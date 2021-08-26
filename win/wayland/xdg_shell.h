@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "popup_placement.h"
 #include "space.h"
 #include "window.h"
 #include "window_release.h"
@@ -32,6 +33,8 @@
 #include <Wrapland/Server/xdg_decoration.h>
 #include <Wrapland/Server/xdg_shell_popup.h>
 #include <Wrapland/Server/xdg_shell_toplevel.h>
+
+#include <functional>
 
 namespace KWin::win::wayland
 {
@@ -675,206 +678,23 @@ Wrapland::Server::XdgShellSurface::States xdg_surface_states(Win* win)
 }
 
 template<typename Win>
-QRect popup_placement(Win const* win, QRect const& bounds)
+QRect get_xdg_shell_popup_placement(Win const* win, QRect const& bounds)
 {
-    using XSS = Wrapland::Server::XdgShellSurface;
-
-    QRect anchor_rect;
-    QPoint offset;
-    Qt::Edges anchor_edge;
-    Qt::Edges gravity;
-
-    XSS::ConstraintAdjustments adjustments;
-
-    // Returns true if target is within bounds, optional edges argument states which side to check.
-    auto in_bounds = [bounds](auto const& target,
-                              Qt::Edges edges = Qt::LeftEdge | Qt::RightEdge | Qt::TopEdge
-                                  | Qt::BottomEdge) -> bool {
-        if (edges & Qt::LeftEdge && target.left() < bounds.left()) {
-            return false;
-        }
-        if (edges & Qt::TopEdge && target.top() < bounds.top()) {
-            return false;
-        }
-        if (edges & Qt::RightEdge && target.right() > bounds.right()) {
-            return false;
-        }
-        if (edges & Qt::BottomEdge && target.bottom() > bounds.bottom()) {
-            return false;
-        }
-        return true;
-    };
-
-    auto get_anchor = [](auto const& rect, Qt::Edges edge, Qt::Edges gravity, auto const& size) {
-        QPoint pos;
-
-        switch (edge & (Qt::LeftEdge | Qt::RightEdge)) {
-        case Qt::LeftEdge:
-            pos.setX(rect.x());
-            break;
-        case Qt::RightEdge:
-            pos.setX(rect.x() + rect.width());
-            break;
-        default:
-            pos.setX(qRound(rect.x() + rect.width() / 2.0));
-        }
-
-        switch (edge & (Qt::TopEdge | Qt::BottomEdge)) {
-        case Qt::TopEdge:
-            pos.setY(rect.y());
-            break;
-        case Qt::BottomEdge:
-            pos.setY(rect.y() + rect.height());
-            break;
-        default:
-            pos.setY(qRound(rect.y() + rect.height() / 2.0));
-        }
-
-        // calculate where the top left point of the popup will end up with the applied
-        // gravity gravity indicates direction. i.e if gravitating towards the top the popup's
-        // bottom edge will next to the anchor point
-        QPoint pos_adjust;
-        switch (gravity & (Qt::LeftEdge | Qt::RightEdge)) {
-        case Qt::LeftEdge:
-            pos_adjust.setX(-size.width());
-            break;
-        case Qt::RightEdge:
-            pos_adjust.setX(0);
-            break;
-        default:
-            pos_adjust.setX(qRound(-size.width() / 2.0));
-        }
-        switch (gravity & (Qt::TopEdge | Qt::BottomEdge)) {
-        case Qt::TopEdge:
-            pos_adjust.setY(-size.height());
-            break;
-        case Qt::BottomEdge:
-            pos_adjust.setY(0);
-            break;
-        default:
-            pos_adjust.setY(qRound(-size.height() / 2.0));
-        }
-
-        return pos + pos_adjust;
-    };
+    // Note: Currently Qt clients don't seem to set any constraint adjustments at all.
 
     auto transient_lead = win->transient()->lead();
     assert(transient_lead);
 
-    auto const parent_pos
-        = transient_lead->pos() + QPoint(left_border(transient_lead), top_border(transient_lead));
-
-    anchor_rect = win->popup->anchorRect();
-    anchor_edge = win->popup->anchorEdge();
-
-    gravity = win->popup->gravity();
-    offset = win->popup->anchorOffset();
-    adjustments = win->popup->constraintAdjustments();
-
-    auto size = win->geometry_update.frame.isValid() ? win->geometry_update.frame.size()
-                                                     : win->popup->initialSize();
-
-    auto place
-        = QRect(get_anchor(anchor_rect, anchor_edge, gravity, size) + offset + parent_pos, size);
-
-    if (in_bounds(place)) {
-        // Fits in the bounds so we're done.
-        return place;
-    }
-
-    // Note: Currently Qt clients don't seem to set any constraint adjustments at all.
-
-    if (adjustments & XSS::ConstraintAdjustment::FlipX) {
-        if (!in_bounds(place, Qt::LeftEdge | Qt::RightEdge)) {
-            // Flip both edges (if either bit is set, XOR both).
-            auto flippedanchor_edge = anchor_edge;
-            if (flippedanchor_edge & (Qt::LeftEdge | Qt::RightEdge)) {
-                flippedanchor_edge ^= (Qt::LeftEdge | Qt::RightEdge);
-            }
-            auto flippedGravity = gravity;
-            if (flippedGravity & (Qt::LeftEdge | Qt::RightEdge)) {
-                flippedGravity ^= (Qt::LeftEdge | Qt::RightEdge);
-            }
-            auto flipped_place
-                = QRect(get_anchor(anchor_rect, flippedanchor_edge, flippedGravity, size) + offset
-                            + parent_pos,
-                        size);
-
-            // If it still doesn't fit continue with the unflipped version.
-            if (in_bounds(flipped_place, Qt::LeftEdge | Qt::RightEdge)) {
-                place.moveLeft(flipped_place.left());
-            }
-        }
-    }
-    if (adjustments & XSS::ConstraintAdjustment::SlideX) {
-        if (!in_bounds(place, Qt::LeftEdge)) {
-            place.moveLeft(bounds.left());
-        }
-        if (!in_bounds(place, Qt::RightEdge)) {
-            place.moveRight(bounds.right());
-        }
-    }
-    if (adjustments & XSS::ConstraintAdjustment::ResizeX) {
-        auto unconstrained_place = place;
-
-        if (!in_bounds(unconstrained_place, Qt::LeftEdge)) {
-            unconstrained_place.setLeft(bounds.left());
-        }
-        if (!in_bounds(unconstrained_place, Qt::RightEdge)) {
-            unconstrained_place.setRight(bounds.right());
-        }
-
-        if (unconstrained_place.isValid()) {
-            place = unconstrained_place;
-        }
-    }
-
-    if (adjustments & XSS::ConstraintAdjustment::FlipY) {
-        if (!in_bounds(place, Qt::TopEdge | Qt::BottomEdge)) {
-            // flip both edges (if either bit is set, XOR both)
-            auto flippedanchor_edge = anchor_edge;
-            if (flippedanchor_edge & (Qt::TopEdge | Qt::BottomEdge)) {
-                flippedanchor_edge ^= (Qt::TopEdge | Qt::BottomEdge);
-            }
-            auto flippedGravity = gravity;
-            if (flippedGravity & (Qt::TopEdge | Qt::BottomEdge)) {
-                flippedGravity ^= (Qt::TopEdge | Qt::BottomEdge);
-            }
-            auto flipped_place
-                = QRect(get_anchor(anchor_rect, flippedanchor_edge, flippedGravity, size) + offset
-                            + parent_pos,
-                        size);
-
-            // if it still doesn't fit we should continue with the unflipped version
-            if (in_bounds(flipped_place, Qt::TopEdge | Qt::BottomEdge)) {
-                place.moveTop(flipped_place.top());
-            }
-        }
-    }
-    if (adjustments & XSS::ConstraintAdjustment::SlideY) {
-        if (!in_bounds(place, Qt::TopEdge)) {
-            place.moveTop(bounds.top());
-        }
-        if (!in_bounds(place, Qt::BottomEdge)) {
-            place.moveBottom(bounds.bottom());
-        }
-    }
-    if (adjustments & XSS::ConstraintAdjustment::ResizeY) {
-        auto unconstrained_place = place;
-
-        if (!in_bounds(unconstrained_place, Qt::TopEdge)) {
-            unconstrained_place.setTop(bounds.top());
-        }
-        if (!in_bounds(unconstrained_place, Qt::BottomEdge)) {
-            unconstrained_place.setBottom(bounds.bottom());
-        }
-
-        if (unconstrained_place.isValid()) {
-            place = unconstrained_place;
-        }
-    }
-
-    return place;
+    auto get = get_popup_placement<std::remove_pointer_t<decltype(transient_lead)>>;
+    return get({transient_lead,
+                bounds,
+                win->popup->anchorRect(),
+                win->popup->anchorEdge(),
+                win->popup->gravity(),
+                win->geometry_update.frame.isValid() ? win->geometry_update.frame.size()
+                                                     : win->popup->initialSize(),
+                win->popup->anchorOffset(),
+                win->popup->constraintAdjustments()});
 }
 
 template<typename Win>

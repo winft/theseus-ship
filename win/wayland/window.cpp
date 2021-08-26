@@ -497,7 +497,8 @@ void window::configure_geometry(QRect const& frame_geo)
             auto const bounds = Workspace::self()->clientArea(
                 top_lead->control->fullscreen() ? FullScreenArea : PlacementArea, top_lead);
 
-            serial = popup->configure(popup_placement(this, bounds).translated(-top_lead->pos()));
+            serial = popup->configure(
+                get_xdg_shell_popup_placement(this, bounds).translated(-top_lead->pos()));
         }
     }
     if (layer_surface) {
@@ -577,13 +578,13 @@ void window::apply_pending_geometry()
         auto const screen_bounds = Workspace::self()->clientArea(
             toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
 
-        // Need to set that for popup_placement(..) call.
+        // Need to set that for get_xdg_shell_popup_placement(..) call.
         // TODO(romangg): make this less akward, i.e. if possible include it in the call.
         if (geometry_update.pending == pending_geometry::none) {
             geometry_update.frame = frame_geo;
         }
 
-        auto const frame_geo = popup_placement(this, screen_bounds);
+        auto const frame_geo = get_xdg_shell_popup_placement(this, screen_bounds);
 
         if (geometry_update.pending == win::pending_geometry::none) {
             geometry_update.frame = frame_geo;
