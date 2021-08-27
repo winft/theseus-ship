@@ -39,6 +39,7 @@ public:
                     redirect::KeyboardKeyState state,
                     uint32_t time,
                     input::keyboard* device = nullptr);
+    void process_key_repeat(uint32_t key, uint32_t time);
 
     void process_modifiers(modifiers_event const& event);
     void processModifiers(uint32_t modsDepressed,

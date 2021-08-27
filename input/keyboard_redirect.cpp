@@ -119,12 +119,7 @@ void keyboard_redirect::init()
     connect(keyRepeatSpy,
             &keyboard_repeat_spy::keyRepeat,
             this,
-            std::bind(&keyboard_redirect::processKey,
-                      this,
-                      std::placeholders::_1,
-                      redirect::KeyboardKeyAutoRepeat,
-                      std::placeholders::_2,
-                      nullptr));
+            &keyboard_redirect::process_key_repeat);
     redirect->installInputEventSpy(keyRepeatSpy);
 
     connect(workspace(), &QObject::destroyed, this, [this] { m_inited = false; });
@@ -221,11 +216,7 @@ void keyboard_redirect::processKey(uint32_t key,
                                    keyboard* device)
 {
     QEvent::Type type;
-    bool autoRepeat = false;
     switch (state) {
-    case redirect::KeyboardKeyAutoRepeat:
-        autoRepeat = true;
-        // fall through
     case redirect::KeyboardKeyPressed:
         type = QEvent::KeyPress;
         break;
@@ -237,13 +228,12 @@ void keyboard_redirect::processKey(uint32_t key,
     }
 
     const quint32 previousLayout = m_xkb->currentLayout();
-    if (!autoRepeat) {
-        m_xkb->updateKey(key, state);
-    }
+    m_xkb->updateKey(key, state);
 
     const xkb_keysym_t keySym = m_xkb->currentKeysym();
     const Qt::KeyboardModifiers globalShortcutsModifiers
         = m_xkb->modifiersRelevantForGlobalShortcuts(key);
+
     KeyEvent event(
         type,
         m_xkb->toQtKey(
@@ -252,9 +242,44 @@ void keyboard_redirect::processKey(uint32_t key,
         key,
         keySym,
         m_xkb->toString(keySym),
-        autoRepeat,
+        false,
         time,
         device);
+    event.setModifiersRelevantForGlobalShortcuts(globalShortcutsModifiers);
+
+    redirect->processSpies(std::bind(&event_spy::keyEvent, std::placeholders::_1, &event));
+    if (!m_inited) {
+        return;
+    }
+    redirect->processFilters(std::bind(&event_filter::keyEvent, std::placeholders::_1, &event));
+
+    m_xkb->forwardModifiers();
+
+    if (event.modifiersRelevantForGlobalShortcuts() == Qt::KeyboardModifier::NoModifier
+        && type != QEvent::KeyRelease) {
+        m_keyboardLayout->checkLayoutChange(previousLayout);
+    }
+}
+
+void keyboard_redirect::process_key_repeat(uint32_t key, uint32_t time)
+{
+    auto type = QEvent::KeyPress;
+    auto const previousLayout = m_xkb->currentLayout();
+
+    auto const keySym = m_xkb->currentKeysym();
+    auto const globalShortcutsModifiers = m_xkb->modifiersRelevantForGlobalShortcuts(key);
+
+    KeyEvent event(
+        type,
+        m_xkb->toQtKey(
+            keySym, key, globalShortcutsModifiers ? Qt::ControlModifier : Qt::KeyboardModifiers()),
+        m_xkb->modifiers(),
+        key,
+        keySym,
+        m_xkb->toString(keySym),
+        true,
+        time,
+        nullptr);
     event.setModifiersRelevantForGlobalShortcuts(globalShortcutsModifiers);
 
     redirect->processSpies(std::bind(&event_spy::keyEvent, std::placeholders::_1, &event));
