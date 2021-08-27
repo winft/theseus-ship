@@ -288,7 +288,9 @@ void WaylandServer::create_globals()
                 return;
             }
             auto check = [surface] (const Toplevel *t) {
-                return t->surfaceId() == surface->id();
+                // Match on surface id and exclude windows already having a surface. This way we
+                // only find Xwayland toplevels. Wayland native windows always have a surface.
+                return t->surfaceId() == surface->id() && !t->surface();
             };
             if (Toplevel *t = ws->findToplevel(check)) {
                 t->setSurface(surface);
