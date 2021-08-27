@@ -147,18 +147,14 @@ QWindow* get_internal_window()
     return found;
 }
 
-bool internal_window_filter::keyEvent(QKeyEvent* event)
+QKeyEvent get_internal_key_event(QKeyEvent* event)
 {
-    auto window = get_internal_window();
-    if (!window) {
-        return false;
-    }
-
     auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     Qt::Key key = xkb->toQtKey(xkb->toKeysym(event->nativeScanCode()),
                                event->nativeScanCode(),
                                Qt::KeyboardModifiers(),
                                true /* workaround for QTBUG-62102 */);
+
     QKeyEvent internalEvent(event->type(),
                             key,
                             event->modifiers(),
@@ -167,7 +163,19 @@ bool internal_window_filter::keyEvent(QKeyEvent* event)
                             event->nativeModifiers(),
                             event->text());
     internalEvent.setAccepted(false);
-    if (QCoreApplication::sendEvent(window, &internalEvent)) {
+
+    return internalEvent;
+}
+
+bool internal_window_filter::keyEvent(QKeyEvent* event)
+{
+    auto window = get_internal_window();
+    if (!window) {
+        return false;
+    }
+
+    auto internal_event = get_internal_key_event(event);
+    if (QCoreApplication::sendEvent(window, &internal_event)) {
         waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
         passToWaylandServer(event);
         return true;
