@@ -48,18 +48,24 @@ bool move_resize_filter::axis([[maybe_unused]] axis_event const& event)
     return workspace()->moveResizeClient() != nullptr;
 }
 
+void process_key_press(Toplevel* window, QKeyEvent* event)
+{
+    win::key_press_event(window, event->key() | event->modifiers());
+
+    if (win::is_move(window) || win::is_resize(window)) {
+        // Only update if mode didn't end.
+        win::update_move_resize(window, kwinApp()->input->redirect->globalPointer());
+    }
+}
+
 bool move_resize_filter::keyEvent(QKeyEvent* event)
 {
-    auto c = workspace()->moveResizeClient();
-    if (!c) {
+    auto window = workspace()->moveResizeClient();
+    if (!window) {
         return false;
     }
     if (event->type() == QEvent::KeyPress) {
-        win::key_press_event(c, event->key() | event->modifiers());
-        if (win::is_move(c) || win::is_resize(c)) {
-            // only update if mode didn't end
-            win::update_move_resize(c, kwinApp()->input->redirect->globalPointer());
-        }
+        process_key_press(window, event);
     }
     return true;
 }
