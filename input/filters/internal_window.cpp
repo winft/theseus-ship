@@ -105,14 +105,16 @@ bool internal_window_filter::axis(axis_event const& event)
     return adapted_qt_event.isAccepted();
 }
 
-bool internal_window_filter::keyEvent(QKeyEvent* event)
+QWindow* get_internal_window()
 {
     auto const& windows = workspace()->windows();
     if (windows.empty()) {
-        return false;
+        return nullptr;
     }
+
     QWindow* found = nullptr;
     auto it = windows.end();
+
     do {
         it--;
         auto internal = qobject_cast<win::InternalClient*>(*it);
@@ -141,9 +143,17 @@ bool internal_window_filter::keyEvent(QKeyEvent* event)
         found = w;
         break;
     } while (it != windows.begin());
-    if (!found) {
+
+    return found;
+}
+
+bool internal_window_filter::keyEvent(QKeyEvent* event)
+{
+    auto window = get_internal_window();
+    if (!window) {
         return false;
     }
+
     auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     Qt::Key key = xkb->toQtKey(xkb->toKeysym(event->nativeScanCode()),
                                event->nativeScanCode(),
@@ -157,7 +167,7 @@ bool internal_window_filter::keyEvent(QKeyEvent* event)
                             event->nativeModifiers(),
                             event->text());
     internalEvent.setAccepted(false);
-    if (QCoreApplication::sendEvent(found, &internalEvent)) {
+    if (QCoreApplication::sendEvent(window, &internalEvent)) {
         waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
         passToWaylandServer(event);
         return true;
