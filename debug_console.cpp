@@ -281,20 +281,22 @@ void DebugConsoleFilter::axis(input::axis_event const& event)
     m_textEdit->ensureCursorVisible();
 }
 
-void add_common_key_data(input::KeyEvent* event, QString& text)
+void add_common_key_data(input::key_event const& event, QString& text)
 {
-    text.append(timestampRow(event->timestamp()));
-    text.append(tableRow(i18nc("The code as read from the input device", "Scan code"),
-                         event->nativeScanCode()));
+    text.append(timestampRow(event.base.time_msec));
+    text.append(
+        tableRow(i18nc("The code as read from the input device", "Scan code"), event.keycode));
 
     auto const key_meta_object = Qt::qt_getEnumMetaObject(Qt::Key());
     auto const enumerator = key_meta_object->enumerator(key_meta_object->indexOfEnumerator("Key"));
     text.append(tableRow(i18nc("Key according to Qt", "Qt::Key code"),
-                         enumerator.valueToKey(event->key())));
+                         enumerator.valueToKey(input::key_to_qt_key(event.keycode))));
 
-    text.append(tableRow(i18nc("The translated code to an Xkb symbol", "Xkb symbol"),
-                         event->nativeVirtualKey()));
-    text.append(tableRow(i18nc("The translated code interpreted as text", "Utf8"), event->text()));
+    auto const& xkb = kwinApp()->input->redirect->keyboard()->xkb();
+    auto const keysym = xkb->toKeysym(event.keycode);
+    text.append(tableRow(i18nc("The translated code to an Xkb symbol", "Xkb symbol"), keysym));
+    text.append(
+        tableRow(i18nc("The translated code interpreted as text", "Utf8"), xkb->toString(keysym)));
 
     auto to_string = [](Qt::KeyboardModifiers mods) {
         QString ret;
@@ -327,34 +329,32 @@ void add_common_key_data(input::KeyEvent* event, QString& text)
     };
 
     text.append(tableRow(i18nc("The currently active modifiers", "Modifiers"),
-                         to_string(event->modifiers())));
+                         to_string(kwinApp()->input->redirect->keyboard()->modifiers())));
     text.append(s_tableEnd);
 }
 
-void DebugConsoleFilter::keyEvent(input::KeyEvent* event)
+void DebugConsoleFilter::key(input::key_event const& event)
 {
     QString text = s_hr;
     text.append(s_tableStart);
 
-    switch (event->type()) {
-    case QEvent::KeyPress:
+    switch (event.state) {
+    case input::button_state::pressed:
         text.append(tableHeaderRow(i18nc("A key press event", "Key Press")));
         break;
-    case QEvent::KeyRelease:
+    case input::button_state::released:
         text.append(tableHeaderRow(i18nc("A key release event", "Key Release")));
-        break;
-    default:
         break;
     }
 
-    text.append(deviceRow(event->device() ? event->device()->control : nullptr));
+    text.append(deviceRow(event.base.dev ? event.base.dev->control : nullptr));
     add_common_key_data(event, text);
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::key_repeat(input::KeyEvent* event)
+void DebugConsoleFilter::key_repeat(input::key_event const& event)
 {
     QString text = s_hr;
     text.append(s_tableStart);

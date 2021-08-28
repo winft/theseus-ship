@@ -9,8 +9,6 @@
 #include "event.h"
 #include <kwin_export.h>
 
-#include <QKeyEvent>
-
 namespace KWin::input
 {
 class SwitchEvent;
@@ -44,14 +42,8 @@ public:
     virtual bool motion(motion_event const& event);
     virtual bool axis(axis_event const& event);
 
-    /**
-     * Event filter for keyboard events.
-     *
-     * @param event The event information about the key event
-     * @return @c tru to stop further event processing, @c false to pass to next filter.
-     */
-    virtual bool keyEvent(QKeyEvent* event);
-    virtual bool key_repeat(QKeyEvent* event);
+    virtual bool key(key_event const& event);
+    virtual bool key_repeat(key_event const& event);
 
     virtual bool touchDown(qint32 id, const QPointF& pos, quint32 time);
     virtual bool touchMotion(qint32 id, const QPointF& pos, quint32 time);
@@ -77,7 +69,7 @@ public:
     virtual bool tabletPadRingEvent(int number, int position, bool isFinger);
 
 protected:
-    void passToWaylandServer(QKeyEvent* event);
+    void passToWaylandServer(key_event const& event);
 };
 
 }

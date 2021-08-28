@@ -13,8 +13,6 @@
 #include "workspace.h"
 #include <input/qt_event.h>
 
-#include <QKeyEvent>
-
 namespace KWin::input
 {
 

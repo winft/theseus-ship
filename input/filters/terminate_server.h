@@ -13,7 +13,7 @@ namespace KWin::input
 class terminate_server_filter : public event_filter
 {
 public:
-    bool keyEvent(QKeyEvent* event) override;
+    bool key(key_event const& event) override;
 };
 
 }

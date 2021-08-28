@@ -6,20 +6,19 @@
 */
 #include "terminate_server.h"
 
+#include "input/event.h"
 #include "input/logging.h"
 #include "input/xkb.h"
 
 #include "utils.h"
 
-#include <QKeyEvent>
-
 namespace KWin::input
 {
 
-bool terminate_server_filter::keyEvent(QKeyEvent* event)
+bool terminate_server_filter::key(key_event const& event)
 {
-    if (event->type() == QEvent::KeyPress) {
-        if (event->nativeVirtualKey() == XKB_KEY_Terminate_Server) {
+    if (event.state == button_state::pressed) {
+        if (event.keycode == XKB_KEY_Terminate_Server) {
             qCWarning(KWIN_INPUT) << "Request to terminate server";
             QMetaObject::invokeMethod(qApp, "quit", Qt::QueuedConnection);
             return true;

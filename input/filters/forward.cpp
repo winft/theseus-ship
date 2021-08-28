@@ -8,6 +8,7 @@
 
 #include "../event.h"
 #include "../keyboard_redirect.h"
+#include "../qt_event.h"
 #include "../redirect.h"
 #include "../touch_redirect.h"
 #include "main.h"
@@ -17,19 +18,17 @@
 
 #include <Wrapland/Server/seat.h>
 
-#include <QKeyEvent>
-
 namespace KWin::input
 {
 
-bool forward_filter::keyEvent(QKeyEvent* event)
+bool forward_filter::key(key_event const& event)
 {
     if (!workspace()) {
         return false;
     }
     auto seat = waylandServer()->seat();
     kwinApp()->input->redirect->keyboard()->update();
-    seat->setTimestamp(event->timestamp());
+    seat->setTimestamp(event.base.time_msec);
     passToWaylandServer(event);
     return true;
 }

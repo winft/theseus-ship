@@ -8,10 +8,11 @@
 
 #include "input/event.h"
 #include "input/global_shortcuts_manager.h"
+#include "input/keyboard.h"
+#include "input/keyboard_redirect.h"
+#include "input/qt_event.h"
 #include "main.h"
-#include <input/keyboard_redirect.h>
 
-#include <QKeyEvent>
 #include <QTimer>
 
 namespace KWin::input
@@ -60,51 +61,56 @@ bool global_shortcut_filter::axis(axis_event const& event)
     return kwinApp()->input->redirect->shortcuts()->processAxis(mods, direction);
 }
 
-bool global_shortcut_filter::keyEvent(QKeyEvent* event)
+bool global_shortcut_filter::key(key_event const& event)
 {
     auto const& redirect = kwinApp()->input->redirect;
-    auto const& modifiers = static_cast<KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts();
+    auto const& modifiers = redirect->modifiersRelevantForGlobalShortcuts();
     auto const& shortcuts = redirect->shortcuts();
+    auto qt_key = key_to_qt_key(event.keycode);
 
-    auto handle_power_key = [this, event, shortcuts, modifiers] {
+    auto handle_power_key = [this, state = event.state, shortcuts, modifiers, qt_key] {
         auto power_off = [this, shortcuts, modifiers] {
             QObject::disconnect(m_powerDown, &QTimer::timeout, shortcuts, nullptr);
             m_powerDown->stop();
             shortcuts->processKey(modifiers, Qt::Key_PowerDown);
         };
 
-        switch (event->type()) {
-        case QEvent::KeyPress:
+        switch (state) {
+        case button_state::pressed:
             QObject::connect(m_powerDown, &QTimer::timeout, shortcuts, power_off);
             m_powerDown->start();
             return true;
-        case QEvent::KeyRelease:
-            auto const ret
-                = !m_powerDown->isActive() || shortcuts->processKey(modifiers, event->key());
+        case button_state::released:
+            auto const ret = !m_powerDown->isActive() || shortcuts->processKey(modifiers, qt_key);
             m_powerDown->stop();
             return ret;
         }
         return false;
     };
 
-    if (event->key() == Qt::Key_PowerOff) {
+    if (qt_key == Qt::Key_PowerOff) {
         return handle_power_key();
     }
 
-    if (event->type() == QEvent::KeyPress) {
-        return shortcuts->processKey(modifiers, event->key());
+    if (event.state == button_state::pressed) {
+        return shortcuts->processKey(modifiers, qt_key);
     }
 
     return false;
 }
 
-bool global_shortcut_filter::key_repeat(QKeyEvent* event)
+bool global_shortcut_filter::key_repeat(key_event const& event)
 {
-    if (event->key() == Qt::Key_PowerOff) {
+    auto qt_key = key_to_qt_key(event.keycode);
+
+    if (qt_key == Qt::Key_PowerOff) {
         return false;
     }
-    return kwinApp()->input->redirect->shortcuts()->processKey(
-        static_cast<KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts(), event->key());
+
+    auto const& redirect = kwinApp()->input->redirect;
+    auto const& modifiers = redirect->modifiersRelevantForGlobalShortcuts();
+
+    return redirect->shortcuts()->processKey(modifiers, qt_key);
 }
 
 bool global_shortcut_filter::swipeGestureBegin(int fingerCount, quint32 time)

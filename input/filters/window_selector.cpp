@@ -8,12 +8,14 @@
 
 #include "../keyboard_redirect.h"
 #include "../pointer_redirect.h"
+#include "input/event.h"
+#include "input/keyboard.h"
+#include "input/qt_event.h"
 #include "main.h"
 #include "wayland_server.h"
 
 #include <Wrapland/Server/seat.h>
 
-#include <QKeyEvent>
 #include <linux/input.h>
 
 namespace KWin::input
@@ -49,39 +51,40 @@ bool window_selector_filter::axis([[maybe_unused]] axis_event const& event)
     return m_active;
 }
 
-bool window_selector_filter::keyEvent(QKeyEvent* event)
+bool window_selector_filter::key(key_event const& event)
 {
-    Q_UNUSED(event)
     if (!m_active) {
         return false;
     }
+
     waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
     passToWaylandServer(event);
 
-    if (event->type() == QEvent::KeyPress) {
+    if (event.state == button_state::pressed) {
+        auto const qt_key = key_to_qt_key(event.keycode);
+
         // x11 variant does this on key press, so do the same
-        if (event->key() == Qt::Key_Escape) {
+        if (qt_key == Qt::Key_Escape) {
             cancel();
-        } else if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return
-                   || event->key() == Qt::Key_Space) {
+        } else if (qt_key == Qt::Key_Enter || qt_key == Qt::Key_Return || qt_key == Qt::Key_Space) {
             accept(kwinApp()->input->redirect->globalPointer());
         }
         if (kwinApp()->input->redirect->supportsPointerWarping()) {
             int mx = 0;
             int my = 0;
-            if (event->key() == Qt::Key_Left) {
+            if (qt_key == Qt::Key_Left) {
                 mx = -10;
             }
-            if (event->key() == Qt::Key_Right) {
+            if (qt_key == Qt::Key_Right) {
                 mx = 10;
             }
-            if (event->key() == Qt::Key_Up) {
+            if (qt_key == Qt::Key_Up) {
                 my = -10;
             }
-            if (event->key() == Qt::Key_Down) {
+            if (qt_key == Qt::Key_Down) {
                 my = 10;
             }
-            if (event->modifiers() & Qt::ControlModifier) {
+            if (event.base.dev->plat->redirect->keyboardModifiers() & Qt::ControlModifier) {
                 mx /= 10;
                 my /= 10;
             }
@@ -93,7 +96,7 @@ bool window_selector_filter::keyEvent(QKeyEvent* event)
     return true;
 }
 
-bool window_selector_filter::key_repeat(QKeyEvent* /*event*/)
+bool window_selector_filter::key_repeat(key_event const& /*event*/)
 {
     return m_active;
 }

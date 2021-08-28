@@ -206,17 +206,18 @@ void redirect::setupWorkspace()
             connect(
                 device, &FakeInputDevice::keyboardKeyPressRequested, this, [this](quint32 button) {
                     // TODO: Fix time
-                    m_keyboard->processKey(button, redirect::KeyboardKeyPressed, 0);
+                    m_keyboard->process_key({button, button_state::pressed, false, nullptr, 0});
                     waylandServer()->simulateUserActivity();
                 });
-            connect(device,
-                    &FakeInputDevice::keyboardKeyReleaseRequested,
-                    this,
-                    [this](quint32 button) {
-                        // TODO: Fix time
-                        m_keyboard->processKey(button, redirect::KeyboardKeyReleased, 0);
-                        waylandServer()->simulateUserActivity();
-                    });
+            connect(
+                device,
+                &FakeInputDevice::keyboardKeyReleaseRequested,
+                this,
+                [this](quint32 button) {
+                    // TODO: Fix time
+                    m_keyboard->process_key({button, button_state::released, false, nullptr, 0});
+                    waylandServer()->simulateUserActivity();
+                });
         });
 
         m_keyboard->init();
@@ -472,7 +473,12 @@ void redirect::processPointerAxis(axis_orientation orientation,
 
 void redirect::processKeyboardKey(uint32_t key, redirect::KeyboardKeyState state, uint32_t time)
 {
-    m_keyboard->processKey(key, state, time);
+    m_keyboard->process_key({key,
+                             state == KeyboardKeyState::KeyboardKeyPressed ? button_state::pressed
+                                                                           : button_state::released,
+                             false,
+                             nullptr,
+                             time});
 }
 
 void redirect::processKeyboardModifiers(uint32_t modsDepressed,

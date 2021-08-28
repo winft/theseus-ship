@@ -38,13 +38,12 @@ bool event_filter::axis([[maybe_unused]] axis_event const& event)
     return false;
 }
 
-bool event_filter::keyEvent(QKeyEvent* event)
+bool event_filter::key(key_event const& /*event*/)
 {
-    Q_UNUSED(event)
     return false;
 }
 
-bool event_filter::key_repeat(QKeyEvent* /*event*/)
+bool event_filter::key_repeat(key_event const& /*event*/)
 {
     return false;
 }
@@ -169,18 +168,15 @@ bool event_filter::tabletPadRingEvent(int number, int position, bool isFinger)
     return false;
 }
 
-void event_filter::passToWaylandServer(QKeyEvent* event)
+void event_filter::passToWaylandServer(key_event const& event)
 {
     Q_ASSERT(waylandServer());
-    if (event->isAutoRepeat()) {
-        return;
-    }
-    switch (event->type()) {
-    case QEvent::KeyPress:
-        waylandServer()->seat()->keyPressed(event->nativeScanCode());
+    switch (event.state) {
+    case button_state::pressed:
+        waylandServer()->seat()->keyPressed(event.keycode);
         break;
-    case QEvent::KeyRelease:
-        waylandServer()->seat()->keyReleased(event->nativeScanCode());
+    case button_state::released:
+        waylandServer()->seat()->keyReleased(event.keycode);
         break;
     default:
         break;

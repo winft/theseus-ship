@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "modifier_only_shortcuts.h"
 #include "input/event.h"
+#include "input/keyboard.h"
 #include "options.h"
 #include "screenlockerwatcher.h"
 #include "workspace.h"
@@ -42,23 +43,23 @@ modifier_only_shortcuts_spy::modifier_only_shortcuts_spy()
 
 modifier_only_shortcuts_spy::~modifier_only_shortcuts_spy() = default;
 
-void modifier_only_shortcuts_spy::keyEvent(KeyEvent* event)
+void modifier_only_shortcuts_spy::key(key_event const& event)
 {
-    assert(!event->isAutoRepeat());
+    auto const& redirect = kwinApp()->input->redirect;
+    auto const& mods = redirect->modifiersRelevantForGlobalShortcuts();
 
-    if (event->type() == QEvent::KeyPress) {
+    if (event.state == button_state::pressed) {
         const bool wasEmpty = m_pressedKeys.isEmpty();
-        m_pressedKeys.insert(event->nativeScanCode());
+        m_pressedKeys.insert(event.keycode);
         if (wasEmpty && m_pressedKeys.size() == 1 && !ScreenLockerWatcher::self()->isLocked()
             && m_buttonPressCount == 0 && m_cachedMods == Qt::NoModifier) {
-            m_modifier = Qt::KeyboardModifier(int(event->modifiersRelevantForGlobalShortcuts()));
+            m_modifier = Qt::KeyboardModifier(int(mods));
         } else {
             m_modifier = Qt::NoModifier;
         }
     } else if (!m_pressedKeys.isEmpty()) {
-        m_pressedKeys.remove(event->nativeScanCode());
-        if (m_pressedKeys.isEmpty()
-            && event->modifiersRelevantForGlobalShortcuts() == Qt::NoModifier
+        m_pressedKeys.remove(event.keycode);
+        if (m_pressedKeys.isEmpty() && mods == Qt::NoModifier
             && !workspace()->globalShortcutsDisabled()) {
             if (m_modifier != Qt::NoModifier) {
                 const auto list = options->modifierOnlyDBusShortcut(m_modifier);
@@ -78,7 +79,8 @@ void modifier_only_shortcuts_spy::keyEvent(KeyEvent* event)
     } else {
         m_modifier = Qt::NoModifier;
     }
-    m_cachedMods = event->modifiersRelevantForGlobalShortcuts();
+
+    m_cachedMods = redirect->modifiersRelevantForGlobalShortcuts();
 }
 
 void modifier_only_shortcuts_spy::button(button_event const& event)

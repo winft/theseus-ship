@@ -35,10 +35,6 @@ public:
     void update();
 
     void process_key(key_event const& event);
-    void processKey(uint32_t key,
-                    redirect::KeyboardKeyState state,
-                    uint32_t time,
-                    input::keyboard* device = nullptr);
     void process_key_repeat(uint32_t key, uint32_t time);
 
     void process_modifiers(modifiers_event const& event);

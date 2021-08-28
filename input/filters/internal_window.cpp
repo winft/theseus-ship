@@ -18,7 +18,6 @@
 #include "workspace.h"
 #include <input/qt_event.h>
 
-#include <QKeyEvent>
 #include <QWindow>
 
 namespace KWin::input
@@ -147,27 +146,27 @@ QWindow* get_internal_window()
     return found;
 }
 
-QKeyEvent get_internal_key_event(QKeyEvent* event)
+QKeyEvent get_internal_key_event(key_event const& event)
 {
     auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
-    Qt::Key key = xkb->toQtKey(xkb->toKeysym(event->nativeScanCode()),
-                               event->nativeScanCode(),
-                               Qt::KeyboardModifiers(),
-                               true /* workaround for QTBUG-62102 */);
+    auto const keysym = xkb->toKeysym(event.keycode);
+    auto qt_key = xkb->toQtKey(
+        keysym, event.keycode, Qt::KeyboardModifiers(), true /* workaround for QTBUG-62102 */);
 
-    QKeyEvent internalEvent(event->type(),
-                            key,
-                            event->modifiers(),
-                            event->nativeScanCode(),
-                            event->nativeVirtualKey(),
-                            event->nativeModifiers(),
-                            event->text());
+    QKeyEvent internalEvent(event.state == button_state::pressed ? QEvent::KeyPress
+                                                                 : QEvent::KeyRelease,
+                            qt_key,
+                            xkb->modifiers(),
+                            event.keycode,
+                            keysym,
+                            0,
+                            xkb->toString(keysym));
     internalEvent.setAccepted(false);
 
     return internalEvent;
 }
 
-bool internal_window_filter::keyEvent(QKeyEvent* event)
+bool internal_window_filter::key(key_event const& event)
 {
     auto window = get_internal_window();
     if (!window) {
@@ -183,7 +182,7 @@ bool internal_window_filter::keyEvent(QKeyEvent* event)
     return false;
 }
 
-bool internal_window_filter::key_repeat(QKeyEvent* event)
+bool internal_window_filter::key_repeat(key_event const& event)
 {
     auto window = get_internal_window();
     if (!window) {

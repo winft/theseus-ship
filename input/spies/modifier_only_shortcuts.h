@@ -36,10 +36,9 @@ public:
     explicit modifier_only_shortcuts_spy();
     ~modifier_only_shortcuts_spy() override;
 
-    void keyEvent(KeyEvent* event) override;
-
     void button(button_event const& event) override;
     void axis(axis_event const& event) override;
+    void key(key_event const& event) override;
 
     void reset()
     {
