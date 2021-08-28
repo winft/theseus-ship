@@ -62,33 +62,39 @@ bool global_shortcut_filter::axis(axis_event const& event)
 
 bool global_shortcut_filter::keyEvent(QKeyEvent* event)
 {
-    if (event->key() == Qt::Key_PowerOff) {
-        const auto modifiers = static_cast<KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts();
-        if (event->type() == QEvent::KeyPress) {
-            QObject::connect(m_powerDown,
-                             &QTimer::timeout,
-                             kwinApp()->input->redirect->shortcuts(),
-                             [this, modifiers] {
-                                 QObject::disconnect(m_powerDown,
-                                                     &QTimer::timeout,
-                                                     kwinApp()->input->redirect->shortcuts(),
-                                                     nullptr);
-                                 m_powerDown->stop();
-                                 kwinApp()->input->redirect->shortcuts()->processKey(
-                                     modifiers, Qt::Key_PowerDown);
-                             });
+    auto const& redirect = kwinApp()->input->redirect;
+    auto const& modifiers = static_cast<KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts();
+    auto const& shortcuts = redirect->shortcuts();
+
+    auto handle_power_key = [this, event, shortcuts, modifiers] {
+        auto power_off = [this, shortcuts, modifiers] {
+            QObject::disconnect(m_powerDown, &QTimer::timeout, shortcuts, nullptr);
+            m_powerDown->stop();
+            shortcuts->processKey(modifiers, Qt::Key_PowerDown);
+        };
+
+        switch (event->type()) {
+        case QEvent::KeyPress:
+            QObject::connect(m_powerDown, &QTimer::timeout, shortcuts, power_off);
             m_powerDown->start();
             return true;
-        } else if (event->type() == QEvent::KeyRelease) {
-            const bool ret = !m_powerDown->isActive()
-                || kwinApp()->input->redirect->shortcuts()->processKey(modifiers, event->key());
+        case QEvent::KeyRelease:
+            auto const ret
+                = !m_powerDown->isActive() || shortcuts->processKey(modifiers, event->key());
             m_powerDown->stop();
             return ret;
         }
-    } else if (event->type() == QEvent::KeyPress) {
-        return kwinApp()->input->redirect->shortcuts()->processKey(
-            static_cast<KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts(), event->key());
+        return false;
+    };
+
+    if (event->key() == Qt::Key_PowerOff) {
+        return handle_power_key();
     }
+
+    if (event->type() == QEvent::KeyPress) {
+        return shortcuts->processKey(modifiers, event->key());
+    }
+
     return false;
 }
 
