@@ -18,7 +18,7 @@ namespace KWin::input
 
 bool terminate_server_filter::keyEvent(QKeyEvent* event)
 {
-    if (event->type() == QEvent::KeyPress && !event->isAutoRepeat()) {
+    if (event->type() == QEvent::KeyPress) {
         if (event->nativeVirtualKey() == XKB_KEY_Terminate_Server) {
             qCWarning(KWIN_INPUT) << "Request to terminate server";
             QMetaObject::invokeMethod(qApp, "quit", Qt::QueuedConnection);

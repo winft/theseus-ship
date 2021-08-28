@@ -64,7 +64,7 @@ bool global_shortcut_filter::keyEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_PowerOff) {
         const auto modifiers = static_cast<KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts();
-        if (event->type() == QEvent::KeyPress && !event->isAutoRepeat()) {
+        if (event->type() == QEvent::KeyPress) {
             QObject::connect(m_powerDown,
                              &QTimer::timeout,
                              kwinApp()->input->redirect->shortcuts(),
@@ -90,6 +90,15 @@ bool global_shortcut_filter::keyEvent(QKeyEvent* event)
             static_cast<KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts(), event->key());
     }
     return false;
+}
+
+bool global_shortcut_filter::key_repeat(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_PowerOff) {
+        return false;
+    }
+    return kwinApp()->input->redirect->shortcuts()->processKey(
+        static_cast<KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts(), event->key());
 }
 
 bool global_shortcut_filter::swipeGestureBegin(int fingerCount, quint32 time)

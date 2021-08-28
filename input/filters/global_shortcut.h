@@ -19,6 +19,8 @@ public:
     ~global_shortcut_filter();
 
     bool keyEvent(QKeyEvent* event) override;
+    bool key_repeat(QKeyEvent* event) override;
+
     bool button(button_event const& event) override;
     bool axis(axis_event const& event) override;
 

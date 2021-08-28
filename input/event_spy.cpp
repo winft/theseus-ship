@@ -40,6 +40,10 @@ void event_spy::keyEvent(KeyEvent* event)
     Q_UNUSED(event)
 }
 
+void event_spy::key_repeat(KeyEvent* /*event*/)
+{
+}
+
 void event_spy::touchDown(qint32 id, const QPointF& point, quint32 time)
 {
     Q_UNUSED(id)

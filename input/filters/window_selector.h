@@ -18,6 +18,7 @@ class window_selector_filter : public event_filter
 {
 public:
     bool keyEvent(QKeyEvent* event) override;
+    bool key_repeat(QKeyEvent* event) override;
 
     bool button(button_event const& event) override;
     bool motion(motion_event const& event) override;

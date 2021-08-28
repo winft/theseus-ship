@@ -44,6 +44,11 @@ bool event_filter::keyEvent(QKeyEvent* event)
     return false;
 }
 
+bool event_filter::key_repeat(QKeyEvent* /*event*/)
+{
+    return false;
+}
+
 bool event_filter::touchDown(qint32 id, const QPointF& point, quint32 time)
 {
     Q_UNUSED(id)

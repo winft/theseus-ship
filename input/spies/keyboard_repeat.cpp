@@ -40,9 +40,8 @@ void keyboard_repeat_spy::handleKeyRepeat()
 
 void keyboard_repeat_spy::keyEvent(input::KeyEvent* event)
 {
-    if (event->isAutoRepeat()) {
-        return;
-    }
+    assert(!event->isAutoRepeat());
+
     const quint32 key = event->nativeScanCode();
     if (event->type() == QEvent::KeyPress) {
         // TODO: don't get these values from WaylandServer

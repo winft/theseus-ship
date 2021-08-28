@@ -80,10 +80,8 @@ bool lock_screen_filter::keyEvent(QKeyEvent* event)
     if (!waylandServer()->isScreenLocked()) {
         return false;
     }
-    if (event->isAutoRepeat()) {
-        // wayland client takes care of it
-        return true;
-    }
+    assert(!event->isAutoRepeat());
+
     // send event to KSldApp for global accel
     // if event is set to accepted it means a whitelisted shortcut was triggered
     // in that case we filter it out and don't process it further
@@ -113,6 +111,13 @@ bool lock_screen_filter::keyEvent(QKeyEvent* event)
     }
     return true;
 }
+
+bool lock_screen_filter::key_repeat(QKeyEvent* /*event*/)
+{
+    // If screen is locked Wayland client takes care of it.
+    return waylandServer()->isScreenLocked();
+}
+
 bool lock_screen_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     if (!waylandServer()->isScreenLocked()) {

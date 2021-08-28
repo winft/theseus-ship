@@ -61,6 +61,15 @@ bool tabbox_filter::keyEvent(QKeyEvent* event)
     return true;
 }
 
+bool tabbox_filter::key_repeat(QKeyEvent* event)
+{
+    if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->isGrabbed()) {
+        return false;
+    }
+    TabBox::TabBox::self()->keyPress(event->modifiers() | event->key());
+    return true;
+}
+
 bool tabbox_filter::axis(axis_event const& event)
 {
     if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->isGrabbed()) {

@@ -348,7 +348,18 @@ void DebugConsoleFilter::keyEvent(input::KeyEvent* event)
     }
 
     text.append(deviceRow(event->device() ? event->device()->control : nullptr));
-    text.append(tableRow(i18nc("Whether the event is an automatic key repeat", "Repeat"), event->isAutoRepeat()));
+    add_common_key_data(event, text);
+
+    m_textEdit->insertHtml(text);
+    m_textEdit->ensureCursorVisible();
+}
+
+void DebugConsoleFilter::key_repeat(input::KeyEvent* event)
+{
+    QString text = s_hr;
+    text.append(s_tableStart);
+
+    text.append(tableHeaderRow(i18nc("A key repeat event", "Key repeat")));
     add_common_key_data(event, text);
 
     m_textEdit->insertHtml(text);

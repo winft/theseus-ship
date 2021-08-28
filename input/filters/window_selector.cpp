@@ -93,6 +93,11 @@ bool window_selector_filter::keyEvent(QKeyEvent* event)
     return true;
 }
 
+bool window_selector_filter::key_repeat(QKeyEvent* /*event*/)
+{
+    return m_active;
+}
+
 bool window_selector_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     Q_UNUSED(time)

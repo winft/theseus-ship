@@ -70,6 +70,17 @@ bool move_resize_filter::keyEvent(QKeyEvent* event)
     return true;
 }
 
+bool move_resize_filter::key_repeat(QKeyEvent* event)
+{
+    auto window = workspace()->moveResizeClient();
+    if (!window) {
+        return false;
+    }
+
+    process_key_press(window, event);
+    return true;
+}
+
 bool move_resize_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     Q_UNUSED(id)

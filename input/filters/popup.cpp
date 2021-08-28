@@ -114,6 +114,14 @@ bool popup_filter::keyEvent(QKeyEvent* event)
     return true;
 }
 
+bool popup_filter::key_repeat(QKeyEvent* /*event*/)
+{
+    // Filter out event when a popup is active.
+    // TODO(romangg): Are we supposed to do something more with a key repeat? But the clients are
+    //                handling key repeats themselves.
+    return !m_popups.empty() && m_popups.back()->surface();
+}
+
 void popup_filter::cancelPopups()
 {
     while (!m_popups.empty()) {

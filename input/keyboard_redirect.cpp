@@ -52,9 +52,8 @@ public:
 
     void keyEvent(KeyEvent* event) override
     {
-        if (event->isAutoRepeat()) {
-            return;
-        }
+        assert(!event->isAutoRepeat());
+
         Q_EMIT redirect->keyStateChanged(event->nativeScanCode(),
                                          event->type() == QEvent::KeyPress
                                              ? redirect::KeyboardKeyPressed
@@ -280,11 +279,11 @@ void keyboard_redirect::process_key_repeat(uint32_t key, uint32_t time)
         nullptr);
     event.setModifiersRelevantForGlobalShortcuts(globalShortcutsModifiers);
 
-    redirect->processSpies(std::bind(&event_spy::keyEvent, std::placeholders::_1, &event));
+    redirect->processSpies(std::bind(&event_spy::key_repeat, std::placeholders::_1, &event));
     if (!m_inited) {
         return;
     }
-    redirect->processFilters(std::bind(&event_filter::keyEvent, std::placeholders::_1, &event));
+    redirect->processFilters(std::bind(&event_filter::key_repeat, std::placeholders::_1, &event));
 }
 
 void keyboard_redirect::process_modifiers(modifiers_event const& event)

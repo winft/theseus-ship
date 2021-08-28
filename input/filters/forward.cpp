@@ -27,10 +27,6 @@ bool forward_filter::keyEvent(QKeyEvent* event)
     if (!workspace()) {
         return false;
     }
-    if (event->isAutoRepeat()) {
-        // handled by Wayland client
-        return false;
-    }
     auto seat = waylandServer()->seat();
     kwinApp()->input->redirect->keyboard()->update();
     seat->setTimestamp(event->timestamp());

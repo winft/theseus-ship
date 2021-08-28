@@ -44,9 +44,8 @@ modifier_only_shortcuts_spy::~modifier_only_shortcuts_spy() = default;
 
 void modifier_only_shortcuts_spy::keyEvent(KeyEvent* event)
 {
-    if (event->isAutoRepeat()) {
-        return;
-    }
+    assert(!event->isAutoRepeat());
+
     if (event->type() == QEvent::KeyPress) {
         const bool wasEmpty = m_pressedKeys.isEmpty();
         m_pressedKeys.insert(event->nativeScanCode());

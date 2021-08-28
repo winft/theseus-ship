@@ -55,6 +55,15 @@ bool effects_filter::keyEvent(QKeyEvent* event)
     return true;
 }
 
+bool effects_filter::key_repeat(QKeyEvent* event)
+{
+    if (!effects || !static_cast<EffectsHandlerImpl*>(effects)->hasKeyboardGrab()) {
+        return false;
+    }
+    static_cast<EffectsHandlerImpl*>(effects)->grabbedKeyboardEvent(event);
+    return true;
+}
+
 bool effects_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     if (!effects) {

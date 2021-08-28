@@ -183,6 +183,17 @@ bool internal_window_filter::keyEvent(QKeyEvent* event)
     return false;
 }
 
+bool internal_window_filter::key_repeat(QKeyEvent* event)
+{
+    auto window = get_internal_window();
+    if (!window) {
+        return false;
+    }
+
+    auto internal_event = get_internal_key_event(event);
+    return QCoreApplication::sendEvent(window, &internal_event);
+}
+
 bool internal_window_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     auto seat = waylandServer()->seat();

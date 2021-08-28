@@ -29,6 +29,8 @@ public:
     explicit popup_filter();
 
     bool keyEvent(QKeyEvent* event) override;
+    bool key_repeat(QKeyEvent* event) override;
+
     bool button(button_event const& event) override;
 
 private:

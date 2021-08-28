@@ -48,6 +48,8 @@ public:
      * @param event The event information about the key event
      */
     virtual void keyEvent(KeyEvent* event);
+    virtual void key_repeat(KeyEvent* event);
+
     virtual void touchDown(qint32 id, const QPointF& pos, quint32 time);
     virtual void touchMotion(qint32 id, const QPointF& pos, quint32 time);
     virtual void touchUp(qint32 id, quint32 time);
