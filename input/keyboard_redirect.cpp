@@ -264,8 +264,6 @@ void keyboard_redirect::processKey(uint32_t key,
 void keyboard_redirect::process_key_repeat(uint32_t key, uint32_t time)
 {
     auto type = QEvent::KeyPress;
-    auto const previousLayout = m_xkb->currentLayout();
-
     auto const keySym = m_xkb->currentKeysym();
     auto const globalShortcutsModifiers = m_xkb->modifiersRelevantForGlobalShortcuts(key);
 
@@ -287,13 +285,6 @@ void keyboard_redirect::process_key_repeat(uint32_t key, uint32_t time)
         return;
     }
     redirect->processFilters(std::bind(&event_filter::keyEvent, std::placeholders::_1, &event));
-
-    m_xkb->forwardModifiers();
-
-    if (event.modifiersRelevantForGlobalShortcuts() == Qt::KeyboardModifier::NoModifier
-        && type != QEvent::KeyRelease) {
-        m_keyboardLayout->checkLayoutChange(previousLayout);
-    }
 }
 
 void keyboard_redirect::process_modifiers(modifiers_event const& event)
