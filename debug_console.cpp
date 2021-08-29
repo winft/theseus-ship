@@ -153,8 +153,10 @@ static QString buttonToString(Qt::MouseButton button)
     }
 }
 
-static QString deviceRow(input::control::device* ctrl)
+template<typename Device>
+static QString deviceRow(Device* dev)
 {
+    auto ctrl = dev ? dev->control : nullptr;
     if (!ctrl) {
         return tableRow(i18n("Input Device"), i18nc("The input device of the event is not known", "Unknown"));
     }
@@ -199,7 +201,7 @@ void DebugConsoleFilter::button(input::button_event const& event)
     case input::button_state::pressed:
         text.append(
             tableHeaderRow(i18nc("A mouse pointer button press event", "Pointer Button Press")));
-        text.append(deviceRow(event.base.dev->control));
+        text.append(deviceRow(event.base.dev));
         text.append(timestamp);
         text.append(
             tableRow(i18nc("A button in a mouse press/release event", "Button"), qt_button));
@@ -212,7 +214,7 @@ void DebugConsoleFilter::button(input::button_event const& event)
     case input::button_state::released:
         text.append(tableHeaderRow(
             i18nc("A mouse pointer button release event", "Pointer Button Release")));
-        text.append(deviceRow(event.base.dev->control));
+        text.append(deviceRow(event.base.dev));
         text.append(timestamp);
         text.append(
             tableRow(i18nc("A button in a mouse press/release event", "Button"), qt_button));
@@ -236,7 +238,7 @@ void DebugConsoleFilter::motion(input::motion_event const& event)
     text.append(s_tableStart);
 
     text.append(tableHeaderRow(i18nc("A mouse pointer motion event", "Pointer Motion")));
-    text.append(deviceRow(event.base.dev->control));
+    text.append(deviceRow(event.base.dev));
     text.append(timestamp);
 
     if (event.base.time_msec != 0) {
@@ -267,7 +269,7 @@ void DebugConsoleFilter::axis(input::axis_event const& event)
     text.append(s_tableStart);
 
     text.append(tableHeaderRow(i18nc("A mouse pointer axis (wheel) event", "Pointer Axis")));
-    text.append(deviceRow(event.base.dev->control));
+    text.append(deviceRow(event.base.dev));
     text.append(timestampRow(event.base.time_msec));
 
     text.append(tableRow(i18nc("The orientation of a pointer axis event", "Orientation"),
@@ -347,7 +349,7 @@ void DebugConsoleFilter::key(input::key_event const& event)
         break;
     }
 
-    text.append(deviceRow(event.base.dev ? event.base.dev->control : nullptr));
+    text.append(deviceRow(event.base.dev));
     add_common_key_data(event, text);
 
     m_textEdit->insertHtml(text);
@@ -522,7 +524,7 @@ void DebugConsoleFilter::switchEvent(input::SwitchEvent *event)
     if (event->timestampMicroseconds() != 0) {
         text.append(timestampRowUsec(event->timestampMicroseconds()));
     }
-    text.append(deviceRow(event->device()->control));
+    text.append(deviceRow(event->device()));
     QString switchName;
     if (event->device()->control->is_lid_switch()) {
         switchName = i18nc("Name of a hardware switch", "Notebook lid");
