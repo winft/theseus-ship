@@ -63,6 +63,7 @@ window::window(WS::Surface* surface)
         discard_shape();
         win::wayland::restack_subsurfaces(this);
     });
+    connect(surface, &WS::Surface::destroyed, this, [this] { destroy(); });
     setupCompositing(false);
 }
 
@@ -79,7 +80,7 @@ QByteArray window::windowRole() const
 
 pid_t window::pid() const
 {
-    if (!surface() || !surface()->client()) {
+    if (!surface()->client()) {
         return 0;
     }
     return surface()->client()->processId();
@@ -92,12 +93,12 @@ bool window::isLocalhost() const
 
 bool window::isLockScreen() const
 {
-    return surface() && surface()->client() == waylandServer()->screenLockerClientConnection();
+    return surface()->client() == waylandServer()->screenLockerClientConnection();
 }
 
 bool window::isInputMethod() const
 {
-    return surface() && surface()->client() == waylandServer()->inputMethodConnection();
+    return surface()->client() == waylandServer()->inputMethodConnection();
 }
 
 void window::updateCaption()
@@ -390,7 +391,7 @@ bool window::isShown() const
     if (control && control->minimized()) {
         return false;
     }
-    return surface() && surface()->buffer().get();
+    return surface()->buffer().get();
 }
 
 bool window::isHiddenInternal() const
@@ -400,7 +401,7 @@ bool window::isHiddenInternal() const
             return false;
         }
     }
-    return hidden || !surface() || !surface()->buffer();
+    return hidden || !surface()->buffer();
 }
 
 void window::hideClient(bool hide)
@@ -446,6 +447,12 @@ void window::setFrameGeometry(QRect const& rect)
     geometry_update.pending = pending_geometry::none;
 
     if (needs_configure(this)) {
+        if (plasma_shell_surface) {
+            if (!pending_configures.empty()) {
+                pending_configures.back().geometry.frame.moveTo(frame_geo.topLeft());
+            }
+            do_set_geometry(QRect(frame_geo.topLeft(), size()));
+        }
         configure_geometry(frame_geo);
         return;
     }
@@ -649,6 +656,12 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     if (old_frame_geo.size() != frame_geo.size()) {
         discard_quads();
+    }
+    if (plasma_shell_surface && popup) {
+        // Plasma-shell surfaces can be xdg-shell popups at the same time. So their geometry might
+        // change but they are also annexed. We have to discard the parent window's quads here.
+        auto lead = lead_of_annexed_transient(this);
+        lead->discard_quads();
     }
 
     if (!control) {
@@ -887,7 +900,7 @@ void window::checkTransient(Toplevel* window)
         // This already has a parent set, we can only set one once.
         return;
     }
-    if (!surface() || !surface()->subsurface()) {
+    if (!surface()->subsurface()) {
         // This is not a subsurface.
         return;
     }
@@ -991,11 +1004,6 @@ bool window::hasStrut() const
         return layer_surface->exclusive_zone() > 0;
     }
     return false;
-}
-
-quint32 window::windowId() const
-{
-    return id;
 }
 
 void window::setFullScreen(bool full, bool user)
@@ -1134,10 +1142,6 @@ bool window::has_exclusive_keyboard_interactivity() const
 
 void window::killWindow()
 {
-    if (!surface()) {
-        return;
-    }
-
     auto client = surface()->client();
     if (client->processId() == getpid() || client->processId() == 0) {
         client->destroy();

@@ -32,7 +32,6 @@ class KWIN_EXPORT window : public Toplevel
 {
     Q_OBJECT
 public:
-    uint32_t id{0};
     bool initialized{false};
     NET::WindowType window_type{NET::Normal};
 
@@ -138,7 +137,6 @@ public:
     bool has_exclusive_keyboard_interactivity() const;
 
     bool hasStrut() const override;
-    quint32 windowId() const override;
     pid_t pid() const override;
     bool isLocalhost() const override;
     bool isLockScreen() const override;

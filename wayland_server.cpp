@@ -288,7 +288,9 @@ void WaylandServer::create_globals()
                 return;
             }
             auto check = [surface] (const Toplevel *t) {
-                return t->surfaceId() == surface->id();
+                // Match on surface id and exclude windows already having a surface. This way we
+                // only find Xwayland toplevels. Wayland native windows always have a surface.
+                return t->surfaceId() == surface->id() && !t->surface();
             };
             if (Toplevel *t = ws->findToplevel(check)) {
                 t->setSurface(surface);
@@ -792,14 +794,6 @@ void WaylandServer::dispatch()
     m_display->dispatchEvents(0);
 }
 
-win::wayland::window* WaylandServer::find_window(quint32 id) const
-{
-    auto it = std::find_if(windows.cbegin(), windows.cend(), [id](auto win) {
-        return win->windowId() == id;
-    });
-    return it != windows.cend() ? *it : nullptr;
-}
-
 win::wayland::window* WaylandServer::find_window(Wrapland::Server::Surface* surface) const
 {
     if (!surface) {
@@ -814,48 +808,6 @@ win::wayland::window* WaylandServer::find_window(Wrapland::Server::Surface* surf
 Toplevel* WaylandServer::findToplevel(Surface *surface) const
 {
     return find_window(surface);
-}
-
-quint32 WaylandServer::createWindowId(Surface *surface)
-{
-    auto it = m_clientIds.constFind(surface->client());
-    quint16 clientId = 0;
-    if (it != m_clientIds.constEnd()) {
-        clientId = it.value();
-    } else {
-        clientId = createClientId(surface->client());
-    }
-    Q_ASSERT(clientId != 0);
-    quint32 id = clientId;
-    // TODO: this does not prevent that two surfaces of same client get same id
-    id = (id << 16) | (surface->id() & 0xFFFF);
-    if (find_window(id)) {
-        qCWarning(KWIN_CORE) << "Invalid client windowId generated:" << id;
-        return 0;
-    }
-    return id;
-}
-
-quint16 WaylandServer::createClientId(Client *c)
-{
-    auto ids = m_clientIds.values().toSet();
-    quint16 id = 1;
-    if (!ids.isEmpty()) {
-        for (quint16 i = ids.count() + 1; i >= 1 ; i--) {
-            if (!ids.contains(i)) {
-                id = i;
-                break;
-            }
-        }
-    }
-    Q_ASSERT(!ids.contains(id));
-    m_clientIds.insert(c, id);
-    connect(c, &Client::disconnected, this,
-        [this] (Client *c) {
-            m_clientIds.remove(c);
-        }
-    );
-    return id;
 }
 
 bool WaylandServer::isScreenLocked() const

@@ -130,10 +130,6 @@ public:
 
     virtual xcb_window_t frameId() const;
     xcb_window_t xcb_window() const;
-    /**
-     * @return a unique identifier for the Toplevel. On X11 same as @ref window
-     */
-    virtual quint32 windowId() const;
 
     QRegion render_region() const;
     void discard_shape();

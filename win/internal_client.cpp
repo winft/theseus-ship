@@ -69,7 +69,6 @@ private:
 InternalClient::InternalClient(QWindow* window)
     : m_internalWindow(window)
     , synced_geo(window->geometry())
-    , m_windowId(window->winId())
     , m_internalWindowFlags(window->flags())
 {
     control = std::make_unique<internal_control>(this);
@@ -285,11 +284,6 @@ bool InternalClient::isOutline() const
         return m_internalWindow->property("__kwin_outline").toBool();
     }
     return false;
-}
-
-quint32 InternalClient::windowId() const
-{
-    return m_windowId;
 }
 
 bool InternalClient::isShown() const

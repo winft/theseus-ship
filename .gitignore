@@ -1,6 +1,11 @@
+# Common build directories
 build/
-.cache/
+_build/
 
-# Arch Linux stuff
-PKGBUILD
-pkg/
+# CI tooling
+node_modules/
+package.json
+yarn.lock
+
+# Note: Use a global .gitignore file for your local editor files. See [1] on how to create this.
+# [1] https://sebastiandedeyne.com/setting-up-a-global-gitignore-file/

@@ -220,7 +220,7 @@ DELEGATE_WIN_TRANSIENT(bool, isModal, modal)
         return m_client->clientName(); \
     }
 
-DELEGATE(WId, windowId, windowId)
+DELEGATE(WId, windowId, xcb_window)
 DELEGATE(WId, decorationId, frameId)
 
 #undef DELEGATE
