@@ -288,7 +288,9 @@ void redirect::reconfigure()
     const bool enabled
         = repeatMode == QLatin1String("accent") || repeatMode == QLatin1String("repeat");
 
-    waylandServer()->seat()->setKeyRepeatInfo(enabled ? rate : 0, delay);
+    if (waylandServer()->seat()->hasKeyboard()) {
+        waylandServer()->seat()->setKeyRepeatInfo(enabled ? rate : 0, delay);
+    }
 }
 
 static Wrapland::Server::Seat* findSeat()
@@ -374,8 +376,9 @@ void redirect::set_platform(input::platform* platform)
                 &keyboard::modifiers_changed,
                 keyboard_red,
                 &keyboard_redirect::process_modifiers);
-        if (auto seat = findSeat()) {
+        if (auto seat = findSeat(); seat && !seat->hasKeyboard()) {
             seat->setHasKeyboard(true);
+            reconfigure();
         }
     });
 
