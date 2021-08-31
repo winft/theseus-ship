@@ -874,7 +874,7 @@ if (BUILD_TESTING)
 endif()
 
 if (KF5DocTools_FOUND)
-    add_subdirectory(doc)
+    add_subdirectory(docs)
 endif()
 
 add_subdirectory(kconf_update)
