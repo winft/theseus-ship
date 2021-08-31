@@ -1,14 +1,25 @@
 # KWinFT
 
-KWinFT (KWin Fast Track) is an easy to use, but flexible, composited window manager for X.Org
-windowing systems (Wayland, X11) on Linux.
+KWinFT (KWin Fast Track) is a robust, fast and versatile yet
+easy to use composited window manager for the
+[Wayland](https://wayland.freedesktop.org/) and
+[X11](https://en.wikipedia.org/wiki/X_Window_System)
+windowing systems on Linux.
 
-The KWinFT project consists of the window manager [KWinFT][kwinft] and the accompanying but
-independent libwayland wrapping Qt/C++ library [Wrapland][wrapland].
-
-The project is a reboot of KWin and KWayland with the explicit goal to be well organized, focused
-and using modern techniques and good practice in software development in order to allow the
-development team to move faster, serving new fundamental features and code refactors at rapid pace.
+KWinFT is intended to be used as part of a
+[KDE Plasma Desktop](https://kde.org/plasma-desktop/).
+The KWinFT project is a reboot of KDE's
+[KWin](https://en.wikipedia.org/wiki/KWin).
+KWinFT differentates itself from KWin in some important aspects:
+* KWinFT values stability and robustness.
+  This is achieved through upholding strict development standards
+  and deploying modern development methods to prevent regressions and code smell.
+* KWinFT values collaboration with competitors and and upstream partners.
+  We want to overcome antiquated notions on community divisions
+  and work together on the best possible Linux graphics platform.
+* KWinFT values the knowledge of experts but also the curiosity of beginners.
+  Well defined and transparent decision processes enable expert knowledge to proliferate
+  and new contributors to easily find help on their first steps.
 
 ## Usage
 You can use KWinFT for now as a drop-in replacement for classic KWin. All configuration, plugins
@@ -35,6 +46,3 @@ We try to keep these APIs compatible with the ones of KWin
 but there is no guarantee on that.
 If there are incompatible changes or API-breaking changes in general,
 this will be announced in the changelog.
-
-[kwinft]: https://gitlab.com/kwinft/kwinft
-[wrapland]: https://gitlab.com/kwinft/wrapland
