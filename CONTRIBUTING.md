@@ -130,9 +130,9 @@ As above we can start a full Plasma session as well from terminal. For that issu
 Again the log output is copied with tee into the file "my-kwinft-output" in the current working
 directory.
 
-Note that by default when one is running KWinFT through any of the startplasma 
-methods, it is invoked using a wrapper that will automatically relaunch KWinFT 
-when it crashes. In order to disable this behavior you can define the 
+Note that by default when one is running KWinFT through any of the startplasma
+methods, it is invoked using a wrapper that will automatically relaunch KWinFT
+when it crashes. In order to disable this behavior you can define the
 environment variable `KWIN_DISABLE_RELAUNCH`.
 
     export KWIN_DISABLE_RELAUNCH=1
