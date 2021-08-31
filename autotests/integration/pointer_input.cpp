@@ -48,6 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/client.h>
+#include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 
 #include <wayland-cursor.h>
@@ -227,7 +228,7 @@ void PointerInputTest::testWarpingUpdatesFocus()
     QVERIFY(window);
 
     // currently there should not be a focused pointer surface
-    QVERIFY(!waylandServer()->seat()->focusedPointerSurface());
+    QVERIFY(!waylandServer()->seat()->pointers().focus.surface);
     QVERIFY(!pointer->enteredSurface());
 
     // enter
@@ -238,7 +239,7 @@ void PointerInputTest::testWarpingUpdatesFocus()
     // window should have focus
     QCOMPARE(pointer->enteredSurface(), surface.get());
     // also on the server
-    QCOMPARE(waylandServer()->seat()->focusedPointerSurface(), window->surface());
+    QCOMPARE(waylandServer()->seat()->pointers().focus.surface, window->surface());
 
     // and out again
     input::get_cursor()->set_pos(QPoint(250, 250));
@@ -246,7 +247,7 @@ void PointerInputTest::testWarpingUpdatesFocus()
     QVERIFY(leftSpy.wait());
     QCOMPARE(leftSpy.count(), 1);
     // there should not be a focused pointer surface anymore
-    QVERIFY(!waylandServer()->seat()->focusedPointerSurface());
+    QVERIFY(!waylandServer()->seat()->pointers().focus.surface);
     QVERIFY(!pointer->enteredSurface());
 }
 

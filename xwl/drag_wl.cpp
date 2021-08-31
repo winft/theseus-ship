@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_source.h>
+#include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 
@@ -272,7 +273,7 @@ void Xvisit::enter()
     m_state.entered = true;
     // send enter event and current position to X client
     sendEnter();
-    sendPosition(waylandServer()->seat()->pointerPos());
+    sendPosition(waylandServer()->seat()->pointers().pos);
 
     // proxy future pointer position changes
     m_motionConnection = connect(waylandServer()->seat(),
@@ -377,7 +378,7 @@ void Xvisit::determineProposedAction()
     }
     // send updated action to X target
     if (oldProposedAction != m_proposedAction) {
-        sendPosition(waylandServer()->seat()->pointerPos());
+        sendPosition(waylandServer()->seat()->pointers().pos);
     }
 }
 

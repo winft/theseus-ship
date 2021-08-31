@@ -14,6 +14,7 @@
 #include "workspace.h"
 #include "xwl/xwayland_interface.h"
 
+#include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 
 namespace KWin::input
@@ -31,9 +32,9 @@ bool drag_and_drop_filter::button(button_event const& event)
     seat->setTimestamp(event.base.time_msec);
 
     if (event.state == button_state::pressed) {
-        seat->pointerButtonPressed(event.key);
+        seat->pointers().button_pressed(event.key);
     } else {
-        seat->pointerButtonReleased(event.key);
+        seat->pointers().button_released(event.key);
     }
 
     return true;
@@ -51,7 +52,7 @@ bool drag_and_drop_filter::motion(motion_event const& event)
     seat->setTimestamp(event.base.time_msec);
 
     auto const pos = kwinApp()->input->redirect->globalPointer();
-    seat->setPointerPos(pos);
+    seat->pointers().set_position(pos);
 
     // TODO: use InputDeviceHandler::at() here and check isClient()?
     auto window = kwinApp()->input->redirect->findManagedToplevel(pos.toPoint());

@@ -24,6 +24,7 @@
 #include <Wrapland/Server/client.h>
 #include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/pointer.h>
+#include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 
@@ -128,11 +129,13 @@ void cursor_image::markAsRendered()
         && m_currentSource != CursorSource::PointerSurface) {
         return;
     }
-    auto p = waylandServer()->seat()->focusedPointer();
-    if (!p) {
+
+    auto& pointer_focus = waylandServer()->seat()->pointers().focus;
+    if (pointer_focus.devices.empty()) {
         return;
     }
-    auto c = p->cursor();
+
+    auto c = pointer_focus.devices.front()->cursor();
     if (!c) {
         return;
     }
@@ -150,14 +153,18 @@ void cursor_image::update()
     }
     using namespace Wrapland::Server;
     disconnect(m_serverCursor.connection);
-    auto p = waylandServer()->seat()->focusedPointer();
-    if (p) {
-        m_serverCursor.connection
-            = connect(p, &Pointer::cursorChanged, this, &cursor_image::updateServerCursor);
-    } else {
+
+    auto& pointer_focus = waylandServer()->seat()->pointers().focus;
+    if (pointer_focus.devices.empty()) {
         m_serverCursor.connection = QMetaObject::Connection();
         reevaluteSource();
+        return;
     }
+
+    m_serverCursor.connection = connect(pointer_focus.devices.front(),
+                                        &Pointer::cursorChanged,
+                                        this,
+                                        &cursor_image::updateServerCursor);
 }
 
 void cursor_image::updateDecoration()
@@ -209,14 +216,16 @@ void cursor_image::updateServerCursor()
     reevaluteSource();
     const bool needsEmit = m_currentSource == CursorSource::LockScreen
         || m_currentSource == CursorSource::PointerSurface;
-    auto p = waylandServer()->seat()->focusedPointer();
-    if (!p) {
+
+    auto& pointer_focus = waylandServer()->seat()->pointers().focus;
+    if (pointer_focus.devices.empty()) {
         if (needsEmit) {
             emit changed();
         }
         return;
     }
-    auto c = p->cursor();
+
+    auto c = pointer_focus.devices.front()->cursor();
     if (!c) {
         if (needsEmit) {
             emit changed();
@@ -463,7 +472,7 @@ void cursor_image::reevaluteSource()
         return;
     }
     if (kwinApp()->input->redirect->pointer()->focus()
-        && waylandServer()->seat()->focusedPointer()) {
+        && !waylandServer()->seat()->pointers().focus.devices.empty()) {
         setSource(CursorSource::PointerSurface);
         return;
     }

@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/deco.h"
 #include "win/x11/window.h"
 
+#include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 
 #include <QSocketNotifier>
@@ -198,8 +199,8 @@ void XWaylandInputTest::testPointerEnterLeave()
     QVERIFY(!client->frameGeometry().contains(input::get_cursor()->pos()));
     QVERIFY(enteredSpy.isEmpty());
     input::get_cursor()->set_pos(client->frameGeometry().center());
-    QCOMPARE(waylandServer()->seat()->focusedPointerSurface(), client->surface());
-    QVERIFY(waylandServer()->seat()->focusedPointer());
+    QCOMPARE(waylandServer()->seat()->pointers().focus.surface, client->surface());
+    QVERIFY(!waylandServer()->seat()->pointers().focus.devices.empty());
     QVERIFY(enteredSpy.wait());
 
     // move out of window

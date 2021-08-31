@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/datasource.h>
 
 #include <Wrapland/Server/data_source.h>
+#include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 
@@ -126,7 +127,9 @@ XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
     //
     // Until then we accept the restriction for Xwayland clients.
     dnd->data.clt_device->startDrag(
-        waylandServer()->seat()->pointerButtonSerial(Qt::LeftButton), m_dataSource, dnd->surface());
+        waylandServer()->seat()->pointers().button_serial(Qt::LeftButton),
+        m_dataSource,
+        dnd->surface());
     waylandServer()->dispatch();
 }
 

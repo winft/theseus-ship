@@ -15,6 +15,7 @@
 
 #include <KScreenLocker/KsldApp>
 
+#include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 
 namespace KWin::input
@@ -32,8 +33,8 @@ bool lock_screen_filter::button(button_event const& event)
     if (pointerSurfaceAllowed()) {
         // TODO: can we leak presses/releases here when we move the mouse in between from an
         // allowed surface to disallowed one or vice versa?
-        event.state == button_state::pressed ? seat->pointerButtonPressed(event.key)
-                                             : seat->pointerButtonReleased(event.key);
+        event.state == button_state::pressed ? seat->pointers().button_pressed(event.key)
+                                             : seat->pointers().button_released(event.key);
     }
 
     return true;
@@ -51,7 +52,7 @@ bool lock_screen_filter::motion(motion_event const& event)
     if (pointerSurfaceAllowed()) {
         // TODO: should the pointer position always stay in sync, i.e. not do the check?
         auto pos = kwinApp()->input->redirect->globalPointer();
-        seat->setPointerPos(pos.toPoint());
+        seat->pointers().set_position(pos.toPoint());
     }
 
     return true;
@@ -69,7 +70,7 @@ bool lock_screen_filter::axis(axis_event const& event)
 
         auto orientation
             = (event.orientation == axis_orientation::horizontal) ? Qt::Horizontal : Qt::Vertical;
-        seat->pointerAxis(orientation, event.delta);
+        seat->pointers().send_axis(orientation, event.delta);
     }
     return true;
 }
@@ -232,9 +233,21 @@ bool lock_screen_filter::surfaceAllowed(
     return true;
 }
 
+template<typename Pool>
+bool is_surface_allowed(Pool const& device_pool)
+{
+    if (auto surface = device_pool.focus.surface) {
+        if (auto win = waylandServer()->findToplevel(surface)) {
+            return win->isLockScreen() || win->isInputMethod();
+        }
+        return false;
+    }
+    return true;
+}
+
 bool lock_screen_filter::pointerSurfaceAllowed() const
 {
-    return surfaceAllowed(&Wrapland::Server::Seat::focusedPointerSurface);
+    return is_surface_allowed(waylandServer()->seat()->pointers());
 }
 
 bool lock_screen_filter::keyboardSurfaceAllowed() const
