@@ -7,12 +7,6 @@
 
 #include "../event_filter.h"
 
-namespace Wrapland::Server
-{
-class Seat;
-class Surface;
-}
-
 namespace KWin::input
 {
 
@@ -41,7 +35,6 @@ public:
     bool swipeGestureCancelled(quint32 time) override;
 
 private:
-    bool surfaceAllowed(Wrapland::Server::Surface* (Wrapland::Server::Seat::*method)() const) const;
     bool pointerSurfaceAllowed() const;
     bool keyboardSurfaceAllowed() const;
     bool touchSurfaceAllowed() const;

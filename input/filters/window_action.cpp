@@ -16,6 +16,7 @@
 #include "win/transient.h"
 
 #include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/touch_pool.h>
 
 namespace KWin::input
 {
@@ -62,7 +63,7 @@ bool window_action_filter::touchDown(qint32 id, const QPointF& pos, quint32 time
     Q_UNUSED(id)
     Q_UNUSED(time)
     auto seat = waylandServer()->seat();
-    if (seat->isTouchSequence()) {
+    if (seat->touches().is_in_progress()) {
         return false;
     }
     auto focus_window = get_focus_lead(kwinApp()->input->redirect->touch()->focus());

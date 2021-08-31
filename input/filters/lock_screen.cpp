@@ -18,6 +18,7 @@
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/touch_pool.h>
 
 namespace KWin::input
 {
@@ -128,7 +129,7 @@ bool lock_screen_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
     if (touchSurfaceAllowed()) {
-        kwinApp()->input->redirect->touch()->insertId(id, seat->touchDown(pos));
+        kwinApp()->input->redirect->touch()->insertId(id, seat->touches().touch_down(pos));
     }
     return true;
 }
@@ -142,7 +143,7 @@ bool lock_screen_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time
     if (touchSurfaceAllowed()) {
         const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
         if (wraplandId != -1) {
-            seat->touchMove(wraplandId, pos);
+            seat->touches().touch_move(wraplandId, pos);
         }
     }
     return true;
@@ -157,7 +158,7 @@ bool lock_screen_filter::touchUp(qint32 id, quint32 time)
     if (touchSurfaceAllowed()) {
         const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
         if (wraplandId != -1) {
-            seat->touchUp(wraplandId);
+            seat->touches().touch_up(wraplandId);
             kwinApp()->input->redirect->touch()->removeId(id);
         }
     }
@@ -222,18 +223,6 @@ bool lock_screen_filter::swipeGestureCancelled(quint32 time)
     return waylandServer()->isScreenLocked();
 }
 
-bool lock_screen_filter::surfaceAllowed(
-    Wrapland::Server::Surface* (Wrapland::Server::Seat::*method)() const) const
-{
-    if (Wrapland::Server::Surface* s = (waylandServer()->seat()->*method)()) {
-        if (auto win = waylandServer()->findToplevel(s)) {
-            return win->isLockScreen() || win->isInputMethod();
-        }
-        return false;
-    }
-    return true;
-}
-
 template<typename Pool>
 bool is_surface_allowed(Pool const& device_pool)
 {
@@ -258,7 +247,7 @@ bool lock_screen_filter::keyboardSurfaceAllowed() const
 
 bool lock_screen_filter::touchSurfaceAllowed() const
 {
-    return surfaceAllowed(&Wrapland::Server::Seat::focusedTouchSurface);
+    return is_surface_allowed(waylandServer()->seat()->touches());
 }
 
 }

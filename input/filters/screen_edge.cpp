@@ -13,6 +13,7 @@
 #include <input/qt_event.h>
 
 #include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/touch_pool.h>
 
 namespace KWin::input
 {
@@ -30,7 +31,7 @@ bool screen_edge_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     Q_UNUSED(time)
     // TODO: better check whether a touch sequence is in progress
-    if (m_touchInProgress || waylandServer()->seat()->isTouchSequence()) {
+    if (m_touchInProgress || waylandServer()->seat()->touches().is_in_progress()) {
         // cancel existing touch
         ScreenEdges::self()->gestureRecognizer()->cancelSwipeGesture();
         m_touchInProgress = false;

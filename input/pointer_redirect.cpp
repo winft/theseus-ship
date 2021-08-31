@@ -28,6 +28,7 @@
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
+#include <Wrapland/Server/touch_pool.h>
 
 #include <KDecoration2/Decoration>
 #include <KScreenLocker/KsldApp>
@@ -490,7 +491,7 @@ bool pointer_redirect::focusUpdatesBlocked()
         // ignore during drag and drop
         return true;
     }
-    if (waylandServer()->seat()->isTouchSequence()) {
+    if (waylandServer()->seat()->touches().is_in_progress()) {
         // ignore during touch operations
         return true;
     }

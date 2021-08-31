@@ -16,6 +16,7 @@
 
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/touch_pool.h>
 
 namespace KWin::input
 {
@@ -94,7 +95,7 @@ bool drag_and_drop_filter::touchDown(qint32 id, const QPointF& pos, quint32 time
         return true;
     }
     seat->setTimestamp(time);
-    kwinApp()->input->redirect->touch()->insertId(id, seat->touchDown(pos));
+    kwinApp()->input->redirect->touch()->insertId(id, seat->touches().touch_down(pos));
     return true;
 }
 bool drag_and_drop_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
@@ -121,7 +122,7 @@ bool drag_and_drop_filter::touchMotion(qint32 id, const QPointF& pos, quint32 ti
         return true;
     }
 
-    seat->touchMove(wraplandId, pos);
+    seat->touches().touch_move(wraplandId, pos);
 
     if (Toplevel* t = kwinApp()->input->redirect->findToplevel(pos.toPoint())) {
         // TODO: consider decorations
@@ -146,7 +147,7 @@ bool drag_and_drop_filter::touchUp(qint32 id, quint32 time)
     seat->setTimestamp(time);
     const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
     if (wraplandId != -1) {
-        seat->touchUp(wraplandId);
+        seat->touches().touch_up(wraplandId);
         kwinApp()->input->redirect->touch()->removeId(id);
     }
     if (m_touchId == id) {
