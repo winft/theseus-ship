@@ -10,6 +10,7 @@
 #include "main.h"
 #include "wayland_server.h"
 
+#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 
 namespace KWin::input
@@ -173,10 +174,10 @@ void event_filter::passToWaylandServer(key_event const& event)
     Q_ASSERT(waylandServer());
     switch (event.state) {
     case button_state::pressed:
-        waylandServer()->seat()->keyPressed(event.keycode);
+        waylandServer()->seat()->keyboards().key_pressed(event.keycode);
         break;
     case button_state::released:
-        waylandServer()->seat()->keyReleased(event.keycode);
+        waylandServer()->seat()->keyboards().key_released(event.keycode);
         break;
     default:
         break;

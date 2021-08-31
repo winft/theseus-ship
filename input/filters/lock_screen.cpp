@@ -15,6 +15,7 @@
 
 #include <KScreenLocker/KsldApp>
 
+#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 
@@ -104,10 +105,10 @@ bool lock_screen_filter::key(key_event const& event)
 
     switch (event.state) {
     case button_state::pressed:
-        seat->keyPressed(event.keycode);
+        seat->keyboards().key_pressed(event.keycode);
         break;
     case button_state::released:
-        seat->keyReleased(event.keycode);
+        seat->keyboards().key_released(event.keycode);
         break;
     }
     return true;
@@ -252,7 +253,7 @@ bool lock_screen_filter::pointerSurfaceAllowed() const
 
 bool lock_screen_filter::keyboardSurfaceAllowed() const
 {
-    return surfaceAllowed(&Wrapland::Server::Seat::focusedKeyboardSurface);
+    return is_surface_allowed(waylandServer()->seat()->keyboards());
 }
 
 bool lock_screen_filter::touchSurfaceAllowed() const

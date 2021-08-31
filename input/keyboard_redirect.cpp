@@ -20,6 +20,7 @@
 #include "win/wayland/window.h"
 
 #include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 
 #include <KGlobalAccel>
@@ -188,7 +189,7 @@ void keyboard_redirect::update()
         found = workspace()->activeClient();
     }
     if (found && found->surface()) {
-        if (found->surface() != seat->focusedKeyboardSurface()) {
+        if (found->surface() != seat->keyboards().focus.surface) {
             seat->setFocusedKeyboardSurface(found->surface());
         }
     } else {

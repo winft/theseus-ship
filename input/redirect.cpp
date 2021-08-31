@@ -51,6 +51,7 @@
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
+#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 
@@ -289,7 +290,7 @@ void redirect::reconfigure()
         = repeatMode == QLatin1String("accent") || repeatMode == QLatin1String("repeat");
 
     if (waylandServer()->seat()->hasKeyboard()) {
-        waylandServer()->seat()->setKeyRepeatInfo(enabled ? rate : 0, delay);
+        waylandServer()->seat()->keyboards().set_repeat_info(enabled ? rate : 0, delay);
     }
 }
 
