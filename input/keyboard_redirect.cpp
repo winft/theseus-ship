@@ -50,13 +50,10 @@ public:
     {
     }
 
-    void keyEvent(KeyEvent* event) override
+    void key(key_event const& event) override
     {
-        if (event->isAutoRepeat()) {
-            return;
-        }
-        Q_EMIT redirect->keyStateChanged(event->nativeScanCode(),
-                                         event->type() == QEvent::KeyPress
+        Q_EMIT redirect->keyStateChanged(event.keycode,
+                                         event.state == button_state::pressed
                                              ? redirect::KeyboardKeyPressed
                                              : redirect::KeyboardKeyReleased);
     }
@@ -74,12 +71,9 @@ public:
     {
     }
 
-    void keyEvent(KeyEvent* event) override
+    void key(key_event const& /*event*/) override
     {
-        if (event->isAutoRepeat()) {
-            return;
-        }
-        updateModifiers(event->modifiers());
+        updateModifiers(kwinApp()->input->redirect->keyboardModifiers());
     }
 
     void updateModifiers(Qt::KeyboardModifiers mods)
@@ -119,12 +113,7 @@ void keyboard_redirect::init()
     connect(keyRepeatSpy,
             &keyboard_repeat_spy::keyRepeat,
             this,
-            std::bind(&keyboard_redirect::processKey,
-                      this,
-                      std::placeholders::_1,
-                      redirect::KeyboardKeyAutoRepeat,
-                      std::placeholders::_2,
-                      nullptr));
+            &keyboard_redirect::process_key_repeat);
     redirect->installInputEventSpy(keyRepeatSpy);
 
     connect(workspace(), &QObject::destroyed, this, [this] { m_inited = false; });
@@ -209,66 +198,35 @@ void keyboard_redirect::update()
 
 void keyboard_redirect::process_key(key_event const& event)
 {
-    processKey(event.keycode,
-               (redirect::KeyboardKeyState)event.state,
-               event.base.time_msec,
-               event.base.dev);
-}
-
-void keyboard_redirect::processKey(uint32_t key,
-                                   redirect::KeyboardKeyState state,
-                                   uint32_t time,
-                                   keyboard* device)
-{
-    QEvent::Type type;
-    bool autoRepeat = false;
-    switch (state) {
-    case redirect::KeyboardKeyAutoRepeat:
-        autoRepeat = true;
-        // fall through
-    case redirect::KeyboardKeyPressed:
-        type = QEvent::KeyPress;
-        break;
-    case redirect::KeyboardKeyReleased:
-        type = QEvent::KeyRelease;
-        break;
-    default:
-        Q_UNREACHABLE();
-    }
-
     const quint32 previousLayout = m_xkb->currentLayout();
-    if (!autoRepeat) {
-        m_xkb->updateKey(key, state);
-    }
+    m_xkb->updateKey(event.keycode, (redirect::KeyboardKeyState)event.state);
 
-    const xkb_keysym_t keySym = m_xkb->currentKeysym();
     const Qt::KeyboardModifiers globalShortcutsModifiers
-        = m_xkb->modifiersRelevantForGlobalShortcuts(key);
-    KeyEvent event(
-        type,
-        m_xkb->toQtKey(
-            keySym, key, globalShortcutsModifiers ? Qt::ControlModifier : Qt::KeyboardModifiers()),
-        m_xkb->modifiers(),
-        key,
-        keySym,
-        m_xkb->toString(keySym),
-        autoRepeat,
-        time,
-        device);
-    event.setModifiersRelevantForGlobalShortcuts(globalShortcutsModifiers);
+        = m_xkb->modifiersRelevantForGlobalShortcuts(event.keycode);
 
-    redirect->processSpies(std::bind(&event_spy::keyEvent, std::placeholders::_1, &event));
+    redirect->processSpies(std::bind(&event_spy::key, std::placeholders::_1, event));
     if (!m_inited) {
         return;
     }
-    redirect->processFilters(std::bind(&event_filter::keyEvent, std::placeholders::_1, &event));
+    redirect->processFilters(std::bind(&event_filter::key, std::placeholders::_1, event));
 
     m_xkb->forwardModifiers();
 
-    if (event.modifiersRelevantForGlobalShortcuts() == Qt::KeyboardModifier::NoModifier
-        && type != QEvent::KeyRelease) {
+    if (globalShortcutsModifiers == Qt::KeyboardModifier::NoModifier
+        && event.state == button_state::pressed) {
         m_keyboardLayout->checkLayoutChange(previousLayout);
     }
+}
+
+void keyboard_redirect::process_key_repeat(uint32_t key, uint32_t time)
+{
+    auto event = key_event{key, button_state::pressed, false, nullptr, time};
+
+    redirect->processSpies(std::bind(&event_spy::key_repeat, std::placeholders::_1, event));
+    if (!m_inited) {
+        return;
+    }
+    redirect->processFilters(std::bind(&event_filter::key_repeat, std::placeholders::_1, event));
 }
 
 void keyboard_redirect::process_modifiers(modifiers_event const& event)

@@ -5,7 +5,8 @@
 */
 #pragma once
 
-#include "../event_filter.h"
+#include "input/event.h"
+#include "input/event_filter.h"
 
 namespace KWin::input
 {
@@ -13,7 +14,8 @@ namespace KWin::input
 class tabbox_filter : public event_filter
 {
 public:
-    bool keyEvent(QKeyEvent* event) override;
+    bool key(key_event const& event) override;
+    bool key_repeat(key_event const& event) override;
 
     bool button(button_event const& event) override;
     bool motion(motion_event const& event) override;

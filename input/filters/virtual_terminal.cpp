@@ -10,16 +10,14 @@
 #include "main.h"
 #include "seat/session.h"
 
-#include <QKeyEvent>
-
 namespace KWin::input
 {
 
-bool virtual_terminal_filter::keyEvent(QKeyEvent* event)
+bool virtual_terminal_filter::key(key_event const& event)
 {
     // really on press and not on release? X11 switches on press.
-    if (event->type() == QEvent::KeyPress && !event->isAutoRepeat()) {
-        auto const keysym = event->nativeVirtualKey();
+    if (event.state == button_state::pressed) {
+        auto const keysym = event.keycode;
         if (keysym >= XKB_KEY_XF86Switch_VT_1 && keysym <= XKB_KEY_XF86Switch_VT_12) {
             kwinApp()->session->switchVirtualTerminal(keysym - XKB_KEY_XF86Switch_VT_1 + 1);
             return true;

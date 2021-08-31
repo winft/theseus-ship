@@ -16,8 +16,6 @@
 
 #include <Wrapland/Server/seat.h>
 
-#include <QKeyEvent>
-
 namespace KWin::input
 {
 
@@ -39,7 +37,7 @@ bool tabbox_filter::motion(motion_event const& event)
     return TabBox::TabBox::self()->handleMouseEvent(&qt_event);
 }
 
-bool tabbox_filter::keyEvent(QKeyEvent* event)
+bool tabbox_filter::key(key_event const& event)
 {
     if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->isGrabbed()) {
         return false;
@@ -52,12 +50,23 @@ bool tabbox_filter::keyEvent(QKeyEvent* event)
     // pressed
     passToWaylandServer(event);
 
-    if (event->type() == QEvent::KeyPress) {
-        TabBox::TabBox::self()->keyPress(event->modifiers() | event->key());
-    } else if (static_cast<input::KeyEvent*>(event)->modifiersRelevantForGlobalShortcuts()
+    if (event.state == button_state::pressed) {
+        TabBox::TabBox::self()->keyPress(kwinApp()->input->redirect->keyboardModifiers()
+                                         | key_to_qt_key(event.keycode));
+    } else if (kwinApp()->input->redirect->modifiersRelevantForGlobalShortcuts()
                == Qt::NoModifier) {
         TabBox::TabBox::self()->modifiersReleased();
     }
+    return true;
+}
+
+bool tabbox_filter::key_repeat(key_event const& event)
+{
+    if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->isGrabbed()) {
+        return false;
+    }
+    TabBox::TabBox::self()->keyPress(kwinApp()->input->redirect->keyboardModifiers()
+                                     | key_to_qt_key(event.keycode));
     return true;
 }
 

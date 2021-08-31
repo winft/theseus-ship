@@ -38,24 +38,24 @@ void keyboard_repeat_spy::handleKeyRepeat()
     emit keyRepeat(m_key, m_time);
 }
 
-void keyboard_repeat_spy::keyEvent(input::KeyEvent* event)
+void keyboard_repeat_spy::key(key_event const& event)
 {
-    if (event->isAutoRepeat()) {
-        return;
-    }
-    const quint32 key = event->nativeScanCode();
-    if (event->type() == QEvent::KeyPress) {
+    switch (event.state) {
+    case button_state::pressed:
         // TODO: don't get these values from WaylandServer
-        if (m_xkb->shouldKeyRepeat(key) && waylandServer()->seat()->keyRepeatDelay() != 0) {
+        if (m_xkb->shouldKeyRepeat(event.keycode)
+            && waylandServer()->seat()->keyRepeatDelay() != 0) {
             m_timer->setInterval(waylandServer()->seat()->keyRepeatDelay());
-            m_key = key;
-            m_time = event->timestamp();
+            m_key = event.keycode;
+            m_time = event.base.time_msec;
             m_timer->start();
         }
-    } else if (event->type() == QEvent::KeyRelease) {
-        if (key == m_key) {
+        break;
+    case button_state::released:
+        if (event.keycode == m_key) {
             m_timer->stop();
         }
+        break;
     }
 }
 

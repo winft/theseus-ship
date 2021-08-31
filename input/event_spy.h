@@ -17,7 +17,6 @@ class QTabletEvent;
 
 namespace KWin::input
 {
-class KeyEvent;
 class MouseEvent;
 class WheelEvent;
 class SwitchEvent;
@@ -42,12 +41,9 @@ public:
     virtual void motion(motion_event const& event);
     virtual void axis(axis_event const& event);
 
-    /**
-     * Event spy for keyboard events.
-     *
-     * @param event The event information about the key event
-     */
-    virtual void keyEvent(KeyEvent* event);
+    virtual void key(key_event const& event);
+    virtual void key_repeat(key_event const& event);
+
     virtual void touchDown(qint32 id, const QPointF& pos, quint32 time);
     virtual void touchMotion(qint32 id, const QPointF& pos, quint32 time);
     virtual void touchUp(qint32 id, quint32 time);

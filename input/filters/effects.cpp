@@ -12,8 +12,6 @@
 
 #include <Wrapland/Server/seat.h>
 
-#include <QKeyEvent>
-
 namespace KWin::input
 {
 
@@ -44,14 +42,25 @@ bool effects_filter::axis(axis_event const& event)
     return static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowEvent(&qt_event);
 }
 
-bool effects_filter::keyEvent(QKeyEvent* event)
+bool effects_filter::key(key_event const& event)
 {
     if (!effects || !static_cast<EffectsHandlerImpl*>(effects)->hasKeyboardGrab()) {
         return false;
     }
     waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
     passToWaylandServer(event);
-    static_cast<EffectsHandlerImpl*>(effects)->grabbedKeyboardEvent(event);
+    auto qt_event = key_to_qt_event(event);
+    static_cast<EffectsHandlerImpl*>(effects)->grabbedKeyboardEvent(&qt_event);
+    return true;
+}
+
+bool effects_filter::key_repeat(key_event const& event)
+{
+    if (!effects || !static_cast<EffectsHandlerImpl*>(effects)->hasKeyboardGrab()) {
+        return false;
+    }
+    auto qt_event = key_to_qt_event(event);
+    static_cast<EffectsHandlerImpl*>(effects)->grabbedKeyboardEvent(&qt_event);
     return true;
 }
 

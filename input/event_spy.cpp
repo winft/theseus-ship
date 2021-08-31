@@ -35,9 +35,12 @@ void event_spy::axis([[maybe_unused]] axis_event const& event)
 {
 }
 
-void event_spy::keyEvent(KeyEvent* event)
+void event_spy::key(key_event const& /*event*/)
 {
-    Q_UNUSED(event)
+}
+
+void event_spy::key_repeat(key_event const& /*event*/)
+{
 }
 
 void event_spy::touchDown(qint32 id, const QPointF& point, quint32 time)

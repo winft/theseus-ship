@@ -5,6 +5,7 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "popup.h"
+#include "input/event.h"
 #include "wayland_server.h"
 
 #include "win/deco.h"
@@ -86,7 +87,7 @@ bool popup_filter::button(button_event const& event)
     return false;
 }
 
-bool popup_filter::keyEvent(QKeyEvent* event)
+bool popup_filter::key(key_event const& event)
 {
     if (m_popups.empty()) {
         return false;
@@ -100,18 +101,26 @@ bool popup_filter::keyEvent(QKeyEvent* event)
     }
 
     seat->setFocusedKeyboardSurface(last->surface());
-    switch (event->type()) {
-    case QEvent::KeyPress:
-        seat->keyPressed(event->nativeScanCode());
+    switch (event.state) {
+    case button_state::pressed:
+        seat->keyPressed(event.keycode);
         break;
-    case QEvent::KeyRelease:
-        seat->keyReleased(event->nativeScanCode());
+    case button_state::released:
+        seat->keyReleased(event.keycode);
         break;
     default:
         break;
     }
 
     return true;
+}
+
+bool popup_filter::key_repeat(key_event const& /*event*/)
+{
+    // Filter out event when a popup is active.
+    // TODO(romangg): Are we supposed to do something more with a key repeat? But the clients are
+    //                handling key repeats themselves.
+    return !m_popups.empty() && m_popups.back()->surface();
 }
 
 void popup_filter::cancelPopups()

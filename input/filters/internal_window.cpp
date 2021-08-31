@@ -18,7 +18,6 @@
 #include "workspace.h"
 #include <input/qt_event.h>
 
-#include <QKeyEvent>
 #include <QWindow>
 
 namespace KWin::input
@@ -105,14 +104,16 @@ bool internal_window_filter::axis(axis_event const& event)
     return adapted_qt_event.isAccepted();
 }
 
-bool internal_window_filter::keyEvent(QKeyEvent* event)
+QWindow* get_internal_window()
 {
     auto const& windows = workspace()->windows();
     if (windows.empty()) {
-        return false;
+        return nullptr;
     }
+
     QWindow* found = nullptr;
     auto it = windows.end();
+
     do {
         it--;
         auto internal = qobject_cast<win::InternalClient*>(*it);
@@ -141,28 +142,55 @@ bool internal_window_filter::keyEvent(QKeyEvent* event)
         found = w;
         break;
     } while (it != windows.begin());
-    if (!found) {
+
+    return found;
+}
+
+QKeyEvent get_internal_key_event(key_event const& event)
+{
+    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
+    auto const keysym = xkb->toKeysym(event.keycode);
+    auto qt_key = xkb->toQtKey(
+        keysym, event.keycode, Qt::KeyboardModifiers(), true /* workaround for QTBUG-62102 */);
+
+    QKeyEvent internalEvent(event.state == button_state::pressed ? QEvent::KeyPress
+                                                                 : QEvent::KeyRelease,
+                            qt_key,
+                            xkb->modifiers(),
+                            event.keycode,
+                            keysym,
+                            0,
+                            xkb->toString(keysym));
+    internalEvent.setAccepted(false);
+
+    return internalEvent;
+}
+
+bool internal_window_filter::key(key_event const& event)
+{
+    auto window = get_internal_window();
+    if (!window) {
         return false;
     }
-    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
-    Qt::Key key = xkb->toQtKey(xkb->toKeysym(event->nativeScanCode()),
-                               event->nativeScanCode(),
-                               Qt::KeyboardModifiers(),
-                               true /* workaround for QTBUG-62102 */);
-    QKeyEvent internalEvent(event->type(),
-                            key,
-                            event->modifiers(),
-                            event->nativeScanCode(),
-                            event->nativeVirtualKey(),
-                            event->nativeModifiers(),
-                            event->text());
-    internalEvent.setAccepted(false);
-    if (QCoreApplication::sendEvent(found, &internalEvent)) {
+
+    auto internal_event = get_internal_key_event(event);
+    if (QCoreApplication::sendEvent(window, &internal_event)) {
         waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
         passToWaylandServer(event);
         return true;
     }
     return false;
+}
+
+bool internal_window_filter::key_repeat(key_event const& event)
+{
+    auto window = get_internal_window();
+    if (!window) {
+        return false;
+    }
+
+    auto internal_event = get_internal_key_event(event);
+    return QCoreApplication::sendEvent(window, &internal_event);
 }
 
 bool internal_window_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)

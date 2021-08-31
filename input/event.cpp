@@ -9,21 +9,6 @@
 namespace KWin::input
 {
 
-KeyEvent::KeyEvent(QEvent::Type type,
-                   Qt::Key key,
-                   Qt::KeyboardModifiers modifiers,
-                   quint32 code,
-                   quint32 keysym,
-                   const QString& text,
-                   bool autorepeat,
-                   quint32 timestamp,
-                   keyboard* device)
-    : QKeyEvent(type, key, modifiers, code, keysym, 0, text, autorepeat)
-    , m_device(device)
-{
-    setTimestamp(timestamp);
-}
-
 SwitchEvent::SwitchEvent(State state,
                          quint32 timestamp,
                          quint64 timestampMicroseconds,

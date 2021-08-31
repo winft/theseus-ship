@@ -14,7 +14,6 @@
 
 #include <Wrapland/Server/seat.h>
 
-#include <QKeyEvent>
 #include <QTemporaryFile>
 #include <QtXkbCommonSupport/private/qxkbcommon_p.h>
 

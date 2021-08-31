@@ -179,39 +179,6 @@ struct toggle_event {
     event<switch_device> base;
 };
 
-class KeyEvent : public QKeyEvent
-{
-public:
-    explicit KeyEvent(QEvent::Type type,
-                      Qt::Key key,
-                      Qt::KeyboardModifiers modifiers,
-                      quint32 code,
-                      quint32 keysym,
-                      const QString& text,
-                      bool autorepeat,
-                      quint32 timestamp,
-                      keyboard* device);
-
-    keyboard* device() const
-    {
-        return m_device;
-    }
-
-    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const
-    {
-        return m_modifiersRelevantForShortcuts;
-    }
-
-    void setModifiersRelevantForGlobalShortcuts(const Qt::KeyboardModifiers& mods)
-    {
-        m_modifiersRelevantForShortcuts = mods;
-    }
-
-private:
-    keyboard* m_device;
-    Qt::KeyboardModifiers m_modifiersRelevantForShortcuts = Qt::KeyboardModifiers();
-};
-
 class SwitchEvent : public QInputEvent
 {
 public:

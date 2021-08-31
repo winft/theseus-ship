@@ -151,7 +151,9 @@ public:
     void motion(input::motion_event const& event) override;
     void axis(input::axis_event const& event) override;
 
-    void keyEvent(input::KeyEvent *event) override;
+    void key(input::key_event const& event) override;
+    void key_repeat(input::key_event const& event) override;
+
     void touchDown(qint32 id, const QPointF &pos, quint32 time) override;
     void touchMotion(qint32 id, const QPointF &pos, quint32 time) override;
     void touchUp(qint32 id, quint32 time) override;

@@ -69,7 +69,6 @@ public:
     enum KeyboardKeyState {
         KeyboardKeyReleased,
         KeyboardKeyPressed,
-        KeyboardKeyAutoRepeat,
     };
     enum TabletEventType {
         Axis,

@@ -13,7 +13,7 @@ namespace KWin::input
 class virtual_terminal_filter : public event_filter
 {
 public:
-    bool keyEvent(QKeyEvent* event) override;
+    bool key(key_event const& event) override;
 };
 
 }

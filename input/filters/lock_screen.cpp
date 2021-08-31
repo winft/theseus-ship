@@ -8,6 +8,7 @@
 
 #include "../keyboard_redirect.h"
 #include "../touch_redirect.h"
+#include "input/qt_event.h"
 #include "main.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -15,8 +16,6 @@
 #include <KScreenLocker/KsldApp>
 
 #include <Wrapland/Server/seat.h>
-
-#include <QKeyEvent>
 
 namespace KWin::input
 {
@@ -75,44 +74,50 @@ bool lock_screen_filter::axis(axis_event const& event)
     return true;
 }
 
-bool lock_screen_filter::keyEvent(QKeyEvent* event)
+bool lock_screen_filter::key(key_event const& event)
 {
     if (!waylandServer()->isScreenLocked()) {
         return false;
     }
-    if (event->isAutoRepeat()) {
-        // wayland client takes care of it
-        return true;
-    }
+
     // send event to KSldApp for global accel
     // if event is set to accepted it means a whitelisted shortcut was triggered
     // in that case we filter it out and don't process it further
-    event->setAccepted(false);
-    QCoreApplication::sendEvent(ScreenLocker::KSldApp::self(), event);
-    if (event->isAccepted()) {
+    auto qt_event = key_to_qt_event(event);
+    qt_event.setAccepted(false);
+    QCoreApplication::sendEvent(ScreenLocker::KSldApp::self(), &qt_event);
+    if (qt_event.isAccepted()) {
         return true;
     }
 
     // continue normal processing
     kwinApp()->input->redirect->keyboard()->update();
+
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(event->timestamp());
+    seat->setTimestamp(event.base.time_msec);
+
     if (!keyboardSurfaceAllowed()) {
         // don't pass event to seat
         return true;
     }
-    switch (event->type()) {
-    case QEvent::KeyPress:
-        seat->keyPressed(event->nativeScanCode());
+
+    switch (event.state) {
+    case button_state::pressed:
+        seat->keyPressed(event.keycode);
         break;
-    case QEvent::KeyRelease:
-        seat->keyReleased(event->nativeScanCode());
-        break;
-    default:
+    case button_state::released:
+        seat->keyReleased(event.keycode);
         break;
     }
     return true;
 }
+
+bool lock_screen_filter::key_repeat(key_event const& /*event*/)
+{
+    // If screen is locked Wayland client takes care of it.
+    return waylandServer()->isScreenLocked();
+}
+
 bool lock_screen_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     if (!waylandServer()->isScreenLocked()) {

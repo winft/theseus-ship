@@ -17,8 +17,6 @@
 
 #include <Wrapland/Server/seat.h>
 
-#include <QKeyEvent>
-
 namespace KWin::input
 {
 

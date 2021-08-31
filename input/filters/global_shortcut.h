@@ -18,9 +18,11 @@ public:
     global_shortcut_filter();
     ~global_shortcut_filter();
 
-    bool keyEvent(QKeyEvent* event) override;
     bool button(button_event const& event) override;
     bool axis(axis_event const& event) override;
+
+    bool key(key_event const& event) override;
+    bool key_repeat(key_event const& event) override;
 
     bool swipeGestureBegin(int fingerCount, quint32 time) override;
     bool swipeGestureUpdate(QSizeF const& delta, quint32 time) override;

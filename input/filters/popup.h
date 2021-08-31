@@ -28,7 +28,9 @@ class popup_filter : public QObject, public event_filter
 public:
     explicit popup_filter();
 
-    bool keyEvent(QKeyEvent* event) override;
+    bool key(key_event const& event) override;
+    bool key_repeat(key_event const& event) override;
+
     bool button(button_event const& event) override;
 
 private:

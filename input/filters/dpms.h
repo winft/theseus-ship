@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include "../event.h"
 #include "../event_filter.h"
 
 #include <QElapsedTimer>
@@ -22,7 +23,7 @@ class dpms_filter : public event_filter
 {
 public:
     dpms_filter(Platform* backend);
-    bool keyEvent(QKeyEvent* event) override;
+    bool key(key_event const& event) override;
 
     bool button(button_event const& event) override;
     bool motion(motion_event const& event) override;

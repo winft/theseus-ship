@@ -153,8 +153,10 @@ static QString buttonToString(Qt::MouseButton button)
     }
 }
 
-static QString deviceRow(input::control::device* ctrl)
+template<typename Device>
+static QString deviceRow(Device* dev)
 {
+    auto ctrl = dev ? dev->control : nullptr;
     if (!ctrl) {
         return tableRow(i18n("Input Device"), i18nc("The input device of the event is not known", "Unknown"));
     }
@@ -199,7 +201,7 @@ void DebugConsoleFilter::button(input::button_event const& event)
     case input::button_state::pressed:
         text.append(
             tableHeaderRow(i18nc("A mouse pointer button press event", "Pointer Button Press")));
-        text.append(deviceRow(event.base.dev->control));
+        text.append(deviceRow(event.base.dev));
         text.append(timestamp);
         text.append(
             tableRow(i18nc("A button in a mouse press/release event", "Button"), qt_button));
@@ -212,7 +214,7 @@ void DebugConsoleFilter::button(input::button_event const& event)
     case input::button_state::released:
         text.append(tableHeaderRow(
             i18nc("A mouse pointer button release event", "Pointer Button Release")));
-        text.append(deviceRow(event.base.dev->control));
+        text.append(deviceRow(event.base.dev));
         text.append(timestamp);
         text.append(
             tableRow(i18nc("A button in a mouse press/release event", "Button"), qt_button));
@@ -236,7 +238,7 @@ void DebugConsoleFilter::motion(input::motion_event const& event)
     text.append(s_tableStart);
 
     text.append(tableHeaderRow(i18nc("A mouse pointer motion event", "Pointer Motion")));
-    text.append(deviceRow(event.base.dev->control));
+    text.append(deviceRow(event.base.dev));
     text.append(timestamp);
 
     if (event.base.time_msec != 0) {
@@ -267,7 +269,7 @@ void DebugConsoleFilter::axis(input::axis_event const& event)
     text.append(s_tableStart);
 
     text.append(tableHeaderRow(i18nc("A mouse pointer axis (wheel) event", "Pointer Axis")));
-    text.append(deviceRow(event.base.dev->control));
+    text.append(deviceRow(event.base.dev));
     text.append(timestampRow(event.base.time_msec));
 
     text.append(tableRow(i18nc("The orientation of a pointer axis event", "Orientation"),
@@ -281,63 +283,86 @@ void DebugConsoleFilter::axis(input::axis_event const& event)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::keyEvent(input::KeyEvent* event)
+void add_common_key_data(input::key_event const& event, QString& text)
 {
-    QString text = s_hr;
-    text.append(s_tableStart);
+    text.append(timestampRow(event.base.time_msec));
+    text.append(
+        tableRow(i18nc("The code as read from the input device", "Scan code"), event.keycode));
 
-    switch (event->type()) {
-    case QEvent::KeyPress:
-        text.append(tableHeaderRow(i18nc("A key press event", "Key Press")));
-        break;
-    case QEvent::KeyRelease:
-        text.append(tableHeaderRow(i18nc("A key release event", "Key Release")));
-        break;
-    default:
-        break;
-    }
-    text.append(deviceRow(event->device() ? event->device()->control : nullptr));
-    auto modifiersToString = [event] {
+    auto const key_meta_object = Qt::qt_getEnumMetaObject(Qt::Key());
+    auto const enumerator = key_meta_object->enumerator(key_meta_object->indexOfEnumerator("Key"));
+    text.append(tableRow(i18nc("Key according to Qt", "Qt::Key code"),
+                         enumerator.valueToKey(input::key_to_qt_key(event.keycode))));
+
+    auto const& xkb = kwinApp()->input->redirect->keyboard()->xkb();
+    auto const keysym = xkb->toKeysym(event.keycode);
+    text.append(tableRow(i18nc("The translated code to an Xkb symbol", "Xkb symbol"), keysym));
+    text.append(
+        tableRow(i18nc("The translated code interpreted as text", "Utf8"), xkb->toString(keysym)));
+
+    auto to_string = [](Qt::KeyboardModifiers mods) {
         QString ret;
-        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+
+        if (mods.testFlag(Qt::ShiftModifier)) {
             ret.append(i18nc("A keyboard modifier", "Shift"));
             ret.append(QStringLiteral(" "));
         }
-        if (event->modifiers().testFlag(Qt::ControlModifier)) {
+        if (mods.testFlag(Qt::ControlModifier)) {
             ret.append(i18nc("A keyboard modifier", "Control"));
             ret.append(QStringLiteral(" "));
         }
-        if (event->modifiers().testFlag(Qt::AltModifier)) {
+        if (mods.testFlag(Qt::AltModifier)) {
             ret.append(i18nc("A keyboard modifier", "Alt"));
             ret.append(QStringLiteral(" "));
         }
-        if (event->modifiers().testFlag(Qt::MetaModifier)) {
+        if (mods.testFlag(Qt::MetaModifier)) {
             ret.append(i18nc("A keyboard modifier", "Meta"));
             ret.append(QStringLiteral(" "));
         }
-        if (event->modifiers().testFlag(Qt::KeypadModifier)) {
+        if (mods.testFlag(Qt::KeypadModifier)) {
             ret.append(i18nc("A keyboard modifier", "Keypad"));
             ret.append(QStringLiteral(" "));
         }
-        if (event->modifiers().testFlag(Qt::GroupSwitchModifier)) {
+        if (mods.testFlag(Qt::GroupSwitchModifier)) {
             ret.append(i18nc("A keyboard modifier", "Group-switch"));
             ret.append(QStringLiteral(" "));
         }
         return ret;
     };
-    text.append(timestampRow(event->timestamp()));
-    text.append(tableRow(i18nc("Whether the event is an automatic key repeat", "Repeat"), event->isAutoRepeat()));
 
-    const auto keyMetaObject = Qt::qt_getEnumMetaObject(Qt::Key());
-    const auto enumerator = keyMetaObject->enumerator(keyMetaObject->indexOfEnumerator("Key"));
-    text.append(tableRow(i18nc("The code as read from the input device", "Scan code"), event->nativeScanCode()));
-    text.append(tableRow(i18nc("Key according to Qt", "Qt::Key code"),
-                         enumerator.valueToKey(event->key())));
-    text.append(tableRow(i18nc("The translated code to an Xkb symbol", "Xkb symbol"), event->nativeVirtualKey()));
-    text.append(tableRow(i18nc("The translated code interpreted as text", "Utf8"), event->text()));
-    text.append(tableRow(i18nc("The currently active modifiers", "Modifiers"), modifiersToString()));
-
+    text.append(tableRow(i18nc("The currently active modifiers", "Modifiers"),
+                         to_string(kwinApp()->input->redirect->keyboard()->modifiers())));
     text.append(s_tableEnd);
+}
+
+void DebugConsoleFilter::key(input::key_event const& event)
+{
+    QString text = s_hr;
+    text.append(s_tableStart);
+
+    switch (event.state) {
+    case input::button_state::pressed:
+        text.append(tableHeaderRow(i18nc("A key press event", "Key Press")));
+        break;
+    case input::button_state::released:
+        text.append(tableHeaderRow(i18nc("A key release event", "Key Release")));
+        break;
+    }
+
+    text.append(deviceRow(event.base.dev));
+    add_common_key_data(event, text);
+
+    m_textEdit->insertHtml(text);
+    m_textEdit->ensureCursorVisible();
+}
+
+void DebugConsoleFilter::key_repeat(input::key_event const& event)
+{
+    QString text = s_hr;
+    text.append(s_tableStart);
+
+    text.append(tableHeaderRow(i18nc("A key repeat event", "Key repeat")));
+    add_common_key_data(event, text);
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
@@ -499,7 +524,7 @@ void DebugConsoleFilter::switchEvent(input::SwitchEvent *event)
     if (event->timestampMicroseconds() != 0) {
         text.append(timestampRowUsec(event->timestampMicroseconds()));
     }
-    text.append(deviceRow(event->device()->control));
+    text.append(deviceRow(event->device()));
     QString switchName;
     if (event->device()->control->is_lid_switch()) {
         switchName = i18nc("Name of a hardware switch", "Notebook lid");

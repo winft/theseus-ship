@@ -41,10 +41,8 @@ bool dpms_filter::axis([[maybe_unused]] axis_event const& event)
     return true;
 }
 
-bool dpms_filter::keyEvent(QKeyEvent* event)
+bool dpms_filter::key(key_event const& /*event*/)
 {
-    Q_UNUSED(event)
-
     notify();
     return true;
 }
