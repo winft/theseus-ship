@@ -5,6 +5,10 @@
    - [Debug console](#debug-console)
    - [Runtime logging](#runtime-logging)
    - [Debugging with GDB](#debugging-with-gdb)
+ - [Developing](#developing)
+   - [Compiling](#compiling)
+   - [Running Tests](#running-tests)
+   - [Learning Material](#learning-material)
  - [Submission Guideline](#submission-guideline)
  - [Commit Message Guideline](#commit-message-guideline)
  - [Contact](#contact)
@@ -240,6 +244,120 @@ Another option is to attach GDB to an already running KWinFT process with the fo
 
 Again it is recommended to only do this for a nested session or from a secondary device
 since otherwise we would not be able to regain control after a crash or when the process exits.
+
+
+## Developing
+
+### Compiling
+To start writing code for KWinFT first the project needs to be compiled.
+You usually want to compile KWinFT from its
+[master branch](https://gitlab.com/kwinft/kwinft/-/commits/master/)
+as it reflects the most recent state of development.
+
+#### Using FDBuild
+Since some of KWinFT's dependencies are moving targets in KDE
+that do not offer backwards compatibility guarantees,
+it is often required to build these KDE dependencies also from their master branches
+and rebuild them regularly from the most recent state of the master branch.
+The most convenient way for that is to use the
+[FDBuild](https://gitlab.com/kwinft/fdbuild)
+tool.
+It comes with a template mechanism
+that creates a subdirectory structure with all required KWinFT and KDE projects to build.
+For that issue the command:
+```
+fdbuild --init-with-template kwinft-plasma-meta
+```
+After the project templating has finished,
+go into the toplevel directory of the just created subdirectory structure.
+FDBuild uses fdbuild.yaml files in directories it is supposed to work on
+to remember settings about the projects inside these directories.
+
+Important is the setting specifying the installation location of the porjects.
+This is set in the fdbuild.yaml file inside the toplevel directory.
+Adjust the setting to your liking. Recommended is setting it to a subdirectory inside `/opt`,
+for example `/opt/kwinft`.
+
+Then simply run FDBuild without any arguments from the toplevel directory
+and FDBuild will try to compile and install all projects one after the other.
+
+Note that this will likely fail for several projects on the first run
+since you require additional dependencies.
+Check the FDBuild log output to find out what dependencies are missing.
+A complete list of reuiqred dependencies with drifting correctness is also listed
+[in the KDE Community Wiki](https://community.kde.org/Guidelines_and_HOWTOs/Build_from_source/Install_the_dependencies).
+
+Once you have installed additional dependencies and want to continue building the projects
+from where it failed command:
+```
+fdbuild --resume-from <project-that-failed>
+```
+
+#### Plasma Desktop Session Integration
+With this setup KWinFT can be run already as standalone binary for example from a VT.
+In case you did not install into your `/usr` directory,
+as is recommended,
+additional steps are required
+to run a full Plasma Desktop session together with your self-compiled KWinFT.
+
+The Plasma Desktop session requires
+sourcing of some environment variables
+pointing to the install location.
+If you run the `dbus-run-session startplasma-wayland` command from a terminal,
+you can source the following script to achieve that:
+```
+#!/bin/bash
+
+export XDG_CURRENT_DESKTOP=KDE
+source <path-to-projects-toplevel-directory>/kde/plasma-desktop/build/prefix.sh
+```
+
+
+Additionally SDDM session scripts can be installed
+and the session started directly from the drop-down menu inside SDDM. For that run:
+```
+<path-to-projects-toplevel-directory>/kde/plasma-workspace/login-sessions/install-sessions.sh
+```
+
+### Running Tests
+KWinFT comes with over 100 integration tests
+which check the expected behavior of different parts of the application.
+
+To run all relevant tests go to the build directory of KWinFT and issue:
+```
+dbus-run-session ctest -E 'testLockScreen|testModifierOnlyShortcut'
+```
+
+This command is composited from two commands. Let's quickly explain the different parts:
+* `dbus-run-session`: starts a new DBus session for the tests, so your current session is unimpaired.
+* `ctest`: the CMake testing utility running binaries, that have been marked as tests in the CMake files.
+* `-E 'testLockScreen|testModifierOnlyShortcut'`: exclude two tests that are currently also not run on the CI.
+
+You can also run a single test.
+All tests are separate binaries in the `bin` directory inside the build directory.
+That means in order to test e.g. pointer input run from the build directory:
+```
+dbus-run-session bin/testPointerInput
+```
+
+You can also run a specific test function inside such a test.
+For example to run the
+[`testPopup` function](https://gitlab.com/kwinft/kwinft/-/blob/0435b1d/autotests/integration/pointer_input.cpp#L1229-1344)
+in the pointer input test run:
+```
+dbus-run-session bin/testPointerInput testPopup
+```
+
+### Learning Material
+The KWinFT source code is vast and complex.
+Understanding it requires time and practice.
+For the beginning there are still few available resources to get an overview:
+* [Xplain](https://magcius.github.io/xplain/article/), introduction and explanations for X11.
+* [How X Window Managers Work](https://jichu4n.com/posts/how-x-window-managers-work-and-how-to-write-one-part-i/),
+  series on how to write an X window manager.
+* [The Wayland Book](https://wayland-book.com/), explains fundamental concepts of Wayland.
+* [KWin now and tomorrow at XDC 2019](https://www.youtube.com/watch?v=vj70xmG_5Bs),
+  gives an overview about the internal structure of KWinFT.
 
 
 ## Submission Guideline

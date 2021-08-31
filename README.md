@@ -23,12 +23,18 @@ that the probability for regressions increases. Make sure to have a plan B in ca
 session becomes unusable because of that. If you don't, better stay with classic KWin.
 
 ## Development
-Please refer to [hacking documentation](HACKING.md) for how to build and start KWinFT. Further
-information about KWinFT's test suite can be found in [TESTING.md](TESTING.md). When you want to
-contribute to the project read [CONTRIBUTING.md](CONTRIBUTING.md) on how to do that.
+The [CONTRIBUTING.md](CONTRIBUTING.md) document contains all information
+on how to get started with:
+* providing useful debug information,
+* building KWinFT
+* and doing your first code submission to the project.
 
-> :warning: There is for the foreseeable future no API/ABI-stability guarantee. You need to align
-your releases with KWinFT release schedule and track breaking changes (announced in the changelog).
+If you want to write an effect or script for KWinFT
+you can do this as usual with the respective APIs that KWinFT provides.
+We try to keep these APIs compatible with the ones of KWin
+but there is no guarantee on that.
+If there are incompatible changes or API-breaking changes in general,
+this will be announced in the changelog.
 
 [kwinft]: https://gitlab.com/kwinft/kwinft
 [wrapland]: https://gitlab.com/kwinft/wrapland
