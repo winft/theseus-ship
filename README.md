@@ -21,17 +21,24 @@ KWinFT differentates itself from KWin in some important aspects:
   Well defined and transparent decision processes enable expert knowledge to proliferate
   and new contributors to easily find help on their first steps.
 
+## Installation
+Your distribution might provide KWinFT already as a package:
+  * Arch(AUR): [kwinft](https://aur.archlinux.org/packages/kwinft)
+  * Manjaro: `sudo pacman -S kwinft`
+
+Alternatively KWinFT can be compiled from source.
+If you do that manually you have to check for your specific distribution
+how to best get the required dependencies.
+You can also make use of the FDBuild tool to automate that process as described
+[here](CONTRIBUTING.md#compiling).
+
 ## Usage
-You can use KWinFT for now as a drop-in replacement for classic KWin. All configuration, plugins
-and shell interaction should continue as usual. Besides all current dependencies of KWin the
-Wrapland library is needed.
+KWinFT can be used as a drop-in replacement for KWin inside a KDE Plasma Desktop session.
+After installation and a system restart the KWinFT binary will execute.
+All configuration, plugins and shell interaction transfer over.
+
 > :warning: The capability of being a drop-in replacement might get lost in a future release. If
 this happens possible conflicts will be announced in the changelog.
-
-> :warning: Although KWinFT uses autotests to check for issues and it is in daily use from the
-master branch so problems can be noticed early and likely before release, being fast still means
-that the probability for regressions increases. Make sure to have a plan B in case your graphical
-session becomes unusable because of that. If you don't, better stay with classic KWin.
 
 ## Development
 The [CONTRIBUTING.md](CONTRIBUTING.md) document contains all information
