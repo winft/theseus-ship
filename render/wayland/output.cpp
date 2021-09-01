@@ -41,6 +41,31 @@ void output::add_repaint(QRegion const& region)
     set_delay_timer();
 }
 
+bool output::prepare_repaint(Toplevel* win)
+{
+    if (!win->has_pending_repaints()) {
+        return false;
+    }
+
+    auto const repaints = win->repaints();
+    if (repaints.intersected(base->geometry()).isEmpty()) {
+        // TODO(romangg): Remove win from windows list?
+        return false;
+    }
+
+    for (auto& [other_base, other_output] : compositor->outputs) {
+        if (other_output.get() == this) {
+            continue;
+        }
+        auto const capped_region = repaints.intersected(other_base->geometry());
+        if (!capped_region.isEmpty()) {
+            other_output->add_repaint(capped_region);
+        }
+    }
+
+    return true;
+}
+
 bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
 {
     delay_timer.stop();
@@ -61,24 +86,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     bool has_window_repaints{false};
 
     for (auto win : windows) {
-        if (win->has_pending_repaints()) {
-            auto const window_repaint = win->repaints();
-            if (window_repaint.intersected(base->geometry()).isEmpty()) {
-                // TODO(romangg): Remove win from windows list?
-                continue;
-            }
-            has_window_repaints = true;
-
-            for (auto& [other_base, other_output] : compositor->outputs) {
-                if (other_output.get() == this) {
-                    continue;
-                }
-                auto const capped_region = window_repaint.intersected(other_base->geometry());
-                if (!capped_region.isEmpty()) {
-                    other_output->add_repaint(capped_region);
-                }
-            }
-        }
+        has_window_repaints |= prepare_repaint(win);
         if (win->resetAndFetchDamage()) {
             // Discard the cached lanczos texture
             if (win->transient()->annexed) {

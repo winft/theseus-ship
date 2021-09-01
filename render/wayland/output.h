@@ -45,6 +45,7 @@ class KWIN_EXPORT output : public QObject
 
     QRegion repaints_region;
 
+    bool prepare_repaint(Toplevel* win);
     bool prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows);
     void retard_next_run();
     void swapped();
