@@ -32,7 +32,7 @@ keyboard_repeat_spy::~keyboard_repeat_spy() = default;
 void keyboard_repeat_spy::handleKeyRepeat()
 {
     // TODO: don't depend on WaylandServer
-    auto const rate = waylandServer()->seat()->keyboards().get_repeat_info().charactersPerSecond;
+    auto const rate = waylandServer()->seat()->keyboards().get_repeat_info().rate;
     if (rate != 0) {
         m_timer->setInterval(1000 / rate);
     }
