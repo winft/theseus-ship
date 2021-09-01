@@ -63,7 +63,7 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
     }
     create_x11_source(sel, nullptr);
     auto const seat = waylandServer()->seat();
-    auto originSurface = seat->pointers().focus.surface;
+    auto originSurface = seat->pointers().get_focus().surface;
     if (!originSurface) {
         return;
     }
@@ -192,7 +192,7 @@ DragEventReply Dnd::dragMoveFilter(Toplevel* target, const QPoint& pos)
 
 void Dnd::startDrag()
 {
-    auto srv_dev = waylandServer()->seat()->drags().source;
+    auto srv_dev = waylandServer()->seat()->drags().get_source().dev;
     if (srv_dev == data.srv_device) {
         // X to Wl drag, started by us, is in progress.
         Q_ASSERT(m_currentDrag);

@@ -133,7 +133,7 @@ void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
             return;
         }
         auto seat = waylandServer()->seat();
-        if (focus()->surface() != seat->touches().focus.surface) {
+        if (focus()->surface() != seat->touches().get_focus().surface) {
             return;
         }
         seat->touches().set_focused_surface_position(

@@ -32,7 +32,7 @@ keyboard_repeat_spy::~keyboard_repeat_spy() = default;
 void keyboard_repeat_spy::handleKeyRepeat()
 {
     // TODO: don't depend on WaylandServer
-    auto const rate = waylandServer()->seat()->keyboards().keyRepeat.charactersPerSecond;
+    auto const rate = waylandServer()->seat()->keyboards().get_repeat_info().charactersPerSecond;
     if (rate != 0) {
         m_timer->setInterval(1000 / rate);
     }
@@ -45,7 +45,7 @@ void keyboard_repeat_spy::key(key_event const& event)
     switch (event.state) {
     case button_state::pressed: {
         // TODO: don't get these values from WaylandServer
-        auto const delay = waylandServer()->seat()->keyboards().keyRepeat.delay;
+        auto const delay = waylandServer()->seat()->keyboards().get_repeat_info().delay;
         if (m_xkb->shouldKeyRepeat(event.keycode) && delay != 0) {
             m_timer->setInterval(delay);
             m_key = event.keycode;

@@ -189,7 +189,7 @@ void keyboard_redirect::update()
         found = workspace()->activeClient();
     }
     if (found && found->surface()) {
-        if (found->surface() != seat->keyboards().focus.surface) {
+        if (found->surface() != seat->keyboards().get_focus().surface) {
             seat->setFocusedKeyboardSurface(found->surface());
         }
     } else {

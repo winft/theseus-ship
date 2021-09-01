@@ -69,7 +69,7 @@ bool drag_and_drop_filter::motion(motion_event const& event)
 
     if (window) {
         // TODO: consider decorations
-        if (window->surface() != seat->drags().surface) {
+        if (window->surface() != seat->drags().get_target().surface) {
             if (window->control) {
                 workspace()->activateClient(window);
             }
@@ -127,7 +127,7 @@ bool drag_and_drop_filter::touchMotion(qint32 id, const QPointF& pos, quint32 ti
 
     if (Toplevel* t = kwinApp()->input->redirect->findToplevel(pos.toPoint())) {
         // TODO: consider decorations
-        if (t->surface() != seat->drags().surface) {
+        if (t->surface() != seat->drags().get_target().surface) {
             if (t->control) {
                 workspace()->activateClient(t);
             }

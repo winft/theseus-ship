@@ -226,7 +226,7 @@ bool lock_screen_filter::swipeGestureCancelled(quint32 time)
 template<typename Pool>
 bool is_surface_allowed(Pool const& device_pool)
 {
-    if (auto surface = device_pool.focus.surface) {
+    if (auto surface = device_pool.get_focus().surface) {
         if (auto win = waylandServer()->findToplevel(surface)) {
             return win->isLockScreen() || win->isInputMethod();
         }

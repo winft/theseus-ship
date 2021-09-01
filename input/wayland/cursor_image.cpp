@@ -106,12 +106,12 @@ void cursor_image::markAsRendered()
     if (m_currentSource == CursorSource::DragAndDrop) {
         // always sending a frame rendered to the drag icon surface to not freeze QtWayland (see
         // https://bugreports.qt.io/browse/QTBUG-51599 )
-        if (auto ddi = waylandServer()->seat()->drags().source) {
+        if (auto ddi = waylandServer()->seat()->drags().get_source().dev) {
             if (auto s = ddi->icon()) {
                 s->frameRendered(m_surfaceRenderedTimer.elapsed());
             }
         }
-        auto p = waylandServer()->seat()->drags().sourcePointer;
+        auto p = waylandServer()->seat()->drags().get_source().pointer;
         if (!p) {
             return;
         }
@@ -131,7 +131,7 @@ void cursor_image::markAsRendered()
         return;
     }
 
-    auto& pointer_focus = waylandServer()->seat()->pointers().focus;
+    auto const pointer_focus = waylandServer()->seat()->pointers().get_focus();
     if (pointer_focus.devices.empty()) {
         return;
     }
@@ -155,7 +155,7 @@ void cursor_image::update()
     using namespace Wrapland::Server;
     disconnect(m_serverCursor.connection);
 
-    auto& pointer_focus = waylandServer()->seat()->pointers().focus;
+    auto const pointer_focus = waylandServer()->seat()->pointers().get_focus();
     if (pointer_focus.devices.empty()) {
         m_serverCursor.connection = QMetaObject::Connection();
         reevaluteSource();
@@ -218,7 +218,7 @@ void cursor_image::updateServerCursor()
     const bool needsEmit = m_currentSource == CursorSource::LockScreen
         || m_currentSource == CursorSource::PointerSurface;
 
-    auto& pointer_focus = waylandServer()->seat()->pointers().focus;
+    auto const pointer_focus = waylandServer()->seat()->pointers().get_focus();
     if (pointer_focus.devices.empty()) {
         if (needsEmit) {
             emit changed();
@@ -309,7 +309,7 @@ void cursor_image::updateDrag()
     m_drag.cursor.image = QImage();
     m_drag.cursor.hotSpot = QPoint();
     reevaluteSource();
-    if (auto p = waylandServer()->seat()->drags().sourcePointer) {
+    if (auto p = waylandServer()->seat()->drags().get_source().pointer) {
         m_drag.connection
             = connect(p, &Pointer::cursorChanged, this, &cursor_image::updateDragCursor);
     } else {
@@ -324,7 +324,7 @@ void cursor_image::updateDragCursor()
     m_drag.cursor.hotSpot = QPoint();
     const bool needsEmit = m_currentSource == CursorSource::DragAndDrop;
     QImage additionalIcon;
-    if (auto ddi = waylandServer()->seat()->drags().source) {
+    if (auto ddi = waylandServer()->seat()->drags().get_source().dev) {
         if (auto dragIcon = ddi->icon()) {
             if (auto buffer = dragIcon->buffer()) {
                 // TODO: Check std::optional?
@@ -333,7 +333,7 @@ void cursor_image::updateDragCursor()
             }
         }
     }
-    auto p = waylandServer()->seat()->drags().sourcePointer;
+    auto p = waylandServer()->seat()->drags().get_source().pointer;
     if (!p) {
         if (needsEmit) {
             emit changed();
@@ -473,7 +473,7 @@ void cursor_image::reevaluteSource()
         return;
     }
     if (kwinApp()->input->redirect->pointer()->focus()
-        && !waylandServer()->seat()->pointers().focus.devices.empty()) {
+        && !waylandServer()->seat()->pointers().get_focus().devices.empty()) {
         setSource(CursorSource::PointerSurface);
         return;
     }

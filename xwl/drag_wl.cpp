@@ -50,7 +50,7 @@ namespace Xwl
 WlToXDrag::WlToXDrag(Dnd* dnd)
     : Drag(dnd)
 {
-    m_dsi = waylandServer()->seat()->drags().source->dragSource();
+    m_dsi = waylandServer()->seat()->drags().get_source().dev->dragSource();
 }
 
 DragEventReply WlToXDrag::moveFilter(Toplevel* target, const QPoint& pos)
@@ -274,7 +274,7 @@ void Xvisit::enter()
     m_state.entered = true;
     // send enter event and current position to X client
     sendEnter();
-    sendPosition(waylandServer()->seat()->pointers().pos);
+    sendPosition(waylandServer()->seat()->pointers().get_position());
 
     // proxy future pointer position changes
     m_motionConnection = connect(waylandServer()->seat(),
@@ -379,7 +379,7 @@ void Xvisit::determineProposedAction()
     }
     // send updated action to X target
     if (oldProposedAction != m_proposedAction) {
-        sendPosition(waylandServer()->seat()->pointers().pos);
+        sendPosition(waylandServer()->seat()->pointers().get_position());
     }
 }
 

@@ -631,7 +631,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
             return;
         }
         auto seat = waylandServer()->seat();
-        if (focus()->surface() != seat->pointers().focus.surface) {
+        if (focus()->surface() != seat->pointers().get_focus().surface) {
             return;
         }
         seat->pointers().set_focused_surface_transformation(focus()->input_transform());
@@ -728,7 +728,7 @@ void pointer_redirect::updatePointerConstraints()
     if (!s) {
         return;
     }
-    if (s != waylandServer()->seat()->pointers().focus.surface) {
+    if (s != waylandServer()->seat()->pointers().get_focus().surface) {
         return;
     }
     if (!supportsWarping()) {
@@ -842,7 +842,7 @@ void pointer_redirect::warpXcbOnSurfaceLeft(Wrapland::Server::Surface* newSurfac
         // new window is an X window
         return;
     }
-    auto s = waylandServer()->seat()->pointers().focus.surface;
+    auto s = waylandServer()->seat()->pointers().get_focus().surface;
     if (!s || s->client() != xc) {
         // pointer was not on an X window
         return;
