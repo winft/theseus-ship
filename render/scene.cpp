@@ -470,10 +470,6 @@ void scene::paintWindow(window* w, paint_type mask, QRegion region, WindowQuadLi
     region &= QRect(0, 0, screenSize.width(), screenSize.height());
     if (region.isEmpty()) // completely clipped
         return;
-    if (w->get_window()->isDeleted() && w->get_window()->skipsCloseAnimation()) {
-        // should not get painted
-        return;
-    }
 
     if (s_recursionCheck == w) {
         return;
