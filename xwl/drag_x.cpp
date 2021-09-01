@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/datasource.h>
 
 #include <Wrapland/Server/data_source.h>
+#include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
@@ -175,7 +176,7 @@ DragEventReply XToWlDrag::moveFilter(Toplevel* target, const QPoint& pos)
         if (hasCurrent) {
             // last received enter event is now void,
             // wait for the next one
-            seat->setDragTarget(nullptr);
+            seat->drags().set_target(nullptr);
         }
         return DragEventReply::Ignore;
     }
@@ -255,7 +256,7 @@ void XToWlDrag::setDragTarget()
 {
     auto* ac = m_visit->target();
     workspace()->activateClient(ac);
-    waylandServer()->seat()->setDragTarget(ac->surface(), ac->input_transform());
+    waylandServer()->seat()->drags().set_target(ac->surface(), ac->input_transform());
 }
 
 bool XToWlDrag::checkForFinished()

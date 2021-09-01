@@ -14,6 +14,7 @@
 #include "workspace.h"
 #include "xwl/xwayland_interface.h"
 
+#include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/touch_pool.h>
@@ -24,10 +25,10 @@ namespace KWin::input
 bool drag_and_drop_filter::button(button_event const& event)
 {
     auto seat = waylandServer()->seat();
-    if (!seat->isDragPointer()) {
+    if (!seat->drags().is_pointer_drag()) {
         return false;
     }
-    if (seat->isDragTouch()) {
+    if (seat->drags().is_touch_drag()) {
         return true;
     }
     seat->setTimestamp(event.base.time_msec);
@@ -44,10 +45,10 @@ bool drag_and_drop_filter::button(button_event const& event)
 bool drag_and_drop_filter::motion(motion_event const& event)
 {
     auto seat = waylandServer()->seat();
-    if (!seat->isDragPointer()) {
+    if (!seat->drags().is_pointer_drag()) {
         return false;
     }
-    if (seat->isDragTouch()) {
+    if (seat->drags().is_touch_drag()) {
         return true;
     }
     seat->setTimestamp(event.base.time_msec);
@@ -68,15 +69,15 @@ bool drag_and_drop_filter::motion(motion_event const& event)
 
     if (window) {
         // TODO: consider decorations
-        if (window->surface() != seat->dragSurface()) {
+        if (window->surface() != seat->drags().surface) {
             if (window->control) {
                 workspace()->activateClient(window);
             }
-            seat->setDragTarget(window->surface(), window->input_transform());
+            seat->drags().set_target(window->surface(), window->input_transform());
         }
     } else {
         // No window at that place, if we have a surface we need to reset.
-        seat->setDragTarget(nullptr);
+        seat->drags().set_target(nullptr);
     }
 
     return true;
@@ -85,10 +86,10 @@ bool drag_and_drop_filter::motion(motion_event const& event)
 bool drag_and_drop_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     auto seat = waylandServer()->seat();
-    if (seat->isDragPointer()) {
+    if (seat->drags().is_pointer_drag()) {
         return true;
     }
-    if (!seat->isDragTouch()) {
+    if (!seat->drags().is_touch_drag()) {
         return false;
     }
     if (m_touchId != id) {
@@ -101,10 +102,10 @@ bool drag_and_drop_filter::touchDown(qint32 id, const QPointF& pos, quint32 time
 bool drag_and_drop_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
 {
     auto seat = waylandServer()->seat();
-    if (seat->isDragPointer()) {
+    if (seat->drags().is_pointer_drag()) {
         return true;
     }
-    if (!seat->isDragTouch()) {
+    if (!seat->drags().is_touch_drag()) {
         return false;
     }
     if (m_touchId < 0) {
@@ -126,22 +127,22 @@ bool drag_and_drop_filter::touchMotion(qint32 id, const QPointF& pos, quint32 ti
 
     if (Toplevel* t = kwinApp()->input->redirect->findToplevel(pos.toPoint())) {
         // TODO: consider decorations
-        if (t->surface() != seat->dragSurface()) {
+        if (t->surface() != seat->drags().surface) {
             if (t->control) {
                 workspace()->activateClient(t);
             }
-            seat->setDragTarget(t->surface(), pos, t->input_transform());
+            seat->drags().set_target(t->surface(), pos, t->input_transform());
         }
     } else {
         // no window at that place, if we have a surface we need to reset
-        seat->setDragTarget(nullptr);
+        seat->drags().set_target(nullptr);
     }
     return true;
 }
 bool drag_and_drop_filter::touchUp(qint32 id, quint32 time)
 {
     auto seat = waylandServer()->seat();
-    if (!seat->isDragTouch()) {
+    if (!seat->drags().is_touch_drag()) {
         return false;
     }
     seat->setTimestamp(time);

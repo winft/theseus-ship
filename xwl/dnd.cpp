@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/compositor.h>
 #include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
@@ -191,7 +192,7 @@ DragEventReply Dnd::dragMoveFilter(Toplevel* target, const QPoint& pos)
 
 void Dnd::startDrag()
 {
-    auto srv_dev = waylandServer()->seat()->dragSource();
+    auto srv_dev = waylandServer()->seat()->drags().source;
     if (srv_dev == data.srv_device) {
         // X to Wl drag, started by us, is in progress.
         Q_ASSERT(m_currentDrag);

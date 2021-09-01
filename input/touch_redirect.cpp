@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KDecoration2/Decoration>
 
+#include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/touch_pool.h>
 
@@ -82,7 +83,7 @@ bool touch_redirect::focusUpdatesBlocked()
         return true;
     }
     m_windowUpdatedInCycle = true;
-    if (waylandServer()->seat()->isDragTouch()) {
+    if (waylandServer()->seat()->drags().is_touch_drag()) {
         return true;
     }
     if (m_touches > 1) {

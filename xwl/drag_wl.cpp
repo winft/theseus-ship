@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_source.h>
+#include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
@@ -49,7 +50,7 @@ namespace Xwl
 WlToXDrag::WlToXDrag(Dnd* dnd)
     : Drag(dnd)
 {
-    m_dsi = waylandServer()->seat()->dragSource()->dragSource();
+    m_dsi = waylandServer()->seat()->drags().source->dragSource();
 }
 
 DragEventReply WlToXDrag::moveFilter(Toplevel* target, const QPoint& pos)
@@ -61,7 +62,7 @@ DragEventReply WlToXDrag::moveFilter(Toplevel* target, const QPoint& pos)
     }
     // leave current target
     if (m_visit) {
-        seat->setDragTarget(nullptr);
+        seat->drags().set_target(nullptr);
         m_visit->leave();
         delete m_visit;
         m_visit = nullptr;
@@ -73,7 +74,7 @@ DragEventReply WlToXDrag::moveFilter(Toplevel* target, const QPoint& pos)
     }
     // new target
     workspace()->activateClient(target, false);
-    seat->setDragTarget(dnd->surfaceIface(), pos, target->input_transform());
+    seat->drags().set_target(dnd->surfaceIface(), pos, target->input_transform());
     m_visit = new Xvisit(this, target);
     return DragEventReply::Take;
 }

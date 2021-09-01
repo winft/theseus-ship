@@ -23,6 +23,7 @@
 #include <win/input.h>
 #include <workspace.h>
 
+#include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer.h>
 #include <Wrapland/Server/pointer_constraints_v1.h>
 #include <Wrapland/Server/pointer_pool.h>
@@ -487,7 +488,7 @@ bool pointer_redirect::focusUpdatesBlocked()
     if (!inited()) {
         return true;
     }
-    if (waylandServer()->seat()->isDragPointer()) {
+    if (waylandServer()->seat()->drags().is_pointer_drag()) {
         // ignore during drag and drop
         return true;
     }
