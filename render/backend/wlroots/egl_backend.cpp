@@ -77,9 +77,7 @@ void egl_backend::init()
     }
 
     initKWinGL();
-
-    // TODO(romangg): buffer age currently deactivated due to issues in multi-screen configurations.
-    // initBufferAge();
+    initBufferAge();
     initWayland();
 }
 
