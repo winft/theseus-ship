@@ -22,6 +22,7 @@ namespace render::wayland
 {
 class output;
 class presentation;
+struct presentation_data;
 
 class KWIN_EXPORT compositor : public render::compositor
 {

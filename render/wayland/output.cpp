@@ -17,6 +17,7 @@
 #include "workspace.h"
 
 #include "win/transient.h"
+#include <kwinglplatform.h>
 #include <kwingltexture.h>
 
 #include "perf/ftrace.h"
@@ -166,6 +167,9 @@ std::deque<Toplevel*> output::run()
     QRegion repaints;
     std::deque<Toplevel*> windows;
 
+    QElapsedTimer test_timer;
+    test_timer.start();
+
     if (!prepare_run(repaints, windows)) {
         return std::deque<Toplevel*>();
     }
@@ -178,9 +182,10 @@ std::deque<Toplevel*> output::run()
     auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
 
     // Start the actual painting process.
-    auto const duration = compositor->scene()->paint(base, repaints, windows, now);
+    auto const duration
+        = std::chrono::nanoseconds(compositor->scene()->paint(base, repaints, windows, now));
 
-    paint_durations.update(std::chrono::nanoseconds(duration));
+    paint_durations.update(duration);
     retard_next_run();
 
     if (!windows.empty()) {
@@ -231,6 +236,22 @@ std::chrono::nanoseconds output::refresh_length() const
 
 void output::set_delay(presentation_data const& data)
 {
+    if (!GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
+        return;
+    }
+
+    // First get the latest Gl timer queries.
+    last_timer_queries.erase(std::remove_if(last_timer_queries.begin(),
+                                            last_timer_queries.end(),
+                                            [this](auto& timer) {
+                                                if (!timer.get_query()) {
+                                                    return false;
+                                                }
+                                                render_durations.update(timer.time());
+                                                return true;
+                                            }),
+                             last_timer_queries.end());
+
     auto now = std::chrono::steady_clock::now().time_since_epoch();
 
     // The gap between the last presentation on the display and us now calculating the delay.
@@ -245,7 +266,8 @@ void output::set_delay(presentation_data const& data)
     auto const hw_margin = refresh / 10;
 
     // We try to delay the next paint shortly before next vblank factoring in our margins.
-    auto try_delay = refresh - vblank_to_now - hw_margin - paint_durations.get_max();
+    auto try_delay = refresh - vblank_to_now - hw_margin - paint_durations.get_max()
+        - render_durations.get_max();
 
     // If our previous margins were too large we don't delay. We would likely miss the next vblank.
     delay = std::max(try_delay, std::chrono::nanoseconds::zero());

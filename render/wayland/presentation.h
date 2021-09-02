@@ -31,6 +31,7 @@ class Toplevel;
 namespace render::wayland
 {
 class output;
+struct presentation_data;
 
 enum class presentation_kind {
     none = 0,

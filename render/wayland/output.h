@@ -6,6 +6,8 @@
 #pragma once
 
 #include "duration_record.h"
+#include "render/gl/timer_query.h"
+
 #include <kwin_export.h>
 
 #include <QBasicTimer>
@@ -15,6 +17,7 @@
 #include <chrono>
 #include <deque>
 #include <map>
+#include <vector>
 
 namespace Wrapland
 {
@@ -45,6 +48,7 @@ class KWIN_EXPORT output : public QObject
     std::chrono::nanoseconds delay;
 
     duration_record paint_durations;
+    duration_record render_durations;
 
     QRegion repaints_region;
 
@@ -64,6 +68,7 @@ public:
     bool swap_pending{false};
     QBasicTimer delay_timer;
     QBasicTimer frame_timer;
+    std::vector<render::gl::timer_query> last_timer_queries;
 
     output(AbstractWaylandOutput* base, wayland::compositor* compositor);
 
