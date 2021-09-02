@@ -75,6 +75,19 @@ uint32_t presentation::current_time() const
     return time;
 }
 
+void presentation::frame(render::wayland::output* output, std::deque<Toplevel*> const& windows)
+{
+    auto const now = current_time();
+
+    for (auto& win : windows) {
+        assert(win->surface());
+        assert(max_coverage_output(win) == output->base);
+
+        // TODO (romangg): Split this up to do on every subsurface (annexed transient) separately.
+        win->surface()->frameRendered(now);
+    }
+}
+
 void presentation::lock(render::wayland::output* output, std::deque<Toplevel*> const& windows)
 {
     auto const now = current_time();

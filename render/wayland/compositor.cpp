@@ -7,6 +7,7 @@
 
 #include "output.h"
 #include "presentation.h"
+#include "utils.h"
 
 #include "abstract_wayland_output.h"
 #include "platform.h"
@@ -123,6 +124,24 @@ void compositor::schedule_repaint(Toplevel* window)
             output->set_delay_timer();
         }
     }
+}
+
+void compositor::schedule_frame_callback(Toplevel* window)
+{
+    if (!isActive()) {
+        return;
+    }
+
+    if (!kwinApp()->platform->areOutputsEnabled()) {
+        return;
+    }
+
+    auto max_out = static_cast<AbstractWaylandOutput*>(max_coverage_output(window));
+    if (!max_out) {
+        return;
+    }
+
+    outputs[max_out]->request_frame(window);
 }
 
 void compositor::toggleCompositing()

@@ -30,6 +30,7 @@ public:
     static compositor* create(QObject* parent = nullptr);
 
     void schedule_repaint(Toplevel* window) override;
+    void schedule_frame_callback(Toplevel* window);
 
     void swapped(AbstractWaylandOutput* output);
     void swapped(AbstractWaylandOutput* output, unsigned int sec, unsigned int usec);

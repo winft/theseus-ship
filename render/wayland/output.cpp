@@ -5,11 +5,13 @@
 */
 #include "output.h"
 
-#include "abstract_wayland_output.h"
 #include "compositor.h"
+#include "presentation.h"
+#include "utils.h"
+
+#include "abstract_wayland_output.h"
 #include "effects.h"
 #include "platform.h"
-#include "presentation.h"
 #include "wayland_server.h"
 #include "win/x11/stacking_tree.h"
 #include "workspace.h"
@@ -18,6 +20,8 @@
 #include <kwingltexture.h>
 
 #include "perf/ftrace.h"
+
+#include <Wrapland/Server/surface.h>
 
 namespace KWin::render::wayland
 {
@@ -69,6 +73,7 @@ bool output::prepare_repaint(Toplevel* win)
 bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
 {
     delay_timer.stop();
+    frame_timer.stop();
 
     // If a buffer swap is still pending, we return to the event loop and
     // continue processing events until the swap has completed.
@@ -84,9 +89,17 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     // Create a list of all windows in the stacking order
     windows = workspace()->x_stacking_tree->as_list();
     bool has_window_repaints{false};
+    std::deque<Toplevel*> frame_windows;
 
     for (auto win : windows) {
-        has_window_repaints |= prepare_repaint(win);
+        if (prepare_repaint(win)) {
+            has_window_repaints = true;
+        } else if (win->surface()
+                   && win->surface()->client() != waylandServer()->xWaylandConnection()
+                   && (win->surface()->state().updates & Wrapland::Server::surface_change::frame)
+                   && max_coverage_output(win) == base) {
+            frame_windows.push_back(win);
+        }
         if (win->resetAndFetchDamage()) {
             // Discard the cached lanczos texture
             if (win->transient()->annexed) {
@@ -115,6 +128,11 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
 
         // This means the next time we composite it is done without timer delay.
         delay = 0;
+
+        if (!frame_windows.empty()) {
+            // Some windows want a frame event still.
+            compositor->presentation->frame(this, frame_windows);
+        }
         return false;
     }
 
@@ -172,6 +190,23 @@ std::deque<Toplevel*> output::run()
     Perf::Ftrace::end(ftrace_identifier, msc);
 
     return windows;
+}
+
+void output::dry_run()
+{
+    auto windows = workspace()->x_stacking_tree->as_list();
+    std::deque<Toplevel*> frame_windows;
+
+    for (auto win : windows) {
+        if (!win->surface() || win->surface()->client() == waylandServer()->xWaylandConnection()) {
+            continue;
+        }
+        if (!(win->surface()->state().updates & Wrapland::Server::surface_change::frame)) {
+            continue;
+        }
+        frame_windows.push_back(win);
+    }
+    compositor->presentation->frame(this, frame_windows);
 }
 
 void output::swapped_sw()
@@ -260,10 +295,25 @@ void output::set_delay_timer()
     delay_timer.start(std::min(wait_time, 250u), this);
 }
 
+void output::request_frame(Toplevel* window)
+{
+    if (swap_pending || delay_timer.isActive() || frame_timer.isActive()) {
+        // Frame will be received when timer runs out.
+        return;
+    }
+
+    compositor->presentation->frame(this, {window});
+    frame_timer.start(refresh_length(), this);
+}
+
 void output::timerEvent(QTimerEvent* event)
 {
     if (event->timerId() == delay_timer.timerId()) {
         run();
+        return;
+    }
+    if (event->timerId() == frame_timer.timerId()) {
+        dry_run();
         return;
     }
     QObject::timerEvent(event);

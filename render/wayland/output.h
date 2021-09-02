@@ -62,13 +62,16 @@ public:
     bool idle{true};
     bool swap_pending{false};
     QBasicTimer delay_timer;
+    QBasicTimer frame_timer;
 
     output(AbstractWaylandOutput* base, wayland::compositor* compositor);
 
     void add_repaint(QRegion const& region);
     void set_delay_timer();
+    void request_frame(Toplevel* window);
 
     std::deque<Toplevel*> run();
+    void dry_run();
 
     void swapped_sw();
     void swapped_hw(unsigned int sec, unsigned int usec);

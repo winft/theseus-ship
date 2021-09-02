@@ -8,6 +8,7 @@
 #include "fullscreen.h"
 #include "layer_shell.h"
 #include "maximize.h"
+#include "render/wayland/compositor.h"
 #include "subsurface.h"
 #include "xdg_shell.h"
 
@@ -863,6 +864,9 @@ void window::handle_commit()
 
     if (!surface()->state().damage.isEmpty()) {
         addDamage(surface()->state().damage);
+    } else if (surface()->state().updates & Wrapland::Server::surface_change::frame) {
+        auto comp = static_cast<render::wayland::compositor*>(kwinApp()->compositor);
+        comp->schedule_frame_callback(this);
     }
 
     if (toplevel || popup) {
