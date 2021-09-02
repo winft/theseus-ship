@@ -58,7 +58,6 @@ window::window(WS::Surface* surface)
 {
     setSurface(surface);
 
-    connect(surface, &WS::Surface::unmapped, this, &window::unmap);
     connect(surface, &WS::Surface::subsurfaceTreeChanged, this, [this] {
         discard_shape();
         win::wayland::restack_subsurfaces(this);
