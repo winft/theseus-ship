@@ -240,7 +240,7 @@ void cursor_image::updateServerCursor()
         }
         return;
     }
-    auto buffer = cursorSurface.data()->buffer();
+    auto buffer = cursorSurface.data()->state().buffer;
     if (!buffer) {
         if (needsEmit) {
             emit changed();
@@ -249,7 +249,7 @@ void cursor_image::updateServerCursor()
     }
     m_serverCursor.hotSpot = c->hotspot();
     m_serverCursor.image = buffer->shmImage()->createQImage().copy();
-    m_serverCursor.image.setDevicePixelRatio(cursorSurface->scale());
+    m_serverCursor.image.setDevicePixelRatio(cursorSurface->state().scale);
     if (needsEmit) {
         emit changed();
     }
@@ -326,10 +326,10 @@ void cursor_image::updateDragCursor()
     QImage additionalIcon;
     if (auto ddi = waylandServer()->seat()->drags().get_source().dev) {
         if (auto dragIcon = ddi->icon()) {
-            if (auto buffer = dragIcon->buffer()) {
+            if (auto buffer = dragIcon->state().buffer) {
                 // TODO: Check std::optional?
                 additionalIcon = buffer->shmImage()->createQImage().copy();
-                additionalIcon.setOffset(dragIcon->offset());
+                additionalIcon.setOffset(dragIcon->state().offset);
             }
         }
     }
@@ -354,7 +354,7 @@ void cursor_image::updateDragCursor()
         }
         return;
     }
-    auto buffer = cursorSurface.data()->buffer();
+    auto buffer = cursorSurface.data()->state().buffer;
     if (!buffer) {
         if (needsEmit) {
             emit changed();
@@ -365,7 +365,7 @@ void cursor_image::updateDragCursor()
 
     if (additionalIcon.isNull()) {
         m_drag.cursor.image = buffer->shmImage()->createQImage().copy();
-        m_drag.cursor.image.setDevicePixelRatio(cursorSurface->scale());
+        m_drag.cursor.image.setDevicePixelRatio(cursorSurface->state().scale);
     } else {
         QRect cursorRect = buffer->shmImage()->createQImage().rect();
         QRect iconRect = additionalIcon.rect();
@@ -383,7 +383,7 @@ void cursor_image::updateDragCursor()
 
         m_drag.cursor.image
             = QImage(cursorRect.united(iconRect).size(), QImage::Format_ARGB32_Premultiplied);
-        m_drag.cursor.image.setDevicePixelRatio(cursorSurface->scale());
+        m_drag.cursor.image.setDevicePixelRatio(cursorSurface->state().scale);
         m_drag.cursor.image.fill(Qt::transparent);
         QPainter p(&m_drag.cursor.image);
         p.drawImage(iconRect, additionalIcon);

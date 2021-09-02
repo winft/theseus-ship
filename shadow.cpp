@@ -110,7 +110,7 @@ Shadow *Shadow::createShadowFromWayland(Toplevel *toplevel)
     if (!surface) {
         return nullptr;
     }
-    const auto s = surface->shadow();
+    const auto s = surface->state().shadow;
     if (!s) {
         return nullptr;
     }
@@ -356,7 +356,7 @@ bool Shadow::updateShadow()
 
     if (waylandServer()) {
         if (m_topLevel && m_topLevel->surface()) {
-            if (const auto &s = m_topLevel->surface()->shadow()) {
+            if (const auto &s = m_topLevel->surface()->state().shadow) {
                 if (init(s)) {
                     return true;
                 }

@@ -969,12 +969,12 @@ WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) co
                           contentsRect.bottomRight() * textureScale);
 
         if (const auto *surface = toplevel->surface()) {
-            QRectF const rect = surface->sourceRectangle();
+            QRectF const rect = surface->state().source_rectangle;
             if (rect.isValid()) {
                 sourceRect = QRectF(rect.topLeft() * textureScale,
                                     rect.bottomRight() * textureScale);
             } else {
-                auto buffer = surface->buffer();
+                auto buffer = surface->state().buffer;
                 // XWayland client's geometry must be taken from their content placement since the
                 // buffer size is not in sync.
                 if (buffer && !toplevel->isClient()) {
@@ -1117,7 +1117,7 @@ void WindowPixmap::updateBuffer()
 {
     using namespace Wrapland::Server;
     if (auto s = surface()) {
-        if (auto b = s->buffer()) {
+        if (auto b = s->state().buffer) {
             if (b == m_buffer) {
                 // no change
                 return;

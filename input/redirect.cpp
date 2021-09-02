@@ -534,11 +534,11 @@ static bool acceptsInput(Toplevel* t, const QPoint& pos)
         // Only wl_surfaces provide means of limiting the input region. So just accept otherwise.
         return true;
     }
-    if (t->surface()->inputIsInfinite()) {
+    if (t->surface()->state().input_is_infinite) {
         return true;
     }
 
-    auto const input_region = t->surface()->input();
+    auto const input_region = t->surface()->state().input;
     auto const localPoint = pos - win::frame_to_client_pos(t, t->pos());
 
     return input_region.contains(localPoint);

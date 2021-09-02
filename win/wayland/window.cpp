@@ -391,7 +391,7 @@ bool window::isShown() const
     if (control && control->minimized()) {
         return false;
     }
-    return surface()->buffer().get();
+    return surface()->state().buffer.get();
 }
 
 bool window::isHiddenInternal() const
@@ -401,7 +401,7 @@ bool window::isHiddenInternal() const
             return false;
         }
     }
-    return hidden || !surface()->buffer();
+    return hidden || !surface()->state().buffer;
 }
 
 void window::hideClient(bool hide)
@@ -853,13 +853,13 @@ void window::unmap()
 
 void window::handle_commit()
 {
-    if (!surface()->buffer()) {
+    if (!surface()->state().buffer) {
         unmap();
         return;
     }
 
-    if (!surface()->damage().isEmpty()) {
-        addDamage(surface()->damage());
+    if (!surface()->state().damage.isEmpty()) {
+        addDamage(surface()->state().damage);
     }
 
     if (toplevel || popup) {
@@ -879,7 +879,7 @@ void window::handle_commit()
         do_set_geometry(QRect(pos(), cur_size));
     }
 
-    setDepth((surface()->buffer()->hasAlphaChannel() && !is_desktop(this)) ? 32 : 24);
+    setDepth((surface()->state().buffer->hasAlphaChannel() && !is_desktop(this)) ? 32 : 24);
     map();
 }
 

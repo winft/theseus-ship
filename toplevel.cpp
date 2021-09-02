@@ -683,7 +683,7 @@ qreal Toplevel::bufferScale() const
     if (m_remnant) {
         return m_remnant->buffer_scale;
     }
-    return surface() ? surface()->scale() : 1;
+    return surface() ? surface()->state().scale : 1;
 }
 
 bool Toplevel::wantsShadowToBeRendered() const
@@ -789,8 +789,8 @@ void Toplevel::setSurface(Wrapland::Server::Surface *surface)
 
     if (surface->client() == waylandServer()->xWaylandConnection()) {
         connect(m_surface, &Surface::committed, this, [this]{
-            if (!m_surface->damage().isEmpty()) {
-                addDamage(m_surface->damage());
+            if (!m_surface->state().damage.isEmpty()) {
+                addDamage(m_surface->state().damage);
             }
         });
     }

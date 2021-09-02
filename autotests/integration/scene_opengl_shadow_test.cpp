@@ -692,7 +692,7 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
     QVERIFY(shadowChangedSpy.wait());
 
     // Check that we got right shadow from the client.
-    QPointer<Wrapland::Server::Shadow> shadowIface = client->surface()->shadow();
+    QPointer<Wrapland::Server::Shadow> shadowIface = client->surface()->state().shadow;
     QVERIFY(!shadowIface.isNull());
     QCOMPARE(shadowIface->offset().left(), 128.0);
     QCOMPARE(shadowIface->offset().top(), 128.0);
@@ -778,7 +778,7 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
     QVERIFY(shadowChangedSpy.wait());
 
     // Check that we got right shadow from the client.
-    QPointer<Wrapland::Server::Shadow> shadowIface = client->surface()->shadow();
+    QPointer<Wrapland::Server::Shadow> shadowIface = client->surface()->state().shadow;
     QVERIFY(!shadowIface.isNull());
     QCOMPARE(shadowIface->offset().left(), 256.0);
     QCOMPARE(shadowIface->offset().top(), 256.0);

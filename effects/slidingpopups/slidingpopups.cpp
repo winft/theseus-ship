@@ -365,12 +365,12 @@ void SlidingPopupsEffect::slotWaylandSlideOnShowChanged(EffectWindow* w)
         return;
     }
 
-    if (surf->slideOnShowHide()) {
+    if (auto& slide = surf->state().slide) {
         AnimationData &animData = m_animationsData[w];
 
-        animData.offset = surf->slideOnShowHide()->offset();
+        animData.offset = slide->offset();
 
-        switch (surf->slideOnShowHide()->location()) {
+        switch (slide->location()) {
         case Wrapland::Server::Slide::Location::Top:
             animData.location = Location::Top;
             break;

@@ -30,7 +30,7 @@ void assign_subsurface_role(Win* win)
 inline void restack_subsurfaces(Toplevel* window)
 {
     auto subsurface_stacker = [&window](std::vector<Toplevel*>& children) {
-        auto const& subsurfaces = window->surface()->childSubsurfaces();
+        auto const& subsurfaces = window->surface()->state().children;
         std::vector<Toplevel*> stacking;
 
         for (auto const& subsurface : subsurfaces) {
