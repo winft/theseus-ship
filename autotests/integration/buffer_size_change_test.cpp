@@ -108,8 +108,8 @@ void BufferSizeChangeTest::testShmBufferSizeChangeOnSubSurface()
     Test::render(surface, QSize(20, 10), Qt::red);
     parentSurface->commit(Surface::CommitFlag::None);
 
-    QVERIFY(damagedParentSpy.count() == 1 || damagedParentSpy.wait());
-    QCOMPARE(damagedParentSpy.count(), 1);
+    QVERIFY(damagedParentSpy.wait());
+    QTRY_COMPARE(damagedParentSpy.count(), 2);
 
     // add a second repaint
     render::compositor::self()->addRepaintFull();

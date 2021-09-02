@@ -858,6 +858,10 @@ void window::handle_commit()
         return;
     }
 
+    if (!surface()->damage().isEmpty()) {
+        addDamage(surface()->damage());
+    }
+
     if (toplevel || popup) {
         apply_pending_geometry();
 

@@ -787,7 +787,13 @@ void Toplevel::setSurface(Wrapland::Server::Surface *surface)
 
     m_surface = surface;
 
-    connect(m_surface, &Surface::damaged, this, &Toplevel::addDamage);
+    if (surface->client() == waylandServer()->xWaylandConnection()) {
+        connect(m_surface, &Surface::committed, this, [this]{
+            if (!m_surface->damage().isEmpty()) {
+                addDamage(m_surface->damage());
+            }
+        });
+    }
     connect(m_surface, &Surface::sizeChanged, this, [this]{
         discardWindowPixmap();
         if (m_surface->client() == waylandServer()->xWaylandConnection()) {
@@ -833,8 +839,9 @@ void Toplevel::updateClientOutputs()
     surface()->setOutputs(clientOutputs);
 }
 
-// TODO(romangg): This function is only called on Wayland and the damage translation is not the
-//                usual way. Unify that.
+// TODO(romangg): * This function is only called on Wayland and the damage translation is not the
+//                  usual way. Unify that.
+//                * Should we return early on the added damage being empty?
 void Toplevel::addDamage(const QRegion &damage)
 {
     auto const render_region = win::render_geometry(this);
