@@ -206,8 +206,10 @@ void SlidingPopupsEffect::slotWindowAdded(EffectWindow *w)
     //Wayland
     if (auto surf = w->surface()) {
         slotWaylandSlideOnShowChanged(w);
-        connect(surf, &Wrapland::Server::Surface::slideOnShowHideChanged, this, [this, surf] {
-            slotWaylandSlideOnShowChanged(effects->findWindow(surf));
+        connect(surf, &Wrapland::Server::Surface::committed, this, [this, surf] {
+            if (surf->state().updates & Wrapland::Server::surface_change::slide) {
+                slotWaylandSlideOnShowChanged(effects->findWindow(surf));
+            }
         });
     }
 

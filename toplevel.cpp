@@ -793,17 +793,17 @@ void Toplevel::setSurface(Wrapland::Server::Surface *surface)
                 addDamage(m_surface->state().damage);
             }
         });
+        connect(m_surface, &Surface::committed, this, [this]{
+            if (m_surface->state().updates & Wrapland::Server::surface_change::size) {
+                discardWindowPixmap();
+                // Quads for Xwayland clients need for size emulation.
+                // Also apparently needed for unmanaged Xwayland clients (compare Kate's open-file
+                // dialog when type-forward list is changing size).
+                // TODO(romangg): can this be put in a less hot path?
+                discard_quads();
+            }
+        });
     }
-    connect(m_surface, &Surface::sizeChanged, this, [this]{
-        discardWindowPixmap();
-        if (m_surface->client() == waylandServer()->xWaylandConnection()) {
-            // Quads for Xwayland clients need for size emulation.
-            // Also apparently needed for unmanaged Xwayland clients (compare Kate's open-file
-            // dialog when type-forward list is changing size).
-            // TODO(romangg): can this be put in a less hot path?
-            discard_quads();
-        }
-    });
 
     connect(m_surface, &Surface::subsurfaceTreeChanged, this,
         [this] {

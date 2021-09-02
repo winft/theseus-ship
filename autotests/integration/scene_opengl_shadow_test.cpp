@@ -685,14 +685,15 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
 
     clientShadow->setOffsets(QMarginsF(128, 128, 128, 128));
 
-    QSignalSpy shadowChangedSpy(client->surface(), &Wrapland::Server::Surface::shadowChanged);
-    QVERIFY(shadowChangedSpy.isValid());
+    QSignalSpy commit_spy(client->surface(), &Wrapland::Server::Surface::committed);
+    QVERIFY(commit_spy.isValid());
     clientShadow->commit();
     surface->commit(Surface::CommitFlag::None);
-    QVERIFY(shadowChangedSpy.wait());
+    QVERIFY(commit_spy.wait());
 
     // Check that we got right shadow from the client.
     QPointer<Wrapland::Server::Shadow> shadowIface = client->surface()->state().shadow;
+    QVERIFY(client->surface()->state().updates & Wrapland::Server::surface_change::shadow);
     QVERIFY(!shadowIface.isNull());
     QCOMPARE(shadowIface->offset().left(), 128.0);
     QCOMPARE(shadowIface->offset().top(), 128.0);
@@ -771,11 +772,11 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
 
     clientShadow->setOffsets(QMarginsF(256, 256, 256, 0));
 
-    QSignalSpy shadowChangedSpy(client->surface(), &Wrapland::Server::Surface::shadowChanged);
-    QVERIFY(shadowChangedSpy.isValid());
+    QSignalSpy commit_spy(client->surface(), &Wrapland::Server::Surface::committed);
+    QVERIFY(commit_spy.isValid());
     clientShadow->commit();
     surface->commit(Surface::CommitFlag::None);
-    QVERIFY(shadowChangedSpy.wait());
+    QVERIFY(commit_spy.wait());
 
     // Check that we got right shadow from the client.
     QPointer<Wrapland::Server::Shadow> shadowIface = client->surface()->state().shadow;

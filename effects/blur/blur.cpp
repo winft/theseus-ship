@@ -319,8 +319,8 @@ void BlurEffect::slotWindowAdded(EffectWindow *w)
     auto surf = w->surface();
 
     if (surf) {
-        windowBlurChangedConnections[w] = connect(surf, &Wrapland::Server::Surface::blurChanged, this, [this, w] () {
-            if (w) {
+        windowBlurChangedConnections[w] = connect(surf, &Wrapland::Server::Surface::committed, this, [this, w, surf] () {
+            if (w && surf->state().updates & Wrapland::Server::surface_change::blur) {
                 updateBlurRegion(w);
             }
         });

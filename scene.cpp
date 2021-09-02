@@ -408,7 +408,11 @@ void Scene::addToplevel(Toplevel *c)
     connect(c, &Toplevel::windowClosed, this, &Scene::windowClosed);
     //A change of scale won't affect the geometry in compositor co-ordinates, but will affect the window quads.
     if (c->surface()) {
-        connect(c->surface(), &Wrapland::Server::Surface::scaleChanged, this, std::bind(&Scene::windowGeometryShapeChanged, this, c));
+        connect(c->surface(), &Wrapland::Server::Surface::committed, this, [this, c] {
+            if (c->surface()->state().updates & Wrapland::Server::surface_change::scale) {
+                windowGeometryShapeChanged(c);
+            }
+        });
     }
     connect(c, &Toplevel::screenScaleChanged, this,
         [this, c] {

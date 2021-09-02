@@ -177,9 +177,8 @@ void ContrastEffect::slotWindowAdded(EffectWindow *w)
     auto surf = w->surface();
 
     if (surf) {
-        m_contrastChangedConnections[w] = connect(surf, &Wrapland::Server::Surface::contrastChanged, this, [this, w] () {
-
-            if (w) {
+        m_contrastChangedConnections[w] = connect(surf, &Wrapland::Server::Surface::committed, this, [this, w, surf] () {
+            if (w && surf->state().updates & Wrapland::Server::surface_change::contrast) {
                 updateContrastRegion(w);
             }
         });
