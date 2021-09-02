@@ -9,6 +9,7 @@
 #include "main.h"
 #include "platform.h"
 #include "toplevel.h"
+#include "utils.h"
 #include "wayland_server.h"
 
 #include "render/wayland/output.h"
@@ -88,20 +89,7 @@ void presentation::lock(render::wayland::output* output, std::deque<Toplevel*> c
         }
 
         // Check if this window should be locked to the output. We use maximum coverage for that.
-        auto const enabled_outputs = kwinApp()->platform->enabledOutputs();
-        auto max_out = enabled_outputs[0];
-        int max_area = 0;
-
-        auto const frame_geo = win->frameGeometry();
-        for (auto out : enabled_outputs) {
-            auto const intersect_geo = frame_geo.intersected(out->geometry());
-            auto const area = intersect_geo.width() * intersect_geo.height();
-            if (area > max_area) {
-                max_area = area;
-                max_out = out;
-            }
-        }
-
+        auto max_out = max_coverage_output(win);
         if (max_out != output->base) {
             // Window not mostly on this output. We lock it to max_out when it presents.
             continue;
