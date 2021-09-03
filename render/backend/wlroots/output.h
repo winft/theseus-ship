@@ -26,7 +26,7 @@ private:
     event_receiver<output> destroy_rec;
     event_receiver<output> present_rec;
 
-    bool enable_native(bool enable);
+    bool disable_native();
 
 public:
     wlr_output* native;

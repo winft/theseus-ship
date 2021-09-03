@@ -37,45 +37,45 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
     }
 }
 
-bool output::enable_native(bool enable)
+bool output::disable_native()
 {
-    wlr_output_enable(native, enable);
+    wlr_output_enable(native, false);
 
     if (!wlr_output_test(native)) {
-        qCWarning(KWIN_WL) << "Failed test commit on" << (enable ? "enabling." : "disabling.");
+        qCWarning(KWIN_WL) << "Failed test commit on disabling output.";
         // Failed test commit. Switch enabling back.
-        wlr_output_enable(native, !enable);
+        wlr_output_enable(native, true);
         return false;
     }
 
-    if (enable) {
-        compositor::self()->addRepaint(geometry());
-    } else {
-        auto compositor = static_cast<wayland::compositor*>(compositor::self());
-        auto render_output = compositor->outputs.at(this).get();
-        render_output->delay_timer.stop();
-        wlr_output_commit(native);
-    }
+    auto compositor = static_cast<wayland::compositor*>(compositor::self());
+    auto render_output = compositor->outputs.at(this).get();
+    render_output->delay_timer.stop();
+    render_output->frame_timer.stop();
+    wlr_output_commit(native);
+
     return true;
 }
 
 void output::updateEnablement(bool enable)
 {
-    enable_native(enable);
+    if (!enable) {
+        disable_native();
+    }
     back->enableOutput(this, enable);
+    if (enable) {
+        compositor::self()->addRepaint(geometry());
+    }
 }
 
 void output::updateDpms(DpmsMode mode)
 {
     auto set_on = mode == DpmsMode::On;
 
-    if (!enable_native(set_on)) {
-        return;
-    }
-
     if (set_on) {
+        compositor::self()->addRepaint(geometry());
         dpmsSetOn();
-    } else {
+    } else if (disable_native()) {
         dpmsSetOff(mode);
     }
 }

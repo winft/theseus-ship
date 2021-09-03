@@ -133,6 +133,7 @@ public:
 
     void forceGeometry(const QRectF &geo);
 
+    bool dpmsOn() const override;
     virtual uint64_t msc() const;
 
     QSize orientateSize(const QSize &size) const;
@@ -173,7 +174,6 @@ protected:
     void setTransform(Transform transform);
 
     DpmsMode dpmsMode() const;
-    bool dpmsOn() const override;
     void dpmsSetOn();
     void dpmsSetOff(DpmsMode mode);
 

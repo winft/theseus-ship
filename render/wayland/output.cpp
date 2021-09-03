@@ -279,7 +279,7 @@ void output::update_paint_periods(int64_t duration)
 
 void output::set_delay_timer()
 {
-    if (delay_timer.isActive() || swap_pending) {
+    if (delay_timer.isActive() || swap_pending || !base->dpmsOn()) {
         // Abort since we will composite when the timer runs out or the timer will only get
         // started at buffer swap.
         return;
@@ -297,7 +297,7 @@ void output::set_delay_timer()
 
 void output::request_frame(Toplevel* window)
 {
-    if (swap_pending || delay_timer.isActive() || frame_timer.isActive()) {
+    if (swap_pending || delay_timer.isActive() || frame_timer.isActive() || !base->dpmsOn()) {
         // Frame will be received when timer runs out.
         return;
     }
