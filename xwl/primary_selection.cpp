@@ -23,9 +23,14 @@ primary_selection::primary_selection(xcb_atom_t atom,
                      &Wrapland::Server::Seat::primarySelectionChanged,
                      data.qobject.get(),
                      [this] { handle_wl_selection_change(this); });
+
+    QObject::connect(data.srv_device,
+                     &srv_data_device::selectionChanged,
+                     data.qobject.get(),
+                     [this](auto srv_src) { get_selection_setter()(srv_src); });
 }
 
-primary_selection::srv_data_device* primary_selection::get_current_device() const
+primary_selection::srv_data_source* primary_selection::get_current_source() const
 {
     return waylandServer()->seat()->primarySelection();
 }
@@ -36,10 +41,10 @@ primary_selection::get_internal_device_manager() const
     return waylandServer()->internalPrimarySelectionDeviceManager();
 }
 
-std::function<void(primary_selection::srv_data_device*)>
+std::function<void(primary_selection::srv_data_source*)>
 primary_selection::get_selection_setter() const
 {
-    return [](srv_data_device* dev) { waylandServer()->seat()->setPrimarySelection(dev); };
+    return [](srv_data_source* src) { waylandServer()->seat()->setPrimarySelection(src); };
 }
 
 }

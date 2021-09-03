@@ -58,9 +58,14 @@ Clipboard::Clipboard(xcb_atom_t atom,
                      &Wrapland::Server::Seat::selectionChanged,
                      data.qobject.get(),
                      [this] { handle_wl_selection_change(this); });
+
+    QObject::connect(data.srv_device,
+                     &srv_data_device::selectionChanged,
+                     data.qobject.get(),
+                     [this](auto srv_src) { get_selection_setter()(srv_src); });
 }
 
-Clipboard::srv_data_device* Clipboard::get_current_device() const
+Clipboard::srv_data_source* Clipboard::get_current_source() const
 {
     return waylandServer()->seat()->selection();
 }
@@ -70,9 +75,9 @@ Wrapland::Client::DataDeviceManager* Clipboard::get_internal_device_manager() co
     return waylandServer()->internalDataDeviceManager();
 }
 
-std::function<void(Clipboard::srv_data_device*)> Clipboard::get_selection_setter() const
+std::function<void(Clipboard::srv_data_source*)> Clipboard::get_selection_setter() const
 {
-    return [](srv_data_device* dev) { waylandServer()->seat()->setSelection(dev); };
+    return [](srv_data_source* src) { waylandServer()->seat()->setSelection(src); };
 }
 
 } // namespace Xwl

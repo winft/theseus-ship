@@ -31,9 +31,9 @@ public:
                       clt_data_device* clt_dev,
                       x11_data const& x11);
 
-    srv_data_device* get_current_device() const;
+    srv_data_source* get_current_source() const;
     Wrapland::Client::PrimarySelectionDeviceManager* get_internal_device_manager() const;
-    std::function<void(srv_data_device*)> get_selection_setter() const;
+    std::function<void(srv_data_source*)> get_selection_setter() const;
 
 private:
     Q_DISABLE_COPY(primary_selection)

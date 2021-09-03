@@ -41,22 +41,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::Xwl
 {
 
-template<typename DeviceIface, typename SourceIface>
-WlSource<DeviceIface, SourceIface>::WlSource(DeviceIface* di)
-    : m_di(di)
-    , m_qobject(new qWlSource)
+template<typename SourceIface>
+WlSource<SourceIface>::WlSource(SourceIface* si)
+    : m_qobject(new qWlSource)
 {
-    Q_ASSERT(di);
+    assert(si);
+    setSourceIface(si);
 }
 
-template<typename DeviceIface, typename SourceIface>
-WlSource<DeviceIface, SourceIface>::~WlSource()
+template<typename SourceIface>
+WlSource<SourceIface>::~WlSource()
 {
     delete m_qobject;
 }
 
-template<typename DeviceIface, typename SourceIface>
-void WlSource<DeviceIface, SourceIface>::setSourceIface(SourceIface* si)
+template<typename SourceIface>
+void WlSource<SourceIface>::setSourceIface(SourceIface* si)
 {
     if (m_si == si) {
         return;
@@ -69,15 +69,14 @@ void WlSource<DeviceIface, SourceIface>::setSourceIface(SourceIface* si)
     m_si = si;
 }
 
-template<typename DeviceIface, typename SourceIface>
-void WlSource<DeviceIface, SourceIface>::receiveOffer(std::string const& mime)
+template<typename SourceIface>
+void WlSource<SourceIface>::receiveOffer(std::string const& mime)
 {
     m_offers << QString::fromStdString(mime);
 }
 
-template<typename DeviceIface, typename SourceIface>
-bool WlSource<DeviceIface, SourceIface>::handleSelectionRequest(
-    xcb_selection_request_event_t* event)
+template<typename SourceIface>
+bool WlSource<SourceIface>::handleSelectionRequest(xcb_selection_request_event_t* event)
 {
     if (event->target == atoms->targets) {
         sendTargets(event);
@@ -94,8 +93,8 @@ bool WlSource<DeviceIface, SourceIface>::handleSelectionRequest(
     return true;
 }
 
-template<typename DeviceIface, typename SourceIface>
-void WlSource<DeviceIface, SourceIface>::sendTargets(xcb_selection_request_event_t* event)
+template<typename SourceIface>
+void WlSource<SourceIface>::sendTargets(xcb_selection_request_event_t* event)
 {
     QVector<xcb_atom_t> targets;
     targets.resize(m_offers.size() + 2);
@@ -119,8 +118,8 @@ void WlSource<DeviceIface, SourceIface>::sendTargets(xcb_selection_request_event
     sendSelectionNotify(event, true);
 }
 
-template<typename DeviceIface, typename SourceIface>
-void WlSource<DeviceIface, SourceIface>::sendTimestamp(xcb_selection_request_event_t* event)
+template<typename SourceIface>
+void WlSource<SourceIface>::sendTimestamp(xcb_selection_request_event_t* event)
 {
     const xcb_timestamp_t time = timestamp();
     xcb_change_property(kwinApp()->x11Connection(),
@@ -135,11 +134,11 @@ void WlSource<DeviceIface, SourceIface>::sendTimestamp(xcb_selection_request_eve
     sendSelectionNotify(event, true);
 }
 
-template<typename DeviceIface, typename SourceIface>
-bool WlSource<DeviceIface, SourceIface>::checkStartTransfer(xcb_selection_request_event_t* event)
+template<typename SourceIface>
+bool WlSource<SourceIface>::checkStartTransfer(xcb_selection_request_event_t* event)
 {
     // check interfaces available
-    if (!m_di || !m_si) {
+    if (!m_si) {
         return false;
     }
 
@@ -319,9 +318,8 @@ void X11Source<DataSource>::startTransfer(const QString& mimeName, qint32 fd)
 }
 
 // Templates specializations
-template class WlSource<Wrapland::Server::DataDevice, Wrapland::Server::DataSource>;
+template class WlSource<Wrapland::Server::DataSource>;
 template class X11Source<Wrapland::Client::DataSource>;
-template class WlSource<Wrapland::Server::PrimarySelectionDevice,
-                        Wrapland::Server::PrimarySelectionSource>;
+template class WlSource<Wrapland::Server::PrimarySelectionSource>;
 template class X11Source<Wrapland::Client::PrimarySelectionSource>;
 }
