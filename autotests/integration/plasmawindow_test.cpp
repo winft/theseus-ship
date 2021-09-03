@@ -33,8 +33,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmawindowmanagement.h>
 #include <Wrapland/Client/surface.h>
+#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
-// screenlocker
+
 #include <KScreenLocker/KsldApp>
 
 #include <QPainter>
@@ -157,13 +158,13 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     // verify that it gets the keyboard focus
     if (!client->surface()) {
         // we don't have a surface yet, so focused keyboard surface if set is not ours
-        QVERIFY(!waylandServer()->seat()->focusedKeyboardSurface());
+        QVERIFY(!waylandServer()->seat()->keyboards().get_focus().surface);
         QSignalSpy surfaceChangedSpy(client, &Toplevel::surfaceChanged);
         QVERIFY(surfaceChangedSpy.isValid());
         QVERIFY(surfaceChangedSpy.wait());
     }
     QVERIFY(client->surface());
-    QCOMPARE(waylandServer()->seat()->focusedKeyboardSurface(), client->surface());
+    QCOMPARE(waylandServer()->seat()->keyboards().get_focus().surface, client->surface());
 
     // now that should also give it to us on client side
     QVERIFY(plasmaWindowCreatedSpy.wait());

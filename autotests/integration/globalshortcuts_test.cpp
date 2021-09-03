@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/window.h"
 
 #include <Wrapland/Client/surface.h>
-
+#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 
 #include <KGlobalAccel>
@@ -215,7 +215,7 @@ void GlobalShortcutsTest::testRepeatedTrigger()
     kwinApp()->input->redirect->registerShortcut(Qt::Key_Percent, action.get());
 
     // we need to configure the key repeat first. It is only enabled on libinput
-    waylandServer()->seat()->setKeyRepeatInfo(25, 300);
+    waylandServer()->seat()->keyboards().set_repeat_info(25, 300);
 
     // press shift+5
     quint32 timestamp = 0;

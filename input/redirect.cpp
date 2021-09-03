@@ -51,6 +51,7 @@
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
+#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 
@@ -288,7 +289,9 @@ void redirect::reconfigure()
     const bool enabled
         = repeatMode == QLatin1String("accent") || repeatMode == QLatin1String("repeat");
 
-    waylandServer()->seat()->setKeyRepeatInfo(enabled ? rate : 0, delay);
+    if (waylandServer()->seat()->hasKeyboard()) {
+        waylandServer()->seat()->keyboards().set_repeat_info(enabled ? rate : 0, delay);
+    }
 }
 
 static Wrapland::Server::Seat* findSeat()
@@ -374,8 +377,9 @@ void redirect::set_platform(input::platform* platform)
                 &keyboard::modifiers_changed,
                 keyboard_red,
                 &keyboard_redirect::process_modifiers);
-        if (auto seat = findSeat()) {
+        if (auto seat = findSeat(); seat && !seat->hasKeyboard()) {
             seat->setHasKeyboard(true);
+            reconfigure();
         }
     });
 

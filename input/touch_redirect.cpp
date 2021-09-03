@@ -33,11 +33,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <workspace.h>
 
 #include <KDecoration2/Decoration>
-// Wrapland
+
+#include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/seat.h>
-// screenlocker
+#include <Wrapland/Server/touch_pool.h>
+
 #include <KScreenLocker/KsldApp>
-// Qt
+
 #include <QHoverEvent>
 #include <QWindow>
 
@@ -60,6 +62,9 @@ void touch_redirect::init()
     if (waylandServer()->hasScreenLockerIntegration()) {
         connect(
             ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
+                if (!inited() || !waylandServer()->seat()->hasTouch()) {
+                    return;
+                }
                 cancel();
                 // position doesn't matter
                 update();
@@ -78,7 +83,7 @@ bool touch_redirect::focusUpdatesBlocked()
         return true;
     }
     m_windowUpdatedInCycle = true;
-    if (waylandServer()->seat()->isDragTouch()) {
+    if (waylandServer()->seat()->drags().is_touch_drag()) {
         return true;
     }
     if (m_touches > 1) {
@@ -113,26 +118,26 @@ void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     auto seat = waylandServer()->seat();
     if (!focusNow || !focusNow->surface() || decoration()) {
         // no new surface or internal window or on decoration -> cleanup
-        seat->setFocusedTouchSurface(nullptr);
+        seat->touches().set_focused_surface(nullptr);
         return;
     }
 
     // TODO: invalidate pointer focus?
 
     // FIXME: add input transformation API to Wrapland::Server::Seat for touch input
-    seat->setFocusedTouchSurface(focusNow->surface(),
-                                 -1 * focusNow->input_transform().map(focusNow->pos())
-                                     + focusNow->pos());
+    seat->touches().set_focused_surface(focusNow->surface(),
+                                        -1 * focusNow->input_transform().map(focusNow->pos())
+                                            + focusNow->pos());
     m_focusGeometryConnection = connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
         if (!focus()) {
             return;
         }
         auto seat = waylandServer()->seat();
-        if (focus()->surface() != seat->focusedTouchSurface()) {
+        if (focus()->surface() != seat->touches().get_focus().surface) {
             return;
         }
-        seat->setFocusedTouchSurfacePosition(-1 * focus()->input_transform().map(focus()->pos())
-                                             + focus()->pos());
+        seat->touches().set_focused_surface_position(
+            -1 * focus()->input_transform().map(focus()->pos()) + focus()->pos());
     });
 }
 
@@ -272,7 +277,7 @@ void touch_redirect::cancel()
     if (!inited()) {
         return;
     }
-    waylandServer()->seat()->cancelTouchSequence();
+    waylandServer()->seat()->touches().cancel_sequence();
     m_idMapper.clear();
 }
 
@@ -281,7 +286,7 @@ void touch_redirect::frame()
     if (!inited()) {
         return;
     }
-    waylandServer()->seat()->touchFrame();
+    waylandServer()->seat()->touches().touch_frame();
 }
 
 }

@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/touch.h>
 
+#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 
 #include <KGlobalAccel>
@@ -567,7 +568,7 @@ void LockScreenTest::testEffectsKeyboardAutorepeat()
     effects->grabKeyboard(effect.get());
 
     // We need to configure the key repeat first. It is only enabled on libinput.
-    waylandServer()->seat()->setKeyRepeatInfo(25, 300);
+    waylandServer()->seat()->keyboards().set_repeat_info(25, 300);
 
     quint32 timestamp = 1;
 

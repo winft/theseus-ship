@@ -14,8 +14,8 @@
 #include "win/util.h"
 #include "win/wayland/window.h"
 
-#include <QMouseEvent>
 #include <Wrapland/Server/keyboard.h>
+#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 
 namespace KWin::input
@@ -103,10 +103,10 @@ bool popup_filter::key(key_event const& event)
     seat->setFocusedKeyboardSurface(last->surface());
     switch (event.state) {
     case button_state::pressed:
-        seat->keyPressed(event.keycode);
+        seat->keyboards().key_pressed(event.keycode);
         break;
     case button_state::released:
-        seat->keyReleased(event.keycode);
+        seat->keyboards().key_released(event.keycode);
         break;
     default:
         break;

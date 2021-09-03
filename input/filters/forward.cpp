@@ -16,7 +16,9 @@
 #include "workspace.h"
 #include <input/pointer_redirect.h>
 
+#include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/touch_pool.h>
 
 namespace KWin::input
 {
@@ -40,10 +42,10 @@ bool forward_filter::button(button_event const& event)
 
     switch (event.state) {
     case button_state::pressed:
-        seat->pointerButtonPressed(event.key);
+        seat->pointers().button_pressed(event.key);
         break;
     case button_state::released:
-        seat->pointerButtonReleased(event.key);
+        seat->pointers().button_released(event.key);
         break;
     }
 
@@ -55,11 +57,11 @@ bool forward_filter::motion(motion_event const& event)
     auto seat = waylandServer()->seat();
     seat->setTimestamp(event.base.time_msec);
 
-    seat->setPointerPos(kwinApp()->input->redirect->pointer()->pos());
+    seat->pointers().set_position(kwinApp()->input->redirect->pointer()->pos());
     if (!event.delta.isNull()) {
-        seat->relativePointerMotion(QSizeF(event.delta.x(), event.delta.y()),
-                                    QSizeF(event.unaccel_delta.x(), event.unaccel_delta.y()),
-                                    event.base.time_msec);
+        seat->pointers().relative_motion(QSizeF(event.delta.x(), event.delta.y()),
+                                         QSizeF(event.unaccel_delta.x(), event.unaccel_delta.y()),
+                                         event.base.time_msec);
     }
 
     return true;
@@ -72,7 +74,7 @@ bool forward_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
     }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
-    kwinApp()->input->redirect->touch()->insertId(id, seat->touchDown(pos));
+    kwinApp()->input->redirect->touch()->insertId(id, seat->touches().touch_down(pos));
     return true;
 }
 bool forward_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
@@ -84,7 +86,7 @@ bool forward_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
     seat->setTimestamp(time);
     const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
     if (wraplandId != -1) {
-        seat->touchMove(wraplandId, pos);
+        seat->touches().touch_move(wraplandId, pos);
     }
     return true;
 }
@@ -97,7 +99,7 @@ bool forward_filter::touchUp(qint32 id, quint32 time)
     seat->setTimestamp(time);
     const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
     if (wraplandId != -1) {
-        seat->touchUp(wraplandId);
+        seat->touches().touch_up(wraplandId);
         kwinApp()->input->redirect->touch()->removeId(id);
     }
     return true;
@@ -134,7 +136,7 @@ bool forward_filter::axis(axis_event const& event)
         ? Qt::Orientation::Horizontal
         : Qt::Orientation::Vertical;
 
-    seat->pointerAxisV5(orientation, event.delta, event.delta_discrete, source);
+    seat->pointers().send_axis(orientation, event.delta, event.delta_discrete, source);
     return true;
 }
 
@@ -145,7 +147,7 @@ bool forward_filter::pinchGestureBegin(int fingerCount, quint32 time)
     }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
-    seat->startPointerPinchGesture(fingerCount);
+    seat->pointers().start_pinch_gesture(fingerCount);
     return true;
 }
 
@@ -159,7 +161,7 @@ bool forward_filter::pinchGestureUpdate(qreal scale,
     }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
-    seat->updatePointerPinchGesture(delta, scale, angleDelta);
+    seat->pointers().update_pinch_gesture(delta, scale, angleDelta);
     return true;
 }
 
@@ -170,7 +172,7 @@ bool forward_filter::pinchGestureEnd(quint32 time)
     }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
-    seat->endPointerPinchGesture();
+    seat->pointers().end_pinch_gesture();
     return true;
 }
 
@@ -181,7 +183,7 @@ bool forward_filter::pinchGestureCancelled(quint32 time)
     }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
-    seat->cancelPointerPinchGesture();
+    seat->pointers().cancel_pinch_gesture();
     return true;
 }
 
@@ -192,7 +194,7 @@ bool forward_filter::swipeGestureBegin(int fingerCount, quint32 time)
     }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
-    seat->startPointerSwipeGesture(fingerCount);
+    seat->pointers().start_swipe_gesture(fingerCount);
     return true;
 }
 
@@ -203,7 +205,7 @@ bool forward_filter::swipeGestureUpdate(const QSizeF& delta, quint32 time)
     }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
-    seat->updatePointerSwipeGesture(delta);
+    seat->pointers().update_swipe_gesture(delta);
     return true;
 }
 
@@ -214,7 +216,7 @@ bool forward_filter::swipeGestureEnd(quint32 time)
     }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
-    seat->endPointerSwipeGesture();
+    seat->pointers().end_swipe_gesture();
     return true;
 }
 
@@ -225,7 +227,7 @@ bool forward_filter::swipeGestureCancelled(quint32 time)
     }
     auto seat = waylandServer()->seat();
     seat->setTimestamp(time);
-    seat->cancelPointerSwipeGesture();
+    seat->pointers().cancel_swipe_gesture();
     return true;
 }
 

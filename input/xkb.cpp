@@ -12,6 +12,7 @@
 
 #include <KConfigGroup>
 
+#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 
 #include <QTemporaryFile>
@@ -324,7 +325,7 @@ void xkb::createKeymapFile()
         return;
     }
 
-    m_seat->setKeymap(keymapString.data());
+    m_seat->keyboards().set_keymap(keymapString.data());
 }
 
 void xkb::updateModifiers(uint32_t modsDepressed,
@@ -420,10 +421,10 @@ void xkb::forwardModifiers()
     if (!m_seat) {
         return;
     }
-    m_seat->updateKeyboardModifiers(m_modifierState.depressed,
-                                    m_modifierState.latched,
-                                    m_modifierState.locked,
-                                    m_currentLayout);
+    m_seat->keyboards().update_modifiers(m_modifierState.depressed,
+                                         m_modifierState.latched,
+                                         m_modifierState.locked,
+                                         m_currentLayout);
 }
 
 QString xkb::layoutName(xkb_layout_index_t index) const

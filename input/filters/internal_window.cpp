@@ -19,6 +19,7 @@
 #include <input/qt_event.h>
 
 #include <QWindow>
+#include <Wrapland/Server/touch_pool.h>
 
 namespace KWin::input
 {
@@ -196,7 +197,7 @@ bool internal_window_filter::key_repeat(key_event const& event)
 bool internal_window_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     auto seat = waylandServer()->seat();
-    if (seat->isTouchSequence()) {
+    if (seat->touches().is_in_progress()) {
         // something else is getting the events
         return false;
     }

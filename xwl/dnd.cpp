@@ -34,6 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/compositor.h>
 #include <Wrapland/Server/data_device.h>
+#include <Wrapland/Server/drag_pool.h>
+#include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 
@@ -61,7 +63,7 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
     }
     create_x11_source(sel, nullptr);
     auto const seat = waylandServer()->seat();
-    auto originSurface = seat->focusedPointerSurface();
+    auto originSurface = seat->pointers().get_focus().surface;
     if (!originSurface) {
         return;
     }
@@ -70,7 +72,7 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
         // TODO: can we make this stronger (window id comparison)?
         return;
     }
-    if (!seat->isPointerButtonPressed(Qt::LeftButton)) {
+    if (!seat->pointers().is_button_pressed(Qt::LeftButton)) {
         // we only allow drags to be started on (left) pointer button being
         // pressed for now
         return;
@@ -190,7 +192,7 @@ DragEventReply Dnd::dragMoveFilter(Toplevel* target, const QPoint& pos)
 
 void Dnd::startDrag()
 {
-    auto srv_dev = waylandServer()->seat()->dragSource();
+    auto srv_dev = waylandServer()->seat()->drags().get_source().dev;
     if (srv_dev == data.srv_device) {
         // X to Wl drag, started by us, is in progress.
         Q_ASSERT(m_currentDrag);

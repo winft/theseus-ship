@@ -23,10 +23,13 @@
 #include <win/input.h>
 #include <workspace.h>
 
+#include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer.h>
 #include <Wrapland/Server/pointer_constraints_v1.h>
+#include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
+#include <Wrapland/Server/touch_pool.h>
 
 #include <KDecoration2/Decoration>
 #include <KScreenLocker/KsldApp>
@@ -73,8 +76,8 @@ void pointer_redirect::init()
     if (waylandServer()->hasScreenLockerIntegration()) {
         connect(
             ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
-                waylandServer()->seat()->cancelPointerPinchGesture();
-                waylandServer()->seat()->cancelPointerSwipeGesture();
+                waylandServer()->seat()->pointers().cancel_pinch_gesture();
+                waylandServer()->seat()->pointers().cancel_swipe_gesture();
                 update();
             });
     }
@@ -82,7 +85,7 @@ void pointer_redirect::init()
     connect(waylandServer(), &QObject::destroyed, this, [this] { setInited(false); });
     connect(waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this, [this] {
         // need to force a focused pointer change
-        waylandServer()->seat()->setFocusedPointerSurface(nullptr);
+        waylandServer()->seat()->pointers().set_focused_surface(nullptr);
         setFocus(nullptr);
         update();
     });
@@ -119,7 +122,7 @@ void pointer_redirect::updateOnStartMoveResize()
     breakPointerConstraints(focus() ? focus()->surface() : nullptr);
     disconnectPointerConstraintsConnection();
     setFocus(nullptr);
-    waylandServer()->seat()->setFocusedPointerSurface(nullptr);
+    waylandServer()->seat()->pointers().set_focused_surface(nullptr);
 }
 
 void pointer_redirect::updateToReset()
@@ -146,7 +149,7 @@ void pointer_redirect::updateToReset()
         disconnectPointerConstraintsConnection();
         setFocus(nullptr);
     }
-    waylandServer()->seat()->setFocusedPointerSurface(nullptr);
+    waylandServer()->seat()->pointers().set_focused_surface(nullptr);
 }
 
 void pointer_redirect::processMotion(const QPointF& pos, uint32_t time, input::pointer* device)
@@ -485,11 +488,11 @@ bool pointer_redirect::focusUpdatesBlocked()
     if (!inited()) {
         return true;
     }
-    if (waylandServer()->seat()->isDragPointer()) {
+    if (waylandServer()->seat()->drags().is_pointer_drag()) {
         // ignore during drag and drop
         return true;
     }
-    if (waylandServer()->seat()->isTouchSequence()) {
+    if (waylandServer()->seat()->touches().is_in_progress()) {
         // ignore during touch operations
         return true;
     }
@@ -540,7 +543,7 @@ void pointer_redirect::cleanupDecoration(Decoration::DecoratedClientImpl* old,
         return;
     }
 
-    waylandServer()->seat()->setFocusedPointerSurface(nullptr);
+    waylandServer()->seat()->pointers().set_focused_surface(nullptr);
 
     auto pos = m_pos - now->client()->pos();
     QHoverEvent event(QEvent::HoverEnter, pos, pos);
@@ -601,7 +604,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
         // Clean up focused pointer surface if there's no client to take focus,
         // or the pointer is on a client without surface or on a decoration.
         warpXcbOnSurfaceLeft(nullptr);
-        seat->setFocusedPointerSurface(nullptr);
+        seat->pointers().set_focused_surface(nullptr);
         return;
     }
 
@@ -610,11 +613,11 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
 
     // TODO: why? in order to reset the cursor icon?
     s_cursorUpdateBlocking = true;
-    seat->setFocusedPointerSurface(nullptr);
+    seat->pointers().set_focused_surface(nullptr);
     s_cursorUpdateBlocking = false;
 
-    seat->setPointerPos(m_pos.toPoint());
-    seat->setFocusedPointerSurface(focusNow->surface(), focusNow->input_transform());
+    seat->pointers().set_position(m_pos.toPoint());
+    seat->pointers().set_focused_surface(focusNow->surface(), focusNow->input_transform());
 
     m_focusGeometryConnection = connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
         if (!focus()) {
@@ -628,10 +631,10 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
             return;
         }
         auto seat = waylandServer()->seat();
-        if (focus()->surface() != seat->focusedPointerSurface()) {
+        if (focus()->surface() != seat->pointers().get_focus().surface) {
             return;
         }
-        seat->setFocusedPointerSurfaceTransformation(focus()->input_transform());
+        seat->pointers().set_focused_surface_transformation(focus()->input_transform());
     });
 
     m_constraintsConnection = connect(focusNow->surface(),
@@ -725,7 +728,7 @@ void pointer_redirect::updatePointerConstraints()
     if (!s) {
         return;
     }
-    if (s != waylandServer()->seat()->focusedPointerSurface()) {
+    if (s != waylandServer()->seat()->pointers().get_focus().surface) {
         return;
     }
     if (!supportsWarping()) {
@@ -839,7 +842,7 @@ void pointer_redirect::warpXcbOnSurfaceLeft(Wrapland::Server::Surface* newSurfac
         // new window is an X window
         return;
     }
-    auto s = waylandServer()->seat()->focusedPointerSurface();
+    auto s = waylandServer()->seat()->pointers().get_focus().surface;
     if (!s || s->client() != xc) {
         // pointer was not on an X window
         return;

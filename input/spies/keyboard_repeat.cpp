@@ -11,6 +11,7 @@
 #include "input/xkb.h"
 #include "wayland_server.h"
 
+#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 
 #include <QTimer>
@@ -31,8 +32,9 @@ keyboard_repeat_spy::~keyboard_repeat_spy() = default;
 void keyboard_repeat_spy::handleKeyRepeat()
 {
     // TODO: don't depend on WaylandServer
-    if (waylandServer()->seat()->keyRepeatRate() != 0) {
-        m_timer->setInterval(1000 / waylandServer()->seat()->keyRepeatRate());
+    auto const rate = waylandServer()->seat()->keyboards().get_repeat_info().rate;
+    if (rate != 0) {
+        m_timer->setInterval(1000 / rate);
     }
     // TODO: better time
     emit keyRepeat(m_key, m_time);
@@ -41,16 +43,17 @@ void keyboard_repeat_spy::handleKeyRepeat()
 void keyboard_repeat_spy::key(key_event const& event)
 {
     switch (event.state) {
-    case button_state::pressed:
+    case button_state::pressed: {
         // TODO: don't get these values from WaylandServer
-        if (m_xkb->shouldKeyRepeat(event.keycode)
-            && waylandServer()->seat()->keyRepeatDelay() != 0) {
-            m_timer->setInterval(waylandServer()->seat()->keyRepeatDelay());
+        auto const delay = waylandServer()->seat()->keyboards().get_repeat_info().delay;
+        if (m_xkb->shouldKeyRepeat(event.keycode) && delay != 0) {
+            m_timer->setInterval(delay);
             m_key = event.keycode;
             m_time = event.base.time_msec;
             m_timer->start();
         }
         break;
+    }
     case button_state::released:
         if (event.keycode == m_key) {
             m_timer->stop();

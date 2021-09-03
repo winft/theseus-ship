@@ -16,6 +16,8 @@
 #include "win/input.h"
 #include <input/qt_event.h>
 
+#include <Wrapland/Server/touch_pool.h>
+
 namespace KWin::input
 {
 
@@ -115,7 +117,7 @@ bool decoration_event_filter::axis(axis_event const& event)
 bool decoration_event_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     auto seat = waylandServer()->seat();
-    if (seat->isTouchSequence()) {
+    if (seat->touches().is_in_progress()) {
         return false;
     }
     if (kwinApp()->input->redirect->touch()->decorationPressId() != -1) {
