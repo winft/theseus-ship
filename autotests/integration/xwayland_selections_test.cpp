@@ -228,8 +228,6 @@ void XwaylandSelectionsTest::testSync()
     QCOMPARE(finishedSpy.first().first().toInt(), 0);
     delete m_pasteProcess;
     m_pasteProcess = nullptr;
-    delete m_copyProcess;
-    m_copyProcess = nullptr;
 }
 
 }
