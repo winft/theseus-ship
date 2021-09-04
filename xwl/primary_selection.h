@@ -18,7 +18,7 @@ namespace KWin::Xwl
 class primary_selection
 {
 public:
-    using srv_data_device = Wrapland::Server::PrimarySelectionDevice;
+    using srv_data_device = Wrapland::Server::primary_selection_device;
     using clt_data_device = Wrapland::Client::PrimarySelectionDevice;
     using srv_data_source = srv_data_device::source_t;
     using clt_source_t = clt_data_device::source_t;

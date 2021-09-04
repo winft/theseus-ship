@@ -52,7 +52,7 @@ void handle_x11_offer_change(Dnd* sel, QStringList const& added, QStringList con
  */
 class Dnd
 {
-    using srv_data_device = Wrapland::Server::DataDevice;
+    using srv_data_device = Wrapland::Server::data_device;
     using clt_data_device = Wrapland::Client::DataDevice;
 
 public:

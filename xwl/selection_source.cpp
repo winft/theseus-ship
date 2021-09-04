@@ -318,8 +318,8 @@ void X11Source<DataSource>::startTransfer(const QString& mimeName, qint32 fd)
 }
 
 // Templates specializations
-template class WlSource<Wrapland::Server::DataSource>;
+template class WlSource<Wrapland::Server::data_source>;
 template class X11Source<Wrapland::Client::DataSource>;
-template class WlSource<Wrapland::Server::PrimarySelectionSource>;
+template class WlSource<Wrapland::Server::primary_selection_source>;
 template class X11Source<Wrapland::Client::PrimarySelectionSource>;
 }

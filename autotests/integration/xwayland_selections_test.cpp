@@ -61,8 +61,8 @@ void XwaylandSelectionsTest::initTestCase()
     qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<win::x11::window*>();
     qRegisterMetaType<QProcess::ExitStatus>();
-    qRegisterMetaType<Wrapland::Server::DataDevice*>();
-    qRegisterMetaType<Wrapland::Server::DataSource*>();
+    qRegisterMetaType<Wrapland::Server::data_device*>();
+    qRegisterMetaType<Wrapland::Server::data_source*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
@@ -144,11 +144,11 @@ void XwaylandSelectionsTest::testSync()
     QSignalSpy clipboardChangedSpy = [clipboardMode]() {
         if (clipboardMode == "Clipboard") {
             return QSignalSpy(Test::app()->xwayland->data_bridge->dataDeviceIface(),
-                              &Wrapland::Server::DataDevice::selection_changed);
+                              &Wrapland::Server::data_device::selection_changed);
         }
         if (clipboardMode == "Selection") {
             return QSignalSpy(Test::app()->xwayland->data_bridge->primarySelectionDeviceIface(),
-                              &Wrapland::Server::PrimarySelectionDevice::selection_changed);
+                              &Wrapland::Server::primary_selection_device::selection_changed);
         }
         throw;
     }();

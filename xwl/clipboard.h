@@ -40,7 +40,7 @@ class Clipboard;
 class Clipboard
 {
 public:
-    using srv_data_device = Wrapland::Server::DataDevice;
+    using srv_data_device = Wrapland::Server::data_device;
     using clt_data_device = Wrapland::Client::DataDevice;
     using srv_data_source = srv_data_device::source_t;
     using clt_source_t = clt_data_device::source_t;

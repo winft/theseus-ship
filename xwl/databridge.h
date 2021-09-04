@@ -41,8 +41,8 @@ class PrimarySelectionDevice;
 }
 namespace Server
 {
-class DataDevice;
-class PrimarySelectionDevice;
+class data_device;
+class primary_selection_device;
 class Surface;
 }
 }
@@ -80,7 +80,7 @@ public:
     {
         return m_dataDevice;
     }
-    Wrapland::Server::DataDevice* dataDeviceIface() const
+    Wrapland::Server::data_device* dataDeviceIface() const
     {
         return m_dataDeviceInterface;
     }
@@ -92,7 +92,7 @@ public:
     {
         return m_primarySelectionDevice;
     }
-    Wrapland::Server::PrimarySelectionDevice* primarySelectionDeviceIface() const
+    Wrapland::Server::primary_selection_device* primarySelectionDeviceIface() const
     {
         return m_primarySelectionDeviceInterface;
     }
@@ -108,9 +108,9 @@ private:
 
     /* Internal data device interface */
     Wrapland::Client::DataDevice* m_dataDevice = nullptr;
-    Wrapland::Server::DataDevice* m_dataDeviceInterface = nullptr;
+    Wrapland::Server::data_device* m_dataDeviceInterface = nullptr;
     Wrapland::Client::PrimarySelectionDevice* m_primarySelectionDevice = nullptr;
-    Wrapland::Server::PrimarySelectionDevice* m_primarySelectionDeviceInterface = nullptr;
+    Wrapland::Server::primary_selection_device* m_primarySelectionDeviceInterface = nullptr;
 
     Q_DISABLE_COPY(DataBridge)
 };
