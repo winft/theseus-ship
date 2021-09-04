@@ -81,7 +81,7 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
     if (!sel->data.x11_source) {
         return;
     }
-    sel->data.srv_device->updateProxy(originSurface);
+    sel->data.srv_device->update_proxy(originSurface);
     sel->m_currentDrag = new XToWlDrag(sel->data.x11_source, sel);
 }
 
@@ -204,7 +204,7 @@ void Dnd::startDrag()
 
     // New Wl to X drag, init drag and Wl source.
     m_currentDrag = new WlToXDrag(this);
-    auto source = new WlSource<Wrapland::Server::DataSource>(srv_dev->dragSource());
+    auto source = new WlSource<Wrapland::Server::DataSource>(srv_dev->drag_source());
     set_wl_source(this, source);
     own_selection(this, true);
 }

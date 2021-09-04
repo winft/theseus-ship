@@ -50,7 +50,7 @@ namespace Xwl
 WlToXDrag::WlToXDrag(Dnd* dnd)
     : Drag(dnd)
 {
-    m_dsi = waylandServer()->seat()->drags().get_source().dev->dragSource();
+    m_dsi = waylandServer()->seat()->drags().get_source().dev->drag_source();
 }
 
 DragEventReply WlToXDrag::moveFilter(Toplevel* target, const QPoint& pos)
@@ -291,7 +291,7 @@ void Xvisit::sendEnter()
 
     // TODO: replace this with the mime type getter from m_dataOffer,
     // then we can get rid of m_drag.
-    const auto mimeTypesNames = m_drag->dataSourceIface()->mimeTypes();
+    const auto mimeTypesNames = m_drag->dataSourceIface()->mime_types();
     const int mimesCount = mimeTypesNames.size();
     size_t cnt = 0;
     size_t totalCnt = 0;

@@ -108,7 +108,7 @@ XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
 
     auto* dc = new QMetaObject::Connection();
     *dc = connect(waylandServer()->dataDeviceManager(),
-                  &Wrapland::Server::DataDeviceManager::sourceCreated,
+                  &Wrapland::Server::DataDeviceManager::source_created,
                   this,
                   [this, dc](Wrapland::Server::DataSource* dsi) {
                       Q_ASSERT(dsi);
@@ -118,7 +118,7 @@ XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
                       QObject::disconnect(*dc);
                       delete dc;
                       connect(dsi,
-                              &Wrapland::Server::DataSource::mimeTypeOffered,
+                              &Wrapland::Server::DataSource::mime_type_offered,
                               this,
                               &XToWlDrag::offerCallback);
                   });

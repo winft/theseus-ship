@@ -61,11 +61,11 @@ void WlSource<SourceIface>::setSourceIface(SourceIface* si)
     if (m_si == si) {
         return;
     }
-    for (const auto& mime : si->mimeTypes()) {
+    for (auto const& mime : si->mime_types()) {
         m_offers << QString::fromStdString(mime);
     }
     m_offerConnection = QObject::connect(
-        si, &SourceIface::mimeTypeOffered, qobject(), [this](auto mime) { receiveOffer(mime); });
+        si, &SourceIface::mime_type_offered, qobject(), [this](auto mime) { receiveOffer(mime); });
     m_si = si;
 }
 
@@ -157,8 +157,8 @@ bool WlSource<SourceIface>::checkStartTransfer(xcb_selection_request_event_t* ev
         return firstTarget == b;
     };
     // check supported mimes
-    const auto offers = m_si->mimeTypes();
-    const auto mimeIt = std::find_if(offers.begin(), offers.end(), cmp);
+    auto const offers = m_si->mime_types();
+    auto const mimeIt = std::find_if(offers.begin(), offers.end(), cmp);
     if (mimeIt == offers.end()) {
         // Requested Mime not supported. Not sending selection.
         return false;
@@ -170,7 +170,7 @@ bool WlSource<SourceIface>::checkStartTransfer(xcb_selection_request_event_t* ev
         return false;
     }
 
-    m_si->requestData(*mimeIt, p[1]);
+    m_si->request_data(*mimeIt, p[1]);
     waylandServer()->dispatch();
 
     Q_EMIT qobject()->transferReady(new xcb_selection_request_event_t(*event), p[0]);

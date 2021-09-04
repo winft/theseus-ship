@@ -25,7 +25,7 @@ primary_selection::primary_selection(xcb_atom_t atom,
                      [this] { handle_wl_selection_change(this); });
 
     QObject::connect(data.srv_device,
-                     &srv_data_device::selectionChanged,
+                     &srv_data_device::selection_changed,
                      data.qobject.get(),
                      [this](auto srv_src) { get_selection_setter()(srv_src); });
 }

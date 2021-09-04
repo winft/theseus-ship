@@ -144,11 +144,11 @@ void XwaylandSelectionsTest::testSync()
     QSignalSpy clipboardChangedSpy = [clipboardMode]() {
         if (clipboardMode == "Clipboard") {
             return QSignalSpy(Test::app()->xwayland->data_bridge->dataDeviceIface(),
-                              &Wrapland::Server::DataDevice::selectionChanged);
+                              &Wrapland::Server::DataDevice::selection_changed);
         }
         if (clipboardMode == "Selection") {
             return QSignalSpy(Test::app()->xwayland->data_bridge->primarySelectionDeviceIface(),
-                              &Wrapland::Server::PrimarySelectionDevice::selectionChanged);
+                              &Wrapland::Server::PrimarySelectionDevice::selection_changed);
         }
         throw;
     }();

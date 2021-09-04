@@ -59,7 +59,7 @@ DataBridge::DataBridge(x11_data const& x11)
 
     auto* dc = new QMetaObject::Connection();
     *dc = connect(waylandServer()->dataDeviceManager(),
-                  &Wrapland::Server::DataDeviceManager::deviceCreated,
+                  &Wrapland::Server::DataDeviceManager::device_created,
                   this,
                   [this, dc, x11](auto srv_dev) {
                       if (srv_dev->client() != waylandServer()->internalConnection()) {
@@ -83,7 +83,7 @@ DataBridge::DataBridge(x11_data const& x11)
 
     auto* pc = new QMetaObject::Connection();
     *pc = connect(waylandServer()->primarySelectionDeviceManager(),
-                  &Wrapland::Server::PrimarySelectionDeviceManager::deviceCreated,
+                  &Wrapland::Server::PrimarySelectionDeviceManager::device_created,
                   this,
                   [this, pc, x11](auto srv_dev) {
                       if (srv_dev->client() != waylandServer()->internalConnection()) {

@@ -585,7 +585,7 @@ void check_wl_source(Selection* sel)
     set_wl_source(sel, wls);
 
     QObject::connect(sel->data.srv_device,
-                     &srv_data_device::selectionChanged,
+                     &srv_data_device::selection_changed,
                      wls->qobject(),
                      [wls](auto srv_src) { wls->setSourceIface(srv_src); });
 
