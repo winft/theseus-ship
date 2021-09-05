@@ -77,15 +77,8 @@ bool event_filter::pinch_begin(pinch_begin_event const& /*event*/)
     return false;
 }
 
-bool event_filter::pinchGestureUpdate(qreal scale,
-                                      qreal angleDelta,
-                                      const QSizeF& delta,
-                                      quint32 time)
+bool event_filter::pinch_update(pinch_update_event const& /*event*/)
 {
-    Q_UNUSED(scale)
-    Q_UNUSED(angleDelta)
-    Q_UNUSED(delta)
-    Q_UNUSED(time)
     return false;
 }
 

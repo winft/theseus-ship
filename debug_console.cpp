@@ -426,16 +426,18 @@ void DebugConsoleFilter::pinch_begin(input::pinch_begin_event const& event)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF &delta, quint32 time)
+void DebugConsoleFilter::pinch_update(input::pinch_update_event const& event)
 {
-    QString text = s_hr;
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
+
     text.append(s_tableStart);
     text.append(tableHeaderRow(i18nc("A pinch gesture is updated", "Pinch update")));
-    text.append(timestampRow(time));
-    text.append(tableRow(i18nc("Current scale in pinch gesture", "Scale"), scale));
-    text.append(tableRow(i18nc("Current angle in pinch gesture", "Angle delta"), angleDelta));
-    text.append(tableRow(i18nc("Current delta in pinch gesture", "Delta x"), delta.width()));
-    text.append(tableRow(i18nc("Current delta in pinch gesture", "Delta y"), delta.height()));
+    text.append(timestamp);
+    text.append(tableRow(i18nc("Current scale in pinch gesture", "Scale"), event.scale));
+    text.append(tableRow(i18nc("Current angle in pinch gesture", "Angle delta"), event.rotation));
+    text.append(tableRow(i18nc("Current delta in pinch gesture", "Delta x"), event.delta.x()));
+    text.append(tableRow(i18nc("Current delta in pinch gesture", "Delta y"), event.delta.y()));
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);

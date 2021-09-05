@@ -399,33 +399,15 @@ void pointer_redirect::process_pinch_begin(pinch_begin_event const& event)
 
 void pointer_redirect::process_pinch_update(pinch_update_event const& event)
 {
-    processPinchGestureUpdate(event.scale,
-                              event.rotation,
-                              QSize(event.delta.x(), event.delta.y()),
-                              event.base.time_msec,
-                              event.base.dev);
-}
-
-void pointer_redirect::processPinchGestureUpdate(qreal scale,
-                                                 qreal angleDelta,
-                                                 const QSizeF& delta,
-                                                 quint32 time,
-                                                 KWin::input::pointer* device)
-{
-    Q_UNUSED(device)
     if (!inited()) {
         return;
     }
     update();
 
-    kwinApp()->input->redirect->processSpies(std::bind(
-        &event_spy::pinchGestureUpdate, std::placeholders::_1, scale, angleDelta, delta, time));
-    kwinApp()->input->redirect->processFilters(std::bind(&input::event_filter::pinchGestureUpdate,
-                                                         std::placeholders::_1,
-                                                         scale,
-                                                         angleDelta,
-                                                         delta,
-                                                         time));
+    kwinApp()->input->redirect->processSpies(
+        std::bind(&event_spy::pinch_update, std::placeholders::_1, event));
+    kwinApp()->input->redirect->processFilters(
+        std::bind(&event_filter::pinch_update, std::placeholders::_1, event));
 }
 
 void pointer_redirect::process_pinch_end(pinch_end_event const& event)

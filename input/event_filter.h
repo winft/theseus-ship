@@ -50,8 +50,7 @@ public:
     virtual bool touchUp(qint32 id, quint32 time);
 
     virtual bool pinch_begin(pinch_begin_event const& event);
-    virtual bool
-    pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF& delta, quint32 time);
+    virtual bool pinch_update(pinch_update_event const& event);
     virtual bool pinchGestureEnd(quint32 time);
     virtual bool pinchGestureCancelled(quint32 time);
 

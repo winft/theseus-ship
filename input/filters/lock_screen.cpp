@@ -169,15 +169,8 @@ bool lock_screen_filter::pinch_begin(pinch_begin_event const& /*event*/)
     // no touchpad multi-finger gestures on lock screen
     return waylandServer()->isScreenLocked();
 }
-bool lock_screen_filter::pinchGestureUpdate(qreal scale,
-                                            qreal angleDelta,
-                                            const QSizeF& delta,
-                                            quint32 time)
+bool lock_screen_filter::pinch_update(pinch_update_event const& /*event*/)
 {
-    Q_UNUSED(scale)
-    Q_UNUSED(angleDelta)
-    Q_UNUSED(delta)
-    Q_UNUSED(time)
     // no touchpad multi-finger gestures on lock screen
     return waylandServer()->isScreenLocked();
 }

@@ -67,12 +67,8 @@ void event_spy::pinch_begin(pinch_begin_event const& /*event*/)
 {
 }
 
-void event_spy::pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF& delta, quint32 time)
+void event_spy::pinch_update(pinch_update_event const& /*event*/)
 {
-    Q_UNUSED(scale)
-    Q_UNUSED(angleDelta)
-    Q_UNUSED(delta)
-    Q_UNUSED(time)
 }
 
 void event_spy::pinchGestureEnd(quint32 time)

@@ -159,7 +159,7 @@ public:
     void touchUp(qint32 id, quint32 time) override;
 
     void pinch_begin(input::pinch_begin_event const& event) override;
-    void pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF &delta, quint32 time) override;
+    void pinch_update(input::pinch_update_event const& event) override;
     void pinchGestureEnd(quint32 time) override;
     void pinchGestureCancelled(quint32 time) override;
 
