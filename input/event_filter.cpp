@@ -72,10 +72,8 @@ bool event_filter::touchUp(qint32 id, quint32 time)
     return false;
 }
 
-bool event_filter::pinchGestureBegin(int fingerCount, quint32 time)
+bool event_filter::pinch_begin(pinch_begin_event const& /*event*/)
 {
-    Q_UNUSED(fingerCount)
-    Q_UNUSED(time)
     return false;
 }
 

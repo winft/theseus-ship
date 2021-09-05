@@ -97,8 +97,6 @@ public:
     void processSwipeGestureCancelled(quint32 time, KWin::input::pointer* device = nullptr);
 
     void process_pinch_begin(pinch_begin_event const& event);
-    void
-    processPinchGestureBegin(int fingerCount, quint32 time, KWin::input::pointer* device = nullptr);
     void process_pinch_update(pinch_update_event const& event);
     void processPinchGestureUpdate(qreal scale,
                                    qreal angleDelta,

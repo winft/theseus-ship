@@ -48,7 +48,7 @@ public:
     virtual void touchMotion(qint32 id, const QPointF& pos, quint32 time);
     virtual void touchUp(qint32 id, quint32 time);
 
-    virtual void pinchGestureBegin(int fingerCount, quint32 time);
+    virtual void pinch_begin(pinch_begin_event const& event);
     virtual void
     pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF& delta, quint32 time);
     virtual void pinchGestureEnd(quint32 time);

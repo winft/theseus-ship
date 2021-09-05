@@ -26,7 +26,7 @@ public:
     bool touchMotion(qint32 id, const QPointF& pos, quint32 time) override;
     bool touchUp(qint32 id, quint32 time) override;
 
-    bool pinchGestureBegin(int fingerCount, quint32 time) override;
+    bool pinch_begin(pinch_begin_event const& event) override;
     bool
     pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF& delta, quint32 time) override;
     bool pinchGestureEnd(quint32 time) override;

@@ -63,10 +63,8 @@ void event_spy::touchUp(qint32 id, quint32 time)
     Q_UNUSED(time)
 }
 
-void event_spy::pinchGestureBegin(int fingerCount, quint32 time)
+void event_spy::pinch_begin(pinch_begin_event const& /*event*/)
 {
-    Q_UNUSED(fingerCount)
-    Q_UNUSED(time)
 }
 
 void event_spy::pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF& delta, quint32 time)

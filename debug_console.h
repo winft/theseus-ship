@@ -158,7 +158,7 @@ public:
     void touchMotion(qint32 id, const QPointF &pos, quint32 time) override;
     void touchUp(qint32 id, quint32 time) override;
 
-    void pinchGestureBegin(int fingerCount, quint32 time) override;
+    void pinch_begin(input::pinch_begin_event const& event) override;
     void pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF &delta, quint32 time) override;
     void pinchGestureEnd(quint32 time) override;
     void pinchGestureCancelled(quint32 time) override;

@@ -140,14 +140,16 @@ bool forward_filter::axis(axis_event const& event)
     return true;
 }
 
-bool forward_filter::pinchGestureBegin(int fingerCount, quint32 time)
+bool forward_filter::pinch_begin(pinch_begin_event const& event)
 {
     if (!workspace()) {
         return false;
     }
+
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().start_pinch_gesture(fingerCount);
+    seat->setTimestamp(event.base.time_msec);
+    seat->pointers().start_pinch_gesture(event.fingers);
+
     return true;
 }
 

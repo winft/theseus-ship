@@ -411,13 +411,15 @@ void DebugConsoleFilter::touchUp(qint32 id, quint32 time)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::pinchGestureBegin(int fingerCount, quint32 time)
+void DebugConsoleFilter::pinch_begin(input::pinch_begin_event const& event)
 {
-    QString text = s_hr;
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
+
     text.append(s_tableStart);
     text.append(tableHeaderRow(i18nc("A pinch gesture is started", "Pinch start")));
-    text.append(timestampRow(time));
-    text.append(tableRow(i18nc("Number of fingers in this pinch gesture", "Finger count"), fingerCount));
+    text.append(timestamp);
+    text.append(tableRow(i18nc("Number of fingers in this pinch gesture", "Finger count"), event.fingers));
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);

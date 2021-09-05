@@ -386,23 +386,15 @@ void pointer_redirect::processSwipeGestureCancelled(quint32 time, KWin::input::p
 
 void pointer_redirect::process_pinch_begin(pinch_begin_event const& event)
 {
-    processPinchGestureBegin(event.fingers, event.base.time_msec, event.base.dev);
-}
-
-void pointer_redirect::processPinchGestureBegin(int fingerCount,
-                                                quint32 time,
-                                                KWin::input::pointer* device)
-{
-    Q_UNUSED(device)
     if (!inited()) {
         return;
     }
     update();
 
     kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
-    kwinApp()->input->redirect->processFilters(std::bind(
-        &input::event_filter::pinchGestureBegin, std::placeholders::_1, fingerCount, time));
+        std::bind(&event_spy::pinch_begin, std::placeholders::_1, event));
+    kwinApp()->input->redirect->processFilters(
+        std::bind(&event_filter::pinch_begin, std::placeholders::_1, event));
 }
 
 void pointer_redirect::process_pinch_update(pinch_update_event const& event)
