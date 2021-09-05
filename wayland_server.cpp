@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/appmenu.h>
 #include <Wrapland/Server/client.h>
 #include <Wrapland/Server/compositor.h>
+#include <Wrapland/Server/data_control_v1.h>
 #include <Wrapland/Server/data_device_manager.h>
 #include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/display.h>
@@ -370,6 +371,7 @@ void WaylandServer::create_globals()
     m_display->createPointerConstraints(m_display);
     m_dataDeviceManager = m_display->createDataDeviceManager(m_display);
     m_primarySelectionDeviceManager = m_display->createPrimarySelectionDeviceManager(m_display);
+    m_display->create_data_control_manager_v1(m_display);
     m_idle = m_display->createIdle(m_display);
 
     auto idleInhibition = new IdleInhibition(m_idle);
