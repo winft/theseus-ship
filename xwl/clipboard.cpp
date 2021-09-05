@@ -62,7 +62,7 @@ Clipboard::Clipboard(xcb_atom_t atom,
     QObject::connect(data.srv_device,
                      &srv_data_device::selection_changed,
                      data.qobject.get(),
-                     [this](auto srv_src) { get_selection_setter()(srv_src); });
+                     [this, dev = data.srv_device] { get_selection_setter()(dev->selection()); });
 }
 
 Clipboard::srv_data_source* Clipboard::get_current_source() const
