@@ -68,6 +68,7 @@ public:
     output(AbstractWaylandOutput* base, wayland::compositor* compositor);
 
     void add_repaint(QRegion const& region);
+    void set_delay(presentation_data const& data);
     void set_delay_timer();
     void request_frame(Toplevel* window);
 

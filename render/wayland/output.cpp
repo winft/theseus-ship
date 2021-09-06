@@ -219,6 +219,18 @@ void output::swapped(presentation_data const& data)
     }
     swap_pending = false;
 
+    set_delay(data);
+    delay_timer.stop();
+    set_delay_timer();
+}
+
+std::chrono::nanoseconds output::refresh_length() const
+{
+    return std::chrono::nanoseconds(1000 * 1000 * (1000 * 1000 / base->refreshRate()));
+}
+
+void output::set_delay(presentation_data const& data)
+{
     auto now = std::chrono::steady_clock::now().time_since_epoch();
 
     // The gap between the last presentation on the display and us now calculating the delay.
@@ -237,14 +249,6 @@ void output::swapped(presentation_data const& data)
 
     // If our previous margins were too large we don't delay. We would likely miss the next vblank.
     delay = std::max(try_delay, std::chrono::nanoseconds::zero());
-
-    delay_timer.stop();
-    set_delay_timer();
-}
-
-std::chrono::nanoseconds output::refresh_length() const
-{
-    return std::chrono::nanoseconds(1000 * 1000 * (1000 * 1000 / base->refreshRate()));
 }
 
 void output::set_delay_timer()
