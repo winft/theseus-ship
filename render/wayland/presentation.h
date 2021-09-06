@@ -45,9 +45,8 @@ class KWIN_EXPORT presentation : public QObject
     Q_OBJECT
 public:
     presentation(QObject* parent = nullptr);
-    ~presentation() override;
 
-    bool init_clock(bool clockid_valid, clockid_t clockid);
+    bool init_clock(clockid_t clockid);
 
     void frame(render::wayland::output* output, std::deque<Toplevel*> const& windows);
     void lock(render::wayland::output* output, std::deque<Toplevel*> const& windows);
@@ -62,7 +61,6 @@ private:
     QHash<uint32_t, Wrapland::Server::Surface*> surfaces;
 
     clockid_t clockid;
-    QElapsedTimer* fallback_clock{nullptr};
 };
 
 }

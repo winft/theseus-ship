@@ -30,27 +30,14 @@ presentation::presentation(QObject* parent)
 {
 }
 
-presentation::~presentation()
+bool presentation::init_clock(clockid_t clockid)
 {
-    delete fallback_clock;
-}
+    this->clockid = clockid;
 
-bool presentation::init_clock(bool clockid_valid, clockid_t clockid)
-{
-    if (clockid_valid) {
-        this->clockid = clockid;
-
-        struct timespec ts;
-        if (clock_gettime(clockid, &ts) != 0) {
-            qCWarning(KWIN_CORE) << "Could not get presentation clock.";
-            return false;
-        }
-    } else {
-        // There might be other clock types, but for now assume it is always monotonic or realtime.
-        clockid = QElapsedTimer::isMonotonic() ? CLOCK_MONOTONIC : CLOCK_REALTIME;
-
-        fallback_clock = new QElapsedTimer();
-        fallback_clock->start();
+    struct timespec ts;
+    if (clock_gettime(clockid, &ts) != 0) {
+        qCWarning(KWIN_CORE) << "Could not get presentation clock.";
+        return false;
     }
 
     if (!waylandServer()->presentationManager()) {
@@ -63,10 +50,6 @@ bool presentation::init_clock(bool clockid_valid, clockid_t clockid)
 
 uint32_t presentation::current_time() const
 {
-    if (fallback_clock) {
-        return fallback_clock->elapsed();
-    }
-
     uint32_t time{0};
     timespec ts;
     if (clock_gettime(clockid, &ts) == 0) {

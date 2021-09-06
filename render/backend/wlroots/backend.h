@@ -53,7 +53,7 @@ public:
                                        QVector<int> scales = QVector<int>());
 
 protected:
-    bool supportsClockId() const override;
+    clockid_t clockId() const override;
 
 private:
     clockid_t m_clockId;

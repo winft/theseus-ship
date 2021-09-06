@@ -51,8 +51,7 @@ compositor::compositor(QObject* parent)
     : render::compositor(parent)
     , presentation(new render::wayland::presentation(this))
 {
-    if (!presentation->init_clock(kwinApp()->platform->supportsClockId(),
-                                  kwinApp()->platform->clockId())) {
+    if (!presentation->init_clock(kwinApp()->platform->clockId())) {
         qCCritical(KWIN_CORE) << "Presentation clock failed. Exit.";
         qApp->quit();
     }
