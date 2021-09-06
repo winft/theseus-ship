@@ -121,22 +121,22 @@ void presentation::lock(render::wayland::output* output, std::deque<Toplevel*> c
     }
 }
 
-Wrapland::Server::Surface::PresentationKinds to_kinds(presentation::kinds kinds)
+Wrapland::Server::Surface::PresentationKinds to_kinds(presentation_kinds kinds)
 {
-    using kind = presentation::kind;
+    using kind = presentation_kind;
     using ret_kind = Wrapland::Server::Surface::PresentationKind;
 
     Wrapland::Server::Surface::PresentationKinds ret;
-    if (kinds.testFlag(kind::Vsync)) {
+    if (kinds.testFlag(kind::vsync)) {
         ret |= ret_kind::Vsync;
     }
-    if (kinds.testFlag(kind::HwClock)) {
+    if (kinds.testFlag(kind::hw_clock)) {
         ret |= ret_kind::HwClock;
     }
-    if (kinds.testFlag(kind::HwCompletion)) {
+    if (kinds.testFlag(kind::hw_completion)) {
         ret |= ret_kind::HwCompletion;
     }
-    if (kinds.testFlag(kind::ZeroCopy)) {
+    if (kinds.testFlag(kind::zero_copy)) {
         ret |= ret_kind::ZeroCopy;
     }
     return ret;
@@ -161,7 +161,7 @@ void timespec_to_proto(const timespec& ts,
 void presentation::presented(render::wayland::output* output,
                              uint32_t sec,
                              uint32_t usec,
-                             kinds kinds)
+                             presentation_kinds kinds)
 {
     if (!output->base->isEnabled()) {
         // Output disabled, discards will be sent from Wrapland.

@@ -31,19 +31,19 @@ namespace render::wayland
 {
 class output;
 
+enum class presentation_kind {
+    none = 0,
+    vsync = 1 << 0,
+    hw_clock = 1 << 1,
+    hw_completion = 1 << 2,
+    zero_copy = 1 << 3,
+};
+Q_DECLARE_FLAGS(presentation_kinds, presentation_kind)
+
 class KWIN_EXPORT presentation : public QObject
 {
     Q_OBJECT
 public:
-    enum class kind {
-        None = 0,
-        Vsync = 1 << 0,
-        HwClock = 1 << 1,
-        HwCompletion = 1 << 2,
-        ZeroCopy = 1 << 3,
-    };
-    Q_DECLARE_FLAGS(kinds, kind)
-
     presentation(QObject* parent = nullptr);
     ~presentation() override;
 
@@ -51,7 +51,10 @@ public:
 
     void frame(render::wayland::output* output, std::deque<Toplevel*> const& windows);
     void lock(render::wayland::output* output, std::deque<Toplevel*> const& windows);
-    void presented(render::wayland::output* output, uint32_t sec, uint32_t usec, kinds kinds);
+    void presented(render::wayland::output* output,
+                   uint32_t sec,
+                   uint32_t usec,
+                   presentation_kinds kinds);
 
 private:
     uint32_t current_time() const;
@@ -65,4 +68,4 @@ private:
 }
 }
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::render::wayland::presentation::kinds)
+Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::render::wayland::presentation_kinds)

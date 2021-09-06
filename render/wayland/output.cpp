@@ -211,8 +211,8 @@ void output::dry_run()
 
 void output::swapped(unsigned int sec, unsigned int usec)
 {
-    auto const flags = presentation::kind::Vsync | presentation::kind::HwClock
-        | presentation::kind::HwCompletion;
+    auto const flags
+        = presentation_kind::vsync | presentation_kind::hw_clock | presentation_kind::hw_completion;
     compositor->presentation->presented(this, sec, usec, flags);
 
     if (!swap_pending) {
