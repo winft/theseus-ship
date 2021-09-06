@@ -127,7 +127,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
         compositor->check_idle();
 
         // This means the next time we composite it is done without timer delay.
-        delay = 0;
+        delay = std::chrono::nanoseconds::zero();
 
         if (!frame_windows.empty()) {
             // Some windows want a frame event still.
@@ -180,7 +180,7 @@ std::deque<Toplevel*> output::run()
     // Start the actual painting process.
     auto const duration = compositor->scene()->paint(base, repaints, windows, now);
 
-    update_paint_periods(duration);
+    update_paint_periods(std::chrono::nanoseconds(duration));
     retard_next_run();
 
     if (!windows.empty()) {
@@ -229,7 +229,7 @@ void output::swapped(unsigned int sec, unsigned int usec)
     //
     // All temporary calculations are in nanoseconds but the final timer offset in the end in
     // milliseconds. Atleast we take here one millisecond.
-    auto const refresh = refresh_length();
+    auto const refresh = std::chrono::nanoseconds(refresh_length());
     auto const vblankMargin = refresh / 10;
 
     auto max_paint_duration = [this]() {
@@ -240,7 +240,7 @@ void output::swapped(unsigned int sec, unsigned int usec)
     };
 
     auto const paint_margin = max_paint_duration();
-    delay = std::max(refresh - vblankMargin - paint_margin, int64_t(0));
+    delay = std::max(refresh - vblankMargin - paint_margin, std::chrono::nanoseconds::zero());
 
     delay_timer.stop();
     set_delay_timer();
@@ -251,7 +251,7 @@ int64_t output::refresh_length() const
     return 1000 * 1000 / base->refreshRate();
 }
 
-void output::update_paint_periods(int64_t duration)
+void output::update_paint_periods(std::chrono::nanoseconds duration)
 {
     if (duration > last_paint_durations[1]) {
         last_paint_durations[1] = duration;
@@ -262,7 +262,7 @@ void output::update_paint_periods(int64_t duration)
     // We take the maximum over the last 100 frames.
     if (paint_periods == 100) {
         last_paint_durations[0] = last_paint_durations[1];
-        last_paint_durations[1] = 0;
+        last_paint_durations[1] = std::chrono::nanoseconds::zero();
         paint_periods = 0;
     }
 }
@@ -276,13 +276,13 @@ void output::set_delay_timer()
     }
 
     // In milliseconds.
-    uint const wait_time = delay / 1000 / 1000;
+    auto const wait_time = std::chrono::duration_cast<std::chrono::milliseconds>(delay);
 
     auto const ftrace_identifier = QString::fromStdString("timer-" + std::to_string(index));
-    Perf::Ftrace::mark(ftrace_identifier + QString::number(wait_time));
+    Perf::Ftrace::mark(ftrace_identifier + QString::number(wait_time.count()));
 
     // Force 4fps minimum:
-    delay_timer.start(std::min(wait_time, 250u), this);
+    delay_timer.start(std::min(wait_time, std::chrono::milliseconds(250)).count(), this);
 }
 
 void output::request_frame(Toplevel* window)
@@ -315,7 +315,7 @@ void output::retard_next_run()
         // We wait on an explicit callback from the backend to unlock next composition runs.
         return;
     }
-    delay = refresh_length();
+    delay = std::chrono::nanoseconds(refresh_length());
     set_delay_timer();
 }
 

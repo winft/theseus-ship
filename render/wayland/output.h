@@ -11,6 +11,7 @@
 #include <QRegion>
 #include <QTimer>
 
+#include <chrono>
 #include <deque>
 #include <map>
 
@@ -38,9 +39,9 @@ class KWIN_EXPORT output : public QObject
 
     ulong msc{0};
 
-    // Compositing delay (in ns).
-    int64_t delay;
-    int64_t last_paint_durations[2]{0};
+    // Compositing delay.
+    std::chrono::nanoseconds delay;
+    std::chrono::nanoseconds last_paint_durations[2]{};
     int paint_periods{0};
 
     QRegion repaints_region;
@@ -49,7 +50,7 @@ class KWIN_EXPORT output : public QObject
     bool prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows);
     void retard_next_run();
 
-    void update_paint_periods(int64_t duration);
+    void update_paint_periods(std::chrono::nanoseconds duration);
     int64_t refresh_length() const;
 
     void timerEvent(QTimerEvent* event) override;
