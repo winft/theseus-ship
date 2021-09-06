@@ -87,10 +87,8 @@ bool event_filter::pinch_end(pinch_end_event const& /*event*/)
     return false;
 }
 
-bool event_filter::swipeGestureBegin(int fingerCount, quint32 time)
+bool event_filter::swipe_begin(swipe_begin_event const& /*event*/)
 {
-    Q_UNUSED(fingerCount)
-    Q_UNUSED(time)
     return false;
 }
 

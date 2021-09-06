@@ -162,7 +162,7 @@ public:
     void pinch_update(input::pinch_update_event const& event) override;
     void pinch_end(input::pinch_end_event const& event) override;
 
-    void swipeGestureBegin(int fingerCount, quint32 time) override;
+    void swipe_begin(input::swipe_begin_event const& event) override;
     void swipeGestureUpdate(const QSizeF &delta, quint32 time) override;
     void swipeGestureEnd(quint32 time) override;
     void swipeGestureCancelled(quint32 time) override;

@@ -184,14 +184,15 @@ bool forward_filter::pinch_end(pinch_end_event const& event)
     return true;
 }
 
-bool forward_filter::swipeGestureBegin(int fingerCount, quint32 time)
+bool forward_filter::swipe_begin(swipe_begin_event const& event)
 {
     if (!workspace()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().start_swipe_gesture(fingerCount);
+    seat->setTimestamp(event.base.time_msec);
+    seat->pointers().start_swipe_gesture(event.fingers);
+
     return true;
 }
 

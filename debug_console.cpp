@@ -462,13 +462,15 @@ void DebugConsoleFilter::pinch_end(input::pinch_end_event const& event)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::swipeGestureBegin(int fingerCount, quint32 time)
+void DebugConsoleFilter::swipe_begin(input::swipe_begin_event const& event)
 {
-    QString text = s_hr;
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
+
     text.append(s_tableStart);
     text.append(tableHeaderRow(i18nc("A swipe gesture is started", "Swipe start")));
-    text.append(timestampRow(time));
-    text.append(tableRow(i18nc("Number of fingers in this swipe gesture", "Finger count"), fingerCount));
+    text.append(timestamp);
+    text.append(tableRow(i18nc("Number of fingers in this swipe gesture", "Finger count"), event.fingers));
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);

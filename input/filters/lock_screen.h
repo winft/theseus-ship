@@ -27,7 +27,7 @@ public:
     bool pinch_update(pinch_update_event const& event) override;
     bool pinch_end(pinch_end_event const& event) override;
 
-    bool swipeGestureBegin(int fingerCount, quint32 time) override;
+    bool swipe_begin(swipe_begin_event const& event) override;
     bool swipeGestureUpdate(const QSizeF& delta, quint32 time) override;
     bool swipeGestureEnd(quint32 time) override;
     bool swipeGestureCancelled(quint32 time) override;

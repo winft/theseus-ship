@@ -86,8 +86,6 @@ public:
     void process_axis(axis_event const& event);
 
     void process_swipe_begin(swipe_begin_event const& event);
-    void
-    processSwipeGestureBegin(int fingerCount, quint32 time, KWin::input::pointer* device = nullptr);
     void process_swipe_update(swipe_update_event const& event);
     void processSwipeGestureUpdate(const QSizeF& delta,
                                    quint32 time,

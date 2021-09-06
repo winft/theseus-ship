@@ -307,22 +307,14 @@ void pointer_redirect::process_axis(axis_event const& event)
 
 void pointer_redirect::process_swipe_begin(swipe_begin_event const& event)
 {
-    processSwipeGestureBegin(event.fingers, event.base.time_msec, event.base.dev);
-}
-
-void pointer_redirect::processSwipeGestureBegin(int fingerCount,
-                                                quint32 time,
-                                                KWin::input::pointer* device)
-{
-    Q_UNUSED(device)
     if (!inited()) {
         return;
     }
 
     kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
-    kwinApp()->input->redirect->processFilters(std::bind(
-        &input::event_filter::swipeGestureBegin, std::placeholders::_1, fingerCount, time));
+        std::bind(&event_spy::swipe_begin, std::placeholders::_1, event));
+    kwinApp()->input->redirect->processFilters(
+        std::bind(&event_filter::swipe_begin, std::placeholders::_1, event));
 }
 
 void pointer_redirect::process_swipe_update(swipe_update_event const& event)

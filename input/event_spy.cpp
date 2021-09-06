@@ -75,10 +75,8 @@ void event_spy::pinch_end(pinch_end_event const& /*event*/)
 {
 }
 
-void event_spy::swipeGestureBegin(int fingerCount, quint32 time)
+void event_spy::swipe_begin(swipe_begin_event const& /*event*/)
 {
-    Q_UNUSED(fingerCount)
-    Q_UNUSED(time)
 }
 
 void event_spy::swipeGestureUpdate(const QSizeF& delta, quint32 time)

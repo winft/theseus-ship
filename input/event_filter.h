@@ -53,7 +53,7 @@ public:
     virtual bool pinch_update(pinch_update_event const& event);
     virtual bool pinch_end(pinch_end_event const& event);
 
-    virtual bool swipeGestureBegin(int fingerCount, quint32 time);
+    virtual bool swipe_begin(swipe_begin_event const& event);
     virtual bool swipeGestureUpdate(const QSizeF& delta, quint32 time);
     virtual bool swipeGestureEnd(quint32 time);
     virtual bool swipeGestureCancelled(quint32 time);
