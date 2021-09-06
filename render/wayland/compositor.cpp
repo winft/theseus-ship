@@ -47,18 +47,6 @@ void compositor::check_idle()
     scene()->idle();
 }
 
-void compositor::swapped(AbstractWaylandOutput* output)
-{
-    auto render_output = outputs.at(output).get();
-    render_output->swapped_sw();
-}
-
-void compositor::swapped(AbstractWaylandOutput* output, unsigned int sec, unsigned int usec)
-{
-    auto render_output = outputs.at(output).get();
-    render_output->swapped_hw(sec, usec);
-}
-
 compositor::compositor(QObject* parent)
     : render::compositor(parent)
     , presentation(new render::wayland::presentation(this))

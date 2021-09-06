@@ -33,7 +33,8 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
     auto event = static_cast<wlr_output_event_present*>(data);
 
     if (auto compositor = static_cast<wayland::compositor*>(compositor::self())) {
-        compositor->swapped(our_output, event->when->tv_sec, event->when->tv_nsec / 1000);
+        auto render_output = compositor->outputs.at(our_output).get();
+        render_output->swapped_hw(event->when->tv_sec, event->when->tv_nsec / 1000);
     }
 }
 
