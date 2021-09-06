@@ -444,24 +444,18 @@ void DebugConsoleFilter::pinch_update(input::pinch_update_event const& event)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::pinchGestureEnd(quint32 time)
+void DebugConsoleFilter::pinch_end(input::pinch_end_event const& event)
 {
-    QString text = s_hr;
-    text.append(s_tableStart);
-    text.append(tableHeaderRow(i18nc("A pinch gesture ended", "Pinch end")));
-    text.append(timestampRow(time));
-    text.append(s_tableEnd);
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
 
-    m_textEdit->insertHtml(text);
-    m_textEdit->ensureCursorVisible();
-}
-
-void DebugConsoleFilter::pinchGestureCancelled(quint32 time)
-{
-    QString text = s_hr;
     text.append(s_tableStart);
-    text.append(tableHeaderRow(i18nc("A pinch gesture got cancelled", "Pinch cancelled")));
-    text.append(timestampRow(time));
+    if (event.cancelled) {
+        text.append(tableHeaderRow(i18nc("A pinch gesture got cancelled", "Pinch cancelled")));
+    } else {
+        text.append(tableHeaderRow(i18nc("A pinch gesture ended", "Pinch end")));
+    }
+    text.append(timestamp);
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);

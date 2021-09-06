@@ -161,30 +161,26 @@ bool forward_filter::pinch_update(pinch_update_event const& event)
 
     auto seat = waylandServer()->seat();
     seat->setTimestamp(event.base.time_msec);
-    seat->pointers().update_pinch_gesture(QSize(event.delta.x(), event.delta.y()), event.scale, event.rotation);
+    seat->pointers().update_pinch_gesture(
+        QSize(event.delta.x(), event.delta.y()), event.scale, event.rotation);
 
     return true;
 }
 
-bool forward_filter::pinchGestureEnd(quint32 time)
+bool forward_filter::pinch_end(pinch_end_event const& event)
 {
     if (!workspace()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().end_pinch_gesture();
-    return true;
-}
+    seat->setTimestamp(event.base.time_msec);
 
-bool forward_filter::pinchGestureCancelled(quint32 time)
-{
-    if (!workspace()) {
-        return false;
+    if (event.cancelled) {
+        seat->pointers().cancel_pinch_gesture();
+    } else {
+        seat->pointers().end_pinch_gesture();
     }
-    auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().cancel_pinch_gesture();
+
     return true;
 }
 

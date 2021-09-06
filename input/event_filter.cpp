@@ -82,15 +82,8 @@ bool event_filter::pinch_update(pinch_update_event const& /*event*/)
     return false;
 }
 
-bool event_filter::pinchGestureEnd(quint32 time)
+bool event_filter::pinch_end(pinch_end_event const& /*event*/)
 {
-    Q_UNUSED(time)
-    return false;
-}
-
-bool event_filter::pinchGestureCancelled(quint32 time)
-{
-    Q_UNUSED(time)
     return false;
 }
 

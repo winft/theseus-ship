@@ -99,8 +99,6 @@ public:
     void process_pinch_begin(pinch_begin_event const& event);
     void process_pinch_update(pinch_update_event const& event);
     void process_pinch_end(pinch_end_event const& event);
-    void processPinchGestureEnd(quint32 time, KWin::input::pointer* device = nullptr);
-    void processPinchGestureCancelled(quint32 time, KWin::input::pointer* device = nullptr);
 
 private:
     void cleanupInternalWindow(QWindow* old, QWindow* now) override;
