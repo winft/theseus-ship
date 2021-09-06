@@ -62,51 +62,53 @@ class KWIN_EXPORT DebugConsoleModel : public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    explicit DebugConsoleModel(QObject *parent = nullptr);
+    explicit DebugConsoleModel(QObject* parent = nullptr);
     ~DebugConsoleModel() override;
 
-
-    int columnCount(const QModelIndex &parent) const override;
-    QVariant data(const QModelIndex &index, int role) const override;
-    QModelIndex index(int row, int column, const QModelIndex & parent) const override;
-    int rowCount(const QModelIndex &parent) const override;
-    QModelIndex parent(const QModelIndex &child) const override;
+    int columnCount(const QModelIndex& parent) const override;
+    QVariant data(const QModelIndex& index, int role) const override;
+    QModelIndex index(int row, int column, const QModelIndex& parent) const override;
+    int rowCount(const QModelIndex& parent) const override;
+    QModelIndex parent(const QModelIndex& child) const override;
 
 private:
-    template <class T>
-    QModelIndex indexForClient(int row, int column, const QVector<T*> &clients, int id) const;
-    template <class T>
-    QModelIndex indexForProperty(int row, int column, const QModelIndex &parent, T *(DebugConsoleModel::*filter)(const QModelIndex&) const) const;
-    template <class T>
-    int propertyCount(const QModelIndex &parent, T *(DebugConsoleModel::*filter)(const QModelIndex&) const) const;
-    QVariant propertyData(QObject *object, const QModelIndex &index, int role) const;
-    template <class T>
-    QVariant clientData(const QModelIndex &index, int role, const QVector<T*> clients) const;
-    template <class T>
-    void add(int parentRow, QVector<T*> &clients, T *client);
-    template <class T>
-    void remove(int parentRow, QVector<T*> &clients, T *client);
-    win::wayland::window* shellClient(const QModelIndex &index) const;
-    win::InternalClient *internalClient(const QModelIndex &index) const;
-    win::x11::window* x11Client(const QModelIndex &index) const;
-    Toplevel* unmanaged(const QModelIndex &index) const;
+    template<class T>
+    QModelIndex indexForClient(int row, int column, const QVector<T*>& clients, int id) const;
+    template<class T>
+    QModelIndex indexForProperty(int row,
+                                 int column,
+                                 const QModelIndex& parent,
+                                 T* (DebugConsoleModel::*filter)(const QModelIndex&) const) const;
+    template<class T>
+    int propertyCount(const QModelIndex& parent,
+                      T* (DebugConsoleModel::*filter)(const QModelIndex&) const) const;
+    QVariant propertyData(QObject* object, const QModelIndex& index, int role) const;
+    template<class T>
+    QVariant clientData(const QModelIndex& index, int role, const QVector<T*> clients) const;
+    template<class T>
+    void add(int parentRow, QVector<T*>& clients, T* client);
+    template<class T>
+    void remove(int parentRow, QVector<T*>& clients, T* client);
+    win::wayland::window* shellClient(const QModelIndex& index) const;
+    win::InternalClient* internalClient(const QModelIndex& index) const;
+    win::x11::window* x11Client(const QModelIndex& index) const;
+    Toplevel* unmanaged(const QModelIndex& index) const;
     int topLevelRowCount() const;
 
     QVector<win::wayland::window*> m_shellClients;
     QVector<win::InternalClient*> m_internalClients;
     QVector<win::x11::window*> m_x11Clients;
     QVector<Toplevel*> m_unmanageds;
-
 };
 
 class DebugConsoleDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 public:
-    explicit DebugConsoleDelegate(QObject *parent = nullptr);
+    explicit DebugConsoleDelegate(QObject* parent = nullptr);
     ~DebugConsoleDelegate() override;
 
-    QString displayText(const QVariant &value, const QLocale &locale) const override;
+    QString displayText(const QVariant& value, const QLocale& locale) const override;
 };
 
 class KWIN_EXPORT DebugConsole : public QWidget
@@ -117,7 +119,7 @@ public:
     ~DebugConsole() override;
 
 protected:
-    void showEvent(QShowEvent *event) override;
+    void showEvent(QShowEvent* event) override;
 
 private:
     void initGLTab();
@@ -131,20 +133,20 @@ class SurfaceTreeModel : public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    explicit SurfaceTreeModel(QObject *parent = nullptr);
+    explicit SurfaceTreeModel(QObject* parent = nullptr);
     ~SurfaceTreeModel() override;
 
-    int columnCount(const QModelIndex &parent) const override;
-    QVariant data(const QModelIndex &index, int role) const override;
-    QModelIndex index(int row, int column, const QModelIndex & parent) const override;
-    int rowCount(const QModelIndex &parent) const override;
-    QModelIndex parent(const QModelIndex &child) const override;
+    int columnCount(const QModelIndex& parent) const override;
+    QVariant data(const QModelIndex& index, int role) const override;
+    QModelIndex index(int row, int column, const QModelIndex& parent) const override;
+    int rowCount(const QModelIndex& parent) const override;
+    QModelIndex parent(const QModelIndex& child) const override;
 };
 
 class DebugConsoleFilter : public input::event_spy
 {
 public:
-    explicit DebugConsoleFilter(QTextEdit *textEdit);
+    explicit DebugConsoleFilter(QTextEdit* textEdit);
     ~DebugConsoleFilter() override;
 
     void button(input::button_event const& event) override;
@@ -154,8 +156,8 @@ public:
     void key(input::key_event const& event) override;
     void key_repeat(input::key_event const& event) override;
 
-    void touchDown(qint32 id, const QPointF &pos, quint32 time) override;
-    void touchMotion(qint32 id, const QPointF &pos, quint32 time) override;
+    void touchDown(qint32 id, const QPointF& pos, quint32 time) override;
+    void touchMotion(qint32 id, const QPointF& pos, quint32 time) override;
     void touchUp(qint32 id, quint32 time) override;
 
     void pinch_begin(input::pinch_begin_event const& event) override;
@@ -167,16 +169,16 @@ public:
     void swipeGestureEnd(quint32 time) override;
     void swipeGestureCancelled(quint32 time) override;
 
-    void switchEvent(input::SwitchEvent *event) override;
+    void switchEvent(input::SwitchEvent* event) override;
 
-    void tabletToolEvent(QTabletEvent *event) override;
-    void tabletToolButtonEvent(const QSet<uint> &pressedButtons) override;
-    void tabletPadButtonEvent(const QSet<uint> &pressedButtons) override;
+    void tabletToolEvent(QTabletEvent* event) override;
+    void tabletToolButtonEvent(const QSet<uint>& pressedButtons) override;
+    void tabletPadButtonEvent(const QSet<uint>& pressedButtons) override;
     void tabletPadStripEvent(int number, int position, bool isFinger) override;
     void tabletPadRingEvent(int number, int position, bool isFinger) override;
 
 private:
-    QTextEdit *m_textEdit;
+    QTextEdit* m_textEdit;
 };
 
 namespace input
@@ -191,14 +193,14 @@ class InputDeviceModel : public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    explicit InputDeviceModel(QObject *parent = nullptr);
+    explicit InputDeviceModel(QObject* parent = nullptr);
     ~InputDeviceModel() override;
 
-    int columnCount(const QModelIndex &parent) const override;
-    QVariant data(const QModelIndex &index, int role) const override;
-    QModelIndex index(int row, int column, const QModelIndex & parent) const override;
-    int rowCount(const QModelIndex &parent) const override;
-    QModelIndex parent(const QModelIndex &child) const override;
+    int columnCount(const QModelIndex& parent) const override;
+    QVariant data(const QModelIndex& index, int role) const override;
+    QModelIndex index(int row, int column, const QModelIndex& parent) const override;
+    int rowCount(const QModelIndex& parent) const override;
+    QModelIndex parent(const QModelIndex& child) const override;
 
 private:
     void setupDeviceConnections(input::dbus::device* device);
