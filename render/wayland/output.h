@@ -31,6 +31,7 @@ class Toplevel;
 namespace render::wayland
 {
 class compositor;
+struct presentation_data;
 
 class KWIN_EXPORT output : public QObject
 {
@@ -73,7 +74,7 @@ public:
     std::deque<Toplevel*> run();
     void dry_run();
 
-    void swapped(unsigned int sec, unsigned int usec);
+    void swapped(presentation_data const& data);
 };
 
 }

@@ -8,8 +8,10 @@
 #include "backend.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
+#include "render/wayland/presentation.h"
 #include "screens.h"
 
+#include <chrono>
 #include <wayland_logging.h>
 
 namespace KWin::render::backend::wlroots
@@ -25,6 +27,25 @@ void handle_destroy(wl_listener* listener, [[maybe_unused]] void* data)
     delete output;
 }
 
+wayland::presentation_kinds to_presentation_kinds(uint32_t wlr_flags)
+{
+    wayland::presentation_kinds flags{wayland::presentation_kind::none};
+
+    if (wlr_flags & WLR_OUTPUT_PRESENT_VSYNC) {
+        flags |= wayland::presentation_kind::vsync;
+    }
+    if (wlr_flags & WLR_OUTPUT_PRESENT_HW_CLOCK) {
+        flags |= wayland::presentation_kind::hw_clock;
+    }
+    if (wlr_flags & WLR_OUTPUT_PRESENT_HW_COMPLETION) {
+        flags |= wayland::presentation_kind::hw_completion;
+    }
+    if (wlr_flags & WLR_OUTPUT_PRESENT_ZERO_COPY) {
+        flags |= wayland::presentation_kind::zero_copy;
+    }
+    return flags;
+}
+
 void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
 {
     event_receiver<output>* event_receiver_struct
@@ -32,9 +53,20 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
     auto our_output = event_receiver_struct->receiver;
     auto event = static_cast<wlr_output_event_present*>(data);
 
+    // TODO(romangg): What if wee don't have a monotonic clock? For example should
+    //                std::chrono::system_clock::time_point be used?
+    auto when = std::chrono::seconds{event->when->tv_sec}
+        + std::chrono::nanoseconds{event->when->tv_nsec};
+
+    wayland::presentation_data pres_data{event->commit_seq,
+                                         when,
+                                         event->seq,
+                                         std::chrono::nanoseconds(event->refresh),
+                                         to_presentation_kinds(event->flags)};
+
     if (auto compositor = static_cast<wayland::compositor*>(compositor::self())) {
         auto render_output = compositor->outputs.at(our_output).get();
-        render_output->swapped(event->when->tv_sec, event->when->tv_nsec / 1000);
+        render_output->swapped(pres_data);
     }
 }
 

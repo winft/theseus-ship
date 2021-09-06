@@ -10,6 +10,7 @@
 #include <QHash>
 #include <QObject>
 
+#include <chrono>
 #include <deque>
 #include <time.h>
 
@@ -40,6 +41,14 @@ enum class presentation_kind {
 };
 Q_DECLARE_FLAGS(presentation_kinds, presentation_kind)
 
+struct presentation_data {
+    uint32_t commit_seq;
+    std::chrono::nanoseconds when;
+    unsigned seq;
+    std::chrono::nanoseconds refresh;
+    presentation_kinds flags;
+};
+
 class KWIN_EXPORT presentation : public QObject
 {
     Q_OBJECT
@@ -50,10 +59,7 @@ public:
 
     void frame(render::wayland::output* output, std::deque<Toplevel*> const& windows);
     void lock(render::wayland::output* output, std::deque<Toplevel*> const& windows);
-    void presented(render::wayland::output* output,
-                   uint32_t sec,
-                   uint32_t usec,
-                   presentation_kinds kinds);
+    void presented(render::wayland::output* output, presentation_data const& data);
 
 private:
     uint32_t current_time() const;

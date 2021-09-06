@@ -125,57 +125,50 @@ Wrapland::Server::Surface::PresentationKinds to_kinds(presentation_kinds kinds)
     return ret;
 }
 
+std::tuple<std::chrono::seconds, std::chrono::nanoseconds>
+get_timespec_decomposition(std::chrono::nanoseconds time)
+{
+    auto const sec = std::chrono::duration_cast<std::chrono::seconds>(time);
+    return {sec, time - sec};
+}
+
 // From Weston.
-void timespec_to_proto(const timespec& ts,
+void timespec_to_proto(std::chrono::nanoseconds const& time,
                        uint32_t& tv_sec_hi,
                        uint32_t& tv_sec_lo,
                        uint32_t& tv_n_sec)
 {
-    Q_ASSERT(ts.tv_sec >= 0);
-    Q_ASSERT(ts.tv_nsec >= 0 && ts.tv_nsec < NSEC_PER_SEC);
+    auto [time_sec, time_nsec] = get_timespec_decomposition(time);
 
-    uint64_t sec64 = ts.tv_sec;
-
+    uint64_t const sec64 = time_sec.count();
     tv_sec_hi = sec64 >> 32;
     tv_sec_lo = sec64 & 0xffffffff;
-    tv_n_sec = ts.tv_nsec;
+    tv_n_sec = time_nsec.count();
 }
 
-void presentation::presented(render::wayland::output* output,
-                             uint32_t sec,
-                             uint32_t usec,
-                             presentation_kinds kinds)
+void presentation::presented(render::wayland::output* output, presentation_data const& data)
 {
     if (!output->base->isEnabled()) {
         // Output disabled, discards will be sent from Wrapland.
         return;
     }
 
-    timespec ts;
-    ts.tv_sec = sec;
-    ts.tv_nsec = usec * 1000;
-
     uint32_t tv_sec_hi;
     uint32_t tv_sec_lo;
     uint32_t tv_n_sec;
-    timespec_to_proto(ts, tv_sec_hi, tv_sec_lo, tv_n_sec);
+    timespec_to_proto(data.when, tv_sec_hi, tv_sec_lo, tv_n_sec);
 
-    auto const refresh_rate = output->base->refreshRate();
-    assert(refresh_rate > 0);
-
-    auto const refresh_length = 1 / (double)refresh_rate;
-    uint32_t const refresh = refresh_length * 1000 * 1000 * 1000 * 1000;
-    auto const msc = output->base->msc();
+    uint64_t msc = data.seq;
 
     for (auto& [id, surface] : output->assigned_surfaces) {
         surface->presentationFeedback(id,
                                       tv_sec_hi,
                                       tv_sec_lo,
                                       tv_n_sec,
-                                      refresh,
+                                      data.refresh.count(),
                                       msc >> 32,
                                       msc & 0xffffffff,
-                                      to_kinds(kinds));
+                                      to_kinds(data.flags));
         disconnect(surface, &Wrapland::Server::Surface::resourceDestroyed, output, nullptr);
     }
     output->assigned_surfaces.clear();
