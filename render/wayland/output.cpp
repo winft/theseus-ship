@@ -209,22 +209,12 @@ void output::dry_run()
     compositor->presentation->frame(this, frame_windows);
 }
 
-void output::swapped_sw()
-{
-    compositor->presentation->software_presented(presentation::kind::Vsync);
-    swapped();
-}
-
-void output::swapped_hw(unsigned int sec, unsigned int usec)
+void output::swapped(unsigned int sec, unsigned int usec)
 {
     auto const flags = presentation::kind::Vsync | presentation::kind::HwClock
         | presentation::kind::HwCompletion;
     compositor->presentation->presented(this, sec, usec, flags);
-    swapped();
-}
 
-void output::swapped()
-{
     if (!swap_pending) {
         qCWarning(KWIN_CORE) << "render::wayland::output::swapped called but no swap pending.";
         return;

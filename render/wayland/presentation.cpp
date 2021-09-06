@@ -198,47 +198,4 @@ void presentation::presented(render::wayland::output* output,
     output->assigned_surfaces.clear();
 }
 
-void presentation::software_presented(kinds kinds)
-{
-    int64_t const elapsed_time = fallback_clock->nsecsElapsed();
-    uint32_t const elapsed_seconds = static_cast<double>(elapsed_time) / NSEC_PER_SEC;
-    uint32_t const nano_seconds_part
-        = elapsed_time - static_cast<int64_t>(elapsed_seconds) * NSEC_PER_SEC;
-
-    timespec ts;
-    ts.tv_sec = elapsed_seconds;
-    ts.tv_nsec = nano_seconds_part;
-
-    uint32_t tv_sec_hi;
-    uint32_t tv_sec_lo;
-    uint32_t tv_n_sec;
-    timespec_to_proto(ts, tv_sec_hi, tv_sec_lo, tv_n_sec);
-
-    auto output = static_cast<AbstractWaylandOutput*>(kwinApp()->platform->enabledOutputs()[0]);
-
-    int const refresh_rate = output->refreshRate();
-    assert(refresh_rate > 0);
-
-    const double refresh_length = 1 / (double)refresh_rate;
-    uint32_t const refresh = refresh_length * 1000 * 1000 * 1000 * 1000;
-
-    uint64_t const seq = fallback_clock->elapsed() / (double)refresh_rate;
-
-    auto it = surfaces.constBegin();
-    while (it != surfaces.constEnd()) {
-        auto surface = it.value();
-        surface->presentationFeedback(it.key(),
-                                      tv_sec_hi,
-                                      tv_sec_lo,
-                                      tv_n_sec,
-                                      refresh,
-                                      seq >> 32,
-                                      seq & 0xffffffff,
-                                      to_kinds(kinds));
-        disconnect(surface, &Wrapland::Server::Surface::resourceDestroyed, this, nullptr);
-        ++it;
-    }
-    surfaces.clear();
-}
-
 }

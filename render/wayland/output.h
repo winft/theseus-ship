@@ -48,7 +48,6 @@ class KWIN_EXPORT output : public QObject
     bool prepare_repaint(Toplevel* win);
     bool prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows);
     void retard_next_run();
-    void swapped();
 
     void update_paint_periods(int64_t duration);
     int64_t refresh_length() const;
@@ -73,8 +72,7 @@ public:
     std::deque<Toplevel*> run();
     void dry_run();
 
-    void swapped_sw();
-    void swapped_hw(unsigned int sec, unsigned int usec);
+    void swapped(unsigned int sec, unsigned int usec);
 };
 
 }

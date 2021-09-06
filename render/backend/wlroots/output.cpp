@@ -34,7 +34,7 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
 
     if (auto compositor = static_cast<wayland::compositor*>(compositor::self())) {
         auto render_output = compositor->outputs.at(our_output).get();
-        render_output->swapped_hw(event->when->tv_sec, event->when->tv_nsec / 1000);
+        render_output->swapped(event->when->tv_sec, event->when->tv_nsec / 1000);
     }
 }
 

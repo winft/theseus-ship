@@ -52,7 +52,6 @@ public:
     void frame(render::wayland::output* output, std::deque<Toplevel*> const& windows);
     void lock(render::wayland::output* output, std::deque<Toplevel*> const& windows);
     void presented(render::wayland::output* output, uint32_t sec, uint32_t usec, kinds kinds);
-    void software_presented(kinds kinds);
 
 private:
     uint32_t current_time() const;
