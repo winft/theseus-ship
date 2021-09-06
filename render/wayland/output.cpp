@@ -229,7 +229,7 @@ void output::swapped(unsigned int sec, unsigned int usec)
     //
     // All temporary calculations are in nanoseconds but the final timer offset in the end in
     // milliseconds. Atleast we take here one millisecond.
-    auto const refresh = std::chrono::nanoseconds(refresh_length());
+    auto const refresh = refresh_length();
     auto const vblankMargin = refresh / 10;
 
     auto max_paint_duration = [this]() {
@@ -246,9 +246,9 @@ void output::swapped(unsigned int sec, unsigned int usec)
     set_delay_timer();
 }
 
-int64_t output::refresh_length() const
+std::chrono::nanoseconds output::refresh_length() const
 {
-    return 1000 * 1000 / base->refreshRate();
+    return std::chrono::nanoseconds(1000 * 1000 * (1000 * 1000 / base->refreshRate()));
 }
 
 void output::update_paint_periods(std::chrono::nanoseconds duration)
@@ -293,7 +293,8 @@ void output::request_frame(Toplevel* window)
     }
 
     compositor->presentation->frame(this, {window});
-    frame_timer.start(refresh_length(), this);
+    frame_timer.start(
+        std::chrono::duration_cast<std::chrono::milliseconds>(refresh_length()).count(), this);
 }
 
 void output::timerEvent(QTimerEvent* event)
@@ -315,7 +316,7 @@ void output::retard_next_run()
         // We wait on an explicit callback from the backend to unlock next composition runs.
         return;
     }
-    delay = std::chrono::nanoseconds(refresh_length());
+    delay = refresh_length();
     set_delay_timer();
 }
 

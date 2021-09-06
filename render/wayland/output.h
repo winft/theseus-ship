@@ -51,7 +51,7 @@ class KWIN_EXPORT output : public QObject
     void retard_next_run();
 
     void update_paint_periods(std::chrono::nanoseconds duration);
-    int64_t refresh_length() const;
+    std::chrono::nanoseconds refresh_length() const;
 
     void timerEvent(QTimerEvent* event) override;
 
