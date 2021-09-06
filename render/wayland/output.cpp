@@ -162,6 +162,14 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     return true;
 }
 
+#define SWAP_TIME_DEBUG 0
+#if SWAP_TIME_DEBUG
+auto to_ms = [](std::chrono::nanoseconds val) {
+    QString ret = QString::number(std::chrono::duration<double, std::milli>(val).count()) + "ms";
+    return ret;
+};
+#endif
+
 std::deque<Toplevel*> output::run()
 {
     QRegion repaints;
@@ -184,6 +192,12 @@ std::deque<Toplevel*> output::run()
     // Start the actual painting process.
     auto const duration
         = std::chrono::nanoseconds(compositor->scene()->paint(base, repaints, windows, now));
+
+#if SWAP_TIME_DEBUG
+    qDebug().noquote() << "RUN gap:" << to_ms(now_ns - swap_ref_time)
+                       << "paint:" << to_ms(duration);
+    swap_ref_time = now_ns;
+#endif
 
     paint_durations.update(duration);
     retard_next_run();
@@ -240,13 +254,25 @@ void output::set_delay(presentation_data const& data)
         return;
     }
 
+#if SWAP_TIME_DEBUG
+    qDebug() << "";
+    std::chrono::nanoseconds render_time_debug;
+#endif
+
     // First get the latest Gl timer queries.
     last_timer_queries.erase(std::remove_if(last_timer_queries.begin(),
                                             last_timer_queries.end(),
+#if SWAP_TIME_DEBUG
+                                            [this, &render_time_debug](auto& timer) {
+#else
                                             [this](auto& timer) {
+#endif
                                                 if (!timer.get_query()) {
                                                     return false;
                                                 }
+#if SWAP_TIME_DEBUG
+                                                render_time_debug = timer.time();
+#endif
                                                 render_durations.update(timer.time());
                                                 return true;
                                             }),
@@ -271,6 +297,21 @@ void output::set_delay(presentation_data const& data)
 
     // If our previous margins were too large we don't delay. We would likely miss the next vblank.
     delay = std::max(try_delay, std::chrono::nanoseconds::zero());
+
+#if SWAP_TIME_DEBUG
+    QDebug debug = qDebug();
+    debug.noquote().nospace();
+    debug << "SWAP total: " << to_ms((now - swap_ref_time)) << endl;
+    debug << "vblank to now: " << to_ms(now) << " - " << to_ms(data.when) << " = "
+          << to_ms(vblank_to_now) << endl;
+    debug << "MARGINS vblank: " << to_ms(hw_margin)
+          << " paint: " << to_ms(paint_durations.get_max())
+          << " render: " << to_ms(render_time_debug) << "(" << to_ms(render_durations.get_max())
+          << ")" << endl;
+    debug << "refresh: " << to_ms(refresh) << " delay: " << to_ms(try_delay) << " (" << to_ms(delay)
+          << ")";
+    swap_ref_time = now;
+#endif
 }
 
 void output::set_delay_timer()
