@@ -477,14 +477,16 @@ void DebugConsoleFilter::swipe_begin(input::swipe_begin_event const& event)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::swipeGestureUpdate(const QSizeF &delta, quint32 time)
+void DebugConsoleFilter::swipe_update(input::swipe_update_event const& event)
 {
-    QString text = s_hr;
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
+
     text.append(s_tableStart);
     text.append(tableHeaderRow(i18nc("A swipe gesture is updated", "Swipe update")));
-    text.append(timestampRow(time));
-    text.append(tableRow(i18nc("Current delta in swipe gesture", "Delta x"), delta.width()));
-    text.append(tableRow(i18nc("Current delta in swipe gesture", "Delta y"), delta.height()));
+    text.append(timestamp);
+    text.append(tableRow(i18nc("Current delta in swipe gesture", "Delta x"), event.delta.x()));
+    text.append(tableRow(i18nc("Current delta in swipe gesture", "Delta y"), event.delta.y()));
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);

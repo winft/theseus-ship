@@ -53,7 +53,7 @@ public:
     virtual void pinch_end(pinch_end_event const& event);
 
     virtual void swipe_begin(swipe_begin_event const& event);
-    virtual void swipeGestureUpdate(const QSizeF& delta, quint32 time);
+    virtual void swipe_update(swipe_update_event const& event);
     virtual void swipeGestureEnd(quint32 time);
     virtual void swipeGestureCancelled(quint32 time);
 

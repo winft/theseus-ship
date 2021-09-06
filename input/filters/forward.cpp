@@ -196,14 +196,15 @@ bool forward_filter::swipe_begin(swipe_begin_event const& event)
     return true;
 }
 
-bool forward_filter::swipeGestureUpdate(const QSizeF& delta, quint32 time)
+bool forward_filter::swipe_update(swipe_update_event const& event)
 {
     if (!workspace()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().update_swipe_gesture(delta);
+    seat->setTimestamp(event.base.time_msec);
+    seat->pointers().update_swipe_gesture(QSize(event.delta.x(), event.delta.y()));
+
     return true;
 }
 

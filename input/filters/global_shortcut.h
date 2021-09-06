@@ -25,7 +25,7 @@ public:
     bool key_repeat(key_event const& event) override;
 
     bool swipe_begin(swipe_begin_event const& event) override;
-    bool swipeGestureUpdate(QSizeF const& delta, quint32 time) override;
+    bool swipe_update(swipe_update_event const& event) override;
     bool swipeGestureCancelled(quint32 time) override;
     bool swipeGestureEnd(quint32 time) override;
 

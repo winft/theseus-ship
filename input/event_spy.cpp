@@ -79,10 +79,8 @@ void event_spy::swipe_begin(swipe_begin_event const& /*event*/)
 {
 }
 
-void event_spy::swipeGestureUpdate(const QSizeF& delta, quint32 time)
+void event_spy::swipe_update(swipe_update_event const& /*event*/)
 {
-    Q_UNUSED(delta)
-    Q_UNUSED(time)
 }
 
 void event_spy::swipeGestureEnd(quint32 time)

@@ -319,24 +319,15 @@ void pointer_redirect::process_swipe_begin(swipe_begin_event const& event)
 
 void pointer_redirect::process_swipe_update(swipe_update_event const& event)
 {
-    processSwipeGestureUpdate(
-        QSize(event.delta.x(), event.delta.y()), event.base.time_msec, event.base.dev);
-}
-
-void pointer_redirect::processSwipeGestureUpdate(const QSizeF& delta,
-                                                 quint32 time,
-                                                 KWin::input::pointer* device)
-{
-    Q_UNUSED(device)
     if (!inited()) {
         return;
     }
     update();
 
     kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::swipeGestureUpdate, std::placeholders::_1, delta, time));
+        std::bind(&event_spy::swipe_update, std::placeholders::_1, event));
     kwinApp()->input->redirect->processFilters(
-        std::bind(&input::event_filter::swipeGestureUpdate, std::placeholders::_1, delta, time));
+        std::bind(&event_filter::swipe_update, std::placeholders::_1, event));
 }
 
 void pointer_redirect::process_swipe_end(swipe_end_event const& event)

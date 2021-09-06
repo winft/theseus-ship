@@ -87,9 +87,6 @@ public:
 
     void process_swipe_begin(swipe_begin_event const& event);
     void process_swipe_update(swipe_update_event const& event);
-    void processSwipeGestureUpdate(const QSizeF& delta,
-                                   quint32 time,
-                                   KWin::input::pointer* device = nullptr);
     void process_swipe_end(swipe_end_event const& event);
     void processSwipeGestureEnd(quint32 time, KWin::input::pointer* device = nullptr);
     void processSwipeGestureCancelled(quint32 time, KWin::input::pointer* device = nullptr);
