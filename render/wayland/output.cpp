@@ -219,16 +219,18 @@ void output::swapped(presentation_data const& data)
     }
     swap_pending = false;
 
-    // We delay the next paint shortly before next vblank. For that we assume that the swap
-    // event is close to the actual vblank (TODO: it would be better to take the actual flip
-    // time that for example DRM events provide). We take 10% of refresh cycle length.
-    // We also assume the paint duration is relatively constant over time. We take 3 times the
-    // previous paint duration.
-    //
-    // All temporary calculations are in nanoseconds but the final timer offset in the end in
-    // milliseconds. Atleast we take here one millisecond.
-    auto const refresh = refresh_length();
-    auto const vblankMargin = refresh / 10;
+    auto now = std::chrono::steady_clock::now().time_since_epoch();
+
+    // The gap between the last presentation on the display and us now calculating the delay.
+    auto vblank_to_now = now - data.when;
+
+    // The refresh cycle length either from the presentation data, or if not available, our guess.
+    auto const refresh
+        = data.refresh > std::chrono::nanoseconds::zero() ? data.refresh : refresh_length();
+
+    // Some relative gap to factor in the unknown time the hardware needs to put a rendered image
+    // onto the scanout buffer.
+    auto const hw_margin = refresh / 10;
 
     auto max_paint_duration = [this]() {
         if (last_paint_durations[0] > last_paint_durations[1]) {
@@ -237,8 +239,11 @@ void output::swapped(presentation_data const& data)
         return last_paint_durations[1];
     };
 
-    auto const paint_margin = max_paint_duration();
-    delay = std::max(refresh - vblankMargin - paint_margin, std::chrono::nanoseconds::zero());
+    // We try to delay the next paint shortly before next vblank factoring in our margins.
+    auto try_delay = refresh - vblank_to_now - hw_margin - max_paint_duration();
+
+    // If our previous margins were too large we don't delay. We would likely miss the next vblank.
+    delay = std::max(try_delay, std::chrono::nanoseconds::zero());
 
     delay_timer.stop();
     set_delay_timer();
