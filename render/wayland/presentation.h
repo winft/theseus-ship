@@ -62,8 +62,6 @@ public:
     void presented(render::wayland::output* output, presentation_data const& data);
 
 private:
-    uint32_t current_time() const;
-
     QHash<uint32_t, Wrapland::Server::Surface*> surfaces;
 
     clockid_t clockid;

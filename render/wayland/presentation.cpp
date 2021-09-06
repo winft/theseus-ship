@@ -48,19 +48,15 @@ bool presentation::init_clock(clockid_t clockid)
     return true;
 }
 
-uint32_t presentation::current_time() const
+std::chrono::milliseconds get_now_in_ms()
 {
-    uint32_t time{0};
-    timespec ts;
-    if (clock_gettime(clockid, &ts) == 0) {
-        time = ts.tv_sec * 1000 + ts.tv_nsec / 1000 / 1000;
-    }
-    return time;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch());
 }
 
 void presentation::frame(render::wayland::output* output, std::deque<Toplevel*> const& windows)
 {
-    auto const now = current_time();
+    auto const now = get_now_in_ms().count();
 
     for (auto& win : windows) {
         assert(win->surface());
@@ -73,7 +69,7 @@ void presentation::frame(render::wayland::output* output, std::deque<Toplevel*> 
 
 void presentation::lock(render::wayland::output* output, std::deque<Toplevel*> const& windows)
 {
-    auto const now = current_time();
+    auto const now = get_now_in_ms().count();
 
     // TODO(romangg): what to do when the output gets removed or disabled while we have locked
     // surfaces?
