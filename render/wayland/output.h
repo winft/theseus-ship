@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "duration_record.h"
 #include <kwin_export.h>
 
 #include <QBasicTimer>
@@ -42,8 +43,8 @@ class KWIN_EXPORT output : public QObject
 
     // Compositing delay.
     std::chrono::nanoseconds delay;
-    std::chrono::nanoseconds last_paint_durations[2]{};
-    int paint_periods{0};
+
+    duration_record paint_durations;
 
     QRegion repaints_region;
 
@@ -51,7 +52,6 @@ class KWIN_EXPORT output : public QObject
     bool prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows);
     void retard_next_run();
 
-    void update_paint_periods(std::chrono::nanoseconds duration);
     std::chrono::nanoseconds refresh_length() const;
 
     void timerEvent(QTimerEvent* event) override;

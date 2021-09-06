@@ -180,7 +180,7 @@ std::deque<Toplevel*> output::run()
     // Start the actual painting process.
     auto const duration = compositor->scene()->paint(base, repaints, windows, now);
 
-    update_paint_periods(std::chrono::nanoseconds(duration));
+    paint_durations.update(std::chrono::nanoseconds(duration));
     retard_next_run();
 
     if (!windows.empty()) {
@@ -232,15 +232,8 @@ void output::swapped(presentation_data const& data)
     // onto the scanout buffer.
     auto const hw_margin = refresh / 10;
 
-    auto max_paint_duration = [this]() {
-        if (last_paint_durations[0] > last_paint_durations[1]) {
-            return last_paint_durations[0];
-        }
-        return last_paint_durations[1];
-    };
-
     // We try to delay the next paint shortly before next vblank factoring in our margins.
-    auto try_delay = refresh - vblank_to_now - hw_margin - max_paint_duration();
+    auto try_delay = refresh - vblank_to_now - hw_margin - paint_durations.get_max();
 
     // If our previous margins were too large we don't delay. We would likely miss the next vblank.
     delay = std::max(try_delay, std::chrono::nanoseconds::zero());
@@ -252,22 +245,6 @@ void output::swapped(presentation_data const& data)
 std::chrono::nanoseconds output::refresh_length() const
 {
     return std::chrono::nanoseconds(1000 * 1000 * (1000 * 1000 / base->refreshRate()));
-}
-
-void output::update_paint_periods(std::chrono::nanoseconds duration)
-{
-    if (duration > last_paint_durations[1]) {
-        last_paint_durations[1] = duration;
-    }
-
-    paint_periods++;
-
-    // We take the maximum over the last 100 frames.
-    if (paint_periods == 100) {
-        last_paint_durations[0] = last_paint_durations[1];
-        last_paint_durations[1] = std::chrono::nanoseconds::zero();
-        paint_periods = 0;
-    }
 }
 
 void output::set_delay_timer()
