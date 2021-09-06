@@ -97,15 +97,8 @@ bool event_filter::swipe_update(swipe_update_event const& /*event*/)
     return false;
 }
 
-bool event_filter::swipeGestureEnd(quint32 time)
+bool event_filter::swipe_end(swipe_end_event const& /*event*/)
 {
-    Q_UNUSED(time)
-    return false;
-}
-
-bool event_filter::swipeGestureCancelled(quint32 time)
-{
-    Q_UNUSED(time)
     return false;
 }
 

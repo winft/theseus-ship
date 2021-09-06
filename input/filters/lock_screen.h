@@ -29,8 +29,7 @@ public:
 
     bool swipe_begin(swipe_begin_event const& event) override;
     bool swipe_update(swipe_update_event const& event) override;
-    bool swipeGestureEnd(quint32 time) override;
-    bool swipeGestureCancelled(quint32 time) override;
+    bool swipe_end(swipe_end_event const&) override;
 
 private:
     bool pointerSurfaceAllowed() const;

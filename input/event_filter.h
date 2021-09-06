@@ -55,8 +55,7 @@ public:
 
     virtual bool swipe_begin(swipe_begin_event const& event);
     virtual bool swipe_update(swipe_update_event const& event);
-    virtual bool swipeGestureEnd(quint32 time);
-    virtual bool swipeGestureCancelled(quint32 time);
+    virtual bool swipe_end(swipe_end_event const& event);
 
     virtual bool switchEvent(SwitchEvent* event);
 

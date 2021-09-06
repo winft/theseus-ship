@@ -54,8 +54,7 @@ public:
 
     virtual void swipe_begin(swipe_begin_event const& event);
     virtual void swipe_update(swipe_update_event const& event);
-    virtual void swipeGestureEnd(quint32 time);
-    virtual void swipeGestureCancelled(quint32 time);
+    virtual void swipe_end(swipe_end_event const&);
 
     virtual void switchEvent(SwitchEvent* event);
 

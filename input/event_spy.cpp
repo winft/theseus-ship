@@ -83,14 +83,8 @@ void event_spy::swipe_update(swipe_update_event const& /*event*/)
 {
 }
 
-void event_spy::swipeGestureEnd(quint32 time)
+void event_spy::swipe_end(swipe_end_event const& /*event*/)
 {
-    Q_UNUSED(time)
-}
-
-void event_spy::swipeGestureCancelled(quint32 time)
-{
-    Q_UNUSED(time)
 }
 
 void event_spy::switchEvent(SwitchEvent* event)

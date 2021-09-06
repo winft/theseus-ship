@@ -499,24 +499,20 @@ void DebugConsoleFilter::swipe_update(input::swipe_update_event const& event)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::swipeGestureEnd(quint32 time)
+void DebugConsoleFilter::swipe_end(input::swipe_end_event const& event)
 {
-    QString text = s_hr;
-    text.append(s_tableStart);
-    text.append(tableHeaderRow(i18nc("A swipe gesture ended", "Swipe end")));
-    text.append(timestampRow(time));
-    text.append(s_tableEnd);
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
 
-    m_textEdit->insertHtml(text);
-    m_textEdit->ensureCursorVisible();
-}
-
-void DebugConsoleFilter::swipeGestureCancelled(quint32 time)
-{
-    QString text = s_hr;
     text.append(s_tableStart);
-    text.append(tableHeaderRow(i18nc("A swipe gesture got cancelled", "Swipe cancelled")));
-    text.append(timestampRow(time));
+
+    if (event.cancelled) {
+        text.append(tableHeaderRow(i18nc("A swipe gesture got cancelled", "Swipe cancelled")));
+    } else {
+        text.append(tableHeaderRow(i18nc("A swipe gesture ended", "Swipe end")));
+    }
+
+    text.append(timestamp);
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);

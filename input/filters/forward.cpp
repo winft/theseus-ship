@@ -208,25 +208,20 @@ bool forward_filter::swipe_update(swipe_update_event const& event)
     return true;
 }
 
-bool forward_filter::swipeGestureEnd(quint32 time)
+bool forward_filter::swipe_end(swipe_end_event const& event)
 {
     if (!workspace()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().end_swipe_gesture();
-    return true;
-}
+    seat->setTimestamp(event.base.time_msec);
 
-bool forward_filter::swipeGestureCancelled(quint32 time)
-{
-    if (!workspace()) {
-        return false;
+    if (event.cancelled) {
+        seat->pointers().cancel_swipe_gesture();
+    } else {
+        seat->pointers().end_swipe_gesture();
     }
-    auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().cancel_swipe_gesture();
+
     return true;
 }
 

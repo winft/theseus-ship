@@ -121,21 +121,18 @@ bool global_shortcut_filter::swipe_begin(swipe_begin_event const& event)
 
 bool global_shortcut_filter::swipe_update(swipe_update_event const& event)
 {
-    kwinApp()->input->redirect->shortcuts()->processSwipeUpdate(QSizeF(event.delta.x(), event.delta.y()));
+    kwinApp()->input->redirect->shortcuts()->processSwipeUpdate(
+        QSizeF(event.delta.x(), event.delta.y()));
     return false;
 }
 
-bool global_shortcut_filter::swipeGestureCancelled(quint32 time)
+bool global_shortcut_filter::swipe_end(swipe_end_event const& event)
 {
-    Q_UNUSED(time)
-    kwinApp()->input->redirect->shortcuts()->processSwipeCancel();
-    return false;
-}
-
-bool global_shortcut_filter::swipeGestureEnd(quint32 time)
-{
-    Q_UNUSED(time)
-    kwinApp()->input->redirect->shortcuts()->processSwipeEnd();
+    if (event.cancelled) {
+        kwinApp()->input->redirect->shortcuts()->processSwipeCancel();
+    } else {
+        kwinApp()->input->redirect->shortcuts()->processSwipeEnd();
+    }
     return false;
 }
 
