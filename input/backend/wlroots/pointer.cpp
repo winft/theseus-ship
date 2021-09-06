@@ -119,6 +119,112 @@ static void handle_axis(struct wl_listener* listener, [[maybe_unused]] void* dat
     Q_EMIT pointer->axis_changed(event);
 }
 
+static void handle_swipe_begin(struct wl_listener* listener, [[maybe_unused]] void* data)
+{
+    er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
+    auto pointer = event_receiver_struct->receiver;
+    auto wlr_event = reinterpret_cast<wlr_event_pointer_swipe_begin*>(data);
+
+    auto event = swipe_begin_event{
+        wlr_event->fingers,
+        {
+            pointer,
+            wlr_event->time_msec,
+        },
+    };
+
+    Q_EMIT pointer->swipe_begin(event);
+}
+
+static void handle_swipe_update(struct wl_listener* listener, [[maybe_unused]] void* data)
+{
+    er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
+    auto pointer = event_receiver_struct->receiver;
+    auto wlr_event = reinterpret_cast<wlr_event_pointer_swipe_update*>(data);
+
+    auto event = swipe_update_event{
+        wlr_event->fingers,
+        QPointF(wlr_event->dx, wlr_event->dy),
+        {
+            pointer,
+            wlr_event->time_msec,
+        },
+    };
+
+    Q_EMIT pointer->swipe_update(event);
+}
+
+static void handle_swipe_end(struct wl_listener* listener, [[maybe_unused]] void* data)
+{
+    er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
+    auto pointer = event_receiver_struct->receiver;
+    auto wlr_event = reinterpret_cast<wlr_event_pointer_swipe_end*>(data);
+
+    auto event = swipe_end_event{
+        wlr_event->cancelled,
+        {
+            pointer,
+            wlr_event->time_msec,
+        },
+    };
+
+    Q_EMIT pointer->swipe_end(event);
+}
+
+static void handle_pinch_begin(struct wl_listener* listener, [[maybe_unused]] void* data)
+{
+    er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
+    auto pointer = event_receiver_struct->receiver;
+    auto wlr_event = reinterpret_cast<wlr_event_pointer_pinch_begin*>(data);
+
+    auto event = pinch_begin_event{
+        wlr_event->fingers,
+        {
+            pointer,
+            wlr_event->time_msec,
+        },
+    };
+
+    Q_EMIT pointer->pinch_begin(event);
+}
+
+static void handle_pinch_update(struct wl_listener* listener, [[maybe_unused]] void* data)
+{
+    er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
+    auto pointer = event_receiver_struct->receiver;
+    auto wlr_event = reinterpret_cast<wlr_event_pointer_pinch_update*>(data);
+
+    auto event = pinch_update_event{
+        wlr_event->fingers,
+        QPointF(wlr_event->dx, wlr_event->dy),
+        wlr_event->scale,
+        wlr_event->rotation,
+        {
+            pointer,
+            wlr_event->time_msec,
+        },
+    };
+
+    Q_EMIT pointer->pinch_update(event);
+}
+
+static void handle_pinch_end(struct wl_listener* listener, [[maybe_unused]] void* data)
+{
+    er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
+    auto pointer = event_receiver_struct->receiver;
+    auto wlr_event = reinterpret_cast<wlr_event_pointer_pinch_end*>(data);
+
+    auto event = pinch_end_event{
+        wlr_event->cancelled,
+        {
+            pointer,
+            wlr_event->time_msec,
+        },
+    };
+
+    Q_EMIT pointer->pinch_end(event);
+}
+
 pointer::pointer(wlr_input_device* dev, platform* plat)
     : input::pointer(plat)
 {
@@ -147,6 +253,30 @@ pointer::pointer(wlr_input_device* dev, platform* plat)
     axis_rec.receiver = this;
     axis_rec.event.notify = handle_axis;
     wl_signal_add(&backend->events.axis, &axis_rec.event);
+
+    swipe_begin_rec.receiver = this;
+    swipe_begin_rec.event.notify = handle_swipe_begin;
+    wl_signal_add(&backend->events.swipe_begin, &swipe_begin_rec.event);
+
+    swipe_update_rec.receiver = this;
+    swipe_update_rec.event.notify = handle_swipe_update;
+    wl_signal_add(&backend->events.swipe_update, &swipe_update_rec.event);
+
+    swipe_end_rec.receiver = this;
+    swipe_end_rec.event.notify = handle_swipe_end;
+    wl_signal_add(&backend->events.swipe_end, &swipe_end_rec.event);
+
+    pinch_begin_rec.receiver = this;
+    pinch_begin_rec.event.notify = handle_pinch_begin;
+    wl_signal_add(&backend->events.pinch_begin, &pinch_begin_rec.event);
+
+    pinch_update_rec.receiver = this;
+    pinch_update_rec.event.notify = handle_pinch_update;
+    wl_signal_add(&backend->events.pinch_update, &pinch_update_rec.event);
+
+    pinch_end_rec.receiver = this;
+    pinch_end_rec.event.notify = handle_pinch_end;
+    wl_signal_add(&backend->events.pinch_end, &pinch_end_rec.event);
 }
 
 }
