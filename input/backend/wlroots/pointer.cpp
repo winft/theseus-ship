@@ -225,6 +225,14 @@ static void handle_pinch_end(struct wl_listener* listener, [[maybe_unused]] void
     Q_EMIT pointer->pinch_end(event);
 }
 
+static void handle_frame(struct wl_listener* listener, [[maybe_unused]] void* data)
+{
+    er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
+    auto pointer = event_receiver_struct->receiver;
+
+    Q_EMIT pointer->frame();
+}
+
 pointer::pointer(wlr_input_device* dev, platform* plat)
     : input::pointer(plat)
 {
@@ -277,6 +285,10 @@ pointer::pointer(wlr_input_device* dev, platform* plat)
     pinch_end_rec.receiver = this;
     pinch_end_rec.event.notify = handle_pinch_end;
     wl_signal_add(&backend->events.pinch_end, &pinch_end_rec.event);
+
+    frame_rec.receiver = this;
+    frame_rec.event.notify = handle_frame;
+    wl_signal_add(&backend->events.frame, &frame_rec.event);
 }
 
 }

@@ -76,6 +76,8 @@ public:
     void process_pinch_update(pinch_update_event const& event) override;
     void process_pinch_end(pinch_end_event const& event) override;
 
+    void process_frame() override;
+
     void cleanupInternalWindow(QWindow* old, QWindow* now) override;
     void cleanupDecoration(Decoration::DecoratedClientImpl* old,
                            Decoration::DecoratedClientImpl* now) override;

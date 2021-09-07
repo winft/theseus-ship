@@ -110,6 +110,9 @@ void redirect::set_platform(wayland::platform* platform)
         QObject::connect(
             pointer, &pointer::swipe_end, pointer_red, &input::pointer_redirect::process_swipe_end);
 
+        QObject::connect(
+            pointer, &pointer::frame, pointer_red, &input::pointer_redirect::process_frame);
+
         if (auto seat = find_seat()) {
             seat->setHasPointer(true);
         }
