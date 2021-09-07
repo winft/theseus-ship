@@ -87,9 +87,8 @@ void event_spy::swipe_end(swipe_end_event const& /*event*/)
 {
 }
 
-void event_spy::switchEvent(SwitchEvent* event)
+void event_spy::switch_toggle(switch_toggle_event const& /*event*/)
 {
-    Q_UNUSED(event)
 }
 
 void event_spy::tabletToolEvent(QTabletEvent* event)

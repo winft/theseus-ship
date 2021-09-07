@@ -11,7 +11,6 @@
 
 namespace KWin::input
 {
-class SwitchEvent;
 
 /**
  * Base class for filtering input events inside InputRedirection.
@@ -57,7 +56,7 @@ public:
     virtual bool swipe_update(swipe_update_event const& event);
     virtual bool swipe_end(swipe_end_event const& event);
 
-    virtual bool switchEvent(SwitchEvent* event);
+    virtual bool switch_toggle(switch_toggle_event const& event);
 
     virtual bool tabletToolEvent(QTabletEvent* event);
     virtual bool tabletToolButtonEvent(const QSet<uint>& buttons);

@@ -474,36 +474,44 @@ void input_filter::swipe_end(input::swipe_end_event const& event)
     m_textEdit->ensureCursorVisible();
 }
 
-void input_filter::switchEvent(input::SwitchEvent* event)
+void input_filter::switch_toggle(input::switch_toggle_event const& event)
 {
-    QString text = s_hr;
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
+
     text.append(s_tableStart);
-    text.append(tableHeaderRow(
-        i18nc("A hardware switch (e.g. notebook lid) got toggled", "Switch toggled")));
-    text.append(timestampRow(event->timestamp()));
-    if (event->timestampMicroseconds() != 0) {
-        text.append(timestampRowUsec(event->timestampMicroseconds()));
-    }
-    text.append(deviceRow(event->device()));
-    QString switchName;
-    if (event->device()->control->is_lid_switch()) {
-        switchName = i18nc("Name of a hardware switch", "Notebook lid");
-    } else if (event->device()->control->is_tablet_mode_switch()) {
-        switchName = i18nc("Name of a hardware switch", "Tablet mode");
-    }
-    text.append(tableRow(i18nc("A hardware switch", "Switch"), switchName));
-    QString switchState;
-    switch (event->state()) {
-    case input::SwitchEvent::State::Off:
-        switchState = i18nc("The hardware switch got turned off", "Off");
+    text.append(timestamp);
+
+    text.append(deviceRow(event.base.dev));
+
+    QString switch_name;
+    switch (event.type) {
+    case input::switch_type::lid:
+        switch_name = i18nc("Name of a hardware switch", "Notebook lid");
         break;
-    case input::SwitchEvent::State::On:
-        switchState = i18nc("The hardware switch got turned on", "On");
+    case input::switch_type::tablet_mode:
+        switch_name = i18nc("Name of a hardware switch", "Tablet mode");
+    default:
+        break;
+    }
+    text.append(tableRow(i18nc("A hardware switch", "Switch"), switch_name));
+
+    QString switch_state;
+    switch (event.state) {
+    case input::switch_state::off:
+        switch_state = i18nc("The hardware switch got turned off", "Off");
+        break;
+    case input::switch_state::on:
+        switch_state = i18nc("The hardware switch got turned on", "On");
+        break;
+    case input::switch_state::toggle:
+        switch_state = i18nc("A hardware switch (e.g. notebook lid) got toggled", "Switch toggled");
         break;
     default:
         Q_UNREACHABLE();
     }
-    text.append(tableRow(i18nc("State of a hardware switch (on/off)", "State"), switchState));
+
+    text.append(tableRow(i18nc("State of a hardware switch (on/off)", "State"), switch_state));
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);

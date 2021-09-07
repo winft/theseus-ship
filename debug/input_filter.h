@@ -38,7 +38,7 @@ public:
     void swipe_update(input::swipe_update_event const& event) override;
     void swipe_end(input::swipe_end_event const&) override;
 
-    void switchEvent(input::SwitchEvent* event) override;
+    void switch_toggle(input::switch_toggle_event const& event) override;
 
     void tabletToolEvent(QTabletEvent* event) override;
     void tabletToolButtonEvent(const QSet<uint>& pressedButtons) override;

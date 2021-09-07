@@ -19,7 +19,6 @@ namespace KWin::input
 {
 class MouseEvent;
 class WheelEvent;
-class SwitchEvent;
 
 /**
  * Base class for spying on input events inside InputRedirection.
@@ -56,7 +55,7 @@ public:
     virtual void swipe_update(swipe_update_event const& event);
     virtual void swipe_end(swipe_end_event const&);
 
-    virtual void switchEvent(SwitchEvent* event);
+    virtual void switch_toggle(switch_toggle_event const& event);
 
     virtual void tabletToolEvent(QTabletEvent* event);
     virtual void tabletToolButtonEvent(const QSet<uint>& pressedButtons);

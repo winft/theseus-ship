@@ -98,9 +98,8 @@ bool event_filter::swipe_end(swipe_end_event const& /*event*/)
     return false;
 }
 
-bool event_filter::switchEvent(SwitchEvent* event)
+bool event_filter::switch_toggle(switch_toggle_event const& /*event*/)
 {
-    Q_UNUSED(event)
     return false;
 }
 
