@@ -86,28 +86,12 @@ public:
     void process_axis(axis_event const& event);
 
     void process_swipe_begin(swipe_begin_event const& event);
-    void
-    processSwipeGestureBegin(int fingerCount, quint32 time, KWin::input::pointer* device = nullptr);
     void process_swipe_update(swipe_update_event const& event);
-    void processSwipeGestureUpdate(const QSizeF& delta,
-                                   quint32 time,
-                                   KWin::input::pointer* device = nullptr);
     void process_swipe_end(swipe_end_event const& event);
-    void processSwipeGestureEnd(quint32 time, KWin::input::pointer* device = nullptr);
-    void processSwipeGestureCancelled(quint32 time, KWin::input::pointer* device = nullptr);
 
     void process_pinch_begin(pinch_begin_event const& event);
-    void
-    processPinchGestureBegin(int fingerCount, quint32 time, KWin::input::pointer* device = nullptr);
     void process_pinch_update(pinch_update_event const& event);
-    void processPinchGestureUpdate(qreal scale,
-                                   qreal angleDelta,
-                                   const QSizeF& delta,
-                                   quint32 time,
-                                   KWin::input::pointer* device = nullptr);
     void process_pinch_end(pinch_end_event const& event);
-    void processPinchGestureEnd(quint32 time, KWin::input::pointer* device = nullptr);
-    void processPinchGestureCancelled(quint32 time, KWin::input::pointer* device = nullptr);
 
 private:
     void cleanupInternalWindow(QWindow* old, QWindow* now) override;

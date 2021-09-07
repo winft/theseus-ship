@@ -20,17 +20,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "debug_console.h"
 #include "render/compositor.h"
 
+#include "input/dbus/device.h"
+#include "input/dbus/device_manager.h"
+#include "input/event.h"
 #include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
-#include "input/event.h"
 #include "input/platform.h"
 #include "input/pointer.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
 #include "input/redirect.h"
 #include "input/switch.h"
-#include "input/dbus/device.h"
-#include "input/dbus/device_manager.h"
 
 #include "main.h"
 #include "scene.h"
@@ -55,9 +55,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KLocalizedString>
 #include <NETWM>
 // Qt
-#include <QMouseEvent>
 #include <QMetaProperty>
 #include <QMetaType>
+#include <QMouseEvent>
 #include <QWindow>
 
 // xkb
@@ -68,15 +68,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-
-static QString tableHeaderRow(const QString &title)
+static QString tableHeaderRow(const QString& title)
 {
     return QStringLiteral("<tr><th colspan=\"2\">%1</th></tr>").arg(title);
 }
 
 template<typename T>
-static
-QString tableRow(const QString &title, const T &argument)
+static QString tableRow(const QString& title, const T& argument)
 {
     return QStringLiteral("<tr><td>%1</td><td>%2</td></tr>").arg(title).arg(argument);
 }
@@ -94,60 +92,60 @@ static QString timestampRowUsec(quint64 timestamp)
 static QString buttonToString(Qt::MouseButton button)
 {
     switch (button) {
-        case Qt::LeftButton:
-            return i18nc("A mouse button", "Left");
-        case Qt::RightButton:
-            return i18nc("A mouse button", "Right");
-        case Qt::MiddleButton:
-            return i18nc("A mouse button", "Middle");
-        case Qt::BackButton:
-            return i18nc("A mouse button", "Back");
-        case Qt::ForwardButton:
-            return i18nc("A mouse button", "Forward");
-        case Qt::TaskButton:
-            return i18nc("A mouse button", "Task");
-        case Qt::ExtraButton4:
-            return i18nc("A mouse button", "Extra Button 4");
-        case Qt::ExtraButton5:
-            return i18nc("A mouse button", "Extra Button 5");
-        case Qt::ExtraButton6:
-            return i18nc("A mouse button", "Extra Button 6");
-        case Qt::ExtraButton7:
-            return i18nc("A mouse button", "Extra Button 7");
-        case Qt::ExtraButton8:
-            return i18nc("A mouse button", "Extra Button 8");
-        case Qt::ExtraButton9:
-            return i18nc("A mouse button", "Extra Button 9");
-        case Qt::ExtraButton10:
-            return i18nc("A mouse button", "Extra Button 10");
-        case Qt::ExtraButton11:
-            return i18nc("A mouse button", "Extra Button 11");
-        case Qt::ExtraButton12:
-            return i18nc("A mouse button", "Extra Button 12");
-        case Qt::ExtraButton13:
-            return i18nc("A mouse button", "Extra Button 13");
-        case Qt::ExtraButton14:
-            return i18nc("A mouse button", "Extra Button 14");
-        case Qt::ExtraButton15:
-            return i18nc("A mouse button", "Extra Button 15");
-        case Qt::ExtraButton16:
-            return i18nc("A mouse button", "Extra Button 16");
-        case Qt::ExtraButton17:
-            return i18nc("A mouse button", "Extra Button 17");
-        case Qt::ExtraButton18:
-            return i18nc("A mouse button", "Extra Button 18");
-        case Qt::ExtraButton19:
-            return i18nc("A mouse button", "Extra Button 19");
-        case Qt::ExtraButton20:
-            return i18nc("A mouse button", "Extra Button 20");
-        case Qt::ExtraButton21:
-            return i18nc("A mouse button", "Extra Button 21");
-        case Qt::ExtraButton22:
-            return i18nc("A mouse button", "Extra Button 22");
-        case Qt::ExtraButton23:
-            return i18nc("A mouse button", "Extra Button 23");
-        case Qt::ExtraButton24:
-            return i18nc("A mouse button", "Extra Button 24");
+    case Qt::LeftButton:
+        return i18nc("A mouse button", "Left");
+    case Qt::RightButton:
+        return i18nc("A mouse button", "Right");
+    case Qt::MiddleButton:
+        return i18nc("A mouse button", "Middle");
+    case Qt::BackButton:
+        return i18nc("A mouse button", "Back");
+    case Qt::ForwardButton:
+        return i18nc("A mouse button", "Forward");
+    case Qt::TaskButton:
+        return i18nc("A mouse button", "Task");
+    case Qt::ExtraButton4:
+        return i18nc("A mouse button", "Extra Button 4");
+    case Qt::ExtraButton5:
+        return i18nc("A mouse button", "Extra Button 5");
+    case Qt::ExtraButton6:
+        return i18nc("A mouse button", "Extra Button 6");
+    case Qt::ExtraButton7:
+        return i18nc("A mouse button", "Extra Button 7");
+    case Qt::ExtraButton8:
+        return i18nc("A mouse button", "Extra Button 8");
+    case Qt::ExtraButton9:
+        return i18nc("A mouse button", "Extra Button 9");
+    case Qt::ExtraButton10:
+        return i18nc("A mouse button", "Extra Button 10");
+    case Qt::ExtraButton11:
+        return i18nc("A mouse button", "Extra Button 11");
+    case Qt::ExtraButton12:
+        return i18nc("A mouse button", "Extra Button 12");
+    case Qt::ExtraButton13:
+        return i18nc("A mouse button", "Extra Button 13");
+    case Qt::ExtraButton14:
+        return i18nc("A mouse button", "Extra Button 14");
+    case Qt::ExtraButton15:
+        return i18nc("A mouse button", "Extra Button 15");
+    case Qt::ExtraButton16:
+        return i18nc("A mouse button", "Extra Button 16");
+    case Qt::ExtraButton17:
+        return i18nc("A mouse button", "Extra Button 17");
+    case Qt::ExtraButton18:
+        return i18nc("A mouse button", "Extra Button 18");
+    case Qt::ExtraButton19:
+        return i18nc("A mouse button", "Extra Button 19");
+    case Qt::ExtraButton20:
+        return i18nc("A mouse button", "Extra Button 20");
+    case Qt::ExtraButton21:
+        return i18nc("A mouse button", "Extra Button 21");
+    case Qt::ExtraButton22:
+        return i18nc("A mouse button", "Extra Button 22");
+    case Qt::ExtraButton23:
+        return i18nc("A mouse button", "Extra Button 23");
+    case Qt::ExtraButton24:
+        return i18nc("A mouse button", "Extra Button 24");
     default:
         return QString();
     }
@@ -158,10 +156,13 @@ static QString deviceRow(Device* dev)
 {
     auto ctrl = dev ? dev->control : nullptr;
     if (!ctrl) {
-        return tableRow(i18n("Input Device"), i18nc("The input device of the event is not known", "Unknown"));
+        return tableRow(i18n("Input Device"),
+                        i18nc("The input device of the event is not known", "Unknown"));
     }
     return tableRow(i18n("Input Device"),
-                    QStringLiteral("%1 (%2)").arg(ctrl->metadata.name.c_str()).arg(ctrl->metadata.sys_name.c_str()));
+                    QStringLiteral("%1 (%2)")
+                        .arg(ctrl->metadata.name.c_str())
+                        .arg(ctrl->metadata.sys_name.c_str()));
 }
 
 static QString buttonsToString(Qt::MouseButtons buttons)
@@ -180,7 +181,7 @@ static const QString s_hr = QStringLiteral("<hr/>");
 static const QString s_tableStart = QStringLiteral("<table>");
 static const QString s_tableEnd = QStringLiteral("</table>");
 
-DebugConsoleFilter::DebugConsoleFilter(QTextEdit *textEdit)
+DebugConsoleFilter::DebugConsoleFilter(QTextEdit* textEdit)
     : input::event_spy()
     , m_textEdit(textEdit)
 {
@@ -368,13 +369,14 @@ void DebugConsoleFilter::key_repeat(input::key_event const& event)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::touchDown(qint32 id, const QPointF &pos, quint32 time)
+void DebugConsoleFilter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     QString text = s_hr;
     text.append(s_tableStart);
     text.append(tableHeaderRow(i18nc("A touch down event", "Touch down")));
     text.append(timestampRow(time));
-    text.append(tableRow(i18nc("The id of the touch point in the touch event", "Point identifier"), id));
+    text.append(
+        tableRow(i18nc("The id of the touch point in the touch event", "Point identifier"), id));
     text.append(tableRow(i18nc("The global position of the touch point", "Global position"),
                          QStringLiteral("%1/%2").arg(pos.x()).arg(pos.y())));
     text.append(s_tableEnd);
@@ -383,13 +385,14 @@ void DebugConsoleFilter::touchDown(qint32 id, const QPointF &pos, quint32 time)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::touchMotion(qint32 id, const QPointF &pos, quint32 time)
+void DebugConsoleFilter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
 {
     QString text = s_hr;
     text.append(s_tableStart);
     text.append(tableHeaderRow(i18nc("A touch motion event", "Touch Motion")));
     text.append(timestampRow(time));
-    text.append(tableRow(i18nc("The id of the touch point in the touch event", "Point identifier"), id));
+    text.append(
+        tableRow(i18nc("The id of the touch point in the touch event", "Point identifier"), id));
     text.append(tableRow(i18nc("The global position of the touch point", "Global position"),
                          QStringLiteral("%1/%2").arg(pos.x()).arg(pos.y())));
     text.append(s_tableEnd);
@@ -404,122 +407,124 @@ void DebugConsoleFilter::touchUp(qint32 id, quint32 time)
     text.append(s_tableStart);
     text.append(tableHeaderRow(i18nc("A touch up event", "Touch Up")));
     text.append(timestampRow(time));
-    text.append(tableRow(i18nc("The id of the touch point in the touch event", "Point identifier"), id));
+    text.append(
+        tableRow(i18nc("The id of the touch point in the touch event", "Point identifier"), id));
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::pinchGestureBegin(int fingerCount, quint32 time)
+void DebugConsoleFilter::pinch_begin(input::pinch_begin_event const& event)
 {
-    QString text = s_hr;
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
+
     text.append(s_tableStart);
     text.append(tableHeaderRow(i18nc("A pinch gesture is started", "Pinch start")));
-    text.append(timestampRow(time));
-    text.append(tableRow(i18nc("Number of fingers in this pinch gesture", "Finger count"), fingerCount));
+    text.append(timestamp);
+    text.append(
+        tableRow(i18nc("Number of fingers in this pinch gesture", "Finger count"), event.fingers));
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF &delta, quint32 time)
+void DebugConsoleFilter::pinch_update(input::pinch_update_event const& event)
 {
-    QString text = s_hr;
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
+
     text.append(s_tableStart);
     text.append(tableHeaderRow(i18nc("A pinch gesture is updated", "Pinch update")));
-    text.append(timestampRow(time));
-    text.append(tableRow(i18nc("Current scale in pinch gesture", "Scale"), scale));
-    text.append(tableRow(i18nc("Current angle in pinch gesture", "Angle delta"), angleDelta));
-    text.append(tableRow(i18nc("Current delta in pinch gesture", "Delta x"), delta.width()));
-    text.append(tableRow(i18nc("Current delta in pinch gesture", "Delta y"), delta.height()));
+    text.append(timestamp);
+    text.append(tableRow(i18nc("Current scale in pinch gesture", "Scale"), event.scale));
+    text.append(tableRow(i18nc("Current angle in pinch gesture", "Angle delta"), event.rotation));
+    text.append(tableRow(i18nc("Current delta in pinch gesture", "Delta x"), event.delta.x()));
+    text.append(tableRow(i18nc("Current delta in pinch gesture", "Delta y"), event.delta.y()));
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::pinchGestureEnd(quint32 time)
+void DebugConsoleFilter::pinch_end(input::pinch_end_event const& event)
 {
-    QString text = s_hr;
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
+
     text.append(s_tableStart);
-    text.append(tableHeaderRow(i18nc("A pinch gesture ended", "Pinch end")));
-    text.append(timestampRow(time));
+    if (event.cancelled) {
+        text.append(tableHeaderRow(i18nc("A pinch gesture got cancelled", "Pinch cancelled")));
+    } else {
+        text.append(tableHeaderRow(i18nc("A pinch gesture ended", "Pinch end")));
+    }
+    text.append(timestamp);
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::pinchGestureCancelled(quint32 time)
+void DebugConsoleFilter::swipe_begin(input::swipe_begin_event const& event)
 {
-    QString text = s_hr;
-    text.append(s_tableStart);
-    text.append(tableHeaderRow(i18nc("A pinch gesture got cancelled", "Pinch cancelled")));
-    text.append(timestampRow(time));
-    text.append(s_tableEnd);
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
 
-    m_textEdit->insertHtml(text);
-    m_textEdit->ensureCursorVisible();
-}
-
-void DebugConsoleFilter::swipeGestureBegin(int fingerCount, quint32 time)
-{
-    QString text = s_hr;
     text.append(s_tableStart);
     text.append(tableHeaderRow(i18nc("A swipe gesture is started", "Swipe start")));
-    text.append(timestampRow(time));
-    text.append(tableRow(i18nc("Number of fingers in this swipe gesture", "Finger count"), fingerCount));
+    text.append(timestamp);
+    text.append(
+        tableRow(i18nc("Number of fingers in this swipe gesture", "Finger count"), event.fingers));
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::swipeGestureUpdate(const QSizeF &delta, quint32 time)
+void DebugConsoleFilter::swipe_update(input::swipe_update_event const& event)
 {
-    QString text = s_hr;
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
+
     text.append(s_tableStart);
     text.append(tableHeaderRow(i18nc("A swipe gesture is updated", "Swipe update")));
-    text.append(timestampRow(time));
-    text.append(tableRow(i18nc("Current delta in swipe gesture", "Delta x"), delta.width()));
-    text.append(tableRow(i18nc("Current delta in swipe gesture", "Delta y"), delta.height()));
+    text.append(timestamp);
+    text.append(tableRow(i18nc("Current delta in swipe gesture", "Delta x"), event.delta.x()));
+    text.append(tableRow(i18nc("Current delta in swipe gesture", "Delta y"), event.delta.y()));
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::swipeGestureEnd(quint32 time)
+void DebugConsoleFilter::swipe_end(input::swipe_end_event const& event)
 {
-    QString text = s_hr;
+    auto text = s_hr;
+    auto const timestamp = timestampRow(event.base.time_msec);
+
     text.append(s_tableStart);
-    text.append(tableHeaderRow(i18nc("A swipe gesture ended", "Swipe end")));
-    text.append(timestampRow(time));
+
+    if (event.cancelled) {
+        text.append(tableHeaderRow(i18nc("A swipe gesture got cancelled", "Swipe cancelled")));
+    } else {
+        text.append(tableHeaderRow(i18nc("A swipe gesture ended", "Swipe end")));
+    }
+
+    text.append(timestamp);
     text.append(s_tableEnd);
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::swipeGestureCancelled(quint32 time)
+void DebugConsoleFilter::switchEvent(input::SwitchEvent* event)
 {
     QString text = s_hr;
     text.append(s_tableStart);
-    text.append(tableHeaderRow(i18nc("A swipe gesture got cancelled", "Swipe cancelled")));
-    text.append(timestampRow(time));
-    text.append(s_tableEnd);
-
-    m_textEdit->insertHtml(text);
-    m_textEdit->ensureCursorVisible();
-}
-
-void DebugConsoleFilter::switchEvent(input::SwitchEvent *event)
-{
-    QString text = s_hr;
-    text.append(s_tableStart);
-    text.append(tableHeaderRow(i18nc("A hardware switch (e.g. notebook lid) got toggled", "Switch toggled")));
+    text.append(tableHeaderRow(
+        i18nc("A hardware switch (e.g. notebook lid) got toggled", "Switch toggled")));
     text.append(timestampRow(event->timestamp()));
     if (event->timestampMicroseconds() != 0) {
         text.append(timestampRowUsec(event->timestampMicroseconds()));
@@ -550,7 +555,7 @@ void DebugConsoleFilter::switchEvent(input::SwitchEvent *event)
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::tabletToolEvent(QTabletEvent *event)
+void DebugConsoleFilter::tabletToolEvent(QTabletEvent* event)
 {
     QString typeString;
     {
@@ -559,45 +564,40 @@ void DebugConsoleFilter::tabletToolEvent(QTabletEvent *event)
     }
 
     QString text = s_hr + s_tableStart + tableHeaderRow(i18n("Tablet Tool"))
-                 + tableRow(i18n("EventType"), typeString)
-                 + tableRow(i18n("Position"),
-                            QStringLiteral("%1,%2").arg(event->pos().x()).arg(event->pos().y()))
-                 + tableRow(i18n("Tilt"),
-                            QStringLiteral("%1,%2").arg(event->xTilt()).arg(event->yTilt()))
-                 + tableRow(i18n("Rotation"), QString::number(event->rotation()))
-                 + tableRow(i18n("Pressure"), QString::number(event->pressure()))
-                 + tableRow(i18n("Buttons"), QString::number(event->buttons()))
-                 + tableRow(i18n("Modifiers"), QString::number(event->modifiers()))
-                 + s_tableEnd;
+        + tableRow(i18n("EventType"), typeString)
+        + tableRow(i18n("Position"),
+                   QStringLiteral("%1,%2").arg(event->pos().x()).arg(event->pos().y()))
+        + tableRow(i18n("Tilt"), QStringLiteral("%1,%2").arg(event->xTilt()).arg(event->yTilt()))
+        + tableRow(i18n("Rotation"), QString::number(event->rotation()))
+        + tableRow(i18n("Pressure"), QString::number(event->pressure()))
+        + tableRow(i18n("Buttons"), QString::number(event->buttons()))
+        + tableRow(i18n("Modifiers"), QString::number(event->modifiers())) + s_tableEnd;
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::tabletToolButtonEvent(const QSet<uint> &pressedButtons)
+void DebugConsoleFilter::tabletToolButtonEvent(const QSet<uint>& pressedButtons)
 {
     QString buttons;
     for (uint b : pressedButtons) {
         buttons += QString::number(b) + ' ';
     }
     QString text = s_hr + s_tableStart + tableHeaderRow(i18n("Tablet Tool Button"))
-                 + tableRow(i18n("Pressed Buttons"), buttons)
-                 + s_tableEnd;
+        + tableRow(i18n("Pressed Buttons"), buttons) + s_tableEnd;
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
 }
 
-void DebugConsoleFilter::tabletPadButtonEvent(const QSet<uint> &pressedButtons)
+void DebugConsoleFilter::tabletPadButtonEvent(const QSet<uint>& pressedButtons)
 {
     QString buttons;
     for (uint b : pressedButtons) {
         buttons += QString::number(b) + ' ';
     }
-    QString text = s_hr + s_tableStart
-                 + tableHeaderRow(i18n("Tablet Pad Button"))
-                 + tableRow(i18n("Pressed Buttons"), buttons)
-                 + s_tableEnd;
+    QString text = s_hr + s_tableStart + tableHeaderRow(i18n("Tablet Pad Button"))
+        + tableRow(i18n("Pressed Buttons"), buttons) + s_tableEnd;
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
@@ -606,10 +606,8 @@ void DebugConsoleFilter::tabletPadButtonEvent(const QSet<uint> &pressedButtons)
 void DebugConsoleFilter::tabletPadStripEvent(int number, int position, bool isFinger)
 {
     QString text = s_hr + s_tableStart + tableHeaderRow(i18n("Tablet Pad Strip"))
-                 + tableRow(i18n("Number"), number)
-                 + tableRow(i18n("Position"), position)
-                 + tableRow(i18n("isFinger"), isFinger)
-                 + s_tableEnd;
+        + tableRow(i18n("Number"), number) + tableRow(i18n("Position"), position)
+        + tableRow(i18n("isFinger"), isFinger) + s_tableEnd;
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
@@ -618,10 +616,8 @@ void DebugConsoleFilter::tabletPadStripEvent(int number, int position, bool isFi
 void DebugConsoleFilter::tabletPadRingEvent(int number, int position, bool isFinger)
 {
     QString text = s_hr + s_tableStart + tableHeaderRow(i18n("Tablet Pad Ring"))
-                 + tableRow(i18n("Number"), number)
-                 + tableRow(i18n("Position"), position)
-                 + tableRow(i18n("isFinger"), isFinger)
-                 + s_tableEnd;
+        + tableRow(i18n("Number"), number) + tableRow(i18n("Position"), position)
+        + tableRow(i18n("isFinger"), isFinger) + s_tableEnd;
 
     m_textEdit->insertHtml(text);
     m_textEdit->ensureCursorVisible();
@@ -653,20 +649,20 @@ DebugConsole::DebugConsole()
     }
 
     connect(m_ui->quitButton, &QAbstractButton::clicked, this, &DebugConsole::deleteLater);
-    connect(m_ui->tabWidget, &QTabWidget::currentChanged, this,
-        [this] (int index) {
-            // delay creation of input event filter until the tab is selected
-            if (index == 2 && m_inputFilter.isNull()) {
-                m_inputFilter.reset(new DebugConsoleFilter(m_ui->inputTextEdit));
-                kwinApp()->input->redirect->installInputEventSpy(m_inputFilter.data());
-            }
-            if (index == 5) {
-                updateKeyboardTab();
-                connect(kwinApp()->input->redirect.get(), &input::redirect::keyStateChanged,
-                        this, &DebugConsole::updateKeyboardTab);
-            }
+    connect(m_ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
+        // delay creation of input event filter until the tab is selected
+        if (index == 2 && m_inputFilter.isNull()) {
+            m_inputFilter.reset(new DebugConsoleFilter(m_ui->inputTextEdit));
+            kwinApp()->input->redirect->installInputEventSpy(m_inputFilter.data());
         }
-    );
+        if (index == 5) {
+            updateKeyboardTab();
+            connect(kwinApp()->input->redirect.get(),
+                    &input::redirect::keyStateChanged,
+                    this,
+                    &DebugConsole::updateKeyboardTab);
+        }
+    });
 
     // for X11
     setWindowFlags(Qt::X11BypassWindowManagerHint);
@@ -683,19 +679,20 @@ void DebugConsole::initGLTab()
         m_ui->glInfoScrollArea->setVisible(false);
         return;
     }
-    GLPlatform *gl = GLPlatform::instance();
+    GLPlatform* gl = GLPlatform::instance();
     m_ui->noOpenGLLabel->setVisible(false);
     m_ui->glInfoScrollArea->setVisible(true);
     m_ui->glVendorStringLabel->setText(QString::fromLocal8Bit(gl->glVendorString()));
     m_ui->glRendererStringLabel->setText(QString::fromLocal8Bit(gl->glRendererString()));
     m_ui->glVersionStringLabel->setText(QString::fromLocal8Bit(gl->glVersionString()));
-    m_ui->glslVersionStringLabel->setText(QString::fromLocal8Bit(gl->glShadingLanguageVersionString()));
+    m_ui->glslVersionStringLabel->setText(
+        QString::fromLocal8Bit(gl->glShadingLanguageVersionString()));
     m_ui->glDriverLabel->setText(GLPlatform::driverToString(gl->driver()));
     m_ui->glGPULabel->setText(GLPlatform::chipClassToString(gl->chipClass()));
     m_ui->glVersionLabel->setText(GLPlatform::versionToString(gl->glVersion()));
     m_ui->glslLabel->setText(GLPlatform::versionToString(gl->glslVersion()));
 
-    auto extensionsString = [] (const auto &extensions) {
+    auto extensionsString = [](const auto& extensions) {
         QString text = QStringLiteral("<ul>");
         for (auto extension : extensions) {
             text.append(QStringLiteral("<li>%1</li>").arg(QString::fromLocal8Bit(extension)));
@@ -704,12 +701,15 @@ void DebugConsole::initGLTab()
         return text;
     };
 
-    m_ui->platformExtensionsLabel->setText(extensionsString(render::compositor::self()->scene()->openGLPlatformInterfaceExtensions()));
+    m_ui->platformExtensionsLabel->setText(
+        extensionsString(render::compositor::self()->scene()->openGLPlatformInterfaceExtensions()));
     m_ui->openGLExtensionsLabel->setText(extensionsString(openGLExtensions()));
 }
 
-template <typename T>
-QString keymapComponentToString(xkb_keymap *map, const T &count, std::function<const char*(xkb_keymap*,T)> f)
+template<typename T>
+QString keymapComponentToString(xkb_keymap* map,
+                                const T& count,
+                                std::function<const char*(xkb_keymap*, T)> f)
 {
     QString text = QStringLiteral("<ul>");
     for (T i = 0; i < count; i++) {
@@ -719,11 +719,14 @@ QString keymapComponentToString(xkb_keymap *map, const T &count, std::function<c
     return text;
 }
 
-template <typename T>
-QString stateActiveComponents(xkb_state *state, const T &count, std::function<int(xkb_state*,T)> f, std::function<const char*(xkb_keymap*,T)> name)
+template<typename T>
+QString stateActiveComponents(xkb_state* state,
+                              const T& count,
+                              std::function<int(xkb_state*, T)> f,
+                              std::function<const char*(xkb_keymap*, T)> name)
 {
     QString text = QStringLiteral("<ul>");
-    xkb_keymap *map = xkb_state_get_keymap(state);
+    xkb_keymap* map = xkb_state_get_keymap(state);
     for (T i = 0; i < count; i++) {
         if (f(state, i) == 1) {
             text.append(QStringLiteral("<li>%1</li>").arg(QString::fromLocal8Bit(name(map, i))));
@@ -736,43 +739,46 @@ QString stateActiveComponents(xkb_state *state, const T &count, std::function<in
 void DebugConsole::updateKeyboardTab()
 {
     auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
-    xkb_keymap *map = xkb->keymap();
-    xkb_state *state = xkb->state();
-    m_ui->layoutsLabel->setText(keymapComponentToString<xkb_layout_index_t>(map, xkb_keymap_num_layouts(map), &xkb_keymap_layout_get_name));
+    xkb_keymap* map = xkb->keymap();
+    xkb_state* state = xkb->state();
+    m_ui->layoutsLabel->setText(keymapComponentToString<xkb_layout_index_t>(
+        map, xkb_keymap_num_layouts(map), &xkb_keymap_layout_get_name));
     m_ui->currentLayoutLabel->setText(xkb_keymap_layout_get_name(map, xkb->currentLayout()));
-    m_ui->modifiersLabel->setText(keymapComponentToString<xkb_mod_index_t>(map, xkb_keymap_num_mods(map), &xkb_keymap_mod_get_name));
-    m_ui->ledsLabel->setText(keymapComponentToString<xkb_led_index_t>(map, xkb_keymap_num_leds(map), &xkb_keymap_led_get_name));
-    m_ui->activeLedsLabel->setText(stateActiveComponents<xkb_led_index_t>(state, xkb_keymap_num_leds(map), &xkb_state_led_index_is_active, &xkb_keymap_led_get_name));
+    m_ui->modifiersLabel->setText(keymapComponentToString<xkb_mod_index_t>(
+        map, xkb_keymap_num_mods(map), &xkb_keymap_mod_get_name));
+    m_ui->ledsLabel->setText(keymapComponentToString<xkb_led_index_t>(
+        map, xkb_keymap_num_leds(map), &xkb_keymap_led_get_name));
+    m_ui->activeLedsLabel->setText(stateActiveComponents<xkb_led_index_t>(
+        state, xkb_keymap_num_leds(map), &xkb_state_led_index_is_active, &xkb_keymap_led_get_name));
 
     using namespace std::placeholders;
     auto modActive = std::bind(xkb_state_mod_index_is_active, _1, _2, XKB_STATE_MODS_EFFECTIVE);
-    m_ui->activeModifiersLabel->setText(stateActiveComponents<xkb_mod_index_t>(state, xkb_keymap_num_mods(map), modActive, &xkb_keymap_mod_get_name));
+    m_ui->activeModifiersLabel->setText(stateActiveComponents<xkb_mod_index_t>(
+        state, xkb_keymap_num_mods(map), modActive, &xkb_keymap_mod_get_name));
 }
 
-void DebugConsole::showEvent(QShowEvent *event)
+void DebugConsole::showEvent(QShowEvent* event)
 {
     QWidget::showEvent(event);
 
     // delay the connection to the show event as in ctor the windowHandle returns null
-    connect(windowHandle(), &QWindow::visibleChanged, this,
-        [this] (bool visible) {
-            if (visible) {
-                // ignore
-                return;
-            }
-            deleteLater();
+    connect(windowHandle(), &QWindow::visibleChanged, this, [this](bool visible) {
+        if (visible) {
+            // ignore
+            return;
         }
-    );
+        deleteLater();
+    });
 }
 
-DebugConsoleDelegate::DebugConsoleDelegate(QObject *parent)
+DebugConsoleDelegate::DebugConsoleDelegate(QObject* parent)
     : QStyledItemDelegate(parent)
 {
 }
 
 DebugConsoleDelegate::~DebugConsoleDelegate() = default;
 
-QString DebugConsoleDelegate::displayText(const QVariant &value, const QLocale &locale) const
+QString DebugConsoleDelegate::displayText(const QVariant& value, const QLocale& locale) const
 {
     switch (value.type()) {
     case QMetaType::QPoint: {
@@ -911,19 +917,19 @@ static const int s_x11UnmanagedId = 2;
 static const int s_waylandClientId = 3;
 static const int s_workspaceInternalId = 4;
 static const quint32 s_propertyBitMask = 0xFFFF0000;
-static const quint32 s_clientBitMask   = 0x0000FFFF;
+static const quint32 s_clientBitMask = 0x0000FFFF;
 static const quint32 s_idDistance = 10000;
 
-template <class T>
-void DebugConsoleModel::add(int parentRow, QVector<T*> &clients, T *client)
+template<class T>
+void DebugConsoleModel::add(int parentRow, QVector<T*>& clients, T* client)
 {
     beginInsertRows(index(parentRow, 0, QModelIndex()), clients.count(), clients.count());
     clients.append(client);
     endInsertRows();
 }
 
-template <class T>
-void DebugConsoleModel::remove(int parentRow, QVector<T*> &clients, T *client)
+template<class T>
+void DebugConsoleModel::remove(int parentRow, QVector<T*>& clients, T* client)
 {
     const int remove = clients.indexOf(client);
     if (remove == -1) {
@@ -934,7 +940,7 @@ void DebugConsoleModel::remove(int parentRow, QVector<T*> &clients, T *client)
     endRemoveRows();
 }
 
-DebugConsoleModel::DebugConsoleModel(QObject *parent)
+DebugConsoleModel::DebugConsoleModel(QObject* parent)
     : QAbstractItemModel(parent)
 {
     if (waylandServer()) {
@@ -943,16 +949,12 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
             m_shellClients.append(c);
         }
         // TODO: that only includes windows getting shown, not those which are only created
-        connect(waylandServer(), &WaylandServer::window_added, this,
-            [this] (auto win) {
-                add(s_waylandClientId -1, m_shellClients, win);
-            }
-        );
-        connect(waylandServer(), &WaylandServer::window_removed, this,
-            [this] (auto win) {
-                remove(s_waylandClientId -1, m_shellClients, win);
-            }
-        );
+        connect(waylandServer(), &WaylandServer::window_added, this, [this](auto win) {
+            add(s_waylandClientId - 1, m_shellClients, win);
+        });
+        connect(waylandServer(), &WaylandServer::window_removed, this, [this](auto win) {
+            remove(s_waylandClientId - 1, m_shellClients, win);
+        });
     }
     for (auto const& client : workspace()->allClientList()) {
         auto x11_client = qobject_cast<win::x11::window*>(client);
@@ -960,55 +962,45 @@ DebugConsoleModel::DebugConsoleModel(QObject *parent)
             m_x11Clients.append(x11_client);
         }
     }
-    connect(workspace(), &Workspace::clientAdded, this,
-        [this] (auto c) {
-            add(s_x11ClientId -1, m_x11Clients, c);
+    connect(workspace(), &Workspace::clientAdded, this, [this](auto c) {
+        add(s_x11ClientId - 1, m_x11Clients, c);
+    });
+    connect(workspace(), &Workspace::clientRemoved, this, [this](Toplevel* window) {
+        auto c = qobject_cast<win::x11::window*>(window);
+        if (!c) {
+            return;
         }
-    );
-    connect(workspace(), &Workspace::clientRemoved, this,
-        [this] (Toplevel* window) {
-            auto c = qobject_cast<win::x11::window*>(window);
-            if (!c) {
-                return;
-            }
-            remove(s_x11ClientId -1, m_x11Clients, c);
-        }
-    );
+        remove(s_x11ClientId - 1, m_x11Clients, c);
+    });
 
     const auto unmangeds = workspace()->unmanagedList();
     for (auto u : unmangeds) {
         m_unmanageds.append(u);
     }
-    connect(workspace(), &Workspace::unmanagedAdded, this,
-        [this] (Toplevel* u) {
-            add(s_x11UnmanagedId -1, m_unmanageds, u);
-        }
-    );
-    connect(workspace(), &Workspace::unmanagedRemoved, this,
-        [this] (Toplevel* u) {
-            remove(s_x11UnmanagedId -1, m_unmanageds, u);
-        }
-    );
+    connect(workspace(), &Workspace::unmanagedAdded, this, [this](Toplevel* u) {
+        add(s_x11UnmanagedId - 1, m_unmanageds, u);
+    });
+    connect(workspace(), &Workspace::unmanagedRemoved, this, [this](Toplevel* u) {
+        remove(s_x11UnmanagedId - 1, m_unmanageds, u);
+    });
     for (auto const& window : workspace()->windows()) {
         if (auto internal = qobject_cast<win::InternalClient*>(window)) {
             m_internalClients.append(internal);
         }
     }
-    connect(workspace(), &Workspace::internalClientAdded, this,
-        [this](win::InternalClient *client) {
-            add(s_workspaceInternalId -1, m_internalClients, client);
-        }
-    );
-    connect(workspace(), &Workspace::internalClientRemoved, this,
-        [this](win::InternalClient *client) {
-            remove(s_workspaceInternalId -1, m_internalClients, client);
-        }
-    );
+    connect(
+        workspace(), &Workspace::internalClientAdded, this, [this](win::InternalClient* client) {
+            add(s_workspaceInternalId - 1, m_internalClients, client);
+        });
+    connect(
+        workspace(), &Workspace::internalClientRemoved, this, [this](win::InternalClient* client) {
+            remove(s_workspaceInternalId - 1, m_internalClients, client);
+        });
 }
 
 DebugConsoleModel::~DebugConsoleModel() = default;
 
-int DebugConsoleModel::columnCount(const QModelIndex &parent) const
+int DebugConsoleModel::columnCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent)
     return 2;
@@ -1019,16 +1011,18 @@ int DebugConsoleModel::topLevelRowCount() const
     return kwinApp()->shouldUseWaylandForCompositing() ? 4 : 2;
 }
 
-template <class T>
-int DebugConsoleModel::propertyCount(const QModelIndex &parent, T *(DebugConsoleModel::*filter)(const QModelIndex&) const) const
+template<class T>
+int DebugConsoleModel::propertyCount(const QModelIndex& parent,
+                                     T* (DebugConsoleModel::*filter)(const QModelIndex&)
+                                         const) const
 {
-    if (T *t = (this->*filter)(parent)) {
+    if (T* t = (this->*filter)(parent)) {
         return t->metaObject()->propertyCount();
     }
     return 0;
 }
 
-int DebugConsoleModel::rowCount(const QModelIndex &parent) const
+int DebugConsoleModel::rowCount(const QModelIndex& parent) const
 {
     if (!parent.isValid()) {
         return topLevelRowCount();
@@ -1065,8 +1059,9 @@ int DebugConsoleModel::rowCount(const QModelIndex &parent) const
     return 0;
 }
 
-template <class T>
-QModelIndex DebugConsoleModel::indexForClient(int row, int column, const QVector<T*> &clients, int id) const
+template<class T>
+QModelIndex
+DebugConsoleModel::indexForClient(int row, int column, const QVector<T*>& clients, int id) const
 {
     if (column != 0) {
         return QModelIndex();
@@ -1077,10 +1072,14 @@ QModelIndex DebugConsoleModel::indexForClient(int row, int column, const QVector
     return createIndex(row, column, s_idDistance * id + row);
 }
 
-template <class T>
-QModelIndex DebugConsoleModel::indexForProperty(int row, int column, const QModelIndex &parent, T *(DebugConsoleModel::*filter)(const QModelIndex&) const) const
+template<class T>
+QModelIndex DebugConsoleModel::indexForProperty(int row,
+                                                int column,
+                                                const QModelIndex& parent,
+                                                T* (DebugConsoleModel::*filter)(const QModelIndex&)
+                                                    const) const
 {
-    if (T *t = (this->*filter)(parent)) {
+    if (T* t = (this->*filter)(parent)) {
         if (row >= t->metaObject()->propertyCount()) {
             return QModelIndex();
         }
@@ -1089,7 +1088,7 @@ QModelIndex DebugConsoleModel::indexForProperty(int row, int column, const QMode
     return QModelIndex();
 }
 
-QModelIndex DebugConsoleModel::index(int row, int column, const QModelIndex &parent) const
+QModelIndex DebugConsoleModel::index(int row, int column, const QModelIndex& parent) const
 {
     if (!parent.isValid()) {
         // index for a top level item
@@ -1130,7 +1129,7 @@ QModelIndex DebugConsoleModel::index(int row, int column, const QModelIndex &par
     return QModelIndex();
 }
 
-QModelIndex DebugConsoleModel::parent(const QModelIndex &child) const
+QModelIndex DebugConsoleModel::parent(const QModelIndex& child) const
 {
     if (child.internalId() <= s_workspaceInternalId) {
         return QModelIndex();
@@ -1150,18 +1149,18 @@ QModelIndex DebugConsoleModel::parent(const QModelIndex &child) const
         return QModelIndex();
     }
     if (child.internalId() < s_idDistance * (s_x11ClientId + 1)) {
-        return createIndex(s_x11ClientId -1, 0, s_x11ClientId);
+        return createIndex(s_x11ClientId - 1, 0, s_x11ClientId);
     } else if (child.internalId() < s_idDistance * (s_x11UnmanagedId + 1)) {
-        return createIndex(s_x11UnmanagedId -1, 0, s_x11UnmanagedId);
+        return createIndex(s_x11UnmanagedId - 1, 0, s_x11UnmanagedId);
     } else if (child.internalId() < s_idDistance * (s_waylandClientId + 1)) {
-        return createIndex(s_waylandClientId -1, 0, s_waylandClientId);
+        return createIndex(s_waylandClientId - 1, 0, s_waylandClientId);
     } else if (child.internalId() < s_idDistance * (s_workspaceInternalId + 1)) {
-        return createIndex(s_workspaceInternalId -1, 0, s_workspaceInternalId);
+        return createIndex(s_workspaceInternalId - 1, 0, s_workspaceInternalId);
     }
     return QModelIndex();
 }
 
-QVariant DebugConsoleModel::propertyData(QObject *object, const QModelIndex &index, int role) const
+QVariant DebugConsoleModel::propertyData(QObject* object, const QModelIndex& index, int role) const
 {
     Q_UNUSED(role)
     const auto property = object->metaObject()->property(index.row());
@@ -1217,22 +1216,25 @@ QVariant DebugConsoleModel::propertyData(QObject *object, const QModelIndex &ind
     return QVariant();
 }
 
-template <class T>
-QVariant DebugConsoleModel::clientData(const QModelIndex &index, int role, const QVector<T*> clients) const
+template<class T>
+QVariant
+DebugConsoleModel::clientData(const QModelIndex& index, int role, const QVector<T*> clients) const
 {
     if (index.row() >= clients.count()) {
         return QVariant();
     }
     auto c = clients.at(index.row());
     if (role == Qt::DisplayRole) {
-        return QStringLiteral("%1: %2").arg(static_cast<Toplevel*>(c)->xcb_window()).arg(win::caption(c));
+        return QStringLiteral("%1: %2")
+            .arg(static_cast<Toplevel*>(c)->xcb_window())
+            .arg(win::caption(c));
     } else if (role == Qt::DecorationRole) {
         return c->control->icon();
     }
     return QVariant();
 }
 
-QVariant DebugConsoleModel::data(const QModelIndex &index, int role) const
+QVariant DebugConsoleModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid()) {
         return QVariant();
@@ -1261,7 +1263,7 @@ QVariant DebugConsoleModel::data(const QModelIndex &index, int role) const
         }
         if (auto c = shellClient(index)) {
             return propertyData(c, index, role);
-        } else if (win::InternalClient *c = internalClient(index)) {
+        } else if (win::InternalClient* c = internalClient(index)) {
             return propertyData(c, index, role);
         } else if (auto c = x11Client(index)) {
             return propertyData(c, index, role);
@@ -1298,7 +1300,7 @@ QVariant DebugConsoleModel::data(const QModelIndex &index, int role) const
 }
 
 template<class T>
-static T *clientForIndex(const QModelIndex &index, const QVector<T*> &clients, int id)
+static T* clientForIndex(const QModelIndex& index, const QVector<T*>& clients, int id)
 {
     const qint32 row = (index.internalId() & s_clientBitMask) - (s_idDistance * id);
     if (row < 0 || row >= clients.count()) {
@@ -1307,28 +1309,28 @@ static T *clientForIndex(const QModelIndex &index, const QVector<T*> &clients, i
     return clients.at(row);
 }
 
-win::wayland::window* DebugConsoleModel::shellClient(const QModelIndex &index) const
+win::wayland::window* DebugConsoleModel::shellClient(const QModelIndex& index) const
 {
     return clientForIndex(index, m_shellClients, s_waylandClientId);
 }
 
-win::InternalClient *DebugConsoleModel::internalClient(const QModelIndex &index) const
+win::InternalClient* DebugConsoleModel::internalClient(const QModelIndex& index) const
 {
     return clientForIndex(index, m_internalClients, s_workspaceInternalId);
 }
 
-win::x11::window* DebugConsoleModel::x11Client(const QModelIndex &index) const
+win::x11::window* DebugConsoleModel::x11Client(const QModelIndex& index) const
 {
     return clientForIndex(index, m_x11Clients, s_x11ClientId);
 }
 
-Toplevel* DebugConsoleModel::unmanaged(const QModelIndex &index) const
+Toplevel* DebugConsoleModel::unmanaged(const QModelIndex& index) const
 {
     return clientForIndex(index, m_unmanageds, s_x11UnmanagedId);
 }
 
 /////////////////////////////////////// SurfaceTreeModel
-SurfaceTreeModel::SurfaceTreeModel(QObject *parent)
+SurfaceTreeModel::SurfaceTreeModel(QObject* parent)
     : QAbstractItemModel(parent)
 {
     // TODO: it would be nice to not have to reset the model on each change
@@ -1352,57 +1354,50 @@ SurfaceTreeModel::SurfaceTreeModel(QObject *parent)
         connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
     }
     if (waylandServer()) {
-        connect(waylandServer(), &WaylandServer::window_added, this,
-            [this, reset] (auto win) {
-                connect(win->surface(), &Surface::subsurfaceTreeChanged, this, reset);
-                reset();
-            }
-        );
+        connect(waylandServer(), &WaylandServer::window_added, this, [this, reset](auto win) {
+            connect(win->surface(), &Surface::subsurfaceTreeChanged, this, reset);
+            reset();
+        });
     }
-    connect(workspace(), &Workspace::clientAdded, this,
-        [this, reset] (auto c) {
-            if (c->surface()) {
-                connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
-            }
-            reset();
+    connect(workspace(), &Workspace::clientAdded, this, [this, reset](auto c) {
+        if (c->surface()) {
+            connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
         }
-    );
+        reset();
+    });
     connect(workspace(), &Workspace::clientRemoved, this, reset);
-    connect(workspace(), &Workspace::unmanagedAdded, this,
-        [this, reset] (Toplevel* window) {
-            if (window->surface()) {
-                connect(window->surface(), &Surface::subsurfaceTreeChanged, this, reset);
-            }
-            reset();
+    connect(workspace(), &Workspace::unmanagedAdded, this, [this, reset](Toplevel* window) {
+        if (window->surface()) {
+            connect(window->surface(), &Surface::subsurfaceTreeChanged, this, reset);
         }
-    );
+        reset();
+    });
     connect(workspace(), &Workspace::unmanagedRemoved, this, reset);
 }
 
 SurfaceTreeModel::~SurfaceTreeModel() = default;
 
-int SurfaceTreeModel::columnCount(const QModelIndex &parent) const
+int SurfaceTreeModel::columnCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent)
     return 1;
 }
 
-int SurfaceTreeModel::rowCount(const QModelIndex &parent) const
+int SurfaceTreeModel::rowCount(const QModelIndex& parent) const
 {
     if (parent.isValid()) {
         using namespace Wrapland::Server;
-        if (Surface *surface = static_cast<Surface*>(parent.internalPointer())) {
-            const auto &children = surface->childSubsurfaces();
+        if (Surface* surface = static_cast<Surface*>(parent.internalPointer())) {
+            const auto& children = surface->childSubsurfaces();
             return children.size();
         }
         return 0;
     }
     // toplevel are all windows
-    return workspace()->allClientList().size() +
-           workspace()->unmanagedList().size();
+    return workspace()->allClientList().size() + workspace()->unmanagedList().size();
 }
 
-QModelIndex SurfaceTreeModel::index(int row, int column, const QModelIndex &parent) const
+QModelIndex SurfaceTreeModel::index(int row, int column, const QModelIndex& parent) const
 {
     if (column != 0) {
         // invalid column
@@ -1413,8 +1408,8 @@ QModelIndex SurfaceTreeModel::index(int row, int column, const QModelIndex &pare
 
     if (parent.isValid()) {
         using namespace Wrapland::Server;
-        if (Surface *surface = static_cast<Surface*>(parent.internalPointer())) {
-            const auto &children = surface->childSubsurfaces();
+        if (Surface* surface = static_cast<Surface*>(parent.internalPointer())) {
+            const auto& children = surface->childSubsurfaces();
             if (row_u < children.size()) {
                 return createIndex(row_u, column, children.at(row_u)->surface());
             }
@@ -1422,26 +1417,26 @@ QModelIndex SurfaceTreeModel::index(int row, int column, const QModelIndex &pare
         return QModelIndex();
     }
     // a window
-    const auto &allClients = workspace()->allClientList();
+    const auto& allClients = workspace()->allClientList();
     if (row_u < allClients.size()) {
         // references a client
         return createIndex(row_u, column, allClients.at(row_u)->surface());
     }
     int reference = allClients.size();
-    const auto &unmanaged = workspace()->unmanagedList();
+    const auto& unmanaged = workspace()->unmanagedList();
     if (row_u < reference + unmanaged.size()) {
-        return createIndex(row_u, column, unmanaged.at(row_u-reference)->surface());
+        return createIndex(row_u, column, unmanaged.at(row_u - reference)->surface());
     }
     reference += unmanaged.size();
     // not found
     return QModelIndex();
 }
 
-QModelIndex SurfaceTreeModel::parent(const QModelIndex &child) const
+QModelIndex SurfaceTreeModel::parent(const QModelIndex& child) const
 {
     using namespace Wrapland::Server;
-    if (Surface *surface = static_cast<Surface*>(child.internalPointer())) {
-        const auto &subsurface = surface->subsurface();
+    if (Surface* surface = static_cast<Surface*>(child.internalPointer())) {
+        const auto& subsurface = surface->subsurface();
         if (!subsurface) {
             // doesn't reference a subsurface, this is a top-level window
             return QModelIndex();
@@ -1458,7 +1453,7 @@ QModelIndex SurfaceTreeModel::parent(const QModelIndex &child) const
                 // something is wrong
                 return QModelIndex();
             }
-            const auto &children = grandParent->childSubsurfaces();
+            const auto& children = grandParent->childSubsurfaces();
             for (size_t row = 0; row < children.size(); row++) {
                 if (children.at(row) == parent->subsurface()) {
                     return createIndex(row, 0, parent);
@@ -1468,14 +1463,14 @@ QModelIndex SurfaceTreeModel::parent(const QModelIndex &child) const
         }
         // not a subsurface, thus it's a true window
         size_t row = 0;
-        const auto &allClients = workspace()->allClientList();
+        const auto& allClients = workspace()->allClientList();
         for (; row < allClients.size(); row++) {
             if (allClients.at(row)->surface() == parent) {
                 return createIndex(row, 0, parent);
             }
         }
         row = allClients.size();
-        const auto &unmanaged = workspace()->unmanagedList();
+        const auto& unmanaged = workspace()->unmanagedList();
         for (size_t i = 0; i < unmanaged.size(); i++) {
             if (unmanaged.at(i)->surface() == parent) {
                 return createIndex(row + i, 0, parent);
@@ -1486,20 +1481,22 @@ QModelIndex SurfaceTreeModel::parent(const QModelIndex &child) const
     return QModelIndex();
 }
 
-QVariant SurfaceTreeModel::data(const QModelIndex &index, int role) const
+QVariant SurfaceTreeModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid()) {
         return QVariant();
     }
     using namespace Wrapland::Server;
-    if (Surface *surface = static_cast<Surface*>(index.internalPointer())) {
+    if (Surface* surface = static_cast<Surface*>(index.internalPointer())) {
         if (role == Qt::DisplayRole || role == Qt::ToolTipRole) {
-            return QStringLiteral("%1 (%2)").arg(QString::fromStdString(surface->client()->executablePath()))
-                                                .arg(surface->client()->processId());
+            return QStringLiteral("%1 (%2)")
+                .arg(QString::fromStdString(surface->client()->executablePath()))
+                .arg(surface->client()->processId());
         } else if (role == Qt::DecorationRole) {
             if (auto buffer = surface->buffer()) {
                 if (buffer->shmBuffer()) {
-                    return buffer->shmImage()->createQImage().scaled(QSize(64, 64), Qt::KeepAspectRatio);
+                    return buffer->shmImage()->createQImage().scaled(QSize(64, 64),
+                                                                     Qt::KeepAspectRatio);
                 }
             }
         }
@@ -1507,7 +1504,7 @@ QVariant SurfaceTreeModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-InputDeviceModel::InputDeviceModel(QObject *parent)
+InputDeviceModel::InputDeviceModel(QObject* parent)
     : QAbstractItemModel(parent)
 {
     auto& platform = kwinApp()->input->redirect->platform;
@@ -1518,49 +1515,50 @@ InputDeviceModel::InputDeviceModel(QObject *parent)
         setupDeviceConnections(dev);
     }
 
-    connect(platform->dbus.get(), &input::dbus::device_manager::deviceAdded, this,
-        [this] (auto const& sys_name) {
-            for (auto& dev : kwinApp()->input->redirect->platform->dbus->devices) {
-                if (dev->sysName() != sys_name) {
-                    continue;
+    connect(platform->dbus.get(),
+            &input::dbus::device_manager::deviceAdded,
+            this,
+            [this](auto const& sys_name) {
+                for (auto& dev : kwinApp()->input->redirect->platform->dbus->devices) {
+                    if (dev->sysName() != sys_name) {
+                        continue;
+                    }
+                    beginInsertRows(QModelIndex(), m_devices.count(), m_devices.count());
+                    m_devices << dev;
+                    setupDeviceConnections(dev);
+                    endInsertRows();
+                    return;
                 }
-                beginInsertRows(QModelIndex(), m_devices.count(), m_devices.count());
-                m_devices << dev;
-                setupDeviceConnections(dev);
-                endInsertRows();
-                return;
-            }
-        }
-    );
-    connect(platform->dbus.get(), &input::dbus::device_manager::deviceRemoved, this,
-        [this] (auto const& sys_name) {
-            int index{-1};
-            for (int i = 0; i < m_devices.size(); i++) {
-                if (m_devices.at(i)->sysName() == sys_name) {
-                    index = i;
-                    break;
+            });
+    connect(platform->dbus.get(),
+            &input::dbus::device_manager::deviceRemoved,
+            this,
+            [this](auto const& sys_name) {
+                int index{-1};
+                for (int i = 0; i < m_devices.size(); i++) {
+                    if (m_devices.at(i)->sysName() == sys_name) {
+                        index = i;
+                        break;
+                    }
                 }
-            }
-            if (index == -1) {
-                return;
-            }
-            beginRemoveRows(QModelIndex(), index, index);
-            m_devices.removeAt(index);
-            endRemoveRows();
-        }
-    );
+                if (index == -1) {
+                    return;
+                }
+                beginRemoveRows(QModelIndex(), index, index);
+                m_devices.removeAt(index);
+                endRemoveRows();
+            });
 }
 
 InputDeviceModel::~InputDeviceModel() = default;
 
-
-int InputDeviceModel::columnCount(const QModelIndex &parent) const
+int InputDeviceModel::columnCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent)
     return 2;
 }
 
-QVariant InputDeviceModel::data(const QModelIndex &index, int role) const
+QVariant InputDeviceModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid()) {
         return QVariant();
@@ -1587,7 +1585,7 @@ QVariant InputDeviceModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-QModelIndex InputDeviceModel::index(int row, int column, const QModelIndex &parent) const
+QModelIndex InputDeviceModel::index(int row, int column, const QModelIndex& parent) const
 {
     if (column >= 2) {
         return QModelIndex();
@@ -1607,7 +1605,7 @@ QModelIndex InputDeviceModel::index(int row, int column, const QModelIndex &pare
     return createIndex(row, column, row + 1);
 }
 
-int InputDeviceModel::rowCount(const QModelIndex &parent) const
+int InputDeviceModel::rowCount(const QModelIndex& parent) const
 {
     if (!parent.isValid()) {
         return m_devices.count();
@@ -1619,7 +1617,7 @@ int InputDeviceModel::rowCount(const QModelIndex &parent) const
     return m_devices.at(parent.row())->metaObject()->propertyCount();
 }
 
-QModelIndex InputDeviceModel::parent(const QModelIndex &child) const
+QModelIndex InputDeviceModel::parent(const QModelIndex& child) const
 {
     if (child.internalId() & s_propertyBitMask) {
         const quintptr parentId = child.internalId() & s_clientBitMask;
@@ -1630,28 +1628,25 @@ QModelIndex InputDeviceModel::parent(const QModelIndex &child) const
 
 void InputDeviceModel::setupDeviceConnections(input::dbus::device* device)
 {
-    connect(device->dev, &input::control::device::enabled_changed, this,
-        [this, device] {
-            const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
-            const QModelIndex child = index(device->metaObject()->indexOfProperty("enabled"), 1, parent);
-            emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
-        }
-    );
+    connect(device->dev, &input::control::device::enabled_changed, this, [this, device] {
+        const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
+        const QModelIndex child
+            = index(device->metaObject()->indexOfProperty("enabled"), 1, parent);
+        emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
+    });
     if (auto& ctrl = device->pointer_ctrl) {
-        connect(ctrl, &input::control::pointer::left_handed_changed, this,
-            [this, device] {
-                const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
-                const QModelIndex child = index(device->metaObject()->indexOfProperty("leftHanded"), 1, parent);
-                emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
-            }
-        );
-        connect(ctrl, &input::control::pointer::acceleration_changed, this,
-            [this, device] {
-                const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
-                const QModelIndex child = index(device->metaObject()->indexOfProperty("pointerAcceleration"), 1, parent);
-                emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
-            }
-        );
+        connect(ctrl, &input::control::pointer::left_handed_changed, this, [this, device] {
+            const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
+            const QModelIndex child
+                = index(device->metaObject()->indexOfProperty("leftHanded"), 1, parent);
+            emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
+        });
+        connect(ctrl, &input::control::pointer::acceleration_changed, this, [this, device] {
+            const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
+            const QModelIndex child
+                = index(device->metaObject()->indexOfProperty("pointerAcceleration"), 1, parent);
+            emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
+        });
     };
 }
 

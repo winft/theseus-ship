@@ -164,61 +164,34 @@ bool lock_screen_filter::touchUp(qint32 id, quint32 time)
     }
     return true;
 }
-bool lock_screen_filter::pinchGestureBegin(int fingerCount, quint32 time)
+bool lock_screen_filter::pinch_begin(pinch_begin_event const& /*event*/)
 {
-    Q_UNUSED(fingerCount)
-    Q_UNUSED(time)
     // no touchpad multi-finger gestures on lock screen
     return waylandServer()->isScreenLocked();
 }
-bool lock_screen_filter::pinchGestureUpdate(qreal scale,
-                                            qreal angleDelta,
-                                            const QSizeF& delta,
-                                            quint32 time)
+bool lock_screen_filter::pinch_update(pinch_update_event const& /*event*/)
 {
-    Q_UNUSED(scale)
-    Q_UNUSED(angleDelta)
-    Q_UNUSED(delta)
-    Q_UNUSED(time)
     // no touchpad multi-finger gestures on lock screen
     return waylandServer()->isScreenLocked();
 }
-bool lock_screen_filter::pinchGestureEnd(quint32 time)
+bool lock_screen_filter::pinch_end(pinch_end_event const& /*event*/)
 {
-    Q_UNUSED(time)
-    // no touchpad multi-finger gestures on lock screen
-    return waylandServer()->isScreenLocked();
-}
-bool lock_screen_filter::pinchGestureCancelled(quint32 time)
-{
-    Q_UNUSED(time)
     // no touchpad multi-finger gestures on lock screen
     return waylandServer()->isScreenLocked();
 }
 
-bool lock_screen_filter::swipeGestureBegin(int fingerCount, quint32 time)
+bool lock_screen_filter::swipe_begin(swipe_begin_event const& /*event*/)
 {
-    Q_UNUSED(fingerCount)
-    Q_UNUSED(time)
     // no touchpad multi-finger gestures on lock screen
     return waylandServer()->isScreenLocked();
 }
-bool lock_screen_filter::swipeGestureUpdate(const QSizeF& delta, quint32 time)
+bool lock_screen_filter::swipe_update(swipe_update_event const& /*event*/)
 {
-    Q_UNUSED(delta)
-    Q_UNUSED(time)
     // no touchpad multi-finger gestures on lock screen
     return waylandServer()->isScreenLocked();
 }
-bool lock_screen_filter::swipeGestureEnd(quint32 time)
+bool lock_screen_filter::swipe_end(swipe_end_event const& /*event*/)
 {
-    Q_UNUSED(time)
-    // no touchpad multi-finger gestures on lock screen
-    return waylandServer()->isScreenLocked();
-}
-bool lock_screen_filter::swipeGestureCancelled(quint32 time)
-{
-    Q_UNUSED(time)
     // no touchpad multi-finger gestures on lock screen
     return waylandServer()->isScreenLocked();
 }

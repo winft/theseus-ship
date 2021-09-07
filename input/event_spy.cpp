@@ -63,50 +63,28 @@ void event_spy::touchUp(qint32 id, quint32 time)
     Q_UNUSED(time)
 }
 
-void event_spy::pinchGestureBegin(int fingerCount, quint32 time)
+void event_spy::pinch_begin(pinch_begin_event const& /*event*/)
 {
-    Q_UNUSED(fingerCount)
-    Q_UNUSED(time)
 }
 
-void event_spy::pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF& delta, quint32 time)
+void event_spy::pinch_update(pinch_update_event const& /*event*/)
 {
-    Q_UNUSED(scale)
-    Q_UNUSED(angleDelta)
-    Q_UNUSED(delta)
-    Q_UNUSED(time)
 }
 
-void event_spy::pinchGestureEnd(quint32 time)
+void event_spy::pinch_end(pinch_end_event const& /*event*/)
 {
-    Q_UNUSED(time)
 }
 
-void event_spy::pinchGestureCancelled(quint32 time)
+void event_spy::swipe_begin(swipe_begin_event const& /*event*/)
 {
-    Q_UNUSED(time)
 }
 
-void event_spy::swipeGestureBegin(int fingerCount, quint32 time)
+void event_spy::swipe_update(swipe_update_event const& /*event*/)
 {
-    Q_UNUSED(fingerCount)
-    Q_UNUSED(time)
 }
 
-void event_spy::swipeGestureUpdate(const QSizeF& delta, quint32 time)
+void event_spy::swipe_end(swipe_end_event const& /*event*/)
 {
-    Q_UNUSED(delta)
-    Q_UNUSED(time)
-}
-
-void event_spy::swipeGestureEnd(quint32 time)
-{
-    Q_UNUSED(time)
-}
-
-void event_spy::swipeGestureCancelled(quint32 time)
-{
-    Q_UNUSED(time)
 }
 
 void event_spy::switchEvent(SwitchEvent* event)

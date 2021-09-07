@@ -38,12 +38,12 @@ private:
     er button_rec;
     er axis_rec;
     er frame;
-    er swipe_begin;
-    er swipe_update;
-    er swipe_end;
-    er pinch_begin;
-    er pinch_update;
-    er pinch_end;
+    er swipe_begin_rec;
+    er swipe_update_rec;
+    er swipe_end_rec;
+    er pinch_begin_rec;
+    er pinch_update_rec;
+    er pinch_end_rec;
 };
 
 }

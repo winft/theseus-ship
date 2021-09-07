@@ -24,10 +24,9 @@ public:
     bool key(key_event const& event) override;
     bool key_repeat(key_event const& event) override;
 
-    bool swipeGestureBegin(int fingerCount, quint32 time) override;
-    bool swipeGestureUpdate(QSizeF const& delta, quint32 time) override;
-    bool swipeGestureCancelled(quint32 time) override;
-    bool swipeGestureEnd(quint32 time) override;
+    bool swipe_begin(swipe_begin_event const& event) override;
+    bool swipe_update(swipe_update_event const& event) override;
+    bool swipe_end(swipe_end_event const&) override;
 
 private:
     QTimer* m_powerDown = nullptr;

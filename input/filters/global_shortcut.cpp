@@ -113,31 +113,26 @@ bool global_shortcut_filter::key_repeat(key_event const& event)
     return redirect->shortcuts()->processKey(modifiers, qt_key);
 }
 
-bool global_shortcut_filter::swipeGestureBegin(int fingerCount, quint32 time)
+bool global_shortcut_filter::swipe_begin(swipe_begin_event const& event)
 {
-    Q_UNUSED(time)
-    kwinApp()->input->redirect->shortcuts()->processSwipeStart(fingerCount);
+    kwinApp()->input->redirect->shortcuts()->processSwipeStart(event.fingers);
     return false;
 }
 
-bool global_shortcut_filter::swipeGestureUpdate(QSizeF const& delta, quint32 time)
+bool global_shortcut_filter::swipe_update(swipe_update_event const& event)
 {
-    Q_UNUSED(time)
-    kwinApp()->input->redirect->shortcuts()->processSwipeUpdate(delta);
+    kwinApp()->input->redirect->shortcuts()->processSwipeUpdate(
+        QSizeF(event.delta.x(), event.delta.y()));
     return false;
 }
 
-bool global_shortcut_filter::swipeGestureCancelled(quint32 time)
+bool global_shortcut_filter::swipe_end(swipe_end_event const& event)
 {
-    Q_UNUSED(time)
-    kwinApp()->input->redirect->shortcuts()->processSwipeCancel();
-    return false;
-}
-
-bool global_shortcut_filter::swipeGestureEnd(quint32 time)
-{
-    Q_UNUSED(time)
-    kwinApp()->input->redirect->shortcuts()->processSwipeEnd();
+    if (event.cancelled) {
+        kwinApp()->input->redirect->shortcuts()->processSwipeCancel();
+    } else {
+        kwinApp()->input->redirect->shortcuts()->processSwipeEnd();
+    }
     return false;
 }
 

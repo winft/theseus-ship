@@ -23,16 +23,13 @@ public:
     bool touchDown(qint32 id, const QPointF& pos, quint32 time) override;
     bool touchMotion(qint32 id, const QPointF& pos, quint32 time) override;
     bool touchUp(qint32 id, quint32 time) override;
-    bool pinchGestureBegin(int fingerCount, quint32 time) override;
-    bool
-    pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF& delta, quint32 time) override;
-    bool pinchGestureEnd(quint32 time) override;
-    bool pinchGestureCancelled(quint32 time) override;
+    bool pinch_begin(pinch_begin_event const& event) override;
+    bool pinch_update(pinch_update_event const& event) override;
+    bool pinch_end(pinch_end_event const& event) override;
 
-    bool swipeGestureBegin(int fingerCount, quint32 time) override;
-    bool swipeGestureUpdate(const QSizeF& delta, quint32 time) override;
-    bool swipeGestureEnd(quint32 time) override;
-    bool swipeGestureCancelled(quint32 time) override;
+    bool swipe_begin(swipe_begin_event const& event) override;
+    bool swipe_update(swipe_update_event const& event) override;
+    bool swipe_end(swipe_end_event const&) override;
 
 private:
     bool pointerSurfaceAllowed() const;

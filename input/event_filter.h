@@ -49,16 +49,13 @@ public:
     virtual bool touchMotion(qint32 id, const QPointF& pos, quint32 time);
     virtual bool touchUp(qint32 id, quint32 time);
 
-    virtual bool pinchGestureBegin(int fingerCount, quint32 time);
-    virtual bool
-    pinchGestureUpdate(qreal scale, qreal angleDelta, const QSizeF& delta, quint32 time);
-    virtual bool pinchGestureEnd(quint32 time);
-    virtual bool pinchGestureCancelled(quint32 time);
+    virtual bool pinch_begin(pinch_begin_event const& event);
+    virtual bool pinch_update(pinch_update_event const& event);
+    virtual bool pinch_end(pinch_end_event const& event);
 
-    virtual bool swipeGestureBegin(int fingerCount, quint32 time);
-    virtual bool swipeGestureUpdate(const QSizeF& delta, quint32 time);
-    virtual bool swipeGestureEnd(quint32 time);
-    virtual bool swipeGestureCancelled(quint32 time);
+    virtual bool swipe_begin(swipe_begin_event const& event);
+    virtual bool swipe_update(swipe_update_event const& event);
+    virtual bool swipe_end(swipe_end_event const& event);
 
     virtual bool switchEvent(SwitchEvent* event);
 

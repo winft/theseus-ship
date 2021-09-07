@@ -140,94 +140,88 @@ bool forward_filter::axis(axis_event const& event)
     return true;
 }
 
-bool forward_filter::pinchGestureBegin(int fingerCount, quint32 time)
+bool forward_filter::pinch_begin(pinch_begin_event const& event)
 {
     if (!workspace()) {
         return false;
     }
+
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().start_pinch_gesture(fingerCount);
+    seat->setTimestamp(event.base.time_msec);
+    seat->pointers().start_pinch_gesture(event.fingers);
+
     return true;
 }
 
-bool forward_filter::pinchGestureUpdate(qreal scale,
-                                        qreal angleDelta,
-                                        const QSizeF& delta,
-                                        quint32 time)
+bool forward_filter::pinch_update(pinch_update_event const& event)
 {
     if (!workspace()) {
         return false;
     }
+
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().update_pinch_gesture(delta, scale, angleDelta);
+    seat->setTimestamp(event.base.time_msec);
+    seat->pointers().update_pinch_gesture(
+        QSize(event.delta.x(), event.delta.y()), event.scale, event.rotation);
+
     return true;
 }
 
-bool forward_filter::pinchGestureEnd(quint32 time)
+bool forward_filter::pinch_end(pinch_end_event const& event)
 {
     if (!workspace()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().end_pinch_gesture();
+    seat->setTimestamp(event.base.time_msec);
+
+    if (event.cancelled) {
+        seat->pointers().cancel_pinch_gesture();
+    } else {
+        seat->pointers().end_pinch_gesture();
+    }
+
     return true;
 }
 
-bool forward_filter::pinchGestureCancelled(quint32 time)
+bool forward_filter::swipe_begin(swipe_begin_event const& event)
 {
     if (!workspace()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().cancel_pinch_gesture();
+    seat->setTimestamp(event.base.time_msec);
+    seat->pointers().start_swipe_gesture(event.fingers);
+
     return true;
 }
 
-bool forward_filter::swipeGestureBegin(int fingerCount, quint32 time)
+bool forward_filter::swipe_update(swipe_update_event const& event)
 {
     if (!workspace()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().start_swipe_gesture(fingerCount);
+    seat->setTimestamp(event.base.time_msec);
+    seat->pointers().update_swipe_gesture(QSize(event.delta.x(), event.delta.y()));
+
     return true;
 }
 
-bool forward_filter::swipeGestureUpdate(const QSizeF& delta, quint32 time)
+bool forward_filter::swipe_end(swipe_end_event const& event)
 {
     if (!workspace()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().update_swipe_gesture(delta);
-    return true;
-}
+    seat->setTimestamp(event.base.time_msec);
 
-bool forward_filter::swipeGestureEnd(quint32 time)
-{
-    if (!workspace()) {
-        return false;
+    if (event.cancelled) {
+        seat->pointers().cancel_swipe_gesture();
+    } else {
+        seat->pointers().end_swipe_gesture();
     }
-    auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().end_swipe_gesture();
-    return true;
-}
 
-bool forward_filter::swipeGestureCancelled(quint32 time)
-{
-    if (!workspace()) {
-        return false;
-    }
-    auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    seat->pointers().cancel_swipe_gesture();
     return true;
 }
 
