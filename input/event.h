@@ -173,7 +173,7 @@ enum class switch_state {
     toggle,
 };
 
-struct toggle_event {
+struct switch_toggle_event {
     switch_type type;
     switch_state state;
     event<switch_device> base;
