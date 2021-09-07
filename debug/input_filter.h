@@ -36,7 +36,7 @@ public:
 
     void swipe_begin(input::swipe_begin_event const& event) override;
     void swipe_update(input::swipe_update_event const& event) override;
-    void swipe_end(input::swipe_end_event const&) override;
+    void swipe_end(input::swipe_end_event const& event) override;
 
     void switch_toggle(input::switch_toggle_event const& event) override;
 
