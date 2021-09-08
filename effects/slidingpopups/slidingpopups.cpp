@@ -206,8 +206,10 @@ void SlidingPopupsEffect::slotWindowAdded(EffectWindow *w)
     //Wayland
     if (auto surf = w->surface()) {
         slotWaylandSlideOnShowChanged(w);
-        connect(surf, &Wrapland::Server::Surface::slideOnShowHideChanged, this, [this, surf] {
-            slotWaylandSlideOnShowChanged(effects->findWindow(surf));
+        connect(surf, &Wrapland::Server::Surface::committed, this, [this, surf] {
+            if (surf->state().updates & Wrapland::Server::surface_change::slide) {
+                slotWaylandSlideOnShowChanged(effects->findWindow(surf));
+            }
         });
     }
 
@@ -365,12 +367,12 @@ void SlidingPopupsEffect::slotWaylandSlideOnShowChanged(EffectWindow* w)
         return;
     }
 
-    if (surf->slideOnShowHide()) {
+    if (auto& slide = surf->state().slide) {
         AnimationData &animData = m_animationsData[w];
 
-        animData.offset = surf->slideOnShowHide()->offset();
+        animData.offset = slide->offset();
 
-        switch (surf->slideOnShowHide()->location()) {
+        switch (slide->location()) {
         case Wrapland::Server::Slide::Location::Top:
             animData.location = Location::Top;
             break;

@@ -683,7 +683,7 @@ qreal Toplevel::bufferScale() const
     if (m_remnant) {
         return m_remnant->buffer_scale;
     }
-    return surface() ? surface()->scale() : 1;
+    return surface() ? surface()->state().scale : 1;
 }
 
 bool Toplevel::wantsShadowToBeRendered() const
@@ -787,17 +787,23 @@ void Toplevel::setSurface(Wrapland::Server::Surface *surface)
 
     m_surface = surface;
 
-    connect(m_surface, &Surface::damaged, this, &Toplevel::addDamage);
-    connect(m_surface, &Surface::sizeChanged, this, [this]{
-        discardWindowPixmap();
-        if (m_surface->client() == waylandServer()->xWaylandConnection()) {
-            // Quads for Xwayland clients need for size emulation.
-            // Also apparently needed for unmanaged Xwayland clients (compare Kate's open-file
-            // dialog when type-forward list is changing size).
-            // TODO(romangg): can this be put in a less hot path?
-            discard_quads();
-        }
-    });
+    if (surface->client() == waylandServer()->xWaylandConnection()) {
+        connect(m_surface, &Surface::committed, this, [this]{
+            if (!m_surface->state().damage.isEmpty()) {
+                addDamage(m_surface->state().damage);
+            }
+        });
+        connect(m_surface, &Surface::committed, this, [this]{
+            if (m_surface->state().updates & Wrapland::Server::surface_change::size) {
+                discardWindowPixmap();
+                // Quads for Xwayland clients need for size emulation.
+                // Also apparently needed for unmanaged Xwayland clients (compare Kate's open-file
+                // dialog when type-forward list is changing size).
+                // TODO(romangg): can this be put in a less hot path?
+                discard_quads();
+            }
+        });
+    }
 
     connect(m_surface, &Surface::subsurfaceTreeChanged, this,
         [this] {
@@ -833,8 +839,9 @@ void Toplevel::updateClientOutputs()
     surface()->setOutputs(clientOutputs);
 }
 
-// TODO(romangg): This function is only called on Wayland and the damage translation is not the
-//                usual way. Unify that.
+// TODO(romangg): * This function is only called on Wayland and the damage translation is not the
+//                  usual way. Unify that.
+//                * Should we return early on the added damage being empty?
 void Toplevel::addDamage(const QRegion &damage)
 {
     auto const render_region = win::render_geometry(this);

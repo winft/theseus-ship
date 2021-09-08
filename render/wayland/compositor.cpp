@@ -7,6 +7,7 @@
 
 #include "output.h"
 #include "presentation.h"
+#include "utils.h"
 
 #include "abstract_wayland_output.h"
 #include "platform.h"
@@ -46,24 +47,11 @@ void compositor::check_idle()
     scene()->idle();
 }
 
-void compositor::swapped(AbstractWaylandOutput* output)
-{
-    auto render_output = outputs.at(output).get();
-    render_output->swapped_sw();
-}
-
-void compositor::swapped(AbstractWaylandOutput* output, unsigned int sec, unsigned int usec)
-{
-    auto render_output = outputs.at(output).get();
-    render_output->swapped_hw(sec, usec);
-}
-
 compositor::compositor(QObject* parent)
     : render::compositor(parent)
     , presentation(new render::wayland::presentation(this))
 {
-    if (!presentation->init_clock(kwinApp()->platform->supportsClockId(),
-                                  kwinApp()->platform->clockId())) {
+    if (!presentation->init_clock(kwinApp()->platform->clockId())) {
         qCCritical(KWIN_CORE) << "Presentation clock failed. Exit.";
         qApp->quit();
     }
@@ -123,6 +111,24 @@ void compositor::schedule_repaint(Toplevel* window)
             output->set_delay_timer();
         }
     }
+}
+
+void compositor::schedule_frame_callback(Toplevel* window)
+{
+    if (!isActive()) {
+        return;
+    }
+
+    if (!kwinApp()->platform->areOutputsEnabled()) {
+        return;
+    }
+
+    auto max_out = static_cast<AbstractWaylandOutput*>(max_coverage_output(window));
+    if (!max_out) {
+        return;
+    }
+
+    outputs[max_out]->request_frame(window);
 }
 
 void compositor::toggleCompositing()

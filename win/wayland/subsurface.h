@@ -30,7 +30,7 @@ void assign_subsurface_role(Win* win)
 inline void restack_subsurfaces(Toplevel* window)
 {
     auto subsurface_stacker = [&window](std::vector<Toplevel*>& children) {
-        auto const& subsurfaces = window->surface()->childSubsurfaces();
+        auto const& subsurfaces = window->surface()->state().children;
         std::vector<Toplevel*> stacking;
 
         for (auto const& subsurface : subsurfaces) {
@@ -67,12 +67,14 @@ void set_subsurface_parent(Win* win, Lead* lead)
     lead->transient()->add_child(win);
     restack_subsurfaces(lead);
 
-    QObject::connect(win->surface(), &WS::Surface::committed, win, &window::handle_commit);
-    QObject::connect(win->surface(), &WS::Surface::sizeChanged, win, [win] {
-        auto const old_geo = win->frameGeometry();
-        // TODO(romangg): use setFrameGeometry?
-        win->set_frame_geometry(QRect(win->pos(), win->surface()->size()));
-        Q_EMIT win->frame_geometry_changed(win, old_geo);
+    QObject::connect(win->surface(), &WS::Surface::committed, win, [win] {
+        if (win->surface()->state().updates & Wrapland::Server::surface_change::size) {
+            auto const old_geo = win->frameGeometry();
+            // TODO(romangg): use setFrameGeometry?
+            win->set_frame_geometry(QRect(win->pos(), win->surface()->size()));
+            Q_EMIT win->frame_geometry_changed(win, old_geo);
+        }
+        win->handle_commit();
     });
 
     QObject::connect(lead, &Lead::windowShown, win, [win] { win->map(); });

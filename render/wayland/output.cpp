@@ -5,19 +5,24 @@
 */
 #include "output.h"
 
-#include "abstract_wayland_output.h"
 #include "compositor.h"
+#include "presentation.h"
+#include "utils.h"
+
+#include "abstract_wayland_output.h"
 #include "effects.h"
 #include "platform.h"
-#include "presentation.h"
 #include "wayland_server.h"
 #include "win/x11/stacking_tree.h"
 #include "workspace.h"
 
 #include "win/transient.h"
+#include <kwinglplatform.h>
 #include <kwingltexture.h>
 
 #include "perf/ftrace.h"
+
+#include <Wrapland/Server/surface.h>
 
 namespace KWin::render::wayland
 {
@@ -41,9 +46,35 @@ void output::add_repaint(QRegion const& region)
     set_delay_timer();
 }
 
+bool output::prepare_repaint(Toplevel* win)
+{
+    if (!win->has_pending_repaints()) {
+        return false;
+    }
+
+    auto const repaints = win->repaints();
+    if (repaints.intersected(base->geometry()).isEmpty()) {
+        // TODO(romangg): Remove win from windows list?
+        return false;
+    }
+
+    for (auto& [other_base, other_output] : compositor->outputs) {
+        if (other_output.get() == this) {
+            continue;
+        }
+        auto const capped_region = repaints.intersected(other_base->geometry());
+        if (!capped_region.isEmpty()) {
+            other_output->add_repaint(capped_region);
+        }
+    }
+
+    return true;
+}
+
 bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
 {
     delay_timer.stop();
+    frame_timer.stop();
 
     // If a buffer swap is still pending, we return to the event loop and
     // continue processing events until the swap has completed.
@@ -59,25 +90,16 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     // Create a list of all windows in the stacking order
     windows = workspace()->x_stacking_tree->as_list();
     bool has_window_repaints{false};
+    std::deque<Toplevel*> frame_windows;
 
     for (auto win : windows) {
-        if (win->has_pending_repaints()) {
-            auto const window_repaint = win->repaints();
-            if (window_repaint.intersected(base->geometry()).isEmpty()) {
-                // TODO(romangg): Remove win from windows list?
-                continue;
-            }
+        if (prepare_repaint(win)) {
             has_window_repaints = true;
-
-            for (auto& [other_base, other_output] : compositor->outputs) {
-                if (other_output.get() == this) {
-                    continue;
-                }
-                auto const capped_region = window_repaint.intersected(other_base->geometry());
-                if (!capped_region.isEmpty()) {
-                    other_output->add_repaint(capped_region);
-                }
-            }
+        } else if (win->surface()
+                   && win->surface()->client() != waylandServer()->xWaylandConnection()
+                   && (win->surface()->state().updates & Wrapland::Server::surface_change::frame)
+                   && max_coverage_output(win) == base) {
+            frame_windows.push_back(win);
         }
         if (win->resetAndFetchDamage()) {
             // Discard the cached lanczos texture
@@ -106,7 +128,12 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
         compositor->check_idle();
 
         // This means the next time we composite it is done without timer delay.
-        delay = 0;
+        delay = std::chrono::nanoseconds::zero();
+
+        if (!frame_windows.empty()) {
+            // Some windows want a frame event still.
+            compositor->presentation->frame(this, frame_windows);
+        }
         return false;
     }
 
@@ -135,10 +162,21 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     return true;
 }
 
+#define SWAP_TIME_DEBUG 0
+#if SWAP_TIME_DEBUG
+auto to_ms = [](std::chrono::nanoseconds val) {
+    QString ret = QString::number(std::chrono::duration<double, std::milli>(val).count()) + "ms";
+    return ret;
+};
+#endif
+
 std::deque<Toplevel*> output::run()
 {
     QRegion repaints;
     std::deque<Toplevel*> windows;
+
+    QElapsedTimer test_timer;
+    test_timer.start();
 
     if (!prepare_run(repaints, windows)) {
         return std::deque<Toplevel*>();
@@ -152,9 +190,16 @@ std::deque<Toplevel*> output::run()
     auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
 
     // Start the actual painting process.
-    auto const duration = compositor->scene()->paint(base, repaints, windows, now);
+    auto const duration
+        = std::chrono::nanoseconds(compositor->scene()->paint(base, repaints, windows, now));
 
-    update_paint_periods(duration);
+#if SWAP_TIME_DEBUG
+    qDebug().noquote() << "RUN gap:" << to_ms(now_ns - swap_ref_time)
+                       << "paint:" << to_ms(duration);
+    swap_ref_time = now_ns;
+#endif
+
+    paint_durations.update(duration);
     retard_next_run();
 
     if (!windows.empty()) {
@@ -166,96 +211,147 @@ std::deque<Toplevel*> output::run()
     return windows;
 }
 
-void output::swapped_sw()
+void output::dry_run()
 {
-    compositor->presentation->software_presented(presentation::kind::Vsync);
-    swapped();
+    auto windows = workspace()->x_stacking_tree->as_list();
+    std::deque<Toplevel*> frame_windows;
+
+    for (auto win : windows) {
+        if (!win->surface() || win->surface()->client() == waylandServer()->xWaylandConnection()) {
+            continue;
+        }
+        if (!(win->surface()->state().updates & Wrapland::Server::surface_change::frame)) {
+            continue;
+        }
+        frame_windows.push_back(win);
+    }
+    compositor->presentation->frame(this, frame_windows);
 }
 
-void output::swapped_hw(unsigned int sec, unsigned int usec)
+void output::swapped(presentation_data const& data)
 {
-    auto const flags = presentation::kind::Vsync | presentation::kind::HwClock
-        | presentation::kind::HwCompletion;
-    compositor->presentation->presented(this, sec, usec, flags);
-    swapped();
-}
+    compositor->presentation->presented(this, data);
 
-void output::swapped()
-{
     if (!swap_pending) {
         qCWarning(KWIN_CORE) << "render::wayland::output::swapped called but no swap pending.";
         return;
     }
     swap_pending = false;
 
-    // We delay the next paint shortly before next vblank. For that we assume that the swap
-    // event is close to the actual vblank (TODO: it would be better to take the actual flip
-    // time that for example DRM events provide). We take 10% of refresh cycle length.
-    // We also assume the paint duration is relatively constant over time. We take 3 times the
-    // previous paint duration.
-    //
-    // All temporary calculations are in nanoseconds but the final timer offset in the end in
-    // milliseconds. Atleast we take here one millisecond.
-    auto const refresh = refresh_length();
-    auto const vblankMargin = refresh / 10;
-
-    auto max_paint_duration = [this]() {
-        if (last_paint_durations[0] > last_paint_durations[1]) {
-            return last_paint_durations[0];
-        }
-        return last_paint_durations[1];
-    };
-
-    auto const paint_margin = max_paint_duration();
-    delay = std::max(refresh - vblankMargin - paint_margin, int64_t(0));
-
+    set_delay(data);
     delay_timer.stop();
     set_delay_timer();
 }
 
-int64_t output::refresh_length() const
+std::chrono::nanoseconds output::refresh_length() const
 {
-    return 1000 * 1000 / base->refreshRate();
+    return std::chrono::nanoseconds(1000 * 1000 * (1000 * 1000 / base->refreshRate()));
 }
 
-void output::update_paint_periods(int64_t duration)
+void output::set_delay(presentation_data const& data)
 {
-    if (duration > last_paint_durations[1]) {
-        last_paint_durations[1] = duration;
+    if (!GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
+        return;
     }
 
-    paint_periods++;
+#if SWAP_TIME_DEBUG
+    qDebug() << "";
+    std::chrono::nanoseconds render_time_debug;
+#endif
 
-    // We take the maximum over the last 100 frames.
-    if (paint_periods == 100) {
-        last_paint_durations[0] = last_paint_durations[1];
-        last_paint_durations[1] = 0;
-        paint_periods = 0;
-    }
+    // First get the latest Gl timer queries.
+    last_timer_queries.erase(std::remove_if(last_timer_queries.begin(),
+                                            last_timer_queries.end(),
+#if SWAP_TIME_DEBUG
+                                            [this, &render_time_debug](auto& timer) {
+#else
+                                            [this](auto& timer) {
+#endif
+                                                if (!timer.get_query()) {
+                                                    return false;
+                                                }
+#if SWAP_TIME_DEBUG
+                                                render_time_debug = timer.time();
+#endif
+                                                render_durations.update(timer.time());
+                                                return true;
+                                            }),
+                             last_timer_queries.end());
+
+    auto now = std::chrono::steady_clock::now().time_since_epoch();
+
+    // The gap between the last presentation on the display and us now calculating the delay.
+    auto vblank_to_now = now - data.when;
+
+    // The refresh cycle length either from the presentation data, or if not available, our guess.
+    auto const refresh
+        = data.refresh > std::chrono::nanoseconds::zero() ? data.refresh : refresh_length();
+
+    // Some relative gap to factor in the unknown time the hardware needs to put a rendered image
+    // onto the scanout buffer.
+    auto const hw_margin = refresh / 10;
+
+    // We try to delay the next paint shortly before next vblank factoring in our margins.
+    auto try_delay = refresh - vblank_to_now - hw_margin - paint_durations.get_max()
+        - render_durations.get_max();
+
+    // If our previous margins were too large we don't delay. We would likely miss the next vblank.
+    delay = std::max(try_delay, std::chrono::nanoseconds::zero());
+
+#if SWAP_TIME_DEBUG
+    QDebug debug = qDebug();
+    debug.noquote().nospace();
+    debug << "SWAP total: " << to_ms((now - swap_ref_time)) << endl;
+    debug << "vblank to now: " << to_ms(now) << " - " << to_ms(data.when) << " = "
+          << to_ms(vblank_to_now) << endl;
+    debug << "MARGINS vblank: " << to_ms(hw_margin)
+          << " paint: " << to_ms(paint_durations.get_max())
+          << " render: " << to_ms(render_time_debug) << "(" << to_ms(render_durations.get_max())
+          << ")" << endl;
+    debug << "refresh: " << to_ms(refresh) << " delay: " << to_ms(try_delay) << " (" << to_ms(delay)
+          << ")";
+    swap_ref_time = now;
+#endif
 }
 
 void output::set_delay_timer()
 {
-    if (delay_timer.isActive() || swap_pending) {
+    if (delay_timer.isActive() || swap_pending || !base->dpmsOn()) {
         // Abort since we will composite when the timer runs out or the timer will only get
         // started at buffer swap.
         return;
     }
 
     // In milliseconds.
-    uint const wait_time = delay / 1000 / 1000;
+    auto const wait_time = std::chrono::duration_cast<std::chrono::milliseconds>(delay);
 
     auto const ftrace_identifier = QString::fromStdString("timer-" + std::to_string(index));
-    Perf::Ftrace::mark(ftrace_identifier + QString::number(wait_time));
+    Perf::Ftrace::mark(ftrace_identifier + QString::number(wait_time.count()));
 
     // Force 4fps minimum:
-    delay_timer.start(std::min(wait_time, 250u), this);
+    delay_timer.start(std::min(wait_time, std::chrono::milliseconds(250)).count(), this);
+}
+
+void output::request_frame(Toplevel* window)
+{
+    if (swap_pending || delay_timer.isActive() || frame_timer.isActive() || !base->dpmsOn()) {
+        // Frame will be received when timer runs out.
+        return;
+    }
+
+    compositor->presentation->frame(this, {window});
+    frame_timer.start(
+        std::chrono::duration_cast<std::chrono::milliseconds>(refresh_length()).count(), this);
 }
 
 void output::timerEvent(QTimerEvent* event)
 {
     if (event->timerId() == delay_timer.timerId()) {
         run();
+        return;
+    }
+    if (event->timerId() == frame_timer.timerId()) {
+        dry_run();
         return;
     }
     QObject::timerEvent(event);

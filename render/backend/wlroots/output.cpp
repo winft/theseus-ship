@@ -8,8 +8,10 @@
 #include "backend.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
+#include "render/wayland/presentation.h"
 #include "screens.h"
 
+#include <chrono>
 #include <wayland_logging.h>
 
 namespace KWin::render::backend::wlroots
@@ -25,6 +27,25 @@ void handle_destroy(wl_listener* listener, [[maybe_unused]] void* data)
     delete output;
 }
 
+wayland::presentation_kinds to_presentation_kinds(uint32_t wlr_flags)
+{
+    wayland::presentation_kinds flags{wayland::presentation_kind::none};
+
+    if (wlr_flags & WLR_OUTPUT_PRESENT_VSYNC) {
+        flags |= wayland::presentation_kind::vsync;
+    }
+    if (wlr_flags & WLR_OUTPUT_PRESENT_HW_CLOCK) {
+        flags |= wayland::presentation_kind::hw_clock;
+    }
+    if (wlr_flags & WLR_OUTPUT_PRESENT_HW_COMPLETION) {
+        flags |= wayland::presentation_kind::hw_completion;
+    }
+    if (wlr_flags & WLR_OUTPUT_PRESENT_ZERO_COPY) {
+        flags |= wayland::presentation_kind::zero_copy;
+    }
+    return flags;
+}
+
 void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
 {
     event_receiver<output>* event_receiver_struct
@@ -32,50 +53,62 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
     auto our_output = event_receiver_struct->receiver;
     auto event = static_cast<wlr_output_event_present*>(data);
 
+    // TODO(romangg): What if wee don't have a monotonic clock? For example should
+    //                std::chrono::system_clock::time_point be used?
+    auto when = std::chrono::seconds{event->when->tv_sec}
+        + std::chrono::nanoseconds{event->when->tv_nsec};
+
+    wayland::presentation_data pres_data{event->commit_seq,
+                                         when,
+                                         event->seq,
+                                         std::chrono::nanoseconds(event->refresh),
+                                         to_presentation_kinds(event->flags)};
+
     if (auto compositor = static_cast<wayland::compositor*>(compositor::self())) {
-        compositor->swapped(our_output, event->when->tv_sec, event->when->tv_nsec / 1000);
+        auto render_output = compositor->outputs.at(our_output).get();
+        render_output->swapped(pres_data);
     }
 }
 
-bool output::enable_native(bool enable)
+bool output::disable_native()
 {
-    wlr_output_enable(native, enable);
+    wlr_output_enable(native, false);
 
     if (!wlr_output_test(native)) {
-        qCWarning(KWIN_WL) << "Failed test commit on" << (enable ? "enabling." : "disabling.");
+        qCWarning(KWIN_WL) << "Failed test commit on disabling output.";
         // Failed test commit. Switch enabling back.
-        wlr_output_enable(native, !enable);
+        wlr_output_enable(native, true);
         return false;
     }
 
-    if (enable) {
-        compositor::self()->addRepaint(geometry());
-    } else {
-        auto compositor = static_cast<wayland::compositor*>(compositor::self());
-        auto render_output = compositor->outputs.at(this).get();
-        render_output->delay_timer.stop();
-        wlr_output_commit(native);
-    }
+    auto compositor = static_cast<wayland::compositor*>(compositor::self());
+    auto render_output = compositor->outputs.at(this).get();
+    render_output->delay_timer.stop();
+    render_output->frame_timer.stop();
+    wlr_output_commit(native);
+
     return true;
 }
 
 void output::updateEnablement(bool enable)
 {
-    enable_native(enable);
+    if (!enable) {
+        disable_native();
+    }
     back->enableOutput(this, enable);
+    if (enable) {
+        compositor::self()->addRepaint(geometry());
+    }
 }
 
 void output::updateDpms(DpmsMode mode)
 {
     auto set_on = mode == DpmsMode::On;
 
-    if (!enable_native(set_on)) {
-        return;
-    }
-
     if (set_on) {
+        compositor::self()->addRepaint(geometry());
         dpmsSetOn();
-    } else {
+    } else if (disable_native()) {
         dpmsSetOff(mode);
     }
 }

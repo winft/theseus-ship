@@ -22,6 +22,7 @@ namespace render::wayland
 {
 class output;
 class presentation;
+struct presentation_data;
 
 class KWIN_EXPORT compositor : public render::compositor
 {
@@ -30,9 +31,7 @@ public:
     static compositor* create(QObject* parent = nullptr);
 
     void schedule_repaint(Toplevel* window) override;
-
-    void swapped(AbstractWaylandOutput* output);
-    void swapped(AbstractWaylandOutput* output, unsigned int sec, unsigned int usec);
+    void schedule_frame_callback(Toplevel* window);
 
     void toggleCompositing() override;
     void addRepaint(QRegion const& region) override;

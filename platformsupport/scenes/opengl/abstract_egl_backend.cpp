@@ -432,9 +432,9 @@ void EglTexture::updateTexture(WindowPixmap *pixmap)
     s->resetTrackedDamage();
 
     if (!GLPlatform::instance()->isGLES() || m_hasSubImageUnpack) {
-        textureSubImage(s->scale(), shmImage.value(), damage);
+        textureSubImage(s->state().scale, shmImage.value(), damage);
     } else {
-        textureSubImageFromQImage(s->scale(), shmImage->createQImage(), damage);
+        textureSubImageFromQImage(s->state().scale, shmImage->createQImage(), damage);
     }
 }
 

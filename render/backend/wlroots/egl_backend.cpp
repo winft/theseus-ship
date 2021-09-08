@@ -17,6 +17,7 @@
 #include "render/wayland/output.h"
 #include "screens.h"
 
+#include <kwinglplatform.h>
 #include <wayland_logging.h>
 
 namespace KWin::render::backend::wlroots
@@ -77,9 +78,7 @@ void egl_backend::init()
     }
 
     initKWinGL();
-
-    // TODO(romangg): buffer age currently deactivated due to issues in multi-screen configurations.
-    // initBufferAge();
+    initBufferAge();
     initWayland();
 }
 
@@ -322,6 +321,12 @@ void egl_backend::endRenderingFrameForScreen(AbstractOutput* output,
     auto& out = get_output(output);
     renderFramebufferToSurface(out);
 
+    auto compositor = static_cast<wayland::compositor*>(render::compositor::self());
+    auto render_output = compositor->outputs.at(out.out).get();
+    if (GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
+        render_output->last_timer_queries.emplace_back();
+    }
+
     if (damagedRegion.intersected(output->geometry()).isEmpty()) {
         // If the damaged region of a window is fully occluded, the only
         // rendering done, if any, will have been to repair a reused back
@@ -343,8 +348,6 @@ void egl_backend::endRenderingFrameForScreen(AbstractOutput* output,
 
     if (!out.present(buffer)) {
         out.bufferAge = 0;
-        auto compositor = static_cast<wayland::compositor*>(render::compositor::self());
-        auto render_output = compositor->outputs.at(out.out).get();
         render_output->swap_pending = false;
         return;
     }

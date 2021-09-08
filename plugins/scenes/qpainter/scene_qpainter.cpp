@@ -275,7 +275,7 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
     QRectF target;
     QRectF viewportRectangle;
     if (toplevel->surface()) {
-        viewportRectangle = toplevel->surface()->sourceRectangle();
+        viewportRectangle = toplevel->surface()->state().source_rectangle;
     }
     if (isXwaylandClient(toplevel)) {
         // special case for XWayland windows

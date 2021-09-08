@@ -130,12 +130,10 @@ void backend::enableOutput(output* output, bool enable)
     Screens::self()->updateAll();
 }
 
-bool backend::supportsClockId() const
+clockid_t backend::clockId() const
 {
-    return false;
+    return wlr_backend_get_presentation_clock(base->backend);
 }
-
-// TODO: Should we return the backend's clock id?
 
 OpenGLBackend* backend::createOpenGLBackend()
 {

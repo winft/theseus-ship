@@ -134,9 +134,10 @@ void ContrastEffect::updateContrastRegion(EffectWindow *w)
 
     auto surf = w->surface();
 
-    if (surf && surf->contrast()) {
-        region = surf->contrast()->region();
-        m_colorMatrices[w] = colorMatrix(surf->contrast()->contrast(), surf->contrast()->intensity(), surf->contrast()->saturation());
+    if (surf && surf->state().contrast) {
+        auto& contrast = surf->state().contrast;
+        region = contrast->region();
+        m_colorMatrices[w] = colorMatrix(contrast->contrast(), contrast->intensity(), contrast->saturation());
     }
 
     if (auto internal = w->internalWindow()) {
@@ -160,9 +161,9 @@ void ContrastEffect::updateContrastRegion(EffectWindow *w)
         }
     }
 
-    //!value.isNull() full window in X11 case, surf->contrast()
+    //!value.isNull() full window in X11 case, surf->state().contrast
     //valid, full window in wayland case
-    if (region.isEmpty() && (!value.isNull() || (surf && surf->contrast()))) {
+    if (region.isEmpty() && (!value.isNull() || (surf && surf->state().contrast))) {
         // Set the data to a dummy value.
         // This is needed to be able to distinguish between the value not
         // being set, and being set to an empty region.
@@ -176,9 +177,8 @@ void ContrastEffect::slotWindowAdded(EffectWindow *w)
     auto surf = w->surface();
 
     if (surf) {
-        m_contrastChangedConnections[w] = connect(surf, &Wrapland::Server::Surface::contrastChanged, this, [this, w] () {
-
-            if (w) {
+        m_contrastChangedConnections[w] = connect(surf, &Wrapland::Server::Surface::committed, this, [this, w, surf] () {
+            if (w && surf->state().updates & Wrapland::Server::surface_change::contrast) {
                 updateContrastRegion(w);
             }
         });

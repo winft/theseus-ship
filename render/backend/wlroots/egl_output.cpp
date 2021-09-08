@@ -152,6 +152,10 @@ bool egl_output::present(buffer* buf)
     render_output->swap_pending = true;
     wlr_output_attach_buffer(out->native, &buf->native.base);
 
+    if (!out->native->enabled) {
+        wlr_output_enable(out->native, true);
+    }
+
     if (!wlr_output_test(out->native)) {
         qCWarning(KWIN_WL) << "Atomic output test failed on present.";
         reset(out);

@@ -90,11 +90,6 @@ inline void finalize_shell_window_creation(window* win)
 {
     namespace WS = Wrapland::Server;
 
-    update_shadow(win);
-    QObject::connect(win->surface(), &Wrapland::Server::Surface::shadowChanged, win, [win] {
-        update_shadow(win);
-    });
-
     QObject::connect(
         waylandServer(), &WaylandServer::foreignTransientChanged, win, [win](WS::Surface* child) {
             if (child == win->surface()) {
@@ -105,6 +100,13 @@ inline void finalize_shell_window_creation(window* win)
     auto handle_first_commit = [win] {
         QObject::disconnect(win->surface(), &WS::Surface::committed, win, nullptr);
         QObject::connect(win->surface(), &WS::Surface::committed, win, &window::handle_commit);
+
+        update_shadow(win);
+        QObject::connect(win->surface(), &Wrapland::Server::Surface::committed, win, [win] {
+            if (win->surface()->state().updates & Wrapland::Server::surface_change::shadow) {
+                update_shadow(win);
+            }
+        });
 
         handle_parent_changed(win);
 

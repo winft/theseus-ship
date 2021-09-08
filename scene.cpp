@@ -408,7 +408,11 @@ void Scene::addToplevel(Toplevel *c)
     connect(c, &Toplevel::windowClosed, this, &Scene::windowClosed);
     //A change of scale won't affect the geometry in compositor co-ordinates, but will affect the window quads.
     if (c->surface()) {
-        connect(c->surface(), &Wrapland::Server::Surface::scaleChanged, this, std::bind(&Scene::windowGeometryShapeChanged, this, c));
+        connect(c->surface(), &Wrapland::Server::Surface::committed, this, [this, c] {
+            if (c->surface()->state().updates & Wrapland::Server::surface_change::scale) {
+                windowGeometryShapeChanged(c);
+            }
+        });
     }
     connect(c, &Toplevel::screenScaleChanged, this,
         [this, c] {
@@ -969,12 +973,12 @@ WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) co
                           contentsRect.bottomRight() * textureScale);
 
         if (const auto *surface = toplevel->surface()) {
-            QRectF const rect = surface->sourceRectangle();
+            QRectF const rect = surface->state().source_rectangle;
             if (rect.isValid()) {
                 sourceRect = QRectF(rect.topLeft() * textureScale,
                                     rect.bottomRight() * textureScale);
             } else {
-                auto buffer = surface->buffer();
+                auto buffer = surface->state().buffer;
                 // XWayland client's geometry must be taken from their content placement since the
                 // buffer size is not in sync.
                 if (buffer && !toplevel->isClient()) {
@@ -1117,7 +1121,7 @@ void WindowPixmap::updateBuffer()
 {
     using namespace Wrapland::Server;
     if (auto s = surface()) {
-        if (auto b = s->buffer()) {
+        if (auto b = s->state().buffer) {
             if (b == m_buffer) {
                 // no change
                 return;

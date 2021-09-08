@@ -1388,7 +1388,7 @@ int SurfaceTreeModel::rowCount(const QModelIndex& parent) const
     if (parent.isValid()) {
         using namespace Wrapland::Server;
         if (Surface* surface = static_cast<Surface*>(parent.internalPointer())) {
-            const auto& children = surface->childSubsurfaces();
+            const auto& children = surface->state().children;
             return children.size();
         }
         return 0;
@@ -1409,7 +1409,7 @@ QModelIndex SurfaceTreeModel::index(int row, int column, const QModelIndex& pare
     if (parent.isValid()) {
         using namespace Wrapland::Server;
         if (Surface* surface = static_cast<Surface*>(parent.internalPointer())) {
-            const auto& children = surface->childSubsurfaces();
+            const auto& children = surface->state().children;
             if (row_u < children.size()) {
                 return createIndex(row_u, column, children.at(row_u)->surface());
             }
@@ -1453,7 +1453,7 @@ QModelIndex SurfaceTreeModel::parent(const QModelIndex& child) const
                 // something is wrong
                 return QModelIndex();
             }
-            const auto& children = grandParent->childSubsurfaces();
+            const auto& children = grandParent->state().children;
             for (size_t row = 0; row < children.size(); row++) {
                 if (children.at(row) == parent->subsurface()) {
                     return createIndex(row, 0, parent);
@@ -1493,7 +1493,7 @@ QVariant SurfaceTreeModel::data(const QModelIndex& index, int role) const
                 .arg(QString::fromStdString(surface->client()->executablePath()))
                 .arg(surface->client()->processId());
         } else if (role == Qt::DecorationRole) {
-            if (auto buffer = surface->buffer()) {
+            if (auto buffer = surface->state().buffer) {
                 if (buffer->shmBuffer()) {
                     return buffer->shmImage()->createQImage().scaled(QSize(64, 64),
                                                                      Qt::KeepAspectRatio);

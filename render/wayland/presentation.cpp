@@ -9,6 +9,7 @@
 #include "main.h"
 #include "platform.h"
 #include "toplevel.h"
+#include "utils.h"
 #include "wayland_server.h"
 
 #include "render/wayland/output.h"
@@ -29,27 +30,14 @@ presentation::presentation(QObject* parent)
 {
 }
 
-presentation::~presentation()
+bool presentation::init_clock(clockid_t clockid)
 {
-    delete fallback_clock;
-}
+    this->clockid = clockid;
 
-bool presentation::init_clock(bool clockid_valid, clockid_t clockid)
-{
-    if (clockid_valid) {
-        this->clockid = clockid;
-
-        struct timespec ts;
-        if (clock_gettime(clockid, &ts) != 0) {
-            qCWarning(KWIN_CORE) << "Could not get presentation clock.";
-            return false;
-        }
-    } else {
-        // There might be other clock types, but for now assume it is always monotonic or realtime.
-        clockid = QElapsedTimer::isMonotonic() ? CLOCK_MONOTONIC : CLOCK_REALTIME;
-
-        fallback_clock = new QElapsedTimer();
-        fallback_clock->start();
+    struct timespec ts;
+    if (clock_gettime(clockid, &ts) != 0) {
+        qCWarning(KWIN_CORE) << "Could not get presentation clock.";
+        return false;
     }
 
     if (!waylandServer()->presentationManager()) {
@@ -60,23 +48,28 @@ bool presentation::init_clock(bool clockid_valid, clockid_t clockid)
     return true;
 }
 
-uint32_t presentation::current_time() const
+std::chrono::milliseconds get_now_in_ms()
 {
-    if (fallback_clock) {
-        return fallback_clock->elapsed();
-    }
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch());
+}
 
-    uint32_t time{0};
-    timespec ts;
-    if (clock_gettime(clockid, &ts) == 0) {
-        time = ts.tv_sec * 1000 + ts.tv_nsec / 1000 / 1000;
+void presentation::frame(render::wayland::output* output, std::deque<Toplevel*> const& windows)
+{
+    auto const now = get_now_in_ms().count();
+
+    for (auto& win : windows) {
+        assert(win->surface());
+        assert(max_coverage_output(win) == output->base);
+
+        // TODO (romangg): Split this up to do on every subsurface (annexed transient) separately.
+        win->surface()->frameRendered(now);
     }
-    return time;
 }
 
 void presentation::lock(render::wayland::output* output, std::deque<Toplevel*> const& windows)
 {
-    auto const now = current_time();
+    auto const now = get_now_in_ms().count();
 
     // TODO(romangg): what to do when the output gets removed or disabled while we have locked
     // surfaces?
@@ -88,20 +81,7 @@ void presentation::lock(render::wayland::output* output, std::deque<Toplevel*> c
         }
 
         // Check if this window should be locked to the output. We use maximum coverage for that.
-        auto const enabled_outputs = kwinApp()->platform->enabledOutputs();
-        auto max_out = enabled_outputs[0];
-        int max_area = 0;
-
-        auto const frame_geo = win->frameGeometry();
-        for (auto out : enabled_outputs) {
-            auto const intersect_geo = frame_geo.intersected(out->geometry());
-            auto const area = intersect_geo.width() * intersect_geo.height();
-            if (area > max_area) {
-                max_area = area;
-                max_out = out;
-            }
-        }
-
+        auto max_out = max_coverage_output(win);
         if (max_out != output->base) {
             // Window not mostly on this output. We lock it to max_out when it presents.
             continue;
@@ -120,124 +100,74 @@ void presentation::lock(render::wayland::output* output, std::deque<Toplevel*> c
     }
 }
 
-Wrapland::Server::Surface::PresentationKinds to_kinds(presentation::kinds kinds)
+Wrapland::Server::Surface::PresentationKinds to_kinds(presentation_kinds kinds)
 {
-    using kind = presentation::kind;
+    using kind = presentation_kind;
     using ret_kind = Wrapland::Server::Surface::PresentationKind;
 
     Wrapland::Server::Surface::PresentationKinds ret;
-    if (kinds.testFlag(kind::Vsync)) {
+    if (kinds.testFlag(kind::vsync)) {
         ret |= ret_kind::Vsync;
     }
-    if (kinds.testFlag(kind::HwClock)) {
+    if (kinds.testFlag(kind::hw_clock)) {
         ret |= ret_kind::HwClock;
     }
-    if (kinds.testFlag(kind::HwCompletion)) {
+    if (kinds.testFlag(kind::hw_completion)) {
         ret |= ret_kind::HwCompletion;
     }
-    if (kinds.testFlag(kind::ZeroCopy)) {
+    if (kinds.testFlag(kind::zero_copy)) {
         ret |= ret_kind::ZeroCopy;
     }
     return ret;
 }
 
+std::tuple<std::chrono::seconds, std::chrono::nanoseconds>
+get_timespec_decomposition(std::chrono::nanoseconds time)
+{
+    auto const sec = std::chrono::duration_cast<std::chrono::seconds>(time);
+    return {sec, time - sec};
+}
+
 // From Weston.
-void timespec_to_proto(const timespec& ts,
+void timespec_to_proto(std::chrono::nanoseconds const& time,
                        uint32_t& tv_sec_hi,
                        uint32_t& tv_sec_lo,
                        uint32_t& tv_n_sec)
 {
-    Q_ASSERT(ts.tv_sec >= 0);
-    Q_ASSERT(ts.tv_nsec >= 0 && ts.tv_nsec < NSEC_PER_SEC);
+    auto [time_sec, time_nsec] = get_timespec_decomposition(time);
 
-    uint64_t sec64 = ts.tv_sec;
-
+    uint64_t const sec64 = time_sec.count();
     tv_sec_hi = sec64 >> 32;
     tv_sec_lo = sec64 & 0xffffffff;
-    tv_n_sec = ts.tv_nsec;
+    tv_n_sec = time_nsec.count();
 }
 
-void presentation::presented(render::wayland::output* output,
-                             uint32_t sec,
-                             uint32_t usec,
-                             kinds kinds)
+void presentation::presented(render::wayland::output* output, presentation_data const& data)
 {
     if (!output->base->isEnabled()) {
         // Output disabled, discards will be sent from Wrapland.
         return;
     }
 
-    timespec ts;
-    ts.tv_sec = sec;
-    ts.tv_nsec = usec * 1000;
-
     uint32_t tv_sec_hi;
     uint32_t tv_sec_lo;
     uint32_t tv_n_sec;
-    timespec_to_proto(ts, tv_sec_hi, tv_sec_lo, tv_n_sec);
+    timespec_to_proto(data.when, tv_sec_hi, tv_sec_lo, tv_n_sec);
 
-    auto const refresh_rate = output->base->refreshRate();
-    assert(refresh_rate > 0);
-
-    auto const refresh_length = 1 / (double)refresh_rate;
-    uint32_t const refresh = refresh_length * 1000 * 1000 * 1000 * 1000;
-    auto const msc = output->base->msc();
+    uint64_t msc = data.seq;
 
     for (auto& [id, surface] : output->assigned_surfaces) {
         surface->presentationFeedback(id,
                                       tv_sec_hi,
                                       tv_sec_lo,
                                       tv_n_sec,
-                                      refresh,
+                                      data.refresh.count(),
                                       msc >> 32,
                                       msc & 0xffffffff,
-                                      to_kinds(kinds));
+                                      to_kinds(data.flags));
         disconnect(surface, &Wrapland::Server::Surface::resourceDestroyed, output, nullptr);
     }
     output->assigned_surfaces.clear();
-}
-
-void presentation::software_presented(kinds kinds)
-{
-    int64_t const elapsed_time = fallback_clock->nsecsElapsed();
-    uint32_t const elapsed_seconds = static_cast<double>(elapsed_time) / NSEC_PER_SEC;
-    uint32_t const nano_seconds_part
-        = elapsed_time - static_cast<int64_t>(elapsed_seconds) * NSEC_PER_SEC;
-
-    timespec ts;
-    ts.tv_sec = elapsed_seconds;
-    ts.tv_nsec = nano_seconds_part;
-
-    uint32_t tv_sec_hi;
-    uint32_t tv_sec_lo;
-    uint32_t tv_n_sec;
-    timespec_to_proto(ts, tv_sec_hi, tv_sec_lo, tv_n_sec);
-
-    auto output = static_cast<AbstractWaylandOutput*>(kwinApp()->platform->enabledOutputs()[0]);
-
-    int const refresh_rate = output->refreshRate();
-    assert(refresh_rate > 0);
-
-    const double refresh_length = 1 / (double)refresh_rate;
-    uint32_t const refresh = refresh_length * 1000 * 1000 * 1000 * 1000;
-
-    uint64_t const seq = fallback_clock->elapsed() / (double)refresh_rate;
-
-    auto it = surfaces.constBegin();
-    while (it != surfaces.constEnd()) {
-        auto surface = it.value();
-        surface->presentationFeedback(it.key(),
-                                      tv_sec_hi,
-                                      tv_sec_lo,
-                                      tv_n_sec,
-                                      refresh,
-                                      seq >> 32,
-                                      seq & 0xffffffff,
-                                      to_kinds(kinds));
-        disconnect(surface, &Wrapland::Server::Surface::resourceDestroyed, this, nullptr);
-        ++it;
-    }
-    surfaces.clear();
 }
 
 }

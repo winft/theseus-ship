@@ -292,8 +292,8 @@ void BlurEffect::updateBlurRegion(EffectWindow *w) const
 
     auto surf = w->surface();
 
-    if (surf && surf->blur()) {
-        region = surf->blur()->region();
+    if (surf && surf->state().blur) {
+        region = surf->state().blur->region();
     }
 
     if (auto internal = w->internalWindow()) {
@@ -303,9 +303,9 @@ void BlurEffect::updateBlurRegion(EffectWindow *w) const
         }
     }
 
-    //!value.isNull() full window in X11 case, surf->blur()
+    //!value.isNull() full window in X11 case, surf->state().blur
     //valid, full window in wayland case
-    if (region.isEmpty() && (!value.isNull() || (surf && surf->blur()))) {
+    if (region.isEmpty() && (!value.isNull() || (surf && surf->state().blur))) {
         // Set the data to a dummy value.
         // This is needed to be able to distinguish between the value not
         // being set, and being set to an empty region.
@@ -319,8 +319,8 @@ void BlurEffect::slotWindowAdded(EffectWindow *w)
     auto surf = w->surface();
 
     if (surf) {
-        windowBlurChangedConnections[w] = connect(surf, &Wrapland::Server::Surface::blurChanged, this, [this, w] () {
-            if (w) {
+        windowBlurChangedConnections[w] = connect(surf, &Wrapland::Server::Surface::committed, this, [this, w, surf] () {
+            if (w && surf->state().updates & Wrapland::Server::surface_change::blur) {
                 updateBlurRegion(w);
             }
         });

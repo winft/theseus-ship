@@ -367,7 +367,6 @@ public:
     void checkOutputsOn();
     Q_INVOKABLE void turnOutputsOn();
 
-    virtual bool supportsClockId() const;
     virtual clockid_t clockId() const;
     QByteArray deviceIdentifier() const {
         return m_deviceIdentifier;
