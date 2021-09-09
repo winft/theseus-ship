@@ -76,6 +76,7 @@ KCM.ScrollViewKCM {
 
                     MouseArea {
                         anchors.fill: parent
+                        enabled: nameField.readOnly
 
                         onDoubleClicked: {
                             renameAction.trigger();
