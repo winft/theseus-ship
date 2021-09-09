@@ -488,10 +488,15 @@ virtual_desktop* virtual_desktop_manager::createVirtualDesktop(uint position, QS
 
     position = qBound(0u, position, static_cast<uint>(m_desktops.count()));
 
+    QString desktopName = name;
+    if (desktopName.isEmpty()) {
+        desktopName = defaultName(position + 1);
+    }
+
     auto vd = new virtual_desktop(this);
     vd->setX11DesktopNumber(position + 1);
     vd->setId(generateDesktopId());
-    vd->setName(name);
+    vd->setName(desktopName);
 
     connect(vd, &virtual_desktop::nameChanged, this, [this, vd]() {
         if (m_rootInfo) {
