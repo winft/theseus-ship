@@ -6,6 +6,15 @@ easy to use composited window manager for the
 [X11](https://en.wikipedia.org/wiki/X_Window_System)
 windowing systems on Linux.
 
+<p>
+  <div align="center">
+    <img style="float:left;box-shadow: 7px 7px 7px #666666;" src="docs/assets/desktop-screenshot.png"
+         alt="KWinFT Plasma Wayland session"
+         width="800">
+  </div>
+</p>
+<br>
+
 KWinFT is intended to be used as part of a
 [KDE Plasma Desktop](https://kde.org/plasma-desktop/).
 The KWinFT project is a reboot of KDE's
