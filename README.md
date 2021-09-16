@@ -37,9 +37,6 @@ KWinFT can be used as a drop-in replacement for KWin inside a KDE Plasma Desktop
 After installation and a system restart the KWinFT binary will execute.
 All configuration, plugins and shell interaction transfer over.
 
-> :warning: The capability of being a drop-in replacement might get lost in a future release. If
-this happens possible conflicts will be announced in the changelog.
-
 ## Development
 The [CONTRIBUTING.md](CONTRIBUTING.md) document contains all information
 on how to get started with:
