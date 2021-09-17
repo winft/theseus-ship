@@ -289,12 +289,7 @@ void compositor::startupWithWorkspace()
 
 void compositor::schedule_repaint()
 {
-    if (m_state != State::On) {
-        return;
-    }
-
-    // Don't repaint if all outputs are disabled
-    if (!kwinApp()->platform->areOutputsEnabled()) {
+    if (!isActive()) {
         return;
     }
 

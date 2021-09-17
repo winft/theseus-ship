@@ -105,7 +105,6 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
 WaylandTestApplication::~WaylandTestApplication()
 {
     setTerminating();
-    kwinApp()->platform->setOutputsOn(false);
 
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
@@ -117,6 +116,10 @@ WaylandTestApplication::~WaylandTestApplication()
         // needs to be done before workspace gets destroyed
         m_xwayland->prepareDestroy();
     }
+
+    // Block compositor to prevent further compositing from crashing with a null workspace.
+    // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
+    static_cast<render::wayland::compositor*>(compositor)->lock();
 
     destroyWorkspace();
     waylandServer()->dispatch();

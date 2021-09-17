@@ -208,12 +208,6 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
         return false;
     }
 
-    // If outputs are disabled, we return to the event loop and
-    // continue processing events until the outputs are enabled again
-    if (!kwinApp()->platform->areOutputsEnabled()) {
-        return false;
-    }
-
     // Create a list of all windows in the stacking order
     windows = workspace()->x_stacking_tree->as_list();
     std::vector<Toplevel*> damaged;

@@ -75,7 +75,6 @@ void handle_new_output(struct wl_listener* listener, void* data)
     }
 
     Q_EMIT back->output_added(out);
-    back->updateOutputsOn();
     Screens::self()->updateAll();
 }
 
@@ -124,7 +123,6 @@ void backend::enableOutput(output* output, bool enable)
         Q_ASSERT(!enabled_outputs.contains(output));
         Q_EMIT output_removed(output);
     }
-    updateOutputsOn();
     checkOutputsOn();
 
     Screens::self()->updateAll();

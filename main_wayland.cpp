@@ -144,9 +144,10 @@ ApplicationWayland::~ApplicationWayland()
         s->unpolish(this);
     }
 
-    if (auto platform = this->platform) {
-        // disable outputs to prevent further compositing from crashing with a null workspace.
-        platform->setOutputsOn(false);
+    if (compositor) {
+        // Block compositor to prevent further compositing from crashing with a null workspace.
+        // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
+        static_cast<render::wayland::compositor*>(compositor)->lock();
     }
     destroyWorkspace();
 

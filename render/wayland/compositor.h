@@ -37,6 +37,10 @@ public:
     void addRepaint(QRegion const& region) override;
     void check_idle();
 
+    bool is_locked() const;
+    void lock();
+    void unlock();
+
     render::wayland::presentation* presentation;
     std::map<AbstractWaylandOutput*, std::unique_ptr<render::wayland::output>> outputs;
 
@@ -47,6 +51,8 @@ protected:
 private:
     explicit compositor(QObject* parent);
     ~compositor();
+
+    int locked{0};
 };
 
 }

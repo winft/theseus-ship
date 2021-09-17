@@ -248,12 +248,6 @@ public:
     bool supportsPointerWarping() const {
         return m_pointerWarping;
     }
-    bool areOutputsEnabled() const {
-        return m_outputsOn;
-    }
-    void setOutputsOn(bool on) {
-        m_outputsOn = on;
-    }
     int initialOutputCount() const {
         return m_initialOutputCount;
     }
@@ -373,8 +367,6 @@ public:
     }
     void repaint(const QRect &rect);
 
-    void updateOutputsOn();
-
 Q_SIGNALS:
     /**
      * Emitted by backends using a one screen (nested window) approach and when the size of that changes.
@@ -404,7 +396,6 @@ private:
     QSize m_initialWindowSize;
     QByteArray m_deviceIdentifier;
     bool m_pointerWarping = false;
-    bool m_outputsOn = true;
     int m_initialOutputCount = 1;
     qreal m_initialOutputScale = 1;
     EGLDisplay m_eglDisplay;

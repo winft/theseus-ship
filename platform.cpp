@@ -262,13 +262,6 @@ void Platform::checkOutputsOn()
     }
 }
 
-void Platform::updateOutputsOn()
-{
-    auto outs = enabledOutputs();
-    auto const allOn = std::all_of(outs.constBegin(), outs.constEnd(), [](auto out) { return out->dpmsOn(); });
-    setOutputsOn(allOn);
-}
-
 OutlineVisual *Platform::createOutline(Outline *outline)
 {
     if (render::compositor::compositing()) {
