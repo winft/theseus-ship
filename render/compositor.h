@@ -58,11 +58,6 @@ public:
     void addRepaintFull();
 
     /**
-     * Schedules a new repaint for all outputs if no repaint is currently scheduled.
-     */
-    void schedule_repaint();
-
-    /**
      * Schedules a new repaint if no repaint is currently scheduled. Tries to optimize by only
      * repainting outputs that the visible bounds of @arg window intersect with.
      */
@@ -136,6 +131,7 @@ protected:
     virtual std::deque<Toplevel*> performCompositing() = 0;
     void update_paint_periods(int64_t duration);
     void retard_next_composition();
+    void setCompositeTimer();
 
     virtual void configChanged();
 
@@ -153,8 +149,6 @@ private:
     int refreshRate() const;
 
     void setupX11Support();
-
-    void setCompositeTimer();
 
     void deleteUnusedSupportProperties();
 

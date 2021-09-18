@@ -287,24 +287,10 @@ void compositor::startupWithWorkspace()
     performCompositing();
 }
 
-void compositor::schedule_repaint()
+void compositor::schedule_repaint(Toplevel* /*window*/)
 {
-    if (!isActive()) {
-        return;
-    }
-
-    // TODO: Make this distinction not on the question if there is a swap event but if per screen
-    //       rendering? On X we get swap events but they are aligned with the "wrong" screen if
-    //       it the primary/first one is not the one with the highest refresh rate.
-    //       But on the other side Present extension does not allow to sync with another screen
-    //       anyway.
-
-    setCompositeTimer();
-}
-
-void compositor::schedule_repaint([[maybe_unused]] Toplevel* window)
-{
-    schedule_repaint();
+    // Needs to be implemented because might get called on destructor.
+    // TODO(romangg): Remove this, i.e. ensure that there are no calls while being destroyed.
 }
 
 void compositor::stop()

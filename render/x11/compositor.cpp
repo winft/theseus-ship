@@ -101,6 +101,18 @@ void compositor::start()
     }
 }
 
+void compositor::schedule_repaint()
+{
+    if (isActive()) {
+        setCompositeTimer();
+    }
+}
+
+void compositor::schedule_repaint([[maybe_unused]] Toplevel* window)
+{
+    schedule_repaint();
+}
+
 void compositor::toggleCompositing()
 {
     if (m_suspended) {
