@@ -99,6 +99,8 @@ public:
         return _self;
     }
 
+    void clear_x11();
+
     bool workspaceEvent(xcb_generic_event_t*);
     bool workspaceEvent(QEvent*);
 
