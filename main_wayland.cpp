@@ -134,6 +134,14 @@ ApplicationWayland::~ApplicationWayland()
     if (effects) {
         static_cast<EffectsHandlerImpl*>(effects)->unloadAllEffects();
     }
+
+    if (exit_with_process && exit_with_process->state() != QProcess::NotRunning) {
+        QObject::disconnect(exit_with_process, nullptr, this, nullptr);
+        exit_with_process->terminate();
+        exit_with_process->waitForFinished(5000);
+        exit_with_process = nullptr;
+    }
+
     if (m_xwayland) {
         // needs to be done before workspace gets destroyed
         m_xwayland->prepareDestroy();
@@ -279,7 +287,8 @@ void ApplicationWayland::startSession()
             QProcess *p = new Process(this);
             p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
             p->setProcessEnvironment(processStartupEnvironment());
-            connect(p, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, [p] (int code, QProcess::ExitStatus status) {
+            connect(p, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, [this, p] (int code, QProcess::ExitStatus status) {
+                exit_with_process = nullptr;
                 p->deleteLater();
                 if (status == QProcess::CrashExit) {
                     qWarning() << "Session process has crashed";
@@ -296,6 +305,7 @@ void ApplicationWayland::startSession()
             p->setProgram(program);
             p->setArguments(arguments);
             p->start();
+            exit_with_process = p;
         } else {
             qWarning("Failed to launch the session process: %s is an invalid command",
                      qPrintable(m_sessionArgument));
