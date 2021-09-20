@@ -142,12 +142,7 @@ ApplicationWayland::~ApplicationWayland()
         exit_with_process = nullptr;
     }
 
-    if (m_xwayland) {
-        // needs to be done before workspace gets destroyed
-        m_xwayland->prepareDestroy();
-    }
-
-    // kill Xwayland before terminating its connection
+    // Kill Xwayland before terminating its connection.
     delete m_xwayland;
     m_xwayland = nullptr;
 

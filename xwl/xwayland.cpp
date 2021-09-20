@@ -89,6 +89,9 @@ Xwayland::Xwayland(ApplicationWaylandAbstract* app, QObject* parent)
 
 Xwayland::~Xwayland()
 {
+    delete m_dataBridge;
+    m_dataBridge = nullptr;
+
     disconnect(m_xwaylandFailConnection);
 
     Workspace::self()->clear_x11();
@@ -192,12 +195,6 @@ void Xwayland::init()
     });
     m_xwaylandProcess->start();
     close(pipeFds[1]);
-}
-
-void Xwayland::prepareDestroy()
-{
-    delete m_dataBridge;
-    m_dataBridge = nullptr;
 }
 
 void Xwayland::createX11Connection()
