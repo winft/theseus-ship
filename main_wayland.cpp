@@ -146,11 +146,17 @@ ApplicationWayland::~ApplicationWayland()
         // needs to be done before workspace gets destroyed
         m_xwayland->prepareDestroy();
     }
-    waylandServer()->dispatch();
+
+    // kill Xwayland before terminating its connection
+    delete m_xwayland;
+    m_xwayland = nullptr;
 
     if (QStyle *s = style()) {
+        // Unpolish style before terminating internal connection.
         s->unpolish(this);
     }
+
+    waylandServer()->terminateClientConnections();
 
     if (compositor) {
         // Block compositor to prevent further compositing from crashing with a null workspace.
@@ -159,13 +165,7 @@ ApplicationWayland::~ApplicationWayland()
     }
     destroyWorkspace();
 
-    // kill Xwayland before terminating its connection
-    delete m_xwayland;
-    m_xwayland = nullptr;
-
     destroyCompositor();
-
-    waylandServer()->terminateClientConnections();
 }
 
 void ApplicationWayland::performStartup()

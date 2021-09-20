@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main_wayland.h"
 #include "utils.h"
 #include "wayland_server.h"
+#include "workspace.h"
 #include "xcbutils.h"
 
 #include <KLocalizedString>
@@ -89,22 +90,27 @@ Xwayland::Xwayland(ApplicationWaylandAbstract* app, QObject* parent)
 Xwayland::~Xwayland()
 {
     disconnect(m_xwaylandFailConnection);
+
+    Workspace::self()->clear_x11();
+
     if (m_app->x11Connection()) {
         Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
         m_app->destroyAtoms();
         Q_EMIT m_app->x11ConnectionAboutToBeDestroyed();
-        xcb_disconnect(m_app->x11Connection());
         m_app->setX11Connection(nullptr);
+        xcb_disconnect(m_app->x11Connection());
     }
 
-    if (m_xwaylandProcess) {
+    if (m_xwaylandProcess->state() != QProcess::NotRunning) {
+        disconnect(m_xwaylandProcess, nullptr, this, nullptr);
         m_xwaylandProcess->terminate();
-        while (m_xwaylandProcess->state() != QProcess::NotRunning) {
-            m_app->processEvents(QEventLoop::WaitForMoreEvents);
-        }
-        waylandServer()->destroyXWaylandConnection();
+        m_xwaylandProcess->waitForFinished(5000);
     }
+    delete m_xwaylandProcess;
+    m_xwaylandProcess = nullptr;
     s_self = nullptr;
+
+    waylandServer()->destroyXWaylandConnection();
 }
 
 void Xwayland::init()

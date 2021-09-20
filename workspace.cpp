@@ -562,6 +562,8 @@ void Workspace::initWithX11()
 
 void Workspace::clear_x11()
 {
+    stacking_order->lock();
+
     // Use stacking_order, so that kwin --replace keeps stacking order
     auto const stack = stacking_order->sorted();
 
@@ -576,7 +578,8 @@ void Workspace::clear_x11()
         }
 
         // Only release the window
-        c->release_window(true);
+        auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
+        c->release_window(is_x11);
 
         // No removeClient() is called, it does more than just removing.
         // However, remove from some lists to e.g. prevent performTransiencyCheck()
@@ -592,6 +595,8 @@ void Workspace::clear_x11()
     }
 
     win::x11::window::cleanupX11();
+
+    stacking_order->unlock();
 }
 
 Workspace::~Workspace()

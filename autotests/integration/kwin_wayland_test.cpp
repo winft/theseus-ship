@@ -117,20 +117,21 @@ WaylandTestApplication::~WaylandTestApplication()
         m_xwayland->prepareDestroy();
     }
 
-    // Block compositor to prevent further compositing from crashing with a null workspace.
-    // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    static_cast<render::wayland::compositor*>(compositor)->lock();
-
-    destroyWorkspace();
-    waylandServer()->dispatch();
+    // kill Xwayland before terminating its connection
+    delete m_xwayland;
+    m_xwayland = nullptr;
 
     if (QStyle* s = style()) {
+        // Unpolish style before terminating internal connection.
         s->unpolish(this);
     }
 
-    // kill Xwayland before terminating its connection
-    delete m_xwayland;
     waylandServer()->terminateClientConnections();
+
+    // Block compositor to prevent further compositing from crashing with a null workspace.
+    // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
+    static_cast<render::wayland::compositor*>(compositor)->lock();
+    destroyWorkspace();
     destroyCompositor();
 }
 
