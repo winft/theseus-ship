@@ -241,15 +241,19 @@ void ApplicationWayland::create_xwayland()
 
 void ApplicationWayland::startSession()
 {
+    auto process_environment = processStartupEnvironment();
+
+    // Enforce Wayland platform for started Qt apps. They otherwise for some reason prefer X11.
+    process_environment.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
+
     if (!m_inputMethodServerToStart.isEmpty()) {
         QStringList arguments = KShell::splitArgs(m_inputMethodServerToStart);
         if (!arguments.isEmpty()) {
             QString program = arguments.takeFirst();
             int socket = dup(waylandServer()->createInputMethodConnection());
             if (socket >= 0) {
-                QProcessEnvironment environment = processStartupEnvironment();
+                auto environment = process_environment;
                 environment.insert(QStringLiteral("WAYLAND_SOCKET"), QByteArray::number(socket));
-                environment.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
                 environment.remove("DISPLAY");
                 environment.remove("WAYLAND_DISPLAY");
                 QProcess *p = new Process(this);
@@ -281,7 +285,7 @@ void ApplicationWayland::startSession()
             QString program = arguments.takeFirst();
             QProcess *p = new Process(this);
             p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-            p->setProcessEnvironment(processStartupEnvironment());
+            p->setProcessEnvironment(process_environment);
             connect(p, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, [this, p] (int code, QProcess::ExitStatus status) {
                 exit_with_process = nullptr;
                 p->deleteLater();
@@ -320,7 +324,7 @@ void ApplicationWayland::startSession()
             // this is going to happen anyway as we are the wayland and X server the app connects to
             QProcess *p = new Process(this);
             p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-            p->setProcessEnvironment(processStartupEnvironment());
+            p->setProcessEnvironment(process_environment);
             p->setProgram(program);
             p->setArguments(arguments);
             p->startDetached();
@@ -416,7 +420,7 @@ int main(int argc, char * argv[])
     sigaddset(&userSignals, SIGUSR2);
     pthread_sigmask(SIG_BLOCK, &userSignals, nullptr);
 
-    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+    auto environment = QProcessEnvironment::systemEnvironment();
 
     // enforce our internal qpa plugin, unfortunately command line switch has precedence
     setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);
