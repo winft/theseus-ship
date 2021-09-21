@@ -744,11 +744,7 @@ void WaylandServer::createInternalConnection()
             registry->create(m_internalConnection.client);
             m_internalConnection.registry = registry;
             m_internalConnection.queue = eventQueue;
-            connect(registry, &Registry::shmAnnounced, this,
-                [this] (quint32 name, quint32 version) {
-                    m_internalConnection.shm = m_internalConnection.registry->createShmPool(name, version, this);
-                }
-            );
+
             connect(registry, &Registry::interfacesAnnounced, this, [this, registry] {
                 m_internalConnection.interfacesAnnounced = true;
 
@@ -759,6 +755,8 @@ void WaylandServer::createInternalConnection()
                           return (registry->*creator)(iface.name, iface.version, this);
                       };
 
+                m_internalConnection.shm
+                    = create_interface(Registry::Interface::Shm, &Registry::createShmPool);
                 m_internalConnection.compositor = create_interface(Registry::Interface::Compositor,
                                                                    &Registry::createCompositor);
                 m_internalConnection.seat
@@ -769,6 +767,7 @@ void WaylandServer::createInternalConnection()
                     = create_interface(Registry::Interface::PrimarySelectionDeviceManager,
                                        &Registry::createPrimarySelectionDeviceManager);
             });
+
             registry->setup();
         }
     );
