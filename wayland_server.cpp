@@ -749,28 +749,26 @@ void WaylandServer::createInternalConnection()
                     m_internalConnection.shm = m_internalConnection.registry->createShmPool(name, version, this);
                 }
             );
-            connect(registry, &Registry::interfacesAnnounced, this,
-                [this, registry] {
-                    m_internalConnection.interfacesAnnounced = true;
+            connect(registry, &Registry::interfacesAnnounced, this, [this, registry] {
+                m_internalConnection.interfacesAnnounced = true;
 
-                    const auto compInterface = registry->interface(Registry::Interface::Compositor);
-                    if (compInterface.name != 0) {
-                        m_internalConnection.compositor = registry->createCompositor(compInterface.name, compInterface.version, this);
-                    }
-                    const auto seatInterface = registry->interface(Registry::Interface::Seat);
-                    if (seatInterface.name != 0) {
-                        m_internalConnection.seat = registry->createSeat(seatInterface.name, seatInterface.version, this);
-                    }
-                    const auto ddmInterface = registry->interface(Registry::Interface::DataDeviceManager);
-                    if (ddmInterface.name != 0) {
-                        m_internalConnection.ddm = registry->createDataDeviceManager(ddmInterface.name, ddmInterface.version, this);
-                    }
-                    const auto psdmInterface = registry->interface(Registry::Interface::PrimarySelectionDeviceManager);
-                    if (psdmInterface.name != 0) {
-                        m_internalConnection.psdm = registry->createPrimarySelectionDeviceManager(psdmInterface.name, psdmInterface.version, this);
-                    }
-                }
-            );
+                auto create_interface
+                    = [registry, this](Registry::Interface iface_code, auto creator) {
+                          auto iface = registry->interface(iface_code);
+                          assert(iface.name != 0);
+                          return (registry->*creator)(iface.name, iface.version, this);
+                      };
+
+                m_internalConnection.compositor = create_interface(Registry::Interface::Compositor,
+                                                                   &Registry::createCompositor);
+                m_internalConnection.seat
+                    = create_interface(Registry::Interface::Seat, &Registry::createSeat);
+                m_internalConnection.ddm = create_interface(Registry::Interface::DataDeviceManager,
+                                                            &Registry::createDataDeviceManager);
+                m_internalConnection.psdm
+                    = create_interface(Registry::Interface::PrimarySelectionDeviceManager,
+                                       &Registry::createPrimarySelectionDeviceManager);
+            });
             registry->setup();
         }
     );
