@@ -197,40 +197,33 @@ void Xwayland::init()
     close(pipeFds[1]);
 }
 
-void Xwayland::createX11Connection()
+void Xwayland::continueStartupWithX()
 {
     int screenNumber = 0;
-    xcb_connection_t* c = nullptr;
+    xcb_connection_t* xcbConn = nullptr;
+
     if (m_xcbConnectionFd == -1) {
-        c = xcb_connect(nullptr, &screenNumber);
+        xcbConn = xcb_connect(nullptr, &screenNumber);
     } else {
-        c = xcb_connect_to_fd(m_xcbConnectionFd, nullptr);
+        xcbConn = xcb_connect_to_fd(m_xcbConnectionFd, nullptr);
     }
-    if (int error = xcb_connection_has_error(c)) {
+
+    if (int error = xcb_connection_has_error(xcbConn)) {
         std::cerr << "FATAL ERROR: Creating connection to XServer failed: " << error << std::endl;
         Q_EMIT criticalError(1);
         return;
     }
 
-    xcb_screen_iterator_t iter = xcb_setup_roots_iterator(xcb_get_setup(c));
+    xcb_screen_iterator_t iter = xcb_setup_roots_iterator(xcb_get_setup(xcbConn));
     m_xcbScreen = iter.data;
     Q_ASSERT(m_xcbScreen);
 
-    m_app->setX11Connection(c);
+    m_app->setX11Connection(xcbConn);
+
     // we don't support X11 multi-head in Wayland
     m_app->setX11ScreenNumber(screenNumber);
     m_app->setX11RootWindow(defaultScreen()->root);
-}
 
-void Xwayland::continueStartupWithX()
-{
-    createX11Connection();
-    xcb_connection_t* xcbConn = m_app->x11Connection();
-    if (!xcbConn) {
-        // about to quit
-        Q_EMIT criticalError(1);
-        return;
-    }
     QSocketNotifier* notifier
         = new QSocketNotifier(xcb_get_file_descriptor(xcbConn), QSocketNotifier::Read, this);
     auto processXcbEvents = [this, xcbConn] {

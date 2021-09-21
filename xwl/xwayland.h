@@ -62,7 +62,6 @@ Q_SIGNALS:
     void criticalError(int code);
 
 private:
-    void createX11Connection();
     void continueStartupWithX();
 
     DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos) override;
