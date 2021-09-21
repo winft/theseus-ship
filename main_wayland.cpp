@@ -224,6 +224,8 @@ void ApplicationWayland::init_workspace()
     startSession();
     createWorkspace();
     waylandServer()->initWorkspace();
+
+    Q_EMIT startup_finished();
 }
 
 void ApplicationWayland::create_xwayland()

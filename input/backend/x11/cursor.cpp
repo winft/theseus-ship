@@ -42,7 +42,7 @@ cursor::cursor(bool xInputSupport)
     }
 
 #ifndef KCMRULES
-    connect(kwinApp(), &Application::workspaceCreated, this, [this] {
+    connect(kwinApp(), &Application::startup_finished, this, [this] {
         if (Xcb::Extensions::self()->isFixesAvailable()) {
             m_xfixesFilter = std::make_unique<xfixes_cursor_event_filter>(this);
         }

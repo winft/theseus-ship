@@ -185,6 +185,8 @@ void WaylandTestApplication::finalizeStartup()
     }
     createWorkspace();
     waylandServer()->initWorkspace();
+
+    Q_EMIT startup_finished();
 }
 
 void WaylandTestApplication::continue_startup_with_workspace()

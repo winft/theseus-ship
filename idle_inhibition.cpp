@@ -39,7 +39,7 @@ IdleInhibition::IdleInhibition(KdeIdle *idle)
     , m_idle(idle)
 {
     // Workspace is created after the wayland server is initialized.
-    connect(kwinApp(), &Application::workspaceCreated, this, &IdleInhibition::slotWorkspaceCreated);
+    connect(kwinApp(), &Application::startup_finished, this, &IdleInhibition::slotWorkspaceCreated);
 }
 
 IdleInhibition::~IdleInhibition() = default;

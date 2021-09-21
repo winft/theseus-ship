@@ -64,7 +64,7 @@ cursor_image::cursor_image()
     connect(waylandServer(), &WaylandServer::window_added, this, &cursor_image::setup_move_resize);
 
     assert(!workspace());
-    connect(kwinApp(), &Application::workspaceCreated, this, &cursor_image::setup_workspace);
+    connect(kwinApp(), &Application::startup_finished, this, &cursor_image::setup_workspace);
 }
 
 cursor_image::~cursor_image() = default;

@@ -254,6 +254,8 @@ void ApplicationX11::continueStartupWithCompositor()
 {
     render::x11::compositor::create();
     createWorkspace();
+
+    Q_EMIT startup_finished();
 }
 
 bool ApplicationX11::notify(QObject* o, QEvent* e)

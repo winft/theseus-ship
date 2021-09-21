@@ -73,7 +73,7 @@ redirect::redirect()
     qRegisterMetaType<KWin::input::redirect::KeyboardKeyState>();
     qRegisterMetaType<KWin::input::redirect::PointerButtonState>();
     qRegisterMetaType<KWin::input::redirect::PointerAxis>();
-    connect(kwinApp(), &Application::workspaceCreated, this, &redirect::setupWorkspace);
+    connect(kwinApp(), &Application::startup_finished, this, &redirect::setupWorkspace);
     reconfigure();
 }
 

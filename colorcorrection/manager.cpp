@@ -56,7 +56,7 @@ Manager::Manager(QObject *parent)
     m_iface = new ColorCorrectDBusInterface(this);
     m_skewNotifier = new ClockSkewNotifier(this);
 
-    connect(kwinApp(), &Application::workspaceCreated, this, &Manager::init);
+    connect(kwinApp(), &Application::startup_finished, this, &Manager::init);
 
     // Display a message when Night Color is (un)inhibited.
     connect(this, &Manager::inhibitedChanged, this, [this] {
