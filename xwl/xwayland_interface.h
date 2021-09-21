@@ -51,7 +51,7 @@ public:
     virtual Xwl::DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos) = 0;
 
 protected:
-    explicit XwaylandInterface(QObject* parent = nullptr);
+    XwaylandInterface();
     ~XwaylandInterface() override;
 
 private:

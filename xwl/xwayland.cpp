@@ -80,8 +80,8 @@ Xwayland* Xwayland::self()
     return s_self;
 }
 
-Xwayland::Xwayland(ApplicationWaylandAbstract* app, QObject* parent)
-    : XwaylandInterface(parent)
+Xwayland::Xwayland(ApplicationWaylandAbstract* app)
+    : XwaylandInterface()
     , m_app(app)
 {
     s_self = this;

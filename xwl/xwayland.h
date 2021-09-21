@@ -43,7 +43,7 @@ class KWIN_EXPORT Xwayland : public XwaylandInterface
 public:
     static Xwayland* self();
 
-    Xwayland(ApplicationWaylandAbstract* app, QObject* parent = nullptr);
+    Xwayland(ApplicationWaylandAbstract* app);
     ~Xwayland() override;
 
     void init();
