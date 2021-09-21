@@ -192,17 +192,18 @@ void ApplicationWayland::performStartup()
 
     input::dbus::tablet_mode_manager::create(this);
 
-    waylandServer()->createInternalConnection([this] { handle_internal_client_created(); });
+    render::wayland::compositor::create();
+    createWorkspace();
+
+    waylandServer()->create_addons([this] { handle_server_addons_created(); });
 }
 
-void ApplicationWayland::handle_internal_client_created()
+void ApplicationWayland::handle_server_addons_created()
 {
-    render::wayland::compositor::create();
-
     if (operationMode() == OperationModeXwayland) {
         create_xwayland();
     } else {
-        init_workspace();
+        startSession();
     }
 }
 
@@ -217,18 +218,6 @@ void ApplicationWayland::init_platforms()
     platform = render.get();
 }
 
-void ApplicationWayland::init_workspace()
-{
-    if (m_xwayland) {
-        disconnect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::init_workspace);
-    }
-    startSession();
-    createWorkspace();
-    waylandServer()->initWorkspace();
-
-    Q_EMIT startup_finished();
-}
-
 void ApplicationWayland::create_xwayland()
 {
     m_xwayland = new Xwl::Xwayland(this);
@@ -238,12 +227,16 @@ void ApplicationWayland::create_xwayland()
         std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
         exit(code);
     });
-    connect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::init_workspace);
+    connect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::startSession);
     m_xwayland->init();
 }
 
 void ApplicationWayland::startSession()
 {
+    if(m_xwayland) {
+        QObject::disconnect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::startSession);
+    }
+
     auto process_environment = processStartupEnvironment();
 
     // Enforce Wayland platform for started Qt apps. They otherwise for some reason prefer X11.
@@ -334,6 +327,8 @@ void ApplicationWayland::startSession()
             p->deleteLater();
         }
     }
+
+    Q_EMIT startup_finished();
 }
 
 static void disablePtrace()

@@ -72,9 +72,8 @@ protected:
     void performStartup() override;
 
 private:
-    void handle_internal_client_created();
+    void handle_server_addons_created();
     void create_xwayland();
-    void init_workspace();
     void startSession();
 
     bool m_startXWayland = false;

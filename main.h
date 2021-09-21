@@ -236,9 +236,11 @@ protected:
      * Inheriting classes should use this method to set the xcb connection
      * before accessing any X11 specific code pathes.
      */
-    void setX11Connection(xcb_connection_t *c) {
+    void setX11Connection(xcb_connection_t *c, bool emit_change = true) {
         m_connection = c;
-        emit x11ConnectionChanged();
+        if (emit_change) {
+            Q_EMIT x11ConnectionChanged();
+        }
     }
     void destroyAtoms();
 

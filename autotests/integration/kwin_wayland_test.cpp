@@ -168,8 +168,9 @@ void WaylandTestApplication::performStartup()
     out->output()->set_physical_size(QSize(1280, 1024));
 
     render::wayland::compositor::create();
+    createWorkspace();
 
-    waylandServer()->createInternalConnection([this] { handle_internal_client_created(); });
+    waylandServer()->create_addons([this] { handle_server_addons_created(); });
 }
 
 void WaylandTestApplication::finalizeStartup()
@@ -180,19 +181,21 @@ void WaylandTestApplication::finalizeStartup()
                    this,
                    &WaylandTestApplication::finalizeStartup);
     }
-    createWorkspace();
-    waylandServer()->initWorkspace();
-
     Q_EMIT startup_finished();
 }
 
-void WaylandTestApplication::handle_internal_client_created()
+void WaylandTestApplication::handle_server_addons_created()
 {
-    if (operationMode() == OperationModeWaylandOnly) {
-        finalizeStartup();
+    if (operationMode() == OperationModeXwayland) {
+        create_xwayland();
         return;
     }
 
+    finalizeStartup();
+}
+
+void WaylandTestApplication::create_xwayland()
+{
     m_xwayland = new Xwl::Xwayland(this);
     connect(m_xwayland, &Xwl::Xwayland::criticalError, this, [](int code) {
         // we currently exit on Xwayland errors always directly

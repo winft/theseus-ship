@@ -185,7 +185,7 @@ public:
      */
     bool hasGlobalShortcutSupport() const;
 
-    void createInternalConnection(std::function<void()> callback);
+    void create_addons(std::function<void()> callback);
     void initWorkspace();
 
     Wrapland::Server::Client *xWaylandConnection() const {
@@ -267,6 +267,7 @@ private:
     explicit WaylandServer(InitializationFlags flags);
 
     void create_globals();
+    void createInternalConnection(std::function<void(bool)> callback);
     int createScreenLockerConnection();
 
     void window_shown(Toplevel* window);

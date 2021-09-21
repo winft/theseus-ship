@@ -218,7 +218,7 @@ void Xwayland::continueStartupWithX()
     m_xcbScreen = iter.data;
     Q_ASSERT(m_xcbScreen);
 
-    m_app->setX11Connection(xcbConn);
+    m_app->setX11Connection(xcbConn, false);
 
     // we don't support X11 multi-head in Wayland
     m_app->setX11ScreenNumber(screenNumber);
@@ -259,8 +259,6 @@ void Xwayland::continueStartupWithX()
     m_app->createAtoms();
     m_app->setupEventFilters();
 
-    m_dataBridge = new DataBridge;
-
     // Check  whether another windowmanager is running
     const uint32_t maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
     ScopedCPointer<xcb_generic_error_t> redirectCheck(
@@ -281,8 +279,12 @@ void Xwayland::continueStartupWithX()
     m_app->setProcessStartupEnvironment(env);
 
     emit initialized();
+    Q_EMIT m_app->x11ConnectionChanged();
 
-    Xcb::sync(); // Trigger possible errors, there's still a chance to abort
+    // Trigger possible errors, there's still a chance to abort
+    Xcb::sync();
+
+    m_dataBridge = new DataBridge;
 }
 
 DragEventReply Xwayland::dragMoveFilter(Toplevel* target, const QPoint& pos)

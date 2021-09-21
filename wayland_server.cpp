@@ -589,8 +589,6 @@ void WaylandServer::initWorkspace()
                 }
                 win::wayland::xdg_activation_activate(ws, win, token);
             });
-
-    initScreenLocker();
 }
 
 void WaylandServer::initScreenLocker()
@@ -715,11 +713,23 @@ void WaylandServer::destroyInputMethodConnection()
     m_inputMethodServerConnection = nullptr;
 }
 
-void WaylandServer::createInternalConnection(std::function<void()> callback)
+void WaylandServer::create_addons(std::function<void()> callback)
+{
+    auto handle_client_created = [this, callback](auto client_created){
+        initWorkspace();
+        if (client_created && hasScreenLockerIntegration()) {
+            initScreenLocker();
+        }
+        callback();
+    };
+    createInternalConnection(handle_client_created);
+}
+
+void WaylandServer::createInternalConnection(std::function<void(bool)> callback)
 {
     const auto socket = createConnection();
     if (!socket.connection) {
-        callback();
+        callback(false);
         return;
     }
     m_internalConnection.server = socket.connection;
@@ -762,7 +772,7 @@ void WaylandServer::createInternalConnection(std::function<void()> callback)
                 m_internalConnection.psdm
                     = create_interface(Registry::Interface::PrimarySelectionDeviceManager,
                                        &Registry::createPrimarySelectionDeviceManager);
-                callback();
+                callback(true);
             }, Qt::QueuedConnection);
 
             registry->setup();

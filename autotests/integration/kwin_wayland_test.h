@@ -144,7 +144,8 @@ protected:
 
 private:
     void init_wlroots_backend();
-    void handle_internal_client_created();
+    void handle_server_addons_created();
+    void create_xwayland();
     void finalizeStartup();
 
     std::unique_ptr<platform_base::wlroots> base;
