@@ -46,8 +46,8 @@ private Q_SLOTS:
 
 void ColorCorrectNightColorTest::initTestCase()
 {
-    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspaceCreatedSpy.isValid());
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
@@ -55,7 +55,7 @@ void ColorCorrectNightColorTest::initTestCase()
     kwinApp()->start();
     QMetaObject::invokeMethod(
         kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
-    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
+    QVERIFY(startup_spy.size() || startup_spy.wait());
 }
 
 void ColorCorrectNightColorTest::init()

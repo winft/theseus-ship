@@ -157,8 +157,8 @@ void KeyboardLayoutTest::initTestCase()
 {
     qRegisterMetaType<win::wayland::window*>();
 
-    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspaceCreatedSpy.isValid());
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
@@ -169,7 +169,7 @@ void KeyboardLayoutTest::initTestCase()
     layoutGroup.deleteGroup();
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
+    QVERIFY(startup_spy.size() || startup_spy.wait());
 
     // don't get DBus signal on one-layout configuration
     //    QVERIFY(layoutsReconfiguredSpy.wait());

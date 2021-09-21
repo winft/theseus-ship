@@ -45,12 +45,12 @@ private Q_SLOTS:
 
 void ScreenChangesTest::initTestCase()
 {
-    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspaceCreatedSpy.isValid());
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
+    QVERIFY(startup_spy.size() || startup_spy.wait());
 }
 
 void ScreenChangesTest::init()

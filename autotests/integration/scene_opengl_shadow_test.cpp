@@ -114,8 +114,8 @@ void SceneOpenGLShadowTest::initTestCase()
 
     qRegisterMetaType<win::wayland::window*>();
 
-    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspaceCreatedSpy.isValid());
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     // disable all effects - we don't want to have it interact with the rendering
@@ -135,7 +135,7 @@ void SceneOpenGLShadowTest::initTestCase()
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
 
     kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
+    QVERIFY(startup_spy.size() || startup_spy.wait());
     QVERIFY(render::compositor::self());
 
     // Add directory with fake decorations to the plugin search path.
