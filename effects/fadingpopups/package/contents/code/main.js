@@ -21,10 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 "use strict";
 
 var blacklist = [
-    // The logout screen has to be animated only by the logout effect.
+    // ignore black background behind lockscreen
     "ksmserver ksmserver",
+    // The logout screen has to be animated only by the logout effect.
     "ksmserver-logout-greeter ksmserver-logout-greeter",
-
+    // The lockscreen isn't a popup window
+    "kscreenlocker_greet kscreenlocker_greet",
     // KDE Plasma splash screen has to be animated only by the login effect.
     "ksplashqml ksplashqml"
 ];
