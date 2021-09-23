@@ -231,7 +231,7 @@ void ApplicationWayland::create_xwayland()
     };
 
     try {
-        m_xwayland = new Xwl::Xwayland(this);
+        m_xwayland = new Xwl::Xwayland(this, status_callback);
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());
@@ -239,8 +239,6 @@ void ApplicationWayland::create_xwayland()
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(1);
     }
-
-    m_xwayland->init(status_callback);
 }
 
 void ApplicationWayland::startSession()

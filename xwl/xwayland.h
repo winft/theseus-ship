@@ -43,13 +43,11 @@ class KWIN_EXPORT Xwayland : public XwaylandInterface
 public:
     static Xwayland* self();
 
-    Xwayland(ApplicationWaylandAbstract* app);
-    ~Xwayland() override;
-
     /** The @ref status_callback is called once with 0 code when Xwayland is ready, other codes
      *  indicate a critical error happened at runtime.
      */
-    void init(std::function<void(int code)> status_callback);
+    Xwayland(ApplicationWaylandAbstract* app, std::function<void(int code)> status_callback);
+    ~Xwayland() override;
 
     xcb_screen_t* xcbScreen() const
     {
