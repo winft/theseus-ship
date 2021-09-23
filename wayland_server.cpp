@@ -766,7 +766,7 @@ void WaylandServer::createInternalConnection()
                 m_internalConnection.psdm
                     = create_interface(Registry::Interface::PrimarySelectionDeviceManager,
                                        &Registry::createPrimarySelectionDeviceManager);
-            });
+            }, Qt::QueuedConnection);
 
             registry->setup();
         }
