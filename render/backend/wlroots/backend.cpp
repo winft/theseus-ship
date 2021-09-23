@@ -95,7 +95,6 @@ void backend::init()
     }
 
     Screens::self()->updateAll();
-    kwinApp()->continueStartupWithCompositor();
 }
 
 Outputs backend::outputs() const

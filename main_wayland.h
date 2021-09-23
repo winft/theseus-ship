@@ -66,13 +66,13 @@ public:
         return m_environment;
     }
 
-    void continueStartupWithCompositor() override;
     void init_platforms();
 
 protected:
     void performStartup() override;
 
 private:
+    void handle_internal_client_created();
     void create_xwayland();
     void init_workspace();
     void startSession();

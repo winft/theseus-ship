@@ -170,7 +170,6 @@ void ApplicationWayland::performStartup()
     }
 
     createOptions();
-    waylandServer()->createInternalConnection();
 
     auto session = new seat::backend::wlroots::session(backend->backend);
     this->session.reset(session);
@@ -192,9 +191,11 @@ void ApplicationWayland::performStartup()
     }
 
     input::dbus::tablet_mode_manager::create(this);
+
+    waylandServer()->createInternalConnection([this] { handle_internal_client_created(); });
 }
 
-void ApplicationWayland::continueStartupWithCompositor()
+void ApplicationWayland::handle_internal_client_created()
 {
     render::wayland::compositor::create();
 

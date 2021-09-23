@@ -185,7 +185,7 @@ public:
      */
     bool hasGlobalShortcutSupport() const;
 
-    void createInternalConnection();
+    void createInternalConnection(std::function<void()> callback);
     void initWorkspace();
 
     Wrapland::Server::Client *xWaylandConnection() const {
@@ -260,7 +260,7 @@ Q_SIGNALS:
     void window_removed(KWin::win::wayland::window*);
 
     void terminatingInternalClientConnection();
-    void initialized();
+    void screenlocker_initialized();
     void foreignTransientChanged(Wrapland::Server::Surface *child);
 
 private:
@@ -311,7 +311,6 @@ private:
         Wrapland::Client::DataDeviceManager *ddm = nullptr;
         Wrapland::Client::PrimarySelectionDeviceManager *psdm = nullptr;
         Wrapland::Client::ShmPool *shm = nullptr;
-        bool interfacesAnnounced = false;
 
     } m_internalConnection;
     Wrapland::Server::XdgForeign *m_XdgForeign = nullptr;

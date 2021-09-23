@@ -39,7 +39,8 @@ ScreenLockerWatcher::ScreenLockerWatcher(QObject *parent)
     , m_locked(false)
 {
     if (waylandServer() && waylandServer()->hasScreenLockerIntegration()) {
-        connect(waylandServer(), &WaylandServer::initialized, this, &ScreenLockerWatcher::initialize);
+        connect(waylandServer(), &WaylandServer::screenlocker_initialized,
+                this, &ScreenLockerWatcher::initialize);
     } else {
         initialize();
     }

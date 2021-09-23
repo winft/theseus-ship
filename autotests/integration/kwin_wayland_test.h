@@ -139,14 +139,12 @@ public:
                            char** argv);
     ~WaylandTestApplication() override;
 
-    void continueStartupWithCompositor() override;
-
 protected:
     void performStartup() override;
 
 private:
     void init_wlroots_backend();
-    void continue_startup_with_workspace();
+    void handle_internal_client_created();
     void finalizeStartup();
 
     std::unique_ptr<platform_base::wlroots> base;

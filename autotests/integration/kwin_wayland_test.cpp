@@ -145,7 +145,6 @@ void WaylandTestApplication::performStartup()
     input::add_dbus(input.get());
 
     createOptions();
-    waylandServer()->createInternalConnection();
 
     session.reset(new seat::backend::wlroots::session(headless_backend));
     input::add_redirect(input.get());
@@ -167,12 +166,10 @@ void WaylandTestApplication::performStartup()
     // TODO(romangg): Make the corner offset calculation not depend on that.
     auto out = dynamic_cast<AbstractWaylandOutput*>(kwinApp()->platform->enabledOutputs().at(0));
     out->output()->set_physical_size(QSize(1280, 1024));
-}
 
-void WaylandTestApplication::continueStartupWithCompositor()
-{
     render::wayland::compositor::create();
-    continue_startup_with_workspace();
+
+    waylandServer()->createInternalConnection([this] { handle_internal_client_created(); });
 }
 
 void WaylandTestApplication::finalizeStartup()
@@ -189,7 +186,7 @@ void WaylandTestApplication::finalizeStartup()
     Q_EMIT startup_finished();
 }
 
-void WaylandTestApplication::continue_startup_with_workspace()
+void WaylandTestApplication::handle_internal_client_created()
 {
     if (operationMode() == OperationModeWaylandOnly) {
         finalizeStartup();

@@ -590,19 +590,15 @@ void WaylandServer::initWorkspace()
                 win::wayland::xdg_activation_activate(ws, win, token);
             });
 
-    if (hasScreenLockerIntegration()) {
-        if (m_internalConnection.interfacesAnnounced) {
-            initScreenLocker();
-        } else {
-            connect(m_internalConnection.registry, &Wrapland::Client::Registry::interfacesAnnounced, this, &WaylandServer::initScreenLocker);
-        }
-    } else {
-        emit initialized();
-    }
+    initScreenLocker();
 }
 
 void WaylandServer::initScreenLocker()
 {
+    if (!hasScreenLockerIntegration()) {
+        return;
+    }
+
     auto *screenLockerApp = ScreenLocker::KSldApp::self();
 
     ScreenLocker::KSldApp::self()->setGreeterEnvironment(kwinApp()->processStartupEnvironment());
@@ -646,7 +642,8 @@ void WaylandServer::initScreenLocker()
     if (m_initFlags.testFlag(InitializationFlag::LockScreen)) {
         ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
     }
-    emit initialized();
+
+    Q_EMIT screenlocker_initialized();
 }
 
 WaylandServer::SocketPairConnection WaylandServer::createConnection()
@@ -718,10 +715,11 @@ void WaylandServer::destroyInputMethodConnection()
     m_inputMethodServerConnection = nullptr;
 }
 
-void WaylandServer::createInternalConnection()
+void WaylandServer::createInternalConnection(std::function<void()> callback)
 {
     const auto socket = createConnection();
     if (!socket.connection) {
+        callback();
         return;
     }
     m_internalConnection.server = socket.connection;
@@ -733,7 +731,7 @@ void WaylandServer::createInternalConnection()
     m_internalConnection.clientThread->start();
 
     connect(m_internalConnection.client, &ConnectionThread::establishedChanged, this,
-        [this](bool established) {
+        [this, callback](bool established) {
             if (!established) {
                 return;
             }
@@ -745,9 +743,7 @@ void WaylandServer::createInternalConnection()
             m_internalConnection.registry = registry;
             m_internalConnection.queue = eventQueue;
 
-            connect(registry, &Registry::interfacesAnnounced, this, [this, registry] {
-                m_internalConnection.interfacesAnnounced = true;
-
+            connect(registry, &Registry::interfacesAnnounced, this, [this, callback, registry] {
                 auto create_interface
                     = [registry](Registry::Interface iface_code, auto creator) {
                           auto iface = registry->interface(iface_code);
@@ -766,6 +762,7 @@ void WaylandServer::createInternalConnection()
                 m_internalConnection.psdm
                     = create_interface(Registry::Interface::PrimarySelectionDeviceManager,
                                        &Registry::createPrimarySelectionDeviceManager);
+                callback();
             }, Qt::QueuedConnection);
 
             registry->setup();
