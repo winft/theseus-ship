@@ -146,7 +146,6 @@ private:
     void init_wlroots_backend();
     void handle_server_addons_created();
     void create_xwayland();
-    void finalizeStartup();
 
     std::unique_ptr<platform_base::wlroots> base;
     std::unique_ptr<render::backend::wlroots::backend> render;

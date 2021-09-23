@@ -116,40 +116,36 @@ Xwayland::~Xwayland()
     waylandServer()->destroyXWaylandConnection();
 }
 
-void Xwayland::init()
+void Xwayland::init(std::function<void(int)> status_callback)
 {
+    this->status_callback = status_callback;
+
     int pipeFds[2];
     if (pipe(pipeFds) != 0) {
-        std::cerr << "FATAL ERROR failed to create pipe to start Xwayland " << std::endl;
-        Q_EMIT criticalError(1);
-        return;
+        throw std::runtime_error("Failed to create pipe to start Xwayland");
     }
+
     int sx[2];
     if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) < 0) {
-        std::cerr << "FATAL ERROR: failed to open socket to open XCB connection" << std::endl;
-        Q_EMIT criticalError(1);
-        return;
+        throw std::runtime_error("Failed to open socket to open XCB connection");
     }
+
     int fd = dup(sx[1]);
     if (fd < 0) {
-        std::cerr << "FATAL ERROR: failed to open socket to open XCB connection" << std::endl;
-        Q_EMIT criticalError(20);
-        return;
+        throw std::system_error(std::error_code(20, std::generic_category()),
+                                "Failed to dup socket to open XCB connection");
     }
 
     const int waylandSocket = waylandServer()->createXWaylandConnection();
     if (waylandSocket == -1) {
-        std::cerr << "FATAL ERROR: failed to open socket for Xwayland" << std::endl;
-        Q_EMIT criticalError(1);
         close(fd);
-        return;
+        throw std::runtime_error("Failed to open socket for Xwayland");
     }
     const int wlfd = dup(waylandSocket);
     if (wlfd < 0) {
-        std::cerr << "FATAL ERROR: failed to open socket for Xwayland" << std::endl;
-        Q_EMIT criticalError(20);
         close(fd);
-        return;
+        throw std::system_error(std::error_code(20, std::generic_category()),
+                                "Failed to dup socket for Xwayland");
     }
 
     m_xcbConnectionFd = sx[0];
@@ -176,7 +172,7 @@ void Xwayland::init()
             } else {
                 std::cerr << "FATAL ERROR: Xwayland failed, going to exit now" << std::endl;
             }
-            Q_EMIT criticalError(1);
+            this->status_callback(1);
         });
     const int xDisplayPipe = pipeFds[0];
     connect(m_xwaylandProcess, &QProcess::started, this, [this, xDisplayPipe] {
@@ -209,8 +205,8 @@ void Xwayland::continueStartupWithX()
     }
 
     if (int error = xcb_connection_has_error(xcbConn)) {
-        std::cerr << "FATAL ERROR: Creating connection to XServer failed: " << error << std::endl;
-        Q_EMIT criticalError(1);
+        std::cerr << "FATAL ERROR connecting to Xwayland server: " << error << std::endl;
+        status_callback(1);
         return;
     }
 
@@ -270,7 +266,7 @@ void Xwayland::continueStartupWithX()
                   .toLocal8Bit()
                   .constData(),
               stderr);
-        Q_EMIT criticalError(1);
+        status_callback(1);
         return;
     }
 
@@ -278,7 +274,7 @@ void Xwayland::continueStartupWithX()
     env.insert(QStringLiteral("DISPLAY"), QString::fromUtf8(qgetenv("DISPLAY")));
     m_app->setProcessStartupEnvironment(env);
 
-    emit initialized();
+    status_callback(0);
     Q_EMIT m_app->x11ConnectionChanged();
 
     // Trigger possible errors, there's still a chance to abort

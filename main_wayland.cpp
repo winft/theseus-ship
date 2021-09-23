@@ -220,23 +220,31 @@ void ApplicationWayland::init_platforms()
 
 void ApplicationWayland::create_xwayland()
 {
-    m_xwayland = new Xwl::Xwayland(this);
-    connect(m_xwayland, &Xwl::Xwayland::criticalError, this, [](int code) {
-        // we currently exit on Xwayland errors always directly
-        // TODO: restart Xwayland
-        std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
-        exit(code);
-    });
-    connect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::startSession);
-    m_xwayland->init();
+    auto status_callback = [this](auto error) {
+        if (error) {
+            // we currently exit on Xwayland errors always directly
+            // TODO: restart Xwayland
+            std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
+            exit(error);
+        }
+        startSession();
+    };
+
+    try {
+        m_xwayland = new Xwl::Xwayland(this);
+    } catch (std::system_error const& exc) {
+        std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+        exit(exc.code().value());
+    } catch (std::exception const& exc) {
+        std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+        exit(1);
+    }
+
+    m_xwayland->init(status_callback);
 }
 
 void ApplicationWayland::startSession()
 {
-    if(m_xwayland) {
-        QObject::disconnect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::startSession);
-    }
-
     auto process_environment = processStartupEnvironment();
 
     // Enforce Wayland platform for started Qt apps. They otherwise for some reason prefer X11.

@@ -46,7 +46,10 @@ public:
     Xwayland(ApplicationWaylandAbstract* app);
     ~Xwayland() override;
 
-    void init();
+    /** The @ref status_callback is called once with 0 code when Xwayland is ready, other codes
+     *  indicate a critical error happened at runtime.
+     */
+    void init(std::function<void(int code)> status_callback);
 
     xcb_screen_t* xcbScreen() const
     {
@@ -56,10 +59,6 @@ public:
     {
         return m_xfixes;
     }
-
-Q_SIGNALS:
-    void initialized();
-    void criticalError(int code);
 
 private:
     void continueStartupWithX();
@@ -75,6 +74,7 @@ private:
     DataBridge* m_dataBridge = nullptr;
 
     ApplicationWaylandAbstract* m_app;
+    std::function<void(int code)> status_callback;
 
     Q_DISABLE_COPY(Xwayland)
 };

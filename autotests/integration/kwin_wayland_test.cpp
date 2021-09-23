@@ -173,17 +173,6 @@ void WaylandTestApplication::performStartup()
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
 }
 
-void WaylandTestApplication::finalizeStartup()
-{
-    if (m_xwayland) {
-        disconnect(m_xwayland,
-                   &Xwl::Xwayland::initialized,
-                   this,
-                   &WaylandTestApplication::finalizeStartup);
-    }
-    Q_EMIT startup_finished();
-}
-
 void WaylandTestApplication::handle_server_addons_created()
 {
     if (operationMode() == OperationModeXwayland) {
@@ -191,21 +180,32 @@ void WaylandTestApplication::handle_server_addons_created()
         return;
     }
 
-    finalizeStartup();
+    Q_EMIT startup_finished();
 }
 
 void WaylandTestApplication::create_xwayland()
 {
-    m_xwayland = new Xwl::Xwayland(this);
-    connect(m_xwayland, &Xwl::Xwayland::criticalError, this, [](int code) {
-        // we currently exit on Xwayland errors always directly
-        // TODO: restart Xwayland
-        std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
-        exit(code);
-    });
-    connect(
-        m_xwayland, &Xwl::Xwayland::initialized, this, &WaylandTestApplication::finalizeStartup);
-    m_xwayland->init();
+    auto status_callback = [this](auto error) {
+        if (error) {
+            // we currently exit on Xwayland errors always directly
+            // TODO: restart Xwayland
+            std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
+            exit(error);
+        }
+        Q_EMIT startup_finished();
+    };
+
+    try {
+        m_xwayland = new Xwl::Xwayland(this);
+    } catch (std::system_error const& exc) {
+        std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+        exit(exc.code().value());
+    } catch (std::exception const& exc) {
+        std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+        exit(1);
+    }
+
+    m_xwayland->init(status_callback);
 }
 
 }
