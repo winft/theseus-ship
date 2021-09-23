@@ -201,9 +201,9 @@ bool TrackMouseEffect::init()
             return false;
     }
 #else
-    if (!m_texture[0] || m_image[0].isNull()) {
+    if (!m_texture[0] && m_image[0].isNull()) {
         loadTexture();
-        if (!m_texture[0] || m_image[0].isNull())
+        if (!m_texture[0] && m_image[0].isNull())
             return false;
     }
 #endif
