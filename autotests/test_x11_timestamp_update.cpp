@@ -44,8 +44,6 @@ public:
 
     std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
 
-    void continueStartupWithCompositor() override;
-
 protected:
     void performStartup() override;
 };
@@ -71,10 +69,6 @@ X11TestApplication::~X11TestApplication()
 }
 
 void X11TestApplication::performStartup()
-{
-}
-
-void X11TestApplication::continueStartupWithCompositor()
 {
     render::x11::compositor::create();
     createWorkspace();

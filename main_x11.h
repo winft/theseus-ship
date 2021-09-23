@@ -26,7 +26,6 @@ public:
 
     void setReplace(bool replace);
     void notifyKSplash() override;
-    void continueStartupWithCompositor() override;
 
 protected:
     void performStartup() override;

@@ -242,20 +242,22 @@ void ApplicationX11::performStartup()
             std::cerr <<  "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
             ::exit(1);
         }
+
+        render::x11::compositor::create();
+        createWorkspace();
+
+        Q_EMIT startup_finished();
+
+        // Trigger possible errors, there's still a chance to abort.
+        Xcb::sync();
+        kwinApp()->notifyKSplash();
     });
+
     // we need to do an XSync here, otherwise the QPA might crash us later on
     Xcb::sync();
     owner->claim(m_replace || wasCrash(), true);
 
     createAtoms();
-}
-
-void ApplicationX11::continueStartupWithCompositor()
-{
-    render::x11::compositor::create();
-    createWorkspace();
-
-    Q_EMIT startup_finished();
 }
 
 bool ApplicationX11::notify(QObject* o, QEvent* e)

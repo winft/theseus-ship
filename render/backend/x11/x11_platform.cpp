@@ -78,12 +78,6 @@ void X11StandalonePlatform::init()
     });
 
     XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
-    kwinApp()->continueStartupWithCompositor();
-
-    // Trigger possible errors, there's still a chance to abort.
-    Xcb::sync();
-    kwinApp()->notifyKSplash();
-
     m_randrFilter.reset(new RandrFilter(this));
 }
 
