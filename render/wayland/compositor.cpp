@@ -11,6 +11,7 @@
 
 #include "abstract_wayland_output.h"
 #include "platform.h"
+#include "render/cursor.h"
 #include "scene.h"
 #include "wayland_server.h"
 #include "win/scene.h"
@@ -55,6 +56,10 @@ compositor::compositor(QObject* parent)
         qCCritical(KWIN_CORE) << "Presentation clock failed. Exit.";
         qApp->quit();
     }
+
+    // For now we use the software cursor as our wlroots backend does not support yet a hardware
+    // cursor.
+    software_cursor->set_enabled(true);
 
     connect(kwinApp(),
             &Application::x11ConnectionAboutToBeDestroyed,
