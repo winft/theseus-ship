@@ -737,8 +737,8 @@ void WaylandServer::createInternalConnection()
             if (!established) {
                 return;
             }
-            Registry *registry = new Registry(this);
-            EventQueue *eventQueue = new EventQueue(this);
+            auto registry = new Registry;
+            auto eventQueue = new EventQueue;
             eventQueue->setup(m_internalConnection.client);
             registry->setEventQueue(eventQueue);
             registry->create(m_internalConnection.client);
@@ -749,10 +749,10 @@ void WaylandServer::createInternalConnection()
                 m_internalConnection.interfacesAnnounced = true;
 
                 auto create_interface
-                    = [registry, this](Registry::Interface iface_code, auto creator) {
+                    = [registry](Registry::Interface iface_code, auto creator) {
                           auto iface = registry->interface(iface_code);
                           assert(iface.name != 0);
-                          return (registry->*creator)(iface.name, iface.version, this);
+                          return (registry->*creator)(iface.name, iface.version, nullptr);
                       };
 
                 m_internalConnection.shm
