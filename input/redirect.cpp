@@ -60,10 +60,10 @@ redirect::~redirect()
     }
 }
 
-void redirect::installInputEventFilter(event_filter* filter)
+void redirect::append_filter(event_filter* filter)
 {
     Q_ASSERT(!contains(m_filters, filter));
-    m_filters.push_back(filter);
+    m_filters.insert(m_filters_install_iterator, filter);
 }
 
 void redirect::prependInputEventFilter(event_filter* filter)

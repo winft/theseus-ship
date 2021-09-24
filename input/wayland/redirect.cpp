@@ -353,40 +353,40 @@ void redirect::setup_filters()
     auto const has_global_shortcuts = waylandServer()->hasGlobalShortcutSupport();
 
     if (kwinApp()->session->hasSessionControl() && has_global_shortcuts) {
-        installInputEventFilter(new virtual_terminal_filter);
+        m_filters.emplace_back(new virtual_terminal_filter);
     }
 
     installInputEventSpy(new touch_hide_cursor_spy);
     if (has_global_shortcuts) {
-        installInputEventFilter(new terminate_server_filter);
+        m_filters.emplace_back(new terminate_server_filter);
     }
-    installInputEventFilter(new drag_and_drop_filter);
-    installInputEventFilter(new lock_screen_filter);
-    installInputEventFilter(new popup_filter);
+    m_filters.emplace_back(new drag_and_drop_filter);
+    m_filters.emplace_back(new lock_screen_filter);
+    m_filters.emplace_back(new popup_filter);
 
     window_selector = new window_selector_filter;
-    installInputEventFilter(window_selector);
+    m_filters.push_back(window_selector);
 
     if (has_global_shortcuts) {
-        installInputEventFilter(new screen_edge_filter);
+        m_filters.emplace_back(new screen_edge_filter);
     }
-    installInputEventFilter(new effects_filter);
-    installInputEventFilter(new move_resize_filter);
+    m_filters.emplace_back(new effects_filter);
+    m_filters.emplace_back(new move_resize_filter);
 
 #ifdef KWIN_BUILD_TABBOX
-    installInputEventFilter(new tabbox_filter);
+    m_filters.emplace_back(new tabbox_filter);
 #endif
 
     if (has_global_shortcuts) {
-        installInputEventFilter(new global_shortcut_filter);
+        m_filters.emplace_back(new global_shortcut_filter);
     }
 
-    installInputEventFilter(new decoration_event_filter);
-    installInputEventFilter(new internal_window_filter);
+    m_filters.emplace_back(new decoration_event_filter);
+    m_filters.emplace_back(new internal_window_filter);
 
-    installInputEventFilter(new window_action_filter);
-    installInputEventFilter(new forward_filter);
-    installInputEventFilter(new fake_tablet_filter);
+    m_filters.emplace_back(new window_action_filter);
+    m_filters_install_iterator = m_filters.insert(m_filters.cend(), new forward_filter);
+    m_filters.emplace_back(new fake_tablet_filter);
 }
 
 void redirect::reconfigure()

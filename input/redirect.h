@@ -17,6 +17,7 @@
 #include <QAction>
 #include <QObject>
 #include <QPoint>
+#include <list>
 #include <memory>
 #include <vector>
 
@@ -146,6 +147,13 @@ public:
     void warpPointer(const QPointF& pos);
 
     /**
+     * Adds the @p filter to the list of event filters at the last relevant position.
+     *
+     * Install the filter at the back of the list for a X compositor, immediately before
+     * the forward filter for a Wayland compositor.
+     */
+    void append_filter(event_filter* filter);
+    /**
      * Adds the @p filter to the list of event filters and makes it the first
      * event filter in processing.
      *
@@ -271,17 +279,17 @@ protected:
              tablet_redirect* tablet,
              touch_redirect* touch);
 
-    void installInputEventFilter(event_filter* filter);
-
     std::unique_ptr<keyboard_redirect> m_keyboard;
     std::unique_ptr<pointer_redirect> m_pointer;
     std::unique_ptr<tablet_redirect> m_tablet;
     std::unique_ptr<touch_redirect> m_touch;
 
+    std::list<event_filter*> m_filters;
+    std::list<event_filter*>::const_iterator m_filters_install_iterator;
+
 private:
     global_shortcuts_manager* m_shortcuts;
 
-    std::vector<event_filter*> m_filters;
     std::vector<event_spy*> m_spies;
 
     friend class DecorationEventFilter;
