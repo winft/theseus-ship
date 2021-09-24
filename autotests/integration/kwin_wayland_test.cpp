@@ -115,8 +115,7 @@ WaylandTestApplication::~WaylandTestApplication()
     }
 
     // Kill Xwayland before terminating its connection.
-    delete m_xwayland;
-    m_xwayland = nullptr;
+    xwayland.reset();
 
     if (QStyle* s = style()) {
         // Unpolish style before terminating internal connection.
@@ -194,7 +193,7 @@ void WaylandTestApplication::create_xwayland()
     };
 
     try {
-        m_xwayland = new Xwl::Xwayland(this, status_callback);
+        xwayland.reset(new Xwl::Xwayland(this, status_callback));
     } catch (std::system_error const& exc) {
         std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
         exit(exc.code().value());

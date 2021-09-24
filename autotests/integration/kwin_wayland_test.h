@@ -147,7 +147,7 @@ private:
 
     std::unique_ptr<platform_base::wlroots> base;
     std::unique_ptr<render::backend::wlroots::backend> render;
-    Xwl::Xwayland* m_xwayland = nullptr;
+    std::unique_ptr<Xwl::Xwayland> xwayland;
 };
 
 namespace Test
