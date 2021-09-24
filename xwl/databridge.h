@@ -68,8 +68,6 @@ class KWIN_EXPORT DataBridge : public QObject
     Q_OBJECT
 
 public:
-    static DataBridge* self();
-
     DataBridge();
     ~DataBridge() override;
 

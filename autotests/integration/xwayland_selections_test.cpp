@@ -18,8 +18,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "../../xwl/databridge.h"
 #include "kwin_wayland_test.h"
+
 #include "platform.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -27,6 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
+
+#include "xwl/databridge.h"
+#include "xwl/xwayland.h"
 
 #include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_device_manager.h>
@@ -81,10 +84,10 @@ void XwaylandSelectionsTest::initTestCase()
     //        QVERIFY(clipboardSyncDevicedCreated.wait());
     //    }
     // wait till the DataBridge sync data device is created
-    while (Xwl::DataBridge::self()->dataDeviceIface() == nullptr) {
+    while (Xwl::Xwayland::self()->data_bridge->dataDeviceIface() == nullptr) {
         QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
     }
-    QVERIFY(Xwl::DataBridge::self()->dataDeviceIface() != nullptr);
+    QVERIFY(Xwl::Xwayland::self()->data_bridge->dataDeviceIface() != nullptr);
 }
 
 void XwaylandSelectionsTest::cleanup()
@@ -121,10 +124,10 @@ void XwaylandSelectionsTest::testSync()
 {
     QFETCH(QString, clipboardMode);
     if (clipboardMode == "Clipboard") {
-        QVERIFY(Xwl::DataBridge::self()->dataDeviceIface() != nullptr);
+        QVERIFY(Xwl::Xwayland::self()->data_bridge->dataDeviceIface() != nullptr);
     }
     if (clipboardMode == "Selection") {
-        QVERIFY(Xwl::DataBridge::self()->primarySelectionDeviceIface() != nullptr);
+        QVERIFY(Xwl::Xwayland::self()->data_bridge->primarySelectionDeviceIface() != nullptr);
     }
 
     // this test verifies the syncing of X11 to Wayland clipboard
@@ -140,11 +143,11 @@ void XwaylandSelectionsTest::testSync()
 
     QSignalSpy clipboardChangedSpy = [clipboardMode]() {
         if (clipboardMode == "Clipboard") {
-            return QSignalSpy(Xwl::DataBridge::self()->dataDeviceIface(),
+            return QSignalSpy(Xwl::Xwayland::self()->data_bridge->dataDeviceIface(),
                               &Wrapland::Server::DataDevice::selectionChanged);
         }
         if (clipboardMode == "Selection") {
-            return QSignalSpy(Xwl::DataBridge::self()->primarySelectionDeviceIface(),
+            return QSignalSpy(Xwl::Xwayland::self()->data_bridge->primarySelectionDeviceIface(),
                               &Wrapland::Server::PrimarySelectionDevice::selectionChanged);
         }
         throw;

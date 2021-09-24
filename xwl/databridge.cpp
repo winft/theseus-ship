@@ -45,18 +45,9 @@ namespace KWin
 namespace Xwl
 {
 
-static DataBridge* s_self = nullptr;
-
-DataBridge* DataBridge::self()
-{
-    return s_self;
-}
-
 DataBridge::DataBridge()
     : QObject()
 {
-    s_self = this;
-
     m_dataDevice = waylandServer()->internalDataDeviceManager()->getDevice(
         waylandServer()->internalSeat(), this);
     m_primarySelectionDevice = waylandServer()->internalPrimarySelectionDeviceManager()->getDevice(
@@ -109,10 +100,7 @@ DataBridge::DataBridge()
                   });
 }
 
-DataBridge::~DataBridge()
-{
-    s_self = nullptr;
-}
+DataBridge::~DataBridge() = default;
 
 bool DataBridge::filterEvent(xcb_generic_event_t* event)
 {
