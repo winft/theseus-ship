@@ -22,9 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "xwayland_interface.h"
 
+#include <memory>
 #include <xcb/xproto.h>
 
 class QProcess;
+class QSocketNotifier;
 
 class xcb_screen_t;
 
@@ -70,6 +72,8 @@ private:
     xcb_screen_t* m_xcbScreen = nullptr;
     const xcb_query_extension_reply_t* m_xfixes = nullptr;
     DataBridge* m_dataBridge = nullptr;
+
+    std::unique_ptr<QSocketNotifier> xcb_read_notifier;
 
     ApplicationWaylandAbstract* m_app;
     std::function<void(int code)> status_callback;

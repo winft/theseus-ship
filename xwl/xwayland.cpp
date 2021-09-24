@@ -216,8 +216,9 @@ void Xwayland::continueStartupWithX()
     m_app->setX11ScreenNumber(screenNumber);
     m_app->setX11RootWindow(defaultScreen()->root);
 
-    QSocketNotifier* notifier
-        = new QSocketNotifier(xcb_get_file_descriptor(xcbConn), QSocketNotifier::Read, this);
+    xcb_read_notifier.reset(
+        new QSocketNotifier(xcb_get_file_descriptor(xcbConn), QSocketNotifier::Read));
+
     auto processXcbEvents = [this, xcbConn] {
         while (auto event = xcb_poll_for_event(xcbConn)) {
             if (m_dataBridge->filterEvent(event)) {
@@ -231,7 +232,8 @@ void Xwayland::continueStartupWithX()
         }
         xcb_flush(xcbConn);
     };
-    connect(notifier, &QSocketNotifier::activated, this, processXcbEvents);
+
+    connect(xcb_read_notifier.get(), &QSocketNotifier::activated, this, processXcbEvents);
     connect(QThread::currentThread()->eventDispatcher(),
             &QAbstractEventDispatcher::aboutToBlock,
             this,
