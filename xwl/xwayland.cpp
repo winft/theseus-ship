@@ -242,9 +242,6 @@ void Xwayland::continueStartupWithX()
             this,
             processXcbEvents);
 
-    xcb_prefetch_extension_data(xcbConn, &xcb_xfixes_id);
-    m_xfixes = xcb_get_extension_data(xcbConn, &xcb_xfixes_id);
-
     // create selection owner for WM_S0 - magic X display number expected by XWayland
     KSelectionOwner owner("WM_S0", xcbConn, m_app->x11RootWindow());
     owner.claim(true);
@@ -277,7 +274,7 @@ void Xwayland::continueStartupWithX()
     // Trigger possible errors, there's still a chance to abort
     Xcb::sync();
 
-    data_bridge.reset(new DataBridge);
+    data_bridge.reset(new DataBridge(xcbConn));
 }
 
 DragEventReply Xwayland::dragMoveFilter(Toplevel* target, const QPoint& pos)

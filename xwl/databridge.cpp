@@ -45,9 +45,12 @@ namespace KWin
 namespace Xwl
 {
 
-DataBridge::DataBridge()
+DataBridge::DataBridge(xcb_connection_t* connection)
     : QObject()
 {
+    xcb_prefetch_extension_data(connection, &xcb_xfixes_id);
+    xfixes = xcb_get_extension_data(connection, &xcb_xfixes_id);
+
     m_dataDevice = waylandServer()->internalDataDeviceManager()->getDevice(
         waylandServer()->internalSeat(), this);
     m_primarySelectionDevice = waylandServer()->internalPrimarySelectionDeviceManager()->getDevice(
@@ -113,8 +116,7 @@ bool DataBridge::filterEvent(xcb_generic_event_t* event)
     if (filter_event(m_primarySelection.get(), event)) {
         return true;
     }
-    if (event->response_type - Xwayland::self()->xfixes()->first_event
-        == XCB_XFIXES_SELECTION_NOTIFY) {
+    if (event->response_type - xfixes->first_event == XCB_XFIXES_SELECTION_NOTIFY) {
         return handleXfixesNotify((xcb_xfixes_selection_notify_event_t*)event);
     }
     return false;

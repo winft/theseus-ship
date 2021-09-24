@@ -55,10 +55,6 @@ public:
     {
         return m_xcbScreen;
     }
-    const xcb_query_extension_reply_t* xfixes() const
-    {
-        return m_xfixes;
-    }
 
     std::unique_ptr<DataBridge> data_bridge;
 
@@ -72,7 +68,6 @@ private:
     QMetaObject::Connection m_xwaylandFailConnection;
 
     xcb_screen_t* m_xcbScreen = nullptr;
-    const xcb_query_extension_reply_t* m_xfixes = nullptr;
 
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
 

@@ -68,7 +68,7 @@ class KWIN_EXPORT DataBridge : public QObject
     Q_OBJECT
 
 public:
-    DataBridge();
+    DataBridge(xcb_connection_t* connection);
     ~DataBridge() override;
 
     bool filterEvent(xcb_generic_event_t* event);
@@ -97,6 +97,8 @@ public:
 
 private:
     bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
+
+    xcb_query_extension_reply_t const* xfixes{nullptr};
 
     std::unique_ptr<Clipboard> m_clipboard;
     std::unique_ptr<Dnd> m_dnd;
