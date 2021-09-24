@@ -38,6 +38,11 @@ namespace Xwl
 {
 class DataBridge;
 
+struct x11_data {
+    xcb_connection_t* connection{nullptr};
+    xcb_screen_t* screen{nullptr};
+};
+
 class KWIN_EXPORT Xwayland : public XwaylandInterface
 {
     Q_OBJECT
@@ -53,7 +58,7 @@ public:
 
     xcb_screen_t* xcbScreen() const
     {
-        return m_xcbScreen;
+        return basic_data.screen;
     }
 
     std::unique_ptr<DataBridge> data_bridge;
@@ -67,7 +72,7 @@ private:
     QProcess* m_xwaylandProcess = nullptr;
     QMetaObject::Connection m_xwaylandFailConnection;
 
-    xcb_screen_t* m_xcbScreen = nullptr;
+    x11_data basic_data;
 
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
 

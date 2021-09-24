@@ -191,35 +191,34 @@ Xwayland::~Xwayland()
 void Xwayland::continueStartupWithX()
 {
     int screenNumber = 0;
-    xcb_connection_t* xcbConn = nullptr;
 
     if (m_xcbConnectionFd == -1) {
-        xcbConn = xcb_connect(nullptr, &screenNumber);
+        basic_data.connection = xcb_connect(nullptr, &screenNumber);
     } else {
-        xcbConn = xcb_connect_to_fd(m_xcbConnectionFd, nullptr);
+        basic_data.connection = xcb_connect_to_fd(m_xcbConnectionFd, nullptr);
     }
 
-    if (int error = xcb_connection_has_error(xcbConn)) {
+    if (int error = xcb_connection_has_error(basic_data.connection)) {
         std::cerr << "FATAL ERROR connecting to Xwayland server: " << error << std::endl;
         status_callback(1);
         return;
     }
 
-    xcb_screen_iterator_t iter = xcb_setup_roots_iterator(xcb_get_setup(xcbConn));
-    m_xcbScreen = iter.data;
-    Q_ASSERT(m_xcbScreen);
+    xcb_screen_iterator_t iter = xcb_setup_roots_iterator(xcb_get_setup(basic_data.connection));
+    basic_data.screen = iter.data;
+    assert(basic_data.screen);
 
-    m_app->setX11Connection(xcbConn, false);
+    m_app->setX11Connection(basic_data.connection, false);
 
     // we don't support X11 multi-head in Wayland
     m_app->setX11ScreenNumber(screenNumber);
     m_app->setX11RootWindow(defaultScreen()->root);
 
     xcb_read_notifier.reset(
-        new QSocketNotifier(xcb_get_file_descriptor(xcbConn), QSocketNotifier::Read));
+        new QSocketNotifier(xcb_get_file_descriptor(basic_data.connection), QSocketNotifier::Read));
 
-    auto processXcbEvents = [this, xcbConn] {
-        while (auto event = xcb_poll_for_event(xcbConn)) {
+    auto processXcbEvents = [this] {
+        while (auto event = xcb_poll_for_event(basic_data.connection)) {
             if (data_bridge->filterEvent(event)) {
                 free(event);
                 continue;
@@ -229,7 +228,7 @@ void Xwayland::continueStartupWithX()
                 QByteArrayLiteral("xcb_generic_event_t"), event, &result);
             free(event);
         }
-        xcb_flush(xcbConn);
+        xcb_flush(basic_data.connection);
     };
 
     connect(xcb_read_notifier.get(), &QSocketNotifier::activated, this, processXcbEvents);
@@ -243,7 +242,7 @@ void Xwayland::continueStartupWithX()
             processXcbEvents);
 
     // create selection owner for WM_S0 - magic X display number expected by XWayland
-    KSelectionOwner owner("WM_S0", xcbConn, m_app->x11RootWindow());
+    KSelectionOwner owner("WM_S0", basic_data.connection, m_app->x11RootWindow());
     owner.claim(true);
 
     m_app->createAtoms();
@@ -274,7 +273,7 @@ void Xwayland::continueStartupWithX()
     // Trigger possible errors, there's still a chance to abort
     Xcb::sync();
 
-    data_bridge.reset(new DataBridge(xcbConn));
+    data_bridge.reset(new DataBridge(basic_data.connection));
 }
 
 DragEventReply Xwayland::dragMoveFilter(Toplevel* target, const QPoint& pos)
