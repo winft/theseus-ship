@@ -289,7 +289,7 @@ WlVisit::WlVisit(Toplevel* target, XToWlDrag* drag)
     , m_target(target)
     , m_drag(drag)
 {
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
+    auto xcbConn = drag->dnd->data.x11.connection;
 
     m_window = xcb_generate_id(xcbConn);
     overwrite_requestor_window(drag->dnd, m_window);
@@ -306,7 +306,7 @@ WlVisit::WlVisit(Toplevel* target, XToWlDrag* drag)
                       8192, // TODO: get current screen size and connect to changes
                       0,
                       XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                      Xwayland::self()->xcbScreen()->root_visual,
+                      drag->dnd->data.x11.screen->root_visual,
                       XCB_CW_EVENT_MASK,
                       dndValues);
 
@@ -330,6 +330,8 @@ WlVisit::WlVisit(Toplevel* target, XToWlDrag* drag)
 
 WlVisit::~WlVisit()
 {
+    // TODO(romangg): Use the x11_data here. But we must ensure the Dnd object still exists at this
+    //                point, i.e. use explicit ownership through smart pointer only.
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();
     xcb_destroy_window(xcbConn, m_window);
     xcb_flush(xcbConn);
@@ -403,7 +405,7 @@ bool WlVisit::handleEnter(xcb_client_message_event_t* event)
 
 void WlVisit::getMimesFromWinProperty(Mimes& offers)
 {
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
+    auto xcbConn = m_drag->dnd->data.x11.connection;
     auto cookie = xcb_get_property(
         xcbConn, 0, m_srcWindow, atoms->xdnd_type_list, XCB_GET_PROPERTY_TYPE_ANY, 0, 0x1fffffff);
 
@@ -536,7 +538,7 @@ void WlVisit::unmapProxyWindow()
     if (!m_mapped) {
         return;
     }
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
+    auto xcbConn = m_drag->dnd->data.x11.connection;
     xcb_unmap_window(xcbConn, m_window);
     workspace()->stacking_order->remove_manual_overlay(m_window);
     workspace()->stacking_order->update(true);

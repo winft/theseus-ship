@@ -12,9 +12,10 @@ namespace KWin::Xwl
 
 primary_selection::primary_selection(xcb_atom_t atom,
                                      srv_data_device* srv_dev,
-                                     clt_data_device* clt_dev)
+                                     clt_data_device* clt_dev,
+                                     x11_data const& x11)
 {
-    data = create_selection_data(atom, srv_dev, clt_dev);
+    data = create_selection_data(atom, srv_dev, clt_dev, x11);
 
     register_x11_selection(this, QSize(10, 10));
 

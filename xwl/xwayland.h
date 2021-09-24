@@ -56,11 +56,6 @@ public:
     Xwayland(ApplicationWaylandAbstract* app, std::function<void(int code)> status_callback);
     ~Xwayland() override;
 
-    xcb_screen_t* xcbScreen() const
-    {
-        return basic_data.screen;
-    }
-
     std::unique_ptr<DataBridge> data_bridge;
 
 private:

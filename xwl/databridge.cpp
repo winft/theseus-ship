@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dnd.h"
 #include "primary_selection.h"
 #include "selection.h"
-#include "xwayland.h"
 
 #include "atoms.h"
 #include "toplevel.h"
@@ -45,11 +44,11 @@ namespace KWin
 namespace Xwl
 {
 
-DataBridge::DataBridge(xcb_connection_t* connection)
+DataBridge::DataBridge(x11_data const& x11)
     : QObject()
 {
-    xcb_prefetch_extension_data(connection, &xcb_xfixes_id);
-    xfixes = xcb_get_extension_data(connection, &xcb_xfixes_id);
+    xcb_prefetch_extension_data(x11.connection, &xcb_xfixes_id);
+    xfixes = xcb_get_extension_data(x11.connection, &xcb_xfixes_id);
 
     m_dataDevice = waylandServer()->internalDataDeviceManager()->getDevice(
         waylandServer()->internalSeat(), this);
@@ -62,7 +61,7 @@ DataBridge::DataBridge(xcb_connection_t* connection)
     *dc = connect(waylandServer()->dataDeviceManager(),
                   &Wrapland::Server::DataDeviceManager::deviceCreated,
                   this,
-                  [this, dc](auto srv_dev) {
+                  [this, dc, x11](auto srv_dev) {
                       if (srv_dev->client() != waylandServer()->internalConnection()) {
                           return;
                       }
@@ -75,8 +74,9 @@ DataBridge::DataBridge(xcb_connection_t* connection)
 
                       assert(!m_clipboard);
                       assert(!m_dnd);
-                      m_clipboard.reset(new Clipboard(atoms->clipboard, srv_dev, m_dataDevice));
-                      m_dnd.reset(new Dnd(atoms->xdnd_selection, srv_dev, m_dataDevice));
+                      m_clipboard.reset(
+                          new Clipboard(atoms->clipboard, srv_dev, m_dataDevice, x11));
+                      m_dnd.reset(new Dnd(atoms->xdnd_selection, srv_dev, m_dataDevice, x11));
 
                       waylandServer()->dispatch();
                   });
@@ -85,7 +85,7 @@ DataBridge::DataBridge(xcb_connection_t* connection)
     *pc = connect(waylandServer()->primarySelectionDeviceManager(),
                   &Wrapland::Server::PrimarySelectionDeviceManager::deviceCreated,
                   this,
-                  [this, pc](auto srv_dev) {
+                  [this, pc, x11](auto srv_dev) {
                       if (srv_dev->client() != waylandServer()->internalConnection()) {
                           return;
                       }
@@ -98,7 +98,7 @@ DataBridge::DataBridge(xcb_connection_t* connection)
 
                       assert(!m_primarySelection);
                       m_primarySelection.reset(new primary_selection(
-                          atoms->primary_selection, srv_dev, m_primarySelectionDevice));
+                          atoms->primary_selection, srv_dev, m_primarySelectionDevice, x11));
                       waylandServer()->dispatch();
                   });
 }

@@ -114,9 +114,9 @@ uint32_t Dnd::version()
     return s_version;
 }
 
-Dnd::Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev)
+Dnd::Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev, x11_data const& x11)
 {
-    data = create_selection_data(atom, srv_dev, clt_dev);
+    data = create_selection_data(atom, srv_dev, clt_dev, x11);
 
     // TODO(romangg): for window size get current screen size and connect to changes.
     register_x11_selection(this, QSize(8192, 8192));

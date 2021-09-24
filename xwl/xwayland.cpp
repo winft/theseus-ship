@@ -273,7 +273,7 @@ void Xwayland::continueStartupWithX()
     // Trigger possible errors, there's still a chance to abort
     Xcb::sync();
 
-    data_bridge.reset(new DataBridge(basic_data.connection));
+    data_bridge.reset(new DataBridge(basic_data));
 }
 
 DragEventReply Xwayland::dragMoveFilter(Toplevel* target, const QPoint& pos)

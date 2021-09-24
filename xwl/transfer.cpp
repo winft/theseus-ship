@@ -19,8 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "transfer.h"
 
-#include "xwayland.h"
-
 #include "atoms.h"
 #include "wayland_server.h"
 #include "workspace.h"
@@ -276,6 +274,7 @@ TransferXtoWl::TransferXtoWl(xcb_atom_t selection,
                              qint32 fd,
                              xcb_timestamp_t timestamp,
                              xcb_window_t parentWindow,
+                             x11_data const& x11,
                              QObject* parent)
     : Transfer(selection, fd, timestamp, parent)
 {
@@ -293,7 +292,7 @@ TransferXtoWl::TransferXtoWl(xcb_atom_t selection,
                       10,
                       0,
                       XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                      Xwayland::self()->xcbScreen()->root_visual,
+                      x11.screen->root_visual,
                       XCB_CW_EVENT_MASK,
                       values);
     // convert selection
