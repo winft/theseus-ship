@@ -207,7 +207,8 @@ void LockScreenTest::initTestCase()
 
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
-    kwinApp()->start();
+
+    Test::app()->start();
     QMetaObject::invokeMethod(
         kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
 

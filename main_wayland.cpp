@@ -163,8 +163,10 @@ ApplicationWayland::~ApplicationWayland()
     destroyCompositor();
 }
 
-void ApplicationWayland::performStartup()
+void ApplicationWayland::start()
 {
+    prepare_start();
+
     if (m_startXWayland) {
         setOperationMode(OperationModeXwayland);
     }

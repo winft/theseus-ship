@@ -73,7 +73,7 @@ void X11ClientTest::initTestCase()
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
-    kwinApp()->start();
+    Test::app()->start();
     QVERIFY(startup_spy.wait());
     QVERIFY(render::compositor::self());
 }

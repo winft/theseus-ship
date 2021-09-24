@@ -71,7 +71,7 @@ void GenericSceneOpenGLTest::initTestCase()
     qputenv("XCURSOR_SIZE", QByteArrayLiteral("24"));
     qputenv("KWIN_COMPOSE", m_envVariable);
 
-    kwinApp()->start();
+    Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
     QVERIFY(render::compositor::self());
 

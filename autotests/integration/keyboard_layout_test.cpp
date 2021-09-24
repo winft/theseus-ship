@@ -168,7 +168,7 @@ void KeyboardLayoutTest::initTestCase()
     layoutGroup = kwinApp()->kxkbConfig()->group("Layout");
     layoutGroup.deleteGroup();
 
-    kwinApp()->start();
+    Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 
     // don't get DBus signal on one-layout configuration

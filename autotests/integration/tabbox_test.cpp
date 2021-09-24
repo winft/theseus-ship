@@ -65,7 +65,7 @@ void TabBoxTest::initTestCase()
     kwinApp()->setConfig(c);
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
 
-    kwinApp()->start();
+    Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 }
 

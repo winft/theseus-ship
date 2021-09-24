@@ -132,8 +132,10 @@ WaylandTestApplication::~WaylandTestApplication()
     destroyCompositor();
 }
 
-void WaylandTestApplication::performStartup()
+void WaylandTestApplication::start()
 {
+    prepare_start();
+
     auto headless_backend = wlr_headless_backend_create(waylandServer()->display()->native());
     wlr_headless_add_output(headless_backend, 1280, 1024);
     base->init(headless_backend);

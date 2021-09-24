@@ -77,7 +77,7 @@ void MinimizeAnimationTest::initTestCase()
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
 
-    kwinApp()->start();
+    Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 
     auto scene = render::compositor::self()->scene();

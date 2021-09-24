@@ -126,7 +126,6 @@ public:
         m_inputConfig = std::move(config);
     }
 
-    void start();
     /**
      * @brief The operation mode used by KWin.
      *
@@ -217,7 +216,8 @@ Q_SIGNALS:
 
 protected:
     Application(OperationMode mode, int &argc, char **argv);
-    virtual void performStartup() = 0;
+
+    void prepare_start();
 
     void createAtoms();
     void createOptions();

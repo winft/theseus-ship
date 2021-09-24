@@ -84,7 +84,7 @@ void DontCrashCursorPhysicalSizeEmpty::initTestCase()
     }
     qputenv("XCURSOR_SIZE", QByteArrayLiteral("0"));
 
-    kwinApp()->start();
+    Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 }
 

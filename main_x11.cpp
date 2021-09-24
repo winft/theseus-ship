@@ -198,8 +198,10 @@ void ApplicationX11::lostSelection()
     quit();
 }
 
-void ApplicationX11::performStartup()
+void ApplicationX11::start()
 {
+    prepare_start();
+
     render.reset(new render::backend::x11::X11StandalonePlatform(this));
     platform = render.get();
 

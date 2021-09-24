@@ -68,7 +68,7 @@ void XwaylandSelectionsTest::initTestCase()
     //    &WaylandServer::xclipboardSyncDataDeviceCreated};
     //    QVERIFY(clipboardSyncDevicedCreated.isValid());
 
-    kwinApp()->start();
+    Test::app()->start();
     QMetaObject::invokeMethod(
         kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
 

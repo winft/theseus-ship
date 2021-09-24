@@ -131,7 +131,7 @@ bool Application::shouldUseWaylandForCompositing() const
     return m_operationMode == OperationModeWaylandOnly || m_operationMode == OperationModeXwayland;
 }
 
-void Application::start()
+void Application::prepare_start()
 {
     setQuitOnLastWindowClosed(false);
 
@@ -151,7 +151,6 @@ void Application::start()
     }
 
     ScreenLockerWatcher::create(this);
-    performStartup();
 }
 
 Application::~Application()

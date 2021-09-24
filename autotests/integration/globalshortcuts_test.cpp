@@ -83,7 +83,7 @@ void GlobalShortcutsTest::initTestCase()
     qputenv("XKB_DEFAULT_RULES", "evdev");
     qputenv("XKB_DEFAULT_LAYOUT", "us,ru");
 
-    kwinApp()->start();
+    Test::app()->start();
     QVERIFY(startup_spy.wait());
 }
 

@@ -83,7 +83,7 @@ void StrutsTest::initTestCase()
 
     kwinApp()->setConfig(config);
 
-    kwinApp()->start();
+    Test::app()->start();
     QMetaObject::invokeMethod(
         kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
 

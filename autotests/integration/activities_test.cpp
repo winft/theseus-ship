@@ -62,9 +62,9 @@ void ActivitiesTest::initTestCase()
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
-
     kwinApp()->setUseKActivities(true);
-    kwinApp()->start();
+
+    Test::app()->start();
     QMetaObject::invokeMethod(
         kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
 

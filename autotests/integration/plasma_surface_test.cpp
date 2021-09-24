@@ -79,7 +79,8 @@ void PlasmaSurfaceTest::initTestCase()
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
-    kwinApp()->start();
+
+    Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 }
 

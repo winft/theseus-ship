@@ -86,7 +86,8 @@ void SlidingPopupsTest::initTestCase()
 
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");
-    kwinApp()->start();
+
+    Test::app()->start();
     QVERIFY(startup_spy.wait());
     QVERIFY(render::compositor::self());
 

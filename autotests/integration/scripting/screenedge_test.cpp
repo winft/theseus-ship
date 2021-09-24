@@ -80,7 +80,7 @@ void ScreenEdgeTest::initTestCase()
     config->sync();
     kwinApp()->setConfig(config);
 
-    kwinApp()->start();
+    Test::app()->start();
     QVERIFY(startup_spy.wait());
     QVERIFY(Scripting::self());
 

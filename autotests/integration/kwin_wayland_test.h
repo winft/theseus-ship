@@ -139,8 +139,7 @@ public:
                            char** argv);
     ~WaylandTestApplication() override;
 
-protected:
-    void performStartup() override;
+    void start();
 
 private:
     void handle_server_addons_created();
@@ -153,6 +152,8 @@ private:
 
 namespace Test
 {
+
+KWIN_EXPORT WaylandTestApplication* app();
 
 /**
  * Creates a Wayland Connection in a dedicated thread and creates various

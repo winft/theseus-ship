@@ -46,6 +46,8 @@ public:
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
 
+    void start();
+
     void setStartXwayland(bool start) {
         m_startXWayland = start;
     }
@@ -67,9 +69,6 @@ public:
     }
 
     void init_platforms();
-
-protected:
-    void performStartup() override;
 
 private:
     void handle_server_addons_created();

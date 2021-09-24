@@ -134,7 +134,7 @@ void SceneOpenGLShadowTest::initTestCase()
     qputenv("XCURSOR_SIZE", QByteArrayLiteral("24"));
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
 
-    kwinApp()->start();
+    Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
     QVERIFY(render::compositor::self());
 

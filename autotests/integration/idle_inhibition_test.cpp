@@ -62,7 +62,7 @@ void TestIdleInhibition::initTestCase()
     QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
-    kwinApp()->start();
+    Test::app()->start();
     QMetaObject::invokeMethod(
         kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(startup_spy.size() || startup_spy.wait());

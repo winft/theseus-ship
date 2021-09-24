@@ -68,7 +68,7 @@ void KeymapCreationFailureTest::initTestCase()
     layoutGroup.writeEntry("Options", "no");
     layoutGroup.sync();
 
-    kwinApp()->start();
+    Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
 }
 
