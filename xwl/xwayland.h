@@ -71,8 +71,8 @@ private:
 
     xcb_screen_t* m_xcbScreen = nullptr;
     const xcb_query_extension_reply_t* m_xfixes = nullptr;
-    DataBridge* m_dataBridge = nullptr;
 
+    std::unique_ptr<DataBridge> data_bridge;
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
 
     ApplicationWaylandAbstract* m_app;

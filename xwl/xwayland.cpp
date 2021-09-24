@@ -162,8 +162,7 @@ Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> sta
 
 Xwayland::~Xwayland()
 {
-    delete m_dataBridge;
-    m_dataBridge = nullptr;
+    data_bridge.reset();
 
     disconnect(m_xwaylandFailConnection);
 
@@ -221,7 +220,7 @@ void Xwayland::continueStartupWithX()
 
     auto processXcbEvents = [this, xcbConn] {
         while (auto event = xcb_poll_for_event(xcbConn)) {
-            if (m_dataBridge->filterEvent(event)) {
+            if (data_bridge->filterEvent(event)) {
                 free(event);
                 continue;
             }
@@ -278,15 +277,15 @@ void Xwayland::continueStartupWithX()
     // Trigger possible errors, there's still a chance to abort
     Xcb::sync();
 
-    m_dataBridge = new DataBridge;
+    data_bridge.reset(new DataBridge);
 }
 
 DragEventReply Xwayland::dragMoveFilter(Toplevel* target, const QPoint& pos)
 {
-    if (!m_dataBridge) {
+    if (!data_bridge) {
         return DragEventReply::Wayland;
     }
-    return m_dataBridge->dragMoveFilter(target, pos);
+    return data_bridge->dragMoveFilter(target, pos);
 }
 
 } // namespace Xwl

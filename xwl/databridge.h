@@ -70,7 +70,7 @@ class KWIN_EXPORT DataBridge : public QObject
 public:
     static DataBridge* self();
 
-    explicit DataBridge(QObject* parent = nullptr);
+    DataBridge();
     ~DataBridge() override;
 
     bool filterEvent(xcb_generic_event_t* event);

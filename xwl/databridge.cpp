@@ -52,8 +52,8 @@ DataBridge* DataBridge::self()
     return s_self;
 }
 
-DataBridge::DataBridge(QObject* parent)
-    : QObject(parent)
+DataBridge::DataBridge()
+    : QObject()
 {
     s_self = this;
 
