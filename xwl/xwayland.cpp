@@ -73,20 +73,11 @@ namespace KWin
 namespace Xwl
 {
 
-Xwayland* s_self = nullptr;
-
-Xwayland* Xwayland::self()
-{
-    return s_self;
-}
-
 Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> status_callback)
     : XwaylandInterface()
     , m_app(app)
     , status_callback{status_callback}
 {
-    s_self = this;
-
     int pipeFds[2];
     if (pipe(pipeFds) != 0) {
         throw std::runtime_error("Failed to create pipe to start Xwayland");
@@ -183,7 +174,6 @@ Xwayland::~Xwayland()
     }
     delete m_xwaylandProcess;
     m_xwaylandProcess = nullptr;
-    s_self = nullptr;
 
     waylandServer()->destroyXWaylandConnection();
 }

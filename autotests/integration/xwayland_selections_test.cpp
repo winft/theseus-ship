@@ -84,10 +84,10 @@ void XwaylandSelectionsTest::initTestCase()
     //        QVERIFY(clipboardSyncDevicedCreated.wait());
     //    }
     // wait till the DataBridge sync data device is created
-    while (Xwl::Xwayland::self()->data_bridge->dataDeviceIface() == nullptr) {
+    while (Test::app()->xwayland->data_bridge->dataDeviceIface() == nullptr) {
         QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
     }
-    QVERIFY(Xwl::Xwayland::self()->data_bridge->dataDeviceIface() != nullptr);
+    QVERIFY(Test::app()->xwayland->data_bridge->dataDeviceIface() != nullptr);
 }
 
 void XwaylandSelectionsTest::cleanup()
@@ -124,10 +124,10 @@ void XwaylandSelectionsTest::testSync()
 {
     QFETCH(QString, clipboardMode);
     if (clipboardMode == "Clipboard") {
-        QVERIFY(Xwl::Xwayland::self()->data_bridge->dataDeviceIface() != nullptr);
+        QVERIFY(Test::app()->xwayland->data_bridge->dataDeviceIface() != nullptr);
     }
     if (clipboardMode == "Selection") {
-        QVERIFY(Xwl::Xwayland::self()->data_bridge->primarySelectionDeviceIface() != nullptr);
+        QVERIFY(Test::app()->xwayland->data_bridge->primarySelectionDeviceIface() != nullptr);
     }
 
     // this test verifies the syncing of X11 to Wayland clipboard
@@ -143,11 +143,11 @@ void XwaylandSelectionsTest::testSync()
 
     QSignalSpy clipboardChangedSpy = [clipboardMode]() {
         if (clipboardMode == "Clipboard") {
-            return QSignalSpy(Xwl::Xwayland::self()->data_bridge->dataDeviceIface(),
+            return QSignalSpy(Test::app()->xwayland->data_bridge->dataDeviceIface(),
                               &Wrapland::Server::DataDevice::selectionChanged);
         }
         if (clipboardMode == "Selection") {
-            return QSignalSpy(Xwl::Xwayland::self()->data_bridge->primarySelectionDeviceIface(),
+            return QSignalSpy(Test::app()->xwayland->data_bridge->primarySelectionDeviceIface(),
                               &Wrapland::Server::PrimarySelectionDevice::selectionChanged);
         }
         throw;

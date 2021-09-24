@@ -48,8 +48,6 @@ class KWIN_EXPORT Xwayland : public XwaylandInterface
     Q_OBJECT
 
 public:
-    static Xwayland* self();
-
     /** The @ref status_callback is called once with 0 code when Xwayland is ready, other codes
      *  indicate a critical error happened at runtime.
      */

@@ -125,6 +125,7 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
     Q_OBJECT
 public:
     std::unique_ptr<WaylandServer> server;
+    std::unique_ptr<Xwl::Xwayland> xwayland;
 
     wlr_input_device* pointer{nullptr};
     wlr_input_device* keyboard{nullptr};
@@ -147,7 +148,6 @@ private:
 
     std::unique_ptr<platform_base::wlroots> base;
     std::unique_ptr<render::backend::wlroots::backend> render;
-    std::unique_ptr<Xwl::Xwayland> xwayland;
 };
 
 namespace Test
