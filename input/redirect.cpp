@@ -44,6 +44,7 @@
 #include "seat/session.h"
 #include "spies/touch_hide_cursor.h"
 #include "toplevel.h"
+#include "utils.h"
 #include "wayland_server.h"
 #include "win/geo.h"
 #include "win/stacking_order.h"
@@ -102,29 +103,29 @@ redirect::~redirect()
 
 void redirect::installInputEventFilter(event_filter* filter)
 {
-    Q_ASSERT(!m_filters.contains(filter));
-    m_filters << filter;
+    Q_ASSERT(!contains(m_filters, filter));
+    m_filters.push_back(filter);
 }
 
 void redirect::prependInputEventFilter(event_filter* filter)
 {
-    Q_ASSERT(!m_filters.contains(filter));
-    m_filters.prepend(filter);
+    Q_ASSERT(!contains(m_filters, filter));
+    m_filters.insert(m_filters.begin(), filter);
 }
 
 void redirect::uninstallInputEventFilter(event_filter* filter)
 {
-    m_filters.removeOne(filter);
+    remove_all(m_filters, filter);
 }
 
 void redirect::installInputEventSpy(event_spy* spy)
 {
-    m_spies << spy;
+    m_spies.push_back(spy);
 }
 
 void redirect::uninstallInputEventSpy(event_spy* spy)
 {
-    m_spies.removeOne(spy);
+    remove_all(m_spies, spy);
 }
 
 void redirect::setupWorkspace()

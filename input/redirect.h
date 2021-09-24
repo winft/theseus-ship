@@ -19,6 +19,7 @@
 #include <QObject>
 #include <QPoint>
 #include <memory>
+#include <vector>
 
 namespace Wrapland::Server
 {
@@ -198,7 +199,7 @@ public:
     template<class UnaryPredicate>
     void processFilters(UnaryPredicate function)
     {
-        std::any_of(m_filters.constBegin(), m_filters.constEnd(), function);
+        std::any_of(m_filters.cbegin(), m_filters.cend(), function);
     }
 
     /**
@@ -217,7 +218,7 @@ public:
     template<class UnaryFunction>
     void processSpies(UnaryFunction function)
     {
-        std::for_each(m_spies.constBegin(), m_spies.constEnd(), function);
+        std::for_each(m_spies.cbegin(), m_spies.cend(), function);
     }
 
     keyboard_redirect* keyboard() const
@@ -306,8 +307,8 @@ private:
     KConfigWatcher::Ptr m_inputConfigWatcher;
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 
-    QVector<event_filter*> m_filters;
-    QVector<event_spy*> m_spies;
+    std::vector<event_filter*> m_filters;
+    std::vector<event_spy*> m_spies;
 
     friend class DecorationEventFilter;
     friend class InternalWindowEventFilter;
