@@ -143,7 +143,6 @@ protected:
     void performStartup() override;
 
 private:
-    void init_wlroots_backend();
     void handle_server_addons_created();
     void create_xwayland();
 

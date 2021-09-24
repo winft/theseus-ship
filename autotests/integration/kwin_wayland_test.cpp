@@ -95,7 +95,9 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     addLibraryPath(ownPath);
 
     server.reset(new WaylandServer(socket_name, flags));
-    init_wlroots_backend();
+
+    render.reset(new render::backend::wlroots::backend(base.get(), this));
+    platform = render.get();
 
     auto environment = QProcessEnvironment::systemEnvironment();
     environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
@@ -128,12 +130,6 @@ WaylandTestApplication::~WaylandTestApplication()
     static_cast<render::wayland::compositor*>(compositor)->lock();
     destroyWorkspace();
     destroyCompositor();
-}
-
-void WaylandTestApplication::init_wlroots_backend()
-{
-    render.reset(new render::backend::wlroots::backend(base.get(), this));
-    platform = render.get();
 }
 
 void WaylandTestApplication::performStartup()
