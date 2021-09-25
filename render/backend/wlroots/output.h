@@ -8,6 +8,8 @@
 #include "abstract_wayland_output.h"
 #include "platform/utils.h"
 
+#include <Wrapland/Server/drm_lease_v1.h>
+
 #include <wayland-server-core.h>
 
 struct wlr_output;
@@ -23,6 +25,10 @@ class KWIN_EXPORT output : public AbstractWaylandOutput
 {
     Q_OBJECT
 private:
+    void create_lease_connector();
+
+    std::unique_ptr<Wrapland::Server::drm_lease_connector_v1> lease_connector;
+
     event_receiver<output> destroy_rec;
     event_receiver<output> present_rec;
 

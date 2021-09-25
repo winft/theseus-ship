@@ -10,6 +10,7 @@
 #include "render/wayland/output.h"
 #include "render/wayland/presentation.h"
 #include "screens.h"
+#include "wayland_server.h"
 
 #include <chrono>
 #include <wayland_logging.h>
@@ -68,6 +69,17 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
         auto render_output = compositor->outputs.at(our_output).get();
         render_output->swapped(pres_data);
     }
+}
+
+void output::create_lease_connector()
+{
+    auto lease_device = waylandServer()->drm_lease_device;
+    if (!lease_device) {
+        return;
+    }
+
+    lease_connector.reset(lease_device->create_connector(AbstractWaylandOutput::output()));
+    AbstractWaylandOutput::output()->set_connector_id(wlr_drm_connector_get_id(native));
 }
 
 bool output::disable_native()
@@ -234,6 +246,8 @@ output::output(wlr_output* wlr_out, backend* backend)
                    QSize(wlr_out->phys_width, wlr_out->phys_height),
                    modes,
                    current_mode.id != -1 ? &current_mode : nullptr);
+
+    create_lease_connector();
 }
 
 output::~output()

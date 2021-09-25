@@ -7,11 +7,6 @@
 
 #include "wlr_includes.h"
 
-extern "C" {
-#include <wlr/backend/headless.h>
-#include <wlr/backend/multi.h>
-}
-
 namespace KWin::render::backend::wlroots
 {
 
@@ -42,23 +37,6 @@ bool has_portrait_transform(Output* out)
     auto const& transform = out->transform();
     return transform == Output::Transform::Rotated90 || transform == Output::Transform::Rotated270
         || transform == Output::Transform::Flipped90 || transform == Output::Transform::Flipped270;
-}
-
-inline bool is_headless_backend(wlr_backend* backend)
-{
-    if (!wlr_backend_is_multi(backend)) {
-        return wlr_backend_is_headless(backend);
-    }
-
-    auto is_headless{false};
-    auto check_backend = [](wlr_backend* backend, void* data) {
-        auto is_headless = static_cast<bool*>(data);
-        if (wlr_backend_is_headless(backend)) {
-            *is_headless = true;
-        }
-    };
-    wlr_multi_for_each_backend(backend, check_backend, &is_headless);
-    return is_headless;
 }
 
 }

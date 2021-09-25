@@ -51,6 +51,7 @@ class Client;
 class Compositor;
 class Display;
 class DataDevice;
+class drm_lease_device_v1;
 class KdeIdle;
 class Seat;
 class DataDeviceManager;
@@ -109,6 +110,7 @@ public:
 
     Wrapland::Server::LayerShellV1* layer_shell{nullptr};
     Wrapland::Server::XdgActivationV1* xdg_activation{nullptr};
+    Wrapland::Server::drm_lease_device_v1* drm_lease_device{nullptr};
 
     WaylandServer(std::string const& socket, InitializationFlags flags);
     WaylandServer(int socket_fd, InitializationFlags flags);
@@ -170,6 +172,8 @@ public:
      */
     int createInputMethodConnection();
     void destroyInputMethodConnection();
+
+    void createDrmLeaseDevice();
 
     /**
      * @returns true if screen is locked.
