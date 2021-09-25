@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_XWL_DATABRIDGE
 #define KWIN_XWL_DATABRIDGE
 
+#include "xwayland.h"
+
 #include <kwin_export.h>
 
 #include <QObject>
@@ -68,9 +70,7 @@ class KWIN_EXPORT DataBridge : public QObject
     Q_OBJECT
 
 public:
-    static DataBridge* self();
-
-    explicit DataBridge(QObject* parent = nullptr);
+    DataBridge(x11_data const& x11);
     ~DataBridge() override;
 
     bool filterEvent(xcb_generic_event_t* event);
@@ -99,6 +99,8 @@ public:
 
 private:
     bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
+
+    xcb_query_extension_reply_t const* xfixes{nullptr};
 
     std::unique_ptr<Clipboard> m_clipboard;
     std::unique_ptr<Dnd> m_dnd;

@@ -95,7 +95,9 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     addLibraryPath(ownPath);
 
     server.reset(new WaylandServer(socket_name, flags));
-    init_wlroots_backend();
+
+    render.reset(new render::backend::wlroots::backend(base.get(), this));
+    platform = render.get();
 
     auto environment = QProcessEnvironment::systemEnvironment();
     environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
@@ -105,7 +107,6 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
 WaylandTestApplication::~WaylandTestApplication()
 {
     setTerminating();
-    kwinApp()->platform->setOutputsOn(false);
 
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
@@ -113,32 +114,27 @@ WaylandTestApplication::~WaylandTestApplication()
         static_cast<EffectsHandlerImpl*>(effects)->unloadAllEffects();
     }
 
-    if (m_xwayland) {
-        // needs to be done before workspace gets destroyed
-        m_xwayland->prepareDestroy();
-    }
-
-    destroyWorkspace();
-    waylandServer()->dispatch();
+    // Kill Xwayland before terminating its connection.
+    xwayland.reset();
 
     if (QStyle* s = style()) {
+        // Unpolish style before terminating internal connection.
         s->unpolish(this);
     }
 
-    // kill Xwayland before terminating its connection
-    delete m_xwayland;
     waylandServer()->terminateClientConnections();
+
+    // Block compositor to prevent further compositing from crashing with a null workspace.
+    // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
+    static_cast<render::wayland::compositor*>(compositor)->lock();
+    destroyWorkspace();
     destroyCompositor();
 }
 
-void WaylandTestApplication::init_wlroots_backend()
+void WaylandTestApplication::start()
 {
-    render.reset(new render::backend::wlroots::backend(base.get(), this));
-    platform = render.get();
-}
+    prepare_start();
 
-void WaylandTestApplication::performStartup()
-{
     auto headless_backend = wlr_headless_backend_create(waylandServer()->display()->native());
     wlr_headless_add_output(headless_backend, 1280, 1024);
     base->init(headless_backend);
@@ -146,7 +142,6 @@ void WaylandTestApplication::performStartup()
     input::add_dbus(input.get());
 
     createOptions();
-    waylandServer()->createInternalConnection();
 
     session.reset(new seat::backend::wlroots::session(headless_backend));
     input::add_redirect(input.get());
@@ -168,43 +163,44 @@ void WaylandTestApplication::performStartup()
     // TODO(romangg): Make the corner offset calculation not depend on that.
     auto out = dynamic_cast<AbstractWaylandOutput*>(kwinApp()->platform->enabledOutputs().at(0));
     out->output()->set_physical_size(QSize(1280, 1024));
-}
 
-void WaylandTestApplication::continueStartupWithCompositor()
-{
     render::wayland::compositor::create();
-    continue_startup_with_workspace();
-}
-
-void WaylandTestApplication::finalizeStartup()
-{
-    if (m_xwayland) {
-        disconnect(m_xwayland,
-                   &Xwl::Xwayland::initialized,
-                   this,
-                   &WaylandTestApplication::finalizeStartup);
-    }
     createWorkspace();
-    waylandServer()->initWorkspace();
+
+    waylandServer()->create_addons([this] { handle_server_addons_created(); });
 }
 
-void WaylandTestApplication::continue_startup_with_workspace()
+void WaylandTestApplication::handle_server_addons_created()
 {
-    if (operationMode() == OperationModeWaylandOnly) {
-        finalizeStartup();
+    if (operationMode() == OperationModeXwayland) {
+        create_xwayland();
         return;
     }
 
-    m_xwayland = new Xwl::Xwayland(this);
-    connect(m_xwayland, &Xwl::Xwayland::criticalError, this, [](int code) {
-        // we currently exit on Xwayland errors always directly
-        // TODO: restart Xwayland
-        std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
-        exit(code);
-    });
-    connect(
-        m_xwayland, &Xwl::Xwayland::initialized, this, &WaylandTestApplication::finalizeStartup);
-    m_xwayland->init();
+    Q_EMIT startup_finished();
+}
+
+void WaylandTestApplication::create_xwayland()
+{
+    auto status_callback = [this](auto error) {
+        if (error) {
+            // we currently exit on Xwayland errors always directly
+            // TODO: restart Xwayland
+            std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
+            exit(error);
+        }
+        Q_EMIT startup_finished();
+    };
+
+    try {
+        xwayland.reset(new Xwl::Xwayland(this, status_callback));
+    } catch (std::system_error const& exc) {
+        std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+        exit(exc.code().value());
+    } catch (std::exception const& exc) {
+        std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+        exit(1);
+    }
 }
 
 }

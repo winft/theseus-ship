@@ -42,12 +42,9 @@ public:
     X11TestApplication(int& argc, char** argv);
     ~X11TestApplication() override;
 
+    void start();
+
     std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
-
-    void continueStartupWithCompositor() override;
-
-protected:
-    void performStartup() override;
 };
 
 X11TestApplication::X11TestApplication(int& argc, char** argv)
@@ -70,12 +67,9 @@ X11TestApplication::~X11TestApplication()
 {
 }
 
-void X11TestApplication::performStartup()
+void X11TestApplication::start()
 {
-}
-
-void X11TestApplication::continueStartupWithCompositor()
-{
+    prepare_start();
     render::x11::compositor::create();
     createWorkspace();
 }

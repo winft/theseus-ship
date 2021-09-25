@@ -125,6 +125,7 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
     Q_OBJECT
 public:
     std::unique_ptr<WaylandServer> server;
+    std::unique_ptr<Xwl::Xwayland> xwayland;
 
     wlr_input_device* pointer{nullptr};
     wlr_input_device* keyboard{nullptr};
@@ -139,23 +140,20 @@ public:
                            char** argv);
     ~WaylandTestApplication() override;
 
-    void continueStartupWithCompositor() override;
-
-protected:
-    void performStartup() override;
+    void start();
 
 private:
-    void init_wlroots_backend();
-    void continue_startup_with_workspace();
-    void finalizeStartup();
+    void handle_server_addons_created();
+    void create_xwayland();
 
     std::unique_ptr<platform_base::wlroots> base;
     std::unique_ptr<render::backend::wlroots::backend> render;
-    Xwl::Xwayland* m_xwayland = nullptr;
 };
 
 namespace Test
 {
+
+KWIN_EXPORT WaylandTestApplication* app();
 
 /**
  * Creates a Wayland Connection in a dedicated thread and creates various

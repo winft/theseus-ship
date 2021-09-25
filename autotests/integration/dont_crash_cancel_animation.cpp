@@ -56,11 +56,12 @@ void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
 
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
-    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspaceCreatedSpy.isValid());
-    kwinApp()->start();
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
+
+    Test::app()->start();
     QVERIFY(render::compositor::self());
-    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
+    QVERIFY(startup_spy.size() || startup_spy.wait());
     QVERIFY(effects);
 }
 

@@ -266,6 +266,11 @@ void client::cleanup()
     }
 }
 
+WaylandTestApplication* app()
+{
+    return static_cast<WaylandTestApplication*>(kwinApp());
+}
+
 void setup_wayland_connection(AdditionalWaylandInterfaces flags)
 {
     get_all_clients().emplace_back(flags);
@@ -283,8 +288,7 @@ client& get_client()
 
 std::vector<client>& get_all_clients()
 {
-    auto app = static_cast<WaylandTestApplication*>(kwinApp());
-    return app->clients;
+    return app()->clients;
 }
 
 bool wait_for_wayland_pointer()
@@ -653,7 +657,7 @@ void wlr_signal_emit_safe(wl_signal* signal, void* data)
 
 void pointer_motion_absolute(QPointF const& position, uint32_t time)
 {
-    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+    auto app = Test::app();
 
     QVERIFY(app->pointer);
 
@@ -672,7 +676,7 @@ void pointer_motion_absolute(QPointF const& position, uint32_t time)
 
 void pointer_button_impl(uint32_t button, uint32_t time, wlr_button_state state)
 {
-    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+    auto app = Test::app();
 
     QVERIFY(app->pointer);
 
@@ -704,7 +708,7 @@ void pointer_axis_impl(double delta,
                        wlr_axis_orientation orientation,
                        wlr_axis_source source)
 {
-    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+    auto app = Test::app();
 
     QVERIFY(app->pointer);
 
@@ -736,7 +740,7 @@ void pointer_axis_vertical(double delta, uint32_t time, int32_t discrete_delta)
 
 void keyboard_key_impl(uint32_t key, uint32_t time, bool update_state, wl_keyboard_key_state state)
 {
-    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+    auto app = Test::app();
 
     QVERIFY(app->keyboard);
 
@@ -770,7 +774,7 @@ QPointF get_relative_touch_position(QPointF const& pos)
 
 void touch_down(int32_t id, QPointF const& position, uint32_t time)
 {
-    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+    auto app = Test::app();
 
     QVERIFY(app->touch);
 
@@ -790,7 +794,7 @@ void touch_down(int32_t id, QPointF const& position, uint32_t time)
 
 void touch_up(int32_t id, uint32_t time)
 {
-    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+    auto app = Test::app();
 
     QVERIFY(app->touch);
 
@@ -806,7 +810,7 @@ void touch_up(int32_t id, uint32_t time)
 
 void touch_motion(int32_t id, QPointF const& position, uint32_t time)
 {
-    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+    auto app = Test::app();
 
     QVERIFY(app->touch);
 
@@ -826,7 +830,7 @@ void touch_motion(int32_t id, QPointF const& position, uint32_t time)
 
 void touch_cancel()
 {
-    auto app = static_cast<WaylandTestApplication*>(kwinApp());
+    auto app = Test::app();
 
     QVERIFY(app->touch);
 

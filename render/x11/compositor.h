@@ -41,6 +41,9 @@ public:
     static compositor* create(QObject* parent = nullptr);
     static compositor* self();
 
+    void schedule_repaint();
+    void schedule_repaint(Toplevel* window) override;
+
     void toggleCompositing() override;
 
     /**

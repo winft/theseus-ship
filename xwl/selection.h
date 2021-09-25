@@ -84,6 +84,8 @@ struct selection_data {
     WlSource<server_device, srv_data_source>* wayland_source{nullptr};
     X11Source<clt_data_source>* x11_source{nullptr};
 
+    x11_data x11;
+
     // active transfers
     struct {
         QVector<TransferWltoX*> wl_to_x11;
@@ -109,7 +111,10 @@ struct selection_data {
 };
 
 template<typename srv_data_source, typename client_data_device>
-auto create_selection_data(xcb_atom_t atom, srv_data_source* sdev, client_data_device* cdev)
+auto create_selection_data(xcb_atom_t atom,
+                           srv_data_source* sdev,
+                           client_data_device* cdev,
+                           x11_data const& x11)
 {
     selection_data<srv_data_source, client_data_device> sel;
 
@@ -117,11 +122,11 @@ auto create_selection_data(xcb_atom_t atom, srv_data_source* sdev, client_data_d
     sel.atom = atom;
     sel.srv_device = sdev;
     sel.clt_device = cdev;
+    sel.x11 = x11;
 
-    auto xcb_con = kwinApp()->x11Connection();
-    sel.window = xcb_generate_id(kwinApp()->x11Connection());
+    sel.window = xcb_generate_id(x11.connection);
     sel.requestor_window = sel.window;
-    xcb_flush(xcb_con);
+    xcb_flush(x11.connection);
 
     return sel;
 }
@@ -300,7 +305,7 @@ bool handle_property_notify(Selection* sel, xcb_property_notify_event_t* event)
 template<typename Selection>
 void own_selection(Selection* sel, bool own)
 {
-    auto xcb_conn = kwinApp()->x11Connection();
+    auto xcb_conn = sel->data.x11.connection;
     if (own) {
         xcb_set_selection_owner(xcb_conn, sel->data.window, sel->data.atom, XCB_TIME_CURRENT_TIME);
     } else {
@@ -369,6 +374,7 @@ void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
                                       fd,
                                       sel->data.x11_source->timestamp(),
                                       sel->data.requestor_window,
+                                      sel->data.x11,
                                       sel->data.qobject.get());
     sel->data.transfers.x11_to_wl << transfer;
 
@@ -506,7 +512,7 @@ inline QStringList atomToMimeTypes(xcb_atom_t atom)
 template<typename Selection>
 void register_x11_selection(Selection* sel, QSize const& window_size)
 {
-    auto xcbConn = kwinApp()->x11Connection();
+    auto xcbConn = sel->data.x11.connection;
 
     uint32_t const values[] = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
     xcb_create_window(xcbConn,
@@ -519,7 +525,7 @@ void register_x11_selection(Selection* sel, QSize const& window_size)
                       window_size.height(),
                       0,
                       XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                      Xwayland::self()->xcbScreen()->root_visual,
+                      sel->data.x11.screen->root_visual,
                       XCB_CW_EVENT_MASK,
                       values);
     register_xfixes(sel);

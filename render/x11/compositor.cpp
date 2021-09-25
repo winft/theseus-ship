@@ -101,6 +101,18 @@ void compositor::start()
     }
 }
 
+void compositor::schedule_repaint()
+{
+    if (isActive()) {
+        setCompositeTimer();
+    }
+}
+
+void compositor::schedule_repaint([[maybe_unused]] Toplevel* window)
+{
+    schedule_repaint();
+}
+
 void compositor::toggleCompositing()
 {
     if (m_suspended) {
@@ -205,12 +217,6 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     // If a buffer swap is still pending, we return to the event loop and
     // continue processing events until the swap has completed.
     if (m_bufferSwapPending) {
-        return false;
-    }
-
-    // If outputs are disabled, we return to the event loop and
-    // continue processing events until the outputs are enabled again
-    if (!kwinApp()->platform->areOutputsEnabled()) {
         return false;
     }
 

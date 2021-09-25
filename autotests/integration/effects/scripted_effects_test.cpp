@@ -142,8 +142,8 @@ void ScriptedEffectsTest::initTestCase()
     qRegisterMetaType<KWin::Effect*>();
     qRegisterMetaType<win::wayland::window*>();
 
-    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspaceCreatedSpy.isValid());
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     ScriptedEffectLoader loader;
@@ -161,8 +161,9 @@ void ScriptedEffectsTest::initTestCase()
 
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", "1");
-    kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+
+    Test::app()->start();
+    QVERIFY(startup_spy.wait());
     QVERIFY(render::compositor::self());
 
     auto scene = render::compositor::self()->scene();

@@ -32,7 +32,7 @@ platform::platform()
             xinput.reset();
         } else {
             connect(kwinApp(),
-                    &Application::workspaceCreated,
+                    &Application::startup_finished,
                     xinput.get(),
                     &xinput_integration::startListening);
         }

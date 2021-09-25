@@ -24,12 +24,12 @@ public:
     ApplicationX11(int &argc, char **argv);
     ~ApplicationX11() override;
 
+    void start();
+
     void setReplace(bool replace);
     void notifyKSplash() override;
-    void continueStartupWithCompositor() override;
 
 protected:
-    void performStartup() override;
     bool notify(QObject *o, QEvent *e) override;
 
 private Q_SLOTS:

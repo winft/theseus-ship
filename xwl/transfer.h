@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_XWL_TRANSFER
 #define KWIN_XWL_TRANSFER
 
+#include "xwayland.h"
+
 #include <QObject>
 #include <QSocketNotifier>
 #include <QVector>
@@ -213,6 +215,7 @@ public:
                   qint32 fd,
                   xcb_timestamp_t timestamp,
                   xcb_window_t parentWindow,
+                  x11_data const& x11,
                   QObject* parent = nullptr);
     ~TransferXtoWl() override;
 

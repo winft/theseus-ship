@@ -56,8 +56,8 @@ void KeymapCreationFailureTest::initTestCase()
     qputenv("XKB_DEFAULT_VARIANT", "no");
     qputenv("XKB_DEFAULT_OPTIONS", "no");
 
-    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspaceCreatedSpy.isValid());
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
@@ -68,8 +68,8 @@ void KeymapCreationFailureTest::initTestCase()
     layoutGroup.writeEntry("Options", "no");
     layoutGroup.sync();
 
-    kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
+    Test::app()->start();
+    QVERIFY(startup_spy.size() || startup_spy.wait());
 }
 
 void KeymapCreationFailureTest::init()

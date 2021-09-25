@@ -134,39 +134,43 @@ ApplicationWayland::~ApplicationWayland()
     if (effects) {
         static_cast<EffectsHandlerImpl*>(effects)->unloadAllEffects();
     }
-    if (m_xwayland) {
-        // needs to be done before workspace gets destroyed
-        m_xwayland->prepareDestroy();
+
+    if (exit_with_process && exit_with_process->state() != QProcess::NotRunning) {
+        QObject::disconnect(exit_with_process, nullptr, this, nullptr);
+        exit_with_process->terminate();
+        exit_with_process->waitForFinished(5000);
+        exit_with_process = nullptr;
     }
-    waylandServer()->dispatch();
+
+    // Kill Xwayland before terminating its connection.
+    xwayland.reset();
 
     if (QStyle *s = style()) {
+        // Unpolish style before terminating internal connection.
         s->unpolish(this);
     }
 
-    if (auto platform = this->platform) {
-        // disable outputs to prevent further compositing from crashing with a null workspace.
-        platform->setOutputsOn(false);
+    waylandServer()->terminateClientConnections();
+
+    if (compositor) {
+        // Block compositor to prevent further compositing from crashing with a null workspace.
+        // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
+        static_cast<render::wayland::compositor*>(compositor)->lock();
     }
     destroyWorkspace();
 
-    // kill Xwayland before terminating its connection
-    delete m_xwayland;
-    m_xwayland = nullptr;
-
     destroyCompositor();
-
-    waylandServer()->terminateClientConnections();
 }
 
-void ApplicationWayland::performStartup()
+void ApplicationWayland::start()
 {
+    prepare_start();
+
     if (m_startXWayland) {
         setOperationMode(OperationModeXwayland);
     }
 
     createOptions();
-    waylandServer()->createInternalConnection();
 
     auto session = new seat::backend::wlroots::session(backend->backend);
     this->session.reset(session);
@@ -188,16 +192,19 @@ void ApplicationWayland::performStartup()
     }
 
     input::dbus::tablet_mode_manager::create(this);
+
+    render::wayland::compositor::create();
+    createWorkspace();
+
+    waylandServer()->create_addons([this] { handle_server_addons_created(); });
 }
 
-void ApplicationWayland::continueStartupWithCompositor()
+void ApplicationWayland::handle_server_addons_created()
 {
-    render::wayland::compositor::create();
-
     if (operationMode() == OperationModeXwayland) {
         create_xwayland();
     } else {
-        init_workspace();
+        startSession();
     }
 }
 
@@ -212,40 +219,44 @@ void ApplicationWayland::init_platforms()
     platform = render.get();
 }
 
-void ApplicationWayland::init_workspace()
-{
-    if (m_xwayland) {
-        disconnect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::init_workspace);
-    }
-    startSession();
-    createWorkspace();
-    waylandServer()->initWorkspace();
-}
-
 void ApplicationWayland::create_xwayland()
 {
-    m_xwayland = new Xwl::Xwayland(this);
-    connect(m_xwayland, &Xwl::Xwayland::criticalError, this, [](int code) {
-        // we currently exit on Xwayland errors always directly
-        // TODO: restart Xwayland
-        std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
-        exit(code);
-    });
-    connect(m_xwayland, &Xwl::Xwayland::initialized, this, &ApplicationWayland::init_workspace);
-    m_xwayland->init();
+    auto status_callback = [this](auto error) {
+        if (error) {
+            // we currently exit on Xwayland errors always directly
+            // TODO: restart Xwayland
+            std::cerr << "Xwayland had a critical error. Going to exit now." << std::endl;
+            exit(error);
+        }
+        startSession();
+    };
+
+    try {
+        xwayland.reset(new Xwl::Xwayland(this, status_callback));
+    } catch (std::system_error const& exc) {
+        std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+        exit(exc.code().value());
+    } catch (std::exception const& exc) {
+        std::cerr << "FATAL ERROR creating Xwayland: " << exc.what() << std::endl;
+        exit(1);
+    }
 }
 
 void ApplicationWayland::startSession()
 {
+    auto process_environment = processStartupEnvironment();
+
+    // Enforce Wayland platform for started Qt apps. They otherwise for some reason prefer X11.
+    process_environment.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
+
     if (!m_inputMethodServerToStart.isEmpty()) {
         QStringList arguments = KShell::splitArgs(m_inputMethodServerToStart);
         if (!arguments.isEmpty()) {
             QString program = arguments.takeFirst();
             int socket = dup(waylandServer()->createInputMethodConnection());
             if (socket >= 0) {
-                QProcessEnvironment environment = processStartupEnvironment();
+                auto environment = process_environment;
                 environment.insert(QStringLiteral("WAYLAND_SOCKET"), QByteArray::number(socket));
-                environment.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
                 environment.remove("DISPLAY");
                 environment.remove("WAYLAND_DISPLAY");
                 QProcess *p = new Process(this);
@@ -277,8 +288,9 @@ void ApplicationWayland::startSession()
             QString program = arguments.takeFirst();
             QProcess *p = new Process(this);
             p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-            p->setProcessEnvironment(processStartupEnvironment());
-            connect(p, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, [p] (int code, QProcess::ExitStatus status) {
+            p->setProcessEnvironment(process_environment);
+            connect(p, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, [this, p] (int code, QProcess::ExitStatus status) {
+                exit_with_process = nullptr;
                 p->deleteLater();
                 if (status == QProcess::CrashExit) {
                     qWarning() << "Session process has crashed";
@@ -295,6 +307,7 @@ void ApplicationWayland::startSession()
             p->setProgram(program);
             p->setArguments(arguments);
             p->start();
+            exit_with_process = p;
         } else {
             qWarning("Failed to launch the session process: %s is an invalid command",
                      qPrintable(m_sessionArgument));
@@ -314,13 +327,15 @@ void ApplicationWayland::startSession()
             // this is going to happen anyway as we are the wayland and X server the app connects to
             QProcess *p = new Process(this);
             p->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-            p->setProcessEnvironment(processStartupEnvironment());
+            p->setProcessEnvironment(process_environment);
             p->setProgram(program);
             p->setArguments(arguments);
             p->startDetached();
             p->deleteLater();
         }
     }
+
+    Q_EMIT startup_finished();
 }
 
 static void disablePtrace()
@@ -410,7 +425,7 @@ int main(int argc, char * argv[])
     sigaddset(&userSignals, SIGUSR2);
     pthread_sigmask(SIG_BLOCK, &userSignals, nullptr);
 
-    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+    auto environment = QProcessEnvironment::systemEnvironment();
 
     // enforce our internal qpa plugin, unfortunately command line switch has precedence
     setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);

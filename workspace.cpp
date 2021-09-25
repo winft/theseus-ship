@@ -560,14 +560,13 @@ void Workspace::initWithX11()
         activateClient(new_active_client);
 }
 
-Workspace::~Workspace()
+void Workspace::clear_x11()
 {
     stacking_order->lock();
 
-    // TODO: grabXServer();
-
     // Use stacking_order, so that kwin --replace keeps stacking order
     auto const stack = stacking_order->sorted();
+
     // "mutex" the stackingorder, since anything trying to access it from now on will find
     // many dangeling pointers and crash
     stacking_order->win_stack.clear();
@@ -577,8 +576,11 @@ Workspace::~Workspace()
         if (!c) {
             continue;
         }
+
         // Only release the window
-        c->release_window(true);
+        auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
+        c->release_window(is_x11);
+
         // No removeClient() is called, it does more than just removing.
         // However, remove from some lists to e.g. prevent performTransiencyCheck()
         // from crashing.
@@ -586,7 +588,24 @@ Workspace::~Workspace()
         remove_all(m_windows, c);
     }
 
+    for (auto const& unmanaged : unmanagedList()) {
+        win::x11::release_unmanaged(unmanaged, ReleaseReason::KWinShutsDown);
+        remove_all(m_windows, unmanaged);
+        remove_all(stacking_order->pre_stack, unmanaged);
+    }
+
     win::x11::window::cleanupX11();
+
+    stacking_order->unlock();
+}
+
+Workspace::~Workspace()
+{
+    stacking_order->lock();
+
+    // TODO: grabXServer();
+
+    clear_x11();
 
     if (waylandServer()) {
         auto const windows = waylandServer()->windows;
@@ -594,11 +613,6 @@ Workspace::~Workspace()
             win->destroy();
             remove_all(m_windows, win);
         }
-    }
-
-    for (auto const& unmanaged : unmanagedList()) {
-        win::x11::release_unmanaged(unmanaged, ReleaseReason::KWinShutsDown);
-        remove_all(m_windows, unmanaged);
     }
 
     for (auto const& window : m_windows) {

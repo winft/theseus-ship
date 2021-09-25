@@ -11,6 +11,7 @@
 
 #include "abstract_wayland_output.h"
 #include "platform.h"
+#include "render/cursor.h"
 #include "scene.h"
 #include "wayland_server.h"
 #include "win/scene.h"
@@ -29,7 +30,7 @@ compositor* compositor::create(QObject* parent)
 
 void compositor::addRepaint(QRegion const& region)
 {
-    if (!isActive()) {
+    if (locked) {
         return;
     }
     for (auto& [key, output] : outputs) {
@@ -55,6 +56,10 @@ compositor::compositor(QObject* parent)
         qCCritical(KWIN_CORE) << "Presentation clock failed. Exit.";
         qApp->quit();
     }
+
+    // For now we use the software cursor as our wlroots backend does not support yet a hardware
+    // cursor.
+    software_cursor->set_enabled(true);
 
     connect(kwinApp(),
             &Application::x11ConnectionAboutToBeDestroyed,
@@ -98,11 +103,7 @@ compositor::~compositor() = default;
 
 void compositor::schedule_repaint(Toplevel* window)
 {
-    if (!isActive()) {
-        return;
-    }
-
-    if (!kwinApp()->platform->areOutputsEnabled()) {
+    if (locked) {
         return;
     }
 
@@ -115,11 +116,7 @@ void compositor::schedule_repaint(Toplevel* window)
 
 void compositor::schedule_frame_callback(Toplevel* window)
 {
-    if (!isActive()) {
-        return;
-    }
-
-    if (!kwinApp()->platform->areOutputsEnabled()) {
+    if (locked) {
         return;
     }
 
@@ -134,6 +131,26 @@ void compositor::schedule_frame_callback(Toplevel* window)
 void compositor::toggleCompositing()
 {
     // For the shortcut. Not possible on Wayland because we always composite.
+}
+
+bool compositor::is_locked() const
+{
+    return locked > 0;
+}
+
+void compositor::lock()
+{
+    locked++;
+}
+
+void compositor::unlock()
+{
+    assert(locked > 0);
+    locked--;
+
+    if (!locked) {
+        addRepaintFull();
+    }
 }
 
 void compositor::start()

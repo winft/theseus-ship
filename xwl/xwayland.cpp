@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main_wayland.h"
 #include "utils.h"
 #include "wayland_server.h"
+#include "workspace.h"
 #include "xcbutils.h"
 
 #include <KLocalizedString>
@@ -72,75 +73,37 @@ namespace KWin
 namespace Xwl
 {
 
-Xwayland* s_self = nullptr;
-
-Xwayland* Xwayland::self()
-{
-    return s_self;
-}
-
-Xwayland::Xwayland(ApplicationWaylandAbstract* app, QObject* parent)
-    : XwaylandInterface(parent)
+Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> status_callback)
+    : XwaylandInterface()
     , m_app(app)
-{
-    s_self = this;
-}
-
-Xwayland::~Xwayland()
-{
-    disconnect(m_xwaylandFailConnection);
-    if (m_app->x11Connection()) {
-        Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
-        m_app->destroyAtoms();
-        Q_EMIT m_app->x11ConnectionAboutToBeDestroyed();
-        xcb_disconnect(m_app->x11Connection());
-        m_app->setX11Connection(nullptr);
-    }
-
-    if (m_xwaylandProcess) {
-        m_xwaylandProcess->terminate();
-        while (m_xwaylandProcess->state() != QProcess::NotRunning) {
-            m_app->processEvents(QEventLoop::WaitForMoreEvents);
-        }
-        waylandServer()->destroyXWaylandConnection();
-    }
-    s_self = nullptr;
-}
-
-void Xwayland::init()
+    , status_callback{status_callback}
 {
     int pipeFds[2];
     if (pipe(pipeFds) != 0) {
-        std::cerr << "FATAL ERROR failed to create pipe to start Xwayland " << std::endl;
-        Q_EMIT criticalError(1);
-        return;
+        throw std::runtime_error("Failed to create pipe to start Xwayland");
     }
+
     int sx[2];
     if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) < 0) {
-        std::cerr << "FATAL ERROR: failed to open socket to open XCB connection" << std::endl;
-        Q_EMIT criticalError(1);
-        return;
+        throw std::runtime_error("Failed to open socket to open XCB connection");
     }
+
     int fd = dup(sx[1]);
     if (fd < 0) {
-        std::cerr << "FATAL ERROR: failed to open socket to open XCB connection" << std::endl;
-        Q_EMIT criticalError(20);
-        return;
+        throw std::system_error(std::error_code(20, std::generic_category()),
+                                "Failed to dup socket to open XCB connection");
     }
 
     const int waylandSocket = waylandServer()->createXWaylandConnection();
     if (waylandSocket == -1) {
-        std::cerr << "FATAL ERROR: failed to open socket for Xwayland" << std::endl;
-        Q_EMIT criticalError(1);
         close(fd);
-        return;
+        throw std::runtime_error("Failed to open socket for Xwayland");
     }
     const int wlfd = dup(waylandSocket);
     if (wlfd < 0) {
-        std::cerr << "FATAL ERROR: failed to open socket for Xwayland" << std::endl;
-        Q_EMIT criticalError(20);
         close(fd);
-        return;
+        throw std::system_error(std::error_code(20, std::generic_category()),
+                                "Failed to dup socket for Xwayland");
     }
 
     m_xcbConnectionFd = sx[0];
@@ -167,7 +130,7 @@ void Xwayland::init()
             } else {
                 std::cerr << "FATAL ERROR: Xwayland failed, going to exit now" << std::endl;
             }
-            Q_EMIT criticalError(1);
+            this->status_callback(1);
         });
     const int xDisplayPipe = pipeFds[0];
     connect(m_xwaylandProcess, &QProcess::started, this, [this, xDisplayPipe] {
@@ -188,51 +151,65 @@ void Xwayland::init()
     close(pipeFds[1]);
 }
 
-void Xwayland::prepareDestroy()
+Xwayland::~Xwayland()
 {
-    delete m_dataBridge;
-    m_dataBridge = nullptr;
-}
+    data_bridge.reset();
 
-void Xwayland::createX11Connection()
-{
-    int screenNumber = 0;
-    xcb_connection_t* c = nullptr;
-    if (m_xcbConnectionFd == -1) {
-        c = xcb_connect(nullptr, &screenNumber);
-    } else {
-        c = xcb_connect_to_fd(m_xcbConnectionFd, nullptr);
-    }
-    if (int error = xcb_connection_has_error(c)) {
-        std::cerr << "FATAL ERROR: Creating connection to XServer failed: " << error << std::endl;
-        Q_EMIT criticalError(1);
-        return;
+    disconnect(m_xwaylandFailConnection);
+
+    Workspace::self()->clear_x11();
+
+    if (m_app->x11Connection()) {
+        Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
+        m_app->destroyAtoms();
+        Q_EMIT m_app->x11ConnectionAboutToBeDestroyed();
+        m_app->setX11Connection(nullptr);
+        xcb_disconnect(m_app->x11Connection());
     }
 
-    xcb_screen_iterator_t iter = xcb_setup_roots_iterator(xcb_get_setup(c));
-    m_xcbScreen = iter.data;
-    Q_ASSERT(m_xcbScreen);
+    if (m_xwaylandProcess->state() != QProcess::NotRunning) {
+        disconnect(m_xwaylandProcess, nullptr, this, nullptr);
+        m_xwaylandProcess->terminate();
+        m_xwaylandProcess->waitForFinished(5000);
+    }
+    delete m_xwaylandProcess;
+    m_xwaylandProcess = nullptr;
 
-    m_app->setX11Connection(c);
-    // we don't support X11 multi-head in Wayland
-    m_app->setX11ScreenNumber(screenNumber);
-    m_app->setX11RootWindow(defaultScreen()->root);
+    waylandServer()->destroyXWaylandConnection();
 }
 
 void Xwayland::continueStartupWithX()
 {
-    createX11Connection();
-    xcb_connection_t* xcbConn = m_app->x11Connection();
-    if (!xcbConn) {
-        // about to quit
-        Q_EMIT criticalError(1);
+    int screenNumber = 0;
+
+    if (m_xcbConnectionFd == -1) {
+        basic_data.connection = xcb_connect(nullptr, &screenNumber);
+    } else {
+        basic_data.connection = xcb_connect_to_fd(m_xcbConnectionFd, nullptr);
+    }
+
+    if (int error = xcb_connection_has_error(basic_data.connection)) {
+        std::cerr << "FATAL ERROR connecting to Xwayland server: " << error << std::endl;
+        status_callback(1);
         return;
     }
-    QSocketNotifier* notifier
-        = new QSocketNotifier(xcb_get_file_descriptor(xcbConn), QSocketNotifier::Read, this);
-    auto processXcbEvents = [this, xcbConn] {
-        while (auto event = xcb_poll_for_event(xcbConn)) {
-            if (m_dataBridge->filterEvent(event)) {
+
+    xcb_screen_iterator_t iter = xcb_setup_roots_iterator(xcb_get_setup(basic_data.connection));
+    basic_data.screen = iter.data;
+    assert(basic_data.screen);
+
+    m_app->setX11Connection(basic_data.connection, false);
+
+    // we don't support X11 multi-head in Wayland
+    m_app->setX11ScreenNumber(screenNumber);
+    m_app->setX11RootWindow(defaultScreen()->root);
+
+    xcb_read_notifier.reset(
+        new QSocketNotifier(xcb_get_file_descriptor(basic_data.connection), QSocketNotifier::Read));
+
+    auto processXcbEvents = [this] {
+        while (auto event = xcb_poll_for_event(basic_data.connection)) {
+            if (data_bridge->filterEvent(event)) {
                 free(event);
                 continue;
             }
@@ -241,9 +218,10 @@ void Xwayland::continueStartupWithX()
                 QByteArrayLiteral("xcb_generic_event_t"), event, &result);
             free(event);
         }
-        xcb_flush(xcbConn);
+        xcb_flush(basic_data.connection);
     };
-    connect(notifier, &QSocketNotifier::activated, this, processXcbEvents);
+
+    connect(xcb_read_notifier.get(), &QSocketNotifier::activated, this, processXcbEvents);
     connect(QThread::currentThread()->eventDispatcher(),
             &QAbstractEventDispatcher::aboutToBlock,
             this,
@@ -253,17 +231,12 @@ void Xwayland::continueStartupWithX()
             this,
             processXcbEvents);
 
-    xcb_prefetch_extension_data(xcbConn, &xcb_xfixes_id);
-    m_xfixes = xcb_get_extension_data(xcbConn, &xcb_xfixes_id);
-
     // create selection owner for WM_S0 - magic X display number expected by XWayland
-    KSelectionOwner owner("WM_S0", xcbConn, m_app->x11RootWindow());
+    KSelectionOwner owner("WM_S0", basic_data.connection, m_app->x11RootWindow());
     owner.claim(true);
 
     m_app->createAtoms();
     m_app->setupEventFilters();
-
-    m_dataBridge = new DataBridge;
 
     // Check  whether another windowmanager is running
     const uint32_t maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
@@ -276,7 +249,7 @@ void Xwayland::continueStartupWithX()
                   .toLocal8Bit()
                   .constData(),
               stderr);
-        Q_EMIT criticalError(1);
+        status_callback(1);
         return;
     }
 
@@ -284,17 +257,21 @@ void Xwayland::continueStartupWithX()
     env.insert(QStringLiteral("DISPLAY"), QString::fromUtf8(qgetenv("DISPLAY")));
     m_app->setProcessStartupEnvironment(env);
 
-    emit initialized();
+    status_callback(0);
+    Q_EMIT m_app->x11ConnectionChanged();
 
-    Xcb::sync(); // Trigger possible errors, there's still a chance to abort
+    // Trigger possible errors, there's still a chance to abort
+    Xcb::sync();
+
+    data_bridge.reset(new DataBridge(basic_data));
 }
 
 DragEventReply Xwayland::dragMoveFilter(Toplevel* target, const QPoint& pos)
 {
-    if (!m_dataBridge) {
+    if (!data_bridge) {
         return DragEventReply::Wayland;
     }
-    return m_dataBridge->dragMoveFilter(target, pos);
+    return data_bridge->dragMoveFilter(target, pos);
 }
 
 } // namespace Xwl

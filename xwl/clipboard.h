@@ -48,7 +48,10 @@ public:
     selection_data<srv_data_device, clt_data_device> data;
     QMetaObject::Connection source_check_connection;
 
-    Clipboard(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev);
+    Clipboard(xcb_atom_t atom,
+              srv_data_device* srv_dev,
+              clt_data_device* clt_dev,
+              x11_data const& x11);
 
     srv_data_device* get_current_device() const;
     Wrapland::Client::DataDeviceManager* get_internal_device_manager() const;

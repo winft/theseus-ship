@@ -70,8 +70,8 @@ void DontCrashCursorPhysicalSizeEmpty::initTestCase()
 {
     qRegisterMetaType<win::wayland::window*>();
 
-    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspaceCreatedSpy.isValid());
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     if (!QStandardPaths::locateAll(QStandardPaths::GenericDataLocation,
@@ -84,8 +84,8 @@ void DontCrashCursorPhysicalSizeEmpty::initTestCase()
     }
     qputenv("XCURSOR_SIZE", QByteArrayLiteral("0"));
 
-    kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
+    Test::app()->start();
+    QVERIFY(startup_spy.size() || startup_spy.wait());
 }
 
 void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()

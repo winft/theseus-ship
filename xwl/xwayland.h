@@ -22,9 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "xwayland_interface.h"
 
+#include <memory>
 #include <xcb/xproto.h>
 
 class QProcess;
+class QSocketNotifier;
 
 class xcb_screen_t;
 
@@ -36,34 +38,25 @@ namespace Xwl
 {
 class DataBridge;
 
+struct x11_data {
+    xcb_connection_t* connection{nullptr};
+    xcb_screen_t* screen{nullptr};
+};
+
 class KWIN_EXPORT Xwayland : public XwaylandInterface
 {
     Q_OBJECT
 
 public:
-    static Xwayland* self();
-
-    Xwayland(ApplicationWaylandAbstract* app, QObject* parent = nullptr);
+    /** The @ref status_callback is called once with 0 code when Xwayland is ready, other codes
+     *  indicate a critical error happened at runtime.
+     */
+    Xwayland(ApplicationWaylandAbstract* app, std::function<void(int code)> status_callback);
     ~Xwayland() override;
 
-    void init();
-    void prepareDestroy();
-
-    xcb_screen_t* xcbScreen() const
-    {
-        return m_xcbScreen;
-    }
-    const xcb_query_extension_reply_t* xfixes() const
-    {
-        return m_xfixes;
-    }
-
-Q_SIGNALS:
-    void initialized();
-    void criticalError(int code);
+    std::unique_ptr<DataBridge> data_bridge;
 
 private:
-    void createX11Connection();
     void continueStartupWithX();
 
     DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos) override;
@@ -72,11 +65,12 @@ private:
     QProcess* m_xwaylandProcess = nullptr;
     QMetaObject::Connection m_xwaylandFailConnection;
 
-    xcb_screen_t* m_xcbScreen = nullptr;
-    const xcb_query_extension_reply_t* m_xfixes = nullptr;
-    DataBridge* m_dataBridge = nullptr;
+    x11_data basic_data;
+
+    std::unique_ptr<QSocketNotifier> xcb_read_notifier;
 
     ApplicationWaylandAbstract* m_app;
+    std::function<void(int code)> status_callback;
 
     Q_DISABLE_COPY(Xwayland)
 };

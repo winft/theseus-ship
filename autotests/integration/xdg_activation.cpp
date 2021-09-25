@@ -44,11 +44,13 @@ void xdg_activation_test::initTestCase()
     qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<std::string>();
 
-    QSignalSpy workspace_spy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspace_spy.isValid());
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
+
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
-    kwinApp()->start();
-    QVERIFY(workspace_spy.size() || workspace_spy.wait());
+
+    Test::app()->start();
+    QVERIFY(startup_spy.size() || startup_spy.wait());
 }
 
 void xdg_activation_test::init()

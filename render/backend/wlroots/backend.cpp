@@ -14,7 +14,6 @@
 #include "screens.h"
 #include "wayland_server.h"
 #include <render/compositor.h>
-#include <render/cursor.h>
 
 #include <QDebug>
 
@@ -75,7 +74,6 @@ void handle_new_output(struct wl_listener* listener, void* data)
     }
 
     Q_EMIT back->output_added(out);
-    back->updateOutputsOn();
     Screens::self()->updateAll();
 }
 
@@ -97,9 +95,6 @@ void backend::init()
     }
 
     Screens::self()->updateAll();
-    kwinApp()->continueStartupWithCompositor();
-
-    compositor::self()->software_cursor->set_enabled(true);
 }
 
 Outputs backend::outputs() const
@@ -124,7 +119,6 @@ void backend::enableOutput(output* output, bool enable)
         Q_ASSERT(!enabled_outputs.contains(output));
         Q_EMIT output_removed(output);
     }
-    updateOutputsOn();
     checkOutputsOn();
 
     Screens::self()->updateAll();

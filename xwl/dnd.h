@@ -62,7 +62,10 @@ public:
     Drag* m_currentDrag = nullptr;
     QVector<Drag*> m_oldDrags;
 
-    explicit Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev);
+    explicit Dnd(xcb_atom_t atom,
+                 srv_data_device* srv_dev,
+                 clt_data_device* clt_dev,
+                 x11_data const& x11);
 
     static uint32_t version();
 

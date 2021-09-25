@@ -126,7 +126,6 @@ public:
         m_inputConfig = std::move(config);
     }
 
-    void start();
     /**
      * @brief The operation mode used by KWin.
      *
@@ -207,17 +206,18 @@ public:
 
     void createWorkspace();
     virtual void notifyKSplash() {}
-    virtual void continueStartupWithCompositor() = 0;
 
 Q_SIGNALS:
     void x11ConnectionChanged();
     void x11ConnectionAboutToBeDestroyed();
     void workspaceCreated();
+    void startup_finished();
     void virtualTerminalCreated();
 
 protected:
     Application(OperationMode mode, int &argc, char **argv);
-    virtual void performStartup() = 0;
+
+    void prepare_start();
 
     void createAtoms();
     void createOptions();
@@ -236,9 +236,11 @@ protected:
      * Inheriting classes should use this method to set the xcb connection
      * before accessing any X11 specific code pathes.
      */
-    void setX11Connection(xcb_connection_t *c) {
+    void setX11Connection(xcb_connection_t *c, bool emit_change = true) {
         m_connection = c;
-        emit x11ConnectionChanged();
+        if (emit_change) {
+            Q_EMIT x11ConnectionChanged();
+        }
     }
     void destroyAtoms();
 

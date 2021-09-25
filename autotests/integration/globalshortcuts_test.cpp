@@ -74,8 +74,8 @@ void GlobalShortcutsTest::initTestCase()
     qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
 
-    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspaceCreatedSpy.isValid());
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
@@ -83,8 +83,8 @@ void GlobalShortcutsTest::initTestCase()
     qputenv("XKB_DEFAULT_RULES", "evdev");
     qputenv("XKB_DEFAULT_LAYOUT", "us,ru");
 
-    kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    Test::app()->start();
+    QVERIFY(startup_spy.wait());
 }
 
 void GlobalShortcutsTest::init()

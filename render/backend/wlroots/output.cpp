@@ -246,7 +246,6 @@ output::~output()
         back->enabled_outputs.removeOne(this);
         back->all_outputs.removeOne(this);
         Q_EMIT back->output_removed(this);
-        back->updateOutputsOn();
         Screens::self()->updateAll();
     }
 }

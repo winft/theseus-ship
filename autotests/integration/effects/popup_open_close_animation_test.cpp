@@ -66,8 +66,8 @@ void PopupOpenCloseAnimationTest::initTestCase()
     qRegisterMetaType<KWin::win::InternalClient*>();
     qRegisterMetaType<win::wayland::window*>();
 
-    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspaceCreatedSpy.isValid());
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -82,8 +82,8 @@ void PopupOpenCloseAnimationTest::initTestCase()
 
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
 
-    kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.size() || workspaceCreatedSpy.wait());
+    Test::app()->start();
+    QVERIFY(startup_spy.size() || startup_spy.wait());
 }
 
 void PopupOpenCloseAnimationTest::init()

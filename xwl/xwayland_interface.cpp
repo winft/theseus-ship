@@ -29,8 +29,8 @@ XwaylandInterface* XwaylandInterface::self()
     return s_self;
 }
 
-XwaylandInterface::XwaylandInterface(QObject* parent)
-    : QObject(parent)
+XwaylandInterface::XwaylandInterface()
+    : QObject()
 {
     s_self = this;
 }

@@ -92,11 +92,12 @@ void MoveResizeWindowTest::initTestCase()
     qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<KWin::win::x11::window*>();
 
-    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspaceCreatedSpy.isValid());
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
-    kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+
+    Test::app()->start();
+    QVERIFY(startup_spy.wait());
     QCOMPARE(screens()->count(), 1);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
 }

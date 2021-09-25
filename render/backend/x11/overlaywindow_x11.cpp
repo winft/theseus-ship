@@ -6,7 +6,7 @@
 #include "overlaywindow_x11.h"
 
 #include "kwinglobals.h"
-#include "render/compositor.h"
+#include "render/x11/compositor.h"
 #include "screens.h"
 #include "utils.h"
 #include "xcbutils.h"
@@ -204,7 +204,7 @@ bool OverlayWindowX11::event(xcb_generic_event_t* event)
         if (m_window != XCB_WINDOW_NONE && visibility->window == m_window) {
             bool was_visible = isVisible();
             setVisibility((visibility->state != XCB_VISIBILITY_FULLY_OBSCURED));
-            auto compositor = render::compositor::self();
+            auto compositor = static_cast<render::x11::compositor*>(render::compositor::self());
             if (!was_visible && m_visible) {
                 // hack for #154825
                 compositor->addRepaintFull();

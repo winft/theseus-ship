@@ -46,6 +46,8 @@ public:
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
 
+    void start();
+
     void setStartXwayland(bool start) {
         m_startXWayland = start;
     }
@@ -66,15 +68,11 @@ public:
         return m_environment;
     }
 
-    void continueStartupWithCompositor() override;
     void init_platforms();
 
-protected:
-    void performStartup() override;
-
 private:
+    void handle_server_addons_created();
     void create_xwayland();
-    void init_workspace();
     void startSession();
 
     bool m_startXWayland = false;
@@ -85,7 +83,9 @@ private:
 
     std::unique_ptr<platform_base::wlroots> backend;
     std::unique_ptr<render::backend::wlroots::backend> render;
-    Xwl::Xwayland *m_xwayland = nullptr;
+    std::unique_ptr<Xwl::Xwayland> xwayland;
+
+    QProcess* exit_with_process{nullptr};
 };
 
 }

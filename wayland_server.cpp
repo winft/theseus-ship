@@ -589,20 +589,14 @@ void WaylandServer::initWorkspace()
                 }
                 win::wayland::xdg_activation_activate(ws, win, token);
             });
-
-    if (hasScreenLockerIntegration()) {
-        if (m_internalConnection.interfacesAnnounced) {
-            initScreenLocker();
-        } else {
-            connect(m_internalConnection.registry, &Wrapland::Client::Registry::interfacesAnnounced, this, &WaylandServer::initScreenLocker);
-        }
-    } else {
-        emit initialized();
-    }
 }
 
 void WaylandServer::initScreenLocker()
 {
+    if (!hasScreenLockerIntegration()) {
+        return;
+    }
+
     auto *screenLockerApp = ScreenLocker::KSldApp::self();
 
     ScreenLocker::KSldApp::self()->setGreeterEnvironment(kwinApp()->processStartupEnvironment());
@@ -646,7 +640,8 @@ void WaylandServer::initScreenLocker()
     if (m_initFlags.testFlag(InitializationFlag::LockScreen)) {
         ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
     }
-    emit initialized();
+
+    Q_EMIT screenlocker_initialized();
 }
 
 WaylandServer::SocketPairConnection WaylandServer::createConnection()
@@ -718,10 +713,23 @@ void WaylandServer::destroyInputMethodConnection()
     m_inputMethodServerConnection = nullptr;
 }
 
-void WaylandServer::createInternalConnection()
+void WaylandServer::create_addons(std::function<void()> callback)
+{
+    auto handle_client_created = [this, callback](auto client_created){
+        initWorkspace();
+        if (client_created && hasScreenLockerIntegration()) {
+            initScreenLocker();
+        }
+        callback();
+    };
+    createInternalConnection(handle_client_created);
+}
+
+void WaylandServer::createInternalConnection(std::function<void(bool)> callback)
 {
     const auto socket = createConnection();
     if (!socket.connection) {
+        callback(false);
         return;
     }
     m_internalConnection.server = socket.connection;
@@ -733,44 +741,40 @@ void WaylandServer::createInternalConnection()
     m_internalConnection.clientThread->start();
 
     connect(m_internalConnection.client, &ConnectionThread::establishedChanged, this,
-        [this](bool established) {
+        [this, callback](bool established) {
             if (!established) {
                 return;
             }
-            Registry *registry = new Registry(this);
-            EventQueue *eventQueue = new EventQueue(this);
+            auto registry = new Registry;
+            auto eventQueue = new EventQueue;
             eventQueue->setup(m_internalConnection.client);
             registry->setEventQueue(eventQueue);
             registry->create(m_internalConnection.client);
             m_internalConnection.registry = registry;
             m_internalConnection.queue = eventQueue;
-            connect(registry, &Registry::shmAnnounced, this,
-                [this] (quint32 name, quint32 version) {
-                    m_internalConnection.shm = m_internalConnection.registry->createShmPool(name, version, this);
-                }
-            );
-            connect(registry, &Registry::interfacesAnnounced, this,
-                [this, registry] {
-                    m_internalConnection.interfacesAnnounced = true;
 
-                    const auto compInterface = registry->interface(Registry::Interface::Compositor);
-                    if (compInterface.name != 0) {
-                        m_internalConnection.compositor = registry->createCompositor(compInterface.name, compInterface.version, this);
-                    }
-                    const auto seatInterface = registry->interface(Registry::Interface::Seat);
-                    if (seatInterface.name != 0) {
-                        m_internalConnection.seat = registry->createSeat(seatInterface.name, seatInterface.version, this);
-                    }
-                    const auto ddmInterface = registry->interface(Registry::Interface::DataDeviceManager);
-                    if (ddmInterface.name != 0) {
-                        m_internalConnection.ddm = registry->createDataDeviceManager(ddmInterface.name, ddmInterface.version, this);
-                    }
-                    const auto psdmInterface = registry->interface(Registry::Interface::PrimarySelectionDeviceManager);
-                    if (psdmInterface.name != 0) {
-                        m_internalConnection.psdm = registry->createPrimarySelectionDeviceManager(psdmInterface.name, psdmInterface.version, this);
-                    }
-                }
-            );
+            connect(registry, &Registry::interfacesAnnounced, this, [this, callback, registry] {
+                auto create_interface
+                    = [registry](Registry::Interface iface_code, auto creator) {
+                          auto iface = registry->interface(iface_code);
+                          assert(iface.name != 0);
+                          return (registry->*creator)(iface.name, iface.version, nullptr);
+                      };
+
+                m_internalConnection.shm
+                    = create_interface(Registry::Interface::Shm, &Registry::createShmPool);
+                m_internalConnection.compositor = create_interface(Registry::Interface::Compositor,
+                                                                   &Registry::createCompositor);
+                m_internalConnection.seat
+                    = create_interface(Registry::Interface::Seat, &Registry::createSeat);
+                m_internalConnection.ddm = create_interface(Registry::Interface::DataDeviceManager,
+                                                            &Registry::createDataDeviceManager);
+                m_internalConnection.psdm
+                    = create_interface(Registry::Interface::PrimarySelectionDeviceManager,
+                                       &Registry::createPrimarySelectionDeviceManager);
+                callback(true);
+            }, Qt::QueuedConnection);
+
             registry->setup();
         }
     );

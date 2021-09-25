@@ -58,8 +58,8 @@ private:
 
 void ScreenEdgeTest::initTestCase()
 {
-    QSignalSpy workspaceCreatedSpy(kwinApp(), &Application::workspaceCreated);
-    QVERIFY(workspaceCreatedSpy.isValid());
+    QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
+    QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     // empty config to have defaults
@@ -80,8 +80,8 @@ void ScreenEdgeTest::initTestCase()
     config->sync();
     kwinApp()->setConfig(config);
 
-    kwinApp()->start();
-    QVERIFY(workspaceCreatedSpy.wait());
+    Test::app()->start();
+    QVERIFY(startup_spy.wait());
     QVERIFY(Scripting::self());
 
     ScreenEdges::self()->setTimeThreshold(0);

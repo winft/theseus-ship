@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dnd.h"
 #include "primary_selection.h"
 #include "selection.h"
-#include "xwayland.h"
 
 #include "atoms.h"
 #include "toplevel.h"
@@ -45,17 +44,11 @@ namespace KWin
 namespace Xwl
 {
 
-static DataBridge* s_self = nullptr;
-
-DataBridge* DataBridge::self()
+DataBridge::DataBridge(x11_data const& x11)
+    : QObject()
 {
-    return s_self;
-}
-
-DataBridge::DataBridge(QObject* parent)
-    : QObject(parent)
-{
-    s_self = this;
+    xcb_prefetch_extension_data(x11.connection, &xcb_xfixes_id);
+    xfixes = xcb_get_extension_data(x11.connection, &xcb_xfixes_id);
 
     m_dataDevice = waylandServer()->internalDataDeviceManager()->getDevice(
         waylandServer()->internalSeat(), this);
@@ -68,7 +61,7 @@ DataBridge::DataBridge(QObject* parent)
     *dc = connect(waylandServer()->dataDeviceManager(),
                   &Wrapland::Server::DataDeviceManager::deviceCreated,
                   this,
-                  [this, dc](auto srv_dev) {
+                  [this, dc, x11](auto srv_dev) {
                       if (srv_dev->client() != waylandServer()->internalConnection()) {
                           return;
                       }
@@ -81,8 +74,9 @@ DataBridge::DataBridge(QObject* parent)
 
                       assert(!m_clipboard);
                       assert(!m_dnd);
-                      m_clipboard.reset(new Clipboard(atoms->clipboard, srv_dev, m_dataDevice));
-                      m_dnd.reset(new Dnd(atoms->xdnd_selection, srv_dev, m_dataDevice));
+                      m_clipboard.reset(
+                          new Clipboard(atoms->clipboard, srv_dev, m_dataDevice, x11));
+                      m_dnd.reset(new Dnd(atoms->xdnd_selection, srv_dev, m_dataDevice, x11));
 
                       waylandServer()->dispatch();
                   });
@@ -91,7 +85,7 @@ DataBridge::DataBridge(QObject* parent)
     *pc = connect(waylandServer()->primarySelectionDeviceManager(),
                   &Wrapland::Server::PrimarySelectionDeviceManager::deviceCreated,
                   this,
-                  [this, pc](auto srv_dev) {
+                  [this, pc, x11](auto srv_dev) {
                       if (srv_dev->client() != waylandServer()->internalConnection()) {
                           return;
                       }
@@ -104,15 +98,12 @@ DataBridge::DataBridge(QObject* parent)
 
                       assert(!m_primarySelection);
                       m_primarySelection.reset(new primary_selection(
-                          atoms->primary_selection, srv_dev, m_primarySelectionDevice));
+                          atoms->primary_selection, srv_dev, m_primarySelectionDevice, x11));
                       waylandServer()->dispatch();
                   });
 }
 
-DataBridge::~DataBridge()
-{
-    s_self = nullptr;
-}
+DataBridge::~DataBridge() = default;
 
 bool DataBridge::filterEvent(xcb_generic_event_t* event)
 {
@@ -125,8 +116,7 @@ bool DataBridge::filterEvent(xcb_generic_event_t* event)
     if (filter_event(m_primarySelection.get(), event)) {
         return true;
     }
-    if (event->response_type - Xwayland::self()->xfixes()->first_event
-        == XCB_XFIXES_SELECTION_NOTIFY) {
+    if (event->response_type - xfixes->first_event == XCB_XFIXES_SELECTION_NOTIFY) {
         return handleXfixesNotify((xcb_xfixes_selection_notify_event_t*)event);
     }
     return false;
