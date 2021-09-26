@@ -161,7 +161,7 @@ Dnd::Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev, x1
             m_surfaceIface = si;
             QObject::connect(
                 workspace(), &Workspace::clientActivated, data.qobject.get(), [this](Toplevel* ac) {
-                    if (!ac || !ac->inherits("KWin::X11Client")) {
+                    if (!qobject_cast<win::x11::window*>(ac)) {
                         return;
                     }
                     auto* surface = ac->surface();

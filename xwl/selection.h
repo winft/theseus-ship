@@ -568,8 +568,7 @@ void check_wl_source(Selection* sel)
         return;
     }
 
-    if (!workspace()->activeClient()
-        || !workspace()->activeClient()->inherits("KWin::win::x11::window")) {
+    if (!qobject_cast<win::x11::window*>(workspace()->activeClient())) {
         // No active client or active client is Wayland native.
         remove_source();
         return;
