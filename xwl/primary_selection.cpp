@@ -24,10 +24,12 @@ primary_selection::primary_selection(xcb_atom_t atom,
                      data.qobject.get(),
                      [this] { handle_wl_selection_change(this); });
 
-    QObject::connect(data.srv_device,
-                     &srv_data_device::selection_changed,
-                     data.qobject.get(),
-                     [this, dev = data.srv_device] { get_selection_setter()(dev->selection()); });
+    QObject::connect(
+        data.srv_device, &srv_data_device::selection_changed, data.qobject.get(), [this] {
+            if (data.srv_device->selection()) {
+                get_selection_setter()(data.srv_device->selection());
+            }
+        });
 }
 
 primary_selection::srv_data_source* primary_selection::get_current_source() const
