@@ -1048,6 +1048,9 @@ void window::debug(QDebug& stream) const
     } else if (transient()->lead()) {
         type = popup ? "popup" : "subsurface";
     }
+    if (input_method_popup) {
+        type = "input method popup";
+    }
 
     stream.nospace();
     stream << "\'wayland::window"
@@ -1128,6 +1131,11 @@ void window::cancel_popup()
     if (popup) {
         popup->popupDone();
     }
+}
+
+bool window::isInputMethod() const
+{
+    return input_method_popup;
 }
 
 bool window::is_popup_end() const

@@ -6,6 +6,7 @@
 #include "platform.h"
 
 #include "cursor.h"
+#include "input_method.h"
 #include "redirect.h"
 
 #include "base/backend/wlroots.h"
@@ -32,6 +33,7 @@ platform::platform(wayland_base const& base)
     redirect.reset(redirect_ptr);
 
     cursor = std::make_unique<wayland::cursor>(redirect_ptr);
+    input_method = std::make_unique<wayland::input_method>(waylandServer());
 }
 
 platform::~platform() = default;

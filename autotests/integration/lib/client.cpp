@@ -153,6 +153,20 @@ client::client(global_selection globals)
             registry->interface(Clt::Registry::Interface::XdgDecorationUnstableV1).version));
         QVERIFY(interfaces.xdg_decoration->isValid());
     }
+
+    if (flags(globals & global_selection::input_method_v2)) {
+        interfaces.input_method_manager_v2.reset(registry->createInputMethodManagerV2(
+            registry->interface(Clt::Registry::Interface::InputMethodManagerV2).name,
+            registry->interface(Clt::Registry::Interface::InputMethodManagerV2).version));
+        QVERIFY(interfaces.input_method_manager_v2->isValid());
+    }
+
+    if (flags(globals & global_selection::text_input_manager_v3)) {
+        interfaces.text_input_manager_v3.reset(registry->createTextInputManagerV3(
+            registry->interface(Clt::Registry::Interface::TextInputManagerV3).name,
+            registry->interface(Clt::Registry::Interface::TextInputManagerV3).version));
+        QVERIFY(interfaces.text_input_manager_v3->isValid());
+    }
 }
 
 client::client(client&& other) noexcept

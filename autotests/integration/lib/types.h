@@ -20,6 +20,8 @@ enum class global_selection {
     appmenu = 1 << 6,
     shadow = 1 << 7,
     xdg_activation = 1 << 8,
+    input_method_v2 = 1 << 9,
+    text_input_manager_v3 = 1 << 10,
 };
 
 }
