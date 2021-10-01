@@ -239,17 +239,17 @@ protected:
     void rearrangeWindows();
     void reCreateGrids();
     void calculateWindowTransformations(EffectWindowList windowlist,
-                                        int screen,
+                                        EffectScreen* screen,
                                         WindowMotionManager& motionManager,
                                         bool external = false);
     void calculateWindowTransformationsClosest(EffectWindowList windowlist,
-                                               int screen,
+                                               EffectScreen* screen,
                                                WindowMotionManager& motionManager);
     void calculateWindowTransformationsKompose(EffectWindowList windowlist,
-                                               int screen,
+                                               EffectScreen* screen,
                                                WindowMotionManager& motionManager);
     void calculateWindowTransformationsNatural(EffectWindowList windowlist,
-                                               int screen,
+                                               EffectScreen* screen,
                                                WindowMotionManager& motionManager);
 
     // Helper functions for window rearranging
@@ -324,7 +324,7 @@ private:
     std::chrono::milliseconds m_lastPresentTime;
 
     // Grid layout info
-    QList<GridSize> m_gridSizes;
+    QMap<EffectScreen*, GridSize> m_gridSizes;
 
     // Filter box
     EffectFrame* m_filterFrame;

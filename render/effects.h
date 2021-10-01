@@ -864,9 +864,10 @@ public:
                    *static_cast<effect_window_t*>(w)->window.ref_win);
     }
 
-    void windowToScreen(EffectWindow* w, int screen) override
+    void windowToScreen(EffectWindow* w, EffectScreen* screen) override
     {
-        auto output = base::get_output(compositor.platform.base.outputs, screen);
+        auto screenImpl = static_cast<effect_screen_impl<base::output> const*>(screen);
+        auto output = static_cast<typename base_t::output_t*>(screenImpl->platformOutput());
         if (!output) {
             return;
         }
@@ -1112,28 +1113,18 @@ public:
         return nullptr;
     }
 
-    int activeScreen() const override
+    EffectScreen* activeScreen() const override
     {
         auto output = win::get_current_output(*compositor.space);
         if (!output) {
-            return 0;
+            return nullptr;
         }
-        return base::get_output_index(compositor.platform.base.outputs, *output);
+        return effect_screen_impl<base::output>::get(output);
     }
 
     int numScreens() const override
     {
         return compositor.platform.base.outputs.size();
-    }
-
-    int screenNumber(const QPoint& pos) const override
-    {
-        auto const& outputs = compositor.platform.base.outputs;
-        auto output = base::get_nearest_output(outputs, pos);
-        if (!output) {
-            return 0;
-        }
-        return base::get_output_index(outputs, *output);
     }
 
     QList<EffectScreen*> screens() const override
@@ -1143,7 +1134,12 @@ public:
 
     EffectScreen* screenAt(const QPoint& point) const override
     {
-        return m_effectScreens.value(screenNumber(point));
+        auto const& outputs = compositor.platform.base.outputs;
+        auto output = base::get_nearest_output(outputs, point);
+        if (!output) {
+            return nullptr;
+        }
+        return effect_screen_impl<base::output>::get(output);
     }
 
     EffectScreen* findScreen(const QString& name) const override
@@ -1161,9 +1157,13 @@ public:
         return m_effectScreens.value(screenId);
     }
 
-    QRect clientArea(clientAreaOption opt, int screen, int desktop) const override
+    QRect clientArea(clientAreaOption opt, EffectScreen const* screen, int desktop) const override
     {
-        auto output = base::get_output(compositor.platform.base.outputs, screen);
+        typename base_t::output_t const* output = nullptr;
+        if (screen) {
+            auto screenImpl = static_cast<effect_screen_impl<base::output> const*>(screen);
+            output = static_cast<typename base_t::output_t*>(screenImpl->platformOutput());
+        }
         return win::space_window_area(*compositor.space, opt, output, desktop);
     }
 
@@ -1582,17 +1582,10 @@ protected:
 
     void slotOutputDisabled(base::output* output)
     {
-        auto it = std::find_if(
-            m_effectScreens.begin(), m_effectScreens.end(), [&output](EffectScreen* screen) {
-                return static_cast<effect_screen_impl<base::output>*>(screen)->platformOutput()
-                    == output;
-            });
-        if (it != m_effectScreens.end()) {
-            EffectScreen* screen = *it;
-            m_effectScreens.erase(it);
-            Q_EMIT screenRemoved(screen);
-            delete screen;
-        }
+        EffectScreen* screen = effect_screen_impl<base::output>::get(output);
+        m_effectScreens.removeOne(screen);
+        Q_EMIT screenRemoved(screen);
+        delete screen;
     }
 
     QList<EffectScreen*> m_effectScreens;

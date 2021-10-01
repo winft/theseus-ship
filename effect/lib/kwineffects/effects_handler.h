@@ -62,7 +62,7 @@ class KWINEFFECTS_EXPORT EffectsHandler : public QObject
     Q_PROPERTY(
         int desktops READ numberOfDesktops WRITE setNumberOfDesktops NOTIFY numberDesktopsChanged)
     Q_PROPERTY(bool optionRollOverDesktops READ optionRollOverDesktops)
-    Q_PROPERTY(int activeScreen READ activeScreen)
+    Q_PROPERTY(KWin::EffectScreen* activeScreen READ activeScreen)
     Q_PROPERTY(int numScreens READ numScreens NOTIFY numberScreensChanged)
     /**
      * Factor by which animation speed in the effect should be modified (multiplied).
@@ -244,7 +244,7 @@ public:
                                                const QVector<uint>& desktopIds)
         = 0;
 
-    Q_SCRIPTABLE virtual void windowToScreen(KWin::EffectWindow* w, int screen) = 0;
+    Q_SCRIPTABLE virtual void windowToScreen(KWin::EffectWindow* w, EffectScreen* screen) = 0;
     virtual void setShowingDesktop(bool showing) = 0;
 
     // Activities
@@ -325,10 +325,9 @@ public:
     Q_SCRIPTABLE virtual QString desktopName(int desktop) const = 0;
     virtual bool optionRollOverDesktops() const = 0;
 
-    virtual int activeScreen() const = 0;                               // Xinerama
-    virtual int numScreens() const = 0;                                 // Xinerama
-    Q_SCRIPTABLE virtual int screenNumber(const QPoint& pos) const = 0; // Xinerama
-    virtual QRect clientArea(clientAreaOption, int screen, int desktop) const = 0;
+    virtual EffectScreen* activeScreen() const = 0; // Xinerama
+    virtual int numScreens() const = 0;             // Xinerama
+    virtual QRect clientArea(clientAreaOption, EffectScreen const* screen, int desktop) const = 0;
     virtual QRect clientArea(clientAreaOption, const EffectWindow* c) const = 0;
     virtual QRect clientArea(clientAreaOption, const QPoint& p, int desktop) const = 0;
 

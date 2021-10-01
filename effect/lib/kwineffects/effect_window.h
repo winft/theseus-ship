@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "kwineffects/effect_screen.h"
 #include <kwinconfig.h>
 #include <kwineffects/export.h>
 #include <kwineffects/types.h>
@@ -54,7 +55,7 @@ class KWINEFFECTS_EXPORT EffectWindow : public QObject
     Q_PROPERTY(int height READ height)
     Q_PROPERTY(qreal opacity READ opacity)
     Q_PROPERTY(QPoint pos READ pos)
-    Q_PROPERTY(int screen READ screen)
+    Q_PROPERTY(KWin::EffectScreen* screen READ screen)
     Q_PROPERTY(QSize size READ size)
     Q_PROPERTY(int width READ width)
     Q_PROPERTY(int x READ x)
@@ -453,7 +454,7 @@ public:
      * @since 4.9
      */
     virtual QRect expandedGeometry() const = 0;
-    virtual int screen() const = 0;
+    virtual EffectScreen* screen() const = 0;
     virtual QPoint pos() const = 0;
     virtual QSize size() const = 0;
     virtual QRect rect() const = 0;

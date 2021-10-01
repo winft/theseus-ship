@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "cube_inside.h"
 #include "cube_proxy.h"
+#include "kwineffects/effect_screen.h"
 #include <QFont>
 #include <QMatrix4x4>
 #include <QObject>
@@ -220,7 +221,7 @@ private:
 
     bool reflectionPainting;
     std::chrono::milliseconds rotationDuration;
-    int activeScreen;
+    EffectScreen* activeScreen;
     bool bottomCap;
     bool closeOnMouseRelease;
     float zoom;

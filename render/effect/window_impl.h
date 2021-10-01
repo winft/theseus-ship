@@ -33,6 +33,7 @@ class effects_window_impl : public EffectWindow
 {
 public:
     using space_t = typename Window::scene_t::space_t;
+    using base_t = typename space_t::base_t;
 
     explicit effects_window_impl(Window& window)
         : window{window}
@@ -291,14 +292,15 @@ public:
             *window.ref_win);
     }
 
-    int screen() const override
+    EffectScreen* screen() const override
     {
-        return std::visit(overload{[](auto&& ref_win) -> size_t {
-                              if (!ref_win->topo.central_output) {
-                                  return 0;
+        return std::visit(overload{[](auto&& ref_win) -> EffectScreen* {
+                              auto output = ref_win->topo.central_output;
+                              if (!output) {
+                                  return nullptr;
                               }
-                              return base::get_output_index(ref_win->space.base.outputs,
-                                                            *ref_win->topo.central_output);
+                              return effect_screen_impl<base::output>::get(
+                                  const_cast<typename base_t::output_t*>(output));
                           }},
                           *window.ref_win);
     }

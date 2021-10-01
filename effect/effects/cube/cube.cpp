@@ -76,7 +76,7 @@ CubeEffect::CubeEffect()
     , texturedCaps(true)
     , capTexture(nullptr)
     , reflectionPainting(false)
-    , activeScreen(0)
+    , activeScreen(nullptr)
     , bottomCap(false)
     , closeOnMouseRelease(false)
     , zoom(0.0)
@@ -1358,11 +1358,13 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
         if (w->isDesktop() && effects->numScreens() > 1 && paintCaps) {
             QRect rect = effects->clientArea(FullArea, activeScreen, painting_desktop);
             QRegion paint = QRegion(rect);
-            for (int i = 0; i < effects->numScreens(); i++) {
-                if (i == w->screen())
+            auto const screens = effects->screens();
+            for (auto screen : screens) {
+                if (screen == w->screen()) {
                     continue;
+                }
                 paint = paint.subtracted(
-                    QRegion(effects->clientArea(ScreenArea, i, painting_desktop)));
+                    QRegion(effects->clientArea(ScreenArea, screen, painting_desktop)));
             }
             paint = paint.subtracted(QRegion(w->frameGeometry()));
             // in case of free area in multiscreen setup fill it with cap color

@@ -441,7 +441,7 @@ QVariantMap ScreenShotDBusInterface2::CaptureActiveScreen(const QVariantMap& opt
         return QVariantMap();
     }
 
-    auto screen = effects->findScreen(effects->activeScreen());
+    auto screen = effects->activeScreen();
     if (!screen) {
         sendErrorReply(s_errorInvalidScreen, s_errorInvalidScreenMessage);
         return QVariantMap();
