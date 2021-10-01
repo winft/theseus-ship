@@ -357,8 +357,9 @@ EffectPluginFactory *PluginEffectLoader::factory(const KPluginMetaData &info) co
         return nullptr;
     }
     KPluginLoader loader(info.fileName());
-    if (loader.pluginVersion() != KWIN_EFFECT_API_VERSION) {
-        qCDebug(KWIN_CORE) << info.pluginId() << " has not matching plugin version, expected " << KWIN_EFFECT_API_VERSION << "got " << loader.pluginVersion();
+    if (loader.metaData().value("IID").toString() != EffectPluginFactory_iid) {
+        qCDebug(KWIN_CORE) << info.pluginId() << " has not matching plugin version, expected "
+                           << EffectPluginFactory_iid << "got " << loader.metaData().value("IID");
         return nullptr;
     }
     KPluginFactory *factory = loader.factory();
