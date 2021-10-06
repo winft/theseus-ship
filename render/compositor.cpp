@@ -129,7 +129,6 @@ bool compositor::setupStart()
             qCDebug(KWIN_CORE) << "Attempting to load the XRender scene";
             break;
         case OpenGLCompositing:
-        case OpenGL2Compositing:
             qCDebug(KWIN_CORE) << "Attempting to load the OpenGL scene";
             break;
         case QPainterCompositing:

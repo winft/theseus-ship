@@ -1060,7 +1060,7 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
             // XRender due to NPOT limitations not supported by KWin's shaders
             m_recommendedCompositor = XRenderCompositing;
         } else {
-            m_recommendedCompositor = OpenGL2Compositing;
+            m_recommendedCompositor = OpenGLCompositing;
         }
 
         if (driver() == Driver_R600G ||
@@ -1081,7 +1081,7 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
         if (m_chipClass < NV40) {
             m_recommendedCompositor = XRenderCompositing;
         } else {
-            m_recommendedCompositor = OpenGL2Compositing;
+            m_recommendedCompositor = OpenGLCompositing;
         }
 
         m_limitedNPOT = m_textureNPOT && m_chipClass < NV40;
@@ -1099,12 +1099,12 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
         if (m_chipClass < I915) {
             m_recommendedCompositor = XRenderCompositing;
         } else {
-            m_recommendedCompositor = OpenGL2Compositing;
+            m_recommendedCompositor = OpenGLCompositing;
         }
     }
 
     if (isPanfrost()) {
-        m_recommendedCompositor = OpenGL2Compositing;
+        m_recommendedCompositor = OpenGLCompositing;
     }
 
     if (isMesaDriver() && platformInterface == EglPlatformInterface) {
@@ -1122,7 +1122,7 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
             m_limitedGLSL = m_supportsGLSL = false;
         } else {
             // llvmpipe does support GLSL
-            m_recommendedCompositor = OpenGL2Compositing;
+            m_recommendedCompositor = OpenGLCompositing;
             m_limitedGLSL = false;
             m_supportsGLSL = true;
         }
@@ -1133,29 +1133,29 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
             m_recommendedCompositor = NoCompositing;
         } else {
             // all other drivers support at least GLES 2
-            m_recommendedCompositor = OpenGL2Compositing;
+            m_recommendedCompositor = OpenGLCompositing;
         }
     }
 
     if (m_chipClass == UnknownChipClass && m_driver == Driver_Unknown) {
         // we don't know the hardware. Let's be optimistic and assume OpenGL compatible hardware
-        m_recommendedCompositor = OpenGL2Compositing;
+        m_recommendedCompositor = OpenGLCompositing;
         m_supportsGLSL = true;
     }
 
     if (isVirtualBox()) {
         m_virtualMachine = true;
-        m_recommendedCompositor = OpenGL2Compositing;
+        m_recommendedCompositor = OpenGLCompositing;
     }
 
     if (isVMware()) {
         m_virtualMachine = true;
-        m_recommendedCompositor = OpenGL2Compositing;
+        m_recommendedCompositor = OpenGLCompositing;
     }
 
     if (m_driver == Driver_Virgl) {
         m_virtualMachine = true;
-        m_recommendedCompositor = OpenGL2Compositing;
+        m_recommendedCompositor = OpenGLCompositing;
     }
 
     // and force back to shader supported on gles, we wouldn't have got a context if not supported

@@ -441,13 +441,12 @@ public:
     QRect geometry() const override;
     QRect frameGeometry() const override;
     QRect bufferGeometry() const override;
+    QRect clientGeometry() const override;
 
     QString caption() const override;
 
     QRect expandedGeometry() const override;
-    QRegion shape() const override;
     int screen() const override;
-    bool hasOwnShape() const override; // only for shadow effect, for now
     QPoint pos() const override;
     QSize size() const override;
     QRect rect() const override;
@@ -596,13 +595,13 @@ public:
     void setText(const QString& text) override;
     EffectFrameStyle style() const override {
         return m_style;
-    };
+    }
     Plasma::FrameSvg& frame() {
         return m_frame;
     }
     bool isStatic() const {
         return m_static;
-    };
+    }
     void finalRender(QRegion region, double opacity, double frameOpacity) const;
     void setShader(GLShader* shader) override {
         m_shader = shader;

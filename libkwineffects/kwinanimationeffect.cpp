@@ -128,7 +128,7 @@ void AnimationEffect::validate(Attribute a, uint &meta, FPx2 *from, FPx2 *to, co
 
     } else if (a == Position) {
         QRect area = effects->clientArea(ScreenArea , w);
-        QPoint pt = w->geometry().bottomRight(); // cannot be < 0 ;-)
+        QPoint pt = w->frameGeometry().bottomRight(); // cannot be < 0 ;-)
         if (from) {
             if (from->isValid()) {
                 RELATIVE_XY(Source);
@@ -225,12 +225,8 @@ quint64 AnimationEffect::p_animate( EffectWindow *w, Attribute a, uint meta, int
     if (!d->m_isInitialized)
         init(); // needs to ensure the window gets removed if deleted in the same event cycle
     if (d->m_animations.isEmpty()) {
-        connect(effects, &EffectsHandler::windowGeometryShapeChanged,
-            this, &AnimationEffect::_expandedGeometryChanged);
-        connect(effects, &EffectsHandler::windowStepUserMovedResized,
-            this, &AnimationEffect::_expandedGeometryChanged);
-        connect(effects, &EffectsHandler::windowPaddingChanged,
-            this, &AnimationEffect::_expandedGeometryChanged);
+        connect(effects, &EffectsHandler::windowExpandedGeometryChanged,
+                this, &AnimationEffect::_windowExpandedGeometryChanged);
     }
     AniMap::iterator it = d->m_animations.find(w);
     if (it == d->m_animations.end())
@@ -464,57 +460,10 @@ QRect AnimationEffect::clipRect(const QRect &geo, const AniData &anim) const
     return clip;
 }
 
-void AnimationEffect::clipWindow(const EffectWindow *w, const AniData &anim, WindowQuadList &quads) const
-{
-    return;
-    const QRect geo = w->expandedGeometry();
-    QRect clip = AnimationEffect::clipRect(geo, anim);
-    WindowQuadList filtered;
-    if (clip.left() != geo.left()) {
-        quads = quads.splitAtX(clip.left());
-        foreach (const WindowQuad &quad, quads) {
-            if (quad.right() >= clip.left())
-                filtered << quad;
-        }
-        quads = filtered;
-        filtered.clear();
-    }
-    if (clip.right() != geo.right()) {
-        quads = quads.splitAtX(clip.left());
-        foreach (const WindowQuad &quad, quads) {
-            if (quad.right() <= clip.right())
-                filtered << quad;
-        }
-        quads = filtered;
-        filtered.clear();
-    }
-    if (clip.top() != geo.top()) {
-        quads = quads.splitAtY(clip.top());
-        foreach (const WindowQuad &quad, quads) {
-            if (quad.top() >= clip.top())
-                filtered << quad;
-        }
-        quads = filtered;
-        filtered.clear();
-    }
-    if (clip.bottom() != geo.bottom()) {
-        quads = quads.splitAtY(clip.bottom());
-        foreach (const WindowQuad &quad, quads) {
-            if (quad.bottom() <= clip.bottom())
-                filtered << quad;
-        }
-        quads = filtered;
-    }
-}
-
 void AnimationEffect::disconnectGeometryChanges()
 {
-    disconnect(effects, &EffectsHandler::windowGeometryShapeChanged,
-        this, &AnimationEffect::_expandedGeometryChanged);
-    disconnect(effects, &EffectsHandler::windowStepUserMovedResized,
-        this, &AnimationEffect::_expandedGeometryChanged);
-    disconnect(effects, &EffectsHandler::windowPaddingChanged,
-        this, &AnimationEffect::_expandedGeometryChanged);
+    disconnect(effects, &EffectsHandler::windowExpandedGeometryChanged,
+               this, &AnimationEffect::_windowExpandedGeometryChanged);
 }
 
 
@@ -534,8 +483,6 @@ void AnimationEffect::prePaintWindow( EffectWindow* w, WindowPrePaintData& data,
                 data.setTranslucent();
             else if (!(anim->attribute == Brightness || anim->attribute == Saturation)) {
                 data.setTransformed();
-                if (anim->attribute == Clip)
-                    clipWindow(w, *anim, data.quads);
             }
 
             paintDeleted |= anim->keepAlive;
@@ -581,7 +528,7 @@ void AnimationEffect::paintWindow( EffectWindow* w, int mask, QRegion region, Wi
             case Saturation:
                 data.multiplySaturation(interpolated(*anim)); break;
             case Scale: {
-                const QSize sz = w->geometry().size();
+                const QSize sz = w->frameGeometry().size();
                 float f1(1.0), f2(0.0);
                 if (anim->from[0] >= 0.0 && anim->to[0] >= 0.0) { // scale x
                     f1 = interpolated(*anim, 0);
@@ -609,7 +556,7 @@ void AnimationEffect::paintWindow( EffectWindow* w, int mask, QRegion region, Wi
                 break;
             case Size: {
                 FPx2 dest = anim->from + progress(*anim) * (anim->to - anim->from);
-                const QSize sz = w->geometry().size();
+                const QSize sz = w->frameGeometry().size();
                 float f;
                 if (anim->from[0] >= 0.0 && anim->to[0] >= 0.0) { // resize x
                     f = dest[0]/sz.width();
@@ -624,7 +571,7 @@ void AnimationEffect::paintWindow( EffectWindow* w, int mask, QRegion region, Wi
                 break;
             }
             case Position: {
-                const QRect geo = w->geometry();
+                const QRect geo = w->frameGeometry();
                 const float prgrs = progress(*anim);
                 if ( anim->from[0] >= 0.0 && anim->to[0] >= 0.0 ) {
                     float dest = interpolated(*anim, 0);
@@ -748,11 +695,7 @@ void AnimationEffect::postPaintScreen()
 
 float AnimationEffect::interpolated( const AniData &a, int i ) const
 {
-    if (a.startTime > clock())
-        return a.from[i];
-    if (!a.timeLine.done())
-        return a.from[i] + a.timeLine.value() * (a.to[i] - a.from[i]);
-    return a.to[i]; // we're done and "waiting" at the target value
+    return a.from[i] + a.timeLine.value() * (a.to[i] - a.from[i]);
 }
 
 float AnimationEffect::progress( const AniData &a ) const
@@ -887,7 +830,7 @@ void AnimationEffect::updateLayerRepaints()
                 case Translation:
                 case Position: {
                     createRegion = true;
-                    QRect r(entry.key()->geometry());
+                    QRect r(entry.key()->frameGeometry());
                     int x[2] = {0,0};
                     int y[2] = {0,0};
                     if (anim->attribute == Translation) {
@@ -915,7 +858,7 @@ void AnimationEffect::updateLayerRepaints()
                 case Size:
                 case Scale: {
                     createRegion = true;
-                    const QSize sz = entry.key()->geometry().size();
+                    const QSize sz = entry.key()->frameGeometry().size();
                     float fx = qMax(fixOvershoot(anim->from[0], *anim, 1), fixOvershoot(anim->to[0], *anim, 2));
 //                     float fx = qMax(interpolated(*anim,0), anim->to[0]);
                     if (fx >= 0.0) {
@@ -964,9 +907,8 @@ region_creation:
     }
 }
 
-void AnimationEffect::_expandedGeometryChanged(KWin::EffectWindow *w, const QRect &old)
+void AnimationEffect::_windowExpandedGeometryChanged(KWin::EffectWindow *w)
 {
-    Q_UNUSED(old)
     Q_D(AnimationEffect);
     AniMap::const_iterator entry = d->m_animations.constFind(w);
     if (entry != d->m_animations.constEnd()) {

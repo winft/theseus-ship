@@ -531,21 +531,21 @@ void set_shortcut(Win* win, QString const& shortcut)
         return;
     }
 
+    QRegularExpression const reg(QStringLiteral("(.*\\+)\\((.*)\\)"));
     QList<QKeySequence> keys;
     QStringList groups = cut.split(QStringLiteral(" - "));
     for (QStringList::ConstIterator it = groups.constBegin(); it != groups.constEnd(); ++it) {
-        QRegExp reg(QStringLiteral("(.*\\+)\\((.*)\\)"));
+        auto const match = reg.match(*it);
+        if (match.hasMatch()) {
+            auto const base = match.captured(1);
+            auto const list = match.captured(2);
 
-        if (reg.indexIn(*it) > -1) {
-            QString base = reg.cap(1);
-            QString list = reg.cap(2);
             for (int i = 0; i < list.length(); ++i) {
                 QKeySequence c(base + list[i]);
                 if (!c.isEmpty()) {
                     keys.append(c);
                 }
             }
-
         } else {
             // The regexp doesn't match, so it should be a normal shortcut.
             QKeySequence c(*it);

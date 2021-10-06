@@ -124,7 +124,7 @@ public:
     explicit SceneOpenGL2(OpenGLBackend *backend, QObject *parent = nullptr);
     ~SceneOpenGL2() override;
     CompositingType compositingType() const override {
-        return OpenGL2Compositing;
+        return OpenGLCompositing;
     }
 
     static bool supported(OpenGLBackend *backend);

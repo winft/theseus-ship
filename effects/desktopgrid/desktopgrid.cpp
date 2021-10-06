@@ -302,18 +302,6 @@ void DesktopGridEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data
                 w->enablePainting(EffectWindow::PAINT_DISABLED_BY_MINIMIZE);
             data.mask |= PAINT_WINDOW_TRANSFORMED;
 
-            // Split windows at screen edges
-            for (int screen = 0; screen < effects->numScreens(); screen++) {
-                QRect screenGeom = effects->clientArea(ScreenArea, screen, 0);
-                if (w->x() < screenGeom.x())
-                    data.quads = data.quads.splitAtX(screenGeom.x() - w->x());
-                if (w->x() + w->width() > screenGeom.x() + screenGeom.width())
-                    data.quads = data.quads.splitAtX(screenGeom.x() + screenGeom.width() - w->x());
-                if (w->y() < screenGeom.y())
-                    data.quads = data.quads.splitAtY(screenGeom.y() - w->y());
-                if (w->y() + w->height() > screenGeom.y() + screenGeom.height())
-                    data.quads = data.quads.splitAtY(screenGeom.y() + screenGeom.height() - w->y());
-            }
             if (windowMove && wasWindowMove && windowMove->findModal() == w)
                 w->disablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
         } else
@@ -339,43 +327,28 @@ void DesktopGridEffect::paintWindow(EffectWindow* w, int mask, QRegion region, W
         for (int screen = 0; screen < effects->numScreens(); screen++) {
             QRect screenGeom = effects->clientArea(ScreenArea, screen, 0);
 
-            QRectF transformedGeo = w->geometry();
-            // Display all quads on the same screen on the same pass
-            WindowQuadList screenQuads;
-            bool quadsAdded = false;
+            QRectF transformedGeo = w->frameGeometry();
             if (isUsingPresentWindows()) {
                 WindowMotionManager& manager = m_managers[(paintingDesktop-1)*(effects->numScreens())+screen ];
                 if (manager.isManaging(w)) {
-                    foreach (const WindowQuad & quad, data.quads)
-                        screenQuads.append(quad);
                     transformedGeo = manager.transformedGeometry(w);
-                    quadsAdded = true;
                     if (!manager.areWindowsMoving() && timeline.currentValue() == 1.0)
                         mask |= PAINT_WINDOW_LANCZOS;
-                } else if (w->screen() != screen)
-                    quadsAdded = true; // we don't want parts of overlapping windows on the other screen
-                if (w->isDesktop())
-                    quadsAdded = false;
-            }
-            if (!quadsAdded) {
-                foreach (const WindowQuad & quad, data.quads) {
-                    QRect quadRect(
-                        w->x() + quad.left(), w->y() + quad.top(),
-                        quad.right() - quad.left(), quad.bottom() - quad.top()
-                    );
-                    if (quadRect.intersects(screenGeom))
-                        screenQuads.append(quad);
+                } else if (w->screen() != screen) {
+                    continue; // we don't want parts of overlapping windows on the other screen
                 }
-            }
-            if (screenQuads.isEmpty())
+                if (w->isDesktop() && !transformedGeo.intersects(screenGeom)) {
+                    continue;
+                }
+            } else if (!transformedGeo.intersects(screenGeom)) {
                 continue; // Nothing is being displayed, don't bother
+            }
             WindowPaintData d = data;
-            d.quads = screenQuads;
 
             QPointF newPos = scalePos(transformedGeo.topLeft().toPoint(), paintingDesktop, screen);
             double progress = timeline.currentValue();
-            d.setXScale(interpolate(1, xScale * scale[screen] * (float)transformedGeo.width() / (float)w->geometry().width(), progress));
-            d.setYScale(interpolate(1, yScale * scale[screen] * (float)transformedGeo.height() / (float)w->geometry().height(), progress));
+            d.setXScale(interpolate(1, xScale * scale[screen] * (float)transformedGeo.width() / (float)w->frameGeometry().width(), progress));
+            d.setYScale(interpolate(1, yScale * scale[screen] * (float)transformedGeo.height() / (float)w->frameGeometry().height(), progress));
             d += QPoint(qRound(newPos.x() - w->x()), qRound(newPos.y() - w->y()));
 
             if (isUsingPresentWindows() && (w->isDock() || w->isSkipSwitcher())) {
@@ -663,7 +636,7 @@ void DesktopGridEffect::windowInputMouseEvent(QEvent* e)
             }
         }
         if (wasWindowMove || wasDesktopMove) { // reset pointer
-            effects->defineCursor(Qt::PointingHandCursor);
+            effects->defineCursor(Qt::ArrowCursor);
         } else { // click -> exit
             const int desk = posToDesktop(me->pos());
             if (desk > effects->numberOfDesktops())
@@ -900,12 +873,12 @@ EffectWindow* DesktopGridEffect::windowAt(QPoint pos) const
         if (w)
             return w;
         foreach (EffectWindow * w, windows) {
-            if (w->isOnDesktop(desktop) && w->isDesktop() && w->geometry().contains(pos))
+            if (w->isOnDesktop(desktop) && w->isDesktop() && w->frameGeometry().contains(pos))
                 return w;
         }
     } else {
         foreach (EffectWindow * w, windows) {
-            if (w->isOnDesktop(desktop) && w->isOnCurrentActivity() && !w->isMinimized() && w->geometry().contains(pos))
+            if (w->isOnDesktop(desktop) && w->isOnCurrentActivity() && !w->isMinimized() && w->frameGeometry().contains(pos))
                 return w;
         }
     }
@@ -1065,7 +1038,7 @@ void DesktopGridEffect::setActive(bool active)
             QList<WindowMotionManager>::iterator it;
             for (it = m_managers.begin(); it != m_managers.end(); ++it) {
                 foreach (EffectWindow * w, (*it).managedWindows()) {
-                    (*it).moveWindow(w, w->geometry());
+                    (*it).moveWindow(w, w->frameGeometry());
                 }
             }
         }
@@ -1089,7 +1062,7 @@ void DesktopGridEffect::setup()
         return;
     if (!keyboardGrab) {
         keyboardGrab = effects->grabKeyboard(this);
-        effects->startMouseInterception(this, Qt::PointingHandCursor);
+        effects->startMouseInterception(this, Qt::ArrowCursor);
         effects->setActiveFullScreenEffect(this);
     }
     setHighlightedDesktop(effects->currentDesktop());

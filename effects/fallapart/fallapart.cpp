@@ -29,7 +29,7 @@ namespace KWin
 
 bool FallApartEffect::supported()
 {
-    return effects->isOpenGLCompositing() && effects->animationsSupported();
+    return DeformEffect::supported() && effects->animationsSupported();
 }
 
 FallApartEffect::FallApartEffect()
@@ -68,9 +68,8 @@ void FallApartEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, 
             animationIt->progress += time / animationTime(1000.);
             data.setTransformed();
             w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DELETE);
-            // Request the window to be divided into cells
-            data.quads = data.quads.makeGrid(blockSize);
         } else {
+            unredirect(w);
             windows.remove(w);
             w->unrefWindow();
         }
@@ -78,14 +77,17 @@ void FallApartEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, 
     effects->prePaintWindow(w, data, presentTime);
 }
 
-void FallApartEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
+void FallApartEffect::deform(EffectWindow *w, int mask, WindowPaintData &data, WindowQuadList &quads)
 {
+    Q_UNUSED(w)
+    Q_UNUSED(mask)
     auto animationIt = windows.constFind(w);
     if (animationIt != windows.constEnd() && isRealWindow(w)) {
         const qreal t = animationIt->progress;
-        WindowQuadList new_quads;
+        // Request the window to be divided into cells
+        quads = quads.makeGrid(blockSize);
         int cnt = 0;
-        foreach (WindowQuad quad, data.quads) { // krazy:exclude=foreach
+        for (WindowQuad &quad : quads) {
             // make fragments move in various directions, based on where
             // they are (left pieces generally move to the left, etc.)
             QPointF p1(quad[ 0 ].x(), quad[ 0 ].y());
@@ -124,13 +126,10 @@ void FallApartEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
                 y = dist * sin(angle);
                 quad[ j ].move(center.x() + x, center.y() + y);
             }
-            new_quads.append(quad);
             ++cnt;
         }
-        data.quads = new_quads;
         data.multiplyOpacity(interpolate(1.0, 0.0, t));
     }
-    effects->paintWindow(w, mask, region, data);
 }
 
 void FallApartEffect::postPaintScreen()
@@ -177,6 +176,7 @@ void FallApartEffect::slotWindowClosed(EffectWindow* c)
     c->setData(WindowClosedGrabRole, QVariant::fromValue(static_cast<void*>(this)));
     windows[ c ].progress = 0;
     c->refWindow();
+    redirect(c);
 }
 
 void FallApartEffect::slotWindowDeleted(EffectWindow* c)
@@ -199,6 +199,7 @@ void FallApartEffect::slotWindowDataChanged(EffectWindow* w, int role)
         return;
     }
 
+    unredirect(it.key());
     it.key()->unrefWindow();
     windows.erase(it);
 }

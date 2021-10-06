@@ -40,8 +40,6 @@ class WindowWrapper;
 class WorkspaceWrapper : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(ClientAreaOption)
-    Q_ENUMS(ElectricBorder)
     Q_PROPERTY(int currentDesktop READ currentDesktop WRITE setCurrentDesktop NOTIFY currentDesktopChanged)
     Q_PROPERTY(KWin::WindowWrapper* activeClient READ activeClient WRITE setActiveClient NOTIFY clientActivated)
     // TODO: write and notify?
@@ -190,6 +188,7 @@ public:
         ///< one whole screen, ignore struts
         ScreenArea
     };
+    Q_ENUM(ClientAreaOption)
     enum ElectricBorder {
         ElectricTop,
         ElectricTopRight,
@@ -202,6 +201,7 @@ public:
         ELECTRIC_COUNT,
         ElectricNone
     };
+    Q_ENUM(ElectricBorder)
 
 protected:
     explicit WorkspaceWrapper(QObject* parent = nullptr);
@@ -230,6 +230,8 @@ void setter( rettype val );
     QSize virtualScreenSize() const;
     QRect virtualScreenGeometry() const;
 
+    std::vector<WindowWrapper*> windows() const;
+
     /**
      * Returns the geometry a Client can use with the specified option.
      * This method should be preferred over other methods providing screen sizes as the
@@ -254,6 +256,7 @@ void setter( rettype val );
      * @param client The Client for which the area should be retrieved
      * @returns The specified screen geometry
      */
+    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, KWin::WindowWrapper* window) const;
     Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, KWin::WindowWrapper const* client) const;
     /**
      * Returns the name for the given @p desktop.

@@ -9,7 +9,7 @@
 #include <QDebug>
 #include <QFile>
 #include <QFileInfo>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QTemporaryFile>
 #include <kconfig.h>
 
@@ -318,8 +318,11 @@ bool Rules::matchWMClass(const QByteArray& match_class, const QByteArray& match_
         // TODO optimize?
         QByteArray cwmclass = wmclasscomplete ? match_name + ' ' + match_class : match_class;
         if (wmclass.match == RegExpMatch
-            && QRegExp(QString::fromUtf8(wmclass.data)).indexIn(QString::fromUtf8(cwmclass)) == -1)
+            && !QRegularExpression(QString::fromUtf8(wmclass.data))
+                    .match(QString::fromUtf8(cwmclass))
+                    .hasMatch()) {
             return false;
+        }
         if (wmclass.match == ExactMatch && wmclass.data != cwmclass)
             return false;
         if (wmclass.match == SubstringMatch && !cwmclass.contains(wmclass.data))
@@ -332,9 +335,11 @@ bool Rules::matchRole(const QByteArray& match_role) const
 {
     if (windowrole.match != UnimportantMatch) {
         if (windowrole.match == RegExpMatch
-            && QRegExp(QString::fromUtf8(windowrole.data)).indexIn(QString::fromUtf8(match_role))
-                == -1)
+            && !QRegularExpression(QString::fromUtf8(windowrole.data))
+                    .match(QString::fromUtf8(match_role))
+                    .hasMatch()) {
             return false;
+        }
         if (windowrole.match == ExactMatch && windowrole.data != match_role)
             return false;
         if (windowrole.match == SubstringMatch && !match_role.contains(windowrole.data))
@@ -346,8 +351,10 @@ bool Rules::matchRole(const QByteArray& match_role) const
 bool Rules::matchTitle(const QString& match_title) const
 {
     if (title.match != UnimportantMatch) {
-        if (title.match == RegExpMatch && QRegExp(title.data).indexIn(match_title) == -1)
+        if (title.match == RegExpMatch
+            && !QRegularExpression(title.data).match(match_title).hasMatch()) {
             return false;
+        }
         if (title.match == ExactMatch && title.data != match_title)
             return false;
         if (title.match == SubstringMatch && !match_title.contains(title.data))
@@ -363,10 +370,11 @@ bool Rules::matchClientMachine(const QByteArray& match_machine, bool local) cons
         if (match_machine != "localhost" && local && matchClientMachine("localhost", true))
             return true;
         if (clientmachine.match == RegExpMatch
-            && QRegExp(QString::fromUtf8(clientmachine.data))
-                    .indexIn(QString::fromUtf8(match_machine))
-                == -1)
+            && !QRegularExpression(QString::fromUtf8(clientmachine.data))
+                    .match(QString::fromUtf8(match_machine))
+                    .hasMatch()) {
             return false;
+        }
         if (clientmachine.match == ExactMatch && clientmachine.data != match_machine)
             return false;
         if (clientmachine.match == SubstringMatch && !match_machine.contains(clientmachine.data))

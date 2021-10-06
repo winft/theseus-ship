@@ -618,13 +618,13 @@ QModelIndex EffectsModel::findByPluginId(const QString &pluginId) const
 
 static KCModule *loadBinaryConfig(const QString &configModule, QObject *parent)
 {
-    const QVector<KPluginMetaData> offers = KPluginLoader::findPluginsById(QStringLiteral("kwin/effects/configs/"), configModule);
+    auto const metaData = KPluginMetaData::findPluginById(QStringLiteral("kwin/effects/configs/"), configModule);
 
-    if (offers.isEmpty()) {
+    if (!metaData.isValid()) {
         return nullptr;
     }
 
-    KPluginLoader loader(offers.first().fileName());
+    KPluginLoader loader(metaData.fileName());
     KPluginFactory *factory = loader.factory();
 
     return factory->create<KCModule>(parent);
@@ -632,14 +632,7 @@ static KCModule *loadBinaryConfig(const QString &configModule, QObject *parent)
 
 static KCModule *findScriptedConfig(const QString &pluginId, QObject *parent)
 {
-    const QVector<KPluginMetaData> offers = KPluginLoader::findPluginsById(QStringLiteral("kwin/effects/configs/"), QStringLiteral("kcm_kwin4_genericscripted"));
-
-    if (offers.isEmpty()) {
-        return nullptr;
-    }
-
-    const KPluginMetaData &generic = offers.first();
-    KPluginLoader loader(generic.fileName());
+    KPluginLoader loader(QStringLiteral("kwin/effects/configs/kcm_kwin4_genericscripted"));
     KPluginFactory *factory = loader.factory();
     if (!factory) {
         return nullptr;

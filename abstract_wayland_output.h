@@ -77,7 +77,7 @@ public:
     QSize modeSize() const;
 
     // TODO: The name is ambiguous. Rename this function.
-    QSize pixelSize() const;
+    QSize pixelSize() const override;
 
     /**
      * Describes the viewable rectangle on the output relative to the output's mode size.

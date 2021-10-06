@@ -39,9 +39,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KDeclarative/QmlObjectSharedEngine>
 
-using namespace KWin;
+namespace KWin
+{
 
 static std::unique_ptr<QOpenGLContext> s_shareContext;
+
+class EffectQuickRenderControl : public QQuickRenderControl
+{
+    Q_OBJECT
+
+public:
+    explicit EffectQuickRenderControl(QWindow *renderWindow, QObject *parent = nullptr)
+        : QQuickRenderControl(parent)
+        , m_renderWindow(renderWindow)
+    {
+    }
+
+    QWindow *renderWindow(QPoint *offset) override
+    {
+        if (offset) {
+            *offset = QPoint(0, 0);
+        }
+        return m_renderWindow;
+    }
+
+private:
+    QPointer<QWindow> m_renderWindow;
+};
 
 class Q_DECL_HIDDEN EffectQuickView::Private
 {
@@ -52,12 +76,14 @@ public:
     QScopedPointer<QOffscreenSurface> m_offscreenSurface;
     QScopedPointer<QOpenGLFramebufferObject> m_fbo;
 
+    QTimer *m_repaintTimer;
     QImage m_image;
     QScopedPointer<GLTexture> m_textureExport;
     // if we should capture a QImage after rendering into our BO.
     // Used for either software QtQuick rendering and nonGL kwin rendering
     bool m_useBlit = false;
     bool m_visible = true;
+    bool m_automaticRepaint = true;
 
     void releaseResources();
 };
@@ -74,10 +100,20 @@ EffectQuickView::EffectQuickView(QObject *parent)
 }
 
 EffectQuickView::EffectQuickView(QObject *parent, ExportMode exportMode)
+    : EffectQuickView(parent, nullptr, exportMode)
+{
+}
+
+EffectQuickView::EffectQuickView(QObject *parent, QWindow *renderWindow)
+    : EffectQuickView(parent, renderWindow, effects->isOpenGLCompositing() ? ExportMode::Texture : ExportMode::Image)
+{
+}
+
+EffectQuickView::EffectQuickView(QObject *parent, QWindow *renderWindow, ExportMode exportMode)
     : QObject(parent)
     , d(new EffectQuickView::Private)
 {
-    d->m_renderControl = new QQuickRenderControl(this);
+    d->m_renderControl = new EffectQuickRenderControl(renderWindow, this);
 
     d->m_view = new QQuickWindow(d->m_renderControl);
     d->m_view->setFlags(Qt::FramelessWindowHint);
@@ -113,7 +149,8 @@ EffectQuickView::EffectQuickView(QObject *parent, ExportMode exportMode)
         d->m_renderControl->initialize(d->m_glcontext.data());
         d->m_glcontext->doneCurrent();
 
-        if (!d->m_glcontext->shareContext()) {
+        // On Wayland, opengl contexts are implicitly shared.
+        if (!effects->waylandDisplay() && !d->m_glcontext->shareContext()) {
             qCDebug(LIBKWINEFFECTS) << "Failed to create a shared context, falling back to raster rendering";
 
             qCDebug(LIBKWINEFFECTS) << "Extra debug:";
@@ -130,22 +167,58 @@ EffectQuickView::EffectQuickView(QObject *parent, ExportMode exportMode)
     connect(d->m_view, &QWindow::widthChanged, this, updateSize);
     connect(d->m_view, &QWindow::heightChanged, this, updateSize);
 
-    QTimer *t = new QTimer(this);
-    t->setSingleShot(true);
-    t->setInterval(10);
+    d->m_repaintTimer = new QTimer(this);
+    d->m_repaintTimer->setSingleShot(true);
+    d->m_repaintTimer->setInterval(10);
 
-    connect(t, &QTimer::timeout, this, &EffectQuickView::update);
-    connect(d->m_renderControl, &QQuickRenderControl::renderRequested, t, [t]() { t->start(); });
-    connect(d->m_renderControl, &QQuickRenderControl::sceneChanged, t, [t]() { t->start(); });
+    connect(d->m_repaintTimer, &QTimer::timeout, this, &EffectQuickView::update);
+    connect(d->m_renderControl, &QQuickRenderControl::renderRequested, this, &EffectQuickView::handleRenderRequested);
+    connect(d->m_renderControl, &QQuickRenderControl::sceneChanged, this, &EffectQuickView::handleSceneChanged);
 }
 
 EffectQuickView::~EffectQuickView()
 {
     if (d->m_glcontext) {
         d->m_glcontext->makeCurrent(d->m_offscreenSurface.data());
+        // close the view whilst we have an active GL context
+        delete d->m_view;
+        d->m_view = nullptr;
         d->m_renderControl->invalidate();
         d->m_glcontext->doneCurrent();
     }
+}
+
+bool EffectQuickView::automaticRepaint() const
+{
+    return d->m_automaticRepaint;
+}
+
+void EffectQuickView::setAutomaticRepaint(bool set)
+{
+    if (d->m_automaticRepaint != set) {
+        d->m_automaticRepaint = set;
+
+        // If there's an in-flight update, disable it.
+        if (!d->m_automaticRepaint) {
+            d->m_repaintTimer->stop();
+        }
+    }
+}
+
+void EffectQuickView::handleSceneChanged()
+{
+    if (d->m_automaticRepaint) {
+        d->m_repaintTimer->start();
+    }
+    Q_EMIT sceneChanged();
+}
+
+void EffectQuickView::handleRenderRequested()
+{
+    if (d->m_automaticRepaint) {
+        d->m_repaintTimer->start();
+    }
+    Q_EMIT renderRequested();
 }
 
 void EffectQuickView::update()
@@ -350,6 +423,20 @@ EffectQuickScene::EffectQuickScene(QObject *parent)
     d->qmlObject = new KDeclarative::QmlObjectSharedEngine(this);
 }
 
+EffectQuickScene::EffectQuickScene(QObject *parent, QWindow *renderWindow)
+    : EffectQuickView(parent, renderWindow)
+    , d(new EffectQuickScene::Private)
+{
+    d->qmlObject = new KDeclarative::QmlObjectSharedEngine(this);
+}
+
+EffectQuickScene::EffectQuickScene(QObject *parent, QWindow *renderWindow, ExportMode exportMode)
+    : EffectQuickView(parent, renderWindow, exportMode)
+    , d(new EffectQuickScene::Private)
+{
+    d->qmlObject = new KDeclarative::QmlObjectSharedEngine(this);
+}
+
 EffectQuickScene::EffectQuickScene(QObject *parent, EffectQuickView::ExportMode exportMode)
     : EffectQuickView(parent, exportMode)
     , d(new EffectQuickScene::Private)
@@ -359,6 +446,7 @@ EffectQuickScene::EffectQuickScene(QObject *parent, EffectQuickView::ExportMode 
 
 EffectQuickScene::~EffectQuickScene()
 {
+    delete d->qmlObject;
 }
 
 void EffectQuickScene::setSource(const QUrl &source)
@@ -387,3 +475,7 @@ QQuickItem *EffectQuickScene::rootItem() const
 {
     return qobject_cast<QQuickItem *>(d->qmlObject->rootObject());
 }
+
+}
+
+#include "kwineffectquickview.moc"

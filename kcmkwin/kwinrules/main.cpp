@@ -12,6 +12,7 @@
 
 #include <KCMultiDialog>
 #include <KLocalizedString>
+#include <KPluginMetaData>
 
 int main(int argc, char* argv[])
 {
@@ -47,8 +48,10 @@ int main(int argc, char* argv[])
         kcm_args << QStringLiteral("whole-app");
     }
 
+    KPluginMetaData pluginData = KPluginMetaData(QStringLiteral("kcms/kcm_kwinrules"));
+
     KCMultiDialog *dialog = new KCMultiDialog;
-    dialog->addModule(QStringLiteral("kcm_kwinrules"), kcm_args);
+    dialog->addModule(pluginData, kcm_args);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     dialog->show();
 

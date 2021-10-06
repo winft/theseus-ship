@@ -73,7 +73,7 @@ ScrollViewKCM {
             Kirigami.PlaceholderMessage {
                 id: hintArea
                 anchors.centerIn: parent
-                width: parent.width - (units.largeSpacing * 4)
+                width: parent.width - (Kirigami.Units.largeSpacing * 4)
                 text: i18n("No window properties changed")
                 explanation: xi18nc("@info", "Click the <interface>Add Property...</interface> button below to add some window properties that will be affected by the rule")
             }
@@ -97,7 +97,7 @@ ScrollViewKCM {
     footer:  RowLayout {
         QQC2.Button {
             text: checked ? i18n("Close") : i18n("Add Property...")
-            icon.name: checked ? "dialog-close" : "list-add-symbolic"
+            icon.name: checked ? "dialog-close" : "list-add"
             checkable: true
             checked: propertySheet.sheetOpen
             onToggled: {
@@ -121,12 +121,23 @@ ScrollViewKCM {
         QQC2.SpinBox {
             id: delaySpin
             enabled: detectButton.enabled
-            Layout.preferredWidth: Kirigami.Units.gridUnit * 8
+            Layout.preferredWidth: Math.max(metricsInstant.advanceWidth, metricsAfter.advanceWidth) + Kirigami.Units.gridUnit * 4
             from: 0
             to: 30
             textFromValue: (value, locale) => {
                 return (value == 0) ? i18n("Instantly")
                                     : i18np("After %1 second", "After %1 seconds", value)
+            }
+
+            TextMetrics {
+                id: metricsInstant
+                font: delaySpin.font
+                text: i18n("Instantly")
+            }
+            TextMetrics {
+                id: metricsAfter
+                font: delaySpin.font
+                text: i18np("After %1 second", "After %1 seconds", 99)
             }
         }
 
@@ -146,9 +157,9 @@ ScrollViewKCM {
 
     Kirigami.OverlaySheet {
         id: errorSheet
-        header: Kirigami.Heading {
-            text: i18n("Error")
-        }
+
+        title: i18n("Error")
+
         Kirigami.Heading {
             id: errorLabel
             level: 3
@@ -162,9 +173,8 @@ ScrollViewKCM {
 
         parent: view
 
-        header: Kirigami.Heading {
-            text: i18n("Add property to the rule")
-        }
+        title: i18n("Add property to the rule")
+
         footer: Kirigami.SearchField {
             id: searchField
             horizontalAlignment: Text.AlignLeft
@@ -218,7 +228,7 @@ ScrollViewKCM {
                         }
                     }
                     QQC2.ToolButton {
-                        icon.name: (model.enabled) ? "dialog-ok-apply" : "list-add-symbolic"
+                        icon.name: (model.enabled) ? "dialog-ok-apply" : "list-add"
                         opacity: propertyDelegate.hovered ? 1 : 0
                         onClicked: propertyDelegate.clicked()
                         Layout.preferredWidth: implicitWidth

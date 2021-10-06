@@ -355,6 +355,7 @@ Q_SIGNALS:
     void damaged(KWin::Toplevel* toplevel, QRegion const& damage);
 
     void frame_geometry_changed(KWin::Toplevel* toplevel, QRect const& old);
+    void visible_geometry_changed();
 
     void paddingChanged(KWin::Toplevel* toplevel, const QRect& old);
     void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);

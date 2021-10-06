@@ -52,7 +52,6 @@ protected:
     void componentComplete() override;
 
 Q_SIGNALS:
-    void scaleChanged();
     void progressScaleChanged();
 
 private:

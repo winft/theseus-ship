@@ -59,10 +59,10 @@ KCM.ScrollViewKCM {
                     bottomPadding: 0
 
                     Layout.fillWidth: true
-
-                    Layout.alignment: Qt.AlignVCenter
+                    Layout.fillHeight: true
 
                     text: model ? model.display : ""
+                    verticalAlignment: Text.AlignVCenter
 
                     readOnly: true
 
@@ -72,6 +72,15 @@ KCM.ScrollViewKCM {
 
                     onEditingFinished: {
                         readOnly = true;
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: nameField.readOnly
+
+                        onDoubleClicked: {
+                            renameAction.trigger();
+                        }
                     }
                 }
 
@@ -88,13 +97,24 @@ KCM.ScrollViewKCM {
 
         actions: [
             Kirigami.Action {
+                id: renameAction
                 enabled: model && !model.IsMissing
+                visible: !applyAction.visible
                 iconName: "edit-rename"
                 tooltip: i18nc("@info:tooltip", "Rename")
                 onTriggered: {
                     nameField.readOnly = false;
                     nameField.selectAll();
                     nameField.forceActiveFocus();
+                }
+            },
+            Kirigami.Action {
+                id: applyAction
+                visible: !nameField.readOnly
+                iconName: "dialog-ok-apply"
+                tooltip: i18nc("@info:tooltip", "Confirm new name")
+                onTriggered: {
+                    nameField.readOnly = true;
                 }
             },
             Kirigami.Action {
@@ -207,9 +227,7 @@ KCM.ScrollViewKCM {
 
                 QQC2.CheckBox {
                     id: animationEnabled
-                    // Let it elide but don't make it push the ComboBox away from it
                     Layout.fillWidth: true
-                    Layout.maximumWidth: implicitWidth
 
                     text: i18n("Show animation when switching:")
 

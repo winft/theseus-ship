@@ -330,6 +330,11 @@ QRect WorkspaceWrapper::clientArea(ClientAreaOption option, const QPoint &p, int
     return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), p, desktop);
 }
 
+QRect WorkspaceWrapper::clientArea(ClientAreaOption option, KWin::WindowWrapper* window) const
+{
+    return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), window->client());
+}
+
 QRect WorkspaceWrapper::clientArea(ClientAreaOption option, KWin::WindowWrapper const* c) const
 {
     return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), c->client());
@@ -447,6 +452,15 @@ QRect WorkspaceWrapper::virtualScreenGeometry() const
 QSize WorkspaceWrapper::virtualScreenSize() const
 {
     return screens()->size();
+}
+
+std::vector<WindowWrapper*> WorkspaceWrapper::windows() const
+{
+    std::vector<WindowWrapper*> ret;
+    for (auto const& client : m_windows) {
+        ret.push_back(client.get());
+    }
+    return ret;
 }
 
 void WorkspaceWrapper::sendClientToScreen(KWin::WindowWrapper *client, int screen)

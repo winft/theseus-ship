@@ -375,7 +375,7 @@ public:
      * In OpenGL based compositing, the frameworks ensures that the context is current
      * when the Effect is constructed.
      */
-    Effect();
+    Effect(QObject *parent = nullptr);
     /**
      * Destructs the Effect object.
      *
@@ -734,6 +734,8 @@ public:
     virtual KWin::Effect *createEffect() const = 0;
 };
 
+# define EffectPluginFactory_iid "org.kde.kwin.EffectPluginFactory" KWIN_PLUGIN_VERSION_STRING
+
 /**
  * Defines an EffectPluginFactory sub class with customized isSupported and enabledByDefault methods.
  *
@@ -741,10 +743,8 @@ public:
  * the simplified KWIN_EFFECT_FACTORY, KWIN_EFFECT_FACTORY_SUPPORTED or KWIN_EFFECT_FACTORY_ENABLED
  * macros which create an EffectPluginFactory with a useable default value.
  *
- * The macro also adds a useable K_EXPORT_PLUGIN_VERSION to the definition. KWin will not load
- * any Effect with a non-matching plugin version. This API is not providing binary compatibility
- * and thus the effect plugin must be compiled against the same kwineffects library version as
- * KWin.
+ * This API is not providing binary compatibility and thus the effect plugin must be compiled against
+ * the same kwineffects library version as KWin.
  *
  * @param factoryName The name to be used for the EffectPluginFactory
  * @param className The class name of the Effect sub class which is to be created by the factory
@@ -756,7 +756,7 @@ public:
     class factoryName : public KWin::EffectPluginFactory \
     { \
         Q_OBJECT \
-        Q_PLUGIN_METADATA(IID KPluginFactory_iid FILE jsonFile) \
+        Q_PLUGIN_METADATA(IID EffectPluginFactory_iid FILE jsonFile) \
         Q_INTERFACES(KPluginFactory) \
     public: \
         explicit factoryName() {} \
@@ -770,8 +770,7 @@ public:
         KWin::Effect *createEffect() const override { \
             return new className(); \
         } \
-    }; \
-    K_EXPORT_PLUGIN_VERSION(quint32(KWIN_EFFECT_API_VERSION))
+    };
 
 #define KWIN_EFFECT_FACTORY_ENABLED( factoryName, className, jsonFile, enabled ) \
     KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED( factoryName, className, jsonFile, return true;, enabled )
@@ -1857,6 +1856,11 @@ Q_SIGNALS:
     void startupChanged(const QString &id, const QIcon &icon);
     void startupRemoved(const QString &id);
 
+    /**
+     * This signal is emitted when the visible geometry of a window changed.
+     */
+    void windowExpandedGeometryChanged(KWin::EffectWindow *window);
+
 protected:
     QVector< EffectPair > loaded_effects;
     //QHash< QString, EffectFactory* > effect_factories;
@@ -1869,6 +1873,9 @@ protected:
 class KWINEFFECTS_EXPORT EffectScreen : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QRect geometry READ geometry NOTIFY geometryChanged)
+    Q_PROPERTY(qreal devicePixelRatio READ devicePixelRatio NOTIFY devicePixelRatioChanged)
+    Q_PROPERTY(QString name READ name CONSTANT)
 
 public:
     explicit EffectScreen(QObject *parent = nullptr);
@@ -1887,6 +1894,27 @@ public:
      * Returns the screen's geometry in the device-independent pixels.
      */
     virtual QRect geometry() const = 0;
+
+Q_SIGNALS:
+    /**
+     * Notifies that the display will be dimmed in @p time ms.
+     */
+    void aboutToTurnOff(std::chrono::milliseconds time);
+
+    /**
+     * Notifies that the output has been turned on and the wake can be decorated.
+     */
+    void wakeUp();
+
+    /**
+     * This signal is emitted when the geometry of this screen changes.
+     */
+    void geometryChanged();
+
+    /**
+     * This signal is emitted when the device pixel ratio of this screen changes.
+     */
+    void devicePixelRatioChanged();
 };
 
 /**
@@ -2012,14 +2040,6 @@ class KWINEFFECTS_EXPORT EffectWindow : public QObject
      * Whether this EffectWindow represents an already deleted window and only kept for the compositor for animations.
      */
     Q_PROPERTY(bool deleted READ isDeleted)
-    /**
-     * Whether the window has an own shape
-     */
-    Q_PROPERTY(bool shaped READ hasOwnShape)
-    /**
-     * The Window's shape
-     */
-    Q_PROPERTY(QRegion shape READ shape)
     /**
      * The Caption of the window. Read from WM_NAME property together with a suffix for hostname and shortcut.
      */
@@ -2286,16 +2306,14 @@ public:
      * @since 5.18
      */
     virtual QRect bufferGeometry() const = 0;
+    virtual QRect clientGeometry() const = 0;
     /**
      * Geometry of the window including decoration and potentially shadows.
      * May be different from geometry() if the window has a shadow.
      * @since 4.9
      */
     virtual QRect expandedGeometry() const = 0;
-    virtual QRegion shape() const = 0;
     virtual int screen() const = 0;
-    /** @internal Do not use */
-    virtual bool hasOwnShape() const = 0; // only for shadow effect, for now
     virtual QPoint pos() const = 0;
     virtual QSize size() const = 0;
     virtual QRect rect() const = 0;

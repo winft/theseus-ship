@@ -544,7 +544,8 @@ EffectScreen *ScreenPaintData::screen() const
 // Effect
 //****************************************
 
-Effect::Effect()
+Effect::Effect(QObject *parent)
+    : QObject(parent)
 {
 }
 
@@ -1647,10 +1648,10 @@ QRectF WindowMotionManager::transformedGeometry(EffectWindow *w) const
 {
     QHash<EffectWindow*, WindowMotion>::const_iterator it = m_managedWindows.constFind(w);
     if (it == m_managedWindows.end())
-        return w->geometry();
+        return w->frameGeometry();
 
     const WindowMotion *motion = &it.value();
-    QRectF geometry(w->geometry());
+    QRectF geometry(w->frameGeometry());
 
     // TODO: Take into account existing scale so that we can work with multiple managers (E.g. Present windows + grid)
     geometry.moveTo(motion->translation.value());
@@ -1674,10 +1675,10 @@ QRectF WindowMotionManager::targetGeometry(EffectWindow *w) const
 {
     QHash<EffectWindow*, WindowMotion>::const_iterator it = m_managedWindows.constFind(w);
     if (it == m_managedWindows.end())
-        return w->geometry();
+        return w->frameGeometry();
 
     const WindowMotion *motion = &it.value();
-    QRectF geometry(w->geometry());
+    QRectF geometry(w->frameGeometry());
 
     // TODO: Take into account existing scale so that we can work with multiple managers (E.g. Present windows + grid)
     geometry.moveTo(motion->translation.target());

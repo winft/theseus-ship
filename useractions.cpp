@@ -71,8 +71,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <kconfig.h>
-#include <QRegExp>
 #include <QMenu>
+#include <QRegularExpression>
 #include <QWidgetAction>
 #include <QWindow>
 
@@ -85,6 +85,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+
+struct ShowOnDesktopActionData {
+    uint desktop;
+    bool moveToSingle;
+};
 
 UserActionsMenu::UserActionsMenu(QObject *parent)
     : QObject(parent)
@@ -355,7 +360,7 @@ void UserActionsMenu::init()
 
     action = m_menu->addMenu(advancedMenu);
     action->setText(i18n("&More Actions"));
-    action->setIcon(QIcon::fromTheme(QStringLiteral("view-more-symbolic")));
+    action->setIcon(QIcon::fromTheme(QStringLiteral("overflow-menu")));
 
     m_closeOperation = m_menu->addAction(i18n("&Close"));
     m_closeOperation->setIcon(QIcon::fromTheme(QStringLiteral("window-close")));
@@ -554,7 +559,7 @@ void UserActionsMenu::desktopPopupAboutToShow()
     }
 
     m_desktopMenu->addSeparator();
-    action = m_desktopMenu->addAction(i18nc("Create a new desktop and move there the window", "&New Desktop"));
+    action = m_desktopMenu->addAction(i18nc("Create a new desktop and move the window there", "&New Desktop"));
     action->setData(vds->count() + 1);
 
     if (vds->count() >= vds->maximum())
@@ -571,17 +576,15 @@ void UserActionsMenu::multipleDesktopsPopupAboutToShow()
     if (m_client) {
         m_multipleDesktopsMenu->setPalette(m_client->control->palette().q_palette());
     }
-    QAction *action = m_multipleDesktopsMenu->addAction(i18n("&All Desktops"));
-    action->setData(0);
-    action->setCheckable(true);
-    QActionGroup *allDesktopsGroup = new QActionGroup(m_multipleDesktopsMenu);
-    allDesktopsGroup->addAction(action);
 
+    QAction *action = m_multipleDesktopsMenu->addAction(i18n("&All Desktops"));
+    action->setData(QVariant::fromValue(ShowOnDesktopActionData{0, false}));
+    action->setCheckable(true);
     if (m_client && m_client->isOnAllDesktops()) {
         action->setChecked(true);
     }
-    m_multipleDesktopsMenu->addSeparator();
 
+    m_multipleDesktopsMenu->addSeparator();
 
     const uint BASE = 10;
 
@@ -590,28 +593,35 @@ void UserActionsMenu::multipleDesktopsPopupAboutToShow()
         if (i < BASE) {
             basic_name.prepend(QLatin1Char('&'));
         }
-        QWidgetAction *action = new QWidgetAction(m_multipleDesktopsMenu);
-        QCheckBox *box = new QCheckBox(basic_name.arg(i).arg(vds->name(i).replace(QLatin1Char('&'), QStringLiteral("&&"))), m_multipleDesktopsMenu);
-        action->setDefaultWidget(box);
 
-        box->setBackgroundRole(m_multipleDesktopsMenu->backgroundRole());
-        box->setForegroundRole(m_multipleDesktopsMenu->foregroundRole());
-        box->setPalette(m_multipleDesktopsMenu->palette());
-        connect(box, &QCheckBox::clicked, action, &QAction::triggered);
-        m_multipleDesktopsMenu->addAction(action);
-        action->setData(i);
-
+        QAction *action = m_multipleDesktopsMenu->addAction(basic_name.arg(i).arg(vds->name(i).replace(QLatin1Char('&'), QStringLiteral("&&"))));
+        action->setData(QVariant::fromValue(ShowOnDesktopActionData{i, false}));
+        action->setCheckable(true);
         if (m_client && !m_client->isOnAllDesktops() && m_client->isOnDesktop(i)) {
-            box->setChecked(true);
+            action->setChecked(true);
         }
     }
 
     m_multipleDesktopsMenu->addSeparator();
-    action = m_multipleDesktopsMenu->addAction(i18nc("Create a new desktop and move there the window", "&New Desktop"));
-    action->setData(vds->count() + 1);
 
-    if (vds->count() >= vds->maximum())
-        action->setEnabled(false);
+    for (uint i = 1; i <= vds->count(); ++i) {
+        QString name = i18n("Move to %1 %2", i, vds->name(i));
+        QAction *action = m_multipleDesktopsMenu->addAction(name);
+        action->setData(QVariant::fromValue(ShowOnDesktopActionData{i, true}));
+    }
+
+    m_multipleDesktopsMenu->addSeparator();
+
+    bool allowNewDesktops = vds->count() < vds->maximum();
+    uint countPlusOne = vds->count() + 1;
+
+    action = m_multipleDesktopsMenu->addAction(i18nc("Create a new desktop and add the window to that desktop", "Add to &New Desktop"));
+    action->setData(QVariant::fromValue(ShowOnDesktopActionData{countPlusOne, false}));
+    action->setEnabled(allowNewDesktops);
+
+    action = m_multipleDesktopsMenu->addAction(i18nc("Create a new desktop and move the window to that desktop", "Move to New Desktop"));
+    action->setData(QVariant::fromValue(ShowOnDesktopActionData{countPlusOne, true}));
+    action->setEnabled(allowNewDesktops);
 }
 
 void UserActionsMenu::screenPopupAboutToShow()
@@ -750,29 +760,33 @@ void UserActionsMenu::slotSendToDesktop(QAction *action)
 
 void UserActionsMenu::slotToggleOnVirtualDesktop(QAction *action)
 {
-    bool ok = false;
-    uint desk = action->data().toUInt(&ok);
-    if (!ok) {
-        return;
-    }
     if (m_client.isNull()) {
         return;
     }
 
+    if (!action->data().canConvert<ShowOnDesktopActionData>()) {
+        return;
+    }
+    ShowOnDesktopActionData data = action->data().value<ShowOnDesktopActionData>();
+
     VirtualDesktopManager *vds = VirtualDesktopManager::self();
-    if (desk == 0) {
+    if (data.desktop == 0) {
         // the 'on_all_desktops' menu entry
         win::set_on_all_desktops(m_client.data(), !m_client->isOnAllDesktops());
         return;
-    } else if (desk > vds->count()) {
-        vds->setCount(desk);
+    } else if (data.desktop > vds->count()) {
+        vds->setCount(data.desktop);
     }
 
-    VirtualDesktop *virtualDesktop = VirtualDesktopManager::self()->desktopForX11Id(desk);
-    if (m_client->desktops().contains(virtualDesktop)) {
-        win::leave_desktop(m_client.data(), virtualDesktop);
+    if (data.moveToSingle) {
+        win::set_desktop(m_client.data(), data.desktop);
     } else {
-        win::enter_desktop(m_client.data(), virtualDesktop);
+    auto virtualDesktop = VirtualDesktopManager::self()->desktopForX11Id(data.desktop);
+        if (m_client->desktops().contains(virtualDesktop)) {
+            win::leave_desktop(m_client.data(), virtualDesktop);
+        } else {
+            win::enter_desktop(m_client.data(), virtualDesktop);
+        }
     }
 }
 
@@ -975,8 +989,148 @@ void Workspace::initShortcut(const QString &actionName, const QString &descripti
  */
 void Workspace::initShortcuts()
 {
-#define IN_KWIN
-#include "kwinbindings.cpp"
+// Some shortcuts have Tarzan-speech like names, they need extra
+// normal human descriptions with DEF2() the others can use DEF()
+// new DEF3 allows to pass data to the action, replacing the %1 argument in the name
+
+#define DEF2( name, descr, key, fnSlot )                            \
+    initShortcut(QStringLiteral(name), i18n(descr), key, &Workspace::fnSlot);
+
+#define DEF( name, key, fnSlot )                                    \
+    initShortcut(QStringLiteral(name), i18n(name), key, &Workspace::fnSlot);
+
+#define DEF3( name, key, fnSlot, value )                            \
+    initShortcut(QStringLiteral(name).arg(value), i18n(name, value), key, &Workspace::fnSlot, value);
+
+#define DEF4( name, descr, key, functor ) \
+    initShortcut(QStringLiteral(name), i18n(descr), key, functor);
+
+#define DEF5( name, key, functor, value )                            \
+    initShortcut(QStringLiteral(name).arg(value), i18n(name, value), key, functor, value);
+
+#define DEF6( name, key, target, fnSlot )                                    \
+    initShortcut(QStringLiteral(name), i18n(name), key, target, &fnSlot);
+
+
+DEF(I18N_NOOP("Window Operations Menu"),
+    Qt::ALT + Qt::Key_F3, slotWindowOperations);
+DEF2("Window Close", I18N_NOOP("Close Window"),
+     Qt::ALT + Qt::Key_F4, slotWindowClose);
+DEF2("Window Maximize", I18N_NOOP("Maximize Window"),
+     Qt::META + Qt::Key_PageUp, slotWindowMaximize);
+DEF2("Window Maximize Vertical", I18N_NOOP("Maximize Window Vertically"),
+     0, slotWindowMaximizeVertical);
+DEF2("Window Maximize Horizontal", I18N_NOOP("Maximize Window Horizontally"),
+     0, slotWindowMaximizeHorizontal);
+DEF2("Window Minimize", I18N_NOOP("Minimize Window"),
+     Qt::META + Qt::Key_PageDown, slotWindowMinimize);
+DEF2("Window Move", I18N_NOOP("Move Window"),
+     0, slotWindowMove);
+DEF2("Window Resize", I18N_NOOP("Resize Window"),
+     0, slotWindowResize);
+DEF2("Window Raise", I18N_NOOP("Raise Window"),
+     0, slotWindowRaise);
+DEF2("Window Lower", I18N_NOOP("Lower Window"),
+     0, slotWindowLower);
+DEF(I18N_NOOP("Toggle Window Raise/Lower"),
+    0, slotWindowRaiseOrLower);
+DEF2("Window Fullscreen", I18N_NOOP("Make Window Fullscreen"),
+     0, slotWindowFullScreen);
+DEF2("Window No Border", I18N_NOOP("Hide Window Border"),
+     0, slotWindowNoBorder);
+DEF2("Window Above Other Windows", I18N_NOOP("Keep Window Above Others"),
+     0, slotWindowAbove);
+DEF2("Window Below Other Windows", I18N_NOOP("Keep Window Below Others"),
+     0, slotWindowBelow);
+DEF(I18N_NOOP("Activate Window Demanding Attention"),
+    Qt::CTRL + Qt::ALT + Qt::Key_A, slotActivateAttentionWindow);
+DEF(I18N_NOOP("Setup Window Shortcut"),
+    0, slotSetupWindowShortcut);
+DEF2("Window Pack Right", I18N_NOOP("Pack Window to the Right"),
+     0, slotWindowPackRight);
+DEF2("Window Pack Left", I18N_NOOP("Pack Window to the Left"),
+     0, slotWindowPackLeft);
+DEF2("Window Pack Up", I18N_NOOP("Pack Window Up"),
+     0, slotWindowPackUp);
+DEF2("Window Pack Down", I18N_NOOP("Pack Window Down"),
+     0, slotWindowPackDown);
+DEF2("Window Grow Horizontal", I18N_NOOP("Pack Grow Window Horizontally"),
+     0, slotWindowGrowHorizontal);
+DEF2("Window Grow Vertical", I18N_NOOP("Pack Grow Window Vertically"),
+     0, slotWindowGrowVertical);
+DEF2("Window Shrink Horizontal", I18N_NOOP("Pack Shrink Window Horizontally"),
+     0, slotWindowShrinkHorizontal);
+DEF2("Window Shrink Vertical", I18N_NOOP("Pack Shrink Window Vertically"),
+     0, slotWindowShrinkVertical);
+DEF4("Window Quick Tile Left", I18N_NOOP("Quick Tile Window to the Left"),
+     Qt::META + Qt::Key_Left, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::left));
+DEF4("Window Quick Tile Right", I18N_NOOP("Quick Tile Window to the Right"),
+     Qt::META + Qt::Key_Right, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::right));
+DEF4("Window Quick Tile Top", I18N_NOOP("Quick Tile Window to the Top"),
+     Qt::META + Qt::Key_Up, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::top));
+DEF4("Window Quick Tile Bottom", I18N_NOOP("Quick Tile Window to the Bottom"),
+     Qt::META + Qt::Key_Down, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::bottom));
+DEF4("Window Quick Tile Top Left", I18N_NOOP("Quick Tile Window to the Top Left"),
+     0, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::top | win::quicktiles::left));
+DEF4("Window Quick Tile Bottom Left", I18N_NOOP("Quick Tile Window to the Bottom Left"),
+     0, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::bottom | win::quicktiles::left));
+DEF4("Window Quick Tile Top Right", I18N_NOOP("Quick Tile Window to the Top Right"),
+     0, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::top | win::quicktiles::right));
+DEF4("Window Quick Tile Bottom Right", I18N_NOOP("Quick Tile Window to the Bottom Right"),
+     0, std::bind(&Workspace::quickTileWindow, this, win::quicktiles::bottom | win::quicktiles::right));
+DEF4("Switch Window Up", I18N_NOOP("Switch to Window Above"),
+     Qt::META + Qt::ALT + Qt::Key_Up, std::bind(static_cast<void (Workspace::*)(Direction)>(&Workspace::switchWindow), this, DirectionNorth));
+DEF4("Switch Window Down", I18N_NOOP("Switch to Window Below"),
+     Qt::META + Qt::ALT + Qt::Key_Down, std::bind(static_cast<void (Workspace::*)(Direction)>(&Workspace::switchWindow), this, DirectionSouth));
+DEF4("Switch Window Right", I18N_NOOP("Switch to Window to the Right"),
+     Qt::META + Qt::ALT + Qt::Key_Right, std::bind(static_cast<void (Workspace::*)(Direction)>(&Workspace::switchWindow), this, DirectionEast));
+DEF4("Switch Window Left", I18N_NOOP("Switch to Window to the Left"),
+     Qt::META + Qt::ALT + Qt::Key_Left, std::bind(static_cast<void (Workspace::*)(Direction)>(&Workspace::switchWindow), this, DirectionWest));
+DEF2("Increase Opacity", I18N_NOOP("Increase Opacity of Active Window by 5 %"),
+    0, slotIncreaseWindowOpacity);
+DEF2("Decrease Opacity", I18N_NOOP("Decrease Opacity of Active Window by 5 %"),
+    0, slotLowerWindowOpacity);
+
+DEF2("Window On All Desktops", I18N_NOOP("Keep Window on All Desktops"),
+     0, slotWindowOnAllDesktops);
+
+for (int i = 1; i < 21; ++i) {
+    DEF5(I18N_NOOP("Window to Desktop %1"),        0, std::bind(&Workspace::slotWindowToDesktop, this, i), i);
+}
+DEF(I18N_NOOP("Window to Next Desktop"),           0, slotWindowToNextDesktop);
+DEF(I18N_NOOP("Window to Previous Desktop"),       0, slotWindowToPreviousDesktop);
+DEF(I18N_NOOP("Window One Desktop to the Right"),  0, slotWindowToDesktopRight);
+DEF(I18N_NOOP("Window One Desktop to the Left"),   0, slotWindowToDesktopLeft);
+DEF(I18N_NOOP("Window One Desktop Up"),            0, slotWindowToDesktopUp);
+DEF(I18N_NOOP("Window One Desktop Down"),          0, slotWindowToDesktopDown);
+
+for (int i = 0; i < 8; ++i) {
+    DEF3(I18N_NOOP("Window to Screen %1"),         0, slotWindowToScreen, i);
+}
+DEF(I18N_NOOP("Window to Next Screen"),            0, slotWindowToNextScreen);
+DEF(I18N_NOOP("Window to Previous Screen"),        0, slotWindowToPrevScreen);
+DEF(I18N_NOOP("Show Desktop"),                     Qt::META + Qt::Key_D, slotToggleShowDesktop);
+
+for (int i = 0; i < 8; ++i) {
+    DEF3(I18N_NOOP("Switch to Screen %1"),         0, slotSwitchToScreen, i);
+}
+
+DEF(I18N_NOOP("Switch to Next Screen"),            0, slotSwitchToNextScreen);
+DEF(I18N_NOOP("Switch to Previous Screen"),        0, slotSwitchToPrevScreen);
+
+DEF(I18N_NOOP("Kill Window"),                      Qt::CTRL + Qt::ALT + Qt::Key_Escape, slotKillWindow);
+DEF6(I18N_NOOP("Suspend Compositing"),             Qt::SHIFT + Qt::ALT + Qt::Key_F12,
+                                                   render::compositor::self(),
+                                                   render::compositor::toggleCompositing);
+DEF6(I18N_NOOP("Invert Screen Colors"),            0, kwinApp()->platform, Platform::invertScreen);
+
+#undef DEF
+#undef DEF2
+#undef DEF3
+#undef DEF4
+#undef DEF5
+#undef DEF6
+
 #ifdef KWIN_BUILD_TABBOX
     TabBox::TabBox::self()->initShortcuts();
 #endif
@@ -1626,3 +1780,5 @@ bool Workspace::shortcutAvailable(const QKeySequence &cut, Toplevel* ignore) con
 }
 
 } // namespace
+
+Q_DECLARE_METATYPE(KWin::ShowOnDesktopActionData);

@@ -51,6 +51,42 @@ bool GLTexturePrivate::s_supportsTextureFormatRG = false;
 uint GLTexturePrivate::s_textureObjectCounter = 0;
 uint GLTexturePrivate::s_fbo = 0;
 
+// Table of GL formats/types associated with different values of QImage::Format.
+// Zero values indicate a direct upload is not feasible.
+//
+// Note: Blending is set up to expect premultiplied data, so the non-premultiplied
+// Format_ARGB32 must be converted to Format_ARGB32_Premultiplied ahead of time.
+struct {
+    GLenum internalFormat;
+    GLenum format;
+    GLenum type;
+} static const formatTable[] = {
+    { 0,           0,       0                              }, // QImage::Format_Invalid
+    { 0,           0,       0                              }, // QImage::Format_Mono
+    { 0,           0,       0                              }, // QImage::Format_MonoLSB
+    { 0,           0,       0                              }, // QImage::Format_Indexed8
+    { GL_RGB8,     GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV    }, // QImage::Format_RGB32
+    { 0,           0,       0                              }, // QImage::Format_ARGB32
+    { GL_RGBA8,    GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV    }, // QImage::Format_ARGB32_Premultiplied
+    { GL_RGB8,     GL_BGR,  GL_UNSIGNED_SHORT_5_6_5_REV    }, // QImage::Format_RGB16
+    { 0,           0,       0                              }, // QImage::Format_ARGB8565_Premultiplied
+    { 0,           0,       0                              }, // QImage::Format_RGB666
+    { 0,           0,       0                              }, // QImage::Format_ARGB6666_Premultiplied
+    { GL_RGB5,     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV  }, // QImage::Format_RGB555
+    { 0,           0,       0                              }, // QImage::Format_ARGB8555_Premultiplied
+    { GL_RGB8,     GL_RGB,  GL_UNSIGNED_BYTE               }, // QImage::Format_RGB888
+    { GL_RGB4,     GL_BGRA, GL_UNSIGNED_SHORT_4_4_4_4_REV  }, // QImage::Format_RGB444
+    { GL_RGBA4,    GL_BGRA, GL_UNSIGNED_SHORT_4_4_4_4_REV  }, // QImage::Format_ARGB4444_Premultiplied
+    { GL_RGB8,     GL_RGBA, GL_UNSIGNED_BYTE               }, // QImage::Format_RGBX8888
+    { 0,           0,       0                              }, // QImage::Format_RGBA8888
+    { GL_RGBA8,    GL_RGBA, GL_UNSIGNED_BYTE               }, // QImage::Format_RGBA8888_Premultiplied
+    { GL_RGB10,    GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV }, // QImage::Format_BGR30
+    { GL_RGB10_A2, GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV }, // QImage::Format_A2BGR30_Premultiplied
+    { GL_RGB10,    GL_BGRA, GL_UNSIGNED_INT_2_10_10_10_REV }, // QImage::Format_RGB30
+    { GL_RGB10_A2, GL_BGRA, GL_UNSIGNED_INT_2_10_10_10_REV }, // QImage::Format_A2RGB30_Premultiplied
+    { GL_R8,       GL_RED,  GL_UNSIGNED_BYTE               }, // QImage::Format_Alpha8
+    { GL_R8,       GL_RED,  GL_UNSIGNED_BYTE               }, // QImage::Format_Grayscale8
+};
 
 GLTexture::GLTexture()
     : d_ptr(new GLTexturePrivate())
@@ -96,40 +132,6 @@ GLTexture::GLTexture(const QImage& image, GLenum target)
     bind();
 
     if (!GLPlatform::instance()->isGLES()) {
-        // Note: Blending is set up to expect premultiplied data, so non-premultiplied
-        //       formats must always be converted.
-        struct {
-            GLenum internalFormat;
-            GLenum format;
-            GLenum type;
-        } static const table[] = {
-            { 0,           0,       0                              }, // QImage::Format_Invalid
-            { 0,           0,       0                              }, // QImage::Format_Mono
-            { 0,           0,       0                              }, // QImage::Format_MonoLSB
-            { GL_R8,       GL_RED,  GL_UNSIGNED_BYTE               }, // QImage::Format_Indexed8
-            { GL_RGB8,     GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV    }, // QImage::Format_RGB32
-            { 0,           0,       0                              }, // QImage::Format_ARGB32
-            { GL_RGBA8,    GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV    }, // QImage::Format_ARGB32_Premultiplied
-            { GL_RGB8,     GL_BGR,  GL_UNSIGNED_SHORT_5_6_5_REV    }, // QImage::Format_RGB16
-            { 0,           0,       0                              }, // QImage::Format_ARGB8565_Premultiplied
-            { 0,           0,       0                              }, // QImage::Format_RGB666
-            { 0,           0,       0                              }, // QImage::Format_ARGB6666_Premultiplied
-            { GL_RGB5,     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV  }, // QImage::Format_RGB555
-            { 0,           0,       0                              }, // QImage::Format_ARGB8555_Premultiplied
-            { GL_RGB8,     GL_RGB,  GL_UNSIGNED_BYTE               }, // QImage::Format_RGB888
-            { GL_RGB4,     GL_BGRA, GL_UNSIGNED_SHORT_4_4_4_4_REV  }, // QImage::Format_RGB444
-            { GL_RGBA4,    GL_BGRA, GL_UNSIGNED_SHORT_4_4_4_4_REV  }, // QImage::Format_ARGB4444_Premultiplied
-            { GL_RGB8,     GL_RGBA, GL_UNSIGNED_BYTE               }, // QImage::Format_RGBX8888
-            { 0,           0,       0                              }, // QImage::Format_RGBA8888
-            { GL_RGBA8,    GL_RGBA, GL_UNSIGNED_BYTE               }, // QImage::Format_RGBA8888_Premultiplied
-            { GL_RGB10,    GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV }, // QImage::Format_BGR30
-            { GL_RGB10_A2, GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV }, // QImage::Format_A2BGR30_Premultiplied
-            { GL_RGB10,    GL_BGRA, GL_UNSIGNED_INT_2_10_10_10_REV }, // QImage::Format_RGB30
-            { GL_RGB10_A2, GL_BGRA, GL_UNSIGNED_INT_2_10_10_10_REV }, // QImage::Format_A2RGB30_Premultiplied
-            { GL_R8,       GL_RED,  GL_UNSIGNED_BYTE               }, // QImage::Format_Alpha8
-            { GL_R8,       GL_RED,  GL_UNSIGNED_BYTE               }, // QImage::Format_Grayscale8
-        };
-
         QImage im;
         GLenum internalFormat;
         GLenum format;
@@ -137,11 +139,10 @@ GLTexture::GLTexture(const QImage& image, GLenum target)
 
         const QImage::Format index = image.format();
 
-        if (index < sizeof(table) / sizeof(table[0]) && table[index].internalFormat &&
-            !(index == QImage::Format_Indexed8 && image.colorCount() > 0)) {
-            internalFormat = table[index].internalFormat;
-            format = table[index].format;
-            type = table[index].type;
+        if (index < sizeof(formatTable) / sizeof(formatTable[0]) && formatTable[index].internalFormat) {
+            internalFormat = formatTable[index].internalFormat;
+            format = formatTable[index].format;
+            type = formatTable[index].type;
             im = image;
         } else {
             im = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
@@ -155,12 +156,12 @@ GLTexture::GLTexture(const QImage& image, GLenum target)
         if (d->s_supportsTextureStorage) {
             glTexStorage2D(d->m_target, 1, internalFormat, im.width(), im.height());
             glTexSubImage2D(d->m_target, 0, 0, 0, im.width(), im.height(),
-                            format, type, im.bits());
+                            format, type, im.constBits());
             d->m_immutable = true;
         } else {
             glTexParameteri(d->m_target, GL_TEXTURE_MAX_LEVEL, d->m_mipLevels - 1);
             glTexImage2D(d->m_target, 0, internalFormat, im.width(), im.height(), 0,
-                         format, type, im.bits());
+                         format, type, im.constBits());
         }
     } else {
         d->m_internalFormat = GL_RGBA8;
@@ -168,11 +169,11 @@ GLTexture::GLTexture(const QImage& image, GLenum target)
         if (d->s_supportsARGB32) {
             const QImage im = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
             glTexImage2D(d->m_target, 0, GL_BGRA_EXT, im.width(), im.height(),
-                         0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, im.bits());
+                         0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, im.constBits());
         } else {
             const QImage im = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             glTexImage2D(d->m_target, 0, GL_RGBA, im.width(), im.height(),
-                         0, GL_RGBA, GL_UNSIGNED_BYTE, im.bits());
+                         0, GL_RGBA, GL_UNSIGNED_BYTE, im.constBits());
         }
     }
 
@@ -354,43 +355,62 @@ void GLTexture::update(const QImage &image, const QPoint &offset, const QRect &s
     Q_D(GLTexture);
     Q_ASSERT(!d->m_foreign);
 
-    bool useUnpack = !src.isNull() && d->s_supportsUnpack && d->s_supportsARGB32 && image.format() == QImage::Format_ARGB32_Premultiplied;
+    GLenum glFormat;
+    GLenum type;
+    QImage::Format uploadFormat;
+    if (!GLPlatform::instance()->isGLES()) {
+        const QImage::Format index = image.format();
+
+        if (index < sizeof(formatTable) / sizeof(formatTable[0]) && formatTable[index].internalFormat) {
+            glFormat = formatTable[index].format;
+            type = formatTable[index].type;
+            uploadFormat = index;
+        } else {
+            glFormat = GL_BGRA;
+            type = GL_UNSIGNED_INT_8_8_8_8_REV;
+            uploadFormat = QImage::Format_ARGB32_Premultiplied;
+        }
+    } else {
+        if (d->s_supportsARGB32) {
+            glFormat = GL_BGRA_EXT;
+            type = GL_UNSIGNED_BYTE;
+            uploadFormat = QImage::Format_ARGB32_Premultiplied;
+        } else {
+            glFormat = GL_RGBA;
+            type = GL_UNSIGNED_BYTE;
+            uploadFormat = QImage::Format_RGBA8888_Premultiplied;
+        }
+    }
+    bool useUnpack = d->s_supportsUnpack && image.format() == uploadFormat && !src.isNull();
+
+    QImage im;
+    if (useUnpack) {
+        im = image;
+        Q_ASSERT(im.depth() % 8 == 0);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, im.bytesPerLine() / (im.depth() / 8));
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS, src.x());
+        glPixelStorei(GL_UNPACK_SKIP_ROWS, src.y());
+    } else {
+        if (src.isNull()) {
+            im = image;
+        } else {
+            im = image.copy(src);
+        }
+        if (im.format() != uploadFormat) {
+            im.convertTo(uploadFormat);
+        }
+    }
 
     int width = image.width();
     int height = image.height();
-    QImage tmpImage;
-
     if (!src.isNull()) {
-        if (useUnpack) {
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, image.width());
-            glPixelStorei(GL_UNPACK_SKIP_PIXELS, src.x());
-            glPixelStorei(GL_UNPACK_SKIP_ROWS, src.y());
-        } else {
-            tmpImage = image.copy(src);
-        }
         width = src.width();
         height = src.height();
     }
 
-    const QImage &img = tmpImage.isNull() ? image : tmpImage;
-
     bind();
 
-    if (!GLPlatform::instance()->isGLES()) {
-        const QImage im = img.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-        glTexSubImage2D(d->m_target, 0, offset.x(), offset.y(), width, height,
-                        GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, im.bits());
-    } else {
-        if (d->s_supportsARGB32) {
-            const QImage im = img.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-            glTexSubImage2D(d->m_target, 0, offset.x(), offset.y(), width, height,
-                            GL_BGRA_EXT, GL_UNSIGNED_BYTE, im.bits());
-        } else {
-            const QImage im = img.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
-            glTexSubImage2D(d->m_target, 0, offset.x(), offset.y(), width, height,
-                            GL_RGBA, GL_UNSIGNED_BYTE, im.bits());
-        }
-    }
+    glTexSubImage2D(d->m_target, 0, offset.x(), offset.y(), width, height, glFormat, type, im.constBits());
 
     unbind();
 
@@ -681,6 +701,13 @@ bool GLTexture::supportsSwizzle()
 bool GLTexture::supportsFormatRG()
 {
     return GLTexturePrivate::s_supportsTextureFormatRG;
+}
+
+QImage GLTexture::toImage() const
+{
+    QImage ret(size(), QImage::Format_RGBA8888_Premultiplied);
+    glGetTextureImage(texture(), 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, ret.sizeInBytes(), ret.bits());
+    return ret;
 }
 
 } // namespace KWin

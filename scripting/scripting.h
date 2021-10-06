@@ -14,6 +14,7 @@
 #include <QStringList>
 #include <QJSEngine>
 #include <QJSValue>
+#include <QTimer>
 
 #include <QDBusContext>
 #include <QDBusMessage>
@@ -78,6 +79,18 @@ private:
     QString m_fileName;
     QString m_pluginName;
     bool m_running;
+};
+
+/**
+ * In order to be able to construct QTimer objects in javascript, the constructor
+ * must be declared with Q_INVOKABLE.
+ */
+class ScriptTimer : public QTimer
+{
+    Q_OBJECT
+
+public:
+    Q_INVOKABLE ScriptTimer(QObject *parent = nullptr);
 };
 
 class Script : public AbstractScript, QDBusContext
@@ -250,7 +263,6 @@ private:
 class JSEngineGlobalMethodsWrapper : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(ClientAreaOption)
 public:
 //------------------------------------------------------------------
 //enums copy&pasted from kwinglobals.h for exporting
@@ -273,6 +285,7 @@ public:
         ///< one whole screen, ignore struts
         ScreenArea
     };
+    Q_ENUM(ClientAreaOption)
     explicit JSEngineGlobalMethodsWrapper(DeclarativeScript *parent);
     ~JSEngineGlobalMethodsWrapper() override;
 

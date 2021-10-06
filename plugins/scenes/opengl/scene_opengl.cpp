@@ -972,8 +972,8 @@ bool SceneOpenGL2::supported(OpenGLBackend *backend)
     if (!backend->isDirectRendering()) {
         return false;
     }
-    if (GLPlatform::instance()->recommendedCompositor() < OpenGL2Compositing) {
-        qCDebug(KWIN_OPENGL) << "Driver does not recommend OpenGL 2 compositing";
+    if (GLPlatform::instance()->recommendedCompositor() != OpenGLCompositing) {
+        qCDebug(KWIN_OPENGL) << "Driver does not recommend OpenGL compositing";
         return false;
     }
     return true;
@@ -1412,30 +1412,9 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
     const QMatrix4x4 modelViewProjection = modelViewProjectionMatrix(mask, data);
     const QMatrix4x4 mvpMatrix = modelViewProjection * windowMatrix;
 
-
-    bool useX11TextureClamp = false;
-
     GLShader *shader = data.shader;
-    GLenum filter;
-
-    if (waylandServer()) {
-        filter = GL_LINEAR;
-    } else {
-        const bool isTransformed = mask & (Effect::PAINT_WINDOW_TRANSFORMED |
-                                           Effect::PAINT_SCREEN_TRANSFORMED);
-        useX11TextureClamp = isTransformed;
-        if (isTransformed) {
-            filter = GL_LINEAR;
-        } else {
-            filter = GL_NEAREST;
-        }
-    }
-
     if (!shader) {
         ShaderTraits traits = ShaderTrait::MapTexture;
-        if (useX11TextureClamp) {
-            traits |= ShaderTrait::ClampTexture;
-        }
 
         if (data.opacity() != 1.0 || data.brightness() != 1.0 || data.crossFadeProgress() != 1.0)
             traits |= ShaderTrait::Modulate;
@@ -1576,28 +1555,9 @@ void OpenGLWindow::performPaint(int mask, QRegion region, WindowPaintData data)
             opacity = nodes[i].opacity;
         }
 
-        nodes[i].texture->setFilter(filter);
+        nodes[i].texture->setFilter(GL_LINEAR);
         nodes[i].texture->setWrapMode(GL_CLAMP_TO_EDGE);
         nodes[i].texture->bind();
-
-        if (i == ContentLeaf && useX11TextureClamp) {
-            // X11 windows are reparented to have their buffer in the middle of a larger texture
-            // holding the frame window.
-            // This code passes the texture geometry to the fragment shader
-            // any samples near the edge of the texture will be constrained to be
-            // at least half a pixel in bounds, meaning we don't bleed the transparent border
-            QRectF bufferContentRect = win::content_render_region(toplevel).boundingRect();
-            bufferContentRect.adjust(0.5, 0.5, -0.5, -0.5);
-
-            auto const render_geo = win::render_geometry(toplevel);
-            float leftClamp = bufferContentRect.left() / render_geo.width();
-            float topClamp = bufferContentRect.top() / render_geo.height();
-            float rightClamp = bufferContentRect.right() / render_geo.width();
-            float bottomClamp = bufferContentRect.bottom() / render_geo.height();
-            shader->setUniform(GLShader::TextureClamp, QVector4D({leftClamp, topClamp, rightClamp, bottomClamp}));
-        } else {
-            shader->setUniform(GLShader::TextureClamp, QVector4D({0, 0, 1, 1}));
-        }
 
         vbo->draw(region, primitiveType, nodes[i].firstVertex, nodes[i].vertexCount, m_hardwareClipping);
     }
@@ -1704,9 +1664,6 @@ SceneOpenGL::EffectFrame::EffectFrame(EffectFrameImpl* frame, SceneOpenGL *scene
     , m_unstyledVBO(nullptr)
     , m_scene(scene)
 {
-    if (m_effectFrame->style() == EffectFrameUnstyled && !m_unstyledTexture) {
-        updateUnstyledTexture();
-    }
 }
 
 SceneOpenGL::EffectFrame::~EffectFrame()
@@ -1801,6 +1758,10 @@ void SceneOpenGL::EffectFrame::render(QRegion region, double opacity, double fra
 
     // Render the actual frame
     if (m_effectFrame->style() == EffectFrameUnstyled) {
+        if (!m_unstyledTexture) {
+            updateUnstyledTexture();
+        }
+
         if (!m_unstyledVBO) {
             m_unstyledVBO = new GLVertexBuffer(GLVertexBuffer::Static);
             QRect area = m_effectFrame->geometry();
@@ -2506,7 +2467,7 @@ bool SceneOpenGLShadow::prepareBackend()
 
     // Check if the image is alpha-only in practice, and if so convert it to an 8-bpp format
     if (!GLPlatform::instance()->isGLES() && GLTexture::supportsSwizzle() && GLTexture::supportsFormatRG()) {
-        QImage alphaImage(image.size(), QImage::Format_Indexed8); // Change to Format_Alpha8 w/ Qt 5.5
+        QImage alphaImage(image.size(), QImage::Format_Alpha8);
         bool alphaOnly = true;
 
         for (ptrdiff_t y = 0; alphaOnly && y < image.height(); y++) {
@@ -2688,7 +2649,9 @@ void SceneOpenGLDecorationRenderer::render()
         renderToPainter(&painter, geo);
         painter.end();
 
-        clamp(image, QRect(viewport.topLeft(), viewport.size() * devicePixelRatio));
+        const QRect viewportScaled(viewport.topLeft() * devicePixelRatio, viewport.size() * devicePixelRatio);
+        const bool isIntegerScaling = qFuzzyCompare(devicePixelRatio, std::ceil(devicePixelRatio));
+        clamp(image, isIntegerScaling ? viewportScaled : viewportScaled.marginsRemoved({1, 1, 1, 1}));
 
         if (rotated) {
             // TODO: get this done directly when rendering to the image

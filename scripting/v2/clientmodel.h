@@ -28,7 +28,7 @@ namespace KWin {
 class Client;
 class WindowWrapper;
 
-namespace ScriptingClientModel {
+namespace ScriptingModels::V2 {
 
 class AbstractLevel;
 
@@ -36,7 +36,6 @@ class ClientModel : public QAbstractItemModel
 {
     Q_OBJECT
     Q_ENUMS(Exclude)
-    Q_ENUMS(LevelRestriction)
     Q_PROPERTY(Exclusions exclusions READ exclusions WRITE setExclusions NOTIFY exclusionsChanged)
 public:
     enum Exclusion {
@@ -59,6 +58,7 @@ public:
     };
     Q_DECLARE_FLAGS(Exclusions, Exclusion)
     Q_FLAGS(Exclusions)
+    Q_ENUM(Exclusion)
     enum LevelRestriction {
         NoRestriction = 0,
         VirtualDesktopRestriction = 1 << 0,
@@ -67,6 +67,7 @@ public:
     };
     Q_DECLARE_FLAGS(LevelRestrictions, LevelRestriction)
     Q_FLAGS(LevelRestrictions)
+    Q_ENUM(LevelRestriction)
     explicit ClientModel(QObject *parent);
     ~ClientModel() override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -282,7 +283,7 @@ public:
 class ClientFilterModel : public QSortFilterProxyModel
 {
     Q_OBJECT
-    Q_PROPERTY(KWin::ScriptingClientModel::ClientModel *clientModel READ clientModel WRITE setClientModel NOTIFY clientModelChanged)
+    Q_PROPERTY(KWin::ScriptingModels::V2::ClientModel *clientModel READ clientModel WRITE setClientModel NOTIFY clientModelChanged)
     Q_PROPERTY(QString filter READ filter WRITE setFilter NOTIFY filterChanged)
 public:
     ClientFilterModel(QObject *parent = nullptr);
@@ -381,7 +382,7 @@ const QString &ClientFilterModel::filter() const
 } // namespace Scripting
 } // namespace KWin
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::ScriptingClientModel::ClientModel::Exclusions)
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::ScriptingClientModel::ClientModel::LevelRestrictions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::ScriptingModels::V2::ClientModel::Exclusions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::ScriptingModels::V2::ClientModel::LevelRestrictions)
 
 #endif // KWIN_SCRIPTING_MODEL_H

@@ -37,7 +37,7 @@
 #include "kwinoptions_kdeglobals_settings.h"
 #include "kwinoptionsdata.h"
 
-K_PLUGIN_FACTORY_DECLARATION(KWinOptionsFactory)
+K_PLUGIN_FACTORY(KWinOptionsFactory, registerPlugin<KWinOptions>();)
 
 class KFocusConfigStandalone : public KFocusConfig
 {
@@ -254,14 +254,5 @@ void KActionsOptions::moduleChanged(bool state)
 {
     emit KCModule::changed(state);
 }
-
-K_PLUGIN_FACTORY_DEFINITION(KWinOptionsFactory,
-                            registerPlugin<KActionsOptions>("kwinactions");
-                            registerPlugin<KFocusConfigStandalone>("kwinfocus");
-                            registerPlugin<KMovingConfigStandalone>("kwinmoving");
-                            registerPlugin<KAdvancedConfigStandalone>("kwinadvanced");
-                            registerPlugin<KWinOptions>("kwinoptions");
-                            registerPlugin<KWinOptionsData>("kwinoptions");
-                           )
 
 #include "main.moc"

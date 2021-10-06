@@ -57,6 +57,11 @@ void Window::setVisible(bool visible)
     QPlatformWindow::setVisible(visible);
 }
 
+void Window::requestActivateWindow()
+{
+    QWindowSystemInterface::handleWindowActivated(window());
+}
+
 void Window::setGeometry(const QRect &rect)
 {
     const QRect &oldRect = geometry();

@@ -71,7 +71,7 @@ ScrollViewKCM {
         Kirigami.PlaceholderMessage {
             visible: ruleBookView.count === 0
             anchors.centerIn: parent
-            width: parent.width - (units.largeSpacing * 4)
+            width: parent.width - (Kirigami.Units.largeSpacing * 4)
             text: i18n("No rules for specific windows are currently set");
             explanation: xi18nc("@info", "Click the <interface>Add New...</interface> button below to add some")
         }
@@ -84,7 +84,7 @@ ScrollViewKCM {
         text: i18n("Select the rules to export")
         actions: [
             Kirigami.Action {
-                iconName: "object-select-symbolic"
+                iconName: "dialog-ok-apply"
                 text: checked ? i18n("Unselect All") : i18n("Select All")
                 checkable: true
                 checked: selectedIndexes.length === ruleBookView.count
@@ -111,7 +111,7 @@ ScrollViewKCM {
     footer: RowLayout {
         QQC2.Button {
             text: i18n("Add New...")
-            icon.name: "list-add-symbolic"
+            icon.name: "list-add"
             enabled: !exportInfo.visible
             onClicked: {
                 kcm.createRule();

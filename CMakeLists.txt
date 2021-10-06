@@ -4,6 +4,8 @@ project(KWinFT)
 set(PROJECT_VERSION "5.22.80")
 set(PROJECT_VERSION_MAJOR 5)
 
+set(CMAKE_C_STANDARD 99)
+
 set(QT_MIN_VERSION "5.15.0")
 set(KF5_MIN_VERSION "5.74.0")
 
@@ -491,7 +493,8 @@ set(kwin_SRCS
     scripting/scriptedeffect.cpp
     scripting/scripting.cpp
     scripting/scripting_logging.cpp
-    scripting/scripting_model.cpp
+    scripting/v2/clientmodel.cpp
+    scripting/v3/clientmodel.cpp
     scripting/scriptingutils.cpp
     scripting/window_wrapper.cpp
     scripting/workspace_wrapper.cpp

@@ -82,7 +82,7 @@ void MinimizeAnimationTest::initTestCase()
 
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
-    QCOMPARE(scene->compositingType(), OpenGL2Compositing);
+    QCOMPARE(scene->compositingType(), OpenGLCompositing);
 }
 
 void MinimizeAnimationTest::init()

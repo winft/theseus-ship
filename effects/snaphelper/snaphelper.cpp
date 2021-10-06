@@ -292,7 +292,7 @@ void SnapHelperEffect::slotWindowStartUserMovedResized(EffectWindow *w)
     }
 
     m_window = w;
-    m_geometry = w->geometry();
+    m_geometry = w->frameGeometry();
 
     m_animation.active = true;
     m_animation.timeLine.setDirection(TimeLine::Forward);
@@ -311,7 +311,7 @@ void SnapHelperEffect::slotWindowFinishUserMovedResized(EffectWindow *w)
     }
 
     m_window = nullptr;
-    m_geometry = w->geometry();
+    m_geometry = w->frameGeometry();
 
     m_animation.active = true;
     m_animation.timeLine.setDirection(TimeLine::Backward);
@@ -329,7 +329,7 @@ void SnapHelperEffect::slotWindowGeometryShapeChanged(EffectWindow *w, const QRe
         return;
     }
 
-    m_geometry = w->geometry();
+    m_geometry = w->frameGeometry();
 
     effects->addRepaint(computeDirtyRegion(old));
 }

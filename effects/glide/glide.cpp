@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // own
 #include "glide.h"
+#include "kwinglutils.h"
 
 // KConfigSkeleton
 #include "glideconfig.h"
@@ -124,14 +125,14 @@ void GlideEffect::paintWindow(EffectWindow *w, int mask, QRegion region, WindowP
     //  [move to the origin] -> [rotate] -> [translate] ->
     //    -> [perspective projection] -> [reverse "move to the origin"]
     const QMatrix4x4 oldProjMatrix = data.screenProjectionMatrix();
-    const QRectF windowGeo = w->geometry();
+    const QRectF windowGeo = w->frameGeometry();
     const QVector3D invOffset = oldProjMatrix.map(QVector3D(windowGeo.center()));
     QMatrix4x4 invOffsetMatrix;
     invOffsetMatrix.translate(invOffset.x(), invOffset.y());
     data.setProjectionMatrix(invOffsetMatrix * oldProjMatrix);
 
     // Move the center of the window to the origin.
-    const QRectF screenGeo = effects->virtualScreenGeometry();
+    const QRectF screenGeo = GLRenderTarget::virtualScreenGeometry();
     const QPointF offset = screenGeo.center() - windowGeo.center();
     data.translate(offset.x(), offset.y());
 

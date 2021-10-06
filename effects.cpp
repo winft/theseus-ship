@@ -392,6 +392,9 @@ void EffectsHandlerImpl::setupAbstractClientConnections(Toplevel* window)
             emit windowFullScreenChanged(window->effectWindow());
         }
     );
+    connect(window, &Toplevel::visible_geometry_changed, this, [this, window]() {
+        Q_EMIT windowExpandedGeometryChanged(window->effectWindow());
+    });
 }
 
 void EffectsHandlerImpl::setupClientConnections(win::x11::window *c)
@@ -408,6 +411,9 @@ void EffectsHandlerImpl::setupUnmanagedConnections(Toplevel* u)
     connect(u, &Toplevel::frame_geometry_changed, this, &EffectsHandlerImpl::slotFrameGeometryChanged);
     connect(u, &Toplevel::paddingChanged,       this, &EffectsHandlerImpl::slotPaddingChanged);
     connect(u, &Toplevel::damaged,              this, &EffectsHandlerImpl::slotWindowDamaged);
+    connect(u, &Toplevel::visible_geometry_changed, this, [this, u]() {
+        Q_EMIT windowExpandedGeometryChanged(u->effectWindow());
+    });
 }
 
 void EffectsHandlerImpl::reconfigure()
@@ -1808,6 +1814,10 @@ EffectScreenImpl::EffectScreenImpl(AbstractOutput *output, QObject *parent)
     : EffectScreen(parent)
     , m_platformOutput(output)
 {
+    connect(output, &AbstractOutput::wakeUp, this, &EffectScreen::wakeUp);
+    connect(output, &AbstractOutput::aboutToTurnOff, this, &EffectScreen::aboutToTurnOff);
+    connect(output, &AbstractOutput::scaleChanged, this, &EffectScreen::devicePixelRatioChanged);
+    connect(output, &AbstractOutput::geometryChanged, this, &EffectScreen::geometryChanged);
 }
 
 AbstractOutput *EffectScreenImpl::platformOutput() const
@@ -1956,7 +1966,6 @@ TOPLEVEL_HELPER(QRect, geometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, frameGeometry, frameGeometry)
 TOPLEVEL_HELPER(int, desktop, desktop)
 TOPLEVEL_HELPER(bool, isDeleted, isDeleted)
-TOPLEVEL_HELPER(bool, hasOwnShape, shape)
 TOPLEVEL_HELPER(QString, windowRole, windowRole)
 TOPLEVEL_HELPER(QStringList, activities, activities)
 TOPLEVEL_HELPER(bool, skipsCloseAnimation, skipsCloseAnimation)
@@ -2027,6 +2036,11 @@ CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isMinimized, minimized, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
+
+QRect EffectWindowImpl::clientGeometry() const
+{
+    return win::frame_to_client_rect(toplevel, toplevel->frameGeometry());
+}
 
 QRect expanded_geometry_recursion(Toplevel* window)
 {
@@ -2135,14 +2149,6 @@ void EffectWindowImpl::setWindow(Toplevel* w)
 void EffectWindowImpl::setSceneWindow(Scene::Window* w)
 {
     sw = w;
-}
-
-QRegion EffectWindowImpl::shape() const
-{
-    if (isX11Client() && toplevel) {
-        return toplevel->render_region();
-    }
-    return rect();
 }
 
 QRect EffectWindowImpl::decorationInnerRect() const

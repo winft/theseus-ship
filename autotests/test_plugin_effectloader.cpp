@@ -163,7 +163,7 @@ void TestPluginEffectLoader::testSupported_data()
     QTest::addColumn<KWin::CompositingType>("type");
 
     const KWin::CompositingType xc = KWin::XRenderCompositing;
-    const KWin::CompositingType oc = KWin::OpenGL2Compositing;
+    const KWin::CompositingType oc = KWin::OpenGLCompositing;
 
     QTest::newRow("invalid") << QStringLiteral("blur") << false << xc;
     QTest::newRow("fake - xrender") << QStringLiteral("fakeeffectplugin") << false << xc;
@@ -191,7 +191,7 @@ void TestPluginEffectLoader::testLoadEffect_data()
     QTest::addColumn<KWin::CompositingType>("type");
 
     const KWin::CompositingType xc = KWin::XRenderCompositing;
-    const KWin::CompositingType oc = KWin::OpenGL2Compositing;
+    const KWin::CompositingType oc = KWin::OpenGLCompositing;
 
     QTest::newRow("invalid") << QStringLiteral("slide") << false << xc;
     QTest::newRow("fake - xrender") << QStringLiteral("fakeeffectplugin") << false << xc;
@@ -264,7 +264,7 @@ void TestPluginEffectLoader::testLoadPluginEffect_data()
     QTest::addColumn<bool>("enabledByDefault");
 
     const KWin::CompositingType xc = KWin::XRenderCompositing;
-    const KWin::CompositingType oc = KWin::OpenGL2Compositing;
+    const KWin::CompositingType oc = KWin::OpenGLCompositing;
 
     const KWin::LoadEffectFlags checkDefault
         = KWin::LoadEffectFlag::Load | KWin::LoadEffectFlag::CheckDefaultFunction;
@@ -358,7 +358,7 @@ void TestPluginEffectLoader::testLoadPluginEffect()
 void TestPluginEffectLoader::testLoadAllEffects()
 {
     QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(
-        new MockEffectsHandler(KWin::OpenGL2Compositing));
+        new MockEffectsHandler(KWin::OpenGLCompositing));
     mockHandler->setProperty("testEnabledByDefault", true);
     KWin::PluginEffectLoader loader;
     loader.setPluginSubDirectory(QString());
@@ -407,7 +407,7 @@ void TestPluginEffectLoader::testLoadAllEffects()
 void TestPluginEffectLoader::testCancelLoadAllEffects()
 {
     // this test verifies that no test gets loaded when the loader gets cleared
-    MockEffectsHandler mockHandler(KWin::OpenGL2Compositing);
+    MockEffectsHandler mockHandler(KWin::OpenGLCompositing);
     KWin::PluginEffectLoader loader;
     loader.setPluginSubDirectory(QString());
 

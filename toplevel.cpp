@@ -78,6 +78,7 @@ Toplevel::Toplevel(win::transient* transient)
             return;
         }
         discard_shape();
+        Q_EMIT visible_geometry_changed();
     });
 
     connect(this, &Toplevel::damaged, this, &Toplevel::needsRepaint);
