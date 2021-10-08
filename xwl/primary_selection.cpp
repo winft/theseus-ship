@@ -10,12 +10,9 @@
 namespace KWin::Xwl
 {
 
-primary_selection::primary_selection(xcb_atom_t atom,
-                                     srv_data_device* srv_dev,
-                                     clt_data_device* clt_dev,
-                                     x11_data const& x11)
+primary_selection::primary_selection(xcb_atom_t atom, x11_data const& x11)
 {
-    data = create_selection_data(atom, srv_dev, clt_dev, x11);
+    data = create_selection_data<srv_data_source, internal_data_source>(atom, x11);
 
     register_x11_selection(this, QSize(10, 10));
 
@@ -23,24 +20,11 @@ primary_selection::primary_selection(xcb_atom_t atom,
                      &Wrapland::Server::Seat::primarySelectionChanged,
                      data.qobject.get(),
                      [this] { handle_wl_selection_change(this); });
-
-    QObject::connect(
-        data.srv_device, &srv_data_device::selection_changed, data.qobject.get(), [this] {
-            if (data.srv_device->selection()) {
-                get_selection_setter()(data.srv_device->selection());
-            }
-        });
 }
 
 primary_selection::srv_data_source* primary_selection::get_current_source() const
 {
     return waylandServer()->seat()->primarySelection();
-}
-
-Wrapland::Client::PrimarySelectionDeviceManager*
-primary_selection::get_internal_device_manager() const
-{
-    return waylandServer()->internalPrimarySelectionDeviceManager();
 }
 
 std::function<void(primary_selection::srv_data_source*)>

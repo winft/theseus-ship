@@ -25,13 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "wayland_server.h"
 
-#include <Wrapland/Client/datadevice.h>
-#include <Wrapland/Client/datasource.h>
-#include <Wrapland/Client/primary_selection.h>
-
-#include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_source.h>
-#include <Wrapland/Server/primary_selection.h>
 
 #include <string>
 #include <unistd.h>
@@ -270,14 +264,14 @@ void X11Source<DataSource>::setSource(DataSource* src)
 
     m_source = src;
 
-    for (const Mime& offer : m_offers) {
-        src->offer(offer.first);
+    for (auto const& offer : m_offers) {
+        src->offer(offer.first.toStdString());
     }
 
-    QObject::connect(src,
-                     &DataSource::sendDataRequested,
-                     qobject(),
-                     [this](auto const& mimeName, auto fd) { startTransfer(mimeName, fd); });
+    QObject::connect(
+        src, &DataSource::data_requested, qobject(), [this](auto const& mimeName, auto fd) {
+            startTransfer(QString::fromStdString(mimeName), fd);
+        });
 }
 
 template<typename DataSource>
@@ -319,7 +313,7 @@ void X11Source<DataSource>::startTransfer(const QString& mimeName, qint32 fd)
 
 // Templates specializations
 template class WlSource<Wrapland::Server::data_source>;
-template class X11Source<Wrapland::Client::DataSource>;
+template class X11Source<data_source_ext>;
 template class WlSource<Wrapland::Server::primary_selection_source>;
-template class X11Source<Wrapland::Client::PrimarySelectionSource>;
+template class X11Source<primary_selection_source_ext>;
 }

@@ -106,10 +106,8 @@ void cursor_image::markAsRendered()
     if (m_currentSource == CursorSource::DragAndDrop) {
         // always sending a frame rendered to the drag icon surface to not freeze QtWayland (see
         // https://bugreports.qt.io/browse/QTBUG-51599 )
-        if (auto ddi = waylandServer()->seat()->drags().get_source().dev) {
-            if (auto s = ddi->icon()) {
-                s->frameRendered(m_surfaceRenderedTimer.elapsed());
-            }
+        if (auto drag_icon = waylandServer()->seat()->drags().get_source().surfaces.icon) {
+            drag_icon->frameRendered(m_surfaceRenderedTimer.elapsed());
         }
         auto p = waylandServer()->seat()->drags().get_source().pointer;
         if (!p) {
@@ -324,13 +322,11 @@ void cursor_image::updateDragCursor()
     m_drag.cursor.hotSpot = QPoint();
     const bool needsEmit = m_currentSource == CursorSource::DragAndDrop;
     QImage additionalIcon;
-    if (auto ddi = waylandServer()->seat()->drags().get_source().dev) {
-        if (auto dragIcon = ddi->icon()) {
-            if (auto buffer = dragIcon->state().buffer) {
-                // TODO: Check std::optional?
-                additionalIcon = buffer->shmImage()->createQImage().copy();
-                additionalIcon.setOffset(dragIcon->state().offset);
-            }
+    if (auto drag_icon = waylandServer()->seat()->drags().get_source().surfaces.icon) {
+        if (auto buffer = drag_icon->state().buffer) {
+            // TODO: Check std::optional?
+            additionalIcon = buffer->shmImage()->createQImage().copy();
+            additionalIcon.setOffset(drag_icon->state().offset);
         }
     }
     auto p = waylandServer()->seat()->drags().get_source().pointer;

@@ -29,15 +29,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/x11/window.h"
 
-#include <Wrapland/Client/datadevice.h>
-#include <Wrapland/Client/datasource.h>
-
-#include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
-#include <Wrapland/Server/surface.h>
 
 #include <QMouseEvent>
 #include <QTimer>
@@ -50,7 +45,7 @@ namespace Xwl
 WlToXDrag::WlToXDrag(Dnd* dnd)
     : Drag(dnd)
 {
-    m_dsi = waylandServer()->seat()->drags().get_source().dev->drag_source();
+    m_dsi = waylandServer()->seat()->drags().get_source().src;
 }
 
 DragEventReply WlToXDrag::moveFilter(Toplevel* target, const QPoint& pos)
@@ -74,7 +69,7 @@ DragEventReply WlToXDrag::moveFilter(Toplevel* target, const QPoint& pos)
     }
     // new target
     workspace()->activateClient(target, false);
-    seat->drags().set_target(dnd->surfaceIface(), pos, target->input_transform());
+    seat->drags().set_target(target->surface(), pos, target->input_transform());
     m_visit = new Xvisit(this, target);
     return DragEventReply::Take;
 }
@@ -133,11 +128,16 @@ Xvisit::Xvisit(WlToXDrag* drag, Toplevel* target)
     }
     free(reply);
 
-    auto const dd = drag->dnd->data.clt_device;
     // proxy drop
-    m_enterConnection
-        = connect(dd, &Wrapland::Client::DataDevice::dragEntered, this, &Xvisit::receiveOffer);
-    m_dropConnection = connect(dd, &Wrapland::Client::DataDevice::dropped, this, &Xvisit::drop);
+    receiveOffer();
+    m_dropConnection = connect(
+        waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this, [this](auto success) {
+            if (success) {
+                drop();
+            } else {
+                leave();
+            }
+        });
 }
 
 bool Xvisit::handleClientMessage(xcb_client_message_event_t* event)
@@ -205,12 +205,6 @@ bool Xvisit::handleFinished(xcb_client_message_event_t* event)
     Q_UNUSED(success);
     Q_UNUSED(usedActionAtom);
 
-    // data offer might have been deleted already by the DataDevice
-    if (!m_dataOffer.isNull()) {
-        m_dataOffer->dragAndDropFinished();
-        delete m_dataOffer;
-        m_dataOffer = nullptr;
-    }
     doFinish();
     return true;
 }
@@ -257,16 +251,13 @@ void Xvisit::receiveOffer()
         return;
     }
 
-    Q_ASSERT(m_dataOffer.isNull());
-    m_dataOffer = m_drag->dnd->data.clt_device->dragOffer();
-    Q_ASSERT(!m_dataOffer.isNull());
-
+    enter();
     retrieveSupportedActions();
-    m_actionConnection = connect(m_dataOffer,
-                                 &Wrapland::Client::DataOffer::sourceDragAndDropActionsChanged,
+    m_actionConnection = connect(m_drag->dataSourceIface(),
+                                 &Wrapland::Server::data_source::supported_dnd_actions_changed,
                                  this,
                                  &Xvisit::retrieveSupportedActions);
-    enter();
+    sendPosition(waylandServer()->seat()->pointers().get_position());
 }
 
 void Xvisit::enter()
@@ -274,7 +265,6 @@ void Xvisit::enter()
     m_state.entered = true;
     // send enter event and current position to X client
     sendEnter();
-    sendPosition(waylandServer()->seat()->pointers().get_position());
 
     // proxy future pointer position changes
     m_motionConnection = connect(waylandServer()->seat(),
@@ -289,8 +279,6 @@ void Xvisit::sendEnter()
     data.data32[0] = m_drag->dnd->data.window;
     data.data32[1] = m_version << 24;
 
-    // TODO: replace this with the mime type getter from m_dataOffer,
-    // then we can get rid of m_drag.
     const auto mimeTypesNames = m_drag->dataSourceIface()->mime_types();
     const int mimesCount = mimeTypesNames.size();
     size_t cnt = 0;
@@ -362,7 +350,7 @@ void Xvisit::sendLeave()
 
 void Xvisit::retrieveSupportedActions()
 {
-    m_supportedActions = m_dataOffer->sourceDragAndDropActions();
+    m_supportedActions = m_drag->dataSourceIface()->supported_dnd_actions();
     determineProposedAction();
     requestDragAndDropAction();
 }
@@ -372,10 +360,10 @@ void Xvisit::determineProposedAction()
     DnDAction oldProposedAction = m_proposedAction;
     if (m_supportedActions.testFlag(m_preferredAction)) {
         m_proposedAction = m_preferredAction;
-    } else if (m_supportedActions.testFlag(DnDAction::Copy)) {
-        m_proposedAction = DnDAction::Copy;
+    } else if (m_supportedActions.testFlag(DnDAction::copy)) {
+        m_proposedAction = DnDAction::copy;
     } else {
-        m_proposedAction = DnDAction::None;
+        m_proposedAction = DnDAction::none;
     }
     // send updated action to X target
     if (oldProposedAction != m_proposedAction) {
@@ -385,15 +373,11 @@ void Xvisit::determineProposedAction()
 
 void Xvisit::requestDragAndDropAction()
 {
-    if (m_dataOffer.isNull()) {
-        return;
-    }
-    const auto pref = m_preferredAction != DnDAction::None ? m_preferredAction : DnDAction::Copy;
+    const auto pref = m_preferredAction != DnDAction::none ? m_preferredAction : DnDAction::copy;
     // we assume the X client supports Move, but this might be wrong - then
     // the drag just cancels, if the user tries to force it.
 
-    m_dataOffer->setDragAndDropActions(DnDAction::Copy | DnDAction::Move, pref);
-    waylandServer()->dispatch();
+    waylandServer()->seat()->drags().target_actions_update(DnDAction::copy | DnDAction::move, pref);
 }
 
 void Xvisit::drop()

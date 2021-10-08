@@ -31,11 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xwl/databridge.h"
 #include "xwl/xwayland.h"
 
-#include <Wrapland/Server/data_device.h>
-#include <Wrapland/Server/data_device_manager.h>
-#include <Wrapland/Server/data_source.h>
-#include <Wrapland/Server/primary_selection.h>
-
 #include <QProcess>
 #include <QProcessEnvironment>
 
@@ -61,15 +56,10 @@ void XwaylandSelectionsTest::initTestCase()
     qRegisterMetaType<win::wayland::window*>();
     qRegisterMetaType<win::x11::window*>();
     qRegisterMetaType<QProcess::ExitStatus>();
-    qRegisterMetaType<Wrapland::Server::data_device*>();
-    qRegisterMetaType<Wrapland::Server::data_source*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
-    //    QSignalSpy clipboardSyncDevicedCreated{waylandServer(),
-    //    &WaylandServer::xclipboardSyncDataDeviceCreated};
-    //    QVERIFY(clipboardSyncDevicedCreated.isValid());
 
     Test::app()->start();
     QMetaObject::invokeMethod(
@@ -79,15 +69,6 @@ void XwaylandSelectionsTest::initTestCase()
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
     QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
-    //    // wait till the xclipboard sync data device is created
-    //    if (clipboardSyncDevicedCreated.empty()) {
-    //        QVERIFY(clipboardSyncDevicedCreated.wait());
-    //    }
-    // wait till the DataBridge sync data device is created
-    while (Test::app()->xwayland->data_bridge->dataDeviceIface() == nullptr) {
-        QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
-    }
-    QVERIFY(Test::app()->xwayland->data_bridge->dataDeviceIface() != nullptr);
 }
 
 void XwaylandSelectionsTest::cleanup()
@@ -123,12 +104,6 @@ void XwaylandSelectionsTest::testSync_data()
 void XwaylandSelectionsTest::testSync()
 {
     QFETCH(QString, clipboardMode);
-    if (clipboardMode == "Clipboard") {
-        QVERIFY(Test::app()->xwayland->data_bridge->dataDeviceIface() != nullptr);
-    }
-    if (clipboardMode == "Selection") {
-        QVERIFY(Test::app()->xwayland->data_bridge->primarySelectionDeviceIface() != nullptr);
-    }
 
     // this test verifies the syncing of X11 to Wayland clipboard
     const QString copy = QFINDTESTDATA(QStringLiteral("copy"));
@@ -143,12 +118,11 @@ void XwaylandSelectionsTest::testSync()
 
     QSignalSpy clipboardChangedSpy = [clipboardMode]() {
         if (clipboardMode == "Clipboard") {
-            return QSignalSpy(Test::app()->xwayland->data_bridge->dataDeviceIface(),
-                              &Wrapland::Server::data_device::selection_changed);
+            return QSignalSpy(waylandServer()->seat(), &Wrapland::Server::Seat::selectionChanged);
         }
         if (clipboardMode == "Selection") {
-            return QSignalSpy(Test::app()->xwayland->data_bridge->primarySelectionDeviceIface(),
-                              &Wrapland::Server::primary_selection_device::selection_changed);
+            return QSignalSpy(waylandServer()->seat(),
+                              &Wrapland::Server::Seat::primarySelectionChanged);
         }
         throw;
     }();

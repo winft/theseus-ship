@@ -30,9 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/stacking_order.h"
 #include "workspace.h"
 
-#include <Wrapland/Client/datadevice.h>
-#include <Wrapland/Client/datasource.h>
-
 #include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
@@ -75,9 +72,17 @@ XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
             Q_UNUSED(fd);
             m_dataRequests << QPair<xcb_timestamp_t, bool>(m_source->timestamp(), false);
         });
-    auto* ddm = waylandServer()->internalDataDeviceManager();
-    m_dataSource = ddm->createSource(this);
-    connect(m_dataSource, &Wrapland::Client::DataSource::dragAndDropPerformed, this, [this] {
+
+    data_source.reset(new data_source_ext);
+    auto source_int_ptr = data_source.get();
+
+    assert(!dnd->data.source_int);
+    dnd->data.source_int = source_int_ptr;
+
+    connect(source_int_ptr, &data_source_ext::accepted, this, [this](auto /*mime_type*/) {
+        // TODO(romangg): handle?
+    });
+    connect(source_int_ptr, &data_source_ext::dropped, this, [this] {
         m_performed = true;
         if (m_visit) {
             connect(m_visit, &WlVisit::finish, this, [this](WlVisit* visit) {
@@ -98,46 +103,22 @@ XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
         }
         checkForFinished();
     });
-    connect(m_dataSource, &Wrapland::Client::DataSource::dragAndDropFinished, this, [this] {
+    connect(source_int_ptr, &data_source_ext::finished, this, [this] {
         // this call is not reliably initiated by Wayland clients
         checkForFinished();
     });
+    connect(source_int_ptr, &data_source_ext::action, this, [this](auto action) {
+        m_lastSelectedDragAndDropAction = action;
+    });
 
-    // source does _not_ take ownership of m_dataSource
-    source->setSource(m_dataSource);
-
-    auto* dc = new QMetaObject::Connection();
-    *dc = connect(waylandServer()->dataDeviceManager(),
-                  &Wrapland::Server::data_device_manager::source_created,
-                  this,
-                  [this, dc](Wrapland::Server::data_source* dsi) {
-                      Q_ASSERT(dsi);
-                      if (dsi->client() != waylandServer()->internalConnection()) {
-                          return;
-                      }
-                      QObject::disconnect(*dc);
-                      delete dc;
-                      connect(dsi,
-                              &Wrapland::Server::data_source::mime_type_offered,
-                              this,
-                              &XToWlDrag::offerCallback);
-                  });
-    // Start drag with serial of last left pointer button press.
-    // This means X to Wl drags can only be executed with the left pointer button being pressed.
-    // For touch and (maybe) other pointer button drags we have to revisit this.
-    //
-    // Until then we accept the restriction for Xwayland clients.
-    dnd->data.clt_device->startDrag(
-        waylandServer()->seat()->pointers().button_serial(Qt::LeftButton),
-        m_dataSource,
-        dnd->surface());
-    waylandServer()->dispatch();
+    // source does _not_ take ownership of source_int_ptr
+    source->setSource(source_int_ptr);
 }
 
 XToWlDrag::~XToWlDrag()
 {
-    delete m_dataSource;
-    m_dataSource = nullptr;
+    delete dnd->data.source_int;
+    dnd->data.source_int = nullptr;
 }
 
 DragEventReply XToWlDrag::moveFilter(Toplevel* target, const QPoint& pos)
@@ -168,7 +149,7 @@ DragEventReply XToWlDrag::moveFilter(Toplevel* target, const QPoint& pos)
         || target->surface()->client() == waylandServer()->xWaylandConnection()) {
         // currently there is no target or target is an Xwayland window
         // handled here and by X directly
-        if (target->control) {
+        if (target && target->surface() && target->control) {
             if (workspace()->activeClient() != target) {
                 workspace()->activateClient(target);
             }
@@ -201,17 +182,11 @@ bool XToWlDrag::handleClientMessage(xcb_client_message_event_t* event)
 
 void XToWlDrag::setDragAndDropAction(DnDAction action)
 {
-    m_dataSource->setDragAndDropActions(action);
+    data_source->set_actions(action);
 }
 
 DnDAction XToWlDrag::selectedDragAndDropAction()
 {
-    // Take the last received action only from before the drag was performed,
-    // because the action gets reset as soon as the drag is performed
-    // (this seems to be a bug in Wrapland -> TODO).
-    if (!m_performed) {
-        m_lastSelectedDragAndDropAction = m_dataSource->selectedDragAndDropAction();
-    }
     return m_lastSelectedDragAndDropAction;
 }
 
@@ -233,24 +208,14 @@ void XToWlDrag::setOffers(const Mimes& offers)
 
     // TODO: make sure that offers are not changed in between visits
 
-    m_offersPending = m_offers = offers;
-    for (const auto& mimePair : offers) {
-        m_dataSource->offer(mimePair.first);
+    m_offers = offers;
+    for (auto const& mimePair : offers) {
+        data_source->offer(mimePair.first.toStdString());
     }
+    setDragTarget();
 }
 
 using Mime = QPair<QString, xcb_atom_t>;
-
-void XToWlDrag::offerCallback(std::string const& mime)
-{
-    m_offersPending.erase(
-        std::remove_if(m_offersPending.begin(), m_offersPending.end(), [mime](const Mime& m) {
-            return m.first == mime.c_str();
-        }));
-    if (m_offersPending.isEmpty() && m_visit && m_visit->entered()) {
-        setDragTarget();
-    }
-}
 
 void XToWlDrag::setDragTarget()
 {
@@ -282,6 +247,12 @@ bool XToWlDrag::checkForFinished()
         Q_EMIT finish(this);
     }
     return transfersFinished;
+}
+
+bool XToWlDrag::end()
+{
+    dnd->data.source_int = nullptr;
+    return false;
 }
 
 WlVisit::WlVisit(Toplevel* target, XToWlDrag* drag)
@@ -438,7 +409,7 @@ bool WlVisit::handlePosition(xcb_client_message_event_t* event)
 
     if (!m_target) {
         // not over Wl window at the moment
-        m_action = DnDAction::None;
+        m_action = DnDAction::none;
         m_actionAtom = XCB_ATOM_NONE;
         sendStatus();
         return true;
@@ -452,9 +423,9 @@ bool WlVisit::handlePosition(xcb_client_message_event_t* event)
     xcb_atom_t actionAtom = m_version > 1 ? data->data32[4] : atoms->xdnd_action_copy;
     auto action = Drag::atomToClientAction(actionAtom);
 
-    if (action == DnDAction::None) {
+    if (action == DnDAction::none) {
         // copy action is always possible in XDND
-        action = DnDAction::Copy;
+        action = DnDAction::copy;
         actionAtom = atoms->xdnd_action_copy;
     }
 
@@ -516,7 +487,7 @@ void WlVisit::sendStatus()
 
 void WlVisit::sendFinished()
 {
-    const bool accepted = m_entered && m_action != DnDAction::None;
+    const bool accepted = m_entered && m_action != DnDAction::none;
     xcb_client_message_data_t data = {{0}};
     data.data32[0] = m_window;
     data.data32[1] = accepted;
@@ -526,11 +497,11 @@ void WlVisit::sendFinished()
 
 bool WlVisit::targetAcceptsAction() const
 {
-    if (m_action == DnDAction::None) {
+    if (m_action == DnDAction::none) {
         return false;
     }
     const auto selAction = m_drag->selectedDragAndDropAction();
-    return selAction == m_action || selAction == DnDAction::Copy;
+    return selAction == m_action || selAction == DnDAction::copy;
 }
 
 void WlVisit::unmapProxyWindow()

@@ -29,11 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include "xwayland.h"
 
-#include <Wrapland/Client/compositor.h>
-#include <Wrapland/Client/surface.h>
-
-#include <Wrapland/Server/compositor.h>
-#include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
@@ -81,8 +76,19 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
     if (!sel->data.x11_source) {
         return;
     }
-    sel->data.srv_device->update_proxy(originSurface);
+
     sel->m_currentDrag = new XToWlDrag(sel->data.x11_source, sel);
+
+    // Start drag with serial of last left pointer button press.
+    // This means X to Wl drags can only be executed with the left pointer button being pressed.
+    // For touch and (maybe) other pointer button drags we have to revisit this.
+    //
+    // Until then we accept the restriction for Xwayland clients.
+    seat->drags().start(sel->data.source_int->src(),
+                        originSurface,
+                        nullptr,
+                        seat->pointers().button_serial(Qt::LeftButton));
+    seat->drags().set_source_client_movement_blocked(false);
 }
 
 template<>
@@ -114,9 +120,9 @@ uint32_t Dnd::version()
     return s_version;
 }
 
-Dnd::Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev, x11_data const& x11)
+Dnd::Dnd(xcb_atom_t atom, x11_data const& x11)
 {
-    data = create_selection_data(atom, srv_dev, clt_dev, x11);
+    data = create_selection_data<srv_data_source, internal_data_source>(atom, x11);
 
     // TODO(romangg): for window size get current screen size and connect to changes.
     register_x11_selection(this, QSize(8192, 8192));
@@ -141,46 +147,6 @@ Dnd::Dnd(xcb_atom_t atom, srv_data_device* srv_dev, clt_data_device* clt_dev, x1
                      &Wrapland::Server::Seat::dragEnded,
                      data.qobject.get(),
                      [this]() { endDrag(); });
-
-    const auto* comp = waylandServer()->compositor();
-    m_surface = waylandServer()->internalCompositor()->createSurface(data.qobject.get());
-    m_surface->setInputRegion(nullptr);
-    m_surface->commit(Wrapland::Client::Surface::CommitFlag::None);
-    auto* dc = new QMetaObject::Connection();
-    *dc = QObject::connect(
-        comp,
-        &Wrapland::Server::Compositor::surfaceCreated,
-        data.qobject.get(),
-        [this, dc](Wrapland::Server::Surface* si) {
-            // TODO: how to make sure that it is the iface of m_surface?
-            if (m_surfaceIface || si->client() != waylandServer()->internalConnection()) {
-                return;
-            }
-            QObject::disconnect(*dc);
-            delete dc;
-            m_surfaceIface = si;
-            QObject::connect(
-                workspace(), &Workspace::clientActivated, data.qobject.get(), [this](Toplevel* ac) {
-                    if (!qobject_cast<win::x11::window*>(ac)) {
-                        return;
-                    }
-                    auto* surface = ac->surface();
-                    if (surface) {
-                        surface->setDataProxy(m_surfaceIface);
-                    } else {
-                        auto* dc = new QMetaObject::Connection();
-                        *dc = QObject::connect(
-                            ac, &Toplevel::surfaceChanged, data.qobject.get(), [this, ac, dc] {
-                                if (auto* surface = ac->surface()) {
-                                    surface->setDataProxy(m_surfaceIface);
-                                    QObject::disconnect(*dc);
-                                    delete dc;
-                                }
-                            });
-                    }
-                });
-        });
-    waylandServer()->dispatch();
 }
 
 DragEventReply Dnd::dragMoveFilter(Toplevel* target, const QPoint& pos)
@@ -192,8 +158,9 @@ DragEventReply Dnd::dragMoveFilter(Toplevel* target, const QPoint& pos)
 
 void Dnd::startDrag()
 {
-    auto srv_dev = waylandServer()->seat()->drags().get_source().dev;
-    if (srv_dev == data.srv_device) {
+    auto srv_src = waylandServer()->seat()->drags().get_source().src;
+
+    if (data.source_int && srv_src == data.source_int->src()) {
         // X to Wl drag, started by us, is in progress.
         Q_ASSERT(m_currentDrag);
         return;
@@ -204,7 +171,7 @@ void Dnd::startDrag()
 
     // New Wl to X drag, init drag and Wl source.
     m_currentDrag = new WlToXDrag(this);
-    auto source = new WlSource<Wrapland::Server::data_source>(srv_dev->drag_source());
+    auto source = new WlSource<Wrapland::Server::data_source>(srv_src);
     set_wl_source(this, source);
     own_selection(this, true);
 }

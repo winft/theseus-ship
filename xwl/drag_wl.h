@@ -23,22 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "drag.h"
 
 #include <QPoint>
-#include <QPointer>
-#include <QVector>
 
-namespace Wrapland
+namespace Wrapland::Server
 {
-namespace Client
-{
-class DataOffer;
-class Surface;
-}
-namespace Server
-{
-class data_device;
 class data_source;
-class Surface;
-}
 }
 
 namespace KWin
@@ -50,7 +38,7 @@ namespace Xwl
 enum class DragEventReply;
 class Xvisit;
 
-using DnDActions = Wrapland::Client::DataDeviceManager::DnDActions;
+using DnDActions = Wrapland::Server::dnd_actions;
 
 class WlToXDrag : public Drag
 {
@@ -138,16 +126,12 @@ private:
         QPoint cache;
     } m_pos;
 
-    // Must be QPointer, because Wrapland::Client::DataDevice
-    // might delete it.
-    QPointer<Wrapland::Client::DataOffer> m_dataOffer;
-
     // supported by the Wl source
-    DnDActions m_supportedActions = DnDAction::None;
+    DnDActions m_supportedActions = DnDAction::none;
     // preferred by the X client
-    DnDAction m_preferredAction = DnDAction::None;
+    DnDAction m_preferredAction = DnDAction::none;
     // decided upon by the compositor
-    DnDAction m_proposedAction = DnDAction::None;
+    DnDAction m_proposedAction = DnDAction::none;
 
     struct {
         bool entered = false;

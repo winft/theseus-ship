@@ -21,15 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_XWL_DRAG_X
 
 #include "drag.h"
+#include "sources.h"
 
 #include <QPoint>
 #include <QPointer>
 #include <QVector>
-
-namespace Wrapland::Client
-{
-class DataSource;
-}
+#include <memory>
 
 namespace KWin
 {
@@ -43,7 +40,7 @@ template<typename>
 class X11Source;
 
 using Mimes = QVector<QPair<QString, xcb_atom_t>>;
-using DataX11Source = X11Source<Wrapland::Client::DataSource>;
+using DataX11Source = X11Source<data_source_ext>;
 
 class XToWlDrag : public Drag
 {
@@ -59,10 +56,7 @@ public:
     void setDragAndDropAction(DnDAction action);
     DnDAction selectedDragAndDropAction();
 
-    bool end() override
-    {
-        return false;
-    }
+    bool end() override;
     DataX11Source* x11Source() const
     {
         return m_source;
@@ -70,12 +64,9 @@ public:
 
 private:
     void setOffers(const Mimes& offers);
-    void offerCallback(const std::string& mime);
     void setDragTarget();
 
     bool checkForFinished();
-
-    Wrapland::Client::DataSource* m_dataSource;
 
     Mimes m_offers;
     Mimes m_offersPending;
@@ -87,7 +78,9 @@ private:
     QVector<WlVisit*> m_oldVisits;
 
     bool m_performed = false;
-    DnDAction m_lastSelectedDragAndDropAction = DnDAction::None;
+    DnDAction m_lastSelectedDragAndDropAction = DnDAction::none;
+
+    std::unique_ptr<data_source_ext> data_source;
 
     Q_DISABLE_COPY(XToWlDrag)
 };
@@ -153,7 +146,7 @@ private:
     uint32_t m_version = 0;
 
     xcb_atom_t m_actionAtom;
-    DnDAction m_action = DnDAction::None;
+    DnDAction m_action = DnDAction::none;
 
     bool m_mapped = false;
     bool m_entered = false;

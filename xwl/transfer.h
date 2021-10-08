@@ -28,19 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xcb/xcb.h>
 
-namespace Wrapland
-{
-namespace Client
-{
-class DataDevice;
-class DataSource;
-}
-namespace Server
-{
-class data_device;
-}
-}
-
 namespace KWin
 {
 namespace Xwl

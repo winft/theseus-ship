@@ -28,10 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/x11/window.h"
 
-#include <Wrapland/Client/datadevice.h>
-#include <Wrapland/Client/datasource.h>
-
-#include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/seat.h>
 
@@ -45,12 +41,9 @@ namespace KWin
 namespace Xwl
 {
 
-Clipboard::Clipboard(xcb_atom_t atom,
-                     srv_data_device* srv_dev,
-                     clt_data_device* clt_dev,
-                     x11_data const& x11)
+Clipboard::Clipboard(xcb_atom_t atom, x11_data const& x11)
 {
-    data = create_selection_data(atom, srv_dev, clt_dev, x11);
+    data = create_selection_data<srv_data_source, internal_data_source>(atom, x11);
 
     register_x11_selection(this, QSize(10, 10));
 
@@ -58,23 +51,11 @@ Clipboard::Clipboard(xcb_atom_t atom,
                      &Wrapland::Server::Seat::selectionChanged,
                      data.qobject.get(),
                      [this] { handle_wl_selection_change(this); });
-
-    QObject::connect(
-        data.srv_device, &srv_data_device::selection_changed, data.qobject.get(), [this] {
-            if (data.srv_device->selection()) {
-                get_selection_setter()(data.srv_device->selection());
-            }
-        });
 }
 
 Clipboard::srv_data_source* Clipboard::get_current_source() const
 {
     return waylandServer()->seat()->selection();
-}
-
-Wrapland::Client::DataDeviceManager* Clipboard::get_internal_device_manager() const
-{
-    return waylandServer()->internalDataDeviceManager();
 }
 
 std::function<void(Clipboard::srv_data_source*)> Clipboard::get_selection_setter() const
