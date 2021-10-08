@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QObject>
 #include <QPair>
 #include <QQueue>
+#include <QStaticPlugin>
 
 namespace KWin
 {
@@ -332,6 +333,31 @@ private:
     QStringList m_loadedEffects;
     effect_load_queue<scripted_effect_loader, KPluginMetaData>* m_queue;
     QMetaObject::Connection m_queryConnection;
+};
+
+class static_plugin_effect_loader : public basic_effect_loader
+{
+    Q_OBJECT
+public:
+    explicit static_plugin_effect_loader(QObject* parent = nullptr);
+    ~static_plugin_effect_loader() override;
+
+    bool hasEffect(const QString& name) const override;
+    bool isEffectSupported(const QString& name) const override;
+    QStringList listOfKnownEffects() const override;
+
+    void clear() override;
+    void queryAndLoadAll() override;
+    bool loadEffect(const QString& name) override;
+    bool loadEffect(const QString& name, load_effect_flags flags);
+
+private:
+    EffectPluginFactory* factory(const QStaticPlugin& staticPlugin) const;
+    bool checkEnabledByDefault(const QStaticPlugin& staticPlugin) const;
+
+    QHash<QString, QStaticPlugin> m_staticPlugins;
+    effect_load_queue<static_plugin_effect_loader, QString>* m_queue;
+    QStringList m_loadedEffects;
 };
 
 class plugin_effect_loader : public basic_effect_loader
