@@ -1,12 +1,19 @@
 #######################################
 # Effect
+set(cube_SOURCES
+    cube.cpp
+    cube_proxy.cpp
+)
+kconfig_add_kcfg_files(cube_SOURCES
+    cubeconfig.kcfgc
+)
+kwin4_add_effect_module(kwin4_effect_cube ${cube_SOURCES})
 
 # Data files
 install(FILES data/cubecap.png DESTINATION ${KDE_INSTALL_DATADIR}/kwin)
 
 #######################################
 # Config
-
 set(kwin_cube_config_SRCS cube_config.cpp)
 ki18n_wrap_ui(kwin_cube_config_SRCS cube_config.ui)
 kconfig_add_kcfg_files(kwin_cube_config_SRCS cubeconfig.kcfgc)

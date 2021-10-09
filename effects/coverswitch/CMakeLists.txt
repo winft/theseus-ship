@@ -1,5 +1,12 @@
 #######################################
 # Effect
+set(coverswitch_SOURCES
+    coverswitch.cpp
+)
+kconfig_add_kcfg_files(coverswitch_SOURCES
+    coverswitchconfig.kcfgc
+)
+kwin4_add_effect_module(kwin4_effect_coverswitch ${coverswitch_SOURCES})
 
 #######################################
 # Config

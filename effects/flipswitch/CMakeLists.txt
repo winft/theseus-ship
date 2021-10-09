@@ -1,4 +1,14 @@
 #######################################
+# Effect
+set(flipswitch_SOURCES
+    flipswitch.cpp
+)
+kconfig_add_kcfg_files(flipswitch_SOURCES
+    flipswitchconfig.kcfgc
+)
+kwin4_add_effect_module(kwin4_effect_flipswitch ${flipswitch_SOURCES})
+
+#######################################
 # Config
 set(kwin_flipswitch_config_SRCS flipswitch_config.cpp)
 ki18n_wrap_ui(kwin_flipswitch_config_SRCS flipswitch_config.ui)

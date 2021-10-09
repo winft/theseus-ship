@@ -1,4 +1,14 @@
 #######################################
+# Effect
+set(cubeslide_SOURCES
+    cubeslide.cpp
+)
+kconfig_add_kcfg_files(cubeslide_SOURCES
+    cubeslideconfig.kcfgc
+)
+kwin4_add_effect_module(kwin4_effect_cubeslide ${cubeslide_SOURCES})
+
+#######################################
 # Config
 
 set(kwin_cubeslide_config_SRCS cubeslide_config.cpp)
