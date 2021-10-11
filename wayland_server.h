@@ -39,8 +39,6 @@ class EventQueue;
 class Registry;
 class Compositor;
 class Seat;
-class DataDeviceManager;
-class PrimarySelectionDeviceManager;
 class ShmPool;
 class Surface;
 }
@@ -50,7 +48,6 @@ class AppmenuManager;
 class Client;
 class Compositor;
 class Display;
-class DataDevice;
 class drm_lease_device_v1;
 class KdeIdle;
 class Seat;
@@ -210,12 +207,6 @@ public:
     Wrapland::Client::Seat *internalSeat() {
         return m_internalConnection.seat;
     }
-    Wrapland::Client::DataDeviceManager *internalDataDeviceManager() {
-        return m_internalConnection.ddm;
-    }
-    Wrapland::Client::PrimarySelectionDeviceManager *internalPrimarySelectionDeviceManager() {
-        return m_internalConnection.psdm;
-    }
     Wrapland::Client::ShmPool *internalShmPool() {
         return m_internalConnection.shm;
     }
@@ -313,8 +304,6 @@ private:
         Wrapland::Client::Compositor *compositor = nullptr;
         Wrapland::Client::EventQueue *queue = nullptr;
         Wrapland::Client::Seat *seat = nullptr;
-        Wrapland::Client::DataDeviceManager *ddm = nullptr;
-        Wrapland::Client::PrimarySelectionDeviceManager *psdm = nullptr;
         Wrapland::Client::ShmPool *shm = nullptr;
 
     } m_internalConnection;

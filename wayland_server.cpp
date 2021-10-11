@@ -36,8 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/registry.h>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/seat.h>
-#include <Wrapland/Client/datadevicemanager.h>
-#include <Wrapland/Client/primary_selection.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 // Server
@@ -241,8 +239,6 @@ void WaylandServer::destroyInternalConnection()
         delete m_internalConnection.registry;
         delete m_internalConnection.compositor;
         delete m_internalConnection.seat;
-        delete m_internalConnection.ddm;
-        delete m_internalConnection.psdm;
         delete m_internalConnection.shm;
         dispatch();
         delete m_internalConnection.queue;
@@ -776,11 +772,6 @@ void WaylandServer::createInternalConnection(std::function<void(bool)> callback)
                                                                    &Registry::createCompositor);
                 m_internalConnection.seat
                     = create_interface(Registry::Interface::Seat, &Registry::createSeat);
-                m_internalConnection.ddm = create_interface(Registry::Interface::DataDeviceManager,
-                                                            &Registry::createDataDeviceManager);
-                m_internalConnection.psdm
-                    = create_interface(Registry::Interface::PrimarySelectionDeviceManager,
-                                       &Registry::createPrimarySelectionDeviceManager);
                 callback(true);
             }, Qt::QueuedConnection);
 
