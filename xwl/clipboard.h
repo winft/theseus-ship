@@ -36,16 +36,13 @@ class Clipboard;
 class Clipboard
 {
 public:
-    using server_source = Wrapland::Server::data_source;
-    using internal_source = data_source_ext;
-
-    selection_data<server_source, internal_source> data;
+    selection_data<Wrapland::Server::data_source, data_source_ext> data;
     QMetaObject::Connection source_check_connection;
 
     Clipboard(xcb_atom_t atom, x11_data const& x11);
 
-    server_source* get_current_source() const;
-    std::function<void(server_source*)> get_selection_setter() const;
+    Wrapland::Server::data_source* get_current_source() const;
+    std::function<void(Wrapland::Server::data_source*)> get_selection_setter() const;
 
 private:
     Q_DISABLE_COPY(Clipboard)

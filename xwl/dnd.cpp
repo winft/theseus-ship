@@ -113,7 +113,7 @@ uint32_t Dnd::version()
 
 Dnd::Dnd(xcb_atom_t atom, x11_data const& x11)
 {
-    data = create_selection_data<srv_data_source, internal_data_source>(atom, x11);
+    data = create_selection_data<Wrapland::Server::data_source, data_source_ext>(atom, x11);
 
     // TODO(romangg): for window size get current screen size and connect to changes.
     register_x11_selection(this, QSize(8192, 8192));

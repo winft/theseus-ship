@@ -28,7 +28,7 @@ namespace KWin::Xwl
 
 Clipboard::Clipboard(xcb_atom_t atom, x11_data const& x11)
 {
-    data = create_selection_data<server_source, internal_source>(atom, x11);
+    data = create_selection_data<Wrapland::Server::data_source, data_source_ext>(atom, x11);
 
     register_x11_selection(this, QSize(10, 10));
 
@@ -38,14 +38,14 @@ Clipboard::Clipboard(xcb_atom_t atom, x11_data const& x11)
                      [this] { handle_wl_selection_change(this); });
 }
 
-Clipboard::server_source* Clipboard::get_current_source() const
+Wrapland::Server::data_source* Clipboard::get_current_source() const
 {
     return waylandServer()->seat()->selection();
 }
 
-std::function<void(Clipboard::server_source*)> Clipboard::get_selection_setter() const
+std::function<void(Wrapland::Server::data_source*)> Clipboard::get_selection_setter() const
 {
-    return [](server_source* src) { waylandServer()->seat()->setSelection(src); };
+    return [](Wrapland::Server::data_source* src) { waylandServer()->seat()->setSelection(src); };
 }
 
 }

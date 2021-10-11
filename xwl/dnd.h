@@ -48,11 +48,8 @@ void handle_x11_offer_change(Dnd* sel, QStringList const& added, QStringList con
  */
 class Dnd
 {
-    using srv_data_source = Wrapland::Server::data_source;
-    using internal_data_source = data_source_ext;
-
 public:
-    selection_data<srv_data_source, internal_data_source> data;
+    selection_data<Wrapland::Server::data_source, data_source_ext> data;
 
     // active drag or null when no drag active
     Drag* m_currentDrag = nullptr;
