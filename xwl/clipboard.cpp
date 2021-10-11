@@ -43,7 +43,7 @@ namespace Xwl
 
 Clipboard::Clipboard(xcb_atom_t atom, x11_data const& x11)
 {
-    data = create_selection_data<srv_data_source, internal_data_source>(atom, x11);
+    data = create_selection_data<server_source, internal_source>(atom, x11);
 
     register_x11_selection(this, QSize(10, 10));
 
@@ -53,14 +53,14 @@ Clipboard::Clipboard(xcb_atom_t atom, x11_data const& x11)
                      [this] { handle_wl_selection_change(this); });
 }
 
-Clipboard::srv_data_source* Clipboard::get_current_source() const
+Clipboard::server_source* Clipboard::get_current_source() const
 {
     return waylandServer()->seat()->selection();
 }
 
-std::function<void(Clipboard::srv_data_source*)> Clipboard::get_selection_setter() const
+std::function<void(Clipboard::server_source*)> Clipboard::get_selection_setter() const
 {
-    return [](srv_data_source* src) { waylandServer()->seat()->setSelection(src); };
+    return [](server_source* src) { waylandServer()->seat()->setSelection(src); };
 }
 
 } // namespace Xwl

@@ -51,11 +51,11 @@ Q_SIGNALS:
 /**
  * Representing a Wayland native data source.
  */
-template<typename SourceInterface>
+template<typename ServerSource>
 class WlSource
 {
 public:
-    WlSource(SourceInterface* di);
+    WlSource(ServerSource* source);
     ~WlSource();
 
     bool handleSelectionRequest(xcb_selection_request_event_t* event);
@@ -81,7 +81,7 @@ public:
 private:
     bool checkStartTransfer(xcb_selection_request_event_t* event);
 
-    SourceInterface* m_si = nullptr;
+    ServerSource* server_source = nullptr;
 
     QVector<QString> m_offers;
     QMetaObject::Connection m_offerConnection;
@@ -113,7 +113,7 @@ Q_SIGNALS:
 /**
  * Representing an X data source.
  */
-template<typename Source>
+template<typename InternalSource>
 class X11Source
 {
 public:
@@ -126,8 +126,8 @@ public:
      * X11Source does not take ownership of it in general, but if the function
      * is called again, it will delete the previous data source.
      */
-    void setSource(Source* src);
-    Source* source() const
+    void setSource(InternalSource* src);
+    InternalSource* source() const
     {
         return m_source;
     }
@@ -160,7 +160,7 @@ private:
     void startTransfer(const QString& mimeName, qint32 fd);
 
     xcb_window_t m_owner;
-    Source* m_source = nullptr;
+    InternalSource* m_source = nullptr;
 
     Mimes m_offers;
 

@@ -35,34 +35,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::Xwl
 {
 
-template<typename SourceIface>
-WlSource<SourceIface>::WlSource(SourceIface* si)
-    : m_si{si}
+template<typename ServerSource>
+WlSource<ServerSource>::WlSource(ServerSource* source)
+    : server_source{source}
     , m_qobject(new qWlSource)
 {
-    assert(si);
+    assert(source);
 
-    for (auto const& mime : si->mime_types()) {
+    for (auto const& mime : source->mime_types()) {
         m_offers << QString::fromStdString(mime);
     }
-    m_offerConnection = QObject::connect(
-        si, &SourceIface::mime_type_offered, qobject(), [this](auto mime) { receiveOffer(mime); });
+    m_offerConnection
+        = QObject::connect(source, &ServerSource::mime_type_offered, qobject(), [this](auto mime) {
+              receiveOffer(mime);
+          });
 }
 
-template<typename SourceIface>
-WlSource<SourceIface>::~WlSource()
+template<typename ServerSource>
+WlSource<ServerSource>::~WlSource()
 {
     delete m_qobject;
 }
 
-template<typename SourceIface>
-void WlSource<SourceIface>::receiveOffer(std::string const& mime)
+template<typename ServerSource>
+void WlSource<ServerSource>::receiveOffer(std::string const& mime)
 {
     m_offers << QString::fromStdString(mime);
 }
 
-template<typename SourceIface>
-bool WlSource<SourceIface>::handleSelectionRequest(xcb_selection_request_event_t* event)
+template<typename ServerSource>
+bool WlSource<ServerSource>::handleSelectionRequest(xcb_selection_request_event_t* event)
 {
     if (event->target == atoms->targets) {
         sendTargets(event);
@@ -79,8 +81,8 @@ bool WlSource<SourceIface>::handleSelectionRequest(xcb_selection_request_event_t
     return true;
 }
 
-template<typename SourceIface>
-void WlSource<SourceIface>::sendTargets(xcb_selection_request_event_t* event)
+template<typename ServerSource>
+void WlSource<ServerSource>::sendTargets(xcb_selection_request_event_t* event)
 {
     QVector<xcb_atom_t> targets;
     targets.resize(m_offers.size() + 2);
@@ -104,8 +106,8 @@ void WlSource<SourceIface>::sendTargets(xcb_selection_request_event_t* event)
     sendSelectionNotify(event, true);
 }
 
-template<typename SourceIface>
-void WlSource<SourceIface>::sendTimestamp(xcb_selection_request_event_t* event)
+template<typename ServerSource>
+void WlSource<ServerSource>::sendTimestamp(xcb_selection_request_event_t* event)
 {
     const xcb_timestamp_t time = timestamp();
     xcb_change_property(kwinApp()->x11Connection(),
@@ -120,8 +122,8 @@ void WlSource<SourceIface>::sendTimestamp(xcb_selection_request_event_t* event)
     sendSelectionNotify(event, true);
 }
 
-template<typename SourceIface>
-bool WlSource<SourceIface>::checkStartTransfer(xcb_selection_request_event_t* event)
+template<typename ServerSource>
+bool WlSource<ServerSource>::checkStartTransfer(xcb_selection_request_event_t* event)
 {
     const auto targets = atomToMimeTypes(event->target);
     if (targets.isEmpty()) {
@@ -138,7 +140,7 @@ bool WlSource<SourceIface>::checkStartTransfer(xcb_selection_request_event_t* ev
         return firstTarget == b;
     };
     // check supported mimes
-    auto const offers = m_si->mime_types();
+    auto const offers = server_source->mime_types();
     auto const mimeIt = std::find_if(offers.begin(), offers.end(), cmp);
     if (mimeIt == offers.end()) {
         // Requested Mime not supported. Not sending selection.
@@ -151,29 +153,29 @@ bool WlSource<SourceIface>::checkStartTransfer(xcb_selection_request_event_t* ev
         return false;
     }
 
-    m_si->request_data(*mimeIt, p[1]);
+    server_source->request_data(*mimeIt, p[1]);
     waylandServer()->dispatch();
 
     Q_EMIT qobject()->transferReady(new xcb_selection_request_event_t(*event), p[0]);
     return true;
 }
 
-template<typename DataSource>
-X11Source<DataSource>::X11Source(xcb_xfixes_selection_notify_event_t* event)
+template<typename InternalSource>
+X11Source<InternalSource>::X11Source(xcb_xfixes_selection_notify_event_t* event)
     : m_owner(event->owner)
     , m_timestamp(event->timestamp)
     , m_qobject(new qX11Source)
 {
 }
 
-template<typename DataSource>
-X11Source<DataSource>::~X11Source()
+template<typename InternalSource>
+X11Source<InternalSource>::~X11Source()
 {
     delete m_qobject;
 }
 
-template<typename DataSource>
-void X11Source<DataSource>::getTargets(xcb_window_t const window, xcb_atom_t const atom) const
+template<typename InternalSource>
+void X11Source<InternalSource>::getTargets(xcb_window_t const window, xcb_atom_t const atom) const
 {
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();
     /* will lead to a selection request event for the new owner */
@@ -183,8 +185,8 @@ void X11Source<DataSource>::getTargets(xcb_window_t const window, xcb_atom_t con
 
 using Mime = QPair<QString, xcb_atom_t>;
 
-template<typename DataSource>
-void X11Source<DataSource>::handleTargets(xcb_window_t const requestor)
+template<typename InternalSource>
+void X11Source<InternalSource>::handleTargets(xcb_window_t const requestor)
 {
     // receive targets
     xcb_connection_t* xcbConn = kwinApp()->x11Connection();
@@ -241,8 +243,8 @@ void X11Source<DataSource>::handleTargets(xcb_window_t const requestor)
     free(reply);
 }
 
-template<typename DataSource>
-void X11Source<DataSource>::setSource(DataSource* src)
+template<typename InternalSource>
+void X11Source<InternalSource>::setSource(InternalSource* src)
 {
     Q_ASSERT(src);
     if (m_source) {
@@ -256,20 +258,20 @@ void X11Source<DataSource>::setSource(DataSource* src)
     }
 
     QObject::connect(
-        src, &DataSource::data_requested, qobject(), [this](auto const& mimeName, auto fd) {
+        src, &InternalSource::data_requested, qobject(), [this](auto const& mimeName, auto fd) {
             startTransfer(QString::fromStdString(mimeName), fd);
         });
 }
 
-template<typename DataSource>
-void X11Source<DataSource>::setOffers(const Mimes& offers)
+template<typename InternalSource>
+void X11Source<InternalSource>::setOffers(const Mimes& offers)
 {
     // TODO: share code with handleTargets and emit signals accordingly?
     m_offers = offers;
 }
 
-template<typename DataSource>
-bool X11Source<DataSource>::handleSelectionNotify(xcb_selection_notify_event_t* event)
+template<typename InternalSource>
+bool X11Source<InternalSource>::handleSelectionNotify(xcb_selection_notify_event_t* event)
 {
     if (event->property == XCB_ATOM_NONE) {
         qCWarning(KWIN_XWL) << "Incoming X selection conversion failed";
@@ -282,8 +284,8 @@ bool X11Source<DataSource>::handleSelectionNotify(xcb_selection_notify_event_t* 
     return false;
 }
 
-template<typename DataSource>
-void X11Source<DataSource>::startTransfer(const QString& mimeName, qint32 fd)
+template<typename InternalSource>
+void X11Source<InternalSource>::startTransfer(const QString& mimeName, qint32 fd)
 {
     const auto mimeIt
         = std::find_if(m_offers.begin(), m_offers.end(), [mimeName](const Mime& mime) {

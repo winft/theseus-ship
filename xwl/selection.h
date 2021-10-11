@@ -62,9 +62,9 @@ Q_SIGNALS:
  * This class can be specialized to support the core Wayland protocol
  * (clipboard and dnd) as well as primary selection.
  */
-template<typename srv_data_source, typename int_data_source>
+template<typename server_source, typename int_source>
 struct selection_data {
-    using internal_data_source = int_data_source;
+    using internal_source = int_source;
 
     std::unique_ptr<q_selection> qobject;
 
@@ -77,10 +77,10 @@ struct selection_data {
 
     // Active source, if any. Only one of them at max can exist
     // at the same time.
-    WlSource<srv_data_source>* wayland_source{nullptr};
-    X11Source<internal_data_source>* x11_source{nullptr};
+    WlSource<server_source>* wayland_source{nullptr};
+    X11Source<internal_source>* x11_source{nullptr};
 
-    internal_data_source* source_int{nullptr};
+    internal_source* source_int{nullptr};
 
     x11_data x11;
 
@@ -108,10 +108,10 @@ struct selection_data {
     }
 };
 
-template<typename srv_data_source, typename internal_data_source>
+template<typename server_source, typename internal_source>
 auto create_selection_data(xcb_atom_t atom, x11_data const& x11)
 {
-    selection_data<srv_data_source, internal_data_source> sel;
+    selection_data<server_source, internal_source> sel;
 
     sel.qobject.reset(new q_selection());
     sel.atom = atom;
@@ -324,8 +324,8 @@ void overwrite_requestor_window(Selection* sel, xcb_window_t window)
 }
 
 // sets the current provider of the selection
-template<typename Selection, typename srv_data_source>
-void set_wl_source(Selection* sel, WlSource<srv_data_source>* source)
+template<typename Selection, typename server_source>
+void set_wl_source(Selection* sel, WlSource<server_source>* source)
 {
     delete sel->data.wayland_source;
     delete sel->data.x11_source;
@@ -353,8 +353,8 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
     delete sel->data.wayland_source;
     sel->data.wayland_source = nullptr;
 
-    using internal_data_source = typename decltype(sel->data)::internal_data_source;
-    sel->data.x11_source = new X11Source<internal_data_source>(event);
+    using internal_source = typename decltype(sel->data)::internal_source;
+    sel->data.x11_source = new X11Source<internal_source>(event);
 
     QObject::connect(sel->data.x11_source->qobject(),
                      &qX11Source::offersChanged,
@@ -538,19 +538,19 @@ void register_x11_selection(Selection* sel, QSize const& window_size)
 template<typename Selection>
 void cleanup_wl_to_x11_source(Selection* sel)
 {
-    using srv_data_source = typename Selection::srv_data_source;
+    using server_source = typename Selection::server_source;
 
-    set_wl_source<Selection, srv_data_source>(sel, nullptr);
+    set_wl_source<Selection, server_source>(sel, nullptr);
     own_selection(sel, false);
 }
 
 template<typename Selection>
 void handle_wl_selection_client_change(Selection* sel)
 {
-    using srv_data_source = typename Selection::srv_data_source;
+    using server_source = typename Selection::server_source;
 
     auto srv_src = sel->get_current_source();
-    static_assert(std::is_same_v<srv_data_source, std::remove_pointer_t<decltype(srv_src)>>,
+    static_assert(std::is_same_v<server_source, std::remove_pointer_t<decltype(srv_src)>>,
                   "get current data source type mismatch");
 
     if (!qobject_cast<win::x11::window*>(workspace()->activeClient())) {
@@ -567,7 +567,7 @@ void handle_wl_selection_client_change(Selection* sel)
         return;
     }
 
-    auto wls = new WlSource<srv_data_source>(srv_src);
+    auto wls = new WlSource<server_source>(srv_src);
     set_wl_source(sel, wls);
     own_selection(sel, true);
 }
@@ -578,10 +578,10 @@ void handle_wl_selection_client_change(Selection* sel)
 template<typename Selection>
 void handle_wl_selection_change(Selection* sel)
 {
-    using srv_data_source = typename Selection::srv_data_source;
+    using server_source = typename Selection::server_source;
 
     auto srv_src = sel->get_current_source();
-    static_assert(std::is_same_v<srv_data_source, std::remove_pointer_t<decltype(srv_src)>>,
+    static_assert(std::is_same_v<server_source, std::remove_pointer_t<decltype(srv_src)>>,
                   "get current data source type mismatch");
 
     auto cleanup_activation_notifier = [&] {
@@ -627,7 +627,7 @@ void handle_wl_selection_change(Selection* sel)
 template<typename Selection>
 void handle_x11_offer_change(Selection* sel, QStringList const& added, QStringList const& removed)
 {
-    using internal_data_source = typename Selection::internal_data_source;
+    using internal_source = typename Selection::internal_source;
 
     auto source = sel->data.x11_source;
 
@@ -645,7 +645,7 @@ void handle_x11_offer_change(Selection* sel, QStringList const& added, QStringLi
         // create new Wl DataSource if there is none or when types
         // were removed (Wl Data Sources can only add types)
         auto old_source_int = sel->data.source_int;
-        auto internal_src = new internal_data_source();
+        auto internal_src = new internal_source();
 
         sel->data.source_int = internal_src;
         source->setSource(internal_src);

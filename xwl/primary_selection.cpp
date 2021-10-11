@@ -12,7 +12,7 @@ namespace KWin::Xwl
 
 primary_selection::primary_selection(xcb_atom_t atom, x11_data const& x11)
 {
-    data = create_selection_data<srv_data_source, internal_data_source>(atom, x11);
+    data = create_selection_data<server_source, internal_source>(atom, x11);
 
     register_x11_selection(this, QSize(10, 10));
 
@@ -22,15 +22,15 @@ primary_selection::primary_selection(xcb_atom_t atom, x11_data const& x11)
                      [this] { handle_wl_selection_change(this); });
 }
 
-primary_selection::srv_data_source* primary_selection::get_current_source() const
+primary_selection::server_source* primary_selection::get_current_source() const
 {
     return waylandServer()->seat()->primarySelection();
 }
 
-std::function<void(primary_selection::srv_data_source*)>
+std::function<void(primary_selection::server_source*)>
 primary_selection::get_selection_setter() const
 {
-    return [](srv_data_source* src) { waylandServer()->seat()->setPrimarySelection(src); };
+    return [](server_source* src) { waylandServer()->seat()->setPrimarySelection(src); };
 }
 
 }
