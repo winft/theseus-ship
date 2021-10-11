@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "dnd.h"
 #include "selection.h"
-#include "xwayland.h"
 
 #include "atoms.h"
 #include "wayland_server.h"
@@ -29,13 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/x11/window.h"
 
-#include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
-
-#include <QMouseEvent>
-#include <QTimer>
 
 namespace KWin::Xwl
 {

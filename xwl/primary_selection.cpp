@@ -5,6 +5,8 @@
 */
 #include "primary_selection.h"
 
+#include "wayland_server.h"
+
 #include <Wrapland/Server/seat.h>
 
 namespace KWin::Xwl

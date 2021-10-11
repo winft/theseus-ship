@@ -37,7 +37,6 @@ class Toplevel;
 
 namespace Xwl
 {
-class Xwayland;
 class Clipboard;
 class Dnd;
 enum class DragEventReply;

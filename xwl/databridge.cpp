@@ -18,20 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "databridge.h"
+
 #include "clipboard.h"
 #include "dnd.h"
 #include "primary_selection.h"
-#include "selection.h"
 
 #include "atoms.h"
-#include "toplevel.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
-#include <Wrapland/Server/primary_selection.h>
-#include <Wrapland/Server/seat.h>
-
-using namespace Wrapland::Client;
 
 namespace KWin::Xwl
 {

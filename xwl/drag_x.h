@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "sources.h"
 
 #include <QPoint>
-#include <QPointer>
 #include <QVector>
 #include <memory>
 

@@ -20,9 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "selection_source.h"
 
 #include "selection.h"
-#include "transfer.h"
 
-#include "atoms.h"
 #include "wayland_server.h"
 
 #include <Wrapland/Server/data_source.h>

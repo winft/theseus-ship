@@ -21,20 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "drag_wl.h"
 #include "drag_x.h"
-#include "selection_source.h"
 
 #include "atoms.h"
-#include "toplevel.h"
 #include "wayland_server.h"
-#include "workspace.h"
-#include "xwayland.h"
 
-#include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
-
-#include <QMouseEvent>
 
 #include <xcb/xcb.h>
 

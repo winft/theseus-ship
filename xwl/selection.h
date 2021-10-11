@@ -12,7 +12,6 @@
 #include "xwayland.h"
 
 #include "atoms.h"
-#include "wayland_server.h"
 #include "win/x11/window.h"
 #include "workspace.h"
 

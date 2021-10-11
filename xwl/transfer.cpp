@@ -20,11 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "transfer.h"
 
 #include "atoms.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
-#include <xcb/xcb_event.h>
-#include <xcb/xfixes.h>
 
 #include <algorithm>
 #include <unistd.h>

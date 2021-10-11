@@ -19,22 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "clipboard.h"
 
-#include "selection_source.h"
-#include "transfer.h"
-#include "xwayland.h"
-
 #include "wayland_server.h"
-#include "workspace.h"
 
-#include "win/x11/window.h"
-
-#include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/seat.h>
-
-#include <xcb/xcb_event.h>
-#include <xcb/xfixes.h>
-
-#include <xwayland_logging.h>
 
 namespace KWin::Xwl
 {
