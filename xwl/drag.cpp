@@ -60,7 +60,7 @@ DnDAction Drag::atomToClientAction(xcb_atom_t atom)
     } else if (atom == atoms->xdnd_action_ask) {
         // we currently do not support it - need some test client first
         return DnDAction::none;
-        //        return DnDAction::Ask;
+        // return DnDAction::Ask;
     }
     return DnDAction::none;
 }
@@ -74,7 +74,7 @@ xcb_atom_t Drag::clientActionToAtom(DnDAction action)
     } else if (action == DnDAction::ask) {
         // we currently do not support it - need some test client first
         return XCB_ATOM_NONE;
-        //        return atoms->xdnd_action_ask;
+        // return atoms->xdnd_action_ask;
     }
     return XCB_ATOM_NONE;
 }

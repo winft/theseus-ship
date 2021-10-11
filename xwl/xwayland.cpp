@@ -109,18 +109,22 @@ Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> sta
     m_xwaylandProcess = new Process(this);
     m_xwaylandProcess->setProcessChannelMode(QProcess::ForwardedErrorChannel);
     m_xwaylandProcess->setProgram(QStringLiteral("Xwayland"));
+
     QProcessEnvironment env = m_app->processStartupEnvironment();
     env.insert("WAYLAND_SOCKET", QByteArray::number(wlfd));
     env.insert("EGL_PLATFORM", QByteArrayLiteral("DRM"));
+
     if (qEnvironmentVariableIsSet("KWIN_XWAYLAND_DEBUG")) {
         env.insert("WAYLAND_DEBUG", QByteArrayLiteral("1"));
     }
+
     m_xwaylandProcess->setProcessEnvironment(env);
     m_xwaylandProcess->setArguments({QStringLiteral("-displayfd"),
                                      QString::number(pipeFds[1]),
                                      QStringLiteral("-rootless"),
                                      QStringLiteral("-wm"),
                                      QString::number(fd)});
+
     m_xwaylandFailConnection = connect(
         m_xwaylandProcess, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
             if (error == QProcess::FailedToStart) {
@@ -130,6 +134,7 @@ Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> sta
             }
             this->status_callback(1);
         });
+
     auto const xDisplayPipe = pipeFds[0];
     connect(m_xwaylandProcess, &QProcess::started, this, [this, xDisplayPipe] {
         QFutureWatcher<void>* watcher = new QFutureWatcher<void>(this);
@@ -145,6 +150,7 @@ Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> sta
                          Qt::QueuedConnection);
         watcher->setFuture(QtConcurrent::run(readDisplay, xDisplayPipe));
     });
+
     m_xwaylandProcess->start();
     close(pipeFds[1]);
 }
@@ -170,6 +176,7 @@ Xwayland::~Xwayland()
         m_xwaylandProcess->terminate();
         m_xwaylandProcess->waitForFinished(5000);
     }
+
     delete m_xwaylandProcess;
     m_xwaylandProcess = nullptr;
 

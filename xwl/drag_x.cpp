@@ -128,6 +128,7 @@ DragEventReply XToWlDrag::moveFilter(Toplevel* target, QPoint const& pos)
         // still same Wl target, wait for X events
         return DragEventReply::Ignore;
     }
+
     if (m_visit) {
         if (m_visit->leave()) {
             delete m_visit;
@@ -139,26 +140,28 @@ DragEventReply XToWlDrag::moveFilter(Toplevel* target, QPoint const& pos)
             m_oldVisits << m_visit;
         }
     }
+
     bool const hasCurrent = m_visit;
     m_visit = nullptr;
 
     if (!target || !target->surface()
         || target->surface()->client() == waylandServer()->xWaylandConnection()) {
-        // currently there is no target or target is an Xwayland window
-        // handled here and by X directly
+        // Currently there is no target or target is an Xwayland window.
+        // Handled here and by X directly.
         if (target && target->surface() && target->control) {
             if (workspace()->activeClient() != target) {
                 workspace()->activateClient(target);
             }
         }
+
         if (hasCurrent) {
-            // last received enter event is now void,
-            // wait for the next one
+            // Last received enter event is now void. Wait for the next one.
             seat->drags().set_target(nullptr);
         }
         return DragEventReply::Ignore;
     }
-    // new Wl native target
+
+    // New Wl native target.
     m_visit = new WlVisit(target, this);
     connect(m_visit, &WlVisit::offersReceived, this, &XToWlDrag::setOffers);
     return DragEventReply::Ignore;
@@ -171,9 +174,11 @@ bool XToWlDrag::handleClientMessage(xcb_client_message_event_t* event)
             return true;
         }
     }
+
     if (m_visit && m_visit->handleClientMessage(event)) {
         return true;
     }
+
     return false;
 }
 
@@ -190,12 +195,14 @@ DnDAction XToWlDrag::selectedDragAndDropAction()
 void XToWlDrag::setOffers(Mimes const& offers)
 {
     m_source->setOffers(offers);
+
     if (offers.isEmpty()) {
         // There are no offers, so just directly set the drag target,
         // no transfer possible anyways.
         setDragTarget();
         return;
     }
+
     if (m_offers == offers) {
         // offers had been set already by a previous visit
         // Wl side is already configured
@@ -206,9 +213,11 @@ void XToWlDrag::setOffers(Mimes const& offers)
     // TODO: make sure that offers are not changed in between visits
 
     m_offers = offers;
+
     for (auto const& mimePair : offers) {
         data_source->offer(mimePair.first.toStdString());
     }
+
     setDragTarget();
 }
 
@@ -226,17 +235,21 @@ bool XToWlDrag::checkForFinished()
         Q_EMIT finish(this);
         return true;
     }
+
     if (!m_visit->finished()) {
         return false;
     }
+
     if (m_dataRequests.size() == 0) {
         // need to wait for first data request
         return false;
     }
+
     auto transfersFinished
         = std::all_of(m_dataRequests.begin(),
                       m_dataRequests.end(),
                       [](QPair<xcb_timestamp_t, bool> req) { return req.second; });
+
     if (transfersFinished) {
         m_visit->sendFinished();
         Q_EMIT finish(this);
@@ -313,7 +326,6 @@ bool WlVisit::leave()
 bool WlVisit::handleClientMessage(xcb_client_message_event_t* event)
 {
     if (event->window != m_window) {
-        // different window
         return false;
     }
 
@@ -340,9 +352,10 @@ using Mime = QPair<QString, xcb_atom_t>;
 bool WlVisit::handleEnter(xcb_client_message_event_t* event)
 {
     if (m_entered) {
-        // a drag already entered
+        // A drag already entered.
         return true;
     }
+
     m_entered = true;
 
     auto data = &event->data;
@@ -411,6 +424,7 @@ bool WlVisit::handlePosition(xcb_client_message_event_t* event)
         sendStatus();
         return true;
     }
+
     auto const pos = data->data32[2];
     Q_UNUSED(pos);
 
@@ -445,8 +459,7 @@ bool WlVisit::handleDrop(xcb_client_message_event_t* event)
     xcb_timestamp_t const timestamp = data->data32[2];
     m_drag->x11Source()->setTimestamp(timestamp);
 
-    // we do nothing more here, the drop is being processed
-    // through the X11Source object
+    // We do nothing more here, the drop is being processed through the X11Source object.
     doFinish();
     return true;
 }
@@ -469,26 +482,30 @@ bool WlVisit::handleLeave(xcb_client_message_event_t* event)
 
 void WlVisit::sendStatus()
 {
-    // receive position events
+    // Receive position events.
     uint32_t flags = 1 << 1;
     if (targetAcceptsAction()) {
         // accept the drop
         flags |= (1 << 0);
     }
+
     xcb_client_message_data_t data = {{0}};
     data.data32[0] = m_window;
     data.data32[1] = flags;
     data.data32[4] = flags & (1 << 0) ? m_actionAtom : static_cast<uint32_t>(XCB_ATOM_NONE);
+
     Drag::sendClientMessage(m_srcWindow, atoms->xdnd_status, &data);
 }
 
 void WlVisit::sendFinished()
 {
     auto const accepted = m_entered && m_action != DnDAction::none;
+
     xcb_client_message_data_t data = {{0}};
     data.data32[0] = m_window;
     data.data32[1] = accepted;
     data.data32[2] = accepted ? m_actionAtom : static_cast<uint32_t>(XCB_ATOM_NONE);
+
     Drag::sendClientMessage(m_srcWindow, atoms->xdnd_finished, &data);
 }
 
@@ -506,10 +523,13 @@ void WlVisit::unmapProxyWindow()
     if (!m_mapped) {
         return;
     }
+
     auto xcbConn = m_drag->dnd->data.x11.connection;
     xcb_unmap_window(xcbConn, m_window);
+
     workspace()->stacking_order->remove_manual_overlay(m_window);
     workspace()->stacking_order->update(true);
+
     xcb_flush(xcbConn);
     m_mapped = false;
 }

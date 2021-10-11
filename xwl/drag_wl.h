@@ -48,7 +48,6 @@ public:
 
     DragEventReply moveFilter(Toplevel* target, QPoint const& pos) override;
     bool handleClientMessage(xcb_client_message_event_t* event) override;
-
     bool end() override;
 
     Wrapland::Server::data_source* dataSourceIface() const
@@ -63,7 +62,7 @@ private:
     Q_DISABLE_COPY(WlToXDrag)
 };
 
-// visit to an X window
+/// Visit to an X window
 class Xvisit : public QObject
 {
     Q_OBJECT

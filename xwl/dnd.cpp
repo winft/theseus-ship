@@ -47,12 +47,15 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
         own_selection(sel, true);
         return;
     }
+
     create_x11_source(sel, nullptr);
+
     auto const seat = waylandServer()->seat();
     auto originSurface = seat->pointers().get_focus().surface;
     if (!originSurface) {
         return;
     }
+
     if (originSurface->client() != waylandServer()->xWaylandConnection()) {
         // focused surface client is not Xwayland - do not allow drag to start
         // TODO: can we make this stronger (window id comparison)?
@@ -63,6 +66,7 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
         // pressed for now
         return;
     }
+
     create_x11_source(sel, event);
     if (!sel->data.x11_source) {
         return;

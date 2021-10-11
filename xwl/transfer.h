@@ -79,6 +79,7 @@ protected:
     {
         m_timeout = false;
     }
+
     void createSocketNotifier(QSocketNotifier::Type type);
     void clearSocketNotifier();
     QSocketNotifier* socketNotifier() const

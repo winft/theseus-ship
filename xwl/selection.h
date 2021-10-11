@@ -32,6 +32,7 @@ namespace KWin::Xwl
 {
 class TransferWltoX;
 class TransferXtoWl;
+
 template<typename>
 class WlSource;
 template<typename>
@@ -141,9 +142,11 @@ template<typename Selection>
 void register_xfixes(Selection* sel)
 {
     auto xcb_conn = kwinApp()->x11Connection();
+
     uint32_t const mask = XCB_XFIXES_SELECTION_EVENT_MASK_SET_SELECTION_OWNER
         | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_WINDOW_DESTROY
         | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_CLIENT_CLOSE;
+
     xcb_xfixes_select_selection_input(
         kwinApp()->x11Connection(), sel->data.window, sel->data.atom, mask);
     xcb_flush(xcb_conn);
@@ -162,6 +165,7 @@ bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* e
     if (event->selection != sel->data.atom) {
         return false;
     }
+
     if (sel->data.disown_pending) {
         // notify of our own disown - ignore it
         sel->data.disown_pending = false;
@@ -192,8 +196,8 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
 
     auto const& client = workspace()->activeClient();
     if (!qobject_cast<win::x11::window const*>(client)) {
-        // clipboard is only allowed to be acquired when Xwayland has focus
-        // TODO: can we make this stronger (window id comparison)?
+        // Clipboard is only allowed to be acquired when Xwayland has focus
+        // TODO(romangg): can we make this stronger (window id comparison)?
         if (source_int) {
             delete source_int;
             sel->data.source_int = nullptr;
@@ -263,6 +267,7 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
         }
         return false;
     }
+
     return sel->data.wayland_source->handleSelectionRequest(event);
 }
 
@@ -275,11 +280,13 @@ bool handle_selection_notify(Selection* sel, xcb_selection_notify_event_t* event
             return true;
         }
     }
+
     for (auto& transfer : sel->data.transfers.x11_to_wl) {
         if (transfer->handleSelectionNotify(event)) {
             return true;
         }
     }
+
     return false;
 }
 
@@ -291,11 +298,13 @@ bool handle_property_notify(Selection* sel, xcb_property_notify_event_t* event)
             return true;
         }
     }
+
     for (auto& transfer : sel->data.transfers.wl_to_x11) {
         if (transfer->handlePropertyNotify(event)) {
             return true;
         }
     }
+
     return false;
 }
 
@@ -304,12 +313,14 @@ template<typename Selection>
 void own_selection(Selection* sel, bool own)
 {
     auto xcb_conn = sel->data.x11.connection;
+
     if (own) {
         xcb_set_selection_owner(xcb_conn, sel->data.window, sel->data.atom, XCB_TIME_CURRENT_TIME);
     } else {
         sel->data.disown_pending = true;
         xcb_set_selection_owner(xcb_conn, XCB_WINDOW_NONE, sel->data.atom, sel->data.timestamp);
     }
+
     xcb_flush(xcb_conn);
 }
 
@@ -328,6 +339,7 @@ void set_wl_source(Selection* sel, WlSource<server_source>* source)
     delete sel->data.x11_source;
     sel->data.wayland_source = nullptr;
     sel->data.x11_source = nullptr;
+
     if (source) {
         sel->data.wayland_source = source;
         QObject::connect(source->qobject(),
@@ -368,7 +380,6 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
 template<typename Selection>
 void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
 {
-    // create new x to wl data transfer object
     auto transfer = new TransferXtoWl(sel->data.atom,
                                       target,
                                       fd,
@@ -385,13 +396,13 @@ void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
             sel->data.transfers.x11_to_wl.removeOne(transfer);
             end_timeout_transfers_timer(sel);
         });
+
     start_timeout_transfers_timer(sel);
 }
 
 template<typename Selection>
 void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event, qint32 fd)
 {
-    // create new wl to x data transfer object
     auto transfer = new TransferWltoX(sel->data.atom, event, fd, sel->data.qobject.get());
 
     QObject::connect(
@@ -400,25 +411,18 @@ void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event,
         transfer, &TransferWltoX::finished, sel->data.qobject.get(), [sel, transfer]() {
             Q_EMIT sel->data.qobject->transferFinished(transfer->timestamp());
 
-            // TODO: serialize? see comment below.
-            //        const bool wasActive = (transfer == m_wlToXTransfers[0]);
+            // TODO(romangg): Serialize? see comment below.
             delete transfer;
             sel->data.transfers.wl_to_x11.removeOne(transfer);
             end_timeout_transfers_timer(sel);
-            //        if (wasActive && !m_wlToXTransfers.isEmpty()) {
-            //            m_wlToXTransfers[0]->startTransferFromSource();
-            //        }
         });
 
-    // add it to list of queued transfers
+    // Add it to list of queued transfers.
     sel->data.transfers.wl_to_x11.append(transfer);
 
-    // TODO: Do we need to serialize the transfers, or can we do
-    //       them in parallel as we do it right now?
+    // TODO(romangg): Do we need to serialize the transfers, or can we do
+    //                them in parallel as we do it right now?
     transfer->startTransferFromSource();
-    //    if (m_wlToXTransfers.size() == 1) {
-    //        transfer->startTransferFromSource();
-    //    }
     start_timeout_transfers_timer(sel);
 }
 
@@ -487,6 +491,7 @@ inline QString atomName(xcb_atom_t atom)
 
     auto const length = xcb_get_atom_name_name_length(nameReply);
     auto const name = QString::fromLatin1(xcb_get_atom_name_name(nameReply), length);
+
     free(nameReply);
     return name;
 }
@@ -554,9 +559,10 @@ void handle_wl_selection_client_change(Selection* sel)
         return;
     }
 
-    // Xwayland client is active and we need a Wayland source
+    // At this point we know an Xwayland client is active and that we need a Wayland source.
+
     if (sel->data.wayland_source) {
-        // source already exists, nothing more to do
+        // Source already exists, we can reuse it.
         return;
     }
 
@@ -619,7 +625,6 @@ void handle_x11_offer_change(Selection* sel, QStringList const& added, QStringLi
     using internal_source = std::remove_pointer_t<decltype(sel->data.source_int)>;
 
     auto source = sel->data.x11_source;
-
     if (!source) {
         return;
     }

@@ -43,6 +43,7 @@ WlSource<ServerSource>::WlSource(ServerSource* source)
     for (auto const& mime : source->mime_types()) {
         m_offers << QString::fromStdString(mime);
     }
+
     m_offerConnection
         = QObject::connect(source, &ServerSource::mime_type_offered, qobject(), [this](auto mime) {
               receiveOffer(mime);
@@ -101,6 +102,7 @@ void WlSource<ServerSource>::sendTargets(xcb_selection_request_event_t* event)
                         32,
                         cnt,
                         targets.data());
+
     sendSelectionNotify(event, true);
 }
 
@@ -128,6 +130,7 @@ bool WlSource<ServerSource>::checkStartTransfer(xcb_selection_request_event_t* e
         qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";
         return false;
     }
+
     std::string const firstTarget = targets[0].toUtf8().constData();
 
     auto cmp = [firstTarget](auto const& b) {
@@ -137,6 +140,7 @@ bool WlSource<ServerSource>::checkStartTransfer(xcb_selection_request_event_t* e
         }
         return firstTarget == b;
     };
+
     // check supported mimes
     auto const offers = server_source->mime_types();
     auto const mimeIt = std::find_if(offers.begin(), offers.end(), cmp);
@@ -203,6 +207,7 @@ void X11Source<InternalSource>::handleTargets(xcb_window_t const requestor)
     QStringList removed;
 
     Mimes all;
+
     auto value = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
     for (uint32_t i = 0; i < reply->value_len; i++) {
         if (value[i] == XCB_ATOM_NONE) {
