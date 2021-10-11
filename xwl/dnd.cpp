@@ -114,7 +114,7 @@ void handle_x11_offer_change([[maybe_unused]] Dnd* sel,
 }
 
 // version of DnD support in X
-const static uint32_t s_version = 5;
+constexpr uint32_t s_version = 5;
 uint32_t Dnd::version()
 {
     return s_version;
@@ -128,7 +128,7 @@ Dnd::Dnd(xcb_atom_t atom, x11_data const& x11)
     register_x11_selection(this, QSize(8192, 8192));
     register_xfixes(this);
 
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
+    auto xcbConn = kwinApp()->x11Connection();
     xcb_change_property(xcbConn,
                         XCB_PROP_MODE_REPLACE,
                         data.window,
@@ -149,7 +149,7 @@ Dnd::Dnd(xcb_atom_t atom, x11_data const& x11)
                      [this]() { endDrag(); });
 }
 
-DragEventReply Dnd::dragMoveFilter(Toplevel* target, const QPoint& pos)
+DragEventReply Dnd::dragMoveFilter(Toplevel* target, QPoint const& pos)
 {
     // This filter only is used when a drag is in process.
     Q_ASSERT(m_currentDrag);

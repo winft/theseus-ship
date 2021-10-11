@@ -63,7 +63,7 @@ public:
 
     static uint32_t version();
 
-    DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos);
+    DragEventReply dragMoveFilter(Toplevel* target, QPoint const& pos);
 
 private:
     // start and end Wl native client drags (Wl -> Xwl)

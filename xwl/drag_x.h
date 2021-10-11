@@ -50,7 +50,7 @@ public:
     explicit XToWlDrag(DataX11Source* source, Dnd* dnd);
     ~XToWlDrag() override;
 
-    DragEventReply moveFilter(Toplevel* target, const QPoint& pos) override;
+    DragEventReply moveFilter(Toplevel* target, QPoint const& pos) override;
     bool handleClientMessage(xcb_client_message_event_t* event) override;
 
     void setDragAndDropAction(DnDAction action);
@@ -63,7 +63,7 @@ public:
     }
 
 private:
-    void setOffers(const Mimes& offers);
+    void setOffers(Mimes const& offers);
     void setDragTarget();
 
     bool checkForFinished();
@@ -119,7 +119,7 @@ public:
     void sendFinished();
 
 Q_SIGNALS:
-    void offersReceived(const Mimes& offers);
+    void offersReceived(Mimes const& offers);
     void finish(WlVisit* self);
 
 private:

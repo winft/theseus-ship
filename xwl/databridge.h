@@ -59,7 +59,7 @@ public:
     ~DataBridge() override;
 
     bool filterEvent(xcb_generic_event_t* event);
-    DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos);
+    DragEventReply dragMoveFilter(Toplevel* target, QPoint const& pos);
 
 private:
     bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);

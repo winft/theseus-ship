@@ -62,7 +62,7 @@ public:
     void sendTargets(xcb_selection_request_event_t* event);
     void sendTimestamp(xcb_selection_request_event_t* event);
 
-    void receiveOffer(const std::string& mime);
+    void receiveOffer(std::string const& mime);
 
     xcb_timestamp_t timestamp() const
     {
@@ -106,7 +106,7 @@ public:
     using QObject::QObject;
 
 Q_SIGNALS:
-    void offersChanged(const QStringList& added, const QStringList& removed);
+    void offersChanged(QStringList const& added, QStringList const& removed);
     void transferReady(xcb_atom_t target, qint32 fd);
 };
 
@@ -137,7 +137,7 @@ public:
     {
         return m_offers;
     }
-    void setOffers(const Mimes& offers);
+    void setOffers(Mimes const& offers);
 
     bool handleSelectionNotify(xcb_selection_notify_event_t* event);
 
@@ -157,7 +157,7 @@ public:
 
 private:
     void handleTargets(xcb_window_t const requestor);
-    void startTransfer(const QString& mimeName, qint32 fd);
+    void startTransfer(QString const& mimeName, qint32 fd);
 
     xcb_window_t m_owner;
     InternalSource* m_source = nullptr;

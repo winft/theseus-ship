@@ -54,11 +54,10 @@ XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
             [this](xcb_timestamp_t eventTime) {
                 // we use this mechanism, because the finished call is not
                 // reliable done by Wayland clients
-                auto it = std::find_if(m_dataRequests.begin(),
-                                       m_dataRequests.end(),
-                                       [eventTime](const QPair<xcb_timestamp_t, bool>& req) {
-                                           return req.first == eventTime && req.second == false;
-                                       });
+                auto it = std::find_if(
+                    m_dataRequests.begin(), m_dataRequests.end(), [eventTime](auto const& req) {
+                        return req.first == eventTime && req.second == false;
+                    });
                 if (it == m_dataRequests.end()) {
                     // transfer finished for a different drag
                     return;
@@ -121,11 +120,11 @@ XToWlDrag::~XToWlDrag()
     dnd->data.source_int = nullptr;
 }
 
-DragEventReply XToWlDrag::moveFilter(Toplevel* target, const QPoint& pos)
+DragEventReply XToWlDrag::moveFilter(Toplevel* target, QPoint const& pos)
 {
     Q_UNUSED(pos);
 
-    auto* seat = waylandServer()->seat();
+    auto seat = waylandServer()->seat();
 
     if (m_visit && m_visit->target() == target) {
         // still same Wl target, wait for X events
@@ -142,7 +141,7 @@ DragEventReply XToWlDrag::moveFilter(Toplevel* target, const QPoint& pos)
             m_oldVisits << m_visit;
         }
     }
-    const bool hasCurrent = m_visit;
+    bool const hasCurrent = m_visit;
     m_visit = nullptr;
 
     if (!target || !target->surface()
@@ -169,7 +168,7 @@ DragEventReply XToWlDrag::moveFilter(Toplevel* target, const QPoint& pos)
 
 bool XToWlDrag::handleClientMessage(xcb_client_message_event_t* event)
 {
-    for (auto* visit : m_oldVisits) {
+    for (auto visit : m_oldVisits) {
         if (visit->handleClientMessage(event)) {
             return true;
         }
@@ -190,7 +189,7 @@ DnDAction XToWlDrag::selectedDragAndDropAction()
     return m_lastSelectedDragAndDropAction;
 }
 
-void XToWlDrag::setOffers(const Mimes& offers)
+void XToWlDrag::setOffers(Mimes const& offers)
 {
     m_source->setOffers(offers);
     if (offers.isEmpty()) {
@@ -215,11 +214,9 @@ void XToWlDrag::setOffers(const Mimes& offers)
     setDragTarget();
 }
 
-using Mime = QPair<QString, xcb_atom_t>;
-
 void XToWlDrag::setDragTarget()
 {
-    auto* ac = m_visit->target();
+    auto ac = m_visit->target();
     workspace()->activateClient(ac);
     waylandServer()->seat()->drags().set_target(ac->surface(), ac->input_transform());
 }
@@ -238,7 +235,7 @@ bool XToWlDrag::checkForFinished()
         // need to wait for first data request
         return false;
     }
-    const bool transfersFinished
+    auto transfersFinished
         = std::all_of(m_dataRequests.begin(),
                       m_dataRequests.end(),
                       [](QPair<xcb_timestamp_t, bool> req) { return req.second; });
@@ -265,7 +262,7 @@ WlVisit::WlVisit(Toplevel* target, XToWlDrag* drag)
     m_window = xcb_generate_id(xcbConn);
     overwrite_requestor_window(drag->dnd, m_window);
 
-    const uint32_t dndValues[]
+    uint32_t const dndValues[]
         = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
     xcb_create_window(xcbConn,
                       XCB_COPY_FROM_PARENT,
@@ -303,7 +300,7 @@ WlVisit::~WlVisit()
 {
     // TODO(romangg): Use the x11_data here. But we must ensure the Dnd object still exists at this
     //                point, i.e. use explicit ownership through smart pointer only.
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
+    auto xcbConn = kwinApp()->x11Connection();
     xcb_destroy_window(xcbConn, m_window);
     xcb_flush(xcbConn);
 }
@@ -334,11 +331,13 @@ bool WlVisit::handleClientMessage(xcb_client_message_event_t* event)
     return false;
 }
 
-static bool hasMimeName(const Mimes& mimes, const QString& name)
+static bool hasMimeName(Mimes const& mimes, QString const& name)
 {
     return std::any_of(
-        mimes.begin(), mimes.end(), [name](const Mime& m) { return m.first == name; });
+        mimes.begin(), mimes.end(), [name](auto const& m) { return m.first == name; });
 }
+
+using Mime = QPair<QString, xcb_atom_t>;
 
 bool WlVisit::handleEnter(xcb_client_message_event_t* event)
 {
@@ -348,7 +347,7 @@ bool WlVisit::handleEnter(xcb_client_message_event_t* event)
     }
     m_entered = true;
 
-    xcb_client_message_data_t* data = &event->data;
+    auto data = &event->data;
     m_srcWindow = data->data32[0];
     m_version = data->data32[1] >> 24;
 
@@ -358,8 +357,8 @@ bool WlVisit::handleEnter(xcb_client_message_event_t* event)
         // message has only max 3 types (which are directly in data)
         for (size_t i = 0; i < 3; i++) {
             xcb_atom_t mimeAtom = data->data32[2 + i];
-            const auto mimeStrings = atomToMimeTypes(mimeAtom);
-            for (const auto& mime : mimeStrings) {
+            auto const mimeStrings = atomToMimeTypes(mimeAtom);
+            for (auto const& mime : mimeStrings) {
                 if (!hasMimeName(offers, mime)) {
                     offers << Mime(mime, mimeAtom);
                 }
@@ -380,7 +379,7 @@ void WlVisit::getMimesFromWinProperty(Mimes& offers)
     auto cookie = xcb_get_property(
         xcbConn, 0, m_srcWindow, atoms->xdnd_type_list, XCB_GET_PROPERTY_TYPE_ANY, 0, 0x1fffffff);
 
-    auto* reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
+    auto reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
     if (reply == nullptr) {
         return;
     }
@@ -390,10 +389,10 @@ void WlVisit::getMimesFromWinProperty(Mimes& offers)
         return;
     }
 
-    xcb_atom_t* mimeAtoms = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
+    auto mimeAtoms = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
     for (size_t i = 0; i < reply->value_len; ++i) {
-        const auto mimeStrings = atomToMimeTypes(mimeAtoms[i]);
-        for (const auto& mime : mimeStrings) {
+        auto const mimeStrings = atomToMimeTypes(mimeAtoms[i]);
+        for (auto const& mime : mimeStrings) {
             if (!hasMimeName(offers, mime)) {
                 offers << Mime(mime, mimeAtoms[i]);
             }
@@ -404,7 +403,7 @@ void WlVisit::getMimesFromWinProperty(Mimes& offers)
 
 bool WlVisit::handlePosition(xcb_client_message_event_t* event)
 {
-    xcb_client_message_data_t* data = &event->data;
+    auto data = &event->data;
     m_srcWindow = data->data32[0];
 
     if (!m_target) {
@@ -414,10 +413,10 @@ bool WlVisit::handlePosition(xcb_client_message_event_t* event)
         sendStatus();
         return true;
     }
-    const uint32_t pos = data->data32[2];
+    auto const pos = data->data32[2];
     Q_UNUSED(pos);
 
-    const xcb_timestamp_t timestamp = data->data32[3];
+    xcb_timestamp_t const timestamp = data->data32[3];
     m_drag->x11Source()->setTimestamp(timestamp);
 
     xcb_atom_t actionAtom = m_version > 1 ? data->data32[4] : atoms->xdnd_action_copy;
@@ -443,9 +442,9 @@ bool WlVisit::handleDrop(xcb_client_message_event_t* event)
 {
     m_dropHandled = true;
 
-    xcb_client_message_data_t* data = &event->data;
+    auto data = &event->data;
     m_srcWindow = data->data32[0];
-    const xcb_timestamp_t timestamp = data->data32[2];
+    xcb_timestamp_t const timestamp = data->data32[2];
     m_drag->x11Source()->setTimestamp(timestamp);
 
     // we do nothing more here, the drop is being processed
@@ -464,7 +463,7 @@ void WlVisit::doFinish()
 bool WlVisit::handleLeave(xcb_client_message_event_t* event)
 {
     m_entered = false;
-    xcb_client_message_data_t* data = &event->data;
+    auto data = &event->data;
     m_srcWindow = data->data32[0];
     doFinish();
     return true;
@@ -487,7 +486,7 @@ void WlVisit::sendStatus()
 
 void WlVisit::sendFinished()
 {
-    const bool accepted = m_entered && m_action != DnDAction::none;
+    auto const accepted = m_entered && m_action != DnDAction::none;
     xcb_client_message_data_t data = {{0}};
     data.data32[0] = m_window;
     data.data32[1] = accepted;
@@ -500,7 +499,7 @@ bool WlVisit::targetAcceptsAction() const
     if (m_action == DnDAction::none) {
         return false;
     }
-    const auto selAction = m_drag->selectedDragAndDropAction();
+    auto const selAction = m_drag->selectedDragAndDropAction();
     return selAction == m_action || selAction == DnDAction::copy;
 }
 

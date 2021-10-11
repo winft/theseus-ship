@@ -152,7 +152,7 @@ public:
 
     void transferFromProperty(xcb_get_property_reply_t* reply);
 
-    virtual void setData(const char* value, int length);
+    virtual void setData(char const* value, int length);
     QByteArray data() const;
 
     void partRead(int length);
@@ -176,7 +176,7 @@ private:
 class NetscapeUrlReceiver : public DataReceiver
 {
 public:
-    void setData(const char* value, int length) override;
+    void setData(char const* value, int length) override;
 };
 
 /**
@@ -186,7 +186,7 @@ public:
 class MozUrlReceiver : public DataReceiver
 {
 public:
-    void setData(const char* value, int length) override;
+    void setData(char const* value, int length) override;
 };
 
 /**

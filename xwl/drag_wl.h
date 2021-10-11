@@ -47,7 +47,7 @@ class WlToXDrag : public Drag
 public:
     explicit WlToXDrag(Dnd* dnd);
 
-    DragEventReply moveFilter(Toplevel* target, const QPoint& pos) override;
+    DragEventReply moveFilter(Toplevel* target, QPoint const& pos) override;
     bool handleClientMessage(xcb_client_message_event_t* event) override;
 
     bool end() override;
@@ -78,7 +78,7 @@ public:
     bool handleStatus(xcb_client_message_event_t* event);
     bool handleFinished(xcb_client_message_event_t* event);
 
-    void sendPosition(const QPointF& globalPos);
+    void sendPosition(QPointF const& globalPos);
     void leave();
 
     bool finished() const

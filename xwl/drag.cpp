@@ -47,9 +47,9 @@ void Drag::sendClientMessage(xcb_window_t target, xcb_atom_t type, xcb_client_me
         *data,              // data
     };
 
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
+    auto xcbConn = kwinApp()->x11Connection();
     xcb_send_event(
-        xcbConn, 0, target, XCB_EVENT_MASK_NO_EVENT, reinterpret_cast<const char*>(&event));
+        xcbConn, 0, target, XCB_EVENT_MASK_NO_EVENT, reinterpret_cast<char const*>(&event));
     xcb_flush(xcbConn);
 }
 

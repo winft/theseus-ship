@@ -59,7 +59,7 @@ public:
 private:
     void continueStartupWithX();
 
-    DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos) override;
+    DragEventReply dragMoveFilter(Toplevel* target, QPoint const& pos) override;
 
     int m_xcbConnectionFd = -1;
     QProcess* m_xwaylandProcess = nullptr;

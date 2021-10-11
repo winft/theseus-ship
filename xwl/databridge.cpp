@@ -82,7 +82,7 @@ bool DataBridge::handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
     return false;
 }
 
-DragEventReply DataBridge::dragMoveFilter(Toplevel* target, const QPoint& pos)
+DragEventReply DataBridge::dragMoveFilter(Toplevel* target, QPoint const& pos)
 {
     if (!m_dnd) {
         return DragEventReply::Wayland;

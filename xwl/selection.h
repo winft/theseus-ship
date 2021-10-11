@@ -135,8 +135,8 @@ inline void sendSelectionNotify(xcb_selection_request_event_t* event, bool succe
     notify.target = event->target;
     notify.property = success ? event->property : xcb_atom_t(XCB_ATOM_NONE);
 
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
-    xcb_send_event(xcbConn, 0, event->requestor, XCB_EVENT_MASK_NO_EVENT, (const char*)&notify);
+    auto xcbConn = kwinApp()->x11Connection();
+    xcb_send_event(xcbConn, 0, event->requestor, XCB_EVENT_MASK_NO_EVENT, (char const*)&notify);
     xcb_flush(xcbConn);
 }
 
@@ -144,7 +144,7 @@ template<typename Selection>
 void register_xfixes(Selection* sel)
 {
     auto xcb_conn = kwinApp()->x11Connection();
-    const uint32_t mask = XCB_XFIXES_SELECTION_EVENT_MASK_SET_SELECTION_OWNER
+    uint32_t const mask = XCB_XFIXES_SELECTION_EVENT_MASK_SET_SELECTION_OWNER
         | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_WINDOW_DESTROY
         | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_CLIENT_CLOSE;
     xcb_xfixes_select_selection_input(
@@ -460,12 +460,12 @@ void end_timeout_transfers_timer(Selection* sel)
     }
 }
 
-inline xcb_atom_t mimeTypeToAtomLiteral(const QString& mimeType)
+inline xcb_atom_t mimeTypeToAtomLiteral(QString const& mimeType)
 {
     return Xcb::Atom(mimeType.toLatin1(), false, kwinApp()->x11Connection());
 }
 
-inline xcb_atom_t mimeTypeToAtom(const QString& mimeType)
+inline xcb_atom_t mimeTypeToAtom(QString const& mimeType)
 {
     if (mimeType == QLatin1String("text/plain;charset=utf-8")) {
         return atoms->utf8_string;
@@ -481,15 +481,15 @@ inline xcb_atom_t mimeTypeToAtom(const QString& mimeType)
 
 inline QString atomName(xcb_atom_t atom)
 {
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
-    xcb_get_atom_name_cookie_t nameCookie = xcb_get_atom_name(xcbConn, atom);
-    xcb_get_atom_name_reply_t* nameReply = xcb_get_atom_name_reply(xcbConn, nameCookie, nullptr);
+    auto xcbConn = kwinApp()->x11Connection();
+    auto nameCookie = xcb_get_atom_name(xcbConn, atom);
+    auto nameReply = xcb_get_atom_name_reply(xcbConn, nameCookie, nullptr);
     if (!nameReply) {
         return QString();
     }
 
-    const size_t length = xcb_get_atom_name_name_length(nameReply);
-    QString name = QString::fromLatin1(xcb_get_atom_name_name(nameReply), length);
+    auto const length = xcb_get_atom_name_name_length(nameReply);
+    auto const name = QString::fromLatin1(xcb_get_atom_name_name(nameReply), length);
     free(nameReply);
     return name;
 }
@@ -635,7 +635,7 @@ void handle_x11_offer_change(Selection* sel, QStringList const& added, QStringLi
         return;
     }
 
-    const Mimes offers = source->offers();
+    auto const offers = source->offers();
     if (offers.isEmpty()) {
         sel->get_selection_setter()(nullptr);
         return;
@@ -655,7 +655,7 @@ void handle_x11_offer_change(Selection* sel, QStringList const& added, QStringLi
         // receive an intermediate null selection and send it back to us overriding our new one.
         delete old_source_int;
     } else if (auto dataSource = source->source()) {
-        for (const QString& mime : added) {
+        for (auto const& mime : added) {
             dataSource->offer(mime.toStdString());
         }
     }

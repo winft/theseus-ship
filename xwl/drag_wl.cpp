@@ -48,9 +48,9 @@ WlToXDrag::WlToXDrag(Dnd* dnd)
     m_dsi = waylandServer()->seat()->drags().get_source().src;
 }
 
-DragEventReply WlToXDrag::moveFilter(Toplevel* target, const QPoint& pos)
+DragEventReply WlToXDrag::moveFilter(Toplevel* target, QPoint const& pos)
 {
-    auto* seat = waylandServer()->seat();
+    auto seat = waylandServer()->seat();
     if (m_visit && m_visit->target() == target) {
         // no target change
         return DragEventReply::Take;
@@ -105,10 +105,10 @@ Xvisit::Xvisit(WlToXDrag* drag, Toplevel* target)
     , m_target(target)
 {
     // first check supported DND version
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
-    xcb_get_property_cookie_t cookie = xcb_get_property(
+    auto xcbConn = kwinApp()->x11Connection();
+    auto cookie = xcb_get_property(
         xcbConn, 0, m_target->xcb_window(), atoms->xdnd_aware, XCB_GET_PROPERTY_TYPE_ANY, 0, 1);
-    auto* reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
+    auto reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
     if (!reply) {
         doFinish();
         return;
@@ -118,7 +118,7 @@ Xvisit::Xvisit(WlToXDrag* drag, Toplevel* target)
         free(reply);
         return;
     }
-    xcb_atom_t* value = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
+    auto value = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
     m_version = qMin(*value, Dnd::version());
     if (m_version < 1) {
         // minimal version we accept is 1
@@ -152,7 +152,7 @@ bool Xvisit::handleClientMessage(xcb_client_message_event_t* event)
 
 bool Xvisit::handleStatus(xcb_client_message_event_t* event)
 {
-    xcb_client_message_data_t* data = &event->data;
+    auto data = &event->data;
     if (data->data32[0] != m_target->xcb_window()) {
         // wrong target window
         return false;
@@ -186,7 +186,7 @@ bool Xvisit::handleStatus(xcb_client_message_event_t* event)
 
 bool Xvisit::handleFinished(xcb_client_message_event_t* event)
 {
-    xcb_client_message_data_t* data = &event->data;
+    auto data = &event->data;
 
     if (data->data32[0] != m_target->xcb_window()) {
         // different target window
@@ -199,8 +199,8 @@ bool Xvisit::handleFinished(xcb_client_message_event_t* event)
         return true;
     }
 
-    const bool success = m_version > 4 ? data->data32[1] & 1 : true;
-    const xcb_atom_t usedActionAtom
+    auto const success = m_version > 4 ? data->data32[1] & 1 : true;
+    xcb_atom_t const usedActionAtom
         = m_version > 4 ? data->data32[2] : static_cast<uint32_t>(XCB_ATOM_NONE);
     Q_UNUSED(success);
     Q_UNUSED(usedActionAtom);
@@ -209,10 +209,10 @@ bool Xvisit::handleFinished(xcb_client_message_event_t* event)
     return true;
 }
 
-void Xvisit::sendPosition(const QPointF& globalPos)
+void Xvisit::sendPosition(QPointF const& globalPos)
 {
-    const int16_t x = globalPos.x();
-    const int16_t y = globalPos.y();
+    int16_t const x = globalPos.x();
+    int16_t const y = globalPos.y();
 
     if (m_pos.pending) {
         m_pos.cache = QPoint(x, y);
@@ -279,16 +279,16 @@ void Xvisit::sendEnter()
     data.data32[0] = m_drag->dnd->data.window;
     data.data32[1] = m_version << 24;
 
-    const auto mimeTypesNames = m_drag->dataSourceIface()->mime_types();
-    const int mimesCount = mimeTypesNames.size();
+    auto const mimeTypesNames = m_drag->dataSourceIface()->mime_types();
+    auto const mimesCount = mimeTypesNames.size();
     size_t cnt = 0;
     size_t totalCnt = 0;
-    for (const auto& mimeName : mimeTypesNames) {
+    for (auto const& mimeName : mimeTypesNames) {
         // 3 mimes and less can be sent directly in the XdndEnter message
         if (totalCnt == 3) {
             break;
         }
-        const auto atom = mimeTypeToAtom(mimeName.c_str());
+        auto const atom = mimeTypeToAtom(mimeName.c_str());
 
         if (atom != XCB_ATOM_NONE) {
             data.data32[cnt + 2] = atom;
@@ -308,8 +308,8 @@ void Xvisit::sendEnter()
         targets.resize(mimesCount);
 
         size_t cnt = 0;
-        for (const auto& mimeName : mimeTypesNames) {
-            const auto atom = mimeTypeToAtom(mimeName.c_str());
+        for (auto const& mimeName : mimeTypesNames) {
+            auto const atom = mimeTypeToAtom(mimeName.c_str());
             if (atom != XCB_ATOM_NONE) {
                 targets[cnt] = atom;
                 cnt++;
@@ -373,7 +373,7 @@ void Xvisit::determineProposedAction()
 
 void Xvisit::requestDragAndDropAction()
 {
-    const auto pref = m_preferredAction != DnDAction::none ? m_preferredAction : DnDAction::copy;
+    auto const pref = m_preferredAction != DnDAction::none ? m_preferredAction : DnDAction::copy;
     // we assume the X client supports Move, but this might be wrong - then
     // the drag just cancels, if the user tries to force it.
 

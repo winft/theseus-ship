@@ -56,7 +56,7 @@ public:
     static xcb_atom_t clientActionToAtom(DnDAction action);
 
     virtual bool handleClientMessage(xcb_client_message_event_t* event) = 0;
-    virtual DragEventReply moveFilter(Toplevel* target, const QPoint& pos) = 0;
+    virtual DragEventReply moveFilter(Toplevel* target, QPoint const& pos) = 0;
 
     virtual bool end() = 0;
 

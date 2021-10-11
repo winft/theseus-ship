@@ -56,7 +56,7 @@ static void readDisplay(int pipe)
         std::cerr << "FATAL ERROR failed to open pipe to start X Server" << std::endl;
         exit(1);
     }
-    QByteArray displayNumber = readPipe.readLine();
+    auto displayNumber = readPipe.readLine();
 
     displayNumber.prepend(QByteArray(":"));
     displayNumber.remove(displayNumber.size() - 1, 1);
@@ -94,12 +94,12 @@ Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> sta
                                 "Failed to dup socket to open XCB connection");
     }
 
-    const int waylandSocket = waylandServer()->createXWaylandConnection();
+    auto const waylandSocket = waylandServer()->createXWaylandConnection();
     if (waylandSocket == -1) {
         close(fd);
         throw std::runtime_error("Failed to open socket for Xwayland");
     }
-    const int wlfd = dup(waylandSocket);
+    auto const wlfd = dup(waylandSocket);
     if (wlfd < 0) {
         close(fd);
         throw std::system_error(std::error_code(20, std::generic_category()),
@@ -132,7 +132,7 @@ Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> sta
             }
             this->status_callback(1);
         });
-    const int xDisplayPipe = pipeFds[0];
+    auto const xDisplayPipe = pipeFds[0];
     connect(m_xwaylandProcess, &QProcess::started, this, [this, xDisplayPipe] {
         QFutureWatcher<void>* watcher = new QFutureWatcher<void>(this);
         QObject::connect(watcher,
@@ -180,7 +180,7 @@ Xwayland::~Xwayland()
 
 void Xwayland::continueStartupWithX()
 {
-    int screenNumber = 0;
+    auto screenNumber = 0;
 
     if (m_xcbConnectionFd == -1) {
         basic_data.connection = xcb_connect(nullptr, &screenNumber);
@@ -194,7 +194,7 @@ void Xwayland::continueStartupWithX()
         return;
     }
 
-    xcb_screen_iterator_t iter = xcb_setup_roots_iterator(xcb_get_setup(basic_data.connection));
+    auto iter = xcb_setup_roots_iterator(xcb_get_setup(basic_data.connection));
     basic_data.screen = iter.data;
     assert(basic_data.screen);
 
@@ -239,7 +239,7 @@ void Xwayland::continueStartupWithX()
     m_app->setupEventFilters();
 
     // Check  whether another windowmanager is running
-    const uint32_t maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
+    uint32_t const maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
     ScopedCPointer<xcb_generic_error_t> redirectCheck(
         xcb_request_check(connection(),
                           xcb_change_window_attributes_checked(
@@ -266,7 +266,7 @@ void Xwayland::continueStartupWithX()
     data_bridge.reset(new DataBridge(basic_data));
 }
 
-DragEventReply Xwayland::dragMoveFilter(Toplevel* target, const QPoint& pos)
+DragEventReply Xwayland::dragMoveFilter(Toplevel* target, QPoint const& pos)
 {
     if (!data_bridge) {
         return DragEventReply::Wayland;

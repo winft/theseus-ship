@@ -90,7 +90,7 @@ void WlSource<ServerSource>::sendTargets(xcb_selection_request_event_t* event)
     targets[1] = atoms->targets;
 
     size_t cnt = 2;
-    for (const auto& mime : m_offers) {
+    for (auto const& mime : m_offers) {
         targets[cnt] = mimeTypeToAtom(mime);
         cnt++;
     }
@@ -109,7 +109,7 @@ void WlSource<ServerSource>::sendTargets(xcb_selection_request_event_t* event)
 template<typename ServerSource>
 void WlSource<ServerSource>::sendTimestamp(xcb_selection_request_event_t* event)
 {
-    const xcb_timestamp_t time = timestamp();
+    auto const time = timestamp();
     xcb_change_property(kwinApp()->x11Connection(),
                         XCB_PROP_MODE_REPLACE,
                         event->requestor,
@@ -125,14 +125,14 @@ void WlSource<ServerSource>::sendTimestamp(xcb_selection_request_event_t* event)
 template<typename ServerSource>
 bool WlSource<ServerSource>::checkStartTransfer(xcb_selection_request_event_t* event)
 {
-    const auto targets = atomToMimeTypes(event->target);
+    auto const targets = atomToMimeTypes(event->target);
     if (targets.isEmpty()) {
         qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";
         return false;
     }
-    const std::string firstTarget = targets[0].toUtf8().constData();
+    std::string const firstTarget = targets[0].toUtf8().constData();
 
-    auto cmp = [firstTarget](std::string const& b) {
+    auto cmp = [firstTarget](auto const& b) {
         if (firstTarget == "text/uri-list") {
             // Wayland sources might announce the old mime or the new standard
             return firstTarget == b || b == "text/x-uri";
@@ -177,7 +177,7 @@ X11Source<InternalSource>::~X11Source()
 template<typename InternalSource>
 void X11Source<InternalSource>::getTargets(xcb_window_t const window, xcb_atom_t const atom) const
 {
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
+    auto xcbConn = kwinApp()->x11Connection();
     /* will lead to a selection request event for the new owner */
     xcb_convert_selection(xcbConn, window, atom, atoms->targets, atoms->wl_selection, timestamp());
     xcb_flush(xcbConn);
@@ -189,10 +189,10 @@ template<typename InternalSource>
 void X11Source<InternalSource>::handleTargets(xcb_window_t const requestor)
 {
     // receive targets
-    xcb_connection_t* xcbConn = kwinApp()->x11Connection();
+    auto xcbConn = kwinApp()->x11Connection();
     xcb_get_property_cookie_t cookie = xcb_get_property(
         xcbConn, 1, requestor, atoms->wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 4096);
-    auto* reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
+    auto reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
     if (!reply) {
         return;
     }
@@ -205,20 +205,20 @@ void X11Source<InternalSource>::handleTargets(xcb_window_t const requestor)
     QStringList removed;
 
     Mimes all;
-    xcb_atom_t* value = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
+    auto value = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
     for (uint32_t i = 0; i < reply->value_len; i++) {
         if (value[i] == XCB_ATOM_NONE) {
             continue;
         }
 
-        const auto mimeStrings = atomToMimeTypes(value[i]);
+        auto const mimeStrings = atomToMimeTypes(value[i]);
         if (mimeStrings.isEmpty()) {
             // TODO: this should never happen? assert?
             continue;
         }
 
-        const auto mimeIt
-            = std::find_if(m_offers.begin(), m_offers.end(), [value, i](const Mime& mime) {
+        auto const mimeIt
+            = std::find_if(m_offers.begin(), m_offers.end(), [value, i](auto const& mime) {
                   return mime.second == value[i];
               });
 
@@ -231,7 +231,7 @@ void X11Source<InternalSource>::handleTargets(xcb_window_t const requestor)
         all << mimePair;
     }
     // all left in m_offers are not in the updated targets
-    for (const auto& mimePair : m_offers) {
+    for (auto const& mimePair : m_offers) {
         removed << mimePair.first;
     }
     m_offers = all;
@@ -264,7 +264,7 @@ void X11Source<InternalSource>::setSource(InternalSource* src)
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::setOffers(const Mimes& offers)
+void X11Source<InternalSource>::setOffers(Mimes const& offers)
 {
     // TODO: share code with handleTargets and emit signals accordingly?
     m_offers = offers;
@@ -285,10 +285,10 @@ bool X11Source<InternalSource>::handleSelectionNotify(xcb_selection_notify_event
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::startTransfer(const QString& mimeName, qint32 fd)
+void X11Source<InternalSource>::startTransfer(QString const& mimeName, qint32 fd)
 {
-    const auto mimeIt
-        = std::find_if(m_offers.begin(), m_offers.end(), [mimeName](const Mime& mime) {
+    auto const mimeIt
+        = std::find_if(m_offers.begin(), m_offers.end(), [mimeName](auto const& mime) {
               return mime.first == mimeName;
           });
     if (mimeIt == m_offers.end()) {
