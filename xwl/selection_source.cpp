@@ -37,30 +37,22 @@ namespace KWin::Xwl
 
 template<typename SourceIface>
 WlSource<SourceIface>::WlSource(SourceIface* si)
-    : m_qobject(new qWlSource)
+    : m_si{si}
+    , m_qobject(new qWlSource)
 {
     assert(si);
-    setSourceIface(si);
+
+    for (auto const& mime : si->mime_types()) {
+        m_offers << QString::fromStdString(mime);
+    }
+    m_offerConnection = QObject::connect(
+        si, &SourceIface::mime_type_offered, qobject(), [this](auto mime) { receiveOffer(mime); });
 }
 
 template<typename SourceIface>
 WlSource<SourceIface>::~WlSource()
 {
     delete m_qobject;
-}
-
-template<typename SourceIface>
-void WlSource<SourceIface>::setSourceIface(SourceIface* si)
-{
-    if (m_si == si) {
-        return;
-    }
-    for (auto const& mime : si->mime_types()) {
-        m_offers << QString::fromStdString(mime);
-    }
-    m_offerConnection = QObject::connect(
-        si, &SourceIface::mime_type_offered, qobject(), [this](auto mime) { receiveOffer(mime); });
-    m_si = si;
 }
 
 template<typename SourceIface>
@@ -131,11 +123,6 @@ void WlSource<SourceIface>::sendTimestamp(xcb_selection_request_event_t* event)
 template<typename SourceIface>
 bool WlSource<SourceIface>::checkStartTransfer(xcb_selection_request_event_t* event)
 {
-    // check interfaces available
-    if (!m_si) {
-        return false;
-    }
-
     const auto targets = atomToMimeTypes(event->target);
     if (targets.isEmpty()) {
         qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";

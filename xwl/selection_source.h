@@ -58,8 +58,6 @@ public:
     WlSource(SourceInterface* di);
     ~WlSource();
 
-    void setSourceIface(SourceInterface* si);
-
     bool handleSelectionRequest(xcb_selection_request_event_t* event);
     void sendTargets(xcb_selection_request_event_t* event);
     void sendTimestamp(xcb_selection_request_event_t* event);
