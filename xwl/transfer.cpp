@@ -31,9 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xwayland_logging.h>
 
-namespace KWin
-{
-namespace Xwl
+namespace KWin::Xwl
 {
 
 // in Bytes: equals 64KB
@@ -560,5 +558,4 @@ void TransferXtoWl::dataSourceWrite()
     resetTimeout();
 }
 
-} // namespace Xwl
-} // namespace KWin
+}

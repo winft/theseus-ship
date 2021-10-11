@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_XWL_XWAYLAND_INTERFACE
-#define KWIN_XWL_XWAYLAND_INTERFACE
+#pragma once
 
 #include <kwinglobals.h>
 
@@ -39,7 +38,7 @@ enum class DragEventReply {
     // event should be handled as a Wayland native one
     Wayland,
 };
-} // namespace Xwl
+}
 
 class KWIN_EXPORT XwaylandInterface : public QObject
 {
@@ -63,6 +62,4 @@ inline XwaylandInterface* xwayland()
     return XwaylandInterface::self();
 }
 
-} // namespace KWin
-
-#endif
+}

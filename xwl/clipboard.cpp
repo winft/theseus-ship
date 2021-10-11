@@ -36,9 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xwayland_logging.h>
 
-namespace KWin
-{
-namespace Xwl
+namespace KWin::Xwl
 {
 
 Clipboard::Clipboard(xcb_atom_t atom, x11_data const& x11)
@@ -63,5 +61,4 @@ std::function<void(Clipboard::server_source*)> Clipboard::get_selection_setter()
     return [](server_source* src) { waylandServer()->seat()->setSelection(src); };
 }
 
-} // namespace Xwl
-} // namespace KWin
+}

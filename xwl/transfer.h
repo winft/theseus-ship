@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_XWL_TRANSFER
-#define KWIN_XWL_TRANSFER
+#pragma once
 
 #include "xwayland.h"
 
@@ -28,9 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xcb/xcb.h>
 
-namespace KWin
-{
-namespace Xwl
+namespace KWin::Xwl
 {
 
 /**
@@ -220,7 +217,4 @@ private:
     Q_DISABLE_COPY(TransferXtoWl)
 };
 
-} // namespace Xwl
-} // namespace KWin
-
-#endif
+}

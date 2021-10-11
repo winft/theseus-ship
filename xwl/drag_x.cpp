@@ -39,9 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMouseEvent>
 #include <QTimer>
 
-namespace KWin
-{
-namespace Xwl
+namespace KWin::Xwl
 {
 
 XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
@@ -516,5 +514,4 @@ void WlVisit::unmapProxyWindow()
     m_mapped = false;
 }
 
-} // namespace Xwl
-} // namespace KWin
+}

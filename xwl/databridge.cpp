@@ -33,9 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace Wrapland::Client;
 
-namespace KWin
-{
-namespace Xwl
+namespace KWin::Xwl
 {
 
 DataBridge::DataBridge(x11_data const& x11)
@@ -90,5 +88,4 @@ DragEventReply DataBridge::dragMoveFilter(Toplevel* target, QPoint const& pos)
     return m_dnd->dragMoveFilter(target, pos);
 }
 
-} // namespace Xwl
-} // namespace KWin
+}

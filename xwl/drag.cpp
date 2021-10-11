@@ -21,9 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "atoms.h"
 
-namespace KWin
-{
-namespace Xwl
+namespace KWin::Xwl
 {
 
 Drag::Drag(Dnd* dnd, QObject* parent)
@@ -81,5 +79,4 @@ xcb_atom_t Drag::clientActionToAtom(DnDAction action)
     return XCB_ATOM_NONE;
 }
 
-} // namespace Xwl
-} // namespace KWin
+}

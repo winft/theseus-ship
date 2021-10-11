@@ -37,9 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMouseEvent>
 #include <QTimer>
 
-namespace KWin
-{
-namespace Xwl
+namespace KWin::Xwl
 {
 
 WlToXDrag::WlToXDrag(Dnd* dnd)
@@ -428,5 +426,4 @@ void Xvisit::stopConnections()
     m_actionConnection = QMetaObject::Connection();
 }
 
-} // namespace Xwl
-} // namespace KWin
+}

@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_XWL_DRAG
-#define KWIN_XWL_DRAG
+#pragma once
 
 #include <Wrapland/Server/drag_pool.h>
 
@@ -67,7 +66,5 @@ private:
     Q_DISABLE_COPY(Drag)
 };
 
-} // namespace Xwl
-} // namespace KWin
-
-#endif
+}
+}

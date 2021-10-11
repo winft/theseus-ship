@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_XWL_DRAG_WL
-#define KWIN_XWL_DRAG_WL
+#pragma once
 
 #include "drag.h"
 
@@ -144,7 +143,5 @@ private:
     Q_DISABLE_COPY(Xvisit)
 };
 
-} // namespace Xwl
-} // namespace KWin
-
-#endif
+}
+}

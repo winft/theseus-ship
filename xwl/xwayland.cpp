@@ -68,9 +68,7 @@ static void readDisplay(int pipe)
     close(pipe);
 }
 
-namespace KWin
-{
-namespace Xwl
+namespace KWin::Xwl
 {
 
 Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> status_callback)
@@ -274,5 +272,4 @@ DragEventReply Xwayland::dragMoveFilter(Toplevel* target, QPoint const& pos)
     return data_bridge->dragMoveFilter(target, pos);
 }
 
-} // namespace Xwl
-} // namespace KWin
+}

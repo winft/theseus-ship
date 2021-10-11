@@ -38,9 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xcb/xcb.h>
 
-namespace KWin
-{
-namespace Xwl
+namespace KWin::Xwl
 {
 
 template<>
@@ -197,5 +195,4 @@ void Dnd::clearOldDrag(Drag* drag)
     delete drag;
 }
 
-} // namespace Xwl
-} // namespace KWin
+}
