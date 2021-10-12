@@ -32,21 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 struct xcb_xfixes_selection_notify_event_t;
 
-namespace Wrapland
-{
-namespace Client
-{
-class DataDevice;
-class PrimarySelectionDevice;
-}
-namespace Server
-{
-class DataDevice;
-class PrimarySelectionDevice;
-class Surface;
-}
-}
-
 namespace KWin
 {
 class Toplevel;
@@ -76,27 +61,6 @@ public:
     bool filterEvent(xcb_generic_event_t* event);
     DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos);
 
-    Wrapland::Client::DataDevice* dataDevice() const
-    {
-        return m_dataDevice;
-    }
-    Wrapland::Server::DataDevice* dataDeviceIface() const
-    {
-        return m_dataDeviceInterface;
-    }
-    Dnd* dnd() const
-    {
-        return m_dnd.get();
-    }
-    Wrapland::Client::PrimarySelectionDevice* primarySelectionDevice() const
-    {
-        return m_primarySelectionDevice;
-    }
-    Wrapland::Server::PrimarySelectionDevice* primarySelectionDeviceIface() const
-    {
-        return m_primarySelectionDeviceInterface;
-    }
-
 private:
     bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
 
@@ -105,12 +69,6 @@ private:
     std::unique_ptr<Clipboard> m_clipboard;
     std::unique_ptr<Dnd> m_dnd;
     std::unique_ptr<primary_selection> m_primarySelection;
-
-    /* Internal data device interface */
-    Wrapland::Client::DataDevice* m_dataDevice = nullptr;
-    Wrapland::Server::DataDevice* m_dataDeviceInterface = nullptr;
-    Wrapland::Client::PrimarySelectionDevice* m_primarySelectionDevice = nullptr;
-    Wrapland::Server::PrimarySelectionDevice* m_primarySelectionDeviceInterface = nullptr;
 
     Q_DISABLE_COPY(DataBridge)
 };

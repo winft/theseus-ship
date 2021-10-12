@@ -39,8 +39,6 @@ class EventQueue;
 class Registry;
 class Compositor;
 class Seat;
-class DataDeviceManager;
-class PrimarySelectionDeviceManager;
 class ShmPool;
 class Surface;
 }
@@ -50,11 +48,10 @@ class AppmenuManager;
 class Client;
 class Compositor;
 class Display;
-class DataDevice;
 class drm_lease_device_v1;
 class KdeIdle;
 class Seat;
-class DataDeviceManager;
+class data_device_manager;
 class ServerSideDecorationPaletteManager;
 class Surface;
 class Output;
@@ -63,7 +60,7 @@ class PlasmaShellSurface;
 class PlasmaVirtualDesktopManager;
 class PlasmaWindowManager;
 class PresentationManager;
-class PrimarySelectionDeviceManager;
+class primary_selection_device_manager;
 class QtSurfaceExtension;
 class OutputManagementV1;
 class OutputConfigurationV1;
@@ -128,10 +125,10 @@ public:
     Wrapland::Server::Seat *seat() {
         return m_seat;
     }
-    Wrapland::Server::DataDeviceManager *dataDeviceManager() {
+    Wrapland::Server::data_device_manager *dataDeviceManager() {
         return m_dataDeviceManager;
     }
-    Wrapland::Server::PrimarySelectionDeviceManager *primarySelectionDeviceManager() const {
+    Wrapland::Server::primary_selection_device_manager *primarySelectionDeviceManager() const {
         return m_primarySelectionDeviceManager;
     }
     Wrapland::Server::PlasmaVirtualDesktopManager *virtualDesktopManagement() {
@@ -210,12 +207,6 @@ public:
     Wrapland::Client::Seat *internalSeat() {
         return m_internalConnection.seat;
     }
-    Wrapland::Client::DataDeviceManager *internalDataDeviceManager() {
-        return m_internalConnection.ddm;
-    }
-    Wrapland::Client::PrimarySelectionDeviceManager *internalPrimarySelectionDeviceManager() {
-        return m_internalConnection.psdm;
-    }
     Wrapland::Client::ShmPool *internalShmPool() {
         return m_internalConnection.shm;
     }
@@ -284,13 +275,13 @@ private:
     Wrapland::Server::Display *m_display = nullptr;
     Wrapland::Server::Compositor *m_compositor = nullptr;
     Wrapland::Server::Seat *m_seat = nullptr;
-    Wrapland::Server::DataDeviceManager *m_dataDeviceManager = nullptr;
+    Wrapland::Server::data_device_manager *m_dataDeviceManager = nullptr;
     Wrapland::Server::XdgShell *m_xdgShell = nullptr;
     Wrapland::Server::PlasmaShell *m_plasmaShell = nullptr;
     Wrapland::Server::PlasmaWindowManager *m_windowManagement = nullptr;
     Wrapland::Server::PlasmaVirtualDesktopManager *m_virtualDesktopManagement = nullptr;
     Wrapland::Server::PresentationManager *m_presentationManager = nullptr;
-    Wrapland::Server::PrimarySelectionDeviceManager *m_primarySelectionDeviceManager = nullptr;
+    Wrapland::Server::primary_selection_device_manager *m_primarySelectionDeviceManager = nullptr;
     Wrapland::Server::OutputManagementV1 *m_outputManagement = nullptr;
     Wrapland::Server::AppmenuManager *m_appmenuManager = nullptr;
     Wrapland::Server::ServerSideDecorationPaletteManager *m_paletteManager = nullptr;
@@ -313,8 +304,6 @@ private:
         Wrapland::Client::Compositor *compositor = nullptr;
         Wrapland::Client::EventQueue *queue = nullptr;
         Wrapland::Client::Seat *seat = nullptr;
-        Wrapland::Client::DataDeviceManager *ddm = nullptr;
-        Wrapland::Client::PrimarySelectionDeviceManager *psdm = nullptr;
         Wrapland::Client::ShmPool *shm = nullptr;
 
     } m_internalConnection;

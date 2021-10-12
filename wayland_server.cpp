@@ -36,14 +36,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Client/registry.h>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/seat.h>
-#include <Wrapland/Client/datadevicemanager.h>
-#include <Wrapland/Client/primary_selection.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 // Server
 #include <Wrapland/Server/appmenu.h>
 #include <Wrapland/Server/client.h>
 #include <Wrapland/Server/compositor.h>
+#include <Wrapland/Server/data_control_v1.h>
 #include <Wrapland/Server/data_device_manager.h>
 #include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/display.h>
@@ -240,8 +239,6 @@ void WaylandServer::destroyInternalConnection()
         delete m_internalConnection.registry;
         delete m_internalConnection.compositor;
         delete m_internalConnection.seat;
-        delete m_internalConnection.ddm;
-        delete m_internalConnection.psdm;
         delete m_internalConnection.shm;
         dispatch();
         delete m_internalConnection.queue;
@@ -370,6 +367,7 @@ void WaylandServer::create_globals()
     m_display->createPointerConstraints(m_display);
     m_dataDeviceManager = m_display->createDataDeviceManager(m_display);
     m_primarySelectionDeviceManager = m_display->createPrimarySelectionDeviceManager(m_display);
+    m_display->create_data_control_manager_v1(m_display);
     m_idle = m_display->createIdle(m_display);
 
     auto idleInhibition = new IdleInhibition(m_idle);
@@ -774,11 +772,6 @@ void WaylandServer::createInternalConnection(std::function<void(bool)> callback)
                                                                    &Registry::createCompositor);
                 m_internalConnection.seat
                     = create_interface(Registry::Interface::Seat, &Registry::createSeat);
-                m_internalConnection.ddm = create_interface(Registry::Interface::DataDeviceManager,
-                                                            &Registry::createDataDeviceManager);
-                m_internalConnection.psdm
-                    = create_interface(Registry::Interface::PrimarySelectionDeviceManager,
-                                       &Registry::createPrimarySelectionDeviceManager);
                 callback(true);
             }, Qt::QueuedConnection);
 

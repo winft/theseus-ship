@@ -7,6 +7,7 @@
 #pragma once
 
 #include "selection_source.h"
+#include "sources.h"
 #include "transfer.h"
 #include "xwayland.h"
 
@@ -26,15 +27,13 @@
 #include <xcb/xfixes.h>
 #include <xcbutils.h>
 
-#include <Wrapland/Client/connection_thread.h>
-
 #include <memory>
 
 namespace KWin::Xwl
 {
 class TransferWltoX;
 class TransferXtoWl;
-template<typename, typename>
+template<typename>
 class WlSource;
 template<typename>
 class X11Source;
@@ -63,14 +62,11 @@ Q_SIGNALS:
  * This class can be specialized to support the core Wayland protocol
  * (clipboard and dnd) as well as primary selection.
  */
-template<typename server_device, typename client_device>
+template<typename srv_data_source, typename int_data_source>
 struct selection_data {
-    using srv_data_source = typename server_device::source_t;
-    using clt_data_source = typename client_device::source_t;
+    using internal_data_source = int_data_source;
 
     std::unique_ptr<q_selection> qobject;
-    server_device* srv_device{nullptr};
-    client_device* clt_device{nullptr};
 
     xcb_atom_t atom{XCB_ATOM_NONE};
     xcb_window_t window{XCB_WINDOW_NONE};
@@ -81,8 +77,10 @@ struct selection_data {
 
     // Active source, if any. Only one of them at max can exist
     // at the same time.
-    WlSource<server_device, srv_data_source>* wayland_source{nullptr};
-    X11Source<clt_data_source>* x11_source{nullptr};
+    WlSource<srv_data_source>* wayland_source{nullptr};
+    X11Source<internal_data_source>* x11_source{nullptr};
+
+    internal_data_source* source_int{nullptr};
 
     x11_data x11;
 
@@ -101,27 +99,22 @@ struct selection_data {
 
     ~selection_data()
     {
+        delete source_int;
         delete wayland_source;
         delete x11_source;
+        source_int = nullptr;
         wayland_source = nullptr;
         x11_source = nullptr;
-        clt_device = nullptr;
-        srv_device = nullptr;
     }
 };
 
-template<typename srv_data_source, typename client_data_device>
-auto create_selection_data(xcb_atom_t atom,
-                           srv_data_source* sdev,
-                           client_data_device* cdev,
-                           x11_data const& x11)
+template<typename srv_data_source, typename internal_data_source>
+auto create_selection_data(xcb_atom_t atom, x11_data const& x11)
 {
-    selection_data<srv_data_source, client_data_device> sel;
+    selection_data<srv_data_source, internal_data_source> sel;
 
     sel.qobject.reset(new q_selection());
     sel.atom = atom;
-    sel.srv_device = sdev;
-    sel.clt_device = cdev;
     sel.x11 = x11;
 
     sel.window = xcb_generate_id(x11.connection);
@@ -194,12 +187,20 @@ bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* e
 template<typename Selection>
 void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
 {
+    // In case we had an X11 source, we need to delete it directly if there is no new one.
+    // But if there is a new one don't delete it, as this might trigger data-control clients.
+    auto source_int = sel->data.x11_source ? sel->data.source_int : nullptr;
+
     create_x11_source(sel, nullptr);
 
     auto const& client = workspace()->activeClient();
     if (!qobject_cast<win::x11::window const*>(client)) {
         // clipboard is only allowed to be acquired when Xwayland has focus
         // TODO: can we make this stronger (window id comparison)?
+        if (source_int) {
+            delete source_int;
+            sel->data.source_int = nullptr;
+        }
         return;
     }
 
@@ -323,8 +324,8 @@ void overwrite_requestor_window(Selection* sel, xcb_window_t window)
 }
 
 // sets the current provider of the selection
-template<typename Selection, typename srv_data_device, typename srv_data_source>
-void set_wl_source(Selection* sel, WlSource<srv_data_device, srv_data_source>* source)
+template<typename Selection, typename srv_data_source>
+void set_wl_source(Selection* sel, WlSource<srv_data_source>* source)
 {
     delete sel->data.wayland_source;
     delete sel->data.x11_source;
@@ -342,16 +343,18 @@ void set_wl_source(Selection* sel, WlSource<srv_data_device, srv_data_source>* s
 template<typename Selection>
 void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
 {
-    delete sel->data.wayland_source;
     delete sel->data.x11_source;
-    sel->data.wayland_source = nullptr;
     sel->data.x11_source = nullptr;
+
     if (!event || event->owner == XCB_WINDOW_NONE) {
         return;
     }
 
-    using clt_data_source = typename decltype(sel->data)::clt_data_source;
-    sel->data.x11_source = new X11Source<clt_data_source>(event);
+    delete sel->data.wayland_source;
+    sel->data.wayland_source = nullptr;
+
+    using internal_data_source = typename decltype(sel->data)::internal_data_source;
+    sel->data.x11_source = new X11Source<internal_data_source>(event);
 
     QObject::connect(sel->data.x11_source->qobject(),
                      &qX11Source::offersChanged,
@@ -532,46 +535,29 @@ void register_x11_selection(Selection* sel, QSize const& window_size)
     xcb_flush(xcbConn);
 }
 
-/**
- * Check the current state of the selection and if a source needs to be created or destroyed.
- */
 template<typename Selection>
-void check_wl_source(Selection* sel)
+void cleanup_wl_to_x11_source(Selection* sel)
 {
-    using srv_data_device = typename Selection::srv_data_device;
-    using srv_data_source = typename srv_data_device::source_t;
+    using srv_data_source = typename Selection::srv_data_source;
 
-    auto remove_source = [sel] {
-        if (sel->data.wayland_source) {
-            set_wl_source<Selection, srv_data_device, srv_data_source>(sel, nullptr);
-            own_selection(sel, false);
-        }
-    };
+    set_wl_source<Selection, srv_data_source>(sel, nullptr);
+    own_selection(sel, false);
+}
 
-    auto srv_dev = sel->get_current_device();
-    static_assert(std::is_same_v<srv_data_device, std::remove_pointer_t<decltype(srv_dev)>>,
-                  "get current device type mismatch");
+template<typename Selection>
+void handle_wl_selection_client_change(Selection* sel)
+{
+    using srv_data_source = typename Selection::srv_data_source;
 
-    // Wayland source gets created when:
-    // - the Wl selection exists,
-    // - its source is not Xwayland,
-    // - a client is active,
-    // - this client is an Xwayland one.
-    //
-    // Otherwise the Wayland source gets destroyed to shield against snooping X clients.
+    auto srv_src = sel->get_current_source();
+    static_assert(std::is_same_v<srv_data_source, std::remove_pointer_t<decltype(srv_src)>>,
+                  "get current data source type mismatch");
 
-    if (!srv_dev || sel->data.srv_device == srv_dev) {
-        // That means there is either no source or it's an Xwayland source.
-        QObject::disconnect(sel->source_check_connection);
-        sel->source_check_connection = QMetaObject::Connection();
-        remove_source();
-        return;
-    }
-
-    if (!workspace()->activeClient()
-        || !workspace()->activeClient()->inherits("KWin::win::x11::window")) {
+    if (!qobject_cast<win::x11::window*>(workspace()->activeClient())) {
         // No active client or active client is Wayland native.
-        remove_source();
+        if (sel->data.wayland_source) {
+            cleanup_wl_to_x11_source(sel);
+        }
         return;
     }
 
@@ -581,17 +567,8 @@ void check_wl_source(Selection* sel)
         return;
     }
 
-    auto wls = new WlSource<srv_data_device, srv_data_source>(srv_dev);
+    auto wls = new WlSource<srv_data_source>(srv_src);
     set_wl_source(sel, wls);
-
-    auto srv_src = srv_dev->selection();
-    if (srv_src) {
-        wls->setSourceIface(srv_src);
-    }
-    QObject::connect(srv_dev,
-                     &srv_data_device::selectionChanged,
-                     wls->qobject(),
-                     [wls](auto srv_src) { wls->setSourceIface(srv_src); });
     own_selection(sel, true);
 }
 
@@ -601,64 +578,87 @@ void check_wl_source(Selection* sel)
 template<typename Selection>
 void handle_wl_selection_change(Selection* sel)
 {
-    using srv_data_device = typename Selection::srv_data_device;
-    using srv_data_source = typename srv_data_device::source_t;
+    using srv_data_source = typename Selection::srv_data_source;
 
-    auto srv_dev = sel->get_current_device();
-    static_assert(std::is_same_v<srv_data_device, std::remove_pointer_t<decltype(srv_dev)>>,
-                  "get current device type mismatch");
+    auto srv_src = sel->get_current_source();
+    static_assert(std::is_same_v<srv_data_source, std::remove_pointer_t<decltype(srv_src)>>,
+                  "get current data source type mismatch");
 
-    if (srv_dev && srv_dev != sel->data.srv_device) {
-        // Wayland native client provides new selection.
-        if (!sel->source_check_connection) {
-            sel->source_check_connection = QObject::connect(workspace(),
-                                                            &Workspace::clientActivated,
-                                                            sel->data.qobject.get(),
-                                                            [sel] { check_wl_source(sel); });
-        }
-        // Remove previous source so checkWlSource() can create a new one.
-        set_wl_source<Selection, srv_data_device, srv_data_source>(sel, nullptr);
+    auto cleanup_activation_notifier = [&] {
+        QObject::disconnect(sel->source_check_connection);
+        sel->source_check_connection = QMetaObject::Connection();
+    };
+
+    // Wayland source gets created when:
+    // - the Wl selection exists,
+    // - its source is not Xwayland,
+    // - a client is active,
+    // - this client is an Xwayland one.
+    //
+    // In all other cases the Wayland source gets destroyed to shield against snooping X clients.
+
+    if (!srv_src) {
+        // Wayland selection has been removed.
+        cleanup_activation_notifier();
+        cleanup_wl_to_x11_source(sel);
+        return;
     }
-    check_wl_source(sel);
+
+    if (sel->data.source_int && sel->data.source_int->src() == srv_src) {
+        // Wayland selection has been changed to our internal Xwayland source. Nothing to do.
+        cleanup_activation_notifier();
+        return;
+    }
+
+    // Wayland native client provides new selection.
+    if (!sel->source_check_connection) {
+        sel->source_check_connection = QObject::connect(
+            workspace(), &Workspace::clientActivated, sel->data.qobject.get(), [sel] {
+                handle_wl_selection_client_change(sel);
+            });
+    }
+
+    delete sel->data.wayland_source;
+    sel->data.wayland_source = nullptr;
+
+    handle_wl_selection_client_change(sel);
 }
 
 template<typename Selection>
 void handle_x11_offer_change(Selection* sel, QStringList const& added, QStringList const& removed)
 {
+    using internal_data_source = typename Selection::internal_data_source;
+
     auto source = sel->data.x11_source;
+
     if (!source) {
         return;
     }
 
-    auto flush_and_dispatch = [] {
-        waylandServer()->internalClientConection()->flush();
-        waylandServer()->dispatch();
-    };
-
     const Mimes offers = source->offers();
     if (offers.isEmpty()) {
         sel->get_selection_setter()(nullptr);
-        flush_and_dispatch();
         return;
     }
 
     if (!source->source() || !removed.isEmpty()) {
         // create new Wl DataSource if there is none or when types
         // were removed (Wl Data Sources can only add types)
-        auto dataDeviceManager = sel->get_internal_device_manager();
-        auto dataSource = dataDeviceManager->createSource(source->qobject());
+        auto old_source_int = sel->data.source_int;
+        auto internal_src = new internal_data_source();
 
-        // also offers directly the currently available types
-        source->setSource(dataSource);
-        sel->data.clt_device->setSelection(0, dataSource);
-        sel->get_selection_setter()(sel->data.srv_device);
+        sel->data.source_int = internal_src;
+        source->setSource(internal_src);
+        sel->get_selection_setter()(internal_src->src());
+
+        // Delete old internal source after setting the new one so data-control devices won't
+        // receive an intermediate null selection and send it back to us overriding our new one.
+        delete old_source_int;
     } else if (auto dataSource = source->source()) {
         for (const QString& mime : added) {
-            dataSource->offer(mime);
+            dataSource->offer(mime.toStdString());
         }
     }
-
-    flush_and_dispatch();
 }
 
 }

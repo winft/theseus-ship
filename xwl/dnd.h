@@ -23,9 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "drag.h"
 #include "selection.h"
 
-#include <Wrapland/Client/datadevice.h>
-#include <Wrapland/Client/datasource.h>
-#include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_source.h>
 
 #include <QPoint>
@@ -52,42 +49,27 @@ void handle_x11_offer_change(Dnd* sel, QStringList const& added, QStringList con
  */
 class Dnd
 {
-    using srv_data_device = Wrapland::Server::DataDevice;
-    using clt_data_device = Wrapland::Client::DataDevice;
+    using srv_data_source = Wrapland::Server::data_source;
+    using internal_data_source = data_source_ext;
 
 public:
-    selection_data<srv_data_device, clt_data_device> data;
+    selection_data<srv_data_source, internal_data_source> data;
 
     // active drag or null when no drag active
     Drag* m_currentDrag = nullptr;
     QVector<Drag*> m_oldDrags;
 
-    explicit Dnd(xcb_atom_t atom,
-                 srv_data_device* srv_dev,
-                 clt_data_device* clt_dev,
-                 x11_data const& x11);
+    Dnd(xcb_atom_t atom, x11_data const& x11);
 
     static uint32_t version();
 
     DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos);
-
-    Wrapland::Server::Surface* surfaceIface() const
-    {
-        return m_surfaceIface;
-    }
-    Wrapland::Client::Surface* surface() const
-    {
-        return m_surface;
-    }
 
 private:
     // start and end Wl native client drags (Wl -> Xwl)
     void startDrag();
     void endDrag();
     void clearOldDrag(Drag* drag);
-
-    Wrapland::Client::Surface* m_surface;
-    Wrapland::Server::Surface* m_surfaceIface = nullptr;
 
     Q_DISABLE_COPY(Dnd)
 };

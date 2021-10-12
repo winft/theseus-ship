@@ -51,11 +51,11 @@ Q_SIGNALS:
 /**
  * Representing a Wayland native data source.
  */
-template<typename DeviceInterface, typename SourceInterface>
+template<typename SourceInterface>
 class WlSource
 {
 public:
-    WlSource(DeviceInterface* di);
+    WlSource(SourceInterface* di);
     ~WlSource();
 
     void setSourceIface(SourceInterface* si);
@@ -83,7 +83,6 @@ public:
 private:
     bool checkStartTransfer(xcb_selection_request_event_t* event);
 
-    DeviceInterface* m_di = nullptr;
     SourceInterface* m_si = nullptr;
 
     QVector<QString> m_offers;

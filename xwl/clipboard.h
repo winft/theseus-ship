@@ -22,9 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "selection.h"
 
-#include <Wrapland/Client/datadevice.h>
-#include <Wrapland/Client/datasource.h>
-#include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_source.h>
 
 #include <functional>
@@ -40,22 +37,16 @@ class Clipboard;
 class Clipboard
 {
 public:
-    using srv_data_device = Wrapland::Server::DataDevice;
-    using clt_data_device = Wrapland::Client::DataDevice;
-    using srv_data_source = srv_data_device::source_t;
-    using clt_source_t = clt_data_device::source_t;
+    using srv_data_source = Wrapland::Server::data_source;
+    using internal_data_source = data_source_ext;
 
-    selection_data<srv_data_device, clt_data_device> data;
+    selection_data<srv_data_source, internal_data_source> data;
     QMetaObject::Connection source_check_connection;
 
-    Clipboard(xcb_atom_t atom,
-              srv_data_device* srv_dev,
-              clt_data_device* clt_dev,
-              x11_data const& x11);
+    Clipboard(xcb_atom_t atom, x11_data const& x11);
 
-    srv_data_device* get_current_device() const;
-    Wrapland::Client::DataDeviceManager* get_internal_device_manager() const;
-    std::function<void(srv_data_device*)> get_selection_setter() const;
+    srv_data_source* get_current_source() const;
+    std::function<void(srv_data_source*)> get_selection_setter() const;
 
 private:
     Q_DISABLE_COPY(Clipboard)

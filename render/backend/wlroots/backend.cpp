@@ -204,7 +204,7 @@ void backend::init_drm_leasing()
 #endif
 }
 
-void backend::process_drm_leased(Wrapland::Server::drm_lease_v1* lease)
+void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1* lease)
 {
 #if HAVE_WLR_DRM_LEASE
     std::vector<output*> outputs;

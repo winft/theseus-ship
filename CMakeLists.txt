@@ -757,6 +757,7 @@ install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
 set(kwin_XWAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/clipboard.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/databridge.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/sources.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/dnd.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag_wl.cpp

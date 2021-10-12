@@ -25,13 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "wayland_server.h"
 
-#include <Wrapland/Client/datadevice.h>
-#include <Wrapland/Client/datasource.h>
-#include <Wrapland/Client/primary_selection.h>
-
-#include <Wrapland/Server/data_device.h>
 #include <Wrapland/Server/data_source.h>
-#include <Wrapland/Server/primary_selection.h>
 
 #include <string>
 #include <unistd.h>
@@ -41,43 +35,42 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::Xwl
 {
 
-template<typename DeviceIface, typename SourceIface>
-WlSource<DeviceIface, SourceIface>::WlSource(DeviceIface* di)
-    : m_di(di)
-    , m_qobject(new qWlSource)
+template<typename SourceIface>
+WlSource<SourceIface>::WlSource(SourceIface* si)
+    : m_qobject(new qWlSource)
 {
-    Q_ASSERT(di);
+    assert(si);
+    setSourceIface(si);
 }
 
-template<typename DeviceIface, typename SourceIface>
-WlSource<DeviceIface, SourceIface>::~WlSource()
+template<typename SourceIface>
+WlSource<SourceIface>::~WlSource()
 {
     delete m_qobject;
 }
 
-template<typename DeviceIface, typename SourceIface>
-void WlSource<DeviceIface, SourceIface>::setSourceIface(SourceIface* si)
+template<typename SourceIface>
+void WlSource<SourceIface>::setSourceIface(SourceIface* si)
 {
     if (m_si == si) {
         return;
     }
-    for (const auto& mime : si->mimeTypes()) {
+    for (auto const& mime : si->mime_types()) {
         m_offers << QString::fromStdString(mime);
     }
     m_offerConnection = QObject::connect(
-        si, &SourceIface::mimeTypeOffered, qobject(), [this](auto mime) { receiveOffer(mime); });
+        si, &SourceIface::mime_type_offered, qobject(), [this](auto mime) { receiveOffer(mime); });
     m_si = si;
 }
 
-template<typename DeviceIface, typename SourceIface>
-void WlSource<DeviceIface, SourceIface>::receiveOffer(std::string const& mime)
+template<typename SourceIface>
+void WlSource<SourceIface>::receiveOffer(std::string const& mime)
 {
     m_offers << QString::fromStdString(mime);
 }
 
-template<typename DeviceIface, typename SourceIface>
-bool WlSource<DeviceIface, SourceIface>::handleSelectionRequest(
-    xcb_selection_request_event_t* event)
+template<typename SourceIface>
+bool WlSource<SourceIface>::handleSelectionRequest(xcb_selection_request_event_t* event)
 {
     if (event->target == atoms->targets) {
         sendTargets(event);
@@ -94,8 +87,8 @@ bool WlSource<DeviceIface, SourceIface>::handleSelectionRequest(
     return true;
 }
 
-template<typename DeviceIface, typename SourceIface>
-void WlSource<DeviceIface, SourceIface>::sendTargets(xcb_selection_request_event_t* event)
+template<typename SourceIface>
+void WlSource<SourceIface>::sendTargets(xcb_selection_request_event_t* event)
 {
     QVector<xcb_atom_t> targets;
     targets.resize(m_offers.size() + 2);
@@ -119,8 +112,8 @@ void WlSource<DeviceIface, SourceIface>::sendTargets(xcb_selection_request_event
     sendSelectionNotify(event, true);
 }
 
-template<typename DeviceIface, typename SourceIface>
-void WlSource<DeviceIface, SourceIface>::sendTimestamp(xcb_selection_request_event_t* event)
+template<typename SourceIface>
+void WlSource<SourceIface>::sendTimestamp(xcb_selection_request_event_t* event)
 {
     const xcb_timestamp_t time = timestamp();
     xcb_change_property(kwinApp()->x11Connection(),
@@ -135,11 +128,11 @@ void WlSource<DeviceIface, SourceIface>::sendTimestamp(xcb_selection_request_eve
     sendSelectionNotify(event, true);
 }
 
-template<typename DeviceIface, typename SourceIface>
-bool WlSource<DeviceIface, SourceIface>::checkStartTransfer(xcb_selection_request_event_t* event)
+template<typename SourceIface>
+bool WlSource<SourceIface>::checkStartTransfer(xcb_selection_request_event_t* event)
 {
     // check interfaces available
-    if (!m_di || !m_si) {
+    if (!m_si) {
         return false;
     }
 
@@ -158,8 +151,8 @@ bool WlSource<DeviceIface, SourceIface>::checkStartTransfer(xcb_selection_reques
         return firstTarget == b;
     };
     // check supported mimes
-    const auto offers = m_si->mimeTypes();
-    const auto mimeIt = std::find_if(offers.begin(), offers.end(), cmp);
+    auto const offers = m_si->mime_types();
+    auto const mimeIt = std::find_if(offers.begin(), offers.end(), cmp);
     if (mimeIt == offers.end()) {
         // Requested Mime not supported. Not sending selection.
         return false;
@@ -171,7 +164,7 @@ bool WlSource<DeviceIface, SourceIface>::checkStartTransfer(xcb_selection_reques
         return false;
     }
 
-    m_si->requestData(*mimeIt, p[1]);
+    m_si->request_data(*mimeIt, p[1]);
     waylandServer()->dispatch();
 
     Q_EMIT qobject()->transferReady(new xcb_selection_request_event_t(*event), p[0]);
@@ -271,14 +264,14 @@ void X11Source<DataSource>::setSource(DataSource* src)
 
     m_source = src;
 
-    for (const Mime& offer : m_offers) {
-        src->offer(offer.first);
+    for (auto const& offer : m_offers) {
+        src->offer(offer.first.toStdString());
     }
 
-    QObject::connect(src,
-                     &DataSource::sendDataRequested,
-                     qobject(),
-                     [this](auto const& mimeName, auto fd) { startTransfer(mimeName, fd); });
+    QObject::connect(
+        src, &DataSource::data_requested, qobject(), [this](auto const& mimeName, auto fd) {
+            startTransfer(QString::fromStdString(mimeName), fd);
+        });
 }
 
 template<typename DataSource>
@@ -319,9 +312,8 @@ void X11Source<DataSource>::startTransfer(const QString& mimeName, qint32 fd)
 }
 
 // Templates specializations
-template class WlSource<Wrapland::Server::DataDevice, Wrapland::Server::DataSource>;
-template class X11Source<Wrapland::Client::DataSource>;
-template class WlSource<Wrapland::Server::PrimarySelectionDevice,
-                        Wrapland::Server::PrimarySelectionSource>;
-template class X11Source<Wrapland::Client::PrimarySelectionSource>;
+template class WlSource<Wrapland::Server::data_source>;
+template class X11Source<data_source_ext>;
+template class WlSource<Wrapland::Server::primary_selection_source>;
+template class X11Source<primary_selection_source_ext>;
 }
