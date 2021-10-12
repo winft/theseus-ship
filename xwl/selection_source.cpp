@@ -34,8 +34,9 @@ namespace KWin::Xwl
 {
 
 template<typename ServerSource>
-WlSource<ServerSource>::WlSource(ServerSource* source)
+WlSource<ServerSource>::WlSource(ServerSource* source, xcb_connection_t* connection)
     : server_source{source}
+    , connection{connection}
     , m_qobject(new qWlSource)
 {
     assert(source);
@@ -94,7 +95,7 @@ void WlSource<ServerSource>::sendTargets(xcb_selection_request_event_t* event)
         cnt++;
     }
 
-    xcb_change_property(kwinApp()->x11Connection(),
+    xcb_change_property(connection,
                         XCB_PROP_MODE_REPLACE,
                         event->requestor,
                         event->property,
@@ -110,7 +111,7 @@ template<typename ServerSource>
 void WlSource<ServerSource>::sendTimestamp(xcb_selection_request_event_t* event)
 {
     auto const time = timestamp();
-    xcb_change_property(kwinApp()->x11Connection(),
+    xcb_change_property(connection,
                         XCB_PROP_MODE_REPLACE,
                         event->requestor,
                         event->property,
@@ -163,8 +164,10 @@ bool WlSource<ServerSource>::checkStartTransfer(xcb_selection_request_event_t* e
 }
 
 template<typename InternalSource>
-X11Source<InternalSource>::X11Source(xcb_xfixes_selection_notify_event_t* event)
-    : m_owner(event->owner)
+X11Source<InternalSource>::X11Source(xcb_xfixes_selection_notify_event_t* event,
+                                     x11_data const& x11)
+    : x11{x11}
+    , m_owner(event->owner)
     , m_timestamp(event->timestamp)
     , m_qobject(new qX11Source)
 {
@@ -179,10 +182,10 @@ X11Source<InternalSource>::~X11Source()
 template<typename InternalSource>
 void X11Source<InternalSource>::getTargets(xcb_window_t const window, xcb_atom_t const atom) const
 {
-    auto xcbConn = kwinApp()->x11Connection();
     /* will lead to a selection request event for the new owner */
-    xcb_convert_selection(xcbConn, window, atom, atoms->targets, atoms->wl_selection, timestamp());
-    xcb_flush(xcbConn);
+    xcb_convert_selection(
+        x11.connection, window, atom, atoms->targets, atoms->wl_selection, timestamp());
+    xcb_flush(x11.connection);
 }
 
 using Mime = QPair<QString, xcb_atom_t>;
@@ -191,10 +194,9 @@ template<typename InternalSource>
 void X11Source<InternalSource>::handleTargets(xcb_window_t const requestor)
 {
     // receive targets
-    auto xcbConn = kwinApp()->x11Connection();
     xcb_get_property_cookie_t cookie = xcb_get_property(
-        xcbConn, 1, requestor, atoms->wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 4096);
-    auto reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
+        x11.connection, 1, requestor, atoms->wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 4096);
+    auto reply = xcb_get_property_reply(x11.connection, cookie, nullptr);
     if (!reply) {
         return;
     }

@@ -364,7 +364,7 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
     sel->data.wayland_source = nullptr;
 
     using internal_source = std::remove_pointer_t<decltype(sel->data.source_int)>;
-    sel->data.x11_source = new X11Source<internal_source>(event);
+    sel->data.x11_source = new X11Source<internal_source>(event, sel->data.x11);
 
     QObject::connect(sel->data.x11_source->qobject(),
                      &qX11Source::offersChanged,
@@ -567,7 +567,9 @@ void handle_wl_selection_client_change(Selection* sel)
         return;
     }
 
-    auto wls = new WlSource<std::remove_pointer_t<decltype(srv_src)>>(srv_src);
+    using server_source = std::remove_pointer_t<decltype(srv_src)>;
+    auto wls = new WlSource<server_source>(srv_src, sel->data.x11.connection);
+
     set_wl_source(sel, wls);
     own_selection(sel, true);
 }

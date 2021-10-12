@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "xwayland.h"
+
 #include <QObject>
 #include <QVector>
 
@@ -54,7 +56,7 @@ template<typename ServerSource>
 class WlSource
 {
 public:
-    WlSource(ServerSource* source);
+    WlSource(ServerSource* source, xcb_connection_t* connection);
     ~WlSource();
 
     bool handleSelectionRequest(xcb_selection_request_event_t* event);
@@ -81,6 +83,7 @@ private:
     bool checkStartTransfer(xcb_selection_request_event_t* event);
 
     ServerSource* server_source = nullptr;
+    xcb_connection_t* connection;
 
     QVector<QString> m_offers;
     QMetaObject::Connection m_offerConnection;
@@ -116,7 +119,7 @@ template<typename InternalSource>
 class X11Source
 {
 public:
-    X11Source(xcb_xfixes_selection_notify_event_t* event);
+    X11Source(xcb_xfixes_selection_notify_event_t* event, x11_data const& x11);
     ~X11Source();
 
     /**
@@ -153,6 +156,8 @@ public:
     {
         return m_qobject;
     }
+
+    x11_data const x11;
 
 private:
     void handleTargets(xcb_window_t const requestor);
