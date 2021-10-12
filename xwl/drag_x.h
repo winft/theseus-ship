@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPoint>
 #include <QVector>
 #include <memory>
+#include <vector>
 
 namespace KWin
 {
@@ -72,8 +73,8 @@ private:
     DataX11Source* m_source;
     QVector<QPair<xcb_timestamp_t, bool>> m_dataRequests;
 
-    WlVisit* m_visit = nullptr;
-    QVector<WlVisit*> m_oldVisits;
+    std::unique_ptr<WlVisit> m_visit;
+    std::vector<std::unique_ptr<WlVisit>> m_oldVisits;
 
     bool m_performed = false;
     DnDAction m_lastSelectedDragAndDropAction = DnDAction::none;

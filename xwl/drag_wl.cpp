@@ -54,8 +54,7 @@ DragEventReply WlToXDrag::moveFilter(Toplevel* target, QPoint const& pos)
     if (m_visit) {
         seat->drags().set_target(nullptr);
         m_visit->leave();
-        delete m_visit;
-        m_visit = nullptr;
+        m_visit.reset();
     }
 
     if (!qobject_cast<win::x11::window*>(target)) {
@@ -69,7 +68,7 @@ DragEventReply WlToXDrag::moveFilter(Toplevel* target, QPoint const& pos)
     workspace()->activateClient(target, false);
     seat->drags().set_target(target->surface(), pos, target->input_transform());
 
-    m_visit = new Xvisit(this, target);
+    m_visit.reset(new Xvisit(this, target));
     return DragEventReply::Take;
 }
 
@@ -84,15 +83,13 @@ bool WlToXDrag::handleClientMessage(xcb_client_message_event_t* event)
 bool WlToXDrag::end()
 {
     if (!m_visit || m_visit->finished()) {
-        delete m_visit;
-        m_visit = nullptr;
+        m_visit.reset();
         return true;
     }
 
-    connect(m_visit, &Xvisit::finish, this, [this](Xvisit* visit) {
-        Q_ASSERT(m_visit == visit);
-        delete visit;
-        m_visit = nullptr;
+    connect(m_visit.get(), &Xvisit::finish, this, [this](Xvisit* visit) {
+        Q_ASSERT(m_visit.get() == visit);
+        m_visit.reset();
 
         // We directly allow to delete previous visits.
         Q_EMIT finish(this);
@@ -101,7 +98,7 @@ bool WlToXDrag::end()
 }
 
 Xvisit::Xvisit(WlToXDrag* drag, Toplevel* target)
-    : QObject(drag)
+    : QObject()
     , m_drag(drag)
     , m_target(target)
 {

@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "drag.h"
 
 #include <QPoint>
+#include <memory>
 
 namespace Wrapland::Server
 {
@@ -57,7 +58,7 @@ public:
 
 private:
     Wrapland::Server::data_source* m_dsi;
-    Xvisit* m_visit = nullptr;
+    std::unique_ptr<Xvisit> m_visit;
 
     Q_DISABLE_COPY(WlToXDrag)
 };
