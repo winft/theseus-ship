@@ -361,8 +361,6 @@ void Xvisit::send_leave()
 
 void Xvisit::retrieve_supported_actions()
 {
-    m_supportedActions = source->supported_dnd_actions();
-
     determine_proposed_action();
     request_drag_and_drop_action();
 }
@@ -370,10 +368,11 @@ void Xvisit::retrieve_supported_actions()
 void Xvisit::determine_proposed_action()
 {
     DnDAction oldProposedAction = m_proposedAction;
+    auto const supported = source->supported_dnd_actions();
 
-    if (m_supportedActions.testFlag(m_preferredAction)) {
+    if (supported.testFlag(m_preferredAction)) {
         m_proposedAction = m_preferredAction;
-    } else if (m_supportedActions.testFlag(DnDAction::copy)) {
+    } else if (supported.testFlag(DnDAction::copy)) {
         m_proposedAction = DnDAction::copy;
     } else {
         m_proposedAction = DnDAction::none;

@@ -122,8 +122,6 @@ private:
         QPoint cache;
     } m_pos;
 
-    // supported by the Wl source
-    DnDActions m_supportedActions = DnDAction::none;
     // preferred by the X client
     DnDAction m_preferredAction = DnDAction::none;
     // decided upon by the compositor
