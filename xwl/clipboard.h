@@ -23,8 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/data_source.h>
 
-#include <functional>
-
 namespace KWin::Xwl
 {
 class Clipboard;
@@ -41,7 +39,7 @@ public:
     Clipboard(xcb_atom_t atom, x11_data const& x11);
 
     Wrapland::Server::data_source* get_current_source() const;
-    std::function<void(Wrapland::Server::data_source*)> get_selection_setter() const;
+    void set_selection(Wrapland::Server::data_source* source) const;
 
 private:
     Q_DISABLE_COPY(Clipboard)

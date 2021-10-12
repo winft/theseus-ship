@@ -629,7 +629,7 @@ void handle_x11_offer_change(Selection* sel,
 
     auto const offers = source->offers();
     if (offers.empty()) {
-        sel->get_selection_setter()(nullptr);
+        sel->set_selection(nullptr);
         return;
     }
 
@@ -641,7 +641,7 @@ void handle_x11_offer_change(Selection* sel,
 
         sel->data.source_int = internal_src;
         source->set_source(internal_src);
-        sel->get_selection_setter()(internal_src->src());
+        sel->set_selection(internal_src->src());
 
         // Delete old internal source after setting the new one so data-control devices won't
         // receive an intermediate null selection and send it back to us overriding our new one.

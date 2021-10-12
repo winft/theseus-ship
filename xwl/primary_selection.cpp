@@ -30,12 +30,9 @@ Wrapland::Server::primary_selection_source* primary_selection::get_current_sourc
     return waylandServer()->seat()->primarySelection();
 }
 
-std::function<void(Wrapland::Server::primary_selection_source*)>
-primary_selection::get_selection_setter() const
+void primary_selection::set_selection(Wrapland::Server::primary_selection_source* source) const
 {
-    return [](Wrapland::Server::primary_selection_source* src) {
-        waylandServer()->seat()->setPrimarySelection(src);
-    };
+    waylandServer()->seat()->setPrimarySelection(source);
 }
 
 }

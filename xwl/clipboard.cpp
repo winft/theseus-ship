@@ -43,9 +43,9 @@ Wrapland::Server::data_source* Clipboard::get_current_source() const
     return waylandServer()->seat()->selection();
 }
 
-std::function<void(Wrapland::Server::data_source*)> Clipboard::get_selection_setter() const
+void Clipboard::set_selection(Wrapland::Server::data_source* source) const
 {
-    return [](Wrapland::Server::data_source* src) { waylandServer()->seat()->setSelection(src); };
+    waylandServer()->seat()->setSelection(source);
 }
 
 }
