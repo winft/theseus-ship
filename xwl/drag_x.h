@@ -46,12 +46,14 @@ class XToWlDrag : public Drag
     Q_OBJECT
 
 public:
-    explicit XToWlDrag(DataX11Source* source, Dnd* dnd);
+    explicit XToWlDrag(DataX11Source* source);
     ~XToWlDrag() override;
 
     DragEventReply move_filter(Toplevel* target, QPoint const& pos) override;
     bool handle_client_message(xcb_client_message_event_t* event) override;
     bool end() override;
+
+    void handle_transfer_finished(xcb_timestamp_t time);
 
     std::unique_ptr<data_source_ext> data_source;
     std::unique_ptr<WlVisit> m_visit;

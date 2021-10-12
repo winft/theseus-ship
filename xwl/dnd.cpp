@@ -76,7 +76,12 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
     sel->data.source_int = new data_source_ext;
     sel->data.x11_source->set_source(sel->data.source_int);
 
-    sel->xdrag.reset(new XToWlDrag(sel->data.x11_source, sel));
+    sel->xdrag.reset(new XToWlDrag(sel->data.x11_source));
+
+    QObject::connect(sel->data.qobject.get(),
+                     &q_selection::transfer_finished,
+                     sel->xdrag.get(),
+                     &XToWlDrag::handle_transfer_finished);
 
     // Start drag with serial of last left pointer button press.
     // This means X to Wl drags can only be executed with the left pointer button being pressed.

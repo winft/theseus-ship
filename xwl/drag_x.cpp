@@ -42,26 +42,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::Xwl
 {
 
-XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
+XToWlDrag::XToWlDrag(DataX11Source* source)
     : m_source{source}
 {
-    connect(dnd->data.qobject.get(),
-            &q_selection::transfer_finished,
-            this,
-            [this](xcb_timestamp_t eventTime) {
-                // we use this mechanism, because the finished call is not
-                // reliable done by Wayland clients
-                auto it = std::find_if(
-                    m_dataRequests.begin(), m_dataRequests.end(), [eventTime](auto const& req) {
-                        return req.first == eventTime && req.second == false;
-                    });
-                if (it == m_dataRequests.end()) {
-                    // transfer finished for a different drag
-                    return;
-                }
-                (*it).second = true;
-                check_for_finished();
-            });
     connect(
         source->qobject(), &qX11Source::transfer_ready, this, [this](xcb_atom_t target, qint32 fd) {
             Q_UNUSED(target);
@@ -163,6 +146,25 @@ bool XToWlDrag::handle_client_message(xcb_client_message_event_t* event)
     return false;
 }
 
+bool XToWlDrag::end()
+{
+    return false;
+}
+
+void XToWlDrag::handle_transfer_finished(xcb_timestamp_t time)
+{
+    // We use this mechanism, because the finished call is not reliable done by Wayland clients.
+    auto it = std::find_if(m_dataRequests.begin(), m_dataRequests.end(), [time](auto const& req) {
+        return req.first == time && req.second == false;
+    });
+    if (it == m_dataRequests.end()) {
+        // Transfer finished for a different drag.
+        return;
+    }
+    (*it).second = true;
+    check_for_finished();
+}
+
 void XToWlDrag::set_offers(Mimes const& offers)
 {
     m_source->set_offers(offers);
@@ -226,11 +228,6 @@ bool XToWlDrag::check_for_finished()
         Q_EMIT finish(this);
     }
     return transfersFinished;
-}
-
-bool XToWlDrag::end()
-{
-    return false;
 }
 
 WlVisit::WlVisit(Toplevel* target, DataX11Source* source)
