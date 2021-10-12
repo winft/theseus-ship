@@ -2,6 +2,7 @@
 # Effect
 set(cubeslide_SOURCES
     cubeslide.cpp
+    main.cpp
 )
 kconfig_add_kcfg_files(cubeslide_SOURCES
     cubeslideconfig.kcfgc

@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 class KWinTabBoxConfigForm;
-enum class BuiltInEffect;
 namespace TabBox
 {
 class KWinTabboxData;

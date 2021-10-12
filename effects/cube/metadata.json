@@ -1,0 +1,17 @@
+{
+    "KPlugin": {
+        "Category": "Window Management",
+        "Description": "Display each virtual desktop on a side of a cube",
+        "EnabledByDefault": false,
+        "Id": "cube",
+        "License": "GPL",
+        "Name": "Desktop Cube",
+        "ServiceTypes": [
+            "KWin/Effect"
+        ]
+    },
+    "X-KDE-ConfigModule": "kwin_cube_config",
+    "org.kde.kwin.effect": {
+        "video": "https://files.kde.org/plasma/kwin/effect-videos/desktop_cube.ogv"
+    }
+}

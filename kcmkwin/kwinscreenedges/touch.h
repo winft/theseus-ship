@@ -34,7 +34,6 @@ namespace KWin
 class KWinTouchScreenData;
 class KWinTouchScreenEdgeConfigForm;
 class KWinTouchScreenScriptSettings;
-enum class BuiltInEffect;
 
 class KWinScreenEdgesConfig : public KCModule
 {
@@ -71,8 +70,6 @@ private:
         TabBoxAlternative,
         EffectCount
     };
-
-    bool effectEnabled(const BuiltInEffect &effect, const KConfigGroup &cfg) const;
 
     void monitorInit();
     void monitorLoadSettings();

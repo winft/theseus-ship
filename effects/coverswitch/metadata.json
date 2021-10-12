@@ -1,0 +1,18 @@
+{
+    "KPlugin": {
+        "Category": "Window Management",
+        "Description": "Display a Cover Flow effect for the alt+tab window switcher",
+        "EnabledByDefault": false,
+        "Id": "coverswitch",
+        "License": "GPL",
+        "Name": "Cover Switch",
+        "ServiceTypes": [
+            "KWin/Effect"
+        ]
+    },
+    "X-KDE-ConfigModule": "kwin_coverswitch_config",
+    "org.kde.kwin.effect": {
+        "internal": true,
+        "video": "https://files.kde.org/plasma/kwin/effect-videos/cover_switch.mp4"
+    }
+}

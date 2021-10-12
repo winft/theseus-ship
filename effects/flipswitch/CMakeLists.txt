@@ -2,6 +2,7 @@
 # Effect
 set(flipswitch_SOURCES
     flipswitch.cpp
+    main.cpp
 )
 kconfig_add_kcfg_files(flipswitch_SOURCES
     flipswitchconfig.kcfgc

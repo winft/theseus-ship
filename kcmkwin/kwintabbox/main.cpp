@@ -19,7 +19,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "main.h"
-#include <effect_builtins.h>
 #include <kwin_effects_interface.h>
 
 // Qt
@@ -147,8 +146,8 @@ static QList<KPackage::Package> availableLnFPackages()
 void KWinTabBoxConfig::initLayoutLists()
 {
     // search the effect names
-    m_coverSwitch = BuiltInEffects::effectData(BuiltInEffect::CoverSwitch).name;
-    m_flipSwitch = BuiltInEffects::effectData(BuiltInEffect::FlipSwitch).name;
+    m_coverSwitch = "coverswitch";
+    m_flipSwitch = "flipswitch";
 
     QList<KPluginMetaData> offers = KPackage::PackageLoader::self()->listPackages("KWin/WindowSwitcher");
     QStringList layoutNames, layoutPlugins, layoutPaths;
@@ -188,12 +187,12 @@ void KWinTabBoxConfig::initLayoutLists()
     for (int i=0; i<2; ++i) {
         QStandardItemModel *model = new QStandardItemModel;
 
-        QStandardItem *coverItem = new QStandardItem(BuiltInEffects::effectData(BuiltInEffect::CoverSwitch).displayName);
+        QStandardItem *coverItem = new QStandardItem("Cover Switch");
         coverItem->setData(m_coverSwitch, Qt::UserRole);
         coverItem->setData(false, KWinTabBoxConfigForm::AddonEffect);
         model->appendRow(coverItem);
 
-        QStandardItem *flipItem = new QStandardItem(BuiltInEffects::effectData(BuiltInEffect::FlipSwitch).displayName);
+        QStandardItem *flipItem = new QStandardItem("Flip Switch");
         flipItem->setData(m_flipSwitch, Qt::UserRole);
         flipItem->setData(false, KWinTabBoxConfigForm::AddonEffect);
         model->appendRow(flipItem);
@@ -379,8 +378,8 @@ void KWinTabBoxConfig::save()
     OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
                                              QStringLiteral("/Effects"),
                                              QDBusConnection::sessionBus());
-    interface.reconfigureEffect(BuiltInEffects::nameForEffect(BuiltInEffect::CoverSwitch));
-    interface.reconfigureEffect(BuiltInEffects::nameForEffect(BuiltInEffect::FlipSwitch));
+    interface.reconfigureEffect("coverswitch");
+    interface.reconfigureEffect("flipswitch");
 }
 
 void KWinTabBoxConfig::defaults()

@@ -3,6 +3,7 @@
 set(cube_SOURCES
     cube.cpp
     cube_proxy.cpp
+    main.cpp
 )
 kconfig_add_kcfg_files(cube_SOURCES
     cubeconfig.kcfgc

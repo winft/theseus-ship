@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effect_loader.h"
 
 #include "../utils.h"
-#include "effects/effect_builtins.h"
 #include "scripting/effect.h"
 #include <config-kwin.h>
 #include <kwineffects.h>
@@ -72,114 +71,6 @@ load_effect_flags basic_effect_loader::readConfig(const QString& effectName,
         return load_effect_flags::load | load_effect_flags::check_default_function;
     }
     return load_effect_flags();
-}
-
-builtin_effect_loader::builtin_effect_loader(QObject* parent)
-    : basic_effect_loader(parent)
-    , m_queue(new effect_load_queue<builtin_effect_loader, BuiltInEffect>(this))
-{
-}
-
-builtin_effect_loader::~builtin_effect_loader()
-{
-}
-
-bool builtin_effect_loader::hasEffect(const QString& name) const
-{
-    return BuiltInEffects::available(internalName(name));
-}
-
-bool builtin_effect_loader::isEffectSupported(const QString& name) const
-{
-    return BuiltInEffects::supported(BuiltInEffects::builtInForName(internalName(name)));
-}
-
-QStringList builtin_effect_loader::listOfKnownEffects() const
-{
-    return BuiltInEffects::availableEffectNames();
-}
-
-bool builtin_effect_loader::loadEffect(const QString& name)
-{
-    return loadEffect(
-        name, BuiltInEffects::builtInForName(internalName(name)), load_effect_flags::load);
-}
-
-void builtin_effect_loader::queryAndLoadAll()
-{
-    const QList<BuiltInEffect> effects = BuiltInEffects::availableEffects();
-    for (BuiltInEffect effect : effects) {
-        // check whether it is already loaded
-        if (m_loadedEffects.contains(effect)) {
-            continue;
-        }
-        const QString key = BuiltInEffects::nameForEffect(effect);
-        auto const flags = readConfig(key, BuiltInEffects::enabledByDefault(effect));
-        if (KWin::flags(flags & load_effect_flags::load)) {
-            m_queue->enqueue(qMakePair(effect, flags));
-        }
-    }
-}
-
-bool builtin_effect_loader::loadEffect(BuiltInEffect effect, load_effect_flags flags)
-{
-    return loadEffect(BuiltInEffects::nameForEffect(effect), effect, flags);
-}
-
-bool builtin_effect_loader::loadEffect(const QString& name,
-                                       BuiltInEffect effect,
-                                       load_effect_flags load_flags)
-{
-    if (effect == BuiltInEffect::Invalid) {
-        return false;
-    }
-    if (!(load_flags & load_effect_flags::load)) {
-        qCDebug(KWIN_CORE) << "Loading flags disable effect: " << name;
-        return false;
-    }
-    // check that it is not already loaded
-    if (m_loadedEffects.contains(effect)) {
-        return false;
-    }
-
-    // supported might need a context
-#ifndef KWIN_UNIT_TEST
-    effects->makeOpenGLContextCurrent();
-#endif
-    if (!BuiltInEffects::supported(effect)) {
-        qCDebug(KWIN_CORE) << "Effect is not supported: " << name;
-        return false;
-    }
-
-    if (flags(load_flags & load_effect_flags::check_default_function)) {
-        if (!BuiltInEffects::checkEnabledByDefault(effect)) {
-            qCDebug(KWIN_CORE) << "Enabled by default function disables effect: " << name;
-            return false;
-        }
-    }
-
-    // ok, now we can try to create the Effect
-    Effect* e = BuiltInEffects::create(effect);
-    if (!e) {
-        qCDebug(KWIN_CORE) << "Failed to create effect: " << name;
-        return false;
-    }
-    // insert in our loaded effects
-    m_loadedEffects.insert(effect, e);
-    connect(e, &Effect::destroyed, this, [this, effect]() { m_loadedEffects.remove(effect); });
-    qCDebug(KWIN_CORE) << "Successfully loaded built-in effect: " << name;
-    Q_EMIT effectLoaded(e, name);
-    return true;
-}
-
-QString builtin_effect_loader::internalName(const QString& name) const
-{
-    return name.toLower();
-}
-
-void builtin_effect_loader::clear()
-{
-    m_queue->clear();
 }
 
 static const QString s_nameProperty = QStringLiteral("X-KDE-PluginInfo-Name");
@@ -632,8 +523,8 @@ void plugin_effect_loader::clear()
 effect_loader::effect_loader(QObject* parent)
     : basic_effect_loader(parent)
 {
-    m_loaders << new builtin_effect_loader(this) << new scripted_effect_loader(this)
-              << new static_plugin_effect_loader(this) << new plugin_effect_loader(this);
+    m_loaders << new static_plugin_effect_loader(this) << new scripted_effect_loader(this)
+              << new plugin_effect_loader(this);
     for (auto it = m_loaders.constBegin(); it != m_loaders.constEnd(); ++it) {
         connect(*it, &basic_effect_loader::effectLoaded, this, &basic_effect_loader::effectLoaded);
     }

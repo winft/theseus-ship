@@ -6,13 +6,13 @@
     <kcfgfile name="kwinrc" />
     <group name="Plugins">
         <entry key="coverswitchEnabled" type="Bool">
-            <default code="true">BuiltInEffects::enabledByDefault(BuiltInEffect::CoverSwitch)</default>
+            <default>false</default>
         </entry>
         <entry key="flipswitchEnabled" type="Bool">
-            <default code="true">BuiltInEffects::enabledByDefault(BuiltInEffect::FlipSwitch)</default>
+            <default>false</default>
         </entry>
         <entry key="highlightwindowEnabled" type="Bool">
-            <default code="true">BuiltInEffects::enabledByDefault(BuiltInEffect::HighlightWindow)</default>
+            <default>true</default>
         </entry>
     </group>
 </kcfg>

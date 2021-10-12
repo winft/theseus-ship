@@ -1,0 +1,18 @@
+{
+    "KPlugin": {
+        "Category": "Virtual Desktop Switching Animation",
+        "Description": "Animate desktop switching with a cube",
+        "EnabledByDefault": false,
+        "Id": "cubeslide",
+        "License": "GPL",
+        "Name": "Desktop Cube Animation",
+        "ServiceTypes": [
+            "KWin/Effect"
+        ]
+    },
+    "X-KDE-ConfigModule": "kwin_cubeslide_config",
+    "org.kde.kwin.effect": {
+        "exclusiveGroup": "desktop-animations",
+        "video": "https://files.kde.org/plasma/kwin/effect-videos/desktop_cube_animation.ogv"
+    }
+}

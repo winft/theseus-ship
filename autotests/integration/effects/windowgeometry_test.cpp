@@ -64,9 +64,7 @@ void WindowGeometryTest::initTestCase()
     for (QString name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
     }
-    plugins.writeEntry(BuiltInEffects::nameForEffect(BuiltInEffect::WindowGeometry)
-                           + QStringLiteral("Enabled"),
-                       true);
+    plugins.writeEntry(QStringLiteral("windowgeometryEnabled"), true);
 
     config->sync();
     kwinApp()->setConfig(config);
@@ -92,7 +90,7 @@ void WindowGeometryTest::testStartup()
 {
     // just a test to load the effect to verify it doesn't crash
     auto e = static_cast<render::effects_handler_impl*>(effects);
-    QVERIFY(e->isEffectLoaded(BuiltInEffects::nameForEffect(BuiltInEffect::WindowGeometry)));
+    QVERIFY(e->isEffectLoaded(QStringLiteral("windowgeometry")));
 }
 
 }

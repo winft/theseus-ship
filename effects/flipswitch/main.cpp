@@ -1,0 +1,19 @@
+/*
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.org>
+
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+
+#include "flipswitch.h"
+
+namespace KWin
+{
+
+KWIN_EFFECT_FACTORY_SUPPORTED(FlipSwitchEffectFactory,
+                              FlipSwitchEffect,
+                              "metadata.json",
+                              return FlipSwitchEffect::supported();)
+
+}
+
+#include "main.moc"

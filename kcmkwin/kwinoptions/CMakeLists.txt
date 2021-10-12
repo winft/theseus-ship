@@ -3,7 +3,6 @@
 add_definitions(-DTRANSLATION_DOMAIN=\"kcmkwm\")
 
 set(kcm_kwinoptions_PART_SRCS
-    ${KWIN_SOURCE_DIR}/effects/effect_builtins.cpp
     main.cpp
     mouse.cpp
     windows.cpp
