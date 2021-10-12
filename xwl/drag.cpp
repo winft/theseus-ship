@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::Xwl
 {
 
-Drag::Drag(Dnd* dnd, QObject* parent)
-    : QObject(parent)
+Drag::Drag(Dnd* dnd)
+    : QObject()
     , dnd(dnd)
 {
 }

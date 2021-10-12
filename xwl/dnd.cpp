@@ -37,7 +37,7 @@ namespace KWin::Xwl
 template<>
 void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* event)
 {
-    if (qobject_cast<XToWlDrag*>(sel->m_currentDrag)) {
+    if (qobject_cast<XToWlDrag*>(sel->m_currentDrag.get())) {
         // X drag is in progress, rogue X client took over the selection.
         return;
     }
@@ -72,7 +72,7 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
         return;
     }
 
-    sel->m_currentDrag = new XToWlDrag(sel->data.x11_source, sel);
+    sel->m_currentDrag.reset(new XToWlDrag(sel->data.x11_source, sel));
 
     // Start drag with serial of last left pointer button press.
     // This means X to Wl drags can only be executed with the left pointer button being pressed.
@@ -165,7 +165,7 @@ void Dnd::start_drag()
     Q_ASSERT(!m_currentDrag);
 
     // New Wl to X drag, init drag and Wl source.
-    m_currentDrag = new WlToXDrag(this);
+    m_currentDrag.reset(new WlToXDrag(this));
     auto source = new WlSource<Wrapland::Server::data_source>(srv_src, data.x11.connection);
     set_wl_source(this, source);
     own_selection(this, true);
@@ -176,20 +176,18 @@ void Dnd::end_drag()
     Q_ASSERT(m_currentDrag);
 
     if (m_currentDrag->end()) {
-        delete m_currentDrag;
+        m_currentDrag.reset();
     } else {
-        QObject::connect(m_currentDrag, &Drag::finish, data.qobject.get(), [this](auto drag) {
+        QObject::connect(m_currentDrag.get(), &Drag::finish, data.qobject.get(), [this](auto drag) {
             clear_old_drag(drag);
         });
-        m_oldDrags << m_currentDrag;
+        m_oldDrags.emplace_back(m_currentDrag.release());
     }
-    m_currentDrag = nullptr;
 }
 
 void Dnd::clear_old_drag(Drag* drag)
 {
-    m_oldDrags.removeOne(drag);
-    delete drag;
+    remove_all_if(m_oldDrags, [drag](auto&& old) { return old.get() == drag; });
 }
 
 }

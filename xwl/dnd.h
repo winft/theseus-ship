@@ -25,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/data_source.h>
 
 #include <QPoint>
+#include <memory>
+#include <vector>
 
 namespace KWin
 {
@@ -52,8 +54,8 @@ public:
     selection_data<Wrapland::Server::data_source, data_source_ext> data;
 
     // active drag or null when no drag active
-    Drag* m_currentDrag = nullptr;
-    QVector<Drag*> m_oldDrags;
+    std::unique_ptr<Drag> m_currentDrag;
+    std::vector<std::unique_ptr<Drag>> m_oldDrags;
 
     Dnd(xcb_atom_t atom, x11_data const& x11);
 

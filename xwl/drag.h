@@ -46,7 +46,7 @@ class Drag : public QObject
 public:
     Dnd* dnd;
 
-    explicit Drag(Dnd* dnd, QObject* parent = nullptr);
+    explicit Drag(Dnd* dnd);
     ~Drag() override;
 
     static void
