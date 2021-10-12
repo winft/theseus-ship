@@ -23,7 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QSocketNotifier>
-#include <QVector>
+#include <deque>
+#include <utility>
 
 #include <xcb/xcb.h>
 
@@ -130,9 +131,9 @@ private:
     xcb_selection_request_event_t* m_request = nullptr;
 
     /* contains all received data portioned in chunks
-     * TODO: explain second QPair component
+     * TODO(romangg): explain second std::pair component
      */
-    QVector<QPair<QByteArray, int>> m_chunks;
+    std::deque<std::pair<QByteArray, int>> m_chunks;
 
     bool m_propertyIsSet = false;
     bool m_flushPropertyOnDelete = false;

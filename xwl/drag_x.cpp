@@ -49,7 +49,7 @@ XToWlDrag::XToWlDrag(DataX11Source* source)
         source->qobject(), &qX11Source::transfer_ready, this, [this](xcb_atom_t target, qint32 fd) {
             Q_UNUSED(target);
             Q_UNUSED(fd);
-            m_dataRequests << QPair<xcb_timestamp_t, bool>(m_source->timestamp(), false);
+            m_dataRequests.emplace_back(m_source->timestamp(), false);
         });
 
     connect(source->source(), &data_source_ext::accepted, this, [this](auto /*mime_type*/) {
@@ -218,10 +218,8 @@ bool XToWlDrag::check_for_finished()
         return false;
     }
 
-    auto transfersFinished
-        = std::all_of(m_dataRequests.begin(),
-                      m_dataRequests.end(),
-                      [](QPair<xcb_timestamp_t, bool> req) { return req.second; });
+    auto transfersFinished = std::all_of(
+        m_dataRequests.begin(), m_dataRequests.end(), [](auto const& req) { return req.second; });
 
     if (transfersFinished) {
         m_visit->send_finished();

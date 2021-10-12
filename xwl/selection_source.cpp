@@ -85,7 +85,7 @@ bool WlSource<ServerSource>::handle_selection_request(xcb_selection_request_even
 template<typename ServerSource>
 void WlSource<ServerSource>::send_targets(xcb_selection_request_event_t* event)
 {
-    QVector<xcb_atom_t> targets;
+    std::vector<xcb_atom_t> targets;
     targets.resize(m_offers.size() + 2);
     targets[0] = atoms->timestamp;
     targets[1] = atoms->targets;

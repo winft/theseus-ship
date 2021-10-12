@@ -17,7 +17,6 @@
 
 #include <QObject>
 #include <QTimer>
-#include <QVector>
 
 #include <xcb/xcb.h>
 #include <xcb/xcb_event.h>
@@ -83,8 +82,8 @@ struct selection_data {
 
     // active transfers
     struct {
-        QVector<TransferWltoX*> wl_to_x11;
-        QVector<TransferXtoWl*> x11_to_wl;
+        std::vector<TransferWltoX*> wl_to_x11;
+        std::vector<TransferXtoWl*> x11_to_wl;
         QTimer* timeout{nullptr};
     } transfers;
 
@@ -379,13 +378,13 @@ void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
                                       sel->data.requestor_window,
                                       sel->data.x11,
                                       sel->data.qobject.get());
-    sel->data.transfers.x11_to_wl << transfer;
+    sel->data.transfers.x11_to_wl.push_back(transfer);
 
     QObject::connect(
         transfer, &TransferXtoWl::finished, sel->data.qobject.get(), [sel, transfer]() {
             Q_EMIT sel->data.qobject->transfer_finished(transfer->timestamp());
             delete transfer;
-            sel->data.transfers.x11_to_wl.removeOne(transfer);
+            remove_all(sel->data.transfers.x11_to_wl, transfer);
             end_timeout_transfers_timer(sel);
         });
 
@@ -407,12 +406,12 @@ void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event,
 
             // TODO(romangg): Serialize? see comment below.
             delete transfer;
-            sel->data.transfers.wl_to_x11.removeOne(transfer);
+            remove_all(sel->data.transfers.wl_to_x11, transfer);
             end_timeout_transfers_timer(sel);
         });
 
     // Add it to list of queued transfers.
-    sel->data.transfers.wl_to_x11.append(transfer);
+    sel->data.transfers.wl_to_x11.push_back(transfer);
 
     // TODO(romangg): Do we need to serialize the transfers, or can we do
     //                them in parallel as we do it right now?
@@ -449,7 +448,7 @@ void start_timeout_transfers_timer(Selection* sel)
 template<typename Selection>
 void end_timeout_transfers_timer(Selection* sel)
 {
-    if (sel->data.transfers.x11_to_wl.isEmpty() && sel->data.transfers.wl_to_x11.isEmpty()) {
+    if (sel->data.transfers.x11_to_wl.empty() && sel->data.transfers.wl_to_x11.empty()) {
         delete sel->data.transfers.timeout;
         sel->data.transfers.timeout = nullptr;
     }

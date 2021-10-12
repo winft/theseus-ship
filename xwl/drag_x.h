@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "types.h"
 
 #include <QPoint>
-#include <QVector>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace KWin
@@ -68,7 +68,7 @@ private:
     mime_atoms m_offersPending;
 
     DataX11Source* m_source;
-    QVector<QPair<xcb_timestamp_t, bool>> m_dataRequests;
+    std::vector<std::pair<xcb_timestamp_t, bool>> m_dataRequests;
 
     std::vector<std::unique_ptr<WlVisit>> m_oldVisits;
 

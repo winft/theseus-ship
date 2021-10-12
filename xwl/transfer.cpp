@@ -110,14 +110,15 @@ int TransferWltoX::flush_source_data()
                         m_request->property,
                         m_request->target,
                         8,
-                        m_chunks.first().first.size(),
-                        m_chunks.first().first.data());
+                        m_chunks.front().first.size(),
+                        m_chunks.front().first.data());
     xcb_flush(xcbConn);
 
     m_propertyIsSet = true;
     reset_timeout();
 
-    auto const rm = m_chunks.takeFirst();
+    auto const rm = m_chunks.front();
+    m_chunks.pop_front();
     return rm.first.size();
 }
 
@@ -152,19 +153,19 @@ void TransferWltoX::start_incr()
 
 void TransferWltoX::read_wl_source()
 {
-    if (m_chunks.size() == 0 || m_chunks.last().second == s_incrChunkSize) {
+    if (m_chunks.size() == 0 || m_chunks.back().second == s_incrChunkSize) {
         // append new chunk
-        auto next = QPair<QByteArray, int>();
+        auto next = std::pair<QByteArray, int>();
         next.first.resize(s_incrChunkSize);
         next.second = 0;
-        m_chunks.append(next);
+        m_chunks.push_back(next);
     }
 
-    auto const oldLen = m_chunks.last().second;
-    auto const avail = s_incrChunkSize - m_chunks.last().second;
+    auto const oldLen = m_chunks.back().second;
+    auto const avail = s_incrChunkSize - m_chunks.back().second;
     Q_ASSERT(avail > 0);
 
-    ssize_t readLen = read(fd(), m_chunks.last().first.data() + oldLen, avail);
+    ssize_t readLen = read(fd(), m_chunks.back().first.data() + oldLen, avail);
     if (readLen == -1) {
         qCWarning(KWIN_XWL) << "Error reading in Wl data.";
 
@@ -172,11 +173,11 @@ void TransferWltoX::read_wl_source()
         end_transfer();
         return;
     }
-    m_chunks.last().second = oldLen + readLen;
+    m_chunks.back().second = oldLen + readLen;
 
     if (readLen == 0) {
         // at the fd end - complete transfer now
-        m_chunks.last().first.resize(m_chunks.last().second);
+        m_chunks.back().first.resize(m_chunks.back().second);
 
         if (incr()) {
             // incremental transfer is to be completed now
@@ -193,7 +194,7 @@ void TransferWltoX::read_wl_source()
             Q_EMIT selection_notify(m_request, true);
             end_transfer();
         }
-    } else if (m_chunks.last().second == s_incrChunkSize) {
+    } else if (m_chunks.back().second == s_incrChunkSize) {
         // first chunk full, but not yet at fd end -> go incremental
         if (incr()) {
             m_flushPropertyOnDelete = true;
@@ -229,7 +230,7 @@ void TransferWltoX::handle_property_delete()
     m_propertyIsSet = false;
 
     if (m_flushPropertyOnDelete) {
-        if (!socket_notifier() && m_chunks.isEmpty()) {
+        if (!socket_notifier() && m_chunks.empty()) {
             // transfer complete
             auto xcbConn = kwinApp()->x11Connection();
 

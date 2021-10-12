@@ -312,7 +312,7 @@ void Xvisit::send_enter()
         // need to first transfer all available mime types
         data.data32[1] |= 1;
 
-        QVector<xcb_atom_t> targets;
+        std::vector<xcb_atom_t> targets;
         targets.resize(mimesCount);
 
         size_t cnt = 0;
