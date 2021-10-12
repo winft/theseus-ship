@@ -37,7 +37,6 @@ class Clipboard
 {
 public:
     selection_data<Wrapland::Server::data_source, data_source_ext> data;
-    QMetaObject::Connection source_check_connection;
 
     Clipboard(xcb_atom_t atom, x11_data const& x11);
 

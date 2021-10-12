@@ -81,6 +81,7 @@ struct selection_data {
     internal_source* source_int{nullptr};
 
     x11_data x11;
+    QMetaObject::Connection active_window_notifier;
 
     // active transfers
     struct {
@@ -580,8 +581,8 @@ void handle_wl_selection_change(Selection* sel)
     auto srv_src = sel->get_current_source();
 
     auto cleanup_activation_notifier = [&] {
-        QObject::disconnect(sel->source_check_connection);
-        sel->source_check_connection = QMetaObject::Connection();
+        QObject::disconnect(sel->data.active_window_notifier);
+        sel->data.active_window_notifier = QMetaObject::Connection();
     };
 
     // Wayland source gets created when:
@@ -606,8 +607,8 @@ void handle_wl_selection_change(Selection* sel)
     }
 
     // Wayland native client provides new selection.
-    if (!sel->source_check_connection) {
-        sel->source_check_connection = QObject::connect(
+    if (!sel->data.active_window_notifier) {
+        sel->data.active_window_notifier = QObject::connect(
             workspace(), &Workspace::clientActivated, sel->data.qobject.get(), [sel] {
                 handle_wl_selection_client_change(sel);
             });
