@@ -128,6 +128,7 @@ DragEventReply XToWlDrag::moveFilter(Toplevel* target, QPoint const& pos)
 
     auto const had_visit = static_cast<bool>(m_visit);
     if (m_visit) {
+        overwrite_requestor_window(dnd, XCB_WINDOW_NONE);
         if (m_visit->leave()) {
             m_visit.reset();
         } else {
@@ -157,6 +158,8 @@ DragEventReply XToWlDrag::moveFilter(Toplevel* target, QPoint const& pos)
 
     // New Wl native target.
     m_visit.reset(new WlVisit(target, this));
+    overwrite_requestor_window(dnd, m_visit->window());
+
     connect(m_visit.get(), &WlVisit::offersReceived, this, &XToWlDrag::setOffers);
     return DragEventReply::Ignore;
 }
@@ -265,10 +268,9 @@ WlVisit::WlVisit(Toplevel* target, XToWlDrag* drag)
     auto xcbConn = drag->dnd->data.x11.connection;
 
     m_window = xcb_generate_id(xcbConn);
-    overwrite_requestor_window(drag->dnd, m_window);
-
     uint32_t const dndValues[]
         = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
+
     xcb_create_window(xcbConn,
                       XCB_COPY_FROM_PARENT,
                       m_window,
@@ -312,7 +314,6 @@ WlVisit::~WlVisit()
 
 bool WlVisit::leave()
 {
-    overwrite_requestor_window(m_drag->dnd, XCB_WINDOW_NONE);
     unmapProxyWindow();
     return m_finished;
 }
