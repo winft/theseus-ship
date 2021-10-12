@@ -37,11 +37,11 @@ namespace KWin::Xwl
 template<>
 void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* event)
 {
-    if (qobject_cast<XToWlDrag*>(sel->m_currentDrag.get())) {
+    if (sel->xdrag) {
         // X drag is in progress, rogue X client took over the selection.
         return;
     }
-    if (sel->m_currentDrag) {
+    if (sel->wldrag) {
         // Wl drag is in progress - don't overwrite by rogue X client,
         // get it back instead!
         own_selection(sel, true);
@@ -76,7 +76,7 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
     sel->data.source_int = new data_source_ext;
     sel->data.x11_source->set_source(sel->data.source_int);
 
-    sel->m_currentDrag.reset(new XToWlDrag(sel->data.x11_source, sel));
+    sel->xdrag.reset(new XToWlDrag(sel->data.x11_source, sel));
 
     // Start drag with serial of last left pointer button press.
     // This means X to Wl drags can only be executed with the left pointer button being pressed.
@@ -98,7 +98,15 @@ bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event)
             return true;
         }
     }
-    if (sel->m_currentDrag && sel->m_currentDrag->handle_client_message(event)) {
+
+    auto handle = [event](auto&& drag) {
+        if (!drag) {
+            return false;
+        }
+        return drag->handle_client_message(event);
+    };
+
+    if (handle(sel->wldrag) || handle(sel->xdrag)) {
         return true;
     }
     return false;
@@ -148,28 +156,35 @@ Dnd::Dnd(xcb_atom_t atom, x11_data const& x11)
                      [this]() { end_drag(); });
 }
 
+Dnd::~Dnd() = default;
+
 DragEventReply Dnd::drag_move_filter(Toplevel* target, QPoint const& pos)
 {
     // This filter only is used when a drag is in process.
-    Q_ASSERT(m_currentDrag);
-    return m_currentDrag->move_filter(target, pos);
+    if (wldrag) {
+        return wldrag->move_filter(target, pos);
+    }
+    if (xdrag) {
+        return xdrag->move_filter(target, pos);
+    }
+    assert(false);
+    return DragEventReply();
 }
 
 void Dnd::start_drag()
 {
     auto srv_src = waylandServer()->seat()->drags().get_source().src;
 
-    if (data.source_int && srv_src == data.source_int->src()) {
+    if (xdrag) {
         // X to Wl drag, started by us, is in progress.
-        Q_ASSERT(m_currentDrag);
         return;
     }
 
     // There can only ever be one Wl native drag at the same time.
-    Q_ASSERT(!m_currentDrag);
+    assert(!wldrag);
 
     // New Wl to X drag, init drag and Wl source.
-    m_currentDrag.reset(new WlToXDrag(srv_src, data.window));
+    wldrag.reset(new WlToXDrag(srv_src, data.window));
     auto source = new WlSource<Wrapland::Server::data_source>(srv_src, data.x11.connection);
     set_wl_source(this, source);
     own_selection(this, true);
@@ -177,22 +192,26 @@ void Dnd::start_drag()
 
 void Dnd::end_drag()
 {
-    Q_ASSERT(m_currentDrag);
+    auto process = [this](auto& drag) {
+        if (drag->end()) {
+            drag.reset();
+        } else {
+            QObject::connect(drag.get(), &Drag::finish, data.qobject.get(), [this](auto drag) {
+                clear_old_drag(drag);
+            });
+            m_oldDrags.emplace_back(drag.release());
+        }
+    };
 
-    if (data.source_int) {
-        auto xdrag = dynamic_cast<XToWlDrag*>(m_currentDrag.get());
-        assert(xdrag);
+    if (xdrag) {
+        assert(data.source_int);
         xdrag->data_source.reset(data.source_int);
         data.source_int = nullptr;
-    }
 
-    if (m_currentDrag->end()) {
-        m_currentDrag.reset();
+        process(xdrag);
     } else {
-        QObject::connect(m_currentDrag.get(), &Drag::finish, data.qobject.get(), [this](auto drag) {
-            clear_old_drag(drag);
-        });
-        m_oldDrags.emplace_back(m_currentDrag.release());
+        assert(wldrag);
+        process(wldrag);
     }
 }
 

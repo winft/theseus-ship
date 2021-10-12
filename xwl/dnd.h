@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "drag.h"
 #include "selection.h"
 
 #include <Wrapland/Server/data_source.h>
@@ -35,7 +34,10 @@ class Toplevel;
 namespace Xwl
 {
 class Dnd;
+class Drag;
 enum class DragEventReply;
+class WlToXDrag;
+class XToWlDrag;
 
 template<>
 void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* event);
@@ -53,11 +55,12 @@ class Dnd
 public:
     selection_data<Wrapland::Server::data_source, data_source_ext> data;
 
-    // active drag or null when no drag active
-    std::unique_ptr<Drag> m_currentDrag;
+    std::unique_ptr<WlToXDrag> wldrag;
+    std::unique_ptr<XToWlDrag> xdrag;
     std::vector<std::unique_ptr<Drag>> m_oldDrags;
 
     Dnd(xcb_atom_t atom, x11_data const& x11);
+    ~Dnd();
 
     static uint32_t version();
 
