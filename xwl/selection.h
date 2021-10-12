@@ -457,20 +457,20 @@ void end_timeout_transfers_timer(Selection* sel)
     }
 }
 
-inline xcb_atom_t mime_type_to_atom_literal(QString const& mimeType)
+inline xcb_atom_t mime_type_to_atom_literal(std::string const& mimeType)
 {
-    return Xcb::Atom(mimeType.toLatin1(), false, kwinApp()->x11Connection());
+    return Xcb::Atom(mimeType.c_str(), false, kwinApp()->x11Connection());
 }
 
-inline xcb_atom_t mime_type_to_atom(QString const& mimeType)
+inline xcb_atom_t mime_type_to_atom(std::string const& mimeType)
 {
-    if (mimeType == QLatin1String("text/plain;charset=utf-8")) {
+    if (mimeType == "text/plain;charset=utf-8") {
         return atoms->utf8_string;
     }
-    if (mimeType == QLatin1String("text/plain")) {
+    if (mimeType == "text/plain") {
         return atoms->text;
     }
-    if (mimeType == QLatin1String("text/x-uri")) {
+    if (mimeType == "text/x-uri") {
         return atoms->uri_list;
     }
     return mime_type_to_atom_literal(mimeType);

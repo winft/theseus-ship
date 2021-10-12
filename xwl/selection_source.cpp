@@ -42,7 +42,7 @@ WlSource<ServerSource>::WlSource(ServerSource* source, xcb_connection_t* connect
     assert(source);
 
     for (auto const& mime : source->mime_types()) {
-        m_offers << QString::fromStdString(mime);
+        m_offers.emplace_back(mime);
     }
 
     m_offerConnection
@@ -60,7 +60,7 @@ WlSource<ServerSource>::~WlSource()
 template<typename ServerSource>
 void WlSource<ServerSource>::receive_offer(std::string const& mime)
 {
-    m_offers << QString::fromStdString(mime);
+    m_offers.emplace_back(mime);
 }
 
 template<typename ServerSource>

@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QVector>
-
+#include <vector>
 #include <xcb/xcb.h>
 
 class QSocketNotifier;
@@ -85,7 +85,7 @@ private:
     ServerSource* server_source = nullptr;
     xcb_connection_t* connection;
 
-    QVector<QString> m_offers;
+    std::vector<std::string> m_offers;
     QMetaObject::Connection m_offerConnection;
 
     xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
