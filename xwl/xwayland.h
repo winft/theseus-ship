@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "xwayland_interface.h"
+#include "types.h"
 
 #include <memory>
 #include <xcb/xproto.h>
@@ -36,11 +36,6 @@ class ApplicationWaylandAbstract;
 namespace Xwl
 {
 class DataBridge;
-
-struct x11_data {
-    xcb_connection_t* connection{nullptr};
-    xcb_screen_t* screen{nullptr};
-};
 
 class KWIN_EXPORT Xwayland : public XwaylandInterface
 {

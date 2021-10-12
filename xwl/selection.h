@@ -9,7 +9,7 @@
 #include "selection_source.h"
 #include "sources.h"
 #include "transfer.h"
-#include "xwayland.h"
+#include "types.h"
 
 #include "atoms.h"
 #include "win/x11/window.h"
