@@ -51,15 +51,7 @@ public:
 
     DragEventReply moveFilter(Toplevel* target, QPoint const& pos) override;
     bool handleClientMessage(xcb_client_message_event_t* event) override;
-
-    void setDragAndDropAction(DnDAction action);
-    DnDAction selectedDragAndDropAction();
-
     bool end() override;
-    DataX11Source* x11Source() const
-    {
-        return m_source;
-    }
 
 private:
     void setOffers(Mimes const& offers);
@@ -88,7 +80,7 @@ class WlVisit : public QObject
     Q_OBJECT
 
 public:
-    WlVisit(Toplevel* target, XToWlDrag* drag);
+    WlVisit(Toplevel* target, DataX11Source* source);
     ~WlVisit() override;
 
     bool handleClientMessage(xcb_client_message_event_t* event);
@@ -139,7 +131,7 @@ private:
     xcb_window_t m_window;
 
     xcb_window_t m_srcWindow = XCB_WINDOW_NONE;
-    XToWlDrag* m_drag;
+    DataX11Source* source;
 
     uint32_t m_version = 0;
 

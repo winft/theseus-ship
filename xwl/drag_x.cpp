@@ -157,7 +157,7 @@ DragEventReply XToWlDrag::moveFilter(Toplevel* target, QPoint const& pos)
     }
 
     // New Wl native target.
-    m_visit.reset(new WlVisit(target, this));
+    m_visit.reset(new WlVisit(target, m_source));
     overwrite_requestor_window(dnd, m_visit->window());
 
     connect(m_visit.get(), &WlVisit::offersReceived, this, &XToWlDrag::setOffers);
@@ -177,16 +177,6 @@ bool XToWlDrag::handleClientMessage(xcb_client_message_event_t* event)
     }
 
     return false;
-}
-
-void XToWlDrag::setDragAndDropAction(DnDAction action)
-{
-    data_source->set_actions(action);
-}
-
-DnDAction XToWlDrag::selectedDragAndDropAction()
-{
-    return data_source->action;
 }
 
 void XToWlDrag::setOffers(Mimes const& offers)
@@ -260,12 +250,12 @@ bool XToWlDrag::end()
     return false;
 }
 
-WlVisit::WlVisit(Toplevel* target, XToWlDrag* drag)
+WlVisit::WlVisit(Toplevel* target, DataX11Source* source)
     : QObject()
     , m_target(target)
-    , m_drag(drag)
+    , source{source}
 {
-    auto xcbConn = drag->dnd->data.x11.connection;
+    auto xcbConn = source->x11.connection;
 
     m_window = xcb_generate_id(xcbConn);
     uint32_t const dndValues[]
@@ -281,7 +271,7 @@ WlVisit::WlVisit(Toplevel* target, XToWlDrag* drag)
                       8192, // TODO: get current screen size and connect to changes
                       0,
                       XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                      drag->dnd->data.x11.screen->root_visual,
+                      source->x11.screen->root_visual,
                       XCB_CW_EVENT_MASK,
                       dndValues);
 
@@ -307,9 +297,8 @@ WlVisit::~WlVisit()
 {
     // TODO(romangg): Use the x11_data here. But we must ensure the Dnd object still exists at this
     //                point, i.e. use explicit ownership through smart pointer only.
-    auto xcbConn = kwinApp()->x11Connection();
-    xcb_destroy_window(xcbConn, m_window);
-    xcb_flush(xcbConn);
+    xcb_destroy_window(source->x11.connection, m_window);
+    xcb_flush(source->x11.connection);
 }
 
 bool WlVisit::leave()
@@ -381,11 +370,15 @@ bool WlVisit::handleEnter(xcb_client_message_event_t* event)
 
 void WlVisit::getMimesFromWinProperty(Mimes& offers)
 {
-    auto xcbConn = m_drag->dnd->data.x11.connection;
-    auto cookie = xcb_get_property(
-        xcbConn, 0, m_srcWindow, atoms->xdnd_type_list, XCB_GET_PROPERTY_TYPE_ANY, 0, 0x1fffffff);
+    auto cookie = xcb_get_property(source->x11.connection,
+                                   0,
+                                   m_srcWindow,
+                                   atoms->xdnd_type_list,
+                                   XCB_GET_PROPERTY_TYPE_ANY,
+                                   0,
+                                   0x1fffffff);
 
-    auto reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
+    auto reply = xcb_get_property_reply(source->x11.connection, cookie, nullptr);
     if (reply == nullptr) {
         return;
     }
@@ -424,7 +417,7 @@ bool WlVisit::handlePosition(xcb_client_message_event_t* event)
     Q_UNUSED(pos);
 
     xcb_timestamp_t const timestamp = data->data32[3];
-    m_drag->x11Source()->setTimestamp(timestamp);
+    source->setTimestamp(timestamp);
 
     xcb_atom_t actionAtom = m_version > 1 ? data->data32[4] : atoms->xdnd_action_copy;
     auto action = Drag::atomToClientAction(actionAtom);
@@ -438,7 +431,7 @@ bool WlVisit::handlePosition(xcb_client_message_event_t* event)
     if (m_action != action) {
         m_action = action;
         m_actionAtom = actionAtom;
-        m_drag->setDragAndDropAction(m_action);
+        source->source()->set_actions(m_action);
     }
 
     sendStatus();
@@ -452,7 +445,7 @@ bool WlVisit::handleDrop(xcb_client_message_event_t* event)
     auto data = &event->data;
     m_srcWindow = data->data32[0];
     xcb_timestamp_t const timestamp = data->data32[2];
-    m_drag->x11Source()->setTimestamp(timestamp);
+    source->setTimestamp(timestamp);
 
     // We do nothing more here, the drop is being processed through the X11Source object.
     doFinish();
@@ -509,7 +502,7 @@ bool WlVisit::targetAcceptsAction() const
     if (m_action == DnDAction::none) {
         return false;
     }
-    auto const selAction = m_drag->selectedDragAndDropAction();
+    auto const selAction = source->source()->action;
     return selAction == m_action || selAction == DnDAction::copy;
 }
 
@@ -519,13 +512,12 @@ void WlVisit::unmapProxyWindow()
         return;
     }
 
-    auto xcbConn = m_drag->dnd->data.x11.connection;
-    xcb_unmap_window(xcbConn, m_window);
+    xcb_unmap_window(source->x11.connection, m_window);
 
     workspace()->stacking_order->remove_manual_overlay(m_window);
     workspace()->stacking_order->update(true);
 
-    xcb_flush(xcbConn);
+    xcb_flush(source->x11.connection);
     m_mapped = false;
 }
 
