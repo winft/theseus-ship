@@ -172,7 +172,7 @@ bool Xvisit::handle_status(xcb_client_message_event_t* event)
     if (!m_state.dropped) {
         // as long as the drop is not yet done determine requested action
         actions.preferred = Drag::atom_to_client_action(actionAtom);
-        retrieve_supported_actions();
+        update_actions();
     }
 
     if (m_pos.cached) {
@@ -255,12 +255,12 @@ void Xvisit::receive_offer()
     }
 
     enter();
-    retrieve_supported_actions();
+    update_actions();
 
     notifiers.action = connect(source,
                                &Wrapland::Server::data_source::supported_dnd_actions_changed,
                                this,
-                               &Xvisit::retrieve_supported_actions);
+                               &Xvisit::update_actions);
 
     send_position(waylandServer()->seat()->pointers().get_position());
 }
@@ -358,13 +358,7 @@ void Xvisit::send_leave()
     Drag::send_client_message(m_target->xcb_window(), atoms->xdnd_leave, &data);
 }
 
-void Xvisit::retrieve_supported_actions()
-{
-    determine_proposed_action();
-    request_drag_and_drop_action();
-}
-
-void Xvisit::determine_proposed_action()
+void Xvisit::update_actions()
 {
     auto const old_proposed = actions.proposed;
     auto const supported = source->supported_dnd_actions();
@@ -381,14 +375,11 @@ void Xvisit::determine_proposed_action()
     if (old_proposed != actions.proposed) {
         send_position(waylandServer()->seat()->pointers().get_position());
     }
-}
 
-void Xvisit::request_drag_and_drop_action()
-{
     auto const pref = actions.preferred != DnDAction::none ? actions.preferred : DnDAction::copy;
-    // we assume the X client supports Move, but this might be wrong - then
-    // the drag just cancels, if the user tries to force it.
 
+    // We assume the X client supports Move, but this might be wrong - then the drag just cancels,
+    // if the user tries to force it.
     waylandServer()->seat()->drags().target_actions_update(DnDAction::copy | DnDAction::move, pref);
 }
 

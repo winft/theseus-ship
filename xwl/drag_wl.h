@@ -95,11 +95,7 @@ private:
 
     void receive_offer();
     void enter();
-
-    void retrieve_supported_actions();
-    void determine_proposed_action();
-    void request_drag_and_drop_action();
-
+    void update_actions();
     void drop();
 
     void do_finish();
