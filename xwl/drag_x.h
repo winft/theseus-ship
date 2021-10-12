@@ -53,6 +53,8 @@ public:
     bool handle_client_message(xcb_client_message_event_t* event) override;
     bool end() override;
 
+    std::unique_ptr<data_source_ext> data_source;
+
 private:
     void set_offers(Mimes const& offers);
     void set_drag_target();
@@ -70,7 +72,6 @@ private:
 
     bool m_performed = false;
 
-    std::unique_ptr<data_source_ext> data_source;
     Dnd* dnd;
 
     Q_DISABLE_COPY(XToWlDrag)

@@ -72,6 +72,10 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
         return;
     }
 
+    assert(!sel->data.source_int);
+    sel->data.source_int = new data_source_ext;
+    sel->data.x11_source->set_source(sel->data.source_int);
+
     sel->m_currentDrag.reset(new XToWlDrag(sel->data.x11_source, sel));
 
     // Start drag with serial of last left pointer button press.
@@ -174,6 +178,13 @@ void Dnd::start_drag()
 void Dnd::end_drag()
 {
     Q_ASSERT(m_currentDrag);
+
+    if (data.source_int) {
+        auto xdrag = dynamic_cast<XToWlDrag*>(m_currentDrag.get());
+        assert(xdrag);
+        xdrag->data_source.reset(data.source_int);
+        data.source_int = nullptr;
+    }
 
     if (m_currentDrag->end()) {
         m_currentDrag.reset();

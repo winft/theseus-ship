@@ -70,16 +70,10 @@ XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
             m_dataRequests << QPair<xcb_timestamp_t, bool>(m_source->timestamp(), false);
         });
 
-    data_source.reset(new data_source_ext);
-    auto source_int_ptr = data_source.get();
-
-    assert(!dnd->data.source_int);
-    dnd->data.source_int = source_int_ptr;
-
-    connect(source_int_ptr, &data_source_ext::accepted, this, [this](auto /*mime_type*/) {
+    connect(source->source(), &data_source_ext::accepted, this, [this](auto /*mime_type*/) {
         // TODO(romangg): handle?
     });
-    connect(source_int_ptr, &data_source_ext::dropped, this, [this] {
+    connect(source->source(), &data_source_ext::dropped, this, [this] {
         m_performed = true;
         if (m_visit) {
             connect(m_visit.get(), &WlVisit::finish, this, [this](WlVisit* visit) {
@@ -100,20 +94,13 @@ XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
         }
         check_for_finished();
     });
-    connect(source_int_ptr, &data_source_ext::finished, this, [this] {
+    connect(source->source(), &data_source_ext::finished, this, [this] {
         // this call is not reliably initiated by Wayland clients
         check_for_finished();
     });
-
-    // source does _not_ take ownership of source_int_ptr
-    source->set_source(source_int_ptr);
 }
 
-XToWlDrag::~XToWlDrag()
-{
-    delete dnd->data.source_int;
-    dnd->data.source_int = nullptr;
-}
+XToWlDrag::~XToWlDrag() = default;
 
 DragEventReply XToWlDrag::move_filter(Toplevel* target, QPoint const& pos)
 {
@@ -202,7 +189,7 @@ void XToWlDrag::set_offers(Mimes const& offers)
     m_offers = offers;
 
     for (auto const& mimePair : offers) {
-        data_source->offer(mimePair.first.toStdString());
+        m_source->source()->offer(mimePair.first.toStdString());
     }
 
     set_drag_target();
@@ -246,7 +233,6 @@ bool XToWlDrag::check_for_finished()
 
 bool XToWlDrag::end()
 {
-    dnd->data.source_int = nullptr;
     return false;
 }
 
