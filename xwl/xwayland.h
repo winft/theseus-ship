@@ -56,9 +56,9 @@ public:
     std::unique_ptr<DataBridge> data_bridge;
 
 private:
-    void continueStartupWithX();
+    void continue_startup_with_x11();
 
-    DragEventReply dragMoveFilter(Toplevel* target, QPoint const& pos) override;
+    DragEventReply drag_move_filter(Toplevel* target, QPoint const& pos) override;
 
     int m_xcbConnectionFd = -1;
     QProcess* m_xwaylandProcess = nullptr;

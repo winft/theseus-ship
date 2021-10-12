@@ -47,8 +47,8 @@ class WlToXDrag : public Drag
 public:
     explicit WlToXDrag(Dnd* dnd);
 
-    DragEventReply moveFilter(Toplevel* target, QPoint const& pos) override;
-    bool handleClientMessage(xcb_client_message_event_t* event) override;
+    DragEventReply move_filter(Toplevel* target, QPoint const& pos) override;
+    bool handle_client_message(xcb_client_message_event_t* event) override;
     bool end() override;
 
 private:
@@ -68,11 +68,9 @@ public:
 
     Xvisit(Toplevel* target, Wrapland::Server::data_source* source, xcb_window_t drag_window);
 
-    bool handleClientMessage(xcb_client_message_event_t* event);
-    bool handleStatus(xcb_client_message_event_t* event);
-    bool handleFinished(xcb_client_message_event_t* event);
+    bool handle_client_message(xcb_client_message_event_t* event);
 
-    void sendPosition(QPointF const& globalPos);
+    void send_position(QPointF const& globalPos);
     void leave();
 
     bool finished() const
@@ -88,22 +86,24 @@ Q_SIGNALS:
     void finish(Xvisit* self);
 
 private:
-    void sendEnter();
-    void sendDrop(uint32_t time);
-    void sendLeave();
+    bool handle_status(xcb_client_message_event_t* event);
+    bool handle_finished(xcb_client_message_event_t* event);
 
-    void receiveOffer();
+    void send_enter();
+    void send_drop(uint32_t time);
+    void send_leave();
+
+    void receive_offer();
     void enter();
 
-    void retrieveSupportedActions();
-    void determineProposedAction();
-    void requestDragAndDropAction();
-    void setProposedAction();
+    void retrieve_supported_actions();
+    void determine_proposed_action();
+    void request_drag_and_drop_action();
 
     void drop();
 
-    void doFinish();
-    void stopConnections();
+    void do_finish();
+    void stop_connections();
 
     Toplevel* m_target;
     Wrapland::Server::data_source* source;

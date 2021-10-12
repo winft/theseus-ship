@@ -59,13 +59,13 @@ public:
 
     static uint32_t version();
 
-    DragEventReply dragMoveFilter(Toplevel* target, QPoint const& pos);
+    DragEventReply drag_move_filter(Toplevel* target, QPoint const& pos);
 
 private:
     // start and end Wl native client drags (Wl -> Xwl)
-    void startDrag();
-    void endDrag();
-    void clearOldDrag(Drag* drag);
+    void start_drag();
+    void end_drag();
+    void clear_old_drag(Drag* drag);
 
     Q_DISABLE_COPY(Dnd)
 };

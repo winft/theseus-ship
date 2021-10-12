@@ -45,7 +45,7 @@ class Transfer : public QObject
 public:
     Transfer(xcb_atom_t selection, qint32 fd, xcb_timestamp_t timestamp, QObject* parent = nullptr);
 
-    virtual bool handlePropertyNotify(xcb_property_notify_event_t* event) = 0;
+    virtual bool handle_property_notify(xcb_property_notify_event_t* event) = 0;
     void timeout();
     xcb_timestamp_t timestamp() const
     {
@@ -56,7 +56,7 @@ Q_SIGNALS:
     void finished();
 
 protected:
-    void endTransfer();
+    void end_transfer();
 
     xcb_atom_t atom() const
     {
@@ -67,7 +67,7 @@ protected:
         return m_fd;
     }
 
-    void setIncr(bool set)
+    void set_incr(bool set)
     {
         m_incr = set;
     }
@@ -75,20 +75,20 @@ protected:
     {
         return m_incr;
     }
-    void resetTimeout()
+    void reset_timeout()
     {
         m_timeout = false;
     }
 
-    void createSocketNotifier(QSocketNotifier::Type type);
-    void clearSocketNotifier();
-    QSocketNotifier* socketNotifier() const
+    void create_socket_notifier(QSocketNotifier::Type type);
+    void clear_socket_notifier();
+    QSocketNotifier* socket_notifier() const
     {
         return m_notifier;
     }
 
 private:
-    void closeFd();
+    void close_fd();
 
     xcb_atom_t m_atom;
     qint32 m_fd;
@@ -115,17 +115,17 @@ public:
                   QObject* parent = nullptr);
     ~TransferWltoX() override;
 
-    void startTransferFromSource();
-    bool handlePropertyNotify(xcb_property_notify_event_t* event) override;
+    void start_transfer_from_source();
+    bool handle_property_notify(xcb_property_notify_event_t* event) override;
 
 Q_SIGNALS:
-    void selectionNotify(xcb_selection_request_event_t* event, bool success);
+    void selection_notify(xcb_selection_request_event_t* event, bool success);
 
 private:
-    void startIncr();
-    void readWlSource();
-    int flushSourceData();
-    void handlePropertyDelete();
+    void start_incr();
+    void read_wl_source();
+    int flush_source_data();
+    void handle_property_delete();
 
     xcb_selection_request_event_t* m_request = nullptr;
 
@@ -148,15 +148,15 @@ class DataReceiver
 public:
     virtual ~DataReceiver();
 
-    void transferFromProperty(xcb_get_property_reply_t* reply);
+    void transfer_from_property(xcb_get_property_reply_t* reply);
 
-    virtual void setData(char const* value, int length);
+    virtual void set_data(char const* value, int length);
     QByteArray data() const;
 
-    void partRead(int length);
+    void part_read(int length);
 
 protected:
-    void setDataInternal(QByteArray data)
+    void set_data_internal(QByteArray data)
     {
         m_data = data;
     }
@@ -174,7 +174,7 @@ private:
 class NetscapeUrlReceiver : public DataReceiver
 {
 public:
-    void setData(char const* value, int length) override;
+    void set_data(char const* value, int length) override;
 };
 
 /**
@@ -184,7 +184,7 @@ public:
 class MozUrlReceiver : public DataReceiver
 {
 public:
-    void setData(char const* value, int length) override;
+    void set_data(char const* value, int length) override;
 };
 
 /**
@@ -204,13 +204,13 @@ public:
                   QObject* parent = nullptr);
     ~TransferXtoWl() override;
 
-    bool handleSelectionNotify(xcb_selection_notify_event_t* event);
-    bool handlePropertyNotify(xcb_property_notify_event_t* event) override;
+    bool handle_selection_notify(xcb_selection_notify_event_t* event);
+    bool handle_property_notify(xcb_property_notify_event_t* event) override;
 
 private:
-    void dataSourceWrite();
-    void startTransfer();
-    void getIncrChunk();
+    void data_source_write();
+    void start_transfer();
+    void get_incr_chunk();
 
     xcb_window_t m_window;
     DataReceiver* m_receiver = nullptr;

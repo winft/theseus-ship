@@ -49,15 +49,15 @@ public:
     explicit XToWlDrag(DataX11Source* source, Dnd* dnd);
     ~XToWlDrag() override;
 
-    DragEventReply moveFilter(Toplevel* target, QPoint const& pos) override;
-    bool handleClientMessage(xcb_client_message_event_t* event) override;
+    DragEventReply move_filter(Toplevel* target, QPoint const& pos) override;
+    bool handle_client_message(xcb_client_message_event_t* event) override;
     bool end() override;
 
 private:
-    void setOffers(Mimes const& offers);
-    void setDragTarget();
+    void set_offers(Mimes const& offers);
+    void set_drag_target();
 
-    bool checkForFinished();
+    bool check_for_finished();
 
     Mimes m_offers;
     Mimes m_offersPending;
@@ -83,7 +83,7 @@ public:
     WlVisit(Toplevel* target, DataX11Source* source);
     ~WlVisit() override;
 
-    bool handleClientMessage(xcb_client_message_event_t* event);
+    bool handle_client_message(xcb_client_message_event_t* event);
     bool leave();
 
     Toplevel* target() const
@@ -98,7 +98,7 @@ public:
     {
         return m_entered;
     }
-    bool dropHandled() const
+    bool drop_handled() const
     {
         return m_dropHandled;
     }
@@ -106,26 +106,26 @@ public:
     {
         return m_finished;
     }
-    void sendFinished();
+    void send_finished();
 
 Q_SIGNALS:
-    void offersReceived(Mimes const& offers);
+    void offers_received(Mimes const& offers);
     void finish(WlVisit* self);
 
 private:
-    bool handleEnter(xcb_client_message_event_t* event);
-    bool handlePosition(xcb_client_message_event_t* event);
-    bool handleDrop(xcb_client_message_event_t* event);
-    bool handleLeave(xcb_client_message_event_t* event);
+    bool handle_enter(xcb_client_message_event_t* event);
+    bool handle_position(xcb_client_message_event_t* event);
+    bool handle_drop(xcb_client_message_event_t* event);
+    bool handle_leave(xcb_client_message_event_t* event);
 
-    void sendStatus();
+    void send_status();
 
-    void getMimesFromWinProperty(Mimes& offers);
+    void get_mimes_from_win_property(Mimes& offers);
 
-    bool targetAcceptsAction() const;
+    bool target_accepts_action() const;
 
-    void doFinish();
-    void unmapProxyWindow();
+    void do_finish();
+    void unmap_proxy_window();
 
     Toplevel* m_target;
     xcb_window_t m_window;

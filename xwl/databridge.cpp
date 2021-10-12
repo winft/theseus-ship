@@ -41,43 +41,43 @@ DataBridge::DataBridge(x11_data const& x11)
 
 DataBridge::~DataBridge() = default;
 
-bool DataBridge::filterEvent(xcb_generic_event_t* event)
+bool DataBridge::filter_event(xcb_generic_event_t* event)
 {
-    if (filter_event(m_clipboard.get(), event)) {
+    if (Xwl::filter_event(m_clipboard.get(), event)) {
         return true;
     }
-    if (filter_event(m_dnd.get(), event)) {
+    if (Xwl::filter_event(m_dnd.get(), event)) {
         return true;
     }
-    if (filter_event(m_primarySelection.get(), event)) {
+    if (Xwl::filter_event(m_primarySelection.get(), event)) {
         return true;
     }
     if (event->response_type - xfixes->first_event == XCB_XFIXES_SELECTION_NOTIFY) {
-        return handleXfixesNotify((xcb_xfixes_selection_notify_event_t*)event);
+        return handle_xfixes_notify((xcb_xfixes_selection_notify_event_t*)event);
     }
     return false;
 }
 
-bool DataBridge::handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
+bool DataBridge::handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
 {
     if (event->selection == atoms->clipboard) {
-        return handle_xfixes_notify(m_clipboard.get(), event);
+        return Xwl::handle_xfixes_notify(m_clipboard.get(), event);
     }
     if (event->selection == atoms->primary_selection) {
-        return handle_xfixes_notify(m_primarySelection.get(), event);
+        return Xwl::handle_xfixes_notify(m_primarySelection.get(), event);
     }
     if (event->selection == atoms->xdnd_selection) {
-        return handle_xfixes_notify(m_dnd.get(), event);
+        return Xwl::handle_xfixes_notify(m_dnd.get(), event);
     }
     return false;
 }
 
-DragEventReply DataBridge::dragMoveFilter(Toplevel* target, QPoint const& pos)
+DragEventReply DataBridge::drag_move_filter(Toplevel* target, QPoint const& pos)
 {
     if (!m_dnd) {
         return DragEventReply::Wayland;
     }
-    return m_dnd->dragMoveFilter(target, pos);
+    return m_dnd->drag_move_filter(target, pos);
 }
 
 }

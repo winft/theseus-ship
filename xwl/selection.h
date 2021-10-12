@@ -48,7 +48,7 @@ class q_selection : public QObject
 
 public:
 Q_SIGNALS:
-    void transferFinished(xcb_timestamp_t eventTime);
+    void transfer_finished(xcb_timestamp_t eventTime);
 };
 
 /**
@@ -123,7 +123,7 @@ auto create_selection_data(xcb_atom_t atom, x11_data const& x11)
     return sel;
 }
 
-inline void sendSelectionNotify(xcb_selection_request_event_t* event, bool success)
+inline void send_selection_notify(xcb_selection_request_event_t* event, bool success)
 {
     xcb_selection_notify_event_t notify;
     notify.response_type = XCB_SELECTION_NOTIFY;
@@ -176,7 +176,7 @@ bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* e
         // When we claim a selection we must use XCB_TIME_CURRENT,
         // grab the actual timestamp here to answer TIMESTAMP requests
         // correctly
-        sel->data.wayland_source->setTimestamp(event->timestamp);
+        sel->data.wayland_source->set_timestamp(event->timestamp);
         sel->data.timestamp = event->timestamp;
         return true;
     }
@@ -209,7 +209,7 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
     create_x11_source(sel, event);
 
     if (auto const& source = sel->data.x11_source) {
-        source->getTargets(sel->data.requestor_window, sel->data.atom);
+        source->get_targets(sel->data.requestor_window, sel->data.atom);
     }
 }
 
@@ -255,7 +255,7 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
     if (qobject_cast<win::x11::window*>(workspace()->activeClient()) == nullptr) {
         // Receiving Wayland selection not allowed when no Xwayland surface active
         // filter the event, but don't act upon it
-        sendSelectionNotify(event, false);
+        send_selection_notify(event, false);
         return true;
     }
 
@@ -263,13 +263,13 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
         if (event->time < sel->data.timestamp) {
             // cancel earlier attempts at receiving a selection
             // TODO: is this for sure without problems?
-            sendSelectionNotify(event, false);
+            send_selection_notify(event, false);
             return true;
         }
         return false;
     }
 
-    return sel->data.wayland_source->handleSelectionRequest(event);
+    return sel->data.wayland_source->handle_selection_request(event);
 }
 
 template<typename Selection>
@@ -277,13 +277,13 @@ bool handle_selection_notify(Selection* sel, xcb_selection_notify_event_t* event
 {
     if (sel->data.x11_source && event->requestor == sel->data.requestor_window
         && event->selection == sel->data.atom) {
-        if (sel->data.x11_source->handleSelectionNotify(event)) {
+        if (sel->data.x11_source->handle_selection_notify(event)) {
             return true;
         }
     }
 
     for (auto& transfer : sel->data.transfers.x11_to_wl) {
-        if (transfer->handleSelectionNotify(event)) {
+        if (transfer->handle_selection_notify(event)) {
             return true;
         }
     }
@@ -295,13 +295,13 @@ template<typename Selection>
 bool handle_property_notify(Selection* sel, xcb_property_notify_event_t* event)
 {
     for (auto& transfer : sel->data.transfers.x11_to_wl) {
-        if (transfer->handlePropertyNotify(event)) {
+        if (transfer->handle_property_notify(event)) {
             return true;
         }
     }
 
     for (auto& transfer : sel->data.transfers.wl_to_x11) {
-        if (transfer->handlePropertyNotify(event)) {
+        if (transfer->handle_property_notify(event)) {
             return true;
         }
     }
@@ -344,7 +344,7 @@ void set_wl_source(Selection* sel, WlSource<server_source>* source)
     if (source) {
         sel->data.wayland_source = source;
         QObject::connect(source->qobject(),
-                         &qWlSource::transferReady,
+                         &qWlSource::transfer_ready,
                          sel->data.qobject.get(),
                          [sel](auto event, auto fd) { start_transfer_to_x11(sel, event, fd); });
     }
@@ -367,13 +367,13 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
     sel->data.x11_source = new X11Source<internal_source>(event, sel->data.x11);
 
     QObject::connect(sel->data.x11_source->qobject(),
-                     &qX11Source::offersChanged,
+                     &qX11Source::offers_changed,
                      sel->data.qobject.get(),
                      [sel](auto const& added, auto const& removed) {
                          handle_x11_offer_change(sel, added, removed);
                      });
     QObject::connect(sel->data.x11_source->qobject(),
-                     &qX11Source::transferReady,
+                     &qX11Source::transfer_ready,
                      sel->data.qobject.get(),
                      [sel](auto target, auto fd) { start_transfer_to_wayland(sel, target, fd); });
 }
@@ -392,7 +392,7 @@ void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
 
     QObject::connect(
         transfer, &TransferXtoWl::finished, sel->data.qobject.get(), [sel, transfer]() {
-            Q_EMIT sel->data.qobject->transferFinished(transfer->timestamp());
+            Q_EMIT sel->data.qobject->transfer_finished(transfer->timestamp());
             delete transfer;
             sel->data.transfers.x11_to_wl.removeOne(transfer);
             end_timeout_transfers_timer(sel);
@@ -406,11 +406,13 @@ void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event,
 {
     auto transfer = new TransferWltoX(sel->data.atom, event, fd, sel->data.qobject.get());
 
-    QObject::connect(
-        transfer, &TransferWltoX::selectionNotify, sel->data.qobject.get(), &sendSelectionNotify);
+    QObject::connect(transfer,
+                     &TransferWltoX::selection_notify,
+                     sel->data.qobject.get(),
+                     &send_selection_notify);
     QObject::connect(
         transfer, &TransferWltoX::finished, sel->data.qobject.get(), [sel, transfer]() {
-            Q_EMIT sel->data.qobject->transferFinished(transfer->timestamp());
+            Q_EMIT sel->data.qobject->transfer_finished(transfer->timestamp());
 
             // TODO(romangg): Serialize? see comment below.
             delete transfer;
@@ -423,7 +425,7 @@ void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event,
 
     // TODO(romangg): Do we need to serialize the transfers, or can we do
     //                them in parallel as we do it right now?
-    transfer->startTransferFromSource();
+    transfer->start_transfer_from_source();
     start_timeout_transfers_timer(sel);
 }
 
@@ -462,12 +464,12 @@ void end_timeout_transfers_timer(Selection* sel)
     }
 }
 
-inline xcb_atom_t mimeTypeToAtomLiteral(QString const& mimeType)
+inline xcb_atom_t mime_type_to_atom_literal(QString const& mimeType)
 {
     return Xcb::Atom(mimeType.toLatin1(), false, kwinApp()->x11Connection());
 }
 
-inline xcb_atom_t mimeTypeToAtom(QString const& mimeType)
+inline xcb_atom_t mime_type_to_atom(QString const& mimeType)
 {
     if (mimeType == QLatin1String("text/plain;charset=utf-8")) {
         return atoms->utf8_string;
@@ -478,10 +480,10 @@ inline xcb_atom_t mimeTypeToAtom(QString const& mimeType)
     if (mimeType == QLatin1String("text/x-uri")) {
         return atoms->uri_list;
     }
-    return mimeTypeToAtomLiteral(mimeType);
+    return mime_type_to_atom_literal(mimeType);
 }
 
-inline QString atomName(xcb_atom_t atom)
+inline QString atom_name(xcb_atom_t atom)
 {
     auto xcbConn = kwinApp()->x11Connection();
     auto nameCookie = xcb_get_atom_name(xcbConn, atom);
@@ -497,7 +499,7 @@ inline QString atomName(xcb_atom_t atom)
     return name;
 }
 
-inline QStringList atomToMimeTypes(xcb_atom_t atom)
+inline QStringList atom_to_mime_types(xcb_atom_t atom)
 {
     QStringList mimeTypes;
 
@@ -510,7 +512,7 @@ inline QStringList atomToMimeTypes(xcb_atom_t atom)
         // text/x-uri and accept the information loss.
         mimeTypes << QString::fromLatin1("text/uri-list") << QString::fromLatin1("text/x-uri");
     } else {
-        mimeTypes << atomName(atom);
+        mimeTypes << atom_name(atom);
     }
     return mimeTypes;
 }
@@ -645,7 +647,7 @@ void handle_x11_offer_change(Selection* sel, QStringList const& added, QStringLi
         auto internal_src = new internal_source();
 
         sel->data.source_int = internal_src;
-        source->setSource(internal_src);
+        source->set_source(internal_src);
         sel->get_selection_setter()(internal_src->src());
 
         // Delete old internal source after setting the new one so data-control devices won't

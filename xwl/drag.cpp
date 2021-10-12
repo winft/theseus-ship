@@ -34,7 +34,9 @@ Drag::~Drag()
 {
 }
 
-void Drag::sendClientMessage(xcb_window_t target, xcb_atom_t type, xcb_client_message_data_t* data)
+void Drag::send_client_message(xcb_window_t target,
+                               xcb_atom_t type,
+                               xcb_client_message_data_t* data)
 {
     xcb_client_message_event_t event{
         XCB_CLIENT_MESSAGE, // response_type
@@ -51,7 +53,7 @@ void Drag::sendClientMessage(xcb_window_t target, xcb_atom_t type, xcb_client_me
     xcb_flush(xcbConn);
 }
 
-DnDAction Drag::atomToClientAction(xcb_atom_t atom)
+DnDAction Drag::atom_to_client_action(xcb_atom_t atom)
 {
     if (atom == atoms->xdnd_action_copy) {
         return DnDAction::copy;
@@ -65,7 +67,7 @@ DnDAction Drag::atomToClientAction(xcb_atom_t atom)
     return DnDAction::none;
 }
 
-xcb_atom_t Drag::clientActionToAtom(DnDAction action)
+xcb_atom_t Drag::client_action_to_atom(DnDAction action)
 {
     if (action == DnDAction::copy) {
         return atoms->xdnd_action_copy;

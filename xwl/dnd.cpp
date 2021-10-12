@@ -90,11 +90,11 @@ template<>
 bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event)
 {
     for (auto& drag : sel->m_oldDrags) {
-        if (drag->handleClientMessage(event)) {
+        if (drag->handle_client_message(event)) {
             return true;
         }
     }
-    if (sel->m_currentDrag && sel->m_currentDrag->handleClientMessage(event)) {
+    if (sel->m_currentDrag && sel->m_currentDrag->handle_client_message(event)) {
         return true;
     }
     return false;
@@ -137,21 +137,21 @@ Dnd::Dnd(xcb_atom_t atom, x11_data const& x11)
     QObject::connect(waylandServer()->seat(),
                      &Wrapland::Server::Seat::dragStarted,
                      data.qobject.get(),
-                     [this]() { startDrag(); });
+                     [this]() { start_drag(); });
     QObject::connect(waylandServer()->seat(),
                      &Wrapland::Server::Seat::dragEnded,
                      data.qobject.get(),
-                     [this]() { endDrag(); });
+                     [this]() { end_drag(); });
 }
 
-DragEventReply Dnd::dragMoveFilter(Toplevel* target, QPoint const& pos)
+DragEventReply Dnd::drag_move_filter(Toplevel* target, QPoint const& pos)
 {
     // This filter only is used when a drag is in process.
     Q_ASSERT(m_currentDrag);
-    return m_currentDrag->moveFilter(target, pos);
+    return m_currentDrag->move_filter(target, pos);
 }
 
-void Dnd::startDrag()
+void Dnd::start_drag()
 {
     auto srv_src = waylandServer()->seat()->drags().get_source().src;
 
@@ -171,7 +171,7 @@ void Dnd::startDrag()
     own_selection(this, true);
 }
 
-void Dnd::endDrag()
+void Dnd::end_drag()
 {
     Q_ASSERT(m_currentDrag);
 
@@ -179,14 +179,14 @@ void Dnd::endDrag()
         delete m_currentDrag;
     } else {
         QObject::connect(m_currentDrag, &Drag::finish, data.qobject.get(), [this](auto drag) {
-            clearOldDrag(drag);
+            clear_old_drag(drag);
         });
         m_oldDrags << m_currentDrag;
     }
     m_currentDrag = nullptr;
 }
 
-void Dnd::clearOldDrag(Drag* drag)
+void Dnd::clear_old_drag(Drag* drag)
 {
     m_oldDrags.removeOne(drag);
     delete drag;

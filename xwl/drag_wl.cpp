@@ -41,7 +41,7 @@ WlToXDrag::WlToXDrag(Dnd* dnd)
     m_dsi = waylandServer()->seat()->drags().get_source().src;
 }
 
-DragEventReply WlToXDrag::moveFilter(Toplevel* target, QPoint const& pos)
+DragEventReply WlToXDrag::move_filter(Toplevel* target, QPoint const& pos)
 {
     auto seat = waylandServer()->seat();
 
@@ -72,9 +72,9 @@ DragEventReply WlToXDrag::moveFilter(Toplevel* target, QPoint const& pos)
     return DragEventReply::Take;
 }
 
-bool WlToXDrag::handleClientMessage(xcb_client_message_event_t* event)
+bool WlToXDrag::handle_client_message(xcb_client_message_event_t* event)
 {
-    if (m_visit && m_visit->handleClientMessage(event)) {
+    if (m_visit && m_visit->handle_client_message(event)) {
         return true;
     }
     return false;
@@ -110,12 +110,12 @@ Xvisit::Xvisit(Toplevel* target, Wrapland::Server::data_source* source, xcb_wind
 
     auto reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
     if (!reply) {
-        doFinish();
+        do_finish();
         return;
     }
 
     if (reply->type != XCB_ATOM_ATOM) {
-        doFinish();
+        do_finish();
         free(reply);
         return;
     }
@@ -124,14 +124,14 @@ Xvisit::Xvisit(Toplevel* target, Wrapland::Server::data_source* source, xcb_wind
     m_version = qMin(*value, Dnd::version());
     if (m_version < 1) {
         // minimal version we accept is 1
-        doFinish();
+        do_finish();
         free(reply);
         return;
     }
     free(reply);
 
     // proxy drop
-    receiveOffer();
+    receive_offer();
 
     m_dropConnection = connect(
         waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this, [this](auto success) {
@@ -143,17 +143,17 @@ Xvisit::Xvisit(Toplevel* target, Wrapland::Server::data_source* source, xcb_wind
         });
 }
 
-bool Xvisit::handleClientMessage(xcb_client_message_event_t* event)
+bool Xvisit::handle_client_message(xcb_client_message_event_t* event)
 {
     if (event->type == atoms->xdnd_status) {
-        return handleStatus(event);
+        return handle_status(event);
     } else if (event->type == atoms->xdnd_finished) {
-        return handleFinished(event);
+        return handle_finished(event);
     }
     return false;
 }
 
-bool Xvisit::handleStatus(xcb_client_message_event_t* event)
+bool Xvisit::handle_status(xcb_client_message_event_t* event)
 {
     auto data = &event->data;
     if (data->data32[0] != m_target->xcb_window()) {
@@ -171,15 +171,15 @@ bool Xvisit::handleStatus(xcb_client_message_event_t* event)
 
     if (!m_state.dropped) {
         // as long as the drop is not yet done determine requested action
-        m_preferredAction = Drag::atomToClientAction(actionAtom);
-        determineProposedAction();
-        requestDragAndDropAction();
+        m_preferredAction = Drag::atom_to_client_action(actionAtom);
+        determine_proposed_action();
+        request_drag_and_drop_action();
     }
 
     if (m_pos.cached) {
         // send cached position
         m_pos.cached = false;
-        sendPosition(m_pos.cache);
+        send_position(m_pos.cache);
     } else if (m_state.dropped) {
         // drop was done in between, now close it out
         drop();
@@ -187,7 +187,7 @@ bool Xvisit::handleStatus(xcb_client_message_event_t* event)
     return true;
 }
 
-bool Xvisit::handleFinished(xcb_client_message_event_t* event)
+bool Xvisit::handle_finished(xcb_client_message_event_t* event)
 {
     auto data = &event->data;
 
@@ -198,7 +198,7 @@ bool Xvisit::handleFinished(xcb_client_message_event_t* event)
 
     if (!m_state.dropped) {
         // drop was never done
-        doFinish();
+        do_finish();
         return true;
     }
 
@@ -208,11 +208,11 @@ bool Xvisit::handleFinished(xcb_client_message_event_t* event)
     Q_UNUSED(success);
     Q_UNUSED(usedActionAtom);
 
-    doFinish();
+    do_finish();
     return true;
 }
 
-void Xvisit::sendPosition(QPointF const& globalPos)
+void Xvisit::send_position(QPointF const& globalPos)
 {
     int16_t const x = globalPos.x();
     int16_t const y = globalPos.y();
@@ -229,9 +229,9 @@ void Xvisit::sendPosition(QPointF const& globalPos)
     data.data32[0] = drag_window;
     data.data32[2] = (x << 16) | y;
     data.data32[3] = XCB_CURRENT_TIME;
-    data.data32[4] = Drag::clientActionToAtom(m_proposedAction);
+    data.data32[4] = Drag::client_action_to_atom(m_proposedAction);
 
-    Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_position, &data);
+    Drag::send_client_message(m_target->xcb_window(), atoms->xdnd_position, &data);
 }
 
 void Xvisit::leave()
@@ -243,12 +243,12 @@ void Xvisit::leave()
     }
     // We only need to leave if we entered before.
     if (m_state.entered) {
-        sendLeave();
+        send_leave();
     }
-    doFinish();
+    do_finish();
 }
 
-void Xvisit::receiveOffer()
+void Xvisit::receive_offer()
 {
     if (m_state.finished) {
         // Already ended.
@@ -256,14 +256,14 @@ void Xvisit::receiveOffer()
     }
 
     enter();
-    retrieveSupportedActions();
+    retrieve_supported_actions();
 
     m_actionConnection = connect(source,
                                  &Wrapland::Server::data_source::supported_dnd_actions_changed,
                                  this,
-                                 &Xvisit::retrieveSupportedActions);
+                                 &Xvisit::retrieve_supported_actions);
 
-    sendPosition(waylandServer()->seat()->pointers().get_position());
+    send_position(waylandServer()->seat()->pointers().get_position());
 }
 
 void Xvisit::enter()
@@ -271,16 +271,16 @@ void Xvisit::enter()
     m_state.entered = true;
 
     // Send enter event and current position to X client.
-    sendEnter();
+    send_enter();
 
     // Proxy future pointer position changes.
     m_motionConnection = connect(waylandServer()->seat(),
                                  &Wrapland::Server::Seat::pointerPosChanged,
                                  this,
-                                 &Xvisit::sendPosition);
+                                 &Xvisit::send_position);
 }
 
-void Xvisit::sendEnter()
+void Xvisit::send_enter()
 {
     xcb_client_message_data_t data = {{0}};
     data.data32[0] = drag_window;
@@ -296,7 +296,7 @@ void Xvisit::sendEnter()
         if (totalCnt == 3) {
             break;
         }
-        auto const atom = mimeTypeToAtom(mimeName.c_str());
+        auto const atom = mime_type_to_atom(mimeName.c_str());
 
         if (atom != XCB_ATOM_NONE) {
             data.data32[cnt + 2] = atom;
@@ -318,7 +318,7 @@ void Xvisit::sendEnter()
 
         size_t cnt = 0;
         for (auto const& mimeName : mimeTypesNames) {
-            auto const atom = mimeTypeToAtom(mimeName.c_str());
+            auto const atom = mime_type_to_atom(mimeName.c_str());
             if (atom != XCB_ATOM_NONE) {
                 targets[cnt] = atom;
                 cnt++;
@@ -335,39 +335,39 @@ void Xvisit::sendEnter()
                             targets.data());
     }
 
-    Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_enter, &data);
+    Drag::send_client_message(m_target->xcb_window(), atoms->xdnd_enter, &data);
 }
 
-void Xvisit::sendDrop(uint32_t time)
+void Xvisit::send_drop(uint32_t time)
 {
     xcb_client_message_data_t data = {{0}};
     data.data32[0] = drag_window;
     data.data32[2] = time;
 
-    Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_drop, &data);
+    Drag::send_client_message(m_target->xcb_window(), atoms->xdnd_drop, &data);
 
     if (m_version < 2) {
-        doFinish();
+        do_finish();
     }
 }
 
-void Xvisit::sendLeave()
+void Xvisit::send_leave()
 {
     xcb_client_message_data_t data = {{0}};
     data.data32[0] = drag_window;
 
-    Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_leave, &data);
+    Drag::send_client_message(m_target->xcb_window(), atoms->xdnd_leave, &data);
 }
 
-void Xvisit::retrieveSupportedActions()
+void Xvisit::retrieve_supported_actions()
 {
     m_supportedActions = source->supported_dnd_actions();
 
-    determineProposedAction();
-    requestDragAndDropAction();
+    determine_proposed_action();
+    request_drag_and_drop_action();
 }
 
-void Xvisit::determineProposedAction()
+void Xvisit::determine_proposed_action()
 {
     DnDAction oldProposedAction = m_proposedAction;
 
@@ -381,11 +381,11 @@ void Xvisit::determineProposedAction()
 
     // Send updated action to X target.
     if (oldProposedAction != m_proposedAction) {
-        sendPosition(waylandServer()->seat()->pointers().get_position());
+        send_position(waylandServer()->seat()->pointers().get_position());
     }
 }
 
-void Xvisit::requestDragAndDropAction()
+void Xvisit::request_drag_and_drop_action()
 {
     auto const pref = m_preferredAction != DnDAction::none ? m_preferredAction : DnDAction::copy;
     // we assume the X client supports Move, but this might be wrong - then
@@ -401,7 +401,7 @@ void Xvisit::drop()
 
     // Stop further updates.
     // TODO(romangg): revisit when we allow ask action
-    stopConnections();
+    stop_connections();
 
     if (!m_state.entered) {
         // wait for enter (init + offers)
@@ -413,24 +413,24 @@ void Xvisit::drop()
     }
     if (!m_accepts) {
         // target does not accept current action/offer
-        sendLeave();
-        doFinish();
+        send_leave();
+        do_finish();
         return;
     }
 
     // Dnd session ended successfully.
-    sendDrop(XCB_CURRENT_TIME);
+    send_drop(XCB_CURRENT_TIME);
 }
 
-void Xvisit::doFinish()
+void Xvisit::do_finish()
 {
     m_state.finished = true;
     m_pos.cached = false;
-    stopConnections();
+    stop_connections();
     Q_EMIT finish(this);
 }
 
-void Xvisit::stopConnections()
+void Xvisit::stop_connections()
 {
     // Final outcome has been determined from Wayland side, no more updates needed.
     disconnect(m_enterConnection);

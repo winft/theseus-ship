@@ -141,7 +141,7 @@ Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> sta
         QObject::connect(watcher,
                          &QFutureWatcher<void>::finished,
                          this,
-                         &Xwayland::continueStartupWithX,
+                         &Xwayland::continue_startup_with_x11,
                          Qt::QueuedConnection);
         QObject::connect(watcher,
                          &QFutureWatcher<void>::finished,
@@ -183,7 +183,7 @@ Xwayland::~Xwayland()
     waylandServer()->destroyXWaylandConnection();
 }
 
-void Xwayland::continueStartupWithX()
+void Xwayland::continue_startup_with_x11()
 {
     auto screenNumber = 0;
 
@@ -214,7 +214,7 @@ void Xwayland::continueStartupWithX()
 
     auto processXcbEvents = [this] {
         while (auto event = xcb_poll_for_event(basic_data.connection)) {
-            if (data_bridge->filterEvent(event)) {
+            if (data_bridge->filter_event(event)) {
                 free(event);
                 continue;
             }
@@ -271,12 +271,12 @@ void Xwayland::continueStartupWithX()
     data_bridge.reset(new DataBridge(basic_data));
 }
 
-DragEventReply Xwayland::dragMoveFilter(Toplevel* target, QPoint const& pos)
+DragEventReply Xwayland::drag_move_filter(Toplevel* target, QPoint const& pos)
 {
     if (!data_bridge) {
         return DragEventReply::Wayland;
     }
-    return data_bridge->dragMoveFilter(target, pos);
+    return data_bridge->drag_move_filter(target, pos);
 }
 
 }

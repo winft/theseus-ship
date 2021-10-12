@@ -56,11 +56,11 @@ public:
     DataBridge(x11_data const& x11);
     ~DataBridge() override;
 
-    bool filterEvent(xcb_generic_event_t* event);
-    DragEventReply dragMoveFilter(Toplevel* target, QPoint const& pos);
+    bool filter_event(xcb_generic_event_t* event);
+    DragEventReply drag_move_filter(Toplevel* target, QPoint const& pos);
 
 private:
-    bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
+    bool handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event);
 
     xcb_query_extension_reply_t const* xfixes{nullptr};
 

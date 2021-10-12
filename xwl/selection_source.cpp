@@ -47,7 +47,7 @@ WlSource<ServerSource>::WlSource(ServerSource* source, xcb_connection_t* connect
 
     m_offerConnection
         = QObject::connect(source, &ServerSource::mime_type_offered, qobject(), [this](auto mime) {
-              receiveOffer(mime);
+              receive_offer(mime);
           });
 }
 
@@ -58,31 +58,31 @@ WlSource<ServerSource>::~WlSource()
 }
 
 template<typename ServerSource>
-void WlSource<ServerSource>::receiveOffer(std::string const& mime)
+void WlSource<ServerSource>::receive_offer(std::string const& mime)
 {
     m_offers << QString::fromStdString(mime);
 }
 
 template<typename ServerSource>
-bool WlSource<ServerSource>::handleSelectionRequest(xcb_selection_request_event_t* event)
+bool WlSource<ServerSource>::handle_selection_request(xcb_selection_request_event_t* event)
 {
     if (event->target == atoms->targets) {
-        sendTargets(event);
+        send_targets(event);
     } else if (event->target == atoms->timestamp) {
-        sendTimestamp(event);
+        send_timestamp(event);
     } else if (event->target == atoms->delete_atom) {
-        sendSelectionNotify(event, true);
+        send_selection_notify(event, true);
     } else {
         // try to send mime data
-        if (!checkStartTransfer(event)) {
-            sendSelectionNotify(event, false);
+        if (!check_start_transfer(event)) {
+            send_selection_notify(event, false);
         }
     }
     return true;
 }
 
 template<typename ServerSource>
-void WlSource<ServerSource>::sendTargets(xcb_selection_request_event_t* event)
+void WlSource<ServerSource>::send_targets(xcb_selection_request_event_t* event)
 {
     QVector<xcb_atom_t> targets;
     targets.resize(m_offers.size() + 2);
@@ -91,7 +91,7 @@ void WlSource<ServerSource>::sendTargets(xcb_selection_request_event_t* event)
 
     size_t cnt = 2;
     for (auto const& mime : m_offers) {
-        targets[cnt] = mimeTypeToAtom(mime);
+        targets[cnt] = mime_type_to_atom(mime);
         cnt++;
     }
 
@@ -104,11 +104,11 @@ void WlSource<ServerSource>::sendTargets(xcb_selection_request_event_t* event)
                         cnt,
                         targets.data());
 
-    sendSelectionNotify(event, true);
+    send_selection_notify(event, true);
 }
 
 template<typename ServerSource>
-void WlSource<ServerSource>::sendTimestamp(xcb_selection_request_event_t* event)
+void WlSource<ServerSource>::send_timestamp(xcb_selection_request_event_t* event)
 {
     auto const time = timestamp();
     xcb_change_property(connection,
@@ -120,13 +120,13 @@ void WlSource<ServerSource>::sendTimestamp(xcb_selection_request_event_t* event)
                         1,
                         &time);
 
-    sendSelectionNotify(event, true);
+    send_selection_notify(event, true);
 }
 
 template<typename ServerSource>
-bool WlSource<ServerSource>::checkStartTransfer(xcb_selection_request_event_t* event)
+bool WlSource<ServerSource>::check_start_transfer(xcb_selection_request_event_t* event)
 {
-    auto const targets = atomToMimeTypes(event->target);
+    auto const targets = atom_to_mime_types(event->target);
     if (targets.isEmpty()) {
         qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";
         return false;
@@ -159,7 +159,7 @@ bool WlSource<ServerSource>::checkStartTransfer(xcb_selection_request_event_t* e
     server_source->request_data(*mimeIt, p[1]);
     waylandServer()->dispatch();
 
-    Q_EMIT qobject()->transferReady(new xcb_selection_request_event_t(*event), p[0]);
+    Q_EMIT qobject()->transfer_ready(new xcb_selection_request_event_t(*event), p[0]);
     return true;
 }
 
@@ -180,7 +180,7 @@ X11Source<InternalSource>::~X11Source()
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::getTargets(xcb_window_t const window, xcb_atom_t const atom) const
+void X11Source<InternalSource>::get_targets(xcb_window_t const window, xcb_atom_t const atom) const
 {
     /* will lead to a selection request event for the new owner */
     xcb_convert_selection(
@@ -191,7 +191,7 @@ void X11Source<InternalSource>::getTargets(xcb_window_t const window, xcb_atom_t
 using Mime = QPair<QString, xcb_atom_t>;
 
 template<typename InternalSource>
-void X11Source<InternalSource>::handleTargets(xcb_window_t const requestor)
+void X11Source<InternalSource>::handle_targets(xcb_window_t const requestor)
 {
     // receive targets
     xcb_get_property_cookie_t cookie = xcb_get_property(
@@ -216,7 +216,7 @@ void X11Source<InternalSource>::handleTargets(xcb_window_t const requestor)
             continue;
         }
 
-        auto const mimeStrings = atomToMimeTypes(value[i]);
+        auto const mimeStrings = atom_to_mime_types(value[i]);
         if (mimeStrings.isEmpty()) {
             // TODO: this should never happen? assert?
             continue;
@@ -242,14 +242,14 @@ void X11Source<InternalSource>::handleTargets(xcb_window_t const requestor)
     m_offers = all;
 
     if (!added.isEmpty() || !removed.isEmpty()) {
-        Q_EMIT qobject()->offersChanged(added, removed);
+        Q_EMIT qobject()->offers_changed(added, removed);
     }
 
     free(reply);
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::setSource(InternalSource* src)
+void X11Source<InternalSource>::set_source(InternalSource* src)
 {
     Q_ASSERT(src);
     if (m_source) {
@@ -264,33 +264,33 @@ void X11Source<InternalSource>::setSource(InternalSource* src)
 
     QObject::connect(
         src, &InternalSource::data_requested, qobject(), [this](auto const& mimeName, auto fd) {
-            startTransfer(QString::fromStdString(mimeName), fd);
+            start_transfer(QString::fromStdString(mimeName), fd);
         });
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::setOffers(Mimes const& offers)
+void X11Source<InternalSource>::set_offers(Mimes const& offers)
 {
-    // TODO: share code with handleTargets and emit signals accordingly?
+    // TODO: share code with handle_targets and emit signals accordingly?
     m_offers = offers;
 }
 
 template<typename InternalSource>
-bool X11Source<InternalSource>::handleSelectionNotify(xcb_selection_notify_event_t* event)
+bool X11Source<InternalSource>::handle_selection_notify(xcb_selection_notify_event_t* event)
 {
     if (event->property == XCB_ATOM_NONE) {
         qCWarning(KWIN_XWL) << "Incoming X selection conversion failed";
         return true;
     }
     if (event->target == atoms->targets) {
-        handleTargets(event->requestor);
+        handle_targets(event->requestor);
         return true;
     }
     return false;
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::startTransfer(QString const& mimeName, qint32 fd)
+void X11Source<InternalSource>::start_transfer(QString const& mimeName, qint32 fd)
 {
     auto const mimeIt
         = std::find_if(m_offers.begin(), m_offers.end(), [mimeName](auto const& mime) {
@@ -302,7 +302,7 @@ void X11Source<InternalSource>::startTransfer(QString const& mimeName, qint32 fd
         return;
     }
 
-    Q_EMIT qobject()->transferReady((*mimeIt).second, fd);
+    Q_EMIT qobject()->transfer_ready((*mimeIt).second, fd);
 }
 
 // Templates specializations

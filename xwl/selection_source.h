@@ -46,7 +46,7 @@ public:
     using QObject::QObject;
 
 Q_SIGNALS:
-    void transferReady(xcb_selection_request_event_t* event, qint32 fd);
+    void transfer_ready(xcb_selection_request_event_t* event, qint32 fd);
 };
 
 /**
@@ -59,17 +59,13 @@ public:
     WlSource(ServerSource* source, xcb_connection_t* connection);
     ~WlSource();
 
-    bool handleSelectionRequest(xcb_selection_request_event_t* event);
-    void sendTargets(xcb_selection_request_event_t* event);
-    void sendTimestamp(xcb_selection_request_event_t* event);
-
-    void receiveOffer(std::string const& mime);
+    bool handle_selection_request(xcb_selection_request_event_t* event);
 
     xcb_timestamp_t timestamp() const
     {
         return m_timestamp;
     }
-    void setTimestamp(xcb_timestamp_t time)
+    void set_timestamp(xcb_timestamp_t time)
     {
         m_timestamp = time;
     }
@@ -80,7 +76,11 @@ public:
     }
 
 private:
-    bool checkStartTransfer(xcb_selection_request_event_t* event);
+    void send_targets(xcb_selection_request_event_t* event);
+    void send_timestamp(xcb_selection_request_event_t* event);
+
+    void receive_offer(std::string const& mime);
+    bool check_start_transfer(xcb_selection_request_event_t* event);
 
     ServerSource* server_source = nullptr;
     xcb_connection_t* connection;
@@ -108,8 +108,8 @@ public:
     using QObject::QObject;
 
 Q_SIGNALS:
-    void offersChanged(QStringList const& added, QStringList const& removed);
-    void transferReady(xcb_atom_t target, qint32 fd);
+    void offers_changed(QStringList const& added, QStringList const& removed);
+    void transfer_ready(xcb_atom_t target, qint32 fd);
 };
 
 /**
@@ -128,26 +128,26 @@ public:
      * X11Source does not take ownership of it in general, but if the function
      * is called again, it will delete the previous data source.
      */
-    void setSource(InternalSource* src);
+    void set_source(InternalSource* src);
     InternalSource* source() const
     {
         return m_source;
     }
-    void getTargets(xcb_window_t const window, xcb_atom_t const atom) const;
+    void get_targets(xcb_window_t const window, xcb_atom_t const atom) const;
 
     Mimes offers() const
     {
         return m_offers;
     }
-    void setOffers(Mimes const& offers);
+    void set_offers(Mimes const& offers);
 
-    bool handleSelectionNotify(xcb_selection_notify_event_t* event);
+    bool handle_selection_notify(xcb_selection_notify_event_t* event);
 
     xcb_timestamp_t timestamp() const
     {
         return m_timestamp;
     }
-    void setTimestamp(xcb_timestamp_t time)
+    void set_timestamp(xcb_timestamp_t time)
     {
         m_timestamp = time;
     }
@@ -160,8 +160,8 @@ public:
     x11_data const x11;
 
 private:
-    void handleTargets(xcb_window_t const requestor);
-    void startTransfer(QString const& mimeName, qint32 fd);
+    void handle_targets(xcb_window_t const requestor);
+    void start_transfer(QString const& mimeName, qint32 fd);
 
     xcb_window_t m_owner;
     InternalSource* m_source = nullptr;
