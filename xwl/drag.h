@@ -44,10 +44,7 @@ class Drag : public QObject
     Q_OBJECT
 
 public:
-    Dnd* dnd;
-
-    explicit Drag(Dnd* dnd);
-    ~Drag() override;
+    Drag() = default;
 
     static void
     send_client_message(xcb_window_t target, xcb_atom_t type, xcb_client_message_data_t* data);

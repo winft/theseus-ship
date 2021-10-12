@@ -24,16 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::Xwl
 {
 
-Drag::Drag(Dnd* dnd)
-    : QObject()
-    , dnd(dnd)
-{
-}
-
-Drag::~Drag()
-{
-}
-
 void Drag::send_client_message(xcb_window_t target,
                                xcb_atom_t type,
                                xcb_client_message_data_t* data)

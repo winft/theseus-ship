@@ -43,8 +43,8 @@ namespace KWin::Xwl
 {
 
 XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
-    : Drag(dnd)
-    , m_source(source)
+    : m_source{source}
+    , dnd{dnd}
 {
     connect(dnd->data.qobject.get(),
             &q_selection::transfer_finished,

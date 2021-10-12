@@ -45,14 +45,15 @@ class WlToXDrag : public Drag
     Q_OBJECT
 
 public:
-    explicit WlToXDrag(Dnd* dnd);
+    WlToXDrag(Wrapland::Server::data_source* source, xcb_window_t proxy_window);
 
     DragEventReply move_filter(Toplevel* target, QPoint const& pos) override;
     bool handle_client_message(xcb_client_message_event_t* event) override;
     bool end() override;
 
 private:
-    Wrapland::Server::data_source* m_dsi;
+    Wrapland::Server::data_source* source;
+    xcb_window_t proxy_window;
     std::unique_ptr<Xvisit> m_visit;
 
     Q_DISABLE_COPY(WlToXDrag)

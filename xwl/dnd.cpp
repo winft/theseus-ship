@@ -165,7 +165,7 @@ void Dnd::start_drag()
     Q_ASSERT(!m_currentDrag);
 
     // New Wl to X drag, init drag and Wl source.
-    m_currentDrag.reset(new WlToXDrag(this));
+    m_currentDrag.reset(new WlToXDrag(srv_src, data.window));
     auto source = new WlSource<Wrapland::Server::data_source>(srv_src, data.x11.connection);
     set_wl_source(this, source);
     own_selection(this, true);

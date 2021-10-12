@@ -35,10 +35,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::Xwl
 {
 
-WlToXDrag::WlToXDrag(Dnd* dnd)
-    : Drag(dnd)
+WlToXDrag::WlToXDrag(Wrapland::Server::data_source* source, xcb_window_t proxy_window)
+    : source{source}
+    , proxy_window{proxy_window}
 {
-    m_dsi = waylandServer()->seat()->drags().get_source().src;
 }
 
 DragEventReply WlToXDrag::move_filter(Toplevel* target, QPoint const& pos)
@@ -68,7 +68,7 @@ DragEventReply WlToXDrag::move_filter(Toplevel* target, QPoint const& pos)
     workspace()->activateClient(target, false);
     seat->drags().set_target(target->surface(), pos, target->input_transform());
 
-    m_visit.reset(new Xvisit(target, m_dsi, dnd->data.window));
+    m_visit.reset(new Xvisit(target, source, proxy_window));
     return DragEventReply::Take;
 }
 

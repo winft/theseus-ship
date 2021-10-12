@@ -71,6 +71,7 @@ private:
     bool m_performed = false;
 
     std::unique_ptr<data_source_ext> data_source;
+    Dnd* dnd;
 
     Q_DISABLE_COPY(XToWlDrag)
 };
