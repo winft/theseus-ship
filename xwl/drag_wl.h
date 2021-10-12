@@ -51,11 +51,6 @@ public:
     bool handleClientMessage(xcb_client_message_event_t* event) override;
     bool end() override;
 
-    Wrapland::Server::data_source* dataSourceIface() const
-    {
-        return m_dsi;
-    }
-
 private:
     Wrapland::Server::data_source* m_dsi;
     std::unique_ptr<Xvisit> m_visit;
@@ -71,7 +66,7 @@ class Xvisit : public QObject
 public:
     // TODO: handle ask action
 
-    Xvisit(WlToXDrag* drag, Toplevel* target);
+    Xvisit(Toplevel* target, Wrapland::Server::data_source* source, xcb_window_t drag_window);
 
     bool handleClientMessage(xcb_client_message_event_t* event);
     bool handleStatus(xcb_client_message_event_t* event);
@@ -110,8 +105,9 @@ private:
     void doFinish();
     void stopConnections();
 
-    WlToXDrag* m_drag;
     Toplevel* m_target;
+    Wrapland::Server::data_source* source;
+    xcb_window_t drag_window;
     uint32_t m_version = 0;
 
     QMetaObject::Connection m_enterConnection;

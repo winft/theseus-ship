@@ -68,7 +68,7 @@ DragEventReply WlToXDrag::moveFilter(Toplevel* target, QPoint const& pos)
     workspace()->activateClient(target, false);
     seat->drags().set_target(target->surface(), pos, target->input_transform());
 
-    m_visit.reset(new Xvisit(this, target));
+    m_visit.reset(new Xvisit(target, m_dsi, dnd->data.window));
     return DragEventReply::Take;
 }
 
@@ -97,10 +97,11 @@ bool WlToXDrag::end()
     return false;
 }
 
-Xvisit::Xvisit(WlToXDrag* drag, Toplevel* target)
+Xvisit::Xvisit(Toplevel* target, Wrapland::Server::data_source* source, xcb_window_t drag_window)
     : QObject()
-    , m_drag(drag)
     , m_target(target)
+    , source{source}
+    , drag_window{drag_window}
 {
     // first check supported DND version
     auto xcbConn = kwinApp()->x11Connection();
@@ -225,7 +226,7 @@ void Xvisit::sendPosition(QPointF const& globalPos)
     m_pos.pending = true;
 
     xcb_client_message_data_t data = {{0}};
-    data.data32[0] = m_drag->dnd->data.window;
+    data.data32[0] = drag_window;
     data.data32[2] = (x << 16) | y;
     data.data32[3] = XCB_CURRENT_TIME;
     data.data32[4] = Drag::clientActionToAtom(m_proposedAction);
@@ -257,7 +258,7 @@ void Xvisit::receiveOffer()
     enter();
     retrieveSupportedActions();
 
-    m_actionConnection = connect(m_drag->dataSourceIface(),
+    m_actionConnection = connect(source,
                                  &Wrapland::Server::data_source::supported_dnd_actions_changed,
                                  this,
                                  &Xvisit::retrieveSupportedActions);
@@ -282,10 +283,10 @@ void Xvisit::enter()
 void Xvisit::sendEnter()
 {
     xcb_client_message_data_t data = {{0}};
-    data.data32[0] = m_drag->dnd->data.window;
+    data.data32[0] = drag_window;
     data.data32[1] = m_version << 24;
 
-    auto const mimeTypesNames = m_drag->dataSourceIface()->mime_types();
+    auto const mimeTypesNames = source->mime_types();
     auto const mimesCount = mimeTypesNames.size();
     size_t cnt = 0;
     size_t totalCnt = 0;
@@ -326,7 +327,7 @@ void Xvisit::sendEnter()
 
         xcb_change_property(kwinApp()->x11Connection(),
                             XCB_PROP_MODE_REPLACE,
-                            m_drag->dnd->data.window,
+                            drag_window,
                             atoms->xdnd_type_list,
                             XCB_ATOM_ATOM,
                             32,
@@ -340,7 +341,7 @@ void Xvisit::sendEnter()
 void Xvisit::sendDrop(uint32_t time)
 {
     xcb_client_message_data_t data = {{0}};
-    data.data32[0] = m_drag->dnd->data.window;
+    data.data32[0] = drag_window;
     data.data32[2] = time;
 
     Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_drop, &data);
@@ -353,14 +354,14 @@ void Xvisit::sendDrop(uint32_t time)
 void Xvisit::sendLeave()
 {
     xcb_client_message_data_t data = {{0}};
-    data.data32[0] = m_drag->dnd->data.window;
+    data.data32[0] = drag_window;
 
     Drag::sendClientMessage(m_target->xcb_window(), atoms->xdnd_leave, &data);
 }
 
 void Xvisit::retrieveSupportedActions()
 {
-    m_supportedActions = m_drag->dataSourceIface()->supported_dnd_actions();
+    m_supportedActions = source->supported_dnd_actions();
 
     determineProposedAction();
     requestDragAndDropAction();
