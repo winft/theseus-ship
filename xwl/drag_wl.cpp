@@ -133,7 +133,7 @@ Xvisit::Xvisit(Toplevel* target, Wrapland::Server::data_source* source, xcb_wind
     // proxy drop
     receive_offer();
 
-    m_dropConnection = connect(
+    notifiers.drop = connect(
         waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this, [this](auto success) {
             if (success) {
                 drop();
@@ -258,10 +258,10 @@ void Xvisit::receive_offer()
     enter();
     retrieve_supported_actions();
 
-    m_actionConnection = connect(source,
-                                 &Wrapland::Server::data_source::supported_dnd_actions_changed,
-                                 this,
-                                 &Xvisit::retrieve_supported_actions);
+    notifiers.action = connect(source,
+                               &Wrapland::Server::data_source::supported_dnd_actions_changed,
+                               this,
+                               &Xvisit::retrieve_supported_actions);
 
     send_position(waylandServer()->seat()->pointers().get_position());
 }
@@ -274,10 +274,10 @@ void Xvisit::enter()
     send_enter();
 
     // Proxy future pointer position changes.
-    m_motionConnection = connect(waylandServer()->seat(),
-                                 &Wrapland::Server::Seat::pointerPosChanged,
-                                 this,
-                                 &Xvisit::send_position);
+    notifiers.motion = connect(waylandServer()->seat(),
+                               &Wrapland::Server::Seat::pointerPosChanged,
+                               this,
+                               &Xvisit::send_position);
 }
 
 void Xvisit::send_enter()
@@ -433,15 +433,13 @@ void Xvisit::do_finish()
 void Xvisit::stop_connections()
 {
     // Final outcome has been determined from Wayland side, no more updates needed.
-    disconnect(m_enterConnection);
-    m_enterConnection = QMetaObject::Connection();
-    disconnect(m_dropConnection);
-    m_dropConnection = QMetaObject::Connection();
+    disconnect(notifiers.drop);
+    notifiers.drop = QMetaObject::Connection();
 
-    disconnect(m_motionConnection);
-    m_motionConnection = QMetaObject::Connection();
-    disconnect(m_actionConnection);
-    m_actionConnection = QMetaObject::Connection();
+    disconnect(notifiers.motion);
+    notifiers.motion = QMetaObject::Connection();
+    disconnect(notifiers.action);
+    notifiers.action = QMetaObject::Connection();
 }
 
 }

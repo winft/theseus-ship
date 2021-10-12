@@ -110,10 +110,11 @@ private:
     xcb_window_t drag_window;
     uint32_t m_version = 0;
 
-    QMetaObject::Connection m_enterConnection;
-    QMetaObject::Connection m_motionConnection;
-    QMetaObject::Connection m_actionConnection;
-    QMetaObject::Connection m_dropConnection;
+    struct {
+        QMetaObject::Connection motion;
+        QMetaObject::Connection action;
+        QMetaObject::Connection drop;
+    } notifiers;
 
     struct {
         bool pending = false;
