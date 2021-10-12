@@ -54,6 +54,7 @@ public:
     bool end() override;
 
     std::unique_ptr<data_source_ext> data_source;
+    std::unique_ptr<WlVisit> m_visit;
 
 private:
     void set_offers(Mimes const& offers);
@@ -67,12 +68,9 @@ private:
     DataX11Source* m_source;
     QVector<QPair<xcb_timestamp_t, bool>> m_dataRequests;
 
-    std::unique_ptr<WlVisit> m_visit;
     std::vector<std::unique_ptr<WlVisit>> m_oldVisits;
 
     bool m_performed = false;
-
-    Dnd* dnd;
 
     Q_DISABLE_COPY(XToWlDrag)
 };

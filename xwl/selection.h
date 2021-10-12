@@ -325,13 +325,6 @@ void own_selection(Selection* sel, bool own)
     xcb_flush(xcb_conn);
 }
 
-template<typename Selection>
-void overwrite_requestor_window(Selection* sel, xcb_window_t window)
-{
-    assert(sel->data.x11_source);
-    sel->data.requestor_window = window == XCB_WINDOW_NONE ? sel->data.window : window;
-}
-
 // sets the current provider of the selection
 template<typename Selection, typename server_source>
 void set_wl_source(Selection* sel, WlSource<server_source>* source)

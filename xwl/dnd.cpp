@@ -165,7 +165,11 @@ DragEventReply Dnd::drag_move_filter(Toplevel* target, QPoint const& pos)
         return wldrag->move_filter(target, pos);
     }
     if (xdrag) {
-        return xdrag->move_filter(target, pos);
+        auto reply = xdrag->move_filter(target, pos);
+
+        // Adapt the requestor window if a visit is ongoing. Otherwise reset it to our own window.
+        data.requestor_window = xdrag->m_visit ? xdrag->m_visit->window() : data.window;
+        return reply;
     }
     assert(false);
     return DragEventReply();

@@ -44,7 +44,6 @@ namespace KWin::Xwl
 
 XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
     : m_source{source}
-    , dnd{dnd}
 {
     connect(dnd->data.qobject.get(),
             &q_selection::transfer_finished,
@@ -115,7 +114,6 @@ DragEventReply XToWlDrag::move_filter(Toplevel* target, QPoint const& pos)
 
     auto const had_visit = static_cast<bool>(m_visit);
     if (m_visit) {
-        overwrite_requestor_window(dnd, XCB_WINDOW_NONE);
         if (m_visit->leave()) {
             m_visit.reset();
         } else {
@@ -145,7 +143,6 @@ DragEventReply XToWlDrag::move_filter(Toplevel* target, QPoint const& pos)
 
     // New Wl native target.
     m_visit.reset(new WlVisit(target, m_source));
-    overwrite_requestor_window(dnd, m_visit->window());
 
     connect(m_visit.get(), &WlVisit::offers_received, this, &XToWlDrag::set_offers);
     return DragEventReply::Ignore;
