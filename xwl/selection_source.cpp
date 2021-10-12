@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "selection_source.h"
 
 #include "selection.h"
+#include "types.h"
 
 #include "wayland_server.h"
 
@@ -127,14 +128,14 @@ template<typename ServerSource>
 bool WlSource<ServerSource>::check_start_transfer(xcb_selection_request_event_t* event)
 {
     auto const targets = atom_to_mime_types(event->target);
-    if (targets.isEmpty()) {
+    if (targets.empty()) {
         qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";
         return false;
     }
 
-    std::string const firstTarget = targets[0].toUtf8().constData();
+    auto const firstTarget = targets[0];
 
-    auto cmp = [firstTarget](auto const& b) {
+    auto cmp = [&firstTarget](auto const& b) {
         if (firstTarget == "text/uri-list") {
             // Wayland sources might announce the old mime or the new standard
             return firstTarget == b || b == "text/x-uri";
@@ -188,8 +189,6 @@ void X11Source<InternalSource>::get_targets(xcb_window_t const window, xcb_atom_
     xcb_flush(x11.connection);
 }
 
-using Mime = QPair<QString, xcb_atom_t>;
-
 template<typename InternalSource>
 void X11Source<InternalSource>::handle_targets(xcb_window_t const requestor)
 {
@@ -205,10 +204,10 @@ void X11Source<InternalSource>::handle_targets(xcb_window_t const requestor)
         return;
     }
 
-    QStringList added;
-    QStringList removed;
+    std::vector<std::string> added;
+    std::vector<std::string> removed;
 
-    Mimes all;
+    mime_atoms all;
 
     auto value = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
     for (uint32_t i = 0; i < reply->value_len; i++) {
@@ -217,31 +216,31 @@ void X11Source<InternalSource>::handle_targets(xcb_window_t const requestor)
         }
 
         auto const mimeStrings = atom_to_mime_types(value[i]);
-        if (mimeStrings.isEmpty()) {
+        if (mimeStrings.empty()) {
             // TODO: this should never happen? assert?
             continue;
         }
 
         auto const mimeIt
             = std::find_if(m_offers.begin(), m_offers.end(), [value, i](auto const& mime) {
-                  return mime.second == value[i];
+                  return mime.atom == value[i];
               });
 
-        auto mimePair = Mime(mimeStrings[0], value[i]);
+        auto mimePair = mime_atom{mimeStrings[0], value[i]};
         if (mimeIt == m_offers.end()) {
-            added << mimePair.first;
+            added.emplace_back(mimePair.id);
         } else {
-            m_offers.removeAll(mimePair);
+            remove_all(m_offers, mimePair);
         }
-        all << mimePair;
+        all.emplace_back(mimePair);
     }
     // all left in m_offers are not in the updated targets
     for (auto const& mimePair : m_offers) {
-        removed << mimePair.first;
+        removed.emplace_back(mimePair.id);
     }
     m_offers = all;
 
-    if (!added.isEmpty() || !removed.isEmpty()) {
+    if (!added.empty() || !removed.empty()) {
         Q_EMIT qobject()->offers_changed(added, removed);
     }
 
@@ -259,17 +258,17 @@ void X11Source<InternalSource>::set_source(InternalSource* src)
     m_source = src;
 
     for (auto const& offer : m_offers) {
-        src->offer(offer.first.toStdString());
+        src->offer(offer.id);
     }
 
-    QObject::connect(
-        src, &InternalSource::data_requested, qobject(), [this](auto const& mimeName, auto fd) {
-            start_transfer(QString::fromStdString(mimeName), fd);
-        });
+    QObject::connect(src,
+                     &InternalSource::data_requested,
+                     qobject(),
+                     [this](auto const& mimeName, auto fd) { start_transfer(mimeName, fd); });
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::set_offers(Mimes const& offers)
+void X11Source<InternalSource>::set_offers(mime_atoms const& offers)
 {
     // TODO: share code with handle_targets and emit signals accordingly?
     m_offers = offers;
@@ -290,19 +289,18 @@ bool X11Source<InternalSource>::handle_selection_notify(xcb_selection_notify_eve
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::start_transfer(QString const& mimeName, qint32 fd)
+void X11Source<InternalSource>::start_transfer(std::string const& mimeName, qint32 fd)
 {
-    auto const mimeIt
-        = std::find_if(m_offers.begin(), m_offers.end(), [mimeName](auto const& mime) {
-              return mime.first == mimeName;
-          });
+    auto const mimeIt = std::find_if(m_offers.begin(),
+                                     m_offers.end(),
+                                     [&mimeName](auto const& mime) { return mime.id == mimeName; });
     if (mimeIt == m_offers.end()) {
         qCDebug(KWIN_XWL) << "Sending X11 clipboard to Wayland failed: unsupported MIME.";
         close(fd);
         return;
     }
 
-    Q_EMIT qobject()->transfer_ready((*mimeIt).second, fd);
+    Q_EMIT qobject()->transfer_ready(mimeIt->atom, fd);
 }
 
 // Templates specializations

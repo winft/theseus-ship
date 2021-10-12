@@ -165,11 +165,11 @@ void XToWlDrag::handle_transfer_finished(xcb_timestamp_t time)
     check_for_finished();
 }
 
-void XToWlDrag::set_offers(Mimes const& offers)
+void XToWlDrag::set_offers(mime_atoms const& offers)
 {
     m_source->set_offers(offers);
 
-    if (offers.isEmpty()) {
+    if (offers.empty()) {
         // There are no offers, so just directly set the drag target,
         // no transfer possible anyways.
         set_drag_target();
@@ -188,7 +188,7 @@ void XToWlDrag::set_offers(Mimes const& offers)
     m_offers = offers;
 
     for (auto const& mimePair : offers) {
-        m_source->source()->offer(mimePair.first.toStdString());
+        m_source->source()->offer(mimePair.id);
     }
 
     set_drag_target();
@@ -305,13 +305,10 @@ bool WlVisit::handle_client_message(xcb_client_message_event_t* event)
     return false;
 }
 
-static bool hasMimeName(Mimes const& mimes, QString const& name)
+static bool hasMimeName(mime_atoms const& mimes, std::string const& name)
 {
-    return std::any_of(
-        mimes.begin(), mimes.end(), [name](auto const& m) { return m.first == name; });
+    return std::any_of(mimes.begin(), mimes.end(), [name](auto const& m) { return m.id == name; });
 }
-
-using Mime = QPair<QString, xcb_atom_t>;
 
 bool WlVisit::handle_enter(xcb_client_message_event_t* event)
 {
@@ -327,7 +324,7 @@ bool WlVisit::handle_enter(xcb_client_message_event_t* event)
     m_version = data->data32[1] >> 24;
 
     // get types
-    Mimes offers;
+    mime_atoms offers;
     if (!(data->data32[1] & 1)) {
         // message has only max 3 types (which are directly in data)
         for (size_t i = 0; i < 3; i++) {
@@ -335,7 +332,7 @@ bool WlVisit::handle_enter(xcb_client_message_event_t* event)
             auto const mimeStrings = atom_to_mime_types(mimeAtom);
             for (auto const& mime : mimeStrings) {
                 if (!hasMimeName(offers, mime)) {
-                    offers << Mime(mime, mimeAtom);
+                    offers.emplace_back(mime, mimeAtom);
                 }
             }
         }
@@ -348,7 +345,7 @@ bool WlVisit::handle_enter(xcb_client_message_event_t* event)
     return true;
 }
 
-void WlVisit::get_mimes_from_win_property(Mimes& offers)
+void WlVisit::get_mimes_from_win_property(mime_atoms& offers)
 {
     auto cookie = xcb_get_property(source->x11.connection,
                                    0,
@@ -373,7 +370,7 @@ void WlVisit::get_mimes_from_win_property(Mimes& offers)
         auto const mimeStrings = atom_to_mime_types(mimeAtoms[i]);
         for (auto const& mime : mimeStrings) {
             if (!hasMimeName(offers, mime)) {
-                offers << Mime(mime, mimeAtoms[i]);
+                offers.emplace_back(mime, mimeAtoms[i]);
             }
         }
     }

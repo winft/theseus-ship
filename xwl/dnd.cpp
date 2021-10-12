@@ -118,9 +118,9 @@ bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event)
 }
 
 template<>
-void handle_x11_offer_change([[maybe_unused]] Dnd* sel,
-                             [[maybe_unused]] QStringList const& added,
-                             [[maybe_unused]] QStringList const& removed)
+void handle_x11_offer_change(Dnd* /*sel*/,
+                             std::vector<std::string> const& /*added*/,
+                             std::vector<std::string> const& /*removed*/)
 {
     // Handled internally.
 }

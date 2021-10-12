@@ -16,8 +16,6 @@
 #include "workspace.h"
 
 #include <QObject>
-#include <QString>
-#include <QStringList>
 #include <QTimer>
 #include <QVector>
 
@@ -476,36 +474,37 @@ inline xcb_atom_t mime_type_to_atom(std::string const& mimeType)
     return mime_type_to_atom_literal(mimeType);
 }
 
-inline QString atom_name(xcb_atom_t atom)
+inline std::string atom_name(xcb_atom_t atom)
 {
     auto xcbConn = kwinApp()->x11Connection();
     auto nameCookie = xcb_get_atom_name(xcbConn, atom);
     auto nameReply = xcb_get_atom_name_reply(xcbConn, nameCookie, nullptr);
     if (!nameReply) {
-        return QString();
+        return std::string();
     }
 
     auto const length = xcb_get_atom_name_name_length(nameReply);
-    auto const name = QString::fromLatin1(xcb_get_atom_name_name(nameReply), length);
+    auto const name = std::string(xcb_get_atom_name_name(nameReply), length);
 
     free(nameReply);
     return name;
 }
 
-inline QStringList atom_to_mime_types(xcb_atom_t atom)
+inline std::vector<std::string> atom_to_mime_types(xcb_atom_t atom)
 {
-    QStringList mimeTypes;
+    std::vector<std::string> mimeTypes;
 
     if (atom == atoms->utf8_string) {
-        mimeTypes << QString::fromLatin1("text/plain;charset=utf-8");
+        mimeTypes.emplace_back("text/plain;charset=utf-8");
     } else if (atom == atoms->text) {
-        mimeTypes << QString::fromLatin1("text/plain");
+        mimeTypes.emplace_back("text/plain");
     } else if (atom == atoms->uri_list || atom == atoms->netscape_url || atom == atoms->moz_url) {
         // We identify netscape and moz format as less detailed formats text/uri-list,
         // text/x-uri and accept the information loss.
-        mimeTypes << QString::fromLatin1("text/uri-list") << QString::fromLatin1("text/x-uri");
+        mimeTypes.emplace_back("text/uri-list");
+        mimeTypes.emplace_back("text/x-uri");
     } else {
-        mimeTypes << atom_name(atom);
+        mimeTypes.emplace_back(atom_name(atom));
     }
     return mimeTypes;
 }
@@ -618,7 +617,9 @@ void handle_wl_selection_change(Selection* sel)
 }
 
 template<typename Selection>
-void handle_x11_offer_change(Selection* sel, QStringList const& added, QStringList const& removed)
+void handle_x11_offer_change(Selection* sel,
+                             std::vector<std::string> const& added,
+                             std::vector<std::string> const& removed)
 {
     using internal_source = std::remove_pointer_t<decltype(sel->data.source_int)>;
 
@@ -628,12 +629,12 @@ void handle_x11_offer_change(Selection* sel, QStringList const& added, QStringLi
     }
 
     auto const offers = source->offers();
-    if (offers.isEmpty()) {
+    if (offers.empty()) {
         sel->get_selection_setter()(nullptr);
         return;
     }
 
-    if (!source->source() || !removed.isEmpty()) {
+    if (!source->source() || !removed.empty()) {
         // create new Wl DataSource if there is none or when types
         // were removed (Wl Data Sources can only add types)
         auto old_source_int = sel->data.source_int;
@@ -648,7 +649,7 @@ void handle_x11_offer_change(Selection* sel, QStringList const& added, QStringLi
         delete old_source_int;
     } else if (auto dataSource = source->source()) {
         for (auto const& mime : added) {
-            dataSource->offer(mime.toStdString());
+            dataSource->offer(mime);
         }
     }
 }

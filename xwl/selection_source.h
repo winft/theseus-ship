@@ -94,8 +94,6 @@ private:
     Q_DISABLE_COPY(WlSource)
 };
 
-using Mimes = QVector<QPair<QString, xcb_atom_t>>;
-
 /*
  * QObject attribute of a X11Source.
  * This is a hack around having a template QObject.
@@ -108,7 +106,8 @@ public:
     using QObject::QObject;
 
 Q_SIGNALS:
-    void offers_changed(QStringList const& added, QStringList const& removed);
+    void offers_changed(std::vector<std::string> const& added,
+                        std::vector<std::string> const& removed);
     void transfer_ready(xcb_atom_t target, qint32 fd);
 };
 
@@ -135,11 +134,11 @@ public:
     }
     void get_targets(xcb_window_t const window, xcb_atom_t const atom) const;
 
-    Mimes offers() const
+    mime_atoms offers() const
     {
         return m_offers;
     }
-    void set_offers(Mimes const& offers);
+    void set_offers(mime_atoms const& offers);
 
     bool handle_selection_notify(xcb_selection_notify_event_t* event);
 
@@ -161,12 +160,12 @@ public:
 
 private:
     void handle_targets(xcb_window_t const requestor);
-    void start_transfer(QString const& mimeName, qint32 fd);
+    void start_transfer(std::string const& mimeName, qint32 fd);
 
     xcb_window_t m_owner;
     InternalSource* m_source = nullptr;
 
-    Mimes m_offers;
+    mime_atoms m_offers;
 
     xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
     qX11Source* m_qobject;
@@ -175,3 +174,5 @@ private:
 };
 
 }
+
+Q_DECLARE_METATYPE(std::vector<std::string>)

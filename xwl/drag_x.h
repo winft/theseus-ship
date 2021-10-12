@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "drag.h"
 #include "sources.h"
+#include "types.h"
 
 #include <QPoint>
 #include <QVector>
@@ -38,7 +39,6 @@ class WlVisit;
 template<typename>
 class X11Source;
 
-using Mimes = QVector<QPair<QString, xcb_atom_t>>;
 using DataX11Source = X11Source<data_source_ext>;
 
 class XToWlDrag : public Drag
@@ -59,13 +59,13 @@ public:
     std::unique_ptr<WlVisit> m_visit;
 
 private:
-    void set_offers(Mimes const& offers);
+    void set_offers(mime_atoms const& offers);
     void set_drag_target();
 
     bool check_for_finished();
 
-    Mimes m_offers;
-    Mimes m_offersPending;
+    mime_atoms m_offers;
+    mime_atoms m_offersPending;
 
     DataX11Source* m_source;
     QVector<QPair<xcb_timestamp_t, bool>> m_dataRequests;
@@ -111,7 +111,7 @@ public:
     void send_finished();
 
 Q_SIGNALS:
-    void offers_received(Mimes const& offers);
+    void offers_received(mime_atoms const& offers);
     void finish(WlVisit* self);
 
 private:
@@ -122,7 +122,7 @@ private:
 
     void send_status();
 
-    void get_mimes_from_win_property(Mimes& offers);
+    void get_mimes_from_win_property(mime_atoms& offers);
 
     bool target_accepts_action() const;
 

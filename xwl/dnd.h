@@ -44,7 +44,9 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
 template<>
 bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event);
 template<>
-void handle_x11_offer_change(Dnd* sel, QStringList const& added, QStringList const& removed);
+void handle_x11_offer_change(Dnd* sel,
+                             std::vector<std::string> const& added,
+                             std::vector<std::string> const& removed);
 
 /**
  * Represents the drag and drop mechanism, on X side this is the XDND protocol.
