@@ -122,10 +122,12 @@ private:
         QPoint cache;
     } m_pos;
 
-    // preferred by the X client
-    DnDAction m_preferredAction = DnDAction::none;
-    // decided upon by the compositor
-    DnDAction m_proposedAction = DnDAction::none;
+    struct {
+        // Preferred by the X client.
+        DnDAction preferred{DnDAction::none};
+        // Decided upon by the compositor.
+        DnDAction proposed{DnDAction::none};
+    } actions;
 
     struct {
         bool entered = false;

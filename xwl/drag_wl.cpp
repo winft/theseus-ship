@@ -171,7 +171,7 @@ bool Xvisit::handle_status(xcb_client_message_event_t* event)
 
     if (!m_state.dropped) {
         // as long as the drop is not yet done determine requested action
-        m_preferredAction = Drag::atom_to_client_action(actionAtom);
+        actions.preferred = Drag::atom_to_client_action(actionAtom);
         determine_proposed_action();
         request_drag_and_drop_action();
     }
@@ -229,7 +229,7 @@ void Xvisit::send_position(QPointF const& globalPos)
     data.data32[0] = drag_window;
     data.data32[2] = (x << 16) | y;
     data.data32[3] = XCB_CURRENT_TIME;
-    data.data32[4] = Drag::client_action_to_atom(m_proposedAction);
+    data.data32[4] = Drag::client_action_to_atom(actions.proposed);
 
     Drag::send_client_message(m_target->xcb_window(), atoms->xdnd_position, &data);
 }
@@ -367,26 +367,26 @@ void Xvisit::retrieve_supported_actions()
 
 void Xvisit::determine_proposed_action()
 {
-    DnDAction oldProposedAction = m_proposedAction;
+    auto const old_proposed = actions.proposed;
     auto const supported = source->supported_dnd_actions();
 
-    if (supported.testFlag(m_preferredAction)) {
-        m_proposedAction = m_preferredAction;
+    if (supported.testFlag(actions.preferred)) {
+        actions.proposed = actions.preferred;
     } else if (supported.testFlag(DnDAction::copy)) {
-        m_proposedAction = DnDAction::copy;
+        actions.proposed = DnDAction::copy;
     } else {
-        m_proposedAction = DnDAction::none;
+        actions.proposed = DnDAction::none;
     }
 
     // Send updated action to X target.
-    if (oldProposedAction != m_proposedAction) {
+    if (old_proposed != actions.proposed) {
         send_position(waylandServer()->seat()->pointers().get_position());
     }
 }
 
 void Xvisit::request_drag_and_drop_action()
 {
-    auto const pref = m_preferredAction != DnDAction::none ? m_preferredAction : DnDAction::copy;
+    auto const pref = actions.preferred != DnDAction::none ? actions.preferred : DnDAction::copy;
     // we assume the X client supports Move, but this might be wrong - then
     // the drag just cancels, if the user tries to force it.
 
