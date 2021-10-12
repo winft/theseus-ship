@@ -77,7 +77,6 @@ private:
     std::vector<std::unique_ptr<WlVisit>> m_oldVisits;
 
     bool m_performed = false;
-    DnDAction m_lastSelectedDragAndDropAction = DnDAction::none;
 
     std::unique_ptr<data_source_ext> data_source;
 

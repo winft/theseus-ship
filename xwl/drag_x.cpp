@@ -104,9 +104,6 @@ XToWlDrag::XToWlDrag(DataX11Source* source, Dnd* dnd)
         // this call is not reliably initiated by Wayland clients
         checkForFinished();
     });
-    connect(source_int_ptr, &data_source_ext::action, this, [this](auto action) {
-        m_lastSelectedDragAndDropAction = action;
-    });
 
     // source does _not_ take ownership of source_int_ptr
     source->setSource(source_int_ptr);
@@ -186,7 +183,7 @@ void XToWlDrag::setDragAndDropAction(DnDAction action)
 
 DnDAction XToWlDrag::selectedDragAndDropAction()
 {
-    return m_lastSelectedDragAndDropAction;
+    return data_source->action;
 }
 
 void XToWlDrag::setOffers(Mimes const& offers)

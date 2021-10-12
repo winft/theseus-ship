@@ -25,13 +25,14 @@ public:
     void send_dnd_finished() override;
     void send_action(Wrapland::Server::dnd_action action) override;
 
+    Wrapland::Server::dnd_action action{Wrapland::Server::dnd_action::none};
+
 Q_SIGNALS:
     void data_requested(std::string const& mime_type, int32_t fd);
     void accepted(std::string const& mime_type);
     void cancelled();
     void dropped();
     void finished();
-    void action(Wrapland::Server::dnd_action action);
 };
 
 class primary_selection_source_ext : public Wrapland::Server::primary_selection_source_ext

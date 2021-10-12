@@ -40,7 +40,7 @@ void data_source_ext::send_dnd_finished()
 
 void data_source_ext::send_action(Wrapland::Server::dnd_action action)
 {
-    Q_EMIT this->action(action);
+    this->action = action;
 }
 
 primary_selection_source_ext::primary_selection_source_ext()
