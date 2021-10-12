@@ -172,8 +172,7 @@ bool Xvisit::handle_status(xcb_client_message_event_t* event)
     if (!m_state.dropped) {
         // as long as the drop is not yet done determine requested action
         actions.preferred = Drag::atom_to_client_action(actionAtom);
-        determine_proposed_action();
-        request_drag_and_drop_action();
+        retrieve_supported_actions();
     }
 
     if (m_pos.cached) {
