@@ -27,13 +27,13 @@
 
 namespace KWin::xwl
 {
-class TransferWltoX;
-class TransferXtoWl;
+class wl_to_x11_transfer;
+class x11_to_wl_transfer;
 
 template<typename>
-class WlSource;
+class wl_source;
 template<typename>
-class X11Source;
+class x11_source;
 
 /*
  * QObject attribute of a Selection.
@@ -72,8 +72,8 @@ struct selection_data {
 
     // Active source, if any. Only one of them at max can exist
     // at the same time.
-    WlSource<server_source>* wayland_source{nullptr};
-    X11Source<internal_source>* x11_source{nullptr};
+    wl_source<server_source>* wayland_source{nullptr};
+    xwl::x11_source<internal_source>* x11_source{nullptr};
 
     internal_source* source_int{nullptr};
 
@@ -82,8 +82,8 @@ struct selection_data {
 
     // active transfers
     struct {
-        std::vector<TransferWltoX*> wl_to_x11;
-        std::vector<TransferXtoWl*> x11_to_wl;
+        std::vector<wl_to_x11_transfer*> wl_to_x11;
+        std::vector<x11_to_wl_transfer*> x11_to_wl;
         QTimer* timeout{nullptr};
     } transfers;
 
@@ -324,7 +324,7 @@ void own_selection(Selection* sel, bool own)
 
 // sets the current provider of the selection
 template<typename Selection, typename server_source>
-void set_wl_source(Selection* sel, WlSource<server_source>* source)
+void set_wl_source(Selection* sel, wl_source<server_source>* source)
 {
     delete sel->data.wayland_source;
     delete sel->data.x11_source;
@@ -334,7 +334,7 @@ void set_wl_source(Selection* sel, WlSource<server_source>* source)
     if (source) {
         sel->data.wayland_source = source;
         QObject::connect(source->qobject(),
-                         &qWlSource::transfer_ready,
+                         &q_wl_source::transfer_ready,
                          sel->data.qobject.get(),
                          [sel](auto event, auto fd) { start_transfer_to_x11(sel, event, fd); });
     }
@@ -354,16 +354,16 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
     sel->data.wayland_source = nullptr;
 
     using internal_source = std::remove_pointer_t<decltype(sel->data.source_int)>;
-    sel->data.x11_source = new X11Source<internal_source>(event, sel->data.x11);
+    sel->data.x11_source = new x11_source<internal_source>(event, sel->data.x11);
 
     QObject::connect(sel->data.x11_source->qobject(),
-                     &qX11Source::offers_changed,
+                     &q_x11_source::offers_changed,
                      sel->data.qobject.get(),
                      [sel](auto const& added, auto const& removed) {
                          handle_x11_offer_change(sel, added, removed);
                      });
     QObject::connect(sel->data.x11_source->qobject(),
-                     &qX11Source::transfer_ready,
+                     &q_x11_source::transfer_ready,
                      sel->data.qobject.get(),
                      [sel](auto target, auto fd) { start_transfer_to_wayland(sel, target, fd); });
 }
@@ -371,17 +371,17 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
 template<typename Selection>
 void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
 {
-    auto transfer = new TransferXtoWl(sel->data.atom,
-                                      target,
-                                      fd,
-                                      sel->data.x11_source->timestamp(),
-                                      sel->data.requestor_window,
-                                      sel->data.x11,
-                                      sel->data.qobject.get());
+    auto transfer = new x11_to_wl_transfer(sel->data.atom,
+                                           target,
+                                           fd,
+                                           sel->data.x11_source->timestamp(),
+                                           sel->data.requestor_window,
+                                           sel->data.x11,
+                                           sel->data.qobject.get());
     sel->data.transfers.x11_to_wl.push_back(transfer);
 
     QObject::connect(
-        transfer, &TransferXtoWl::finished, sel->data.qobject.get(), [sel, transfer]() {
+        transfer, &x11_to_wl_transfer::finished, sel->data.qobject.get(), [sel, transfer]() {
             Q_EMIT sel->data.qobject->transfer_finished(transfer->timestamp());
             delete transfer;
             remove_all(sel->data.transfers.x11_to_wl, transfer);
@@ -394,14 +394,14 @@ void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
 template<typename Selection>
 void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event, qint32 fd)
 {
-    auto transfer = new TransferWltoX(sel->data.atom, event, fd, sel->data.qobject.get());
+    auto transfer = new wl_to_x11_transfer(sel->data.atom, event, fd, sel->data.qobject.get());
 
     QObject::connect(transfer,
-                     &TransferWltoX::selection_notify,
+                     &wl_to_x11_transfer::selection_notify,
                      sel->data.qobject.get(),
                      &send_selection_notify);
     QObject::connect(
-        transfer, &TransferWltoX::finished, sel->data.qobject.get(), [sel, transfer]() {
+        transfer, &wl_to_x11_transfer::finished, sel->data.qobject.get(), [sel, transfer]() {
             Q_EMIT sel->data.qobject->transfer_finished(transfer->timestamp());
 
             // TODO(romangg): Serialize? see comment below.
@@ -561,7 +561,7 @@ void handle_wl_selection_client_change(Selection* sel)
     }
 
     using server_source = std::remove_pointer_t<decltype(srv_src)>;
-    auto wls = new WlSource<server_source>(srv_src, sel->data.x11.connection);
+    auto wls = new wl_source<server_source>(srv_src, sel->data.x11.connection);
 
     set_wl_source(sel, wls);
     own_selection(sel, true);

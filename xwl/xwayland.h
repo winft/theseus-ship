@@ -35,9 +35,9 @@ class ApplicationWaylandAbstract;
 
 namespace xwl
 {
-class DataBridge;
+class data_bridge;
 
-class KWIN_EXPORT Xwayland : public XwaylandInterface
+class KWIN_EXPORT xwayland : public xwayland_interface
 {
     Q_OBJECT
 
@@ -45,15 +45,15 @@ public:
     /** The @ref status_callback is called once with 0 code when Xwayland is ready, other codes
      *  indicate a critical error happened at runtime.
      */
-    Xwayland(ApplicationWaylandAbstract* app, std::function<void(int code)> status_callback);
-    ~Xwayland() override;
+    xwayland(ApplicationWaylandAbstract* app, std::function<void(int code)> status_callback);
+    ~xwayland() override;
 
-    std::unique_ptr<DataBridge> data_bridge;
+    std::unique_ptr<xwl::data_bridge> data_bridge;
 
 private:
     void continue_startup_with_x11();
 
-    DragEventReply drag_move_filter(Toplevel* target, QPoint const& pos) override;
+    drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos) override;
 
     int m_xcbConnectionFd = -1;
     QProcess* m_xwaylandProcess = nullptr;
@@ -66,7 +66,7 @@ private:
     ApplicationWaylandAbstract* m_app;
     std::function<void(int code)> status_callback;
 
-    Q_DISABLE_COPY(Xwayland)
+    Q_DISABLE_COPY(xwayland)
 };
 
 }

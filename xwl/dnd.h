@@ -33,18 +33,18 @@ class Toplevel;
 
 namespace xwl
 {
-class Dnd;
-class Drag;
-enum class DragEventReply;
-class WlToXDrag;
-class XToWlDrag;
+class drag_and_drop;
+class drag;
+enum class drag_event_reply;
+class wl_drag;
+class x11_drag;
 
 template<>
-void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* event);
+void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_event_t* event);
 template<>
-bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event);
+bool handle_client_message(drag_and_drop* sel, xcb_client_message_event_t* event);
 template<>
-void handle_x11_offer_change(Dnd* sel,
+void handle_x11_offer_change(drag_and_drop* sel,
                              std::vector<std::string> const& added,
                              std::vector<std::string> const& removed);
 
@@ -52,29 +52,29 @@ void handle_x11_offer_change(Dnd* sel,
  * Represents the drag and drop mechanism, on X side this is the XDND protocol.
  * For more information on XDND see: https://johnlindal.wixsite.com/xdnd
  */
-class Dnd
+class drag_and_drop
 {
 public:
     selection_data<Wrapland::Server::data_source, data_source_ext> data;
 
-    std::unique_ptr<WlToXDrag> wldrag;
-    std::unique_ptr<XToWlDrag> xdrag;
-    std::vector<std::unique_ptr<Drag>> m_oldDrags;
+    std::unique_ptr<wl_drag> wldrag;
+    std::unique_ptr<x11_drag> xdrag;
+    std::vector<std::unique_ptr<drag>> m_oldDrags;
 
-    Dnd(xcb_atom_t atom, x11_data const& x11);
-    ~Dnd();
+    drag_and_drop(xcb_atom_t atom, x11_data const& x11);
+    ~drag_and_drop();
 
     static uint32_t version();
 
-    DragEventReply drag_move_filter(Toplevel* target, QPoint const& pos);
+    drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos);
 
 private:
     // start and end Wl native client drags (Wl -> Xwl)
     void start_drag();
     void end_drag();
-    void clear_old_drag(Drag* drag);
+    void clear_old_drag(xwl::drag* drag);
 
-    Q_DISABLE_COPY(Dnd)
+    Q_DISABLE_COPY(drag_and_drop)
 };
 
 }

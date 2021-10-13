@@ -35,39 +35,39 @@ class Toplevel;
 
 namespace xwl
 {
-enum class DragEventReply;
-class Xvisit;
+enum class drag_event_reply;
+class x11_visit;
 
-using DnDActions = Wrapland::Server::dnd_actions;
+using dnd_actions = Wrapland::Server::dnd_actions;
 
-class WlToXDrag : public Drag
+class wl_drag : public drag
 {
     Q_OBJECT
 
 public:
-    WlToXDrag(Wrapland::Server::data_source* source, xcb_window_t proxy_window);
+    wl_drag(Wrapland::Server::data_source* source, xcb_window_t proxy_window);
 
-    DragEventReply move_filter(Toplevel* target, QPoint const& pos) override;
+    drag_event_reply move_filter(Toplevel* target, QPoint const& pos) override;
     bool handle_client_message(xcb_client_message_event_t* event) override;
     bool end() override;
 
 private:
     Wrapland::Server::data_source* source;
     xcb_window_t proxy_window;
-    std::unique_ptr<Xvisit> m_visit;
+    std::unique_ptr<x11_visit> m_visit;
 
-    Q_DISABLE_COPY(WlToXDrag)
+    Q_DISABLE_COPY(wl_drag)
 };
 
 /// Visit to an X window
-class Xvisit : public QObject
+class x11_visit : public QObject
 {
     Q_OBJECT
 
 public:
     // TODO: handle ask action
 
-    Xvisit(Toplevel* target, Wrapland::Server::data_source* source, xcb_window_t drag_window);
+    x11_visit(Toplevel* target, Wrapland::Server::data_source* source, xcb_window_t drag_window);
 
     bool handle_client_message(xcb_client_message_event_t* event);
 
@@ -84,7 +84,7 @@ public:
     }
 
 Q_SIGNALS:
-    void finish(Xvisit* self);
+    void finish(x11_visit* self);
 
 private:
     bool handle_status(xcb_client_message_event_t* event);
@@ -121,9 +121,9 @@ private:
 
     struct {
         // Preferred by the X client.
-        DnDAction preferred{DnDAction::none};
+        dnd_action preferred{dnd_action::none};
         // Decided upon by the compositor.
-        DnDAction proposed{DnDAction::none};
+        dnd_action proposed{dnd_action::none};
     } actions;
 
     struct {
@@ -134,7 +134,7 @@ private:
 
     bool m_accepts = false;
 
-    Q_DISABLE_COPY(Xvisit)
+    Q_DISABLE_COPY(x11_visit)
 };
 
 }

@@ -34,10 +34,10 @@ namespace KWin::xwl
 {
 
 /*
- * QObject attribute of a WlSource.
+ * QObject attribute of a wl_source.
  * This is a hack around having a template QObject.
  */
-class qWlSource : public QObject
+class q_wl_source : public QObject
 {
     Q_OBJECT
 
@@ -52,11 +52,11 @@ Q_SIGNALS:
  * Representing a Wayland native data source.
  */
 template<typename ServerSource>
-class WlSource
+class wl_source
 {
 public:
-    WlSource(ServerSource* source, xcb_connection_t* connection);
-    ~WlSource();
+    wl_source(ServerSource* source, xcb_connection_t* connection);
+    ~wl_source();
 
     bool handle_selection_request(xcb_selection_request_event_t* event);
 
@@ -69,7 +69,7 @@ public:
         m_timestamp = time;
     }
 
-    qWlSource* qobject() const
+    q_wl_source* qobject() const
     {
         return m_qobject;
     }
@@ -88,16 +88,16 @@ private:
     QMetaObject::Connection m_offerConnection;
 
     xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
-    qWlSource* m_qobject;
+    q_wl_source* m_qobject;
 
-    Q_DISABLE_COPY(WlSource)
+    Q_DISABLE_COPY(wl_source)
 };
 
 /*
- * QObject attribute of a X11Source.
+ * QObject attribute of a x11_source.
  * This is a hack around having a template QObject.
  */
-class qX11Source : public QObject
+class q_x11_source : public QObject
 {
     Q_OBJECT
 
@@ -114,16 +114,16 @@ Q_SIGNALS:
  * Representing an X data source.
  */
 template<typename InternalSource>
-class X11Source
+class x11_source
 {
 public:
-    X11Source(xcb_xfixes_selection_notify_event_t* event, x11_data const& x11);
-    ~X11Source();
+    x11_source(xcb_xfixes_selection_notify_event_t* event, x11_data const& x11);
+    ~x11_source();
 
     /**
      * @param ds must exist.
      *
-     * X11Source does not take ownership of it in general, but if the function
+     * x11_source does not take ownership of it in general, but if the function
      * is called again, it will delete the previous data source.
      */
     void set_source(InternalSource* src);
@@ -150,7 +150,7 @@ public:
         m_timestamp = time;
     }
 
-    qX11Source* qobject() const
+    q_x11_source* qobject() const
     {
         return m_qobject;
     }
@@ -167,9 +167,9 @@ private:
     mime_atoms m_offers;
 
     xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
-    qX11Source* m_qobject;
+    q_x11_source* m_qobject;
 
-    Q_DISABLE_COPY(X11Source)
+    Q_DISABLE_COPY(x11_source)
 };
 
 }

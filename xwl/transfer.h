@@ -39,12 +39,12 @@ namespace KWin::xwl
  * externally afterwards. For that the owner should connect to the
  * @c finished() signal.
  */
-class Transfer : public QObject
+class transfer : public QObject
 {
     Q_OBJECT
 
 public:
-    Transfer(xcb_atom_t selection, qint32 fd, xcb_timestamp_t timestamp, QObject* parent = nullptr);
+    transfer(xcb_atom_t selection, qint32 fd, xcb_timestamp_t timestamp, QObject* parent = nullptr);
 
     virtual bool handle_property_notify(xcb_property_notify_event_t* event) = 0;
     void timeout();
@@ -99,22 +99,22 @@ private:
     bool m_incr = false;
     bool m_timeout = false;
 
-    Q_DISABLE_COPY(Transfer)
+    Q_DISABLE_COPY(transfer)
 };
 
 /**
  * Represents a transfer from a Wayland native source to an X window.
  */
-class TransferWltoX : public Transfer
+class wl_to_x11_transfer : public transfer
 {
     Q_OBJECT
 
 public:
-    TransferWltoX(xcb_atom_t selection,
-                  xcb_selection_request_event_t* request,
-                  qint32 fd,
-                  QObject* parent = nullptr);
-    ~TransferWltoX() override;
+    wl_to_x11_transfer(xcb_atom_t selection,
+                       xcb_selection_request_event_t* request,
+                       qint32 fd,
+                       QObject* parent = nullptr);
+    ~wl_to_x11_transfer() override;
 
     void start_transfer_from_source();
     bool handle_property_notify(xcb_property_notify_event_t* event) override;
@@ -138,16 +138,16 @@ private:
     bool m_propertyIsSet = false;
     bool m_flushPropertyOnDelete = false;
 
-    Q_DISABLE_COPY(TransferWltoX)
+    Q_DISABLE_COPY(wl_to_x11_transfer)
 };
 
 /**
  * Helper class for X to Wl transfers.
  */
-class DataReceiver
+class data_receiver
 {
 public:
-    virtual ~DataReceiver();
+    virtual ~data_receiver();
 
     void transfer_from_property(xcb_get_property_reply_t* reply);
 
@@ -172,7 +172,7 @@ private:
  * Compatibility receiver for clients only
  * supporting the NETSCAPE_URL scheme (Firefox)
  */
-class NetscapeUrlReceiver : public DataReceiver
+class netscape_url_receiver : public data_receiver
 {
 public:
     void set_data(char const* value, int length) override;
@@ -182,7 +182,7 @@ public:
  * Compatibility receiver for clients only
  * supporting the text/x-moz-url scheme (Chromium on own drags)
  */
-class MozUrlReceiver : public DataReceiver
+class moz_url_receiver : public data_receiver
 {
 public:
     void set_data(char const* value, int length) override;
@@ -191,19 +191,19 @@ public:
 /**
  * Represents a transfer from an X window to a Wayland native client.
  */
-class TransferXtoWl : public Transfer
+class x11_to_wl_transfer : public transfer
 {
     Q_OBJECT
 
 public:
-    TransferXtoWl(xcb_atom_t selection,
-                  xcb_atom_t target,
-                  qint32 fd,
-                  xcb_timestamp_t timestamp,
-                  xcb_window_t parentWindow,
-                  x11_data const& x11,
-                  QObject* parent = nullptr);
-    ~TransferXtoWl() override;
+    x11_to_wl_transfer(xcb_atom_t selection,
+                       xcb_atom_t target,
+                       qint32 fd,
+                       xcb_timestamp_t timestamp,
+                       xcb_window_t parentWindow,
+                       x11_data const& x11,
+                       QObject* parent = nullptr);
+    ~x11_to_wl_transfer() override;
 
     bool handle_selection_notify(xcb_selection_notify_event_t* event);
     bool handle_property_notify(xcb_property_notify_event_t* event) override;
@@ -214,9 +214,9 @@ private:
     void get_incr_chunk();
 
     xcb_window_t m_window;
-    DataReceiver* m_receiver = nullptr;
+    data_receiver* m_receiver = nullptr;
 
-    Q_DISABLE_COPY(TransferXtoWl)
+    Q_DISABLE_COPY(x11_to_wl_transfer)
 };
 
 }

@@ -37,9 +37,9 @@ class Toplevel;
 
 namespace xwl
 {
-class Clipboard;
-class Dnd;
-enum class DragEventReply;
+class clipboard;
+class drag_and_drop;
+enum class drag_event_reply;
 class primary_selection;
 
 /**
@@ -48,27 +48,27 @@ class primary_selection;
  *
  * Exists only once per Xwayland session.
  */
-class KWIN_EXPORT DataBridge : public QObject
+class KWIN_EXPORT data_bridge : public QObject
 {
     Q_OBJECT
 
 public:
-    DataBridge(x11_data const& x11);
-    ~DataBridge() override;
+    data_bridge(x11_data const& x11);
+    ~data_bridge() override;
 
     bool filter_event(xcb_generic_event_t* event);
-    DragEventReply drag_move_filter(Toplevel* target, QPoint const& pos);
+    drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos);
 
 private:
     bool handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event);
 
     xcb_query_extension_reply_t const* xfixes{nullptr};
 
-    std::unique_ptr<Clipboard> m_clipboard;
-    std::unique_ptr<Dnd> m_dnd;
+    std::unique_ptr<clipboard> m_clipboard;
+    std::unique_ptr<drag_and_drop> m_dnd;
     std::unique_ptr<primary_selection> m_primarySelection;
 
-    Q_DISABLE_COPY(DataBridge)
+    Q_DISABLE_COPY(data_bridge)
 };
 
 }

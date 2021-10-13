@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-void Drag::send_client_message(xcb_window_t target,
+void drag::send_client_message(xcb_window_t target,
                                xcb_atom_t type,
                                xcb_client_message_data_t* data)
 {
@@ -43,27 +43,27 @@ void Drag::send_client_message(xcb_window_t target,
     xcb_flush(xcbConn);
 }
 
-DnDAction Drag::atom_to_client_action(xcb_atom_t atom)
+dnd_action drag::atom_to_client_action(xcb_atom_t atom)
 {
     if (atom == atoms->xdnd_action_copy) {
-        return DnDAction::copy;
+        return dnd_action::copy;
     } else if (atom == atoms->xdnd_action_move) {
-        return DnDAction::move;
+        return dnd_action::move;
     } else if (atom == atoms->xdnd_action_ask) {
         // we currently do not support it - need some test client first
-        return DnDAction::none;
-        // return DnDAction::Ask;
+        return dnd_action::none;
+        // return dnd_action::Ask;
     }
-    return DnDAction::none;
+    return dnd_action::none;
 }
 
-xcb_atom_t Drag::client_action_to_atom(DnDAction action)
+xcb_atom_t drag::client_action_to_atom(dnd_action action)
 {
-    if (action == DnDAction::copy) {
+    if (action == dnd_action::copy) {
         return atoms->xdnd_action_copy;
-    } else if (action == DnDAction::move) {
+    } else if (action == dnd_action::move) {
         return atoms->xdnd_action_move;
-    } else if (action == DnDAction::ask) {
+    } else if (action == dnd_action::ask) {
         // we currently do not support it - need some test client first
         return XCB_ATOM_NONE;
         // return atoms->xdnd_action_ask;

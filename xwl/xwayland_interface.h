@@ -30,37 +30,37 @@ class Toplevel;
 
 namespace xwl
 {
-enum class DragEventReply {
+enum class drag_event_reply {
     // event should be ignored by the filter
-    Ignore,
+    ignore,
     // event is filtered out
-    Take,
+    take,
     // event should be handled as a Wayland native one
-    Wayland,
+    wayland,
 };
 
-class KWIN_EXPORT XwaylandInterface : public QObject
+class KWIN_EXPORT xwayland_interface : public QObject
 {
     Q_OBJECT
 
 public:
-    static XwaylandInterface* self();
+    static xwayland_interface* self();
 
-    virtual DragEventReply drag_move_filter(Toplevel* target, QPoint const& pos) = 0;
+    virtual drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos) = 0;
 
 protected:
-    XwaylandInterface();
-    ~XwaylandInterface() override;
+    xwayland_interface();
+    ~xwayland_interface() override;
 
 private:
-    Q_DISABLE_COPY(XwaylandInterface)
+    Q_DISABLE_COPY(xwayland_interface)
 };
 
 }
 
-inline xwl::XwaylandInterface* xwayland()
+inline xwl::xwayland_interface* xwayland()
 {
-    return xwl::XwaylandInterface::self();
+    return xwl::xwayland_interface::self();
 }
 
 }

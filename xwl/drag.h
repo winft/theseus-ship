@@ -31,36 +31,36 @@ class Toplevel;
 
 namespace xwl
 {
-class Dnd;
-enum class DragEventReply;
+class drag_and_drop;
+enum class drag_event_reply;
 
-using DnDAction = Wrapland::Server::dnd_action;
+using dnd_action = Wrapland::Server::dnd_action;
 
 /**
  * An ongoing drag operation.
  */
-class Drag : public QObject
+class drag : public QObject
 {
     Q_OBJECT
 
 public:
-    Drag() = default;
+    drag() = default;
 
     static void
     send_client_message(xcb_window_t target, xcb_atom_t type, xcb_client_message_data_t* data);
-    static DnDAction atom_to_client_action(xcb_atom_t atom);
-    static xcb_atom_t client_action_to_atom(DnDAction action);
+    static dnd_action atom_to_client_action(xcb_atom_t atom);
+    static xcb_atom_t client_action_to_atom(dnd_action action);
 
     virtual bool handle_client_message(xcb_client_message_event_t* event) = 0;
-    virtual DragEventReply move_filter(Toplevel* target, QPoint const& pos) = 0;
+    virtual drag_event_reply move_filter(Toplevel* target, QPoint const& pos) = 0;
 
     virtual bool end() = 0;
 
 Q_SIGNALS:
-    void finish(Drag* self);
+    void finish(drag* self);
 
 private:
-    Q_DISABLE_COPY(Drag)
+    Q_DISABLE_COPY(drag)
 };
 
 }

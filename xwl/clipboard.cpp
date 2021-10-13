@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-Clipboard::Clipboard(xcb_atom_t atom, x11_data const& x11)
+clipboard::clipboard(xcb_atom_t atom, x11_data const& x11)
 {
     data = create_selection_data<Wrapland::Server::data_source, data_source_ext>(atom, x11);
 
@@ -38,12 +38,12 @@ Clipboard::Clipboard(xcb_atom_t atom, x11_data const& x11)
                      [this] { handle_wl_selection_change(this); });
 }
 
-Wrapland::Server::data_source* Clipboard::get_current_source() const
+Wrapland::Server::data_source* clipboard::get_current_source() const
 {
     return waylandServer()->seat()->selection();
 }
 
-void Clipboard::set_selection(Wrapland::Server::data_source* source) const
+void clipboard::set_selection(Wrapland::Server::data_source* source) const
 {
     waylandServer()->seat()->setSelection(source);
 }

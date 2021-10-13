@@ -42,15 +42,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-XToWlDrag::XToWlDrag(DataX11Source* source)
+x11_drag::x11_drag(x11_source_ext* source)
     : m_source{source}
 {
-    connect(
-        source->qobject(), &qX11Source::transfer_ready, this, [this](xcb_atom_t target, qint32 fd) {
-            Q_UNUSED(target);
-            Q_UNUSED(fd);
-            m_dataRequests.emplace_back(m_source->timestamp(), false);
-        });
+    connect(source->qobject(),
+            &q_x11_source::transfer_ready,
+            this,
+            [this](xcb_atom_t target, qint32 fd) {
+                Q_UNUSED(target);
+                Q_UNUSED(fd);
+                m_dataRequests.emplace_back(m_source->timestamp(), false);
+            });
 
     connect(source->source(), &data_source_ext::accepted, this, [this](auto /*mime_type*/) {
         // TODO(romangg): handle?
@@ -58,7 +60,7 @@ XToWlDrag::XToWlDrag(DataX11Source* source)
     connect(source->source(), &data_source_ext::dropped, this, [this] {
         m_performed = true;
         if (m_visit) {
-            connect(m_visit.get(), &WlVisit::finish, this, [this](WlVisit* visit) {
+            connect(m_visit.get(), &wl_visit::finish, this, [this](wl_visit* visit) {
                 Q_UNUSED(visit);
                 check_for_finished();
             });
@@ -82,9 +84,9 @@ XToWlDrag::XToWlDrag(DataX11Source* source)
     });
 }
 
-XToWlDrag::~XToWlDrag() = default;
+x11_drag::~x11_drag() = default;
 
-DragEventReply XToWlDrag::move_filter(Toplevel* target, QPoint const& pos)
+drag_event_reply x11_drag::move_filter(Toplevel* target, QPoint const& pos)
 {
     Q_UNUSED(pos);
 
@@ -92,7 +94,7 @@ DragEventReply XToWlDrag::move_filter(Toplevel* target, QPoint const& pos)
 
     if (m_visit && m_visit->target() == target) {
         // still same Wl target, wait for X events
-        return DragEventReply::Ignore;
+        return drag_event_reply::ignore;
     }
 
     auto const had_visit = static_cast<bool>(m_visit);
@@ -100,7 +102,7 @@ DragEventReply XToWlDrag::move_filter(Toplevel* target, QPoint const& pos)
         if (m_visit->leave()) {
             m_visit.reset();
         } else {
-            connect(m_visit.get(), &WlVisit::finish, this, [this](WlVisit* visit) {
+            connect(m_visit.get(), &wl_visit::finish, this, [this](wl_visit* visit) {
                 remove_all_if(m_oldVisits, [visit](auto&& old) { return old.get() == visit; });
             });
             m_oldVisits.emplace_back(m_visit.release());
@@ -121,17 +123,17 @@ DragEventReply XToWlDrag::move_filter(Toplevel* target, QPoint const& pos)
             // Last received enter event is now void. Wait for the next one.
             seat->drags().set_target(nullptr);
         }
-        return DragEventReply::Ignore;
+        return drag_event_reply::ignore;
     }
 
     // New Wl native target.
-    m_visit.reset(new WlVisit(target, m_source));
+    m_visit.reset(new wl_visit(target, m_source));
 
-    connect(m_visit.get(), &WlVisit::offers_received, this, &XToWlDrag::set_offers);
-    return DragEventReply::Ignore;
+    connect(m_visit.get(), &wl_visit::offers_received, this, &x11_drag::set_offers);
+    return drag_event_reply::ignore;
 }
 
-bool XToWlDrag::handle_client_message(xcb_client_message_event_t* event)
+bool x11_drag::handle_client_message(xcb_client_message_event_t* event)
 {
     for (auto const& visit : m_oldVisits) {
         if (visit->handle_client_message(event)) {
@@ -146,12 +148,12 @@ bool XToWlDrag::handle_client_message(xcb_client_message_event_t* event)
     return false;
 }
 
-bool XToWlDrag::end()
+bool x11_drag::end()
 {
     return false;
 }
 
-void XToWlDrag::handle_transfer_finished(xcb_timestamp_t time)
+void x11_drag::handle_transfer_finished(xcb_timestamp_t time)
 {
     // We use this mechanism, because the finished call is not reliable done by Wayland clients.
     auto it = std::find_if(m_dataRequests.begin(), m_dataRequests.end(), [time](auto const& req) {
@@ -165,7 +167,7 @@ void XToWlDrag::handle_transfer_finished(xcb_timestamp_t time)
     check_for_finished();
 }
 
-void XToWlDrag::set_offers(mime_atoms const& offers)
+void x11_drag::set_offers(mime_atoms const& offers)
 {
     m_source->set_offers(offers);
 
@@ -194,14 +196,14 @@ void XToWlDrag::set_offers(mime_atoms const& offers)
     set_drag_target();
 }
 
-void XToWlDrag::set_drag_target()
+void x11_drag::set_drag_target()
 {
     auto ac = m_visit->target();
     workspace()->activateClient(ac);
     waylandServer()->seat()->drags().set_target(ac->surface(), ac->input_transform());
 }
 
-bool XToWlDrag::check_for_finished()
+bool x11_drag::check_for_finished()
 {
     if (!m_visit) {
         // not dropped above Wl native target
@@ -228,7 +230,7 @@ bool XToWlDrag::check_for_finished()
     return transfersFinished;
 }
 
-WlVisit::WlVisit(Toplevel* target, DataX11Source* source)
+wl_visit::wl_visit(Toplevel* target, x11_source_ext* source)
     : QObject()
     , m_target(target)
     , source{source}
@@ -253,7 +255,7 @@ WlVisit::WlVisit(Toplevel* target, DataX11Source* source)
                       XCB_CW_EVENT_MASK,
                       dndValues);
 
-    uint32_t version = Dnd::version();
+    uint32_t version = drag_and_drop::version();
     xcb_change_property(xcbConn,
                         XCB_PROP_MODE_REPLACE,
                         m_window,
@@ -271,7 +273,7 @@ WlVisit::WlVisit(Toplevel* target, DataX11Source* source)
     m_mapped = true;
 }
 
-WlVisit::~WlVisit()
+wl_visit::~wl_visit()
 {
     // TODO(romangg): Use the x11_data here. But we must ensure the Dnd object still exists at this
     //                point, i.e. use explicit ownership through smart pointer only.
@@ -279,13 +281,13 @@ WlVisit::~WlVisit()
     xcb_flush(source->x11.connection);
 }
 
-bool WlVisit::leave()
+bool wl_visit::leave()
 {
     unmap_proxy_window();
     return m_finished;
 }
 
-bool WlVisit::handle_client_message(xcb_client_message_event_t* event)
+bool wl_visit::handle_client_message(xcb_client_message_event_t* event)
 {
     if (event->window != m_window) {
         return false;
@@ -308,7 +310,7 @@ static bool hasMimeName(mime_atoms const& mimes, std::string const& name)
     return std::any_of(mimes.begin(), mimes.end(), [name](auto const& m) { return m.id == name; });
 }
 
-bool WlVisit::handle_enter(xcb_client_message_event_t* event)
+bool wl_visit::handle_enter(xcb_client_message_event_t* event)
 {
     if (m_entered) {
         // A drag already entered.
@@ -343,7 +345,7 @@ bool WlVisit::handle_enter(xcb_client_message_event_t* event)
     return true;
 }
 
-void WlVisit::get_mimes_from_win_property(mime_atoms& offers)
+void wl_visit::get_mimes_from_win_property(mime_atoms& offers)
 {
     auto cookie = xcb_get_property(source->x11.connection,
                                    0,
@@ -375,14 +377,14 @@ void WlVisit::get_mimes_from_win_property(mime_atoms& offers)
     free(reply);
 }
 
-bool WlVisit::handle_position(xcb_client_message_event_t* event)
+bool wl_visit::handle_position(xcb_client_message_event_t* event)
 {
     auto data = &event->data;
     m_srcWindow = data->data32[0];
 
     if (!m_target) {
         // not over Wl window at the moment
-        m_action = DnDAction::none;
+        m_action = dnd_action::none;
         m_actionAtom = XCB_ATOM_NONE;
         send_status();
         return true;
@@ -395,11 +397,11 @@ bool WlVisit::handle_position(xcb_client_message_event_t* event)
     source->set_timestamp(timestamp);
 
     xcb_atom_t actionAtom = m_version > 1 ? data->data32[4] : atoms->xdnd_action_copy;
-    auto action = Drag::atom_to_client_action(actionAtom);
+    auto action = drag::atom_to_client_action(actionAtom);
 
-    if (action == DnDAction::none) {
+    if (action == dnd_action::none) {
         // copy action is always possible in XDND
-        action = DnDAction::copy;
+        action = dnd_action::copy;
         actionAtom = atoms->xdnd_action_copy;
     }
 
@@ -413,7 +415,7 @@ bool WlVisit::handle_position(xcb_client_message_event_t* event)
     return true;
 }
 
-bool WlVisit::handle_drop(xcb_client_message_event_t* event)
+bool wl_visit::handle_drop(xcb_client_message_event_t* event)
 {
     m_dropHandled = true;
 
@@ -422,19 +424,19 @@ bool WlVisit::handle_drop(xcb_client_message_event_t* event)
     xcb_timestamp_t const timestamp = data->data32[2];
     source->set_timestamp(timestamp);
 
-    // We do nothing more here, the drop is being processed through the X11Source object.
+    // We do nothing more here, the drop is being processed through the x11_source object.
     do_finish();
     return true;
 }
 
-void WlVisit::do_finish()
+void wl_visit::do_finish()
 {
     m_finished = true;
     unmap_proxy_window();
     Q_EMIT finish(this);
 }
 
-bool WlVisit::handle_leave(xcb_client_message_event_t* event)
+bool wl_visit::handle_leave(xcb_client_message_event_t* event)
 {
     m_entered = false;
     auto data = &event->data;
@@ -443,7 +445,7 @@ bool WlVisit::handle_leave(xcb_client_message_event_t* event)
     return true;
 }
 
-void WlVisit::send_status()
+void wl_visit::send_status()
 {
     // Receive position events.
     uint32_t flags = 1 << 1;
@@ -457,31 +459,31 @@ void WlVisit::send_status()
     data.data32[1] = flags;
     data.data32[4] = flags & (1 << 0) ? m_actionAtom : static_cast<uint32_t>(XCB_ATOM_NONE);
 
-    Drag::send_client_message(m_srcWindow, atoms->xdnd_status, &data);
+    drag::send_client_message(m_srcWindow, atoms->xdnd_status, &data);
 }
 
-void WlVisit::send_finished()
+void wl_visit::send_finished()
 {
-    auto const accepted = m_entered && m_action != DnDAction::none;
+    auto const accepted = m_entered && m_action != dnd_action::none;
 
     xcb_client_message_data_t data = {{0}};
     data.data32[0] = m_window;
     data.data32[1] = accepted;
     data.data32[2] = accepted ? m_actionAtom : static_cast<uint32_t>(XCB_ATOM_NONE);
 
-    Drag::send_client_message(m_srcWindow, atoms->xdnd_finished, &data);
+    drag::send_client_message(m_srcWindow, atoms->xdnd_finished, &data);
 }
 
-bool WlVisit::target_accepts_action() const
+bool wl_visit::target_accepts_action() const
 {
-    if (m_action == DnDAction::none) {
+    if (m_action == dnd_action::none) {
         return false;
     }
     auto const selAction = source->source()->action;
-    return selAction == m_action || selAction == DnDAction::copy;
+    return selAction == m_action || selAction == dnd_action::copy;
 }
 
-void WlVisit::unmap_proxy_window()
+void wl_visit::unmap_proxy_window()
 {
     if (!m_mapped) {
         return;

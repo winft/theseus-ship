@@ -34,29 +34,29 @@ class Toplevel;
 
 namespace xwl
 {
-enum class DragEventReply;
-class WlVisit;
+enum class drag_event_reply;
+class wl_visit;
 template<typename>
-class X11Source;
+class x11_source;
 
-using DataX11Source = X11Source<data_source_ext>;
+using x11_source_ext = x11_source<data_source_ext>;
 
-class XToWlDrag : public Drag
+class x11_drag : public drag
 {
     Q_OBJECT
 
 public:
-    explicit XToWlDrag(DataX11Source* source);
-    ~XToWlDrag() override;
+    explicit x11_drag(x11_source_ext* source);
+    ~x11_drag() override;
 
-    DragEventReply move_filter(Toplevel* target, QPoint const& pos) override;
+    drag_event_reply move_filter(Toplevel* target, QPoint const& pos) override;
     bool handle_client_message(xcb_client_message_event_t* event) override;
     bool end() override;
 
     void handle_transfer_finished(xcb_timestamp_t time);
 
     std::unique_ptr<data_source_ext> data_source;
-    std::unique_ptr<WlVisit> m_visit;
+    std::unique_ptr<wl_visit> m_visit;
 
 private:
     void set_offers(mime_atoms const& offers);
@@ -67,23 +67,23 @@ private:
     mime_atoms m_offers;
     mime_atoms m_offersPending;
 
-    DataX11Source* m_source;
+    x11_source_ext* m_source;
     std::vector<std::pair<xcb_timestamp_t, bool>> m_dataRequests;
 
-    std::vector<std::unique_ptr<WlVisit>> m_oldVisits;
+    std::vector<std::unique_ptr<wl_visit>> m_oldVisits;
 
     bool m_performed = false;
 
-    Q_DISABLE_COPY(XToWlDrag)
+    Q_DISABLE_COPY(x11_drag)
 };
 
-class WlVisit : public QObject
+class wl_visit : public QObject
 {
     Q_OBJECT
 
 public:
-    WlVisit(Toplevel* target, DataX11Source* source);
-    ~WlVisit() override;
+    wl_visit(Toplevel* target, x11_source_ext* source);
+    ~wl_visit() override;
 
     bool handle_client_message(xcb_client_message_event_t* event);
     bool leave();
@@ -112,7 +112,7 @@ public:
 
 Q_SIGNALS:
     void offers_received(mime_atoms const& offers);
-    void finish(WlVisit* self);
+    void finish(wl_visit* self);
 
 private:
     bool handle_enter(xcb_client_message_event_t* event);
@@ -133,19 +133,19 @@ private:
     xcb_window_t m_window;
 
     xcb_window_t m_srcWindow = XCB_WINDOW_NONE;
-    DataX11Source* source;
+    x11_source_ext* source;
 
     uint32_t m_version = 0;
 
     xcb_atom_t m_actionAtom;
-    DnDAction m_action = DnDAction::none;
+    dnd_action m_action = dnd_action::none;
 
     bool m_mapped = false;
     bool m_entered = false;
     bool m_dropHandled = false;
     bool m_finished = false;
 
-    Q_DISABLE_COPY(WlVisit)
+    Q_DISABLE_COPY(wl_visit)
 };
 
 }

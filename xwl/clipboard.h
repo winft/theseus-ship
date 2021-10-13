@@ -25,24 +25,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin::xwl
 {
-class Clipboard;
+class clipboard;
 
 /**
  * Represents the X clipboard, which is on Wayland side just called
  * @e selection.
  */
-class Clipboard
+class clipboard
 {
 public:
     selection_data<Wrapland::Server::data_source, data_source_ext> data;
 
-    Clipboard(xcb_atom_t atom, x11_data const& x11);
+    clipboard(xcb_atom_t atom, x11_data const& x11);
 
     Wrapland::Server::data_source* get_current_source() const;
     void set_selection(Wrapland::Server::data_source* source) const;
 
 private:
-    Q_DISABLE_COPY(Clipboard)
+    Q_DISABLE_COPY(clipboard)
 };
 
 }

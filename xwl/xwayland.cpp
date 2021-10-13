@@ -71,8 +71,8 @@ static void readDisplay(int pipe)
 namespace KWin::xwl
 {
 
-Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> status_callback)
-    : XwaylandInterface()
+xwayland::xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> status_callback)
+    : xwayland_interface()
     , m_app(app)
     , status_callback{status_callback}
 {
@@ -141,7 +141,7 @@ Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> sta
         QObject::connect(watcher,
                          &QFutureWatcher<void>::finished,
                          this,
-                         &Xwayland::continue_startup_with_x11,
+                         &xwayland::continue_startup_with_x11,
                          Qt::QueuedConnection);
         QObject::connect(watcher,
                          &QFutureWatcher<void>::finished,
@@ -155,7 +155,7 @@ Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> sta
     close(pipeFds[1]);
 }
 
-Xwayland::~Xwayland()
+xwayland::~xwayland()
 {
     data_bridge.reset();
 
@@ -183,7 +183,7 @@ Xwayland::~Xwayland()
     waylandServer()->destroyXWaylandConnection();
 }
 
-void Xwayland::continue_startup_with_x11()
+void xwayland::continue_startup_with_x11()
 {
     auto screenNumber = 0;
 
@@ -268,13 +268,13 @@ void Xwayland::continue_startup_with_x11()
     // Trigger possible errors, there's still a chance to abort
     Xcb::sync();
 
-    data_bridge.reset(new DataBridge(basic_data));
+    data_bridge.reset(new xwl::data_bridge(basic_data));
 }
 
-DragEventReply Xwayland::drag_move_filter(Toplevel* target, QPoint const& pos)
+drag_event_reply xwayland::drag_move_filter(Toplevel* target, QPoint const& pos)
 {
     if (!data_bridge) {
-        return DragEventReply::Wayland;
+        return drag_event_reply::wayland;
     }
     return data_bridge->drag_move_filter(target, pos);
 }

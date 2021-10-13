@@ -28,20 +28,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-DataBridge::DataBridge(x11_data const& x11)
+data_bridge::data_bridge(x11_data const& x11)
     : QObject()
 {
     xcb_prefetch_extension_data(x11.connection, &xcb_xfixes_id);
     xfixes = xcb_get_extension_data(x11.connection, &xcb_xfixes_id);
 
-    m_clipboard.reset(new Clipboard(atoms->clipboard, x11));
-    m_dnd.reset(new Dnd(atoms->xdnd_selection, x11));
+    m_clipboard.reset(new clipboard(atoms->clipboard, x11));
+    m_dnd.reset(new drag_and_drop(atoms->xdnd_selection, x11));
     m_primarySelection.reset(new primary_selection(atoms->primary_selection, x11));
 }
 
-DataBridge::~DataBridge() = default;
+data_bridge::~data_bridge() = default;
 
-bool DataBridge::filter_event(xcb_generic_event_t* event)
+bool data_bridge::filter_event(xcb_generic_event_t* event)
 {
     if (xwl::filter_event(m_clipboard.get(), event)) {
         return true;
@@ -58,7 +58,7 @@ bool DataBridge::filter_event(xcb_generic_event_t* event)
     return false;
 }
 
-bool DataBridge::handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
+bool data_bridge::handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
 {
     if (event->selection == atoms->clipboard) {
         return xwl::handle_xfixes_notify(m_clipboard.get(), event);
@@ -72,10 +72,10 @@ bool DataBridge::handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event
     return false;
 }
 
-DragEventReply DataBridge::drag_move_filter(Toplevel* target, QPoint const& pos)
+drag_event_reply data_bridge::drag_move_filter(Toplevel* target, QPoint const& pos)
 {
     if (!m_dnd) {
-        return DragEventReply::Wayland;
+        return drag_event_reply::wayland;
     }
     return m_dnd->drag_move_filter(target, pos);
 }

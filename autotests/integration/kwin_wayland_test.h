@@ -54,7 +54,7 @@ class window;
 }
 namespace xwl
 {
-class Xwayland;
+class xwayland;
 }
 
 class Toplevel;
@@ -125,7 +125,7 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
     Q_OBJECT
 public:
     std::unique_ptr<WaylandServer> server;
-    std::unique_ptr<xwl::Xwayland> xwayland;
+    std::unique_ptr<xwl::xwayland> xwayland;
 
     wlr_input_device* pointer{nullptr};
     wlr_input_device* keyboard{nullptr};

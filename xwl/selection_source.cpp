@@ -35,10 +35,10 @@ namespace KWin::xwl
 {
 
 template<typename ServerSource>
-WlSource<ServerSource>::WlSource(ServerSource* source, xcb_connection_t* connection)
+wl_source<ServerSource>::wl_source(ServerSource* source, xcb_connection_t* connection)
     : server_source{source}
     , connection{connection}
-    , m_qobject(new qWlSource)
+    , m_qobject(new q_wl_source)
 {
     assert(source);
 
@@ -53,19 +53,19 @@ WlSource<ServerSource>::WlSource(ServerSource* source, xcb_connection_t* connect
 }
 
 template<typename ServerSource>
-WlSource<ServerSource>::~WlSource()
+wl_source<ServerSource>::~wl_source()
 {
     delete m_qobject;
 }
 
 template<typename ServerSource>
-void WlSource<ServerSource>::receive_offer(std::string const& mime)
+void wl_source<ServerSource>::receive_offer(std::string const& mime)
 {
     m_offers.emplace_back(mime);
 }
 
 template<typename ServerSource>
-bool WlSource<ServerSource>::handle_selection_request(xcb_selection_request_event_t* event)
+bool wl_source<ServerSource>::handle_selection_request(xcb_selection_request_event_t* event)
 {
     if (event->target == atoms->targets) {
         send_targets(event);
@@ -83,7 +83,7 @@ bool WlSource<ServerSource>::handle_selection_request(xcb_selection_request_even
 }
 
 template<typename ServerSource>
-void WlSource<ServerSource>::send_targets(xcb_selection_request_event_t* event)
+void wl_source<ServerSource>::send_targets(xcb_selection_request_event_t* event)
 {
     std::vector<xcb_atom_t> targets;
     targets.resize(m_offers.size() + 2);
@@ -109,7 +109,7 @@ void WlSource<ServerSource>::send_targets(xcb_selection_request_event_t* event)
 }
 
 template<typename ServerSource>
-void WlSource<ServerSource>::send_timestamp(xcb_selection_request_event_t* event)
+void wl_source<ServerSource>::send_timestamp(xcb_selection_request_event_t* event)
 {
     auto const time = timestamp();
     xcb_change_property(connection,
@@ -125,7 +125,7 @@ void WlSource<ServerSource>::send_timestamp(xcb_selection_request_event_t* event
 }
 
 template<typename ServerSource>
-bool WlSource<ServerSource>::check_start_transfer(xcb_selection_request_event_t* event)
+bool wl_source<ServerSource>::check_start_transfer(xcb_selection_request_event_t* event)
 {
     auto const targets = atom_to_mime_types(event->target);
     if (targets.empty()) {
@@ -165,23 +165,23 @@ bool WlSource<ServerSource>::check_start_transfer(xcb_selection_request_event_t*
 }
 
 template<typename InternalSource>
-X11Source<InternalSource>::X11Source(xcb_xfixes_selection_notify_event_t* event,
-                                     x11_data const& x11)
+x11_source<InternalSource>::x11_source(xcb_xfixes_selection_notify_event_t* event,
+                                       x11_data const& x11)
     : x11{x11}
     , m_owner(event->owner)
     , m_timestamp(event->timestamp)
-    , m_qobject(new qX11Source)
+    , m_qobject(new q_x11_source)
 {
 }
 
 template<typename InternalSource>
-X11Source<InternalSource>::~X11Source()
+x11_source<InternalSource>::~x11_source()
 {
     delete m_qobject;
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::get_targets(xcb_window_t const window, xcb_atom_t const atom) const
+void x11_source<InternalSource>::get_targets(xcb_window_t const window, xcb_atom_t const atom) const
 {
     /* will lead to a selection request event for the new owner */
     xcb_convert_selection(
@@ -190,7 +190,7 @@ void X11Source<InternalSource>::get_targets(xcb_window_t const window, xcb_atom_
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::handle_targets(xcb_window_t const requestor)
+void x11_source<InternalSource>::handle_targets(xcb_window_t const requestor)
 {
     // receive targets
     xcb_get_property_cookie_t cookie = xcb_get_property(
@@ -248,7 +248,7 @@ void X11Source<InternalSource>::handle_targets(xcb_window_t const requestor)
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::set_source(InternalSource* src)
+void x11_source<InternalSource>::set_source(InternalSource* src)
 {
     Q_ASSERT(src);
     if (m_source) {
@@ -268,14 +268,14 @@ void X11Source<InternalSource>::set_source(InternalSource* src)
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::set_offers(mime_atoms const& offers)
+void x11_source<InternalSource>::set_offers(mime_atoms const& offers)
 {
     // TODO: share code with handle_targets and emit signals accordingly?
     m_offers = offers;
 }
 
 template<typename InternalSource>
-bool X11Source<InternalSource>::handle_selection_notify(xcb_selection_notify_event_t* event)
+bool x11_source<InternalSource>::handle_selection_notify(xcb_selection_notify_event_t* event)
 {
     if (event->property == XCB_ATOM_NONE) {
         qCWarning(KWIN_XWL) << "Incoming X selection conversion failed";
@@ -289,7 +289,7 @@ bool X11Source<InternalSource>::handle_selection_notify(xcb_selection_notify_eve
 }
 
 template<typename InternalSource>
-void X11Source<InternalSource>::start_transfer(std::string const& mimeName, qint32 fd)
+void x11_source<InternalSource>::start_transfer(std::string const& mimeName, qint32 fd)
 {
     auto const mimeIt = std::find_if(m_offers.begin(),
                                      m_offers.end(),
@@ -304,8 +304,8 @@ void X11Source<InternalSource>::start_transfer(std::string const& mimeName, qint
 }
 
 // Templates specializations
-template class WlSource<Wrapland::Server::data_source>;
-template class X11Source<data_source_ext>;
-template class WlSource<Wrapland::Server::primary_selection_source>;
-template class X11Source<primary_selection_source_ext>;
+template class wl_source<Wrapland::Server::data_source>;
+template class x11_source<data_source_ext>;
+template class wl_source<Wrapland::Server::primary_selection_source>;
+template class x11_source<primary_selection_source_ext>;
 }

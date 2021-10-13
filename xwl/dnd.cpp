@@ -35,7 +35,7 @@ namespace KWin::xwl
 {
 
 template<>
-void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* event)
+void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_event_t* event)
 {
     if (sel->xdrag) {
         // X drag is in progress, rogue X client took over the selection.
@@ -76,12 +76,12 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
     sel->data.source_int = new data_source_ext;
     sel->data.x11_source->set_source(sel->data.source_int);
 
-    sel->xdrag.reset(new XToWlDrag(sel->data.x11_source));
+    sel->xdrag.reset(new x11_drag(sel->data.x11_source));
 
     QObject::connect(sel->data.qobject.get(),
                      &q_selection::transfer_finished,
                      sel->xdrag.get(),
-                     &XToWlDrag::handle_transfer_finished);
+                     &x11_drag::handle_transfer_finished);
 
     // Start drag with serial of last left pointer button press.
     // This means X to Wl drags can only be executed with the left pointer button being pressed.
@@ -96,7 +96,7 @@ void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* even
 }
 
 template<>
-bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event)
+bool handle_client_message(drag_and_drop* sel, xcb_client_message_event_t* event)
 {
     for (auto& drag : sel->m_oldDrags) {
         if (drag->handle_client_message(event)) {
@@ -118,7 +118,7 @@ bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event)
 }
 
 template<>
-void handle_x11_offer_change(Dnd* /*sel*/,
+void handle_x11_offer_change(drag_and_drop* /*sel*/,
                              std::vector<std::string> const& /*added*/,
                              std::vector<std::string> const& /*removed*/)
 {
@@ -127,12 +127,12 @@ void handle_x11_offer_change(Dnd* /*sel*/,
 
 // version of DnD support in X
 constexpr uint32_t s_version = 5;
-uint32_t Dnd::version()
+uint32_t drag_and_drop::version()
 {
     return s_version;
 }
 
-Dnd::Dnd(xcb_atom_t atom, x11_data const& x11)
+drag_and_drop::drag_and_drop(xcb_atom_t atom, x11_data const& x11)
 {
     data = create_selection_data<Wrapland::Server::data_source, data_source_ext>(atom, x11);
 
@@ -161,9 +161,9 @@ Dnd::Dnd(xcb_atom_t atom, x11_data const& x11)
                      [this]() { end_drag(); });
 }
 
-Dnd::~Dnd() = default;
+drag_and_drop::~drag_and_drop() = default;
 
-DragEventReply Dnd::drag_move_filter(Toplevel* target, QPoint const& pos)
+drag_event_reply drag_and_drop::drag_move_filter(Toplevel* target, QPoint const& pos)
 {
     // This filter only is used when a drag is in process.
     if (wldrag) {
@@ -177,10 +177,10 @@ DragEventReply Dnd::drag_move_filter(Toplevel* target, QPoint const& pos)
         return reply;
     }
     assert(false);
-    return DragEventReply();
+    return drag_event_reply();
 }
 
-void Dnd::start_drag()
+void drag_and_drop::start_drag()
 {
     auto srv_src = waylandServer()->seat()->drags().get_source().src;
 
@@ -193,19 +193,19 @@ void Dnd::start_drag()
     assert(!wldrag);
 
     // New Wl to X drag, init drag and Wl source.
-    wldrag.reset(new WlToXDrag(srv_src, data.window));
-    auto source = new WlSource<Wrapland::Server::data_source>(srv_src, data.x11.connection);
+    wldrag.reset(new wl_drag(srv_src, data.window));
+    auto source = new wl_source<Wrapland::Server::data_source>(srv_src, data.x11.connection);
     set_wl_source(this, source);
     own_selection(this, true);
 }
 
-void Dnd::end_drag()
+void drag_and_drop::end_drag()
 {
     auto process = [this](auto& drag) {
         if (drag->end()) {
             drag.reset();
         } else {
-            QObject::connect(drag.get(), &Drag::finish, data.qobject.get(), [this](auto drag) {
+            QObject::connect(drag.get(), &drag::finish, data.qobject.get(), [this](auto drag) {
                 clear_old_drag(drag);
             });
             m_oldDrags.emplace_back(drag.release());
@@ -224,7 +224,7 @@ void Dnd::end_drag()
     }
 }
 
-void Dnd::clear_old_drag(Drag* drag)
+void drag_and_drop::clear_old_drag(xwl::drag* drag)
 {
     remove_all_if(m_oldDrags, [drag](auto&& old) { return old.get() == drag; });
 }
