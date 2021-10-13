@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
-#include "xwl/databridge.h"
+#include "xwl/data_bridge.h"
 #include "xwl/xwayland.h"
 
 #include <QProcess>
