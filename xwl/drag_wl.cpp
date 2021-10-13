@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "drag_wl.h"
 
 #include "dnd.h"
-#include "selection.h"
+#include "mime.h"
 
 #include "atoms.h"
 #include "wayland_server.h"

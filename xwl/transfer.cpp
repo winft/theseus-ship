@@ -21,9 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "atoms.h"
 
-#include <algorithm>
 #include <unistd.h>
-
 #include <xwayland_logging.h>
 
 namespace KWin::xwl

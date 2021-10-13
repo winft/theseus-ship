@@ -11,6 +11,7 @@
 
 namespace KWin::xwl
 {
+class primary_selection_source_ext;
 
 class primary_selection
 {

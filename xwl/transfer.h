@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QObject>
 #include <QSocketNotifier>
 #include <deque>
-#include <utility>
 
 #include <xcb/xcb.h>
 

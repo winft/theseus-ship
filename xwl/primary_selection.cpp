@@ -5,6 +5,10 @@
 */
 #include "primary_selection.h"
 
+#include "selection_wl.h"
+#include "selection_x11.h"
+#include "sources.h"
+
 #include "wayland_server.h"
 
 #include <Wrapland/Server/seat.h>

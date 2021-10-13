@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 class clipboard;
+class data_source_ext;
 
 /**
  * Represents the X clipboard, which is on Wayland side just called

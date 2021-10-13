@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "selection.h"
+#include "selection_x11.h"
 
 #include <Wrapland/Server/data_source.h>
 
@@ -33,9 +34,11 @@ class Toplevel;
 
 namespace xwl
 {
-class drag_and_drop;
+class data_source_ext;
 class drag;
+class drag_and_drop;
 enum class drag_event_reply;
+
 class wl_drag;
 class x11_drag;
 

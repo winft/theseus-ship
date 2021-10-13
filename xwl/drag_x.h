@@ -20,12 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "drag.h"
-#include "sources.h"
 #include "types.h"
 
 #include <QPoint>
 #include <memory>
-#include <utility>
 #include <vector>
 
 namespace KWin
@@ -34,11 +32,13 @@ class Toplevel;
 
 namespace xwl
 {
+class data_source_ext;
 enum class drag_event_reply;
+
 class wl_visit;
+
 template<typename>
 class x11_source;
-
 using x11_source_ext = x11_source<data_source_ext>;
 
 class x11_drag : public drag

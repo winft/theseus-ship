@@ -19,7 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "selection_source.h"
 
-#include "selection.h"
+#include "event_x11.h"
+#include "mime.h"
+#include "sources.h"
 #include "types.h"
 
 #include <Wrapland/Server/data_source.h>

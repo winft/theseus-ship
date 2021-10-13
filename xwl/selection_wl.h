@@ -1,0 +1,180 @@
+/*
+    SPDX-FileCopyrightText: 2019-2021 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2021 Francesco Sorrentino <francesco.sorr@gmail.com>
+
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
+
+#include "selection.h"
+#include "selection_source.h"
+#include "transfer.h"
+
+#include "win/x11/window.h"
+#include "workspace.h"
+
+#include <QObject>
+
+namespace KWin::xwl
+{
+
+inline void send_selection_notify(xcb_selection_request_event_t* event, bool success)
+{
+    xcb_selection_notify_event_t notify;
+    notify.response_type = XCB_SELECTION_NOTIFY;
+    notify.sequence = 0;
+    notify.time = event->time;
+    notify.requestor = event->requestor;
+    notify.selection = event->selection;
+    notify.target = event->target;
+    notify.property = success ? event->property : xcb_atom_t(XCB_ATOM_NONE);
+
+    auto xcb_con = kwinApp()->x11Connection();
+    xcb_send_event(xcb_con, 0, event->requestor, XCB_EVENT_MASK_NO_EVENT, (char const*)&notify);
+    xcb_flush(xcb_con);
+}
+
+// must be called in order to provide data from Wl to X
+template<typename Selection>
+void own_selection(Selection* sel, bool own)
+{
+    auto xcb_con = sel->data.x11.connection;
+
+    if (own) {
+        xcb_set_selection_owner(xcb_con, sel->data.window, sel->data.atom, XCB_TIME_CURRENT_TIME);
+    } else {
+        sel->data.disown_pending = true;
+        xcb_set_selection_owner(xcb_con, XCB_WINDOW_NONE, sel->data.atom, sel->data.timestamp);
+    }
+
+    xcb_flush(xcb_con);
+}
+
+// sets the current provider of the selection
+template<typename Selection, typename server_source>
+void set_wl_source(Selection* sel, wl_source<server_source>* source)
+{
+    sel->data.wayland_source.reset();
+    sel->data.x11_source.reset();
+
+    if (source) {
+        sel->data.wayland_source.reset(source);
+        QObject::connect(source->get_qobject(),
+                         &q_wl_source::transfer_ready,
+                         sel->data.qobject.get(),
+                         [sel](auto event, auto fd) { start_transfer_to_x11(sel, event, fd); });
+    }
+}
+
+template<typename Selection>
+void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event, qint32 fd)
+{
+    auto transfer = new wl_to_x11_transfer(sel->data.atom, event, fd, sel->data.qobject.get());
+
+    QObject::connect(transfer,
+                     &wl_to_x11_transfer::selection_notify,
+                     sel->data.qobject.get(),
+                     &send_selection_notify);
+    QObject::connect(
+        transfer, &wl_to_x11_transfer::finished, sel->data.qobject.get(), [sel, transfer]() {
+            Q_EMIT sel->data.qobject->transfer_finished(transfer->get_timestamp());
+
+            // TODO(romangg): Serialize? see comment below.
+            delete transfer;
+            remove_all(sel->data.transfers.wl_to_x11, transfer);
+            end_timeout_transfers_timer(sel);
+        });
+
+    // Add it to list of queued transfers.
+    sel->data.transfers.wl_to_x11.push_back(transfer);
+
+    // TODO(romangg): Do we need to serialize the transfers, or can we do
+    //                them in parallel as we do it right now?
+    transfer->start_transfer_from_source();
+    start_timeout_transfers_timer(sel);
+}
+
+template<typename Selection>
+void cleanup_wl_to_x11_source(Selection* sel)
+{
+    using server_source = std::remove_pointer_t<decltype(sel->get_current_source())>;
+
+    set_wl_source<Selection, server_source>(sel, nullptr);
+    own_selection(sel, false);
+}
+
+template<typename Selection>
+void handle_wl_selection_client_change(Selection* sel)
+{
+    auto srv_src = sel->get_current_source();
+
+    if (!qobject_cast<win::x11::window*>(workspace()->activeClient())) {
+        // No active client or active client is Wayland native.
+        if (sel->data.wayland_source) {
+            cleanup_wl_to_x11_source(sel);
+        }
+        return;
+    }
+
+    // At this point we know an Xwayland client is active and that we need a Wayland source.
+
+    if (sel->data.wayland_source) {
+        // Source already exists, we can reuse it.
+        return;
+    }
+
+    using server_source = std::remove_pointer_t<decltype(srv_src)>;
+    auto wls = new wl_source<server_source>(srv_src, sel->data.x11.connection);
+
+    set_wl_source(sel, wls);
+    own_selection(sel, true);
+}
+
+/**
+ * React to Wl selection change.
+ */
+template<typename Selection>
+void handle_wl_selection_change(Selection* sel)
+{
+    auto srv_src = sel->get_current_source();
+
+    auto cleanup_activation_notifier = [&] {
+        QObject::disconnect(sel->data.active_window_notifier);
+        sel->data.active_window_notifier = QMetaObject::Connection();
+    };
+
+    // Wayland source gets created when:
+    // - the Wl selection exists,
+    // - its source is not Xwayland,
+    // - a client is active,
+    // - this client is an Xwayland one.
+    //
+    // In all other cases the Wayland source gets destroyed to shield against snooping X clients.
+
+    if (!srv_src) {
+        // Wayland selection has been removed.
+        cleanup_activation_notifier();
+        cleanup_wl_to_x11_source(sel);
+        return;
+    }
+
+    if (sel->data.source_int && sel->data.source_int->src() == srv_src) {
+        // Wayland selection has been changed to our internal Xwayland source. Nothing to do.
+        cleanup_activation_notifier();
+        return;
+    }
+
+    // Wayland native client provides new selection.
+    if (!sel->data.active_window_notifier) {
+        sel->data.active_window_notifier = QObject::connect(
+            workspace(), &Workspace::clientActivated, sel->data.qobject.get(), [sel] {
+                handle_wl_selection_client_change(sel);
+            });
+    }
+
+    sel->data.wayland_source.reset();
+
+    handle_wl_selection_client_change(sel);
+}
+
+}
