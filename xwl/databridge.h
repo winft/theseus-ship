@@ -64,9 +64,9 @@ private:
 
     xcb_query_extension_reply_t const* xfixes{nullptr};
 
-    std::unique_ptr<clipboard> m_clipboard;
-    std::unique_ptr<drag_and_drop> m_dnd;
-    std::unique_ptr<primary_selection> m_primarySelection;
+    std::unique_ptr<xwl::clipboard> clipboard;
+    std::unique_ptr<drag_and_drop> dnd;
+    std::unique_ptr<xwl::primary_selection> primary_selection;
 
     Q_DISABLE_COPY(data_bridge)
 };

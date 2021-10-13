@@ -54,7 +54,7 @@ public:
 private:
     Wrapland::Server::data_source* source;
     xcb_window_t proxy_window;
-    std::unique_ptr<x11_visit> m_visit;
+    std::unique_ptr<x11_visit> visit;
 
     Q_DISABLE_COPY(wl_drag)
 };
@@ -76,11 +76,11 @@ public:
 
     bool finished() const
     {
-        return m_state.finished;
+        return state.finished;
     }
-    Toplevel* target() const
+    Toplevel* get_target() const
     {
-        return m_target;
+        return target;
     }
 
 Q_SIGNALS:
@@ -102,10 +102,10 @@ private:
     void do_finish();
     void stop_connections();
 
-    Toplevel* m_target;
+    Toplevel* target;
     Wrapland::Server::data_source* source;
     xcb_window_t drag_window;
-    uint32_t m_version = 0;
+    uint32_t version = 0;
 
     struct {
         QMetaObject::Connection motion;
@@ -130,7 +130,7 @@ private:
         bool entered = false;
         bool dropped = false;
         bool finished = false;
-    } m_state;
+    } state;
 
     bool m_accepts = false;
 

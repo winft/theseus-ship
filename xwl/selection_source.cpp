@@ -38,15 +38,15 @@ template<typename ServerSource>
 wl_source<ServerSource>::wl_source(ServerSource* source, xcb_connection_t* connection)
     : server_source{source}
     , connection{connection}
-    , m_qobject(new q_wl_source)
+    , qobject{new q_wl_source}
 {
     assert(source);
 
     for (auto const& mime : source->mime_types()) {
-        m_offers.emplace_back(mime);
+        offers.emplace_back(mime);
     }
 
-    QObject::connect(source, &ServerSource::mime_type_offered, qobject(), [this](auto mime) {
+    QObject::connect(source, &ServerSource::mime_type_offered, get_qobject(), [this](auto mime) {
         receive_offer(mime);
     });
 }
@@ -54,13 +54,13 @@ wl_source<ServerSource>::wl_source(ServerSource* source, xcb_connection_t* conne
 template<typename ServerSource>
 wl_source<ServerSource>::~wl_source()
 {
-    delete m_qobject;
+    delete qobject;
 }
 
 template<typename ServerSource>
 void wl_source<ServerSource>::receive_offer(std::string const& mime)
 {
-    m_offers.emplace_back(mime);
+    offers.emplace_back(mime);
 }
 
 template<typename ServerSource>
@@ -85,12 +85,12 @@ template<typename ServerSource>
 void wl_source<ServerSource>::send_targets(xcb_selection_request_event_t* event)
 {
     std::vector<xcb_atom_t> targets;
-    targets.resize(m_offers.size() + 2);
+    targets.resize(offers.size() + 2);
     targets[0] = atoms->timestamp;
     targets[1] = atoms->targets;
 
     size_t cnt = 2;
-    for (auto const& mime : m_offers) {
+    for (auto const& mime : offers) {
         targets[cnt] = mime_type_to_atom(mime);
         cnt++;
     }
@@ -110,7 +110,7 @@ void wl_source<ServerSource>::send_targets(xcb_selection_request_event_t* event)
 template<typename ServerSource>
 void wl_source<ServerSource>::send_timestamp(xcb_selection_request_event_t* event)
 {
-    auto const time = timestamp();
+    auto const time = get_timestamp();
     xcb_change_property(connection,
                         XCB_PROP_MODE_REPLACE,
                         event->requestor,
@@ -159,7 +159,7 @@ bool wl_source<ServerSource>::check_start_transfer(xcb_selection_request_event_t
     server_source->request_data(*mimeIt, p[1]);
     waylandServer()->dispatch();
 
-    Q_EMIT qobject()->transfer_ready(new xcb_selection_request_event_t(*event), p[0]);
+    Q_EMIT get_qobject()->transfer_ready(new xcb_selection_request_event_t(*event), p[0]);
     return true;
 }
 
@@ -167,16 +167,15 @@ template<typename InternalSource>
 x11_source<InternalSource>::x11_source(xcb_xfixes_selection_notify_event_t* event,
                                        x11_data const& x11)
     : x11{x11}
-    , m_owner(event->owner)
-    , m_timestamp(event->timestamp)
-    , m_qobject(new q_x11_source)
+    , timestamp{event->timestamp}
+    , qobject{new q_x11_source}
 {
 }
 
 template<typename InternalSource>
 x11_source<InternalSource>::~x11_source()
 {
-    delete m_qobject;
+    delete qobject;
 }
 
 template<typename InternalSource>
@@ -184,7 +183,7 @@ void x11_source<InternalSource>::get_targets(xcb_window_t const window, xcb_atom
 {
     /* will lead to a selection request event for the new owner */
     xcb_convert_selection(
-        x11.connection, window, atom, atoms->targets, atoms->wl_selection, timestamp());
+        x11.connection, window, atom, atoms->targets, atoms->wl_selection, timestamp);
     xcb_flush(x11.connection);
 }
 
@@ -221,26 +220,26 @@ void x11_source<InternalSource>::handle_targets(xcb_window_t const requestor)
         }
 
         auto const mimeIt
-            = std::find_if(m_offers.begin(), m_offers.end(), [value, i](auto const& mime) {
+            = std::find_if(offers.begin(), offers.end(), [value, i](auto const& mime) {
                   return mime.atom == value[i];
               });
 
         auto mimePair = mime_atom{mimeStrings[0], value[i]};
-        if (mimeIt == m_offers.end()) {
+        if (mimeIt == offers.end()) {
             added.emplace_back(mimePair.id);
         } else {
-            remove_all(m_offers, mimePair);
+            remove_all(offers, mimePair);
         }
         all.emplace_back(mimePair);
     }
-    // all left in m_offers are not in the updated targets
-    for (auto const& mimePair : m_offers) {
+    // all left in offers are not in the updated targets
+    for (auto const& mimePair : offers) {
         removed.emplace_back(mimePair.id);
     }
-    m_offers = all;
+    offers = all;
 
     if (!added.empty() || !removed.empty()) {
-        Q_EMIT qobject()->offers_changed(added, removed);
+        Q_EMIT qobject->offers_changed(added, removed);
     }
 
     free(reply);
@@ -250,19 +249,19 @@ template<typename InternalSource>
 void x11_source<InternalSource>::set_source(InternalSource* src)
 {
     Q_ASSERT(src);
-    if (m_source) {
-        delete m_source;
+    if (source) {
+        delete source;
     }
 
-    m_source = src;
+    source = src;
 
-    for (auto const& offer : m_offers) {
+    for (auto const& offer : offers) {
         src->offer(offer.id);
     }
 
     QObject::connect(src,
                      &InternalSource::data_requested,
-                     qobject(),
+                     get_qobject(),
                      [this](auto const& mimeName, auto fd) { start_transfer(mimeName, fd); });
 }
 
@@ -270,7 +269,7 @@ template<typename InternalSource>
 void x11_source<InternalSource>::set_offers(mime_atoms const& offers)
 {
     // TODO: share code with handle_targets and emit signals accordingly?
-    m_offers = offers;
+    this->offers = offers;
 }
 
 template<typename InternalSource>
@@ -290,16 +289,16 @@ bool x11_source<InternalSource>::handle_selection_notify(xcb_selection_notify_ev
 template<typename InternalSource>
 void x11_source<InternalSource>::start_transfer(std::string const& mimeName, qint32 fd)
 {
-    auto const mimeIt = std::find_if(m_offers.begin(),
-                                     m_offers.end(),
-                                     [&mimeName](auto const& mime) { return mime.id == mimeName; });
-    if (mimeIt == m_offers.end()) {
+    auto const mimeIt = std::find_if(offers.begin(), offers.end(), [&mimeName](auto const& mime) {
+        return mime.id == mimeName;
+    });
+    if (mimeIt == offers.end()) {
         qCDebug(KWIN_XWL) << "Sending X11 clipboard to Wayland failed: unsupported MIME.";
         close(fd);
         return;
     }
 
-    Q_EMIT qobject()->transfer_ready(mimeIt->atom, fd);
+    Q_EMIT get_qobject()->transfer_ready(mimeIt->atom, fd);
 }
 
 // Templates specializations

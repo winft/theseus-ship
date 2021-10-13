@@ -60,18 +60,18 @@ public:
 
     bool handle_selection_request(xcb_selection_request_event_t* event);
 
-    xcb_timestamp_t timestamp() const
+    xcb_timestamp_t get_timestamp() const
     {
-        return m_timestamp;
+        return timestamp;
     }
     void set_timestamp(xcb_timestamp_t time)
     {
-        m_timestamp = time;
+        timestamp = time;
     }
 
-    q_wl_source* qobject() const
+    q_wl_source* get_qobject() const
     {
-        return m_qobject;
+        return qobject;
     }
 
 private:
@@ -84,10 +84,10 @@ private:
     ServerSource* server_source = nullptr;
     xcb_connection_t* connection;
 
-    std::vector<std::string> m_offers;
+    std::vector<std::string> offers;
 
-    xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
-    q_wl_source* m_qobject;
+    xcb_timestamp_t timestamp = XCB_CURRENT_TIME;
+    q_wl_source* qobject;
 
     Q_DISABLE_COPY(wl_source)
 };
@@ -126,32 +126,32 @@ public:
      * is called again, it will delete the previous data source.
      */
     void set_source(InternalSource* src);
-    InternalSource* source() const
+    InternalSource* get_source() const
     {
-        return m_source;
+        return source;
     }
     void get_targets(xcb_window_t const window, xcb_atom_t const atom) const;
 
-    mime_atoms offers() const
+    mime_atoms get_offers() const
     {
-        return m_offers;
+        return offers;
     }
     void set_offers(mime_atoms const& offers);
 
     bool handle_selection_notify(xcb_selection_notify_event_t* event);
 
-    xcb_timestamp_t timestamp() const
+    xcb_timestamp_t get_timestamp() const
     {
-        return m_timestamp;
+        return timestamp;
     }
     void set_timestamp(xcb_timestamp_t time)
     {
-        m_timestamp = time;
+        timestamp = time;
     }
 
-    q_x11_source* qobject() const
+    q_x11_source* get_qobject() const
     {
-        return m_qobject;
+        return qobject;
     }
 
     x11_data const x11;
@@ -160,13 +160,12 @@ private:
     void handle_targets(xcb_window_t const requestor);
     void start_transfer(std::string const& mimeName, qint32 fd);
 
-    xcb_window_t m_owner;
-    InternalSource* m_source = nullptr;
+    InternalSource* source = nullptr;
 
-    mime_atoms m_offers;
+    mime_atoms offers;
 
-    xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
-    q_x11_source* m_qobject;
+    xcb_timestamp_t timestamp = XCB_CURRENT_TIME;
+    q_x11_source* qobject;
 
     Q_DISABLE_COPY(x11_source)
 };

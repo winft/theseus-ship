@@ -37,10 +37,9 @@ void drag::send_client_message(xcb_window_t target,
         *data,              // data
     };
 
-    auto xcbConn = kwinApp()->x11Connection();
-    xcb_send_event(
-        xcbConn, 0, target, XCB_EVENT_MASK_NO_EVENT, reinterpret_cast<char const*>(&event));
-    xcb_flush(xcbConn);
+    auto con = kwinApp()->x11Connection();
+    xcb_send_event(con, 0, target, XCB_EVENT_MASK_NO_EVENT, reinterpret_cast<char const*>(&event));
+    xcb_flush(con);
 }
 
 dnd_action drag::atom_to_client_action(xcb_atom_t atom)

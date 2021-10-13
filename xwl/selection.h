@@ -131,15 +131,15 @@ inline void send_selection_notify(xcb_selection_request_event_t* event, bool suc
     notify.target = event->target;
     notify.property = success ? event->property : xcb_atom_t(XCB_ATOM_NONE);
 
-    auto xcbConn = kwinApp()->x11Connection();
-    xcb_send_event(xcbConn, 0, event->requestor, XCB_EVENT_MASK_NO_EVENT, (char const*)&notify);
-    xcb_flush(xcbConn);
+    auto xcb_con = kwinApp()->x11Connection();
+    xcb_send_event(xcb_con, 0, event->requestor, XCB_EVENT_MASK_NO_EVENT, (char const*)&notify);
+    xcb_flush(xcb_con);
 }
 
 template<typename Selection>
 void register_xfixes(Selection* sel)
 {
-    auto xcb_conn = kwinApp()->x11Connection();
+    auto xcb_con = kwinApp()->x11Connection();
 
     uint32_t const mask = XCB_XFIXES_SELECTION_EVENT_MASK_SET_SELECTION_OWNER
         | XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_WINDOW_DESTROY
@@ -147,7 +147,7 @@ void register_xfixes(Selection* sel)
 
     xcb_xfixes_select_selection_input(
         kwinApp()->x11Connection(), sel->data.window, sel->data.atom, mask);
-    xcb_flush(xcb_conn);
+    xcb_flush(xcb_con);
 }
 
 // on selection owner changes by X clients (Xwl -> Wl)
@@ -310,16 +310,16 @@ bool handle_property_notify(Selection* sel, xcb_property_notify_event_t* event)
 template<typename Selection>
 void own_selection(Selection* sel, bool own)
 {
-    auto xcb_conn = sel->data.x11.connection;
+    auto xcb_con = sel->data.x11.connection;
 
     if (own) {
-        xcb_set_selection_owner(xcb_conn, sel->data.window, sel->data.atom, XCB_TIME_CURRENT_TIME);
+        xcb_set_selection_owner(xcb_con, sel->data.window, sel->data.atom, XCB_TIME_CURRENT_TIME);
     } else {
         sel->data.disown_pending = true;
-        xcb_set_selection_owner(xcb_conn, XCB_WINDOW_NONE, sel->data.atom, sel->data.timestamp);
+        xcb_set_selection_owner(xcb_con, XCB_WINDOW_NONE, sel->data.atom, sel->data.timestamp);
     }
 
-    xcb_flush(xcb_conn);
+    xcb_flush(xcb_con);
 }
 
 // sets the current provider of the selection
@@ -333,7 +333,7 @@ void set_wl_source(Selection* sel, wl_source<server_source>* source)
 
     if (source) {
         sel->data.wayland_source = source;
-        QObject::connect(source->qobject(),
+        QObject::connect(source->get_qobject(),
                          &q_wl_source::transfer_ready,
                          sel->data.qobject.get(),
                          [sel](auto event, auto fd) { start_transfer_to_x11(sel, event, fd); });
@@ -356,13 +356,13 @@ void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* even
     using internal_source = std::remove_pointer_t<decltype(sel->data.source_int)>;
     sel->data.x11_source = new x11_source<internal_source>(event, sel->data.x11);
 
-    QObject::connect(sel->data.x11_source->qobject(),
+    QObject::connect(sel->data.x11_source->get_qobject(),
                      &q_x11_source::offers_changed,
                      sel->data.qobject.get(),
                      [sel](auto const& added, auto const& removed) {
                          handle_x11_offer_change(sel, added, removed);
                      });
-    QObject::connect(sel->data.x11_source->qobject(),
+    QObject::connect(sel->data.x11_source->get_qobject(),
                      &q_x11_source::transfer_ready,
                      sel->data.qobject.get(),
                      [sel](auto target, auto fd) { start_transfer_to_wayland(sel, target, fd); });
@@ -374,7 +374,7 @@ void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
     auto transfer = new x11_to_wl_transfer(sel->data.atom,
                                            target,
                                            fd,
-                                           sel->data.x11_source->timestamp(),
+                                           sel->data.x11_source->get_timestamp(),
                                            sel->data.requestor_window,
                                            sel->data.x11,
                                            sel->data.qobject.get());
@@ -382,7 +382,7 @@ void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
 
     QObject::connect(
         transfer, &x11_to_wl_transfer::finished, sel->data.qobject.get(), [sel, transfer]() {
-            Q_EMIT sel->data.qobject->transfer_finished(transfer->timestamp());
+            Q_EMIT sel->data.qobject->transfer_finished(transfer->get_timestamp());
             delete transfer;
             remove_all(sel->data.transfers.x11_to_wl, transfer);
             end_timeout_transfers_timer(sel);
@@ -402,7 +402,7 @@ void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event,
                      &send_selection_notify);
     QObject::connect(
         transfer, &wl_to_x11_transfer::finished, sel->data.qobject.get(), [sel, transfer]() {
-            Q_EMIT sel->data.qobject->transfer_finished(transfer->timestamp());
+            Q_EMIT sel->data.qobject->transfer_finished(transfer->get_timestamp());
 
             // TODO(romangg): Serialize? see comment below.
             delete transfer;
@@ -419,7 +419,7 @@ void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event,
     start_timeout_transfers_timer(sel);
 }
 
-// Timeout transfers, which have become inactive due to client errors.
+// Time out transfers, which have become inactive due to client errors.
 template<typename Selection>
 void timeout_transfers(Selection* sel)
 {
@@ -454,67 +454,67 @@ void end_timeout_transfers_timer(Selection* sel)
     }
 }
 
-inline xcb_atom_t mime_type_to_atom_literal(std::string const& mimeType)
+inline xcb_atom_t mime_type_to_atom_literal(std::string const& mime_type)
 {
-    return Xcb::Atom(mimeType.c_str(), false, kwinApp()->x11Connection());
+    return Xcb::Atom(mime_type.c_str(), false, kwinApp()->x11Connection());
 }
 
-inline xcb_atom_t mime_type_to_atom(std::string const& mimeType)
+inline xcb_atom_t mime_type_to_atom(std::string const& mime_type)
 {
-    if (mimeType == "text/plain;charset=utf-8") {
+    if (mime_type == "text/plain;charset=utf-8") {
         return atoms->utf8_string;
     }
-    if (mimeType == "text/plain") {
+    if (mime_type == "text/plain") {
         return atoms->text;
     }
-    if (mimeType == "text/x-uri") {
+    if (mime_type == "text/x-uri") {
         return atoms->uri_list;
     }
-    return mime_type_to_atom_literal(mimeType);
+    return mime_type_to_atom_literal(mime_type);
 }
 
 inline std::string atom_name(xcb_atom_t atom)
 {
-    auto xcbConn = kwinApp()->x11Connection();
-    auto nameCookie = xcb_get_atom_name(xcbConn, atom);
-    auto nameReply = xcb_get_atom_name_reply(xcbConn, nameCookie, nullptr);
-    if (!nameReply) {
+    auto xcb_con = kwinApp()->x11Connection();
+    auto name_cookie = xcb_get_atom_name(xcb_con, atom);
+    auto name_reply = xcb_get_atom_name_reply(xcb_con, name_cookie, nullptr);
+    if (!name_reply) {
         return std::string();
     }
 
-    auto const length = xcb_get_atom_name_name_length(nameReply);
-    auto const name = std::string(xcb_get_atom_name_name(nameReply), length);
+    auto const length = xcb_get_atom_name_name_length(name_reply);
+    auto const name = std::string(xcb_get_atom_name_name(name_reply), length);
 
-    free(nameReply);
+    free(name_reply);
     return name;
 }
 
 inline std::vector<std::string> atom_to_mime_types(xcb_atom_t atom)
 {
-    std::vector<std::string> mimeTypes;
+    std::vector<std::string> mime_types;
 
     if (atom == atoms->utf8_string) {
-        mimeTypes.emplace_back("text/plain;charset=utf-8");
+        mime_types.emplace_back("text/plain;charset=utf-8");
     } else if (atom == atoms->text) {
-        mimeTypes.emplace_back("text/plain");
+        mime_types.emplace_back("text/plain");
     } else if (atom == atoms->uri_list || atom == atoms->netscape_url || atom == atoms->moz_url) {
         // We identify netscape and moz format as less detailed formats text/uri-list,
         // text/x-uri and accept the information loss.
-        mimeTypes.emplace_back("text/uri-list");
-        mimeTypes.emplace_back("text/x-uri");
+        mime_types.emplace_back("text/uri-list");
+        mime_types.emplace_back("text/x-uri");
     } else {
-        mimeTypes.emplace_back(atom_name(atom));
+        mime_types.emplace_back(atom_name(atom));
     }
-    return mimeTypes;
+    return mime_types;
 }
 
 template<typename Selection>
 void register_x11_selection(Selection* sel, QSize const& window_size)
 {
-    auto xcbConn = sel->data.x11.connection;
+    auto xcb_con = sel->data.x11.connection;
 
     uint32_t const values[] = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
-    xcb_create_window(xcbConn,
+    xcb_create_window(xcb_con,
                       XCB_COPY_FROM_PARENT,
                       sel->data.window,
                       kwinApp()->x11RootWindow(),
@@ -528,7 +528,7 @@ void register_x11_selection(Selection* sel, QSize const& window_size)
                       XCB_CW_EVENT_MASK,
                       values);
     register_xfixes(sel);
-    xcb_flush(xcbConn);
+    xcb_flush(xcb_con);
 }
 
 template<typename Selection>
@@ -627,13 +627,13 @@ void handle_x11_offer_change(Selection* sel,
         return;
     }
 
-    auto const offers = source->offers();
+    auto const offers = source->get_offers();
     if (offers.empty()) {
         sel->set_selection(nullptr);
         return;
     }
 
-    if (!source->source() || !removed.empty()) {
+    if (!source->get_source() || !removed.empty()) {
         // create new Wl DataSource if there is none or when types
         // were removed (Wl Data Sources can only add types)
         auto old_source_int = sel->data.source_int;
@@ -646,7 +646,7 @@ void handle_x11_offer_change(Selection* sel,
         // Delete old internal source after setting the new one so data-control devices won't
         // receive an intermediate null selection and send it back to us overriding our new one.
         delete old_source_int;
-    } else if (auto dataSource = source->source()) {
+    } else if (auto dataSource = source->get_source()) {
         for (auto const& mime : added) {
             dataSource->offer(mime);
         }

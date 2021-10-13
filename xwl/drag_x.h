@@ -56,7 +56,7 @@ public:
     void handle_transfer_finished(xcb_timestamp_t time);
 
     std::unique_ptr<data_source_ext> data_source;
-    std::unique_ptr<wl_visit> m_visit;
+    std::unique_ptr<wl_visit> visit;
 
 private:
     void set_offers(mime_atoms const& offers);
@@ -64,14 +64,11 @@ private:
 
     bool check_for_finished();
 
-    mime_atoms m_offers;
+    x11_source_ext* source;
+    mime_atoms offers;
+    std::vector<std::pair<xcb_timestamp_t, bool>> data_requests;
 
-    x11_source_ext* m_source;
-    std::vector<std::pair<xcb_timestamp_t, bool>> m_dataRequests;
-
-    std::vector<std::unique_ptr<wl_visit>> m_oldVisits;
-
-    bool m_performed = false;
+    std::vector<std::unique_ptr<wl_visit>> old_visits;
 
     Q_DISABLE_COPY(x11_drag)
 };
@@ -87,25 +84,25 @@ public:
     bool handle_client_message(xcb_client_message_event_t* event);
     bool leave();
 
-    Toplevel* target() const
+    Toplevel* get_target() const
     {
-        return m_target;
+        return target;
     }
-    xcb_window_t window() const
+    xcb_window_t get_window() const
     {
-        return m_window;
+        return window;
     }
-    bool entered() const
+    bool get_entered() const
     {
-        return m_entered;
+        return entered;
     }
-    bool drop_handled() const
+    bool get_drop_handled() const
     {
-        return m_dropHandled;
+        return drop_handled;
     }
-    bool finished() const
+    bool get_finished() const
     {
-        return m_finished;
+        return finished;
     }
     void send_finished();
 
@@ -128,21 +125,21 @@ private:
     void do_finish();
     void unmap_proxy_window();
 
-    Toplevel* m_target;
-    xcb_window_t m_window;
+    Toplevel* target;
+    xcb_window_t window;
 
-    xcb_window_t m_srcWindow = XCB_WINDOW_NONE;
+    xcb_window_t source_window = XCB_WINDOW_NONE;
     x11_source_ext* source;
 
     uint32_t m_version = 0;
 
-    xcb_atom_t m_actionAtom;
-    dnd_action m_action = dnd_action::none;
+    xcb_atom_t action_atom;
+    dnd_action action = dnd_action::none;
 
-    bool m_mapped = false;
-    bool m_entered = false;
-    bool m_dropHandled = false;
-    bool m_finished = false;
+    bool mapped = false;
+    bool entered = false;
+    bool drop_handled = false;
+    bool finished = false;
 
     Q_DISABLE_COPY(wl_visit)
 };

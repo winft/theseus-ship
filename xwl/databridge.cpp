@@ -34,22 +34,22 @@ data_bridge::data_bridge(x11_data const& x11)
     xcb_prefetch_extension_data(x11.connection, &xcb_xfixes_id);
     xfixes = xcb_get_extension_data(x11.connection, &xcb_xfixes_id);
 
-    m_clipboard.reset(new clipboard(atoms->clipboard, x11));
-    m_dnd.reset(new drag_and_drop(atoms->xdnd_selection, x11));
-    m_primarySelection.reset(new primary_selection(atoms->primary_selection, x11));
+    clipboard.reset(new xwl::clipboard(atoms->clipboard, x11));
+    dnd.reset(new drag_and_drop(atoms->xdnd_selection, x11));
+    primary_selection.reset(new xwl::primary_selection(atoms->primary_selection, x11));
 }
 
 data_bridge::~data_bridge() = default;
 
 bool data_bridge::filter_event(xcb_generic_event_t* event)
 {
-    if (xwl::filter_event(m_clipboard.get(), event)) {
+    if (xwl::filter_event(clipboard.get(), event)) {
         return true;
     }
-    if (xwl::filter_event(m_dnd.get(), event)) {
+    if (xwl::filter_event(dnd.get(), event)) {
         return true;
     }
-    if (xwl::filter_event(m_primarySelection.get(), event)) {
+    if (xwl::filter_event(primary_selection.get(), event)) {
         return true;
     }
     if (event->response_type - xfixes->first_event == XCB_XFIXES_SELECTION_NOTIFY) {
@@ -61,23 +61,23 @@ bool data_bridge::filter_event(xcb_generic_event_t* event)
 bool data_bridge::handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
 {
     if (event->selection == atoms->clipboard) {
-        return xwl::handle_xfixes_notify(m_clipboard.get(), event);
+        return xwl::handle_xfixes_notify(clipboard.get(), event);
     }
     if (event->selection == atoms->primary_selection) {
-        return xwl::handle_xfixes_notify(m_primarySelection.get(), event);
+        return xwl::handle_xfixes_notify(primary_selection.get(), event);
     }
     if (event->selection == atoms->xdnd_selection) {
-        return xwl::handle_xfixes_notify(m_dnd.get(), event);
+        return xwl::handle_xfixes_notify(dnd.get(), event);
     }
     return false;
 }
 
 drag_event_reply data_bridge::drag_move_filter(Toplevel* target, QPoint const& pos)
 {
-    if (!m_dnd) {
+    if (!dnd) {
         return drag_event_reply::wayland;
     }
-    return m_dnd->drag_move_filter(target, pos);
+    return dnd->drag_move_filter(target, pos);
 }
 
 }

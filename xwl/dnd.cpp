@@ -98,7 +98,7 @@ void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_eve
 template<>
 bool handle_client_message(drag_and_drop* sel, xcb_client_message_event_t* event)
 {
-    for (auto& drag : sel->m_oldDrags) {
+    for (auto& drag : sel->old_drags) {
         if (drag->handle_client_message(event)) {
             return true;
         }
@@ -140,8 +140,8 @@ drag_and_drop::drag_and_drop(xcb_atom_t atom, x11_data const& x11)
     register_x11_selection(this, QSize(8192, 8192));
     register_xfixes(this);
 
-    auto xcbConn = kwinApp()->x11Connection();
-    xcb_change_property(xcbConn,
+    auto xcb_con = kwinApp()->x11Connection();
+    xcb_change_property(xcb_con,
                         XCB_PROP_MODE_REPLACE,
                         data.window,
                         atoms->xdnd_aware,
@@ -149,7 +149,7 @@ drag_and_drop::drag_and_drop(xcb_atom_t atom, x11_data const& x11)
                         32,
                         1,
                         &s_version);
-    xcb_flush(xcbConn);
+    xcb_flush(xcb_con);
 
     QObject::connect(waylandServer()->seat(),
                      &Wrapland::Server::Seat::dragStarted,
@@ -173,7 +173,7 @@ drag_event_reply drag_and_drop::drag_move_filter(Toplevel* target, QPoint const&
         auto reply = xdrag->move_filter(target, pos);
 
         // Adapt the requestor window if a visit is ongoing. Otherwise reset it to our own window.
-        data.requestor_window = xdrag->m_visit ? xdrag->m_visit->window() : data.window;
+        data.requestor_window = xdrag->visit ? xdrag->visit->get_window() : data.window;
         return reply;
     }
     assert(false);
@@ -208,7 +208,7 @@ void drag_and_drop::end_drag()
             QObject::connect(drag.get(), &drag::finish, data.qobject.get(), [this](auto drag) {
                 clear_old_drag(drag);
             });
-            m_oldDrags.emplace_back(drag.release());
+            old_drags.emplace_back(drag.release());
         }
     };
 
@@ -226,7 +226,7 @@ void drag_and_drop::end_drag()
 
 void drag_and_drop::clear_old_drag(xwl::drag* drag)
 {
-    remove_all_if(m_oldDrags, [drag](auto&& old) { return old.get() == drag; });
+    remove_all_if(old_drags, [drag](auto&& old) { return old.get() == drag; });
 }
 
 }

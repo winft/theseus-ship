@@ -59,7 +59,7 @@ public:
 
     std::unique_ptr<wl_drag> wldrag;
     std::unique_ptr<x11_drag> xdrag;
-    std::vector<std::unique_ptr<drag>> m_oldDrags;
+    std::vector<std::unique_ptr<drag>> old_drags;
 
     drag_and_drop(xcb_atom_t atom, x11_data const& x11);
     ~drag_and_drop();

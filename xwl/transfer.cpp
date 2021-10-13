@@ -34,30 +34,30 @@ constexpr uint32_t s_incrChunkSize = 63 * 1024;
 
 transfer::transfer(xcb_atom_t selection, qint32 fd, xcb_timestamp_t timestamp, QObject* parent)
     : QObject(parent)
-    , m_atom(selection)
-    , m_fd(fd)
-    , m_timestamp(timestamp)
+    , atom{selection}
+    , fd{fd}
+    , timestamp{timestamp}
 {
 }
 
 void transfer::create_socket_notifier(QSocketNotifier::Type type)
 {
-    delete m_notifier;
-    m_notifier = new QSocketNotifier(m_fd, type, this);
+    delete notifier;
+    notifier = new QSocketNotifier(fd, type, this);
 }
 
 void transfer::clear_socket_notifier()
 {
-    delete m_notifier;
-    m_notifier = nullptr;
+    delete notifier;
+    notifier = nullptr;
 }
 
 void transfer::timeout()
 {
-    if (m_timeout) {
+    if (timed_out) {
         end_transfer();
     }
-    m_timeout = true;
+    timed_out = true;
 }
 
 void transfer::end_transfer()
@@ -69,11 +69,11 @@ void transfer::end_transfer()
 
 void transfer::close_fd()
 {
-    if (m_fd < 0) {
+    if (fd < 0) {
         return;
     }
-    close(m_fd);
-    m_fd = -1;
+    close(fd);
+    fd = -1;
 }
 
 wl_to_x11_transfer::wl_to_x11_transfer(xcb_atom_t selection,
@@ -81,14 +81,14 @@ wl_to_x11_transfer::wl_to_x11_transfer(xcb_atom_t selection,
                                        qint32 fd,
                                        QObject* parent)
     : transfer(selection, fd, 0, parent)
-    , m_request(request)
+    , request(request)
 {
 }
 
 wl_to_x11_transfer::~wl_to_x11_transfer()
 {
-    delete m_request;
-    m_request = nullptr;
+    delete request;
+    request = nullptr;
 }
 
 void wl_to_x11_transfer::start_transfer_from_source()
@@ -102,70 +102,70 @@ void wl_to_x11_transfer::start_transfer_from_source()
 
 int wl_to_x11_transfer::flush_source_data()
 {
-    auto xcbConn = kwinApp()->x11Connection();
+    auto xcb_con = kwinApp()->x11Connection();
 
-    xcb_change_property(xcbConn,
+    xcb_change_property(xcb_con,
                         XCB_PROP_MODE_REPLACE,
-                        m_request->requestor,
-                        m_request->property,
-                        m_request->target,
+                        request->requestor,
+                        request->property,
+                        request->target,
                         8,
-                        m_chunks.front().first.size(),
-                        m_chunks.front().first.data());
-    xcb_flush(xcbConn);
+                        chunks.front().first.size(),
+                        chunks.front().first.data());
+    xcb_flush(xcb_con);
 
-    m_propertyIsSet = true;
+    property_is_set = true;
     reset_timeout();
 
-    auto const rm = m_chunks.front();
-    m_chunks.pop_front();
+    auto const rm = chunks.front();
+    chunks.pop_front();
     return rm.first.size();
 }
 
 void wl_to_x11_transfer::start_incr()
 {
-    Q_ASSERT(m_chunks.size() == 1);
+    Q_ASSERT(chunks.size() == 1);
 
-    auto xcbConn = kwinApp()->x11Connection();
+    auto xcb_con = kwinApp()->x11Connection();
 
     uint32_t mask[] = {XCB_EVENT_MASK_PROPERTY_CHANGE};
-    xcb_change_window_attributes(xcbConn, m_request->requestor, XCB_CW_EVENT_MASK, mask);
+    xcb_change_window_attributes(xcb_con, request->requestor, XCB_CW_EVENT_MASK, mask);
 
     // spec says to make the available space larger
     uint32_t const chunkSpace = 1024 + s_incrChunkSize;
-    xcb_change_property(xcbConn,
+    xcb_change_property(xcb_con,
                         XCB_PROP_MODE_REPLACE,
-                        m_request->requestor,
-                        m_request->property,
+                        request->requestor,
+                        request->property,
                         atoms->incr,
                         32,
                         1,
                         &chunkSpace);
-    xcb_flush(xcbConn);
+    xcb_flush(xcb_con);
 
     set_incr(true);
     // first data will be flushed after the property has been deleted
     // again by the requestor
-    m_flushPropertyOnDelete = true;
-    m_propertyIsSet = true;
-    Q_EMIT selection_notify(m_request, true);
+    flush_property_on_delete = true;
+    property_is_set = true;
+    Q_EMIT selection_notify(request, true);
 }
 
 void wl_to_x11_transfer::read_wl_source()
 {
-    if (m_chunks.size() == 0 || m_chunks.back().second == s_incrChunkSize) {
+    if (chunks.size() == 0 || chunks.back().second == s_incrChunkSize) {
         // append new chunk
         auto next = std::pair<QByteArray, int>();
         next.first.resize(s_incrChunkSize);
         next.second = 0;
-        m_chunks.push_back(next);
+        chunks.push_back(next);
     }
 
-    auto const oldLen = m_chunks.back().second;
-    auto const avail = s_incrChunkSize - m_chunks.back().second;
+    auto const oldLen = chunks.back().second;
+    auto const avail = s_incrChunkSize - chunks.back().second;
     Q_ASSERT(avail > 0);
 
-    ssize_t readLen = read(fd(), m_chunks.back().first.data() + oldLen, avail);
+    ssize_t readLen = read(get_fd(), chunks.back().first.data() + oldLen, avail);
     if (readLen == -1) {
         qCWarning(KWIN_XWL) << "Error reading in Wl data.";
 
@@ -173,16 +173,16 @@ void wl_to_x11_transfer::read_wl_source()
         end_transfer();
         return;
     }
-    m_chunks.back().second = oldLen + readLen;
+    chunks.back().second = oldLen + readLen;
 
     if (readLen == 0) {
         // at the fd end - complete transfer now
-        m_chunks.back().first.resize(m_chunks.back().second);
+        chunks.back().first.resize(chunks.back().second);
 
-        if (incr()) {
+        if (get_incr()) {
             // incremental transfer is to be completed now
-            m_flushPropertyOnDelete = true;
-            if (!m_propertyIsSet) {
+            flush_property_on_delete = true;
+            if (!property_is_set) {
                 // flush if target's property is not set at the moment
                 flush_source_data();
             }
@@ -191,14 +191,14 @@ void wl_to_x11_transfer::read_wl_source()
             // non incremental transfer is to be completed now,
             // data can be transferred to X client via a single property set
             flush_source_data();
-            Q_EMIT selection_notify(m_request, true);
+            Q_EMIT selection_notify(request, true);
             end_transfer();
         }
-    } else if (m_chunks.back().second == s_incrChunkSize) {
+    } else if (chunks.back().second == s_incrChunkSize) {
         // first chunk full, but not yet at fd end -> go incremental
-        if (incr()) {
-            m_flushPropertyOnDelete = true;
-            if (!m_propertyIsSet) {
+        if (get_incr()) {
+            flush_property_on_delete = true;
+            if (!property_is_set) {
                 // flush if target's property is not set at the moment
                 flush_source_data();
             }
@@ -212,8 +212,8 @@ void wl_to_x11_transfer::read_wl_source()
 
 bool wl_to_x11_transfer::handle_property_notify(xcb_property_notify_event_t* event)
 {
-    if (event->window == m_request->requestor) {
-        if (event->state == XCB_PROPERTY_DELETE && event->atom == m_request->property) {
+    if (event->window == request->requestor) {
+        if (event->state == XCB_PROPERTY_DELETE && event->atom == request->property) {
             handle_property_delete();
         }
         return true;
@@ -223,30 +223,30 @@ bool wl_to_x11_transfer::handle_property_notify(xcb_property_notify_event_t* eve
 
 void wl_to_x11_transfer::handle_property_delete()
 {
-    if (!incr()) {
+    if (!get_incr()) {
         // non-incremental transfer: nothing to do
         return;
     }
-    m_propertyIsSet = false;
+    property_is_set = false;
 
-    if (m_flushPropertyOnDelete) {
-        if (!socket_notifier() && m_chunks.empty()) {
+    if (flush_property_on_delete) {
+        if (!socket_notifier() && chunks.empty()) {
             // transfer complete
-            auto xcbConn = kwinApp()->x11Connection();
+            auto xcb_con = kwinApp()->x11Connection();
 
             uint32_t mask[] = {0};
-            xcb_change_window_attributes(xcbConn, m_request->requestor, XCB_CW_EVENT_MASK, mask);
+            xcb_change_window_attributes(xcb_con, request->requestor, XCB_CW_EVENT_MASK, mask);
 
-            xcb_change_property(xcbConn,
+            xcb_change_property(xcb_con,
                                 XCB_PROP_MODE_REPLACE,
-                                m_request->requestor,
-                                m_request->property,
-                                m_request->target,
+                                request->requestor,
+                                request->property,
+                                request->target,
                                 8,
                                 0,
                                 nullptr);
-            xcb_flush(xcbConn);
-            m_flushPropertyOnDelete = false;
+            xcb_flush(xcb_con);
+            flush_property_on_delete = false;
             end_transfer();
         } else {
             flush_source_data();
@@ -264,12 +264,12 @@ x11_to_wl_transfer::x11_to_wl_transfer(xcb_atom_t selection,
     : transfer(selection, fd, timestamp, parent)
 {
     // create transfer window
-    auto xcbConn = kwinApp()->x11Connection();
-    m_window = xcb_generate_id(xcbConn);
+    auto xcb_con = kwinApp()->x11Connection();
+    window = xcb_generate_id(xcb_con);
     uint32_t const values[] = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_PROPERTY_CHANGE};
-    xcb_create_window(xcbConn,
+    xcb_create_window(xcb_con,
                       XCB_COPY_FROM_PARENT,
-                      m_window,
+                      window,
                       parentWindow,
                       0,
                       0,
@@ -281,23 +281,23 @@ x11_to_wl_transfer::x11_to_wl_transfer(xcb_atom_t selection,
                       XCB_CW_EVENT_MASK,
                       values);
     // convert selection
-    xcb_convert_selection(xcbConn, m_window, selection, target, atoms->wl_selection, timestamp);
-    xcb_flush(xcbConn);
+    xcb_convert_selection(xcb_con, window, selection, target, atoms->wl_selection, timestamp);
+    xcb_flush(xcb_con);
 }
 
 x11_to_wl_transfer::~x11_to_wl_transfer()
 {
-    auto xcbConn = kwinApp()->x11Connection();
-    xcb_destroy_window(xcbConn, m_window);
-    xcb_flush(xcbConn);
+    auto xcb_con = kwinApp()->x11Connection();
+    xcb_destroy_window(xcb_con, window);
+    xcb_flush(xcb_con);
 
-    delete m_receiver;
-    m_receiver = nullptr;
+    delete receiver;
+    receiver = nullptr;
 }
 
 bool x11_to_wl_transfer::handle_property_notify(xcb_property_notify_event_t* event)
 {
-    if (event->window == m_window) {
+    if (event->window == window) {
         if (event->state == XCB_PROPERTY_NEW_VALUE && event->atom == atoms->wl_selection) {
             get_incr_chunk();
         }
@@ -308,10 +308,10 @@ bool x11_to_wl_transfer::handle_property_notify(xcb_property_notify_event_t* eve
 
 bool x11_to_wl_transfer::handle_selection_notify(xcb_selection_notify_event_t* event)
 {
-    if (event->requestor != m_window) {
+    if (event->requestor != window) {
         return false;
     }
-    if (event->selection != atom()) {
+    if (event->selection != get_atom()) {
         return false;
     }
     if (event->property == XCB_ATOM_NONE) {
@@ -323,7 +323,7 @@ bool x11_to_wl_transfer::handle_selection_notify(xcb_selection_notify_event_t* e
         // TODO: or allow it?
         return true;
     }
-    if (m_receiver) {
+    if (receiver) {
         // second selection notify element - misbehaving source
 
         // TODO: cancel this transfer?
@@ -331,11 +331,11 @@ bool x11_to_wl_transfer::handle_selection_notify(xcb_selection_notify_event_t* e
     }
 
     if (event->target == atoms->netscape_url) {
-        m_receiver = new netscape_url_receiver;
+        receiver = new netscape_url_receiver;
     } else if (event->target == atoms->moz_url) {
-        m_receiver = new moz_url_receiver;
+        receiver = new moz_url_receiver;
     } else {
-        m_receiver = new data_receiver;
+        receiver = new data_receiver;
     }
     start_transfer();
     return true;
@@ -343,11 +343,11 @@ bool x11_to_wl_transfer::handle_selection_notify(xcb_selection_notify_event_t* e
 
 void x11_to_wl_transfer::start_transfer()
 {
-    auto xcbConn = kwinApp()->x11Connection();
+    auto xcb_con = kwinApp()->x11Connection();
     auto cookie = xcb_get_property(
-        xcbConn, 1, m_window, atoms->wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 0x1fffffff);
+        xcb_con, 1, window, atoms->wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 0x1fffffff);
 
-    auto reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
+    auto reply = xcb_get_property_reply(xcb_con, cookie, nullptr);
     if (reply == nullptr) {
         qCWarning(KWIN_XWL) << "Can't get selection property.";
         end_transfer();
@@ -360,27 +360,27 @@ void x11_to_wl_transfer::start_transfer()
     } else {
         set_incr(false);
         // reply's ownership is transferred
-        m_receiver->transfer_from_property(reply);
+        receiver->transfer_from_property(reply);
         data_source_write();
     }
 }
 
 void x11_to_wl_transfer::get_incr_chunk()
 {
-    if (!incr()) {
+    if (!get_incr()) {
         // source tries to sent incrementally, but did not announce it before
         return;
     }
-    if (!m_receiver) {
+    if (!receiver) {
         // receive mechanism has not yet been setup
         return;
     }
-    auto xcbConn = kwinApp()->x11Connection();
+    auto xcb_con = kwinApp()->x11Connection();
 
     auto cookie = xcb_get_property(
-        xcbConn, 0, m_window, atoms->wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 0x1fffffff);
+        xcb_con, 0, window, atoms->wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 0x1fffffff);
 
-    auto reply = xcb_get_property_reply(xcbConn, cookie, nullptr);
+    auto reply = xcb_get_property_reply(xcb_con, cookie, nullptr);
     if (!reply) {
         qCWarning(KWIN_XWL) << "Can't get selection property.";
         end_transfer();
@@ -389,7 +389,7 @@ void x11_to_wl_transfer::get_incr_chunk()
 
     if (xcb_get_property_value_length(reply) > 0) {
         // reply's ownership is transferred
-        m_receiver->transfer_from_property(reply);
+        receiver->transfer_from_property(reply);
         data_source_write();
     } else {
         // transfer complete
@@ -400,16 +400,16 @@ void x11_to_wl_transfer::get_incr_chunk()
 
 data_receiver::~data_receiver()
 {
-    if (m_propertyReply) {
-        free(m_propertyReply);
-        m_propertyReply = nullptr;
+    if (property_reply) {
+        free(property_reply);
+        property_reply = nullptr;
     }
 }
 
 void data_receiver::transfer_from_property(xcb_get_property_reply_t* reply)
 {
-    m_propertyStart = 0;
-    m_propertyReply = reply;
+    property_start = 0;
+    property_reply = reply;
 
     set_data(static_cast<char*>(xcb_get_property_value(reply)),
              xcb_get_property_value_length(reply));
@@ -418,22 +418,21 @@ void data_receiver::transfer_from_property(xcb_get_property_reply_t* reply)
 void data_receiver::set_data(char const* value, int length)
 {
     // simply set data without copy
-    m_data = QByteArray::fromRawData(value, length);
+    data = QByteArray::fromRawData(value, length);
 }
 
-QByteArray data_receiver::data() const
+QByteArray data_receiver::get_data() const
 {
-    return QByteArray::fromRawData(m_data.data() + m_propertyStart,
-                                   m_data.size() - m_propertyStart);
+    return QByteArray::fromRawData(data.data() + property_start, data.size() - property_start);
 }
 
 void data_receiver::part_read(int length)
 {
-    m_propertyStart += length;
-    if (m_propertyStart == m_data.size()) {
-        Q_ASSERT(m_propertyReply);
-        free(m_propertyReply);
-        m_propertyReply = nullptr;
+    property_start += length;
+    if (property_start == data.size()) {
+        Q_ASSERT(property_reply);
+        free(property_reply);
+        property_reply = nullptr;
     }
 }
 
@@ -521,23 +520,23 @@ void moz_url_receiver::set_data(char const* value, int length)
 
 void x11_to_wl_transfer::data_source_write()
 {
-    QByteArray property = m_receiver->data();
+    auto property = receiver->get_data();
 
-    auto len = write(fd(), property.constData(), property.size());
+    auto len = write(get_fd(), property.constData(), property.size());
     if (len == -1) {
-        qCWarning(KWIN_XWL) << "X11 to Wayland write error on fd:" << fd();
+        qCWarning(KWIN_XWL) << "X11 to Wayland write error on fd:" << get_fd();
         end_transfer();
         return;
     }
 
-    m_receiver->part_read(len);
+    receiver->part_read(len);
     if (len == property.size()) {
         // property completely transferred
-        if (incr()) {
+        if (get_incr()) {
             clear_socket_notifier();
-            auto xcbConn = kwinApp()->x11Connection();
-            xcb_delete_property(xcbConn, m_window, atoms->wl_selection);
-            xcb_flush(xcbConn);
+            auto xcb_con = kwinApp()->x11Connection();
+            xcb_delete_property(xcb_con, window, atoms->wl_selection);
+            xcb_flush(xcb_con);
         } else {
             // transfer complete
             end_transfer();

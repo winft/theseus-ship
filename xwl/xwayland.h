@@ -55,15 +55,15 @@ private:
 
     drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos) override;
 
-    int m_xcbConnectionFd = -1;
-    QProcess* m_xwaylandProcess = nullptr;
-    QMetaObject::Connection m_xwaylandFailConnection;
+    int xcb_connection_fd{-1};
+    QProcess* xwayland_process{nullptr};
+    QMetaObject::Connection xwayland_fail_notifier;
 
     x11_data basic_data;
 
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
 
-    ApplicationWaylandAbstract* m_app;
+    ApplicationWaylandAbstract* app;
     std::function<void(int code)> status_callback;
 
     Q_DISABLE_COPY(xwayland)

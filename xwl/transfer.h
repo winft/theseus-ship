@@ -48,9 +48,9 @@ public:
 
     virtual bool handle_property_notify(xcb_property_notify_event_t* event) = 0;
     void timeout();
-    xcb_timestamp_t timestamp() const
+    xcb_timestamp_t get_timestamp() const
     {
-        return m_timestamp;
+        return timestamp;
     }
 
 Q_SIGNALS:
@@ -59,45 +59,45 @@ Q_SIGNALS:
 protected:
     void end_transfer();
 
-    xcb_atom_t atom() const
+    xcb_atom_t get_atom() const
     {
-        return m_atom;
+        return atom;
     }
-    qint32 fd() const
+    qint32 get_fd() const
     {
-        return m_fd;
+        return fd;
     }
 
     void set_incr(bool set)
     {
-        m_incr = set;
+        incr = set;
     }
-    bool incr() const
+    bool get_incr() const
     {
-        return m_incr;
+        return incr;
     }
     void reset_timeout()
     {
-        m_timeout = false;
+        timed_out = false;
     }
 
     void create_socket_notifier(QSocketNotifier::Type type);
     void clear_socket_notifier();
     QSocketNotifier* socket_notifier() const
     {
-        return m_notifier;
+        return notifier;
     }
 
 private:
     void close_fd();
 
-    xcb_atom_t m_atom;
-    qint32 m_fd;
-    xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
+    xcb_atom_t atom;
+    qint32 fd;
+    xcb_timestamp_t timestamp{XCB_CURRENT_TIME};
 
-    QSocketNotifier* m_notifier = nullptr;
-    bool m_incr = false;
-    bool m_timeout = false;
+    QSocketNotifier* notifier = nullptr;
+    bool incr = false;
+    bool timed_out = false;
 
     Q_DISABLE_COPY(transfer)
 };
@@ -128,15 +128,15 @@ private:
     int flush_source_data();
     void handle_property_delete();
 
-    xcb_selection_request_event_t* m_request = nullptr;
+    xcb_selection_request_event_t* request = nullptr;
 
     /* contains all received data portioned in chunks
      * TODO(romangg): explain second std::pair component
      */
-    std::deque<std::pair<QByteArray, int>> m_chunks;
+    std::deque<std::pair<QByteArray, int>> chunks;
 
-    bool m_propertyIsSet = false;
-    bool m_flushPropertyOnDelete = false;
+    bool property_is_set = false;
+    bool flush_property_on_delete = false;
 
     Q_DISABLE_COPY(wl_to_x11_transfer)
 };
@@ -152,20 +152,20 @@ public:
     void transfer_from_property(xcb_get_property_reply_t* reply);
 
     virtual void set_data(char const* value, int length);
-    QByteArray data() const;
+    QByteArray get_data() const;
 
     void part_read(int length);
 
 protected:
     void set_data_internal(QByteArray data)
     {
-        m_data = data;
+        this->data = data;
     }
 
 private:
-    xcb_get_property_reply_t* m_propertyReply = nullptr;
-    int m_propertyStart = 0;
-    QByteArray m_data;
+    xcb_get_property_reply_t* property_reply = nullptr;
+    int property_start = 0;
+    QByteArray data;
 };
 
 /**
@@ -213,8 +213,8 @@ private:
     void start_transfer();
     void get_incr_chunk();
 
-    xcb_window_t m_window;
-    data_receiver* m_receiver = nullptr;
+    xcb_window_t window;
+    data_receiver* receiver = nullptr;
 
     Q_DISABLE_COPY(x11_to_wl_transfer)
 };
