@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "types.h"
 
 #include <QObject>
+#include <memory>
 #include <vector>
 #include <xcb/xcb.h>
 
@@ -71,7 +72,7 @@ public:
 
     q_wl_source* get_qobject() const
     {
-        return qobject;
+        return qobject.get();
     }
 
 private:
@@ -86,7 +87,7 @@ private:
     std::vector<std::string> offers;
 
     xcb_timestamp_t timestamp = XCB_CURRENT_TIME;
-    q_wl_source* qobject;
+    std::unique_ptr<q_wl_source> qobject;
 
     Q_DISABLE_COPY(wl_source)
 };
@@ -150,7 +151,7 @@ public:
 
     q_x11_source* get_qobject() const
     {
-        return qobject;
+        return qobject.get();
     }
 
     x11_data const x11;
@@ -164,7 +165,7 @@ private:
     mime_atoms offers;
 
     xcb_timestamp_t timestamp = XCB_CURRENT_TIME;
-    q_x11_source* qobject;
+    std::unique_ptr<q_x11_source> qobject;
 
     Q_DISABLE_COPY(x11_source)
 };

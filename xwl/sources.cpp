@@ -38,7 +38,7 @@ template<typename ServerSource>
 wl_source<ServerSource>::wl_source(ServerSource* source, xcb_connection_t* connection)
     : server_source{source}
     , connection{connection}
-    , qobject{new q_wl_source}
+    , qobject{std::make_unique<q_wl_source>()}
 {
     assert(source);
 
@@ -52,10 +52,7 @@ wl_source<ServerSource>::wl_source(ServerSource* source, xcb_connection_t* conne
 }
 
 template<typename ServerSource>
-wl_source<ServerSource>::~wl_source()
-{
-    delete qobject;
-}
+wl_source<ServerSource>::~wl_source() = default;
 
 template<typename ServerSource>
 bool wl_source<ServerSource>::handle_selection_request(xcb_selection_request_event_t* event)
@@ -161,15 +158,12 @@ x11_source<InternalSource>::x11_source(xcb_xfixes_selection_notify_event_t* even
                                        x11_data const& x11)
     : x11{x11}
     , timestamp{event->timestamp}
-    , qobject{new q_x11_source}
+    , qobject{std::make_unique<q_x11_source>()}
 {
 }
 
 template<typename InternalSource>
-x11_source<InternalSource>::~x11_source()
-{
-    delete qobject;
-}
+x11_source<InternalSource>::~x11_source() = default;
 
 template<typename InternalSource>
 void x11_source<InternalSource>::get_targets(xcb_window_t const window, xcb_atom_t const atom) const
