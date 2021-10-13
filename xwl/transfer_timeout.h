@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include "selection.h"
+#include "selection_data.h"
 
 #include "atoms.h"
 #include "win/x11/window.h"

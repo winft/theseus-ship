@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "selection.h"
+#include "selection_data.h"
 
 #include <Wrapland/Server/primary_selection.h>
 

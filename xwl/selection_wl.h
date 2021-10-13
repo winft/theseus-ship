@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include "selection.h"
+#include "selection_data.h"
 #include "selection_source.h"
 #include "transfer.h"
 

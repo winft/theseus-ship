@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "selection.h"
+#include "selection_data.h"
 
 #include <Wrapland/Server/data_source.h>
 
