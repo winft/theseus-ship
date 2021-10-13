@@ -32,7 +32,7 @@ namespace KWin
 {
 class WaylandServer;
 
-namespace Xwl
+namespace xwl
 {
 class Xwayland;
 }
@@ -83,7 +83,7 @@ private:
 
     std::unique_ptr<platform_base::wlroots> backend;
     std::unique_ptr<render::backend::wlroots::backend> render;
-    std::unique_ptr<Xwl::Xwayland> xwayland;
+    std::unique_ptr<xwl::Xwayland> xwayland;
 
     QProcess* exit_with_process{nullptr};
 };

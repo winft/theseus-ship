@@ -33,7 +33,7 @@ namespace KWin
 {
 class ApplicationWaylandAbstract;
 
-namespace Xwl
+namespace xwl
 {
 class DataBridge;
 

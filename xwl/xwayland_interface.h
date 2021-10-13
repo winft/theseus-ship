@@ -28,7 +28,7 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Xwl
+namespace xwl
 {
 enum class DragEventReply {
     // event should be ignored by the filter
@@ -47,7 +47,7 @@ class KWIN_EXPORT XwaylandInterface : public QObject
 public:
     static XwaylandInterface* self();
 
-    virtual Xwl::DragEventReply drag_move_filter(Toplevel* target, QPoint const& pos) = 0;
+    virtual xwl::DragEventReply drag_move_filter(Toplevel* target, QPoint const& pos) = 0;
 
 protected:
     XwaylandInterface();

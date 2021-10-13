@@ -30,7 +30,7 @@ class QSocketNotifier;
 struct xcb_selection_request_event_t;
 struct xcb_xfixes_selection_notify_event_t;
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 
 /*

@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "atoms.h"
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 
 void Drag::send_client_message(xcb_window_t target,

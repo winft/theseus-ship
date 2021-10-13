@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/data_source.h>
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 class Clipboard;
 

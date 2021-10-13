@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xwayland_logging.h>
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 
 // in Bytes: equals 64KB

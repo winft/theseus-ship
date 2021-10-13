@@ -8,7 +8,7 @@
 #include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/primary_selection.h>
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 
 class data_source_ext : public Wrapland::Server::data_source_ext

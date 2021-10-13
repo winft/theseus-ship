@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "atoms.h"
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 
 DataBridge::DataBridge(x11_data const& x11)
@@ -43,13 +43,13 @@ DataBridge::~DataBridge() = default;
 
 bool DataBridge::filter_event(xcb_generic_event_t* event)
 {
-    if (Xwl::filter_event(m_clipboard.get(), event)) {
+    if (xwl::filter_event(m_clipboard.get(), event)) {
         return true;
     }
-    if (Xwl::filter_event(m_dnd.get(), event)) {
+    if (xwl::filter_event(m_dnd.get(), event)) {
         return true;
     }
-    if (Xwl::filter_event(m_primarySelection.get(), event)) {
+    if (xwl::filter_event(m_primarySelection.get(), event)) {
         return true;
     }
     if (event->response_type - xfixes->first_event == XCB_XFIXES_SELECTION_NOTIFY) {
@@ -61,13 +61,13 @@ bool DataBridge::filter_event(xcb_generic_event_t* event)
 bool DataBridge::handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
 {
     if (event->selection == atoms->clipboard) {
-        return Xwl::handle_xfixes_notify(m_clipboard.get(), event);
+        return xwl::handle_xfixes_notify(m_clipboard.get(), event);
     }
     if (event->selection == atoms->primary_selection) {
-        return Xwl::handle_xfixes_notify(m_primarySelection.get(), event);
+        return xwl::handle_xfixes_notify(m_primarySelection.get(), event);
     }
     if (event->selection == atoms->xdnd_selection) {
-        return Xwl::handle_xfixes_notify(m_dnd.get(), event);
+        return xwl::handle_xfixes_notify(m_dnd.get(), event);
     }
     return false;
 }

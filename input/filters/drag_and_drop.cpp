@@ -60,9 +60,9 @@ bool drag_and_drop_filter::motion(motion_event const& event)
     auto window = kwinApp()->input->redirect->findManagedToplevel(pos.toPoint());
     if (auto xwl = xwayland()) {
         const auto ret = xwl->drag_move_filter(window, pos.toPoint());
-        if (ret == Xwl::DragEventReply::Ignore) {
+        if (ret == xwl::DragEventReply::Ignore) {
             return false;
-        } else if (ret == Xwl::DragEventReply::Take) {
+        } else if (ret == xwl::DragEventReply::Take) {
             return true;
         }
     }

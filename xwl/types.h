@@ -11,7 +11,7 @@
 #include <vector>
 #include <xcb/xcb.h>
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 
 struct x11_data {

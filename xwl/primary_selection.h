@@ -9,7 +9,7 @@
 
 #include <Wrapland/Server/primary_selection.h>
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 
 class primary_selection

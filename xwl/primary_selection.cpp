@@ -9,7 +9,7 @@
 
 #include <Wrapland/Server/seat.h>
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 
 primary_selection::primary_selection(xcb_atom_t atom, x11_data const& x11)

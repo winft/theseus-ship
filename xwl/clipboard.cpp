@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/seat.h>
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 
 Clipboard::Clipboard(xcb_atom_t atom, x11_data const& x11)

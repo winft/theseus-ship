@@ -35,7 +35,7 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Xwl
+namespace xwl
 {
 class Clipboard;
 class Dnd;

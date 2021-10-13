@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 
 WlToXDrag::WlToXDrag(Wrapland::Server::data_source* source, xcb_window_t proxy_window)

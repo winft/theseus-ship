@@ -32,7 +32,7 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Xwl
+namespace xwl
 {
 enum class DragEventReply;
 class WlVisit;

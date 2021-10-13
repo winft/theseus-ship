@@ -273,7 +273,7 @@ inline static Application *kwinApp()
     return static_cast<Application*>(QCoreApplication::instance());
 }
 
-namespace Xwl
+namespace xwl
 {
 class Xwayland;
 }
@@ -284,7 +284,7 @@ class KWIN_EXPORT ApplicationWaylandAbstract : public Application
 public:
     ~ApplicationWaylandAbstract() override = 0;
 protected:
-    friend class Xwl::Xwayland;
+    friend class xwl::Xwayland;
 
     ApplicationWaylandAbstract(OperationMode mode, int &argc, char **argv);
     virtual void setProcessStartupEnvironment(const QProcessEnvironment &environment) {

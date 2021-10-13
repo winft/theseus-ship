@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMouseEvent>
 #include <QTimer>
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 
 XToWlDrag::XToWlDrag(DataX11Source* source)

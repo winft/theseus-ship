@@ -25,7 +25,7 @@
 
 #include <memory>
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 class TransferWltoX;
 class TransferXtoWl;

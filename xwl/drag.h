@@ -29,7 +29,7 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Xwl
+namespace xwl
 {
 class Dnd;
 enum class DragEventReply;

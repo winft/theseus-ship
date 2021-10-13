@@ -68,7 +68,7 @@ static void readDisplay(int pipe)
     close(pipe);
 }
 
-namespace KWin::Xwl
+namespace KWin::xwl
 {
 
 Xwayland::Xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> status_callback)
