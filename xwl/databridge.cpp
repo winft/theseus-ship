@@ -29,7 +29,6 @@ namespace KWin::xwl
 {
 
 data_bridge::data_bridge(x11_data const& x11)
-    : QObject()
 {
     xcb_prefetch_extension_data(x11.connection, &xcb_xfixes_id);
     xfixes = xcb_get_extension_data(x11.connection, &xcb_xfixes_id);

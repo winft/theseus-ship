@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwin_export.h>
 
-#include <QObject>
 #include <QPoint>
 
 #include <memory>
@@ -48,13 +47,11 @@ class primary_selection;
  *
  * Exists only once per Xwayland session.
  */
-class KWIN_EXPORT data_bridge : public QObject
+class KWIN_EXPORT data_bridge
 {
-    Q_OBJECT
-
 public:
     data_bridge(x11_data const& x11);
-    ~data_bridge() override;
+    ~data_bridge();
 
     bool filter_event(xcb_generic_event_t* event);
     drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos);
