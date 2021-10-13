@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "dnd.h"
 #include "mime.h"
-#include "selection_source.h"
+#include "sources.h"
 #include "types.h"
 
 #include "atoms.h"

@@ -7,7 +7,7 @@
 #pragma once
 
 #include "selection_data.h"
-#include "selection_source.h"
+#include "sources.h"
 #include "transfer.h"
 
 #include "win/x11/window.h"
