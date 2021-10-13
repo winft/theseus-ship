@@ -65,7 +65,6 @@ private:
     bool check_for_finished();
 
     mime_atoms m_offers;
-    mime_atoms m_offersPending;
 
     x11_source_ext* m_source;
     std::vector<std::pair<xcb_timestamp_t, bool>> m_dataRequests;

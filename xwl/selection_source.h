@@ -85,7 +85,6 @@ private:
     xcb_connection_t* connection;
 
     std::vector<std::string> m_offers;
-    QMetaObject::Connection m_offerConnection;
 
     xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
     q_wl_source* m_qobject;
