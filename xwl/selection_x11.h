@@ -8,7 +8,7 @@
 
 #include "event_x11.h"
 #include "selection_source.h"
-#include "sources.h"
+#include "sources_ext.h"
 #include "transfer.h"
 #include "transfer_timeout.h"
 #include "types.h"

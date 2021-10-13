@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "selection_wl.h"
 #include "selection_x11.h"
-#include "sources.h"
+#include "sources_ext.h"
 
 #include "wayland_server.h"
 

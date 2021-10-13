@@ -3,7 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "sources.h"
+#include "sources_ext.h"
 
 namespace KWin::xwl
 {

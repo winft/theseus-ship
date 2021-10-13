@@ -757,7 +757,6 @@ install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
 set(kwin_XWAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/clipboard.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/data_bridge.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/sources.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/dnd.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag_wl.cpp
@@ -765,6 +764,7 @@ set(kwin_XWAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/primary_selection.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/selection_data.h
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/selection_source.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/sources_ext.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/transfer.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/xwayland.cpp
 )
