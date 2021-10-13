@@ -38,7 +38,6 @@ enum class DragEventReply {
     // event should be handled as a Wayland native one
     Wayland,
 };
-}
 
 class KWIN_EXPORT XwaylandInterface : public QObject
 {
@@ -47,7 +46,7 @@ class KWIN_EXPORT XwaylandInterface : public QObject
 public:
     static XwaylandInterface* self();
 
-    virtual xwl::DragEventReply drag_move_filter(Toplevel* target, QPoint const& pos) = 0;
+    virtual DragEventReply drag_move_filter(Toplevel* target, QPoint const& pos) = 0;
 
 protected:
     XwaylandInterface();
@@ -57,9 +56,11 @@ private:
     Q_DISABLE_COPY(XwaylandInterface)
 };
 
-inline XwaylandInterface* xwayland()
+}
+
+inline xwl::XwaylandInterface* xwayland()
 {
-    return XwaylandInterface::self();
+    return xwl::XwaylandInterface::self();
 }
 
 }

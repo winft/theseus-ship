@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "xwayland_interface.h"
 
-namespace KWin
+namespace KWin::xwl
 {
 
 XwaylandInterface* s_self = nullptr;
