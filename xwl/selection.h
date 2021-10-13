@@ -72,10 +72,10 @@ struct selection_data {
 
     // Active source, if any. Only one of them at max can exist
     // at the same time.
-    wl_source<server_source>* wayland_source{nullptr};
-    xwl::x11_source<internal_source>* x11_source{nullptr};
+    std::unique_ptr<wl_source<server_source>> wayland_source;
+    std::unique_ptr<xwl::x11_source<internal_source>> x11_source;
 
-    internal_source* source_int{nullptr};
+    std::unique_ptr<internal_source> source_int;
 
     x11_data x11;
     QMetaObject::Connection active_window_notifier;
@@ -92,16 +92,7 @@ struct selection_data {
     selection_data& operator=(selection_data const&) = delete;
     selection_data(selection_data&&) noexcept = default;
     selection_data& operator=(selection_data&&) noexcept = default;
-
-    ~selection_data()
-    {
-        delete source_int;
-        delete wayland_source;
-        delete x11_source;
-        source_int = nullptr;
-        wayland_source = nullptr;
-        x11_source = nullptr;
-    }
+    ~selection_data() = default;
 };
 
 template<typename server_source, typename internal_source>
@@ -188,7 +179,7 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
 {
     // In case we had an X11 source, we need to delete it directly if there is no new one.
     // But if there is a new one don't delete it, as this might trigger data-control clients.
-    auto source_int = sel->data.x11_source ? sel->data.source_int : nullptr;
+    auto had_x11_source = static_cast<bool>(sel->data.x11_source);
 
     create_x11_source(sel, nullptr);
 
@@ -196,9 +187,8 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
     if (!qobject_cast<win::x11::window const*>(client)) {
         // Clipboard is only allowed to be acquired when Xwayland has focus
         // TODO(romangg): can we make this stronger (window id comparison)?
-        if (source_int) {
-            delete source_int;
-            sel->data.source_int = nullptr;
+        if (had_x11_source) {
+            sel->data.source_int.reset();
         }
         return;
     }
@@ -326,13 +316,11 @@ void own_selection(Selection* sel, bool own)
 template<typename Selection, typename server_source>
 void set_wl_source(Selection* sel, wl_source<server_source>* source)
 {
-    delete sel->data.wayland_source;
-    delete sel->data.x11_source;
-    sel->data.wayland_source = nullptr;
-    sel->data.x11_source = nullptr;
+    sel->data.wayland_source.reset();
+    sel->data.x11_source.reset();
 
     if (source) {
-        sel->data.wayland_source = source;
+        sel->data.wayland_source.reset(source);
         QObject::connect(source->get_qobject(),
                          &q_wl_source::transfer_ready,
                          sel->data.qobject.get(),
@@ -343,18 +331,16 @@ void set_wl_source(Selection* sel, wl_source<server_source>* source)
 template<typename Selection>
 void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
 {
-    delete sel->data.x11_source;
-    sel->data.x11_source = nullptr;
+    sel->data.x11_source.reset();
 
     if (!event || event->owner == XCB_WINDOW_NONE) {
         return;
     }
 
-    delete sel->data.wayland_source;
-    sel->data.wayland_source = nullptr;
+    sel->data.wayland_source.reset();
 
-    using internal_source = std::remove_pointer_t<decltype(sel->data.source_int)>;
-    sel->data.x11_source = new x11_source<internal_source>(event, sel->data.x11);
+    using internal_source = std::remove_pointer_t<decltype(sel->data.source_int.get())>;
+    sel->data.x11_source.reset(new x11_source<internal_source>(event, sel->data.x11));
 
     QObject::connect(sel->data.x11_source->get_qobject(),
                      &q_x11_source::offers_changed,
@@ -609,8 +595,7 @@ void handle_wl_selection_change(Selection* sel)
             });
     }
 
-    delete sel->data.wayland_source;
-    sel->data.wayland_source = nullptr;
+    sel->data.wayland_source.reset();
 
     handle_wl_selection_client_change(sel);
 }
@@ -620,33 +605,31 @@ void handle_x11_offer_change(Selection* sel,
                              std::vector<std::string> const& added,
                              std::vector<std::string> const& removed)
 {
-    using internal_source = std::remove_pointer_t<decltype(sel->data.source_int)>;
+    using internal_source = std::remove_pointer_t<decltype(sel->data.source_int.get())>;
 
-    auto source = sel->data.x11_source;
-    if (!source) {
+    if (!sel->data.x11_source) {
         return;
     }
 
-    auto const offers = source->get_offers();
+    auto const offers = sel->data.x11_source->get_offers();
     if (offers.empty()) {
         sel->set_selection(nullptr);
         return;
     }
 
-    if (!source->get_source() || !removed.empty()) {
+    if (!sel->data.x11_source->get_source() || !removed.empty()) {
         // create new Wl DataSource if there is none or when types
         // were removed (Wl Data Sources can only add types)
-        auto old_source_int = sel->data.source_int;
-        auto internal_src = new internal_source();
+        auto old_source_int = sel->data.source_int.release();
 
-        sel->data.source_int = internal_src;
-        source->set_source(internal_src);
-        sel->set_selection(internal_src->src());
+        sel->data.source_int.reset(new internal_source());
+        sel->data.x11_source->set_source(sel->data.source_int.get());
+        sel->set_selection(sel->data.source_int->src());
 
         // Delete old internal source after setting the new one so data-control devices won't
         // receive an intermediate null selection and send it back to us overriding our new one.
         delete old_source_int;
-    } else if (auto dataSource = source->get_source()) {
+    } else if (auto dataSource = sel->data.x11_source->get_source()) {
         for (auto const& mime : added) {
             dataSource->offer(mime);
         }
