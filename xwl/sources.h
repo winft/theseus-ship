@@ -78,7 +78,6 @@ private:
     void send_targets(xcb_selection_request_event_t* event);
     void send_timestamp(xcb_selection_request_event_t* event);
 
-    void receive_offer(std::string const& mime);
     bool check_start_transfer(xcb_selection_request_event_t* event);
 
     ServerSource* server_source = nullptr;

@@ -47,7 +47,7 @@ wl_source<ServerSource>::wl_source(ServerSource* source, xcb_connection_t* conne
     }
 
     QObject::connect(source, &ServerSource::mime_type_offered, get_qobject(), [this](auto mime) {
-        receive_offer(mime);
+        offers.emplace_back(mime);
     });
 }
 
@@ -55,12 +55,6 @@ template<typename ServerSource>
 wl_source<ServerSource>::~wl_source()
 {
     delete qobject;
-}
-
-template<typename ServerSource>
-void wl_source<ServerSource>::receive_offer(std::string const& mime)
-{
-    offers.emplace_back(mime);
 }
 
 template<typename ServerSource>
