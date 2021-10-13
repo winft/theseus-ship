@@ -181,7 +181,7 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
     // But if there is a new one don't delete it, as this might trigger data-control clients.
     auto had_x11_source = static_cast<bool>(sel->data.x11_source);
 
-    create_x11_source(sel, nullptr);
+    sel->data.x11_source.reset();
 
     auto const& client = workspace()->activeClient();
     if (!qobject_cast<win::x11::window const*>(client)) {
@@ -331,12 +331,14 @@ void set_wl_source(Selection* sel, wl_source<server_source>* source)
 template<typename Selection>
 void create_x11_source(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
 {
-    sel->data.x11_source.reset();
+    assert(event);
+    assert(!sel->data.x11_source);
 
-    if (!event || event->owner == XCB_WINDOW_NONE) {
+    if (event->owner == XCB_WINDOW_NONE) {
         return;
     }
 
+    // We may remove a current Wayland selection at this point.
     sel->data.wayland_source.reset();
 
     using internal_source = std::remove_pointer_t<decltype(sel->data.source_int.get())>;

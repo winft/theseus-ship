@@ -48,7 +48,7 @@ void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_eve
         return;
     }
 
-    create_x11_source(sel, nullptr);
+    sel->data.x11_source.reset();
 
     auto const seat = waylandServer()->seat();
     auto originSurface = seat->pointers().get_focus().surface;
