@@ -22,8 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "selection.h"
 #include "types.h"
 
-#include "wayland_server.h"
-
 #include <Wrapland/Server/data_source.h>
 
 #include <string>
@@ -157,7 +155,6 @@ bool wl_source<ServerSource>::check_start_transfer(xcb_selection_request_event_t
     }
 
     server_source->request_data(*mimeIt, p[1]);
-    waylandServer()->dispatch();
 
     Q_EMIT get_qobject()->transfer_ready(new xcb_selection_request_event_t(*event), p[0]);
     return true;
