@@ -73,26 +73,16 @@ public:
                          [this](auto mime) { offers.emplace_back(mime); });
     }
 
-    xcb_timestamp_t get_timestamp() const
-    {
-        return timestamp;
-    }
-    void set_timestamp(xcb_timestamp_t time)
-    {
-        timestamp = time;
-    }
-
     q_wl_source* get_qobject() const
     {
         return qobject.get();
     }
     ServerSource* server_source = nullptr;
     std::vector<std::string> offers;
+    xcb_timestamp_t timestamp{XCB_CURRENT_TIME};
 
 private:
     xcb_connection_t* connection;
-
-    xcb_timestamp_t timestamp = XCB_CURRENT_TIME;
     std::unique_ptr<q_wl_source> qobject;
 
     Q_DISABLE_COPY(wl_source)
@@ -160,15 +150,6 @@ public:
         return source;
     }
 
-    xcb_timestamp_t get_timestamp() const
-    {
-        return timestamp;
-    }
-    void set_timestamp(xcb_timestamp_t time)
-    {
-        timestamp = time;
-    }
-
     q_x11_source* get_qobject() const
     {
         return qobject.get();
@@ -176,11 +157,10 @@ public:
 
     x11_data const x11;
     mime_atoms offers;
+    xcb_timestamp_t timestamp;
 
 private:
     InternalSource* source = nullptr;
-
-    xcb_timestamp_t timestamp = XCB_CURRENT_TIME;
     std::unique_ptr<q_x11_source> qobject;
 
     Q_DISABLE_COPY(x11_source)

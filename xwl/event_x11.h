@@ -43,7 +43,7 @@ bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* e
         // When we claim a selection we must use XCB_TIME_CURRENT,
         // grab the actual timestamp here to answer TIMESTAMP requests
         // correctly
-        sel->data.wayland_source->set_timestamp(event->timestamp);
+        sel->data.wayland_source->timestamp = event->timestamp;
         sel->data.timestamp = event->timestamp;
         return true;
     }
@@ -85,10 +85,8 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
     create_x11_source(sel, event);
 
     if (auto const& source = sel->data.x11_source) {
-        get_x11_targets(source->x11.connection,
-                        sel->data.requestor_window,
-                        sel->data.atom,
-                        source->get_timestamp());
+        get_x11_targets(
+            source->x11.connection, sel->data.requestor_window, sel->data.atom, source->timestamp);
     }
 }
 

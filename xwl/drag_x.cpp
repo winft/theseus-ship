@@ -51,7 +51,7 @@ x11_drag::x11_drag(x11_source_ext* source)
             [this](xcb_atom_t target, qint32 fd) {
                 Q_UNUSED(target);
                 Q_UNUSED(fd);
-                data_requests.emplace_back(this->source->get_timestamp(), false);
+                data_requests.emplace_back(this->source->timestamp, false);
             });
 
     connect(source->get_source(), &data_source_ext::accepted, this, [this](auto /*mime_type*/) {
@@ -386,8 +386,7 @@ bool wl_visit::handle_position(xcb_client_message_event_t* event)
     auto const pos = data->data32[2];
     Q_UNUSED(pos);
 
-    xcb_timestamp_t const timestamp = data->data32[3];
-    source->set_timestamp(timestamp);
+    source->timestamp = data->data32[3];
 
     xcb_atom_t actionAtom = m_version > 1 ? data->data32[4] : atoms->xdnd_action_copy;
     auto action = drag::atom_to_client_action(actionAtom);
@@ -414,8 +413,7 @@ bool wl_visit::handle_drop(xcb_client_message_event_t* event)
 
     auto data = &event->data;
     source_window = data->data32[0];
-    xcb_timestamp_t const timestamp = data->data32[2];
-    source->set_timestamp(timestamp);
+    source->timestamp = data->data32[2];
 
     // We do nothing more here, the drop is being processed through the x11_source object.
     do_finish();

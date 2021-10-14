@@ -270,7 +270,7 @@ bool selection_wl_handle_request(Source&& source,
     if (event->target == atoms->targets) {
         send_wl_selection_targets(con, event, source->offers);
     } else if (event->target == atoms->timestamp) {
-        send_wl_selection_timestamp(con, event, source->get_timestamp());
+        send_wl_selection_timestamp(con, event, source->timestamp);
     } else if (event->target == atoms->delete_atom) {
         send_selection_notify(event, true);
     } else {

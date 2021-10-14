@@ -55,7 +55,7 @@ void start_transfer_to_wayland(Selection* sel, xcb_atom_t target, qint32 fd)
     auto transfer = new x11_to_wl_transfer(sel->data.atom,
                                            target,
                                            fd,
-                                           sel->data.x11_source->get_timestamp(),
+                                           sel->data.x11_source->timestamp,
                                            sel->data.requestor_window,
                                            sel->data.x11,
                                            sel->data.qobject.get());
