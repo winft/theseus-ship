@@ -65,7 +65,7 @@ public:
     std::unique_ptr<x11_drag> xdrag;
     std::vector<std::unique_ptr<drag>> old_drags;
 
-    drag_and_drop(xcb_atom_t atom, x11_data const& x11);
+    drag_and_drop(x11_data const& x11);
     ~drag_and_drop();
 
     static uint32_t version();

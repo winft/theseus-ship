@@ -18,7 +18,7 @@ class primary_selection
 public:
     selection_data<Wrapland::Server::primary_selection_source, primary_selection_source_ext> data;
 
-    primary_selection(xcb_atom_t atom, x11_data const& x11);
+    primary_selection(x11_data const& x11);
 
     Wrapland::Server::primary_selection_source* get_current_source() const;
     void set_selection(Wrapland::Server::primary_selection_source* source) const;

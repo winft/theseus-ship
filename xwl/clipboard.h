@@ -37,7 +37,7 @@ class clipboard
 public:
     selection_data<Wrapland::Server::data_source, data_source_ext> data;
 
-    clipboard(xcb_atom_t atom, x11_data const& x11);
+    clipboard(x11_data const& x11);
 
     Wrapland::Server::data_source* get_current_source() const;
     void set_selection(Wrapland::Server::data_source* source) const;

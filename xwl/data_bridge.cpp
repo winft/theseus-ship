@@ -33,9 +33,9 @@ data_bridge::data_bridge(x11_data const& x11)
     xcb_prefetch_extension_data(x11.connection, &xcb_xfixes_id);
     xfixes = xcb_get_extension_data(x11.connection, &xcb_xfixes_id);
 
-    clipboard.reset(new xwl::clipboard(atoms->clipboard, x11));
-    dnd.reset(new drag_and_drop(atoms->xdnd_selection, x11));
-    primary_selection.reset(new xwl::primary_selection(atoms->primary_selection, x11));
+    clipboard.reset(new xwl::clipboard(x11));
+    dnd.reset(new drag_and_drop(x11));
+    primary_selection.reset(new xwl::primary_selection(x11));
 }
 
 data_bridge::~data_bridge() = default;
