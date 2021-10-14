@@ -1,5 +1,13 @@
 # Changelog
 All notable changes to KWinFT will be documented in this file.
+## [5.23.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.23.0-beta.0...kwinft@5.23.0) (2021-10-14)
+
+
+### Bug Fixes
+
+* declare placement Q_PROPERTY with full path ([bb9df74](https://gitlab.com/kwinft/kwinft/commit/bb9df747fba92dab024be2397870b589d86d3659))
+* **script:** add back geometry property ([edd2d60](https://gitlab.com/kwinft/kwinft/commit/edd2d606720c977c3835017c7a306e5c4af3f963))
+
 ## [5.23.0-beta.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.22.0-beta.0...kwinft@5.23.0-beta.0) (2021-10-06)
 
 
