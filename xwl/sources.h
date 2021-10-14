@@ -56,10 +56,22 @@ template<typename ServerSource>
 class wl_source
 {
 public:
-    wl_source(ServerSource* source, xcb_connection_t* connection);
-    ~wl_source();
+    wl_source(ServerSource* source, xcb_connection_t* connection)
+        : server_source{source}
+        , connection{connection}
+        , qobject{std::make_unique<q_wl_source>()}
+    {
+        assert(source);
 
-    bool handle_selection_request(xcb_selection_request_event_t* event);
+        for (auto const& mime : source->mime_types()) {
+            offers.emplace_back(mime);
+        }
+
+        QObject::connect(source,
+                         &ServerSource::mime_type_offered,
+                         get_qobject(),
+                         [this](auto mime) { offers.emplace_back(mime); });
+    }
 
     xcb_timestamp_t get_timestamp() const
     {
@@ -74,17 +86,11 @@ public:
     {
         return qobject.get();
     }
+    ServerSource* server_source = nullptr;
+    std::vector<std::string> offers;
 
 private:
-    void send_targets(xcb_selection_request_event_t* event);
-    void send_timestamp(xcb_selection_request_event_t* event);
-
-    bool check_start_transfer(xcb_selection_request_event_t* event);
-
-    ServerSource* server_source = nullptr;
     xcb_connection_t* connection;
-
-    std::vector<std::string> offers;
 
     xcb_timestamp_t timestamp = XCB_CURRENT_TIME;
     std::unique_ptr<q_wl_source> qobject;

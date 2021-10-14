@@ -27,131 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/data_source.h>
 
 #include <string>
-#include <unistd.h>
-
 #include <xwayland_logging.h>
 
 namespace KWin::xwl
 {
-
-template<typename ServerSource>
-wl_source<ServerSource>::wl_source(ServerSource* source, xcb_connection_t* connection)
-    : server_source{source}
-    , connection{connection}
-    , qobject{std::make_unique<q_wl_source>()}
-{
-    assert(source);
-
-    for (auto const& mime : source->mime_types()) {
-        offers.emplace_back(mime);
-    }
-
-    QObject::connect(source, &ServerSource::mime_type_offered, get_qobject(), [this](auto mime) {
-        offers.emplace_back(mime);
-    });
-}
-
-template<typename ServerSource>
-wl_source<ServerSource>::~wl_source() = default;
-
-template<typename ServerSource>
-bool wl_source<ServerSource>::handle_selection_request(xcb_selection_request_event_t* event)
-{
-    if (event->target == atoms->targets) {
-        send_targets(event);
-    } else if (event->target == atoms->timestamp) {
-        send_timestamp(event);
-    } else if (event->target == atoms->delete_atom) {
-        send_selection_notify(event, true);
-    } else {
-        // try to send mime data
-        if (!check_start_transfer(event)) {
-            send_selection_notify(event, false);
-        }
-    }
-    return true;
-}
-
-template<typename ServerSource>
-void wl_source<ServerSource>::send_targets(xcb_selection_request_event_t* event)
-{
-    std::vector<xcb_atom_t> targets;
-    targets.resize(offers.size() + 2);
-    targets[0] = atoms->timestamp;
-    targets[1] = atoms->targets;
-
-    size_t cnt = 2;
-    for (auto const& mime : offers) {
-        targets[cnt] = mime_type_to_atom(mime);
-        cnt++;
-    }
-
-    xcb_change_property(connection,
-                        XCB_PROP_MODE_REPLACE,
-                        event->requestor,
-                        event->property,
-                        XCB_ATOM_ATOM,
-                        32,
-                        cnt,
-                        targets.data());
-
-    send_selection_notify(event, true);
-}
-
-template<typename ServerSource>
-void wl_source<ServerSource>::send_timestamp(xcb_selection_request_event_t* event)
-{
-    auto const time = get_timestamp();
-    xcb_change_property(connection,
-                        XCB_PROP_MODE_REPLACE,
-                        event->requestor,
-                        event->property,
-                        XCB_ATOM_INTEGER,
-                        32,
-                        1,
-                        &time);
-
-    send_selection_notify(event, true);
-}
-
-template<typename ServerSource>
-bool wl_source<ServerSource>::check_start_transfer(xcb_selection_request_event_t* event)
-{
-    auto const targets = atom_to_mime_types(event->target);
-    if (targets.empty()) {
-        qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";
-        return false;
-    }
-
-    auto const firstTarget = targets[0];
-
-    auto cmp = [&firstTarget](auto const& b) {
-        if (firstTarget == "text/uri-list") {
-            // Wayland sources might announce the old mime or the new standard
-            return firstTarget == b || b == "text/x-uri";
-        }
-        return firstTarget == b;
-    };
-
-    // check supported mimes
-    auto const offers = server_source->mime_types();
-    auto const mimeIt = std::find_if(offers.begin(), offers.end(), cmp);
-    if (mimeIt == offers.end()) {
-        // Requested Mime not supported. Not sending selection.
-        return false;
-    }
-
-    int p[2];
-    if (pipe(p) == -1) {
-        qCWarning(KWIN_XWL) << "Pipe failed. Not sending selection.";
-        return false;
-    }
-
-    server_source->request_data(*mimeIt, p[1]);
-
-    Q_EMIT get_qobject()->transfer_ready(new xcb_selection_request_event_t(*event), p[0]);
-    return true;
-}
 
 template<typename InternalSource>
 x11_source<InternalSource>::x11_source(xcb_xfixes_selection_notify_event_t* event,
@@ -289,8 +168,6 @@ void x11_source<InternalSource>::start_transfer(std::string const& mimeName, qin
 }
 
 // Templates specializations
-template class wl_source<Wrapland::Server::data_source>;
 template class x11_source<data_source_ext>;
-template class wl_source<Wrapland::Server::primary_selection_source>;
 template class x11_source<primary_selection_source_ext>;
 }

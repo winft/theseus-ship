@@ -134,7 +134,7 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
         return false;
     }
 
-    return sel->data.wayland_source->handle_selection_request(event);
+    return selection_wl_handle_request(sel->data.wayland_source, sel->data.x11.connection, event);
 }
 
 template<typename Selection>

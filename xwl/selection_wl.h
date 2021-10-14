@@ -6,14 +6,18 @@
 */
 #pragma once
 
+#include "mime.h"
 #include "selection_data.h"
 #include "sources.h"
 #include "transfer.h"
 
+#include "atoms.h"
 #include "win/x11/window.h"
 #include "workspace.h"
 
 #include <QObject>
+#include <unistd.h>
+#include <xwayland_logging.h>
 
 namespace KWin::xwl
 {
@@ -175,6 +179,110 @@ void handle_wl_selection_change(Selection* sel)
     sel->data.wayland_source.reset();
 
     handle_wl_selection_client_change(sel);
+}
+
+inline void send_wl_selection_timestamp(xcb_connection_t* con,
+                                        xcb_selection_request_event_t* event,
+                                        xcb_timestamp_t time)
+{
+    xcb_change_property(con,
+                        XCB_PROP_MODE_REPLACE,
+                        event->requestor,
+                        event->property,
+                        XCB_ATOM_INTEGER,
+                        32,
+                        1,
+                        &time);
+
+    send_selection_notify(event, true);
+}
+
+inline void send_wl_selection_targets(xcb_connection_t* con,
+                                      xcb_selection_request_event_t* event,
+                                      std::vector<std::string> const& offers)
+{
+    std::vector<xcb_atom_t> targets;
+    targets.resize(offers.size() + 2);
+    targets[0] = atoms->timestamp;
+    targets[1] = atoms->targets;
+
+    size_t cnt = 2;
+    for (auto const& mime : offers) {
+        targets[cnt] = mime_type_to_atom(mime);
+        cnt++;
+    }
+
+    xcb_change_property(con,
+                        XCB_PROP_MODE_REPLACE,
+                        event->requestor,
+                        event->property,
+                        XCB_ATOM_ATOM,
+                        32,
+                        cnt,
+                        targets.data());
+
+    send_selection_notify(event, true);
+}
+
+/// Returns the file descriptor to write in or -1 on error.
+template<typename ServerSource>
+int selection_wl_start_transfer(ServerSource server_source, xcb_selection_request_event_t* event)
+{
+    auto const targets = atom_to_mime_types(event->target);
+    if (targets.empty()) {
+        qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";
+        return -1;
+    }
+
+    auto const firstTarget = targets[0];
+
+    auto cmp = [&firstTarget](auto const& b) {
+        if (firstTarget == "text/uri-list") {
+            // Wayland sources might announce the old mime or the new standard
+            return firstTarget == b || b == "text/x-uri";
+        }
+        return firstTarget == b;
+    };
+
+    // check supported mimes
+    auto const offers = server_source->mime_types();
+    auto const mimeIt = std::find_if(offers.begin(), offers.end(), cmp);
+    if (mimeIt == offers.end()) {
+        // Requested Mime not supported. Not sending selection.
+        return -1;
+    }
+
+    int p[2];
+    if (pipe(p) == -1) {
+        qCWarning(KWIN_XWL) << "Pipe failed. Not sending selection.";
+        return -1;
+    }
+
+    server_source->request_data(*mimeIt, p[1]);
+    return p[0];
+}
+
+template<typename Source>
+bool selection_wl_handle_request(Source&& source,
+                                 xcb_connection_t* con,
+                                 xcb_selection_request_event_t* event)
+{
+    if (event->target == atoms->targets) {
+        send_wl_selection_targets(con, event, source->offers);
+    } else if (event->target == atoms->timestamp) {
+        send_wl_selection_timestamp(con, event, source->get_timestamp());
+    } else if (event->target == atoms->delete_atom) {
+        send_selection_notify(event, true);
+    } else {
+        // try to send mime data
+        if (auto fd = selection_wl_start_transfer(source->server_source, event); fd > 0) {
+            Q_EMIT source->get_qobject()->transfer_ready(new xcb_selection_request_event_t(*event),
+                                                         fd);
+        } else {
+            send_selection_notify(event, false);
+        }
+    }
+    return true;
 }
 
 }
