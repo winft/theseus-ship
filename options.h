@@ -81,7 +81,7 @@ class KWIN_EXPORT Options : public QObject
      * Whether to see Xinerama screens separately for focus (in Alt+Tab, when activating next client)
      */
     Q_PROPERTY(bool separateScreenFocus READ isSeparateScreenFocus WRITE setSeparateScreenFocus NOTIFY separateScreenFocusChanged)
-    Q_PROPERTY(win::placement placement READ placement WRITE setPlacement NOTIFY placementChanged)
+    Q_PROPERTY(KWin::win::placement placement READ placement WRITE setPlacement NOTIFY placementChanged)
     Q_PROPERTY(bool focusPolicyIsReasonable READ focusPolicyIsReasonable NOTIFY focusPolicyIsResonableChanged)
     /**
      * The size of the zone that triggers snapping on desktop borders.
