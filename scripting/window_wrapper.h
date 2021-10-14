@@ -46,6 +46,9 @@ class WindowWrapper : public QObject
     Q_PROPERTY(QRect bufferGeometry READ bufferGeometry NOTIFY geometryChanged)
     Q_PROPERTY(QRect frameGeometry READ frameGeometry WRITE setFrameGeometry NOTIFY geometryChanged)
 
+    /// @deprecated. Use frameGeometry instead.
+    Q_PROPERTY(QRect geometry READ frameGeometry WRITE setFrameGeometry NOTIFY geometryChanged)
+
     Q_PROPERTY(QPoint pos READ pos)
     Q_PROPERTY(QRect rect READ rect)
     Q_PROPERTY(QRect visibleRect READ visibleRect)
