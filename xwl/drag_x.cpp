@@ -168,7 +168,7 @@ void x11_drag::handle_transfer_finished(xcb_timestamp_t time)
 
 void x11_drag::set_offers(mime_atoms const& offers)
 {
-    source->set_offers(offers);
+    source->offers = offers;
 
     if (offers.empty()) {
         // There are no offers, so just directly set the drag target,

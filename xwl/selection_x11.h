@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include "event_x11.h"
+#include "mime.h"
 #include "sources.h"
 #include "sources_ext.h"
 #include "transfer.h"
@@ -14,8 +14,9 @@
 #include "types.h"
 
 #include <QObject>
-
+#include <unistd.h>
 #include <xcb/xfixes.h>
+#include <xwayland_logging.h>
 
 namespace KWin::xwl
 {
@@ -82,8 +83,7 @@ void handle_x11_offer_change(Selection* sel,
         return;
     }
 
-    auto const offers = sel->data.x11_source->get_offers();
-    if (offers.empty()) {
+    if (sel->data.x11_source->offers.empty()) {
         sel->set_selection(nullptr);
         return;
     }
@@ -142,6 +142,101 @@ void register_x11_selection(Selection* sel, QSize const& window_size)
                       values);
     register_xfixes(sel);
     xcb_flush(xcb_con);
+}
+
+template<typename Source>
+void selection_x11_handle_targets(Source&& source, xcb_window_t const requestor)
+{
+    // receive targets
+    xcb_get_property_cookie_t cookie = xcb_get_property(source->x11.connection,
+                                                        1,
+                                                        requestor,
+                                                        atoms->wl_selection,
+                                                        XCB_GET_PROPERTY_TYPE_ANY,
+                                                        0,
+                                                        4096);
+    auto reply = xcb_get_property_reply(source->x11.connection, cookie, nullptr);
+    if (!reply) {
+        return;
+    }
+    if (reply->type != XCB_ATOM_ATOM) {
+        free(reply);
+        return;
+    }
+
+    std::vector<std::string> added;
+    std::vector<std::string> removed;
+
+    mime_atoms all;
+    auto& offers = source->offers;
+
+    auto value = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
+    for (uint32_t i = 0; i < reply->value_len; i++) {
+        if (value[i] == XCB_ATOM_NONE) {
+            continue;
+        }
+
+        auto const mimeStrings = atom_to_mime_types(value[i]);
+        if (mimeStrings.empty()) {
+            // TODO: this should never happen? assert?
+            continue;
+        }
+
+        auto const mimeIt
+            = std::find_if(offers.begin(), offers.end(), [value, i](auto const& mime) {
+                  return mime.atom == value[i];
+              });
+
+        auto mimePair = mime_atom{mimeStrings[0], value[i]};
+        if (mimeIt == offers.end()) {
+            added.emplace_back(mimePair.id);
+        } else {
+            remove_all(offers, mimePair);
+        }
+        all.emplace_back(mimePair);
+    }
+    // all left in offers are not in the updated targets
+    for (auto const& mimePair : offers) {
+        removed.emplace_back(mimePair.id);
+    }
+    offers = all;
+
+    if (!added.empty() || !removed.empty()) {
+        Q_EMIT source->get_qobject()->offers_changed(added, removed);
+    }
+
+    free(reply);
+}
+
+template<typename Source>
+void selection_x11_start_transfer(Source&& source, std::string const& mimeName, int32_t fd)
+{
+    auto const& offers = source->offers;
+
+    auto const mimeIt = std::find_if(offers.begin(), offers.end(), [&mimeName](auto const& mime) {
+        return mime.id == mimeName;
+    });
+    if (mimeIt == offers.end()) {
+        qCDebug(KWIN_XWL) << "Sending X11 clipboard to Wayland failed: unsupported MIME.";
+        close(fd);
+        return;
+    }
+
+    Q_EMIT source->get_qobject()->transfer_ready(mimeIt->atom, fd);
+}
+
+template<typename Source>
+bool selection_x11_handle_notify(Source&& source, xcb_selection_notify_event_t* event)
+{
+    if (event->property == XCB_ATOM_NONE) {
+        qCWarning(KWIN_XWL) << "Incoming X selection conversion failed";
+        return true;
+    }
+    if (event->target == atoms->targets) {
+        selection_x11_handle_targets(source, event->requestor);
+        return true;
+    }
+    return false;
 }
 
 }

@@ -2,7 +2,7 @@
  KWin - the KDE window manager
  This file is part of the KDE project.
 
-Copyright 2019 Roman Gilg <subdiff@gmail.com>
+Copyright 2019-2021 Roman Gilg <subdiff@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QObject>
 #include <memory>
 #include <vector>
-#include <xcb/xcb.h>
+#include <xcb/xfixes.h>
 
 class QSocketNotifier;
 
@@ -122,29 +122,43 @@ template<typename InternalSource>
 class x11_source
 {
 public:
-    x11_source(xcb_xfixes_selection_notify_event_t* event, x11_data const& x11);
-    ~x11_source();
+    x11_source(xcb_xfixes_selection_notify_event_t* event, x11_data const& x11)
+        : x11{x11}
+        , timestamp{event->timestamp}
+        , qobject{std::make_unique<q_x11_source>()}
+    {
+    }
+    ~x11_source() = default;
 
     /**
-     * @param ds must exist.
-     *
-     * x11_source does not take ownership of it in general, but if the function
-     * is called again, it will delete the previous data source.
+     * Does not take ownership of @param src in general, but if the function is called again, it
+     * will delete the previous data source.
      */
-    void set_source(InternalSource* src);
+    void set_source(InternalSource* src)
+    {
+        Q_ASSERT(src);
+        if (source) {
+            delete source;
+        }
+
+        source = src;
+
+        for (auto const& offer : offers) {
+            src->offer(offer.id);
+        }
+
+        QObject::connect(src,
+                         &InternalSource::data_requested,
+                         get_qobject(),
+                         [this](auto const& mimeName, auto fd) {
+                             selection_x11_start_transfer(this, mimeName, fd);
+                         });
+    }
+
     InternalSource* get_source() const
     {
         return source;
     }
-    void get_targets(xcb_window_t const window, xcb_atom_t const atom) const;
-
-    mime_atoms get_offers() const
-    {
-        return offers;
-    }
-    void set_offers(mime_atoms const& offers);
-
-    bool handle_selection_notify(xcb_selection_notify_event_t* event);
 
     xcb_timestamp_t get_timestamp() const
     {
@@ -161,14 +175,10 @@ public:
     }
 
     x11_data const x11;
+    mime_atoms offers;
 
 private:
-    void handle_targets(xcb_window_t const requestor);
-    void start_transfer(std::string const& mimeName, qint32 fd);
-
     InternalSource* source = nullptr;
-
-    mime_atoms offers;
 
     xcb_timestamp_t timestamp = XCB_CURRENT_TIME;
     std::unique_ptr<q_x11_source> qobject;
