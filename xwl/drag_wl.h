@@ -17,12 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_XWL_DRAG_WL
-#define KWIN_XWL_DRAG_WL
+#pragma once
 
 #include "drag.h"
 
 #include <QPoint>
+#include <memory>
 
 namespace Wrapland::Server
 {
@@ -33,92 +33,85 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Xwl
+namespace xwl
 {
-enum class DragEventReply;
-class Xvisit;
+enum class drag_event_reply;
+class x11_visit;
 
-using DnDActions = Wrapland::Server::dnd_actions;
+using dnd_actions = Wrapland::Server::dnd_actions;
 
-class WlToXDrag : public Drag
+class wl_drag : public drag
 {
     Q_OBJECT
 
 public:
-    explicit WlToXDrag(Dnd* dnd);
+    wl_drag(Wrapland::Server::data_source* source, xcb_window_t proxy_window);
 
-    DragEventReply moveFilter(Toplevel* target, const QPoint& pos) override;
-    bool handleClientMessage(xcb_client_message_event_t* event) override;
-
+    drag_event_reply move_filter(Toplevel* target, QPoint const& pos) override;
+    bool handle_client_message(xcb_client_message_event_t* event) override;
     bool end() override;
 
-    Wrapland::Server::data_source* dataSourceIface() const
-    {
-        return m_dsi;
-    }
-
 private:
-    Wrapland::Server::data_source* m_dsi;
-    Xvisit* m_visit = nullptr;
+    Wrapland::Server::data_source* source;
+    xcb_window_t proxy_window;
+    std::unique_ptr<x11_visit> visit;
 
-    Q_DISABLE_COPY(WlToXDrag)
+    Q_DISABLE_COPY(wl_drag)
 };
 
-// visit to an X window
-class Xvisit : public QObject
+/// Visit to an X window
+class x11_visit : public QObject
 {
     Q_OBJECT
 
 public:
     // TODO: handle ask action
 
-    Xvisit(WlToXDrag* drag, Toplevel* target);
+    x11_visit(Toplevel* target, Wrapland::Server::data_source* source, xcb_window_t drag_window);
 
-    bool handleClientMessage(xcb_client_message_event_t* event);
-    bool handleStatus(xcb_client_message_event_t* event);
-    bool handleFinished(xcb_client_message_event_t* event);
+    bool handle_client_message(xcb_client_message_event_t* event);
 
-    void sendPosition(const QPointF& globalPos);
+    void send_position(QPointF const& globalPos);
     void leave();
 
     bool finished() const
     {
-        return m_state.finished;
+        return state.finished;
     }
-    Toplevel* target() const
+    Toplevel* get_target() const
     {
-        return m_target;
+        return target;
     }
 
 Q_SIGNALS:
-    void finish(Xvisit* self);
+    void finish(x11_visit* self);
 
 private:
-    void sendEnter();
-    void sendDrop(uint32_t time);
-    void sendLeave();
+    bool handle_status(xcb_client_message_event_t* event);
+    bool handle_finished(xcb_client_message_event_t* event);
 
-    void receiveOffer();
+    void send_enter();
+    void send_drop(uint32_t time);
+    void send_leave();
+
+    void receive_offer();
     void enter();
-
-    void retrieveSupportedActions();
-    void determineProposedAction();
-    void requestDragAndDropAction();
-    void setProposedAction();
-
+    void update_actions();
     void drop();
 
-    void doFinish();
-    void stopConnections();
+    void do_finish();
+    void stop_connections();
 
-    WlToXDrag* m_drag;
-    Toplevel* m_target;
-    uint32_t m_version = 0;
+    Toplevel* target;
+    Wrapland::Server::data_source* source;
+    xcb_window_t drag_window;
+    uint32_t version = 0;
 
-    QMetaObject::Connection m_enterConnection;
-    QMetaObject::Connection m_motionConnection;
-    QMetaObject::Connection m_actionConnection;
-    QMetaObject::Connection m_dropConnection;
+    struct {
+        QMetaObject::Connection motion;
+        QMetaObject::Connection action;
+        QMetaObject::Connection drop;
+    } notifiers;
 
     struct {
         bool pending = false;
@@ -126,25 +119,23 @@ private:
         QPoint cache;
     } m_pos;
 
-    // supported by the Wl source
-    DnDActions m_supportedActions = DnDAction::none;
-    // preferred by the X client
-    DnDAction m_preferredAction = DnDAction::none;
-    // decided upon by the compositor
-    DnDAction m_proposedAction = DnDAction::none;
+    struct {
+        // Preferred by the X client.
+        dnd_action preferred{dnd_action::none};
+        // Decided upon by the compositor.
+        dnd_action proposed{dnd_action::none};
+    } actions;
 
     struct {
         bool entered = false;
         bool dropped = false;
         bool finished = false;
-    } m_state;
+    } state;
 
     bool m_accepts = false;
 
-    Q_DISABLE_COPY(Xvisit)
+    Q_DISABLE_COPY(x11_visit)
 };
 
-} // namespace Xwl
-} // namespace KWin
-
-#endif
+}
+}

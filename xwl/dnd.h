@@ -17,64 +17,69 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_XWL_DND
-#define KWIN_XWL_DND
+#pragma once
 
-#include "drag.h"
-#include "selection.h"
+#include "event_x11.h"
+#include "selection_data.h"
+#include "selection_x11.h"
 
 #include <Wrapland/Server/data_source.h>
 
 #include <QPoint>
+#include <memory>
+#include <vector>
 
 namespace KWin
 {
 class Toplevel;
 
-namespace Xwl
+namespace xwl
 {
-class Dnd;
-enum class DragEventReply;
+class data_source_ext;
+class drag;
+class drag_and_drop;
+enum class drag_event_reply;
+
+class wl_drag;
+class x11_drag;
 
 template<>
-void do_handle_xfixes_notify(Dnd* sel, xcb_xfixes_selection_notify_event_t* event);
+void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_event_t* event);
 template<>
-bool handle_client_message(Dnd* sel, xcb_client_message_event_t* event);
+bool handle_client_message(drag_and_drop* sel, xcb_client_message_event_t* event);
 template<>
-void handle_x11_offer_change(Dnd* sel, QStringList const& added, QStringList const& removed);
+void handle_x11_offer_change(drag_and_drop* sel,
+                             std::vector<std::string> const& added,
+                             std::vector<std::string> const& removed);
 
 /**
  * Represents the drag and drop mechanism, on X side this is the XDND protocol.
  * For more information on XDND see: https://johnlindal.wixsite.com/xdnd
  */
-class Dnd
+class drag_and_drop
 {
-    using srv_data_source = Wrapland::Server::data_source;
-    using internal_data_source = data_source_ext;
-
 public:
-    selection_data<srv_data_source, internal_data_source> data;
+    selection_data<Wrapland::Server::data_source, data_source_ext> data;
 
-    // active drag or null when no drag active
-    Drag* m_currentDrag = nullptr;
-    QVector<Drag*> m_oldDrags;
+    std::unique_ptr<wl_drag> wldrag;
+    std::unique_ptr<x11_drag> xdrag;
+    std::vector<std::unique_ptr<drag>> old_drags;
 
-    Dnd(xcb_atom_t atom, x11_data const& x11);
+    drag_and_drop(x11_data const& x11);
+    ~drag_and_drop();
 
     static uint32_t version();
 
-    DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos);
+    drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos);
 
 private:
     // start and end Wl native client drags (Wl -> Xwl)
-    void startDrag();
-    void endDrag();
-    void clearOldDrag(Drag* drag);
+    void start_drag();
+    void end_drag();
+    void clear_old_drag(xwl::drag* drag);
 
-    Q_DISABLE_COPY(Dnd)
+    Q_DISABLE_COPY(drag_and_drop)
 };
 
-} // namespace Xwl
-} // namespace KWin
-
-#endif
+}
+}

@@ -17,14 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_XWL_DATABRIDGE
-#define KWIN_XWL_DATABRIDGE
+#pragma once
 
-#include "xwayland.h"
+#include "types.h"
 
 #include <kwin_export.h>
 
-#include <QObject>
 #include <QPoint>
 
 #include <memory>
@@ -36,12 +34,11 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Xwl
+namespace xwl
 {
-class Xwayland;
-class Clipboard;
-class Dnd;
-enum class DragEventReply;
+class clipboard;
+class drag_and_drop;
+enum class drag_event_reply;
 class primary_selection;
 
 /**
@@ -50,30 +47,26 @@ class primary_selection;
  *
  * Exists only once per Xwayland session.
  */
-class KWIN_EXPORT DataBridge : public QObject
+class KWIN_EXPORT data_bridge
 {
-    Q_OBJECT
-
 public:
-    DataBridge(x11_data const& x11);
-    ~DataBridge() override;
+    data_bridge(x11_data const& x11);
+    ~data_bridge();
 
-    bool filterEvent(xcb_generic_event_t* event);
-    DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos);
+    bool filter_event(xcb_generic_event_t* event);
+    drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos);
 
 private:
-    bool handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event);
+    bool handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event);
 
     xcb_query_extension_reply_t const* xfixes{nullptr};
 
-    std::unique_ptr<Clipboard> m_clipboard;
-    std::unique_ptr<Dnd> m_dnd;
-    std::unique_ptr<primary_selection> m_primarySelection;
+    std::unique_ptr<xwl::clipboard> clipboard;
+    std::unique_ptr<drag_and_drop> dnd;
+    std::unique_ptr<xwl::primary_selection> primary_selection;
 
-    Q_DISABLE_COPY(DataBridge)
+    Q_DISABLE_COPY(data_bridge)
 };
 
-} // namespace Xwl
-} // namespace KWin
-
-#endif
+}
+}

@@ -19,25 +19,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "xwayland_interface.h"
 
-namespace KWin
+namespace KWin::xwl
 {
 
-XwaylandInterface* s_self = nullptr;
+xwayland_interface* s_self = nullptr;
 
-XwaylandInterface* XwaylandInterface::self()
+xwayland_interface* xwayland_interface::self()
 {
     return s_self;
 }
 
-XwaylandInterface::XwaylandInterface()
+xwayland_interface::xwayland_interface()
     : QObject()
 {
     s_self = this;
 }
 
-XwaylandInterface::~XwaylandInterface()
+xwayland_interface::~xwayland_interface()
 {
     s_self = nullptr;
 }
 
-} // namespace KWin
+}

@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_XWL_XWAYLAND_INTERFACE
-#define KWIN_XWL_XWAYLAND_INTERFACE
+#pragma once
 
 #include <kwinglobals.h>
 
@@ -29,40 +28,39 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Xwl
+namespace xwl
 {
-enum class DragEventReply {
+enum class drag_event_reply {
     // event should be ignored by the filter
-    Ignore,
+    ignore,
     // event is filtered out
-    Take,
+    take,
     // event should be handled as a Wayland native one
-    Wayland,
+    wayland,
 };
-} // namespace Xwl
 
-class KWIN_EXPORT XwaylandInterface : public QObject
+class KWIN_EXPORT xwayland_interface : public QObject
 {
     Q_OBJECT
 
 public:
-    static XwaylandInterface* self();
+    static xwayland_interface* self();
 
-    virtual Xwl::DragEventReply dragMoveFilter(Toplevel* target, const QPoint& pos) = 0;
+    virtual drag_event_reply drag_move_filter(Toplevel* target, QPoint const& pos) = 0;
 
 protected:
-    XwaylandInterface();
-    ~XwaylandInterface() override;
+    xwayland_interface();
+    ~xwayland_interface() override;
 
 private:
-    Q_DISABLE_COPY(XwaylandInterface)
+    Q_DISABLE_COPY(xwayland_interface)
 };
 
-inline XwaylandInterface* xwayland()
-{
-    return XwaylandInterface::self();
 }
 
-} // namespace KWin
+inline xwl::xwayland_interface* xwayland()
+{
+    return xwl::xwayland_interface::self();
+}
 
-#endif
+}

@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_XWL_DRAG
-#define KWIN_XWL_DRAG
+#pragma once
 
 #include <Wrapland/Server/drag_pool.h>
 
@@ -30,44 +29,39 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Xwl
+namespace xwl
 {
-class Dnd;
-enum class DragEventReply;
+class drag_and_drop;
+enum class drag_event_reply;
 
-using DnDAction = Wrapland::Server::dnd_action;
+using dnd_action = Wrapland::Server::dnd_action;
 
 /**
  * An ongoing drag operation.
  */
-class Drag : public QObject
+class drag : public QObject
 {
     Q_OBJECT
 
 public:
-    Dnd* dnd;
-
-    explicit Drag(Dnd* dnd, QObject* parent = nullptr);
-    ~Drag() override;
+    drag() = default;
 
     static void
-    sendClientMessage(xcb_window_t target, xcb_atom_t type, xcb_client_message_data_t* data);
-    static DnDAction atomToClientAction(xcb_atom_t atom);
-    static xcb_atom_t clientActionToAtom(DnDAction action);
+    send_client_message(xcb_window_t target, xcb_atom_t type, xcb_client_message_data_t* data);
+    static dnd_action atom_to_client_action(xcb_atom_t atom);
+    static xcb_atom_t client_action_to_atom(dnd_action action);
 
-    virtual bool handleClientMessage(xcb_client_message_event_t* event) = 0;
-    virtual DragEventReply moveFilter(Toplevel* target, const QPoint& pos) = 0;
+    virtual bool handle_client_message(xcb_client_message_event_t* event) = 0;
+    virtual drag_event_reply move_filter(Toplevel* target, QPoint const& pos) = 0;
 
     virtual bool end() = 0;
 
 Q_SIGNALS:
-    void finish(Drag* self);
+    void finish(drag* self);
 
 private:
-    Q_DISABLE_COPY(Drag)
+    Q_DISABLE_COPY(drag)
 };
 
-} // namespace Xwl
-} // namespace KWin
-
-#endif
+}
+}

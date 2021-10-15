@@ -19,31 +19,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "clipboard.h"
 
-#include "selection_source.h"
-#include "transfer.h"
-#include "xwayland.h"
+#include "selection_wl.h"
+#include "selection_x11.h"
+#include "sources_ext.h"
 
 #include "wayland_server.h"
-#include "workspace.h"
 
-#include "win/x11/window.h"
-
-#include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/seat.h>
 
-#include <xcb/xcb_event.h>
-#include <xcb/xfixes.h>
-
-#include <xwayland_logging.h>
-
-namespace KWin
-{
-namespace Xwl
+namespace KWin::xwl
 {
 
-Clipboard::Clipboard(xcb_atom_t atom, x11_data const& x11)
+clipboard::clipboard(x11_data const& x11)
 {
-    data = create_selection_data<srv_data_source, internal_data_source>(atom, x11);
+    data = create_selection_data<Wrapland::Server::data_source, data_source_ext>(atoms->clipboard,
+                                                                                 x11);
 
     register_x11_selection(this, QSize(10, 10));
 
@@ -53,15 +43,14 @@ Clipboard::Clipboard(xcb_atom_t atom, x11_data const& x11)
                      [this] { handle_wl_selection_change(this); });
 }
 
-Clipboard::srv_data_source* Clipboard::get_current_source() const
+Wrapland::Server::data_source* clipboard::get_current_source() const
 {
     return waylandServer()->seat()->selection();
 }
 
-std::function<void(Clipboard::srv_data_source*)> Clipboard::get_selection_setter() const
+void clipboard::set_selection(Wrapland::Server::data_source* source) const
 {
-    return [](srv_data_source* src) { waylandServer()->seat()->setSelection(src); };
+    waylandServer()->seat()->setSelection(source);
 }
 
-} // namespace Xwl
-} // namespace KWin
+}

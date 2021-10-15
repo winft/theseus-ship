@@ -17,41 +17,33 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_XWL_CLIPBOARD
-#define KWIN_XWL_CLIPBOARD
+#pragma once
 
-#include "selection.h"
+#include "selection_data.h"
 
 #include <Wrapland/Server/data_source.h>
 
-#include <functional>
-
-namespace KWin::Xwl
+namespace KWin::xwl
 {
-class Clipboard;
+class clipboard;
+class data_source_ext;
 
 /**
  * Represents the X clipboard, which is on Wayland side just called
  * @e selection.
  */
-class Clipboard
+class clipboard
 {
 public:
-    using srv_data_source = Wrapland::Server::data_source;
-    using internal_data_source = data_source_ext;
+    selection_data<Wrapland::Server::data_source, data_source_ext> data;
 
-    selection_data<srv_data_source, internal_data_source> data;
-    QMetaObject::Connection source_check_connection;
+    clipboard(x11_data const& x11);
 
-    Clipboard(xcb_atom_t atom, x11_data const& x11);
-
-    srv_data_source* get_current_source() const;
-    std::function<void(srv_data_source*)> get_selection_setter() const;
+    Wrapland::Server::data_source* get_current_source() const;
+    void set_selection(Wrapland::Server::data_source* source) const;
 
 private:
-    Q_DISABLE_COPY(Clipboard)
+    Q_DISABLE_COPY(clipboard)
 };
 
 }
-
-#endif

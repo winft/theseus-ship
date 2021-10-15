@@ -17,20 +17,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_XWL_TRANSFER
-#define KWIN_XWL_TRANSFER
+#pragma once
 
-#include "xwayland.h"
+#include "types.h"
 
 #include <QObject>
 #include <QSocketNotifier>
-#include <QVector>
+#include <deque>
 
 #include <xcb/xcb.h>
 
-namespace KWin
-{
-namespace Xwl
+namespace KWin::xwl
 {
 
 /**
@@ -41,186 +38,184 @@ namespace Xwl
  * externally afterwards. For that the owner should connect to the
  * @c finished() signal.
  */
-class Transfer : public QObject
+class transfer : public QObject
 {
     Q_OBJECT
 
 public:
-    Transfer(xcb_atom_t selection, qint32 fd, xcb_timestamp_t timestamp, QObject* parent = nullptr);
+    transfer(xcb_atom_t selection, qint32 fd, xcb_timestamp_t timestamp, QObject* parent = nullptr);
 
-    virtual bool handlePropertyNotify(xcb_property_notify_event_t* event) = 0;
+    virtual bool handle_property_notify(xcb_property_notify_event_t* event) = 0;
     void timeout();
-    xcb_timestamp_t timestamp() const
+    xcb_timestamp_t get_timestamp() const
     {
-        return m_timestamp;
+        return timestamp;
     }
 
 Q_SIGNALS:
     void finished();
 
 protected:
-    void endTransfer();
+    void end_transfer();
 
-    xcb_atom_t atom() const
+    xcb_atom_t get_atom() const
     {
-        return m_atom;
+        return atom;
     }
-    qint32 fd() const
+    qint32 get_fd() const
     {
-        return m_fd;
+        return fd;
     }
 
-    void setIncr(bool set)
+    void set_incr(bool set)
     {
-        m_incr = set;
+        incr = set;
     }
-    bool incr() const
+    bool get_incr() const
     {
-        return m_incr;
+        return incr;
     }
-    void resetTimeout()
+    void reset_timeout()
     {
-        m_timeout = false;
+        timed_out = false;
     }
-    void createSocketNotifier(QSocketNotifier::Type type);
-    void clearSocketNotifier();
-    QSocketNotifier* socketNotifier() const
+
+    void create_socket_notifier(QSocketNotifier::Type type);
+    void clear_socket_notifier();
+    QSocketNotifier* socket_notifier() const
     {
-        return m_notifier;
+        return notifier;
     }
 
 private:
-    void closeFd();
+    void close_fd();
 
-    xcb_atom_t m_atom;
-    qint32 m_fd;
-    xcb_timestamp_t m_timestamp = XCB_CURRENT_TIME;
+    xcb_atom_t atom;
+    qint32 fd;
+    xcb_timestamp_t timestamp{XCB_CURRENT_TIME};
 
-    QSocketNotifier* m_notifier = nullptr;
-    bool m_incr = false;
-    bool m_timeout = false;
+    QSocketNotifier* notifier = nullptr;
+    bool incr = false;
+    bool timed_out = false;
 
-    Q_DISABLE_COPY(Transfer)
+    Q_DISABLE_COPY(transfer)
 };
 
 /**
  * Represents a transfer from a Wayland native source to an X window.
  */
-class TransferWltoX : public Transfer
+class wl_to_x11_transfer : public transfer
 {
     Q_OBJECT
 
 public:
-    TransferWltoX(xcb_atom_t selection,
-                  xcb_selection_request_event_t* request,
-                  qint32 fd,
-                  QObject* parent = nullptr);
-    ~TransferWltoX() override;
+    wl_to_x11_transfer(xcb_atom_t selection,
+                       xcb_selection_request_event_t* request,
+                       qint32 fd,
+                       QObject* parent = nullptr);
+    ~wl_to_x11_transfer() override;
 
-    void startTransferFromSource();
-    bool handlePropertyNotify(xcb_property_notify_event_t* event) override;
+    void start_transfer_from_source();
+    bool handle_property_notify(xcb_property_notify_event_t* event) override;
 
 Q_SIGNALS:
-    void selectionNotify(xcb_selection_request_event_t* event, bool success);
+    void selection_notify(xcb_selection_request_event_t* event, bool success);
 
 private:
-    void startIncr();
-    void readWlSource();
-    int flushSourceData();
-    void handlePropertyDelete();
+    void start_incr();
+    void read_wl_source();
+    int flush_source_data();
+    void handle_property_delete();
 
-    xcb_selection_request_event_t* m_request = nullptr;
+    xcb_selection_request_event_t* request = nullptr;
 
     /* contains all received data portioned in chunks
-     * TODO: explain second QPair component
+     * TODO(romangg): explain second std::pair component
      */
-    QVector<QPair<QByteArray, int>> m_chunks;
+    std::deque<std::pair<QByteArray, int>> chunks;
 
-    bool m_propertyIsSet = false;
-    bool m_flushPropertyOnDelete = false;
+    bool property_is_set = false;
+    bool flush_property_on_delete = false;
 
-    Q_DISABLE_COPY(TransferWltoX)
+    Q_DISABLE_COPY(wl_to_x11_transfer)
 };
 
 /**
  * Helper class for X to Wl transfers.
  */
-class DataReceiver
+class data_receiver
 {
 public:
-    virtual ~DataReceiver();
+    virtual ~data_receiver();
 
-    void transferFromProperty(xcb_get_property_reply_t* reply);
+    void transfer_from_property(xcb_get_property_reply_t* reply);
 
-    virtual void setData(const char* value, int length);
-    QByteArray data() const;
+    virtual void set_data(char const* value, int length);
+    QByteArray get_data() const;
 
-    void partRead(int length);
+    void part_read(int length);
 
 protected:
-    void setDataInternal(QByteArray data)
+    void set_data_internal(QByteArray data)
     {
-        m_data = data;
+        this->data = data;
     }
 
 private:
-    xcb_get_property_reply_t* m_propertyReply = nullptr;
-    int m_propertyStart = 0;
-    QByteArray m_data;
+    xcb_get_property_reply_t* property_reply = nullptr;
+    int property_start = 0;
+    QByteArray data;
 };
 
 /**
  * Compatibility receiver for clients only
  * supporting the NETSCAPE_URL scheme (Firefox)
  */
-class NetscapeUrlReceiver : public DataReceiver
+class netscape_url_receiver : public data_receiver
 {
 public:
-    void setData(const char* value, int length) override;
+    void set_data(char const* value, int length) override;
 };
 
 /**
  * Compatibility receiver for clients only
  * supporting the text/x-moz-url scheme (Chromium on own drags)
  */
-class MozUrlReceiver : public DataReceiver
+class moz_url_receiver : public data_receiver
 {
 public:
-    void setData(const char* value, int length) override;
+    void set_data(char const* value, int length) override;
 };
 
 /**
  * Represents a transfer from an X window to a Wayland native client.
  */
-class TransferXtoWl : public Transfer
+class x11_to_wl_transfer : public transfer
 {
     Q_OBJECT
 
 public:
-    TransferXtoWl(xcb_atom_t selection,
-                  xcb_atom_t target,
-                  qint32 fd,
-                  xcb_timestamp_t timestamp,
-                  xcb_window_t parentWindow,
-                  x11_data const& x11,
-                  QObject* parent = nullptr);
-    ~TransferXtoWl() override;
+    x11_to_wl_transfer(xcb_atom_t selection,
+                       xcb_atom_t target,
+                       qint32 fd,
+                       xcb_timestamp_t timestamp,
+                       xcb_window_t parentWindow,
+                       x11_data const& x11,
+                       QObject* parent = nullptr);
+    ~x11_to_wl_transfer() override;
 
-    bool handleSelectionNotify(xcb_selection_notify_event_t* event);
-    bool handlePropertyNotify(xcb_property_notify_event_t* event) override;
+    bool handle_selection_notify(xcb_selection_notify_event_t* event);
+    bool handle_property_notify(xcb_property_notify_event_t* event) override;
 
 private:
-    void dataSourceWrite();
-    void startTransfer();
-    void getIncrChunk();
+    void data_source_write();
+    void start_transfer();
+    void get_incr_chunk();
 
-    xcb_window_t m_window;
-    DataReceiver* m_receiver = nullptr;
+    xcb_window_t window;
+    data_receiver* receiver = nullptr;
 
-    Q_DISABLE_COPY(TransferXtoWl)
+    Q_DISABLE_COPY(x11_to_wl_transfer)
 };
 
-} // namespace Xwl
-} // namespace KWin
-
-#endif
+}

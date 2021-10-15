@@ -756,17 +756,19 @@ install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
 
 set(kwin_XWAYLAND_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/clipboard.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/databridge.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/sources.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/data_bridge.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/dnd.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag_wl.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag_x.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/primary_selection.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/selection.h
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/selection_source.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/sources_ext.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/transfer.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/xwl/xwayland.cpp
+
+   # These headers need to be compiled for the helper QObjects they contain.
+   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/selection_data.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/sources.h
 )
 include(ECMQtDeclareLoggingCategory)
 ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS

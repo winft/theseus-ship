@@ -17,78 +17,66 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "databridge.h"
+#include "data_bridge.h"
+
 #include "clipboard.h"
 #include "dnd.h"
 #include "primary_selection.h"
-#include "selection.h"
 
 #include "atoms.h"
-#include "toplevel.h"
-#include "wayland_server.h"
-#include "workspace.h"
 
-#include <Wrapland/Server/primary_selection.h>
-#include <Wrapland/Server/seat.h>
-
-using namespace Wrapland::Client;
-
-namespace KWin
-{
-namespace Xwl
+namespace KWin::xwl
 {
 
-DataBridge::DataBridge(x11_data const& x11)
-    : QObject()
+data_bridge::data_bridge(x11_data const& x11)
 {
     xcb_prefetch_extension_data(x11.connection, &xcb_xfixes_id);
     xfixes = xcb_get_extension_data(x11.connection, &xcb_xfixes_id);
 
-    m_clipboard.reset(new Clipboard(atoms->clipboard, x11));
-    m_dnd.reset(new Dnd(atoms->xdnd_selection, x11));
-    m_primarySelection.reset(new primary_selection(atoms->primary_selection, x11));
+    clipboard.reset(new xwl::clipboard(x11));
+    dnd.reset(new drag_and_drop(x11));
+    primary_selection.reset(new xwl::primary_selection(x11));
 }
 
-DataBridge::~DataBridge() = default;
+data_bridge::~data_bridge() = default;
 
-bool DataBridge::filterEvent(xcb_generic_event_t* event)
+bool data_bridge::filter_event(xcb_generic_event_t* event)
 {
-    if (filter_event(m_clipboard.get(), event)) {
+    if (xwl::filter_event(clipboard.get(), event)) {
         return true;
     }
-    if (filter_event(m_dnd.get(), event)) {
+    if (xwl::filter_event(dnd.get(), event)) {
         return true;
     }
-    if (filter_event(m_primarySelection.get(), event)) {
+    if (xwl::filter_event(primary_selection.get(), event)) {
         return true;
     }
     if (event->response_type - xfixes->first_event == XCB_XFIXES_SELECTION_NOTIFY) {
-        return handleXfixesNotify((xcb_xfixes_selection_notify_event_t*)event);
+        return handle_xfixes_notify((xcb_xfixes_selection_notify_event_t*)event);
     }
     return false;
 }
 
-bool DataBridge::handleXfixesNotify(xcb_xfixes_selection_notify_event_t* event)
+bool data_bridge::handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
 {
     if (event->selection == atoms->clipboard) {
-        return handle_xfixes_notify(m_clipboard.get(), event);
+        return xwl::handle_xfixes_notify(clipboard.get(), event);
     }
     if (event->selection == atoms->primary_selection) {
-        return handle_xfixes_notify(m_primarySelection.get(), event);
+        return xwl::handle_xfixes_notify(primary_selection.get(), event);
     }
     if (event->selection == atoms->xdnd_selection) {
-        return handle_xfixes_notify(m_dnd.get(), event);
+        return xwl::handle_xfixes_notify(dnd.get(), event);
     }
     return false;
 }
 
-DragEventReply DataBridge::dragMoveFilter(Toplevel* target, const QPoint& pos)
+drag_event_reply data_bridge::drag_move_filter(Toplevel* target, QPoint const& pos)
 {
-    if (!m_dnd) {
-        return DragEventReply::Wayland;
+    if (!dnd) {
+        return drag_event_reply::wayland;
     }
-    return m_dnd->dragMoveFilter(target, pos);
+    return dnd->drag_move_filter(target, pos);
 }
 
-} // namespace Xwl
-} // namespace KWin
+}

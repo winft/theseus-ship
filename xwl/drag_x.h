@@ -17,146 +17,132 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_XWL_DRAG_X
-#define KWIN_XWL_DRAG_X
+#pragma once
 
 #include "drag.h"
-#include "sources.h"
+#include "types.h"
 
 #include <QPoint>
-#include <QPointer>
-#include <QVector>
 #include <memory>
+#include <vector>
 
 namespace KWin
 {
 class Toplevel;
 
-namespace Xwl
+namespace xwl
 {
-enum class DragEventReply;
-class WlVisit;
+class data_source_ext;
+enum class drag_event_reply;
+
+class wl_visit;
+
 template<typename>
-class X11Source;
+class x11_source;
+using x11_source_ext = x11_source<data_source_ext>;
 
-using Mimes = QVector<QPair<QString, xcb_atom_t>>;
-using DataX11Source = X11Source<data_source_ext>;
-
-class XToWlDrag : public Drag
+class x11_drag : public drag
 {
     Q_OBJECT
 
 public:
-    explicit XToWlDrag(DataX11Source* source, Dnd* dnd);
-    ~XToWlDrag() override;
+    explicit x11_drag(x11_source_ext* source);
+    ~x11_drag() override;
 
-    DragEventReply moveFilter(Toplevel* target, const QPoint& pos) override;
-    bool handleClientMessage(xcb_client_message_event_t* event) override;
-
-    void setDragAndDropAction(DnDAction action);
-    DnDAction selectedDragAndDropAction();
-
+    drag_event_reply move_filter(Toplevel* target, QPoint const& pos) override;
+    bool handle_client_message(xcb_client_message_event_t* event) override;
     bool end() override;
-    DataX11Source* x11Source() const
-    {
-        return m_source;
-    }
 
-private:
-    void setOffers(const Mimes& offers);
-    void setDragTarget();
-
-    bool checkForFinished();
-
-    Mimes m_offers;
-    Mimes m_offersPending;
-
-    DataX11Source* m_source;
-    QVector<QPair<xcb_timestamp_t, bool>> m_dataRequests;
-
-    WlVisit* m_visit = nullptr;
-    QVector<WlVisit*> m_oldVisits;
-
-    bool m_performed = false;
-    DnDAction m_lastSelectedDragAndDropAction = DnDAction::none;
+    void handle_transfer_finished(xcb_timestamp_t time);
 
     std::unique_ptr<data_source_ext> data_source;
+    std::unique_ptr<wl_visit> visit;
 
-    Q_DISABLE_COPY(XToWlDrag)
+private:
+    void set_offers(mime_atoms const& offers);
+    void set_drag_target();
+
+    bool check_for_finished();
+
+    x11_source_ext* source;
+    mime_atoms offers;
+    std::vector<std::pair<xcb_timestamp_t, bool>> data_requests;
+
+    std::vector<std::unique_ptr<wl_visit>> old_visits;
+
+    Q_DISABLE_COPY(x11_drag)
 };
 
-class WlVisit : public QObject
+class wl_visit : public QObject
 {
     Q_OBJECT
 
 public:
-    WlVisit(Toplevel* target, XToWlDrag* drag);
-    ~WlVisit() override;
+    wl_visit(Toplevel* target, x11_source_ext* source);
+    ~wl_visit() override;
 
-    bool handleClientMessage(xcb_client_message_event_t* event);
+    bool handle_client_message(xcb_client_message_event_t* event);
     bool leave();
 
-    Toplevel* target() const
+    Toplevel* get_target() const
     {
-        return m_target;
+        return target;
     }
-    xcb_window_t window() const
+    xcb_window_t get_window() const
     {
-        return m_window;
+        return window;
     }
-    bool entered() const
+    bool get_entered() const
     {
-        return m_entered;
+        return entered;
     }
-    bool dropHandled() const
+    bool get_drop_handled() const
     {
-        return m_dropHandled;
+        return drop_handled;
     }
-    bool finished() const
+    bool get_finished() const
     {
-        return m_finished;
+        return finished;
     }
-    void sendFinished();
+    void send_finished();
 
 Q_SIGNALS:
-    void offersReceived(const Mimes& offers);
-    void finish(WlVisit* self);
+    void offers_received(mime_atoms const& offers);
+    void finish(wl_visit* self);
 
 private:
-    bool handleEnter(xcb_client_message_event_t* event);
-    bool handlePosition(xcb_client_message_event_t* event);
-    bool handleDrop(xcb_client_message_event_t* event);
-    bool handleLeave(xcb_client_message_event_t* event);
+    bool handle_enter(xcb_client_message_event_t* event);
+    bool handle_position(xcb_client_message_event_t* event);
+    bool handle_drop(xcb_client_message_event_t* event);
+    bool handle_leave(xcb_client_message_event_t* event);
 
-    void sendStatus();
+    void send_status();
 
-    void getMimesFromWinProperty(Mimes& offers);
+    void get_mimes_from_win_property(mime_atoms& offers);
 
-    bool targetAcceptsAction() const;
+    bool target_accepts_action() const;
 
-    void doFinish();
-    void unmapProxyWindow();
+    void do_finish();
+    void unmap_proxy_window();
 
-    Toplevel* m_target;
-    xcb_window_t m_window;
+    Toplevel* target;
+    xcb_window_t window;
 
-    xcb_window_t m_srcWindow = XCB_WINDOW_NONE;
-    XToWlDrag* m_drag;
+    xcb_window_t source_window = XCB_WINDOW_NONE;
+    x11_source_ext* source;
 
     uint32_t m_version = 0;
 
-    xcb_atom_t m_actionAtom;
-    DnDAction m_action = DnDAction::none;
+    xcb_atom_t action_atom;
+    dnd_action action = dnd_action::none;
 
-    bool m_mapped = false;
-    bool m_entered = false;
-    bool m_dropHandled = false;
-    bool m_finished = false;
+    bool mapped = false;
+    bool entered = false;
+    bool drop_handled = false;
+    bool finished = false;
 
-    Q_DISABLE_COPY(WlVisit)
+    Q_DISABLE_COPY(wl_visit)
 };
 
-} // namespace Xwl
-} // namespace KWin
-
-#endif
+}
+}
