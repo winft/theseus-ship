@@ -89,57 +89,35 @@ public:
     std::vector<win::wayland::window*> windows;
     QVector<Wrapland::Server::PlasmaShellSurface*> m_plasmaShellSurfaces;
 
-    Wrapland::Server::LayerShellV1* layer_shell{nullptr};
-    Wrapland::Server::XdgActivationV1* xdg_activation{nullptr};
-    Wrapland::Server::drm_lease_device_v1* drm_lease_device{nullptr};
-
     WaylandServer(std::string const& socket, InitializationFlags flags);
     WaylandServer(int socket_fd, InitializationFlags flags);
     ~WaylandServer() override;
 
     void terminateClientConnections();
 
-    Wrapland::Server::Display* display()
-    {
-        return m_display;
-    }
-    Wrapland::Server::Compositor* compositor()
-    {
-        return m_compositor;
-    }
-    Wrapland::Server::Subcompositor* subcompositor{nullptr};
-    Wrapland::Server::Seat* seat()
-    {
-        return m_seat;
-    }
-    Wrapland::Server::data_device_manager* dataDeviceManager()
-    {
-        return m_dataDeviceManager;
-    }
-    Wrapland::Server::primary_selection_device_manager* primarySelectionDeviceManager() const
-    {
-        return m_primarySelectionDeviceManager;
-    }
-    Wrapland::Server::PlasmaVirtualDesktopManager* virtualDesktopManagement()
-    {
-        return m_virtualDesktopManagement;
-    }
-    Wrapland::Server::PlasmaWindowManager* windowManagement()
-    {
-        return m_windowManagement;
-    }
-    Wrapland::Server::XdgShell* xdgShell() const
-    {
-        return m_xdgShell;
-    }
-    Wrapland::Server::Viewporter* viewporter() const
-    {
-        return m_viewporter;
-    }
-    Wrapland::Server::LinuxDmabufV1* linuxDmabuf();
+    Wrapland::Server::Display* display() const;
 
-    Wrapland::Server::PresentationManager* presentationManager() const;
-    void createPresentationManager();
+    Wrapland::Server::Compositor* compositor() const;
+    Wrapland::Server::Subcompositor* subcompositor() const;
+    Wrapland::Server::LinuxDmabufV1* linux_dmabuf();
+    Wrapland::Server::Viewporter* viewporter() const;
+    Wrapland::Server::PresentationManager* presentation_manager() const;
+
+    Wrapland::Server::Seat* seat() const;
+
+    Wrapland::Server::data_device_manager* data_device_manager() const;
+    Wrapland::Server::primary_selection_device_manager* primary_selection_device_manager() const;
+
+    Wrapland::Server::XdgShell* xdg_shell() const;
+    Wrapland::Server::XdgActivationV1* xdg_activation() const;
+
+    Wrapland::Server::PlasmaVirtualDesktopManager* virtual_desktop_management() const;
+    Wrapland::Server::LayerShellV1* layer_shell() const;
+    Wrapland::Server::PlasmaWindowManager* window_management() const;
+
+    Wrapland::Server::drm_lease_device_v1* drm_lease_device() const;
+
+    void create_presentation_manager();
 
     void remove_window(win::wayland::window* window);
 
@@ -294,6 +272,11 @@ private:
     Wrapland::Server::Viewporter* m_viewporter = nullptr;
     Wrapland::Server::XdgDecorationManager* m_xdgDecorationManager = nullptr;
     Wrapland::Server::LinuxDmabufV1* m_linuxDmabuf = nullptr;
+    Wrapland::Server::LayerShellV1* m_layer_shell{nullptr};
+    Wrapland::Server::XdgActivationV1* m_xdg_activation{nullptr};
+    Wrapland::Server::drm_lease_device_v1* m_drm_lease_device{nullptr};
+    Wrapland::Server::Subcompositor* m_subcompositor{nullptr};
+
     QSet<Wrapland::Server::LinuxDmabufBufferV1*> m_linuxDmabufBuffers;
     struct {
         Wrapland::Server::Client* client = nullptr;

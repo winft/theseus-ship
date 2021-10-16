@@ -447,8 +447,8 @@ void WaylandServer::create_globals()
                 kwinApp()->platform->requestOutputsChange(config);
             });
 
-    subcompositor = m_display->createSubCompositor(m_display);
-    connect(subcompositor,
+    m_subcompositor = m_display->createSubCompositor(m_display);
+    connect(m_subcompositor,
             &Wrapland::Server::Subcompositor::subsurfaceCreated,
             this,
             [this](auto subsurface) {
@@ -478,8 +478,8 @@ void WaylandServer::create_globals()
                     window, &win::wayland::window::windowShown, this, &WaylandServer::window_shown);
             });
 
-    layer_shell = m_display->createLayerShellV1(m_display);
-    connect(layer_shell,
+    m_layer_shell = m_display->createLayerShellV1(m_display);
+    connect(m_layer_shell,
             &Wrapland::Server::LayerShellV1::surface_created,
             this,
             [this](auto layer_surface) {
@@ -506,7 +506,7 @@ void WaylandServer::create_globals()
                 }
             });
 
-    xdg_activation = m_display->createXdgActivationV1(m_display);
+    m_xdg_activation = m_display->createXdgActivationV1(m_display);
     m_XdgForeign = m_display->createXdgForeign(m_display);
 
     m_keyState = m_display->createKeyState(m_display);
@@ -515,23 +515,89 @@ void WaylandServer::create_globals()
     m_display->createRelativePointerManager(m_display);
 }
 
-Wrapland::Server::PresentationManager* WaylandServer::presentationManager() const
+Wrapland::Server::Display* WaylandServer::display() const
 {
-    return m_presentationManager;
+    return m_display;
 }
 
-void WaylandServer::createPresentationManager()
+Wrapland::Server::Compositor* WaylandServer::compositor() const
 {
-    Q_ASSERT(!m_presentationManager);
-    m_presentationManager = m_display->createPresentationManager(m_display);
+    return m_compositor;
 }
 
-Wrapland::Server::LinuxDmabufV1* WaylandServer::linuxDmabuf()
+Wrapland::Server::Subcompositor* WaylandServer::subcompositor() const
+{
+    return m_subcompositor;
+}
+
+Wrapland::Server::LinuxDmabufV1* WaylandServer::linux_dmabuf()
 {
     if (!m_linuxDmabuf) {
         m_linuxDmabuf = m_display->createLinuxDmabuf(m_display);
     }
     return m_linuxDmabuf;
+}
+
+Wrapland::Server::Viewporter* WaylandServer::viewporter() const
+{
+    return m_viewporter;
+}
+
+Wrapland::Server::PresentationManager* WaylandServer::presentation_manager() const
+{
+    return m_presentationManager;
+}
+
+Wrapland::Server::Seat* WaylandServer::seat() const
+{
+    return m_seat;
+}
+
+Wrapland::Server::data_device_manager* WaylandServer::data_device_manager() const
+{
+    return m_dataDeviceManager;
+}
+
+Wrapland::Server::primary_selection_device_manager*
+WaylandServer::primary_selection_device_manager() const
+{
+    return m_primarySelectionDeviceManager;
+}
+
+Wrapland::Server::XdgShell* WaylandServer::xdg_shell() const
+{
+    return m_xdgShell;
+}
+
+Wrapland::Server::XdgActivationV1* WaylandServer::xdg_activation() const
+{
+    return m_xdg_activation;
+}
+
+Wrapland::Server::PlasmaVirtualDesktopManager* WaylandServer::virtual_desktop_management() const
+{
+    return m_virtualDesktopManagement;
+}
+
+Wrapland::Server::LayerShellV1* WaylandServer::layer_shell() const
+{
+    return m_layer_shell;
+}
+
+Wrapland::Server::PlasmaWindowManager* WaylandServer::window_management() const
+{
+    return m_windowManagement;
+}
+
+Wrapland::Server::drm_lease_device_v1* WaylandServer::drm_lease_device() const
+{
+    return m_drm_lease_device;
+}
+
+void WaylandServer::create_presentation_manager()
+{
+    Q_ASSERT(!m_presentationManager);
+    m_presentationManager = m_display->createPresentationManager(m_display);
 }
 
 Surface* WaylandServer::findForeignParentForSurface(Surface* surface)
@@ -567,11 +633,11 @@ void WaylandServer::initWorkspace()
         });
     }
 
-    connect(xdg_activation,
+    connect(m_xdg_activation,
             &Wrapland::Server::XdgActivationV1::token_requested,
             ws,
             [ws](auto token) { win::wayland::xdg_activation_create_token(ws, token); });
-    connect(xdg_activation,
+    connect(m_xdg_activation,
             &Wrapland::Server::XdgActivationV1::activate,
             ws,
             [ws, this](auto const& token, auto surface) {
@@ -714,8 +780,8 @@ void WaylandServer::destroyInputMethodConnection()
 
 void WaylandServer::createDrmLeaseDevice()
 {
-    if (!drm_lease_device) {
-        drm_lease_device = m_display->createDrmLeaseDeviceV1(m_display);
+    if (!m_drm_lease_device) {
+        m_drm_lease_device = m_display->createDrmLeaseDeviceV1(m_display);
     }
 }
 

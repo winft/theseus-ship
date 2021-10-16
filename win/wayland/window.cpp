@@ -1102,7 +1102,7 @@ void window::ping(window::ping_reason reason)
 {
     assert(toplevel);
 
-    auto shell = waylandServer()->xdgShell();
+    auto shell = waylandServer()->xdg_shell();
     auto const serial = shell->ping(toplevel->client());
     pings.insert({serial, reason});
 }
