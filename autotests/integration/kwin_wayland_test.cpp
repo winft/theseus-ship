@@ -151,7 +151,7 @@ void WaylandTestApplication::start()
     createOptions();
 
     session.reset(new seat::backend::wlroots::session(headless_backend));
-    input::add_redirect(input.get());
+    input::add_redirect(input.get(), std::make_unique<input::redirect>());
     input->cursor.reset(new input::wayland::cursor);
     input->redirect->set_platform(input.get());
 

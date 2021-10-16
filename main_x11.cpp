@@ -241,7 +241,7 @@ void ApplicationX11::start()
 
         auto input = new input::backend::x11::platform;
         this->input.reset(input);
-        input::add_redirect(input);
+        input::add_redirect(input, std::make_unique<input::redirect>());
         input::backend::x11::create_cursor(input);
 
         try {

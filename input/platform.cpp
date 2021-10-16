@@ -115,9 +115,9 @@ void add_dbus(platform* platform)
     platform->dbus = std::make_unique<dbus::device_manager>(platform);
 }
 
-void add_redirect(platform* platform)
+void add_redirect(platform* platform, std::unique_ptr<redirect> redirect)
 {
-    platform->redirect = std::make_unique<input::redirect>();
+    platform->redirect = std::move(redirect);
     platform->redirect->shortcuts()->init();
 }
 
