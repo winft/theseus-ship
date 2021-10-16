@@ -43,6 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/netinfo.h"
 #include "win/x11/xcb.h"
 
+#include <Wrapland/Server/compositor.h>
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/wl_output.h>
 #include <Wrapland/Server/surface.h>
@@ -1401,5 +1402,35 @@ void Toplevel::setWindowHandles(xcb_window_t w)
     m_client.reset(w, false);
 }
 
-} // namespace
+void Toplevel::propertyNotifyEvent(xcb_property_notify_event_t* e)
+{
+    if (e->window != xcb_window())
+        return; // ignore frame/wrapper
+    switch (e->atom) {
+    default:
+        if (e->atom == atoms->wm_client_leader)
+            getWmClientLeader();
+        else if (e->atom == atoms->kde_net_wm_shadow)
+            win::update_shadow(this);
+        else if (e->atom == atoms->kde_skip_close_animation)
+            getSkipCloseAnimation();
+        break;
+    }
+}
+
+void Toplevel::clientMessageEvent(xcb_client_message_event_t* e)
+{
+    if (e->type == atoms->wl_surface_id) {
+        m_surfaceId = e->data.data32[0];
+        if (auto w = waylandServer()) {
+            if (auto s = w->compositor()->getSurface(m_surfaceId, w->xWaylandConnection())) {
+                setSurface(s);
+            }
+        }
+        emit surfaceIdChanged(m_surfaceId);
+    }
+}
+
+
+}
 

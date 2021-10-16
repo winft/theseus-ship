@@ -400,7 +400,6 @@ set(kwin_SRCS
     effectloader.cpp
     effects.cpp
     egl_context_attribute_builder.cpp
-    events.cpp
     idle_inhibition.cpp
     input/device_redirect.cpp
     input/event_filter.cpp
