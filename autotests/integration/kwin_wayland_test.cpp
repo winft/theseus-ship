@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../effects.h"
 #include "../../input/backend/wlroots/platform.h"
 #include "../../input/wayland/cursor.h"
+#include "../../input/wayland/redirect.h"
 #include "../../platform.h"
 #include "../../render/wayland/compositor.h"
 #include "../../seat/backend/wlroots/session.h"
@@ -151,7 +152,7 @@ void WaylandTestApplication::start()
     createOptions();
 
     session.reset(new seat::backend::wlroots::session(headless_backend));
-    input::add_redirect(input.get(), std::make_unique<input::redirect>());
+    input::add_redirect(input.get(), std::make_unique<input::wayland::redirect>());
     input->cursor.reset(new input::wayland::cursor);
     input->redirect->set_platform(input.get());
 

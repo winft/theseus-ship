@@ -799,6 +799,8 @@ set(kwin_WAYLAND_SRCS
    input/backend/wlroots/control/touch.cpp
    input/dbus/tablet_mode_manager.cpp
    input/spies/tablet_mode_switch.cpp
+   input/wayland/keyboard_redirect.cpp
+   input/wayland/redirect.cpp
    input/logging.cpp
    linux_dmabuf.cpp
    platform/wlroots.cpp

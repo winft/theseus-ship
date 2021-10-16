@@ -62,8 +62,12 @@ namespace KWin::input
 {
 
 redirect::redirect()
-    : QObject(nullptr)
-    , m_keyboard(new keyboard_redirect(this))
+    : redirect(new keyboard_redirect(this))
+{
+}
+
+redirect::redirect(keyboard_redirect* keyboard)
+    : m_keyboard(keyboard)
     , m_pointer(new pointer_redirect())
     , m_tablet(new tablet_redirect())
     , m_touch(new touch_redirect())

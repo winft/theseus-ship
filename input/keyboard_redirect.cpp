@@ -32,13 +32,10 @@ namespace KWin::input
 
 keyboard_redirect::keyboard_redirect(input::redirect* redirect)
     : QObject()
-    , redirect(redirect)
     , m_xkb{std::make_unique<input::xkb>()}
+    , redirect(redirect)
 {
     connect(m_xkb.get(), &input::xkb::ledsChanged, this, &keyboard_redirect::ledsChanged);
-    if (waylandServer()) {
-        m_xkb->setSeat(waylandServer()->seat());
-    }
 }
 
 keyboard_redirect::~keyboard_redirect() = default;

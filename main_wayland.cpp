@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "seat/backend/wlroots/session.h"
 #include "input/backend/wlroots/platform.h"
 #include "input/wayland/cursor.h"
+#include "input/wayland/redirect.h"
 #include "input/dbus/tablet_mode_manager.h"
 #include "wayland_server.h"
 #include "xwl/xwayland.h"
@@ -181,7 +182,7 @@ void ApplicationWayland::start()
     auto session = new seat::backend::wlroots::session(backend->backend);
     this->session.reset(session);
     session->take_control();
-    input::add_redirect(input.get(), std::make_unique<input::redirect>());
+    input::add_redirect(input.get(), std::make_unique<input::wayland::redirect>());
     input->cursor.reset(new input::wayland::cursor);
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
