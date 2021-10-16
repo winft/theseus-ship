@@ -401,7 +401,8 @@ bool pointer_redirect::focusUpdatesBlocked()
         // ignore during drag and drop
         return true;
     }
-    if (waylandServer()->seat()->touches().is_in_progress()) {
+    if (waylandServer()->seat()->hasTouch()
+        && waylandServer()->seat()->touches().is_in_progress()) {
         // ignore during touch operations
         return true;
     }
