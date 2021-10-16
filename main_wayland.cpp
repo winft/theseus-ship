@@ -155,11 +155,11 @@ ApplicationWayland::~ApplicationWayland()
     if (compositor) {
         // Block compositor to prevent further compositing from crashing with a null workspace.
         // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-        static_cast<render::wayland::compositor*>(compositor)->lock();
+        static_cast<render::wayland::compositor*>(compositor.get())->lock();
     }
 
     workspace.reset();
-    destroyCompositor();
+    compositor.reset();
 }
 
 void ApplicationWayland::start()
@@ -193,8 +193,7 @@ void ApplicationWayland::start()
 
     input::dbus::tablet_mode_manager::create(this);
 
-    render::wayland::compositor::create();
-
+    compositor = std::make_unique<render::wayland::compositor>();
     workspace = std::make_unique<Workspace>();
     Q_EMIT workspaceCreated();
 

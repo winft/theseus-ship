@@ -38,7 +38,7 @@ public:
     Q_ENUM(SuspendReason)
     Q_FLAG(SuspendReasons)
 
-    static compositor* create(QObject* parent = nullptr);
+    compositor();
     static compositor* self();
 
     void schedule_repaint();
@@ -99,8 +99,6 @@ protected:
     std::deque<Toplevel*> performCompositing() override;
 
 private:
-    explicit compositor(QObject* parent);
-
     void releaseCompositorSelection();
     bool prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows);
     void create_opengl_safepoint(OpenGLSafePoint safepoint);

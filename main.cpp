@@ -279,11 +279,6 @@ void Application::setupEventFilters()
     installNativeEventFilter(m_eventFilter.data());
 }
 
-void Application::destroyCompositor()
-{
-    delete render::compositor::self();
-}
-
 void Application::updateX11Time(xcb_generic_event_t *event)
 {
     xcb_timestamp_t time = XCB_TIME_CURRENT_TIME;

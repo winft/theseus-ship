@@ -112,7 +112,7 @@ Q_SIGNALS:
     void sceneCreated();
 
 protected:
-    explicit compositor(QObject* parent = nullptr);
+    compositor();
     void timerEvent(QTimerEvent* te) override;
 
     virtual void start() = 0;

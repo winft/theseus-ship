@@ -72,8 +72,7 @@ X11TestApplication::~X11TestApplication()
 void X11TestApplication::start()
 {
     prepare_start();
-    render::x11::compositor::create();
-
+    compositor = std::make_unique<render::x11::compositor>();
     workspace = std::make_unique<Workspace>();
     Q_EMIT workspaceCreated();
 }
