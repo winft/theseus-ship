@@ -33,7 +33,7 @@ namespace KWin::input
 keyboard_redirect::keyboard_redirect(input::redirect* redirect)
     : QObject()
     , redirect(redirect)
-    , m_xkb(new input::xkb(redirect))
+    , m_xkb(new input::xkb)
 {
     connect(m_xkb.data(), &input::xkb::ledsChanged, this, &keyboard_redirect::ledsChanged);
     if (waylandServer()) {
