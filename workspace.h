@@ -20,7 +20,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_WORKSPACE_H
 #define KWIN_WORKSPACE_H
 
@@ -95,7 +94,8 @@ public:
     explicit Workspace();
     ~Workspace() override;
 
-    static Workspace* self() {
+    static Workspace* self()
+    {
         return _self;
     }
 
@@ -135,7 +135,7 @@ public:
      * @return KWin::win::x11::window* The found Client or @c null
      * @see findClient(win::x11::predicate_match, xcb_window_t)
      */
-    Toplevel* findAbstractClient(std::function<bool (Toplevel const*)> func) const;
+    Toplevel* findAbstractClient(std::function<bool(Toplevel const*)> func) const;
     /**
      * @brief Finds the Client matching the given match @p predicate for the given window.
      *
@@ -145,7 +145,7 @@ public:
      * @see findClient(std::function<bool (win::x11::window const*)>)
      */
     win::x11::window* findClient(win::x11::predicate_match predicate, xcb_window_t w) const;
-    void forEachAbstractClient(std::function<void (Toplevel*)> func);
+    void forEachAbstractClient(std::function<void(Toplevel*)> func);
     /**
      * @brief Finds the Unmanaged with the given window id.
      *
@@ -153,8 +153,8 @@ public:
      * @return KWin::Unmanaged* Found Unmanaged or @c null if there is no Unmanaged with given Id.
      */
     Toplevel* findUnmanaged(xcb_window_t w) const;
-    Toplevel* findToplevel(std::function<bool (Toplevel const*)> func) const;
-    void forEachToplevel(std::function<void (Toplevel*)> func);
+    Toplevel* findToplevel(std::function<bool(Toplevel const*)> func) const;
+    void forEachToplevel(std::function<void(Toplevel*)> func);
     /**
      * @brief Finds a Toplevel for the internal window @p w.
      *
@@ -163,7 +163,7 @@ public:
      *
      * @returns Toplevel
      */
-    Toplevel* findInternal(QWindow *w) const;
+    Toplevel* findInternal(QWindow* w) const;
 
     QRect clientArea(clientAreaOption, const QPoint& p, int desktop) const;
     QRect clientArea(clientAreaOption, Toplevel const* window) const;
@@ -197,13 +197,16 @@ public:
      */
     void request_focus(Toplevel* window, bool raise = false, bool force_focus = false);
 
-    bool allowClientActivation(Toplevel const* window, xcb_timestamp_t time = -1U, bool focus_in = false,
+    bool allowClientActivation(Toplevel const* window,
+                               xcb_timestamp_t time = -1U,
+                               bool focus_in = false,
                                bool ignore_desktop = false);
     void restoreFocus();
     void gotFocusIn(Toplevel const* window);
     void setShouldGetFocus(Toplevel* window);
     bool activateNextClient(Toplevel* window);
-    bool focusChangeEnabled() {
+    bool focusChangeEnabled()
+    {
         return block_focus == 0;
     }
 
@@ -212,7 +215,8 @@ public:
      */
     void setMoveResizeClient(Toplevel* window);
 
-    QPoint adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, double snapAdjust = 1.0);
+    QPoint
+    adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, double snapAdjust = 1.0);
     QRect adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::position mode);
 
     // used by layers.cpp, defined in activation.cpp
@@ -247,11 +251,12 @@ public:
     /**
      * @returns List of all clients (either X11 or Wayland) currently managed by Workspace
      */
-    std::vector<Toplevel*> const& allClientList() const {
+    std::vector<Toplevel*> const& allClientList() const
+    {
         return m_allClients;
     }
 
-    SessionManager *sessionManager() const;
+    SessionManager* sessionManager() const;
 
 private:
     render::compositor* m_compositor{nullptr};
@@ -266,11 +271,12 @@ public:
     // The calls below are valid only in that case.
     bool inUpdateClientArea() const;
     QRegion previousRestrictedMoveArea(int desktop, StrutAreas areas = StrutAreaAll) const;
-    std::vector< QRect > previousScreenSizes() const;
+    std::vector<QRect> previousScreenSizes() const;
     int oldDisplayWidth() const;
     int oldDisplayHeight() const;
 
-    std::deque<win::x11::window*> ensureStackingOrder(std::vector<win::x11::window*> const& clients) const;
+    std::deque<win::x11::window*>
+    ensureStackingOrder(std::vector<win::x11::window*> const& clients) const;
     std::deque<Toplevel*> ensureStackingOrder(std::vector<Toplevel*> const& clients) const;
 
     Toplevel* active_client{nullptr};
@@ -285,20 +291,21 @@ public:
      * it's not already.
      */
     void showWindowMenu(const QRect& pos, Toplevel* window);
-    const UserActionsMenu *userActionsMenu() const {
+    const UserActionsMenu* userActionsMenu() const
+    {
         return m_userActionsMenu;
     }
 
-    void showApplicationMenu(const QRect &pos, Toplevel* window, int actionId);
+    void showApplicationMenu(const QRect& pos, Toplevel* window, int actionId);
 
     void updateMinimizedOfTransients(Toplevel*);
     void updateOnAllDesktopsOfTransients(Toplevel* window);
     void checkTransients(Toplevel* window);
 
-    void storeSession(const QString &sessionName, SMSavePhase phase);
-    void storeClient(KConfigGroup &cg, int num, win::x11::window* c);
-    void storeSubSession(const QString &name, QSet<QByteArray> sessionIds);
-    void loadSubSessionInfo(const QString &name);
+    void storeSession(const QString& sessionName, SMSavePhase phase);
+    void storeClient(KConfigGroup& cg, int num, win::x11::window* c);
+    void storeSubSession(const QString& name, QSet<QByteArray> sessionIds);
+    void loadSubSessionInfo(const QString& name);
 
     SessionInfo* takeSessionInfo(win::x11::window*);
 
@@ -327,7 +334,7 @@ public:
     void focusToNull(); // SELI TODO: Public?
 
     void clientShortcutUpdated(Toplevel* window);
-    bool shortcutAvailable(const QKeySequence &cut, Toplevel* ignore = nullptr) const;
+    bool shortcutAvailable(const QKeySequence& cut, Toplevel* ignore = nullptr) const;
     bool globalShortcutsDisabled() const;
     void disableGlobalShortcutsForClient(bool disable);
 
@@ -346,8 +353,9 @@ public:
      * updates the mouse position to track whether a focus follow mouse focus change was caused by
      * an actual mouse move
      * is esp. called on enter/motion events of inactive windows
-     * since an active window doesn't receive mouse events, it must also be invoked if a (potentially)
-     * active window might be moved/resize away from the cursor (causing a leave event)
+     * since an active window doesn't receive mouse events, it must also be invoked if a
+     * (potentially) active window might be moved/resize away from the cursor (causing a leave
+     * event)
      */
     void updateFocusMousePosition(const QPoint& pos);
     QPoint focusMousePosition() const;
@@ -357,7 +365,8 @@ public:
      *
      * If none of clients is being moved or resized, @c null will be returned.
      */
-    Toplevel* moveResizeClient() {
+    Toplevel* moveResizeClient()
+    {
         return movingClient;
     }
 
@@ -368,15 +377,11 @@ public:
 
     void quickTileWindow(win::quicktiles mode);
 
-    enum Direction {
-        DirectionNorth,
-        DirectionEast,
-        DirectionSouth,
-        DirectionWest
-    };
+    enum Direction { DirectionNorth, DirectionEast, DirectionSouth, DirectionWest };
     void switchWindow(Direction direction);
 
-    ShortcutDialog *shortcutDialog() const {
+    ShortcutDialog* shortcutDialog() const
+    {
         return client_keys_dialog;
     }
 
@@ -388,7 +393,7 @@ public:
      * @see internalClientAdded
      * @internal
      */
-    void addInternalClient(win::InternalClient *client);
+    void addInternalClient(win::InternalClient* client);
 
     /**
      * Removes the internal client from Workspace.
@@ -398,17 +403,17 @@ public:
      * @see internalClientRemoved
      * @internal
      */
-    void removeInternalClient(win::InternalClient *client);
+    void removeInternalClient(win::InternalClient* client);
 
     void remove_window(Toplevel* window);
 
 public Q_SLOTS:
     void performWindowOperation(KWin::Toplevel* window, Options::WindowOperation op);
     // Keybindings
-    //void slotSwitchToWindow( int );
+    // void slotSwitchToWindow( int );
     void slotWindowToDesktop(uint i);
 
-    //void slotWindowToListPosition( int );
+    // void slotWindowToListPosition( int );
     void slotSwitchToScreen();
     void slotWindowToScreen();
     void slotSwitchToNextScreen();
@@ -470,7 +475,8 @@ private Q_SLOTS:
     void slotUpdateToolWindows();
     void delayFocus();
     void slotReloadConfig();
-    void updateCurrentActivity(const QString &new_activity);
+    void updateCurrentActivity(const QString& new_activity);
+
     // virtual desktop handling
     void slotDesktopCountChanged(uint previousCount, uint newCount);
     void slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop);
@@ -482,7 +488,7 @@ Q_SIGNALS:
      */
     void workspaceInitialized();
 
-    //Signals required for the scripting interface
+    // Signals required for the scripting interface
     void desktopPresenceChanged(KWin::Toplevel*, int);
     void currentDesktopChanged(int, KWin::Toplevel*);
     void clientAdded(KWin::win::x11::window*);
@@ -500,26 +506,34 @@ Q_SIGNALS:
     /**
      * This signal is emitted whenever an internal client is created.
      */
-    void internalClientAdded(KWin::win::InternalClient *client);
+    void internalClientAdded(KWin::win::InternalClient* client);
 
     /**
      * This signal is emitted whenever an internal client gets removed.
      */
-    void internalClientRemoved(KWin::win::InternalClient *client);
+    void internalClientRemoved(KWin::win::InternalClient* client);
 
 private:
     void init();
     void initWithX11();
     void initShortcuts();
-    template <typename Slot>
-    void initShortcut(const QString &actionName, const QString &description, const QKeySequence &shortcut,
-                      Slot slot, const QVariant &data = QVariant());
-    template <typename T, typename Slot>
-    void initShortcut(const QString &actionName, const QString &description, const QKeySequence &shortcut, T *receiver, Slot slot, const QVariant &data = QVariant());
+    template<typename Slot>
+    void initShortcut(const QString& actionName,
+                      const QString& description,
+                      const QKeySequence& shortcut,
+                      Slot slot,
+                      const QVariant& data = QVariant());
+    template<typename T, typename Slot>
+    void initShortcut(const QString& actionName,
+                      const QString& description,
+                      const QKeySequence& shortcut,
+                      T* receiver,
+                      Slot slot,
+                      const QVariant& data = QVariant());
     void setupWindowShortcut(Toplevel* window);
     bool switchWindow(Toplevel* c, Direction direction, QPoint curPos, int desktop);
 
-    void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t *geom);
+    void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t* geom);
     void saveOldScreenSizes();
 
     /// This is the right way to create a new client
@@ -528,8 +542,6 @@ private:
     void addClient(win::x11::window* c);
     Toplevel* createUnmanaged(xcb_window_t w);
     void addUnmanaged(Toplevel* c);
-
-    //---------------------------------------------------------------------
 
     void closeActivePopup();
     void updateClientArea(bool force);
@@ -541,8 +553,8 @@ private:
     Toplevel* active_popup_client{nullptr};
 
     int m_initialDesktop{1};
-    void loadSessionInfo(const QString &sessionName);
-    void addSessionInfo(KConfigGroup &cg);
+    void loadSessionInfo(const QString& sessionName);
+    void addSessionInfo(KConfigGroup& cg);
 
     std::vector<SessionInfo*> session;
 
@@ -579,7 +591,7 @@ private:
      * Holds the menu containing the user actions which is shown
      * on e.g. right click the window decoration.
      */
-    UserActionsMenu *m_userActionsMenu;
+    UserActionsMenu* m_userActionsMenu;
 
     void modalActionsSwitch(bool enabled);
 
@@ -611,7 +623,7 @@ private:
     std::vector<std::vector<QRect>> screenarea;
 
     // array of previous sizes of xinerama screens
-    std::vector< QRect > oldscreensizes;
+    std::vector<QRect> oldscreensizes;
 
     // previous sizes od displayWidth()/displayHeight()
     QSize olddisplaysize;
@@ -625,27 +637,26 @@ private:
     QScopedPointer<platform::x11::event_filter> m_movingClientFilter;
     QScopedPointer<platform::x11::event_filter> m_syncAlarmFilter;
 
-    SessionManager *m_sessionManager;
+    SessionManager* m_sessionManager;
+
 private:
     friend bool performTransiencyCheck();
-    friend Workspace *workspace();
+    friend Workspace* workspace();
 };
 
 class ColorMapper : public QObject
 {
     Q_OBJECT
 public:
-    ColorMapper(QObject *parent);
+    ColorMapper(QObject* parent);
     ~ColorMapper() override;
 public Q_SLOTS:
     void update();
+
 private:
     xcb_colormap_t m_default;
     xcb_colormap_t m_installed;
 };
-
-//---------------------------------------------------------
-// Unsorted
 
 inline bool Workspace::initializing() const
 {
@@ -678,7 +689,7 @@ inline bool Workspace::wasUserInteraction() const
     return was_user_interaction;
 }
 
-inline SessionManager *Workspace::sessionManager() const
+inline SessionManager* Workspace::sessionManager() const
 {
     return m_sessionManager;
 }
@@ -703,7 +714,7 @@ inline QPoint Workspace::focusMousePosition() const
     return focusMousePos;
 }
 
-inline Workspace *workspace()
+inline Workspace* workspace()
 {
     return Workspace::_self;
 }
