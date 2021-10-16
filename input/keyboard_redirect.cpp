@@ -33,9 +33,9 @@ namespace KWin::input
 keyboard_redirect::keyboard_redirect(input::redirect* redirect)
     : QObject()
     , redirect(redirect)
-    , m_xkb(new input::xkb)
+    , m_xkb{std::make_unique<input::xkb>()}
 {
-    connect(m_xkb.data(), &input::xkb::ledsChanged, this, &keyboard_redirect::ledsChanged);
+    connect(m_xkb.get(), &input::xkb::ledsChanged, this, &keyboard_redirect::ledsChanged);
     if (waylandServer()) {
         m_xkb->setSeat(waylandServer()->seat());
     }
@@ -102,7 +102,7 @@ void keyboard_redirect::init()
     redirect->installInputEventSpy(new KeyStateChangedSpy(redirect));
     modifiers_spy = new modifiers_changed_spy(redirect);
     redirect->installInputEventSpy(modifiers_spy);
-    m_keyboardLayout = new keyboard_layout_spy(m_xkb.data(), config);
+    m_keyboardLayout = new keyboard_layout_spy(m_xkb.get(), config);
     m_keyboardLayout->init();
     redirect->installInputEventSpy(m_keyboardLayout);
 
@@ -110,7 +110,7 @@ void keyboard_redirect::init()
         redirect->installInputEventSpy(new modifier_only_shortcuts_spy);
     }
 
-    auto keyRepeatSpy = new keyboard_repeat_spy(m_xkb.data());
+    auto keyRepeatSpy = new keyboard_repeat_spy(m_xkb.get());
     connect(keyRepeatSpy,
             &keyboard_repeat_spy::keyRepeat,
             this,
@@ -139,7 +139,7 @@ void keyboard_redirect::init()
 
 input::xkb* keyboard_redirect::xkb() const
 {
-    return m_xkb.data();
+    return m_xkb.get();
 }
 Qt::KeyboardModifiers keyboard_redirect::modifiers() const
 {
