@@ -20,6 +20,11 @@
 #include <QPoint>
 #include <memory>
 
+namespace Wrapland::Server
+{
+class FakeInput;
+}
+
 class KGlobalAccelInterface;
 
 namespace KWin
@@ -293,6 +298,7 @@ private:
     global_shortcuts_manager* m_shortcuts;
     window_selector_filter* m_windowSelector = nullptr;
     KConfigWatcher::Ptr m_inputConfigWatcher;
+    std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 
     QVector<event_filter*> m_filters;
     QVector<event_spy*> m_spies;

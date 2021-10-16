@@ -573,7 +573,7 @@ int main(int argc, char * argv[])
     }
     a.platform->setInitialOutputScale(outputScale);
 
-    if (auto const& name = a.server->display()->socketName(); !name.empty()) {
+    if (auto const& name = a.server->display()->socket_name(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
     }
 

@@ -28,11 +28,13 @@ class Surface;
 }
 namespace Server
 {
+class Display;
+struct globals;
+
 class AppmenuManager;
 class Client;
 class Compositor;
 class data_device_manager;
-class Display;
 class drm_lease_device_v1;
 class KdeIdle;
 class KeyState;
@@ -115,6 +117,7 @@ public:
     Wrapland::Server::LayerShellV1* layer_shell() const;
     Wrapland::Server::PlasmaWindowManager* window_management() const;
 
+    Wrapland::Server::KdeIdle* kde_idle() const;
     Wrapland::Server::drm_lease_device_v1* drm_lease_device() const;
 
     void create_presentation_manager();
@@ -255,29 +258,12 @@ private:
     template<class T>
     void createSurface(T* surface);
     void initScreenLocker();
-    Wrapland::Server::Display* m_display = nullptr;
-    Wrapland::Server::Compositor* m_compositor = nullptr;
-    Wrapland::Server::Seat* m_seat = nullptr;
-    Wrapland::Server::data_device_manager* m_dataDeviceManager = nullptr;
-    Wrapland::Server::XdgShell* m_xdgShell = nullptr;
-    Wrapland::Server::PlasmaShell* m_plasmaShell = nullptr;
-    Wrapland::Server::PlasmaWindowManager* m_windowManagement = nullptr;
-    Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement = nullptr;
-    Wrapland::Server::PresentationManager* m_presentationManager = nullptr;
-    Wrapland::Server::primary_selection_device_manager* m_primarySelectionDeviceManager = nullptr;
-    Wrapland::Server::OutputManagementV1* m_outputManagement = nullptr;
-    Wrapland::Server::AppmenuManager* m_appmenuManager = nullptr;
-    Wrapland::Server::ServerSideDecorationPaletteManager* m_paletteManager = nullptr;
-    Wrapland::Server::KdeIdle* m_idle = nullptr;
-    Wrapland::Server::Viewporter* m_viewporter = nullptr;
-    Wrapland::Server::XdgDecorationManager* m_xdgDecorationManager = nullptr;
-    Wrapland::Server::LinuxDmabufV1* m_linuxDmabuf = nullptr;
-    Wrapland::Server::LayerShellV1* m_layer_shell{nullptr};
-    Wrapland::Server::XdgActivationV1* m_xdg_activation{nullptr};
-    Wrapland::Server::drm_lease_device_v1* m_drm_lease_device{nullptr};
-    Wrapland::Server::Subcompositor* m_subcompositor{nullptr};
+
+    std::unique_ptr<Wrapland::Server::Display> m_display;
+    std::unique_ptr<Wrapland::Server::globals> globals;
 
     QSet<Wrapland::Server::LinuxDmabufBufferV1*> m_linuxDmabufBuffers;
+
     struct {
         Wrapland::Server::Client* client = nullptr;
         QMetaObject::Connection destroyConnection;
@@ -295,8 +281,6 @@ private:
         Wrapland::Client::ShmPool* shm = nullptr;
 
     } m_internalConnection;
-    Wrapland::Server::XdgForeign* m_XdgForeign = nullptr;
-    Wrapland::Server::KeyState* m_keyState = nullptr;
     QHash<Wrapland::Server::Client*, quint16> m_clientIds;
     InitializationFlags m_initFlags;
 

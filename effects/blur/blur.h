@@ -132,7 +132,7 @@ private:
     QVector <BlurValuesStruct> blurStrengthValues;
 
     QMap <EffectWindow*, QMetaObject::Connection> windowBlurChangedConnections;
-    Wrapland::Server::BlurManager *m_blurManager = nullptr;
+    std::unique_ptr<Wrapland::Server::BlurManager> wayland_blur_manager;
 };
 
 inline

@@ -83,7 +83,7 @@ void TestIdleInhibition::cleanup()
 
 void TestIdleInhibition::testInhibit()
 {
-    auto idle = waylandServer()->display()->findChild<KdeIdle*>();
+    auto idle = waylandServer()->kde_idle();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);
@@ -130,7 +130,7 @@ void TestIdleInhibition::testDontInhibitWhenNotOnCurrentDesktop()
     QCOMPARE(VirtualDesktopManager::self()->count(), 2u);
 
     // Get reference to the idle interface.
-    auto idle = waylandServer()->display()->findChild<KdeIdle*>();
+    auto idle = waylandServer()->kde_idle();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);
@@ -188,7 +188,7 @@ void TestIdleInhibition::testDontInhibitWhenMinimized()
     // associated surface is minimized.
 
     // Get reference to the idle interface.
-    auto idle = waylandServer()->display()->findChild<KdeIdle*>();
+    auto idle = waylandServer()->kde_idle();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);
@@ -236,7 +236,7 @@ void TestIdleInhibition::testDontInhibitWhenUnmapped()
     // when the associated client is unmapped.
 
     // Get reference to the idle interface.
-    auto idle = waylandServer()->display()->findChild<KdeIdle*>();
+    auto idle = waylandServer()->kde_idle();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);
@@ -300,7 +300,7 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
     QCOMPARE(VirtualDesktopManager::self()->count(), 2u);
 
     // Get reference to the idle interface.
-    auto idle = waylandServer()->display()->findChild<KdeIdle*>();
+    auto idle = waylandServer()->kde_idle();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);

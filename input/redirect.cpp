@@ -121,9 +121,9 @@ void redirect::setupWorkspace()
 {
     if (waylandServer()) {
         using namespace Wrapland::Server;
-        auto fakeInput = waylandServer()->display()->createFakeInput(this);
+        fake_input = waylandServer()->display()->createFakeInput();
 
-        connect(fakeInput, &FakeInput::deviceCreated, this, [this](FakeInputDevice* device) {
+        connect(fake_input.get(), &FakeInput::deviceCreated, this, [this](FakeInputDevice* device) {
             connect(device,
                     &FakeInputDevice::authenticationRequested,
                     this,

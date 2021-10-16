@@ -26,41 +26,11 @@
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
 
-#include <KWayland/Server/display.h>
-#include <Wrapland/Server/appmenu.h>
-#include <Wrapland/Server/blur.h>
 #include <Wrapland/Server/client.h>
-#include <Wrapland/Server/compositor.h>
-#include <Wrapland/Server/data_control_v1.h>
-#include <Wrapland/Server/data_device_manager.h>
-#include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/dpms.h>
 #include <Wrapland/Server/filtered_display.h>
-#include <Wrapland/Server/idle_inhibit_v1.h>
-#include <Wrapland/Server/kde_idle.h>
-#include <Wrapland/Server/keystate.h>
-#include <Wrapland/Server/layer_shell_v1.h>
-#include <Wrapland/Server/linux_dmabuf_v1.h>
-#include <Wrapland/Server/output.h>
-#include <Wrapland/Server/output_configuration_v1.h>
-#include <Wrapland/Server/output_management_v1.h>
-#include <Wrapland/Server/plasma_shell.h>
-#include <Wrapland/Server/plasma_virtual_desktop.h>
-#include <Wrapland/Server/plasma_window.h>
-#include <Wrapland/Server/pointer_constraints_v1.h>
-#include <Wrapland/Server/pointer_gestures_v1.h>
-#include <Wrapland/Server/presentation_time.h>
-#include <Wrapland/Server/primary_selection.h>
-#include <Wrapland/Server/seat.h>
-#include <Wrapland/Server/server_decoration_palette.h>
-#include <Wrapland/Server/shadow.h>
-#include <Wrapland/Server/subcompositor.h>
+#include <Wrapland/Server/globals.h>
 #include <Wrapland/Server/surface.h>
-#include <Wrapland/Server/viewporter.h>
-#include <Wrapland/Server/xdg_decoration.h>
-#include <Wrapland/Server/xdg_foreign.h>
-#include <Wrapland/Server/xdg_shell.h>
 
 #include <QCryptographicHash>
 #include <QFile>
@@ -80,8 +50,8 @@ namespace KWin
 class KWinDisplay : public Wrapland::Server::FilteredDisplay
 {
 public:
-    KWinDisplay(QObject* parent)
-        : Wrapland::Server::FilteredDisplay(parent)
+    KWinDisplay()
+        : Wrapland::Server::FilteredDisplay()
     {
     }
 
@@ -182,8 +152,8 @@ WaylandServer* WaylandServer::self()
 }
 
 WaylandServer::WaylandServer(InitializationFlags flags)
-    : QObject()
-    , m_display(new KWinDisplay(this))
+    : m_display(std::make_unique<KWinDisplay>())
+    , globals{std::make_unique<Wrapland::Server::globals>()}
     , m_initFlags{flags}
 
 {
@@ -197,7 +167,7 @@ WaylandServer::WaylandServer(std::string const& socket, InitializationFlags flag
     : WaylandServer(flags)
 
 {
-    m_display->setSocketName(socket);
+    m_display->set_socket_name(socket);
     m_display->start(Wrapland::Server::Display::StartMode::ConnectToSocket);
     create_globals();
 }
@@ -263,9 +233,9 @@ void WaylandServer::create_globals()
         throw std::exception();
     }
 
-    m_compositor = m_display->createCompositor(m_display);
+    globals->compositor = m_display->createCompositor();
 
-    connect(m_compositor,
+    connect(compositor(),
             &Wrapland::Server::Compositor::surfaceCreated,
             this,
             [this](Surface* surface) {
@@ -289,8 +259,8 @@ void WaylandServer::create_globals()
                 }
             });
 
-    m_xdgShell = m_display->createXdgShell(m_display);
-    connect(m_xdgShell, &XdgShell::toplevelCreated, this, [this](XdgShellToplevel* toplevel) {
+    globals->xdg_shell = m_display->createXdgShell();
+    connect(xdg_shell(), &XdgShell::toplevelCreated, this, [this](XdgShellToplevel* toplevel) {
         if (!Workspace::self()) {
             // it's possible that a Surface gets created before Workspace is created
             return;
@@ -310,10 +280,11 @@ void WaylandServer::create_globals()
             m_plasmaShellSurfaces.erase(it);
         }
 
-        if (auto menu = m_appmenuManager->appmenuForSurface(window->surface())) {
+        if (auto menu = globals->appmenu_manager->appmenuForSurface(window->surface())) {
             win::wayland::install_appmenu(window, menu);
         }
-        if (auto palette = m_paletteManager->paletteForSurface(toplevel->surface()->surface())) {
+        if (auto palette = globals->server_side_decoration_palette_manager->paletteForSurface(
+                toplevel->surface()->surface())) {
             win::wayland::install_palette(window, palette);
         }
 
@@ -327,13 +298,13 @@ void WaylandServer::create_globals()
 
         // not directly connected as the connection is tied to client instead of this
         connect(
-            m_XdgForeign,
+            globals->xdg_foreign.get(),
             &Wrapland::Server::XdgForeign::parentChanged,
             window,
             [this]([[maybe_unused]] Wrapland::Server::Surface* parent,
                    Wrapland::Server::Surface* child) { Q_EMIT foreignTransientChanged(child); });
     });
-    connect(m_xdgShell, &XdgShell::popupCreated, this, [this](XdgShellPopup* popup) {
+    connect(xdg_shell(), &XdgShell::popupCreated, this, [this](XdgShellPopup* popup) {
         if (!Workspace::self()) {
             // it's possible that a Surface gets created before Workspace is created
             return;
@@ -348,8 +319,8 @@ void WaylandServer::create_globals()
         }
     });
 
-    m_xdgDecorationManager = m_display->createXdgDecorationManager(m_xdgShell, m_display);
-    connect(m_xdgDecorationManager,
+    globals->xdg_decoration_manager = m_display->createXdgDecorationManager(xdg_shell());
+    connect(globals->xdg_decoration_manager.get(),
             &XdgDecorationManager::decorationCreated,
             this,
             [this](XdgDecoration* deco) {
@@ -359,44 +330,48 @@ void WaylandServer::create_globals()
             });
 
     m_display->createShm();
-    m_seat = m_display->createSeat(m_display);
+    globals->seats.push_back(m_display->createSeat());
 
-    m_display->createPointerGestures(m_display);
-    m_display->createPointerConstraints(m_display);
-    m_dataDeviceManager = m_display->createDataDeviceManager(m_display);
-    m_primarySelectionDeviceManager = m_display->createPrimarySelectionDeviceManager(m_display);
-    m_display->create_data_control_manager_v1(m_display);
-    m_idle = m_display->createIdle(m_display);
+    globals->pointer_gestures_v1 = m_display->createPointerGestures();
+    globals->pointer_constraints_v1 = m_display->createPointerConstraints();
+    globals->data_device_manager = m_display->createDataDeviceManager();
+    globals->primary_selection_device_manager = m_display->createPrimarySelectionDeviceManager();
+    globals->data_control_manager_v1 = m_display->create_data_control_manager_v1();
+    globals->kde_idle = m_display->createIdle();
 
-    auto idleInhibition = new IdleInhibition(m_idle);
+    auto idleInhibition = new IdleInhibition(globals->kde_idle.get());
     connect(this, &WaylandServer::window_added, idleInhibition, &IdleInhibition::register_window);
-    m_display->createIdleInhibitManager(m_display);
+    globals->idle_inhibit_manager_v1 = m_display->createIdleInhibitManager();
 
-    m_plasmaShell = m_display->createPlasmaShell(m_display);
-    connect(m_plasmaShell, &PlasmaShell::surfaceCreated, [this](PlasmaShellSurface* surface) {
-        if (auto win = find_window(surface->surface())) {
-            assert(win->toplevel || win->popup || win->layer_surface);
-            win::wayland::install_plasma_shell_surface(win, surface);
-        } else {
-            m_plasmaShellSurfaces << surface;
-            connect(surface, &QObject::destroyed, this, [this, surface] {
-                m_plasmaShellSurfaces.removeOne(surface);
+    globals->plasma_shell = m_display->createPlasmaShell();
+    connect(globals->plasma_shell.get(),
+            &PlasmaShell::surfaceCreated,
+            [this](PlasmaShellSurface* surface) {
+                if (auto win = find_window(surface->surface())) {
+                    assert(win->toplevel || win->popup || win->layer_surface);
+                    win::wayland::install_plasma_shell_surface(win, surface);
+                } else {
+                    m_plasmaShellSurfaces << surface;
+                    connect(surface, &QObject::destroyed, this, [this, surface] {
+                        m_plasmaShellSurfaces.removeOne(surface);
+                    });
+                }
             });
-        }
-    });
-    m_appmenuManager = m_display->createAppmenuManager(m_display);
-    connect(m_appmenuManager, &AppmenuManager::appmenuCreated, [this](Appmenu* appMenu) {
-        if (auto win = find_window(appMenu->surface())) {
-            if (win->control) {
-                // Need to check that as plasma-integration creates them blindly even for
-                // xdg-shell popups.
-                win::wayland::install_appmenu(win, appMenu);
+    globals->appmenu_manager = m_display->createAppmenuManager();
+    connect(
+        globals->appmenu_manager.get(), &AppmenuManager::appmenuCreated, [this](Appmenu* appMenu) {
+            if (auto win = find_window(appMenu->surface())) {
+                if (win->control) {
+                    // Need to check that as plasma-integration creates them blindly even for
+                    // xdg-shell popups.
+                    win::wayland::install_appmenu(win, appMenu);
+                }
             }
-        }
-    });
+        });
 
-    m_paletteManager = m_display->createServerSideDecorationPaletteManager(m_display);
-    connect(m_paletteManager,
+    globals->server_side_decoration_palette_manager
+        = m_display->createServerSideDecorationPaletteManager();
+    connect(globals->server_side_decoration_palette_manager.get(),
             &ServerSideDecorationPaletteManager::paletteCreated,
             [this](ServerSideDecorationPalette* palette) {
                 if (auto win = find_window(palette->surface())) {
@@ -406,9 +381,10 @@ void WaylandServer::create_globals()
                 }
             });
 
-    m_windowManagement = m_display->createPlasmaWindowManager(m_display);
-    m_windowManagement->setShowingDesktopState(PlasmaWindowManager::ShowingDesktopState::Disabled);
-    connect(m_windowManagement,
+    globals->plasma_window_manager = m_display->createPlasmaWindowManager();
+    globals->plasma_window_manager->setShowingDesktopState(
+        PlasmaWindowManager::ShowingDesktopState::Disabled);
+    connect(globals->plasma_window_manager.get(),
             &PlasmaWindowManager::requestChangeShowingDesktop,
             this,
             [](PlasmaWindowManager::ShowingDesktopState state) {
@@ -433,22 +409,22 @@ void WaylandServer::create_globals()
                 workspace()->setShowingDesktop(set);
             });
 
-    m_virtualDesktopManagement = m_display->createPlasmaVirtualDesktopManager(m_display);
-    m_windowManagement->setVirtualDesktopManager(m_virtualDesktopManagement);
+    globals->plasma_virtual_desktop_manager = m_display->createPlasmaVirtualDesktopManager();
+    globals->plasma_window_manager->setVirtualDesktopManager(virtual_desktop_management());
 
-    m_display->createShadowManager(m_display);
-    m_display->createDpmsManager(m_display);
+    globals->shadow_manager = m_display->createShadowManager();
+    globals->dpms_manager = m_display->createDpmsManager();
 
-    m_outputManagement = m_display->createOutputManagementV1(m_display);
-    connect(m_outputManagement,
+    globals->output_management_v1 = m_display->createOutputManagementV1();
+    connect(globals->output_management_v1.get(),
             &OutputManagementV1::configurationChangeRequested,
             this,
             [](Wrapland::Server::OutputConfigurationV1* config) {
                 kwinApp()->platform->requestOutputsChange(config);
             });
 
-    m_subcompositor = m_display->createSubCompositor(m_display);
-    connect(m_subcompositor,
+    globals->subcompositor = m_display->createSubCompositor();
+    connect(subcompositor(),
             &Wrapland::Server::Subcompositor::subsurfaceCreated,
             this,
             [this](auto subsurface) {
@@ -478,8 +454,8 @@ void WaylandServer::create_globals()
                     window, &win::wayland::window::windowShown, this, &WaylandServer::window_shown);
             });
 
-    m_layer_shell = m_display->createLayerShellV1(m_display);
-    connect(m_layer_shell,
+    globals->layer_shell_v1 = m_display->createLayerShellV1();
+    connect(layer_shell(),
             &Wrapland::Server::LayerShellV1::surface_created,
             this,
             [this](auto layer_surface) {
@@ -506,103 +482,111 @@ void WaylandServer::create_globals()
                 }
             });
 
-    m_xdg_activation = m_display->createXdgActivationV1(m_display);
-    m_XdgForeign = m_display->createXdgForeign(m_display);
+    globals->xdg_activation_v1 = m_display->createXdgActivationV1();
+    globals->xdg_foreign = m_display->createXdgForeign();
 
-    m_keyState = m_display->createKeyState(m_display);
-    m_viewporter = m_display->createViewporter(m_display);
+    globals->key_state = m_display->createKeyState();
+    globals->viewporter = m_display->createViewporter();
 
-    m_display->createRelativePointerManager(m_display);
+    globals->relative_pointer_manager_v1 = m_display->createRelativePointerManager();
 }
 
 Wrapland::Server::Display* WaylandServer::display() const
 {
-    return m_display;
+    return m_display.get();
 }
 
 Wrapland::Server::Compositor* WaylandServer::compositor() const
 {
-    return m_compositor;
+    return globals->compositor.get();
 }
 
 Wrapland::Server::Subcompositor* WaylandServer::subcompositor() const
 {
-    return m_subcompositor;
+    return globals->subcompositor.get();
 }
 
 Wrapland::Server::LinuxDmabufV1* WaylandServer::linux_dmabuf()
 {
-    if (!m_linuxDmabuf) {
-        m_linuxDmabuf = m_display->createLinuxDmabuf(m_display);
+    if (!globals->linux_dmabuf_v1) {
+        globals->linux_dmabuf_v1 = m_display->createLinuxDmabuf();
     }
-    return m_linuxDmabuf;
+    return globals->linux_dmabuf_v1.get();
 }
 
 Wrapland::Server::Viewporter* WaylandServer::viewporter() const
 {
-    return m_viewporter;
+    return globals->viewporter.get();
 }
 
 Wrapland::Server::PresentationManager* WaylandServer::presentation_manager() const
 {
-    return m_presentationManager;
+    return globals->presentation_manager.get();
 }
 
 Wrapland::Server::Seat* WaylandServer::seat() const
 {
-    return m_seat;
+    if (globals->seats.empty()) {
+        return nullptr;
+    }
+    return globals->seats.front().get();
 }
 
 Wrapland::Server::data_device_manager* WaylandServer::data_device_manager() const
 {
-    return m_dataDeviceManager;
+    return globals->data_device_manager.get();
 }
 
 Wrapland::Server::primary_selection_device_manager*
 WaylandServer::primary_selection_device_manager() const
 {
-    return m_primarySelectionDeviceManager;
+    return globals->primary_selection_device_manager.get();
 }
 
 Wrapland::Server::XdgShell* WaylandServer::xdg_shell() const
 {
-    return m_xdgShell;
+    return globals->xdg_shell.get();
 }
 
 Wrapland::Server::XdgActivationV1* WaylandServer::xdg_activation() const
 {
-    return m_xdg_activation;
+    return globals->xdg_activation_v1.get();
 }
 
 Wrapland::Server::PlasmaVirtualDesktopManager* WaylandServer::virtual_desktop_management() const
 {
-    return m_virtualDesktopManagement;
+    return globals->plasma_virtual_desktop_manager.get();
 }
 
 Wrapland::Server::LayerShellV1* WaylandServer::layer_shell() const
 {
-    return m_layer_shell;
+    return globals->layer_shell_v1.get();
 }
 
 Wrapland::Server::PlasmaWindowManager* WaylandServer::window_management() const
 {
-    return m_windowManagement;
+    return globals->plasma_window_manager.get();
+}
+
+Wrapland::Server::KdeIdle* WaylandServer::kde_idle() const
+{
+    return globals->kde_idle.get();
 }
 
 Wrapland::Server::drm_lease_device_v1* WaylandServer::drm_lease_device() const
 {
-    return m_drm_lease_device;
+    return globals->drm_lease_device_v1.get();
 }
 
 void WaylandServer::create_presentation_manager()
 {
-    Q_ASSERT(!m_presentationManager);
-    m_presentationManager = m_display->createPresentationManager(m_display);
+    Q_ASSERT(!globals->presentation_manager);
+    globals->presentation_manager = m_display->createPresentationManager();
 }
 
 Surface* WaylandServer::findForeignParentForSurface(Surface* surface)
 {
-    return m_XdgForeign->parentOf(surface);
+    return globals->xdg_foreign->parentOf(surface);
 }
 
 void WaylandServer::window_shown(Toplevel* window)
@@ -622,22 +606,22 @@ void WaylandServer::initWorkspace()
 {
     auto ws = workspace();
 
-    VirtualDesktopManager::self()->setVirtualDesktopManagement(m_virtualDesktopManagement);
+    VirtualDesktopManager::self()->setVirtualDesktopManagement(virtual_desktop_management());
 
-    if (m_windowManagement) {
+    if (window_management()) {
         connect(ws, &Workspace::showingDesktopChanged, this, [this](bool set) {
             using namespace Wrapland::Server;
-            m_windowManagement->setShowingDesktopState(
+            window_management()->setShowingDesktopState(
                 set ? PlasmaWindowManager::ShowingDesktopState::Enabled
                     : PlasmaWindowManager::ShowingDesktopState::Disabled);
         });
     }
 
-    connect(m_xdg_activation,
+    connect(xdg_activation(),
             &Wrapland::Server::XdgActivationV1::token_requested,
             ws,
             [ws](auto token) { win::wayland::xdg_activation_create_token(ws, token); });
-    connect(m_xdg_activation,
+    connect(xdg_activation(),
             &Wrapland::Server::XdgActivationV1::activate,
             ws,
             [ws, this](auto const& token, auto surface) {
@@ -780,8 +764,8 @@ void WaylandServer::destroyInputMethodConnection()
 
 void WaylandServer::createDrmLeaseDevice()
 {
-    if (!m_drm_lease_device) {
-        m_drm_lease_device = m_display->createDrmLeaseDeviceV1(m_display);
+    if (!drm_lease_device()) {
+        globals->drm_lease_device_v1 = m_display->createDrmLeaseDeviceV1();
     }
 }
 
@@ -908,25 +892,25 @@ bool WaylandServer::hasGlobalShortcutSupport() const
 
 void WaylandServer::simulateUserActivity()
 {
-    if (m_idle) {
-        m_idle->simulateUserActivity();
+    if (globals->kde_idle) {
+        globals->kde_idle->simulateUserActivity();
     }
 }
 
 void WaylandServer::updateKeyState(input::xkb::LEDs leds)
 {
-    if (!m_keyState)
+    if (!globals->key_state)
         return;
 
-    m_keyState->setState(KeyState::Key::CapsLock,
-                         leds & input::xkb::LED::CapsLock ? KeyState::State::Locked
-                                                          : KeyState::State::Unlocked);
-    m_keyState->setState(KeyState::Key::NumLock,
-                         leds & input::xkb::LED::NumLock ? KeyState::State::Locked
-                                                         : KeyState::State::Unlocked);
-    m_keyState->setState(KeyState::Key::ScrollLock,
-                         leds & input::xkb::LED::ScrollLock ? KeyState::State::Locked
-                                                            : KeyState::State::Unlocked);
+    globals->key_state->setState(KeyState::Key::CapsLock,
+                                 leds & input::xkb::LED::CapsLock ? KeyState::State::Locked
+                                                                  : KeyState::State::Unlocked);
+    globals->key_state->setState(KeyState::Key::NumLock,
+                                 leds & input::xkb::LED::NumLock ? KeyState::State::Locked
+                                                                 : KeyState::State::Unlocked);
+    globals->key_state->setState(KeyState::Key::ScrollLock,
+                                 leds & input::xkb::LED::ScrollLock ? KeyState::State::Locked
+                                                                    : KeyState::State::Unlocked);
 }
 
 }

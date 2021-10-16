@@ -57,7 +57,7 @@ BlurEffect::BlurEffect()
         net_wm_blur_region = effects->announceSupportProperty(s_blurAtomName, this);
         Wrapland::Server::Display *display = effects->waylandDisplay();
         if (display) {
-            m_blurManager = display->createBlurManager(this);
+            wayland_blur_manager = display->createBlurManager();
         }
     } else {
         net_wm_blur_region = 0;
@@ -263,8 +263,7 @@ void BlurEffect::reconfigure(ReconfigureFlags flags)
 
     if (!m_shader || !m_shader->isValid()) {
         effects->removeSupportProperty(s_blurAtomName, this);
-        delete m_blurManager;
-        m_blurManager = nullptr;
+        wayland_blur_manager.reset();
     }
 
     // Update all windows for the blur to take effect
