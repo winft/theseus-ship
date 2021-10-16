@@ -157,8 +157,8 @@ ApplicationWayland::~ApplicationWayland()
         // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
         static_cast<render::wayland::compositor*>(compositor)->lock();
     }
-    destroyWorkspace();
 
+    workspace.reset();
     destroyCompositor();
 }
 
@@ -194,7 +194,9 @@ void ApplicationWayland::start()
     input::dbus::tablet_mode_manager::create(this);
 
     render::wayland::compositor::create();
-    createWorkspace();
+
+    workspace = std::make_unique<Workspace>();
+    Q_EMIT workspaceCreated();
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
 }

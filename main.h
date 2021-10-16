@@ -203,8 +203,6 @@ public:
 
     static void setupMalloc();
     static void setupLocalizedString();
-
-    void createWorkspace();
     virtual void notifyKSplash() {}
 
 Q_SIGNALS:
@@ -222,7 +220,6 @@ protected:
     void createAtoms();
     void createOptions();
     void setupEventFilters();
-    void destroyWorkspace();
     void destroyCompositor();
 
     /**

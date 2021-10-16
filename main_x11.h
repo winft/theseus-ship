@@ -16,6 +16,7 @@ namespace KWin
 {
 
 class KWinSelectionOwner;
+class Workspace;
 
 class ApplicationX11 : public Application
 {
@@ -42,6 +43,8 @@ private:
     static void crashHandler(int signal);
 
     std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
+    std::unique_ptr<Workspace> workspace;
+
     QScopedPointer<KWinSelectionOwner> owner;
     bool m_replace;
 };
