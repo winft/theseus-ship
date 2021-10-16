@@ -17,7 +17,7 @@ namespace KWin::input
 {
 class xkb;
 
-class keyboard_repeat_spy : public QObject, public input::event_spy
+class KWIN_EXPORT keyboard_repeat_spy : public QObject, public input::event_spy
 {
     Q_OBJECT
 public:

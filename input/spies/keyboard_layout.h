@@ -34,7 +34,7 @@ namespace KeyboardLayoutSwitching
 class Policy;
 }
 
-class keyboard_layout_spy : public QObject, public input::event_spy
+class KWIN_EXPORT keyboard_layout_spy : public QObject, public input::event_spy
 {
     Q_OBJECT
 public:
