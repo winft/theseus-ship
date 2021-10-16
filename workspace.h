@@ -514,7 +514,6 @@ Q_SIGNALS:
     void internalClientRemoved(KWin::win::InternalClient* client);
 
 private:
-    void init();
     void initWithX11();
     void initShortcuts();
     template<typename Slot>
