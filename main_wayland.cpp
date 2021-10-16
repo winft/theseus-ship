@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/redirect.h"
 #include "input/dbus/tablet_mode_manager.h"
 #include "wayland_server.h"
+#include "win/wayland/space.h"
 #include "xwl/xwayland.h"
 
 // Wrapland
@@ -224,7 +225,7 @@ void ApplicationWayland::start()
     tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
 
     compositor = std::make_unique<render::wayland::compositor>();
-    workspace = std::make_unique<Workspace>();
+    workspace = std::make_unique<win::wayland::space>();
     Q_EMIT workspaceCreated();
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });

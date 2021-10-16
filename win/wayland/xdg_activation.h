@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "wayland_server.h"
 #include "win/stacking.h"
 
 #include <Wrapland/Server/xdg_activation_v1.h>

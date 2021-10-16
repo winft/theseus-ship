@@ -13,6 +13,7 @@
 #include "workspace.h"
 
 #include "win/wayland/layer_shell.h"
+#include "win/wayland/space.h"
 #include "win/wayland/subsurface.h"
 #include "win/wayland/surface.h"
 #include "win/wayland/window.h"
@@ -598,7 +599,7 @@ void WaylandServer::adopt_transient_children(Toplevel* window)
 
 void WaylandServer::initWorkspace()
 {
-    auto ws = workspace();
+    auto ws = static_cast<win::wayland::space*>(workspace());
 
     VirtualDesktopManager::self()->setVirtualDesktopManagement(virtual_desktop_management());
 

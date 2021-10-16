@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 class WaylandServer;
-class Workspace;
 
 namespace input::dbus
 {
@@ -41,6 +40,10 @@ class tablet_mode_manager;
 namespace render::wayland
 {
 class compositor;
+}
+namespace win::wayland
+{
+class space;
 }
 namespace xwl
 {
@@ -52,7 +55,7 @@ class ApplicationWayland : public ApplicationWaylandAbstract
     Q_OBJECT
 public:
     std::unique_ptr<WaylandServer> server;
-    std::unique_ptr<Workspace> workspace;
+    std::unique_ptr<win::wayland::space> workspace;
     std::unique_ptr<render::wayland::compositor> compositor;
 
     ApplicationWayland(int &argc, char **argv);

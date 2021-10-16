@@ -55,6 +55,7 @@ class compositor;
 }
 namespace win::wayland
 {
+class space;
 class window;
 }
 namespace xwl
@@ -63,7 +64,6 @@ class xwayland;
 }
 
 class Toplevel;
-class Workspace;
 
 namespace Test
 {
@@ -132,7 +132,7 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 public:
     std::unique_ptr<WaylandServer> server;
     std::unique_ptr<xwl::xwayland> xwayland;
-    std::unique_ptr<Workspace> workspace;
+    std::unique_ptr<win::wayland::space> workspace;
 
     wlr_input_device* pointer{nullptr};
     wlr_input_device* keyboard{nullptr};

@@ -73,10 +73,6 @@ class window;
 class Group;
 class stacking_tree;
 }
-namespace wayland
-{
-struct xdg_activation;
-}
 }
 
 class KillWindow;
@@ -89,7 +85,6 @@ class KWIN_EXPORT Workspace : public QObject
     Q_OBJECT
 public:
     std::vector<Toplevel*> m_windows;
-    std::unique_ptr<win::wayland::xdg_activation> activation;
 
     explicit Workspace();
     ~Workspace() override;
@@ -471,6 +466,15 @@ public Q_SLOTS:
 
     void updateClientArea();
 
+protected:
+    void setupClientConnections(Toplevel* window);
+    void updateTabbox();
+
+    std::vector<Toplevel*> m_allClients;
+    Toplevel* last_active_client{nullptr};
+    Toplevel* delayfocus_client{nullptr};
+    Toplevel* client_keys_client{nullptr};
+
 private Q_SLOTS:
     void desktopResized();
     void selectWmInputEventMask();
@@ -542,7 +546,6 @@ private:
 
     /// This is the right way to create a new client
     win::x11::window* createClient(xcb_window_t w, bool is_mapped);
-    void setupClientConnections(Toplevel* window);
     void addClient(win::x11::window* c);
     Toplevel* createUnmanaged(xcb_window_t w);
     void addUnmanaged(Toplevel* c);
@@ -562,17 +565,11 @@ private:
 
     std::vector<SessionInfo*> session;
 
-    void updateTabbox();
-
-    Toplevel* last_active_client{nullptr};
     Toplevel* movingClient{nullptr};
 
     // Delay(ed) window focus timer and client
     QTimer* delayFocusTimer{nullptr};
-    Toplevel* delayfocus_client{nullptr};
     QPoint focusMousePos;
-
-    std::vector<Toplevel*> m_allClients;
 
     // Last is most recent.
     std::deque<Toplevel*> should_get_focus;
@@ -600,7 +597,6 @@ private:
     void modalActionsSwitch(bool enabled);
 
     ShortcutDialog* client_keys_dialog{nullptr};
-    Toplevel* client_keys_client{nullptr};
     bool global_shortcuts_disabled_for_client{false};
 
     // Timer to collect requests for 'reconfigure'

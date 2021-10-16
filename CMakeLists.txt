@@ -478,6 +478,7 @@ set(kwin_SRCS
     win/remnant.cpp
     win/stacking_order.cpp
     win/transient.cpp
+    win/wayland/space.cpp
     win/wayland/window.cpp
     win/x11/client_machine.cpp
     win/x11/geometrytip.cpp

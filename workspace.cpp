@@ -68,7 +68,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/util.h"
 
 #include "win/wayland/window.h"
-#include "win/wayland/xdg_activation.h"
 #include "win/x11/control.h"
 #include "win/x11/event.h"
 #include "win/x11/group.h"
@@ -311,122 +310,6 @@ Workspace::Workspace()
     initWithX11();
     Scripting::create(this);
 
-    if (auto w = waylandServer()) {
-        activation.reset(new win::wayland::xdg_activation);
-        connect(this, &Workspace::clientActivated, this, [this] {
-            if (activeClient()) {
-                activation->clear();
-            }
-        });
-
-        connect(w, &WaylandServer::window_added, this, [this](win::wayland::window* window) {
-            assert(!contains(m_windows, window));
-
-            if (window->control && !window->layer_surface) {
-                setupClientConnections(window);
-                window->updateDecoration(false);
-                win::update_layer(window);
-
-                auto const area
-                    = clientArea(PlacementArea, Screens::self()->current(), window->desktop());
-                auto placementDone = false;
-
-                if (window->isInitialPositionSet()) {
-                    placementDone = true;
-                }
-                if (window->control->fullscreen()) {
-                    placementDone = true;
-                }
-                if (window->maximizeMode() == win::maximize_mode::full) {
-                    placementDone = true;
-                }
-                if (window->control->rules().checkPosition(invalidPoint, true) != invalidPoint) {
-                    placementDone = true;
-                }
-                if (!placementDone) {
-                    window->placeIn(area);
-                }
-
-                m_allClients.push_back(window);
-            }
-
-            m_windows.push_back(window);
-
-            if (!contains(stacking_order->pre_stack, window)) {
-                // Raise if it hasn't got any stacking position yet.
-                stacking_order->pre_stack.push_back(window);
-            }
-            if (!contains(stacking_order->sorted(), window)) {
-                // It'll be updated later, and updateToolWindows() requires window to be in
-                // stacking_order.
-                stacking_order->win_stack.push_back(window);
-            }
-
-            x_stacking_tree->mark_as_dirty();
-            stacking_order->update(true);
-
-            if (window->control) {
-                updateClientArea();
-
-                if (window->wantsInput() && !window->control->minimized()) {
-                    activateClient(window);
-                }
-
-                updateTabbox();
-
-                connect(window, &win::wayland::window::windowShown, this, [this, window] {
-                    win::update_layer(window);
-                    x_stacking_tree->mark_as_dirty();
-                    stacking_order->update(true);
-                    updateClientArea();
-                    if (window->wantsInput()) {
-                        activateClient(window);
-                    }
-                });
-                connect(window, &win::wayland::window::windowHidden, this, [this] {
-                    // TODO: update tabbox if it's displayed
-                    x_stacking_tree->mark_as_dirty();
-                    stacking_order->update(true);
-                    updateClientArea();
-                });
-            }
-            Q_EMIT wayland_window_added(window);
-        });
-        connect(w, &WaylandServer::window_removed, this, [this](win::wayland::window* window) {
-            remove_all(m_windows, window);
-
-            if (window->control) {
-                remove_all(m_allClients, window);
-                if (window == most_recently_raised) {
-                    most_recently_raised = nullptr;
-                }
-                if (window == delayfocus_client) {
-                    cancelDelayFocus();
-                }
-                if (window == last_active_client) {
-                    last_active_client = nullptr;
-                }
-                if (window == client_keys_client) {
-                    setupWindowShortcutDone(false);
-                }
-                if (!window->control->shortcut().isEmpty()) {
-                    // Remove from client_keys.
-                    win::set_shortcut(window, QString());
-                }
-                clientHidden(window);
-                Q_EMIT clientRemoved(window);
-            }
-
-            x_stacking_tree->mark_as_dirty();
-            stacking_order->update(true);
-
-            if (window->control) {
-                updateClientArea();
-                updateTabbox();
-            }
-        });
-    }
-
     // SELI TODO: This won't work with unreasonable focus policies,
     // and maybe in rare cases also if the selected client doesn't
     // want focus
@@ -641,25 +524,10 @@ Workspace::~Workspace()
 
     clear_x11();
 
-    if (waylandServer()) {
-        auto const windows = waylandServer()->windows;
-        for (auto win : windows) {
-            win->destroy();
-            remove_all(m_windows, win);
-        }
-    }
-
     for (auto const& window : m_windows) {
         if (auto internal = qobject_cast<win::InternalClient*>(window)) {
             internal->destroyClient();
             remove_all(m_windows, internal);
-        }
-    }
-
-    for (auto const& window : m_windows) {
-        if (auto win = qobject_cast<win::wayland::window*>(window)) {
-            win->destroy();
-            remove_all(m_windows, win);
         }
     }
 
