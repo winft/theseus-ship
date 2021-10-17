@@ -22,11 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "device_redirect.h"
 #include "redirect.h"
 
-#include <QHash>
-#include <QObject>
 #include <QPointF>
-#include <QPointer>
-#include <QTabletEvent>
 
 namespace KWin
 {
@@ -37,63 +33,39 @@ namespace Decoration
 class DecoratedClientImpl;
 }
 
-namespace LibInput
-{
-class Device;
-}
-
 namespace input
 {
 
-class tablet_redirect : public device_redirect
+class KWIN_EXPORT tablet_redirect : public device_redirect
 {
     Q_OBJECT
 public:
     tablet_redirect();
-    ~tablet_redirect() override;
-
-    void tabletPad();
-
-    void tabletToolEvent(redirect::TabletEventType type,
-                         const QPointF& pos,
-                         qreal pressure,
-                         int xTilt,
-                         int yTilt,
-                         qreal rotation,
-                         bool tipDown,
-                         bool tipNear,
-                         quint64 serialId,
-                         quint64 toolId,
-                         void* device);
-    void tabletToolButtonEvent(uint button, bool isPressed);
-
-    void tabletPadButtonEvent(uint button, bool isPressed);
-    void tabletPadStripEvent(int number, int position, bool isFinger);
-    void tabletPadRingEvent(int number, int position, bool isFinger);
-
-    bool positionValid() const override
+    virtual void tabletToolEvent(redirect::TabletEventType /*type*/,
+                                 QPointF const& /*pos*/,
+                                 qreal /*pressure*/,
+                                 int /*xTilt*/,
+                                 int /*yTilt*/,
+                                 qreal /*rotation*/,
+                                 bool /*tipDown*/,
+                                 bool /*tipNear*/,
+                                 quint64 /*serialId*/,
+                                 quint64 /*toolId*/,
+                                 void* /*device*/)
     {
-        return !m_lastPosition.isNull();
     }
-    void init() override;
-
-    QPointF position() const override
+    virtual void tabletToolButtonEvent(uint /*button*/, bool /*isPressed*/)
     {
-        return m_lastPosition;
     }
-
-private:
-    void cleanupDecoration(Decoration::DecoratedClientImpl* old,
-                           Decoration::DecoratedClientImpl* now) override;
-    void cleanupInternalWindow(QWindow* old, QWindow* now) override;
-    void focusUpdate(KWin::Toplevel* old, KWin::Toplevel* now) override;
-
-    bool m_tipDown = false;
-    bool m_tipNear = false;
-
-    QPointF m_lastPosition;
-    QSet<uint> m_toolPressedButtons;
-    QSet<uint> m_padPressedButtons;
+    virtual void tabletPadButtonEvent(uint /*button*/, bool /*isPressed*/)
+    {
+    }
+    virtual void tabletPadStripEvent(int /*number*/, int /*position*/, bool /*isFinger*/)
+    {
+    }
+    virtual void tabletPadRingEvent(int /*number*/, int /*position*/, bool /*isFinger*/)
+    {
+    }
 };
 
 }

@@ -62,14 +62,14 @@ namespace KWin::input
 {
 
 redirect::redirect()
-    : redirect(new keyboard_redirect(this), new pointer_redirect)
+    : redirect(new keyboard_redirect(this), new pointer_redirect, new tablet_redirect)
 {
 }
 
-redirect::redirect(keyboard_redirect* keyboard, pointer_redirect* pointer)
+redirect::redirect(keyboard_redirect* keyboard, pointer_redirect* pointer, tablet_redirect* tablet)
     : m_keyboard(keyboard)
     , m_pointer(pointer)
-    , m_tablet(new tablet_redirect())
+    , m_tablet(tablet)
     , m_touch(new touch_redirect())
     , m_shortcuts(new global_shortcuts_manager(this))
     , m_inputConfigWatcher{KConfigWatcher::create(kwinApp()->inputConfig())}

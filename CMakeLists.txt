@@ -802,6 +802,7 @@ set(kwin_WAYLAND_SRCS
    input/wayland/keyboard_redirect.cpp
    input/wayland/pointer_redirect.cpp
    input/wayland/redirect.cpp
+   input/wayland/tablet_redirect.cpp
    input/logging.cpp
    linux_dmabuf.cpp
    platform/wlroots.cpp
