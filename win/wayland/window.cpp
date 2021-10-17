@@ -67,6 +67,11 @@ window::window(WS::Surface* surface)
     setupCompositing(false);
 }
 
+bool window::is_wayland_window() const
+{
+    return true;
+}
+
 NET::WindowType window::windowType([[maybe_unused]] bool direct,
                                    [[maybe_unused]] int supported_types) const
 {

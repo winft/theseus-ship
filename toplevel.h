@@ -160,6 +160,7 @@ public:
      */
     virtual qreal bufferScale() const;
 
+    virtual bool is_wayland_window() const;
     virtual bool isClient() const;
     bool isDeleted() const;
 

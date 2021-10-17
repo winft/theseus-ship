@@ -93,6 +93,8 @@ public:
     window(Wrapland::Server::Surface* surface);
     ~window() = default;
 
+    bool is_wayland_window() const override;
+
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     QByteArray windowRole() const override;
 

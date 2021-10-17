@@ -704,6 +704,11 @@ void Toplevel::getWmOpaqueRegion()
     opaque_region = new_opaque_region;
 }
 
+bool Toplevel::is_wayland_window() const
+{
+    return false;
+}
+
 bool Toplevel::isClient() const
 {
     return false;
