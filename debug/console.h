@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_DEBUG_CONSOLE_H
-#define KWIN_DEBUG_CONSOLE_H
+#pragma once
 
 #include <config-kwin.h>
 #include <input/event.h>
@@ -33,7 +32,7 @@ class QTextEdit;
 
 namespace Ui
 {
-class DebugConsole;
+class debug_console;
 }
 
 namespace KWin
@@ -51,19 +50,27 @@ namespace x11
 {
 class window;
 }
+}
 
+namespace input::dbus
+{
+class device;
 }
 
 class X11Client;
 class Toplevel;
-class DebugConsoleFilter;
 
-class KWIN_EXPORT DebugConsoleModel : public QAbstractItemModel
+namespace debug
+{
+
+class console_filter;
+
+class KWIN_EXPORT console_model : public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    explicit DebugConsoleModel(QObject* parent = nullptr);
-    ~DebugConsoleModel() override;
+    explicit console_model(QObject* parent = nullptr);
+    ~console_model() override;
 
     int columnCount(const QModelIndex& parent) const override;
     QVariant data(const QModelIndex& index, int role) const override;
@@ -78,10 +85,10 @@ private:
     QModelIndex indexForProperty(int row,
                                  int column,
                                  const QModelIndex& parent,
-                                 T* (DebugConsoleModel::*filter)(const QModelIndex&) const) const;
+                                 T* (console_model::*filter)(const QModelIndex&) const) const;
     template<class T>
     int propertyCount(const QModelIndex& parent,
-                      T* (DebugConsoleModel::*filter)(const QModelIndex&) const) const;
+                      T* (console_model::*filter)(const QModelIndex&) const) const;
     QVariant propertyData(QObject* object, const QModelIndex& index, int role) const;
     template<class T>
     QVariant clientData(const QModelIndex& index, int role, const QVector<T*> clients) const;
@@ -101,22 +108,22 @@ private:
     QVector<Toplevel*> m_unmanageds;
 };
 
-class DebugConsoleDelegate : public QStyledItemDelegate
+class console_delegate : public QStyledItemDelegate
 {
     Q_OBJECT
 public:
-    explicit DebugConsoleDelegate(QObject* parent = nullptr);
-    ~DebugConsoleDelegate() override;
+    explicit console_delegate(QObject* parent = nullptr);
+    ~console_delegate() override;
 
     QString displayText(const QVariant& value, const QLocale& locale) const override;
 };
 
-class KWIN_EXPORT DebugConsole : public QWidget
+class KWIN_EXPORT console : public QWidget
 {
     Q_OBJECT
 public:
-    DebugConsole();
-    ~DebugConsole() override;
+    console();
+    ~console() override;
 
 protected:
     void showEvent(QShowEvent* event) override;
@@ -125,16 +132,16 @@ private:
     void initGLTab();
     void updateKeyboardTab();
 
-    QScopedPointer<Ui::DebugConsole> m_ui;
-    QScopedPointer<DebugConsoleFilter> m_inputFilter;
+    QScopedPointer<Ui::debug_console> m_ui;
+    QScopedPointer<console_filter> m_inputFilter;
 };
 
-class SurfaceTreeModel : public QAbstractItemModel
+class surface_tree_model : public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    explicit SurfaceTreeModel(QObject* parent = nullptr);
-    ~SurfaceTreeModel() override;
+    explicit surface_tree_model(QObject* parent = nullptr);
+    ~surface_tree_model() override;
 
     int columnCount(const QModelIndex& parent) const override;
     QVariant data(const QModelIndex& index, int role) const override;
@@ -143,11 +150,11 @@ public:
     QModelIndex parent(const QModelIndex& child) const override;
 };
 
-class DebugConsoleFilter : public input::event_spy
+class console_filter : public input::event_spy
 {
 public:
-    explicit DebugConsoleFilter(QTextEdit* textEdit);
-    ~DebugConsoleFilter() override;
+    explicit console_filter(QTextEdit* textEdit);
+    ~console_filter() override;
 
     void button(input::button_event const& event) override;
     void motion(input::motion_event const& event) override;
@@ -180,20 +187,12 @@ private:
     QTextEdit* m_textEdit;
 };
 
-namespace input
-{
-namespace dbus
-{
-class device;
-}
-}
-
-class InputDeviceModel : public QAbstractItemModel
+class input_device_model : public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    explicit InputDeviceModel(QObject* parent = nullptr);
-    ~InputDeviceModel() override;
+    explicit input_device_model(QObject* parent = nullptr);
+    ~input_device_model() override;
 
     int columnCount(const QModelIndex& parent) const override;
     QVariant data(const QModelIndex& index, int role) const override;
@@ -207,5 +206,4 @@ private:
 };
 
 }
-
-#endif
+}

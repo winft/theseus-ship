@@ -183,7 +183,7 @@ void DBusInterface::previousDesktop()
 
 void DBusInterface::showDebugConsole()
 {
-    DebugConsole *console = new DebugConsole;
+    auto console = new debug::console;
     console->show();
 }
 
