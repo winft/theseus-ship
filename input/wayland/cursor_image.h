@@ -8,6 +8,8 @@
 */
 #pragma once
 
+#include <kwin_export.h>
+
 #include <QElapsedTimer>
 #include <QHash>
 #include <QImage>
@@ -27,7 +29,7 @@ namespace wayland
 
 class cursor_theme;
 
-class cursor_image : public QObject
+class KWIN_EXPORT cursor_image : public QObject
 {
     Q_OBJECT
 public:

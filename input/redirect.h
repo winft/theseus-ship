@@ -281,7 +281,7 @@ Q_SIGNALS:
     void hasTabletModeSwitchChanged(bool set);
 
 protected:
-    explicit redirect(keyboard_redirect* keyboard);
+    redirect(keyboard_redirect* keyboard, pointer_redirect* pointer);
 
 private Q_SLOTS:
     void handleInputConfigChanged(const KConfigGroup& group);

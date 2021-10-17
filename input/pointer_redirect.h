@@ -10,28 +10,11 @@
 
 #include "device_redirect.h"
 #include "event.h"
-#include "redirect.h"
 
-#include <QObject>
 #include <QPointF>
-#include <QPointer>
-#include <memory>
-
-class QWindow;
-
-namespace Wrapland::Server
-{
-class Surface;
-}
 
 namespace KWin
 {
-class Toplevel;
-
-namespace Decoration
-{
-class DecoratedClientImpl;
-}
 
 namespace input
 {
@@ -43,89 +26,88 @@ class KWIN_EXPORT pointer_redirect : public device_redirect
 public:
     static bool s_cursorUpdateBlocking;
 
-    pointer_redirect();
-    ~pointer_redirect() override;
-
-    void init() override;
-
-    void updateAfterScreenChange();
-    bool supportsWarping() const;
-    void warp(const QPointF& pos);
-
-    QPointF pos() const
+    void init() override
     {
-        return m_pos;
     }
-    Qt::MouseButtons buttons() const
+    virtual void updateAfterScreenChange()
     {
-        return m_qtButtons;
     }
-    bool areButtonsPressed() const;
-
-    void setEffectsOverrideCursor(Qt::CursorShape shape);
-    void removeEffectsOverrideCursor();
-    void setWindowSelectionCursor(const QByteArray& shape);
-    void removeWindowSelectionCursor();
-
-    void updatePointerConstraints();
-
-    void setEnableConstraints(bool set);
-
-    bool isConstrained() const
+    virtual bool supportsWarping() const
     {
-        return m_confined || m_locked;
+        return false;
     }
-
-    bool focusUpdatesBlocked() override;
-
-    void process_motion(motion_event const& event);
-    void process_motion_absolute(motion_absolute_event const& event);
-    void processMotion(const QPointF& pos, uint32_t time, KWin::input::pointer* device = nullptr);
-
-    void process_button(button_event const& event);
-    void process_axis(axis_event const& event);
-
-    void process_swipe_begin(swipe_begin_event const& event);
-    void process_swipe_update(swipe_update_event const& event);
-    void process_swipe_end(swipe_end_event const& event);
-
-    void process_pinch_begin(pinch_begin_event const& event);
-    void process_pinch_update(pinch_update_event const& event);
-    void process_pinch_end(pinch_end_event const& event);
-
-private:
-    void cleanupInternalWindow(QWindow* old, QWindow* now) override;
-    void cleanupDecoration(Decoration::DecoratedClientImpl* old,
-                           Decoration::DecoratedClientImpl* now) override;
-
-    void focusUpdate(Toplevel* focusOld, Toplevel* focusNow) override;
-
-    QPointF position() const override;
-
-    void updateOnStartMoveResize();
-    void updateToReset();
-    void updatePosition(const QPointF& pos);
-    void update_button(button_event const& event);
-    void warpXcbOnSurfaceLeft(Wrapland::Server::Surface* surface);
-    QPointF applyPointerConfinement(const QPointF& pos) const;
-    void disconnectConfinedPointerRegionConnection();
-    void disconnectLockedPointerDestroyedConnection();
-    void disconnectPointerConstraintsConnection();
-    void breakPointerConstraints(Wrapland::Server::Surface* surface);
-    bool m_supportsWarping;
-    QPointF m_pos;
-    QHash<uint32_t, input::redirect::PointerButtonState> m_buttons;
-    Qt::MouseButtons m_qtButtons;
-    QMetaObject::Connection m_focusGeometryConnection;
-    QMetaObject::Connection m_internalWindowConnection;
-    QMetaObject::Connection m_constraintsConnection;
-    QMetaObject::Connection m_constraintsActivatedConnection;
-    QMetaObject::Connection m_confinedPointerRegionConnection;
-    QMetaObject::Connection m_lockedPointerDestroyedConnection;
-    QMetaObject::Connection m_decorationGeometryConnection;
-    bool m_confined = false;
-    bool m_locked = false;
-    bool m_enableConstraints = true;
+    virtual void warp(QPointF const& /*pos*/)
+    {
+    }
+    virtual QPointF pos() const
+    {
+        return {};
+    }
+    virtual Qt::MouseButtons buttons() const
+    {
+        return {};
+    }
+    virtual bool areButtonsPressed() const
+    {
+        return false;
+    }
+    virtual void setEffectsOverrideCursor(Qt::CursorShape /*shape*/)
+    {
+    }
+    virtual void removeEffectsOverrideCursor()
+    {
+    }
+    virtual void setWindowSelectionCursor(QByteArray const& /*shape*/)
+    {
+    }
+    virtual void removeWindowSelectionCursor()
+    {
+    }
+    virtual void updatePointerConstraints()
+    {
+    }
+    virtual void setEnableConstraints(bool /*set*/)
+    {
+    }
+    virtual bool isConstrained() const
+    {
+        return false;
+    }
+    virtual void process_motion(motion_event const& /*event*/)
+    {
+    }
+    virtual void process_motion_absolute(motion_absolute_event const& /*event*/)
+    {
+    }
+    virtual void processMotion(QPointF const& /*pos*/,
+                               uint32_t /*time*/,
+                               [[maybe_unused]] KWin::input::pointer* device = nullptr)
+    {
+    }
+    virtual void process_button(button_event const& /*event*/)
+    {
+    }
+    virtual void process_axis(axis_event const& /*event*/)
+    {
+    }
+    virtual void process_swipe_begin(swipe_begin_event const& /*event*/)
+    {
+    }
+    virtual void process_swipe_update(swipe_update_event const& /*event*/)
+    {
+    }
+    virtual void process_swipe_end(swipe_end_event const& /*event*/)
+    {
+    }
+    virtual void process_pinch_begin(pinch_begin_event const& /*event*/)
+    {
+    }
+    virtual void process_pinch_update(pinch_update_event const& /*event*/)
+    {
+    }
+    virtual void process_pinch_end(pinch_end_event const& /*event*/)
+    {
+    }
 };
 
 }

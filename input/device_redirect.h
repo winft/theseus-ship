@@ -63,7 +63,10 @@ public:
      */
     QWindow* internalWindow() const;
 
-    virtual QPointF position() const = 0;
+    virtual QPointF position() const
+    {
+        return {};
+    }
 
     void setFocus(Toplevel* toplevel);
     void setDecoration(Decoration::DecoratedClientImpl* decoration);
@@ -75,12 +78,17 @@ Q_SIGNALS:
 protected:
     device_redirect();
 
-    virtual void cleanupInternalWindow(QWindow* old, QWindow* now) = 0;
-    virtual void cleanupDecoration(Decoration::DecoratedClientImpl* old,
-                                   Decoration::DecoratedClientImpl* now)
-        = 0;
+    virtual void cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/)
+    {
+    }
+    virtual void cleanupDecoration(Decoration::DecoratedClientImpl* /*old*/,
+                                   Decoration::DecoratedClientImpl* /*now*/)
+    {
+    }
 
-    virtual void focusUpdate(Toplevel* old, Toplevel* now) = 0;
+    virtual void focusUpdate(Toplevel* /*old*/, Toplevel* /*now*/)
+    {
+    }
 
     /**
      * Certain input devices can be in a state of having no valid

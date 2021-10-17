@@ -62,13 +62,13 @@ namespace KWin::input
 {
 
 redirect::redirect()
-    : redirect(new keyboard_redirect(this))
+    : redirect(new keyboard_redirect(this), new pointer_redirect)
 {
 }
 
-redirect::redirect(keyboard_redirect* keyboard)
+redirect::redirect(keyboard_redirect* keyboard, pointer_redirect* pointer)
     : m_keyboard(keyboard)
-    , m_pointer(new pointer_redirect())
+    , m_pointer(pointer)
     , m_tablet(new tablet_redirect())
     , m_touch(new touch_redirect())
     , m_shortcuts(new global_shortcuts_manager(this))

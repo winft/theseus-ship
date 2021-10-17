@@ -6,12 +6,13 @@
 #include "redirect.h"
 
 #include "keyboard_redirect.h"
+#include "pointer_redirect.h"
 
 namespace KWin::input::wayland
 {
 
 redirect::redirect()
-    : input::redirect(new keyboard_redirect(this))
+    : input::redirect(new keyboard_redirect(this), new pointer_redirect)
 {
 }
 

@@ -445,8 +445,6 @@ set(kwin_SRCS
     input/spies/modifier_only_shortcuts.cpp
     input/spies/touch_hide_cursor.cpp
     input/cursor.cpp
-    input/wayland/cursor_image.cpp
-    input/wayland/cursor.cpp
     input/cursor_shape.cpp
     input/event.cpp
     input/gestures.cpp
@@ -454,7 +452,6 @@ set(kwin_SRCS
     input/global_shortcuts_manager.cpp
     input/logging.cpp
     input/qt_event.cpp
-    input/wayland/cursor_theme.cpp
     input/xkb.cpp
     killwindow.cpp
     layers.cpp
@@ -799,7 +796,11 @@ set(kwin_WAYLAND_SRCS
    input/backend/wlroots/control/touch.cpp
    input/dbus/tablet_mode_manager.cpp
    input/spies/tablet_mode_switch.cpp
+   input/wayland/cursor.cpp
+   input/wayland/cursor_image.cpp
+   input/wayland/cursor_theme.cpp
    input/wayland/keyboard_redirect.cpp
+   input/wayland/pointer_redirect.cpp
    input/wayland/redirect.cpp
    input/logging.cpp
    linux_dmabuf.cpp
