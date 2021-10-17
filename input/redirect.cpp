@@ -515,6 +515,9 @@ void redirect::processTouchMotion(qint32 id, const QPointF& pos, quint32 time)
 
 void redirect::cancelTouch()
 {
+    if (!waylandServer()->seat()->hasTouch()) {
+        return;
+    }
     m_touch->cancel();
 }
 
