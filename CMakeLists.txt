@@ -389,7 +389,7 @@ set(kwin_SRCS
     colorcorrection/manager.cpp
     colorcorrection/suncalc.cpp
     dbusinterface.cpp
-    debug_console.cpp
+    debug/console.cpp
     decorations/decoratedclient.cpp
     decorations/decorationbridge.cpp
     decorations/decorationpalette.cpp
@@ -568,7 +568,7 @@ qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.sc
 qt5_add_dbus_interface(kwin_SRCS org.kde.kappmenu.xml appmenu_interface)
 
 ki18n_wrap_ui(kwin_SRCS
-    debug_console.ui
+    debug/debug_console.ui
     shortcutdialog.ui
 )
 

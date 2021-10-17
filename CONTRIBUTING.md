@@ -387,6 +387,7 @@ amendments:
   * style: improvements to code style without logic change
   * test: addition of a new test or correction of an existing one
 * Only the following optional scopes are allowed:
+  * debug: internal debug tools
   * deco: window decorations
   * effect: libkwineffects and internal effects handling
   * input: libinput integration and input redirection

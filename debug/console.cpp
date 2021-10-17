@@ -17,7 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "debug_console.h"
+#include "console.h"
+
 #include "render/compositor.h"
 
 #include "input/dbus/device.h"

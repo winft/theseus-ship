@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "debug_console.h"
+#include "debug/console.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
