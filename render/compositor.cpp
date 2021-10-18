@@ -115,6 +115,12 @@ bool compositor::setupStart()
 
         m_scene.reset();
 
+        if (auto con = kwinApp()->x11Connection()) {
+            // TODO(romangg): That's X11-only. Move to the x11::compositor class.
+            xcb_composite_unredirect_subwindows(
+                con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
+        }
+
         if (m_selectionOwner) {
             m_selectionOwner->disown();
         }
