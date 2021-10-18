@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 
 #include "../../abstract_wayland_output.h"
+#include "../../debug/wayland_console.h"
 #include "../../effects.h"
 #include "../../input/backend/wlroots/platform.h"
 #include "../../input/wayland/cursor.h"
@@ -130,6 +131,11 @@ WaylandTestApplication::~WaylandTestApplication()
 
     workspace.reset();
     compositor.reset();
+}
+
+debug::console* WaylandTestApplication::create_debug_console()
+{
+    return new debug::wayland_console;
 }
 
 void WaylandTestApplication::start()

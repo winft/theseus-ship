@@ -7,13 +7,15 @@
 
 #include "event.h"
 
+#include <kwin_export.h>
+
 namespace KWin::input
 {
 
-Qt::MouseButton button_to_qt_mouse_button(uint32_t button);
+Qt::MouseButton KWIN_EXPORT button_to_qt_mouse_button(uint32_t button);
 uint32_t qt_mouse_button_to_button(Qt::MouseButton button);
 
-Qt::Key key_to_qt_key(uint32_t key);
+Qt::Key KWIN_EXPORT key_to_qt_key(uint32_t key);
 
 QMouseEvent button_to_qt_event(button_event const& event);
 

@@ -20,7 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main_wayland.h"
 #include "workspace.h"
 #include <config-kwin.h>
-// kwin
+
+#include "debug/wayland_console.h"
 #include "platform.h"
 #include "effects.h"
 #include "render/wayland/compositor.h"
@@ -160,6 +161,11 @@ ApplicationWayland::~ApplicationWayland()
 
     workspace.reset();
     compositor.reset();
+}
+
+debug::console* ApplicationWayland::create_debug_console()
+{
+    return new debug::wayland_console;
 }
 
 void ApplicationWayland::start()

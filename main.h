@@ -210,7 +210,7 @@ public:
     static void setupLocalizedString();
     virtual void notifyKSplash() {}
 
-    debug::console* create_debug_console();
+    virtual debug::console* create_debug_console() = 0;
 
 Q_SIGNALS:
     void x11ConnectionChanged();

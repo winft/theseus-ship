@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
 
+#include "debug/x11_console.h"
 #include "main.h"
 #include "utils.h"
 #include "workspace.h"
@@ -43,6 +44,7 @@ public:
     X11TestApplication(int& argc, char** argv);
     ~X11TestApplication() override;
 
+    debug::console* create_debug_console() override;
     void start();
 
     std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
@@ -67,6 +69,11 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
 
 X11TestApplication::~X11TestApplication()
 {
+}
+
+debug::console* X11TestApplication::create_debug_console()
+{
+    return new debug::x11_console;
 }
 
 void X11TestApplication::start()

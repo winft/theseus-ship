@@ -390,9 +390,7 @@ set(kwin_SRCS
     colorcorrection/suncalc.cpp
     dbusinterface.cpp
     debug/console.cpp
-    debug/input_device_model.cpp
-    debug/input_filter.cpp
-    debug/surface_tree_model.cpp
+    debug/x11_console.cpp
     decorations/decoratedclient.cpp
     decorations/decorationbridge.cpp
     decorations/decorationpalette.cpp
@@ -784,6 +782,10 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
 )
 
 set(kwin_WAYLAND_SRCS
+   ${CMAKE_CURRENT_SOURCE_DIR}/debug/input_device_model.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/debug/input_filter.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/debug/surface_tree_model.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/debug/wayland_console.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/keyboard.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/platform.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/pointer.cpp

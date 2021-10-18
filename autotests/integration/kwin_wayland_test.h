@@ -142,6 +142,8 @@ public:
                            char** argv);
     ~WaylandTestApplication() override;
 
+    debug::console* create_debug_console() override;
+
     void start();
 
 private:

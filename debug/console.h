@@ -48,18 +48,11 @@ class window;
 }
 }
 
-namespace input::dbus
-{
-class device;
-}
-
 class X11Client;
 class Toplevel;
 
 namespace debug
 {
-
-class input_filter;
 
 class KWIN_EXPORT console_model : public QAbstractItemModel
 {
@@ -74,37 +67,38 @@ public:
     int rowCount(const QModelIndex& parent) const override;
     QModelIndex parent(const QModelIndex& child) const override;
 
-private:
-    template<class T>
-    QModelIndex indexForClient(int row, int column, const QVector<T*>& clients, int id) const;
-    template<class T>
-    QModelIndex indexForProperty(int row,
-                                 int column,
-                                 const QModelIndex& parent,
-                                 T* (console_model::*filter)(const QModelIndex&) const) const;
-    template<class T>
-    int propertyCount(const QModelIndex& parent,
-                      T* (console_model::*filter)(const QModelIndex&) const) const;
+    // Wrap QAbstractItemModel functions for public consumption from free functions.
+    QModelIndex create_index(int row, int column, quintptr id) const;
+    void begin_insert_rows(QModelIndex const& parent, int first, int last);
+    void end_insert_rows();
+    void begin_remove_rows(QModelIndex const& parent, int first, int last);
+    void end_remove_rows();
+
+protected:
+    virtual bool get_client_count(int parent_id, int& count) const;
+    virtual bool get_property_count(QModelIndex const& parent, int& count) const;
+
+    virtual bool get_client_index(int row, int column, int parent_id, QModelIndex& index) const;
+    virtual bool
+    get_property_index(int row, int column, QModelIndex const& parent, QModelIndex& index) const;
+
+    virtual QVariant get_client_data(QModelIndex const& index, int role) const;
+    virtual QVariant get_client_property_data(QModelIndex const& index, int role) const;
+
     QVariant propertyData(QObject* object, const QModelIndex& index, int role) const;
-    template<class T>
-    QVariant clientData(const QModelIndex& index, int role, const QVector<T*> clients) const;
-    template<class T>
-    void add(int parentRow, QVector<T*>& clients, T* client);
-    template<class T>
-    void remove(int parentRow, QVector<T*>& clients, T* client);
-    win::wayland::window* shellClient(const QModelIndex& index) const;
+
     win::InternalClient* internalClient(const QModelIndex& index) const;
     win::x11::window* x11Client(const QModelIndex& index) const;
     Toplevel* unmanaged(const QModelIndex& index) const;
-    int topLevelRowCount() const;
+    virtual int topLevelRowCount() const;
 
-    QVector<win::wayland::window*> m_shellClients;
+private:
     QVector<win::InternalClient*> m_internalClients;
     QVector<win::x11::window*> m_x11Clients;
     QVector<Toplevel*> m_unmanageds;
 };
 
-class console_delegate : public QStyledItemDelegate
+class KWIN_EXPORT console_delegate : public QStyledItemDelegate
 {
     Q_OBJECT
 public:
@@ -119,17 +113,13 @@ class KWIN_EXPORT console : public QWidget
     Q_OBJECT
 public:
     console();
-    ~console() override;
+    ~console();
 
 protected:
     void showEvent(QShowEvent* event) override;
-
-private:
     void initGLTab();
-    void updateKeyboardTab();
 
     QScopedPointer<Ui::debug_console> m_ui;
-    QScopedPointer<input_filter> m_inputFilter;
 };
 
 }

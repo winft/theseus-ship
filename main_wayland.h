@@ -48,6 +48,8 @@ public:
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
 
+    debug::console* create_debug_console() override;
+
     void start();
 
     void setStartXwayland(bool start) {

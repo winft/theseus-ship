@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include <config-kwin.h>
 
-#include "debug/console.h"
 #include "platform.h"
 #include "atoms.h"
 #include "render/compositor.h"
@@ -261,11 +260,6 @@ void Application::setupMalloc()
 void Application::setupLocalizedString()
 {
     KLocalizedString::setApplicationDomain("kwin");
-}
-
-debug::console* Application::create_debug_console()
-{
-    return new debug::console();
 }
 
 void Application::createAtoms()
