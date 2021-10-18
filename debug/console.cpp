@@ -1338,37 +1338,37 @@ surface_tree_model::surface_tree_model(QObject* parent)
         beginResetModel();
         endResetModel();
     };
-    using namespace Wrapland::Server;
 
     const auto unmangeds = workspace()->unmanagedList();
     for (auto u : unmangeds) {
         if (!u->surface()) {
             continue;
         }
-        connect(u->surface(), &Surface::subsurfaceTreeChanged, this, reset);
+        connect(u->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
     }
     for (auto c : workspace()->allClientList()) {
         if (!c->surface()) {
             continue;
         }
-        connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
+        connect(c->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
     }
     if (waylandServer()) {
         connect(waylandServer(), &WaylandServer::window_added, this, [this, reset](auto win) {
-            connect(win->surface(), &Surface::subsurfaceTreeChanged, this, reset);
+            connect(win->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
             reset();
         });
     }
     connect(workspace(), &Workspace::clientAdded, this, [this, reset](auto c) {
         if (c->surface()) {
-            connect(c->surface(), &Surface::subsurfaceTreeChanged, this, reset);
+            connect(c->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
         }
         reset();
     });
     connect(workspace(), &Workspace::clientRemoved, this, reset);
     connect(workspace(), &Workspace::unmanagedAdded, this, [this, reset](Toplevel* window) {
         if (window->surface()) {
-            connect(window->surface(), &Surface::subsurfaceTreeChanged, this, reset);
+            connect(
+                window->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
         }
         reset();
     });
@@ -1386,8 +1386,7 @@ int surface_tree_model::columnCount(const QModelIndex& parent) const
 int surface_tree_model::rowCount(const QModelIndex& parent) const
 {
     if (parent.isValid()) {
-        using namespace Wrapland::Server;
-        if (Surface* surface = static_cast<Surface*>(parent.internalPointer())) {
+        if (auto surface = static_cast<Wrapland::Server::Surface*>(parent.internalPointer())) {
             const auto& children = surface->state().children;
             return children.size();
         }
@@ -1407,8 +1406,7 @@ QModelIndex surface_tree_model::index(int row, int column, const QModelIndex& pa
     auto row_u = static_cast<size_t>(row);
 
     if (parent.isValid()) {
-        using namespace Wrapland::Server;
-        if (Surface* surface = static_cast<Surface*>(parent.internalPointer())) {
+        if (auto surface = static_cast<Wrapland::Server::Surface*>(parent.internalPointer())) {
             const auto& children = surface->state().children;
             if (row_u < children.size()) {
                 return createIndex(row_u, column, children.at(row_u)->surface());
@@ -1434,8 +1432,7 @@ QModelIndex surface_tree_model::index(int row, int column, const QModelIndex& pa
 
 QModelIndex surface_tree_model::parent(const QModelIndex& child) const
 {
-    using namespace Wrapland::Server;
-    if (Surface* surface = static_cast<Surface*>(child.internalPointer())) {
+    if (auto surface = static_cast<Wrapland::Server::Surface*>(child.internalPointer())) {
         const auto& subsurface = surface->subsurface();
         if (!subsurface) {
             // doesn't reference a subsurface, this is a top-level window
@@ -1486,8 +1483,7 @@ QVariant surface_tree_model::data(const QModelIndex& index, int role) const
     if (!index.isValid()) {
         return QVariant();
     }
-    using namespace Wrapland::Server;
-    if (Surface* surface = static_cast<Surface*>(index.internalPointer())) {
+    if (auto surface = static_cast<Wrapland::Server::Surface*>(index.internalPointer())) {
         if (role == Qt::DisplayRole || role == Qt::ToolTipRole) {
             return QStringLiteral("%1 (%2)")
                 .arg(QString::fromStdString(surface->client()->executablePath()))
