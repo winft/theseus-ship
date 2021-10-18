@@ -803,113 +803,116 @@ QString console_delegate::displayText(const QVariant& value, const QLocale& loca
         return QStringLiteral("%1,%2 %3x%4").arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height());
     }
     default:
-        if (value.userType() == qMetaTypeId<Wrapland::Server::Surface*>()) {
-            if (auto s = value.value<Wrapland::Server::Surface*>()) {
-                return QStringLiteral("Wrapland::Server::Surface(0x%1)").arg(qulonglong(s), 0, 16);
-            } else {
-                return QStringLiteral("nullptr");
-            }
-        }
-        if (value.userType() == qMetaTypeId<Qt::MouseButtons>()) {
-            const auto buttons = value.value<Qt::MouseButtons>();
-            if (buttons == Qt::NoButton) {
-                return i18n("No Mouse Buttons");
-            }
-            QStringList list;
-            if (buttons.testFlag(Qt::LeftButton)) {
-                list << i18nc("Mouse Button", "left");
-            }
-            if (buttons.testFlag(Qt::RightButton)) {
-                list << i18nc("Mouse Button", "right");
-            }
-            if (buttons.testFlag(Qt::MiddleButton)) {
-                list << i18nc("Mouse Button", "middle");
-            }
-            if (buttons.testFlag(Qt::BackButton)) {
-                list << i18nc("Mouse Button", "back");
-            }
-            if (buttons.testFlag(Qt::ForwardButton)) {
-                list << i18nc("Mouse Button", "forward");
-            }
-            if (buttons.testFlag(Qt::ExtraButton1)) {
-                list << i18nc("Mouse Button", "extra 1");
-            }
-            if (buttons.testFlag(Qt::ExtraButton2)) {
-                list << i18nc("Mouse Button", "extra 2");
-            }
-            if (buttons.testFlag(Qt::ExtraButton3)) {
-                list << i18nc("Mouse Button", "extra 3");
-            }
-            if (buttons.testFlag(Qt::ExtraButton4)) {
-                list << i18nc("Mouse Button", "extra 4");
-            }
-            if (buttons.testFlag(Qt::ExtraButton5)) {
-                list << i18nc("Mouse Button", "extra 5");
-            }
-            if (buttons.testFlag(Qt::ExtraButton6)) {
-                list << i18nc("Mouse Button", "extra 6");
-            }
-            if (buttons.testFlag(Qt::ExtraButton7)) {
-                list << i18nc("Mouse Button", "extra 7");
-            }
-            if (buttons.testFlag(Qt::ExtraButton8)) {
-                list << i18nc("Mouse Button", "extra 8");
-            }
-            if (buttons.testFlag(Qt::ExtraButton9)) {
-                list << i18nc("Mouse Button", "extra 9");
-            }
-            if (buttons.testFlag(Qt::ExtraButton10)) {
-                list << i18nc("Mouse Button", "extra 10");
-            }
-            if (buttons.testFlag(Qt::ExtraButton11)) {
-                list << i18nc("Mouse Button", "extra 11");
-            }
-            if (buttons.testFlag(Qt::ExtraButton12)) {
-                list << i18nc("Mouse Button", "extra 12");
-            }
-            if (buttons.testFlag(Qt::ExtraButton13)) {
-                list << i18nc("Mouse Button", "extra 13");
-            }
-            if (buttons.testFlag(Qt::ExtraButton14)) {
-                list << i18nc("Mouse Button", "extra 14");
-            }
-            if (buttons.testFlag(Qt::ExtraButton15)) {
-                list << i18nc("Mouse Button", "extra 15");
-            }
-            if (buttons.testFlag(Qt::ExtraButton16)) {
-                list << i18nc("Mouse Button", "extra 16");
-            }
-            if (buttons.testFlag(Qt::ExtraButton17)) {
-                list << i18nc("Mouse Button", "extra 17");
-            }
-            if (buttons.testFlag(Qt::ExtraButton18)) {
-                list << i18nc("Mouse Button", "extra 18");
-            }
-            if (buttons.testFlag(Qt::ExtraButton19)) {
-                list << i18nc("Mouse Button", "extra 19");
-            }
-            if (buttons.testFlag(Qt::ExtraButton20)) {
-                list << i18nc("Mouse Button", "extra 20");
-            }
-            if (buttons.testFlag(Qt::ExtraButton21)) {
-                list << i18nc("Mouse Button", "extra 21");
-            }
-            if (buttons.testFlag(Qt::ExtraButton22)) {
-                list << i18nc("Mouse Button", "extra 22");
-            }
-            if (buttons.testFlag(Qt::ExtraButton23)) {
-                list << i18nc("Mouse Button", "extra 23");
-            }
-            if (buttons.testFlag(Qt::ExtraButton24)) {
-                list << i18nc("Mouse Button", "extra 24");
-            }
-            if (buttons.testFlag(Qt::TaskButton)) {
-                list << i18nc("Mouse Button", "task");
-            }
-            return list.join(QStringLiteral(", "));
-        }
         break;
+    };
+
+    if (value.userType() == qMetaTypeId<Wrapland::Server::Surface*>()) {
+        if (auto s = value.value<Wrapland::Server::Surface*>()) {
+            return QStringLiteral("Wrapland::Server::Surface(0x%1)").arg(qulonglong(s), 0, 16);
+        } else {
+            return QStringLiteral("nullptr");
+        }
     }
+
+    if (value.userType() == qMetaTypeId<Qt::MouseButtons>()) {
+        const auto buttons = value.value<Qt::MouseButtons>();
+        if (buttons == Qt::NoButton) {
+            return i18n("No Mouse Buttons");
+        }
+        QStringList list;
+        if (buttons.testFlag(Qt::LeftButton)) {
+            list << i18nc("Mouse Button", "left");
+        }
+        if (buttons.testFlag(Qt::RightButton)) {
+            list << i18nc("Mouse Button", "right");
+        }
+        if (buttons.testFlag(Qt::MiddleButton)) {
+            list << i18nc("Mouse Button", "middle");
+        }
+        if (buttons.testFlag(Qt::BackButton)) {
+            list << i18nc("Mouse Button", "back");
+        }
+        if (buttons.testFlag(Qt::ForwardButton)) {
+            list << i18nc("Mouse Button", "forward");
+        }
+        if (buttons.testFlag(Qt::ExtraButton1)) {
+            list << i18nc("Mouse Button", "extra 1");
+        }
+        if (buttons.testFlag(Qt::ExtraButton2)) {
+            list << i18nc("Mouse Button", "extra 2");
+        }
+        if (buttons.testFlag(Qt::ExtraButton3)) {
+            list << i18nc("Mouse Button", "extra 3");
+        }
+        if (buttons.testFlag(Qt::ExtraButton4)) {
+            list << i18nc("Mouse Button", "extra 4");
+        }
+        if (buttons.testFlag(Qt::ExtraButton5)) {
+            list << i18nc("Mouse Button", "extra 5");
+        }
+        if (buttons.testFlag(Qt::ExtraButton6)) {
+            list << i18nc("Mouse Button", "extra 6");
+        }
+        if (buttons.testFlag(Qt::ExtraButton7)) {
+            list << i18nc("Mouse Button", "extra 7");
+        }
+        if (buttons.testFlag(Qt::ExtraButton8)) {
+            list << i18nc("Mouse Button", "extra 8");
+        }
+        if (buttons.testFlag(Qt::ExtraButton9)) {
+            list << i18nc("Mouse Button", "extra 9");
+        }
+        if (buttons.testFlag(Qt::ExtraButton10)) {
+            list << i18nc("Mouse Button", "extra 10");
+        }
+        if (buttons.testFlag(Qt::ExtraButton11)) {
+            list << i18nc("Mouse Button", "extra 11");
+        }
+        if (buttons.testFlag(Qt::ExtraButton12)) {
+            list << i18nc("Mouse Button", "extra 12");
+        }
+        if (buttons.testFlag(Qt::ExtraButton13)) {
+            list << i18nc("Mouse Button", "extra 13");
+        }
+        if (buttons.testFlag(Qt::ExtraButton14)) {
+            list << i18nc("Mouse Button", "extra 14");
+        }
+        if (buttons.testFlag(Qt::ExtraButton15)) {
+            list << i18nc("Mouse Button", "extra 15");
+        }
+        if (buttons.testFlag(Qt::ExtraButton16)) {
+            list << i18nc("Mouse Button", "extra 16");
+        }
+        if (buttons.testFlag(Qt::ExtraButton17)) {
+            list << i18nc("Mouse Button", "extra 17");
+        }
+        if (buttons.testFlag(Qt::ExtraButton18)) {
+            list << i18nc("Mouse Button", "extra 18");
+        }
+        if (buttons.testFlag(Qt::ExtraButton19)) {
+            list << i18nc("Mouse Button", "extra 19");
+        }
+        if (buttons.testFlag(Qt::ExtraButton20)) {
+            list << i18nc("Mouse Button", "extra 20");
+        }
+        if (buttons.testFlag(Qt::ExtraButton21)) {
+            list << i18nc("Mouse Button", "extra 21");
+        }
+        if (buttons.testFlag(Qt::ExtraButton22)) {
+            list << i18nc("Mouse Button", "extra 22");
+        }
+        if (buttons.testFlag(Qt::ExtraButton23)) {
+            list << i18nc("Mouse Button", "extra 23");
+        }
+        if (buttons.testFlag(Qt::ExtraButton24)) {
+            list << i18nc("Mouse Button", "extra 24");
+        }
+        if (buttons.testFlag(Qt::TaskButton)) {
+            list << i18nc("Mouse Button", "task");
+        }
+        return list.join(QStringLiteral(", "));
+    }
+
     return QStyledItemDelegate::displayText(value, locale);
 }
 
@@ -1645,5 +1648,4 @@ void input_device_model::setupDeviceConnections(input::dbus::device* device)
         });
     };
 }
-
 }
