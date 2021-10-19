@@ -458,7 +458,6 @@ set(kwin_SRCS
     input/xkb.cpp
     killwindow.cpp
     layers.cpp
-    linux_dmabuf.cpp
     main.cpp
     moving_client_x11_filter.cpp
     onscreennotification.cpp
@@ -801,6 +800,7 @@ set(kwin_WAYLAND_SRCS
    input/dbus/tablet_mode_manager.cpp
    input/spies/tablet_mode_switch.cpp
    input/logging.cpp
+   linux_dmabuf.cpp
    platform/wlroots.cpp
    platform/wlroots.cpp
    render/backend/wlroots/backend.cpp
