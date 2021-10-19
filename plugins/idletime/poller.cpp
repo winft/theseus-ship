@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "poller.h"
+
+#include "../../main.h"
 #include "../../wayland_server.h"
 
 #include <Wrapland/Client/idle.h>

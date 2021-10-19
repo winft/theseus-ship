@@ -6,6 +6,7 @@
 #include "output.h"
 
 #include "backend.h"
+#include "main.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
 #include "render/wayland/presentation.h"

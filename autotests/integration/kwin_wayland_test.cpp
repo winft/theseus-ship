@@ -134,6 +134,11 @@ WaylandTestApplication::~WaylandTestApplication()
     compositor.reset();
 }
 
+WaylandServer* WaylandTestApplication::get_wayland_server()
+{
+    return server.get();
+}
+
 debug::console* WaylandTestApplication::create_debug_console()
 {
     return new debug::wayland_console;

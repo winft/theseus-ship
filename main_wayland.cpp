@@ -164,6 +164,11 @@ ApplicationWayland::~ApplicationWayland()
     compositor.reset();
 }
 
+WaylandServer* ApplicationWayland::get_wayland_server()
+{
+    return server.get();
+}
+
 debug::console* ApplicationWayland::create_debug_console()
 {
     return new debug::wayland_console;

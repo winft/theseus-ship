@@ -262,6 +262,11 @@ void Application::setupLocalizedString()
     KLocalizedString::setApplicationDomain("kwin");
 }
 
+WaylandServer* Application::get_wayland_server()
+{
+    return nullptr;
+}
+
 void Application::createAtoms()
 {
     atoms = new Atoms;

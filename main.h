@@ -61,6 +61,7 @@ class session;
 }
 
 class Platform;
+class WaylandServer;
 
 class XcbEventFilter : public QAbstractNativeEventFilter
 {
@@ -210,6 +211,7 @@ public:
     static void setupLocalizedString();
     virtual void notifyKSplash() {}
 
+    virtual WaylandServer* get_wayland_server();
     virtual debug::console* create_debug_console() = 0;
 
 Q_SIGNALS:
@@ -295,7 +297,11 @@ protected:
     }
 };
 
+inline WaylandServer* waylandServer()
+{
+    return kwinApp()->get_wayland_server();
+}
 
-} // namespace
+}
 
 #endif

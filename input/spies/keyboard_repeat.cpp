@@ -9,6 +9,7 @@
 
 #include "input/event.h"
 #include "input/xkb.h"
+#include "main.h"
 #include "wayland_server.h"
 
 #include <Wrapland/Server/keyboard_pool.h>

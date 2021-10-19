@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "drm_fourcc.h"
 #include "kwineglext.h"
+#include "../../../main.h"
 #include "../../../wayland_server.h"
 
 #include <unistd.h>
