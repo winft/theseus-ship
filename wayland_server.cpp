@@ -6,8 +6,8 @@
 */
 #include "wayland_server.h"
 
-#include "idle_inhibition.h"
 #include "platform.h"
+#include "platform/wayland/idle_inhibition.h"
 #include "screens.h"
 #include "service_utils.h"
 #include "workspace.h"

@@ -401,7 +401,6 @@ set(kwin_SRCS
     effectloader.cpp
     effects.cpp
     egl_context_attribute_builder.cpp
-    idle_inhibition.cpp
     input/device_redirect.cpp
     input/event_filter.cpp
     input/event_spy.cpp
@@ -467,6 +466,7 @@ set(kwin_SRCS
     osd.cpp
     outline.cpp
     overlaywindow.cpp
+    platform/wayland/idle_inhibition.cpp
     platform/x11/event_filter.cpp
     platform/x11/event_filter_container.cpp
     platform/x11/event_filter_manager.cpp
