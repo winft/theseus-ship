@@ -183,7 +183,7 @@ void DBusInterface::previousDesktop()
 
 void DBusInterface::showDebugConsole()
 {
-    auto console = new debug::console;
+    auto console = kwinApp()->create_debug_console();
     console->show();
 }
 
