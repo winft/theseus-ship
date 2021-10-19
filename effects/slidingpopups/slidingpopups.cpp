@@ -42,7 +42,7 @@ SlidingPopupsEffect::SlidingPopupsEffect()
     initConfig<SlidingPopupsConfig>();
     Wrapland::Server::Display *display = effects->waylandDisplay();
     if (display) {
-        display->createSlideManager(this);
+        wayland_slide_manager = display->createSlideManager();
     }
 
     m_slideLength = QFontMetrics(qApp->font()).height() * 8;

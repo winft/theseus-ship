@@ -89,7 +89,7 @@ void xdg_activation_test::test_single_client()
     auto activation = Test::get_client().interfaces.xdg_activation.get();
     QVERIFY(activation);
 
-    auto server_activation = waylandServer()->xdg_activation;
+    auto server_activation = waylandServer()->xdg_activation();
     QVERIFY(server_activation);
     QSignalSpy token_spy(server_activation, &Wrapland::Server::XdgActivationV1::token_requested);
     QVERIFY(token_spy.isValid());
@@ -159,7 +159,7 @@ void xdg_activation_test::test_multi_client()
     auto activation2 = client2.interfaces.xdg_activation.get();
     QVERIFY(activation2);
 
-    auto server_activation = waylandServer()->xdg_activation;
+    auto server_activation = waylandServer()->xdg_activation();
     QVERIFY(server_activation);
     QSignalSpy token_spy(server_activation, &Wrapland::Server::XdgActivationV1::token_requested);
     QVERIFY(token_spy.isValid());

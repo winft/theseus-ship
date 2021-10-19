@@ -47,7 +47,7 @@ ContrastEffect::ContrastEffect()
         net_wm_contrast_region = effects->announceSupportProperty(s_contrastAtomName, this);
         Wrapland::Server::Display *display = effects->waylandDisplay();
         if (display) {
-            m_contrastManager = display->createContrastManager(this);
+            wayland_contrast_manager = display->createContrastManager();
         }
     } else {
         net_wm_contrast_region = 0;
@@ -97,8 +97,7 @@ void ContrastEffect::reconfigure(ReconfigureFlags flags)
 
     if (!shader || !shader->isValid()) {
         effects->removeSupportProperty(s_contrastAtomName, this);
-        delete m_contrastManager;
-        m_contrastManager = nullptr;
+        wayland_contrast_manager.reset();
     }
 }
 

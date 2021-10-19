@@ -182,15 +182,15 @@ void backend::init_drm_leasing()
     auto server = waylandServer();
     server->createDrmLeaseDevice();
 
-    connect(server->drm_lease_device,
+    connect(server->drm_lease_device(),
             &Wrapland::Server::drm_lease_device_v1::needs_new_client_fd,
             this,
-            [device = server->drm_lease_device, drm_backend] {
+            [device = server->drm_lease_device(), drm_backend] {
                 // TODO(romangg): wait in case not DRM master at the moment.
                 auto fd = wlr_drm_backend_get_non_master_fd(drm_backend);
                 device->update_fd(fd);
             });
-    connect(server->drm_lease_device,
+    connect(server->drm_lease_device(),
             &Wrapland::Server::drm_lease_device_v1::leased,
             this,
             [this](auto lease) {

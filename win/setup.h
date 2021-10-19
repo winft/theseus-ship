@@ -102,11 +102,11 @@ void setup_wayland_plasma_management(Win* win)
     if (!waylandServer() || !win->surface()) {
         return;
     }
-    if (!waylandServer()->windowManagement()) {
+    if (!waylandServer()->window_management()) {
         return;
     }
     auto plasma_win
-        = waylandServer()->windowManagement()->createWindow(waylandServer()->windowManagement());
+        = waylandServer()->window_management()->createWindow(waylandServer()->window_management());
     plasma_win->setTitle(caption(win));
     plasma_win->setActive(win->control->active());
     plasma_win->setFullscreen(win->control->fullscreen());

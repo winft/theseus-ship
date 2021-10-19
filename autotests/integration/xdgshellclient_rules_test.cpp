@@ -2096,7 +2096,7 @@ void TestXdgShellClientRules::testMinimizeApply()
     win::wayland::window* client;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<XdgShellToplevel> shellSurface;
-    QSignalSpy toplevel_created_Spy(waylandServer()->xdgShell(),
+    QSignalSpy toplevel_created_Spy(waylandServer()->xdg_shell(),
                                     &Wrapland::Server::XdgShell::toplevelCreated);
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo", 500);
     QVERIFY(!client);
@@ -2167,7 +2167,7 @@ void TestXdgShellClientRules::testMinimizeRemember()
     surface.reset();
     QVERIFY(Test::wait_for_destroyed(client));
 
-    QSignalSpy toplevel_created_Spy(waylandServer()->xdgShell(),
+    QSignalSpy toplevel_created_Spy(waylandServer()->xdg_shell(),
                                     &Wrapland::Server::XdgShell::toplevelCreated);
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo", 500);
     QVERIFY(!client);

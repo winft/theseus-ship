@@ -56,12 +56,12 @@ LinuxDmabuf::LinuxDmabuf()
     : Wrapland::Server::LinuxDmabufV1::Impl()
 {
     Q_ASSERT(waylandServer());
-    waylandServer()->linuxDmabuf()->setImpl(this);
+    waylandServer()->linux_dmabuf()->setImpl(this);
 }
 
 LinuxDmabuf::~LinuxDmabuf()
 {
-    waylandServer()->linuxDmabuf()->setImpl(nullptr);
+    waylandServer()->linux_dmabuf()->setImpl(nullptr);
 }
 
 using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
@@ -82,7 +82,7 @@ Wrapland::Server::LinuxDmabufBufferV1* LinuxDmabuf::importBuffer(const QVector<P
 
 void LinuxDmabuf::setSupportedFormatsAndModifiers(QHash<uint32_t, QSet<uint64_t> > &set)
 {
-    waylandServer()->linuxDmabuf()->setSupportedFormatsWithModifiers(set);
+    waylandServer()->linux_dmabuf()->setSupportedFormatsWithModifiers(set);
 }
 
 }

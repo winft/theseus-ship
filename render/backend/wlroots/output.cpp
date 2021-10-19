@@ -73,7 +73,7 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
 
 void output::create_lease_connector()
 {
-    auto lease_device = waylandServer()->drm_lease_device;
+    auto lease_device = waylandServer()->drm_lease_device();
     if (!lease_device) {
         return;
     }

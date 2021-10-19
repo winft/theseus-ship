@@ -24,6 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Include with base class for effects.
 #include <kwineffects.h>
+#include <memory>
+
+namespace Wrapland::Server
+{
+class SlideManager;
+}
 
 namespace KWin
 {
@@ -70,6 +76,7 @@ private:
     void setupInternalWindowSlide(EffectWindow *w);
 
     long m_atom;
+    std::unique_ptr<Wrapland::Server::SlideManager> wayland_slide_manager;
 
     int m_slideLength;
     std::chrono::milliseconds m_slideInDuration;

@@ -27,6 +27,8 @@
 
 #include <QVector>
 #include <QVector2D>
+#include <memory>
+
 
 namespace Wrapland
 {
@@ -88,7 +90,7 @@ private:
     QRegion m_currentContrast; // keeps track of the currently contrasted area of non-caching windows(from bottom to top)
     QHash< const EffectWindow*, QMatrix4x4> m_colorMatrices;
     QHash< const EffectWindow*, QMetaObject::Connection > m_contrastChangedConnections; // used only in Wayland to keep track of effect changed
-    Wrapland::Server::ContrastManager *m_contrastManager = nullptr;
+    std::unique_ptr<Wrapland::Server::ContrastManager> wayland_contrast_manager;
 };
 
 inline

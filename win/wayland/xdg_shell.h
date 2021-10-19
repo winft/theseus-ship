@@ -63,7 +63,7 @@ inline window* create_shell_window(Wrapland::Server::XdgShellSurface* shell_surf
 
     win->shell_surface = shell_surface;
 
-    auto xdg_shell = waylandServer()->xdgShell();
+    auto xdg_shell = waylandServer()->xdg_shell();
     QObject::connect(xdg_shell, &WS::XdgShell::pingDelayed, win, [win](auto serial) {
         handle_ping_delayed(win, serial);
     });
