@@ -385,13 +385,6 @@ protected:
         m_supportsGammaControl = set;
     }
 
-    /**
-     * Whether the backend is supposed to change the configuration of outputs.
-     */
-    void supportsOutputChanges() {
-        m_supportsOutputChanges = true;
-    }
-
 private:
     QSize m_initialWindowSize;
     QByteArray m_deviceIdentifier;
@@ -404,7 +397,6 @@ private:
     EGLSurface m_surface = EGL_NO_SURFACE;
     ColorCorrect::Manager *m_colorCorrect = nullptr;
     bool m_supportsGammaControl = false;
-    bool m_supportsOutputChanges = false;
     CompositingType m_selectedCompositor = NoCompositing;
 
     std::unique_ptr<input::dpms_filter> m_dpmsFilter;

@@ -31,7 +31,6 @@ backend::backend(platform_base::wlroots* base, QObject* parent)
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 
     setSupportsGammaControl(true);
-    supportsOutputChanges();
 }
 
 backend::~backend()

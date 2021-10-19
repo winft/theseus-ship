@@ -77,12 +77,6 @@ Edge *Platform::createScreenEdge(ScreenEdges *edges)
 
 void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *config)
 {
-    if (!m_supportsOutputChanges) {
-        qCWarning(KWIN_CORE) << "This backend does not support configuration changes.";
-        config->setFailed();
-        return;
-    }
-
     const auto changes = config->changes();
 
     for (auto it = changes.begin(); it != changes.end(); it++) {
