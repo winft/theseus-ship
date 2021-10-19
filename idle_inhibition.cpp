@@ -1,27 +1,13 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2017 Martin Flöser <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2018 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
 
-Copyright (C) 2017 Martin Flöser <mgraesslin@kde.org>
-Copyright (C) 2018 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "idle_inhibition.h"
-#include "workspace.h"
 
 #include "win/wayland/window.h"
+#include "workspace.h"
 
 #include <Wrapland/Server/kde_idle.h>
 #include <Wrapland/Server/surface.h>
@@ -34,7 +20,7 @@ using Wrapland::Server::Surface;
 namespace KWin
 {
 
-IdleInhibition::IdleInhibition(KdeIdle *idle)
+IdleInhibition::IdleInhibition(KdeIdle* idle)
     : QObject(idle)
     , m_idle(idle)
 {
@@ -46,31 +32,28 @@ IdleInhibition::~IdleInhibition() = default;
 
 void IdleInhibition::register_window(win::wayland::window* window)
 {
-    auto updateInhibit = [this, window] {
-        update(window);
-    };
+    auto updateInhibit = [this, window] { update(window); };
 
     if (!window->control) {
         // Only Wayland windows with explicit control are allowed to inhibit idle for now.
         return;
     }
 
-    m_connections[window] = connect(window->surface(), &Surface::inhibitsIdleChanged, this, updateInhibit);
+    m_connections[window]
+        = connect(window->surface(), &Surface::inhibitsIdleChanged, this, updateInhibit);
     connect(window, &win::wayland::window::desktopChanged, this, updateInhibit);
     connect(window, &win::wayland::window::clientMinimized, this, updateInhibit);
     connect(window, &win::wayland::window::clientUnminimized, this, updateInhibit);
     connect(window, &win::wayland::window::windowHidden, this, updateInhibit);
     connect(window, &win::wayland::window::windowShown, this, updateInhibit);
-    connect(window, &win::wayland::window::windowClosed, this,
-        [this, window] {
-            uninhibit(window);
-            auto it = m_connections.find(window);
-            if (it != m_connections.end()) {
-                disconnect(it.value());
-                m_connections.erase(it);
-            }
+    connect(window, &win::wayland::window::windowClosed, this, [this, window] {
+        uninhibit(window);
+        auto it = m_connections.find(window);
+        if (it != m_connections.end()) {
+            disconnect(it.value());
+            m_connections.erase(it);
         }
-    );
+    });
 
     updateInhibit();
 }
@@ -121,12 +104,13 @@ void IdleInhibition::update(Toplevel* window)
 
 void IdleInhibition::slotWorkspaceCreated()
 {
-    connect(workspace(), &Workspace::currentDesktopChanged, this, &IdleInhibition::slotDesktopChanged);
+    connect(
+        workspace(), &Workspace::currentDesktopChanged, this, &IdleInhibition::slotDesktopChanged);
 }
 
 void IdleInhibition::slotDesktopChanged()
 {
-    workspace()->forEachAbstractClient([this] (Toplevel* t) { update(t); });
+    workspace()->forEachAbstractClient([this](Toplevel* t) { update(t); });
 }
 
 }
