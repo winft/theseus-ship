@@ -7,6 +7,8 @@
 
 #include "platform/utils.h"
 
+#include <kwin_export.h>
+
 #include <functional>
 
 extern "C" {
@@ -58,7 +60,7 @@ inline wlr_backend* wlroots_get_headless_backend(wlr_backend* backend)
     return wlroots_get_backend(backend, wlr_backend_is_headless);
 }
 
-class wlroots
+class KWIN_EXPORT wlroots
 {
 public:
     wlr_backend* backend{nullptr};

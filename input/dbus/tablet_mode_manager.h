@@ -7,13 +7,14 @@
 
 #pragma once
 
+#include <kwin_export.h>
+
 #include <QObject>
-#include <kwinglobals.h>
 
 namespace KWin::input::dbus
 {
 
-class tablet_mode_manager : public QObject
+class KWIN_EXPORT tablet_mode_manager : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.TabletModeManager")

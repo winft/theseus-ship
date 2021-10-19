@@ -8,6 +8,8 @@
 #include "input/platform.h"
 #include "platform/wlroots.h"
 
+#include <kwin_export.h>
+
 extern "C" {
 #include <wlr/backend/libinput.h>
 #include <wlr/backend/multi.h>
@@ -26,7 +28,7 @@ inline libinput_device* get_libinput_device(Dev dev)
     return nullptr;
 }
 
-class platform : public input::platform
+class KWIN_EXPORT platform : public input::platform
 {
     Q_OBJECT
 public:

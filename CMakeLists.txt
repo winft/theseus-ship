@@ -754,20 +754,20 @@ install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
 
 set(kwin_XWAYLAND_SRCS
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/clipboard.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/data_bridge.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/dnd.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag_wl.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/drag_x.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/primary_selection.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/sources_ext.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/transfer.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/xwayland.cpp
+   xwl/clipboard.cpp
+   xwl/data_bridge.cpp
+   xwl/dnd.cpp
+   xwl/drag.cpp
+   xwl/drag_wl.cpp
+   xwl/drag_x.cpp
+   xwl/primary_selection.cpp
+   xwl/sources_ext.cpp
+   xwl/transfer.cpp
+   xwl/xwayland.cpp
 
    # These headers need to be compiled for the helper QObjects they contain.
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/selection_data.h
-   ${CMAKE_CURRENT_SOURCE_DIR}/xwl/sources.h
+   xwl/selection_data.h
+   xwl/sources.h
 )
 include(ECMQtDeclareLoggingCategory)
 ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
@@ -781,31 +781,34 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
         Critical
 )
 
+add_subdirectory(platformsupport)
+add_subdirectory(plugins)
+
 set(kwin_WAYLAND_SRCS
-   ${CMAKE_CURRENT_SOURCE_DIR}/debug/input_device_model.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/debug/input_filter.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/debug/surface_tree_model.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/debug/wayland_console.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/keyboard.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/platform.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/pointer.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/switch.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/touch.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/keyboard.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/pointer.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/switch.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/control/touch.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/dbus/tablet_mode_manager.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/spies/tablet_mode_switch.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/platform/wlroots.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/backend.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/buffer.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/egl_backend.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/egl_output.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/wlroots/output.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/seat/backend/wlroots/session.cpp
+   debug/input_device_model.cpp
+   debug/input_filter.cpp
+   debug/surface_tree_model.cpp
+   debug/wayland_console.cpp
+   input/backend/wlroots/keyboard.cpp
+   input/backend/wlroots/platform.cpp
+   input/backend/wlroots/pointer.cpp
+   input/backend/wlroots/switch.cpp
+   input/backend/wlroots/touch.cpp
+   input/backend/wlroots/control/keyboard.cpp
+   input/backend/wlroots/control/pointer.cpp
+   input/backend/wlroots/control/switch.cpp
+   input/backend/wlroots/control/touch.cpp
+   input/dbus/tablet_mode_manager.cpp
+   input/spies/tablet_mode_switch.cpp
+   input/logging.cpp
+   platform/wlroots.cpp
+   platform/wlroots.cpp
+   render/backend/wlroots/backend.cpp
+   render/backend/wlroots/buffer.cpp
+   render/backend/wlroots/egl_backend.cpp
+   render/backend/wlroots/egl_output.cpp
+   render/backend/wlroots/output.cpp
+   seat/backend/wlroots/session.cpp
 )
 
 ecm_qt_declare_logging_category(kwin_WAYLAND_SRCS
@@ -819,22 +822,39 @@ ecm_qt_declare_logging_category(kwin_WAYLAND_SRCS
         Critical
 )
 
-add_executable(kwin_wayland ${kwin_WAYLAND_SRCS} ${kwin_XWAYLAND_SRCS} main_wayland.cpp)
-target_link_libraries(kwin_wayland
-    kwin
-    KF5::Crash
-    wlroots::wlroots
-    Wayland::Server
-    gbm::gbm
-    SceneOpenGLBackend
-    kwinxrenderutils
+add_library(kwin_wayland_lib SHARED
+  ${kwin_XWAYLAND_SRCS}
+  ${kwin_WAYLAND_SRCS}
 )
+
+target_link_libraries(kwin_wayland_lib
+PUBLIC
+  kwin
+  kwinxrenderutils
+  SceneOpenGLBackend
+  gbm::gbm
+  Wayland::Server
+  wlroots::wlroots
+)
+
+set_target_properties(kwin_wayland_lib PROPERTIES
+   VERSION ${PROJECT_VERSION}
+   SOVERSION ${PROJECT_VERSION_MAJOR}
+   OUTPUT_NAME "kwin_wayland"
+)
+target_compile_definitions(kwin_wayland_lib PUBLIC WLR_USE_UNSTABLE)
+
+add_executable(kwin_wayland main_wayland.cpp)
+target_link_libraries(kwin_wayland
+    kwin_wayland_lib
+    KF5::Crash
+)
+
 if (HAVE_LIBCAP)
     target_link_libraries(kwin_wayland ${Libcap_LIBRARIES})
 endif()
 
-target_compile_definitions(kwin_wayland PUBLIC WLR_USE_UNSTABLE)
-
+install(TARGETS kwin_wayland_lib ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_wayland ${INSTALL_TARGETS_DEFAULT_ARGS})
 if (HAVE_LIBCAP)
     install(
@@ -845,9 +865,6 @@ if (HAVE_LIBCAP)
                 \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_BINDIR}/kwin_wayland)"
     )
 endif()
-
-add_subdirectory(platformsupport)
-add_subdirectory(plugins)
 
 target_link_libraries(kwin_wayland
     KWinQpaPlugin
