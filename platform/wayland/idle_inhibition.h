@@ -28,12 +28,15 @@ class window;
 class Toplevel;
 class XdgShellClient;
 
-class IdleInhibition : public QObject
+namespace platform::wayland
+{
+
+class idle_inhibition : public QObject
 {
     Q_OBJECT
 public:
-    explicit IdleInhibition(KdeIdle* idle);
-    ~IdleInhibition() override;
+    explicit idle_inhibition(KdeIdle* idle);
+    ~idle_inhibition() override;
 
     void register_window(win::wayland::window* window);
 
@@ -60,4 +63,5 @@ private:
     QMap<Toplevel*, QMetaObject::Connection> m_connections;
 };
 
+}
 }

@@ -17,20 +17,21 @@
 
 using Wrapland::Server::Surface;
 
-namespace KWin
+namespace KWin::platform::wayland
 {
 
-IdleInhibition::IdleInhibition(KdeIdle* idle)
+idle_inhibition::idle_inhibition(KdeIdle* idle)
     : QObject(idle)
     , m_idle(idle)
 {
     // Workspace is created after the wayland server is initialized.
-    connect(kwinApp(), &Application::startup_finished, this, &IdleInhibition::slotWorkspaceCreated);
+    connect(
+        kwinApp(), &Application::startup_finished, this, &idle_inhibition::slotWorkspaceCreated);
 }
 
-IdleInhibition::~IdleInhibition() = default;
+idle_inhibition::~idle_inhibition() = default;
 
-void IdleInhibition::register_window(win::wayland::window* window)
+void idle_inhibition::register_window(win::wayland::window* window)
 {
     auto updateInhibit = [this, window] { update(window); };
 
@@ -58,7 +59,7 @@ void IdleInhibition::register_window(win::wayland::window* window)
     updateInhibit();
 }
 
-void IdleInhibition::inhibit(Toplevel* window)
+void idle_inhibition::inhibit(Toplevel* window)
 {
     if (isInhibited(window)) {
         // already inhibited
@@ -69,7 +70,7 @@ void IdleInhibition::inhibit(Toplevel* window)
     // TODO: notify powerdevil?
 }
 
-void IdleInhibition::uninhibit(Toplevel* window)
+void idle_inhibition::uninhibit(Toplevel* window)
 {
     auto it = std::find(m_idleInhibitors.begin(), m_idleInhibitors.end(), window);
     if (it == m_idleInhibitors.end()) {
@@ -80,7 +81,7 @@ void IdleInhibition::uninhibit(Toplevel* window)
     m_idle->uninhibit();
 }
 
-void IdleInhibition::update(Toplevel* window)
+void idle_inhibition::update(Toplevel* window)
 {
     if (window->isInternal()) {
         return;
@@ -102,13 +103,13 @@ void IdleInhibition::update(Toplevel* window)
     }
 }
 
-void IdleInhibition::slotWorkspaceCreated()
+void idle_inhibition::slotWorkspaceCreated()
 {
     connect(
-        workspace(), &Workspace::currentDesktopChanged, this, &IdleInhibition::slotDesktopChanged);
+        workspace(), &Workspace::currentDesktopChanged, this, &idle_inhibition::slotDesktopChanged);
 }
 
-void IdleInhibition::slotDesktopChanged()
+void idle_inhibition::slotDesktopChanged()
 {
     workspace()->forEachAbstractClient([this](Toplevel* t) { update(t); });
 }
