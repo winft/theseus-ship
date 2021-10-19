@@ -390,6 +390,9 @@ set(kwin_SRCS
     colorcorrection/suncalc.cpp
     dbusinterface.cpp
     debug/console.cpp
+    debug/input_device_model.cpp
+    debug/input_filter.cpp
+    debug/surface_tree_model.cpp
     decorations/decoratedclient.cpp
     decorations/decorationbridge.cpp
     decorations/decorationpalette.cpp
