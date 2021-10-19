@@ -197,7 +197,7 @@ void ApplicationWayland::start()
         QCoreApplication::exit(1);
     }
 
-    input::dbus::tablet_mode_manager::create(this);
+    tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
 
     compositor = std::make_unique<render::wayland::compositor>();
     workspace = std::make_unique<Workspace>();

@@ -24,7 +24,7 @@ class tablet_mode_manager : public QObject
     Q_PROPERTY(bool tabletMode READ isTablet NOTIFY tabletModeChanged)
 
 public:
-    ~tablet_mode_manager() override = default;
+    tablet_mode_manager();
 
     bool isTabletModeAvailable() const;
     void setTabletModeAvailable(bool detecting);
@@ -42,8 +42,6 @@ private:
     bool m_tabletModeAvailable{false};
     bool m_isTabletMode{false};
     bool m_detecting{false};
-
-    KWIN_SINGLETON_VARIABLE(tablet_mode_manager, s_manager)
 };
 
 }

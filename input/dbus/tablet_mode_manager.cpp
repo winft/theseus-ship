@@ -19,8 +19,6 @@
 namespace KWin::input::dbus
 {
 
-KWIN_SINGLETON_FACTORY_VARIABLE(tablet_mode_manager, s_manager)
-
 // TODO(romangg): Is this like a regular event spy or a different kind of spy?
 class tablet_mode_touchpad_removed_spy : public QObject
 {
@@ -58,8 +56,7 @@ private:
     tablet_mode_manager* const m_parent;
 };
 
-tablet_mode_manager::tablet_mode_manager(QObject* parent)
-    : QObject(parent)
+tablet_mode_manager::tablet_mode_manager()
 {
     if (kwinApp()->input->redirect->hasTabletModeSwitch()) {
         kwinApp()->input->redirect->installInputEventSpy(new tablet_mode_switch_spy(this));
