@@ -847,6 +847,10 @@ target_compile_definitions(kwin_wayland_lib PUBLIC WLR_USE_UNSTABLE)
 add_executable(kwin_wayland main_wayland.cpp)
 target_link_libraries(kwin_wayland
     kwin_wayland_lib
+    KF5GlobalAccelKWinPlugin
+    KF5IdleTimeKWinPlugin
+    KF5WindowSystemKWinPlugin
+    KWinQpaPlugin
     KF5::Crash
 )
 
@@ -865,13 +869,6 @@ if (HAVE_LIBCAP)
                 \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_BINDIR}/kwin_wayland)"
     )
 endif()
-
-target_link_libraries(kwin_wayland
-    KWinQpaPlugin
-    KF5GlobalAccelKWinPlugin
-    KF5WindowSystemKWinPlugin
-    KF5IdleTimeKWinPlugin
-)
 
 ########### install files ###############
 
