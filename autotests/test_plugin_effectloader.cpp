@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KConfig>
 #include <KConfigGroup>
-#include <KPluginLoader>
 // Qt
 #include <QStringList>
 #include <QtTest>
@@ -313,10 +312,11 @@ void TestPluginEffectLoader::testLoadPluginEffect()
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     loader.setConfig(config);
 
-    const auto plugins = KPluginLoader::findPlugins(QString(), [name](const KPluginMetaData& data) {
-        return data.pluginId().compare(name, Qt::CaseInsensitive) == 0
-            && data.serviceTypes().contains(QStringLiteral("KWin/Effect"));
-    });
+    const auto plugins
+        = KPluginMetaData::findPlugins(QString(), [name](const KPluginMetaData& data) {
+              return data.pluginId().compare(name, Qt::CaseInsensitive) == 0
+                  && data.serviceTypes().contains(QStringLiteral("KWin/Effect"));
+          });
     QCOMPARE(plugins.size(), 1);
 
     qRegisterMetaType<KWin::Effect*>();

@@ -46,7 +46,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KDE
 #include <KCrash>
 #include <KLocalizedString>
-#include <KPluginLoader>
 #include <KPluginMetaData>
 #include <KQuickAddons/QtQuickSettings>
 #include <KShell>

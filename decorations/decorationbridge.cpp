@@ -39,7 +39,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Frameworks
 #include <KPluginMetaData>
-#include <KPluginLoader>
 
 // Qt
 #include <QMetaProperty>
@@ -149,13 +148,12 @@ void DecorationBridge::initPlugin()
         return;
     }
     qCDebug(KWIN_DECORATIONS) << "Trying to load decoration plugin: " << metaData.fileName();
-    KPluginLoader loader(metaData.fileName());
-    KPluginFactory *factory = loader.factory();
-    if (!factory) {
-        qCWarning(KWIN_DECORATIONS) << "Error loading plugin:" << loader.errorString();
+    auto factoryResult = KPluginFactory::loadFactory(metaData);
+    if (!factoryResult) {
+        qCWarning(KWIN_DECORATIONS) << "Error loading plugin:" << factoryResult.errorText;
     } else {
-        m_factory = factory;
-        loadMetaData(loader.metaData().value(QStringLiteral("MetaData")).toObject());
+        m_factory = factoryResult.plugin;
+        loadMetaData(metaData.rawData());
     }
 }
 

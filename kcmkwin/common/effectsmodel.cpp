@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KConfigGroup>
 #include <KLocalizedString>
 #include <KPackage/PackageLoader>
-#include <KPluginLoader>
 #include <KPluginFactory>
 #include <KPluginInfo>
 #include <KPluginMetaData>
@@ -345,7 +344,7 @@ void EffectsModel::loadJavascriptEffects(const KConfigGroup &kwinConfig)
 
 void EffectsModel::loadPluginEffects(const KConfigGroup &kwinConfig)
 {
-    const auto pluginEffects = KPluginLoader::findPlugins(
+    const auto pluginEffects = KPluginMetaData::findPlugins(
         QStringLiteral("kwin/effects/plugins/"),
         [](const KPluginMetaData &data) {
             return data.serviceTypes().contains(QStringLiteral("KWin/Effect"));
@@ -381,7 +380,7 @@ void EffectsModel::loadPluginEffects(const KConfigGroup &kwinConfig)
                 return parentComponents.contains(pluginEffect.pluginId());
             };
 
-            const QVector<KPluginMetaData> plugins = KPluginLoader::findPlugins(QStringLiteral("kwin/effects/configs/"), filter);
+            const QVector<KPluginMetaData> plugins = KPluginMetaData::findPlugins(QStringLiteral("kwin/effects/configs/"), filter);
 
             if (!plugins.isEmpty()) {
                 effect.configModule = plugins.first().pluginId();
@@ -643,21 +642,13 @@ static KCModule *loadBinaryConfig(const QString &configModule, QObject *parent)
         return nullptr;
     }
 
-    KPluginLoader loader(metaData.fileName());
-    KPluginFactory *factory = loader.factory();
-
-    return factory->create<KCModule>(parent);
+    return KPluginFactory::instantiatePlugin<KCModule>(metaData, parent).plugin;
 }
 
 static KCModule *findScriptedConfig(const QString &pluginId, QObject *parent)
 {
-    KPluginLoader loader(QStringLiteral("kwin/effects/configs/kcm_kwin4_genericscripted"));
-    KPluginFactory *factory = loader.factory();
-    if (!factory) {
-        return nullptr;
-    }
-
-    return factory->create<KCModule>(parent, QVariantList{pluginId});
+    KPluginMetaData metaData(QStringLiteral("kwin/effects/configs/kcm_kwin4_genericscripted"));
+    return KPluginFactory::instantiatePlugin<KCModule>(metaData, parent, QVariantList{pluginId}).plugin;
 }
 
 void EffectsModel::requestConfigure(const QModelIndex &index, QWindow *transientParent)

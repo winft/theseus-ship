@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KConfigGroup>
 #include <KPackage/Package>
 #include <KPackage/PackageLoader>
-#include <KPluginLoader>
 
 #include <QDebug>
 #include <QFutureWatcher>
@@ -367,7 +366,7 @@ bool plugin_effect_loader::hasEffect(const QString& name) const
 KPluginMetaData plugin_effect_loader::findEffect(const QString& name) const
 {
     const auto plugins
-        = KPluginLoader::findPlugins(m_pluginSubDirectory, [name](const KPluginMetaData& data) {
+        = KPluginMetaData::findPlugins(m_pluginSubDirectory, [name](const KPluginMetaData& data) {
               return data.pluginId().compare(name, Qt::CaseInsensitive) == 0
                   && data.serviceTypes().contains(s_serviceType);
           });
@@ -390,13 +389,13 @@ EffectPluginFactory* plugin_effect_loader::factory(const KPluginMetaData& info) 
     if (!info.isValid()) {
         return nullptr;
     }
-    KPluginLoader loader(info.fileName());
+    QPluginLoader loader(info.fileName());
     if (loader.metaData().value("IID").toString() != EffectPluginFactory_iid) {
         qCDebug(KWIN_CORE) << info.pluginId() << " has not matching plugin version, expected "
                            << EffectPluginFactory_iid << "got " << loader.metaData().value("IID");
         return nullptr;
     }
-    KPluginFactory* factory = loader.factory();
+    KPluginFactory* factory = qobject_cast<KPluginFactory*>(loader.instance());
     if (!factory) {
         qCDebug(KWIN_CORE) << "Did not get KPluginFactory for " << info.pluginId();
         return nullptr;
@@ -503,7 +502,7 @@ void plugin_effect_loader::queryAndLoadAll()
 
 QVector<KPluginMetaData> plugin_effect_loader::findAllEffects() const
 {
-    return KPluginLoader::findPlugins(m_pluginSubDirectory, [](const KPluginMetaData& data) {
+    return KPluginMetaData::findPlugins(m_pluginSubDirectory, [](const KPluginMetaData& data) {
         return data.serviceTypes().contains(s_serviceType);
     });
 }
