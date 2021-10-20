@@ -448,7 +448,7 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::DragAndDrop);
         return;
     }
-    if (waylandServer()->isScreenLocked()) {
+    if (kwinApp()->is_screen_locked()) {
         setSource(CursorSource::LockScreen);
         return;
     }

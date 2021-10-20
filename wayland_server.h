@@ -146,10 +146,7 @@ public:
 
     void createDrmLeaseDevice();
 
-    /**
-     * @returns true if screen is locked.
-     */
-    bool isScreenLocked() const;
+    bool is_screen_locked() const;
     /**
      * @returns whether integration with KScreenLocker is available.
      */

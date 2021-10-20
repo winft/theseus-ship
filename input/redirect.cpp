@@ -562,9 +562,9 @@ Toplevel* redirect::findToplevel(const QPoint& pos)
     if (!Workspace::self()) {
         return nullptr;
     }
-    const bool isScreenLocked = waylandServer() && waylandServer()->isScreenLocked();
+
     // TODO: check whether the unmanaged wants input events at all
-    if (!isScreenLocked) {
+    if (!kwinApp()->is_screen_locked()) {
         // if an effect overrides the cursor we don't have a window to focus
         if (effects && static_cast<EffectsHandlerImpl*>(effects)->isMouseInterception()) {
             return nullptr;
@@ -584,7 +584,7 @@ Toplevel* redirect::findManagedToplevel(const QPoint& pos)
     if (!Workspace::self()) {
         return nullptr;
     }
-    const bool isScreenLocked = waylandServer() && waylandServer()->isScreenLocked();
+    auto const isScreenLocked = kwinApp()->is_screen_locked();
     auto const& stacking = workspace()->stacking_order->sorted();
     if (stacking.empty()) {
         return nullptr;

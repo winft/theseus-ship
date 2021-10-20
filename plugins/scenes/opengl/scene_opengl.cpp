@@ -1105,7 +1105,7 @@ Scene::Window *SceneOpenGL2::createWindow(Toplevel *t)
 
 void SceneOpenGL2::finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data)
 {
-    if (waylandServer() && waylandServer()->isScreenLocked() && !w->window()->isLockScreen() && !w->window()->isInputMethod()) {
+    if (kwinApp()->is_screen_locked() && !w->window()->isLockScreen() && !w->window()->isInputMethod()) {
         return;
     }
     performPaintWindow(w, mask, region, data);

@@ -142,6 +142,8 @@ public:
                            char** argv);
     ~WaylandTestApplication() override;
 
+    bool is_screen_locked() const override;
+
     WaylandServer* get_wayland_server() override;
     debug::console* create_debug_console() override;
 

@@ -25,7 +25,7 @@ namespace KWin::input
 
 bool lock_screen_filter::button(button_event const& event)
 {
-    if (!waylandServer()->isScreenLocked()) {
+    if (!kwinApp()->is_screen_locked()) {
         return false;
     }
 
@@ -44,7 +44,7 @@ bool lock_screen_filter::button(button_event const& event)
 
 bool lock_screen_filter::motion(motion_event const& event)
 {
-    if (!waylandServer()->isScreenLocked()) {
+    if (!kwinApp()->is_screen_locked()) {
         return false;
     }
 
@@ -62,7 +62,7 @@ bool lock_screen_filter::motion(motion_event const& event)
 
 bool lock_screen_filter::axis(axis_event const& event)
 {
-    if (!waylandServer()->isScreenLocked()) {
+    if (!kwinApp()->is_screen_locked()) {
         return false;
     }
 
@@ -79,7 +79,7 @@ bool lock_screen_filter::axis(axis_event const& event)
 
 bool lock_screen_filter::key(key_event const& event)
 {
-    if (!waylandServer()->isScreenLocked()) {
+    if (!kwinApp()->is_screen_locked()) {
         return false;
     }
 
@@ -118,12 +118,12 @@ bool lock_screen_filter::key(key_event const& event)
 bool lock_screen_filter::key_repeat(key_event const& /*event*/)
 {
     // If screen is locked Wayland client takes care of it.
-    return waylandServer()->isScreenLocked();
+    return kwinApp()->is_screen_locked();
 }
 
 bool lock_screen_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
-    if (!waylandServer()->isScreenLocked()) {
+    if (!kwinApp()->is_screen_locked()) {
         return false;
     }
     auto seat = waylandServer()->seat();
@@ -135,7 +135,7 @@ bool lock_screen_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
 }
 bool lock_screen_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
 {
-    if (!waylandServer()->isScreenLocked()) {
+    if (!kwinApp()->is_screen_locked()) {
         return false;
     }
     auto seat = waylandServer()->seat();
@@ -150,7 +150,7 @@ bool lock_screen_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time
 }
 bool lock_screen_filter::touchUp(qint32 id, quint32 time)
 {
-    if (!waylandServer()->isScreenLocked()) {
+    if (!kwinApp()->is_screen_locked()) {
         return false;
     }
     auto seat = waylandServer()->seat();
@@ -167,33 +167,33 @@ bool lock_screen_filter::touchUp(qint32 id, quint32 time)
 bool lock_screen_filter::pinch_begin(pinch_begin_event const& /*event*/)
 {
     // no touchpad multi-finger gestures on lock screen
-    return waylandServer()->isScreenLocked();
+    return kwinApp()->is_screen_locked();
 }
 bool lock_screen_filter::pinch_update(pinch_update_event const& /*event*/)
 {
     // no touchpad multi-finger gestures on lock screen
-    return waylandServer()->isScreenLocked();
+    return kwinApp()->is_screen_locked();
 }
 bool lock_screen_filter::pinch_end(pinch_end_event const& /*event*/)
 {
     // no touchpad multi-finger gestures on lock screen
-    return waylandServer()->isScreenLocked();
+    return kwinApp()->is_screen_locked();
 }
 
 bool lock_screen_filter::swipe_begin(swipe_begin_event const& /*event*/)
 {
     // no touchpad multi-finger gestures on lock screen
-    return waylandServer()->isScreenLocked();
+    return kwinApp()->is_screen_locked();
 }
 bool lock_screen_filter::swipe_update(swipe_update_event const& /*event*/)
 {
     // no touchpad multi-finger gestures on lock screen
-    return waylandServer()->isScreenLocked();
+    return kwinApp()->is_screen_locked();
 }
 bool lock_screen_filter::swipe_end(swipe_end_event const& /*event*/)
 {
     // no touchpad multi-finger gestures on lock screen
-    return waylandServer()->isScreenLocked();
+    return kwinApp()->is_screen_locked();
 }
 
 template<typename Pool>

@@ -164,6 +164,14 @@ ApplicationWayland::~ApplicationWayland()
     compositor.reset();
 }
 
+bool ApplicationWayland::is_screen_locked() const
+{
+    if (!server) {
+        return false;
+    }
+    return server->is_screen_locked();
+}
+
 WaylandServer* ApplicationWayland::get_wayland_server()
 {
     return server.get();

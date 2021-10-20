@@ -211,6 +211,8 @@ public:
     static void setupLocalizedString();
     virtual void notifyKSplash() {}
 
+    virtual bool is_screen_locked() const;
+
     virtual WaylandServer* get_wayland_server();
     virtual debug::console* create_debug_console() = 0;
 

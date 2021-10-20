@@ -196,7 +196,7 @@ QWindow* device_redirect::internalWindow() const
 
 QWindow* device_redirect::findInternalWindow(const QPoint& pos) const
 {
-    if (waylandServer()->isScreenLocked()) {
+    if (kwinApp()->is_screen_locked()) {
         return nullptr;
     }
 

@@ -134,6 +134,14 @@ WaylandTestApplication::~WaylandTestApplication()
     compositor.reset();
 }
 
+bool WaylandTestApplication::is_screen_locked() const
+{
+    if (!server) {
+        return false;
+    }
+    return server->is_screen_locked();
+}
+
 WaylandServer* WaylandTestApplication::get_wayland_server()
 {
     return server.get();
