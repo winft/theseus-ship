@@ -7,6 +7,11 @@
 
 #include "input/redirect.h"
 
+namespace Wrapland::Server
+{
+class FakeInput;
+}
+
 namespace KWin::input::wayland
 {
 
@@ -15,6 +20,13 @@ class KWIN_EXPORT redirect : public input::redirect
     Q_OBJECT
 public:
     redirect();
+    ~redirect();
+
+protected:
+    void setupWorkspace() override;
+
+private:
+    std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 };
 
 }

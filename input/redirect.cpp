@@ -50,8 +50,6 @@
 #include "win/stacking_order.h"
 #include "workspace.h"
 
-#include <Wrapland/Server/display.h>
-#include <Wrapland/Server/fake_input.h>
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
@@ -122,113 +120,6 @@ void redirect::uninstallInputEventSpy(event_spy* spy)
 
 void redirect::setupWorkspace()
 {
-    if (waylandServer()) {
-        using namespace Wrapland::Server;
-        fake_input = waylandServer()->display()->createFakeInput();
-
-        connect(fake_input.get(), &FakeInput::deviceCreated, this, [this](FakeInputDevice* device) {
-            connect(device,
-                    &FakeInputDevice::authenticationRequested,
-                    this,
-                    [this, device](const QString& application, const QString& reason) {
-                        Q_UNUSED(application)
-                        Q_UNUSED(reason)
-                        // TODO: make secure
-                        device->setAuthentication(true);
-                    });
-            connect(device,
-                    &FakeInputDevice::pointerMotionRequested,
-                    this,
-                    [this](const QSizeF& delta) {
-                        // TODO: Fix time
-                        m_pointer->processMotion(
-                            globalPointer() + QPointF(delta.width(), delta.height()), 0);
-                        waylandServer()->simulateUserActivity();
-                    });
-            connect(device,
-                    &FakeInputDevice::pointerMotionAbsoluteRequested,
-                    this,
-                    [this](const QPointF& pos) {
-                        // TODO: Fix time
-                        m_pointer->processMotion(pos, 0);
-                        waylandServer()->simulateUserActivity();
-                    });
-            connect(device,
-                    &FakeInputDevice::pointerButtonPressRequested,
-                    this,
-                    [this](quint32 button) {
-                        // TODO: Fix time
-                        m_pointer->process_button({button, button_state::pressed, {nullptr, 0}});
-                        waylandServer()->simulateUserActivity();
-                    });
-            connect(device,
-                    &FakeInputDevice::pointerButtonReleaseRequested,
-                    this,
-                    [this](quint32 button) {
-                        // TODO: Fix time
-                        m_pointer->process_button({button, button_state::released, {nullptr, 0}});
-                        waylandServer()->simulateUserActivity();
-                    });
-            connect(device,
-                    &FakeInputDevice::pointerAxisRequested,
-                    this,
-                    [this](Qt::Orientation orientation, qreal delta) {
-                        // TODO: Fix time
-                        auto axis = (orientation == Qt::Horizontal) ? axis_orientation::horizontal
-                                                                    : axis_orientation::vertical;
-                        // TODO: Fix time
-                        m_pointer->process_axis({axis_source::unknown, axis, delta, 0, nullptr, 0});
-                        waylandServer()->simulateUserActivity();
-                    });
-            connect(device,
-                    &FakeInputDevice::touchDownRequested,
-                    this,
-                    [this](qint32 id, const QPointF& pos) {
-                        // TODO: Fix time
-                        m_touch->processDown(id, pos, 0);
-                        waylandServer()->simulateUserActivity();
-                    });
-            connect(device,
-                    &FakeInputDevice::touchMotionRequested,
-                    this,
-                    [this](qint32 id, const QPointF& pos) {
-                        // TODO: Fix time
-                        m_touch->processMotion(id, pos, 0);
-                        waylandServer()->simulateUserActivity();
-                    });
-            connect(device, &FakeInputDevice::touchUpRequested, this, [this](qint32 id) {
-                // TODO: Fix time
-                m_touch->processUp(id, 0);
-                waylandServer()->simulateUserActivity();
-            });
-            connect(device, &FakeInputDevice::touchCancelRequested, this, [this]() {
-                m_touch->cancel();
-            });
-            connect(device, &FakeInputDevice::touchFrameRequested, this, [this]() {
-                m_touch->frame();
-            });
-            connect(
-                device, &FakeInputDevice::keyboardKeyPressRequested, this, [this](quint32 button) {
-                    // TODO: Fix time
-                    m_keyboard->process_key({button, button_state::pressed, false, nullptr, 0});
-                    waylandServer()->simulateUserActivity();
-                });
-            connect(
-                device,
-                &FakeInputDevice::keyboardKeyReleaseRequested,
-                this,
-                [this](quint32 button) {
-                    // TODO: Fix time
-                    m_keyboard->process_key({button, button_state::released, false, nullptr, 0});
-                    waylandServer()->simulateUserActivity();
-                });
-        });
-
-        m_keyboard->init();
-        m_pointer->init();
-        m_touch->init();
-        m_tablet->init();
-    }
     setupInputFilters();
 }
 

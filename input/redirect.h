@@ -21,11 +21,6 @@
 #include <memory>
 #include <vector>
 
-namespace Wrapland::Server
-{
-class FakeInput;
-}
-
 class KGlobalAccelInterface;
 
 namespace KWin
@@ -286,25 +281,25 @@ protected:
              tablet_redirect* tablet,
              touch_redirect* touch);
 
-private Q_SLOTS:
-    void handleInputConfigChanged(const KConfigGroup& group);
-
-private:
-    void setupTouchpadShortcuts();
-    void setupWorkspace();
-    void reconfigure();
+    virtual void setupWorkspace();
     void setupInputFilters();
-    void installInputEventFilter(event_filter* filter);
 
     std::unique_ptr<keyboard_redirect> m_keyboard;
     std::unique_ptr<pointer_redirect> m_pointer;
     std::unique_ptr<tablet_redirect> m_tablet;
     std::unique_ptr<touch_redirect> m_touch;
 
+private Q_SLOTS:
+    void handleInputConfigChanged(const KConfigGroup& group);
+
+private:
+    void setupTouchpadShortcuts();
+    void reconfigure();
+    void installInputEventFilter(event_filter* filter);
+
     global_shortcuts_manager* m_shortcuts;
     window_selector_filter* m_windowSelector = nullptr;
     KConfigWatcher::Ptr m_inputConfigWatcher;
-    std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 
     std::vector<event_filter*> m_filters;
     std::vector<event_spy*> m_spies;
