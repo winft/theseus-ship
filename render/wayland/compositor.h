@@ -32,7 +32,7 @@ public:
     ~compositor();
 
     void schedule_repaint(Toplevel* window) override;
-    void schedule_frame_callback(Toplevel* window);
+    void schedule_frame_callback(Toplevel* window) override;
 
     void toggleCompositing() override;
     void addRepaint(QRegion const& region) override;

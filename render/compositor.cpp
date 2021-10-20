@@ -290,6 +290,11 @@ void compositor::schedule_repaint(Toplevel* /*window*/)
     // TODO(romangg): Remove this, i.e. ensure that there are no calls while being destroyed.
 }
 
+void compositor::schedule_frame_callback(Toplevel* /*window*/)
+{
+    // Only needed on Wayland.
+}
+
 void compositor::stop()
 {
     if (m_state == State::Off || m_state == State::Stopping) {
