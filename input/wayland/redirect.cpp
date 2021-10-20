@@ -42,6 +42,7 @@
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
+#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 
 namespace KWin::input::wayland
@@ -53,6 +54,7 @@ redirect::redirect()
                       new tablet_redirect,
                       new touch_redirect)
 {
+    reconfigure();
 }
 
 redirect::~redirect() = default;
@@ -347,6 +349,24 @@ void redirect::setupInputFilters()
     installInputEventFilter(new window_action_filter);
     installInputEventFilter(new forward_filter);
     installInputEventFilter(new fake_tablet_filter);
+}
+
+void redirect::reconfigure()
+{
+    auto input_config = m_inputConfigWatcher->config();
+    auto const group = input_config->group(QStringLiteral("Keyboard"));
+
+    auto delay = group.readEntry("RepeatDelay", 660);
+    auto rate = group.readEntry("RepeatRate", 25);
+    auto const repeat = group.readEntry("KeyRepeat", "repeat");
+
+    // When the clients will repeat the character or turn repeat key events into an accent character
+    // selection, we want to tell the clients that we are indeed repeating keys.
+    auto enabled = repeat == QLatin1String("accent") || repeat == QLatin1String("repeat");
+
+    if (waylandServer()->seat()->hasKeyboard()) {
+        waylandServer()->seat()->keyboards().set_repeat_info(enabled ? rate : 0, delay);
+    }
 }
 
 }

@@ -283,7 +283,6 @@ protected:
     virtual void setupInputFilters() = 0;
     void installInputEventFilter(event_filter* filter);
     void setupTouchpadShortcuts();
-    void reconfigure();
 
     std::unique_ptr<keyboard_redirect> m_keyboard;
     std::unique_ptr<pointer_redirect> m_pointer;

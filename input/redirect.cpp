@@ -31,7 +31,6 @@
 #include "win/stacking_order.h"
 #include "workspace.h"
 
-#include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 
@@ -56,7 +55,6 @@ redirect::redirect(keyboard_redirect* keyboard,
     qRegisterMetaType<KWin::input::redirect::PointerButtonState>();
     qRegisterMetaType<KWin::input::redirect::PointerAxis>();
     connect(kwinApp(), &Application::startup_finished, this, &redirect::setupWorkspace);
-    reconfigure();
 }
 
 redirect::~redirect()
@@ -102,26 +100,6 @@ void redirect::uninstallInputEventSpy(event_spy* spy)
 void redirect::setupWorkspace()
 {
     setupInputFilters();
-}
-
-void redirect::reconfigure()
-{
-    if (!waylandServer()) {
-        return;
-    }
-    auto inputConfig = m_inputConfigWatcher->config();
-    const auto config = inputConfig->group(QStringLiteral("Keyboard"));
-    const int delay = config.readEntry("RepeatDelay", 660);
-    const int rate = config.readEntry("RepeatRate", 25);
-    const QString repeatMode = config.readEntry("KeyRepeat", "repeat");
-    // when the clients will repeat the character or turn repeat key events into an accent character
-    // selection, we want to tell the clients that we are indeed repeating keys.
-    const bool enabled
-        = repeatMode == QLatin1String("accent") || repeatMode == QLatin1String("repeat");
-
-    if (waylandServer()->seat()->hasKeyboard()) {
-        waylandServer()->seat()->keyboards().set_repeat_info(enabled ? rate : 0, delay);
-    }
 }
 
 static const QString s_touchpadComponent = QStringLiteral("kcm_touchpad");

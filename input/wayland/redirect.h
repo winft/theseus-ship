@@ -29,6 +29,8 @@ protected:
     void setupInputFilters() override;
 
 private:
+    void reconfigure();
+
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 };
 
