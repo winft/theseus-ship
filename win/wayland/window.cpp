@@ -865,7 +865,7 @@ void window::handle_commit()
     if (!surface()->state().damage.isEmpty()) {
         addDamage(surface()->state().damage);
     } else if (surface()->state().updates & Wrapland::Server::surface_change::frame) {
-        auto comp = static_cast<render::wayland::compositor*>(kwinApp()->compositor);
+        auto comp = static_cast<render::wayland::compositor*>(kwinApp()->compositor.get());
         comp->schedule_frame_callback(this);
     }
 

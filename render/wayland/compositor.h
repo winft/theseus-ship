@@ -28,7 +28,8 @@ class KWIN_EXPORT compositor : public render::compositor
 {
     Q_OBJECT
 public:
-    static compositor* create(QObject* parent = nullptr);
+    compositor();
+    ~compositor();
 
     void schedule_repaint(Toplevel* window) override;
     void schedule_frame_callback(Toplevel* window);
@@ -49,9 +50,6 @@ protected:
     std::deque<Toplevel*> performCompositing() override;
 
 private:
-    explicit compositor(QObject* parent);
-    ~compositor();
-
     int locked{0};
 };
 

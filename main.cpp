@@ -109,6 +109,10 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
     qRegisterMetaType<KWin::EffectWindow*>();
     qRegisterMetaType<Wrapland::Server::Surface*>("Wrapland::Server::Surface*");
     qRegisterMetaType<KSharedConfigPtr>();
+
+    // We want all QQuickWindows with an alpha buffer, do here as a later Workspace might create
+    // QQuickWindows.
+    QQuickWindow::setDefaultAlphaBuffer(true);
 }
 
 void Application::setConfigLock(bool lock)
@@ -258,20 +262,6 @@ void Application::setupLocalizedString()
     KLocalizedString::setApplicationDomain("kwin");
 }
 
-void Application::createWorkspace()
-{
-    // we want all QQuickWindows with an alpha buffer, do here as Workspace might create QQuickWindows
-    QQuickWindow::setDefaultAlphaBuffer(true);
-
-    // This tries to detect compositing options and can use GLX. GLX problems
-    // (X errors) shouldn't cause kwin to abort, so this is out of the
-    // critical startup section where x errors cause kwin to abort.
-
-    // create workspace.
-    (void) new Workspace();
-    emit workspaceCreated();
-}
-
 void Application::createAtoms()
 {
     atoms = new Atoms;
@@ -287,16 +277,6 @@ void Application::createOptions()
 void Application::setupEventFilters()
 {
     installNativeEventFilter(m_eventFilter.data());
-}
-
-void Application::destroyWorkspace()
-{
-    delete Workspace::self();
-}
-
-void Application::destroyCompositor()
-{
-    delete render::compositor::self();
 }
 
 void Application::updateX11Time(xcb_generic_event_t *event)

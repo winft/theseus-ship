@@ -97,7 +97,7 @@ public:
 
     Platform* platform{nullptr};
     std::unique_ptr<seat::session> session;
-    render::compositor* compositor{nullptr};
+    std::unique_ptr<render::compositor> compositor;
     std::unique_ptr<platform::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<input::platform> input;
 
@@ -203,8 +203,6 @@ public:
 
     static void setupMalloc();
     static void setupLocalizedString();
-
-    void createWorkspace();
     virtual void notifyKSplash() {}
 
 Q_SIGNALS:
@@ -222,8 +220,6 @@ protected:
     void createAtoms();
     void createOptions();
     void setupEventFilters();
-    void destroyWorkspace();
-    void destroyCompositor();
 
     /**
      * Inheriting classes should use this method to set the X11 root window

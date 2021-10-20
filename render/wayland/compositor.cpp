@@ -20,14 +20,6 @@
 namespace KWin::render::wayland
 {
 
-compositor* compositor::create(QObject* parent)
-{
-    assert(!kwinApp()->compositor);
-    auto compositor = new wayland::compositor(parent);
-    kwinApp()->compositor = compositor;
-    return compositor;
-}
-
 void compositor::addRepaint(QRegion const& region)
 {
     if (locked) {
@@ -48,9 +40,8 @@ void compositor::check_idle()
     scene()->idle();
 }
 
-compositor::compositor(QObject* parent)
-    : render::compositor(parent)
-    , presentation(new render::wayland::presentation(this))
+compositor::compositor()
+    : presentation(new render::wayland::presentation(this))
 {
     if (!presentation->init_clock(kwinApp()->platform->clockId())) {
         qCCritical(KWIN_CORE) << "Presentation clock failed. Exit.";

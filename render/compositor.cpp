@@ -39,7 +39,7 @@ constexpr auto compositor_lost_message_delay = 2000;
 
 compositor* compositor::self()
 {
-    return kwinApp()->compositor;
+    return kwinApp()->compositor.get();
 }
 
 bool compositor::compositing()
@@ -47,9 +47,8 @@ bool compositor::compositing()
     return kwinApp()->compositor != nullptr && kwinApp()->compositor->isActive();
 }
 
-compositor::compositor(QObject* parent)
-    : QObject(parent)
-    , software_cursor{std::make_unique<cursor>(kwinApp()->input.get())}
+compositor::compositor()
+    : software_cursor{std::make_unique<cursor>(kwinApp()->input.get())}
     , m_state(State::Off)
     , m_selectionOwner(nullptr)
     , m_delay(0)
@@ -76,7 +75,6 @@ compositor::~compositor()
     stop();
     deleteUnusedSupportProperties();
     destroyCompositorSelection();
-    kwinApp()->compositor = nullptr;
 }
 
 bool compositor::setupStart()

@@ -37,22 +37,13 @@ static ulong s_msc = 0;
 // 2 sec which should be enough to restart the compositor.
 constexpr auto compositor_lost_message_delay = 2000;
 
-compositor* compositor::create(QObject* parent)
-{
-    assert(!kwinApp()->compositor);
-    auto compositor = new x11::compositor(parent);
-    kwinApp()->compositor = compositor;
-    return compositor;
-}
-
 compositor* compositor::self()
 {
     return qobject_cast<compositor*>(render::compositor::self());
 }
 
-compositor::compositor(QObject* parent)
-    : render::compositor(parent)
-    , m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
+compositor::compositor()
+    : m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
 {
     if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED")) {
         m_framesToTestForSafety = qEnvironmentVariableIntValue("KWIN_MAX_FRAMES_TESTED");

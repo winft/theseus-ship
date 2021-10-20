@@ -382,7 +382,6 @@ set(kwin_SRCS
     abstract_opengl_context_attribute_builder.cpp
     abstract_output.cpp
     abstract_wayland_output.cpp
-    activation.cpp
     atoms.cpp
     colorcorrection/clockskewnotifier.cpp
     colorcorrection/clockskewnotifierengine.cpp
@@ -401,7 +400,6 @@ set(kwin_SRCS
     effectloader.cpp
     effects.cpp
     egl_context_attribute_builder.cpp
-    events.cpp
     idle_inhibition.cpp
     input/device_redirect.cpp
     input/event_filter.cpp
