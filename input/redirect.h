@@ -292,9 +292,6 @@ protected:
 
     window_selector_filter* m_windowSelector{nullptr};
 
-private Q_SLOTS:
-    void handleInputConfigChanged(const KConfigGroup& group);
-
 private:
     void setupTouchpadShortcuts();
     void reconfigure();

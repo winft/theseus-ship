@@ -104,13 +104,6 @@ void redirect::setupWorkspace()
     setupInputFilters();
 }
 
-void redirect::handleInputConfigChanged(const KConfigGroup& group)
-{
-    if (group.name() == QLatin1String("Keyboard")) {
-        reconfigure();
-    }
-}
-
 void redirect::reconfigure()
 {
     if (!waylandServer()) {
@@ -241,7 +234,11 @@ void redirect::set_platform(input::platform* platform)
     QObject::connect(m_inputConfigWatcher.data(),
                      &KConfigWatcher::configChanged,
                      this,
-                     &redirect::handleInputConfigChanged);
+                     [this](auto const& group) {
+                         if (group.name() == QLatin1String("Keyboard")) {
+                             reconfigure();
+                         }
+                     });
 
     setupTouchpadShortcuts();
 }
