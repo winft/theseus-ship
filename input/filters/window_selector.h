@@ -14,7 +14,7 @@ class Toplevel;
 namespace input
 {
 
-class KWIN_EXPORT window_selector_filter : public event_filter
+class window_selector_filter : public event_filter
 {
 public:
     bool button(button_event const& event) override;

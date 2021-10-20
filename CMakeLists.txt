@@ -412,7 +412,6 @@ set(kwin_SRCS
     input/filters/internal_window.cpp
     input/filters/move_resize.cpp
     input/filters/screen_edge.cpp
-    input/filters/window_selector.cpp
     input/keyboard.cpp
     input/keyboard_redirect.cpp
     input/platform.cpp
@@ -795,6 +794,7 @@ set(kwin_WAYLAND_SRCS
    input/filters/terminate_server.cpp
    input/filters/virtual_terminal.cpp
    input/filters/window_action.cpp
+   input/filters/window_selector.cpp
    input/spies/touch_hide_cursor.cpp
    input/spies/tablet_mode_switch.cpp
    input/wayland/cursor.cpp

@@ -5,14 +5,13 @@
 */
 #include "redirect.h"
 
-#include "filters/window_selector.h"
-
 #include "keyboard.h"
 #include "platform.h"
 #include "pointer.h"
 #include "switch.h"
 #include "touch.h"
 
+#include "event_filter.h"
 #include "event_spy.h"
 #include "keyboard_redirect.h"
 #include "pointer_redirect.h"
@@ -302,29 +301,19 @@ QPointF redirect::globalPointer() const
 }
 
 void redirect::startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
-                                               const QByteArray& cursorName)
+                                               QByteArray const& /*cursorName*/)
 {
-    if (!m_windowSelector || m_windowSelector->isActive()) {
-        callback(nullptr);
-        return;
-    }
-    m_windowSelector->start(callback);
-    m_pointer->setWindowSelectionCursor(cursorName);
+    callback(nullptr);
 }
 
-void redirect::startInteractivePositionSelection(std::function<void(const QPoint&)> callback)
+void redirect::startInteractivePositionSelection(std::function<void(QPoint const&)> callback)
 {
-    if (!m_windowSelector || m_windowSelector->isActive()) {
-        callback(QPoint(-1, -1));
-        return;
-    }
-    m_windowSelector->start(callback);
-    m_pointer->setWindowSelectionCursor(QByteArray());
+    callback(QPoint(-1, -1));
 }
 
 bool redirect::isSelectingWindow() const
 {
-    return m_windowSelector ? m_windowSelector->isActive() : false;
+    return false;
 }
 
 }

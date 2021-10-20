@@ -359,8 +359,8 @@ void redirect::setupInputFilters()
     installInputEventFilter(new lock_screen_filter);
     installInputEventFilter(new popup_filter);
 
-    m_windowSelector = new window_selector_filter;
-    installInputEventFilter(m_windowSelector);
+    window_selector = new window_selector_filter;
+    installInputEventFilter(window_selector);
 
     if (has_global_shortcuts) {
         installInputEventFilter(new screen_edge_filter);
@@ -400,6 +400,34 @@ void redirect::reconfigure()
     if (waylandServer()->seat()->hasKeyboard()) {
         waylandServer()->seat()->keyboards().set_repeat_info(enabled ? rate : 0, delay);
     }
+}
+
+void redirect::startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
+                                               QByteArray const& cursorName)
+{
+    if (window_selector->isActive()) {
+        callback(nullptr);
+        return;
+    }
+    window_selector->start(callback);
+    m_pointer->setWindowSelectionCursor(cursorName);
+}
+
+void redirect::startInteractivePositionSelection(std::function<void(QPoint const&)> callback)
+{
+    if (window_selector->isActive()) {
+        callback(QPoint(-1, -1));
+        return;
+    }
+    window_selector->start(callback);
+    m_pointer->setWindowSelectionCursor(QByteArray());
+}
+
+bool redirect::isSelectingWindow() const
+{
+    // TODO(romangg): This function is called before setupInputFilters is run (from setupWorkspace).
+    //                Can we ensure it's only called afterwards and remove the nullptr check?
+    return window_selector && window_selector->isActive();
 }
 
 }

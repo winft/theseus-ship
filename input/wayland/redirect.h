@@ -26,6 +26,11 @@ public:
 
     void set_platform(input::platform* platform);
 
+    void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
+                                         QByteArray const& cursorName) override;
+    void startInteractivePositionSelection(std::function<void(QPoint const&)> callback) override;
+    bool isSelectingWindow() const override;
+
 protected:
     void setupWorkspace() override;
     void setupInputFilters() override;
@@ -36,6 +41,8 @@ private:
 
     KConfigWatcher::Ptr config_watcher;
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
+
+    window_selector_filter* window_selector{nullptr};
 };
 
 }

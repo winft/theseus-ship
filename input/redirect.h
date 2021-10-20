@@ -231,10 +231,10 @@ public:
 
     bool hasTabletModeSwitch();
 
-    void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
-                                         const QByteArray& cursorName);
-    void startInteractivePositionSelection(std::function<void(const QPoint&)> callback);
-    bool isSelectingWindow() const;
+    virtual void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
+                                                 QByteArray const& cursorName);
+    virtual void startInteractivePositionSelection(std::function<void(QPoint const&)> callback);
+    virtual bool isSelectingWindow() const;
 
     input::platform* platform{nullptr};
 
@@ -286,8 +286,6 @@ protected:
     std::unique_ptr<pointer_redirect> m_pointer;
     std::unique_ptr<tablet_redirect> m_tablet;
     std::unique_ptr<touch_redirect> m_touch;
-
-    window_selector_filter* m_windowSelector{nullptr};
 
 private:
     global_shortcuts_manager* m_shortcuts;
