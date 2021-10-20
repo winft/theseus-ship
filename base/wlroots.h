@@ -10,6 +10,7 @@
 #include <kwin_export.h>
 
 #include <functional>
+#include <memory>
 
 extern "C" {
 #include <wlr/backend.h>
@@ -66,7 +67,7 @@ public:
     wlr_backend* backend{nullptr};
 
     // TODO(romangg): remove all but one ctor once the startup sequence is cleaned up.
-    wlroots() = default;
+    wlroots();
     explicit wlroots(Wrapland::Server::Display* display);
     explicit wlroots(wlr_backend* backend);
     void init(wlr_backend* backend);
@@ -83,7 +84,7 @@ public:
     }
 
 private:
-    event_receiver<wlroots> destroyed;
+    std::unique_ptr<event_receiver<wlroots>> destroyed;
 };
 
 }
