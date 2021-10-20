@@ -281,6 +281,7 @@ public:
      */
     QMatrix4x4 input_transform() const;
 
+
     /**
      * Can be implemented by child classes to add additional checks to the ones in win::is_popup.
      */

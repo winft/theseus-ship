@@ -28,9 +28,8 @@
 #include "utils.h"
 #include "win/geo.h"
 #include "win/stacking_order.h"
+#include "win/wayland/input.h"
 #include "workspace.h"
-
-#include <Wrapland/Server/surface.h>
 
 namespace KWin::input
 {
@@ -183,22 +182,6 @@ Qt::MouseButtons redirect::qtButtonStates() const
     return m_pointer->buttons();
 }
 
-static bool acceptsInput(Toplevel* t, const QPoint& pos)
-{
-    if (!t->surface()) {
-        // Only wl_surfaces provide means of limiting the input region. So just accept otherwise.
-        return true;
-    }
-    if (t->surface()->state().input_is_infinite) {
-        return true;
-    }
-
-    auto const input_region = t->surface()->state().input;
-    auto const localPoint = pos - win::frame_to_client_pos(t, t->pos());
-
-    return input_region.contains(localPoint);
-}
-
 Toplevel* redirect::findToplevel(const QPoint& pos)
 {
     if (!Workspace::self()) {
@@ -213,7 +196,7 @@ Toplevel* redirect::findToplevel(const QPoint& pos)
         }
         auto const& unmanaged = Workspace::self()->unmanagedList();
         for (auto const& u : unmanaged) {
-            if (win::input_geometry(u).contains(pos) && acceptsInput(u, pos)) {
+            if (win::input_geometry(u).contains(pos) && win::wayland::accepts_input(u, pos)) {
                 return u;
             }
         }
@@ -256,7 +239,7 @@ Toplevel* redirect::findManagedToplevel(const QPoint& pos)
                 continue;
             }
         }
-        if (win::input_geometry(window).contains(pos) && acceptsInput(window, pos)) {
+        if (win::input_geometry(window).contains(pos) && win::wayland::accepts_input(window, pos)) {
             return window;
         }
     } while (it != stacking.begin());
