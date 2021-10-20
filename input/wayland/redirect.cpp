@@ -45,6 +45,8 @@
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
 
+#include <KGlobalAccel>
+
 namespace KWin::input::wayland
 {
 
@@ -186,7 +188,39 @@ void redirect::set_platform(input::platform* platform)
             }
         });
 
-    setupTouchpadShortcuts();
+    setup_touchpad_shortcuts();
+}
+
+void redirect::setup_touchpad_shortcuts()
+{
+    auto toggle_action = new QAction(this);
+    auto on_action = new QAction(this);
+    auto off_action = new QAction(this);
+
+    constexpr auto const component{"kcm_touchpad"};
+
+    toggle_action->setObjectName(QStringLiteral("Toggle Touchpad"));
+    toggle_action->setProperty("componentName", component);
+    on_action->setObjectName(QStringLiteral("Enable Touchpad"));
+    on_action->setProperty("componentName", component);
+    off_action->setObjectName(QStringLiteral("Disable Touchpad"));
+    off_action->setProperty("componentName", component);
+
+    KGlobalAccel::self()->setDefaultShortcut(toggle_action,
+                                             QList<QKeySequence>{Qt::Key_TouchpadToggle});
+    KGlobalAccel::self()->setShortcut(toggle_action, QList<QKeySequence>{Qt::Key_TouchpadToggle});
+    KGlobalAccel::self()->setDefaultShortcut(on_action, QList<QKeySequence>{Qt::Key_TouchpadOn});
+    KGlobalAccel::self()->setShortcut(on_action, QList<QKeySequence>{Qt::Key_TouchpadOn});
+    KGlobalAccel::self()->setDefaultShortcut(off_action, QList<QKeySequence>{Qt::Key_TouchpadOff});
+    KGlobalAccel::self()->setShortcut(off_action, QList<QKeySequence>{Qt::Key_TouchpadOff});
+
+    registerShortcut(Qt::Key_TouchpadToggle, toggle_action);
+    registerShortcut(Qt::Key_TouchpadOn, on_action);
+    registerShortcut(Qt::Key_TouchpadOff, off_action);
+
+    QObject::connect(toggle_action, &QAction::triggered, platform, &platform::toggle_touchpads);
+    QObject::connect(on_action, &QAction::triggered, platform, &platform::enable_touchpads);
+    QObject::connect(off_action, &QAction::triggered, platform, &platform::disable_touchpads);
 }
 
 void redirect::setupWorkspace()

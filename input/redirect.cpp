@@ -34,8 +34,6 @@
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 
-#include <KGlobalAccel>
-
 namespace KWin::input
 {
 
@@ -98,43 +96,6 @@ void redirect::uninstallInputEventSpy(event_spy* spy)
 void redirect::setupWorkspace()
 {
     setupInputFilters();
-}
-
-static const QString s_touchpadComponent = QStringLiteral("kcm_touchpad");
-
-void redirect::setupTouchpadShortcuts()
-{
-    if (!platform) {
-        return;
-    }
-    QAction* touchpadToggleAction = new QAction(this);
-    QAction* touchpadOnAction = new QAction(this);
-    QAction* touchpadOffAction = new QAction(this);
-
-    touchpadToggleAction->setObjectName(QStringLiteral("Toggle Touchpad"));
-    touchpadToggleAction->setProperty("componentName", s_touchpadComponent);
-    touchpadOnAction->setObjectName(QStringLiteral("Enable Touchpad"));
-    touchpadOnAction->setProperty("componentName", s_touchpadComponent);
-    touchpadOffAction->setObjectName(QStringLiteral("Disable Touchpad"));
-    touchpadOffAction->setProperty("componentName", s_touchpadComponent);
-    KGlobalAccel::self()->setDefaultShortcut(touchpadToggleAction,
-                                             QList<QKeySequence>{Qt::Key_TouchpadToggle});
-    KGlobalAccel::self()->setShortcut(touchpadToggleAction,
-                                      QList<QKeySequence>{Qt::Key_TouchpadToggle});
-    KGlobalAccel::self()->setDefaultShortcut(touchpadOnAction,
-                                             QList<QKeySequence>{Qt::Key_TouchpadOn});
-    KGlobalAccel::self()->setShortcut(touchpadOnAction, QList<QKeySequence>{Qt::Key_TouchpadOn});
-    KGlobalAccel::self()->setDefaultShortcut(touchpadOffAction,
-                                             QList<QKeySequence>{Qt::Key_TouchpadOff});
-    KGlobalAccel::self()->setShortcut(touchpadOffAction, QList<QKeySequence>{Qt::Key_TouchpadOff});
-
-    registerShortcut(Qt::Key_TouchpadToggle, touchpadToggleAction);
-    registerShortcut(Qt::Key_TouchpadOn, touchpadOnAction);
-    registerShortcut(Qt::Key_TouchpadOff, touchpadOffAction);
-
-    connect(touchpadToggleAction, &QAction::triggered, platform, &platform::toggle_touchpads);
-    connect(touchpadOnAction, &QAction::triggered, platform, &platform::enable_touchpads);
-    connect(touchpadOffAction, &QAction::triggered, platform, &platform::disable_touchpads);
 }
 
 bool redirect::hasTabletModeSwitch()

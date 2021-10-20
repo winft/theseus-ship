@@ -31,6 +31,7 @@ protected:
     void setupInputFilters() override;
 
 private:
+    void setup_touchpad_shortcuts();
     void reconfigure();
 
     KConfigWatcher::Ptr config_watcher;
