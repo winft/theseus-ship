@@ -10,7 +10,7 @@
 namespace KWin::input
 {
 
-class decoration_event_filter : public event_filter
+class KWIN_EXPORT decoration_event_filter : public event_filter
 {
 public:
     bool button(button_event const& event) override;

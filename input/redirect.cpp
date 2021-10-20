@@ -5,23 +5,6 @@
 */
 #include "redirect.h"
 
-// TODO(romangg): should only be included when KWIN_BUILD_TABBOX is defined.
-#include "filters/tabbox.h"
-
-#include "filters/decoration_event.h"
-#include "filters/drag_and_drop.h"
-#include "filters/effects.h"
-#include "filters/fake_tablet.h"
-#include "filters/forward.h"
-#include "filters/global_shortcut.h"
-#include "filters/internal_window.h"
-#include "filters/lock_screen.h"
-#include "filters/move_resize.h"
-#include "filters/popup.h"
-#include "filters/screen_edge.h"
-#include "filters/terminate_server.h"
-#include "filters/virtual_terminal.h"
-#include "filters/window_action.h"
 #include "filters/window_selector.h"
 
 #include "keyboard.h"
@@ -30,19 +13,17 @@
 #include "switch.h"
 #include "touch.h"
 
+#include "event_spy.h"
 #include "keyboard_redirect.h"
 #include "pointer_redirect.h"
 #include "tablet_redirect.h"
 #include "touch_redirect.h"
 
 #include "../platform.h"
-#include "abstract_wayland_output.h"
 #include "effects.h"
 #include "global_shortcuts_manager.h"
 #include "main.h"
 #include "screens.h"
-#include "seat/session.h"
-#include "spies/touch_hide_cursor.h"
 #include "toplevel.h"
 #include "utils.h"
 #include "wayland_server.h"
@@ -121,44 +102,6 @@ void redirect::uninstallInputEventSpy(event_spy* spy)
 void redirect::setupWorkspace()
 {
     setupInputFilters();
-}
-
-void redirect::setupInputFilters()
-{
-    const bool hasGlobalShortcutSupport
-        = !waylandServer() || waylandServer()->hasGlobalShortcutSupport();
-    if (kwinApp()->session->hasSessionControl() && hasGlobalShortcutSupport) {
-        installInputEventFilter(new virtual_terminal_filter);
-    }
-    if (waylandServer()) {
-        installInputEventSpy(new touch_hide_cursor_spy);
-        if (hasGlobalShortcutSupport) {
-            installInputEventFilter(new terminate_server_filter);
-        }
-        installInputEventFilter(new drag_and_drop_filter);
-        installInputEventFilter(new lock_screen_filter);
-        installInputEventFilter(new popup_filter);
-        m_windowSelector = new window_selector_filter;
-        installInputEventFilter(m_windowSelector);
-    }
-    if (hasGlobalShortcutSupport) {
-        installInputEventFilter(new screen_edge_filter);
-    }
-    installInputEventFilter(new effects_filter);
-    installInputEventFilter(new move_resize_filter);
-#ifdef KWIN_BUILD_TABBOX
-    installInputEventFilter(new tabbox_filter);
-#endif
-    if (hasGlobalShortcutSupport) {
-        installInputEventFilter(new global_shortcut_filter);
-    }
-    installInputEventFilter(new decoration_event_filter);
-    installInputEventFilter(new internal_window_filter);
-    if (waylandServer()) {
-        installInputEventFilter(new window_action_filter);
-        installInputEventFilter(new forward_filter);
-        installInputEventFilter(new fake_tablet_filter);
-    }
 }
 
 void redirect::handleInputConfigChanged(const KConfigGroup& group)

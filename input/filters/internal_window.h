@@ -10,7 +10,7 @@
 namespace KWin::input
 {
 
-class internal_window_filter : public event_filter
+class KWIN_EXPORT internal_window_filter : public event_filter
 {
 public:
     bool key(key_event const& event) override;

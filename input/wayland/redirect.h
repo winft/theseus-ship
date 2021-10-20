@@ -24,6 +24,7 @@ public:
 
 protected:
     void setupWorkspace() override;
+    void setupInputFilters() override;
 
 private:
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;

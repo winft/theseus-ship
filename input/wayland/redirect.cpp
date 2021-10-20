@@ -10,7 +10,28 @@
 #include "tablet_redirect.h"
 #include "touch_redirect.h"
 
+// TODO(romangg): should only be included when KWIN_BUILD_TABBOX is defined.
+#include "input/filters/tabbox.h"
+
+#include "input/filters/decoration_event.h"
+#include "input/filters/drag_and_drop.h"
+#include "input/filters/effects.h"
+#include "input/filters/fake_tablet.h"
+#include "input/filters/forward.h"
+#include "input/filters/global_shortcut.h"
+#include "input/filters/internal_window.h"
+#include "input/filters/lock_screen.h"
+#include "input/filters/move_resize.h"
+#include "input/filters/popup.h"
+#include "input/filters/screen_edge.h"
+#include "input/filters/terminate_server.h"
+#include "input/filters/virtual_terminal.h"
+#include "input/filters/window_action.h"
+#include "input/filters/window_selector.h"
+#include "input/spies/touch_hide_cursor.h"
+
 #include "main.h"
+#include "seat/session.h"
 #include "wayland_server.h"
 
 #include <Wrapland/Server/display.h>
@@ -147,6 +168,47 @@ void redirect::setupWorkspace()
     m_tablet->init();
 
     setupInputFilters();
+}
+
+void redirect::setupInputFilters()
+{
+    auto const has_global_shortcuts = waylandServer()->hasGlobalShortcutSupport();
+
+    if (kwinApp()->session->hasSessionControl() && has_global_shortcuts) {
+        installInputEventFilter(new virtual_terminal_filter);
+    }
+
+    installInputEventSpy(new touch_hide_cursor_spy);
+    if (has_global_shortcuts) {
+        installInputEventFilter(new terminate_server_filter);
+    }
+    installInputEventFilter(new drag_and_drop_filter);
+    installInputEventFilter(new lock_screen_filter);
+    installInputEventFilter(new popup_filter);
+
+    m_windowSelector = new window_selector_filter;
+    installInputEventFilter(m_windowSelector);
+
+    if (has_global_shortcuts) {
+        installInputEventFilter(new screen_edge_filter);
+    }
+    installInputEventFilter(new effects_filter);
+    installInputEventFilter(new move_resize_filter);
+
+#ifdef KWIN_BUILD_TABBOX
+    installInputEventFilter(new tabbox_filter);
+#endif
+
+    if (has_global_shortcuts) {
+        installInputEventFilter(new global_shortcut_filter);
+    }
+
+    installInputEventFilter(new decoration_event_filter);
+    installInputEventFilter(new internal_window_filter);
+
+    installInputEventFilter(new window_action_filter);
+    installInputEventFilter(new forward_filter);
+    installInputEventFilter(new fake_tablet_filter);
 }
 
 }

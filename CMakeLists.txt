@@ -406,20 +406,12 @@ set(kwin_SRCS
     input/event_spy.cpp
     input/filters/decoration_event.cpp
     input/filters/dpms.cpp
-    input/filters/drag_and_drop.cpp
     input/filters/effects.cpp
-    input/filters/fake_tablet.cpp
-    input/filters/forward.cpp
     input/filters/global_shortcut.cpp
     input/filters/helpers.cpp
     input/filters/internal_window.cpp
-    input/filters/lock_screen.cpp
     input/filters/move_resize.cpp
-    input/filters/popup.cpp
     input/filters/screen_edge.cpp
-    input/filters/terminate_server.cpp
-    input/filters/virtual_terminal.cpp
-    input/filters/window_action.cpp
     input/filters/window_selector.cpp
     input/keyboard.cpp
     input/keyboard_redirect.cpp
@@ -443,7 +435,6 @@ set(kwin_SRCS
     input/spies/keyboard_layout.cpp
     input/spies/keyboard_repeat.cpp
     input/spies/modifier_only_shortcuts.cpp
-    input/spies/touch_hide_cursor.cpp
     input/cursor.cpp
     input/cursor_shape.cpp
     input/event.cpp
@@ -796,6 +787,15 @@ set(kwin_WAYLAND_SRCS
    input/backend/wlroots/control/switch.cpp
    input/backend/wlroots/control/touch.cpp
    input/dbus/tablet_mode_manager.cpp
+   input/filters/drag_and_drop.cpp
+   input/filters/fake_tablet.cpp
+   input/filters/forward.cpp
+   input/filters/lock_screen.cpp
+   input/filters/popup.cpp
+   input/filters/terminate_server.cpp
+   input/filters/virtual_terminal.cpp
+   input/filters/window_action.cpp
+   input/spies/touch_hide_cursor.cpp
    input/spies/tablet_mode_switch.cpp
    input/wayland/cursor.cpp
    input/wayland/cursor_image.cpp

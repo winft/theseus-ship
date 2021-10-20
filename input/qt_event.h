@@ -13,7 +13,7 @@ namespace KWin::input
 {
 
 Qt::MouseButton KWIN_EXPORT button_to_qt_mouse_button(uint32_t button);
-uint32_t qt_mouse_button_to_button(Qt::MouseButton button);
+uint32_t KWIN_EXPORT qt_mouse_button_to_button(Qt::MouseButton button);
 
 Qt::Key KWIN_EXPORT key_to_qt_key(uint32_t key);
 
@@ -24,6 +24,6 @@ QMouseEvent motion_absolute_to_qt_event(motion_absolute_event const& event);
 
 QWheelEvent axis_to_qt_event(axis_event const& event);
 
-QKeyEvent key_to_qt_event(key_event const& event);
+QKeyEvent KWIN_EXPORT key_to_qt_event(key_event const& event);
 
 }

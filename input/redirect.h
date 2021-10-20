@@ -282,12 +282,15 @@ protected:
              touch_redirect* touch);
 
     virtual void setupWorkspace();
-    void setupInputFilters();
+    virtual void setupInputFilters() = 0;
+    void installInputEventFilter(event_filter* filter);
 
     std::unique_ptr<keyboard_redirect> m_keyboard;
     std::unique_ptr<pointer_redirect> m_pointer;
     std::unique_ptr<tablet_redirect> m_tablet;
     std::unique_ptr<touch_redirect> m_touch;
+
+    window_selector_filter* m_windowSelector{nullptr};
 
 private Q_SLOTS:
     void handleInputConfigChanged(const KConfigGroup& group);
@@ -295,10 +298,8 @@ private Q_SLOTS:
 private:
     void setupTouchpadShortcuts();
     void reconfigure();
-    void installInputEventFilter(event_filter* filter);
 
     global_shortcuts_manager* m_shortcuts;
-    window_selector_filter* m_windowSelector = nullptr;
     KConfigWatcher::Ptr m_inputConfigWatcher;
 
     std::vector<event_filter*> m_filters;

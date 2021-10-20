@@ -10,7 +10,7 @@
 namespace KWin::input
 {
 
-class screen_edge_filter : public event_filter
+class KWIN_EXPORT screen_edge_filter : public event_filter
 {
 public:
     bool motion(motion_event const& event) override;

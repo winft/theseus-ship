@@ -12,7 +12,7 @@ class QTimer;
 namespace KWin::input
 {
 
-class global_shortcut_filter : public event_filter
+class KWIN_EXPORT global_shortcut_filter : public event_filter
 {
 public:
     global_shortcut_filter();
