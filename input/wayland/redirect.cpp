@@ -10,6 +10,12 @@
 #include "tablet_redirect.h"
 #include "touch_redirect.h"
 
+#include "input/keyboard.h"
+#include "input/platform.h"
+#include "input/pointer.h"
+#include "input/switch.h"
+#include "input/touch.h"
+
 // TODO(romangg): should only be included when KWIN_BUILD_TABBOX is defined.
 #include "input/filters/tabbox.h"
 
@@ -36,6 +42,7 @@
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
+#include <Wrapland/Server/seat.h>
 
 namespace KWin::input::wayland
 {
@@ -49,6 +56,137 @@ redirect::redirect()
 }
 
 redirect::~redirect() = default;
+
+static Wrapland::Server::Seat* find_seat()
+{
+    return waylandServer()->seat();
+}
+
+void redirect::set_platform(input::platform* platform)
+{
+    this->platform = platform;
+    platform->config = kwinApp()->inputConfig();
+
+    QObject::connect(platform, &platform::pointer_added, this, [this](auto pointer) {
+        auto pointer_red = m_pointer.get();
+        QObject::connect(pointer,
+                         &pointer::button_changed,
+                         pointer_red,
+                         &input::pointer_redirect::process_button);
+        QObject::connect(
+            pointer, &pointer::motion, pointer_red, &input::pointer_redirect::process_motion);
+        QObject::connect(pointer,
+                         &pointer::motion_absolute,
+                         pointer_red,
+                         &input::pointer_redirect::process_motion_absolute);
+        QObject::connect(
+            pointer, &pointer::axis_changed, pointer_red, &input::pointer_redirect::process_axis);
+
+        QObject::connect(pointer,
+                         &pointer::pinch_begin,
+                         pointer_red,
+                         &input::pointer_redirect::process_pinch_begin);
+        QObject::connect(pointer,
+                         &pointer::pinch_update,
+                         pointer_red,
+                         &input::pointer_redirect::process_pinch_update);
+        QObject::connect(
+            pointer, &pointer::pinch_end, pointer_red, &input::pointer_redirect::process_pinch_end);
+
+        QObject::connect(pointer,
+                         &pointer::swipe_begin,
+                         pointer_red,
+                         &input::pointer_redirect::process_swipe_begin);
+        QObject::connect(pointer,
+                         &pointer::swipe_update,
+                         pointer_red,
+                         &input::pointer_redirect::process_swipe_update);
+        QObject::connect(
+            pointer, &pointer::swipe_end, pointer_red, &input::pointer_redirect::process_swipe_end);
+
+        if (auto seat = find_seat()) {
+            seat->setHasPointer(true);
+        }
+    });
+
+    QObject::connect(platform, &platform::pointer_removed, this, [this, platform]() {
+        if (auto seat = find_seat(); seat && platform->pointers.empty()) {
+            seat->setHasPointer(false);
+        }
+    });
+
+    QObject::connect(platform, &platform::switch_added, this, [this](auto switch_device) {
+        QObject::connect(switch_device, &switch_device::toggle, this, [this](auto const& event) {
+            if (event.type == switch_type::tablet_mode) {
+                Q_EMIT hasTabletModeSwitchChanged(event.state == switch_state::on);
+            }
+        });
+    });
+
+    QObject::connect(platform, &platform::touch_added, this, [this](auto touch) {
+        auto touch_red = m_touch.get();
+        QObject::connect(touch, &touch::down, touch_red, &input::touch_redirect::process_down);
+        QObject::connect(touch, &touch::up, touch_red, &input::touch_redirect::process_up);
+        QObject::connect(touch, &touch::motion, touch_red, &input::touch_redirect::process_motion);
+        QObject::connect(touch, &touch::cancel, touch_red, &input::touch_redirect::cancel);
+#if HAVE_WLR_TOUCH_FRAME
+        QObject::connect(touch, &touch::frame, touch_red, &input::touch_redirect::frame);
+#endif
+
+        if (auto seat = find_seat()) {
+            seat->setHasTouch(true);
+        }
+    });
+
+    QObject::connect(platform, &platform::touch_removed, this, [this, platform]() {
+        if (auto seat = find_seat(); seat && platform->touchs.empty()) {
+            seat->setHasTouch(false);
+        }
+    });
+
+    QObject::connect(platform, &platform::keyboard_added, this, [this](auto keyboard) {
+        auto keyboard_red = m_keyboard.get();
+        QObject::connect(
+            keyboard, &keyboard::key_changed, keyboard_red, &input::keyboard_redirect::process_key);
+        QObject::connect(keyboard,
+                         &keyboard::modifiers_changed,
+                         keyboard_red,
+                         &input::keyboard_redirect::process_modifiers);
+        if (auto seat = find_seat(); seat && !seat->hasKeyboard()) {
+            seat->setHasKeyboard(true);
+            reconfigure();
+        }
+    });
+
+    QObject::connect(platform, &platform::keyboard_removed, this, [this, platform]() {
+        if (auto seat = find_seat(); seat && platform->keyboards.empty()) {
+            seat->setHasKeyboard(false);
+        }
+    });
+
+    platform->update_keyboard_leds(m_keyboard->xkb()->leds());
+    waylandServer()->updateKeyState(m_keyboard->xkb()->leds());
+    QObject::connect(m_keyboard.get(),
+                     &keyboard_redirect::ledsChanged,
+                     waylandServer(),
+                     &WaylandServer::updateKeyState);
+    QObject::connect(m_keyboard.get(),
+                     &keyboard_redirect::ledsChanged,
+                     platform,
+                     &platform::update_keyboard_leds);
+
+    reconfigure();
+    QObject::connect(m_inputConfigWatcher.data(),
+                     &KConfigWatcher::configChanged,
+                     this,
+                     [this](auto const& group) {
+                         if (group.name() == QLatin1String("Keyboard")) {
+                             reconfigure();
+                         }
+                     });
+
+    setupTouchpadShortcuts();
+}
 
 void redirect::setupWorkspace()
 {

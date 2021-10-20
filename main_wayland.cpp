@@ -195,14 +195,17 @@ void ApplicationWayland::start()
     auto session = new seat::backend::wlroots::session(backend->backend);
     this->session.reset(session);
     session->take_control();
-    input::add_redirect(input.get(), std::make_unique<input::wayland::redirect>());
+
+    auto redirect = std::make_unique<input::wayland::redirect>();
+    auto redirect_ptr = redirect.get();
+
+    input::add_redirect(input.get(), std::move(redirect));
     input->cursor.reset(new input::wayland::cursor);
+    redirect_ptr->set_platform(input.get());
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     // TODO(romangg): can be removed?
     gainRealTime(RealTimeFlags::ResetOnFork);
-
-    input->redirect->set_platform(input.get());
 
     try {
         render->init();

@@ -79,8 +79,6 @@ public:
 
     ~redirect() override;
 
-    void set_platform(input::platform* platform);
-
     /**
      * @return const QPointF& The current global pointer position
      */
@@ -284,6 +282,8 @@ protected:
     virtual void setupWorkspace();
     virtual void setupInputFilters() = 0;
     void installInputEventFilter(event_filter* filter);
+    void setupTouchpadShortcuts();
+    void reconfigure();
 
     std::unique_ptr<keyboard_redirect> m_keyboard;
     std::unique_ptr<pointer_redirect> m_pointer;
@@ -291,13 +291,10 @@ protected:
     std::unique_ptr<touch_redirect> m_touch;
 
     window_selector_filter* m_windowSelector{nullptr};
+    KConfigWatcher::Ptr m_inputConfigWatcher;
 
 private:
-    void setupTouchpadShortcuts();
-    void reconfigure();
-
     global_shortcuts_manager* m_shortcuts;
-    KConfigWatcher::Ptr m_inputConfigWatcher;
 
     std::vector<event_filter*> m_filters;
     std::vector<event_spy*> m_spies;

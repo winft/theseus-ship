@@ -22,6 +22,8 @@ public:
     redirect();
     ~redirect();
 
+    void set_platform(input::platform* platform);
+
 protected:
     void setupWorkspace() override;
     void setupInputFilters() override;

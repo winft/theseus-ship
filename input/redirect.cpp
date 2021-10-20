@@ -49,8 +49,8 @@ redirect::redirect(keyboard_redirect* keyboard,
     , m_pointer(pointer)
     , m_tablet(tablet)
     , m_touch(touch)
-    , m_shortcuts(new global_shortcuts_manager(this))
     , m_inputConfigWatcher{KConfigWatcher::create(kwinApp()->inputConfig())}
+    , m_shortcuts(new global_shortcuts_manager(this))
 {
     qRegisterMetaType<KWin::input::redirect::KeyboardKeyState>();
     qRegisterMetaType<KWin::input::redirect::PointerButtonState>();
@@ -122,125 +122,6 @@ void redirect::reconfigure()
     if (waylandServer()->seat()->hasKeyboard()) {
         waylandServer()->seat()->keyboards().set_repeat_info(enabled ? rate : 0, delay);
     }
-}
-
-static Wrapland::Server::Seat* findSeat()
-{
-    auto server = waylandServer();
-    if (!server) {
-        return nullptr;
-    }
-    return server->seat();
-}
-
-void redirect::set_platform(input::platform* platform)
-{
-    this->platform = platform;
-    platform->config = kwinApp()->inputConfig();
-
-    connect(platform, &platform::pointer_added, this, [this](auto pointer) {
-        auto pointer_red = m_pointer.get();
-        connect(pointer, &pointer::button_changed, pointer_red, &pointer_redirect::process_button);
-        connect(pointer, &pointer::motion, pointer_red, &pointer_redirect::process_motion);
-        connect(pointer,
-                &pointer::motion_absolute,
-                pointer_red,
-                &pointer_redirect::process_motion_absolute);
-        connect(pointer, &pointer::axis_changed, pointer_red, &pointer_redirect::process_axis);
-
-        connect(
-            pointer, &pointer::pinch_begin, pointer_red, &pointer_redirect::process_pinch_begin);
-        connect(
-            pointer, &pointer::pinch_update, pointer_red, &pointer_redirect::process_pinch_update);
-        connect(pointer, &pointer::pinch_end, pointer_red, &pointer_redirect::process_pinch_end);
-
-        connect(
-            pointer, &pointer::swipe_begin, pointer_red, &pointer_redirect::process_swipe_begin);
-        connect(
-            pointer, &pointer::swipe_update, pointer_red, &pointer_redirect::process_swipe_update);
-        connect(pointer, &pointer::swipe_end, pointer_red, &pointer_redirect::process_swipe_end);
-
-        if (auto seat = findSeat()) {
-            seat->setHasPointer(true);
-        }
-    });
-
-    connect(platform, &platform::pointer_removed, this, [this, platform]() {
-        if (auto seat = findSeat(); seat && platform->pointers.empty()) {
-            seat->setHasPointer(false);
-        }
-    });
-
-    connect(platform, &platform::switch_added, this, [this](auto switch_device) {
-        connect(switch_device, &switch_device::toggle, this, [this](auto const& event) {
-            if (event.type == switch_type::tablet_mode) {
-                Q_EMIT hasTabletModeSwitchChanged(event.state == switch_state::on);
-            }
-        });
-    });
-
-    connect(platform, &platform::touch_added, this, [this](auto touch) {
-        auto touch_red = m_touch.get();
-        connect(touch, &touch::down, touch_red, &touch_redirect::process_down);
-        connect(touch, &touch::up, touch_red, &touch_redirect::process_up);
-        connect(touch, &touch::motion, touch_red, &touch_redirect::process_motion);
-        connect(touch, &touch::cancel, touch_red, &touch_redirect::cancel);
-#if HAVE_WLR_TOUCH_FRAME
-        connect(touch, &touch::frame, touch_red, &touch_redirect::frame);
-#endif
-
-        if (auto seat = findSeat()) {
-            seat->setHasTouch(true);
-        }
-    });
-
-    connect(platform, &platform::touch_removed, this, [this, platform]() {
-        if (auto seat = findSeat(); seat && platform->touchs.empty()) {
-            seat->setHasTouch(false);
-        }
-    });
-
-    connect(platform, &platform::keyboard_added, this, [this](auto keyboard) {
-        auto keyboard_red = m_keyboard.get();
-        connect(keyboard, &keyboard::key_changed, keyboard_red, &keyboard_redirect::process_key);
-        connect(keyboard,
-                &keyboard::modifiers_changed,
-                keyboard_red,
-                &keyboard_redirect::process_modifiers);
-        if (auto seat = findSeat(); seat && !seat->hasKeyboard()) {
-            seat->setHasKeyboard(true);
-            reconfigure();
-        }
-    });
-
-    connect(platform, &platform::keyboard_removed, this, [this, platform]() {
-        if (auto seat = findSeat(); seat && platform->keyboards.empty()) {
-            seat->setHasKeyboard(false);
-        }
-    });
-
-    platform->update_keyboard_leds(m_keyboard->xkb()->leds());
-    waylandServer()->updateKeyState(m_keyboard->xkb()->leds());
-    connect(m_keyboard.get(),
-            &keyboard_redirect::ledsChanged,
-            waylandServer(),
-            &WaylandServer::updateKeyState);
-    connect(m_keyboard.get(),
-            &keyboard_redirect::ledsChanged,
-            platform,
-            &platform::update_keyboard_leds);
-
-    reconfigure();
-    QObject::connect(m_inputConfigWatcher.data(),
-                     &KConfigWatcher::configChanged,
-                     this,
-                     [this](auto const& group) {
-                         if (group.name() == QLatin1String("Keyboard")) {
-                             reconfigure();
-                         }
-                     });
-
-    setupTouchpadShortcuts();
 }
 
 static const QString s_touchpadComponent = QStringLiteral("kcm_touchpad");

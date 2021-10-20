@@ -165,9 +165,13 @@ void WaylandTestApplication::start()
     createOptions();
 
     session.reset(new seat::backend::wlroots::session(headless_backend));
-    input::add_redirect(input.get(), std::make_unique<input::wayland::redirect>());
+
+    auto redirect = std::make_unique<input::wayland::redirect>();
+    auto redirect_ptr = redirect.get();
+
+    input::add_redirect(input.get(), std::move(redirect));
     input->cursor.reset(new input::wayland::cursor);
-    input->redirect->set_platform(input.get());
+    redirect_ptr->set_platform(input.get());
 
     keyboard = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_KEYBOARD);
     pointer = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_POINTER);
