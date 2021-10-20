@@ -7,6 +7,7 @@
 
 #include "wlr_includes.h"
 
+#include "base/platform.h"
 #include "base/wlroots.h"
 #include "platform.h"
 
@@ -25,14 +26,15 @@ class KWIN_EXPORT backend : public Platform
 {
     Q_OBJECT
 public:
-    base::wlroots* base;
+    base::platform<base::wlroots, AbstractWaylandOutput>& base;
     egl_backend* egl{nullptr};
 
     QVector<output*> all_outputs;
     QVector<output*> enabled_outputs;
     int fd{0};
 
-    explicit backend(base::wlroots* base, QObject* parent = nullptr);
+    explicit backend(base::platform<base::wlroots, AbstractWaylandOutput>& base,
+                     QObject* parent = nullptr);
     ~backend() override;
 
     OpenGLBackend* createOpenGLBackend() override;

@@ -193,7 +193,7 @@ void ApplicationWayland::start()
 
     createOptions();
 
-    auto session = new seat::backend::wlroots::session(backend->backend);
+    auto session = new seat::backend::wlroots::session(base.backend.backend);
     this->session.reset(session);
     session->take_control();
 
@@ -235,12 +235,12 @@ void ApplicationWayland::handle_server_addons_created()
 
 void ApplicationWayland::init_platforms()
 {
-    backend.reset(new base::wlroots(waylandServer()->display()));
+    base.backend = base::wlroots(waylandServer()->display());
 
-    input.reset(new input::backend::wlroots::platform(backend.get()));
+    input.reset(new input::backend::wlroots::platform(&base.backend));
     input::wayland::add_dbus(input.get());
 
-    render.reset(new render::backend::wlroots::backend(backend.get(), this));
+    render.reset(new render::backend::wlroots::backend(base, this));
     platform = render.get();
 }
 

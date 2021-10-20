@@ -74,7 +74,6 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
                                                int& argc,
                                                char** argv)
     : ApplicationWaylandAbstract(mode, argc, argv)
-    , base{new base::wlroots()}
 {
     // TODO: add a test move to kglobalaccel instead?
     QFile{QStandardPaths::locate(QStandardPaths::ConfigLocation,
@@ -97,9 +96,10 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
+    base.backend = base::wlroots();
     server.reset(new WaylandServer(socket_name, flags));
 
-    render.reset(new render::backend::wlroots::backend(base.get(), this));
+    render.reset(new render::backend::wlroots::backend(base, this));
     platform = render.get();
 
     auto environment = QProcessEnvironment::systemEnvironment();
@@ -159,8 +159,8 @@ void WaylandTestApplication::start()
 
     auto headless_backend = wlr_headless_backend_create(waylandServer()->display()->native());
     wlr_headless_add_output(headless_backend, 1280, 1024);
-    base->init(headless_backend);
-    input.reset(new input::backend::wlroots::platform(base.get()));
+    base.backend.init(headless_backend);
+    input.reset(new input::backend::wlroots::platform(&base.backend));
     input::wayland::add_dbus(input.get());
 
     createOptions();
