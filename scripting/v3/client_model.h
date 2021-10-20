@@ -114,9 +114,9 @@ private:
     WindowTypes windowTypeMask(window* client) const;
 
     client_model* m_clientModel = nullptr;
+    base::output* m_output = nullptr;
     win::virtual_desktop* m_desktop = nullptr;
     QString m_filter;
-    std::optional<QString> m_screenName;
     std::optional<WindowTypes> m_windowType;
 };
 
