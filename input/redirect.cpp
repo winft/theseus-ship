@@ -238,6 +238,11 @@ void redirect::set_platform(input::platform* platform)
             &platform::update_keyboard_leds);
 
     reconfigure();
+    QObject::connect(m_inputConfigWatcher.data(),
+                     &KConfigWatcher::configChanged,
+                     this,
+                     &redirect::handleInputConfigChanged);
+
     setupTouchpadShortcuts();
 }
 
