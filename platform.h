@@ -359,7 +359,7 @@ public:
 
     void createDpmsFilter();
     void checkOutputsOn();
-    Q_INVOKABLE void turnOutputsOn();
+    void turnOutputsOn();
 
     virtual clockid_t clockId() const;
     QByteArray deviceIdentifier() const {

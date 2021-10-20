@@ -12,6 +12,7 @@
 #include "wayland_server.h"
 
 #include <QApplication>
+#include <QTimer>
 
 #include <Wrapland/Server/seat.h>
 
@@ -100,7 +101,7 @@ bool dpms_filter::touchMotion(int32_t id, const QPointF& pos, uint32_t time)
 void dpms_filter::notify()
 {
     // Queued to not modify the list of event filters while filtering.
-    QMetaObject::invokeMethod(m_backend, "turnOutputsOn", Qt::QueuedConnection);
+    QTimer::singleShot(0, m_backend, [backend = m_backend] { backend->turnOutputsOn(); });
 }
 
 }
