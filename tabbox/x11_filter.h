@@ -27,7 +27,7 @@ namespace KWin
 namespace TabBox
 {
 
-class X11Filter : public platform::x11::event_filter
+class X11Filter : public base::x11::event_filter
 {
 public:
     explicit X11Filter();

@@ -15,7 +15,7 @@ class EffectsHandlerImpl;
 namespace render::backend::x11
 {
 
-class EffectsMouseInterceptionX11Filter : public platform::x11::event_filter
+class EffectsMouseInterceptionX11Filter : public base::x11::event_filter
 {
 public:
     explicit EffectsMouseInterceptionX11Filter(xcb_window_t window, EffectsHandlerImpl* effects);

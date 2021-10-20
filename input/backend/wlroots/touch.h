@@ -23,7 +23,7 @@ class touch : public input::touch
 {
     Q_OBJECT
 public:
-    using er = event_receiver<touch>;
+    using er = base::event_receiver<touch>;
 
     wlr_touch* backend{nullptr};
 

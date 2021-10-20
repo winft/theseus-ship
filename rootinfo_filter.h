@@ -29,7 +29,7 @@ namespace win::x11
 class RootInfo;
 }
 
-class RootInfoFilter : public platform::x11::event_filter
+class RootInfoFilter : public base::x11::event_filter
 {
 public:
     explicit RootInfoFilter(win::x11::RootInfo *parent);

@@ -29,7 +29,7 @@ class EffectsHandlerImpl;
 namespace win::x11
 {
 
-class WindowPropertyNotifyX11Filter : public platform::x11::event_filter
+class WindowPropertyNotifyX11Filter : public base::x11::event_filter
 {
 public:
     explicit WindowPropertyNotifyX11Filter(EffectsHandlerImpl* effects);

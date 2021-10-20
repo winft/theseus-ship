@@ -9,7 +9,7 @@
 #include "event_filter_manager.h"
 #include "main.h"
 
-namespace KWin::platform::x11
+namespace KWin::base::x11
 {
 
 event_filter::event_filter(const QVector<int>& eventTypes)

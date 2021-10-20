@@ -12,7 +12,7 @@ namespace KWin::input::backend::x11
 {
 class cursor;
 
-class xfixes_cursor_event_filter : public KWin::platform::x11::event_filter
+class xfixes_cursor_event_filter : public base::x11::event_filter
 {
 public:
     explicit xfixes_cursor_event_filter(cursor* cursor);

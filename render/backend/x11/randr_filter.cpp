@@ -17,7 +17,7 @@ namespace KWin::render::backend::x11
 {
 
 RandrFilter::RandrFilter(X11StandalonePlatform* backend)
-    : platform::x11::event_filter(Xcb::Extensions::self()->randrNotifyEvent())
+    : base::x11::event_filter(Xcb::Extensions::self()->randrNotifyEvent())
     , m_backend(backend)
     , m_changedTimer(new QTimer(backend))
 {

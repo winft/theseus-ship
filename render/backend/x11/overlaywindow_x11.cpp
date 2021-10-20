@@ -23,7 +23,7 @@ namespace KWin::render::backend::x11
 {
 OverlayWindowX11::OverlayWindowX11()
     : OverlayWindow()
-    , platform::x11::event_filter(QVector<int>{XCB_EXPOSE, XCB_VISIBILITY_NOTIFY})
+    , base::x11::event_filter(QVector<int>{XCB_EXPOSE, XCB_VISIBILITY_NOTIFY})
     , m_visible(true)
     , m_shown(false)
     , m_window(XCB_WINDOW_NONE)

@@ -29,8 +29,8 @@ private:
 
     std::unique_ptr<Wrapland::Server::drm_lease_connector_v1> lease_connector;
 
-    event_receiver<output> destroy_rec;
-    event_receiver<output> present_rec;
+    base::event_receiver<output> destroy_rec;
+    base::event_receiver<output> present_rec;
 
     bool disable_native();
 

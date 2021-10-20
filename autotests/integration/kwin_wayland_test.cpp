@@ -74,7 +74,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
                                                int& argc,
                                                char** argv)
     : ApplicationWaylandAbstract(mode, argc, argv)
-    , base{new platform_base::wlroots()}
+    , base{new base::wlroots()}
 {
     // TODO: add a test move to kglobalaccel instead?
     QFile{QStandardPaths::locate(QStandardPaths::ConfigLocation,

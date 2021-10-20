@@ -22,7 +22,7 @@ class Toplevel;
 namespace input::backend::x11
 {
 
-class window_selector : public KWin::platform::x11::event_filter
+class window_selector : public base::x11::event_filter
 {
 public:
     window_selector();

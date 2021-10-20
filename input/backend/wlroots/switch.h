@@ -21,7 +21,7 @@ class switch_device : public input::switch_device
 {
     Q_OBJECT
 public:
-    using er = event_receiver<switch_device>;
+    using er = base::event_receiver<switch_device>;
 
     wlr_switch* backend{nullptr};
 

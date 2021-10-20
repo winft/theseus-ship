@@ -153,7 +153,7 @@ private:
     void handle_server_addons_created();
     void create_xwayland();
 
-    std::unique_ptr<platform_base::wlroots> base;
+    std::unique_ptr<base::wlroots> base;
     std::unique_ptr<render::backend::wlroots::backend> render;
 };
 

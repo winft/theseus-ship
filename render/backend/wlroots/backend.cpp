@@ -24,7 +24,7 @@ namespace KWin::render::backend::wlroots
 
 static auto align_horizontal{false};
 
-backend::backend(platform_base::wlroots* base, QObject* parent)
+backend::backend(base::wlroots* base, QObject* parent)
     : Platform(parent)
     , base{base}
 {
@@ -45,7 +45,7 @@ backend::~backend()
 
 void handle_new_output(struct wl_listener* listener, void* data)
 {
-    event_receiver<backend>* new_output_struct
+    base::event_receiver<backend>* new_output_struct
         = wl_container_of(listener, new_output_struct, event);
     auto back = new_output_struct->receiver;
     auto wlr_out = reinterpret_cast<wlr_output*>(data);
@@ -82,7 +82,7 @@ void backend::init()
 {
     // TODO(romangg): Can we omit making a distinction here?
     // Pointer warping is required for tests.
-    setSupportsPointerWarping(platform_base::wlroots_get_headless_backend(base->backend));
+    setSupportsPointerWarping(base::wlroots_get_headless_backend(base->backend));
 
     assert(base->backend);
     fd = wlr_backend_get_drm_fd(base->backend);
@@ -134,7 +134,7 @@ clockid_t backend::clockId() const
 
 OpenGLBackend* backend::createOpenGLBackend()
 {
-    egl = new egl_backend(this, platform_base::wlroots_get_headless_backend(base->backend));
+    egl = new egl_backend(this, base::wlroots_get_headless_backend(base->backend));
     return egl;
 }
 
@@ -173,7 +173,7 @@ struct outputs_array_wrap {
 void backend::init_drm_leasing()
 {
 #if HAVE_WLR_DRM_LEASE
-    auto drm_backend = platform_base::wlroots_get_drm_backend(base->backend);
+    auto drm_backend = base::wlroots_get_drm_backend(base->backend);
     if (!drm_backend) {
         return;
     }
@@ -241,8 +241,7 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
     }
 
     connect(lease, &Wrapland::Server::drm_lease_v1::resourceDestroyed, this, [this, lessee_id] {
-        wlr_drm_backend_terminate_lease(platform_base::wlroots_get_drm_backend(base->backend),
-                                        lessee_id);
+        wlr_drm_backend_terminate_lease(base::wlroots_get_drm_backend(base->backend), lessee_id);
         static_cast<render::wayland::compositor*>(compositor::self())->unlock();
     });
 

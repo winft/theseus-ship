@@ -34,7 +34,7 @@ public:
 
 // ------------------------------------------------------------------
 
-class SwapEventFilter : public platform::x11::event_filter
+class SwapEventFilter : public base::x11::event_filter
 {
 public:
     SwapEventFilter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable);

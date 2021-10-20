@@ -20,7 +20,7 @@ class pointer : public input::pointer
 {
     Q_OBJECT
 public:
-    using er = event_receiver<pointer>;
+    using er = base::event_receiver<pointer>;
 
     wlr_pointer* backend{nullptr};
 

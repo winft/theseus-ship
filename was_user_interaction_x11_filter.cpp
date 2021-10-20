@@ -24,12 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 WasUserInteractionX11Filter::WasUserInteractionX11Filter()
-    : platform::x11::event_filter(
+    : base::x11::event_filter(
         QVector<int>{XCB_KEY_PRESS, XCB_KEY_RELEASE, XCB_BUTTON_PRESS, XCB_BUTTON_RELEASE})
 {
 }
 
-bool WasUserInteractionX11Filter::event(xcb_generic_event_t *event)
+bool WasUserInteractionX11Filter::event(xcb_generic_event_t* event)
 {
     Q_UNUSED(event);
     workspace()->setWasUserInteraction();

@@ -17,7 +17,7 @@ namespace KWin::input::backend::wlroots
 
 void handle_device(struct wl_listener* listener, [[maybe_unused]] void* data)
 {
-    event_receiver<platform>* event_receiver_struct
+    base::event_receiver<platform>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto input = event_receiver_struct->receiver;
 
@@ -50,7 +50,7 @@ void handle_device(struct wl_listener* listener, [[maybe_unused]] void* data)
     }
 }
 
-platform::platform(platform_base::wlroots* base)
+platform::platform(base::wlroots* base)
     : base{base}
 {
     add_device.receiver = this;

@@ -11,7 +11,7 @@
 namespace KWin::render::backend::x11
 {
 
-class ScreenEdgesFilter : public platform::x11::event_filter
+class ScreenEdgesFilter : public base::x11::event_filter
 {
 public:
     explicit ScreenEdgesFilter();

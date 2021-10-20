@@ -22,15 +22,15 @@ namespace KWin::input::backend::x11
 {
 
 window_selector::window_selector()
-    : KWin::platform::x11::event_filter(QVector<int>{XCB_BUTTON_PRESS,
-                                                     XCB_BUTTON_RELEASE,
-                                                     XCB_MOTION_NOTIFY,
-                                                     XCB_ENTER_NOTIFY,
-                                                     XCB_LEAVE_NOTIFY,
-                                                     XCB_KEY_PRESS,
-                                                     XCB_KEY_RELEASE,
-                                                     XCB_FOCUS_IN,
-                                                     XCB_FOCUS_OUT})
+    : base::x11::event_filter(QVector<int>{XCB_BUTTON_PRESS,
+                                           XCB_BUTTON_RELEASE,
+                                           XCB_MOTION_NOTIFY,
+                                           XCB_ENTER_NOTIFY,
+                                           XCB_LEAVE_NOTIFY,
+                                           XCB_KEY_PRESS,
+                                           XCB_KEY_RELEASE,
+                                           XCB_FOCUS_IN,
+                                           XCB_FOCUS_OUT})
     , m_active(false)
 {
 }

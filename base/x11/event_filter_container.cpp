@@ -6,7 +6,7 @@
 */
 #include "event_filter_container.h"
 
-namespace KWin::platform::x11
+namespace KWin::base::x11
 {
 
 event_filter_container::event_filter_container(event_filter* filter)

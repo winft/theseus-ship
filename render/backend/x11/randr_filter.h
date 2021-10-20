@@ -13,7 +13,7 @@ namespace KWin::render::backend::x11
 {
 class X11StandalonePlatform;
 
-class RandrFilter : public platform::x11::event_filter
+class RandrFilter : public base::x11::event_filter
 {
 public:
     explicit RandrFilter(X11StandalonePlatform* backend);

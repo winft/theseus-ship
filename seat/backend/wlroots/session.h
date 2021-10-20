@@ -24,8 +24,8 @@ class KWIN_EXPORT session : public seat::session
 {
     Q_OBJECT
 public:
-    event_receiver<session> active_changed;
-    event_receiver<session> destroyed;
+    base::event_receiver<session> active_changed;
+    base::event_receiver<session> destroyed;
     wlr_session* native{nullptr};
     std::vector<wlr_device*> taken_devices;
 

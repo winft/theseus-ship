@@ -21,7 +21,7 @@ class keyboard : public input::keyboard
 {
     Q_OBJECT
 public:
-    using er = event_receiver<keyboard>;
+    using er = base::event_receiver<keyboard>;
 
     wlr_keyboard* backend{nullptr};
 

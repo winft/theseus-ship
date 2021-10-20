@@ -25,14 +25,14 @@ class KWIN_EXPORT backend : public Platform
 {
     Q_OBJECT
 public:
-    platform_base::wlroots* base;
+    base::wlroots* base;
     egl_backend* egl{nullptr};
 
     QVector<output*> all_outputs;
     QVector<output*> enabled_outputs;
     int fd{0};
 
-    explicit backend(platform_base::wlroots* base, QObject* parent = nullptr);
+    explicit backend(base::wlroots* base, QObject* parent = nullptr);
     ~backend() override;
 
     OpenGLBackend* createOpenGLBackend() override;
@@ -61,7 +61,7 @@ private:
     void process_drm_leased(Wrapland::Server::drm_lease_v1* lease);
 
     clockid_t m_clockId;
-    event_receiver<backend> new_output;
+    base::event_receiver<backend> new_output;
 };
 
 }

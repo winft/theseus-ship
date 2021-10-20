@@ -21,7 +21,7 @@ namespace KWin::render::backend::wlroots
 
 void handle_destroy(wl_listener* listener, [[maybe_unused]] void* data)
 {
-    event_receiver<output>* event_receiver_struct
+    base::event_receiver<output>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto output = event_receiver_struct->receiver;
 
@@ -50,7 +50,7 @@ wayland::presentation_kinds to_presentation_kinds(uint32_t wlr_flags)
 
 void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
 {
-    event_receiver<output>* event_receiver_struct
+    base::event_receiver<output>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto our_output = event_receiver_struct->receiver;
     auto event = static_cast<wlr_output_event_present*>(data);

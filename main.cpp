@@ -91,7 +91,7 @@ int Application::x11ScreenNumber()
 
 Application::Application(Application::OperationMode mode, int &argc, char **argv)
     : QApplication(argc, argv)
-    , x11_event_filters{new platform::x11::event_filter_manager}
+    , x11_event_filters{new base::x11::event_filter_manager}
     , m_eventFilter(new XcbEventFilter())
     , m_configLock(false)
     , m_config()

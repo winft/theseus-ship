@@ -14,8 +14,7 @@ namespace KWin::render::backend::x11
 {
 
 ScreenEdgesFilter::ScreenEdgesFilter()
-    : platform::x11::event_filter(
-        QVector<int>{XCB_MOTION_NOTIFY, XCB_ENTER_NOTIFY, XCB_CLIENT_MESSAGE})
+    : base::x11::event_filter(QVector<int>{XCB_MOTION_NOTIFY, XCB_ENTER_NOTIFY, XCB_CLIENT_MESSAGE})
 {
 }
 

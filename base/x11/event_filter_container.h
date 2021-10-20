@@ -8,7 +8,7 @@
 
 #include <QObject>
 
-namespace KWin::platform::x11
+namespace KWin::base::x11
 {
 
 class event_filter;

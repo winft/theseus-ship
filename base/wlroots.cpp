@@ -7,7 +7,7 @@
 
 #include <Wrapland/Server/display.h>
 
-namespace KWin::platform_base
+namespace KWin::base
 {
 
 void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)

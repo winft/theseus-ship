@@ -32,7 +32,7 @@ class KWIN_EXPORT platform : public input::wayland::platform
 {
     Q_OBJECT
 public:
-    platform(platform_base::wlroots* base);
+    platform(base::wlroots* base);
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     platform(platform&& other) noexcept = default;
@@ -40,8 +40,8 @@ public:
     ~platform() override = default;
 
 private:
-    event_receiver<platform> add_device;
-    platform_base::wlroots* base;
+    base::event_receiver<platform> add_device;
+    base::wlroots* base;
 };
 
 }

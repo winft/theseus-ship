@@ -44,7 +44,7 @@ class QStringList;
 namespace KWin
 {
 
-namespace platform::x11
+namespace base::x11
 {
 class event_filter;
 }
@@ -579,7 +579,7 @@ private:
     std::vector<win::x11::Group*> groups;
 
     bool was_user_interaction{false};
-    QScopedPointer<platform::x11::event_filter> m_wasUserInteractionFilter;
+    QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
 
     int session_active_client;
     int session_desktop;
@@ -633,8 +633,8 @@ private:
 
     QScopedPointer<KillWindow> m_windowKiller;
 
-    QScopedPointer<platform::x11::event_filter> m_movingClientFilter;
-    QScopedPointer<platform::x11::event_filter> m_syncAlarmFilter;
+    QScopedPointer<base::x11::event_filter> m_movingClientFilter;
+    QScopedPointer<base::x11::event_filter> m_syncAlarmFilter;
 
     SessionManager* m_sessionManager;
 
