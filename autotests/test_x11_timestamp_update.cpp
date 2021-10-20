@@ -47,6 +47,7 @@ public:
     debug::console* create_debug_console() override;
     void start();
 
+    base::platform<base::backend::x11, AbstractOutput> base;
     std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
     std::unique_ptr<Workspace> workspace;
 };
@@ -63,7 +64,7 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    render.reset(new render::backend::x11::X11StandalonePlatform(this));
+    render.reset(new render::backend::x11::X11StandalonePlatform(base));
     platform = render.get();
 }
 

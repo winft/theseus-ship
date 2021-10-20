@@ -8,6 +8,8 @@
 #define KWIN_MAIN_X11_H
 #include "main.h"
 
+#include "base/platform.h"
+#include "base/backend/x11.h"
 #include "render/backend/x11/x11_platform.h"
 
 #include <memory>
@@ -44,6 +46,7 @@ private:
 
     static void crashHandler(int signal);
 
+    base::platform<base::backend::x11, AbstractOutput> base;
     std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
     std::unique_ptr<Workspace> workspace;
 
