@@ -7,6 +7,8 @@
 
 #include "input/redirect.h"
 
+#include <KConfigWatcher>
+
 namespace Wrapland::Server
 {
 class FakeInput;
@@ -31,6 +33,7 @@ protected:
 private:
     void reconfigure();
 
+    KConfigWatcher::Ptr config_watcher;
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 };
 

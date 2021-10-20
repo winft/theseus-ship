@@ -12,7 +12,6 @@
 #include <kwin_export.h>
 #include <kwinglobals.h>
 
-#include <KConfigWatcher>
 #include <KSharedConfig>
 
 #include <QAction>
@@ -290,7 +289,6 @@ protected:
     std::unique_ptr<touch_redirect> m_touch;
 
     window_selector_filter* m_windowSelector{nullptr};
-    KConfigWatcher::Ptr m_inputConfigWatcher;
 
 private:
     global_shortcuts_manager* m_shortcuts;

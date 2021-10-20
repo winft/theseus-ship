@@ -53,6 +53,7 @@ redirect::redirect()
                       new pointer_redirect,
                       new tablet_redirect,
                       new touch_redirect)
+    , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
 {
     reconfigure();
 }
@@ -178,14 +179,12 @@ void redirect::set_platform(input::platform* platform)
                      &platform::update_keyboard_leds);
 
     reconfigure();
-    QObject::connect(m_inputConfigWatcher.data(),
-                     &KConfigWatcher::configChanged,
-                     this,
-                     [this](auto const& group) {
-                         if (group.name() == QLatin1String("Keyboard")) {
-                             reconfigure();
-                         }
-                     });
+    QObject::connect(
+        config_watcher.data(), &KConfigWatcher::configChanged, this, [this](auto const& group) {
+            if (group.name() == QLatin1String("Keyboard")) {
+                reconfigure();
+            }
+        });
 
     setupTouchpadShortcuts();
 }
@@ -353,7 +352,7 @@ void redirect::setupInputFilters()
 
 void redirect::reconfigure()
 {
-    auto input_config = m_inputConfigWatcher->config();
+    auto input_config = config_watcher->config();
     auto const group = input_config->group(QStringLiteral("Keyboard"));
 
     auto delay = group.readEntry("RepeatDelay", 660);

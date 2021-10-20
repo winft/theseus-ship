@@ -34,7 +34,6 @@
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 
-#include <KConfigWatcher>
 #include <KGlobalAccel>
 
 namespace KWin::input
@@ -48,7 +47,6 @@ redirect::redirect(keyboard_redirect* keyboard,
     , m_pointer(pointer)
     , m_tablet(tablet)
     , m_touch(touch)
-    , m_inputConfigWatcher{KConfigWatcher::create(kwinApp()->inputConfig())}
     , m_shortcuts(new global_shortcuts_manager(this))
 {
     qRegisterMetaType<KWin::input::redirect::KeyboardKeyState>();
