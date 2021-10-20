@@ -35,9 +35,9 @@ namespace Ftrace
 /**
  * Internal perf API for consumers
  */
-void mark(const QString &message);
-void begin(const QString &message, ulong ctx);
-void end(const QString &message, ulong ctx);
+void KWIN_EXPORT mark(const QString &message);
+void KWIN_EXPORT begin(const QString &message, ulong ctx);
+void KWIN_EXPORT end(const QString &message, ulong ctx);
 
 bool valid(QObject *parent = nullptr, bool create = false);
 bool setEnabled(bool enable);

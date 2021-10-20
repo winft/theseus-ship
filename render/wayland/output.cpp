@@ -12,11 +12,12 @@
 #include "abstract_wayland_output.h"
 #include "effects.h"
 #include "platform.h"
+#include "wayland_logging.h"
 #include "wayland_server.h"
+#include "win/transient.h"
 #include "win/x11/stacking_tree.h"
 #include "workspace.h"
 
-#include "win/transient.h"
 #include <kwinglplatform.h>
 #include <kwingltexture.h>
 
@@ -231,7 +232,7 @@ void output::swapped(presentation_data const& data)
     compositor->presentation->presented(this, data);
 
     if (!swap_pending) {
-        qCWarning(KWIN_CORE) << "render::wayland::output::swapped called but no swap pending.";
+        qCWarning(KWIN_WL) << "render::wayland::output::swapped called but no swap pending.";
         return;
     }
     swap_pending = false;

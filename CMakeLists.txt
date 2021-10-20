@@ -436,9 +436,6 @@ set(kwin_SRCS
     outline.cpp
     overlaywindow.cpp
     platform.cpp
-    render/wayland/compositor.cpp
-    render/wayland/output.cpp
-    render/wayland/presentation.cpp
     render/x11/compositor.cpp
     render/x11/compositor_selection_owner.cpp
     render/compositor.cpp
@@ -813,7 +810,10 @@ set(kwin_WAYLAND_SRCS
    render/backend/wlroots/egl_backend.cpp
    render/backend/wlroots/egl_output.cpp
    render/backend/wlroots/output.cpp
+   render/wayland/compositor.cpp
    render/wayland/effects.cpp
+   render/wayland/output.cpp
+   render/wayland/presentation.cpp
    seat/backend/wlroots/session.cpp
 )
 
