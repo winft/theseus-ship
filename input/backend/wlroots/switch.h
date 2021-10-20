@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/utils.h"
 #include "input/switch.h"
-#include "platform/utils.h"
 
 extern "C" {
 #include <wlr/types/wlr_input_device.h>

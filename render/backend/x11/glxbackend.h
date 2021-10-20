@@ -7,7 +7,7 @@
 #define KWIN_GLX_BACKEND_H
 
 #include "backend.h"
-#include "platform/x11/event_filter.h"
+#include "base/x11/event_filter.h"
 #include "texture.h"
 
 #include <epoxy/glx.h>

@@ -6,7 +6,7 @@
 #pragma once
 
 #include "abstract_wayland_output.h"
-#include "platform/utils.h"
+#include "base/utils.h"
 
 #include <Wrapland/Server/drm_lease_v1.h>
 

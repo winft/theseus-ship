@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_WAS_USER_INTERACTION_X11_FILTER_H
 #define KWIN_WAS_USER_INTERACTION_X11_FILTER_H
 
-#include "platform/x11/event_filter.h"
+#include "base/x11/event_filter.h"
 
 namespace KWin
 {

@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "platform/x11/event_filter.h"
+#include "base/x11/event_filter.h"
 
 namespace KWin::win::x11
 {

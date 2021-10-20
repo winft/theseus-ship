@@ -383,6 +383,10 @@ set(kwin_SRCS
     abstract_output.cpp
     abstract_wayland_output.cpp
     atoms.cpp
+    base/wayland/idle_inhibition.cpp
+    base/x11/event_filter.cpp
+    base/x11/event_filter_container.cpp
+    base/x11/event_filter_manager.cpp
     colorcorrection/clockskewnotifier.cpp
     colorcorrection/clockskewnotifierengine.cpp
     colorcorrection/colorcorrectdbusinterface.cpp
@@ -431,10 +435,6 @@ set(kwin_SRCS
     osd.cpp
     outline.cpp
     overlaywindow.cpp
-    platform/wayland/idle_inhibition.cpp
-    platform/x11/event_filter.cpp
-    platform/x11/event_filter_container.cpp
-    platform/x11/event_filter_manager.cpp
     platform.cpp
     render/wayland/compositor.cpp
     render/wayland/output.cpp
@@ -749,6 +749,7 @@ add_subdirectory(platformsupport)
 add_subdirectory(plugins)
 
 set(kwin_WAYLAND_SRCS
+   base/wlroots.cpp
    debug/input_device_model.cpp
    debug/input_filter.cpp
    debug/surface_tree_model.cpp
@@ -807,8 +808,6 @@ set(kwin_WAYLAND_SRCS
    input/switch.cpp
    input/touch.cpp
    linux_dmabuf.cpp
-   platform/wlroots.cpp
-   platform/wlroots.cpp
    render/backend/wlroots/backend.cpp
    render/backend/wlroots/buffer.cpp
    render/backend/wlroots/egl_backend.cpp

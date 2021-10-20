@@ -7,8 +7,8 @@
 
 #include "wlr_includes.h"
 
+#include "base/wlroots.h"
 #include "platform.h"
-#include "platform/wlroots.h"
 
 #include <Wrapland/Server/drm_lease_v1.h>
 #include <variant>

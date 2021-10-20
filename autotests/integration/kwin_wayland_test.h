@@ -8,8 +8,8 @@
 
 #include "../../main.h"
 
+#include "base/wlroots.h"
 #include "main.h"
-#include "platform/wlroots.h"
 #include "render/backend/wlroots/backend.h"
 #include "wayland_server.h"
 

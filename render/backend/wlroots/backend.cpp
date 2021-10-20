@@ -11,8 +11,8 @@
 #include "output.h"
 #include "wlr_helpers.h"
 
+#include "base/wlroots.h"
 #include "main.h"
-#include "platform/wlroots.h"
 #include "render/wayland/compositor.h"
 #include "screens.h"
 #include "wayland_server.h"

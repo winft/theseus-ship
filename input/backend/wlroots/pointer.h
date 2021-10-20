@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/utils.h"
 #include "input/pointer.h"
-#include "platform/utils.h"
 
 extern "C" {
 #include <wlr/types/wlr_pointer.h>

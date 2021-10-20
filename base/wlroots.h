@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "platform/utils.h"
+#include "base/utils.h"
 
 #include <kwin_export.h>
 

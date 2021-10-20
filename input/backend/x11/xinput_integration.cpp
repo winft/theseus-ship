@@ -15,8 +15,8 @@
 #include "screenedge.h"
 #include "xinput_helpers.h"
 
+#include "base/x11/event_filter.h"
 #include "input/spies/modifier_only_shortcuts.h"
-#include "platform/x11/event_filter.h"
 #include <kwinglobals.h>
 
 #include <X11/extensions/XI2proto.h>

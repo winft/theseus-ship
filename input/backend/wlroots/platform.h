@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/wlroots.h"
 #include "input/wayland/platform.h"
-#include "platform/wlroots.h"
 
 #include <kwin_export.h>
 

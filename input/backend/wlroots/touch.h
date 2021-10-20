@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/utils.h"
 #include "input/touch.h"
-#include "platform/utils.h"
 
 #include <config-kwin.h>
 
