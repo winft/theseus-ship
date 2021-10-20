@@ -23,7 +23,7 @@ namespace KWin::render::backend::wlroots
 
 static auto align_horizontal{false};
 
-backend::backend(base::platform<base::wlroots, AbstractWaylandOutput>& base)
+backend::backend(base::platform<base::backend::wlroots, AbstractWaylandOutput>& base)
     : base{base}
 {
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
@@ -83,7 +83,7 @@ void backend::init()
 {
     // TODO(romangg): Can we omit making a distinction here?
     // Pointer warping is required for tests.
-    setSupportsPointerWarping(base::wlroots_get_headless_backend(base.backend.backend));
+    setSupportsPointerWarping(base::backend::wlroots_get_headless_backend(base.backend.backend));
 
     assert(base.backend.backend);
     fd = wlr_backend_get_drm_fd(base.backend.backend);
@@ -137,7 +137,7 @@ clockid_t backend::clockId() const
 
 OpenGLBackend* backend::createOpenGLBackend()
 {
-    egl = new egl_backend(this, base::wlroots_get_headless_backend(base.backend.backend));
+    egl = new egl_backend(this, base::backend::wlroots_get_headless_backend(base.backend.backend));
     return egl;
 }
 
@@ -176,7 +176,7 @@ struct outputs_array_wrap {
 void backend::init_drm_leasing()
 {
 #if HAVE_WLR_DRM_LEASE
-    auto drm_backend = base::wlroots_get_drm_backend(base.backend.backend);
+    auto drm_backend = base::backend::wlroots_get_drm_backend(base.backend.backend);
     if (!drm_backend) {
         return;
     }
@@ -244,8 +244,8 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
     }
 
     connect(lease, &Wrapland::Server::drm_lease_v1::resourceDestroyed, this, [this, lessee_id] {
-        wlr_drm_backend_terminate_lease(base::wlroots_get_drm_backend(base.backend.backend),
-                                        lessee_id);
+        wlr_drm_backend_terminate_lease(
+            base::backend::wlroots_get_drm_backend(base.backend.backend), lessee_id);
         static_cast<render::wayland::compositor*>(compositor::self())->unlock();
     });
 

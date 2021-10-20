@@ -8,8 +8,8 @@
 
 #include "../../main.h"
 
+#include "base/backend/wlroots.h"
 #include "base/platform.h"
-#include "base/wlroots.h"
 #include "main.h"
 #include "render/backend/wlroots/backend.h"
 #include "wayland_server.h"
@@ -154,7 +154,7 @@ private:
     void handle_server_addons_created();
     void create_xwayland();
 
-    base::platform<base::wlroots, AbstractWaylandOutput> base;
+    base::platform<base::backend::wlroots, AbstractWaylandOutput> base;
     std::unique_ptr<render::backend::wlroots::backend> render;
 };
 

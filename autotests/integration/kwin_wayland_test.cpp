@@ -96,7 +96,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    base.backend = base::wlroots();
+    base.backend = base::backend::wlroots();
     server.reset(new WaylandServer(socket_name, flags));
 
     render.reset(new render::backend::wlroots::backend(base));

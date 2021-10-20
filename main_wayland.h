@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "main.h"
 
+#include "base/backend/wlroots.h"
 #include "base/platform.h"
-#include "base/wlroots.h"
 #include "render/backend/wlroots/backend.h"
 
 #include <QProcessEnvironment>
@@ -94,7 +94,7 @@ private:
     QProcessEnvironment m_environment;
     QString m_sessionArgument;
 
-    base::platform<base::wlroots, AbstractWaylandOutput> base;
+    base::platform<base::backend::wlroots, AbstractWaylandOutput> base;
     std::unique_ptr<render::backend::wlroots::backend> render;
     std::unique_ptr<xwl::xwayland> xwayland;
 

@@ -25,7 +25,7 @@ namespace Wrapland::Server
 class Display;
 }
 
-namespace KWin::base
+namespace KWin::base::backend
 {
 
 inline wlr_backend* wlroots_get_backend(wlr_backend* backend,

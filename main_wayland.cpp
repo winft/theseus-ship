@@ -235,7 +235,7 @@ void ApplicationWayland::handle_server_addons_created()
 
 void ApplicationWayland::init_platforms()
 {
-    base.backend = base::wlroots(waylandServer()->display());
+    base.backend = base::backend::wlroots(waylandServer()->display());
 
     input.reset(new input::backend::wlroots::platform(&base.backend));
     input::wayland::add_dbus(input.get());

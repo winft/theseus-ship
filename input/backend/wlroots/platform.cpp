@@ -50,7 +50,7 @@ void handle_device(struct wl_listener* listener, [[maybe_unused]] void* data)
     }
 }
 
-platform::platform(base::wlroots* base)
+platform::platform(base::backend::wlroots* base)
     : base{base}
 {
     add_device.receiver = this;

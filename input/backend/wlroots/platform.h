@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "base/wlroots.h"
+#include "base/backend/wlroots.h"
 #include "input/wayland/platform.h"
 
 #include <kwin_export.h>
@@ -32,7 +32,7 @@ class KWIN_EXPORT platform : public input::wayland::platform
 {
     Q_OBJECT
 public:
-    platform(base::wlroots* base);
+    platform(base::backend::wlroots* base);
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     platform(platform&& other) noexcept = default;
@@ -41,7 +41,7 @@ public:
 
 private:
     base::event_receiver<platform> add_device;
-    base::wlroots* base;
+    base::backend::wlroots* base;
 };
 
 }

@@ -749,7 +749,7 @@ add_subdirectory(platformsupport)
 add_subdirectory(plugins)
 
 set(kwin_WAYLAND_SRCS
-   base/wlroots.cpp
+   base/backend/wlroots.cpp
    debug/input_device_model.cpp
    debug/input_filter.cpp
    debug/surface_tree_model.cpp
