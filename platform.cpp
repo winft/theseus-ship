@@ -44,9 +44,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-Platform::Platform(QObject *parent)
-    : QObject(parent)
-    , m_eglDisplay(EGL_NO_DISPLAY)
+Platform::Platform()
+    : m_eglDisplay(EGL_NO_DISPLAY)
 {
     m_colorCorrect = new ColorCorrect::Manager(this);
 

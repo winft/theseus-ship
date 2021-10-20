@@ -33,8 +33,7 @@ public:
     QVector<output*> enabled_outputs;
     int fd{0};
 
-    explicit backend(base::platform<base::wlroots, AbstractWaylandOutput>& base,
-                     QObject* parent = nullptr);
+    explicit backend(base::platform<base::wlroots, AbstractWaylandOutput>& base);
     ~backend() override;
 
     OpenGLBackend* createOpenGLBackend() override;

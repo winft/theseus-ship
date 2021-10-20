@@ -377,7 +377,7 @@ Q_SIGNALS:
     void output_removed(AbstractOutput* output);
 
 protected:
-    explicit Platform(QObject *parent = nullptr);
+    Platform();
     void setSupportsPointerWarping(bool set) {
         m_pointerWarping = set;
     }

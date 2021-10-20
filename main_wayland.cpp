@@ -240,7 +240,7 @@ void ApplicationWayland::init_platforms()
     input.reset(new input::backend::wlroots::platform(&base.backend));
     input::wayland::add_dbus(input.get());
 
-    render.reset(new render::backend::wlroots::backend(base, this));
+    render.reset(new render::backend::wlroots::backend(base));
     platform = render.get();
 }
 

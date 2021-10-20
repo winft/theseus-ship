@@ -99,7 +99,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     base.backend = base::wlroots();
     server.reset(new WaylandServer(socket_name, flags));
 
-    render.reset(new render::backend::wlroots::backend(base, this));
+    render.reset(new render::backend::wlroots::backend(base));
     platform = render.get();
 
     auto environment = QProcessEnvironment::systemEnvironment();
