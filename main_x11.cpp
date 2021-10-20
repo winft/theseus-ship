@@ -13,6 +13,7 @@
 #include "debug/x11_console.h"
 #include "platform.h"
 #include "input/backend/x11/platform.h"
+#include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
 #include "seat/backend/logind/session.h"
 #include "sm.h"
@@ -241,7 +242,7 @@ void ApplicationX11::start()
 
         auto input = new input::backend::x11::platform;
         this->input.reset(input);
-        input::add_redirect(input, std::make_unique<input::redirect>());
+        input::add_redirect(input, std::make_unique<input::x11::redirect>());
         input::backend::x11::create_cursor(input);
 
         try {

@@ -451,6 +451,7 @@ set(kwin_SRCS
     input/global_shortcut.cpp
     input/global_shortcuts_manager.cpp
     input/logging.cpp
+    input/x11/redirect.cpp
     input/qt_event.cpp
     input/xkb.cpp
     killwindow.cpp

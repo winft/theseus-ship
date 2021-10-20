@@ -82,7 +82,6 @@ public:
         Tip,
     };
 
-    redirect();
     ~redirect() override;
 
     void set_platform(input::platform* platform);

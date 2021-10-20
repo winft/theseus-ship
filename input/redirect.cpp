@@ -62,14 +62,6 @@
 namespace KWin::input
 {
 
-redirect::redirect()
-    : redirect(new keyboard_redirect(this),
-               new pointer_redirect,
-               new tablet_redirect,
-               new touch_redirect)
-{
-}
-
 redirect::redirect(keyboard_redirect* keyboard,
                    pointer_redirect* pointer,
                    tablet_redirect* tablet,
