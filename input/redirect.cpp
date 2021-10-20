@@ -26,12 +26,10 @@
 #include "screens.h"
 #include "toplevel.h"
 #include "utils.h"
-#include "wayland_server.h"
 #include "win/geo.h"
 #include "win/stacking_order.h"
 #include "workspace.h"
 
-#include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
 
 namespace KWin::input
@@ -172,9 +170,6 @@ void redirect::processTouchMotion(qint32 id, const QPointF& pos, quint32 time)
 
 void redirect::cancelTouch()
 {
-    if (!waylandServer()->seat()->hasTouch()) {
-        return;
-    }
     m_touch->cancel();
 }
 

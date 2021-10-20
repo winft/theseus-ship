@@ -288,6 +288,9 @@ void touch_redirect::cancel()
     if (!inited()) {
         return;
     }
+    if (!waylandServer()->seat()->hasTouch()) {
+        return;
+    }
     waylandServer()->seat()->touches().cancel_sequence();
     m_idMapper.clear();
 }
