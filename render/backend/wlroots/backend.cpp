@@ -13,6 +13,7 @@
 
 #include "main.h"
 #include "render/wayland/compositor.h"
+#include "render/wayland/effects.h"
 #include "screens.h"
 #include "wayland_server.h"
 
@@ -139,6 +140,11 @@ OpenGLBackend* backend::createOpenGLBackend()
 {
     egl = new egl_backend(this, base::backend::wlroots_get_headless_backend(base.backend.backend));
     return egl;
+}
+
+void backend::createEffectsHandler(render::compositor* compositor, Scene* scene)
+{
+    new wayland::effects_handler_impl(compositor, scene);
 }
 
 QVector<CompositingType> backend::supportedCompositors() const

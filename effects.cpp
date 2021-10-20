@@ -62,7 +62,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "xcbutils.h"
 #include "platform.h"
-#include "wayland_server.h"
 
 #include "decorations/decorationbridge.h"
 #include <KDecoration2/DecorationSettings>
@@ -268,24 +267,6 @@ EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *sc
     for (auto window : ws->windows()) {
         if (auto internal = qobject_cast<win::InternalClient*>(window)) {
             setupAbstractClientConnections(internal);
-        }
-    }
-    if (auto w = waylandServer()) {
-        connect(w, &WaylandServer::window_added, this,
-            [this](auto c) {
-                if (c->readyForPainting())
-                    slotXdgShellClientShown(c);
-                else
-                    connect(c, &Toplevel::windowShown, this, &EffectsHandlerImpl::slotXdgShellClientShown);
-            }
-        );
-        const auto clients = waylandServer()->windows;
-        for (auto c : clients) {
-            if (c->readyForPainting()) {
-                setupAbstractClientConnections(c);
-            } else {
-                connect(c, &Toplevel::windowShown, this, &EffectsHandlerImpl::slotXdgShellClientShown);
-            }
         }
     }
 
@@ -1130,13 +1111,8 @@ EffectWindow* EffectsHandlerImpl::findWindow(WId id) const
     return nullptr;
 }
 
-EffectWindow* EffectsHandlerImpl::findWindow(Wrapland::Server::Surface *surf) const
+EffectWindow* EffectsHandlerImpl::findWindow(Wrapland::Server::Surface* /*surf*/) const
 {
-    if (waylandServer()) {
-        if (auto win = waylandServer()->find_window(surf)) {
-            return win->effectWindow();
-        }
-    }
     return nullptr;
 }
 
@@ -1583,9 +1559,6 @@ QStringList EffectsHandlerImpl::activeEffects() const
 
 Wrapland::Server::Display *EffectsHandlerImpl::waylandDisplay() const
 {
-    if (waylandServer()) {
-        return waylandServer()->display();
-    }
     return nullptr;
 }
 

@@ -813,6 +813,7 @@ set(kwin_WAYLAND_SRCS
    render/backend/wlroots/egl_backend.cpp
    render/backend/wlroots/egl_output.cpp
    render/backend/wlroots/output.cpp
+   render/wayland/effects.cpp
    seat/backend/wlroots/session.cpp
 )
 

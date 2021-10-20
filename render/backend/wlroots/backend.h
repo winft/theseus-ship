@@ -37,6 +37,7 @@ public:
     ~backend() override;
 
     OpenGLBackend* createOpenGLBackend() override;
+    void createEffectsHandler(render::compositor* compositor, Scene* scene) override;
 
     void init();
 
