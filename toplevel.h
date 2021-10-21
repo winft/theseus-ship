@@ -327,7 +327,7 @@ public:
 
     virtual void propertyNotifyEvent(xcb_property_notify_event_t *e);
     virtual void damageNotifyEvent();
-    virtual void clientMessageEvent(xcb_client_message_event_t *e);
+    void clientMessageEvent(xcb_client_message_event_t *e);
     void discardWindowPixmap();
     void deleteEffectWindow();
 
