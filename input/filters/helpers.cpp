@@ -55,7 +55,8 @@ std::pair<bool, bool> do_perform_mouse_action(Options::MouseCommand command, Top
                               command, kwinApp()->input->redirect->pointer()->pos().toPoint()));
 }
 
-std::pair<bool, bool> perform_mouse_modifier_action(button_event const& event, Toplevel* window)
+std::pair<bool, bool> KWIN_EXPORT perform_mouse_modifier_action(button_event const& event,
+                                                                Toplevel* window)
 {
     auto command = Options::MouseNothing;
     auto was_action = get_modifier_command(event.key, command);
@@ -97,7 +98,7 @@ bool get_wheel_modifier_command(axis_orientation orientation,
     return true;
 }
 
-std::pair<bool, bool> perform_wheel_action(axis_event const& event, Toplevel* window)
+std::pair<bool, bool> KWIN_EXPORT perform_wheel_action(axis_event const& event, Toplevel* window)
 {
     auto command = Options::MouseNothing;
     auto was_action = get_wheel_modifier_command(event.orientation, event.delta, command);

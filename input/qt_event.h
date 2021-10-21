@@ -17,12 +17,12 @@ uint32_t KWIN_EXPORT qt_mouse_button_to_button(Qt::MouseButton button);
 
 Qt::Key KWIN_EXPORT key_to_qt_key(uint32_t key);
 
-QMouseEvent button_to_qt_event(button_event const& event);
+QMouseEvent KWIN_EXPORT button_to_qt_event(button_event const& event);
 
-QMouseEvent motion_to_qt_event(motion_event const& event);
+QMouseEvent KWIN_EXPORT motion_to_qt_event(motion_event const& event);
 QMouseEvent motion_absolute_to_qt_event(motion_absolute_event const& event);
 
-QWheelEvent axis_to_qt_event(axis_event const& event);
+QWheelEvent KWIN_EXPORT axis_to_qt_event(axis_event const& event);
 
 QKeyEvent KWIN_EXPORT key_to_qt_event(key_event const& event);
 

@@ -404,14 +404,7 @@ set(kwin_SRCS
     input/device_redirect.cpp
     input/event_filter.cpp
     input/event_spy.cpp
-    input/filters/decoration_event.cpp
     input/filters/dpms.cpp
-    input/filters/effects.cpp
-    input/filters/global_shortcut.cpp
-    input/filters/helpers.cpp
-    input/filters/internal_window.cpp
-    input/filters/move_resize.cpp
-    input/filters/screen_edge.cpp
     input/keyboard_redirect.cpp
     input/platform.cpp
     input/pointer_redirect.cpp
@@ -642,7 +635,6 @@ endif()
 
 if (KWIN_BUILD_TABBOX)
     target_sources(kwin PRIVATE
-        input/filters/tabbox.cpp
         tabbox/clientmodel.cpp
         tabbox/desktopchain.cpp
         tabbox/desktopmodel.cpp
@@ -779,11 +771,18 @@ set(kwin_WAYLAND_SRCS
    input/dbus/device_manager.cpp
    input/dbus/keyboard_layout.cpp
    input/dbus/tablet_mode_manager.cpp
+   input/filters/decoration_event.cpp
    input/filters/drag_and_drop.cpp
+   input/filters/effects.cpp
    input/filters/fake_tablet.cpp
    input/filters/forward.cpp
+   input/filters/global_shortcut.cpp
+   input/filters/helpers.cpp
+   input/filters/internal_window.cpp
    input/filters/lock_screen.cpp
+   input/filters/move_resize.cpp
    input/filters/popup.cpp
+   input/filters/screen_edge.cpp
    input/filters/terminate_server.cpp
    input/filters/virtual_terminal.cpp
    input/filters/window_action.cpp
@@ -817,6 +816,13 @@ set(kwin_WAYLAND_SRCS
    render/backend/wlroots/output.cpp
    seat/backend/wlroots/session.cpp
 )
+
+if (KWIN_BUILD_TABBOX)
+  set(kwin_WAYLAND_SRCS
+    ${kwin_WAYLAND_SRCS}
+    input/filters/tabbox.cpp
+  )
+endif()
 
 ecm_qt_declare_logging_category(kwin_WAYLAND_SRCS
     HEADER
