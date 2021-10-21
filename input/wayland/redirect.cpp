@@ -6,12 +6,12 @@
 #include "redirect.h"
 
 #include "keyboard_redirect.h"
+#include "platform.h"
 #include "pointer_redirect.h"
 #include "tablet_redirect.h"
 #include "touch_redirect.h"
 
 #include "input/keyboard.h"
-#include "input/platform.h"
 #include "input/pointer.h"
 #include "input/switch.h"
 #include "input/touch.h"
@@ -67,7 +67,7 @@ static Wrapland::Server::Seat* find_seat()
     return waylandServer()->seat();
 }
 
-void redirect::set_platform(input::platform* platform)
+void redirect::set_platform(wayland::platform* platform)
 {
     this->platform = platform;
     platform->config = kwinApp()->inputConfig();

@@ -16,6 +16,7 @@ class FakeInput;
 
 namespace KWin::input::wayland
 {
+class platform;
 
 class KWIN_EXPORT redirect : public input::redirect
 {
@@ -24,7 +25,7 @@ public:
     redirect();
     ~redirect();
 
-    void set_platform(input::platform* platform);
+    void set_platform(wayland::platform* platform);
 
     void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
                                          QByteArray const& cursorName) override;

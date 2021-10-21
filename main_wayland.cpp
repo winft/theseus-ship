@@ -202,7 +202,7 @@ void ApplicationWayland::start()
 
     input::add_redirect(input.get(), std::move(redirect));
     input->cursor.reset(new input::wayland::cursor);
-    redirect_ptr->set_platform(input.get());
+    redirect_ptr->set_platform(static_cast<input::wayland::platform*>(input.get()));
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     // TODO(romangg): can be removed?
