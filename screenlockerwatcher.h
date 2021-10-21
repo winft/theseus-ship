@@ -37,27 +37,34 @@ class KWIN_EXPORT ScreenLockerWatcher : public QObject
     Q_OBJECT
 public:
     ~ScreenLockerWatcher() override;
-    bool isLocked() const {
+    bool isLocked() const
+    {
         return m_locked;
     }
+
 Q_SIGNALS:
     void locked(bool locked);
     void aboutToLock();
+
 private Q_SLOTS:
     void setLocked(bool activated);
-    void activeQueried(QDBusPendingCallWatcher *watcher);
-    void serviceOwnerChanged(const QString &serviceName, const QString &oldOwner, const QString &newOwner);
+    void activeQueried(QDBusPendingCallWatcher* watcher);
+    void serviceOwnerChanged(const QString& serviceName,
+                             const QString& oldOwner,
+                             const QString& newOwner);
     void serviceRegisteredQueried();
     void serviceOwnerQueried();
+
 private:
     void initialize();
-    OrgFreedesktopScreenSaverInterface *m_interface = nullptr;
-    OrgKdeScreensaverInterface *m_kdeInterface = nullptr;
-    QDBusServiceWatcher *m_serviceWatcher;
+    OrgFreedesktopScreenSaverInterface* m_interface = nullptr;
+    OrgKdeScreensaverInterface* m_kdeInterface = nullptr;
+    QDBusServiceWatcher* m_serviceWatcher;
     bool m_locked;
 
     KWIN_SINGLETON(ScreenLockerWatcher)
 };
+
 }
 
 #endif
