@@ -36,9 +36,18 @@ public:
     platform& operator=(platform&& other) noexcept = default;
     ~platform() override = default;
 
+    void update_keyboard_leds(input::xkb::LEDs leds);
+
+    void toggle_touchpads();
+    void enable_touchpads();
+    void disable_touchpads();
+
     void start_interactive_window_selection(std::function<void(KWin::Toplevel*)> callback,
                                             QByteArray const& cursorName = QByteArray()) override;
     void start_interactive_position_selection(std::function<void(QPoint const&)> callback) override;
+
+private:
+    bool touchpads_enabled{true};
 };
 
 KWIN_EXPORT void add_dbus(input::platform* platform);

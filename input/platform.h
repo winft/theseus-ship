@@ -44,20 +44,12 @@ public:
     std::unique_ptr<dbus::device_manager> dbus;
     KSharedConfigPtr config;
 
-    bool touchpads_enabled{true};
-
     platform();
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     platform(platform&& other) noexcept = default;
     platform& operator=(platform&& other) noexcept = default;
     ~platform() override;
-
-    void update_keyboard_leds(input::xkb::LEDs leds);
-
-    void toggle_touchpads();
-    void enable_touchpads();
-    void disable_touchpads();
 
     /**
      * Starts an interactive window selection process.
