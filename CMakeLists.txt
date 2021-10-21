@@ -427,12 +427,6 @@ set(kwin_SRCS
     input/control/pointer.cpp
     input/control/switch.cpp
     input/control/touch.cpp
-    input/dbus/device.cpp
-    input/dbus/device_manager.cpp
-    input/dbus/keyboard_layout.cpp
-    input/keyboard_layout_switching.cpp
-    input/spies/keyboard_layout.cpp
-    input/spies/keyboard_repeat.cpp
     input/spies/modifier_only_shortcuts.cpp
     input/cursor.cpp
     input/cursor_shape.cpp
@@ -785,6 +779,9 @@ set(kwin_WAYLAND_SRCS
    input/backend/wlroots/control/pointer.cpp
    input/backend/wlroots/control/switch.cpp
    input/backend/wlroots/control/touch.cpp
+   input/dbus/device.cpp
+   input/dbus/device_manager.cpp
+   input/dbus/keyboard_layout.cpp
    input/dbus/tablet_mode_manager.cpp
    input/filters/drag_and_drop.cpp
    input/filters/fake_tablet.cpp
@@ -795,6 +792,8 @@ set(kwin_WAYLAND_SRCS
    input/filters/virtual_terminal.cpp
    input/filters/window_action.cpp
    input/filters/window_selector.cpp
+   input/spies/keyboard_layout.cpp
+   input/spies/keyboard_repeat.cpp
    input/spies/touch_hide_cursor.cpp
    input/spies/tablet_mode_switch.cpp
    input/wayland/cursor.cpp
@@ -807,6 +806,7 @@ set(kwin_WAYLAND_SRCS
    input/wayland/tablet_redirect.cpp
    input/wayland/touch_redirect.cpp
    input/logging.cpp
+   input/keyboard_layout_switching.cpp
    linux_dmabuf.cpp
    platform/wlroots.cpp
    platform/wlroots.cpp
