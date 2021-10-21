@@ -8,12 +8,16 @@
 
 #include "main.h"
 #include "options.h"
+#include "wayland_server.h"
 #include "win/input.h"
 #include "workspace.h"
 #include <input/event.h>
 #include <input/keyboard_redirect.h>
 #include <input/pointer_redirect.h>
 #include <input/qt_event.h>
+
+#include <Wrapland/Server/keyboard_pool.h>
+#include <Wrapland/Server/seat.h>
 
 namespace KWin::input
 {
@@ -117,6 +121,22 @@ std::pair<bool, bool> KWIN_EXPORT perform_wheel_and_window_action(axis_event con
     }
 
     return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
+}
+
+void pass_to_wayland_server(key_event const& event)
+{
+    assert(waylandServer());
+
+    switch (event.state) {
+    case button_state::pressed:
+        waylandServer()->seat()->keyboards().key_pressed(event.keycode);
+        break;
+    case button_state::released:
+        waylandServer()->seat()->keyboards().key_released(event.keycode);
+        break;
+    default:
+        break;
+    }
 }
 
 }
