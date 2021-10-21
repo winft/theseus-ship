@@ -15,9 +15,6 @@ class KWIN_EXPORT redirect : public input::redirect
     Q_OBJECT
 public:
     redirect();
-
-protected:
-    void setupInputFilters() override;
 };
 
 }

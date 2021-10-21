@@ -272,7 +272,7 @@ protected:
              touch_redirect* touch);
 
     virtual void setupWorkspace();
-    virtual void setupInputFilters() = 0;
+    virtual void setupInputFilters();
     void installInputEventFilter(event_filter* filter);
 
     std::unique_ptr<keyboard_redirect> m_keyboard;

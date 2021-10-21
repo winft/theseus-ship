@@ -93,6 +93,10 @@ void redirect::setupWorkspace()
     setupInputFilters();
 }
 
+void redirect::setupInputFilters()
+{
+}
+
 void redirect::processPointerMotion(const QPointF& pos, uint32_t time)
 {
     m_pointer->processMotion(pos, time);
