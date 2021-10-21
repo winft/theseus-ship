@@ -6,7 +6,6 @@
 #include "redirect.h"
 
 #include "keyboard.h"
-#include "platform.h"
 #include "pointer.h"
 #include "switch.h"
 #include "touch.h"

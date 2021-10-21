@@ -31,7 +31,6 @@ namespace input
 class event_filter;
 class event_spy;
 class global_shortcuts_manager;
-class platform;
 class window_selector_filter;
 
 class keyboard_redirect;
@@ -233,8 +232,6 @@ public:
                                                  QByteArray const& cursorName);
     virtual void startInteractivePositionSelection(std::function<void(QPoint const&)> callback);
     virtual bool isSelectingWindow() const;
-
-    input::platform* platform{nullptr};
 
 Q_SIGNALS:
     /**

@@ -10,6 +10,7 @@
 #include "input/pointer.h"
 #include "input/spies/tablet_mode_switch.h"
 #include "input/touch.h"
+#include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
 
 #include "main.h"
@@ -27,27 +28,36 @@ public:
         : QObject(parent)
         , m_parent(parent)
     {
-        auto& plat = kwinApp()->input->redirect->platform;
-        connect(
-            plat, &input::platform::pointer_added, this, &tablet_mode_touchpad_removed_spy::check);
+        auto& plat
+            = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get())->platform;
         connect(plat,
-                &input::platform::pointer_removed,
+                &input::wayland::platform::pointer_added,
                 this,
                 &tablet_mode_touchpad_removed_spy::check);
-        connect(
-            plat, &input::platform::touch_added, this, &tablet_mode_touchpad_removed_spy::check);
-        connect(
-            plat, &input::platform::touch_removed, this, &tablet_mode_touchpad_removed_spy::check);
+        connect(plat,
+                &input::wayland::platform::pointer_removed,
+                this,
+                &tablet_mode_touchpad_removed_spy::check);
+        connect(plat,
+                &input::wayland::platform::touch_added,
+                this,
+                &tablet_mode_touchpad_removed_spy::check);
+        connect(plat,
+                &input::wayland::platform::touch_removed,
+                this,
+                &tablet_mode_touchpad_removed_spy::check);
         check();
     }
 
     void check()
     {
-        if (!kwinApp()->input->redirect->platform) {
+        auto& plat
+            = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get())->platform;
+        if (!plat) {
             return;
         }
-        auto has_touch = !kwinApp()->input->redirect->platform->touchs.empty();
-        auto has_pointer = !kwinApp()->input->redirect->platform->pointers.empty();
+        auto has_touch = !plat->touchs.empty();
+        auto has_pointer = !plat->pointers.empty();
         m_parent->setTabletModeAvailable(has_touch);
         m_parent->setIsTablet(has_touch && !has_pointer);
     }

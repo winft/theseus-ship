@@ -34,6 +34,8 @@ public:
     void startInteractivePositionSelection(std::function<void(QPoint const&)> callback) override;
     bool isSelectingWindow() const override;
 
+    wayland::platform* platform{nullptr};
+
 Q_SIGNALS:
     void has_tablet_mode_switch_changed(bool set);
 
