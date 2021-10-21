@@ -372,6 +372,8 @@ detail in Wrapland's [contributing document][wrapland-submissions].
 * Merge requests have to be posted against master or a feature branch. Commits to the stable branch
   are only cherry-picked from the master branch after some testing on the master branch.
 
+Also make sure to increase the default pipeline timeout to 2h in `Settings > CI/CD > General Pipelines > Timeout`.
+
 ## Commit Message Guideline
 The [Conventional Commits 1.0.0][conventional-commits] specification is applied with the following
 amendments:
