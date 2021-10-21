@@ -1427,11 +1427,7 @@ void Toplevel::clientMessageEvent(xcb_client_message_event_t* e)
 {
     if (e->type == atoms->wl_surface_id) {
         m_surfaceId = e->data.data32[0];
-        if (auto w = waylandServer()) {
-            if (auto s = w->compositor()->getSurface(m_surfaceId, w->xWaylandConnection())) {
-                setSurface(s);
-            }
-        }
+        Q_EMIT workspace()->surface_id_changed(this, m_surfaceId);
         emit surfaceIdChanged(m_surfaceId);
     }
 }

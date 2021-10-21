@@ -625,6 +625,13 @@ void WaylandServer::initWorkspace()
                 }
                 win::wayland::xdg_activation_activate(ws, win, token);
             });
+
+    // For Xwayland windows
+    QObject::connect(ws, &Workspace::surface_id_changed, this, [this](auto window, auto id) {
+        if (auto surface = compositor()->getSurface(id, xWaylandConnection())) {
+            window->setSurface(surface);
+        }
+    });
 }
 
 void WaylandServer::initScreenLocker()

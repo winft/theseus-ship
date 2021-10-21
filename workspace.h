@@ -513,6 +513,8 @@ Q_SIGNALS:
      */
     void internalClientRemoved(KWin::win::InternalClient* client);
 
+    void surface_id_changed(KWin::Toplevel*, quint32);
+
 private:
     void initWithX11();
     void initShortcuts();
