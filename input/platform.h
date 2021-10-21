@@ -108,7 +108,6 @@ Q_SIGNALS:
     void touch_removed(KWin::input::touch*);
 };
 
-KWIN_EXPORT void add_dbus(platform* platform);
 KWIN_EXPORT void add_redirect(platform* platform, std::unique_ptr<redirect> redirect);
 
 }

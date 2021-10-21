@@ -801,6 +801,7 @@ set(kwin_WAYLAND_SRCS
    input/wayland/cursor_image.cpp
    input/wayland/cursor_theme.cpp
    input/wayland/keyboard_redirect.cpp
+   input/wayland/platform.cpp
    input/wayland/pointer_redirect.cpp
    input/wayland/redirect.cpp
    input/wayland/tablet_redirect.cpp

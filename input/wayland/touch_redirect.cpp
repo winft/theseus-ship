@@ -11,8 +11,8 @@
 #include "input/event_spy.h"
 #include "input/touch.h"
 
+#include "../../platform.h"
 #include "abstract_wayland_output.h"
-#include "platform.h"
 #include "wayland_server.h"
 #include "win/input.h"
 #include "workspace.h"

@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "seat/backend/wlroots/session.h"
 #include "input/backend/wlroots/platform.h"
 #include "input/wayland/cursor.h"
+#include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
 #include "input/dbus/tablet_mode_manager.h"
 #include "wayland_server.h"
@@ -237,7 +238,7 @@ void ApplicationWayland::init_platforms()
     backend.reset(new platform_base::wlroots(waylandServer()->display()));
 
     input.reset(new input::backend::wlroots::platform(backend.get()));
-    input::add_dbus(input.get());
+    input::wayland::add_dbus(input.get());
 
     render.reset(new render::backend::wlroots::backend(backend.get(), this));
     platform = render.get();

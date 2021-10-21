@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../effects.h"
 #include "../../input/backend/wlroots/platform.h"
 #include "../../input/wayland/cursor.h"
+#include "../../input/wayland/platform.h"
 #include "../../input/wayland/redirect.h"
 #include "../../platform.h"
 #include "../../render/wayland/compositor.h"
@@ -160,7 +161,7 @@ void WaylandTestApplication::start()
     wlr_headless_add_output(headless_backend, 1280, 1024);
     base->init(headless_backend);
     input.reset(new input::backend::wlroots::platform(base.get()));
-    input::add_dbus(input.get());
+    input::wayland::add_dbus(input.get());
 
     createOptions();
 

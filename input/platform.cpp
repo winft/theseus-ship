@@ -110,11 +110,6 @@ void platform::start_interactive_position_selection(std::function<void(QPoint co
     redirect->startInteractivePositionSelection(callback);
 }
 
-void add_dbus(platform* platform)
-{
-    platform->dbus = std::make_unique<dbus::device_manager>(platform);
-}
-
 void add_redirect(platform* platform, std::unique_ptr<redirect> redirect)
 {
     platform->redirect = std::move(redirect);
