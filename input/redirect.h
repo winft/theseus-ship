@@ -229,8 +229,6 @@ public:
         return m_touch.get();
     }
 
-    bool hasTabletModeSwitch();
-
     virtual void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
                                                  QByteArray const& cursorName);
     virtual void startInteractivePositionSelection(std::function<void(QPoint const&)> callback);
@@ -269,8 +267,6 @@ Q_SIGNALS:
      * @param state The new key state
      */
     void keyStateChanged(quint32 keyCode, redirect::KeyboardKeyState state);
-
-    void hasTabletModeSwitchChanged(bool set);
 
 protected:
     redirect(keyboard_redirect* keyboard,

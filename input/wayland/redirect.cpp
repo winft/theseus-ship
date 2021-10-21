@@ -123,7 +123,7 @@ void redirect::set_platform(wayland::platform* platform)
     QObject::connect(platform, &platform::switch_added, this, [this](auto switch_device) {
         QObject::connect(switch_device, &switch_device::toggle, this, [this](auto const& event) {
             if (event.type == switch_type::tablet_mode) {
-                Q_EMIT hasTabletModeSwitchChanged(event.state == switch_state::on);
+                Q_EMIT has_tablet_mode_switch_changed(event.state == switch_state::on);
             }
         });
     });
@@ -400,6 +400,16 @@ void redirect::reconfigure()
     if (waylandServer()->seat()->hasKeyboard()) {
         waylandServer()->seat()->keyboards().set_repeat_info(enabled ? rate : 0, delay);
     }
+}
+
+bool redirect::has_tablet_mode_switch()
+{
+    if (platform) {
+        return std::any_of(platform->switches.cbegin(), platform->switches.cend(), [](auto dev) {
+            return dev->control->is_tablet_mode_switch();
+        });
+    }
+    return false;
 }
 
 void redirect::startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,

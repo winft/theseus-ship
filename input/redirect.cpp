@@ -94,16 +94,6 @@ void redirect::setupWorkspace()
     setupInputFilters();
 }
 
-bool redirect::hasTabletModeSwitch()
-{
-    if (platform) {
-        return std::any_of(platform->switches.cbegin(), platform->switches.cend(), [](auto dev) {
-            return dev->control->is_tablet_mode_switch();
-        });
-    }
-    return false;
-}
-
 void redirect::processPointerMotion(const QPointF& pos, uint32_t time)
 {
     m_pointer->processMotion(pos, time);

@@ -27,10 +27,15 @@ public:
 
     void set_platform(wayland::platform* platform);
 
+    bool has_tablet_mode_switch();
+
     void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
                                          QByteArray const& cursorName) override;
     void startInteractivePositionSelection(std::function<void(QPoint const&)> callback) override;
     bool isSelectingWindow() const override;
+
+Q_SIGNALS:
+    void has_tablet_mode_switch_changed(bool set);
 
 protected:
     void setupWorkspace() override;
