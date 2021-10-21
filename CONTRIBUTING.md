@@ -273,7 +273,7 @@ go into the toplevel directory of the just created subdirectory structure.
 FDBuild uses fdbuild.yaml files in directories it is supposed to work on
 to remember settings about the projects inside these directories.
 
-Important is the setting specifying the installation location of the porjects.
+Important is the setting specifying the installation location of the projects.
 This is set in the fdbuild.yaml file inside the toplevel directory.
 Adjust the setting to your liking. Recommended is setting it to a subdirectory inside `/opt`,
 for example `/opt/kwinft`.
@@ -284,7 +284,7 @@ and FDBuild will try to compile and install all projects one after the other.
 Note that this will likely fail for several projects on the first run
 since you require additional dependencies.
 Check the FDBuild log output to find out what dependencies are missing.
-A complete list of reuiqred dependencies with drifting correctness is also listed
+A complete list of required dependencies with drifting correctness is also listed
 [in the KDE Community Wiki](https://community.kde.org/Guidelines_and_HOWTOs/Build_from_source/Install_the_dependencies).
 
 Once you have installed additional dependencies and want to continue building the projects
@@ -294,7 +294,7 @@ fdbuild --resume-from <project-that-failed>
 ```
 
 #### Plasma Desktop Session Integration
-With this setup KWinFT can be run already as standalone binary for example from a VT.
+With this setup KWinFT can be run already as a standalone binary for example from a VT.
 In case you did not install into your `/usr` directory,
 as is recommended,
 additional steps are required
@@ -361,7 +361,7 @@ For the beginning there are still few available resources to get an overview:
 
 
 ## Submission Guideline
-Code contributions to KWinFT are very welcome but follow a strict process that is layed out in
+Code contributions to KWinFT are very welcome but follow a strict process that is laid out in
 detail in Wrapland's [contributing document][wrapland-submissions].
 
 *Summarizing the main points:*
