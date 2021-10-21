@@ -11,6 +11,7 @@ module.exports = {
             2,
             'always',
             [
+                'debug',
                 'deco',
                 'effect',
                 'input',

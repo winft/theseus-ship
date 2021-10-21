@@ -389,7 +389,8 @@ set(kwin_SRCS
     colorcorrection/manager.cpp
     colorcorrection/suncalc.cpp
     dbusinterface.cpp
-    debug_console.cpp
+    debug/console.cpp
+    debug/x11_console.cpp
     decorations/decoratedclient.cpp
     decorations/decorationbridge.cpp
     decorations/decorationpalette.cpp
@@ -568,7 +569,7 @@ qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.sc
 qt5_add_dbus_interface(kwin_SRCS org.kde.kappmenu.xml appmenu_interface)
 
 ki18n_wrap_ui(kwin_SRCS
-    debug_console.ui
+    debug/debug_console.ui
     shortcutdialog.ui
 )
 
@@ -781,6 +782,10 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
 )
 
 set(kwin_WAYLAND_SRCS
+   ${CMAKE_CURRENT_SOURCE_DIR}/debug/input_device_model.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/debug/input_filter.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/debug/surface_tree_model.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/debug/wayland_console.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/keyboard.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/platform.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/wlroots/pointer.cpp

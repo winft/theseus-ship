@@ -9,6 +9,7 @@ RUN_SCRIPT_URL="https://gitlab.com/kwinft/tooling/-/raw/master/analysis/run-clan
 
 python <(curl -s $RUN_SCRIPT_URL) -r \
     ${SOURCE_DIR}/autotests \
+    ${SOURCE_DIR}/debug \
     ${SOURCE_DIR}/input \
     ${SOURCE_DIR}/platform \
     ${SOURCE_DIR}/win \

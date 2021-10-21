@@ -10,6 +10,7 @@
 
 #include <config-kwin.h>
 
+#include "debug/x11_console.h"
 #include "platform.h"
 #include "input/backend/x11/platform.h"
 #include "render/x11/compositor.h"
@@ -196,6 +197,11 @@ void ApplicationX11::lostSelection()
     // Remove windowmanager privileges
     Xcb::selectInput(rootWindow(), XCB_EVENT_MASK_PROPERTY_CHANGE);
     quit();
+}
+
+debug::console* ApplicationX11::create_debug_console()
+{
+    return new debug::x11_console;
 }
 
 void ApplicationX11::start()

@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // kwin
 #include "atoms.h"
 #include "render/x11/compositor.h"
-#include "debug_console.h"
+#include "debug/console.h"
 #include <input/platform.h>
 #include "main.h"
 #include "perf/ftrace.h"
@@ -183,7 +183,7 @@ void DBusInterface::previousDesktop()
 
 void DBusInterface::showDebugConsole()
 {
-    DebugConsole *console = new DebugConsole;
+    auto console = kwinApp()->create_debug_console();
     console->show();
 }
 

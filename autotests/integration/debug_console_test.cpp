@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "debug_console.h"
+#include "debug/wayland_console.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
@@ -101,7 +101,7 @@ void DebugConsoleTest::topLevelTest_data()
 
 void DebugConsoleTest::topLevelTest()
 {
-    DebugConsoleModel model;
+    debug::wayland_console_model model;
     QCOMPARE(model.rowCount(QModelIndex()), 4);
     QCOMPARE(model.columnCount(QModelIndex()), 2);
     QFETCH(int, row);
@@ -120,7 +120,7 @@ void DebugConsoleTest::topLevelTest()
 
 void DebugConsoleTest::testX11Client()
 {
-    DebugConsoleModel model;
+    debug::wayland_console_model model;
     QModelIndex x11TopLevelIndex = model.index(0, 0, QModelIndex());
     QVERIFY(x11TopLevelIndex.isValid());
     // we don't have any windows yet
@@ -185,7 +185,7 @@ void DebugConsoleTest::testX11Client()
     QVERIFY(!model.index(model.rowCount(clientIndex), 0, clientIndex).isValid());
 
     // creating a second model should be initialized directly with the X11 child
-    DebugConsoleModel model2;
+    debug::wayland_console_model model2;
     QVERIFY(model2.hasChildren(model2.index(0, 0, QModelIndex())));
 
     // now close the window again, it should be removed from the model
@@ -208,7 +208,7 @@ void DebugConsoleTest::testX11Client()
 
 void DebugConsoleTest::testX11Unmanaged()
 {
-    DebugConsoleModel model;
+    debug::wayland_console_model model;
     QModelIndex unmanagedTopLevelIndex = model.index(1, 0, QModelIndex());
     QVERIFY(unmanagedTopLevelIndex.isValid());
     // we don't have any windows yet
@@ -275,7 +275,7 @@ void DebugConsoleTest::testX11Unmanaged()
     QVERIFY(!model.index(model.rowCount(clientIndex), 0, clientIndex).isValid());
 
     // creating a second model should be initialized directly with the X11 child
-    DebugConsoleModel model2;
+    debug::wayland_console_model model2;
     QVERIFY(model2.hasChildren(model2.index(1, 0, QModelIndex())));
 
     // now close the window again, it should be removed from the model
@@ -297,7 +297,7 @@ void DebugConsoleTest::testX11Unmanaged()
 
 void DebugConsoleTest::testWaylandClient()
 {
-    DebugConsoleModel model;
+    debug::wayland_console_model model;
     QModelIndex waylandTopLevelIndex = model.index(2, 0, QModelIndex());
     QVERIFY(waylandTopLevelIndex.isValid());
 
@@ -371,7 +371,7 @@ void DebugConsoleTest::testWaylandClient()
     QVERIFY(!model.index(model.rowCount(clientIndex), 0, clientIndex).isValid());
 
     // creating a second model should be initialized directly with the X11 child
-    DebugConsoleModel model2;
+    debug::wayland_console_model model2;
     QVERIFY(model2.hasChildren(model2.index(2, 0, QModelIndex())));
 
     // now close the window again, it should be removed from the model
@@ -434,7 +434,7 @@ protected:
 
 void DebugConsoleTest::testInternalWindow()
 {
-    DebugConsoleModel model;
+    debug::wayland_console_model model;
     QModelIndex internalTopLevelIndex = model.index(3, 0, QModelIndex());
     QVERIFY(internalTopLevelIndex.isValid());
 
@@ -509,7 +509,7 @@ void DebugConsoleTest::testClosingDebugConsole()
     // this test verifies that the DebugConsole gets destroyed when closing the window
     // BUG: 369858
 
-    DebugConsole* console = new DebugConsole;
+    auto console = new debug::console;
     QSignalSpy destroyedSpy(console, &QObject::destroyed);
     QVERIFY(destroyedSpy.isValid());
 

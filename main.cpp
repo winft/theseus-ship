@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "main.h"
 #include <config-kwin.h>
-// kwin
+
 #include "platform.h"
 #include "atoms.h"
 #include "render/compositor.h"

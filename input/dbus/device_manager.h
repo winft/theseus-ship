@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include <kwin_export.h>
+
 #include <QObject>
 #include <QStringList>
 
@@ -19,7 +21,7 @@ namespace dbus
 {
 class device;
 
-class device_manager : public QObject
+class KWIN_EXPORT device_manager : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.InputDeviceManager")

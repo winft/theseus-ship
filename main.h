@@ -40,6 +40,11 @@ class QCommandLineParser;
 namespace KWin
 {
 
+namespace debug
+{
+class console;
+}
+
 namespace platform::x11
 {
 class event_filter_manager;
@@ -204,6 +209,8 @@ public:
     static void setupMalloc();
     static void setupLocalizedString();
     virtual void notifyKSplash() {}
+
+    virtual debug::console* create_debug_console() = 0;
 
 Q_SIGNALS:
     void x11ConnectionChanged();

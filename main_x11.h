@@ -25,6 +25,8 @@ public:
     ApplicationX11(int &argc, char **argv);
     ~ApplicationX11() override;
 
+    debug::console* create_debug_console() override;
+
     void start();
 
     void setReplace(bool replace);
