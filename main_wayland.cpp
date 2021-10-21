@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "effects.h"
 #include "render/wayland/compositor.h"
+#include "screenlockerwatcher.h"
 #include "seat/backend/logind/session.h"
 #include "seat/backend/wlroots/session.h"
 #include "input/backend/wlroots/platform.h"
@@ -222,6 +223,7 @@ void ApplicationWayland::start()
     Q_EMIT workspaceCreated();
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
+    ScreenLockerWatcher::self()->initialize();
 }
 
 void ApplicationWayland::handle_server_addons_created()

@@ -37,6 +37,8 @@ class KWIN_EXPORT ScreenLockerWatcher : public QObject
     Q_OBJECT
 public:
     ~ScreenLockerWatcher() override;
+    void initialize();
+
     bool isLocked() const
     {
         return m_locked;
@@ -56,7 +58,6 @@ private Q_SLOTS:
     void serviceOwnerQueried();
 
 private:
-    void initialize();
     OrgFreedesktopScreenSaverInterface* m_interface = nullptr;
     OrgKdeScreensaverInterface* m_kdeInterface = nullptr;
     QDBusServiceWatcher* m_serviceWatcher;

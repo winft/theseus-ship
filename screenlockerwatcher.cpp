@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenlockerwatcher.h"
 
 #include "main.h"
-#include "wayland_server.h"
 
 #include <QFutureWatcher>
 #include <QtConcurrentRun>
@@ -41,14 +40,6 @@ ScreenLockerWatcher::ScreenLockerWatcher(QObject* parent)
     , m_serviceWatcher(new QDBusServiceWatcher(this))
     , m_locked(false)
 {
-    if (waylandServer() && waylandServer()->hasScreenLockerIntegration()) {
-        connect(waylandServer(),
-                &WaylandServer::screenlocker_initialized,
-                this,
-                &ScreenLockerWatcher::initialize);
-    } else {
-        initialize();
-    }
 }
 
 ScreenLockerWatcher::~ScreenLockerWatcher()

@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../input/wayland/redirect.h"
 #include "../../platform.h"
 #include "../../render/wayland/compositor.h"
+#include "../../screenlockerwatcher.h"
 #include "../../seat/backend/wlroots/session.h"
 #include "../../wayland_server.h"
 #include "../../workspace.h"
@@ -195,6 +196,7 @@ void WaylandTestApplication::start()
     Q_EMIT workspaceCreated();
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
+    ScreenLockerWatcher::self()->initialize();
 }
 
 void WaylandTestApplication::handle_server_addons_created()

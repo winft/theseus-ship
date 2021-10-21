@@ -15,6 +15,7 @@
 #include "input/backend/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
+#include "screenlockerwatcher.h"
 #include "seat/backend/logind/session.h"
 #include "sm.h"
 #include "workspace.h"
@@ -208,6 +209,7 @@ debug::console* ApplicationX11::create_debug_console()
 void ApplicationX11::start()
 {
     prepare_start();
+    ScreenLockerWatcher::self()->initialize();
 
     render.reset(new render::backend::x11::X11StandalonePlatform(base));
     platform = render.get();
