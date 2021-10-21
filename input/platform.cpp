@@ -91,25 +91,6 @@ void platform::disable_touchpads()
     toggle_touchpads();
 }
 
-void platform::start_interactive_window_selection(std::function<void(KWin::Toplevel*)> callback,
-                                                  QByteArray const& cursorName)
-{
-    if (!redirect) {
-        callback(nullptr);
-        return;
-    }
-    redirect->startInteractiveWindowSelection(callback, cursorName);
-}
-
-void platform::start_interactive_position_selection(std::function<void(QPoint const&)> callback)
-{
-    if (!redirect) {
-        callback(QPoint(-1, -1));
-        return;
-    }
-    redirect->startInteractivePositionSelection(callback);
-}
-
 void add_redirect(platform* platform, std::unique_ptr<redirect> redirect)
 {
     platform->redirect = std::move(redirect);

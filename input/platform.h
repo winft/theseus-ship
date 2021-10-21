@@ -72,13 +72,12 @@ public:
      * Qt::CursorShape to support the "pirate" cursor for kill window which is not wrapped by
      * Qt::CursorShape.
      *
-     * The default implementation forwards to InputRedirection.
-     *
      * @param callback The function to invoke once the interactive window selection ends
      * @param cursorName The optional name of the cursor shape to use, default is crosshair
      */
     virtual void start_interactive_window_selection(std::function<void(KWin::Toplevel*)> callback,
-                                                    QByteArray const& cursorName = QByteArray());
+                                                    QByteArray const& cursorName = QByteArray())
+        = 0;
 
     /**
      * Starts an interactive position selection process.
@@ -90,11 +89,10 @@ public:
      *
      * During the interactive window selection the cursor is turned into a crosshair cursor.
      *
-     * The default implementation forwards to InputRedirection.
-     *
      * @param callback The function to invoke once the interactive position selection ends
      */
-    virtual void start_interactive_position_selection(std::function<void(QPoint const&)> callback);
+    virtual void start_interactive_position_selection(std::function<void(QPoint const&)> callback)
+        = 0;
 
 Q_SIGNALS:
     void keyboard_added(KWin::input::keyboard*);
