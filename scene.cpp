@@ -76,7 +76,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "overlaywindow.h"
 #include "screens.h"
 #include "shadow.h"
-#include "wayland_server.h"
 
 #include "win/geo.h"
 #include "win/scene.h"

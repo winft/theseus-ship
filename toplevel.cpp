@@ -589,7 +589,7 @@ void Toplevel::resetRepaints(AbstractOutput* output)
 
 void Toplevel::add_repaint_outputs(QRegion const& region)
 {
-    if (!waylandServer()) {
+    if (kwinApp()->operationMode() == Application::OperationModeX11) {
         // On X11 we do not paint per output.
         return;
     }
