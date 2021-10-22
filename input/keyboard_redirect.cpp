@@ -26,10 +26,6 @@ keyboard_redirect::keyboard_redirect(input::redirect* redirect)
 
 keyboard_redirect::~keyboard_redirect() = default;
 
-void keyboard_redirect::init()
-{
-}
-
 input::xkb* keyboard_redirect::xkb() const
 {
     return m_xkb.get();

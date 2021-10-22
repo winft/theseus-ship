@@ -26,17 +26,6 @@ device_redirect::device_redirect()
 
 device_redirect::~device_redirect() = default;
 
-void device_redirect::init()
-{
-    connect(
-        workspace()->stacking_order, &win::stacking_order::changed, this, &device_redirect::update);
-    connect(workspace(), &Workspace::clientMinimizedChanged, this, &device_redirect::update);
-    connect(VirtualDesktopManager::self(),
-            &VirtualDesktopManager::currentChanged,
-            this,
-            &device_redirect::update);
-}
-
 bool device_redirect::setAt(Toplevel* toplevel)
 {
     if (m_at.at == toplevel) {

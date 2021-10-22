@@ -24,8 +24,6 @@ public:
     explicit keyboard_redirect(input::redirect* parent);
     ~keyboard_redirect() override;
 
-    virtual void init();
-
     input::xkb* xkb() const;
     Qt::KeyboardModifiers modifiers() const;
     Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const;

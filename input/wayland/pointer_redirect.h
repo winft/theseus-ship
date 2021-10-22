@@ -36,7 +36,7 @@ class KWIN_EXPORT pointer_redirect : public input::pointer_redirect
 {
     Q_OBJECT
 public:
-    void init() override;
+    void init();
 
     void updateAfterScreenChange() override;
     bool supportsWarping() const override;

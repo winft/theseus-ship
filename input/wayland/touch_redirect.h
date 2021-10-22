@@ -30,7 +30,7 @@ class KWIN_EXPORT touch_redirect : public input::touch_redirect
 {
     Q_OBJECT
 public:
-    void init() override;
+    void init();
 
     QPointF position() const override;
     bool positionValid() const override;

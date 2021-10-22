@@ -26,9 +26,6 @@ class KWIN_EXPORT pointer_redirect : public device_redirect
 public:
     static bool s_cursorUpdateBlocking;
 
-    void init() override
-    {
-    }
     virtual void updateAfterScreenChange()
     {
     }

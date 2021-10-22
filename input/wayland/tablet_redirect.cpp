@@ -6,10 +6,13 @@
 */
 #include "tablet_redirect.h"
 
+#include "device_redirect.h"
+
 #include "input/event.h"
 #include "input/event_filter.h"
 #include "input/event_spy.h"
 
+#include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
 
@@ -22,7 +25,7 @@ void tablet_redirect::init()
 {
     assert(!inited());
     setInited(true);
-    device_redirect::init();
+    device_redirect_init(this);
 
     QObject::connect(workspace(), &QObject::destroyed, this, [this] { setInited(false); });
     QObject::connect(waylandServer(), &QObject::destroyed, this, [this] { setInited(false); });

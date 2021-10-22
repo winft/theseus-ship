@@ -336,10 +336,10 @@ void redirect::setup_workspace()
                 });
         });
 
-    m_keyboard->init();
-    m_pointer->init();
-    m_touch->init();
-    m_tablet->init();
+    static_cast<keyboard_redirect*>(m_keyboard.get())->init();
+    static_cast<pointer_redirect*>(m_pointer.get())->init();
+    static_cast<touch_redirect*>(m_touch.get())->init();
+    static_cast<tablet_redirect*>(m_tablet.get())->init();
 
     setup_filters();
 }

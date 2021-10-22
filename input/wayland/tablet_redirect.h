@@ -27,7 +27,7 @@ class KWIN_EXPORT tablet_redirect : public input::tablet_redirect
 {
     Q_OBJECT
 public:
-    void init() override;
+    void init();
 
     QPointF position() const override;
     bool positionValid() const override;

@@ -6,6 +6,8 @@
 */
 #include "touch_redirect.h"
 
+#include "device_redirect.h"
+
 #include "input/event.h"
 #include "input/event_filter.h"
 #include "input/event_spy.h"
@@ -32,7 +34,7 @@ void touch_redirect::init()
     assert(!inited());
 
     setInited(true);
-    device_redirect::init();
+    device_redirect_init(this);
 
     if (waylandServer()->hasScreenLockerIntegration()) {
         QObject::connect(

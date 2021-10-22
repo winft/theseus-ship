@@ -23,7 +23,7 @@ public:
     explicit keyboard_redirect(wayland::redirect* redirect);
     ~keyboard_redirect() override;
 
-    void init() override;
+    void init();
     void update() override;
 
     void process_key(key_event const& event) override;

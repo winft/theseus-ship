@@ -10,6 +10,7 @@
 
 #include "cursor.h"
 #include "cursor_image.h"
+#include "device_redirect.h"
 
 #include "input/event.h"
 #include "input/event_filter.h"
@@ -56,7 +57,7 @@ void pointer_redirect::init()
 {
     assert(!inited());
     setInited(true);
-    device_redirect::init();
+    device_redirect_init(this);
 
     QObject::connect(
         screens(), &Screens::changed, this, &pointer_redirect::updateAfterScreenChange);

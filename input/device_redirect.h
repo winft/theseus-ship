@@ -42,7 +42,6 @@ class KWIN_EXPORT device_redirect : public QObject
     Q_OBJECT
 public:
     ~device_redirect() override;
-    virtual void init();
 
     void update();
 
