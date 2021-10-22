@@ -495,6 +495,7 @@ Q_SIGNALS:
     void currentDesktopChanged(int, KWin::Toplevel*);
     void clientAdded(KWin::win::x11::window*);
     void clientRemoved(KWin::Toplevel*);
+    void wayland_window_added(KWin::Toplevel*);
     void clientActivated(KWin::Toplevel*);
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
     void clientMinimizedChanged(KWin::Toplevel*);

@@ -390,6 +390,7 @@ Workspace::Workspace()
                     updateClientArea();
                 });
             }
+            Q_EMIT wayland_window_added(window);
         });
         connect(w, &WaylandServer::window_removed, this, [this](win::wayland::window* window) {
             remove_all(m_windows, window);
