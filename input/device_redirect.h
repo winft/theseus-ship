@@ -71,45 +71,24 @@ public:
      */
     QWindow* internalWindow() const;
 
-    virtual QPointF position() const
-    {
-        return {};
-    }
+    virtual QPointF position() const;
 
-    virtual void cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/)
-    {
-    }
-    virtual void cleanupDecoration(Decoration::DecoratedClientImpl* /*old*/,
-                                   Decoration::DecoratedClientImpl* /*now*/)
-    {
-    }
+    virtual void cleanupInternalWindow(QWindow* old, QWindow* now);
+    virtual void cleanupDecoration(Decoration::DecoratedClientImpl* old,
+                                   Decoration::DecoratedClientImpl* now);
 
-    virtual void focusUpdate(Toplevel* /*old*/, Toplevel* /*now*/)
-    {
-    }
+    virtual void focusUpdate(Toplevel* old, Toplevel* now);
 
     /**
      * Certain input devices can be in a state of having no valid
      * position. An example are touch screens when no finger/pen
      * is resting on the surface (no touch point).
      */
-    virtual bool positionValid() const
-    {
-        return true;
-    }
-    virtual bool focusUpdatesBlocked()
-    {
-        return false;
-    }
+    virtual bool positionValid() const;
+    virtual bool focusUpdatesBlocked();
 
-    inline bool inited() const
-    {
-        return m_inited;
-    }
-    inline void setInited(bool set)
-    {
-        m_inited = set;
-    }
+    bool inited() const;
+    void setInited(bool set);
 
     device_redirect_at m_at;
     device_redirect_focus m_focus;
