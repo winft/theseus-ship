@@ -24,16 +24,15 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
         // the Wayland connection is independent of when the corresponding X11 unmap/map events
         // are received.
         QObject::disconnect(win->m_surface, nullptr, win, nullptr);
-
-        QObject::disconnect(
-            win, &Toplevel::frame_geometry_changed, win, &Toplevel::updateClientOutputs);
-        QObject::disconnect(screens(), &Screens::changed, win, &Toplevel::updateClientOutputs);
+        QObject::disconnect(win->notifiers.frame_update_outputs);
+        QObject::disconnect(win->notifiers.screens_update_outputs);
     } else {
         // Need to setup this connections since setSurface was never called before or
         // the surface had been destroyed before what disconnected them.
-        QObject::connect(
+        win->notifiers.frame_update_outputs = QObject::connect(
             win, &Toplevel::frame_geometry_changed, win, &Toplevel::updateClientOutputs);
-        QObject::connect(screens(), &Screens::changed, win, &Toplevel::updateClientOutputs);
+        win->notifiers.screens_update_outputs
+            = QObject::connect(screens(), &Screens::changed, win, &Toplevel::updateClientOutputs);
     }
 
     win->m_surface = surface;
@@ -66,9 +65,8 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
     QObject::connect(win->m_surface, &Wrapland::Server::Surface::destroyed, win, [win] {
         win->m_surface = nullptr;
         win->m_surfaceId = 0;
-        QObject::disconnect(
-            win, &Toplevel::frame_geometry_changed, win, &Toplevel::updateClientOutputs);
-        QObject::disconnect(screens(), &Screens::changed, win, &Toplevel::updateClientOutputs);
+        QObject::disconnect(win->notifiers.frame_update_outputs);
+        QObject::disconnect(win->notifiers.screens_update_outputs);
     });
 
     win->m_surfaceId = surface->id();

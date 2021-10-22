@@ -103,6 +103,11 @@ public:
         } original;
     } geometry_update;
 
+    struct {
+        QMetaObject::Connection frame_update_outputs;
+        QMetaObject::Connection screens_update_outputs;
+    } notifiers;
+
     /**
      * Used to store and retrieve frame geometry values when certain geometry-transforming
      * actions are triggered and later reversed again. For example when a window has been
