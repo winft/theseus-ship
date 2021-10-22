@@ -147,10 +147,7 @@ void InternalClient::blockActivityUpdates(bool b)
 
 qreal InternalClient::bufferScale() const
 {
-    if (m_internalWindow) {
-        return m_internalWindow->devicePixelRatio();
-    }
-    return 1;
+    return buffer_scale_internal();
 }
 
 void InternalClient::debug(QDebug& stream) const
@@ -438,7 +435,7 @@ void InternalClient::present(const QSharedPointer<QOpenGLFramebufferObject> fbo)
 {
     Q_ASSERT(m_internalImage.isNull());
 
-    const QSize bufferSize = fbo->size() / bufferScale();
+    const QSize bufferSize = fbo->size() / buffer_scale_internal();
 
     setFrameGeometry(QRect(pos(), win::client_to_frame_size(this, bufferSize)));
     markAsMapped();
@@ -457,7 +454,7 @@ void InternalClient::present(const QImage& image, const QRegion& damage)
 {
     Q_ASSERT(m_internalFBO.isNull());
 
-    const QSize bufferSize = image.size() / bufferScale();
+    const QSize bufferSize = image.size() / buffer_scale_internal();
 
     setFrameGeometry(QRect(pos(), win::client_to_frame_size(this, bufferSize)));
     markAsMapped();
@@ -514,6 +511,14 @@ void InternalClient::updateCaption()
     if (caption.suffix != oldSuffix) {
         emit captionChanged();
     }
+}
+
+double InternalClient::buffer_scale_internal() const
+{
+    if (m_internalWindow) {
+        return m_internalWindow->devicePixelRatio();
+    }
+    return 1;
 }
 
 void InternalClient::createDecoration(const QRect& rect)
