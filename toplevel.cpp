@@ -43,9 +43,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/netinfo.h"
 #include "win/x11/xcb.h"
 
-#include <Wrapland/Server/compositor.h>
-#include <Wrapland/Server/display.h>
-#include <Wrapland/Server/wl_output.h>
 #include <Wrapland/Server/surface.h>
 
 #include <QDebug>
@@ -769,18 +766,6 @@ void Toplevel::setSkipCloseAnimation(bool set)
     }
     m_skipCloseAnimation = set;
     emit skipCloseAnimationChanged();
-}
-
-void Toplevel::updateClientOutputs()
-{
-    std::vector<Wrapland::Server::Output*> clientOutputs;
-    const auto outputs = waylandServer()->display()->outputs();
-    for (auto output : outputs) {
-        if (frameGeometry().intersects(output->output()->geometry().toRect())) {
-            clientOutputs.push_back(output->output());
-        }
-    }
-    surface()->setOutputs(clientOutputs);
 }
 
 // TODO(romangg): * This function is only called on Wayland and the damage translation is not the

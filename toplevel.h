@@ -178,8 +178,6 @@ public:
     virtual bool isInputMethod() const;
     virtual bool isOutline() const;
 
-    void updateClientOutputs();
-
     /**
      * Returns the virtual desktop within the workspace() the client window
      * is located in, 0 if it isn't located on any special desktop (not mapped yet),

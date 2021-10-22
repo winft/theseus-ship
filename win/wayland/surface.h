@@ -9,10 +9,26 @@
 #include "wayland_server.h"
 
 #include <Wrapland/Server/surface.h>
+#include <Wrapland/Server/wl_output.h>
 #include <cassert>
 
 namespace KWin::win::wayland
 {
+
+template<typename Win>
+void update_surface_outputs(Win* win)
+{
+    std::vector<Wrapland::Server::Output*> surface_outputs;
+
+    auto const outputs = waylandServer()->display()->outputs();
+    for (auto output : outputs) {
+        if (win->frameGeometry().intersects(output->output()->geometry().toRect())) {
+            surface_outputs.push_back(output->output());
+        }
+    }
+
+    win->surface()->setOutputs(surface_outputs);
+}
 
 template<typename Win>
 void set_surface(Win* win, Wrapland::Server::Surface* surface)
@@ -30,9 +46,9 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
         // Need to setup this connections since setSurface was never called before or
         // the surface had been destroyed before what disconnected them.
         win->notifiers.frame_update_outputs = QObject::connect(
-            win, &Toplevel::frame_geometry_changed, win, &Toplevel::updateClientOutputs);
-        win->notifiers.screens_update_outputs
-            = QObject::connect(screens(), &Screens::changed, win, &Toplevel::updateClientOutputs);
+            win, &Toplevel::frame_geometry_changed, win, [win] { update_surface_outputs(win); });
+        win->notifiers.screens_update_outputs = QObject::connect(
+            screens(), &Screens::changed, win, [win] { update_surface_outputs(win); });
     }
 
     win->m_surface = surface;
@@ -70,7 +86,7 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
     });
 
     win->m_surfaceId = surface->id();
-    win->updateClientOutputs();
+    update_surface_outputs(win);
     Q_EMIT win->surfaceChanged();
 }
 
