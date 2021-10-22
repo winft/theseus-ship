@@ -42,8 +42,8 @@ bool device_redirect::setAt(Toplevel* toplevel)
     if (m_at.at == toplevel) {
         return false;
     }
-    disconnect(m_at.surfaceCreatedConnection);
-    m_at.surfaceCreatedConnection = QMetaObject::Connection();
+    disconnect(m_at.surface_notifier);
+    m_at.surface_notifier = QMetaObject::Connection();
 
     m_at.at = toplevel;
     return true;
@@ -76,8 +76,8 @@ void device_redirect::updateFocus()
     if (m_at.at && !m_at.at->surface()) {
         // The surface has not yet been created (special XWayland case).
         // Therefore listen for its creation.
-        if (!m_at.surfaceCreatedConnection) {
-            m_at.surfaceCreatedConnection
+        if (!m_at.surface_notifier) {
+            m_at.surface_notifier
                 = connect(m_at.at, &Toplevel::surfaceChanged, this, &device_redirect::update);
         }
         m_focus.focus = nullptr;

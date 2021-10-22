@@ -26,6 +26,17 @@ namespace input
 {
 class redirect;
 
+struct device_redirect_at {
+    QPointer<Toplevel> at;
+    QMetaObject::Connection surface_notifier;
+};
+
+struct device_redirect_focus {
+    QPointer<Toplevel> focus;
+    QPointer<Decoration::DecoratedClientImpl> decoration;
+    QPointer<QWindow> internalWindow;
+};
+
 class KWIN_EXPORT device_redirect : public QObject
 {
     Q_OBJECT
@@ -121,16 +132,8 @@ private:
 
     QWindow* findInternalWindow(const QPoint& pos) const;
 
-    struct {
-        QPointer<Toplevel> at;
-        QMetaObject::Connection surfaceCreatedConnection;
-    } m_at;
-
-    struct {
-        QPointer<Toplevel> focus;
-        QPointer<Decoration::DecoratedClientImpl> decoration;
-        QPointer<QWindow> internalWindow;
-    } m_focus;
+    device_redirect_at m_at;
+    device_redirect_focus m_focus;
 
     bool m_inited = false;
 };
