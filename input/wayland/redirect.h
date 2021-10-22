@@ -39,11 +39,9 @@ public:
 Q_SIGNALS:
     void has_tablet_mode_switch_changed(bool set);
 
-protected:
-    void setupWorkspace() override;
-    void setupInputFilters() override;
-
 private:
+    void setup_workspace();
+    void setup_filters();
     void setup_touchpad_shortcuts();
     void reconfigure();
 

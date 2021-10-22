@@ -271,8 +271,6 @@ protected:
              tablet_redirect* tablet,
              touch_redirect* touch);
 
-    virtual void setupWorkspace();
-    virtual void setupInputFilters();
     void installInputEventFilter(event_filter* filter);
 
     std::unique_ptr<keyboard_redirect> m_keyboard;

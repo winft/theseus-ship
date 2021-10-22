@@ -57,6 +57,7 @@ redirect::redirect()
                       new touch_redirect)
     , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
 {
+    QObject::connect(kwinApp(), &Application::startup_finished, this, &redirect::setup_workspace);
     reconfigure();
 }
 
@@ -223,7 +224,7 @@ void redirect::setup_touchpad_shortcuts()
     QObject::connect(off_action, &QAction::triggered, platform, &platform::disable_touchpads);
 }
 
-void redirect::setupWorkspace()
+void redirect::setup_workspace()
 {
     fake_input = waylandServer()->display()->createFakeInput();
 
@@ -340,10 +341,10 @@ void redirect::setupWorkspace()
     m_touch->init();
     m_tablet->init();
 
-    setupInputFilters();
+    setup_filters();
 }
 
-void redirect::setupInputFilters()
+void redirect::setup_filters()
 {
     auto const has_global_shortcuts = waylandServer()->hasGlobalShortcutSupport();
 
@@ -435,7 +436,7 @@ void redirect::startInteractivePositionSelection(std::function<void(QPoint const
 
 bool redirect::isSelectingWindow() const
 {
-    // TODO(romangg): This function is called before setupInputFilters is run (from setupWorkspace).
+    // TODO(romangg): This function is called before setup_filters is run (from setup_workspace).
     //                Can we ensure it's only called afterwards and remove the nullptr check?
     return window_selector && window_selector->isActive();
 }

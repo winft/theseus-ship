@@ -45,7 +45,6 @@ redirect::redirect(keyboard_redirect* keyboard,
     qRegisterMetaType<KWin::input::redirect::KeyboardKeyState>();
     qRegisterMetaType<KWin::input::redirect::PointerButtonState>();
     qRegisterMetaType<KWin::input::redirect::PointerAxis>();
-    connect(kwinApp(), &Application::startup_finished, this, &redirect::setupWorkspace);
 }
 
 redirect::~redirect()
@@ -86,15 +85,6 @@ void redirect::installInputEventSpy(event_spy* spy)
 void redirect::uninstallInputEventSpy(event_spy* spy)
 {
     remove_all(m_spies, spy);
-}
-
-void redirect::setupWorkspace()
-{
-    setupInputFilters();
-}
-
-void redirect::setupInputFilters()
-{
 }
 
 void redirect::processPointerMotion(const QPointF& pos, uint32_t time)
