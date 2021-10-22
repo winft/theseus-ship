@@ -59,8 +59,7 @@ Toplevel::Toplevel()
 }
 
 Toplevel::Toplevel(win::transient* transient)
-    : m_isDamaged(false)
-    , m_internalId(QUuid::createUuid())
+    : m_internalId(QUuid::createUuid())
     , m_client()
     , damage_handle(XCB_NONE)
     , is_shape(false)
@@ -770,68 +769,6 @@ void Toplevel::setSkipCloseAnimation(bool set)
     }
     m_skipCloseAnimation = set;
     emit skipCloseAnimationChanged();
-}
-
-void Toplevel::setSurface(Wrapland::Server::Surface *surface)
-{
-    using namespace Wrapland::Server;
-    Q_ASSERT(surface);
-
-    if (m_surface) {
-        // This can happen with XWayland clients since receiving the surface destroy signal through
-        // the Wayland connection is independent of when the corresponding X11 unmap/map events
-        // are received.
-        disconnect(m_surface, nullptr, this, nullptr);
-
-        disconnect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::updateClientOutputs);
-        disconnect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
-    } else {
-        // Need to setup this connections since setSurface was never called before or
-        // the surface had been destroyed before what disconnected them.
-        connect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::updateClientOutputs);
-        connect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
-    }
-
-    m_surface = surface;
-
-    if (surface->client() == waylandServer()->xWaylandConnection()) {
-        connect(m_surface, &Surface::committed, this, [this]{
-            if (!m_surface->state().damage.isEmpty()) {
-                addDamage(m_surface->state().damage);
-            }
-        });
-        connect(m_surface, &Surface::committed, this, [this]{
-            if (m_surface->state().updates & Wrapland::Server::surface_change::size) {
-                discardWindowPixmap();
-                // Quads for Xwayland clients need for size emulation.
-                // Also apparently needed for unmanaged Xwayland clients (compare Kate's open-file
-                // dialog when type-forward list is changing size).
-                // TODO(romangg): can this be put in a less hot path?
-                discard_quads();
-            }
-        });
-    }
-
-    connect(m_surface, &Surface::subsurfaceTreeChanged, this,
-        [this] {
-            // TODO improve to only update actual visual area
-            if (ready_for_painting) {
-                addDamageFull();
-                m_isDamaged = true;
-            }
-        }
-    );
-    connect(m_surface, &Surface::destroyed, this,
-        [this] {
-            m_surface = nullptr;
-            m_surfaceId = 0;
-            disconnect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::updateClientOutputs);
-            disconnect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
-        }
-    );
-    m_surfaceId = surface->id();
-    updateClientOutputs();
-    emit surfaceChanged();
 }
 
 void Toplevel::updateClientOutputs()

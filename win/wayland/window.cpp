@@ -10,6 +10,7 @@
 #include "maximize.h"
 #include "render/wayland/compositor.h"
 #include "subsurface.h"
+#include "surface.h"
 #include "xdg_shell.h"
 
 #include "win/deco.h"
@@ -57,7 +58,7 @@ Toplevel* find_toplevel(WS::Surface* surface)
 window::window(WS::Surface* surface)
     : Toplevel()
 {
-    setSurface(surface);
+    set_surface(this, surface);
 
     connect(surface, &WS::Surface::subsurfaceTreeChanged, this, [this] {
         discard_shape();

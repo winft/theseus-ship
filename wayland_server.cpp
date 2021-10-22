@@ -14,6 +14,7 @@
 
 #include "win/wayland/layer_shell.h"
 #include "win/wayland/subsurface.h"
+#include "win/wayland/surface.h"
 #include "win/wayland/window.h"
 #include "win/wayland/xdg_activation.h"
 #include "win/wayland/xdg_shell.h"
@@ -244,8 +245,8 @@ void WaylandServer::create_globals()
                     // only find Xwayland toplevels. Wayland native windows always have a surface.
                     return t->surfaceId() == surface->id() && !t->surface();
                 };
-                if (Toplevel* t = ws->findToplevel(check)) {
-                    t->setSurface(surface);
+                if (auto window = ws->findToplevel(check)) {
+                    win::wayland::set_surface(window, surface);
                 }
             });
 
@@ -629,7 +630,7 @@ void WaylandServer::initWorkspace()
     // For Xwayland windows
     QObject::connect(ws, &Workspace::surface_id_changed, this, [this](auto window, auto id) {
         if (auto surface = compositor()->getSurface(id, xWaylandConnection())) {
-            window->setSurface(surface);
+            win::wayland::set_surface(window, surface);
         }
     });
 }
