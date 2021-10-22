@@ -44,7 +44,7 @@ void touch_redirect::init()
                 }
                 cancel();
                 // position doesn't matter
-                update();
+                device_redirect_update(this);
             });
     }
 
@@ -218,7 +218,7 @@ void touch_redirect::processDown(qint32 id,
     window_already_updated_this_cycle = false;
     m_touches++;
     if (m_touches == 1) {
-        update();
+        device_redirect_update(this);
     }
     kwinApp()->input->redirect->processSpies(
         std::bind(&event_spy::touchDown, std::placeholders::_1, id, pos, time));
@@ -252,7 +252,7 @@ void touch_redirect::processUp(qint32 id, quint32 time, input::touch* /*device*/
     m_touches--;
 
     if (m_touches == 0) {
-        update();
+        device_redirect_update(this);
     }
 }
 

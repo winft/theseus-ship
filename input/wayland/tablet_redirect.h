@@ -49,12 +49,12 @@ public:
     void tabletPadStripEvent(int number, int position, bool is_finger) override;
     void tabletPadRingEvent(int number, int position, bool is_finger) override;
 
-private:
     void cleanupDecoration(Decoration::DecoratedClientImpl* old,
                            Decoration::DecoratedClientImpl* now) override;
     void cleanupInternalWindow(QWindow* old, QWindow* now) override;
     void focusUpdate(KWin::Toplevel* old, KWin::Toplevel* now) override;
 
+private:
     struct {
         bool down = false;
         bool near = false;

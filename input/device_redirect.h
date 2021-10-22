@@ -43,8 +43,6 @@ class KWIN_EXPORT device_redirect : public QObject
 public:
     ~device_redirect() override;
 
-    void update();
-
     /**
      * @brief First Toplevel currently at the position of the input device
      * according to the stacking order.
@@ -77,16 +75,6 @@ public:
     {
         return {};
     }
-
-    void setFocus(Toplevel* toplevel);
-    void setDecoration(Decoration::DecoratedClientImpl* decoration);
-    void setInternalWindow(QWindow* window);
-
-Q_SIGNALS:
-    void decorationChanged();
-
-protected:
-    device_redirect();
 
     virtual void cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/)
     {
@@ -123,18 +111,16 @@ protected:
         m_inited = set;
     }
 
-private:
-    bool setAt(Toplevel* toplevel);
-    void updateFocus();
-    bool updateDecoration();
-    void updateInternalWindow(QWindow* window);
-
-    QWindow* findInternalWindow(const QPoint& pos) const;
-
     device_redirect_at m_at;
     device_redirect_focus m_focus;
 
-    bool m_inited = false;
+    bool m_inited{false};
+
+Q_SIGNALS:
+    void decorationChanged();
+
+protected:
+    device_redirect();
 };
 
 }

@@ -64,14 +64,13 @@ public:
     void setInternalPressId(qint32 id) override;
     qint32 internalPressId() const override;
 
-private:
     void cleanupInternalWindow(QWindow* old, QWindow* now) override;
     void cleanupDecoration(Decoration::DecoratedClientImpl* old,
                            Decoration::DecoratedClientImpl* now) override;
 
     void focusUpdate(Toplevel* focusOld, Toplevel* focusNow) override;
 
-    bool m_inited = false;
+private:
     qint32 m_decorationId = -1;
     qint32 m_internalId = -1;
 
