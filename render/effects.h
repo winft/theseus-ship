@@ -426,9 +426,6 @@ public:
                          &EffectsHandler::mouseChanged);
 
         auto& base = compositor.platform.base;
-        connect(&base, &base_t::output_added, this, &EffectsHandler::numberScreensChanged);
-        connect(&base, &base_t::output_removed, this, &EffectsHandler::numberScreensChanged);
-
         QObject::connect(
             &base, &base_t::topology_changed, this, [this](auto old_topo, auto new_topo) {
                 if (old_topo.size != new_topo.size) {
@@ -1120,11 +1117,6 @@ public:
             return nullptr;
         }
         return effect_screen_impl<base::output>::get(output);
-    }
-
-    int numScreens() const override
-    {
-        return compositor.platform.base.outputs.size();
     }
 
     QList<EffectScreen*> screens() const override

@@ -102,7 +102,8 @@ DesktopGridEffect::DesktopGridEffect()
             &EffectsHandler::windowGeometryShapeChanged,
             this,
             &DesktopGridEffect::slotWindowGeometryShapeChanged);
-    connect(effects, &EffectsHandler::numberScreensChanged, this, &DesktopGridEffect::setup);
+    connect(effects, &EffectsHandler::screenAdded, this, &DesktopGridEffect::setup);
+    connect(effects, &EffectsHandler::screenRemoved, this, &DesktopGridEffect::setup);
 
     connect(effects, &EffectsHandler::screenAboutToLock, this, [this]() {
         setActive(false);

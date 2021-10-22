@@ -1355,7 +1355,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
         if (mode == Cylinder || mode == Sphere) {
             shaderManager->popShader();
         }
-        if (w->isDesktop() && effects->numScreens() > 1 && paintCaps) {
+        if (w->isDesktop() && effects->screens().size() > 1 && paintCaps) {
             QRect rect = effects->clientArea(FullArea, activeScreen, painting_desktop);
             QRegion paint = QRegion(rect);
             auto const screens = effects->screens();

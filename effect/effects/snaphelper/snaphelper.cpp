@@ -131,7 +131,7 @@ void SnapHelperEffect::paintScreen(int mask, const QRegion& region, ScreenPaintD
 
         glLineWidth(s_lineWidth);
         QVector<float> verts;
-        verts.reserve(effects->numScreens() * 24);
+        verts.reserve(screens.size() * 24);
         for (EffectScreen* screen : screens) {
             const QRect rect = effects->clientArea(ScreenArea, screen, 0);
             const int midX = rect.x() + rect.width() / 2;

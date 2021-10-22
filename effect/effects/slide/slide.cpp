@@ -46,7 +46,8 @@ SlideEffect::SlideEffect()
     connect(effects, &EffectsHandler::windowAdded, this, &SlideEffect::windowAdded);
     connect(effects, &EffectsHandler::windowDeleted, this, &SlideEffect::windowDeleted);
     connect(effects, &EffectsHandler::numberDesktopsChanged, this, &SlideEffect::stop);
-    connect(effects, &EffectsHandler::numberScreensChanged, this, &SlideEffect::stop);
+    connect(effects, &EffectsHandler::screenAdded, this, &SlideEffect::stop);
+    connect(effects, &EffectsHandler::screenRemoved, this, &SlideEffect::stop);
 }
 
 SlideEffect::~SlideEffect()

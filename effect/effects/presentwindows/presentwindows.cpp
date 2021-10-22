@@ -120,9 +120,15 @@ PresentWindowsEffect::PresentWindowsEffect()
             &EffectsHandler::windowGeometryShapeChanged,
             this,
             &PresentWindowsEffect::slotWindowGeometryShapeChanged);
-    connect(effects, &EffectsHandler::numberScreensChanged, this, [this] {
-        if (isActive())
+    connect(effects, &EffectsHandler::screenAdded, this, [this]() {
+        if (isActive()) {
             reCreateGrids();
+        }
+    });
+    connect(effects, &EffectsHandler::screenRemoved, this, [this]() {
+        if (isActive()) {
+            reCreateGrids();
+        }
     });
     connect(effects, &EffectsHandler::screenAboutToLock, this, [this]() { setActive(false); });
 
