@@ -21,6 +21,8 @@ public:
     space();
     ~space() override;
 
+    QRect get_icon_geometry(Toplevel const* win) const override;
+
     std::unique_ptr<win::wayland::xdg_activation> activation;
 };
 

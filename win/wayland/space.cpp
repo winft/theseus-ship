@@ -182,4 +182,37 @@ space::~space()
     }
 }
 
+QRect space::get_icon_geometry(Toplevel const* win) const
+{
+    auto management = win->control->wayland_management();
+    if (!management || !waylandServer()) {
+        // window management interface is only available if the surface is mapped
+        return QRect();
+    }
+
+    auto min_distance = INT_MAX;
+    Toplevel* candidate_panel{nullptr};
+    QRect candidate_geo;
+
+    for (auto i = management->minimizedGeometries().constBegin(),
+              end = management->minimizedGeometries().constEnd();
+         i != end;
+         ++i) {
+        auto client = waylandServer()->findToplevel(i.key());
+        if (!client) {
+            continue;
+        }
+        auto const distance = QPoint(client->pos() - win->pos()).manhattanLength();
+        if (distance < min_distance) {
+            min_distance = distance;
+            candidate_panel = client;
+            candidate_geo = i.value();
+        }
+    }
+    if (!candidate_panel) {
+        return QRect();
+    }
+    return candidate_geo.translated(candidate_panel->pos());
+}
+
 }
