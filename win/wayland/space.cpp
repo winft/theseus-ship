@@ -8,8 +8,10 @@
 #include "xdg_activation.h"
 
 #include "screens.h"
+#include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "win/input.h"
+#include "win/screen.h"
 #include "win/stacking_order.h"
 #include "win/x11/stacking_tree.h"
 
@@ -138,6 +140,25 @@ space::space()
                          if (window->control) {
                              updateClientArea();
                              updateTabbox();
+                         }
+                     });
+
+    QObject::connect(VirtualDesktopManager::self(),
+                     &VirtualDesktopManager::desktopRemoved,
+                     this,
+                     [this](auto desktop) {
+                         for (auto const& client : m_allClients) {
+                             if (!client->desktops().contains(desktop)) {
+                                 continue;
+                             }
+                             if (client->desktops().count() > 1) {
+                                 win::leave_desktop(client, desktop);
+                             } else {
+                                 sendClientToDesktop(client,
+                                                     qMin(desktop->x11DesktopNumber(),
+                                                          VirtualDesktopManager::self()->count()),
+                                                     true);
+                             }
                          }
                      });
 }

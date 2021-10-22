@@ -233,35 +233,18 @@ Workspace::Workspace()
 
     // create VirtualDesktopManager and perform dependency injection
     VirtualDesktopManager* vds = VirtualDesktopManager::self();
-    connect(
-        vds, &VirtualDesktopManager::desktopRemoved, this, [this](KWin::VirtualDesktop* desktop) {
-            // Wayland
-            if (kwinApp()->operationMode() == Application::OperationModeWaylandOnly
-                || kwinApp()->operationMode() == Application::OperationModeXwayland) {
-                for (auto const& client : m_allClients) {
-                    if (!client->desktops().contains(desktop)) {
-                        continue;
-                    }
-                    if (client->desktops().count() > 1) {
-                        win::leave_desktop(client, desktop);
-                    } else {
-                        sendClientToDesktop(client,
-                                            qMin(desktop->x11DesktopNumber(),
-                                                 VirtualDesktopManager::self()->count()),
-                                            true);
-                    }
-                }
-                // X11
-            } else {
-                for (auto const& client : m_allClients) {
-                    if (!client->isOnAllDesktops()
-                        && (client->desktop()
-                            > static_cast<int>(VirtualDesktopManager::self()->count()))) {
-                        sendClientToDesktop(client, VirtualDesktopManager::self()->count(), true);
-                    }
+    connect(vds, &VirtualDesktopManager::desktopRemoved, this, [this] {
+        // Wayland
+        if (kwinApp()->operationMode() == Application::OperationModeX11) {
+            for (auto const& client : m_allClients) {
+                if (!client->isOnAllDesktops()
+                    && (client->desktop()
+                        > static_cast<int>(VirtualDesktopManager::self()->count()))) {
+                    sendClientToDesktop(client, VirtualDesktopManager::self()->count(), true);
                 }
             }
-        });
+        }
+    });
 
     connect(vds, &VirtualDesktopManager::countChanged, this, &Workspace::slotDesktopCountChanged);
     connect(
