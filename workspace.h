@@ -407,6 +407,8 @@ public:
 
     void remove_window(Toplevel* window);
 
+    QRect get_icon_geometry(Toplevel const* win) const;
+
 public Q_SLOTS:
     void performWindowOperation(KWin::Toplevel* window, Options::WindowOperation op);
     // Keybindings

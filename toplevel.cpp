@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "screens.h"
 #include "shadow.h"
-#include "wayland_server.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -1294,33 +1293,7 @@ bool Toplevel::belongsToSameApplication([[maybe_unused]] Toplevel const* other,
 
 QRect Toplevel::iconGeometry() const
 {
-    auto management = control->wayland_management();
-    if (!management || !waylandServer()) {
-        // window management interface is only available if the surface is mapped
-        return QRect();
-    }
-
-    int minDistance = INT_MAX;
-    Toplevel* candidatePanel = nullptr;
-    QRect candidateGeom;
-
-    for (auto i = management->minimizedGeometries().constBegin(),
-         end = management->minimizedGeometries().constEnd(); i != end; ++i) {
-        auto client = waylandServer()->findToplevel(i.key());
-        if (!client) {
-            continue;
-        }
-        const int distance = QPoint(client->pos() - pos()).manhattanLength();
-        if (distance < minDistance) {
-            minDistance = distance;
-            candidatePanel = client;
-            candidateGeom = i.value();
-        }
-    }
-    if (!candidatePanel) {
-        return QRect();
-    }
-    return candidateGeom.translated(candidatePanel->pos());
+    return workspace()->get_icon_geometry(this);
 }
 
 void Toplevel::setWindowHandles(xcb_window_t w)
