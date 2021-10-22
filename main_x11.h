@@ -16,6 +16,10 @@
 
 namespace KWin
 {
+namespace render::x11
+{
+class compositor;
+}
 
 class KWinSelectionOwner;
 class Workspace;
@@ -27,6 +31,7 @@ public:
     ApplicationX11(int &argc, char **argv);
     ~ApplicationX11() override;
 
+    render::compositor* get_compositor() override;
     debug::console* create_debug_console() override;
 
     void start();
@@ -49,6 +54,7 @@ private:
     base::platform<base::backend::x11, AbstractOutput> base;
     std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
     std::unique_ptr<Workspace> workspace;
+    std::unique_ptr<render::x11::compositor> compositor;
 
     QScopedPointer<KWinSelectionOwner> owner;
     bool m_replace;

@@ -49,6 +49,10 @@ class XdgDecorationManager;
 
 namespace KWin
 {
+namespace render::wayland
+{
+class compositor;
+}
 namespace win::wayland
 {
 class window;
@@ -146,6 +150,7 @@ public:
     bool is_screen_locked() const override;
 
     WaylandServer* get_wayland_server() override;
+    render::compositor* get_compositor() override;
     debug::console* create_debug_console() override;
 
     void start();
@@ -156,6 +161,7 @@ private:
 
     base::platform<base::backend::wlroots, AbstractWaylandOutput> base;
     std::unique_ptr<render::backend::wlroots::backend> render;
+    std::unique_ptr<render::wayland::compositor> compositor;
 };
 
 namespace Test

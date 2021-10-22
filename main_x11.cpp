@@ -201,6 +201,11 @@ void ApplicationX11::lostSelection()
     quit();
 }
 
+render::compositor* ApplicationX11::get_compositor()
+{
+    return compositor.get();
+}
+
 debug::console* ApplicationX11::create_debug_console()
 {
     return new debug::x11_console;

@@ -103,11 +103,12 @@ public:
 
     Platform* platform{nullptr};
     std::unique_ptr<seat::session> session;
-    std::unique_ptr<render::compositor> compositor;
     std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<input::platform> input;
 
     ~Application() override;
+
+    virtual render::compositor* get_compositor() = 0;
 
     void setConfigLock(bool lock);
 

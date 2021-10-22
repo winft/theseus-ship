@@ -159,7 +159,7 @@ ApplicationWayland::~ApplicationWayland()
     if (compositor) {
         // Block compositor to prevent further compositing from crashing with a null workspace.
         // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-        static_cast<render::wayland::compositor*>(compositor.get())->lock();
+        compositor->lock();
     }
 
     workspace.reset();
@@ -177,6 +177,11 @@ bool ApplicationWayland::is_screen_locked() const
 WaylandServer* ApplicationWayland::get_wayland_server()
 {
     return server.get();
+}
+
+render::compositor* ApplicationWayland::get_compositor()
+{
+    return compositor.get();
 }
 
 debug::console* ApplicationWayland::create_debug_console()

@@ -38,7 +38,10 @@ namespace input::dbus
 {
 class tablet_mode_manager;
 }
-
+namespace render::wayland
+{
+class compositor;
+}
 namespace xwl
 {
 class xwayland;
@@ -50,6 +53,7 @@ class ApplicationWayland : public ApplicationWaylandAbstract
 public:
     std::unique_ptr<WaylandServer> server;
     std::unique_ptr<Workspace> workspace;
+    std::unique_ptr<render::wayland::compositor> compositor;
 
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
@@ -57,6 +61,7 @@ public:
     bool is_screen_locked() const override;
 
     WaylandServer* get_wayland_server() override;
+    render::compositor* get_compositor() override;
     debug::console* create_debug_console() override;
 
     void start();
