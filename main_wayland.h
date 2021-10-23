@@ -33,6 +33,11 @@ namespace KWin
 class WaylandServer;
 class Workspace;
 
+namespace input::dbus
+{
+class tablet_mode_manager;
+}
+
 namespace xwl
 {
 class xwayland;
@@ -88,6 +93,8 @@ private:
     std::unique_ptr<platform_base::wlroots> backend;
     std::unique_ptr<render::backend::wlroots::backend> render;
     std::unique_ptr<xwl::xwayland> xwayland;
+
+    std::unique_ptr<input::dbus::tablet_mode_manager> tablet_mode_manager;
 
     QProcess* exit_with_process{nullptr};
 };

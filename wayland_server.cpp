@@ -6,8 +6,8 @@
 */
 #include "wayland_server.h"
 
-#include "idle_inhibition.h"
 #include "platform.h"
+#include "platform/wayland/idle_inhibition.h"
 #include "screens.h"
 #include "service_utils.h"
 #include "workspace.h"
@@ -339,8 +339,11 @@ void WaylandServer::create_globals()
     globals->data_control_manager_v1 = m_display->create_data_control_manager_v1();
     globals->kde_idle = m_display->createIdle();
 
-    auto idleInhibition = new IdleInhibition(globals->kde_idle.get());
-    connect(this, &WaylandServer::window_added, idleInhibition, &IdleInhibition::register_window);
+    auto idleInhibition = new platform::wayland::idle_inhibition(globals->kde_idle.get());
+    connect(this,
+            &WaylandServer::window_added,
+            idleInhibition,
+            &platform::wayland::idle_inhibition::register_window);
     globals->idle_inhibit_manager_v1 = m_display->createIdleInhibitManager();
 
     globals->plasma_shell = m_display->createPlasmaShell();
