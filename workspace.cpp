@@ -72,6 +72,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/event.h"
 #include "win/x11/group.h"
 #include "win/x11/netinfo.h"
+#include "win/x11/space_areas.h"
 #include "win/x11/stacking_tree.h"
 #include "win/x11/syncalarmx11filter.h"
 #include "win/x11/transient.h"
@@ -1808,79 +1809,8 @@ void Workspace::updateClientArea(bool force)
     for (auto const& client : m_allClients) {
         // TODO(romangg): Merge this with Wayland clients below.
         auto x11_client = qobject_cast<win::x11::window*>(client);
-        if (!x11_client) {
-            continue;
-        }
-        if (!x11_client->hasStrut()) {
-            continue;
-        }
-
-        auto client_area = win::x11::adjusted_client_area(x11_client, desktop_area, desktop_area);
-
-        // Sanity check that a strut doesn't exclude a complete screen geometry. This is a violation
-        // to EWMH, as KWin just ignores the strut.
-        for (int screen = 0; screen < screens->count(); screen++) {
-            if (!client_area.intersects(screens->geometry(screen))) {
-                qCDebug(KWIN_CORE)
-                    << "Adjusted client area would exclude a complete screen, ignore.";
-                client_area = desktop_area;
-                break;
-            }
-        }
-
-        auto strut_region = win::x11::strut_rects(x11_client);
-        auto const clientsScreenRect = screens->geometry(x11_client->screen());
-
-        for (auto strut = strut_region.begin(); strut != strut_region.end(); strut++) {
-            *strut = StrutRect((*strut).intersected(clientsScreenRect), (*strut).area());
-        }
-
-        // Ignore offscreen xinerama struts. These interfere with the larger monitors on the setup
-        // and should be ignored so that applications that use the work area to work out where
-        // windows can go can use the entire visible area of the larger monitors.
-        // This goes against the EWMH description of the work area but it is a toss up between
-        // having unusable sections of the screen (Which can be quite large with newer monitors)
-        // or having some content appear offscreen (Relatively rare compared to other).
-        auto has_offscreen_xinerama_strut = win::x11::has_offscreen_xinerama_strut(x11_client);
-
-        if (x11_client->isOnAllDesktops()) {
-            for (int desktop = 1; desktop <= desktops_count; ++desktop) {
-                if (!has_offscreen_xinerama_strut) {
-                    new_areas.work[desktop] = new_areas.work[desktop].intersected(client_area);
-                }
-
-                new_areas.restrictedmove[desktop] += strut_region;
-
-                for (int screen = 0; screen < screens_count; screen++) {
-                    auto const client_area_on_screen = win::x11::adjusted_client_area(
-                        x11_client, desktop_area, screens_geos[screen]);
-                    auto& screen_area = new_areas.screen[desktop][screen];
-                    auto const geo = screen_area.intersected(client_area_on_screen);
-
-                    // Ignore the geometry if it results in the screen getting removed completely.
-                    if (!geo.isEmpty()) {
-                        screen_area = geo;
-                    }
-                }
-            }
-        } else {
-            if (!has_offscreen_xinerama_strut) {
-                new_areas.work[x11_client->desktop()]
-                    = new_areas.work[x11_client->desktop()].intersected(client_area);
-            }
-
-            new_areas.restrictedmove[x11_client->desktop()] += strut_region;
-
-            for (int screen = 0; screen < screens_count; screen++) {
-                auto const screen_area = new_areas.screen[x11_client->desktop()][screen];
-                auto const geo = screen_area.intersected(
-                    win::x11::adjusted_client_area(x11_client, desktop_area, screens_geos[screen]));
-
-                // Ignore the geometry if it results in the screen getting removed completely.
-                if (!geo.isEmpty()) {
-                    new_areas.screen[x11_client->desktop()][screen] = geo;
-                }
-            }
+        if (x11_client) {
+            win::x11::update_space_areas(x11_client, desktop_area, screens_geos, new_areas);
         }
     }
 
