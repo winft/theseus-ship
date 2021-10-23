@@ -67,7 +67,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/stacking_order.h"
 #include "win/util.h"
 
-#include "win/wayland/window.h"
+#include "win/wayland/space_areas.h"
 #include "win/x11/control.h"
 #include "win/x11/event.h"
 #include "win/x11/group.h"
@@ -1885,89 +1885,9 @@ void Workspace::updateClientArea(bool force)
     }
 
     if (waylandServer()) {
-        auto update_areas_from_wayland_window = [&](auto win) {
-            // Assuming that only docks have "struts" and that all docks have a strut.
-            if (!win->hasStrut()) {
-                return;
-            }
-            auto margins = [win](auto const& geometry) {
-                QMargins margins;
-                if (!geometry.intersects(win->frameGeometry())) {
-                    return margins;
-                }
-
-                // Figure out which areas of the overall screen setup it borders.
-                auto const left = win->frameGeometry().left() == geometry.left();
-                auto const right = win->frameGeometry().right() == geometry.right();
-                auto const top = win->frameGeometry().top() == geometry.top();
-                auto const bottom = win->frameGeometry().bottom() == geometry.bottom();
-                auto const horizontal
-                    = win->frameGeometry().width() >= win->frameGeometry().height();
-
-                if (left && ((!top && !bottom) || !horizontal)) {
-                    margins.setLeft(win->frameGeometry().width());
-                }
-                if (right && ((!top && !bottom) || !horizontal)) {
-                    margins.setRight(win->frameGeometry().width());
-                }
-                if (top && ((!left && !right) || horizontal)) {
-                    margins.setTop(win->frameGeometry().height());
-                }
-                if (bottom && ((!left && !right) || horizontal)) {
-                    margins.setBottom(win->frameGeometry().height());
-                }
-                return margins;
-            };
-
-            auto margins_to_strut_area = [](auto const& margins) {
-                if (margins.left() != 0) {
-                    return StrutAreaLeft;
-                }
-                if (margins.right() != 0) {
-                    return StrutAreaRight;
-                }
-                if (margins.top() != 0) {
-                    return StrutAreaTop;
-                }
-                if (margins.bottom() != 0) {
-                    return StrutAreaBottom;
-                }
-                return StrutAreaInvalid;
-            };
-
-            auto const strut = margins(screens->geometry(win->screen()));
-            auto const strut_region
-                = StrutRects{StrutRect(win->frameGeometry(), margins_to_strut_area(strut))};
-            auto rect = desktop_area - margins(screens->geometry());
-
-            if (win->isOnAllDesktops()) {
-                for (int desktop = 1; desktop <= desktops_count; ++desktop) {
-                    new_areas.work[desktop] = new_areas.work[desktop].intersected(rect);
-
-                    for (int screen = 0; screen < screens_count; ++screen) {
-                        auto& screen_area = new_areas.screen[desktop][screen];
-                        auto intersect = screens_geos[screen] - margins(screens_geos[screen]);
-                        screen_area = screen_area.intersected(intersect);
-                    }
-
-                    new_areas.restrictedmove[desktop] += strut_region;
-                }
-            } else {
-                new_areas.work[win->desktop()] = new_areas.work[win->desktop()].intersected(rect);
-
-                for (int screen = 0; screen < screens_count; screen++) {
-                    new_areas.screen[win->desktop()][screen]
-                        = new_areas.screen[win->desktop()][screen].intersected(
-                            screens_geos[screen] - margins(screens_geos[screen]));
-                }
-
-                new_areas.restrictedmove[win->desktop()] += strut_region;
-            }
-        };
-
         auto const wayland_windows = waylandServer()->windows;
         for (auto win : wayland_windows) {
-            update_areas_from_wayland_window(win);
+            win::wayland::update_space_areas(win, desktop_area, screens_geos, new_areas);
         }
     }
 
