@@ -144,6 +144,11 @@ bool WaylandTestApplication::is_screen_locked() const
     return server->is_screen_locked();
 }
 
+wayland_base& WaylandTestApplication::get_base()
+{
+    return base;
+}
+
 WaylandServer* WaylandTestApplication::get_wayland_server()
 {
     return server.get();

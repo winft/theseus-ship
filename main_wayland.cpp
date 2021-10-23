@@ -175,6 +175,11 @@ bool ApplicationWayland::is_screen_locked() const
     return server->is_screen_locked();
 }
 
+wayland_base& ApplicationWayland::get_base()
+{
+    return base;
+}
+
 WaylandServer* ApplicationWayland::get_wayland_server()
 {
     return server.get();
