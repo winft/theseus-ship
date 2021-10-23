@@ -994,11 +994,11 @@ void Workspace::slotDesktopCountChanged(uint previousCount, uint newCount)
 void Workspace::resetClientAreas(uint desktopCount)
 {
     // Make it +1, so that it can be accessed as [1..numberofdesktops]
-    workarea.clear();
-    workarea.resize(desktopCount + 1);
-    restrictedmovearea.clear();
-    restrictedmovearea.resize(desktopCount + 1);
-    screenarea.clear();
+    areas.work.clear();
+    areas.work.resize(desktopCount + 1);
+    areas.restrictedmove.clear();
+    areas.restrictedmove.resize(desktopCount + 1);
+    areas.screen.clear();
 
     updateClientArea(true);
 }
@@ -1973,31 +1973,31 @@ void Workspace::updateClientArea(bool force)
         }
     }
 
-    auto changed = force || screenarea.empty();
+    auto changed = force || areas.screen.empty();
 
     for (int desktop = 1; !changed && desktop <= desktops_count; ++desktop) {
-        changed |= workarea[desktop] != new_wareas[desktop];
-        changed |= restrictedmovearea[desktop] != new_rmareas[desktop];
-        changed |= screenarea[desktop].size() != new_sareas[desktop].size();
+        changed |= areas.work[desktop] != new_wareas[desktop];
+        changed |= areas.restrictedmove[desktop] != new_rmareas[desktop];
+        changed |= areas.screen[desktop].size() != new_sareas[desktop].size();
 
         for (int screen = 0; !changed && screen < screens_count; screen++) {
-            changed |= new_sareas[desktop][screen] != screenarea[desktop][screen];
+            changed |= new_sareas[desktop][screen] != areas.screen[desktop][screen];
         }
     }
 
     if (changed) {
-        workarea = new_wareas;
-        oldrestrictedmovearea = restrictedmovearea;
-        restrictedmovearea = new_rmareas;
-        screenarea = new_sareas;
+        areas.work = new_wareas;
+        oldrestrictedmovearea = areas.restrictedmove;
+        areas.restrictedmove = new_rmareas;
+        areas.screen = new_sareas;
 
         if (win::x11::rootInfo()) {
             NETRect rect;
             for (int desktop = 1; desktop <= desktops_count; desktop++) {
-                rect.pos.x = workarea[desktop].x();
-                rect.pos.y = workarea[desktop].y();
-                rect.size.width = workarea[desktop].width();
-                rect.size.height = workarea[desktop].height();
+                rect.pos.x = areas.work[desktop].x();
+                rect.pos.y = areas.work[desktop].y();
+                rect.size.width = areas.work[desktop].width();
+                rect.size.height = areas.work[desktop].height();
                 win::x11::rootInfo()->setWorkArea(desktop, rect);
             }
         }
@@ -2031,13 +2031,13 @@ QRect Workspace::clientArea(clientAreaOption opt, int screen, int desktop) const
     const QSize displaySize = screens()->displaySize();
 
     QRect sarea, warea;
-    sarea = (!screenarea.empty()
+    sarea = (!areas.screen.empty()
              // screens may be missing during KWin initialization or screen config changes
-             && screen < static_cast<int>(screenarea[desktop].size()))
-        ? screenarea[desktop][screen]
+             && screen < static_cast<int>(areas.screen[desktop].size()))
+        ? areas.screen[desktop][screen]
         : screens()->geometry(screen);
-    warea = workarea[desktop].isNull() ? QRect(0, 0, displaySize.width(), displaySize.height())
-                                       : workarea[desktop];
+    warea = areas.work[desktop].isNull() ? QRect(0, 0, displaySize.width(), displaySize.height())
+                                         : areas.work[desktop];
 
     switch (opt) {
     case MaximizeArea:
@@ -2082,7 +2082,7 @@ static QRegion strutsToRegion(int desktop, StrutAreas areas, std::vector<StrutRe
 
 QRegion Workspace::restrictedMoveArea(int desktop, StrutAreas areas) const
 {
-    return strutsToRegion(desktop, areas, restrictedmovearea);
+    return strutsToRegion(desktop, areas, this->areas.restrictedmove);
 }
 
 bool Workspace::inUpdateClientArea() const

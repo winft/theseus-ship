@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "sm.h"
 #include "utils.h"
+#include "win/space_areas.h"
 
 #include <QTimer>
 
@@ -610,17 +611,10 @@ private:
 
     KStartupInfo* startup{nullptr};
 
-    // Array of workareas for virtual desktops
-    std::vector<QRect> workarea;
-
-    // Array of restricted areas that window cannot be moved into
-    std::vector<StrutRects> restrictedmovearea;
+    win::space_areas areas;
 
     // Array of the previous restricted areas that window cannot be moved into
     std::vector<StrutRects> oldrestrictedmovearea;
-
-    // Array of workareas per xinerama screen for all virtual desktops
-    std::vector<std::vector<QRect>> screenarea;
 
     // array of previous sizes of xinerama screens
     std::vector<QRect> oldscreensizes;
