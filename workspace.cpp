@@ -230,19 +230,6 @@ Workspace::Workspace()
 
     // create VirtualDesktopManager and perform dependency injection
     VirtualDesktopManager* vds = VirtualDesktopManager::self();
-    connect(vds, &VirtualDesktopManager::desktopRemoved, this, [this] {
-        // Wayland
-        if (kwinApp()->operationMode() == Application::OperationModeX11) {
-            for (auto const& client : m_allClients) {
-                if (!client->isOnAllDesktops()
-                    && (client->desktop()
-                        > static_cast<int>(VirtualDesktopManager::self()->count()))) {
-                    sendClientToDesktop(client, VirtualDesktopManager::self()->count(), true);
-                }
-            }
-        }
-    });
-
     connect(vds, &VirtualDesktopManager::countChanged, this, &Workspace::slotDesktopCountChanged);
     connect(
         vds, &VirtualDesktopManager::currentChanged, this, &Workspace::slotCurrentDesktopChanged);
@@ -1842,15 +1829,11 @@ void Workspace::updateClientArea(bool force)
     }
 }
 
-void Workspace::update_space_area_from_windows(QRect const& desktop_area,
-                                               std::vector<QRect> const& screens_geos,
-                                               win::space_areas& areas)
+void Workspace::update_space_area_from_windows(QRect const& /*desktop_area*/,
+                                               std::vector<QRect> const& /*screens_geos*/,
+                                               win::space_areas& /*areas*/)
 {
-    for (auto const& client : m_allClients) {
-        if (auto x11_client = qobject_cast<win::x11::window*>(client)) {
-            win::x11::update_space_areas(x11_client, desktop_area, screens_geos, areas);
-        }
-    }
+    // Can't be pure virtual because the function might be called from the ctor.
 }
 
 void Workspace::updateClientArea()

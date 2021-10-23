@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "debug/x11_console.h"
 #include "main.h"
 #include "utils.h"
-#include "workspace.h"
+#include "win/x11/space.h"
 
 #include "render/backend/x11/x11_platform.h"
 #include "render/x11/compositor.h"
@@ -52,7 +52,7 @@ public:
     base::platform<base::backend::x11, AbstractOutput> base;
     std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
     std::unique_ptr<render::x11::compositor> compositor;
-    std::unique_ptr<Workspace> workspace;
+    std::unique_ptr<win::x11::space> workspace;
 };
 
 X11TestApplication::X11TestApplication(int& argc, char** argv)
@@ -89,7 +89,7 @@ void X11TestApplication::start()
 {
     prepare_start();
     compositor = std::make_unique<render::x11::compositor>();
-    workspace = std::make_unique<Workspace>();
+    workspace = std::make_unique<win::x11::space>();
     Q_EMIT workspaceCreated();
 }
 

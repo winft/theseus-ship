@@ -5,6 +5,8 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
+#pragma once
+
 #include "netinfo.h"
 
 #include "win/stacking_order.h"
@@ -18,6 +20,19 @@
 
 namespace KWin::win::x11
 {
+
+class KWIN_EXPORT space : public Workspace
+{
+    Q_OBJECT
+public:
+    space();
+    ~space() override;
+
+protected:
+    void update_space_area_from_windows(QRect const& desktop_area,
+                                        std::vector<QRect> const& screens_geos,
+                                        win::space_areas& areas) override;
+};
 
 template<typename Space, typename Window>
 void restore_session_stacking_order(Space space, Window* c)

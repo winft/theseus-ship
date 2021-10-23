@@ -18,6 +18,7 @@
 #include "screenlockerwatcher.h"
 #include "seat/backend/logind/session.h"
 #include "sm.h"
+#include "win/x11/space.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -260,7 +261,7 @@ void ApplicationX11::start()
         }
 
         compositor = std::make_unique<render::x11::compositor>();
-        workspace = std::make_unique<Workspace>();
+        workspace = std::make_unique<win::x11::space>();
         Q_EMIT workspaceCreated();
 
         Q_EMIT startup_finished();
