@@ -9,10 +9,7 @@
 namespace KWin
 {
 
-KWIN_EFFECT_FACTORY_SUPPORTED(CubeEffectFactory,
-                              CubeEffect,
-                              "metadata.json",
-                              return CubeEffect::supported();)
+KWIN_EFFECT_FACTORY_SUPPORTED(CubeEffect, "metadata.json", return CubeEffect::supported();)
 
 }
 

@@ -12,7 +12,6 @@
 
 #include "base/x11/xcb_event_filter.h"
 #include "debug/x11_console.h"
-#include "effect_builtins.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
@@ -51,8 +50,6 @@
 #include <iostream>
 
 Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core", QtWarningMsg)
-
-KWIN_IMPORT_BUILTIN_EFFECTS
 
 namespace KWin
 {

@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../win/wayland/space.h"
 #include "../../xcbutils.h"
 #include "../../xwl/xwayland.h"
-#include "effects/effect_builtins.h"
 #include "render/backend/wlroots/output.h"
 #include "render/effects.h"
 #include "screens.h"
@@ -62,8 +61,6 @@ Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
 Q_IMPORT_PLUGIN(KGlobalAccelImpl)
 Q_IMPORT_PLUGIN(KWindowSystemKWinPlugin)
 Q_IMPORT_PLUGIN(KWinIdleTimePoller)
-
-KWIN_IMPORT_BUILTIN_EFFECTS
 
 namespace KWin
 {

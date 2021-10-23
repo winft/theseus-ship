@@ -9,8 +9,7 @@
 namespace KWin
 {
 
-KWIN_EFFECT_FACTORY_SUPPORTED(FlipSwitchEffectFactory,
-                              FlipSwitchEffect,
+KWIN_EFFECT_FACTORY_SUPPORTED(FlipSwitchEffect,
                               "metadata.json",
                               return FlipSwitchEffect::supported();)
 

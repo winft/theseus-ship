@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "effect_builtins.h"
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"

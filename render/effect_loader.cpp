@@ -213,6 +213,7 @@ static_plugin_effect_loader::static_plugin_effect_loader(QObject* parent)
     , m_queue(new effect_load_queue<static_plugin_effect_loader, QString>(this))
 {
     const QVector<QStaticPlugin> staticPlugins = QPluginLoader::staticPlugins();
+    qWarning() << Q_FUNC_INFO << staticPlugins.count();
     for (const QStaticPlugin& staticPlugin : staticPlugins) {
         const QJsonObject rootMetaData = staticPlugin.metaData();
         if (rootMetaData.value(QLatin1String("IID")) != QLatin1String(EffectPluginFactory_iid)) {
@@ -349,7 +350,7 @@ EffectPluginFactory* static_plugin_effect_loader::factory(const QStaticPlugin& s
 plugin_effect_loader::plugin_effect_loader(QObject* parent)
     : basic_effect_loader(parent)
     , m_queue(new effect_load_queue<plugin_effect_loader, KPluginMetaData>(this))
-    , m_pluginSubDirectory(QStringLiteral("kwin/effects/plugins/"))
+    , m_pluginSubDirectory(QStringLiteral("kwin/effects/plugins"))
 {
 }
 

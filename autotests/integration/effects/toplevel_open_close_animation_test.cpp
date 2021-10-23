@@ -31,8 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/transient.h"
 #include "win/wayland/window.h"
 
-#include "effect_builtins.h"
-
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
 
