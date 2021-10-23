@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "toplevel.h"
 #include "platform.h"
-#include "wayland_server.h"
 #include <render/compositor.h>
 #include <render/cursor.h>
 

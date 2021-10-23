@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 #include "screens.h"
 #include "screenedge.h"
-#include "wayland_server.h"
 #include "colorcorrection/manager.h"
 
 #include <Wrapland/Server/output_configuration_v1.h>

@@ -86,7 +86,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "effects.h"
 #include "screenedge.h"
-#include "wayland_server.h"
 
 #include "win/controlling.h"
 #include "win/focuschain.h"
