@@ -9,6 +9,7 @@
 #include "layer_shell.h"
 #include "maximize.h"
 #include "render/wayland/compositor.h"
+#include "setup.h"
 #include "subsurface.h"
 #include "surface.h"
 #include "xdg_shell.h"
@@ -813,7 +814,7 @@ void window::map()
 
     if (control) {
         if (!isLockScreen()) {
-            setup_wayland_plasma_management(this);
+            setup_plasma_management(this);
         }
         update_screen_edge(this);
     }
