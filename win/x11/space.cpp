@@ -15,12 +15,15 @@ space::space()
 {
     QObject::connect(
         VirtualDesktopManager::self(), &VirtualDesktopManager::desktopRemoved, this, [this] {
+            auto const desktop_count = static_cast<int>(VirtualDesktopManager::self()->count());
             for (auto const& window : m_allClients) {
-                if (!window->isOnAllDesktops()
-                    && (window->desktop()
-                        > static_cast<int>(VirtualDesktopManager::self()->count()))) {
-                    sendClientToDesktop(window, VirtualDesktopManager::self()->count(), true);
+                if (window->isOnAllDesktops()) {
+                    continue;
                 }
+                if (window->desktop() <= desktop_count) {
+                    continue;
+                }
+                sendClientToDesktop(window, desktop_count, true);
             }
         });
 }
