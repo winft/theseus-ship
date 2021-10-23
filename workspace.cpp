@@ -1784,9 +1784,7 @@ void Workspace::updateClientArea(bool force)
     // * work areas,
     // * restricted-move areas,
     // * screen areas.
-    std::vector<QRect> new_wareas(desktops_count + 1);
-    std::vector<StrutRects> new_rmareas(desktops_count + 1);
-    std::vector<std::vector<QRect>> new_sareas(desktops_count + 1);
+    win::space_areas new_areas(desktops_count + 1);
 
     std::vector<QRect> screens_geos(screens_count);
     QRect desktop_area;
@@ -1800,10 +1798,10 @@ void Workspace::updateClientArea(bool force)
     }
 
     for (auto desktop = 1; desktop <= desktops_count; ++desktop) {
-        new_wareas[desktop] = desktop_area;
-        new_sareas[desktop].resize(screens_count);
+        new_areas.work[desktop] = desktop_area;
+        new_areas.screen[desktop].resize(screens_count);
         for (int screen = 0; screen < screens_count; screen++) {
-            new_sareas[desktop][screen] = screens_geos[screen];
+            new_areas.screen[desktop][screen] = screens_geos[screen];
         }
     }
 
@@ -1848,15 +1846,15 @@ void Workspace::updateClientArea(bool force)
         if (x11_client->isOnAllDesktops()) {
             for (int desktop = 1; desktop <= desktops_count; ++desktop) {
                 if (!has_offscreen_xinerama_strut) {
-                    new_wareas[desktop] = new_wareas[desktop].intersected(client_area);
+                    new_areas.work[desktop] = new_areas.work[desktop].intersected(client_area);
                 }
 
-                new_rmareas[desktop] += strut_region;
+                new_areas.restrictedmove[desktop] += strut_region;
 
                 for (int screen = 0; screen < screens_count; screen++) {
                     auto const client_area_on_screen = win::x11::adjusted_client_area(
                         x11_client, desktop_area, screens_geos[screen]);
-                    auto& screen_area = new_sareas[desktop][screen];
+                    auto& screen_area = new_areas.screen[desktop][screen];
                     auto const geo = screen_area.intersected(client_area_on_screen);
 
                     // Ignore the geometry if it results in the screen getting removed completely.
@@ -1867,20 +1865,20 @@ void Workspace::updateClientArea(bool force)
             }
         } else {
             if (!has_offscreen_xinerama_strut) {
-                new_wareas[x11_client->desktop()]
-                    = new_wareas[x11_client->desktop()].intersected(client_area);
+                new_areas.work[x11_client->desktop()]
+                    = new_areas.work[x11_client->desktop()].intersected(client_area);
             }
 
-            new_rmareas[x11_client->desktop()] += strut_region;
+            new_areas.restrictedmove[x11_client->desktop()] += strut_region;
 
             for (int screen = 0; screen < screens_count; screen++) {
-                auto const screen_area = new_sareas[x11_client->desktop()][screen];
+                auto const screen_area = new_areas.screen[x11_client->desktop()][screen];
                 auto const geo = screen_area.intersected(
                     win::x11::adjusted_client_area(x11_client, desktop_area, screens_geos[screen]));
 
                 // Ignore the geometry if it results in the screen getting removed completely.
                 if (!geo.isEmpty()) {
-                    new_sareas[x11_client->desktop()][screen] = geo;
+                    new_areas.screen[x11_client->desktop()][screen] = geo;
                 }
             }
         }
@@ -1944,26 +1942,26 @@ void Workspace::updateClientArea(bool force)
 
             if (win->isOnAllDesktops()) {
                 for (int desktop = 1; desktop <= desktops_count; ++desktop) {
-                    new_wareas[desktop] = new_wareas[desktop].intersected(rect);
+                    new_areas.work[desktop] = new_areas.work[desktop].intersected(rect);
 
                     for (int screen = 0; screen < screens_count; ++screen) {
-                        auto& screen_area = new_sareas[desktop][screen];
+                        auto& screen_area = new_areas.screen[desktop][screen];
                         auto intersect = screens_geos[screen] - margins(screens_geos[screen]);
                         screen_area = screen_area.intersected(intersect);
                     }
 
-                    new_rmareas[desktop] += strut_region;
+                    new_areas.restrictedmove[desktop] += strut_region;
                 }
             } else {
-                new_wareas[win->desktop()] = new_wareas[win->desktop()].intersected(rect);
+                new_areas.work[win->desktop()] = new_areas.work[win->desktop()].intersected(rect);
 
                 for (int screen = 0; screen < screens_count; screen++) {
-                    new_sareas[win->desktop()][screen]
-                        = new_sareas[win->desktop()][screen].intersected(
+                    new_areas.screen[win->desktop()][screen]
+                        = new_areas.screen[win->desktop()][screen].intersected(
                             screens_geos[screen] - margins(screens_geos[screen]));
                 }
 
-                new_rmareas[win->desktop()] += strut_region;
+                new_areas.restrictedmove[win->desktop()] += strut_region;
             }
         };
 
@@ -1976,20 +1974,18 @@ void Workspace::updateClientArea(bool force)
     auto changed = force || areas.screen.empty();
 
     for (int desktop = 1; !changed && desktop <= desktops_count; ++desktop) {
-        changed |= areas.work[desktop] != new_wareas[desktop];
-        changed |= areas.restrictedmove[desktop] != new_rmareas[desktop];
-        changed |= areas.screen[desktop].size() != new_sareas[desktop].size();
+        changed |= areas.work[desktop] != new_areas.work[desktop];
+        changed |= areas.restrictedmove[desktop] != new_areas.restrictedmove[desktop];
+        changed |= areas.screen[desktop].size() != new_areas.screen[desktop].size();
 
         for (int screen = 0; !changed && screen < screens_count; screen++) {
-            changed |= new_sareas[desktop][screen] != areas.screen[desktop][screen];
+            changed |= new_areas.screen[desktop][screen] != areas.screen[desktop][screen];
         }
     }
 
     if (changed) {
-        areas.work = new_wareas;
         oldrestrictedmovearea = areas.restrictedmove;
-        areas.restrictedmove = new_rmareas;
-        areas.screen = new_sareas;
+        areas = new_areas;
 
         if (win::x11::rootInfo()) {
             NETRect rect;
