@@ -19,10 +19,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "abstract_wayland_output.h"
 
+#include "base/wayland/output_helpers.h"
+#include "input/wayland/dpms.h"
+#include "input/wayland/platform.h"
+#include "render/backend/wlroots/backend.h"
 #include "render/compositor.h"
 #include "main.h"
 #include "platform.h"
 #include "screens.h"
+#include "wayland_logging.h"
 #include "wayland_server.h"
 
 // Wrapland
@@ -141,35 +146,35 @@ Wrapland::Server::Output::Transform toWaylandTransform(AbstractWaylandOutput::Tr
 
 void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset)
 {
-    qCDebug(KWIN_CORE) << "Apply changes to Wayland output:" << m_output->name().c_str();
+    qCDebug(KWIN_WL) << "Apply changes to Wayland output:" << m_output->name().c_str();
     bool emitModeChanged = false;
 
     if (changeset->enabledChanged() && changeset->enabled()) {
-        qCDebug(KWIN_CORE) << "Setting output enabled.";
+        qCDebug(KWIN_WL) << "Setting output enabled.";
         setEnabled(true);
     }
 
     if (changeset->modeChanged()) {
-        qCDebug(KWIN_CORE) << "Setting new mode:" << changeset->mode();
+        qCDebug(KWIN_WL) << "Setting new mode:" << changeset->mode();
         m_output->set_mode(changeset->mode());
         updateMode(changeset->mode());
         emitModeChanged = true;
     }
     if (changeset->transformChanged()) {
-        qCDebug(KWIN_CORE) << "Server setting transform: " << (int)(changeset->transform());
+        qCDebug(KWIN_WL) << "Server setting transform: " << (int)(changeset->transform());
         m_output->set_transform(changeset->transform());
         updateTransform(toTransform(changeset->transform()));
         emitModeChanged = true;
     }
     if (changeset->geometryChanged()) {
-        qCDebug(KWIN_CORE) << "Server setting position: " << changeset->geometry();
+        qCDebug(KWIN_WL) << "Server setting position: " << changeset->geometry();
         m_output->set_geometry(changeset->geometry());
         emitModeChanged = true;
     }
     updateViewGeometry();
 
     if (changeset->enabledChanged() && !changeset->enabled()) {
-        qCDebug(KWIN_CORE) << "Setting output disabled.";
+        qCDebug(KWIN_WL) << "Setting output disabled.";
         setEnabled(false);
     }
 
@@ -255,11 +260,11 @@ void AbstractWaylandOutput::initInterfaces(std::string const& name,
 
     m_output->set_physical_size(physicalSize);
 
-    qCDebug(KWIN_CORE) << "Initializing output:" << m_output->description().c_str();
+    qCDebug(KWIN_WL) << "Initializing output:" << m_output->description().c_str();
 
     int i = 0;
     for (auto mode : modes) {
-        qCDebug(KWIN_CORE).nospace() << "Adding mode " << ++i << ": "
+        qCDebug(KWIN_WL).nospace() << "Adding mode " << ++i << ": "
                                      << mode.size << " [" << mode.refresh_rate << "]";
         m_output->add_mode(mode);
     }
@@ -311,14 +316,17 @@ AbstractWaylandOutput::Transform AbstractWaylandOutput::transform() const
 
 void AbstractWaylandOutput::dpmsSetOn()
 {
-    qCDebug(KWIN_CORE) << "DPMS mode set for output" << name() << "to On.";
+    qCDebug(KWIN_WL) << "DPMS mode set for output" << name() << "to On.";
     m_dpms = DpmsMode::On;
 
     if (isEnabled()) {
         m_output->set_dpms_mode(Wrapland::Server::Output::DpmsMode::On);
     }
 
-    kwinApp()->platform->checkOutputsOn();
+    auto& wlroots_base = static_cast<ApplicationWaylandAbstract*>(kwinApp())->get_base();
+    auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
+    base::wayland::check_outputs_on(wlroots_base, wayland_input->dpms_filter);
+
     if (auto compositor = render::compositor::self()) {
         compositor->addRepaintFull();
     }
@@ -326,13 +334,15 @@ void AbstractWaylandOutput::dpmsSetOn()
 
 void AbstractWaylandOutput::dpmsSetOff(DpmsMode mode)
 {
-    qCDebug(KWIN_CORE) << "DPMS mode set for output" << name() << "to Off.";
+    qCDebug(KWIN_WL) << "DPMS mode set for output" << name() << "to Off.";
 
     m_dpms = mode;
 
     if (isEnabled()) {
         m_output->set_dpms_mode(toWaylandDpmsMode(mode));
-        kwinApp()->platform->createDpmsFilter();
+
+        auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
+        input::wayland::create_dpms_filter(wayland_input);
     }
 }
 

@@ -8,8 +8,10 @@
 #include "abstract_wayland_output.h"
 #include "base/backend/wlroots.h"
 #include "base/platform.h"
+#include "base/wayland/output_helpers.h"
 #include "input/dbus/dbus.h"
 #include "input/dbus/device_manager.h"
+#include "input/filters/dpms.h"
 #include "input/keyboard.h"
 #include "input/pointer.h"
 #include "input/switch.h"
@@ -94,6 +96,11 @@ void platform::start_interactive_position_selection(std::function<void(QPoint co
         return;
     }
     redirect->startInteractivePositionSelection(callback);
+}
+
+void platform::turn_outputs_on()
+{
+    base::wayland::turn_outputs_on(base, dpms_filter);
 }
 
 void add_dbus(input::platform* platform)

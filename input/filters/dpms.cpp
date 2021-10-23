@@ -7,6 +7,7 @@
 */
 #include "dpms.h"
 
+#include "base/wayland/output_helpers.h"
 #include "main.h"
 #include "platform.h"
 #include "wayland_server.h"
@@ -19,9 +20,9 @@
 namespace KWin::input
 {
 
-dpms_filter::dpms_filter(Platform* backend)
+dpms_filter::dpms_filter(wayland::platform* input)
     : event_filter()
-    , m_backend(backend)
+    , input{input}
 {
 }
 
@@ -101,7 +102,7 @@ bool dpms_filter::touchMotion(int32_t id, const QPointF& pos, uint32_t time)
 void dpms_filter::notify()
 {
     // Queued to not modify the list of event filters while filtering.
-    QTimer::singleShot(0, m_backend, [backend = m_backend] { backend->turnOutputsOn(); });
+    QTimer::singleShot(0, input, [this] { input->turn_outputs_on(); });
 }
 
 }

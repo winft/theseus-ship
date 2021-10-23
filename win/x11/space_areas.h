@@ -35,7 +35,8 @@ void update_space_areas(Window* win,
     // to EWMH, as KWin just ignores the strut.
     for (int screen = 0; screen < screens->count(); screen++) {
         if (!client_area.intersects(screens->geometry(screen))) {
-            qCDebug(KWIN_CORE) << "Adjusted client area would exclude a complete screen, ignore.";
+            // TODO(romangg): Can we give this again a logging category?
+            qDebug() << "Adjusted client area would exclude a complete screen, ignore.";
             client_area = desktop_area;
             break;
         }

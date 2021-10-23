@@ -46,10 +46,6 @@ namespace KWin
 namespace ColorCorrect {
 class Manager;
 }
-namespace input
-{
-class dpms_filter;
-}
 
 class AbstractOutput;
 class AbstractWaylandOutput;
@@ -173,14 +169,6 @@ public:
      * Base implementation returns a screen with a scale of 1.
      */
     virtual QVector<qreal> screenScales() const;
-    /**
-     * Implement this method to receive configuration change requests through Wrapland's
-     * OutputManagement.
-     *
-     * Base implementation warns that the current backend does not implement this
-     * functionality.
-     */
-    void requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *config);
 
     /**
      * Whether the Platform requires compositing for rendering.
@@ -323,7 +311,6 @@ public:
     virtual Outputs enabledOutputs() const {
         return Outputs();
     }
-    AbstractWaylandOutput* findOutput(Wrapland::Server::Output const* output);
 
     /**
      * A string of information to include in kwin debug output
@@ -356,10 +343,6 @@ public:
     QSize initialWindowSize() const {
         return m_initialWindowSize;
     }
-
-    void createDpmsFilter();
-    void checkOutputsOn();
-    void turnOutputsOn();
 
     virtual clockid_t clockId() const;
     QByteArray deviceIdentifier() const {
@@ -398,8 +381,6 @@ private:
     ColorCorrect::Manager *m_colorCorrect = nullptr;
     bool m_supportsGammaControl = false;
     CompositingType m_selectedCompositor = NoCompositing;
-
-    std::unique_ptr<input::dpms_filter> m_dpmsFilter;
 };
 
 }

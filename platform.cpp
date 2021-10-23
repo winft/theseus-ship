@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_wayland_output.h"
 #include <config-kwin.h>
 #include "render/compositor.h"
-#include "input/filters/dpms.h"
 #include "effects.h"
 #include <KCoreAddons>
 #include "overlaywindow.h"
@@ -71,41 +70,6 @@ QPainterBackend *Platform::createQPainterBackend()
 Edge *Platform::createScreenEdge(ScreenEdges *edges)
 {
     return new Edge(edges);
-}
-
-void Platform::requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *config)
-{
-    const auto changes = config->changes();
-
-    for (auto it = changes.begin(); it != changes.end(); it++) {
-        auto const changeset = it.value();
-
-        auto output = findOutput(it.key()->output());
-        if (!output) {
-            qCWarning(KWIN_CORE) << "Could NOT find output:"
-                                 << it.key()->output()->description().c_str();
-            continue;
-        }
-
-        output->applyChanges(changeset);
-    }
-
-    Screens::self()->updateAll();
-    config->setApplied();
-}
-
-AbstractWaylandOutput *Platform::findOutput(Wrapland::Server::Output const* output)
-{
-    const auto outs = outputs();
-    auto it = std::find_if(outs.constBegin(), outs.constEnd(),
-        [output](AbstractOutput *out) {
-            auto wayland_output = dynamic_cast<AbstractWaylandOutput*>(out);
-            return wayland_output->output() == output; }
-    );
-    if (it != outs.constEnd()) {
-        return dynamic_cast<AbstractWaylandOutput*>(*it);
-    }
-    return nullptr;
 }
 
 void Platform::repaint(const QRect &rect)
@@ -218,39 +182,6 @@ void Platform::updateXTime()
     default:
         // Do not update the current X11 time stamp if it's the Wayland only session.
         break;
-    }
-}
-
-void Platform::turnOutputsOn()
-{
-    m_dpmsFilter.reset();
-    auto outs = enabledOutputs();
-    for (auto out : outs) {
-        out->updateDpms(AbstractOutput::DpmsMode::On);
-    }
-}
-
-void Platform::createDpmsFilter()
-{
-    if (m_dpmsFilter) {
-        // already another output is off
-        return;
-    }
-    m_dpmsFilter.reset(new input::dpms_filter(this));
-    kwinApp()->input->redirect->prependInputEventFilter(m_dpmsFilter.get());
-}
-
-void Platform::checkOutputsOn()
-{
-    if (!m_dpmsFilter) {
-        // already disabled, all outputs are on
-        return;
-    }
-
-    auto outs = enabledOutputs();
-    if (std::all_of(outs.constBegin(), outs.constEnd(), [](auto out) { return out->dpmsOn(); })) {
-        // All outputs are on, disable the filter.
-        m_dpmsFilter.reset();
     }
 }
 

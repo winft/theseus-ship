@@ -6,6 +6,7 @@
 #pragma once
 
 #include <QObject>
+#include <kwin_export.h>
 
 namespace KWin
 {
@@ -17,7 +18,7 @@ namespace Decoration
 /**
  * Wrapper class for windows.
  */
-class window : public QObject
+class KWIN_EXPORT window : public QObject
 {
     Q_OBJECT
 public:

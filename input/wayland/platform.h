@@ -35,6 +35,8 @@ class device_manager;
 }
 
 class cursor;
+class dpms_filter;
+
 class keyboard;
 class pointer;
 class redirect;
@@ -64,6 +66,10 @@ public:
     void start_interactive_window_selection(std::function<void(KWin::Toplevel*)> callback,
                                             QByteArray const& cursorName = QByteArray()) override;
     void start_interactive_position_selection(std::function<void(QPoint const&)> callback) override;
+
+    void turn_outputs_on();
+
+    std::unique_ptr<input::dpms_filter> dpms_filter;
 
 private:
     wayland_base const& base;

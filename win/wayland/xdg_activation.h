@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "wayland_logging.h"
 #include "wayland_server.h"
 #include "win/stacking.h"
 
@@ -30,17 +31,17 @@ inline bool generate_token(char out[token_strlen])
 
     if (!urandom) {
         if (!(urandom = fopen("/dev/urandom", "r"))) {
-            qCWarning(KWIN_CORE) << "Failed to open random device.";
+            qCWarning(KWIN_WL) << "Failed to open random device.";
             return false;
         }
     }
     if (fread(data, sizeof(data), 1, urandom) != 1) {
-        qCWarning(KWIN_CORE) << "Failed to read from random device.";
+        qCWarning(KWIN_WL) << "Failed to read from random device.";
         return false;
     }
     if (snprintf(out, token_strlen, "%016" PRIx64 "%016" PRIx64, data[0], data[1])
         != token_strlen - 1) {
-        qCWarning(KWIN_CORE) << "Failed to format hex string token.";
+        qCWarning(KWIN_WL) << "Failed to format hex string token.";
         return false;
     }
     return true;
@@ -66,7 +67,7 @@ void xdg_activation_create_token(Space* space, Wrapland::Server::XdgActivationTo
 {
     auto check_allowance = [&] {
         if (!token->surface()) {
-            qCDebug(KWIN_CORE) << "Token request has no surface set.";
+            qCDebug(KWIN_WL) << "Token request has no surface set.";
             return false;
         }
 
@@ -82,7 +83,7 @@ void xdg_activation_create_token(Space* space, Wrapland::Server::XdgActivationTo
 
         auto win = waylandServer()->find_window(token->surface());
         if (!win) {
-            qCDebug(KWIN_CORE) << "No window associated with token surface" << token->surface();
+            qCDebug(KWIN_WL) << "No window associated with token surface" << token->surface();
             return false;
         }
 
@@ -92,21 +93,21 @@ void xdg_activation_create_token(Space* space, Wrapland::Server::XdgActivationTo
         }
 
         if (win != space->active_client) {
-            qCDebug(KWIN_CORE) << "Requesting window" << win << "currently not active.";
+            qCDebug(KWIN_WL) << "Requesting window" << win << "currently not active.";
             return false;
         }
         return true;
     };
 
     if (!check_allowance()) {
-        qCDebug(KWIN_CORE) << "Deny creation of XDG Activation token.";
+        qCDebug(KWIN_WL) << "Deny creation of XDG Activation token.";
         token->done("");
         return;
     }
 
     char token_str[token_strlen + 1] = {0};
     if (!generate_token(token_str)) {
-        qCWarning(KWIN_CORE) << "Error creating XDG Activation token.";
+        qCWarning(KWIN_WL) << "Error creating XDG Activation token.";
         token->done("");
         return;
     }
@@ -129,14 +130,14 @@ void xdg_activation_activate(Space* space, Window* win, std::string const& token
     assert(win);
 
     if (space->activation->token.empty()) {
-        qCDebug(KWIN_CORE) << "Empty token provided on XDG Activation of" << win;
+        qCDebug(KWIN_WL) << "Empty token provided on XDG Activation of" << win;
         set_demands_attention(win, true);
         return;
     }
     if (space->activation->token != token) {
-        qCDebug(KWIN_CORE) << "Token mismatch on XDG Activation of" << win;
-        qCDebug(KWIN_CORE).nospace() << "Provided: '" << token.c_str() << "', match: '"
-                                     << space->activation->token.c_str() << "'";
+        qCDebug(KWIN_WL) << "Token mismatch on XDG Activation of" << win;
+        qCDebug(KWIN_WL).nospace() << "Provided: '" << token.c_str() << "', match: '"
+                                   << space->activation->token.c_str() << "'";
         set_demands_attention(win, true);
         return;
     }

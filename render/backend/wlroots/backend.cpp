@@ -11,6 +11,9 @@
 #include "output.h"
 #include "wlr_helpers.h"
 
+#include "base/platform.h"
+#include "base/wayland/output_helpers.h"
+#include "input/wayland/platform.h"
 #include "main.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/effects.h"
@@ -126,7 +129,10 @@ void backend::enableOutput(output* output, bool enable)
         remove_all(base.enabled_outputs, output);
         Q_EMIT output_removed(output);
     }
-    checkOutputsOn();
+
+    auto const& wlroots_base = static_cast<ApplicationWaylandAbstract*>(kwinApp())->get_base();
+    auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
+    base::wayland::check_outputs_on(wlroots_base, wayland_input->dpms_filter);
 
     Screens::self()->updateAll();
 }
@@ -224,8 +230,10 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
         throw;
     }
 
+    auto const& wlroots_base = static_cast<ApplicationWaylandAbstract*>(kwinApp())->get_base();
+
     for (auto& con : lease->connectors()) {
-        auto out = static_cast<output*>(kwinApp()->platform->findOutput(con->output()));
+        auto out = static_cast<output*>(base::wayland::find_output(wlroots_base, con->output()));
         assert(out);
         outputs.push_back(out);
     }
