@@ -24,6 +24,11 @@ public:
     QRect get_icon_geometry(Toplevel const* win) const override;
 
     std::unique_ptr<win::wayland::xdg_activation> activation;
+
+protected:
+    void update_space_area_from_windows(QRect const& desktop_area,
+                                        std::vector<QRect> const& screens_geos,
+                                        win::space_areas& areas) override;
 };
 
 }

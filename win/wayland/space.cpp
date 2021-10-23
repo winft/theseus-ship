@@ -5,6 +5,7 @@
 */
 #include "space.h"
 
+#include "space_areas.h"
 #include "xdg_activation.h"
 
 #include "screens.h"
@@ -13,6 +14,7 @@
 #include "win/input.h"
 #include "win/screen.h"
 #include "win/stacking_order.h"
+#include "win/x11/space_areas.h"
 #include "win/x11/stacking_tree.h"
 
 #ifdef KWIN_BUILD_TABBOX
@@ -213,6 +215,22 @@ QRect space::get_icon_geometry(Toplevel const* win) const
         return QRect();
     }
     return candidate_geo.translated(candidate_panel->pos());
+}
+
+void space::update_space_area_from_windows(QRect const& desktop_area,
+                                           std::vector<QRect> const& screens_geos,
+                                           win::space_areas& areas)
+{
+    for (auto const& window : m_allClients) {
+        if (auto x11_window = qobject_cast<win::x11::window*>(window)) {
+            win::x11::update_space_areas(x11_window, desktop_area, screens_geos, areas);
+        }
+    }
+
+    auto const wayland_windows = waylandServer()->windows;
+    for (auto win : wayland_windows) {
+        update_space_areas(win, desktop_area, screens_geos, areas);
+    }
 }
 
 }

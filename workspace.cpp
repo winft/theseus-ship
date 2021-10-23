@@ -51,7 +51,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "useractions.h"
 #include "virtualdesktops.h"
 #include "was_user_interaction_x11_filter.h"
-#include "wayland_server.h"
 #include "xcbutils.h"
 
 #include "win/appmenu.h"
@@ -67,7 +66,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/stacking_order.h"
 #include "win/util.h"
 
-#include "win/wayland/space_areas.h"
 #include "win/x11/control.h"
 #include "win/x11/event.h"
 #include "win/x11/group.h"
@@ -1806,20 +1804,7 @@ void Workspace::updateClientArea(bool force)
         }
     }
 
-    for (auto const& client : m_allClients) {
-        // TODO(romangg): Merge this with Wayland clients below.
-        auto x11_client = qobject_cast<win::x11::window*>(client);
-        if (x11_client) {
-            win::x11::update_space_areas(x11_client, desktop_area, screens_geos, new_areas);
-        }
-    }
-
-    if (waylandServer()) {
-        auto const wayland_windows = waylandServer()->windows;
-        for (auto win : wayland_windows) {
-            win::wayland::update_space_areas(win, desktop_area, screens_geos, new_areas);
-        }
-    }
+    update_space_area_from_windows(desktop_area, screens_geos, new_areas);
 
     auto changed = force || areas.screen.empty();
 
@@ -1854,6 +1839,17 @@ void Workspace::updateClientArea(bool force)
 
         // Reset, no longer valid or needed.
         oldrestrictedmovearea.clear();
+    }
+}
+
+void Workspace::update_space_area_from_windows(QRect const& desktop_area,
+                                               std::vector<QRect> const& screens_geos,
+                                               win::space_areas& areas)
+{
+    for (auto const& client : m_allClients) {
+        if (auto x11_client = qobject_cast<win::x11::window*>(client)) {
+            win::x11::update_space_areas(x11_client, desktop_area, screens_geos, areas);
+        }
     }
 }
 
