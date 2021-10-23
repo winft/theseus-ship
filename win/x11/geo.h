@@ -10,7 +10,6 @@
 
 #include "win/setup.h"
 #include "win/space.h"
-#include "win/wayland/setup.h"
 #include "win/x11/geometrytip.h"
 
 #include <xcb/xcb_icccm.h>
@@ -199,7 +198,6 @@ void handle_sync(Win* win, xcb_sync_int64_t counter_value)
     }
 
     win->setReadyForPainting();
-    win::wayland::setup_plasma_management(win);
 
     apply_pending_geometry(win, update_request_number);
 }

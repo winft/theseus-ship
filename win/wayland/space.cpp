@@ -5,6 +5,7 @@
 */
 #include "space.h"
 
+#include "setup.h"
 #include "space_areas.h"
 #include "xdg_activation.h"
 
@@ -163,6 +164,18 @@ space::space()
                              }
                          }
                      });
+
+    // For Xwayland windows we need to setup Plasma management too.
+    QObject::connect(this, &Workspace::clientAdded, this, [this](auto x11_window) {
+        if (x11_window->readyForPainting()) {
+            setup_plasma_management(x11_window);
+        } else {
+            QObject::connect(x11_window,
+                             &std::remove_pointer_t<decltype(x11_window)>::windowShown,
+                             this,
+                             [](auto x11_window) { setup_plasma_management(x11_window); });
+        }
+    });
 }
 
 space::~space()
