@@ -17,7 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "syncalarmx11filter.h"
 #include "workspace.h"
 #include "xcbutils.h"
@@ -30,12 +29,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win::x11
 {
 
-SyncAlarmX11Filter::SyncAlarmX11Filter()
+sync_alarm_filter::sync_alarm_filter()
     : base::x11::event_filter(QVector<int>{Xcb::Extensions::self()->syncAlarmNotifyEvent()})
 {
 }
 
-bool SyncAlarmX11Filter::event(xcb_generic_event_t* event)
+bool sync_alarm_filter::event(xcb_generic_event_t* event)
 {
     auto alarmEvent = reinterpret_cast<xcb_sync_alarm_notify_event_t*>(event);
     auto client = workspace()->findAbstractClient([alarmEvent](Toplevel const* client) {

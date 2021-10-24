@@ -20,8 +20,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_NETINFO_H
-#define KWIN_NETINFO_H
+#pragma once
 
 #include <kwin_export.h>
 
@@ -42,10 +41,10 @@ class window;
 /**
  * NET WM Protocol handler class
  */
-class KWIN_EXPORT RootInfo : public NETRootInfo
+class KWIN_EXPORT root_info : public NETRootInfo
 {
 public:
-    static RootInfo* create();
+    static root_info* create();
     static void destroy();
 
     void setActiveClient(Toplevel* window);
@@ -69,37 +68,37 @@ protected:
     void changeShowingDesktop(bool showing) override;
 
 private:
-    RootInfo(xcb_window_t w,
-             const char* name,
-             NET::Properties properties,
-             NET::WindowTypes types,
-             NET::States states,
-             NET::Properties2 properties2,
-             NET::Actions actions,
-             int scr = -1);
-    static RootInfo* s_self;
-    friend RootInfo* rootInfo();
+    root_info(xcb_window_t w,
+              const char* name,
+              NET::Properties properties,
+              NET::WindowTypes types,
+              NET::States states,
+              NET::Properties2 properties2,
+              NET::Actions actions,
+              int scr = -1);
+    static root_info* s_self;
+    friend root_info* rootInfo();
 
     xcb_window_t m_activeWindow;
     std::unique_ptr<root_info_filter> m_eventFilter;
 };
 
-inline RootInfo* rootInfo()
+inline root_info* rootInfo()
 {
-    return RootInfo::s_self;
+    return root_info::s_self;
 }
 
 /**
  * NET WM Protocol handler class
  */
-class WinInfo : public NETWinInfo
+class win_info : public NETWinInfo
 {
 public:
-    WinInfo(win::x11::window* c,
-            xcb_window_t window,
-            xcb_window_t rwin,
-            NET::Properties properties,
-            NET::Properties2 properties2);
+    win_info(win::x11::window* c,
+             xcb_window_t window,
+             xcb_window_t rwin,
+             NET::Properties properties,
+             NET::Properties2 properties2);
     void changeDesktop(int desktop) override;
     void changeFullscreenMonitors(NETFullscreenMonitors topology) override;
     void changeState(NET::States state, NET::States mask) override;
@@ -109,8 +108,5 @@ private:
     win::x11::window* m_client;
 };
 
-} // KWin::win::x11
-
-} // KWin
-
-#endif
+}
+}

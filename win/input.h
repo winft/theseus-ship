@@ -3,8 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_WIN_INPUT_H
-#define KWIN_WIN_INPUT_H
+#pragma once
 
 #include "control.h"
 #include "layers.h"
@@ -571,5 +570,3 @@ void set_shortcut(Win* win, QString const& shortcut)
 }
 
 }
-
-#endif

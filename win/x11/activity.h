@@ -46,7 +46,7 @@ void update_activities(Win* win, bool includeTransients)
     // reset
     win->blocked_activity_updates_require_transients = false;
 
-    FocusChain::self()->update(win, FocusChain::MakeFirst);
+    focus_chain::self()->update(win, focus_chain::MakeFirst);
     update_visibility(win);
     win->updateWindowRules(Rules::Activity);
 }

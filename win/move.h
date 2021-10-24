@@ -3,8 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_WIN_MOVE_H
-#define KWIN_WIN_MOVE_H
+#pragma once
 
 #include "deco.h"
 #include "geo.h"
@@ -1424,5 +1423,3 @@ void start_delayed_move_resize(Win* win)
 }
 
 }
-
-#endif

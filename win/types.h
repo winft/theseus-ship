@@ -3,8 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_WIN_TYPES_H
-#define KWIN_WIN_TYPES_H
+#pragma once
 
 #include "flags.h"
 
@@ -103,5 +102,3 @@ enum class quicktiles {
 ENUM_FLAGS(quicktiles)
 
 }
-
-#endif

@@ -3,8 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_WIN_GEO_H
-#define KWIN_WIN_GEO_H
+#pragma once
 
 #include "deco.h"
 #include "remnant.h"
@@ -409,5 +408,3 @@ void set_electric(Win* win, quicktiles tiles)
 }
 
 }
-
-#endif

@@ -125,7 +125,7 @@ Workspace::Workspace()
     // For invoke methods of UserActionsMenu.
     qRegisterMetaType<Toplevel*>();
 
-    win::ApplicationMenu::create(this);
+    win::app_menu::create(this);
 
     _self = this;
 
@@ -211,21 +211,21 @@ Workspace::Workspace()
             &ScreenEdges::updateLayout);
     connect(this, &Workspace::clientActivated, screenEdges, &ScreenEdges::checkBlocking);
 
-    auto* focusChain = win::FocusChain::create(this);
-    connect(this, &Workspace::clientRemoved, focusChain, &win::FocusChain::remove);
-    connect(this, &Workspace::clientActivated, focusChain, &win::FocusChain::setActiveClient);
+    auto* focusChain = win::focus_chain::create(this);
+    connect(this, &Workspace::clientRemoved, focusChain, &win::focus_chain::remove);
+    connect(this, &Workspace::clientActivated, focusChain, &win::focus_chain::setActiveClient);
     connect(VirtualDesktopManager::self(),
             &VirtualDesktopManager::countChanged,
             focusChain,
-            &win::FocusChain::resize);
+            &win::focus_chain::resize);
     connect(VirtualDesktopManager::self(),
             &VirtualDesktopManager::currentChanged,
             focusChain,
-            &win::FocusChain::setCurrentDesktop);
+            &win::focus_chain::setCurrentDesktop);
     connect(options,
             &Options::separateScreenFocusChanged,
             focusChain,
-            &win::FocusChain::setSeparateScreenFocus);
+            &win::focus_chain::setSeparateScreenFocus);
     focusChain->setSeparateScreenFocus(options->isSeparateScreenFocus());
 
     // create VirtualDesktopManager and perform dependency injection
@@ -331,7 +331,7 @@ void Workspace::initWithX11()
         m_movingClientFilter.reset(new MovingClientX11Filter);
     }
     if (Xcb::Extensions::self()->isSyncAvailable()) {
-        m_syncAlarmFilter.reset(new win::x11::SyncAlarmX11Filter);
+        m_syncAlarmFilter.reset(new win::x11::sync_alarm_filter);
     }
     updateXTime(); // Needed for proper initialization of user_time in Client ctor
 
@@ -342,7 +342,7 @@ void Workspace::initWithX11()
                                       nullFocusValues));
     m_nullFocus->map();
 
-    auto* rootInfo = win::x11::RootInfo::create();
+    auto* rootInfo = win::x11::root_info::create();
     const auto vds = VirtualDesktopManager::self();
     vds->setRootInfo(rootInfo);
     rootInfo->activate();
@@ -492,7 +492,7 @@ Workspace::~Workspace()
     clear_x11();
 
     for (auto const& window : m_windows) {
-        if (auto internal = qobject_cast<win::InternalClient*>(window)) {
+        if (auto internal = qobject_cast<win::internal_window*>(window)) {
             internal->destroyClient();
             remove_all(m_windows, internal);
         }
@@ -516,7 +516,7 @@ Workspace::~Workspace()
     delete RuleBook::self();
     kwinApp()->config()->sync();
 
-    win::x11::RootInfo::destroy();
+    win::x11::root_info::destroy();
     delete startup;
     delete client_keys_dialog;
     foreach (SessionInfo* s, session)
@@ -554,7 +554,7 @@ win::x11::window* Workspace::createClient(xcb_window_t w, bool is_mapped)
                 &render::x11::compositor::updateClientCompositeBlocking);
     }
     connect(c,
-            &win::x11::window::clientFullScreenSet,
+            &win::x11::window::client_fullscreen_set,
             ScreenEdges::self(),
             &ScreenEdges::checkBlocking);
     if (!win::x11::take_control(c, w, is_mapped)) {
@@ -601,7 +601,7 @@ void Workspace::addClient(win::x11::window* c)
             request_focus(c);
         }
     } else {
-        win::FocusChain::self()->update(c, win::FocusChain::Update);
+        win::focus_chain::self()->update(c, win::focus_chain::Update);
     }
 
     m_windows.push_back(c);
@@ -846,7 +846,7 @@ void Workspace::activateClientOnNewDesktop(uint desktop)
 Toplevel* Workspace::findClientToActivateOnDesktop(uint desktop)
 {
     if (movingClient != nullptr && active_client == movingClient
-        && win::FocusChain::self()->contains(active_client, desktop) && active_client->isShown()
+        && win::focus_chain::self()->contains(active_client, desktop) && active_client->isShown()
         && active_client->isOnCurrentDesktop()) {
         // A requestFocus call will fail, as the client is already active
         return active_client;
@@ -872,7 +872,7 @@ Toplevel* Workspace::findClientToActivateOnDesktop(uint desktop)
             }
         }
     }
-    return win::FocusChain::self()->getForActivation(desktop);
+    return win::focus_chain::self()->getForActivation(desktop);
 }
 
 /**
@@ -937,7 +937,7 @@ void Workspace::updateCurrentActivity(const QString& new_activity)
     // FIXME below here is a lot of focuschain stuff, probably all wrong now
     if (options->focusPolicyIsReasonable()) {
         // Search in focus chain
-        c = win::FocusChain::self()->getForActivation(VirtualDesktopManager::self()->current());
+        c = win::focus_chain::self()->getForActivation(VirtualDesktopManager::self()->current());
     }
     // If "unreasonable focus policy" and active_client is on_all_desktops and
     // under mouse (Hence == old_active_client), conserve focus.
@@ -1130,7 +1130,7 @@ void Workspace::setShowingDesktop(bool showing)
         request_focus(topDesk);
     } else if (!showing_desktop && changed) {
         const auto client
-            = win::FocusChain::self()->getForActivation(VirtualDesktopManager::self()->current());
+            = win::focus_chain::self()->getForActivation(VirtualDesktopManager::self()->current());
         if (client) {
             activateClient(client);
         }
@@ -1560,7 +1560,7 @@ Toplevel* Workspace::findInternal(QWindow* w) const
         return findUnmanaged(w->winId());
     }
     for (auto client : m_allClients) {
-        if (auto internal = qobject_cast<win::InternalClient*>(client)) {
+        if (auto internal = qobject_cast<win::internal_window*>(client)) {
             if (internal->internalWindow() == w) {
                 return internal;
             }
@@ -1594,7 +1594,7 @@ void Workspace::updateTabbox()
 #endif
 }
 
-void Workspace::addInternalClient(win::InternalClient* client)
+void Workspace::addInternalClient(win::internal_window* client)
 {
     m_windows.push_back(client);
     m_allClients.push_back(client);
@@ -1614,7 +1614,7 @@ void Workspace::addInternalClient(win::InternalClient* client)
     emit internalClientAdded(client);
 }
 
-void Workspace::removeInternalClient(win::InternalClient* client)
+void Workspace::removeInternalClient(win::internal_window* client)
 {
     remove_all(m_allClients, client);
     remove_all(m_windows, client);
@@ -2910,7 +2910,7 @@ void Workspace::setActiveClient(Toplevel* window)
 
     if (active_client) {
         last_active_client = active_client;
-        win::FocusChain::self()->update(active_client, win::FocusChain::MakeFirst);
+        win::focus_chain::self()->update(active_client, win::focus_chain::MakeFirst);
         win::set_demands_attention(active_client, false);
 
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer
@@ -3153,7 +3153,7 @@ bool Workspace::activateNextClient(Toplevel* window)
         if (window && window->isTransient()) {
             auto leaders = window->transient()->leads();
             if (leaders.size() == 1
-                && win::FocusChain::self()->isUsableFocusCandidate(leaders.at(0), window)) {
+                && win::focus_chain::self()->isUsableFocusCandidate(leaders.at(0), window)) {
                 get_focus = leaders.at(0);
 
                 // also raise - we don't know where it came from
@@ -3162,7 +3162,7 @@ bool Workspace::activateNextClient(Toplevel* window)
         }
         if (!get_focus) {
             // nope, ask the focus chain for the next candidate
-            get_focus = win::FocusChain::self()->nextForDesktop(window, desktop);
+            get_focus = win::focus_chain::self()->nextForDesktop(window, desktop);
         }
     }
 
@@ -3186,7 +3186,7 @@ void Workspace::setCurrentScreen(int new_screen)
         return;
     closeActivePopup();
     const int desktop = VirtualDesktopManager::self()->current();
-    auto get_focus = win::FocusChain::self()->getForActivation(desktop, new_screen);
+    auto get_focus = win::focus_chain::self()->getForActivation(desktop, new_screen);
     if (get_focus == nullptr) {
         get_focus = win::find_desktop(this, true, desktop);
     }
@@ -3562,7 +3562,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
             // e->xmaprequest.window is different from e->xany.window
             // TODO this shouldn't be necessary now
             win::x11::window_event(c, e);
-            win::FocusChain::self()->update(c, win::FocusChain::Update);
+            win::focus_chain::self()->update(c, win::focus_chain::Update);
         } else if (true /*|| e->xmaprequest.parent != root */) {
             // NOTICE don't check for the parent being the root window, this breaks when some app
             // unmaps a window, changes something and immediately maps it back, without giving KWin

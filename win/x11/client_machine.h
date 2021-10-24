@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_CLIENT_MACHINE_H
-#define KWIN_CLIENT_MACHINE_H
+#pragma once
 
 #include <QObject>
 #include <xcb/xcb.h>
@@ -28,15 +27,15 @@ struct addrinfo;
 template<typename T>
 class QFutureWatcher;
 
-namespace KWin
+namespace KWin::win::x11
 {
 
-class GetAddrInfo : public QObject
+class get_addr_info_wrapper : public QObject
 {
     Q_OBJECT
 public:
-    explicit GetAddrInfo(const QByteArray& hostName, QObject* parent = nullptr);
-    ~GetAddrInfo() override;
+    explicit get_addr_info_wrapper(QByteArray const& hostName, QObject* parent = nullptr);
+    ~get_addr_info_wrapper() override;
 
     void resolve();
 
@@ -53,7 +52,7 @@ private:
     bool m_resolving;
     bool m_resolved;
     bool m_ownResolved;
-    QByteArray m_hostName;
+    QByteArray m_hostname;
     addrinfo* m_addressHints;
     addrinfo* m_address;
     addrinfo* m_ownAddress;
@@ -61,54 +60,53 @@ private:
     QFutureWatcher<int>* m_ownAddressWatcher;
 };
 
-class ClientMachine : public QObject
+class client_machine : public QObject
 {
     Q_OBJECT
 public:
-    explicit ClientMachine(QObject* parent = nullptr);
-    ~ClientMachine() override;
+    explicit client_machine(QObject* parent = nullptr);
+    ~client_machine() override;
 
     void resolve(xcb_window_t window, xcb_window_t clientLeader);
-    const QByteArray& hostName() const;
-    bool isLocal() const;
+    QByteArray const& hostname() const;
+    bool is_local() const;
     static QByteArray localhost();
-    bool isResolving() const;
+    bool is_resolving() const;
 
 Q_SIGNALS:
     void localhostChanged();
 
 private Q_SLOTS:
-    void setLocal();
-    void resolveFinished();
+    void set_local();
+    void resolve_finished();
 
 private:
-    void checkForLocalhost();
-    QByteArray m_hostName;
+    void check_for_localhost();
+
+    QByteArray m_hostname;
     bool m_localhost;
     bool m_resolved;
     bool m_resolving;
 };
 
-inline bool ClientMachine::isLocal() const
+inline bool client_machine::is_local() const
 {
     return m_localhost;
 }
 
-inline const QByteArray& ClientMachine::hostName() const
+inline const QByteArray& client_machine::hostname() const
 {
-    return m_hostName;
+    return m_hostname;
 }
 
-inline QByteArray ClientMachine::localhost()
+inline QByteArray client_machine::localhost()
 {
     return "localhost";
 }
 
-inline bool ClientMachine::isResolving() const
+inline bool client_machine::is_resolving() const
 {
     return m_resolving;
 }
 
-} // namespace
-
-#endif
+}

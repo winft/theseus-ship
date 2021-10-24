@@ -185,7 +185,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *sc
         }
     );
     connect(ws, &Workspace::internalClientAdded, this,
-        [this](win::InternalClient *client) {
+        [this](auto client) {
             setupAbstractClientConnections(client);
             emit windowAdded(client->effectWindow());
         }
@@ -240,7 +240,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *sc
                 registerPropertyType(atom, true);
             }
             if (kwinApp()->x11Connection()) {
-                m_x11WindowPropertyNotify = std::make_unique<win::x11::WindowPropertyNotifyX11Filter>(this);
+                m_x11WindowPropertyNotify = std::make_unique<win::x11::window_property_notify_filter>(this);
             } else {
                 m_x11WindowPropertyNotify.reset();
             }
@@ -249,7 +249,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *sc
     );
 
     if (kwinApp()->x11Connection()) {
-        m_x11WindowPropertyNotify = std::make_unique<win::x11::WindowPropertyNotifyX11Filter>(this);
+        m_x11WindowPropertyNotify = std::make_unique<win::x11::window_property_notify_filter>(this);
     }
 
     // connect all clients
@@ -265,7 +265,7 @@ EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *sc
         setupUnmanagedConnections(u);
     }
     for (auto window : ws->windows()) {
-        if (auto internal = qobject_cast<win::InternalClient*>(window)) {
+        if (auto internal = qobject_cast<win::internal_window*>(window)) {
             setupAbstractClientConnections(internal);
         }
     }
@@ -2173,7 +2173,7 @@ EffectWindow* EffectWindowImpl::transientFor()
 
 QWindow *EffectWindowImpl::internalWindow() const
 {
-    auto client = qobject_cast<win::InternalClient *>(toplevel);
+    auto client = qobject_cast<win::internal_window*>(toplevel);
     if (!client) {
         return nullptr;
     }

@@ -16,9 +16,9 @@
 
 namespace KWin::win::x11
 {
-class GeometryTip;
+class geometry_tip;
 
-constexpr long ClientWinMask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE
+constexpr long client_win_mask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE
     | XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_KEYMAP_STATE
     | XCB_EVENT_MASK_BUTTON_MOTION | XCB_EVENT_MASK_POINTER_MOTION | // need this, too!
     XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW | XCB_EVENT_MASK_FOCUS_CHANGE
@@ -26,7 +26,7 @@ constexpr long ClientWinMask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_REL
     | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
 
 // Window types with control.
-constexpr NET::WindowTypes SUPPORTED_MANAGED_WINDOW_TYPES_MASK = NET::NormalMask | NET::DesktopMask
+constexpr NET::WindowTypes supported_managed_window_types_mask = NET::NormalMask | NET::DesktopMask
     | NET::DockMask | NET::ToolbarMask | NET::MenuMask
     | NET::DialogMask /*| NET::OverrideMask*/ | NET::TopMenuMask | NET::UtilityMask
     | NET::SplashMask | NET::NotificationMask | NET::OnScreenDisplayMask
@@ -162,9 +162,9 @@ public:
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
 
     // TODO(romangg): Make non-static? Or remove geometry tips completely?
-    static GeometryTip* geometry_tip;
+    static x11::geometry_tip* geometry_tip;
 
-    explicit window();
+    window();
     ~window();
 
     bool isClient() const override;
@@ -201,7 +201,7 @@ public:
     QSize basicUnit() const override;
 
     // TODO: remove
-    const win::x11::Group* group() const override;
+    win::x11::Group const* group() const override;
     win::x11::Group* group() override;
 
     // When another window is created, checks if this window is a child for it.
@@ -274,8 +274,8 @@ public:
     void debug(QDebug& stream) const override;
 
 Q_SIGNALS:
-    void clientManaging(KWin::win::x11::window*);
-    void clientFullScreenSet(KWin::win::x11::window*, bool, bool);
+    void client_managing(KWin::win::x11::window*);
+    void client_fullscreen_set(KWin::win::x11::window*, bool, bool);
 };
 
 template<typename T>
@@ -285,7 +285,7 @@ inline void window::print(T& stream) const
            << ";Caption:" << win::caption(this) << "\'";
 }
 
-} // namespace KWin::win::x11
+}
 
 Q_DECLARE_METATYPE(KWin::win::x11::window*)
 Q_DECLARE_METATYPE(QList<KWin::win::x11::window*>)

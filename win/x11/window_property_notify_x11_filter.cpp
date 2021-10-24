@@ -26,13 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win::x11
 {
 
-WindowPropertyNotifyX11Filter::WindowPropertyNotifyX11Filter(EffectsHandlerImpl* effects)
+window_property_notify_filter::window_property_notify_filter(EffectsHandlerImpl* effects)
     : base::x11::event_filter(QVector<int>{XCB_PROPERTY_NOTIFY})
     , m_effects(effects)
 {
 }
 
-bool WindowPropertyNotifyX11Filter::event(xcb_generic_event_t* event)
+bool window_property_notify_filter::event(xcb_generic_event_t* event)
 {
     const auto* pe = reinterpret_cast<xcb_property_notify_event_t*>(event);
     if (!m_effects->isPropertyTypeRegistered(pe->atom)) {

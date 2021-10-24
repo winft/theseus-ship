@@ -216,7 +216,7 @@ void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
 
     win->doSetDesktop(win->desktop(), was_desk);
 
-    FocusChain::self()->update(win, FocusChain::MakeFirst);
+    focus_chain::self()->update(win, focus_chain::MakeFirst);
     win->updateWindowRules(Rules::Desktop);
 
     Q_EMIT win->desktopChanged();

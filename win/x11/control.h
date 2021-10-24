@@ -635,7 +635,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     // From this place on, manage() must not return false
     win->control.reset(new x11_control(win));
 
-    win->supported_default_types = SUPPORTED_MANAGED_WINDOW_TYPES_MASK;
+    win->supported_default_types = supported_managed_window_types_mask;
     win->has_in_content_deco = true;
 
     win->sync_request.timestamp = xTime();
@@ -645,7 +645,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     win->control->setup_color_scheme();
 
     QObject::connect(
-        win->clientMachine(), &ClientMachine::localhostChanged, win, &window::updateCaption);
+        win->clientMachine(), &client_machine::localhostChanged, win, &window::updateCaption);
     QObject::connect(
         options, &Options::configChanged, win, [win] { win->control->update_mouse_grab(); });
     QObject::connect(options, &Options::condensedTitleChanged, win, &window::updateCaption);
@@ -694,7 +694,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     win->geometry_hints.init(win->xcb_window());
     win->motif_hints.init(win->xcb_window());
 
-    win->info = new WinInfo(win, win->xcb_windows.client, rootWindow(), properties, properties2);
+    win->info = new win_info(win, win->xcb_windows.client, rootWindow(), properties, properties2);
 
     if (is_desktop(win) && win->bit_depth == 32) {
         // force desktop windows to be opaque. It's a desktop after all, there is no window below
@@ -1139,7 +1139,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
     win->setupCompositing(false);
 
-    Q_EMIT win->clientManaging(win);
+    Q_EMIT win->client_managing(win);
 
     return true;
 }

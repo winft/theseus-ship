@@ -116,10 +116,11 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
 
     if (client->isClient()) {
         auto x11_client = dynamic_cast<win::x11::window*>(m_client);
-        connect(
-            x11_client, &win::x11::window::clientManaging, this, [this] { Q_EMIT clientManaging(this); });
+        connect(x11_client, &win::x11::window::client_managing, this, [this] {
+            Q_EMIT clientManaging(this);
+        });
         connect(x11_client,
-                &win::x11::window::clientFullScreenSet,
+                &win::x11::window::client_fullscreen_set,
                 this,
                 [this]([[maybe_unused]] auto client, bool fullscreen, bool user) {
                     Q_EMIT clientFullScreenSet(this, fullscreen, user);

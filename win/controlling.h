@@ -60,8 +60,8 @@ void set_skip_taskbar(Win* win, bool set)
     win->updateWindowRules(Rules::SkipTaskbar);
 
     if (was_wants_tab_focus != win::wants_tab_focus(win)) {
-        FocusChain::self()->update(
-            win, win->control->active() ? FocusChain::MakeFirst : FocusChain::Update);
+        focus_chain::self()->update(
+            win, win->control->active() ? focus_chain::MakeFirst : focus_chain::Update);
     }
 
     Q_EMIT win->skipTaskbarChanged();

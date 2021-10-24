@@ -31,7 +31,7 @@ namespace KWin
 
 namespace win
 {
-class InternalClient;
+class internal_window;
 }
 
 namespace QPA
@@ -53,14 +53,14 @@ public:
     const QSharedPointer<QOpenGLFramebufferObject> &contentFBO() const;
     QSharedPointer<QOpenGLFramebufferObject> swapFBO();
 
-    win::InternalClient *client() const;
+    win::internal_window *client() const;
 
 private:
     void createFBO();
     void map();
     void unmap();
 
-    QPointer<win::InternalClient> m_handle;
+    QPointer<win::internal_window> m_handle;
     QSharedPointer<QOpenGLFramebufferObject> m_contentFBO;
     quint32 m_windowId;
     bool m_resized = false;

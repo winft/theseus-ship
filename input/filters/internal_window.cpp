@@ -31,7 +31,7 @@ bool internal_window_filter::button(button_event const& event)
         return false;
     }
 
-    auto window = qobject_cast<win::InternalClient*>(workspace()->findInternal(internal));
+    auto window = qobject_cast<win::internal_window*>(workspace()->findInternal(internal));
 
     if (window && win::decoration(window)) {
         // only perform mouse commands on decorated internal windows
@@ -80,7 +80,7 @@ bool internal_window_filter::axis(axis_event const& event)
     }
 
     if (event.orientation == axis_orientation::vertical) {
-        auto window = qobject_cast<win::InternalClient*>(workspace()->findInternal(internal));
+        auto window = qobject_cast<win::internal_window*>(workspace()->findInternal(internal));
         if (window && win::decoration(window)) {
             // client window action only on vertical scrolling
             auto const action_result = perform_wheel_and_window_action(event, window);
@@ -117,7 +117,7 @@ QWindow* get_internal_window()
 
     do {
         it--;
-        auto internal = qobject_cast<win::InternalClient*>(*it);
+        auto internal = qobject_cast<win::internal_window*>(*it);
         if (!internal) {
             continue;
         }

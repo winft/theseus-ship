@@ -17,7 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #pragma once
 
 #include "base/x11/event_filter.h"
@@ -25,12 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win::x11
 {
 
-class SyncAlarmX11Filter : public base::x11::event_filter
+class sync_alarm_filter : public base::x11::event_filter
 {
 public:
-    SyncAlarmX11Filter();
+    sync_alarm_filter();
 
     bool event(xcb_generic_event_t* event) override;
 };
 
-} // namespace KWin
+}

@@ -60,7 +60,7 @@ Toplevel::Toplevel(win::transient* transient)
     , damage_handle(XCB_NONE)
     , is_shape(false)
     , effect_window(nullptr)
-    , m_clientMachine(new ClientMachine(this))
+    , m_clientMachine(new win::x11::client_machine(this))
     , m_wmClientLeader(XCB_WINDOW_NONE)
     , m_damageReplyPending(false)
     , m_screen(0)
@@ -155,7 +155,7 @@ void Toplevel::copyToDeleted(Toplevel* c)
     bit_depth = c->bit_depth;
 
     info = c->info;
-    if (auto win_info = dynamic_cast<win::x11::WinInfo*>(info)) {
+    if (auto win_info = dynamic_cast<win::x11::win_info*>(info)) {
         win_info->disable();
     }
 
@@ -250,11 +250,11 @@ QByteArray Toplevel::wmClientMachine(bool use_localhost) const
         // this should never happen
         return QByteArray();
     }
-    if (use_localhost && m_clientMachine->isLocal()) {
+    if (use_localhost && m_clientMachine->is_local()) {
         // special name for the local machine (localhost)
-        return ClientMachine::localhost();
+        return win::x11::client_machine::localhost();
     }
-    return m_clientMachine->hostName();
+    return m_clientMachine->hostname();
 }
 
 /**
@@ -877,7 +877,7 @@ bool Toplevel::isLocalhost() const
     if (!m_clientMachine) {
         return true;
     }
-    return m_clientMachine->isLocal();
+    return m_clientMachine->is_local();
 }
 
 bool Toplevel::is_popup_end() const

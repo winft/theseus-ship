@@ -129,7 +129,7 @@ void control::set_icon(QIcon const& icon)
 
 bool control::has_application_menu() const
 {
-    return ApplicationMenu::self()->applicationMenuEnabled() && !m_application_menu.is_empty();
+    return app_menu::self()->applicationMenuEnabled() && !m_application_menu.is_empty();
 }
 
 bool control::application_menu_active() const

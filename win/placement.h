@@ -19,14 +19,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#pragma once
 
-#ifndef KWIN_PLACEMENT_H
-#define KWIN_PLACEMENT_H
-
-// KWin
 #include "types.h"
 #include <kwinglobals.h>
-// Qt
+
 #include <QList>
 #include <QPoint>
 #include <QRect>
@@ -604,9 +601,7 @@ inline void unclutter_desktop()
     }
 }
 
-} // namespace win
-
-} // namespace KWin
+}
+}
 
 #endif // KCMRULES
-#endif // KWIN_PLACEMENT_H

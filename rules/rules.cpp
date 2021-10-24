@@ -395,8 +395,8 @@ bool Rules::match(Toplevel const* window) const
     if (!matchRole(window->windowRole().toLower())) {
         return false;
     }
-    if (!matchClientMachine(window->clientMachine()->hostName(),
-                            window->clientMachine()->isLocal())) {
+    if (!matchClientMachine(window->clientMachine()->hostname(),
+                            window->clientMachine()->is_local())) {
         return false;
     }
 

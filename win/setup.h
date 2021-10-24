@@ -3,8 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_WIN_SETUP_H
-#define KWIN_WIN_SETUP_H
+#pragma once
 
 #include "appmenu.h"
 #include "deco.h"
@@ -83,12 +82,9 @@ void setup_connections(Win* win)
                          win::place(win, area);
                      });
 
-    QObject::connect(
-        ApplicationMenu::self(), &ApplicationMenu::applicationMenuEnabledChanged, win, [win] {
-            Q_EMIT win->hasApplicationMenuChanged(win->control->has_application_menu());
-        });
+    QObject::connect(app_menu::self(), &app_menu::applicationMenuEnabledChanged, win, [win] {
+        Q_EMIT win->hasApplicationMenuChanged(win->control->has_application_menu());
+    });
 }
 
 }
-
-#endif

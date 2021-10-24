@@ -37,9 +37,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin::win::x11
 {
-RootInfo* RootInfo::s_self = nullptr;
+root_info* root_info::s_self = nullptr;
 
-RootInfo* RootInfo::create()
+root_info* root_info::create()
 {
     Q_ASSERT(!s_self);
     xcb_window_t supportWindow = xcb_generate_id(connection());
@@ -144,18 +144,18 @@ RootInfo* RootInfo::create()
         NET::ActionClose;
     // clang-format on
 
-    s_self = new RootInfo(supportWindow,
-                          "KWin",
-                          properties,
-                          types,
-                          states,
-                          properties2,
-                          actions,
-                          kwinApp()->x11ScreenNumber());
+    s_self = new root_info(supportWindow,
+                           "KWin",
+                           properties,
+                           types,
+                           states,
+                           properties2,
+                           actions,
+                           kwinApp()->x11ScreenNumber());
     return s_self;
 }
 
-void RootInfo::destroy()
+void root_info::destroy()
 {
     if (!s_self) {
         return;
@@ -166,34 +166,34 @@ void RootInfo::destroy()
     xcb_destroy_window(connection(), supportWindow);
 }
 
-RootInfo::RootInfo(xcb_window_t w,
-                   const char* name,
-                   NET::Properties properties,
-                   NET::WindowTypes types,
-                   NET::States states,
-                   NET::Properties2 properties2,
-                   NET::Actions actions,
-                   int scr)
+root_info::root_info(xcb_window_t w,
+                     const char* name,
+                     NET::Properties properties,
+                     NET::WindowTypes types,
+                     NET::States states,
+                     NET::Properties2 properties2,
+                     NET::Actions actions,
+                     int scr)
     : NETRootInfo(connection(), w, name, properties, types, states, properties2, actions, scr)
     , m_activeWindow(activeWindow())
     , m_eventFilter(std::make_unique<root_info_filter>(this))
 {
 }
 
-void RootInfo::changeNumberOfDesktops(int n)
+void root_info::changeNumberOfDesktops(int n)
 {
     VirtualDesktopManager::self()->setCount(n);
 }
 
-void RootInfo::changeCurrentDesktop(int d)
+void root_info::changeCurrentDesktop(int d)
 {
     VirtualDesktopManager::self()->setCurrent(d);
 }
 
-void RootInfo::changeActiveWindow(xcb_window_t w,
-                                  NET::RequestSource src,
-                                  xcb_timestamp_t timestamp,
-                                  xcb_window_t active_window)
+void root_info::changeActiveWindow(xcb_window_t w,
+                                   NET::RequestSource src,
+                                   xcb_timestamp_t timestamp,
+                                   xcb_window_t active_window)
 {
     Workspace* workspace = Workspace::self();
     if (auto c = workspace->findClient(win::x11::predicate_match::window, w)) {
@@ -227,11 +227,11 @@ void RootInfo::changeActiveWindow(xcb_window_t w,
     }
 }
 
-void RootInfo::restackWindow(xcb_window_t w,
-                             RequestSource src,
-                             xcb_window_t above,
-                             int detail,
-                             xcb_timestamp_t timestamp)
+void root_info::restackWindow(xcb_window_t w,
+                              RequestSource src,
+                              xcb_window_t above,
+                              int detail,
+                              xcb_timestamp_t timestamp)
 {
     if (auto c = Workspace::self()->findClient(win::x11::predicate_match::window, w)) {
         if (timestamp == XCB_CURRENT_TIME)
@@ -242,14 +242,14 @@ void RootInfo::restackWindow(xcb_window_t w,
     }
 }
 
-void RootInfo::closeWindow(xcb_window_t w)
+void root_info::closeWindow(xcb_window_t w)
 {
     auto c = Workspace::self()->findClient(win::x11::predicate_match::window, w);
     if (c)
         c->closeWindow();
 }
 
-void RootInfo::moveResize(xcb_window_t w, int x_root, int y_root, unsigned long direction)
+void root_info::moveResize(xcb_window_t w, int x_root, int y_root, unsigned long direction)
 {
     auto c = Workspace::self()->findClient(win::x11::predicate_match::window, w);
     if (c) {
@@ -259,25 +259,25 @@ void RootInfo::moveResize(xcb_window_t w, int x_root, int y_root, unsigned long 
     }
 }
 
-void RootInfo::moveResizeWindow(xcb_window_t w, int flags, int x, int y, int width, int height)
+void root_info::moveResizeWindow(xcb_window_t w, int flags, int x, int y, int width, int height)
 {
     auto c = Workspace::self()->findClient(win::x11::predicate_match::window, w);
     if (c)
         win::x11::net_move_resize_window(c, flags, x, y, width, height);
 }
 
-void RootInfo::gotPing(xcb_window_t w, xcb_timestamp_t timestamp)
+void root_info::gotPing(xcb_window_t w, xcb_timestamp_t timestamp)
 {
     if (auto c = Workspace::self()->findClient(win::x11::predicate_match::window, w))
         win::x11::pong(c, timestamp);
 }
 
-void RootInfo::changeShowingDesktop(bool showing)
+void root_info::changeShowingDesktop(bool showing)
 {
     Workspace::self()->setShowingDesktop(showing);
 }
 
-void RootInfo::setActiveClient(Toplevel* window)
+void root_info::setActiveClient(Toplevel* window)
 {
     const xcb_window_t w = window ? window->xcb_window() : xcb_window_t{XCB_WINDOW_NONE};
     if (m_activeWindow == w) {
@@ -288,30 +288,30 @@ void RootInfo::setActiveClient(Toplevel* window)
 }
 
 // ****************************************
-// WinInfo
+// win_info
 // ****************************************
 
-WinInfo::WinInfo(win::x11::window* c,
-                 xcb_window_t window,
-                 xcb_window_t rwin,
-                 NET::Properties properties,
-                 NET::Properties2 properties2)
+win_info::win_info(win::x11::window* c,
+                   xcb_window_t window,
+                   xcb_window_t rwin,
+                   NET::Properties properties,
+                   NET::Properties2 properties2)
     : NETWinInfo(connection(), window, rwin, properties, properties2, NET::WindowManager)
     , m_client(c)
 {
 }
 
-void WinInfo::changeDesktop(int desktop)
+void win_info::changeDesktop(int desktop)
 {
     Workspace::self()->sendClientToDesktop(m_client, desktop, true);
 }
 
-void WinInfo::changeFullscreenMonitors(NETFullscreenMonitors topology)
+void win_info::changeFullscreenMonitors(NETFullscreenMonitors topology)
 {
     win::x11::update_fullscreen_monitors(m_client, topology);
 }
 
-void WinInfo::changeState(NET::States state, NET::States mask)
+void win_info::changeState(NET::States state, NET::States mask)
 {
     mask &= ~NET::Sticky; // KWin doesn't support large desktops, ignore
     mask &= ~NET::Hidden; // clients are not allowed to change this directly
@@ -350,7 +350,7 @@ void WinInfo::changeState(NET::States state, NET::States mask)
         m_client->setFullScreen(true, false);
 }
 
-void WinInfo::disable()
+void win_info::disable()
 {
     m_client = nullptr; // only used when the object is passed to Deleted
 }

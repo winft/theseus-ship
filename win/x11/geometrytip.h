@@ -17,9 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#pragma once
 
-#ifndef KWIN_GEOMETRY_TIP_H
-#define KWIN_GEOMETRY_TIP_H
 #include "xcbutils.h"
 
 #include <QLabel>
@@ -27,18 +26,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win::x11
 {
 
-class GeometryTip : public QLabel
+class geometry_tip : public QLabel
 {
     Q_OBJECT
 public:
-    GeometryTip(const Xcb::GeometryHints* xSizeHints);
-    ~GeometryTip() override;
-    void setGeometry(const QRect& geom);
+    geometry_tip(Xcb::GeometryHints const* xSizeHints);
+    ~geometry_tip() override;
+    void set_geometry(QRect const& geom);
 
 private:
-    const Xcb::GeometryHints* sizeHints;
+    Xcb::GeometryHints const* sizeHints;
 };
 
-} // namespace
-
-#endif
+}

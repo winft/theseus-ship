@@ -18,9 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
-#ifndef KWIN_GROUP_H
-#define KWIN_GROUP_H
+#pragma once
 
 #include "utils.h"
 #include <netwm.h>
@@ -97,8 +95,5 @@ inline EffectWindowGroupImpl* Group::effectGroup()
     return effect_group;
 }
 
-} // Kwin::win::x11
-
-} // KWin
-
-#endif
+}
+}

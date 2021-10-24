@@ -60,7 +60,7 @@ void stacking_tree::update()
     }
 
     for (auto const& toplevel : workspace()->windows()) {
-        auto internal = qobject_cast<InternalClient*>(toplevel);
+        auto internal = qobject_cast<internal_window*>(toplevel);
         if (internal && internal->isShown()) {
             winlist.push_back(internal);
         }

@@ -36,7 +36,7 @@
 namespace KWin::win::x11
 {
 
-GeometryTip* window::geometry_tip{nullptr};
+geometry_tip* window::geometry_tip{nullptr};
 
 window::window()
     : Toplevel(new x11::transient(this))
@@ -981,7 +981,7 @@ void window::do_set_fullscreen(bool full)
 
     // TODO(romangg): Is it really important for scripts if the fullscreen was triggered by the app
     //                or the user? For now just pretend that it was always the user.
-    Q_EMIT clientFullScreenSet(this, full, true);
+    Q_EMIT client_fullscreen_set(this, full, true);
     Q_EMIT fullScreenChanged();
 }
 
@@ -1010,7 +1010,7 @@ void window::doSetDesktop([[maybe_unused]] int desktop, [[maybe_unused]] int was
     update_visibility(this);
 }
 
-const Group* window::group() const
+Group const* window::group() const
 {
     return in_group;
 }

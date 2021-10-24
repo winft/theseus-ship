@@ -64,7 +64,7 @@ class Window;
 namespace win
 {
 enum class activation;
-class InternalClient;
+class internal_window;
 class stacking_order;
 
 namespace x11
@@ -384,22 +384,22 @@ public:
     /**
      * Adds the internal client to Workspace.
      *
-     * This method will be called by InternalClient when it's mapped.
+     * This method will be called by internal_window when it's mapped.
      *
      * @see internalClientAdded
      * @internal
      */
-    void addInternalClient(win::InternalClient* client);
+    void addInternalClient(win::internal_window* client);
 
     /**
      * Removes the internal client from Workspace.
      *
-     * This method is meant to be called only by InternalClient.
+     * This method is meant to be called only by internal_window.
      *
      * @see internalClientRemoved
      * @internal
      */
-    void removeInternalClient(win::InternalClient* client);
+    void removeInternalClient(win::internal_window* client);
 
     void remove_window(Toplevel* window);
 
@@ -517,12 +517,12 @@ Q_SIGNALS:
     /**
      * This signal is emitted whenever an internal client is created.
      */
-    void internalClientAdded(KWin::win::InternalClient* client);
+    void internalClientAdded(KWin::win::internal_window* client);
 
     /**
      * This signal is emitted whenever an internal client gets removed.
      */
-    void internalClientRemoved(KWin::win::InternalClient* client);
+    void internalClientRemoved(KWin::win::internal_window* client);
 
     void surface_id_changed(KWin::Toplevel*, quint32);
 

@@ -11,9 +11,9 @@
 namespace KWin::win::x11
 {
 
-root_info_filter::root_info_filter(RootInfo* info)
+root_info_filter::root_info_filter(root_info* info)
     : base::x11::event_filter(QVector<int>{XCB_PROPERTY_NOTIFY, XCB_CLIENT_MESSAGE})
-    , root_info{info}
+    , info{info}
 {
 }
 
@@ -21,7 +21,7 @@ bool root_info_filter::event(xcb_generic_event_t* event)
 {
     NET::Properties dirtyProtocols;
     NET::Properties2 dirtyProtocols2;
-    root_info->event(event, &dirtyProtocols, &dirtyProtocols2);
+    info->event(event, &dirtyProtocols, &dirtyProtocols2);
 
     if (dirtyProtocols & NET::DesktopNames) {
         VirtualDesktopManager::self()->save();

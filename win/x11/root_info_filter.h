@@ -9,17 +9,17 @@
 
 namespace KWin::win::x11
 {
-class RootInfo;
+class root_info;
 
 class root_info_filter : public base::x11::event_filter
 {
 public:
-    explicit root_info_filter(RootInfo* info);
+    explicit root_info_filter(root_info* info);
 
     bool event(xcb_generic_event_t* event) override;
 
 private:
-    win::x11::RootInfo* root_info;
+    root_info* info;
 };
 
 }

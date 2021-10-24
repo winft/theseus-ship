@@ -187,7 +187,7 @@ void HelperWindow::keyReleaseEvent(QKeyEvent* event)
 
 void InternalWindowTest::initTestCase()
 {
-    qRegisterMetaType<KWin::win::InternalClient*>();
+    qRegisterMetaType<KWin::win::internal_window*>();
     qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -229,7 +229,7 @@ void InternalWindowTest::testEnterLeave()
 
     QTRY_COMPARE(clientAddedSpy.count(), 1);
     QVERIFY(!workspace()->activeClient());
-    win::InternalClient* c = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto c = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(c);
     QVERIFY(c->isInternal());
     QVERIFY(!win::decoration(c));
@@ -330,7 +330,7 @@ void InternalWindowTest::testKeyboard()
     QSignalSpy releaseSpy(&win, &HelperWindow::keyReleased);
     QVERIFY(releaseSpy.isValid());
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->isInternal());
     QVERIFY(internalClient->readyForPainting());
@@ -360,7 +360,7 @@ void InternalWindowTest::testKeyboardShowWithoutActivating()
     QSignalSpy releaseSpy(&win, &HelperWindow::keyReleased);
     QVERIFY(releaseSpy.isValid());
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->isInternal());
     QVERIFY(internalClient->readyForPainting());
@@ -415,7 +415,7 @@ void InternalWindowTest::testKeyboardTriggersLeave()
     QSignalSpy releaseSpy(&win, &HelperWindow::keyReleased);
     QVERIFY(releaseSpy.isValid());
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->isInternal());
     QVERIFY(internalClient->readyForPainting());
@@ -518,12 +518,12 @@ void InternalWindowTest::testOpacity()
     win.setGeometry(0, 0, 100, 100);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->isInternal());
     QCOMPARE(internalClient->opacity(), 0.5);
 
-    QSignalSpy opacityChangedSpy(internalClient, &win::InternalClient::opacityChanged);
+    QSignalSpy opacityChangedSpy(internalClient, &win::internal_window::opacityChanged);
     QVERIFY(opacityChangedSpy.isValid());
     win.setOpacity(0.75);
     QCOMPARE(opacityChangedSpy.count(), 1);
@@ -539,7 +539,7 @@ void InternalWindowTest::testMove()
     win.setGeometry(0, 0, 100, 100);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QCOMPARE(internalClient->frameGeometry(), QRect(0, 0, 100, 100));
 
@@ -582,7 +582,7 @@ void InternalWindowTest::testSkipCloseAnimation()
     win.setProperty("KWIN_SKIP_CLOSE_ANIMATION", initial);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QCOMPARE(internalClient->skipsCloseAnimation(), initial);
     QSignalSpy skipCloseChangedSpy(internalClient, &Toplevel::skipCloseAnimationChanged);
@@ -604,7 +604,7 @@ void InternalWindowTest::testModifierClickUnrestrictedMove()
     win.setFlags(win.flags() & ~Qt::FramelessWindowHint);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QVERIFY(win::decoration(internalClient));
 
@@ -646,7 +646,7 @@ void InternalWindowTest::testModifierScroll()
     win.setFlags(win.flags() & ~Qt::FramelessWindowHint);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QVERIFY(win::decoration(internalClient));
 
@@ -680,7 +680,7 @@ void InternalWindowTest::testPopup()
     win.setFlags(win.flags() | Qt::Popup);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QCOMPARE(win::is_popup(internalClient), true);
 }
@@ -704,7 +704,7 @@ void InternalWindowTest::testScale()
     win.show();
     QCOMPARE(win.devicePixelRatio(), 2.0);
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QCOMPARE(internalClient->bufferScale(), 2);
 }
 
@@ -739,7 +739,7 @@ void InternalWindowTest::testWindowType()
     KWindowSystem::setType(win.winId(), windowType);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QCOMPARE(internalClient->windowType(), windowType);
 }
@@ -772,7 +772,7 @@ void InternalWindowTest::testChangeWindowType()
     win.setGeometry(0, 0, 100, 100);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QCOMPARE(internalClient->windowType(), NET::Normal);
 
@@ -792,7 +792,7 @@ void InternalWindowTest::testEffectWindow()
     win.setGeometry(0, 0, 100, 100);
     win.show();
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    auto internalClient = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
     QVERIFY(internalClient->effectWindow());
     QCOMPARE(internalClient->effectWindow()->internalWindow(), &win);

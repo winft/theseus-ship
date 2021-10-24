@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_WINDOW_PROPERTY_NOTIFY_X11_FILTER_H
-#define KWIN_WINDOW_PROPERTY_NOTIFY_X11_FILTER_H
+#pragma once
 
 #include "base/x11/event_filter.h"
 
@@ -29,10 +28,10 @@ class EffectsHandlerImpl;
 namespace win::x11
 {
 
-class WindowPropertyNotifyX11Filter : public base::x11::event_filter
+class window_property_notify_filter : public base::x11::event_filter
 {
 public:
-    explicit WindowPropertyNotifyX11Filter(EffectsHandlerImpl* effects);
+    explicit window_property_notify_filter(EffectsHandlerImpl* effects);
 
     bool event(xcb_generic_event_t* event) override;
 
@@ -40,8 +39,6 @@ private:
     EffectsHandlerImpl* m_effects;
 };
 
-} // namespace win::x11
-
 }
 
-#endif
+}

@@ -128,18 +128,18 @@ void TestClientMachine::hostName()
     QFETCH(bool, local);
     setClientMachineProperty(window, hostName);
 
-    ClientMachine clientMachine;
-    QSignalSpy spy(&clientMachine, &ClientMachine::localhostChanged);
+    win::x11::client_machine clientMachine;
+    QSignalSpy spy(&clientMachine, &win::x11::client_machine::localhostChanged);
     clientMachine.resolve(window, XCB_WINDOW_NONE);
-    QTEST(clientMachine.hostName(), "expectedHost");
+    QTEST(clientMachine.hostname(), "expectedHost");
 
     int i = 0;
-    while (clientMachine.isResolving() && i++ < 50) {
+    while (clientMachine.is_resolving() && i++ < 50) {
         // name is being resolved in an external thread, so let's wait a little bit
         QTest::qWait(250);
     }
 
-    QCOMPARE(clientMachine.isLocal(), local);
+    QCOMPARE(clientMachine.is_local(), local);
     QCOMPARE(spy.isEmpty(), !local);
 }
 
@@ -148,11 +148,11 @@ void TestClientMachine::emptyHostName()
     const QRect geometry(0, 0, 10, 10);
     const uint32_t values[] = {true};
     Xcb::Window window(geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
-    ClientMachine clientMachine;
-    QSignalSpy spy(&clientMachine, &ClientMachine::localhostChanged);
+    win::x11::client_machine clientMachine;
+    QSignalSpy spy(&clientMachine, &win::x11::client_machine::localhostChanged);
     clientMachine.resolve(window, XCB_WINDOW_NONE);
-    QCOMPARE(clientMachine.hostName(), ClientMachine::localhost());
-    QVERIFY(clientMachine.isLocal());
+    QCOMPARE(clientMachine.hostname(), win::x11::client_machine::localhost());
+    QVERIFY(clientMachine.is_local());
     // should be local
     QCOMPARE(spy.isEmpty(), false);
 }

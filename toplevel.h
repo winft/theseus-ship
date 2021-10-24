@@ -65,11 +65,11 @@ class transient;
 
 namespace x11
 {
+class client_machine;
 class Group;
 }
 }
 
-class ClientMachine;
 class EffectWindowImpl;
 
 /**
@@ -205,7 +205,7 @@ public:
     QByteArray resourceClass() const;
     QByteArray wmCommand();
     QByteArray wmClientMachine(bool use_localhost) const;
-    const ClientMachine *clientMachine() const;
+    win::x11::client_machine const* clientMachine() const;
     virtual bool isLocalhost() const;
     xcb_window_t wmClientLeader() const;
     virtual pid_t pid() const;
@@ -486,7 +486,7 @@ private:
     EffectWindowImpl* effect_window;
     QByteArray resource_name;
     QByteArray resource_class;
-    ClientMachine *m_clientMachine;
+    win::x11::client_machine* m_clientMachine;
     xcb_window_t m_wmClientLeader;
     bool m_damageReplyPending;
     QRegion opaque_region;
@@ -886,7 +886,7 @@ inline QByteArray Toplevel::resourceClass() const
     return resource_class; // it is always lowercase
 }
 
-inline const ClientMachine *Toplevel::clientMachine() const
+inline const win::x11::client_machine* Toplevel::clientMachine() const
 {
     return m_clientMachine;
 }
