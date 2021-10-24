@@ -34,37 +34,37 @@ uint32_t GammaRamp::size() const
     return m_size;
 }
 
-uint16_t *GammaRamp::red()
+uint16_t* GammaRamp::red()
 {
     return m_table.data();
 }
 
-const uint16_t *GammaRamp::red() const
+const uint16_t* GammaRamp::red() const
 {
     return m_table.data();
 }
 
-uint16_t *GammaRamp::green()
+uint16_t* GammaRamp::green()
 {
     return m_table.data() + m_size;
 }
 
-const uint16_t *GammaRamp::green() const
+const uint16_t* GammaRamp::green() const
 {
     return m_table.data() + m_size;
 }
 
-uint16_t *GammaRamp::blue()
+uint16_t* GammaRamp::blue()
 {
     return m_table.data() + 2 * m_size;
 }
 
-const uint16_t *GammaRamp::blue() const
+const uint16_t* GammaRamp::blue() const
 {
     return m_table.data() + 2 * m_size;
 }
 
-AbstractOutput::AbstractOutput(QObject *parent)
+AbstractOutput::AbstractOutput(QObject* parent)
     : QObject(parent)
 {
 }
@@ -78,7 +78,7 @@ void AbstractOutput::setEnabled(bool enable)
     Q_UNUSED(enable)
 }
 
-void AbstractOutput::applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset)
+void AbstractOutput::applyChanges(const Wrapland::Server::OutputChangesetV1* changeset)
 {
     Q_UNUSED(changeset)
 }
@@ -103,7 +103,7 @@ int AbstractOutput::gammaRampSize() const
     return 0;
 }
 
-bool AbstractOutput::setGammaRamp(const GammaRamp &gamma)
+bool AbstractOutput::setGammaRamp(const GammaRamp& gamma)
 {
     Q_UNUSED(gamma);
     return false;

@@ -29,10 +29,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QPoint>
-#include <memory>
 #include <QRect>
 #include <QSize>
 #include <QVector>
+#include <memory>
 
 #include <Wrapland/Server/output.h>
 
@@ -54,7 +54,7 @@ class KWIN_EXPORT AbstractWaylandOutput : public AbstractOutput
 {
     Q_OBJECT
 public:
-    explicit AbstractWaylandOutput(QObject *parent = nullptr);
+    explicit AbstractWaylandOutput(QObject* parent = nullptr);
 
     QString name() const override;
 
@@ -104,13 +104,15 @@ public:
      */
     int refreshRate() const override;
 
-    bool isInternal() const override {
+    bool isInternal() const override
+    {
         return m_internal;
     }
 
-    void applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset) override;
+    void applyChanges(const Wrapland::Server::OutputChangesetV1* changeset) override;
 
-    Wrapland::Server::Output* output() const {
+    Wrapland::Server::Output* output() const
+    {
         return m_output.get();
     }
 
@@ -123,46 +125,54 @@ public:
      */
     void setEnabled(bool enable) override;
 
-    void forceGeometry(const QRectF &geo);
+    void forceGeometry(const QRectF& geo);
 
     bool dpmsOn() const override;
     virtual uint64_t msc() const;
 
-    QSize orientateSize(const QSize &size) const;
+    QSize orientateSize(const QSize& size) const;
 
 Q_SIGNALS:
     void modeChanged();
 
 protected:
-    void initInterfaces(std::string const& name, std::string const& make,
-                        std::string const& model, std::string const& serial_number,
-                        const QSize &physicalSize,
-                        const QVector<Wrapland::Server::Output::Mode> &modes,
-                        Wrapland::Server::Output::Mode *current_mode = nullptr);
+    void initInterfaces(std::string const& name,
+                        std::string const& make,
+                        std::string const& model,
+                        std::string const& serial_number,
+                        const QSize& physicalSize,
+                        const QVector<Wrapland::Server::Output::Mode>& modes,
+                        Wrapland::Server::Output::Mode* current_mode = nullptr);
 
     QPoint globalPos() const;
 
-    bool internal() const {
+    bool internal() const
+    {
         return m_internal;
     }
-    void setInternal(bool set) {
+    void setInternal(bool set)
+    {
         m_internal = set;
     }
-    void setDpmsSupported(bool set) {
+    void setDpmsSupported(bool set)
+    {
         m_supportsDpms = set;
     }
 
-    virtual void updateEnablement(bool enable) {
+    virtual void updateEnablement(bool enable)
+    {
         Q_UNUSED(enable);
     }
-    virtual void updateMode(int modeIndex) {
+    virtual void updateMode(int modeIndex)
+    {
         Q_UNUSED(modeIndex);
     }
-    virtual void updateTransform(base::wayland::output_transform transform) {
+    virtual void updateTransform(base::wayland::output_transform transform)
+    {
         Q_UNUSED(transform);
     }
 
-    void setWaylandMode(const QSize &size, int refreshRate, bool force_update);
+    void setWaylandMode(const QSize& size, int refreshRate, bool force_update);
     void setTransform(base::wayland::output_transform transform);
 
     DpmsMode dpmsMode() const;

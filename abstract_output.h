@@ -54,12 +54,12 @@ public:
      * The returned pointer can be used for altering the red component
      * in the gamma ramp.
      */
-    uint16_t *red();
+    uint16_t* red();
 
     /**
      * Returns pointer to the first red component in the gamma ramp.
      */
-    const uint16_t *red() const;
+    const uint16_t* red() const;
 
     /**
      * Returns pointer to the first green component in the gamma ramp.
@@ -67,12 +67,12 @@ public:
      * The returned pointer can be used for altering the green component
      * in the gamma ramp.
      */
-    uint16_t *green();
+    uint16_t* green();
 
     /**
      * Returns pointer to the first green component in the gamma ramp.
      */
-    const uint16_t *green() const;
+    const uint16_t* green() const;
 
     /**
      * Returns pointer to the first blue component in the gamma ramp.
@@ -80,12 +80,12 @@ public:
      * The returned pointer can be used for altering the blue component
      * in the gamma ramp.
      */
-    uint16_t *blue();
+    uint16_t* blue();
 
     /**
      * Returns pointer to the first blue component in the gamma ramp.
      */
-    const uint16_t *blue() const;
+    const uint16_t* blue() const;
 
 private:
     QVector<uint16_t> m_table;
@@ -100,15 +100,10 @@ class KWIN_EXPORT AbstractOutput : public QObject
     Q_OBJECT
 
 public:
-    explicit AbstractOutput(QObject *parent = nullptr);
+    explicit AbstractOutput(QObject* parent = nullptr);
     ~AbstractOutput() override;
 
-    enum class DpmsMode {
-        On,
-        Standby,
-        Suspend,
-        Off
-    };
+    enum class DpmsMode { On, Standby, Suspend, Off };
 
     /**
      * Returns the name of this output.
@@ -127,7 +122,7 @@ public:
      *
      * Default implementation does nothing
      */
-    virtual void applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset);
+    virtual void applyChanges(const Wrapland::Server::OutputChangesetV1* changeset);
 
     /**
      * Returns geometry of this output in device independent pixels.
@@ -173,26 +168,41 @@ public:
      *
      * Returns @c true if the gamma ramp was successfully set.
      */
-    virtual bool setGammaRamp(const GammaRamp &gamma);
+    virtual bool setGammaRamp(const GammaRamp& gamma);
 
     virtual void updateDpms(DpmsMode mode);
-    virtual bool dpmsOn() const {return true;}
+    virtual bool dpmsOn() const
+    {
+        return true;
+    }
 
     /** Returns the resolution of the output.  */
-    virtual QSize pixelSize() const { return geometry().size(); }
+    virtual QSize pixelSize() const
+    {
+        return geometry().size();
+    }
 
     /**
      * Returns the manufacturer of the screen.
      */
-    virtual QString manufacturer() const { return QString(); }
+    virtual QString manufacturer() const
+    {
+        return QString();
+    }
     /**
      * Returns the model of the screen.
      */
-    virtual QString model() const { return QString(); }
+    virtual QString model() const
+    {
+        return QString();
+    }
     /**
      * Returns the serial number of the screen.
      */
-    virtual QString serialNumber() const { return QString(); }
+    virtual QString serialNumber() const
+    {
+        return QString();
+    }
 
 Q_SIGNALS:
     /**
