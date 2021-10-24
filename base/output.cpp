@@ -26,10 +26,6 @@ void output::set_enabled(bool /*enable*/)
 {
 }
 
-void output::apply_changes(Wrapland::Server::OutputChangesetV1 const* /*changeset*/)
-{
-}
-
 bool output::is_internal() const
 {
     return false;

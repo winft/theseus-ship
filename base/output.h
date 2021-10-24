@@ -12,14 +12,6 @@
 #include <QSize>
 #include <QVector>
 
-namespace Wrapland
-{
-namespace Server
-{
-class OutputChangesetV1;
-}
-}
-
 namespace KWin::base
 {
 class gamma_ramp;
@@ -49,13 +41,6 @@ public:
      * Default implementation does nothing
      */
     virtual void set_enabled(bool enable);
-
-    /**
-     * This sets the changes and tests them against the specific output.
-     *
-     * Default implementation does nothing
-     */
-    virtual void apply_changes(Wrapland::Server::OutputChangesetV1 const* changeset);
 
     /**
      * Returns geometry of this output in device independent pixels.

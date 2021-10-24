@@ -106,7 +106,7 @@ public:
         return m_internal;
     }
 
-    void apply_changes(const Wrapland::Server::OutputChangesetV1* changeset) override;
+    void apply_changes(const Wrapland::Server::OutputChangesetV1* changeset);
 
     Wrapland::Server::Output* wrapland_output() const
     {
