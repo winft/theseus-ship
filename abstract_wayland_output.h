@@ -125,12 +125,12 @@ public:
      */
     void set_enabled(bool enable) override;
 
-    void force_geometry(const QRectF& geo);
+    void force_geometry(QRectF const& geo);
 
     bool is_dpms_on() const override;
     virtual uint64_t msc() const;
 
-    QSize orientate_size(const QSize& size) const;
+    QSize orientate_size(QSize const& size) const;
 
 Q_SIGNALS:
     void mode_changed();
@@ -140,8 +140,8 @@ protected:
                          std::string const& make,
                          std::string const& model,
                          std::string const& serial_number,
-                         const QSize& physical_size,
-                         const QVector<Wrapland::Server::Output::Mode>& modes,
+                         QSize const& physical_size,
+                         QVector<Wrapland::Server::Output::Mode> const& modes,
                          Wrapland::Server::Output::Mode* current_mode = nullptr);
 
     QPoint global_pos() const;
@@ -172,7 +172,7 @@ protected:
         Q_UNUSED(transform);
     }
 
-    void set_wayland_mode(const QSize& size, int refresh_rate, bool force_update);
+    void set_wayland_mode(QSize const& size, int refresh_rate, bool force_update);
     void set_transform(base::wayland::output_transform transform);
 
     DpmsMode dpms_mode() const;

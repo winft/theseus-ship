@@ -59,7 +59,7 @@ public:
     /**
      * Returns pointer to the first red component in the gamma ramp.
      */
-    const uint16_t* red() const;
+    uint16_t const* red() const;
 
     /**
      * Returns pointer to the first green component in the gamma ramp.
@@ -72,7 +72,7 @@ public:
     /**
      * Returns pointer to the first green component in the gamma ramp.
      */
-    const uint16_t* green() const;
+    uint16_t const* green() const;
 
     /**
      * Returns pointer to the first blue component in the gamma ramp.
@@ -85,7 +85,7 @@ public:
     /**
      * Returns pointer to the first blue component in the gamma ramp.
      */
-    const uint16_t* blue() const;
+    uint16_t const* blue() const;
 
 private:
     QVector<uint16_t> m_table;
@@ -122,7 +122,7 @@ public:
      *
      * Default implementation does nothing
      */
-    virtual void apply_changes(const Wrapland::Server::OutputChangesetV1* changeset);
+    virtual void apply_changes(Wrapland::Server::OutputChangesetV1 const* changeset);
 
     /**
      * Returns geometry of this output in device independent pixels.
@@ -168,7 +168,7 @@ public:
      *
      * Returns @c true if the gamma ramp was successfully set.
      */
-    virtual bool set_gamma_ramp(const GammaRamp& gamma);
+    virtual bool set_gamma_ramp(GammaRamp const& gamma);
 
     virtual void update_dpms(DpmsMode mode);
     virtual bool is_dpms_on() const

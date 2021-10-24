@@ -54,7 +54,7 @@ QString AbstractWaylandOutput::name() const
 
 QRect AbstractWaylandOutput::geometry() const
 {
-    const QRect& geo = m_output->geometry().toRect();
+    auto const& geo = m_output->geometry().toRect();
     // TODO: allow invalid size (disable output on the fly)
     return geo.isValid() ? geo : QRect(QPoint(0, 0), pixel_size());
 }
@@ -79,7 +79,7 @@ QPoint AbstractWaylandOutput::global_pos() const
     return geometry().topLeft();
 }
 
-void AbstractWaylandOutput::force_geometry(const QRectF& geo)
+void AbstractWaylandOutput::force_geometry(QRectF const& geo)
 {
     m_output->set_geometry(geo);
     update_view_geometry();
@@ -120,7 +120,7 @@ void AbstractWaylandOutput::update_view_geometry()
     Q_ASSERT(view_size.height() <= mode_size.height());
     Q_ASSERT(view_size.width() <= mode_size.width());
 
-    const QPoint pos((mode_size.width() - view_size.width()) / 2,
+    QPoint const pos((mode_size.width() - view_size.width()) / 2,
                      (mode_size.height() - view_size.height()) / 2);
     m_view_geometry = QRect(pos, view_size.toSize());
 }
@@ -143,7 +143,7 @@ to_wayland_transform(base::wayland::output_transform transform)
     return static_cast<Wrapland::Server::Output::Transform>(transform);
 }
 
-void AbstractWaylandOutput::apply_changes(const Wrapland::Server::OutputChangesetV1* changeset)
+void AbstractWaylandOutput::apply_changes(Wrapland::Server::OutputChangesetV1 const* changeset)
 {
     qCDebug(KWIN_WL) << "Apply changes to Wayland output:" << m_output->name().c_str();
     bool emitModeChanged = false;
@@ -199,7 +199,7 @@ void AbstractWaylandOutput::set_enabled(bool enable)
 // TODO(romangg): the force_update variable is only a temporary solution to a larger issue, that
 // our data flow is not correctly handled between backend and this class. In general this class
 // should request data from the backend and not the backend set it.
-void AbstractWaylandOutput::set_wayland_mode(const QSize& size, int refresh_rate, bool force_update)
+void AbstractWaylandOutput::set_wayland_mode(QSize const& size, int refresh_rate, bool force_update)
 {
     m_output->set_mode(size, refresh_rate);
 
@@ -244,8 +244,8 @@ void AbstractWaylandOutput::init_interfaces(std::string const& name,
                                             std::string const& make,
                                             std::string const& model,
                                             std::string const& serial_number,
-                                            const QSize& physical_size,
-                                            const QVector<Wrapland::Server::Output::Mode>& modes,
+                                            QSize const& physical_size,
+                                            QVector<Wrapland::Server::Output::Mode> const& modes,
                                             Wrapland::Server::Output::Mode* current_mode)
 {
     Q_ASSERT(!m_output);
@@ -292,10 +292,10 @@ void AbstractWaylandOutput::init_interfaces(std::string const& name,
     m_output->done();
 }
 
-QSize AbstractWaylandOutput::orientate_size(const QSize& size) const
+QSize AbstractWaylandOutput::orientate_size(QSize const& size) const
 {
     using Transform = Wrapland::Server::Output::Transform;
-    const Transform transform = m_output->transform();
+    auto const transform = m_output->transform();
     if (transform == Transform::Rotated90 || transform == Transform::Rotated270
         || transform == Transform::Flipped90 || transform == Transform::Flipped270) {
         return size.transposed();

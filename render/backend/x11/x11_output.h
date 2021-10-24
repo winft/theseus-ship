@@ -38,10 +38,10 @@ public:
     void set_refresh_rate(int set);
 
     int gamma_ramp_size() const override;
-    bool set_gamma_ramp(const GammaRamp& gamma) override;
+    bool set_gamma_ramp(GammaRamp const& gamma) override;
 
     QSize physical_size() const override;
-    void set_physical_size(const QSize& size);
+    void set_physical_size(QSize const& size);
 
 private:
     void set_crtc(xcb_randr_crtc_t crtc);
