@@ -39,7 +39,7 @@ public:
     backend* back;
 
     void update_enablement(bool enable) override;
-    void update_dpms(DpmsMode mode) override;
+    void update_dpms(base::dpms_mode mode) override;
     void update_mode(int mode_index) override;
     void update_transform(base::wayland::output_transform transform) override;
 

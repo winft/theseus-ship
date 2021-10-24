@@ -204,32 +204,32 @@ void output::set_wayland_mode(QSize const& size, int refresh_rate, bool force_up
     }
 }
 
-base::output::DpmsMode from_wayland_dpms_mode(Wrapland::Server::Output::DpmsMode wlMode)
+base::dpms_mode from_wayland_dpms_mode(Wrapland::Server::Output::DpmsMode wlMode)
 {
     switch (wlMode) {
     case Wrapland::Server::Output::DpmsMode::On:
-        return base::output::DpmsMode::On;
+        return base::dpms_mode::on;
     case Wrapland::Server::Output::DpmsMode::Standby:
-        return base::output::DpmsMode::Standby;
+        return base::dpms_mode::standby;
     case Wrapland::Server::Output::DpmsMode::Suspend:
-        return base::output::DpmsMode::Suspend;
+        return base::dpms_mode::suspend;
     case Wrapland::Server::Output::DpmsMode::Off:
-        return base::output::DpmsMode::Off;
+        return base::dpms_mode::off;
     default:
         Q_UNREACHABLE();
     }
 }
 
-Wrapland::Server::Output::DpmsMode to_wayland_dpms_mode(base::output::DpmsMode mode)
+Wrapland::Server::Output::DpmsMode to_wayland_dpms_mode(base::dpms_mode mode)
 {
     switch (mode) {
-    case base::output::DpmsMode::On:
+    case base::dpms_mode::on:
         return Wrapland::Server::Output::DpmsMode::On;
-    case base::output::DpmsMode::Standby:
+    case base::dpms_mode::standby:
         return Wrapland::Server::Output::DpmsMode::Standby;
-    case base::output::DpmsMode::Suspend:
+    case base::dpms_mode::suspend:
         return Wrapland::Server::Output::DpmsMode::Suspend;
-    case base::output::DpmsMode::Off:
+    case base::dpms_mode::off:
         return Wrapland::Server::Output::DpmsMode::Off;
     default:
         Q_UNREACHABLE();
@@ -313,7 +313,7 @@ base::wayland::output_transform output::transform() const
 void output::dpms_set_on()
 {
     qCDebug(KWIN_WL) << "DPMS mode set for output" << name() << "to On.";
-    m_dpms = DpmsMode::On;
+    m_dpms = base::dpms_mode::on;
 
     if (is_enabled()) {
         m_output->set_dpms_mode(Wrapland::Server::Output::DpmsMode::On);
@@ -328,7 +328,7 @@ void output::dpms_set_on()
     }
 }
 
-void output::dpms_set_off(DpmsMode mode)
+void output::dpms_set_off(base::dpms_mode mode)
 {
     qCDebug(KWIN_WL) << "DPMS mode set for output" << name() << "to Off.";
 
@@ -342,14 +342,14 @@ void output::dpms_set_off(DpmsMode mode)
     }
 }
 
-output::DpmsMode output::dpms_mode() const
+base::dpms_mode output::dpms_mode() const
 {
     return m_dpms;
 }
 
 bool output::is_dpms_on() const
 {
-    return m_dpms == DpmsMode::On;
+    return m_dpms == base::dpms_mode::on;
 }
 
 uint64_t output::msc() const

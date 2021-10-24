@@ -115,9 +115,9 @@ void output::update_enablement(bool enable)
     }
 }
 
-void output::update_dpms(DpmsMode mode)
+void output::update_dpms(base::dpms_mode mode)
 {
-    auto set_on = mode == DpmsMode::On;
+    auto set_on = mode == base::dpms_mode::on;
 
     if (set_on) {
         compositor::self()->addRepaint(geometry());

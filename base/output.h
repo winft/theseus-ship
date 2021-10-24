@@ -24,14 +24,19 @@ namespace KWin::base
 {
 class gamma_ramp;
 
+enum class dpms_mode {
+    on,
+    standby,
+    suspend,
+    off,
+};
+
 class KWIN_EXPORT output : public QObject
 {
     Q_OBJECT
 
 public:
     output() = default;
-
-    enum class DpmsMode { On, Standby, Suspend, Off };
 
     /**
      * Returns the name of this output.
@@ -98,7 +103,7 @@ public:
      */
     virtual bool set_gamma_ramp(gamma_ramp const& gamma);
 
-    virtual void update_dpms(DpmsMode mode);
+    virtual void update_dpms(dpms_mode mode);
     virtual bool is_dpms_on() const
     {
         return true;

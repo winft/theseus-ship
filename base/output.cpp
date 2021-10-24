@@ -55,7 +55,7 @@ bool output::set_gamma_ramp(gamma_ramp const& /*gamma*/)
     return false;
 }
 
-void output::update_dpms(DpmsMode /*mode*/)
+void output::update_dpms(dpms_mode /*mode*/)
 {
 }
 

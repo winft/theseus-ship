@@ -172,9 +172,9 @@ protected:
     void set_wayland_mode(QSize const& size, int refresh_rate, bool force_update);
     void set_transform(base::wayland::output_transform transform);
 
-    DpmsMode dpms_mode() const;
+    base::dpms_mode dpms_mode() const;
     void dpms_set_on();
-    void dpms_set_off(DpmsMode mode);
+    void dpms_set_off(base::dpms_mode mode);
 
 private:
     QSizeF logical_size() const;
@@ -182,7 +182,7 @@ private:
 
     std::unique_ptr<Wrapland::Server::Output> m_output;
 
-    DpmsMode m_dpms = DpmsMode::On;
+    base::dpms_mode m_dpms{base::dpms_mode::on};
     QRect m_view_geometry;
 
     bool m_internal = false;

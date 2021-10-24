@@ -59,7 +59,7 @@ void turn_outputs_on(Base const& base, Filter& filter)
     filter.reset();
 
     for (auto& out : base.enabled_outputs) {
-        out->update_dpms(base::output::DpmsMode::On);
+        out->update_dpms(base::dpms_mode::on);
     }
 }
 
