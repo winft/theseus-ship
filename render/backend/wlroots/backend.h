@@ -34,14 +34,14 @@ class KWIN_EXPORT backend : public Platform
 {
     Q_OBJECT
 public:
-    base::platform<base::backend::wlroots, base::wayland::output>& base;
+    base::platform<base::backend::wlroots>& base;
     egl_backend* egl{nullptr};
 
     QVector<output*> all_outputs;
     QVector<output*> enabled_outputs;
     int fd{0};
 
-    explicit backend(base::platform<base::backend::wlroots, base::wayland::output>& base);
+    explicit backend(base::platform<base::backend::wlroots>& base);
     ~backend() override;
 
     OpenGLBackend* createOpenGLBackend() override;

@@ -25,7 +25,15 @@ namespace Wrapland::Server
 class Display;
 }
 
-namespace KWin::base::backend
+namespace KWin::base
+{
+
+namespace wayland
+{
+class output;
+}
+
+namespace backend
 {
 
 inline wlr_backend* wlroots_get_backend(wlr_backend* backend,
@@ -64,6 +72,8 @@ inline wlr_backend* wlroots_get_headless_backend(wlr_backend* backend)
 class KWIN_EXPORT wlroots
 {
 public:
+    using output = base::wayland::output;
+
     wlr_backend* backend{nullptr};
 
     // TODO(romangg): remove all but one ctor once the startup sequence is cleaned up.
@@ -87,4 +97,5 @@ private:
     std::unique_ptr<event_receiver<wlroots>> destroyed;
 };
 
+}
 }

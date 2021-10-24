@@ -35,7 +35,7 @@ class KWIN_EXPORT X11StandalonePlatform : public Platform
 {
     Q_OBJECT
 public:
-    X11StandalonePlatform(base::platform<base::backend::x11, base::output>& base);
+    X11StandalonePlatform(base::platform<base::backend::x11>& base);
     ~X11StandalonePlatform() override;
 
     void init();
@@ -87,7 +87,7 @@ private:
     QTimer* m_openGLFreezeProtection = nullptr;
 
     Display* m_x11Display;
-    base::platform<base::backend::x11, base::output>& base;
+    base::platform<base::backend::x11>& base;
 
     QScopedPointer<base::x11::event_filter> m_screenEdgesFilter;
     QScopedPointer<base::x11::event_filter> m_randrFilter;

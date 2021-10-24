@@ -10,12 +10,13 @@
 namespace KWin::base
 {
 
-template<typename Backend, typename Output>
+template<typename Backend>
 class platform
 {
 public:
-    platform() = default;
+    using output = typename Backend::output;
 
+    platform() = default;
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     platform(platform&& other) noexcept = default;
@@ -23,8 +24,8 @@ public:
     ~platform() = default;
 
     Backend backend;
-    std::vector<Output*> all_outputs;
-    std::vector<Output*> enabled_outputs;
+    std::vector<output*> all_outputs;
+    std::vector<output*> enabled_outputs;
 };
 
 }
