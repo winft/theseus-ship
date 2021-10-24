@@ -54,8 +54,6 @@ class KWIN_EXPORT AbstractWaylandOutput : public AbstractOutput
 {
     Q_OBJECT
 public:
-    explicit AbstractWaylandOutput(QObject* parent = nullptr);
-
     QString name() const override;
 
     /**

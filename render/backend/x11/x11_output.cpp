@@ -9,11 +9,6 @@
 namespace KWin::render::backend::x11
 {
 
-X11Output::X11Output(QObject* parent)
-    : AbstractOutput(parent)
-{
-}
-
 QString X11Output::name() const
 {
     return m_name;

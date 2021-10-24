@@ -55,6 +55,7 @@ X11StandalonePlatform::~X11StandalonePlatform()
         delete m_openGLFreezeProtectionThread;
     }
     XRenderUtils::cleanup();
+    qDeleteAll(m_outputs);
 }
 
 void X11StandalonePlatform::init()
@@ -372,7 +373,7 @@ template<typename T>
 void X11StandalonePlatform::doUpdateOutputs()
 {
     auto fallback = [this]() {
-        auto* o = new X11Output(this);
+        auto o = new X11Output;
         o->set_gamma_ramp_size(0);
         o->set_refresh_rate(-1.0f);
         o->set_name(QStringLiteral("Fallback"));
@@ -442,7 +443,7 @@ void X11StandalonePlatform::doUpdateOutputs()
             // drm platform do this.
             Xcb::RandR::CrtcGamma gamma(crtc);
 
-            auto* o = new X11Output(this);
+            auto o = new X11Output;
             o->set_crtc(crtc);
             o->set_gamma_ramp_size(gamma.isNull() ? 0 : gamma->size);
             o->set_geometry(geo);

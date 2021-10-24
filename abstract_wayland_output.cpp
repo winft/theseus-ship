@@ -42,11 +42,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-AbstractWaylandOutput::AbstractWaylandOutput(QObject* parent)
-    : AbstractOutput(parent)
-{
-}
-
 QString AbstractWaylandOutput::name() const
 {
     return QString::fromStdString(m_output->name());

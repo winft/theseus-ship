@@ -64,15 +64,6 @@ uint16_t const* GammaRamp::blue() const
     return m_table.data() + 2 * m_size;
 }
 
-AbstractOutput::AbstractOutput(QObject* parent)
-    : QObject(parent)
-{
-}
-
-AbstractOutput::~AbstractOutput()
-{
-}
-
 void AbstractOutput::set_enabled(bool enable)
 {
     Q_UNUSED(enable)

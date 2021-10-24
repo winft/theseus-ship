@@ -100,8 +100,7 @@ class KWIN_EXPORT AbstractOutput : public QObject
     Q_OBJECT
 
 public:
-    explicit AbstractOutput(QObject* parent = nullptr);
-    ~AbstractOutput() override;
+    AbstractOutput() = default;
 
     enum class DpmsMode { On, Standby, Suspend, Off };
 

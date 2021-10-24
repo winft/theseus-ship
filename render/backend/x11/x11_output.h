@@ -25,9 +25,6 @@ class KWIN_EXPORT X11Output : public AbstractOutput
     Q_OBJECT
 
 public:
-    explicit X11Output(QObject* parent = nullptr);
-    ~X11Output() override = default;
-
     QString name() const override;
     void set_name(QString set);
 
