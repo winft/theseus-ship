@@ -48,7 +48,6 @@ public:
     Xcb::Atom net_wm_ping;
     Xcb::Atom net_wm_user_time;
     Xcb::Atom kde_net_wm_user_creation_time;
-    Xcb::Atom net_wm_take_activity;
     Xcb::Atom net_wm_window_opacity;
     Xcb::Atom xdnd_selection;
     Xcb::Atom xdnd_aware;
