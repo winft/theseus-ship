@@ -384,6 +384,7 @@ set(kwin_SRCS
     base/x11/event_filter.cpp
     base/x11/event_filter_container.cpp
     base/x11/event_filter_manager.cpp
+    base/gamma_ramp.cpp
     base/output.cpp
     colorcorrection/clockskewnotifier.cpp
     colorcorrection/clockskewnotifierengine.cpp

@@ -4,6 +4,8 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "x11_output.h"
+
+#include "base/gamma_ramp.h"
 #include "screens.h"
 
 namespace KWin::render::backend::x11
