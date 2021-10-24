@@ -5,6 +5,9 @@
 */
 #include "platform.h"
 
+#include "abstract_wayland_output.h"
+#include "base/backend/wlroots.h"
+#include "base/platform.h"
 #include "input/dbus/dbus.h"
 #include "input/dbus/device_manager.h"
 #include "input/keyboard.h"
@@ -14,6 +17,13 @@
 
 namespace KWin::input::wayland
 {
+
+platform::platform(wayland_base const& base)
+    : base{base}
+{
+}
+
+platform::~platform() = default;
 
 void platform::update_keyboard_leds(input::xkb::LEDs leds)
 {

@@ -250,7 +250,7 @@ void ApplicationWayland::init_platforms()
 {
     base.backend = base::backend::wlroots(waylandServer()->display());
 
-    input.reset(new input::backend::wlroots::platform(&base.backend));
+    input.reset(new input::backend::wlroots::platform(base));
     input::wayland::add_dbus(input.get());
 
     render.reset(new render::backend::wlroots::backend(base));

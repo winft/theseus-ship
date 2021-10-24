@@ -171,7 +171,7 @@ void WaylandTestApplication::start()
     auto headless_backend = wlr_headless_backend_create(waylandServer()->display()->native());
     wlr_headless_add_output(headless_backend, 1280, 1024);
     base.backend.init(headless_backend);
-    input.reset(new input::backend::wlroots::platform(&base.backend));
+    input.reset(new input::backend::wlroots::platform(base));
     input::wayland::add_dbus(input.get());
 
     createOptions();

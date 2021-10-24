@@ -7,7 +7,26 @@
 
 #include "input/platform.h"
 
-namespace KWin::input
+#include "base/platform.h"
+
+namespace KWin
+{
+
+namespace base
+{
+namespace backend
+{
+class wlroots;
+}
+template<typename Backend, typename Output>
+class platform;
+}
+
+class AbstractWaylandOutput;
+
+using wayland_base = base::platform<base::backend::wlroots, AbstractWaylandOutput>;
+
+namespace input
 {
 
 namespace dbus
@@ -29,12 +48,12 @@ class platform : public input::platform
 {
     Q_OBJECT
 public:
-    platform() = default;
+    platform(wayland_base const& base);
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     platform(platform&& other) noexcept = default;
     platform& operator=(platform&& other) noexcept = default;
-    ~platform() override = default;
+    ~platform() override;
 
     void update_keyboard_leds(input::xkb::LEDs leds);
 
@@ -47,10 +66,12 @@ public:
     void start_interactive_position_selection(std::function<void(QPoint const&)> callback) override;
 
 private:
+    wayland_base const& base;
     bool touchpads_enabled{true};
 };
 
 KWIN_EXPORT void add_dbus(input::platform* platform);
 
+}
 }
 }

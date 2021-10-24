@@ -50,12 +50,12 @@ void handle_device(struct wl_listener* listener, [[maybe_unused]] void* data)
     }
 }
 
-platform::platform(base::backend::wlroots* base)
-    : base{base}
+platform::platform(wayland_base const& base)
+    : wayland::platform(base)
 {
     add_device.receiver = this;
     add_device.event.notify = handle_device;
-    wl_signal_add(&base->backend->events.new_input, &add_device.event);
+    wl_signal_add(&base.backend.backend->events.new_input, &add_device.event);
 }
 
 }
