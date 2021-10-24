@@ -41,7 +41,7 @@ public:
     void updateEnablement(bool enable) override;
     void updateDpms(DpmsMode mode) override;
     void updateMode(int modeIndex) override;
-    void updateTransform(Transform transform) override;
+    void updateTransform(base::wayland::output_transform transform) override;
 
     int gammaRampSize() const override;
     bool setGammaRamp(GammaRamp const& gamma) override;

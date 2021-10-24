@@ -133,13 +133,13 @@ qreal AbstractWaylandOutput::scale() const
 }
 
 inline
-AbstractWaylandOutput::Transform toTransform(Wrapland::Server::Output::Transform transform)
+base::wayland::output_transform toTransform(Wrapland::Server::Output::Transform transform)
 {
-    return static_cast<AbstractWaylandOutput::Transform>(transform);
+    return static_cast<base::wayland::output_transform>(transform);
 }
 
 inline
-Wrapland::Server::Output::Transform toWaylandTransform(AbstractWaylandOutput::Transform transform)
+Wrapland::Server::Output::Transform toWaylandTransform(base::wayland::output_transform transform)
 {
     return static_cast<Wrapland::Server::Output::Transform>(transform);
 }
@@ -303,15 +303,15 @@ QSize AbstractWaylandOutput::orientateSize(const QSize &size) const
     return size;
 }
 
-void AbstractWaylandOutput::setTransform(Transform transform)
+void AbstractWaylandOutput::setTransform(base::wayland::output_transform transform)
 {
     m_output->set_transform(toWaylandTransform(transform));
     emit modeChanged();
 }
 
-AbstractWaylandOutput::Transform AbstractWaylandOutput::transform() const
+base::wayland::output_transform AbstractWaylandOutput::transform() const
 {
-    return static_cast<Transform>(m_output->transform());
+    return static_cast<base::wayland::output_transform>(m_output->transform());
 }
 
 void AbstractWaylandOutput::dpmsSetOn()

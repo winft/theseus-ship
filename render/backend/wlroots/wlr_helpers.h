@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "base/wayland/output_transform.h"
 #include "wlr_includes.h"
 
 namespace KWin::render::backend::wlroots
@@ -34,9 +35,10 @@ int rotation_in_degree(Output* out)
 template<typename Output>
 bool has_portrait_transform(Output* out)
 {
+    using Tr = base::wayland::output_transform;
     auto const& transform = out->transform();
-    return transform == Output::Transform::Rotated90 || transform == Output::Transform::Rotated270
-        || transform == Output::Transform::Flipped90 || transform == Output::Transform::Flipped270;
+    return transform == Tr::rotated_90 || transform == Tr::rotated_270
+        || transform == Tr::flipped_90 || transform == Tr::flipped_270;
 }
 
 }

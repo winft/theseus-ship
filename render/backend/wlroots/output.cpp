@@ -150,12 +150,12 @@ void output::updateMode(int modeIndex)
     }
 }
 
-wl_output_transform to_wl_transform(output::Transform tr)
+wl_output_transform to_wl_transform(base::wayland::output_transform tr)
 {
     return static_cast<wl_output_transform>(tr);
 }
 
-void output::updateTransform(Transform transform)
+void output::updateTransform(base::wayland::output_transform transform)
 {
     auto old_transform = native->transform;
     wlr_output_set_transform(native, to_wl_transform(transform));

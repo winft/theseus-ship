@@ -15,20 +15,20 @@
 namespace KWin::input
 {
 
-Qt::ScreenOrientation to_qt_orientation(AbstractWaylandOutput::Transform transform)
+Qt::ScreenOrientation to_qt_orientation(base::wayland::output_transform transform)
 {
-    using Tr = AbstractWaylandOutput::Transform;
+    using Tr = base::wayland::output_transform;
 
     // TODO(romangg): Are flipped cases different?
     switch (transform) {
-    case Tr::Rotated90:
-    case Tr::Flipped90:
+    case Tr::rotated_90:
+    case Tr::flipped_90:
         return Qt::PortraitOrientation;
-    case Tr::Rotated180:
-    case Tr::Flipped180:
+    case Tr::rotated_180:
+    case Tr::flipped_180:
         return Qt::InvertedLandscapeOrientation;
-    case Tr::Rotated270:
-    case Tr::Flipped270:
+    case Tr::rotated_270:
+    case Tr::flipped_270:
         return Qt::InvertedPortraitOrientation;
     default:
         return Qt::PrimaryOrientation;

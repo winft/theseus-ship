@@ -93,7 +93,7 @@ bool egl_output::reset_framebuffer()
     auto const view_geo = out->viewGeometry();
     auto const centered_view = out->modeSize() != view_geo.size() || !view_geo.topLeft().isNull();
 
-    if (out->transform() == output::Transform::Normal && !centered_view) {
+    if (out->transform() == base::wayland::output_transform::normal && !centered_view) {
         // No need to create intermediate framebuffer.
         return true;
     }

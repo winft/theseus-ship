@@ -21,7 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_ABSTRACT_WAYLAND_OUTPUT_H
 
 #include "abstract_output.h"
-#include <utils.h>
+
+#include "base/wayland/output_transform.h"
+#include "utils.h"
+
 #include <kwin_export.h>
 
 #include <QObject>
@@ -51,17 +54,6 @@ class KWIN_EXPORT AbstractWaylandOutput : public AbstractOutput
 {
     Q_OBJECT
 public:
-    enum class Transform {
-        Normal,
-        Rotated90,
-        Rotated180,
-        Rotated270,
-        Flipped,
-        Flipped90,
-        Flipped180,
-        Flipped270
-    };
-
     explicit AbstractWaylandOutput(QObject *parent = nullptr);
 
     QString name() const override;
@@ -105,7 +97,7 @@ public:
      * - Rotated 270° and flipped along the horizontal axis is inv. portrait + inv. landscape +
      *   portrait
      */
-    Transform transform() const;
+    base::wayland::output_transform transform() const;
 
     /**
      * Current refresh rate in 1/ms.
@@ -166,12 +158,12 @@ protected:
     virtual void updateMode(int modeIndex) {
         Q_UNUSED(modeIndex);
     }
-    virtual void updateTransform(Transform transform) {
+    virtual void updateTransform(base::wayland::output_transform transform) {
         Q_UNUSED(transform);
     }
 
     void setWaylandMode(const QSize &size, int refreshRate, bool force_update);
-    void setTransform(Transform transform);
+    void setTransform(base::wayland::output_transform transform);
 
     DpmsMode dpmsMode() const;
     void dpmsSetOn();
