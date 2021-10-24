@@ -47,7 +47,7 @@ int X11Output::gamma_ramp_size() const
     return m_gamma_ramp_size;
 }
 
-bool X11Output::set_gamma_ramp(GammaRamp const& gamma)
+bool X11Output::set_gamma_ramp(base::gamma_ramp const& gamma)
 {
     if (m_crtc == XCB_NONE) {
         return false;

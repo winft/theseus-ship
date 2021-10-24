@@ -39,8 +39,7 @@
 namespace KWin::render::backend::x11
 {
 
-X11StandalonePlatform::X11StandalonePlatform(
-    base::platform<base::backend::x11, AbstractOutput>& base)
+X11StandalonePlatform::X11StandalonePlatform(base::platform<base::backend::x11, base::output>& base)
     : m_x11Display(QX11Info::display())
     , base{base}
 {

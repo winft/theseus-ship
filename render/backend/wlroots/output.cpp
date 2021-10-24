@@ -79,8 +79,8 @@ void output::create_lease_connector()
         return;
     }
 
-    lease_connector.reset(lease_device->create_connector(AbstractWaylandOutput::output()));
-    AbstractWaylandOutput::output()->set_connector_id(wlr_drm_connector_get_id(native));
+    lease_connector.reset(lease_device->create_connector(base::wayland::output::wrapland_output()));
+    base::wayland::output::wrapland_output()->set_connector_id(wlr_drm_connector_get_id(native));
 }
 
 bool output::disable_native()
@@ -174,7 +174,7 @@ int output::gamma_ramp_size() const
     return wlr_output_get_gamma_size(native);
 }
 
-bool output::set_gamma_ramp(GammaRamp const& gamma)
+bool output::set_gamma_ramp(base::gamma_ramp const& gamma)
 {
     wlr_output_set_gamma(native, gamma.size(), gamma.red(), gamma.green(), gamma.blue());
 
@@ -189,8 +189,7 @@ bool output::set_gamma_ramp(GammaRamp const& gamma)
 }
 
 output::output(wlr_output* wlr_out, backend* backend)
-    : AbstractWaylandOutput()
-    , native{wlr_out}
+    : native{wlr_out}
     , back{backend}
 {
     wlr_out->data = this;

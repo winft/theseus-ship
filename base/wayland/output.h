@@ -2,7 +2,7 @@
  KWin - the KDE window manager
  This file is part of the KDE project.
 
-Copyright 2019 Roman Gilg <subdiff@gmail.com>
+Copyright 2019, 2021 Roman Gilg <subdiff@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,12 +17,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_ABSTRACT_WAYLAND_OUTPUT_H
-#define KWIN_ABSTRACT_WAYLAND_OUTPUT_H
+#pragma once
 
-#include "abstract_output.h"
+#include "base/output.h"
 
-#include "base/wayland/output_transform.h"
+#include "output_transform.h"
 #include "utils.h"
 
 #include <kwin_export.h>
@@ -44,13 +43,13 @@ class OutputChangesetV1;
 }
 }
 
-namespace KWin
+namespace KWin::base::wayland
 {
 
 /**
  * Generic output representation in a Wayland session
  */
-class KWIN_EXPORT AbstractWaylandOutput : public AbstractOutput
+class KWIN_EXPORT output : public base::output
 {
     Q_OBJECT
 public:
@@ -109,7 +108,7 @@ public:
 
     void apply_changes(const Wrapland::Server::OutputChangesetV1* changeset) override;
 
-    Wrapland::Server::Output* output() const
+    Wrapland::Server::Output* wrapland_output() const
     {
         return m_output.get();
     }
@@ -191,5 +190,3 @@ private:
 };
 
 }
-
-#endif // KWIN_OUTPUT_H

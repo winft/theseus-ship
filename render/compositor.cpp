@@ -6,7 +6,7 @@
 */
 #include "compositor.h"
 
-#include "abstract_output.h"
+#include "base/output.h"
 #include "cursor.h"
 #include "dbusinterface.h"
 #include "effects.h"

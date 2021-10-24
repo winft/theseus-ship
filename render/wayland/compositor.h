@@ -15,9 +15,12 @@
 
 namespace KWin
 {
-class AbstractWaylandOutput;
 class Toplevel;
 
+namespace base::wayland
+{
+class output;
+}
 namespace render::wayland
 {
 class output;
@@ -43,7 +46,7 @@ public:
     void unlock();
 
     render::wayland::presentation* presentation;
-    std::map<AbstractWaylandOutput*, std::unique_ptr<render::wayland::output>> outputs;
+    std::map<base::wayland::output*, std::unique_ptr<render::wayland::output>> outputs;
 
 protected:
     void start() override;

@@ -160,7 +160,7 @@ private:
     void handle_server_addons_created();
     void create_xwayland();
 
-    base::platform<base::backend::wlroots, AbstractWaylandOutput> base;
+    base::platform<base::backend::wlroots, base::wayland::output> base;
     std::unique_ptr<render::backend::wlroots::backend> render;
     std::unique_ptr<render::wayland::compositor> compositor;
 };

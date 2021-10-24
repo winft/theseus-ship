@@ -23,7 +23,7 @@
 namespace KWin::render::backend::wlroots
 {
 
-egl_output& egl_backend::get_output(AbstractOutput* out)
+egl_output& egl_backend::get_output(base::output* out)
 {
     auto it = std::find_if(
         outputs.begin(), outputs.end(), [this, out](auto& egl_out) { return egl_out.out == out; });
@@ -270,7 +270,7 @@ void egl_backend::setViewport(egl_output const& egl_out) const
                overall.height() * height_ratio);
 }
 
-QRegion egl_backend::prepareRenderingForScreen(AbstractOutput* output)
+QRegion egl_backend::prepareRenderingForScreen(base::output* output)
 {
     auto const& out = get_output(output);
 
@@ -314,7 +314,7 @@ void egl_backend::endRenderingFrame(QRegion const& renderedRegion, QRegion const
     Q_UNUSED(damagedRegion)
 }
 
-void egl_backend::endRenderingFrameForScreen(AbstractOutput* output,
+void egl_backend::endRenderingFrameForScreen(base::output* output,
                                              QRegion const& renderedRegion,
                                              QRegion const& damagedRegion)
 {

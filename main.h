@@ -55,9 +55,16 @@ namespace debug
 class console;
 }
 
-namespace base::x11
+namespace base
+{
+namespace wayland
+{
+class output;
+}
+namespace x11
 {
 class event_filter_manager;
+}
 }
 
 namespace render
@@ -70,11 +77,10 @@ namespace seat
 class session;
 }
 
-class AbstractWaylandOutput;
 class Platform;
 class WaylandServer;
 
-using wayland_base = base::platform<base::backend::wlroots, AbstractWaylandOutput>;
+using wayland_base = base::platform<base::backend::wlroots, base::wayland::output>;
 
 class XcbEventFilter : public QAbstractNativeEventFilter
 {

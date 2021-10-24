@@ -1,24 +1,9 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2019, 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright 2019 Roman Gilg <subdiff@gmail.com>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-#ifndef KWIN_ABSTRACT_OUTPUT_H
-#define KWIN_ABSTRACT_OUTPUT_H
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
 
 #include <kwin_export.h>
 
@@ -35,13 +20,13 @@ class OutputChangesetV1;
 }
 }
 
-namespace KWin
+namespace KWin::base
 {
 
-class KWIN_EXPORT GammaRamp
+class KWIN_EXPORT gamma_ramp
 {
 public:
-    GammaRamp(uint32_t size);
+    gamma_ramp(uint32_t size);
 
     /**
      * Returns the size of the gamma ramp.
@@ -95,12 +80,12 @@ private:
 /**
  * Generic output representation.
  */
-class KWIN_EXPORT AbstractOutput : public QObject
+class KWIN_EXPORT output : public QObject
 {
     Q_OBJECT
 
 public:
-    AbstractOutput() = default;
+    output() = default;
 
     enum class DpmsMode { On, Standby, Suspend, Off };
 
@@ -167,7 +152,7 @@ public:
      *
      * Returns @c true if the gamma ramp was successfully set.
      */
-    virtual bool set_gamma_ramp(GammaRamp const& gamma);
+    virtual bool set_gamma_ramp(gamma_ramp const& gamma);
 
     virtual void update_dpms(DpmsMode mode);
     virtual bool is_dpms_on() const
@@ -229,9 +214,7 @@ Q_SIGNALS:
     void wake_up();
 
 private:
-    Q_DISABLE_COPY(AbstractOutput)
+    Q_DISABLE_COPY(output)
 };
 
-} // namespace KWin
-
-#endif
+}

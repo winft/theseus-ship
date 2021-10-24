@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <main.h>
 #include <platform.h>
-#include <abstract_output.h>
+#include <base/output.h>
 #include <screens.h>
 #include <workspace.h>
 #include <seat/session.h>
@@ -647,7 +647,7 @@ void Manager::commitGammaRamps(int temperature)
 
     for (auto *o : outs) {
         int rampsize = o->gamma_ramp_size();
-        GammaRamp ramp(rampsize);
+        base::gamma_ramp ramp(rampsize);
 
         /*
          * The gamma calculation below is based on the Redshift app:

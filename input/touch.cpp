@@ -6,7 +6,7 @@
 #include "touch.h"
 
 #include "../platform.h"
-#include "abstract_wayland_output.h"
+#include "base/wayland/output.h"
 #include "main.h"
 #include "screens.h"
 
@@ -54,7 +54,7 @@ touch::~touch()
 {
 }
 
-AbstractWaylandOutput* touch::get_output() const
+base::wayland::output* touch::get_output() const
 {
     if (!control) {
         return nullptr;
@@ -67,13 +67,13 @@ AbstractWaylandOutput* touch::get_output() const
     }
 
     if (outputs.size() == 1) {
-        return static_cast<AbstractWaylandOutput*>(outputs.front());
+        return static_cast<base::wayland::output*>(outputs.front());
     }
 
     // First try by name.
     if (auto name = control->output_name(); !name.empty()) {
         for (auto& output : outputs) {
-            auto wl_out = static_cast<AbstractWaylandOutput*>(output);
+            auto wl_out = static_cast<base::wayland::output*>(output);
             if (wl_out->name() == name.c_str()) {
                 return wl_out;
             }
@@ -87,11 +87,11 @@ AbstractWaylandOutput* touch::get_output() const
             && std::round(size.height()) == std::round(out_size.height());
     };
 
-    AbstractWaylandOutput* internal{nullptr};
+    base::wayland::output* internal{nullptr};
 
     // Prefer the internal screen.
     for (auto& output : outputs) {
-        auto wl_out = static_cast<AbstractWaylandOutput*>(output);
+        auto wl_out = static_cast<base::wayland::output*>(output);
         if (wl_out->is_internal()) {
             // Only prefer it if the dimensions match.
             if (check_dimensions(wl_out)) {
@@ -103,7 +103,7 @@ AbstractWaylandOutput* touch::get_output() const
     }
 
     for (auto& output : outputs) {
-        auto wl_out = static_cast<AbstractWaylandOutput*>(output);
+        auto wl_out = static_cast<base::wayland::output*>(output);
         if (check_dimensions(wl_out)) {
             return wl_out;
         }

@@ -14,7 +14,7 @@
 #include "input/touch.h"
 
 #include "../../platform.h"
-#include "abstract_wayland_output.h"
+#include "base/wayland/output.h"
 #include "wayland_server.h"
 #include "win/input.h"
 #include "workspace.h"
@@ -189,7 +189,7 @@ QPointF get_abs_pos(QPointF const& pos, touch* dev)
         if (outs.empty()) {
             return QPointF();
         }
-        out = static_cast<AbstractWaylandOutput*>(outs.front());
+        out = static_cast<base::wayland::output*>(outs.front());
     }
 
     auto const& geo = out->geometry();

@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "scene_opengl.h"
 
-#include "abstract_output.h"
+#include "base/output.h"
 #include "platform.h"
 #include "platformsupport/scenes/opengl/texture.h"
 
@@ -687,7 +687,7 @@ qint64 SceneOpenGL::paint(QRegion damage, std::deque<Toplevel*> const& toplevels
     return m_backend->renderTime();
 }
 
-int64_t SceneOpenGL::paint(AbstractOutput* output, QRegion damage,
+int64_t SceneOpenGL::paint(base::output* output, QRegion damage,
                            std::deque<Toplevel*> const& windows,
                            std::chrono::milliseconds presentTime)
 {

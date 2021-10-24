@@ -5,7 +5,6 @@
 */
 #include "platform.h"
 
-#include "abstract_wayland_output.h"
 #include "base/backend/wlroots.h"
 #include "base/platform.h"
 #include "base/wayland/output_helpers.h"

@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "effects.h"
 
-#include "abstract_output.h"
+#include "base/output.h"
 #include "effectsadaptor.h"
 #include "effectloader.h"
 #ifdef KWIN_BUILD_ACTIVITIES
@@ -273,8 +273,8 @@ EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *sc
     connect(kwinApp()->platform, &Platform::output_added, this, &EffectsHandlerImpl::slotOutputEnabled);
     connect(kwinApp()->platform, &Platform::output_removed, this, &EffectsHandlerImpl::slotOutputDisabled);
 
-    const QVector<AbstractOutput *> outputs = kwinApp()->platform->enabledOutputs();
-    for (AbstractOutput *output : outputs) {
+    const QVector<base::output*> outputs = kwinApp()->platform->enabledOutputs();
+    for (base::output* output : outputs) {
         slotOutputEnabled(output);
     }
 
@@ -1758,14 +1758,14 @@ EffectScreen *EffectsHandlerImpl::findScreen(int screenId) const
     return m_effectScreens.value(screenId);
 }
 
-void EffectsHandlerImpl::slotOutputEnabled(AbstractOutput *output)
+void EffectsHandlerImpl::slotOutputEnabled(base::output* output)
 {
     EffectScreen *screen = new EffectScreenImpl(output, this);
     m_effectScreens.append(screen);
     emit screenAdded(screen);
 }
 
-void EffectsHandlerImpl::slotOutputDisabled(AbstractOutput *output)
+void EffectsHandlerImpl::slotOutputDisabled(base::output* output)
 {
     auto it = std::find_if(m_effectScreens.begin(), m_effectScreens.end(), [&output](EffectScreen *screen) {
         return static_cast<EffectScreenImpl *>(screen)->platformOutput() == output;
@@ -1782,17 +1782,17 @@ void EffectsHandlerImpl::slotOutputDisabled(AbstractOutput *output)
 // EffectScreenImpl
 //****************************************
 
-EffectScreenImpl::EffectScreenImpl(AbstractOutput *output, QObject *parent)
+EffectScreenImpl::EffectScreenImpl(base::output* output, QObject *parent)
     : EffectScreen(parent)
     , m_platformOutput(output)
 {
-    connect(output, &AbstractOutput::wake_up, this, &EffectScreen::wakeUp);
-    connect(output, &AbstractOutput::about_to_turn_off, this, &EffectScreen::aboutToTurnOff);
-    connect(output, &AbstractOutput::scale_changed, this, &EffectScreen::devicePixelRatioChanged);
-    connect(output, &AbstractOutput::geometry_changed, this, &EffectScreen::geometryChanged);
+    connect(output, &base::output::wake_up, this, &EffectScreen::wakeUp);
+    connect(output, &base::output::about_to_turn_off, this, &EffectScreen::aboutToTurnOff);
+    connect(output, &base::output::scale_changed, this, &EffectScreen::devicePixelRatioChanged);
+    connect(output, &base::output::geometry_changed, this, &EffectScreen::geometryChanged);
 }
 
-AbstractOutput *EffectScreenImpl::platformOutput() const
+base::output* EffectScreenImpl::platformOutput() const
 {
     return m_platformOutput;
 }

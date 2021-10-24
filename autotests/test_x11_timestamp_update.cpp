@@ -49,7 +49,7 @@ public:
 
     void start();
 
-    base::platform<base::backend::x11, AbstractOutput> base;
+    base::platform<base::backend::x11, base::output> base;
     std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
     std::unique_ptr<render::x11::compositor> compositor;
     std::unique_ptr<win::x11::space> workspace;

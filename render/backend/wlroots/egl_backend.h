@@ -53,14 +53,14 @@ public:
     QRegion prepareRenderingFrame() override;
     void endRenderingFrame(QRegion const& renderedRegion, QRegion const& damagedRegion) override;
 
-    void endRenderingFrameForScreen(AbstractOutput* output,
+    void endRenderingFrameForScreen(base::output* output,
                                     QRegion const& damage,
                                     QRegion const& damagedRegion) override;
-    QRegion prepareRenderingForScreen(AbstractOutput* output) override;
+    QRegion prepareRenderingForScreen(base::output* output) override;
 
     bool usesOverlayWindow() const override;
 
-    egl_output& get_output(AbstractOutput* out);
+    egl_output& get_output(base::output* out);
 
 protected:
     void present() override;

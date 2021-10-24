@@ -27,7 +27,7 @@ namespace KWin::render::backend::wlroots
 
 static auto align_horizontal{false};
 
-backend::backend(base::platform<base::backend::wlroots, AbstractWaylandOutput>& base)
+backend::backend(base::platform<base::backend::wlroots, base::wayland::output>& base)
     : base{base}
 {
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");

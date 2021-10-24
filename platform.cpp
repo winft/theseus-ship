@@ -19,8 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "platform.h"
 
-#include "abstract_output.h"
-#include "abstract_wayland_output.h"
+#include "base/output.h"
 #include <config-kwin.h>
 #include "render/compositor.h"
 #include "effects.h"

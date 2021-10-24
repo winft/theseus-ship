@@ -10,7 +10,7 @@
 #include "win/stacking.h"
 #include "win/transient.h"
 
-#include "abstract_wayland_output.h"
+#include "base/wayland/output.h"
 #include "input/keyboard_redirect.h"
 #include "platform.h"
 #include "render/compositor.h"
@@ -156,7 +156,8 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         if (!win->layer_surface->output()) {
             auto current_index = screens()->current();
             auto output = kwinApp()->platform->enabledOutputs().at(current_index);
-            win->layer_surface->set_output(static_cast<AbstractWaylandOutput*>(output)->output());
+            win->layer_surface->set_output(
+                static_cast<base::wayland::output*>(output)->wrapland_output());
         }
 
         if (win->pending_configures.empty()) {

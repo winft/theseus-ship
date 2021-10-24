@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "kwin_wayland_test.h"
 
-#include "../../abstract_wayland_output.h"
+#include "../../base/wayland/output.h"
 #include "../../debug/wayland_console.h"
 #include "../../effects.h"
 #include "../../input/backend/wlroots/platform.h"
@@ -198,8 +198,8 @@ void WaylandTestApplication::start()
 
     // Must set physical size for calculation of screen edges corner offset.
     // TODO(romangg): Make the corner offset calculation not depend on that.
-    auto out = dynamic_cast<AbstractWaylandOutput*>(kwinApp()->platform->enabledOutputs().at(0));
-    out->output()->set_physical_size(QSize(1280, 1024));
+    auto out = dynamic_cast<base::wayland::output*>(kwinApp()->platform->enabledOutputs().at(0));
+    out->wrapland_output()->set_physical_size(QSize(1280, 1024));
 
     compositor = std::make_unique<render::wayland::compositor>();
     workspace = std::make_unique<win::wayland::space>();

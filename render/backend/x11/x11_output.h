@@ -6,7 +6,7 @@
 #ifndef KWIN_X11_OUTPUT_H
 #define KWIN_X11_OUTPUT_H
 
-#include "abstract_output.h"
+#include "base/output.h"
 #include <kwin_export.h>
 
 #include <QObject>
@@ -20,7 +20,7 @@ namespace KWin::render::backend::x11
 /**
  * X11 output representation
  */
-class KWIN_EXPORT X11Output : public AbstractOutput
+class KWIN_EXPORT X11Output : public base::output
 {
     Q_OBJECT
 
@@ -35,7 +35,7 @@ public:
     void set_refresh_rate(int set);
 
     int gamma_ramp_size() const override;
-    bool set_gamma_ramp(GammaRamp const& gamma) override;
+    bool set_gamma_ramp(base::gamma_ramp const& gamma) override;
 
     QSize physical_size() const override;
     void set_physical_size(QSize const& size);

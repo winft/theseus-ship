@@ -9,7 +9,7 @@
 #include "presentation.h"
 #include "utils.h"
 
-#include "abstract_wayland_output.h"
+#include "base/wayland/output.h"
 #include "platform.h"
 #include "render/cursor.h"
 #include "scene.h"
@@ -60,12 +60,12 @@ compositor::compositor()
             &compositor::destroyCompositorSelection);
 
     for (auto output : kwinApp()->platform->enabledOutputs()) {
-        auto wl_out = static_cast<AbstractWaylandOutput*>(output);
+        auto wl_out = static_cast<base::wayland::output*>(output);
         outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
     }
 
     connect(kwinApp()->platform, &Platform::output_added, this, [this](auto output) {
-        auto wl_out = static_cast<AbstractWaylandOutput*>(output);
+        auto wl_out = static_cast<base::wayland::output*>(output);
         outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
     });
 
@@ -113,7 +113,7 @@ void compositor::schedule_frame_callback(Toplevel* window)
         return;
     }
 
-    auto max_out = static_cast<AbstractWaylandOutput*>(max_coverage_output(window));
+    auto max_out = static_cast<base::wayland::output*>(max_coverage_output(window));
     if (!max_out) {
         return;
     }

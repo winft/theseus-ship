@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "screens.h"
 
-#include "abstract_output.h"
+#include "base/output.h"
 
 #include "input/cursor.h"
 #include "utils.h"
@@ -260,7 +260,7 @@ int Screens::physicalDpiY(int screen) const
     return size(screen).height() / physicalSize(screen).height() * qreal(25.4);
 }
 
-AbstractOutput *Screens::findOutput(int screen) const
+base::output* Screens::findOutput(int screen) const
 {
     return kwinApp()->platform->enabledOutputs().value(screen);
 }

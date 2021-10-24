@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "abstract_wayland_output.h"
+#include "base/wayland/output.h"
 #include "input/filters/dpms.h"
 #include "screens.h"
 #include "wayland_logging.h"
@@ -18,15 +18,15 @@ namespace KWin::base::wayland
 {
 
 template<typename Base>
-AbstractWaylandOutput* find_output(Base const& base, Wrapland::Server::Output const* output)
+base::wayland::output* find_output(Base const& base, Wrapland::Server::Output const* output)
 {
     auto const& outs = base.all_outputs;
     auto it = std::find_if(outs.cbegin(), outs.cend(), [output](auto out) {
-        auto wayland_output = dynamic_cast<AbstractWaylandOutput*>(out);
-        return wayland_output->output() == output;
+        auto wayland_output = dynamic_cast<base::wayland::output*>(out);
+        return wayland_output->wrapland_output() == output;
     });
     if (it != outs.cend()) {
-        return qobject_cast<AbstractWaylandOutput*>(*it);
+        return qobject_cast<base::wayland::output*>(*it);
     }
     return nullptr;
 }
@@ -59,7 +59,7 @@ void turn_outputs_on(Base const& base, Filter& filter)
     filter.reset();
 
     for (auto& out : base.enabled_outputs) {
-        out->update_dpms(AbstractOutput::DpmsMode::On);
+        out->update_dpms(base::output::DpmsMode::On);
     }
 }
 

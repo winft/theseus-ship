@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "activities.h"
 #endif
-#include "abstract_output.h"
+#include "base/output.h"
 #include "atoms.h"
 #include "render/compositor.h"
 #include "effects.h"
@@ -553,7 +553,7 @@ QRegion Toplevel::repaints() const
     return repaints_region.translated(pos()) | layer_repaints_region;
 }
 
-void Toplevel::resetRepaints(AbstractOutput* output)
+void Toplevel::resetRepaints(base::output* output)
 {
     auto reset_all = [this] {
         repaints_region = QRegion();

@@ -9,7 +9,7 @@
 #include "presentation.h"
 #include "utils.h"
 
-#include "abstract_wayland_output.h"
+#include "base/wayland/output.h"
 #include "effects.h"
 #include "platform.h"
 #include "wayland_logging.h"
@@ -30,7 +30,7 @@ namespace KWin::render::wayland
 
 static int s_index{0};
 
-output::output(AbstractWaylandOutput* base, wayland::compositor* compositor)
+output::output(base::wayland::output* base, wayland::compositor* compositor)
     : index{++s_index}
     , compositor{compositor}
     , base{base}

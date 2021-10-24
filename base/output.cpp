@@ -2,7 +2,7 @@
  KWin - the KDE window manager
  This file is part of the KDE project.
 
-Copyright 2018 Roman Gilg <subdiff@gmail.com>
+Copyright 2018, 2021 Roman Gilg <subdiff@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,92 +17,87 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "output.h"
 
-#include "abstract_output.h"
-
-namespace KWin
+namespace KWin::base
 {
 
-GammaRamp::GammaRamp(uint32_t size)
+gamma_ramp::gamma_ramp(uint32_t size)
     : m_table(3 * size)
     , m_size(size)
 {
 }
 
-uint32_t GammaRamp::size() const
+uint32_t gamma_ramp::size() const
 {
     return m_size;
 }
 
-uint16_t* GammaRamp::red()
+uint16_t* gamma_ramp::red()
 {
     return m_table.data();
 }
 
-uint16_t const* GammaRamp::red() const
+uint16_t const* gamma_ramp::red() const
 {
     return m_table.data();
 }
 
-uint16_t* GammaRamp::green()
+uint16_t* gamma_ramp::green()
 {
     return m_table.data() + m_size;
 }
 
-uint16_t const* GammaRamp::green() const
+uint16_t const* gamma_ramp::green() const
 {
     return m_table.data() + m_size;
 }
 
-uint16_t* GammaRamp::blue()
+uint16_t* gamma_ramp::blue()
 {
     return m_table.data() + 2 * m_size;
 }
 
-uint16_t const* GammaRamp::blue() const
+uint16_t const* gamma_ramp::blue() const
 {
     return m_table.data() + 2 * m_size;
 }
 
-void AbstractOutput::set_enabled(bool enable)
+void output::set_enabled(bool /*enable*/)
 {
-    Q_UNUSED(enable)
 }
 
-void AbstractOutput::apply_changes(Wrapland::Server::OutputChangesetV1 const* changeset)
+void output::apply_changes(Wrapland::Server::OutputChangesetV1 const* /*changeset*/)
 {
-    Q_UNUSED(changeset)
 }
 
-bool AbstractOutput::is_internal() const
+bool output::is_internal() const
 {
     return false;
 }
 
-qreal AbstractOutput::scale() const
+qreal output::scale() const
 {
     return 1;
 }
 
-QSize AbstractOutput::physical_size() const
+QSize output::physical_size() const
 {
     return QSize();
 }
 
-int AbstractOutput::gamma_ramp_size() const
+int output::gamma_ramp_size() const
 {
     return 0;
 }
 
-bool AbstractOutput::set_gamma_ramp(GammaRamp const& gamma)
+bool output::set_gamma_ramp(gamma_ramp const& /*gamma*/)
 {
-    Q_UNUSED(gamma);
     return false;
 }
 
-void AbstractOutput::update_dpms(DpmsMode mode)
+void output::update_dpms(DpmsMode /*mode*/)
 {
-    Q_UNUSED(mode);
 }
 
-} // namespace KWin
+}
