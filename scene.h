@@ -342,7 +342,7 @@ public:
         // Window will not be painted because it is minimized
         PAINT_DISABLED_BY_MINIMIZE     = 1 << 3,
         // Window will not be painted because it's not on the current activity
-        PAINT_DISABLED_BY_ACTIVITY     = 1 << 5
+        PAINT_DISABLED_BY_ACTIVITY     = 1 << 5, /// Deprecated
     };
     void enablePainting(int reason);
     void disablePainting(int reason);

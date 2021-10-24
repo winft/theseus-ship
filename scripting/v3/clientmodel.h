@@ -107,7 +107,6 @@ private:
     WindowTypes windowTypeMask(WindowWrapper *client) const;
 
     ClientModel *m_clientModel = nullptr;
-    std::optional<QString> m_activity;
     std::optional<int> m_desktop;
     QString m_filter;
     std::optional<QString> m_screenName;

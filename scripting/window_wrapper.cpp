@@ -105,8 +105,6 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
             &WindowWrapper::hasApplicationMenuChanged);
     connect(client, &Toplevel::surfaceIdChanged, this, &WindowWrapper::surfaceIdChanged);
 
-    connect(client, &Toplevel::activitiesChanged, this, [this] { Q_EMIT activitiesChanged(this); });
-
     connect(client, &Toplevel::closeableChanged, this, &WindowWrapper::closeableChanged);
     connect(client, &Toplevel::minimizeableChanged, this, &WindowWrapper::minimizeableChanged);
     connect(client, &Toplevel::maximizeableChanged, this, &WindowWrapper::maximizeableChanged);
@@ -318,7 +316,7 @@ void WindowWrapper::setOnAllDesktops(bool set)
 
 QStringList WindowWrapper::activities() const
 {
-    return m_client->activities();
+    return {};
 }
 
 QByteArray WindowWrapper::windowRole() const

@@ -34,8 +34,6 @@ public:
     Atoms();
 
     Xcb::Atom kwin_running;
-    Xcb::Atom activities;
-
     Xcb::Atom wm_protocols;
     Xcb::Atom wm_delete_window;
     Xcb::Atom wm_take_focus;

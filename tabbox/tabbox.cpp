@@ -30,10 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox/desktopchain.h"
 #include "tabbox/tabbox_logging.h"
 #include "tabbox/x11_filter.h"
-// kwin
-#ifdef KWIN_BUILD_ACTIVITIES
-#include "activities.h"
-#endif
+
 #include "effects.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
@@ -83,11 +80,6 @@ TabBoxHandlerImpl::TabBoxHandlerImpl(TabBox* tabBox)
     VirtualDesktopManager *vds = VirtualDesktopManager::self();
     connect(vds, &VirtualDesktopManager::countChanged, m_desktopFocusChain, &DesktopChainManager::resize);
     connect(vds, &VirtualDesktopManager::currentChanged, m_desktopFocusChain, &DesktopChainManager::addDesktop);
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (Activities::self()) {
-        connect(Activities::self(), &Activities::currentChanged, m_desktopFocusChain, &DesktopChainManager::useChain);
-    }
-#endif
 }
 
 TabBoxHandlerImpl::~TabBoxHandlerImpl()
@@ -178,20 +170,6 @@ bool TabBoxHandlerImpl::checkDesktop(TabBoxClient* client, int desktop) const
     }
 }
 
-bool TabBoxHandlerImpl::checkActivity(TabBoxClient* client) const
-{
-    auto current = (static_cast< TabBoxClientImpl* >(client))->client();
-
-    switch (config().clientActivitiesMode()) {
-    case TabBoxConfig::AllActivitiesClients:
-        return true;
-    case TabBoxConfig::ExcludeCurrentActivityClients:
-        return !current->isOnCurrentActivity();
-    default:       // TabBoxConfig::OnlyCurrentActivityClients
-        return current->isOnCurrentActivity();
-    }
-}
-
 bool TabBoxHandlerImpl::checkApplications(TabBoxClient* client) const
 {
     auto current = (static_cast< TabBoxClientImpl* >(client))->client();
@@ -264,7 +242,6 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
     auto current = (static_cast< TabBoxClientImpl* >(client))->client();
 
     bool addClient = checkDesktop(client, desktop)
-                  && checkActivity(client)
                   && checkApplications(client)
                   && checkMinimized(client)
                   && checkMultiScreen(client);
@@ -462,7 +439,6 @@ TabBox::TabBox(QObject *parent)
     m_defaultConfig = TabBoxConfig();
     m_defaultConfig.setTabBoxMode(TabBoxConfig::ClientTabBox);
     m_defaultConfig.setClientDesktopMode(TabBoxConfig::OnlyCurrentDesktopClients);
-    m_defaultConfig.setClientActivitiesMode(TabBoxConfig::OnlyCurrentActivityClients);
     m_defaultConfig.setClientApplicationsMode(TabBoxConfig::AllWindowsAllApplications);
     m_defaultConfig.setClientMinimizedMode(TabBoxConfig::IgnoreMinimizedStatus);
     m_defaultConfig.setShowDesktopMode(TabBoxConfig::DoNotShowDesktopClient);
@@ -472,7 +448,6 @@ TabBox::TabBox(QObject *parent)
     m_alternativeConfig = TabBoxConfig();
     m_alternativeConfig.setTabBoxMode(TabBoxConfig::ClientTabBox);
     m_alternativeConfig.setClientDesktopMode(TabBoxConfig::AllDesktopsClients);
-    m_alternativeConfig.setClientActivitiesMode(TabBoxConfig::OnlyCurrentActivityClients);
     m_alternativeConfig.setClientApplicationsMode(TabBoxConfig::AllWindowsAllApplications);
     m_alternativeConfig.setClientMinimizedMode(TabBoxConfig::IgnoreMinimizedStatus);
     m_alternativeConfig.setShowDesktopMode(TabBoxConfig::DoNotShowDesktopClient);
@@ -804,8 +779,6 @@ void TabBox::loadConfig(const KConfigGroup& config, TabBoxConfig& tabBoxConfig)
 {
     tabBoxConfig.setClientDesktopMode(TabBoxConfig::ClientDesktopMode(
                                        config.readEntry<int>("DesktopMode", TabBoxConfig::defaultDesktopMode())));
-    tabBoxConfig.setClientActivitiesMode(TabBoxConfig::ClientActivitiesMode(
-                                       config.readEntry<int>("ActivitiesMode", TabBoxConfig::defaultActivitiesMode())));
     tabBoxConfig.setClientApplicationsMode(TabBoxConfig::ClientApplicationsMode(
                                        config.readEntry<int>("ApplicationsMode", TabBoxConfig::defaultApplicationsMode())));
     tabBoxConfig.setClientMinimizedMode(TabBoxConfig::ClientMinimizedMode(
@@ -1212,7 +1185,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
             i >= 0 ;
             --i) {
         auto window = workspace()->stacking_order->sorted().at(i);
-        if (window->control && window->isOnCurrentActivity() && window->isOnCurrentDesktop() &&
+        if (window->control && window->isOnCurrentDesktop() &&
                 !win::is_special_window(window)
                 && window->isShown() && win::wants_tab_focus(window)
                 && !window->control->keep_above() && !window->control->keep_below()) {
@@ -1242,7 +1215,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
     } while (nc && nc != c &&
             ((!options_traverse_all && !nc->isOnDesktop(currentDesktop())) ||
              nc->control->minimized() || !win::wants_tab_focus(nc) || nc->control->keep_above() ||
-             nc->control->keep_below() || !nc->isOnCurrentActivity()));
+             nc->control->keep_below()));
     if (nc) {
         if (c && c != nc)
             win::lower_window(workspace(), c);

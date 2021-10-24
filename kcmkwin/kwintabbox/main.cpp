@@ -215,7 +215,6 @@ void KWinTabBoxConfig::setEnabledUi(KWinTabBoxConfigForm *form, const TabBoxSett
     form->setHighlightWindowsEnabled(!config->isHighlightWindowsImmutable());
     form->setFilterScreenEnabled(!config->isMultiScreenModeImmutable());
     form->setFilterDesktopEnabled(!config->isDesktopModeImmutable());
-    form->setFilterActivitiesEnabled(!config->isActivitiesModeImmutable());
     form->setFilterMinimizationEnabled(!config->isMinimizedModeImmutable());
     form->setApplicationModeEnabled(!config->isApplicationsModeImmutable());
     form->setShowDesktopModeEnabled(!config->isShowDesktopModeImmutable());
@@ -229,7 +228,6 @@ void KWinTabBoxConfig::createConnections(KWinTabBoxConfigForm *form)
 
     connect(form, &KWinTabBoxConfigForm::filterScreenChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
     connect(form, &KWinTabBoxConfigForm::filterDesktopChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
-    connect(form, &KWinTabBoxConfigForm::filterActivitiesChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
     connect(form, &KWinTabBoxConfigForm::filterMinimizationChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
     connect(form, &KWinTabBoxConfigForm::applicationModeChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
     connect(form, &KWinTabBoxConfigForm::showDesktopModeChanged, this, &KWinTabBoxConfig::updateUnmanagedState);
@@ -266,7 +264,6 @@ bool KWinTabBoxConfig::updateUnmanagedIsNeedSave(const KWinTabBoxConfigForm *for
     bool isNeedSave = false;
     isNeedSave |= form->filterScreen() != config->multiScreenMode();
     isNeedSave |= form->filterDesktop() != config->desktopMode();
-    isNeedSave |= form->filterActivities() != config->activitiesMode();
     isNeedSave |= form->filterMinimization() != config->minimizedMode();
     isNeedSave |= form->applicationMode() != config->applicationsMode();
     isNeedSave |= form->showDesktopMode() != config->showDesktopMode();
@@ -281,7 +278,6 @@ bool KWinTabBoxConfig::updateUnmanagedIsDefault(KWinTabBoxConfigForm *form, cons
     bool isDefault = true;
     isDefault &= form->filterScreen() == config->defaultMultiScreenModeValue();
     isDefault &= form->filterDesktop() == config->defaultDesktopModeValue();
-    isDefault &= form->filterActivities() == config->defaultActivitiesModeValue();
     isDefault &= form->filterMinimization() == config->defaultMinimizedModeValue();
     isDefault &= form->applicationMode() == config->defaultApplicationsModeValue();
     isDefault &= form->showDesktopMode() == config->defaultShowDesktopModeValue();
@@ -295,7 +291,6 @@ void KWinTabBoxConfig::updateUiDefaultIndicator(bool visible, KWinTabBoxConfigFo
 {
     form->setFilterScreenDefaultIndicatorVisible(visible && form->filterScreen() != config->defaultMultiScreenModeValue());
     form->setFilterDesktopDefaultIndicatorVisible(visible && form->filterDesktop() != config->defaultDesktopModeValue());
-    form->setFilterActivitiesDefaultIndicatorVisible(visible && form->filterActivities() != config->defaultActivitiesModeValue());
     form->setFilterMinimizationDefaultIndicatorVisible(visible && form->filterMinimization() != config->defaultMinimizedModeValue());
     form->setApplicationModeDefaultIndicatorVisible(visible && form->applicationMode() != config->defaultApplicationsModeValue());
     form->setShowDesktopModeDefaultIndicatorVisible(visible && form->showDesktopMode() != config->defaultShowDesktopModeValue());
@@ -407,7 +402,6 @@ void KWinTabBoxConfig::updateUiFromConfig(KWinTabBoxConfigForm *form, const KWin
 {
     form->setFilterScreen(static_cast<TabBoxConfig::ClientMultiScreenMode>(config->multiScreenMode()));
     form->setFilterDesktop(static_cast<TabBoxConfig::ClientDesktopMode>(config->desktopMode()));
-    form->setFilterActivities(static_cast<TabBoxConfig::ClientActivitiesMode>(config->activitiesMode()));
     form->setFilterMinimization(static_cast<TabBoxConfig::ClientMinimizedMode>(config->minimizedMode()));
     form->setApplicationMode(static_cast<TabBoxConfig::ClientApplicationsMode>(config->applicationsMode()));
     form->setShowDesktopMode(static_cast<TabBoxConfig::ShowDesktopMode>(config->showDesktopMode()));
@@ -419,7 +413,6 @@ void KWinTabBoxConfig::updateConfigFromUi(const KWinTabBoxConfigForm *form, TabB
 {
     config->setMultiScreenMode(form->filterScreen());
     config->setDesktopMode(form->filterDesktop());
-    config->setActivitiesMode(form->filterActivities());
     config->setMinimizedMode(form->filterMinimization());
     config->setApplicationsMode(form->applicationMode());
     config->setShowDesktopMode(form->showDesktopMode());
@@ -431,7 +424,6 @@ void KWinTabBoxConfig::updateUiFromDefaultConfig(KWinTabBoxConfigForm *form, con
 {
     form->setFilterScreen(static_cast<TabBoxConfig::ClientMultiScreenMode>(config->defaultMultiScreenModeValue()));
     form->setFilterDesktop(static_cast<TabBoxConfig::ClientDesktopMode>(config->defaultDesktopModeValue()));
-    form->setFilterActivities(static_cast<TabBoxConfig::ClientActivitiesMode>(config->defaultActivitiesModeValue()));
     form->setFilterMinimization(static_cast<TabBoxConfig::ClientMinimizedMode>(config->defaultMinimizedModeValue()));
     form->setApplicationMode(static_cast<TabBoxConfig::ClientApplicationsMode>(config->defaultApplicationsModeValue()));
     form->setShowDesktopMode(static_cast<TabBoxConfig::ShowDesktopMode>(config->defaultShowDesktopModeValue()));

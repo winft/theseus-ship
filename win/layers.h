@@ -45,7 +45,7 @@ Toplevel* top_client_on_desktop(Space* space,
         = unconstrained ? space->stacking_order->pre_stack : space->stacking_order->sorted();
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         auto c = *it;
-        if (c && c->isOnDesktop(desktop) && c->isShown() && c->isOnCurrentActivity()) {
+        if (c && c->isOnDesktop(desktop) && c->isShown()) {
             if (screen != -1 && c->screen() != screen)
                 continue;
             if (!only_normal)

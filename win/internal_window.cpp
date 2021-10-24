@@ -132,18 +132,6 @@ bool internal_window::eventFilter(QObject* watched, QEvent* event)
     return false;
 }
 
-QStringList internal_window::activities() const
-{
-    return QStringList();
-}
-
-void internal_window::blockActivityUpdates(bool b)
-{
-    Q_UNUSED(b)
-
-    // Internal clients do not support activities.
-}
-
 qreal internal_window::bufferScale() const
 {
     return buffer_scale_internal();
@@ -338,13 +326,6 @@ void internal_window::do_set_geometry(QRect const& frame_geo)
 bool internal_window::supportsWindowRules() const
 {
     return false;
-}
-
-void internal_window::setOnAllActivities(bool set)
-{
-    Q_UNUSED(set)
-
-    // Internal clients do not support activities.
 }
 
 void internal_window::takeFocus()

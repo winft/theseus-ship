@@ -36,8 +36,6 @@ public:
 
     bool eventFilter(QObject* watched, QEvent* event) override;
 
-    QStringList activities() const override;
-    void blockActivityUpdates(bool b = true) override;
     qreal bufferScale() const override;
     void debug(QDebug& stream) const override;
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
@@ -66,7 +64,6 @@ public:
     void hideClient(bool hide) override;
     void setFrameGeometry(QRect const& rect) override;
     bool supportsWindowRules() const override;
-    void setOnAllActivities(bool set) override;
     void takeFocus() override;
     bool userCanSetFullScreen() const override;
     void setFullScreen(bool set, bool user = true) override;

@@ -117,9 +117,6 @@ static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int 
     if (!window->isOnDesktop(desktop)) {
         return true;
     }
-    if (!window->isOnCurrentActivity()) {
-        return true;
-    }
     if (is_desktop(window)) {
         return true;
     }

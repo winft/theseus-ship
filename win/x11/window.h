@@ -82,13 +82,6 @@ public:
 
     NET::Actions allowed_actions{};
 
-    // Whether the X property was actually set.
-    bool activities_defined{false};
-    QStringList activity_list;
-    int activity_updates_blocked{false};
-    bool blocked_activity_updates_require_transients{false};
-    bool session_activity_override{false};
-
     uint user_no_border{0};
     uint app_no_border{0};
 
@@ -249,10 +242,6 @@ public:
     bool belongsToDesktop() const override;
     void doSetDesktop(int desktop, int was_desk) override;
 
-    QStringList activities() const override;
-    void setOnAllActivities(bool set) override;
-    void setOnActivities(QStringList newActivitiesList) override;
-    void blockActivityUpdates(bool b = true) override;
     bool isBlockingCompositing() override;
 
     xcb_timestamp_t userTime() const override;

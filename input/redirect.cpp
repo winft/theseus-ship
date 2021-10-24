@@ -205,8 +205,7 @@ Toplevel* redirect::findManagedToplevel(const QPoint& pos)
             continue;
         }
         if (window->control) {
-            if (!window->isOnCurrentActivity() || !window->isOnCurrentDesktop()
-                || window->control->minimized()) {
+            if (!window->isOnCurrentDesktop() || window->control->minimized()) {
                 continue;
             }
         }

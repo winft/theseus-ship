@@ -27,7 +27,6 @@ namespace KWin
 
 Atoms::Atoms()
     : kwin_running(QByteArrayLiteral("KWIN_RUNNING"))
-    , activities(QByteArrayLiteral("_KDE_NET_WM_ACTIVITIES"))
     , wm_protocols(QByteArrayLiteral("WM_PROTOCOLS"))
     , wm_delete_window(QByteArrayLiteral("WM_DELETE_WINDOW"))
     , wm_take_focus(QByteArrayLiteral("WM_TAKE_FOCUS"))

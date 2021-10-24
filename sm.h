@@ -86,8 +86,6 @@ struct SessionInfo {
     bool active; // means 'was active in the saved session'
     int stackingOrder;
     float opacity;
-
-    QStringList activities;
 };
 
 

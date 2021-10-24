@@ -485,7 +485,6 @@ private Q_SLOTS:
     void slotUpdateToolWindows();
     void delayFocus();
     void slotReloadConfig();
-    void updateCurrentActivity(const QString& new_activity);
 
     // virtual desktop handling
     void slotDesktopCountChanged(uint previousCount, uint newCount);

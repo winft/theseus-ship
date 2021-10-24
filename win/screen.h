@@ -302,16 +302,4 @@ void leave_desktop(Win* win, VirtualDesktop* virtualDesktop)
     set_desktops(win, desktops);
 }
 
-template<typename Win>
-bool on_all_activities(Win* win)
-{
-    return win->activities().isEmpty();
-}
-
-template<typename Win>
-bool on_activity(Win* win, QString const& activity)
-{
-    return on_all_activities(win) || win->activities().contains(activity);
-}
-
 }

@@ -19,9 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "toplevel.h"
 
-#ifdef KWIN_BUILD_ACTIVITIES
-#include "activities.h"
-#endif
 #include "base/output.h"
 #include "atoms.h"
 #include "render/compositor.h"
@@ -714,18 +711,6 @@ bool Toplevel::isDeleted() const
     return remnant() != nullptr;
 }
 
-bool Toplevel::isOnCurrentActivity() const
-{
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (!Activities::self()) {
-        return true;
-    }
-    return isOnActivity(Activities::self()->current());
-#else
-    return true;
-#endif
-}
-
 pid_t Toplevel::pid() const
 {
     return info->pid();
@@ -904,16 +889,6 @@ void Toplevel::set_desktops(QVector<VirtualDesktop*> const& desktops)
     m_desktops = desktops;
 }
 
-bool Toplevel::isOnAllActivities() const
-{
-    return win::on_all_activities(this);
-}
-
-bool Toplevel::isOnActivity(const QString &activity) const
-{
-    return win::on_activity(this, activity);
-}
-
 bool Toplevel::isOnAllDesktops() const
 {
     return win::on_all_desktops(this);
@@ -927,14 +902,6 @@ bool Toplevel::isOnDesktop(int d) const
 bool Toplevel::isOnCurrentDesktop() const
 {
     return win::on_current_desktop(this);
-}
-
-QStringList Toplevel::activities() const
-{
-    if (m_remnant) {
-        return m_remnant->activities;
-    }
-    return QStringList();
 }
 
 win::layer Toplevel::layer() const
@@ -1034,10 +1001,6 @@ void Toplevel::setNoBorder([[maybe_unused]] bool set)
 {
 }
 
-void Toplevel::blockActivityUpdates([[maybe_unused]] bool b)
-{
-}
-
 bool Toplevel::isResizable() const
 {
     return false;
@@ -1095,14 +1058,6 @@ void Toplevel::checkNoBorder()
 bool Toplevel::isTransient() const
 {
     return transient()->lead();
-}
-
-void Toplevel::setOnActivities([[maybe_unused]] QStringList newActivitiesList)
-{
-}
-
-void Toplevel::setOnAllActivities([[maybe_unused]] bool set)
-{
 }
 
 xcb_timestamp_t Toplevel::userTime() const

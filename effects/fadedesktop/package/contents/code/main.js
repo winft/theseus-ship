@@ -104,10 +104,6 @@ var fadeDesktopEffect = {
                 continue;
             }
 
-            if (!w.isOnActivity(effects.currentActivity)){
-                continue;
-            }
-
             if (onOldDesktop) {
                 fadeDesktopEffect.fadeOutWindow(w);
             } else {

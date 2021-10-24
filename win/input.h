@@ -123,7 +123,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
                     // Can never raise above "it".
                     continue;
                 }
-                mustReplay = !(window->isOnCurrentDesktop() && window->isOnCurrentActivity()
+                mustReplay = !(window->isOnCurrentDesktop()
                                && window->frameGeometry().intersects(win->frameGeometry()));
             }
         }

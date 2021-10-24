@@ -341,14 +341,6 @@ bool Edge::handleAction(ElectricBorderAction action)
                                            QStringLiteral("display")));
         return true;
     }
-    case ElectricActionActivityManager: { // open activity manager
-        QDBusConnection::sessionBus().asyncCall(
-            QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
-                                           QStringLiteral("/PlasmaShell"),
-                                           QStringLiteral("org.kde.PlasmaShell"),
-                                           QStringLiteral("toggleActivityManager")));
-        return true;
-    }
     case ElectricActionApplicationLauncher: {
         QDBusConnection::sessionBus().asyncCall(
             QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
@@ -758,8 +750,6 @@ static ElectricBorderAction electricBorderAction(const QString& name)
         return ElectricActionLockScreen;
     } else if (lowerName == QLatin1String("krunner")) {
         return ElectricActionKRunner;
-    } else if (lowerName == QLatin1String("activitymanager")) {
-        return ElectricActionActivityManager;
     } else if (lowerName == QLatin1String("applicationlauncher")) {
         return ElectricActionApplicationLauncher;
     }

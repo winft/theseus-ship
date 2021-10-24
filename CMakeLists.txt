@@ -87,13 +87,6 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
 )
 
 # optional frameworks
-find_package(KF5Activities ${KF5_MIN_VERSION} CONFIG)
-set_package_properties(KF5Activities PROPERTIES
-    PURPOSE "Enable building of KWin with kactivities support"
-    TYPE OPTIONAL
-)
-add_feature_info("KF5Activities" KF5Activities_FOUND "Enable building of KWin with kactivities support")
-
 find_package(KF5DocTools ${KF5_MIN_VERSION} CONFIG)
 set_package_properties(KF5DocTools PROPERTIES
     PURPOSE "Enable building documentation"
@@ -299,7 +292,6 @@ option(KWIN_BUILD_KCMS "Enable building of KWin configuration modules." ON)
 option(KWIN_BUILD_TABBOX "Enable building of KWin Tabbox functionality" ON)
 option(KWIN_BUILD_PERF "Build internal tools for performance analysis at runtime." ON)
 option(KWIN_BUILD_XRENDER_COMPOSITING "Enable building of KWin with XRender Compositing support" ON)
-cmake_dependent_option(KWIN_BUILD_ACTIVITIES "Enable building of KWin with kactivities support" ON "KF5Activities_FOUND" OFF)
 
 # Binary name of KWin
 set(KWIN_NAME "kwin")
@@ -620,11 +612,6 @@ target_link_libraries(kwin ${kwinLibs} kwinglutils epoxy::epoxy)
 
 if(HAVE_PERF)
     target_sources(kwin PRIVATE perf/ftrace_impl.cpp)
-endif()
-
-if (KWIN_BUILD_ACTIVITIES)
-    target_sources(kwin PRIVATE activities.cpp)
-    target_link_libraries(kwin KF5::Activities)
 endif()
 
 if (KWIN_BUILD_TABBOX)

@@ -24,9 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output.h"
 #include "effectsadaptor.h"
 #include "effectloader.h"
-#ifdef KWIN_BUILD_ACTIVITIES
-#include "activities.h"
-#endif
 #include "input/cursor.h"
 #include "osd.h"
 #include "input/pointer_redirect.h"
@@ -208,13 +205,6 @@ EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *sc
     connect(Screens::self(), &Screens::countChanged, this, &EffectsHandler::numberScreensChanged);
     connect(Screens::self(), &Screens::sizeChanged, this, &EffectsHandler::virtualScreenSizeChanged);
     connect(Screens::self(), &Screens::geometryChanged, this, &EffectsHandler::virtualScreenGeometryChanged);
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (Activities *activities = Activities::self()) {
-        connect(activities, &Activities::added,          this, &EffectsHandler::activityAdded);
-        connect(activities, &Activities::removed,        this, &EffectsHandler::activityRemoved);
-        connect(activities, &Activities::currentChanged, this, &EffectsHandler::currentActivityChanged);
-    }
-#endif
     connect(ws->stacking_order, &win::stacking_order::changed, this, &EffectsHandler::stackingOrderChanged);
 #ifdef KWIN_BUILD_TABBOX
     TabBox::TabBox *tabBox = TabBox::TabBox::self();
@@ -983,14 +973,7 @@ void EffectsHandlerImpl::setShowingDesktop(bool showing)
 
 QString EffectsHandlerImpl::currentActivity() const
 {
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (!Activities::self()) {
-        return QString();
-    }
-    return Activities::self()->current();
-#else
     return QString();
-#endif
 }
 
 int EffectsHandlerImpl::currentDesktop() const
@@ -1939,7 +1922,6 @@ TOPLEVEL_HELPER(QRect, frameGeometry, frameGeometry)
 TOPLEVEL_HELPER(int, desktop, desktop)
 TOPLEVEL_HELPER(bool, isDeleted, isDeleted)
 TOPLEVEL_HELPER(QString, windowRole, windowRole)
-TOPLEVEL_HELPER(QStringList, activities, activities)
 TOPLEVEL_HELPER(bool, skipsCloseAnimation, skipsCloseAnimation)
 TOPLEVEL_HELPER(Wrapland::Server::Surface *, surface, surface)
 TOPLEVEL_HELPER(bool, isOutline, isOutline)
@@ -2008,6 +1990,12 @@ CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isMinimized, minimized, false)
 CLIENT_HELPER_WITH_DELETED_WIN_CTRL(bool, isFullScreen, fullscreen, false)
 
 #undef CLIENT_HELPER_WITH_DELETED_WIN_CTRL
+
+QStringList EffectWindowImpl::activities() const
+{
+    // No support for Activities.
+    return {};
+}
 
 QRect EffectWindowImpl::clientGeometry() const
 {

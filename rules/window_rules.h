@@ -59,7 +59,6 @@ public:
     bool checkIgnoreGeometry(bool ignore, bool init = false) const;
     int checkDesktop(int desktop, bool init = false) const;
     int checkScreen(int screen, bool init = false) const;
-    QString checkActivity(QString activity, bool init = false) const;
     NET::WindowType checkType(NET::WindowType type) const;
     KWin::win::maximize_mode checkMaximize(win::maximize_mode mode, bool init = false) const;
     bool checkMinimize(bool minimized, bool init = false) const;

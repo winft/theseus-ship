@@ -191,13 +191,9 @@ public:
     QVector<VirtualDesktop *> desktops() const;
     void set_desktops(QVector<VirtualDesktop*> const& desktops);
 
-    virtual QStringList activities() const;
     bool isOnDesktop(int d) const;
-    bool isOnActivity(const QString &activity) const;
     bool isOnCurrentDesktop() const;
-    bool isOnCurrentActivity() const;
     bool isOnAllDesktops() const;
-    bool isOnAllActivities() const;
 
     virtual QByteArray windowRole() const;
     QByteArray sessionId() const;
@@ -388,7 +384,6 @@ Q_SIGNALS:
      * schedule a repaint of the scene.
      */
     void needsRepaint();
-    void activitiesChanged(KWin::Toplevel* toplevel);
     /**
      * Emitted whenever the Toplevel's screen changes. This can happen either in consequence to
      * a screen being removed/added or if the Toplevel's geometry changes.
@@ -524,8 +519,6 @@ public:
     virtual bool noBorder() const;
     virtual void setNoBorder(bool set);
 
-    virtual void blockActivityUpdates(bool b = true);
-
     /**
      * Returns whether the window is resizable or has a fixed size.
      */
@@ -565,9 +558,6 @@ public:
     virtual void checkNoBorder();
 
     virtual bool isTransient() const;
-
-    virtual void setOnActivities(QStringList newActivitiesList);
-    virtual void setOnAllActivities(bool set);
 
     virtual xcb_timestamp_t userTime() const;
     virtual void updateWindowRules(Rules::Types selection);

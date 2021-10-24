@@ -5,7 +5,6 @@
 */
 #include "window.h"
 
-#include "activity.h"
 #include "client.h"
 #include "deco.h"
 #include "fullscreen.h"
@@ -1066,26 +1065,6 @@ void window::updateDecoration(bool check_workspace_pos, bool force)
 
 void window::updateColorScheme()
 {
-}
-
-QStringList window::activities() const
-{
-    return x11::activities(this);
-}
-
-void window::setOnActivities(QStringList newActivitiesList)
-{
-    set_on_activities(this, newActivitiesList);
-}
-
-void window::setOnAllActivities(bool on)
-{
-    set_on_all_activities(this, on);
-}
-
-void window::blockActivityUpdates(bool b)
-{
-    block_activity_updates(this, b);
 }
 
 bool window::isBlockingCompositing()

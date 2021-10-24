@@ -206,14 +206,6 @@ void update_visibility(Win* win)
         }
         return;
     }
-    if (!win->isOnCurrentActivity()) {
-        if (win::compositing() && options->hiddenPreviews() != HiddenPreviewsNever) {
-            internal_keep(win);
-        } else {
-            internal_hide(win);
-        }
-        return;
-    }
     internal_show(win);
 }
 

@@ -28,7 +28,6 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     render_region = source->render_region();
     buffer_scale = source->bufferScale();
     desk = source->desktop();
-    activities = source->activities();
     frame = source->frameId();
     opacity = source->opacity();
     window_type = source->windowType();

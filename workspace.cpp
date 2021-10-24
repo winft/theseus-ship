@@ -23,9 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwinglplatform.h>
 
-#ifdef KWIN_BUILD_ACTIVITIES
-#include "activities.h"
-#endif
 #include "atoms.h"
 #include "base/x11/event_filter.h"
 #include "base/x11/event_filter_container.h"
@@ -128,16 +125,6 @@ Workspace::Workspace()
     win::app_menu::create(this);
 
     _self = this;
-
-#ifdef KWIN_BUILD_ACTIVITIES
-    Activities* activities = nullptr;
-    if (kwinApp()->usesKActivities()) {
-        activities = Activities::create(this);
-    }
-    if (activities) {
-        connect(activities, &Activities::currentChanged, this, &Workspace::updateCurrentActivity);
-    }
-#endif
 
     m_quickTileCombineTimer = new QTimer(this);
     m_quickTileCombineTimer->setSingleShot(true);
@@ -860,7 +847,7 @@ Toplevel* Workspace::findClientToActivateOnDesktop(uint desktop)
                 continue;
             }
 
-            if (!(client->isShown() && client->isOnDesktop(desktop) && client->isOnCurrentActivity()
+            if (!(client->isShown() && client->isOnDesktop(desktop)
                   && win::on_active_screen(client)))
                 continue;
 
@@ -873,102 +860,6 @@ Toplevel* Workspace::findClientToActivateOnDesktop(uint desktop)
         }
     }
     return win::focus_chain::self()->getForActivation(desktop);
-}
-
-/**
- * Updates the current activity when it changes
- * do *not* call this directly; it does not set the activity.
- *
- * Shows/Hides windows according to the stacking order
- */
-
-void Workspace::updateCurrentActivity(const QString& new_activity)
-{
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (!Activities::self()) {
-        return;
-    }
-    // closeActivePopup();
-    ++block_focus;
-    // TODO: Q_ASSERT( block_stacking_updates == 0 ); // Make sure stacking_order is up to date
-    Blocker blocker(stacking_order);
-
-    // Optimized Desktop switching: unmapping done from back to front
-    // mapping done from front to back => less exposure events
-    // Notify::raise((Notify::Event) (Notify::DesktopChange+new_desktop));
-
-    for (auto it = stacking_order->sorted().cbegin(); it != stacking_order->sorted().cend(); ++it) {
-        auto c = qobject_cast<win::x11::window*>(*it);
-        if (!c) {
-            continue;
-        }
-        if (!c->isOnActivity(new_activity) && c != movingClient && c->isOnCurrentDesktop()) {
-            win::x11::update_visibility(c);
-        }
-    }
-
-    // Now propagate the change, after hiding, before showing
-    // rootInfo->setCurrentDesktop( currentDesktop() );
-
-    /* TODO someday enable dragging windows to other activities
-    if ( movingClient && !movingClient->isOnDesktop( new_desktop ))
-        {
-        movingClient->setDesktop( new_desktop );
-        */
-
-    for (int i = stacking_order->sorted().size() - 1; i >= 0; --i) {
-        auto c = qobject_cast<win::x11::window*>(stacking_order->sorted().at(i));
-        if (!c) {
-            continue;
-        }
-        if (c->isOnActivity(new_activity)) {
-            win::x11::update_visibility(c);
-        }
-    }
-
-    // FIXME not sure if I should do this either
-    if (showingDesktop()) // Do this only after desktop change to avoid flicker
-        setShowingDesktop(false);
-
-    // Restore the focus on this desktop
-    --block_focus;
-    Toplevel* c = nullptr;
-
-    // FIXME below here is a lot of focuschain stuff, probably all wrong now
-    if (options->focusPolicyIsReasonable()) {
-        // Search in focus chain
-        c = win::focus_chain::self()->getForActivation(VirtualDesktopManager::self()->current());
-    }
-    // If "unreasonable focus policy" and active_client is on_all_desktops and
-    // under mouse (Hence == old_active_client), conserve focus.
-    // (Thanks to Volker Schatz <V.Schatz at thphys.uni-heidelberg.de>)
-    else if (active_client && active_client->isShown() && active_client->isOnCurrentDesktop()
-             && active_client->isOnCurrentActivity())
-        c = active_client;
-
-    if (c == nullptr) {
-        c = win::find_desktop(this, true, VirtualDesktopManager::self()->current());
-    }
-
-    if (c != active_client)
-        setActiveClient(nullptr);
-
-    if (c)
-        request_focus(c);
-    else if (auto desktop = win::find_desktop(this, true, VirtualDesktopManager::self()->current()))
-        request_focus(desktop);
-    else
-        focusToNull();
-
-    // Not for the very first time, only if something changed and there are more than 1 desktops
-
-    // if ( effects != NULL && old_desktop != 0 && old_desktop != new_desktop )
-    //    static_cast<EffectsHandlerImpl*>( effects )->desktopChanged( old_desktop );
-    if (compositing() && m_compositor)
-        m_compositor->addRepaintFull();
-#else
-    Q_UNUSED(new_activity)
-#endif
 }
 
 void Workspace::slotDesktopCountChanged(uint previousCount, uint newCount)
@@ -1218,12 +1109,8 @@ QString Workspace::supportInformation() const
 #else
     support.append(no);
 #endif
-    support.append(QStringLiteral("KWIN_BUILD_ACTIVITIES: "));
-#ifdef KWIN_BUILD_ACTIVITIES
-    support.append(yes);
-#else
+    support.append(QStringLiteral("KWIN_BUILD_ACTIVITIES (deprecated): "));
     support.append(no);
-#endif
     support.append(QStringLiteral("HAVE_PERF: "));
 #if HAVE_PERF
     support.append(yes);
@@ -2058,8 +1945,6 @@ Workspace::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted,
                     continue;
                 if (!((*l)->isOnDesktop(window->desktop()) || window->isOnDesktop((*l)->desktop())))
                     continue; // wrong virtual desktop
-                if (!(*l)->isOnCurrentActivity())
-                    continue; // wrong activity
                 if (win::is_desktop(*l) || win::is_splash(*l))
                     continue;
 
@@ -2967,15 +2852,6 @@ void Workspace::activateClient(Toplevel* window, bool force)
         VirtualDesktopManager::self()->setCurrent(window->desktop());
         --block_focus;
     }
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (!window->isOnCurrentActivity()) {
-        ++block_focus;
-        // DBUS!
-        // first isn't necessarily best, but it's easiest
-        Activities::self()->setCurrent(window->activities().first());
-        --block_focus;
-    }
-#endif
     if (window->control->minimized()) {
         win::set_minimized(window, false);
     }
@@ -3075,7 +2951,7 @@ void Workspace::request_focus(Toplevel* window, bool raise, bool force_focus)
  */
 void Workspace::clientHidden(Toplevel* window)
 {
-    Q_ASSERT(!window->isShown() || !window->isOnCurrentDesktop() || !window->isOnCurrentActivity());
+    Q_ASSERT(!window->isShown() || !window->isOnCurrentDesktop());
     activateNextClient(window);
 }
 
@@ -3091,8 +2967,7 @@ Toplevel* Workspace::clientUnderMouse(int screen) const
         // rule out clients which are not really visible.
         // the screen test is rather superfluous for xrandr & twinview since the geometry would
         // differ -> TODO: might be dropped
-        if (!(client->isShown() && client->isOnCurrentDesktop() && client->isOnCurrentActivity()
-              && win::on_screen(client, screen)))
+        if (!(client->isShown() && client->isOnCurrentDesktop() && win::on_screen(client, screen)))
             continue;
 
         if (client->frameGeometry().contains(input::get_cursor()->pos())) {

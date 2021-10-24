@@ -37,7 +37,6 @@ void TestTabBoxConfig::testDefaultCtor()
     QCOMPARE(config.isHighlightWindows(), TabBoxConfig::defaultHighlightWindow());
     QCOMPARE(config.tabBoxMode(), TabBoxConfig::ClientTabBox);
     QCOMPARE(config.clientDesktopMode(), TabBoxConfig::defaultDesktopMode());
-    QCOMPARE(config.clientActivitiesMode(), TabBoxConfig::defaultActivitiesMode());
     QCOMPARE(config.clientApplicationsMode(), TabBoxConfig::defaultApplicationsMode());
     QCOMPARE(config.clientMinimizedMode(), TabBoxConfig::defaultMinimizedMode());
     QCOMPARE(config.showDesktopMode(), TabBoxConfig::defaultShowDesktopMode());
@@ -55,7 +54,6 @@ void TestTabBoxConfig::testAssignmentOperator()
     config.setHighlightWindows(!TabBoxConfig::defaultHighlightWindow());
     config.setTabBoxMode(TabBoxConfig::DesktopTabBox);
     config.setClientDesktopMode(TabBoxConfig::AllDesktopsClients);
-    config.setClientActivitiesMode(TabBoxConfig::AllActivitiesClients);
     config.setClientApplicationsMode(TabBoxConfig::OneWindowPerApplication);
     config.setClientMinimizedMode(TabBoxConfig::ExcludeMinimizedClients);
     config.setShowDesktopMode(TabBoxConfig::ShowDesktopClient);
@@ -70,7 +68,6 @@ void TestTabBoxConfig::testAssignmentOperator()
     QCOMPARE(config2.isHighlightWindows(), !TabBoxConfig::defaultHighlightWindow());
     QCOMPARE(config2.tabBoxMode(), TabBoxConfig::DesktopTabBox);
     QCOMPARE(config2.clientDesktopMode(), TabBoxConfig::AllDesktopsClients);
-    QCOMPARE(config2.clientActivitiesMode(), TabBoxConfig::AllActivitiesClients);
     QCOMPARE(config2.clientApplicationsMode(), TabBoxConfig::OneWindowPerApplication);
     QCOMPARE(config2.clientMinimizedMode(), TabBoxConfig::ExcludeMinimizedClients);
     QCOMPARE(config2.showDesktopMode(), TabBoxConfig::ShowDesktopClient);

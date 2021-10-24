@@ -454,23 +454,6 @@ void RulesModel::populateRuleList()
             this, [this] { m_rules["desktop"]->setOptionsData(virtualDesktopsModelData()); });
     updateVirtualDesktops();
 
-#ifdef KWIN_BUILD_ACTIVITIES
-    m_activities = new KActivities::Consumer(this);
-
-    auto activity = addRule(new RuleItem(QLatin1String("activity"),
-                                         RulePolicy::SetRule, RuleItem::Option,
-                                         i18n("Activity"), i18n("Size & Position"),
-                                         QIcon::fromTheme("activities")));
-    activity->setOptionsData(activitiesModelData());
-
-    // Activites consumer may update the available activities later
-    connect(m_activities, &KActivities::Consumer::activitiesChanged,
-            this, [this] { m_rules["activity"]->setOptionsData(activitiesModelData()); });
-    connect(m_activities, &KActivities::Consumer::serviceStatusChanged,
-            this, [this] { m_rules["activity"]->setOptionsData(activitiesModelData()); });
-
-#endif
-
     addRule(new RuleItem(QLatin1String("screen"),
                          RulePolicy::SetRule, RuleItem::Integer,
                          i18n("Screen"), i18n("Size & Position"),
@@ -738,33 +721,6 @@ QList<OptionsModel::Data> RulesModel::virtualDesktopsModelData() const
     }
     modelData << OptionsModel::Data{ NET::OnAllDesktops, i18n("All Desktops"), QIcon::fromTheme("window-pin") };
     return modelData;
-}
-
-
-QList<OptionsModel::Data> RulesModel::activitiesModelData() const
-{
-#ifdef KWIN_BUILD_ACTIVITIES
-    QList<OptionsModel::Data> modelData;
-
-    // NULL_ID from kactivities/src/lib/core/consumer.cpp
-    modelData << OptionsModel::Data{
-        QString::fromLatin1("00000000-0000-0000-0000-000000000000"),
-        i18n("All Activities"),
-        QIcon::fromTheme("activities")
-    };
-
-    const auto activities = m_activities->activities(KActivities::Info::Running);
-    if (m_activities->serviceStatus() == KActivities::Consumer::Running) {
-        for (const QString &activityId : activities) {
-            const KActivities::Info info(activityId);
-            modelData << OptionsModel::Data{ activityId, info.name(), QIcon::fromTheme(info.icon()) };
-        }
-    }
-
-    return modelData;
-#else
-    return {};
-#endif
 }
 
 QList<OptionsModel::Data> RulesModel::placementModelData() const

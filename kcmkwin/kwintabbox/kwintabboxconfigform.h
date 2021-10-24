@@ -63,7 +63,6 @@ public:
     bool showTabBox() const;
     int filterScreen() const;
     int filterDesktop() const;
-    int filterActivities() const;
     int filterMinimization() const;
     int applicationMode() const;
     int showDesktopMode() const;
@@ -72,7 +71,6 @@ public:
 
     void setFilterScreen(TabBox::TabBoxConfig::ClientMultiScreenMode mode);
     void setFilterDesktop(TabBox::TabBoxConfig::ClientDesktopMode mode);
-    void setFilterActivities(TabBox::TabBoxConfig::ClientActivitiesMode mode);
     void setFilterMinimization(TabBox::TabBoxConfig::ClientMinimizedMode mode);
     void setApplicationMode(TabBox::TabBoxConfig::ClientApplicationsMode mode);
     void setShowDesktopMode(TabBox::TabBoxConfig::ShowDesktopMode mode);
@@ -89,7 +87,6 @@ public:
     void setHighlightWindowsEnabled(bool enabled);
     void setFilterScreenEnabled(bool enabled);
     void setFilterDesktopEnabled(bool enabled);
-    void setFilterActivitiesEnabled(bool enabled);
     void setFilterMinimizationEnabled(bool enabled);
     void setApplicationModeEnabled(bool enabled);
     void setShowDesktopModeEnabled(bool enabled);
@@ -98,7 +95,6 @@ public:
 
     void setFilterScreenDefaultIndicatorVisible(bool visible);
     void setFilterDesktopDefaultIndicatorVisible(bool visible);
-    void setFilterActivitiesDefaultIndicatorVisible(bool visible);
     void setFilterMinimizationDefaultIndicatorVisible(bool visible);
     void setApplicationModeDefaultIndicatorVisible(bool visible);
     void setShowDesktopModeDefaultIndicatorVisible(bool visible);
@@ -108,7 +104,6 @@ public:
 Q_SIGNALS:
     void filterScreenChanged(int value);
     void filterDesktopChanged(int value);
-    void filterActivitiesChanged(int value);
     void filterMinimizationChanged(int value);
     void applicationModeChanged(int value);
     void showDesktopModeChanged(int value);
@@ -120,7 +115,6 @@ private Q_SLOTS:
     void tabBoxToggled(bool on);
     void onFilterScreen();
     void onFilterDesktop();
-    void onFilterActivites();
     void onFilterMinimization();
     void onApplicationMode();
     void onShowDesktopMode();

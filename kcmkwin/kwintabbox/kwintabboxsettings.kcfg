@@ -10,9 +10,6 @@
        <entry key="DesktopMode" type="Int">
            <default code="true">TabBoxConfig::defaultDesktopMode()</default>
        </entry>
-       <entry key="ActivitiesMode" type="Int">
-           <default code="true">TabBoxConfig::defaultActivitiesMode()</default>
-       </entry>
        <entry key="ApplicationsMode" type="Int">
            <default code="true">TabBoxConfig::defaultApplicationsMode()</default>
        </entry>

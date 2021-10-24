@@ -32,7 +32,6 @@ public:
         , highlightWindows(TabBoxConfig::defaultHighlightWindow())
         , tabBoxMode(TabBoxConfig::ClientTabBox)
         , clientDesktopMode(TabBoxConfig::defaultDesktopMode())
-        , clientActivitiesMode(TabBoxConfig::defaultActivitiesMode())
         , clientApplicationsMode(TabBoxConfig::defaultApplicationsMode())
         , clientMinimizedMode(TabBoxConfig::defaultMinimizedMode())
         , showDesktopMode(TabBoxConfig::defaultShowDesktopMode())
@@ -48,7 +47,6 @@ public:
 
     TabBoxConfig::TabBoxMode tabBoxMode;
     TabBoxConfig::ClientDesktopMode clientDesktopMode;
-    TabBoxConfig::ClientActivitiesMode clientActivitiesMode;
     TabBoxConfig::ClientApplicationsMode clientApplicationsMode;
     TabBoxConfig::ClientMinimizedMode clientMinimizedMode;
     TabBoxConfig::ShowDesktopMode showDesktopMode;
@@ -74,7 +72,6 @@ TabBoxConfig& TabBoxConfig::operator=(const KWin::TabBox::TabBoxConfig& object)
     d->highlightWindows = object.isHighlightWindows();
     d->tabBoxMode = object.tabBoxMode();
     d->clientDesktopMode = object.clientDesktopMode();
-    d->clientActivitiesMode = object.clientActivitiesMode();
     d->clientApplicationsMode = object.clientApplicationsMode();
     d->clientMinimizedMode = object.clientMinimizedMode();
     d->showDesktopMode = object.showDesktopMode();
@@ -123,16 +120,6 @@ TabBoxConfig::ClientDesktopMode TabBoxConfig::clientDesktopMode() const
 void TabBoxConfig::setClientDesktopMode(ClientDesktopMode desktopMode)
 {
     d->clientDesktopMode = desktopMode;
-}
-
-TabBoxConfig::ClientActivitiesMode TabBoxConfig::clientActivitiesMode() const
-{
-    return d->clientActivitiesMode;
-}
-
-void TabBoxConfig::setClientActivitiesMode(ClientActivitiesMode activitiesMode)
-{
-    d->clientActivitiesMode = activitiesMode;
 }
 
 TabBoxConfig::ClientApplicationsMode TabBoxConfig::clientApplicationsMode() const

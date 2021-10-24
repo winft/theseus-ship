@@ -23,7 +23,6 @@ var registeredBorders = [];
 function isRelevant(client) {
     return client.minimizable &&
            (client.onAllDesktops || client.desktop === workspace.currentDesktop);
-           (!client.activities.length || client.activities.indexOf(workspace.currentActivity.toString()) > -1);
 }
 
 function minimizeAllWindows() {

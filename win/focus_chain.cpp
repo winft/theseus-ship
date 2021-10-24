@@ -77,8 +77,7 @@ Toplevel* focus_chain::getForActivation(uint desktop, int screen) const
     for (int i = chain.size() - 1; i >= 0; --i) {
         auto tmp = chain.at(i);
         // TODO: move the check into Client
-        if (tmp->isShown() && tmp->isOnCurrentActivity()
-            && (!m_separateScreenFocus || tmp->screen() == screen)) {
+        if (tmp->isShown() && (!m_separateScreenFocus || tmp->screen() == screen)) {
             return tmp;
         }
     }
@@ -211,7 +210,6 @@ Toplevel* focus_chain::nextMostRecentlyUsed(Toplevel* reference) const
 bool focus_chain::isUsableFocusCandidate(Toplevel* window, Toplevel* prev) const
 {
     return window != prev && window->isShown() && window->isOnCurrentDesktop()
-        && window->isOnCurrentActivity()
         && (!m_separateScreenFocus
             || win::on_screen(window, prev ? prev->screen() : screens()->current()));
 }
