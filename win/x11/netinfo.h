@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class RootInfoFilter;
+class root_info_filter;
 class Toplevel;
 
 namespace win::x11
@@ -81,7 +81,7 @@ private:
     friend RootInfo* rootInfo();
 
     xcb_window_t m_activeWindow;
-    std::unique_ptr<RootInfoFilter> m_eventFilter;
+    std::unique_ptr<root_info_filter> m_eventFilter;
 };
 
 inline RootInfo* rootInfo()

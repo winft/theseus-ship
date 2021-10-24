@@ -175,7 +175,7 @@ RootInfo::RootInfo(xcb_window_t w,
                    int scr)
     : NETRootInfo(connection(), w, name, properties, types, states, properties2, actions, scr)
     , m_activeWindow(activeWindow())
-    , m_eventFilter(std::make_unique<RootInfoFilter>(this))
+    , m_eventFilter(std::make_unique<root_info_filter>(this))
 {
 }
 
