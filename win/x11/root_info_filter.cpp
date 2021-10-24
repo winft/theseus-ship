@@ -3,15 +3,15 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "rootinfo_filter.h"
+#include "root_info_filter.h"
 
 #include "virtualdesktops.h"
 #include "win/x11/netinfo.h"
 
-namespace KWin
+namespace KWin::win::x11
 {
 
-root_info_filter::root_info_filter(win::x11::RootInfo* info)
+root_info_filter::root_info_filter(RootInfo* info)
     : base::x11::event_filter(QVector<int>{XCB_PROPERTY_NOTIFY, XCB_CLIENT_MESSAGE})
     , root_info{info}
 {

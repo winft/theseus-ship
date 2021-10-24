@@ -32,11 +32,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class root_info_filter;
 class Toplevel;
 
 namespace win::x11
 {
+class root_info_filter;
 class window;
 
 /**

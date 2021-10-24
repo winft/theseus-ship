@@ -7,17 +7,14 @@
 
 #include "base/x11/event_filter.h"
 
-namespace KWin
-{
-namespace win::x11
+namespace KWin::win::x11
 {
 class RootInfo;
-}
 
 class root_info_filter : public base::x11::event_filter
 {
 public:
-    explicit root_info_filter(win::x11::RootInfo* info);
+    explicit root_info_filter(RootInfo* info);
 
     bool event(xcb_generic_event_t* event) override;
 

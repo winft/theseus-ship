@@ -21,7 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "netinfo.h"
 
-#include "rootinfo_filter.h"
+#include "root_info_filter.h"
+
 #include "virtualdesktops.h"
 #include "workspace.h"
 

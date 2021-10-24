@@ -438,7 +438,6 @@ set(kwin_SRCS
     render/x11/compositor_selection_owner.cpp
     render/compositor.cpp
     render/cursor.cpp
-    rootinfo_filter.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp
     rules/rules.cpp
@@ -479,6 +478,7 @@ set(kwin_SRCS
     win/x11/geometrytip.cpp
     win/x11/group.cpp
     win/x11/netinfo.cpp
+    win/x11/root_info_filter.cpp
     win/x11/space.cpp
     win/x11/stacking_tree.cpp
     win/x11/syncalarmx11filter.cpp
