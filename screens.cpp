@@ -94,7 +94,7 @@ QSize Screens::size(int screen) const
 float Screens::refreshRate(int screen) const
 {
     if (auto output = findOutput(screen)) {
-        return output->refreshRate() / 1000.0;
+        return output->refresh_rate() / 1000.0;
     }
     return 60.0;
 }
@@ -225,7 +225,7 @@ QSize Screens::displaySize() const
 QSizeF Screens::physicalSize(int screen) const
 {
     if (auto output = findOutput(screen)) {
-        return output->physicalSize();
+        return output->physical_size();
     }
     return QSizeF(size(screen)) / 3.8;
 }
@@ -233,7 +233,7 @@ QSizeF Screens::physicalSize(int screen) const
 bool Screens::isInternal(int screen) const
 {
     if (auto output = findOutput(screen)) {
-        return output->isInternal();
+        return output->is_internal();
     }
     return false;
 }

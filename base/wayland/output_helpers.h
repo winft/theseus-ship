@@ -46,7 +46,7 @@ void request_outputs_change(Base const& base, Wrapland::Server::OutputConfigurat
             continue;
         }
 
-        output->applyChanges(changeset);
+        output->apply_changes(changeset);
     }
 
     Screens::self()->updateAll();
@@ -59,7 +59,7 @@ void turn_outputs_on(Base const& base, Filter& filter)
     filter.reset();
 
     for (auto& out : base.enabled_outputs) {
-        out->updateDpms(AbstractOutput::DpmsMode::On);
+        out->update_dpms(AbstractOutput::DpmsMode::On);
     }
 }
 
@@ -72,7 +72,7 @@ void check_outputs_on(Base const& base, Filter& filter)
     }
 
     auto const& outs = base.enabled_outputs;
-    if (std::all_of(outs.cbegin(), outs.cend(), [](auto&& out) { return out->dpmsOn(); })) {
+    if (std::all_of(outs.cbegin(), outs.cend(), [](auto&& out) { return out->is_dpms_on(); })) {
         // All outputs are on, disable the filter.
         filter.reset();
     }

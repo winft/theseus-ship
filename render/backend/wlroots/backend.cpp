@@ -76,7 +76,7 @@ void handle_new_output(struct wl_listener* listener, void* data)
     if (align_horizontal) {
         auto shifted_geo = out->geometry();
         shifted_geo.moveLeft(screens_width);
-        out->forceGeometry(shifted_geo);
+        out->force_geometry(shifted_geo);
     }
 
     Q_EMIT back->output_added(out);
@@ -290,10 +290,10 @@ void backend::setVirtualOutputs(int count, QVector<QRect> geometries, QVector<in
         auto added_output = all_outputs.back();
 
         if (geometries.size()) {
-            added_output->forceGeometry(geometries.at(i));
+            added_output->force_geometry(geometries.at(i));
         } else {
             auto const geo = QRect(QPoint(sum_width, 0), initialWindowSize() * scale);
-            added_output->forceGeometry(geo);
+            added_output->force_geometry(geo);
             sum_width += geo.width();
         }
     }

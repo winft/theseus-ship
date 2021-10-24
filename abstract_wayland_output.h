@@ -66,10 +66,10 @@ public:
      *
      * @return output mode size
      */
-    QSize modeSize() const;
+    QSize mode_size() const;
 
     // TODO: The name is ambiguous. Rename this function.
-    QSize pixelSize() const override;
+    QSize pixel_size() const override;
 
     /**
      * Describes the viewable rectangle on the output relative to the output's mode size.
@@ -78,7 +78,7 @@ public:
      *
      * @return viewable geometry on the output
      */
-    QRect viewGeometry() const;
+    QRect view_geometry() const;
 
     qreal scale() const override;
 
@@ -86,7 +86,7 @@ public:
      * The geometry of this output in global compositor co-ordinates (i.e scaled)
      */
     QRect geometry() const override;
-    QSize physicalSize() const override;
+    QSize physical_size() const override;
 
     /**
      * Returns the orientation of this output.
@@ -102,94 +102,94 @@ public:
     /**
      * Current refresh rate in 1/ms.
      */
-    int refreshRate() const override;
+    int refresh_rate() const override;
 
-    bool isInternal() const override
+    bool is_internal() const override
     {
         return m_internal;
     }
 
-    void applyChanges(const Wrapland::Server::OutputChangesetV1* changeset) override;
+    void apply_changes(const Wrapland::Server::OutputChangesetV1* changeset) override;
 
     Wrapland::Server::Output* output() const
     {
         return m_output.get();
     }
 
-    bool isEnabled() const;
+    bool is_enabled() const;
     /**
      * Enable or disable the output.
      *
-     * This differs from updateDpms as it also removes the wl_output.
+     * This differs from update_dpms as it also removes the wl_output.
      * The default is on.
      */
-    void setEnabled(bool enable) override;
+    void set_enabled(bool enable) override;
 
-    void forceGeometry(const QRectF& geo);
+    void force_geometry(const QRectF& geo);
 
-    bool dpmsOn() const override;
+    bool is_dpms_on() const override;
     virtual uint64_t msc() const;
 
-    QSize orientateSize(const QSize& size) const;
+    QSize orientate_size(const QSize& size) const;
 
 Q_SIGNALS:
-    void modeChanged();
+    void mode_changed();
 
 protected:
-    void initInterfaces(std::string const& name,
-                        std::string const& make,
-                        std::string const& model,
-                        std::string const& serial_number,
-                        const QSize& physicalSize,
-                        const QVector<Wrapland::Server::Output::Mode>& modes,
-                        Wrapland::Server::Output::Mode* current_mode = nullptr);
+    void init_interfaces(std::string const& name,
+                         std::string const& make,
+                         std::string const& model,
+                         std::string const& serial_number,
+                         const QSize& physical_size,
+                         const QVector<Wrapland::Server::Output::Mode>& modes,
+                         Wrapland::Server::Output::Mode* current_mode = nullptr);
 
-    QPoint globalPos() const;
+    QPoint global_pos() const;
 
     bool internal() const
     {
         return m_internal;
     }
-    void setInternal(bool set)
+    void set_internal(bool set)
     {
         m_internal = set;
     }
-    void setDpmsSupported(bool set)
+    void set_dpms_supported(bool set)
     {
-        m_supportsDpms = set;
+        m_supports_dpms = set;
     }
 
-    virtual void updateEnablement(bool enable)
+    virtual void update_enablement(bool enable)
     {
         Q_UNUSED(enable);
     }
-    virtual void updateMode(int modeIndex)
+    virtual void update_mode(int mode_index)
     {
-        Q_UNUSED(modeIndex);
+        Q_UNUSED(mode_index);
     }
-    virtual void updateTransform(base::wayland::output_transform transform)
+    virtual void update_transform(base::wayland::output_transform transform)
     {
         Q_UNUSED(transform);
     }
 
-    void setWaylandMode(const QSize& size, int refreshRate, bool force_update);
-    void setTransform(base::wayland::output_transform transform);
+    void set_wayland_mode(const QSize& size, int refresh_rate, bool force_update);
+    void set_transform(base::wayland::output_transform transform);
 
-    DpmsMode dpmsMode() const;
-    void dpmsSetOn();
-    void dpmsSetOff(DpmsMode mode);
+    DpmsMode dpms_mode() const;
+    void dpms_set_on();
+    void dpms_set_off(DpmsMode mode);
 
 private:
-    QSizeF logicalSize() const;
-    void updateViewGeometry();
+    QSizeF logical_size() const;
+    void update_view_geometry();
 
     std::unique_ptr<Wrapland::Server::Output> m_output;
 
     DpmsMode m_dpms = DpmsMode::On;
-    QRect m_viewGeometry;
+    QRect m_view_geometry;
 
     bool m_internal = false;
-    bool m_supportsDpms = false;
+    bool m_supports_dpms = false;
 };
 
 }

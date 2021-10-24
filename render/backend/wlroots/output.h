@@ -38,13 +38,13 @@ public:
     wlr_output* native;
     backend* back;
 
-    void updateEnablement(bool enable) override;
-    void updateDpms(DpmsMode mode) override;
-    void updateMode(int modeIndex) override;
-    void updateTransform(base::wayland::output_transform transform) override;
+    void update_enablement(bool enable) override;
+    void update_dpms(DpmsMode mode) override;
+    void update_mode(int mode_index) override;
+    void update_transform(base::wayland::output_transform transform) override;
 
-    int gammaRampSize() const override;
-    bool setGammaRamp(GammaRamp const& gamma) override;
+    int gamma_ramp_size() const override;
+    bool set_gamma_ramp(GammaRamp const& gamma) override;
 
     output(wlr_output* wlr_out, backend* backend);
     ~output() override;

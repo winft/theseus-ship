@@ -73,17 +73,17 @@ AbstractOutput::~AbstractOutput()
 {
 }
 
-void AbstractOutput::setEnabled(bool enable)
+void AbstractOutput::set_enabled(bool enable)
 {
     Q_UNUSED(enable)
 }
 
-void AbstractOutput::applyChanges(const Wrapland::Server::OutputChangesetV1* changeset)
+void AbstractOutput::apply_changes(const Wrapland::Server::OutputChangesetV1* changeset)
 {
     Q_UNUSED(changeset)
 }
 
-bool AbstractOutput::isInternal() const
+bool AbstractOutput::is_internal() const
 {
     return false;
 }
@@ -93,23 +93,23 @@ qreal AbstractOutput::scale() const
     return 1;
 }
 
-QSize AbstractOutput::physicalSize() const
+QSize AbstractOutput::physical_size() const
 {
     return QSize();
 }
 
-int AbstractOutput::gammaRampSize() const
+int AbstractOutput::gamma_ramp_size() const
 {
     return 0;
 }
 
-bool AbstractOutput::setGammaRamp(const GammaRamp& gamma)
+bool AbstractOutput::set_gamma_ramp(const GammaRamp& gamma)
 {
     Q_UNUSED(gamma);
     return false;
 }
 
-void AbstractOutput::updateDpms(DpmsMode mode)
+void AbstractOutput::update_dpms(DpmsMode mode)
 {
     Q_UNUSED(mode);
 }

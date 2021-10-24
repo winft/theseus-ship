@@ -1786,10 +1786,10 @@ EffectScreenImpl::EffectScreenImpl(AbstractOutput *output, QObject *parent)
     : EffectScreen(parent)
     , m_platformOutput(output)
 {
-    connect(output, &AbstractOutput::wakeUp, this, &EffectScreen::wakeUp);
-    connect(output, &AbstractOutput::aboutToTurnOff, this, &EffectScreen::aboutToTurnOff);
-    connect(output, &AbstractOutput::scaleChanged, this, &EffectScreen::devicePixelRatioChanged);
-    connect(output, &AbstractOutput::geometryChanged, this, &EffectScreen::geometryChanged);
+    connect(output, &AbstractOutput::wake_up, this, &EffectScreen::wakeUp);
+    connect(output, &AbstractOutput::about_to_turn_off, this, &EffectScreen::aboutToTurnOff);
+    connect(output, &AbstractOutput::scale_changed, this, &EffectScreen::devicePixelRatioChanged);
+    connect(output, &AbstractOutput::geometry_changed, this, &EffectScreen::geometryChanged);
 }
 
 AbstractOutput *EffectScreenImpl::platformOutput() const

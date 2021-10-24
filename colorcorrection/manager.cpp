@@ -646,7 +646,7 @@ void Manager::commitGammaRamps(int temperature)
     const auto outs = kwinApp()->platform->outputs();
 
     for (auto *o : outs) {
-        int rampsize = o->gammaRampSize();
+        int rampsize = o->gamma_ramp_size();
         GammaRamp ramp(rampsize);
 
         /*
@@ -679,7 +679,7 @@ void Manager::commitGammaRamps(int temperature)
             blue[i] = qreal(blue[i]) / (UINT16_MAX+1) * whitePoint[2] * (UINT16_MAX+1);
         }
 
-        if (o->setGammaRamp(ramp)) {
+        if (o->set_gamma_ramp(ramp)) {
             setCurrentTemperature(temperature);
             m_failedCommitAttempts = 0;
         } else {

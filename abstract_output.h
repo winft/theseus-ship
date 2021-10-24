@@ -115,14 +115,14 @@ public:
      *
      * Default implementation does nothing
      */
-    virtual void setEnabled(bool enable);
+    virtual void set_enabled(bool enable);
 
     /**
      * This sets the changes and tests them against the specific output.
      *
      * Default implementation does nothing
      */
-    virtual void applyChanges(const Wrapland::Server::OutputChangesetV1* changeset);
+    virtual void apply_changes(const Wrapland::Server::OutputChangesetV1* changeset);
 
     /**
      * Returns geometry of this output in device independent pixels.
@@ -132,7 +132,7 @@ public:
     /**
      * Returns the approximate vertical refresh rate of this output, in mHz.
      */
-    virtual int refreshRate() const = 0;
+    virtual int refresh_rate() const = 0;
 
     /**
      * Returns whether this output is connected through an internal connector,
@@ -140,7 +140,7 @@ public:
      *
      * Default implementation returns @c false.
      */
-    virtual bool isInternal() const;
+    virtual bool is_internal() const;
 
     /**
      * Returns the ratio between physical pixels and logical pixels.
@@ -154,30 +154,30 @@ public:
      *
      * Default implementation returns an invalid QSize.
      */
-    virtual QSize physicalSize() const;
+    virtual QSize physical_size() const;
 
     /**
      * Returns the size of the gamma lookup table.
      *
      * Default implementation returns 0.
      */
-    virtual int gammaRampSize() const;
+    virtual int gamma_ramp_size() const;
 
     /**
      * Sets the gamma ramp of this output.
      *
      * Returns @c true if the gamma ramp was successfully set.
      */
-    virtual bool setGammaRamp(const GammaRamp& gamma);
+    virtual bool set_gamma_ramp(const GammaRamp& gamma);
 
-    virtual void updateDpms(DpmsMode mode);
-    virtual bool dpmsOn() const
+    virtual void update_dpms(DpmsMode mode);
+    virtual bool is_dpms_on() const
     {
         return true;
     }
 
     /** Returns the resolution of the output.  */
-    virtual QSize pixelSize() const
+    virtual QSize pixel_size() const
     {
         return geometry().size();
     }
@@ -199,7 +199,7 @@ public:
     /**
      * Returns the serial number of the screen.
      */
-    virtual QString serialNumber() const
+    virtual QString serial_number() const
     {
         return QString();
     }
@@ -208,26 +208,26 @@ Q_SIGNALS:
     /**
      * This signal is emitted when the geometry of this output has changed.
      */
-    void geometryChanged();
+    void geometry_changed();
     /**
      * This signal is emitted when the output has been enabled or disabled.
      */
-    void enabledChanged();
+    void enabled_changed();
     /**
      * This signal is emitted when the device pixel ratio of the output has changed.
      */
-    void scaleChanged();
+    void scale_changed();
 
     /**
      * Notifies that the display will be dimmed in @p time ms. This allows
      * effects to plan for it and hopefully animate it
      */
-    void aboutToTurnOff(std::chrono::milliseconds time);
+    void about_to_turn_off(std::chrono::milliseconds time);
 
     /**
      * Notifies that the output has been turned on and the wake can be decorated.
      */
-    void wakeUp();
+    void wake_up();
 
 private:
     Q_DISABLE_COPY(AbstractOutput)

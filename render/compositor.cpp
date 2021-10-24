@@ -516,7 +516,7 @@ int compositor::refreshRate() const
 {
     int max_refresh_rate = 60000;
     for (auto output : kwinApp()->platform->outputs()) {
-        auto const rate = output->refreshRate();
+        auto const rate = output->refresh_rate();
         if (rate > max_refresh_rate) {
             max_refresh_rate = rate;
         }

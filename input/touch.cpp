@@ -82,7 +82,7 @@ AbstractWaylandOutput* touch::get_output() const
 
     auto check_dimensions = [this](auto const& output) {
         auto const& size = control->size();
-        auto const& out_size = output->physicalSize();
+        auto const& out_size = output->physical_size();
         return std::round(size.width()) == std::round(out_size.width())
             && std::round(size.height()) == std::round(out_size.height());
     };
@@ -92,7 +92,7 @@ AbstractWaylandOutput* touch::get_output() const
     // Prefer the internal screen.
     for (auto& output : outputs) {
         auto wl_out = static_cast<AbstractWaylandOutput*>(output);
-        if (wl_out->isInternal()) {
+        if (wl_out->is_internal()) {
             // Only prefer it if the dimensions match.
             if (check_dimensions(wl_out)) {
                 return wl_out;

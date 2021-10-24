@@ -103,7 +103,7 @@ bool output::disable_native()
     return true;
 }
 
-void output::updateEnablement(bool enable)
+void output::update_enablement(bool enable)
 {
     if (!enable) {
         disable_native();
@@ -114,19 +114,19 @@ void output::updateEnablement(bool enable)
     }
 }
 
-void output::updateDpms(DpmsMode mode)
+void output::update_dpms(DpmsMode mode)
 {
     auto set_on = mode == DpmsMode::On;
 
     if (set_on) {
         compositor::self()->addRepaint(geometry());
-        dpmsSetOn();
+        dpms_set_on();
     } else if (disable_native()) {
-        dpmsSetOff(mode);
+        dpms_set_off(mode);
     }
 }
 
-void output::updateMode(int modeIndex)
+void output::update_mode(int mode_index)
 {
     // TODO(romangg): Determine target mode more precisly with semantic properties instead of index.
     wlr_output_mode* wlr_mode;
@@ -135,7 +135,7 @@ void output::updateMode(int modeIndex)
     auto old_mode = native->current_mode;
     wl_list_for_each(wlr_mode, &native->modes, link)
     {
-        if (count == modeIndex) {
+        if (count == mode_index) {
             wlr_output_set_mode(native, wlr_mode);
             if (wlr_output_test(native)) {
                 compositor::self()->addRepaint(geometry());
@@ -155,7 +155,7 @@ wl_output_transform to_wl_transform(base::wayland::output_transform tr)
     return static_cast<wl_output_transform>(tr);
 }
 
-void output::updateTransform(base::wayland::output_transform transform)
+void output::update_transform(base::wayland::output_transform transform)
 {
     auto old_transform = native->transform;
     wlr_output_set_transform(native, to_wl_transform(transform));
@@ -169,11 +169,12 @@ void output::updateTransform(base::wayland::output_transform transform)
     }
 }
 
-int output::gammaRampSize() const
+int output::gamma_ramp_size() const
 {
     return wlr_output_get_gamma_size(native);
 }
-bool output::setGammaRamp(GammaRamp const& gamma)
+
+bool output::set_gamma_ramp(GammaRamp const& gamma)
 {
     wlr_output_set_gamma(native, gamma.size(), gamma.red(), gamma.green(), gamma.blue());
 
@@ -240,13 +241,13 @@ output::output(wlr_output* wlr_out, backend* backend)
         }
     }
 
-    initInterfaces(wlr_out->name,
-                   wlr_out->make,
-                   wlr_out->model,
-                   wlr_out->serial,
-                   QSize(wlr_out->phys_width, wlr_out->phys_height),
-                   modes,
-                   current_mode.id != -1 ? &current_mode : nullptr);
+    init_interfaces(wlr_out->name,
+                    wlr_out->make,
+                    wlr_out->model,
+                    wlr_out->serial,
+                    QSize(wlr_out->phys_width, wlr_out->phys_height),
+                    modes,
+                    current_mode.id != -1 ? &current_mode : nullptr);
 
     create_lease_connector();
 }

@@ -144,7 +144,7 @@ void timespec_to_proto(std::chrono::nanoseconds const& time,
 
 void presentation::presented(render::wayland::output* output, presentation_data const& data)
 {
-    if (!output->base->isEnabled()) {
+    if (!output->base->is_enabled()) {
         // Output disabled, discards will be sent from Wrapland.
         return;
     }
