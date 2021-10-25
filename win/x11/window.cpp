@@ -1096,8 +1096,18 @@ void window::killWindow()
 
 void window::debug(QDebug& stream) const
 {
+    std::string type = "unmanaged";
+    std::string caption = "";
+    if (control) {
+        type = "managed";
+        caption = win::caption(this).toStdString();
+    }
+
     stream.nospace();
-    print<QDebug>(stream);
+    stream << "\'x11::window"
+           << "(" << QString::fromStdString(type) << "):" << xcb_window() << ";"
+           << ";WMCLASS:" << resourceClass() << ":" << resourceName()
+           << ";Caption:" << QString::fromStdString(caption) << "\'";
 }
 
 void window::doMinimize()
