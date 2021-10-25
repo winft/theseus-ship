@@ -17,7 +17,7 @@ namespace KWin::win::x11
 {
 
 template<typename Win>
-bool setup_unmanaged(Win* win, xcb_window_t w)
+Win* create_unmanaged_window(xcb_window_t w)
 {
     // Window types that are supported as unmanaged (mainly for compositing).
     NET::WindowTypes constexpr supported_default_types = NET::NormalMask | NET::DesktopMask
@@ -27,24 +27,26 @@ bool setup_unmanaged(Win* win, xcb_window_t w)
         | NET::NotificationMask | NET::ComboBoxMask | NET::DNDIconMask | NET::OnScreenDisplayMask
         | NET::CriticalNotificationMask;
 
-    win->supported_default_types = supported_default_types;
-    win->set_layer(win::layer::unmanaged);
-
-    QTimer::singleShot(50, win, &Win::setReadyForPainting);
-
     XServerGrabber xserverGrabber;
     Xcb::WindowAttributes attr(w);
     Xcb::WindowGeometry geo(w);
 
     if (attr.isNull() || attr->map_state != XCB_MAP_STATE_VIEWABLE) {
-        return false;
+        return nullptr;
     }
     if (attr->_class == XCB_WINDOW_CLASS_INPUT_ONLY) {
-        return false;
+        return nullptr;
     }
     if (geo.isNull()) {
-        return false;
+        return nullptr;
     }
+
+    auto win = new Win;
+
+    win->supported_default_types = supported_default_types;
+    win->set_layer(win::layer::unmanaged);
+
+    QTimer::singleShot(50, win, &Win::setReadyForPainting);
 
     // The window is also the frame.
     win->setWindowHandles(w);
@@ -88,7 +90,7 @@ bool setup_unmanaged(Win* win, xcb_window_t w)
     if (effects) {
         static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking();
     }
-    return true;
+    return win;
 }
 
 template<typename Win>
