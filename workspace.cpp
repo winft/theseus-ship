@@ -528,14 +528,17 @@ win::x11::window* Workspace::createClient(xcb_window_t w, bool is_mapped)
                 compositor,
                 &render::x11::compositor::updateClientCompositeBlocking);
     }
+
     connect(c,
             &win::x11::window::client_fullscreen_set,
             ScreenEdges::self(),
             &ScreenEdges::checkBlocking);
-    if (!win::x11::take_control(c, w, is_mapped)) {
+
+    if (!win::x11::setup_controlled_window(c, w, is_mapped)) {
         delete c;
         return nullptr;
     }
+
     addClient(c);
     return c;
 }

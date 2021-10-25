@@ -617,7 +617,7 @@ QRect place_on_taking_control(Win* win,
  * Returns false if KWin is not going to manage this window.
  */
 template<typename Win>
-bool take_control(Win* win, xcb_window_t w, bool isMapped)
+bool setup_controlled_window(Win* win, xcb_window_t w, bool isMapped)
 {
     Blocker blocker(workspace()->stacking_order);
 
