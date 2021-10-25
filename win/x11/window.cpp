@@ -21,7 +21,7 @@
 #include "win/rules.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
-#include "win/x11/geometrytip.h"
+#include "win/x11/geometry_tip.h"
 
 #include "decorations/window.h"
 #include "rules/rules.h"
@@ -1010,12 +1010,12 @@ void window::doSetDesktop([[maybe_unused]] int desktop, [[maybe_unused]] int was
     update_visibility(this);
 }
 
-Group const* window::group() const
+group const* window::group() const
 {
     return in_group;
 }
 
-Group* window::group()
+group* window::group()
 {
     return in_group;
 }

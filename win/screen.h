@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "focuschain.h"
+#include "focus_chain.h"
 #include "move.h"
 #include "net.h"
 #include "stacking.h"

@@ -157,7 +157,7 @@ public:
 
     int sm_stacking_order{-1};
 
-    Group* in_group{nullptr};
+    x11::group* in_group{nullptr};
 
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
 
@@ -201,8 +201,8 @@ public:
     QSize basicUnit() const override;
 
     // TODO: remove
-    win::x11::Group const* group() const override;
-    win::x11::Group* group() override;
+    x11::group const* group() const override;
+    x11::group* group() override;
 
     // When another window is created, checks if this window is a child for it.
     void checkTransient(Toplevel* window) override;

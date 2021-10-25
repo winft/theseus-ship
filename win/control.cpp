@@ -4,7 +4,8 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "control.h"
-#include "appmenu.h"
+
+#include "app_menu.h"
 #include "stacking.h"
 
 #include <config-kwin.h>

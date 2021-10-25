@@ -66,7 +66,7 @@ class transient;
 namespace x11
 {
 class client_machine;
-class Group;
+class group;
 }
 }
 
@@ -636,13 +636,13 @@ public:
      *
      * Mostly for X11 clients, holds the client group
      */
-    virtual win::x11::Group const* group() const;
+    virtual win::x11::group const* group() const;
     /**
      * Default implementation returns @c null.
      *
      * Mostly for X11 clients, holds the client group
      */
-    virtual win::x11::Group* group();
+    virtual win::x11::group* group();
 
     virtual bool supportsWindowRules() const;
 

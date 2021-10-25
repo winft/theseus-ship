@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwineffectquickview.h"
 
 #include "win/control.h"
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/remnant.h"
 #include "win/screen.h"
@@ -53,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/group.h"
 #include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
-#include "win/x11/window_property_notify_x11_filter.h"
+#include "win/x11/window_property_notify_filter.h"
 
 #include <QDebug>
 

@@ -1169,12 +1169,12 @@ bool Toplevel::groupTransient() const
     return false;
 }
 
-win::x11::Group const* Toplevel::group() const
+win::x11::group const* Toplevel::group() const
 {
     return nullptr;
 }
 
-win::x11::Group* Toplevel::group()
+win::x11::group* Toplevel::group()
 {
     return nullptr;
 }

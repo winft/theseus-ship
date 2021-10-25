@@ -34,11 +34,11 @@ namespace win::x11
 {
 class window;
 
-class Group
+class group
 {
 public:
-    Group(xcb_window_t leader);
-    ~Group();
+    group(xcb_window_t leader);
+    ~group();
     xcb_window_t leader() const;
     const win::x11::window* leaderClient() const;
     win::x11::window* leaderClient();
@@ -65,32 +65,32 @@ private:
     EffectWindowGroupImpl* effect_group;
 };
 
-inline xcb_window_t Group::leader() const
+inline xcb_window_t group::leader() const
 {
     return leader_wid;
 }
 
-inline const win::x11::window* Group::leaderClient() const
+inline const win::x11::window* group::leaderClient() const
 {
     return leader_client;
 }
 
-inline win::x11::window* Group::leaderClient()
+inline win::x11::window* group::leaderClient()
 {
     return leader_client;
 }
 
-inline std::vector<win::x11::window*> const& Group::members() const
+inline std::vector<win::x11::window*> const& group::members() const
 {
     return _members;
 }
 
-inline xcb_timestamp_t Group::userTime() const
+inline xcb_timestamp_t group::userTime() const
 {
     return user_time;
 }
 
-inline EffectWindowGroupImpl* Group::effectGroup()
+inline EffectWindowGroupImpl* group::effectGroup()
 {
     return effect_group;
 }

@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "appmenu.h"
+#include "app_menu.h"
 #include "deco.h"
 #include "placement.h"
 #include "screen.h"

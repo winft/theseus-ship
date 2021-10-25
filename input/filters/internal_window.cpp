@@ -14,7 +14,7 @@
 #include "screens.h"
 #include "wayland_server.h"
 #include "win/deco.h"
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "workspace.h"
 #include <input/qt_event.h>
 

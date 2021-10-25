@@ -6,7 +6,7 @@
 #pragma once
 
 #include "control.h"
-#include "focuschain.h"
+#include "focus_chain.h"
 #include "net.h"
 
 #include "rules/rules.h"

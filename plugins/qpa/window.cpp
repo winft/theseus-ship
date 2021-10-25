@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window.h"
 #include "screens.h"
 
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 
 #include <logging.h>
 

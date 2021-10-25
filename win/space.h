@@ -77,7 +77,7 @@ void update_tool_windows(Space* space, bool also_hide)
         return;
     }
 
-    x11::Group const* active_group = nullptr;
+    x11::group const* active_group = nullptr;
     auto active_window = space->activeClient();
 
     // Go up in transiency hiearchy, if the top is found, only tool transients for the top

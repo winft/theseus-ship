@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xcbutils.h"
 
 #include "win/controlling.h"
-#include "win/focuschain.h"
+#include "win/focus_chain.h"
 #include "win/layers.h"
 #include "win/meta.h"
 #include "win/scene.h"

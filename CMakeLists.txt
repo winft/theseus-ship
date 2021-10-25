@@ -467,23 +467,23 @@ set(kwin_SRCS
     virtualdesktops.cpp
     virtualdesktopsdbustypes.cpp
     was_user_interaction_x11_filter.cpp
-    win/appmenu.cpp
+    win/app_menu.cpp
     win/control.cpp
-    win/focuschain.cpp
-    win/internal_client.cpp
+    win/focus_chain.cpp
+    win/internal_window.cpp
     win/remnant.cpp
     win/stacking_order.cpp
     win/transient.cpp
     win/x11/client_machine.cpp
-    win/x11/geometrytip.cpp
+    win/x11/geometry_tip.cpp
     win/x11/group.cpp
     win/x11/netinfo.cpp
     win/x11/root_info_filter.cpp
     win/x11/space.cpp
     win/x11/stacking_tree.cpp
-    win/x11/syncalarmx11filter.cpp
+    win/x11/sync_alarm_filter.cpp
     win/x11/window.cpp
-    win/x11/window_property_notify_x11_filter.cpp
+    win/x11/window_property_notify_filter.cpp
     workspace.cpp
     xcbutils.cpp
     xwl/xwayland_interface.cpp

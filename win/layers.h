@@ -6,7 +6,7 @@
 #pragma once
 
 #include "controlling.h"
-#include "focuschain.h"
+#include "focus_chain.h"
 #include "meta.h"
 #include "stacking_order.h"
 #include "transient.h"

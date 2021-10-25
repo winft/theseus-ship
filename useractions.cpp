@@ -51,7 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kactivities/info.h>
 #endif
 
-#include "win/appmenu.h"
+#include "win/app_menu.h"
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/layers.h"

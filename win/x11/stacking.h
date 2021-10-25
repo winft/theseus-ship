@@ -20,7 +20,7 @@ std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
     std::deque<Toplevel*> layers[layer_count];
 
     // build the order from layers
-    QVector<QMap<Group*, layer>> minimum_layer(qMax(screens()->count(), 1));
+    QVector<QMap<group*, layer>> minimum_layer(qMax(screens()->count(), 1));
 
     for (auto const& win : list) {
         auto l = win->layer();
@@ -28,7 +28,7 @@ std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
         auto const screen = win->screen();
         auto c = qobject_cast<window*>(win);
 
-        QMap<Group*, layer>::iterator mLayer = minimum_layer[screen].find(c ? c->group() : nullptr);
+        QMap<group*, layer>::iterator mLayer = minimum_layer[screen].find(c ? c->group() : nullptr);
         if (mLayer != minimum_layer[screen].end()) {
             // If a window is raised above some other window in the same window group
             // which is in the ActiveLayer (i.e. it's fulscreened), make sure it stays

@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 #include "workspace.h"
 
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/x11/window.h"
 
 #include <kwinglplatform.h>

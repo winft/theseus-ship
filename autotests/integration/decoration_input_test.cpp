@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects.h>
 
 #include "win/deco.h"
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/move.h"
 #include "win/wayland/window.h"
 

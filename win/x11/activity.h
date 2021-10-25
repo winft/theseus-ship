@@ -11,7 +11,7 @@
 
 #include "activities.h"
 #include "atoms.h"
-#include "win/focuschain.h"
+#include "win/focus_chain.h"
 
 namespace KWin::win::x11
 {

@@ -11,7 +11,7 @@
 #include "toplevel.h"
 #include "virtualdesktops.h"
 #include "win/geo.h"
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/stacking_order.h"
 #include "workspace.h"
 

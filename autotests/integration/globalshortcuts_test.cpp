@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/input.h"
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/x11/window.h"
 

@@ -10,7 +10,7 @@
 
 #include "win/setup.h"
 #include "win/space.h"
-#include "win/x11/geometrytip.h"
+#include "win/x11/geometry_tip.h"
 
 #include <xcb/xcb_icccm.h>
 

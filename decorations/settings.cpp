@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "virtualdesktops.h"
 #include "workspace.h"
 
-#include "win/appmenu.h"
+#include "win/app_menu.h"
 
 #include <config-kwin.h>
 

@@ -9,7 +9,7 @@
 #include "stacking_tree.h"
 
 #include "toplevel.h"
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/stacking_order.h"
 #include "workspace.h"
 

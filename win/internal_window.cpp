@@ -18,7 +18,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "internal_client.h"
+#include "internal_window.h"
+
 #include "decorations/decorationbridge.h"
 #include "decorations/window.h"
 #include "workspace.h"

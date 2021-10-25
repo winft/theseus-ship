@@ -53,11 +53,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "was_user_interaction_x11_filter.h"
 #include "xcbutils.h"
 
-#include "win/appmenu.h"
+#include "win/app_menu.h"
 #include "win/controlling.h"
-#include "win/focuschain.h"
+#include "win/focus_chain.h"
 #include "win/input.h"
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/layers.h"
 #include "win/remnant.h"
 #include "win/setup.h"
@@ -72,7 +72,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/netinfo.h"
 #include "win/x11/space_areas.h"
 #include "win/x11/stacking_tree.h"
-#include "win/x11/syncalarmx11filter.h"
+#include "win/x11/sync_alarm_filter.h"
 #include "win/x11/transient.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
@@ -1641,7 +1641,7 @@ QRect Workspace::get_icon_geometry(Toplevel const* /*win*/) const
     return QRect();
 }
 
-win::x11::Group* Workspace::findGroup(xcb_window_t leader) const
+win::x11::group* Workspace::findGroup(xcb_window_t leader) const
 {
     Q_ASSERT(leader != XCB_WINDOW_NONE);
     for (auto it = groups.cbegin(); it != groups.cend(); ++it)
