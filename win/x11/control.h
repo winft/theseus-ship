@@ -11,7 +11,7 @@
 #include "geo.h"
 #include "meta.h"
 #include "netinfo.h"
-#include "render/compositor.h"
+#include "render/x11/compositor.h"
 #include "space.h"
 #include "window.h"
 #include "xcb.h"
@@ -626,6 +626,20 @@ bool setup_controlled_window(Win* win, xcb_window_t w, bool isMapped)
     if (attr.isNull() || windowGeometry.isNull()) {
         return false;
     }
+
+    setup_space_window_connections(workspace(), win);
+
+    if (auto compositor = render::x11::compositor::self()) {
+        QObject::connect(win,
+                         &win::x11::window::blockingCompositingChanged,
+                         compositor,
+                         &render::x11::compositor::updateClientCompositeBlocking);
+    }
+
+    QObject::connect(win,
+                     &win::x11::window::client_fullscreen_set,
+                     ScreenEdges::self(),
+                     &ScreenEdges::checkBlocking);
 
     // From this place on, manage() must not return false
     win->control.reset(new x11_control(win));
