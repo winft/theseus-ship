@@ -173,7 +173,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
     auto const eventType = e->response_type & ~0x80;
     switch (eventType) {
     case XCB_DESTROY_NOTIFY:
-        win::x11::release_unmanaged(win, ReleaseReason::Destroyed);
+        win->destroy();
         break;
     case XCB_UNMAP_NOTIFY: {
         // may cause leave event

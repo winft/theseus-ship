@@ -13,6 +13,7 @@
 #include "maximize.h"
 #include "meta.h"
 #include "transient.h"
+#include "unmanaged.h"
 
 #include "win/deco.h"
 #include "win/layers.h"
@@ -63,11 +64,14 @@ window::~window()
 
 bool window::isClient() const
 {
-    return true;
+    return static_cast<bool>(control);
 }
 
 xcb_window_t window::frameId() const
 {
+    if (!control) {
+        return Toplevel::frameId();
+    }
     return xcb_windows.outer;
 }
 
@@ -144,7 +148,7 @@ void window::checkNoBorder()
 
 bool window::wantsShadowToBeRendered() const
 {
-    return !control->fullscreen() && maximizeMode() != win::maximize_mode::full;
+    return control && !control->fullscreen() && maximizeMode() != win::maximize_mode::full;
 }
 
 QSize window::resizeIncrements() const
@@ -249,8 +253,10 @@ bool window::setupCompositing(bool add_full_damage)
         return false;
     }
 
-    // for internalKeep()
-    update_visibility(this);
+    if (control) {
+        // for internalKeep()
+        update_visibility(this);
+    }
 
     return true;
 }
@@ -259,8 +265,10 @@ void window::finishCompositing(ReleaseReason releaseReason)
 {
     Toplevel::finishCompositing(releaseReason);
 
-    // for safety in case KWin is just resizing the window
-    control->reset_have_resize_effect();
+    if (control) {
+        // for safety in case KWin is just resizing the window
+        control->reset_have_resize_effect();
+    }
 }
 
 void window::setBlockingCompositing(bool block)
@@ -276,6 +284,11 @@ void window::setBlockingCompositing(bool block)
 
 void window::damageNotifyEvent()
 {
+    if (!control) {
+        Toplevel::damageNotifyEvent();
+        return;
+    }
+
     if (isWaitingForMoveResizeSync()) {
         m_isDamaged = true;
         return;
@@ -296,6 +309,12 @@ void window::release_window(bool on_shutdown)
 {
     Q_ASSERT(!deleting);
     deleting = true;
+
+    if (!control) {
+        release_unmanaged(this,
+                          on_shutdown ? ReleaseReason::KWinShutsDown : ReleaseReason::Release);
+        return;
+    }
 
 #ifdef KWIN_BUILD_TABBOX
     auto tabbox = TabBox::TabBox::self();
@@ -423,6 +442,11 @@ void window::destroy()
 {
     assert(!deleting);
     deleting = true;
+
+    if (!control) {
+        release_unmanaged(this, ReleaseReason::Destroyed);
+        return;
+    }
 
 #ifdef KWIN_BUILD_TABBOX
     auto tabbox = TabBox::TabBox::self();
@@ -711,6 +735,9 @@ bool window::acceptsFocus() const
 
 bool window::isShown() const
 {
+    if (!control) {
+        return true;
+    }
     return !control->minimized() && !hidden;
 }
 

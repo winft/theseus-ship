@@ -148,7 +148,7 @@ public:
      * @param w The window id to search for
      * @return KWin::Unmanaged* Found Unmanaged or @c null if there is no Unmanaged with given Id.
      */
-    Toplevel* findUnmanaged(xcb_window_t w) const;
+    win::x11::window* findUnmanaged(xcb_window_t w) const;
     Toplevel* findToplevel(std::function<bool(Toplevel const*)> func) const;
     void forEachToplevel(std::function<void(Toplevel*)> func);
     /**
@@ -549,7 +549,7 @@ private:
     /// This is the right way to create a new client
     win::x11::window* createClient(xcb_window_t w, bool is_mapped);
     void addClient(win::x11::window* c);
-    Toplevel* createUnmanaged(xcb_window_t w);
+    win::x11::window* createUnmanaged(xcb_window_t w);
     void addUnmanaged(Toplevel* c);
 
     void closeActivePopup();
