@@ -519,14 +519,10 @@ win::x11::window* Workspace::createClient(xcb_window_t w, bool is_mapped)
 {
     Blocker blocker(stacking_order);
 
-    auto c = new win::x11::window();
-
-    if (!win::x11::setup_controlled_window(c, w, is_mapped)) {
-        delete c;
-        return nullptr;
+    auto c = win::x11::create_controlled_window<win::x11::window>(w, is_mapped);
+    if (c) {
+        addClient(c);
     }
-
-    addClient(c);
     return c;
 }
 

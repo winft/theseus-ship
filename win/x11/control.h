@@ -617,16 +617,17 @@ QRect place_on_taking_control(Win* win,
  * Returns false if KWin is not going to manage this window.
  */
 template<typename Win>
-bool setup_controlled_window(Win* win, xcb_window_t w, bool isMapped)
+Win* create_controlled_window(xcb_window_t w, bool isMapped)
 {
     Blocker blocker(workspace()->stacking_order);
 
     Xcb::WindowAttributes attr(w);
     Xcb::WindowGeometry windowGeometry(w);
     if (attr.isNull() || windowGeometry.isNull()) {
-        return false;
+        return nullptr;
     }
 
+    auto win = new Win;
     setup_space_window_connections(workspace(), win);
 
     if (auto compositor = render::x11::compositor::self()) {
@@ -1111,7 +1112,7 @@ bool setup_controlled_window(Win* win, xcb_window_t w, bool isMapped)
 
     Q_EMIT win->client_managing(win);
 
-    return true;
+    return win;
 }
 
 template<typename Space, typename Win>
