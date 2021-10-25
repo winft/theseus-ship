@@ -41,8 +41,6 @@ window::window()
     : Toplevel(new x11::transient(this))
     , motif_hints(atoms->motif_wm_hints)
 {
-    // So that decorations don't start with size being (0,0).
-    set_frame_geometry(QRect(0, 0, 100, 100));
 }
 
 window::~window()

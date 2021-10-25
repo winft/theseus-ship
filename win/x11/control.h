@@ -628,6 +628,10 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
     }
 
     auto win = new Win;
+
+    // So that decorations don't start with size being (0,0).
+    win->set_frame_geometry(QRect(0, 0, 100, 100));
+
     setup_space_window_connections(workspace(), win);
 
     if (auto compositor = render::x11::compositor::self()) {
