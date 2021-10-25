@@ -468,7 +468,6 @@ public Q_SLOTS:
     void updateClientArea();
 
 protected:
-    void setupClientConnections(Toplevel* window);
     void updateTabbox();
     virtual void update_space_area_from_windows(QRect const& desktop_area,
                                                 std::vector<QRect> const& screens_geos,

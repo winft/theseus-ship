@@ -14,6 +14,7 @@
 #include "wayland_server.h"
 #include "win/input.h"
 #include "win/screen.h"
+#include "win/setup.h"
 #include "win/stacking_order.h"
 #include "win/x11/space_areas.h"
 #include "win/x11/stacking_tree.h"
@@ -39,7 +40,7 @@ space::space()
             assert(!contains(m_windows, window));
 
             if (window->control && !window->layer_surface) {
-                setupClientConnections(window);
+                setup_space_window_connections(this, window);
                 window->updateDecoration(false);
                 win::update_layer(window);
 

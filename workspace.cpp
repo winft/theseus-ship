@@ -515,24 +515,12 @@ Workspace::~Workspace()
     _self = nullptr;
 }
 
-void Workspace::setupClientConnections(Toplevel* window)
-{
-    connect(window, &Toplevel::needsRepaint, m_compositor, [window] {
-        render::compositor::self()->schedule_repaint(window);
-    });
-    connect(window, &Toplevel::desktopPresenceChanged, this, &Workspace::desktopPresenceChanged);
-    connect(window,
-            &Toplevel::minimizedChanged,
-            this,
-            std::bind(&Workspace::clientMinimizedChanged, this, window));
-}
-
 win::x11::window* Workspace::createClient(xcb_window_t w, bool is_mapped)
 {
     Blocker blocker(stacking_order);
 
     auto c = new win::x11::window();
-    setupClientConnections(c);
+    win::setup_space_window_connections(this, c);
 
     if (auto compositor = render::x11::compositor::self()) {
         connect(c,
@@ -1485,7 +1473,7 @@ void Workspace::addInternalClient(win::internal_window* client)
     m_windows.push_back(client);
     m_allClients.push_back(client);
 
-    setupClientConnections(client);
+    win::setup_space_window_connections(this, client);
     win::update_layer(client);
 
     if (client->placeable()) {
