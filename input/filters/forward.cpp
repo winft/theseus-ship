@@ -6,6 +6,8 @@
 */
 #include "forward.h"
 
+#include "helpers.h"
+
 #include "../event.h"
 #include "../keyboard_redirect.h"
 #include "../qt_event.h"
@@ -31,7 +33,7 @@ bool forward_filter::key(key_event const& event)
     auto seat = waylandServer()->seat();
     kwinApp()->input->redirect->keyboard()->update();
     seat->setTimestamp(event.base.time_msec);
-    passToWaylandServer(event);
+    pass_to_wayland_server(event);
     return true;
 }
 

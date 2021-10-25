@@ -6,6 +6,8 @@
 */
 #include "tabbox.h"
 
+#include "helpers.h"
+
 #include "../pointer_redirect.h"
 #include "input/event.h"
 #include "input/qt_event.h"
@@ -48,7 +50,7 @@ bool tabbox_filter::key(key_event const& event)
     // pass the key event to the seat, so that it has a proper model of the currently hold keys
     // this is important for combinations like alt+shift to ensure that shift is not considered
     // pressed
-    passToWaylandServer(event);
+    pass_to_wayland_server(event);
 
     if (event.state == button_state::pressed) {
         TabBox::TabBox::self()->keyPress(kwinApp()->input->redirect->keyboardModifiers()

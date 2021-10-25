@@ -65,7 +65,7 @@ AbstractEglBackend::~AbstractEglBackend()
 void AbstractEglBackend::unbindWaylandDisplay()
 {
     if (eglUnbindWaylandDisplayWL && m_display != EGL_NO_DISPLAY) {
-        eglUnbindWaylandDisplayWL(m_display, WaylandServer::self()->display()->native());
+        eglUnbindWaylandDisplayWL(m_display, kwinApp()->get_wayland_server()->display()->native());
     }
 }
 
@@ -145,7 +145,7 @@ void AbstractEglBackend::initBufferAge()
 
 void AbstractEglBackend::initWayland()
 {
-    if (!WaylandServer::self()) {
+    if (!kwinApp()->get_wayland_server()) {
         return;
     }
     if (hasExtension(QByteArrayLiteral("EGL_WL_bind_wayland_display"))) {
@@ -153,12 +153,12 @@ void AbstractEglBackend::initWayland()
         eglUnbindWaylandDisplayWL = (eglUnbindWaylandDisplayWL_func)eglGetProcAddress("eglUnbindWaylandDisplayWL");
         eglQueryWaylandBufferWL = (eglQueryWaylandBufferWL_func)eglGetProcAddress("eglQueryWaylandBufferWL");
         // only bind if not already done
-        if (waylandServer()->display()->eglDisplay() != eglDisplay()) {
-            if (!eglBindWaylandDisplayWL(eglDisplay(), WaylandServer::self()->display()->native())) {
+        if (auto wl_display = waylandServer()->display(); wl_display->eglDisplay() != eglDisplay()) {
+            if (!eglBindWaylandDisplayWL(eglDisplay(), wl_display->native())) {
                 eglUnbindWaylandDisplayWL = nullptr;
                 eglQueryWaylandBufferWL = nullptr;
             } else {
-                waylandServer()->display()->setEglDisplay(eglDisplay());
+                wl_display->setEglDisplay(eglDisplay());
             }
         }
     }

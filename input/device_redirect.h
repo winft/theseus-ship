@@ -26,14 +26,22 @@ namespace input
 {
 class redirect;
 
+struct device_redirect_at {
+    QPointer<Toplevel> at;
+    QMetaObject::Connection surface_notifier;
+};
+
+struct device_redirect_focus {
+    QPointer<Toplevel> focus;
+    QPointer<Decoration::DecoratedClientImpl> decoration;
+    QPointer<QWindow> internalWindow;
+};
+
 class KWIN_EXPORT device_redirect : public QObject
 {
     Q_OBJECT
 public:
     ~device_redirect() override;
-    virtual void init();
-
-    void update();
 
     /**
      * @brief First Toplevel currently at the position of the input device
@@ -63,68 +71,35 @@ public:
      */
     QWindow* internalWindow() const;
 
-    virtual QPointF position() const = 0;
+    virtual QPointF position() const;
 
-    void setFocus(Toplevel* toplevel);
-    void setDecoration(Decoration::DecoratedClientImpl* decoration);
-    void setInternalWindow(QWindow* window);
-
-Q_SIGNALS:
-    void decorationChanged();
-
-protected:
-    device_redirect();
-
-    virtual void cleanupInternalWindow(QWindow* old, QWindow* now) = 0;
+    virtual void cleanupInternalWindow(QWindow* old, QWindow* now);
     virtual void cleanupDecoration(Decoration::DecoratedClientImpl* old,
-                                   Decoration::DecoratedClientImpl* now)
-        = 0;
+                                   Decoration::DecoratedClientImpl* now);
 
-    virtual void focusUpdate(Toplevel* old, Toplevel* now) = 0;
+    virtual void focusUpdate(Toplevel* old, Toplevel* now);
 
     /**
      * Certain input devices can be in a state of having no valid
      * position. An example are touch screens when no finger/pen
      * is resting on the surface (no touch point).
      */
-    virtual bool positionValid() const
-    {
-        return true;
-    }
-    virtual bool focusUpdatesBlocked()
-    {
-        return false;
-    }
+    virtual bool positionValid() const;
+    virtual bool focusUpdatesBlocked();
 
-    inline bool inited() const
-    {
-        return m_inited;
-    }
-    inline void setInited(bool set)
-    {
-        m_inited = set;
-    }
+    bool inited() const;
+    void setInited(bool set);
 
-private:
-    bool setAt(Toplevel* toplevel);
-    void updateFocus();
-    bool updateDecoration();
-    void updateInternalWindow(QWindow* window);
+    device_redirect_at m_at;
+    device_redirect_focus m_focus;
 
-    QWindow* findInternalWindow(const QPoint& pos) const;
+    bool m_inited{false};
 
-    struct {
-        QPointer<Toplevel> at;
-        QMetaObject::Connection surfaceCreatedConnection;
-    } m_at;
+Q_SIGNALS:
+    void decorationChanged();
 
-    struct {
-        QPointer<Toplevel> focus;
-        QPointer<Decoration::DecoratedClientImpl> decoration;
-        QPointer<QWindow> internalWindow;
-    } m_focus;
-
-    bool m_inited = false;
+protected:
+    device_redirect();
 };
 
 }

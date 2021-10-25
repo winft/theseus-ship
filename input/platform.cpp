@@ -6,7 +6,6 @@
 #include "platform.h"
 
 #include "cursor.h"
-#include "dbus/dbus.h"
 #include "dbus/device_manager.h"
 #include "global_shortcuts_manager.h"
 #include "keyboard.h"
@@ -39,85 +38,9 @@ platform::~platform()
     }
 }
 
-void platform::update_keyboard_leds(input::xkb::LEDs leds)
+void add_redirect(platform* platform, std::unique_ptr<redirect> redirect)
 {
-    for (auto& keyboard : keyboards) {
-        if (auto ctrl = keyboard->control) {
-            ctrl->update_leds(leds);
-        }
-    }
-}
-
-void platform::toggle_touchpads()
-{
-    auto changed{false};
-    touchpads_enabled = !touchpads_enabled;
-
-    for (auto& pointer : pointers) {
-        if (!pointer->control) {
-            continue;
-        }
-        auto& ctrl = pointer->control;
-        if (!ctrl->is_touchpad()) {
-            continue;
-        }
-
-        auto old_enabled = ctrl->is_enabled();
-        ctrl->set_enabled(touchpads_enabled);
-
-        if (old_enabled != ctrl->is_enabled()) {
-            changed = true;
-        }
-    }
-
-    if (changed) {
-        dbus::inform_touchpad_toggle(touchpads_enabled);
-    }
-}
-
-void platform::enable_touchpads()
-{
-    if (touchpads_enabled) {
-        return;
-    }
-    toggle_touchpads();
-}
-
-void platform::disable_touchpads()
-{
-    if (!touchpads_enabled) {
-        return;
-    }
-    toggle_touchpads();
-}
-
-void platform::start_interactive_window_selection(std::function<void(KWin::Toplevel*)> callback,
-                                                  QByteArray const& cursorName)
-{
-    if (!redirect) {
-        callback(nullptr);
-        return;
-    }
-    redirect->startInteractiveWindowSelection(callback, cursorName);
-}
-
-void platform::start_interactive_position_selection(std::function<void(QPoint const&)> callback)
-{
-    if (!redirect) {
-        callback(QPoint(-1, -1));
-        return;
-    }
-    redirect->startInteractivePositionSelection(callback);
-}
-
-void add_dbus(platform* platform)
-{
-    platform->dbus = std::make_unique<dbus::device_manager>(platform);
-}
-
-void add_redirect(platform* platform)
-{
-    platform->redirect = std::make_unique<input::redirect>();
+    platform->redirect = std::move(redirect);
     platform->redirect->shortcuts()->init();
 }
 

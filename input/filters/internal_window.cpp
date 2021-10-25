@@ -177,7 +177,7 @@ bool internal_window_filter::key(key_event const& event)
     auto internal_event = get_internal_key_event(event);
     if (QCoreApplication::sendEvent(window, &internal_event)) {
         waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
-        passToWaylandServer(event);
+        pass_to_wayland_server(event);
         return true;
     }
     return false;

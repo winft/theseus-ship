@@ -26,7 +26,7 @@ class global_shortcut;
  * For internal shortcut handling (those which are delivered inside KWin) QActions are used and
  * triggered if the shortcut matches. For external shortcut handling a DBus interface is used.
  */
-class global_shortcuts_manager : public QObject
+class KWIN_EXPORT global_shortcuts_manager : public QObject
 {
     Q_OBJECT
 public:

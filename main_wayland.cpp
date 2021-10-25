@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "seat/backend/wlroots/session.h"
 #include "input/backend/wlroots/platform.h"
 #include "input/wayland/cursor.h"
+#include "input/wayland/platform.h"
+#include "input/wayland/redirect.h"
 #include "input/dbus/tablet_mode_manager.h"
 #include "wayland_server.h"
 #include "xwl/xwayland.h"
@@ -163,6 +165,19 @@ ApplicationWayland::~ApplicationWayland()
     compositor.reset();
 }
 
+bool ApplicationWayland::is_screen_locked() const
+{
+    if (!server) {
+        return false;
+    }
+    return server->is_screen_locked();
+}
+
+WaylandServer* ApplicationWayland::get_wayland_server()
+{
+    return server.get();
+}
+
 debug::console* ApplicationWayland::create_debug_console()
 {
     return new debug::wayland_console;
@@ -181,14 +196,17 @@ void ApplicationWayland::start()
     auto session = new seat::backend::wlroots::session(backend->backend);
     this->session.reset(session);
     session->take_control();
-    input::add_redirect(input.get());
+
+    auto redirect = std::make_unique<input::wayland::redirect>();
+    auto redirect_ptr = redirect.get();
+
+    input::add_redirect(input.get(), std::move(redirect));
     input->cursor.reset(new input::wayland::cursor);
+    redirect_ptr->set_platform(static_cast<input::wayland::platform*>(input.get()));
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     // TODO(romangg): can be removed?
     gainRealTime(RealTimeFlags::ResetOnFork);
-
-    input->redirect->set_platform(input.get());
 
     try {
         render->init();
@@ -220,7 +238,7 @@ void ApplicationWayland::init_platforms()
     backend.reset(new platform_base::wlroots(waylandServer()->display()));
 
     input.reset(new input::backend::wlroots::platform(backend.get()));
-    input::add_dbus(input.get());
+    input::wayland::add_dbus(input.get());
 
     render.reset(new render::backend::wlroots::backend(backend.get(), this));
     platform = render.get();

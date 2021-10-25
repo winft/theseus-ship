@@ -305,7 +305,7 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
         break;
     }
     QVERIFY(lockStateChangedSpy.wait());
-    QVERIFY(!waylandServer()->isScreenLocked());
+    QVERIFY(!kwinApp()->is_screen_locked());
 }
 
 void PlasmaWindowTest::testDestroyedButNotUnmapped()

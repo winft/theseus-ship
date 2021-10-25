@@ -7,6 +7,7 @@
 */
 #include "dpms.h"
 
+#include "main.h"
 #include "platform.h"
 #include "wayland_server.h"
 

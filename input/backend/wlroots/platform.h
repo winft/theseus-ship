@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "input/platform.h"
+#include "input/wayland/platform.h"
 #include "platform/wlroots.h"
 
 #include <kwin_export.h>
@@ -28,7 +28,7 @@ inline libinput_device* get_libinput_device(Dev dev)
     return nullptr;
 }
 
-class KWIN_EXPORT platform : public input::platform
+class KWIN_EXPORT platform : public input::wayland::platform
 {
     Q_OBJECT
 public:

@@ -8,6 +8,8 @@
 
 #include "input/dbus/device.h"
 #include "input/dbus/device_manager.h"
+#include "input/wayland/platform.h"
+#include "input/wayland/redirect.h"
 #include "main.h"
 
 #include <QMetaProperty>
@@ -21,7 +23,8 @@ static const quint32 s_clientBitMask = 0x0000FFFF;
 input_device_model::input_device_model(QObject* parent)
     : QAbstractItemModel(parent)
 {
-    auto& platform = kwinApp()->input->redirect->platform;
+    auto& platform
+        = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get())->platform;
 
     for (auto& dev : platform->dbus->devices) {
         m_devices.push_back(dev);
@@ -35,7 +38,9 @@ input_device_model::input_device_model(QObject* parent)
                      &input::dbus::device_manager::deviceAdded,
                      this,
                      [this](auto const& sys_name) {
-                         for (auto& dev : kwinApp()->input->redirect->platform->dbus->devices) {
+                         auto redirect = static_cast<input::wayland::redirect*>(
+                             kwinApp()->input->redirect.get());
+                         for (auto& dev : redirect->platform->dbus->devices) {
                              if (dev->sysName() != sys_name) {
                                  continue;
                              }

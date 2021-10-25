@@ -404,57 +404,23 @@ set(kwin_SRCS
     input/device_redirect.cpp
     input/event_filter.cpp
     input/event_spy.cpp
-    input/filters/decoration_event.cpp
     input/filters/dpms.cpp
-    input/filters/drag_and_drop.cpp
-    input/filters/effects.cpp
-    input/filters/fake_tablet.cpp
-    input/filters/forward.cpp
-    input/filters/global_shortcut.cpp
-    input/filters/helpers.cpp
-    input/filters/internal_window.cpp
-    input/filters/lock_screen.cpp
-    input/filters/move_resize.cpp
-    input/filters/popup.cpp
-    input/filters/screen_edge.cpp
-    input/filters/terminate_server.cpp
-    input/filters/virtual_terminal.cpp
-    input/filters/window_action.cpp
-    input/filters/window_selector.cpp
-    input/keyboard.cpp
     input/keyboard_redirect.cpp
     input/platform.cpp
-    input/pointer.cpp
     input/pointer_redirect.cpp
     input/redirect.cpp
-    input/switch.cpp
     input/tablet_redirect.cpp
-    input/touch.cpp
     input/touch_redirect.cpp
-    input/control/device.cpp
-    input/control/keyboard.cpp
-    input/control/pointer.cpp
-    input/control/switch.cpp
-    input/control/touch.cpp
-    input/dbus/device.cpp
-    input/dbus/device_manager.cpp
-    input/dbus/keyboard_layout.cpp
-    input/keyboard_layout_switching.cpp
-    input/spies/keyboard_layout.cpp
-    input/spies/keyboard_repeat.cpp
     input/spies/modifier_only_shortcuts.cpp
-    input/spies/touch_hide_cursor.cpp
     input/cursor.cpp
-    input/wayland/cursor_image.cpp
-    input/wayland/cursor.cpp
     input/cursor_shape.cpp
     input/event.cpp
     input/gestures.cpp
     input/global_shortcut.cpp
     input/global_shortcuts_manager.cpp
     input/logging.cpp
+    input/x11/redirect.cpp
     input/qt_event.cpp
-    input/wayland/cursor_theme.cpp
     input/xkb.cpp
     killwindow.cpp
     layers.cpp
@@ -669,7 +635,6 @@ endif()
 
 if (KWIN_BUILD_TABBOX)
     target_sources(kwin PRIVATE
-        input/filters/tabbox.cpp
         tabbox/clientmodel.cpp
         tabbox/desktopchain.cpp
         tabbox/desktopmodel.cpp
@@ -797,9 +762,50 @@ set(kwin_WAYLAND_SRCS
    input/backend/wlroots/control/pointer.cpp
    input/backend/wlroots/control/switch.cpp
    input/backend/wlroots/control/touch.cpp
+   input/control/device.cpp
+   input/control/keyboard.cpp
+   input/control/pointer.cpp
+   input/control/switch.cpp
+   input/control/touch.cpp
+   input/dbus/device.cpp
+   input/dbus/device_manager.cpp
+   input/dbus/keyboard_layout.cpp
    input/dbus/tablet_mode_manager.cpp
+   input/filters/decoration_event.cpp
+   input/filters/drag_and_drop.cpp
+   input/filters/effects.cpp
+   input/filters/fake_tablet.cpp
+   input/filters/forward.cpp
+   input/filters/global_shortcut.cpp
+   input/filters/helpers.cpp
+   input/filters/internal_window.cpp
+   input/filters/lock_screen.cpp
+   input/filters/move_resize.cpp
+   input/filters/popup.cpp
+   input/filters/screen_edge.cpp
+   input/filters/terminate_server.cpp
+   input/filters/virtual_terminal.cpp
+   input/filters/window_action.cpp
+   input/filters/window_selector.cpp
+   input/spies/keyboard_layout.cpp
+   input/spies/keyboard_repeat.cpp
+   input/spies/touch_hide_cursor.cpp
    input/spies/tablet_mode_switch.cpp
+   input/wayland/cursor.cpp
+   input/wayland/cursor_image.cpp
+   input/wayland/cursor_theme.cpp
+   input/wayland/keyboard_redirect.cpp
+   input/wayland/platform.cpp
+   input/wayland/pointer_redirect.cpp
+   input/wayland/redirect.cpp
+   input/wayland/tablet_redirect.cpp
+   input/wayland/touch_redirect.cpp
+   input/keyboard.cpp
+   input/keyboard_layout_switching.cpp
    input/logging.cpp
+   input/pointer.cpp
+   input/switch.cpp
+   input/touch.cpp
    linux_dmabuf.cpp
    platform/wlroots.cpp
    platform/wlroots.cpp
@@ -810,6 +816,13 @@ set(kwin_WAYLAND_SRCS
    render/backend/wlroots/output.cpp
    seat/backend/wlroots/session.cpp
 )
+
+if (KWIN_BUILD_TABBOX)
+  set(kwin_WAYLAND_SRCS
+    ${kwin_WAYLAND_SRCS}
+    input/filters/tabbox.cpp
+  )
+endif()
 
 ecm_qt_declare_logging_category(kwin_WAYLAND_SRCS
     HEADER

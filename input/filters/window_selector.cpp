@@ -6,6 +6,8 @@
 */
 #include "window_selector.h"
 
+#include "helpers.h"
+
 #include "../keyboard_redirect.h"
 #include "../pointer_redirect.h"
 #include "input/event.h"
@@ -58,7 +60,7 @@ bool window_selector_filter::key(key_event const& event)
     }
 
     waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
-    passToWaylandServer(event);
+    pass_to_wayland_server(event);
 
     if (event.state == button_state::pressed) {
         auto const qt_key = key_to_qt_key(event.keycode);

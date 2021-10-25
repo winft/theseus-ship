@@ -15,8 +15,6 @@ namespace KWin::input
 {
 
 class keyboard;
-class keyboard_layout_spy;
-class modifiers_changed_spy;
 class redirect;
 
 class KWIN_EXPORT keyboard_redirect : public QObject
@@ -26,35 +24,31 @@ public:
     explicit keyboard_redirect(input::redirect* parent);
     ~keyboard_redirect() override;
 
-    void init();
-
     input::xkb* xkb() const;
     Qt::KeyboardModifiers modifiers() const;
     Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const;
 
-    void update();
+    virtual void update();
 
-    void process_key(key_event const& event);
-    void process_key_repeat(uint32_t key, uint32_t time);
+    virtual void process_key(key_event const& event);
+    virtual void process_key_repeat(uint32_t key, uint32_t time);
 
     void process_modifiers(modifiers_event const& event);
-    void processModifiers(uint32_t modsDepressed,
-                          uint32_t modsLatched,
-                          uint32_t modsLocked,
-                          uint32_t group);
+    virtual void processModifiers(uint32_t modsDepressed,
+                                  uint32_t modsLatched,
+                                  uint32_t modsLocked,
+                                  uint32_t group);
 
-    void processKeymapChange(int fd, uint32_t size);
+    virtual void processKeymapChange(int fd, uint32_t size);
 
 Q_SIGNALS:
     void ledsChanged(input::xkb::LEDs);
 
-private:
+protected:
+    std::unique_ptr<input::xkb> m_xkb;
+
     input::redirect* redirect;
     bool m_inited = false;
-    QScopedPointer<input::xkb> m_xkb;
-    QMetaObject::Connection m_activeClientSurfaceChangedConnection;
-    modifiers_changed_spy* modifiers_spy = nullptr;
-    keyboard_layout_spy* m_keyboardLayout = nullptr;
 };
 
 }

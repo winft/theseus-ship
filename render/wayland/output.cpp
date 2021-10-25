@@ -147,7 +147,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
         if (!win->readyForPainting()) {
             windows.erase(std::remove(windows.begin(), windows.end(), win), windows.end());
         }
-        if (waylandServer()->isScreenLocked() && !win->isLockScreen() && !win->isInputMethod()) {
+        if (kwinApp()->is_screen_locked() && !win->isLockScreen() && !win->isInputMethod()) {
             windows.erase(std::remove(windows.begin(), windows.end(), win), windows.end());
         }
     }

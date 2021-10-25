@@ -8,9 +8,10 @@
 
 #include "input/platform.h"
 #include "input/pointer.h"
-#include "input/redirect.h"
 #include "input/spies/tablet_mode_switch.h"
 #include "input/touch.h"
+#include "input/wayland/platform.h"
+#include "input/wayland/redirect.h"
 
 #include "main.h"
 
@@ -27,27 +28,36 @@ public:
         : QObject(parent)
         , m_parent(parent)
     {
-        auto& plat = kwinApp()->input->redirect->platform;
-        connect(
-            plat, &input::platform::pointer_added, this, &tablet_mode_touchpad_removed_spy::check);
+        auto& plat
+            = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get())->platform;
         connect(plat,
-                &input::platform::pointer_removed,
+                &input::wayland::platform::pointer_added,
                 this,
                 &tablet_mode_touchpad_removed_spy::check);
-        connect(
-            plat, &input::platform::touch_added, this, &tablet_mode_touchpad_removed_spy::check);
-        connect(
-            plat, &input::platform::touch_removed, this, &tablet_mode_touchpad_removed_spy::check);
+        connect(plat,
+                &input::wayland::platform::pointer_removed,
+                this,
+                &tablet_mode_touchpad_removed_spy::check);
+        connect(plat,
+                &input::wayland::platform::touch_added,
+                this,
+                &tablet_mode_touchpad_removed_spy::check);
+        connect(plat,
+                &input::wayland::platform::touch_removed,
+                this,
+                &tablet_mode_touchpad_removed_spy::check);
         check();
     }
 
     void check()
     {
-        if (!kwinApp()->input->redirect->platform) {
+        auto& plat
+            = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get())->platform;
+        if (!plat) {
             return;
         }
-        auto has_touch = !kwinApp()->input->redirect->platform->touchs.empty();
-        auto has_pointer = !kwinApp()->input->redirect->platform->pointers.empty();
+        auto has_touch = !plat->touchs.empty();
+        auto has_pointer = !plat->pointers.empty();
         m_parent->setTabletModeAvailable(has_touch);
         m_parent->setIsTablet(has_touch && !has_pointer);
     }
@@ -58,10 +68,12 @@ private:
 
 tablet_mode_manager::tablet_mode_manager()
 {
-    if (kwinApp()->input->redirect->hasTabletModeSwitch()) {
-        kwinApp()->input->redirect->installInputEventSpy(new tablet_mode_switch_spy(this));
+    auto redirect = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get());
+
+    if (redirect->has_tablet_mode_switch()) {
+        redirect->installInputEventSpy(new tablet_mode_switch_spy(this));
     } else {
-        hasTabletModeInputChanged(false);
+        redirect->has_tablet_mode_switch_changed(false);
     }
 
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin"),
@@ -70,10 +82,10 @@ tablet_mode_manager::tablet_mode_manager()
                                                  QDBusConnection::ExportAllProperties
                                                      | QDBusConnection::ExportAllSignals);
 
-    connect(kwinApp()->input->redirect.get(),
-            &input::redirect::hasTabletModeSwitchChanged,
-            this,
-            &tablet_mode_manager::hasTabletModeInputChanged);
+    QObject::connect(redirect,
+                     &input::wayland::redirect::has_tablet_mode_switch_changed,
+                     this,
+                     &tablet_mode_manager::hasTabletModeInputChanged);
 }
 
 void tablet_mode_manager::hasTabletModeInputChanged(bool set)
@@ -84,13 +96,14 @@ void tablet_mode_manager::hasTabletModeInputChanged(bool set)
     } else {
         auto setupDetector = [this] {
             auto spy = new tablet_mode_touchpad_removed_spy(this);
-            connect(kwinApp()->input->redirect.get(),
-                    &input::redirect::hasTabletModeSwitchChanged,
-                    spy,
-                    [spy](bool set) {
-                        if (set)
-                            spy->deleteLater();
-                    });
+            QObject::connect(
+                static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get()),
+                &input::wayland::redirect::has_tablet_mode_switch_changed,
+                spy,
+                [spy](bool set) {
+                    if (set)
+                        spy->deleteLater();
+                });
         };
         setupDetector();
     }

@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../effects.h"
 #include "../../input/backend/wlroots/platform.h"
 #include "../../input/wayland/cursor.h"
+#include "../../input/wayland/platform.h"
+#include "../../input/wayland/redirect.h"
 #include "../../platform.h"
 #include "../../render/wayland/compositor.h"
 #include "../../seat/backend/wlroots/session.h"
@@ -133,6 +135,19 @@ WaylandTestApplication::~WaylandTestApplication()
     compositor.reset();
 }
 
+bool WaylandTestApplication::is_screen_locked() const
+{
+    if (!server) {
+        return false;
+    }
+    return server->is_screen_locked();
+}
+
+WaylandServer* WaylandTestApplication::get_wayland_server()
+{
+    return server.get();
+}
+
 debug::console* WaylandTestApplication::create_debug_console()
 {
     return new debug::wayland_console;
@@ -146,14 +161,18 @@ void WaylandTestApplication::start()
     wlr_headless_add_output(headless_backend, 1280, 1024);
     base->init(headless_backend);
     input.reset(new input::backend::wlroots::platform(base.get()));
-    input::add_dbus(input.get());
+    input::wayland::add_dbus(input.get());
 
     createOptions();
 
     session.reset(new seat::backend::wlroots::session(headless_backend));
-    input::add_redirect(input.get());
+
+    auto redirect = std::make_unique<input::wayland::redirect>();
+    auto redirect_ptr = redirect.get();
+
+    input::add_redirect(input.get(), std::move(redirect));
     input->cursor.reset(new input::wayland::cursor);
-    input->redirect->set_platform(input.get());
+    redirect_ptr->set_platform(static_cast<input::wayland::platform*>(input.get()));
 
     keyboard = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_KEYBOARD);
     pointer = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_POINTER);

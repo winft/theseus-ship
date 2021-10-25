@@ -28,5 +28,7 @@ std::pair<bool, bool> perform_mouse_modifier_and_window_action(button_event cons
 std::pair<bool, bool> perform_wheel_action(axis_event const& event, Toplevel* window);
 std::pair<bool, bool> perform_wheel_and_window_action(axis_event const& event, Toplevel* window);
 
+void pass_to_wayland_server(key_event const& event);
+
 }
 }

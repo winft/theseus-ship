@@ -11,7 +11,7 @@
 namespace KWin::input
 {
 
-class tabbox_filter : public event_filter
+class KWIN_EXPORT tabbox_filter : public event_filter
 {
 public:
     bool key(key_event const& event) override;

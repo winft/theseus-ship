@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
+#include "input/wayland/device_redirect.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
@@ -142,7 +143,7 @@ void TestWindowSelection::testSelectOnWindowPointer()
     QVERIFY(!kwinApp()->input->redirect->pointer()->focus());
 
     // updating the pointer should not change anything
-    kwinApp()->input->redirect->pointer()->update();
+    input::wayland::device_redirect_update(kwinApp()->input->redirect->pointer());
     QVERIFY(!kwinApp()->input->redirect->pointer()->focus());
     // updating keyboard should also not change
     kwinApp()->input->redirect->keyboard()->update();
@@ -479,7 +480,7 @@ void TestWindowSelection::testSelectPointPointer()
     QVERIFY(!kwinApp()->input->redirect->pointer()->focus());
 
     // updating the pointer should not change anything
-    kwinApp()->input->redirect->pointer()->update();
+    input::wayland::device_redirect_update(kwinApp()->input->redirect->pointer());
     QVERIFY(!kwinApp()->input->redirect->pointer()->focus());
     // updating keyboard should also not change
     kwinApp()->input->redirect->keyboard()->update();

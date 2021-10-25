@@ -145,12 +145,6 @@ public:
     }
 };
 
-WaylandServer* WaylandServer::s_self{nullptr};
-WaylandServer* WaylandServer::self()
-{
-    return s_self;
-}
-
 WaylandServer::WaylandServer(InitializationFlags flags)
     : m_display(std::make_unique<KWinDisplay>())
     , globals{std::make_unique<Wrapland::Server::globals>()}
@@ -158,9 +152,6 @@ WaylandServer::WaylandServer(InitializationFlags flags)
 
 {
     qRegisterMetaType<Wrapland::Server::Output::DpmsMode>();
-
-    assert(!s_self);
-    s_self = this;
 }
 
 WaylandServer::WaylandServer(std::string const& socket, InitializationFlags flags)
@@ -228,7 +219,6 @@ void WaylandServer::terminateClientConnections()
 void WaylandServer::create_globals()
 {
     if (!m_display->running()) {
-        s_self = nullptr;
         qCCritical(KWIN_CORE) << "Wayland server failed to start.";
         throw std::exception();
     }
@@ -874,7 +864,7 @@ Toplevel* WaylandServer::findToplevel(Surface* surface) const
     return find_window(surface);
 }
 
-bool WaylandServer::isScreenLocked() const
+bool WaylandServer::is_screen_locked() const
 {
     if (!hasScreenLockerIntegration()) {
         return false;

@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "linux_dmabuf.h"
 
+#include "main.h"
 #include "wayland_server.h"
 
 #include <unistd.h>

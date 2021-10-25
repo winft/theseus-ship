@@ -521,7 +521,7 @@ bool wait_for_destroyed(Toplevel* window)
 
 void lock_screen()
 {
-    QVERIFY(!waylandServer()->isScreenLocked());
+    QVERIFY(!kwinApp()->is_screen_locked());
 
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
@@ -532,7 +532,7 @@ void lock_screen()
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
     QCOMPARE(lockStateChangedSpy.count(), 1);
 
-    QVERIFY(waylandServer()->isScreenLocked());
+    QVERIFY(kwinApp()->is_screen_locked());
     QVERIFY(lockWatcherSpy.wait());
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 2);
@@ -575,7 +575,7 @@ void unlock_screen()
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 1);
 
-    QVERIFY(!waylandServer()->isScreenLocked());
+    QVERIFY(!kwinApp()->is_screen_locked());
 
     QVERIFY(!ScreenLockerWatcher::self()->isLocked());
 }

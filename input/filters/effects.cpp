@@ -6,6 +6,8 @@
 */
 #include "effects.h"
 
+#include "helpers.h"
+
 #include "../../effects.h"
 #include "wayland_server.h"
 #include <input/qt_event.h>
@@ -48,7 +50,7 @@ bool effects_filter::key(key_event const& event)
         return false;
     }
     waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
-    passToWaylandServer(event);
+    pass_to_wayland_server(event);
     auto qt_event = key_to_qt_event(event);
     static_cast<EffectsHandlerImpl*>(effects)->grabbedKeyboardEvent(&qt_event);
     return true;

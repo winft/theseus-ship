@@ -12,18 +12,13 @@
 #include <kwin_export.h>
 #include <kwinglobals.h>
 
-#include <KConfigWatcher>
 #include <KSharedConfig>
 
 #include <QAction>
 #include <QObject>
 #include <QPoint>
 #include <memory>
-
-namespace Wrapland::Server
-{
-class FakeInput;
-}
+#include <vector>
 
 class KGlobalAccelInterface;
 
@@ -36,7 +31,6 @@ namespace input
 class event_filter;
 class event_spy;
 class global_shortcuts_manager;
-class platform;
 class window_selector_filter;
 
 class keyboard_redirect;
@@ -81,10 +75,7 @@ public:
         Tip,
     };
 
-    redirect();
     ~redirect() override;
-
-    void set_platform(input::platform* platform);
 
     /**
      * @return const QPointF& The current global pointer position
@@ -198,7 +189,7 @@ public:
     template<class UnaryPredicate>
     void processFilters(UnaryPredicate function)
     {
-        std::any_of(m_filters.constBegin(), m_filters.constEnd(), function);
+        std::any_of(m_filters.cbegin(), m_filters.cend(), function);
     }
 
     /**
@@ -217,7 +208,7 @@ public:
     template<class UnaryFunction>
     void processSpies(UnaryFunction function)
     {
-        std::for_each(m_spies.constBegin(), m_spies.constEnd(), function);
+        std::for_each(m_spies.cbegin(), m_spies.cend(), function);
     }
 
     keyboard_redirect* keyboard() const
@@ -237,14 +228,10 @@ public:
         return m_touch.get();
     }
 
-    bool hasTabletModeSwitch();
-
-    void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
-                                         const QByteArray& cursorName);
-    void startInteractivePositionSelection(std::function<void(const QPoint&)> callback);
-    bool isSelectingWindow() const;
-
-    input::platform* platform{nullptr};
+    virtual void startInteractiveWindowSelection(std::function<void(KWin::Toplevel*)> callback,
+                                                 QByteArray const& cursorName);
+    virtual void startInteractivePositionSelection(std::function<void(QPoint const&)> callback);
+    virtual bool isSelectingWindow() const;
 
 Q_SIGNALS:
     /**
@@ -278,16 +265,12 @@ Q_SIGNALS:
      */
     void keyStateChanged(quint32 keyCode, redirect::KeyboardKeyState state);
 
-    void hasTabletModeSwitchChanged(bool set);
+protected:
+    redirect(keyboard_redirect* keyboard,
+             pointer_redirect* pointer,
+             tablet_redirect* tablet,
+             touch_redirect* touch);
 
-private Q_SLOTS:
-    void handleInputConfigChanged(const KConfigGroup& group);
-
-private:
-    void setupTouchpadShortcuts();
-    void setupWorkspace();
-    void reconfigure();
-    void setupInputFilters();
     void installInputEventFilter(event_filter* filter);
 
     std::unique_ptr<keyboard_redirect> m_keyboard;
@@ -295,13 +278,11 @@ private:
     std::unique_ptr<tablet_redirect> m_tablet;
     std::unique_ptr<touch_redirect> m_touch;
 
+private:
     global_shortcuts_manager* m_shortcuts;
-    window_selector_filter* m_windowSelector = nullptr;
-    KConfigWatcher::Ptr m_inputConfigWatcher;
-    std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
 
-    QVector<event_filter*> m_filters;
-    QVector<event_spy*> m_spies;
+    std::vector<event_filter*> m_filters;
+    std::vector<event_spy*> m_spies;
 
     friend class DecorationEventFilter;
     friend class InternalWindowEventFilter;

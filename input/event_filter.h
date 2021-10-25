@@ -64,9 +64,6 @@ public:
     virtual bool tabletPadButtonEvent(const QSet<uint>& buttons);
     virtual bool tabletPadStripEvent(int number, int position, bool isFinger);
     virtual bool tabletPadRingEvent(int number, int position, bool isFinger);
-
-protected:
-    void passToWaylandServer(key_event const& event);
 };
 
 }

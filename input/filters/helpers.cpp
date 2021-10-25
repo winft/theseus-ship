@@ -8,12 +8,16 @@
 
 #include "main.h"
 #include "options.h"
+#include "wayland_server.h"
 #include "win/input.h"
 #include "workspace.h"
 #include <input/event.h>
 #include <input/keyboard_redirect.h>
 #include <input/pointer_redirect.h>
 #include <input/qt_event.h>
+
+#include <Wrapland/Server/keyboard_pool.h>
+#include <Wrapland/Server/seat.h>
 
 namespace KWin::input
 {
@@ -55,7 +59,8 @@ std::pair<bool, bool> do_perform_mouse_action(Options::MouseCommand command, Top
                               command, kwinApp()->input->redirect->pointer()->pos().toPoint()));
 }
 
-std::pair<bool, bool> perform_mouse_modifier_action(button_event const& event, Toplevel* window)
+std::pair<bool, bool> KWIN_EXPORT perform_mouse_modifier_action(button_event const& event,
+                                                                Toplevel* window)
 {
     auto command = Options::MouseNothing;
     auto was_action = get_modifier_command(event.key, command);
@@ -63,8 +68,8 @@ std::pair<bool, bool> perform_mouse_modifier_action(button_event const& event, T
     return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
 }
 
-std::pair<bool, bool> perform_mouse_modifier_and_window_action(button_event const& event,
-                                                               Toplevel* window)
+std::pair<bool, bool> KWIN_EXPORT
+perform_mouse_modifier_and_window_action(button_event const& event, Toplevel* window)
 {
     auto command = Options::MouseNothing;
     auto was_action = get_modifier_command(event.key, command);
@@ -97,7 +102,7 @@ bool get_wheel_modifier_command(axis_orientation orientation,
     return true;
 }
 
-std::pair<bool, bool> perform_wheel_action(axis_event const& event, Toplevel* window)
+std::pair<bool, bool> KWIN_EXPORT perform_wheel_action(axis_event const& event, Toplevel* window)
 {
     auto command = Options::MouseNothing;
     auto was_action = get_wheel_modifier_command(event.orientation, event.delta, command);
@@ -105,7 +110,8 @@ std::pair<bool, bool> perform_wheel_action(axis_event const& event, Toplevel* wi
     return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
 }
 
-std::pair<bool, bool> perform_wheel_and_window_action(axis_event const& event, Toplevel* window)
+std::pair<bool, bool> KWIN_EXPORT perform_wheel_and_window_action(axis_event const& event,
+                                                                  Toplevel* window)
 {
     auto command = Options::MouseNothing;
     auto was_action = get_wheel_modifier_command(event.orientation, event.delta, command);
@@ -115,6 +121,22 @@ std::pair<bool, bool> perform_wheel_and_window_action(axis_event const& event, T
     }
 
     return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
+}
+
+void pass_to_wayland_server(key_event const& event)
+{
+    assert(waylandServer());
+
+    switch (event.state) {
+    case button_state::pressed:
+        waylandServer()->seat()->keyboards().key_pressed(event.keycode);
+        break;
+    case button_state::released:
+        waylandServer()->seat()->keyboards().key_released(event.keycode);
+        break;
+    default:
+        break;
+    }
 }
 
 }

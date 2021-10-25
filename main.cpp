@@ -262,6 +262,16 @@ void Application::setupLocalizedString()
     KLocalizedString::setApplicationDomain("kwin");
 }
 
+bool Application::is_screen_locked() const
+{
+    return false;
+}
+
+WaylandServer* Application::get_wayland_server()
+{
+    return nullptr;
+}
+
 void Application::createAtoms()
 {
     atoms = new Atoms;
