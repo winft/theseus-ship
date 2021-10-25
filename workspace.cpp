@@ -560,8 +560,7 @@ Toplevel* Workspace::createUnmanaged(xcb_window_t w)
         }
     }
     auto c = new Toplevel();
-    win::x11::setup_unmanaged(c);
-    if (!win::x11::track(c, w)) {
+    if (!win::x11::setup_unmanaged(c, w)) {
         delete c;
         return nullptr;
     }

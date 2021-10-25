@@ -17,7 +17,7 @@ namespace KWin::win::x11
 {
 
 template<typename Win>
-void setup_unmanaged(Win* win)
+bool setup_unmanaged(Win* win, xcb_window_t w)
 {
     // Window types that are supported as unmanaged (mainly for compositing).
     NET::WindowTypes constexpr supported_default_types = NET::NormalMask | NET::DesktopMask
@@ -31,11 +31,7 @@ void setup_unmanaged(Win* win)
     win->set_layer(win::layer::unmanaged);
 
     QTimer::singleShot(50, win, &Win::setReadyForPainting);
-}
 
-template<typename Win>
-bool track(Win* win, xcb_window_t w)
-{
     XServerGrabber xserverGrabber;
     Xcb::WindowAttributes attr(w);
     Xcb::WindowGeometry geo(w);
