@@ -635,7 +635,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
     win->sync_request.timestamp = xTime();
 
-    setup_connections(win);
+    setup_window_control_connections(win);
     win->control->setup_tabbox();
     win->control->setup_color_scheme();
 

@@ -38,7 +38,7 @@ void evaluate_rules(Win* win)
 }
 
 template<typename Win>
-void setup_connections(Win* win)
+void setup_window_control_connections(Win* win)
 {
     QObject::connect(win, &Win::clientStartUserMovedResized, win, &Win::moveResizedChanged);
     QObject::connect(win, &Win::clientFinishUserMovedResized, win, &Win::moveResizedChanged);

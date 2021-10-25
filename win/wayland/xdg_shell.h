@@ -202,7 +202,7 @@ inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplev
     win->control->setup_tabbox();
     win->control->setup_color_scheme();
 
-    setup_connections(win);
+    setup_window_control_connections(win);
 
     auto update_icon = [win] {
         QString const wayland_icon = QStringLiteral("wayland");
