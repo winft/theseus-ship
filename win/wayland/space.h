@@ -10,8 +10,20 @@
 #include <kwin_export.h>
 #include <memory>
 
-namespace KWin::win::wayland
+namespace KWin
 {
+class VirtualDesktop;
+
+namespace win
+{
+namespace x11
+{
+class window;
+}
+
+namespace wayland
+{
+class window;
 struct xdg_activation;
 
 class KWIN_EXPORT space : public Workspace
@@ -29,6 +41,16 @@ protected:
     void update_space_area_from_windows(QRect const& desktop_area,
                                         std::vector<QRect> const& screens_geos,
                                         win::space_areas& areas) override;
+
+private:
+    void handle_window_added(wayland::window* window);
+    void handle_window_removed(wayland::window* window);
+
+    void handle_x11_window_added(x11::window* window);
+
+    void handle_desktop_removed(VirtualDesktop* desktop);
 };
 
+}
+}
 }

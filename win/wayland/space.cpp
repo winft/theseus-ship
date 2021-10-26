@@ -36,147 +36,18 @@ space::space()
     });
 
     QObject::connect(
-        waylandServer(), &WaylandServer::window_added, this, [this](win::wayland::window* window) {
-            assert(!contains(m_windows, window));
+        waylandServer(), &WaylandServer::window_added, this, &space::handle_window_added);
 
-            if (window->control && !window->layer_surface) {
-                setup_space_window_connections(this, window);
-                window->updateDecoration(false);
-                win::update_layer(window);
+    QObject::connect(
+        waylandServer(), &WaylandServer::window_removed, this, &space::handle_window_removed);
 
-                auto const area
-                    = clientArea(PlacementArea, Screens::self()->current(), window->desktop());
-                auto placementDone = false;
-
-                if (window->isInitialPositionSet()) {
-                    placementDone = true;
-                }
-                if (window->control->fullscreen()) {
-                    placementDone = true;
-                }
-                if (window->maximizeMode() == win::maximize_mode::full) {
-                    placementDone = true;
-                }
-                if (window->control->rules().checkPosition(invalidPoint, true) != invalidPoint) {
-                    placementDone = true;
-                }
-                if (!placementDone) {
-                    window->placeIn(area);
-                }
-
-                m_allClients.push_back(window);
-            }
-
-            m_windows.push_back(window);
-
-            if (!contains(stacking_order->pre_stack, window)) {
-                // Raise if it hasn't got any stacking position yet.
-                stacking_order->pre_stack.push_back(window);
-            }
-            if (!contains(stacking_order->sorted(), window)) {
-                // It'll be updated later, and updateToolWindows() requires window to be in
-                // stacking_order.
-                stacking_order->win_stack.push_back(window);
-            }
-
-            x_stacking_tree->mark_as_dirty();
-            stacking_order->update(true);
-
-            if (window->control) {
-                updateClientArea();
-
-                if (window->wantsInput() && !window->control->minimized()) {
-                    activateClient(window);
-                }
-
-                updateTabbox();
-
-                QObject::connect(window, &win::wayland::window::windowShown, this, [this, window] {
-                    win::update_layer(window);
-                    x_stacking_tree->mark_as_dirty();
-                    stacking_order->update(true);
-                    updateClientArea();
-                    if (window->wantsInput()) {
-                        activateClient(window);
-                    }
-                });
-                QObject::connect(window, &win::wayland::window::windowHidden, this, [this] {
-                    // TODO: update tabbox if it's displayed
-                    x_stacking_tree->mark_as_dirty();
-                    stacking_order->update(true);
-                    updateClientArea();
-                });
-            }
-            Q_EMIT wayland_window_added(window);
-        });
-
-    QObject::connect(waylandServer(),
-                     &WaylandServer::window_removed,
-                     this,
-                     [this](win::wayland::window* window) {
-                         remove_all(m_windows, window);
-
-                         if (window->control) {
-                             remove_all(m_allClients, window);
-                             if (window == most_recently_raised) {
-                                 most_recently_raised = nullptr;
-                             }
-                             if (window == delayfocus_client) {
-                                 cancelDelayFocus();
-                             }
-                             if (window == last_active_client) {
-                                 last_active_client = nullptr;
-                             }
-                             if (window == client_keys_client) {
-                                 setupWindowShortcutDone(false);
-                             }
-                             if (!window->control->shortcut().isEmpty()) {
-                                 // Remove from client_keys.
-                                 win::set_shortcut(window, QString());
-                             }
-                             clientHidden(window);
-                             Q_EMIT clientRemoved(window);
-                         }
-
-                         x_stacking_tree->mark_as_dirty();
-                         stacking_order->update(true);
-
-                         if (window->control) {
-                             updateClientArea();
-                             updateTabbox();
-                         }
-                     });
+    // For Xwayland windows we need to setup Plasma management too.
+    QObject::connect(this, &Workspace::clientAdded, this, &space::handle_x11_window_added);
 
     QObject::connect(VirtualDesktopManager::self(),
                      &VirtualDesktopManager::desktopRemoved,
                      this,
-                     [this](auto desktop) {
-                         for (auto const& client : m_allClients) {
-                             if (!client->desktops().contains(desktop)) {
-                                 continue;
-                             }
-                             if (client->desktops().count() > 1) {
-                                 win::leave_desktop(client, desktop);
-                             } else {
-                                 sendClientToDesktop(client,
-                                                     qMin(desktop->x11DesktopNumber(),
-                                                          VirtualDesktopManager::self()->count()),
-                                                     true);
-                             }
-                         }
-                     });
-
-    // For Xwayland windows we need to setup Plasma management too.
-    QObject::connect(this, &Workspace::clientAdded, this, [this](auto x11_window) {
-        if (x11_window->readyForPainting()) {
-            setup_plasma_management(x11_window);
-        } else {
-            QObject::connect(x11_window,
-                             &std::remove_pointer_t<decltype(x11_window)>::windowShown,
-                             this,
-                             [](auto x11_window) { setup_plasma_management(x11_window); });
-        }
-    });
+                     &space::handle_desktop_removed);
 }
 
 space::~space()
@@ -194,6 +65,144 @@ space::~space()
         if (auto win = qobject_cast<win::wayland::window*>(window)) {
             win->destroy();
             remove_all(m_windows, win);
+        }
+    }
+}
+
+void space::handle_window_added(wayland::window* window)
+{
+    assert(!contains(m_windows, window));
+
+    if (window->control && !window->layer_surface) {
+        setup_space_window_connections(this, window);
+        window->updateDecoration(false);
+        win::update_layer(window);
+
+        auto const area = clientArea(PlacementArea, Screens::self()->current(), window->desktop());
+        auto placementDone = false;
+
+        if (window->isInitialPositionSet()) {
+            placementDone = true;
+        }
+        if (window->control->fullscreen()) {
+            placementDone = true;
+        }
+        if (window->maximizeMode() == win::maximize_mode::full) {
+            placementDone = true;
+        }
+        if (window->control->rules().checkPosition(invalidPoint, true) != invalidPoint) {
+            placementDone = true;
+        }
+        if (!placementDone) {
+            window->placeIn(area);
+        }
+
+        m_allClients.push_back(window);
+    }
+
+    m_windows.push_back(window);
+
+    if (!contains(stacking_order->pre_stack, window)) {
+        // Raise if it hasn't got any stacking position yet.
+        stacking_order->pre_stack.push_back(window);
+    }
+    if (!contains(stacking_order->sorted(), window)) {
+        // It'll be updated later, and updateToolWindows() requires window to be in
+        // stacking_order.
+        stacking_order->win_stack.push_back(window);
+    }
+
+    x_stacking_tree->mark_as_dirty();
+    stacking_order->update(true);
+
+    if (window->control) {
+        updateClientArea();
+
+        if (window->wantsInput() && !window->control->minimized()) {
+            activateClient(window);
+        }
+
+        updateTabbox();
+
+        QObject::connect(window, &win::wayland::window::windowShown, this, [this, window] {
+            win::update_layer(window);
+            x_stacking_tree->mark_as_dirty();
+            stacking_order->update(true);
+            updateClientArea();
+            if (window->wantsInput()) {
+                activateClient(window);
+            }
+        });
+        QObject::connect(window, &win::wayland::window::windowHidden, this, [this] {
+            // TODO: update tabbox if it's displayed
+            x_stacking_tree->mark_as_dirty();
+            stacking_order->update(true);
+            updateClientArea();
+        });
+    }
+    Q_EMIT wayland_window_added(window);
+}
+
+void space::handle_window_removed(wayland::window* window)
+{
+    remove_all(m_windows, window);
+
+    if (window->control) {
+        remove_all(m_allClients, window);
+        if (window == most_recently_raised) {
+            most_recently_raised = nullptr;
+        }
+        if (window == delayfocus_client) {
+            cancelDelayFocus();
+        }
+        if (window == last_active_client) {
+            last_active_client = nullptr;
+        }
+        if (window == client_keys_client) {
+            setupWindowShortcutDone(false);
+        }
+        if (!window->control->shortcut().isEmpty()) {
+            // Remove from client_keys.
+            win::set_shortcut(window, QString());
+        }
+        clientHidden(window);
+        Q_EMIT clientRemoved(window);
+    }
+
+    x_stacking_tree->mark_as_dirty();
+    stacking_order->update(true);
+
+    if (window->control) {
+        updateClientArea();
+        updateTabbox();
+    }
+}
+
+void space::handle_x11_window_added(x11::window* window)
+{
+    if (window->readyForPainting()) {
+        setup_plasma_management(window);
+    } else {
+        QObject::connect(window, &x11::window::windowShown, this, [](auto window) {
+            setup_plasma_management(window);
+        });
+    }
+}
+
+void space::handle_desktop_removed(VirtualDesktop* desktop)
+{
+    for (auto const& client : m_allClients) {
+        if (!client->desktops().contains(desktop)) {
+            continue;
+        }
+
+        if (client->desktops().count() > 1) {
+            win::leave_desktop(client, desktop);
+        } else {
+            sendClientToDesktop(
+                client,
+                qMin(desktop->x11DesktopNumber(), VirtualDesktopManager::self()->count()),
+                true);
         }
     }
 }
