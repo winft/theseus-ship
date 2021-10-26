@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/controlling.h"
 #include "win/move.h"
 #include "win/stacking.h"
+#include "win/wayland/space.h"
 #include "win/x11/window.h"
 
 #include <Wrapland/Client/surface.h>
@@ -114,7 +115,8 @@ void TestDbusInterface::testGetWindowInfoInvalidUuid()
 
 void TestDbusInterface::testGetWindowInfoXdgShellClient()
 {
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     std::unique_ptr<Surface> surface(Test::create_surface());

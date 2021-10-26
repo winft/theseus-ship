@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "space.h"
+
 #include "win/geo.h"
 #include "win/screen.h"
 #include "win/stacking.h"
@@ -135,7 +137,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, &window::destroy);
 
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::got_popup, win, [win](auto popup) {
-        for (auto child : waylandServer()->windows) {
+        for (auto child : static_cast<win::wayland::space*>(workspace())->announced_windows) {
             if (child->popup == popup) {
                 win->transient()->add_child(child);
                 break;
@@ -174,26 +176,27 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     });
 }
 
-template<typename Window, typename Server>
-void handle_new_layer_surface(Server* server, Wrapland::Server::LayerSurfaceV1* layer_surface)
+template<typename Window, typename Space>
+void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* layer_surface)
 {
     auto window = new Window(layer_surface->surface());
-    if (layer_surface->surface()->client() == server->screenLockerClientConnection()) {
+    if (layer_surface->surface()->client() == space->server->screenLockerClientConnection()) {
         ScreenLocker::KSldApp::self()->lockScreenShown();
     }
 
-    server->windows.push_back(window);
+    space->announced_windows.push_back(window);
     QObject::connect(layer_surface,
                      &Wrapland::Server::LayerSurfaceV1::resourceDestroyed,
-                     server,
-                     [server, window] { remove_all(server->windows, window); });
+                     space,
+                     [space, window] { remove_all(space->announced_windows, window); });
 
     win::wayland::assign_layer_surface_role(window, layer_surface);
 
     if (window->readyForPainting()) {
-        Q_EMIT server->window_added(window);
+        space->handle_window_added(window);
     } else {
-        QObject::connect(window, &win::wayland::window::windowShown, server, &Server::window_shown);
+        QObject::connect(
+            window, &win::wayland::window::windowShown, space, &Space::handle_wayland_window_shown);
     }
 }
 

@@ -5,10 +5,21 @@
 */
 #include "space.h"
 
+#include "appmenu.h"
+#include "deco.h"
+#include "layer_shell.h"
+#include "plasma_shell.h"
+#include "plasma_window.h"
 #include "setup.h"
 #include "space_areas.h"
+#include "subsurface.h"
+#include "surface.h"
+#include "transient.h"
+#include "window.h"
 #include "xdg_activation.h"
+#include "xdg_shell.h"
 
+#include "base/wayland/idle_inhibition.h"
 #include "screens.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
@@ -18,6 +29,7 @@
 #include "win/stacking_order.h"
 #include "win/x11/space_areas.h"
 #include "win/x11/stacking_tree.h"
+#include "xwl/surface.h"
 
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
@@ -26,20 +38,69 @@
 namespace KWin::win::wayland
 {
 
-space::space()
+space::space(WaylandServer* server)
+    : server{server}
 {
+    namespace WS = Wrapland::Server;
+
+    QObject::connect(server->globals->compositor.get(),
+                     &WS::Compositor::surfaceCreated,
+                     this,
+                     [this](auto surface) { xwl::handle_new_surface(this, surface); });
+
+    QObject::connect(server->globals->xdg_shell.get(),
+                     &WS::XdgShell::toplevelCreated,
+                     this,
+                     [this](auto toplevel) { handle_new_toplevel<window>(this, toplevel); });
+    QObject::connect(server->globals->xdg_shell.get(),
+                     &WS::XdgShell::popupCreated,
+                     this,
+                     [this](auto popup) { handle_new_popup<window>(this, popup); });
+
+    QObject::connect(server->globals->xdg_decoration_manager.get(),
+                     &WS::XdgDecorationManager::decorationCreated,
+                     this,
+                     [this](auto deco) { handle_new_xdg_deco(this, deco); });
+
+    QObject::connect(server->globals->plasma_shell.get(),
+                     &WS::PlasmaShell::surfaceCreated,
+                     [this](auto surface) { handle_new_plasma_shell_surface(this, surface); });
+
+    auto idle_inhibition = new base::wayland::idle_inhibition(server->globals->kde_idle.get());
+    QObject::connect(
+        this, &space::wayland_window_added, idle_inhibition, [idle_inhibition](auto window) {
+            idle_inhibition->register_window(static_cast<win::wayland::window*>(window));
+        });
+
+    QObject::connect(server->globals->appmenu_manager.get(),
+                     &WS::AppmenuManager::appmenuCreated,
+                     [this](auto appmenu) { handle_new_appmenu(this, appmenu); });
+
+    QObject::connect(server->globals->server_side_decoration_palette_manager.get(),
+                     &WS::ServerSideDecorationPaletteManager::paletteCreated,
+                     [this](auto palette) { handle_new_palette(this, palette); });
+
+    QObject::connect(server->globals->plasma_window_manager.get(),
+                     &WS::PlasmaWindowManager::requestChangeShowingDesktop,
+                     this,
+                     [this](auto state) { handle_change_showing_desktop(this, state); });
+
+    QObject::connect(server->globals->subcompositor.get(),
+                     &Wrapland::Server::Subcompositor::subsurfaceCreated,
+                     this,
+                     [this](auto subsurface) { handle_new_subsurface<window>(this, subsurface); });
+    QObject::connect(
+        server->globals->layer_shell_v1.get(),
+        &Wrapland::Server::LayerShellV1::surface_created,
+        this,
+        [this](auto layer_surface) { handle_new_layer_surface<window>(this, layer_surface); });
+
     activation.reset(new win::wayland::xdg_activation);
     QObject::connect(this, &Workspace::clientActivated, this, [this] {
         if (activeClient()) {
             activation->clear();
         }
     });
-
-    QObject::connect(
-        waylandServer(), &WaylandServer::window_added, this, &space::handle_window_added);
-
-    QObject::connect(
-        waylandServer(), &WaylandServer::window_removed, this, &space::handle_window_removed);
 
     // For Xwayland windows we need to setup Plasma management too.
     QObject::connect(this, &Workspace::clientAdded, this, &space::handle_x11_window_added);
@@ -55,8 +116,7 @@ space::~space()
     stacking_order->lock();
 
     // TODO(romangg): Do we really need both loops?
-    auto const windows = waylandServer()->windows;
-    for (auto win : windows) {
+    for (auto win : announced_windows) {
         win->destroy();
         remove_all(m_windows, win);
     }
@@ -67,6 +127,25 @@ space::~space()
             remove_all(m_windows, win);
         }
     }
+}
+
+window* space::find_window(Wrapland::Server::Surface* surface) const
+{
+    if (!surface) {
+        // TODO(romangg): assert instead?
+        return nullptr;
+    }
+
+    auto it = std::find_if(announced_windows.cbegin(),
+                           announced_windows.cend(),
+                           [surface](auto win) { return win->surface() == surface; });
+    return it != announced_windows.cend() ? *it : nullptr;
+}
+
+void space::handle_wayland_window_shown(Toplevel* window)
+{
+    QObject::disconnect(window, &Toplevel::windowShown, this, &space::handle_wayland_window_shown);
+    handle_window_added(static_cast<win::wayland::window*>(window));
 }
 
 void space::handle_window_added(wayland::window* window)
@@ -140,11 +219,14 @@ void space::handle_window_added(wayland::window* window)
             updateClientArea();
         });
     }
+
+    adopt_transient_children(this, window);
     Q_EMIT wayland_window_added(window);
 }
 
 void space::handle_window_removed(wayland::window* window)
 {
+    remove_all(announced_windows, window);
     remove_all(m_windows, window);
 
     if (window->control) {
@@ -176,6 +258,8 @@ void space::handle_window_removed(wayland::window* window)
         updateClientArea();
         updateTabbox();
     }
+
+    Q_EMIT wayland_window_removed(window);
 }
 
 void space::handle_x11_window_added(x11::window* window)
@@ -223,7 +307,7 @@ QRect space::get_icon_geometry(Toplevel const* win) const
               end = management->minimizedGeometries().constEnd();
          i != end;
          ++i) {
-        auto client = waylandServer()->findToplevel(i.key());
+        auto client = find_window(i.key());
         if (!client) {
             continue;
         }
@@ -250,8 +334,7 @@ void space::update_space_area_from_windows(QRect const& desktop_area,
         }
     }
 
-    auto const wayland_windows = waylandServer()->windows;
-    for (auto win : wayland_windows) {
+    for (auto win : announced_windows) {
         update_space_areas(win, desktop_area, screens_geos, areas);
     }
 }

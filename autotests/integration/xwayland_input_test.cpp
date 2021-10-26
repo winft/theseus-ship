@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/deco.h"
+#include "win/wayland/space.h"
 #include "win/x11/window.h"
 
 #include <Wrapland/Server/pointer_pool.h>
@@ -70,7 +71,7 @@ void XWaylandInputTest::init()
 {
     screens()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
-    QVERIFY(waylandServer()->windows.empty());
+    QVERIFY(static_cast<win::wayland::space*>(workspace())->announced_windows.empty());
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)

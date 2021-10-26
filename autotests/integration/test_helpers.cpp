@@ -12,6 +12,7 @@
 #include "input/backend/wlroots/keyboard.h"
 #include "input/backend/wlroots/pointer.h"
 #include "input/backend/wlroots/touch.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/appmenu.h>
@@ -374,7 +375,8 @@ win::wayland::window* render_and_wait_for_shown(client const& clt,
                                                 QImage::Format const& format,
                                                 int timeout)
 {
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     if (!clientAddedSpy.isValid()) {
         return nullptr;
     }

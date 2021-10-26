@@ -10,12 +10,11 @@
 namespace KWin::win::wayland
 {
 
-template<typename Window, typename Server>
-void adopt_transient_children(Server* server, Window* window)
+template<typename Window, typename Space>
+void adopt_transient_children(Space* space, Window* window)
 {
-    std::for_each(server->windows.cbegin(), server->windows.cend(), [&window](auto win) {
-        win->checkTransient(window);
-    });
+    auto const& wins = space->announced_windows;
+    std::for_each(wins.cbegin(), wins.cend(), [&window](auto win) { win->checkTransient(window); });
 }
 
 }

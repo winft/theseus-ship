@@ -8,27 +8,17 @@
 
 #include "base/backend/wlroots.h"
 #include "base/platform.h"
-#include "base/wayland/idle_inhibition.h"
 #include "base/wayland/output_helpers.h"
 #include "platform.h"
 #include "screens.h"
 #include "service_utils.h"
+#include "virtualdesktops.h"
 #include "wayland_logging.h"
 #include "workspace.h"
-#include "xwl/surface.h"
 
-#include "win/wayland/appmenu.h"
-#include "win/wayland/deco.h"
-#include "win/wayland/layer_shell.h"
-#include "win/wayland/plasma_shell.h"
-#include "win/wayland/plasma_window.h"
 #include "win/wayland/space.h"
-#include "win/wayland/subsurface.h"
 #include "win/wayland/surface.h"
-#include "win/wayland/transient.h"
-#include "win/wayland/window.h"
 #include "win/wayland/xdg_activation.h"
-#include "win/wayland/xdg_shell.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
@@ -236,26 +226,9 @@ void WaylandServer::create_globals()
     }
 
     globals->compositor = m_display->createCompositor();
-
-    connect(compositor(),
-            &Wrapland::Server::Compositor::surfaceCreated,
-            this,
-            [this](auto surface) { xwl::handle_new_surface(this, workspace(), surface); });
-
     globals->xdg_shell = m_display->createXdgShell();
-    connect(xdg_shell(), &XdgShell::toplevelCreated, this, [this](auto toplevel) {
-        win::wayland::handle_new_toplevel<win::wayland::window>(this, toplevel);
-    });
-    connect(xdg_shell(), &XdgShell::popupCreated, this, [this](auto popup) {
-        win::wayland::handle_new_popup<win::wayland::window>(this, popup);
-    });
 
     globals->xdg_decoration_manager = m_display->createXdgDecorationManager(xdg_shell());
-    connect(globals->xdg_decoration_manager.get(),
-            &XdgDecorationManager::decorationCreated,
-            this,
-            [this](auto deco) { win::wayland::handle_new_xdg_deco(this, deco); });
-
     m_display->createShm();
     globals->seats.push_back(m_display->createSeat());
 
@@ -265,36 +238,16 @@ void WaylandServer::create_globals()
     globals->primary_selection_device_manager = m_display->createPrimarySelectionDeviceManager();
     globals->data_control_manager_v1 = m_display->create_data_control_manager_v1();
     globals->kde_idle = m_display->createIdle();
-
-    auto idleInhibition = new base::wayland::idle_inhibition(globals->kde_idle.get());
-    connect(this,
-            &WaylandServer::window_added,
-            idleInhibition,
-            &base::wayland::idle_inhibition::register_window);
     globals->idle_inhibit_manager_v1 = m_display->createIdleInhibitManager();
 
     globals->plasma_shell = m_display->createPlasmaShell();
-    connect(globals->plasma_shell.get(), &PlasmaShell::surfaceCreated, [this](auto surface) {
-        win::wayland::handle_new_plasma_shell_surface(this, surface);
-    });
     globals->appmenu_manager = m_display->createAppmenuManager();
-    connect(globals->appmenu_manager.get(), &AppmenuManager::appmenuCreated, [this](auto appmenu) {
-        win::wayland::handle_new_appmenu(this, appmenu);
-    });
 
     globals->server_side_decoration_palette_manager
         = m_display->createServerSideDecorationPaletteManager();
-    connect(globals->server_side_decoration_palette_manager.get(),
-            &ServerSideDecorationPaletteManager::paletteCreated,
-            [this](auto palette) { win::wayland::handle_new_palette(this, palette); });
-
     globals->plasma_window_manager = m_display->createPlasmaWindowManager();
     globals->plasma_window_manager->setShowingDesktopState(
         PlasmaWindowManager::ShowingDesktopState::Disabled);
-    connect(globals->plasma_window_manager.get(),
-            &PlasmaWindowManager::requestChangeShowingDesktop,
-            this,
-            [](auto state) { win::wayland::handle_change_showing_desktop(workspace(), state); });
 
     globals->plasma_virtual_desktop_manager = m_display->createPlasmaVirtualDesktopManager();
     globals->plasma_window_manager->setVirtualDesktopManager(virtual_desktop_management());
@@ -312,20 +265,7 @@ void WaylandServer::create_globals()
             });
 
     globals->subcompositor = m_display->createSubCompositor();
-    connect(subcompositor(),
-            &Wrapland::Server::Subcompositor::subsurfaceCreated,
-            this,
-            [this](auto subsurface) {
-                win::wayland::handle_new_subsurface<win::wayland::window>(this, subsurface);
-            });
-
     globals->layer_shell_v1 = m_display->createLayerShellV1();
-    connect(layer_shell(),
-            &Wrapland::Server::LayerShellV1::surface_created,
-            this,
-            [this](auto layer_surface) {
-                win::wayland::handle_new_layer_surface<win::wayland::window>(this, layer_surface);
-            });
 
     globals->xdg_activation_v1 = m_display->createXdgActivationV1();
     globals->xdg_foreign = m_display->createXdgForeign();
@@ -434,13 +374,6 @@ Surface* WaylandServer::findForeignParentForSurface(Surface* surface)
     return globals->xdg_foreign->parentOf(surface);
 }
 
-void WaylandServer::window_shown(Toplevel* window)
-{
-    disconnect(window, &Toplevel::windowShown, this, &WaylandServer::window_shown);
-    Q_EMIT window_added(static_cast<win::wayland::window*>(window));
-    win::wayland::adopt_transient_children(this, window);
-}
-
 void WaylandServer::initWorkspace()
 {
     auto ws = static_cast<win::wayland::space*>(workspace());
@@ -464,7 +397,7 @@ void WaylandServer::initWorkspace()
             &Wrapland::Server::XdgActivationV1::activate,
             ws,
             [ws, this](auto const& token, auto surface) {
-                win::wayland::handle_xdg_activation_activate(this, ws, token, surface);
+                win::wayland::handle_xdg_activation_activate(ws, token, surface);
             });
 
     // For Xwayland windows
@@ -679,12 +612,6 @@ void WaylandServer::createInternalConnection(std::function<void(bool)> callback)
     m_internalConnection.client->establishConnection();
 }
 
-void WaylandServer::remove_window(win::wayland::window* window)
-{
-    remove_all(windows, window);
-    Q_EMIT window_removed(window);
-}
-
 void WaylandServer::dispatch()
 {
     if (!m_display) {
@@ -694,22 +621,6 @@ void WaylandServer::dispatch()
         m_internalConnection.server->flush();
     }
     m_display->dispatchEvents(0);
-}
-
-win::wayland::window* WaylandServer::find_window(Wrapland::Server::Surface* surface) const
-{
-    if (!surface) {
-        return nullptr;
-    }
-    auto it = std::find_if(windows.cbegin(), windows.cend(), [surface](auto win) {
-        return win->surface() == surface;
-    });
-    return it != windows.cend() ? *it : nullptr;
-}
-
-Toplevel* WaylandServer::findToplevel(Surface* surface) const
-{
-    return find_window(surface);
 }
 
 bool WaylandServer::is_screen_locked() const

@@ -121,32 +121,33 @@ void set_subsurface_parent(Win* win, Lead* lead)
     win->map();
 }
 
-template<typename Window, typename Server>
-void handle_new_subsurface(Server* server, Wrapland::Server::Subsurface* subsurface)
+template<typename Window, typename Space>
+void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurface)
 {
     auto window = new Window(subsurface->surface());
 
-    server->windows.push_back(window);
+    space->announced_windows.push_back(window);
     QObject::connect(subsurface,
                      &Wrapland::Server::Subsurface::resourceDestroyed,
-                     server,
-                     [server, window] { remove_all(server->windows, window); });
+                     space,
+                     [space, window] { remove_all(space->announced_windows, window); });
 
     assign_subsurface_role(window);
 
-    for (auto& win : server->windows) {
+    for (auto& win : space->announced_windows) {
         if (win->surface() == subsurface->parentSurface()) {
             win::wayland::set_subsurface_parent(window, win);
             if (window->readyForPainting()) {
-                Q_EMIT server->window_added(window);
-                adopt_transient_children(server, window);
+                space->handle_window_added(window);
+                adopt_transient_children(space, window);
                 return;
             }
             break;
         }
     }
     // Must wait till a parent is mapped and subsurface is ready for painting.
-    QObject::connect(window, &win::wayland::window::windowShown, server, &Server::window_shown);
+    QObject::connect(
+        window, &win::wayland::window::windowShown, space, &Space::handle_wayland_window_shown);
 }
 
 }

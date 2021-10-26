@@ -759,7 +759,7 @@ void window::do_set_fullscreen(bool full)
 
 bool window::belongsToDesktop() const
 {
-    auto const windows = waylandServer()->windows;
+    auto const windows = static_cast<win::wayland::space*>(workspace())->announced_windows;
 
     return std::any_of(windows.cbegin(), windows.cend(), [this](auto const& win) {
         if (belongsToSameApplication(win, flags<same_client_check>())) {
@@ -1078,7 +1078,7 @@ void window::destroy()
         control->destroy_decoration();
     }
 
-    waylandServer()->remove_window(this);
+    static_cast<win::wayland::space*>(workspace())->handle_window_removed(this);
     remnant_window->remnant()->unref();
 
     delete_self(this);

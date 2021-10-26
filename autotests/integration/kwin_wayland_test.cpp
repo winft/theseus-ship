@@ -198,7 +198,7 @@ void WaylandTestApplication::start()
     out->wrapland_output()->set_physical_size(QSize(1280, 1024));
 
     compositor = std::make_unique<render::wayland::compositor>();
-    workspace = std::make_unique<win::wayland::space>();
+    workspace = std::make_unique<win::wayland::space>(server.get());
     Q_EMIT workspaceCreated();
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });

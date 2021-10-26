@@ -12,6 +12,7 @@
 #include "win/geo.h"
 #include "win/transient.h"
 #include "win/util.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Server/keyboard.h>
@@ -24,8 +25,11 @@ namespace KWin::input
 popup_filter::popup_filter()
     : QObject()
 {
-    connect(
-        waylandServer(), &WaylandServer::window_added, this, &popup_filter::handle_window_added);
+    QObject::connect(
+        static_cast<win::wayland::space*>(workspace()),
+        &win::wayland::space::wayland_window_added,
+        this,
+        [this](auto window) { handle_window_added(static_cast<win::wayland::window*>(window)); });
 }
 
 void popup_filter::handle_window_added(win::wayland::window* window)

@@ -12,6 +12,8 @@
 #include "main.h"
 #include "toplevel.h"
 #include "wayland_server.h"
+#include "win/wayland/space.h"
+#include "win/wayland/window.h"
 
 #include <KScreenLocker/KsldApp>
 
@@ -200,7 +202,7 @@ template<typename Pool>
 bool is_surface_allowed(Pool const& device_pool)
 {
     if (auto surface = device_pool.get_focus().surface) {
-        if (auto win = waylandServer()->findToplevel(surface)) {
+        if (auto win = static_cast<win::wayland::space*>(workspace())->find_window(surface)) {
             return win->isLockScreen() || win->isInputMethod();
         }
         return false;

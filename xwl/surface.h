@@ -13,16 +13,10 @@ namespace KWin::xwl
 {
 
 /// Find X11 window with the surface's id, so we may associate it with the surface.
-template<typename Server, typename Space>
-void handle_new_surface(Server* server, Space* space, Wrapland::Server::Surface* surface)
+template<typename Space>
+void handle_new_surface(Space* space, Wrapland::Server::Surface* surface)
 {
-    if (!space) {
-        // it's possible that a Surface gets created before Workspace is created
-        // TODO(romangg): Make this check unnecessary.
-        return;
-    }
-
-    if (surface->client() != server->xWaylandConnection()) {
+    if (surface->client() != space->server->xWaylandConnection()) {
         // setting surface is only relevat for Xwayland clients
         return;
     }

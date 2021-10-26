@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/wayland/space.h"
 #include "workspace.h"
 #include <kwineffects.h>
 
@@ -276,7 +277,8 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     QVERIFY(plasmaWindowCreatedSpy.isValid());
 
     // this time we use a QSignalSpy on XdgShellClient as it'a a little bit more complex setup
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     // lock

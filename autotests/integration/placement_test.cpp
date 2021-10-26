@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/placement.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>
@@ -137,7 +138,8 @@ PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)
 {
     PlaceWindowResult rc;
 
-    QSignalSpy window_spy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy window_spy(static_cast<win::wayland::space*>(workspace()),
+                          &win::wayland::space::wayland_window_added);
     assert(window_spy.isValid());
 
     // create a new window

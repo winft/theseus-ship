@@ -7,6 +7,7 @@
 
 #include "toplevel.h"
 #include "wayland_server.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 namespace KWin::render::wayland
@@ -15,7 +16,8 @@ namespace KWin::render::wayland
 effects_handler_impl::effects_handler_impl(render::compositor* compositor, Scene* scene)
     : EffectsHandlerImpl(compositor, scene)
 {
-    QObject::connect(waylandServer(), &WaylandServer::window_added, this, [this](auto c) {
+    auto space = static_cast<win::wayland::space*>(workspace());
+    QObject::connect(space, &win::wayland::space::wayland_window_added, this, [this](auto c) {
         if (c->readyForPainting()) {
             slotXdgShellClientShown(c);
         } else {
@@ -23,7 +25,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, Scene
                 c, &Toplevel::windowShown, this, &effects_handler_impl::slotXdgShellClientShown);
         }
     });
-    auto const clients = waylandServer()->windows;
+    auto const clients = space->announced_windows;
     for (auto c : clients) {
         if (c->readyForPainting()) {
             setupAbstractClientConnections(c);
@@ -36,7 +38,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, Scene
 
 EffectWindow* effects_handler_impl::findWindow(Wrapland::Server::Surface* surf) const
 {
-    if (auto win = waylandServer()->find_window(surf)) {
+    if (auto win = static_cast<win::wayland::space*>(workspace())->find_window(surf)) {
         return win->effectWindow();
     }
     return nullptr;

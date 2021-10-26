@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/screen.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 #include <KDecoration2/DecoratedClient>
@@ -155,7 +156,8 @@ void TestXdgShellClient::cleanup()
 void TestXdgShellClient::testMapUnmapMap()
 {
     // this test verifies that mapping a previously mapped window works correctly
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     QSignalSpy effectsWindowShownSpy(effects, &EffectsHandler::windowShown);
     QVERIFY(effectsWindowShownSpy.isValid());
@@ -929,7 +931,8 @@ void TestXdgShellClient::testUnresponsiveWindow()
     // for this an external binary is launched
     const QString kill = QFINDTESTDATA(QStringLiteral("kill"));
     QVERIFY(!kill.isEmpty());
-    QSignalSpy shellClientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy shellClientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                                   &win::wayland::space::wayland_window_added);
     QVERIFY(shellClientAddedSpy.isValid());
 
     std::unique_ptr<QProcess> process(new QProcess);

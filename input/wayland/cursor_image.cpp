@@ -11,6 +11,7 @@
 #include "cursor_theme.h"
 #include <input/pointer_redirect.h>
 
+#include "win/wayland/space.h"
 #include <effects.h>
 #include <screens.h>
 #include <wayland_server.h>
@@ -61,8 +62,6 @@ cursor_image::cursor_image()
 
     m_surfaceRenderedTimer.start();
 
-    connect(waylandServer(), &WaylandServer::window_added, this, &cursor_image::setup_move_resize);
-
     assert(!workspace());
     connect(kwinApp(), &Application::startup_finished, this, &cursor_image::setup_workspace);
 }
@@ -71,6 +70,11 @@ cursor_image::~cursor_image() = default;
 
 void cursor_image::setup_workspace()
 {
+    QObject::connect(static_cast<win::wayland::space*>(workspace()),
+                     &win::wayland::space::wayland_window_added,
+                     this,
+                     &cursor_image::setup_move_resize);
+
     // TODO(romangg): can we load the fallback cursor earlier in the ctor already?
     loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
     if (m_cursorTheme) {

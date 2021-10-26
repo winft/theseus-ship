@@ -10,6 +10,12 @@
 #include <kwin_export.h>
 #include <memory>
 
+namespace Wrapland::Server
+{
+class PlasmaShellSurface;
+class Surface;
+}
+
 namespace KWin
 {
 class VirtualDesktop;
@@ -30,12 +36,23 @@ class KWIN_EXPORT space : public Workspace
 {
     Q_OBJECT
 public:
-    space();
+    space(WaylandServer* server);
     ~space() override;
 
     QRect get_icon_geometry(Toplevel const* win) const override;
 
+    window* find_window(Wrapland::Server::Surface* surface) const;
+
+    void handle_wayland_window_shown(Toplevel* window);
+    void handle_window_added(wayland::window* window);
+    void handle_window_removed(wayland::window* window);
+
+    WaylandServer* server;
     std::unique_ptr<win::wayland::xdg_activation> activation;
+
+    // Windows requested by Wayland clients already ready for painting or not yet.
+    std::vector<window*> announced_windows;
+    QVector<Wrapland::Server::PlasmaShellSurface*> plasma_shell_surfaces;
 
 protected:
     void update_space_area_from_windows(QRect const& desktop_area,
@@ -43,11 +60,7 @@ protected:
                                         win::space_areas& areas) override;
 
 private:
-    void handle_window_added(wayland::window* window);
-    void handle_window_removed(wayland::window* window);
-
     void handle_x11_window_added(x11::window* window);
-
     void handle_desktop_removed(VirtualDesktop* desktop);
 };
 

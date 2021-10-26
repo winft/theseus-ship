@@ -10,10 +10,10 @@
 namespace KWin::win::wayland
 {
 
-template<typename Server>
-void handle_new_appmenu(Server* server, Wrapland::Server::Appmenu* appmenu)
+template<typename Space>
+void handle_new_appmenu(Space* space, Wrapland::Server::Appmenu* appmenu)
 {
-    if (auto win = server->find_window(appmenu->surface())) {
+    if (auto win = space->find_window(appmenu->surface())) {
         if (win->control) {
             // Need to check that as plasma-integration creates them blindly even for
             // xdg-shell popups.

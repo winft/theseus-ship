@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/setup.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/surface.h>
@@ -213,7 +214,7 @@ createWindow(const QByteArray& appId, int timeout = 5000)
 win::wayland::window* get_toplevel_window(QSignalSpy const& spy)
 {
     auto xdg_toplevel = spy.last().at(0).value<Wrapland::Server::XdgShellToplevel*>();
-    for (auto win : waylandServer()->windows) {
+    for (auto win : static_cast<win::wayland::space*>(workspace())->announced_windows) {
         if (win->toplevel == xdg_toplevel) {
             return win;
         }
@@ -2117,7 +2118,7 @@ void TestXdgShellClientRules::testMinimizeApply()
     shellSurface.reset();
     surface.reset();
     QVERIFY(Test::wait_for_destroyed(client));
-    QVERIFY(waylandServer()->windows.empty());
+    QVERIFY(static_cast<win::wayland::space*>(workspace())->announced_windows.empty());
 
     std::tie(client, surface, shellSurface) = createWindow("org.kde.foo", 500);
     QVERIFY(!client);

@@ -24,14 +24,12 @@ class EventQueue;
 class Registry;
 class Seat;
 class ShmPool;
-class Surface;
 }
 namespace Server
 {
 class Display;
 struct globals;
 
-class AppmenuManager;
 class Client;
 class Compositor;
 class data_device_manager;
@@ -41,24 +39,15 @@ class KeyState;
 class LayerShellV1;
 class LinuxDmabufBufferV1;
 class LinuxDmabufV1;
-class Output;
-class OutputConfigurationV1;
-class OutputManagementV1;
-class PlasmaShell;
-class PlasmaShellSurface;
 class PlasmaVirtualDesktopManager;
 class PlasmaWindowManager;
 class PresentationManager;
 class primary_selection_device_manager;
-class QtSurfaceExtension;
 class Seat;
-class ServerSideDecorationPaletteManager;
 class Subcompositor;
 class Surface;
 class Viewporter;
 class XdgActivationV1;
-class XdgDecorationManager;
-class XdgForeign;
 class XdgShell;
 }
 }
@@ -89,8 +78,6 @@ public:
     Q_DECLARE_FLAGS(InitializationFlags, InitializationFlag)
 
     std::unique_ptr<Wrapland::Server::globals> globals;
-    std::vector<win::wayland::window*> windows;
-    QVector<Wrapland::Server::PlasmaShellSurface*> m_plasmaShellSurfaces;
 
     WaylandServer(std::string const& socket, InitializationFlags flags);
     WaylandServer(int socket_fd, InitializationFlags flags);
@@ -122,11 +109,6 @@ public:
     Wrapland::Server::drm_lease_device_v1* drm_lease_device() const;
 
     void create_presentation_manager();
-
-    void remove_window(win::wayland::window* window);
-
-    win::wayland::window* find_window(Wrapland::Server::Surface* surface) const;
-    Toplevel* findToplevel(Wrapland::Server::Surface* surface) const;
 
     /**
      * @returns a parent of a surface imported with the foreign protocol, if any
@@ -234,12 +216,7 @@ public:
         m_linuxDmabufBuffers.remove(buffer);
     }
 
-    void window_shown(Toplevel* window);
-
 Q_SIGNALS:
-    void window_added(KWin::win::wayland::window*);
-    void window_removed(KWin::win::wayland::window*);
-
     void terminatingInternalClientConnection();
     void screenlocker_initialized();
     void foreignTransientChanged(Wrapland::Server::Surface* child);

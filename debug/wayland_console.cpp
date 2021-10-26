@@ -9,13 +9,13 @@
 #include "input_filter.h"
 #include "model_helpers.h"
 #include "surface_tree_model.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 #include "ui_debug_console.h"
 
 #include "input/keyboard_redirect.h"
 #include "main.h"
-#include "wayland_server.h"
 
 #include <Wrapland/Server/surface.h>
 
@@ -107,16 +107,19 @@ void wayland_console::update_keyboard_tab()
 wayland_console_model::wayland_console_model(QObject* parent)
     : console_model(parent)
 {
-    auto const clients = waylandServer()->windows;
+    auto space = static_cast<win::wayland::space*>(workspace());
+    auto const clients = space->announced_windows;
     for (auto c : clients) {
         m_shellClients.append(c);
     }
     // TODO: that only includes windows getting shown, not those which are only created
-    QObject::connect(waylandServer(), &WaylandServer::window_added, this, [this](auto win) {
-        add_window(this, s_waylandClientId - 1, m_shellClients, win);
+    QObject::connect(space, &win::wayland::space::wayland_window_added, this, [this](auto win) {
+        auto wayland_win = static_cast<win::wayland::window*>(win);
+        add_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
     });
-    QObject::connect(waylandServer(), &WaylandServer::window_removed, this, [this](auto win) {
-        remove_window(this, s_waylandClientId - 1, m_shellClients, win);
+    QObject::connect(space, &win::wayland::space::wayland_window_removed, this, [this](auto win) {
+        auto wayland_win = static_cast<win::wayland::window*>(win);
+        remove_window(this, s_waylandClientId - 1, m_shellClients, wayland_win);
     });
 }
 
