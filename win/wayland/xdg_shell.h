@@ -17,8 +17,10 @@
 #include "toplevel.h"
 #include "wayland_logging.h"
 
+#include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/appmenu.h>
 #include <Wrapland/Server/client.h>
+#include <Wrapland/Server/globals.h>
 #include <Wrapland/Server/plasma_shell.h>
 #include <Wrapland/Server/server_decoration_palette.h>
 #include <Wrapland/Server/surface.h>
@@ -560,6 +562,73 @@ void install_deco(Win* win, Wrapland::Server::XdgDecoration* deco)
         // Force as we must send a new configure response.
         win->updateDecoration(false, true);
     });
+}
+
+template<typename Window, typename Server>
+void handle_new_toplevel(Server* server, Wrapland::Server::XdgShellToplevel* toplevel)
+{
+    if (!Workspace::self()) {
+        // it's possible that a Surface gets created before Workspace is created
+        // TODO(romangg): Make this check unnecessary.
+        return;
+    }
+    if (toplevel->client() == server->screenLockerClientConnection()) {
+        ScreenLocker::KSldApp::self()->lockScreenShown();
+    }
+    auto window = win::wayland::create_toplevel_window(toplevel);
+
+    // TODO(romangg): Also relevant for popups?
+    auto it = std::find_if(
+        server->m_plasmaShellSurfaces.begin(),
+        server->m_plasmaShellSurfaces.end(),
+        [window](auto shell_surface) { return window->surface() == shell_surface->surface(); });
+    if (it != server->m_plasmaShellSurfaces.end()) {
+        win::wayland::install_plasma_shell_surface(window, *it);
+        server->m_plasmaShellSurfaces.erase(it);
+    }
+
+    if (auto menu = server->globals->appmenu_manager->appmenuForSurface(window->surface())) {
+        win::wayland::install_appmenu(window, menu);
+    }
+    if (auto palette = server->globals->server_side_decoration_palette_manager->paletteForSurface(
+            toplevel->surface()->surface())) {
+        win::wayland::install_palette(window, palette);
+    }
+
+    server->windows.push_back(window);
+
+    if (window->readyForPainting()) {
+        Q_EMIT server->window_added(window);
+    } else {
+        QObject::connect(window, &win::wayland::window::windowShown, server, &Server::window_shown);
+    }
+
+    // Not directly connected as the connection is tied to client instead of this.
+    // TODO(romangg): What does this mean?
+    QObject::connect(
+        server->globals->xdg_foreign.get(),
+        &Wrapland::Server::XdgForeign::parentChanged,
+        window,
+        [server](auto /*parent*/, auto child) { Q_EMIT server->foreignTransientChanged(child); });
+}
+
+template<typename Window, typename Server>
+void handle_new_popup(Server* server, Wrapland::Server::XdgShellPopup* popup)
+{
+    if (!Workspace::self()) {
+        // it's possible that a Surface gets created before Workspace is created
+        // TODO(romangg): Make this check unnecessary.
+        return;
+    }
+
+    auto window = win::wayland::create_popup_window(popup);
+    server->windows.push_back(window);
+
+    if (window->readyForPainting()) {
+        Q_EMIT server->window_added(window);
+    } else {
+        QObject::connect(window, &win::wayland::window::windowShown, server, &Server::window_shown);
+    }
 }
 
 template<typename Win>

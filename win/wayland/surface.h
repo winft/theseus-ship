@@ -8,6 +8,7 @@
 #include "toplevel.h"
 #include "wayland_server.h"
 
+#include <Wrapland/Server/display.h>
 #include <Wrapland/Server/surface.h>
 #include <Wrapland/Server/wl_output.h>
 #include <cassert>

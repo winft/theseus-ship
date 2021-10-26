@@ -7,6 +7,8 @@
 
 #include "window.h"
 
+#include "transient.h"
+
 #include "render/compositor.h"
 #include "win/space.h"
 #include "win/transient.h"
@@ -117,6 +119,34 @@ void set_subsurface_parent(Win* win, Lead* lead)
     win->set_layer(win::layer::unmanaged);
 
     win->map();
+}
+
+template<typename Window, typename Server>
+void handle_new_subsurface(Server* server, Wrapland::Server::Subsurface* subsurface)
+{
+    auto window = new Window(subsurface->surface());
+
+    server->windows.push_back(window);
+    QObject::connect(subsurface,
+                     &Wrapland::Server::Subsurface::resourceDestroyed,
+                     server,
+                     [server, window] { remove_all(server->windows, window); });
+
+    assign_subsurface_role(window);
+
+    for (auto& win : server->windows) {
+        if (win->surface() == subsurface->parentSurface()) {
+            win::wayland::set_subsurface_parent(window, win);
+            if (window->readyForPainting()) {
+                Q_EMIT server->window_added(window);
+                adopt_transient_children(server, window);
+                return;
+            }
+            break;
+        }
+    }
+    // Must wait till a parent is mapped and subsurface is ready for painting.
+    QObject::connect(window, &win::wayland::window::windowShown, server, &Server::window_shown);
 }
 
 }

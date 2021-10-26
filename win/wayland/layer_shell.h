@@ -17,6 +17,7 @@
 #include "screens.h"
 #include "wayland_server.h"
 
+#include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/layer_shell_v1.h>
 #include <Wrapland/Server/surface.h>
 
@@ -171,6 +172,29 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     QObject::connect(win->surface(), &WS::Surface::committed, win, [handle_first_commit] {
         handle_first_commit();
     });
+}
+
+template<typename Window, typename Server>
+void handle_new_layer_surface(Server* server, Wrapland::Server::LayerSurfaceV1* layer_surface)
+{
+    auto window = new Window(layer_surface->surface());
+    if (layer_surface->surface()->client() == server->screenLockerClientConnection()) {
+        ScreenLocker::KSldApp::self()->lockScreenShown();
+    }
+
+    server->windows.push_back(window);
+    QObject::connect(layer_surface,
+                     &Wrapland::Server::LayerSurfaceV1::resourceDestroyed,
+                     server,
+                     [server, window] { remove_all(server->windows, window); });
+
+    win::wayland::assign_layer_surface_role(window, layer_surface);
+
+    if (window->readyForPainting()) {
+        Q_EMIT server->window_added(window);
+    } else {
+        QObject::connect(window, &win::wayland::window::windowShown, server, &Server::window_shown);
+    }
 }
 
 template<typename Win>

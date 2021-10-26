@@ -15,11 +15,17 @@
 #include "service_utils.h"
 #include "wayland_logging.h"
 #include "workspace.h"
+#include "xwl/surface.h"
 
+#include "win/wayland/appmenu.h"
+#include "win/wayland/deco.h"
 #include "win/wayland/layer_shell.h"
+#include "win/wayland/plasma_shell.h"
+#include "win/wayland/plasma_window.h"
 #include "win/wayland/space.h"
 #include "win/wayland/subsurface.h"
 #include "win/wayland/surface.h"
+#include "win/wayland/transient.h"
 #include "win/wayland/window.h"
 #include "win/wayland/xdg_activation.h"
 #include "win/wayland/xdg_shell.h"
@@ -152,8 +158,8 @@ public:
 };
 
 WaylandServer::WaylandServer(InitializationFlags flags)
-    : m_display(std::make_unique<KWinDisplay>())
-    , globals{std::make_unique<Wrapland::Server::globals>()}
+    : globals{std::make_unique<Wrapland::Server::globals>()}
+    , m_display(std::make_unique<KWinDisplay>())
     , m_initFlags{flags}
 
 {
@@ -234,96 +240,21 @@ void WaylandServer::create_globals()
     connect(compositor(),
             &Wrapland::Server::Compositor::surfaceCreated,
             this,
-            [this](Surface* surface) {
-                // check whether we have a Toplevel with the Surface's id
-                Workspace* ws = Workspace::self();
-                if (!ws) {
-                    // it's possible that a Surface gets created before Workspace is created
-                    return;
-                }
-                if (surface->client() != xWaylandConnection()) {
-                    // setting surface is only relevat for Xwayland clients
-                    return;
-                }
-                auto check = [surface](const Toplevel* t) {
-                    // Match on surface id and exclude windows already having a surface. This way we
-                    // only find Xwayland toplevels. Wayland native windows always have a surface.
-                    return t->surfaceId() == surface->id() && !t->surface();
-                };
-                if (auto window = ws->findToplevel(check)) {
-                    win::wayland::set_surface(window, surface);
-                }
-            });
+            [this](auto surface) { xwl::handle_new_surface(this, workspace(), surface); });
 
     globals->xdg_shell = m_display->createXdgShell();
-    connect(xdg_shell(), &XdgShell::toplevelCreated, this, [this](XdgShellToplevel* toplevel) {
-        if (!Workspace::self()) {
-            // it's possible that a Surface gets created before Workspace is created
-            return;
-        }
-        if (toplevel->client() == m_screenLockerClientConnection) {
-            ScreenLocker::KSldApp::self()->lockScreenShown();
-        }
-        auto window = win::wayland::create_toplevel_window(toplevel);
-
-        // TODO: Also relevant for popups?
-        auto it = std::find_if(
-            m_plasmaShellSurfaces.begin(),
-            m_plasmaShellSurfaces.end(),
-            [window](auto shell_surface) { return window->surface() == shell_surface->surface(); });
-        if (it != m_plasmaShellSurfaces.end()) {
-            win::wayland::install_plasma_shell_surface(window, *it);
-            m_plasmaShellSurfaces.erase(it);
-        }
-
-        if (auto menu = globals->appmenu_manager->appmenuForSurface(window->surface())) {
-            win::wayland::install_appmenu(window, menu);
-        }
-        if (auto palette = globals->server_side_decoration_palette_manager->paletteForSurface(
-                toplevel->surface()->surface())) {
-            win::wayland::install_palette(window, palette);
-        }
-
-        windows.push_back(window);
-
-        if (window->readyForPainting()) {
-            Q_EMIT window_added(window);
-        } else {
-            connect(window, &win::wayland::window::windowShown, this, &WaylandServer::window_shown);
-        }
-
-        // not directly connected as the connection is tied to client instead of this
-        connect(
-            globals->xdg_foreign.get(),
-            &Wrapland::Server::XdgForeign::parentChanged,
-            window,
-            [this]([[maybe_unused]] Wrapland::Server::Surface* parent,
-                   Wrapland::Server::Surface* child) { Q_EMIT foreignTransientChanged(child); });
+    connect(xdg_shell(), &XdgShell::toplevelCreated, this, [this](auto toplevel) {
+        win::wayland::handle_new_toplevel<win::wayland::window>(this, toplevel);
     });
-    connect(xdg_shell(), &XdgShell::popupCreated, this, [this](XdgShellPopup* popup) {
-        if (!Workspace::self()) {
-            // it's possible that a Surface gets created before Workspace is created
-            return;
-        }
-        auto window = win::wayland::create_popup_window(popup);
-        windows.push_back(window);
-
-        if (window->readyForPainting()) {
-            Q_EMIT window_added(window);
-        } else {
-            connect(window, &win::wayland::window::windowShown, this, &WaylandServer::window_shown);
-        }
+    connect(xdg_shell(), &XdgShell::popupCreated, this, [this](auto popup) {
+        win::wayland::handle_new_popup<win::wayland::window>(this, popup);
     });
 
     globals->xdg_decoration_manager = m_display->createXdgDecorationManager(xdg_shell());
     connect(globals->xdg_decoration_manager.get(),
             &XdgDecorationManager::decorationCreated,
             this,
-            [this](XdgDecoration* deco) {
-                if (auto win = find_window(deco->toplevel()->surface()->surface())) {
-                    win::wayland::install_deco(win, deco);
-                }
-            });
+            [this](auto deco) { win::wayland::handle_new_xdg_deco(this, deco); });
 
     m_display->createShm();
     globals->seats.push_back(m_display->createSeat());
@@ -343,42 +274,19 @@ void WaylandServer::create_globals()
     globals->idle_inhibit_manager_v1 = m_display->createIdleInhibitManager();
 
     globals->plasma_shell = m_display->createPlasmaShell();
-    connect(globals->plasma_shell.get(),
-            &PlasmaShell::surfaceCreated,
-            [this](PlasmaShellSurface* surface) {
-                if (auto win = find_window(surface->surface())) {
-                    assert(win->toplevel || win->popup || win->layer_surface);
-                    win::wayland::install_plasma_shell_surface(win, surface);
-                } else {
-                    m_plasmaShellSurfaces << surface;
-                    connect(surface, &QObject::destroyed, this, [this, surface] {
-                        m_plasmaShellSurfaces.removeOne(surface);
-                    });
-                }
-            });
+    connect(globals->plasma_shell.get(), &PlasmaShell::surfaceCreated, [this](auto surface) {
+        win::wayland::handle_new_plasma_shell_surface(this, surface);
+    });
     globals->appmenu_manager = m_display->createAppmenuManager();
-    connect(
-        globals->appmenu_manager.get(), &AppmenuManager::appmenuCreated, [this](Appmenu* appMenu) {
-            if (auto win = find_window(appMenu->surface())) {
-                if (win->control) {
-                    // Need to check that as plasma-integration creates them blindly even for
-                    // xdg-shell popups.
-                    win::wayland::install_appmenu(win, appMenu);
-                }
-            }
-        });
+    connect(globals->appmenu_manager.get(), &AppmenuManager::appmenuCreated, [this](auto appmenu) {
+        win::wayland::handle_new_appmenu(this, appmenu);
+    });
 
     globals->server_side_decoration_palette_manager
         = m_display->createServerSideDecorationPaletteManager();
     connect(globals->server_side_decoration_palette_manager.get(),
             &ServerSideDecorationPaletteManager::paletteCreated,
-            [this](ServerSideDecorationPalette* palette) {
-                if (auto win = find_window(palette->surface())) {
-                    if (win->control) {
-                        win::wayland::install_palette(win, palette);
-                    }
-                }
-            });
+            [this](auto palette) { win::wayland::handle_new_palette(this, palette); });
 
     globals->plasma_window_manager = m_display->createPlasmaWindowManager();
     globals->plasma_window_manager->setShowingDesktopState(
@@ -386,27 +294,7 @@ void WaylandServer::create_globals()
     connect(globals->plasma_window_manager.get(),
             &PlasmaWindowManager::requestChangeShowingDesktop,
             this,
-            [](PlasmaWindowManager::ShowingDesktopState state) {
-                if (!workspace()) {
-                    return;
-                }
-                bool set = false;
-                switch (state) {
-                case PlasmaWindowManager::ShowingDesktopState::Disabled:
-                    set = false;
-                    break;
-                case PlasmaWindowManager::ShowingDesktopState::Enabled:
-                    set = true;
-                    break;
-                default:
-                    Q_UNREACHABLE();
-                    break;
-                }
-                if (set == workspace()->showingDesktop()) {
-                    return;
-                }
-                workspace()->setShowingDesktop(set);
-            });
+            [](auto state) { win::wayland::handle_change_showing_desktop(workspace(), state); });
 
     globals->plasma_virtual_desktop_manager = m_display->createPlasmaVirtualDesktopManager();
     globals->plasma_window_manager->setVirtualDesktopManager(virtual_desktop_management());
@@ -428,30 +316,7 @@ void WaylandServer::create_globals()
             &Wrapland::Server::Subcompositor::subsurfaceCreated,
             this,
             [this](auto subsurface) {
-                auto window = new win::wayland::window(subsurface->surface());
-
-                windows.push_back(window);
-                QObject::connect(subsurface,
-                                 &Wrapland::Server::Subsurface::resourceDestroyed,
-                                 this,
-                                 [this, window] { remove_all(windows, window); });
-
-                win::wayland::assign_subsurface_role(window);
-
-                for (auto& win : windows) {
-                    if (win->surface() == subsurface->parentSurface()) {
-                        win::wayland::set_subsurface_parent(window, win);
-                        if (window->readyForPainting()) {
-                            Q_EMIT window_added(window);
-                            adopt_transient_children(window);
-                            return;
-                        }
-                        break;
-                    }
-                }
-                // Must wait till a parent is mapped and subsurface is ready for painting.
-                connect(
-                    window, &win::wayland::window::windowShown, this, &WaylandServer::window_shown);
+                win::wayland::handle_new_subsurface<win::wayland::window>(this, subsurface);
             });
 
     globals->layer_shell_v1 = m_display->createLayerShellV1();
@@ -459,27 +324,7 @@ void WaylandServer::create_globals()
             &Wrapland::Server::LayerShellV1::surface_created,
             this,
             [this](auto layer_surface) {
-                auto window = new win::wayland::window(layer_surface->surface());
-                if (layer_surface->surface()->client() == m_screenLockerClientConnection) {
-                    ScreenLocker::KSldApp::self()->lockScreenShown();
-                }
-
-                windows.push_back(window);
-                QObject::connect(layer_surface,
-                                 &Wrapland::Server::LayerSurfaceV1::resourceDestroyed,
-                                 this,
-                                 [this, window] { remove_all(windows, window); });
-
-                win::wayland::assign_layer_surface_role(window, layer_surface);
-
-                if (window->readyForPainting()) {
-                    Q_EMIT window_added(window);
-                } else {
-                    connect(window,
-                            &win::wayland::window::windowShown,
-                            this,
-                            &WaylandServer::window_shown);
-                }
+                win::wayland::handle_new_layer_surface<win::wayland::window>(this, layer_surface);
             });
 
     globals->xdg_activation_v1 = m_display->createXdgActivationV1();
@@ -593,13 +438,7 @@ void WaylandServer::window_shown(Toplevel* window)
 {
     disconnect(window, &Toplevel::windowShown, this, &WaylandServer::window_shown);
     Q_EMIT window_added(static_cast<win::wayland::window*>(window));
-    adopt_transient_children(window);
-}
-
-void WaylandServer::adopt_transient_children(Toplevel* window)
-{
-    std::for_each(
-        windows.cbegin(), windows.cend(), [&window](auto win) { win->checkTransient(window); });
+    win::wayland::adopt_transient_children(this, window);
 }
 
 void WaylandServer::initWorkspace()
@@ -625,12 +464,7 @@ void WaylandServer::initWorkspace()
             &Wrapland::Server::XdgActivationV1::activate,
             ws,
             [ws, this](auto const& token, auto surface) {
-                auto win = find_window(surface);
-                if (!win) {
-                    qCDebug(KWIN_WL) << "No window found to xdg-activate" << surface;
-                    return;
-                }
-                win::wayland::xdg_activation_activate(ws, win, token);
+                win::wayland::handle_xdg_activation_activate(this, ws, token, surface);
             });
 
     // For Xwayland windows

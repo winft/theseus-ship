@@ -146,4 +146,18 @@ void xdg_activation_activate(Space* space, Window* win, std::string const& token
     space->activateClient(win);
 }
 
+template<typename Server, typename Space>
+void handle_xdg_activation_activate(Server* server,
+                                    Space* space,
+                                    std::string const& token,
+                                    Wrapland::Server::Surface* surface)
+{
+    auto win = server->find_window(surface);
+    if (!win) {
+        qCDebug(KWIN_WL) << "No window found to xdg-activate" << surface;
+        return;
+    }
+    xdg_activation_activate(space, win, token);
+}
+
 }

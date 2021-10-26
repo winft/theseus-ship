@@ -88,6 +88,7 @@ public:
 
     Q_DECLARE_FLAGS(InitializationFlags, InitializationFlag)
 
+    std::unique_ptr<Wrapland::Server::globals> globals;
     std::vector<win::wayland::window*> windows;
     QVector<Wrapland::Server::PlasmaShellSurface*> m_plasmaShellSurfaces;
 
@@ -233,6 +234,8 @@ public:
         m_linuxDmabufBuffers.remove(buffer);
     }
 
+    void window_shown(Toplevel* window);
+
 Q_SIGNALS:
     void window_added(KWin::win::wayland::window*);
     void window_removed(KWin::win::wayland::window*);
@@ -248,16 +251,12 @@ private:
     void createInternalConnection(std::function<void(bool)> callback);
     int createScreenLockerConnection();
 
-    void window_shown(Toplevel* window);
-    void adopt_transient_children(Toplevel* window);
-
     void destroyInternalConnection();
     template<class T>
     void createSurface(T* surface);
     void initScreenLocker();
 
     std::unique_ptr<Wrapland::Server::Display> m_display;
-    std::unique_ptr<Wrapland::Server::globals> globals;
 
     QSet<Wrapland::Server::LinuxDmabufBufferV1*> m_linuxDmabufBuffers;
 
