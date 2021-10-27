@@ -105,7 +105,7 @@ void lower_window(Space* space, Window* window)
 
     auto blocker = do_lower(window);
 
-    if (window->isTransient() && window->group()) {
+    if (window->transient()->lead() && window->group()) {
         // Lower also all windows in the group, in reversed stacking order.
         auto const wins = space->ensureStackingOrder(window->group()->members());
 
@@ -147,7 +147,7 @@ void raise_window(Space* space, Window* window)
 
     auto blocker = prepare(window);
 
-    if (window->isTransient()) {
+    if (window->transient()->lead()) {
         // Also raise all leads.
         std::vector<Toplevel*> leads;
 

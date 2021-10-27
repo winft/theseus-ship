@@ -81,8 +81,8 @@ public:
  etc. KWin should handle both group and non-group transient dialogs well.
 
  In other words:
- - non-transient windows     : isTransient() == false
- - normal transients         : transientFor() != NULL
+ - non-transient windows     : transient()->lead() == NULL
+ - normal transients         : transient()->lead() != NULL and not group transient
  - group transients          : groupTransient() == true
 
  - list of mainwindows       : mainClients()  (call once and loop over the result)

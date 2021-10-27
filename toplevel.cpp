@@ -120,7 +120,7 @@ NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_
     // hacks here
     if (wt == NET::Unknown) {
         // this is more or less suggested in NETWM spec
-        wt = isTransient() ? NET::Dialog : NET::Normal;
+        wt = transient()->lead() ? NET::Dialog : NET::Normal;
     }
     return wt;
 }
@@ -1053,11 +1053,6 @@ bool Toplevel::userCanSetNoBorder() const
 void Toplevel::checkNoBorder()
 {
     setNoBorder(false);
-}
-
-bool Toplevel::isTransient() const
-{
-    return transient()->lead();
 }
 
 xcb_timestamp_t Toplevel::userTime() const

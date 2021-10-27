@@ -556,14 +556,14 @@ bool window::isMaximizable() const
 
 bool window::isMinimizable() const
 {
-    if (win::is_special_window(this) && !isTransient()) {
+    if (win::is_special_window(this) && !transient()->lead()) {
         return false;
     }
     if (!control->rules().checkMinimize(true)) {
         return false;
     }
 
-    if (isTransient()) {
+    if (transient()->lead()) {
         // #66868 - Let other xmms windows be minimized when the mainwindow is minimized
         auto shown_main_window = false;
         for (auto const& lead : transient()->leads())

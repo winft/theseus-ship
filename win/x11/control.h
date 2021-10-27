@@ -532,7 +532,7 @@ template<typename Win>
 bool ignore_position_default(Win* win)
 {
     // TODO(romangg): This function flow can surely be radically simplified.
-    if (win->isTransient()) {
+    if (win->transient()->lead()) {
         if (!is_utility(win) && !is_dialog(win) && !is_splash(win)) {
             return false;
         }
@@ -804,7 +804,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
         // If this window is transient, ensure that it is opened on the
         // same window as its parent.  this is necessary when an application
         // starts up on a different desktop than is currently displayed.
-        if (win->isTransient()) {
+        if (win->transient()->lead()) {
             auto leads = win->transient()->leads();
             bool on_current = false;
             bool on_all = false;
@@ -1431,7 +1431,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
                     && belong_to_same_application(
                            x11_client, win, same_client_check::relaxed_for_active);
             };
-            if (win->isTransient()) {
+            if (win->transient()->lead()) {
                 auto clientMainClients = [win]() {
                     std::vector<Win*> ret;
                     const auto mcs = win->transient()->leads();

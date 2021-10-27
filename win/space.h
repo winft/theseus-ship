@@ -82,7 +82,7 @@ void update_tool_windows(Space* space, bool also_hide)
     // Go up in transiency hiearchy, if the top is found, only tool transients for the top
     // window will be shown; if a group transient is group, all tools in the group will be shown.
     while (active_window) {
-        if (!active_window->isTransient()) {
+        if (!active_window->transient()->lead()) {
             break;
         }
         if (active_window->groupTransient()) {
@@ -111,7 +111,7 @@ void update_tool_windows(Space* space, bool also_hide)
 
         auto show{true};
 
-        if (window->isTransient()) {
+        if (window->transient()->lead()) {
             auto const in_active_group = active_group && window->group() == active_group;
             auto const has_active_lead
                 = active_window && window->transient()->is_follower_of(active_window);

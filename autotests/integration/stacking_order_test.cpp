@@ -171,7 +171,7 @@ void StackingOrderTest::testTransientIsAboveParent()
     auto parent = Test::render_and_wait_for_shown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
     QVERIFY(parent->control->active());
-    QVERIFY(!parent->isTransient());
+    QVERIFY(!parent->transient()->lead());
 
     // Initially, the stacking order should contain only the parent window.
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent}));
@@ -185,7 +185,7 @@ void StackingOrderTest::testTransientIsAboveParent()
     auto transient = Test::render_and_wait_for_shown(transientSurface, QSize(128, 128), Qt::red);
     QVERIFY(transient);
     QVERIFY(transient->control->active());
-    QVERIFY(transient->isTransient());
+    QVERIFY(transient->transient()->lead());
 
     // The transient should be above the parent.
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent, transient}));
@@ -211,7 +211,7 @@ void StackingOrderTest::testRaiseTransient()
     auto parent = Test::render_and_wait_for_shown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
     QVERIFY(parent->control->active());
-    QVERIFY(!parent->isTransient());
+    QVERIFY(!parent->transient()->lead());
 
     // Initially, the stacking order should contain only the parent window.
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent}));
@@ -225,7 +225,7 @@ void StackingOrderTest::testRaiseTransient()
     auto transient = Test::render_and_wait_for_shown(transientSurface, QSize(128, 128), Qt::red);
     QVERIFY(transient);
     QTRY_VERIFY(transient->control->active());
-    QVERIFY(transient->isTransient());
+    QVERIFY(transient->transient()->lead());
 
     // The transient should be above the parent.
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent, transient}));
@@ -239,7 +239,7 @@ void StackingOrderTest::testRaiseTransient()
         = Test::render_and_wait_for_shown(anotherSurface, QSize(128, 128), Qt::green);
     QVERIFY(anotherClient);
     QVERIFY(anotherClient->control->active());
-    QVERIFY(!anotherClient->isTransient());
+    QVERIFY(!anotherClient->transient()->lead());
 
     // The newly created surface has to be above both the parent and the transient.
     QCOMPARE(workspace()->stacking_order->sorted(),
@@ -283,7 +283,7 @@ void StackingOrderTest::testDeletedTransient()
     auto parent = Test::render_and_wait_for_shown(parentSurface, QSize(256, 256), Qt::blue);
     QVERIFY(parent);
     QVERIFY(parent->control->active());
-    QVERIFY(!parent->isTransient());
+    QVERIFY(!parent->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent}));
 
@@ -296,7 +296,7 @@ void StackingOrderTest::testDeletedTransient()
     auto transient1 = Test::render_and_wait_for_shown(transient1Surface, QSize(128, 128), Qt::red);
     QVERIFY(transient1);
     QTRY_VERIFY(transient1->control->active());
-    QVERIFY(transient1->isTransient());
+    QVERIFY(transient1->transient()->lead());
     QCOMPARE(transient1->transient()->lead(), parent);
 
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{parent, transient1}));
@@ -314,7 +314,7 @@ void StackingOrderTest::testDeletedTransient()
     QVERIFY(transient2);
 
     QTRY_VERIFY(transient2->control->active());
-    QVERIFY(transient2->isTransient());
+    QVERIFY(transient2->transient()->lead());
     QCOMPARE(transient2->transient()->lead(), transient1);
 
     QCOMPARE(workspace()->stacking_order->sorted(),
@@ -374,7 +374,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     QVERIFY(leader);
     QVERIFY(leader->control->active());
     QCOMPARE(leader->xcb_window(), leaderWid);
-    QVERIFY(!leader->isTransient());
+    QVERIFY(!leader->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{leader}));
 
@@ -390,7 +390,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     QVERIFY(member1->control->active());
     QCOMPARE(member1->xcb_window(), member1Wid);
     QCOMPARE(member1->group(), leader->group());
-    QVERIFY(!member1->isTransient());
+    QVERIFY(!member1->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{leader, member1}));
 
@@ -406,7 +406,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     QVERIFY(member2->control->active());
     QCOMPARE(member2->xcb_window(), member2Wid);
     QCOMPARE(member2->group(), leader->group());
-    QVERIFY(!member2->isTransient());
+    QVERIFY(!member2->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(),
              (std::deque<Toplevel*>{leader, member1, member2}));
@@ -444,7 +444,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     QVERIFY(transient->control->active());
     QCOMPARE(transient->xcb_window(), transientWid);
     QCOMPARE(transient->group(), leader->group());
-    QVERIFY(transient->isTransient());
+    QVERIFY(transient->transient()->lead());
     QVERIFY(transient->groupTransient());
     QVERIFY(!win::is_dialog(transient)); // See above why
 
@@ -492,7 +492,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     QVERIFY(leader);
     QVERIFY(leader->control->active());
     QCOMPARE(leader->xcb_window(), leaderWid);
-    QVERIFY(!leader->isTransient());
+    QVERIFY(!leader->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{leader}));
 
@@ -508,7 +508,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     QVERIFY(member1->control->active());
     QCOMPARE(member1->xcb_window(), member1Wid);
     QCOMPARE(member1->group(), leader->group());
-    QVERIFY(!member1->isTransient());
+    QVERIFY(!member1->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{leader, member1}));
 
@@ -524,7 +524,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     QVERIFY(member2->control->active());
     QCOMPARE(member2->xcb_window(), member2Wid);
     QCOMPARE(member2->group(), leader->group());
-    QVERIFY(!member2->isTransient());
+    QVERIFY(!member2->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(),
              (std::deque<Toplevel*>{leader, member1, member2}));
@@ -562,7 +562,7 @@ void StackingOrderTest::testRaiseGroupTransient()
     QVERIFY(transient->control->active());
     QCOMPARE(transient->xcb_window(), transientWid);
     QCOMPARE(transient->group(), leader->group());
-    QVERIFY(transient->isTransient());
+    QVERIFY(transient->transient()->lead());
     QVERIFY(transient->groupTransient());
     QVERIFY(!win::is_dialog(transient)); // See above why
 
@@ -578,7 +578,7 @@ void StackingOrderTest::testRaiseGroupTransient()
         = Test::render_and_wait_for_shown(anotherSurface, QSize(128, 128), Qt::green);
     QVERIFY(anotherClient);
     QVERIFY(anotherClient->control->active());
-    QVERIFY(!anotherClient->isTransient());
+    QVERIFY(!anotherClient->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(),
              (std::deque<Toplevel*>{leader, member1, member2, transient, anotherClient}));
@@ -630,7 +630,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     QVERIFY(leader);
     QVERIFY(leader->control->active());
     QCOMPARE(leader->xcb_window(), leaderWid);
-    QVERIFY(!leader->isTransient());
+    QVERIFY(!leader->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{leader}));
 
@@ -646,7 +646,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     QVERIFY(member1->control->active());
     QCOMPARE(member1->xcb_window(), member1Wid);
     QCOMPARE(member1->group(), leader->group());
-    QVERIFY(!member1->isTransient());
+    QVERIFY(!member1->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{leader, member1}));
 
@@ -662,7 +662,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     QVERIFY(member2->control->active());
     QCOMPARE(member2->xcb_window(), member2Wid);
     QCOMPARE(member2->group(), leader->group());
-    QVERIFY(!member2->isTransient());
+    QVERIFY(!member2->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(),
              (std::deque<Toplevel*>{leader, member1, member2}));
@@ -700,7 +700,7 @@ void StackingOrderTest::testDeletedGroupTransient()
     QVERIFY(transient->control->active());
     QCOMPARE(transient->xcb_window(), transientWid);
     QCOMPARE(transient->group(), leader->group());
-    QVERIFY(transient->isTransient());
+    QVERIFY(transient->transient()->lead());
     QVERIFY(transient->groupTransient());
     QVERIFY(!win::is_dialog(transient)); // See above why
 
@@ -748,7 +748,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QVERIFY(leader);
     QVERIFY(leader->control->active());
     QCOMPARE(leader->xcb_window(), leaderWid);
-    QVERIFY(!leader->isTransient());
+    QVERIFY(!leader->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{leader}));
 
@@ -764,7 +764,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QVERIFY(member1->control->active());
     QCOMPARE(member1->xcb_window(), member1Wid);
     QCOMPARE(member1->group(), leader->group());
-    QVERIFY(!member1->isTransient());
+    QVERIFY(!member1->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{leader, member1}));
 
@@ -780,7 +780,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QVERIFY(member2->control->active());
     QCOMPARE(member2->xcb_window(), member2Wid);
     QCOMPARE(member2->group(), leader->group());
-    QVERIFY(!member2->isTransient());
+    QVERIFY(!member2->transient()->lead());
 
     QCOMPARE(workspace()->stacking_order->sorted(),
              (std::deque<Toplevel*>{leader, member1, member2}));
@@ -798,7 +798,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
     QVERIFY(transient->control->active());
     QCOMPARE(transient->xcb_window(), transientWid);
     QCOMPARE(transient->group(), leader->group());
-    QVERIFY(transient->isTransient());
+    QVERIFY(transient->transient()->lead());
     QVERIFY(transient->groupTransient());
     QVERIFY(win::is_dialog(transient));
     QVERIFY(!transient->transient()->modal());
