@@ -49,9 +49,6 @@ public:
 
     WaylandServer* server;
     std::unique_ptr<win::wayland::xdg_activation> activation;
-
-    // Windows requested by Wayland clients already ready for painting or not yet.
-    std::vector<window*> announced_windows;
     QVector<Wrapland::Server::PlasmaShellSurface*> plasma_shell_surfaces;
 
 protected:

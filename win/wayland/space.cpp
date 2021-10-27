@@ -115,12 +115,6 @@ space::~space()
 {
     stacking_order->lock();
 
-    // TODO(romangg): Do we really need both loops?
-    for (auto win : announced_windows) {
-        win->destroy();
-        remove_all(m_windows, win);
-    }
-
     for (auto const& window : m_windows) {
         if (auto win = qobject_cast<win::wayland::window*>(window)) {
             win->destroy();
@@ -136,10 +130,10 @@ window* space::find_window(Wrapland::Server::Surface* surface) const
         return nullptr;
     }
 
-    auto it = std::find_if(announced_windows.cbegin(),
-                           announced_windows.cend(),
-                           [surface](auto win) { return win->surface() == surface; });
-    return it != announced_windows.cend() ? *it : nullptr;
+    auto it = std::find_if(m_windows.cbegin(), m_windows.cend(), [surface](auto win) {
+        return win->surface() == surface;
+    });
+    return it != m_windows.cend() ? qobject_cast<window*>(*it) : nullptr;
 }
 
 void space::handle_wayland_window_shown(Toplevel* window)
@@ -150,8 +144,6 @@ void space::handle_wayland_window_shown(Toplevel* window)
 
 void space::handle_window_added(wayland::window* window)
 {
-    assert(!contains(m_windows, window));
-
     if (window->control && !window->layer_surface) {
         setup_space_window_connections(this, window);
         window->updateDecoration(false);
@@ -178,8 +170,6 @@ void space::handle_window_added(wayland::window* window)
 
         m_allClients.push_back(window);
     }
-
-    m_windows.push_back(window);
 
     if (!contains(stacking_order->pre_stack, window)) {
         // Raise if it hasn't got any stacking position yet.
@@ -226,7 +216,6 @@ void space::handle_window_added(wayland::window* window)
 
 void space::handle_window_removed(wayland::window* window)
 {
-    remove_all(announced_windows, window);
     remove_all(m_windows, window);
 
     if (window->control) {
@@ -334,8 +323,11 @@ void space::update_space_area_from_windows(QRect const& desktop_area,
         }
     }
 
-    for (auto win : announced_windows) {
-        update_space_areas(win, desktop_area, screens_geos, areas);
+    // TODO(romangg): Combine this and above loop.
+    for (auto win : m_windows) {
+        if (auto wl_win = qobject_cast<win::wayland::window*>(win)) {
+            update_space_areas(wl_win, desktop_area, screens_geos, areas);
+        }
     }
 }
 

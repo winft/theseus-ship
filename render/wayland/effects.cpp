@@ -17,6 +17,9 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, Scene
     : EffectsHandlerImpl(compositor, scene)
 {
     auto space = static_cast<win::wayland::space*>(workspace());
+
+    // TODO(romangg): We do this for every window here, even for windows that are not an xdg-shell
+    //                type window. Restrict that?
     QObject::connect(space, &win::wayland::space::wayland_window_added, this, [this](auto c) {
         if (c->readyForPainting()) {
             slotXdgShellClientShown(c);
@@ -25,13 +28,20 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, Scene
                 c, &Toplevel::windowShown, this, &effects_handler_impl::slotXdgShellClientShown);
         }
     });
-    auto const clients = space->announced_windows;
-    for (auto c : clients) {
-        if (c->readyForPainting()) {
-            setupAbstractClientConnections(c);
+
+    // TODO(romangg): We do this here too for every window.
+    for (auto window : space->m_windows) {
+        auto wayland_window = qobject_cast<win::wayland::window*>(window);
+        if (!wayland_window) {
+            continue;
+        }
+        if (wayland_window->readyForPainting()) {
+            setupAbstractClientConnections(wayland_window);
         } else {
-            QObject::connect(
-                c, &Toplevel::windowShown, this, &effects_handler_impl::slotXdgShellClientShown);
+            QObject::connect(wayland_window,
+                             &Toplevel::windowShown,
+                             this,
+                             &effects_handler_impl::slotXdgShellClientShown);
         }
     }
 }

@@ -108,10 +108,13 @@ wayland_console_model::wayland_console_model(QObject* parent)
     : console_model(parent)
 {
     auto space = static_cast<win::wayland::space*>(workspace());
-    auto const clients = space->announced_windows;
-    for (auto c : clients) {
-        m_shellClients.append(c);
+
+    for (auto window : space->m_windows) {
+        if (auto wayland_window = qobject_cast<win::wayland::window*>(window)) {
+            m_shellClients.append(wayland_window);
+        }
     }
+
     // TODO: that only includes windows getting shown, not those which are only created
     QObject::connect(space, &win::wayland::space::wayland_window_added, this, [this](auto win) {
         auto wayland_win = static_cast<win::wayland::window*>(win);

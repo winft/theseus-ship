@@ -598,7 +598,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
         win::wayland::install_palette(window, palette);
     }
 
-    space->announced_windows.push_back(window);
+    space->m_windows.push_back(window);
 
     if (window->readyForPainting()) {
         space->handle_window_added(window);
@@ -627,7 +627,7 @@ void handle_new_popup(Space* space, Wrapland::Server::XdgShellPopup* popup)
     }
 
     auto window = win::wayland::create_popup_window(popup);
-    space->announced_windows.push_back(window);
+    space->m_windows.push_back(window);
 
     if (window->readyForPainting()) {
         space->handle_window_added(window);

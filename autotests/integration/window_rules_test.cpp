@@ -72,7 +72,6 @@ void WindowRuleTest::init()
 {
     screens()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
-    QVERIFY(static_cast<win::wayland::space*>(workspace())->announced_windows.empty());
 }
 
 void WindowRuleTest::cleanup()

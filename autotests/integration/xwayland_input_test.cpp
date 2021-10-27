@@ -71,7 +71,7 @@ void XWaylandInputTest::init()
 {
     screens()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
-    QVERIFY(static_cast<win::wayland::space*>(workspace())->announced_windows.empty());
+    QVERIFY(static_cast<win::wayland::space*>(workspace())->m_windows.empty());
 }
 
 void xcb_connection_deleter(xcb_connection_t* pointer)

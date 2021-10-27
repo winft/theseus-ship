@@ -102,7 +102,6 @@ void StrutsTest::init()
 
     screens()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
-    QVERIFY(static_cast<win::wayland::space*>(workspace())->announced_windows.empty());
 }
 
 void StrutsTest::cleanup()
@@ -196,8 +195,7 @@ void StrutsTest::testWaylandStruts()
 {
     // this test verifies that struts on Wayland panels are handled correctly
     using namespace Wrapland::Client;
-    // no, struts yet
-    QVERIFY(static_cast<win::wayland::space*>(workspace())->announced_windows.empty());
+
     // first screen
     QCOMPARE(workspace()->clientArea(PlacementArea, 0, 1), QRect(0, 0, 1280, 1024));
     QCOMPARE(workspace()->clientArea(MovementArea, 0, 1), QRect(0, 0, 1280, 1024));
