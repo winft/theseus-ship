@@ -557,7 +557,7 @@ public:
     virtual bool userCanSetNoBorder() const;
     virtual void checkNoBorder();
 
-    virtual bool isTransient() const;
+    bool isTransient() const;
 
     virtual xcb_timestamp_t userTime() const;
     virtual void updateWindowRules(Rules::Types selection);

@@ -896,11 +896,6 @@ void window::handle_commit()
     map();
 }
 
-bool window::isTransient() const
-{
-    return transient()->lead() != nullptr;
-}
-
 bool window::isInitialPositionSet() const
 {
     if (layer_surface) {
