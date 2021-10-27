@@ -6,7 +6,7 @@
 #pragma once
 
 #include "abstract_wayland_output.h"
-#include "platform/utils.h"
+#include "base/utils.h"
 
 #include <Wrapland/Server/drm_lease_v1.h>
 
@@ -29,8 +29,8 @@ private:
 
     std::unique_ptr<Wrapland::Server::drm_lease_connector_v1> lease_connector;
 
-    event_receiver<output> destroy_rec;
-    event_receiver<output> present_rec;
+    base::event_receiver<output> destroy_rec;
+    base::event_receiver<output> present_rec;
 
     bool disable_native();
 

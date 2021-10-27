@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/utils.h"
 #include "input/touch.h"
-#include "platform/utils.h"
 
 #include <config-kwin.h>
 
@@ -23,7 +23,7 @@ class touch : public input::touch
 {
     Q_OBJECT
 public:
-    using er = event_receiver<touch>;
+    using er = base::event_receiver<touch>;
 
     wlr_touch* backend{nullptr};
 

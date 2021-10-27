@@ -9,7 +9,9 @@
 #include "layer_shell.h"
 #include "maximize.h"
 #include "render/wayland/compositor.h"
+#include "setup.h"
 #include "subsurface.h"
+#include "surface.h"
 #include "xdg_shell.h"
 
 #include "win/deco.h"
@@ -57,7 +59,7 @@ Toplevel* find_toplevel(WS::Surface* surface)
 window::window(WS::Surface* surface)
     : Toplevel()
 {
-    setSurface(surface);
+    set_surface(this, surface);
 
     connect(surface, &WS::Surface::subsurfaceTreeChanged, this, [this] {
         discard_shape();
@@ -65,6 +67,11 @@ window::window(WS::Surface* surface)
     });
     connect(surface, &WS::Surface::destroyed, this, [this] { destroy(); });
     setupCompositing(false);
+}
+
+bool window::is_wayland_window() const
+{
+    return true;
 }
 
 NET::WindowType window::windowType([[maybe_unused]] bool direct,
@@ -807,7 +814,7 @@ void window::map()
 
     if (control) {
         if (!isLockScreen()) {
-            setup_wayland_plasma_management(this);
+            setup_plasma_management(this);
         }
         update_screen_edge(this);
     }
@@ -865,8 +872,7 @@ void window::handle_commit()
     if (!surface()->state().damage.isEmpty()) {
         addDamage(surface()->state().damage);
     } else if (surface()->state().updates & Wrapland::Server::surface_change::frame) {
-        auto comp = static_cast<render::wayland::compositor*>(kwinApp()->compositor.get());
-        comp->schedule_frame_callback(this);
+        kwinApp()->get_compositor()->schedule_frame_callback(this);
     }
 
     if (toplevel || popup) {

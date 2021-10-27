@@ -11,6 +11,7 @@
 
 #include "win/control.h"
 #include "win/move.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/wayland/xdg_activation.h"
 
@@ -104,7 +105,7 @@ void xdg_activation_test::test_single_client()
     auto server_token = token_spy.front().front().value<Wrapland::Server::XdgActivationTokenV1*>();
     QCOMPARE(server_token->app_id(), "testclient1");
 
-    auto const token_string = workspace()->activation->token;
+    auto const token_string = static_cast<win::wayland::space*>(workspace())->activation->token;
 
     QSignalSpy done_spy(token.get(), &Clt::XdgActivationTokenV1::done);
     QVERIFY(done_spy.isValid());
@@ -174,7 +175,7 @@ void xdg_activation_test::test_multi_client()
     auto server_token = token_spy.front().front().value<Wrapland::Server::XdgActivationTokenV1*>();
     QCOMPARE(server_token->app_id(), "testclient1");
 
-    auto const token_string = workspace()->activation->token;
+    auto const token_string = static_cast<win::wayland::space*>(workspace())->activation->token;
 
     QSignalSpy done_spy(token.get(), &Clt::XdgActivationTokenV1::done);
     QVERIFY(done_spy.isValid());

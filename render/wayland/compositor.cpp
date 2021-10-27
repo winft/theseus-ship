@@ -17,6 +17,8 @@
 #include "win/scene.h"
 #include "workspace.h"
 
+#include "wayland_logging.h"
+
 namespace KWin::render::wayland
 {
 
@@ -44,7 +46,7 @@ compositor::compositor()
     : presentation(new render::wayland::presentation(this))
 {
     if (!presentation->init_clock(kwinApp()->platform->clockId())) {
-        qCCritical(KWIN_CORE) << "Presentation clock failed. Exit.";
+        qCCritical(KWIN_WL) << "Presentation clock failed. Exit.";
         qApp->quit();
     }
 

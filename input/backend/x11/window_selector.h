@@ -8,7 +8,7 @@
 */
 #pragma once
 
-#include <platform/x11/event_filter.h>
+#include "base/x11/event_filter.h"
 
 #include <functional>
 #include <xcb/xcb.h>
@@ -22,7 +22,7 @@ class Toplevel;
 namespace input::backend::x11
 {
 
-class window_selector : public KWin::platform::x11::event_filter
+class window_selector : public base::x11::event_filter
 {
 public:
     window_selector();

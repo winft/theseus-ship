@@ -24,28 +24,6 @@ add_test(NAME kwin-testWindowPaintData COMMAND testWindowPaintData)
 ecm_mark_as_test(testWindowPaintData)
 
 ########################################################
-# Test VirtualDesktopManager
-########################################################
-set(testVirtualDesktops_SRCS
-    ../virtualdesktops.cpp
-    test_virtual_desktops.cpp
-)
-add_executable(testVirtualDesktops ${testVirtualDesktops_SRCS})
-
-target_link_libraries(testVirtualDesktops
-    Qt::Test
-    Qt::Widgets
-
-    KF5::ConfigCore
-    KF5::GlobalAccel
-    KF5::I18n
-    WraplandServer
-    KF5::WindowSystem
-)
-add_test(NAME kwin-testVirtualDesktops COMMAND testVirtualDesktops)
-ecm_mark_as_test(testVirtualDesktops)
-
-########################################################
 # Test ClientMachine
 ########################################################
 set(testClientMachine_SRCS

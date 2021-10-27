@@ -7,7 +7,7 @@
 #define KWIN_GLX_BACKEND_H
 
 #include "backend.h"
-#include "platform/x11/event_filter.h"
+#include "base/x11/event_filter.h"
 #include "texture.h"
 
 #include <epoxy/glx.h>
@@ -34,7 +34,7 @@ public:
 
 // ------------------------------------------------------------------
 
-class SwapEventFilter : public platform::x11::event_filter
+class SwapEventFilter : public base::x11::event_filter
 {
 public:
     SwapEventFilter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable);

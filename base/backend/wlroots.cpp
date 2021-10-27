@@ -7,7 +7,7 @@
 
 #include <Wrapland/Server/display.h>
 
-namespace KWin::platform_base
+namespace KWin::base::backend
 {
 
 void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
@@ -19,7 +19,13 @@ void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
     wlr->backend = nullptr;
 }
 
+wlroots::wlroots()
+    : destroyed{std::make_unique<event_receiver<wlroots>>()}
+{
+}
+
 wlroots::wlroots(Wrapland::Server::Display* display)
+    : wlroots()
 {
     wlr_log_init(WLR_DEBUG, nullptr);
     backend = wlr_backend_autocreate(display->native());
@@ -27,8 +33,9 @@ wlroots::wlroots(Wrapland::Server::Display* display)
 }
 
 wlroots::wlroots(wlr_backend* backend)
-    : backend{backend}
+    : wlroots()
 {
+    this->backend = backend;
     init(backend);
 }
 
@@ -39,21 +46,21 @@ void wlroots::init(wlr_backend* backend)
 
     this->backend = backend;
 
-    destroyed.receiver = this;
-    destroyed.event.notify = handle_destroy;
-    wl_signal_add(&backend->events.destroy, &destroyed.event);
+    destroyed->receiver = this;
+    destroyed->event.notify = handle_destroy;
+    wl_signal_add(&backend->events.destroy, &destroyed->event);
 }
 
 wlroots::wlroots(wlroots&& other) noexcept
 {
     *this = std::move(other);
-    other.backend = nullptr;
 }
 
 wlroots& wlroots::operator=(wlroots&& other) noexcept
 {
     backend = other.backend;
-    destroyed = other.destroyed;
+    destroyed = std::move(other.destroyed);
+    destroyed->receiver = this;
     other.backend = nullptr;
     return *this;
 }

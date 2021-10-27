@@ -7,6 +7,9 @@
 #define KWIN_X11_PLATFORM_H
 #include "platform.h"
 
+#include "base/backend/x11.h"
+#include "base/platform.h"
+
 #include <kwin_export.h>
 
 #include <QObject>
@@ -19,7 +22,7 @@
 namespace KWin
 {
 
-namespace platform::x11
+namespace base::x11
 {
 class event_filter;
 }
@@ -32,7 +35,7 @@ class KWIN_EXPORT X11StandalonePlatform : public Platform
 {
     Q_OBJECT
 public:
-    X11StandalonePlatform(QObject* parent = nullptr);
+    X11StandalonePlatform(base::platform<base::backend::x11, AbstractOutput>& base);
     ~X11StandalonePlatform() override;
 
     void init();
@@ -82,9 +85,12 @@ private:
 
     QThread* m_openGLFreezeProtectionThread = nullptr;
     QTimer* m_openGLFreezeProtection = nullptr;
+
     Display* m_x11Display;
-    QScopedPointer<platform::x11::event_filter> m_screenEdgesFilter;
-    QScopedPointer<platform::x11::event_filter> m_randrFilter;
+    base::platform<base::backend::x11, AbstractOutput>& base;
+
+    QScopedPointer<base::x11::event_filter> m_screenEdgesFilter;
+    QScopedPointer<base::x11::event_filter> m_randrFilter;
 
     QVector<X11Output*> m_outputs;
 };

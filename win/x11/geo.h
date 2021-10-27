@@ -198,7 +198,6 @@ void handle_sync(Win* win, xcb_sync_int64_t counter_value)
     }
 
     win->setReadyForPainting();
-    win::setup_wayland_plasma_management(win);
 
     apply_pending_geometry(win, update_request_number);
 }

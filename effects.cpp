@@ -50,7 +50,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/screen.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
-#include "win/wayland/window.h"
 #include "win/x11/group.h"
 #include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
@@ -63,7 +62,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "xcbutils.h"
 #include "platform.h"
-#include "wayland_server.h"
 
 #include "decorations/decorationbridge.h"
 #include <KDecoration2/DecorationSettings>
@@ -269,24 +267,6 @@ EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene *sc
     for (auto window : ws->windows()) {
         if (auto internal = qobject_cast<win::InternalClient*>(window)) {
             setupAbstractClientConnections(internal);
-        }
-    }
-    if (auto w = waylandServer()) {
-        connect(w, &WaylandServer::window_added, this,
-            [this](auto c) {
-                if (c->readyForPainting())
-                    slotXdgShellClientShown(c);
-                else
-                    connect(c, &Toplevel::windowShown, this, &EffectsHandlerImpl::slotXdgShellClientShown);
-            }
-        );
-        const auto clients = waylandServer()->windows;
-        for (auto c : clients) {
-            if (c->readyForPainting()) {
-                setupAbstractClientConnections(c);
-            } else {
-                connect(c, &Toplevel::windowShown, this, &EffectsHandlerImpl::slotXdgShellClientShown);
-            }
         }
     }
 
@@ -1131,13 +1111,8 @@ EffectWindow* EffectsHandlerImpl::findWindow(WId id) const
     return nullptr;
 }
 
-EffectWindow* EffectsHandlerImpl::findWindow(Wrapland::Server::Surface *surf) const
+EffectWindow* EffectsHandlerImpl::findWindow(Wrapland::Server::Surface* /*surf*/) const
 {
-    if (waylandServer()) {
-        if (auto win = waylandServer()->find_window(surf)) {
-            return win->effectWindow();
-        }
-    }
     return nullptr;
 }
 
@@ -1584,9 +1559,6 @@ QStringList EffectsHandlerImpl::activeEffects() const
 
 Wrapland::Server::Display *EffectsHandlerImpl::waylandDisplay() const
 {
-    if (waylandServer()) {
-        return waylandServer()->display();
-    }
     return nullptr;
 }
 
@@ -1858,7 +1830,7 @@ EffectWindowImpl::EffectWindowImpl(Toplevel *toplevel)
     // can still figure out whether it is/was a managed window.
     managed = toplevel->isClient();
 
-    waylandClient = qobject_cast<KWin::win::wayland::window*>(toplevel) != nullptr;
+    waylandClient = toplevel->is_wayland_window();
     x11Client = qobject_cast<KWin::win::x11::window*>(toplevel) != nullptr || toplevel->xcb_window();
 }
 

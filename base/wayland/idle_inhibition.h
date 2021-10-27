@@ -28,7 +28,7 @@ class window;
 class Toplevel;
 class XdgShellClient;
 
-namespace platform::wayland
+namespace base::wayland
 {
 
 class idle_inhibition : public QObject

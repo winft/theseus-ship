@@ -39,12 +39,12 @@ constexpr auto compositor_lost_message_delay = 2000;
 
 compositor* compositor::self()
 {
-    return kwinApp()->compositor.get();
+    return kwinApp()->get_compositor();
 }
 
 bool compositor::compositing()
 {
-    return kwinApp()->compositor != nullptr && kwinApp()->compositor->isActive();
+    return kwinApp()->get_compositor() != nullptr && kwinApp()->get_compositor()->isActive();
 }
 
 compositor::compositor()
@@ -288,6 +288,11 @@ void compositor::schedule_repaint(Toplevel* /*window*/)
 {
     // Needs to be implemented because might get called on destructor.
     // TODO(romangg): Remove this, i.e. ensure that there are no calls while being destroyed.
+}
+
+void compositor::schedule_frame_callback(Toplevel* /*window*/)
+{
+    // Only needed on Wayland.
 }
 
 void compositor::stop()

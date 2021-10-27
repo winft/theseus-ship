@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_output.h"
 #include "platform.h"
-#include "wayland_server.h"
 #include "platformsupport/scenes/opengl/texture.h"
 
 #include <kwinglplatform.h>
@@ -1234,16 +1233,16 @@ bool OpenGLWindow::beginRenderWindow(int mask, const QRegion &region, WindowPain
     }
 
     // Update the texture filter
-    if (waylandServer()) {
-        filter = Scene::ImageFilterGood;
-        texture->setFilter(GL_LINEAR);
-    } else {
+    if (kwinApp()->operationMode() == Application::OperationModeX11) {
         if (mask & (Scene::PAINT_WINDOW_TRANSFORMED | Scene::PAINT_SCREEN_TRANSFORMED)) {
             filter = Scene::ImageFilterGood;
         } else {
             filter = Scene::ImageFilterFast;
         }
         texture->setFilter(filter == Scene::ImageFilterGood ? GL_LINEAR : GL_NEAREST);
+    } else {
+        filter = Scene::ImageFilterGood;
+        texture->setFilter(GL_LINEAR);
     }
 
     const GLVertexAttrib attribs[] = {

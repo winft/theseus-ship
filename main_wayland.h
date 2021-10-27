@@ -22,7 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "main.h"
 
-#include "platform/wlroots.h"
+#include "base/backend/wlroots.h"
+#include "base/platform.h"
 #include "render/backend/wlroots/backend.h"
 
 #include <QProcessEnvironment>
@@ -31,13 +32,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 class WaylandServer;
-class Workspace;
 
 namespace input::dbus
 {
 class tablet_mode_manager;
 }
-
+namespace render::wayland
+{
+class compositor;
+}
+namespace win::wayland
+{
+class space;
+}
 namespace xwl
 {
 class xwayland;
@@ -48,14 +55,17 @@ class ApplicationWayland : public ApplicationWaylandAbstract
     Q_OBJECT
 public:
     std::unique_ptr<WaylandServer> server;
-    std::unique_ptr<Workspace> workspace;
+    std::unique_ptr<win::wayland::space> workspace;
+    std::unique_ptr<render::wayland::compositor> compositor;
 
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
 
     bool is_screen_locked() const override;
 
+    wayland_base& get_base() override;
     WaylandServer* get_wayland_server() override;
+    render::compositor* get_compositor() override;
     debug::console* create_debug_console() override;
 
     void start();
@@ -93,7 +103,7 @@ private:
     QProcessEnvironment m_environment;
     QString m_sessionArgument;
 
-    std::unique_ptr<platform_base::wlroots> backend;
+    base::platform<base::backend::wlroots, AbstractWaylandOutput> base;
     std::unique_ptr<render::backend::wlroots::backend> render;
     std::unique_ptr<xwl::xwayland> xwayland;
 

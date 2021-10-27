@@ -381,8 +381,10 @@ add_subdirectory(helpers)
 set(kwin_SRCS
     abstract_opengl_context_attribute_builder.cpp
     abstract_output.cpp
-    abstract_wayland_output.cpp
     atoms.cpp
+    base/x11/event_filter.cpp
+    base/x11/event_filter_container.cpp
+    base/x11/event_filter_manager.cpp
     colorcorrection/clockskewnotifier.cpp
     colorcorrection/clockskewnotifierengine.cpp
     colorcorrection/colorcorrectdbusinterface.cpp
@@ -404,7 +406,6 @@ set(kwin_SRCS
     input/device_redirect.cpp
     input/event_filter.cpp
     input/event_spy.cpp
-    input/filters/dpms.cpp
     input/keyboard_redirect.cpp
     input/platform.cpp
     input/pointer_redirect.cpp
@@ -431,14 +432,7 @@ set(kwin_SRCS
     osd.cpp
     outline.cpp
     overlaywindow.cpp
-    platform/wayland/idle_inhibition.cpp
-    platform/x11/event_filter.cpp
-    platform/x11/event_filter_container.cpp
-    platform/x11/event_filter_manager.cpp
     platform.cpp
-    render/wayland/compositor.cpp
-    render/wayland/output.cpp
-    render/wayland/presentation.cpp
     render/x11/compositor.cpp
     render/x11/compositor_selection_owner.cpp
     render/compositor.cpp
@@ -473,7 +467,6 @@ set(kwin_SRCS
     virtualdesktops.cpp
     virtualdesktopsdbustypes.cpp
     was_user_interaction_x11_filter.cpp
-    wayland_server.cpp
     win/appmenu.cpp
     win/control.cpp
     win/focuschain.cpp
@@ -481,11 +474,11 @@ set(kwin_SRCS
     win/remnant.cpp
     win/stacking_order.cpp
     win/transient.cpp
-    win/wayland/window.cpp
     win/x11/client_machine.cpp
     win/x11/geometrytip.cpp
     win/x11/group.cpp
     win/x11/netinfo.cpp
+    win/x11/space.cpp
     win/x11/stacking_tree.cpp
     win/x11/syncalarmx11filter.cpp
     win/x11/window.cpp
@@ -749,6 +742,9 @@ add_subdirectory(platformsupport)
 add_subdirectory(plugins)
 
 set(kwin_WAYLAND_SRCS
+   abstract_wayland_output.cpp
+   base/backend/wlroots.cpp
+   base/wayland/idle_inhibition.cpp
    debug/input_device_model.cpp
    debug/input_filter.cpp
    debug/surface_tree_model.cpp
@@ -772,6 +768,7 @@ set(kwin_WAYLAND_SRCS
    input/dbus/keyboard_layout.cpp
    input/dbus/tablet_mode_manager.cpp
    input/filters/decoration_event.cpp
+   input/filters/dpms.cpp
    input/filters/drag_and_drop.cpp
    input/filters/effects.cpp
    input/filters/fake_tablet.cpp
@@ -807,14 +804,19 @@ set(kwin_WAYLAND_SRCS
    input/switch.cpp
    input/touch.cpp
    linux_dmabuf.cpp
-   platform/wlroots.cpp
-   platform/wlroots.cpp
    render/backend/wlroots/backend.cpp
    render/backend/wlroots/buffer.cpp
    render/backend/wlroots/egl_backend.cpp
    render/backend/wlroots/egl_output.cpp
    render/backend/wlroots/output.cpp
+   render/wayland/compositor.cpp
+   render/wayland/effects.cpp
+   render/wayland/output.cpp
+   render/wayland/presentation.cpp
    seat/backend/wlroots/session.cpp
+   wayland_server.cpp
+   win/wayland/space.cpp
+   win/wayland/window.cpp
 )
 
 if (KWIN_BUILD_TABBOX)

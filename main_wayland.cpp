@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "effects.h"
 #include "render/wayland/compositor.h"
+#include "screenlockerwatcher.h"
 #include "seat/backend/logind/session.h"
 #include "seat/backend/wlroots/session.h"
 #include "input/backend/wlroots/platform.h"
@@ -33,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/redirect.h"
 #include "input/dbus/tablet_mode_manager.h"
 #include "wayland_server.h"
+#include "win/wayland/space.h"
 #include "xwl/xwayland.h"
 
 // Wrapland
@@ -158,7 +160,7 @@ ApplicationWayland::~ApplicationWayland()
     if (compositor) {
         // Block compositor to prevent further compositing from crashing with a null workspace.
         // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-        static_cast<render::wayland::compositor*>(compositor.get())->lock();
+        compositor->lock();
     }
 
     workspace.reset();
@@ -173,9 +175,19 @@ bool ApplicationWayland::is_screen_locked() const
     return server->is_screen_locked();
 }
 
+wayland_base& ApplicationWayland::get_base()
+{
+    return base;
+}
+
 WaylandServer* ApplicationWayland::get_wayland_server()
 {
     return server.get();
+}
+
+render::compositor* ApplicationWayland::get_compositor()
+{
+    return compositor.get();
 }
 
 debug::console* ApplicationWayland::create_debug_console()
@@ -193,7 +205,7 @@ void ApplicationWayland::start()
 
     createOptions();
 
-    auto session = new seat::backend::wlroots::session(backend->backend);
+    auto session = new seat::backend::wlroots::session(base.backend.backend);
     this->session.reset(session);
     session->take_control();
 
@@ -218,10 +230,11 @@ void ApplicationWayland::start()
     tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
 
     compositor = std::make_unique<render::wayland::compositor>();
-    workspace = std::make_unique<Workspace>();
+    workspace = std::make_unique<win::wayland::space>();
     Q_EMIT workspaceCreated();
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
+    ScreenLockerWatcher::self()->initialize();
 }
 
 void ApplicationWayland::handle_server_addons_created()
@@ -235,12 +248,12 @@ void ApplicationWayland::handle_server_addons_created()
 
 void ApplicationWayland::init_platforms()
 {
-    backend.reset(new platform_base::wlroots(waylandServer()->display()));
+    base.backend = base::backend::wlroots(waylandServer()->display());
 
-    input.reset(new input::backend::wlroots::platform(backend.get()));
+    input.reset(new input::backend::wlroots::platform(base));
     input::wayland::add_dbus(input.get());
 
-    render.reset(new render::backend::wlroots::backend(backend.get(), this));
+    render.reset(new render::backend::wlroots::backend(base));
     platform = render.get();
 }
 

@@ -8,8 +8,9 @@
 
 #include "../../main.h"
 
+#include "base/backend/wlroots.h"
+#include "base/platform.h"
 #include "main.h"
-#include "platform/wlroots.h"
 #include "render/backend/wlroots/backend.h"
 #include "wayland_server.h"
 
@@ -48,8 +49,13 @@ class XdgDecorationManager;
 
 namespace KWin
 {
+namespace render::wayland
+{
+class compositor;
+}
 namespace win::wayland
 {
+class space;
 class window;
 }
 namespace xwl
@@ -58,7 +64,6 @@ class xwayland;
 }
 
 class Toplevel;
-class Workspace;
 
 namespace Test
 {
@@ -127,7 +132,7 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 public:
     std::unique_ptr<WaylandServer> server;
     std::unique_ptr<xwl::xwayland> xwayland;
-    std::unique_ptr<Workspace> workspace;
+    std::unique_ptr<win::wayland::space> workspace;
 
     wlr_input_device* pointer{nullptr};
     wlr_input_device* keyboard{nullptr};
@@ -144,7 +149,9 @@ public:
 
     bool is_screen_locked() const override;
 
+    wayland_base& get_base() override;
     WaylandServer* get_wayland_server() override;
+    render::compositor* get_compositor() override;
     debug::console* create_debug_console() override;
 
     void start();
@@ -153,8 +160,9 @@ private:
     void handle_server_addons_created();
     void create_xwayland();
 
-    std::unique_ptr<platform_base::wlroots> base;
+    base::platform<base::backend::wlroots, AbstractWaylandOutput> base;
     std::unique_ptr<render::backend::wlroots::backend> render;
+    std::unique_ptr<render::wayland::compositor> compositor;
 };
 
 namespace Test

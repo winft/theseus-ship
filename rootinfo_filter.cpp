@@ -25,7 +25,7 @@ namespace KWin
 {
 
 RootInfoFilter::RootInfoFilter(win::x11::RootInfo *parent)
-    : platform::x11::event_filter(QVector<int>{XCB_PROPERTY_NOTIFY, XCB_CLIENT_MESSAGE})
+    : base::x11::event_filter(QVector<int>{XCB_PROPERTY_NOTIFY, XCB_CLIENT_MESSAGE})
     , m_rootInfo(parent)
 {
 }

@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_DECORATION_PALETTE_H
 #define KWIN_DECORATION_PALETTE_H
 
+#include <kwin_export.h>
+
 #include <KDecoration2/DecorationSettings>
 #include <QFileSystemWatcher>
 #include <QPalette>
@@ -37,7 +39,7 @@ namespace KWin
 namespace Decoration
 {
 
-class DecorationPalette : public QObject
+class KWIN_EXPORT DecorationPalette : public QObject
 {
     Q_OBJECT
 public:

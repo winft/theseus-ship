@@ -11,7 +11,7 @@
 #include <QVector>
 #include <xcb/xcb.h>
 
-namespace KWin::platform::x11
+namespace KWin::base::x11
 {
 
 class KWIN_EXPORT event_filter

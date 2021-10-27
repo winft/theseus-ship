@@ -20,14 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_TABBOX_X11_FILTER_H
 #define KWIN_TABBOX_X11_FILTER_H
 
-#include "platform/x11/event_filter.h"
+#include "base/x11/event_filter.h"
 
 namespace KWin
 {
 namespace TabBox
 {
 
-class X11Filter : public platform::x11::event_filter
+class X11Filter : public base::x11::event_filter
 {
 public:
     explicit X11Filter();

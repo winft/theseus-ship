@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "sm.h"
 #include "utils.h"
+#include "win/space_areas.h"
 
 #include <QTimer>
 
@@ -44,7 +45,7 @@ class QStringList;
 namespace KWin
 {
 
-namespace platform::x11
+namespace base::x11
 {
 class event_filter;
 }
@@ -73,10 +74,6 @@ class window;
 class Group;
 class stacking_tree;
 }
-namespace wayland
-{
-struct xdg_activation;
-}
 }
 
 class KillWindow;
@@ -89,7 +86,6 @@ class KWIN_EXPORT Workspace : public QObject
     Q_OBJECT
 public:
     std::vector<Toplevel*> m_windows;
-    std::unique_ptr<win::wayland::xdg_activation> activation;
 
     explicit Workspace();
     ~Workspace() override;
@@ -407,6 +403,8 @@ public:
 
     void remove_window(Toplevel* window);
 
+    virtual QRect get_icon_geometry(Toplevel const* win) const;
+
 public Q_SLOTS:
     void performWindowOperation(KWin::Toplevel* window, Options::WindowOperation op);
     // Keybindings
@@ -469,6 +467,18 @@ public Q_SLOTS:
 
     void updateClientArea();
 
+protected:
+    void setupClientConnections(Toplevel* window);
+    void updateTabbox();
+    virtual void update_space_area_from_windows(QRect const& desktop_area,
+                                                std::vector<QRect> const& screens_geos,
+                                                win::space_areas& areas);
+
+    std::vector<Toplevel*> m_allClients;
+    Toplevel* last_active_client{nullptr};
+    Toplevel* delayfocus_client{nullptr};
+    Toplevel* client_keys_client{nullptr};
+
 private Q_SLOTS:
     void desktopResized();
     void selectWmInputEventMask();
@@ -493,6 +503,7 @@ Q_SIGNALS:
     void currentDesktopChanged(int, KWin::Toplevel*);
     void clientAdded(KWin::win::x11::window*);
     void clientRemoved(KWin::Toplevel*);
+    void wayland_window_added(KWin::Toplevel*);
     void clientActivated(KWin::Toplevel*);
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
     void clientMinimizedChanged(KWin::Toplevel*);
@@ -512,6 +523,8 @@ Q_SIGNALS:
      * This signal is emitted whenever an internal client gets removed.
      */
     void internalClientRemoved(KWin::win::InternalClient* client);
+
+    void surface_id_changed(KWin::Toplevel*, quint32);
 
 private:
     void initWithX11();
@@ -537,7 +550,6 @@ private:
 
     /// This is the right way to create a new client
     win::x11::window* createClient(xcb_window_t w, bool is_mapped);
-    void setupClientConnections(Toplevel* window);
     void addClient(win::x11::window* c);
     Toplevel* createUnmanaged(xcb_window_t w);
     void addUnmanaged(Toplevel* c);
@@ -557,17 +569,11 @@ private:
 
     std::vector<SessionInfo*> session;
 
-    void updateTabbox();
-
-    Toplevel* last_active_client{nullptr};
     Toplevel* movingClient{nullptr};
 
     // Delay(ed) window focus timer and client
     QTimer* delayFocusTimer{nullptr};
-    Toplevel* delayfocus_client{nullptr};
     QPoint focusMousePos;
-
-    std::vector<Toplevel*> m_allClients;
 
     // Last is most recent.
     std::deque<Toplevel*> should_get_focus;
@@ -579,7 +585,7 @@ private:
     std::vector<win::x11::Group*> groups;
 
     bool was_user_interaction{false};
-    QScopedPointer<platform::x11::event_filter> m_wasUserInteractionFilter;
+    QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
 
     int session_active_client;
     int session_desktop;
@@ -595,7 +601,6 @@ private:
     void modalActionsSwitch(bool enabled);
 
     ShortcutDialog* client_keys_dialog{nullptr};
-    Toplevel* client_keys_client{nullptr};
     bool global_shortcuts_disabled_for_client{false};
 
     // Timer to collect requests for 'reconfigure'
@@ -609,17 +614,10 @@ private:
 
     KStartupInfo* startup{nullptr};
 
-    // Array of workareas for virtual desktops
-    std::vector<QRect> workarea;
-
-    // Array of restricted areas that window cannot be moved into
-    std::vector<StrutRects> restrictedmovearea;
+    win::space_areas areas;
 
     // Array of the previous restricted areas that window cannot be moved into
     std::vector<StrutRects> oldrestrictedmovearea;
-
-    // Array of workareas per xinerama screen for all virtual desktops
-    std::vector<std::vector<QRect>> screenarea;
 
     // array of previous sizes of xinerama screens
     std::vector<QRect> oldscreensizes;
@@ -633,8 +631,8 @@ private:
 
     QScopedPointer<KillWindow> m_windowKiller;
 
-    QScopedPointer<platform::x11::event_filter> m_movingClientFilter;
-    QScopedPointer<platform::x11::event_filter> m_syncAlarmFilter;
+    QScopedPointer<base::x11::event_filter> m_movingClientFilter;
+    QScopedPointer<base::x11::event_filter> m_syncAlarmFilter;
 
     SessionManager* m_sessionManager;
 

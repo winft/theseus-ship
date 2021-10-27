@@ -39,9 +39,10 @@
 namespace KWin::render::backend::x11
 {
 
-X11StandalonePlatform::X11StandalonePlatform(QObject* parent)
-    : Platform(parent)
-    , m_x11Display(QX11Info::display())
+X11StandalonePlatform::X11StandalonePlatform(
+    base::platform<base::backend::x11, AbstractOutput>& base)
+    : m_x11Display(QX11Info::display())
+    , base{base}
 {
     setSupportsGammaControl(true);
 }
@@ -376,6 +377,8 @@ void X11StandalonePlatform::doUpdateOutputs()
         o->setRefreshRate(-1.0f);
         o->setName(QStringLiteral("Fallback"));
         m_outputs << o;
+        base.all_outputs.push_back(o);
+        base.enabled_outputs.push_back(o);
     };
 
     // TODO: instead of resetting all outputs, check if new output is added/removed
@@ -383,6 +386,8 @@ void X11StandalonePlatform::doUpdateOutputs()
     //       untouched (like in DRM backend)
     qDeleteAll(m_outputs);
     m_outputs.clear();
+    base.all_outputs.clear();
+    base.enabled_outputs.clear();
 
     if (!Xcb::Extensions::self()->isRandrAvailable()) {
         fallback();
@@ -467,6 +472,8 @@ void X11StandalonePlatform::doUpdateOutputs()
             }
 
             m_outputs << o;
+            base.all_outputs.push_back(o);
+            base.enabled_outputs.push_back(o);
         }
     }
 

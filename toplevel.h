@@ -103,6 +103,11 @@ public:
         } original;
     } geometry_update;
 
+    struct {
+        QMetaObject::Connection frame_update_outputs;
+        QMetaObject::Connection screens_update_outputs;
+    } notifiers;
+
     /**
      * Used to store and retrieve frame geometry values when certain geometry-transforming
      * actions are triggered and later reversed again. For example when a window has been
@@ -119,6 +124,7 @@ public:
     QRegion repaints_region;
     QRegion layer_repaints_region;
     bool ready_for_painting{false};
+    bool m_isDamaged{false};
 
     /**
      * Records all outputs that still need to be repainted for the current repaint regions.
@@ -160,6 +166,7 @@ public:
      */
     virtual qreal bufferScale() const;
 
+    virtual bool is_wayland_window() const;
     virtual bool isClient() const;
     bool isDeleted() const;
 
@@ -229,6 +236,10 @@ public:
 
     QRegion damage() const;
     void resetDamage();
+
+    void addDamageFull();
+    virtual void addDamage(const QRegion &damage);
+
     EffectWindowImpl* effectWindow();
     const EffectWindowImpl* effectWindow() const;
 
@@ -271,7 +282,6 @@ public:
 
     quint32 surfaceId() const;
     Wrapland::Server::Surface *surface() const;
-    void setSurface(Wrapland::Server::Surface *surface);
 
     const QSharedPointer<QOpenGLFramebufferObject> &internalFramebufferObject() const;
     QImage internalImageObject() const;
@@ -326,7 +336,7 @@ public:
 
     virtual void propertyNotifyEvent(xcb_property_notify_event_t *e);
     virtual void damageNotifyEvent();
-    virtual void clientMessageEvent(xcb_client_message_event_t *e);
+    void clientMessageEvent(xcb_client_message_event_t *e);
     void discardWindowPixmap();
     void deleteEffectWindow();
 
@@ -337,6 +347,8 @@ public:
     void readWmClientLeader(Xcb::Property &p);
 
     NETWinInfo* info{nullptr};
+    Wrapland::Server::Surface* m_surface{nullptr};
+    quint32 m_surfaceId{0};
 
     // TODO: These are X11-only properties, should go into a separate struct once we use class
     //       templates only.
@@ -443,9 +455,6 @@ public Q_SLOTS:
 protected:
     explicit Toplevel(win::transient* transient);
 
-    void addDamageFull();
-    virtual void addDamage(const QRegion &damage);
-
     virtual void debug(QDebug& stream) const;
     void copyToDeleted(Toplevel* c);
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
@@ -457,10 +466,7 @@ protected:
     QSharedPointer<QOpenGLFramebufferObject> m_internalFBO;
     QImage m_internalImage;
 
-    bool m_isDamaged;
-
 private:
-    void updateClientOutputs();
     void add_repaint_outputs(QRegion const& region);
 
     // when adding new data members, check also copyToDeleted()
@@ -484,8 +490,6 @@ private:
     xcb_xfixes_fetch_region_cookie_t m_regionCookie;
     int m_screen;
     bool m_skipCloseAnimation;
-    quint32 m_surfaceId = 0;
-    Wrapland::Server::Surface *m_surface = nullptr;
     // when adding new data members, check also copyToDeleted()
     qreal m_screenScale = 1.0;
     QVector<VirtualDesktop*> m_desktops;

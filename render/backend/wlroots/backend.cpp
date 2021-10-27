@@ -11,9 +11,12 @@
 #include "output.h"
 #include "wlr_helpers.h"
 
+#include "base/platform.h"
+#include "base/wayland/output_helpers.h"
+#include "input/wayland/platform.h"
 #include "main.h"
-#include "platform/wlroots.h"
 #include "render/wayland/compositor.h"
+#include "render/wayland/effects.h"
 #include "screens.h"
 #include "wayland_server.h"
 
@@ -24,14 +27,12 @@ namespace KWin::render::backend::wlroots
 
 static auto align_horizontal{false};
 
-backend::backend(platform_base::wlroots* base, QObject* parent)
-    : Platform(parent)
-    , base{base}
+backend::backend(base::platform<base::backend::wlroots, AbstractWaylandOutput>& base)
+    : base{base}
 {
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 
     setSupportsGammaControl(true);
-    supportsOutputChanges();
 }
 
 backend::~backend()
@@ -42,11 +43,12 @@ backend::~backend()
         delete output;
     }
     all_outputs.clear();
+    base.all_outputs.clear();
 }
 
 void handle_new_output(struct wl_listener* listener, void* data)
 {
-    event_receiver<backend>* new_output_struct
+    base::event_receiver<backend>* new_output_struct
         = wl_container_of(listener, new_output_struct, event);
     auto back = new_output_struct->receiver;
     auto wlr_out = reinterpret_cast<wlr_output*>(data);
@@ -67,7 +69,9 @@ void handle_new_output(struct wl_listener* listener, void* data)
 
     auto out = new output(wlr_out, back);
     back->all_outputs << out;
+    back->base.all_outputs.push_back(out);
     back->enabled_outputs << out;
+    back->base.enabled_outputs.push_back(out);
 
     if (align_horizontal) {
         auto shifted_geo = out->geometry();
@@ -83,18 +87,18 @@ void backend::init()
 {
     // TODO(romangg): Can we omit making a distinction here?
     // Pointer warping is required for tests.
-    setSupportsPointerWarping(platform_base::wlroots_get_headless_backend(base->backend));
+    setSupportsPointerWarping(base::backend::wlroots_get_headless_backend(base.backend.backend));
 
-    assert(base->backend);
-    fd = wlr_backend_get_drm_fd(base->backend);
+    assert(base.backend.backend);
+    fd = wlr_backend_get_drm_fd(base.backend.backend);
 
     new_output.receiver = this;
     new_output.event.notify = handle_new_output;
-    wl_signal_add(&base->backend->events.new_output, &new_output.event);
+    wl_signal_add(&base.backend.backend->events.new_output, &new_output.event);
 
     init_drm_leasing();
 
-    if (!wlr_backend_start(base->backend)) {
+    if (!wlr_backend_start(base.backend.backend)) {
         throw std::exception();
     }
 
@@ -116,27 +120,37 @@ void backend::enableOutput(output* output, bool enable)
     if (enable) {
         Q_ASSERT(!enabled_outputs.contains(output));
         enabled_outputs << output;
+        base.enabled_outputs.push_back(output);
         Q_EMIT output_added(output);
     } else {
         Q_ASSERT(enabled_outputs.contains(output));
         enabled_outputs.removeOne(output);
         Q_ASSERT(!enabled_outputs.contains(output));
+        remove_all(base.enabled_outputs, output);
         Q_EMIT output_removed(output);
     }
-    checkOutputsOn();
+
+    auto const& wlroots_base = static_cast<ApplicationWaylandAbstract*>(kwinApp())->get_base();
+    auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
+    base::wayland::check_outputs_on(wlroots_base, wayland_input->dpms_filter);
 
     Screens::self()->updateAll();
 }
 
 clockid_t backend::clockId() const
 {
-    return wlr_backend_get_presentation_clock(base->backend);
+    return wlr_backend_get_presentation_clock(base.backend.backend);
 }
 
 OpenGLBackend* backend::createOpenGLBackend()
 {
-    egl = new egl_backend(this, platform_base::wlroots_get_headless_backend(base->backend));
+    egl = new egl_backend(this, base::backend::wlroots_get_headless_backend(base.backend.backend));
     return egl;
+}
+
+void backend::createEffectsHandler(render::compositor* compositor, Scene* scene)
+{
+    new wayland::effects_handler_impl(compositor, scene);
 }
 
 QVector<CompositingType> backend::supportedCompositors() const
@@ -174,7 +188,7 @@ struct outputs_array_wrap {
 void backend::init_drm_leasing()
 {
 #if HAVE_WLR_DRM_LEASE
-    auto drm_backend = platform_base::wlroots_get_drm_backend(base->backend);
+    auto drm_backend = base::backend::wlroots_get_drm_backend(base.backend.backend);
     if (!drm_backend) {
         return;
     }
@@ -216,8 +230,10 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
         throw;
     }
 
+    auto const& wlroots_base = static_cast<ApplicationWaylandAbstract*>(kwinApp())->get_base();
+
     for (auto& con : lease->connectors()) {
-        auto out = static_cast<output*>(kwinApp()->platform->findOutput(con->output()));
+        auto out = static_cast<output*>(base::wayland::find_output(wlroots_base, con->output()));
         assert(out);
         outputs.push_back(out);
     }
@@ -242,8 +258,8 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
     }
 
     connect(lease, &Wrapland::Server::drm_lease_v1::resourceDestroyed, this, [this, lessee_id] {
-        wlr_drm_backend_terminate_lease(platform_base::wlroots_get_drm_backend(base->backend),
-                                        lessee_id);
+        wlr_drm_backend_terminate_lease(
+            base::backend::wlroots_get_drm_backend(base.backend.backend), lessee_id);
         static_cast<render::wayland::compositor*>(compositor::self())->unlock();
     });
 
@@ -269,7 +285,7 @@ void backend::setVirtualOutputs(int count, QVector<QRect> geometries, QVector<in
         auto const size
             = (geometries.size() ? geometries.at(i).size() : initialWindowSize()) * scale;
 
-        wlr_headless_add_output(base->backend, size.width(), size.height());
+        wlr_headless_add_output(base.backend.backend, size.width(), size.height());
 
         auto added_output = all_outputs.back();
 

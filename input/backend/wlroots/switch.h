@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/utils.h"
 #include "input/switch.h"
-#include "platform/utils.h"
 
 extern "C" {
 #include <wlr/types/wlr_input_device.h>
@@ -21,7 +21,7 @@ class switch_device : public input::switch_device
 {
     Q_OBJECT
 public:
-    using er = event_receiver<switch_device>;
+    using er = base::event_receiver<switch_device>;
 
     wlr_switch* backend{nullptr};
 

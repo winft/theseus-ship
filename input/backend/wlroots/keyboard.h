@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/utils.h"
 #include "input/keyboard.h"
-#include "platform/utils.h"
 
 extern "C" {
 #include <wlr/types/wlr_input_device.h>
@@ -21,7 +21,7 @@ class keyboard : public input::keyboard
 {
     Q_OBJECT
 public:
-    using er = event_receiver<keyboard>;
+    using er = base::event_receiver<keyboard>;
 
     wlr_keyboard* backend{nullptr};
 

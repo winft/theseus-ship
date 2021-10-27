@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/utils.h"
 #include "input/pointer.h"
-#include "platform/utils.h"
 
 extern "C" {
 #include <wlr/types/wlr_pointer.h>
@@ -20,7 +20,7 @@ class pointer : public input::pointer
 {
     Q_OBJECT
 public:
-    using er = event_receiver<pointer>;
+    using er = base::event_receiver<pointer>;
 
     wlr_pointer* backend{nullptr};
 

@@ -17,7 +17,7 @@
 
 using Wrapland::Server::Surface;
 
-namespace KWin::platform::wayland
+namespace KWin::base::wayland
 {
 
 idle_inhibition::idle_inhibition(KdeIdle* idle)

@@ -28,9 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../input/wayland/redirect.h"
 #include "../../platform.h"
 #include "../../render/wayland/compositor.h"
+#include "../../screenlockerwatcher.h"
 #include "../../seat/backend/wlroots/session.h"
 #include "../../wayland_server.h"
-#include "../../workspace.h"
+#include "../../win/wayland/space.h"
 #include "../../xcbutils.h"
 #include "../../xwl/xwayland.h"
 
@@ -74,7 +75,6 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
                                                int& argc,
                                                char** argv)
     : ApplicationWaylandAbstract(mode, argc, argv)
-    , base{new platform_base::wlroots()}
 {
     // TODO: add a test move to kglobalaccel instead?
     QFile{QStandardPaths::locate(QStandardPaths::ConfigLocation,
@@ -97,9 +97,10 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
+    base.backend = base::backend::wlroots();
     server.reset(new WaylandServer(socket_name, flags));
 
-    render.reset(new render::backend::wlroots::backend(base.get(), this));
+    render.reset(new render::backend::wlroots::backend(base));
     platform = render.get();
 
     auto environment = QProcessEnvironment::systemEnvironment();
@@ -129,7 +130,7 @@ WaylandTestApplication::~WaylandTestApplication()
 
     // Block compositor to prevent further compositing from crashing with a null workspace.
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    static_cast<render::wayland::compositor*>(compositor.get())->lock();
+    compositor->lock();
 
     workspace.reset();
     compositor.reset();
@@ -143,9 +144,19 @@ bool WaylandTestApplication::is_screen_locked() const
     return server->is_screen_locked();
 }
 
+wayland_base& WaylandTestApplication::get_base()
+{
+    return base;
+}
+
 WaylandServer* WaylandTestApplication::get_wayland_server()
 {
     return server.get();
+}
+
+render::compositor* WaylandTestApplication::get_compositor()
+{
+    return compositor.get();
 }
 
 debug::console* WaylandTestApplication::create_debug_console()
@@ -159,8 +170,8 @@ void WaylandTestApplication::start()
 
     auto headless_backend = wlr_headless_backend_create(waylandServer()->display()->native());
     wlr_headless_add_output(headless_backend, 1280, 1024);
-    base->init(headless_backend);
-    input.reset(new input::backend::wlroots::platform(base.get()));
+    base.backend.init(headless_backend);
+    input.reset(new input::backend::wlroots::platform(base));
     input::wayland::add_dbus(input.get());
 
     createOptions();
@@ -191,10 +202,11 @@ void WaylandTestApplication::start()
     out->output()->set_physical_size(QSize(1280, 1024));
 
     compositor = std::make_unique<render::wayland::compositor>();
-    workspace = std::make_unique<Workspace>();
+    workspace = std::make_unique<win::wayland::space>();
     Q_EMIT workspaceCreated();
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
+    ScreenLockerWatcher::self()->initialize();
 }
 
 void WaylandTestApplication::handle_server_addons_created()

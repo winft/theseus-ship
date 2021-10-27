@@ -41,7 +41,7 @@ namespace KWin
 {
 class Toplevel;
 
-namespace platform::x11
+namespace base::x11
 {
 class event_filter;
 }
@@ -360,7 +360,7 @@ private:
     QList<ElectricBorder> m_borderActivate, m_borderAlternativeActivate;
     QHash<ElectricBorder, QAction *> m_touchActivate;
     QHash<ElectricBorder, QAction *> m_touchAlternativeActivate;
-    QScopedPointer<platform::x11::event_filter> m_x11EventFilter;
+    QScopedPointer<base::x11::event_filter> m_x11EventFilter;
 
     static TabBox *s_self;
 };

@@ -6,14 +6,20 @@
 */
 #include "wayland_server.h"
 
+#include "base/backend/wlroots.h"
+#include "base/platform.h"
+#include "base/wayland/idle_inhibition.h"
+#include "base/wayland/output_helpers.h"
 #include "platform.h"
-#include "platform/wayland/idle_inhibition.h"
 #include "screens.h"
 #include "service_utils.h"
+#include "wayland_logging.h"
 #include "workspace.h"
 
 #include "win/wayland/layer_shell.h"
+#include "win/wayland/space.h"
 #include "win/wayland/subsurface.h"
+#include "win/wayland/surface.h"
 #include "win/wayland/window.h"
 #include "win/wayland/xdg_activation.h"
 #include "win/wayland/xdg_shell.h"
@@ -75,8 +81,8 @@ public:
         const bool trusted = !localSha.isEmpty() && fullPathSha == localSha;
 
         if (!trusted) {
-            qCWarning(KWIN_CORE) << "Could not trust" << client->executablePath().c_str() << "sha"
-                                 << localSha << fullPathSha;
+            qCWarning(KWIN_WL) << "Could not trust" << client->executablePath().c_str() << "sha"
+                               << localSha << fullPathSha;
         }
 
         return trusted;
@@ -104,7 +110,7 @@ public:
         }
 
         if (client->executablePath().empty()) {
-            qCDebug(KWIN_CORE) << "Could not identify process with pid" << client->processId();
+            qCDebug(KWIN_WL) << "Could not identify process with pid" << client->processId();
             return false;
         }
 
@@ -115,12 +121,12 @@ public:
                 client->setProperty("requestedInterfaces", requestedInterfaces);
             }
             if (!requestedInterfaces.toStringList().contains(QString::fromUtf8(interfaceName))) {
-                if (KWIN_CORE().isDebugEnabled()) {
+                if (KWIN_WL().isDebugEnabled()) {
                     const QString id = QString::fromStdString(client->executablePath())
                         + QLatin1Char('|') + QString::fromUtf8(interfaceName);
                     if (!m_reported.contains({id})) {
                         m_reported.insert(id);
-                        qCDebug(KWIN_CORE)
+                        qCDebug(KWIN_WL)
                             << "Interface" << interfaceName << "not in X-KDE-Wayland-Interfaces of"
                             << client->executablePath().c_str();
                     }
@@ -140,7 +146,7 @@ public:
                 return false;
             }
         }
-        qCDebug(KWIN_CORE) << "authorized" << client->executablePath().c_str() << interfaceName;
+        qCDebug(KWIN_WL) << "authorized" << client->executablePath().c_str() << interfaceName;
         return true;
     }
 };
@@ -219,7 +225,7 @@ void WaylandServer::terminateClientConnections()
 void WaylandServer::create_globals()
 {
     if (!m_display->running()) {
-        qCCritical(KWIN_CORE) << "Wayland server failed to start.";
+        qCCritical(KWIN_WL) << "Wayland server failed to start.";
         throw std::exception();
     }
 
@@ -244,8 +250,8 @@ void WaylandServer::create_globals()
                     // only find Xwayland toplevels. Wayland native windows always have a surface.
                     return t->surfaceId() == surface->id() && !t->surface();
                 };
-                if (Toplevel* t = ws->findToplevel(check)) {
-                    t->setSurface(surface);
+                if (auto window = ws->findToplevel(check)) {
+                    win::wayland::set_surface(window, surface);
                 }
             });
 
@@ -329,11 +335,11 @@ void WaylandServer::create_globals()
     globals->data_control_manager_v1 = m_display->create_data_control_manager_v1();
     globals->kde_idle = m_display->createIdle();
 
-    auto idleInhibition = new platform::wayland::idle_inhibition(globals->kde_idle.get());
+    auto idleInhibition = new base::wayland::idle_inhibition(globals->kde_idle.get());
     connect(this,
             &WaylandServer::window_added,
             idleInhibition,
-            &platform::wayland::idle_inhibition::register_window);
+            &base::wayland::idle_inhibition::register_window);
     globals->idle_inhibit_manager_v1 = m_display->createIdleInhibitManager();
 
     globals->plasma_shell = m_display->createPlasmaShell();
@@ -413,7 +419,8 @@ void WaylandServer::create_globals()
             &OutputManagementV1::configurationChangeRequested,
             this,
             [](Wrapland::Server::OutputConfigurationV1* config) {
-                kwinApp()->platform->requestOutputsChange(config);
+                auto& base = static_cast<ApplicationWaylandAbstract*>(kwinApp())->get_base();
+                base::wayland::request_outputs_change(base, config);
             });
 
     globals->subcompositor = m_display->createSubCompositor();
@@ -597,7 +604,7 @@ void WaylandServer::adopt_transient_children(Toplevel* window)
 
 void WaylandServer::initWorkspace()
 {
-    auto ws = workspace();
+    auto ws = static_cast<win::wayland::space*>(workspace());
 
     VirtualDesktopManager::self()->setVirtualDesktopManagement(virtual_desktop_management());
 
@@ -620,11 +627,18 @@ void WaylandServer::initWorkspace()
             [ws, this](auto const& token, auto surface) {
                 auto win = find_window(surface);
                 if (!win) {
-                    qCDebug(KWIN_CORE) << "No window found to xdg-activate" << surface;
+                    qCDebug(KWIN_WL) << "No window found to xdg-activate" << surface;
                     return;
                 }
                 win::wayland::xdg_activation_activate(ws, win, token);
             });
+
+    // For Xwayland windows
+    QObject::connect(ws, &Workspace::surface_id_changed, this, [this](auto window, auto id) {
+        if (auto surface = compositor()->getSurface(id, xWaylandConnection())) {
+            win::wayland::set_surface(window, surface);
+        }
+    });
 }
 
 void WaylandServer::initScreenLocker()
@@ -691,7 +705,7 @@ WaylandServer::SocketPairConnection WaylandServer::createConnection()
     SocketPairConnection ret;
     int sx[2];
     if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) < 0) {
-        qCWarning(KWIN_CORE) << "Could not create socket";
+        qCWarning(KWIN_WL) << "Could not create socket";
         return ret;
     }
     ret.connection = m_display->createClient(sx[0]);

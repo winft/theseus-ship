@@ -17,7 +17,7 @@ extern "C" {
 namespace KWin::input::backend::wlroots
 {
 
-using er = event_receiver<keyboard>;
+using er = base::event_receiver<keyboard>;
 
 static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
 {

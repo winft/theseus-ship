@@ -10,7 +10,6 @@
 #include "meta.h"
 #include "net.h"
 #include "transient.h"
-#include "wayland/window.h"
 #include "x11/window.h"
 
 #include "decorations/decorationrenderer.h"
@@ -103,7 +102,7 @@ remnant::remnant(Toplevel* win, Toplevel* source)
         });
     }
 
-    was_wayland_client = qobject_cast<win::wayland::window*>(source) != nullptr;
+    was_wayland_client = source->is_wayland_window();
     was_x11_client = qobject_cast<win::x11::window*>(source) != nullptr;
     was_popup_window = win::is_popup(source);
     was_outline = source->isOutline();

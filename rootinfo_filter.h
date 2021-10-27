@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_ROOTINFO_FILTER_H
 #define KWIN_ROOTINFO_FILTER_H
 
-#include "platform/x11/event_filter.h"
+#include "base/x11/event_filter.h"
 
 namespace KWin
 {
@@ -29,7 +29,7 @@ namespace win::x11
 class RootInfo;
 }
 
-class RootInfoFilter : public platform::x11::event_filter
+class RootInfoFilter : public base::x11::event_filter
 {
 public:
     explicit RootInfoFilter(win::x11::RootInfo *parent);

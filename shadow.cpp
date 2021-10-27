@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "effects.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 
 #include "win/deco.h"
 #include "win/scene.h"
@@ -56,7 +55,7 @@ Shadow *Shadow::createShadow(Toplevel *toplevel)
         return nullptr;
     }
     Shadow *shadow = createShadowFromDecoration(toplevel);
-    if (!shadow && waylandServer()) {
+    if (!shadow && kwinApp()->operationMode() != Application::OperationModeX11) {
         shadow = createShadowFromWayland(toplevel);
     }
     if (!shadow && kwinApp()->x11Connection()) {
@@ -354,7 +353,7 @@ bool Shadow::updateShadow()
         return false;
     }
 
-    if (waylandServer()) {
+    if (kwinApp()->operationMode() != Application::OperationModeX11) {
         if (m_topLevel && m_topLevel->surface()) {
             if (const auto &s = m_topLevel->surface()->state().shadow) {
                 if (init(s)) {

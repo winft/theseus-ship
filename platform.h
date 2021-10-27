@@ -46,10 +46,6 @@ namespace KWin
 namespace ColorCorrect {
 class Manager;
 }
-namespace input
-{
-class dpms_filter;
-}
 
 class AbstractOutput;
 class AbstractWaylandOutput;
@@ -173,14 +169,6 @@ public:
      * Base implementation returns a screen with a scale of 1.
      */
     virtual QVector<qreal> screenScales() const;
-    /**
-     * Implement this method to receive configuration change requests through Wrapland's
-     * OutputManagement.
-     *
-     * Base implementation warns that the current backend does not implement this
-     * functionality.
-     */
-    void requestOutputsChange(Wrapland::Server::OutputConfigurationV1 *config);
 
     /**
      * Whether the Platform requires compositing for rendering.
@@ -323,7 +311,6 @@ public:
     virtual Outputs enabledOutputs() const {
         return Outputs();
     }
-    AbstractWaylandOutput* findOutput(Wrapland::Server::Output const* output);
 
     /**
      * A string of information to include in kwin debug output
@@ -357,10 +344,6 @@ public:
         return m_initialWindowSize;
     }
 
-    void createDpmsFilter();
-    void checkOutputsOn();
-    Q_INVOKABLE void turnOutputsOn();
-
     virtual clockid_t clockId() const;
     QByteArray deviceIdentifier() const {
         return m_deviceIdentifier;
@@ -377,19 +360,12 @@ Q_SIGNALS:
     void output_removed(AbstractOutput* output);
 
 protected:
-    explicit Platform(QObject *parent = nullptr);
+    Platform();
     void setSupportsPointerWarping(bool set) {
         m_pointerWarping = set;
     }
     void setSupportsGammaControl(bool set) {
         m_supportsGammaControl = set;
-    }
-
-    /**
-     * Whether the backend is supposed to change the configuration of outputs.
-     */
-    void supportsOutputChanges() {
-        m_supportsOutputChanges = true;
     }
 
 private:
@@ -404,10 +380,7 @@ private:
     EGLSurface m_surface = EGL_NO_SURFACE;
     ColorCorrect::Manager *m_colorCorrect = nullptr;
     bool m_supportsGammaControl = false;
-    bool m_supportsOutputChanges = false;
     CompositingType m_selectedCompositor = NoCompositing;
-
-    std::unique_ptr<input::dpms_filter> m_dpmsFilter;
 };
 
 }

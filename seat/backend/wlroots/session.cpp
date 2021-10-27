@@ -58,7 +58,7 @@ int session::vt() const
 
 void handle_active(struct wl_listener* listener, [[maybe_unused]] void* data)
 {
-    event_receiver<session>* event_receiver_struct
+    base::event_receiver<session>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto session = event_receiver_struct->receiver;
 
@@ -68,7 +68,7 @@ void handle_active(struct wl_listener* listener, [[maybe_unused]] void* data)
 
 void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
 {
-    event_receiver<session>* event_receiver_struct
+    base::event_receiver<session>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto session = event_receiver_struct->receiver;
 

@@ -9,7 +9,7 @@
 
 #include <QPointer>
 
-namespace KWin::platform::x11
+namespace KWin::base::x11
 {
 class event_filter;
 class event_filter_container;
@@ -17,8 +17,8 @@ class event_filter_container;
 class KWIN_EXPORT event_filter_manager
 {
 public:
-    std::vector<QPointer<platform::x11::event_filter_container>> filters;
-    std::vector<QPointer<platform::x11::event_filter_container>> generic_filters;
+    std::vector<QPointer<event_filter_container>> filters;
+    std::vector<QPointer<event_filter_container>> generic_filters;
 
     void register_filter(event_filter* filter);
     void unregister_filter(event_filter* filter);

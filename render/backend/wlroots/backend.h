@@ -7,8 +7,9 @@
 
 #include "wlr_includes.h"
 
+#include "base/backend/wlroots.h"
+#include "base/platform.h"
 #include "platform.h"
-#include "platform/wlroots.h"
 
 #include <Wrapland/Server/drm_lease_v1.h>
 #include <variant>
@@ -25,17 +26,18 @@ class KWIN_EXPORT backend : public Platform
 {
     Q_OBJECT
 public:
-    platform_base::wlroots* base;
+    base::platform<base::backend::wlroots, AbstractWaylandOutput>& base;
     egl_backend* egl{nullptr};
 
     QVector<output*> all_outputs;
     QVector<output*> enabled_outputs;
     int fd{0};
 
-    explicit backend(platform_base::wlroots* base, QObject* parent = nullptr);
+    explicit backend(base::platform<base::backend::wlroots, AbstractWaylandOutput>& base);
     ~backend() override;
 
     OpenGLBackend* createOpenGLBackend() override;
+    void createEffectsHandler(render::compositor* compositor, Scene* scene) override;
 
     void init();
 
@@ -61,7 +63,7 @@ private:
     void process_drm_leased(Wrapland::Server::drm_lease_v1* lease);
 
     clockid_t m_clockId;
-    event_receiver<backend> new_output;
+    base::event_receiver<backend> new_output;
 };
 
 }

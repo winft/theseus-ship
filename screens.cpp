@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 #include "platform.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 
 namespace KWin
 {

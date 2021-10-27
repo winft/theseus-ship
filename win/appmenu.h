@@ -39,7 +39,7 @@ class Toplevel;
 
 namespace win
 {
-class ApplicationMenu : public QObject
+class KWIN_EXPORT ApplicationMenu : public QObject
 {
     Q_OBJECT
 

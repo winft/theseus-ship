@@ -16,7 +16,7 @@ extern "C" {
 namespace KWin::input::backend::wlroots
 {
 
-using er = event_receiver<pointer>;
+using er = base::event_receiver<pointer>;
 
 static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
 {

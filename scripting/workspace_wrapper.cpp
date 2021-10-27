@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../outline.h"
 #include "../screens.h"
 #include "../virtualdesktops.h"
-#include "../wayland_server.h"
 #include "../workspace.h"
 #ifdef KWIN_BUILD_ACTIVITIES
 #include "../activities.h"
@@ -61,6 +60,7 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent) : QObject(parent)
 
     connect(ws, &Workspace::clientAdded, this, &WorkspaceWrapper::handle_client_added);
     connect(ws, &Workspace::clientRemoved, this, &WorkspaceWrapper::handle_client_removed);
+    connect(ws, &Workspace::wayland_window_added, this, &WorkspaceWrapper::handle_client_added);
 
     connect(ws, &Workspace::clientActivated, this,
         [this](Toplevel* client) {
@@ -98,9 +98,6 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent) : QObject(parent)
     );
     // TODO Plasma 6: Remove it.
     connect(QApplication::desktop(), &QDesktopWidget::resized, this, &WorkspaceWrapper::screenResized);
-    if (waylandServer()) {
-        connect(waylandServer(), &WaylandServer::window_added, this, &WorkspaceWrapper::handle_client_added);
-    }
 
     for (auto client : ws->allClientList()) {
         handle_client_added(client);

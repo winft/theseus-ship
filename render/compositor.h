@@ -62,6 +62,7 @@ public:
      * repainting outputs that the visible bounds of @arg window intersect with.
      */
     virtual void schedule_repaint(Toplevel* window);
+    virtual void schedule_frame_callback(Toplevel* window);
 
     /**
      * Notifies the compositor that SwapBuffers() is about to be called.

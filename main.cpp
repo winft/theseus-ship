@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include <config-kwin.h>
 
+#include "base/x11/event_filter_manager.h"
 #include "platform.h"
 #include "atoms.h"
 #include "render/compositor.h"
@@ -31,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "seat/backend/logind/session.h"
 #include "options.h"
 #include "perf/ftrace.h"
-#include "platform/x11/event_filter_manager.h"
 #include "screens.h"
 #include "screenlockerwatcher.h"
 #include "sm.h"
@@ -91,7 +91,7 @@ int Application::x11ScreenNumber()
 
 Application::Application(Application::OperationMode mode, int &argc, char **argv)
     : QApplication(argc, argv)
-    , x11_event_filters{new platform::x11::event_filter_manager}
+    , x11_event_filters{new base::x11::event_filter_manager}
     , m_eventFilter(new XcbEventFilter())
     , m_configLock(false)
     , m_config()

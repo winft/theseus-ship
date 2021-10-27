@@ -40,12 +40,22 @@ class QCommandLineParser;
 namespace KWin
 {
 
+namespace base
+{
+namespace backend
+{
+class wlroots;
+}
+template<typename Backend, typename Output>
+class platform;
+}
+
 namespace debug
 {
 class console;
 }
 
-namespace platform::x11
+namespace base::x11
 {
 class event_filter_manager;
 }
@@ -60,8 +70,11 @@ namespace seat
 class session;
 }
 
+class AbstractWaylandOutput;
 class Platform;
 class WaylandServer;
+
+using wayland_base = base::platform<base::backend::wlroots, AbstractWaylandOutput>;
 
 class XcbEventFilter : public QAbstractNativeEventFilter
 {
@@ -103,11 +116,12 @@ public:
 
     Platform* platform{nullptr};
     std::unique_ptr<seat::session> session;
-    std::unique_ptr<render::compositor> compositor;
-    std::unique_ptr<platform::x11::event_filter_manager> x11_event_filters;
+    std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<input::platform> input;
 
     ~Application() override;
+
+    virtual render::compositor* get_compositor() = 0;
 
     void setConfigLock(bool lock);
 
@@ -290,6 +304,9 @@ class KWIN_EXPORT ApplicationWaylandAbstract : public Application
     Q_OBJECT
 public:
     ~ApplicationWaylandAbstract() override = 0;
+
+    virtual wayland_base& get_base() = 0;
+
 protected:
     friend class xwl::xwayland;
 

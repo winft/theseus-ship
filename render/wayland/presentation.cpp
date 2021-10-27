@@ -8,11 +8,11 @@
 #include "abstract_wayland_output.h"
 #include "main.h"
 #include "platform.h"
+#include "render/wayland/output.h"
 #include "toplevel.h"
 #include "utils.h"
+#include "wayland_logging.h"
 #include "wayland_server.h"
-
-#include "render/wayland/output.h"
 
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/presentation_time.h>
@@ -36,7 +36,7 @@ bool presentation::init_clock(clockid_t clockid)
 
     struct timespec ts;
     if (clock_gettime(clockid, &ts) != 0) {
-        qCWarning(KWIN_CORE) << "Could not get presentation clock.";
+        qCWarning(KWIN_WL) << "Could not get presentation clock.";
         return false;
     }
 

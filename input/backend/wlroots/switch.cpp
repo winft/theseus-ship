@@ -12,7 +12,7 @@
 namespace KWin::input::backend::wlroots
 {
 
-using er = event_receiver<switch_device>;
+using er = base::event_receiver<switch_device>;
 
 static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
 {

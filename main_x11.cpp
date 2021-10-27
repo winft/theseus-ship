@@ -15,8 +15,10 @@
 #include "input/backend/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
+#include "screenlockerwatcher.h"
 #include "seat/backend/logind/session.h"
 #include "sm.h"
+#include "win/x11/space.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -200,6 +202,11 @@ void ApplicationX11::lostSelection()
     quit();
 }
 
+render::compositor* ApplicationX11::get_compositor()
+{
+    return compositor.get();
+}
+
 debug::console* ApplicationX11::create_debug_console()
 {
     return new debug::x11_console;
@@ -208,8 +215,9 @@ debug::console* ApplicationX11::create_debug_console()
 void ApplicationX11::start()
 {
     prepare_start();
+    ScreenLockerWatcher::self()->initialize();
 
-    render.reset(new render::backend::x11::X11StandalonePlatform(this));
+    render.reset(new render::backend::x11::X11StandalonePlatform(base));
     platform = render.get();
 
     crashChecking();
@@ -253,7 +261,7 @@ void ApplicationX11::start()
         }
 
         compositor = std::make_unique<render::x11::compositor>();
-        workspace = std::make_unique<Workspace>();
+        workspace = std::make_unique<win::x11::space>();
         Q_EMIT workspaceCreated();
 
         Q_EMIT startup_finished();

@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "screens.h"
 #include "shadow.h"
-#include "wayland_server.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -43,9 +42,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/netinfo.h"
 #include "win/x11/xcb.h"
 
-#include <Wrapland/Server/compositor.h>
-#include <Wrapland/Server/display.h>
-#include <Wrapland/Server/wl_output.h>
 #include <Wrapland/Server/surface.h>
 
 #include <QDebug>
@@ -59,8 +55,7 @@ Toplevel::Toplevel()
 }
 
 Toplevel::Toplevel(win::transient* transient)
-    : m_isDamaged(false)
-    , m_internalId(QUuid::createUuid())
+    : m_internalId(QUuid::createUuid())
     , m_client()
     , damage_handle(XCB_NONE)
     , is_shape(false)
@@ -593,7 +588,7 @@ void Toplevel::resetRepaints(AbstractOutput* output)
 
 void Toplevel::add_repaint_outputs(QRegion const& region)
 {
-    if (!waylandServer()) {
+    if (kwinApp()->operationMode() == Application::OperationModeX11) {
         // On X11 we do not paint per output.
         return;
     }
@@ -704,6 +699,11 @@ void Toplevel::getWmOpaqueRegion()
     opaque_region = new_opaque_region;
 }
 
+bool Toplevel::is_wayland_window() const
+{
+    return false;
+}
+
 bool Toplevel::isClient() const
 {
     return false;
@@ -765,80 +765,6 @@ void Toplevel::setSkipCloseAnimation(bool set)
     }
     m_skipCloseAnimation = set;
     emit skipCloseAnimationChanged();
-}
-
-void Toplevel::setSurface(Wrapland::Server::Surface *surface)
-{
-    using namespace Wrapland::Server;
-    Q_ASSERT(surface);
-
-    if (m_surface) {
-        // This can happen with XWayland clients since receiving the surface destroy signal through
-        // the Wayland connection is independent of when the corresponding X11 unmap/map events
-        // are received.
-        disconnect(m_surface, nullptr, this, nullptr);
-
-        disconnect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::updateClientOutputs);
-        disconnect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
-    } else {
-        // Need to setup this connections since setSurface was never called before or
-        // the surface had been destroyed before what disconnected them.
-        connect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::updateClientOutputs);
-        connect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
-    }
-
-    m_surface = surface;
-
-    if (surface->client() == waylandServer()->xWaylandConnection()) {
-        connect(m_surface, &Surface::committed, this, [this]{
-            if (!m_surface->state().damage.isEmpty()) {
-                addDamage(m_surface->state().damage);
-            }
-        });
-        connect(m_surface, &Surface::committed, this, [this]{
-            if (m_surface->state().updates & Wrapland::Server::surface_change::size) {
-                discardWindowPixmap();
-                // Quads for Xwayland clients need for size emulation.
-                // Also apparently needed for unmanaged Xwayland clients (compare Kate's open-file
-                // dialog when type-forward list is changing size).
-                // TODO(romangg): can this be put in a less hot path?
-                discard_quads();
-            }
-        });
-    }
-
-    connect(m_surface, &Surface::subsurfaceTreeChanged, this,
-        [this] {
-            // TODO improve to only update actual visual area
-            if (ready_for_painting) {
-                addDamageFull();
-                m_isDamaged = true;
-            }
-        }
-    );
-    connect(m_surface, &Surface::destroyed, this,
-        [this] {
-            m_surface = nullptr;
-            m_surfaceId = 0;
-            disconnect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::updateClientOutputs);
-            disconnect(screens(), &Screens::changed, this, &Toplevel::updateClientOutputs);
-        }
-    );
-    m_surfaceId = surface->id();
-    updateClientOutputs();
-    emit surfaceChanged();
-}
-
-void Toplevel::updateClientOutputs()
-{
-    std::vector<Wrapland::Server::Output*> clientOutputs;
-    const auto outputs = waylandServer()->display()->outputs();
-    for (auto output : outputs) {
-        if (frameGeometry().intersects(output->output()->geometry().toRect())) {
-            clientOutputs.push_back(output->output());
-        }
-    }
-    surface()->setOutputs(clientOutputs);
 }
 
 // TODO(romangg): * This function is only called on Wayland and the damage translation is not the
@@ -1367,33 +1293,7 @@ bool Toplevel::belongsToSameApplication([[maybe_unused]] Toplevel const* other,
 
 QRect Toplevel::iconGeometry() const
 {
-    auto management = control->wayland_management();
-    if (!management || !waylandServer()) {
-        // window management interface is only available if the surface is mapped
-        return QRect();
-    }
-
-    int minDistance = INT_MAX;
-    Toplevel* candidatePanel = nullptr;
-    QRect candidateGeom;
-
-    for (auto i = management->minimizedGeometries().constBegin(),
-         end = management->minimizedGeometries().constEnd(); i != end; ++i) {
-        auto client = waylandServer()->findToplevel(i.key());
-        if (!client) {
-            continue;
-        }
-        const int distance = QPoint(client->pos() - pos()).manhattanLength();
-        if (distance < minDistance) {
-            minDistance = distance;
-            candidatePanel = client;
-            candidateGeom = i.value();
-        }
-    }
-    if (!candidatePanel) {
-        return QRect();
-    }
-    return candidateGeom.translated(candidatePanel->pos());
+    return workspace()->get_icon_geometry(this);
 }
 
 void Toplevel::setWindowHandles(xcb_window_t w)
@@ -1422,11 +1322,7 @@ void Toplevel::clientMessageEvent(xcb_client_message_event_t* e)
 {
     if (e->type == atoms->wl_surface_id) {
         m_surfaceId = e->data.data32[0];
-        if (auto w = waylandServer()) {
-            if (auto s = w->compositor()->getSurface(m_surfaceId, w->xWaylandConnection())) {
-                setSurface(s);
-            }
-        }
+        Q_EMIT workspace()->surface_id_changed(this, m_surfaceId);
         emit surfaceIdChanged(m_surfaceId);
     }
 }

@@ -27,6 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "activities.h"
 #endif
 #include "atoms.h"
+#include "base/x11/event_filter.h"
+#include "base/x11/event_filter_container.h"
+#include "base/x11/event_filter_manager.h"
 #include "dbusinterface.h"
 #include "effects.h"
 #include "input/cursor.h"
@@ -34,9 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "moving_client_x11_filter.h"
 #include "outline.h"
 #include "platform.h"
-#include "platform/x11/event_filter.h"
-#include "platform/x11/event_filter_container.h"
-#include "platform/x11/event_filter_manager.h"
 #include "render/x11/compositor.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
@@ -51,7 +51,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "useractions.h"
 #include "virtualdesktops.h"
 #include "was_user_interaction_x11_filter.h"
-#include "wayland_server.h"
 #include "xcbutils.h"
 
 #include "win/appmenu.h"
@@ -67,19 +66,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/stacking_order.h"
 #include "win/util.h"
 
-#include "win/wayland/window.h"
-#include "win/wayland/xdg_activation.h"
 #include "win/x11/control.h"
 #include "win/x11/event.h"
 #include "win/x11/group.h"
 #include "win/x11/netinfo.h"
+#include "win/x11/space_areas.h"
 #include "win/x11/stacking_tree.h"
 #include "win/x11/syncalarmx11filter.h"
 #include "win/x11/transient.h"
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
-
-#include <Wrapland/Server/subcompositor.h>
 
 #include <KConfig>
 #include <KConfigGroup>
@@ -234,36 +230,6 @@ Workspace::Workspace()
 
     // create VirtualDesktopManager and perform dependency injection
     VirtualDesktopManager* vds = VirtualDesktopManager::self();
-    connect(
-        vds, &VirtualDesktopManager::desktopRemoved, this, [this](KWin::VirtualDesktop* desktop) {
-            // Wayland
-            if (kwinApp()->operationMode() == Application::OperationModeWaylandOnly
-                || kwinApp()->operationMode() == Application::OperationModeXwayland) {
-                for (auto const& client : m_allClients) {
-                    if (!client->desktops().contains(desktop)) {
-                        continue;
-                    }
-                    if (client->desktops().count() > 1) {
-                        win::leave_desktop(client, desktop);
-                    } else {
-                        sendClientToDesktop(client,
-                                            qMin(desktop->x11DesktopNumber(),
-                                                 VirtualDesktopManager::self()->count()),
-                                            true);
-                    }
-                }
-                // X11
-            } else {
-                for (auto const& client : m_allClients) {
-                    if (!client->isOnAllDesktops()
-                        && (client->desktop()
-                            > static_cast<int>(VirtualDesktopManager::self()->count()))) {
-                        sendClientToDesktop(client, VirtualDesktopManager::self()->count(), true);
-                    }
-                }
-            }
-        });
-
     connect(vds, &VirtualDesktopManager::countChanged, this, &Workspace::slotDesktopCountChanged);
     connect(
         vds, &VirtualDesktopManager::currentChanged, this, &Workspace::slotCurrentDesktopChanged);
@@ -310,121 +276,6 @@ Workspace::Workspace()
 
     initWithX11();
     Scripting::create(this);
-
-    if (auto w = waylandServer()) {
-        activation.reset(new win::wayland::xdg_activation);
-        connect(this, &Workspace::clientActivated, this, [this] {
-            if (activeClient()) {
-                activation->clear();
-            }
-        });
-
-        connect(w, &WaylandServer::window_added, this, [this](win::wayland::window* window) {
-            assert(!contains(m_windows, window));
-
-            if (window->control && !window->layer_surface) {
-                setupClientConnections(window);
-                window->updateDecoration(false);
-                win::update_layer(window);
-
-                auto const area
-                    = clientArea(PlacementArea, Screens::self()->current(), window->desktop());
-                auto placementDone = false;
-
-                if (window->isInitialPositionSet()) {
-                    placementDone = true;
-                }
-                if (window->control->fullscreen()) {
-                    placementDone = true;
-                }
-                if (window->maximizeMode() == win::maximize_mode::full) {
-                    placementDone = true;
-                }
-                if (window->control->rules().checkPosition(invalidPoint, true) != invalidPoint) {
-                    placementDone = true;
-                }
-                if (!placementDone) {
-                    window->placeIn(area);
-                }
-
-                m_allClients.push_back(window);
-            }
-
-            m_windows.push_back(window);
-
-            if (!contains(stacking_order->pre_stack, window)) {
-                // Raise if it hasn't got any stacking position yet.
-                stacking_order->pre_stack.push_back(window);
-            }
-            if (!contains(stacking_order->sorted(), window)) {
-                // It'll be updated later, and updateToolWindows() requires window to be in
-                // stacking_order.
-                stacking_order->win_stack.push_back(window);
-            }
-
-            x_stacking_tree->mark_as_dirty();
-            stacking_order->update(true);
-
-            if (window->control) {
-                updateClientArea();
-
-                if (window->wantsInput() && !window->control->minimized()) {
-                    activateClient(window);
-                }
-
-                updateTabbox();
-
-                connect(window, &win::wayland::window::windowShown, this, [this, window] {
-                    win::update_layer(window);
-                    x_stacking_tree->mark_as_dirty();
-                    stacking_order->update(true);
-                    updateClientArea();
-                    if (window->wantsInput()) {
-                        activateClient(window);
-                    }
-                });
-                connect(window, &win::wayland::window::windowHidden, this, [this] {
-                    // TODO: update tabbox if it's displayed
-                    x_stacking_tree->mark_as_dirty();
-                    stacking_order->update(true);
-                    updateClientArea();
-                });
-            }
-        });
-        connect(w, &WaylandServer::window_removed, this, [this](win::wayland::window* window) {
-            remove_all(m_windows, window);
-
-            if (window->control) {
-                remove_all(m_allClients, window);
-                if (window == most_recently_raised) {
-                    most_recently_raised = nullptr;
-                }
-                if (window == delayfocus_client) {
-                    cancelDelayFocus();
-                }
-                if (window == last_active_client) {
-                    last_active_client = nullptr;
-                }
-                if (window == client_keys_client) {
-                    setupWindowShortcutDone(false);
-                }
-                if (!window->control->shortcut().isEmpty()) {
-                    // Remove from client_keys.
-                    win::set_shortcut(window, QString());
-                }
-                clientHidden(window);
-                Q_EMIT clientRemoved(window);
-            }
-
-            x_stacking_tree->mark_as_dirty();
-            stacking_order->update(true);
-
-            if (window->control) {
-                updateClientArea();
-                updateTabbox();
-            }
-        });
-    }
 
     // SELI TODO: This won't work with unreasonable focus policies,
     // and maybe in rare cases also if the selected client doesn't
@@ -640,25 +491,10 @@ Workspace::~Workspace()
 
     clear_x11();
 
-    if (waylandServer()) {
-        auto const windows = waylandServer()->windows;
-        for (auto win : windows) {
-            win->destroy();
-            remove_all(m_windows, win);
-        }
-    }
-
     for (auto const& window : m_windows) {
         if (auto internal = qobject_cast<win::InternalClient*>(window)) {
             internal->destroyClient();
             remove_all(m_windows, internal);
-        }
-    }
-
-    for (auto const& window : m_windows) {
-        if (auto win = qobject_cast<win::wayland::window*>(window)) {
-            win->destroy();
-            remove_all(m_windows, win);
         }
     }
 
@@ -1144,11 +980,11 @@ void Workspace::slotDesktopCountChanged(uint previousCount, uint newCount)
 void Workspace::resetClientAreas(uint desktopCount)
 {
     // Make it +1, so that it can be accessed as [1..numberofdesktops]
-    workarea.clear();
-    workarea.resize(desktopCount + 1);
-    restrictedmovearea.clear();
-    restrictedmovearea.resize(desktopCount + 1);
-    screenarea.clear();
+    areas.work.clear();
+    areas.work.resize(desktopCount + 1);
+    areas.restrictedmove.clear();
+    areas.restrictedmove.resize(desktopCount + 1);
+    areas.screen.clear();
 
     updateClientArea(true);
 }
@@ -1800,6 +1636,11 @@ void Workspace::remove_window(Toplevel* window)
     stacking_order->update(true);
 }
 
+QRect Workspace::get_icon_geometry(Toplevel const* /*win*/) const
+{
+    return QRect();
+}
+
 win::x11::Group* Workspace::findGroup(xcb_window_t leader) const
 {
     Q_ASSERT(leader != XCB_WINDOW_NONE);
@@ -1921,207 +1762,78 @@ void Workspace::saveOldScreenSizes()
  */
 void Workspace::updateClientArea(bool force)
 {
-    const Screens* s = Screens::self();
-    int nscreens = s->count();
-    const int numberOfDesktops = VirtualDesktopManager::self()->count();
-    std::vector<QRect> new_wareas(numberOfDesktops + 1);
-    std::vector<StrutRects> new_rmoveareas(numberOfDesktops + 1);
-    std::vector<std::vector<QRect>> new_sareas(numberOfDesktops + 1);
-    QVector<QRect> screens(nscreens);
-    QRect desktopArea;
-    for (int i = 0; i < nscreens; i++) {
-        desktopArea |= s->geometry(i);
-    }
-    for (int iS = 0; iS < nscreens; iS++) {
-        screens[iS] = s->geometry(iS);
-    }
-    for (int i = 1; i <= numberOfDesktops; ++i) {
-        new_wareas[i] = desktopArea;
-        new_sareas[i].resize(nscreens);
-        for (int iS = 0; iS < nscreens; iS++)
-            new_sareas[i][iS] = screens[iS];
-    }
-    for (auto const& client : m_allClients) {
+    auto const screens = Screens::self();
+    auto const screens_count = screens->count();
+    auto const desktops_count = static_cast<int>(VirtualDesktopManager::self()->count());
 
-        // TODO(romangg): Merge this with Wayland clients below.
-        auto x11_client = qobject_cast<win::x11::window*>(client);
-        if (!x11_client) {
-            continue;
-        }
-        if (!x11_client->hasStrut()) {
-            continue;
-        }
+    // To be determined are new:
+    // * work areas,
+    // * restricted-move areas,
+    // * screen areas.
+    win::space_areas new_areas(desktops_count + 1);
 
-        auto r = win::x11::adjusted_client_area(x11_client, desktopArea, desktopArea);
-        // sanity check that a strut doesn't exclude a complete screen geometry
-        // this is a violation to EWMH, as KWin just ignores the strut
-        for (int i = 0; i < Screens::self()->count(); i++) {
-            if (!r.intersects(Screens::self()->geometry(i))) {
-                qCDebug(KWIN_CORE)
-                    << "Adjusted client area would exclude a complete screen, ignore";
-                r = desktopArea;
-                break;
-            }
-        }
-        StrutRects strutRegion = win::x11::strut_rects(x11_client);
-        const QRect clientsScreenRect = KWin::screens()->geometry(x11_client->screen());
-        for (auto strut = strutRegion.begin(); strut != strutRegion.end(); strut++) {
-            *strut = StrutRect((*strut).intersected(clientsScreenRect), (*strut).area());
-        }
+    std::vector<QRect> screens_geos(screens_count);
+    QRect desktop_area;
 
-        // Ignore offscreen xinerama struts. These interfere with the larger monitors on the setup
-        // and should be ignored so that applications that use the work area to work out where
-        // windows can go can use the entire visible area of the larger monitors.
-        // This goes against the EWMH description of the work area but it is a toss up between
-        // having unusable sections of the screen (Which can be quite large with newer monitors)
-        // or having some content appear offscreen (Relatively rare compared to other).
-        bool hasOffscreenXineramaStrut = win::x11::has_offscreen_xinerama_strut(x11_client);
+    for (auto screen = 0; screen < screens_count; screen++) {
+        desktop_area |= screens->geometry(screen);
+    }
 
-        if (x11_client->isOnAllDesktops()) {
-            for (int i = 1; i <= numberOfDesktops; ++i) {
-                if (!hasOffscreenXineramaStrut)
-                    new_wareas[i] = new_wareas[i].intersected(r);
-                new_rmoveareas[i] += strutRegion;
-                for (int iS = 0; iS < nscreens; iS++) {
-                    const auto geo = new_sareas[i][iS].intersected(
-                        win::x11::adjusted_client_area(x11_client, desktopArea, screens[iS]));
-                    // ignore the geometry if it results in the screen getting removed completely
-                    if (!geo.isEmpty()) {
-                        new_sareas[i][iS] = geo;
-                    }
-                }
-            }
-        } else {
-            if (!hasOffscreenXineramaStrut)
-                new_wareas[x11_client->desktop()]
-                    = new_wareas[x11_client->desktop()].intersected(r);
-            new_rmoveareas[x11_client->desktop()] += strutRegion;
-            for (int iS = 0; iS < nscreens; iS++) {
-                //                            qDebug() << "adjusting new_sarea: " << screens[ iS ];
-                const auto geo = new_sareas[x11_client->desktop()][iS].intersected(
-                    win::x11::adjusted_client_area(x11_client, desktopArea, screens[iS]));
-                // ignore the geometry if it results in the screen getting removed completely
-                if (!geo.isEmpty()) {
-                    new_sareas[x11_client->desktop()][iS] = geo;
-                }
-            }
+    for (auto screen = 0; screen < screens_count; screen++) {
+        screens_geos[screen] = screens->geometry(screen);
+    }
+
+    for (auto desktop = 1; desktop <= desktops_count; ++desktop) {
+        new_areas.work[desktop] = desktop_area;
+        new_areas.screen[desktop].resize(screens_count);
+        for (int screen = 0; screen < screens_count; screen++) {
+            new_areas.screen[desktop][screen] = screens_geos[screen];
         }
     }
-    if (waylandServer()) {
-        auto updateStrutsForWaylandClient = [&](win::wayland::window* c) {
-            // assuming that only docks have "struts" and that all docks have a strut
-            if (!c->hasStrut()) {
-                return;
-            }
-            auto margins = [c](const QRect& geometry) {
-                QMargins margins;
-                if (!geometry.intersects(c->frameGeometry())) {
-                    return margins;
-                }
-                // figure out which areas of the overall screen setup it borders
-                const bool left = c->frameGeometry().left() == geometry.left();
-                const bool right = c->frameGeometry().right() == geometry.right();
-                const bool top = c->frameGeometry().top() == geometry.top();
-                const bool bottom = c->frameGeometry().bottom() == geometry.bottom();
-                const bool horizontal = c->frameGeometry().width() >= c->frameGeometry().height();
-                if (left && ((!top && !bottom) || !horizontal)) {
-                    margins.setLeft(c->frameGeometry().width());
-                }
-                if (right && ((!top && !bottom) || !horizontal)) {
-                    margins.setRight(c->frameGeometry().width());
-                }
-                if (top && ((!left && !right) || horizontal)) {
-                    margins.setTop(c->frameGeometry().height());
-                }
-                if (bottom && ((!left && !right) || horizontal)) {
-                    margins.setBottom(c->frameGeometry().height());
-                }
-                return margins;
-            };
-            auto marginsToStrutArea = [](const QMargins& margins) {
-                if (margins.left() != 0) {
-                    return StrutAreaLeft;
-                }
-                if (margins.right() != 0) {
-                    return StrutAreaRight;
-                }
-                if (margins.top() != 0) {
-                    return StrutAreaTop;
-                }
-                if (margins.bottom() != 0) {
-                    return StrutAreaBottom;
-                }
-                return StrutAreaInvalid;
-            };
-            const auto strut = margins(KWin::screens()->geometry(c->screen()));
-            const StrutRects strutRegion
-                = StrutRects{StrutRect(c->frameGeometry(), marginsToStrutArea(strut))};
-            QRect r = desktopArea - margins(KWin::screens()->geometry());
-            if (c->isOnAllDesktops()) {
-                for (int i = 1; i <= numberOfDesktops; ++i) {
-                    new_wareas[i] = new_wareas[i].intersected(r);
-                    for (int iS = 0; iS < nscreens; ++iS) {
-                        new_sareas[i][iS]
-                            = new_sareas[i][iS].intersected(screens[iS] - margins(screens[iS]));
-                    }
-                    new_rmoveareas[i] += strutRegion;
-                }
-            } else {
-                new_wareas[c->desktop()] = new_wareas[c->desktop()].intersected(r);
-                for (int iS = 0; iS < nscreens; iS++) {
-                    new_sareas[c->desktop()][iS] = new_sareas[c->desktop()][iS].intersected(
-                        screens[iS] - margins(screens[iS]));
-                }
-                new_rmoveareas[c->desktop()] += strutRegion;
-            }
-        };
-        const auto wayland_windows = waylandServer()->windows;
-        for (auto win : wayland_windows) {
-            updateStrutsForWaylandClient(win);
-        }
-    }
-#if 0
-    for (int i = 1;
-            i <= numberOfDesktops();
-            ++i) {
-        for (int iS = 0;
-                iS < nscreens;
-                iS ++)
-            qCDebug(KWIN_CORE) << "new_sarea: " << new_sareas[ i ][ iS ];
-    }
-#endif
 
-    bool changed = force || screenarea.empty();
-    for (int i = 1; !changed && i <= numberOfDesktops; ++i) {
-        changed |= workarea[i] != new_wareas[i];
-        changed |= restrictedmovearea[i] != new_rmoveareas[i];
-        changed |= screenarea[i].size() != new_sareas[i].size();
-        for (int iS = 0; !changed && iS < nscreens; iS++) {
-            changed |= new_sareas[i][iS] != screenarea[i][iS];
+    update_space_area_from_windows(desktop_area, screens_geos, new_areas);
+
+    auto changed = force || areas.screen.empty();
+
+    for (int desktop = 1; !changed && desktop <= desktops_count; ++desktop) {
+        changed |= areas.work[desktop] != new_areas.work[desktop];
+        changed |= areas.restrictedmove[desktop] != new_areas.restrictedmove[desktop];
+        changed |= areas.screen[desktop].size() != new_areas.screen[desktop].size();
+
+        for (int screen = 0; !changed && screen < screens_count; screen++) {
+            changed |= new_areas.screen[desktop][screen] != areas.screen[desktop][screen];
         }
     }
 
     if (changed) {
-        workarea = new_wareas;
-        oldrestrictedmovearea = restrictedmovearea;
-        restrictedmovearea = new_rmoveareas;
-        screenarea = new_sareas;
+        oldrestrictedmovearea = areas.restrictedmove;
+        areas = new_areas;
+
         if (win::x11::rootInfo()) {
-            NETRect r;
-            for (int i = 1; i <= numberOfDesktops; i++) {
-                r.pos.x = workarea[i].x();
-                r.pos.y = workarea[i].y();
-                r.size.width = workarea[i].width();
-                r.size.height = workarea[i].height();
-                win::x11::rootInfo()->setWorkArea(i, r);
+            NETRect rect;
+            for (int desktop = 1; desktop <= desktops_count; desktop++) {
+                rect.pos.x = areas.work[desktop].x();
+                rect.pos.y = areas.work[desktop].y();
+                rect.size.width = areas.work[desktop].width();
+                rect.size.height = areas.work[desktop].height();
+                win::x11::rootInfo()->setWorkArea(desktop, rect);
             }
         }
 
-        for (auto it = m_allClients.cbegin(); it != m_allClients.cend(); ++it)
-            win::check_workspace_position(*it);
+        for (auto win : m_allClients) {
+            win::check_workspace_position(win);
+        }
 
-        oldrestrictedmovearea.clear(); // reset, no longer valid or needed
+        // Reset, no longer valid or needed.
+        oldrestrictedmovearea.clear();
     }
+}
+
+void Workspace::update_space_area_from_windows(QRect const& /*desktop_area*/,
+                                               std::vector<QRect> const& /*screens_geos*/,
+                                               win::space_areas& /*areas*/)
+{
+    // Can't be pure virtual because the function might be called from the ctor.
 }
 
 void Workspace::updateClientArea()
@@ -2144,13 +1856,13 @@ QRect Workspace::clientArea(clientAreaOption opt, int screen, int desktop) const
     const QSize displaySize = screens()->displaySize();
 
     QRect sarea, warea;
-    sarea = (!screenarea.empty()
+    sarea = (!areas.screen.empty()
              // screens may be missing during KWin initialization or screen config changes
-             && screen < static_cast<int>(screenarea[desktop].size()))
-        ? screenarea[desktop][screen]
+             && screen < static_cast<int>(areas.screen[desktop].size()))
+        ? areas.screen[desktop][screen]
         : screens()->geometry(screen);
-    warea = workarea[desktop].isNull() ? QRect(0, 0, displaySize.width(), displaySize.height())
-                                       : workarea[desktop];
+    warea = areas.work[desktop].isNull() ? QRect(0, 0, displaySize.width(), displaySize.height())
+                                         : areas.work[desktop];
 
     switch (opt) {
     case MaximizeArea:
@@ -2195,7 +1907,7 @@ static QRegion strutsToRegion(int desktop, StrutAreas areas, std::vector<StrutRe
 
 QRegion Workspace::restrictedMoveArea(int desktop, StrutAreas areas) const
 {
-    return strutsToRegion(desktop, areas, restrictedmovearea);
+    return strutsToRegion(desktop, areas, this->areas.restrictedmove);
 }
 
 bool Workspace::inUpdateClientArea() const

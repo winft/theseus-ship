@@ -90,6 +90,7 @@ protected:
     void updateCaption() override;
 
 private:
+    double buffer_scale_internal() const;
     void createDecoration(const QRect& rect);
     void setCaption(QString const& cap);
     void markAsMapped();

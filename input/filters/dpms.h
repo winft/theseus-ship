@@ -9,20 +9,17 @@
 
 #include "../event.h"
 #include "../event_filter.h"
+#include "../wayland/platform.h"
 
 #include <QElapsedTimer>
 
-namespace KWin
-{
-class Platform;
-
-namespace input
+namespace KWin::input
 {
 
 class dpms_filter : public event_filter
 {
 public:
-    dpms_filter(Platform* backend);
+    dpms_filter(wayland::platform* input);
     bool key(key_event const& event) override;
 
     bool button(button_event const& event) override;
@@ -36,11 +33,10 @@ public:
 private:
     void notify();
 
-    Platform* m_backend;
+    wayland::platform* input;
     QElapsedTimer m_doubleTapTimer;
     QVector<int32_t> m_touchPoints;
     bool m_secondTap = false;
 };
 
-}
 }

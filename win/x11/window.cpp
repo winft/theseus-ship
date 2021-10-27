@@ -289,7 +289,6 @@ void window::damageNotifyEvent()
         if (sync_request.counter == XCB_NONE) {
             // cannot detect complete redraw, consider done now
             setReadyForPainting();
-            win::setup_wayland_plasma_management(this);
         }
     }
 
@@ -758,7 +757,6 @@ void window::addDamage(QRegion const& damage)
             // cannot detect complete redraw, consider done now
             first_geo_synced = true;
             setReadyForPainting();
-            win::setup_wayland_plasma_management(this);
         }
     }
     Toplevel::addDamage(damage);
@@ -812,7 +810,6 @@ void window::setFrameGeometry(QRect const& rect)
                 pending_configures.erase(pending_configures.begin());
 
                 setReadyForPainting();
-                setup_wayland_plasma_management(this);
             });
             fallback_timer->setSingleShot(true);
             fallback_timer->start(1000);
