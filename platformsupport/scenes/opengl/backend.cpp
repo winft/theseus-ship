@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "backend.h"
 
-#include "abstract_output.h"
+#include "base/output.h"
 #include <kwineffects.h>
 #include <logging.h>
 
@@ -85,13 +85,13 @@ OverlayWindow* OpenGLBackend::overlayWindow() const
     return nullptr;
 }
 
-QRegion OpenGLBackend::prepareRenderingForScreen(AbstractOutput* output)
+QRegion OpenGLBackend::prepareRenderingForScreen(base::output* output)
 {
     // fallback to repaint complete screen
     return output->geometry();
 }
 
-void OpenGLBackend::endRenderingFrameForScreen(AbstractOutput* output, const QRegion &damage, const QRegion &damagedRegion)
+void OpenGLBackend::endRenderingFrameForScreen(base::output* output, const QRegion &damage, const QRegion &damagedRegion)
 {
     Q_UNUSED(output)
     Q_UNUSED(damage)

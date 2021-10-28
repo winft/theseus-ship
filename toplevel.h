@@ -53,6 +53,10 @@ class Surface;
 namespace KWin
 {
 
+namespace base
+{
+class output;
+}
 namespace win
 {
 class control;
@@ -65,7 +69,6 @@ class Group;
 }
 }
 
-class AbstractOutput;
 class ClientMachine;
 class EffectWindowImpl;
 
@@ -129,7 +132,7 @@ public:
     /**
      * Records all outputs that still need to be repainted for the current repaint regions.
      */
-    std::vector<AbstractOutput*> repaint_outputs;
+    std::vector<base::output*> repaint_outputs;
 
     explicit Toplevel();
     ~Toplevel() override;
@@ -232,7 +235,7 @@ public:
 
     virtual bool has_pending_repaints() const;
     QRegion repaints() const;
-    void resetRepaints(AbstractOutput* output);
+    void resetRepaints(base::output* output);
 
     QRegion damage() const;
     void resetDamage();

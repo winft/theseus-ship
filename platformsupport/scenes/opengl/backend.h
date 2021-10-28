@@ -28,7 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class AbstractOutput;
+namespace base
+{
+class output;
+}
+
 class OpenGLBackend;
 class OverlayWindow;
 class SceneOpenGL;
@@ -82,12 +86,12 @@ public:
      * @param damagedRegion The damaged region that should be posted
      */
     virtual void endRenderingFrame(const QRegion &damage, const QRegion &damagedRegion) = 0;
-    virtual void endRenderingFrameForScreen(AbstractOutput* output, const QRegion &damage, const QRegion &damagedRegion);
+    virtual void endRenderingFrameForScreen(base::output* output, const QRegion &damage, const QRegion &damagedRegion);
     virtual bool makeCurrent() = 0;
     virtual void doneCurrent() = 0;
     virtual bool usesOverlayWindow() const = 0;
     virtual bool hasSwapEvent() const { return true; }
-    virtual QRegion prepareRenderingForScreen(AbstractOutput* output);
+    virtual QRegion prepareRenderingForScreen(base::output* output);
     /**
      * @brief Compositor is going into idle mode, flushes any pending paints.
      */

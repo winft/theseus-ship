@@ -5,7 +5,7 @@
 */
 #include "presentation.h"
 
-#include "abstract_wayland_output.h"
+#include "base/wayland/output.h"
 #include "main.h"
 #include "platform.h"
 #include "render/wayland/output.h"
@@ -90,7 +90,7 @@ void presentation::lock(render::wayland::output* output, std::deque<Toplevel*> c
         // TODO (romangg): Split this up to do on every subsurface (annexed transient) separately.
         surface->frameRendered(now);
 
-        auto const id = surface->lockPresentation(output->base->output());
+        auto const id = surface->lockPresentation(output->base->wrapland_output());
         if (id != 0) {
             output->assigned_surfaces.emplace(id, surface);
             connect(surface, &Wrapland::Server::Surface::resourceDestroyed, output, [output, id]() {
@@ -144,7 +144,7 @@ void timespec_to_proto(std::chrono::nanoseconds const& time,
 
 void presentation::presented(render::wayland::output* output, presentation_data const& data)
 {
-    if (!output->base->isEnabled()) {
+    if (!output->base->is_enabled()) {
         // Output disabled, discards will be sent from Wrapland.
         return;
     }

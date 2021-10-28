@@ -16,7 +16,10 @@
 
 namespace KWin
 {
-class AbstractWaylandOutput;
+namespace base::wayland
+{
+class output;
+}
 
 namespace input
 {
@@ -29,7 +32,7 @@ class KWIN_EXPORT touch : public QObject
 public:
     input::platform* plat;
     control::touch* control{nullptr};
-    AbstractWaylandOutput* output{nullptr};
+    base::wayland::output* output{nullptr};
 
     touch(platform* plat, QObject* parent = nullptr);
     touch(touch const&) = delete;
@@ -39,7 +42,7 @@ public:
     ~touch();
 
     // TODO(romangg): Make this a function template.
-    AbstractWaylandOutput* get_output() const;
+    base::wayland::output* get_output() const;
 
 Q_SIGNALS:
     void down(touch_down_event);

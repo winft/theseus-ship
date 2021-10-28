@@ -18,13 +18,12 @@ namespace backend
 {
 class wlroots;
 }
-template<typename Backend, typename Output>
+
+template<typename Backend>
 class platform;
 }
 
-class AbstractWaylandOutput;
-
-using wayland_base = base::platform<base::backend::wlroots, AbstractWaylandOutput>;
+using wayland_base = base::platform<base::backend::wlroots>;
 
 namespace input
 {

@@ -32,7 +32,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class AbstractOutput;
+namespace base
+{
+class output;
+}
 class Platform;
 class Toplevel;
 
@@ -177,7 +180,7 @@ private:
     void updateSize();
     void updateCount();
     void setCount(int count);
-    AbstractOutput* findOutput(int screen) const;
+    base::output* findOutput(int screen) const;
 
     int m_count;
     int m_current;

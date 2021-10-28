@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "abstract_wayland_output.h"
+#include "base/wayland/output.h"
 #include "input/filters/dpms.h"
 #include "screens.h"
 #include "wayland_logging.h"
@@ -18,15 +18,15 @@ namespace KWin::base::wayland
 {
 
 template<typename Base>
-AbstractWaylandOutput* find_output(Base const& base, Wrapland::Server::Output const* output)
+base::wayland::output* find_output(Base const& base, Wrapland::Server::Output const* output)
 {
     auto const& outs = base.all_outputs;
     auto it = std::find_if(outs.cbegin(), outs.cend(), [output](auto out) {
-        auto wayland_output = dynamic_cast<AbstractWaylandOutput*>(out);
-        return wayland_output->output() == output;
+        auto wayland_output = dynamic_cast<base::wayland::output*>(out);
+        return wayland_output->wrapland_output() == output;
     });
     if (it != outs.cend()) {
-        return qobject_cast<AbstractWaylandOutput*>(*it);
+        return qobject_cast<base::wayland::output*>(*it);
     }
     return nullptr;
 }
@@ -46,7 +46,7 @@ void request_outputs_change(Base const& base, Wrapland::Server::OutputConfigurat
             continue;
         }
 
-        output->applyChanges(changeset);
+        output->apply_changes(changeset);
     }
 
     Screens::self()->updateAll();
@@ -59,7 +59,7 @@ void turn_outputs_on(Base const& base, Filter& filter)
     filter.reset();
 
     for (auto& out : base.enabled_outputs) {
-        out->updateDpms(AbstractOutput::DpmsMode::On);
+        out->update_dpms(base::dpms_mode::on);
     }
 }
 
@@ -72,7 +72,7 @@ void check_outputs_on(Base const& base, Filter& filter)
     }
 
     auto const& outs = base.enabled_outputs;
-    if (std::all_of(outs.cbegin(), outs.cend(), [](auto&& out) { return out->dpmsOn(); })) {
+    if (std::all_of(outs.cbegin(), outs.cend(), [](auto&& out) { return out->is_dpms_on(); })) {
         // All outputs are on, disable the filter.
         filter.reset();
     }

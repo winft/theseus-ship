@@ -43,12 +43,14 @@ class OutputConfigurationV1;
 
 namespace KWin
 {
+namespace base
+{
+class output;
+}
 namespace ColorCorrect {
 class Manager;
 }
 
-class AbstractOutput;
-class AbstractWaylandOutput;
 class Edge;
 class OverlayWindow;
 class OpenGLBackend;
@@ -71,7 +73,7 @@ namespace render
 class compositor;
 }
 
-class KWIN_EXPORT Outputs : public QVector<AbstractOutput*>
+class KWIN_EXPORT Outputs : public QVector<base::output*>
 {
 public:
     Outputs(){};
@@ -356,8 +358,8 @@ Q_SIGNALS:
      */
     void screenSizeChanged();
 
-    void output_added(AbstractOutput* output);
-    void output_removed(AbstractOutput* output);
+    void output_added(base::output* output);
+    void output_removed(base::output* output);
 
 protected:
     Platform();

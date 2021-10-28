@@ -59,6 +59,10 @@ class Deleted;
 class EffectLoader;
 class Toplevel;
 
+namespace base
+{
+class output;
+}
 namespace render
 {
 class compositor;
@@ -317,8 +321,8 @@ protected Q_SLOTS:
     void slotFrameGeometryChanged(Toplevel *toplevel, const QRect &oldGeometry);
     void slotPaddingChanged(KWin::Toplevel *t, const QRect &old);
     void slotWindowDamaged(KWin::Toplevel *t, const QRegion& r);
-    void slotOutputEnabled(AbstractOutput *output);
-    void slotOutputDisabled(AbstractOutput *output);
+    void slotOutputEnabled(base::output* output);
+    void slotOutputDisabled(base::output* output);
 
 protected:
     void connectNotify(const QMetaMethod &signal) override;
@@ -390,16 +394,16 @@ class EffectScreenImpl : public EffectScreen
     Q_OBJECT
 
 public:
-    explicit EffectScreenImpl(AbstractOutput *output, QObject *parent = nullptr);
+    explicit EffectScreenImpl(base::output* output, QObject *parent = nullptr);
 
-    AbstractOutput *platformOutput() const;
+    base::output* platformOutput() const;
 
     QString name() const override;
     qreal devicePixelRatio() const override;
     QRect geometry() const override;
 
 private:
-    AbstractOutput *m_platformOutput;
+    base::output* m_platformOutput;
 };
 
 class KWIN_EXPORT EffectWindowImpl : public EffectWindow

@@ -5,12 +5,18 @@
 */
 #pragma once
 
-namespace KWin::base::backend
+namespace KWin::base
+{
+class output;
+
+namespace backend
 {
 
 class x11
 {
 public:
+    using output = base::output;
+
     x11() = default;
     x11(x11 const&) = delete;
     x11& operator=(x11 const&) = delete;
@@ -19,4 +25,5 @@ public:
     ~x11() = default;
 };
 
+}
 }

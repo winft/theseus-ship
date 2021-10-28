@@ -103,7 +103,7 @@ private:
     QProcessEnvironment m_environment;
     QString m_sessionArgument;
 
-    base::platform<base::backend::wlroots, AbstractWaylandOutput> base;
+    wayland_base base;
     std::unique_ptr<render::backend::wlroots::backend> render;
     std::unique_ptr<xwl::xwayland> xwayland;
 

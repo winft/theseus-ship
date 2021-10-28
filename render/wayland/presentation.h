@@ -25,7 +25,6 @@ class Surface;
 namespace KWin
 {
 
-class AbstractWaylandOutput;
 class Toplevel;
 
 namespace render::wayland

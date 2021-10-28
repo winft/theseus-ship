@@ -25,7 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <main.h>
 #include <platform.h>
-#include <abstract_output.h>
+#include "base/gamma_ramp.h"
+#include <base/output.h>
 #include <screens.h>
 #include <workspace.h>
 #include <seat/session.h>
@@ -646,8 +647,8 @@ void Manager::commitGammaRamps(int temperature)
     const auto outs = kwinApp()->platform->outputs();
 
     for (auto *o : outs) {
-        int rampsize = o->gammaRampSize();
-        GammaRamp ramp(rampsize);
+        int rampsize = o->gamma_ramp_size();
+        base::gamma_ramp ramp(rampsize);
 
         /*
          * The gamma calculation below is based on the Redshift app:
@@ -679,7 +680,7 @@ void Manager::commitGammaRamps(int temperature)
             blue[i] = qreal(blue[i]) / (UINT16_MAX+1) * whitePoint[2] * (UINT16_MAX+1);
         }
 
-        if (o->setGammaRamp(ramp)) {
+        if (o->set_gamma_ramp(ramp)) {
             setCurrentTemperature(temperature);
             m_failedCommitAttempts = 0;
         } else {

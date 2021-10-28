@@ -71,7 +71,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QQuickWindow>
 #include <QVector2D>
 
-#include "abstract_output.h"
+#include "base/output.h"
 #include "effects.h"
 #include "overlaywindow.h"
 #include "screens.h"
@@ -113,7 +113,7 @@ qint64 Scene::paint([[maybe_unused]] QRegion damage,
     return 0;
 }
 
-int64_t Scene::paint([[maybe_unused]] AbstractOutput* output,
+int64_t Scene::paint([[maybe_unused]] base::output* output,
                      [[maybe_unused]] QRegion damage,
                      [[maybe_unused]] std::deque<Toplevel*> const& windows,
                      [[maybe_unused]] std::chrono::milliseconds presentTime)

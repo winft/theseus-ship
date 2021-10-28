@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "abstract_output.h"
+#include "base/output.h"
 #include "main.h"
 #include "platform.h"
 #include "win/scene.h"
@@ -17,7 +17,7 @@ namespace render::wayland
 {
 
 template<typename Win>
-AbstractOutput* max_coverage_output(Win* window)
+base::output* max_coverage_output(Win* window)
 {
     auto const enabled_outputs = kwinApp()->platform->enabledOutputs();
     if (enabled_outputs.empty()) {

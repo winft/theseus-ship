@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "screens.h"
 
-#include "abstract_output.h"
+#include "base/output.h"
 
 #include "input/cursor.h"
 #include "utils.h"
@@ -94,7 +94,7 @@ QSize Screens::size(int screen) const
 float Screens::refreshRate(int screen) const
 {
     if (auto output = findOutput(screen)) {
-        return output->refreshRate() / 1000.0;
+        return output->refresh_rate() / 1000.0;
     }
     return 60.0;
 }
@@ -225,7 +225,7 @@ QSize Screens::displaySize() const
 QSizeF Screens::physicalSize(int screen) const
 {
     if (auto output = findOutput(screen)) {
-        return output->physicalSize();
+        return output->physical_size();
     }
     return QSizeF(size(screen)) / 3.8;
 }
@@ -233,7 +233,7 @@ QSizeF Screens::physicalSize(int screen) const
 bool Screens::isInternal(int screen) const
 {
     if (auto output = findOutput(screen)) {
-        return output->isInternal();
+        return output->is_internal();
     }
     return false;
 }
@@ -260,7 +260,7 @@ int Screens::physicalDpiY(int screen) const
     return size(screen).height() / physicalSize(screen).height() * qreal(25.4);
 }
 
-AbstractOutput *Screens::findOutput(int screen) const
+base::output* Screens::findOutput(int screen) const
 {
     return kwinApp()->platform->enabledOutputs().value(screen);
 }

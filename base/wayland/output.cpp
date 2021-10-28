@@ -2,7 +2,7 @@
  KWin - the KDE window manager
  This file is part of the KDE project.
 
-Copyright 2019 Roman Gilg <subdiff@gmail.com>
+Copyright 2019, 2021 Roman Gilg <subdiff@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,15 +17,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "abstract_wayland_output.h"
+#include "output.h"
 
-#include "base/wayland/output_helpers.h"
+#include "output_helpers.h"
+
 #include "input/wayland/dpms.h"
 #include "input/wayland/platform.h"
-#include "render/backend/wlroots/backend.h"
-#include "render/compositor.h"
 #include "main.h"
 #include "platform.h"
+#include "render/backend/wlroots/backend.h"
+#include "render/compositor.h"
 #include "screens.h"
 #include "wayland_logging.h"
 #include "wayland_server.h"
@@ -39,131 +40,125 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cmath>
 
-namespace KWin
+namespace KWin::base::wayland
 {
 
-AbstractWaylandOutput::AbstractWaylandOutput(QObject *parent)
-    : AbstractOutput(parent)
-{
-}
-
-QString AbstractWaylandOutput::name() const
+QString output::name() const
 {
     return QString::fromStdString(m_output->name());
 }
 
-QRect AbstractWaylandOutput::geometry() const
+QRect output::geometry() const
 {
-    const QRect &geo = m_output->geometry().toRect();
+    auto const& geo = m_output->geometry().toRect();
     // TODO: allow invalid size (disable output on the fly)
-    return geo.isValid() ? geo : QRect(QPoint(0,0), pixelSize());
+    return geo.isValid() ? geo : QRect(QPoint(0, 0), pixel_size());
 }
 
-QSizeF AbstractWaylandOutput::logicalSize() const
+QSizeF output::logical_size() const
 {
     return geometry().size();
 }
 
-QSize AbstractWaylandOutput::physicalSize() const
+QSize output::physical_size() const
 {
-    return orientateSize(m_output->physical_size());
+    return orientate_size(m_output->physical_size());
 }
 
-int AbstractWaylandOutput::refreshRate() const
+int output::refresh_rate() const
 {
     return m_output->refresh_rate();
 }
 
-QPoint AbstractWaylandOutput::globalPos() const
+QPoint output::global_pos() const
 {
     return geometry().topLeft();
 }
 
-void AbstractWaylandOutput::forceGeometry(const QRectF &geo)
+void output::force_geometry(QRectF const& geo)
 {
     m_output->set_geometry(geo);
-    updateViewGeometry();
+    update_view_geometry();
     m_output->done();
 }
 
-QSize AbstractWaylandOutput::modeSize() const
+QSize output::mode_size() const
 {
     return m_output->mode_size();
 }
 
-QSize AbstractWaylandOutput::pixelSize() const
+QSize output::pixel_size() const
 {
-    return orientateSize(m_output->mode_size());
+    return orientate_size(m_output->mode_size());
 }
 
-QRect AbstractWaylandOutput::viewGeometry() const
+QRect output::view_geometry() const
 {
-    return m_viewGeometry;
+    return m_view_geometry;
 }
 
-void AbstractWaylandOutput::updateViewGeometry()
+void output::update_view_geometry()
 {
     // Fit view into output mode keeping the aspect ratio.
-    const QSize modeSize = pixelSize();
-    const QSizeF sourceSize = logicalSize();
+    auto const mode_size = pixel_size();
+    auto const source_size = logical_size();
 
-    QSizeF viewSize;
-    viewSize.setWidth(modeSize.width());
-    viewSize.setHeight(viewSize.width() * sourceSize.height() / (double)sourceSize.width());
+    QSizeF view_size;
+    view_size.setWidth(mode_size.width());
+    view_size.setHeight(view_size.width() * source_size.height() / (double)source_size.width());
 
-    if (viewSize.height() > modeSize.height()) {
-        auto const oldSize = viewSize;
-        viewSize.setHeight(modeSize.height());
-        viewSize.setWidth(oldSize.width() * viewSize.height() / (double)oldSize.height());
+    if (view_size.height() > mode_size.height()) {
+        auto const oldSize = view_size;
+        view_size.setHeight(mode_size.height());
+        view_size.setWidth(oldSize.width() * view_size.height() / (double)oldSize.height());
     }
 
-    Q_ASSERT(viewSize.height() <= modeSize.height());
-    Q_ASSERT(viewSize.width() <= modeSize.width());
+    Q_ASSERT(view_size.height() <= mode_size.height());
+    Q_ASSERT(view_size.width() <= mode_size.width());
 
-    const QPoint pos((modeSize.width() - viewSize.width()) / 2,
-                     (modeSize.height() - viewSize.height()) / 2);
-    m_viewGeometry = QRect(pos, viewSize.toSize());
+    QPoint const pos((mode_size.width() - view_size.width()) / 2,
+                     (mode_size.height() - view_size.height()) / 2);
+    m_view_geometry = QRect(pos, view_size.toSize());
 }
 
-qreal AbstractWaylandOutput::scale() const
+qreal output::scale() const
 {
     // We just return the client scale here for all internal calculations depending on it (for
     // example the scaling of internal windows).
     return m_output->client_scale();
 }
 
-inline
-AbstractWaylandOutput::Transform toTransform(Wrapland::Server::Output::Transform transform)
+inline base::wayland::output_transform toTransform(Wrapland::Server::Output::Transform transform)
 {
-    return static_cast<AbstractWaylandOutput::Transform>(transform);
+    return static_cast<base::wayland::output_transform>(transform);
 }
 
-inline
-Wrapland::Server::Output::Transform toWaylandTransform(AbstractWaylandOutput::Transform transform)
+inline Wrapland::Server::Output::Transform
+to_wayland_transform(base::wayland::output_transform transform)
 {
     return static_cast<Wrapland::Server::Output::Transform>(transform);
 }
 
-void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangesetV1 *changeset)
+void output::apply_changes(Wrapland::Server::OutputChangesetV1 const* changeset)
 {
     qCDebug(KWIN_WL) << "Apply changes to Wayland output:" << m_output->name().c_str();
     bool emitModeChanged = false;
 
     if (changeset->enabledChanged() && changeset->enabled()) {
         qCDebug(KWIN_WL) << "Setting output enabled.";
-        setEnabled(true);
+        set_enabled(true);
     }
 
     if (changeset->modeChanged()) {
         qCDebug(KWIN_WL) << "Setting new mode:" << changeset->mode();
         m_output->set_mode(changeset->mode());
-        updateMode(changeset->mode());
+        update_mode(changeset->mode());
         emitModeChanged = true;
     }
     if (changeset->transformChanged()) {
         qCDebug(KWIN_WL) << "Server setting transform: " << (int)(changeset->transform());
         m_output->set_transform(changeset->transform());
-        updateTransform(toTransform(changeset->transform()));
+        update_transform(toTransform(changeset->transform()));
         emitModeChanged = true;
     }
     if (changeset->geometryChanged()) {
@@ -171,83 +166,83 @@ void AbstractWaylandOutput::applyChanges(const Wrapland::Server::OutputChangeset
         m_output->set_geometry(changeset->geometry());
         emitModeChanged = true;
     }
-    updateViewGeometry();
+    update_view_geometry();
 
     if (changeset->enabledChanged() && !changeset->enabled()) {
         qCDebug(KWIN_WL) << "Setting output disabled.";
-        setEnabled(false);
+        set_enabled(false);
     }
 
     if (emitModeChanged) {
-        emit modeChanged();
+        Q_EMIT mode_changed();
     }
 
     m_output->done();
 }
 
-bool AbstractWaylandOutput::isEnabled() const
+bool output::is_enabled() const
 {
     return m_output->enabled();
 }
 
-void AbstractWaylandOutput::setEnabled(bool enable)
+void output::set_enabled(bool enable)
 {
     m_output->set_enabled(enable);
-    updateEnablement(enable);
+    update_enablement(enable);
     // TODO: it is unclear that the consumer has to call done() on the output still.
 }
 
 // TODO(romangg): the force_update variable is only a temporary solution to a larger issue, that
 // our data flow is not correctly handled between backend and this class. In general this class
 // should request data from the backend and not the backend set it.
-void AbstractWaylandOutput::setWaylandMode(const QSize &size, int refreshRate, bool force_update)
+void output::set_wayland_mode(QSize const& size, int refresh_rate, bool force_update)
 {
-    m_output->set_mode(size, refreshRate);
+    m_output->set_mode(size, refresh_rate);
 
     if (force_update) {
         m_output->done();
     }
 }
 
-AbstractOutput::DpmsMode fromWaylandDpmsMode(Wrapland::Server::Output::DpmsMode wlMode)
+base::dpms_mode from_wayland_dpms_mode(Wrapland::Server::Output::DpmsMode wlMode)
 {
     switch (wlMode) {
     case Wrapland::Server::Output::DpmsMode::On:
-        return AbstractOutput::DpmsMode::On;
+        return base::dpms_mode::on;
     case Wrapland::Server::Output::DpmsMode::Standby:
-        return AbstractOutput::DpmsMode::Standby;
+        return base::dpms_mode::standby;
     case Wrapland::Server::Output::DpmsMode::Suspend:
-        return AbstractOutput::DpmsMode::Suspend;
+        return base::dpms_mode::suspend;
     case Wrapland::Server::Output::DpmsMode::Off:
-        return AbstractOutput::DpmsMode::Off;
+        return base::dpms_mode::off;
     default:
         Q_UNREACHABLE();
     }
 }
 
-Wrapland::Server::Output::DpmsMode toWaylandDpmsMode(AbstractOutput::DpmsMode mode)
+Wrapland::Server::Output::DpmsMode to_wayland_dpms_mode(base::dpms_mode mode)
 {
     switch (mode) {
-    case AbstractOutput::DpmsMode::On:
+    case base::dpms_mode::on:
         return Wrapland::Server::Output::DpmsMode::On;
-    case AbstractOutput::DpmsMode::Standby:
+    case base::dpms_mode::standby:
         return Wrapland::Server::Output::DpmsMode::Standby;
-    case AbstractOutput::DpmsMode::Suspend:
+    case base::dpms_mode::suspend:
         return Wrapland::Server::Output::DpmsMode::Suspend;
-    case AbstractOutput::DpmsMode::Off:
+    case base::dpms_mode::off:
         return Wrapland::Server::Output::DpmsMode::Off;
     default:
         Q_UNREACHABLE();
     }
 }
 
-void AbstractWaylandOutput::initInterfaces(std::string const& name,
-                                           std::string const& make,
-                                           std::string const& model,
-                                           std::string const& serial_number,
-                                           const QSize &physicalSize,
-                                           const QVector<Wrapland::Server::Output::Mode> &modes,
-                                           Wrapland::Server::Output::Mode *current_mode)
+void output::init_interfaces(std::string const& name,
+                             std::string const& make,
+                             std::string const& model,
+                             std::string const& serial_number,
+                             QSize const& physical_size,
+                             QVector<Wrapland::Server::Output::Mode> const& modes,
+                             Wrapland::Server::Output::Mode* current_mode)
 {
     Q_ASSERT(!m_output);
     m_output = std::make_unique<Wrapland::Server::Output>(waylandServer()->display());
@@ -258,14 +253,14 @@ void AbstractWaylandOutput::initInterfaces(std::string const& name,
     m_output->set_serial_number(serial_number);
     m_output->generate_description();
 
-    m_output->set_physical_size(physicalSize);
+    m_output->set_physical_size(physical_size);
 
     qCDebug(KWIN_WL) << "Initializing output:" << m_output->description().c_str();
 
     int i = 0;
     for (auto mode : modes) {
-        qCDebug(KWIN_WL).nospace() << "Adding mode " << ++i << ": "
-                                     << mode.size << " [" << mode.refresh_rate << "]";
+        qCDebug(KWIN_WL).nospace()
+            << "Adding mode " << ++i << ": " << mode.size << " [" << mode.refresh_rate << "]";
         m_output->add_mode(mode);
     }
 
@@ -274,52 +269,53 @@ void AbstractWaylandOutput::initInterfaces(std::string const& name,
     }
 
     m_output->set_geometry(QRectF(QPointF(0, 0), m_output->mode_size()));
-    updateViewGeometry();
+    update_view_geometry();
 
-    m_output->set_dpms_supported(m_supportsDpms);
+    m_output->set_dpms_supported(m_supports_dpms);
     // set to last known mode
-    m_output->set_dpms_mode(toWaylandDpmsMode(m_dpms));
-    connect(m_output.get(), &Wrapland::Server::Output::dpms_mode_requested, this,
-        [this] (Wrapland::Server::Output::DpmsMode mode) {
-            if (!isEnabled()) {
-                return;
-            }
-            updateDpms(fromWaylandDpmsMode(mode));
-        }
-    );
+    m_output->set_dpms_mode(to_wayland_dpms_mode(m_dpms));
+    connect(m_output.get(),
+            &Wrapland::Server::Output::dpms_mode_requested,
+            this,
+            [this](Wrapland::Server::Output::DpmsMode mode) {
+                if (!is_enabled()) {
+                    return;
+                }
+                update_dpms(from_wayland_dpms_mode(mode));
+            });
 
     m_output->set_enabled(true);
     m_output->done();
 }
 
-QSize AbstractWaylandOutput::orientateSize(const QSize &size) const
+QSize output::orientate_size(QSize const& size) const
 {
     using Transform = Wrapland::Server::Output::Transform;
-    const Transform transform = m_output->transform();
-    if (transform == Transform::Rotated90 || transform == Transform::Rotated270 ||
-            transform == Transform::Flipped90 || transform == Transform::Flipped270) {
+    auto const transform = m_output->transform();
+    if (transform == Transform::Rotated90 || transform == Transform::Rotated270
+        || transform == Transform::Flipped90 || transform == Transform::Flipped270) {
         return size.transposed();
     }
     return size;
 }
 
-void AbstractWaylandOutput::setTransform(Transform transform)
+void output::set_transform(base::wayland::output_transform transform)
 {
-    m_output->set_transform(toWaylandTransform(transform));
-    emit modeChanged();
+    m_output->set_transform(to_wayland_transform(transform));
+    Q_EMIT mode_changed();
 }
 
-AbstractWaylandOutput::Transform AbstractWaylandOutput::transform() const
+base::wayland::output_transform output::transform() const
 {
-    return static_cast<Transform>(m_output->transform());
+    return static_cast<base::wayland::output_transform>(m_output->transform());
 }
 
-void AbstractWaylandOutput::dpmsSetOn()
+void output::dpms_set_on()
 {
     qCDebug(KWIN_WL) << "DPMS mode set for output" << name() << "to On.";
-    m_dpms = DpmsMode::On;
+    m_dpms = base::dpms_mode::on;
 
-    if (isEnabled()) {
+    if (is_enabled()) {
         m_output->set_dpms_mode(Wrapland::Server::Output::DpmsMode::On);
     }
 
@@ -332,31 +328,31 @@ void AbstractWaylandOutput::dpmsSetOn()
     }
 }
 
-void AbstractWaylandOutput::dpmsSetOff(DpmsMode mode)
+void output::dpms_set_off(base::dpms_mode mode)
 {
     qCDebug(KWIN_WL) << "DPMS mode set for output" << name() << "to Off.";
 
     m_dpms = mode;
 
-    if (isEnabled()) {
-        m_output->set_dpms_mode(toWaylandDpmsMode(mode));
+    if (is_enabled()) {
+        m_output->set_dpms_mode(to_wayland_dpms_mode(mode));
 
         auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
         input::wayland::create_dpms_filter(wayland_input);
     }
 }
 
-AbstractWaylandOutput::DpmsMode AbstractWaylandOutput::dpmsMode() const
+base::dpms_mode output::dpms_mode() const
 {
     return m_dpms;
 }
 
-bool AbstractWaylandOutput::dpmsOn() const
+bool output::is_dpms_on() const
 {
-    return m_dpms == DpmsMode::On;
+    return m_dpms == base::dpms_mode::on;
 }
 
-uint64_t AbstractWaylandOutput::msc() const
+uint64_t output::msc() const
 {
     return 0;
 }

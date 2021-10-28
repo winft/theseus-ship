@@ -16,7 +16,15 @@
 
 struct gbm_device;
 
-namespace KWin::render::backend::wlroots
+namespace KWin
+{
+
+namespace base::wayland
+{
+class output;
+}
+
+namespace render::backend::wlroots
 {
 
 class egl_backend;
@@ -26,14 +34,14 @@ class KWIN_EXPORT backend : public Platform
 {
     Q_OBJECT
 public:
-    base::platform<base::backend::wlroots, AbstractWaylandOutput>& base;
+    base::platform<base::backend::wlroots>& base;
     egl_backend* egl{nullptr};
 
     QVector<output*> all_outputs;
     QVector<output*> enabled_outputs;
     int fd{0};
 
-    explicit backend(base::platform<base::backend::wlroots, AbstractWaylandOutput>& base);
+    explicit backend(base::platform<base::backend::wlroots>& base);
     ~backend() override;
 
     OpenGLBackend* createOpenGLBackend() override;
@@ -66,4 +74,5 @@ private:
     base::event_receiver<backend> new_output;
 };
 
+}
 }

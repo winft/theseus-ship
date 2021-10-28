@@ -380,11 +380,12 @@ add_subdirectory(helpers)
 
 set(kwin_SRCS
     abstract_opengl_context_attribute_builder.cpp
-    abstract_output.cpp
     atoms.cpp
     base/x11/event_filter.cpp
     base/x11/event_filter_container.cpp
     base/x11/event_filter_manager.cpp
+    base/gamma_ramp.cpp
+    base/output.cpp
     colorcorrection/clockskewnotifier.cpp
     colorcorrection/clockskewnotifierengine.cpp
     colorcorrection/colorcorrectdbusinterface.cpp
@@ -742,9 +743,9 @@ add_subdirectory(platformsupport)
 add_subdirectory(plugins)
 
 set(kwin_WAYLAND_SRCS
-   abstract_wayland_output.cpp
    base/backend/wlroots.cpp
    base/wayland/idle_inhibition.cpp
+   base/wayland/output.cpp
    debug/input_device_model.cpp
    debug/input_filter.cpp
    debug/surface_tree_model.cpp

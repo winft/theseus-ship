@@ -39,8 +39,7 @@
 namespace KWin::render::backend::x11
 {
 
-X11StandalonePlatform::X11StandalonePlatform(
-    base::platform<base::backend::x11, AbstractOutput>& base)
+X11StandalonePlatform::X11StandalonePlatform(base::platform<base::backend::x11>& base)
     : m_x11Display(QX11Info::display())
     , base{base}
 {
@@ -55,6 +54,7 @@ X11StandalonePlatform::~X11StandalonePlatform()
         delete m_openGLFreezeProtectionThread;
     }
     XRenderUtils::cleanup();
+    qDeleteAll(m_outputs);
 }
 
 void X11StandalonePlatform::init()
@@ -372,10 +372,10 @@ template<typename T>
 void X11StandalonePlatform::doUpdateOutputs()
 {
     auto fallback = [this]() {
-        auto* o = new X11Output(this);
-        o->setGammaRampSize(0);
-        o->setRefreshRate(-1.0f);
-        o->setName(QStringLiteral("Fallback"));
+        auto o = new X11Output;
+        o->set_gamma_ramp_size(0);
+        o->set_refresh_rate(-1.0f);
+        o->set_name(QStringLiteral("Fallback"));
         m_outputs << o;
         base.all_outputs.push_back(o);
         base.enabled_outputs.push_back(o);
@@ -442,11 +442,11 @@ void X11StandalonePlatform::doUpdateOutputs()
             // drm platform do this.
             Xcb::RandR::CrtcGamma gamma(crtc);
 
-            auto* o = new X11Output(this);
-            o->setCrtc(crtc);
-            o->setGammaRampSize(gamma.isNull() ? 0 : gamma->size);
-            o->setGeometry(geo);
-            o->setRefreshRate(refreshRate * 1000);
+            auto o = new X11Output;
+            o->set_crtc(crtc);
+            o->set_gamma_ramp_size(gamma.isNull() ? 0 : gamma->size);
+            o->set_geometry(geo);
+            o->set_refresh_rate(refreshRate * 1000);
 
             for (int j = 0; j < info->num_outputs; ++j) {
                 Xcb::RandR::OutputInfo outputInfo(outputInfos.at(j));
@@ -466,8 +466,8 @@ void X11StandalonePlatform::doUpdateOutputs()
                 case XCB_RANDR_ROTATION_REFLECT_Y:
                     break;
                 }
-                o->setName(outputInfo.name());
-                o->setPhysicalSize(physicalSize);
+                o->set_name(outputInfo.name());
+                o->set_physical_size(physicalSize);
                 break;
             }
 

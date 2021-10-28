@@ -44,13 +44,16 @@ class Buffer;
 namespace KWin
 {
 
+namespace base
+{
+class output;
+}
 namespace Decoration
 {
 class DecoratedClientImpl;
 class Renderer;
 }
 
-class AbstractOutput;
 class AbstractThumbnailItem;
 class Deleted;
 class EffectFrameImpl;
@@ -84,7 +87,7 @@ public:
      */
     virtual qint64 paint(QRegion damage, std::deque<Toplevel*> const& windows,
                          std::chrono::milliseconds presentTime);
-    virtual int64_t paint(AbstractOutput* output, QRegion damage,
+    virtual int64_t paint(base::output* output, QRegion damage,
                           std::deque<Toplevel*> const& windows,
                           std::chrono::milliseconds presentTime);
 
@@ -273,7 +276,7 @@ protected:
     /**
      * The output currently being repainted. Only relevant for per-output painting.
      */
-    AbstractOutput* repaint_output{nullptr};
+    base::output* repaint_output{nullptr};
 
 private:
     void paintWindowThumbnails(Scene::Window *w, QRegion region, qreal opacity, qreal brightness, qreal saturation);

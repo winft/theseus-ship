@@ -72,7 +72,7 @@ bool egl_output::reset(output* out)
 {
     this->out = out;
 
-    auto size = out->modeSize();
+    auto size = out->mode_size();
 
     auto surf = egl_back->headless ? create_headless_surface(*egl_back->back, size)
                                    : create_surface(*egl_back->back, size);
@@ -90,10 +90,10 @@ bool egl_output::reset_framebuffer()
 {
     cleanup_framebuffer();
 
-    auto const view_geo = out->viewGeometry();
-    auto const centered_view = out->modeSize() != view_geo.size() || !view_geo.topLeft().isNull();
+    auto const view_geo = out->view_geometry();
+    auto const centered_view = out->mode_size() != view_geo.size() || !view_geo.topLeft().isNull();
 
-    if (out->transform() == output::Transform::Normal && !centered_view) {
+    if (out->transform() == base::wayland::output_transform::normal && !centered_view) {
         // No need to create intermediate framebuffer.
         return true;
     }

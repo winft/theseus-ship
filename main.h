@@ -46,7 +46,7 @@ namespace backend
 {
 class wlroots;
 }
-template<typename Backend, typename Output>
+template<typename Backend>
 class platform;
 }
 
@@ -55,9 +55,16 @@ namespace debug
 class console;
 }
 
-namespace base::x11
+namespace base
+{
+namespace wayland
+{
+class output;
+}
+namespace x11
 {
 class event_filter_manager;
+}
 }
 
 namespace render
@@ -70,11 +77,10 @@ namespace seat
 class session;
 }
 
-class AbstractWaylandOutput;
 class Platform;
 class WaylandServer;
 
-using wayland_base = base::platform<base::backend::wlroots, AbstractWaylandOutput>;
+using wayland_base = base::platform<base::backend::wlroots>;
 
 class XcbEventFilter : public QAbstractNativeEventFilter
 {

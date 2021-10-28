@@ -23,7 +23,7 @@
 namespace KWin::render::backend::wlroots
 {
 
-egl_output& egl_backend::get_output(AbstractOutput* out)
+egl_output& egl_backend::get_output(base::output* out)
 {
     auto it = std::find_if(
         outputs.begin(), outputs.end(), [this, out](auto& egl_out) { return egl_out.out == out; });
@@ -139,7 +139,7 @@ void egl_backend::add_output(output* out)
 
     outputs.push_back(std::move(egl_out));
 
-    connect(out, &output::modeChanged, this, [out, this] {
+    connect(out, &output::mode_changed, this, [out, this] {
         auto& egl_out = get_output(out);
         egl_out.reset(out);
     });
@@ -207,7 +207,7 @@ void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
     GLuint clearColor[4] = {0, 0, 0, 0};
     glClearBufferuiv(GL_COLOR, 0, clearColor);
 
-    auto geo = egl_out.out->viewGeometry();
+    auto geo = egl_out.out->view_geometry();
     if (has_portrait_transform(egl_out.out)) {
         geo = geo.transposed();
         geo.moveTopLeft(geo.topLeft().transposed());
@@ -259,7 +259,7 @@ void egl_backend::setViewport(egl_output const& egl_out) const
 {
     auto const& overall = screens()->size();
     auto const& geo = egl_out.out->geometry();
-    auto const& view = egl_out.out->viewGeometry();
+    auto const& view = egl_out.out->view_geometry();
 
     auto const width_ratio = view.width() / (double)geo.width();
     auto const height_ratio = view.height() / (double)geo.height();
@@ -270,7 +270,7 @@ void egl_backend::setViewport(egl_output const& egl_out) const
                overall.height() * height_ratio);
 }
 
-QRegion egl_backend::prepareRenderingForScreen(AbstractOutput* output)
+QRegion egl_backend::prepareRenderingForScreen(base::output* output)
 {
     auto const& out = get_output(output);
 
@@ -314,7 +314,7 @@ void egl_backend::endRenderingFrame(QRegion const& renderedRegion, QRegion const
     Q_UNUSED(damagedRegion)
 }
 
-void egl_backend::endRenderingFrameForScreen(AbstractOutput* output,
+void egl_backend::endRenderingFrameForScreen(base::output* output,
                                              QRegion const& renderedRegion,
                                              QRegion const& damagedRegion)
 {

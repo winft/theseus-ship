@@ -50,7 +50,7 @@ public:
 
     qint64 paint(QRegion damage, std::deque<Toplevel*> const& windows,
                  std::chrono::milliseconds presentTime) override;
-    int64_t paint(AbstractOutput* output, QRegion damage,
+    int64_t paint(base::output* output, QRegion damage,
                   std::deque<Toplevel*> const& windows,
                   std::chrono::milliseconds presentTime) override;
 

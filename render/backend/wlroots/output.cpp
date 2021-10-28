@@ -6,6 +6,7 @@
 #include "output.h"
 
 #include "backend.h"
+#include "base/gamma_ramp.h"
 #include "main.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
@@ -79,8 +80,8 @@ void output::create_lease_connector()
         return;
     }
 
-    lease_connector.reset(lease_device->create_connector(AbstractWaylandOutput::output()));
-    AbstractWaylandOutput::output()->set_connector_id(wlr_drm_connector_get_id(native));
+    lease_connector.reset(lease_device->create_connector(base::wayland::output::wrapland_output()));
+    base::wayland::output::wrapland_output()->set_connector_id(wlr_drm_connector_get_id(native));
 }
 
 bool output::disable_native()
@@ -103,7 +104,7 @@ bool output::disable_native()
     return true;
 }
 
-void output::updateEnablement(bool enable)
+void output::update_enablement(bool enable)
 {
     if (!enable) {
         disable_native();
@@ -114,19 +115,19 @@ void output::updateEnablement(bool enable)
     }
 }
 
-void output::updateDpms(DpmsMode mode)
+void output::update_dpms(base::dpms_mode mode)
 {
-    auto set_on = mode == DpmsMode::On;
+    auto set_on = mode == base::dpms_mode::on;
 
     if (set_on) {
         compositor::self()->addRepaint(geometry());
-        dpmsSetOn();
+        dpms_set_on();
     } else if (disable_native()) {
-        dpmsSetOff(mode);
+        dpms_set_off(mode);
     }
 }
 
-void output::updateMode(int modeIndex)
+void output::update_mode(int mode_index)
 {
     // TODO(romangg): Determine target mode more precisly with semantic properties instead of index.
     wlr_output_mode* wlr_mode;
@@ -135,7 +136,7 @@ void output::updateMode(int modeIndex)
     auto old_mode = native->current_mode;
     wl_list_for_each(wlr_mode, &native->modes, link)
     {
-        if (count == modeIndex) {
+        if (count == mode_index) {
             wlr_output_set_mode(native, wlr_mode);
             if (wlr_output_test(native)) {
                 compositor::self()->addRepaint(geometry());
@@ -150,12 +151,12 @@ void output::updateMode(int modeIndex)
     }
 }
 
-wl_output_transform to_wl_transform(output::Transform tr)
+wl_output_transform to_wl_transform(base::wayland::output_transform tr)
 {
     return static_cast<wl_output_transform>(tr);
 }
 
-void output::updateTransform(Transform transform)
+void output::update_transform(base::wayland::output_transform transform)
 {
     auto old_transform = native->transform;
     wlr_output_set_transform(native, to_wl_transform(transform));
@@ -169,11 +170,12 @@ void output::updateTransform(Transform transform)
     }
 }
 
-int output::gammaRampSize() const
+int output::gamma_ramp_size() const
 {
     return wlr_output_get_gamma_size(native);
 }
-bool output::setGammaRamp(GammaRamp const& gamma)
+
+bool output::set_gamma_ramp(base::gamma_ramp const& gamma)
 {
     wlr_output_set_gamma(native, gamma.size(), gamma.red(), gamma.green(), gamma.blue());
 
@@ -188,8 +190,7 @@ bool output::setGammaRamp(GammaRamp const& gamma)
 }
 
 output::output(wlr_output* wlr_out, backend* backend)
-    : AbstractWaylandOutput()
-    , native{wlr_out}
+    : native{wlr_out}
     , back{backend}
 {
     wlr_out->data = this;
@@ -240,13 +241,13 @@ output::output(wlr_output* wlr_out, backend* backend)
         }
     }
 
-    initInterfaces(wlr_out->name,
-                   wlr_out->make,
-                   wlr_out->model,
-                   wlr_out->serial,
-                   QSize(wlr_out->phys_width, wlr_out->phys_height),
-                   modes,
-                   current_mode.id != -1 ? &current_mode : nullptr);
+    init_interfaces(wlr_out->name,
+                    wlr_out->make,
+                    wlr_out->model,
+                    wlr_out->serial,
+                    QSize(wlr_out->phys_width, wlr_out->phys_height),
+                    modes,
+                    current_mode.id != -1 ? &current_mode : nullptr);
 
     create_lease_connector();
 }

@@ -4,22 +4,19 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "x11_output.h"
+
+#include "base/gamma_ramp.h"
 #include "screens.h"
 
 namespace KWin::render::backend::x11
 {
-
-X11Output::X11Output(QObject* parent)
-    : AbstractOutput(parent)
-{
-}
 
 QString X11Output::name() const
 {
     return m_name;
 }
 
-void X11Output::setName(QString set)
+void X11Output::set_name(QString set)
 {
     m_name = set;
 }
@@ -32,27 +29,27 @@ QRect X11Output::geometry() const
     return QRect(QPoint(0, 0), Screens::self()->displaySize()); // xinerama, lacks RandR
 }
 
-void X11Output::setGeometry(QRect set)
+void X11Output::set_geometry(QRect set)
 {
     m_geometry = set;
 }
 
-int X11Output::refreshRate() const
+int X11Output::refresh_rate() const
 {
-    return m_refreshRate;
+    return m_refresh_rate;
 }
 
-void X11Output::setRefreshRate(int set)
+void X11Output::set_refresh_rate(int set)
 {
-    m_refreshRate = set;
+    m_refresh_rate = set;
 }
 
-int X11Output::gammaRampSize() const
+int X11Output::gamma_ramp_size() const
 {
-    return m_gammaRampSize;
+    return m_gamma_ramp_size;
 }
 
-bool X11Output::setGammaRamp(const GammaRamp& gamma)
+bool X11Output::set_gamma_ramp(base::gamma_ramp const& gamma)
 {
     if (m_crtc == XCB_NONE) {
         return false;
@@ -64,24 +61,24 @@ bool X11Output::setGammaRamp(const GammaRamp& gamma)
     return true;
 }
 
-void X11Output::setCrtc(xcb_randr_crtc_t crtc)
+void X11Output::set_crtc(xcb_randr_crtc_t crtc)
 {
     m_crtc = crtc;
 }
 
-void X11Output::setGammaRampSize(int size)
+void X11Output::set_gamma_ramp_size(int size)
 {
-    m_gammaRampSize = size;
+    m_gamma_ramp_size = size;
 }
 
-QSize X11Output::physicalSize() const
+QSize X11Output::physical_size() const
 {
-    return m_physicalSize;
+    return m_physical_size;
 }
 
-void X11Output::setPhysicalSize(const QSize& size)
+void X11Output::set_physical_size(QSize const& size)
 {
-    m_physicalSize = size;
+    m_physical_size = size;
 }
 
 }

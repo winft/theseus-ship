@@ -9,7 +9,7 @@
 #include "presentation.h"
 #include "utils.h"
 
-#include "abstract_wayland_output.h"
+#include "base/wayland/output.h"
 #include "effects.h"
 #include "platform.h"
 #include "wayland_logging.h"
@@ -30,7 +30,7 @@ namespace KWin::render::wayland
 
 static int s_index{0};
 
-output::output(AbstractWaylandOutput* base, wayland::compositor* compositor)
+output::output(base::wayland::output* base, wayland::compositor* compositor)
     : index{++s_index}
     , compositor{compositor}
     , base{base}
@@ -244,7 +244,7 @@ void output::swapped(presentation_data const& data)
 
 std::chrono::nanoseconds output::refresh_length() const
 {
-    return std::chrono::nanoseconds(1000 * 1000 * (1000 * 1000 / base->refreshRate()));
+    return std::chrono::nanoseconds(1000 * 1000 * (1000 * 1000 / base->refresh_rate()));
 }
 
 void output::set_delay(presentation_data const& data)
@@ -315,7 +315,7 @@ void output::set_delay(presentation_data const& data)
 
 void output::set_delay_timer()
 {
-    if (delay_timer.isActive() || swap_pending || !base->dpmsOn()) {
+    if (delay_timer.isActive() || swap_pending || !base->is_dpms_on()) {
         // Abort since we will composite when the timer runs out or the timer will only get
         // started at buffer swap.
         return;
@@ -333,7 +333,7 @@ void output::set_delay_timer()
 
 void output::request_frame(Toplevel* window)
 {
-    if (swap_pending || delay_timer.isActive() || frame_timer.isActive() || !base->dpmsOn()) {
+    if (swap_pending || delay_timer.isActive() || frame_timer.isActive() || !base->is_dpms_on()) {
         // Frame will be received when timer runs out.
         return;
     }

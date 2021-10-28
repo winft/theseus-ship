@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "scene_qpainter.h"
 
-#include "abstract_output.h"
+#include "base/output.h"
 #include "input/cursor.h"
 #include "effects.h"
 #include "main.h"
@@ -94,7 +94,7 @@ void SceneQPainter::paintGenericScreen(int mask, ScreenPaintData data)
     m_painter->restore();
 }
 
-int64_t SceneQPainter::paint(AbstractOutput* output, QRegion damage,
+int64_t SceneQPainter::paint(base::output* output, QRegion damage,
                              std::deque<Toplevel*> const& toplevels,
                              std::chrono::milliseconds presentTime)
 {

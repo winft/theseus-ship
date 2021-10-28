@@ -29,9 +29,12 @@ class Surface;
 
 namespace KWin
 {
-class AbstractWaylandOutput;
 class Toplevel;
 
+namespace base::wayland
+{
+class output;
+}
 namespace render::wayland
 {
 class compositor;
@@ -64,7 +67,7 @@ class KWIN_EXPORT output : public QObject
     void timerEvent(QTimerEvent* event) override;
 
 public:
-    AbstractWaylandOutput* base;
+    base::wayland::output* base;
     std::map<uint32_t, Wrapland::Server::Surface*> assigned_surfaces;
 
     bool idle{true};
@@ -73,7 +76,7 @@ public:
     QBasicTimer frame_timer;
     std::vector<render::gl::timer_query> last_timer_queries;
 
-    output(AbstractWaylandOutput* base, wayland::compositor* compositor);
+    output(base::wayland::output* base, wayland::compositor* compositor);
 
     void add_repaint(QRegion const& region);
     void set_delay(presentation_data const& data);

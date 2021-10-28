@@ -5,8 +5,8 @@
 */
 #pragma once
 
-#include "abstract_wayland_output.h"
 #include "base/utils.h"
+#include "base/wayland/output.h"
 
 #include <Wrapland/Server/drm_lease_v1.h>
 
@@ -21,7 +21,7 @@ class backend;
 class buffer;
 class output;
 
-class KWIN_EXPORT output : public AbstractWaylandOutput
+class KWIN_EXPORT output : public base::wayland::output
 {
     Q_OBJECT
 private:
@@ -38,13 +38,13 @@ public:
     wlr_output* native;
     backend* back;
 
-    void updateEnablement(bool enable) override;
-    void updateDpms(DpmsMode mode) override;
-    void updateMode(int modeIndex) override;
-    void updateTransform(Transform transform) override;
+    void update_enablement(bool enable) override;
+    void update_dpms(base::dpms_mode mode) override;
+    void update_mode(int mode_index) override;
+    void update_transform(base::wayland::output_transform transform) override;
 
-    int gammaRampSize() const override;
-    bool setGammaRamp(GammaRamp const& gamma) override;
+    int gamma_ramp_size() const override;
+    bool set_gamma_ramp(base::gamma_ramp const& gamma) override;
 
     output(wlr_output* wlr_out, backend* backend);
     ~output() override;
