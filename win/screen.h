@@ -120,7 +120,7 @@ void send_to_screen(Win* win, int new_screen)
         win->restore_geometries.maximize = restore_geo;
     }
 
-    auto children = workspace()->ensureStackingOrder(win->transient()->children);
+    auto children = restacked_by_space_stacking_order(workspace(), win->transient()->children);
     for (auto const& child : children) {
         if (child->control) {
             send_to_screen(child, new_screen);
@@ -199,7 +199,8 @@ void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
         workspace()->updateOnAllDesktopsOfTransients(win);
     }
 
-    auto transients_stacking_order = workspace()->ensureStackingOrder(win->transient()->children);
+    auto transients_stacking_order
+        = restacked_by_space_stacking_order(workspace(), win->transient()->children);
     for (auto const& child : transients_stacking_order) {
         if (!child->transient()->annexed) {
             set_desktops(child, desktops);

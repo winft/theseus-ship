@@ -902,7 +902,8 @@ void Workspace::sendClientToDesktop(Toplevel* window, int desk, bool dont_activa
 
     win::check_workspace_position(window, QRect(), old_desktop);
 
-    auto transients_stacking_order = ensureStackingOrder(window->transient()->children);
+    auto transients_stacking_order
+        = win::restacked_by_space_stacking_order(this, window->transient()->children);
     for (auto const& transient : transients_stacking_order) {
         if (transient->control) {
             sendClientToDesktop(transient, desk, dont_activate);

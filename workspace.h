@@ -271,10 +271,6 @@ public:
     int oldDisplayWidth() const;
     int oldDisplayHeight() const;
 
-    std::deque<win::x11::window*>
-    ensureStackingOrder(std::vector<win::x11::window*> const& clients) const;
-    std::deque<Toplevel*> ensureStackingOrder(std::vector<Toplevel*> const& clients) const;
-
     Toplevel* active_client{nullptr};
 
     void sendClientToDesktop(Toplevel* window, int desktop, bool dont_activate);

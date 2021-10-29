@@ -25,6 +25,62 @@
 #include "utils.h"
 #include "workspace.h"
 
+/**
+ This file contains things relevant to stacking order and layers.
+
+ Design:
+
+ Normal unconstrained stacking order, as requested by the user (by clicking
+ on windows to raise them, etc.), is in Workspace::unconstrained_stacking_order.
+ That list shouldn't be used at all, except for building
+ Workspace::stacking_order. The building is done
+ in Workspace::constrainedStackingOrder(). Only Workspace::stackingOrder() should
+ be used to get the stacking order, because it also checks the stacking order
+ is up to date.
+ All clients are also stored in Workspace::clients (except for isDesktop() clients,
+ as those are very special, and are stored in Workspace::desktops), in the order
+ the clients were created.
+
+ Every window has one layer assigned in which it is. There are 7 layers,
+ from bottom : DesktopLayer, BelowLayer, NormalLayer, DockLayer, AboveLayer, NotificationLayer,
+ ActiveLayer, CriticalNotificationLayer, and OnScreenDisplayLayer (see also NETWM sect.7.10.).
+ The layer a window is in depends on the window type, and on other things like whether the window
+ is active. We extend the layers provided in NETWM by the NotificationLayer, OnScreenDisplayLayer,
+ and CriticalNotificationLayer.
+ The NoficationLayer contains notification windows which are kept above all windows except the
+ active fullscreen window. The CriticalNotificationLayer contains notification windows which are
+ important enough to keep them even above fullscreen windows. The OnScreenDisplayLayer is used for
+ eg. volume and brightness change feedback and is kept above all windows since it provides immediate
+ response to a user action.
+
+ NET::Splash clients belong to the Normal layer. NET::TopMenu clients
+ belong to Dock layer. Clients that are both NET::Dock and NET::KeepBelow
+ are in the Normal layer in order to keep the 'allow window to cover
+ the panel' Kicker setting to work as intended (this may look like a slight
+ spec violation, but a) I have no better idea, b) the spec allows adjusting
+ the stacking order if the WM thinks it's a good idea . We put all
+ NET::KeepAbove above all Docks too, even though the spec suggests putting
+ them in the same layer.
+
+ Most transients are in the same layer as their mainwindow,
+ see Workspace::constrainedStackingOrder(), they may also be in higher layers, but
+ they should never be below their mainwindow.
+
+ When some client attribute changes (above/below flag, transiency...),
+ win::update_layer() should be called in order to make
+ sure it's moved to the appropriate layer QList<X11Client *> if needed.
+
+ Currently the things that affect client in which layer a client
+ belongs: KeepAbove/Keep Below flags, window type, fullscreen
+ state and whether the client is active, mainclient (transiency).
+
+ Make sure updateStackingOrder() is called in order to make
+ Workspace::stackingOrder() up to date and propagated to the world.
+ Using Workspace::blockStackingUpdates() (or the StackingUpdatesBlocker
+ helper class) it's possible to temporarily disable updates
+ and the stacking order will be updated once after it's allowed again.
+*/
+
 namespace KWin::win
 {
 
@@ -83,6 +139,44 @@ Toplevel* find_desktop(Space* space, bool topmost, int desktop)
     return nullptr;
 }
 
+template<class T, class R = T>
+std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stackingOrder,
+                                             std::vector<T*> const& list)
+{
+    static_assert(std::is_base_of<Toplevel, T>::value, "U must be derived from T");
+    // TODO    Q_ASSERT( block_stacking_updates == 0 );
+
+    if (!list.size()) {
+        return std::deque<R*>();
+    }
+    if (list.size() < 2) {
+        return std::deque<R*>({qobject_cast<R*>(list.at(0))});
+    }
+
+    // TODO is this worth optimizing?
+    std::deque<R*> result;
+    for (auto c : list) {
+        result.push_back(qobject_cast<R*>(c));
+    }
+    for (auto it = stackingOrder.begin(); it != stackingOrder.end(); ++it) {
+        R* c = qobject_cast<R*>(*it);
+        if (!c) {
+            continue;
+        }
+        if (contains(result, c)) {
+            remove_all(result, c);
+            result.push_back(c);
+        }
+    }
+    return result;
+}
+
+template<class Space, class Win>
+std::deque<Win*> restacked_by_space_stacking_order(Space* space, std::vector<Win*> const& list)
+{
+    return ensure_stacking_order_in_list(space->stacking_order->sorted(), list);
+}
+
 template<typename Space, typename Window>
 void lower_window(Space* space, Window* window)
 {
@@ -108,7 +202,7 @@ void lower_window(Space* space, Window* window)
 
     if (window->transient()->lead() && window->group()) {
         // Lower also all windows in the group, in reversed stacking order.
-        auto const wins = space->ensureStackingOrder(window->group()->members());
+        auto const wins = restacked_by_space_stacking_order(space, window->group()->members());
 
         for (auto it = wins.crbegin(); it != wins.crend(); it++) {
             auto gwin = *it;
@@ -161,7 +255,7 @@ void raise_window(Space* space, Window* window)
             }
         }
 
-        auto stacked_leads = space->ensureStackingOrder(leads);
+        auto stacked_leads = restacked_by_space_stacking_order(space, leads);
 
         for (auto lead : stacked_leads) {
             if (!lead->control) {
@@ -402,38 +496,6 @@ void set_minimized(Win* win, bool set, bool avoid_animation = false)
         Q_EMIT win->clientUnminimized(win, !avoid_animation);
         Q_EMIT win->minimizedChanged();
     }
-}
-
-template<class T, class R = T>
-std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stackingOrder,
-                                             std::vector<T*> const& list)
-{
-    static_assert(std::is_base_of<Toplevel, T>::value, "U must be derived from T");
-    // TODO    Q_ASSERT( block_stacking_updates == 0 );
-
-    if (!list.size()) {
-        return std::deque<R*>();
-    }
-    if (list.size() < 2) {
-        return std::deque<R*>({qobject_cast<R*>(list.at(0))});
-    }
-
-    // TODO is this worth optimizing?
-    std::deque<R*> result;
-    for (auto c : list) {
-        result.push_back(qobject_cast<R*>(c));
-    }
-    for (auto it = stackingOrder.begin(); it != stackingOrder.end(); ++it) {
-        R* c = qobject_cast<R*>(*it);
-        if (!c) {
-            continue;
-        }
-        if (contains(result, c)) {
-            remove_all(result, c);
-            result.push_back(c);
-        }
-    }
-    return result;
 }
 
 // check whether a transient should be actually kept above its mainwindow
