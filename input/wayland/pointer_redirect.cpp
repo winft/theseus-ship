@@ -24,6 +24,7 @@
 #include "wayland_server.h"
 #include "win/input.h"
 #include "win/wayland/space.h"
+#include "win/x11/window.h"
 #include "workspace.h"
 
 #include <KDecoration2/Decoration>

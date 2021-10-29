@@ -33,8 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include <kwineffects.h>
 
-#include "win/layers.h"
 #include "win/move.h"
+#include "win/stacking.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 

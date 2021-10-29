@@ -42,9 +42,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/controlling.h"
 #include "win/focus_chain.h"
-#include "win/layers.h"
 #include "win/meta.h"
 #include "win/scene.h"
+#include "win/stacking.h"
 #include "win/stacking_order.h"
 #include "win/util.h"
 #include "win/x11/window.h"
