@@ -190,7 +190,7 @@ void SlidingPopupsEffect::postPaintWindow(EffectWindow *w)
             }
             m_animations.erase(animationIt);
         }
-        w->addRepaintFull();
+        effects->addRepaint(w->expandedGeometry());
     }
 
     effects->postPaintWindow(w);
