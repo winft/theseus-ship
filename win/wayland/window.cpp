@@ -12,6 +12,7 @@
 #include "setup.h"
 #include "subsurface.h"
 #include "surface.h"
+#include "window_release.h"
 #include "xdg_shell.h"
 
 #include "win/deco.h"
@@ -59,13 +60,13 @@ Toplevel* find_toplevel(WS::Surface* surface)
 window::window(WS::Surface* surface)
     : Toplevel()
 {
-    set_surface(this, surface);
-
     connect(surface, &WS::Surface::subsurfaceTreeChanged, this, [this] {
         discard_shape();
         win::wayland::restack_subsurfaces(this);
     });
-    connect(surface, &WS::Surface::destroyed, this, [this] { destroy(); });
+    connect(surface, &WS::Surface::destroyed, this, [this] { destroy_window(this); });
+
+    set_surface(this, surface);
     setupCompositing(false);
 }
 
@@ -1045,43 +1046,6 @@ void window::handle_title_changed()
         // Don't emit caption change twice it already got emitted by the changing suffix.
         Q_EMIT captionChanged();
     }
-}
-
-void window::destroy()
-{
-    closing = true;
-
-    Blocker blocker(workspace()->stacking_order);
-
-    auto remnant_window = create_remnant(this);
-    Q_EMIT windowClosed(this, remnant_window);
-
-    if (control) {
-#ifdef KWIN_BUILD_TABBOX
-        auto tabbox = TabBox::TabBox::self();
-        if (tabbox->isDisplayed() && tabbox->currentClient() == this) {
-            tabbox->nextPrev(true);
-        }
-#endif
-        if (control->move_resize().enabled) {
-            leaveMoveResize();
-        }
-
-        RuleBook::self()->discardUsed(this, true);
-
-        control->destroy_wayland_management();
-        control->destroy_decoration();
-    }
-
-    static_cast<win::wayland::space*>(workspace())->handle_window_removed(this);
-    remnant_window->remnant()->unref();
-
-    delete_self(this);
-}
-
-void window::delete_self(window* win)
-{
-    delete win;
 }
 
 void window::debug(QDebug& stream) const

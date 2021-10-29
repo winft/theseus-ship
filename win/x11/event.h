@@ -10,6 +10,7 @@
 #include "geo.h"
 #include "meta.h"
 #include "transient.h"
+#include "window_release.h"
 
 #include "win/input.h"
 #include "win/meta.h"
@@ -386,10 +387,10 @@ void unmap_notify_event(Win* win, xcb_unmap_notify_event_t* e)
 
     if (daddy == win->xcb_windows.wrapper) {
         // unmapped from a regular client state
-        win->release_window();
+        release_window(win, false);
     } else {
         // the client was moved to some other parent
-        win->destroy();
+        destroy_window(win);
     }
 }
 
@@ -399,7 +400,7 @@ void destroy_notify_event(Win* win, xcb_destroy_notify_event_t* e)
     if (e->window != win->xcb_window()) {
         return;
     }
-    win->destroy();
+    destroy_window(win);
 }
 
 /**

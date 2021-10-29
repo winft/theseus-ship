@@ -8,6 +8,7 @@
 #include "window.h"
 
 #include "transient.h"
+#include "window_release.h"
 
 #include "render/compositor.h"
 #include "win/space.h"
@@ -111,8 +112,9 @@ void set_subsurface_parent(Win* win, Lead* lead)
 
     set_pos();
 
-    QObject::connect(
-        subsurface, &Wrapland::Server::Subsurface::resourceDestroyed, win, &Win::destroy);
+    QObject::connect(subsurface, &Wrapland::Server::Subsurface::resourceDestroyed, win, [win] {
+        destroy_window(win);
+    });
     QObject::connect(subsurface, &Wrapland::Server::Subsurface::positionChanged, win, set_pos);
     QObject::connect(lead, &Lead::frame_geometry_changed, win, set_pos);
 

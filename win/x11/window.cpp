@@ -14,11 +14,11 @@
 #include "meta.h"
 #include "transient.h"
 #include "unmanaged.h"
+#include "window_release.h"
 
 #include "win/deco.h"
 #include "win/layers.h"
 #include "win/remnant.h"
-#include "win/rules.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 #include "win/x11/geometry_tip.h"
@@ -26,10 +26,6 @@
 #include "decorations/window.h"
 #include "rules/rules.h"
 #include "utils.h"
-
-#ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
-#endif
 
 #include <KDecoration2/DecoratedClient>
 
@@ -305,121 +301,6 @@ void window::damageNotifyEvent()
     Toplevel::damageNotifyEvent();
 }
 
-void window::release_window(bool on_shutdown)
-{
-    Q_ASSERT(!deleting);
-    deleting = true;
-
-    if (!control) {
-        release_unmanaged(this,
-                          on_shutdown ? ReleaseReason::KWinShutsDown : ReleaseReason::Release);
-        return;
-    }
-
-#ifdef KWIN_BUILD_TABBOX
-    auto tabbox = TabBox::TabBox::self();
-    if (tabbox->isDisplayed() && tabbox->currentClient() == this) {
-        tabbox->nextPrev(true);
-    }
-#endif
-
-    control->destroy_wayland_management();
-
-    Toplevel* del = nullptr;
-    if (on_shutdown) {
-        // Move the client window to maintain its position.
-        auto const offset = QPoint(left_border(this), top_border(this));
-        setFrameGeometry(frameGeometry().translated(offset));
-    } else {
-        del = create_remnant(this);
-    }
-
-    if (control->move_resize().enabled) {
-        Q_EMIT clientFinishUserMovedResized(this);
-    }
-
-    Q_EMIT windowClosed(this, del);
-    finishCompositing();
-
-    // Remove ForceTemporarily rules
-    RuleBook::self()->discardUsed(this, true);
-
-    Blocker blocker(workspace()->stacking_order);
-
-    if (control->move_resize().enabled) {
-        leaveMoveResize();
-    }
-
-    win::finish_rules(this);
-    geometry_update.block++;
-
-    if (isOnCurrentDesktop() && isShown()) {
-        addWorkspaceRepaint(win::visible_rect(this));
-    }
-
-    // Grab X during the release to make removing of properties, setting to withdrawn state
-    // and repareting to root an atomic operation
-    // (https://lists.kde.org/?l=kde-devel&m=116448102901184&w=2)
-    grabXServer();
-    export_mapping_state(this, XCB_ICCCM_WM_STATE_WITHDRAWN);
-
-    // So that it's not considered visible anymore (can't use hideClient(), it would set flags)
-    hidden = true;
-
-    if (!on_shutdown) {
-        workspace()->clientHidden(this);
-    }
-
-    // Destroying decoration would cause ugly visual effect
-    xcb_windows.outer.unmap();
-
-    control->destroy_decoration();
-    clean_grouping(this);
-
-    if (!on_shutdown) {
-        workspace()->removeClient(this);
-        // Only when the window is being unmapped, not when closing down KWin (NETWM
-        // sections 5.5,5.7)
-        info->setDesktop(0);
-        info->setState(NET::States(), info->state()); // Reset all state flags
-    }
-
-    xcb_windows.client.deleteProperty(atoms->kde_net_wm_user_creation_time);
-    xcb_windows.client.deleteProperty(atoms->net_frame_extents);
-    xcb_windows.client.deleteProperty(atoms->kde_net_wm_frame_strut);
-
-    auto const client_rect = frame_to_client_rect(this, frameGeometry());
-    xcb_windows.client.reparent(rootWindow(), client_rect.x(), client_rect.y());
-
-    xcb_change_save_set(connection(), XCB_SET_MODE_DELETE, xcb_windows.client);
-    xcb_windows.client.selectInput(XCB_EVENT_MASK_NO_EVENT);
-
-    if (on_shutdown) {
-        // Map the window, so it can be found after another WM is started
-        xcb_windows.client.map();
-        // TODO: Preserve minimized etc. state?
-    } else {
-        // Make sure it's not mapped if the app unmapped it (#65279). The app
-        // may do map+unmap before we initially map the window by calling rawShow() from manage().
-        xcb_windows.client.unmap();
-    }
-
-    xcb_windows.client.reset();
-    xcb_windows.wrapper.reset();
-    xcb_windows.outer.reset();
-
-    // Don't use GeometryUpdatesBlocker, it would now set the geometry
-    geometry_update.block--;
-
-    if (!on_shutdown) {
-        disownDataPassedToDeleted();
-        del->remnant()->unref();
-    }
-
-    delete this;
-    ungrabXServer();
-}
-
 void window::applyWindowRules()
 {
     Toplevel::applyWindowRules();
@@ -433,72 +314,6 @@ void window::updateWindowRules(Rules::Types selection)
         return;
     }
     Toplevel::updateWindowRules(selection);
-}
-
-/**
- * Like release(), but window is already destroyed (for example app closed it).
- */
-void window::destroy()
-{
-    assert(!deleting);
-    deleting = true;
-
-    if (!control) {
-        release_unmanaged(this, ReleaseReason::Destroyed);
-        return;
-    }
-
-#ifdef KWIN_BUILD_TABBOX
-    auto tabbox = TabBox::TabBox::self();
-    if (tabbox && tabbox->isDisplayed() && tabbox->currentClient() == this) {
-        tabbox->nextPrev(true);
-    }
-#endif
-
-    control->destroy_wayland_management();
-
-    auto del = create_remnant(this);
-
-    if (control->move_resize().enabled) {
-        Q_EMIT clientFinishUserMovedResized(this);
-    }
-    Q_EMIT windowClosed(this, del);
-
-    finishCompositing(ReleaseReason::Destroyed);
-
-    // Remove ForceTemporarily rules
-    RuleBook::self()->discardUsed(this, true);
-
-    Blocker blocker(workspace()->stacking_order);
-    if (control->move_resize().enabled) {
-        leaveMoveResize();
-    }
-
-    win::finish_rules(this);
-    geometry_update.block++;
-
-    if (isOnCurrentDesktop() && isShown()) {
-        addWorkspaceRepaint(win::visible_rect(this));
-    }
-
-    // So that it's not considered visible anymore
-    hidden = true;
-
-    workspace()->clientHidden(this);
-    control->destroy_decoration();
-    clean_grouping(this);
-    workspace()->removeClient(this);
-
-    // invalidate
-    xcb_windows.client.reset();
-    xcb_windows.wrapper.reset();
-    xcb_windows.outer.reset();
-
-    // Don't use GeometryUpdatesBlocker, it would now set the geometry
-    geometry_update.block--;
-    disownDataPassedToDeleted();
-    del->remnant()->unref();
-    delete this;
 }
 
 void window::closeWindow()
@@ -1118,7 +933,7 @@ void window::killWindow()
     // Always kill this client at the server
     xcb_windows.client.kill();
 
-    destroy();
+    destroy_window(this);
 }
 
 void window::debug(QDebug& stream) const

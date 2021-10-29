@@ -59,8 +59,6 @@ public:
     void do_set_maximize_mode(win::maximize_mode mode);
     void do_set_fullscreen(bool full);
 
-    static void delete_self(window* win);
-
     bool acceptsFocus() const override;
     void updateCaption() override;
 
@@ -118,8 +116,6 @@ public:
 
     // When another window is created, checks if this window is a subsurface for it.
     void checkTransient(Toplevel* window) override;
-
-    void destroy() override;
 
     void debug(QDebug& stream) const override;
 

@@ -339,7 +339,6 @@ public:
     void discardWindowPixmap();
     void deleteEffectWindow();
 
-    virtual void destroy() {}
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
 
     Xcb::Property fetchWmClientLeader() const;

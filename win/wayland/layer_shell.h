@@ -6,6 +6,7 @@
 #pragma once
 
 #include "space.h"
+#include "window_release.h"
 
 #include "win/geo.h"
 #include "win/screen.h"
@@ -134,7 +135,8 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     QObject::connect(win, &window::needsRepaint, render::compositor::self(), [win] {
         render::compositor::self()->schedule_repaint(win);
     });
-    QObject::connect(layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, &window::destroy);
+    QObject::connect(
+        layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, [win] { destroy_window(win); });
 
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::got_popup, win, [win](auto popup) {
         for (auto window : static_cast<win::wayland::space*>(workspace())->m_windows) {

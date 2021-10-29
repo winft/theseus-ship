@@ -117,7 +117,7 @@ space::~space()
 
     for (auto const& window : m_windows) {
         if (auto win = qobject_cast<win::wayland::window*>(window)) {
-            win->destroy();
+            destroy_window(win);
             remove_all(m_windows, win);
         }
     }

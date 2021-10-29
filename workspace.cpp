@@ -451,7 +451,7 @@ void Workspace::clear_x11()
             continue;
         }
 
-        c->release_window(is_x11);
+        win::x11::release_window(c, is_x11);
 
         // No removeClient() is called, it does more than just removing.
         // However, remove from some lists to e.g. prevent performTransiencyCheck()
@@ -461,7 +461,7 @@ void Workspace::clear_x11()
     }
 
     for (auto const& unmanaged : unmanagedList()) {
-        static_cast<win::x11::window*>(unmanaged)->release_window(is_x11);
+        win::x11::release_window(static_cast<win::x11::window*>(unmanaged), is_x11);
         remove_all(m_windows, unmanaged);
         remove_all(stacking_order->pre_stack, unmanaged);
     }
@@ -3438,7 +3438,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
                 // since release is scheduled after map notify, this old Unmanaged will get released
                 // before KWIN has chance to remanage it again. so release it right now.
                 if (c->has_scheduled_release) {
-                    c->release_window(false);
+                    win::x11::release_window(c, false);
                     c = createUnmanaged(event->window);
                 }
                 if (c) {

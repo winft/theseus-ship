@@ -7,6 +7,7 @@
 
 #include "space.h"
 #include "window.h"
+#include "window_release.h"
 
 #include "win/controlling.h"
 #include "win/input.h"
@@ -63,8 +64,8 @@ inline window* create_shell_window(Wrapland::Server::XdgShellSurface* shell_surf
     auto win = new window(surface);
     block_geometry_updates(win, true);
 
-    QObject::connect(surface->client(), &WS::Client::disconnected, win, &window::destroy);
-    QObject::connect(surface, &WS::Surface::resourceDestroyed, win, &window::destroy);
+    QObject::connect(
+        surface->client(), &WS::Client::disconnected, win, [win] { destroy_window(win); });
 
     win->shell_surface = shell_surface;
 
@@ -224,7 +225,8 @@ inline window* create_toplevel_window(Wrapland::Server::XdgShellToplevel* toplev
         win->window_type = NET::OnScreenDisplay;
     }
 
-    QObject::connect(toplevel, &WS::XdgShellToplevel::resourceDestroyed, win, &window::destroy);
+    QObject::connect(
+        toplevel, &WS::XdgShellToplevel::resourceDestroyed, win, [win] { destroy_window(win); });
     QObject::connect(toplevel,
                      &WS::XdgShellToplevel::configureAcknowledged,
                      win,
@@ -327,7 +329,8 @@ inline window* create_popup_window(Wrapland::Server::XdgShellPopup* popup)
     QObject::connect(popup, &WS::XdgShellPopup::grabRequested, win, [win](auto seat, auto serial) {
         handle_grab_request(win, seat, serial);
     });
-    QObject::connect(popup, &WS::XdgShellPopup::resourceDestroyed, win, &window::destroy);
+    QObject::connect(
+        popup, &WS::XdgShellPopup::resourceDestroyed, win, [win] { destroy_window(win); });
 
     finalize_shell_window_creation(win);
     return win;

@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "window_release.h"
+
 #include "win/remnant.h"
 #include "win/space.h"
 
@@ -94,33 +96,6 @@ Win* create_unmanaged_window(xcb_window_t w)
 }
 
 template<typename Win>
-void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Release)
-{
-    Toplevel* del = nullptr;
-    if (releaseReason != ReleaseReason::KWinShutsDown) {
-        del = Toplevel::create_remnant(win);
-    }
-    Q_EMIT win->windowClosed(win, del);
-    win->finishCompositing(releaseReason);
-
-    // Don't affect our own windows.
-    if (!QWidget::find(win->xcb_window()) && releaseReason != ReleaseReason::Destroyed) {
-        if (Xcb::Extensions::self()->isShapeAvailable()) {
-            xcb_shape_select_input(connection(), win->xcb_window(), false);
-        }
-        Xcb::selectInput(win->xcb_window(), XCB_EVENT_MASK_NO_EVENT);
-    }
-
-    if (releaseReason != ReleaseReason::KWinShutsDown) {
-        workspace()->removeUnmanaged(win);
-        win->addWorkspaceRepaint(win::visible_rect(del));
-        win->disownDataPassedToDeleted();
-        del->remnant()->unref();
-    }
-    delete win;
-}
-
-template<typename Win>
 void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* e)
 {
     if (effects) {
@@ -173,7 +148,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
     auto const eventType = e->response_type & ~0x80;
     switch (eventType) {
     case XCB_DESTROY_NOTIFY:
-        win->destroy();
+        destroy_window(win);
         break;
     case XCB_UNMAP_NOTIFY: {
         // may cause leave event

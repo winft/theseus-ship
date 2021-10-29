@@ -177,9 +177,6 @@ public:
     void damageNotifyEvent() override;
     void addDamage(QRegion const& damage) override;
 
-    void release_window(bool on_shutdown = false);
-    void destroy() override;
-
     void applyWindowRules() override;
     void updateWindowRules(Rules::Types selection) override;
 
