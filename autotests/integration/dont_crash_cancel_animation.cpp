@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "render/compositor.h"
 #include "screens.h"
-#include "scripting/scriptedeffect.h"
+#include "scripting/effect.h"
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"

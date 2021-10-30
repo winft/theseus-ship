@@ -8,17 +8,17 @@
 #include "script.h"
 
 #include "js_engine_global_methods_wrapper.h"
+#include "platform.h"
+#include "screen_edge_item.h"
 #include "script_timer.h"
-#include "scripting.h"
+#include "scripting_logging.h"
+#include "space.h"
+#include "utils.h"
+#include "window.h"
 
 #include "../options.h"
 #include "input/redirect.h"
 #include "screenedge.h"
-#include "screenedgeitem.h"
-#include "scripting_logging.h"
-#include "scriptingutils.h"
-#include "window_wrapper.h"
-#include "workspace_wrapper.h"
 
 #include <KConfigGroup>
 #include <KGlobalAccel>

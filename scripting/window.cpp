@@ -3,11 +3,11 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "window_wrapper.h"
+#include "window.h"
+
+#include "space.h"
 
 #include "toplevel.h"
-#include "workspace_wrapper.h"
-
 #include "win/controlling.h"
 #include "win/meta.h"
 #include "win/screen.h"

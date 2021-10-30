@@ -5,25 +5,24 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "scripting.h"
+#include "platform.h"
 
+#include "dbus_call.h"
+#include "screen_edge_item.h"
 #include "script.h"
+#include "space.h"
+#include "v2/client_model.h"
+#include "v3/client_model.h"
+#include "window.h"
 
 #include "../options.h"
 #include "../thumbnailitem.h"
 #include "../workspace.h"
-#include "dbuscall.h"
 #include "input/redirect.h"
 #include "screenedge.h"
-#include "screenedgeitem.h"
 #include "scripting_logging.h"
-#include "window_wrapper.h"
-#include "workspace_wrapper.h"
 
 #include "win/x11/window.h"
-
-#include "v2/clientmodel.h"
-#include "v3/clientmodel.h"
 
 #include <KConfigGroup>
 #include <KPackage/PackageLoader>

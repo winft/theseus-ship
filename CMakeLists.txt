@@ -437,19 +437,19 @@ set(kwin_SRCS
     screenedge.cpp
     screenlockerwatcher.cpp
     screens.cpp
-    scripting/dbuscall.cpp
+    scripting/dbus_call.cpp
     scripting/js_engine_global_methods_wrapper.cpp
-    scripting/screenedgeitem.cpp
+    scripting/screen_edge_item.cpp
+    scripting/effect.cpp
+    scripting/platform.cpp
     scripting/script.cpp
-    scripting/scriptedeffect.cpp
     scripting/script_timer.cpp
-    scripting/scripting.cpp
     scripting/scripting_logging.cpp
-    scripting/v2/clientmodel.cpp
-    scripting/v3/clientmodel.cpp
-    scripting/scriptingutils.cpp
-    scripting/window_wrapper.cpp
-    scripting/workspace_wrapper.cpp
+    scripting/v2/client_model.cpp
+    scripting/v3/client_model.cpp
+    scripting/utils.cpp
+    scripting/window.cpp
+    scripting/space.cpp
     seat/session.cpp
     seat/backend/logind/session.cpp
     shadow.cpp

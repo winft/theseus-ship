@@ -31,7 +31,7 @@ namespace KWin::scripting
 class generic_scripted_config_factory : public KPluginFactory
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.kde.KPluginFactory" FILE "genericscriptedconfig.json")
+    Q_PLUGIN_METADATA(IID "org.kde.KPluginFactory" FILE "generic_scripted_config.json")
     Q_INTERFACES(KPluginFactory)
 
 protected:

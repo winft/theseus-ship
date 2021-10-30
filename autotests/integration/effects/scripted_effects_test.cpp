@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 *********************************************************************/
 
 #include "libkwineffects/anidata_p.h"
-#include "scripting/scriptedeffect.h"
+#include "scripting/effect.h"
 
 #include "effect_builtins.h"
 #include "effectloader.h"

@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "main.h"
 #include "platform.h"
-#include "scripting/scripting.h"
+#include "scripting/platform.h"
 #include "utils.h"
 // Frameworks
 #include <KConfigGroup>

@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "desktopmodel.h"
 #include "tabboxconfig.h"
 #include "thumbnailitem.h"
-#include "scripting/scripting.h"
+#include "scripting/platform.h"
 #include "switcheritem.h"
 #include "tabbox_logging.h"
 // Qt

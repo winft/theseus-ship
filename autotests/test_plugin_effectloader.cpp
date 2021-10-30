@@ -18,9 +18,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "../effectloader.h"
-#include "../scripting/scriptedeffect.h" // for mocking scripting::effect::create
+
+// for mocking scripting::effect::create
+#include "../scripting/effect.h"
 #include "mock_effectshandler.h"
-// KDE
+
 #include <KConfig>
 #include <KConfigGroup>
 #include <KPluginLoader>

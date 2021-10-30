@@ -3,11 +3,11 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "clientmodel.h"
+#include "client_model.h"
 
-#include "../scripting.h"
-#include "../window_wrapper.h"
-#include "../workspace_wrapper.h"
+#include "scripting/platform.h"
+#include "scripting/space.h"
+#include "scripting/window.h"
 
 #include "screens.h"
 

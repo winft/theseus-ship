@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "utils.h"
 #include "virtualdesktops.h"
-#include "scripting/scripting.h"
+#include "scripting/platform.h"
 
 #include "win/app_menu.h"
 #include "win/controlling.h"

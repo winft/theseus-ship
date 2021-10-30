@@ -7,8 +7,8 @@
 */
 #include "js_engine_global_methods_wrapper.h"
 
+#include "platform.h"
 #include "script.h"
-#include "scripting.h"
 #include "scripting_logging.h"
 
 #include "input/redirect.h"

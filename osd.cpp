@@ -22,7 +22,7 @@
 #include "onscreennotification.h"
 #include "main.h"
 #include "workspace.h"
-#include "scripting/scripting.h"
+#include "scripting/platform.h"
 
 #include <QQmlEngine>
 

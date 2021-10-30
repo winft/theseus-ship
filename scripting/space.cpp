@@ -18,10 +18,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "space.h"
 
-#include "workspace_wrapper.h"
-
-#include "window_wrapper.h"
+#include "window.h"
 
 #include "../outline.h"
 #include "../screens.h"

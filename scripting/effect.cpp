@@ -7,13 +7,15 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "scriptedeffect.h"
+#include "effect.h"
+
+#include "scripting_logging.h"
+#include "space.h"
+#include "utils.h"
+
 #include "../options.h"
 #include "../screenedge.h"
 #include "../screens.h"
-#include "scripting_logging.h"
-#include "scriptingutils.h"
-#include "workspace_wrapper.h"
 
 #include "input/redirect.h"
 #include "screenedge.h"
