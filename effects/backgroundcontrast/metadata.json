@@ -2,6 +2,7 @@
     "KPlugin": {
         "Category": "Appearance",
         "Description": "Improve contrast and readability behind semi-transparent windows",
+        "EnabledByDefault": true,
         "Id": "contrast",
         "License": "GPL",
         "Name": "Background contrast",
