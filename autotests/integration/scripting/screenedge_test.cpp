@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
+#include "scripting/script.h"
 #include "scripting/scripting.h"
 #include "wayland_server.h"
 #include "workspace.h"

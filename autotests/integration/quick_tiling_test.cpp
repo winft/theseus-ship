@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
+#include "scripting/script.h"
 #include "scripting/scripting.h"
 #include "toplevel.h"
 #include "wayland_server.h"

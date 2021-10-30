@@ -438,8 +438,11 @@ set(kwin_SRCS
     screenlockerwatcher.cpp
     screens.cpp
     scripting/dbuscall.cpp
+    scripting/js_engine_global_methods_wrapper.cpp
     scripting/screenedgeitem.cpp
+    scripting/script.cpp
     scripting/scriptedeffect.cpp
+    scripting/script_timer.cpp
     scripting/scripting.cpp
     scripting/scripting_logging.cpp
     scripting/v2/clientmodel.cpp
@@ -502,7 +505,7 @@ ecm_qt_declare_logging_category(kwin_SRCS
 
 qt5_add_dbus_adaptor(kwin_SRCS
   scripting/org.kde.kwin.Script.xml
-  scripting/scripting.h
+  scripting/script.h
   KWin::scripting::AbstractScript
 )
 
