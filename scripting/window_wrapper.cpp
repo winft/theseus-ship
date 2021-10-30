@@ -17,7 +17,7 @@
 namespace KWin::scripting
 {
 
-WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
+window::window(Toplevel* client, space* workspace)
     : m_client{client}
     , m_workspace{workspace}
 {
@@ -28,19 +28,18 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
                 Q_EMIT opacityChanged(this, oldOpacity);
             });
 
-    connect(client, &Toplevel::activeChanged, this, &WindowWrapper::activeChanged);
-    connect(
-        client, &Toplevel::demandsAttentionChanged, this, &WindowWrapper::demandsAttentionChanged);
+    connect(client, &Toplevel::activeChanged, this, &window::activeChanged);
+    connect(client, &Toplevel::demandsAttentionChanged, this, &window::demandsAttentionChanged);
     connect(client,
             &Toplevel::desktopPresenceChanged,
             this,
             [this]([[maybe_unused]] auto toplevel, auto desktop) {
                 Q_EMIT desktopPresenceChanged(this, desktop);
             });
-    connect(client, &Toplevel::desktopChanged, this, &WindowWrapper::desktopChanged);
-    connect(client, &Toplevel::x11DesktopIdsChanged, this, &WindowWrapper::x11DesktopIdsChanged);
+    connect(client, &Toplevel::desktopChanged, this, &window::desktopChanged);
+    connect(client, &Toplevel::x11DesktopIdsChanged, this, &window::x11DesktopIdsChanged);
 
-    connect(client, &Toplevel::minimizedChanged, this, &WindowWrapper::minimizedChanged);
+    connect(client, &Toplevel::minimizedChanged, this, &window::minimizedChanged);
     connect(client, &Toplevel::clientMinimized, this, [this] { Q_EMIT clientMinimized(this); });
     connect(client, &Toplevel::clientUnminimized, this, [this] { Q_EMIT clientUnminimized(this); });
 
@@ -51,24 +50,23 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
                 Q_EMIT clientMaximizedStateChanged(this, horizontal, vertical);
             });
 
-    connect(client, &Toplevel::quicktiling_changed, this, &WindowWrapper::quickTileModeChanged);
+    connect(client, &Toplevel::quicktiling_changed, this, &window::quickTileModeChanged);
 
-    connect(client, &Toplevel::keepAboveChanged, this, &WindowWrapper::keepAboveChanged);
-    connect(client, &Toplevel::keepBelowChanged, this, &WindowWrapper::keepBelowChanged);
+    connect(client, &Toplevel::keepAboveChanged, this, &window::keepAboveChanged);
+    connect(client, &Toplevel::keepBelowChanged, this, &window::keepBelowChanged);
 
-    connect(client, &Toplevel::fullScreenChanged, this, &WindowWrapper::fullScreenChanged);
-    connect(client, &Toplevel::skipTaskbarChanged, this, &WindowWrapper::skipTaskbarChanged);
-    connect(client, &Toplevel::skipPagerChanged, this, &WindowWrapper::skipPagerChanged);
-    connect(client, &Toplevel::skipSwitcherChanged, this, &WindowWrapper::skipSwitcherChanged);
+    connect(client, &Toplevel::fullScreenChanged, this, &window::fullScreenChanged);
+    connect(client, &Toplevel::skipTaskbarChanged, this, &window::skipTaskbarChanged);
+    connect(client, &Toplevel::skipPagerChanged, this, &window::skipPagerChanged);
+    connect(client, &Toplevel::skipSwitcherChanged, this, &window::skipSwitcherChanged);
 
-    connect(client, &Toplevel::paletteChanged, this, &WindowWrapper::paletteChanged);
-    connect(client, &Toplevel::colorSchemeChanged, this, &WindowWrapper::colorSchemeChanged);
-    connect(client, &Toplevel::transientChanged, this, &WindowWrapper::transientChanged);
-    connect(client, &Toplevel::modalChanged, this, &WindowWrapper::modalChanged);
+    connect(client, &Toplevel::paletteChanged, this, &window::paletteChanged);
+    connect(client, &Toplevel::colorSchemeChanged, this, &window::colorSchemeChanged);
+    connect(client, &Toplevel::transientChanged, this, &window::transientChanged);
+    connect(client, &Toplevel::modalChanged, this, &window::modalChanged);
 
-    connect(client, &Toplevel::moveResizedChanged, this, &WindowWrapper::moveResizedChanged);
-    connect(
-        client, &Toplevel::moveResizeCursorChanged, this, &WindowWrapper::moveResizeCursorChanged);
+    connect(client, &Toplevel::moveResizedChanged, this, &window::moveResizedChanged);
+    connect(client, &Toplevel::moveResizeCursorChanged, this, &window::moveResizeCursorChanged);
     connect(client, &Toplevel::clientStartUserMovedResized, this, [this] {
         Q_EMIT clientStartUserMovedResized(this);
     });
@@ -82,35 +80,28 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
         Q_EMIT clientFinishUserMovedResized(this);
     });
 
-    connect(client, &Toplevel::windowClassChanged, this, &WindowWrapper::windowClassChanged);
-    connect(client, &Toplevel::captionChanged, this, &WindowWrapper::captionChanged);
-    connect(client, &Toplevel::iconChanged, this, &WindowWrapper::iconChanged);
-    connect(client, &Toplevel::frame_geometry_changed, this, &WindowWrapper::geometryChanged);
-    connect(client, &Toplevel::hasAlphaChanged, this, &WindowWrapper::hasAlphaChanged);
-    connect(client, &Toplevel::screenChanged, this, &WindowWrapper::screenChanged);
-    connect(client, &Toplevel::windowRoleChanged, this, &WindowWrapper::windowRoleChanged);
-    connect(client, &Toplevel::shapedChanged, this, &WindowWrapper::shapedChanged);
-    connect(client,
-            &Toplevel::skipCloseAnimationChanged,
-            this,
-            &WindowWrapper::skipCloseAnimationChanged);
+    connect(client, &Toplevel::windowClassChanged, this, &window::windowClassChanged);
+    connect(client, &Toplevel::captionChanged, this, &window::captionChanged);
+    connect(client, &Toplevel::iconChanged, this, &window::iconChanged);
+    connect(client, &Toplevel::frame_geometry_changed, this, &window::geometryChanged);
+    connect(client, &Toplevel::hasAlphaChanged, this, &window::hasAlphaChanged);
+    connect(client, &Toplevel::screenChanged, this, &window::screenChanged);
+    connect(client, &Toplevel::windowRoleChanged, this, &window::windowRoleChanged);
+    connect(client, &Toplevel::shapedChanged, this, &window::shapedChanged);
+    connect(client, &Toplevel::skipCloseAnimationChanged, this, &window::skipCloseAnimationChanged);
     connect(client,
             &Toplevel::applicationMenuActiveChanged,
             this,
-            &WindowWrapper::applicationMenuActiveChanged);
-    connect(client, &Toplevel::unresponsiveChanged, this, &WindowWrapper::unresponsiveChanged);
-    connect(client,
-            &Toplevel::hasApplicationMenuChanged,
-            this,
-            &WindowWrapper::hasApplicationMenuChanged);
-    connect(client, &Toplevel::surfaceIdChanged, this, &WindowWrapper::surfaceIdChanged);
+            &window::applicationMenuActiveChanged);
+    connect(client, &Toplevel::unresponsiveChanged, this, &window::unresponsiveChanged);
+    connect(client, &Toplevel::hasApplicationMenuChanged, this, &window::hasApplicationMenuChanged);
+    connect(client, &Toplevel::surfaceIdChanged, this, &window::surfaceIdChanged);
 
-    connect(client, &Toplevel::closeableChanged, this, &WindowWrapper::closeableChanged);
-    connect(client, &Toplevel::minimizeableChanged, this, &WindowWrapper::minimizeableChanged);
-    connect(client, &Toplevel::maximizeableChanged, this, &WindowWrapper::maximizeableChanged);
+    connect(client, &Toplevel::closeableChanged, this, &window::closeableChanged);
+    connect(client, &Toplevel::minimizeableChanged, this, &window::minimizeableChanged);
+    connect(client, &Toplevel::maximizeableChanged, this, &window::maximizeableChanged);
 
-    connect(
-        client, &Toplevel::desktopFileNameChanged, this, &WindowWrapper::desktopFileNameChanged);
+    connect(client, &Toplevel::desktopFileNameChanged, this, &window::desktopFileNameChanged);
 
     if (client->isClient()) {
         auto x11_client = dynamic_cast<win::x11::window*>(m_client);
@@ -129,461 +120,461 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
     }
 }
 
-xcb_window_t WindowWrapper::frameId() const
+xcb_window_t window::frameId() const
 {
     return m_client->frameId();
 }
 
-quint32 WindowWrapper::windowId() const
+quint32 window::windowId() const
 {
     return m_client->xcb_window();
 }
 
-QByteArray WindowWrapper::resourceName() const
+QByteArray window::resourceName() const
 {
     return m_client->resourceName();
 }
 
-QByteArray WindowWrapper::resourceClass() const
+QByteArray window::resourceClass() const
 {
     return m_client->resourceClass();
 }
 
-QString WindowWrapper::caption() const
+QString window::caption() const
 {
     return win::caption(m_client);
 }
 
-QIcon WindowWrapper::icon() const
+QIcon window::icon() const
 {
     return m_client->control->icon();
 }
 
-QRect WindowWrapper::iconGeometry() const
+QRect window::iconGeometry() const
 {
     return m_client->iconGeometry();
 }
 
-QUuid WindowWrapper::internalId() const
+QUuid window::internalId() const
 {
     return m_client->internalId();
 }
 
-pid_t WindowWrapper::pid() const
+pid_t window::pid() const
 {
     return m_client->pid();
 }
 
-QRect WindowWrapper::bufferGeometry() const
+QRect window::bufferGeometry() const
 {
     return win::render_geometry(m_client);
 }
 
-QRect WindowWrapper::frameGeometry() const
+QRect window::frameGeometry() const
 {
     return m_client->frameGeometry();
 }
 
-void WindowWrapper::setFrameGeometry(QRect const& geo)
+void window::setFrameGeometry(QRect const& geo)
 {
     m_client->setFrameGeometry(geo);
 }
 
-QPoint WindowWrapper::pos() const
+QPoint window::pos() const
 {
     return m_client->pos();
 }
 
-QRect WindowWrapper::rect() const
+QRect window::rect() const
 {
     return QRect(QPoint(0, 0), m_client->size());
 }
 
-QRect WindowWrapper::visibleRect() const
+QRect window::visibleRect() const
 {
     return win::visible_rect(m_client);
 }
 
-QSize WindowWrapper::size() const
+QSize window::size() const
 {
     return m_client->size();
 }
 
-QSize WindowWrapper::minSize() const
+QSize window::minSize() const
 {
     return m_client->minSize();
 }
 
-QSize WindowWrapper::maxSize() const
+QSize window::maxSize() const
 {
     return m_client->maxSize();
 }
 
-QPoint WindowWrapper::clientPos() const
+QPoint window::clientPos() const
 {
     return win::frame_relative_client_rect(m_client).topLeft();
 }
 
-QSize WindowWrapper::clientSize() const
+QSize window::clientSize() const
 {
     return win::frame_to_client_size(m_client, m_client->size());
 }
 
-int WindowWrapper::x() const
+int window::x() const
 {
     return m_client->pos().x();
 }
 
-int WindowWrapper::y() const
+int window::y() const
 {
     return m_client->pos().y();
 }
 
-int WindowWrapper::width() const
+int window::width() const
 {
     return m_client->size().width();
 }
 
-int WindowWrapper::height() const
+int window::height() const
 {
     return m_client->size().height();
 }
 
-bool WindowWrapper::isMove() const
+bool window::isMove() const
 {
     return win::is_move(m_client);
 }
 
-bool WindowWrapper::isResize() const
+bool window::isResize() const
 {
     return win::is_resize(m_client);
 }
 
-bool WindowWrapper::hasAlpha() const
+bool window::hasAlpha() const
 {
     return m_client->hasAlpha();
 }
 
-qreal WindowWrapper::opacity() const
+qreal window::opacity() const
 {
     return m_client->opacity();
 }
 
-void WindowWrapper::setOpacity(qreal opacity)
+void window::setOpacity(qreal opacity)
 {
     m_client->setOpacity(opacity);
 }
 
-bool WindowWrapper::isFullScreen() const
+bool window::isFullScreen() const
 {
     return m_client->control->fullscreen();
 }
 
-void WindowWrapper::setFullScreen(bool set)
+void window::setFullScreen(bool set)
 {
     m_client->setFullScreen(set);
 }
 
-int WindowWrapper::screen() const
+int window::screen() const
 {
     return m_client->screen();
 }
 
-int WindowWrapper::desktop() const
+int window::desktop() const
 {
     return m_client->desktop();
 }
 
-void WindowWrapper::setDesktop(int desktop)
+void window::setDesktop(int desktop)
 {
     win::set_desktop(m_client, desktop);
 }
 
-QVector<uint> WindowWrapper::x11DesktopIds() const
+QVector<uint> window::x11DesktopIds() const
 {
     return win::x11_desktop_ids(m_client);
 }
 
-bool WindowWrapper::isOnAllDesktops() const
+bool window::isOnAllDesktops() const
 {
     return m_client->isOnAllDesktops();
 }
 
-void WindowWrapper::setOnAllDesktops(bool set)
+void window::setOnAllDesktops(bool set)
 {
     win::set_on_all_desktops(m_client, set);
 }
 
-QStringList WindowWrapper::activities() const
+QStringList window::activities() const
 {
     return {};
 }
 
-QByteArray WindowWrapper::windowRole() const
+QByteArray window::windowRole() const
 {
     return m_client->windowRole();
 }
 
-NET::WindowType WindowWrapper::windowType(bool direct, int supported_types) const
+NET::WindowType window::windowType(bool direct, int supported_types) const
 {
     return m_client->windowType(direct, supported_types);
 }
 
-bool WindowWrapper::isDesktop() const
+bool window::isDesktop() const
 {
     return win::is_desktop(m_client);
 }
 
-bool WindowWrapper::isDock() const
+bool window::isDock() const
 {
     return win::is_dock(m_client);
 }
 
-bool WindowWrapper::isToolbar() const
+bool window::isToolbar() const
 {
     return win::is_toolbar(m_client);
 }
 
-bool WindowWrapper::isMenu() const
+bool window::isMenu() const
 {
     return win::is_menu(m_client);
 }
 
-bool WindowWrapper::isNormalWindow() const
+bool window::isNormalWindow() const
 {
     return win::is_normal(m_client);
 }
 
-bool WindowWrapper::isDialog() const
+bool window::isDialog() const
 {
     return win::is_dialog(m_client);
 }
 
-bool WindowWrapper::isSplash() const
+bool window::isSplash() const
 {
     return win::is_splash(m_client);
 }
 
-bool WindowWrapper::isUtility() const
+bool window::isUtility() const
 {
     return win::is_utility(m_client);
 }
 
-bool WindowWrapper::isDropdownMenu() const
+bool window::isDropdownMenu() const
 {
     return win::is_dropdown_menu(m_client);
 }
 
-bool WindowWrapper::isPopupMenu() const
+bool window::isPopupMenu() const
 {
     return win::is_popup_menu(m_client);
 }
 
-bool WindowWrapper::isTooltip() const
+bool window::isTooltip() const
 {
     return win::is_tooltip(m_client);
 }
 
-bool WindowWrapper::isNotification() const
+bool window::isNotification() const
 {
     return win::is_notification(m_client);
 }
 
-bool WindowWrapper::isCriticalNotification() const
+bool window::isCriticalNotification() const
 {
     return win::is_critical_notification(m_client);
 }
 
-bool WindowWrapper::isOnScreenDisplay() const
+bool window::isOnScreenDisplay() const
 {
     return win::is_on_screen_display(m_client);
 }
 
-bool WindowWrapper::isComboBox() const
+bool window::isComboBox() const
 {
     return win::is_combo_box(m_client);
 }
 
-bool WindowWrapper::isDNDIcon() const
+bool window::isDNDIcon() const
 {
     return win::is_dnd_icon(m_client);
 }
 
-bool WindowWrapper::isPopupWindow() const
+bool window::isPopupWindow() const
 {
     return win::is_popup(m_client);
 }
 
-bool WindowWrapper::isSpecialWindow() const
+bool window::isSpecialWindow() const
 {
     return win::is_special_window(m_client);
 }
 
-bool WindowWrapper::isCloseable() const
+bool window::isCloseable() const
 {
     return m_client->isCloseable();
 }
 
-bool WindowWrapper::isMovable() const
+bool window::isMovable() const
 {
     return m_client->isMovable();
 }
 
-bool WindowWrapper::isMovableAcrossScreens() const
+bool window::isMovableAcrossScreens() const
 {
     return m_client->isMovableAcrossScreens();
 }
 
-bool WindowWrapper::isResizable() const
+bool window::isResizable() const
 {
     return m_client->isResizable();
 }
 
-bool WindowWrapper::isMinimizable() const
+bool window::isMinimizable() const
 {
     return m_client->isMinimizable();
 }
 
-bool WindowWrapper::isMaximizable() const
+bool window::isMaximizable() const
 {
     return m_client->isMaximizable();
 }
 
-bool WindowWrapper::isFullScreenable() const
+bool window::isFullScreenable() const
 {
     return m_client->control->can_fullscreen();
 }
 
-bool WindowWrapper::isShadeable() const
+bool window::isShadeable() const
 {
     return false;
 }
 
-bool WindowWrapper::isOutline() const
+bool window::isOutline() const
 {
     return m_client->isOutline();
 }
 
-bool WindowWrapper::isShape() const
+bool window::isShape() const
 {
     return m_client->shape();
 }
 
-bool WindowWrapper::isShade() const
+bool window::isShade() const
 {
     return false;
 }
 
-void WindowWrapper::setShade([[maybe_unused]] bool set)
+void window::setShade([[maybe_unused]] bool set)
 {
 }
 
-bool WindowWrapper::keepAbove() const
+bool window::keepAbove() const
 {
     return m_client->control->keep_above();
 }
 
-void WindowWrapper::setKeepAbove(bool set)
+void window::setKeepAbove(bool set)
 {
     win::set_keep_above(m_client, set);
 }
 
-bool WindowWrapper::keepBelow() const
+bool window::keepBelow() const
 {
     return m_client->control->keep_below();
 }
 
-void WindowWrapper::setKeepBelow(bool set)
+void window::setKeepBelow(bool set)
 {
     win::set_keep_below(m_client, set);
 }
 
-bool WindowWrapper::isMinimized() const
+bool window::isMinimized() const
 {
     return m_client->control->minimized();
 }
 
-void WindowWrapper::setMinimized(bool set)
+void window::setMinimized(bool set)
 {
     win::set_minimized(m_client, set);
 }
 
-bool WindowWrapper::skipTaskbar() const
+bool window::skipTaskbar() const
 {
     return m_client->control->skip_taskbar();
 }
 
-void WindowWrapper::setSkipTaskbar(bool set)
+void window::setSkipTaskbar(bool set)
 {
     win::set_skip_taskbar(m_client, set);
 }
 
-bool WindowWrapper::skipPager() const
+bool window::skipPager() const
 {
     return m_client->control->skip_pager();
 }
 
-void WindowWrapper::setSkipPager(bool set)
+void window::setSkipPager(bool set)
 {
     win::set_skip_pager(m_client, set);
 }
 
-bool WindowWrapper::skipSwitcher() const
+bool window::skipSwitcher() const
 {
     return m_client->control->skip_switcher();
 }
 
-void WindowWrapper::setSkipSwitcher(bool set)
+void window::setSkipSwitcher(bool set)
 {
     win::set_skip_switcher(m_client, set);
 }
 
-bool WindowWrapper::skipsCloseAnimation() const
+bool window::skipsCloseAnimation() const
 {
     return m_client->skipsCloseAnimation();
 }
 
-void WindowWrapper::setSkipCloseAnimation(bool set)
+void window::setSkipCloseAnimation(bool set)
 {
     m_client->setSkipCloseAnimation(set);
 }
 
-bool WindowWrapper::isActive() const
+bool window::isActive() const
 {
     return m_client->control->active();
 }
 
-bool WindowWrapper::isDemandingAttention() const
+bool window::isDemandingAttention() const
 {
     return m_client->control->demands_attention();
 }
 
-void WindowWrapper::demandAttention(bool set)
+void window::demandAttention(bool set)
 {
     win::set_demands_attention(m_client, set);
 }
 
-bool WindowWrapper::wantsInput() const
+bool window::wantsInput() const
 {
     return m_client->wantsInput();
 }
 
-bool WindowWrapper::applicationMenuActive() const
+bool window::applicationMenuActive() const
 {
     return m_client->control->application_menu_active();
 }
 
-bool WindowWrapper::unresponsive() const
+bool window::unresponsive() const
 {
     return m_client->control->unresponsive();
 }
 
-bool WindowWrapper::isTransient() const
+bool window::isTransient() const
 {
     return m_client->transient()->lead();
 }
 
-WindowWrapper* WindowWrapper::transientFor() const
+window* window::transientFor() const
 {
     auto parent = m_client->transient()->lead();
     if (!parent) {
@@ -592,82 +583,82 @@ WindowWrapper* WindowWrapper::transientFor() const
     return m_workspace->get_window(parent);
 }
 
-bool WindowWrapper::isModal() const
+bool window::isModal() const
 {
     return m_client->transient()->modal();
 }
 
-bool WindowWrapper::decorationHasAlpha() const
+bool window::decorationHasAlpha() const
 {
     return win::decoration_has_alpha(m_client);
 }
 
-bool WindowWrapper::hasNoBorder() const
+bool window::hasNoBorder() const
 {
     return m_client->noBorder();
 }
 
-void WindowWrapper::setNoBorder(bool set)
+void window::setNoBorder(bool set)
 {
     m_client->setNoBorder(set);
 }
 
-QString WindowWrapper::colorScheme() const
+QString window::colorScheme() const
 {
     return m_client->control->palette().color_scheme;
 }
 
-QByteArray WindowWrapper::desktopFileName() const
+QByteArray window::desktopFileName() const
 {
     return m_client->control->desktop_file_name();
 }
 
-bool WindowWrapper::hasApplicationMenu() const
+bool window::hasApplicationMenu() const
 {
     return m_client->control->has_application_menu();
 }
 
-bool WindowWrapper::providesContextHelp() const
+bool window::providesContextHelp() const
 {
     return m_client->providesContextHelp();
 }
 
-bool WindowWrapper::isClient() const
+bool window::isClient() const
 {
     return m_client->isClient();
 }
 
-bool WindowWrapper::isDeleted() const
+bool window::isDeleted() const
 {
     return m_client->isDeleted();
 }
 
-quint32 WindowWrapper::surfaceId() const
+quint32 window::surfaceId() const
 {
     return m_client->surfaceId();
 }
 
-Wrapland::Server::Surface* WindowWrapper::surface() const
+Wrapland::Server::Surface* window::surface() const
 {
     return m_client->surface();
 }
 
-QSize WindowWrapper::basicUnit() const
+QSize window::basicUnit() const
 {
     return m_client->basicUnit();
 }
 
-bool WindowWrapper::isBlockingCompositing()
+bool window::isBlockingCompositing()
 {
     return m_client->isBlockingCompositing();
 }
 
-void WindowWrapper::setBlockingCompositing(bool block)
+void window::setBlockingCompositing(bool block)
 {
     m_client->setBlockingCompositing(block);
 }
 
-Toplevel* WindowWrapper::client() const
+Toplevel* window::client() const
 {
     return m_client;
 }

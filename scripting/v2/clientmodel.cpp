@@ -36,8 +36,8 @@ client_level::client_level(client_model* model, abstract_level* parent)
             &VirtualDesktopManager::currentChanged,
             this,
             &client_level::reInit);
-    connect(ws_wrap, &WorkspaceWrapper::clientAdded, this, &client_level::clientAdded);
-    connect(ws_wrap, &WorkspaceWrapper::clientRemoved, this, &client_level::clientRemoved);
+    connect(ws_wrap, &space::clientAdded, this, &client_level::clientAdded);
+    connect(ws_wrap, &space::clientRemoved, this, &client_level::clientRemoved);
     connect(model, &client_model::exclusionsChanged, this, &client_level::reInit);
 }
 
@@ -45,27 +45,27 @@ client_level::~client_level()
 {
 }
 
-void client_level::clientAdded(WindowWrapper* client)
+void client_level::clientAdded(window* client)
 {
     setupClientConnections(client);
     checkClient(client);
 }
 
-void client_level::clientRemoved(WindowWrapper* client)
+void client_level::clientRemoved(window* client)
 {
     removeClient(client);
 }
 
-void client_level::setupClientConnections(WindowWrapper* client)
+void client_level::setupClientConnections(window* client)
 {
     auto check = [this, client] { checkClient(client); };
-    connect(client, &WindowWrapper::desktopChanged, this, check);
-    connect(client, &WindowWrapper::screenChanged, this, check);
+    connect(client, &window::desktopChanged, this, check);
+    connect(client, &window::screenChanged, this, check);
     connect(client->client(), &Toplevel::windowHidden, this, check);
     connect(client->client(), &Toplevel::windowShown, this, check);
 }
 
-void client_level::checkClient(WindowWrapper* client)
+void client_level::checkClient(window* client)
 {
     const bool shouldInclude = !exclude(client) && shouldAdd(client);
     const bool contains = containsClient(client);
@@ -77,7 +77,7 @@ void client_level::checkClient(WindowWrapper* client)
     }
 }
 
-bool client_level::exclude(WindowWrapper* client) const
+bool client_level::exclude(window* client) const
 {
     client_model::Exclusions exclusions = model()->exclusions();
     if (exclusions == client_model::NoExclusion) {
@@ -136,7 +136,7 @@ bool client_level::exclude(WindowWrapper* client) const
     return false;
 }
 
-bool client_level::shouldAdd(WindowWrapper* client) const
+bool client_level::shouldAdd(window* client) const
 {
     if (restrictions() == client_model::NoRestriction) {
         return true;
@@ -154,7 +154,7 @@ bool client_level::shouldAdd(WindowWrapper* client) const
     return true;
 }
 
-void client_level::addClient(WindowWrapper* client)
+void client_level::addClient(window* client)
 {
     if (containsClient(client)) {
         return;
@@ -164,7 +164,7 @@ void client_level::addClient(WindowWrapper* client)
     emit endInsert();
 }
 
-void client_level::removeClient(WindowWrapper* client)
+void client_level::removeClient(window* client)
 {
     int index = 0;
     auto it = m_clients.begin();
@@ -228,7 +228,7 @@ int client_level::rowForId(quint32 id) const
     return -1;
 }
 
-WindowWrapper* client_level::clientForId(quint32 child) const
+window* client_level::clientForId(quint32 child) const
 {
     auto it = m_clients.constFind(child);
     if (it == m_clients.constEnd()) {
@@ -237,7 +237,7 @@ WindowWrapper* client_level::clientForId(quint32 child) const
     return it.value();
 }
 
-bool client_level::containsClient(WindowWrapper* client) const
+bool client_level::containsClient(window* client) const
 {
     for (auto it = m_clients.constBegin(); it != m_clients.constEnd(); ++it) {
         if (it.value() == client) {
@@ -556,7 +556,7 @@ int fork_level::rowForId(quint32 child) const
     return -1;
 }
 
-WindowWrapper* fork_level::clientForId(quint32 child) const
+window* fork_level::clientForId(quint32 child) const
 {
     for (QList<abstract_level*>::const_iterator it = m_children.constBegin();
          it != m_children.constEnd();

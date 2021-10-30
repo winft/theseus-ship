@@ -104,7 +104,7 @@ script::script(int id, QString scriptName, QString pluginName, QObject* parent)
         QMetaType::registerConverter<QJSValue, QSize>(scriptValueToSize);
     }
 
-    qRegisterMetaType<QList<WindowWrapper*>>();
+    qRegisterMetaType<QList<window*>>();
 }
 
 script::~script()
@@ -169,8 +169,7 @@ void script::slotScriptLoadedFromFile()
 
     // Expose enums.
     m_engine->globalObject().setProperty(
-        QStringLiteral("KWin"),
-        m_engine->newQMetaObject(&QtScriptWorkspaceWrapper::staticMetaObject));
+        QStringLiteral("KWin"), m_engine->newQMetaObject(&qt_script_space::staticMetaObject));
 
     // Make the options object visible to QJSEngine.
     QJSValue optionsObject = m_engine->newQObject(options);
@@ -434,7 +433,7 @@ void script::registerUserActionsMenu(const QJSValue& callback)
     m_userActionsMenuCallbacks.append(callback);
 }
 
-QList<QAction*> script::actionsForUserActionMenu(WindowWrapper* window, QMenu* parent)
+QList<QAction*> script::actionsForUserActionMenu(window* window, QMenu* parent)
 {
     QList<QAction*> actions;
     actions.reserve(m_userActionsMenuCallbacks.count());

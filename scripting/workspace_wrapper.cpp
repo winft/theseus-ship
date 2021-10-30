@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::scripting
 {
 
-WorkspaceWrapper::WorkspaceWrapper(QObject* parent)
+space::space(QObject* parent)
     : QObject(parent)
 {
     KWin::Workspace* ws = KWin::Workspace::self();
@@ -53,9 +53,9 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent)
         Q_EMIT currentDesktopChanged(desktop, window);
     });
 
-    connect(ws, &Workspace::clientAdded, this, &WorkspaceWrapper::handle_client_added);
-    connect(ws, &Workspace::clientRemoved, this, &WorkspaceWrapper::handle_client_removed);
-    connect(ws, &Workspace::wayland_window_added, this, &WorkspaceWrapper::handle_client_added);
+    connect(ws, &Workspace::clientAdded, this, &space::handle_client_added);
+    connect(ws, &Workspace::clientRemoved, this, &space::handle_client_removed);
+    connect(ws, &Workspace::wayland_window_added, this, &space::handle_client_added);
 
     connect(ws, &Workspace::clientActivated, this, [this](Toplevel* client) {
         auto window = get_window(client);
@@ -68,36 +68,30 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent)
             Q_EMIT clientDemandsAttentionChanged(window, set);
         });
 
-    connect(
-        vds, &VirtualDesktopManager::countChanged, this, &WorkspaceWrapper::numberDesktopsChanged);
-    connect(
-        vds, &VirtualDesktopManager::layoutChanged, this, &WorkspaceWrapper::desktopLayoutChanged);
+    connect(vds, &VirtualDesktopManager::countChanged, this, &space::numberDesktopsChanged);
+    connect(vds, &VirtualDesktopManager::layoutChanged, this, &space::desktopLayoutChanged);
 
-    connect(screens(), &Screens::sizeChanged, this, &WorkspaceWrapper::virtualScreenSizeChanged);
-    connect(screens(),
-            &Screens::geometryChanged,
-            this,
-            &WorkspaceWrapper::virtualScreenGeometryChanged);
+    connect(screens(), &Screens::sizeChanged, this, &space::virtualScreenSizeChanged);
+    connect(screens(), &Screens::geometryChanged, this, &space::virtualScreenGeometryChanged);
     connect(screens(), &Screens::countChanged, this, [this](int previousCount, int currentCount) {
         Q_UNUSED(previousCount)
         emit numberScreensChanged(currentCount);
     });
     // TODO Plasma 6: Remove it.
-    connect(
-        QApplication::desktop(), &QDesktopWidget::resized, this, &WorkspaceWrapper::screenResized);
+    connect(QApplication::desktop(), &QDesktopWidget::resized, this, &space::screenResized);
 
     for (auto client : ws->allClientList()) {
         handle_client_added(client);
     }
 }
 
-void WorkspaceWrapper::handle_client_added(Toplevel* client)
+void space::handle_client_added(Toplevel* client)
 {
     if (!client->control) {
         // Only windows with control are made available to the scripting system.
         return;
     }
-    auto wrapper = std::make_unique<WindowWrapper>(client, this);
+    auto wrapper = std::make_unique<window>(client, this);
 
     setupAbstractClientConnections(wrapper.get());
     if (client->isClient()) {
@@ -108,7 +102,7 @@ void WorkspaceWrapper::handle_client_added(Toplevel* client)
     m_windows.push_back(std::move(wrapper));
 }
 
-void WorkspaceWrapper::handle_client_removed(Toplevel* client)
+void space::handle_client_removed(Toplevel* client)
 {
     auto remover = [this, client](auto& wrapper) {
         if (wrapper->client() == client) {
@@ -120,7 +114,7 @@ void WorkspaceWrapper::handle_client_removed(Toplevel* client)
     m_windows.erase(std::remove_if(m_windows.begin(), m_windows.end(), remover), m_windows.end());
 }
 
-WindowWrapper* WorkspaceWrapper::get_window(Toplevel* client) const
+window* space::get_window(Toplevel* client) const
 {
     auto const it
         = std::find_if(m_windows.cbegin(), m_windows.cend(), [client](auto const& window) {
@@ -129,27 +123,27 @@ WindowWrapper* WorkspaceWrapper::get_window(Toplevel* client) const
     return it != m_windows.cend() ? it->get() : nullptr;
 }
 
-int WorkspaceWrapper::currentDesktop() const
+int space::currentDesktop() const
 {
     return VirtualDesktopManager::self()->current();
 }
 
-int WorkspaceWrapper::numberOfDesktops() const
+int space::numberOfDesktops() const
 {
     return VirtualDesktopManager::self()->count();
 }
 
-void WorkspaceWrapper::setCurrentDesktop(int desktop)
+void space::setCurrentDesktop(int desktop)
 {
     VirtualDesktopManager::self()->setCurrent(desktop);
 }
 
-void WorkspaceWrapper::setNumberOfDesktops(int count)
+void space::setNumberOfDesktops(int count)
 {
     VirtualDesktopManager::self()->setCount(count);
 }
 
-WindowWrapper* WorkspaceWrapper::activeClient() const
+window* space::activeClient() const
 {
     auto active_client = workspace()->activeClient();
     if (!active_client) {
@@ -158,22 +152,22 @@ WindowWrapper* WorkspaceWrapper::activeClient() const
     return get_window(active_client);
 }
 
-QString WorkspaceWrapper::currentActivity() const
+QString space::currentActivity() const
 {
     return {};
 }
 
-void WorkspaceWrapper::setCurrentActivity(QString /*activity*/)
+void space::setCurrentActivity(QString /*activity*/)
 {
 }
 
-QStringList WorkspaceWrapper::activityList() const
+QStringList space::activityList() const
 {
     return {};
 }
 
 #define SLOTWRAPPER(name)                                                                          \
-    void WorkspaceWrapper::name()                                                                  \
+    void space::name()                                                                             \
     {                                                                                              \
         Workspace::self()->name();                                                                 \
     }
@@ -222,7 +216,7 @@ SLOTWRAPPER(slotWindowToDesktopDown)
 #undef SLOTWRAPPER
 
 #define SLOTWRAPPER(name, modes)                                                                   \
-    void WorkspaceWrapper::name()                                                                  \
+    void space::name()                                                                             \
     {                                                                                              \
         Workspace::self()->quickTileWindow(modes);                                                 \
     }
@@ -239,7 +233,7 @@ SLOTWRAPPER(slotWindowQuickTileBottomRight, win::quicktiles::bottom | win::quick
 #undef SLOTWRAPPER
 
 #define SLOTWRAPPER(name, direction)                                                               \
-    void WorkspaceWrapper::name()                                                                  \
+    void space::name()                                                                             \
     {                                                                                              \
         Workspace::self()->switchWindow(Workspace::direction);                                     \
     }
@@ -252,7 +246,7 @@ SLOTWRAPPER(slotSwitchWindowLeft, DirectionWest)
 #undef SLOTWRAPPER
 
 #define SLOTWRAPPER(name, direction)                                                               \
-    void WorkspaceWrapper::name()                                                                  \
+    void space::name()                                                                             \
     {                                                                                              \
         VirtualDesktopManager::self()->moveTo<direction>(options->isRollOverDesktops());           \
     }
@@ -266,62 +260,62 @@ SLOTWRAPPER(slotSwitchDesktopDown, DesktopBelow)
 
 #undef SLOTWRAPPER
 
-void WorkspaceWrapper::setActiveClient(WindowWrapper* window)
+void space::setActiveClient(window* window)
 {
     KWin::Workspace::self()->activateClient(window->client());
 }
 
-QSize WorkspaceWrapper::workspaceSize() const
+QSize space::workspaceSize() const
 {
     return QSize(workspaceWidth(), workspaceHeight());
 }
 
-QSize WorkspaceWrapper::displaySize() const
+QSize space::displaySize() const
 {
     return screens()->displaySize();
 }
 
-int WorkspaceWrapper::displayWidth() const
+int space::displayWidth() const
 {
     return displaySize().width();
 }
 
-int WorkspaceWrapper::displayHeight() const
+int space::displayHeight() const
 {
     return displaySize().height();
 }
 
-QRect WorkspaceWrapper::clientArea(ClientAreaOption option, const QPoint& p, int desktop) const
+QRect space::clientArea(ClientAreaOption option, const QPoint& p, int desktop) const
 {
     return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), p, desktop);
 }
 
-QRect WorkspaceWrapper::clientArea(ClientAreaOption option, WindowWrapper* window) const
+QRect space::clientArea(ClientAreaOption option, window* window) const
 {
     return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), window->client());
 }
 
-QRect WorkspaceWrapper::clientArea(ClientAreaOption option, WindowWrapper const* c) const
+QRect space::clientArea(ClientAreaOption option, window const* c) const
 {
     return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), c->client());
 }
 
-QRect WorkspaceWrapper::clientArea(ClientAreaOption option, int screen, int desktop) const
+QRect space::clientArea(ClientAreaOption option, int screen, int desktop) const
 {
     return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), screen, desktop);
 }
 
-QString WorkspaceWrapper::desktopName(int desktop) const
+QString space::desktopName(int desktop) const
 {
     return VirtualDesktopManager::self()->name(desktop);
 }
 
-void WorkspaceWrapper::createDesktop(int position, const QString& name) const
+void space::createDesktop(int position, const QString& name) const
 {
     VirtualDesktopManager::self()->createVirtualDesktop(position, name);
 }
 
-void WorkspaceWrapper::removeDesktop(int position) const
+void space::removeDesktop(int position) const
 {
     VirtualDesktop* vd = VirtualDesktopManager::self()->desktopForX11Id(position + 1);
     if (!vd) {
@@ -331,44 +325,40 @@ void WorkspaceWrapper::removeDesktop(int position) const
     VirtualDesktopManager::self()->removeVirtualDesktop(vd->id());
 }
 
-QString WorkspaceWrapper::supportInformation() const
+QString space::supportInformation() const
 {
     return Workspace::self()->supportInformation();
 }
 
-void WorkspaceWrapper::setupAbstractClientConnections(WindowWrapper* window)
+void space::setupAbstractClientConnections(window* window)
 {
-    connect(window, &WindowWrapper::clientMinimized, this, &WorkspaceWrapper::clientMinimized);
-    connect(window, &WindowWrapper::clientUnminimized, this, &WorkspaceWrapper::clientUnminimized);
-    connect(window,
-            &WindowWrapper::clientMaximizedStateChanged,
-            this,
-            &WorkspaceWrapper::clientMaximizeSet);
+    connect(window, &window::clientMinimized, this, &space::clientMinimized);
+    connect(window, &window::clientUnminimized, this, &space::clientUnminimized);
+    connect(window, &window::clientMaximizedStateChanged, this, &space::clientMaximizeSet);
 }
 
-void WorkspaceWrapper::setupClientConnections(WindowWrapper* window)
+void space::setupClientConnections(window* window)
 {
-    connect(window, &WindowWrapper::clientManaging, this, &WorkspaceWrapper::clientManaging);
-    connect(
-        window, &WindowWrapper::clientFullScreenSet, this, &WorkspaceWrapper::clientFullScreenSet);
+    connect(window, &window::clientManaging, this, &space::clientManaging);
+    connect(window, &window::clientFullScreenSet, this, &space::clientFullScreenSet);
 }
 
-void WorkspaceWrapper::showOutline(const QRect& geometry)
+void space::showOutline(const QRect& geometry)
 {
     outline()->show(geometry);
 }
 
-void WorkspaceWrapper::showOutline(int x, int y, int width, int height)
+void space::showOutline(int x, int y, int width, int height)
 {
     outline()->show(QRect(x, y, width, height));
 }
 
-void WorkspaceWrapper::hideOutline()
+void space::hideOutline()
 {
     outline()->hide();
 }
 
-WindowWrapper* WorkspaceWrapper::getClient(qulonglong windowId)
+window* space::getClient(qulonglong windowId)
 {
     auto const it
         = std::find_if(m_windows.cbegin(), m_windows.cend(), [windowId](auto const& client) {
@@ -377,61 +367,61 @@ WindowWrapper* WorkspaceWrapper::getClient(qulonglong windowId)
     return it != m_windows.cend() ? it->get() : nullptr;
 }
 
-QSize WorkspaceWrapper::desktopGridSize() const
+QSize space::desktopGridSize() const
 {
     return VirtualDesktopManager::self()->grid().size();
 }
 
-int WorkspaceWrapper::desktopGridWidth() const
+int space::desktopGridWidth() const
 {
     return desktopGridSize().width();
 }
 
-int WorkspaceWrapper::desktopGridHeight() const
+int space::desktopGridHeight() const
 {
     return desktopGridSize().height();
 }
 
-int WorkspaceWrapper::workspaceHeight() const
+int space::workspaceHeight() const
 {
     return desktopGridHeight() * displayHeight();
 }
 
-int WorkspaceWrapper::workspaceWidth() const
+int space::workspaceWidth() const
 {
     return desktopGridWidth() * displayWidth();
 }
 
-int WorkspaceWrapper::numScreens() const
+int space::numScreens() const
 {
     return screens()->count();
 }
 
-int WorkspaceWrapper::activeScreen() const
+int space::activeScreen() const
 {
     return screens()->current();
 }
 
-QRect WorkspaceWrapper::virtualScreenGeometry() const
+QRect space::virtualScreenGeometry() const
 {
     return screens()->geometry();
 }
 
-QSize WorkspaceWrapper::virtualScreenSize() const
+QSize space::virtualScreenSize() const
 {
     return screens()->size();
 }
 
-std::vector<WindowWrapper*> WorkspaceWrapper::windows() const
+std::vector<window*> space::windows() const
 {
-    std::vector<WindowWrapper*> ret;
+    std::vector<window*> ret;
     for (auto const& client : m_windows) {
         ret.push_back(client.get());
     }
     return ret;
 }
 
-void WorkspaceWrapper::sendClientToScreen(WindowWrapper* client, int screen)
+void space::sendClientToScreen(window* client, int screen)
 {
     if (screen < 0 || screen >= screens()->count()) {
         return;
@@ -439,40 +429,39 @@ void WorkspaceWrapper::sendClientToScreen(WindowWrapper* client, int screen)
     workspace()->sendClientToScreen(client->client(), screen);
 }
 
-QtScriptWorkspaceWrapper::QtScriptWorkspaceWrapper(QObject* parent)
-    : WorkspaceWrapper(parent)
+qt_script_space::qt_script_space(QObject* parent)
+    : space(parent)
 {
 }
 
-QList<WindowWrapper*> QtScriptWorkspaceWrapper::clientList() const
+QList<window*> qt_script_space::clientList() const
 {
-    QList<WindowWrapper*> ret;
+    QList<window*> ret;
     for (auto const& client : m_windows) {
         ret << client.get();
     }
     return ret;
 }
 
-QQmlListProperty<WindowWrapper> DeclarativeScriptWorkspaceWrapper::clients()
+QQmlListProperty<window> declarative_script_space::clients()
 {
-    return QQmlListProperty<WindowWrapper>(this,
-                                           this,
-                                           &DeclarativeScriptWorkspaceWrapper::countClientList,
-                                           &DeclarativeScriptWorkspaceWrapper::atClientList);
+    return QQmlListProperty<window>(this,
+                                    this,
+                                    &declarative_script_space::countClientList,
+                                    &declarative_script_space::atClientList);
 }
 
-int DeclarativeScriptWorkspaceWrapper::countClientList(QQmlListProperty<WindowWrapper>* clients)
+int declarative_script_space::countClientList(QQmlListProperty<window>* clients)
 {
     Q_UNUSED(clients)
-    auto wsw = reinterpret_cast<DeclarativeScriptWorkspaceWrapper*>(clients->data);
+    auto wsw = reinterpret_cast<declarative_script_space*>(clients->data);
     return wsw->m_windows.size();
 }
 
-WindowWrapper*
-DeclarativeScriptWorkspaceWrapper::atClientList(QQmlListProperty<WindowWrapper>* clients, int index)
+window* declarative_script_space::atClientList(QQmlListProperty<window>* clients, int index)
 {
     Q_UNUSED(clients)
-    auto wsw = reinterpret_cast<DeclarativeScriptWorkspaceWrapper*>(clients->data);
+    auto wsw = reinterpret_cast<declarative_script_space*>(clients->data);
 
     try {
         return wsw->m_windows[index].get();
@@ -481,8 +470,8 @@ DeclarativeScriptWorkspaceWrapper::atClientList(QQmlListProperty<WindowWrapper>*
     }
 }
 
-DeclarativeScriptWorkspaceWrapper::DeclarativeScriptWorkspaceWrapper(QObject* parent)
-    : WorkspaceWrapper(parent)
+declarative_script_space::declarative_script_space(QObject* parent)
+    : space(parent)
 {
 }
 

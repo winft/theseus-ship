@@ -12,7 +12,7 @@
 
 namespace KWin::scripting
 {
-class WindowWrapper;
+class window;
 
 namespace models::v3
 {
@@ -36,13 +36,13 @@ public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
 private:
-    void markRoleChanged(WindowWrapper* client, int role);
+    void markRoleChanged(window* client, int role);
 
-    void handleClientAdded(WindowWrapper* client);
-    void handleClientRemoved(WindowWrapper* client);
-    void setupClientConnections(WindowWrapper* client);
+    void handleClientAdded(window* client);
+    void handleClientRemoved(window* client);
+    void setupClientConnections(window* client);
 
-    QList<WindowWrapper*> m_clients;
+    QList<window*> m_clients;
 };
 
 class client_filter_model : public QSortFilterProxyModel
@@ -107,7 +107,7 @@ Q_SIGNALS:
     void windowTypeChanged();
 
 private:
-    WindowTypes windowTypeMask(WindowWrapper* client) const;
+    WindowTypes windowTypeMask(window* client) const;
 
     client_model* m_clientModel = nullptr;
     std::optional<int> m_desktop;

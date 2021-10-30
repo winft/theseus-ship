@@ -28,7 +28,7 @@ namespace scripting
 {
 class abstract_script;
 class DeclarativeScript;
-class QtScriptWorkspaceWrapper;
+class qt_script_space;
 
 /**
  * The heart of Scripting. Infinite power lies beyond
@@ -71,7 +71,7 @@ public:
     QQmlEngine* qmlEngine();
     QQmlContext* declarativeScriptSharedContext() const;
     QQmlContext* declarativeScriptSharedContext();
-    QtScriptWorkspaceWrapper* workspaceWrapper() const;
+    qt_script_space* workspaceWrapper() const;
 
     abstract_script* findScript(const QString& pluginName) const;
 
@@ -91,7 +91,7 @@ private:
     static scripting* s_self;
     QQmlEngine* m_qmlEngine;
     QQmlContext* m_declarativeScriptSharedContext;
-    QtScriptWorkspaceWrapper* m_workspaceWrapper;
+    qt_script_space* m_workspaceWrapper;
 };
 
 inline QQmlEngine* scripting::qmlEngine() const
@@ -114,7 +114,7 @@ inline QQmlContext* scripting::declarativeScriptSharedContext()
     return m_declarativeScriptSharedContext;
 }
 
-inline QtScriptWorkspaceWrapper* scripting::workspaceWrapper() const
+inline qt_script_space* scripting::workspaceWrapper() const
 {
     return m_workspaceWrapper;
 }

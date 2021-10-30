@@ -26,9 +26,9 @@ class Toplevel;
 
 namespace scripting
 {
-class WorkspaceWrapper;
+class space;
 
-class WindowWrapper : public QObject
+class window : public QObject
 {
     Q_OBJECT
 
@@ -137,7 +137,7 @@ class WindowWrapper : public QObject
     Q_PROPERTY(bool unresponsive READ unresponsive NOTIFY unresponsiveChanged)
 
     Q_PROPERTY(bool transient READ isTransient NOTIFY transientChanged)
-    Q_PROPERTY(WindowWrapper* transientFor READ transientFor NOTIFY transientChanged)
+    Q_PROPERTY(window* transientFor READ transientFor NOTIFY transientChanged)
     Q_PROPERTY(bool modal READ isModal NOTIFY modalChanged)
 
     Q_PROPERTY(bool decorationHasAlpha READ decorationHasAlpha)
@@ -163,7 +163,7 @@ class WindowWrapper : public QObject
                    blockingCompositingChanged)
 
 public:
-    WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace);
+    window(Toplevel* client, space* workspace);
 
     xcb_window_t frameId() const;
     quint32 windowId() const;
@@ -278,7 +278,7 @@ public:
     bool unresponsive() const;
 
     bool isTransient() const;
-    WindowWrapper* transientFor() const;
+    window* transientFor() const;
     bool isModal() const;
 
     bool decorationHasAlpha() const;
@@ -311,9 +311,9 @@ Q_SIGNALS:
 
     void moveResizedChanged();
     void moveResizeCursorChanged(input::cursor_shape);
-    void clientStartUserMovedResized(KWin::scripting::WindowWrapper* window);
-    void clientStepUserMovedResized(KWin::scripting::WindowWrapper* window, const QRect&);
-    void clientFinishUserMovedResized(KWin::scripting::WindowWrapper* window);
+    void clientStartUserMovedResized(KWin::scripting::window* window);
+    void clientStepUserMovedResized(KWin::scripting::window* window, const QRect&);
+    void clientFinishUserMovedResized(KWin::scripting::window* window);
 
     void closeableChanged(bool);
     void minimizeableChanged(bool);
@@ -321,13 +321,13 @@ Q_SIGNALS:
     void maximizeableChanged(bool);
 
     void hasAlphaChanged();
-    void opacityChanged(KWin::scripting::WindowWrapper* client, qreal old_opacity);
+    void opacityChanged(KWin::scripting::window* client, qreal old_opacity);
     void fullScreenChanged();
 
     void screenChanged();
     void desktopChanged();
     void x11DesktopIdsChanged();
-    void activitiesChanged(KWin::scripting::WindowWrapper* client);
+    void activitiesChanged(KWin::scripting::window* client);
     void windowRoleChanged();
 
     void shapedChanged();
@@ -343,7 +343,7 @@ Q_SIGNALS:
     void skipCloseAnimationChanged();
 
     void activeChanged();
-    void desktopPresenceChanged(KWin::scripting::WindowWrapper* window, int);
+    void desktopPresenceChanged(KWin::scripting::window* window, int);
     void demandsAttentionChanged();
     void applicationMenuActiveChanged();
     void unresponsiveChanged(bool);
@@ -356,31 +356,30 @@ Q_SIGNALS:
     void hasApplicationMenuChanged();
     void surfaceIdChanged(quint32);
 
-    void blockingCompositingChanged(KWin::scripting::WindowWrapper* window);
+    void blockingCompositingChanged(KWin::scripting::window* window);
 
-    void clientMinimized(KWin::scripting::WindowWrapper* window);
-    void clientUnminimized(KWin::scripting::WindowWrapper* window);
+    void clientMinimized(KWin::scripting::window* window);
+    void clientUnminimized(KWin::scripting::window* window);
 
-    void clientMaximizedStateChanged(KWin::scripting::WindowWrapper* window,
-                                     bool horizontal,
-                                     bool vertical);
+    void
+    clientMaximizedStateChanged(KWin::scripting::window* window, bool horizontal, bool vertical);
 
     /**
      * X11 only signals
      */
-    void clientManaging(KWin::scripting::WindowWrapper* window);
-    void clientFullScreenSet(KWin::scripting::WindowWrapper* client, bool fullscreen, bool user);
+    void clientManaging(KWin::scripting::window* window);
+    void clientFullScreenSet(KWin::scripting::window* client, bool fullscreen, bool user);
 
     // TODO: this signal is never emitted - remove?
-    void clientMaximizeSet(KWin::scripting::WindowWrapper* window, bool horizontal, bool vertical);
+    void clientMaximizeSet(KWin::scripting::window* window, bool horizontal, bool vertical);
 
 private:
     Toplevel* m_client;
-    WorkspaceWrapper* m_workspace;
+    space* m_workspace;
 };
 
 }
 }
 
-Q_DECLARE_METATYPE(KWin::scripting::WindowWrapper*)
-Q_DECLARE_METATYPE(QList<KWin::scripting::WindowWrapper*>)
+Q_DECLARE_METATYPE(KWin::scripting::window*)
+Q_DECLARE_METATYPE(QList<KWin::scripting::window*>)

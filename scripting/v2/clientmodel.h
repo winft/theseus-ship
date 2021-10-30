@@ -29,7 +29,7 @@ class Client;
 
 namespace scripting
 {
-class WindowWrapper;
+class window;
 
 namespace models::v2
 {
@@ -157,7 +157,7 @@ public:
     virtual const abstract_level* levelForId(quint32 id) const = 0;
     virtual abstract_level* parentForId(quint32 child) const = 0;
     virtual int rowForId(quint32 child) const = 0;
-    virtual WindowWrapper* clientForId(quint32 child) const = 0;
+    virtual window* clientForId(quint32 child) const = 0;
 
     virtual void setScreen(uint screen);
     virtual void setVirtualDesktop(uint virtualDesktop);
@@ -206,7 +206,7 @@ public:
     const abstract_level* levelForId(quint32 id) const override;
     abstract_level* parentForId(quint32 child) const override;
     int rowForId(quint32 child) const override;
-    WindowWrapper* clientForId(quint32 child) const override;
+    window* clientForId(quint32 child) const override;
 private Q_SLOTS:
     void desktopCountChanged(uint previousCount, uint newCount);
     void screenCountChanged(int previousCount, int newCount);
@@ -241,25 +241,25 @@ public:
     quint32 idForRow(int row) const override;
     bool containsId(quint32 id) const;
     int rowForId(quint32 row) const override;
-    WindowWrapper* clientForId(quint32 child) const override;
+    window* clientForId(quint32 child) const override;
     const abstract_level* levelForId(quint32 id) const override;
     abstract_level* parentForId(quint32 child) const override;
 public Q_SLOTS:
-    void clientAdded(KWin::scripting::WindowWrapper* client);
-    void clientRemoved(KWin::scripting::WindowWrapper* client);
+    void clientAdded(KWin::scripting::window* client);
+    void clientRemoved(KWin::scripting::window* client);
 private Q_SLOTS:
     // uses sender()
     void reInit();
 
 private:
-    void checkClient(WindowWrapper* client);
-    void setupClientConnections(WindowWrapper* client);
-    void addClient(WindowWrapper* client);
-    void removeClient(WindowWrapper* client);
-    bool shouldAdd(WindowWrapper* client) const;
-    bool exclude(WindowWrapper* client) const;
-    bool containsClient(WindowWrapper* client) const;
-    QMap<quint32, WindowWrapper*> m_clients;
+    void checkClient(window* client);
+    void setupClientConnections(window* client);
+    void addClient(window* client);
+    void removeClient(window* client);
+    bool shouldAdd(window* client) const;
+    bool exclude(window* client) const;
+    bool containsClient(window* client) const;
+    QMap<quint32, window*> m_clients;
 };
 
 class simple_client_model : public client_model

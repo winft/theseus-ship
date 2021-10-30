@@ -19,8 +19,8 @@ client_model::client_model(QObject* parent)
 {
     auto ws_wrap = scripting::self()->workspaceWrapper();
 
-    connect(ws_wrap, &WorkspaceWrapper::clientAdded, this, &client_model::handleClientAdded);
-    connect(ws_wrap, &WorkspaceWrapper::clientRemoved, this, &client_model::handleClientRemoved);
+    connect(ws_wrap, &space::clientAdded, this, &client_model::handleClientAdded);
+    connect(ws_wrap, &space::clientRemoved, this, &client_model::handleClientRemoved);
 
     for (auto window : ws_wrap->windows()) {
         m_clients << window;
@@ -28,23 +28,23 @@ client_model::client_model(QObject* parent)
     }
 }
 
-void client_model::markRoleChanged(WindowWrapper* client, int role)
+void client_model::markRoleChanged(window* client, int role)
 {
     const QModelIndex row = index(m_clients.indexOf(client), 0);
     Q_EMIT dataChanged(row, row, {role});
 }
 
-void client_model::setupClientConnections(WindowWrapper* client)
+void client_model::setupClientConnections(window* client)
 {
-    connect(client, &WindowWrapper::desktopChanged, this, [this, client]() {
+    connect(client, &window::desktopChanged, this, [this, client]() {
         markRoleChanged(client, DesktopRole);
     });
-    connect(client, &WindowWrapper::screenChanged, this, [this, client]() {
+    connect(client, &window::screenChanged, this, [this, client]() {
         markRoleChanged(client, ScreenRole);
     });
 }
 
-void client_model::handleClientAdded(WindowWrapper* client)
+void client_model::handleClientAdded(window* client)
 {
     beginInsertRows(QModelIndex(), m_clients.count(), m_clients.count());
     m_clients.append(client);
@@ -53,7 +53,7 @@ void client_model::handleClientAdded(WindowWrapper* client)
     setupClientConnections(client);
 }
 
-void client_model::handleClientRemoved(WindowWrapper* client)
+void client_model::handleClientRemoved(window* client)
 {
     const int index = m_clients.indexOf(client);
     Q_ASSERT(index != -1);
@@ -233,7 +233,7 @@ bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sou
         return true;
     }
 
-    auto client = qvariant_cast<WindowWrapper*>(data);
+    auto client = qvariant_cast<window*>(data);
     if (!client) {
         return false;
     }
@@ -277,7 +277,7 @@ bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sou
     return true;
 }
 
-client_filter_model::WindowTypes client_filter_model::windowTypeMask(WindowWrapper* client) const
+client_filter_model::WindowTypes client_filter_model::windowTypeMask(window* client) const
 {
     WindowTypes mask;
     if (client->isNormalWindow()) {

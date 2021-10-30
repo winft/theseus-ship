@@ -54,7 +54,7 @@ scripting::scripting(QObject* parent)
     , m_scriptsLock(new QMutex(QMutex::Recursive))
     , m_qmlEngine(new QQmlEngine(this))
     , m_declarativeScriptSharedContext(new QQmlContext(m_qmlEngine, this))
-    , m_workspaceWrapper(new QtScriptWorkspaceWrapper(this))
+    , m_workspaceWrapper(new qt_script_space(this))
 {
     init();
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
@@ -87,20 +87,20 @@ void scripting::init()
     qmlRegisterType<models::v3::client_model>("org.kde.kwin", 3, 0, "ClientModel");
     qmlRegisterType<models::v3::client_filter_model>("org.kde.kwin", 3, 0, "ClientFilterModel");
 
-    qmlRegisterType<WindowWrapper>();
-    qmlRegisterSingletonType<QtScriptWorkspaceWrapper>(
+    qmlRegisterType<window>();
+    qmlRegisterSingletonType<qt_script_space>(
         "org.kde.kwin", 3, 0, "Workspace", [](QQmlEngine* qmlEngine, QJSEngine* jsEngine) {
             Q_UNUSED(qmlEngine)
             Q_UNUSED(jsEngine)
-            return new QtScriptWorkspaceWrapper();
+            return new qt_script_space();
         });
     qmlRegisterType<QAbstractItemModel>();
 
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), m_workspaceWrapper);
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("options"), options);
 
-    m_declarativeScriptSharedContext->setContextProperty(
-        QStringLiteral("workspace"), new DeclarativeScriptWorkspaceWrapper(this));
+    m_declarativeScriptSharedContext->setContextProperty(QStringLiteral("workspace"),
+                                                         new declarative_script_space(this));
     // QQmlListProperty interfaces only work via properties, rebind them as functions here
     QQmlExpression expr(m_declarativeScriptSharedContext,
                         nullptr,

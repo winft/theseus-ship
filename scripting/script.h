@@ -24,7 +24,7 @@ class KConfigGroup;
 
 namespace KWin::scripting
 {
-class WindowWrapper;
+class window;
 
 class KWIN_EXPORT abstract_script : public QObject
 {
@@ -164,7 +164,7 @@ public:
      * @return QList< QAction* > List of QActions obtained from asking the registered callbacks
      * @see registerUseractionsMenuCallback
      */
-    QList<QAction*> actionsForUserActionMenu(WindowWrapper* window, QMenu* parent);
+    QList<QAction*> actionsForUserActionMenu(window* window, QMenu* parent);
 
 public Q_SLOTS:
     void run() override;

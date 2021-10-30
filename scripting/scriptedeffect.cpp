@@ -261,7 +261,7 @@ bool effect::init(const QString& effectName, const QString& pathToScript)
                              m_engine->newQMetaObject(&effect::staticMetaObject));
 #ifndef KWIN_UNIT_TEST
     globalObject.setProperty(QStringLiteral("KWin"),
-                             m_engine->newQMetaObject(&QtScriptWorkspaceWrapper::staticMetaObject));
+                             m_engine->newQMetaObject(&qt_script_space::staticMetaObject));
 #endif
     globalObject.setProperty(QStringLiteral("Globals"),
                              m_engine->newQMetaObject(&KWin::staticMetaObject));

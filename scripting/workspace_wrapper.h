@@ -36,15 +36,15 @@ class Toplevel;
 
 namespace scripting
 {
-class WindowWrapper;
+class window;
 
-class WorkspaceWrapper : public QObject
+class space : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(
         int currentDesktop READ currentDesktop WRITE setCurrentDesktop NOTIFY currentDesktopChanged)
-    Q_PROPERTY(KWin::scripting::WindowWrapper* activeClient READ activeClient WRITE setActiveClient
-                   NOTIFY clientActivated)
+    Q_PROPERTY(KWin::scripting::window* activeClient READ activeClient WRITE setActiveClient NOTIFY
+                   clientActivated)
     // TODO: write and notify?
     Q_PROPERTY(QSize desktopGridSize READ desktopGridSize NOTIFY desktopLayoutChanged)
     Q_PROPERTY(int desktopGridWidth READ desktopGridWidth NOTIFY desktopLayoutChanged)
@@ -92,22 +92,22 @@ class WorkspaceWrapper : public QObject
         QRect virtualScreenGeometry READ virtualScreenGeometry NOTIFY virtualScreenGeometryChanged)
 
 private:
-    Q_DISABLE_COPY(WorkspaceWrapper)
+    Q_DISABLE_COPY(space)
 
 Q_SIGNALS:
-    void desktopPresenceChanged(KWin::scripting::WindowWrapper* client, int desktop);
-    void currentDesktopChanged(int desktop, KWin::scripting::WindowWrapper* client);
-    void clientAdded(KWin::scripting::WindowWrapper* client);
-    void clientRemoved(KWin::scripting::WindowWrapper* client);
-    void clientManaging(KWin::scripting::WindowWrapper* client);
-    void clientMinimized(KWin::scripting::WindowWrapper* client);
-    void clientUnminimized(KWin::scripting::WindowWrapper* client);
-    void clientRestored(KWin::scripting::WindowWrapper* client);
-    void clientMaximizeSet(KWin::scripting::WindowWrapper* client, bool h, bool v);
-    void killWindowCalled(KWin::scripting::WindowWrapper* client);
-    void clientActivated(KWin::scripting::WindowWrapper* client);
-    void clientFullScreenSet(KWin::scripting::WindowWrapper* client, bool fullScreen, bool user);
-    void clientSetKeepAbove(KWin::scripting::WindowWrapper* client, bool keepAbove);
+    void desktopPresenceChanged(KWin::scripting::window* client, int desktop);
+    void currentDesktopChanged(int desktop, KWin::scripting::window* client);
+    void clientAdded(KWin::scripting::window* client);
+    void clientRemoved(KWin::scripting::window* client);
+    void clientManaging(KWin::scripting::window* client);
+    void clientMinimized(KWin::scripting::window* client);
+    void clientUnminimized(KWin::scripting::window* client);
+    void clientRestored(KWin::scripting::window* client);
+    void clientMaximizeSet(KWin::scripting::window* client, bool h, bool v);
+    void killWindowCalled(KWin::scripting::window* client);
+    void clientActivated(KWin::scripting::window* client);
+    void clientFullScreenSet(KWin::scripting::window* client, bool fullScreen, bool user);
+    void clientSetKeepAbove(KWin::scripting::window* client, bool keepAbove);
     /**
      * Signal emitted whenever the number of desktops changed.
      * To get the current number of desktops use the property desktops.
@@ -125,7 +125,7 @@ Q_SIGNALS:
      * @param c The Client for which demands attention changed
      * @param set New value of demands attention
      */
-    void clientDemandsAttentionChanged(KWin::scripting::WindowWrapper* window, bool set);
+    void clientDemandsAttentionChanged(KWin::scripting::window* window, bool set);
     /**
      * Signal emitted when the number of screens changes.
      * @param count The new number of screens
@@ -210,7 +210,7 @@ public:
     Q_ENUM(ElectricBorder)
 
 protected:
-    explicit WorkspaceWrapper(QObject* parent = nullptr);
+    explicit space(QObject* parent = nullptr);
 
 public:
 #define GETTERSETTERDEF(rettype, getter, setter)                                                   \
@@ -219,7 +219,7 @@ public:
     GETTERSETTERDEF(int, numberOfDesktops, setNumberOfDesktops)
     GETTERSETTERDEF(int, currentDesktop, setCurrentDesktop)
     GETTERSETTERDEF(QString, currentActivity, setCurrentActivity)
-    GETTERSETTERDEF(KWin::scripting::WindowWrapper*, activeClient, setActiveClient)
+    GETTERSETTERDEF(KWin::scripting::window*, activeClient, setActiveClient)
 #undef GETTERSETTERDEF
     QSize desktopGridSize() const;
     int desktopGridWidth() const;
@@ -236,7 +236,7 @@ public:
     QSize virtualScreenSize() const;
     QRect virtualScreenGeometry() const;
 
-    std::vector<WindowWrapper*> windows() const;
+    std::vector<window*> windows() const;
 
     /**
      * Returns the geometry a Client can use with the specified option.
@@ -264,10 +264,9 @@ public:
      * @param client The Client for which the area should be retrieved
      * @returns The specified screen geometry
      */
+    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, KWin::scripting::window* window) const;
     Q_SCRIPTABLE QRect clientArea(ClientAreaOption option,
-                                  KWin::scripting::WindowWrapper* window) const;
-    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option,
-                                  KWin::scripting::WindowWrapper const* client) const;
+                                  KWin::scripting::window const* client) const;
     /**
      * Returns the name for the given @p desktop.
      */
@@ -293,7 +292,7 @@ public:
      * @param windowId The window Id of the Client
      * @return The found Client or @c null
      */
-    Q_SCRIPTABLE KWin::scripting::WindowWrapper* getClient(qulonglong windowId);
+    Q_SCRIPTABLE KWin::scripting::window* getClient(qulonglong windowId);
 
 public Q_SLOTS:
     // all the available key bindings
@@ -362,9 +361,9 @@ public Q_SLOTS:
     void slotWindowToDesktopDown();
 
     /**
-     * Sends the WindowWrapper to the given @p screen.
+     * Sends the window to the given @p screen.
      */
-    void sendClientToScreen(KWin::scripting::WindowWrapper* client, int screen);
+    void sendClientToScreen(KWin::scripting::window* client, int screen);
 
     /**
      * Shows an outline at the specified @p geometry.
@@ -381,45 +380,44 @@ public Q_SLOTS:
      */
     void hideOutline();
 
-    WindowWrapper* get_window(Toplevel* client) const;
+    window* get_window(Toplevel* client) const;
 
 protected:
     // TODO: make this private. Remove dynamic inheritance?
-    std::vector<std::unique_ptr<WindowWrapper>> m_windows;
+    std::vector<std::unique_ptr<window>> m_windows;
 
 private Q_SLOTS:
-    void setupAbstractClientConnections(WindowWrapper* window);
-    void setupClientConnections(WindowWrapper* window);
+    void setupAbstractClientConnections(window* window);
+    void setupClientConnections(window* window);
 
 private:
     void handle_client_added(Toplevel* client);
     void handle_client_removed(Toplevel* client);
 };
 
-class QtScriptWorkspaceWrapper : public WorkspaceWrapper
+class qt_script_space : public space
 {
     Q_OBJECT
 public:
     /**
      * List of Clients currently managed by KWin.
      */
-    Q_INVOKABLE QList<KWin::scripting::WindowWrapper*> clientList() const;
+    Q_INVOKABLE QList<KWin::scripting::window*> clientList() const;
 
-    explicit QtScriptWorkspaceWrapper(QObject* parent = nullptr);
+    explicit qt_script_space(QObject* parent = nullptr);
 };
 
-class DeclarativeScriptWorkspaceWrapper : public WorkspaceWrapper
+class declarative_script_space : public space
 {
     Q_OBJECT
 
-    Q_PROPERTY(QQmlListProperty<KWin::scripting::WindowWrapper> clients READ clients)
+    Q_PROPERTY(QQmlListProperty<KWin::scripting::window> clients READ clients)
 public:
-    QQmlListProperty<KWin::scripting::WindowWrapper> clients();
-    static int countClientList(QQmlListProperty<KWin::scripting::WindowWrapper>* clients);
-    static WindowWrapper* atClientList(QQmlListProperty<KWin::scripting::WindowWrapper>* clients,
-                                       int index);
+    QQmlListProperty<KWin::scripting::window> clients();
+    static int countClientList(QQmlListProperty<KWin::scripting::window>* clients);
+    static window* atClientList(QQmlListProperty<KWin::scripting::window>* clients, int index);
 
-    explicit DeclarativeScriptWorkspaceWrapper(QObject* parent = nullptr);
+    explicit declarative_script_space(QObject* parent = nullptr);
 };
 
 }
