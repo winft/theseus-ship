@@ -35,7 +35,7 @@ static OnScreenNotification *create()
 {
     auto osd = new OnScreenNotification(workspace());
     osd->setConfig(kwinApp()->config());
-    osd->setEngine(Scripting::self()->qmlEngine());
+    osd->setEngine(scripting::Scripting::self()->qmlEngine());
     return osd;
 }
 

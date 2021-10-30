@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDBusObjectPath>
 #include <QDBusSignature>
 
-namespace KWin
+namespace KWin::scripting
 {
 
 QVariant dbusToVariant(const QVariant& variant)

@@ -7,8 +7,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_SCRIPTEDEFFECT_H
-#define KWIN_SCRIPTEDEFFECT_H
+#pragma once
 
 #include <kwinanimationeffect.h>
 
@@ -18,8 +17,9 @@
 class KConfigLoader;
 class KPluginMetaData;
 
-namespace KWin
+namespace KWin::scripting
 {
+
 class KWIN_EXPORT ScriptedEffect : public KWin::AnimationEffect
 {
     Q_OBJECT
@@ -206,5 +206,3 @@ private:
 };
 
 }
-
-#endif // KWIN_SCRIPTEDEFFECT_H

@@ -14,7 +14,7 @@
 #include "win/transient.h"
 #include "win/x11/window.h"
 
-namespace KWin
+namespace KWin::scripting
 {
 
 WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)

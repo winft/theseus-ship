@@ -3,7 +3,6 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #pragma once
 
 #include <QAbstractListModel>
@@ -11,7 +10,7 @@
 
 #include <optional>
 
-namespace KWin
+namespace KWin::scripting
 {
 class WindowWrapper;
 
@@ -112,5 +111,5 @@ private:
     std::optional<WindowTypes> m_windowType;
 };
 
-} // namespace ScriptingModels::V3
-} // namespace KWin
+}
+}

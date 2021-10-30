@@ -18,12 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "screenedgeitem.h"
+
 #include "screenedge.h"
 #include <config-kwin.h>
 
 #include <QAction>
 
-namespace KWin
+namespace KWin::scripting
 {
 
 ScreenEdgeItem::ScreenEdgeItem(QObject* parent)
@@ -115,4 +116,4 @@ void ScreenEdgeItem::setMode(Mode mode)
     emit modeChanged();
 }
 
-} // namespace
+}

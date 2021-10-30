@@ -78,10 +78,10 @@ private Q_SLOTS:
     void testComplete();
 
 private:
-    ScriptedEffect* loadEffect(const QString& name);
+    scripting::ScriptedEffect* loadEffect(const QString& name);
 };
 
-class ScriptedEffectWithDebugSpy : public KWin::ScriptedEffect
+class ScriptedEffectWithDebugSpy : public scripting::ScriptedEffect
 {
     Q_OBJECT
 public:
@@ -106,7 +106,7 @@ QList<QAction*> ScriptedEffectWithDebugSpy::actions()
 }
 
 ScriptedEffectWithDebugSpy::ScriptedEffectWithDebugSpy()
-    : ScriptedEffect()
+    : scripting::ScriptedEffect()
 {
 }
 
@@ -383,8 +383,8 @@ void ScriptedEffectsTest::testFullScreenEffect()
     QSignalSpy effectOutputSpy(effectMain, &ScriptedEffectWithDebugSpy::testOutput);
     QSignalSpy fullScreenEffectActiveSpy(effects,
                                          &EffectsHandler::hasActiveFullScreenEffectChanged);
-    QSignalSpy isActiveFullScreenEffectSpy(effectMain,
-                                           &ScriptedEffect::isActiveFullScreenEffectChanged);
+    QSignalSpy isActiveFullScreenEffectSpy(
+        effectMain, &scripting::ScriptedEffect::isActiveFullScreenEffectChanged);
 
     QVERIFY(effectMain->load(file));
 
@@ -392,8 +392,8 @@ void ScriptedEffectsTest::testFullScreenEffect()
     // shown as being someone else
     auto effectOther = new ScriptedEffectWithDebugSpy();
     QVERIFY(effectOther->load("screenEdgeTouchTest"));
-    QSignalSpy isActiveFullScreenEffectSpyOther(effectOther,
-                                                &ScriptedEffect::isActiveFullScreenEffectChanged);
+    QSignalSpy isActiveFullScreenEffectSpyOther(
+        effectOther, &scripting::ScriptedEffect::isActiveFullScreenEffectChanged);
 
     using namespace Wrapland::Client;
     auto surface = Test::create_surface();

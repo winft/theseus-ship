@@ -17,13 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_DBUSCALL_H
-#define KWIN_DBUSCALL_H
+#pragma once
 
 #include <QObject>
 #include <QString>
 
-namespace KWin
+namespace KWin::scripting
 {
 
 /**
@@ -141,6 +140,4 @@ GENERIC_WRAPPER(const QVariantList&, arguments, Arguments)
 #undef WRAPPER
 #undef GENERIC_WRAPPER
 
-} // KWin
-
-#endif //  KWIN_SCRIPTING_DBUSCALL_H
+}

@@ -18,7 +18,7 @@
 #include "win/meta.h"
 #include "win/net.h"
 
-namespace KWin::ScriptingModels::V2
+namespace KWin::scripting::ScriptingModels::V2
 {
 
 static quint32 nextId()
@@ -853,4 +853,4 @@ bool ClientFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourc
     return false;
 }
 
-} // namespace KWin
+}

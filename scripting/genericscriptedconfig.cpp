@@ -17,8 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "genericscriptedconfig.h"
+
 #include "config-kwin.h"
 #include <KAboutData>
 #include <kwineffects_interface.h>
@@ -34,7 +34,7 @@
 #include <QUiLoader>
 #include <QVBoxLayout>
 
-namespace KWin
+namespace KWin::scripting
 {
 
 QObject* GenericScriptedConfigFactory::create(const char* iface,
@@ -179,4 +179,4 @@ void ScriptingConfig::reload()
     // TODO: what to call
 }
 
-} // namespace
+}

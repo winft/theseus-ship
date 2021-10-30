@@ -17,9 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef KWIN_GENERICSCRIPTEDCONFIG_H
-#define KWIN_GENERICSCRIPTEDCONFIG_H
+#pragma once
 
 #include <KCModule>
 #include <KConfigGroup>
@@ -27,7 +25,7 @@
 
 class KLocalizedTranslator;
 
-namespace KWin
+namespace KWin::scripting
 {
 
 class GenericScriptedConfigFactory : public KPluginFactory
@@ -99,5 +97,3 @@ inline const QString& GenericScriptedConfig::packageName() const
 }
 
 }
-
-#endif // KWIN_GENERICSCRIPTEDCONFIG_H

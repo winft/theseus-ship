@@ -78,7 +78,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::cleanup()
 void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
 {
     // load a scripted effect which deletes animation data
-    ScriptedEffect* effect = ScriptedEffect::create(
+    auto effect = scripting::ScriptedEffect::create(
         QStringLiteral("crashy"), QFINDTESTDATA("data/anim-data-delete-effect/effect.js"), 10);
     QVERIFY(effect);
 

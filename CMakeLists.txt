@@ -500,7 +500,11 @@ ecm_qt_declare_logging_category(kwin_SRCS
         Critical
 )
 
-qt5_add_dbus_adaptor(kwin_SRCS scripting/org.kde.kwin.Script.xml scripting/scripting.h KWin::AbstractScript)
+qt5_add_dbus_adaptor(kwin_SRCS
+  scripting/org.kde.kwin.Script.xml
+  scripting/scripting.h
+  KWin::scripting::AbstractScript
+)
 
 kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS colorcorrection/colorcorrect_settings.kcfgc)

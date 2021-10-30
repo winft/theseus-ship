@@ -31,7 +31,7 @@
 
 Q_DECLARE_METATYPE(KSharedConfigPtr)
 
-namespace KWin
+namespace KWin::scripting
 {
 
 struct AnimationSettings {

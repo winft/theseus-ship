@@ -141,7 +141,7 @@ void BindingsTest::testSwitchWindow()
 
 void BindingsTest::testSwitchWindowScript()
 {
-    QVERIFY(Scripting::self());
+    QVERIFY(scripting::Scripting::self());
 
     // first create windows
     std::unique_ptr<Surface> surface1(Test::create_surface());
@@ -175,12 +175,12 @@ void BindingsTest::testSwitchWindowScript()
         out << "workspace." << slot << "()";
         out.flush();
 
-        const int id = Scripting::self()->loadScript(tmpFile.fileName());
+        auto const id = scripting::Scripting::self()->loadScript(tmpFile.fileName());
         QVERIFY(id != -1);
-        QVERIFY(Scripting::self()->isScriptLoaded(tmpFile.fileName()));
-        auto s = Scripting::self()->findScript(tmpFile.fileName());
+        QVERIFY(scripting::Scripting::self()->isScriptLoaded(tmpFile.fileName()));
+        auto s = scripting::Scripting::self()->findScript(tmpFile.fileName());
         QVERIFY(s);
-        QSignalSpy runningChangedSpy(s, &AbstractScript::runningChanged);
+        QSignalSpy runningChangedSpy(s, &scripting::AbstractScript::runningChanged);
         QVERIFY(runningChangedSpy.isValid());
         s->run();
         QTRY_COMPARE(runningChangedSpy.count(), 1);

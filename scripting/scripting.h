@@ -5,8 +5,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_SCRIPTING_H
-#define KWIN_SCRIPTING_H
+#pragma once
 
 #include <kwinglobals.h>
 
@@ -34,6 +33,9 @@ typedef QList<QPair<bool, QPair<QString, QString>>> LoadScriptList;
 namespace KWin
 {
 class Toplevel;
+
+namespace scripting
+{
 class QtScriptWorkspaceWrapper;
 class WindowWrapper;
 
@@ -186,7 +188,7 @@ public:
      * @return QList< QAction* > List of QActions obtained from asking the registered callbacks
      * @see registerUseractionsMenuCallback
      */
-    QList<QAction*> actionsForUserActionMenu(KWin::WindowWrapper* window, QMenu* parent);
+    QList<QAction*> actionsForUserActionMenu(WindowWrapper* window, QMenu* parent);
 
 public Q_SLOTS:
     void run() override;
@@ -315,7 +317,7 @@ private:
 };
 
 /**
- * The heart of KWin::Scripting. Infinite power lies beyond
+ * The heart of Scripting. Infinite power lies beyond
  */
 class KWIN_EXPORT Scripting : public QObject
 {
@@ -324,7 +326,7 @@ class KWIN_EXPORT Scripting : public QObject
 private:
     explicit Scripting(QObject* parent);
     QStringList scriptList;
-    QList<KWin::AbstractScript*> scripts;
+    QList<AbstractScript*> scripts;
     /**
      * Lock to protect the scripts member variable.
      */
@@ -409,4 +411,4 @@ inline Scripting* Scripting::self()
 }
 
 }
-#endif
+}

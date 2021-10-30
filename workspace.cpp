@@ -262,7 +262,7 @@ Workspace::Workspace()
     });
 
     initWithX11();
-    Scripting::create(this);
+    scripting::Scripting::create(this);
 
     // SELI TODO: This won't work with unreasonable focus policies,
     // and maybe in rare cases also if the selected client doesn't

@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDBusMessage>
 #include <QDBusPendingCall>
 
-namespace KWin
+namespace KWin::scripting
 {
 
 DBusCall::DBusCall(QObject* parent)

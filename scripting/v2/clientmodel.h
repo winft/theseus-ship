@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_SCRIPTING_MODEL_H
-#define KWIN_SCRIPTING_MODEL_H
+#pragma once
 
 #include <QAbstractItemModel>
 #include <QList>
@@ -27,6 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 class Client;
+
+namespace scripting
+{
 class WindowWrapper;
 
 namespace ScriptingModels::V2
@@ -235,8 +237,8 @@ public:
     const AbstractLevel* levelForId(quint32 id) const override;
     AbstractLevel* parentForId(quint32 child) const override;
 public Q_SLOTS:
-    void clientAdded(KWin::WindowWrapper* client);
-    void clientRemoved(KWin::WindowWrapper* client);
+    void clientAdded(KWin::scripting::WindowWrapper* client);
+    void clientRemoved(KWin::scripting::WindowWrapper* client);
 private Q_SLOTS:
     // uses sender()
     void reInit();
@@ -290,7 +292,7 @@ public:
 class ClientFilterModel : public QSortFilterProxyModel
 {
     Q_OBJECT
-    Q_PROPERTY(KWin::ScriptingModels::V2::ClientModel* clientModel READ clientModel WRITE
+    Q_PROPERTY(KWin::scripting::ScriptingModels::V2::ClientModel* clientModel READ clientModel WRITE
                    setClientModel NOTIFY clientModelChanged)
     Q_PROPERTY(QString filter READ filter WRITE setFilter NOTIFY filterChanged)
 public:
@@ -375,10 +377,9 @@ inline const QString& ClientFilterModel::filter() const
     return m_filter;
 }
 
-} // namespace Scripting
-} // namespace KWin
+}
+}
+}
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::ScriptingModels::V2::ClientModel::Exclusions)
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::ScriptingModels::V2::ClientModel::LevelRestrictions)
-
-#endif // KWIN_SCRIPTING_MODEL_H
+Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::scripting::ScriptingModels::V2::ClientModel::Exclusions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::scripting::ScriptingModels::V2::ClientModel::LevelRestrictions)

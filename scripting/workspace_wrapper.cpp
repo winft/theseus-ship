@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QDesktopWidget>
 
-namespace KWin
+namespace KWin::scripting
 {
 
 WorkspaceWrapper::WorkspaceWrapper(QObject* parent)
@@ -149,7 +149,7 @@ void WorkspaceWrapper::setNumberOfDesktops(int count)
     VirtualDesktopManager::self()->setCount(count);
 }
 
-KWin::WindowWrapper* WorkspaceWrapper::activeClient() const
+WindowWrapper* WorkspaceWrapper::activeClient() const
 {
     auto active_client = workspace()->activeClient();
     if (!active_client) {
@@ -266,7 +266,7 @@ SLOTWRAPPER(slotSwitchDesktopDown, DesktopBelow)
 
 #undef SLOTWRAPPER
 
-void WorkspaceWrapper::setActiveClient(KWin::WindowWrapper* window)
+void WorkspaceWrapper::setActiveClient(WindowWrapper* window)
 {
     KWin::Workspace::self()->activateClient(window->client());
 }
@@ -296,12 +296,12 @@ QRect WorkspaceWrapper::clientArea(ClientAreaOption option, const QPoint& p, int
     return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), p, desktop);
 }
 
-QRect WorkspaceWrapper::clientArea(ClientAreaOption option, KWin::WindowWrapper* window) const
+QRect WorkspaceWrapper::clientArea(ClientAreaOption option, WindowWrapper* window) const
 {
     return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), window->client());
 }
 
-QRect WorkspaceWrapper::clientArea(ClientAreaOption option, KWin::WindowWrapper const* c) const
+QRect WorkspaceWrapper::clientArea(ClientAreaOption option, WindowWrapper const* c) const
 {
     return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), c->client());
 }
@@ -368,7 +368,7 @@ void WorkspaceWrapper::hideOutline()
     outline()->hide();
 }
 
-KWin::WindowWrapper* WorkspaceWrapper::getClient(qulonglong windowId)
+WindowWrapper* WorkspaceWrapper::getClient(qulonglong windowId)
 {
     auto const it
         = std::find_if(m_windows.cbegin(), m_windows.cend(), [windowId](auto const& client) {
@@ -431,7 +431,7 @@ std::vector<WindowWrapper*> WorkspaceWrapper::windows() const
     return ret;
 }
 
-void WorkspaceWrapper::sendClientToScreen(KWin::WindowWrapper* client, int screen)
+void WorkspaceWrapper::sendClientToScreen(WindowWrapper* client, int screen)
 {
     if (screen < 0 || screen >= screens()->count()) {
         return;
@@ -444,35 +444,32 @@ QtScriptWorkspaceWrapper::QtScriptWorkspaceWrapper(QObject* parent)
 {
 }
 
-QList<KWin::WindowWrapper*> QtScriptWorkspaceWrapper::clientList() const
+QList<WindowWrapper*> QtScriptWorkspaceWrapper::clientList() const
 {
-    QList<KWin::WindowWrapper*> ret;
+    QList<WindowWrapper*> ret;
     for (auto const& client : m_windows) {
         ret << client.get();
     }
     return ret;
 }
 
-QQmlListProperty<KWin::WindowWrapper> DeclarativeScriptWorkspaceWrapper::clients()
+QQmlListProperty<WindowWrapper> DeclarativeScriptWorkspaceWrapper::clients()
 {
-    return QQmlListProperty<KWin::WindowWrapper>(
-        this,
-        this,
-        &DeclarativeScriptWorkspaceWrapper::countClientList,
-        &DeclarativeScriptWorkspaceWrapper::atClientList);
+    return QQmlListProperty<WindowWrapper>(this,
+                                           this,
+                                           &DeclarativeScriptWorkspaceWrapper::countClientList,
+                                           &DeclarativeScriptWorkspaceWrapper::atClientList);
 }
 
-int DeclarativeScriptWorkspaceWrapper::countClientList(
-    QQmlListProperty<KWin::WindowWrapper>* clients)
+int DeclarativeScriptWorkspaceWrapper::countClientList(QQmlListProperty<WindowWrapper>* clients)
 {
     Q_UNUSED(clients)
     auto wsw = reinterpret_cast<DeclarativeScriptWorkspaceWrapper*>(clients->data);
     return wsw->m_windows.size();
 }
 
-KWin::WindowWrapper*
-DeclarativeScriptWorkspaceWrapper::atClientList(QQmlListProperty<KWin::WindowWrapper>* clients,
-                                                int index)
+WindowWrapper*
+DeclarativeScriptWorkspaceWrapper::atClientList(QQmlListProperty<WindowWrapper>* clients, int index)
 {
     Q_UNUSED(clients)
     auto wsw = reinterpret_cast<DeclarativeScriptWorkspaceWrapper*>(clients->data);

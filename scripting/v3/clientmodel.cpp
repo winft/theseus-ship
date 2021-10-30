@@ -11,7 +11,7 @@
 
 #include "screens.h"
 
-namespace KWin::ScriptingModels::V3
+namespace KWin::scripting::ScriptingModels::V3
 {
 
 ClientModel::ClientModel(QObject* parent)
@@ -296,4 +296,4 @@ ClientFilterModel::WindowTypes ClientFilterModel::windowTypeMask(WindowWrapper* 
     return mask;
 }
 
-} // namespace KWin::ScriptingModels::V3
+}

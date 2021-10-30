@@ -17,15 +17,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_SCREENEDGEITEM_H
-#define KWIN_SCREENEDGEITEM_H
+#pragma once
 
 #include <QObject>
 #include <kwinglobals.h>
 
 class QAction;
 
-namespace KWin
+namespace KWin::scripting
 {
 
 /**
@@ -120,6 +119,4 @@ inline ScreenEdgeItem::Edge ScreenEdgeItem::edge() const
     return m_edge;
 }
 
-} // namespace KWin
-
-#endif //  KWIN_SCREENEDGEITEM_H
+}
