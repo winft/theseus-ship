@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "../effectloader.h"
-#include "../scripting/scriptedeffect.h" // for mocking ScriptedEffect::create
+#include "../scripting/scriptedeffect.h" // for mocking scripting::effect::create
 #include "mock_effectshandler.h"
 // KDE
 #include <KConfig>
@@ -37,12 +37,12 @@ Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core")
 namespace KWin::scripting
 {
 
-ScriptedEffect* ScriptedEffect::create(const KPluginMetaData&)
+effect* effect::create(const KPluginMetaData&)
 {
     return nullptr;
 }
 
-bool ScriptedEffect::supported()
+bool effect::supported()
 {
     return true;
 }

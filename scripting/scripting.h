@@ -26,21 +26,21 @@ class Toplevel;
 
 namespace scripting
 {
-class AbstractScript;
+class abstract_script;
 class DeclarativeScript;
 class QtScriptWorkspaceWrapper;
 
 /**
  * The heart of Scripting. Infinite power lies beyond
  */
-class KWIN_EXPORT Scripting : public QObject
+class KWIN_EXPORT scripting : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Scripting")
 private:
-    explicit Scripting(QObject* parent);
+    explicit scripting(QObject* parent);
     QStringList scriptList;
-    QList<AbstractScript*> scripts;
+    QList<abstract_script*> scripts;
     /**
      * Lock to protect the scripts member variable.
      */
@@ -50,7 +50,7 @@ private:
     void runScripts();
 
 public:
-    ~Scripting() override;
+    ~scripting() override;
     Q_SCRIPTABLE Q_INVOKABLE int loadScript(const QString& filePath,
                                             const QString& pluginName = QString());
     Q_SCRIPTABLE Q_INVOKABLE int loadDeclarativeScript(const QString& filePath,
@@ -73,10 +73,10 @@ public:
     QQmlContext* declarativeScriptSharedContext();
     QtScriptWorkspaceWrapper* workspaceWrapper() const;
 
-    AbstractScript* findScript(const QString& pluginName) const;
+    abstract_script* findScript(const QString& pluginName) const;
 
-    static Scripting* self();
-    static Scripting* create(QObject* parent);
+    static scripting* self();
+    static scripting* create(QObject* parent);
 
 public Q_SLOTS:
     void scriptDestroyed(QObject* object);
@@ -88,38 +88,38 @@ private Q_SLOTS:
 private:
     void init();
     LoadScriptList queryScriptsToLoad();
-    static Scripting* s_self;
+    static scripting* s_self;
     QQmlEngine* m_qmlEngine;
     QQmlContext* m_declarativeScriptSharedContext;
     QtScriptWorkspaceWrapper* m_workspaceWrapper;
 };
 
-inline QQmlEngine* Scripting::qmlEngine() const
+inline QQmlEngine* scripting::qmlEngine() const
 {
     return m_qmlEngine;
 }
 
-inline QQmlEngine* Scripting::qmlEngine()
+inline QQmlEngine* scripting::qmlEngine()
 {
     return m_qmlEngine;
 }
 
-inline QQmlContext* Scripting::declarativeScriptSharedContext() const
+inline QQmlContext* scripting::declarativeScriptSharedContext() const
 {
     return m_declarativeScriptSharedContext;
 }
 
-inline QQmlContext* Scripting::declarativeScriptSharedContext()
+inline QQmlContext* scripting::declarativeScriptSharedContext()
 {
     return m_declarativeScriptSharedContext;
 }
 
-inline QtScriptWorkspaceWrapper* Scripting::workspaceWrapper() const
+inline QtScriptWorkspaceWrapper* scripting::workspaceWrapper() const
 {
     return m_workspaceWrapper;
 }
 
-inline Scripting* Scripting::self()
+inline scripting* scripting::self()
 {
     return s_self;
 }

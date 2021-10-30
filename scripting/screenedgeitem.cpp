@@ -27,20 +27,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::scripting
 {
 
-ScreenEdgeItem::ScreenEdgeItem(QObject* parent)
+screen_edge_item::screen_edge_item(QObject* parent)
     : QObject(parent)
     , m_enabled(true)
     , m_edge(NoEdge)
     , m_action(new QAction(this))
 {
-    connect(m_action, &QAction::triggered, this, &ScreenEdgeItem::activated);
+    connect(m_action, &QAction::triggered, this, &screen_edge_item::activated);
 }
 
-ScreenEdgeItem::~ScreenEdgeItem()
+screen_edge_item::~screen_edge_item()
 {
 }
 
-void ScreenEdgeItem::setEnabled(bool enabled)
+void screen_edge_item::setEnabled(bool enabled)
 {
     if (m_enabled == enabled) {
         return;
@@ -51,7 +51,7 @@ void ScreenEdgeItem::setEnabled(bool enabled)
     emit enabledChanged();
 }
 
-void ScreenEdgeItem::setEdge(Edge edge)
+void screen_edge_item::setEdge(Edge edge)
 {
     if (m_edge == edge) {
         return;
@@ -62,7 +62,7 @@ void ScreenEdgeItem::setEdge(Edge edge)
     emit edgeChanged();
 }
 
-void ScreenEdgeItem::enableEdge()
+void screen_edge_item::enableEdge()
 {
     if (!m_enabled || m_edge == NoEdge) {
         return;
@@ -79,7 +79,7 @@ void ScreenEdgeItem::enableEdge()
     }
 }
 
-void ScreenEdgeItem::disableEdge()
+void screen_edge_item::disableEdge()
 {
     if (!m_enabled || m_edge == NoEdge) {
         return;
@@ -96,7 +96,7 @@ void ScreenEdgeItem::disableEdge()
     }
 }
 
-bool ScreenEdgeItem::borderActivated(ElectricBorder edge)
+bool screen_edge_item::borderActivated(ElectricBorder edge)
 {
     if (edge != static_cast<ElectricBorder>(m_edge) || !m_enabled) {
         return false;
@@ -105,7 +105,7 @@ bool ScreenEdgeItem::borderActivated(ElectricBorder edge)
     return true;
 }
 
-void ScreenEdgeItem::setMode(Mode mode)
+void screen_edge_item::setMode(Mode mode)
 {
     if (m_mode == mode) {
         return;

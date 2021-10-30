@@ -71,7 +71,7 @@ namespace KWin::scripting
  *  }
  * @endcode
  */
-class DBusCall : public QObject
+class dbus_call : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString service READ service WRITE setService NOTIFY serviceChanged)
@@ -80,8 +80,8 @@ class DBusCall : public QObject
     Q_PROPERTY(QString method READ method WRITE setMethod NOTIFY methodChanged)
     Q_PROPERTY(QVariantList arguments READ arguments WRITE setArguments NOTIFY argumentsChanged)
 public:
-    explicit DBusCall(QObject* parent = nullptr);
-    ~DBusCall() override;
+    explicit dbus_call(QObject* parent = nullptr);
+    ~dbus_call() override;
 
     const QString& service() const;
     const QString& path() const;
@@ -117,11 +117,11 @@ private:
 };
 
 #define GENERIC_WRAPPER(type, name, upperName)                                                     \
-    inline type DBusCall::name() const                                                             \
+    inline type dbus_call::name() const                                                            \
     {                                                                                              \
         return m_##name;                                                                           \
     }                                                                                              \
-    inline void DBusCall::set##upperName(type name)                                                \
+    inline void dbus_call::set##upperName(type name)                                               \
     {                                                                                              \
         if (m_##name == name) {                                                                    \
             return;                                                                                \

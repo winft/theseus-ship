@@ -37,24 +37,24 @@
 namespace KWin::scripting
 {
 
-QObject* GenericScriptedConfigFactory::create(const char* iface,
-                                              QWidget* parentWidget,
-                                              QObject* parent,
-                                              const QVariantList& args,
-                                              const QString& keyword)
+QObject* generic_scripted_config_factory::create(const char* iface,
+                                                 QWidget* parentWidget,
+                                                 QObject* parent,
+                                                 const QVariantList& args,
+                                                 const QString& keyword)
 {
     Q_UNUSED(iface)
     Q_UNUSED(parent)
     if (keyword.startsWith(QLatin1String("kwin4_effect_"))) {
-        return new ScriptedEffectConfig(keyword, parentWidget, args);
+        return new scripted_effect_config(keyword, parentWidget, args);
     } else {
-        return new ScriptingConfig(keyword, parentWidget, args);
+        return new scripting_config(keyword, parentWidget, args);
     }
 }
 
-GenericScriptedConfig::GenericScriptedConfig(const QString& keyword,
-                                             QWidget* parent,
-                                             const QVariantList& args)
+generic_scripted_config::generic_scripted_config(const QString& keyword,
+                                                 QWidget* parent,
+                                                 const QVariantList& args)
     : KCModule(parent, args)
     , m_packageName(keyword)
     , m_translator(new KLocalizedTranslator(this))
@@ -62,11 +62,11 @@ GenericScriptedConfig::GenericScriptedConfig(const QString& keyword,
     QCoreApplication::instance()->installTranslator(m_translator);
 }
 
-GenericScriptedConfig::~GenericScriptedConfig()
+generic_scripted_config::~generic_scripted_config()
 {
 }
 
-void GenericScriptedConfig::createUi()
+void generic_scripted_config::createUi()
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
 
@@ -113,68 +113,70 @@ void GenericScriptedConfig::createUi()
     addConfig(configLoader, customConfigForm);
 }
 
-void GenericScriptedConfig::save()
+void generic_scripted_config::save()
 {
     KCModule::save();
     reload();
 }
 
-void GenericScriptedConfig::reload()
+void generic_scripted_config::reload()
 {
 }
 
-ScriptedEffectConfig::ScriptedEffectConfig(const QString& keyword,
-                                           QWidget* parent,
-                                           const QVariantList& args)
-    : GenericScriptedConfig(keyword, parent, args)
+scripted_effect_config::scripted_effect_config(const QString& keyword,
+                                               QWidget* parent,
+                                               const QVariantList& args)
+    : generic_scripted_config(keyword, parent, args)
 {
     createUi();
 }
 
-ScriptedEffectConfig::~ScriptedEffectConfig()
+scripted_effect_config::~scripted_effect_config()
 {
 }
 
-QString ScriptedEffectConfig::typeName() const
+QString scripted_effect_config::typeName() const
 {
     return QStringLiteral("effects");
 }
 
-KConfigGroup ScriptedEffectConfig::configGroup()
+KConfigGroup scripted_effect_config::configGroup()
 {
     return KSharedConfig::openConfig(QStringLiteral(KWIN_CONFIG))
         ->group(QLatin1String("Effect-") + packageName());
 }
 
-void ScriptedEffectConfig::reload()
+void scripted_effect_config::reload()
 {
     OrgKdeKwinEffectsInterface interface(
         QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(packageName());
 }
 
-ScriptingConfig::ScriptingConfig(const QString& keyword, QWidget* parent, const QVariantList& args)
-    : GenericScriptedConfig(keyword, parent, args)
+scripting_config::scripting_config(const QString& keyword,
+                                   QWidget* parent,
+                                   const QVariantList& args)
+    : generic_scripted_config(keyword, parent, args)
 {
     createUi();
 }
 
-ScriptingConfig::~ScriptingConfig()
+scripting_config::~scripting_config()
 {
 }
 
-KConfigGroup ScriptingConfig::configGroup()
+KConfigGroup scripting_config::configGroup()
 {
     return KSharedConfig::openConfig(QStringLiteral(KWIN_CONFIG))
         ->group(QLatin1String("Script-") + packageName());
 }
 
-QString ScriptingConfig::typeName() const
+QString scripting_config::typeName() const
 {
     return QStringLiteral("scripts");
 }
 
-void ScriptingConfig::reload()
+void scripting_config::reload()
 {
     // TODO: what to call
 }

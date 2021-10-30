@@ -27,16 +27,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::scripting
 {
 
-DBusCall::DBusCall(QObject* parent)
+dbus_call::dbus_call(QObject* parent)
     : QObject(parent)
 {
 }
 
-DBusCall::~DBusCall()
+dbus_call::~dbus_call()
 {
 }
 
-void DBusCall::call()
+void dbus_call::call()
 {
     QDBusMessage msg = QDBusMessage::createMethodCall(m_service, m_path, m_interface, m_method);
     msg.setArguments(m_arguments);

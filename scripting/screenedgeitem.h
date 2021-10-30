@@ -42,7 +42,7 @@ namespace KWin::scripting
  * }
  * @endcode
  */
-class ScreenEdgeItem : public QObject
+class screen_edge_item : public QObject
 {
     Q_OBJECT
     /**
@@ -76,8 +76,8 @@ public:
      */
     enum class Mode { Pointer, Touch };
     Q_ENUM(Mode)
-    explicit ScreenEdgeItem(QObject* parent = nullptr);
-    ~ScreenEdgeItem() override;
+    explicit screen_edge_item(QObject* parent = nullptr);
+    ~screen_edge_item() override;
     bool isEnabled() const;
     Edge edge() const;
     Mode mode() const
@@ -109,12 +109,12 @@ private:
     QAction* m_action;
 };
 
-inline bool ScreenEdgeItem::isEnabled() const
+inline bool screen_edge_item::isEnabled() const
 {
     return m_enabled;
 }
 
-inline ScreenEdgeItem::Edge ScreenEdgeItem::edge() const
+inline screen_edge_item::Edge screen_edge_item::edge() const
 {
     return m_edge;
 }

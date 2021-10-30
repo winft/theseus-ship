@@ -506,7 +506,7 @@ ecm_qt_declare_logging_category(kwin_SRCS
 qt5_add_dbus_adaptor(kwin_SRCS
   scripting/org.kde.kwin.Script.xml
   scripting/script.h
-  KWin::scripting::AbstractScript
+  KWin::scripting::abstract_script
 )
 
 kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)

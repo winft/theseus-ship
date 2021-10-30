@@ -24,7 +24,7 @@
 namespace KWin::scripting
 {
 
-js_engine_global_methods_wrapper::js_engine_global_methods_wrapper(DeclarativeScript* parent)
+js_engine_global_methods_wrapper::js_engine_global_methods_wrapper(declarative_script* parent)
     : QObject(parent)
     , m_script(parent)
 {
@@ -73,7 +73,7 @@ bool js_engine_global_methods_wrapper::registerShortcut(const QString& name,
 
     connect(a, &QAction::triggered, this, [=]() mutable {
         QJSValueList arguments;
-        arguments << Scripting::self()->qmlEngine()->toScriptValue(a);
+        arguments << scripting::self()->qmlEngine()->toScriptValue(a);
         function.call(arguments);
     });
     return true;

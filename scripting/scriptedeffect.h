@@ -20,7 +20,7 @@ class KPluginMetaData;
 namespace KWin::scripting
 {
 
-class KWIN_EXPORT ScriptedEffect : public KWin::AnimationEffect
+class KWIN_EXPORT effect : public KWin::AnimationEffect
 {
     Q_OBJECT
     Q_ENUMS(DataRole)
@@ -66,11 +66,11 @@ public:
     }
     QString activeConfig() const;
     void setActiveConfig(const QString& name);
-    static ScriptedEffect*
+    static effect*
     create(const QString& effectName, const QString& pathToScript, int chainPosition);
-    static ScriptedEffect* create(const KPluginMetaData& effect);
+    static effect* create(const KPluginMetaData& effect);
     static bool supported();
-    ~ScriptedEffect() override;
+    ~effect() override;
     /**
      * Whether another effect has grabbed the @p w with the given @p grabRole.
      * @param w The window to check
@@ -185,7 +185,7 @@ Q_SIGNALS:
     void isActiveFullScreenEffectChanged();
 
 protected:
-    ScriptedEffect();
+    effect();
     QJSEngine* engine() const;
     bool init(const QString& effectName, const QString& pathToScript);
     void animationEnded(KWin::EffectWindow* w, Attribute a, uint meta) override;

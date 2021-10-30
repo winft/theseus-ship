@@ -40,16 +40,16 @@
 namespace KWin::scripting
 {
 
-Scripting* Scripting::s_self = nullptr;
+scripting* scripting::s_self = nullptr;
 
-Scripting* Scripting::create(QObject* parent)
+scripting* scripting::create(QObject* parent)
 {
     Q_ASSERT(!s_self);
-    s_self = new Scripting(parent);
+    s_self = new scripting(parent);
     return s_self;
 }
 
-Scripting::Scripting(QObject* parent)
+scripting::scripting(QObject* parent)
     : QObject(parent)
     , m_scriptsLock(new QMutex(QMutex::Recursive))
     , m_qmlEngine(new QQmlEngine(this))
@@ -61,33 +61,31 @@ Scripting::Scripting(QObject* parent)
                                                  this,
                                                  QDBusConnection::ExportScriptableContents
                                                      | QDBusConnection::ExportScriptableInvokables);
-    connect(Workspace::self(), &Workspace::configChanged, this, &Scripting::start);
-    connect(Workspace::self(), &Workspace::workspaceInitialized, this, &Scripting::start);
+    connect(Workspace::self(), &Workspace::configChanged, this, &scripting::start);
+    connect(Workspace::self(), &Workspace::workspaceInitialized, this, &scripting::start);
 }
 
-void Scripting::init()
+void scripting::init()
 {
     qmlRegisterType<DesktopThumbnailItem>("org.kde.kwin", 2, 0, "DesktopThumbnailItem");
     qmlRegisterType<WindowThumbnailItem>("org.kde.kwin", 2, 0, "ThumbnailItem");
-    qmlRegisterType<DBusCall>("org.kde.kwin", 2, 0, "DBusCall");
-    qmlRegisterType<ScreenEdgeItem>("org.kde.kwin", 2, 0, "ScreenEdgeItem");
-    qmlRegisterType<ScriptingModels::V2::ClientModel>();
-    qmlRegisterType<ScriptingModels::V2::SimpleClientModel>("org.kde.kwin", 2, 0, "ClientModel");
-    qmlRegisterType<ScriptingModels::V2::ClientModelByScreen>(
+    qmlRegisterType<dbus_call>("org.kde.kwin", 2, 0, "DBusCall");
+    qmlRegisterType<screen_edge_item>("org.kde.kwin", 2, 0, "ScreenEdgeItem");
+    qmlRegisterType<models::v2::client_model>();
+    qmlRegisterType<models::v2::simple_client_model>("org.kde.kwin", 2, 0, "ClientModel");
+    qmlRegisterType<models::v2::client_model_by_screen>(
         "org.kde.kwin", 2, 0, "ClientModelByScreen");
-    qmlRegisterType<ScriptingModels::V2::ClientModelByScreenAndDesktop>(
+    qmlRegisterType<models::v2::client_model_by_screen_and_desktop>(
         "org.kde.kwin", 2, 0, "ClientModelByScreenAndDesktop");
-    qmlRegisterType<ScriptingModels::V2::ClientModelByScreenAndActivity>(
+    qmlRegisterType<models::v2::client_model_by_screen_and_activity>(
         "org.kde.kwin", 2, 1, "ClientModelByScreenAndActivity");
-    qmlRegisterType<ScriptingModels::V2::ClientFilterModel>(
-        "org.kde.kwin", 2, 0, "ClientFilterModel");
+    qmlRegisterType<models::v2::client_filter_model>("org.kde.kwin", 2, 0, "ClientFilterModel");
 
     qmlRegisterType<WindowThumbnailItem>("org.kde.kwin", 3, 0, "WindowThumbnailItem");
-    qmlRegisterType<DBusCall>("org.kde.kwin", 3, 0, "DBusCall");
-    qmlRegisterType<ScreenEdgeItem>("org.kde.kwin", 3, 0, "ScreenEdgeItem");
-    qmlRegisterType<ScriptingModels::V3::ClientModel>("org.kde.kwin", 3, 0, "ClientModel");
-    qmlRegisterType<ScriptingModels::V3::ClientFilterModel>(
-        "org.kde.kwin", 3, 0, "ClientFilterModel");
+    qmlRegisterType<dbus_call>("org.kde.kwin", 3, 0, "DBusCall");
+    qmlRegisterType<screen_edge_item>("org.kde.kwin", 3, 0, "ScreenEdgeItem");
+    qmlRegisterType<models::v3::client_model>("org.kde.kwin", 3, 0, "ClientModel");
+    qmlRegisterType<models::v3::client_filter_model>("org.kde.kwin", 3, 0, "ClientFilterModel");
 
     qmlRegisterType<WindowWrapper>();
     qmlRegisterSingletonType<QtScriptWorkspaceWrapper>(
@@ -110,14 +108,14 @@ void Scripting::init()
     expr.evaluate();
 }
 
-void Scripting::start()
+void scripting::start()
 {
 #if 0
     // TODO make this threaded again once KConfigGroup is sufficiently thread safe, bug #305361 and friends
     // perform querying for the services in a thread
     QFutureWatcher<LoadScriptList> *watcher = new QFutureWatcher<LoadScriptList>(this);
-    connect(watcher, &QFutureWatcher<LoadScriptList>::finished, this, &Scripting::slotScriptsQueried);
-    watcher->setFuture(QtConcurrent::run(this, &Scripting::queryScriptsToLoad, pluginStates, offers));
+    connect(watcher, &QFutureWatcher<LoadScriptList>::finished, this, &scripting::slotScriptsQueried);
+    watcher->setFuture(QtConcurrent::run(this, &scripting::queryScriptsToLoad, pluginStates, offers));
 #else
     LoadScriptList scriptsToLoad = queryScriptsToLoad();
     for (LoadScriptList::const_iterator it = scriptsToLoad.constBegin();
@@ -134,7 +132,7 @@ void Scripting::start()
 #endif
 }
 
-LoadScriptList Scripting::queryScriptsToLoad()
+LoadScriptList scripting::queryScriptsToLoad()
 {
     KSharedConfig::Ptr _config = kwinApp()->config();
     static bool s_started = false;
@@ -184,7 +182,7 @@ LoadScriptList Scripting::queryScriptsToLoad()
     return scriptsToLoad;
 }
 
-void Scripting::slotScriptsQueried()
+void scripting::slotScriptsQueried()
 {
     QFutureWatcher<LoadScriptList>* watcher
         = dynamic_cast<QFutureWatcher<LoadScriptList>*>(sender());
@@ -208,15 +206,15 @@ void Scripting::slotScriptsQueried()
     watcher->deleteLater();
 }
 
-bool Scripting::isScriptLoaded(const QString& pluginName) const
+bool scripting::isScriptLoaded(const QString& pluginName) const
 {
     return findScript(pluginName) != nullptr;
 }
 
-AbstractScript* Scripting::findScript(const QString& pluginName) const
+abstract_script* scripting::findScript(const QString& pluginName) const
 {
     QMutexLocker locker(m_scriptsLock.data());
-    foreach (AbstractScript* script, scripts) {
+    foreach (abstract_script* script, scripts) {
         if (script->pluginName() == pluginName) {
             return script;
         }
@@ -224,10 +222,10 @@ AbstractScript* Scripting::findScript(const QString& pluginName) const
     return nullptr;
 }
 
-bool Scripting::unloadScript(const QString& pluginName)
+bool scripting::unloadScript(const QString& pluginName)
 {
     QMutexLocker locker(m_scriptsLock.data());
-    foreach (AbstractScript* script, scripts) {
+    foreach (abstract_script* script, scripts) {
         if (script->pluginName() == pluginName) {
             script->deleteLater();
             return true;
@@ -236,7 +234,7 @@ bool Scripting::unloadScript(const QString& pluginName)
     return false;
 }
 
-void Scripting::runScripts()
+void scripting::runScripts()
 {
     QMutexLocker locker(m_scriptsLock.data());
     for (int i = 0; i < scripts.size(); i++) {
@@ -244,55 +242,55 @@ void Scripting::runScripts()
     }
 }
 
-void Scripting::scriptDestroyed(QObject* object)
+void scripting::scriptDestroyed(QObject* object)
 {
     QMutexLocker locker(m_scriptsLock.data());
-    scripts.removeAll(static_cast<Script*>(object));
+    scripts.removeAll(static_cast<script*>(object));
 }
 
-int Scripting::loadScript(const QString& filePath, const QString& pluginName)
-{
-    QMutexLocker locker(m_scriptsLock.data());
-    if (isScriptLoaded(pluginName)) {
-        return -1;
-    }
-    const int id = scripts.size();
-    auto script = new Script(id, filePath, pluginName, this);
-    connect(script, &QObject::destroyed, this, &Scripting::scriptDestroyed);
-    scripts.append(script);
-    return id;
-}
-
-int Scripting::loadDeclarativeScript(const QString& filePath, const QString& pluginName)
+int scripting::loadScript(const QString& filePath, const QString& pluginName)
 {
     QMutexLocker locker(m_scriptsLock.data());
     if (isScriptLoaded(pluginName)) {
         return -1;
     }
     const int id = scripts.size();
-    auto script = new DeclarativeScript(id, filePath, pluginName, this);
-    connect(script, &QObject::destroyed, this, &Scripting::scriptDestroyed);
+    auto script = new KWin::scripting::script(id, filePath, pluginName, this);
+    connect(script, &QObject::destroyed, this, &scripting::scriptDestroyed);
     scripts.append(script);
     return id;
 }
 
-Scripting::~Scripting()
+int scripting::loadDeclarativeScript(const QString& filePath, const QString& pluginName)
+{
+    QMutexLocker locker(m_scriptsLock.data());
+    if (isScriptLoaded(pluginName)) {
+        return -1;
+    }
+    const int id = scripts.size();
+    auto script = new declarative_script(id, filePath, pluginName, this);
+    connect(script, &QObject::destroyed, this, &scripting::scriptDestroyed);
+    scripts.append(script);
+    return id;
+}
+
+scripting::~scripting()
 {
     QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/Scripting"));
     s_self = nullptr;
 }
 
-QList<QAction*> Scripting::actionsForUserActionMenu(Toplevel* window, QMenu* parent)
+QList<QAction*> scripting::actionsForUserActionMenu(Toplevel* window, QMenu* parent)
 {
-    auto const w_wins = Scripting::self()->workspaceWrapper()->clientList();
+    auto const w_wins = scripting::self()->workspaceWrapper()->clientList();
     auto window_it = std::find_if(
         w_wins.cbegin(), w_wins.cend(), [window](auto win) { return win->client() == window; });
     assert(window_it != w_wins.cend());
 
     QList<QAction*> actions;
-    for (AbstractScript* s : scripts) {
+    for (auto s : scripts) {
         // TODO: Allow declarative scripts to add their own user actions.
-        if (Script* script = qobject_cast<Script*>(s)) {
+        if (auto script = qobject_cast<KWin::scripting::script*>(s)) {
             actions << script->actionsForUserActionMenu(*window_it, parent);
         }
     }

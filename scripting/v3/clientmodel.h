@@ -14,17 +14,22 @@ namespace KWin::scripting
 {
 class WindowWrapper;
 
-namespace ScriptingModels::V3
+namespace models::v3
 {
 
-class ClientModel : public QAbstractListModel
+class client_model : public QAbstractListModel
 {
     Q_OBJECT
 
 public:
-    enum Roles { ClientRole = Qt::UserRole + 1, ScreenRole, DesktopRole, ActivityRole };
+    enum Roles {
+        ClientRole = Qt::UserRole + 1,
+        ScreenRole,
+        DesktopRole,
+        ActivityRole,
+    };
 
-    explicit ClientModel(QObject* parent = nullptr);
+    explicit client_model(QObject* parent = nullptr);
 
     QHash<int, QByteArray> roleNames() const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
@@ -40,11 +45,11 @@ private:
     QList<WindowWrapper*> m_clients;
 };
 
-class ClientFilterModel : public QSortFilterProxyModel
+class client_filter_model : public QSortFilterProxyModel
 {
     Q_OBJECT
     Q_PROPERTY(
-        ClientModel* clientModel READ clientModel WRITE setClientModel NOTIFY clientModelChanged)
+        client_model* clientModel READ clientModel WRITE setClientModel NOTIFY clientModelChanged)
     Q_PROPERTY(
         QString activity READ activity WRITE setActivity RESET resetActivity NOTIFY activityChanged)
     Q_PROPERTY(int desktop READ desktop WRITE setDesktop RESET resetDesktop NOTIFY desktopChanged)
@@ -66,10 +71,10 @@ public:
     Q_DECLARE_FLAGS(WindowTypes, WindowType)
     Q_FLAG(WindowTypes)
 
-    explicit ClientFilterModel(QObject* parent = nullptr);
+    explicit client_filter_model(QObject* parent = nullptr);
 
-    ClientModel* clientModel() const;
-    void setClientModel(ClientModel* clientModel);
+    client_model* clientModel() const;
+    void setClientModel(client_model* model);
 
     QString activity() const;
     void setActivity(const QString& activity);
@@ -104,7 +109,7 @@ Q_SIGNALS:
 private:
     WindowTypes windowTypeMask(WindowWrapper* client) const;
 
-    ClientModel* m_clientModel = nullptr;
+    client_model* m_clientModel = nullptr;
     std::optional<int> m_desktop;
     QString m_filter;
     std::optional<QString> m_screenName;

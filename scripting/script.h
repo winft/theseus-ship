@@ -26,12 +26,12 @@ namespace KWin::scripting
 {
 class WindowWrapper;
 
-class KWIN_EXPORT AbstractScript : public QObject
+class KWIN_EXPORT abstract_script : public QObject
 {
     Q_OBJECT
 public:
-    AbstractScript(int id, QString scriptName, QString pluginName, QObject* parent = nullptr);
-    ~AbstractScript() override;
+    abstract_script(int id, QString scriptName, QString pluginName, QObject* parent = nullptr);
+    ~abstract_script() override;
     int scriptId() const
     {
         return m_scriptId;
@@ -75,12 +75,13 @@ private:
     bool m_running;
 };
 
-class Script : public AbstractScript, QDBusContext
+// TODO(romangg): Give it a more specific name.
+class script : public abstract_script, QDBusContext
 {
     Q_OBJECT
 public:
-    Script(int id, QString scriptName, QString pluginName, QObject* parent = nullptr);
-    virtual ~Script();
+    script(int id, QString scriptName, QString pluginName, QObject* parent = nullptr);
+    virtual ~script();
 
     Q_INVOKABLE QVariant readConfig(const QString& key, const QVariant& defaultValue = QVariant());
 
@@ -229,15 +230,15 @@ private:
     QJSValueList m_userActionsMenuCallbacks;
 };
 
-class DeclarativeScript : public AbstractScript
+class declarative_script : public abstract_script
 {
     Q_OBJECT
 public:
-    explicit DeclarativeScript(int id,
-                               QString scriptName,
-                               QString pluginName,
-                               QObject* parent = nullptr);
-    ~DeclarativeScript() override;
+    explicit declarative_script(int id,
+                                QString scriptName,
+                                QString pluginName,
+                                QObject* parent = nullptr);
+    ~declarative_script() override;
 
 public Q_SLOTS:
     Q_SCRIPTABLE void run() override;
