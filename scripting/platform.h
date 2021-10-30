@@ -93,6 +93,8 @@ private:
     QQmlEngine* m_qmlEngine;
     QQmlContext* m_declarativeScriptSharedContext;
     qt_script_space* m_workspaceWrapper;
+
+    bool is_running{false};
 };
 
 inline QQmlEngine* platform::qmlEngine() const

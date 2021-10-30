@@ -133,18 +133,18 @@ void platform::start()
 
 LoadScriptList platform::queryScriptsToLoad()
 {
-    KSharedConfig::Ptr _config = kwinApp()->config();
-    static bool s_started = false;
-    if (s_started) {
-        _config->reparseConfiguration();
+    auto config = kwinApp()->config();
+
+    if (is_running) {
+        config->reparseConfiguration();
     } else {
-        s_started = true;
+        is_running = true;
     }
-    QMap<QString, QString> pluginStates = KConfigGroup(_config, "Plugins").entryMap();
+
+    QMap<QString, QString> pluginStates = KConfigGroup(config, "Plugins").entryMap();
     const QString scriptFolder = QStringLiteral(KWIN_NAME "/scripts/");
     const auto offers = KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"),
                                                                       scriptFolder);
-
     LoadScriptList scriptsToLoad;
 
     for (const KPluginMetaData& service : offers) {
