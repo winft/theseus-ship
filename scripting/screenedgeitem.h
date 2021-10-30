@@ -75,16 +75,14 @@ public:
     /**
      * Enum describing the operation modes of the edge.
      */
-    enum class Mode {
-        Pointer,
-        Touch
-    };
+    enum class Mode { Pointer, Touch };
     Q_ENUM(Mode)
-    explicit ScreenEdgeItem(QObject *parent = nullptr);
+    explicit ScreenEdgeItem(QObject* parent = nullptr);
     ~ScreenEdgeItem() override;
     bool isEnabled() const;
     Edge edge() const;
-    Mode mode() const {
+    Mode mode() const
+    {
         return m_mode;
     }
 
@@ -102,13 +100,14 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     bool borderActivated(ElectricBorder edge);
+
 private:
     void enableEdge();
     void disableEdge();
     bool m_enabled;
     Edge m_edge;
     Mode m_mode = Mode::Pointer;
-    QAction *m_action;
+    QAction* m_action;
 };
 
 inline bool ScreenEdgeItem::isEnabled() const

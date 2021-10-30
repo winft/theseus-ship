@@ -24,9 +24,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDBusMessage>
 #include <QDBusPendingCall>
 
-namespace KWin {
+namespace KWin
+{
 
-DBusCall::DBusCall(QObject *parent)
+DBusCall::DBusCall(QObject* parent)
     : QObject(parent)
 {
 }
@@ -40,7 +41,8 @@ void DBusCall::call()
     QDBusMessage msg = QDBusMessage::createMethodCall(m_service, m_path, m_interface, m_method);
     msg.setArguments(m_arguments);
 
-    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(msg), this);
+    QDBusPendingCallWatcher* watcher
+        = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(msg), this);
     connect(watcher, &QDBusPendingCallWatcher::finished, [this, watcher]() {
         watcher->deleteLater();
         if (watcher->isError()) {
@@ -48,7 +50,7 @@ void DBusCall::call()
             return;
         }
         QVariantList reply = watcher->reply().arguments();
-        std::for_each(reply.begin(), reply.end(), [](QVariant &variant) {
+        std::for_each(reply.begin(), reply.end(), [](QVariant& variant) {
             variant = dbusToVariant(variant);
         });
         emit finished(reply);

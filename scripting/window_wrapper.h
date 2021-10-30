@@ -348,7 +348,7 @@ Q_SIGNALS:
     void transientChanged();
     void modalChanged();
 
-    void paletteChanged(const QPalette &p);
+    void paletteChanged(const QPalette& p);
     void colorSchemeChanged();
     void desktopFileNameChanged();
     void hasApplicationMenuChanged();

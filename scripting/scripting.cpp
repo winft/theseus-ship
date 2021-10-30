@@ -7,17 +7,17 @@
 */
 #include "scripting.h"
 // own
+#include "../options.h"
+#include "../thumbnailitem.h"
+#include "../workspace.h"
 #include "dbuscall.h"
 #include "input/redirect.h"
-#include "scriptingutils.h"
-#include "window_wrapper.h"
-#include "workspace_wrapper.h"
 #include "screenedge.h"
 #include "screenedgeitem.h"
 #include "scripting_logging.h"
-#include "../thumbnailitem.h"
-#include "../options.h"
-#include "../workspace.h"
+#include "scriptingutils.h"
+#include "window_wrapper.h"
+#include "workspace_wrapper.h"
 
 #include "win/x11/window.h"
 
@@ -33,18 +33,18 @@
 #include <QDBusPendingCallWatcher>
 #include <QDebug>
 #include <QFutureWatcher>
-#include <QSettings>
-#include <QtConcurrentRun>
 #include <QMenu>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlExpression>
-#include <QStandardPaths>
 #include <QQuickWindow>
+#include <QSettings>
+#include <QStandardPaths>
+#include <QtConcurrentRun>
 
 #include "scriptadaptor.h"
 
-static QRect scriptValueToRect(const QJSValue &value)
+static QRect scriptValueToRect(const QJSValue& value)
 {
     return QRect(value.property(QStringLiteral("x")).toInt(),
                  value.property(QStringLiteral("y")).toInt(),
@@ -52,19 +52,22 @@ static QRect scriptValueToRect(const QJSValue &value)
                  value.property(QStringLiteral("height")).toInt());
 }
 
-static QPoint scriptValueToPoint(const QJSValue &value)
+static QPoint scriptValueToPoint(const QJSValue& value)
 {
     return QPoint(value.property(QStringLiteral("x")).toInt(),
                   value.property(QStringLiteral("y")).toInt());
 }
 
-static QSize scriptValueToSize(const QJSValue &value)
+static QSize scriptValueToSize(const QJSValue& value)
 {
     return QSize(value.property(QStringLiteral("width")).toInt(),
                  value.property(QStringLiteral("height")).toInt());
 }
 
-KWin::AbstractScript::AbstractScript(int id, QString scriptName, QString pluginName, QObject *parent)
+KWin::AbstractScript::AbstractScript(int id,
+                                     QString scriptName,
+                                     QString pluginName,
+                                     QObject* parent)
     : QObject(parent)
     , m_scriptId(id)
     , m_fileName(scriptName)
@@ -76,7 +79,8 @@ KWin::AbstractScript::AbstractScript(int id, QString scriptName, QString pluginN
     }
 
     new ScriptAdaptor(this);
-    QDBusConnection::sessionBus().registerObject(QLatin1Char('/') + QString::number(scriptId()), this, QDBusConnection::ExportAdaptors);
+    QDBusConnection::sessionBus().registerObject(
+        QLatin1Char('/') + QString::number(scriptId()), this, QDBusConnection::ExportAdaptors);
 }
 
 KWin::AbstractScript::~AbstractScript()
@@ -93,7 +97,7 @@ void KWin::AbstractScript::stop()
     deleteLater();
 }
 
-KWin::ScriptTimer::ScriptTimer(QObject *parent)
+KWin::ScriptTimer::ScriptTimer(QObject* parent)
     : QTimer(parent)
 {
 }
@@ -115,7 +119,6 @@ KWin::Script::Script(int id, QString scriptName, QString pluginName, QObject* pa
     }
 
     qRegisterMetaType<QList<KWin::WindowWrapper*>>();
-
 }
 
 KWin::Script::~Script()
@@ -134,12 +137,12 @@ void KWin::Script::run()
     }
 
     m_starting = true;
-    QFutureWatcher<QByteArray> *watcher = new QFutureWatcher<QByteArray>(this);
+    QFutureWatcher<QByteArray>* watcher = new QFutureWatcher<QByteArray>(this);
     connect(watcher, &QFutureWatcherBase::finished, this, &Script::slotScriptLoadedFromFile);
     watcher->setFuture(QtConcurrent::run(this, &KWin::Script::loadScriptFromFile, fileName()));
 }
 
-QByteArray KWin::Script::loadScriptFromFile(const QString &fileName)
+QByteArray KWin::Script::loadScriptFromFile(const QString& fileName)
 {
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -151,7 +154,7 @@ QByteArray KWin::Script::loadScriptFromFile(const QString &fileName)
 
 void KWin::Script::slotScriptLoadedFromFile()
 {
-    QFutureWatcher<QByteArray> *watcher = dynamic_cast< QFutureWatcher< QByteArray>* >(sender());
+    QFutureWatcher<QByteArray>* watcher = dynamic_cast<QFutureWatcher<QByteArray>*>(sender());
     if (!watcher) {
         // not invoked from a QFutureWatcher
         return;
@@ -162,7 +165,8 @@ void KWin::Script::slotScriptLoadedFromFile()
         watcher->deleteLater();
 
         if (m_invocationContext.type() == QDBusMessage::MethodCallMessage) {
-            auto reply = m_invocationContext.createErrorReply("org.kde.kwin.Scripting.FileError", QString("Could not open %1").arg(fileName()));
+            auto reply = m_invocationContext.createErrorReply(
+                "org.kde.kwin.Scripting.FileError", QString("Could not open %1").arg(fileName()));
             QDBusConnection::sessionBus().send(reply);
             m_invocationContext = QDBusMessage();
         }
@@ -178,7 +182,9 @@ void KWin::Script::slotScriptLoadedFromFile()
     m_engine->globalObject().setProperty("QTimer", timerMetaObject);
 
     // Expose enums.
-    m_engine->globalObject().setProperty(QStringLiteral("KWin"), m_engine->newQMetaObject(&QtScriptWorkspaceWrapper::staticMetaObject));
+    m_engine->globalObject().setProperty(
+        QStringLiteral("KWin"),
+        m_engine->newQMetaObject(&QtScriptWorkspaceWrapper::staticMetaObject));
 
     // Make the options object visible to QJSEngine.
     QJSValue optionsObject = m_engine->newQObject(options);
@@ -193,7 +199,7 @@ void KWin::Script::slotScriptLoadedFromFile()
     QJSValue self = m_engine->newQObject(this);
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
-    static const QStringList globalProperties {
+    static const QStringList globalProperties{
         QStringLiteral("readConfig"),
         QStringLiteral("callDBus"),
 
@@ -205,7 +211,7 @@ void KWin::Script::slotScriptLoadedFromFile()
         QStringLiteral("registerUserActionsMenu"),
     };
 
-    for (const QString &propertyName : globalProperties) {
+    for (const QString& propertyName : globalProperties) {
         m_engine->globalObject().setProperty(propertyName, self.property(propertyName));
     }
 
@@ -235,7 +241,9 @@ void KWin::Script::slotScriptLoadedFromFile()
 
     result = m_engine->evaluate(QString::fromUtf8(watcher->result()), fileName());
     if (result.isError()) {
-        qCWarning(KWIN_SCRIPTING, "%s:%d: error: %s", qPrintable(fileName()),
+        qCWarning(KWIN_SCRIPTING,
+                  "%s:%d: error: %s",
+                  qPrintable(fileName()),
                   result.property(QStringLiteral("lineNumber")).toInt(),
                   qPrintable(result.property(QStringLiteral("message")).toString()));
         deleteLater();
@@ -252,16 +260,24 @@ void KWin::Script::slotScriptLoadedFromFile()
     m_starting = false;
 }
 
-QVariant KWin::Script::readConfig(const QString &key, const QVariant &defaultValue)
+QVariant KWin::Script::readConfig(const QString& key, const QVariant& defaultValue)
 {
     return config().readEntry(key, defaultValue);
 }
 
-void KWin::Script::callDBus(const QString &service, const QString &path, const QString &interface,
-                            const QString &method, const QJSValue &arg1, const QJSValue &arg2,
-                            const QJSValue &arg3, const QJSValue &arg4, const QJSValue &arg5,
-                            const QJSValue &arg6, const QJSValue &arg7, const QJSValue &arg8,
-                            const QJSValue &arg9)
+void KWin::Script::callDBus(const QString& service,
+                            const QString& path,
+                            const QString& interface,
+                            const QString& method,
+                            const QJSValue& arg1,
+                            const QJSValue& arg2,
+                            const QJSValue& arg3,
+                            const QJSValue& arg4,
+                            const QJSValue& arg5,
+                            const QJSValue& arg6,
+                            const QJSValue& arg7,
+                            const QJSValue& arg8,
+                            const QJSValue& arg9)
 {
     QJSValueList jsArguments;
     jsArguments.reserve(9);
@@ -301,7 +317,7 @@ void KWin::Script::callDBus(const QString &service, const QString &path, const Q
 
     QVariantList dbusArguments;
     dbusArguments.reserve(jsArguments.count());
-    for (const QJSValue &jsArgument : qAsConst(jsArguments)) {
+    for (const QJSValue& jsArgument : qAsConst(jsArguments)) {
         dbusArguments << jsArgument.toVariant();
     }
 
@@ -313,57 +329,64 @@ void KWin::Script::callDBus(const QString &service, const QString &path, const Q
         return;
     }
 
-    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(call, this);
-    connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, callback](QDBusPendingCallWatcher *self) {
-        self->deleteLater();
+    QDBusPendingCallWatcher* watcher = new QDBusPendingCallWatcher(call, this);
+    connect(watcher,
+            &QDBusPendingCallWatcher::finished,
+            this,
+            [this, callback](QDBusPendingCallWatcher* self) {
+                self->deleteLater();
 
-        if (self->isError()) {
-            qCDebug(KWIN_SCRIPTING) << "Received D-Bus message is error";
-            return;
-        }
+                if (self->isError()) {
+                    qCDebug(KWIN_SCRIPTING) << "Received D-Bus message is error";
+                    return;
+                }
 
-        QJSValueList arguments;
-        const QVariantList reply = self->reply().arguments();
-        for (const QVariant &variant : reply) {
-            arguments << m_engine->toScriptValue(dbusToVariant(variant));
-        }
+                QJSValueList arguments;
+                const QVariantList reply = self->reply().arguments();
+                for (const QVariant& variant : reply) {
+                    arguments << m_engine->toScriptValue(dbusToVariant(variant));
+                }
 
-        QJSValue(callback).call(arguments);
-    });
+                QJSValue(callback).call(arguments);
+            });
 }
 
-bool KWin::Script::registerShortcut(const QString &objectName, const QString &text, const QString &keySequence, const QJSValue &callback)
+bool KWin::Script::registerShortcut(const QString& objectName,
+                                    const QString& text,
+                                    const QString& keySequence,
+                                    const QJSValue& callback)
 {
     if (!callback.isCallable()) {
         m_engine->throwError(QStringLiteral("Shortcut handler must be callable"));
         return false;
     }
 
-    QAction *action = new QAction(this);
+    QAction* action = new QAction(this);
     action->setObjectName(objectName);
     action->setText(text);
 
     const QKeySequence shortcut = keySequence;
-    KGlobalAccel::self()->setShortcut(action, { shortcut });
+    KGlobalAccel::self()->setShortcut(action, {shortcut});
     kwinApp()->input->redirect->registerShortcut(shortcut, action);
 
     connect(action, &QAction::triggered, this, [this, action, callback]() {
-        QJSValue(callback).call({ m_engine->toScriptValue(action) });
+        QJSValue(callback).call({m_engine->toScriptValue(action)});
     });
 
     return true;
 }
 
-bool KWin::Script::registerScreenEdge(int edge, const QJSValue &callback)
+bool KWin::Script::registerScreenEdge(int edge, const QJSValue& callback)
 {
     if (!callback.isCallable()) {
         m_engine->throwError(QStringLiteral("Screen edge handler must be callable"));
         return false;
     }
 
-    QJSValueList &callbacks = m_screenEdgeCallbacks[edge];
+    QJSValueList& callbacks = m_screenEdgeCallbacks[edge];
     if (callbacks.isEmpty()) {
-        ScreenEdges::self()->reserve(static_cast<KWin::ElectricBorder>(edge), this, "slotBorderActivated");
+        ScreenEdges::self()->reserve(
+            static_cast<KWin::ElectricBorder>(edge), this, "slotBorderActivated");
     }
 
     callbacks << callback;
@@ -384,7 +407,7 @@ bool KWin::Script::unregisterScreenEdge(int edge)
     return true;
 }
 
-bool KWin::Script::registerTouchScreenEdge(int edge, const QJSValue &callback)
+bool KWin::Script::registerTouchScreenEdge(int edge, const QJSValue& callback)
 {
     if (!callback.isCallable()) {
         m_engine->throwError(QStringLiteral("Touch screen edge handler must be callable"));
@@ -394,13 +417,11 @@ bool KWin::Script::registerTouchScreenEdge(int edge, const QJSValue &callback)
         return false;
     }
 
-    QAction *action = new QAction(this);
+    QAction* action = new QAction(this);
     ScreenEdges::self()->reserveTouch(KWin::ElectricBorder(edge), action);
     m_touchScreenEdgeCallbacks.insert(edge, action);
 
-    connect(action, &QAction::triggered, this, [callback]() {
-        QJSValue(callback).call();
-    });
+    connect(action, &QAction::triggered, this, [callback]() { QJSValue(callback).call(); });
 
     return true;
 }
@@ -418,7 +439,7 @@ bool KWin::Script::unregisterTouchScreenEdge(int edge)
     return true;
 }
 
-void KWin::Script::registerUserActionsMenu(const QJSValue &callback)
+void KWin::Script::registerUserActionsMenu(const QJSValue& callback)
 {
     if (!callback.isCallable()) {
         m_engine->throwError(QStringLiteral("User action handler must be callable"));
@@ -429,18 +450,18 @@ void KWin::Script::registerUserActionsMenu(const QJSValue &callback)
 
 QList<QAction*> KWin::Script::actionsForUserActionMenu(KWin::WindowWrapper* window, QMenu* parent)
 {
-    QList<QAction *> actions;
+    QList<QAction*> actions;
     actions.reserve(m_userActionsMenuCallbacks.count());
 
     for (QJSValue callback : m_userActionsMenuCallbacks) {
-        QJSValue result = callback.call({ m_engine->toScriptValue(window) });
+        QJSValue result = callback.call({m_engine->toScriptValue(window)});
         if (result.isError()) {
             continue;
         }
         if (!result.isObject()) {
             continue;
         }
-        if (QAction *action = scriptValueToAction(result, parent)) {
+        if (QAction* action = scriptValueToAction(result, parent)) {
             actions << action;
         }
     }
@@ -454,13 +475,11 @@ bool KWin::Script::slotBorderActivated(ElectricBorder border)
     if (callbacks.isEmpty()) {
         return false;
     }
-    std::for_each(callbacks.begin(), callbacks.end(), [](QJSValue callback) {
-        callback.call();
-    });
+    std::for_each(callbacks.begin(), callbacks.end(), [](QJSValue callback) { callback.call(); });
     return true;
 }
 
-QAction *KWin::Script::scriptValueToAction(const QJSValue &value, QMenu *parent)
+QAction* KWin::Script::scriptValueToAction(const QJSValue& value, QMenu* parent)
 {
     const QString title = value.property(QStringLiteral("text")).toString();
     if (title.isEmpty()) {
@@ -476,7 +495,7 @@ QAction *KWin::Script::scriptValueToAction(const QJSValue &value, QMenu *parent)
     return createAction(title, value, parent);
 }
 
-QAction *KWin::Script::createAction(const QString &title, const QJSValue &item, QMenu *parent)
+QAction* KWin::Script::createAction(const QString& title, const QJSValue& item, QMenu* parent)
 {
     const QJSValue callback = item.property(QStringLiteral("triggered"));
     if (!callback.isCallable()) {
@@ -486,18 +505,18 @@ QAction *KWin::Script::createAction(const QString &title, const QJSValue &item, 
     const bool checkable = item.property(QStringLiteral("checkable")).toBool();
     const bool checked = item.property(QStringLiteral("checked")).toBool();
 
-    QAction *action = new QAction(title, parent);
+    QAction* action = new QAction(title, parent);
     action->setCheckable(checkable);
     action->setChecked(checked);
 
     connect(action, &QAction::triggered, this, [this, action, callback]() {
-        QJSValue(callback).call({ m_engine->toScriptValue(action) });
+        QJSValue(callback).call({m_engine->toScriptValue(action)});
     });
 
     return action;
 }
 
-QAction *KWin::Script::createMenu(const QString &title, const QJSValue &items, QMenu *parent)
+QAction* KWin::Script::createMenu(const QString& title, const QJSValue& items, QMenu* parent)
 {
     if (!items.isArray()) {
         return nullptr;
@@ -508,13 +527,13 @@ QAction *KWin::Script::createMenu(const QString &title, const QJSValue &items, Q
         return nullptr;
     }
 
-    QMenu *menu = new QMenu(title, parent);
+    QMenu* menu = new QMenu(title, parent);
     for (int i = 0; i < length; ++i) {
         const QJSValue value = items.property(QString::number(i));
         if (!value.isObject()) {
             continue;
         }
-        if (QAction *action = scriptValueToAction(value, menu)) {
+        if (QAction* action = scriptValueToAction(value, menu)) {
             menu->addAction(action);
         }
     }
@@ -522,7 +541,10 @@ QAction *KWin::Script::createMenu(const QString &title, const QJSValue &items, Q
     return menu->menuAction();
 }
 
-KWin::DeclarativeScript::DeclarativeScript(int id, QString scriptName, QString pluginName, QObject* parent)
+KWin::DeclarativeScript::DeclarativeScript(int id,
+                                           QString scriptName,
+                                           QString pluginName,
+                                           QObject* parent)
     : AbstractScript(id, scriptName, pluginName, parent)
     , m_context(new QQmlContext(Scripting::self()->declarativeScriptSharedContext(), this))
     , m_component(new QQmlComponent(Scripting::self()->qmlEngine(), this))
@@ -542,7 +564,8 @@ void KWin::DeclarativeScript::run()
 
     m_component->loadUrl(QUrl::fromLocalFile(fileName()));
     if (m_component->isLoading()) {
-        connect(m_component, &QQmlComponent::statusChanged, this, &DeclarativeScript::createComponent);
+        connect(
+            m_component, &QQmlComponent::statusChanged, this, &DeclarativeScript::createComponent);
     } else {
         createComponent();
     }
@@ -553,14 +576,14 @@ void KWin::DeclarativeScript::createComponent()
     if (m_component->isError()) {
         qCDebug(KWIN_SCRIPTING) << "Component failed to load: " << m_component->errors();
     } else {
-        if (QObject *object = m_component->create(m_context)) {
+        if (QObject* object = m_component->create(m_context)) {
             object->setParent(this);
         }
     }
     setRunning(true);
 }
 
-KWin::JSEngineGlobalMethodsWrapper::JSEngineGlobalMethodsWrapper(KWin::DeclarativeScript *parent)
+KWin::JSEngineGlobalMethodsWrapper::JSEngineGlobalMethodsWrapper(KWin::DeclarativeScript* parent)
     : QObject(parent)
     , m_script(parent)
 {
@@ -570,29 +593,37 @@ KWin::JSEngineGlobalMethodsWrapper::~JSEngineGlobalMethodsWrapper()
 {
 }
 
-QVariant KWin::JSEngineGlobalMethodsWrapper::readConfig(const QString &key, QVariant defaultValue)
+QVariant KWin::JSEngineGlobalMethodsWrapper::readConfig(const QString& key, QVariant defaultValue)
 {
     return m_script->config().readEntry(key, defaultValue);
 }
 
-void KWin::JSEngineGlobalMethodsWrapper::registerWindow(QQuickWindow *window)
+void KWin::JSEngineGlobalMethodsWrapper::registerWindow(QQuickWindow* window)
 {
     QPointer<QQuickWindow> guard = window;
-    connect(window, &QWindow::visibilityChanged, this, [guard](QWindow::Visibility visibility) {
-        if (guard && visibility == QWindow::Hidden) {
-            guard->destroy();
-        }
-    }, Qt::QueuedConnection);
+    connect(
+        window,
+        &QWindow::visibilityChanged,
+        this,
+        [guard](QWindow::Visibility visibility) {
+            if (guard && visibility == QWindow::Hidden) {
+                guard->destroy();
+            }
+        },
+        Qt::QueuedConnection);
 }
 
-bool KWin::JSEngineGlobalMethodsWrapper::registerShortcut(const QString &name, const QString &text, const QKeySequence& keys, QJSValue function)
+bool KWin::JSEngineGlobalMethodsWrapper::registerShortcut(const QString& name,
+                                                          const QString& text,
+                                                          const QKeySequence& keys,
+                                                          QJSValue function)
 {
     if (!function.isCallable()) {
         qCDebug(KWIN_SCRIPTING) << "Fourth and final argument must be a javascript function";
         return false;
     }
 
-    QAction *a = new QAction(this);
+    QAction* a = new QAction(this);
     a->setObjectName(name);
     a->setText(text);
     const QKeySequence shortcut = QKeySequence(keys);
@@ -607,16 +638,16 @@ bool KWin::JSEngineGlobalMethodsWrapper::registerShortcut(const QString &name, c
     return true;
 }
 
-KWin::Scripting *KWin::Scripting::s_self = nullptr;
+KWin::Scripting* KWin::Scripting::s_self = nullptr;
 
-KWin::Scripting *KWin::Scripting::create(QObject *parent)
+KWin::Scripting* KWin::Scripting::create(QObject* parent)
 {
     Q_ASSERT(!s_self);
     s_self = new Scripting(parent);
     return s_self;
 }
 
-KWin::Scripting::Scripting(QObject *parent)
+KWin::Scripting::Scripting(QObject* parent)
     : QObject(parent)
     , m_scriptsLock(new QMutex(QMutex::Recursive))
     , m_qmlEngine(new QQmlEngine(this))
@@ -624,7 +655,10 @@ KWin::Scripting::Scripting(QObject *parent)
     , m_workspaceWrapper(new QtScriptWorkspaceWrapper(this))
 {
     init();
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"), this, QDBusConnection::ExportScriptableContents | QDBusConnection::ExportScriptableInvokables);
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
+                                                 this,
+                                                 QDBusConnection::ExportScriptableContents
+                                                     | QDBusConnection::ExportScriptableInvokables);
     connect(Workspace::self(), &Workspace::configChanged, this, &Scripting::start);
     connect(Workspace::self(), &Workspace::workspaceInitialized, this, &Scripting::start);
 }
@@ -637,31 +671,40 @@ void KWin::Scripting::init()
     qmlRegisterType<ScreenEdgeItem>("org.kde.kwin", 2, 0, "ScreenEdgeItem");
     qmlRegisterType<ScriptingModels::V2::ClientModel>();
     qmlRegisterType<ScriptingModels::V2::SimpleClientModel>("org.kde.kwin", 2, 0, "ClientModel");
-    qmlRegisterType<ScriptingModels::V2::ClientModelByScreen>("org.kde.kwin", 2, 0, "ClientModelByScreen");
-    qmlRegisterType<ScriptingModels::V2::ClientModelByScreenAndDesktop>("org.kde.kwin", 2, 0, "ClientModelByScreenAndDesktop");
-    qmlRegisterType<ScriptingModels::V2::ClientModelByScreenAndActivity>("org.kde.kwin", 2, 1, "ClientModelByScreenAndActivity");
-    qmlRegisterType<ScriptingModels::V2::ClientFilterModel>("org.kde.kwin", 2, 0, "ClientFilterModel");
+    qmlRegisterType<ScriptingModels::V2::ClientModelByScreen>(
+        "org.kde.kwin", 2, 0, "ClientModelByScreen");
+    qmlRegisterType<ScriptingModels::V2::ClientModelByScreenAndDesktop>(
+        "org.kde.kwin", 2, 0, "ClientModelByScreenAndDesktop");
+    qmlRegisterType<ScriptingModels::V2::ClientModelByScreenAndActivity>(
+        "org.kde.kwin", 2, 1, "ClientModelByScreenAndActivity");
+    qmlRegisterType<ScriptingModels::V2::ClientFilterModel>(
+        "org.kde.kwin", 2, 0, "ClientFilterModel");
 
     qmlRegisterType<WindowThumbnailItem>("org.kde.kwin", 3, 0, "WindowThumbnailItem");
     qmlRegisterType<DBusCall>("org.kde.kwin", 3, 0, "DBusCall");
     qmlRegisterType<ScreenEdgeItem>("org.kde.kwin", 3, 0, "ScreenEdgeItem");
     qmlRegisterType<ScriptingModels::V3::ClientModel>("org.kde.kwin", 3, 0, "ClientModel");
-    qmlRegisterType<ScriptingModels::V3::ClientFilterModel>("org.kde.kwin", 3, 0, "ClientFilterModel");
+    qmlRegisterType<ScriptingModels::V3::ClientFilterModel>(
+        "org.kde.kwin", 3, 0, "ClientFilterModel");
 
     qmlRegisterType<KWin::WindowWrapper>();
-    qmlRegisterSingletonType<QtScriptWorkspaceWrapper>("org.kde.kwin", 3, 0, "Workspace", [](QQmlEngine *qmlEngine, QJSEngine *jsEngine) {
-        Q_UNUSED(qmlEngine)
-        Q_UNUSED(jsEngine)
-        return new QtScriptWorkspaceWrapper();
-    });
+    qmlRegisterSingletonType<QtScriptWorkspaceWrapper>(
+        "org.kde.kwin", 3, 0, "Workspace", [](QQmlEngine* qmlEngine, QJSEngine* jsEngine) {
+            Q_UNUSED(qmlEngine)
+            Q_UNUSED(jsEngine)
+            return new QtScriptWorkspaceWrapper();
+        });
     qmlRegisterType<QAbstractItemModel>();
 
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), m_workspaceWrapper);
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("options"), options);
 
-    m_declarativeScriptSharedContext->setContextProperty(QStringLiteral("workspace"), new DeclarativeScriptWorkspaceWrapper(this));
+    m_declarativeScriptSharedContext->setContextProperty(
+        QStringLiteral("workspace"), new DeclarativeScriptWorkspaceWrapper(this));
     // QQmlListProperty interfaces only work via properties, rebind them as functions here
-    QQmlExpression expr(m_declarativeScriptSharedContext, nullptr, "workspace.clientList = function() { return workspace.clients }");
+    QQmlExpression expr(m_declarativeScriptSharedContext,
+                        nullptr,
+                        "workspace.clientList = function() { return workspace.clients }");
     expr.evaluate();
 }
 
@@ -676,8 +719,8 @@ void KWin::Scripting::start()
 #else
     LoadScriptList scriptsToLoad = queryScriptsToLoad();
     for (LoadScriptList::const_iterator it = scriptsToLoad.constBegin();
-            it != scriptsToLoad.constEnd();
-            ++it) {
+         it != scriptsToLoad.constEnd();
+         ++it) {
         if (it->first) {
             loadScript(it->second.first, it->second.second);
         } else {
@@ -698,17 +741,22 @@ LoadScriptList KWin::Scripting::queryScriptsToLoad()
     } else {
         s_started = true;
     }
-    QMap<QString,QString> pluginStates = KConfigGroup(_config, "Plugins").entryMap();
+    QMap<QString, QString> pluginStates = KConfigGroup(_config, "Plugins").entryMap();
     const QString scriptFolder = QStringLiteral(KWIN_NAME "/scripts/");
-    const auto offers = KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"), scriptFolder);
+    const auto offers = KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"),
+                                                                      scriptFolder);
 
     LoadScriptList scriptsToLoad;
 
-    for (const KPluginMetaData &service: offers) {
-        const QString value = pluginStates.value(service.pluginId() + QLatin1String("Enabled"), QString());
-        const bool enabled = value.isNull() ? service.isEnabledByDefault() : QVariant(value).toBool();
-        const bool javaScript = service.value(QStringLiteral("X-Plasma-API")) == QLatin1String("javascript");
-        const bool declarativeScript = service.value(QStringLiteral("X-Plasma-API")) == QLatin1String("declarativescript");
+    for (const KPluginMetaData& service : offers) {
+        const QString value
+            = pluginStates.value(service.pluginId() + QLatin1String("Enabled"), QString());
+        const bool enabled
+            = value.isNull() ? service.isEnabledByDefault() : QVariant(value).toBool();
+        const bool javaScript
+            = service.value(QStringLiteral("X-Plasma-API")) == QLatin1String("javascript");
+        const bool declarativeScript
+            = service.value(QStringLiteral("X-Plasma-API")) == QLatin1String("declarativescript");
         if (!javaScript && !declarativeScript) {
             continue;
         }
@@ -722,7 +770,9 @@ LoadScriptList KWin::Scripting::queryScriptsToLoad()
         }
         const QString pluginName = service.pluginId();
         const QString scriptName = service.value(QStringLiteral("X-Plasma-MainScript"));
-        const QString file = QStandardPaths::locate(QStandardPaths::GenericDataLocation, scriptFolder + pluginName + QLatin1String("/contents/") + scriptName);
+        const QString file = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
+                                                    scriptFolder + pluginName
+                                                        + QLatin1String("/contents/") + scriptName);
         if (file.isNull()) {
             qCDebug(KWIN_SCRIPTING) << "Could not find script file for " << pluginName;
             continue;
@@ -734,7 +784,8 @@ LoadScriptList KWin::Scripting::queryScriptsToLoad()
 
 void KWin::Scripting::slotScriptsQueried()
 {
-    QFutureWatcher<LoadScriptList> *watcher = dynamic_cast< QFutureWatcher<LoadScriptList>* >(sender());
+    QFutureWatcher<LoadScriptList>* watcher
+        = dynamic_cast<QFutureWatcher<LoadScriptList>*>(sender());
     if (!watcher) {
         // slot invoked not from a FutureWatcher
         return;
@@ -742,8 +793,8 @@ void KWin::Scripting::slotScriptsQueried()
 
     LoadScriptList scriptsToLoad = watcher->result();
     for (LoadScriptList::const_iterator it = scriptsToLoad.constBegin();
-            it != scriptsToLoad.constEnd();
-            ++it) {
+         it != scriptsToLoad.constEnd();
+         ++it) {
         if (it->first) {
             loadScript(it->second.first, it->second.second);
         } else {
@@ -755,15 +806,15 @@ void KWin::Scripting::slotScriptsQueried()
     watcher->deleteLater();
 }
 
-bool KWin::Scripting::isScriptLoaded(const QString &pluginName) const
+bool KWin::Scripting::isScriptLoaded(const QString& pluginName) const
 {
     return findScript(pluginName) != nullptr;
 }
 
-KWin::AbstractScript *KWin::Scripting::findScript(const QString &pluginName) const
+KWin::AbstractScript* KWin::Scripting::findScript(const QString& pluginName) const
 {
     QMutexLocker locker(m_scriptsLock.data());
-    foreach (AbstractScript *script, scripts) {
+    foreach (AbstractScript* script, scripts) {
         if (script->pluginName() == pluginName) {
             return script;
         }
@@ -771,10 +822,10 @@ KWin::AbstractScript *KWin::Scripting::findScript(const QString &pluginName) con
     return nullptr;
 }
 
-bool KWin::Scripting::unloadScript(const QString &pluginName)
+bool KWin::Scripting::unloadScript(const QString& pluginName)
 {
     QMutexLocker locker(m_scriptsLock.data());
-    foreach (AbstractScript *script, scripts) {
+    foreach (AbstractScript* script, scripts) {
         if (script->pluginName() == pluginName) {
             script->deleteLater();
             return true;
@@ -791,20 +842,20 @@ void KWin::Scripting::runScripts()
     }
 }
 
-void KWin::Scripting::scriptDestroyed(QObject *object)
+void KWin::Scripting::scriptDestroyed(QObject* object)
 {
     QMutexLocker locker(m_scriptsLock.data());
     scripts.removeAll(static_cast<KWin::Script*>(object));
 }
 
-int KWin::Scripting::loadScript(const QString &filePath, const QString& pluginName)
+int KWin::Scripting::loadScript(const QString& filePath, const QString& pluginName)
 {
     QMutexLocker locker(m_scriptsLock.data());
     if (isScriptLoaded(pluginName)) {
         return -1;
     }
     const int id = scripts.size();
-    KWin::Script *script = new KWin::Script(id, filePath, pluginName, this);
+    KWin::Script* script = new KWin::Script(id, filePath, pluginName, this);
     connect(script, &QObject::destroyed, this, &Scripting::scriptDestroyed);
     scripts.append(script);
     return id;
@@ -817,7 +868,7 @@ int KWin::Scripting::loadDeclarativeScript(const QString& filePath, const QStrin
         return -1;
     }
     const int id = scripts.size();
-    KWin::DeclarativeScript *script = new KWin::DeclarativeScript(id, filePath, pluginName, this);
+    KWin::DeclarativeScript* script = new KWin::DeclarativeScript(id, filePath, pluginName, this);
     connect(script, &QObject::destroyed, this, &Scripting::scriptDestroyed);
     scripts.append(script);
     return id;
@@ -829,20 +880,19 @@ KWin::Scripting::~Scripting()
     s_self = nullptr;
 }
 
-QList< QAction * > KWin::Scripting::actionsForUserActionMenu(Toplevel* window, QMenu *parent)
+QList<QAction*> KWin::Scripting::actionsForUserActionMenu(Toplevel* window, QMenu* parent)
 {
     auto const w_wins = Scripting::self()->workspaceWrapper()->clientList();
-    auto window_it = std::find_if(w_wins.cbegin(), w_wins.cend(),
-                                  [window](auto win) { return win->client() == window; });
+    auto window_it = std::find_if(
+        w_wins.cbegin(), w_wins.cend(), [window](auto win) { return win->client() == window; });
     assert(window_it != w_wins.cend());
 
     QList<QAction*> actions;
-    for (AbstractScript *s : scripts) {
+    for (AbstractScript* s : scripts) {
         // TODO: Allow declarative scripts to add their own user actions.
-        if (Script *script = qobject_cast<Script *>(s)) {
+        if (Script* script = qobject_cast<Script*>(s)) {
             actions << script->actionsForUserActionMenu(*window_it, parent);
         }
     }
     return actions;
 }
-

@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-QVariant dbusToVariant(const QVariant &variant);
+QVariant dbusToVariant(const QVariant& variant);
 
 } // namespace KWin
 

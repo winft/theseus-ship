@@ -8,21 +8,21 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "scriptedeffect.h"
+#include "../options.h"
+#include "../screenedge.h"
+#include "../screens.h"
+#include "scripting_logging.h"
 #include "scriptingutils.h"
 #include "workspace_wrapper.h"
-#include "../options.h"
-#include "../screens.h"
-#include "../screenedge.h"
-#include "scripting_logging.h"
 
 #include "input/redirect.h"
 #include "screenedge.h"
 #include "screens.h"
 // KDE
 #include <KConfigGroup>
-#include <kconfigloader.h>
 #include <KGlobalAccel>
 #include <KPluginMetaData>
+#include <kconfigloader.h>
 // Qt
 #include <QAction>
 #include <QFile>
@@ -36,12 +36,12 @@ namespace KWin
 
 struct AnimationSettings {
     enum {
-        Type       = 1<<0,
-        Curve      = 1<<1,
-        Delay      = 1<<2,
-        Duration   = 1<<3,
-        FullScreen = 1<<4,
-        KeepAlive  = 1<<5
+        Type = 1 << 0,
+        Curve = 1 << 1,
+        Delay = 1 << 2,
+        Duration = 1 << 3,
+        FullScreen = 1 << 4,
+        KeepAlive = 1 << 5
     };
     AnimationEffect::Attribute type;
     QEasingCurve::Type curve;
@@ -55,7 +55,7 @@ struct AnimationSettings {
     bool keepAlive;
 };
 
-AnimationSettings animationSettingsFromObject(const QJSValue &object)
+AnimationSettings animationSettingsFromObject(const QJSValue& object)
 {
     AnimationSettings settings;
     settings.set = 0;
@@ -133,7 +133,7 @@ AnimationSettings animationSettingsFromObject(const QJSValue &object)
     return settings;
 }
 
-static KWin::FPx2 fpx2FromScriptValue(const QJSValue &value)
+static KWin::FPx2 fpx2FromScriptValue(const QJSValue& value)
 {
     if (value.isNull()) {
         return FPx2();
@@ -153,7 +153,7 @@ static KWin::FPx2 fpx2FromScriptValue(const QJSValue &value)
     return FPx2();
 }
 
-ScriptedEffect *ScriptedEffect::create(const KPluginMetaData &effect)
+ScriptedEffect* ScriptedEffect::create(const KPluginMetaData& effect)
 {
     const QString name = effect.pluginId();
     const QString scriptName = effect.value(QStringLiteral("X-Plasma-MainScript"));
@@ -161,18 +161,21 @@ ScriptedEffect *ScriptedEffect::create(const KPluginMetaData &effect)
         qCDebug(KWIN_SCRIPTING) << "X-Plasma-MainScript not set";
         return nullptr;
     }
-    const QString scriptFile = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                                      QLatin1String(KWIN_NAME "/effects/") + name + QLatin1String("/contents/") + scriptName);
+    const QString scriptFile = QStandardPaths::locate(
+        QStandardPaths::GenericDataLocation,
+        QLatin1String(KWIN_NAME "/effects/") + name + QLatin1String("/contents/") + scriptName);
     if (scriptFile.isNull()) {
         qCDebug(KWIN_SCRIPTING) << "Could not locate the effect script";
         return nullptr;
     }
-    return ScriptedEffect::create(name, scriptFile, effect.value(QStringLiteral("X-KDE-Ordering")).toInt());
+    return ScriptedEffect::create(
+        name, scriptFile, effect.value(QStringLiteral("X-KDE-Ordering")).toInt());
 }
 
-ScriptedEffect *ScriptedEffect::create(const QString& effectName, const QString& pathToScript, int chainPosition)
+ScriptedEffect*
+ScriptedEffect::create(const QString& effectName, const QString& pathToScript, int chainPosition)
 {
-    ScriptedEffect *effect = new ScriptedEffect();
+    ScriptedEffect* effect = new ScriptedEffect();
     if (!effect->init(effectName, pathToScript)) {
         delete effect;
         return nullptr;
@@ -210,7 +213,7 @@ ScriptedEffect::~ScriptedEffect()
 {
 }
 
-bool ScriptedEffect::init(const QString &effectName, const QString &pathToScript)
+bool ScriptedEffect::init(const QString& effectName, const QString& pathToScript)
 {
     qRegisterMetaType<QJSValueList>();
     qRegisterMetaType<EffectWindowList>();
@@ -224,9 +227,14 @@ bool ScriptedEffect::init(const QString &effectName, const QString &pathToScript
     m_scriptFile = pathToScript;
 
     // does the effect contain an KConfigXT file?
-    const QString kconfigXTFile = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QLatin1String(KWIN_NAME "/effects/") + m_effectName + QLatin1String("/contents/config/main.xml"));
+    const QString kconfigXTFile
+        = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
+                                 QLatin1String(KWIN_NAME "/effects/") + m_effectName
+                                     + QLatin1String("/contents/config/main.xml"));
     if (!kconfigXTFile.isNull()) {
-        KConfigGroup cg = QCoreApplication::instance()->property("config").value<KSharedConfigPtr>()->group(QStringLiteral("Effect-%1").arg(m_effectName));
+        KConfigGroup cg
+            = QCoreApplication::instance()->property("config").value<KSharedConfigPtr>()->group(
+                QStringLiteral("Effect-%1").arg(m_effectName));
         QFile xmlFile(kconfigXTFile);
         m_config = new KConfigLoader(cg, &xmlFile, this);
         m_config->load();
@@ -262,7 +270,7 @@ bool ScriptedEffect::init(const QString &effectName, const QString &pathToScript
     globalObject.setProperty(QStringLiteral("QEasingCurve"),
                              m_engine->newQMetaObject(&QEasingCurve::staticMetaObject));
 
-    static const QStringList globalProperties {
+    static const QStringList globalProperties{
         QStringLiteral("animationTime"),
         QStringLiteral("displayWidth"),
         QStringLiteral("displayHeight"),
@@ -281,14 +289,16 @@ bool ScriptedEffect::init(const QString &effectName, const QString &pathToScript
         QStringLiteral("cancel"),
     };
 
-    for (const QString &propertyName : globalProperties) {
+    for (const QString& propertyName : globalProperties) {
         globalObject.setProperty(propertyName, selfObject.property(propertyName));
     }
 
     const QJSValue result = m_engine->evaluate(QString::fromUtf8(scriptFile.readAll()));
 
     if (result.isError()) {
-        qCWarning(KWIN_SCRIPTING, "%s:%d: error: %s", qPrintable(scriptFile.fileName()),
+        qCWarning(KWIN_SCRIPTING,
+                  "%s:%d: error: %s",
+                  qPrintable(scriptFile.fileName()),
                   result.property(QStringLiteral("lineNumber")).toInt(),
                   qPrintable(result.property(QStringLiteral("message")).toString()));
         return false;
@@ -297,7 +307,7 @@ bool ScriptedEffect::init(const QString &effectName, const QString &pathToScript
     return true;
 }
 
-void ScriptedEffect::animationEnded(KWin::EffectWindow *w, Attribute a, uint meta)
+void ScriptedEffect::animationEnded(KWin::EffectWindow* w, Attribute a, uint meta)
 {
     AnimationEffect::animationEnded(w, a, meta);
     emit animationEnded(w, 0);
@@ -313,7 +323,7 @@ bool ScriptedEffect::isActiveFullScreenEffect() const
     return effects->activeFullScreenEffect() == this;
 }
 
-QJSValue ScriptedEffect::animate_helper(const QJSValue &object, AnimationType animationType)
+QJSValue ScriptedEffect::animate_helper(const QJSValue& object, AnimationType animationType)
 {
     QJSValue windowProperty = object.property(QStringLiteral("window"));
     if (!windowProperty.isObject()) {
@@ -321,7 +331,7 @@ QJSValue ScriptedEffect::animate_helper(const QJSValue &object, AnimationType an
         return QJSValue();
     }
 
-    EffectWindow *window = qobject_cast<EffectWindow *>(windowProperty.toQObject());
+    EffectWindow* window = qobject_cast<EffectWindow*>(windowProperty.toQObject());
     if (!window) {
         m_engine->throwError(QStringLiteral("Window property references invalid window"));
         return QJSValue();
@@ -344,11 +354,13 @@ QJSValue ScriptedEffect::animate_helper(const QJSValue &object, AnimationType an
                 const uint set = s.set | settings.at(0).set;
                 // Catch show stoppers (incompletable animation)
                 if (!(set & AnimationSettings::Type)) {
-                    m_engine->throwError(QStringLiteral("Type property missing in animation options"));
+                    m_engine->throwError(
+                        QStringLiteral("Type property missing in animation options"));
                     return QJSValue();
                 }
                 if (!(set & AnimationSettings::Duration)) {
-                    m_engine->throwError(QStringLiteral("Duration property missing in animation options"));
+                    m_engine->throwError(
+                        QStringLiteral("Duration property missing in animation options"));
                     return QJSValue();
                 }
                 // Complete local animations from global settings
@@ -370,18 +382,17 @@ QJSValue ScriptedEffect::animate_helper(const QJSValue &object, AnimationType an
 
                 s.metaData = 0;
                 typedef QMap<AnimationEffect::MetaType, QString> MetaTypeMap;
-                static MetaTypeMap metaTypes({
-                    {AnimationEffect::SourceAnchor, QStringLiteral("sourceAnchor")},
-                    {AnimationEffect::TargetAnchor, QStringLiteral("targetAnchor")},
-                    {AnimationEffect::RelativeSourceX, QStringLiteral("relativeSourceX")},
-                    {AnimationEffect::RelativeSourceY, QStringLiteral("relativeSourceY")},
-                    {AnimationEffect::RelativeTargetX, QStringLiteral("relativeTargetX")},
-                    {AnimationEffect::RelativeTargetY, QStringLiteral("relativeTargetY")},
-                    {AnimationEffect::Axis, QStringLiteral("axis")}
-                });
+                static MetaTypeMap metaTypes(
+                    {{AnimationEffect::SourceAnchor, QStringLiteral("sourceAnchor")},
+                     {AnimationEffect::TargetAnchor, QStringLiteral("targetAnchor")},
+                     {AnimationEffect::RelativeSourceX, QStringLiteral("relativeSourceX")},
+                     {AnimationEffect::RelativeSourceY, QStringLiteral("relativeSourceY")},
+                     {AnimationEffect::RelativeTargetX, QStringLiteral("relativeTargetX")},
+                     {AnimationEffect::RelativeTargetY, QStringLiteral("relativeTargetY")},
+                     {AnimationEffect::Axis, QStringLiteral("axis")}});
 
-                for (auto it = metaTypes.constBegin(),
-                     end = metaTypes.constEnd(); it != end; ++it) {
+                for (auto it = metaTypes.constBegin(), end = metaTypes.constEnd(); it != end;
+                     ++it) {
                     QJSValue metaVal = value.property(*it);
                     if (metaVal.isNumber()) {
                         AnimationEffect::setMetaData(it.key(), metaVal.toInt(), s.metaData);
@@ -414,7 +425,7 @@ QJSValue ScriptedEffect::animate_helper(const QJSValue &object, AnimationType an
 
     QJSValue array = m_engine->newArray(settings.length());
     for (int i = 0; i < settings.count(); i++) {
-        const AnimationSettings &setting = settings[i];
+        const AnimationSettings& setting = settings[i];
         int animationId;
         if (animationType == AnimationType::Set) {
             animationId = set(window,
@@ -445,60 +456,96 @@ QJSValue ScriptedEffect::animate_helper(const QJSValue &object, AnimationType an
     return array;
 }
 
-quint64 ScriptedEffect::animate(KWin::EffectWindow *window, KWin::AnimationEffect::Attribute attribute,
-                                int ms, const QJSValue &to, const QJSValue &from, uint metaData, int curve,
-                                int delay, bool fullScreen, bool keepAlive)
+quint64 ScriptedEffect::animate(KWin::EffectWindow* window,
+                                KWin::AnimationEffect::Attribute attribute,
+                                int ms,
+                                const QJSValue& to,
+                                const QJSValue& from,
+                                uint metaData,
+                                int curve,
+                                int delay,
+                                bool fullScreen,
+                                bool keepAlive)
 {
     QEasingCurve qec;
     if (curve < QEasingCurve::Custom)
         qec.setType(static_cast<QEasingCurve::Type>(curve));
     else if (curve == GaussianCurve)
         qec.setCustomType(qecGaussian);
-    return AnimationEffect::animate(window, attribute, metaData, ms, fpx2FromScriptValue(to), qec,
-                                    delay, fpx2FromScriptValue(from), fullScreen, keepAlive);
+    return AnimationEffect::animate(window,
+                                    attribute,
+                                    metaData,
+                                    ms,
+                                    fpx2FromScriptValue(to),
+                                    qec,
+                                    delay,
+                                    fpx2FromScriptValue(from),
+                                    fullScreen,
+                                    keepAlive);
 }
 
-QJSValue ScriptedEffect::animate(const QJSValue &object)
+QJSValue ScriptedEffect::animate(const QJSValue& object)
 {
     return animate_helper(object, AnimationType::Animate);
 }
 
-quint64 ScriptedEffect::set(KWin::EffectWindow *window, KWin::AnimationEffect::Attribute attribute,
-                            int ms, const QJSValue &to, const QJSValue &from, uint metaData, int curve,
-                            int delay, bool fullScreen, bool keepAlive)
+quint64 ScriptedEffect::set(KWin::EffectWindow* window,
+                            KWin::AnimationEffect::Attribute attribute,
+                            int ms,
+                            const QJSValue& to,
+                            const QJSValue& from,
+                            uint metaData,
+                            int curve,
+                            int delay,
+                            bool fullScreen,
+                            bool keepAlive)
 {
     QEasingCurve qec;
     if (curve < QEasingCurve::Custom)
         qec.setType(static_cast<QEasingCurve::Type>(curve));
     else if (curve == GaussianCurve)
         qec.setCustomType(qecGaussian);
-    return AnimationEffect::set(window, attribute, metaData, ms, fpx2FromScriptValue(to), qec,
-                                delay, fpx2FromScriptValue(from), fullScreen, keepAlive);
+    return AnimationEffect::set(window,
+                                attribute,
+                                metaData,
+                                ms,
+                                fpx2FromScriptValue(to),
+                                qec,
+                                delay,
+                                fpx2FromScriptValue(from),
+                                fullScreen,
+                                keepAlive);
 }
 
-QJSValue ScriptedEffect::set(const QJSValue &object)
+QJSValue ScriptedEffect::set(const QJSValue& object)
 {
     return animate_helper(object, AnimationType::Set);
 }
 
-bool ScriptedEffect::retarget(quint64 animationId, const QJSValue &newTarget, int newRemainingTime)
+bool ScriptedEffect::retarget(quint64 animationId, const QJSValue& newTarget, int newRemainingTime)
 {
     return AnimationEffect::retarget(animationId, fpx2FromScriptValue(newTarget), newRemainingTime);
 }
 
-bool ScriptedEffect::retarget(const QList<quint64> &animationIds, const QJSValue &newTarget, int newRemainingTime)
+bool ScriptedEffect::retarget(const QList<quint64>& animationIds,
+                              const QJSValue& newTarget,
+                              int newRemainingTime)
 {
     return std::all_of(animationIds.begin(), animationIds.end(), [&](quint64 animationId) {
         return retarget(animationId, newTarget, newRemainingTime);
     });
 }
 
-bool ScriptedEffect::redirect(quint64 animationId, Direction direction, TerminationFlags terminationFlags)
+bool ScriptedEffect::redirect(quint64 animationId,
+                              Direction direction,
+                              TerminationFlags terminationFlags)
 {
     return AnimationEffect::redirect(animationId, direction, terminationFlags);
 }
 
-bool ScriptedEffect::redirect(const QList<quint64> &animationIds, Direction direction, TerminationFlags terminationFlags)
+bool ScriptedEffect::redirect(const QList<quint64>& animationIds,
+                              Direction direction,
+                              TerminationFlags terminationFlags)
 {
     return std::all_of(animationIds.begin(), animationIds.end(), [&](quint64 animationId) {
         return redirect(animationId, direction, terminationFlags);
@@ -510,7 +557,7 @@ bool ScriptedEffect::complete(quint64 animationId)
     return AnimationEffect::complete(animationId);
 }
 
-bool ScriptedEffect::complete(const QList<quint64> &animationIds)
+bool ScriptedEffect::complete(const QList<quint64>& animationIds)
 {
     return std::all_of(animationIds.begin(), animationIds.end(), [&](quint64 animationId) {
         return complete(animationId);
@@ -522,10 +569,10 @@ bool ScriptedEffect::cancel(quint64 animationId)
     return AnimationEffect::cancel(animationId);
 }
 
-bool ScriptedEffect::cancel(const QList<quint64> &animationIds)
+bool ScriptedEffect::cancel(const QList<quint64>& animationIds)
 {
     bool ret = false;
-    for (const quint64 &animationId : animationIds) {
+    for (const quint64& animationId : animationIds) {
         ret |= cancel(animationId);
     }
     return ret;
@@ -533,7 +580,7 @@ bool ScriptedEffect::cancel(const QList<quint64> &animationIds)
 
 bool ScriptedEffect::isGrabbed(EffectWindow* w, ScriptedEffect::DataRole grabRole)
 {
-    void *e = w->data(static_cast<KWin::DataRole>(grabRole)).value<void*>();
+    void* e = w->data(static_cast<KWin::DataRole>(grabRole)).value<void*>();
     if (e) {
         return e != this;
     } else {
@@ -541,9 +588,9 @@ bool ScriptedEffect::isGrabbed(EffectWindow* w, ScriptedEffect::DataRole grabRol
     }
 }
 
-bool ScriptedEffect::grab(EffectWindow *w, DataRole grabRole, bool force)
+bool ScriptedEffect::grab(EffectWindow* w, DataRole grabRole, bool force)
 {
-    void *grabber = w->data(grabRole).value<void *>();
+    void* grabber = w->data(grabRole).value<void*>();
 
     if (grabber == this) {
         return true;
@@ -553,14 +600,14 @@ bool ScriptedEffect::grab(EffectWindow *w, DataRole grabRole, bool force)
         return false;
     }
 
-    w->setData(grabRole, QVariant::fromValue(static_cast<void *>(this)));
+    w->setData(grabRole, QVariant::fromValue(static_cast<void*>(this)));
 
     return true;
 }
 
-bool ScriptedEffect::ungrab(EffectWindow *w, DataRole grabRole)
+bool ScriptedEffect::ungrab(EffectWindow* w, DataRole grabRole)
 {
-    void *grabber = w->data(grabRole).value<void *>();
+    void* grabber = w->data(grabRole).value<void*>();
 
     if (grabber == nullptr) {
         return true;
@@ -584,14 +631,16 @@ void ScriptedEffect::reconfigure(ReconfigureFlags flags)
     emit configChanged();
 }
 
-void ScriptedEffect::registerShortcut(const QString &objectName, const QString &text,
-                                      const QString &keySequence, const QJSValue &callback)
+void ScriptedEffect::registerShortcut(const QString& objectName,
+                                      const QString& text,
+                                      const QString& keySequence,
+                                      const QJSValue& callback)
 {
     if (!callback.isCallable()) {
         m_engine->throwError(QStringLiteral("Shortcut handler must be callable"));
         return;
     }
-    QAction *action = new QAction(this);
+    QAction* action = new QAction(this);
     action->setObjectName(objectName);
     action->setText(text);
     const QKeySequence shortcut = QKeySequence(keySequence);
@@ -608,14 +657,14 @@ bool ScriptedEffect::borderActivated(ElectricBorder edge)
 {
     auto it = screenEdgeCallbacks().constFind(edge);
     if (it != screenEdgeCallbacks().constEnd()) {
-        for (const QJSValue &callback : it.value()) {
+        for (const QJSValue& callback : it.value()) {
             QJSValue(callback).call();
         }
     }
     return true;
 }
 
-QJSValue ScriptedEffect::readConfig(const QString &key, const QJSValue &defaultValue)
+QJSValue ScriptedEffect::readConfig(const QString& key, const QJSValue& defaultValue)
 {
     if (!m_config) {
         return defaultValue;
@@ -638,7 +687,7 @@ int ScriptedEffect::animationTime(int defaultTime) const
     return Effect::animationTime(defaultTime);
 }
 
-bool ScriptedEffect::registerScreenEdge(int edge, const QJSValue &callback)
+bool ScriptedEffect::registerScreenEdge(int edge, const QJSValue& callback)
 {
     if (!callback.isCallable()) {
         m_engine->throwError(QStringLiteral("Screen edge handler must be callable"));
@@ -647,7 +696,8 @@ bool ScriptedEffect::registerScreenEdge(int edge, const QJSValue &callback)
     auto it = screenEdgeCallbacks().find(edge);
     if (it == screenEdgeCallbacks().end()) {
         // not yet registered
-        ScreenEdges::self()->reserve(static_cast<KWin::ElectricBorder>(edge), this, "borderActivated");
+        ScreenEdges::self()->reserve(
+            static_cast<KWin::ElectricBorder>(edge), this, "borderActivated");
         screenEdgeCallbacks().insert(edge, QJSValueList{callback});
     } else {
         it->append(callback);
@@ -659,7 +709,7 @@ bool ScriptedEffect::unregisterScreenEdge(int edge)
 {
     auto it = screenEdgeCallbacks().find(edge);
     if (it == screenEdgeCallbacks().end()) {
-        //not previously registered
+        // not previously registered
         return false;
     }
     ScreenEdges::self()->unreserve(static_cast<KWin::ElectricBorder>(edge), this);
@@ -667,7 +717,7 @@ bool ScriptedEffect::unregisterScreenEdge(int edge)
     return true;
 }
 
-bool ScriptedEffect::registerTouchScreenEdge(int edge, const QJSValue &callback)
+bool ScriptedEffect::registerTouchScreenEdge(int edge, const QJSValue& callback)
 {
     if (m_touchScreenEdgeCallbacks.constFind(edge) != m_touchScreenEdgeCallbacks.constEnd()) {
         return false;
@@ -676,10 +726,8 @@ bool ScriptedEffect::registerTouchScreenEdge(int edge, const QJSValue &callback)
         m_engine->throwError(QStringLiteral("Touch screen edge handler must be callable"));
         return false;
     }
-    QAction *action = new QAction(this);
-    connect(action, &QAction::triggered, this, [callback]() {
-        QJSValue(callback).call();
-    });
+    QAction* action = new QAction(this);
+    connect(action, &QAction::triggered, this, [callback]() { QJSValue(callback).call(); });
     ScreenEdges::self()->reserveTouch(KWin::ElectricBorder(edge), action);
     m_touchScreenEdgeCallbacks.insert(edge, action);
     return true;
@@ -696,7 +744,7 @@ bool ScriptedEffect::unregisterTouchScreenEdge(int edge)
     return true;
 }
 
-QJSEngine *ScriptedEffect::engine() const
+QJSEngine* ScriptedEffect::engine() const
 {
     return m_engine;
 }

@@ -16,14 +16,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #ifndef KWIN_GENERICSCRIPTEDCONFIG_H
 #define KWIN_GENERICSCRIPTEDCONFIG_H
 
 #include <KCModule>
-#include <KPluginFactory>
 #include <KConfigGroup>
+#include <KPluginFactory>
 
 class KLocalizedTranslator;
 
@@ -33,11 +33,15 @@ namespace KWin
 class GenericScriptedConfigFactory : public KPluginFactory
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.kde.KPluginFactory"  FILE "genericscriptedconfig.json" )
+    Q_PLUGIN_METADATA(IID "org.kde.KPluginFactory" FILE "genericscriptedconfig.json")
     Q_INTERFACES(KPluginFactory)
 
 protected:
-    QObject *create(const char *iface, QWidget *parentWidget, QObject *parent, const QVariantList &args, const QString &keyword) override;
+    QObject* create(const char* iface,
+                    QWidget* parentWidget,
+                    QObject* parent,
+                    const QVariantList& args,
+                    const QString& keyword) override;
 };
 
 class GenericScriptedConfig : public KCModule
@@ -45,14 +49,14 @@ class GenericScriptedConfig : public KCModule
     Q_OBJECT
 
 public:
-    GenericScriptedConfig(const QString &keyword, QWidget *parent, const QVariantList &args);
+    GenericScriptedConfig(const QString& keyword, QWidget* parent, const QVariantList& args);
     ~GenericScriptedConfig() override;
 
 public Q_SLOTS:
     void save() override;
 
 protected:
-    const QString &packageName() const;
+    const QString& packageName() const;
     void createUi();
     virtual QString typeName() const = 0;
     virtual KConfigGroup configGroup() = 0;
@@ -60,15 +64,16 @@ protected:
 
 private:
     QString m_packageName;
-    KLocalizedTranslator *m_translator;
+    KLocalizedTranslator* m_translator;
 };
 
 class ScriptedEffectConfig : public GenericScriptedConfig
 {
     Q_OBJECT
 public:
-    ScriptedEffectConfig(const QString &keyword, QWidget *parent, const QVariantList &args);
+    ScriptedEffectConfig(const QString& keyword, QWidget* parent, const QVariantList& args);
     ~ScriptedEffectConfig() override;
+
 protected:
     QString typeName() const override;
     KConfigGroup configGroup() override;
@@ -79,7 +84,7 @@ class ScriptingConfig : public GenericScriptedConfig
 {
     Q_OBJECT
 public:
-    ScriptingConfig(const QString &keyword, QWidget *parent, const QVariantList &args);
+    ScriptingConfig(const QString& keyword, QWidget* parent, const QVariantList& args);
     ~ScriptingConfig() override;
 
 protected:
@@ -88,8 +93,7 @@ protected:
     void reload() override;
 };
 
-inline
-const QString &GenericScriptedConfig::packageName() const
+inline const QString& GenericScriptedConfig::packageName() const
 {
     return m_packageName;
 }

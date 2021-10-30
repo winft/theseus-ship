@@ -16,27 +16,32 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #include "genericscriptedconfig.h"
 #include "config-kwin.h"
-#include <kwineffects_interface.h>
 #include <KAboutData>
+#include <kwineffects_interface.h>
 #define TRANSLATION_DOMAIN "kwin_scripting"
+#include <KDesktopFile>
 #include <KLocalizedString>
 #include <KLocalizedTranslator>
 #include <kconfigloader.h>
-#include <KDesktopFile>
 
 #include <QFile>
 #include <QLabel>
+#include <QStandardPaths>
 #include <QUiLoader>
 #include <QVBoxLayout>
-#include <QStandardPaths>
 
-namespace KWin {
+namespace KWin
+{
 
-QObject *GenericScriptedConfigFactory::create(const char *iface, QWidget *parentWidget, QObject *parent, const QVariantList &args, const QString &keyword)
+QObject* GenericScriptedConfigFactory::create(const char* iface,
+                                              QWidget* parentWidget,
+                                              QObject* parent,
+                                              const QVariantList& args,
+                                              const QString& keyword)
 {
     Q_UNUSED(iface)
     Q_UNUSED(parent)
@@ -47,7 +52,9 @@ QObject *GenericScriptedConfigFactory::create(const char *iface, QWidget *parent
     }
 }
 
-GenericScriptedConfig::GenericScriptedConfig(const QString &keyword, QWidget *parent, const QVariantList &args)
+GenericScriptedConfig::GenericScriptedConfig(const QString& keyword,
+                                             QWidget* parent,
+                                             const QVariantList& args)
     : KCModule(parent, args)
     , m_packageName(keyword)
     , m_translator(new KLocalizedTranslator(this))
@@ -63,41 +70,38 @@ void GenericScriptedConfig::createUi()
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
 
-    const QString kconfigXTFile = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                                        QLatin1String(KWIN_NAME) +
-                                                        QLatin1Char('/') +
-                                                        typeName() +
-                                                        QLatin1Char('/') +
-                                                        m_packageName +
-                                                        QLatin1String("/contents/config/main.xml"));
-    const QString uiPath = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                                 QLatin1String(KWIN_NAME) +
-                                                 QLatin1Char('/') +
-                                                 typeName() +
-                                                 QLatin1Char('/') +
-                                                 m_packageName +
-                                                 QLatin1String("/contents/ui/config.ui"));
+    const QString kconfigXTFile = QStandardPaths::locate(
+        QStandardPaths::GenericDataLocation,
+        QLatin1String(KWIN_NAME) + QLatin1Char('/') + typeName() + QLatin1Char('/') + m_packageName
+            + QLatin1String("/contents/config/main.xml"));
+    const QString uiPath = QStandardPaths::locate(
+        QStandardPaths::GenericDataLocation,
+        QLatin1String(KWIN_NAME) + QLatin1Char('/') + typeName() + QLatin1Char('/') + m_packageName
+            + QLatin1String("/contents/ui/config.ui"));
     if (kconfigXTFile.isEmpty() || uiPath.isEmpty()) {
-        layout->addWidget(new QLabel(i18nc("Error message", "Plugin does not provide configuration file in expected location")));
+        layout->addWidget(new QLabel(i18nc(
+            "Error message", "Plugin does not provide configuration file in expected location")));
         return;
     }
     QFile xmlFile(kconfigXTFile);
     KConfigGroup cg = configGroup();
-    KConfigLoader *configLoader = new KConfigLoader(cg, &xmlFile, this);
+    KConfigLoader* configLoader = new KConfigLoader(cg, &xmlFile, this);
     // load the ui file
-    QUiLoader *loader = new QUiLoader(this);
+    QUiLoader* loader = new QUiLoader(this);
     loader->setLanguageChangeEnabled(true);
     QFile uiFile(uiPath);
     // try getting a translation domain
-    const QString metaDataPath = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                                        QStringLiteral(KWIN_NAME"/%1/%2/metadata.desktop").arg(typeName()).arg(m_packageName));
+    const QString metaDataPath = QStandardPaths::locate(
+        QStandardPaths::GenericDataLocation,
+        QStringLiteral(KWIN_NAME "/%1/%2/metadata.desktop").arg(typeName()).arg(m_packageName));
     if (!metaDataPath.isNull()) {
         KDesktopFile metaData(metaDataPath);
-        m_translator->setTranslationDomain(metaData.desktopGroup().readEntry("X-KWin-Config-TranslationDomain", QString()));
+        m_translator->setTranslationDomain(
+            metaData.desktopGroup().readEntry("X-KWin-Config-TranslationDomain", QString()));
     }
 
     uiFile.open(QFile::ReadOnly);
-    QWidget *customConfigForm = loader->load(&uiFile, this);
+    QWidget* customConfigForm = loader->load(&uiFile, this);
     m_translator->addContextToMonitor(customConfigForm->objectName());
     uiFile.close();
 
@@ -119,7 +123,9 @@ void GenericScriptedConfig::reload()
 {
 }
 
-ScriptedEffectConfig::ScriptedEffectConfig(const QString &keyword, QWidget *parent, const QVariantList &args)
+ScriptedEffectConfig::ScriptedEffectConfig(const QString& keyword,
+                                           QWidget* parent,
+                                           const QVariantList& args)
     : GenericScriptedConfig(keyword, parent, args)
 {
     createUi();
@@ -136,18 +142,18 @@ QString ScriptedEffectConfig::typeName() const
 
 KConfigGroup ScriptedEffectConfig::configGroup()
 {
-    return KSharedConfig::openConfig(QStringLiteral(KWIN_CONFIG))->group(QLatin1String("Effect-") + packageName());
+    return KSharedConfig::openConfig(QStringLiteral(KWIN_CONFIG))
+        ->group(QLatin1String("Effect-") + packageName());
 }
 
 void ScriptedEffectConfig::reload()
 {
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(packageName());
 }
 
-ScriptingConfig::ScriptingConfig(const QString &keyword, QWidget *parent, const QVariantList &args)
+ScriptingConfig::ScriptingConfig(const QString& keyword, QWidget* parent, const QVariantList& args)
     : GenericScriptedConfig(keyword, parent, args)
 {
     createUi();
@@ -159,7 +165,8 @@ ScriptingConfig::~ScriptingConfig()
 
 KConfigGroup ScriptingConfig::configGroup()
 {
-    return KSharedConfig::openConfig(QStringLiteral(KWIN_CONFIG))->group(QLatin1String("Script-") + packageName());
+    return KSharedConfig::openConfig(QStringLiteral(KWIN_CONFIG))
+        ->group(QLatin1String("Script-") + packageName());
 }
 
 QString ScriptingConfig::typeName() const
@@ -171,6 +178,5 @@ void ScriptingConfig::reload()
 {
     // TODO: what to call
 }
-
 
 } // namespace

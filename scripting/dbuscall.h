@@ -84,20 +84,20 @@ public:
     explicit DBusCall(QObject* parent = nullptr);
     ~DBusCall() override;
 
-    const QString &service() const;
-    const QString &path() const;
-    const QString &interface() const;
-    const QString &method() const;
-    const QVariantList &arguments() const;
+    const QString& service() const;
+    const QString& path() const;
+    const QString& interface() const;
+    const QString& method() const;
+    const QVariantList& arguments() const;
 
 public Q_SLOTS:
     void call();
 
-    void setService(const QString &service);
-    void setPath(const QString &path);
-    void setInterface(const QString &interface);
-    void setMethod(const QString &method);
-    void setArguments(const QVariantList &arguments);
+    void setService(const QString& service);
+    void setPath(const QString& path);
+    void setInterface(const QString& interface);
+    void setMethod(const QString& method);
+    void setArguments(const QVariantList& arguments);
 
 Q_SIGNALS:
     void finished(QVariantList returnValue);
@@ -117,28 +117,27 @@ private:
     QVariantList m_arguments;
 };
 
-#define GENERIC_WRAPPER(type, name, upperName) \
-inline type DBusCall::name() const \
-{ \
-    return m_##name; \
-}\
-inline void DBusCall::set##upperName(type name) \
-{\
-    if (m_##name == name) { \
-        return; \
-    } \
-    m_##name = name; \
-    emit name##Changed(); \
-}
-#define WRAPPER(name, upperName) \
-GENERIC_WRAPPER(const QString&, name, upperName)
+#define GENERIC_WRAPPER(type, name, upperName)                                                     \
+    inline type DBusCall::name() const                                                             \
+    {                                                                                              \
+        return m_##name;                                                                           \
+    }                                                                                              \
+    inline void DBusCall::set##upperName(type name)                                                \
+    {                                                                                              \
+        if (m_##name == name) {                                                                    \
+            return;                                                                                \
+        }                                                                                          \
+        m_##name = name;                                                                           \
+        emit name##Changed();                                                                      \
+    }
+#define WRAPPER(name, upperName) GENERIC_WRAPPER(const QString&, name, upperName)
 
 WRAPPER(interface, Interface)
 WRAPPER(method, Method)
 WRAPPER(path, Path)
 WRAPPER(service, Service)
 
-GENERIC_WRAPPER(const QVariantList &, arguments, Arguments)
+GENERIC_WRAPPER(const QVariantList&, arguments, Arguments)
 #undef WRAPPER
 #undef GENERIC_WRAPPER
 
