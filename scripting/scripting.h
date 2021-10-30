@@ -33,12 +33,12 @@ class qt_script_space;
 /**
  * The heart of Scripting. Infinite power lies beyond
  */
-class KWIN_EXPORT scripting : public QObject
+class KWIN_EXPORT platform : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Scripting")
 private:
-    explicit scripting(QObject* parent);
+    explicit platform(QObject* parent);
     QStringList scriptList;
     QList<abstract_script*> scripts;
     /**
@@ -50,7 +50,7 @@ private:
     void runScripts();
 
 public:
-    ~scripting() override;
+    ~platform() override;
     Q_SCRIPTABLE Q_INVOKABLE int loadScript(const QString& filePath,
                                             const QString& pluginName = QString());
     Q_SCRIPTABLE Q_INVOKABLE int loadDeclarativeScript(const QString& filePath,
@@ -75,8 +75,8 @@ public:
 
     abstract_script* findScript(const QString& pluginName) const;
 
-    static scripting* self();
-    static scripting* create(QObject* parent);
+    static platform* self();
+    static platform* create(QObject* parent);
 
 public Q_SLOTS:
     void scriptDestroyed(QObject* object);
@@ -88,38 +88,39 @@ private Q_SLOTS:
 private:
     void init();
     LoadScriptList queryScriptsToLoad();
-    static scripting* s_self;
+
+    static platform* s_self;
     QQmlEngine* m_qmlEngine;
     QQmlContext* m_declarativeScriptSharedContext;
     qt_script_space* m_workspaceWrapper;
 };
 
-inline QQmlEngine* scripting::qmlEngine() const
+inline QQmlEngine* platform::qmlEngine() const
 {
     return m_qmlEngine;
 }
 
-inline QQmlEngine* scripting::qmlEngine()
+inline QQmlEngine* platform::qmlEngine()
 {
     return m_qmlEngine;
 }
 
-inline QQmlContext* scripting::declarativeScriptSharedContext() const
+inline QQmlContext* platform::declarativeScriptSharedContext() const
 {
     return m_declarativeScriptSharedContext;
 }
 
-inline QQmlContext* scripting::declarativeScriptSharedContext()
+inline QQmlContext* platform::declarativeScriptSharedContext()
 {
     return m_declarativeScriptSharedContext;
 }
 
-inline qt_script_space* scripting::workspaceWrapper() const
+inline qt_script_space* platform::workspaceWrapper() const
 {
     return m_workspaceWrapper;
 }
 
-inline scripting* scripting::self()
+inline platform* platform::self()
 {
     return s_self;
 }

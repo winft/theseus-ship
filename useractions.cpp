@@ -407,7 +407,7 @@ void UserActionsMenu::menuAboutToShow()
     delete m_scriptsMenu;
     m_scriptsMenu = nullptr;
     // ask scripts whether they want to add entries for the given Client
-    QList<QAction*> scriptActions = scripting::scripting::self()->actionsForUserActionMenu(m_client.data(), m_scriptsMenu);
+    auto scriptActions = scripting::platform::self()->actionsForUserActionMenu(m_client.data(), m_scriptsMenu);
     if (!scriptActions.isEmpty()) {
         m_scriptsMenu = new QMenu(m_menu);
         m_scriptsMenu->setPalette(m_client->control->palette().q_palette());

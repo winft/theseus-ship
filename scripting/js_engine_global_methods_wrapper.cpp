@@ -73,7 +73,7 @@ bool js_engine_global_methods_wrapper::registerShortcut(const QString& name,
 
     connect(a, &QAction::triggered, this, [=]() mutable {
         QJSValueList arguments;
-        arguments << scripting::self()->qmlEngine()->toScriptValue(a);
+        arguments << platform::self()->qmlEngine()->toScriptValue(a);
         function.call(arguments);
     });
     return true;

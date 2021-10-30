@@ -177,8 +177,8 @@ void script::slotScriptLoadedFromFile()
     m_engine->globalObject().setProperty(QStringLiteral("options"), optionsObject);
 
     // Make the workspace visible to QJSEngine.
-    QJSValue workspaceObject = m_engine->newQObject(scripting::self()->workspaceWrapper());
-    QQmlEngine::setObjectOwnership(scripting::self()->workspaceWrapper(), QQmlEngine::CppOwnership);
+    QJSValue workspaceObject = m_engine->newQObject(platform::self()->workspaceWrapper());
+    QQmlEngine::setObjectOwnership(platform::self()->workspaceWrapper(), QQmlEngine::CppOwnership);
     m_engine->globalObject().setProperty(QStringLiteral("workspace"), workspaceObject);
 
     QJSValue self = m_engine->newQObject(this);
@@ -531,8 +531,8 @@ declarative_script::declarative_script(int id,
                                        QString pluginName,
                                        QObject* parent)
     : abstract_script(id, scriptName, pluginName, parent)
-    , m_context(new QQmlContext(scripting::self()->declarativeScriptSharedContext(), this))
-    , m_component(new QQmlComponent(scripting::self()->qmlEngine(), this))
+    , m_context(new QQmlContext(platform::self()->declarativeScriptSharedContext(), this))
+    , m_component(new QQmlComponent(platform::self()->qmlEngine(), this))
 {
     m_context->setContextProperty(QStringLiteral("KWin"),
                                   new js_engine_global_methods_wrapper(this));

@@ -163,11 +163,11 @@ void CompositedOutlineVisual::hide()
 void CompositedOutlineVisual::show()
 {
     if (m_qmlContext.isNull()) {
-        m_qmlContext.reset(new QQmlContext(scripting::scripting::self()->qmlEngine()));
+        m_qmlContext.reset(new QQmlContext(scripting::platform::self()->qmlEngine()));
         m_qmlContext->setContextProperty(QStringLiteral("outline"), outline());
     }
     if (m_qmlComponent.isNull()) {
-        m_qmlComponent.reset(new QQmlComponent(scripting::scripting::self()->qmlEngine()));
+        m_qmlComponent.reset(new QQmlComponent(scripting::platform::self()->qmlEngine()));
         const QString fileName = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
                                                  kwinApp()->config()->group(QStringLiteral("Outline")).readEntry("QmlPath", QStringLiteral(KWIN_NAME "/outline/plasma/outline.qml")));
         if (fileName.isEmpty()) {

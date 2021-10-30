@@ -293,10 +293,10 @@ void TabBoxHandlerPrivate::show()
 #ifndef KWIN_UNIT_TEST
     if (m_qmlContext.isNull()) {
         qmlRegisterType<SwitcherItem>("org.kde.kwin", 2, 0, "Switcher");
-        m_qmlContext.reset(new QQmlContext(scripting::scripting::self()->qmlEngine()));
+        m_qmlContext.reset(new QQmlContext(scripting::platform::self()->qmlEngine()));
     }
     if (m_qmlComponent.isNull()) {
-        m_qmlComponent.reset(new QQmlComponent(scripting::scripting::self()->qmlEngine()));
+        m_qmlComponent.reset(new QQmlComponent(scripting::platform::self()->qmlEngine()));
     }
     const bool desktopMode = (config.tabBoxMode() == TabBoxConfig::DesktopTabBox);
     auto findMainItem = [this](const QMap<QString, QObject *> &tabBoxes) -> QObject* {
