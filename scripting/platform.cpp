@@ -51,7 +51,6 @@ platform::platform()
                                                  QDBusConnection::ExportScriptableContents
                                                      | QDBusConnection::ExportScriptableInvokables);
     connect(Workspace::self(), &Workspace::configChanged, this, &platform::start);
-    connect(Workspace::self(), &Workspace::workspaceInitialized, this, &platform::start);
 }
 
 platform::~platform()

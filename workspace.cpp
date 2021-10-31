@@ -269,8 +269,9 @@ Workspace::Workspace()
     // want focus
     workspaceInit = false;
 
-    // broadcast that Workspace is ready, but first process all events.
-    QMetaObject::invokeMethod(this, "workspaceInitialized", Qt::QueuedConnection);
+    // Start the scripting platform, but first process all events.
+    // TODO(romangg): Can we also do this through a simple call?
+    QMetaObject::invokeMethod(scripting.get(), "start", Qt::QueuedConnection);
 
     // TODO: ungrabXServer()
 }

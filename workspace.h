@@ -493,12 +493,6 @@ private Q_SLOTS:
     void slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop);
 
 Q_SIGNALS:
-    /**
-     * Emitted after the Workspace has setup the complete initialization process.
-     * This can be used to connect to for performing post-workspace initialization.
-     */
-    void workspaceInitialized();
-
     // Signals required for the scripting interface
     void desktopPresenceChanged(KWin::Toplevel*, int);
     void currentDesktopChanged(int, KWin::Toplevel*);
