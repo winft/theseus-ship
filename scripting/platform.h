@@ -24,12 +24,16 @@ typedef QList<QPair<bool, QPair<QString, QString>>> LoadScriptList;
 namespace KWin
 {
 class Toplevel;
+class Workspace;
 
 namespace scripting
 {
 class abstract_script;
 class declarative_script_space;
 class qt_script_space;
+
+template<typename Space, typename RefSpace>
+class template_space;
 
 /**
  * The heart of Scripting. Infinite power lies beyond
@@ -90,8 +94,8 @@ private:
     QQmlEngine* m_qmlEngine;
     QQmlContext* m_declarativeScriptSharedContext;
 
-    std::unique_ptr<qt_script_space> qt_space;
-    std::unique_ptr<declarative_script_space> decl_space;
+    std::unique_ptr<template_space<qt_script_space, Workspace>> qt_space;
+    std::unique_ptr<template_space<declarative_script_space, Workspace>> decl_space;
 
     bool is_running{false};
 };
@@ -114,11 +118,6 @@ inline QQmlContext* platform::declarativeScriptSharedContext() const
 inline QQmlContext* platform::declarativeScriptSharedContext()
 {
     return m_declarativeScriptSharedContext;
-}
-
-inline qt_script_space* platform::workspaceWrapper() const
-{
-    return qt_space.get();
 }
 
 }

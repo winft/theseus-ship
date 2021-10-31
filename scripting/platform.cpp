@@ -20,6 +20,7 @@
 #include "input/redirect.h"
 #include "screenedge.h"
 #include "scripting_logging.h"
+#include "workspace.h"
 
 #include "win/x11/window.h"
 
@@ -42,7 +43,7 @@ platform::platform()
     : m_scriptsLock(new QMutex(QMutex::Recursive))
     , m_qmlEngine(new QQmlEngine(this))
     , m_declarativeScriptSharedContext(new QQmlContext(m_qmlEngine, this))
-    , qt_space{std::make_unique<qt_script_space>()}
+    , qt_space{std::make_unique<template_space<qt_script_space, Workspace>>(workspace())}
 {
     init();
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
@@ -80,17 +81,21 @@ void platform::init()
 
     qmlRegisterType<window>();
     qmlRegisterSingletonType<qt_script_space>(
-        "org.kde.kwin", 3, 0, "Workspace", [](QQmlEngine* qmlEngine, QJSEngine* jsEngine) {
+        "org.kde.kwin",
+        3,
+        0,
+        "Workspace",
+        [](QQmlEngine* qmlEngine, QJSEngine* jsEngine) -> qt_script_space* {
             Q_UNUSED(qmlEngine)
             Q_UNUSED(jsEngine)
-            return new qt_script_space();
+            return new template_space<qt_script_space, Workspace>(workspace());
         });
     qmlRegisterType<QAbstractItemModel>();
 
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), qt_space.get());
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("options"), options);
 
-    decl_space = std::make_unique<declarative_script_space>();
+    decl_space = std::make_unique<template_space<declarative_script_space, Workspace>>(workspace());
     m_declarativeScriptSharedContext->setContextProperty(QStringLiteral("workspace"),
                                                          decl_space.get());
     // QQmlListProperty interfaces only work via properties, rebind them as functions here
@@ -201,6 +206,11 @@ void platform::slotScriptsQueried()
 bool platform::isScriptLoaded(const QString& pluginName) const
 {
     return findScript(pluginName) != nullptr;
+}
+
+qt_script_space* platform::workspaceWrapper() const
+{
+    return qt_space.get();
 }
 
 abstract_script* platform::findScript(const QString& pluginName) const
