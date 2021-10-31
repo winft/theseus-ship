@@ -74,6 +74,7 @@ private Q_SLOTS:
 private:
     void setupAnimData(EffectWindow *w);
     void setupInternalWindowSlide(EffectWindow *w);
+    void setupSlideData(EffectWindow *w);
 
     long m_atom;
     std::unique_ptr<Wrapland::Server::SlideManager> wayland_slide_manager;
