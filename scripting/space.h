@@ -91,87 +91,6 @@ class space : public QObject
     Q_PROPERTY(
         QRect virtualScreenGeometry READ virtualScreenGeometry NOTIFY virtualScreenGeometryChanged)
 
-private:
-    Q_DISABLE_COPY(space)
-
-Q_SIGNALS:
-    void desktopPresenceChanged(KWin::scripting::window* client, int desktop);
-    void currentDesktopChanged(int desktop, KWin::scripting::window* client);
-    void clientAdded(KWin::scripting::window* client);
-    void clientRemoved(KWin::scripting::window* client);
-    void clientManaging(KWin::scripting::window* client);
-    void clientMinimized(KWin::scripting::window* client);
-    void clientUnminimized(KWin::scripting::window* client);
-    void clientRestored(KWin::scripting::window* client);
-    void clientMaximizeSet(KWin::scripting::window* client, bool h, bool v);
-    void killWindowCalled(KWin::scripting::window* client);
-    void clientActivated(KWin::scripting::window* client);
-    void clientFullScreenSet(KWin::scripting::window* client, bool fullScreen, bool user);
-    void clientSetKeepAbove(KWin::scripting::window* client, bool keepAbove);
-    /**
-     * Signal emitted whenever the number of desktops changed.
-     * To get the current number of desktops use the property desktops.
-     * @param oldNumberOfDesktops The previous number of desktops.
-     */
-    void numberDesktopsChanged(uint oldNumberOfDesktops);
-    /**
-     * Signal emitted whenever the layout of virtual desktops changed.
-     * That is desktopGrid(Size/Width/Height) will have new values.
-     * @since 4.11
-     */
-    void desktopLayoutChanged();
-    /**
-     * The demands attention state for Client @p c changed to @p set.
-     * @param c The Client for which demands attention changed
-     * @param set New value of demands attention
-     */
-    void clientDemandsAttentionChanged(KWin::scripting::window* window, bool set);
-    /**
-     * Signal emitted when the number of screens changes.
-     * @param count The new number of screens
-     */
-    void numberScreensChanged(int count);
-    /**
-     * This signal is emitted when the size of @p screen changes.
-     * Don't forget to fetch an updated client area.
-     *
-     * @deprecated Use QScreen::geometryChanged signal instead.
-     */
-    void screenResized(int screen);
-    /**
-     * Signal emitted whenever the current activity changed.
-     * @param id id of the new activity
-     */
-    void currentActivityChanged(const QString& id);
-    /**
-     * Signal emitted whenever the list of activities changed.
-     * @param id id of the new activity
-     */
-    void activitiesChanged(const QString& id);
-    /**
-     * This signal is emitted when a new activity is added
-     * @param id id of the new activity
-     */
-    void activityAdded(const QString& id);
-    /**
-     * This signal is emitted when the activity
-     * is removed
-     * @param id id of the removed activity
-     */
-    void activityRemoved(const QString& id);
-    /**
-     * Emitted whenever the virtualScreenSize changes.
-     * @see virtualScreenSize()
-     * @since 5.0
-     */
-    void virtualScreenSizeChanged();
-    /**
-     * Emitted whenever the virtualScreenGeometry changes.
-     * @see virtualScreenGeometry()
-     * @since 5.0
-     */
-    void virtualScreenGeometryChanged();
-
 public:
     //------------------------------------------------------------------
     // enums copy&pasted from kwinglobals.h because qtscript is evil
@@ -195,6 +114,7 @@ public:
         ScreenArea
     };
     Q_ENUM(ClientAreaOption)
+
     enum ElectricBorder {
         ElectricTop,
         ElectricTopRight,
@@ -209,10 +129,6 @@ public:
     };
     Q_ENUM(ElectricBorder)
 
-protected:
-    space();
-
-public:
 #define GETTERSETTERDEF(rettype, getter, setter)                                                   \
     rettype getter() const;                                                                        \
     void setter(rettype val);
@@ -221,6 +137,7 @@ public:
     GETTERSETTERDEF(QString, currentActivity, setCurrentActivity)
     GETTERSETTERDEF(KWin::scripting::window*, activeClient, setActiveClient)
 #undef GETTERSETTERDEF
+
     QSize desktopGridSize() const;
     int desktopGridWidth() const;
     int desktopGridHeight() const;
@@ -382,22 +299,105 @@ public Q_SLOTS:
 
     window* get_window(Toplevel* client) const;
 
+Q_SIGNALS:
+    void desktopPresenceChanged(KWin::scripting::window* client, int desktop);
+    void currentDesktopChanged(int desktop, KWin::scripting::window* client);
+    void clientAdded(KWin::scripting::window* client);
+    void clientRemoved(KWin::scripting::window* client);
+    void clientManaging(KWin::scripting::window* client);
+    void clientMinimized(KWin::scripting::window* client);
+    void clientUnminimized(KWin::scripting::window* client);
+    void clientRestored(KWin::scripting::window* client);
+    void clientMaximizeSet(KWin::scripting::window* client, bool h, bool v);
+    void killWindowCalled(KWin::scripting::window* client);
+    void clientActivated(KWin::scripting::window* client);
+    void clientFullScreenSet(KWin::scripting::window* client, bool fullScreen, bool user);
+    void clientSetKeepAbove(KWin::scripting::window* client, bool keepAbove);
+    /**
+     * Signal emitted whenever the number of desktops changed.
+     * To get the current number of desktops use the property desktops.
+     * @param oldNumberOfDesktops The previous number of desktops.
+     */
+    void numberDesktopsChanged(uint oldNumberOfDesktops);
+    /**
+     * Signal emitted whenever the layout of virtual desktops changed.
+     * That is desktopGrid(Size/Width/Height) will have new values.
+     * @since 4.11
+     */
+    void desktopLayoutChanged();
+    /**
+     * The demands attention state for Client @p c changed to @p set.
+     * @param c The Client for which demands attention changed
+     * @param set New value of demands attention
+     */
+    void clientDemandsAttentionChanged(KWin::scripting::window* window, bool set);
+    /**
+     * Signal emitted when the number of screens changes.
+     * @param count The new number of screens
+     */
+    void numberScreensChanged(int count);
+    /**
+     * This signal is emitted when the size of @p screen changes.
+     * Don't forget to fetch an updated client area.
+     *
+     * @deprecated Use QScreen::geometryChanged signal instead.
+     */
+    void screenResized(int screen);
+    /**
+     * Signal emitted whenever the current activity changed.
+     * @param id id of the new activity
+     */
+    void currentActivityChanged(const QString& id);
+    /**
+     * Signal emitted whenever the list of activities changed.
+     * @param id id of the new activity
+     */
+    void activitiesChanged(const QString& id);
+    /**
+     * This signal is emitted when a new activity is added
+     * @param id id of the new activity
+     */
+    void activityAdded(const QString& id);
+    /**
+     * This signal is emitted when the activity
+     * is removed
+     * @param id id of the removed activity
+     */
+    void activityRemoved(const QString& id);
+    /**
+     * Emitted whenever the virtualScreenSize changes.
+     * @see virtualScreenSize()
+     * @since 5.0
+     */
+    void virtualScreenSizeChanged();
+    /**
+     * Emitted whenever the virtualScreenGeometry changes.
+     * @see virtualScreenGeometry()
+     * @since 5.0
+     */
+    void virtualScreenGeometryChanged();
+
 protected:
+    space();
+
     // TODO: make this private. Remove dynamic inheritance?
     std::vector<std::unique_ptr<window>> m_windows;
+
+private:
+    Q_DISABLE_COPY(space)
+
+    void handle_client_added(Toplevel* client);
+    void handle_client_removed(Toplevel* client);
 
 private Q_SLOTS:
     void setupAbstractClientConnections(window* window);
     void setupClientConnections(window* window);
-
-private:
-    void handle_client_added(Toplevel* client);
-    void handle_client_removed(Toplevel* client);
 };
 
 class qt_script_space : public space
 {
     Q_OBJECT
+
 public:
     /**
      * List of Clients currently managed by KWin.
@@ -408,8 +408,8 @@ public:
 class declarative_script_space : public space
 {
     Q_OBJECT
-
     Q_PROPERTY(QQmlListProperty<KWin::scripting::window> clients READ clients)
+
 public:
     QQmlListProperty<KWin::scripting::window> clients();
     static int countClientList(QQmlListProperty<KWin::scripting::window>* clients);
