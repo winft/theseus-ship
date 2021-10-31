@@ -386,12 +386,11 @@ protected:
 private:
     Q_DISABLE_COPY(space)
 
-    void handle_client_added(Toplevel* client);
-    void handle_client_removed(Toplevel* client);
-
-private Q_SLOTS:
     void setupAbstractClientConnections(window* window);
     void setupClientConnections(window* window);
+
+    void handle_client_added(Toplevel* client);
+    void handle_client_removed(Toplevel* client);
 };
 
 class qt_script_space : public space
