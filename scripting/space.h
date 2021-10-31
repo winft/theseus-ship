@@ -210,7 +210,7 @@ public:
     Q_ENUM(ElectricBorder)
 
 protected:
-    explicit space(QObject* parent = nullptr);
+    space();
 
 public:
 #define GETTERSETTERDEF(rettype, getter, setter)                                                   \
@@ -403,8 +403,6 @@ public:
      * List of Clients currently managed by KWin.
      */
     Q_INVOKABLE QList<KWin::scripting::window*> clientList() const;
-
-    explicit qt_script_space(QObject* parent = nullptr);
 };
 
 class declarative_script_space : public space
@@ -416,8 +414,6 @@ public:
     QQmlListProperty<KWin::scripting::window> clients();
     static int countClientList(QQmlListProperty<KWin::scripting::window>* clients);
     static window* atClientList(QQmlListProperty<KWin::scripting::window>* clients, int index);
-
-    explicit declarative_script_space(QObject* parent = nullptr);
 };
 
 }

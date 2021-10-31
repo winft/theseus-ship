@@ -10,6 +10,7 @@
 #include <kwinglobals.h>
 
 #include <QStringList>
+#include <memory>
 
 class QQmlContext;
 class QQmlEngine;
@@ -27,7 +28,7 @@ class Toplevel;
 namespace scripting
 {
 class abstract_script;
-class DeclarativeScript;
+class declarative_script_space;
 class qt_script_space;
 
 /**
@@ -88,7 +89,9 @@ private:
 
     QQmlEngine* m_qmlEngine;
     QQmlContext* m_declarativeScriptSharedContext;
-    qt_script_space* m_workspaceWrapper;
+
+    std::unique_ptr<qt_script_space> qt_space;
+    std::unique_ptr<declarative_script_space> decl_space;
 
     bool is_running{false};
 };
@@ -115,7 +118,7 @@ inline QQmlContext* platform::declarativeScriptSharedContext()
 
 inline qt_script_space* platform::workspaceWrapper() const
 {
-    return m_workspaceWrapper;
+    return qt_space.get();
 }
 
 }

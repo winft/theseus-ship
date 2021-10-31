@@ -36,8 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::scripting
 {
 
-space::space(QObject* parent)
-    : QObject(parent)
+space::space()
 {
     KWin::Workspace* ws = KWin::Workspace::self();
     KWin::VirtualDesktopManager* vds = KWin::VirtualDesktopManager::self();
@@ -428,11 +427,6 @@ void space::sendClientToScreen(window* client, int screen)
     workspace()->sendClientToScreen(client->client(), screen);
 }
 
-qt_script_space::qt_script_space(QObject* parent)
-    : space(parent)
-{
-}
-
 QList<window*> qt_script_space::clientList() const
 {
     QList<window*> ret;
@@ -467,11 +461,6 @@ window* declarative_script_space::atClientList(QQmlListProperty<window>* clients
     } catch (std::out_of_range const& ex) {
         return nullptr;
     }
-}
-
-declarative_script_space::declarative_script_space(QObject* parent)
-    : space(parent)
-{
 }
 
 } // KWin

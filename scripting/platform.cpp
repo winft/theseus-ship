@@ -42,7 +42,7 @@ platform::platform()
     : m_scriptsLock(new QMutex(QMutex::Recursive))
     , m_qmlEngine(new QQmlEngine(this))
     , m_declarativeScriptSharedContext(new QQmlContext(m_qmlEngine, this))
-    , m_workspaceWrapper(new qt_script_space(this))
+    , qt_space{std::make_unique<qt_script_space>()}
 {
     init();
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
@@ -87,11 +87,12 @@ void platform::init()
         });
     qmlRegisterType<QAbstractItemModel>();
 
-    m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), m_workspaceWrapper);
+    m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), qt_space.get());
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("options"), options);
 
+    decl_space = std::make_unique<declarative_script_space>();
     m_declarativeScriptSharedContext->setContextProperty(QStringLiteral("workspace"),
-                                                         new declarative_script_space(this));
+                                                         decl_space.get());
     // QQmlListProperty interfaces only work via properties, rebind them as functions here
     QQmlExpression expr(m_declarativeScriptSharedContext,
                         nullptr,
