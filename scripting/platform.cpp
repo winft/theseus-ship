@@ -17,7 +17,6 @@
 
 #include "../options.h"
 #include "../thumbnailitem.h"
-#include "../workspace.h"
 #include "input/redirect.h"
 #include "screenedge.h"
 #include "scripting_logging.h"
@@ -50,7 +49,6 @@ platform::platform()
                                                  this,
                                                  QDBusConnection::ExportScriptableContents
                                                      | QDBusConnection::ExportScriptableInvokables);
-    connect(Workspace::self(), &Workspace::configChanged, this, &platform::start);
 }
 
 platform::~platform()

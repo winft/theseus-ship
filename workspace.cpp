@@ -739,8 +739,10 @@ void Workspace::slotReconfigure()
 
     kwinApp()->config()->reparseConfiguration();
     options->updateSettings();
+    scripting->start();
 
     emit configChanged();
+
     m_userActionsMenu->discard();
     win::update_tool_windows(this, true);
 
