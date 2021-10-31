@@ -42,9 +42,6 @@ void ClientModel::setupClientConnections(WindowWrapper *client)
     connect(client, &WindowWrapper::screenChanged, this, [this, client]() {
         markRoleChanged(client, ScreenRole);
     });
-    connect(client, &WindowWrapper::activitiesChanged, this, [this, client]() {
-        markRoleChanged(client, ActivityRole);
-    });
 }
 
 void ClientModel::handleClientAdded(WindowWrapper *client)
@@ -126,25 +123,15 @@ void ClientFilterModel::setClientModel(ClientModel *clientModel)
 
 QString ClientFilterModel::activity() const
 {
-    return m_activity.value_or(QString());
+    return {};
 }
 
-void ClientFilterModel::setActivity(const QString &activity)
+void ClientFilterModel::setActivity(const QString &/*activity*/)
 {
-    if (m_activity != activity) {
-        m_activity = activity;
-        Q_EMIT activityChanged();
-        invalidateFilter();
-    }
 }
 
 void ClientFilterModel::resetActivity()
 {
-    if (m_activity.has_value()) {
-        m_activity.reset();
-        Q_EMIT activityChanged();
-        invalidateFilter();
-    }
 }
 
 int ClientFilterModel::desktop() const
@@ -249,12 +236,6 @@ bool ClientFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourc
     auto client = qvariant_cast<WindowWrapper *>(data);
     if (!client) {
         return false;
-    }
-
-    if (m_activity.has_value()) {
-        if (!client->activities().contains(*m_activity)) {
-            return false;
-        }
     }
 
     if (m_desktop.has_value()) {

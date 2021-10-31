@@ -274,9 +274,6 @@
         <entry name="DesktopMode" type="UInt">
             <default>1</default>
         </entry>
-        <entry name="ActivitiesMode" type="UInt">
-            <default>1</default>
-        </entry>
         <entry name="ApplicationsMode" type="UInt">
             <default>0</default>
         </entry>

@@ -3,8 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_WIN_NET_H
-#define KWIN_WIN_NET_H
+#pragma once
 
 #include <NETWM>
 
@@ -122,5 +121,3 @@ bool is_dnd_icon(Win* win)
 }
 
 }
-
-#endif

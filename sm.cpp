@@ -34,7 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/stacking_order.h"
 #include "win/x11/geo.h"
-#include "win/x11/activity.h"
 #include "win/x11/window.h"
 
 #include <QDebug>
@@ -147,9 +146,6 @@ void Workspace::storeSession(const QString &sessionName, SMSavePhase phase)
 
 void Workspace::storeClient(KConfigGroup &cg, int num, win::x11::window* c)
 {
-    //make sure we get the real values
-    win::x11::set_session_activity_override(c, false);
-
     QString n = QString::number(num);
     cg.writeEntry(QLatin1String("sessionId") + n, c->sessionId().constData());
     cg.writeEntry(QLatin1String("windowRole") + n, c->windowRole().constData());
@@ -185,7 +181,6 @@ void Workspace::storeClient(KConfigGroup &cg, int num, win::x11::window* c)
     cg.writeEntry(QLatin1String("shortcut") + n, c->control->shortcut().toString());
     cg.writeEntry(QLatin1String("stackingOrder") + n,
         static_cast<int>(index_of(stacking_order->pre_stack, c)));
-    cg.writeEntry(QLatin1String("activities") + n, c->activities());
 }
 
 void Workspace::storeSubSession(const QString &name, QSet<QByteArray> sessionIds)
@@ -276,7 +271,6 @@ void Workspace::addSessionInfo(KConfigGroup &cg)
         info->shortcut = cg.readEntry(QLatin1String("shortcut") + n, QString());
         info->active = (active_client == i);
         info->stackingOrder = cg.readEntry(QLatin1String("stackingOrder") + n, -1);
-        info->activities = cg.readEntry(QLatin1String("activities") + n, QStringList());
     }
 }
 
@@ -396,11 +390,6 @@ void SessionManager::setState(SessionState state)
     // If we're ending a save session due to either completion or cancellation
     if (m_sessionState == SessionState::Saving) {
         RuleBook::self()->setUpdatesDisabled(false);
-        Workspace::self()->forEachToplevel([](auto client) {
-            if (auto x11_client = qobject_cast<win::x11::window*>(client)) {
-                win::x11::set_session_activity_override(x11_client, false);
-            }
-        });
     }
     m_sessionState = state;
     emit stateChanged();

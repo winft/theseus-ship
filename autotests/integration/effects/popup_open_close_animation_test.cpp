@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/deco.h"
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/net.h"
 #include "win/transient.h"
 
@@ -63,7 +63,7 @@ private Q_SLOTS:
 void PopupOpenCloseAnimationTest::initTestCase()
 {
     qputenv("XDG_DATA_DIRS", QCoreApplication::applicationDirPath().toUtf8());
-    qRegisterMetaType<KWin::win::InternalClient*>();
+    qRegisterMetaType<win::internal_window*>();
     qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -251,7 +251,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(tooltipAddedSpy.isValid());
     client->control->deco().client->requestShowToolTip(QStringLiteral("KWin rocks!"));
     QVERIFY(tooltipAddedSpy.wait());
-    win::InternalClient* tooltip = tooltipAddedSpy.first().first().value<win::InternalClient*>();
+    auto tooltip = tooltipAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(tooltip->isInternal());
     QVERIFY(win::is_popup(tooltip));
     QVERIFY(tooltip->internalWindow()->flags().testFlag(Qt::ToolTip));
@@ -261,7 +261,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QTRY_VERIFY(!effect->isActive());
 
     // Hide the decoration tooltip.
-    QSignalSpy tooltipClosedSpy(tooltip, &win::InternalClient::windowClosed);
+    QSignalSpy tooltipClosedSpy(tooltip, &win::internal_window::windowClosed);
     QVERIFY(tooltipClosedSpy.isValid());
     client->control->deco().client->requestHideToolTip();
     QVERIFY(tooltipClosedSpy.wait());

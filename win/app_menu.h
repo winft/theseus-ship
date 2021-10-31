@@ -19,13 +19,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_APPMENU_H
-#define KWIN_APPMENU_H
-// KWin
+#pragma once
+
 #include <kwinglobals.h>
-// Qt
+
 #include <QObject>
-// xcb
 #include <xcb/xcb.h>
 
 class QPoint;
@@ -39,12 +37,12 @@ class Toplevel;
 
 namespace win
 {
-class KWIN_EXPORT ApplicationMenu : public QObject
+class KWIN_EXPORT app_menu : public QObject
 {
     Q_OBJECT
 
 public:
-    ~ApplicationMenu() override;
+    ~app_menu() override;
 
     void showApplicationMenu(const QPoint& pos, Toplevel* window, int actionId);
 
@@ -71,11 +69,8 @@ private:
 
     bool m_applicationMenuEnabled = false;
 
-    KWIN_SINGLETON(ApplicationMenu)
+    KWIN_SINGLETON(app_menu)
 };
 
-} // KWin::win
-
-} // KWin
-
-#endif // KWIN_APPMENU_H
+}
+}

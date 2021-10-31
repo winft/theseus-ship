@@ -105,8 +105,6 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
             &WindowWrapper::hasApplicationMenuChanged);
     connect(client, &Toplevel::surfaceIdChanged, this, &WindowWrapper::surfaceIdChanged);
 
-    connect(client, &Toplevel::activitiesChanged, this, [this] { Q_EMIT activitiesChanged(this); });
-
     connect(client, &Toplevel::closeableChanged, this, &WindowWrapper::closeableChanged);
     connect(client, &Toplevel::minimizeableChanged, this, &WindowWrapper::minimizeableChanged);
     connect(client, &Toplevel::maximizeableChanged, this, &WindowWrapper::maximizeableChanged);
@@ -116,10 +114,11 @@ WindowWrapper::WindowWrapper(Toplevel* client, WorkspaceWrapper* workspace)
 
     if (client->isClient()) {
         auto x11_client = dynamic_cast<win::x11::window*>(m_client);
-        connect(
-            x11_client, &win::x11::window::clientManaging, this, [this] { Q_EMIT clientManaging(this); });
+        connect(x11_client, &win::x11::window::client_managing, this, [this] {
+            Q_EMIT clientManaging(this);
+        });
         connect(x11_client,
-                &win::x11::window::clientFullScreenSet,
+                &win::x11::window::client_fullscreen_set,
                 this,
                 [this]([[maybe_unused]] auto client, bool fullscreen, bool user) {
                     Q_EMIT clientFullScreenSet(this, fullscreen, user);
@@ -317,7 +316,7 @@ void WindowWrapper::setOnAllDesktops(bool set)
 
 QStringList WindowWrapper::activities() const
 {
-    return m_client->activities();
+    return {};
 }
 
 QByteArray WindowWrapper::windowRole() const

@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 #include "workspace.h"
 
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/x11/window.h"
 
 #include <kwinglplatform.h>
@@ -276,16 +276,16 @@ console_model::console_model(QObject* parent)
         remove_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
     });
     for (auto const& window : workspace()->windows()) {
-        if (auto internal = qobject_cast<win::InternalClient*>(window)) {
+        if (auto internal = qobject_cast<win::internal_window*>(window)) {
             m_internalClients.append(internal);
         }
     }
     connect(
-        workspace(), &Workspace::internalClientAdded, this, [this](win::InternalClient* client) {
+        workspace(), &Workspace::internalClientAdded, this, [this](win::internal_window* client) {
             add_window(this, s_workspaceInternalId - 1, m_internalClients, client);
         });
     connect(
-        workspace(), &Workspace::internalClientRemoved, this, [this](win::InternalClient* client) {
+        workspace(), &Workspace::internalClientRemoved, this, [this](win::internal_window* client) {
             remove_window(this, s_workspaceInternalId - 1, m_internalClients, client);
         });
 }
@@ -546,7 +546,7 @@ QVariant console_model::propertyData(QObject* object, const QModelIndex& index, 
 
 QVariant console_model::get_client_property_data(QModelIndex const& index, int role) const
 {
-    if (win::InternalClient* c = internalClient(index)) {
+    if (auto c = internalClient(index)) {
         return propertyData(c, index, role);
     }
     if (auto c = x11Client(index)) {
@@ -619,7 +619,7 @@ QVariant console_model::data(const QModelIndex& index, int role) const
     return get_client_data(index, role);
 }
 
-win::InternalClient* console_model::internalClient(const QModelIndex& index) const
+win::internal_window* console_model::internalClient(const QModelIndex& index) const
 {
     return window_for_index(index, m_internalClients, s_workspaceInternalId);
 }

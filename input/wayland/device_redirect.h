@@ -11,7 +11,7 @@
 #include "toplevel.h"
 #include "virtualdesktops.h"
 #include "win/geo.h"
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/stacking_order.h"
 #include "workspace.h"
 
@@ -149,7 +149,7 @@ static QWindow* device_redirect_find_internal_window(QPoint const& pos)
     auto it = windows.end();
     do {
         --it;
-        auto internal = qobject_cast<win::InternalClient*>(*it);
+        auto internal = qobject_cast<win::internal_window*>(*it);
         if (!internal) {
             continue;
         }

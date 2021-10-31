@@ -137,7 +137,6 @@ void KWinScreenEdgesConfig::monitorInit()
     m_form->monitorAddItem(i18n("Show Desktop"));
     m_form->monitorAddItem(i18n("Lock Screen"));
     m_form->monitorAddItem(i18n("Show KRunner"));
-    m_form->monitorAddItem(i18n("Activity Manager"));
     m_form->monitorAddItem(i18n("Application Launcher"));
 
     // Add the effects
@@ -344,9 +343,6 @@ ElectricBorderAction KWinScreenEdgesConfig::electricBorderActionFromString(const
     if (lowerName == QStringLiteral("krunner")) {
         return ElectricActionKRunner;
     }
-    if (lowerName == QStringLiteral("activitymanager")) {
-        return ElectricActionActivityManager;
-    }
     if (lowerName == QStringLiteral("applicationlauncher")) {
         return ElectricActionApplicationLauncher;
     }
@@ -363,8 +359,6 @@ QString KWinScreenEdgesConfig::electricBorderActionToString(int action)
     case 3:
         return QStringLiteral("KRunner");
     case 4:
-        return QStringLiteral("ActivityManager");
-    case 5:
         return QStringLiteral("ApplicationLauncher");
     default:
         return QStringLiteral("None");

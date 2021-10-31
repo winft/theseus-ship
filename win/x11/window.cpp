@@ -5,7 +5,6 @@
 */
 #include "window.h"
 
-#include "activity.h"
 #include "client.h"
 #include "deco.h"
 #include "fullscreen.h"
@@ -21,7 +20,7 @@
 #include "win/rules.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
-#include "win/x11/geometrytip.h"
+#include "win/x11/geometry_tip.h"
 
 #include "decorations/window.h"
 #include "rules/rules.h"
@@ -36,7 +35,7 @@
 namespace KWin::win::x11
 {
 
-GeometryTip* window::geometry_tip{nullptr};
+geometry_tip* window::geometry_tip{nullptr};
 
 window::window()
     : Toplevel(new x11::transient(this))
@@ -981,7 +980,7 @@ void window::do_set_fullscreen(bool full)
 
     // TODO(romangg): Is it really important for scripts if the fullscreen was triggered by the app
     //                or the user? For now just pretend that it was always the user.
-    Q_EMIT clientFullScreenSet(this, full, true);
+    Q_EMIT client_fullscreen_set(this, full, true);
     Q_EMIT fullScreenChanged();
 }
 
@@ -1010,12 +1009,12 @@ void window::doSetDesktop([[maybe_unused]] int desktop, [[maybe_unused]] int was
     update_visibility(this);
 }
 
-const Group* window::group() const
+group const* window::group() const
 {
     return in_group;
 }
 
-Group* window::group()
+group* window::group()
 {
     return in_group;
 }
@@ -1066,26 +1065,6 @@ void window::updateDecoration(bool check_workspace_pos, bool force)
 
 void window::updateColorScheme()
 {
-}
-
-QStringList window::activities() const
-{
-    return x11::activities(this);
-}
-
-void window::setOnActivities(QStringList newActivitiesList)
-{
-    set_on_activities(this, newActivitiesList);
-}
-
-void window::setOnAllActivities(bool on)
-{
-    set_on_all_activities(this, on);
-}
-
-void window::blockActivityUpdates(bool b)
-{
-    block_activity_updates(this, b);
 }
 
 bool window::isBlockingCompositing()

@@ -10,9 +10,6 @@
 #include "../workspace_wrapper.h"
 
 #include <config-kwin.h>
-#ifdef KWIN_BUILD_ACTIVITIES
-#include "activities.h"
-#endif
 #include "screens.h"
 #include "toplevel.h"
 #include "virtualdesktops.h"
@@ -31,12 +28,6 @@ static quint32 nextId() {
 ClientLevel::ClientLevel(ClientModel *model, AbstractLevel *parent)
     : AbstractLevel(model, parent)
 {
-#if KWIN_BUILD_ACTIVITIES
-    if (Activities *activities = Activities::self()) {
-        connect(activities, &Activities::currentChanged, this, &ClientLevel::reInit);
-    }
-#endif
-
     auto ws_wrap = Scripting::self()->workspaceWrapper();
 
     connect(VirtualDesktopManager::self(), &VirtualDesktopManager::currentChanged, this, &ClientLevel::reInit);
@@ -67,7 +58,6 @@ void ClientLevel::setupClientConnections(WindowWrapper* client)
     };
     connect(client, &WindowWrapper::desktopChanged, this, check);
     connect(client, &WindowWrapper::screenChanged, this, check);
-    connect(client, &WindowWrapper::activitiesChanged, this, check);
     connect(client->client(), &Toplevel::windowHidden, this, check);
     connect(client->client(), &Toplevel::windowShown, this, check);
 }
@@ -130,11 +120,6 @@ bool ClientLevel::exclude(WindowWrapper* client) const
             return true;
         }
     }
-    if (exclusions & ClientModel::OtherActivitiesExclusion) {
-        if (!client->client()->isOnCurrentActivity()) {
-            return true;
-        }
-    }
     if (exclusions & ClientModel::MinimizedExclusion) {
         if (client->isMinimized()) {
             return true;
@@ -152,11 +137,6 @@ bool ClientLevel::shouldAdd(WindowWrapper* client) const
 {
     if (restrictions() == ClientModel::NoRestriction) {
         return true;
-    }
-    if (restrictions() & ClientModel::ActivityRestriction) {
-        if (!client->client()->isOnActivity(activity())) {
-            return false;
-        }
     }
     if (restrictions() & ClientModel::VirtualDesktopRestriction) {
         if (!client->client()->isOnDesktop(virtualDesktop())) {
@@ -309,22 +289,7 @@ AbstractLevel *AbstractLevel::create(const QList< ClientModel::LevelRestriction 
     }
     switch (restriction) {
     case ClientModel::ActivityRestriction: {
-#ifdef KWIN_BUILD_ACTIVITIES
-        if (Activities::self()) {
-            const QStringList &activities = Activities::self()->all();
-            for (QStringList::const_iterator it = activities.begin(); it != activities.end(); ++it) {
-                AbstractLevel *childLevel = create(childRestrictions, childrenRestrictions, model, currentLevel);
-                if (!childLevel) {
-                    continue;
-                }
-                childLevel->setActivity(*it);
-                currentLevel->addChild(childLevel);
-            }
-        }
-        break;
-#else
         return nullptr;
-#endif
     }
     case ClientModel::ScreenRestriction:
         for (int i=0; i<screens()->count(); ++i) {
@@ -360,7 +325,6 @@ AbstractLevel::AbstractLevel(ClientModel *model, AbstractLevel *parent)
     , m_parent(parent)
     , m_screen(0)
     , m_virtualDesktop(0)
-    , m_activity()
     , m_restriction(ClientModel::ClientModel::NoRestriction)
     , m_restrictions(ClientModel::NoRestriction)
     , m_id(nextId())
@@ -376,9 +340,9 @@ void AbstractLevel::setRestriction(ClientModel::LevelRestriction restriction)
     m_restriction = restriction;
 }
 
-void AbstractLevel::setActivity(const QString &activity)
+// TODO(romangg): Can activity-related functions be safely removed?
+void AbstractLevel::setActivity(const QString &/*activity*/)
 {
-    m_activity = activity;
 }
 
 void AbstractLevel::setScreen(uint screen)
@@ -402,12 +366,6 @@ ForkLevel::ForkLevel(const QList<ClientModel::LevelRestriction> &childRestrictio
 {
     connect(VirtualDesktopManager::self(), &VirtualDesktopManager::countChanged, this, &ForkLevel::desktopCountChanged);
     connect(screens(), &Screens::countChanged, this, &ForkLevel::screenCountChanged);
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (Activities *activities = Activities::self()) {
-        connect(activities, &Activities::added, this, &ForkLevel::activityAdded);
-        connect(activities, &Activities::removed, this, &ForkLevel::activityRemoved);
-    }
-#endif
 }
 
 ForkLevel::~ForkLevel()
@@ -477,50 +435,12 @@ void ForkLevel::screenCountChanged(int previousCount, int newCount)
     }
 }
 
-void ForkLevel::activityAdded(const QString &activityId)
+void ForkLevel::activityAdded(const QString &/*activityId*/)
 {
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (restriction() != ClientModel::ClientModel::ActivityRestriction) {
-        return;
-    }
-    // verify that our children do not contain this activity
-    foreach (AbstractLevel *child, m_children) {
-        if (child->activity() == activityId) {
-            return;
-        }
-    }
-    emit beginInsert(m_children.count(), m_children.count(), id());
-    AbstractLevel *childLevel = AbstractLevel::create(m_childRestrictions, restrictions(), model(), this);
-    if (!childLevel) {
-        emit endInsert();
-        return;
-    }
-    childLevel->setActivity(activityId);
-    childLevel->init();
-    addChild(childLevel);
-    emit endInsert();
-#else
-    Q_UNUSED(activityId)
-#endif
 }
 
-void ForkLevel::activityRemoved(const QString &activityId)
+void ForkLevel::activityRemoved(const QString &/*activityId*/)
 {
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (restriction() != ClientModel::ClientModel::ActivityRestriction) {
-        return;
-    }
-    for (int i=0; i<m_children.length(); ++i) {
-        if (m_children.at(i)->activity() == activityId) {
-            emit beginRemove(i, i, id());
-            delete m_children.takeAt(i);
-            emit endRemove();
-            break;
-        }
-    }
-#else
-    Q_UNUSED(activityId)
-#endif
 }
 
 int ForkLevel::count() const
@@ -537,12 +457,8 @@ void ForkLevel::addChild(AbstractLevel *child)
     connect(child, &AbstractLevel::endRemove, this, &AbstractLevel::endRemove);
 }
 
-void ForkLevel::setActivity(const QString &activity)
+void ForkLevel::setActivity(const QString &/*activity*/)
 {
-    AbstractLevel::setActivity(activity);
-    for (QList<AbstractLevel*>::iterator it = m_children.begin(); it != m_children.end(); ++it) {
-        (*it)->setActivity(activity);
-    }
 }
 
 void ForkLevel::setScreen(uint screen)

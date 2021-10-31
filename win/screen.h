@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "focuschain.h"
+#include "focus_chain.h"
 #include "move.h"
 #include "net.h"
 #include "stacking.h"
@@ -216,7 +216,7 @@ void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
 
     win->doSetDesktop(win->desktop(), was_desk);
 
-    FocusChain::self()->update(win, FocusChain::MakeFirst);
+    focus_chain::self()->update(win, focus_chain::MakeFirst);
     win->updateWindowRules(Rules::Desktop);
 
     Q_EMIT win->desktopChanged();
@@ -300,18 +300,6 @@ void leave_desktop(Win* win, VirtualDesktop* virtualDesktop)
     auto desktops = currentDesktops;
     desktops.removeOne(virtualDesktop);
     set_desktops(win, desktops);
-}
-
-template<typename Win>
-bool on_all_activities(Win* win)
-{
-    return win->activities().isEmpty();
-}
-
-template<typename Win>
-bool on_activity(Win* win, QString const& activity)
-{
-    return on_all_activities(win) || win->activities().contains(activity);
 }
 
 }

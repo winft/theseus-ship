@@ -18,9 +18,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
-//#define QT_CLEAN_NAMESPACE
-
 #include "group.h"
 #include "effects.h"
 #include "workspace.h"
@@ -36,10 +33,10 @@ namespace KWin::win::x11
 {
 
 //********************************************
-// Group
+// group
 //********************************************
 
-Group::Group(xcb_window_t leader_P)
+group::group(xcb_window_t leader_P)
     : leader_client(nullptr)
     , leader_wid(leader_P)
     , leader_info(nullptr)
@@ -55,13 +52,13 @@ Group::Group(xcb_window_t leader_P)
     workspace()->addGroup(this);
 }
 
-Group::~Group()
+group::~group()
 {
     delete leader_info;
     delete effect_group;
 }
 
-QIcon Group::icon() const
+QIcon group::icon() const
 {
     if (leader_client != nullptr)
         return leader_client->control->icon();
@@ -89,14 +86,14 @@ QIcon Group::icon() const
     return QIcon();
 }
 
-void Group::addMember(win::x11::window* member_P)
+void group::addMember(win::x11::window* member_P)
 {
     _members.push_back(member_P);
     //    qDebug() << "GROUPADD:" << this << ":" << member_P;
     //    qDebug() << kBacktrace();
 }
 
-void Group::removeMember(win::x11::window* member_P)
+void group::removeMember(win::x11::window* member_P)
 {
     //    qDebug() << "GROUPREMOVE:" << this << ":" << member_P;
     //    qDebug() << kBacktrace();
@@ -112,12 +109,12 @@ void Group::removeMember(win::x11::window* member_P)
     }
 }
 
-void Group::ref()
+void group::ref()
 {
     ++refcount;
 }
 
-void Group::deref()
+void group::deref()
 {
     if (--refcount == 0 && _members.empty()) {
         workspace()->removeGroup(this);
@@ -125,13 +122,13 @@ void Group::deref()
     }
 }
 
-void Group::gotLeader(win::x11::window* leader_P)
+void group::gotLeader(win::x11::window* leader_P)
 {
     assert(leader_P->xcb_window() == leader_wid);
     leader_client = leader_P;
 }
 
-void Group::lostLeader()
+void group::lostLeader()
 {
     assert(std::find(_members.cbegin(), _members.cend(), leader_client) == _members.cend());
     leader_client = nullptr;
@@ -145,7 +142,7 @@ void Group::lostLeader()
 // activation code
 //****************************************
 
-void Group::startupIdChanged()
+void group::startupIdChanged()
 {
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
@@ -158,7 +155,7 @@ void Group::startupIdChanged()
     }
 }
 
-void Group::updateUserTime(xcb_timestamp_t time)
+void group::updateUserTime(xcb_timestamp_t time)
 {
     // copy of win::x11::update_user_time in control.h
     if (time == XCB_CURRENT_TIME) {
@@ -171,4 +168,4 @@ void Group::updateUserTime(xcb_timestamp_t time)
         user_time = time;
 }
 
-} // namespace
+}

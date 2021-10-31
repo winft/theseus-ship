@@ -27,9 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../screens.h"
 #include "../virtualdesktops.h"
 #include "../workspace.h"
-#ifdef KWIN_BUILD_ACTIVITIES
-#include "../activities.h"
-#endif
 
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
@@ -79,15 +76,6 @@ WorkspaceWrapper::WorkspaceWrapper(QObject* parent) : QObject(parent)
     connect(vds, &VirtualDesktopManager::countChanged, this, &WorkspaceWrapper::numberDesktopsChanged);
     connect(vds, &VirtualDesktopManager::layoutChanged, this, &WorkspaceWrapper::desktopLayoutChanged);
 
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (KWin::Activities *activities = KWin::Activities::self()) {
-        connect(activities, &Activities::currentChanged, this, &WorkspaceWrapper::currentActivityChanged);
-        connect(activities, &Activities::added, this, &WorkspaceWrapper::activitiesChanged);
-        connect(activities, &Activities::added, this, &WorkspaceWrapper::activityAdded);
-        connect(activities, &Activities::removed, this, &WorkspaceWrapper::activitiesChanged);
-        connect(activities, &Activities::removed, this, &WorkspaceWrapper::activityRemoved);
-    }
-#endif
     connect(screens(), &Screens::sizeChanged, this, &WorkspaceWrapper::virtualScreenSizeChanged);
     connect(screens(), &Screens::geometryChanged, this, &WorkspaceWrapper::virtualScreenGeometryChanged);
     connect(screens(), &Screens::countChanged, this,
@@ -174,37 +162,16 @@ KWin::WindowWrapper* WorkspaceWrapper::activeClient() const
 
 QString WorkspaceWrapper::currentActivity() const
 {
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (!Activities::self()) {
-        return QString();
-    }
-    return Activities::self()->current();
-#else
-    return QString();
-#endif
+    return {};
 }
 
-void WorkspaceWrapper::setCurrentActivity(QString activity)
+void WorkspaceWrapper::setCurrentActivity(QString /*activity*/)
 {
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (Activities::self()) {
-        Activities::self()->setCurrent(activity);
-    }
-#else
-    Q_UNUSED(activity)
-#endif
 }
 
 QStringList WorkspaceWrapper::activityList() const
 {
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (!Activities::self()) {
-        return QStringList();
-    }
-    return Activities::self()->all();
-#else
-    return QStringList();
-#endif
+    return {};
 }
 
 #define SLOTWRAPPER(name) \

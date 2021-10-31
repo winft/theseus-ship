@@ -30,8 +30,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
             continue;
         }
 
-        if (!client->isOnDesktop(newDesktop) && client != space->moveResizeClient()
-            && client->isOnCurrentActivity()) {
+        if (!client->isOnDesktop(newDesktop) && client != space->moveResizeClient()) {
             update_visibility(client);
         }
     }
@@ -53,7 +52,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
         if (!client) {
             continue;
         }
-        if (client->isOnDesktop(newDesktop) && client->isOnCurrentActivity()) {
+        if (client->isOnDesktop(newDesktop)) {
             update_visibility(client);
         }
     }
@@ -77,7 +76,7 @@ void update_tool_windows(Space* space, bool also_hide)
         return;
     }
 
-    x11::Group const* active_group = nullptr;
+    x11::group const* active_group = nullptr;
     auto active_window = space->activeClient();
 
     // Go up in transiency hiearchy, if the top is found, only tool transients for the top

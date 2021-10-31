@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "activity.h"
 #include "client_machine.h"
 #include "command.h"
 #include "deco.h"
@@ -29,10 +28,6 @@
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 #include "win/util.h"
-
-#ifdef KWIN_BUILD_ACTIVITIES
-#include "activities.h"
-#endif
 
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
@@ -635,7 +630,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     // From this place on, manage() must not return false
     win->control.reset(new x11_control(win));
 
-    win->supported_default_types = SUPPORTED_MANAGED_WINDOW_TYPES_MASK;
+    win->supported_default_types = supported_managed_window_types_mask;
     win->has_in_content_deco = true;
 
     win->sync_request.timestamp = xTime();
@@ -645,7 +640,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     win->control->setup_color_scheme();
 
     QObject::connect(
-        win->clientMachine(), &ClientMachine::localhostChanged, win, &window::updateCaption);
+        win->clientMachine(), &client_machine::localhostChanged, win, &window::updateCaption);
     QObject::connect(
         options, &Options::configChanged, win, [win] { win->control->update_mouse_grab(); });
     QObject::connect(options, &Options::condensedTitleChanged, win, &window::updateCaption);
@@ -689,12 +684,11 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     auto showOnScreenEdgeCookie = fetch_show_on_screen_edge(win);
     auto firstInTabBoxCookie = fetch_first_in_tabbox(win);
     auto transientCookie = fetch_transient(win);
-    auto activitiesCookie = fetch_activities(win);
 
     win->geometry_hints.init(win->xcb_window());
     win->motif_hints.init(win->xcb_window());
 
-    win->info = new WinInfo(win, win->xcb_windows.client, rootWindow(), properties, properties2);
+    win->info = new win_info(win, win->xcb_windows.client, rootWindow(), properties, properties2);
 
     if (is_desktop(win) && win->bit_depth == 32) {
         // force desktop windows to be opaque. It's a desktop after all, there is no window below
@@ -780,8 +774,6 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     init_minimize = win->control->rules().checkMinimize(init_minimize, !isMapped);
     win->user_no_border = win->control->rules().checkNoBorder(win->user_no_border, !isMapped);
 
-    read_activities(win, activitiesCookie);
-
     // Initial desktop placement
     int desk = 0;
     if (session) {
@@ -789,7 +781,6 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
         if (session->onAllDesktops) {
             desk = NET::OnAllDesktops;
         }
-        win->setOnActivities(session->activities);
     } else {
         // If this window is transient, ensure that it is opened on the
         // same window as its parent.  this is necessary when an application
@@ -825,10 +816,6 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
             } else if (maincl != nullptr) {
                 desk = maincl->desktop();
             }
-
-            if (maincl) {
-                win->setOnActivities(maincl->activities());
-            }
         } else {
             // A transient shall appear on its leader and not drag that around.
             if (win->info->desktop()) {
@@ -839,20 +826,6 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
                 desk = asn_data.desktop();
             }
         }
-
-#ifdef KWIN_BUILD_ACTIVITIES
-        if (Activities::self() && !isMapped && !win->user_no_border && is_normal(win)
-            && !win->activities_defined) {
-            // a new, regular window, when we're not recovering from a crash,
-            // and it hasn't got an activity. let's try giving it the current one.
-            // TODO: decide whether to keep this before the 4.6 release
-            // TODO: if we are keeping it (at least as an option), replace noborder checking
-            // with a public API for setting windows to be on all activities.
-            // something like KWindowSystem::setOnAllActivities or
-            // KActivityConsumer::setOnAllActivities
-            set_on_activity(win, Activities::self()->current(), true);
-        }
-#endif
     }
 
     if (desk == 0) {
@@ -871,12 +844,6 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
     win->info->setDesktop(desk);
 
     workspace()->updateOnAllDesktopsOfTransients(win);
-
-    QString activitiesList;
-    activitiesList = win->control->rules().checkActivity(activitiesList, !isMapped);
-    if (!activitiesList.isEmpty()) {
-        win->setOnActivities(activitiesList.split(QStringLiteral(",")));
-    }
 
     win->client_frame_extents = gtk_frame_extents(win);
     win->geometry_update.original.client_frame_extents = win->client_frame_extents;
@@ -1054,17 +1021,6 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
             VirtualDesktopManager::self()->setCurrent(win->desktop());
         }
 
-        // If the window is on an inactive activity during session saving, temporarily force it to
-        // show.
-        if (!isMapped && !session && isSessionSaving && !win->isOnCurrentActivity()) {
-            set_session_activity_override(win, true);
-            for (auto mc : win->transient()->leads()) {
-                if (auto x11_mc = dynamic_cast<Win*>(mc)) {
-                    set_session_activity_override(x11_mc, true);
-                }
-            }
-        }
-
         if (win->isOnCurrentDesktop() && !isMapped && !allow
             && (!session || session->stackingOrder < 0)) {
             restack_client_under_active(workspace(), win);
@@ -1139,7 +1095,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
     win->setupCompositing(false);
 
-    Q_EMIT win->clientManaging(win);
+    Q_EMIT win->client_managing(win);
 
     return true;
 }
@@ -1303,7 +1259,7 @@ void restack_window(Win* win,
 
             if (!c
                 || !(is_normal(*it) && c->isShown() && (*it)->isOnCurrentDesktop()
-                     && (*it)->isOnCurrentActivity() && on_screen(*it, win->screen()))) {
+                     && on_screen(*it, win->screen()))) {
                 continue;
             }
 

@@ -3,8 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_WIN_INPUT_H
-#define KWIN_WIN_INPUT_H
+#pragma once
 
 #include "control.h"
 #include "layers.h"
@@ -124,7 +123,7 @@ bool perform_mouse_command(Win* win, Options::MouseCommand cmd, QPoint const& gl
                     // Can never raise above "it".
                     continue;
                 }
-                mustReplay = !(window->isOnCurrentDesktop() && window->isOnCurrentActivity()
+                mustReplay = !(window->isOnCurrentDesktop()
                                && window->frameGeometry().intersects(win->frameGeometry()));
             }
         }
@@ -571,5 +570,3 @@ void set_shortcut(Win* win, QString const& shortcut)
 }
 
 }
-
-#endif

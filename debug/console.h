@@ -36,7 +36,7 @@ namespace KWin
 
 namespace win
 {
-class InternalClient;
+class internal_window;
 
 namespace wayland
 {
@@ -87,13 +87,13 @@ protected:
 
     QVariant propertyData(QObject* object, const QModelIndex& index, int role) const;
 
-    win::InternalClient* internalClient(const QModelIndex& index) const;
+    win::internal_window* internalClient(const QModelIndex& index) const;
     win::x11::window* x11Client(const QModelIndex& index) const;
     Toplevel* unmanaged(const QModelIndex& index) const;
     virtual int topLevelRowCount() const;
 
 private:
-    QVector<win::InternalClient*> m_internalClients;
+    QVector<win::internal_window*> m_internalClients;
     QVector<win::x11::window*> m_x11Clients;
     QVector<Toplevel*> m_unmanageds;
 };

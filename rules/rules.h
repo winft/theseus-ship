@@ -66,7 +66,7 @@ public:
         NoBorder = 1 << 13,
         OpacityActive = 1 << 14,
         OpacityInactive = 1 << 15,
-        Activity = 1 << 16,
+        Activity = 1 << 16, // Deprecated
         Screen = 1 << 17,
         DesktopFile = 1 << 18,
         All = 0xffffffff
@@ -113,7 +113,6 @@ public:
     bool applyIgnoreGeometry(bool& ignore, bool init) const;
     bool applyDesktop(int& desktop, bool init) const;
     bool applyScreen(int& screen, bool init) const;
-    bool applyActivity(QString& activity, bool init) const;
     bool applyType(NET::WindowType& type) const;
     bool applyMaximizeVert(win::maximize_mode& mode, bool init) const;
     bool applyMaximizeHoriz(win::maximize_mode& mode, bool init) const;
@@ -194,7 +193,6 @@ private:
     NET::WindowTypes types; // types for matching
 
     set_ruler<bool> above;
-    set_ruler<QString> activity;
     set_ruler<bool> below;
     set_ruler<bool> ignoregeometry;
     set_ruler<int> desktop;

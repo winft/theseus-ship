@@ -80,7 +80,6 @@ public:
 
 private:
     bool checkDesktop(TabBoxClient* client, int desktop) const;
-    bool checkActivity(TabBoxClient* client) const;
     bool checkApplications(TabBoxClient* client) const;
     bool checkMinimized(TabBoxClient* client) const;
     bool checkMultiScreen(TabBoxClient* client) const;

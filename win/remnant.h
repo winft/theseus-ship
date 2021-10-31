@@ -41,7 +41,6 @@ public:
     int refcount{1};
 
     int desk;
-    QStringList activities;
 
     xcb_window_t frame{XCB_WINDOW_NONE};
 

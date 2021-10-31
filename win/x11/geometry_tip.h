@@ -2,7 +2,7 @@
  KWin - the KDE window manager
  This file is part of the KDE project.
 
-Copyright (C) 2017 Martin Flöser <mgraesslin@kde.org>
+Copyright (c) 2003, Karol Szwed <kszwed@kde.org>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,29 +17,25 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_ROOTINFO_FILTER_H
-#define KWIN_ROOTINFO_FILTER_H
+#pragma once
 
-#include "base/x11/event_filter.h"
+#include "xcbutils.h"
 
-namespace KWin
-{
-namespace win::x11
-{
-class RootInfo;
-}
+#include <QLabel>
 
-class RootInfoFilter : public base::x11::event_filter
+namespace KWin::win::x11
 {
+
+class geometry_tip : public QLabel
+{
+    Q_OBJECT
 public:
-    explicit RootInfoFilter(win::x11::RootInfo *parent);
-
-    bool event(xcb_generic_event_t *event) override;
+    geometry_tip(Xcb::GeometryHints const* xSizeHints);
+    ~geometry_tip() override;
+    void set_geometry(QRect const& geom);
 
 private:
-    win::x11::RootInfo *m_rootInfo;
+    Xcb::GeometryHints const* sizeHints;
 };
 
 }
-
-#endif

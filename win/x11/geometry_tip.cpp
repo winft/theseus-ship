@@ -17,13 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
-#include "geometrytip.h"
+#include "geometry_tip.h"
 
 namespace KWin::win::x11
 {
 
-GeometryTip::GeometryTip(const Xcb::GeometryHints* xSizeHints)
+geometry_tip::geometry_tip(Xcb::GeometryHints const* xSizeHints)
     : QLabel(nullptr)
 {
     setObjectName(QLatin1String("kwingeometry"));
@@ -36,7 +35,7 @@ GeometryTip::GeometryTip(const Xcb::GeometryHints* xSizeHints)
     sizeHints = xSizeHints;
 }
 
-GeometryTip::~GeometryTip()
+geometry_tip::~geometry_tip()
 {
 }
 
@@ -47,7 +46,7 @@ static QString numberWithSign(int n)
     return sign + QString::number(std::abs(n));
 }
 
-void GeometryTip::setGeometry(const QRect& geom)
+void geometry_tip::set_geometry(QRect const& geom)
 {
     int w = geom.width();
     int h = geom.height();
@@ -70,4 +69,4 @@ void GeometryTip::setGeometry(const QRect& geom)
     move(geom.x() + ((geom.width() - width()) / 2), geom.y() + ((geom.height() - height()) / 2));
 }
 
-} // namespace
+}

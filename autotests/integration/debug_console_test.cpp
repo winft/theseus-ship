@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "win/control.h"
 #include "win/deco.h"
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/wayland/window.h"
 #include "workspace.h"
 #include "xcbutils.h"
@@ -57,7 +57,7 @@ private Q_SLOTS:
 
 void DebugConsoleTest::initTestCase()
 {
-    qRegisterMetaType<KWin::win::InternalClient*>();
+    qRegisterMetaType<win::internal_window*>();
     qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -518,7 +518,7 @@ void DebugConsoleTest::testClosingDebugConsole()
     console->show();
     QCOMPARE(console->windowHandle()->isVisible(), true);
     QTRY_COMPARE(clientAddedSpy.count(), 1);
-    win::InternalClient* c = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto c = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(c->isInternal());
     QCOMPARE(c->internalWindow(), console->windowHandle());
     QVERIFY(win::decoration(c));

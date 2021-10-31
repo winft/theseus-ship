@@ -3,8 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_WIN_DECO_H
-#define KWIN_WIN_DECO_H
+#pragma once
 
 #include "control.h"
 #include "structs.h"
@@ -166,5 +165,3 @@ void set_color_scheme(Win* win, QString const& path)
 }
 
 }
-
-#endif

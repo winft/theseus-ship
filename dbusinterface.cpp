@@ -39,9 +39,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/placement.h"
 #include "workspace.h"
 #include "virtualdesktops.h"
-#ifdef KWIN_BUILD_ACTIVITIES
-#include "activities.h"
-#endif
 
 // Qt
 #include <QOpenGLContext>
@@ -135,30 +132,14 @@ WRAP(QString, supportInformation)
 
 #undef WRAP
 
-bool DBusInterface::startActivity(const QString &in0)
+bool DBusInterface::startActivity(const QString& /*in0*/)
 {
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (!Activities::self()) {
-        return false;
-    }
-    return Activities::self()->start(in0);
-#else
-    Q_UNUSED(in0)
     return false;
-#endif
 }
 
-bool DBusInterface::stopActivity(const QString &in0)
+bool DBusInterface::stopActivity(const QString& /*in0*/)
 {
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (!Activities::self()) {
-        return false;
-    }
-    return Activities::self()->stop(in0);
-#else
-    Q_UNUSED(in0)
     return false;
-#endif
 }
 
 int DBusInterface::currentDesktop()

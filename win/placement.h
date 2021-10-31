@@ -19,14 +19,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#pragma once
 
-#ifndef KWIN_PLACEMENT_H
-#define KWIN_PLACEMENT_H
-
-// KWin
 #include "types.h"
 #include <kwinglobals.h>
-// Qt
+
 #include <QList>
 #include <QPoint>
 #include <QRect>
@@ -118,9 +115,6 @@ static inline bool is_irrelevant(Win1 const* window, Win2 const* regarding, int 
         return true;
     }
     if (!window->isOnDesktop(desktop)) {
-        return true;
-    }
-    if (!window->isOnCurrentActivity()) {
         return true;
     }
     if (is_desktop(window)) {
@@ -604,9 +598,7 @@ inline void unclutter_desktop()
     }
 }
 
-} // namespace win
-
-} // namespace KWin
+}
+}
 
 #endif // KCMRULES
-#endif // KWIN_PLACEMENT_H

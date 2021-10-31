@@ -100,18 +100,6 @@ public:
      */
     void show(const QRect &pos, Toplevel* window);
 
-public Q_SLOTS:
-    /**
-     * Delayed initialization of the activity menu.
-     *
-     * The call to retrieve the current list of activities is performed in a thread and this
-     * slot is invoked once the list has been fetched. Only task of this method is to decide
-     * whether to show the activity menu and to invoke the initialization of it.
-     *
-     * @see initActivityPopup
-     */
-    void showHideActivityMenu();
-
 private Q_SLOTS:
     /**
      * The menu will become visible soon.
@@ -135,11 +123,6 @@ private Q_SLOTS:
      */
     void screenPopupAboutToShow();
     /**
-     * Adjusts the activity popup to the current values and the location of
-     * the Client.
-     */
-    void activityPopupAboutToShow();
-    /**
      * Sends the client to desktop \a desk
      *
      * @param action Invoked Action containing the Desktop as data element
@@ -157,12 +140,6 @@ private Q_SLOTS:
      * @param action Invoked Action containing the Screen as data element
      */
     void slotSendToScreen(QAction *action);
-    /**
-     * Toggles whether the Client is on the \a activity
-     *
-     * @param action Invoked Action containing the Id of the Activity to toggle the Client on
-     */
-    void slotToggleOnActivity(QAction *action);
     /**
      * Performs a window operation.
      *
@@ -183,12 +160,6 @@ private:
      * Creates the Move to Screen sub-menu.
      */
     void initScreenPopup();
-    /**
-     * Creates activity popup.
-     * I'm going with checkable ones instead of "copy to" and "move to" menus; I *think* it's an easier way.
-     * Oh, and an 'all' option too of course
-     */
-    void initActivityPopup();
     /**
      * Shows a helper Dialog to inform the user how to get back in case he triggered
      * an action which hides the window decoration (e.g. NoBorder or Fullscreen).
@@ -212,10 +183,6 @@ private:
      * The move to screen sub menu.
      */
     QMenu* m_screenMenu;
-    /**
-     * The activities sub menu.
-     */
-    QMenu* m_activityMenu;
     /**
      * Menu for further entries added by scripts.
      */

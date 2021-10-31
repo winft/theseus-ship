@@ -17,11 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_FOCUS_CHAIN_H
-#define KWIN_FOCUS_CHAIN_H
-// KWin
+#pragma once
+
 #include <kwinglobals.h>
-// Qt
+
 #include <QHash>
 #include <QObject>
 
@@ -36,22 +35,26 @@ namespace win
  *
  * A focus chain is a list of Clients containing information on which Client should be activated.
  *
- * Internally this FocusChain holds multiple independent chains. There is one chain of most recently
- * used Clients which is primarily used by TabBox to build up the list of Clients for navigation.
- * The chains are organized as a normal QList of Clients with the most recently used Client being
- * the last item of the list, that is a LIFO like structure.
+ * Internally this focus_chain holds multiple independent chains. There is one chain of most
+ * recently used Clients which is primarily used by TabBox to build up the list of Clients for
+ * navigation. The chains are organized as a normal QList of Clients with the most recently used
+ * Client being the last item of the list, that is a LIFO like structure.
  *
  * In addition there is one chain for each virtual desktop which is used to determine which Client
  * should get activated when the user switches to another virtual desktop.
  *
  * Furthermore this class contains various helper methods for the two different kind of chains.
  */
-class KWIN_EXPORT FocusChain : public QObject
+class KWIN_EXPORT focus_chain : public QObject
 {
     Q_OBJECT
 public:
-    enum Change { MakeFirst, MakeLast, Update };
-    ~FocusChain() override;
+    enum Change {
+        MakeFirst,
+        MakeLast,
+        Update,
+    };
+    ~focus_chain() override;
     /**
      * @brief Updates the position of the @p client according to the requested @p change in the
      * focus chain.
@@ -215,37 +218,34 @@ private:
     void updateClientInChain(Toplevel* window, Change change, Chain& chain);
     void insertClientIntoChain(Toplevel* window, Chain& chain);
     Chain m_mostRecentlyUsed;
-    QHash<uint, Chain> m_desktopFocusChains;
+    QHash<uint, Chain> desktop_focus_chains;
     bool m_separateScreenFocus;
     Toplevel* m_activeClient;
     uint m_currentDesktop;
 
-    KWIN_SINGLETON_VARIABLE(FocusChain, s_manager)
+    KWIN_SINGLETON_VARIABLE(focus_chain, s_manager)
 };
 
-inline bool FocusChain::contains(Toplevel* window) const
+inline bool focus_chain::contains(Toplevel* window) const
 {
     return m_mostRecentlyUsed.contains(window);
 }
 
-inline void FocusChain::setSeparateScreenFocus(bool enabled)
+inline void focus_chain::setSeparateScreenFocus(bool enabled)
 {
     m_separateScreenFocus = enabled;
 }
 
-inline void FocusChain::setActiveClient(Toplevel* window)
+inline void focus_chain::setActiveClient(Toplevel* window)
 {
     m_activeClient = window;
 }
 
-inline void FocusChain::setCurrentDesktop(uint previous, uint newDesktop)
+inline void focus_chain::setCurrentDesktop(uint previous, uint newDesktop)
 {
     Q_UNUSED(previous)
     m_currentDesktop = newDesktop;
 }
 
-} // KWin::win
-
-} // KWin
-
-#endif // KWIN_FOCUS_CHAIN_H
+}
+}

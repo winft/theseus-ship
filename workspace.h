@@ -64,14 +64,14 @@ class Window;
 namespace win
 {
 enum class activation;
-class InternalClient;
+class internal_window;
 class stacking_order;
 
 namespace x11
 {
 enum class predicate_match;
 class window;
-class Group;
+class group;
 class stacking_tree;
 }
 }
@@ -316,9 +316,9 @@ public:
     // Only called from win::x11::window::destroyClient() or win::x11::window::releaseWindow()
     void removeClient(win::x11::window*);
     void setActiveClient(Toplevel* window);
-    win::x11::Group* findGroup(xcb_window_t leader) const;
-    void addGroup(win::x11::Group* group);
-    void removeGroup(win::x11::Group* group);
+    win::x11::group* findGroup(xcb_window_t leader) const;
+    void addGroup(win::x11::group* group);
+    void removeGroup(win::x11::group* group);
 
     // Only called from Unmanaged::release().
     void removeUnmanaged(Toplevel* window);
@@ -384,22 +384,22 @@ public:
     /**
      * Adds the internal client to Workspace.
      *
-     * This method will be called by InternalClient when it's mapped.
+     * This method will be called by internal_window when it's mapped.
      *
      * @see internalClientAdded
      * @internal
      */
-    void addInternalClient(win::InternalClient* client);
+    void addInternalClient(win::internal_window* client);
 
     /**
      * Removes the internal client from Workspace.
      *
-     * This method is meant to be called only by InternalClient.
+     * This method is meant to be called only by internal_window.
      *
      * @see internalClientRemoved
      * @internal
      */
-    void removeInternalClient(win::InternalClient* client);
+    void removeInternalClient(win::internal_window* client);
 
     void remove_window(Toplevel* window);
 
@@ -485,7 +485,6 @@ private Q_SLOTS:
     void slotUpdateToolWindows();
     void delayFocus();
     void slotReloadConfig();
-    void updateCurrentActivity(const QString& new_activity);
 
     // virtual desktop handling
     void slotDesktopCountChanged(uint previousCount, uint newCount);
@@ -507,7 +506,7 @@ Q_SIGNALS:
     void clientActivated(KWin::Toplevel*);
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
     void clientMinimizedChanged(KWin::Toplevel*);
-    void groupAdded(KWin::win::x11::Group*);
+    void groupAdded(KWin::win::x11::group*);
     void unmanagedAdded(KWin::Toplevel*);
     void unmanagedRemoved(KWin::Toplevel*);
     void deletedRemoved(KWin::Toplevel*);
@@ -517,12 +516,12 @@ Q_SIGNALS:
     /**
      * This signal is emitted whenever an internal client is created.
      */
-    void internalClientAdded(KWin::win::InternalClient* client);
+    void internalClientAdded(KWin::win::internal_window* client);
 
     /**
      * This signal is emitted whenever an internal client gets removed.
      */
-    void internalClientRemoved(KWin::win::InternalClient* client);
+    void internalClientRemoved(KWin::win::internal_window* client);
 
     void surface_id_changed(KWin::Toplevel*, quint32);
 
@@ -582,7 +581,7 @@ private:
     bool showing_desktop{false};
     int m_remnant_count{0};
 
-    std::vector<win::x11::Group*> groups;
+    std::vector<win::x11::group*> groups;
 
     bool was_user_interaction{false};
     QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
@@ -670,13 +669,13 @@ inline Toplevel* Workspace::mostRecentlyActivatedClient() const
     return should_get_focus.size() > 0 ? should_get_focus.back() : active_client;
 }
 
-inline void Workspace::addGroup(win::x11::Group* group)
+inline void Workspace::addGroup(win::x11::group* group)
 {
     emit groupAdded(group);
     groups.push_back(group);
 }
 
-inline void Workspace::removeGroup(win::x11::Group* group)
+inline void Workspace::removeGroup(win::x11::group* group)
 {
     remove_all(groups, group);
 }

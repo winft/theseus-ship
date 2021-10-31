@@ -168,16 +168,6 @@
       <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
     </entry>
 
-    <entry name="activity" type="String">
-      <label>Activity</label>
-    </entry>
-    <entry name="activityrule" type="Int">
-      <label>Activity rule type</label>
-      <min code="true">static_cast&lt;int&gt;(set_rule::unused)</min>
-      <max code="true">static_cast&lt;int&gt;(Rules::ForceTemporarily)</max>
-      <default code="true">static_cast&lt;int&gt;(set_rule::unused)</default>
-    </entry>
-
     <entry name="type" type="Int">
       <label>Set window type to</label>
       <min code="true">NET::Normal</min>

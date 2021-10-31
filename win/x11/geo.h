@@ -10,7 +10,7 @@
 
 #include "win/setup.h"
 #include "win/space.h"
-#include "win/x11/geometrytip.h"
+#include "win/x11/geometry_tip.h"
 
 #include <xcb/xcb_icccm.h>
 
@@ -941,7 +941,7 @@ void reposition_geometry_tip(Win* win)
     }
 
     if (!win->geometry_tip) {
-        win->geometry_tip = new GeometryTip(&win->geometry_hints);
+        win->geometry_tip = new geometry_tip(&win->geometry_hints);
     }
 
     // Position of the frame, size of the window itself.

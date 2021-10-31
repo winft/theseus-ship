@@ -83,10 +83,6 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
 
     QIcon::setThemeName(QStringLiteral("breeze"));
 
-#ifdef KWIN_BUILD_ACTIVITIES
-    setUseKActivities(false);
-#endif
-
     qunsetenv("XKB_DEFAULT_RULES");
     qunsetenv("XKB_DEFAULT_MODEL");
     qunsetenv("XKB_DEFAULT_LAYOUT");

@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include "win/input.h"
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/x11/window.h"
 
@@ -70,9 +70,9 @@ private Q_SLOTS:
 
 void GlobalShortcutsTest::initTestCase()
 {
-    qRegisterMetaType<KWin::win::InternalClient*>();
+    qRegisterMetaType<win::internal_window*>();
     qRegisterMetaType<win::wayland::window*>();
-    qRegisterMetaType<KWin::win::x11::window*>();
+    qRegisterMetaType<win::x11::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
@@ -455,7 +455,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     QVERIFY(shortcutDialogAddedSpy.isValid());
     workspace()->slotSetupWindowShortcut();
     QTRY_COMPARE(shortcutDialogAddedSpy.count(), 1);
-    auto dialog = shortcutDialogAddedSpy.first().first().value<win::InternalClient*>();
+    auto dialog = shortcutDialogAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(dialog);
     QVERIFY(dialog->isInternal());
     auto sequenceEdit = workspace()->shortcutDialog()->findChild<QKeySequenceEdit*>();

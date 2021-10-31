@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects.h>
 
 #include "win/deco.h"
-#include "win/internal_client.h"
+#include "win/internal_window.h"
 #include "win/move.h"
 #include "win/wayland/window.h"
 
@@ -147,7 +147,7 @@ Toplevel* DecorationInputTest::showWindow()
 
 void DecorationInputTest::initTestCase()
 {
-    qRegisterMetaType<KWin::win::InternalClient*>();
+    qRegisterMetaType<win::internal_window*>();
     qRegisterMetaType<win::wayland::window*>();
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -862,7 +862,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     c->control->deco().client->requestShowToolTip(QStringLiteral("test"));
     // now we should get an internal window
     QVERIFY(clientAddedSpy.wait());
-    win::InternalClient* internal = clientAddedSpy.first().first().value<win::InternalClient*>();
+    auto internal = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internal->isInternal());
     QVERIFY(internal->internalWindow()->flags().testFlag(Qt::ToolTip));
 

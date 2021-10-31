@@ -138,7 +138,7 @@ public:
 
     uint screen() const;
     uint virtualDesktop() const;
-    const QString &activity() const;
+    QString const activity() const;
     ClientModel::LevelRestrictions restrictions() const;
     void setRestrictions(ClientModel::LevelRestrictions restrictions);
     ClientModel::LevelRestriction restriction() const;
@@ -169,7 +169,6 @@ private:
     AbstractLevel *m_parent;
     uint m_screen;
     uint m_virtualDesktop;
-    QString m_activity;
     ClientModel::LevelRestriction m_restriction;
     ClientModel::LevelRestrictions m_restrictions;
     quint32 m_id;
@@ -314,9 +313,9 @@ int ClientLevel::count() const
 }
 
 inline
-const QString &AbstractLevel::activity() const
+QString const AbstractLevel::activity() const
 {
-    return m_activity;
+    return {};
 }
 
 inline

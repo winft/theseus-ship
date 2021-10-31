@@ -532,10 +532,6 @@ int main(int argc, char * argv[])
     parser.process(a);
     a.processCommandLine(&parser);
 
-#ifdef KWIN_BUILD_ACTIVITIES
-    a.setUseKActivities(false);
-#endif
-
     if (parser.isSet(exitWithSessionOption)) {
         a.setSessionArgument(parser.value(exitWithSessionOption));
     }

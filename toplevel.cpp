@@ -19,9 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "toplevel.h"
 
-#ifdef KWIN_BUILD_ACTIVITIES
-#include "activities.h"
-#endif
 #include "base/output.h"
 #include "atoms.h"
 #include "render/compositor.h"
@@ -60,7 +57,7 @@ Toplevel::Toplevel(win::transient* transient)
     , damage_handle(XCB_NONE)
     , is_shape(false)
     , effect_window(nullptr)
-    , m_clientMachine(new ClientMachine(this))
+    , m_clientMachine(new win::x11::client_machine(this))
     , m_wmClientLeader(XCB_WINDOW_NONE)
     , m_damageReplyPending(false)
     , m_screen(0)
@@ -155,7 +152,7 @@ void Toplevel::copyToDeleted(Toplevel* c)
     bit_depth = c->bit_depth;
 
     info = c->info;
-    if (auto win_info = dynamic_cast<win::x11::WinInfo*>(info)) {
+    if (auto win_info = dynamic_cast<win::x11::win_info*>(info)) {
         win_info->disable();
     }
 
@@ -250,11 +247,11 @@ QByteArray Toplevel::wmClientMachine(bool use_localhost) const
         // this should never happen
         return QByteArray();
     }
-    if (use_localhost && m_clientMachine->isLocal()) {
+    if (use_localhost && m_clientMachine->is_local()) {
         // special name for the local machine (localhost)
-        return ClientMachine::localhost();
+        return win::x11::client_machine::localhost();
     }
-    return m_clientMachine->hostName();
+    return m_clientMachine->hostname();
 }
 
 /**
@@ -714,18 +711,6 @@ bool Toplevel::isDeleted() const
     return remnant() != nullptr;
 }
 
-bool Toplevel::isOnCurrentActivity() const
-{
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (!Activities::self()) {
-        return true;
-    }
-    return isOnActivity(Activities::self()->current());
-#else
-    return true;
-#endif
-}
-
 pid_t Toplevel::pid() const
 {
     return info->pid();
@@ -877,7 +862,7 @@ bool Toplevel::isLocalhost() const
     if (!m_clientMachine) {
         return true;
     }
-    return m_clientMachine->isLocal();
+    return m_clientMachine->is_local();
 }
 
 bool Toplevel::is_popup_end() const
@@ -904,16 +889,6 @@ void Toplevel::set_desktops(QVector<VirtualDesktop*> const& desktops)
     m_desktops = desktops;
 }
 
-bool Toplevel::isOnAllActivities() const
-{
-    return win::on_all_activities(this);
-}
-
-bool Toplevel::isOnActivity(const QString &activity) const
-{
-    return win::on_activity(this, activity);
-}
-
 bool Toplevel::isOnAllDesktops() const
 {
     return win::on_all_desktops(this);
@@ -927,14 +902,6 @@ bool Toplevel::isOnDesktop(int d) const
 bool Toplevel::isOnCurrentDesktop() const
 {
     return win::on_current_desktop(this);
-}
-
-QStringList Toplevel::activities() const
-{
-    if (m_remnant) {
-        return m_remnant->activities;
-    }
-    return QStringList();
 }
 
 win::layer Toplevel::layer() const
@@ -1034,10 +1001,6 @@ void Toplevel::setNoBorder([[maybe_unused]] bool set)
 {
 }
 
-void Toplevel::blockActivityUpdates([[maybe_unused]] bool b)
-{
-}
-
 bool Toplevel::isResizable() const
 {
     return false;
@@ -1095,14 +1058,6 @@ void Toplevel::checkNoBorder()
 bool Toplevel::isTransient() const
 {
     return transient()->lead();
-}
-
-void Toplevel::setOnActivities([[maybe_unused]] QStringList newActivitiesList)
-{
-}
-
-void Toplevel::setOnAllActivities([[maybe_unused]] bool set)
-{
 }
 
 xcb_timestamp_t Toplevel::userTime() const
@@ -1169,12 +1124,12 @@ bool Toplevel::groupTransient() const
     return false;
 }
 
-win::x11::Group const* Toplevel::group() const
+win::x11::group const* Toplevel::group() const
 {
     return nullptr;
 }
 
-win::x11::Group* Toplevel::group()
+win::x11::group* Toplevel::group()
 {
     return nullptr;
 }

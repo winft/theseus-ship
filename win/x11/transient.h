@@ -351,7 +351,7 @@ void check_active_modal()
 }
 
 template<typename Win>
-void check_group(Win* win, Group* group)
+void check_group(Win* win, x11::group* group)
 {
     // First get all information about the current group.
     if (!group) {
@@ -365,12 +365,12 @@ void check_group(Win* win, Group* group)
             group = workspace()->findGroup(win->info->groupLeader());
             if (!group) {
                 // doesn't exist yet
-                group = new Group(win->info->groupLeader());
+                group = new x11::group(win->info->groupLeader());
             }
         } else {
             group = find_client_leader_group(win);
             if (!group) {
-                group = new Group(XCB_WINDOW_NONE);
+                group = new x11::group(XCB_WINDOW_NONE);
             }
         }
     }
@@ -390,7 +390,7 @@ void check_group(Win* win, Group* group)
 }
 
 template<typename Win>
-void change_client_leader_group(Win* win, Group* group)
+void change_client_leader_group(Win* win, x11::group* group)
 {
     auto lead_id = x11_transient(win)->lead_id;
     if (lead_id != XCB_WINDOW_NONE && lead_id != rootWindow()) {
@@ -411,9 +411,9 @@ void change_client_leader_group(Win* win, Group* group)
  *  Tries to find a group that has member windows with the same client leader like @ref win.
  */
 template<typename Win>
-Group* find_client_leader_group(Win const* win)
+group* find_client_leader_group(Win const* win)
 {
-    Group* ret = nullptr;
+    group* ret = nullptr;
 
     for (auto const& other : workspace()->allClientList()) {
         if (other == win) {

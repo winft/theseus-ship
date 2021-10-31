@@ -93,7 +93,6 @@ void Rules::readFromSettings(const RuleSettings* settings)
         return set;
     };
 
-    activity = read_set_rule(settings->activity(), settings->activityrule());
     above = read_set_rule(settings->above(), settings->aboverule());
     below = read_set_rule(settings->below(), settings->belowrule());
     desktop = read_set_rule(settings->desktop(), settings->desktoprule());
@@ -192,7 +191,6 @@ void Rules::write(RuleSettings* settings) const
     };
 
     write_set(above, &RuleSettings::setAboverule, &RuleSettings::setAbove);
-    write_set(activity, &RuleSettings::setActivityrule, &RuleSettings::setActivity);
     write_set(below, &RuleSettings::setBelowrule, &RuleSettings::setBelow);
     write_set(desktop, &RuleSettings::setDesktoprule, &RuleSettings::setDesktop);
     write_set(desktopfile, &RuleSettings::setDesktopfilerule, &RuleSettings::setDesktopfile);
@@ -271,16 +269,16 @@ bool Rules::isEmpty() const
 
     return unused_s(position.rule) && unused_s(size.rule) && unused_s(desktopfile.rule)
         && unused_s(ignoregeometry.rule) && unused_s(desktop.rule) && unused_s(screen.rule)
-        && unused_s(activity.rule) && unused_s(maximizevert.rule) && unused_s(maximizehoriz.rule)
-        && unused_s(minimize.rule) && unused_s(skiptaskbar.rule) && unused_s(skippager.rule)
-        && unused_s(skipswitcher.rule) && unused_s(above.rule) && unused_s(below.rule)
-        && unused_s(fullscreen.rule) && unused_s(noborder.rule) && unused_f(decocolor.rule)
-        && unused_f(blockcompositing.rule) && unused_f(fsplevel.rule) && unused_f(fpplevel.rule)
-        && unused_f(acceptfocus.rule) && unused_f(closeable.rule) && unused_f(autogroup.rule)
-        && unused_f(autogroupfg.rule) && unused_f(autogroupid.rule) && unused_f(strictgeometry.rule)
-        && unused_s(shortcut.rule) && unused_f(disableglobalshortcuts.rule)
-        && unused_f(minsize.rule) && unused_f(maxsize.rule) && unused_f(opacityactive.rule)
-        && unused_f(opacityinactive.rule) && unused_f(placement.rule) && unused_f(type.rule);
+        && unused_s(maximizevert.rule) && unused_s(maximizehoriz.rule) && unused_s(minimize.rule)
+        && unused_s(skiptaskbar.rule) && unused_s(skippager.rule) && unused_s(skipswitcher.rule)
+        && unused_s(above.rule) && unused_s(below.rule) && unused_s(fullscreen.rule)
+        && unused_s(noborder.rule) && unused_f(decocolor.rule) && unused_f(blockcompositing.rule)
+        && unused_f(fsplevel.rule) && unused_f(fpplevel.rule) && unused_f(acceptfocus.rule)
+        && unused_f(closeable.rule) && unused_f(autogroup.rule) && unused_f(autogroupfg.rule)
+        && unused_f(autogroupid.rule) && unused_f(strictgeometry.rule) && unused_s(shortcut.rule)
+        && unused_f(disableglobalshortcuts.rule) && unused_f(minsize.rule) && unused_f(maxsize.rule)
+        && unused_f(opacityactive.rule) && unused_f(opacityinactive.rule)
+        && unused_f(placement.rule) && unused_f(type.rule);
 }
 
 force_rule Rules::convertForceRule(int v)
@@ -395,8 +393,8 @@ bool Rules::match(Toplevel const* window) const
     if (!matchRole(window->windowRole().toLower())) {
         return false;
     }
-    if (!matchClientMachine(window->clientMachine()->hostName(),
-                            window->clientMachine()->isLocal())) {
+    if (!matchClientMachine(window->clientMachine()->hostname(),
+                            window->clientMachine()->is_local())) {
         return false;
     }
 
@@ -455,12 +453,6 @@ bool Rules::update(Toplevel* window, int selection)
     if (remember(above, Above)) {
         updated = updated || above.data != window->control->keep_above();
         above.data = window->control->keep_above();
-    }
-    if (remember(activity, Activity)) {
-        // TODO: ivan - multiple activities support
-        const QString& joinedActivities = window->activities().join(QStringLiteral(","));
-        updated = updated || activity.data != joinedActivities;
-        activity.data = joinedActivities;
     }
     if (remember(below, Below)) {
         updated = updated || below.data != window->control->keep_below();
@@ -578,11 +570,6 @@ bool Rules::applySize(QSize& s, bool init) const
         s = this->size.data;
     }
     return checkSetStop(size.rule);
-}
-
-bool Rules::applyActivity(QString& activity, bool init) const
-{
-    return apply_set(activity, this->activity, init);
 }
 
 bool Rules::applyMinimize(bool& minimize, bool init) const
@@ -797,7 +784,6 @@ bool Rules::discardUsed(bool withdrawn)
     };
 
     discard_used_set(above);
-    discard_used_set(activity);
     discard_used_set(below);
     discard_used_set(desktop);
     discard_used_set(desktopfile);

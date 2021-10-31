@@ -6,7 +6,7 @@
 #pragma once
 
 #include "controlling.h"
-#include "focuschain.h"
+#include "focus_chain.h"
 #include "meta.h"
 #include "stacking_order.h"
 #include "transient.h"
@@ -45,7 +45,7 @@ Toplevel* top_client_on_desktop(Space* space,
         = unconstrained ? space->stacking_order->pre_stack : space->stacking_order->sorted();
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         auto c = *it;
-        if (c && c->isOnDesktop(desktop) && c->isShown() && c->isOnCurrentActivity()) {
+        if (c && c->isOnDesktop(desktop) && c->isShown()) {
             if (screen != -1 && c->screen() != screen)
                 continue;
             if (!only_normal)
@@ -228,7 +228,7 @@ void restack(Space* space, Window* window, Toplevel* under, bool force = false)
     }
 
     assert(contains(space->stacking_order->pre_stack, window));
-    FocusChain::self()->moveAfterClient(window, under);
+    focus_chain::self()->moveAfterClient(window, under);
     space->stacking_order->update();
 }
 

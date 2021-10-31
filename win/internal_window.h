@@ -26,18 +26,16 @@ namespace KWin::win
 {
 class internal_control;
 
-class KWIN_EXPORT InternalClient : public Toplevel
+class KWIN_EXPORT internal_window : public Toplevel
 {
     Q_OBJECT
 
 public:
-    explicit InternalClient(QWindow* window);
-    ~InternalClient() override;
+    explicit internal_window(QWindow* window);
+    ~internal_window() override;
 
     bool eventFilter(QObject* watched, QEvent* event) override;
 
-    QStringList activities() const override;
-    void blockActivityUpdates(bool b = true) override;
     qreal bufferScale() const override;
     void debug(QDebug& stream) const override;
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
@@ -66,7 +64,6 @@ public:
     void hideClient(bool hide) override;
     void setFrameGeometry(QRect const& rect) override;
     bool supportsWindowRules() const override;
-    void setOnAllActivities(bool set) override;
     void takeFocus() override;
     bool userCanSetFullScreen() const override;
     void setFullScreen(bool set, bool user = true) override;
@@ -106,7 +103,7 @@ private:
     Qt::WindowFlags m_internalWindowFlags = Qt::WindowFlags();
     bool m_userNoBorder = false;
 
-    Q_DISABLE_COPY(InternalClient)
+    Q_DISABLE_COPY(internal_window)
 
     friend class internal_control;
 };

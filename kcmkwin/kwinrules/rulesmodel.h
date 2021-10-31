@@ -30,11 +30,6 @@
 #include <QSortFilterProxyModel>
 #include <QObject>
 
-#ifdef KWIN_BUILD_ACTIVITIES
-#include <KActivities/Consumer>
-#endif
-
-
 namespace KWin
 {
 
@@ -114,7 +109,6 @@ private:
 
     QList<OptionsModel::Data> windowTypesModelData() const;
     QList<OptionsModel::Data> virtualDesktopsModelData() const;
-    QList<OptionsModel::Data> activitiesModelData() const;
     QList<OptionsModel::Data> placementModelData() const;
     QList<OptionsModel::Data> focusModelData() const;
     QList<OptionsModel::Data> colorSchemesModelData() const;
@@ -126,9 +120,6 @@ private:
     QList<RuleItem *> m_ruleList;
     QHash<QString, RuleItem *> m_rules;
     DBusDesktopDataVector m_virtualDesktops;
-#ifdef KWIN_BUILD_ACTIVITIES
-    KActivities::Consumer *m_activities;
-#endif
     RuleSettings *m_settings;
 };
 

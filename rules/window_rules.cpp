@@ -100,11 +100,6 @@ int WindowRules::checkDesktop(int desktop, bool init) const
     return check_set(desktop, init, &Rules::applyDesktop);
 }
 
-QString WindowRules::checkActivity(QString activity, bool init) const
-{
-    return check_set(activity, init, &Rules::applyActivity);
-}
-
 win::maximize_mode WindowRules::checkMaximizeVert(win::maximize_mode mode, bool init) const
 {
     return check_set(mode, init, &Rules::applyMaximizeVert);
@@ -293,7 +288,6 @@ void Toplevel::applyWindowRules()
     // IgnoreGeometry
     win::set_desktop(this, desktop());
     workspace()->sendClientToScreen(this, screen());
-    setOnActivities(activities());
     // Type
     win::maximize(this, maximizeMode());
 

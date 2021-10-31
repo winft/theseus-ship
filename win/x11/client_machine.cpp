@@ -31,10 +31,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/types.h>
 #include <unistd.h>
 
-namespace KWin
+namespace KWin::win::x11
 {
 
-static QByteArray getHostName()
+static QByteArray get_hostname_helper()
 {
 #ifdef HOST_NAME_MAX
     char hostnamebuf[HOST_NAME_MAX];
@@ -48,30 +48,33 @@ static QByteArray getHostName()
     return QByteArray();
 }
 
-GetAddrInfo::GetAddrInfo(const QByteArray& hostName, QObject* parent)
+get_addr_info_wrapper::get_addr_info_wrapper(QByteArray const& hostName, QObject* parent)
     : QObject(parent)
     , m_resolving(false)
     , m_resolved(false)
     , m_ownResolved(false)
-    , m_hostName(hostName)
+    , m_hostname(hostName)
     , m_addressHints(new addrinfo)
     , m_address(nullptr)
     , m_ownAddress(nullptr)
     , m_watcher(new QFutureWatcher<int>(this))
     , m_ownAddressWatcher(new QFutureWatcher<int>(this))
 {
-    // watcher will be deleted together with the GetAddrInfo once the future
-    // got canceled or finished
-    connect(m_watcher, &QFutureWatcher<int>::canceled, this, &GetAddrInfo::deleteLater);
-    connect(m_watcher, &QFutureWatcher<int>::finished, this, &GetAddrInfo::slotResolved);
-    connect(m_ownAddressWatcher, &QFutureWatcher<int>::canceled, this, &GetAddrInfo::deleteLater);
+    // Watcher will be deleted together with the get_addr_info_wrapper once the future got canceled
+    // or finished.
+    connect(m_watcher, &QFutureWatcher<int>::canceled, this, &get_addr_info_wrapper::deleteLater);
+    connect(m_watcher, &QFutureWatcher<int>::finished, this, &get_addr_info_wrapper::slotResolved);
+    connect(m_ownAddressWatcher,
+            &QFutureWatcher<int>::canceled,
+            this,
+            &get_addr_info_wrapper::deleteLater);
     connect(m_ownAddressWatcher,
             &QFutureWatcher<int>::finished,
             this,
-            &GetAddrInfo::slotOwnAddressResolved);
+            &get_addr_info_wrapper::slotOwnAddressResolved);
 }
 
-GetAddrInfo::~GetAddrInfo()
+get_addr_info_wrapper::~get_addr_info_wrapper()
 {
     if (m_watcher && m_watcher->isRunning()) {
         m_watcher->cancel();
@@ -90,7 +93,7 @@ GetAddrInfo::~GetAddrInfo()
     delete m_addressHints;
 }
 
-void GetAddrInfo::resolve()
+void get_addr_info_wrapper::resolve()
 {
     if (m_resolving) {
         return;
@@ -102,15 +105,17 @@ void GetAddrInfo::resolve()
     m_addressHints->ai_flags |= AI_CANONNAME;
 
     m_watcher->setFuture(QtConcurrent::run(
-        getaddrinfo, m_hostName.constData(), nullptr, m_addressHints, &m_address));
+        getaddrinfo, m_hostname.constData(), nullptr, m_addressHints, &m_address));
     m_ownAddressWatcher->setFuture(QtConcurrent::run([this] {
-        // needs to be performed in a lambda as getHostName() returns a temporary value which would
-        // get destroyed in the main thread before the getaddrinfo thread is able to read it
-        return getaddrinfo(getHostName().constData(), nullptr, m_addressHints, &m_ownAddress);
+        // needs to be performed in a lambda as get_hostname_helper() returns a temporary value
+        // which would get destroyed in the main thread before the getaddrinfo thread is able to
+        // read it
+        return getaddrinfo(
+            get_hostname_helper().constData(), nullptr, m_addressHints, &m_ownAddress);
     }));
 }
 
-void GetAddrInfo::slotResolved()
+void get_addr_info_wrapper::slotResolved()
 {
     if (resolved(m_watcher)) {
         m_resolved = true;
@@ -118,7 +123,7 @@ void GetAddrInfo::slotResolved()
     }
 }
 
-void GetAddrInfo::slotOwnAddressResolved()
+void get_addr_info_wrapper::slotOwnAddressResolved()
 {
     if (resolved(m_ownAddressWatcher)) {
         m_ownResolved = true;
@@ -126,7 +131,7 @@ void GetAddrInfo::slotOwnAddressResolved()
     }
 }
 
-bool GetAddrInfo::resolved(QFutureWatcher<int>* watcher)
+bool get_addr_info_wrapper::resolved(QFutureWatcher<int>* watcher)
 {
     if (!watcher->isFinished()) {
         return false;
@@ -140,19 +145,19 @@ bool GetAddrInfo::resolved(QFutureWatcher<int>* watcher)
     return true;
 }
 
-void GetAddrInfo::compare()
+void get_addr_info_wrapper::compare()
 {
     if (!m_resolved || !m_ownResolved) {
         return;
     }
     addrinfo* address = m_address;
     while (address) {
-        if (address->ai_canonname && m_hostName == QByteArray(address->ai_canonname).toLower()) {
+        if (address->ai_canonname && m_hostname == QByteArray(address->ai_canonname).toLower()) {
             addrinfo* ownAddress = m_ownAddress;
             bool localFound = false;
             while (ownAddress) {
                 if (ownAddress->ai_canonname
-                    && QByteArray(ownAddress->ai_canonname).toLower() == m_hostName) {
+                    && QByteArray(ownAddress->ai_canonname).toLower() == m_hostname) {
                     localFound = true;
                     break;
                 }
@@ -168,7 +173,7 @@ void GetAddrInfo::compare()
     deleteLater();
 }
 
-ClientMachine::ClientMachine(QObject* parent)
+client_machine::client_machine(QObject* parent)
     : QObject(parent)
     , m_localhost(false)
     , m_resolved(false)
@@ -176,11 +181,11 @@ ClientMachine::ClientMachine(QObject* parent)
 {
 }
 
-ClientMachine::~ClientMachine()
+client_machine::~client_machine()
 {
 }
 
-void ClientMachine::resolve(xcb_window_t window, xcb_window_t clientLeader)
+void client_machine::resolve(xcb_window_t window, xcb_window_t clientLeader)
 {
     if (m_resolved) {
         return;
@@ -200,53 +205,54 @@ void ClientMachine::resolve(xcb_window_t window, xcb_window_t clientLeader)
         name = localhost();
     }
     if (name == localhost()) {
-        setLocal();
+        set_local();
     }
-    m_hostName = name;
-    checkForLocalhost();
+    m_hostname = name;
+    check_for_localhost();
     m_resolved = true;
 }
 
-void ClientMachine::checkForLocalhost()
+void client_machine::check_for_localhost()
 {
-    if (isLocal()) {
+    if (is_local()) {
         // nothing to do
         return;
     }
-    QByteArray host = getHostName();
+    auto host = get_hostname_helper();
 
     if (!host.isEmpty()) {
         host = host.toLower();
-        const QByteArray lowerHostName(m_hostName.toLower());
+        const QByteArray lowerHostName(m_hostname.toLower());
         if (host == lowerHostName) {
-            setLocal();
+            set_local();
             return;
         }
         if (char* dot = strchr(host.data(), '.')) {
             *dot = '\0';
             if (host == lowerHostName) {
-                setLocal();
+                set_local();
                 return;
             }
         } else {
             m_resolving = true;
             // check using information from get addr info
-            // GetAddrInfo gets automatically destroyed once it finished or not
-            GetAddrInfo* info = new GetAddrInfo(lowerHostName, this);
-            connect(info, &GetAddrInfo::local, this, &ClientMachine::setLocal);
-            connect(info, &GetAddrInfo::destroyed, this, &ClientMachine::resolveFinished);
+            // get_addr_info_wrapper gets automatically destroyed once it finished or not
+            auto info = new get_addr_info_wrapper(lowerHostName, this);
+            connect(info, &get_addr_info_wrapper::local, this, &client_machine::set_local);
+            connect(
+                info, &get_addr_info_wrapper::destroyed, this, &client_machine::resolve_finished);
             info->resolve();
         }
     }
 }
 
-void ClientMachine::setLocal()
+void client_machine::set_local()
 {
     m_localhost = true;
     emit localhostChanged();
 }
 
-void ClientMachine::resolveFinished()
+void client_machine::resolve_finished()
 {
     m_resolving = false;
 }

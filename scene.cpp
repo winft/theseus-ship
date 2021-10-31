@@ -783,8 +783,6 @@ bool Scene::Window::isVisible() const
         return false;
     if (!toplevel->isOnCurrentDesktop())
         return false;
-    if (!toplevel->isOnCurrentActivity())
-        return false;
     if (toplevel->control) {
         return toplevel->isShown();
     }
@@ -814,8 +812,6 @@ void Scene::Window::resetPaintingEnabled()
         if (!toplevel->isOnCurrentDesktop())
             disable_painting |= PAINT_DISABLED_BY_DESKTOP;
     }
-    if (!toplevel->isOnCurrentActivity())
-        disable_painting |= PAINT_DISABLED_BY_ACTIVITY;
     if (toplevel->control) {
         if (toplevel->control->minimized()) {
             disable_painting |= PAINT_DISABLED_BY_MINIMIZE;

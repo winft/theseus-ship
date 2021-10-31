@@ -70,9 +70,9 @@ class compositor;
 
 namespace win::x11
 {
-class Group;
+class group;
 class window;
-class WindowPropertyNotifyX11Filter;
+class window_property_notify_filter;
 }
 
 class KWIN_EXPORT EffectsHandlerImpl : public EffectsHandler
@@ -385,7 +385,7 @@ private:
     QList<Effect*> m_grabbedMouseEffects;
     EffectLoader *m_effectLoader;
     int m_trackingCursorChanges;
-    std::unique_ptr<win::x11::WindowPropertyNotifyX11Filter> m_x11WindowPropertyNotify;
+    std::unique_ptr<win::x11::window_property_notify_filter> m_x11WindowPropertyNotify;
     QList<EffectScreen *> m_effectScreens;
 };
 
@@ -567,10 +567,10 @@ class EffectWindowGroupImpl
     : public EffectWindowGroup
 {
 public:
-    explicit EffectWindowGroupImpl(win::x11::Group* g);
+    explicit EffectWindowGroupImpl(win::x11::group* g);
     EffectWindowList members() const override;
 private:
-    win::x11::Group* group;
+    win::x11::group* group;
 };
 
 class KWIN_EXPORT EffectFrameImpl
@@ -677,7 +677,7 @@ xcb_connection_t *EffectsHandlerImpl::xcbConnection() const
 }
 
 inline
-EffectWindowGroupImpl::EffectWindowGroupImpl(win::x11::Group* g)
+EffectWindowGroupImpl::EffectWindowGroupImpl(win::x11::group* g)
     : group(g)
 {
 }

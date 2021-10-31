@@ -109,10 +109,6 @@ if (XCB_ICCCM_FOUND)
     integrationTest(NAME testGlobalShortcuts SRCS globalshortcuts_test.cpp LIBS XCB::ICCCM)
     integrationTest(NAME testStackingOrder SRCS stacking_order_test.cpp LIBS XCB::ICCCM)
     integrationTest(NAME testDbusInterface SRCS dbus_interface_test.cpp LIBS XCB::ICCCM)
-
-    if (KWIN_BUILD_ACTIVITIES)
-        integrationTest(NAME testActivities SRCS activities_test.cpp LIBS XCB::ICCCM)
-    endif()
 endif()
 
 add_subdirectory(scripting)

@@ -60,10 +60,6 @@ KWinTabBoxConfigForm::KWinTabBoxConfigForm(TabboxType type, QWidget *parent)
     connect(ui->currentDesktop, &QAbstractButton::clicked, this, &KWinTabBoxConfigForm::onFilterDesktop);
     connect(ui->otherDesktops, &QAbstractButton::clicked, this, &KWinTabBoxConfigForm::onFilterDesktop);
 
-    connect(ui->filterActivities, &QAbstractButton::clicked, this, &KWinTabBoxConfigForm::onFilterActivites);
-    connect(ui->currentActivity, &QAbstractButton::clicked, this, &KWinTabBoxConfigForm::onFilterActivites);
-    connect(ui->otherActivities, &QAbstractButton::clicked, this, &KWinTabBoxConfigForm::onFilterActivites);
-
     connect(ui->filterMinimization, &QAbstractButton::clicked, this, &KWinTabBoxConfigForm::onFilterMinimization);
     connect(ui->visibleWindows, &QAbstractButton::clicked, this, &KWinTabBoxConfigForm::onFilterMinimization);
     connect(ui->hiddenWindows, &QAbstractButton::clicked, this, &KWinTabBoxConfigForm::onFilterMinimization);
@@ -135,15 +131,6 @@ int KWinTabBoxConfigForm::filterDesktop() const
     }
 }
 
-int KWinTabBoxConfigForm::filterActivities() const
-{
-    if (ui->filterActivities->isChecked()) {
-        return ui->currentActivity->isChecked() ? TabBoxConfig::OnlyCurrentActivityClients : TabBoxConfig::ExcludeCurrentActivityClients;
-    } else {
-        return TabBoxConfig::AllActivitiesClients;
-    }
-}
-
 int KWinTabBoxConfigForm::filterMinimization() const
 {
     if (ui->filterMinimization->isChecked()) {
@@ -185,13 +172,6 @@ void KWinTabBoxConfigForm::setFilterDesktop(TabBox::TabBoxConfig::ClientDesktopM
     ui->filterDesktops->setChecked(mode != TabBoxConfig::AllDesktopsClients);
     ui->currentDesktop->setChecked(mode == TabBoxConfig::OnlyCurrentDesktopClients);
     ui->otherDesktops->setChecked(mode == TabBoxConfig::ExcludeCurrentDesktopClients);
-}
-
-void KWinTabBoxConfigForm::setFilterActivities(TabBox::TabBoxConfig::ClientActivitiesMode mode)
-{
-    ui->filterActivities->setChecked(mode != TabBoxConfig::AllActivitiesClients);
-    ui->currentActivity->setChecked(mode == TabBoxConfig::OnlyCurrentActivityClients);
-    ui->otherActivities->setChecked(mode == TabBoxConfig::ExcludeCurrentActivityClients);
 }
 
 void KWinTabBoxConfigForm::setFilterMinimization(TabBox::TabBoxConfig::ClientMinimizedMode mode)
@@ -301,13 +281,6 @@ void KWinTabBoxConfigForm::setFilterDesktopEnabled(bool enabled)
     ui->otherDesktops->setEnabled(enabled);
 }
 
-void KWinTabBoxConfigForm::setFilterActivitiesEnabled(bool enabled)
-{
-    ui->filterActivities->setEnabled(enabled);
-    ui->currentActivity->setEnabled(enabled);
-    ui->otherActivities->setEnabled(enabled);
-}
-
 void KWinTabBoxConfigForm::setFilterMinimizationEnabled(bool enabled)
 {
     ui->filterMinimization->setEnabled(enabled);
@@ -347,13 +320,6 @@ void KWinTabBoxConfigForm::setFilterDesktopDefaultIndicatorVisible(bool visible)
     setDefaultIndicatorVisible(ui->filterDesktops, visible);
     setDefaultIndicatorVisible(ui->currentDesktop, visible);
     setDefaultIndicatorVisible(ui->otherDesktops, visible);
-}
-
-void KWinTabBoxConfigForm::setFilterActivitiesDefaultIndicatorVisible(bool visible)
-{
-    setDefaultIndicatorVisible(ui->filterActivities, visible);
-    setDefaultIndicatorVisible(ui->currentActivity, visible);
-    setDefaultIndicatorVisible(ui->otherActivities, visible);
 }
 
 void KWinTabBoxConfigForm::setFilterMinimizationDefaultIndicatorVisible(bool visible)
@@ -399,11 +365,6 @@ void KWinTabBoxConfigForm::onFilterScreen()
 void KWinTabBoxConfigForm::onFilterDesktop()
 {
     emit filterDesktopChanged(filterDesktop());
-}
-
-void KWinTabBoxConfigForm::onFilterActivites()
-{
-    emit filterActivitiesChanged(filterActivities());
 }
 
 void KWinTabBoxConfigForm::onFilterMinimization()

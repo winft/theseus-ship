@@ -46,12 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "virtualdesktops.h"
 #include "scripting/scripting.h"
 
-#ifdef KWIN_BUILD_ACTIVITIES
-#include "activities.h"
-#include <kactivities/info.h>
-#endif
-
-#include "win/appmenu.h"
+#include "win/app_menu.h"
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/layers.h"
@@ -97,7 +92,6 @@ UserActionsMenu::UserActionsMenu(QObject *parent)
     , m_desktopMenu(nullptr)
     , m_multipleDesktopsMenu(nullptr)
     , m_screenMenu(nullptr)
-    , m_activityMenu(nullptr)
     , m_scriptsMenu(nullptr)
     , m_resizeOperation(nullptr)
     , m_moveOperation(nullptr)
@@ -161,14 +155,10 @@ void UserActionsMenu::show(const QRect &pos, Toplevel* window)
     }
     m_client = cl;
     init();
-    m_client->blockActivityUpdates(true);
     if (kwinApp()->shouldUseWaylandForCompositing()) {
         m_menu->popup(pos.bottomLeft());
     } else {
         m_menu->exec(pos.bottomLeft());
-    }
-    if (m_client) {
-        m_client->blockActivityUpdates(false);
     }
 }
 
@@ -375,7 +365,6 @@ void UserActionsMenu::discard()
     m_desktopMenu = nullptr;
     m_multipleDesktopsMenu = nullptr;
     m_screenMenu = nullptr;
-    m_activityMenu = nullptr;
     m_scriptsMenu = nullptr;
 }
 
@@ -432,25 +421,6 @@ void UserActionsMenu::menuAboutToShow()
 
     m_rulesOperation->setEnabled(m_client->supportsWindowRules());
     m_applicationRulesOperation->setEnabled(m_client->supportsWindowRules());
-
-    showHideActivityMenu();
-}
-
-void UserActionsMenu::showHideActivityMenu()
-{
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (!Activities::self()) {
-        return;
-    }
-    const QStringList &openActivities_ = Activities::self()->running();
-    qCDebug(KWIN_CORE) << "activities:" << openActivities_.size();
-    if (openActivities_.size() < 2) {
-        delete m_activityMenu;
-        m_activityMenu = nullptr;
-    } else {
-        initActivityPopup();
-    }
-#endif
 }
 
 void UserActionsMenu::initDesktopPopup()
@@ -499,25 +469,9 @@ void UserActionsMenu::initScreenPopup()
 
     QAction *action = m_screenMenu->menuAction();
     // set it as the first item after desktop
-    m_menu->insertAction(m_activityMenu ? m_activityMenu->menuAction() : m_minimizeOperation, action);
+    m_menu->insertAction(m_minimizeOperation, action);
     action->setText(i18n("Move to &Screen"));
     action->setIcon(QIcon::fromTheme(QStringLiteral("computer")));
-}
-
-void UserActionsMenu::initActivityPopup()
-{
-    if (m_activityMenu)
-        return;
-
-    m_activityMenu = new QMenu(m_menu);
-    connect(m_activityMenu, &QMenu::triggered, this,   &UserActionsMenu::slotToggleOnActivity);
-    connect(m_activityMenu, &QMenu::aboutToShow, this, &UserActionsMenu::activityPopupAboutToShow);
-
-    QAction *action = m_activityMenu->menuAction();
-    // set it as the first item
-    m_menu->insertAction(m_maximizeOperation, action);
-    action->setText(i18n("Show in &Activities"));
-    action->setIcon(QIcon::fromTheme(QStringLiteral("activities")));
 }
 
 void UserActionsMenu::desktopPopupAboutToShow()
@@ -650,57 +604,6 @@ void UserActionsMenu::screenPopupAboutToShow()
     }
 }
 
-void UserActionsMenu::activityPopupAboutToShow()
-{
-    if (!m_activityMenu)
-        return;
-
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (!Activities::self()) {
-        return;
-    }
-    m_activityMenu->clear();
-    if (m_client) {
-        m_activityMenu->setPalette(m_client->control->palette().q_palette());
-    }
-    QAction *action = m_activityMenu->addAction(i18n("&All Activities"));
-    action->setData(QString());
-    action->setCheckable(true);
-    static QPointer<QActionGroup> allActivitiesGroup;
-    if (!allActivitiesGroup) {
-        allActivitiesGroup = new QActionGroup(m_activityMenu);
-    }
-    allActivitiesGroup->addAction(action);
-
-    if (m_client && m_client->isOnAllActivities()) {
-        action->setChecked(true);
-    }
-    m_activityMenu->addSeparator();
-
-    foreach (const QString &id, Activities::self()->running()) {
-        KActivities::Info activity(id);
-        QString name = activity.name();
-        name.replace('&', "&&");
-        QWidgetAction *action = new QWidgetAction(m_activityMenu);
-        QCheckBox *box = new QCheckBox(name, m_activityMenu);
-        action->setDefaultWidget(box);
-        const QString icon = activity.icon();
-        if (!icon.isEmpty())
-            box->setIcon(QIcon::fromTheme(icon));
-        box->setBackgroundRole(m_activityMenu->backgroundRole());
-        box->setForegroundRole(m_activityMenu->foregroundRole());
-        box->setPalette(m_activityMenu->palette());
-        connect(box, &QCheckBox::clicked, action, &QAction::triggered);
-        m_activityMenu->addAction(action);
-        action->setData(id);
-
-        if (m_client && !m_client->isOnAllActivities() && m_client->isOnActivity(id)) {
-            box->setChecked(true);
-        }
-    }
-#endif
-}
-
 void UserActionsMenu::slotWindowOperation(QAction *action)
 {
     if (!action->data().isValid())
@@ -801,48 +704,6 @@ void UserActionsMenu::slotSendToScreen(QAction *action)
     }
 
     Workspace::self()->sendClientToScreen(m_client.data(), screen);
-}
-
-void UserActionsMenu::slotToggleOnActivity(QAction *action)
-{
-#ifdef KWIN_BUILD_ACTIVITIES
-    if (!Activities::self()) {
-        return;
-    }
-    QString activity = action->data().toString();
-    if (m_client.isNull())
-        return;
-    if (activity.isEmpty()) {
-        // the 'on_all_activities' menu entry
-        m_client->setOnAllActivities(!m_client->isOnAllActivities());
-        return;
-    }
-
-    auto c = dynamic_cast<win::x11::window*>(m_client.data());
-    if (!c) {
-        return;
-    }
-
-    Activities::self()->toggleClientOnActivity(c, activity, false);
-    if (m_activityMenu && m_activityMenu->isVisible() && m_activityMenu->actions().count()) {
-        const bool isOnAll = m_client->isOnAllActivities();
-        m_activityMenu->actions().at(0)->setChecked(isOnAll);
-        if (isOnAll) {
-            // toggleClientOnActivity interprets "on all" as "on none" and
-            // susequent toggling ("off") would move the client to only that activity.
-            // bug #330838 -> set all but "on all" off to "force proper usage"
-            for (int i = 1; i < m_activityMenu->actions().count(); ++i) {
-                if (QWidgetAction *qwa = qobject_cast<QWidgetAction*>(m_activityMenu->actions().at(i))) {
-                    if (QCheckBox *qcb = qobject_cast<QCheckBox*>(qwa->defaultWidget())) {
-                        qcb->setChecked(false);
-                    }
-                }
-            }
-        }
-    }
-#else
-    Q_UNUSED(action)
-#endif
 }
 
 //****************************************
@@ -1657,8 +1518,7 @@ bool Workspace::switchWindow(Toplevel *c, Direction direction, QPoint curPos, in
             continue;
         }
         if (win::wants_tab_focus(client) && *i != c &&
-                client->isOnDesktop(d) && !client->control->minimized()
-                && (*i)->isOnCurrentActivity()) {
+                client->isOnDesktop(d) && !client->control->minimized()) {
             // Centre of the other window
             const QPoint other(client->pos().x() + client->size().width() / 2,
                                client->pos().y() + client->size().height() / 2);
@@ -1722,8 +1582,7 @@ void Workspace::showWindowMenu(const QRect &pos, Toplevel* window)
 
 void Workspace::showApplicationMenu(const QRect &pos, Toplevel* window, int actionId)
 {
-    win::ApplicationMenu::self()->showApplicationMenu(
-        window->pos() + pos.bottomLeft(), window, actionId);
+    win::app_menu::self()->showApplicationMenu(window->pos() + pos.bottomLeft(), window, actionId);
 }
 
 /**

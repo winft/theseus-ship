@@ -88,8 +88,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 
 #include "win/controlling.h"
-#include "win/focuschain.h"
-#include "win/internal_client.h"
+#include "win/focus_chain.h"
+#include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/net.h"
 #include "win/remnant.h"
