@@ -20,68 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "space.h"
 
-#include "window.h"
-
 #include "../outline.h"
-#include "../screens.h"
-#include "../virtualdesktops.h"
-#include "../workspace.h"
-
-#include "win/wayland/window.h"
-#include "win/x11/window.h"
-
-#include <QApplication>
-#include <QDesktopWidget>
 
 namespace KWin::scripting
 {
-
-space::space()
-{
-    KWin::Workspace* ws = KWin::Workspace::self();
-    KWin::VirtualDesktopManager* vds = KWin::VirtualDesktopManager::self();
-
-    connect(ws, &Workspace::desktopPresenceChanged, this, [this](Toplevel* client, int desktop) {
-        auto window = get_window(client);
-        Q_EMIT desktopPresenceChanged(window, desktop);
-    });
-
-    connect(ws, &Workspace::currentDesktopChanged, this, [this](int desktop, Toplevel* client) {
-        auto window = get_window(client);
-        Q_EMIT currentDesktopChanged(desktop, window);
-    });
-
-    connect(ws, &Workspace::clientAdded, this, &space::handle_client_added);
-    connect(ws, &Workspace::clientRemoved, this, &space::handle_client_removed);
-    connect(ws, &Workspace::wayland_window_added, this, &space::handle_client_added);
-
-    connect(ws, &Workspace::clientActivated, this, [this](Toplevel* client) {
-        auto window = get_window(client);
-        Q_EMIT clientActivated(window);
-    });
-
-    connect(
-        ws, &Workspace::clientDemandsAttentionChanged, this, [this](Toplevel* client, bool set) {
-            auto window = get_window(client);
-            Q_EMIT clientDemandsAttentionChanged(window, set);
-        });
-
-    connect(vds, &VirtualDesktopManager::countChanged, this, &space::numberDesktopsChanged);
-    connect(vds, &VirtualDesktopManager::layoutChanged, this, &space::desktopLayoutChanged);
-
-    connect(screens(), &Screens::sizeChanged, this, &space::virtualScreenSizeChanged);
-    connect(screens(), &Screens::geometryChanged, this, &space::virtualScreenGeometryChanged);
-    connect(screens(), &Screens::countChanged, this, [this](int previousCount, int currentCount) {
-        Q_UNUSED(previousCount)
-        emit numberScreensChanged(currentCount);
-    });
-    // TODO Plasma 6: Remove it.
-    connect(QApplication::desktop(), &QDesktopWidget::resized, this, &space::screenResized);
-
-    for (auto client : ws->allClientList()) {
-        handle_client_added(client);
-    }
-}
 
 void space::handle_client_added(Toplevel* client)
 {
@@ -141,15 +83,6 @@ void space::setNumberOfDesktops(int count)
     VirtualDesktopManager::self()->setCount(count);
 }
 
-window* space::activeClient() const
-{
-    auto active_client = workspace()->activeClient();
-    if (!active_client) {
-        return nullptr;
-    }
-    return get_window(active_client);
-}
-
 QString space::currentActivity() const
 {
     return {};
@@ -162,105 +95,6 @@ void space::setCurrentActivity(QString /*activity*/)
 QStringList space::activityList() const
 {
     return {};
-}
-
-#define SLOTWRAPPER(name)                                                                          \
-    void space::name()                                                                             \
-    {                                                                                              \
-        Workspace::self()->name();                                                                 \
-    }
-
-SLOTWRAPPER(slotSwitchToNextScreen)
-SLOTWRAPPER(slotWindowToNextScreen)
-SLOTWRAPPER(slotToggleShowDesktop)
-
-SLOTWRAPPER(slotWindowMaximize)
-SLOTWRAPPER(slotWindowMaximizeVertical)
-SLOTWRAPPER(slotWindowMaximizeHorizontal)
-SLOTWRAPPER(slotWindowMinimize)
-SLOTWRAPPER(slotWindowRaise)
-SLOTWRAPPER(slotWindowLower)
-SLOTWRAPPER(slotWindowRaiseOrLower)
-SLOTWRAPPER(slotActivateAttentionWindow)
-SLOTWRAPPER(slotWindowPackLeft)
-SLOTWRAPPER(slotWindowPackRight)
-SLOTWRAPPER(slotWindowPackUp)
-SLOTWRAPPER(slotWindowPackDown)
-SLOTWRAPPER(slotWindowGrowHorizontal)
-SLOTWRAPPER(slotWindowGrowVertical)
-SLOTWRAPPER(slotWindowShrinkHorizontal)
-SLOTWRAPPER(slotWindowShrinkVertical)
-
-SLOTWRAPPER(slotIncreaseWindowOpacity)
-SLOTWRAPPER(slotLowerWindowOpacity)
-
-SLOTWRAPPER(slotWindowOperations)
-SLOTWRAPPER(slotWindowClose)
-SLOTWRAPPER(slotWindowMove)
-SLOTWRAPPER(slotWindowResize)
-SLOTWRAPPER(slotWindowAbove)
-SLOTWRAPPER(slotWindowBelow)
-SLOTWRAPPER(slotWindowOnAllDesktops)
-SLOTWRAPPER(slotWindowFullScreen)
-SLOTWRAPPER(slotWindowNoBorder)
-
-SLOTWRAPPER(slotWindowToNextDesktop)
-SLOTWRAPPER(slotWindowToPreviousDesktop)
-SLOTWRAPPER(slotWindowToDesktopRight)
-SLOTWRAPPER(slotWindowToDesktopLeft)
-SLOTWRAPPER(slotWindowToDesktopUp)
-SLOTWRAPPER(slotWindowToDesktopDown)
-
-#undef SLOTWRAPPER
-
-#define SLOTWRAPPER(name, modes)                                                                   \
-    void space::name()                                                                             \
-    {                                                                                              \
-        Workspace::self()->quickTileWindow(modes);                                                 \
-    }
-
-SLOTWRAPPER(slotWindowQuickTileLeft, win::quicktiles::left)
-SLOTWRAPPER(slotWindowQuickTileRight, win::quicktiles::right)
-SLOTWRAPPER(slotWindowQuickTileTop, win::quicktiles::top)
-SLOTWRAPPER(slotWindowQuickTileBottom, win::quicktiles::bottom)
-SLOTWRAPPER(slotWindowQuickTileTopLeft, win::quicktiles::top | win::quicktiles::left)
-SLOTWRAPPER(slotWindowQuickTileTopRight, win::quicktiles::top | win::quicktiles::right)
-SLOTWRAPPER(slotWindowQuickTileBottomLeft, win::quicktiles::bottom | win::quicktiles::left)
-SLOTWRAPPER(slotWindowQuickTileBottomRight, win::quicktiles::bottom | win::quicktiles::right)
-
-#undef SLOTWRAPPER
-
-#define SLOTWRAPPER(name, direction)                                                               \
-    void space::name()                                                                             \
-    {                                                                                              \
-        Workspace::self()->switchWindow(Workspace::direction);                                     \
-    }
-
-SLOTWRAPPER(slotSwitchWindowUp, DirectionNorth)
-SLOTWRAPPER(slotSwitchWindowDown, DirectionSouth)
-SLOTWRAPPER(slotSwitchWindowRight, DirectionEast)
-SLOTWRAPPER(slotSwitchWindowLeft, DirectionWest)
-
-#undef SLOTWRAPPER
-
-#define SLOTWRAPPER(name, direction)                                                               \
-    void space::name()                                                                             \
-    {                                                                                              \
-        VirtualDesktopManager::self()->moveTo<direction>(options->isRollOverDesktops());           \
-    }
-
-SLOTWRAPPER(slotSwitchDesktopNext, DesktopNext)
-SLOTWRAPPER(slotSwitchDesktopPrevious, DesktopPrevious)
-SLOTWRAPPER(slotSwitchDesktopRight, DesktopRight)
-SLOTWRAPPER(slotSwitchDesktopLeft, DesktopLeft)
-SLOTWRAPPER(slotSwitchDesktopUp, DesktopAbove)
-SLOTWRAPPER(slotSwitchDesktopDown, DesktopBelow)
-
-#undef SLOTWRAPPER
-
-void space::setActiveClient(window* window)
-{
-    KWin::Workspace::self()->activateClient(window->client());
 }
 
 QSize space::workspaceSize() const
@@ -283,26 +117,6 @@ int space::displayHeight() const
     return displaySize().height();
 }
 
-QRect space::clientArea(ClientAreaOption option, const QPoint& p, int desktop) const
-{
-    return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), p, desktop);
-}
-
-QRect space::clientArea(ClientAreaOption option, window* window) const
-{
-    return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), window->client());
-}
-
-QRect space::clientArea(ClientAreaOption option, window const* c) const
-{
-    return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), c->client());
-}
-
-QRect space::clientArea(ClientAreaOption option, int screen, int desktop) const
-{
-    return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), screen, desktop);
-}
-
 QString space::desktopName(int desktop) const
 {
     return VirtualDesktopManager::self()->name(desktop);
@@ -321,11 +135,6 @@ void space::removeDesktop(int position) const
     }
 
     VirtualDesktopManager::self()->removeVirtualDesktop(vd->id());
-}
-
-QString space::supportInformation() const
-{
-    return Workspace::self()->supportInformation();
 }
 
 void space::setupAbstractClientConnections(window* window)
@@ -417,14 +226,6 @@ std::vector<window*> space::windows() const
         ret.push_back(client.get());
     }
     return ret;
-}
-
-void space::sendClientToScreen(window* client, int screen)
-{
-    if (screen < 0 || screen >= screens()->count()) {
-        return;
-    }
-    workspace()->sendClientToScreen(client->client(), screen);
 }
 
 QList<window*> qt_script_space::clientList() const

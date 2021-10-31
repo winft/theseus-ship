@@ -20,23 +20,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "window.h"
+
+#include "screens.h"
+#include "virtualdesktops.h"
+#include "win/wayland/window.h"
+#include "win/x11/window.h"
+#include "workspace.h"
+
+#include <QApplication>
+#include <QDesktopWidget>
 #include <QObject>
 #include <QQmlListProperty>
 #include <QRect>
 #include <QSize>
 #include <QStringList>
+
 #include <kwinglobals.h>
 
 #include <memory>
 #include <vector>
 
-namespace KWin
+namespace KWin::scripting
 {
-class Toplevel;
-
-namespace scripting
-{
-class window;
 
 class space : public QObject
 {
@@ -135,8 +141,21 @@ public:
     GETTERSETTERDEF(int, numberOfDesktops, setNumberOfDesktops)
     GETTERSETTERDEF(int, currentDesktop, setCurrentDesktop)
     GETTERSETTERDEF(QString, currentActivity, setCurrentActivity)
-    GETTERSETTERDEF(KWin::scripting::window*, activeClient, setActiveClient)
 #undef GETTERSETTERDEF
+
+    window* activeClient() const
+    {
+        auto active_client = workspace()->activeClient();
+        if (!active_client) {
+            return nullptr;
+        }
+        return get_window(active_client);
+    }
+
+    void setActiveClient(window* win)
+    {
+        Workspace::self()->activateClient(win->client());
+    }
 
     QSize desktopGridSize() const;
     int desktopGridWidth() const;
@@ -166,7 +185,12 @@ public:
      * not be a difference
      * @returns The specified screen geometry
      */
-    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, int screen, int desktop) const;
+    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, int screen, int desktop) const
+    {
+        return Workspace::self()->clientArea(
+            static_cast<clientAreaOption>(option), screen, desktop);
+    }
+
     /**
      * Overloaded method for convenience.
      * @param option The type of area which should be considered
@@ -175,15 +199,29 @@ public:
      * not be a difference
      * @returns The specified screen geometry
      */
-    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, const QPoint& point, int desktop) const;
+    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, QPoint const& point, int desktop) const
+    {
+        return Workspace::self()->clientArea(static_cast<clientAreaOption>(option), point, desktop);
+    }
+
     /**
      * Overloaded method for convenience.
      * @param client The Client for which the area should be retrieved
      * @returns The specified screen geometry
      */
-    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, KWin::scripting::window* window) const;
+    Q_SCRIPTABLE QRect clientArea(ClientAreaOption option, KWin::scripting::window* window) const
+    {
+        return Workspace::self()->clientArea(static_cast<clientAreaOption>(option),
+                                             window->client());
+    }
+
     Q_SCRIPTABLE QRect clientArea(ClientAreaOption option,
-                                  KWin::scripting::window const* client) const;
+                                  KWin::scripting::window const* window) const
+    {
+        return Workspace::self()->clientArea(static_cast<clientAreaOption>(option),
+                                             window->client());
+    }
+
     /**
      * Returns the name for the given @p desktop.
      */
@@ -200,10 +238,15 @@ public:
      * 1].
      */
     Q_SCRIPTABLE void removeDesktop(int position) const;
+
     /**
      * Provides support information about the currently running KWin instance.
      */
-    Q_SCRIPTABLE QString supportInformation() const;
+    Q_SCRIPTABLE QString supportInformation() const
+    {
+        return Workspace::self()->supportInformation();
+    }
+
     /**
      * Finds the Client with the given @p windowId.
      * @param windowId The window Id of the Client
@@ -213,81 +256,122 @@ public:
 
 public Q_SLOTS:
     // all the available key bindings
-    void slotSwitchDesktopNext();
-    void slotSwitchDesktopPrevious();
-    void slotSwitchDesktopRight();
-    void slotSwitchDesktopLeft();
-    void slotSwitchDesktopUp();
-    void slotSwitchDesktopDown();
+#define SIMPLE_SLOT(name)                                                                          \
+    void name()                                                                                    \
+    {                                                                                              \
+        Workspace::self()->name();                                                                 \
+    }
 
-    void slotSwitchToNextScreen();
-    void slotWindowToNextScreen();
-    void slotToggleShowDesktop();
+#define QUICKTILE_SLOT(name, modes)                                                                \
+    void name()                                                                                    \
+    {                                                                                              \
+        Workspace::self()->quickTileWindow(modes);                                                 \
+    }
 
-    void slotWindowMaximize();
-    void slotWindowMaximizeVertical();
-    void slotWindowMaximizeHorizontal();
-    void slotWindowMinimize();
+#define SWITCH_WINDOW_SLOT(name, direction)                                                        \
+    void name()                                                                                    \
+    {                                                                                              \
+        Workspace::self()->switchWindow(Workspace::direction);                                     \
+    }
+
+#define SWITCH_VD_SLOT(name, direction)                                                            \
+    void name()                                                                                    \
+    {                                                                                              \
+        VirtualDesktopManager::self()->moveTo<direction>(options->isRollOverDesktops());           \
+    }
+
+    SWITCH_VD_SLOT(slotSwitchDesktopNext, DesktopNext)
+    SWITCH_VD_SLOT(slotSwitchDesktopPrevious, DesktopPrevious)
+    SWITCH_VD_SLOT(slotSwitchDesktopRight, DesktopRight)
+    SWITCH_VD_SLOT(slotSwitchDesktopLeft, DesktopLeft)
+    SWITCH_VD_SLOT(slotSwitchDesktopUp, DesktopAbove)
+    SWITCH_VD_SLOT(slotSwitchDesktopDown, DesktopBelow)
+
+    SIMPLE_SLOT(slotSwitchToNextScreen)
+    SIMPLE_SLOT(slotWindowToNextScreen)
+    SIMPLE_SLOT(slotToggleShowDesktop)
+
+    SIMPLE_SLOT(slotWindowMaximize)
+    SIMPLE_SLOT(slotWindowMaximizeVertical)
+    SIMPLE_SLOT(slotWindowMaximizeHorizontal)
+    SIMPLE_SLOT(slotWindowMinimize)
+
+    /// Deprecated
     void slotWindowShade()
     {
-    } // Deprecated
-    void slotWindowRaise();
-    void slotWindowLower();
-    void slotWindowRaiseOrLower();
-    void slotActivateAttentionWindow();
-    void slotWindowPackLeft();
-    void slotWindowPackRight();
-    void slotWindowPackUp();
-    void slotWindowPackDown();
-    void slotWindowGrowHorizontal();
-    void slotWindowGrowVertical();
-    void slotWindowShrinkHorizontal();
-    void slotWindowShrinkVertical();
-    void slotWindowQuickTileLeft();
-    void slotWindowQuickTileRight();
-    void slotWindowQuickTileTop();
-    void slotWindowQuickTileBottom();
-    void slotWindowQuickTileTopLeft();
-    void slotWindowQuickTileTopRight();
-    void slotWindowQuickTileBottomLeft();
-    void slotWindowQuickTileBottomRight();
+    }
 
-    void slotSwitchWindowUp();
-    void slotSwitchWindowDown();
-    void slotSwitchWindowRight();
-    void slotSwitchWindowLeft();
+    SIMPLE_SLOT(slotWindowRaise)
+    SIMPLE_SLOT(slotWindowLower)
+    SIMPLE_SLOT(slotWindowRaiseOrLower)
+    SIMPLE_SLOT(slotActivateAttentionWindow)
 
-    void slotIncreaseWindowOpacity();
-    void slotLowerWindowOpacity();
+    SIMPLE_SLOT(slotWindowPackLeft)
+    SIMPLE_SLOT(slotWindowPackRight)
+    SIMPLE_SLOT(slotWindowPackUp)
+    SIMPLE_SLOT(slotWindowPackDown)
 
-    void slotWindowOperations();
-    void slotWindowClose();
-    void slotWindowMove();
-    void slotWindowResize();
-    void slotWindowAbove();
-    void slotWindowBelow();
-    void slotWindowOnAllDesktops();
-    void slotWindowFullScreen();
-    void slotWindowNoBorder();
+    SIMPLE_SLOT(slotWindowGrowHorizontal)
+    SIMPLE_SLOT(slotWindowGrowVertical)
+    SIMPLE_SLOT(slotWindowShrinkHorizontal)
+    SIMPLE_SLOT(slotWindowShrinkVertical)
 
-    void slotWindowToNextDesktop();
-    void slotWindowToPreviousDesktop();
-    void slotWindowToDesktopRight();
-    void slotWindowToDesktopLeft();
-    void slotWindowToDesktopUp();
-    void slotWindowToDesktopDown();
+    QUICKTILE_SLOT(slotWindowQuickTileLeft, win::quicktiles::left)
+    QUICKTILE_SLOT(slotWindowQuickTileRight, win::quicktiles::right)
+    QUICKTILE_SLOT(slotWindowQuickTileTop, win::quicktiles::top)
+    QUICKTILE_SLOT(slotWindowQuickTileBottom, win::quicktiles::bottom)
+    QUICKTILE_SLOT(slotWindowQuickTileTopLeft, win::quicktiles::top | win::quicktiles::left)
+    QUICKTILE_SLOT(slotWindowQuickTileTopRight, win::quicktiles::top | win::quicktiles::right)
+    QUICKTILE_SLOT(slotWindowQuickTileBottomLeft, win::quicktiles::bottom | win::quicktiles::left)
+    QUICKTILE_SLOT(slotWindowQuickTileBottomRight, win::quicktiles::bottom | win::quicktiles::right)
+
+    SWITCH_WINDOW_SLOT(slotSwitchWindowUp, DirectionNorth)
+    SWITCH_WINDOW_SLOT(slotSwitchWindowDown, DirectionSouth)
+    SWITCH_WINDOW_SLOT(slotSwitchWindowRight, DirectionEast)
+    SWITCH_WINDOW_SLOT(slotSwitchWindowLeft, DirectionWest)
+
+    SIMPLE_SLOT(slotIncreaseWindowOpacity)
+    SIMPLE_SLOT(slotLowerWindowOpacity)
+
+    SIMPLE_SLOT(slotWindowOperations)
+    SIMPLE_SLOT(slotWindowClose)
+    SIMPLE_SLOT(slotWindowMove)
+    SIMPLE_SLOT(slotWindowResize)
+    SIMPLE_SLOT(slotWindowAbove)
+    SIMPLE_SLOT(slotWindowBelow)
+    SIMPLE_SLOT(slotWindowOnAllDesktops)
+    SIMPLE_SLOT(slotWindowFullScreen)
+    SIMPLE_SLOT(slotWindowNoBorder)
+
+    SIMPLE_SLOT(slotWindowToNextDesktop)
+    SIMPLE_SLOT(slotWindowToPreviousDesktop)
+    SIMPLE_SLOT(slotWindowToDesktopRight)
+    SIMPLE_SLOT(slotWindowToDesktopLeft)
+    SIMPLE_SLOT(slotWindowToDesktopUp)
+    SIMPLE_SLOT(slotWindowToDesktopDown)
+
+#undef SIMPLE_SLOT
+#undef QUICKTILE_SLOT
+#undef SWITCH_WINDOW_SLOT
+#undef SWITCH_VD_SLOT
 
     /**
      * Sends the window to the given @p screen.
      */
-    void sendClientToScreen(KWin::scripting::window* client, int screen);
+    void sendClientToScreen(KWin::scripting::window* client, int screen)
+    {
+        if (screen < 0 || screen >= screens()->count()) {
+            return;
+        }
+        workspace()->sendClientToScreen(client->client(), screen);
+    }
 
     /**
      * Shows an outline at the specified @p geometry.
      * If an outline is already shown the outline is moved to the new position.
      * Use hideOutline to remove the outline again.
      */
-    void showOutline(const QRect& geometry);
+    void showOutline(QRect const& geometry);
     /**
      * Overloaded method for convenience.
      */
@@ -378,7 +462,59 @@ Q_SIGNALS:
     void virtualScreenGeometryChanged();
 
 protected:
-    space();
+    space()
+    {
+        auto ws = KWin::Workspace::self();
+        auto vds = KWin::VirtualDesktopManager::self();
+
+        QObject::connect(
+            ws, &Workspace::desktopPresenceChanged, this, [this](auto client, auto desktop) {
+                auto window = get_window(client);
+                Q_EMIT desktopPresenceChanged(window, desktop);
+            });
+
+        QObject::connect(
+            ws, &Workspace::currentDesktopChanged, this, [this](auto desktop, auto client) {
+                auto window = get_window(client);
+                Q_EMIT currentDesktopChanged(desktop, window);
+            });
+
+        QObject::connect(ws, &Workspace::clientAdded, this, &space::handle_client_added);
+        QObject::connect(ws, &Workspace::clientRemoved, this, &space::handle_client_removed);
+        QObject::connect(ws, &Workspace::wayland_window_added, this, &space::handle_client_added);
+
+        QObject::connect(ws, &Workspace::clientActivated, this, [this](auto client) {
+            auto window = get_window(client);
+            Q_EMIT clientActivated(window);
+        });
+
+        QObject::connect(
+            ws, &Workspace::clientDemandsAttentionChanged, this, [this](auto client, auto set) {
+                auto window = get_window(client);
+                Q_EMIT clientDemandsAttentionChanged(window, set);
+            });
+
+        QObject::connect(
+            vds, &VirtualDesktopManager::countChanged, this, &space::numberDesktopsChanged);
+        QObject::connect(
+            vds, &VirtualDesktopManager::layoutChanged, this, &space::desktopLayoutChanged);
+
+        QObject::connect(screens(), &Screens::sizeChanged, this, &space::virtualScreenSizeChanged);
+        QObject::connect(
+            screens(), &Screens::geometryChanged, this, &space::virtualScreenGeometryChanged);
+        QObject::connect(
+            screens(), &Screens::countChanged, this, [this](int previousCount, int currentCount) {
+                Q_UNUSED(previousCount)
+                emit numberScreensChanged(currentCount);
+            });
+        // TODO Plasma 6: Remove it.
+        QObject::connect(
+            QApplication::desktop(), &QDesktopWidget::resized, this, &space::screenResized);
+
+        for (auto client : ws->allClientList()) {
+            handle_client_added(client);
+        }
+    }
 
     // TODO: make this private. Remove dynamic inheritance?
     std::vector<std::unique_ptr<window>> m_windows;
@@ -415,5 +551,4 @@ public:
     static window* atClientList(QQmlListProperty<KWin::scripting::window>* clients, int index);
 };
 
-}
 }
