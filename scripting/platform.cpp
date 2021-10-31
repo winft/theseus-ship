@@ -39,18 +39,8 @@
 namespace KWin::scripting
 {
 
-platform* platform::s_self = nullptr;
-
-platform* platform::create(QObject* parent)
-{
-    Q_ASSERT(!s_self);
-    s_self = new platform(parent);
-    return s_self;
-}
-
-platform::platform(QObject* parent)
-    : QObject(parent)
-    , m_scriptsLock(new QMutex(QMutex::Recursive))
+platform::platform()
+    : m_scriptsLock(new QMutex(QMutex::Recursive))
     , m_qmlEngine(new QQmlEngine(this))
     , m_declarativeScriptSharedContext(new QQmlContext(m_qmlEngine, this))
     , m_workspaceWrapper(new qt_script_space(this))
@@ -62,6 +52,11 @@ platform::platform(QObject* parent)
                                                      | QDBusConnection::ExportScriptableInvokables);
     connect(Workspace::self(), &Workspace::configChanged, this, &platform::start);
     connect(Workspace::self(), &Workspace::workspaceInitialized, this, &platform::start);
+}
+
+platform::~platform()
+{
+    QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/Scripting"));
 }
 
 void platform::init()
@@ -271,12 +266,6 @@ int platform::loadDeclarativeScript(const QString& filePath, const QString& plug
     connect(script, &QObject::destroyed, this, &platform::scriptDestroyed);
     scripts.append(script);
     return id;
-}
-
-platform::~platform()
-{
-    QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/Scripting"));
-    s_self = nullptr;
 }
 
 QList<QAction*> platform::actionsForUserActionMenu(Toplevel* window, QMenu* parent)

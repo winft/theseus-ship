@@ -13,6 +13,7 @@
 #include "toplevel.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
+#include "workspace.h"
 #include <config-kwin.h>
 
 #include "win/meta.h"
@@ -30,7 +31,7 @@ static quint32 nextId()
 client_level::client_level(client_model* model, abstract_level* parent)
     : abstract_level(model, parent)
 {
-    auto ws_wrap = platform::self()->workspaceWrapper();
+    auto ws_wrap = workspace()->scripting->workspaceWrapper();
 
     connect(VirtualDesktopManager::self(),
             &VirtualDesktopManager::currentChanged,
@@ -183,7 +184,7 @@ void client_level::removeClient(window* client)
 
 void client_level::init()
 {
-    auto const& clients = platform::self()->workspaceWrapper()->clientList();
+    auto const& clients = workspace()->scripting->workspaceWrapper()->clientList();
     for (auto const& client : clients) {
         setupClientConnections(client);
         if (!exclude(client) && shouldAdd(client)) {
@@ -194,7 +195,7 @@ void client_level::init()
 
 void client_level::reInit()
 {
-    auto const& clients = platform::self()->workspaceWrapper()->clientList();
+    auto const& clients = workspace()->scripting->workspaceWrapper()->clientList();
     for (auto const& client : clients) {
         checkClient(client);
     }

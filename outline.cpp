@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "scripting/platform.h"
 #include "utils.h"
+#include "workspace.h"
 // Frameworks
 #include <KConfigGroup>
 // Qt
@@ -163,11 +164,11 @@ void CompositedOutlineVisual::hide()
 void CompositedOutlineVisual::show()
 {
     if (m_qmlContext.isNull()) {
-        m_qmlContext.reset(new QQmlContext(scripting::platform::self()->qmlEngine()));
+        m_qmlContext.reset(new QQmlContext(workspace()->scripting->qmlEngine()));
         m_qmlContext->setContextProperty(QStringLiteral("outline"), outline());
     }
     if (m_qmlComponent.isNull()) {
-        m_qmlComponent.reset(new QQmlComponent(scripting::platform::self()->qmlEngine()));
+        m_qmlComponent.reset(new QQmlComponent(workspace()->scripting->qmlEngine()));
         const QString fileName = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
                                                  kwinApp()->config()->group(QStringLiteral("Outline")).readEntry("QmlPath", QStringLiteral(KWIN_NAME "/outline/plasma/outline.qml")));
         if (fileName.isEmpty()) {

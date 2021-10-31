@@ -13,6 +13,7 @@
 
 #include "input/redirect.h"
 #include "main.h"
+#include "workspace.h"
 
 #include <KConfigGroup>
 #include <KGlobalAccel>
@@ -73,7 +74,7 @@ bool js_engine_global_methods_wrapper::registerShortcut(const QString& name,
 
     connect(a, &QAction::triggered, this, [=]() mutable {
         QJSValueList arguments;
-        arguments << platform::self()->qmlEngine()->toScriptValue(a);
+        arguments << workspace()->scripting->qmlEngine()->toScriptValue(a);
         function.call(arguments);
     });
     return true;

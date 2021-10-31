@@ -10,6 +10,7 @@
 #include "scripting/window.h"
 
 #include "screens.h"
+#include "workspace.h"
 
 namespace KWin::scripting::models::v3
 {
@@ -17,7 +18,7 @@ namespace KWin::scripting::models::v3
 client_model::client_model(QObject* parent)
     : QAbstractListModel(parent)
 {
-    auto ws_wrap = platform::self()->workspaceWrapper();
+    auto ws_wrap = workspace()->scripting->workspaceWrapper();
 
     connect(ws_wrap, &space::clientAdded, this, &client_model::handleClientAdded);
     connect(ws_wrap, &space::clientRemoved, this, &client_model::handleClientRemoved);

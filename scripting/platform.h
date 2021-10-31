@@ -38,7 +38,6 @@ class KWIN_EXPORT platform : public QObject
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Scripting")
 private:
-    explicit platform(QObject* parent);
     QStringList scriptList;
     QList<abstract_script*> scripts;
     /**
@@ -50,6 +49,7 @@ private:
     void runScripts();
 
 public:
+    platform();
     ~platform() override;
     Q_SCRIPTABLE Q_INVOKABLE int loadScript(const QString& filePath,
                                             const QString& pluginName = QString());
@@ -75,9 +75,6 @@ public:
 
     abstract_script* findScript(const QString& pluginName) const;
 
-    static platform* self();
-    static platform* create(QObject* parent);
-
 public Q_SLOTS:
     void scriptDestroyed(QObject* object);
     Q_SCRIPTABLE void start();
@@ -89,7 +86,6 @@ private:
     void init();
     LoadScriptList queryScriptsToLoad();
 
-    static platform* s_self;
     QQmlEngine* m_qmlEngine;
     QQmlContext* m_declarativeScriptSharedContext;
     qt_script_space* m_workspaceWrapper;
@@ -120,11 +116,6 @@ inline QQmlContext* platform::declarativeScriptSharedContext()
 inline qt_script_space* platform::workspaceWrapper() const
 {
     return m_workspaceWrapper;
-}
-
-inline platform* platform::self()
-{
-    return s_self;
 }
 
 }

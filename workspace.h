@@ -55,6 +55,11 @@ namespace render
 class compositor;
 }
 
+namespace scripting
+{
+class platform;
+}
+
 namespace Xcb
 {
 class Tree;
@@ -86,6 +91,8 @@ class KWIN_EXPORT Workspace : public QObject
     Q_OBJECT
 public:
     std::vector<Toplevel*> m_windows;
+
+    std::unique_ptr<scripting::platform> scripting;
 
     explicit Workspace();
     ~Workspace() override;

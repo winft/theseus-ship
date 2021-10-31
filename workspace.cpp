@@ -262,7 +262,7 @@ Workspace::Workspace()
     });
 
     initWithX11();
-    scripting::platform::create(this);
+    scripting = std::make_unique<scripting::platform>();
 
     // SELI TODO: This won't work with unreasonable focus policies,
     // and maybe in rare cases also if the selected client doesn't
