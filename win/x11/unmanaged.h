@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "window_release.h"
+
 #include "win/remnant.h"
 #include "win/space.h"
 
@@ -17,7 +19,7 @@ namespace KWin::win::x11
 {
 
 template<typename Win>
-void setup_unmanaged(Win* win)
+Win* create_unmanaged_window(xcb_window_t w)
 {
     // Window types that are supported as unmanaged (mainly for compositing).
     NET::WindowTypes constexpr supported_default_types = NET::NormalMask | NET::DesktopMask
@@ -27,28 +29,26 @@ void setup_unmanaged(Win* win)
         | NET::NotificationMask | NET::ComboBoxMask | NET::DNDIconMask | NET::OnScreenDisplayMask
         | NET::CriticalNotificationMask;
 
-    win->supported_default_types = supported_default_types;
-    win->set_layer(win::layer::unmanaged);
-
-    QTimer::singleShot(50, win, &Win::setReadyForPainting);
-}
-
-template<typename Win>
-bool track(Win* win, xcb_window_t w)
-{
     XServerGrabber xserverGrabber;
     Xcb::WindowAttributes attr(w);
     Xcb::WindowGeometry geo(w);
 
     if (attr.isNull() || attr->map_state != XCB_MAP_STATE_VIEWABLE) {
-        return false;
+        return nullptr;
     }
     if (attr->_class == XCB_WINDOW_CLASS_INPUT_ONLY) {
-        return false;
+        return nullptr;
     }
     if (geo.isNull()) {
-        return false;
+        return nullptr;
     }
+
+    auto win = new Win;
+
+    win->supported_default_types = supported_default_types;
+    win->set_layer(win::layer::unmanaged);
+
+    QTimer::singleShot(50, win, &Win::setReadyForPainting);
 
     // The window is also the frame.
     win->setWindowHandles(w);
@@ -92,34 +92,7 @@ bool track(Win* win, xcb_window_t w)
     if (effects) {
         static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking();
     }
-    return true;
-}
-
-template<typename Win>
-void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Release)
-{
-    Toplevel* del = nullptr;
-    if (releaseReason != ReleaseReason::KWinShutsDown) {
-        del = Toplevel::create_remnant(win);
-    }
-    Q_EMIT win->windowClosed(win, del);
-    win->finishCompositing(releaseReason);
-
-    // Don't affect our own windows.
-    if (!QWidget::find(win->xcb_window()) && releaseReason != ReleaseReason::Destroyed) {
-        if (Xcb::Extensions::self()->isShapeAvailable()) {
-            xcb_shape_select_input(connection(), win->xcb_window(), false);
-        }
-        Xcb::selectInput(win->xcb_window(), XCB_EVENT_MASK_NO_EVENT);
-    }
-
-    if (releaseReason != ReleaseReason::KWinShutsDown) {
-        workspace()->removeUnmanaged(win);
-        win->addWorkspaceRepaint(win::visible_rect(del));
-        win->disownDataPassedToDeleted();
-        del->remnant()->unref();
-    }
-    delete win;
+    return win;
 }
 
 template<typename Win>
@@ -175,7 +148,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
     auto const eventType = e->response_type & ~0x80;
     switch (eventType) {
     case XCB_DESTROY_NOTIFY:
-        win::x11::release_unmanaged(win, ReleaseReason::Destroyed);
+        destroy_window(win);
         break;
     case XCB_UNMAP_NOTIFY: {
         // may cause leave event

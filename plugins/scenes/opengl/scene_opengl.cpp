@@ -740,7 +740,7 @@ std::deque<Toplevel*> SceneOpenGL::get_leads(std::deque<Toplevel*> const& window
     std::deque<Toplevel*> leads;
 
     for (auto const& window : windows) {
-        if (window->isTransient() && window->transient()->annexed) {
+        if (window->transient()->lead() && window->transient()->annexed) {
             auto const damage = window->damage();
             if (damage.isEmpty()) {
                 continue;

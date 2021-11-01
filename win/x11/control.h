@@ -11,7 +11,7 @@
 #include "geo.h"
 #include "meta.h"
 #include "netinfo.h"
-#include "render/compositor.h"
+#include "render/x11/compositor.h"
 #include "space.h"
 #include "window.h"
 #include "xcb.h"
@@ -532,7 +532,7 @@ template<typename Win>
 bool ignore_position_default(Win* win)
 {
     // TODO(romangg): This function flow can surely be radically simplified.
-    if (win->isTransient()) {
+    if (win->transient()->lead()) {
         if (!is_utility(win) && !is_dialog(win) && !is_splash(win)) {
             return false;
         }
@@ -617,15 +617,34 @@ QRect place_on_taking_control(Win* win,
  * Returns false if KWin is not going to manage this window.
  */
 template<typename Win>
-bool take_control(Win* win, xcb_window_t w, bool isMapped)
+Win* create_controlled_window(xcb_window_t w, bool isMapped)
 {
     Blocker blocker(workspace()->stacking_order);
 
     Xcb::WindowAttributes attr(w);
     Xcb::WindowGeometry windowGeometry(w);
     if (attr.isNull() || windowGeometry.isNull()) {
-        return false;
+        return nullptr;
     }
+
+    auto win = new Win;
+
+    // So that decorations don't start with size being (0,0).
+    win->set_frame_geometry(QRect(0, 0, 100, 100));
+
+    setup_space_window_connections(workspace(), win);
+
+    if (auto compositor = render::x11::compositor::self()) {
+        QObject::connect(win,
+                         &win::x11::window::blockingCompositingChanged,
+                         compositor,
+                         &render::x11::compositor::updateClientCompositeBlocking);
+    }
+
+    QObject::connect(win,
+                     &win::x11::window::client_fullscreen_set,
+                     ScreenEdges::self(),
+                     &ScreenEdges::checkBlocking);
 
     // From this place on, manage() must not return false
     win->control.reset(new x11_control(win));
@@ -635,7 +654,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
     win->sync_request.timestamp = xTime();
 
-    setup_connections(win);
+    setup_window_control_connections(win);
     win->control->setup_tabbox();
     win->control->setup_color_scheme();
 
@@ -785,7 +804,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
         // If this window is transient, ensure that it is opened on the
         // same window as its parent.  this is necessary when an application
         // starts up on a different desktop than is currently displayed.
-        if (win->isTransient()) {
+        if (win->transient()->lead()) {
             auto leads = win->transient()->leads();
             bool on_current = false;
             bool on_all = false;
@@ -1097,7 +1116,7 @@ bool take_control(Win* win, xcb_window_t w, bool isMapped)
 
     Q_EMIT win->client_managing(win);
 
-    return true;
+    return win;
 }
 
 template<typename Space, typename Win>
@@ -1412,7 +1431,7 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
                     && belong_to_same_application(
                            x11_client, win, same_client_check::relaxed_for_active);
             };
-            if (win->isTransient()) {
+            if (win->transient()->lead()) {
                 auto clientMainClients = [win]() {
                     std::vector<Win*> ret;
                     const auto mcs = win->transient()->leads();

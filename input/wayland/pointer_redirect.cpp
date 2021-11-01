@@ -23,6 +23,8 @@
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "win/input.h"
+#include "win/wayland/space.h"
+#include "win/x11/window.h"
 #include "workspace.h"
 
 #include <KDecoration2/Decoration>
@@ -93,8 +95,10 @@ void pointer_redirect::init()
     const auto clients = workspace()->allClientList();
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
     QObject::connect(workspace(), &Workspace::clientAdded, this, setupMoveResizeConnection);
-    QObject::connect(
-        waylandServer(), &WaylandServer::window_added, this, setupMoveResizeConnection);
+    QObject::connect(static_cast<win::wayland::space*>(workspace()),
+                     &win::wayland::space::wayland_window_added,
+                     this,
+                     setupMoveResizeConnection);
 
     // warp the cursor to center of screen
     warp(screens()->geometry().center());

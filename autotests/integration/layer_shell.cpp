@@ -8,6 +8,7 @@
 #include "platform.h"
 #include "wayland_server.h"
 #include "win/screen.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/layer_shell_v1.h>
@@ -168,7 +169,8 @@ QRect target_geo(QRect const& area_geo,
 void layer_shell_test::test_create()
 {
     // Tries to create multiple kinds of layer surfaces.
-    QSignalSpy window_spy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy window_spy(static_cast<win::wayland::space*>(workspace()),
+                          &win::wayland::space::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
     auto surface = std::unique_ptr<Clt::Surface>(Test::create_surface());
@@ -324,7 +326,8 @@ void layer_shell_test::test_geo_data()
 void layer_shell_test::test_geo()
 {
     // Checks various standard geometries.
-    QSignalSpy window_spy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy window_spy(static_cast<win::wayland::space*>(workspace()),
+                          &win::wayland::space::wayland_window_added);
     QVERIFY(window_spy.isValid());
 
     QFETCH(int, output);

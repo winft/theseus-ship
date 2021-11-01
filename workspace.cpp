@@ -442,15 +442,16 @@ void Workspace::clear_x11()
     // many dangeling pointers and crash
     stacking_order->win_stack.clear();
 
+    // Only release windows on X11.
+    auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
+
     for (auto it = stack.cbegin(), end = stack.cend(); it != end; ++it) {
         auto c = qobject_cast<win::x11::window*>(const_cast<Toplevel*>(*it));
         if (!c) {
             continue;
         }
 
-        // Only release the window
-        auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
-        c->release_window(is_x11);
+        win::x11::release_window(c, is_x11);
 
         // No removeClient() is called, it does more than just removing.
         // However, remove from some lists to e.g. prevent performTransiencyCheck()
@@ -460,7 +461,7 @@ void Workspace::clear_x11()
     }
 
     for (auto const& unmanaged : unmanagedList()) {
-        win::x11::release_unmanaged(unmanaged, ReleaseReason::KWinShutsDown);
+        win::x11::release_window(static_cast<win::x11::window*>(unmanaged), is_x11);
         remove_all(m_windows, unmanaged);
         remove_all(stacking_order->pre_stack, unmanaged);
     }
@@ -515,57 +516,29 @@ Workspace::~Workspace()
     _self = nullptr;
 }
 
-void Workspace::setupClientConnections(Toplevel* window)
-{
-    connect(window, &Toplevel::needsRepaint, m_compositor, [window] {
-        render::compositor::self()->schedule_repaint(window);
-    });
-    connect(window, &Toplevel::desktopPresenceChanged, this, &Workspace::desktopPresenceChanged);
-    connect(window,
-            &Toplevel::minimizedChanged,
-            this,
-            std::bind(&Workspace::clientMinimizedChanged, this, window));
-}
-
 win::x11::window* Workspace::createClient(xcb_window_t w, bool is_mapped)
 {
     Blocker blocker(stacking_order);
 
-    auto c = new win::x11::window();
-    setupClientConnections(c);
-
-    if (auto compositor = render::x11::compositor::self()) {
-        connect(c,
-                &win::x11::window::blockingCompositingChanged,
-                compositor,
-                &render::x11::compositor::updateClientCompositeBlocking);
+    auto c = win::x11::create_controlled_window<win::x11::window>(w, is_mapped);
+    if (c) {
+        addClient(c);
     }
-    connect(c,
-            &win::x11::window::client_fullscreen_set,
-            ScreenEdges::self(),
-            &ScreenEdges::checkBlocking);
-    if (!win::x11::take_control(c, w, is_mapped)) {
-        delete c;
-        return nullptr;
-    }
-    addClient(c);
     return c;
 }
 
-Toplevel* Workspace::createUnmanaged(xcb_window_t w)
+win::x11::window* Workspace::createUnmanaged(xcb_window_t w)
 {
     if (auto compositor = render::x11::compositor::self()) {
         if (compositor->checkForOverlayWindow(w)) {
             return nullptr;
         }
     }
-    auto c = new Toplevel();
-    win::x11::setup_unmanaged(c);
-    if (!win::x11::track(c, w)) {
-        delete c;
+    auto c = win::x11::create_unmanaged_window<win::x11::window>(w);
+    if (!c) {
         return nullptr;
     }
-    connect(c, &Toplevel::needsRepaint, m_compositor, [c] {
+    connect(c, &win::x11::window::needsRepaint, m_compositor, [c] {
         render::compositor::self()->schedule_repaint(c);
     });
     addUnmanaged(c);
@@ -929,7 +902,8 @@ void Workspace::sendClientToDesktop(Toplevel* window, int desk, bool dont_activa
 
     win::check_workspace_position(window, QRect(), old_desktop);
 
-    auto transients_stacking_order = ensureStackingOrder(window->transient()->children);
+    auto transients_stacking_order
+        = win::restacked_by_space_stacking_order(this, window->transient()->children);
     for (auto const& transient : transients_stacking_order) {
         if (transient->control) {
             sendClientToDesktop(transient, desk, dont_activate);
@@ -1375,11 +1349,10 @@ Toplevel* Workspace::findAbstractClient(std::function<bool(const Toplevel*)> fun
     return nullptr;
 }
 
-Toplevel* Workspace::findUnmanaged(xcb_window_t w) const
+win::x11::window* Workspace::findUnmanaged(xcb_window_t w) const
 {
-    return findToplevel([w](Toplevel const* toplevel) {
-        return !toplevel->control && toplevel->xcb_window() == w;
-    });
+    return static_cast<win::x11::window*>(findToplevel(
+        [w](auto toplevel) { return !toplevel->control && toplevel->xcb_window() == w; }));
 }
 
 win::x11::window* Workspace::findClient(win::x11::predicate_match predicate, xcb_window_t w) const
@@ -1486,7 +1459,7 @@ void Workspace::addInternalClient(win::internal_window* client)
     m_windows.push_back(client);
     m_allClients.push_back(client);
 
-    setupClientConnections(client);
+    win::setup_space_window_connections(this, client);
     win::update_layer(client);
 
     if (client->placeable()) {
@@ -3025,7 +2998,7 @@ bool Workspace::activateNextClient(Toplevel* window)
 
     if (!get_focus) { // no suitable window under the mouse -> find sth. else
         // first try to pass the focus to the (former) active clients leader
-        if (window && window->isTransient()) {
+        if (window && window->transient()->lead()) {
             auto leaders = window->transient()->leads();
             if (leaders.size() == 1
                 && win::focus_chain::self()->isUsableFocusCandidate(leaders.at(0), window)) {
@@ -3466,7 +3439,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
                 // since release is scheduled after map notify, this old Unmanaged will get released
                 // before KWIN has chance to remanage it again. so release it right now.
                 if (c->has_scheduled_release) {
-                    win::x11::release_unmanaged(c);
+                    win::x11::release_window(c, false);
                     c = createUnmanaged(event->window);
                 }
                 if (c) {

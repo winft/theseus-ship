@@ -33,8 +33,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include <kwineffects.h>
 
-#include "win/layers.h"
 #include "win/move.h"
+#include "win/stacking.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/buffer.h>
@@ -217,7 +218,8 @@ void PointerInputTest::testWarpingUpdatesFocus()
     QVERIFY(leftSpy.isValid());
 
     // create a window
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);
@@ -266,7 +268,8 @@ void PointerInputTest::testWarpingGeneratesPointerMotion()
     QVERIFY(movedSpy.isValid());
 
     // create a window
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);
@@ -306,7 +309,8 @@ void PointerInputTest::testWarpingDuringFilter()
     input::get_cursor()->set_pos(10, 10);
 
     // create a window
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);
@@ -350,7 +354,8 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     QVERIFY(enteredSpy.isValid());
 
     // Create a window.
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     auto surface = Test::create_surface();
@@ -458,7 +463,8 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
     QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedMove);
 
     // create a window
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);
@@ -525,7 +531,8 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedMove);
 
     // create a window
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);
@@ -598,7 +605,8 @@ void PointerInputTest::testModifierScrollOpacity()
     workspace()->slotReconfigure();
 
     // create a window
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);
@@ -657,7 +665,8 @@ void PointerInputTest::testModifierScrollOpacityGlobalShortcutsDisabled()
     workspace()->slotReconfigure();
 
     // create a window
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);
@@ -707,7 +716,8 @@ void PointerInputTest::testScrollAction()
     group.sync();
     workspace()->slotReconfigure();
     // create two windows
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface1 = Test::create_surface();
     QVERIFY(surface1);
@@ -767,7 +777,8 @@ void PointerInputTest::testFocusFollowsMouse()
     QCOMPARE(options->delayFocusInterval(), 200);
 
     // create two windows
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface1 = Test::create_surface();
     QVERIFY(surface1);
@@ -853,7 +864,8 @@ void PointerInputTest::testMouseActionInactiveWindow()
     workspace()->slotReconfigure();
 
     // Create two windows.
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     auto surface1 = Test::create_surface();
@@ -952,7 +964,8 @@ void PointerInputTest::testMouseActionActiveWindow()
     QCOMPARE(options->isClickRaise(), clickRaise);
 
     // Create two windows.
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     auto surface1 = Test::create_surface();
@@ -1044,7 +1057,8 @@ void PointerInputTest::testCursorImage()
     QVERIFY(!fallback_cursor.isNull());
 
     // Create a window.
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     auto surface = Test::create_surface();
@@ -1167,7 +1181,8 @@ void PointerInputTest::testEffectOverrideCursorImage()
     QVERIFY(!fallback_cursor.isNull());
 
     // Now let's create a window.
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
 
     auto surface = Test::create_surface();
@@ -1249,7 +1264,8 @@ void PointerInputTest::testPopup()
 
     input::get_cursor()->set_pos(800, 800);
 
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);
@@ -1365,7 +1381,8 @@ void PointerInputTest::testDecoCancelsPopup()
     QVERIFY(motionSpy.isValid());
 
     input::get_cursor()->set_pos(800, 800);
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);
@@ -1448,7 +1465,8 @@ void PointerInputTest::testWindowUnderCursorWhileButtonPressed()
     QVERIFY(leftSpy.isValid());
 
     input::get_cursor()->set_pos(800, 800);
-    QSignalSpy clientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                              &win::wayland::space::wayland_window_added);
     QVERIFY(clientAddedSpy.isValid());
     auto surface = Test::create_surface();
     QVERIFY(surface);

@@ -417,7 +417,6 @@ set(kwin_SRCS
     input/qt_event.cpp
     input/xkb.cpp
     killwindow.cpp
-    layers.cpp
     main.cpp
     moving_client_x11_filter.cpp
     onscreennotification.cpp

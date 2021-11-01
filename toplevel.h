@@ -339,7 +339,6 @@ public:
     void discardWindowPixmap();
     void deleteEffectWindow();
 
-    virtual void destroy() {}
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
 
     Xcb::Property fetchWmClientLeader() const;
@@ -556,8 +555,6 @@ public:
     virtual bool userCanSetFullScreen() const;
     virtual bool userCanSetNoBorder() const;
     virtual void checkNoBorder();
-
-    virtual bool isTransient() const;
 
     virtual xcb_timestamp_t userTime() const;
     virtual void updateWindowRules(Rules::Types selection);

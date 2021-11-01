@@ -7,6 +7,7 @@
 
 #include "toplevel.h"
 #include "wayland_server.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 namespace KWin::render::wayland
@@ -15,7 +16,11 @@ namespace KWin::render::wayland
 effects_handler_impl::effects_handler_impl(render::compositor* compositor, Scene* scene)
     : EffectsHandlerImpl(compositor, scene)
 {
-    QObject::connect(waylandServer(), &WaylandServer::window_added, this, [this](auto c) {
+    auto space = static_cast<win::wayland::space*>(workspace());
+
+    // TODO(romangg): We do this for every window here, even for windows that are not an xdg-shell
+    //                type window. Restrict that?
+    QObject::connect(space, &win::wayland::space::wayland_window_added, this, [this](auto c) {
         if (c->readyForPainting()) {
             slotXdgShellClientShown(c);
         } else {
@@ -23,20 +28,27 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, Scene
                 c, &Toplevel::windowShown, this, &effects_handler_impl::slotXdgShellClientShown);
         }
     });
-    auto const clients = waylandServer()->windows;
-    for (auto c : clients) {
-        if (c->readyForPainting()) {
-            setupAbstractClientConnections(c);
+
+    // TODO(romangg): We do this here too for every window.
+    for (auto window : space->m_windows) {
+        auto wayland_window = qobject_cast<win::wayland::window*>(window);
+        if (!wayland_window) {
+            continue;
+        }
+        if (wayland_window->readyForPainting()) {
+            setupAbstractClientConnections(wayland_window);
         } else {
-            QObject::connect(
-                c, &Toplevel::windowShown, this, &effects_handler_impl::slotXdgShellClientShown);
+            QObject::connect(wayland_window,
+                             &Toplevel::windowShown,
+                             this,
+                             &effects_handler_impl::slotXdgShellClientShown);
         }
     }
 }
 
 EffectWindow* effects_handler_impl::findWindow(Wrapland::Server::Surface* surf) const
 {
-    if (auto win = waylandServer()->find_window(surf)) {
+    if (auto win = static_cast<win::wayland::space*>(workspace())->find_window(surf)) {
         return win->effectWindow();
     }
     return nullptr;

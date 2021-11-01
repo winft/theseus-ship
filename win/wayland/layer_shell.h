@@ -5,6 +5,9 @@
 */
 #pragma once
 
+#include "space.h"
+#include "window_release.h"
+
 #include "win/geo.h"
 #include "win/screen.h"
 #include "win/stacking.h"
@@ -17,6 +20,7 @@
 #include "screens.h"
 #include "wayland_server.h"
 
+#include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/layer_shell_v1.h>
 #include <Wrapland/Server/surface.h>
 
@@ -131,12 +135,14 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     QObject::connect(win, &window::needsRepaint, render::compositor::self(), [win] {
         render::compositor::self()->schedule_repaint(win);
     });
-    QObject::connect(layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, &window::destroy);
+    QObject::connect(
+        layer_surface, &WS::LayerSurfaceV1::resourceDestroyed, win, [win] { destroy_window(win); });
 
     QObject::connect(layer_surface, &WS::LayerSurfaceV1::got_popup, win, [win](auto popup) {
-        for (auto child : waylandServer()->windows) {
-            if (child->popup == popup) {
-                win->transient()->add_child(child);
+        for (auto window : static_cast<win::wayland::space*>(workspace())->m_windows) {
+            if (auto wayland_window = qobject_cast<win::wayland::window*>(window);
+                wayland_window && wayland_window->popup == popup) {
+                win->transient()->add_child(wayland_window);
                 break;
             }
         }
@@ -171,6 +177,30 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
     QObject::connect(win->surface(), &WS::Surface::committed, win, [handle_first_commit] {
         handle_first_commit();
     });
+}
+
+template<typename Window, typename Space>
+void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* layer_surface)
+{
+    auto window = new Window(layer_surface->surface());
+    if (layer_surface->surface()->client() == space->server->screenLockerClientConnection()) {
+        ScreenLocker::KSldApp::self()->lockScreenShown();
+    }
+
+    space->m_windows.push_back(window);
+    QObject::connect(layer_surface,
+                     &Wrapland::Server::LayerSurfaceV1::resourceDestroyed,
+                     space,
+                     [space, window] { remove_all(space->m_windows, window); });
+
+    win::wayland::assign_layer_surface_role(window, layer_surface);
+
+    if (window->readyForPainting()) {
+        space->handle_window_added(window);
+    } else {
+        QObject::connect(
+            window, &win::wayland::window::windowShown, space, &Space::handle_wayland_window_shown);
+    }
 }
 
 template<typename Win>

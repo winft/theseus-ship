@@ -8,6 +8,7 @@
 
 #include "toplevel.h"
 #include "wayland_server.h"
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 #include "workspace.h"
@@ -44,14 +45,16 @@ surface_tree_model::surface_tree_model(QObject* parent)
         QObject::connect(
             c->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
     }
-    if (waylandServer()) {
-        QObject::connect(
-            waylandServer(), &WaylandServer::window_added, this, [this, reset](auto win) {
-                QObject::connect(
-                    win->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
-                reset();
-            });
-    }
+    QObject::connect(static_cast<win::wayland::space*>(workspace()),
+                     &win::wayland::space::wayland_window_added,
+                     this,
+                     [this, reset](auto win) {
+                         QObject::connect(win->surface(),
+                                          &Wrapland::Server::Surface::subsurfaceTreeChanged,
+                                          this,
+                                          reset);
+                         reset();
+                     });
     QObject::connect(workspace(), &Workspace::clientAdded, this, [this, reset](auto c) {
         if (c->surface()) {
             QObject::connect(

@@ -177,9 +177,6 @@ public:
     void damageNotifyEvent() override;
     void addDamage(QRegion const& damage) override;
 
-    void release_window(bool on_shutdown = false);
-    void destroy() override;
-
     void applyWindowRules() override;
     void updateWindowRules(Rules::Types selection) override;
 
@@ -258,21 +255,12 @@ public:
 
     void update_input_shape();
 
-    template<typename T>
-    void print(T& stream) const;
     void debug(QDebug& stream) const override;
 
 Q_SIGNALS:
     void client_managing(KWin::win::x11::window*);
     void client_fullscreen_set(KWin::win::x11::window*, bool, bool);
 };
-
-template<typename T>
-inline void window::print(T& stream) const
-{
-    stream << "\'Client:" << xcb_window() << ";WMCLASS:" << resourceClass() << ":" << resourceName()
-           << ";Caption:" << win::caption(this) << "\'";
-}
 
 }
 

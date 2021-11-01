@@ -148,7 +148,7 @@ public:
      * @param w The window id to search for
      * @return KWin::Unmanaged* Found Unmanaged or @c null if there is no Unmanaged with given Id.
      */
-    Toplevel* findUnmanaged(xcb_window_t w) const;
+    win::x11::window* findUnmanaged(xcb_window_t w) const;
     Toplevel* findToplevel(std::function<bool(Toplevel const*)> func) const;
     void forEachToplevel(std::function<void(Toplevel*)> func);
     /**
@@ -270,10 +270,6 @@ public:
     std::vector<QRect> previousScreenSizes() const;
     int oldDisplayWidth() const;
     int oldDisplayHeight() const;
-
-    std::deque<win::x11::window*>
-    ensureStackingOrder(std::vector<win::x11::window*> const& clients) const;
-    std::deque<Toplevel*> ensureStackingOrder(std::vector<Toplevel*> const& clients) const;
 
     Toplevel* active_client{nullptr};
 
@@ -468,7 +464,6 @@ public Q_SLOTS:
     void updateClientArea();
 
 protected:
-    void setupClientConnections(Toplevel* window);
     void updateTabbox();
     virtual void update_space_area_from_windows(QRect const& desktop_area,
                                                 std::vector<QRect> const& screens_geos,
@@ -503,6 +498,7 @@ Q_SIGNALS:
     void clientAdded(KWin::win::x11::window*);
     void clientRemoved(KWin::Toplevel*);
     void wayland_window_added(KWin::Toplevel*);
+    void wayland_window_removed(KWin::Toplevel*);
     void clientActivated(KWin::Toplevel*);
     void clientDemandsAttentionChanged(KWin::Toplevel*, bool);
     void clientMinimizedChanged(KWin::Toplevel*);
@@ -550,7 +546,7 @@ private:
     /// This is the right way to create a new client
     win::x11::window* createClient(xcb_window_t w, bool is_mapped);
     void addClient(win::x11::window* c);
-    Toplevel* createUnmanaged(xcb_window_t w);
+    win::x11::window* createUnmanaged(xcb_window_t w);
     void addUnmanaged(Toplevel* c);
 
     void closeActivePopup();

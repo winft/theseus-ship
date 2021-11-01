@@ -7,6 +7,9 @@
 
 #include "window.h"
 
+#include "transient.h"
+#include "window_release.h"
+
 #include "render/compositor.h"
 #include "win/space.h"
 #include "win/transient.h"
@@ -109,14 +112,44 @@ void set_subsurface_parent(Win* win, Lead* lead)
 
     set_pos();
 
-    QObject::connect(
-        subsurface, &Wrapland::Server::Subsurface::resourceDestroyed, win, &Win::destroy);
+    QObject::connect(subsurface, &Wrapland::Server::Subsurface::resourceDestroyed, win, [win] {
+        destroy_window(win);
+    });
     QObject::connect(subsurface, &Wrapland::Server::Subsurface::positionChanged, win, set_pos);
     QObject::connect(lead, &Lead::frame_geometry_changed, win, set_pos);
 
     win->set_layer(win::layer::unmanaged);
 
     win->map();
+}
+
+template<typename Window, typename Space>
+void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurface)
+{
+    auto window = new Window(subsurface->surface());
+
+    space->m_windows.push_back(window);
+    QObject::connect(subsurface,
+                     &Wrapland::Server::Subsurface::resourceDestroyed,
+                     space,
+                     [space, window] { remove_all(space->m_windows, window); });
+
+    assign_subsurface_role(window);
+
+    for (auto& win : space->m_windows) {
+        if (win->surface() == subsurface->parentSurface()) {
+            win::wayland::set_subsurface_parent(window, win);
+            if (window->readyForPainting()) {
+                space->handle_window_added(window);
+                adopt_transient_children(space, window);
+                return;
+            }
+            break;
+        }
+    }
+    // Must wait till a parent is mapped and subsurface is ready for painting.
+    QObject::connect(
+        window, &win::wayland::window::windowShown, space, &Space::handle_wayland_window_shown);
 }
 
 }

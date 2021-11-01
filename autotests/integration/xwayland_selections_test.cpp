@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_server.h"
 #include "workspace.h"
 
+#include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
@@ -113,7 +114,8 @@ void XwaylandSelectionsTest::testSync()
 
     QSignalSpy clientAddedSpy(workspace(), &Workspace::clientAdded);
     QVERIFY(clientAddedSpy.isValid());
-    QSignalSpy shellClientAddedSpy(waylandServer(), &WaylandServer::window_added);
+    QSignalSpy shellClientAddedSpy(static_cast<win::wayland::space*>(workspace()),
+                                   &win::wayland::space::wayland_window_added);
     QVERIFY(shellClientAddedSpy.isValid());
 
     QSignalSpy clipboardChangedSpy = [clipboardMode]() {

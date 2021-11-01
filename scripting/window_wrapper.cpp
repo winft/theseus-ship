@@ -580,7 +580,7 @@ bool WindowWrapper::unresponsive() const
 
 bool WindowWrapper::isTransient() const
 {
-    return m_client->isTransient();
+    return m_client->transient()->lead();
 }
 
 WindowWrapper* WindowWrapper::transientFor() const

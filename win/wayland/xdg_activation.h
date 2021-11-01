@@ -71,7 +71,7 @@ void xdg_activation_create_token(Space* space, Wrapland::Server::XdgActivationTo
             return false;
         }
 
-        if (auto& plasma_surfaces = waylandServer()->m_plasmaShellSurfaces;
+        if (auto& plasma_surfaces = space->plasma_shell_surfaces;
             std::any_of(plasma_surfaces.cbegin(),
                         plasma_surfaces.cend(),
                         [surface = token->surface()](auto const& plasma_surface) {
@@ -81,7 +81,7 @@ void xdg_activation_create_token(Space* space, Wrapland::Server::XdgActivationTo
             return true;
         }
 
-        auto win = waylandServer()->find_window(token->surface());
+        auto win = space->find_window(token->surface());
         if (!win) {
             qCDebug(KWIN_WL) << "No window associated with token surface" << token->surface();
             return false;
@@ -144,6 +144,19 @@ void xdg_activation_activate(Space* space, Window* win, std::string const& token
 
     space->activation->clear();
     space->activateClient(win);
+}
+
+template<typename Space>
+void handle_xdg_activation_activate(Space* space,
+                                    std::string const& token,
+                                    Wrapland::Server::Surface* surface)
+{
+    auto win = space->find_window(surface);
+    if (!win) {
+        qCDebug(KWIN_WL) << "No window found to xdg-activate" << surface;
+        return;
+    }
+    xdg_activation_activate(space, win, token);
 }
 
 }
