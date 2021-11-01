@@ -258,7 +258,6 @@ public:
     void debug(QDebug& stream) const override;
 
 Q_SIGNALS:
-    void client_managing(KWin::win::x11::window*);
     void client_fullscreen_set(KWin::win::x11::window*, bool, bool);
 };
 

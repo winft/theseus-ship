@@ -350,7 +350,10 @@ Q_SIGNALS:
     void currentDesktopChanged(int desktop, KWin::scripting::window* client);
     void clientAdded(KWin::scripting::window* client);
     void clientRemoved(KWin::scripting::window* client);
+
+    /// Deprecated
     void clientManaging(KWin::scripting::window* client);
+
     void clientMinimized(KWin::scripting::window* client);
     void clientUnminimized(KWin::scripting::window* client);
     void clientRestored(KWin::scripting::window* client);

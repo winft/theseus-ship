@@ -142,7 +142,6 @@ void space::setupAbstractClientConnections(window* window)
 
 void space::setupClientConnections(window* window)
 {
-    connect(window, &window::clientManaging, this, &space::clientManaging);
     connect(window, &window::clientFullScreenSet, this, &space::clientFullScreenSet);
 }
 

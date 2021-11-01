@@ -364,10 +364,12 @@ Q_SIGNALS:
     void
     clientMaximizedStateChanged(KWin::scripting::window* window, bool horizontal, bool vertical);
 
+    /// Deprecated
+    void clientManaging(KWin::scripting::window* window);
+
     /**
      * X11 only signals
      */
-    void clientManaging(KWin::scripting::window* window);
     void clientFullScreenSet(KWin::scripting::window* client, bool fullscreen, bool user);
 
     // TODO: this signal is never emitted - remove?

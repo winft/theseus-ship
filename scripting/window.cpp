@@ -105,9 +105,6 @@ window::window(Toplevel* client, space* workspace)
 
     if (client->isClient()) {
         auto x11_client = dynamic_cast<win::x11::window*>(m_client);
-        connect(x11_client, &win::x11::window::client_managing, this, [this] {
-            Q_EMIT clientManaging(this);
-        });
         connect(x11_client,
                 &win::x11::window::client_fullscreen_set,
                 this,
