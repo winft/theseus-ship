@@ -31,36 +31,32 @@ void space::handle_client_added(Toplevel* client)
         // Only windows with control are made available to the scripting system.
         return;
     }
-    auto wrapper = std::make_unique<window>(client, this);
+    client->control->scripting = std::make_unique<window>(client, this);
+    auto scr_win = client->control->scripting.get();
 
-    setupAbstractClientConnections(wrapper.get());
+    setupAbstractClientConnections(scr_win);
     if (client->isClient()) {
-        setupClientConnections(wrapper.get());
+        setupClientConnections(scr_win);
     }
 
-    Q_EMIT clientAdded(wrapper.get());
-    m_windows.push_back(std::move(wrapper));
+    windows_count++;
+    Q_EMIT clientAdded(scr_win);
 }
 
 void space::handle_client_removed(Toplevel* client)
 {
-    auto remover = [this, client](auto& wrapper) {
-        if (wrapper->client() == client) {
-            Q_EMIT clientRemoved(wrapper.get());
-            return true;
-        }
-        return false;
-    };
-    m_windows.erase(std::remove_if(m_windows.begin(), m_windows.end(), remover), m_windows.end());
+    if (client->control) {
+        windows_count--;
+        Q_EMIT clientRemoved(client->control->scripting.get());
+    }
 }
 
 window* space::get_window(Toplevel* client) const
 {
-    auto const it
-        = std::find_if(m_windows.cbegin(), m_windows.cend(), [client](auto const& window) {
-              return window->client() == client;
-          });
-    return it != m_windows.cend() ? it->get() : nullptr;
+    if (!client || !client->control) {
+        return nullptr;
+    }
+    return client->control->scripting.get();
 }
 
 int space::currentDesktop() const
@@ -167,11 +163,7 @@ void space::hideOutline()
 
 window* space::getClient(qulonglong windowId)
 {
-    auto const it
-        = std::find_if(m_windows.cbegin(), m_windows.cend(), [windowId](auto const& client) {
-              return client->windowId() == windowId;
-          });
-    return it != m_windows.cend() ? it->get() : nullptr;
+    return get_client_impl(windowId);
 }
 
 QSize space::desktopGridSize() const
@@ -219,20 +211,11 @@ QSize space::virtualScreenSize() const
     return screens()->size();
 }
 
-std::vector<window*> space::windows() const
-{
-    std::vector<window*> ret;
-    for (auto const& client : m_windows) {
-        ret.push_back(client.get());
-    }
-    return ret;
-}
-
 QList<window*> qt_script_space::clientList() const
 {
     QList<window*> ret;
-    for (auto const& client : m_windows) {
-        ret << client.get();
+    for (auto const& window : windows()) {
+        ret << window;
     }
     return ret;
 }
@@ -249,7 +232,7 @@ int declarative_script_space::countClientList(QQmlListProperty<window>* clients)
 {
     Q_UNUSED(clients)
     auto wsw = reinterpret_cast<declarative_script_space*>(clients->data);
-    return wsw->m_windows.size();
+    return wsw->windows_count;
 }
 
 window* declarative_script_space::atClientList(QQmlListProperty<window>* clients, int index)
@@ -258,7 +241,7 @@ window* declarative_script_space::atClientList(QQmlListProperty<window>* clients
     auto wsw = reinterpret_cast<declarative_script_space*>(clients->data);
 
     try {
-        return wsw->m_windows[index].get();
+        return wsw->windows()[index];
     } catch (std::out_of_range const& ex) {
         return nullptr;
     }

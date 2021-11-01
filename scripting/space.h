@@ -161,7 +161,7 @@ public:
     QSize virtualScreenSize() const;
     QRect virtualScreenGeometry() const;
 
-    std::vector<window*> windows() const;
+    virtual std::vector<window*> windows() const = 0;
 
     /**
      * Returns the geometry a Client can use with the specified option.
@@ -432,8 +432,11 @@ protected:
     virtual QRect client_area_impl(clientAreaOption option, window* window) const = 0;
     virtual QRect client_area_impl(clientAreaOption option, window const* window) const = 0;
 
+    virtual window* get_client_impl(qulonglong windowId) = 0;
+
     // TODO: make this private. Remove dynamic inheritance?
     std::vector<std::unique_ptr<window>> m_windows;
+    int windows_count{0};
 
 private:
     Q_DISABLE_COPY(space)
@@ -527,6 +530,18 @@ public:
             Space::handle_client_added(client);
         }
     }
+
+    std::vector<window*> windows() const override
+    {
+        std::vector<window*> ret;
+        for (auto const& window : ref_space->m_windows) {
+            if (window->control && window->control->scripting) {
+                ret.push_back(window->control->scripting.get());
+            }
+        }
+        return ret;
+    }
+
     window* activeClient() const override
     {
         auto active_client = ref_space->activeClient();
@@ -653,6 +668,16 @@ protected:
     QString supportInformation() const override
     {
         return ref_space->supportInformation();
+    }
+
+    window* get_client_impl(qulonglong windowId) override
+    {
+        for (auto& win : ref_space->m_windows) {
+            if (win->control && win->xcb_window() == windowId) {
+                return win->control->scripting.get();
+            }
+        }
+        return nullptr;
     }
 
     RefSpace* ref_space;
