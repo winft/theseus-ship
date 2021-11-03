@@ -356,18 +356,6 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
         return;
     }
 
-    auto const& s = compositor.platform.base.screens.size();
-    GLRenderTarget::setVirtualScreenSize(s);
-    GLRenderTarget::setVirtualScreenGeometry(compositor.platform.base.screens.geometry());
-
-    // push one shader on the stack so that one is always bound
-    ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
-    if (checkGLError("Init")) {
-        qCCritical(KWIN_CORE) << "OpenGL 2 compositing setup failed";
-        init_ok = false;
-        return;
-    }
-
     // It is not legal to not have a vertex array object bound in a core context
     if (!GLPlatform::instance()->isGLES()
         && hasGLExtension(QByteArrayLiteral("GL_ARB_vertex_array_object"))) {
