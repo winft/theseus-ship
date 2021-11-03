@@ -322,11 +322,6 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
         init_ok = false;
         return; // error
     }
-    if (glPlatform->isMesaDriver() && glPlatform->mesaVersion() < kVersionNumber(10, 0)) {
-        qCCritical(KWIN_CORE) << "KWin requires at least Mesa 10.0 for OpenGL compositing.";
-        init_ok = false;
-        return;
-    }
 
     m_debug = qstrcmp(qgetenv("KWIN_GL_DEBUG"), "1") == 0;
     initDebugOutput();
