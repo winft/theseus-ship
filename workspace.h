@@ -55,6 +55,11 @@ namespace render
 class compositor;
 }
 
+namespace scripting
+{
+class platform;
+}
+
 namespace Xcb
 {
 class Tree;
@@ -86,6 +91,8 @@ class KWIN_EXPORT Workspace : public QObject
     Q_OBJECT
 public:
     std::vector<Toplevel*> m_windows;
+
+    std::unique_ptr<scripting::platform> scripting;
 
     explicit Workspace();
     ~Workspace() override;
@@ -486,12 +493,6 @@ private Q_SLOTS:
     void slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop);
 
 Q_SIGNALS:
-    /**
-     * Emitted after the Workspace has setup the complete initialization process.
-     * This can be used to connect to for performing post-workspace initialization.
-     */
-    void workspaceInitialized();
-
     // Signals required for the scripting interface
     void desktopPresenceChanged(KWin::Toplevel*, int);
     void currentDesktopChanged(int, KWin::Toplevel*);

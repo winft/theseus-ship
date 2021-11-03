@@ -22,7 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
-#include "scripting/scripting.h"
+#include "scripting/platform.h"
+#include "scripting/script.h"
 #include "wayland_server.h"
 #include "workspace.h"
 
@@ -82,7 +83,7 @@ void ScreenEdgeTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    QVERIFY(Scripting::self());
+    QVERIFY(workspace()->scripting);
 
     ScreenEdges::self()->setTimeThreshold(0);
     ScreenEdges::self()->setReActivationThreshold(0);
@@ -105,9 +106,9 @@ void ScreenEdgeTest::cleanup()
                                  QFINDTESTDATA("./scripts/touchScreenedge.js")};
     for (const QString& script : scripts) {
         if (!script.isEmpty()) {
-            if (Scripting::self()->isScriptLoaded(script)) {
-                QVERIFY(Scripting::self()->unloadScript(script));
-                QTRY_VERIFY(!Scripting::self()->isScriptLoaded(script));
+            if (workspace()->scripting->isScriptLoaded(script)) {
+                QVERIFY(workspace()->scripting->unloadScript(script));
+                QTRY_VERIFY(!workspace()->scripting->isScriptLoaded(script));
             }
         }
     }
@@ -142,13 +143,13 @@ void ScreenEdgeTest::testEdge()
     config->group(QLatin1String("Script-") + scriptToLoad).writeEntry("Edge", int(edge));
     config->sync();
 
-    QVERIFY(!Scripting::self()->isScriptLoaded(scriptToLoad));
-    const int id = Scripting::self()->loadScript(scriptToLoad);
+    QVERIFY(!workspace()->scripting->isScriptLoaded(scriptToLoad));
+    const int id = workspace()->scripting->loadScript(scriptToLoad);
     QVERIFY(id != -1);
-    QVERIFY(Scripting::self()->isScriptLoaded(scriptToLoad));
-    auto s = Scripting::self()->findScript(scriptToLoad);
+    QVERIFY(workspace()->scripting->isScriptLoaded(scriptToLoad));
+    auto s = workspace()->scripting->findScript(scriptToLoad);
     QVERIFY(s);
-    QSignalSpy runningChangedSpy(s, &AbstractScript::runningChanged);
+    QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
     QVERIFY(runningChangedSpy.isValid());
     s->run();
     QVERIFY(runningChangedSpy.wait());
@@ -191,13 +192,13 @@ void ScreenEdgeTest::testTouchEdge()
     config->group(QLatin1String("Script-") + scriptToLoad).writeEntry("Edge", int(edge));
     config->sync();
 
-    QVERIFY(!Scripting::self()->isScriptLoaded(scriptToLoad));
-    const int id = Scripting::self()->loadScript(scriptToLoad);
+    QVERIFY(!workspace()->scripting->isScriptLoaded(scriptToLoad));
+    auto const id = workspace()->scripting->loadScript(scriptToLoad);
     QVERIFY(id != -1);
-    QVERIFY(Scripting::self()->isScriptLoaded(scriptToLoad));
-    auto s = Scripting::self()->findScript(scriptToLoad);
+    QVERIFY(workspace()->scripting->isScriptLoaded(scriptToLoad));
+    auto s = workspace()->scripting->findScript(scriptToLoad);
     QVERIFY(s);
-    QSignalSpy runningChangedSpy(s, &AbstractScript::runningChanged);
+    QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
     QVERIFY(runningChangedSpy.isValid());
     s->run();
     QVERIFY(runningChangedSpy.wait());
@@ -229,14 +230,14 @@ void ScreenEdgeTest::testEdgeUnregister()
     const QString scriptToLoad = QFINDTESTDATA("./scripts/screenedgeunregister.js");
     QVERIFY(!scriptToLoad.isEmpty());
 
-    Scripting::self()->loadScript(scriptToLoad);
-    auto s = Scripting::self()->findScript(scriptToLoad);
+    workspace()->scripting->loadScript(scriptToLoad);
+    auto s = workspace()->scripting->findScript(scriptToLoad);
     auto configGroup = s->config();
     configGroup.writeEntry("Edge", int(KWin::ElectricLeft));
     configGroup.sync();
     const QPoint triggerPos = QPoint(0, 512);
 
-    QSignalSpy runningChangedSpy(s, &AbstractScript::runningChanged);
+    QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
     s->run();
     QVERIFY(runningChangedSpy.wait());
 
@@ -275,11 +276,11 @@ void ScreenEdgeTest::testDeclarativeTouchEdge()
 {
     const QString scriptToLoad = QFINDTESTDATA("./scripts/screenedgetouch.qml");
     QVERIFY(!scriptToLoad.isEmpty());
-    QVERIFY(Scripting::self()->loadDeclarativeScript(scriptToLoad) != -1);
-    QVERIFY(Scripting::self()->isScriptLoaded(scriptToLoad));
+    QVERIFY(workspace()->scripting->loadDeclarativeScript(scriptToLoad) != -1);
+    QVERIFY(workspace()->scripting->isScriptLoaded(scriptToLoad));
 
-    auto s = Scripting::self()->findScript(scriptToLoad);
-    QSignalSpy runningChangedSpy(s, &AbstractScript::runningChanged);
+    auto s = workspace()->scripting->findScript(scriptToLoad);
+    QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
     s->run();
     QTRY_COMPARE(runningChangedSpy.count(), 1);
 

@@ -17,13 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_DBUSCALL_H
-#define KWIN_DBUSCALL_H
+#pragma once
 
 #include <QObject>
 #include <QString>
 
-namespace KWin
+namespace KWin::scripting
 {
 
 /**
@@ -72,7 +71,7 @@ namespace KWin
  *  }
  * @endcode
  */
-class DBusCall : public QObject
+class dbus_call : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString service READ service WRITE setService NOTIFY serviceChanged)
@@ -81,23 +80,23 @@ class DBusCall : public QObject
     Q_PROPERTY(QString method READ method WRITE setMethod NOTIFY methodChanged)
     Q_PROPERTY(QVariantList arguments READ arguments WRITE setArguments NOTIFY argumentsChanged)
 public:
-    explicit DBusCall(QObject* parent = nullptr);
-    ~DBusCall() override;
+    explicit dbus_call(QObject* parent = nullptr);
+    ~dbus_call() override;
 
-    const QString &service() const;
-    const QString &path() const;
-    const QString &interface() const;
-    const QString &method() const;
-    const QVariantList &arguments() const;
+    const QString& service() const;
+    const QString& path() const;
+    const QString& interface() const;
+    const QString& method() const;
+    const QVariantList& arguments() const;
 
 public Q_SLOTS:
     void call();
 
-    void setService(const QString &service);
-    void setPath(const QString &path);
-    void setInterface(const QString &interface);
-    void setMethod(const QString &method);
-    void setArguments(const QVariantList &arguments);
+    void setService(const QString& service);
+    void setPath(const QString& path);
+    void setInterface(const QString& interface);
+    void setMethod(const QString& method);
+    void setArguments(const QVariantList& arguments);
 
 Q_SIGNALS:
     void finished(QVariantList returnValue);
@@ -117,31 +116,28 @@ private:
     QVariantList m_arguments;
 };
 
-#define GENERIC_WRAPPER(type, name, upperName) \
-inline type DBusCall::name() const \
-{ \
-    return m_##name; \
-}\
-inline void DBusCall::set##upperName(type name) \
-{\
-    if (m_##name == name) { \
-        return; \
-    } \
-    m_##name = name; \
-    emit name##Changed(); \
-}
-#define WRAPPER(name, upperName) \
-GENERIC_WRAPPER(const QString&, name, upperName)
+#define GENERIC_WRAPPER(type, name, upperName)                                                     \
+    inline type dbus_call::name() const                                                            \
+    {                                                                                              \
+        return m_##name;                                                                           \
+    }                                                                                              \
+    inline void dbus_call::set##upperName(type name)                                               \
+    {                                                                                              \
+        if (m_##name == name) {                                                                    \
+            return;                                                                                \
+        }                                                                                          \
+        m_##name = name;                                                                           \
+        emit name##Changed();                                                                      \
+    }
+#define WRAPPER(name, upperName) GENERIC_WRAPPER(const QString&, name, upperName)
 
 WRAPPER(interface, Interface)
 WRAPPER(method, Method)
 WRAPPER(path, Path)
 WRAPPER(service, Service)
 
-GENERIC_WRAPPER(const QVariantList &, arguments, Arguments)
+GENERIC_WRAPPER(const QVariantList&, arguments, Arguments)
 #undef WRAPPER
 #undef GENERIC_WRAPPER
 
-} // KWin
-
-#endif //  KWIN_SCRIPTING_DBUSCALL_H
+}

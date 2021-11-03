@@ -1113,9 +1113,6 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
         });
 
     win->setupCompositing(false);
-
-    Q_EMIT win->client_managing(win);
-
     return win;
 }
 

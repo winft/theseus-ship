@@ -437,16 +437,19 @@ set(kwin_SRCS
     screenedge.cpp
     screenlockerwatcher.cpp
     screens.cpp
-    scripting/dbuscall.cpp
-    scripting/screenedgeitem.cpp
-    scripting/scriptedeffect.cpp
-    scripting/scripting.cpp
+    scripting/dbus_call.cpp
+    scripting/js_engine_global_methods_wrapper.cpp
+    scripting/screen_edge_item.cpp
+    scripting/effect.cpp
+    scripting/platform.cpp
+    scripting/script.cpp
+    scripting/script_timer.cpp
     scripting/scripting_logging.cpp
-    scripting/v2/clientmodel.cpp
-    scripting/v3/clientmodel.cpp
-    scripting/scriptingutils.cpp
-    scripting/window_wrapper.cpp
-    scripting/workspace_wrapper.cpp
+    scripting/v2/client_model.cpp
+    scripting/v3/client_model.cpp
+    scripting/utils.cpp
+    scripting/window.cpp
+    scripting/space.cpp
     seat/session.cpp
     seat/backend/logind/session.cpp
     shadow.cpp
@@ -500,7 +503,11 @@ ecm_qt_declare_logging_category(kwin_SRCS
         Critical
 )
 
-qt5_add_dbus_adaptor(kwin_SRCS scripting/org.kde.kwin.Script.xml scripting/scripting.h KWin::AbstractScript)
+qt5_add_dbus_adaptor(kwin_SRCS
+  scripting/org.kde.kwin.Script.xml
+  scripting/script.h
+  KWin::scripting::abstract_script
+)
 
 kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS colorcorrection/colorcorrect_settings.kcfgc)

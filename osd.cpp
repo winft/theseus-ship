@@ -22,7 +22,7 @@
 #include "onscreennotification.h"
 #include "main.h"
 #include "workspace.h"
-#include "scripting/scripting.h"
+#include "scripting/platform.h"
 
 #include <QQmlEngine>
 
@@ -35,7 +35,7 @@ static OnScreenNotification *create()
 {
     auto osd = new OnScreenNotification(workspace());
     osd->setConfig(kwinApp()->config());
-    osd->setEngine(Scripting::self()->qmlEngine());
+    osd->setEngine(workspace()->scripting->qmlEngine());
     return osd;
 }
 

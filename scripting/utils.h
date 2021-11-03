@@ -17,17 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
-#ifndef KWIN_SCRIPTINGUTILS_H
-#define KWIN_SCRIPTINGUTILS_H
+#pragma once
 
 #include <QVariant>
 
-namespace KWin
+namespace KWin::scripting
 {
 
-QVariant dbusToVariant(const QVariant &variant);
+QVariant dbusToVariant(const QVariant& variant);
 
-} // namespace KWin
-
-#endif // KWIN_SCRIPTINGUTILS_H
+}

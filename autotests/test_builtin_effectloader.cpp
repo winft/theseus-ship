@@ -19,7 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "../effectloader.h"
 #include "../effects/effect_builtins.h"
-#include "../scripting/scriptedeffect.h" // for mocking ScriptedEffect::create
+
+// for mocking scripting::effect::create
+#include "../scripting/effect.h"
 #include "mock_effectshandler.h"
 #include "testutils.h"
 // KDE
@@ -37,15 +39,15 @@ Q_DECLARE_METATYPE(KWin::Effect*)
 
 Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core")
 
-namespace KWin
+namespace KWin::scripting
 {
 
-ScriptedEffect* ScriptedEffect::create(const KPluginMetaData&)
+effect* effect::create(const KPluginMetaData&)
 {
     return nullptr;
 }
 
-bool ScriptedEffect::supported()
+bool effect::supported()
 {
     return true;
 }

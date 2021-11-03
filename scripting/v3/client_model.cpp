@@ -3,24 +3,25 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "clientmodel.h"
+#include "client_model.h"
 
-#include "../scripting.h"
-#include "../window_wrapper.h"
-#include "../workspace_wrapper.h"
+#include "scripting/platform.h"
+#include "scripting/space.h"
+#include "scripting/window.h"
 
 #include "screens.h"
+#include "workspace.h"
 
-namespace KWin::ScriptingModels::V3
+namespace KWin::scripting::models::v3
 {
 
-ClientModel::ClientModel(QObject *parent)
+client_model::client_model(QObject* parent)
     : QAbstractListModel(parent)
 {
-    auto ws_wrap = Scripting::self()->workspaceWrapper();
+    auto ws_wrap = workspace()->scripting->workspaceWrapper();
 
-    connect(ws_wrap, &WorkspaceWrapper::clientAdded, this, &ClientModel::handleClientAdded);
-    connect(ws_wrap, &WorkspaceWrapper::clientRemoved, this, &ClientModel::handleClientRemoved);
+    connect(ws_wrap, &space::clientAdded, this, &client_model::handleClientAdded);
+    connect(ws_wrap, &space::clientRemoved, this, &client_model::handleClientRemoved);
 
     for (auto window : ws_wrap->windows()) {
         m_clients << window;
@@ -28,23 +29,23 @@ ClientModel::ClientModel(QObject *parent)
     }
 }
 
-void ClientModel::markRoleChanged(WindowWrapper *client, int role)
+void client_model::markRoleChanged(window* client, int role)
 {
     const QModelIndex row = index(m_clients.indexOf(client), 0);
     Q_EMIT dataChanged(row, row, {role});
 }
 
-void ClientModel::setupClientConnections(WindowWrapper *client)
+void client_model::setupClientConnections(window* client)
 {
-    connect(client, &WindowWrapper::desktopChanged, this, [this, client]() {
+    connect(client, &window::desktopChanged, this, [this, client]() {
         markRoleChanged(client, DesktopRole);
     });
-    connect(client, &WindowWrapper::screenChanged, this, [this, client]() {
+    connect(client, &window::screenChanged, this, [this, client]() {
         markRoleChanged(client, ScreenRole);
     });
 }
 
-void ClientModel::handleClientAdded(WindowWrapper *client)
+void client_model::handleClientAdded(window* client)
 {
     beginInsertRows(QModelIndex(), m_clients.count(), m_clients.count());
     m_clients.append(client);
@@ -53,7 +54,7 @@ void ClientModel::handleClientAdded(WindowWrapper *client)
     setupClientConnections(client);
 }
 
-void ClientModel::handleClientRemoved(WindowWrapper *client)
+void client_model::handleClientRemoved(window* client)
 {
     const int index = m_clients.indexOf(client);
     Q_ASSERT(index != -1);
@@ -63,18 +64,18 @@ void ClientModel::handleClientRemoved(WindowWrapper *client)
     endRemoveRows();
 }
 
-QHash<int, QByteArray> ClientModel::roleNames() const
+QHash<int, QByteArray> client_model::roleNames() const
 {
     return {
-        { Qt::DisplayRole, QByteArrayLiteral("display") },
-        { ClientRole, QByteArrayLiteral("client") },
-        { ScreenRole, QByteArrayLiteral("screen") },
-        { DesktopRole, QByteArrayLiteral("desktop") },
-        { ActivityRole, QByteArrayLiteral("activity") },
+        {Qt::DisplayRole, QByteArrayLiteral("display")},
+        {ClientRole, QByteArrayLiteral("client")},
+        {ScreenRole, QByteArrayLiteral("screen")},
+        {DesktopRole, QByteArrayLiteral("desktop")},
+        {ActivityRole, QByteArrayLiteral("activity")},
     };
 }
 
-QVariant ClientModel::data(const QModelIndex &index, int role) const
+QVariant client_model::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_clients.count()) {
         return QVariant();
@@ -96,50 +97,50 @@ QVariant ClientModel::data(const QModelIndex &index, int role) const
     }
 }
 
-int ClientModel::rowCount(const QModelIndex &parent) const
+int client_model::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : m_clients.count();
 }
 
-ClientFilterModel::ClientFilterModel(QObject *parent)
+client_filter_model::client_filter_model(QObject* parent)
     : QSortFilterProxyModel(parent)
 {
 }
 
-ClientModel *ClientFilterModel::clientModel() const
+client_model* client_filter_model::clientModel() const
 {
     return m_clientModel;
 }
 
-void ClientFilterModel::setClientModel(ClientModel *clientModel)
+void client_filter_model::setClientModel(client_model* model)
 {
-    if (clientModel == m_clientModel) {
+    if (model == m_clientModel) {
         return;
     }
-    m_clientModel = clientModel;
+    m_clientModel = model;
     setSourceModel(m_clientModel);
     Q_EMIT clientModelChanged();
 }
 
-QString ClientFilterModel::activity() const
+QString client_filter_model::activity() const
 {
     return {};
 }
 
-void ClientFilterModel::setActivity(const QString &/*activity*/)
+void client_filter_model::setActivity(const QString& /*activity*/)
 {
 }
 
-void ClientFilterModel::resetActivity()
+void client_filter_model::resetActivity()
 {
 }
 
-int ClientFilterModel::desktop() const
+int client_filter_model::desktop() const
 {
     return m_desktop.value_or(0);
 }
 
-void ClientFilterModel::setDesktop(int desktop)
+void client_filter_model::setDesktop(int desktop)
 {
     if (m_desktop != desktop) {
         m_desktop = desktop;
@@ -148,7 +149,7 @@ void ClientFilterModel::setDesktop(int desktop)
     }
 }
 
-void ClientFilterModel::resetDesktop()
+void client_filter_model::resetDesktop()
 {
     if (m_desktop.has_value()) {
         m_desktop.reset();
@@ -157,12 +158,12 @@ void ClientFilterModel::resetDesktop()
     }
 }
 
-QString ClientFilterModel::filter() const
+QString client_filter_model::filter() const
 {
     return m_filter;
 }
 
-void ClientFilterModel::setFilter(const QString &filter)
+void client_filter_model::setFilter(const QString& filter)
 {
     if (filter == m_filter) {
         return;
@@ -172,12 +173,12 @@ void ClientFilterModel::setFilter(const QString &filter)
     invalidateFilter();
 }
 
-QString ClientFilterModel::screenName() const
+QString client_filter_model::screenName() const
 {
     return m_screenName.value_or(QString());
 }
 
-void ClientFilterModel::setScreenName(const QString &screen)
+void client_filter_model::setScreenName(const QString& screen)
 {
     if (m_screenName != screen) {
         m_screenName = screen;
@@ -186,7 +187,7 @@ void ClientFilterModel::setScreenName(const QString &screen)
     }
 }
 
-void ClientFilterModel::resetScreenName()
+void client_filter_model::resetScreenName()
 {
     if (m_screenName.has_value()) {
         m_screenName.reset();
@@ -195,12 +196,12 @@ void ClientFilterModel::resetScreenName()
     }
 }
 
-ClientFilterModel::WindowTypes ClientFilterModel::windowType() const
+client_filter_model::WindowTypes client_filter_model::windowType() const
 {
     return m_windowType.value_or(WindowTypes());
 }
 
-void ClientFilterModel::setWindowType(WindowTypes windowType)
+void client_filter_model::setWindowType(WindowTypes windowType)
 {
     if (m_windowType != windowType) {
         m_windowType = windowType;
@@ -209,7 +210,7 @@ void ClientFilterModel::setWindowType(WindowTypes windowType)
     }
 }
 
-void ClientFilterModel::resetWindowType()
+void client_filter_model::resetWindowType()
 {
     if (m_windowType.has_value()) {
         m_windowType.reset();
@@ -218,7 +219,7 @@ void ClientFilterModel::resetWindowType()
     }
 }
 
-bool ClientFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
+bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
 {
     if (!m_clientModel) {
         return false;
@@ -233,7 +234,7 @@ bool ClientFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourc
         return true;
     }
 
-    auto client = qvariant_cast<WindowWrapper *>(data);
+    auto client = qvariant_cast<window*>(data);
     if (!client) {
         return false;
     }
@@ -277,7 +278,7 @@ bool ClientFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourc
     return true;
 }
 
-ClientFilterModel::WindowTypes ClientFilterModel::windowTypeMask(WindowWrapper *client) const
+client_filter_model::WindowTypes client_filter_model::windowTypeMask(window* client) const
 {
     WindowTypes mask;
     if (client->isNormalWindow()) {
@@ -296,4 +297,4 @@ ClientFilterModel::WindowTypes ClientFilterModel::windowTypeMask(WindowWrapper *
     return mask;
 }
 
-} // namespace KWin::ScriptingModels::V3
+}

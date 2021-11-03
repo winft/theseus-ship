@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox.h"
 #endif
 #include "screenedge.h"
-#include "scripting/scriptedeffect.h"
+#include "scripting/effect.h"
 #include "screens.h"
 #include "screenlockerwatcher.h"
 #include "thumbnailitem.h"

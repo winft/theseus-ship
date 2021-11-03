@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "render/compositor.h"
 #include "screens.h"
-#include "scripting/scriptedeffect.h"
+#include "scripting/effect.h"
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
@@ -78,7 +78,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::cleanup()
 void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
 {
     // load a scripted effect which deletes animation data
-    ScriptedEffect* effect = ScriptedEffect::create(
+    auto effect = scripting::effect::create(
         QStringLiteral("crashy"), QFINDTESTDATA("data/anim-data-delete-effect/effect.js"), 10);
     QVERIFY(effect);
 

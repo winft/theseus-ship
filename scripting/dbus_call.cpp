@@ -17,30 +17,33 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "dbuscall.h"
-#include "scriptingutils.h"
+#include "dbus_call.h"
+
+#include "utils.h"
 
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
 
-namespace KWin {
+namespace KWin::scripting
+{
 
-DBusCall::DBusCall(QObject *parent)
+dbus_call::dbus_call(QObject* parent)
     : QObject(parent)
 {
 }
 
-DBusCall::~DBusCall()
+dbus_call::~dbus_call()
 {
 }
 
-void DBusCall::call()
+void dbus_call::call()
 {
     QDBusMessage msg = QDBusMessage::createMethodCall(m_service, m_path, m_interface, m_method);
     msg.setArguments(m_arguments);
 
-    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(msg), this);
+    QDBusPendingCallWatcher* watcher
+        = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(msg), this);
     connect(watcher, &QDBusPendingCallWatcher::finished, [this, watcher]() {
         watcher->deleteLater();
         if (watcher->isError()) {
@@ -48,7 +51,7 @@ void DBusCall::call()
             return;
         }
         QVariantList reply = watcher->reply().arguments();
-        std::for_each(reply.begin(), reply.end(), [](QVariant &variant) {
+        std::for_each(reply.begin(), reply.end(), [](QVariant& variant) {
             variant = dbusToVariant(variant);
         });
         emit finished(reply);

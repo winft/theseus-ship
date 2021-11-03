@@ -143,9 +143,9 @@ include_directories(${KWIN_SOURCE_DIR})
 set(testScriptedEffectLoader_SRCS
     ../effectloader.cpp
     ../screens.cpp
-    ../scripting/scriptedeffect.cpp
+    ../scripting/effect.cpp
     ../scripting/scripting_logging.cpp
-    ../scripting/scriptingutils.cpp
+    ../scripting/utils.cpp
     mock_effectshandler.cpp
     test_scripted_effectloader.cpp
 )

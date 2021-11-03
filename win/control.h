@@ -11,6 +11,7 @@
 #include <kwin_export.h>
 
 #include "rules/window_rules.h"
+#include "scripting/window.h"
 
 #include <QIcon>
 #include <QKeySequence>
@@ -110,6 +111,8 @@ class KWIN_EXPORT control
     void unminimize(bool avoid_animation);
 
 public:
+    std::unique_ptr<scripting::window> scripting;
+
     explicit control(Toplevel* win);
     virtual ~control();
 

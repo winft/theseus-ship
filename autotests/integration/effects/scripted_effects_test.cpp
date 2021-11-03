@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 *********************************************************************/
 
 #include "libkwineffects/anidata_p.h"
-#include "scripting/scriptedeffect.h"
+#include "scripting/effect.h"
 
 #include "effect_builtins.h"
 #include "effectloader.h"
@@ -78,10 +78,10 @@ private Q_SLOTS:
     void testComplete();
 
 private:
-    ScriptedEffect* loadEffect(const QString& name);
+    scripting::effect* loadEffect(const QString& name);
 };
 
-class ScriptedEffectWithDebugSpy : public KWin::ScriptedEffect
+class ScriptedEffectWithDebugSpy : public scripting::effect
 {
     Q_OBJECT
 public:
@@ -106,7 +106,7 @@ QList<QAction*> ScriptedEffectWithDebugSpy::actions()
 }
 
 ScriptedEffectWithDebugSpy::ScriptedEffectWithDebugSpy()
-    : ScriptedEffect()
+    : scripting::effect()
 {
 }
 
@@ -384,7 +384,7 @@ void ScriptedEffectsTest::testFullScreenEffect()
     QSignalSpy fullScreenEffectActiveSpy(effects,
                                          &EffectsHandler::hasActiveFullScreenEffectChanged);
     QSignalSpy isActiveFullScreenEffectSpy(effectMain,
-                                           &ScriptedEffect::isActiveFullScreenEffectChanged);
+                                           &scripting::effect::isActiveFullScreenEffectChanged);
 
     QVERIFY(effectMain->load(file));
 
@@ -392,8 +392,8 @@ void ScriptedEffectsTest::testFullScreenEffect()
     // shown as being someone else
     auto effectOther = new ScriptedEffectWithDebugSpy();
     QVERIFY(effectOther->load("screenEdgeTouchTest"));
-    QSignalSpy isActiveFullScreenEffectSpyOther(effectOther,
-                                                &ScriptedEffect::isActiveFullScreenEffectChanged);
+    QSignalSpy isActiveFullScreenEffectSpyOther(
+        effectOther, &scripting::effect::isActiveFullScreenEffectChanged);
 
     using namespace Wrapland::Client;
     auto surface = Test::create_surface();

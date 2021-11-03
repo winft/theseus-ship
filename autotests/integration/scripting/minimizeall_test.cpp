@@ -22,7 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "platform.h"
 #include "screens.h"
-#include "scripting/scripting.h"
+#include "scripting/platform.h"
+#include "scripting/script.h"
 #include "wayland_server.h"
 #include "workspace.h"
 
@@ -89,12 +90,12 @@ void MinimizeAllScriptTest::init()
 {
     Test::setup_wayland_connection();
 
-    Scripting::self()->loadScript(locateMainScript(s_scriptName), s_scriptName);
-    QTRY_VERIFY(Scripting::self()->isScriptLoaded(s_scriptName));
+    workspace()->scripting->loadScript(locateMainScript(s_scriptName), s_scriptName);
+    QTRY_VERIFY(workspace()->scripting->isScriptLoaded(s_scriptName));
 
-    AbstractScript* script = Scripting::self()->findScript(s_scriptName);
+    auto script = workspace()->scripting->findScript(s_scriptName);
     QVERIFY(script);
-    QSignalSpy runningChangedSpy(script, &AbstractScript::runningChanged);
+    QSignalSpy runningChangedSpy(script, &scripting::abstract_script::runningChanged);
     QVERIFY(runningChangedSpy.isValid());
     script->run();
     QTRY_COMPARE(runningChangedSpy.count(), 1);
@@ -104,8 +105,8 @@ void MinimizeAllScriptTest::cleanup()
 {
     Test::destroy_wayland_connection();
 
-    Scripting::self()->unloadScript(s_scriptName);
-    QTRY_VERIFY(!Scripting::self()->isScriptLoaded(s_scriptName));
+    workspace()->scripting->unloadScript(s_scriptName);
+    QTRY_VERIFY(!workspace()->scripting->isScriptLoaded(s_scriptName));
 }
 
 void MinimizeAllScriptTest::testMinimizeUnminimize()

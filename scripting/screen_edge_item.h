@@ -17,15 +17,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_SCREENEDGEITEM_H
-#define KWIN_SCREENEDGEITEM_H
+#pragma once
 
 #include <QObject>
 #include <kwinglobals.h>
 
 class QAction;
 
-namespace KWin
+namespace KWin::scripting
 {
 
 /**
@@ -43,7 +42,7 @@ namespace KWin
  * }
  * @endcode
  */
-class ScreenEdgeItem : public QObject
+class screen_edge_item : public QObject
 {
     Q_OBJECT
     /**
@@ -75,16 +74,14 @@ public:
     /**
      * Enum describing the operation modes of the edge.
      */
-    enum class Mode {
-        Pointer,
-        Touch
-    };
+    enum class Mode { Pointer, Touch };
     Q_ENUM(Mode)
-    explicit ScreenEdgeItem(QObject *parent = nullptr);
-    ~ScreenEdgeItem() override;
+    explicit screen_edge_item(QObject* parent = nullptr);
+    ~screen_edge_item() override;
     bool isEnabled() const;
     Edge edge() const;
-    Mode mode() const {
+    Mode mode() const
+    {
         return m_mode;
     }
 
@@ -102,25 +99,24 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     bool borderActivated(ElectricBorder edge);
+
 private:
     void enableEdge();
     void disableEdge();
     bool m_enabled;
     Edge m_edge;
     Mode m_mode = Mode::Pointer;
-    QAction *m_action;
+    QAction* m_action;
 };
 
-inline bool ScreenEdgeItem::isEnabled() const
+inline bool screen_edge_item::isEnabled() const
 {
     return m_enabled;
 }
 
-inline ScreenEdgeItem::Edge ScreenEdgeItem::edge() const
+inline screen_edge_item::Edge screen_edge_item::edge() const
 {
     return m_edge;
 }
 
-} // namespace KWin
-
-#endif //  KWIN_SCREENEDGEITEM_H
+}

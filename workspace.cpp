@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "screenedge.h"
 #include "screens.h"
-#include "scripting/scripting.h"
+#include "scripting/platform.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
@@ -262,15 +262,16 @@ Workspace::Workspace()
     });
 
     initWithX11();
-    Scripting::create(this);
+    scripting = std::make_unique<scripting::platform>();
 
     // SELI TODO: This won't work with unreasonable focus policies,
     // and maybe in rare cases also if the selected client doesn't
     // want focus
     workspaceInit = false;
 
-    // broadcast that Workspace is ready, but first process all events.
-    QMetaObject::invokeMethod(this, "workspaceInitialized", Qt::QueuedConnection);
+    // Start the scripting platform, but first process all events.
+    // TODO(romangg): Can we also do this through a simple call?
+    QMetaObject::invokeMethod(scripting.get(), "start", Qt::QueuedConnection);
 
     // TODO: ungrabXServer()
 }
@@ -738,8 +739,10 @@ void Workspace::slotReconfigure()
 
     kwinApp()->config()->reparseConfiguration();
     options->updateSettings();
+    scripting->start();
 
     emit configChanged();
+
     m_userActionsMenu->discard();
     win::update_tool_windows(this, true);
 

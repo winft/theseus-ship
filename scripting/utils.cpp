@@ -17,17 +17,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "scriptingutils.h"
+#include "utils.h"
+
 #include "scripting_logging.h"
 
 #include <QDBusArgument>
 #include <QDBusObjectPath>
 #include <QDBusSignature>
 
-namespace KWin
+namespace KWin::scripting
 {
 
-QVariant dbusToVariant(const QVariant &variant)
+QVariant dbusToVariant(const QVariant& variant)
 {
     if (variant.canConvert<QDBusArgument>()) {
         const QDBusArgument argument = variant.value<QDBusArgument>();
@@ -44,7 +45,8 @@ QVariant dbusToVariant(const QVariant &variant)
                 array.append(dbusToVariant(value));
             }
             argument.endArray();
-            return array; }
+            return array;
+        }
         case QDBusArgument::StructureType: {
             QVariantList structure;
             argument.beginStructure();
@@ -53,7 +55,8 @@ QVariant dbusToVariant(const QVariant &variant)
                 structure.append(dbusToVariant(value));
             }
             argument.endStructure();
-            return structure; }
+            return structure;
+        }
         case QDBusArgument::MapType: {
             QVariantMap map;
             argument.beginMap();
@@ -65,9 +68,11 @@ QVariant dbusToVariant(const QVariant &variant)
                 map.insert(key.toString(), dbusToVariant(value));
             }
             argument.endMap();
-            return map; }
+            return map;
+        }
         default:
-            qCWarning(KWIN_SCRIPTING) << "Couldn't unwrap QDBusArgument of type" << argument.currentType();
+            qCWarning(KWIN_SCRIPTING)
+                << "Couldn't unwrap QDBusArgument of type" << argument.currentType();
             return variant;
         }
     } else if (variant.canConvert<QDBusObjectPath>()) {

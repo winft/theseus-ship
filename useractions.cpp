@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "utils.h"
 #include "virtualdesktops.h"
-#include "scripting/scripting.h"
+#include "scripting/platform.h"
 
 #include "win/app_menu.h"
 #include "win/controlling.h"
@@ -407,7 +407,8 @@ void UserActionsMenu::menuAboutToShow()
     delete m_scriptsMenu;
     m_scriptsMenu = nullptr;
     // ask scripts whether they want to add entries for the given Client
-    QList<QAction*> scriptActions = Scripting::self()->actionsForUserActionMenu(m_client.data(), m_scriptsMenu);
+    auto scriptActions
+        = workspace()->scripting->actionsForUserActionMenu(m_client.data(), m_scriptsMenu);
     if (!scriptActions.isEmpty()) {
         m_scriptsMenu = new QMenu(m_menu);
         m_scriptsMenu->setPalette(m_client->control->palette().q_palette());

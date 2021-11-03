@@ -23,7 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
-#include "scripting/scripting.h"
+#include "scripting/platform.h"
+#include "scripting/script.h"
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"
@@ -984,7 +985,7 @@ void QuickTilingTest::testScript()
     QSignalSpy geometryChangedSpy(c, &Toplevel::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
 
-    QVERIFY(Scripting::self());
+    QVERIFY(workspace()->scripting);
     QTemporaryFile tmpFile;
     QVERIFY(tmpFile.open());
     QTextStream out(&tmpFile);
@@ -996,12 +997,12 @@ void QuickTilingTest::testScript()
     QFETCH(win::quicktiles, expectedMode);
     QFETCH(QRect, expectedGeometry);
 
-    const int id = Scripting::self()->loadScript(tmpFile.fileName());
+    auto const id = workspace()->scripting->loadScript(tmpFile.fileName());
     QVERIFY(id != -1);
-    QVERIFY(Scripting::self()->isScriptLoaded(tmpFile.fileName()));
-    auto s = Scripting::self()->findScript(tmpFile.fileName());
+    QVERIFY(workspace()->scripting->isScriptLoaded(tmpFile.fileName()));
+    auto s = workspace()->scripting->findScript(tmpFile.fileName());
     QVERIFY(s);
-    QSignalSpy runningChangedSpy(s, &AbstractScript::runningChanged);
+    QSignalSpy runningChangedSpy(s, &scripting::abstract_script::runningChanged);
     QVERIFY(runningChangedSpy.isValid());
     s->run();
 
