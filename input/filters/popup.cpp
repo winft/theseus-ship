@@ -6,6 +6,8 @@
 */
 #include "popup.h"
 
+#include "helpers.h"
+
 #include "input/event.h"
 #include "input/redirect.h"
 #include "wayland_server.h"
@@ -106,17 +108,7 @@ bool popup_filter::key(key_event const& event)
     }
 
     seat->setFocusedKeyboardSurface(last->surface());
-    switch (event.state) {
-    case key_state::pressed:
-        seat->keyboards().key_pressed(event.keycode);
-        break;
-    case key_state::released:
-        seat->keyboards().key_released(event.keycode);
-        break;
-    default:
-        break;
-    }
-
+    pass_to_wayland_server(event);
     return true;
 }
 

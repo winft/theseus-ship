@@ -127,18 +127,10 @@ std::pair<bool, bool> KWIN_EXPORT perform_wheel_and_window_action(axis_event con
 
 void pass_to_wayland_server(key_event const& event)
 {
-    assert(waylandServer());
-
-    switch (event.state) {
-    case key_state::pressed:
-        waylandServer()->seat()->keyboards().key_pressed(event.keycode);
-        break;
-    case key_state::released:
-        waylandServer()->seat()->keyboards().key_released(event.keycode);
-        break;
-    default:
-        break;
-    }
+    waylandServer()->seat()->keyboards().key(event.keycode,
+                                             event.state == key_state::pressed
+                                                 ? Wrapland::Server::key_state::pressed
+                                                 : Wrapland::Server::key_state::released);
 }
 
 }
