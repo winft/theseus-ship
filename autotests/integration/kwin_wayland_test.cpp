@@ -178,7 +178,7 @@ void WaylandTestApplication::start()
     auto redirect_ptr = redirect.get();
 
     input::add_redirect(input.get(), std::move(redirect));
-    input->cursor.reset(new input::wayland::cursor);
+    input->cursor.reset(new input::wayland::cursor(redirect_ptr));
     redirect_ptr->set_platform(static_cast<input::wayland::platform*>(input.get()));
 
     keyboard = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_KEYBOARD);
