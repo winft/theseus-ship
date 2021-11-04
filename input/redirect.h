@@ -177,7 +177,7 @@ public:
     Toplevel* findManagedToplevel(const QPoint& pos);
     global_shortcuts_manager* shortcuts() const
     {
-        return m_shortcuts;
+        return m_shortcuts.get();
     }
 
     /**
@@ -288,7 +288,7 @@ protected:
     std::list<event_filter*>::const_iterator m_filters_install_iterator;
 
 private:
-    global_shortcuts_manager* m_shortcuts;
+    std::unique_ptr<global_shortcuts_manager> m_shortcuts;
 
     std::vector<event_spy*> m_spies;
 

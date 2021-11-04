@@ -28,7 +28,7 @@ public:
     std::unique_ptr<wayland::cursor_image> cursor_image;
 
     cursor(wayland::redirect* redirect);
-    ~cursor();
+    ~cursor() override;
 
     QImage image() const override;
     QPoint hotspot() const override;

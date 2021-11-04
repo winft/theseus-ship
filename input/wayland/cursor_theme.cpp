@@ -20,9 +20,8 @@
 namespace KWin::input::wayland
 {
 
-cursor_theme::cursor_theme(Wrapland::Client::ShmPool* shm, QObject* parent)
-    : QObject(parent)
-    , m_theme(nullptr)
+cursor_theme::cursor_theme(Wrapland::Client::ShmPool* shm)
+    : m_theme(nullptr)
     , m_shm(shm)
 {
     connect(screens(), &Screens::maxScaleChanged, this, &cursor_theme::loadTheme);

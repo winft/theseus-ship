@@ -26,17 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::input
 {
 
-gesture::gesture(QObject* parent)
-    : QObject(parent)
-{
-}
-
 gesture::~gesture() = default;
-
-swipe_gesture::swipe_gesture(QObject* parent)
-    : gesture(parent)
-{
-}
 
 swipe_gesture::~swipe_gesture() = default;
 
@@ -71,11 +61,6 @@ qreal swipe_gesture::minimumDeltaReachedProgress(const QSizeF& delta) const
 bool swipe_gesture::minimumDeltaReached(const QSizeF& delta) const
 {
     return minimumDeltaReachedProgress(delta) >= 1.0;
-}
-
-gesture_recognizer::gesture_recognizer(QObject* parent)
-    : QObject(parent)
-{
 }
 
 gesture_recognizer::~gesture_recognizer() = default;

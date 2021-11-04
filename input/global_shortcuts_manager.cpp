@@ -23,15 +23,12 @@
 namespace KWin::input
 {
 
-global_shortcuts_manager::global_shortcuts_manager(QObject* parent)
-    : QObject(parent)
-    , m_gestureRecognizer(new gesture_recognizer(this))
+global_shortcuts_manager::global_shortcuts_manager()
+    : m_gestureRecognizer{std::make_unique<gesture_recognizer>()}
 {
 }
 
-global_shortcuts_manager::~global_shortcuts_manager()
-{
-}
+global_shortcuts_manager::~global_shortcuts_manager() = default;
 
 void global_shortcuts_manager::init()
 {

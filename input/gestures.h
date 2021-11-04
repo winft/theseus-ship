@@ -23,9 +23,6 @@ class gesture : public QObject
 public:
     ~gesture() override;
 
-protected:
-    explicit gesture(QObject* parent);
-
 Q_SIGNALS:
     /**
      * Matching of a gesture started and this gesture might match.
@@ -49,7 +46,6 @@ class swipe_gesture : public gesture
 public:
     enum class Direction { Down, Left, Up, Right };
 
-    explicit swipe_gesture(QObject* parent = nullptr);
     ~swipe_gesture() override;
 
     bool minimumFingerCountIsRelevant() const
@@ -190,7 +186,6 @@ class KWIN_EXPORT gesture_recognizer : public QObject
 {
     Q_OBJECT
 public:
-    gesture_recognizer(QObject* parent = nullptr);
     ~gesture_recognizer() override;
 
     void registerGesture(gesture* gesture);

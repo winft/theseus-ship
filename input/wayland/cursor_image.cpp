@@ -38,7 +38,6 @@ namespace KWin::input::wayland
 {
 
 cursor_image::cursor_image()
-    : QObject()
 {
     connect(waylandServer()->seat(),
             &Wrapland::Server::Seat::focusedPointerChanged,
@@ -78,7 +77,7 @@ void cursor_image::setup_workspace()
     // TODO(romangg): can we load the fallback cursor earlier in the ctor already?
     loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
     if (m_cursorTheme) {
-        connect(m_cursorTheme, &cursor_theme::themeChanged, this, [this] {
+        connect(m_cursorTheme.get(), &cursor_theme::themeChanged, this, [this] {
             m_cursors.clear();
             m_cursorsByName.clear();
             loadThemeCursor(Qt::ArrowCursor, &m_fallbackCursor);
@@ -262,13 +261,14 @@ void cursor_image::loadTheme()
     if (m_cursorTheme) {
         return;
     }
+
     // check whether we can create it
     if (waylandServer()->internalShmPool()) {
-        m_cursorTheme = new cursor_theme(waylandServer()->internalShmPool(), this);
-        connect(waylandServer(), &WaylandServer::terminatingInternalClientConnection, this, [this] {
-            delete m_cursorTheme;
-            m_cursorTheme = nullptr;
-        });
+        m_cursorTheme = std::make_unique<cursor_theme>(waylandServer()->internalShmPool());
+        QObject::connect(waylandServer(),
+                         &WaylandServer::terminatingInternalClientConnection,
+                         this,
+                         [this] { m_cursorTheme.reset(); });
     }
 }
 
@@ -411,9 +411,11 @@ template<typename T>
 void cursor_image::loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Image* image)
 {
     loadTheme();
+
     if (!m_cursorTheme) {
         return;
     }
+
     auto it = cursors.constFind(shape);
     if (it == cursors.constEnd()) {
         image->image = QImage();
@@ -441,6 +443,7 @@ void cursor_image::loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Ima
         img.setDevicePixelRatio(scale);
         it = decltype(it)(cursors.insert(shape, {img, QPoint(hotSpotX, hotSpotY)}));
     }
+
     image->hotSpot = it.value().hotSpot;
     image->image = it.value().image;
 }
