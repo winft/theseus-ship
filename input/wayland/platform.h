@@ -45,7 +45,7 @@ class touch;
 namespace wayland
 {
 
-class platform : public input::platform
+class KWIN_EXPORT platform : public input::platform
 {
     Q_OBJECT
 public:

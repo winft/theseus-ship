@@ -40,7 +40,6 @@ redirect::redirect(keyboard_redirect* keyboard,
     , m_pointer(pointer)
     , m_tablet(tablet)
     , m_touch(touch)
-    , m_shortcuts{std::make_unique<global_shortcuts_manager>()}
 {
     qRegisterMetaType<KWin::input::redirect::KeyboardKeyState>();
     qRegisterMetaType<KWin::input::redirect::PointerButtonState>();

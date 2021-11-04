@@ -14,6 +14,7 @@
 
 #include "input/keyboard_redirect.h"
 #include "input/logging.h"
+#include "input/x11/redirect.h"
 #include "main.h"
 
 #include <QX11Info>
@@ -38,31 +39,32 @@ platform::platform()
         }
     }
 #endif
+
+    redirect = std::make_unique<input::x11::redirect>();
+    create_cursor();
 }
 
 platform::~platform() = default;
 
 #if HAVE_X11_XINPUT
-void create_cursor(platform* platform)
+void platform::create_cursor()
 {
-    auto const is_xinput_avail = platform->xinput != nullptr;
-    auto cursor = new x11::cursor(is_xinput_avail);
-    platform->cursor.reset(cursor);
+    auto const is_xinput_avail = xinput != nullptr;
+    cursor = std::make_unique<x11::cursor>(is_xinput_avail);
 
     if (is_xinput_avail) {
-        platform->xinput->setCursor(cursor);
+        xinput->setCursor(static_cast<x11::cursor*>(cursor.get()));
 
         // We know we have xkb already.
-        auto xkb = platform->redirect->keyboard()->xkb();
+        auto xkb = redirect->keyboard()->xkb();
         xkb->setConfig(kwinApp()->kxkbConfig());
         xkb->reconfigure();
     }
 }
 #else
-void create_cursor(platform* platform)
+void platform::create_cursor()
 {
-    auto cursor = new x11::cursor(false);
-    platform->cursor.reset(cursor);
+    cursor = std::make_unique<x11::cursor>(false);
 }
 #endif
 

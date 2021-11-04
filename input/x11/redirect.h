@@ -15,6 +15,8 @@ class KWIN_EXPORT redirect : public input::redirect
     Q_OBJECT
 public:
     redirect();
+
+    void install_shortcuts() override;
 };
 
 }

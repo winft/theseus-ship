@@ -241,6 +241,8 @@ public:
     virtual void startInteractivePositionSelection(std::function<void(QPoint const&)> callback);
     virtual bool isSelectingWindow() const;
 
+    virtual void install_shortcuts() = 0;
+
 Q_SIGNALS:
     /**
      * @brief Emitted when the global pointer position changed
@@ -284,12 +286,12 @@ protected:
     std::unique_ptr<tablet_redirect> m_tablet;
     std::unique_ptr<touch_redirect> m_touch;
 
+    std::unique_ptr<global_shortcuts_manager> m_shortcuts;
+
     std::list<event_filter*> m_filters;
     std::list<event_filter*>::const_iterator m_filters_install_iterator;
 
 private:
-    std::unique_ptr<global_shortcuts_manager> m_shortcuts;
-
     std::vector<event_spy*> m_spies;
 
     friend class DecorationEventFilter;

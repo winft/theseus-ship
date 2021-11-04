@@ -11,6 +11,7 @@
 #include "tablet_redirect.h"
 #include "touch_redirect.h"
 
+#include "input/global_shortcuts_manager.h"
 #include "input/keyboard.h"
 #include "input/pointer.h"
 #include "input/switch.h"
@@ -50,28 +51,22 @@
 namespace KWin::input::wayland
 {
 
-redirect::redirect()
-    : input::redirect(new keyboard_redirect(this),
-                      new pointer_redirect,
-                      new tablet_redirect,
-                      new touch_redirect)
-    , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
-{
-    QObject::connect(kwinApp(), &Application::startup_finished, this, &redirect::setup_workspace);
-    reconfigure();
-}
-
-redirect::~redirect() = default;
-
 static Wrapland::Server::Seat* find_seat()
 {
     return waylandServer()->seat();
 }
 
-void redirect::set_platform(wayland::platform* platform)
+redirect::redirect(wayland::platform* platform)
+    : input::redirect(new keyboard_redirect(this),
+                      new pointer_redirect,
+                      new tablet_redirect,
+                      new touch_redirect)
+    , platform{platform}
+    , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
 {
-    this->platform = platform;
-    platform->config = kwinApp()->inputConfig();
+    QObject::connect(kwinApp(), &Application::startup_finished, this, &redirect::setup_workspace);
+
+    reconfigure();
 
     QObject::connect(platform, &platform::pointer_added, this, [this](auto pointer) {
         auto pointer_red = m_pointer.get();
@@ -184,16 +179,22 @@ void redirect::set_platform(wayland::platform* platform)
                      platform,
                      &platform::update_keyboard_leds);
 
-    reconfigure();
     QObject::connect(
         config_watcher.data(), &KConfigWatcher::configChanged, this, [this](auto const& group) {
             if (group.name() == QLatin1String("Keyboard")) {
                 reconfigure();
             }
         });
+}
 
+void redirect::install_shortcuts()
+{
+    m_shortcuts = std::make_unique<input::global_shortcuts_manager>();
+    m_shortcuts->init();
     setup_touchpad_shortcuts();
 }
+
+redirect::~redirect() = default;
 
 void redirect::setup_touchpad_shortcuts()
 {

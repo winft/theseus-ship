@@ -5,6 +5,7 @@
 */
 #include "redirect.h"
 
+#include "input/global_shortcuts_manager.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/tablet_redirect.h"
@@ -22,6 +23,12 @@ redirect::redirect()
                       new input::tablet_redirect,
                       new input::touch_redirect)
 {
+}
+
+void redirect::install_shortcuts()
+{
+    m_shortcuts = std::make_unique<input::global_shortcuts_manager>();
+    m_shortcuts->init();
 }
 
 }

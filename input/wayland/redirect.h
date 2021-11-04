@@ -22,10 +22,8 @@ class KWIN_EXPORT redirect : public input::redirect
 {
     Q_OBJECT
 public:
-    redirect();
-    ~redirect();
-
-    void set_platform(wayland::platform* platform);
+    redirect(wayland::platform* platform);
+    ~redirect() override;
 
     bool has_tablet_mode_switch();
 
@@ -33,6 +31,8 @@ public:
                                          QByteArray const& cursorName) override;
     void startInteractivePositionSelection(std::function<void(QPoint const&)> callback) override;
     bool isSelectingWindow() const override;
+
+    void install_shortcuts() override;
 
     wayland::platform* platform{nullptr};
 

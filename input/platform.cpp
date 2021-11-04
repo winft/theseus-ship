@@ -7,7 +7,6 @@
 
 #include "cursor.h"
 #include "dbus/device_manager.h"
-#include "global_shortcuts_manager.h"
 #include "keyboard.h"
 #include "pointer.h"
 #include "redirect.h"
@@ -36,12 +35,6 @@ platform::~platform()
     for (auto touch : touchs) {
         touch->plat = nullptr;
     }
-}
-
-void add_redirect(platform* platform, std::unique_ptr<redirect> redirect)
-{
-    platform->redirect = std::move(redirect);
-    platform->redirect->shortcuts()->init();
 }
 
 }

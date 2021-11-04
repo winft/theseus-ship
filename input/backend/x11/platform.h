@@ -35,8 +35,9 @@ public:
     std::unique_ptr<xinput_integration> xinput;
 #endif
     std::unique_ptr<window_selector> window_sel;
-};
 
-void create_cursor(platform* platform);
+private:
+    void create_cursor();
+};
 
 }
