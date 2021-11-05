@@ -45,14 +45,14 @@ inline void pointer_axis_vertical(double delta, uint32_t time, int32_t discreteD
 inline void keyboard_key_pressed(uint32_t key, uint32_t time)
 {
     if (auto input = kwinApp()->input->redirect.get()) {
-        input->processKeyboardKey(key, redirect::KeyboardKeyPressed, time);
+        input->processKeyboardKey(key, key_state::pressed, time);
     }
 }
 
 inline void keyboard_key_released(uint32_t key, uint32_t time)
 {
     if (auto input = kwinApp()->input->redirect.get()) {
-        input->processKeyboardKey(key, redirect::KeyboardKeyReleased, time);
+        input->processKeyboardKey(key, key_state::released, time);
     }
 }
 

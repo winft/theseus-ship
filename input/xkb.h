@@ -57,7 +57,7 @@ public:
                          uint32_t modsLatched,
                          uint32_t modsLocked,
                          uint32_t group);
-    void updateKey(uint32_t key, input::redirect::KeyboardKeyState state);
+    void updateKey(uint32_t key, key_state state);
 
     xkb_keysym_t toKeysym(uint32_t key);
     xkb_keysym_t currentKeysym() const

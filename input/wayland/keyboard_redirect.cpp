@@ -45,10 +45,7 @@ public:
 
     void key(key_event const& event) override
     {
-        Q_EMIT redirect->keyStateChanged(event.keycode,
-                                         event.state == key_state::pressed
-                                             ? redirect::KeyboardKeyPressed
-                                             : redirect::KeyboardKeyReleased);
+        Q_EMIT redirect->keyStateChanged(event.keycode, event.state);
     }
 
 private:

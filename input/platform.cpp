@@ -19,6 +19,7 @@ namespace KWin::input
 platform::platform()
     : QObject()
 {
+    qRegisterMetaType<key_state>();
 }
 
 platform::~platform()

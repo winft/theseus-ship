@@ -45,7 +45,7 @@ void keyboard_redirect::update()
 
 void keyboard_redirect::process_key(key_event const& event)
 {
-    m_xkb->updateKey(event.keycode, (redirect::KeyboardKeyState)event.state);
+    m_xkb->updateKey(event.keycode, event.state);
     redirect->processSpies(std::bind(&event_spy::key, std::placeholders::_1, event));
 }
 

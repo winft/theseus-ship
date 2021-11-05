@@ -66,10 +66,6 @@ public:
         PointerAxisSourceContinuous,
         PointerAxisSourceWheelTilt
     };
-    enum KeyboardKeyState {
-        KeyboardKeyReleased,
-        KeyboardKeyPressed,
-    };
     enum TabletEventType {
         Axis,
         Proximity,
@@ -125,7 +121,7 @@ public:
     /**
      * @internal
      */
-    void processKeyboardKey(uint32_t key, KeyboardKeyState state, uint32_t time);
+    void processKeyboardKey(uint32_t key, key_state state, uint32_t time);
     /**
      * @internal
      */
@@ -273,7 +269,7 @@ Q_SIGNALS:
      * @param keyCode The keycode of the key which changed
      * @param state The new key state
      */
-    void keyStateChanged(quint32 keyCode, redirect::KeyboardKeyState state);
+    void keyStateChanged(quint32 keyCode, key_state state);
 
 protected:
     redirect(keyboard_redirect* keyboard,
@@ -310,7 +306,6 @@ redirect::registerShortcut(const QKeySequence& shortcut, QAction* action, T* rec
 }
 }
 
-Q_DECLARE_METATYPE(KWin::input::redirect::KeyboardKeyState)
 Q_DECLARE_METATYPE(KWin::input::redirect::PointerButtonState)
 Q_DECLARE_METATYPE(KWin::input::redirect::PointerAxis)
 Q_DECLARE_METATYPE(KWin::input::redirect::PointerAxisSource)
