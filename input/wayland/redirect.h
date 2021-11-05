@@ -42,6 +42,7 @@ Q_SIGNALS:
 
 private:
     void setup_workspace();
+    void setup_devices();
     void setup_filters();
     void setup_touchpad_shortcuts();
     void reconfigure();

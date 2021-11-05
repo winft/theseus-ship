@@ -67,29 +67,7 @@ redirect::redirect(wayland::platform* platform)
     QObject::connect(kwinApp(), &Application::startup_finished, this, &redirect::setup_workspace);
 
     reconfigure();
-
-    QObject::connect(platform, &platform::pointer_added, this, &redirect::handle_pointer_added);
-    QObject::connect(platform, &platform::pointer_removed, this, [this, platform]() {
-        if (auto seat = find_seat(); seat && platform->pointers.empty()) {
-            seat->setHasPointer(false);
-        }
-    });
-
-    QObject::connect(platform, &platform::switch_added, this, &redirect::handle_switch_added);
-
-    QObject::connect(platform, &platform::touch_added, this, &redirect::handle_touch_added);
-    QObject::connect(platform, &platform::touch_removed, this, [this, platform]() {
-        if (auto seat = find_seat(); seat && platform->touchs.empty()) {
-            seat->setHasTouch(false);
-        }
-    });
-
-    QObject::connect(platform, &platform::keyboard_added, this, &redirect::handle_keyboard_added);
-    QObject::connect(platform, &platform::keyboard_removed, this, [this, platform]() {
-        if (auto seat = find_seat(); seat && platform->keyboards.empty()) {
-            seat->setHasKeyboard(false);
-        }
-    });
+    setup_devices();
 
     platform->update_keyboard_leds(m_keyboard->xkb()->leds());
     waylandServer()->updateKeyState(m_keyboard->xkb()->leds());
@@ -108,6 +86,32 @@ redirect::redirect(wayland::platform* platform)
                 reconfigure();
             }
         });
+}
+
+void redirect::setup_devices()
+{
+    QObject::connect(platform, &platform::pointer_added, this, &redirect::handle_pointer_added);
+    QObject::connect(platform, &platform::pointer_removed, this, [this]() {
+        if (auto seat = find_seat(); seat && platform->pointers.empty()) {
+            seat->setHasPointer(false);
+        }
+    });
+
+    QObject::connect(platform, &platform::keyboard_added, this, &redirect::handle_keyboard_added);
+    QObject::connect(platform, &platform::keyboard_removed, this, [this]() {
+        if (auto seat = find_seat(); seat && platform->keyboards.empty()) {
+            seat->setHasKeyboard(false);
+        }
+    });
+
+    QObject::connect(platform, &platform::touch_added, this, &redirect::handle_touch_added);
+    QObject::connect(platform, &platform::touch_removed, this, [this]() {
+        if (auto seat = find_seat(); seat && platform->touchs.empty()) {
+            seat->setHasTouch(false);
+        }
+    });
+
+    QObject::connect(platform, &platform::switch_added, this, &redirect::handle_switch_added);
 }
 
 void redirect::install_shortcuts()
