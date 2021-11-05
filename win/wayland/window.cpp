@@ -129,7 +129,7 @@ void window::updateCaption()
 
 bool window::belongsToSameApplication(Toplevel const* other, win::same_client_check checks) const
 {
-    if (win::flags(checks & win::same_client_check::allow_cross_process)) {
+    if (flags(checks & win::same_client_check::allow_cross_process)) {
         if (other->control->desktop_file_name() == control->desktop_file_name()) {
             return true;
         }

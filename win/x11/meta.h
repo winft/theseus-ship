@@ -316,21 +316,21 @@ bool belong_to_same_application(Win const* c1, Win const* c2, win::same_client_c
 
         // tests that mean they most probably don't belong together
     } else if ((c1->pid() != c2->pid()
-                && !win::flags(checks & win::same_client_check::allow_cross_process))
+                && !flags(checks & win::same_client_check::allow_cross_process))
                || c1->wmClientMachine(false) != c2->wmClientMachine(false)) {
         // different processes
     } else if (c1->wmClientLeader() != c2->wmClientLeader()
                && c1->wmClientLeader() != c1->xcb_window()
                && c2->wmClientLeader() != c2->xcb_window()
-               && !win::flags(checks & win::same_client_check::allow_cross_process)) {
+               && !flags(checks & win::same_client_check::allow_cross_process)) {
         // if WM_CLIENT_LEADER is not set, it returns xcb_window(),
         // don't use in this test then
         // different client leader
     } else if (!Win::resourceMatch(c1, c2)) {
         // different apps
     } else if (!same_app_window_role_match(
-                   c1, c2, win::flags(checks & win::same_client_check::relaxed_for_active))
-               && !win::flags(checks & win::same_client_check::allow_cross_process)) {
+                   c1, c2, flags(checks & win::same_client_check::relaxed_for_active))
+               && !flags(checks & win::same_client_check::allow_cross_process)) {
         // "different" apps
     } else if (c1->pid() == 0 || c2->pid() == 0) {
         // old apps that don't have _NET_WM_PID, consider them different

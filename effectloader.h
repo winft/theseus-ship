@@ -19,8 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #ifndef KWIN_EFFECT_LOADER_H
 #define KWIN_EFFECT_LOADER_H
+
+#include "utils/flags.h"
 #include <kwin_export.h>
-// KDE
+
 #include <KPluginMetaData>
 #include <KSharedConfig>
 // Qt
@@ -44,11 +46,10 @@ enum class BuiltInEffect;
  *
  * @see AbstractEffectLoader::readConfig()
  */
-enum class LoadEffectFlag {
+enum class LoadEffectFlags {
     Load = 1 << 0, ///< Effect should be loaded
     CheckDefaultFunction = 1 << 2 ///< The Check Default Function needs to be invoked if the Effect provides it
 };
-Q_DECLARE_FLAGS(LoadEffectFlags, LoadEffectFlag)
 
 /**
  * @brief Interface to describe how an effect loader has to function.
@@ -292,7 +293,7 @@ public:
     bool loadEffect(BuiltInEffect effect, LoadEffectFlags flags);
 
 private:
-    bool loadEffect(const QString &name, BuiltInEffect effect, LoadEffectFlags flags);
+    bool loadEffect(const QString &name, BuiltInEffect effect, LoadEffectFlags load_flags);
     QString internalName(const QString &name) const;
     EffectLoadQueue<BuiltInEffectLoader, BuiltInEffect> *m_queue;
     QMap<BuiltInEffect, Effect*> m_loadedEffects;
@@ -339,7 +340,7 @@ public:
     void clear() override;
     void queryAndLoadAll() override;
     bool loadEffect(const QString &name) override;
-    bool loadEffect(const KPluginMetaData &info, LoadEffectFlags flags);
+    bool loadEffect(const KPluginMetaData &info, LoadEffectFlags load_flags);
 
     void setPluginSubDirectory(const QString &directory);
 
@@ -372,6 +373,6 @@ private:
 };
 
 }
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::LoadEffectFlags)
+ENUM_FLAGS(KWin::LoadEffectFlags)
 
 #endif

@@ -321,10 +321,10 @@ void win_info::changeState(NET::States state, NET::States mask)
     else if (mask & NET::MaxVert)
         win::set_maximize(m_client,
                           state & NET::MaxVert,
-                          win::flags(m_client->maximizeMode() & win::maximize_mode::horizontal));
+                          flags(m_client->maximizeMode() & win::maximize_mode::horizontal));
     else if (mask & NET::MaxHoriz)
         win::set_maximize(m_client,
-                          win::flags(m_client->maximizeMode() & win::maximize_mode::vertical),
+                          flags(m_client->maximizeMode() & win::maximize_mode::vertical),
                           state & NET::MaxHoriz);
 
     if (mask & NET::KeepAbove)

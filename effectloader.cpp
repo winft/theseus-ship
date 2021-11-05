@@ -65,11 +65,11 @@ LoadEffectFlags AbstractEffectLoader::readConfig(const QString &effectName, bool
     if (plugins.hasKey(key)) {
         // we have a key in the config, so read the enabled state
         const bool load = plugins.readEntry(key, defaultValue);
-        return load ? LoadEffectFlags(LoadEffectFlag::Load) : LoadEffectFlags();
+        return load ? LoadEffectFlags::Load : LoadEffectFlags();
     }
     // we don't have a key, so we just use the enabled by default value
     if (defaultValue) {
-        return LoadEffectFlag::Load | LoadEffectFlag::CheckDefaultFunction;
+        return LoadEffectFlags::Load | LoadEffectFlags::CheckDefaultFunction;
     }
     return LoadEffectFlags();
 }
@@ -101,7 +101,7 @@ QStringList BuiltInEffectLoader::listOfKnownEffects() const
 
 bool BuiltInEffectLoader::loadEffect(const QString &name)
 {
-    return loadEffect(name, BuiltInEffects::builtInForName(internalName(name)), LoadEffectFlag::Load);
+    return loadEffect(name, BuiltInEffects::builtInForName(internalName(name)), LoadEffectFlags::Load);
 }
 
 void BuiltInEffectLoader::queryAndLoadAll()
@@ -113,8 +113,8 @@ void BuiltInEffectLoader::queryAndLoadAll()
             continue;
         }
         const QString key = BuiltInEffects::nameForEffect(effect);
-        const LoadEffectFlags flags = readConfig(key, BuiltInEffects::enabledByDefault(effect));
-        if (flags.testFlag(LoadEffectFlag::Load)) {
+        auto const flags = readConfig(key, BuiltInEffects::enabledByDefault(effect));
+        if (KWin::flags(flags & LoadEffectFlags::Load)) {
             m_queue->enqueue(qMakePair(effect, flags));
         }
     }
@@ -125,12 +125,12 @@ bool BuiltInEffectLoader::loadEffect(BuiltInEffect effect, LoadEffectFlags flags
     return loadEffect(BuiltInEffects::nameForEffect(effect), effect, flags);
 }
 
-bool BuiltInEffectLoader::loadEffect(const QString &name, BuiltInEffect effect, LoadEffectFlags flags)
+bool BuiltInEffectLoader::loadEffect(const QString &name, BuiltInEffect effect, LoadEffectFlags load_flags)
 {
     if (effect == BuiltInEffect::Invalid) {
         return false;
     }
-    if (!flags.testFlag(LoadEffectFlag::Load)) {
+    if (!(load_flags & LoadEffectFlags::Load)) {
         qCDebug(KWIN_CORE) << "Loading flags disable effect: " << name;
         return false;
     }
@@ -148,7 +148,7 @@ bool BuiltInEffectLoader::loadEffect(const QString &name, BuiltInEffect effect, 
         return false;
     }
 
-    if (flags.testFlag(LoadEffectFlag::CheckDefaultFunction)) {
+    if (flags(load_flags & LoadEffectFlags::CheckDefaultFunction)) {
         if (!BuiltInEffects::checkEnabledByDefault(effect)) {
             qCDebug(KWIN_CORE) << "Enabled by default function disables effect: " << name;
             return false;
@@ -227,13 +227,13 @@ bool ScriptedEffectLoader::loadEffect(const QString &name)
     if (!effect.isValid()) {
         return false;
     }
-    return loadEffect(effect, LoadEffectFlag::Load);
+    return loadEffect(effect, LoadEffectFlags::Load);
 }
 
 bool ScriptedEffectLoader::loadEffect(const KPluginMetaData &effect, LoadEffectFlags flags)
 {
     const QString name = effect.pluginId();
-    if (!flags.testFlag(LoadEffectFlag::Load)) {
+    if (!(flags & LoadEffectFlags::Load)) {
         qCDebug(KWIN_CORE) << "Loading flags disable effect: " << name;
         return false;
     }
@@ -275,9 +275,9 @@ void ScriptedEffectLoader::queryAndLoadAll()
         [this, watcher]() {
             const auto effects = watcher->result();
             for (auto effect : effects) {
-                const LoadEffectFlags flags = readConfig(effect.pluginId(), effect.isEnabledByDefault());
-                if (flags.testFlag(LoadEffectFlag::Load)) {
-                    m_queue->enqueue(qMakePair(effect, flags));
+                auto const load_flags = readConfig(effect.pluginId(), effect.isEnabledByDefault());
+                if (flags(load_flags & LoadEffectFlags::Load)) {
+                    m_queue->enqueue(qMakePair(effect, load_flags));
                 }
             }
             watcher->deleteLater();
@@ -387,17 +387,17 @@ bool PluginEffectLoader::loadEffect(const QString &name)
     if (!info.isValid()) {
         return false;
     }
-    return loadEffect(info, LoadEffectFlag::Load);
+    return loadEffect(info, LoadEffectFlags::Load);
 }
 
-bool PluginEffectLoader::loadEffect(const KPluginMetaData &info, LoadEffectFlags flags)
+bool PluginEffectLoader::loadEffect(const KPluginMetaData &info, LoadEffectFlags load_flags)
 {
     if (!info.isValid()) {
         qCDebug(KWIN_CORE) << "Plugin info is not valid";
         return false;
     }
     const QString name = info.pluginId();
-    if (!flags.testFlag(LoadEffectFlag::Load)) {
+    if (!(load_flags & LoadEffectFlags::Load)) {
         qCDebug(KWIN_CORE) << "Loading flags disable effect: " << name;
         return false;
     }
@@ -419,7 +419,7 @@ bool PluginEffectLoader::loadEffect(const KPluginMetaData &info, LoadEffectFlags
         return false;
     }
 
-    if (flags.testFlag(LoadEffectFlag::CheckDefaultFunction)) {
+    if (flags(load_flags & LoadEffectFlags::CheckDefaultFunction)) {
         if (!effectFactory->enabledByDefault()) {
             qCDebug(KWIN_CORE) << "Enabled by default function disables effect: " << name;
             return false;
@@ -455,9 +455,9 @@ void PluginEffectLoader::queryAndLoadAll()
         [this, watcher]() {
             const auto effects = watcher->result();
             for (const auto &effect : effects) {
-                const LoadEffectFlags flags = readConfig(effect.pluginId(), effect.isEnabledByDefault());
-                if (flags.testFlag(LoadEffectFlag::Load)) {
-                    m_queue->enqueue(qMakePair(effect, flags));
+                auto const load_flags = readConfig(effect.pluginId(), effect.isEnabledByDefault());
+                if (flags(load_flags & LoadEffectFlags::Load)) {
+                    m_queue->enqueue(qMakePair(effect, load_flags));
                 }
             }
             watcher->deleteLater();

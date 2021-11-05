@@ -83,7 +83,7 @@ void DontCrashNoBorder::initTestCase()
 
 void DontCrashNoBorder::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration);
+    Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
 
     screens()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));

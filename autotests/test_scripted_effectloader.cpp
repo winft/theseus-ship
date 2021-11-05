@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Qt
 #include <QStringList>
 #include <QtTest>
-Q_DECLARE_METATYPE(KWin::LoadEffectFlag)
 Q_DECLARE_METATYPE(KWin::LoadEffectFlags)
 Q_DECLARE_METATYPE(KWin::Effect*)
 Q_DECLARE_METATYPE(KSharedConfigPtr)
@@ -291,10 +290,10 @@ void TestScriptedEffectLoader::testLoadScriptedEffect_data()
     QTest::addColumn<bool>("expected");
     QTest::addColumn<KWin::LoadEffectFlags>("loadFlags");
 
-    const KWin::LoadEffectFlags checkDefault
-        = KWin::LoadEffectFlag::Load | KWin::LoadEffectFlag::CheckDefaultFunction;
-    const KWin::LoadEffectFlags forceFlags = KWin::LoadEffectFlag::Load;
-    const KWin::LoadEffectFlags dontLoadFlags = KWin::LoadEffectFlags();
+    auto const checkDefault
+        = KWin::LoadEffectFlags::Load | KWin::LoadEffectFlags::CheckDefaultFunction;
+    auto const forceFlags = KWin::LoadEffectFlags::Load;
+    auto const dontLoadFlags = KWin::LoadEffectFlags();
 
     // enabled by default
     QTest::newRow("Fade") << QStringLiteral("kwin4_effect_fade") << true << checkDefault;

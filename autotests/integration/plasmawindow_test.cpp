@@ -90,7 +90,7 @@ void PlasmaWindowTest::initTestCase()
 
 void PlasmaWindowTest::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::WindowManagement);
+    Test::setup_wayland_connection(Test::global_selection::window_management);
     m_windowManagement = Test::get_client().interfaces.window_management.get();
     m_compositor = Test::get_client().interfaces.compositor.get();
 

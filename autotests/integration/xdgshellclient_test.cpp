@@ -141,8 +141,8 @@ void TestXdgShellClient::initTestCase()
 
 void TestXdgShellClient::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration
-                                   | Test::AdditionalWaylandInterface::AppMenu);
+    Test::setup_wayland_connection(Test::global_selection::xdg_decoration
+                                   | Test::global_selection::appmenu);
 
     screens()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(1280, 512));

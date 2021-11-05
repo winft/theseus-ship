@@ -12,6 +12,7 @@
 #include "base/platform.h"
 #include "main.h"
 #include "render/backend/wlroots/backend.h"
+#include "utils/flags.h"
 #include "wayland_server.h"
 
 #include <Wrapland/Client/xdg_shell.h>
@@ -68,18 +69,17 @@ class Toplevel;
 namespace Test
 {
 
-enum class AdditionalWaylandInterface {
-    Seat = 1 << 0,
-    XdgDecoration = 1 << 1,
-    PlasmaShell = 1 << 2,
-    WindowManagement = 1 << 3,
-    PointerConstraints = 1 << 4,
-    IdleInhibition = 1 << 5,
-    AppMenu = 1 << 6,
-    ShadowManager = 1 << 7,
-    XdgActivation = 1 << 8,
+enum class global_selection {
+    seat = 1 << 0,
+    xdg_decoration = 1 << 1,
+    plasma_shell = 1 << 2,
+    window_management = 1 << 3,
+    pointer_constraints = 1 << 4,
+    idle_inhibition = 1 << 5,
+    appmenu = 1 << 6,
+    shadow = 1 << 7,
+    xdg_activation = 1 << 8,
 };
-Q_DECLARE_FLAGS(AdditionalWaylandInterfaces, AdditionalWaylandInterface)
 
 class KWIN_EXPORT client
 {
@@ -108,7 +108,7 @@ public:
     } interfaces;
 
     client() = default;
-    explicit client(AdditionalWaylandInterfaces flags);
+    explicit client(global_selection globals);
     client(client const&) = delete;
     client& operator=(client const&) = delete;
     client(client&& other) noexcept;
@@ -175,8 +175,7 @@ KWIN_EXPORT WaylandTestApplication* app();
  * client side objects which can be used to create windows.
  * @see destroy_wayland_connection
  */
-KWIN_EXPORT void setup_wayland_connection(AdditionalWaylandInterfaces flags
-                                          = AdditionalWaylandInterfaces());
+KWIN_EXPORT void setup_wayland_connection(global_selection globals = {});
 
 /**
  * Destroys the Wayland Connection created with @link{setup_wayland_connection}.
@@ -343,7 +342,7 @@ int create_test(std::string const& test_name,
 }
 }
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::Test::AdditionalWaylandInterfaces)
+ENUM_FLAGS(KWin::Test::global_selection)
 
 #define WAYLANDTEST_MAIN_FLAGS(Tester, flags)                                                      \
     int main(int argc, char* argv[])                                                               \

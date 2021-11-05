@@ -96,8 +96,8 @@ void TestPointerConstraints::initTestCase()
 
 void TestPointerConstraints::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat
-                                   | Test::AdditionalWaylandInterface::PointerConstraints);
+    Test::setup_wayland_connection(Test::global_selection::seat
+                                   | Test::global_selection::pointer_constraints);
     QVERIFY(Test::wait_for_wayland_pointer());
 
     screens()->setCurrent(0);

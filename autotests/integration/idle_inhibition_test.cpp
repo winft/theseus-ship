@@ -70,7 +70,7 @@ void TestIdleInhibition::initTestCase()
 
 void TestIdleInhibition::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::IdleInhibition);
+    Test::setup_wayland_connection(Test::global_selection::idle_inhibition);
 }
 
 void TestIdleInhibition::cleanup()

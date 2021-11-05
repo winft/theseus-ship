@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStringList>
 #include <QtTest>
 Q_DECLARE_METATYPE(KWin::CompositingType)
-Q_DECLARE_METATYPE(KWin::LoadEffectFlag)
 Q_DECLARE_METATYPE(KWin::LoadEffectFlags)
 Q_DECLARE_METATYPE(KWin::Effect*)
 
@@ -268,10 +267,10 @@ void TestPluginEffectLoader::testLoadPluginEffect_data()
     const KWin::CompositingType xc = KWin::XRenderCompositing;
     const KWin::CompositingType oc = KWin::OpenGLCompositing;
 
-    const KWin::LoadEffectFlags checkDefault
-        = KWin::LoadEffectFlag::Load | KWin::LoadEffectFlag::CheckDefaultFunction;
-    const KWin::LoadEffectFlags forceFlags = KWin::LoadEffectFlag::Load;
-    const KWin::LoadEffectFlags dontLoadFlags = KWin::LoadEffectFlags();
+    auto const checkDefault
+        = KWin::LoadEffectFlags::Load | KWin::LoadEffectFlags::CheckDefaultFunction;
+    auto const forceFlags = KWin::LoadEffectFlags::Load;
+    auto const dontLoadFlags = KWin::LoadEffectFlags();
 
     // enabled by default, but not supported
     QTest::newRow("fakeeffectplugin")

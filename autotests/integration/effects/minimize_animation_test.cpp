@@ -87,8 +87,8 @@ void MinimizeAnimationTest::initTestCase()
 
 void MinimizeAnimationTest::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::PlasmaShell
-                                   | Test::AdditionalWaylandInterface::WindowManagement);
+    Test::setup_wayland_connection(Test::global_selection::plasma_shell
+                                   | Test::global_selection::window_management);
 }
 
 void MinimizeAnimationTest::cleanup()

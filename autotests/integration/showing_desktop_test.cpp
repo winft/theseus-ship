@@ -57,7 +57,7 @@ void ShowingDesktopTest::initTestCase()
 
 void ShowingDesktopTest::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::PlasmaShell);
+    Test::setup_wayland_connection(Test::global_selection::plasma_shell);
 }
 
 void ShowingDesktopTest::cleanup()

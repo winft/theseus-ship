@@ -84,8 +84,8 @@ void TouchInputTest::initTestCase()
 void TouchInputTest::init()
 {
     using namespace Wrapland::Client;
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat
-                                   | Test::AdditionalWaylandInterface::XdgDecoration);
+    Test::setup_wayland_connection(Test::global_selection::seat
+                                   | Test::global_selection::xdg_decoration);
     QVERIFY(Test::wait_for_wayland_touch());
     auto seat = Test::get_client().interfaces.seat.get();
     touch = std::unique_ptr<Wrapland::Client::Touch>(seat->createTouch(seat));

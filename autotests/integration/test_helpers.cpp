@@ -50,7 +50,7 @@ namespace Clt = Wrapland::Client;
 namespace KWin::Test
 {
 
-client::client(AdditionalWaylandInterfaces flags)
+client::client(global_selection globals)
 {
     int sx[2];
     QVERIFY(socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) >= 0);
@@ -118,63 +118,63 @@ client::client(AdditionalWaylandInterfaces flags)
         registry->interface(Clt::Registry::Interface::LayerShellV1).version));
     QVERIFY(interfaces.layer_shell->isValid());
 
-    if (flags.testFlag(AdditionalWaylandInterface::Seat)) {
+    if (flags(globals & global_selection::seat)) {
         interfaces.seat.reset(
             registry->createSeat(registry->interface(Clt::Registry::Interface::Seat).name,
                                  registry->interface(Clt::Registry::Interface::Seat).version));
         QVERIFY(interfaces.seat->isValid());
     }
 
-    if (flags.testFlag(AdditionalWaylandInterface::ShadowManager)) {
+    if (flags(globals & global_selection::shadow)) {
         interfaces.shadow_manager.reset(registry->createShadowManager(
             registry->interface(Clt::Registry::Interface::Shadow).name,
             registry->interface(Clt::Registry::Interface::Shadow).version));
         QVERIFY(interfaces.shadow_manager->isValid());
     }
 
-    if (flags.testFlag(AdditionalWaylandInterface::PlasmaShell)) {
+    if (flags(globals & global_selection::plasma_shell)) {
         interfaces.plasma_shell.reset(registry->createPlasmaShell(
             registry->interface(Clt::Registry::Interface::PlasmaShell).name,
             registry->interface(Clt::Registry::Interface::PlasmaShell).version));
         QVERIFY(interfaces.plasma_shell->isValid());
     }
 
-    if (flags.testFlag(AdditionalWaylandInterface::WindowManagement)) {
+    if (flags(globals & global_selection::window_management)) {
         interfaces.window_management.reset(registry->createPlasmaWindowManagement(
             registry->interface(Clt::Registry::Interface::PlasmaWindowManagement).name,
             registry->interface(Clt::Registry::Interface::PlasmaWindowManagement).version));
         QVERIFY(interfaces.window_management->isValid());
     }
 
-    if (flags.testFlag(AdditionalWaylandInterface::PointerConstraints)) {
+    if (flags(globals & global_selection::pointer_constraints)) {
         interfaces.pointer_constraints.reset(registry->createPointerConstraints(
             registry->interface(Clt::Registry::Interface::PointerConstraintsUnstableV1).name,
             registry->interface(Clt::Registry::Interface::PointerConstraintsUnstableV1).version));
         QVERIFY(interfaces.pointer_constraints->isValid());
     }
 
-    if (flags.testFlag(AdditionalWaylandInterface::IdleInhibition)) {
+    if (flags(globals & global_selection::idle_inhibition)) {
         interfaces.idle_inhibit.reset(registry->createIdleInhibitManager(
             registry->interface(Clt::Registry::Interface::IdleInhibitManagerUnstableV1).name,
             registry->interface(Clt::Registry::Interface::IdleInhibitManagerUnstableV1).version));
         QVERIFY(interfaces.idle_inhibit->isValid());
     }
 
-    if (flags.testFlag(AdditionalWaylandInterface::AppMenu)) {
+    if (flags(globals & global_selection::appmenu)) {
         interfaces.app_menu.reset(registry->createAppMenuManager(
             registry->interface(Clt::Registry::Interface::AppMenu).name,
             registry->interface(Clt::Registry::Interface::AppMenu).version));
         QVERIFY(interfaces.app_menu->isValid());
     }
 
-    if (flags.testFlag(AdditionalWaylandInterface::XdgActivation)) {
+    if (flags(globals & global_selection::xdg_activation)) {
         interfaces.xdg_activation.reset(registry->createXdgActivationV1(
             registry->interface(Clt::Registry::Interface::XdgActivationV1).name,
             registry->interface(Clt::Registry::Interface::XdgActivationV1).version));
         QVERIFY(interfaces.xdg_activation->isValid());
     }
 
-    if (flags.testFlag(AdditionalWaylandInterface::XdgDecoration)) {
+    if (flags(globals & global_selection::xdg_decoration)) {
         interfaces.xdg_decoration.reset(registry->createXdgDecorationManager(
             registry->interface(Clt::Registry::Interface::XdgDecorationUnstableV1).name,
             registry->interface(Clt::Registry::Interface::XdgDecorationUnstableV1).version));
@@ -272,9 +272,9 @@ WaylandTestApplication* app()
     return static_cast<WaylandTestApplication*>(kwinApp());
 }
 
-void setup_wayland_connection(AdditionalWaylandInterfaces flags)
+void setup_wayland_connection(global_selection globals)
 {
-    get_all_clients().emplace_back(flags);
+    get_all_clients().emplace_back(globals);
 }
 
 void destroy_wayland_connection()

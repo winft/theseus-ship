@@ -124,7 +124,7 @@ void QuickTilingTest::initTestCase()
 
 void QuickTilingTest::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration);
+    Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
     m_connection = Test::get_client().connection;
     m_compositor = Test::get_client().interfaces.compositor.get();
 
@@ -155,7 +155,7 @@ Wrapland::Client::XdgShellToplevel::States get_client_tiles(win::quicktiles tile
     auto maximized{true};
 
     auto check_tile = [&](win::quicktiles tile, ClientToplevel::State state) {
-        if (win::flags(tiles & tile)) {
+        if (flags(tiles & tile)) {
             states |= state;
         } else {
             // When any tile is inactive, the state is not maximized.
@@ -792,7 +792,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     const QRect origGeo = client->frameGeometry();
     QCOMPARE(client->maximizeMode(), win::maximize_mode::restore);
     // vertically maximize the window
-    win::maximize(client, win::flags(client->maximizeMode() ^ win::maximize_mode::vertical));
+    win::maximize(client, flags(client->maximizeMode() ^ win::maximize_mode::vertical));
     QCOMPARE(client->frameGeometry().width(), origGeo.width());
     QCOMPARE(client->size().height(), screens()->size(client->screen()).height());
     QCOMPARE(client->restore_geometries.maximize, origGeo);

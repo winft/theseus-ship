@@ -104,8 +104,8 @@ void MoveResizeWindowTest::initTestCase()
 
 void MoveResizeWindowTest::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::PlasmaShell
-                                   | Test::AdditionalWaylandInterface::Seat);
+    Test::setup_wayland_connection(Test::global_selection::plasma_shell
+                                   | Test::global_selection::seat);
     QVERIFY(Test::wait_for_wayland_pointer());
     m_connection = Test::get_client().connection;
     m_compositor = Test::get_client().interfaces.compositor.get();
