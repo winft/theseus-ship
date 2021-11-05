@@ -146,7 +146,7 @@ static bool stringIsEmptyOrNull(const char* str)
  * As kwin_wayland may have the CAP_SET_NICE capability, it returns nullptr
  * so we need to do it ourselves (see xkb_context_sanitize_rule_names).
  **/
-void xkb::applyEnvironmentRules(xkb_rule_names& ruleNames)
+void xkb::apply_environment_rules(xkb_rule_names& ruleNames, QStringList& layouts) const
 {
     if (stringIsEmptyOrNull(ruleNames.rules)) {
         ruleNames.rules = getenv("XKB_DEFAULT_RULES");
@@ -165,7 +165,7 @@ void xkb::applyEnvironmentRules(xkb_rule_names& ruleNames)
         ruleNames.options = getenv("XKB_DEFAULT_OPTIONS");
     }
 
-    m_layoutList = QString::fromLatin1(ruleNames.layout).split(QLatin1Char(','));
+    layouts = QString::fromLatin1(ruleNames.layout).split(QLatin1Char(','));
 }
 
 xkb_keymap* xkb::loadKeymapFromConfig()
@@ -186,7 +186,7 @@ xkb_keymap* xkb::loadKeymapFromConfig()
                                 .variant = variant.constData(),
                                 .options = options.constData()};
 
-    applyEnvironmentRules(ruleNames);
+    apply_environment_rules(ruleNames, m_layoutList);
 
     return xkb_keymap_new_from_names(m_context, &ruleNames, XKB_KEYMAP_COMPILE_NO_FLAGS);
 }
@@ -194,7 +194,7 @@ xkb_keymap* xkb::loadKeymapFromConfig()
 xkb_keymap* xkb::loadDefaultKeymap()
 {
     xkb_rule_names ruleNames = {};
-    applyEnvironmentRules(ruleNames);
+    apply_environment_rules(ruleNames, m_layoutList);
     return xkb_keymap_new_from_names(m_context, &ruleNames, XKB_KEYMAP_COMPILE_NO_FLAGS);
 }
 

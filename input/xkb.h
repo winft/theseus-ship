@@ -117,7 +117,7 @@ Q_SIGNALS:
     void ledsChanged(keyboard_leds leds);
 
 private:
-    void applyEnvironmentRules(xkb_rule_names&);
+    void apply_environment_rules(xkb_rule_names&, QStringList& layouts) const;
 
     xkb_keymap* loadKeymapFromConfig();
     xkb_keymap* loadDefaultKeymap();
