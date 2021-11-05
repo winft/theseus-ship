@@ -128,25 +128,25 @@ private:
     void updateConsumedModifiers(uint32_t key);
 
     xkb_context* m_context;
-    xkb_keymap* m_keymap;
+    xkb_keymap* m_keymap{nullptr};
     QStringList m_layoutList;
-    xkb_state* m_state;
+    xkb_state* m_state{nullptr};
 
-    xkb_mod_index_t m_shiftModifier;
-    xkb_mod_index_t m_capsModifier;
-    xkb_mod_index_t m_controlModifier;
-    xkb_mod_index_t m_altModifier;
-    xkb_mod_index_t m_metaModifier;
-    xkb_mod_index_t m_numModifier;
+    xkb_mod_index_t m_shiftModifier{0};
+    xkb_mod_index_t m_capsModifier{0};
+    xkb_mod_index_t m_controlModifier{0};
+    xkb_mod_index_t m_altModifier{0};
+    xkb_mod_index_t m_metaModifier{0};
+    xkb_mod_index_t m_numModifier{0};
 
-    xkb_led_index_t m_numLock;
-    xkb_led_index_t m_capsLock;
-    xkb_led_index_t m_scrollLock;
+    xkb_led_index_t m_numLock{0};
+    xkb_led_index_t m_capsLock{0};
+    xkb_led_index_t m_scrollLock{0};
 
     Qt::KeyboardModifiers m_modifiers{Qt::NoModifier};
     Qt::KeyboardModifiers m_consumedModifiers{Qt::NoModifier};
 
-    xkb_keysym_t m_keysym;
+    xkb_keysym_t m_keysym{XKB_KEY_NoSymbol};
     quint32 m_currentLayout{0};
 
     struct {
@@ -154,7 +154,7 @@ private:
         xkb_compose_state* state{nullptr};
     } m_compose;
 
-    keyboard_leds m_leds;
+    keyboard_leds m_leds{keyboard_leds::none};
 
     KConfigGroup m_configGroup;
     KSharedConfigPtr m_numLockConfig;

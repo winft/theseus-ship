@@ -66,21 +66,6 @@ static void xkbLogHandler([[maybe_unused]] xkb_context* context,
 
 xkb::xkb()
     : m_context(xkb_context_new(XKB_CONTEXT_NO_FLAGS))
-    , m_keymap(nullptr)
-    , m_state(nullptr)
-    , m_shiftModifier(0)
-    , m_capsModifier(0)
-    , m_controlModifier(0)
-    , m_altModifier(0)
-    , m_metaModifier(0)
-    , m_numModifier(0)
-    , m_numLock(0)
-    , m_capsLock(0)
-    , m_scrollLock(0)
-    , m_modifiers(Qt::NoModifier)
-    , m_consumedModifiers(Qt::NoModifier)
-    , m_keysym(XKB_KEY_NoSymbol)
-    , m_leds()
 {
     qRegisterMetaType<KWin::input::keyboard_leds>();
 
