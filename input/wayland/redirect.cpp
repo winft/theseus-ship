@@ -68,100 +68,23 @@ redirect::redirect(wayland::platform* platform)
 
     reconfigure();
 
-    QObject::connect(platform, &platform::pointer_added, this, [this](auto pointer) {
-        auto pointer_red = m_pointer.get();
-        QObject::connect(pointer,
-                         &pointer::button_changed,
-                         pointer_red,
-                         &input::pointer_redirect::process_button);
-        QObject::connect(
-            pointer, &pointer::motion, pointer_red, &input::pointer_redirect::process_motion);
-        QObject::connect(pointer,
-                         &pointer::motion_absolute,
-                         pointer_red,
-                         &input::pointer_redirect::process_motion_absolute);
-        QObject::connect(
-            pointer, &pointer::axis_changed, pointer_red, &input::pointer_redirect::process_axis);
-
-        QObject::connect(pointer,
-                         &pointer::pinch_begin,
-                         pointer_red,
-                         &input::pointer_redirect::process_pinch_begin);
-        QObject::connect(pointer,
-                         &pointer::pinch_update,
-                         pointer_red,
-                         &input::pointer_redirect::process_pinch_update);
-        QObject::connect(
-            pointer, &pointer::pinch_end, pointer_red, &input::pointer_redirect::process_pinch_end);
-
-        QObject::connect(pointer,
-                         &pointer::swipe_begin,
-                         pointer_red,
-                         &input::pointer_redirect::process_swipe_begin);
-        QObject::connect(pointer,
-                         &pointer::swipe_update,
-                         pointer_red,
-                         &input::pointer_redirect::process_swipe_update);
-        QObject::connect(
-            pointer, &pointer::swipe_end, pointer_red, &input::pointer_redirect::process_swipe_end);
-
-        QObject::connect(
-            pointer, &pointer::frame, pointer_red, &input::pointer_redirect::process_frame);
-
-        if (auto seat = find_seat()) {
-            seat->setHasPointer(true);
-        }
-    });
-
+    QObject::connect(platform, &platform::pointer_added, this, &redirect::handle_pointer_added);
     QObject::connect(platform, &platform::pointer_removed, this, [this, platform]() {
         if (auto seat = find_seat(); seat && platform->pointers.empty()) {
             seat->setHasPointer(false);
         }
     });
 
-    QObject::connect(platform, &platform::switch_added, this, [this](auto switch_device) {
-        QObject::connect(switch_device, &switch_device::toggle, this, [this](auto const& event) {
-            if (event.type == switch_type::tablet_mode) {
-                Q_EMIT has_tablet_mode_switch_changed(event.state == switch_state::on);
-            }
-        });
-    });
+    QObject::connect(platform, &platform::switch_added, this, &redirect::handle_switch_added);
 
-    QObject::connect(platform, &platform::touch_added, this, [this](auto touch) {
-        auto touch_red = m_touch.get();
-        QObject::connect(touch, &touch::down, touch_red, &input::touch_redirect::process_down);
-        QObject::connect(touch, &touch::up, touch_red, &input::touch_redirect::process_up);
-        QObject::connect(touch, &touch::motion, touch_red, &input::touch_redirect::process_motion);
-        QObject::connect(touch, &touch::cancel, touch_red, &input::touch_redirect::cancel);
-#if HAVE_WLR_TOUCH_FRAME
-        QObject::connect(touch, &touch::frame, touch_red, &input::touch_redirect::frame);
-#endif
-
-        if (auto seat = find_seat()) {
-            seat->setHasTouch(true);
-        }
-    });
-
+    QObject::connect(platform, &platform::touch_added, this, &redirect::handle_touch_added);
     QObject::connect(platform, &platform::touch_removed, this, [this, platform]() {
         if (auto seat = find_seat(); seat && platform->touchs.empty()) {
             seat->setHasTouch(false);
         }
     });
 
-    QObject::connect(platform, &platform::keyboard_added, this, [this](auto keyboard) {
-        auto keyboard_red = m_keyboard.get();
-        QObject::connect(
-            keyboard, &keyboard::key_changed, keyboard_red, &input::keyboard_redirect::process_key);
-        QObject::connect(keyboard,
-                         &keyboard::modifiers_changed,
-                         keyboard_red,
-                         &input::keyboard_redirect::process_modifiers);
-        if (auto seat = find_seat(); seat && !seat->hasKeyboard()) {
-            seat->setHasKeyboard(true);
-            reconfigure();
-        }
-    });
-
+    QObject::connect(platform, &platform::keyboard_added, this, &redirect::handle_keyboard_added);
     QObject::connect(platform, &platform::keyboard_removed, this, [this, platform]() {
         if (auto seat = find_seat(); seat && platform->keyboards.empty()) {
             seat->setHasKeyboard(false);
@@ -231,115 +154,10 @@ void redirect::setup_touchpad_shortcuts()
 void redirect::setup_workspace()
 {
     fake_input = waylandServer()->display()->createFakeInput();
-
-    QObject::connect(
-        fake_input.get(), &Wrapland::Server::FakeInput::deviceCreated, this, [this](auto device) {
-            QObject::connect(device,
-                             &Wrapland::Server::FakeInputDevice::authenticationRequested,
-                             this,
-                             [this, device](auto const& /*application*/, auto const& /*reason*/) {
-                                 // TODO: make secure
-                                 device->setAuthentication(true);
-                             });
-            QObject::connect(device,
-                             &Wrapland::Server::FakeInputDevice::pointerMotionRequested,
-                             this,
-                             [this](auto const& delta) {
-                                 // TODO: Fix time
-                                 m_pointer->processMotion(
-                                     globalPointer() + QPointF(delta.width(), delta.height()), 0);
-                                 waylandServer()->simulateUserActivity();
-                             });
-            QObject::connect(device,
-                             &Wrapland::Server::FakeInputDevice::pointerMotionAbsoluteRequested,
-                             this,
-                             [this](auto const& pos) {
-                                 // TODO: Fix time
-                                 m_pointer->processMotion(pos, 0);
-                                 waylandServer()->simulateUserActivity();
-                             });
-            QObject::connect(
-                device,
-                &Wrapland::Server::FakeInputDevice::pointerButtonPressRequested,
-                this,
-                [this](auto button) {
-                    // TODO: Fix time
-                    m_pointer->process_button({button, button_state::pressed, {nullptr, 0}});
-                    waylandServer()->simulateUserActivity();
-                });
-            QObject::connect(
-                device,
-                &Wrapland::Server::FakeInputDevice::pointerButtonReleaseRequested,
-                this,
-                [this](auto button) {
-                    // TODO: Fix time
-                    m_pointer->process_button({button, button_state::released, {nullptr, 0}});
-                    waylandServer()->simulateUserActivity();
-                });
-            QObject::connect(
-                device,
-                &Wrapland::Server::FakeInputDevice::pointerAxisRequested,
-                this,
-                [this](auto orientation, auto delta) {
-                    // TODO: Fix time
-                    auto axis = (orientation == Qt::Horizontal) ? axis_orientation::horizontal
-                                                                : axis_orientation::vertical;
-                    // TODO: Fix time
-                    m_pointer->process_axis({axis_source::unknown, axis, delta, 0, nullptr, 0});
-                    waylandServer()->simulateUserActivity();
-                });
-            QObject::connect(device,
-                             &Wrapland::Server::FakeInputDevice::touchDownRequested,
-                             this,
-                             [this](auto id, auto const& pos) {
-                                 // TODO: Fix time
-                                 m_touch->process_down({static_cast<int32_t>(id), pos, nullptr, 0});
-                                 waylandServer()->simulateUserActivity();
-                             });
-            QObject::connect(
-                device,
-                &Wrapland::Server::FakeInputDevice::touchMotionRequested,
-                this,
-                [this](auto id, auto const& pos) {
-                    // TODO: Fix time
-                    m_touch->process_motion({static_cast<int32_t>(id), pos, nullptr, 0});
-                    waylandServer()->simulateUserActivity();
-                });
-            QObject::connect(device,
-                             &Wrapland::Server::FakeInputDevice::touchUpRequested,
-                             this,
-                             [this](auto id) {
-                                 // TODO: Fix time
-                                 m_touch->process_up({static_cast<int32_t>(id), nullptr, 0});
-                                 waylandServer()->simulateUserActivity();
-                             });
-            QObject::connect(device,
-                             &Wrapland::Server::FakeInputDevice::touchCancelRequested,
-                             this,
-                             [this]() { m_touch->cancel(); });
-            QObject::connect(device,
-                             &Wrapland::Server::FakeInputDevice::touchFrameRequested,
-                             this,
-                             [this]() { m_touch->frame(); });
-            QObject::connect(
-                device,
-                &Wrapland::Server::FakeInputDevice::keyboardKeyPressRequested,
-                this,
-                [this](auto button) {
-                    // TODO: Fix time
-                    m_keyboard->process_key({button, key_state::pressed, false, nullptr, 0});
-                    waylandServer()->simulateUserActivity();
-                });
-            QObject::connect(
-                device,
-                &Wrapland::Server::FakeInputDevice::keyboardKeyReleaseRequested,
-                this,
-                [this](auto button) {
-                    // TODO: Fix time
-                    m_keyboard->process_key({button, key_state::released, false, nullptr, 0});
-                    waylandServer()->simulateUserActivity();
-                });
-        });
+    QObject::connect(fake_input.get(),
+                     &Wrapland::Server::FakeInput::deviceCreated,
+                     this,
+                     &redirect::handle_fake_input_device_added);
 
     static_cast<keyboard_redirect*>(m_keyboard.get())->init();
     static_cast<pointer_redirect*>(m_pointer.get())->init();
@@ -444,6 +262,198 @@ bool redirect::isSelectingWindow() const
     // TODO(romangg): This function is called before setup_filters is run (from setup_workspace).
     //                Can we ensure it's only called afterwards and remove the nullptr check?
     return window_selector && window_selector->isActive();
+}
+
+void redirect::handle_pointer_added(input::pointer* pointer)
+{
+    auto pointer_red = m_pointer.get();
+
+    QObject::connect(
+        pointer, &pointer::button_changed, pointer_red, &input::pointer_redirect::process_button);
+
+    QObject::connect(
+        pointer, &pointer::motion, pointer_red, &input::pointer_redirect::process_motion);
+    QObject::connect(pointer,
+                     &pointer::motion_absolute,
+                     pointer_red,
+                     &input::pointer_redirect::process_motion_absolute);
+
+    QObject::connect(
+        pointer, &pointer::axis_changed, pointer_red, &input::pointer_redirect::process_axis);
+
+    QObject::connect(
+        pointer, &pointer::pinch_begin, pointer_red, &input::pointer_redirect::process_pinch_begin);
+    QObject::connect(pointer,
+                     &pointer::pinch_update,
+                     pointer_red,
+                     &input::pointer_redirect::process_pinch_update);
+    QObject::connect(
+        pointer, &pointer::pinch_end, pointer_red, &input::pointer_redirect::process_pinch_end);
+
+    QObject::connect(
+        pointer, &pointer::swipe_begin, pointer_red, &input::pointer_redirect::process_swipe_begin);
+    QObject::connect(pointer,
+                     &pointer::swipe_update,
+                     pointer_red,
+                     &input::pointer_redirect::process_swipe_update);
+    QObject::connect(
+        pointer, &pointer::swipe_end, pointer_red, &input::pointer_redirect::process_swipe_end);
+
+    QObject::connect(
+        pointer, &pointer::frame, pointer_red, &input::pointer_redirect::process_frame);
+
+    if (auto seat = find_seat()) {
+        seat->setHasPointer(true);
+    }
+}
+
+void redirect::handle_keyboard_added(input::keyboard* keyboard)
+{
+    auto keyboard_red = m_keyboard.get();
+
+    QObject::connect(
+        keyboard, &keyboard::key_changed, keyboard_red, &input::keyboard_redirect::process_key);
+    QObject::connect(keyboard,
+                     &keyboard::modifiers_changed,
+                     keyboard_red,
+                     &input::keyboard_redirect::process_modifiers);
+
+    if (auto seat = find_seat(); seat && !seat->hasKeyboard()) {
+        seat->setHasKeyboard(true);
+        reconfigure();
+    }
+}
+
+void redirect::handle_touch_added(input::touch* touch)
+{
+    auto touch_red = m_touch.get();
+
+    QObject::connect(touch, &touch::down, touch_red, &input::touch_redirect::process_down);
+    QObject::connect(touch, &touch::up, touch_red, &input::touch_redirect::process_up);
+    QObject::connect(touch, &touch::motion, touch_red, &input::touch_redirect::process_motion);
+    QObject::connect(touch, &touch::cancel, touch_red, &input::touch_redirect::cancel);
+#if HAVE_WLR_TOUCH_FRAME
+    QObject::connect(touch, &touch::frame, touch_red, &input::touch_redirect::frame);
+#endif
+
+    if (auto seat = find_seat()) {
+        seat->setHasTouch(true);
+    }
+}
+
+void redirect::handle_switch_added(input::switch_device* switch_device)
+{
+    QObject::connect(switch_device, &switch_device::toggle, this, [this](auto const& event) {
+        if (event.type == switch_type::tablet_mode) {
+            Q_EMIT has_tablet_mode_switch_changed(event.state == switch_state::on);
+        }
+    });
+}
+
+void redirect::handle_fake_input_device_added(Wrapland::Server::FakeInputDevice* device)
+{
+    QObject::connect(device,
+                     &Wrapland::Server::FakeInputDevice::authenticationRequested,
+                     this,
+                     [this, device](auto const& /*application*/, auto const& /*reason*/) {
+                         // TODO: make secure
+                         device->setAuthentication(true);
+                     });
+
+    QObject::connect(device,
+                     &Wrapland::Server::FakeInputDevice::pointerMotionRequested,
+                     this,
+                     [this](auto const& delta) {
+                         // TODO: Fix time
+                         m_pointer->processMotion(
+                             globalPointer() + QPointF(delta.width(), delta.height()), 0);
+                         waylandServer()->simulateUserActivity();
+                     });
+    QObject::connect(device,
+                     &Wrapland::Server::FakeInputDevice::pointerMotionAbsoluteRequested,
+                     this,
+                     [this](auto const& pos) {
+                         // TODO: Fix time
+                         m_pointer->processMotion(pos, 0);
+                         waylandServer()->simulateUserActivity();
+                     });
+
+    QObject::connect(device,
+                     &Wrapland::Server::FakeInputDevice::pointerButtonPressRequested,
+                     this,
+                     [this](auto button) {
+                         // TODO: Fix time
+                         m_pointer->process_button({button, button_state::pressed, {nullptr, 0}});
+                         waylandServer()->simulateUserActivity();
+                     });
+    QObject::connect(device,
+                     &Wrapland::Server::FakeInputDevice::pointerButtonReleaseRequested,
+                     this,
+                     [this](auto button) {
+                         // TODO: Fix time
+                         m_pointer->process_button({button, button_state::released, {nullptr, 0}});
+                         waylandServer()->simulateUserActivity();
+                     });
+    QObject::connect(
+        device,
+        &Wrapland::Server::FakeInputDevice::pointerAxisRequested,
+        this,
+        [this](auto orientation, auto delta) {
+            // TODO: Fix time
+            auto axis = (orientation == Qt::Horizontal) ? axis_orientation::horizontal
+                                                        : axis_orientation::vertical;
+            // TODO: Fix time
+            m_pointer->process_axis({axis_source::unknown, axis, delta, 0, nullptr, 0});
+            waylandServer()->simulateUserActivity();
+        });
+
+    QObject::connect(device,
+                     &Wrapland::Server::FakeInputDevice::touchDownRequested,
+                     this,
+                     [this](auto id, auto const& pos) {
+                         // TODO: Fix time
+                         m_touch->process_down({static_cast<int32_t>(id), pos, nullptr, 0});
+                         waylandServer()->simulateUserActivity();
+                     });
+    QObject::connect(device,
+                     &Wrapland::Server::FakeInputDevice::touchMotionRequested,
+                     this,
+                     [this](auto id, auto const& pos) {
+                         // TODO: Fix time
+                         m_touch->process_motion({static_cast<int32_t>(id), pos, nullptr, 0});
+                         waylandServer()->simulateUserActivity();
+                     });
+    QObject::connect(
+        device, &Wrapland::Server::FakeInputDevice::touchUpRequested, this, [this](auto id) {
+            // TODO: Fix time
+            m_touch->process_up({static_cast<int32_t>(id), nullptr, 0});
+            waylandServer()->simulateUserActivity();
+        });
+    QObject::connect(device,
+                     &Wrapland::Server::FakeInputDevice::touchCancelRequested,
+                     this,
+                     [this]() { m_touch->cancel(); });
+    QObject::connect(device,
+                     &Wrapland::Server::FakeInputDevice::touchFrameRequested,
+                     this,
+                     [this]() { m_touch->frame(); });
+
+    QObject::connect(device,
+                     &Wrapland::Server::FakeInputDevice::keyboardKeyPressRequested,
+                     this,
+                     [this](auto button) {
+                         // TODO: Fix time
+                         m_keyboard->process_key({button, key_state::pressed, false, nullptr, 0});
+                         waylandServer()->simulateUserActivity();
+                     });
+    QObject::connect(device,
+                     &Wrapland::Server::FakeInputDevice::keyboardKeyReleaseRequested,
+                     this,
+                     [this](auto button) {
+                         // TODO: Fix time
+                         m_keyboard->process_key({button, key_state::released, false, nullptr, 0});
+                         waylandServer()->simulateUserActivity();
+                     });
 }
 
 }

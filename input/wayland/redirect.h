@@ -12,6 +12,7 @@
 namespace Wrapland::Server
 {
 class FakeInput;
+class FakeInputDevice;
 }
 
 namespace KWin::input::wayland
@@ -44,6 +45,12 @@ private:
     void setup_filters();
     void setup_touchpad_shortcuts();
     void reconfigure();
+
+    void handle_pointer_added(input::pointer* pointer);
+    void handle_keyboard_added(input::keyboard* keyboard);
+    void handle_touch_added(input::touch* touch);
+    void handle_switch_added(input::switch_device* switch_device);
+    void handle_fake_input_device_added(Wrapland::Server::FakeInputDevice* device);
 
     KConfigWatcher::Ptr config_watcher;
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
