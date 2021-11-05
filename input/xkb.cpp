@@ -70,8 +70,9 @@ xkb::xkb()
     qRegisterMetaType<KWin::input::keyboard_leds>();
 
     if (!m_context) {
-        qCDebug(KWIN_XKB) << "Could not create xkb context";
-        return;
+        // TODO(romangg): throw instead
+        qCCritical(KWIN_XKB) << "Could not create xkb context";
+        QCoreApplication::exit(1);
     }
     xkb_context_set_log_level(m_context, XKB_LOG_LEVEL_DEBUG);
     xkb_context_set_log_fn(m_context, &xkbLogHandler);
@@ -117,10 +118,6 @@ void xkb::setNumLockConfig(const KSharedConfigPtr& config)
 
 void xkb::reconfigure()
 {
-    if (!m_context) {
-        return;
-    }
-
     xkb_keymap* keymap{nullptr};
     if (!qEnvironmentVariableIsSet("KWIN_XKB_DEFAULT_KEYMAP")) {
         keymap = loadKeymapFromConfig();
@@ -200,9 +197,6 @@ xkb_keymap* xkb::loadDefaultKeymap()
 
 void xkb::installKeymap(int fd, uint32_t size)
 {
-    if (!m_context) {
-        return;
-    }
     char* map = reinterpret_cast<char*>(mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0));
     if (map == MAP_FAILED) {
         return;
