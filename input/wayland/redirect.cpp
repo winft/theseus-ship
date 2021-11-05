@@ -65,31 +65,14 @@ redirect::redirect(wayland::platform* platform)
     , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
 {
     QObject::connect(kwinApp(), &Application::startup_finished, this, &redirect::setup_workspace);
-
     reconfigure();
-    setup_devices();
-
-    platform->update_keyboard_leds(m_keyboard->xkb()->leds());
-    waylandServer()->updateKeyState(m_keyboard->xkb()->leds());
-    QObject::connect(m_keyboard.get(),
-                     &keyboard_redirect::ledsChanged,
-                     waylandServer(),
-                     &WaylandServer::updateKeyState);
-    QObject::connect(m_keyboard.get(),
-                     &keyboard_redirect::ledsChanged,
-                     platform,
-                     &platform::update_keyboard_leds);
-
-    QObject::connect(
-        config_watcher.data(), &KConfigWatcher::configChanged, this, [this](auto const& group) {
-            if (group.name() == QLatin1String("Keyboard")) {
-                reconfigure();
-            }
-        });
 }
 
 void redirect::setup_devices()
 {
+    for (auto pointer : platform->pointers) {
+        handle_pointer_added(pointer);
+    }
     QObject::connect(platform, &platform::pointer_added, this, &redirect::handle_pointer_added);
     QObject::connect(platform, &platform::pointer_removed, this, [this]() {
         if (auto seat = find_seat(); seat && platform->pointers.empty()) {
@@ -97,6 +80,9 @@ void redirect::setup_devices()
         }
     });
 
+    for (auto keyboard : platform->keyboards) {
+        handle_keyboard_added(keyboard);
+    }
     QObject::connect(platform, &platform::keyboard_added, this, &redirect::handle_keyboard_added);
     QObject::connect(platform, &platform::keyboard_removed, this, [this]() {
         if (auto seat = find_seat(); seat && platform->keyboards.empty()) {
@@ -104,6 +90,9 @@ void redirect::setup_devices()
         }
     });
 
+    for (auto touch : platform->touchs) {
+        handle_touch_added(touch);
+    }
     QObject::connect(platform, &platform::touch_added, this, &redirect::handle_touch_added);
     QObject::connect(platform, &platform::touch_removed, this, [this]() {
         if (auto seat = find_seat(); seat && platform->touchs.empty()) {
@@ -111,6 +100,9 @@ void redirect::setup_devices()
         }
     });
 
+    for (auto switch_dev : platform->switches) {
+        handle_switch_added(switch_dev);
+    }
     QObject::connect(platform, &platform::switch_added, this, &redirect::handle_switch_added);
 }
 
@@ -157,6 +149,27 @@ void redirect::setup_touchpad_shortcuts()
 
 void redirect::setup_workspace()
 {
+    reconfigure();
+    QObject::connect(
+        config_watcher.data(), &KConfigWatcher::configChanged, this, [this](auto const& group) {
+            if (group.name() == QLatin1String("Keyboard")) {
+                reconfigure();
+            }
+        });
+
+    setup_devices();
+
+    platform->update_keyboard_leds(m_keyboard->xkb()->leds());
+    waylandServer()->updateKeyState(m_keyboard->xkb()->leds());
+    QObject::connect(m_keyboard.get(),
+                     &keyboard_redirect::ledsChanged,
+                     waylandServer(),
+                     &WaylandServer::updateKeyState);
+    QObject::connect(m_keyboard.get(),
+                     &keyboard_redirect::ledsChanged,
+                     platform,
+                     &platform::update_keyboard_leds);
+
     fake_input = waylandServer()->display()->createFakeInput();
     QObject::connect(fake_input.get(),
                      &Wrapland::Server::FakeInput::deviceCreated,
