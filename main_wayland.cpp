@@ -540,14 +540,14 @@ int main(int argc, char * argv[])
 
     auto const wrapped_process = parser.isSet(wayland_socket_fd_option);
 
-    KWin::WaylandServer::InitializationFlags flags;
+    KWin::wayland_start_options flags;
     if (parser.isSet(screenLockerOption)) {
-        flags = KWin::WaylandServer::InitializationFlag::LockScreen;
+        flags = KWin::wayland_start_options::lock_screen;
     } else if (parser.isSet(noScreenLockerOption)) {
-        flags = KWin::WaylandServer::InitializationFlag::NoLockScreenIntegration;
+        flags = KWin::wayland_start_options::no_lock_screen_integration;
     }
     if (parser.isSet(noGlobalShortcutsOption)) {
-        flags |= KWin::WaylandServer::InitializationFlag::NoGlobalShortcuts;
+        flags |= KWin::wayland_start_options::no_global_shortcuts;
     }
 
     try {

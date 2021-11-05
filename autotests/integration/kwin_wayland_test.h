@@ -142,7 +142,7 @@ public:
 
     WaylandTestApplication(OperationMode mode,
                            std::string const& socket_name,
-                           WaylandServer::InitializationFlags flags,
+                           wayland_start_options flags,
                            int& argc,
                            char** argv);
     ~WaylandTestApplication() override;
@@ -317,10 +317,7 @@ KWIN_EXPORT void prepare_sys_env(std::string const& socket_name);
 KWIN_EXPORT std::string create_socket_name(std::string base);
 
 template<typename Test>
-int create_test(std::string const& test_name,
-                WaylandServer::InitializationFlags flags,
-                int argc,
-                char* argv[])
+int create_test(std::string const& test_name, wayland_start_options flags, int argc, char* argv[])
 {
     auto const socket_name = create_socket_name(test_name);
     auto mode = Application::OperationModeXwayland;
@@ -350,5 +347,4 @@ ENUM_FLAGS(KWin::Test::global_selection)
         return KWin::Test::create_test<Tester>(#Tester, flags, argc, argv);                        \
     }
 
-#define WAYLANDTEST_MAIN(Tester)                                                                   \
-    WAYLANDTEST_MAIN_FLAGS(Tester, KWin::WaylandServer::InitializationFlag::NoOptions)
+#define WAYLANDTEST_MAIN(Tester) WAYLANDTEST_MAIN_FLAGS(Tester, KWin::wayland_start_options::none)

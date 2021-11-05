@@ -71,7 +71,7 @@ Q_CONSTRUCTOR_FUNCTION(disable_dr_konqi)
 
 WaylandTestApplication::WaylandTestApplication(OperationMode mode,
                                                std::string const& socket_name,
-                                               WaylandServer::InitializationFlags flags,
+                                               wayland_start_options flags,
                                                int& argc,
                                                char** argv)
     : ApplicationWaylandAbstract(mode, argc, argv)
