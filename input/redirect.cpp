@@ -41,8 +41,6 @@ redirect::redirect(keyboard_redirect* keyboard,
     , m_tablet(tablet)
     , m_touch(touch)
 {
-    qRegisterMetaType<KWin::input::redirect::PointerButtonState>();
-    qRegisterMetaType<KWin::input::redirect::PointerAxis>();
 }
 
 redirect::~redirect()
@@ -90,14 +88,9 @@ void redirect::processPointerMotion(const QPointF& pos, uint32_t time)
     m_pointer->processMotion(pos, time);
 }
 
-void redirect::processPointerButton(uint32_t button,
-                                    redirect::PointerButtonState state,
-                                    uint32_t time)
+void redirect::processPointerButton(uint32_t button, button_state state, uint32_t time)
 {
-    m_pointer->process_button(
-        {button,
-         state == PointerButtonPressed ? button_state::pressed : button_state::released,
-         {nullptr, time}});
+    m_pointer->process_button({button, state, {nullptr, time}});
 }
 
 void redirect::processPointerAxis(axis_orientation orientation,

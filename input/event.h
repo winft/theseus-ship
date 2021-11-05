@@ -186,4 +186,5 @@ struct switch_toggle_event {
 
 }
 
+Q_DECLARE_METATYPE(KWin::input::button_state)
 Q_DECLARE_METATYPE(KWin::input::key_state)

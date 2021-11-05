@@ -51,21 +51,6 @@ class KWIN_EXPORT redirect : public QObject
 {
     Q_OBJECT
 public:
-    enum PointerButtonState {
-        PointerButtonReleased,
-        PointerButtonPressed,
-    };
-    enum PointerAxis {
-        PointerAxisVertical,
-        PointerAxisHorizontal,
-    };
-    enum PointerAxisSource {
-        PointerAxisSourceUnknown,
-        PointerAxisSourceWheel,
-        PointerAxisSourceFinger,
-        PointerAxisSourceContinuous,
-        PointerAxisSourceWheelTilt
-    };
     enum TabletEventType {
         Axis,
         Proximity,
@@ -109,7 +94,7 @@ public:
     /**
      * @internal
      */
-    void processPointerButton(uint32_t button, PointerButtonState state, uint32_t time);
+    void processPointerButton(uint32_t button, button_state state, uint32_t time);
     /**
      * @internal
      */
@@ -252,7 +237,7 @@ Q_SIGNALS:
      * @param button The button which changed
      * @param state The new button state
      */
-    void pointerButtonStateChanged(uint32_t button, redirect::PointerButtonState state);
+    void pointerButtonStateChanged(uint32_t button, button_state state);
     /**
      * @brief Emitted when the modifiers changes.
      *
@@ -304,8 +289,5 @@ redirect::registerShortcut(const QKeySequence& shortcut, QAction* action, T* rec
 }
 
 }
-}
 
-Q_DECLARE_METATYPE(KWin::input::redirect::PointerButtonState)
-Q_DECLARE_METATYPE(KWin::input::redirect::PointerAxis)
-Q_DECLARE_METATYPE(KWin::input::redirect::PointerAxisSource)
+}

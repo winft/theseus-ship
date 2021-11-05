@@ -15,14 +15,14 @@ namespace KWin::input::backend::x11
 inline void pointer_button_pressed(uint32_t button, uint32_t time)
 {
     if (auto input = kwinApp()->input->redirect.get()) {
-        input->processPointerButton(button, redirect::PointerButtonPressed, time);
+        input->processPointerButton(button, button_state::pressed, time);
     }
 }
 
 inline void pointer_button_released(uint32_t button, uint32_t time)
 {
     if (auto input = kwinApp()->input->redirect.get()) {
-        input->processPointerButton(button, redirect::PointerButtonReleased, time);
+        input->processPointerButton(button, button_state::released, time);
     }
 }
 

@@ -396,7 +396,7 @@ void pointer_redirect::process_frame()
 bool pointer_redirect::areButtonsPressed() const
 {
     for (auto state : m_buttons) {
-        if (state == redirect::PointerButtonPressed) {
+        if (state == button_state::pressed) {
             return true;
         }
     }
@@ -845,22 +845,18 @@ void pointer_redirect::update_position(const QPointF& pos)
 
 void pointer_redirect::update_button(button_event const& event)
 {
-    auto internal_state = event.state == button_state::pressed
-        ? input::redirect::PointerButtonPressed
-        : input::redirect::PointerButtonReleased;
-
-    m_buttons[event.key] = internal_state;
+    m_buttons[event.key] = event.state;
 
     // update Qt buttons
     qt_buttons = Qt::NoButton;
     for (auto it = m_buttons.constBegin(); it != m_buttons.constEnd(); ++it) {
-        if (it.value() == redirect::PointerButtonReleased) {
+        if (it.value() == button_state::released) {
             continue;
         }
         qt_buttons |= button_to_qt_mouse_button(it.key());
     }
 
-    Q_EMIT kwinApp()->input->redirect->pointerButtonStateChanged(event.key, internal_state);
+    Q_EMIT kwinApp()->input->redirect->pointerButtonStateChanged(event.key, event.state);
 }
 
 void pointer_redirect::warp(QPointF const& pos)
