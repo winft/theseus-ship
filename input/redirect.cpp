@@ -112,12 +112,12 @@ void redirect::processPointerAxis(axis_orientation orientation,
 
 void redirect::processKeyboardKey(uint32_t key, redirect::KeyboardKeyState state, uint32_t time)
 {
-    m_keyboard->process_key({key,
-                             state == KeyboardKeyState::KeyboardKeyPressed ? button_state::pressed
-                                                                           : button_state::released,
-                             false,
-                             nullptr,
-                             time});
+    m_keyboard->process_key(
+        {key,
+         state == KeyboardKeyState::KeyboardKeyPressed ? key_state::pressed : key_state::released,
+         false,
+         nullptr,
+         time});
 }
 
 void redirect::processKeyboardModifiers(uint32_t modsDepressed,

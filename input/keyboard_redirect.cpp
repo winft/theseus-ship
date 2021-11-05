@@ -51,7 +51,7 @@ void keyboard_redirect::process_key(key_event const& event)
 
 void keyboard_redirect::process_key_repeat(uint32_t key, uint32_t time)
 {
-    auto event = key_event{key, button_state::pressed, false, nullptr, time};
+    auto event = key_event{key, key_state::pressed, false, nullptr, time};
     redirect->processSpies(std::bind(&event_spy::key_repeat, std::placeholders::_1, event));
 }
 

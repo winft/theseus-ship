@@ -50,7 +50,7 @@ void modifier_only_shortcuts_spy::key(key_event const& event)
     auto const& redirect = kwinApp()->input->redirect;
     auto const& mods = redirect->modifiersRelevantForGlobalShortcuts();
 
-    if (event.state == button_state::pressed) {
+    if (event.state == key_state::pressed) {
         const bool wasEmpty = m_pressedKeys.isEmpty();
         m_pressedKeys.insert(event.keycode);
         if (wasEmpty && m_pressedKeys.size() == 1 && !ScreenLockerWatcher::self()->isLocked()

@@ -128,10 +128,10 @@ void pass_to_wayland_server(key_event const& event)
     assert(waylandServer());
 
     switch (event.state) {
-    case button_state::pressed:
+    case key_state::pressed:
         waylandServer()->seat()->keyboards().key_pressed(event.keycode);
         break;
-    case button_state::released:
+    case key_state::released:
         waylandServer()->seat()->keyboards().key_released(event.keycode);
         break;
     default:

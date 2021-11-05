@@ -19,7 +19,7 @@ namespace KWin::input
 
 bool terminate_server_filter::key(key_event const& event)
 {
-    if (event.state == button_state::pressed) {
+    if (event.state == key_state::pressed) {
         auto const& xkb = kwinApp()->input->redirect->keyboard()->xkb();
         if (xkb->toKeysym(event.keycode) == XKB_KEY_Terminate_Server) {
             qCWarning(KWIN_INPUT) << "Request to terminate server";

@@ -40,7 +40,7 @@ static void handle_key(struct wl_listener* listener, [[maybe_unused]] void* data
 
     auto event = key_event{
         wlr_event->keycode,
-        static_cast<button_state>(wlr_event->state),
+        static_cast<key_state>(wlr_event->state),
         wlr_event->update_state,
         {
             keyboard,

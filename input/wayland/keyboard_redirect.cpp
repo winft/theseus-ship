@@ -46,7 +46,7 @@ public:
     void key(key_event const& event) override
     {
         Q_EMIT redirect->keyStateChanged(event.keycode,
-                                         event.state == button_state::pressed
+                                         event.state == key_state::pressed
                                              ? redirect::KeyboardKeyPressed
                                              : redirect::KeyboardKeyReleased);
     }
@@ -195,7 +195,7 @@ void keyboard_redirect::process_key(key_event const& event)
     m_xkb->forwardModifiers();
 
     if (globalShortcutsModifiers == Qt::KeyboardModifier::NoModifier
-        && event.state == button_state::pressed) {
+        && event.state == key_state::pressed) {
         m_keyboardLayout->checkLayoutChange(previousLayout);
     }
 }
@@ -208,7 +208,7 @@ void keyboard_redirect::process_key_repeat(uint32_t key, uint32_t time)
         return;
     }
 
-    auto event = key_event{key, button_state::pressed, false, nullptr, time};
+    auto event = key_event{key, key_state::pressed, false, nullptr, time};
     redirect->processFilters(std::bind(&event_filter::key_repeat, std::placeholders::_1, event));
 }
 

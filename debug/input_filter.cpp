@@ -297,10 +297,10 @@ void input_filter::key(input::key_event const& event)
     text.append(s_tableStart);
 
     switch (event.state) {
-    case input::button_state::pressed:
+    case input::key_state::pressed:
         text.append(tableHeaderRow(i18nc("A key press event", "Key Press")));
         break;
-    case input::button_state::released:
+    case input::key_state::released:
         text.append(tableHeaderRow(i18nc("A key release event", "Key Release")));
         break;
     }

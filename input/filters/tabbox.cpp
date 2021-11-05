@@ -52,7 +52,7 @@ bool tabbox_filter::key(key_event const& event)
     // pressed
     pass_to_wayland_server(event);
 
-    if (event.state == button_state::pressed) {
+    if (event.state == key_state::pressed) {
         TabBox::TabBox::self()->keyPress(kwinApp()->input->redirect->keyboardModifiers()
                                          | key_to_qt_key(event.keycode));
     } else if (kwinApp()->input->redirect->modifiersRelevantForGlobalShortcuts()

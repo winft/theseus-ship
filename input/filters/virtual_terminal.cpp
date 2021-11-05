@@ -17,7 +17,7 @@ namespace KWin::input
 bool virtual_terminal_filter::key(key_event const& event)
 {
     // really on press and not on release? X11 switches on press.
-    if (event.state == button_state::pressed) {
+    if (event.state == key_state::pressed) {
         auto const& xkb = kwinApp()->input->redirect->keyboard()->xkb();
         auto const keysym = xkb->toKeysym(event.keycode);
         if (keysym >= XKB_KEY_XF86Switch_VT_1 && keysym <= XKB_KEY_XF86Switch_VT_12) {

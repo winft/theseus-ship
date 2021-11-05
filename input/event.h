@@ -102,6 +102,11 @@ struct pinch_end_event {
 
 /** Keyboard events */
 
+enum class key_state {
+    released,
+    pressed,
+};
+
 enum class keyboard_led {
     num_lock,
     caps_lock,
@@ -121,7 +126,7 @@ enum class modifier {
 
 struct key_event {
     uint32_t keycode;
-    button_state state;
+    key_state state;
     bool requires_modifier_update;
     event<keyboard> base;
 };

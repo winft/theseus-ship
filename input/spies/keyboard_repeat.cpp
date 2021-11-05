@@ -44,7 +44,7 @@ void keyboard_repeat_spy::handleKeyRepeat()
 void keyboard_repeat_spy::key(key_event const& event)
 {
     switch (event.state) {
-    case button_state::pressed: {
+    case key_state::pressed: {
         // TODO: don't get these values from WaylandServer
         auto const delay = waylandServer()->seat()->keyboards().get_repeat_info().delay;
         if (m_xkb->shouldKeyRepeat(event.keycode) && delay != 0) {
@@ -55,7 +55,7 @@ void keyboard_repeat_spy::key(key_event const& event)
         }
         break;
     }
-    case button_state::released:
+    case key_state::released:
         if (event.keycode == m_key) {
             m_timer->stop();
         }

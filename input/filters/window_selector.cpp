@@ -62,7 +62,7 @@ bool window_selector_filter::key(key_event const& event)
     waylandServer()->seat()->setFocusedKeyboardSurface(nullptr);
     pass_to_wayland_server(event);
 
-    if (event.state == button_state::pressed) {
+    if (event.state == key_state::pressed) {
         auto const qt_key = key_to_qt_key(event.keycode);
 
         // x11 variant does this on key press, so do the same

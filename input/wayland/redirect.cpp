@@ -327,7 +327,7 @@ void redirect::setup_workspace()
                 this,
                 [this](auto button) {
                     // TODO: Fix time
-                    m_keyboard->process_key({button, button_state::pressed, false, nullptr, 0});
+                    m_keyboard->process_key({button, key_state::pressed, false, nullptr, 0});
                     waylandServer()->simulateUserActivity();
                 });
             QObject::connect(
@@ -336,7 +336,7 @@ void redirect::setup_workspace()
                 this,
                 [this](auto button) {
                     // TODO: Fix time
-                    m_keyboard->process_key({button, button_state::released, false, nullptr, 0});
+                    m_keyboard->process_key({button, key_state::released, false, nullptr, 0});
                     waylandServer()->simulateUserActivity();
                 });
         });

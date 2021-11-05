@@ -66,7 +66,7 @@ bool move_resize_filter::key(key_event const& event)
         return false;
     }
 
-    if (event.state == button_state::pressed) {
+    if (event.state == key_state::pressed) {
         process_key_press(window, event);
     }
     return true;

@@ -76,11 +76,11 @@ bool global_shortcut_filter::key(key_event const& event)
         };
 
         switch (state) {
-        case button_state::pressed:
+        case key_state::pressed:
             QObject::connect(m_powerDown, &QTimer::timeout, shortcuts, power_off);
             m_powerDown->start();
             return true;
-        case button_state::released:
+        case key_state::released:
             auto const ret = !m_powerDown->isActive() || shortcuts->processKey(modifiers, qt_key);
             m_powerDown->stop();
             return ret;
@@ -92,7 +92,7 @@ bool global_shortcut_filter::key(key_event const& event)
         return handle_power_key();
     }
 
-    if (event.state == button_state::pressed) {
+    if (event.state == key_state::pressed) {
         return shortcuts->processKey(modifiers, qt_key);
     }
 

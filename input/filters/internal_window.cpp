@@ -154,8 +154,8 @@ QKeyEvent get_internal_key_event(key_event const& event)
     auto qt_key = xkb->toQtKey(
         keysym, event.keycode, Qt::KeyboardModifiers(), true /* workaround for QTBUG-62102 */);
 
-    QKeyEvent internalEvent(event.state == button_state::pressed ? QEvent::KeyPress
-                                                                 : QEvent::KeyRelease,
+    QKeyEvent internalEvent(event.state == key_state::pressed ? QEvent::KeyPress
+                                                              : QEvent::KeyRelease,
                             qt_key,
                             xkb->modifiers(),
                             event.keycode,

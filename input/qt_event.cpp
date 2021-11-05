@@ -136,7 +136,7 @@ QWheelEvent axis_to_qt_event(axis_event const& event)
 
 QKeyEvent key_to_qt_event(const key_event& event)
 {
-    auto type = event.state == button_state::pressed ? QEvent::KeyPress : QEvent::KeyRelease;
+    auto type = event.state == key_state::pressed ? QEvent::KeyPress : QEvent::KeyRelease;
     auto const& xkb = kwinApp()->input->redirect->keyboard()->xkb();
     auto mods = xkb->modifiers();
 
