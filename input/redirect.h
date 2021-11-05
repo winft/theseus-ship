@@ -257,10 +257,7 @@ Q_SIGNALS:
     void keyStateChanged(quint32 keyCode, key_state state);
 
 protected:
-    redirect(keyboard_redirect* keyboard,
-             pointer_redirect* pointer,
-             tablet_redirect* tablet,
-             touch_redirect* touch);
+    redirect() = default;
 
     std::unique_ptr<keyboard_redirect> m_keyboard;
     std::unique_ptr<pointer_redirect> m_pointer;

@@ -57,14 +57,10 @@ static Wrapland::Server::Seat* find_seat()
 }
 
 redirect::redirect(wayland::platform* platform)
-    : input::redirect(new keyboard_redirect(this),
-                      new pointer_redirect,
-                      new tablet_redirect,
-                      new touch_redirect)
-    , platform{platform}
+    : platform{platform}
     , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
 {
-    QObject::connect(kwinApp(), &Application::startup_finished, this, &redirect::setup_workspace);
+    QObject::connect(kwinApp(), &Application::workspaceCreated, this, &redirect::setup_workspace);
     reconfigure();
 }
 
@@ -156,6 +152,11 @@ void redirect::setup_workspace()
                 reconfigure();
             }
         });
+
+    m_pointer = std::make_unique<wayland::pointer_redirect>();
+    m_keyboard = std::make_unique<wayland::keyboard_redirect>(this);
+    m_touch = std::make_unique<wayland::touch_redirect>();
+    m_tablet = std::make_unique<wayland::tablet_redirect>();
 
     setup_devices();
 

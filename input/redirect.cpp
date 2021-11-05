@@ -32,17 +32,6 @@
 namespace KWin::input
 {
 
-redirect::redirect(keyboard_redirect* keyboard,
-                   pointer_redirect* pointer,
-                   tablet_redirect* tablet,
-                   touch_redirect* touch)
-    : m_keyboard(keyboard)
-    , m_pointer(pointer)
-    , m_tablet(tablet)
-    , m_touch(touch)
-{
-}
-
 redirect::~redirect()
 {
     auto const filters = m_filters;
