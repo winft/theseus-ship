@@ -127,7 +127,7 @@ private:
     void updateModifiers();
     void updateConsumedModifiers(uint32_t key);
 
-    xkb_context* m_context;
+    xkb_context* context;
     xkb_keymap* m_keymap{nullptr};
     QStringList m_layoutList;
     xkb_state* m_state{nullptr};
@@ -152,7 +152,7 @@ private:
     struct {
         xkb_compose_table* table{nullptr};
         xkb_compose_state* state{nullptr};
-    } m_compose;
+    } compose;
 
     keyboard_leds m_leds{keyboard_leds::none};
 

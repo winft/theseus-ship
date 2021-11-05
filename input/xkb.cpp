@@ -65,17 +65,17 @@ static void xkbLogHandler([[maybe_unused]] xkb_context* context,
 }
 
 xkb::xkb()
-    : m_context(xkb_context_new(XKB_CONTEXT_NO_FLAGS))
+    : context(xkb_context_new(XKB_CONTEXT_NO_FLAGS))
 {
     qRegisterMetaType<KWin::input::keyboard_leds>();
 
-    if (!m_context) {
+    if (!context) {
         // TODO(romangg): throw instead
         qCCritical(KWIN_XKB) << "Could not create xkb context";
         QCoreApplication::exit(1);
     }
-    xkb_context_set_log_level(m_context, XKB_LOG_LEVEL_DEBUG);
-    xkb_context_set_log_fn(m_context, &xkbLogHandler);
+    xkb_context_set_log_level(context, XKB_LOG_LEVEL_DEBUG);
+    xkb_context_set_log_fn(context, &xkbLogHandler);
 
     // Get locale as described in xkbcommon doc, cannot use QLocale as it drops the modifier part.
     QByteArray locale = qgetenv("LC_ALL");
@@ -89,21 +89,21 @@ xkb::xkb()
         locale = QByteArrayLiteral("C");
     }
 
-    m_compose.table = xkb_compose_table_new_from_locale(
-        m_context, locale.constData(), XKB_COMPOSE_COMPILE_NO_FLAGS);
+    compose.table = xkb_compose_table_new_from_locale(
+        context, locale.constData(), XKB_COMPOSE_COMPILE_NO_FLAGS);
 
-    if (m_compose.table) {
-        m_compose.state = xkb_compose_state_new(m_compose.table, XKB_COMPOSE_STATE_NO_FLAGS);
+    if (compose.table) {
+        compose.state = xkb_compose_state_new(compose.table, XKB_COMPOSE_STATE_NO_FLAGS);
     }
 }
 
 xkb::~xkb()
 {
-    xkb_compose_state_unref(m_compose.state);
-    xkb_compose_table_unref(m_compose.table);
+    xkb_compose_state_unref(compose.state);
+    xkb_compose_table_unref(compose.table);
     xkb_state_unref(m_state);
     xkb_keymap_unref(m_keymap);
-    xkb_context_unref(m_context);
+    xkb_context_unref(context);
 }
 
 void xkb::setConfig(const KSharedConfigPtr& config)
@@ -185,14 +185,14 @@ xkb_keymap* xkb::loadKeymapFromConfig()
 
     apply_environment_rules(ruleNames, m_layoutList);
 
-    return xkb_keymap_new_from_names(m_context, &ruleNames, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    return xkb_keymap_new_from_names(context, &ruleNames, XKB_KEYMAP_COMPILE_NO_FLAGS);
 }
 
 xkb_keymap* xkb::loadDefaultKeymap()
 {
     xkb_rule_names ruleNames = {};
     apply_environment_rules(ruleNames, m_layoutList);
-    return xkb_keymap_new_from_names(m_context, &ruleNames, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    return xkb_keymap_new_from_names(context, &ruleNames, XKB_KEYMAP_COMPILE_NO_FLAGS);
 }
 
 void xkb::installKeymap(int fd, uint32_t size)
@@ -202,7 +202,7 @@ void xkb::installKeymap(int fd, uint32_t size)
         return;
     }
     xkb_keymap* keymap = xkb_keymap_new_from_string(
-        m_context, map, XKB_KEYMAP_FORMAT_TEXT_V1, XKB_MAP_COMPILE_PLACEHOLDER);
+        context, map, XKB_KEYMAP_FORMAT_TEXT_V1, XKB_MAP_COMPILE_PLACEHOLDER);
     munmap(map, size);
     if (!keymap) {
         qCDebug(KWIN_XKB) << "Could not map keymap from file";
@@ -327,14 +327,14 @@ void xkb::updateKey(uint32_t key, key_state state)
     xkb_state_update_key(m_state, key + 8, static_cast<xkb_key_direction>(state));
     if (state == key_state::pressed) {
         const auto sym = toKeysym(key);
-        if (m_compose.state
-            && xkb_compose_state_feed(m_compose.state, sym) == XKB_COMPOSE_FEED_ACCEPTED) {
-            switch (xkb_compose_state_get_status(m_compose.state)) {
+        if (compose.state
+            && xkb_compose_state_feed(compose.state, sym) == XKB_COMPOSE_FEED_ACCEPTED) {
+            switch (xkb_compose_state_get_status(compose.state)) {
             case XKB_COMPOSE_NOTHING:
                 m_keysym = sym;
                 break;
             case XKB_COMPOSE_COMPOSED:
-                m_keysym = xkb_compose_state_get_one_sym(m_compose.state);
+                m_keysym = xkb_compose_state_get_one_sym(compose.state);
                 break;
             default:
                 m_keysym = XKB_KEY_NoSymbol;
