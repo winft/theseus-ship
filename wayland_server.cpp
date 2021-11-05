@@ -649,20 +649,23 @@ void WaylandServer::simulateUserActivity()
     }
 }
 
-void WaylandServer::updateKeyState(input::xkb::LEDs leds)
+void WaylandServer::updateKeyState(input::keyboard_leds leds)
 {
     if (!globals->key_state)
         return;
 
     globals->key_state->setState(KeyState::Key::CapsLock,
-                                 leds & input::xkb::LED::CapsLock ? KeyState::State::Locked
-                                                                  : KeyState::State::Unlocked);
+                                 flags(leds & input::keyboard_leds::caps_lock)
+                                     ? KeyState::State::Locked
+                                     : KeyState::State::Unlocked);
     globals->key_state->setState(KeyState::Key::NumLock,
-                                 leds & input::xkb::LED::NumLock ? KeyState::State::Locked
-                                                                 : KeyState::State::Unlocked);
+                                 flags(leds & input::keyboard_leds::num_lock)
+                                     ? KeyState::State::Locked
+                                     : KeyState::State::Unlocked);
     globals->key_state->setState(KeyState::Key::ScrollLock,
-                                 leds & input::xkb::LED::ScrollLock ? KeyState::State::Locked
-                                                                    : KeyState::State::Unlocked);
+                                 flags(leds & input::keyboard_leds::scroll_lock)
+                                     ? KeyState::State::Locked
+                                     : KeyState::State::Unlocked);
 }
 
 }

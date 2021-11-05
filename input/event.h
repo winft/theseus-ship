@@ -107,12 +107,6 @@ enum class key_state {
     pressed,
 };
 
-enum class keyboard_led {
-    num_lock,
-    caps_lock,
-    scroll_lock,
-};
-
 enum class modifier {
     shift,
     caps,

@@ -546,16 +546,16 @@ void KeyboardLayoutTest::testNumLock()
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
     // by default not set
-    QVERIFY(!xkb->leds().testFlag(input::xkb::LED::NumLock));
+    QVERIFY(!(xkb->leds() & input::keyboard_leds::num_lock));
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
     Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
     // now it should be on
-    QVERIFY(xkb->leds().testFlag(input::xkb::LED::NumLock));
+    QVERIFY(flags(xkb->leds() & input::keyboard_leds::num_lock));
     // and back to off
     Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
     Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
-    QVERIFY(!xkb->leds().testFlag(input::xkb::LED::NumLock));
+    QVERIFY(!(xkb->leds() & input::keyboard_leds::num_lock));
 
     // let's reconfigure to enable through config
     auto group = kwinApp()->inputConfig()->group("Keyboard");
@@ -563,22 +563,22 @@ void KeyboardLayoutTest::testNumLock()
     group.sync();
     xkb->reconfigure();
     // now it should be on
-    QVERIFY(xkb->leds().testFlag(input::xkb::LED::NumLock));
+    QVERIFY(flags(xkb->leds() & input::keyboard_leds::num_lock));
     // pressing should result in it being off
     Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
     Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
-    QVERIFY(!xkb->leds().testFlag(input::xkb::LED::NumLock));
+    QVERIFY(!(xkb->leds() & input::keyboard_leds::num_lock));
 
     // pressing again should enable it
     Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
     Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
-    QVERIFY(xkb->leds().testFlag(input::xkb::LED::NumLock));
+    QVERIFY(flags(xkb->leds() & input::keyboard_leds::num_lock));
 
     // now reconfigure to disable on load
     group.writeEntry("NumLock", 1);
     group.sync();
     xkb->reconfigure();
-    QVERIFY(!xkb->leds().testFlag(input::xkb::LED::NumLock));
+    QVERIFY(!(xkb->leds() & input::keyboard_leds::num_lock));
 }
 
 }

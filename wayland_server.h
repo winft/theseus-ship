@@ -6,12 +6,14 @@
 */
 #pragma once
 
-#include "input/xkb.h"
+#include "input/types.h"
 #include "utils/flags.h"
 
 #include <kwinglobals.h>
 
 #include <QObject>
+#include <QSet>
+#include <memory>
 
 class QThread;
 
@@ -200,7 +202,7 @@ public:
     SocketPairConnection createConnection();
 
     void simulateUserActivity();
-    void updateKeyState(input::xkb::LEDs leds);
+    void updateKeyState(input::keyboard_leds leds);
 
     QSet<Wrapland::Server::LinuxDmabufBufferV1*> linuxDmabufBuffers() const
     {

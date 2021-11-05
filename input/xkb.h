@@ -9,6 +9,7 @@
 #pragma once
 
 #include "redirect.h"
+#include "types.h"
 
 #include <kwin_export.h>
 
@@ -80,14 +81,7 @@ public:
     void switchToPreviousLayout();
     bool switchToLayout(xkb_layout_index_t layout);
 
-    enum class LED {
-        NumLock = 1 << 0,
-        CapsLock = 1 << 1,
-        ScrollLock = 1 << 2,
-    };
-    Q_DECLARE_FLAGS(LEDs, LED)
-
-    LEDs leds() const
+    keyboard_leds leds() const
     {
         return m_leds;
     }
@@ -120,7 +114,7 @@ public:
     void setSeat(Wrapland::Server::Seat* seat);
 
 Q_SIGNALS:
-    void ledsChanged(const LEDs& leds);
+    void ledsChanged(keyboard_leds leds);
 
 private:
     void applyEnvironmentRules(xkb_rule_names&);
@@ -160,7 +154,7 @@ private:
         xkb_compose_state* state{nullptr};
     } m_compose;
 
-    LEDs m_leds;
+    keyboard_leds m_leds;
 
     KConfigGroup m_configGroup;
     KSharedConfigPtr m_numLockConfig;
@@ -186,6 +180,3 @@ inline Qt::KeyboardModifiers xkb::modifiers() const
 }
 
 }
-
-Q_DECLARE_METATYPE(KWin::input::xkb::LED)
-Q_DECLARE_METATYPE(KWin::input::xkb::LEDs)

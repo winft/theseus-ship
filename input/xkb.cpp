@@ -82,7 +82,7 @@ xkb::xkb()
     , m_keysym(XKB_KEY_NoSymbol)
     , m_leds()
 {
-    qRegisterMetaType<KWin::input::xkb::LEDs>();
+    qRegisterMetaType<KWin::input::keyboard_leds>();
 
     if (!m_context) {
         qCDebug(KWIN_XKB) << "Could not create xkb context";
@@ -391,15 +391,15 @@ void xkb::updateModifiers()
     m_modifiers = mods;
 
     // update LEDs
-    LEDs leds;
+    auto leds{keyboard_leds::none};
     if (xkb_state_led_index_is_active(m_state, m_numLock) == 1) {
-        leds = leds | LED::NumLock;
+        leds = leds | keyboard_leds::num_lock;
     }
     if (xkb_state_led_index_is_active(m_state, m_capsLock) == 1) {
-        leds = leds | LED::CapsLock;
+        leds = leds | keyboard_leds::caps_lock;
     }
     if (xkb_state_led_index_is_active(m_state, m_scrollLock) == 1) {
-        leds = leds | LED::ScrollLock;
+        leds = leds | keyboard_leds::scroll_lock;
     }
     if (m_leds != leds) {
         m_leds = leds;

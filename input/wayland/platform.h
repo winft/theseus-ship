@@ -56,7 +56,7 @@ public:
     platform& operator=(platform&& other) noexcept = default;
     ~platform() override;
 
-    void update_keyboard_leds(input::xkb::LEDs leds);
+    void update_keyboard_leds(input::keyboard_leds leds);
 
     void toggle_touchpads();
     void enable_touchpads();

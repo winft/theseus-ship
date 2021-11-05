@@ -22,7 +22,7 @@ public:
     explicit keyboard(platform* plat);
 
     virtual bool is_alpha_numeric_keyboard() const = 0;
-    virtual void update_leds(input::xkb::LEDs leds) = 0;
+    virtual void update_leds(input::keyboard_leds leds) = 0;
 };
 
 }

@@ -36,7 +36,7 @@ platform::platform(wayland_base const& base)
 
 platform::~platform() = default;
 
-void platform::update_keyboard_leds(input::xkb::LEDs leds)
+void platform::update_keyboard_leds(input::keyboard_leds leds)
 {
     for (auto& keyboard : keyboards) {
         if (auto ctrl = keyboard->control) {

@@ -42,7 +42,7 @@ public:
     virtual void processKeymapChange(int fd, uint32_t size);
 
 Q_SIGNALS:
-    void ledsChanged(input::xkb::LEDs);
+    void ledsChanged(input::keyboard_leds);
 
 protected:
     std::unique_ptr<input::xkb> m_xkb;
