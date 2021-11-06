@@ -69,8 +69,6 @@ xkb::xkb()
 {
     qRegisterMetaType<KWin::input::keyboard_leds>();
 
-    startup_num_lock.force = qEnvironmentVariableIsSet("KWIN_FORCE_NUM_LOCK_EVALUATION");
-
     if (!context) {
         // TODO(romangg): throw instead
         qCCritical(KWIN_XKB) << "Could not create xkb context";
@@ -260,10 +258,10 @@ void xkb::updateKeymap(xkb_keymap* keymap)
 
 void xkb::evaluate_startup_num_lock()
 {
-    if (startup_num_lock.done && !startup_num_lock.force) {
+    if (startup_num_lock_done) {
         return;
     }
-    startup_num_lock.done = true;
+    startup_num_lock_done = true;
 
     if (m_ownership == Ownership::Client || m_numModifier == XKB_MOD_INVALID || !m_numLockConfig) {
         return;

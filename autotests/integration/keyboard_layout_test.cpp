@@ -540,8 +540,6 @@ void KeyboardLayoutTest::testNumLock()
     QCOMPARE(xkb->numberOfLayouts(), 1u);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
 
-    xkb->startup_num_lock.force = true;
-
     // by default not set
     QVERIFY(!(xkb->leds() & input::keyboard_leds::num_lock));
     quint32 timestamp = 0;
@@ -560,9 +558,14 @@ void KeyboardLayoutTest::testNumLock()
     auto group = kwinApp()->inputConfig()->group("Keyboard");
     group.writeEntry("NumLock", 0);
     group.sync();
-    xkb->reconfigure();
 
-    // now it should be on
+    // Without resetting the done flag should not be on.
+    xkb->reconfigure();
+    QVERIFY(!(xkb->leds() & input::keyboard_leds::num_lock));
+
+    // With the done flag unset it changes though.
+    xkb->startup_num_lock_done = false;
+    xkb->reconfigure();
     QVERIFY(flags(xkb->leds() & input::keyboard_leds::num_lock));
 
     // pressing should result in it being off
