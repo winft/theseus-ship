@@ -100,6 +100,8 @@ private:
 
 void KeyboardLayoutTest::reconfigureLayouts()
 {
+    layoutsReconfiguredSpy.clear();
+
     // create DBus signal to reload
     QDBusMessage message = QDBusMessage::createSignal(QStringLiteral("/Layouts"),
                                                       QStringLiteral("org.kde.keyboard"),
@@ -108,7 +110,6 @@ void KeyboardLayoutTest::reconfigureLayouts()
 
     QVERIFY(layoutsReconfiguredSpy.wait(1000));
     QCOMPARE(layoutsReconfiguredSpy.count(), 1);
-    layoutsReconfiguredSpy.clear();
 }
 
 void KeyboardLayoutTest::resetLayouts()
@@ -170,11 +171,6 @@ void KeyboardLayoutTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
-
-    // don't get DBus signal on one-layout configuration
-    //    QVERIFY(layoutsReconfiguredSpy.wait());
-    //    QCOMPARE(layoutsReconfiguredSpy.count(), 1);
-    //    layoutsReconfiguredSpy.clear();
 }
 
 void KeyboardLayoutTest::init()
@@ -185,6 +181,14 @@ void KeyboardLayoutTest::init()
 void KeyboardLayoutTest::cleanup()
 {
     Test::destroy_wayland_connection();
+
+    // We always reset to a us layout.
+    if (auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
+        xkb->layoutName() != QStringLiteral("English (US)") || xkb->numberOfLayouts() != 1) {
+        layoutGroup.writeEntry("LayoutList", QStringLiteral("us"));
+        layoutGroup.sync();
+        reconfigureLayouts();
+    }
 }
 
 void KeyboardLayoutTest::testReconfigure()
@@ -327,10 +331,6 @@ void KeyboardLayoutTest::testDBusServiceExport()
 {
     // verifies that the dbus service is only exported if there are at least two layouts
 
-    // first configure layouts, with just one layout
-    layoutGroup.writeEntry("LayoutList", QStringLiteral("us"));
-    layoutGroup.sync();
-    reconfigureLayouts();
     auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 1u);
     // default layout is English
@@ -537,9 +537,6 @@ void KeyboardLayoutTest::testApplicationPolicy()
 void KeyboardLayoutTest::testNumLock()
 {
     qputenv("KWIN_FORCE_NUM_LOCK_EVALUATION", "1");
-    layoutGroup.writeEntry("LayoutList", QStringLiteral("us"));
-    layoutGroup.sync();
-    reconfigureLayouts();
 
     auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 1u);
