@@ -267,13 +267,22 @@ void xkb::evaluate_startup_num_lock()
         return;
     }
 
-    // STATE_ON = 0,  STATE_OFF = 1, STATE_UNCHANGED = 2, see plasma-desktop/kcms/keyboard/kcmmisc.h
-    auto const config = m_numLockConfig->group("Keyboard");
-    auto const setting = config.readEntry("NumLock", 2);
-    auto num_lock_is_on
-        = xkb_state_mod_index_is_active(m_state, m_numModifier, XKB_STATE_MODS_LOCKED);
+    auto const setting = read_startup_num_lock_config();
+    if (setting == latched_key_change::unchanged) {
+        // We keep the current state.
+        return;
+    }
 
-    if (setting == 2 || (setting == 0 && num_lock_is_on) || (setting == 1 && !num_lock_is_on)) {
+    auto num_lock_is_active
+        = xkb_state_mod_index_is_active(m_state, m_numModifier, XKB_STATE_MODS_LOCKED);
+    if (num_lock_is_active < 0) {
+        // Index not available
+        return;
+    }
+
+    auto num_lock_current = num_lock_is_active ? latched_key_change::on : latched_key_change::off;
+
+    if (setting == num_lock_current) {
         // Nothing to change.
         return;
     }
@@ -285,7 +294,7 @@ void xkb::evaluate_startup_num_lock()
         return;
     }
 
-    mask[m_numModifier] = (setting == 0);
+    mask[m_numModifier] = (setting == latched_key_change::on);
     m_modifierState.locked = mask.to_ulong();
 
     xkb_state_update_mask(m_state,
@@ -298,6 +307,22 @@ void xkb::evaluate_startup_num_lock()
 
     m_modifierState.locked
         = xkb_state_serialize_mods(m_state, xkb_state_component(XKB_STATE_MODS_LOCKED));
+}
+
+latched_key_change xkb::read_startup_num_lock_config()
+{
+    // STATE_ON = 0,  STATE_OFF = 1, STATE_UNCHANGED = 2, see plasma-desktop/kcms/keyboard/kcmmisc.h
+    auto const config = m_numLockConfig->group("Keyboard");
+    auto setting = config.readEntry("NumLock", 2);
+
+    if (setting == 0) {
+        return latched_key_change::on;
+    }
+    if (setting == 1) {
+        return latched_key_change::off;
+    }
+
+    return latched_key_change::unchanged;
 }
 
 void xkb::createKeymapFile()
