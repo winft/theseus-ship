@@ -126,6 +126,7 @@ private:
     void createKeymapFile();
     void updateModifiers();
     void updateConsumedModifiers(uint32_t key);
+    void evaluate_startup_num_lock();
 
     xkb_context* context;
     xkb_keymap* m_keymap{nullptr};
