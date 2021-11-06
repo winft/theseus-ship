@@ -26,9 +26,9 @@ public:
     bool motion(motion_event const& event) override;
     bool axis(axis_event const& event) override;
 
-    bool touchDown(int32_t id, const QPointF& pos, uint32_t time) override;
-    bool touchMotion(int32_t id, const QPointF& pos, uint32_t time) override;
-    bool touchUp(int32_t id, uint32_t time) override;
+    bool touch_down(touch_down_event const& event) override;
+    bool touch_motion(touch_motion_event const& event) override;
+    bool touch_up(touch_up_event const& event) override;
 
 private:
     void notify();

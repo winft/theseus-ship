@@ -44,9 +44,9 @@ public:
     virtual bool key(key_event const& event);
     virtual bool key_repeat(key_event const& event);
 
-    virtual bool touchDown(qint32 id, const QPointF& pos, quint32 time);
-    virtual bool touchMotion(qint32 id, const QPointF& pos, quint32 time);
-    virtual bool touchUp(qint32 id, quint32 time);
+    virtual bool touch_down(touch_down_event const& event);
+    virtual bool touch_motion(touch_motion_event const& event);
+    virtual bool touch_up(touch_up_event const& event);
 
     virtual bool pinch_begin(pinch_begin_event const& event);
     virtual bool pinch_update(pinch_update_event const& event);

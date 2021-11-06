@@ -18,7 +18,7 @@ public:
     void motion(motion_event const& event) override;
     void axis(axis_event const& event) override;
 
-    void touchDown(qint32 id, const QPointF& pos, quint32 time) override;
+    void touch_down(touch_down_event const& event) override;
 
 private:
     void showCursor();

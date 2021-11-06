@@ -83,11 +83,8 @@ bool move_resize_filter::key_repeat(key_event const& event)
     return true;
 }
 
-bool move_resize_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
+bool move_resize_filter::touch_down(touch_down_event const& /*event*/)
 {
-    Q_UNUSED(id)
-    Q_UNUSED(pos)
-    Q_UNUSED(time)
     auto c = workspace()->moveResizeClient();
     if (!c) {
         return false;
@@ -95,7 +92,7 @@ bool move_resize_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
     return true;
 }
 
-bool move_resize_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
+bool move_resize_filter::touch_motion(touch_motion_event const& event)
 {
     Q_UNUSED(time)
     auto c = workspace()->moveResizeClient();
@@ -103,23 +100,22 @@ bool move_resize_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time
         return false;
     }
     if (!m_set) {
-        m_id = id;
+        m_id = event.id;
         m_set = true;
     }
-    if (m_id == id) {
-        win::update_move_resize(c, pos.toPoint());
+    if (m_id == event.id) {
+        win::update_move_resize(c, event.pos.toPoint());
     }
     return true;
 }
 
-bool move_resize_filter::touchUp(qint32 id, quint32 time)
+bool move_resize_filter::touch_up(touch_up_event const& event)
 {
-    Q_UNUSED(time)
     auto c = workspace()->moveResizeClient();
     if (!c) {
         return false;
     }
-    if (m_id == id || !m_set) {
+    if (m_id == event.id || !m_set) {
         win::end_move_resize(c);
         m_set = false;
         // pass through to update decoration filter later on

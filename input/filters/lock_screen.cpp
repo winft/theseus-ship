@@ -123,45 +123,48 @@ bool lock_screen_filter::key_repeat(key_event const& /*event*/)
     return kwinApp()->is_screen_locked();
 }
 
-bool lock_screen_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
+bool lock_screen_filter::touch_down(touch_down_event const& event)
 {
     if (!kwinApp()->is_screen_locked()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
+    seat->setTimestamp(event.base.time_msec);
     if (touchSurfaceAllowed()) {
-        kwinApp()->input->redirect->touch()->insertId(id, seat->touches().touch_down(pos));
+        kwinApp()->input->redirect->touch()->insertId(event.id,
+                                                      seat->touches().touch_down(event.pos));
     }
     return true;
 }
-bool lock_screen_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
+
+bool lock_screen_filter::touch_motion(touch_motion_event const& event)
 {
     if (!kwinApp()->is_screen_locked()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
+    seat->setTimestamp(event.base.time_msec);
     if (touchSurfaceAllowed()) {
-        const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
+        const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(event.id);
         if (wraplandId != -1) {
-            seat->touches().touch_move(wraplandId, pos);
+            seat->touches().touch_move(wraplandId, event.pos);
         }
     }
     return true;
 }
-bool lock_screen_filter::touchUp(qint32 id, quint32 time)
+
+bool lock_screen_filter::touch_up(touch_up_event const& event)
 {
     if (!kwinApp()->is_screen_locked()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
+    seat->setTimestamp(event.base.time_msec);
     if (touchSurfaceAllowed()) {
-        const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
+        const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(event.id);
         if (wraplandId != -1) {
             seat->touches().touch_up(wraplandId);
-            kwinApp()->input->redirect->touch()->removeId(id);
+            kwinApp()->input->redirect->touch()->removeId(event.id);
         }
     }
     return true;

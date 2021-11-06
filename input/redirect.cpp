@@ -134,19 +134,19 @@ void redirect::processKeymapChange(int fd, uint32_t size)
     m_keyboard->processKeymapChange(fd, size);
 }
 
-void redirect::processTouchDown(qint32 id, const QPointF& pos, quint32 time)
+void redirect::processTouchDown(touch_down_event const& event)
 {
-    m_touch->processDown(id, pos, time);
+    m_touch->process_down(event);
 }
 
-void redirect::processTouchUp(qint32 id, quint32 time)
+void redirect::processTouchUp(touch_up_event const& event)
 {
-    m_touch->processUp(id, time);
+    m_touch->process_up(event);
 }
 
-void redirect::processTouchMotion(qint32 id, const QPointF& pos, quint32 time)
+void redirect::processTouchMotion(touch_motion_event const& event)
 {
-    m_touch->processMotion(id, pos, time);
+    m_touch->process_motion(event);
 }
 
 void redirect::cancelTouch()

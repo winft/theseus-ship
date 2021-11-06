@@ -50,10 +50,8 @@ bool dpms_filter::key(key_event const& /*event*/)
     return true;
 }
 
-bool dpms_filter::touchDown(int32_t id, const QPointF& pos, uint32_t time)
+bool dpms_filter::touch_down(touch_down_event const& event)
 {
-    Q_UNUSED(pos)
-    Q_UNUSED(time)
     if (m_touchPoints.isEmpty()) {
         if (!m_doubleTapTimer.isValid()) {
             // This is the first tap.
@@ -71,16 +69,16 @@ bool dpms_filter::touchDown(int32_t id, const QPointF& pos, uint32_t time)
         m_doubleTapTimer.invalidate();
         m_secondTap = false;
     }
-    m_touchPoints << id;
+    m_touchPoints << event.id;
     return true;
 }
 
-bool dpms_filter::touchUp(int32_t id, uint32_t time)
+bool dpms_filter::touch_up(touch_up_event const& event)
 {
-    m_touchPoints.removeAll(id);
+    m_touchPoints.removeAll(event.id);
     if (m_touchPoints.isEmpty() && m_doubleTapTimer.isValid() && m_secondTap) {
         if (m_doubleTapTimer.elapsed() < qApp->doubleClickInterval()) {
-            waylandServer()->seat()->setTimestamp(time);
+            waylandServer()->seat()->setTimestamp(event.base.time_msec);
             notify();
         }
         m_doubleTapTimer.invalidate();
@@ -89,12 +87,8 @@ bool dpms_filter::touchUp(int32_t id, uint32_t time)
     return true;
 }
 
-bool dpms_filter::touchMotion(int32_t id, const QPointF& pos, uint32_t time)
+bool dpms_filter::touch_motion(touch_motion_event const& /*event*/)
 {
-    Q_UNUSED(id)
-    Q_UNUSED(pos)
-    Q_UNUSED(time)
-
     // Ignore the event.
     return true;
 }

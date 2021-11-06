@@ -292,23 +292,24 @@ void redirect::setup_workspace()
                              this,
                              [this](auto id, auto const& pos) {
                                  // TODO: Fix time
-                                 m_touch->processDown(id, pos, 0);
+                                 m_touch->process_down({static_cast<int32_t>(id), pos, nullptr, 0});
                                  waylandServer()->simulateUserActivity();
                              });
-            QObject::connect(device,
-                             &Wrapland::Server::FakeInputDevice::touchMotionRequested,
-                             this,
-                             [this](auto id, auto const& pos) {
-                                 // TODO: Fix time
-                                 m_touch->processMotion(id, pos, 0);
-                                 waylandServer()->simulateUserActivity();
-                             });
+            QObject::connect(
+                device,
+                &Wrapland::Server::FakeInputDevice::touchMotionRequested,
+                this,
+                [this](auto id, auto const& pos) {
+                    // TODO: Fix time
+                    m_touch->process_motion({static_cast<int32_t>(id), pos, nullptr, 0});
+                    waylandServer()->simulateUserActivity();
+                });
             QObject::connect(device,
                              &Wrapland::Server::FakeInputDevice::touchUpRequested,
                              this,
                              [this](auto id) {
                                  // TODO: Fix time
-                                 m_touch->processUp(id, 0);
+                                 m_touch->process_up({static_cast<int32_t>(id), nullptr, 0});
                                  waylandServer()->simulateUserActivity();
                              });
             QObject::connect(device,

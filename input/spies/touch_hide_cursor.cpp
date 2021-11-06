@@ -27,11 +27,8 @@ void touch_hide_cursor_spy::axis([[maybe_unused]] axis_event const& event)
     showCursor();
 }
 
-void touch_hide_cursor_spy::touchDown(qint32 id, const QPointF& pos, quint32 time)
+void touch_hide_cursor_spy::touch_down(touch_down_event const& /*event*/)
 {
-    Q_UNUSED(id)
-    Q_UNUSED(pos)
-    Q_UNUSED(time)
     hideCursor();
 }
 

@@ -26,9 +26,9 @@ public:
     void key(input::key_event const& event) override;
     void key_repeat(input::key_event const& event) override;
 
-    void touchDown(qint32 id, const QPointF& pos, quint32 time) override;
-    void touchMotion(qint32 id, const QPointF& pos, quint32 time) override;
-    void touchUp(qint32 id, quint32 time) override;
+    void touch_down(input::touch_down_event const& event) override;
+    void touch_motion(input::touch_motion_event const& event) override;
+    void touch_up(input::touch_up_event const& event) override;
 
     void pinch_begin(input::pinch_begin_event const& event) override;
     void pinch_update(input::pinch_update_event const& event) override;
