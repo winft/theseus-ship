@@ -113,6 +113,11 @@ public:
 
     void setSeat(Wrapland::Server::Seat* seat);
 
+    struct {
+        bool done{false};
+        bool force{false};
+    } startup_num_lock;
+
 Q_SIGNALS:
     void ledsChanged(keyboard_leds leds);
 

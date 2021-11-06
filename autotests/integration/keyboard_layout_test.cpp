@@ -536,19 +536,21 @@ void KeyboardLayoutTest::testApplicationPolicy()
 
 void KeyboardLayoutTest::testNumLock()
 {
-    qputenv("KWIN_FORCE_NUM_LOCK_EVALUATION", "1");
-
     auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     QCOMPARE(xkb->numberOfLayouts(), 1u);
     QCOMPARE(xkb->layoutName(), QStringLiteral("English (US)"));
+
+    xkb->startup_num_lock.force = true;
 
     // by default not set
     QVERIFY(!(xkb->leds() & input::keyboard_leds::num_lock));
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
     Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
+
     // now it should be on
     QVERIFY(flags(xkb->leds() & input::keyboard_leds::num_lock));
+
     // and back to off
     Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
     Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
@@ -559,8 +561,10 @@ void KeyboardLayoutTest::testNumLock()
     group.writeEntry("NumLock", 0);
     group.sync();
     xkb->reconfigure();
+
     // now it should be on
     QVERIFY(flags(xkb->leds() & input::keyboard_leds::num_lock));
+
     // pressing should result in it being off
     Test::keyboard_key_pressed(KEY_NUMLOCK, timestamp++);
     Test::keyboard_key_released(KEY_NUMLOCK, timestamp++);
