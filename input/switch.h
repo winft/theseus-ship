@@ -32,7 +32,7 @@ public:
     ~switch_device() = default;
 
 Q_SIGNALS:
-    void toggle(toggle_event);
+    void toggle(switch_toggle_event);
 };
 
 }

@@ -45,26 +45,18 @@ bool event_filter::key_repeat(key_event const& /*event*/)
     return false;
 }
 
-bool event_filter::touchDown(qint32 id, const QPointF& point, quint32 time)
+bool event_filter::touch_down(touch_down_event const& /*event*/)
 {
-    Q_UNUSED(id)
-    Q_UNUSED(point)
-    Q_UNUSED(time)
     return false;
 }
 
-bool event_filter::touchMotion(qint32 id, const QPointF& point, quint32 time)
+bool event_filter::touch_motion(touch_motion_event const& /*event*/)
 {
-    Q_UNUSED(id)
-    Q_UNUSED(point)
-    Q_UNUSED(time)
     return false;
 }
 
-bool event_filter::touchUp(qint32 id, quint32 time)
+bool event_filter::touch_up(touch_up_event const& /*event*/)
 {
-    Q_UNUSED(id)
-    Q_UNUSED(time)
     return false;
 }
 
@@ -98,9 +90,8 @@ bool event_filter::swipe_end(swipe_end_event const& /*event*/)
     return false;
 }
 
-bool event_filter::switchEvent(SwitchEvent* event)
+bool event_filter::switch_toggle(switch_toggle_event const& /*event*/)
 {
-    Q_UNUSED(event)
     return false;
 }
 

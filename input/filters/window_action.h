@@ -22,7 +22,7 @@ class window_action_filter : public event_filter
 {
 public:
     bool button(button_event const& event) override;
-    bool touchDown(qint32 id, const QPointF& pos, quint32 time) override;
+    bool touch_down(touch_down_event const& event) override;
     bool axis(axis_event const& event) override;
 
 private:

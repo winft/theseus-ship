@@ -114,7 +114,7 @@ bool decoration_event_filter::axis(axis_event const& event)
     return true;
 }
 
-bool decoration_event_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
+bool decoration_event_filter::touch_down(touch_down_event const& event)
 {
     auto seat = waylandServer()->seat();
     if (seat->touches().is_in_progress()) {
@@ -124,22 +124,22 @@ bool decoration_event_filter::touchDown(qint32 id, const QPointF& pos, quint32 t
         // already on a decoration, ignore further touch points, but filter out
         return true;
     }
-    seat->setTimestamp(time);
+    seat->setTimestamp(event.base.time_msec);
     auto decoration = kwinApp()->input->redirect->touch()->decoration();
     if (!decoration) {
         return false;
     }
 
-    kwinApp()->input->redirect->touch()->setDecorationPressId(id);
-    m_lastGlobalTouchPos = pos;
-    m_lastLocalTouchPos = pos - decoration->client()->pos();
+    kwinApp()->input->redirect->touch()->setDecorationPressId(event.id);
+    m_lastGlobalTouchPos = event.pos;
+    m_lastLocalTouchPos = event.pos - decoration->client()->pos();
 
     QHoverEvent hoverEvent(QEvent::HoverMove, m_lastLocalTouchPos, m_lastLocalTouchPos);
     QCoreApplication::sendEvent(decoration->decoration(), &hoverEvent);
 
     QMouseEvent e(QEvent::MouseButtonPress,
                   m_lastLocalTouchPos,
-                  pos,
+                  event.pos,
                   Qt::LeftButton,
                   Qt::LeftButton,
                   kwinApp()->input->redirect->keyboardModifiers());
@@ -151,7 +151,7 @@ bool decoration_event_filter::touchDown(qint32 id, const QPointF& pos, quint32 t
     return true;
 }
 
-bool decoration_event_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
+bool decoration_event_filter::touch_motion(touch_motion_event const& event)
 {
     Q_UNUSED(time)
     auto decoration = kwinApp()->input->redirect->touch()->decoration();
@@ -161,21 +161,21 @@ bool decoration_event_filter::touchMotion(qint32 id, const QPointF& pos, quint32
     if (kwinApp()->input->redirect->touch()->decorationPressId() == -1) {
         return false;
     }
-    if (kwinApp()->input->redirect->touch()->decorationPressId() != qint32(id)) {
+    if (kwinApp()->input->redirect->touch()->decorationPressId() != qint32(event.id)) {
         // ignore, but filter out
         return true;
     }
-    m_lastGlobalTouchPos = pos;
-    m_lastLocalTouchPos = pos - decoration->client()->pos();
+    m_lastGlobalTouchPos = event.pos;
+    m_lastLocalTouchPos = event.pos - decoration->client()->pos();
 
     QHoverEvent e(QEvent::HoverMove, m_lastLocalTouchPos, m_lastLocalTouchPos);
     QCoreApplication::instance()->sendEvent(decoration->decoration(), &e);
     win::process_decoration_move(
-        decoration->client(), m_lastLocalTouchPos.toPoint(), pos.toPoint());
+        decoration->client(), m_lastLocalTouchPos.toPoint(), event.pos.toPoint());
     return true;
 }
 
-bool decoration_event_filter::touchUp(qint32 id, quint32 time)
+bool decoration_event_filter::touch_up(touch_up_event const& event)
 {
     Q_UNUSED(time);
     auto decoration = kwinApp()->input->redirect->touch()->decoration();
@@ -185,7 +185,7 @@ bool decoration_event_filter::touchUp(qint32 id, quint32 time)
     if (kwinApp()->input->redirect->touch()->decorationPressId() == -1) {
         return false;
     }
-    if (kwinApp()->input->redirect->touch()->decorationPressId() != qint32(id)) {
+    if (kwinApp()->input->redirect->touch()->decorationPressId() != qint32(event.id)) {
         // ignore, but filter out
         return true;
     }

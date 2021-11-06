@@ -36,19 +36,8 @@ public:
     bool positionValid() const override;
 
     void process_down(touch_down_event const& event) override;
-    void processDown(qint32 id,
-                     QPointF const& pos,
-                     quint32 time,
-                     input::touch* device = nullptr) override;
-
     void process_up(touch_up_event const& event) override;
-    void processUp(qint32 id, quint32 time, input::touch* device = nullptr) override;
-
     void process_motion(touch_motion_event const& event) override;
-    void processMotion(qint32 id,
-                       QPointF const& pos,
-                       quint32 time,
-                       input::touch* device = nullptr) override;
 
     bool focusUpdatesBlocked() override;
 

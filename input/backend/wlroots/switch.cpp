@@ -33,7 +33,7 @@ static void handle_toggle(struct wl_listener* listener, [[maybe_unused]] void* d
     auto switch_device = event_receiver_struct->receiver;
     auto wlr_event = reinterpret_cast<wlr_event_switch_toggle*>(data);
 
-    auto event = toggle_event{
+    auto event = switch_toggle_event{
         static_cast<switch_type>(wlr_event->switch_type),
         static_cast<switch_state>(wlr_event->switch_state),
         {

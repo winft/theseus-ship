@@ -19,17 +19,17 @@ tablet_mode_switch_spy::tablet_mode_switch_spy(dbus::tablet_mode_manager* parent
 {
 }
 
-void tablet_mode_switch_spy::switchEvent(input::SwitchEvent* event)
+void tablet_mode_switch_spy::switch_toggle(switch_toggle_event const& event)
 {
-    if (auto& ctrl = event->device()->control; !ctrl || !ctrl->is_tablet_mode_switch()) {
+    if (event.type != switch_type::tablet_mode) {
         return;
     }
 
-    switch (event->state()) {
-    case input::SwitchEvent::State::Off:
+    switch (event.state) {
+    case input::switch_state::off:
         m_parent->setIsTablet(false);
         break;
-    case input::SwitchEvent::State::On:
+    case input::switch_state::on:
         m_parent->setIsTablet(true);
         break;
     default:

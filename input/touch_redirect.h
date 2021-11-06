@@ -39,26 +39,10 @@ public:
     virtual void process_down(touch_down_event const& /*event*/)
     {
     }
-    virtual void processDown(qint32 /*id*/,
-                             QPointF const& /*pos*/,
-                             quint32 /*time*/,
-                             [[maybe_unused]] input::touch* device = nullptr)
-    {
-    }
     virtual void process_up(touch_up_event const& /*event*/)
     {
     }
-    virtual void
-    processUp(qint32 /*id*/, quint32 /*time*/, [[maybe_unused]] input::touch* device = nullptr)
-    {
-    }
     virtual void process_motion(touch_motion_event const& /*event*/)
-    {
-    }
-    virtual void processMotion(qint32 /*id*/,
-                               QPointF const& /*pos*/,
-                               quint32 /*time*/,
-                               [[maybe_unused]] input::touch* device = nullptr)
     {
     }
     virtual void cancel()

@@ -103,36 +103,33 @@ bool window_selector_filter::key_repeat(key_event const& /*event*/)
     return m_active;
 }
 
-bool window_selector_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
+bool window_selector_filter::touch_down(touch_down_event const& event)
 {
-    Q_UNUSED(time)
     if (!isActive()) {
         return false;
     }
-    m_touchPoints.insert(id, pos);
+    m_touchPoints.insert(event.id, event.pos);
     return true;
 }
 
-bool window_selector_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
+bool window_selector_filter::touch_motion(touch_motion_event const& event)
 {
-    Q_UNUSED(time)
     if (!isActive()) {
         return false;
     }
-    auto it = m_touchPoints.find(id);
+    auto it = m_touchPoints.find(event.id);
     if (it != m_touchPoints.end()) {
-        *it = pos;
+        *it = event.pos;
     }
     return true;
 }
 
-bool window_selector_filter::touchUp(qint32 id, quint32 time)
+bool window_selector_filter::touch_up(touch_up_event const& event)
 {
-    Q_UNUSED(time)
     if (!isActive()) {
         return false;
     }
-    auto it = m_touchPoints.find(id);
+    auto it = m_touchPoints.find(event.id);
     if (it != m_touchPoints.end()) {
         const auto pos = it.value();
         m_touchPoints.erase(it);

@@ -27,9 +27,8 @@ bool screen_edge_filter::motion(motion_event const& event)
     return false;
 }
 
-bool screen_edge_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
+bool screen_edge_filter::touch_down(touch_down_event const& event)
 {
-    Q_UNUSED(time)
     // TODO: better check whether a touch sequence is in progress
     if (m_touchInProgress || waylandServer()->seat()->touches().is_in_progress()) {
         // cancel existing touch
@@ -38,31 +37,29 @@ bool screen_edge_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
         m_id = 0;
         return false;
     }
-    if (ScreenEdges::self()->gestureRecognizer()->startSwipeGesture(pos) > 0) {
+    if (ScreenEdges::self()->gestureRecognizer()->startSwipeGesture(event.pos) > 0) {
         m_touchInProgress = true;
-        m_id = id;
-        m_lastPos = pos;
+        m_id = event.id;
+        m_lastPos = event.pos;
         return true;
     }
     return false;
 }
 
-bool screen_edge_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
+bool screen_edge_filter::touch_motion(touch_motion_event const& event)
 {
-    Q_UNUSED(time)
-    if (m_touchInProgress && m_id == id) {
+    if (m_touchInProgress && m_id == event.id) {
         ScreenEdges::self()->gestureRecognizer()->updateSwipeGesture(
-            QSizeF(pos.x() - m_lastPos.x(), pos.y() - m_lastPos.y()));
-        m_lastPos = pos;
+            QSizeF(event.pos.x() - m_lastPos.x(), event.pos.y() - m_lastPos.y()));
+        m_lastPos = event.pos;
         return true;
     }
     return false;
 }
 
-bool screen_edge_filter::touchUp(qint32 id, quint32 time)
+bool screen_edge_filter::touch_up(touch_up_event const& event)
 {
-    Q_UNUSED(time)
-    if (m_touchInProgress && m_id == id) {
+    if (m_touchInProgress && m_id == event.id) {
         ScreenEdges::self()->gestureRecognizer()->endSwipeGesture();
         m_touchInProgress = false;
         return true;

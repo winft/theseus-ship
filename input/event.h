@@ -173,40 +173,10 @@ enum class switch_state {
     toggle,
 };
 
-struct toggle_event {
+struct switch_toggle_event {
     switch_type type;
     switch_state state;
     event<switch_device> base;
-};
-
-class SwitchEvent : public QInputEvent
-{
-public:
-    enum class State { Off, On };
-    explicit SwitchEvent(State state,
-                         quint32 timestamp,
-                         quint64 timestampMicroseconds,
-                         switch_device* device);
-
-    State state() const
-    {
-        return m_state;
-    }
-
-    quint64 timestampMicroseconds() const
-    {
-        return m_timestampMicroseconds;
-    }
-
-    switch_device* device() const
-    {
-        return m_device;
-    }
-
-private:
-    State m_state;
-    quint64 m_timestampMicroseconds;
-    switch_device* m_device;
 };
 
 }

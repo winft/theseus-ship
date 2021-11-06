@@ -66,28 +66,30 @@ bool effects_filter::key_repeat(key_event const& event)
     return true;
 }
 
-bool effects_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
+bool effects_filter::touch_down(touch_down_event const& event)
 {
     if (!effects) {
         return false;
     }
-    return static_cast<EffectsHandlerImpl*>(effects)->touchDown(id, pos, time);
+    return static_cast<EffectsHandlerImpl*>(effects)->touchDown(
+        event.id, event.pos, event.base.time_msec);
 }
 
-bool effects_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
+bool effects_filter::touch_motion(touch_motion_event const& event)
 {
     if (!effects) {
         return false;
     }
-    return static_cast<EffectsHandlerImpl*>(effects)->touchMotion(id, pos, time);
+    return static_cast<EffectsHandlerImpl*>(effects)->touchMotion(
+        event.id, event.pos, event.base.time_msec);
 }
 
-bool effects_filter::touchUp(qint32 id, quint32 time)
+bool effects_filter::touch_up(touch_up_event const& event)
 {
     if (!effects) {
         return false;
     }
-    return static_cast<EffectsHandlerImpl*>(effects)->touchUp(id, time);
+    return static_cast<EffectsHandlerImpl*>(effects)->touchUp(event.id, event.base.time_msec);
 }
 
 }

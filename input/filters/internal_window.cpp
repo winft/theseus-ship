@@ -194,7 +194,7 @@ bool internal_window_filter::key_repeat(key_event const& event)
     return QCoreApplication::sendEvent(window, &internal_event);
 }
 
-bool internal_window_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
+bool internal_window_filter::touch_down(touch_down_event const& event)
 {
     auto seat = waylandServer()->seat();
     if (seat->touches().is_in_progress()) {
@@ -204,26 +204,26 @@ bool internal_window_filter::touchDown(qint32 id, const QPointF& pos, quint32 ti
     auto touch = kwinApp()->input->redirect->touch();
     if (touch->internalPressId() != -1) {
         // already on internal window, ignore further touch points, but filter out
-        m_pressedIds.insert(id);
+        m_pressedIds.insert(event.id);
         return true;
     }
     // a new touch point
-    seat->setTimestamp(time);
+    seat->setTimestamp(event.base.time_msec);
     auto internal = touch->internalWindow();
     if (!internal) {
         return false;
     }
-    touch->setInternalPressId(id);
+    touch->setInternalPressId(event.id);
     // Qt's touch event API is rather complex, let's do fake mouse events instead
-    m_lastGlobalTouchPos = pos;
-    m_lastLocalTouchPos = pos - QPointF(internal->x(), internal->y());
+    m_lastGlobalTouchPos = event.pos;
+    m_lastLocalTouchPos = event.pos - QPointF(internal->x(), internal->y());
 
-    QEnterEvent enterEvent(m_lastLocalTouchPos, m_lastLocalTouchPos, pos);
+    QEnterEvent enterEvent(m_lastLocalTouchPos, m_lastLocalTouchPos, event.pos);
     QCoreApplication::sendEvent(internal, &enterEvent);
 
     QMouseEvent e(QEvent::MouseButtonPress,
                   m_lastLocalTouchPos,
-                  pos,
+                  event.pos,
                   Qt::LeftButton,
                   Qt::LeftButton,
                   kwinApp()->input->redirect->keyboardModifiers());
@@ -232,7 +232,7 @@ bool internal_window_filter::touchDown(qint32 id, const QPointF& pos, quint32 ti
     return true;
 }
 
-bool internal_window_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
+bool internal_window_filter::touch_motion(touch_motion_event const& event)
 {
     auto touch = kwinApp()->input->redirect->touch();
     auto internal = touch->internalWindow();
@@ -242,13 +242,13 @@ bool internal_window_filter::touchMotion(qint32 id, const QPointF& pos, quint32 
     if (touch->internalPressId() == -1) {
         return false;
     }
-    waylandServer()->seat()->setTimestamp(time);
-    if (touch->internalPressId() != qint32(id) || m_pressedIds.contains(id)) {
+    waylandServer()->seat()->setTimestamp(event.base.time_msec);
+    if (touch->internalPressId() != qint32(event.id) || m_pressedIds.contains(event.id)) {
         // ignore, but filter out
         return true;
     }
-    m_lastGlobalTouchPos = pos;
-    m_lastLocalTouchPos = pos - QPointF(internal->x(), internal->y());
+    m_lastGlobalTouchPos = event.pos;
+    m_lastLocalTouchPos = event.pos - QPointF(internal->x(), internal->y());
 
     QMouseEvent e(QEvent::MouseMove,
                   m_lastLocalTouchPos,
@@ -260,19 +260,19 @@ bool internal_window_filter::touchMotion(qint32 id, const QPointF& pos, quint32 
     return true;
 }
 
-bool internal_window_filter::touchUp(qint32 id, quint32 time)
+bool internal_window_filter::touch_up(touch_up_event const& event)
 {
     auto touch = kwinApp()->input->redirect->touch();
     auto internal = touch->internalWindow();
-    const bool removed = m_pressedIds.remove(id);
+    const bool removed = m_pressedIds.remove(event.id);
     if (!internal) {
         return removed;
     }
     if (touch->internalPressId() == -1) {
         return removed;
     }
-    waylandServer()->seat()->setTimestamp(time);
-    if (touch->internalPressId() != qint32(id)) {
+    waylandServer()->seat()->setTimestamp(event.base.time_msec);
+    if (touch->internalPressId() != qint32(event.id)) {
         // ignore, but filter out
         return true;
     }

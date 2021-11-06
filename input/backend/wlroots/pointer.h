@@ -37,7 +37,7 @@ private:
     er motion_absolute_rec;
     er button_rec;
     er axis_rec;
-    er frame;
+    er frame_rec;
     er swipe_begin_rec;
     er swipe_update_rec;
     er swipe_end_rec;

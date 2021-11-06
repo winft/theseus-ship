@@ -26,9 +26,9 @@ public:
     void key(input::key_event const& event) override;
     void key_repeat(input::key_event const& event) override;
 
-    void touchDown(qint32 id, const QPointF& pos, quint32 time) override;
-    void touchMotion(qint32 id, const QPointF& pos, quint32 time) override;
-    void touchUp(qint32 id, quint32 time) override;
+    void touch_down(input::touch_down_event const& event) override;
+    void touch_motion(input::touch_motion_event const& event) override;
+    void touch_up(input::touch_up_event const& event) override;
 
     void pinch_begin(input::pinch_begin_event const& event) override;
     void pinch_update(input::pinch_update_event const& event) override;
@@ -36,9 +36,9 @@ public:
 
     void swipe_begin(input::swipe_begin_event const& event) override;
     void swipe_update(input::swipe_update_event const& event) override;
-    void swipe_end(input::swipe_end_event const&) override;
+    void swipe_end(input::swipe_end_event const& event) override;
 
-    void switchEvent(input::SwitchEvent* event) override;
+    void switch_toggle(input::switch_toggle_event const& event) override;
 
     void tabletToolEvent(QTabletEvent* event) override;
     void tabletToolButtonEvent(const QSet<uint>& pressedButtons) override;

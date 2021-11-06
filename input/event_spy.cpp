@@ -43,24 +43,16 @@ void event_spy::key_repeat(key_event const& /*event*/)
 {
 }
 
-void event_spy::touchDown(qint32 id, const QPointF& point, quint32 time)
+void event_spy::touch_down(touch_down_event const& /*event*/)
 {
-    Q_UNUSED(id)
-    Q_UNUSED(point)
-    Q_UNUSED(time)
 }
 
-void event_spy::touchMotion(qint32 id, const QPointF& point, quint32 time)
+void event_spy::touch_motion(touch_motion_event const& /*event*/)
 {
-    Q_UNUSED(id)
-    Q_UNUSED(point)
-    Q_UNUSED(time)
 }
 
-void event_spy::touchUp(qint32 id, quint32 time)
+void event_spy::touch_up(touch_up_event const& /*event*/)
 {
-    Q_UNUSED(id)
-    Q_UNUSED(time)
 }
 
 void event_spy::pinch_begin(pinch_begin_event const& /*event*/)
@@ -87,9 +79,8 @@ void event_spy::swipe_end(swipe_end_event const& /*event*/)
 {
 }
 
-void event_spy::switchEvent(SwitchEvent* event)
+void event_spy::switch_toggle(switch_toggle_event const& /*event*/)
 {
-    Q_UNUSED(event)
 }
 
 void event_spy::tabletToolEvent(QTabletEvent* event)

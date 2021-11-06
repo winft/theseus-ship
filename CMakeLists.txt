@@ -408,7 +408,6 @@ set(kwin_SRCS
     input/spies/modifier_only_shortcuts.cpp
     input/cursor.cpp
     input/cursor_shape.cpp
-    input/event.cpp
     input/gestures.cpp
     input/global_shortcut.cpp
     input/global_shortcuts_manager.cpp

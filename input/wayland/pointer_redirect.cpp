@@ -233,6 +233,8 @@ void pointer_redirect::process_motion(motion_event const& event)
         std::bind(&event_spy::motion, std::placeholders::_1, event));
     kwinApp()->input->redirect->processFilters(
         std::bind(&input::event_filter::motion, std::placeholders::_1, event));
+
+    process_frame();
 }
 
 void pointer_redirect::process_motion_absolute(motion_absolute_event const& event)
@@ -259,6 +261,8 @@ void pointer_redirect::process_motion_absolute(motion_absolute_event const& even
         std::bind(&event_spy::motion, std::placeholders::_1, motion_ev));
     kwinApp()->input->redirect->processFilters(
         std::bind(&input::event_filter::motion, std::placeholders::_1, motion_ev));
+
+    process_frame();
 }
 
 void pointer_redirect::process_button(button_event const& event)
@@ -284,6 +288,8 @@ void pointer_redirect::process_button(button_event const& event)
         // Check focus after processing spies/filters.
         device_redirect_update(this);
     }
+
+    process_frame();
 }
 
 void pointer_redirect::process_axis(axis_event const& event)
@@ -298,6 +304,8 @@ void pointer_redirect::process_axis(axis_event const& event)
     }
     kwinApp()->input->redirect->processFilters(
         std::bind(&event_filter::axis, std::placeholders::_1, event));
+
+    process_frame();
 }
 
 void pointer_redirect::process_swipe_begin(swipe_begin_event const& event)
@@ -375,6 +383,14 @@ void pointer_redirect::process_pinch_end(pinch_end_event const& event)
         std::bind(&event_spy::pinch_end, std::placeholders::_1, event));
     kwinApp()->input->redirect->processFilters(
         std::bind(&event_filter::pinch_end, std::placeholders::_1, event));
+}
+
+void pointer_redirect::process_frame()
+{
+    if (!inited()) {
+        return;
+    }
+    waylandServer()->seat()->pointers().frame();
 }
 
 bool pointer_redirect::areButtonsPressed() const

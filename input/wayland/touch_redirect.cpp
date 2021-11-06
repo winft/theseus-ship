@@ -199,43 +199,31 @@ QPointF get_abs_pos(QPointF const& pos, touch* dev)
 
 void touch_redirect::process_down(touch_down_event const& event)
 {
-    auto const pos = get_abs_pos(event.pos, event.base.dev);
-    processDown(event.id, pos, event.base.time_msec, event.base.dev);
-#if !HAVE_WLR_TOUCH_FRAME
-    frame();
-#endif
-}
-
-void touch_redirect::processDown(qint32 id,
-                                 QPointF const& pos,
-                                 quint32 time,
-                                 input::touch* /*device*/)
-{
     if (!inited()) {
         return;
     }
-    m_lastPosition = pos;
+
+    auto const event_abs = touch_down_event(
+        {event.id, get_abs_pos(event.pos, event.base.dev), event.base.dev, event.base.time_msec});
+
+    m_lastPosition = event_abs.pos;
     window_already_updated_this_cycle = false;
     m_touches++;
     if (m_touches == 1) {
         device_redirect_update(this);
     }
     kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::touchDown, std::placeholders::_1, id, pos, time));
+        std::bind(&event_spy::touch_down, std::placeholders::_1, event_abs));
     kwinApp()->input->redirect->processFilters(
-        std::bind(&input::event_filter::touchDown, std::placeholders::_1, id, pos, time));
+        std::bind(&input::event_filter::touch_down, std::placeholders::_1, event_abs));
     window_already_updated_this_cycle = false;
-}
 
-void touch_redirect::process_up(touch_up_event const& event)
-{
-    processUp(event.id, event.base.time_msec, event.base.dev);
 #if !HAVE_WLR_TOUCH_FRAME
     frame();
 #endif
 }
 
-void touch_redirect::processUp(qint32 id, quint32 time, input::touch* /*device*/)
+void touch_redirect::process_up(touch_up_event const& event)
 {
     if (!inited()) {
         return;
@@ -244,9 +232,9 @@ void touch_redirect::processUp(qint32 id, quint32 time, input::touch* /*device*/
     window_already_updated_this_cycle = false;
 
     kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::touchUp, std::placeholders::_1, id, time));
+        std::bind(&event_spy::touch_up, std::placeholders::_1, event));
     kwinApp()->input->redirect->processFilters(
-        std::bind(&input::event_filter::touchUp, std::placeholders::_1, id, time));
+        std::bind(&input::event_filter::touch_up, std::placeholders::_1, event));
 
     window_already_updated_this_cycle = false;
     m_touches--;
@@ -254,35 +242,34 @@ void touch_redirect::processUp(qint32 id, quint32 time, input::touch* /*device*/
     if (m_touches == 0) {
         device_redirect_update(this);
     }
-}
 
-void touch_redirect::process_motion(touch_motion_event const& event)
-{
-    auto const pos = get_abs_pos(event.pos, event.base.dev);
-    processMotion(event.id, pos, event.base.time_msec, event.base.dev);
 #if !HAVE_WLR_TOUCH_FRAME
     frame();
 #endif
 }
 
-void touch_redirect::processMotion(qint32 id,
-                                   QPointF const& pos,
-                                   quint32 time,
-                                   input::touch* /*device*/)
+void touch_redirect::process_motion(touch_motion_event const& event)
 {
     if (!inited()) {
         return;
     }
 
-    m_lastPosition = pos;
+    auto const event_abs = touch_motion_event(
+        {event.id, get_abs_pos(event.pos, event.base.dev), event.base.dev, event.base.time_msec});
+
+    m_lastPosition = event_abs.pos;
     window_already_updated_this_cycle = false;
 
     kwinApp()->input->redirect->processSpies(
-        std::bind(&event_spy::touchMotion, std::placeholders::_1, id, pos, time));
+        std::bind(&event_spy::touch_motion, std::placeholders::_1, event_abs));
     kwinApp()->input->redirect->processFilters(
-        std::bind(&input::event_filter::touchMotion, std::placeholders::_1, id, pos, time));
+        std::bind(&input::event_filter::touch_motion, std::placeholders::_1, event_abs));
 
     window_already_updated_this_cycle = false;
+
+#if !HAVE_WLR_TOUCH_FRAME
+    frame();
+#endif
 }
 
 void touch_redirect::cancel()

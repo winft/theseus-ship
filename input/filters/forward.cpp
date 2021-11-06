@@ -69,40 +69,40 @@ bool forward_filter::motion(motion_event const& event)
     return true;
 }
 
-bool forward_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
+bool forward_filter::touch_down(touch_down_event const& event)
 {
     if (!workspace()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    kwinApp()->input->redirect->touch()->insertId(id, seat->touches().touch_down(pos));
+    seat->setTimestamp(event.base.time_msec);
+    kwinApp()->input->redirect->touch()->insertId(event.id, seat->touches().touch_down(event.pos));
     return true;
 }
-bool forward_filter::touchMotion(qint32 id, const QPointF& pos, quint32 time)
+bool forward_filter::touch_motion(touch_motion_event const& event)
 {
     if (!workspace()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
+    seat->setTimestamp(event.base.time_msec);
+    const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(event.id);
     if (wraplandId != -1) {
-        seat->touches().touch_move(wraplandId, pos);
+        seat->touches().touch_move(wraplandId, event.pos);
     }
     return true;
 }
-bool forward_filter::touchUp(qint32 id, quint32 time)
+bool forward_filter::touch_up(touch_up_event const& event)
 {
     if (!workspace()) {
         return false;
     }
     auto seat = waylandServer()->seat();
-    seat->setTimestamp(time);
-    const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(id);
+    seat->setTimestamp(event.base.time_msec);
+    const qint32 wraplandId = kwinApp()->input->redirect->touch()->mappedId(event.id);
     if (wraplandId != -1) {
         seat->touches().touch_up(wraplandId);
-        kwinApp()->input->redirect->touch()->removeId(id);
+        kwinApp()->input->redirect->touch()->removeId(event.id);
     }
     return true;
 }

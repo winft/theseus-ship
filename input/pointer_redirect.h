@@ -105,6 +105,9 @@ public:
     virtual void process_pinch_end(pinch_end_event const& /*event*/)
     {
     }
+    virtual void process_frame()
+    {
+    }
 };
 
 }

@@ -136,9 +136,9 @@ public:
      * @internal
      */
     void processKeymapChange(int fd, uint32_t size);
-    void processTouchDown(qint32 id, const QPointF& pos, quint32 time);
-    void processTouchUp(qint32 id, quint32 time);
-    void processTouchMotion(qint32 id, const QPointF& pos, quint32 time);
+    void processTouchDown(touch_down_event const& event);
+    void processTouchUp(touch_up_event const& event);
+    void processTouchMotion(touch_motion_event const& event);
     void cancelTouch();
     void touchFrame();
 

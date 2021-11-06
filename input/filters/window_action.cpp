@@ -58,10 +58,8 @@ bool window_action_filter::axis(axis_event const& event)
     return false;
 }
 
-bool window_action_filter::touchDown(qint32 id, const QPointF& pos, quint32 time)
+bool window_action_filter::touch_down(touch_down_event const& event)
 {
-    Q_UNUSED(id)
-    Q_UNUSED(time)
     auto seat = waylandServer()->seat();
     if (seat->touches().is_in_progress()) {
         return false;
@@ -73,7 +71,7 @@ bool window_action_filter::touchDown(qint32 id, const QPointF& pos, quint32 time
     bool wasAction = false;
     auto const command = win::get_mouse_command(focus_window, Qt::LeftButton, &wasAction);
     if (wasAction) {
-        return !focus_window->performMouseCommand(command, pos.toPoint());
+        return !focus_window->performMouseCommand(command, event.pos.toPoint());
     }
     return false;
 }

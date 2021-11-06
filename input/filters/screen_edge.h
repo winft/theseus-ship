@@ -15,9 +15,9 @@ class KWIN_EXPORT screen_edge_filter : public event_filter
 public:
     bool motion(motion_event const& event) override;
 
-    bool touchDown(qint32 id, const QPointF& pos, quint32 time) override;
-    bool touchMotion(qint32 id, const QPointF& pos, quint32 time) override;
-    bool touchUp(qint32 id, quint32 time) override;
+    bool touch_down(touch_down_event const& event) override;
+    bool touch_motion(touch_motion_event const& event) override;
+    bool touch_up(touch_up_event const& event) override;
 
 private:
     bool m_touchInProgress = false;
