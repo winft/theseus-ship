@@ -111,15 +111,17 @@ static QString buttonToString(Qt::MouseButton button)
 template<typename Device>
 static QString deviceRow(Device* dev)
 {
-    auto ctrl = dev ? dev->control : nullptr;
-    if (!ctrl) {
+    assert(dev);
+
+    if (!dev->control) {
         return tableRow(i18n("Input Device"),
                         i18nc("The input device of the event is not known", "Unknown"));
     }
+
     return tableRow(i18n("Input Device"),
                     QStringLiteral("%1 (%2)")
-                        .arg(ctrl->metadata.name.c_str())
-                        .arg(ctrl->metadata.sys_name.c_str()));
+                        .arg(dev->control->metadata.name.c_str())
+                        .arg(dev->control->metadata.sys_name.c_str()));
 }
 
 static QString buttonsToString(Qt::MouseButtons buttons)
@@ -318,6 +320,8 @@ void input_filter::key_repeat(input::key_event const& event)
     text.append(s_tableStart);
 
     text.append(tableHeaderRow(i18nc("A key repeat event", "Key repeat")));
+
+    text.append(deviceRow(event.base.dev));
     add_common_key_data(event, text);
 
     m_textEdit->insertHtml(text);
