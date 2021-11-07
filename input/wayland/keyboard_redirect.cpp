@@ -104,7 +104,7 @@ void keyboard_redirect::init()
 
     auto keyRepeatSpy = new keyboard_repeat_spy(m_xkb.get());
     connect(keyRepeatSpy,
-            &keyboard_repeat_spy::keyRepeat,
+            &keyboard_repeat_spy::key_repeated,
             this,
             &keyboard_redirect::process_key_repeat);
     redirect->installInputEventSpy(keyRepeatSpy);
@@ -197,15 +197,14 @@ void keyboard_redirect::process_key(key_event const& event)
     }
 }
 
-void keyboard_redirect::process_key_repeat(uint32_t key, uint32_t time)
+void keyboard_redirect::process_key_repeat(const key_event& event)
 {
-    input::keyboard_redirect::process_key_repeat(key, time);
+    input::keyboard_redirect::process_key_repeat(event);
 
     if (!m_inited) {
         return;
     }
 
-    auto event = key_event{key, key_state::pressed, false, nullptr, time};
     redirect->processFilters(std::bind(&event_filter::key_repeat, std::placeholders::_1, event));
 }
 

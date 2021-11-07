@@ -38,7 +38,7 @@ void keyboard_repeat_spy::handleKeyRepeat()
         m_timer->setInterval(1000 / rate);
     }
     // TODO: better time
-    emit keyRepeat(m_key, m_time);
+    Q_EMIT key_repeated({m_key, key_state::pressed, false, keyboard, m_time});
 }
 
 void keyboard_repeat_spy::key(key_event const& event)
@@ -50,6 +50,7 @@ void keyboard_repeat_spy::key(key_event const& event)
         if (m_xkb->shouldKeyRepeat(event.keycode) && delay != 0) {
             m_timer->setInterval(delay);
             m_key = event.keycode;
+            keyboard = event.base.dev;
             m_time = event.base.time_msec;
             m_timer->start();
         }
@@ -58,6 +59,7 @@ void keyboard_repeat_spy::key(key_event const& event)
     case key_state::released:
         if (event.keycode == m_key) {
             m_timer->stop();
+            keyboard = nullptr;
         }
         break;
     }

@@ -27,7 +27,7 @@ public:
     void update() override;
 
     void process_key(key_event const& event) override;
-    void process_key_repeat(uint32_t key, uint32_t time) override;
+    void process_key_repeat(key_event const& event) override;
 
     void process_modifiers(modifiers_event const& event) override;
     void processKeymapChange(int fd, uint32_t size) override;

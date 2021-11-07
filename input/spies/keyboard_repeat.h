@@ -15,6 +15,7 @@ class QTimer;
 
 namespace KWin::input
 {
+class keyboard;
 class xkb;
 
 class KWIN_EXPORT keyboard_repeat_spy : public QObject, public input::event_spy
@@ -27,7 +28,7 @@ public:
     void key(key_event const& event) override;
 
 Q_SIGNALS:
-    void keyRepeat(quint32 key, quint32 time);
+    void key_repeated(key_event const& event);
 
 private:
     void handleKeyRepeat();
@@ -35,6 +36,7 @@ private:
     xkb* m_xkb;
     quint32 m_time;
     quint32 m_key = 0;
+    input::keyboard* keyboard{nullptr};
 };
 
 }

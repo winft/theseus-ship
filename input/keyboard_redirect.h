@@ -31,7 +31,7 @@ public:
     virtual void update();
 
     virtual void process_key(key_event const& event);
-    virtual void process_key_repeat(uint32_t key, uint32_t time);
+    virtual void process_key_repeat(key_event const& event);
 
     virtual void process_modifiers(modifiers_event const& event);
     virtual void processKeymapChange(int fd, uint32_t size);
