@@ -72,38 +72,6 @@ void redirect::uninstallInputEventSpy(event_spy* spy)
     remove_all(m_spies, spy);
 }
 
-void redirect::processPointerMotion(const QPointF& pos, uint32_t time)
-{
-    m_pointer->processMotion(pos, time);
-}
-
-void redirect::processPointerButton(uint32_t button, button_state state, uint32_t time)
-{
-    m_pointer->process_button({button, state, {nullptr, time}});
-}
-
-void redirect::processPointerAxis(axis_orientation orientation,
-                                  double delta,
-                                  int32_t discreteDelta,
-                                  axis_source source,
-                                  uint32_t time)
-{
-    m_pointer->process_axis({source, orientation, delta, discreteDelta, nullptr, time});
-}
-
-void redirect::processKeyboardKey(uint32_t key, key_state state, uint32_t time)
-{
-    m_keyboard->process_key({key, state, false, nullptr, time});
-}
-
-void redirect::processKeyboardModifiers(uint32_t modsDepressed,
-                                        uint32_t modsLatched,
-                                        uint32_t modsLocked,
-                                        uint32_t group)
-{
-    m_keyboard->processModifiers(modsDepressed, modsLatched, modsLocked, group);
-}
-
 void redirect::processKeymapChange(int fd, uint32_t size)
 {
     m_keyboard->processKeymapChange(fd, size);

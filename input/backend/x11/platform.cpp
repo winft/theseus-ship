@@ -27,7 +27,7 @@ platform::platform()
 {
 #if HAVE_X11_XINPUT
     if (!qEnvironmentVariableIsSet("KWIN_NO_XI2")) {
-        xinput.reset(new xinput_integration(QX11Info::display()));
+        xinput.reset(new xinput_integration(QX11Info::display(), this));
         xinput->init();
         if (!xinput->hasXinput()) {
             xinput.reset();

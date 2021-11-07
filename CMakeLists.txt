@@ -405,6 +405,7 @@ set(kwin_SRCS
     input/device_redirect.cpp
     input/event_filter.cpp
     input/event_spy.cpp
+    input/keyboard.cpp
     input/keyboard_redirect.cpp
     input/platform.cpp
     input/pointer_redirect.cpp
@@ -418,6 +419,7 @@ set(kwin_SRCS
     input/global_shortcut.cpp
     input/global_shortcuts_manager.cpp
     input/logging.cpp
+    input/pointer.cpp
     input/x11/redirect.cpp
     input/qt_event.cpp
     input/xkb.cpp
@@ -799,10 +801,8 @@ set(kwin_WAYLAND_SRCS
    input/wayland/redirect.cpp
    input/wayland/tablet_redirect.cpp
    input/wayland/touch_redirect.cpp
-   input/keyboard.cpp
    input/keyboard_layout_switching.cpp
    input/logging.cpp
-   input/pointer.cpp
    input/switch.cpp
    input/touch.cpp
    linux_dmabuf.cpp

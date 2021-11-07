@@ -90,33 +90,6 @@ public:
     /**
      * @internal
      */
-    void processPointerMotion(const QPointF& pos, uint32_t time);
-    /**
-     * @internal
-     */
-    void processPointerButton(uint32_t button, button_state state, uint32_t time);
-    /**
-     * @internal
-     */
-    void processPointerAxis(axis_orientation orientation,
-                            double delta,
-                            int32_t discreteDelta,
-                            axis_source source,
-                            uint32_t time);
-    /**
-     * @internal
-     */
-    void processKeyboardKey(uint32_t key, key_state state, uint32_t time);
-    /**
-     * @internal
-     */
-    void processKeyboardModifiers(uint32_t modsDepressed,
-                                  uint32_t modsLatched,
-                                  uint32_t modsLocked,
-                                  uint32_t group);
-    /**
-     * @internal
-     */
     void processKeymapChange(int fd, uint32_t size);
     void cancelTouch();
 
