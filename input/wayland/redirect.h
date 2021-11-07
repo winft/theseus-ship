@@ -8,6 +8,7 @@
 #include "input/redirect.h"
 
 #include <KConfigWatcher>
+#include <unordered_map>
 
 namespace Wrapland::Server
 {
@@ -17,6 +18,13 @@ class FakeInputDevice;
 
 namespace KWin::input::wayland
 {
+namespace fake
+{
+class keyboard;
+class pointer;
+class touch;
+}
+
 class platform;
 
 class KWIN_EXPORT redirect : public input::redirect
@@ -55,6 +63,14 @@ private:
 
     KConfigWatcher::Ptr config_watcher;
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
+
+    struct fake_input_devices {
+        std::unique_ptr<fake::pointer> pointer;
+        std::unique_ptr<fake::keyboard> keyboard;
+        std::unique_ptr<fake::touch> touch;
+    };
+
+    std::unordered_map<Wrapland::Server::FakeInputDevice*, fake_input_devices> fake_devices;
 
     window_selector_filter* window_selector{nullptr};
 };

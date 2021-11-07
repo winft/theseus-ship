@@ -118,11 +118,7 @@ public:
      * @internal
      */
     void processKeymapChange(int fd, uint32_t size);
-    void processTouchDown(touch_down_event const& event);
-    void processTouchUp(touch_up_event const& event);
-    void processTouchMotion(touch_motion_event const& event);
     void cancelTouch();
-    void touchFrame();
 
     bool supportsPointerWarping() const;
     void warpPointer(const QPointF& pos);

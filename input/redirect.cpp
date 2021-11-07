@@ -109,29 +109,9 @@ void redirect::processKeymapChange(int fd, uint32_t size)
     m_keyboard->processKeymapChange(fd, size);
 }
 
-void redirect::processTouchDown(touch_down_event const& event)
-{
-    m_touch->process_down(event);
-}
-
-void redirect::processTouchUp(touch_up_event const& event)
-{
-    m_touch->process_up(event);
-}
-
-void redirect::processTouchMotion(touch_motion_event const& event)
-{
-    m_touch->process_motion(event);
-}
-
 void redirect::cancelTouch()
 {
     m_touch->cancel();
-}
-
-void redirect::touchFrame()
-{
-    m_touch->frame();
 }
 
 Qt::MouseButtons redirect::qtButtonStates() const

@@ -790,6 +790,9 @@ set(kwin_WAYLAND_SRCS
    input/wayland/cursor.cpp
    input/wayland/cursor_image.cpp
    input/wayland/cursor_theme.cpp
+   input/wayland/fake/keyboard.cpp
+   input/wayland/fake/pointer.cpp
+   input/wayland/fake/touch.cpp
    input/wayland/keyboard_redirect.cpp
    input/wayland/platform.cpp
    input/wayland/pointer_redirect.cpp
