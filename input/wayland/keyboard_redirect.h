@@ -29,10 +29,7 @@ public:
     void process_key(key_event const& event) override;
     void process_key_repeat(uint32_t key, uint32_t time) override;
 
-    void processModifiers(uint32_t modsDepressed,
-                          uint32_t modsLatched,
-                          uint32_t modsLocked,
-                          uint32_t group) override;
+    void process_modifiers(modifiers_event const& event) override;
     void processKeymapChange(int fd, uint32_t size) override;
 
 private:

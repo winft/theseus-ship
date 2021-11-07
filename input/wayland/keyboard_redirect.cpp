@@ -209,17 +209,14 @@ void keyboard_redirect::process_key_repeat(uint32_t key, uint32_t time)
     redirect->processFilters(std::bind(&event_filter::key_repeat, std::placeholders::_1, event));
 }
 
-void keyboard_redirect::processModifiers(uint32_t modsDepressed,
-                                         uint32_t modsLatched,
-                                         uint32_t modsLocked,
-                                         uint32_t group)
+void keyboard_redirect::process_modifiers(modifiers_event const& event)
 {
     if (!m_inited) {
         return;
     }
     auto const previousLayout = m_xkb->currentLayout();
     // TODO: send to proper Client and also send when active Client changes
-    m_xkb->updateModifiers(modsDepressed, modsLatched, modsLocked, group);
+    m_xkb->updateModifiers(event.depressed, event.latched, event.locked, event.group);
     modifiers_spy->updateModifiers(modifiers());
     m_keyboardLayout->checkLayoutChange(previousLayout);
 }

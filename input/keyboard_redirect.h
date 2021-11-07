@@ -33,12 +33,7 @@ public:
     virtual void process_key(key_event const& event);
     virtual void process_key_repeat(uint32_t key, uint32_t time);
 
-    void process_modifiers(modifiers_event const& event);
-    virtual void processModifiers(uint32_t modsDepressed,
-                                  uint32_t modsLatched,
-                                  uint32_t modsLocked,
-                                  uint32_t group);
-
+    virtual void process_modifiers(modifiers_event const& event);
     virtual void processKeymapChange(int fd, uint32_t size);
 
 Q_SIGNALS:
