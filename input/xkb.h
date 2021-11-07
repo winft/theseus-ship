@@ -14,10 +14,9 @@
 #include <kwin_export.h>
 
 #include <KConfigGroup>
-
 #include <QLoggingCategory>
 #include <QPointer>
-
+#include <string>
 #include <xkbcommon/xkbcommon.h>
 
 Q_DECLARE_LOGGING_CATEGORY(KWIN_XKB)
@@ -72,7 +71,7 @@ public:
         return m_keysym;
     }
 
-    QString toString(xkb_keysym_t keysym);
+    std::string toString(xkb_keysym_t keysym);
     Qt::Key toQtKey(xkb_keysym_t keysym,
                     uint32_t scanCode = 0,
                     Qt::KeyboardModifiers modifiers = Qt::KeyboardModifiers(),
@@ -107,9 +106,9 @@ public:
         return m_currentLayout;
     }
 
-    QString layoutName(xkb_layout_index_t index) const;
-    QString layoutName() const;
-    const QString& layoutShortName(int index) const;
+    std::string layoutName(xkb_layout_index_t index) const;
+    std::string layoutName() const;
+    std::string const& layoutShortName(int index) const;
     quint32 numberOfLayouts() const;
 
     /**
@@ -125,7 +124,7 @@ Q_SIGNALS:
     void ledsChanged(keyboard_leds leds);
 
 private:
-    void apply_environment_rules(xkb_rule_names&, QStringList& layouts) const;
+    void apply_environment_rules(xkb_rule_names&, std::vector<std::string>& layouts) const;
 
     xkb_keymap* loadKeymapFromConfig();
     xkb_keymap* loadDefaultKeymap();
@@ -140,7 +139,7 @@ private:
 
     xkb_context* context;
     xkb_keymap* m_keymap{nullptr};
-    QStringList m_layoutList;
+    std::vector<std::string> m_layoutList;
     xkb_state* m_state{nullptr};
 
     xkb_mod_index_t m_shiftModifier{0};

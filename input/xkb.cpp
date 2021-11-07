@@ -22,6 +22,7 @@
 #include <xkbcommon/xkbcommon-keysyms.h>
 
 #include <bitset>
+#include <sstream>
 #include <sys/mman.h>
 #include <unistd.h>
 
@@ -143,7 +144,8 @@ static bool stringIsEmptyOrNull(const char* str)
  * As kwin_wayland may have the CAP_SET_NICE capability, it returns nullptr
  * so we need to do it ourselves (see xkb_context_sanitize_rule_names).
  **/
-void xkb::apply_environment_rules(xkb_rule_names& ruleNames, QStringList& layouts) const
+void xkb::apply_environment_rules(xkb_rule_names& ruleNames,
+                                  std::vector<std::string>& layouts) const
 {
     if (stringIsEmptyOrNull(ruleNames.rules)) {
         ruleNames.rules = getenv("XKB_DEFAULT_RULES");
@@ -162,7 +164,16 @@ void xkb::apply_environment_rules(xkb_rule_names& ruleNames, QStringList& layout
         ruleNames.options = getenv("XKB_DEFAULT_OPTIONS");
     }
 
-    layouts = QString::fromLatin1(ruleNames.layout).split(QLatin1Char(','));
+    layouts.clear();
+
+    if (ruleNames.layout) {
+        auto layout_stream = std::stringstream(ruleNames.layout);
+        while (layout_stream.good()) {
+            std::string layout;
+            getline(layout_stream, layout, ',');
+            layouts.push_back(layout);
+        }
+    }
 }
 
 xkb_keymap* xkb::loadKeymapFromConfig()
@@ -443,20 +454,20 @@ void xkb::forwardModifiers()
                                          m_currentLayout);
 }
 
-QString xkb::layoutName(xkb_layout_index_t index) const
+std::string xkb::layoutName(xkb_layout_index_t index) const
 {
     if (!m_keymap) {
-        return QString{};
+        return {};
     }
-    return QString::fromLocal8Bit(xkb_keymap_layout_get_name(m_keymap, index));
+    return std::string(xkb_keymap_layout_get_name(m_keymap, index));
 }
 
-QString xkb::layoutName() const
+std::string xkb::layoutName() const
 {
     return layoutName(m_currentLayout);
 }
 
-const QString& xkb::layoutShortName(int index) const
+std::string const& xkb::layoutShortName(int index) const
 {
     return m_layoutList.at(index);
 }
@@ -524,17 +535,17 @@ xkb_keysym_t xkb::toKeysym(uint32_t key)
     return xkb_state_key_get_one_sym(m_state, key + 8);
 }
 
-QString xkb::toString(xkb_keysym_t keysym)
+std::string xkb::toString(xkb_keysym_t keysym)
 {
     if (!m_state || keysym == XKB_KEY_NoSymbol) {
-        return QString();
+        return {};
     }
     QByteArray byteArray(7, 0);
     int ok = xkb_keysym_to_utf8(keysym, byteArray.data(), byteArray.size());
     if (ok == -1 || ok == 0) {
-        return QString();
+        return {};
     }
-    return QString::fromUtf8(byteArray.constData());
+    return std::string(byteArray.constData());
 }
 
 Qt::Key xkb::toQtKey(xkb_keysym_t keySym,

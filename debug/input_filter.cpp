@@ -253,8 +253,8 @@ void add_common_key_data(input::key_event const& event, QString& text)
     auto const& xkb = kwinApp()->input->redirect->keyboard()->xkb();
     auto const keysym = xkb->toKeysym(event.keycode);
     text.append(tableRow(i18nc("The translated code to an Xkb symbol", "Xkb symbol"), keysym));
-    text.append(
-        tableRow(i18nc("The translated code interpreted as text", "Utf8"), xkb->toString(keysym)));
+    text.append(tableRow(i18nc("The translated code interpreted as text", "Utf8"),
+                         QString::fromStdString(xkb->toString(keysym))));
 
     auto to_string = [](Qt::KeyboardModifiers mods) {
         QString ret;

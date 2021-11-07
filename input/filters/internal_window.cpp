@@ -161,7 +161,7 @@ QKeyEvent get_internal_key_event(key_event const& event)
                             event.keycode,
                             keysym,
                             0,
-                            xkb->toString(keysym));
+                            QString::fromStdString(xkb->toString(keysym)));
     internalEvent.setAccepted(false);
 
     return internalEvent;

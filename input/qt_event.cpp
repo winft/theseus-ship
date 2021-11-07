@@ -146,7 +146,14 @@ QKeyEvent key_to_qt_event(const key_event& event)
         = xkb->toQtKey(keysym,
                        event.keycode,
                        globalShortcutsModifiers ? Qt::ControlModifier : Qt::KeyboardModifiers());
-    return {type, key, mods, event.keycode, keysym, 0, xkb->toString(keysym), false};
+    return {type,
+            key,
+            mods,
+            event.keycode,
+            keysym,
+            0,
+            QString::fromStdString(xkb->toString(keysym)),
+            false};
 }
 
 }

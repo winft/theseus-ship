@@ -144,7 +144,7 @@ void GlobalShortcutsTest::testNonLatinLayout()
     // Shortcuts on non-Latin layouts should still work, see BUG 375518
     auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
     xkb->switchToLayout(1);
-    QCOMPARE(xkb->layoutName(), QStringLiteral("Russian"));
+    QCOMPARE(xkb->layoutName(), "Russian");
 
     QFETCH(int, modifierKey);
     QFETCH(Qt::Modifier, qtModifier);

@@ -7,13 +7,14 @@
 
 #include <KLocalizedString>
 #include <QString>
+#include <string>
 
 namespace KWin::input
 {
 
-inline QString translated_keyboard_layout(QString const& layout)
+inline QString translated_keyboard_layout(std::string const& layout)
 {
-    return i18nd("xkeyboard-config", layout.toUtf8().constData());
+    return i18nd("xkeyboard-config", layout.c_str());
 }
 
 }

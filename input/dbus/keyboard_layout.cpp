@@ -87,7 +87,7 @@ QVector<keyboard_layout::LayoutNames> keyboard_layout::getLayoutsList() const
     const int layoutsSize = m_xkb->numberOfLayouts();
     const int displayNamesSize = displayNames.size();
     for (int i = 0; i < layoutsSize; ++i) {
-        ret.append({m_xkb->layoutShortName(i),
+        ret.append({QString::fromStdString(m_xkb->layoutShortName(i)),
                     i < displayNamesSize ? displayNames.at(i) : QString(),
                     translated_keyboard_layout(m_xkb->layoutName(i))});
     }
