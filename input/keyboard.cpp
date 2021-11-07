@@ -14,8 +14,4 @@ keyboard::keyboard(platform* plat, QObject* parent)
 {
 }
 
-keyboard::~keyboard()
-{
-}
-
 }

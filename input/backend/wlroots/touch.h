@@ -32,7 +32,7 @@ public:
     touch& operator=(touch const&) = delete;
     touch(touch&& other) noexcept = default;
     touch& operator=(touch&& other) noexcept = default;
-    ~touch() = default;
+    ~touch() override = default;
 
 private:
     er destroyed;

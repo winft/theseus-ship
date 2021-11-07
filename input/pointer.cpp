@@ -14,8 +14,4 @@ pointer::pointer(platform* plat, QObject* parent)
 {
 }
 
-pointer::~pointer()
-{
-}
-
 }

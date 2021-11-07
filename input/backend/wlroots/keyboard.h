@@ -30,7 +30,7 @@ public:
     keyboard& operator=(keyboard const&) = delete;
     keyboard(keyboard&& other) noexcept = default;
     keyboard& operator=(keyboard&& other) noexcept = default;
-    ~keyboard() = default;
+    ~keyboard() override = default;
 
 private:
     er destroyed;

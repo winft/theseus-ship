@@ -29,7 +29,7 @@ public:
     pointer& operator=(pointer const&) = delete;
     pointer(pointer&& other) noexcept = default;
     pointer& operator=(pointer&& other) noexcept = default;
-    ~pointer() = default;
+    ~pointer() override = default;
 
 private:
     er destroyed;
