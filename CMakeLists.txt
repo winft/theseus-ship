@@ -899,6 +899,9 @@ install(
         org.kde.kwin.ColorCorrect.xml
         org.kde.kwin.Compositing.xml
         org.kde.kwin.Effects.xml
+
+        # Still needs to be installed as plasma-workspace expects it at compile time.
+        data/org.kde.kwin.VirtualKeyboard.xml
     DESTINATION
         ${KDE_INSTALL_DBUSINTERFACEDIR}
 )
