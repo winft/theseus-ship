@@ -295,12 +295,6 @@ public:
     GLShader *generateShaderFromResources(ShaderTraits traits, const QString &vertexFile = QString(), const QString &fragmentFile = QString());
 
     /**
-     * Compiles and tests the dynamically generated shaders.
-     * Returns true if successful and false otherwise.
-     */
-    bool selfTest();
-
-    /**
      * @return a pointer to the ShaderManager instance
      */
     static ShaderManager *instance();

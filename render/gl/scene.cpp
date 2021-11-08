@@ -363,12 +363,6 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
         glBindVertexArray(vao);
     }
 
-    if (!ShaderManager::instance()->selfTest()) {
-        qCCritical(KWIN_CORE) << "ShaderManager self test failed";
-        init_ok = false;
-        return;
-    }
-
     qCDebug(KWIN_CORE) << "OpenGL 2 compositing successfully initialized";
     init_ok = true;
 }
