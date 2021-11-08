@@ -25,9 +25,9 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
 
     touch->backend = nullptr;
 
-    if (touch->plat) {
-        remove_all(touch->plat->touchs, touch);
-        Q_EMIT touch->plat->touch_removed(touch);
+    if (touch->platform) {
+        remove_all(touch->platform->touchs, touch);
+        Q_EMIT touch->platform->touch_removed(touch);
     }
 }
 
@@ -111,13 +111,13 @@ static void handle_frame(struct wl_listener* listener, [[maybe_unused]] void* da
 }
 #endif
 
-touch::touch(wlr_input_device* dev, platform* plat)
-    : input::touch(plat)
+touch::touch(wlr_input_device* dev, input::platform* platform)
+    : input::touch(platform)
 {
     backend = dev->touch;
 
     if (auto libinput = get_libinput_device(dev)) {
-        control = new touch_control(libinput, plat);
+        control = new touch_control(libinput, platform);
     }
     output = get_output();
 

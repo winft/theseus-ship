@@ -19,10 +19,10 @@ class KWIN_EXPORT keyboard : public QObject
 {
     Q_OBJECT
 public:
-    input::platform* plat;
+    input::platform* platform;
     control::keyboard* control{nullptr};
 
-    keyboard(platform* plat, QObject* parent = nullptr);
+    keyboard(input::platform* platform, QObject* parent = nullptr);
     keyboard(keyboard const&) = delete;
     keyboard& operator=(keyboard const&) = delete;
     keyboard(keyboard&& other) noexcept = default;

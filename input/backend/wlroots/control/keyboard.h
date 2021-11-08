@@ -17,7 +17,7 @@ class keyboard_control : public input::control::keyboard
     Q_OBJECT
 
 public:
-    keyboard_control(libinput_device* device, input::platform* plat);
+    keyboard_control(libinput_device* device, input::platform* platform);
     ~keyboard_control() override = default;
 
     bool supports_disable_events() const override;

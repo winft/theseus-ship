@@ -21,10 +21,10 @@ class KWIN_EXPORT switch_device : public QObject
 {
     Q_OBJECT
 public:
-    input::platform* plat;
+    input::platform* platform;
     control::switch_device* control{nullptr};
 
-    switch_device(platform* plat, QObject* parent = nullptr);
+    switch_device(input::platform* platform, QObject* parent = nullptr);
     switch_device(switch_device const&) = delete;
     switch_device& operator=(switch_device const&) = delete;
     switch_device(switch_device&& other) noexcept = default;

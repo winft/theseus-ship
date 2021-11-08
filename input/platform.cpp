@@ -26,16 +26,16 @@ platform::platform()
 platform::~platform()
 {
     for (auto keyboard : keyboards) {
-        keyboard->plat = nullptr;
+        keyboard->platform = nullptr;
     }
     for (auto pointer : pointers) {
-        pointer->plat = nullptr;
+        pointer->platform = nullptr;
     }
     for (auto switch_device : switches) {
-        switch_device->plat = nullptr;
+        switch_device->platform = nullptr;
     }
     for (auto touch : touchs) {
-        touch->plat = nullptr;
+        touch->platform = nullptr;
     }
 }
 

@@ -8,9 +8,9 @@
 namespace KWin::input
 {
 
-keyboard::keyboard(platform* plat, QObject* parent)
+keyboard::keyboard(input::platform* platform, QObject* parent)
     : QObject(parent)
-    , plat{plat}
+    , platform{platform}
 {
 }
 

@@ -30,11 +30,11 @@ class KWIN_EXPORT touch : public QObject
 {
     Q_OBJECT
 public:
-    input::platform* plat;
+    input::platform* platform;
     control::touch* control{nullptr};
     base::wayland::output* output{nullptr};
 
-    touch(platform* plat, QObject* parent = nullptr);
+    touch(input::platform* platform, QObject* parent = nullptr);
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;
     touch(touch&& other) noexcept = default;

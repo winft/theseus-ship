@@ -17,7 +17,6 @@ extern "C" {
 
 namespace KWin::input::backend::wlroots
 {
-class platform;
 
 class touch : public input::touch
 {
@@ -27,7 +26,7 @@ public:
 
     wlr_touch* backend{nullptr};
 
-    touch(wlr_input_device* dev, platform* plat);
+    touch(wlr_input_device* dev, input::platform* plat);
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;
     touch(touch&& other) noexcept = default;

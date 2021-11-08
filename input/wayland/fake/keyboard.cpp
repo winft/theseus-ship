@@ -24,7 +24,7 @@ keyboard::keyboard(Wrapland::Server::FakeInputDevice* device, input::platform* p
                      this,
                      [this](auto button) {
                          // TODO: Fix time
-                         this->plat->redirect->keyboard()->process_key(
+                         this->platform->redirect->keyboard()->process_key(
                              {button, key_state::pressed, false, this, 0});
                          waylandServer()->simulateUserActivity();
                      });
@@ -33,7 +33,7 @@ keyboard::keyboard(Wrapland::Server::FakeInputDevice* device, input::platform* p
                      this,
                      [this](auto button) {
                          // TODO: Fix time
-                         this->plat->redirect->keyboard()->process_key(
+                         this->platform->redirect->keyboard()->process_key(
                              {button, key_state::released, false, this, 0});
                          waylandServer()->simulateUserActivity();
                      });

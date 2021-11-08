@@ -25,9 +25,9 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
 
     pointer->backend = nullptr;
 
-    if (pointer->plat) {
-        remove_all(pointer->plat->pointers, pointer);
-        Q_EMIT pointer->plat->pointer_removed(pointer);
+    if (pointer->platform) {
+        remove_all(pointer->platform->pointers, pointer);
+        Q_EMIT pointer->platform->pointer_removed(pointer);
     }
 }
 
@@ -233,13 +233,13 @@ static void handle_frame(struct wl_listener* listener, [[maybe_unused]] void* da
     Q_EMIT pointer->frame();
 }
 
-pointer::pointer(wlr_input_device* dev, platform* plat)
-    : input::pointer(plat)
+pointer::pointer(wlr_input_device* dev, input::platform* platform)
+    : input::pointer(platform)
 {
     backend = dev->pointer;
 
     if (auto libinput = get_libinput_device(dev)) {
-        control = new pointer_control(libinput, plat);
+        control = new pointer_control(libinput, platform);
     }
 
     destroyed.receiver = this;

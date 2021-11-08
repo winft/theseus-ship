@@ -16,7 +16,7 @@ class switch_control : public input::control::switch_device
 {
     Q_OBJECT
 public:
-    switch_control(libinput_device* device, input::platform* plat);
+    switch_control(libinput_device* device, input::platform* platform);
     ~switch_control() override = default;
 
     bool supports_disable_events() const override;

@@ -37,8 +37,8 @@ bool check_alpha_numeric_keyboard(libinput_device* device)
     return true;
 }
 
-keyboard_control::keyboard_control(libinput_device* dev, input::platform* plat)
-    : input::control::keyboard(plat)
+keyboard_control::keyboard_control(libinput_device* dev, input::platform* platform)
+    : input::control::keyboard(platform)
     , dev{dev}
 {
     populate_metadata(this);

@@ -86,7 +86,7 @@ bool window_selector_filter::key(key_event const& event)
             if (qt_key == Qt::Key_Down) {
                 my = 10;
             }
-            if (event.base.dev->plat->redirect->keyboardModifiers() & Qt::ControlModifier) {
+            if (event.base.dev->platform->redirect->keyboardModifiers() & Qt::ControlModifier) {
                 mx /= 10;
                 my /= 10;
             }

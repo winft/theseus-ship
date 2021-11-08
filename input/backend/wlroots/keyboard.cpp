@@ -26,9 +26,9 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
 
     keyboard->backend = nullptr;
 
-    if (keyboard->plat) {
-        remove_all(keyboard->plat->keyboards, keyboard);
-        Q_EMIT keyboard->plat->keyboard_removed(keyboard);
+    if (keyboard->platform) {
+        remove_all(keyboard->platform->keyboards, keyboard);
+        Q_EMIT keyboard->platform->keyboard_removed(keyboard);
     }
 }
 
@@ -70,13 +70,13 @@ static void handle_modifiers(struct wl_listener* listener, [[maybe_unused]] void
     Q_EMIT keyboard->modifiers_changed(event);
 }
 
-keyboard::keyboard(wlr_input_device* dev, platform* plat)
-    : input::keyboard(plat)
+keyboard::keyboard(wlr_input_device* dev, input::platform* platform)
+    : input::keyboard(platform)
 {
     backend = dev->keyboard;
 
     if (auto libinput = get_libinput_device(dev)) {
-        control = new keyboard_control(libinput, plat);
+        control = new keyboard_control(libinput, platform);
     }
 
     destroyed.receiver = this;

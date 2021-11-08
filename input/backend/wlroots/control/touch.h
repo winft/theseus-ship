@@ -19,7 +19,7 @@ class touch_control : public input::control::touch
     Q_OBJECT
 
 public:
-    touch_control(libinput_device* dev, input::platform* plat);
+    touch_control(libinput_device* dev, input::platform* platform);
     ~touch_control() override = default;
 
     bool supports_disable_events() const override;

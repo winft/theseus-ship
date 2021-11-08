@@ -10,8 +10,8 @@
 namespace KWin::input::backend::wlroots
 {
 
-switch_control::switch_control(libinput_device* dev, input::platform* plat)
-    : input::control::switch_device(plat)
+switch_control::switch_control(libinput_device* dev, input::platform* platform)
+    : input::control::switch_device(platform)
     , dev{dev}
 {
     populate_metadata(this);

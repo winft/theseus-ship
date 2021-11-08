@@ -15,7 +15,6 @@ extern "C" {
 
 namespace KWin::input::backend::wlroots
 {
-class platform;
 
 class switch_device : public input::switch_device
 {
@@ -25,7 +24,7 @@ public:
 
     wlr_switch* backend{nullptr};
 
-    switch_device(wlr_input_device* dev, platform* plat);
+    switch_device(wlr_input_device* dev, input::platform* platform);
     switch_device(switch_device const&) = delete;
     switch_device& operator=(switch_device const&) = delete;
     switch_device(switch_device&& other) noexcept = default;
