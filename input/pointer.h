@@ -24,7 +24,7 @@ public:
     input::platform* platform;
     control::pointer* control{nullptr};
 
-    pointer(input::platform* platform, QObject* parent = nullptr);
+    pointer(input::platform* platform);
     pointer(pointer const&) = delete;
     pointer& operator=(pointer const&) = delete;
     pointer(pointer&& other) noexcept = default;

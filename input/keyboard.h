@@ -22,7 +22,7 @@ public:
     input::platform* platform;
     control::keyboard* control{nullptr};
 
-    keyboard(input::platform* platform, QObject* parent = nullptr);
+    keyboard(input::platform* platform);
     keyboard(keyboard const&) = delete;
     keyboard& operator=(keyboard const&) = delete;
     keyboard(keyboard&& other) noexcept = default;

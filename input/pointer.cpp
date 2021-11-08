@@ -8,9 +8,8 @@
 namespace KWin::input
 {
 
-pointer::pointer(input::platform* platform, QObject* parent)
-    : QObject(parent)
-    , platform{platform}
+pointer::pointer(input::platform* platform)
+    : platform{platform}
 {
 }
 

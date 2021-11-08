@@ -8,9 +8,8 @@
 namespace KWin::input
 {
 
-switch_device::switch_device(input::platform* platform, QObject* parent)
-    : QObject(parent)
-    , platform{platform}
+switch_device::switch_device(input::platform* platform)
+    : platform{platform}
 {
 }
 

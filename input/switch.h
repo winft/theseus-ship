@@ -24,7 +24,7 @@ public:
     input::platform* platform;
     control::switch_device* control{nullptr};
 
-    switch_device(input::platform* platform, QObject* parent = nullptr);
+    switch_device(input::platform* platform);
     switch_device(switch_device const&) = delete;
     switch_device& operator=(switch_device const&) = delete;
     switch_device(switch_device&& other) noexcept = default;

@@ -35,9 +35,8 @@ Qt::ScreenOrientation to_qt_orientation(base::wayland::output_transform transfor
     }
 }
 
-touch::touch(input::platform* platform, QObject* parent)
-    : QObject(parent)
-    , platform{platform}
+touch::touch(input::platform* platform)
+    : platform{platform}
 {
     connect(screens(), &Screens::changed, this, [this] {
         if (!control) {

@@ -34,7 +34,7 @@ public:
     control::touch* control{nullptr};
     base::wayland::output* output{nullptr};
 
-    touch(input::platform* platform, QObject* parent = nullptr);
+    touch(input::platform* platform);
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;
     touch(touch&& other) noexcept = default;
