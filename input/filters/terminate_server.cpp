@@ -7,9 +7,10 @@
 #include "terminate_server.h"
 
 #include "input/event.h"
+#include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
 #include "input/logging.h"
-#include "input/xkb.h"
+#include "input/xkb_keyboard.h"
 #include "main.h"
 
 #include "utils.h"
@@ -20,8 +21,7 @@ namespace KWin::input
 bool terminate_server_filter::key(key_event const& event)
 {
     if (event.state == key_state::pressed) {
-        auto const& xkb = kwinApp()->input->redirect->keyboard()->xkb();
-        if (xkb->toKeysym(event.keycode) == XKB_KEY_Terminate_Server) {
+        if (event.base.dev->xkb->to_keysym(event.keycode) == XKB_KEY_Terminate_Server) {
             qCWarning(KWIN_INPUT) << "Request to terminate server";
             QMetaObject::invokeMethod(qApp, "quit", Qt::QueuedConnection);
             return true;

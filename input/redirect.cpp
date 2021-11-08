@@ -150,16 +150,6 @@ Toplevel* redirect::findManagedToplevel(const QPoint& pos)
     return nullptr;
 }
 
-Qt::KeyboardModifiers redirect::keyboardModifiers() const
-{
-    return m_keyboard->modifiers();
-}
-
-Qt::KeyboardModifiers redirect::modifiersRelevantForGlobalShortcuts() const
-{
-    return m_keyboard->modifiersRelevantForGlobalShortcuts();
-}
-
 void redirect::registerShortcut(const QKeySequence& shortcut, QAction* action)
 {
     Q_UNUSED(shortcut)

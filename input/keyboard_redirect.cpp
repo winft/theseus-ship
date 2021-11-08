@@ -9,6 +9,9 @@
 #include "event.h"
 #include "event_filter.h"
 #include "event_spy.h"
+#include "keyboard.h"
+#include "redirect.h"
+#include "xkb_keyboard.h"
 
 #include <KGlobalAccel>
 #include <QKeyEvent>
@@ -18,26 +21,11 @@ namespace KWin::input
 
 keyboard_redirect::keyboard_redirect(input::redirect* redirect)
     : QObject()
-    , m_xkb{std::make_unique<input::xkb>()}
     , redirect(redirect)
 {
-    connect(m_xkb.get(), &input::xkb::ledsChanged, this, &keyboard_redirect::ledsChanged);
 }
 
 keyboard_redirect::~keyboard_redirect() = default;
-
-input::xkb* keyboard_redirect::xkb() const
-{
-    return m_xkb.get();
-}
-Qt::KeyboardModifiers keyboard_redirect::modifiers() const
-{
-    return m_xkb->modifiers();
-}
-Qt::KeyboardModifiers keyboard_redirect::modifiersRelevantForGlobalShortcuts() const
-{
-    return m_xkb->modifiersRelevantForGlobalShortcuts();
-}
 
 void keyboard_redirect::update()
 {
@@ -45,7 +33,7 @@ void keyboard_redirect::update()
 
 void keyboard_redirect::process_key(key_event const& event)
 {
-    m_xkb->updateKey(event.keycode, event.state);
+    event.base.dev->xkb->update_key(event.keycode, event.state);
     redirect->processSpies(std::bind(&event_spy::key, std::placeholders::_1, event));
 }
 

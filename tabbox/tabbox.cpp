@@ -34,6 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
+#include "input/redirect.h"
+#include "input/xkb_helpers.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "virtualdesktops.h"
@@ -966,7 +968,7 @@ static bool areModKeysDepressedX11(const QKeySequence &seq)
 static bool areModKeysDepressedWayland(const QKeySequence &seq)
 {
     const int mod = seq[seq.count()-1] & Qt::KeyboardModifierMask;
-    const Qt::KeyboardModifiers mods = kwinApp()->input->redirect->modifiersRelevantForGlobalShortcuts();
+    auto const mods = get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input);
     if ((mod & Qt::SHIFT) && mods.testFlag(Qt::ShiftModifier)) {
         return true;
     }

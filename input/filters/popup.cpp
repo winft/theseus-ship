@@ -7,6 +7,7 @@
 #include "popup.h"
 
 #include "input/event.h"
+#include "input/redirect.h"
 #include "wayland_server.h"
 #include "win/deco.h"
 #include "win/geo.h"

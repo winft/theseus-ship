@@ -13,15 +13,12 @@
 #include <KConfigGroup>
 #include <KSharedConfig>
 
-typedef uint32_t xkb_layout_index_t;
-
 class QAction;
 class QDBusArgument;
 
 namespace KWin::input
 {
 class keyboard_layout_spy;
-class xkb;
 
 namespace dbus
 {
@@ -32,9 +29,7 @@ class keyboard_layout : public QObject
     Q_CLASSINFO("D-Bus Interface", "org.kde.KeyboardLayouts")
 
 public:
-    explicit keyboard_layout(xkb* xkb,
-                             KConfigGroup const& configGroup,
-                             input::keyboard_layout_spy* parent);
+    keyboard_layout(KConfigGroup const& configGroup, input::keyboard_layout_spy* parent);
     ~keyboard_layout() override;
 
     struct LayoutNames {
@@ -55,7 +50,6 @@ Q_SIGNALS:
     void layoutListChanged();
 
 private:
-    xkb* m_xkb;
     KConfigGroup const& m_configGroup;
     input::keyboard_layout_spy* m_keyboardLayout;
 };

@@ -9,6 +9,7 @@
 #include "input/logging.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
+#include "input/redirect.h"
 #include "main.h"
 #include "wayland_server.h"
 #include "workspace.h"

@@ -64,8 +64,6 @@ public:
      */
     QPointF globalPointer() const;
     Qt::MouseButtons qtButtonStates() const;
-    Qt::KeyboardModifiers keyboardModifiers() const;
-    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const;
 
     void registerShortcut(const QKeySequence& shortcut, QAction* action);
     /**

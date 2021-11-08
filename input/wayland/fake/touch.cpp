@@ -6,6 +6,7 @@
 #include "touch.h"
 
 #include "input/platform.h"
+#include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
 #include "wayland_server.h"

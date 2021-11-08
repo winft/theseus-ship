@@ -15,6 +15,7 @@
 #include "input/qt_event.h"
 #include "input/redirect.h"
 #include "input/switch.h"
+#include "input/xkb_keyboard.h"
 
 #include "main.h"
 
@@ -247,16 +248,16 @@ void add_common_key_data(input::key_event const& event, QString& text)
     text.append(
         tableRow(i18nc("The code as read from the input device", "Scan code"), event.keycode));
 
+    auto const xkb = event.base.dev->xkb.get();
     auto const key_meta_object = Qt::qt_getEnumMetaObject(Qt::Key());
     auto const enumerator = key_meta_object->enumerator(key_meta_object->indexOfEnumerator("Key"));
     text.append(tableRow(i18nc("Key according to Qt", "Qt::Key code"),
-                         enumerator.valueToKey(input::key_to_qt_key(event.keycode))));
+                         enumerator.valueToKey(input::key_to_qt_key(event.keycode, xkb))));
 
-    auto const& xkb = kwinApp()->input->redirect->keyboard()->xkb();
-    auto const keysym = xkb->toKeysym(event.keycode);
+    auto const keysym = xkb->to_keysym(event.keycode);
     text.append(tableRow(i18nc("The translated code to an Xkb symbol", "Xkb symbol"), keysym));
     text.append(tableRow(i18nc("The translated code interpreted as text", "Utf8"),
-                         QString::fromStdString(xkb->toString(keysym))));
+                         QString::fromStdString(xkb->to_string(keysym))));
 
     auto to_string = [](Qt::KeyboardModifiers mods) {
         QString ret;
@@ -289,7 +290,7 @@ void add_common_key_data(input::key_event const& event, QString& text)
     };
 
     text.append(tableRow(i18nc("The currently active modifiers", "Modifiers"),
-                         to_string(kwinApp()->input->redirect->keyboard()->modifiers())));
+                         to_string(xkb->qt_modifiers)));
     text.append(s_tableEnd);
 }
 

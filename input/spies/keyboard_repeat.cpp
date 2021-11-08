@@ -8,7 +8,8 @@
 #include "keyboard_repeat.h"
 
 #include "input/event.h"
-#include "input/xkb.h"
+#include "input/keyboard.h"
+#include "input/xkb_helpers.h"
 #include "main.h"
 #include "wayland_server.h"
 
@@ -20,9 +21,8 @@
 namespace KWin::input
 {
 
-keyboard_repeat_spy::keyboard_repeat_spy(xkb* xkb)
+keyboard_repeat_spy::keyboard_repeat_spy()
     : m_timer(new QTimer(this))
-    , m_xkb(xkb)
 {
     QObject::connect(m_timer, &QTimer::timeout, this, &keyboard_repeat_spy::handleKeyRepeat);
 }
@@ -42,11 +42,14 @@ void keyboard_repeat_spy::handleKeyRepeat()
 
 void keyboard_repeat_spy::key(key_event const& event)
 {
+    if (keyboard && keyboard != event.base.dev) {
+        return;
+    }
     switch (event.state) {
     case key_state::pressed: {
         // TODO: don't get these values from WaylandServer
         auto const delay = waylandServer()->seat()->keyboards().get_repeat_info().delay;
-        if (m_xkb->shouldKeyRepeat(event.keycode) && delay != 0) {
+        if (event.base.dev->xkb->should_key_repeat(event.keycode) && delay != 0) {
             m_timer->setInterval(delay);
             m_key = event.keycode;
             keyboard = event.base.dev;

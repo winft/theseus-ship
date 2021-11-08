@@ -8,6 +8,7 @@
 */
 #pragma once
 
+#include "input/redirect.h"
 #include "toplevel.h"
 #include "virtualdesktops.h"
 #include "win/geo.h"

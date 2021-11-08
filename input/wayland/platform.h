@@ -6,6 +6,7 @@
 #pragma once
 
 #include "input/platform.h"
+#include "input/types.h"
 
 #include "base/platform.h"
 

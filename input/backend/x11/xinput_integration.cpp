@@ -15,6 +15,7 @@
 #include "input/keyboard_redirect.h"
 #include "input/logging.h"
 #include "input/pointer_redirect.h"
+#include "input/redirect.h"
 #include "input/spies/modifier_only_shortcuts.h"
 #include "main.h"
 #include "platform.h"
@@ -323,6 +324,8 @@ void xinput_integration::setup_fake_devices()
     auto keyboard = fake_devices.keyboard.get();
     auto keyboard_red = platform->redirect->keyboard();
 
+    keyboard->xkb->update_from_default();
+
     QObject::connect(
         pointer, &pointer::button_changed, pointer_red, &input::pointer_redirect::process_button);
 
@@ -347,10 +350,6 @@ void xinput_integration::setup_fake_devices()
 
     QObject::connect(
         keyboard, &keyboard::key_changed, keyboard_red, &input::keyboard_redirect::process_key);
-    QObject::connect(keyboard,
-                     &keyboard::modifiers_changed,
-                     keyboard_red,
-                     &input::keyboard_redirect::process_modifiers);
 }
 
 }

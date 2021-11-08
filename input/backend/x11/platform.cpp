@@ -55,10 +55,8 @@ void platform::create_cursor()
     if (is_xinput_avail) {
         xinput->setCursor(static_cast<x11::cursor*>(cursor.get()));
 
-        // We know we have xkb already.
-        auto xkb = redirect->keyboard()->xkb();
-        xkb->setConfig(kwinApp()->kxkbConfig());
-        xkb->reconfigure();
+        xkb.setConfig(kwinApp()->kxkbConfig());
+        xkb.reconfigure();
     }
 }
 #else

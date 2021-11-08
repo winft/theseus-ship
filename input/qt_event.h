@@ -11,11 +11,12 @@
 
 namespace KWin::input
 {
+class xkb_keyboard;
 
 Qt::MouseButton KWIN_EXPORT button_to_qt_mouse_button(uint32_t button);
 uint32_t KWIN_EXPORT qt_mouse_button_to_button(Qt::MouseButton button);
 
-Qt::Key KWIN_EXPORT key_to_qt_key(uint32_t key);
+Qt::Key KWIN_EXPORT key_to_qt_key(uint32_t key, xkb_keyboard* xkb);
 
 QMouseEvent KWIN_EXPORT button_to_qt_event(button_event const& event);
 

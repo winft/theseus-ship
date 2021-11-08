@@ -13,6 +13,8 @@
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
+#include "input/redirect.h"
+#include "input/xkb_keyboard.h"
 #include "main.h"
 #include "wayland_server.h"
 
@@ -63,7 +65,7 @@ bool window_selector_filter::key(key_event const& event)
     pass_to_wayland_server(event);
 
     if (event.state == key_state::pressed) {
-        auto const qt_key = key_to_qt_key(event.keycode);
+        auto const qt_key = key_to_qt_key(event.keycode, event.base.dev->xkb.get());
 
         // x11 variant does this on key press, so do the same
         if (qt_key == Qt::Key_Escape) {
@@ -86,7 +88,7 @@ bool window_selector_filter::key(key_event const& event)
             if (qt_key == Qt::Key_Down) {
                 my = 10;
             }
-            if (event.base.dev->platform->redirect->keyboardModifiers() & Qt::ControlModifier) {
+            if (event.base.dev->xkb->qt_modifiers & Qt::ControlModifier) {
                 mx /= 10;
                 my /= 10;
             }

@@ -22,7 +22,7 @@ class KWIN_EXPORT keyboard_repeat_spy : public QObject, public input::event_spy
 {
     Q_OBJECT
 public:
-    explicit keyboard_repeat_spy(xkb* xkb);
+    keyboard_repeat_spy();
     ~keyboard_repeat_spy() override;
 
     void key(key_event const& event) override;
@@ -33,7 +33,6 @@ Q_SIGNALS:
 private:
     void handleKeyRepeat();
     QTimer* m_timer;
-    xkb* m_xkb;
     quint32 m_time;
     quint32 m_key = 0;
     input::keyboard* keyboard{nullptr};

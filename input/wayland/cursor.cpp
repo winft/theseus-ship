@@ -10,6 +10,8 @@
 #include "cursor_image.h"
 #include "redirect.h"
 
+#include "input/xkb_helpers.h"
+
 namespace KWin::input::wayland
 {
 
@@ -56,16 +58,18 @@ void cursor::do_set_pos()
     Q_EMIT pos_changed(current_pos());
 }
 
+Qt::KeyboardModifiers get_keyboard_modifiers()
+{
+    return get_active_keyboard_modifiers(kwinApp()->input.get());
+}
+
 void cursor::slot_pos_changed(const QPointF& pos)
 {
     auto const oldPos = current_pos();
     update_pos(pos.toPoint());
-    Q_EMIT mouse_changed(pos.toPoint(),
-                         oldPos,
-                         m_currentButtons,
-                         m_currentButtons,
-                         redirect->keyboardModifiers(),
-                         redirect->keyboardModifiers());
+
+    auto mods = get_keyboard_modifiers();
+    Q_EMIT mouse_changed(pos.toPoint(), oldPos, m_currentButtons, m_currentButtons, mods, mods);
 }
 
 void cursor::slot_modifiers_changed(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods)
@@ -78,13 +82,11 @@ void cursor::slot_pointer_button_changed()
 {
     Qt::MouseButtons const oldButtons = m_currentButtons;
     m_currentButtons = redirect->qtButtonStates();
+
     auto const pos = current_pos();
-    Q_EMIT mouse_changed(pos,
-                         pos,
-                         m_currentButtons,
-                         oldButtons,
-                         redirect->keyboardModifiers(),
-                         redirect->keyboardModifiers());
+    auto mods = get_keyboard_modifiers();
+
+    Q_EMIT mouse_changed(pos, pos, m_currentButtons, oldButtons, mods, mods);
 }
 
 void cursor::do_start_image_tracking()

@@ -8,6 +8,11 @@
 #include "keyboard.h"
 #include "keyboard_redirect.h"
 #include "pointer_redirect.h"
+#include "redirect.h"
+#include "xkb_helpers.h"
+#include "xkb_keyboard.h"
+
+#include "main.h"
 
 #include "main.h"
 
@@ -57,20 +62,18 @@ uint32_t qt_mouse_button_to_button(Qt::MouseButton button)
     return button_map.key(button);
 }
 
-Qt::Key key_to_qt_key(uint32_t key)
+Qt::Key key_to_qt_key(uint32_t key, xkb_keyboard* xkb)
 {
-    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
-    auto const keysym = xkb->currentKeysym();
-    auto const global_shortcuts_mods = xkb->modifiersRelevantForGlobalShortcuts(key);
+    auto const global_shortcuts_mods = xkb->modifiers_relevant_for_global_shortcuts(key);
 
-    return xkb->toQtKey(
-        keysym, key, global_shortcuts_mods ? Qt::ControlModifier : Qt::KeyboardModifiers());
+    return xkb->to_qt_key(
+        xkb->keysym, key, global_shortcuts_mods ? Qt::ControlModifier : Qt::KeyboardModifiers());
 }
 
 QMouseEvent get_qt_mouse_event(QEvent::Type type, QPointF const& pos, Qt::MouseButton button)
 {
     auto buttons = kwinApp()->input->redirect->pointer()->buttons();
-    auto modifiers = kwinApp()->input->redirect->keyboard()->modifiers();
+    auto modifiers = get_active_keyboard_modifiers(kwinApp()->input.get());
 
     return QMouseEvent(type, pos, pos, button, buttons, modifiers);
 }
@@ -117,7 +120,10 @@ QWheelEvent axis_to_qt_event(axis_event const& event)
 {
     auto pos = kwinApp()->input->redirect->pointer()->pos();
     auto buttons = kwinApp()->input->redirect->pointer()->buttons();
-    auto mods = kwinApp()->input->redirect->keyboard()->modifiers();
+
+    // TODO(romangg): In the future only get modifiers from keyboards associated with the seat of
+    //                the pointer the event originated from.
+    auto mods = get_active_keyboard_modifiers(kwinApp()->input.get());
 
     auto const delta_int = static_cast<int>(std::round(event.delta));
     auto delta_point = QPoint(event.delta, 0);
@@ -135,25 +141,25 @@ QWheelEvent axis_to_qt_event(axis_event const& event)
     return qt_event;
 }
 
-QKeyEvent key_to_qt_event(const key_event& event)
+QKeyEvent key_to_qt_event(key_event const& event)
 {
     auto type = event.state == key_state::pressed ? QEvent::KeyPress : QEvent::KeyRelease;
-    auto const& xkb = kwinApp()->input->redirect->keyboard()->xkb();
-    auto mods = xkb->modifiers();
+    auto const& xkb = event.base.dev->xkb;
+    auto mods = xkb->qt_modifiers;
 
-    auto const keysym = xkb->currentKeysym();
-    auto const globalShortcutsModifiers = xkb->modifiersRelevantForGlobalShortcuts(event.keycode);
+    auto const globalShortcutsModifiers
+        = xkb->modifiers_relevant_for_global_shortcuts(event.keycode);
     auto const key
-        = xkb->toQtKey(keysym,
-                       event.keycode,
-                       globalShortcutsModifiers ? Qt::ControlModifier : Qt::KeyboardModifiers());
+        = xkb->to_qt_key(xkb->keysym,
+                         event.keycode,
+                         globalShortcutsModifiers ? Qt::ControlModifier : Qt::KeyboardModifiers());
     return {type,
             key,
             mods,
             event.keycode,
-            keysym,
+            xkb->keysym,
             0,
-            QString::fromStdString(xkb->toString(keysym)),
+            QString::fromStdString(xkb->to_string(xkb->keysym)),
             false};
 }
 

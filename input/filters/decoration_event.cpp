@@ -10,7 +10,9 @@
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
+#include "input/redirect.h"
 #include "input/touch_redirect.h"
+#include "input/xkb_helpers.h"
 #include "main.h"
 #include "wayland_server.h"
 #include "win/deco.h"
@@ -43,7 +45,7 @@ bool decoration_event_filter::button(button_event const& event)
                                 global_pos,
                                 button_to_qt_mouse_button(event.key),
                                 kwinApp()->input->redirect->pointer()->buttons(),
-                                kwinApp()->input->redirect->keyboard()->modifiers());
+                                get_active_keyboard_modifiers(kwinApp()->input));
     qt_event.setAccepted(false);
 
     QCoreApplication::sendEvent(decoration->decoration(), &qt_event);
@@ -142,7 +144,7 @@ bool decoration_event_filter::touch_down(touch_down_event const& event)
                   event.pos,
                   Qt::LeftButton,
                   Qt::LeftButton,
-                  kwinApp()->input->redirect->keyboardModifiers());
+                  get_active_keyboard_modifiers(kwinApp()->input));
     e.setAccepted(false);
     QCoreApplication::sendEvent(decoration->decoration(), &e);
     if (!e.isAccepted()) {
@@ -196,7 +198,7 @@ bool decoration_event_filter::touch_up(touch_up_event const& event)
                   m_lastGlobalTouchPos,
                   Qt::LeftButton,
                   Qt::MouseButtons(),
-                  kwinApp()->input->redirect->keyboardModifiers());
+                  get_active_keyboard_modifiers(kwinApp()->input));
     e.setAccepted(false);
     QCoreApplication::sendEvent(decoration->decoration(), &e);
     win::process_decoration_button_release(decoration->client(), &e);

@@ -8,7 +8,10 @@
 #include "control/keyboard.h"
 
 #include "platform.h"
+
+#include "main.h"
 #include "utils.h"
+#include "wayland_server.h"
 
 extern "C" {
 #include <wlr/backend/libinput.h>
@@ -69,6 +72,7 @@ static void handle_modifiers(struct wl_listener* listener, [[maybe_unused]] void
 keyboard::keyboard(wlr_input_device* dev, input::platform* platform)
     : input::keyboard(platform)
 {
+    xkb->seat = waylandServer()->seat();
     backend = dev->keyboard;
 
     if (auto libinput = get_libinput_device(dev)) {

@@ -8,6 +8,7 @@
 
 #include "helpers.h"
 #include "input/pointer_redirect.h"
+#include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
 #include "toplevel.h"

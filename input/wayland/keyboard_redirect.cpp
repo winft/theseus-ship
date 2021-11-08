@@ -11,9 +11,11 @@
 #include "input/event.h"
 #include "input/event_filter.h"
 #include "input/event_spy.h"
+#include "input/keyboard.h"
 #include "input/spies/keyboard_layout.h"
 #include "input/spies/keyboard_repeat.h"
 #include "input/spies/modifier_only_shortcuts.h"
+#include "input/xkb_helpers.h"
 
 #include "main.h"
 #include "toplevel.h"
@@ -32,7 +34,6 @@ namespace KWin::input::wayland
 keyboard_redirect::keyboard_redirect(wayland::redirect* redirect)
     : input::keyboard_redirect(redirect)
 {
-    m_xkb->setSeat(waylandServer()->seat());
 }
 
 class KeyStateChangedSpy : public event_spy
@@ -61,9 +62,11 @@ public:
     {
     }
 
-    void key(key_event const& /*event*/) override
+    void key(key_event const& event) override
     {
-        updateModifiers(kwinApp()->input->redirect->keyboardModifiers());
+        if (auto& xkb = event.base.dev->xkb) {
+            updateModifiers(xkb->qt_modifiers);
+        }
     }
 
     void updateModifiers(Qt::KeyboardModifiers mods)
@@ -87,14 +90,15 @@ void keyboard_redirect::init()
     assert(!m_inited);
     m_inited = true;
 
-    const auto config = kwinApp()->kxkbConfig();
-    m_xkb->setNumLockConfig(kwinApp()->inputConfig());
-    m_xkb->setConfig(config);
+    auto& xkb = kwinApp()->input->xkb;
+    auto const config = kwinApp()->kxkbConfig();
+    xkb.setNumLockConfig(kwinApp()->inputConfig());
+    xkb.setConfig(config);
 
     redirect->installInputEventSpy(new KeyStateChangedSpy(redirect));
     modifiers_spy = new modifiers_changed_spy(redirect);
     redirect->installInputEventSpy(modifiers_spy);
-    m_keyboardLayout = new keyboard_layout_spy(m_xkb.get(), config);
+    m_keyboardLayout = new keyboard_layout_spy(kwinApp()->input->xkb, config);
     m_keyboardLayout->init();
     redirect->installInputEventSpy(m_keyboardLayout);
 
@@ -102,7 +106,7 @@ void keyboard_redirect::init()
         redirect->installInputEventSpy(new modifier_only_shortcuts_spy);
     }
 
-    auto keyRepeatSpy = new keyboard_repeat_spy(m_xkb.get());
+    auto keyRepeatSpy = new keyboard_repeat_spy();
     QObject::connect(keyRepeatSpy,
                      &keyboard_repeat_spy::key_repeated,
                      this,
@@ -178,7 +182,8 @@ void keyboard_redirect::update()
 
 void keyboard_redirect::process_key(key_event const& event)
 {
-    auto const previousLayout = m_xkb->currentLayout();
+    auto& xkb = event.base.dev->xkb;
+    auto const previousLayout = xkb->layout;
 
     input::keyboard_redirect::process_key(event);
 
@@ -186,14 +191,15 @@ void keyboard_redirect::process_key(key_event const& event)
         return;
     }
 
-    auto const globalShortcutsModifiers = m_xkb->modifiersRelevantForGlobalShortcuts(event.keycode);
+    auto const globalShortcutsModifiers
+        = xkb->modifiers_relevant_for_global_shortcuts(event.keycode);
 
     redirect->processFilters(std::bind(&event_filter::key, std::placeholders::_1, event));
-    m_xkb->forwardModifiers();
+    xkb->forward_modifiers();
 
     if (globalShortcutsModifiers == Qt::KeyboardModifier::NoModifier
         && event.state == key_state::pressed) {
-        m_keyboardLayout->checkLayoutChange(previousLayout);
+        m_keyboardLayout->check_layout_change(xkb.get(), previousLayout);
     }
 }
 
@@ -213,11 +219,15 @@ void keyboard_redirect::process_modifiers(modifiers_event const& event)
     if (!m_inited) {
         return;
     }
-    auto const previousLayout = m_xkb->currentLayout();
+
+    auto const& xkb = event.base.dev->xkb.get();
+    auto const previousLayout = xkb->layout;
+
     // TODO: send to proper Client and also send when active Client changes
-    m_xkb->updateModifiers(event.depressed, event.latched, event.locked, event.group);
-    modifiers_spy->updateModifiers(modifiers());
-    m_keyboardLayout->checkLayoutChange(previousLayout);
+    xkb->update_modifiers(event.depressed, event.latched, event.locked, event.group);
+
+    modifiers_spy->updateModifiers(xkb->qt_modifiers);
+    m_keyboardLayout->check_layout_change(xkb, previousLayout);
 }
 
 void keyboard_redirect::processKeymapChange(int fd, uint32_t size)
@@ -227,7 +237,9 @@ void keyboard_redirect::processKeymapChange(int fd, uint32_t size)
     }
     // TODO: should we pass the keymap to our Clients? Or only to the currently active one and
     // update
-    m_xkb->installKeymap(fd, size);
+    // TODO(romangg): hand over the keyboard as argument instead.
+    auto xkb = get_primary_xkb_keyboard();
+    xkb->install_keymap(fd, size);
     m_keyboardLayout->resetLayout();
 }
 

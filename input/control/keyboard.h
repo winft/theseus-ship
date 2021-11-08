@@ -7,7 +7,7 @@
 
 #include "device.h"
 
-#include "input/xkb.h"
+#include "input/types.h"
 
 #include <kwin_export.h>
 

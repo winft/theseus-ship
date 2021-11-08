@@ -12,6 +12,7 @@
 
 #include "effects.h"
 #include "input/pointer_redirect.h"
+#include "input/redirect.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "win/control.h"

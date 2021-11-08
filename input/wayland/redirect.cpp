@@ -20,6 +20,7 @@
 #include "input/pointer.h"
 #include "input/switch.h"
 #include "input/touch.h"
+#include "input/xkb_keyboard.h"
 
 // TODO(romangg): should only be included when KWIN_BUILD_TABBOX is defined.
 #include "input/filters/tabbox.h"
@@ -163,17 +164,6 @@ void redirect::setup_workspace()
     m_tablet = std::make_unique<wayland::tablet_redirect>(this);
 
     setup_devices();
-
-    platform->update_keyboard_leds(m_keyboard->xkb()->leds());
-    waylandServer()->updateKeyState(m_keyboard->xkb()->leds());
-    QObject::connect(m_keyboard.get(),
-                     &keyboard_redirect::ledsChanged,
-                     waylandServer(),
-                     &WaylandServer::updateKeyState);
-    QObject::connect(m_keyboard.get(),
-                     &keyboard_redirect::ledsChanged,
-                     platform,
-                     &platform::update_keyboard_leds);
 
     fake_input = waylandServer()->display()->createFakeInput();
     QObject::connect(fake_input.get(),
@@ -344,10 +334,27 @@ void redirect::handle_keyboard_added(input::keyboard* keyboard)
                      keyboard_red,
                      &input::keyboard_redirect::process_modifiers);
 
-    if (auto seat = find_seat(); seat && !seat->hasKeyboard()) {
+    auto seat = find_seat();
+
+    if (!seat->hasKeyboard()) {
         seat->setHasKeyboard(true);
         reconfigure();
     }
+
+    keyboard->xkb->seat = waylandServer()->seat();
+    keyboard->xkb->update_from_default();
+
+    platform->update_keyboard_leds(keyboard->xkb->leds);
+    waylandServer()->updateKeyState(keyboard->xkb->leds);
+
+    QObject::connect(keyboard->xkb.get(),
+                     &xkb_keyboard::leds_changed,
+                     waylandServer(),
+                     &WaylandServer::updateKeyState);
+    QObject::connect(keyboard->xkb.get(),
+                     &xkb_keyboard::leds_changed,
+                     platform,
+                     &platform::update_keyboard_leds);
 }
 
 void redirect::handle_touch_added(input::touch* touch)
@@ -389,6 +396,10 @@ void redirect::handle_fake_input_device_added(Wrapland::Server::FakeInputDevice*
     auto devices = fake_input_devices({std::make_unique<fake::pointer>(device, platform),
                                        std::make_unique<fake::keyboard>(device, platform),
                                        std::make_unique<fake::touch>(device, platform)});
+
+    Q_EMIT platform->pointer_added(devices.pointer.get());
+    Q_EMIT platform->keyboard_added(devices.keyboard.get());
+    Q_EMIT platform->touch_added(devices.touch.get());
 
     fake_devices.insert({device, std::move(devices)});
 }

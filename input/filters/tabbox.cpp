@@ -11,6 +11,8 @@
 #include "input/event.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
+#include "input/redirect.h"
+#include "input/xkb_helpers.h"
 #include "main.h"
 #include "tabbox/tabbox.h"
 #include "wayland_server.h"
@@ -57,9 +59,10 @@ bool tabbox_filter::key(key_event const& event)
     pass_to_wayland_server(event);
 
     if (event.state == key_state::pressed) {
-        TabBox::TabBox::self()->keyPress(kwinApp()->input->redirect->keyboardModifiers()
-                                         | key_to_qt_key(event.keycode));
-    } else if (kwinApp()->input->redirect->modifiersRelevantForGlobalShortcuts()
+        auto mods = input::get_active_keyboard_modifiers(kwinApp()->input);
+        TabBox::TabBox::self()->keyPress(mods
+                                         | key_to_qt_key(event.keycode, event.base.dev->xkb.get()));
+    } else if (input::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
                == Qt::NoModifier) {
         TabBox::TabBox::self()->modifiersReleased();
     }
@@ -72,8 +75,9 @@ bool tabbox_filter::key_repeat(key_event const& event)
         return false;
     }
 
-    TabBox::TabBox::self()->keyPress(kwinApp()->input->redirect->keyboardModifiers()
-                                     | key_to_qt_key(event.keycode));
+    auto mods = input::get_active_keyboard_modifiers(kwinApp()->input);
+    TabBox::TabBox::self()->keyPress(mods
+                                     | key_to_qt_key(event.keycode, event.base.dev->xkb.get()));
     return true;
 }
 

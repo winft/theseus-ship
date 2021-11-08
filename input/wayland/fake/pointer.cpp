@@ -7,6 +7,7 @@
 
 #include "input/platform.h"
 #include "input/pointer_redirect.h"
+#include "input/redirect.h"
 #include "main.h"
 #include "wayland_server.h"
 

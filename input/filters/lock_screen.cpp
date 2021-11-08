@@ -8,6 +8,7 @@
 
 #include "input/keyboard_redirect.h"
 #include "input/qt_event.h"
+#include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
 #include "toplevel.h"

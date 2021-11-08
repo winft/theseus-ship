@@ -19,6 +19,7 @@ keyboard::keyboard(Wrapland::Server::FakeInputDevice* device, input::platform* p
     : input::keyboard(platform)
     , device{device}
 {
+    xkb->seat = waylandServer()->seat();
     QObject::connect(device,
                      &Wrapland::Server::FakeInputDevice::keyboardKeyPressRequested,
                      this,
