@@ -312,16 +312,7 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
         return;
     }
 
-    // perform Scene specific checks
     GLPlatform* glPlatform = GLPlatform::instance();
-    if (!glPlatform->isGLES()
-        && !hasGLExtension(QByteArrayLiteral("GL_ARB_texture_non_power_of_two"))
-        && !hasGLExtension(QByteArrayLiteral("GL_ARB_texture_rectangle"))) {
-        qCCritical(KWIN_CORE)
-            << "GL_ARB_texture_non_power_of_two and GL_ARB_texture_rectangle missing";
-        init_ok = false;
-        return; // error
-    }
 
     // set strict binding
     if (options->isGlStrictBindingFollowsDriver()) {
