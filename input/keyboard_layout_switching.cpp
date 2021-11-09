@@ -120,13 +120,15 @@ virtual_desktop_policy::virtual_desktop_policy(input::xkb* xkb,
         workspace()->sessionManager(), &SessionManager::prepareSessionSaveRequested, this, [this] {
             clear_layouts();
 
-            for (auto i = layouts.constBegin(); i != layouts.constEnd(); ++i) {
-                if (uint const layout = *i) {
-                    this->config.writeEntry(
-                        default_layout_entry_key()
-                            % QLatin1String(QByteArray::number(i.key()->x11DesktopNumber())),
-                        layout);
+            for (auto const& [vd, layout] : layouts) {
+                if (!layout) {
+                    continue;
                 }
+
+                this->config.writeEntry(
+                    default_layout_entry_key()
+                        % QLatin1String(QByteArray::number(vd->x11DesktopNumber())),
+                    layout);
             }
         });
 
@@ -142,11 +144,11 @@ virtual_desktop_policy::virtual_desktop_policy(input::xkb* xkb,
                         0u);
 
                     if (layout) {
-                        layouts.insert(desktop, layout);
+                        layouts.insert({desktop, layout});
                         QObject::connect(desktop,
                                          &VirtualDesktop::aboutToBeDestroyed,
                                          this,
-                                         [this, desktop] { layouts.remove(desktop); });
+                                         [this, desktop] { layouts.erase(desktop); });
                     }
                 }
 
@@ -163,14 +165,13 @@ void virtual_desktop_policy::clear_cache()
 namespace
 {
 template<typename T, typename U>
-quint32 getLayout(T const& layouts, U const& reference)
+uint32_t getLayout(T const& layouts, U const& reference)
 {
-    auto it = layouts.constFind(reference);
-    if (it == layouts.constEnd()) {
+    auto it = layouts.find(reference);
+    if (it == layouts.end()) {
         return 0;
-    } else {
-        return it.value();
     }
+    return it->second;
 }
 }
 
@@ -191,15 +192,12 @@ void virtual_desktop_policy::handle_layout_change(uint index)
     auto it = layouts.find(desktop);
 
     if (it == layouts.end()) {
-        layouts.insert(desktop, index);
+        layouts.insert({desktop, index});
         QObject::connect(desktop, &VirtualDesktop::aboutToBeDestroyed, this, [this, desktop] {
-            layouts.remove(desktop);
+            layouts.erase(desktop);
         });
     } else {
-        if (it.value() == index) {
-            return;
-        }
-        it.value() = index;
+        it->second = index;
     }
 }
 
@@ -240,14 +238,11 @@ void window_policy::handle_layout_change(uint index)
     auto it = layouts.find(window);
 
     if (it == layouts.end()) {
-        layouts.insert(window, index);
+        layouts.insert({window, index});
         QObject::connect(
-            window, &Toplevel::windowClosed, this, [this, window] { layouts.remove(window); });
+            window, &Toplevel::windowClosed, this, [this, window] { layouts.erase(window); });
     } else {
-        if (it.value() == index) {
-            return;
-        }
-        it.value() = index;
+        it->second = index;
     }
 }
 
@@ -265,13 +260,13 @@ application_policy::application_policy(input::xkb* xkb,
         workspace()->sessionManager(), &SessionManager::prepareSessionSaveRequested, this, [this] {
             clear_layouts();
 
-            for (auto i = layouts.constBegin(); i != layouts.constEnd(); ++i) {
-                if (auto const layout = *i) {
-                    auto const desktopFileName = i.key()->control->desktop_file_name();
-                    if (!desktopFileName.isEmpty()) {
-                        this->config.writeEntry(
-                            default_layout_entry_key() % QLatin1String(desktopFileName), layout);
-                    }
+            for (auto const& [win, layout] : layouts) {
+                if (!layout) {
+                    continue;
+                }
+                if (auto const name = win->control->desktop_file_name(); !name.isEmpty()) {
+                    this->config.writeEntry(default_layout_entry_key() % QLatin1String(name),
+                                            layout);
                 }
             }
         });
@@ -282,11 +277,10 @@ application_policy::application_policy(input::xkb* xkb,
                 auto const keyPrefix = default_layout_entry_key();
                 auto const keyList = this->config.keyList().filter(keyPrefix);
                 for (auto const& key : keyList) {
-                    restored_layouts.insert(key.midRef(keyPrefix.size()).toLatin1(),
-                                            this->config.readEntry(key, 0));
+                    restored_layouts.insert(
+                        {key.midRef(keyPrefix.size()).toLatin1(), this->config.readEntry(key, 0)});
                 }
             }
-            restored_layouts.squeeze();
         });
 }
 
@@ -301,21 +295,30 @@ void application_policy::handle_client_activated(Toplevel* window)
         return;
     }
 
-    auto it = layouts.constFind(window);
-    if (it != layouts.constEnd()) {
-        set_layout(it.value());
+    auto it = layouts.find(window);
+    if (it != layouts.end()) {
+        set_layout(it->second);
         return;
     }
 
-    for (it = layouts.constBegin(); it != layouts.constEnd(); it++) {
-        if (win::belong_to_same_client(window, it.key())) {
-            auto const layout = it.value();
+    for (auto const& [win, layout] : layouts) {
+        if (win::belong_to_same_client(window, win)) {
             set_layout(layout);
             handle_layout_change(layout);
             return;
         }
     }
-    set_layout(restored_layouts.take(window->control->desktop_file_name()));
+
+    auto restored_layout = 0;
+
+    if (auto restored_it = restored_layouts.find(window->control->desktop_file_name());
+        restored_it != restored_layouts.end()) {
+        restored_layout = restored_it->second;
+        restored_layouts.erase(restored_it);
+    }
+
+    set_layout(restored_layout);
+
     if (auto const index = xkb->currentLayout()) {
         handle_layout_change(index);
     }
@@ -341,20 +344,20 @@ void application_policy::handle_layout_change(uint index)
     auto it = layouts.find(window);
 
     if (it == layouts.end()) {
-        layouts.insert(window, index);
+        layouts.insert({window, index});
         QObject::connect(
-            window, &Toplevel::windowClosed, this, [this, window] { layouts.remove(window); });
+            window, &Toplevel::windowClosed, this, [this, window] { layouts.erase(window); });
     } else {
-        if (it.value() == index) {
+        if (it->second == index) {
             return;
         }
-        it.value() = index;
+        it->second = index;
     }
 
     // Update all layouts for the application.
-    for (it = layouts.begin(); it != layouts.end(); it++) {
-        if (win::belong_to_same_client(it.key(), window)) {
-            it.value() = index;
+    for (auto& [win, layout] : layouts) {
+        if (win::belong_to_same_client(win, window)) {
+            layout = index;
         }
     }
 }

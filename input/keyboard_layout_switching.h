@@ -7,8 +7,8 @@
 #pragma once
 
 #include <KConfigGroup>
-#include <QHash>
 #include <QObject>
+#include <unordered_map>
 
 namespace KWin
 {
@@ -101,7 +101,7 @@ protected:
 private:
     void handle_desktop_change();
 
-    QHash<VirtualDesktop*, quint32> layouts;
+    std::unordered_map<VirtualDesktop*, uint32_t> layouts;
 };
 
 class window_policy : public policy
@@ -120,7 +120,7 @@ protected:
     void handle_layout_change(uint index) override;
 
 private:
-    QHash<Toplevel*, quint32> layouts;
+    std::unordered_map<Toplevel*, uint32_t> layouts;
 };
 
 class application_policy : public policy
@@ -141,8 +141,8 @@ protected:
 private:
     void handle_client_activated(Toplevel* window);
 
-    QHash<Toplevel*, quint32> layouts;
-    QHash<QByteArray, quint32> restored_layouts;
+    std::unordered_map<Toplevel*, uint32_t> layouts;
+    std::unordered_map<QByteArray, uint32_t> restored_layouts;
 };
 
 }
