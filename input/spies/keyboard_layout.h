@@ -29,9 +29,9 @@ namespace dbus
 class keyboard_layout;
 }
 
-namespace KeyboardLayoutSwitching
+namespace keyboard_layout_switching
 {
-class Policy;
+class policy;
 }
 
 class KWIN_EXPORT keyboard_layout_spy : public QObject, public input::event_spy
@@ -66,7 +66,7 @@ private:
     KConfigGroup m_configGroup;
     QVector<QAction*> m_layoutShortcuts;
     dbus::keyboard_layout* m_dbusInterface = nullptr;
-    KeyboardLayoutSwitching::Policy* m_policy = nullptr;
+    keyboard_layout_switching::policy* m_policy = nullptr;
 };
 
 }

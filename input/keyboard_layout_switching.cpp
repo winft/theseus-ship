@@ -19,157 +19,151 @@
 namespace KWin
 {
 
-namespace input::KeyboardLayoutSwitching
+namespace input::keyboard_layout_switching
 {
 
-Policy::Policy(xkb* xkb, keyboard_layout_spy* layout, const KConfigGroup& config)
+policy::policy(input::xkb* xkb, keyboard_layout_spy* layout, KConfigGroup const& config)
     : QObject(layout)
-    , m_config(config)
-    , m_xkb(xkb)
-    , m_layout(layout)
+    , config(config)
+    , xkb(xkb)
+    , layout(layout)
 {
-    connect(m_layout, &keyboard_layout_spy::layoutsReconfigured, this, &Policy::clearCache);
-    connect(m_layout, &keyboard_layout_spy::layoutChanged, this, &Policy::layoutChanged);
+    QObject::connect(layout, &keyboard_layout_spy::layoutsReconfigured, this, &policy::clear_cache);
+    QObject::connect(
+        layout, &keyboard_layout_spy::layoutChanged, this, &policy::handle_layout_change);
 }
 
-Policy::~Policy() = default;
+policy::~policy() = default;
 
-void Policy::setLayout(uint index)
+void policy::set_layout(uint index)
 {
-    const uint previousLayout = m_xkb->currentLayout();
-    m_xkb->switchToLayout(index);
-    const uint currentLayout = m_xkb->currentLayout();
-    if (previousLayout != currentLayout) {
-        emit m_layout->layoutChanged(currentLayout);
+    auto const previous_layout = xkb->currentLayout();
+    xkb->switchToLayout(index);
+    auto const current_layout = xkb->currentLayout();
+
+    if (previous_layout != current_layout) {
+        Q_EMIT layout->layoutChanged(current_layout);
     }
 }
 
-Policy* Policy::create(xkb* xkb,
+policy* policy::create(input::xkb* xkb,
                        keyboard_layout_spy* layout,
-                       const KConfigGroup& config,
-                       const QString& policy)
+                       KConfigGroup const& config,
+                       QString const& policy)
 {
     if (policy.toLower() == QStringLiteral("desktop")) {
-        return new VirtualDesktopPolicy(xkb, layout, config);
+        return new virtual_desktop_policy(xkb, layout, config);
     }
     if (policy.toLower() == QStringLiteral("window")) {
-        return new WindowPolicy(xkb, layout);
+        return new window_policy(xkb, layout);
     }
     if (policy.toLower() == QStringLiteral("winclass")) {
-        return new ApplicationPolicy(xkb, layout, config);
+        return new application_policy(xkb, layout, config);
     }
-    return new GlobalPolicy(xkb, layout, config);
+    return new global_policy(xkb, layout, config);
 }
 
-const char Policy::defaultLayoutEntryKeyPrefix[] = "LayoutDefault";
-const QString Policy::defaultLayoutEntryKey() const
+char const policy::default_layout_entry_key_prefix[] = "LayoutDefault";
+
+QString const policy::default_layout_entry_key() const
 {
-    return QLatin1String(defaultLayoutEntryKeyPrefix) % name() % QLatin1Char('_');
+    return QLatin1String(default_layout_entry_key_prefix) % name() % QLatin1Char('_');
 }
 
-void Policy::clearLayouts()
+void policy::clear_layouts()
 {
-    const QStringList layoutEntryList = m_config.keyList().filter(defaultLayoutEntryKeyPrefix);
-    for (const auto& layoutEntry : layoutEntryList) {
-        m_config.deleteEntry(layoutEntry);
+    auto const layout_entries = config.keyList().filter(default_layout_entry_key_prefix);
+    for (const auto& entry : layout_entries) {
+        config.deleteEntry(entry);
     }
 }
 
-const QString GlobalPolicy::defaultLayoutEntryKey() const
+QString const global_policy::default_layout_entry_key() const
 {
-    return QLatin1String(defaultLayoutEntryKeyPrefix) % name();
+    return QLatin1String(default_layout_entry_key_prefix) % name();
 }
 
-GlobalPolicy::GlobalPolicy(xkb* xkb, keyboard_layout_spy* _layout, const KConfigGroup& config)
-    : Policy(xkb, _layout, config)
+global_policy::global_policy(input::xkb* xkb,
+                             keyboard_layout_spy* _layout,
+                             KConfigGroup const& config)
+    : policy(xkb, _layout, config)
 {
-    connect(workspace()->sessionManager(),
-            &SessionManager::prepareSessionSaveRequested,
-            this,
-            [this, xkb](const QString& name) {
-                Q_UNUSED(name)
-                clearLayouts();
-                if (const uint layout = xkb->currentLayout()) {
-                    m_config.writeEntry(defaultLayoutEntryKey(), layout);
-                }
-            });
+    QObject::connect(workspace()->sessionManager(),
+                     &SessionManager::prepareSessionSaveRequested,
+                     this,
+                     [this, xkb] {
+                         clear_layouts();
+                         if (auto const layout = xkb->currentLayout()) {
+                             this->config.writeEntry(default_layout_entry_key(), layout);
+                         }
+                     });
 
-    connect(workspace()->sessionManager(),
-            &SessionManager::loadSessionRequested,
-            this,
-            [this, xkb](const QString& name) {
-                Q_UNUSED(name)
-                if (xkb->numberOfLayouts() > 1) {
-                    setLayout(m_config.readEntry(defaultLayoutEntryKey(), 0));
-                }
-            });
+    QObject::connect(
+        workspace()->sessionManager(), &SessionManager::loadSessionRequested, this, [this, xkb] {
+            if (xkb->numberOfLayouts() > 1) {
+                set_layout(this->config.readEntry(default_layout_entry_key(), 0));
+            }
+        });
 }
 
-GlobalPolicy::~GlobalPolicy() = default;
-
-VirtualDesktopPolicy::VirtualDesktopPolicy(xkb* xkb,
-                                           keyboard_layout_spy* layout,
-                                           const KConfigGroup& config)
-    : Policy(xkb, layout, config)
+virtual_desktop_policy::virtual_desktop_policy(input::xkb* xkb,
+                                               keyboard_layout_spy* layout,
+                                               KConfigGroup const& config)
+    : policy(xkb, layout, config)
 {
-    connect(VirtualDesktopManager::self(),
-            &VirtualDesktopManager::currentChanged,
-            this,
-            &VirtualDesktopPolicy::desktopChanged);
+    QObject::connect(VirtualDesktopManager::self(),
+                     &VirtualDesktopManager::currentChanged,
+                     this,
+                     &virtual_desktop_policy::handle_desktop_change);
 
-    connect(workspace()->sessionManager(),
-            &SessionManager::prepareSessionSaveRequested,
-            this,
-            [this](const QString& name) {
-                Q_UNUSED(name)
-                clearLayouts();
+    QObject::connect(
+        workspace()->sessionManager(), &SessionManager::prepareSessionSaveRequested, this, [this] {
+            clear_layouts();
 
-                for (auto i = m_layouts.constBegin(); i != m_layouts.constEnd(); ++i) {
-                    if (const uint layout = *i) {
-                        m_config.writeEntry(
-                            defaultLayoutEntryKey()
-                                % QLatin1String(QByteArray::number(i.key()->x11DesktopNumber())),
-                            layout);
+            for (auto i = layouts.constBegin(); i != layouts.constEnd(); ++i) {
+                if (uint const layout = *i) {
+                    this->config.writeEntry(
+                        default_layout_entry_key()
+                            % QLatin1String(QByteArray::number(i.key()->x11DesktopNumber())),
+                        layout);
+                }
+            }
+        });
+
+    QObject::connect(
+        workspace()->sessionManager(), &SessionManager::loadSessionRequested, this, [this, xkb] {
+            if (xkb->numberOfLayouts() > 1) {
+                auto const& desktops = VirtualDesktopManager::self()->desktops();
+
+                for (KWin::VirtualDesktop* const desktop : desktops) {
+                    uint const layout = this->config.readEntry(
+                        default_layout_entry_key()
+                            % QLatin1String(QByteArray::number(desktop->x11DesktopNumber())),
+                        0u);
+
+                    if (layout) {
+                        layouts.insert(desktop, layout);
+                        QObject::connect(desktop,
+                                         &VirtualDesktop::aboutToBeDestroyed,
+                                         this,
+                                         [this, desktop] { layouts.remove(desktop); });
                     }
                 }
-            });
 
-    connect(workspace()->sessionManager(),
-            &SessionManager::loadSessionRequested,
-            this,
-            [this, xkb](const QString& name) {
-                Q_UNUSED(name)
-                if (xkb->numberOfLayouts() > 1) {
-                    const auto& desktops = VirtualDesktopManager::self()->desktops();
-                    for (KWin::VirtualDesktop* const desktop : desktops) {
-                        const uint layout = m_config.readEntry(
-                            defaultLayoutEntryKey()
-                                % QLatin1String(QByteArray::number(desktop->x11DesktopNumber())),
-                            0u);
-                        if (layout) {
-                            m_layouts.insert(desktop, layout);
-                            connect(desktop,
-                                    &VirtualDesktop::aboutToBeDestroyed,
-                                    this,
-                                    [this, desktop] { m_layouts.remove(desktop); });
-                        }
-                    }
-                    desktopChanged();
-                }
-            });
+                handle_desktop_change();
+            }
+        });
 }
 
-VirtualDesktopPolicy::~VirtualDesktopPolicy() = default;
-
-void VirtualDesktopPolicy::clearCache()
+void virtual_desktop_policy::clear_cache()
 {
-    m_layouts.clear();
+    layouts.clear();
 }
 
 namespace
 {
 template<typename T, typename U>
-quint32 getLayout(const T& layouts, const U& reference)
+quint32 getLayout(T const& layouts, U const& reference)
 {
     auto it = layouts.constFind(reference);
     if (it == layouts.constEnd()) {
@@ -180,25 +174,27 @@ quint32 getLayout(const T& layouts, const U& reference)
 }
 }
 
-void VirtualDesktopPolicy::desktopChanged()
+void virtual_desktop_policy::handle_desktop_change()
 {
-    auto d = VirtualDesktopManager::self()->currentDesktop();
-    if (!d) {
-        return;
+    if (auto desktop = VirtualDesktopManager::self()->currentDesktop()) {
+        set_layout(getLayout(layouts, desktop));
     }
-    setLayout(getLayout(m_layouts, d));
 }
 
-void VirtualDesktopPolicy::layoutChanged(uint index)
+void virtual_desktop_policy::handle_layout_change(uint index)
 {
-    auto d = VirtualDesktopManager::self()->currentDesktop();
-    if (!d) {
+    auto desktop = VirtualDesktopManager::self()->currentDesktop();
+    if (!desktop) {
         return;
     }
-    auto it = m_layouts.find(d);
-    if (it == m_layouts.end()) {
-        m_layouts.insert(d, index);
-        connect(d, &VirtualDesktop::aboutToBeDestroyed, this, [this, d] { m_layouts.remove(d); });
+
+    auto it = layouts.find(desktop);
+
+    if (it == layouts.end()) {
+        layouts.insert(desktop, index);
+        QObject::connect(desktop, &VirtualDesktop::aboutToBeDestroyed, this, [this, desktop] {
+            layouts.remove(desktop);
+        });
     } else {
         if (it.value() == index) {
             return;
@@ -207,45 +203,46 @@ void VirtualDesktopPolicy::layoutChanged(uint index)
     }
 }
 
-WindowPolicy::WindowPolicy(xkb* xkb, keyboard_layout_spy* layout)
-    : Policy(xkb, layout)
+window_policy::window_policy(input::xkb* xkb, keyboard_layout_spy* layout)
+    : policy(xkb, layout)
 {
-    connect(workspace(), &Workspace::clientActivated, this, [this](Toplevel* window) {
+    QObject::connect(workspace(), &Workspace::clientActivated, this, [this](auto window) {
         if (!window) {
             return;
         }
-        // ignore some special types
+
+        // Ignore some special types.
         if (win::is_desktop(window) || win::is_dock(window)) {
             return;
         }
-        setLayout(getLayout(m_layouts, window));
+
+        set_layout(getLayout(layouts, window));
     });
 }
 
-WindowPolicy::~WindowPolicy()
+void window_policy::clear_cache()
 {
+    layouts.clear();
 }
 
-void WindowPolicy::clearCache()
+void window_policy::handle_layout_change(uint index)
 {
-    m_layouts.clear();
-}
-
-void WindowPolicy::layoutChanged(uint index)
-{
-    auto c = workspace()->activeClient();
-    if (!c) {
-        return;
-    }
-    // ignore some special types
-    if (win::is_desktop(c) || win::is_dock(c)) {
+    auto window = workspace()->activeClient();
+    if (!window) {
         return;
     }
 
-    auto it = m_layouts.find(c);
-    if (it == m_layouts.end()) {
-        m_layouts.insert(c, index);
-        connect(c, &Toplevel::windowClosed, this, [this, c] { m_layouts.remove(c); });
+    // Ignore some special types.
+    if (win::is_desktop(window) || win::is_dock(window)) {
+        return;
+    }
+
+    auto it = layouts.find(window);
+
+    if (it == layouts.end()) {
+        layouts.insert(window, index);
+        QObject::connect(
+            window, &Toplevel::windowClosed, this, [this, window] { layouts.remove(window); });
     } else {
         if (it.value() == index) {
             return;
@@ -254,109 +251,109 @@ void WindowPolicy::layoutChanged(uint index)
     }
 }
 
-ApplicationPolicy::ApplicationPolicy(xkb* xkb,
-                                     keyboard_layout_spy* layout,
-                                     const KConfigGroup& config)
-    : Policy(xkb, layout, config)
+application_policy::application_policy(input::xkb* xkb,
+                                       keyboard_layout_spy* layout,
+                                       KConfigGroup const& config)
+    : policy(xkb, layout, config)
 {
-    connect(workspace(), &Workspace::clientActivated, this, &ApplicationPolicy::clientActivated);
+    QObject::connect(workspace(),
+                     &Workspace::clientActivated,
+                     this,
+                     &application_policy::handle_client_activated);
 
-    connect(workspace()->sessionManager(),
-            &SessionManager::prepareSessionSaveRequested,
-            this,
-            [this](const QString& name) {
-                Q_UNUSED(name)
-                clearLayouts();
+    QObject::connect(
+        workspace()->sessionManager(), &SessionManager::prepareSessionSaveRequested, this, [this] {
+            clear_layouts();
 
-                for (auto i = m_layouts.constBegin(); i != m_layouts.constEnd(); ++i) {
-                    if (const uint layout = *i) {
-                        auto const desktopFileName = i.key()->control->desktop_file_name();
-                        if (!desktopFileName.isEmpty()) {
-                            m_config.writeEntry(
-                                defaultLayoutEntryKey() % QLatin1String(desktopFileName), layout);
-                        }
+            for (auto i = layouts.constBegin(); i != layouts.constEnd(); ++i) {
+                if (auto const layout = *i) {
+                    auto const desktopFileName = i.key()->control->desktop_file_name();
+                    if (!desktopFileName.isEmpty()) {
+                        this->config.writeEntry(
+                            default_layout_entry_key() % QLatin1String(desktopFileName), layout);
                     }
                 }
-            });
+            }
+        });
 
-    connect(workspace()->sessionManager(),
-            &SessionManager::loadSessionRequested,
-            this,
-            [this, xkb](const QString& name) {
-                Q_UNUSED(name)
-                if (xkb->numberOfLayouts() > 1) {
-                    const QString keyPrefix = defaultLayoutEntryKey();
-                    const QStringList keyList = m_config.keyList().filter(keyPrefix);
-                    for (const QString& key : keyList) {
-                        m_layoutsRestored.insert(key.midRef(keyPrefix.size()).toLatin1(),
-                                                 m_config.readEntry(key, 0));
-                    }
+    QObject::connect(
+        workspace()->sessionManager(), &SessionManager::loadSessionRequested, this, [this, xkb] {
+            if (xkb->numberOfLayouts() > 1) {
+                auto const keyPrefix = default_layout_entry_key();
+                auto const keyList = this->config.keyList().filter(keyPrefix);
+                for (auto const& key : keyList) {
+                    restored_layouts.insert(key.midRef(keyPrefix.size()).toLatin1(),
+                                            this->config.readEntry(key, 0));
                 }
-                m_layoutsRestored.squeeze();
-            });
+            }
+            restored_layouts.squeeze();
+        });
 }
 
-ApplicationPolicy::~ApplicationPolicy()
-{
-}
-
-void ApplicationPolicy::clientActivated(Toplevel* window)
+void application_policy::handle_client_activated(Toplevel* window)
 {
     if (!window) {
         return;
     }
-    // ignore some special types
+
+    // Ignore some special types.
     if (win::is_desktop(window) || win::is_dock(window)) {
         return;
     }
-    auto it = m_layouts.constFind(window);
-    if (it != m_layouts.constEnd()) {
-        setLayout(it.value());
+
+    auto it = layouts.constFind(window);
+    if (it != layouts.constEnd()) {
+        set_layout(it.value());
         return;
-    };
-    for (it = m_layouts.constBegin(); it != m_layouts.constEnd(); it++) {
+    }
+
+    for (it = layouts.constBegin(); it != layouts.constEnd(); it++) {
         if (win::belong_to_same_client(window, it.key())) {
             auto const layout = it.value();
-            setLayout(layout);
-            layoutChanged(layout);
+            set_layout(layout);
+            handle_layout_change(layout);
             return;
         }
     }
-    setLayout(m_layoutsRestored.take(window->control->desktop_file_name()));
-    if (auto const index = m_xkb->currentLayout()) {
-        layoutChanged(index);
+    set_layout(restored_layouts.take(window->control->desktop_file_name()));
+    if (auto const index = xkb->currentLayout()) {
+        handle_layout_change(index);
     }
 }
 
-void ApplicationPolicy::clearCache()
+void application_policy::clear_cache()
 {
-    m_layouts.clear();
+    layouts.clear();
 }
 
-void ApplicationPolicy::layoutChanged(uint index)
+void application_policy::handle_layout_change(uint index)
 {
-    auto c = workspace()->activeClient();
-    if (!c) {
-        return;
-    }
-    // ignore some special types
-    if (win::is_desktop(c) || win::is_dock(c)) {
+    auto window = workspace()->activeClient();
+    if (!window) {
         return;
     }
 
-    auto it = m_layouts.find(c);
-    if (it == m_layouts.end()) {
-        m_layouts.insert(c, index);
-        connect(c, &Toplevel::windowClosed, this, [this, c] { m_layouts.remove(c); });
+    // Ignore some special types.
+    if (win::is_desktop(window) || win::is_dock(window)) {
+        return;
+    }
+
+    auto it = layouts.find(window);
+
+    if (it == layouts.end()) {
+        layouts.insert(window, index);
+        QObject::connect(
+            window, &Toplevel::windowClosed, this, [this, window] { layouts.remove(window); });
     } else {
         if (it.value() == index) {
             return;
         }
         it.value() = index;
     }
-    // update all layouts for the application
-    for (it = m_layouts.begin(); it != m_layouts.end(); it++) {
-        if (win::belong_to_same_client(it.key(), c)) {
+
+    // Update all layouts for the application.
+    for (it = layouts.begin(); it != layouts.end(); it++) {
+        if (win::belong_to_same_client(it.key(), window)) {
             it.value() = index;
         }
     }

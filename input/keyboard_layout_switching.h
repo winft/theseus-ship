@@ -20,48 +20,48 @@ namespace input
 class keyboard_layout_spy;
 class xkb;
 
-namespace KeyboardLayoutSwitching
+namespace keyboard_layout_switching
 {
 
-class Policy : public QObject
+class policy : public QObject
 {
     Q_OBJECT
 public:
-    ~Policy() override;
+    ~policy() override;
 
     virtual QString name() const = 0;
 
-    static Policy* create(xkb* xkb,
+    static policy* create(input::xkb* xkb,
                           keyboard_layout_spy* layout,
-                          const KConfigGroup& config,
-                          const QString& policy);
+                          KConfigGroup const& config,
+                          QString const& policy);
 
 protected:
-    explicit Policy(xkb* xkb,
-                    keyboard_layout_spy* layout,
-                    const KConfigGroup& config = KConfigGroup());
-    virtual void clearCache() = 0;
-    virtual void layoutChanged(uint index) = 0;
+    policy(input::xkb* xkb,
+           keyboard_layout_spy* layout,
+           KConfigGroup const& config = KConfigGroup());
 
-    void setLayout(uint index);
+    virtual void clear_cache() = 0;
+    virtual void handle_layout_change(uint index) = 0;
 
-    KConfigGroup m_config;
-    virtual const QString defaultLayoutEntryKey() const;
-    void clearLayouts();
+    void set_layout(uint index);
 
-    static const char defaultLayoutEntryKeyPrefix[];
-    xkb* m_xkb;
+    virtual QString const default_layout_entry_key() const;
+    void clear_layouts();
+
+    KConfigGroup config;
+    static const char default_layout_entry_key_prefix[];
+    input::xkb* xkb;
 
 private:
-    keyboard_layout_spy* m_layout;
+    keyboard_layout_spy* layout;
 };
 
-class GlobalPolicy : public Policy
+class global_policy : public policy
 {
     Q_OBJECT
 public:
-    explicit GlobalPolicy(xkb* xkb, keyboard_layout_spy* layout, const KConfigGroup& config);
-    ~GlobalPolicy() override;
+    global_policy(input::xkb* xkb, keyboard_layout_spy* layout, KConfigGroup const& config);
 
     QString name() const override
     {
@@ -69,26 +69,25 @@ public:
     }
 
 protected:
-    void clearCache() override
+    void clear_cache() override
     {
     }
-    void layoutChanged(uint index) override
+    void handle_layout_change(uint index) override
     {
         Q_UNUSED(index)
     }
 
 private:
-    const QString defaultLayoutEntryKey() const override;
+    QString const default_layout_entry_key() const override;
 };
 
-class VirtualDesktopPolicy : public Policy
+class virtual_desktop_policy : public policy
 {
     Q_OBJECT
 public:
-    explicit VirtualDesktopPolicy(xkb* xkb,
-                                  keyboard_layout_spy* layout,
-                                  const KConfigGroup& config);
-    ~VirtualDesktopPolicy() override;
+    virtual_desktop_policy(input::xkb* xkb,
+                           keyboard_layout_spy* layout,
+                           KConfigGroup const& config);
 
     QString name() const override
     {
@@ -96,20 +95,20 @@ public:
     }
 
 protected:
-    void clearCache() override;
-    void layoutChanged(uint index) override;
+    void clear_cache() override;
+    void handle_layout_change(uint index) override;
 
 private:
-    void desktopChanged();
-    QHash<VirtualDesktop*, quint32> m_layouts;
+    void handle_desktop_change();
+
+    QHash<VirtualDesktop*, quint32> layouts;
 };
 
-class WindowPolicy : public Policy
+class window_policy : public policy
 {
     Q_OBJECT
 public:
-    explicit WindowPolicy(xkb* xkb, keyboard_layout_spy* layout);
-    ~WindowPolicy() override;
+    window_policy(input::xkb* xkb, keyboard_layout_spy* layout);
 
     QString name() const override
     {
@@ -117,19 +116,18 @@ public:
     }
 
 protected:
-    void clearCache() override;
-    void layoutChanged(uint index) override;
+    void clear_cache() override;
+    void handle_layout_change(uint index) override;
 
 private:
-    QHash<Toplevel*, quint32> m_layouts;
+    QHash<Toplevel*, quint32> layouts;
 };
 
-class ApplicationPolicy : public Policy
+class application_policy : public policy
 {
     Q_OBJECT
 public:
-    explicit ApplicationPolicy(xkb* xkb, keyboard_layout_spy* layout, const KConfigGroup& config);
-    ~ApplicationPolicy() override;
+    application_policy(input::xkb* xkb, keyboard_layout_spy* layout, KConfigGroup const& config);
 
     QString name() const override
     {
@@ -137,13 +135,14 @@ public:
     }
 
 protected:
-    void clearCache() override;
-    void layoutChanged(uint index) override;
+    void clear_cache() override;
+    void handle_layout_change(uint index) override;
 
 private:
-    void clientActivated(Toplevel* window);
-    QHash<Toplevel*, quint32> m_layouts;
-    QHash<QByteArray, quint32> m_layoutsRestored;
+    void handle_client_activated(Toplevel* window);
+
+    QHash<Toplevel*, quint32> layouts;
+    QHash<QByteArray, quint32> restored_layouts;
 };
 
 }

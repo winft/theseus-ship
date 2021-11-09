@@ -111,7 +111,7 @@ void keyboard_layout_spy::reconfigure()
         if (!m_policy || m_policy->name() != policyKey) {
             delete m_policy;
             m_policy
-                = KeyboardLayoutSwitching::Policy::create(m_xkb, this, m_configGroup, policyKey);
+                = keyboard_layout_switching::policy::create(m_xkb, this, m_configGroup, policyKey);
         }
     } else {
         m_xkb->reconfigure();
