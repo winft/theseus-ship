@@ -27,22 +27,22 @@ cursor::cursor(bool xInputSupport)
     , m_needsPoll(false)
 {
     m_resetTimeStampTimer->setSingleShot(true);
-    connect(m_resetTimeStampTimer, &QTimer::timeout, this, &cursor::reset_time_stamp);
+    QObject::connect(m_resetTimeStampTimer, &QTimer::timeout, this, &cursor::reset_time_stamp);
     // TODO: How often do we really need to poll?
     m_mousePollingTimer->setInterval(50);
-    connect(m_mousePollingTimer, &QTimer::timeout, this, &cursor::mouse_polled);
+    QObject::connect(m_mousePollingTimer, &QTimer::timeout, this, &cursor::mouse_polled);
 
-    connect(this, &input::cursor::theme_changed, this, [this] { m_cursors.clear(); });
+    QObject::connect(this, &input::cursor::theme_changed, this, [this] { m_cursors.clear(); });
 
     if (m_hasXInput) {
-        connect(qApp->eventDispatcher(),
-                &QAbstractEventDispatcher::aboutToBlock,
-                this,
-                &cursor::about_to_block);
+        QObject::connect(qApp->eventDispatcher(),
+                         &QAbstractEventDispatcher::aboutToBlock,
+                         this,
+                         &cursor::about_to_block);
     }
 
 #ifndef KCMRULES
-    connect(kwinApp(), &Application::startup_finished, this, [this] {
+    QObject::connect(kwinApp(), &Application::startup_finished, this, [this] {
         if (Xcb::Extensions::self()->isFixesAvailable()) {
             m_xfixesFilter = std::make_unique<xfixes_cursor_event_filter>(this);
         }

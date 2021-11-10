@@ -9,12 +9,12 @@
 #include "helpers.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
+#include "input/qt_event.h"
 #include "input/touch_redirect.h"
 #include "main.h"
 #include "wayland_server.h"
 #include "win/deco.h"
 #include "win/input.h"
-#include <input/qt_event.h>
 
 #include <Wrapland/Server/touch_pool.h>
 

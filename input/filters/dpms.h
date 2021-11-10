@@ -7,9 +7,9 @@
 */
 #pragma once
 
-#include "../event.h"
-#include "../event_filter.h"
-#include "../wayland/platform.h"
+#include "input/event.h"
+#include "input/event_filter.h"
+#include "input/wayland/platform.h"
 
 #include <QElapsedTimer>
 

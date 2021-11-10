@@ -443,12 +443,12 @@ void pointer_redirect::cleanupInternalWindow(QWindow* old, QWindow* now)
     }
 
     if (now) {
-        notifiers.internal_window
-            = connect(internalWindow(), &QWindow::visibleChanged, this, [this](bool visible) {
-                  if (!visible) {
-                      device_redirect_update(this);
-                  }
-              });
+        notifiers.internal_window = QObject::connect(
+            internalWindow(), &QWindow::visibleChanged, this, [this](bool visible) {
+                if (!visible) {
+                    device_redirect_update(this);
+                }
+            });
     }
 }
 
@@ -479,7 +479,7 @@ void pointer_redirect::cleanupDecoration(Decoration::DecoratedClientImpl* old,
     auto window = decoration()->client();
 
     notifiers.decoration_geometry
-        = connect(window, &Toplevel::frame_geometry_changed, this, [this, window] {
+        = QObject::connect(window, &Toplevel::frame_geometry_changed, this, [this, window] {
               if (window->control && (win::is_move(window) || win::is_resize(window))) {
                   // Don't update while doing an interactive move or resize.
                   return;
@@ -545,32 +545,33 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     seat->pointers().set_position(m_pos.toPoint());
     seat->pointers().set_focused_surface(focusNow->surface(), focusNow->input_transform());
 
-    notifiers.focus_geometry = connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
-        if (!focus()) {
-            // Might happen for Xwayland clients.
-            return;
-        }
+    notifiers.focus_geometry
+        = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
+              if (!focus()) {
+                  // Might happen for Xwayland clients.
+                  return;
+              }
 
-        // TODO: can we check on the client instead?
-        if (workspace()->moveResizeClient()) {
-            // don't update while moving
-            return;
-        }
-        auto seat = waylandServer()->seat();
-        if (focus()->surface() != seat->pointers().get_focus().surface) {
-            return;
-        }
-        seat->pointers().set_focused_surface_transformation(focus()->input_transform());
-    });
+              // TODO: can we check on the client instead?
+              if (workspace()->moveResizeClient()) {
+                  // don't update while moving
+                  return;
+              }
+              auto seat = waylandServer()->seat();
+              if (focus()->surface() != seat->pointers().get_focus().surface) {
+                  return;
+              }
+              seat->pointers().set_focused_surface_transformation(focus()->input_transform());
+          });
 
-    notifiers.constraints = connect(focusNow->surface(),
-                                    &Wrapland::Server::Surface::pointerConstraintsChanged,
-                                    this,
-                                    &pointer_redirect::updatePointerConstraints);
-    notifiers.constraints_activated = connect(workspace(),
-                                              &Workspace::clientActivated,
-                                              this,
-                                              &pointer_redirect::updatePointerConstraints);
+    notifiers.constraints = QObject::connect(focusNow->surface(),
+                                             &Wrapland::Server::Surface::pointerConstraintsChanged,
+                                             this,
+                                             &pointer_redirect::updatePointerConstraints);
+    notifiers.constraints_activated = QObject::connect(workspace(),
+                                                       &Workspace::clientActivated,
+                                                       this,
+                                                       &pointer_redirect::updatePointerConstraints);
     updatePointerConstraints();
 }
 
@@ -680,7 +681,7 @@ void pointer_redirect::updatePointerConstraints()
         if (canConstrain && r.contains(m_pos.toPoint())) {
             cf->setConfined(true);
             constraints.confined = true;
-            notifiers.confined_pointer_region = connect(
+            notifiers.confined_pointer_region = QObject::connect(
                 cf.data(), &Wrapland::Server::ConfinedPointerV1::regionChanged, this, [this] {
                     if (!focus()) {
                         return;
@@ -731,20 +732,19 @@ void pointer_redirect::updatePointerConstraints()
             // The client might cancel pointer locking from its side by unbinding the
             // LockedPointerV1. In this case the cached cursor position hint must be fetched before
             // the resource goes away
-            notifiers.locked_pointer_destroyed
-                = connect(lock.data(),
-                          &Wrapland::Server::LockedPointerV1::resourceDestroyed,
-                          this,
-                          [this, lock]() {
-                              const auto hint = lock->cursorPositionHint();
-                              if (hint.x() < 0 || hint.y() < 0 || !focus()) {
-                                  return;
-                              }
-                              // TODO(romangg): different client offset for Xwayland clients?
-                              auto globalHint
-                                  = win::frame_to_client_pos(focus(), focus()->pos()) + hint;
-                              processMotion(globalHint, waylandServer()->seat()->timestamp());
-                          });
+            notifiers.locked_pointer_destroyed = QObject::connect(
+                lock.data(),
+                &Wrapland::Server::LockedPointerV1::resourceDestroyed,
+                this,
+                [this, lock]() {
+                    const auto hint = lock->cursorPositionHint();
+                    if (hint.x() < 0 || hint.y() < 0 || !focus()) {
+                        return;
+                    }
+                    // TODO(romangg): different client offset for Xwayland clients?
+                    auto globalHint = win::frame_to_client_pos(focus(), focus()->pos()) + hint;
+                    processMotion(globalHint, waylandServer()->seat()->timestamp());
+                });
             // TODO: connect to region change - is it needed at all? If the pointer is locked it's
             // always in the region
         }
@@ -845,7 +845,7 @@ void pointer_redirect::update_position(const QPointF& pos)
         return;
     }
     m_pos = p;
-    emit kwinApp()->input->redirect->globalPointerChanged(m_pos);
+    Q_EMIT kwinApp()->input->redirect->globalPointerChanged(m_pos);
 }
 
 void pointer_redirect::update_button(button_event const& event)

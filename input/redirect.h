@@ -251,7 +251,7 @@ inline void
 redirect::registerShortcut(const QKeySequence& shortcut, QAction* action, T* receiver, Slot slot)
 {
     registerShortcut(shortcut, action);
-    connect(action, &QAction::triggered, receiver, slot);
+    QObject::connect(action, &QAction::triggered, receiver, slot);
 }
 
 }

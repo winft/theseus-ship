@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "../event_filter.h"
+#include "input/event_filter.h"
 
 class QTimer;
 

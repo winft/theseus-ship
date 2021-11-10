@@ -14,9 +14,12 @@
 #include <memory>
 #include <vector>
 
-namespace KWin::input
+namespace KWin
 {
+class Toplevel;
 
+namespace input
+{
 namespace dbus
 {
 class device_manager;
@@ -98,4 +101,5 @@ Q_SIGNALS:
     void touch_removed(KWin::input::touch*);
 };
 
+}
 }

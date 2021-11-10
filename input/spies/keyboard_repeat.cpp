@@ -21,11 +21,10 @@ namespace KWin::input
 {
 
 keyboard_repeat_spy::keyboard_repeat_spy(xkb* xkb)
-    : QObject()
-    , m_timer(new QTimer(this))
+    : m_timer(new QTimer(this))
     , m_xkb(xkb)
 {
-    connect(m_timer, &QTimer::timeout, this, &keyboard_repeat_spy::handleKeyRepeat);
+    QObject::connect(m_timer, &QTimer::timeout, this, &keyboard_repeat_spy::handleKeyRepeat);
 }
 
 keyboard_repeat_spy::~keyboard_repeat_spy() = default;

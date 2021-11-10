@@ -6,15 +6,15 @@
 */
 #include "move_resize.h"
 
-#include "../redirect.h"
+#include "input/event.h"
 #include "input/keyboard.h"
+#include "input/pointer_redirect.h"
+#include "input/qt_event.h"
+#include "input/redirect.h"
 #include "main.h"
 #include "win/input.h"
 #include "win/move.h"
 #include "workspace.h"
-#include <input/event.h>
-#include <input/pointer_redirect.h>
-#include <input/qt_event.h>
 
 namespace KWin::input
 {

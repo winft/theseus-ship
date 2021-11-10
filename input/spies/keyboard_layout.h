@@ -7,7 +7,7 @@
 */
 #pragma once
 
-#include "../event_spy.h"
+#include "input/event_spy.h"
 
 #include <QObject>
 #include <QVector>
@@ -38,9 +38,7 @@ class KWIN_EXPORT keyboard_layout_spy : public QObject, public input::event_spy
 {
     Q_OBJECT
 public:
-    explicit keyboard_layout_spy(xkb* xkb, const KSharedConfigPtr& config);
-
-    ~keyboard_layout_spy() override;
+    keyboard_layout_spy(xkb* xkb, KSharedConfigPtr const& config);
 
     void init();
 

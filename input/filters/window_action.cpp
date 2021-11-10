@@ -6,9 +6,9 @@
 */
 #include "window_action.h"
 
-#include "../pointer_redirect.h"
-#include "../touch_redirect.h"
 #include "helpers.h"
+#include "input/pointer_redirect.h"
+#include "input/touch_redirect.h"
 #include "main.h"
 #include "toplevel.h"
 #include "wayland_server.h"

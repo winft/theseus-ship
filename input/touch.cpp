@@ -40,7 +40,7 @@ touch::touch(input::platform* platform)
 {
     platform->touchs.push_back(this);
 
-    connect(screens(), &Screens::changed, this, [this] {
+    QObject::connect(screens(), &Screens::changed, this, [this] {
         if (!control) {
             return;
         }

@@ -103,29 +103,29 @@ void keyboard_redirect::init()
     }
 
     auto keyRepeatSpy = new keyboard_repeat_spy(m_xkb.get());
-    connect(keyRepeatSpy,
-            &keyboard_repeat_spy::key_repeated,
-            this,
-            &keyboard_redirect::process_key_repeat);
+    QObject::connect(keyRepeatSpy,
+                     &keyboard_repeat_spy::key_repeated,
+                     this,
+                     &keyboard_redirect::process_key_repeat);
     redirect->installInputEventSpy(keyRepeatSpy);
 
-    connect(workspace(), &QObject::destroyed, this, [this] { m_inited = false; });
-    connect(waylandServer(), &QObject::destroyed, this, [this] { m_inited = false; });
-    connect(workspace(), &Workspace::clientActivated, this, [this] {
-        disconnect(m_activeClientSurfaceChangedConnection);
+    QObject::connect(workspace(), &QObject::destroyed, this, [this] { m_inited = false; });
+    QObject::connect(waylandServer(), &QObject::destroyed, this, [this] { m_inited = false; });
+    QObject::connect(workspace(), &Workspace::clientActivated, this, [this] {
+        QObject::disconnect(m_activeClientSurfaceChangedConnection);
         if (auto c = workspace()->activeClient()) {
             m_activeClientSurfaceChangedConnection
-                = connect(c, &Toplevel::surfaceChanged, this, &keyboard_redirect::update);
+                = QObject::connect(c, &Toplevel::surfaceChanged, this, &keyboard_redirect::update);
         } else {
             m_activeClientSurfaceChangedConnection = QMetaObject::Connection();
         }
         update();
     });
     if (waylandServer()->hasScreenLockerIntegration()) {
-        connect(ScreenLocker::KSldApp::self(),
-                &ScreenLocker::KSldApp::lockStateChanged,
-                this,
-                &keyboard_redirect::update);
+        QObject::connect(ScreenLocker::KSldApp::self(),
+                         &ScreenLocker::KSldApp::lockStateChanged,
+                         this,
+                         &keyboard_redirect::update);
     }
 }
 

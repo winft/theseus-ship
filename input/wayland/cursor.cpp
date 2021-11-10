@@ -89,12 +89,12 @@ void cursor::slot_pointer_button_changed()
 
 void cursor::do_start_image_tracking()
 {
-    connect(cursor_image.get(), &cursor_image::changed, this, &cursor::image_changed);
+    QObject::connect(cursor_image.get(), &cursor_image::changed, this, &cursor::image_changed);
 }
 
 void cursor::do_stop_image_tracking()
 {
-    disconnect(cursor_image.get(), &cursor_image::changed, this, &cursor::image_changed);
+    QObject::disconnect(cursor_image.get(), &cursor_image::changed, this, &cursor::image_changed);
 }
 
 }

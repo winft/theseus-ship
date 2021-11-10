@@ -33,7 +33,7 @@ class keyboard_layout : public QObject
 
 public:
     explicit keyboard_layout(xkb* xkb,
-                             const KConfigGroup& configGroup,
+                             KConfigGroup const& configGroup,
                              input::keyboard_layout_spy* parent);
     ~keyboard_layout() override;
 
@@ -56,7 +56,7 @@ Q_SIGNALS:
 
 private:
     xkb* m_xkb;
-    const KConfigGroup& m_configGroup;
+    KConfigGroup const& m_configGroup;
     input::keyboard_layout_spy* m_keyboardLayout;
 };
 

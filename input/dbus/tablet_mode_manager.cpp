@@ -30,22 +30,22 @@ public:
     {
         auto& plat
             = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get())->platform;
-        connect(plat,
-                &input::wayland::platform::pointer_added,
-                this,
-                &tablet_mode_touchpad_removed_spy::check);
-        connect(plat,
-                &input::wayland::platform::pointer_removed,
-                this,
-                &tablet_mode_touchpad_removed_spy::check);
-        connect(plat,
-                &input::wayland::platform::touch_added,
-                this,
-                &tablet_mode_touchpad_removed_spy::check);
-        connect(plat,
-                &input::wayland::platform::touch_removed,
-                this,
-                &tablet_mode_touchpad_removed_spy::check);
+        QObject::connect(plat,
+                         &input::wayland::platform::pointer_added,
+                         this,
+                         &tablet_mode_touchpad_removed_spy::check);
+        QObject::connect(plat,
+                         &input::wayland::platform::pointer_removed,
+                         this,
+                         &tablet_mode_touchpad_removed_spy::check);
+        QObject::connect(plat,
+                         &input::wayland::platform::touch_added,
+                         this,
+                         &tablet_mode_touchpad_removed_spy::check);
+        QObject::connect(plat,
+                         &input::wayland::platform::touch_removed,
+                         this,
+                         &tablet_mode_touchpad_removed_spy::check);
         check();
     }
 
@@ -126,14 +126,14 @@ void tablet_mode_manager::setIsTablet(bool tablet)
     }
 
     m_isTabletMode = tablet;
-    emit tabletModeChanged(tablet);
+    Q_EMIT tabletModeChanged(tablet);
 }
 
 void tablet_mode_manager::setTabletModeAvailable(bool detecting)
 {
     if (m_detecting != detecting) {
         m_detecting = detecting;
-        emit tabletModeAvailableChanged(detecting);
+        Q_EMIT tabletModeAvailableChanged(detecting);
     }
 }
 

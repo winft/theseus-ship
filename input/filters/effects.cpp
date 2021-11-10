@@ -9,8 +9,8 @@
 #include "helpers.h"
 
 #include "../../effects.h"
+#include "input/qt_event.h"
 #include "wayland_server.h"
-#include <input/qt_event.h>
 
 #include <Wrapland/Server/seat.h>
 

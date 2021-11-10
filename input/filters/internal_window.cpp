@@ -6,17 +6,18 @@
 */
 #include "internal_window.h"
 
-#include "../keyboard_redirect.h"
-#include "../pointer_redirect.h"
-#include "../touch_redirect.h"
 #include "helpers.h"
+
+#include "input/keyboard_redirect.h"
+#include "input/pointer_redirect.h"
+#include "input/qt_event.h"
+#include "input/touch_redirect.h"
 #include "main.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "win/deco.h"
 #include "win/internal_window.h"
 #include "workspace.h"
-#include <input/qt_event.h>
 
 #include <QWindow>
 #include <Wrapland/Server/touch_pool.h>

@@ -8,10 +8,10 @@
 
 #include "helpers.h"
 
-#include "../keyboard_redirect.h"
-#include "../pointer_redirect.h"
 #include "input/event.h"
 #include "input/keyboard.h"
+#include "input/keyboard_redirect.h"
+#include "input/pointer_redirect.h"
 #include "input/qt_event.h"
 #include "main.h"
 #include "wayland_server.h"

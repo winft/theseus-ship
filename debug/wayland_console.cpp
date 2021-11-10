@@ -9,13 +9,13 @@
 #include "input_filter.h"
 #include "model_helpers.h"
 #include "surface_tree_model.h"
+
+#include "input/keyboard_redirect.h"
+#include "main.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
 #include "ui_debug_console.h"
-
-#include "input/keyboard_redirect.h"
-#include "main.h"
 
 #include <Wrapland/Server/surface.h>
 

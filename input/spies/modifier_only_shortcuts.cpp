@@ -37,10 +37,10 @@ modifier_only_shortcuts_spy::modifier_only_shortcuts_spy()
     : QObject()
     , event_spy()
 {
-    connect(ScreenLockerWatcher::self(),
-            &ScreenLockerWatcher::locked,
-            this,
-            &modifier_only_shortcuts_spy::reset);
+    QObject::connect(ScreenLockerWatcher::self(),
+                     &ScreenLockerWatcher::locked,
+                     this,
+                     &modifier_only_shortcuts_spy::reset);
 }
 
 modifier_only_shortcuts_spy::~modifier_only_shortcuts_spy() = default;

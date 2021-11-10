@@ -8,7 +8,8 @@
 #include "keyboard.h"
 #include "keyboard_redirect.h"
 #include "pointer_redirect.h"
-#include <main.h>
+
+#include "main.h"
 
 #include <QHash>
 #include <cmath>

@@ -6,9 +6,9 @@
 */
 #include "keyboard_redirect.h"
 
+#include "event.h"
 #include "event_filter.h"
-#include "input/event.h"
-#include "input/event_spy.h"
+#include "event_spy.h"
 
 #include <KGlobalAccel>
 #include <QKeyEvent>

@@ -25,14 +25,11 @@
 namespace KWin::input
 {
 
-keyboard_layout_spy::keyboard_layout_spy(xkb* xkb, const KSharedConfigPtr& config)
-    : QObject()
-    , m_xkb(xkb)
+keyboard_layout_spy::keyboard_layout_spy(xkb* xkb, KSharedConfigPtr const& config)
+    : m_xkb(xkb)
     , m_configGroup(config->group("Layout"))
 {
 }
-
-keyboard_layout_spy::~keyboard_layout_spy() = default;
 
 void keyboard_layout_spy::init()
 {
@@ -44,7 +41,7 @@ void keyboard_layout_spy::init()
     KGlobalAccel::self()->setDefaultShortcut(switchKeyboardAction, QList<QKeySequence>({sequence}));
     KGlobalAccel::self()->setShortcut(switchKeyboardAction, QList<QKeySequence>({sequence}));
     kwinApp()->platform->setupActionForGlobalAccel(switchKeyboardAction);
-    connect(
+    QObject::connect(
         switchKeyboardAction, &QAction::triggered, this, &keyboard_layout_spy::switchToNextLayout);
 
     QDBusConnection::sessionBus().connect(QString(),
@@ -66,19 +63,22 @@ void keyboard_layout_spy::initDBusInterface()
         }
         return;
     }
+
     if (m_dbusInterface) {
         return;
     }
+
     m_dbusInterface = new dbus::keyboard_layout(m_xkb, m_configGroup, this);
-    connect(this,
-            &keyboard_layout_spy::layoutChanged,
-            m_dbusInterface,
-            &dbus::keyboard_layout::layoutChanged);
+
+    QObject::connect(this,
+                     &keyboard_layout_spy::layoutChanged,
+                     m_dbusInterface,
+                     &dbus::keyboard_layout::layoutChanged);
     // TODO: the signal might be emitted even if the list didn't change
-    connect(this,
-            &keyboard_layout_spy::layoutsReconfigured,
-            m_dbusInterface,
-            &dbus::keyboard_layout::layoutListChanged);
+    QObject::connect(this,
+                     &keyboard_layout_spy::layoutsReconfigured,
+                     m_dbusInterface,
+                     &dbus::keyboard_layout::layoutListChanged);
 }
 
 void keyboard_layout_spy::switchToNextLayout()
@@ -125,7 +125,7 @@ void keyboard_layout_spy::resetLayout()
     loadShortcuts();
 
     initDBusInterface();
-    emit layoutsReconfigured();
+    Q_EMIT layoutsReconfigured();
 }
 
 void keyboard_layout_spy::loadShortcuts()
@@ -145,7 +145,7 @@ void keyboard_layout_spy::loadShortcuts()
         QAction* a = new QAction(this);
         a->setObjectName(action);
         a->setProperty("componentName", componentName);
-        connect(
+        QObject::connect(
             a, &QAction::triggered, this, std::bind(&keyboard_layout_spy::switchToLayout, this, i));
         KGlobalAccel::self()->setShortcut(a, shortcuts, KGlobalAccel::Autoloading);
         m_layoutShortcuts << a;
@@ -162,7 +162,7 @@ void keyboard_layout_spy::checkLayoutChange(uint previousLayout)
     if (m_layout != currentLayout || previousLayout != currentLayout) {
         m_layout = currentLayout;
         notifyLayoutChange();
-        emit layoutChanged(currentLayout);
+        Q_EMIT layoutChanged(currentLayout);
     }
 }
 

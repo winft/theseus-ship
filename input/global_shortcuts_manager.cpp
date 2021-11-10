@@ -68,7 +68,8 @@ bool global_shortcuts_manager::addIfNotExists(global_shortcut sc)
     if (std::holds_alternative<FourFingerSwipeShortcut>(sc.shortcut())) {
         m_gestureRecognizer->registerGesture(sc.swipeGesture());
     }
-    connect(sc.action(), &QAction::destroyed, this, &global_shortcuts_manager::objectDeleted);
+    QObject::connect(
+        sc.action(), &QAction::destroyed, this, &global_shortcuts_manager::objectDeleted);
     m_shortcuts.push_back(std::move(sc));
     return true;
 }

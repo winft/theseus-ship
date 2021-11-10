@@ -32,10 +32,10 @@ platform::platform()
         if (!xinput->hasXinput()) {
             xinput.reset();
         } else {
-            connect(kwinApp(),
-                    &Application::startup_finished,
-                    xinput.get(),
-                    &xinput_integration::startListening);
+            QObject::connect(kwinApp(),
+                             &Application::startup_finished,
+                             xinput.get(),
+                             &xinput_integration::startListening);
         }
     }
 #endif

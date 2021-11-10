@@ -30,7 +30,7 @@ static const QString s_keyboardService = QStringLiteral("org.kde.keyboard");
 static const QString s_keyboardObject = QStringLiteral("/Layouts");
 
 keyboard_layout::keyboard_layout(xkb* xkb,
-                                 const KConfigGroup& configGroup,
+                                 KConfigGroup const& configGroup,
                                  input::keyboard_layout_spy* parent)
     : QObject(parent)
     , m_xkb(xkb)
@@ -81,14 +81,15 @@ uint keyboard_layout::getLayout() const
 QVector<keyboard_layout::LayoutNames> keyboard_layout::getLayoutsList() const
 {
     // TODO: - should be handled by layout applet itself, it has nothing to do with KWin
-    const QStringList displayNames = m_configGroup.readEntry("DisplayNames", QStringList());
+    auto const display_names = m_configGroup.readEntry("DisplayNames", QStringList());
 
     QVector<LayoutNames> ret;
-    const int layoutsSize = m_xkb->numberOfLayouts();
-    const int displayNamesSize = displayNames.size();
-    for (int i = 0; i < layoutsSize; ++i) {
+    auto const layouts_count = m_xkb->numberOfLayouts();
+    size_t const display_names_count = display_names.size();
+
+    for (size_t i = 0; i < layouts_count; ++i) {
         ret.append({QString::fromStdString(m_xkb->layoutShortName(i)),
-                    i < displayNamesSize ? displayNames.at(i) : QString(),
+                    i < display_names_count ? display_names.at(i) : QString(),
                     translated_keyboard_layout(m_xkb->layoutName(i))});
     }
     return ret;

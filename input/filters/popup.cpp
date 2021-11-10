@@ -5,9 +5,9 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "popup.h"
+
 #include "input/event.h"
 #include "wayland_server.h"
-
 #include "win/deco.h"
 #include "win/geo.h"
 #include "win/transient.h"

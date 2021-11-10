@@ -6,15 +6,15 @@
 */
 #include "helpers.h"
 
+#include "input/event.h"
+#include "input/keyboard_redirect.h"
+#include "input/pointer_redirect.h"
+#include "input/qt_event.h"
 #include "main.h"
 #include "options.h"
 #include "wayland_server.h"
 #include "win/input.h"
 #include "workspace.h"
-#include <input/event.h>
-#include <input/keyboard_redirect.h>
-#include <input/pointer_redirect.h>
-#include <input/qt_event.h>
 
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
