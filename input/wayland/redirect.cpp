@@ -157,10 +157,10 @@ void redirect::setup_workspace()
             }
         });
 
-    m_pointer = std::make_unique<wayland::pointer_redirect>();
+    m_pointer = std::make_unique<wayland::pointer_redirect>(this);
     m_keyboard = std::make_unique<wayland::keyboard_redirect>(this);
-    m_touch = std::make_unique<wayland::touch_redirect>();
-    m_tablet = std::make_unique<wayland::tablet_redirect>();
+    m_touch = std::make_unique<wayland::touch_redirect>(this);
+    m_tablet = std::make_unique<wayland::tablet_redirect>(this);
 
     setup_devices();
 

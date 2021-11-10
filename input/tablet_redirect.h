@@ -40,7 +40,8 @@ class KWIN_EXPORT tablet_redirect : public device_redirect
 {
     Q_OBJECT
 public:
-    tablet_redirect();
+    explicit tablet_redirect(input::redirect* redirect);
+
     virtual void tabletToolEvent(redirect::TabletEventType /*type*/,
                                  QPointF const& /*pos*/,
                                  qreal /*pressure*/,

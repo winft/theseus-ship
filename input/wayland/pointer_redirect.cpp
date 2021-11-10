@@ -55,6 +55,11 @@ static QPointF confineToBoundingBox(QPointF const& pos, QRectF const& boundingBo
                    qBound(boundingBox.top(), pos.y(), boundingBox.bottom() - 1.0));
 }
 
+pointer_redirect::pointer_redirect(input::redirect* redirect)
+    : input::pointer_redirect(redirect)
+{
+}
+
 void pointer_redirect::init()
 {
     assert(!inited());

@@ -94,12 +94,13 @@ public:
     device_redirect_focus m_focus;
 
     bool m_inited{false};
+    input::redirect* redirect;
 
 Q_SIGNALS:
     void decorationChanged();
 
 protected:
-    device_redirect();
+    explicit device_redirect(input::redirect* redirect);
 };
 
 }

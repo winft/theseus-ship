@@ -36,6 +36,7 @@ class KWIN_EXPORT pointer_redirect : public input::pointer_redirect
 {
     Q_OBJECT
 public:
+    explicit pointer_redirect(input::redirect* redirect);
     void init();
 
     void updateAfterScreenChange() override;

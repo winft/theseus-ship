@@ -19,10 +19,10 @@ namespace KWin::input::x11
 
 redirect::redirect()
 {
-    m_pointer = std::make_unique<input::pointer_redirect>();
+    m_pointer = std::make_unique<input::pointer_redirect>(this);
     m_keyboard = std::make_unique<input::keyboard_redirect>(this);
-    m_touch = std::make_unique<input::touch_redirect>();
-    m_tablet = std::make_unique<input::tablet_redirect>();
+    m_touch = std::make_unique<input::touch_redirect>(this);
+    m_tablet = std::make_unique<input::tablet_redirect>(this);
 }
 
 void redirect::install_shortcuts()

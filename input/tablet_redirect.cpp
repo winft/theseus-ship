@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::input
 {
 
-tablet_redirect::tablet_redirect() = default;
+tablet_redirect::tablet_redirect(input::redirect* redirect)
+    : device_redirect(redirect)
+{
+}
 
 }

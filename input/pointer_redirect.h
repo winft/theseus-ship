@@ -26,6 +26,8 @@ class KWIN_EXPORT pointer_redirect : public device_redirect
 public:
     static bool s_cursorUpdateBlocking;
 
+    explicit pointer_redirect(input::redirect* redirect);
+
     virtual void updateAfterScreenChange()
     {
     }
@@ -81,9 +83,9 @@ public:
                                [[maybe_unused]] KWin::input::pointer* device = nullptr)
     {
     }
-    virtual void process_button(button_event const& /*event*/)
-    {
-    }
+
+    virtual void process_button(button_event const& event);
+
     virtual void process_axis(axis_event const& /*event*/)
     {
     }

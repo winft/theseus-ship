@@ -21,6 +21,11 @@
 namespace KWin::input::wayland
 {
 
+tablet_redirect::tablet_redirect(input::redirect* redirect)
+    : input::tablet_redirect(redirect)
+{
+}
+
 void tablet_redirect::init()
 {
     assert(!inited());

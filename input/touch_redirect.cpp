@@ -23,6 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::input
 {
 
-touch_redirect::touch_redirect() = default;
+touch_redirect::touch_redirect(input::redirect* redirect)
+    : device_redirect(redirect)
+{
+}
 
 }

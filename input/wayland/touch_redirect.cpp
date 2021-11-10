@@ -29,6 +29,11 @@
 namespace KWin::input::wayland
 {
 
+touch_redirect::touch_redirect(input::redirect* redirect)
+    : input::touch_redirect(redirect)
+{
+}
+
 void touch_redirect::init()
 {
     assert(!inited());
