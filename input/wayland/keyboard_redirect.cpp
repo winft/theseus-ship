@@ -87,9 +87,6 @@ keyboard_redirect::~keyboard_redirect() = default;
 
 void keyboard_redirect::init()
 {
-    assert(!m_inited);
-    m_inited = true;
-
     auto& xkb = kwinApp()->input->xkb;
     auto const config = kwinApp()->kxkbConfig();
     xkb.setNumLockConfig(kwinApp()->inputConfig());
@@ -113,8 +110,6 @@ void keyboard_redirect::init()
                      &keyboard_redirect::process_key_repeat);
     redirect->installInputEventSpy(keyRepeatSpy);
 
-    QObject::connect(workspace(), &QObject::destroyed, this, [this] { m_inited = false; });
-    QObject::connect(waylandServer(), &QObject::destroyed, this, [this] { m_inited = false; });
     QObject::connect(workspace(), &Workspace::clientActivated, this, [this] {
         QObject::disconnect(m_activeClientSurfaceChangedConnection);
         if (auto c = workspace()->activeClient()) {
@@ -135,9 +130,6 @@ void keyboard_redirect::init()
 
 void keyboard_redirect::update()
 {
-    if (!m_inited) {
-        return;
-    }
     auto seat = waylandServer()->seat();
 
     // TODO: this needs better integration
@@ -187,10 +179,6 @@ void keyboard_redirect::process_key(key_event const& event)
 
     input::keyboard_redirect::process_key(event);
 
-    if (!m_inited) {
-        return;
-    }
-
     auto const globalShortcutsModifiers
         = xkb->modifiers_relevant_for_global_shortcuts(event.keycode);
 
@@ -206,20 +194,11 @@ void keyboard_redirect::process_key(key_event const& event)
 void keyboard_redirect::process_key_repeat(const key_event& event)
 {
     input::keyboard_redirect::process_key_repeat(event);
-
-    if (!m_inited) {
-        return;
-    }
-
     redirect->processFilters(std::bind(&event_filter::key_repeat, std::placeholders::_1, event));
 }
 
 void keyboard_redirect::process_modifiers(modifiers_event const& event)
 {
-    if (!m_inited) {
-        return;
-    }
-
     auto const& xkb = event.base.dev->xkb.get();
     auto const previousLayout = xkb->layout;
 
@@ -232,9 +211,6 @@ void keyboard_redirect::process_modifiers(modifiers_event const& event)
 
 void keyboard_redirect::processKeymapChange(int fd, uint32_t size)
 {
-    if (!m_inited) {
-        return;
-    }
     // TODO: should we pass the keymap to our Clients? Or only to the currently active one and
     // update
     // TODO(romangg): hand over the keyboard as argument instead.

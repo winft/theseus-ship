@@ -62,8 +62,6 @@ pointer_redirect::pointer_redirect(input::redirect* redirect)
 
 void pointer_redirect::init()
 {
-    assert(!inited());
-    setInited(true);
     device_redirect_init(this);
 
     QObject::connect(
@@ -76,14 +74,14 @@ void pointer_redirect::init()
                 device_redirect_update(this);
             });
     }
-    QObject::connect(workspace(), &QObject::destroyed, this, [this] { setInited(false); });
-    QObject::connect(waylandServer(), &QObject::destroyed, this, [this] { setInited(false); });
+
     QObject::connect(waylandServer()->seat(), &Wrapland::Server::Seat::dragEnded, this, [this] {
         // need to force a focused pointer change
         waylandServer()->seat()->pointers().set_focused_surface(nullptr);
         device_redirect_set_focus(this, nullptr);
         device_redirect_update(this);
     });
+
     // connect the move resize of all window
     auto setupMoveResizeConnection = [this](Toplevel* c) {
         if (!c->control) {
@@ -219,10 +217,6 @@ QVector<PositionUpdateBlocker::ScheduledPosition> PositionUpdateBlocker::s_sched
 
 void pointer_redirect::process_motion(motion_event const& event)
 {
-    if (!inited()) {
-        return;
-    }
-
     if (PositionUpdateBlocker::isPositionBlocked()) {
         PositionUpdateBlocker::schedule(event.delta, event.unaccel_delta, event.base.time_msec);
         return;
@@ -244,10 +238,6 @@ void pointer_redirect::process_motion(motion_event const& event)
 
 void pointer_redirect::process_motion_absolute(motion_absolute_event const& event)
 {
-    if (!inited()) {
-        return;
-    }
-
     if (PositionUpdateBlocker::isPositionBlocked()) {
         PositionUpdateBlocker::schedule(event.pos, event.base.time_msec);
         return;
@@ -282,10 +272,6 @@ void pointer_redirect::process_button(button_event const& event)
     kwinApp()->input->redirect->processSpies(
         std::bind(&event_spy::button, std::placeholders::_1, event));
 
-    if (!inited()) {
-        return;
-    }
-
     kwinApp()->input->redirect->processFilters(
         std::bind(&input::event_filter::button, std::placeholders::_1, event));
 
@@ -303,10 +289,6 @@ void pointer_redirect::process_axis(axis_event const& event)
 
     kwinApp()->input->redirect->processSpies(
         std::bind(&event_spy::axis, std::placeholders::_1, event));
-
-    if (!inited()) {
-        return;
-    }
     kwinApp()->input->redirect->processFilters(
         std::bind(&event_filter::axis, std::placeholders::_1, event));
 
@@ -315,10 +297,6 @@ void pointer_redirect::process_axis(axis_event const& event)
 
 void pointer_redirect::process_swipe_begin(swipe_begin_event const& event)
 {
-    if (!inited()) {
-        return;
-    }
-
     kwinApp()->input->redirect->processSpies(
         std::bind(&event_spy::swipe_begin, std::placeholders::_1, event));
     kwinApp()->input->redirect->processFilters(
@@ -327,9 +305,6 @@ void pointer_redirect::process_swipe_begin(swipe_begin_event const& event)
 
 void pointer_redirect::process_swipe_update(swipe_update_event const& event)
 {
-    if (!inited()) {
-        return;
-    }
     device_redirect_update(this);
 
     kwinApp()->input->redirect->processSpies(
@@ -340,9 +315,6 @@ void pointer_redirect::process_swipe_update(swipe_update_event const& event)
 
 void pointer_redirect::process_swipe_end(swipe_end_event const& event)
 {
-    if (!inited()) {
-        return;
-    }
     device_redirect_update(this);
 
     kwinApp()->input->redirect->processSpies(
@@ -353,9 +325,6 @@ void pointer_redirect::process_swipe_end(swipe_end_event const& event)
 
 void pointer_redirect::process_pinch_begin(pinch_begin_event const& event)
 {
-    if (!inited()) {
-        return;
-    }
     device_redirect_update(this);
 
     kwinApp()->input->redirect->processSpies(
@@ -366,9 +335,6 @@ void pointer_redirect::process_pinch_begin(pinch_begin_event const& event)
 
 void pointer_redirect::process_pinch_update(pinch_update_event const& event)
 {
-    if (!inited()) {
-        return;
-    }
     device_redirect_update(this);
 
     kwinApp()->input->redirect->processSpies(
@@ -379,9 +345,6 @@ void pointer_redirect::process_pinch_update(pinch_update_event const& event)
 
 void pointer_redirect::process_pinch_end(pinch_end_event const& event)
 {
-    if (!inited()) {
-        return;
-    }
     device_redirect_update(this);
 
     kwinApp()->input->redirect->processSpies(
@@ -392,9 +355,6 @@ void pointer_redirect::process_pinch_end(pinch_end_event const& event)
 
 void pointer_redirect::process_frame()
 {
-    if (!inited()) {
-        return;
-    }
     waylandServer()->seat()->pointers().frame();
 }
 
@@ -410,9 +370,6 @@ bool pointer_redirect::areButtonsPressed() const
 
 bool pointer_redirect::focusUpdatesBlocked()
 {
-    if (!inited()) {
-        return true;
-    }
     if (waylandServer()->seat()->drags().is_pointer_drag()) {
         // ignore during drag and drop
         return true;
@@ -884,17 +841,11 @@ Qt::MouseButtons pointer_redirect::buttons() const
 
 bool pointer_redirect::supportsWarping() const
 {
-    if (!inited()) {
-        return false;
-    }
     return true;
 }
 
 void pointer_redirect::updateAfterScreenChange()
 {
-    if (!inited()) {
-        return;
-    }
     if (screenContainsPos(m_pos)) {
         // pointer still on a screen
         return;
@@ -912,9 +863,6 @@ QPointF pointer_redirect::position() const
 
 void pointer_redirect::setEffectsOverrideCursor(Qt::CursorShape shape)
 {
-    if (!inited()) {
-        return;
-    }
     // current pointer focus window should get a leave event
     device_redirect_update(this);
     auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
@@ -923,9 +871,6 @@ void pointer_redirect::setEffectsOverrideCursor(Qt::CursorShape shape)
 
 void pointer_redirect::removeEffectsOverrideCursor()
 {
-    if (!inited()) {
-        return;
-    }
     // cursor position might have changed while there was an effect in place
     device_redirect_update(this);
     auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
@@ -934,9 +879,6 @@ void pointer_redirect::removeEffectsOverrideCursor()
 
 void pointer_redirect::setWindowSelectionCursor(QByteArray const& shape)
 {
-    if (!inited()) {
-        return;
-    }
     // send leave to current pointer focus window
     update_to_reset();
     auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
@@ -945,9 +887,6 @@ void pointer_redirect::setWindowSelectionCursor(QByteArray const& shape)
 
 void pointer_redirect::removeWindowSelectionCursor()
 {
-    if (!inited()) {
-        return;
-    }
     device_redirect_update(this);
     auto wayland_cursor = static_cast<wayland::cursor*>(input::get_cursor());
     wayland_cursor->cursor_image->removeWindowSelectionCursor();

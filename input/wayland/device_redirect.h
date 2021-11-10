@@ -178,10 +178,6 @@ static QWindow* device_redirect_find_internal_window(QPoint const& pos)
 template<typename Dev>
 void device_redirect_update(Dev* dev)
 {
-    if (!dev->m_inited) {
-        return;
-    }
-
     Toplevel* toplevel = nullptr;
     QWindow* internal_window = nullptr;
 

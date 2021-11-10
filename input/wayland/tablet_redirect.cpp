@@ -28,12 +28,7 @@ tablet_redirect::tablet_redirect(input::redirect* redirect)
 
 void tablet_redirect::init()
 {
-    assert(!inited());
-    setInited(true);
     device_redirect_init(this);
-
-    QObject::connect(workspace(), &QObject::destroyed, this, [this] { setInited(false); });
-    QObject::connect(waylandServer(), &QObject::destroyed, this, [this] { setInited(false); });
 }
 
 QPointF tablet_redirect::position() const
@@ -58,9 +53,6 @@ void tablet_redirect::tabletToolEvent(redirect::TabletEventType type,
                                       quint64 /*toolId*/,
                                       void* /*device*/)
 {
-    if (!inited()) {
-        return;
-    }
     last_position = pos;
 
     QEvent::Type t;

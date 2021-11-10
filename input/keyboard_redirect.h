@@ -34,7 +34,6 @@ public:
 
 protected:
     input::redirect* redirect;
-    bool m_inited = false;
 };
 
 }
