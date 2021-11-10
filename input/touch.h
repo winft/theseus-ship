@@ -39,7 +39,7 @@ public:
     touch& operator=(touch const&) = delete;
     touch(touch&& other) noexcept = default;
     touch& operator=(touch&& other) noexcept = default;
-    ~touch();
+    ~touch() override;
 
     // TODO(romangg): Make this a function template.
     base::wayland::output* get_output() const;

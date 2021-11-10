@@ -24,11 +24,7 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
     auto pointer = event_receiver_struct->receiver;
 
     pointer->backend = nullptr;
-
-    if (pointer->platform) {
-        remove_all(pointer->platform->pointers, pointer);
-        Q_EMIT pointer->platform->pointer_removed(pointer);
-    }
+    delete pointer;
 }
 
 static void handle_motion(struct wl_listener* listener, [[maybe_unused]] void* data)

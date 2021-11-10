@@ -27,7 +27,7 @@ public:
     keyboard& operator=(keyboard const&) = delete;
     keyboard(keyboard&& other) noexcept = default;
     keyboard& operator=(keyboard&& other) noexcept = default;
-    ~keyboard() override = default;
+    ~keyboard() override;
 
 Q_SIGNALS:
     void key_changed(key_event);

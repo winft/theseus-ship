@@ -29,7 +29,7 @@ public:
     switch_device& operator=(switch_device const&) = delete;
     switch_device(switch_device&& other) noexcept = default;
     switch_device& operator=(switch_device&& other) noexcept = default;
-    ~switch_device() = default;
+    ~switch_device() override = default;
 
 private:
     er destroyed;

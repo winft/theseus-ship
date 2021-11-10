@@ -38,6 +38,8 @@ Qt::ScreenOrientation to_qt_orientation(base::wayland::output_transform transfor
 touch::touch(input::platform* platform)
     : platform{platform}
 {
+    platform->touchs.push_back(this);
+
     connect(screens(), &Screens::changed, this, [this] {
         if (!control) {
             return;
@@ -51,6 +53,10 @@ touch::touch(input::platform* platform)
 
 touch::~touch()
 {
+    if (platform) {
+        remove_all(platform->touchs, this);
+        Q_EMIT platform->touch_removed(this);
+    }
 }
 
 base::wayland::output* touch::get_output() const

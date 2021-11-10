@@ -25,11 +25,7 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
     auto keyboard = event_receiver_struct->receiver;
 
     keyboard->backend = nullptr;
-
-    if (keyboard->platform) {
-        remove_all(keyboard->platform->keyboards, keyboard);
-        Q_EMIT keyboard->platform->keyboard_removed(keyboard);
-    }
+    delete keyboard;
 }
 
 static void handle_key(struct wl_listener* listener, [[maybe_unused]] void* data)

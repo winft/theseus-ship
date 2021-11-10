@@ -24,11 +24,7 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
     auto touch = event_receiver_struct->receiver;
 
     touch->backend = nullptr;
-
-    if (touch->platform) {
-        remove_all(touch->platform->touchs, touch);
-        Q_EMIT touch->platform->touch_removed(touch);
-    }
+    delete touch;
 }
 
 static void handle_down(struct wl_listener* listener, [[maybe_unused]] void* data)

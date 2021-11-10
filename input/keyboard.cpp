@@ -5,12 +5,24 @@
 */
 #include "keyboard.h"
 
+#include "platform.h"
+#include "utils.h"
+
 namespace KWin::input
 {
 
 keyboard::keyboard(input::platform* platform)
     : platform{platform}
 {
+    platform->keyboards.push_back(this);
+}
+
+keyboard::~keyboard()
+{
+    if (platform) {
+        remove_all(platform->keyboards, this);
+        Q_EMIT platform->keyboard_removed(this);
+    }
 }
 
 }

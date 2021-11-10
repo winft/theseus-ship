@@ -20,11 +20,7 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
     auto switch_device = event_receiver_struct->receiver;
 
     switch_device->backend = nullptr;
-
-    if (switch_device->platform) {
-        remove_all(switch_device->platform->switches, switch_device);
-        Q_EMIT switch_device->platform->switch_removed(switch_device);
-    }
+    delete switch_device;
 }
 
 static void handle_toggle(struct wl_listener* listener, [[maybe_unused]] void* data)
