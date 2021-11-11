@@ -7,7 +7,7 @@
 */
 #pragma once
 
-#include "input/event_spy.h"
+#include <kwin_export.h>
 
 #include <QObject>
 #include <QVector>
@@ -39,7 +39,7 @@ class keyboard;
 class manager;
 }
 
-class KWIN_EXPORT keyboard_layout_spy : public QObject, public input::event_spy
+class KWIN_EXPORT keyboard_layout_spy : public QObject
 {
     Q_OBJECT
 public:

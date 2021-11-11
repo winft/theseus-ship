@@ -7,6 +7,8 @@
 
 #include "input/keyboard_redirect.h"
 
+#include <memory>
+
 namespace KWin::input
 {
 class keyboard_layout_spy;
@@ -35,7 +37,7 @@ public:
 private:
     QMetaObject::Connection m_activeClientSurfaceChangedConnection;
     modifiers_changed_spy* modifiers_spy{nullptr};
-    keyboard_layout_spy* m_keyboardLayout{nullptr};
+    std::unique_ptr<keyboard_layout_spy> m_keyboardLayout;
 };
 
 }

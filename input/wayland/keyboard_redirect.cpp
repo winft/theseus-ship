@@ -95,9 +95,9 @@ void keyboard_redirect::init()
     redirect->installInputEventSpy(new KeyStateChangedSpy(redirect));
     modifiers_spy = new modifiers_changed_spy(redirect);
     redirect->installInputEventSpy(modifiers_spy);
-    m_keyboardLayout = new keyboard_layout_spy(kwinApp()->input->xkb, config);
+
+    m_keyboardLayout = std::make_unique<keyboard_layout_spy>(kwinApp()->input->xkb, config);
     m_keyboardLayout->init();
-    redirect->installInputEventSpy(m_keyboardLayout);
 
     if (waylandServer()->hasGlobalShortcutSupport()) {
         redirect->installInputEventSpy(new modifier_only_shortcuts_spy);
