@@ -31,14 +31,10 @@ namespace dbus
 class keyboard_layout;
 }
 
-namespace keyboard_layout_switching
-{
-class policy;
-}
-
 namespace xkb
 {
 class keyboard;
+class layout_policy;
 class manager;
 
 inline QString translated_keyboard_layout(std::string const& layout)
@@ -77,7 +73,7 @@ private:
     KConfigGroup m_configGroup;
     QVector<QAction*> m_layoutShortcuts;
     dbus::keyboard_layout* m_dbusInterface = nullptr;
-    keyboard_layout_switching::policy* m_policy = nullptr;
+    xkb::layout_policy* m_policy = nullptr;
 };
 
 }

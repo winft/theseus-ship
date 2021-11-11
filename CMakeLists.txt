@@ -801,11 +801,11 @@ set(kwin_WAYLAND_SRCS
    input/wayland/redirect.cpp
    input/wayland/tablet_redirect.cpp
    input/wayland/touch_redirect.cpp
-   input/keyboard_layout_switching.cpp
    input/logging.cpp
    input/switch.cpp
    input/touch.cpp
    input/xkb/layout_manager.cpp
+   input/xkb/layout_policies.cpp
    linux_dmabuf.cpp
    render/backend/wlroots/backend.cpp
    render/backend/wlroots/buffer.cpp

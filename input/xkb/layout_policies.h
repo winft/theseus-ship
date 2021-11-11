@@ -15,29 +15,23 @@ namespace KWin
 class Toplevel;
 class VirtualDesktop;
 
-namespace input
-{
-namespace xkb
+namespace input::xkb
 {
 class layout_manager;
-}
 
-namespace keyboard_layout_switching
-{
-
-class policy : public QObject
+class layout_policy : public QObject
 {
     Q_OBJECT
 public:
-    ~policy() override;
+    ~layout_policy() override;
 
     virtual QString name() const = 0;
 
-    static policy*
-    create(xkb::layout_manager* manager, KConfigGroup const& config, QString const& policy);
+    static layout_policy*
+    create(layout_manager* manager, KConfigGroup const& config, QString const& policy);
 
 protected:
-    explicit policy(xkb::layout_manager* manager, KConfigGroup const& config = KConfigGroup());
+    explicit layout_policy(layout_manager* manager, KConfigGroup const& config = KConfigGroup());
 
     virtual void clear_cache() = 0;
     virtual void handle_layout_change(uint index) = 0;
@@ -54,11 +48,11 @@ private:
     xkb::layout_manager* manager;
 };
 
-class global_policy : public policy
+class global_layout_policy : public layout_policy
 {
     Q_OBJECT
 public:
-    global_policy(xkb::layout_manager* manager, KConfigGroup const& config);
+    global_layout_policy(layout_manager* manager, KConfigGroup const& config);
 
     QString name() const override
     {
@@ -78,11 +72,11 @@ private:
     QString const default_layout_entry_key() const override;
 };
 
-class virtual_desktop_policy : public policy
+class virtual_desktop_layout_policy : public layout_policy
 {
     Q_OBJECT
 public:
-    virtual_desktop_policy(xkb::layout_manager* manager, KConfigGroup const& config);
+    virtual_desktop_layout_policy(layout_manager* manager, KConfigGroup const& config);
 
     QString name() const override
     {
@@ -99,11 +93,11 @@ private:
     std::unordered_map<VirtualDesktop*, uint32_t> layouts;
 };
 
-class window_policy : public policy
+class window_layout_policy : public layout_policy
 {
     Q_OBJECT
 public:
-    explicit window_policy(xkb::layout_manager* manager);
+    explicit window_layout_policy(layout_manager* manager);
 
     QString name() const override
     {
@@ -118,11 +112,11 @@ private:
     std::unordered_map<Toplevel*, uint32_t> layouts;
 };
 
-class application_policy : public policy
+class application_layout_policy : public layout_policy
 {
     Q_OBJECT
 public:
-    application_policy(xkb::layout_manager* manager, KConfigGroup const& config);
+    application_layout_policy(layout_manager* manager, KConfigGroup const& config);
 
     QString name() const override
     {
@@ -140,6 +134,5 @@ private:
     std::unordered_map<QByteArray, uint32_t> restored_layouts;
 };
 
-}
 }
 }

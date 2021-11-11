@@ -8,11 +8,11 @@
 #include "layout_manager.h"
 
 #include "helpers.h"
+#include "layout_policies.h"
 
 #include "../../platform.h"
 #include "input/dbus/keyboard_layout.h"
 #include "input/event.h"
-#include "input/keyboard_layout_switching.h"
 #include "main.h"
 
 #include <KGlobalAccel>
@@ -115,7 +115,7 @@ void layout_manager::reconfigure()
         xkb.reconfigure();
         if (!m_policy || m_policy->name() != policyKey) {
             delete m_policy;
-            m_policy = keyboard_layout_switching::policy::create(this, m_configGroup, policyKey);
+            m_policy = xkb::layout_policy::create(this, m_configGroup, policyKey);
         }
     } else {
         xkb.reconfigure();
