@@ -8,10 +8,9 @@
 #include "keyboard_layout.h"
 
 #include "input/event.h"
-#include "input/keyboard_layout_helpers.h"
 #include "input/keyboard_layout_switching.h"
-#include "input/spies/keyboard_layout.h"
 #include "input/xkb/helpers.h"
+#include "input/xkb/layout_manager.h"
 #include "main.h"
 #include "platform.h"
 
@@ -29,11 +28,10 @@ namespace KWin::input::dbus
 static const QString s_keyboardService = QStringLiteral("org.kde.keyboard");
 static const QString s_keyboardObject = QStringLiteral("/Layouts");
 
-keyboard_layout::keyboard_layout(KConfigGroup const& configGroup,
-                                 input::keyboard_layout_spy* parent)
+keyboard_layout::keyboard_layout(KConfigGroup const& configGroup, xkb::layout_manager* parent)
     : QObject(parent)
     , m_configGroup(configGroup)
-    , m_keyboardLayout(parent)
+    , manager(parent)
 {
     qRegisterMetaType<QVector<LayoutNames>>("QVector<LayoutNames>");
     qDBusRegisterMetaType<LayoutNames>();
@@ -53,12 +51,12 @@ keyboard_layout::~keyboard_layout()
 
 void keyboard_layout::switchToNextLayout()
 {
-    m_keyboardLayout->switchToNextLayout();
+    manager->switchToNextLayout();
 }
 
 void keyboard_layout::switchToPreviousLayout()
 {
-    m_keyboardLayout->switchToPreviousLayout();
+    manager->switchToPreviousLayout();
 }
 
 bool keyboard_layout::setLayout(uint index)
@@ -70,7 +68,7 @@ bool keyboard_layout::setLayout(uint index)
         return false;
     }
 
-    m_keyboardLayout->check_layout_change(xkb, previous_layout);
+    manager->check_layout_change(xkb, previous_layout);
     return true;
 }
 
@@ -93,7 +91,7 @@ QVector<keyboard_layout::LayoutNames> keyboard_layout::getLayoutsList() const
     for (size_t i = 0; i < layouts_count; ++i) {
         ret.append({QString::fromStdString(xkb->layout_short_name_from_index(i)),
                     i < display_names_count ? display_names.at(i) : QString(),
-                    translated_keyboard_layout(xkb->layout_name_from_index(i))});
+                    xkb::translated_keyboard_layout(xkb->layout_name_from_index(i))});
     }
     return ret;
 }

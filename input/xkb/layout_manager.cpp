@@ -5,15 +5,15 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "keyboard_layout.h"
+#include "layout_manager.h"
 
+#include "helpers.h"
+
+#include "../../platform.h"
 #include "input/dbus/keyboard_layout.h"
 #include "input/event.h"
-#include "input/keyboard_layout_helpers.h"
 #include "input/keyboard_layout_switching.h"
-#include "input/xkb/helpers.h"
 #include "main.h"
-#include "platform.h"
 
 #include <KGlobalAccel>
 #include <QAction>
@@ -22,16 +22,16 @@
 #include <QDBusMetaType>
 #include <QDBusPendingCall>
 
-namespace KWin::input
+namespace KWin::input::xkb
 {
 
-keyboard_layout_spy::keyboard_layout_spy(xkb::manager& xkb, KSharedConfigPtr const& config)
+layout_manager::layout_manager(xkb::manager& xkb, KSharedConfigPtr const& config)
     : xkb{xkb}
     , m_configGroup(config->group("Layout"))
 {
 }
 
-void keyboard_layout_spy::init()
+void layout_manager::init()
 {
     QAction* switchKeyboardAction = new QAction(this);
     switchKeyboardAction->setObjectName(QStringLiteral("Switch to Next Keyboard Layout"));
@@ -42,7 +42,7 @@ void keyboard_layout_spy::init()
     KGlobalAccel::self()->setShortcut(switchKeyboardAction, QList<QKeySequence>({sequence}));
     kwinApp()->platform->setupActionForGlobalAccel(switchKeyboardAction);
     QObject::connect(
-        switchKeyboardAction, &QAction::triggered, this, &keyboard_layout_spy::switchToNextLayout);
+        switchKeyboardAction, &QAction::triggered, this, &layout_manager::switchToNextLayout);
 
     QDBusConnection::sessionBus().connect(QString(),
                                           QStringLiteral("/Layouts"),
@@ -54,7 +54,7 @@ void keyboard_layout_spy::init()
     reconfigure();
 }
 
-void keyboard_layout_spy::initDBusInterface()
+void layout_manager::initDBusInterface()
 {
     auto xkb = xkb::get_primary_xkb_keyboard();
 
@@ -73,17 +73,17 @@ void keyboard_layout_spy::initDBusInterface()
     m_dbusInterface = new dbus::keyboard_layout(m_configGroup, this);
 
     QObject::connect(this,
-                     &keyboard_layout_spy::layoutChanged,
+                     &layout_manager::layoutChanged,
                      m_dbusInterface,
                      &dbus::keyboard_layout::layoutChanged);
     // TODO: the signal might be emitted even if the list didn't change
     QObject::connect(this,
-                     &keyboard_layout_spy::layoutsReconfigured,
+                     &layout_manager::layoutsReconfigured,
                      m_dbusInterface,
                      &dbus::keyboard_layout::layoutListChanged);
 }
 
-void keyboard_layout_spy::switchToNextLayout()
+void layout_manager::switchToNextLayout()
 {
     auto xkb = xkb::get_primary_xkb_keyboard();
     auto const previousLayout = xkb->layout;
@@ -91,7 +91,7 @@ void keyboard_layout_spy::switchToNextLayout()
     check_layout_change(xkb, previousLayout);
 }
 
-void keyboard_layout_spy::switchToPreviousLayout()
+void layout_manager::switchToPreviousLayout()
 {
     auto xkb = xkb::get_primary_xkb_keyboard();
     auto const previousLayout = xkb->layout;
@@ -99,7 +99,7 @@ void keyboard_layout_spy::switchToPreviousLayout()
     check_layout_change(xkb, previousLayout);
 }
 
-void keyboard_layout_spy::switchToLayout(xkb_layout_index_t index)
+void layout_manager::switchToLayout(xkb_layout_index_t index)
 {
     auto xkb = xkb::get_primary_xkb_keyboard();
     auto const previousLayout = xkb->layout;
@@ -107,7 +107,7 @@ void keyboard_layout_spy::switchToLayout(xkb_layout_index_t index)
     check_layout_change(xkb, previousLayout);
 }
 
-void keyboard_layout_spy::reconfigure()
+void layout_manager::reconfigure()
 {
     if (m_configGroup.isValid()) {
         m_configGroup.config()->reparseConfiguration();
@@ -123,7 +123,7 @@ void keyboard_layout_spy::reconfigure()
     resetLayout();
 }
 
-void keyboard_layout_spy::resetLayout()
+void layout_manager::resetLayout()
 {
     auto xkb = xkb::get_primary_xkb_keyboard();
 
@@ -134,7 +134,7 @@ void keyboard_layout_spy::resetLayout()
     Q_EMIT layoutsReconfigured();
 }
 
-void keyboard_layout_spy::loadShortcuts()
+void layout_manager::loadShortcuts()
 {
     qDeleteAll(m_layoutShortcuts);
     m_layoutShortcuts.clear();
@@ -156,13 +156,13 @@ void keyboard_layout_spy::loadShortcuts()
         a->setObjectName(action);
         a->setProperty("componentName", componentName);
         QObject::connect(
-            a, &QAction::triggered, this, std::bind(&keyboard_layout_spy::switchToLayout, this, i));
+            a, &QAction::triggered, this, std::bind(&layout_manager::switchToLayout, this, i));
         KGlobalAccel::self()->setShortcut(a, shortcuts, KGlobalAccel::Autoloading);
         m_layoutShortcuts << a;
     }
 }
 
-void keyboard_layout_spy::check_layout_change(input::xkb::keyboard* xkb, uint32_t old_layout)
+void layout_manager::check_layout_change(xkb::keyboard* xkb, uint32_t old_layout)
 {
     // Get here on key event or DBus call.
     // m_layout - layout saved last time OSD occurred
@@ -181,7 +181,7 @@ void keyboard_layout_spy::check_layout_change(input::xkb::keyboard* xkb, uint32_
     }
 }
 
-void keyboard_layout_spy::notifyLayoutChange()
+void layout_manager::notifyLayoutChange()
 {
     auto xkb = xkb::get_primary_xkb_keyboard();
 

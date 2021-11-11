@@ -11,7 +11,11 @@
 
 namespace KWin::input
 {
-class keyboard_layout_spy;
+
+namespace xkb
+{
+class layout_manager;
+}
 
 namespace wayland
 {
@@ -37,7 +41,7 @@ public:
 private:
     QMetaObject::Connection m_activeClientSurfaceChangedConnection;
     modifiers_changed_spy* modifiers_spy{nullptr};
-    std::unique_ptr<keyboard_layout_spy> m_keyboardLayout;
+    std::unique_ptr<xkb::layout_manager> layout_manager;
 };
 
 }

@@ -12,10 +12,10 @@
 #include "input/event_filter.h"
 #include "input/event_spy.h"
 #include "input/keyboard.h"
-#include "input/spies/keyboard_layout.h"
 #include "input/spies/keyboard_repeat.h"
 #include "input/spies/modifier_only_shortcuts.h"
 #include "input/xkb/helpers.h"
+#include "input/xkb/layout_manager.h"
 
 #include "main.h"
 #include "toplevel.h"
@@ -96,8 +96,8 @@ void keyboard_redirect::init()
     modifiers_spy = new modifiers_changed_spy(redirect);
     redirect->installInputEventSpy(modifiers_spy);
 
-    m_keyboardLayout = std::make_unique<keyboard_layout_spy>(kwinApp()->input->xkb, config);
-    m_keyboardLayout->init();
+    layout_manager = std::make_unique<xkb::layout_manager>(kwinApp()->input->xkb, config);
+    layout_manager->init();
 
     if (waylandServer()->hasGlobalShortcutSupport()) {
         redirect->installInputEventSpy(new modifier_only_shortcuts_spy);
@@ -187,7 +187,7 @@ void keyboard_redirect::process_key(key_event const& event)
 
     if (globalShortcutsModifiers == Qt::KeyboardModifier::NoModifier
         && event.state == key_state::pressed) {
-        m_keyboardLayout->check_layout_change(xkb.get(), previousLayout);
+        layout_manager->check_layout_change(xkb.get(), previousLayout);
     }
 }
 
@@ -206,7 +206,7 @@ void keyboard_redirect::process_modifiers(modifiers_event const& event)
     xkb->update_modifiers(event.depressed, event.latched, event.locked, event.group);
 
     modifiers_spy->updateModifiers(xkb->qt_modifiers);
-    m_keyboardLayout->check_layout_change(xkb, previousLayout);
+    layout_manager->check_layout_change(xkb, previousLayout);
 }
 
 void keyboard_redirect::processKeymapChange(int fd, uint32_t size)
@@ -216,7 +216,7 @@ void keyboard_redirect::processKeymapChange(int fd, uint32_t size)
     // TODO(romangg): hand over the keyboard as argument instead.
     auto xkb = xkb::get_primary_xkb_keyboard();
     xkb->install_keymap(fd, size);
-    m_keyboardLayout->resetLayout();
+    layout_manager->resetLayout();
 }
 
 }

@@ -18,7 +18,11 @@ class QDBusArgument;
 
 namespace KWin::input
 {
-class keyboard_layout_spy;
+
+namespace xkb
+{
+class layout_manager;
+}
 
 namespace dbus
 {
@@ -29,7 +33,7 @@ class keyboard_layout : public QObject
     Q_CLASSINFO("D-Bus Interface", "org.kde.KeyboardLayouts")
 
 public:
-    keyboard_layout(KConfigGroup const& configGroup, input::keyboard_layout_spy* parent);
+    keyboard_layout(KConfigGroup const& configGroup, xkb::layout_manager* parent);
     ~keyboard_layout() override;
 
     struct LayoutNames {
@@ -51,7 +55,7 @@ Q_SIGNALS:
 
 private:
     KConfigGroup const& m_configGroup;
-    input::keyboard_layout_spy* m_keyboardLayout;
+    xkb::layout_manager* manager;
 };
 
 QDBusArgument& operator<<(QDBusArgument& argument, const keyboard_layout::LayoutNames& layoutNames);

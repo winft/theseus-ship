@@ -786,7 +786,6 @@ set(kwin_WAYLAND_SRCS
    input/filters/virtual_terminal.cpp
    input/filters/window_action.cpp
    input/filters/window_selector.cpp
-   input/spies/keyboard_layout.cpp
    input/spies/keyboard_repeat.cpp
    input/spies/touch_hide_cursor.cpp
    input/spies/tablet_mode_switch.cpp
@@ -806,6 +805,7 @@ set(kwin_WAYLAND_SRCS
    input/logging.cpp
    input/switch.cpp
    input/touch.cpp
+   input/xkb/layout_manager.cpp
    linux_dmabuf.cpp
    render/backend/wlroots/backend.cpp
    render/backend/wlroots/buffer.cpp

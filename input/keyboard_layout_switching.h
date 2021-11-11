@@ -17,7 +17,10 @@ class VirtualDesktop;
 
 namespace input
 {
-class keyboard_layout_spy;
+namespace xkb
+{
+class layout_manager;
+}
 
 namespace keyboard_layout_switching
 {
@@ -31,10 +34,10 @@ public:
     virtual QString name() const = 0;
 
     static policy*
-    create(keyboard_layout_spy* layout, KConfigGroup const& config, QString const& policy);
+    create(xkb::layout_manager* manager, KConfigGroup const& config, QString const& policy);
 
 protected:
-    explicit policy(keyboard_layout_spy* layout, KConfigGroup const& config = KConfigGroup());
+    explicit policy(xkb::layout_manager* manager, KConfigGroup const& config = KConfigGroup());
 
     virtual void clear_cache() = 0;
     virtual void handle_layout_change(uint index) = 0;
@@ -48,14 +51,14 @@ protected:
     static const char default_layout_entry_key_prefix[];
 
 private:
-    keyboard_layout_spy* layout;
+    xkb::layout_manager* manager;
 };
 
 class global_policy : public policy
 {
     Q_OBJECT
 public:
-    global_policy(keyboard_layout_spy* layout, KConfigGroup const& config);
+    global_policy(xkb::layout_manager* manager, KConfigGroup const& config);
 
     QString name() const override
     {
@@ -79,7 +82,7 @@ class virtual_desktop_policy : public policy
 {
     Q_OBJECT
 public:
-    virtual_desktop_policy(keyboard_layout_spy* layout, KConfigGroup const& config);
+    virtual_desktop_policy(xkb::layout_manager* manager, KConfigGroup const& config);
 
     QString name() const override
     {
@@ -100,7 +103,7 @@ class window_policy : public policy
 {
     Q_OBJECT
 public:
-    explicit window_policy(keyboard_layout_spy* layout);
+    explicit window_policy(xkb::layout_manager* manager);
 
     QString name() const override
     {
@@ -119,7 +122,7 @@ class application_policy : public policy
 {
     Q_OBJECT
 public:
-    application_policy(keyboard_layout_spy* layout, KConfigGroup const& config);
+    application_policy(xkb::layout_manager* manager, KConfigGroup const& config);
 
     QString name() const override
     {

@@ -6,7 +6,8 @@
 */
 #include "keyboard_layout_switching.h"
 
-#include "spies/keyboard_layout.h"
+#include "xkb/layout_manager.h"
+
 #include "toplevel.h"
 #include "virtualdesktops.h"
 #include "workspace.h"
@@ -22,14 +23,15 @@ namespace KWin
 namespace input::keyboard_layout_switching
 {
 
-policy::policy(keyboard_layout_spy* layout, KConfigGroup const& config)
-    : QObject(layout)
+policy::policy(xkb::layout_manager* manager, KConfigGroup const& config)
+    : QObject(manager)
     , config(config)
-    , layout(layout)
+    , manager(manager)
 {
-    QObject::connect(layout, &keyboard_layout_spy::layoutsReconfigured, this, &policy::clear_cache);
     QObject::connect(
-        layout, &keyboard_layout_spy::layoutChanged, this, &policy::handle_layout_change);
+        manager, &xkb::layout_manager::layoutsReconfigured, this, &policy::clear_cache);
+    QObject::connect(
+        manager, &xkb::layout_manager::layoutChanged, this, &policy::handle_layout_change);
 }
 
 policy::~policy() = default;
@@ -42,23 +44,23 @@ void policy::set_layout(uint index)
     xkb->switch_to_layout(index);
 
     if (previous_layout != xkb->layout) {
-        Q_EMIT layout->layoutChanged(xkb->layout);
+        Q_EMIT manager->layoutChanged(xkb->layout);
     }
 }
 
 policy*
-policy::create(keyboard_layout_spy* layout, KConfigGroup const& config, QString const& policy)
+policy::create(xkb::layout_manager* manager, KConfigGroup const& config, QString const& policy)
 {
     if (policy.toLower() == QStringLiteral("desktop")) {
-        return new virtual_desktop_policy(layout, config);
+        return new virtual_desktop_policy(manager, config);
     }
     if (policy.toLower() == QStringLiteral("window")) {
-        return new window_policy(layout);
+        return new window_policy(manager);
     }
     if (policy.toLower() == QStringLiteral("winclass")) {
-        return new application_policy(layout, config);
+        return new application_policy(manager, config);
     }
-    return new global_policy(layout, config);
+    return new global_policy(manager, config);
 }
 
 char const policy::default_layout_entry_key_prefix[] = "LayoutDefault";
@@ -81,8 +83,8 @@ QString const global_policy::default_layout_entry_key() const
     return QLatin1String(default_layout_entry_key_prefix) % name();
 }
 
-global_policy::global_policy(keyboard_layout_spy* layout, KConfigGroup const& config)
-    : policy(layout, config)
+global_policy::global_policy(xkb::layout_manager* manager, KConfigGroup const& config)
+    : policy(manager, config)
 {
     QObject::connect(
         workspace()->sessionManager(), &SessionManager::prepareSessionSaveRequested, this, [this] {
@@ -100,9 +102,9 @@ global_policy::global_policy(keyboard_layout_spy* layout, KConfigGroup const& co
         });
 }
 
-virtual_desktop_policy::virtual_desktop_policy(keyboard_layout_spy* layout,
+virtual_desktop_policy::virtual_desktop_policy(xkb::layout_manager* manager,
                                                KConfigGroup const& config)
-    : policy(layout, config)
+    : policy(manager, config)
 {
     QObject::connect(VirtualDesktopManager::self(),
                      &VirtualDesktopManager::currentChanged,
@@ -194,8 +196,8 @@ void virtual_desktop_policy::handle_layout_change(uint index)
     }
 }
 
-window_policy::window_policy(keyboard_layout_spy* layout)
-    : policy(layout)
+window_policy::window_policy(xkb::layout_manager* manager)
+    : policy(manager)
 {
     QObject::connect(workspace(), &Workspace::clientActivated, this, [this](auto window) {
         if (!window) {
@@ -239,8 +241,8 @@ void window_policy::handle_layout_change(uint index)
     }
 }
 
-application_policy::application_policy(keyboard_layout_spy* layout, KConfigGroup const& config)
-    : policy(layout, config)
+application_policy::application_policy(xkb::layout_manager* manager, KConfigGroup const& config)
+    : policy(manager, config)
 {
     QObject::connect(workspace(),
                      &Workspace::clientActivated,

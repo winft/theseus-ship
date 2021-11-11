@@ -18,8 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "input/keyboard_redirect.h"
-#include "input/spies/keyboard_layout.h"
 #include "input/xkb/helpers.h"
+#include "input/xkb/layout_manager.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "virtualdesktops.h"

@@ -13,7 +13,10 @@
 #include <QVector>
 
 #include <KConfigGroup>
+#include <KLocalizedString>
 #include <KSharedConfig>
+#include <QString>
+#include <string>
 
 typedef uint32_t xkb_layout_index_t;
 
@@ -37,17 +40,21 @@ namespace xkb
 {
 class keyboard;
 class manager;
+
+inline QString translated_keyboard_layout(std::string const& layout)
+{
+    return i18nd("xkeyboard-config", layout.c_str());
 }
 
-class KWIN_EXPORT keyboard_layout_spy : public QObject
+class KWIN_EXPORT layout_manager : public QObject
 {
     Q_OBJECT
 public:
-    keyboard_layout_spy(input::xkb::manager& xkb, KSharedConfigPtr const& config);
+    layout_manager(xkb::manager& xkb, KSharedConfigPtr const& config);
 
     void init();
 
-    void check_layout_change(input::xkb::keyboard* xkb, uint32_t old_layout);
+    void check_layout_change(xkb::keyboard* xkb, uint32_t old_layout);
     void switchToNextLayout();
     void switchToPreviousLayout();
     void resetLayout();
@@ -65,7 +72,7 @@ private:
     void switchToLayout(xkb_layout_index_t index);
     void loadShortcuts();
 
-    input::xkb::manager& xkb;
+    xkb::manager& xkb;
     xkb_layout_index_t m_layout = 0;
     KConfigGroup m_configGroup;
     QVector<QAction*> m_layoutShortcuts;
@@ -73,4 +80,5 @@ private:
     keyboard_layout_switching::policy* m_policy = nullptr;
 };
 
+}
 }
