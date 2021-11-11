@@ -2120,7 +2120,7 @@ void GLVertexBuffer::endOfFrame()
     }
 }
 
-void GLVertexBuffer::framePosted()
+void GLVertexBuffer::beginFrame()
 {
     if (!d->persistent)
         return;

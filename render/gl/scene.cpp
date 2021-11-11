@@ -527,6 +527,7 @@ int64_t scene::paint(QRegion damage,
 
     m_backend->makeCurrent();
     auto const repaint = m_backend->prepareRenderingFrame();
+    GLVertexBuffer::streamingBuffer()->beginFrame();
 
     GLenum const status = glGetGraphicsResetStatus();
     if (status != GL_NO_ERROR) {
@@ -561,7 +562,6 @@ int64_t scene::paint(QRegion damage,
 
     GLVertexBuffer::streamingBuffer()->endOfFrame();
     m_backend->endRenderingFrame(valid, update);
-    GLVertexBuffer::streamingBuffer()->framePosted();
 
     if (m_currentFence) {
         if (!m_syncManager->updateFences()) {
@@ -589,6 +589,7 @@ int64_t scene::paint_output(base::output* output,
 
     // Makes context current on the output.
     auto const repaint = m_backend->prepareRenderingForScreen(output);
+    GLVertexBuffer::streamingBuffer()->beginFrame();
 
     auto const geo = output->geometry();
     auto const scaling = output->scale();
@@ -618,10 +619,6 @@ int64_t scene::paint_output(base::output* output,
 
     GLVertexBuffer::streamingBuffer()->endOfFrame();
     m_backend->endRenderingFrameForScreen(output, valid, update);
-
-    m_backend->makeCurrent();
-    GLVertexBuffer::streamingBuffer()->framePosted();
-    m_backend->doneCurrent();
 
     clearStackingOrder();
     repaint_output = nullptr;
