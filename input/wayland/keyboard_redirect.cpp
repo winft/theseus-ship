@@ -15,7 +15,7 @@
 #include "input/spies/keyboard_layout.h"
 #include "input/spies/keyboard_repeat.h"
 #include "input/spies/modifier_only_shortcuts.h"
-#include "input/xkb_helpers.h"
+#include "input/xkb/helpers.h"
 
 #include "main.h"
 #include "toplevel.h"
@@ -214,7 +214,7 @@ void keyboard_redirect::processKeymapChange(int fd, uint32_t size)
     // TODO: should we pass the keymap to our Clients? Or only to the currently active one and
     // update
     // TODO(romangg): hand over the keyboard as argument instead.
-    auto xkb = get_primary_xkb_keyboard();
+    auto xkb = xkb::get_primary_xkb_keyboard();
     xkb->install_keymap(fd, size);
     m_keyboardLayout->resetLayout();
 }

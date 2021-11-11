@@ -28,7 +28,10 @@ struct xkb_keymap;
 namespace KWin::input
 {
 class platform;
-class xkb_keyboard;
+
+namespace xkb
+{
+class keyboard;
 
 enum class latched_key_change {
     off,
@@ -36,11 +39,11 @@ enum class latched_key_change {
     unchanged,
 };
 
-class KWIN_EXPORT xkb
+class KWIN_EXPORT manager
 {
 public:
-    xkb(input::platform* platform);
-    ~xkb();
+    manager(input::platform* platform);
+    ~manager();
 
     void setConfig(const KSharedConfigPtr& config);
     void setNumLockConfig(const KSharedConfigPtr& config);
@@ -52,7 +55,7 @@ public:
     xkb_context* context;
     xkb_compose_table* compose_table{nullptr};
 
-    std::unique_ptr<xkb_keyboard> default_keyboard;
+    std::unique_ptr<keyboard> default_keyboard;
 
 private:
     void apply_environment_rules(xkb_rule_names&, std::vector<std::string>& layouts) const;
@@ -65,4 +68,5 @@ private:
     input::platform* platform;
 };
 
+}
 }

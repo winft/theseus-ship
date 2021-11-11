@@ -10,7 +10,7 @@
 #include "cursor_image.h"
 #include "redirect.h"
 
-#include "input/xkb_helpers.h"
+#include "input/xkb/helpers.h"
 
 namespace KWin::input::wayland
 {
@@ -60,7 +60,7 @@ void cursor::do_set_pos()
 
 Qt::KeyboardModifiers get_keyboard_modifiers()
 {
-    return get_active_keyboard_modifiers(kwinApp()->input.get());
+    return xkb::get_active_keyboard_modifiers(kwinApp()->input.get());
 }
 
 void cursor::slot_pos_changed(const QPointF& pos)

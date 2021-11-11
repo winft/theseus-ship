@@ -422,8 +422,8 @@ set(kwin_SRCS
     input/pointer.cpp
     input/x11/redirect.cpp
     input/qt_event.cpp
-    input/xkb.cpp
-    input/xkb_keyboard.cpp
+    input/xkb/keyboard.cpp
+    input/xkb/manager.cpp
     killwindow.cpp
     main.cpp
     moving_client_x11_filter.cpp

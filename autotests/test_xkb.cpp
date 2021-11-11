@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "input/xkb_keyboard.h"
+#include "input/xkb/keyboard.h"
 
 #include <QtTest>
 #include <xkbcommon/xkbcommon-keysyms.h>
@@ -483,8 +483,8 @@ void XkbTest::testToQtKey_data()
 
 void XkbTest::testToQtKey()
 {
-    input::xkb xkb(nullptr);
-    input::xkb_keyboard xkb_keyboard(xkb);
+    input::xkb::manager manager(nullptr);
+    input::xkb::keyboard xkb_keyboard(manager);
     QFETCH(xkb_keysym_t, keySym);
     QTEST(xkb_keyboard.to_qt_key(keySym), "qt");
 }

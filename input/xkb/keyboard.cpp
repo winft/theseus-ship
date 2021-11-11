@@ -6,7 +6,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "xkb_keyboard.h"
+#include "keyboard.h"
 
 #include "utils.h"
 
@@ -26,25 +26,25 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-namespace KWin::input
+namespace KWin::input::xkb
 {
 
-xkb_keyboard::xkb_keyboard(input::xkb& xkb)
-    : xkb{xkb}
+keyboard::keyboard(xkb::manager& manager)
+    : manager{manager}
 {
-    if (xkb.compose_table) {
-        compose_state = xkb_compose_state_new(xkb.compose_table, XKB_COMPOSE_STATE_NO_FLAGS);
+    if (manager.compose_table) {
+        compose_state = xkb_compose_state_new(manager.compose_table, XKB_COMPOSE_STATE_NO_FLAGS);
     }
 }
 
-xkb_keyboard::~xkb_keyboard()
+keyboard::~keyboard()
 {
     xkb_compose_state_unref(compose_state);
     xkb_state_unref(state);
     xkb_keymap_unref(keymap);
 }
 
-void xkb_keyboard::install_keymap(int fd, uint32_t size)
+void keyboard::install_keymap(int fd, uint32_t size)
 {
     auto map = reinterpret_cast<char*>(mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0));
     if (map == MAP_FAILED) {
@@ -52,7 +52,7 @@ void xkb_keyboard::install_keymap(int fd, uint32_t size)
     }
 
     auto keymap = xkb_keymap_new_from_string(
-        xkb.context, map, XKB_KEYMAP_FORMAT_TEXT_V1, XKB_MAP_COMPILE_PLACEHOLDER);
+        manager.context, map, XKB_KEYMAP_FORMAT_TEXT_V1, XKB_MAP_COMPILE_PLACEHOLDER);
     munmap(map, size);
 
     if (!keymap) {
@@ -64,14 +64,14 @@ void xkb_keyboard::install_keymap(int fd, uint32_t size)
     update_keymap(keymap);
 }
 
-void xkb_keyboard::update_from_default()
+void keyboard::update_from_default()
 {
-    if (auto const& dkeys = xkb.default_keyboard; dkeys->keymap) {
+    if (auto const& dkeys = manager.default_keyboard; dkeys->keymap) {
         update(dkeys->keymap, dkeys->layouts);
     }
 }
 
-void xkb_keyboard::update(xkb_keymap* keymap, std::vector<std::string> const& layouts)
+void keyboard::update(xkb_keymap* keymap, std::vector<std::string> const& layouts)
 {
     if (foreign_owned) {
         return;
@@ -80,7 +80,7 @@ void xkb_keyboard::update(xkb_keymap* keymap, std::vector<std::string> const& la
     update_keymap(keymap);
 }
 
-void xkb_keyboard::update_keymap(xkb_keymap* keymap)
+void keyboard::update_keymap(xkb_keymap* keymap)
 {
     assert(keymap);
     xkb_keymap_ref(keymap);
@@ -125,7 +125,7 @@ void xkb_keyboard::update_keymap(xkb_keymap* keymap)
     forward_modifiers();
 }
 
-void xkb_keyboard::evaluate_startup_num_lock()
+void keyboard::evaluate_startup_num_lock()
 {
     if (startup_num_lock_done) {
         return;
@@ -136,7 +136,7 @@ void xkb_keyboard::evaluate_startup_num_lock()
         return;
     }
 
-    auto const setting = xkb.read_startup_num_lock_config();
+    auto const setting = manager.read_startup_num_lock_config();
     if (setting == latched_key_change::unchanged) {
         // We keep the current state.
         return;
@@ -178,7 +178,7 @@ void xkb_keyboard::evaluate_startup_num_lock()
         = xkb_state_serialize_mods(state, xkb_state_component(XKB_STATE_MODS_LOCKED));
 }
 
-void xkb_keyboard::create_keymap_file()
+void keyboard::create_keymap_file()
 {
     if (!seat) {
         return;
@@ -196,10 +196,10 @@ void xkb_keyboard::create_keymap_file()
     seat->keyboards().set_keymap(keymap_string.data());
 }
 
-void xkb_keyboard::update_modifiers(uint32_t modsDepressed,
-                                    uint32_t modsLatched,
-                                    uint32_t modsLocked,
-                                    uint32_t group)
+void keyboard::update_modifiers(uint32_t modsDepressed,
+                                uint32_t modsLatched,
+                                uint32_t modsLocked,
+                                uint32_t group)
 {
     if (!keymap || !state) {
         return;
@@ -209,7 +209,7 @@ void xkb_keyboard::update_modifiers(uint32_t modsDepressed,
     forward_modifiers();
 }
 
-void xkb_keyboard::update_key(uint32_t key, key_state state)
+void keyboard::update_key(uint32_t key, key_state state)
 {
     if (!keymap || !this->state) {
         return;
@@ -240,7 +240,7 @@ void xkb_keyboard::update_key(uint32_t key, key_state state)
     update_consumed_modifiers(key);
 }
 
-void xkb_keyboard::update_modifiers()
+void keyboard::update_modifiers()
 {
     constexpr auto is_active = xkb_state_mod_index_is_active;
     auto mods = Qt::KeyboardModifiers();
@@ -289,7 +289,7 @@ void xkb_keyboard::update_modifiers()
         = xkb_state_serialize_mods(state, xkb_state_component(XKB_STATE_MODS_LOCKED));
 }
 
-void xkb_keyboard::forward_modifiers()
+void keyboard::forward_modifiers()
 {
     if (seat) {
         seat->keyboards().update_modifiers(
@@ -297,7 +297,7 @@ void xkb_keyboard::forward_modifiers()
     }
 }
 
-std::string xkb_keyboard::layout_name_from_index(xkb_layout_index_t index) const
+std::string keyboard::layout_name_from_index(xkb_layout_index_t index) const
 {
     if (!keymap) {
         return {};
@@ -305,17 +305,17 @@ std::string xkb_keyboard::layout_name_from_index(xkb_layout_index_t index) const
     return std::string(xkb_keymap_layout_get_name(keymap, index));
 }
 
-std::string xkb_keyboard::layout_name() const
+std::string keyboard::layout_name() const
 {
     return layout_name_from_index(layout);
 }
 
-std::string const& xkb_keyboard::layout_short_name_from_index(int index) const
+std::string const& keyboard::layout_short_name_from_index(int index) const
 {
     return layouts.at(index);
 }
 
-void xkb_keyboard::update_consumed_modifiers(uint32_t key)
+void keyboard::update_consumed_modifiers(uint32_t key)
 {
     constexpr auto is_consumed = xkb_state_mod_index_is_consumed2;
     auto mods = Qt::KeyboardModifiers();
@@ -338,7 +338,7 @@ void xkb_keyboard::update_consumed_modifiers(uint32_t key)
     qt_modifiers_consumed = mods;
 }
 
-Qt::KeyboardModifiers xkb_keyboard::modifiers_relevant_for_global_shortcuts(uint32_t scanCode) const
+Qt::KeyboardModifiers keyboard::modifiers_relevant_for_global_shortcuts(uint32_t scanCode) const
 {
     if (!state) {
         return {};
@@ -374,7 +374,7 @@ Qt::KeyboardModifiers xkb_keyboard::modifiers_relevant_for_global_shortcuts(uint
     return mods & ~consumed_mods;
 }
 
-xkb_keysym_t xkb_keyboard::to_keysym(uint32_t key)
+xkb_keysym_t keyboard::to_keysym(uint32_t key)
 {
     if (!state) {
         return XKB_KEY_NoSymbol;
@@ -382,7 +382,7 @@ xkb_keysym_t xkb_keyboard::to_keysym(uint32_t key)
     return xkb_state_key_get_one_sym(state, key + 8);
 }
 
-std::string xkb_keyboard::to_string(xkb_keysym_t keysym)
+std::string keyboard::to_string(xkb_keysym_t keysym)
 {
     if (!state || keysym == XKB_KEY_NoSymbol) {
         return {};
@@ -397,10 +397,10 @@ std::string xkb_keyboard::to_string(xkb_keysym_t keysym)
     return std::string(byteArray.constData());
 }
 
-Qt::Key xkb_keyboard::to_qt_key(xkb_keysym_t keysym,
-                                uint32_t scanCode,
-                                Qt::KeyboardModifiers modifiers,
-                                bool superAsMeta) const
+Qt::Key keyboard::to_qt_key(xkb_keysym_t keysym,
+                            uint32_t scanCode,
+                            Qt::KeyboardModifiers modifiers,
+                            bool superAsMeta) const
 {
     // FIXME: passing superAsMeta doesn't have impact due to bug in the Qt function, so handle it
     // below
@@ -424,7 +424,7 @@ Qt::Key xkb_keyboard::to_qt_key(xkb_keysym_t keysym,
     return qtKey;
 }
 
-bool xkb_keyboard::should_key_repeat(uint32_t key) const
+bool keyboard::should_key_repeat(uint32_t key) const
 {
     if (!keymap) {
         return false;
@@ -432,7 +432,7 @@ bool xkb_keyboard::should_key_repeat(uint32_t key) const
     return xkb_keymap_key_repeats(keymap, key + 8) != 0;
 }
 
-void xkb_keyboard::switch_to_next_layout()
+void keyboard::switch_to_next_layout()
 {
     if (!keymap || !state) {
         return;
@@ -444,7 +444,7 @@ void xkb_keyboard::switch_to_next_layout()
     switch_to_layout(next % num_layouts);
 }
 
-void xkb_keyboard::switch_to_previous_layout()
+void keyboard::switch_to_previous_layout()
 {
     if (!keymap || !state) {
         return;
@@ -453,7 +453,7 @@ void xkb_keyboard::switch_to_previous_layout()
     switch_to_layout(previousLayout);
 }
 
-bool xkb_keyboard::switch_to_layout(xkb_layout_index_t layout)
+bool keyboard::switch_to_layout(xkb_layout_index_t layout)
 {
     if (!keymap || !state || layout >= layouts_count()) {
         return false;
@@ -469,7 +469,7 @@ bool xkb_keyboard::switch_to_layout(xkb_layout_index_t layout)
     return true;
 }
 
-uint32_t xkb_keyboard::layouts_count() const
+uint32_t keyboard::layouts_count() const
 {
     if (!keymap) {
         return 0;

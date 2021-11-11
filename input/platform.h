@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "xkb.h"
+#include "xkb/manager.h"
 
 #include <kwin_export.h>
 
@@ -41,7 +41,7 @@ public:
     std::vector<switch_device*> switches;
     std::vector<touch*> touchs;
 
-    input::xkb xkb;
+    input::xkb::manager xkb;
     std::unique_ptr<input::redirect> redirect;
     std::unique_ptr<input::cursor> cursor;
 

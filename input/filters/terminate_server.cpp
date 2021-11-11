@@ -10,7 +10,7 @@
 #include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
 #include "input/logging.h"
-#include "input/xkb_keyboard.h"
+#include "input/xkb/keyboard.h"
 #include "main.h"
 
 #include "utils.h"

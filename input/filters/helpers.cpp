@@ -11,7 +11,7 @@
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
 #include "input/redirect.h"
-#include "input/xkb_helpers.h"
+#include "input/xkb/helpers.h"
 #include "main.h"
 #include "options.h"
 #include "wayland_server.h"
@@ -26,7 +26,7 @@ namespace KWin::input
 
 bool get_modifier_command(uint32_t key, Options::MouseCommand& command)
 {
-    if (get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
+    if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
         != options->commandAllModifier()) {
         return false;
     }
@@ -87,7 +87,7 @@ bool get_wheel_modifier_command(axis_orientation orientation,
                                 double delta,
                                 Options::MouseCommand& command)
 {
-    if (get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
+    if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
         != options->commandAllModifier()) {
         return false;
     }

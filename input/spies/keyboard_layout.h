@@ -22,8 +22,6 @@ class QDBusArgument;
 
 namespace KWin::input
 {
-class xkb;
-class xkb_keyboard;
 
 namespace dbus
 {
@@ -35,15 +33,21 @@ namespace keyboard_layout_switching
 class policy;
 }
 
+namespace xkb
+{
+class keyboard;
+class manager;
+}
+
 class KWIN_EXPORT keyboard_layout_spy : public QObject, public input::event_spy
 {
     Q_OBJECT
 public:
-    keyboard_layout_spy(input::xkb& xkb, KSharedConfigPtr const& config);
+    keyboard_layout_spy(input::xkb::manager& xkb, KSharedConfigPtr const& config);
 
     void init();
 
-    void check_layout_change(input::xkb_keyboard* xkb, uint32_t old_layout);
+    void check_layout_change(input::xkb::keyboard* xkb, uint32_t old_layout);
     void switchToNextLayout();
     void switchToPreviousLayout();
     void resetLayout();
@@ -61,7 +65,7 @@ private:
     void switchToLayout(xkb_layout_index_t index);
     void loadShortcuts();
 
-    input::xkb& xkb;
+    input::xkb::manager& xkb;
     xkb_layout_index_t m_layout = 0;
     KConfigGroup m_configGroup;
     QVector<QAction*> m_layoutShortcuts;

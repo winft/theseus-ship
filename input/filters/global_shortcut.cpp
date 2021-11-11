@@ -12,7 +12,7 @@
 #include "input/keyboard_redirect.h"
 #include "input/qt_event.h"
 #include "input/redirect.h"
-#include "input/xkb_helpers.h"
+#include "input/xkb/helpers.h"
 #include "main.h"
 
 #include <QTimer>
@@ -36,7 +36,7 @@ bool global_shortcut_filter::button(button_event const& event)
 {
     if (event.state == button_state::pressed) {
         auto redirect = kwinApp()->input->redirect.get();
-        auto mods = get_active_keyboard_modifiers(kwinApp()->input.get());
+        auto mods = xkb::get_active_keyboard_modifiers(kwinApp()->input.get());
         if (redirect->shortcuts()->processPointerPressed(mods, redirect->qtButtonStates())) {
             return true;
         }
@@ -46,7 +46,7 @@ bool global_shortcut_filter::button(button_event const& event)
 
 bool global_shortcut_filter::axis(axis_event const& event)
 {
-    auto mods = get_active_keyboard_modifiers(kwinApp()->input);
+    auto mods = xkb::get_active_keyboard_modifiers(kwinApp()->input);
 
     if (mods == Qt::NoModifier) {
         return false;

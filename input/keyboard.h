@@ -7,7 +7,7 @@
 
 #include "control/keyboard.h"
 #include "event.h"
-#include "xkb_keyboard.h"
+#include "xkb/keyboard.h"
 
 #include <kwin_export.h>
 
@@ -15,7 +15,6 @@
 
 namespace KWin::input
 {
-class xkb_keyboard;
 
 class KWIN_EXPORT keyboard : public QObject
 {
@@ -23,7 +22,7 @@ class KWIN_EXPORT keyboard : public QObject
 public:
     input::platform* platform;
     control::keyboard* control{nullptr};
-    std::unique_ptr<xkb_keyboard> xkb;
+    std::unique_ptr<xkb::keyboard> xkb;
 
     keyboard(input::platform* platform);
     keyboard(keyboard const&) = delete;

@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
-#include "input/xkb_helpers.h"
+#include "input/xkb/helpers.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
@@ -94,7 +94,7 @@ void GlobalShortcutsTest::init()
     screens()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 
-    input::get_primary_xkb_keyboard()->switch_to_layout(0);
+    input::xkb::get_primary_xkb_keyboard()->switch_to_layout(0);
 }
 
 void GlobalShortcutsTest::cleanup()
@@ -142,7 +142,7 @@ void GlobalShortcutsTest::testNonLatinLayout_data()
 void GlobalShortcutsTest::testNonLatinLayout()
 {
     // Shortcuts on non-Latin layouts should still work, see BUG 375518
-    auto xkb = input::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard();
     xkb->switch_to_layout(1);
     QCOMPARE(xkb->layout_name(), "Russian");
 
@@ -191,7 +191,7 @@ void GlobalShortcutsTest::testConsumedShift()
     // press shift+5
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input::get_active_keyboard_modifiers(kwinApp()->input), Qt::ShiftModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::ShiftModifier);
     Test::keyboard_key_pressed(KEY_5, timestamp++);
 
     QVERIFY(triggeredSpy.size() || triggeredSpy.wait());
@@ -224,7 +224,7 @@ void GlobalShortcutsTest::testRepeatedTrigger()
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_WAKEUP, timestamp++);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input::get_active_keyboard_modifiers(kwinApp()->input), Qt::ShiftModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::ShiftModifier);
     Test::keyboard_key_pressed(KEY_5, timestamp++);
 
     QVERIFY(triggeredSpy.size() || triggeredSpy.wait());
@@ -287,9 +287,9 @@ void GlobalShortcutsTest::testMetaShiftW()
     // press meta+shift+w
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    QCOMPARE(input::get_active_keyboard_modifiers(kwinApp()->input), Qt::MetaModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::MetaModifier);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input::get_active_keyboard_modifiers(kwinApp()->input),
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input),
              Qt::ShiftModifier | Qt::MetaModifier);
     Test::keyboard_key_pressed(KEY_W, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 1);

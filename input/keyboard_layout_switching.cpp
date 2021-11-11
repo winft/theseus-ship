@@ -10,7 +10,7 @@
 #include "toplevel.h"
 #include "virtualdesktops.h"
 #include "workspace.h"
-#include "xkb_helpers.h"
+#include "xkb/helpers.h"
 
 #include "win/control.h"
 #include "win/net.h"
@@ -36,7 +36,7 @@ policy::~policy() = default;
 
 void policy::set_layout(uint index)
 {
-    auto xkb = get_primary_xkb_keyboard();
+    auto xkb = xkb::get_primary_xkb_keyboard();
 
     auto const previous_layout = xkb->layout;
     xkb->switch_to_layout(index);
@@ -87,14 +87,14 @@ global_policy::global_policy(keyboard_layout_spy* layout, KConfigGroup const& co
     QObject::connect(
         workspace()->sessionManager(), &SessionManager::prepareSessionSaveRequested, this, [this] {
             clear_layouts();
-            if (auto const layout = get_primary_xkb_keyboard()->layout) {
+            if (auto const layout = xkb::get_primary_xkb_keyboard()->layout) {
                 this->config.writeEntry(default_layout_entry_key(), layout);
             }
         });
 
     QObject::connect(
         workspace()->sessionManager(), &SessionManager::loadSessionRequested, this, [this] {
-            if (get_primary_xkb_keyboard()->layouts_count() > 1) {
+            if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
                 set_layout(this->config.readEntry(default_layout_entry_key(), 0));
             }
         });
@@ -127,7 +127,7 @@ virtual_desktop_policy::virtual_desktop_policy(keyboard_layout_spy* layout,
 
     QObject::connect(
         workspace()->sessionManager(), &SessionManager::loadSessionRequested, this, [this] {
-            if (get_primary_xkb_keyboard()->layouts_count() > 1) {
+            if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
                 auto const& desktops = VirtualDesktopManager::self()->desktops();
 
                 for (KWin::VirtualDesktop* const desktop : desktops) {
@@ -264,7 +264,7 @@ application_policy::application_policy(keyboard_layout_spy* layout, KConfigGroup
 
     QObject::connect(
         workspace()->sessionManager(), &SessionManager::loadSessionRequested, this, [this] {
-            if (get_primary_xkb_keyboard()->layouts_count() > 1) {
+            if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
                 auto const keyPrefix = default_layout_entry_key();
                 auto const keyList = this->config.keyList().filter(keyPrefix);
                 for (auto const& key : keyList) {
@@ -310,7 +310,7 @@ void application_policy::handle_client_activated(Toplevel* window)
 
     set_layout(restored_layout);
 
-    if (auto index = get_primary_xkb_keyboard()->layout) {
+    if (auto index = xkb::get_primary_xkb_keyboard()->layout) {
         handle_layout_change(index);
     }
 }

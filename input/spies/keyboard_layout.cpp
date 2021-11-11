@@ -11,7 +11,7 @@
 #include "input/event.h"
 #include "input/keyboard_layout_helpers.h"
 #include "input/keyboard_layout_switching.h"
-#include "input/xkb_helpers.h"
+#include "input/xkb/helpers.h"
 #include "main.h"
 #include "platform.h"
 
@@ -25,7 +25,7 @@
 namespace KWin::input
 {
 
-keyboard_layout_spy::keyboard_layout_spy(input::xkb& xkb, KSharedConfigPtr const& config)
+keyboard_layout_spy::keyboard_layout_spy(xkb::manager& xkb, KSharedConfigPtr const& config)
     : xkb{xkb}
     , m_configGroup(config->group("Layout"))
 {
@@ -56,7 +56,7 @@ void keyboard_layout_spy::init()
 
 void keyboard_layout_spy::initDBusInterface()
 {
-    auto xkb = get_primary_xkb_keyboard();
+    auto xkb = xkb::get_primary_xkb_keyboard();
 
     if (xkb->layouts_count() <= 1) {
         if (m_dbusInterface) {
@@ -85,7 +85,7 @@ void keyboard_layout_spy::initDBusInterface()
 
 void keyboard_layout_spy::switchToNextLayout()
 {
-    auto xkb = get_primary_xkb_keyboard();
+    auto xkb = xkb::get_primary_xkb_keyboard();
     auto const previousLayout = xkb->layout;
     xkb->switch_to_next_layout();
     check_layout_change(xkb, previousLayout);
@@ -93,7 +93,7 @@ void keyboard_layout_spy::switchToNextLayout()
 
 void keyboard_layout_spy::switchToPreviousLayout()
 {
-    auto xkb = get_primary_xkb_keyboard();
+    auto xkb = xkb::get_primary_xkb_keyboard();
     auto const previousLayout = xkb->layout;
     xkb->switch_to_previous_layout();
     check_layout_change(xkb, previousLayout);
@@ -101,7 +101,7 @@ void keyboard_layout_spy::switchToPreviousLayout()
 
 void keyboard_layout_spy::switchToLayout(xkb_layout_index_t index)
 {
-    auto xkb = get_primary_xkb_keyboard();
+    auto xkb = xkb::get_primary_xkb_keyboard();
     auto const previousLayout = xkb->layout;
     xkb->switch_to_layout(index);
     check_layout_change(xkb, previousLayout);
@@ -125,7 +125,7 @@ void keyboard_layout_spy::reconfigure()
 
 void keyboard_layout_spy::resetLayout()
 {
-    auto xkb = get_primary_xkb_keyboard();
+    auto xkb = xkb::get_primary_xkb_keyboard();
 
     m_layout = xkb->layout;
     loadShortcuts();
@@ -139,7 +139,7 @@ void keyboard_layout_spy::loadShortcuts()
     qDeleteAll(m_layoutShortcuts);
     m_layoutShortcuts.clear();
 
-    auto xkb = get_primary_xkb_keyboard();
+    auto xkb = xkb::get_primary_xkb_keyboard();
 
     const QString componentName = QStringLiteral("KDE Keyboard Layout Switcher");
     auto const count = xkb->layouts_count();
@@ -162,14 +162,14 @@ void keyboard_layout_spy::loadShortcuts()
     }
 }
 
-void keyboard_layout_spy::check_layout_change(input::xkb_keyboard* xkb, uint32_t old_layout)
+void keyboard_layout_spy::check_layout_change(input::xkb::keyboard* xkb, uint32_t old_layout)
 {
     // Get here on key event or DBus call.
     // m_layout - layout saved last time OSD occurred
     // previousLayout - actual layout just before potential layout change
     // We need OSD if current layout deviates from any of these
 
-    if (xkb != get_primary_xkb_keyboard()) {
+    if (xkb != xkb::get_primary_xkb_keyboard()) {
         // We currently only inform about changes on the primary device.
         return;
     }
@@ -183,7 +183,7 @@ void keyboard_layout_spy::check_layout_change(input::xkb_keyboard* xkb, uint32_t
 
 void keyboard_layout_spy::notifyLayoutChange()
 {
-    auto xkb = get_primary_xkb_keyboard();
+    auto xkb = xkb::get_primary_xkb_keyboard();
 
     // notify OSD service about the new layout
     QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),

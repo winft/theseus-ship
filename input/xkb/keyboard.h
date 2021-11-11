@@ -5,9 +5,10 @@
 */
 #pragma once
 
-#include "event.h"
-#include "types.h"
-#include "xkb.h"
+#include "manager.h"
+
+#include "input/event.h"
+#include "input/types.h"
 
 struct xkb_compose_state;
 struct xkb_context;
@@ -24,15 +25,15 @@ namespace Wrapland::Server
 class Seat;
 }
 
-namespace KWin::input
+namespace KWin::input::xkb
 {
 
-class KWIN_EXPORT xkb_keyboard : public QObject
+class KWIN_EXPORT keyboard : public QObject
 {
     Q_OBJECT
 public:
-    xkb_keyboard(input::xkb& xkb);
-    ~xkb_keyboard() override;
+    keyboard(xkb::manager& manager);
+    ~keyboard() override;
 
     void install_keymap(int fd, uint32_t size);
 
@@ -121,7 +122,7 @@ private:
 
     Qt::KeyboardModifiers qt_modifiers_consumed{Qt::NoModifier};
     xkb_compose_state* compose_state{nullptr};
-    input::xkb& xkb;
+    xkb::manager& manager;
 };
 
 }

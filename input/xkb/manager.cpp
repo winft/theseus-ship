@@ -6,12 +6,13 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "xkb.h"
+#include "manager.h"
 
 #include "keyboard.h"
-#include "platform.h"
-#include "types.h"
-#include "xkb_keyboard.h"
+
+#include "input/keyboard.h"
+#include "input/platform.h"
+#include "input/types.h"
 
 #include <xkbcommon/xkbcommon-compose.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
@@ -20,7 +21,7 @@
 
 Q_LOGGING_CATEGORY(KWIN_XKB, "kwin_xkbcommon", QtWarningMsg)
 
-namespace KWin::input
+namespace KWin::input::xkb
 {
 
 static void xkbLogHandler([[maybe_unused]] xkb_context* context,
@@ -57,7 +58,7 @@ static void xkbLogHandler([[maybe_unused]] xkb_context* context,
     }
 }
 
-xkb::xkb(input::platform* platform)
+manager::manager(input::platform* platform)
     : context(xkb_context_new(XKB_CONTEXT_NO_FLAGS))
     , platform{platform}
 {
@@ -86,26 +87,26 @@ xkb::xkb(input::platform* platform)
     compose_table = xkb_compose_table_new_from_locale(
         context, locale.constData(), XKB_COMPOSE_COMPILE_NO_FLAGS);
 
-    default_keyboard = std::make_unique<xkb_keyboard>(*this);
+    default_keyboard = std::make_unique<keyboard>(*this);
 }
 
-xkb::~xkb()
+manager::~manager()
 {
     xkb_compose_table_unref(compose_table);
     xkb_context_unref(context);
 }
 
-void xkb::setConfig(const KSharedConfigPtr& config)
+void manager::setConfig(const KSharedConfigPtr& config)
 {
     m_configGroup = config->group("Layout");
 }
 
-void xkb::setNumLockConfig(const KSharedConfigPtr& config)
+void manager::setNumLockConfig(const KSharedConfigPtr& config)
 {
     m_numLockConfig = config;
 }
 
-void xkb::reconfigure()
+void manager::reconfigure()
 {
     xkb_keymap* keymap{nullptr};
     std::vector<std::string> layouts;
@@ -143,8 +144,8 @@ static bool stringIsEmptyOrNull(const char* str)
  * As kwin_wayland may have the CAP_SET_NICE capability, it returns nullptr
  * so we need to do it ourselves (see xkb_context_sanitize_rule_names).
  **/
-void xkb::apply_environment_rules(xkb_rule_names& ruleNames,
-                                  std::vector<std::string>& layouts) const
+void manager::apply_environment_rules(xkb_rule_names& ruleNames,
+                                      std::vector<std::string>& layouts) const
 {
     if (stringIsEmptyOrNull(ruleNames.rules)) {
         ruleNames.rules = getenv("XKB_DEFAULT_RULES");
@@ -175,7 +176,7 @@ void xkb::apply_environment_rules(xkb_rule_names& ruleNames,
     }
 }
 
-xkb_keymap* xkb::loadKeymapFromConfig(std::vector<std::string>& layouts)
+xkb_keymap* manager::loadKeymapFromConfig(std::vector<std::string>& layouts)
 {
     // load config
     if (!m_configGroup.isValid()) {
@@ -198,7 +199,7 @@ xkb_keymap* xkb::loadKeymapFromConfig(std::vector<std::string>& layouts)
     return xkb_keymap_new_from_names(context, &ruleNames, XKB_KEYMAP_COMPILE_NO_FLAGS);
 }
 
-xkb_keymap* xkb::loadDefaultKeymap(std::vector<std::string>& layouts)
+xkb_keymap* manager::loadDefaultKeymap(std::vector<std::string>& layouts)
 {
     xkb_rule_names ruleNames = {};
 
@@ -207,7 +208,7 @@ xkb_keymap* xkb::loadDefaultKeymap(std::vector<std::string>& layouts)
     return xkb_keymap_new_from_names(context, &ruleNames, XKB_KEYMAP_COMPILE_NO_FLAGS);
 }
 
-latched_key_change xkb::read_startup_num_lock_config()
+latched_key_change manager::read_startup_num_lock_config()
 {
     if (!m_numLockConfig) {
         return latched_key_change::unchanged;

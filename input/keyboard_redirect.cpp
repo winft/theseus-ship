@@ -11,7 +11,7 @@
 #include "event_spy.h"
 #include "keyboard.h"
 #include "redirect.h"
-#include "xkb_keyboard.h"
+#include "xkb/keyboard.h"
 
 #include <KGlobalAccel>
 #include <QKeyEvent>

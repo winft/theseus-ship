@@ -14,7 +14,7 @@
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
 #include "input/redirect.h"
-#include "input/xkb_keyboard.h"
+#include "input/xkb/keyboard.h"
 #include "main.h"
 #include "wayland_server.h"
 

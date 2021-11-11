@@ -6,18 +6,18 @@
 #pragma once
 
 #include "keyboard.h"
-#include "platform.h"
-#include "xkb_keyboard.h"
 
+#include "input/keyboard.h"
+#include "input/platform.h"
 #include "main.h"
 
-namespace KWin::input
+namespace KWin::input::xkb
 {
 
 /**
  * Retuns the first configurable keyboard, otherwise the default-created keyboard is returned.
  */
-inline xkb_keyboard* get_primary_xkb_keyboard()
+inline keyboard* get_primary_xkb_keyboard()
 {
     auto const& platform = kwinApp()->input;
     auto const& keyboards = platform->keyboards;

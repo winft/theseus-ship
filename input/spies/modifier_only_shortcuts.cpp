@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/event.h"
 #include "input/keyboard.h"
 #include "input/qt_event.h"
-#include "input/xkb_helpers.h"
+#include "input/xkb/helpers.h"
 #include "options.h"
 #include "screenlockerwatcher.h"
 #include "workspace.h"
@@ -48,7 +48,7 @@ modifier_only_shortcuts_spy::~modifier_only_shortcuts_spy() = default;
 
 void modifier_only_shortcuts_spy::key(key_event const& event)
 {
-    auto mods = get_active_keyboard_modifiers(kwinApp()->input.get());
+    auto mods = xkb::get_active_keyboard_modifiers(kwinApp()->input.get());
 
     if (event.state == key_state::pressed) {
         const bool wasEmpty = m_pressedKeys.isEmpty();
@@ -83,7 +83,7 @@ void modifier_only_shortcuts_spy::key(key_event const& event)
     }
 
     m_cachedMods
-        = get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input.get());
+        = xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input.get());
 }
 
 void modifier_only_shortcuts_spy::button(button_event const& event)

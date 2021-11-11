@@ -13,8 +13,8 @@
 #include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
 #include "input/redirect.h"
-#include "input/xkb_helpers.h"
-#include "input/xkb_keyboard.h"
+#include "input/xkb/helpers.h"
+#include "input/xkb/keyboard.h"
 #include "input_filter.h"
 #include "main.h"
 #include "win/wayland/space.h"
@@ -90,7 +90,7 @@ QString stateActiveComponents(xkb_state* state,
 
 void wayland_console::update_keyboard_tab()
 {
-    auto xkb = input::get_primary_xkb_keyboard();
+    auto xkb = input::xkb::get_primary_xkb_keyboard();
 
     m_ui->layoutsLabel->setText(keymapComponentToString<xkb_layout_index_t>(
         xkb->keymap, xkb_keymap_num_layouts(xkb->keymap), &xkb_keymap_layout_get_name));

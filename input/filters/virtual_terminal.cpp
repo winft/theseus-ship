@@ -8,7 +8,7 @@
 
 #include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
-#include "input/xkb_keyboard.h"
+#include "input/xkb/keyboard.h"
 #include "main.h"
 #include "seat/session.h"
 

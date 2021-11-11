@@ -20,7 +20,7 @@
 #include "input/pointer.h"
 #include "input/switch.h"
 #include "input/touch.h"
-#include "input/xkb_keyboard.h"
+#include "input/xkb/keyboard.h"
 
 // TODO(romangg): should only be included when KWIN_BUILD_TABBOX is defined.
 #include "input/filters/tabbox.h"
@@ -348,11 +348,11 @@ void redirect::handle_keyboard_added(input::keyboard* keyboard)
     waylandServer()->updateKeyState(keyboard->xkb->leds);
 
     QObject::connect(keyboard->xkb.get(),
-                     &xkb_keyboard::leds_changed,
+                     &xkb::keyboard::leds_changed,
                      waylandServer(),
                      &WaylandServer::updateKeyState);
     QObject::connect(keyboard->xkb.get(),
-                     &xkb_keyboard::leds_changed,
+                     &xkb::keyboard::leds_changed,
                      platform,
                      &platform::update_keyboard_leds);
 }

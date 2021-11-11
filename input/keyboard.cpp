@@ -13,7 +13,7 @@ namespace KWin::input
 
 keyboard::keyboard(input::platform* platform)
     : platform{platform}
-    , xkb{std::make_unique<xkb_keyboard>(platform->xkb)}
+    , xkb{std::make_unique<xkb::keyboard>(platform->xkb)}
 {
     platform->keyboards.push_back(this);
 }

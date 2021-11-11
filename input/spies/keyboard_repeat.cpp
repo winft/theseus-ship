@@ -9,7 +9,7 @@
 
 #include "input/event.h"
 #include "input/keyboard.h"
-#include "input/xkb_helpers.h"
+#include "input/xkb/keyboard.h"
 #include "main.h"
 #include "wayland_server.h"
 

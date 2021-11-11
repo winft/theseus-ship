@@ -16,7 +16,6 @@ class QTimer;
 namespace KWin::input
 {
 class keyboard;
-class xkb;
 
 class KWIN_EXPORT keyboard_repeat_spy : public QObject, public input::event_spy
 {

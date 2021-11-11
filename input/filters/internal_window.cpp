@@ -13,7 +13,7 @@
 #include "input/qt_event.h"
 #include "input/redirect.h"
 #include "input/touch_redirect.h"
-#include "input/xkb_helpers.h"
+#include "input/xkb/helpers.h"
 #include "main.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -229,7 +229,7 @@ bool internal_window_filter::touch_down(touch_down_event const& event)
                   event.pos,
                   Qt::LeftButton,
                   Qt::LeftButton,
-                  get_active_keyboard_modifiers(kwinApp()->input));
+                  xkb::get_active_keyboard_modifiers(kwinApp()->input));
     e.setAccepted(false);
     QCoreApplication::sendEvent(internal, &e);
     return true;
@@ -258,7 +258,7 @@ bool internal_window_filter::touch_motion(touch_motion_event const& event)
                   m_lastGlobalTouchPos,
                   Qt::LeftButton,
                   Qt::LeftButton,
-                  get_active_keyboard_modifiers(kwinApp()->input));
+                  xkb::get_active_keyboard_modifiers(kwinApp()->input));
     QCoreApplication::instance()->sendEvent(internal, &e);
     return true;
 }
@@ -285,7 +285,7 @@ bool internal_window_filter::touch_up(touch_up_event const& event)
                   m_lastGlobalTouchPos,
                   Qt::LeftButton,
                   Qt::MouseButtons(),
-                  get_active_keyboard_modifiers(kwinApp()->input));
+                  xkb::get_active_keyboard_modifiers(kwinApp()->input));
     e.setAccepted(false);
     QCoreApplication::sendEvent(internal, &e);
 

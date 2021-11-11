@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
-#include "input/xkb_helpers.h"
+#include "input/xkb/helpers.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screenedge.h"
@@ -241,10 +241,10 @@ void NoGlobalShortcutsTest::testKGlobalAccel()
     // press meta+shift+w
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    QCOMPARE(input::get_active_keyboard_modifiers(kwinApp()->input), Qt::MetaModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::MetaModifier);
 
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(input::get_active_keyboard_modifiers(kwinApp()->input),
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input),
              Qt::ShiftModifier | Qt::MetaModifier);
 
     Test::keyboard_key_pressed(KEY_W, timestamp++);

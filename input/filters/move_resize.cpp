@@ -11,7 +11,7 @@
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
 #include "input/redirect.h"
-#include "input/xkb_helpers.h"
+#include "input/xkb/helpers.h"
 #include "main.h"
 #include "win/input.h"
 #include "win/move.h"
@@ -54,7 +54,7 @@ void process_key_press(Toplevel* window, key_event const& event)
 
     win::key_press_event(window,
                          key_to_qt_key(event.keycode, event.base.dev->xkb.get())
-                             | get_active_keyboard_modifiers(input));
+                             | xkb::get_active_keyboard_modifiers(input));
 
     if (win::is_move(window) || win::is_resize(window)) {
         // Only update if mode didn't end.
