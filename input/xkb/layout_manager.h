@@ -30,6 +30,7 @@ class keyboard;
 namespace dbus
 {
 class keyboard_layout;
+class keyboard_layouts_v2;
 }
 
 namespace xkb
@@ -63,6 +64,7 @@ private Q_SLOTS:
 
 private:
     void initDBusInterface();
+    void init_dbus_interface_v2();
     void add_keyboard(input::keyboard* keyboard);
     void handle_layout_change(xkb::keyboard* xkb);
     void send_layout_to_osd(xkb::keyboard* xkb);
@@ -73,6 +75,7 @@ private:
     KConfigGroup m_configGroup;
     QVector<QAction*> m_layoutShortcuts;
     dbus::keyboard_layout* m_dbusInterface = nullptr;
+    dbus::keyboard_layouts_v2* dbus_interface_v2{nullptr};
     xkb::layout_policy* m_policy = nullptr;
 };
 

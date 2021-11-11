@@ -12,6 +12,7 @@
 
 #include "../../platform.h"
 #include "input/dbus/keyboard_layout.h"
+#include "input/dbus/keyboard_layouts_v2.h"
 #include "input/event.h"
 #include "input/keyboard.h"
 #include "main.h"
@@ -60,6 +61,8 @@ void layout_manager::init()
     }
 
     QObject::connect(xkb.platform, &platform::keyboard_added, this, &layout_manager::add_keyboard);
+
+    init_dbus_interface_v2();
 }
 
 void layout_manager::initDBusInterface()
@@ -89,6 +92,12 @@ void layout_manager::initDBusInterface()
                      &layout_manager::layoutsReconfigured,
                      m_dbusInterface,
                      &dbus::keyboard_layout::layoutListChanged);
+}
+
+void layout_manager::init_dbus_interface_v2()
+{
+    assert(!dbus_interface_v2);
+    dbus_interface_v2 = new dbus::keyboard_layouts_v2(xkb.platform, this);
 }
 
 void layout_manager::switchToNextLayout()

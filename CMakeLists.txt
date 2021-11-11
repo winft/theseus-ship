@@ -769,6 +769,7 @@ set(kwin_WAYLAND_SRCS
    input/dbus/device.cpp
    input/dbus/device_manager.cpp
    input/dbus/keyboard_layout.cpp
+   input/dbus/keyboard_layouts_v2.cpp
    input/dbus/tablet_mode_manager.cpp
    input/filters/decoration_event.cpp
    input/filters/dpms.cpp

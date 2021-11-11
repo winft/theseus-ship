@@ -90,6 +90,7 @@ public:
 
 Q_SIGNALS:
     void layout_changed();
+    void layouts_changed();
     void leds_changed(keyboard_leds leds);
 
 private:
