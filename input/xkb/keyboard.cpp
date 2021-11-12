@@ -215,6 +215,8 @@ void keyboard::update_key(uint32_t key, key_state state)
         return;
     }
 
+    forward_modifiers();
+
     xkb_state_update_key(this->state, key + 8, static_cast<xkb_key_direction>(state));
     if (state == key_state::pressed) {
         const auto sym = to_keysym(key);
