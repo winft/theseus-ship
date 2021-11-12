@@ -30,6 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorationrenderer.h"
 #include "platformsupport/scenes/opengl/backend.h"
 
+#include <unordered_map>
+
 namespace KWin
 {
 class LanczosFilter;

@@ -747,10 +747,11 @@ void Workspace::slotReconfigure()
     win::update_tool_windows(this, true);
 
     RuleBook::self()->load();
-    for (auto it = m_allClients.begin(); it != m_allClients.end(); ++it) {
-        win::setup_rules(*it, true);
-        (*it)->applyWindowRules();
-        RuleBook::self()->discardUsed(*it, false);
+    for (auto window : m_allClients) {
+        if (window->supportsWindowRules()) {
+            win::evaluate_rules(window);
+            RuleBook::self()->discardUsed(window, false);
+        }
     }
 
     if (borderlessMaximizedWindows != options->borderlessMaximizedWindows()

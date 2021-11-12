@@ -784,8 +784,8 @@ layer window::layer_for_dock() const
     case PSS::PanelBehavior::WindowsCanCover:
         return layer::normal;
     case PSS::PanelBehavior::AutoHide:
-        return layer::above;
     case PSS::PanelBehavior::WindowsGoBelow:
+        return layer::above;
     case PSS::PanelBehavior::AlwaysVisible:
         return layer::dock;
     default:

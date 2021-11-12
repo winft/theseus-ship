@@ -161,6 +161,12 @@ set_package_properties(XKB PROPERTIES
 
 find_package(Qt5XkbCommonSupport REQUIRED)
 
+find_package(Threads)
+set_package_properties(Threads PROPERTIES
+    TYPE REQUIRED
+    PURPOSE "Required for building KWin with Wayland support"
+)
+
 find_package(Libinput 1.9)
 set_package_properties(Libinput PROPERTIES TYPE REQUIRED PURPOSE "Required for input handling on Wayland.")
 
