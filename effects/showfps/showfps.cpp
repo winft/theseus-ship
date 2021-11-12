@@ -402,7 +402,7 @@ void ShowFpsEffect::paintGraph(int x, int y, QList<int> values, QList<int> lines
         vbo->setColor(color);
         QVector<float> verts;
         // First draw the lines
-        foreach (int h, lines) {
+        for (auto h : qAsConst(lines)) {
             verts << x << y - h;
             verts << x + values.count() << y - h;
         }
@@ -487,7 +487,7 @@ void ShowFpsEffect::paintGraph(int x, int y, QList<int> values, QList<int> lines
         // Then the lines
         col.red = col.green = col.blue = 0;  // black
         QVector<xcb_rectangle_t> rects;
-        foreach (int h, lines) {
+        for (auto h : qAsConst(lines)) {
             xcb_rectangle_t rect = {0, int16_t(MAX_TIME - h), uint16_t(values.count()), 1};
             rects << rect;
         }
@@ -502,7 +502,7 @@ void ShowFpsEffect::paintGraph(int x, int y, QList<int> values, QList<int> lines
         QPainter *painter = effects->scenePainter();
         painter->setPen(Qt::black);
         // First draw the lines
-        foreach (int h, lines) {
+        for (auto h : qAsConst(lines)) {
             painter->drawLine(x, y - h, x + values.count(), y - h);
         }
         QColor color(0, 0, 0);

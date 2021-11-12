@@ -194,9 +194,11 @@ void Monitor::selectEdgeItem(int edge, int index)
 
 int Monitor::selectedEdgeItem(int edge) const
 {
-    foreach (QAction * act, popup_actions[ edge ])
-    if (act->isChecked())
-        return popup_actions[ edge ].indexOf(act);
+    for (auto const& act : qAsConst(popup_actions[edge])) {
+        if (act->isChecked()) {
+           return popup_actions[edge].indexOf(act);
+        }
+    }
     abort();
 }
 

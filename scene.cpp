@@ -175,7 +175,7 @@ void Scene::paintScreen(int* mask, const QRegion &damage, const QRegion &repaint
     ScreenPaintData data(projection, repaint_output ? effects->findScreen(repaint_output->name()) : nullptr);
     effects->paintScreen(*mask, region, data);
 
-    foreach (Window *w, stacking_order) {
+    for (auto const& w : qAsConst(stacking_order)) {
         effects->postPaintWindow(effectWindow(w));
     }
 
@@ -215,7 +215,8 @@ void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
     }
     QVector<Phase2Data> phase2;
     phase2.reserve(stacking_order.size());
-    foreach (Window * w, stacking_order) { // bottom to top
+    for (auto const& w : qAsConst(stacking_order)) {
+        // bottom to top
         Toplevel* topw = w->window();
 
         // Reset the repaint_region.
@@ -242,7 +243,7 @@ void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
         phase2.append({w, infiniteRegion(), data.clip, data.mask, data.quads});
     }
 
-    foreach (const Phase2Data & d, phase2) {
+    for (auto const& d : phase2) {
         paintWindow(d.window, d.mask, d.region, d.quads);
     }
 

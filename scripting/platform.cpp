@@ -216,7 +216,7 @@ qt_script_space* platform::workspaceWrapper() const
 abstract_script* platform::findScript(const QString& pluginName) const
 {
     QMutexLocker locker(m_scriptsLock.data());
-    foreach (abstract_script* script, scripts) {
+    for (auto const& script : qAsConst(scripts)) {
         if (script->pluginName() == pluginName) {
             return script;
         }
@@ -227,7 +227,7 @@ abstract_script* platform::findScript(const QString& pluginName) const
 bool platform::unloadScript(const QString& pluginName)
 {
     QMutexLocker locker(m_scriptsLock.data());
-    foreach (abstract_script* script, scripts) {
+    for (auto const& script : qAsConst(scripts)) {
         if (script->pluginName() == pluginName) {
             script->deleteLater();
             return true;

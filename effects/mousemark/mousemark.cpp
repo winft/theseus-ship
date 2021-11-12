@@ -132,10 +132,10 @@ void MouseMarkEffect::paintScreen(int mask, const QRegion &region, ScreenPaintDa
         ShaderBinder binder(ShaderTrait::UniformColor);
         binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, data.projectionMatrix());
         QVector<float> verts;
-        foreach (const Mark & mark, marks) {
+        for (auto const& mark : qAsConst(marks)) {
             verts.clear();
             verts.reserve(mark.size() * 2);
-            foreach (const QPoint & p, mark) {
+            for (auto const& p : qAsConst(mark)) {
                 verts << p.x() << p.y();
             }
             vbo->setData(verts.size() / 2, 2, verts.data(), nullptr);
@@ -144,7 +144,7 @@ void MouseMarkEffect::paintScreen(int mask, const QRegion &region, ScreenPaintDa
         if (!drawing.isEmpty()) {
             verts.clear();
             verts.reserve(drawing.size() * 2);
-            foreach (const QPoint & p, drawing) {
+            for (auto const& p : qAsConst(drawing)) {
                 verts << p.x() << p.y();
             }
             vbo->setData(verts.size() / 2, 2, verts.data(), nullptr);
@@ -186,7 +186,7 @@ void MouseMarkEffect::paintScreen(int mask, const QRegion &region, ScreenPaintDa
         QPen pen(color);
         pen.setWidth(width);
         painter->setPen(pen);
-        foreach (const Mark &mark, marks) {
+        for (auto const& mark : qAsConst(marks)) {
             drawMark(painter, mark);
         }
         drawMark(painter, drawing);

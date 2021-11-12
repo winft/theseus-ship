@@ -508,7 +508,7 @@ Workspace::~Workspace()
     win::x11::root_info::destroy();
     delete startup;
     delete client_keys_dialog;
-    foreach (SessionInfo* s, session)
+    for (auto const& s : session)
         delete s;
 
     // TODO: ungrabXServer();
@@ -1322,20 +1322,19 @@ QString Workspace::supportInformation() const
         }
         support.append(QStringLiteral("\nLoaded Effects:\n"));
         support.append(QStringLiteral("---------------\n"));
-        foreach (const QString& effect,
-                 static_cast<EffectsHandlerImpl*>(effects)->loadedEffects()) {
+        auto const& loaded_effects = static_cast<EffectsHandlerImpl*>(effects)->loadedEffects();
+        for (auto const& effect : qAsConst(loaded_effects)) {
             support.append(effect + QStringLiteral("\n"));
         }
         support.append(QStringLiteral("\nCurrently Active Effects:\n"));
         support.append(QStringLiteral("-------------------------\n"));
-        foreach (const QString& effect,
-                 static_cast<EffectsHandlerImpl*>(effects)->activeEffects()) {
+        auto const& active_effects = static_cast<EffectsHandlerImpl*>(effects)->activeEffects();
+        for (auto const& effect : qAsConst(active_effects)) {
             support.append(effect + QStringLiteral("\n"));
         }
         support.append(QStringLiteral("\nEffect Settings:\n"));
         support.append(QStringLiteral("----------------\n"));
-        foreach (const QString& effect,
-                 static_cast<EffectsHandlerImpl*>(effects)->loadedEffects()) {
+        for (auto const& effect : qAsConst(loaded_effects)) {
             support.append(static_cast<EffectsHandlerImpl*>(effects)->supportInformation(effect));
             support.append(QStringLiteral("\n"));
         }
