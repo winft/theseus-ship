@@ -38,14 +38,7 @@ layout_policy::~layout_policy() = default;
 
 void layout_policy::set_layout(uint index)
 {
-    auto xkb = xkb::get_primary_xkb_keyboard();
-
-    auto const previous_layout = xkb->layout;
-    xkb->switch_to_layout(index);
-
-    if (previous_layout != xkb->layout) {
-        Q_EMIT manager->layoutChanged(xkb->layout);
-    }
+    xkb::get_primary_xkb_keyboard()->switch_to_layout(index);
 }
 
 layout_policy*

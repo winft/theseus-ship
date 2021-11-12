@@ -175,20 +175,11 @@ void keyboard_redirect::update()
 void keyboard_redirect::process_key(key_event const& event)
 {
     auto& xkb = event.base.dev->xkb;
-    auto const previousLayout = xkb->layout;
 
     input::keyboard_redirect::process_key(event);
 
-    auto const globalShortcutsModifiers
-        = xkb->modifiers_relevant_for_global_shortcuts(event.keycode);
-
     redirect->processFilters(std::bind(&event_filter::key, std::placeholders::_1, event));
     xkb->forward_modifiers();
-
-    if (globalShortcutsModifiers == Qt::KeyboardModifier::NoModifier
-        && event.state == key_state::pressed) {
-        layout_manager->check_layout_change(xkb.get(), previousLayout);
-    }
 }
 
 void keyboard_redirect::process_key_repeat(const key_event& event)
@@ -200,13 +191,11 @@ void keyboard_redirect::process_key_repeat(const key_event& event)
 void keyboard_redirect::process_modifiers(modifiers_event const& event)
 {
     auto const& xkb = event.base.dev->xkb.get();
-    auto const previousLayout = xkb->layout;
 
     // TODO: send to proper Client and also send when active Client changes
     xkb->update_modifiers(event.depressed, event.latched, event.locked, event.group);
 
     modifiers_spy->updateModifiers(xkb->qt_modifiers);
-    layout_manager->check_layout_change(xkb, previousLayout);
 }
 
 }

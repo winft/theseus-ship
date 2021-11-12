@@ -89,6 +89,7 @@ public:
     Wrapland::Server::Seat* seat{nullptr};
 
 Q_SIGNALS:
+    void layout_changed();
     void leds_changed(keyboard_leds leds);
 
 private:

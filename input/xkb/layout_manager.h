@@ -25,6 +25,7 @@ class QDBusArgument;
 
 namespace KWin::input
 {
+class keyboard;
 
 namespace dbus
 {
@@ -50,7 +51,6 @@ public:
 
     void init();
 
-    void check_layout_change(xkb::keyboard* xkb, uint32_t old_layout);
     void switchToNextLayout();
     void switchToPreviousLayout();
 
@@ -63,6 +63,8 @@ private Q_SLOTS:
 
 private:
     void initDBusInterface();
+    void add_keyboard(input::keyboard* keyboard);
+    void handle_layout_change(xkb::keyboard* xkb);
     void send_layout_to_osd(xkb::keyboard* xkb);
     void switchToLayout(xkb_layout_index_t index);
     void load_shortcuts(xkb::keyboard* xkb);

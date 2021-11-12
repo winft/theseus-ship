@@ -282,13 +282,19 @@ void keyboard::update_modifiers()
         Q_EMIT leds_changed(leds);
     }
 
-    layout = xkb_state_serialize_layout(state, XKB_STATE_LAYOUT_EFFECTIVE);
     modifier_state.depressed
         = xkb_state_serialize_mods(state, xkb_state_component(XKB_STATE_MODS_DEPRESSED));
     modifier_state.latched
         = xkb_state_serialize_mods(state, xkb_state_component(XKB_STATE_MODS_LATCHED));
     modifier_state.locked
         = xkb_state_serialize_mods(state, xkb_state_component(XKB_STATE_MODS_LOCKED));
+
+    auto old_layout = layout;
+    layout = xkb_state_serialize_layout(state, XKB_STATE_LAYOUT_EFFECTIVE);
+
+    if (old_layout != layout) {
+        Q_EMIT layout_changed();
+    }
 }
 
 void keyboard::forward_modifiers()

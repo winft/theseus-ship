@@ -56,6 +56,7 @@ public:
     xkb_compose_table* compose_table{nullptr};
 
     std::unique_ptr<keyboard> default_keyboard;
+    input::platform* platform;
 
 private:
     void apply_environment_rules(xkb_rule_names&, std::vector<std::string>& layouts) const;
@@ -65,7 +66,6 @@ private:
 
     KConfigGroup m_configGroup;
     KSharedConfigPtr m_numLockConfig;
-    input::platform* platform;
 };
 
 }

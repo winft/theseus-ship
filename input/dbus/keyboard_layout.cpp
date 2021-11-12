@@ -63,12 +63,10 @@ bool keyboard_layout::setLayout(uint index)
 {
     auto xkb = xkb::get_primary_xkb_keyboard();
 
-    auto const previous_layout = xkb->layout;
     if (!xkb->switch_to_layout(index)) {
         return false;
     }
 
-    manager->check_layout_change(xkb, previous_layout);
     return true;
 }
 

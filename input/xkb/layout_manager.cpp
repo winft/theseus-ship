@@ -13,6 +13,7 @@
 #include "../../platform.h"
 #include "input/dbus/keyboard_layout.h"
 #include "input/event.h"
+#include "input/keyboard.h"
 #include "main.h"
 
 #include <KGlobalAccel>
@@ -53,6 +54,12 @@ void layout_manager::init()
                                           SLOT(reconfigure()));
 
     reconfigure();
+
+    for (auto keyboard : xkb.platform->keyboards) {
+        add_keyboard(keyboard);
+    }
+
+    QObject::connect(xkb.platform, &platform::keyboard_added, this, &layout_manager::add_keyboard);
 }
 
 void layout_manager::initDBusInterface()
@@ -86,26 +93,17 @@ void layout_manager::initDBusInterface()
 
 void layout_manager::switchToNextLayout()
 {
-    auto xkb = xkb::get_primary_xkb_keyboard();
-    auto const previousLayout = xkb->layout;
-    xkb->switch_to_next_layout();
-    check_layout_change(xkb, previousLayout);
+    xkb::get_primary_xkb_keyboard()->switch_to_next_layout();
 }
 
 void layout_manager::switchToPreviousLayout()
 {
-    auto xkb = xkb::get_primary_xkb_keyboard();
-    auto const previousLayout = xkb->layout;
-    xkb->switch_to_previous_layout();
-    check_layout_change(xkb, previousLayout);
+    xkb::get_primary_xkb_keyboard()->switch_to_previous_layout();
 }
 
 void layout_manager::switchToLayout(xkb_layout_index_t index)
 {
-    auto xkb = xkb::get_primary_xkb_keyboard();
-    auto const previousLayout = xkb->layout;
-    xkb->switch_to_layout(index);
-    check_layout_change(xkb, previousLayout);
+    xkb::get_primary_xkb_keyboard()->switch_to_layout(index);
 }
 
 void layout_manager::reconfigure()
@@ -156,12 +154,19 @@ void layout_manager::load_shortcuts(xkb::keyboard* xkb)
     }
 }
 
-void layout_manager::check_layout_change(xkb::keyboard* xkb, uint32_t old_layout)
+void layout_manager::add_keyboard(input::keyboard* keyboard)
 {
-    if (old_layout == xkb->layout) {
-        // No change.
+    if (!keyboard->control || !keyboard->control->is_alpha_numeric_keyboard()) {
         return;
     }
+
+    auto xkb = keyboard->xkb.get();
+    QObject::connect(
+        xkb, &xkb::keyboard::layout_changed, this, [this, xkb] { handle_layout_change(xkb); });
+}
+
+void layout_manager::handle_layout_change(xkb::keyboard* xkb)
+{
     if (xkb != xkb::get_primary_xkb_keyboard()) {
         // We currently only inform about changes on the primary device.
         return;
