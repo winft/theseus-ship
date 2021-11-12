@@ -63,7 +63,7 @@ private Q_SLOTS:
 
 private:
     void initDBusInterface();
-    void notifyLayoutChange();
+    void send_layout_to_osd(xkb::keyboard* xkb);
     void switchToLayout(xkb_layout_index_t index);
     void load_shortcuts(xkb::keyboard* xkb);
 

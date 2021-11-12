@@ -171,23 +171,18 @@ void layout_manager::check_layout_change(xkb::keyboard* xkb, uint32_t old_layout
 
     if (m_layout != xkb->layout || old_layout != xkb->layout) {
         m_layout = xkb->layout;
-        notifyLayoutChange();
+        send_layout_to_osd(xkb);
         Q_EMIT layoutChanged(xkb->layout);
     }
 }
 
-void layout_manager::notifyLayoutChange()
+void layout_manager::send_layout_to_osd(xkb::keyboard* xkb)
 {
-    auto xkb = xkb::get_primary_xkb_keyboard();
-
-    // notify OSD service about the new layout
     QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
                                                       QStringLiteral("/org/kde/osdService"),
                                                       QStringLiteral("org.kde.osdService"),
                                                       QStringLiteral("kbdLayoutChanged"));
-
     msg << translated_keyboard_layout(xkb->layout_name());
-
     QDBusConnection::sessionBus().asyncCall(msg);
 }
 
