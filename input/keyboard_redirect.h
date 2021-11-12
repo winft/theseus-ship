@@ -30,7 +30,6 @@ public:
     virtual void process_key_repeat(key_event const& event);
 
     virtual void process_modifiers(modifiers_event const& event);
-    virtual void processKeymapChange(int fd, uint32_t size);
 
 protected:
     input::redirect* redirect;

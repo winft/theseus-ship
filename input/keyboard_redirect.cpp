@@ -46,8 +46,4 @@ void keyboard_redirect::process_modifiers(modifiers_event const& /*event*/)
 {
 }
 
-void keyboard_redirect::processKeymapChange(int /*fd*/, uint32_t /*size*/)
-{
-}
-
 }

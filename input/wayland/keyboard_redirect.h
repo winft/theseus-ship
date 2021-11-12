@@ -36,7 +36,6 @@ public:
     void process_key_repeat(key_event const& event) override;
 
     void process_modifiers(modifiers_event const& event) override;
-    void processKeymapChange(int fd, uint32_t size) override;
 
 private:
     QMetaObject::Connection m_activeClientSurfaceChangedConnection;

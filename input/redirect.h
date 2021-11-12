@@ -85,10 +85,6 @@ public:
     void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action);
     void registerGlobalAccel(KGlobalAccelInterface* interface);
 
-    /**
-     * @internal
-     */
-    void processKeymapChange(int fd, uint32_t size);
     void cancelTouch();
 
     bool supportsPointerWarping() const;

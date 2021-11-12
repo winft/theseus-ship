@@ -209,14 +209,4 @@ void keyboard_redirect::process_modifiers(modifiers_event const& event)
     layout_manager->check_layout_change(xkb, previousLayout);
 }
 
-void keyboard_redirect::processKeymapChange(int fd, uint32_t size)
-{
-    // TODO: should we pass the keymap to our Clients? Or only to the currently active one and
-    // update
-    // TODO(romangg): hand over the keyboard as argument instead.
-    auto xkb = xkb::get_primary_xkb_keyboard();
-    xkb->install_keymap(fd, size);
-    layout_manager->resetLayout();
-}
-
 }

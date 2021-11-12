@@ -72,11 +72,6 @@ void redirect::uninstallInputEventSpy(event_spy* spy)
     remove_all(m_spies, spy);
 }
 
-void redirect::processKeymapChange(int fd, uint32_t size)
-{
-    m_keyboard->processKeymapChange(fd, size);
-}
-
 void redirect::cancelTouch()
 {
     m_touch->cancel();
