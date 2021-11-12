@@ -53,7 +53,6 @@ public:
     void check_layout_change(xkb::keyboard* xkb, uint32_t old_layout);
     void switchToNextLayout();
     void switchToPreviousLayout();
-    void resetLayout();
 
 Q_SIGNALS:
     void layoutChanged(uint index);
@@ -66,7 +65,7 @@ private:
     void initDBusInterface();
     void notifyLayoutChange();
     void switchToLayout(xkb_layout_index_t index);
-    void loadShortcuts();
+    void load_shortcuts(xkb::keyboard* xkb);
 
     xkb::manager& xkb;
     xkb_layout_index_t m_layout = 0;

@@ -21,6 +21,7 @@
 #include <QDBusMessage>
 #include <QDBusMetaType>
 #include <QDBusPendingCall>
+#include <cassert>
 
 namespace KWin::input::xkb
 {
@@ -120,26 +121,20 @@ void layout_manager::reconfigure()
     } else {
         xkb.reconfigure();
     }
-    resetLayout();
-}
 
-void layout_manager::resetLayout()
-{
     auto xkb = xkb::get_primary_xkb_keyboard();
 
     m_layout = xkb->layout;
-    loadShortcuts();
+    load_shortcuts(xkb);
 
     initDBusInterface();
     Q_EMIT layoutsReconfigured();
 }
 
-void layout_manager::loadShortcuts()
+void layout_manager::load_shortcuts(xkb::keyboard* xkb)
 {
     qDeleteAll(m_layoutShortcuts);
     m_layoutShortcuts.clear();
-
-    auto xkb = xkb::get_primary_xkb_keyboard();
 
     const QString componentName = QStringLiteral("KDE Keyboard Layout Switcher");
     auto const count = xkb->layouts_count();
