@@ -5,10 +5,7 @@
         "EnabledByDefault": true,
         "Id": "contrast",
         "License": "GPL",
-        "Name": "Background contrast",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Background contrast"
     },
     "org.kde.kwin.effect": {
         "enabledByDefaultMethod": true

@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "invert",
         "License": "GPL",
-        "Name": "Invert",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Invert"
     },
     "X-KDE-ConfigModule": "kwin_invert_config",
     "org.kde.kwin.effect": {

@@ -5,9 +5,6 @@
         "EnabledByDefault": false,
         "Id": "fallapart",
         "License": "GPL",
-        "Name": "Fall Apart",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Fall Apart"
     }
 }

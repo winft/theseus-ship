@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "coverswitch",
         "License": "GPL",
-        "Name": "Cover Switch",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Cover Switch"
     },
     "X-KDE-ConfigModule": "kwin_coverswitch_config",
     "org.kde.kwin.effect": {

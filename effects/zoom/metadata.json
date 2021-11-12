@@ -5,10 +5,7 @@
         "EnabledByDefault": true,
         "Id": "zoom",
         "License": "GPL",
-        "Name": "Zoom",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Zoom"
     },
     "X-KDE-ConfigModule": "kwin_zoom_config",
     "org.kde.kwin.effect": {

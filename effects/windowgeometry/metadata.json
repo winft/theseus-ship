@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "windowgeometry",
         "License": "GPL",
-        "Name": "Window Geometry",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Window Geometry"
     },
     "X-KDE-ConfigModule": "kwin_windowgeometry_config",
     "org.kde.kwin.effect": {

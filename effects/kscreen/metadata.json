@@ -5,10 +5,7 @@
         "EnabledByDefault": true,
         "Id": "kscreen",
         "License": "GPL",
-        "Name": "Kscreen",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Kscreen"
     },
     "org.kde.kwin.effect": {
         "internal": true

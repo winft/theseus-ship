@@ -5,9 +5,6 @@
         "EnabledByDefault": true,
         "Id": "screenedge",
         "License": "GPL",
-        "Name": "Screen Edge",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Screen Edge"
     }
 }

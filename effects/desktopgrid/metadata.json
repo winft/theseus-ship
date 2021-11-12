@@ -5,10 +5,7 @@
         "EnabledByDefault": true,
         "Id": "desktopgrid",
         "License": "GPL",
-        "Name": "Desktop Grid",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Desktop Grid"
     },
     "X-KDE-ConfigModule": "kwin_desktopgrid_config",
     "org.kde.kwin.effect": {

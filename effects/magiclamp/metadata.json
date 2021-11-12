@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "magiclamp",
         "License": "GPL",
-        "Name": "Magic Lamp",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Magic Lamp"
     },
     "X-KDE-ConfigModule": "kwin_magiclamp_config",
     "org.kde.kwin.effect": {

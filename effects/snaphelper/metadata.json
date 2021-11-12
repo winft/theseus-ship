@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "snaphelper",
         "License": "GPL",
-        "Name": "Snap Helper",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Snap Helper"
     },
     "org.kde.kwin.effect": {
         "video": "https://files.kde.org/plasma/kwin/effect-videos/snap_helper.mp4"

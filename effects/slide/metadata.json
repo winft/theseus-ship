@@ -5,10 +5,7 @@
         "EnabledByDefault": true,
         "Id": "slide",
         "License": "GPL",
-        "Name": "Slide",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Slide"
     },
     "X-KDE-ConfigModule": "kwin_slide_config",
     "org.kde.kwin.effect": {

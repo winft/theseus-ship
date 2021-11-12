@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "flipswitch",
         "License": "GPL",
-        "Name": "Flip Switch",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Flip Switch"
     },
     "X-KDE-ConfigModule": "kwin_flipswitch_config",
     "org.kde.kwin.effect": {

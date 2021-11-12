@@ -5,10 +5,7 @@
         "EnabledByDefault": true,
         "Id": "screenshot",
         "License": "GPL",
-        "Name": "Screenshot",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Screenshot"
     },
     "org.kde.kwin.effect": {
         "internal": true

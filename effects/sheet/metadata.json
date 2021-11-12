@@ -5,9 +5,6 @@
         "EnabledByDefault": false,
         "Id": "sheet",
         "License": "GPL",
-        "Name": "Sheet",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Sheet"
     }
 }

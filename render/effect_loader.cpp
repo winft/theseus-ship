@@ -367,8 +367,7 @@ KPluginMetaData plugin_effect_loader::findEffect(const QString& name) const
 {
     const auto plugins
         = KPluginMetaData::findPlugins(m_pluginSubDirectory, [name](const KPluginMetaData& data) {
-              return data.pluginId().compare(name, Qt::CaseInsensitive) == 0
-                  && data.serviceTypes().contains(s_serviceType);
+              return data.pluginId().compare(name, Qt::CaseInsensitive) == 0;
           });
     if (plugins.isEmpty()) {
         return KPluginMetaData();
@@ -502,9 +501,7 @@ void plugin_effect_loader::queryAndLoadAll()
 
 QVector<KPluginMetaData> plugin_effect_loader::findAllEffects() const
 {
-    return KPluginMetaData::findPlugins(m_pluginSubDirectory, [](const KPluginMetaData& data) {
-        return data.serviceTypes().contains(s_serviceType);
-    });
+    return KPluginMetaData::findPlugins(m_pluginSubDirectory);
 }
 
 void plugin_effect_loader::setPluginSubDirectory(const QString& directory)

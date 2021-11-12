@@ -5,9 +5,6 @@
         "EnabledByDefault": false,
         "Id": "slideback",
         "License": "GPL",
-        "Name": "Slide Back",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Slide Back"
     }
 }

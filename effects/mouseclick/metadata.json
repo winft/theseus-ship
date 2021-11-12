@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "mouseclick",
         "License": "GPL",
-        "Name": "Mouse Click Animation",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Mouse Click Animation"
     },
     "X-KDE-ConfigModule": "kwin_mouseclick_config",
     "org.kde.kwin.effect": {

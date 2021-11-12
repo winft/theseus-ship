@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "thumbnailaside",
         "License": "GPL",
-        "Name": "Thumbnail Aside",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Thumbnail Aside"
     },
     "X-KDE-ConfigModule": "kwin_thumbnailaside_config"
 }

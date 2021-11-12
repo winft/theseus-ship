@@ -5,10 +5,7 @@
         "EnabledByDefault": true,
         "Id": "colorpicker",
         "License": "GPL",
-        "Name": "Color Picker",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Color Picker"
     },
     "org.kde.kwin.effect": {
         "internal": true

@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "showpaint",
         "License": "GPL",
-        "Name": "Show Paint",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Show Paint"
     },
     "X-KDE-ConfigModule": "kwin_showpaint_config"
 }

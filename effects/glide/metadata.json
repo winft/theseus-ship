@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "glide",
         "License": "GPL",
-        "Name": "Glide",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Glide"
     },
     "X-KDE-ConfigModule": "kwin_glide_config",
     "org.kde.kwin.effect": {

@@ -5,10 +5,7 @@
         "EnabledByDefault": true,
         "Id": "startupfeedback",
         "License": "GPL",
-        "Name": "Startup Feedback",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Startup Feedback"
     },
     "org.kde.kwin.effect": {
         "internal": true

@@ -5,10 +5,7 @@
         "EnabledByDefault": true,
         "Id": "presentwindows",
         "License": "GPL",
-        "Name": "Present Windows",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Present Windows"
     },
     "X-KDE-ConfigModule": "kwin_presentwindows_config",
     "org.kde.kwin.effect": {

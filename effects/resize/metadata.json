@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "resize",
         "License": "GPL",
-        "Name": "Resize Window",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Resize Window"
     },
     "X-KDE-ConfigModule": "kwin_resize_config"
 }

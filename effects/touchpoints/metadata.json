@@ -5,9 +5,6 @@
         "EnabledByDefault": false,
         "Id": "touchpoints",
         "License": "GPL",
-        "Name": "Touch Points",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Touch Points"
     }
 }

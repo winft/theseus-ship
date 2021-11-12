@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "cubeslide",
         "License": "GPL",
-        "Name": "Desktop Cube Animation",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Desktop Cube Animation"
     },
     "X-KDE-ConfigModule": "kwin_cubeslide_config",
     "org.kde.kwin.effect": {

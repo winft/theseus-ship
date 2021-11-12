@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "trackmouse",
         "License": "GPL",
-        "Name": "Track Mouse",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Track Mouse"
     },
     "X-KDE-ConfigModule": "kwin_trackmouse_config",
     "org.kde.kwin.effect": {

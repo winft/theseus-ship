@@ -5,10 +5,7 @@
         "EnabledByDefault": true,
         "Id": "blur",
         "License": "GPL",
-        "Name": "Blur",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Blur"
     },
     "X-KDE-ConfigModule": "kwin_blur_config",
     "org.kde.kwin.effect": {

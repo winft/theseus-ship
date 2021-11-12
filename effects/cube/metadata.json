@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "cube",
         "License": "GPL",
-        "Name": "Desktop Cube",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Desktop Cube"
     },
     "X-KDE-ConfigModule": "kwin_cube_config",
     "org.kde.kwin.effect": {

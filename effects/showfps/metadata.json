@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "showfps",
         "License": "GPL",
-        "Name": "Show FPS",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Show FPS"
     },
     "X-KDE-ConfigModule": "kwin_showfps_config"
 }

@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "wobblywindows",
         "License": "GPL",
-        "Name": "Wobbly Windows",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Wobbly Windows"
     },
     "X-KDE-ConfigModule": "kwin_wobblywindows_config",
     "org.kde.kwin.effect": {

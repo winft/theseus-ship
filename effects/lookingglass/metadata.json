@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "lookingglass",
         "License": "GPL",
-        "Name": "Looking Glass",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Looking Glass"
     },
     "X-KDE-ConfigModule": "kwin_lookingglass_config",
     "org.kde.kwin.effect": {

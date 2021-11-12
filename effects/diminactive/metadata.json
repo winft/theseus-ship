@@ -5,10 +5,7 @@
         "EnabledByDefault": false,
         "Id": "diminactive",
         "License": "GPL",
-        "Name": "Dim Inactive",
-        "ServiceTypes": [
-            "KWin/Effect"
-        ]
+        "Name": "Dim Inactive"
     },
     "X-KDE-ConfigModule": "kwin_diminactive_config",
     "org.kde.kwin.effect": {
