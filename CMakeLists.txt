@@ -756,6 +756,7 @@ set(kwin_WAYLAND_SRCS
    input/backend/wlroots/pointer.cpp
    input/backend/wlroots/switch.cpp
    input/backend/wlroots/touch.cpp
+   input/backend/wlroots/control/headless/keyboard.cpp
    input/backend/wlroots/control/keyboard.cpp
    input/backend/wlroots/control/pointer.cpp
    input/backend/wlroots/control/switch.cpp

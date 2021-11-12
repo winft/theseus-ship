@@ -5,6 +5,7 @@
 */
 #include "keyboard.h"
 
+#include "control/headless/keyboard.h"
 #include "control/keyboard.h"
 
 #include "platform.h"
@@ -77,6 +78,10 @@ keyboard::keyboard(wlr_input_device* dev, input::platform* platform)
 
     if (auto libinput = get_libinput_device(dev)) {
         control = new keyboard_control(libinput, platform);
+    } else if (is_headless_device(dev)) {
+        auto headless_control = new headless::keyboard_control(platform);
+        headless_control->data.is_alpha_numeric_keyboard = true;
+        this->control = headless_control;
     }
 
     destroyed.receiver = this;
