@@ -551,7 +551,7 @@ void Workspace::addClient(win::x11::window* c)
 {
     auto grp = findGroup(c->xcb_window());
 
-    emit clientAdded(c);
+    Q_EMIT clientAdded(c);
 
     if (grp != nullptr)
         grp->gotLeader(c);
@@ -642,7 +642,7 @@ void Workspace::removeClient(win::x11::window* c)
     if (c == delayfocus_client)
         cancelDelayFocus();
 
-    emit clientRemoved(c);
+    Q_EMIT clientRemoved(c);
 
     stacking_order->update(true);
     updateClientArea();
@@ -686,7 +686,7 @@ void Workspace::removeDeleted(Toplevel* window)
 {
     assert(contains(m_windows, window));
 
-    emit deletedRemoved(window);
+    Q_EMIT deletedRemoved(window);
     m_remnant_count--;
 
     remove_all(m_windows, window);
@@ -741,7 +741,7 @@ void Workspace::slotReconfigure()
     options->updateSettings();
     scripting->start();
 
-    emit configChanged();
+    Q_EMIT configChanged();
 
     m_userActionsMenu->discard();
     win::update_tool_windows(this, true);
@@ -775,7 +775,7 @@ void Workspace::slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop)
     --block_focus;
 
     activateClientOnNewDesktop(newDesktop);
-    emit currentDesktopChanged(oldDesktop, movingClient);
+    Q_EMIT currentDesktopChanged(oldDesktop, movingClient);
 }
 
 void Workspace::activateClientOnNewDesktop(uint desktop)
@@ -1005,7 +1005,7 @@ void Workspace::setShowingDesktop(bool showing)
         }
     }
     if (changed)
-        emit showingDesktopChanged(showing);
+        Q_EMIT showingDesktopChanged(showing);
 }
 
 void Workspace::disableGlobalShortcutsForClient(bool disable)
@@ -1474,7 +1474,7 @@ void Workspace::addInternalClient(win::internal_window* client)
     stacking_order->update(true);
     updateClientArea();
 
-    emit internalClientAdded(client);
+    Q_EMIT internalClientAdded(client);
 }
 
 void Workspace::removeInternalClient(win::internal_window* client)
@@ -1486,7 +1486,7 @@ void Workspace::removeInternalClient(win::internal_window* client)
     stacking_order->update(true);
     updateClientArea();
 
-    emit internalClientRemoved(client);
+    Q_EMIT internalClientRemoved(client);
 }
 
 void Workspace::remove_window(Toplevel* window)
@@ -2799,7 +2799,7 @@ void Workspace::setActiveClient(Toplevel* window)
         win::x11::rootInfo()->setActiveClient(active_client);
     }
 
-    emit clientActivated(active_client);
+    Q_EMIT clientActivated(active_client);
     --set_active_client_recursion;
 }
 
@@ -3226,7 +3226,7 @@ void Workspace::clientAttentionChanged(Toplevel* window, bool set)
     if (set) {
         attention_chain.push_front(window);
     }
-    emit clientDemandsAttentionChanged(window, set);
+    Q_EMIT clientDemandsAttentionChanged(window, set);
 }
 
 /// X11 event handling

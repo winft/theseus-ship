@@ -209,7 +209,7 @@ void KWinScreenEdge::onChanged()
             needSave |= it.value() != monitor()->selectedEdgeItem(edge);
         }
     }
-    emit saveNeededChanged(needSave);
+    Q_EMIT saveNeededChanged(needSave);
 
     bool defaults = isDefault();
     for (auto it = m_default.cbegin(); it != m_default.cend(); ++it) {
@@ -218,7 +218,7 @@ void KWinScreenEdge::onChanged()
             defaults &= it.value() == monitor()->selectedEdgeItem(edge);
         }
     }
-    emit defaultChanged(defaults);
+    Q_EMIT defaultChanged(defaults);
 }
 
 void KWinScreenEdge::createConnection()

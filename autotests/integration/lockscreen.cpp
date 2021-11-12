@@ -109,11 +109,11 @@ public:
 
     void windowInputMouseEvent(QEvent*) override
     {
-        emit inputEvent();
+        Q_EMIT inputEvent();
     }
     void grabbedKeyboardEvent(QKeyEvent* e) override
     {
-        emit keyEvent(e->text());
+        Q_EMIT keyEvent(e->text());
     }
 
 Q_SIGNALS:

@@ -122,7 +122,7 @@ WindowThumbnailItem::~WindowThumbnailItem()
 void WindowThumbnailItem::setWId(qulonglong wId)
 {
     m_wId = wId;
-    emit wIdChanged(wId);
+    Q_EMIT wIdChanged(wId);
     findImage();
 }
 
@@ -132,7 +132,7 @@ void WindowThumbnailItem::setClipTo(QQuickItem *clip)
         return;
     }
     m_clipToItem = clip;
-    emit clipToChanged();
+    Q_EMIT clipToChanged();
 }
 
 void WindowThumbnailItem::findImage()
@@ -203,7 +203,7 @@ void WindowThumbnailItem::setBrightness(qreal brightness)
     }
     m_brightness = brightness;
     update();
-    emit brightnessChanged();
+    Q_EMIT brightnessChanged();
 }
 
 void WindowThumbnailItem::setSaturation(qreal saturation)
@@ -213,7 +213,7 @@ void WindowThumbnailItem::setSaturation(qreal saturation)
     }
     m_saturation = saturation;
     update();
-    emit saturationChanged();
+    Q_EMIT saturationChanged();
 }
 
 } // namespace KWin

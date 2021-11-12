@@ -127,7 +127,7 @@ private:
             return;                                                                                \
         }                                                                                          \
         m_##name = name;                                                                           \
-        emit name##Changed();                                                                      \
+        Q_EMIT name##Changed();                                                                    \
     }
 #define WRAPPER(name, upperName) GENERIC_WRAPPER(const QString&, name, upperName)
 

@@ -78,7 +78,7 @@ void InvertEffectConfig::load()
 {
     KCModule::load();
 
-    emit changed(false);
+    Q_EMIT changed(false);
 }
 
 void InvertEffectConfig::save()
@@ -87,7 +87,7 @@ void InvertEffectConfig::save()
 
     mShortcutEditor->save();    // undo() will restore to this state from now on
 
-    emit changed(false);
+    Q_EMIT changed(false);
     OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
                                          QStringLiteral("/Effects"),
                                          QDBusConnection::sessionBus());
@@ -98,7 +98,7 @@ void InvertEffectConfig::defaults()
 {
     mShortcutEditor->allDefault();
 
-    emit changed(true);
+    Q_EMIT changed(true);
 }
 
 

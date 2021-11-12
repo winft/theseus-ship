@@ -63,11 +63,11 @@ app_menu::app_menu(QObject* parent)
 
     connect(m_kappMenuWatcher, &QDBusServiceWatcher::serviceRegistered, this, [this]() {
         m_applicationMenuEnabled = true;
-        emit applicationMenuEnabledChanged(true);
+        Q_EMIT applicationMenuEnabledChanged(true);
     });
     connect(m_kappMenuWatcher, &QDBusServiceWatcher::serviceUnregistered, this, [this]() {
         m_applicationMenuEnabled = false;
-        emit applicationMenuEnabledChanged(false);
+        Q_EMIT applicationMenuEnabledChanged(false);
     });
 
     m_applicationMenuEnabled = QDBusConnection::sessionBus().interface()->isServiceRegistered(

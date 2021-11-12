@@ -181,7 +181,7 @@ WaylandServer::~WaylandServer()
 
 void WaylandServer::destroyInternalConnection()
 {
-    emit terminatingInternalClientConnection();
+    Q_EMIT terminatingInternalClientConnection();
     if (m_internalConnection.client) {
         // delete all connections hold by plugins like e.g. widget style
         const auto connections = Wrapland::Client::ConnectionThread::connections();

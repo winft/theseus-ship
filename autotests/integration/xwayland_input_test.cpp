@@ -125,10 +125,10 @@ void X11EventReaderHelper::processXcbEvents()
         const uint8_t eventType = event->response_type & ~0x80;
         switch (eventType) {
         case XCB_ENTER_NOTIFY:
-            emit entered();
+            Q_EMIT entered();
             break;
         case XCB_LEAVE_NOTIFY:
-            emit left();
+            Q_EMIT left();
             break;
         }
         free(event);

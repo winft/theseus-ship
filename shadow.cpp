@@ -66,7 +66,7 @@ Shadow *Shadow::createShadow(Toplevel *toplevel)
     }
     if (toplevel->effectWindow() && toplevel->effectWindow()->sceneWindow()) {
         toplevel->effectWindow()->sceneWindow()->updateShadow(shadow);
-        emit toplevel->shadowChanged();
+        Q_EMIT toplevel->shadowChanged();
     }
     return shadow;
 }

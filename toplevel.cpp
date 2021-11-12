@@ -130,7 +130,7 @@ void Toplevel::detectShape(xcb_window_t id)
     const bool wasShape = is_shape;
     is_shape = Xcb::Extensions::self()->hasShape(id);
     if (wasShape != is_shape) {
-        emit shapedChanged();
+        Q_EMIT shapedChanged();
     }
 }
 
@@ -275,7 +275,7 @@ void Toplevel::setResourceClass(const QByteArray &name, const QByteArray &classN
 {
     resource_name  = name;
     resource_class = className;
-    emit windowClassChanged();
+    Q_EMIT windowClassChanged();
 }
 
 bool Toplevel::resourceMatch(const Toplevel *c1, const Toplevel *c2)
@@ -302,7 +302,7 @@ void Toplevel::setOpacity(double new_opacity)
     info->setOpacity(static_cast< unsigned long >(new_opacity * 0xffffffff));
     if (win::compositing()) {
         addRepaintFull();
-        emit opacityChanged(this, old_opacity);
+        Q_EMIT opacityChanged(this, old_opacity);
     }
 }
 
@@ -619,7 +619,7 @@ void Toplevel::setReadyForPainting()
         ready_for_painting = true;
         if (win::compositing()) {
             addRepaintFull();
-            emit windowShown(this);
+            Q_EMIT windowShown(this);
         }
     }
 }
@@ -635,19 +635,19 @@ void Toplevel::checkScreen()
     if (screens()->count() == 1) {
         if (m_screen != 0) {
             m_screen = 0;
-            emit screenChanged();
+            Q_EMIT screenChanged();
         }
     } else {
         const int s = screens()->number(frameGeometry().center());
         if (s != m_screen) {
             m_screen = s;
-            emit screenChanged();
+            Q_EMIT screenChanged();
         }
     }
     qreal newScale = screens()->scale(m_screen);
     if (newScale != m_screenScale) {
         m_screenScale = newScale;
-        emit screenScaleChanged();
+        Q_EMIT screenScaleChanged();
     }
 }
 
@@ -749,7 +749,7 @@ void Toplevel::setSkipCloseAnimation(bool set)
         return;
     }
     m_skipCloseAnimation = set;
-    emit skipCloseAnimationChanged();
+    Q_EMIT skipCloseAnimationChanged();
 }
 
 // TODO(romangg): * This function is only called on Wayland and the damage translation is not the
@@ -763,7 +763,7 @@ void Toplevel::addDamage(const QRegion &damage)
 
     m_isDamaged = true;
     damage_region += damage;
-    emit damaged(this, damage);
+    Q_EMIT damaged(this, damage);
 }
 
 QByteArray Toplevel::windowRole() const
@@ -782,7 +782,7 @@ void Toplevel::setDepth(int depth)
     const bool oldAlpha = hasAlpha();
     bit_depth = depth;
     if (oldAlpha != hasAlpha()) {
-        emit hasAlphaChanged();
+        Q_EMIT hasAlphaChanged();
     }
 }
 
@@ -1273,7 +1273,7 @@ void Toplevel::clientMessageEvent(xcb_client_message_event_t* e)
     if (e->type == atoms->wl_surface_id) {
         m_surfaceId = e->data.data32[0];
         Q_EMIT workspace()->surface_id_changed(this, m_surfaceId);
-        emit surfaceIdChanged(m_surfaceId);
+        Q_EMIT surfaceIdChanged(m_surfaceId);
     }
 }
 

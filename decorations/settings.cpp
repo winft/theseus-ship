@@ -52,7 +52,7 @@ SettingsImpl::SettingsImpl(KDecoration2::DecorationSettings *parent)
             if (previous != 1 && current != 1) {
                 return;
             }
-            emit parent->onAllDesktopsAvailableChanged(current > 1);
+            Q_EMIT parent->onAllDesktopsAvailableChanged(current > 1);
         }
     );
     // prevent changes in Decoration due to compositor being destroyed
@@ -165,7 +165,7 @@ void SettingsImpl::readSettings()
     }));
     if (left != m_leftButtons) {
         m_leftButtons = left;
-        emit decorationSettings()->decorationButtonsLeftChanged(m_leftButtons);
+        Q_EMIT decorationSettings()->decorationButtonsLeftChanged(m_leftButtons);
     }
     const auto &right = readDecorationButtons(config, "ButtonsOnRight", QVector<KDecoration2::DecorationButtonType >({
         KDecoration2::DecorationButtonType::ContextHelp,
@@ -175,13 +175,13 @@ void SettingsImpl::readSettings()
     }));
     if (right != m_rightButtons) {
         m_rightButtons = right;
-        emit decorationSettings()->decorationButtonsRightChanged(m_rightButtons);
+        Q_EMIT decorationSettings()->decorationButtonsRightChanged(m_rightButtons);
     }
     win::app_menu::self()->setViewEnabled(left.contains(KDecoration2::DecorationButtonType::ApplicationMenu) || right.contains(KDecoration2::DecorationButtonType::ApplicationMenu));
     const bool close = config.readEntry("CloseOnDoubleClickOnMenu", false);
     if (close != m_closeDoubleClickMenu) {
         m_closeDoubleClickMenu = close;
-        emit decorationSettings()->closeOnDoubleClickOnMenuChanged(m_closeDoubleClickMenu);
+        Q_EMIT decorationSettings()->closeOnDoubleClickOnMenuChanged(m_closeDoubleClickMenu);
     }
     m_autoBorderSize = config.readEntry("BorderSizeAuto", true);
 
@@ -192,15 +192,15 @@ void SettingsImpl::readSettings()
     }
     if (size != m_borderSize) {
         m_borderSize = size;
-        emit decorationSettings()->borderSizeChanged(m_borderSize);
+        Q_EMIT decorationSettings()->borderSizeChanged(m_borderSize);
     }
     const QFont font = QFontDatabase::systemFont(QFontDatabase::TitleFont);
     if (font != m_font) {
         m_font = font;
-        emit decorationSettings()->fontChanged(m_font);
+        Q_EMIT decorationSettings()->fontChanged(m_font);
     }
 
-    emit decorationSettings()->reconfigured();
+    Q_EMIT decorationSettings()->reconfigured();
 }
 
 }

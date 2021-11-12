@@ -65,7 +65,7 @@ protected:
             return;
         }
         m_running = running;
-        emit runningChanged(m_running);
+        Q_EMIT runningChanged(m_running);
     }
 
 private:

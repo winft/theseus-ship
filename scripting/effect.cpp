@@ -203,7 +203,7 @@ effect::effect()
             return;
         }
         if (m_activeFullScreenEffect == this || fullScreenEffect == this) {
-            emit isActiveFullScreenEffectChanged();
+            Q_EMIT isActiveFullScreenEffectChanged();
         }
         m_activeFullScreenEffect = fullScreenEffect;
     });
@@ -310,7 +310,7 @@ bool effect::init(const QString& effectName, const QString& pathToScript)
 void effect::animationEnded(KWin::EffectWindow* w, Attribute a, uint meta)
 {
     AnimationEffect::animationEnded(w, a, meta);
-    emit animationEnded(w, 0);
+    Q_EMIT animationEnded(w, 0);
 }
 
 QString effect::pluginId() const
@@ -626,7 +626,7 @@ void effect::reconfigure(ReconfigureFlags flags)
     if (m_config) {
         m_config->read();
     }
-    emit configChanged();
+    Q_EMIT configChanged();
 }
 
 void effect::registerShortcut(const QString& objectName,

@@ -267,7 +267,7 @@ void EffectQuickView::update()
         QOpenGLFramebufferObject::bindDefault();
         d->m_glcontext->doneCurrent();
     }
-    emit repaintNeeded();
+    Q_EMIT repaintNeeded();
 }
 
 void EffectQuickView::forwardMouseEvent(QEvent *e)
@@ -346,7 +346,7 @@ void EffectQuickView::setVisible(bool visible)
     d->m_visible = visible;
 
     if (visible){
-        emit d->m_renderControl->renderRequested();
+        Q_EMIT d->m_renderControl->renderRequested();
     } else {
         // deferred to not change GL context
         QTimer::singleShot(0, this, [this]() {
@@ -402,7 +402,7 @@ void EffectQuickView::setGeometry(const QRect &rect)
 {
     const QRect oldGeometry = d->m_view->geometry();
     d->m_view->setGeometry(rect);
-    emit geometryChanged(oldGeometry, rect);
+    Q_EMIT geometryChanged(oldGeometry, rect);
 }
 
 void EffectQuickView::Private::releaseResources()

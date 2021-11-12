@@ -27,8 +27,7 @@
 class OnScreenNotificationTest : public QObject
 {
     Q_OBJECT
-private slots:
-
+private Q_SLOTS:
     void show();
     void timeout();
     void iconName();

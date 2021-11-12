@@ -146,7 +146,7 @@ Options::Options(QObject *parent)
     m_configWatcher = KConfigWatcher::create(m_settings->sharedConfig());
     connect(m_configWatcher.data(), &KConfigWatcher::configChanged, this, [this](const KConfigGroup &group, const QByteArrayList &names) {
         if (group.name() == QLatin1String("KDE") && names.contains(QByteArrayLiteral("AnimationDurationFactor"))) {
-            emit animationSpeedChanged();
+            Q_EMIT animationSpeedChanged();
         }
     });
 }
@@ -161,7 +161,7 @@ void Options::setFocusPolicy(FocusPolicy focusPolicy)
         return;
     }
     m_focusPolicy = focusPolicy;
-    emit focusPolicyChanged();
+    Q_EMIT focusPolicyChanged();
     if (m_focusPolicy == ClickToFocus) {
         setAutoRaise(false);
         setAutoRaiseInterval(0);
@@ -175,7 +175,7 @@ void Options::setNextFocusPrefersMouse(bool nextFocusPrefersMouse)
         return;
     }
     m_nextFocusPrefersMouse = nextFocusPrefersMouse;
-    emit nextFocusPrefersMouseChanged();
+    Q_EMIT nextFocusPrefersMouseChanged();
 }
 
 void Options::setClickRaise(bool clickRaise)
@@ -188,7 +188,7 @@ void Options::setClickRaise(bool clickRaise)
         return;
     }
     m_clickRaise = clickRaise;
-    emit clickRaiseChanged();
+    Q_EMIT clickRaiseChanged();
 }
 
 void Options::setAutoRaise(bool autoRaise)
@@ -204,7 +204,7 @@ void Options::setAutoRaise(bool autoRaise)
         // important: autoRaise implies ClickRaise
         setClickRaise(true);
     }
-    emit autoRaiseChanged();
+    Q_EMIT autoRaiseChanged();
 }
 
 void Options::setAutoRaiseInterval(int autoRaiseInterval)
@@ -216,7 +216,7 @@ void Options::setAutoRaiseInterval(int autoRaiseInterval)
         return;
     }
     m_autoRaiseInterval = autoRaiseInterval;
-    emit autoRaiseIntervalChanged();
+    Q_EMIT autoRaiseIntervalChanged();
 }
 
 void Options::setDelayFocusInterval(int delayFocusInterval)
@@ -228,7 +228,7 @@ void Options::setDelayFocusInterval(int delayFocusInterval)
         return;
     }
     m_delayFocusInterval = delayFocusInterval;
-    emit delayFocusIntervalChanged();
+    Q_EMIT delayFocusIntervalChanged();
 }
 
 void Options::setSeparateScreenFocus(bool separateScreenFocus)
@@ -237,7 +237,7 @@ void Options::setSeparateScreenFocus(bool separateScreenFocus)
         return;
     }
     m_separateScreenFocus = separateScreenFocus;
-    emit separateScreenFocusChanged(m_separateScreenFocus);
+    Q_EMIT separateScreenFocusChanged(m_separateScreenFocus);
 }
 
 void Options::setPlacement(win::placement placement)
@@ -246,7 +246,7 @@ void Options::setPlacement(win::placement placement)
         return;
     }
     m_placement = placement;
-    emit placementChanged();
+    Q_EMIT placementChanged();
 }
 
 void Options::setBorderSnapZone(int borderSnapZone)
@@ -255,7 +255,7 @@ void Options::setBorderSnapZone(int borderSnapZone)
         return;
     }
     m_borderSnapZone = borderSnapZone;
-    emit borderSnapZoneChanged();
+    Q_EMIT borderSnapZoneChanged();
 }
 
 void Options::setWindowSnapZone(int windowSnapZone)
@@ -264,7 +264,7 @@ void Options::setWindowSnapZone(int windowSnapZone)
         return;
     }
     m_windowSnapZone = windowSnapZone;
-    emit windowSnapZoneChanged();
+    Q_EMIT windowSnapZoneChanged();
 }
 
 void Options::setCenterSnapZone(int centerSnapZone)
@@ -273,7 +273,7 @@ void Options::setCenterSnapZone(int centerSnapZone)
         return;
     }
     m_centerSnapZone = centerSnapZone;
-    emit centerSnapZoneChanged();
+    Q_EMIT centerSnapZoneChanged();
 }
 
 void Options::setSnapOnlyWhenOverlapping(bool snapOnlyWhenOverlapping)
@@ -282,7 +282,7 @@ void Options::setSnapOnlyWhenOverlapping(bool snapOnlyWhenOverlapping)
         return;
     }
     m_snapOnlyWhenOverlapping = snapOnlyWhenOverlapping;
-    emit snapOnlyWhenOverlappingChanged();
+    Q_EMIT snapOnlyWhenOverlappingChanged();
 }
 
 void Options::setRollOverDesktops(bool rollOverDesktops)
@@ -291,7 +291,7 @@ void Options::setRollOverDesktops(bool rollOverDesktops)
         return;
     }
     m_rollOverDesktops = rollOverDesktops;
-    emit rollOverDesktopsChanged(m_rollOverDesktops);
+    Q_EMIT rollOverDesktopsChanged(m_rollOverDesktops);
 }
 
 void Options::setFocusStealingPreventionLevel(int focusStealingPreventionLevel)
@@ -303,7 +303,7 @@ void Options::setFocusStealingPreventionLevel(int focusStealingPreventionLevel)
         return;
     }
     m_focusStealingPreventionLevel = qMax(0, qMin(4, focusStealingPreventionLevel));
-    emit focusStealingPreventionLevelChanged();
+    Q_EMIT focusStealingPreventionLevelChanged();
 }
 
 void Options::setOperationTitlebarDblClick(WindowOperation operationTitlebarDblClick)
@@ -312,7 +312,7 @@ void Options::setOperationTitlebarDblClick(WindowOperation operationTitlebarDblC
         return;
     }
     OpTitlebarDblClick = operationTitlebarDblClick;
-    emit operationTitlebarDblClickChanged();
+    Q_EMIT operationTitlebarDblClickChanged();
 }
 
 void Options::setOperationMaxButtonLeftClick(WindowOperation op)
@@ -321,7 +321,7 @@ void Options::setOperationMaxButtonLeftClick(WindowOperation op)
         return;
     }
     opMaxButtonLeftClick = op;
-    emit operationMaxButtonLeftClickChanged();
+    Q_EMIT operationMaxButtonLeftClickChanged();
 }
 
 void Options::setOperationMaxButtonRightClick(WindowOperation op)
@@ -330,7 +330,7 @@ void Options::setOperationMaxButtonRightClick(WindowOperation op)
         return;
     }
     opMaxButtonRightClick = op;
-    emit operationMaxButtonRightClickChanged();
+    Q_EMIT operationMaxButtonRightClickChanged();
 }
 
 void Options::setOperationMaxButtonMiddleClick(WindowOperation op)
@@ -339,7 +339,7 @@ void Options::setOperationMaxButtonMiddleClick(WindowOperation op)
         return;
     }
     opMaxButtonMiddleClick = op;
-    emit operationMaxButtonMiddleClickChanged();
+    Q_EMIT operationMaxButtonMiddleClickChanged();
 }
 
 void Options::setCommandActiveTitlebar1(MouseCommand commandActiveTitlebar1)
@@ -348,7 +348,7 @@ void Options::setCommandActiveTitlebar1(MouseCommand commandActiveTitlebar1)
         return;
     }
     CmdActiveTitlebar1 = commandActiveTitlebar1;
-    emit commandActiveTitlebar1Changed();
+    Q_EMIT commandActiveTitlebar1Changed();
 }
 
 void Options::setCommandActiveTitlebar2(MouseCommand commandActiveTitlebar2)
@@ -357,7 +357,7 @@ void Options::setCommandActiveTitlebar2(MouseCommand commandActiveTitlebar2)
         return;
     }
     CmdActiveTitlebar2 = commandActiveTitlebar2;
-    emit commandActiveTitlebar2Changed();
+    Q_EMIT commandActiveTitlebar2Changed();
 }
 
 void Options::setCommandActiveTitlebar3(MouseCommand commandActiveTitlebar3)
@@ -366,7 +366,7 @@ void Options::setCommandActiveTitlebar3(MouseCommand commandActiveTitlebar3)
         return;
     }
     CmdActiveTitlebar3 = commandActiveTitlebar3;
-    emit commandActiveTitlebar3Changed();
+    Q_EMIT commandActiveTitlebar3Changed();
 }
 
 void Options::setCommandInactiveTitlebar1(MouseCommand commandInactiveTitlebar1)
@@ -375,7 +375,7 @@ void Options::setCommandInactiveTitlebar1(MouseCommand commandInactiveTitlebar1)
         return;
     }
     CmdInactiveTitlebar1 = commandInactiveTitlebar1;
-    emit commandInactiveTitlebar1Changed();
+    Q_EMIT commandInactiveTitlebar1Changed();
 }
 
 void Options::setCommandInactiveTitlebar2(MouseCommand commandInactiveTitlebar2)
@@ -384,7 +384,7 @@ void Options::setCommandInactiveTitlebar2(MouseCommand commandInactiveTitlebar2)
         return;
     }
     CmdInactiveTitlebar2 = commandInactiveTitlebar2;
-    emit commandInactiveTitlebar2Changed();
+    Q_EMIT commandInactiveTitlebar2Changed();
 }
 
 void Options::setCommandInactiveTitlebar3(MouseCommand commandInactiveTitlebar3)
@@ -393,7 +393,7 @@ void Options::setCommandInactiveTitlebar3(MouseCommand commandInactiveTitlebar3)
         return;
     }
     CmdInactiveTitlebar3 = commandInactiveTitlebar3;
-    emit commandInactiveTitlebar3Changed();
+    Q_EMIT commandInactiveTitlebar3Changed();
 }
 
 void Options::setCommandWindow1(MouseCommand commandWindow1)
@@ -402,7 +402,7 @@ void Options::setCommandWindow1(MouseCommand commandWindow1)
         return;
     }
     CmdWindow1 = commandWindow1;
-    emit commandWindow1Changed();
+    Q_EMIT commandWindow1Changed();
 }
 
 void Options::setCommandWindow2(MouseCommand commandWindow2)
@@ -411,7 +411,7 @@ void Options::setCommandWindow2(MouseCommand commandWindow2)
         return;
     }
     CmdWindow2 = commandWindow2;
-    emit commandWindow2Changed();
+    Q_EMIT commandWindow2Changed();
 }
 
 void Options::setCommandWindow3(MouseCommand commandWindow3)
@@ -420,7 +420,7 @@ void Options::setCommandWindow3(MouseCommand commandWindow3)
         return;
     }
     CmdWindow3 = commandWindow3;
-    emit commandWindow3Changed();
+    Q_EMIT commandWindow3Changed();
 }
 
 void Options::setCommandWindowWheel(MouseCommand commandWindowWheel)
@@ -429,7 +429,7 @@ void Options::setCommandWindowWheel(MouseCommand commandWindowWheel)
         return;
     }
     CmdWindowWheel = commandWindowWheel;
-    emit commandWindowWheelChanged();
+    Q_EMIT commandWindowWheelChanged();
 }
 
 void Options::setCommandAll1(MouseCommand commandAll1)
@@ -438,7 +438,7 @@ void Options::setCommandAll1(MouseCommand commandAll1)
         return;
     }
     CmdAll1 = commandAll1;
-    emit commandAll1Changed();
+    Q_EMIT commandAll1Changed();
 }
 
 void Options::setCommandAll2(MouseCommand commandAll2)
@@ -447,7 +447,7 @@ void Options::setCommandAll2(MouseCommand commandAll2)
         return;
     }
     CmdAll2 = commandAll2;
-    emit commandAll2Changed();
+    Q_EMIT commandAll2Changed();
 }
 
 void Options::setCommandAll3(MouseCommand commandAll3)
@@ -456,7 +456,7 @@ void Options::setCommandAll3(MouseCommand commandAll3)
         return;
     }
     CmdAll3 = commandAll3;
-    emit commandAll3Changed();
+    Q_EMIT commandAll3Changed();
 }
 
 void Options::setKeyCmdAllModKey(uint keyCmdAllModKey)
@@ -465,7 +465,7 @@ void Options::setKeyCmdAllModKey(uint keyCmdAllModKey)
         return;
     }
     CmdAllModKey = keyCmdAllModKey;
-    emit keyCmdAllModKeyChanged();
+    Q_EMIT keyCmdAllModKeyChanged();
 }
 
 void Options::setShowGeometryTip(bool showGeometryTip)
@@ -474,7 +474,7 @@ void Options::setShowGeometryTip(bool showGeometryTip)
         return;
     }
     show_geometry_tip = showGeometryTip;
-    emit showGeometryTipChanged();
+    Q_EMIT showGeometryTipChanged();
 }
 
 void Options::setCondensedTitle(bool condensedTitle)
@@ -483,7 +483,7 @@ void Options::setCondensedTitle(bool condensedTitle)
         return;
     }
     condensed_title = condensedTitle;
-    emit condensedTitleChanged();
+    Q_EMIT condensedTitleChanged();
 }
 
 void Options::setElectricBorderMaximize(bool electricBorderMaximize)
@@ -492,7 +492,7 @@ void Options::setElectricBorderMaximize(bool electricBorderMaximize)
         return;
     }
     electric_border_maximize = electricBorderMaximize;
-    emit electricBorderMaximizeChanged();
+    Q_EMIT electricBorderMaximizeChanged();
 }
 
 void Options::setElectricBorderTiling(bool electricBorderTiling)
@@ -501,7 +501,7 @@ void Options::setElectricBorderTiling(bool electricBorderTiling)
         return;
     }
     electric_border_tiling = electricBorderTiling;
-    emit electricBorderTilingChanged();
+    Q_EMIT electricBorderTilingChanged();
 }
 
 void Options::setElectricBorderCornerRatio(float electricBorderCornerRatio)
@@ -510,7 +510,7 @@ void Options::setElectricBorderCornerRatio(float electricBorderCornerRatio)
         return;
     }
     electric_border_corner_ratio = electricBorderCornerRatio;
-    emit electricBorderCornerRatioChanged();
+    Q_EMIT electricBorderCornerRatioChanged();
 }
 
 void Options::setBorderlessMaximizedWindows(bool borderlessMaximizedWindows)
@@ -519,7 +519,7 @@ void Options::setBorderlessMaximizedWindows(bool borderlessMaximizedWindows)
         return;
     }
     borderless_maximized_windows = borderlessMaximizedWindows;
-    emit borderlessMaximizedWindowsChanged();
+    Q_EMIT borderlessMaximizedWindowsChanged();
 }
 
 void Options::setKillPingTimeout(int killPingTimeout)
@@ -528,7 +528,7 @@ void Options::setKillPingTimeout(int killPingTimeout)
         return;
     }
     m_killPingTimeout = killPingTimeout;
-    emit killPingTimeoutChanged();
+    Q_EMIT killPingTimeoutChanged();
 }
 
 void Options::setHideUtilityWindowsForInactive(bool hideUtilityWindowsForInactive)
@@ -537,7 +537,7 @@ void Options::setHideUtilityWindowsForInactive(bool hideUtilityWindowsForInactiv
         return;
     }
     m_hideUtilityWindowsForInactive = hideUtilityWindowsForInactive;
-    emit hideUtilityWindowsForInactiveChanged();
+    Q_EMIT hideUtilityWindowsForInactiveChanged();
 }
 
 void Options::setCompositingMode(int compositingMode)
@@ -546,7 +546,7 @@ void Options::setCompositingMode(int compositingMode)
         return;
     }
     m_compositingMode = static_cast<CompositingType>(compositingMode);
-    emit compositingModeChanged();
+    Q_EMIT compositingModeChanged();
 }
 
 void Options::setUseCompositing(bool useCompositing)
@@ -555,7 +555,7 @@ void Options::setUseCompositing(bool useCompositing)
         return;
     }
     m_useCompositing = useCompositing;
-    emit useCompositingChanged();
+    Q_EMIT useCompositingChanged();
 }
 
 void Options::setHiddenPreviews(int hiddenPreviews)
@@ -564,7 +564,7 @@ void Options::setHiddenPreviews(int hiddenPreviews)
         return;
     }
     m_hiddenPreviews = static_cast<HiddenPreviews>(hiddenPreviews);
-    emit hiddenPreviewsChanged();
+    Q_EMIT hiddenPreviewsChanged();
 }
 
 void Options::setMaxFpsInterval(qint64 maxFpsInterval)
@@ -573,7 +573,7 @@ void Options::setMaxFpsInterval(qint64 maxFpsInterval)
         return;
     }
     m_maxFpsInterval = maxFpsInterval;
-    emit maxFpsIntervalChanged();
+    Q_EMIT maxFpsIntervalChanged();
 }
 
 void Options::setRefreshRate(uint refreshRate)
@@ -582,7 +582,7 @@ void Options::setRefreshRate(uint refreshRate)
         return;
     }
     m_refreshRate = refreshRate;
-    emit refreshRateChanged();
+    Q_EMIT refreshRateChanged();
 }
 
 void Options::setVBlankTime(qint64 vBlankTime)
@@ -591,7 +591,7 @@ void Options::setVBlankTime(qint64 vBlankTime)
         return;
     }
     m_vBlankTime = vBlankTime;
-    emit vBlankTimeChanged();
+    Q_EMIT vBlankTimeChanged();
 }
 
 void Options::setGlStrictBinding(bool glStrictBinding)
@@ -600,7 +600,7 @@ void Options::setGlStrictBinding(bool glStrictBinding)
         return;
     }
     m_glStrictBinding = glStrictBinding;
-    emit glStrictBindingChanged();
+    Q_EMIT glStrictBindingChanged();
 }
 
 void Options::setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver)
@@ -609,7 +609,7 @@ void Options::setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver)
         return;
     }
     m_glStrictBindingFollowsDriver = glStrictBindingFollowsDriver;
-    emit glStrictBindingFollowsDriverChanged();
+    Q_EMIT glStrictBindingFollowsDriverChanged();
 }
 
 void Options::setGLCoreProfile(bool value)
@@ -618,7 +618,7 @@ void Options::setGLCoreProfile(bool value)
         return;
     }
     m_glCoreProfile = value;
-    emit glCoreProfileChanged();
+    Q_EMIT glCoreProfileChanged();
 }
 
 void Options::setWindowsBlockCompositing(bool value)
@@ -627,7 +627,7 @@ void Options::setWindowsBlockCompositing(bool value)
         return;
     }
     m_windowsBlockCompositing = value;
-    emit windowsBlockCompositingChanged();
+    Q_EMIT windowsBlockCompositingChanged();
 }
 
 void Options::setAnimationCurve(AnimationCurve curve)
@@ -675,7 +675,7 @@ void Options::setGlPlatformInterface(OpenGLPlatformInterface interface)
         return;
     }
     m_glPlatformInterface = interface;
-    emit glPlatformInterfaceChanged();
+    Q_EMIT glPlatformInterfaceChanged();
 }
 
 void Options::reparseConfiguration()
@@ -698,7 +698,7 @@ void Options::updateSettings()
     // Driver-specific config detection
     reloadCompositingSettings();
 
-    emit configChanged();
+    Q_EMIT configChanged();
 }
 
 void Options::loadConfig()

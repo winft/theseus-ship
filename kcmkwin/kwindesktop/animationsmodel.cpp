@@ -44,7 +44,7 @@ AnimationsModel::AnimationsModel(QObject *parent)
             const bool configurable = index_.data(ConfigurableRole).toBool();
             if (configurable != m_currentConfigurable) {
                 m_currentConfigurable = configurable;
-                emit currentConfigurableChanged();
+                Q_EMIT currentConfigurableChanged();
             }
         }
     );
@@ -59,7 +59,7 @@ void AnimationsModel::setAnimationEnabled(bool enabled)
 {
     if (m_animationEnabled != enabled) {
         m_animationEnabled = enabled;
-        emit animationEnabledChanged();
+        Q_EMIT animationEnabledChanged();
     }
 }
 
@@ -72,7 +72,7 @@ void AnimationsModel::setAnimationIndex(int index)
 {
     if (m_animationIndex != index) {
         m_animationIndex = index;
-        emit animationIndexChanged();
+        Q_EMIT animationIndexChanged();
     }
 }
 
@@ -109,8 +109,8 @@ void AnimationsModel::loadDefaults()
         if (rowIndex.data(EnabledByDefaultRole).toBool()) {
             m_defaultAnimationEnabled = true;
             m_defaultAnimationIndex = i;
-            emit defaultAnimationEnabledChanged();
-            emit defaultAnimationIndexChanged();
+            Q_EMIT defaultAnimationEnabledChanged();
+            Q_EMIT defaultAnimationIndexChanged();
             break;
         }
     }

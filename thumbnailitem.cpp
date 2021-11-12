@@ -98,7 +98,7 @@ void AbstractThumbnailItem::setBrightness(qreal brightness)
     }
     m_brightness = brightness;
     update();
-    emit brightnessChanged();
+    Q_EMIT brightnessChanged();
 }
 
 void AbstractThumbnailItem::setSaturation(qreal saturation)
@@ -108,13 +108,13 @@ void AbstractThumbnailItem::setSaturation(qreal saturation)
     }
     m_saturation = saturation;
     update();
-    emit saturationChanged();
+    Q_EMIT saturationChanged();
 }
 
 void AbstractThumbnailItem::setClipTo(QQuickItem *clip)
 {
     m_clipToItem = QPointer<QQuickItem>(clip);
-    emit clipToChanged();
+    Q_EMIT clipToChanged();
 }
 
 WindowThumbnailItem::WindowThumbnailItem(QQuickItem* parent)
@@ -138,9 +138,9 @@ void WindowThumbnailItem::setWId(const QUuid &wId)
         setClient(workspace()->findAbstractClient([this] (Toplevel const* c) { return c->internalId() == m_wId; }));
     } else if (m_client) {
         m_client = nullptr;
-        emit clientChanged();
+        Q_EMIT clientChanged();
     }
-    emit wIdChanged(wId);
+    Q_EMIT wIdChanged(wId);
 }
 
 void WindowThumbnailItem::setClient(Toplevel* window)
@@ -154,7 +154,7 @@ void WindowThumbnailItem::setClient(Toplevel* window)
     } else {
         setWId({});
     }
-    emit clientChanged();
+    Q_EMIT clientChanged();
 }
 
 void WindowThumbnailItem::paint(QPainter *painter)
@@ -197,7 +197,7 @@ void DesktopThumbnailItem::setDesktop(int desktop)
     }
     m_desktop = desktop;
     update();
-    emit desktopChanged(m_desktop);
+    Q_EMIT desktopChanged(m_desktop);
 }
 
 void DesktopThumbnailItem::paint(QPainter *painter)

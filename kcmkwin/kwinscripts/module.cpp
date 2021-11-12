@@ -152,7 +152,7 @@ void Module::importScriptInstallFinished(KJob *job)
 
     updateListViewContents();
 
-    emit changed(true);
+    Q_EMIT changed(true);
 }
 
 void Module::updateListViewContents()
@@ -174,7 +174,7 @@ void Module::load()
     updateListViewContents();
     ui->scriptSelector->load();
 
-    emit changed(false);
+    Q_EMIT changed(false);
 }
 
 void Module::save()
@@ -204,5 +204,5 @@ void Module::save()
     QDBusMessage message = QDBusMessage::createMethodCall("org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting", "start");
     QDBusConnection::sessionBus().asyncCall(message);
 
-    emit changed(false);
+    Q_EMIT changed(false);
 }

@@ -164,7 +164,7 @@ void get_addr_info_wrapper::compare()
                 ownAddress = ownAddress->ai_next;
             }
             if (localFound) {
-                emit local();
+                Q_EMIT local();
                 break;
             }
         }
@@ -249,7 +249,7 @@ void client_machine::check_for_localhost()
 void client_machine::set_local()
 {
     m_localhost = true;
-    emit localhostChanged();
+    Q_EMIT localhostChanged();
 }
 
 void client_machine::resolve_finished()
