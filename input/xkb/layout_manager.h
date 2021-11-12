@@ -68,7 +68,6 @@ private:
     void load_shortcuts(xkb::keyboard* xkb);
 
     xkb::manager& xkb;
-    xkb_layout_index_t m_layout = 0;
     KConfigGroup m_configGroup;
     QVector<QAction*> m_layoutShortcuts;
     dbus::keyboard_layout* m_dbusInterface = nullptr;

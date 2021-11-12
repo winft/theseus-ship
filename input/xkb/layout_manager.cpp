@@ -124,7 +124,6 @@ void layout_manager::reconfigure()
 
     auto xkb = xkb::get_primary_xkb_keyboard();
 
-    m_layout = xkb->layout;
     load_shortcuts(xkb);
 
     initDBusInterface();
@@ -159,21 +158,16 @@ void layout_manager::load_shortcuts(xkb::keyboard* xkb)
 
 void layout_manager::check_layout_change(xkb::keyboard* xkb, uint32_t old_layout)
 {
-    // Get here on key event or DBus call.
-    // m_layout - layout saved last time OSD occurred
-    // previousLayout - actual layout just before potential layout change
-    // We need OSD if current layout deviates from any of these
-
+    if (old_layout == xkb->layout) {
+        // No change.
+        return;
+    }
     if (xkb != xkb::get_primary_xkb_keyboard()) {
         // We currently only inform about changes on the primary device.
         return;
     }
-
-    if (m_layout != xkb->layout || old_layout != xkb->layout) {
-        m_layout = xkb->layout;
-        send_layout_to_osd(xkb);
-        Q_EMIT layoutChanged(xkb->layout);
-    }
+    send_layout_to_osd(xkb);
+    Q_EMIT layoutChanged(xkb->layout);
 }
 
 void layout_manager::send_layout_to_osd(xkb::keyboard* xkb)
