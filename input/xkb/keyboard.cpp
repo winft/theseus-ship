@@ -107,7 +107,11 @@ void keyboard::update_keymap(std::shared_ptr<xkb::keymap> keymap)
         = xkb_state_serialize_mods(state, xkb_state_component(XKB_STATE_MODS_LOCKED));
 
     evaluate_startup_num_lock();
-    create_keymap_file();
+
+    if (seat) {
+        seat->keyboards().set_keymap(keymap->cache);
+    }
+
     update_modifiers();
     forward_modifiers();
 }
@@ -163,19 +167,6 @@ void keyboard::evaluate_startup_num_lock()
 
     modifier_state.locked
         = xkb_state_serialize_mods(state, xkb_state_component(XKB_STATE_MODS_LOCKED));
-}
-
-void keyboard::create_keymap_file()
-{
-    if (!seat) {
-        return;
-    }
-    // TODO: uninstall keymap on server?
-    if (!keymap) {
-        return;
-    }
-
-    seat->keyboards().set_keymap(keymap->cache);
 }
 
 void keyboard::update_modifiers(uint32_t modsDepressed,

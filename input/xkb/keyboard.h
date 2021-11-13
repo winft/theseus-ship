@@ -95,7 +95,6 @@ Q_SIGNALS:
     void leds_changed(keyboard_leds leds);
 
 private:
-    void create_keymap_file();
     void update_keymap(std::shared_ptr<xkb::keymap> keymap);
     void update_modifiers();
     void update_consumed_modifiers(uint32_t key);
