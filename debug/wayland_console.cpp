@@ -91,24 +91,25 @@ QString stateActiveComponents(xkb_state* state,
 void wayland_console::update_keyboard_tab()
 {
     auto xkb = input::xkb::get_primary_xkb_keyboard();
+    auto keymap = xkb->keymap->raw;
 
     m_ui->layoutsLabel->setText(keymapComponentToString<xkb_layout_index_t>(
-        xkb->keymap, xkb_keymap_num_layouts(xkb->keymap), &xkb_keymap_layout_get_name));
-    m_ui->currentLayoutLabel->setText(xkb_keymap_layout_get_name(xkb->keymap, xkb->layout));
+        keymap, xkb_keymap_num_layouts(keymap), &xkb_keymap_layout_get_name));
+    m_ui->currentLayoutLabel->setText(xkb_keymap_layout_get_name(keymap, xkb->layout));
     m_ui->modifiersLabel->setText(keymapComponentToString<xkb_mod_index_t>(
-        xkb->keymap, xkb_keymap_num_mods(xkb->keymap), &xkb_keymap_mod_get_name));
+        keymap, xkb_keymap_num_mods(keymap), &xkb_keymap_mod_get_name));
     m_ui->ledsLabel->setText(keymapComponentToString<xkb_led_index_t>(
-        xkb->keymap, xkb_keymap_num_leds(xkb->keymap), &xkb_keymap_led_get_name));
+        keymap, xkb_keymap_num_leds(keymap), &xkb_keymap_led_get_name));
     m_ui->activeLedsLabel->setText(
         stateActiveComponents<xkb_led_index_t>(xkb->state,
-                                               xkb_keymap_num_leds(xkb->keymap),
+                                               xkb_keymap_num_leds(keymap),
                                                &xkb_state_led_index_is_active,
                                                &xkb_keymap_led_get_name));
 
     using namespace std::placeholders;
     auto modActive = std::bind(xkb_state_mod_index_is_active, _1, _2, XKB_STATE_MODS_EFFECTIVE);
     m_ui->activeModifiersLabel->setText(stateActiveComponents<xkb_mod_index_t>(
-        xkb->state, xkb_keymap_num_mods(xkb->keymap), modActive, &xkb_keymap_mod_get_name));
+        xkb->state, xkb_keymap_num_mods(keymap), modActive, &xkb_keymap_mod_get_name));
 }
 
 wayland_console_model::wayland_console_model(QObject* parent)

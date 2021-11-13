@@ -123,15 +123,12 @@ void manager::reconfigure()
         return;
     }
 
-    default_keyboard->update(keymap, layouts);
+    default_keyboard->update(std::make_unique<xkb::keymap>(keymap), layouts);
+    xkb_keymap_unref(keymap);
 
     for (auto& keyboard : platform->keyboards) {
-        if (auto& xkb = keyboard->xkb) {
-            xkb->update(keymap, layouts);
-        }
+        keyboard->xkb->update(default_keyboard->keymap, layouts);
     }
-
-    xkb_keymap_unref(keymap);
 }
 
 static bool stringIsEmptyOrNull(const char* str)

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "keymap.h"
 #include "manager.h"
 
 #include "input/event.h"
@@ -38,7 +39,7 @@ public:
     void install_keymap(int fd, uint32_t size);
 
     void update_from_default();
-    void update(xkb_keymap* keymap, std::vector<std::string> const& layouts);
+    void update(std::shared_ptr<xkb::keymap> keymap, std::vector<std::string> const& layouts);
 
     void update_modifiers(uint32_t modsDepressed,
                           uint32_t modsLatched,
@@ -74,7 +75,7 @@ public:
     void forward_modifiers();
 
     xkb_state* state{nullptr};
-    xkb_keymap* keymap{nullptr};
+    std::shared_ptr<xkb::keymap> keymap;
     uint32_t layout{0};
     keyboard_leds leds{keyboard_leds::none};
     xkb_keysym_t keysym{XKB_KEY_NoSymbol};
@@ -95,7 +96,7 @@ Q_SIGNALS:
 
 private:
     void create_keymap_file();
-    void update_keymap(xkb_keymap* keymap);
+    void update_keymap(std::shared_ptr<xkb::keymap> keymap);
     void update_modifiers();
     void update_consumed_modifiers(uint32_t key);
 

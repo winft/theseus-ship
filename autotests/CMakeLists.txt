@@ -276,6 +276,7 @@ ecm_mark_as_test(testOpenGLContextAttributeBuilder)
 
 set(testXkb_SRCS
     ../input/xkb/keyboard.cpp
+    ../input/xkb/keymap.cpp
     ../input/xkb/manager.cpp
     test_xkb.cpp
 )

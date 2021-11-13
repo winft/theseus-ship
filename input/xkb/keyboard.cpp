@@ -8,6 +8,8 @@
 */
 #include "keyboard.h"
 
+#include "keymap.h"
+
 #include "utils.h"
 
 #include <KConfigGroup>
@@ -41,27 +43,17 @@ keyboard::~keyboard()
 {
     xkb_compose_state_unref(compose_state);
     xkb_state_unref(state);
-    xkb_keymap_unref(keymap);
 }
 
 void keyboard::install_keymap(int fd, uint32_t size)
 {
-    auto map = reinterpret_cast<char*>(mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0));
-    if (map == MAP_FAILED) {
-        return;
+    try {
+        auto map = std::make_shared<xkb::keymap>(fd, size, manager.context);
+        foreign_owned = true;
+        update_keymap(map);
+    } catch (...) {
+        // Do nothing for now.
     }
-
-    auto keymap = xkb_keymap_new_from_string(
-        manager.context, map, XKB_KEYMAP_FORMAT_TEXT_V1, XKB_MAP_COMPILE_PLACEHOLDER);
-    munmap(map, size);
-
-    if (!keymap) {
-        qCDebug(KWIN_XKB) << "Could not map keymap from file";
-        return;
-    }
-
-    foreign_owned = true;
-    update_keymap(keymap);
 }
 
 void keyboard::update_from_default()
@@ -71,7 +63,7 @@ void keyboard::update_from_default()
     }
 }
 
-void keyboard::update(xkb_keymap* keymap, std::vector<std::string> const& layouts)
+void keyboard::update(std::shared_ptr<xkb::keymap> keymap, std::vector<std::string> const& layouts)
 {
     if (foreign_owned) {
         return;
@@ -80,35 +72,30 @@ void keyboard::update(xkb_keymap* keymap, std::vector<std::string> const& layout
     update_keymap(keymap);
 }
 
-void keyboard::update_keymap(xkb_keymap* keymap)
+void keyboard::update_keymap(std::shared_ptr<xkb::keymap> keymap)
 {
-    assert(keymap);
-    xkb_keymap_ref(keymap);
-
-    auto state = xkb_state_new(keymap);
+    auto state = xkb_state_new(keymap->raw);
     if (!state) {
         qCDebug(KWIN_XKB) << "Could not create XKB state";
-        xkb_keymap_unref(keymap);
         return;
     }
 
     // now release the old ones
     xkb_state_unref(this->state);
-    xkb_keymap_unref(this->keymap);
 
     this->keymap = keymap;
     this->state = state;
 
-    modifiers_indices.shift = xkb_keymap_mod_get_index(keymap, XKB_MOD_NAME_SHIFT);
-    modifiers_indices.caps = xkb_keymap_mod_get_index(keymap, XKB_MOD_NAME_CAPS);
-    modifiers_indices.ctrl = xkb_keymap_mod_get_index(keymap, XKB_MOD_NAME_CTRL);
-    modifiers_indices.alt = xkb_keymap_mod_get_index(keymap, XKB_MOD_NAME_ALT);
-    modifiers_indices.meta = xkb_keymap_mod_get_index(keymap, XKB_MOD_NAME_LOGO);
-    modifiers_indices.num = xkb_keymap_mod_get_index(keymap, XKB_MOD_NAME_NUM);
+    modifiers_indices.shift = xkb_keymap_mod_get_index(keymap->raw, XKB_MOD_NAME_SHIFT);
+    modifiers_indices.caps = xkb_keymap_mod_get_index(keymap->raw, XKB_MOD_NAME_CAPS);
+    modifiers_indices.ctrl = xkb_keymap_mod_get_index(keymap->raw, XKB_MOD_NAME_CTRL);
+    modifiers_indices.alt = xkb_keymap_mod_get_index(keymap->raw, XKB_MOD_NAME_ALT);
+    modifiers_indices.meta = xkb_keymap_mod_get_index(keymap->raw, XKB_MOD_NAME_LOGO);
+    modifiers_indices.num = xkb_keymap_mod_get_index(keymap->raw, XKB_MOD_NAME_NUM);
 
-    leds_indices.num = xkb_keymap_led_get_index(keymap, XKB_LED_NAME_NUM);
-    leds_indices.caps = xkb_keymap_led_get_index(keymap, XKB_LED_NAME_CAPS);
-    leds_indices.scroll = xkb_keymap_led_get_index(keymap, XKB_LED_NAME_SCROLL);
+    leds_indices.num = xkb_keymap_led_get_index(keymap->raw, XKB_LED_NAME_NUM);
+    leds_indices.caps = xkb_keymap_led_get_index(keymap->raw, XKB_LED_NAME_CAPS);
+    leds_indices.scroll = xkb_keymap_led_get_index(keymap->raw, XKB_LED_NAME_SCROLL);
 
     layout = xkb_state_serialize_layout(state, XKB_STATE_LAYOUT_EFFECTIVE);
 
@@ -188,12 +175,7 @@ void keyboard::create_keymap_file()
         return;
     }
 
-    ScopedCPointer<char> keymap_string(xkb_keymap_get_as_string(keymap, XKB_KEYMAP_FORMAT_TEXT_V1));
-    if (keymap_string.isNull()) {
-        return;
-    }
-
-    seat->keyboards().set_keymap(keymap_string.data());
+    seat->keyboards().set_keymap(keymap->cache);
 }
 
 void keyboard::update_modifiers(uint32_t modsDepressed,
@@ -310,7 +292,7 @@ std::string keyboard::layout_name_from_index(xkb_layout_index_t index) const
     if (!keymap) {
         return {};
     }
-    return std::string(xkb_keymap_layout_get_name(keymap, index));
+    return std::string(xkb_keymap_layout_get_name(keymap->raw, index));
 }
 
 std::string keyboard::layout_name() const
@@ -437,7 +419,7 @@ bool keyboard::should_key_repeat(uint32_t key) const
     if (!keymap) {
         return false;
     }
-    return xkb_keymap_key_repeats(keymap, key + 8) != 0;
+    return xkb_keymap_key_repeats(keymap->raw, key + 8) != 0;
 }
 
 void keyboard::switch_to_next_layout()
@@ -446,7 +428,7 @@ void keyboard::switch_to_next_layout()
         return;
     }
 
-    auto num_layouts = xkb_keymap_num_layouts(keymap);
+    auto num_layouts = xkb_keymap_num_layouts(keymap->raw);
     auto next = xkb_state_serialize_layout(state, XKB_STATE_LAYOUT_EFFECTIVE) + 1;
 
     switch_to_layout(next % num_layouts);
@@ -482,7 +464,7 @@ uint32_t keyboard::layouts_count() const
     if (!keymap) {
         return 0;
     }
-    return xkb_keymap_num_layouts(keymap);
+    return xkb_keymap_num_layouts(keymap->raw);
 }
 
 }
