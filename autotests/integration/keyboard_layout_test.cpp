@@ -4,6 +4,8 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
+#include "base/backend/wlroots.h"
+#include "input/dbus/keyboard_layouts_v2.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
@@ -24,9 +26,14 @@
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDBusMessage>
+#include <QDBusMetaType>
 #include <QDBusPendingCall>
 
 #include <linux/input.h>
+
+extern "C" {
+#include <wlr/interfaces/wlr_input_device.h>
+}
 
 namespace KWin
 {
@@ -45,9 +52,23 @@ public:
             QSignalSpy layout_changed;
             QSignalSpy layouts_reconfigured;
         } v1;
+        struct v2 {
+            v2(keyboard_layout_test* test)
+                : keyboard_added{test, &keyboard_layout_test::keyboard_v2_added}
+                , keyboard_removed{test, &keyboard_layout_test::keyboard_v2_removed}
+                , layout_changed{test, &keyboard_layout_test::layout_v2_changed}
+                , layouts_reconfigured{test, &keyboard_layout_test::layout_list_v2_changed}
+            {
+            }
+            QSignalSpy keyboard_added;
+            QSignalSpy keyboard_removed;
+            QSignalSpy layout_changed;
+            QSignalSpy layouts_reconfigured;
+        } v2;
 
         test_spies(keyboard_layout_test* test)
             : v1{test}
+            , v2{test}
         {
         }
     };
@@ -55,6 +76,8 @@ public:
     keyboard_layout_test()
     {
         qRegisterMetaType<win::wayland::window*>();
+        qRegisterMetaType<input::dbus::keyboard_v2>("input::dbus::keyboard_v2");
+        qDBusRegisterMetaType<input::dbus::keyboard_v2>();
 
         spies = std::make_unique<test_spies>(this);
     }
@@ -63,13 +86,20 @@ Q_SIGNALS:
     void layout_changed(uint index);
     void layout_list_changed();
 
+    void keyboard_v2_added(input::dbus::keyboard_v2 keyboard);
+    void keyboard_v2_removed(uint keyboard);
+    void layout_v2_changed(uint keyboard, uint index);
+    void layout_list_v2_changed(uint keyboard);
+
 private Q_SLOTS:
     void initTestCase();
     void init();
     void cleanup();
 
     void test_reconfigure();
+    void test_multiple_keyboards();
     void test_change_layout_through_dbus();
+    void test_xkb_shortcut();
     void test_per_layout_shortcut();
     void test_dbus_service_export();
     void test_virtual_desktop_policy();
@@ -82,10 +112,28 @@ private:
     void reset_layouts();
     auto change_layout(uint index);
     void call_session(QString const& method);
+    wlr_input_device* create_keyboard();
 
     KConfigGroup layout_group;
     std::unique_ptr<test_spies> spies;
+
+    uint32_t keyboards_index{0};
 };
+
+wlr_input_device* keyboard_layout_test::create_keyboard()
+{
+    keyboards_index++;
+    return wlr_headless_add_input_device(Test::app()->base.backend.backend,
+                                         WLR_INPUT_DEVICE_KEYBOARD);
+}
+
+void remove_input_device(wlr_input_device* device)
+{
+#if !HAVE_WLR_HEADLESS_UNLINK_INPUT_DEVICE
+    wl_list_remove(&device->link);
+#endif
+    wlr_input_device_destroy(device);
+}
 
 void keyboard_layout_test::reconfigure_layouts()
 {
@@ -147,6 +195,11 @@ void keyboard_layout_test::initTestCase()
     QVERIFY(spies->v1.layout_changed.isValid());
     QVERIFY(spies->v1.layouts_reconfigured.isValid());
 
+    QVERIFY(spies->v2.keyboard_added.isValid());
+    QVERIFY(spies->v2.keyboard_removed.isValid());
+    QVERIFY(spies->v2.layout_changed.isValid());
+    QVERIFY(spies->v2.layouts_reconfigured.isValid());
+
     constexpr auto service_name{"org.kde.keyboard"};
 
     {
@@ -165,6 +218,36 @@ void keyboard_layout_test::initTestCase()
                                                       "layoutListChanged",
                                                       this,
                                                       SIGNAL(layout_list_changed())));
+    }
+    {
+        constexpr auto path_v2_name{"/LayoutsV2"};
+        constexpr auto interface_v2_name{"org.kde.KeyboardLayoutsV2"};
+
+        QVERIFY(QDBusConnection::sessionBus().connect(
+            service_name,
+            path_v2_name,
+            interface_v2_name,
+            "keyboardAdded",
+            this,
+            SIGNAL(keyboard_v2_added(input::dbus::keyboard_v2))));
+        QVERIFY(QDBusConnection::sessionBus().connect(service_name,
+                                                      path_v2_name,
+                                                      interface_v2_name,
+                                                      "keyboardRemoved",
+                                                      this,
+                                                      SIGNAL(keyboard_v2_removed(uint))));
+        QVERIFY(QDBusConnection::sessionBus().connect(service_name,
+                                                      path_v2_name,
+                                                      interface_v2_name,
+                                                      "layoutChanged",
+                                                      this,
+                                                      SIGNAL(layout_v2_changed(uint, uint))));
+        QVERIFY(QDBusConnection::sessionBus().connect(service_name,
+                                                      path_v2_name,
+                                                      interface_v2_name,
+                                                      "layoutListChanged",
+                                                      this,
+                                                      SIGNAL(layout_list_v2_changed(uint))));
     }
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
@@ -190,6 +273,9 @@ void keyboard_layout_test::init()
 void keyboard_layout_test::cleanup()
 {
     Test::destroy_wayland_connection();
+
+    spies->v1.layout_changed.clear();
+    spies->v2.layout_changed.clear();
 
     // We always reset to a us layout.
     if (auto xkb = input::xkb::get_primary_xkb_keyboard();
@@ -228,6 +314,24 @@ void keyboard_layout_test::test_reconfigure()
     QCOMPARE(xkb->layout_name_from_index(1), "English (US)");
 }
 
+void keyboard_layout_test::test_multiple_keyboards()
+{
+    // Check creation of a second keyboard with respective D-Bus signals being emitted.
+
+    // Currently no way to destroy a headless input device. Enable this check once we can destroy
+    // the second keyboard before going into the next test function.
+    layout_group = kwinApp()->kxkbConfig()->group("Layout");
+    layout_group.writeEntry("LayoutList", QStringLiteral("de,us"));
+    layout_group.sync();
+    reconfigure_layouts();
+
+    auto wlr_keyboard2 = create_keyboard();
+    QVERIFY(spies->v2.keyboard_added.wait());
+
+    remove_input_device(wlr_keyboard2);
+    QVERIFY(spies->v2.keyboard_removed.wait());
+}
+
 void keyboard_layout_test::test_change_layout_through_dbus()
 {
     // This test verifies that the layout can be changed through DBus.
@@ -260,14 +364,18 @@ void keyboard_layout_test::test_change_layout_through_dbus()
     QCOMPARE(reply.reply().arguments().first().toBool(), true);
     QVERIFY(spies->v1.layout_changed.wait());
     QCOMPARE(spies->v1.layout_changed.count(), 1);
+    QTRY_COMPARE(spies->v2.layout_changed.count(), 1);
     spies->v1.layout_changed.clear();
+    spies->v2.layout_changed.clear();
 
     // Layout should persist after reset.
     reset_layouts();
     QCOMPARE(xkb->layout_name(), "English (US)");
     QVERIFY(spies->v1.layout_changed.wait());
     QCOMPARE(spies->v1.layout_changed.count(), 1);
+    QTRY_COMPARE(spies->v2.layout_changed.count(), 1);
     spies->v1.layout_changed.clear();
+    spies->v2.layout_changed.clear();
 
     // Switch to a layout which does not exist.
     reply = change_layout(Layout::bad);
@@ -275,6 +383,7 @@ void keyboard_layout_test::test_change_layout_through_dbus()
     QCOMPARE(reply.reply().arguments().first().toBool(), false);
     QCOMPARE(xkb->layout_name(), "English (US)");
     QVERIFY(!spies->v1.layout_changed.wait(1000));
+    QCOMPARE(spies->v2.layout_changed.count(), 0);
 
     // Switch to another layout should work.
     reply = change_layout(Layout::de);
@@ -283,6 +392,9 @@ void keyboard_layout_test::test_change_layout_through_dbus()
     QCOMPARE(xkb->layout_name(), "German");
     QVERIFY(spies->v1.layout_changed.wait());
     QCOMPARE(spies->v1.layout_changed.count(), 1);
+    QTRY_COMPARE(spies->v2.layout_changed.count(), 1);
+    spies->v1.layout_changed.clear();
+    spies->v2.layout_changed.clear();
 
     // Switching to same layout should also work.
     reply = change_layout(Layout::de);
@@ -290,6 +402,112 @@ void keyboard_layout_test::test_change_layout_through_dbus()
     QCOMPARE(reply.reply().arguments().first().toBool(), true);
     QCOMPARE(xkb->layout_name(), "German");
     QVERIFY(!spies->v1.layout_changed.wait(1000));
+    QCOMPARE(spies->v2.layout_changed.count(), 0);
+}
+
+void keyboard_layout_test::test_xkb_shortcut()
+{
+    // This test verifies that per-layout global shortcuts are working correctly.
+
+    // First configure layouts and the XKB toggle action.
+    layout_group.writeEntry("LayoutList", QStringLiteral("us,de,de(neo)"));
+    layout_group.writeEntry("Options", QStringLiteral("grp:ctrls_toggle"));
+    layout_group.sync();
+
+    // Now we should have three layouts.
+    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    reconfigure_layouts();
+    QCOMPARE(xkb->layouts_count(), 3u);
+
+    // Create a second keyboard to test the v2 D-Bus interface.
+    auto wlr_keyboard2 = create_keyboard();
+    QVERIFY(Test::app()->keyboard != wlr_keyboard2);
+    QVERIFY(spies->v2.keyboard_added.wait());
+    QCOMPARE(spies->v2.keyboard_added.front().front().value<input::dbus::keyboard_v2>().id, 1);
+    auto& xkb2 = Test::app()->input->keyboards.at(1)->xkb;
+    QCOMPARE(xkb2->layouts_count(), 3u);
+
+    // Default layout is English.
+    xkb->switch_to_layout(0);
+    QCOMPARE(xkb->layout_name(), "English (US)");
+    QCOMPARE(xkb2->layout_name(), "English (US)");
+
+    // Now switch on the first keyboard to German through the XKB shortcut.
+    quint32 timestamp = 1;
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++);
+    Test::keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++);
+    QVERIFY(spies->v1.layout_changed.wait());
+    QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
+
+    QCOMPARE(xkb->layout_name(), "German");
+    QCOMPARE(xkb2->layout_name(), "English (US)");
+    QCOMPARE(spies->v2.layout_changed.front().front(), 0);
+    QCOMPARE(spies->v2.layout_changed.front().back(), 1);
+
+    Test::keyboard_key_released(KEY_RIGHTCTRL, timestamp++);
+    spies->v2.layout_changed.clear();
+
+    // Switch to next layout.
+    Test::keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++);
+    QVERIFY(spies->v1.layout_changed.wait());
+    QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
+
+    QCOMPARE(xkb->layout_name(), "German (Neo 2)");
+    QCOMPARE(xkb2->layout_name(), "English (US)");
+    QCOMPARE(spies->v2.layout_changed.front().front(), 0);
+    QCOMPARE(spies->v2.layout_changed.front().back(), 2);
+
+    Test::keyboard_key_released(KEY_RIGHTCTRL, timestamp++);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
+    spies->v1.layout_changed.clear();
+    spies->v2.layout_changed.clear();
+
+    QCOMPARE(xkb->layout_name(), "German (Neo 2)");
+    QCOMPARE(xkb2->layout_name(), "English (US)");
+
+    // Now on the second keyboard switch to German through the XKB shortcut.
+    Test::keyboard_key_pressed(KEY_LEFTCTRL, timestamp++, wlr_keyboard2);
+    Test::keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
+    QVERIFY(!spies->v1.layout_changed.wait(500));
+    QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
+
+    // Now layout should be German on the second keyboard, but no change on the first one.
+    QCOMPARE(xkb->layout_name(), "German (Neo 2)");
+    QCOMPARE(xkb2->layout_name(), "German");
+    QCOMPARE(spies->v2.layout_changed.front().front(), keyboards_index);
+    QCOMPARE(spies->v2.layout_changed.front().back(), 1);
+
+    Test::keyboard_key_released(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
+    spies->v2.layout_changed.clear();
+
+    // Switch to next layout.
+    Test::keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
+    QVERIFY(!spies->v1.layout_changed.wait(500));
+    QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
+    QCOMPARE(xkb->layout_name(), "German (Neo 2)");
+    QCOMPARE(xkb2->layout_name(), "German (Neo 2)");
+    QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
+    QCOMPARE(spies->v2.layout_changed.front().front(), keyboards_index);
+    QCOMPARE(spies->v2.layout_changed.front().back(), 2);
+
+    Test::keyboard_key_released(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
+    spies->v2.layout_changed.clear();
+
+    // Switch to next layout on the second keyboard, which is again English.
+    Test::keyboard_key_pressed(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
+    QVERIFY(!spies->v1.layout_changed.wait(500));
+    QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
+    QCOMPARE(xkb->layout_name(), "German (Neo 2)");
+    QCOMPARE(xkb2->layout_name(), "English (US)");
+    QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
+    QCOMPARE(spies->v2.layout_changed.front().front(), keyboards_index);
+    QCOMPARE(spies->v2.layout_changed.front().back(), 0);
+
+    Test::keyboard_key_released(KEY_RIGHTCTRL, timestamp++, wlr_keyboard2);
+    Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++, wlr_keyboard2);
+
+    remove_input_device(wlr_keyboard2);
+    QVERIFY(spies->v2.keyboard_removed.wait());
 }
 
 void keyboard_layout_test::test_per_layout_shortcut()
@@ -322,9 +540,17 @@ void keyboard_layout_test::test_per_layout_shortcut()
     reconfigure_layouts();
     QCOMPARE(xkb->layouts_count(), 3u);
 
+    // Create a second keyboard to test the v2 D-Bus interface.
+    auto wlr_keyboard2 = create_keyboard();
+    QVERIFY(Test::app()->keyboard != wlr_keyboard2);
+    QVERIFY(spies->v2.keyboard_added.wait());
+    QCOMPARE(spies->v2.keyboard_added.front().front().value<input::dbus::keyboard_v2>().id, 1);
+    auto& xkb2 = Test::app()->input->keyboards.at(1)->xkb;
+
     // Default layout is English.
     xkb->switch_to_layout(0);
     QCOMPARE(xkb->layout_name(), "English (US)");
+    QCOMPARE(xkb2->layout_name(), "English (US)");
 
     // Now switch to German through the global shortcut.
     quint32 timestamp = 1;
@@ -332,18 +558,32 @@ void keyboard_layout_test::test_per_layout_shortcut()
     Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
     Test::keyboard_key_pressed(KEY_2, timestamp++);
     QVERIFY(spies->v1.layout_changed.wait());
+    QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
+
     QCOMPARE(xkb->layout_name(), "German");
+    QCOMPARE(xkb2->layout_name(), "English (US)");
+    QCOMPARE(spies->v2.layout_changed.front().front(), 0);
+    QCOMPARE(spies->v2.layout_changed.front().back(), 1);
 
     Test::keyboard_key_released(KEY_2, timestamp++);
+    spies->v2.layout_changed.clear();
 
     // Switch back to English.
     Test::keyboard_key_pressed(KEY_1, timestamp++);
     QVERIFY(spies->v1.layout_changed.wait());
     QCOMPARE(xkb->layout_name(), "English (US)");
+    QTRY_COMPARE(spies->v2.layout_changed.size(), 1);
+    QCOMPARE(spies->v2.layout_changed.front().front(), 0);
+    QCOMPARE(spies->v2.layout_changed.front().back(), 0);
 
     Test::keyboard_key_released(KEY_1, timestamp++);
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
     Test::keyboard_key_released(KEY_LEFTCTRL, timestamp++);
+    spies->v1.layout_changed.clear();
+    spies->v2.layout_changed.clear();
+
+    remove_input_device(wlr_keyboard2);
+    QVERIFY(spies->v2.keyboard_removed.wait());
 }
 
 void keyboard_layout_test::test_dbus_service_export()

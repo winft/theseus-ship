@@ -181,6 +181,7 @@ set_package_properties(wlroots PROPERTIES
 if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.15.0)
   set(HAVE_WLR_TOUCH_FRAME 1)
   set(HAVE_WLR_DRM_LEASE 1)
+  set(HAVE_WLR_HEADLESS_UNLINK_INPUT_DEVICE 1)
 endif()
 
 find_package(X11)

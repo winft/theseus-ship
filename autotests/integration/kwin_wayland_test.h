@@ -130,6 +130,7 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 {
     Q_OBJECT
 public:
+    wayland_base base;
     std::unique_ptr<WaylandServer> server;
     std::unique_ptr<xwl::xwayland> xwayland;
     std::unique_ptr<win::wayland::space> workspace;
@@ -160,7 +161,6 @@ private:
     void handle_server_addons_created();
     void create_xwayland();
 
-    wayland_base base;
     std::unique_ptr<render::backend::wlroots::backend> render;
     std::unique_ptr<render::wayland::compositor> compositor;
 };
@@ -306,6 +306,9 @@ KWIN_EXPORT void pointer_axis_vertical(double delta, uint32_t time, int32_t disc
 
 KWIN_EXPORT void keyboard_key_pressed(uint32_t key, uint32_t time);
 KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time);
+
+KWIN_EXPORT void keyboard_key_pressed(uint32_t key, uint32_t time, wlr_input_device* keyboard);
+KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_input_device* keyboard);
 
 KWIN_EXPORT void touch_down(int32_t id, QPointF const& position, uint32_t time);
 KWIN_EXPORT void touch_up(int32_t id, uint32_t time);

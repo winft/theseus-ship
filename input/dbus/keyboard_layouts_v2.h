@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include <kwin_export.h>
+
 #include <QObject>
 #include <QVector>
 
@@ -82,10 +84,10 @@ private:
     std::unordered_map<uint, keyboard_v2_internal> keyboards;
 };
 
-QDBusArgument& operator<<(QDBusArgument& argument, keyboard_v2 const& keyboard);
-QDBusArgument const& operator>>(QDBusArgument const& argument, keyboard_v2& keyboard);
-QDBusArgument& operator<<(QDBusArgument& argument, layout_names_v2 const& names);
-QDBusArgument const& operator>>(QDBusArgument const& argument, layout_names_v2& names);
+KWIN_EXPORT QDBusArgument& operator<<(QDBusArgument& argument, keyboard_v2 const& keyboard);
+KWIN_EXPORT QDBusArgument const& operator>>(QDBusArgument const& argument, keyboard_v2& keyboard);
+KWIN_EXPORT QDBusArgument& operator<<(QDBusArgument& argument, layout_names_v2 const& names);
+KWIN_EXPORT QDBusArgument const& operator>>(QDBusArgument const& argument, layout_names_v2& names);
 
 }
 }

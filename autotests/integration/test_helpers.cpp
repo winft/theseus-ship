@@ -740,12 +740,12 @@ void pointer_axis_vertical(double delta, uint32_t time, int32_t discrete_delta)
         delta, time, discrete_delta, WLR_AXIS_ORIENTATION_VERTICAL, WLR_AXIS_SOURCE_WHEEL);
 }
 
-void keyboard_key_impl(uint32_t key, uint32_t time, bool update_state, wl_keyboard_key_state state)
+void keyboard_key_impl(uint32_t key,
+                       uint32_t time,
+                       bool update_state,
+                       wl_keyboard_key_state state,
+                       wlr_input_device* keyboard)
 {
-    auto app = Test::app();
-
-    QVERIFY(app->keyboard);
-
     wlr_event_keyboard_key event{};
 
     event.keycode = key;
@@ -753,17 +753,27 @@ void keyboard_key_impl(uint32_t key, uint32_t time, bool update_state, wl_keyboa
     event.update_state = update_state;
     event.state = state;
 
-    wlr_signal_emit_safe(&app->keyboard->keyboard->events.key, &event);
+    wlr_signal_emit_safe(&keyboard->keyboard->events.key, &event);
 }
 
 void keyboard_key_pressed(uint32_t key, uint32_t time)
 {
-    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_PRESSED);
+    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_PRESSED, Test::app()->keyboard);
 }
 
 void keyboard_key_released(uint32_t key, uint32_t time)
 {
-    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_RELEASED);
+    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_RELEASED, Test::app()->keyboard);
+}
+
+void keyboard_key_pressed(uint32_t key, uint32_t time, wlr_input_device* keyboard)
+{
+    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_PRESSED, keyboard);
+}
+
+KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_input_device* keyboard)
+{
+    keyboard_key_impl(key, time, true, WL_KEYBOARD_KEY_STATE_RELEASED, keyboard);
 }
 
 QPointF get_relative_touch_position(QPointF const& pos)
