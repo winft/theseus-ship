@@ -5,9 +5,10 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "popup.h"
-#include "input/event.h"
-#include "wayland_server.h"
 
+#include "input/event.h"
+#include "input/redirect.h"
+#include "wayland_server.h"
 #include "win/deco.h"
 #include "win/geo.h"
 #include "win/transient.h"
@@ -106,10 +107,10 @@ bool popup_filter::key(key_event const& event)
 
     seat->setFocusedKeyboardSurface(last->surface());
     switch (event.state) {
-    case button_state::pressed:
+    case key_state::pressed:
         seat->keyboards().key_pressed(event.keycode);
         break;
-    case button_state::released:
+    case key_state::released:
         seat->keyboards().key_released(event.keycode);
         break;
     default:

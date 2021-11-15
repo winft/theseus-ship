@@ -48,13 +48,13 @@ Edge::Edge(ScreenEdges* parent)
     , m_blocked(false)
     , m_pushBackBlocked(false)
     , m_client(nullptr)
-    , m_gesture(new input::swipe_gesture(this))
+    , m_gesture{std::make_unique<input::swipe_gesture>()}
 {
     m_gesture->setMinimumFingerCount(1);
     m_gesture->setMaximumFingerCount(1);
 
-    connect(
-        m_gesture,
+    QObject::connect(
+        m_gesture.get(),
         &input::gesture::triggered,
         this,
         [this] {
@@ -69,22 +69,25 @@ Edge::Edge(ScreenEdges* parent)
         },
         Qt::QueuedConnection);
 
-    connect(m_gesture, &input::swipe_gesture::started, this, &Edge::startApproaching);
-    connect(m_gesture, &input::swipe_gesture::cancelled, this, &Edge::stopApproaching);
-    connect(m_gesture, &input::swipe_gesture::progress, this, [this](qreal progress) {
-        int factor = progress * 256.0f;
-        if (m_lastApproachingFactor != factor) {
-            m_lastApproachingFactor = factor;
-            Q_EMIT approaching(border(), m_lastApproachingFactor / 256.0f, m_approachGeometry);
-        }
-    });
+    QObject::connect(
+        m_gesture.get(), &input::swipe_gesture::started, this, &Edge::startApproaching);
+    QObject::connect(
+        m_gesture.get(), &input::swipe_gesture::cancelled, this, &Edge::stopApproaching);
+    QObject::connect(
+        m_gesture.get(), &input::swipe_gesture::progress, this, [this](qreal progress) {
+            int factor = progress * 256.0f;
+            if (m_lastApproachingFactor != factor) {
+                m_lastApproachingFactor = factor;
+                Q_EMIT approaching(border(), m_lastApproachingFactor / 256.0f, m_approachGeometry);
+            }
+        });
 
-    connect(this, &Edge::activatesForTouchGestureChanged, this, [this] {
+    QObject::connect(this, &Edge::activatesForTouchGestureChanged, this, [this] {
         if (isReserved()) {
             if (activatesForTouchGesture()) {
-                m_edges->gestureRecognizer()->registerGesture(m_gesture);
+                m_edges->gestureRecognizer()->registerGesture(m_gesture.get());
             } else {
-                m_edges->gestureRecognizer()->unregisterGesture(m_gesture);
+                m_edges->gestureRecognizer()->unregisterGesture(m_gesture.get());
             }
         }
     });
@@ -559,7 +562,7 @@ void Edge::doGeometryUpdate()
 void Edge::activate()
 {
     if (activatesForTouchGesture()) {
-        m_edges->gestureRecognizer()->registerGesture(m_gesture);
+        m_edges->gestureRecognizer()->registerGesture(m_gesture.get());
     }
     doActivate();
 }
@@ -570,7 +573,7 @@ void Edge::doActivate()
 
 void Edge::deactivate()
 {
-    m_edges->gestureRecognizer()->unregisterGesture(m_gesture);
+    m_edges->gestureRecognizer()->unregisterGesture(m_gesture.get());
     doDeactivate();
 }
 
@@ -723,7 +726,7 @@ ScreenEdges::ScreenEdges(QObject* parent)
     , m_actionBottom(ElectricActionNone)
     , m_actionBottomLeft(ElectricActionNone)
     , m_actionLeft(ElectricActionNone)
-    , m_gestureRecognizer(new input::gesture_recognizer(this))
+    , m_gestureRecognizer{std::make_unique<input::gesture_recognizer>()}
 {
     m_cornerOffset = (Screens::self()->physicalDpiX(0) + Screens::self()->physicalDpiY(0) + 5) / 6;
 

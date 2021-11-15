@@ -225,7 +225,7 @@ void LockScreenTest::initTestCase()
 
 void LockScreenTest::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat);
+    Test::setup_wayland_connection(Test::global_selection::seat);
     QVERIFY(Test::wait_for_wayland_pointer());
 
     m_connection = Test::get_client().connection;

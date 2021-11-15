@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include "../event_spy.h"
+#include "input/event_spy.h"
 
 namespace KWin::input
 {

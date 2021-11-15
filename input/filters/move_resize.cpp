@@ -6,15 +6,16 @@
 */
 #include "move_resize.h"
 
-#include "../redirect.h"
+#include "input/event.h"
 #include "input/keyboard.h"
+#include "input/pointer_redirect.h"
+#include "input/qt_event.h"
+#include "input/redirect.h"
+#include "input/xkb/helpers.h"
 #include "main.h"
 #include "win/input.h"
 #include "win/move.h"
 #include "workspace.h"
-#include <input/event.h>
-#include <input/pointer_redirect.h>
-#include <input/qt_event.h>
 
 namespace KWin::input
 {
@@ -49,13 +50,15 @@ bool move_resize_filter::axis([[maybe_unused]] axis_event const& event)
 
 void process_key_press(Toplevel* window, key_event const& event)
 {
-    auto const& redirect = kwinApp()->input->redirect;
+    auto const& input = kwinApp()->input;
 
-    win::key_press_event(window, key_to_qt_key(event.keycode) | redirect->keyboardModifiers());
+    win::key_press_event(window,
+                         key_to_qt_key(event.keycode, event.base.dev->xkb.get())
+                             | xkb::get_active_keyboard_modifiers(input));
 
     if (win::is_move(window) || win::is_resize(window)) {
         // Only update if mode didn't end.
-        win::update_move_resize(window, redirect->globalPointer());
+        win::update_move_resize(window, input->redirect->globalPointer());
     }
 }
 
@@ -66,7 +69,7 @@ bool move_resize_filter::key(key_event const& event)
         return false;
     }
 
-    if (event.state == button_state::pressed) {
+    if (event.state == key_state::pressed) {
         process_key_press(window, event);
     }
     return true;

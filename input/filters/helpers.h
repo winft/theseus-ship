@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include <input/event.h>
+#include "input/event.h"
 
 #include <QWheelEvent>
 

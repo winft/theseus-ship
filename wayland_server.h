@@ -6,11 +6,14 @@
 */
 #pragma once
 
-#include "input/xkb.h"
+#include "input/types.h"
+#include "utils/flags.h"
 
 #include <kwinglobals.h>
 
 #include <QObject>
+#include <QSet>
+#include <memory>
 
 class QThread;
 
@@ -62,25 +65,23 @@ class window;
 
 class Toplevel;
 
+enum class wayland_start_options {
+    none = 0x0,
+    lock_screen = 0x1,
+    no_lock_screen_integration = 0x2,
+    no_global_shortcuts = 0x4,
+};
+
 class KWIN_EXPORT WaylandServer : public QObject
 {
     Q_OBJECT
 public:
     static WaylandServer* self();
 
-    enum class InitializationFlag {
-        NoOptions = 0x0,
-        LockScreen = 0x1,
-        NoLockScreenIntegration = 0x2,
-        NoGlobalShortcuts = 0x4,
-    };
-
-    Q_DECLARE_FLAGS(InitializationFlags, InitializationFlag)
-
     std::unique_ptr<Wrapland::Server::globals> globals;
 
-    WaylandServer(std::string const& socket, InitializationFlags flags);
-    WaylandServer(int socket_fd, InitializationFlags flags);
+    WaylandServer(std::string const& socket, wayland_start_options flags);
+    WaylandServer(int socket_fd, wayland_start_options flags);
     ~WaylandServer() override;
 
     void terminateClientConnections();
@@ -201,7 +202,7 @@ public:
     SocketPairConnection createConnection();
 
     void simulateUserActivity();
-    void updateKeyState(input::xkb::LEDs leds);
+    void updateKeyState(input::keyboard_leds leds);
 
     QSet<Wrapland::Server::LinuxDmabufBufferV1*> linuxDmabufBuffers() const
     {
@@ -222,7 +223,7 @@ Q_SIGNALS:
     void foreignTransientChanged(Wrapland::Server::Surface* child);
 
 private:
-    explicit WaylandServer(InitializationFlags flags);
+    explicit WaylandServer(wayland_start_options flags);
 
     void create_globals();
     void createInternalConnection(std::function<void(bool)> callback);
@@ -255,7 +256,9 @@ private:
 
     } m_internalConnection;
     QHash<Wrapland::Server::Client*, quint16> m_clientIds;
-    InitializationFlags m_initFlags;
+    wayland_start_options m_initFlags;
 };
 
 }
+
+ENUM_FLAGS(KWin::wayland_start_options)

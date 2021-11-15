@@ -147,7 +147,7 @@ public:
     }
 };
 
-WaylandServer::WaylandServer(InitializationFlags flags)
+WaylandServer::WaylandServer(wayland_start_options flags)
     : globals{std::make_unique<Wrapland::Server::globals>()}
     , m_display(std::make_unique<KWinDisplay>())
     , m_initFlags{flags}
@@ -156,7 +156,7 @@ WaylandServer::WaylandServer(InitializationFlags flags)
     qRegisterMetaType<Wrapland::Server::Output::DpmsMode>();
 }
 
-WaylandServer::WaylandServer(std::string const& socket, InitializationFlags flags)
+WaylandServer::WaylandServer(std::string const& socket, wayland_start_options flags)
     : WaylandServer(flags)
 
 {
@@ -165,7 +165,7 @@ WaylandServer::WaylandServer(std::string const& socket, InitializationFlags flag
     create_globals();
 }
 
-WaylandServer::WaylandServer(int socket_fd, InitializationFlags flags)
+WaylandServer::WaylandServer(int socket_fd, wayland_start_options flags)
     : WaylandServer(flags)
 
 {
@@ -460,7 +460,7 @@ void WaylandServer::initScreenLocker()
                 ScreenLocker::KSldApp::self()->setWaylandFd(-1);
             });
 
-    if (m_initFlags.testFlag(InitializationFlag::LockScreen)) {
+    if (flags(m_initFlags & wayland_start_options::lock_screen)) {
         ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
     }
 
@@ -634,12 +634,12 @@ bool WaylandServer::is_screen_locked() const
 
 bool WaylandServer::hasScreenLockerIntegration() const
 {
-    return !m_initFlags.testFlag(InitializationFlag::NoLockScreenIntegration);
+    return !(m_initFlags & wayland_start_options::no_lock_screen_integration);
 }
 
 bool WaylandServer::hasGlobalShortcutSupport() const
 {
-    return !m_initFlags.testFlag(InitializationFlag::NoGlobalShortcuts);
+    return !(m_initFlags & wayland_start_options::no_global_shortcuts);
 }
 
 void WaylandServer::simulateUserActivity()
@@ -649,20 +649,23 @@ void WaylandServer::simulateUserActivity()
     }
 }
 
-void WaylandServer::updateKeyState(input::xkb::LEDs leds)
+void WaylandServer::updateKeyState(input::keyboard_leds leds)
 {
     if (!globals->key_state)
         return;
 
     globals->key_state->setState(KeyState::Key::CapsLock,
-                                 leds & input::xkb::LED::CapsLock ? KeyState::State::Locked
-                                                                  : KeyState::State::Unlocked);
+                                 flags(leds & input::keyboard_leds::caps_lock)
+                                     ? KeyState::State::Locked
+                                     : KeyState::State::Unlocked);
     globals->key_state->setState(KeyState::Key::NumLock,
-                                 leds & input::xkb::LED::NumLock ? KeyState::State::Locked
-                                                                 : KeyState::State::Unlocked);
+                                 flags(leds & input::keyboard_leds::num_lock)
+                                     ? KeyState::State::Locked
+                                     : KeyState::State::Unlocked);
     globals->key_state->setState(KeyState::Key::ScrollLock,
-                                 leds & input::xkb::LED::ScrollLock ? KeyState::State::Locked
-                                                                    : KeyState::State::Unlocked);
+                                 flags(leds & input::keyboard_leds::scroll_lock)
+                                     ? KeyState::State::Locked
+                                     : KeyState::State::Unlocked);
 }
 
 }

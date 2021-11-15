@@ -20,12 +20,11 @@
 namespace KWin::input::wayland
 {
 
-cursor_theme::cursor_theme(Wrapland::Client::ShmPool* shm, QObject* parent)
-    : QObject(parent)
-    , m_theme(nullptr)
+cursor_theme::cursor_theme(Wrapland::Client::ShmPool* shm)
+    : m_theme(nullptr)
     , m_shm(shm)
 {
-    connect(screens(), &Screens::maxScaleChanged, this, &cursor_theme::loadTheme);
+    QObject::connect(screens(), &Screens::maxScaleChanged, this, &cursor_theme::loadTheme);
 }
 
 cursor_theme::~cursor_theme()
@@ -52,12 +51,12 @@ void cursor_theme::loadTheme()
         if (!m_theme) {
             // so far the theme had not been created, this means we need to start tracking theme
             // changes
-            connect(c, &input::cursor::theme_changed, this, &cursor_theme::loadTheme);
+            QObject::connect(c, &input::cursor::theme_changed, this, &cursor_theme::loadTheme);
         } else {
             destroyTheme();
         }
         m_theme = theme;
-        emit themeChanged();
+        Q_EMIT themeChanged();
     }
 }
 

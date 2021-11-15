@@ -7,6 +7,7 @@
 #pragma once
 
 #include <kwinglobals.h>
+#include <memory>
 
 class QAction;
 class KGlobalAccelD;
@@ -30,7 +31,7 @@ class KWIN_EXPORT global_shortcuts_manager : public QObject
 {
     Q_OBJECT
 public:
-    explicit global_shortcuts_manager(QObject* parent = nullptr);
+    global_shortcuts_manager();
     ~global_shortcuts_manager() override;
     void init();
 
@@ -101,7 +102,7 @@ private:
 
     KGlobalAccelD* m_kglobalAccel = nullptr;
     KGlobalAccelInterface* m_kglobalAccelInterface = nullptr;
-    gesture_recognizer* m_gestureRecognizer;
+    std::unique_ptr<gesture_recognizer> m_gestureRecognizer;
 };
 
 }

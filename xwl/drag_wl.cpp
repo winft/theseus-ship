@@ -382,8 +382,8 @@ void x11_visit::update_actions()
 
     // We assume the X client supports Move, but this might be wrong - then the drag just cancels,
     // if the user tries to force it.
-    waylandServer()->seat()->drags().target_actions_update(dnd_action::copy | dnd_action::move,
-                                                           pref);
+    waylandServer()->seat()->drags().target_actions_update(
+        QFlags({dnd_action::copy, dnd_action::move}), pref);
 }
 
 void x11_visit::drop()

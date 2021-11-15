@@ -21,15 +21,15 @@ class KWIN_EXPORT switch_device : public QObject
 {
     Q_OBJECT
 public:
-    input::platform* plat;
+    input::platform* platform;
     control::switch_device* control{nullptr};
 
-    switch_device(platform* plat, QObject* parent = nullptr);
+    switch_device(input::platform* platform);
     switch_device(switch_device const&) = delete;
     switch_device& operator=(switch_device const&) = delete;
     switch_device(switch_device&& other) noexcept = default;
     switch_device& operator=(switch_device&& other) noexcept = default;
-    ~switch_device() = default;
+    ~switch_device() override;
 
 Q_SIGNALS:
     void toggle(switch_toggle_event);

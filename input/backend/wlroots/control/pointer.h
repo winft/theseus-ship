@@ -18,7 +18,7 @@ class pointer_control : public input::control::pointer
     Q_OBJECT
 
 public:
-    pointer_control(libinput_device* dev, input::platform* plat);
+    pointer_control(libinput_device* dev, input::platform* platform);
     ~pointer_control() override = default;
 
     bool supports_disable_events() const override;

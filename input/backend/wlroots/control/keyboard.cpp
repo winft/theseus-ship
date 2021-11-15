@@ -37,8 +37,8 @@ bool check_alpha_numeric_keyboard(libinput_device* device)
     return true;
 }
 
-keyboard_control::keyboard_control(libinput_device* dev, input::platform* plat)
-    : input::control::keyboard(plat)
+keyboard_control::keyboard_control(libinput_device* dev, input::platform* platform)
+    : input::control::keyboard(platform)
     , dev{dev}
 {
     populate_metadata(this);
@@ -65,16 +65,16 @@ bool keyboard_control::is_alpha_numeric_keyboard() const
     return is_alpha_numeric_keyboard_cache;
 }
 
-void keyboard_control::update_leds(xkb::LEDs leds)
+void keyboard_control::update_leds(keyboard_leds leds)
 {
     int libi_leds{0};
-    if (leds.testFlag(xkb::LED::NumLock)) {
+    if (flags(leds & keyboard_leds::num_lock)) {
         libi_leds = LIBINPUT_LED_NUM_LOCK;
     }
-    if (leds.testFlag(xkb::LED::CapsLock)) {
+    if (flags(leds & keyboard_leds::caps_lock)) {
         libi_leds |= LIBINPUT_LED_CAPS_LOCK;
     }
-    if (leds.testFlag(xkb::LED::ScrollLock)) {
+    if (flags(leds & keyboard_leds::scroll_lock)) {
         libi_leds |= LIBINPUT_LED_SCROLL_LOCK;
     }
     libinput_device_led_update(dev, static_cast<libinput_led>(libi_leds));

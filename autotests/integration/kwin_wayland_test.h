@@ -12,6 +12,7 @@
 #include "base/platform.h"
 #include "main.h"
 #include "render/backend/wlroots/backend.h"
+#include "utils/flags.h"
 #include "wayland_server.h"
 
 #include <Wrapland/Client/xdg_shell.h>
@@ -68,18 +69,17 @@ class Toplevel;
 namespace Test
 {
 
-enum class AdditionalWaylandInterface {
-    Seat = 1 << 0,
-    XdgDecoration = 1 << 1,
-    PlasmaShell = 1 << 2,
-    WindowManagement = 1 << 3,
-    PointerConstraints = 1 << 4,
-    IdleInhibition = 1 << 5,
-    AppMenu = 1 << 6,
-    ShadowManager = 1 << 7,
-    XdgActivation = 1 << 8,
+enum class global_selection {
+    seat = 1 << 0,
+    xdg_decoration = 1 << 1,
+    plasma_shell = 1 << 2,
+    window_management = 1 << 3,
+    pointer_constraints = 1 << 4,
+    idle_inhibition = 1 << 5,
+    appmenu = 1 << 6,
+    shadow = 1 << 7,
+    xdg_activation = 1 << 8,
 };
-Q_DECLARE_FLAGS(AdditionalWaylandInterfaces, AdditionalWaylandInterface)
 
 class KWIN_EXPORT client
 {
@@ -108,7 +108,7 @@ public:
     } interfaces;
 
     client() = default;
-    explicit client(AdditionalWaylandInterfaces flags);
+    explicit client(global_selection globals);
     client(client const&) = delete;
     client& operator=(client const&) = delete;
     client(client&& other) noexcept;
@@ -130,6 +130,7 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 {
     Q_OBJECT
 public:
+    wayland_base base;
     std::unique_ptr<WaylandServer> server;
     std::unique_ptr<xwl::xwayland> xwayland;
     std::unique_ptr<win::wayland::space> workspace;
@@ -142,7 +143,7 @@ public:
 
     WaylandTestApplication(OperationMode mode,
                            std::string const& socket_name,
-                           WaylandServer::InitializationFlags flags,
+                           wayland_start_options flags,
                            int& argc,
                            char** argv);
     ~WaylandTestApplication() override;
@@ -160,7 +161,6 @@ private:
     void handle_server_addons_created();
     void create_xwayland();
 
-    wayland_base base;
     std::unique_ptr<render::backend::wlroots::backend> render;
     std::unique_ptr<render::wayland::compositor> compositor;
 };
@@ -175,8 +175,7 @@ KWIN_EXPORT WaylandTestApplication* app();
  * client side objects which can be used to create windows.
  * @see destroy_wayland_connection
  */
-KWIN_EXPORT void setup_wayland_connection(AdditionalWaylandInterfaces flags
-                                          = AdditionalWaylandInterfaces());
+KWIN_EXPORT void setup_wayland_connection(global_selection globals = {});
 
 /**
  * Destroys the Wayland Connection created with @link{setup_wayland_connection}.
@@ -308,6 +307,9 @@ KWIN_EXPORT void pointer_axis_vertical(double delta, uint32_t time, int32_t disc
 KWIN_EXPORT void keyboard_key_pressed(uint32_t key, uint32_t time);
 KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time);
 
+KWIN_EXPORT void keyboard_key_pressed(uint32_t key, uint32_t time, wlr_input_device* keyboard);
+KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_input_device* keyboard);
+
 KWIN_EXPORT void touch_down(int32_t id, QPointF const& position, uint32_t time);
 KWIN_EXPORT void touch_up(int32_t id, uint32_t time);
 KWIN_EXPORT void touch_motion(int32_t id, QPointF const& position, uint32_t time);
@@ -318,10 +320,7 @@ KWIN_EXPORT void prepare_sys_env(std::string const& socket_name);
 KWIN_EXPORT std::string create_socket_name(std::string base);
 
 template<typename Test>
-int create_test(std::string const& test_name,
-                WaylandServer::InitializationFlags flags,
-                int argc,
-                char* argv[])
+int create_test(std::string const& test_name, wayland_start_options flags, int argc, char* argv[])
 {
     auto const socket_name = create_socket_name(test_name);
     auto mode = Application::OperationModeXwayland;
@@ -343,7 +342,7 @@ int create_test(std::string const& test_name,
 }
 }
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::Test::AdditionalWaylandInterfaces)
+ENUM_FLAGS(KWin::Test::global_selection)
 
 #define WAYLANDTEST_MAIN_FLAGS(Tester, flags)                                                      \
     int main(int argc, char* argv[])                                                               \
@@ -351,5 +350,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::Test::AdditionalWaylandInterfaces)
         return KWin::Test::create_test<Tester>(#Tester, flags, argc, argv);                        \
     }
 
-#define WAYLANDTEST_MAIN(Tester)                                                                   \
-    WAYLANDTEST_MAIN_FLAGS(Tester, KWin::WaylandServer::InitializationFlag::NoOptions)
+#define WAYLANDTEST_MAIN(Tester) WAYLANDTEST_MAIN_FLAGS(Tester, KWin::wayland_start_options::none)

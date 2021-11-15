@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
+#include "input/xkb/helpers.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
@@ -329,14 +330,14 @@ void ModifierOnlyShortcutTest::testCapsLock()
     // now capslock
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
-    QTRY_COMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::ShiftModifier);
+    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::ShiftModifier);
     QTRY_COMPARE(triggeredSpy.count(), 1);
 
     // currently caps lock is on
     // shift still triggers
     Test::keyboard_key_pressed(modifier, timestamp++);
     Test::keyboard_key_released(modifier, timestamp++);
-    QTRY_COMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::ShiftModifier);
+    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::ShiftModifier);
     QTRY_COMPARE(triggeredSpy.count(), 2);
 
     // meta should also trigger
@@ -347,12 +348,14 @@ void ModifierOnlyShortcutTest::testCapsLock()
     group.writeEntry("Control", QStringList());
     group.sync();
     workspace()->slotReconfigure();
+
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    QTRY_COMPARE(kwinApp()->input->redirect->keyboardModifiers(),
+    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input),
                  Qt::ShiftModifier | Qt::MetaModifier);
     QTRY_COMPARE(
-        kwinApp()->input->redirect->keyboard()->xkb()->modifiersRelevantForGlobalShortcuts(),
+        input::xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input),
         Qt::MetaModifier);
+
     Test::keyboard_key_released(KEY_LEFTMETA, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 3);
 
@@ -368,7 +371,7 @@ void ModifierOnlyShortcutTest::testCapsLock()
     // release caps lock
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
-    QTRY_COMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::NoModifier);
+    QTRY_COMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::NoModifier);
     QTRY_COMPARE(triggeredSpy.count(), 3);
 }
 

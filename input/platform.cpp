@@ -7,7 +7,6 @@
 
 #include "cursor.h"
 #include "dbus/device_manager.h"
-#include "global_shortcuts_manager.h"
 #include "keyboard.h"
 #include "pointer.h"
 #include "redirect.h"
@@ -18,30 +17,26 @@ namespace KWin::input
 {
 
 platform::platform()
-    : QObject()
+    : xkb{input::xkb::manager(this)}
 {
+    qRegisterMetaType<button_state>();
+    qRegisterMetaType<key_state>();
 }
 
 platform::~platform()
 {
     for (auto keyboard : keyboards) {
-        keyboard->plat = nullptr;
+        keyboard->platform = nullptr;
     }
     for (auto pointer : pointers) {
-        pointer->plat = nullptr;
+        pointer->platform = nullptr;
     }
     for (auto switch_device : switches) {
-        switch_device->plat = nullptr;
+        switch_device->platform = nullptr;
     }
     for (auto touch : touchs) {
-        touch->plat = nullptr;
+        touch->platform = nullptr;
     }
-}
-
-void add_redirect(platform* platform, std::unique_ptr<redirect> redirect)
-{
-    platform->redirect = std::move(redirect);
-    platform->redirect->shortcuts()->init();
 }
 
 }

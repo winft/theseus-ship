@@ -7,10 +7,10 @@
 #include "screen_edge.h"
 
 #include "input/gestures.h"
+#include "input/qt_event.h"
 #include "main.h"
 #include "screenedge.h"
 #include "wayland_server.h"
-#include <input/qt_event.h>
 
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/touch_pool.h>

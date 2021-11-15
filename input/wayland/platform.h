@@ -6,6 +6,7 @@
 #pragma once
 
 #include "input/platform.h"
+#include "input/types.h"
 
 #include "base/platform.h"
 
@@ -45,7 +46,7 @@ class touch;
 namespace wayland
 {
 
-class platform : public input::platform
+class KWIN_EXPORT platform : public input::platform
 {
     Q_OBJECT
 public:
@@ -56,7 +57,7 @@ public:
     platform& operator=(platform&& other) noexcept = default;
     ~platform() override;
 
-    void update_keyboard_leds(input::xkb::LEDs leds);
+    void update_keyboard_leds(input::keyboard_leds leds);
 
     void toggle_touchpads();
     void enable_touchpads();

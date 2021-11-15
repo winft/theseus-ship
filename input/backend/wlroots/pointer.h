@@ -14,7 +14,6 @@ extern "C" {
 
 namespace KWin::input::backend::wlroots
 {
-class platform;
 
 class pointer : public input::pointer
 {
@@ -24,12 +23,12 @@ public:
 
     wlr_pointer* backend{nullptr};
 
-    pointer(wlr_input_device* dev, platform* plat);
+    pointer(wlr_input_device* dev, input::platform* platform);
     pointer(pointer const&) = delete;
     pointer& operator=(pointer const&) = delete;
     pointer(pointer&& other) noexcept = default;
     pointer& operator=(pointer&& other) noexcept = default;
-    ~pointer() = default;
+    ~pointer() override = default;
 
 private:
     er destroyed;

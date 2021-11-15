@@ -5,10 +5,14 @@
 */
 #include "keyboard.h"
 
+#include "control/headless/keyboard.h"
 #include "control/keyboard.h"
 
 #include "platform.h"
+
+#include "main.h"
 #include "utils.h"
+#include "wayland_server.h"
 
 extern "C" {
 #include <wlr/backend/libinput.h>
@@ -25,11 +29,7 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
     auto keyboard = event_receiver_struct->receiver;
 
     keyboard->backend = nullptr;
-
-    if (keyboard->plat) {
-        remove_all(keyboard->plat->keyboards, keyboard);
-        Q_EMIT keyboard->plat->keyboard_removed(keyboard);
-    }
+    delete keyboard;
 }
 
 static void handle_key(struct wl_listener* listener, [[maybe_unused]] void* data)
@@ -40,7 +40,7 @@ static void handle_key(struct wl_listener* listener, [[maybe_unused]] void* data
 
     auto event = key_event{
         wlr_event->keycode,
-        static_cast<button_state>(wlr_event->state),
+        static_cast<key_state>(wlr_event->state),
         wlr_event->update_state,
         {
             keyboard,
@@ -70,13 +70,18 @@ static void handle_modifiers(struct wl_listener* listener, [[maybe_unused]] void
     Q_EMIT keyboard->modifiers_changed(event);
 }
 
-keyboard::keyboard(wlr_input_device* dev, platform* plat)
-    : input::keyboard(plat)
+keyboard::keyboard(wlr_input_device* dev, input::platform* platform)
+    : input::keyboard(platform)
 {
+    xkb->seat = waylandServer()->seat();
     backend = dev->keyboard;
 
     if (auto libinput = get_libinput_device(dev)) {
-        control = new keyboard_control(libinput, plat);
+        control = new keyboard_control(libinput, platform);
+    } else if (is_headless_device(dev)) {
+        auto headless_control = new headless::keyboard_control(platform);
+        headless_control->data.is_alpha_numeric_keyboard = true;
+        this->control = headless_control;
     }
 
     destroyed.receiver = this;

@@ -9,20 +9,28 @@
 #include <QObject>
 #include <QPointer>
 #include <QScopedPointer>
+#include <memory>
+
 typedef struct _XDisplay Display;
 
-namespace KWin::input::backend::x11
+namespace KWin::input
+{
+class keyboard;
+class pointer;
+
+namespace backend::x11
 {
 
 class XInputEventFilter;
 class XKeyPressReleaseEventFilter;
 class cursor;
+class platform;
 
 class xinput_integration : public QObject
 {
     Q_OBJECT
 public:
-    explicit xinput_integration(Display* display);
+    explicit xinput_integration(Display* display, x11::platform* platform);
     ~xinput_integration() override;
 
     void init();
@@ -34,7 +42,13 @@ public:
     }
     void setCursor(cursor* cursor);
 
+    struct {
+        std::unique_ptr<input::pointer> pointer;
+        std::unique_ptr<input::keyboard> keyboard;
+    } fake_devices;
+
 private:
+    void setup_fake_devices();
     Display* display() const
     {
         return m_x11Display;
@@ -46,10 +60,12 @@ private:
     int m_minorVersion = 0;
     QPointer<cursor> m_x11Cursor;
     Display* m_x11Display;
+    x11::platform* platform;
 
     QScopedPointer<XInputEventFilter> m_xiEventFilter;
     QScopedPointer<XKeyPressReleaseEventFilter> m_keyPressFilter;
     QScopedPointer<XKeyPressReleaseEventFilter> m_keyReleaseFilter;
 };
 
+}
 }

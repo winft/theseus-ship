@@ -15,7 +15,6 @@ extern "C" {
 
 namespace KWin::input::backend::wlroots
 {
-class platform;
 
 class keyboard : public input::keyboard
 {
@@ -25,12 +24,12 @@ public:
 
     wlr_keyboard* backend{nullptr};
 
-    keyboard(wlr_input_device* dev, platform* plat);
+    keyboard(wlr_input_device* dev, input::platform* platform);
     keyboard(keyboard const&) = delete;
     keyboard& operator=(keyboard const&) = delete;
     keyboard(keyboard&& other) noexcept = default;
     keyboard& operator=(keyboard&& other) noexcept = default;
-    ~keyboard() = default;
+    ~keyboard() override = default;
 
 private:
     er destroyed;

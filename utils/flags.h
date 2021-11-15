@@ -4,13 +4,9 @@
 
     SPDX-License-Identifier: MIT
 */
-#ifndef WIN_FLAGS_H
-#define WIN_FLAGS_H
+#pragma once
 
 #include <type_traits>
-
-namespace KWin::win
-{
 
 /**
  * To enable bitwise operations on enum classes use the ENUM_FLAGS macro:
@@ -63,9 +59,12 @@ namespace KWin::win
 
 #define ENUM_FLAGS(X)                                                                              \
     template<>                                                                                     \
-    struct is_flags_enum<X> {                                                                      \
+    struct KWin::is_flags_enum<X> {                                                                \
         static const bool enable = true;                                                           \
     };
+
+namespace KWin
+{
 
 template<typename Enum>
 struct is_flags_enum {
@@ -220,5 +219,3 @@ public:
 };
 
 }
-
-#endif

@@ -17,6 +17,7 @@
 #include <QAction>
 #include <QObject>
 #include <QPoint>
+#include <list>
 #include <memory>
 #include <vector>
 
@@ -50,25 +51,6 @@ class KWIN_EXPORT redirect : public QObject
 {
     Q_OBJECT
 public:
-    enum PointerButtonState {
-        PointerButtonReleased,
-        PointerButtonPressed,
-    };
-    enum PointerAxis {
-        PointerAxisVertical,
-        PointerAxisHorizontal,
-    };
-    enum PointerAxisSource {
-        PointerAxisSourceUnknown,
-        PointerAxisSourceWheel,
-        PointerAxisSourceFinger,
-        PointerAxisSourceContinuous,
-        PointerAxisSourceWheelTilt
-    };
-    enum KeyboardKeyState {
-        KeyboardKeyReleased,
-        KeyboardKeyPressed,
-    };
     enum TabletEventType {
         Axis,
         Proximity,
@@ -82,8 +64,6 @@ public:
      */
     QPointF globalPointer() const;
     Qt::MouseButtons qtButtonStates() const;
-    Qt::KeyboardModifiers keyboardModifiers() const;
-    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const;
 
     void registerShortcut(const QKeySequence& shortcut, QAction* action);
     /**
@@ -105,46 +85,18 @@ public:
     void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action);
     void registerGlobalAccel(KGlobalAccelInterface* interface);
 
-    /**
-     * @internal
-     */
-    void processPointerMotion(const QPointF& pos, uint32_t time);
-    /**
-     * @internal
-     */
-    void processPointerButton(uint32_t button, PointerButtonState state, uint32_t time);
-    /**
-     * @internal
-     */
-    void processPointerAxis(axis_orientation orientation,
-                            double delta,
-                            int32_t discreteDelta,
-                            axis_source source,
-                            uint32_t time);
-    /**
-     * @internal
-     */
-    void processKeyboardKey(uint32_t key, KeyboardKeyState state, uint32_t time);
-    /**
-     * @internal
-     */
-    void processKeyboardModifiers(uint32_t modsDepressed,
-                                  uint32_t modsLatched,
-                                  uint32_t modsLocked,
-                                  uint32_t group);
-    /**
-     * @internal
-     */
-    void processKeymapChange(int fd, uint32_t size);
-    void processTouchDown(touch_down_event const& event);
-    void processTouchUp(touch_up_event const& event);
-    void processTouchMotion(touch_motion_event const& event);
     void cancelTouch();
-    void touchFrame();
 
     bool supportsPointerWarping() const;
     void warpPointer(const QPointF& pos);
 
+    /**
+     * Adds the @p filter to the list of event filters at the last relevant position.
+     *
+     * Install the filter at the back of the list for a X compositor, immediately before
+     * the forward filter for a Wayland compositor.
+     */
+    void append_filter(event_filter* filter);
     /**
      * Adds the @p filter to the list of event filters and makes it the first
      * event filter in processing.
@@ -169,7 +121,7 @@ public:
     Toplevel* findManagedToplevel(const QPoint& pos);
     global_shortcuts_manager* shortcuts() const
     {
-        return m_shortcuts;
+        return m_shortcuts.get();
     }
 
     /**
@@ -233,6 +185,8 @@ public:
     virtual void startInteractivePositionSelection(std::function<void(QPoint const&)> callback);
     virtual bool isSelectingWindow() const;
 
+    virtual void install_shortcuts() = 0;
+
 Q_SIGNALS:
     /**
      * @brief Emitted when the global pointer position changed
@@ -246,7 +200,7 @@ Q_SIGNALS:
      * @param button The button which changed
      * @param state The new button state
      */
-    void pointerButtonStateChanged(uint32_t button, redirect::PointerButtonState state);
+    void pointerButtonStateChanged(uint32_t button, button_state state);
     /**
      * @brief Emitted when the modifiers changes.
      *
@@ -263,25 +217,22 @@ Q_SIGNALS:
      * @param keyCode The keycode of the key which changed
      * @param state The new key state
      */
-    void keyStateChanged(quint32 keyCode, redirect::KeyboardKeyState state);
+    void keyStateChanged(quint32 keyCode, key_state state);
 
 protected:
-    redirect(keyboard_redirect* keyboard,
-             pointer_redirect* pointer,
-             tablet_redirect* tablet,
-             touch_redirect* touch);
-
-    void installInputEventFilter(event_filter* filter);
+    redirect() = default;
 
     std::unique_ptr<keyboard_redirect> m_keyboard;
     std::unique_ptr<pointer_redirect> m_pointer;
     std::unique_ptr<tablet_redirect> m_tablet;
     std::unique_ptr<touch_redirect> m_touch;
 
-private:
-    global_shortcuts_manager* m_shortcuts;
+    std::unique_ptr<global_shortcuts_manager> m_shortcuts;
 
-    std::vector<event_filter*> m_filters;
+    std::list<event_filter*> m_filters;
+    std::list<event_filter*>::const_iterator m_filters_install_iterator;
+
+private:
     std::vector<event_spy*> m_spies;
 
     friend class DecorationEventFilter;
@@ -294,13 +245,9 @@ inline void
 redirect::registerShortcut(const QKeySequence& shortcut, QAction* action, T* receiver, Slot slot)
 {
     registerShortcut(shortcut, action);
-    connect(action, &QAction::triggered, receiver, slot);
+    QObject::connect(action, &QAction::triggered, receiver, slot);
 }
 
 }
-}
 
-Q_DECLARE_METATYPE(KWin::input::redirect::KeyboardKeyState)
-Q_DECLARE_METATYPE(KWin::input::redirect::PointerButtonState)
-Q_DECLARE_METATYPE(KWin::input::redirect::PointerAxis)
-Q_DECLARE_METATYPE(KWin::input::redirect::PointerAxisSource)
+}

@@ -23,15 +23,12 @@
 namespace KWin::input
 {
 
-global_shortcuts_manager::global_shortcuts_manager(QObject* parent)
-    : QObject(parent)
-    , m_gestureRecognizer(new gesture_recognizer(this))
+global_shortcuts_manager::global_shortcuts_manager()
+    : m_gestureRecognizer{std::make_unique<gesture_recognizer>()}
 {
 }
 
-global_shortcuts_manager::~global_shortcuts_manager()
-{
-}
+global_shortcuts_manager::~global_shortcuts_manager() = default;
 
 void global_shortcuts_manager::init()
 {
@@ -71,7 +68,8 @@ bool global_shortcuts_manager::addIfNotExists(global_shortcut sc)
     if (std::holds_alternative<FourFingerSwipeShortcut>(sc.shortcut())) {
         m_gestureRecognizer->registerGesture(sc.swipeGesture());
     }
-    connect(sc.action(), &QAction::destroyed, this, &global_shortcuts_manager::objectDeleted);
+    QObject::connect(
+        sc.action(), &QAction::destroyed, this, &global_shortcuts_manager::objectDeleted);
     m_shortcuts.push_back(std::move(sc));
     return true;
 }

@@ -30,16 +30,16 @@ class KWIN_EXPORT touch : public QObject
 {
     Q_OBJECT
 public:
-    input::platform* plat;
+    input::platform* platform;
     control::touch* control{nullptr};
     base::wayland::output* output{nullptr};
 
-    touch(platform* plat, QObject* parent = nullptr);
+    touch(input::platform* platform);
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;
     touch(touch&& other) noexcept = default;
     touch& operator=(touch&& other) noexcept = default;
-    ~touch();
+    ~touch() override;
 
     // TODO(romangg): Make this a function template.
     base::wayland::output* get_output() const;

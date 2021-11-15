@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "flags.h"
+#include "../utils/flags.h"
 
 namespace KWin::win
 {
@@ -21,7 +21,6 @@ enum class position {
     bottom_left = left | bottom,
     bottom_right = right | bottom,
 };
-ENUM_FLAGS(position)
 
 enum class size_mode {
     any,
@@ -39,13 +38,11 @@ enum class maximize_mode {
     horizontal = 0x2, ///< The window is maximized horizontally.
     full = vertical | horizontal,
 };
-ENUM_FLAGS(maximize_mode)
 
 enum class same_client_check {
     relaxed_for_active = 0x1,
     allow_cross_process = 0x2,
 };
-ENUM_FLAGS(same_client_check)
 
 enum class layer {
     unknown = -1,
@@ -99,6 +96,10 @@ enum class quicktiles {
     vertical = top | bottom,
     maximize = left | right | top | bottom,
 };
-ENUM_FLAGS(quicktiles)
 
 }
+
+ENUM_FLAGS(KWin::win::position)
+ENUM_FLAGS(KWin::win::maximize_mode)
+ENUM_FLAGS(KWin::win::same_client_check)
+ENUM_FLAGS(KWin::win::quicktiles)

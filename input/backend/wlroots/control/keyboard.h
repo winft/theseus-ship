@@ -17,7 +17,7 @@ class keyboard_control : public input::control::keyboard
     Q_OBJECT
 
 public:
-    keyboard_control(libinput_device* device, input::platform* plat);
+    keyboard_control(libinput_device* device, input::platform* platform);
     ~keyboard_control() override = default;
 
     bool supports_disable_events() const override;
@@ -25,7 +25,7 @@ public:
     bool set_enabled_impl(bool enabled) override;
 
     bool is_alpha_numeric_keyboard() const override;
-    void update_leds(xkb::LEDs leds) override;
+    void update_leds(keyboard_leds leds) override;
 
     bool is_alpha_numeric_keyboard_cache{false};
     libinput_device* dev;

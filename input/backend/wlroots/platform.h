@@ -28,6 +28,13 @@ inline libinput_device* get_libinput_device(Dev dev)
     return nullptr;
 }
 
+template<typename Dev>
+inline bool is_headless_device(Dev dev)
+{
+    auto casted_dev = reinterpret_cast<wlr_input_device*>(dev);
+    return wlr_input_device_is_headless(casted_dev);
+}
+
 class KWIN_EXPORT platform : public input::wayland::platform
 {
     Q_OBJECT

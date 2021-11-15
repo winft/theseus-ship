@@ -18,6 +18,7 @@
 #include <QObject>
 #include <QRect>
 
+#include <memory>
 #include <vector>
 
 class QAction;
@@ -158,7 +159,7 @@ private:
     bool m_pushBackBlocked;
 
     Toplevel* m_client;
-    input::swipe_gesture* m_gesture;
+    std::unique_ptr<input::swipe_gesture> m_gesture;
     std::vector<QAction*> m_touchActions;
 };
 
@@ -357,7 +358,7 @@ public:
 
     input::gesture_recognizer* gestureRecognizer() const
     {
-        return m_gestureRecognizer;
+        return m_gestureRecognizer.get();
     }
 
     bool handleDndNotify(xcb_window_t window, QPoint const& point);
@@ -437,7 +438,7 @@ private:
 
     QMap<ElectricBorder, ElectricBorderAction> m_touchActions;
     int m_cornerOffset;
-    input::gesture_recognizer* m_gestureRecognizer;
+    std::unique_ptr<input::gesture_recognizer> m_gestureRecognizer;
 
     KWIN_SINGLETON(ScreenEdges)
 };

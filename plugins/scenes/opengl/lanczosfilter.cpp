@@ -216,7 +216,9 @@ void LanczosFilter::performPaint(EffectWindowImpl* w, int mask, QRegion region, 
                     const qreal rgb = data.brightness() * data.opacity();
                     const qreal a = data.opacity();
 
-                    ShaderBinder binder(ShaderTrait::MapTexture | ShaderTrait::Modulate | ShaderTrait::AdjustSaturation);
+                    ShaderBinder binder(QFlags({ShaderTrait::MapTexture,
+                                                ShaderTrait::Modulate,
+                                                ShaderTrait::AdjustSaturation}));
                     GLShader *shader = binder.shader();
                     QMatrix4x4 mvp = data.screenProjectionMatrix();
                     mvp.translate(textureRect.x(), textureRect.y());
@@ -354,7 +356,9 @@ void LanczosFilter::performPaint(EffectWindowImpl* w, int mask, QRegion region, 
             const qreal rgb = data.brightness() * data.opacity();
             const qreal a = data.opacity();
 
-            ShaderBinder binder(ShaderTrait::MapTexture | ShaderTrait::Modulate | ShaderTrait::AdjustSaturation);
+            ShaderBinder binder(QFlags({ShaderTrait::MapTexture,
+                                        ShaderTrait::Modulate,
+                                        ShaderTrait::AdjustSaturation}));
             GLShader *shader = binder.shader();
             QMatrix4x4 mvp = data.screenProjectionMatrix();
             mvp.translate(textureRect.x(), textureRect.y());

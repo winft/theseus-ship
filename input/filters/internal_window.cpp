@@ -6,17 +6,20 @@
 */
 #include "internal_window.h"
 
-#include "../keyboard_redirect.h"
-#include "../pointer_redirect.h"
-#include "../touch_redirect.h"
 #include "helpers.h"
+
+#include "input/keyboard_redirect.h"
+#include "input/pointer_redirect.h"
+#include "input/qt_event.h"
+#include "input/redirect.h"
+#include "input/touch_redirect.h"
+#include "input/xkb/helpers.h"
 #include "main.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "win/deco.h"
 #include "win/internal_window.h"
 #include "workspace.h"
-#include <input/qt_event.h>
 
 #include <QWindow>
 #include <Wrapland/Server/touch_pool.h>
@@ -149,19 +152,19 @@ QWindow* get_internal_window()
 
 QKeyEvent get_internal_key_event(key_event const& event)
 {
-    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
-    auto const keysym = xkb->toKeysym(event.keycode);
-    auto qt_key = xkb->toQtKey(
+    auto const& xkb = event.base.dev->xkb;
+    auto const keysym = xkb->to_keysym(event.keycode);
+    auto qt_key = xkb->to_qt_key(
         keysym, event.keycode, Qt::KeyboardModifiers(), true /* workaround for QTBUG-62102 */);
 
-    QKeyEvent internalEvent(event.state == button_state::pressed ? QEvent::KeyPress
-                                                                 : QEvent::KeyRelease,
+    QKeyEvent internalEvent(event.state == key_state::pressed ? QEvent::KeyPress
+                                                              : QEvent::KeyRelease,
                             qt_key,
-                            xkb->modifiers(),
+                            xkb->qt_modifiers,
                             event.keycode,
                             keysym,
                             0,
-                            xkb->toString(keysym));
+                            QString::fromStdString(xkb->to_string(keysym)));
     internalEvent.setAccepted(false);
 
     return internalEvent;
@@ -226,7 +229,7 @@ bool internal_window_filter::touch_down(touch_down_event const& event)
                   event.pos,
                   Qt::LeftButton,
                   Qt::LeftButton,
-                  kwinApp()->input->redirect->keyboardModifiers());
+                  xkb::get_active_keyboard_modifiers(kwinApp()->input));
     e.setAccepted(false);
     QCoreApplication::sendEvent(internal, &e);
     return true;
@@ -255,7 +258,7 @@ bool internal_window_filter::touch_motion(touch_motion_event const& event)
                   m_lastGlobalTouchPos,
                   Qt::LeftButton,
                   Qt::LeftButton,
-                  kwinApp()->input->redirect->keyboardModifiers());
+                  xkb::get_active_keyboard_modifiers(kwinApp()->input));
     QCoreApplication::instance()->sendEvent(internal, &e);
     return true;
 }
@@ -282,7 +285,7 @@ bool internal_window_filter::touch_up(touch_up_event const& event)
                   m_lastGlobalTouchPos,
                   Qt::LeftButton,
                   Qt::MouseButtons(),
-                  kwinApp()->input->redirect->keyboardModifiers());
+                  xkb::get_active_keyboard_modifiers(kwinApp()->input));
     e.setAccepted(false);
     QCoreApplication::sendEvent(internal, &e);
 

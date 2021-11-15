@@ -5,6 +5,9 @@
 */
 #include "platform.h"
 
+#include "cursor.h"
+#include "redirect.h"
+
 #include "base/backend/wlroots.h"
 #include "base/platform.h"
 #include "base/wayland/output_helpers.h"
@@ -15,6 +18,7 @@
 #include "input/pointer.h"
 #include "input/switch.h"
 #include "input/touch.h"
+#include "main.h"
 
 namespace KWin::input::wayland
 {
@@ -22,11 +26,17 @@ namespace KWin::input::wayland
 platform::platform(wayland_base const& base)
     : base{base}
 {
+    config = kwinApp()->inputConfig();
+
+    auto redirect_ptr = new wayland::redirect(this);
+    redirect.reset(redirect_ptr);
+
+    cursor = std::make_unique<wayland::cursor>(redirect_ptr);
 }
 
 platform::~platform() = default;
 
-void platform::update_keyboard_leds(input::xkb::LEDs leds)
+void platform::update_keyboard_leds(input::keyboard_leds leds)
 {
     for (auto& keyboard : keyboards) {
         if (auto ctrl = keyboard->control) {

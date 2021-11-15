@@ -7,6 +7,7 @@
 
 #include "control/keyboard.h"
 #include "event.h"
+#include "xkb/keyboard.h"
 
 #include <kwin_export.h>
 
@@ -19,15 +20,16 @@ class KWIN_EXPORT keyboard : public QObject
 {
     Q_OBJECT
 public:
-    input::platform* plat;
+    input::platform* platform;
     control::keyboard* control{nullptr};
+    std::unique_ptr<xkb::keyboard> xkb;
 
-    keyboard(platform* plat, QObject* parent = nullptr);
+    keyboard(input::platform* platform);
     keyboard(keyboard const&) = delete;
     keyboard& operator=(keyboard const&) = delete;
     keyboard(keyboard&& other) noexcept = default;
     keyboard& operator=(keyboard&& other) noexcept = default;
-    ~keyboard();
+    ~keyboard() override;
 
 Q_SIGNALS:
     void key_changed(key_event);

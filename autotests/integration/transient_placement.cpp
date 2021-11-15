@@ -84,8 +84,8 @@ void TransientPlacementTest::initTestCase()
 
 void TransientPlacementTest::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::XdgDecoration
-                                   | Test::AdditionalWaylandInterface::PlasmaShell);
+    Test::setup_wayland_connection(Test::global_selection::xdg_decoration
+                                   | Test::global_selection::plasma_shell);
 
     screens()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
@@ -176,8 +176,8 @@ void TransientPlacementTest::testXdgPopup_data()
     // constrain and slide
     // popup is still 200,200. window moved near edge of screen, popup always comes out towards the
     // screen edge
-    positioner.setConstraints(XdgPositioner::Constraint::SlideX
-                              | XdgPositioner::Constraint::SlideY);
+    positioner.setConstraints(
+        QFlags({XdgPositioner::Constraint::SlideX, XdgPositioner::Constraint::SlideY}));
 
     positioner.setAnchorEdge(Qt::TopEdge);
     positioner.setGravity(Qt::TopEdge);
@@ -207,7 +207,8 @@ void TransientPlacementTest::testXdgPopup_data()
 
     // ----------------------------------------------------------------
     // constrain and flip
-    positioner.setConstraints(XdgPositioner::Constraint::FlipX | XdgPositioner::Constraint::FlipY);
+    positioner.setConstraints(
+        QFlags({XdgPositioner::Constraint::FlipX, XdgPositioner::Constraint::FlipY}));
 
     positioner.setAnchorEdge(Qt::TopEdge);
     positioner.setGravity(Qt::TopEdge);
@@ -250,8 +251,8 @@ void TransientPlacementTest::testXdgPopup_data()
 
     // ----------------------------------------------------------------
     // resize
-    positioner.setConstraints(XdgPositioner::Constraint::ResizeX
-                              | XdgPositioner::Constraint::ResizeY);
+    positioner.setConstraints(
+        QFlags({XdgPositioner::Constraint::ResizeX, XdgPositioner::Constraint::ResizeY}));
     positioner.setInitialSize(QSize(200, 200));
 
     positioner.setAnchorEdge(Qt::TopEdge);

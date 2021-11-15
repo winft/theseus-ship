@@ -7,9 +7,15 @@
 
 #include "input/keyboard_redirect.h"
 
+#include <memory>
+
 namespace KWin::input
 {
-class keyboard_layout_spy;
+
+namespace xkb
+{
+class layout_manager;
+}
 
 namespace wayland
 {
@@ -27,18 +33,14 @@ public:
     void update() override;
 
     void process_key(key_event const& event) override;
-    void process_key_repeat(uint32_t key, uint32_t time) override;
+    void process_key_repeat(key_event const& event) override;
 
-    void processModifiers(uint32_t modsDepressed,
-                          uint32_t modsLatched,
-                          uint32_t modsLocked,
-                          uint32_t group) override;
-    void processKeymapChange(int fd, uint32_t size) override;
+    void process_modifiers(modifiers_event const& event) override;
 
 private:
     QMetaObject::Connection m_activeClientSurfaceChangedConnection;
     modifiers_changed_spy* modifiers_spy{nullptr};
-    keyboard_layout_spy* m_keyboardLayout{nullptr};
+    std::unique_ptr<xkb::layout_manager> layout_manager;
 };
 
 }

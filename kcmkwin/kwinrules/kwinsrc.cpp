@@ -23,11 +23,6 @@ Qt::MouseButtons KWin::input::redirect::qtButtonStates() const
     return Qt::NoButton;
 }
 
-Qt::KeyboardModifiers KWin::input::redirect::keyboardModifiers() const
-{
-    return Qt::NoModifier;
-}
-
 void KWin::input::redirect::warpPointer(const QPointF&)
 {
 }

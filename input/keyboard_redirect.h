@@ -7,9 +7,9 @@
 #pragma once
 
 #include "event.h"
-#include "xkb.h"
 
 #include <QObject>
+#include <kwin_export.h>
 
 namespace KWin::input
 {
@@ -24,31 +24,15 @@ public:
     explicit keyboard_redirect(input::redirect* parent);
     ~keyboard_redirect() override;
 
-    input::xkb* xkb() const;
-    Qt::KeyboardModifiers modifiers() const;
-    Qt::KeyboardModifiers modifiersRelevantForGlobalShortcuts() const;
-
     virtual void update();
 
     virtual void process_key(key_event const& event);
-    virtual void process_key_repeat(uint32_t key, uint32_t time);
+    virtual void process_key_repeat(key_event const& event);
 
-    void process_modifiers(modifiers_event const& event);
-    virtual void processModifiers(uint32_t modsDepressed,
-                                  uint32_t modsLatched,
-                                  uint32_t modsLocked,
-                                  uint32_t group);
-
-    virtual void processKeymapChange(int fd, uint32_t size);
-
-Q_SIGNALS:
-    void ledsChanged(input::xkb::LEDs);
+    virtual void process_modifiers(modifiers_event const& event);
 
 protected:
-    std::unique_ptr<input::xkb> m_xkb;
-
     input::redirect* redirect;
-    bool m_inited = false;
 };
 
 }

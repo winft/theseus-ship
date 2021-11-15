@@ -10,8 +10,8 @@
 namespace KWin::input::backend::wlroots
 {
 
-touch_control::touch_control(libinput_device* dev, input::platform* plat)
-    : input::control::touch(plat)
+touch_control::touch_control(libinput_device* dev, input::platform* platform)
+    : input::control::touch(platform)
     , dev{dev}
 {
     populate_metadata(this);

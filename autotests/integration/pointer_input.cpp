@@ -182,8 +182,8 @@ void PointerInputTest::initTestCase()
 
 void PointerInputTest::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat
-                                   | Test::AdditionalWaylandInterface::XdgDecoration);
+    Test::setup_wayland_connection(Test::global_selection::seat
+                                   | Test::global_selection::xdg_decoration);
     QVERIFY(Test::wait_for_wayland_pointer());
     m_compositor = Test::get_client().interfaces.compositor.get();
     m_seat = Test::get_client().interfaces.seat.get();

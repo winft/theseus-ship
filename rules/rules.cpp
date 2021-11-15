@@ -474,14 +474,13 @@ bool Rules::update(Toplevel* window, int selection)
 
     if (remember(maximizehoriz, MaximizeHoriz)) {
         updated = updated
-            || maximizehoriz.data
-                != win::flags(window->maximizeMode() & win::maximize_mode::horizontal);
-        maximizehoriz.data = win::flags(window->maximizeMode() & win::maximize_mode::horizontal);
+            || maximizehoriz.data != flags(window->maximizeMode() & win::maximize_mode::horizontal);
+        maximizehoriz.data = flags(window->maximizeMode() & win::maximize_mode::horizontal);
     }
     if (remember(maximizevert, MaximizeVert)) {
         updated = updated
             || maximizevert.data != bool(window->maximizeMode() & win::maximize_mode::vertical);
-        maximizevert.data = win::flags(window->maximizeMode() & win::maximize_mode::vertical);
+        maximizevert.data = flags(window->maximizeMode() & win::maximize_mode::vertical);
     }
     if (remember(minimize, Minimize)) {
         updated = updated || minimize.data != window->control->minimized();
@@ -497,10 +496,10 @@ bool Rules::update(Toplevel* window, int selection)
             QPoint new_pos = position.data;
 
             // Don't use the position in the direction which is maximized.
-            if (!win::flags(window->maximizeMode() & win::maximize_mode::horizontal)) {
+            if (!flags(window->maximizeMode() & win::maximize_mode::horizontal)) {
                 new_pos.setX(window->pos().x());
             }
-            if (!win::flags(window->maximizeMode() & win::maximize_mode::vertical)) {
+            if (!flags(window->maximizeMode() & win::maximize_mode::vertical)) {
                 new_pos.setY(window->pos().y());
             }
             updated = updated || position.data != new_pos;
@@ -516,9 +515,9 @@ bool Rules::update(Toplevel* window, int selection)
         if (!window->control->fullscreen()) {
             QSize new_size = size.data;
             // don't use the position in the direction which is maximized
-            if (!win::flags(window->maximizeMode() & win::maximize_mode::horizontal))
+            if (!flags(window->maximizeMode() & win::maximize_mode::horizontal))
                 new_size.setWidth(window->size().width());
-            if (!win::flags(window->maximizeMode() & win::maximize_mode::vertical))
+            if (!flags(window->maximizeMode() & win::maximize_mode::vertical))
                 new_size.setHeight(window->size().height());
             updated = updated || size.data != new_size;
             size.data = new_size;

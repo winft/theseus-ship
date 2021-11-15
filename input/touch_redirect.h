@@ -34,7 +34,7 @@ class KWIN_EXPORT touch_redirect : public device_redirect
 {
     Q_OBJECT
 public:
-    touch_redirect();
+    explicit touch_redirect(input::redirect* redirect);
 
     virtual void process_down(touch_down_event const& /*event*/)
     {

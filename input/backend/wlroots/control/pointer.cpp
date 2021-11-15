@@ -12,8 +12,8 @@
 namespace KWin::input::backend::wlroots
 {
 
-pointer_control::pointer_control(libinput_device* dev, input::platform* plat)
-    : input::control::pointer(plat)
+pointer_control::pointer_control(libinput_device* dev, input::platform* platform)
+    : input::control::pointer(platform)
     , dev{dev}
 {
     populate_metadata(this);

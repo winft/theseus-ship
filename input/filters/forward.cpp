@@ -8,15 +8,15 @@
 
 #include "helpers.h"
 
-#include "../event.h"
-#include "../keyboard_redirect.h"
-#include "../qt_event.h"
-#include "../redirect.h"
-#include "../touch_redirect.h"
+#include "input/event.h"
+#include "input/keyboard_redirect.h"
+#include "input/pointer_redirect.h"
+#include "input/qt_event.h"
+#include "input/redirect.h"
+#include "input/touch_redirect.h"
 #include "main.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include <input/pointer_redirect.h>
 
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>

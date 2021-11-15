@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/event.h"
 #include "input/keyboard.h"
 #include "input/qt_event.h"
+#include "input/xkb/helpers.h"
 #include "options.h"
 #include "screenlockerwatcher.h"
 #include "workspace.h"
@@ -37,20 +38,19 @@ modifier_only_shortcuts_spy::modifier_only_shortcuts_spy()
     : QObject()
     , event_spy()
 {
-    connect(ScreenLockerWatcher::self(),
-            &ScreenLockerWatcher::locked,
-            this,
-            &modifier_only_shortcuts_spy::reset);
+    QObject::connect(ScreenLockerWatcher::self(),
+                     &ScreenLockerWatcher::locked,
+                     this,
+                     &modifier_only_shortcuts_spy::reset);
 }
 
 modifier_only_shortcuts_spy::~modifier_only_shortcuts_spy() = default;
 
 void modifier_only_shortcuts_spy::key(key_event const& event)
 {
-    auto const& redirect = kwinApp()->input->redirect;
-    auto const& mods = redirect->modifiersRelevantForGlobalShortcuts();
+    auto mods = xkb::get_active_keyboard_modifiers(kwinApp()->input.get());
 
-    if (event.state == button_state::pressed) {
+    if (event.state == key_state::pressed) {
         const bool wasEmpty = m_pressedKeys.isEmpty();
         m_pressedKeys.insert(event.keycode);
         if (wasEmpty && m_pressedKeys.size() == 1 && !ScreenLockerWatcher::self()->isLocked()
@@ -82,7 +82,8 @@ void modifier_only_shortcuts_spy::key(key_event const& event)
         m_modifier = Qt::NoModifier;
     }
 
-    m_cachedMods = redirect->modifiersRelevantForGlobalShortcuts();
+    m_cachedMods
+        = xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input.get());
 }
 
 void modifier_only_shortcuts_spy::button(button_event const& event)

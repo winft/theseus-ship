@@ -56,8 +56,8 @@ void xdg_activation_test::initTestCase()
 
 void xdg_activation_test::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat
-                                   | Test::AdditionalWaylandInterface::XdgActivation);
+    Test::setup_wayland_connection(Test::global_selection::seat
+                                   | Test::global_selection::xdg_activation);
 }
 
 void xdg_activation_test::cleanup()
@@ -144,8 +144,8 @@ void xdg_activation_test::test_multi_client()
     QCOMPARE(workspace()->activeClient(), window1);
 
     // Create a second client.
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat
-                                   | Test::AdditionalWaylandInterface::XdgActivation);
+    Test::setup_wayland_connection(Test::global_selection::seat
+                                   | Test::global_selection::xdg_activation);
     auto& client2 = Test::get_all_clients().back();
 
     std::unique_ptr<Clt::Surface> surface2(Test::create_surface(client2));

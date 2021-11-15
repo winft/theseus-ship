@@ -20,11 +20,7 @@ static void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* 
     auto switch_device = event_receiver_struct->receiver;
 
     switch_device->backend = nullptr;
-
-    if (switch_device->plat) {
-        remove_all(switch_device->plat->switches, switch_device);
-        Q_EMIT switch_device->plat->switch_removed(switch_device);
-    }
+    delete switch_device;
 }
 
 static void handle_toggle(struct wl_listener* listener, [[maybe_unused]] void* data)
@@ -45,13 +41,13 @@ static void handle_toggle(struct wl_listener* listener, [[maybe_unused]] void* d
     Q_EMIT switch_device->toggle(event);
 }
 
-switch_device::switch_device(wlr_input_device* dev, platform* plat)
-    : input::switch_device(plat)
+switch_device::switch_device(wlr_input_device* dev, input::platform* platform)
+    : input::switch_device(platform)
 {
     backend = dev->switch_device;
 
     if (auto libinput = get_libinput_device(dev)) {
-        control = new switch_control(libinput, plat);
+        control = new switch_control(libinput, platform);
     }
 
     destroyed.receiver = this;

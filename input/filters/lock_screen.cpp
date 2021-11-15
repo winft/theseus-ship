@@ -6,9 +6,10 @@
 */
 #include "lock_screen.h"
 
-#include "../keyboard_redirect.h"
-#include "../touch_redirect.h"
+#include "input/keyboard_redirect.h"
 #include "input/qt_event.h"
+#include "input/redirect.h"
+#include "input/touch_redirect.h"
 #include "main.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -107,10 +108,10 @@ bool lock_screen_filter::key(key_event const& event)
     }
 
     switch (event.state) {
-    case button_state::pressed:
+    case key_state::pressed:
         seat->keyboards().key_pressed(event.keycode);
         break;
-    case button_state::released:
+    case key_state::released:
         seat->keyboards().key_released(event.keycode);
         break;
     }

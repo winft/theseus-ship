@@ -96,7 +96,7 @@ void StrutsTest::initTestCase()
 
 void StrutsTest::init()
 {
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::PlasmaShell);
+    Test::setup_wayland_connection(Test::global_selection::plasma_shell);
     m_compositor = Test::get_client().interfaces.compositor.get();
     m_plasmaShell = Test::get_client().interfaces.plasma_shell.get();
 

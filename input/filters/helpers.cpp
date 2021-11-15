@@ -6,15 +6,17 @@
 */
 #include "helpers.h"
 
+#include "input/event.h"
+#include "input/keyboard_redirect.h"
+#include "input/pointer_redirect.h"
+#include "input/qt_event.h"
+#include "input/redirect.h"
+#include "input/xkb/helpers.h"
 #include "main.h"
 #include "options.h"
 #include "wayland_server.h"
 #include "win/input.h"
 #include "workspace.h"
-#include <input/event.h>
-#include <input/keyboard_redirect.h>
-#include <input/pointer_redirect.h>
-#include <input/qt_event.h>
 
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
@@ -24,7 +26,7 @@ namespace KWin::input
 
 bool get_modifier_command(uint32_t key, Options::MouseCommand& command)
 {
-    if (kwinApp()->input->redirect->keyboard()->modifiersRelevantForGlobalShortcuts()
+    if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
         != options->commandAllModifier()) {
         return false;
     }
@@ -85,7 +87,7 @@ bool get_wheel_modifier_command(axis_orientation orientation,
                                 double delta,
                                 Options::MouseCommand& command)
 {
-    if (kwinApp()->input->redirect->keyboard()->modifiersRelevantForGlobalShortcuts()
+    if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
         != options->commandAllModifier()) {
         return false;
     }
@@ -128,10 +130,10 @@ void pass_to_wayland_server(key_event const& event)
     assert(waylandServer());
 
     switch (event.state) {
-    case button_state::pressed:
+    case key_state::pressed:
         waylandServer()->seat()->keyboards().key_pressed(event.keycode);
         break;
-    case button_state::released:
+    case key_state::released:
         waylandServer()->seat()->keyboards().key_released(event.keycode);
         break;
     default:

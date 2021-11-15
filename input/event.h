@@ -102,10 +102,9 @@ struct pinch_end_event {
 
 /** Keyboard events */
 
-enum class keyboard_led {
-    num_lock,
-    caps_lock,
-    scroll_lock,
+enum class key_state {
+    released,
+    pressed,
 };
 
 enum class modifier {
@@ -121,7 +120,7 @@ enum class modifier {
 
 struct key_event {
     uint32_t keycode;
-    button_state state;
+    key_state state;
     bool requires_modifier_update;
     event<keyboard> base;
 };
@@ -180,3 +179,7 @@ struct switch_toggle_event {
 };
 
 }
+
+Q_DECLARE_METATYPE(KWin::input::button_state)
+Q_DECLARE_METATYPE(KWin::input::key_event)
+Q_DECLARE_METATYPE(KWin::input::key_state)

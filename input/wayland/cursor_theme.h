@@ -28,7 +28,7 @@ class KWIN_EXPORT cursor_theme : public QObject
 {
     Q_OBJECT
 public:
-    explicit cursor_theme(Wrapland::Client::ShmPool* shm, QObject* parent = nullptr);
+    explicit cursor_theme(Wrapland::Client::ShmPool* shm);
     ~cursor_theme() override;
 
     wl_cursor_image* get(input::cursor_shape shape);

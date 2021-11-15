@@ -32,21 +32,6 @@
 namespace KWin::input
 {
 
-redirect::redirect(keyboard_redirect* keyboard,
-                   pointer_redirect* pointer,
-                   tablet_redirect* tablet,
-                   touch_redirect* touch)
-    : m_keyboard(keyboard)
-    , m_pointer(pointer)
-    , m_tablet(tablet)
-    , m_touch(touch)
-    , m_shortcuts(new global_shortcuts_manager(this))
-{
-    qRegisterMetaType<KWin::input::redirect::KeyboardKeyState>();
-    qRegisterMetaType<KWin::input::redirect::PointerButtonState>();
-    qRegisterMetaType<KWin::input::redirect::PointerAxis>();
-}
-
 redirect::~redirect()
 {
     auto const filters = m_filters;
@@ -60,10 +45,10 @@ redirect::~redirect()
     }
 }
 
-void redirect::installInputEventFilter(event_filter* filter)
+void redirect::append_filter(event_filter* filter)
 {
     Q_ASSERT(!contains(m_filters, filter));
-    m_filters.push_back(filter);
+    m_filters.insert(m_filters_install_iterator, filter);
 }
 
 void redirect::prependInputEventFilter(event_filter* filter)
@@ -87,76 +72,9 @@ void redirect::uninstallInputEventSpy(event_spy* spy)
     remove_all(m_spies, spy);
 }
 
-void redirect::processPointerMotion(const QPointF& pos, uint32_t time)
-{
-    m_pointer->processMotion(pos, time);
-}
-
-void redirect::processPointerButton(uint32_t button,
-                                    redirect::PointerButtonState state,
-                                    uint32_t time)
-{
-    m_pointer->process_button(
-        {button,
-         state == PointerButtonPressed ? button_state::pressed : button_state::released,
-         {nullptr, time}});
-}
-
-void redirect::processPointerAxis(axis_orientation orientation,
-                                  double delta,
-                                  int32_t discreteDelta,
-                                  axis_source source,
-                                  uint32_t time)
-{
-    m_pointer->process_axis({source, orientation, delta, discreteDelta, nullptr, time});
-}
-
-void redirect::processKeyboardKey(uint32_t key, redirect::KeyboardKeyState state, uint32_t time)
-{
-    m_keyboard->process_key({key,
-                             state == KeyboardKeyState::KeyboardKeyPressed ? button_state::pressed
-                                                                           : button_state::released,
-                             false,
-                             nullptr,
-                             time});
-}
-
-void redirect::processKeyboardModifiers(uint32_t modsDepressed,
-                                        uint32_t modsLatched,
-                                        uint32_t modsLocked,
-                                        uint32_t group)
-{
-    m_keyboard->processModifiers(modsDepressed, modsLatched, modsLocked, group);
-}
-
-void redirect::processKeymapChange(int fd, uint32_t size)
-{
-    m_keyboard->processKeymapChange(fd, size);
-}
-
-void redirect::processTouchDown(touch_down_event const& event)
-{
-    m_touch->process_down(event);
-}
-
-void redirect::processTouchUp(touch_up_event const& event)
-{
-    m_touch->process_up(event);
-}
-
-void redirect::processTouchMotion(touch_motion_event const& event)
-{
-    m_touch->process_motion(event);
-}
-
 void redirect::cancelTouch()
 {
     m_touch->cancel();
-}
-
-void redirect::touchFrame()
-{
-    m_touch->frame();
 }
 
 Qt::MouseButtons redirect::qtButtonStates() const
@@ -225,16 +143,6 @@ Toplevel* redirect::findManagedToplevel(const QPoint& pos)
         }
     } while (it != stacking.begin());
     return nullptr;
-}
-
-Qt::KeyboardModifiers redirect::keyboardModifiers() const
-{
-    return m_keyboard->modifiers();
-}
-
-Qt::KeyboardModifiers redirect::modifiersRelevantForGlobalShortcuts() const
-{
-    return m_keyboard->modifiersRelevantForGlobalShortcuts();
 }
 
 void redirect::registerShortcut(const QKeySequence& shortcut, QAction* action)

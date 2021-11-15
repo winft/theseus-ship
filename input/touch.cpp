@@ -35,11 +35,12 @@ Qt::ScreenOrientation to_qt_orientation(base::wayland::output_transform transfor
     }
 }
 
-touch::touch(platform* plat, QObject* parent)
-    : QObject(parent)
-    , plat{plat}
+touch::touch(input::platform* platform)
+    : platform{platform}
 {
-    connect(screens(), &Screens::changed, this, [this] {
+    platform->touchs.push_back(this);
+
+    QObject::connect(screens(), &Screens::changed, this, [this] {
         if (!control) {
             return;
         }
@@ -52,6 +53,10 @@ touch::touch(platform* plat, QObject* parent)
 
 touch::~touch()
 {
+    if (platform) {
+        remove_all(platform->touchs, this);
+        Q_EMIT platform->touch_removed(this);
+    }
 }
 
 base::wayland::output* touch::get_output() const

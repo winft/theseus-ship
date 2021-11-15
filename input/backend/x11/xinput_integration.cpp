@@ -8,15 +8,19 @@
 
 #include "cursor.h"
 #include "ge_event_mem_mover.h"
-#include "input/gestures.h"
-#include "input/logging.h"
-#include "main.h"
-#include "platform.h"
-#include "screenedge.h"
 #include "xinput_helpers.h"
 
 #include "base/x11/event_filter.h"
+#include "input/gestures.h"
+#include "input/keyboard_redirect.h"
+#include "input/logging.h"
+#include "input/pointer_redirect.h"
+#include "input/redirect.h"
 #include "input/spies/modifier_only_shortcuts.h"
+#include "main.h"
+#include "platform.h"
+#include "screenedge.h"
+
 #include <kwinglobals.h>
 
 #include <X11/extensions/XI2proto.h>
@@ -35,7 +39,7 @@ static inline qreal fixed1616ToReal(FP1616 val)
 class XInputEventFilter : public base::x11::event_filter
 {
 public:
-    XInputEventFilter(int xi_opcode)
+    XInputEventFilter(int xi_opcode, xinput_integration* xinput)
         : base::x11::event_filter(XCB_GE_GENERIC,
                                   xi_opcode,
                                   QVector<int>{XI_RawMotion,
@@ -47,22 +51,26 @@ public:
                                                XI_TouchUpdate,
                                                XI_TouchOwnership,
                                                XI_TouchEnd})
+        , xinput{xinput}
     {
     }
     ~XInputEventFilter() override = default;
 
     bool event(xcb_generic_event_t* event) override
     {
+        auto pointer_device = xinput->fake_devices.pointer.get();
+        auto keyboard_device = xinput->fake_devices.keyboard.get();
+
         GeEventMemMover ge(event);
         switch (ge->event_type) {
         case XI_RawKeyPress: {
             auto re = reinterpret_cast<xXIRawEvent*>(event);
-            keyboard_key_pressed(re->detail - 8, re->time);
+            keyboard_key_pressed(re->detail - 8, re->time, keyboard_device);
             break;
         }
         case XI_RawKeyRelease: {
             auto re = reinterpret_cast<xXIRawEvent*>(event);
-            keyboard_key_released(re->detail - 8, re->time);
+            keyboard_key_released(re->detail - 8, re->time, keyboard_device);
             break;
         }
         case XI_RawButtonPress: {
@@ -72,13 +80,13 @@ public:
             // if we want to use also for global mouse shortcuts, this needs to reflect state
             // correctly
             case XCB_BUTTON_INDEX_1:
-                pointer_button_pressed(BTN_LEFT, e->time);
+                pointer_button_pressed(BTN_LEFT, e->time, pointer_device);
                 break;
             case XCB_BUTTON_INDEX_2:
-                pointer_button_pressed(BTN_MIDDLE, e->time);
+                pointer_button_pressed(BTN_MIDDLE, e->time, pointer_device);
                 break;
             case XCB_BUTTON_INDEX_3:
-                pointer_button_pressed(BTN_RIGHT, e->time);
+                pointer_button_pressed(BTN_RIGHT, e->time, pointer_device);
                 break;
             case XCB_BUTTON_INDEX_4:
             case XCB_BUTTON_INDEX_5:
@@ -98,19 +106,19 @@ public:
             // if we want to use also for global mouse shortcuts, this needs to reflect state
             // correctly
             case XCB_BUTTON_INDEX_1:
-                pointer_button_released(BTN_LEFT, e->time);
+                pointer_button_released(BTN_LEFT, e->time, pointer_device);
                 break;
             case XCB_BUTTON_INDEX_2:
-                pointer_button_released(BTN_MIDDLE, e->time);
+                pointer_button_released(BTN_MIDDLE, e->time, pointer_device);
                 break;
             case XCB_BUTTON_INDEX_3:
-                pointer_button_released(BTN_RIGHT, e->time);
+                pointer_button_released(BTN_RIGHT, e->time, pointer_device);
                 break;
             case XCB_BUTTON_INDEX_4:
-                pointer_axis_vertical(120, e->time);
+                pointer_axis_vertical(120, e->time, 0, pointer_device);
                 break;
             case XCB_BUTTON_INDEX_5:
-                pointer_axis_vertical(-120, e->time);
+                pointer_axis_vertical(-120, e->time, 0, pointer_device);
                 break;
                 // TODO: further buttons, horizontal scrolling?
             }
@@ -191,13 +199,16 @@ private:
     Display* m_x11Display = nullptr;
     uint32_t m_trackingTouchId = 0;
     QHash<uint32_t, QPointF> m_lastTouchPositions;
+
+    xinput_integration* xinput;
 };
 
 class XKeyPressReleaseEventFilter : public base::x11::event_filter
 {
 public:
-    XKeyPressReleaseEventFilter(uint32_t type)
+    XKeyPressReleaseEventFilter(uint32_t type, xinput_integration* xinput)
         : base::x11::event_filter(type)
+        , xinput{xinput}
     {
     }
     ~XKeyPressReleaseEventFilter() override = default;
@@ -207,19 +218,24 @@ public:
         xcb_key_press_event_t* ke = reinterpret_cast<xcb_key_press_event_t*>(event);
         if (ke->event == ke->root) {
             const uint8_t eventType = event->response_type & ~0x80;
+            auto keyboard_device = xinput->fake_devices.keyboard.get();
             if (eventType == XCB_KEY_PRESS) {
-                keyboard_key_pressed(ke->detail - 8, ke->time);
+                keyboard_key_pressed(ke->detail - 8, ke->time, keyboard_device);
             } else {
-                keyboard_key_released(ke->detail - 8, ke->time);
+                keyboard_key_released(ke->detail - 8, ke->time, keyboard_device);
             }
         }
         return false;
     }
+
+    xinput_integration* xinput;
 };
 
-xinput_integration::xinput_integration(Display* display)
-    : QObject()
+xinput_integration::xinput_integration(Display* display, x11::platform* platform)
+    : fake_devices{std::make_unique<input::pointer>(platform),
+                   std::make_unique<input::keyboard>(platform)}
     , m_x11Display(display)
+    , platform{platform}
 {
 }
 
@@ -288,14 +304,52 @@ void xinput_integration::startListening()
     evmasks[0].mask = mask1;
     XISelectEvents(display(), rootWindow(), evmasks, 1);
 
-    m_xiEventFilter.reset(new XInputEventFilter(m_xiOpcode));
+    setup_fake_devices();
+
+    m_xiEventFilter.reset(new XInputEventFilter(m_xiOpcode, this));
     m_xiEventFilter->setCursor(m_x11Cursor);
     m_xiEventFilter->setDisplay(display());
-    m_keyPressFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_PRESS));
-    m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE));
+    m_keyPressFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_PRESS, this));
+    m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE, this));
 
     // install the input event spies also relevant for X11 platform
     kwinApp()->input->redirect->installInputEventSpy(new input::modifier_only_shortcuts_spy);
+}
+
+void xinput_integration::setup_fake_devices()
+{
+    auto pointer = fake_devices.pointer.get();
+    auto pointer_red = platform->redirect->pointer();
+
+    auto keyboard = fake_devices.keyboard.get();
+    auto keyboard_red = platform->redirect->keyboard();
+
+    keyboard->xkb->update_from_default();
+
+    QObject::connect(
+        pointer, &pointer::button_changed, pointer_red, &input::pointer_redirect::process_button);
+
+    QObject::connect(
+        pointer, &pointer::motion, pointer_red, &input::pointer_redirect::process_motion);
+    QObject::connect(pointer,
+                     &pointer::motion_absolute,
+                     pointer_red,
+                     &input::pointer_redirect::process_motion_absolute);
+
+    QObject::connect(
+        pointer, &pointer::axis_changed, pointer_red, &input::pointer_redirect::process_axis);
+
+    QObject::connect(
+        pointer, &pointer::pinch_begin, pointer_red, &input::pointer_redirect::process_pinch_begin);
+    QObject::connect(pointer,
+                     &pointer::pinch_update,
+                     pointer_red,
+                     &input::pointer_redirect::process_pinch_update);
+    QObject::connect(
+        pointer, &pointer::pinch_end, pointer_red, &input::pointer_redirect::process_pinch_end);
+
+    QObject::connect(
+        keyboard, &keyboard::key_changed, keyboard_red, &input::keyboard_redirect::process_key);
 }
 
 }

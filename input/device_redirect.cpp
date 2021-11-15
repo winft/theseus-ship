@@ -11,8 +11,8 @@
 namespace KWin::input
 {
 
-device_redirect::device_redirect()
-    : QObject()
+device_redirect::device_redirect(input::redirect* redirect)
+    : redirect{redirect}
 {
 }
 
@@ -63,16 +63,6 @@ bool device_redirect::positionValid() const
 bool device_redirect::focusUpdatesBlocked()
 {
     return false;
-}
-
-bool device_redirect::inited() const
-{
-    return m_inited;
-}
-
-void device_redirect::setInited(bool set)
-{
-    m_inited = set;
 }
 
 }

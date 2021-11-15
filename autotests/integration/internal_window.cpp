@@ -208,7 +208,7 @@ void InternalWindowTest::initTestCase()
 void InternalWindowTest::init()
 {
     input::get_cursor()->set_pos(QPoint(1280, 512));
-    Test::setup_wayland_connection(Test::AdditionalWaylandInterface::Seat);
+    Test::setup_wayland_connection(Test::global_selection::seat);
     QVERIFY(Test::wait_for_wayland_keyboard());
 }
 

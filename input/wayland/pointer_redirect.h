@@ -36,6 +36,7 @@ class KWIN_EXPORT pointer_redirect : public input::pointer_redirect
 {
     Q_OBJECT
 public:
+    explicit pointer_redirect(input::redirect* redirect);
     void init();
 
     void updateAfterScreenChange() override;
@@ -98,7 +99,7 @@ private:
     void break_pointer_constraints(Wrapland::Server::Surface* surface);
 
     QPointF m_pos;
-    QHash<uint32_t, input::redirect::PointerButtonState> m_buttons;
+    QHash<uint32_t, button_state> m_buttons;
     Qt::MouseButtons qt_buttons;
 
     struct {

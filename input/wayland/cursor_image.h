@@ -14,6 +14,7 @@
 #include <QHash>
 #include <QImage>
 #include <QObject>
+#include <memory>
 
 namespace KWin
 {
@@ -84,7 +85,8 @@ private:
     void setSource(CursorSource source);
 
     CursorSource m_currentSource = CursorSource::Fallback;
-    cursor_theme* m_cursorTheme = nullptr;
+    std::unique_ptr<cursor_theme> m_cursorTheme;
+
     struct {
         QMetaObject::Connection connection;
         QImage image;

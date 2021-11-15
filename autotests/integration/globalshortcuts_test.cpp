@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
+#include "input/xkb/helpers.h"
 #include "kwin_wayland_test.h"
 #include "platform.h"
 #include "screens.h"
@@ -93,8 +94,7 @@ void GlobalShortcutsTest::init()
     screens()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 
-    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
-    xkb->switchToLayout(0);
+    input::xkb::get_primary_xkb_keyboard()->switch_to_layout(0);
 }
 
 void GlobalShortcutsTest::cleanup()
@@ -142,9 +142,9 @@ void GlobalShortcutsTest::testNonLatinLayout_data()
 void GlobalShortcutsTest::testNonLatinLayout()
 {
     // Shortcuts on non-Latin layouts should still work, see BUG 375518
-    auto xkb = kwinApp()->input->redirect->keyboard()->xkb();
-    xkb->switchToLayout(1);
-    QCOMPARE(xkb->layoutName(), QStringLiteral("Russian"));
+    auto xkb = input::xkb::get_primary_xkb_keyboard();
+    xkb->switch_to_layout(1);
+    QCOMPARE(xkb->layout_name(), "Russian");
 
     QFETCH(int, modifierKey);
     QFETCH(Qt::Modifier, qtModifier);
@@ -166,7 +166,7 @@ void GlobalShortcutsTest::testNonLatinLayout()
 
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(modifierKey, timestamp++);
-    QCOMPARE(kwinApp()->input->redirect->keyboardModifiers(), qtModifier);
+    QCOMPARE(xkb->qt_modifiers, qtModifier);
     Test::keyboard_key_pressed(key, timestamp++);
 
     Test::keyboard_key_released(key, timestamp++);
@@ -191,9 +191,12 @@ void GlobalShortcutsTest::testConsumedShift()
     // press shift+5
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::ShiftModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::ShiftModifier);
     Test::keyboard_key_pressed(KEY_5, timestamp++);
-    QTRY_COMPARE(triggeredSpy.count(), 1);
+
+    QVERIFY(triggeredSpy.size() || triggeredSpy.wait());
+    QCOMPARE(triggeredSpy.size(), 1);
+
     Test::keyboard_key_released(KEY_5, timestamp++);
 
     // release shift
@@ -221,12 +224,16 @@ void GlobalShortcutsTest::testRepeatedTrigger()
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_WAKEUP, timestamp++);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::ShiftModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::ShiftModifier);
     Test::keyboard_key_pressed(KEY_5, timestamp++);
-    QTRY_COMPARE(triggeredSpy.count(), 1);
+
+    QVERIFY(triggeredSpy.size() || triggeredSpy.wait());
+    QCOMPARE(triggeredSpy.size(), 1);
+
     // and should repeat
     QVERIFY(triggeredSpy.wait());
     QVERIFY(triggeredSpy.wait());
+
     // now release the key
     Test::keyboard_key_released(KEY_5, timestamp++);
     QVERIFY(!triggeredSpy.wait(50));
@@ -280,9 +287,10 @@ void GlobalShortcutsTest::testMetaShiftW()
     // press meta+shift+w
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(KEY_LEFTMETA, timestamp++);
-    QCOMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::MetaModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::MetaModifier);
     Test::keyboard_key_pressed(KEY_LEFTSHIFT, timestamp++);
-    QCOMPARE(kwinApp()->input->redirect->keyboardModifiers(), Qt::ShiftModifier | Qt::MetaModifier);
+    QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input),
+             Qt::ShiftModifier | Qt::MetaModifier);
     Test::keyboard_key_pressed(KEY_W, timestamp++);
     QTRY_COMPARE(triggeredSpy.count(), 1);
     Test::keyboard_key_released(KEY_W, timestamp++);

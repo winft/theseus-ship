@@ -29,17 +29,19 @@
 namespace KWin::input::wayland
 {
 
+touch_redirect::touch_redirect(input::redirect* redirect)
+    : input::touch_redirect(redirect)
+{
+}
+
 void touch_redirect::init()
 {
-    assert(!inited());
-
-    setInited(true);
     device_redirect_init(this);
 
     if (waylandServer()->hasScreenLockerIntegration()) {
         QObject::connect(
             ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
-                if (!inited() || !waylandServer()->seat()->hasTouch()) {
+                if (!waylandServer()->seat()->hasTouch()) {
                     return;
                 }
                 cancel();
@@ -47,9 +49,6 @@ void touch_redirect::init()
                 device_redirect_update(this);
             });
     }
-
-    QObject::connect(workspace(), &QObject::destroyed, this, [this] { setInited(false); });
-    QObject::connect(waylandServer(), &QObject::destroyed, this, [this] { setInited(false); });
 }
 
 void touch_redirect::setDecorationPressId(qint32 id)
@@ -79,9 +78,6 @@ QPointF touch_redirect::position() const
 
 bool touch_redirect::focusUpdatesBlocked()
 {
-    if (!inited()) {
-        return true;
-    }
     if (window_already_updated_this_cycle) {
         return true;
     }
@@ -199,10 +195,6 @@ QPointF get_abs_pos(QPointF const& pos, touch* dev)
 
 void touch_redirect::process_down(touch_down_event const& event)
 {
-    if (!inited()) {
-        return;
-    }
-
     auto const event_abs = touch_down_event(
         {event.id, get_abs_pos(event.pos, event.base.dev), event.base.dev, event.base.time_msec});
 
@@ -225,10 +217,6 @@ void touch_redirect::process_down(touch_down_event const& event)
 
 void touch_redirect::process_up(touch_up_event const& event)
 {
-    if (!inited()) {
-        return;
-    }
-
     window_already_updated_this_cycle = false;
 
     kwinApp()->input->redirect->processSpies(
@@ -250,10 +238,6 @@ void touch_redirect::process_up(touch_up_event const& event)
 
 void touch_redirect::process_motion(touch_motion_event const& event)
 {
-    if (!inited()) {
-        return;
-    }
-
     auto const event_abs = touch_motion_event(
         {event.id, get_abs_pos(event.pos, event.base.dev), event.base.dev, event.base.time_msec});
 
@@ -274,9 +258,6 @@ void touch_redirect::process_motion(touch_motion_event const& event)
 
 void touch_redirect::cancel()
 {
-    if (!inited()) {
-        return;
-    }
     if (!waylandServer()->seat()->hasTouch()) {
         return;
     }
@@ -286,9 +267,6 @@ void touch_redirect::cancel()
 
 void touch_redirect::frame()
 {
-    if (!inited()) {
-        return;
-    }
     waylandServer()->seat()->touches().touch_frame();
 }
 

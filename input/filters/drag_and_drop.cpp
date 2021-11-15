@@ -6,7 +6,8 @@
 */
 #include "drag_and_drop.h"
 
-#include "../touch_redirect.h"
+#include "input/redirect.h"
+#include "input/touch_redirect.h"
 #include "main.h"
 #include "seat/session.h"
 #include "toplevel.h"

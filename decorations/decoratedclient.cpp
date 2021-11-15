@@ -332,7 +332,7 @@ QSize DecoratedClientImpl::size() const
 
 bool DecoratedClientImpl::isMaximizedVertically() const
 {
-    return win::flags(m_client->maximizeMode() & win::maximize_mode::vertical);
+    return flags(m_client->maximizeMode() & win::maximize_mode::vertical);
 }
 
 bool DecoratedClientImpl::isMaximized() const
@@ -342,31 +342,31 @@ bool DecoratedClientImpl::isMaximized() const
 
 bool DecoratedClientImpl::isMaximizedHorizontally() const
 {
-    return win::flags(m_client->maximizeMode() & win::maximize_mode::horizontal);
+    return flags(m_client->maximizeMode() & win::maximize_mode::horizontal);
 }
 
 Qt::Edges DecoratedClientImpl::adjacentScreenEdges() const
 {
     Qt::Edges edges;
     auto const mode = m_client->control->quicktiling();
-    if (win::flags(mode & win::quicktiles::left)) {
+    if (flags(mode & win::quicktiles::left)) {
         edges |= Qt::LeftEdge;
-        if (!win::flags(mode & (win::quicktiles::top | win::quicktiles::bottom))) {
+        if (!flags(mode & (win::quicktiles::top | win::quicktiles::bottom))) {
             // using complete side
             edges |= Qt::TopEdge | Qt::BottomEdge;
         }
     }
-    if (win::flags(mode & win::quicktiles::top)) {
+    if (flags(mode & win::quicktiles::top)) {
         edges |= Qt::TopEdge;
     }
-    if (win::flags(mode & win::quicktiles::right)) {
+    if (flags(mode & win::quicktiles::right)) {
         edges |= Qt::RightEdge;
-        if (!win::flags(mode & (win::quicktiles::top | win::quicktiles::bottom))) {
+        if (!flags(mode & (win::quicktiles::top | win::quicktiles::bottom))) {
             // using complete side
             edges |= Qt::TopEdge | Qt::BottomEdge;
         }
     }
-    if (win::flags(mode & win::quicktiles::bottom)) {
+    if (flags(mode & win::quicktiles::bottom)) {
         edges |= Qt::BottomEdge;
     }
     return edges;

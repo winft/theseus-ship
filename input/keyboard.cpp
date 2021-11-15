@@ -5,17 +5,25 @@
 */
 #include "keyboard.h"
 
+#include "platform.h"
+#include "utils.h"
+
 namespace KWin::input
 {
 
-keyboard::keyboard(platform* plat, QObject* parent)
-    : QObject(parent)
-    , plat{plat}
+keyboard::keyboard(input::platform* platform)
+    : platform{platform}
+    , xkb{std::make_unique<xkb::keyboard>(platform->xkb)}
 {
+    platform->keyboards.push_back(this);
 }
 
 keyboard::~keyboard()
 {
+    if (platform) {
+        remove_all(platform->keyboards, this);
+        Q_EMIT platform->keyboard_removed(this);
+    }
 }
 
 }

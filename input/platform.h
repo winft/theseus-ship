@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "xkb.h"
+#include "xkb/manager.h"
 
 #include <kwin_export.h>
 
@@ -14,9 +14,12 @@
 #include <memory>
 #include <vector>
 
-namespace KWin::input
+namespace KWin
 {
+class Toplevel;
 
+namespace input
+{
 namespace dbus
 {
 class device_manager;
@@ -38,6 +41,7 @@ public:
     std::vector<switch_device*> switches;
     std::vector<touch*> touchs;
 
+    input::xkb::manager xkb;
     std::unique_ptr<input::redirect> redirect;
     std::unique_ptr<input::cursor> cursor;
 
@@ -98,6 +102,5 @@ Q_SIGNALS:
     void touch_removed(KWin::input::touch*);
 };
 
-KWIN_EXPORT void add_redirect(platform* platform, std::unique_ptr<redirect> redirect);
-
+}
 }

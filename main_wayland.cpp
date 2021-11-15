@@ -209,12 +209,9 @@ void ApplicationWayland::start()
     this->session.reset(session);
     session->take_control();
 
-    auto redirect = std::make_unique<input::wayland::redirect>();
-    auto redirect_ptr = redirect.get();
-
-    input::add_redirect(input.get(), std::move(redirect));
-    input->cursor.reset(new input::wayland::cursor);
-    redirect_ptr->set_platform(static_cast<input::wayland::platform*>(input.get()));
+    input.reset(new input::backend::wlroots::platform(base));
+    input::wayland::add_dbus(input.get());
+    input->redirect->install_shortcuts();
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     // TODO(romangg): can be removed?
@@ -249,9 +246,6 @@ void ApplicationWayland::handle_server_addons_created()
 void ApplicationWayland::init_platforms()
 {
     base.backend = base::backend::wlroots(waylandServer()->display());
-
-    input.reset(new input::backend::wlroots::platform(base));
-    input::wayland::add_dbus(input.get());
 
     render.reset(new render::backend::wlroots::backend(base));
     platform = render.get();
@@ -546,14 +540,14 @@ int main(int argc, char * argv[])
 
     auto const wrapped_process = parser.isSet(wayland_socket_fd_option);
 
-    KWin::WaylandServer::InitializationFlags flags;
+    KWin::wayland_start_options flags;
     if (parser.isSet(screenLockerOption)) {
-        flags = KWin::WaylandServer::InitializationFlag::LockScreen;
+        flags = KWin::wayland_start_options::lock_screen;
     } else if (parser.isSet(noScreenLockerOption)) {
-        flags = KWin::WaylandServer::InitializationFlag::NoLockScreenIntegration;
+        flags = KWin::wayland_start_options::no_lock_screen_integration;
     }
     if (parser.isSet(noGlobalShortcutsOption)) {
-        flags |= KWin::WaylandServer::InitializationFlag::NoGlobalShortcuts;
+        flags |= KWin::wayland_start_options::no_global_shortcuts;
     }
 
     try {

@@ -8,43 +8,23 @@
 #include "cursor.h"
 
 #include "cursor_image.h"
+#include "redirect.h"
 
-#include "main.h"
-#include "utils.h"
-#include "xcbutils.h"
-#include <input/pointer_redirect.h>
-#include <kwinglobals.h>
-#include <platform.h>
-
-#include <KConfig>
-#include <KConfigGroup>
-#include <KSharedConfig>
-
-#include <QAbstractEventDispatcher>
-#include <QDBusConnection>
-#include <QScreen>
-#include <QTimer>
+#include "input/xkb/helpers.h"
 
 namespace KWin::input::wayland
 {
 
-cursor::cursor()
+cursor::cursor(wayland::redirect* redirect)
     : input::cursor()
     , cursor_image{std::make_unique<wayland::cursor_image>()}
-    , m_currentButtons(Qt::NoButton)
+    , redirect{redirect}
 {
-    connect(kwinApp()->input->redirect.get(),
-            &redirect::globalPointerChanged,
-            this,
-            &cursor::slot_pos_changed);
-    connect(kwinApp()->input->redirect.get(),
-            &redirect::pointerButtonStateChanged,
-            this,
-            &cursor::slot_pointer_button_changed);
-    connect(kwinApp()->input->redirect.get(),
-            &input::redirect::keyboardModifiersChanged,
-            this,
-            &cursor::slot_modifiers_changed);
+    QObject::connect(redirect, &redirect::globalPointerChanged, this, &cursor::slot_pos_changed);
+    QObject::connect(
+        redirect, &redirect::pointerButtonStateChanged, this, &cursor::slot_pointer_button_changed);
+    QObject::connect(
+        redirect, &redirect::keyboardModifiersChanged, this, &cursor::slot_modifiers_changed);
 }
 
 cursor::~cursor() = default;
@@ -71,23 +51,25 @@ PlatformCursorImage cursor::platform_image() const
 
 void cursor::do_set_pos()
 {
-    if (kwinApp()->input->redirect->supportsPointerWarping()) {
-        kwinApp()->input->redirect->warpPointer(current_pos());
+    if (redirect->supportsPointerWarping()) {
+        redirect->warpPointer(current_pos());
     }
-    slot_pos_changed(kwinApp()->input->redirect->globalPointer());
+    slot_pos_changed(redirect->globalPointer());
     Q_EMIT pos_changed(current_pos());
+}
+
+Qt::KeyboardModifiers get_keyboard_modifiers()
+{
+    return xkb::get_active_keyboard_modifiers(kwinApp()->input.get());
 }
 
 void cursor::slot_pos_changed(const QPointF& pos)
 {
     auto const oldPos = current_pos();
     update_pos(pos.toPoint());
-    Q_EMIT mouse_changed(pos.toPoint(),
-                         oldPos,
-                         m_currentButtons,
-                         m_currentButtons,
-                         kwinApp()->input->redirect->keyboardModifiers(),
-                         kwinApp()->input->redirect->keyboardModifiers());
+
+    auto mods = get_keyboard_modifiers();
+    Q_EMIT mouse_changed(pos.toPoint(), oldPos, m_currentButtons, m_currentButtons, mods, mods);
 }
 
 void cursor::slot_modifiers_changed(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods)
@@ -99,24 +81,22 @@ void cursor::slot_modifiers_changed(Qt::KeyboardModifiers mods, Qt::KeyboardModi
 void cursor::slot_pointer_button_changed()
 {
     Qt::MouseButtons const oldButtons = m_currentButtons;
-    m_currentButtons = kwinApp()->input->redirect->qtButtonStates();
+    m_currentButtons = redirect->qtButtonStates();
+
     auto const pos = current_pos();
-    Q_EMIT mouse_changed(pos,
-                         pos,
-                         m_currentButtons,
-                         oldButtons,
-                         kwinApp()->input->redirect->keyboardModifiers(),
-                         kwinApp()->input->redirect->keyboardModifiers());
+    auto mods = get_keyboard_modifiers();
+
+    Q_EMIT mouse_changed(pos, pos, m_currentButtons, oldButtons, mods, mods);
 }
 
 void cursor::do_start_image_tracking()
 {
-    connect(cursor_image.get(), &cursor_image::changed, this, &cursor::image_changed);
+    QObject::connect(cursor_image.get(), &cursor_image::changed, this, &cursor::image_changed);
 }
 
 void cursor::do_stop_image_tracking()
 {
-    disconnect(cursor_image.get(), &cursor_image::changed, this, &cursor::image_changed);
+    QObject::disconnect(cursor_image.get(), &cursor_image::changed, this, &cursor::image_changed);
 }
 
 }

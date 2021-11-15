@@ -1741,7 +1741,7 @@ void SceneOpenGL::EffectFrame::render(QRegion region, double opacity, double fra
 
     GLShader* shader = m_effectFrame->shader();
     if (!shader) {
-        shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture | ShaderTrait::Modulate);
+        shader = ShaderManager::instance()->pushShader(QFlags({ShaderTrait::MapTexture, ShaderTrait::Modulate}));
     } else if (shader) {
         ShaderManager::instance()->pushShader(shader);
     }

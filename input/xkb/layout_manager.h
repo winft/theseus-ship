@@ -7,13 +7,16 @@
 */
 #pragma once
 
-#include "../event_spy.h"
+#include <kwin_export.h>
 
 #include <QObject>
 #include <QVector>
 
 #include <KConfigGroup>
+#include <KLocalizedString>
 #include <KSharedConfig>
+#include <QString>
+#include <string>
 
 typedef uint32_t xkb_layout_index_t;
 
@@ -22,32 +25,35 @@ class QDBusArgument;
 
 namespace KWin::input
 {
-class xkb;
+class keyboard;
 
 namespace dbus
 {
 class keyboard_layout;
+class keyboard_layouts_v2;
 }
 
-namespace KeyboardLayoutSwitching
+namespace xkb
 {
-class Policy;
+class keyboard;
+class layout_policy;
+class manager;
+
+inline QString translated_keyboard_layout(std::string const& layout)
+{
+    return i18nd("xkeyboard-config", layout.c_str());
 }
 
-class KWIN_EXPORT keyboard_layout_spy : public QObject, public input::event_spy
+class KWIN_EXPORT layout_manager : public QObject
 {
     Q_OBJECT
 public:
-    explicit keyboard_layout_spy(xkb* xkb, const KSharedConfigPtr& config);
-
-    ~keyboard_layout_spy() override;
+    layout_manager(xkb::manager& xkb, KSharedConfigPtr const& config);
 
     void init();
 
-    void checkLayoutChange(uint previousLayout);
     void switchToNextLayout();
     void switchToPreviousLayout();
-    void resetLayout();
 
 Q_SIGNALS:
     void layoutChanged(uint index);
@@ -58,15 +64,20 @@ private Q_SLOTS:
 
 private:
     void initDBusInterface();
-    void notifyLayoutChange();
+    void init_dbus_interface_v2();
+    void add_keyboard(input::keyboard* keyboard);
+    void handle_layout_change(xkb::keyboard* xkb);
+    void send_layout_to_osd(xkb::keyboard* xkb);
     void switchToLayout(xkb_layout_index_t index);
-    void loadShortcuts();
-    xkb* m_xkb;
-    xkb_layout_index_t m_layout = 0;
+    void load_shortcuts(xkb::keyboard* xkb);
+
+    xkb::manager& xkb;
     KConfigGroup m_configGroup;
     QVector<QAction*> m_layoutShortcuts;
     dbus::keyboard_layout* m_dbusInterface = nullptr;
-    KeyboardLayoutSwitching::Policy* m_policy = nullptr;
+    dbus::keyboard_layouts_v2* dbus_interface_v2{nullptr};
+    xkb::layout_policy* m_policy = nullptr;
 };
 
+}
 }

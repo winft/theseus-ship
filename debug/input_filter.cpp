@@ -15,6 +15,7 @@
 #include "input/qt_event.h"
 #include "input/redirect.h"
 #include "input/switch.h"
+#include "input/xkb/keyboard.h"
 
 #include "main.h"
 
@@ -111,15 +112,17 @@ static QString buttonToString(Qt::MouseButton button)
 template<typename Device>
 static QString deviceRow(Device* dev)
 {
-    auto ctrl = dev ? dev->control : nullptr;
-    if (!ctrl) {
+    assert(dev);
+
+    if (!dev->control) {
         return tableRow(i18n("Input Device"),
                         i18nc("The input device of the event is not known", "Unknown"));
     }
+
     return tableRow(i18n("Input Device"),
                     QStringLiteral("%1 (%2)")
-                        .arg(ctrl->metadata.name.c_str())
-                        .arg(ctrl->metadata.sys_name.c_str()));
+                        .arg(dev->control->metadata.name.c_str())
+                        .arg(dev->control->metadata.sys_name.c_str()));
 }
 
 static QString buttonsToString(Qt::MouseButtons buttons)
@@ -245,16 +248,16 @@ void add_common_key_data(input::key_event const& event, QString& text)
     text.append(
         tableRow(i18nc("The code as read from the input device", "Scan code"), event.keycode));
 
+    auto const xkb = event.base.dev->xkb.get();
     auto const key_meta_object = Qt::qt_getEnumMetaObject(Qt::Key());
     auto const enumerator = key_meta_object->enumerator(key_meta_object->indexOfEnumerator("Key"));
     text.append(tableRow(i18nc("Key according to Qt", "Qt::Key code"),
-                         enumerator.valueToKey(input::key_to_qt_key(event.keycode))));
+                         enumerator.valueToKey(input::key_to_qt_key(event.keycode, xkb))));
 
-    auto const& xkb = kwinApp()->input->redirect->keyboard()->xkb();
-    auto const keysym = xkb->toKeysym(event.keycode);
+    auto const keysym = xkb->to_keysym(event.keycode);
     text.append(tableRow(i18nc("The translated code to an Xkb symbol", "Xkb symbol"), keysym));
-    text.append(
-        tableRow(i18nc("The translated code interpreted as text", "Utf8"), xkb->toString(keysym)));
+    text.append(tableRow(i18nc("The translated code interpreted as text", "Utf8"),
+                         QString::fromStdString(xkb->to_string(keysym))));
 
     auto to_string = [](Qt::KeyboardModifiers mods) {
         QString ret;
@@ -287,7 +290,7 @@ void add_common_key_data(input::key_event const& event, QString& text)
     };
 
     text.append(tableRow(i18nc("The currently active modifiers", "Modifiers"),
-                         to_string(kwinApp()->input->redirect->keyboard()->modifiers())));
+                         to_string(xkb->qt_modifiers)));
     text.append(s_tableEnd);
 }
 
@@ -297,10 +300,10 @@ void input_filter::key(input::key_event const& event)
     text.append(s_tableStart);
 
     switch (event.state) {
-    case input::button_state::pressed:
+    case input::key_state::pressed:
         text.append(tableHeaderRow(i18nc("A key press event", "Key Press")));
         break;
-    case input::button_state::released:
+    case input::key_state::released:
         text.append(tableHeaderRow(i18nc("A key release event", "Key Release")));
         break;
     }
@@ -318,6 +321,8 @@ void input_filter::key_repeat(input::key_event const& event)
     text.append(s_tableStart);
 
     text.append(tableHeaderRow(i18nc("A key repeat event", "Key repeat")));
+
+    text.append(deviceRow(event.base.dev));
     add_common_key_data(event, text);
 
     m_textEdit->insertHtml(text);

@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_MODIFIER_ONLY_SHORTCUTS_H
-#define KWIN_MODIFIER_ONLY_SHORTCUTS_H
+#pragma once
 
 #include "input/event_spy.h"
 #include <kwin_export.h>
@@ -53,5 +52,3 @@ private:
 };
 
 }
-
-#endif

@@ -8,10 +8,9 @@
 #include "keyboard_layout.h"
 
 #include "input/event.h"
-#include "input/keyboard_layout_helpers.h"
-#include "input/keyboard_layout_switching.h"
-#include "input/spies/keyboard_layout.h"
-#include "input/xkb.h"
+#include "input/xkb/helpers.h"
+#include "input/xkb/layout_manager.h"
+#include "input/xkb/layout_policies.h"
 #include "main.h"
 #include "platform.h"
 
@@ -29,13 +28,10 @@ namespace KWin::input::dbus
 static const QString s_keyboardService = QStringLiteral("org.kde.keyboard");
 static const QString s_keyboardObject = QStringLiteral("/Layouts");
 
-keyboard_layout::keyboard_layout(xkb* xkb,
-                                 const KConfigGroup& configGroup,
-                                 input::keyboard_layout_spy* parent)
+keyboard_layout::keyboard_layout(KConfigGroup const& configGroup, xkb::layout_manager* parent)
     : QObject(parent)
-    , m_xkb(xkb)
     , m_configGroup(configGroup)
-    , m_keyboardLayout(parent)
+    , manager(parent)
 {
     qRegisterMetaType<QVector<LayoutNames>>("QVector<LayoutNames>");
     qDBusRegisterMetaType<LayoutNames>();
@@ -55,41 +51,45 @@ keyboard_layout::~keyboard_layout()
 
 void keyboard_layout::switchToNextLayout()
 {
-    m_keyboardLayout->switchToNextLayout();
+    manager->switchToNextLayout();
 }
 
 void keyboard_layout::switchToPreviousLayout()
 {
-    m_keyboardLayout->switchToPreviousLayout();
+    manager->switchToPreviousLayout();
 }
 
 bool keyboard_layout::setLayout(uint index)
 {
-    const quint32 previousLayout = m_xkb->currentLayout();
-    if (!m_xkb->switchToLayout(index)) {
+    auto xkb = xkb::get_primary_xkb_keyboard();
+
+    if (!xkb->switch_to_layout(index)) {
         return false;
     }
-    m_keyboardLayout->checkLayoutChange(previousLayout);
+
     return true;
 }
 
 uint keyboard_layout::getLayout() const
 {
-    return m_xkb->currentLayout();
+    return xkb::get_primary_xkb_keyboard()->layout;
 }
 
 QVector<keyboard_layout::LayoutNames> keyboard_layout::getLayoutsList() const
 {
+    auto xkb = xkb::get_primary_xkb_keyboard();
+
     // TODO: - should be handled by layout applet itself, it has nothing to do with KWin
-    const QStringList displayNames = m_configGroup.readEntry("DisplayNames", QStringList());
+    auto const display_names = m_configGroup.readEntry("DisplayNames", QStringList());
 
     QVector<LayoutNames> ret;
-    const int layoutsSize = m_xkb->numberOfLayouts();
-    const int displayNamesSize = displayNames.size();
-    for (int i = 0; i < layoutsSize; ++i) {
-        ret.append({m_xkb->layoutShortName(i),
-                    i < displayNamesSize ? displayNames.at(i) : QString(),
-                    translated_keyboard_layout(m_xkb->layoutName(i))});
+    auto const layouts_count = xkb->layouts_count();
+    size_t const display_names_count = display_names.size();
+
+    for (size_t i = 0; i < layouts_count; ++i) {
+        ret.append({QString::fromStdString(xkb->layout_short_name_from_index(i)),
+                    i < display_names_count ? display_names.at(i) : QString(),
+                    xkb::translated_keyboard_layout(xkb->layout_name_from_index(i))});
     }
     return ret;
 }

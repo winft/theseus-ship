@@ -181,6 +181,7 @@ set_package_properties(wlroots PROPERTIES
 if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.15.0)
   set(HAVE_WLR_TOUCH_FRAME 1)
   set(HAVE_WLR_DRM_LEASE 1)
+  set(HAVE_WLR_HEADLESS_UNLINK_INPUT_DEVICE 1)
 endif()
 
 find_package(X11)
@@ -405,6 +406,7 @@ set(kwin_SRCS
     input/device_redirect.cpp
     input/event_filter.cpp
     input/event_spy.cpp
+    input/keyboard.cpp
     input/keyboard_redirect.cpp
     input/platform.cpp
     input/pointer_redirect.cpp
@@ -418,9 +420,12 @@ set(kwin_SRCS
     input/global_shortcut.cpp
     input/global_shortcuts_manager.cpp
     input/logging.cpp
+    input/pointer.cpp
     input/x11/redirect.cpp
     input/qt_event.cpp
-    input/xkb.cpp
+    input/xkb/keyboard.cpp
+    input/xkb/keymap.cpp
+    input/xkb/manager.cpp
     killwindow.cpp
     main.cpp
     moving_client_x11_filter.cpp
@@ -753,6 +758,7 @@ set(kwin_WAYLAND_SRCS
    input/backend/wlroots/pointer.cpp
    input/backend/wlroots/switch.cpp
    input/backend/wlroots/touch.cpp
+   input/backend/wlroots/control/headless/keyboard.cpp
    input/backend/wlroots/control/keyboard.cpp
    input/backend/wlroots/control/pointer.cpp
    input/backend/wlroots/control/switch.cpp
@@ -765,6 +771,7 @@ set(kwin_WAYLAND_SRCS
    input/dbus/device.cpp
    input/dbus/device_manager.cpp
    input/dbus/keyboard_layout.cpp
+   input/dbus/keyboard_layouts_v2.cpp
    input/dbus/tablet_mode_manager.cpp
    input/filters/decoration_event.cpp
    input/filters/dpms.cpp
@@ -783,25 +790,26 @@ set(kwin_WAYLAND_SRCS
    input/filters/virtual_terminal.cpp
    input/filters/window_action.cpp
    input/filters/window_selector.cpp
-   input/spies/keyboard_layout.cpp
    input/spies/keyboard_repeat.cpp
    input/spies/touch_hide_cursor.cpp
    input/spies/tablet_mode_switch.cpp
    input/wayland/cursor.cpp
    input/wayland/cursor_image.cpp
    input/wayland/cursor_theme.cpp
+   input/wayland/fake/keyboard.cpp
+   input/wayland/fake/pointer.cpp
+   input/wayland/fake/touch.cpp
    input/wayland/keyboard_redirect.cpp
    input/wayland/platform.cpp
    input/wayland/pointer_redirect.cpp
    input/wayland/redirect.cpp
    input/wayland/tablet_redirect.cpp
    input/wayland/touch_redirect.cpp
-   input/keyboard.cpp
-   input/keyboard_layout_switching.cpp
    input/logging.cpp
-   input/pointer.cpp
    input/switch.cpp
    input/touch.cpp
+   input/xkb/layout_manager.cpp
+   input/xkb/layout_policies.cpp
    linux_dmabuf.cpp
    render/backend/wlroots/backend.cpp
    render/backend/wlroots/buffer.cpp
@@ -896,6 +904,9 @@ install(
         org.kde.kwin.ColorCorrect.xml
         org.kde.kwin.Compositing.xml
         org.kde.kwin.Effects.xml
+
+        # Still needs to be installed as plasma-workspace expects it at compile time.
+        data/org.kde.kwin.VirtualKeyboard.xml
     DESTINATION
         ${KDE_INSTALL_DBUSINTERFACEDIR}
 )

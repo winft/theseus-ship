@@ -5,9 +5,9 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "touch_hide_cursor.h"
+#include "input/cursor.h"
+#include "input/platform.h"
 #include "main.h"
-#include <input/cursor.h>
-#include <input/platform.h>
 
 namespace KWin::input
 {
