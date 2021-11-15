@@ -25,6 +25,7 @@
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/subcompositor.h>
 #include <Wrapland/Client/text_input_v3.h>
+#include <Wrapland/Client/virtual_keyboard_v1.h>
 #include <Wrapland/Client/xdg_activation_v1.h>
 #include <Wrapland/Client/xdg_shell.h>
 #include <Wrapland/Client/xdgdecoration.h>
@@ -61,6 +62,7 @@ public:
         std::unique_ptr<Wrapland::Client::XdgDecorationManager> xdg_decoration;
         std::unique_ptr<Wrapland::Client::input_method_manager_v2> input_method_manager_v2;
         std::unique_ptr<Wrapland::Client::text_input_manager_v3> text_input_manager_v3;
+        std::unique_ptr<Wrapland::Client::virtual_keyboard_manager_v1> virtual_keyboard_manager_v1;
     } interfaces;
 
     client() = default;

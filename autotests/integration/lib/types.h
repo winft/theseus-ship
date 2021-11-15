@@ -22,6 +22,7 @@ enum class global_selection {
     xdg_activation = 1 << 8,
     input_method_v2 = 1 << 9,
     text_input_manager_v3 = 1 << 10,
+    virtual_keyboard_manager_v1 = 1 << 11,
 };
 
 }

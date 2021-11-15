@@ -167,6 +167,13 @@ client::client(global_selection globals)
             registry->interface(Clt::Registry::Interface::TextInputManagerV3).version));
         QVERIFY(interfaces.text_input_manager_v3->isValid());
     }
+
+    if (flags(globals & global_selection::virtual_keyboard_manager_v1)) {
+        interfaces.virtual_keyboard_manager_v1.reset(registry->createVirtualKeyboardManagerV1(
+            registry->interface(Clt::Registry::Interface::VirtualKeyboardManagerV1).name,
+            registry->interface(Clt::Registry::Interface::VirtualKeyboardManagerV1).version));
+        QVERIFY(interfaces.virtual_keyboard_manager_v1->isValid());
+    }
 }
 
 client::client(client&& other) noexcept

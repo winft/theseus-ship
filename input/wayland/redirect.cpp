@@ -50,6 +50,7 @@
 #include <Wrapland/Server/fake_input.h>
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/virtual_keyboard_v1.h>
 
 #include <KGlobalAccel>
 
@@ -174,6 +175,11 @@ void redirect::setup_workspace()
                      &Wrapland::Server::FakeInput::device_destroyed,
                      this,
                      [this](auto device) { fake_devices.erase(device); });
+
+    QObject::connect(platform->virtual_keyboard.get(),
+                     &Wrapland::Server::virtual_keyboard_manager_v1::keyboard_created,
+                     this,
+                     &redirect::handle_virtual_keyboard_added);
 
     static_cast<keyboard_redirect*>(m_keyboard.get())->init();
     static_cast<pointer_redirect*>(m_pointer.get())->init();
@@ -402,6 +408,52 @@ void redirect::handle_fake_input_device_added(Wrapland::Server::FakeInputDevice*
     Q_EMIT platform->touch_added(devices.touch.get());
 
     fake_devices.insert({device, std::move(devices)});
+}
+
+void redirect::handle_virtual_keyboard_added(
+    Wrapland::Server::virtual_keyboard_v1* virtual_keyboard)
+{
+    namespace WS = Wrapland::Server;
+
+    auto keyboard = std::make_unique<input::keyboard>(platform);
+    auto keyboard_ptr = keyboard.get();
+
+    QObject::connect(virtual_keyboard,
+                     &WS::virtual_keyboard_v1::resourceDestroyed,
+                     keyboard_ptr,
+                     [this, virtual_keyboard] { virtual_keyboards.erase(virtual_keyboard); });
+
+    QObject::connect(virtual_keyboard,
+                     &WS::virtual_keyboard_v1::keymap,
+                     keyboard_ptr,
+                     [keyboard_ptr](auto /*format*/, auto fd, auto size) {
+                         // TODO(romangg): Should we check the format?
+                         keyboard_ptr->xkb->install_keymap(fd, size);
+                     });
+
+    QObject::connect(virtual_keyboard,
+                     &WS::virtual_keyboard_v1::key,
+                     keyboard_ptr,
+                     [keyboard_ptr](auto time, auto key, auto state) {
+                         Q_EMIT keyboard_ptr->key_changed({key,
+                                                           state == WS::key_state::pressed
+                                                               ? key_state::pressed
+                                                               : key_state::released,
+                                                           false,
+                                                           keyboard_ptr,
+                                                           time});
+                     });
+
+    QObject::connect(virtual_keyboard,
+                     &WS::virtual_keyboard_v1::modifiers,
+                     keyboard_ptr,
+                     [keyboard_ptr](auto depressed, auto latched, auto locked, auto group) {
+                         Q_EMIT keyboard_ptr->modifiers_changed(
+                             {depressed, latched, locked, group, keyboard_ptr});
+                     });
+
+    virtual_keyboards.insert({virtual_keyboard, std::move(keyboard)});
+    Q_EMIT platform->keyboard_added(keyboard_ptr);
 }
 
 }
