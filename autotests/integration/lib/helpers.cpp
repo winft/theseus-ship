@@ -4,7 +4,10 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "lib/app.h"
+#include "helpers.h"
+
+#include "app.h"
+
 #include "screenlockerwatcher.h"
 #include "screens.h"
 #include "wayland_server.h"
