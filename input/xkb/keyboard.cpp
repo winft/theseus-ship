@@ -53,6 +53,7 @@ void keyboard::install_keymap(int fd, uint32_t size)
         update_keymap(map);
     } catch (...) {
         // Do nothing for now.
+        qCWarning(KWIN_XKB) << "Keymap could not be installed from fd" << fd;
     }
 }
 
