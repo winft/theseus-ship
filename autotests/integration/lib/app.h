@@ -6,13 +6,12 @@
 */
 #pragma once
 
-#include "../../main.h"
+#include "types.h"
 
 #include "base/backend/wlroots.h"
 #include "base/platform.h"
 #include "main.h"
 #include "render/backend/wlroots/backend.h"
-#include "utils/flags.h"
 #include "wayland_server.h"
 
 #include <Wrapland/Client/xdg_shell.h>
@@ -68,18 +67,6 @@ class Toplevel;
 
 namespace Test
 {
-
-enum class global_selection {
-    seat = 1 << 0,
-    xdg_decoration = 1 << 1,
-    plasma_shell = 1 << 2,
-    window_management = 1 << 3,
-    pointer_constraints = 1 << 4,
-    idle_inhibition = 1 << 5,
-    appmenu = 1 << 6,
-    shadow = 1 << 7,
-    xdg_activation = 1 << 8,
-};
 
 class KWIN_EXPORT client
 {
@@ -341,8 +328,6 @@ int create_test(std::string const& test_name, wayland_start_options flags, int a
 
 }
 }
-
-ENUM_FLAGS(KWin::Test::global_selection)
 
 #define WAYLANDTEST_MAIN_FLAGS(Tester, flags)                                                      \
     int main(int argc, char* argv[])                                                               \
