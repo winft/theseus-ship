@@ -4,12 +4,13 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
+#include "lib/app.h"
+
 #include "base/backend/wlroots.h"
 #include "input/dbus/keyboard_layouts_v2.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
-#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"

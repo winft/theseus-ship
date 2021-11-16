@@ -17,9 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "lib/app.h"
+
 #include "atoms.h"
 #include "input/cursor.h"
-#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
