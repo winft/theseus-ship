@@ -2,6 +2,7 @@ add_subdirectory(helper)
 
 add_library(KWinIntegrationTestFramework SHARED
   lib/app.cpp
+  lib/client.cpp
   lib/helpers.cpp
   generic_scene_opengl_test.cpp
 )

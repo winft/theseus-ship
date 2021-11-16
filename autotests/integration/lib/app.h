@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "client.h"
 #include "types.h"
 
 #include "base/backend/wlroots.h"
@@ -26,24 +27,8 @@ namespace Wrapland
 {
 namespace Client
 {
-class AppMenuManager;
-class ConnectionThread;
-class Compositor;
-class IdleInhibitManager;
-class LayerShellV1;
-class Output;
-class PlasmaShell;
-class PlasmaWindowManagement;
-class PointerConstraints;
-class Registry;
-class Seat;
-class ShadowManager;
-class ShmPool;
-class SubCompositor;
 class SubSurface;
 class Surface;
-class XdgActivationV1;
-class XdgDecorationManager;
 }
 }
 
@@ -64,54 +49,6 @@ class xwayland;
 }
 
 class Toplevel;
-
-namespace Test
-{
-
-class KWIN_EXPORT client
-{
-public:
-    Wrapland::Client::ConnectionThread* connection{nullptr};
-    std::unique_ptr<QThread> thread;
-    std::unique_ptr<Wrapland::Client::EventQueue> queue;
-    std::unique_ptr<Wrapland::Client::Registry> registry;
-
-    struct {
-        std::unique_ptr<Wrapland::Client::Compositor> compositor;
-        std::unique_ptr<Wrapland::Client::LayerShellV1> layer_shell;
-        std::unique_ptr<Wrapland::Client::SubCompositor> subcompositor;
-        std::unique_ptr<Wrapland::Client::ShadowManager> shadow_manager;
-        std::unique_ptr<Wrapland::Client::XdgShell> xdg_shell;
-        std::unique_ptr<Wrapland::Client::ShmPool> shm;
-        std::unique_ptr<Wrapland::Client::Seat> seat;
-        std::unique_ptr<Wrapland::Client::PlasmaShell> plasma_shell;
-        std::unique_ptr<Wrapland::Client::PlasmaWindowManagement> window_management;
-        std::unique_ptr<Wrapland::Client::PointerConstraints> pointer_constraints;
-        std::vector<std::unique_ptr<Wrapland::Client::Output>> outputs;
-        std::unique_ptr<Wrapland::Client::IdleInhibitManager> idle_inhibit;
-        std::unique_ptr<Wrapland::Client::AppMenuManager> app_menu;
-        std::unique_ptr<Wrapland::Client::XdgActivationV1> xdg_activation;
-        std::unique_ptr<Wrapland::Client::XdgDecorationManager> xdg_decoration;
-    } interfaces;
-
-    client() = default;
-    explicit client(global_selection globals);
-    client(client const&) = delete;
-    client& operator=(client const&) = delete;
-    client(client&& other) noexcept;
-    client& operator=(client&& other) noexcept;
-    ~client();
-
-private:
-    QMetaObject::Connection output_announced;
-    std::vector<QMetaObject::Connection> output_removals;
-
-    void connect_outputs();
-    QMetaObject::Connection output_removal_connection(Wrapland::Client::Output* output);
-    void cleanup();
-};
-
-}
 
 class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 {
