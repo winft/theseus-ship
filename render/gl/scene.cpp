@@ -962,13 +962,6 @@ void scene::performPaintWindow(effects_window_impl* w,
     if (flags(mask & paint_type::window_lanczos)) {
         if (!lanczos) {
             lanczos = new lanczos_filter(this);
-            // reset the lanczos filter when the screen gets resized
-            // it will get created next paint
-            connect(&compositor.platform.base.screens, &Screens::changed, this, [this]() {
-                makeOpenGLContextCurrent();
-                delete lanczos;
-                lanczos = nullptr;
-            });
         }
         lanczos->performPaint(w, mask, region, data);
     } else
