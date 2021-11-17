@@ -73,7 +73,7 @@ public:
     Q_INVOKABLE QString textOfValue(QVariant value) const;
     int selectedIndex() const;
 
-signals:
+Q_SIGNALS:
     void selectedIndexChanged(int index);
 
 public:

@@ -40,12 +40,12 @@ bool window_property_notify_filter::event(xcb_generic_event_t* event)
         return false;
     }
     if (pe->window == kwinApp()->x11RootWindow()) {
-        emit m_effects->propertyNotify(nullptr, pe->atom);
+        Q_EMIT m_effects->propertyNotify(nullptr, pe->atom);
     } else if (const auto c
                = workspace()->findClient(win::x11::predicate_match::window, pe->window)) {
-        emit m_effects->propertyNotify(c->effectWindow(), pe->atom);
+        Q_EMIT m_effects->propertyNotify(c->effectWindow(), pe->atom);
     } else if (const auto c = workspace()->findUnmanaged(pe->window)) {
-        emit m_effects->propertyNotify(c->effectWindow(), pe->atom);
+        Q_EMIT m_effects->propertyNotify(c->effectWindow(), pe->atom);
     }
     return false;
 }

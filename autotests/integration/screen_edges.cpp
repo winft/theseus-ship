@@ -109,7 +109,7 @@ Q_SIGNALS:
 bool TestObject::callback(KWin::ElectricBorder border)
 {
     qDebug() << "GOT CALLBACK" << border;
-    emit gotCallback(border);
+    Q_EMIT gotCallback(border);
     return true;
 }
 
@@ -724,7 +724,7 @@ void TestScreenEdges::testFullScreenBlocking()
     win::set_active(client, true);
     client->setFullScreen(true);
     Workspace::self()->setActiveClient(client);
-    emit screenEdges->checkBlocking();
+    Q_EMIT screenEdges->checkBlocking();
 
     // the signal doesn't trigger for corners, let's go over all windows just to be sure that it
     // doesn't call for corners
@@ -743,7 +743,7 @@ void TestScreenEdges::testFullScreenBlocking()
 
     // let's make the client not fullscreen, which should trigger
     client->setFullScreen(false);
-    emit screenEdges->checkBlocking();
+    Q_EMIT screenEdges->checkBlocking();
     for (auto e : screenEdges->findChildren<Edge*>()) {
         QCOMPARE(e->activatesForTouchGesture(), e->border() == KWin::ElectricRight);
     }
@@ -757,7 +757,7 @@ void TestScreenEdges::testFullScreenBlocking()
     QTest::qWait(351);
     client->setFullScreen(true);
     client->setFrameGeometry(client->frameGeometry().translated(10, 0));
-    emit screenEdges->checkBlocking();
+    Q_EMIT screenEdges->checkBlocking();
     spy.clear();
     input::get_cursor()->set_pos(0, 50);
     QVERIFY(spy.isEmpty());
@@ -766,7 +766,7 @@ void TestScreenEdges::testFullScreenBlocking()
 
     // just to be sure, let's set geometry back
     client->setFrameGeometry(screens()->geometry());
-    emit screenEdges->checkBlocking();
+    Q_EMIT screenEdges->checkBlocking();
     input::get_cursor()->set_pos(0, 50);
     QVERIFY(spy.isEmpty());
     // and no pushback
@@ -864,7 +864,7 @@ void TestScreenEdges::testClientEdge()
     QCOMPARE(client->isHiddenInternal(), true);
 
     // now let's emulate the removal of a Client through Workspace
-    emit workspace()->clientRemoved(client);
+    Q_EMIT workspace()->clientRemoved(client);
     for (auto e : screenEdges->findChildren<Edge*>()) {
         QVERIFY(!e->client());
     }

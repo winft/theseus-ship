@@ -104,7 +104,7 @@ void ZoomAccessibilityIntegration::destroyAccessibilityRegistry()
 
 void ZoomAccessibilityIntegration::slotFocusChanged(const AccessibleObject &object)
 {
-    emit focusPointChanged(object.focusPoint());
+    Q_EMIT focusPointChanged(object.focusPoint());
 }
 
 } // namespace KWin

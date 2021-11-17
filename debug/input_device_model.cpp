@@ -152,21 +152,21 @@ void input_device_model::setupDeviceConnections(input::dbus::device* device)
         const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
         const QModelIndex child
             = index(device->metaObject()->indexOfProperty("enabled"), 1, parent);
-        emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
+        Q_EMIT dataChanged(child, child, QVector<int>{Qt::DisplayRole});
     });
     if (auto& ctrl = device->pointer_ctrl) {
         QObject::connect(ctrl, &input::control::pointer::left_handed_changed, this, [this, device] {
             const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
             const QModelIndex child
                 = index(device->metaObject()->indexOfProperty("leftHanded"), 1, parent);
-            emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
+            Q_EMIT dataChanged(child, child, QVector<int>{Qt::DisplayRole});
         });
         QObject::connect(
             ctrl, &input::control::pointer::acceleration_changed, this, [this, device] {
                 const QModelIndex parent = index(m_devices.indexOf(device), 0, QModelIndex());
                 const QModelIndex child = index(
                     device->metaObject()->indexOfProperty("pointerAcceleration"), 1, parent);
-                emit dataChanged(child, child, QVector<int>{Qt::DisplayRole});
+                Q_EMIT dataChanged(child, child, QVector<int>{Qt::DisplayRole});
             });
     };
 }

@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class TestTabBoxClientModel : public QObject
 {
     Q_OBJECT
-private slots:
+private Q_SLOTS:
     void initTestCase();
     /**
      * Tests that calculating the longest caption does not

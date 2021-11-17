@@ -163,7 +163,7 @@ void internal_window::setOpacity(double opacity)
     const double oldOpacity = m_opacity;
     m_opacity = opacity;
 
-    emit opacityChanged(this, oldOpacity);
+    Q_EMIT opacityChanged(this, oldOpacity);
 }
 
 void internal_window::killWindow()
@@ -399,7 +399,7 @@ void internal_window::destroyClient()
     }
 
     auto deleted = create_remnant(this);
-    emit windowClosed(this, deleted);
+    Q_EMIT windowClosed(this, deleted);
 
     control->destroy_decoration();
 
@@ -489,7 +489,7 @@ void internal_window::updateCaption()
         } while (win::find_client_with_same_caption(static_cast<Toplevel*>(this)));
     }
     if (caption.suffix != oldSuffix) {
-        emit captionChanged();
+        Q_EMIT captionChanged();
     }
 }
 
@@ -546,7 +546,7 @@ void internal_window::setCaption(QString const& cap)
     updateCaption();
 
     if (caption.suffix == oldCaptionSuffix) {
-        emit captionChanged();
+        Q_EMIT captionChanged();
     }
 }
 

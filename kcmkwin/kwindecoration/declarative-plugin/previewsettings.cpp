@@ -101,10 +101,10 @@ PreviewSettings::PreviewSettings(DecorationSettings *parent)
     connect(this, &PreviewSettings::closeOnDoubleClickOnMenuChanged, parent, &DecorationSettings::closeOnDoubleClickOnMenuChanged);
     connect(this, &PreviewSettings::fontChanged, parent, &DecorationSettings::fontChanged);
     auto updateLeft = [this, parent]() {
-        emit parent->decorationButtonsLeftChanged(decorationButtonsLeft());
+        Q_EMIT parent->decorationButtonsLeftChanged(decorationButtonsLeft());
     };
     auto updateRight = [this, parent]() {
-        emit parent->decorationButtonsRightChanged(decorationButtonsRight());
+        Q_EMIT parent->decorationButtonsRightChanged(decorationButtonsRight());
     };
     connect(m_leftButtons,  &QAbstractItemModel::rowsRemoved,  this, updateLeft);
     connect(m_leftButtons,  &QAbstractItemModel::rowsMoved,    this, updateLeft);
@@ -147,7 +147,7 @@ void PreviewSettings::setAlphaChannelSupported(bool supported)
         return;
     }
     m_alphaChannelSupported = supported;
-    emit alphaChannelSupportedChanged(m_alphaChannelSupported);
+    Q_EMIT alphaChannelSupportedChanged(m_alphaChannelSupported);
 }
 
 void PreviewSettings::setOnAllDesktopsAvailable(bool available)
@@ -156,7 +156,7 @@ void PreviewSettings::setOnAllDesktopsAvailable(bool available)
         return;
     }
     m_onAllDesktopsAvailable = available;
-    emit onAllDesktopsAvailableChanged(m_onAllDesktopsAvailable);
+    Q_EMIT onAllDesktopsAvailableChanged(m_onAllDesktopsAvailable);
 }
 
 void PreviewSettings::setCloseOnDoubleClickOnMenu(bool enabled)
@@ -165,7 +165,7 @@ void PreviewSettings::setCloseOnDoubleClickOnMenu(bool enabled)
         return;
     }
     m_closeOnDoubleClick = enabled;
-    emit closeOnDoubleClickOnMenuChanged(enabled);
+    Q_EMIT closeOnDoubleClickOnMenuChanged(enabled);
 }
 
 QVector< DecorationButtonType > PreviewSettings::decorationButtonsLeft() const
@@ -202,8 +202,8 @@ void PreviewSettings::setBorderSizesIndex(int index)
         return;
     }
     m_borderSize = index;
-    emit borderSizesIndexChanged(index);
-    emit decorationSettings()->borderSizeChanged(borderSize());
+    Q_EMIT borderSizesIndexChanged(index);
+    Q_EMIT decorationSettings()->borderSizeChanged(borderSize());
 }
 
 BorderSize PreviewSettings::borderSize() const
@@ -217,7 +217,7 @@ void PreviewSettings::setFont(const QFont &font)
         return;
     }
     m_font = font;
-    emit fontChanged(m_font);
+    Q_EMIT fontChanged(m_font);
 }
 
 Settings::Settings(QObject *parent)
@@ -234,7 +234,7 @@ void Settings::setBridge(PreviewBridge *bridge)
         return;
     }
     m_bridge = bridge;
-    emit bridgeChanged();
+    Q_EMIT bridgeChanged();
 }
 
 PreviewBridge *Settings::bridge() const
@@ -252,7 +252,7 @@ void Settings::createSettings()
         m_previewSettings->setBorderSizesIndex(m_borderSize);
         connect(this, &Settings::borderSizesIndexChanged, m_previewSettings, &PreviewSettings::setBorderSizesIndex);
     }
-    emit settingsChanged();
+    Q_EMIT settingsChanged();
 }
 
 QSharedPointer<DecorationSettings> Settings::settings() const
@@ -271,7 +271,7 @@ void Settings::setBorderSizesIndex(int index)
         return;
     }
     m_borderSize = index;
-    emit borderSizesIndexChanged(m_borderSize);
+    Q_EMIT borderSizesIndexChanged(m_borderSize);
 }
 
 }

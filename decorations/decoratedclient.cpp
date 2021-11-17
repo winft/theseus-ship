@@ -65,17 +65,17 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     connect(window, &Toplevel::frame_geometry_changed, this, &DecoratedClientImpl::update_size);
     connect(window, &Toplevel::desktopChanged, this,
         [decoratedClient, window]() {
-            emit decoratedClient->onAllDesktopsChanged(window->isOnAllDesktops());
+            Q_EMIT decoratedClient->onAllDesktopsChanged(window->isOnAllDesktops());
         }
     );
     connect(window, &Toplevel::captionChanged, this,
         [decoratedClient, window]() {
-            emit decoratedClient->captionChanged(win::caption(window));
+            Q_EMIT decoratedClient->captionChanged(win::caption(window));
         }
     );
     connect(window, &Toplevel::iconChanged, this,
         [decoratedClient, window]() {
-            emit decoratedClient->iconChanged(window->control->icon());
+            Q_EMIT decoratedClient->iconChanged(window->control->icon());
         }
     );
 
@@ -99,7 +99,7 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     );
     connect(window, &Toplevel::quicktiling_changed, decoratedClient,
         [this, decoratedClient]() {
-            emit decoratedClient->adjacentScreenEdgesChanged(adjacentScreenEdges());
+            Q_EMIT decoratedClient->adjacentScreenEdgesChanged(adjacentScreenEdges());
         }
     );
     connect(window, &Toplevel::closeableChanged,

@@ -67,7 +67,7 @@ void SlideBackEffect::windowRaised(EffectWindow *w)
 {
     // Determine all windows on top of the activated one
     bool currentFound = false;
-    foreach (EffectWindow * tmp, oldStackingOrder) {
+    for (auto const& tmp : qAsConst(oldStackingOrder)) {
         if (!currentFound) {
             if (tmp == w) {
                 currentFound = true;
@@ -86,7 +86,7 @@ void SlideBackEffect::windowRaised(EffectWindow *w)
                     coveringWindows.append(tmp);
                 } else {
                     //Does it intersect with a moved (elevated) window and do we have to elevate it too?
-                    foreach (EffectWindow * elevatedWindow, elevatedList) {
+                    for (auto const& elevatedWindow : qAsConst(elevatedList)) {
                         if (tmp->frameGeometry().intersects(elevatedWindow->frameGeometry())) {
                             effects->setElevatedWindow(tmp, true);
                             elevatedList.append(tmp);
@@ -105,7 +105,7 @@ void SlideBackEffect::windowRaised(EffectWindow *w)
     // If a window is minimized it could happen that the panels stay elevated without any windows sliding.
     // clear all elevation settings
     if (!motionManager.managingWindows()) {
-        foreach (EffectWindow * tmp, elevatedList) {
+        for (auto const& tmp : qAsConst(elevatedList)) {
             effects->setElevatedWindow(tmp, false);
         }
     }
@@ -184,7 +184,7 @@ void SlideBackEffect::paintWindow(EffectWindow *w, int mask, QRegion region, Win
     if (motionManager.isManaging(w)) {
         motionManager.apply(w, data);
     }
-    foreach (const QRegion &r, clippedRegions) {
+    for (auto const& r : qAsConst(clippedRegions)) {
         region = region.intersected(r);
     }
     effects->paintWindow(w, mask, region, data);
@@ -202,7 +202,7 @@ void SlideBackEffect::postPaintWindow(EffectWindow* w)
                 // restore the stacking order of all windows not intersecting any more except panels
                 if (coveringWindows.contains(w)) {
                     EffectWindowList tmpList;
-                    foreach (EffectWindow * tmp, elevatedList) {
+                    for (auto const& tmp : qAsConst(elevatedList)) {
                         QRect elevatedGeometry = tmp->frameGeometry();
                         if (motionManager.isManaging(tmp)) {
                             elevatedGeometry = motionManager.transformedGeometry(tmp).toAlignedRect();
@@ -218,7 +218,7 @@ void SlideBackEffect::postPaintWindow(EffectWindow* w)
                         } else {
                             if (!tmp->isDock()) {
                                 bool keepElevated = false;
-                                foreach (EffectWindow * elevatedWindow, tmpList) {
+                                for (auto const& elevatedWindow : qAsConst(tmpList)) {
                                     if (tmp->frameGeometry().intersects(elevatedWindow->frameGeometry())) {
                                         keepElevated = true;
                                     }
@@ -251,7 +251,7 @@ void SlideBackEffect::postPaintWindow(EffectWindow* w)
                 coveringWindows.removeAll(w);
                 if (coveringWindows.isEmpty()) {
                     // Restore correct stacking order
-                    foreach (EffectWindow * tmp, elevatedList) {
+                    for (auto const& tmp : qAsConst(elevatedList)) {
                         effects->setElevatedWindow(tmp, false);
                     }
                     elevatedList.clear();
@@ -323,7 +323,7 @@ EffectWindowList SlideBackEffect::usableWindows(const EffectWindowList & allWind
     auto isWindowVisible = [] (const EffectWindow *window) {
         return window && effects->virtualScreenGeometry().intersects(window->frameGeometry());
     };
-    foreach (EffectWindow * tmp, allWindows) {
+    for (auto const& tmp : qAsConst(allWindows)) {
         if (isWindowUsable(tmp) && isWindowVisible(tmp)) {
             retList.append(tmp);
         }
@@ -335,7 +335,8 @@ QRect SlideBackEffect::getModalGroupGeometry(EffectWindow *w)
 {
     QRect modalGroupGeometry = w->frameGeometry();
     if (w->isModal()) {
-        foreach (EffectWindow * modalWindow, w->mainWindows()) {
+        auto const& main_windows = w->mainWindows();
+        for (auto const& modalWindow : qAsConst(main_windows)) {
             modalGroupGeometry = modalGroupGeometry.united(getModalGroupGeometry(modalWindow));
         }
     }

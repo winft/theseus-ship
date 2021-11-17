@@ -84,7 +84,7 @@ void ClockSkewNotifier::setActive(bool set)
         d->unloadNotifierEngine();
     }
 
-    emit activeChanged();
+    Q_EMIT activeChanged();
 }
 
 } // namespace KWin

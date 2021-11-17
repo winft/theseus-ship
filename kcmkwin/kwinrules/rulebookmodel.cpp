@@ -154,7 +154,7 @@ void RuleBookModel::setDescriptionAt(int row, const QString &description)
 
     m_ruleBook->ruleSettingsAt(row)->setDescription(description);
 
-    emit dataChanged(index(row), index(row), {});
+    Q_EMIT dataChanged(index(row), index(row), {});
 }
 
 void RuleBookModel::setRuleSettingsAt(int row, const RuleSettings &settings)
@@ -163,7 +163,7 @@ void RuleBookModel::setRuleSettingsAt(int row, const RuleSettings &settings)
 
     copySettingsTo(ruleSettingsAt(row), settings);
 
-    emit dataChanged(index(row), index(row), {});
+    Q_EMIT dataChanged(index(row), index(row), {});
 }
 
 void RuleBookModel::load()

@@ -28,7 +28,7 @@ using namespace KWin;
 class TestTabBoxHandler : public QObject
 {
     Q_OBJECT
-private slots:
+private Q_SLOTS:
     void initTestCase();
     /**
      * Test to verify that update outline does not crash

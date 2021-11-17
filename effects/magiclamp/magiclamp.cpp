@@ -140,7 +140,7 @@ void MagicLampEffect::deform(EffectWindow* w, int mask, WindowPaintData& data, W
         } else {
             // Assumption: there is a panel containing the icon position
             EffectWindow* panel = nullptr;
-            foreach (EffectWindow * window, effects->stackingOrder()) {
+            for (auto const& window : effects->stackingOrder()) {
                 if (!window->isDock())
                     continue;
                 // we have to use intersects as there seems to be a Plasma bug

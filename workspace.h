@@ -668,7 +668,7 @@ inline Toplevel* Workspace::mostRecentlyActivatedClient() const
 
 inline void Workspace::addGroup(win::x11::group* group)
 {
-    emit groupAdded(group);
+    Q_EMIT groupAdded(group);
     groups.push_back(group);
 }
 

@@ -160,9 +160,9 @@ void client_level::addClient(window* client)
     if (containsClient(client)) {
         return;
     }
-    emit beginInsert(m_clients.count(), m_clients.count(), id());
+    Q_EMIT beginInsert(m_clients.count(), m_clients.count(), id());
     m_clients.insert(nextId(), client);
-    emit endInsert();
+    Q_EMIT endInsert();
 }
 
 void client_level::removeClient(window* client)
@@ -177,9 +177,9 @@ void client_level::removeClient(window* client)
     if (it == m_clients.end()) {
         return;
     }
-    emit beginRemove(index, index, id());
+    Q_EMIT beginRemove(index, index, id());
     m_clients.erase(it);
-    emit endRemove();
+    Q_EMIT endRemove();
 }
 
 void client_level::init()
@@ -390,14 +390,14 @@ void fork_level::desktopCountChanged(uint previousCount, uint newCount)
     }
     if (previousCount > newCount) {
         // desktops got removed
-        emit beginRemove(newCount, previousCount - 1, id());
+        Q_EMIT beginRemove(newCount, previousCount - 1, id());
         while (uint(m_children.count()) > newCount) {
             delete m_children.takeLast();
         }
-        emit endRemove();
+        Q_EMIT endRemove();
     } else {
         // desktops got added
-        emit beginInsert(previousCount, newCount - 1, id());
+        Q_EMIT beginInsert(previousCount, newCount - 1, id());
         for (uint i = previousCount + 1; i <= newCount; ++i) {
             abstract_level* childLevel
                 = abstract_level::create(m_childRestrictions, restrictions(), model(), this);
@@ -408,7 +408,7 @@ void fork_level::desktopCountChanged(uint previousCount, uint newCount)
             childLevel->init();
             addChild(childLevel);
         }
-        emit endInsert();
+        Q_EMIT endInsert();
     }
 }
 
@@ -423,14 +423,14 @@ void fork_level::screenCountChanged(int previousCount, int newCount)
 
     if (previousCount > newCount) {
         // screens got removed
-        emit beginRemove(newCount, previousCount - 1, id());
+        Q_EMIT beginRemove(newCount, previousCount - 1, id());
         while (m_children.count() > newCount) {
             delete m_children.takeLast();
         }
-        emit endRemove();
+        Q_EMIT endRemove();
     } else {
         // screens got added
-        emit beginInsert(previousCount, newCount - 1, id());
+        Q_EMIT beginInsert(previousCount, newCount - 1, id());
         for (int i = previousCount; i < newCount; ++i) {
             auto childLevel
                 = abstract_level::create(m_childRestrictions, restrictions(), model(), this);
@@ -441,7 +441,7 @@ void fork_level::screenCountChanged(int previousCount, int newCount)
             childLevel->init();
             addChild(childLevel);
         }
-        emit endInsert();
+        Q_EMIT endInsert();
     }
 }
 
@@ -602,7 +602,7 @@ void client_model::setExclusions(client_model::Exclusions exclusions)
         return;
     }
     m_exclusions = exclusions;
-    emit exclusionsChanged();
+    Q_EMIT exclusionsChanged();
 }
 
 QVariant client_model::data(const QModelIndex& index, int role) const
@@ -794,7 +794,7 @@ void client_filter_model::setClientModel(client_model* model)
     }
     m_client_model = model;
     setSourceModel(m_client_model);
-    emit clientModelChanged();
+    Q_EMIT clientModelChanged();
 }
 
 void client_filter_model::setFilter(const QString& filter)
@@ -803,7 +803,7 @@ void client_filter_model::setFilter(const QString& filter)
         return;
     }
     m_filter = filter;
-    emit filterChanged();
+    Q_EMIT filterChanged();
     invalidateFilter();
 }
 

@@ -159,7 +159,7 @@ void ScreenLockerWatcher::setLocked(bool activated)
         return;
     }
     m_locked = activated;
-    emit locked(m_locked);
+    Q_EMIT locked(m_locked);
 }
 
 }

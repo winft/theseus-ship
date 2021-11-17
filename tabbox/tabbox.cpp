@@ -616,13 +616,13 @@ void TabBox::reset(bool partial_reset)
         break;
     }
 
-    emit tabBoxUpdated();
+    Q_EMIT tabBoxUpdated();
 }
 
 void TabBox::nextPrev(bool next)
 {
     setCurrentIndex(m_tabBox->nextPrev(next), false);
-    emit tabBoxUpdated();
+    Q_EMIT tabBoxUpdated();
 }
 
 Toplevel* TabBox::currentClient()
@@ -678,13 +678,13 @@ void TabBox::setCurrentIndex(QModelIndex index, bool notifyEffects)
         return;
     m_tabBox->setCurrentIndex(index);
     if (notifyEffects) {
-        emit tabBoxUpdated();
+        Q_EMIT tabBoxUpdated();
     }
 }
 
 void TabBox::show()
 {
-    emit tabBoxAdded(m_tabBoxMode);
+    Q_EMIT tabBoxAdded(m_tabBoxMode);
     if (isDisplayed()) {
         m_isShown = false;
         return;
@@ -702,7 +702,7 @@ void TabBox::hide(bool abort)
         m_isShown = false;
         unreference();
     }
-    emit tabBoxClosed();
+    Q_EMIT tabBoxClosed();
     if (isDisplayed())
         qCDebug(KWIN_TABBOX) << "Tab box was not properly closed by an effect";
     m_tabBox->hide(abort);
@@ -736,12 +736,12 @@ void TabBox::reconfigure()
     QList<ElectricBorder> *borders = &m_borderActivate;
     QString borderConfig = QStringLiteral("BorderActivate");
     for (int i = 0; i < 2; ++i) {
-        foreach (ElectricBorder border, *borders) {
+        for (auto const& border : qAsConst(*borders)) {
             ScreenEdges::self()->unreserve(border, this);
         }
         borders->clear();
         QStringList list = config.readEntry(borderConfig, QStringList());
-        foreach (const QString &s, list) {
+        for (auto const& s : qAsConst(list)) {
             bool ok;
             const int i = s.toInt(&ok);
             if (!ok)
@@ -865,7 +865,7 @@ bool TabBox::handleWheelEvent(QWheelEvent *event)
 
 void TabBox::grabbedKeyEvent(QKeyEvent* event)
 {
-    emit tabBoxKeyEvent(event);
+    Q_EMIT tabBoxKeyEvent(event);
     if (!m_isShown && isDisplayed()) {
         // tabbox has been replaced, check effects
         return;

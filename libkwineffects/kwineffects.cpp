@@ -1026,7 +1026,7 @@ WindowQuadList WindowQuadList::makeGrid(int maxQuadSize) const
     double top    = first().top();
     double bottom = first().bottom();
 
-    foreach (const WindowQuad &quad, *this) {
+    for (auto const& quad : qAsConst(*this)) {
 #if !defined(QT_NO_DEBUG)
         if (quad.isTransformed())
             qFatal("Splitting quads is allowed only in pre-paint calls!");
@@ -1284,10 +1284,10 @@ void WindowQuadList::makeArrays(float **vertices, float **texcoords, const QSize
 
 WindowQuadList WindowQuadList::select(WindowQuadType type) const
 {
-    foreach (const WindowQuad & q, *this) {
+    for (auto const& q : qAsConst(*this)) {
         if (q.type() != type) { // something else than ones to select, make a copy and filter
             WindowQuadList ret;
-            foreach (const WindowQuad & q, *this) {
+            for (auto const& q : qAsConst(*this)) {
                 if (q.type() == type)
                     ret.append(q);
             }
@@ -1302,7 +1302,7 @@ WindowQuadList WindowQuadList::filterOut(WindowQuadType type) const
     for (const WindowQuad & q : *this) {
         if (q.type() == type) { // something to filter out, make a copy and filter
             WindowQuadList ret;
-            foreach (const WindowQuad & q, *this) {
+            for (auto const& q : qAsConst(*this)) {
                 if (q.type() != type)
                     ret.append(q);
             }

@@ -139,11 +139,11 @@ void Screens::updateSize()
     }
     if (m_boundingSize != bounding.size()) {
         m_boundingSize = bounding.size();
-        emit sizeChanged();
+        Q_EMIT sizeChanged();
     }
     if (!qFuzzyCompare(m_maxScale, maxScale)) {
         m_maxScale = maxScale;
-        emit maxScaleChanged();
+        Q_EMIT maxScaleChanged();
     }
 }
 
@@ -159,7 +159,7 @@ void Screens::setCount(int count)
     }
     const int previous = m_count;
     m_count = count;
-    emit countChanged(previous, count);
+    Q_EMIT countChanged(previous, count);
 }
 
 void Screens::setCurrent(int current)
@@ -168,7 +168,7 @@ void Screens::setCurrent(int current)
         return;
     }
     m_current = current;
-    emit currentChanged();
+    Q_EMIT currentChanged();
 }
 
 void Screens::setCurrent(const QPoint &pos)

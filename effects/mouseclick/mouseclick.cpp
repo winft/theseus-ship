@@ -91,7 +91,7 @@ void MouseClickEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::mil
 {
     const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
 
-    foreach (MouseEvent* click, m_clicks) {
+    for (auto const& click : qAsConst(m_clicks)) {
         click->m_time += time;
     }
 
@@ -124,7 +124,7 @@ void MouseClickEffect::paintScreen(int mask, const QRegion &region, ScreenPaintD
     effects->paintScreen(mask, region, data);
 
     paintScreenSetup(mask, region, data);
-    foreach (const MouseEvent* click, m_clicks) {
+    for (auto const& click : qAsConst(m_clicks)) {
         for (int i = 0; i < m_ringCount; ++i) {
             float alpha = computeAlpha(click, i);
             float size = computeRadius(click, i);
@@ -209,7 +209,7 @@ void MouseClickEffect::repaint()
     if (m_clicks.size() > 0) {
         QRegion dirtyRegion;
         const int radius = m_ringMaxSize + m_lineWidth;
-        foreach (MouseEvent* click, m_clicks) {
+        for (auto const& click : qAsConst(m_clicks)) {
             dirtyRegion |= QRect(click->m_pos.x() - radius, click->m_pos.y() - radius, 2*radius, 2*radius);
             if (click->m_frame) {
                 // we grant the plasma style 32px padding for stuff like shadows...
