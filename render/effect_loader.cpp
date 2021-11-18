@@ -205,7 +205,6 @@ void scripted_effect_loader::clear()
 
 plugin_effect_loader::plugin_effect_loader(QObject* parent)
     : basic_effect_loader(parent)
-    , m_queue(new effect_load_queue<plugin_effect_loader, KPluginMetaData>(this))
     , m_pluginSubDirectory(QStringLiteral("kwin/effects/plugins"))
 {
 }
@@ -339,29 +338,13 @@ bool plugin_effect_loader::loadEffect(const KPluginMetaData& info, load_effect_f
 
 void plugin_effect_loader::queryAndLoadAll()
 {
-    if (m_queryConnection) {
-        return;
+    auto const effects = findAllEffects();
+    for (auto const& effect : effects) {
+        load_effect_flags const flags = readConfig(effect.pluginId(), effect.isEnabledByDefault());
+        if (KWin::flags(flags & load_effect_flags::load)) {
+            loadEffect(effect, flags);
+        }
     }
-    // perform querying for the services in a thread
-    QFutureWatcher<QVector<KPluginMetaData>>* watcher
-        = new QFutureWatcher<QVector<KPluginMetaData>>(this);
-    m_queryConnection = connect(
-        watcher,
-        &QFutureWatcher<QVector<KPluginMetaData>>::finished,
-        this,
-        [this, watcher]() {
-            const auto effects = watcher->result();
-            for (const auto& effect : effects) {
-                auto const load_flags = readConfig(effect.pluginId(), effect.isEnabledByDefault());
-                if (flags(load_flags & load_effect_flags::load)) {
-                    m_queue->enqueue(qMakePair(effect, load_flags));
-                }
-            }
-            watcher->deleteLater();
-            m_queryConnection = QMetaObject::Connection();
-        },
-        Qt::QueuedConnection);
-    watcher->setFuture(QtConcurrent::run(this, &plugin_effect_loader::findAllEffects));
 }
 
 QVector<KPluginMetaData> plugin_effect_loader::findAllEffects() const
@@ -376,9 +359,6 @@ void plugin_effect_loader::setPluginSubDirectory(const QString& directory)
 
 void plugin_effect_loader::clear()
 {
-    disconnect(m_queryConnection);
-    m_queryConnection = QMetaObject::Connection();
-    m_queue->clear();
 }
 
 effect_loader::effect_loader(QObject* parent)
