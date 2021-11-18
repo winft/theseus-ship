@@ -42,8 +42,6 @@ public:
     platform(wayland_base const& base);
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
-    platform(platform&& other) noexcept = default;
-    platform& operator=(platform&& other) noexcept = default;
     ~platform() override = default;
 
 private:

@@ -26,8 +26,6 @@ public:
     pointer(Wrapland::Server::FakeInputDevice* device, input::platform* platform);
     pointer(pointer const&) = delete;
     pointer& operator=(pointer const&) = delete;
-    pointer(pointer&& other) noexcept = default;
-    pointer& operator=(pointer&& other) noexcept = default;
     ~pointer() override = default;
 
     Wrapland::Server::FakeInputDevice* device;

@@ -27,8 +27,6 @@ public:
     switch_device(wlr_input_device* dev, input::platform* platform);
     switch_device(switch_device const&) = delete;
     switch_device& operator=(switch_device const&) = delete;
-    switch_device(switch_device&& other) noexcept = default;
-    switch_device& operator=(switch_device&& other) noexcept = default;
     ~switch_device() override = default;
 
 private:

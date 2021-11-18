@@ -23,8 +23,6 @@ public:
     platform();
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
-    platform(platform&& other) noexcept = default;
-    platform& operator=(platform&& other) noexcept = default;
     ~platform() override;
 
     void start_interactive_window_selection(std::function<void(KWin::Toplevel*)> callback,
