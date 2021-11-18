@@ -6,167 +6,36 @@
 */
 #pragma once
 
-#include "../../main.h"
+#include "types.h"
 
-#include "base/backend/wlroots.h"
-#include "base/platform.h"
 #include "main.h"
-#include "render/backend/wlroots/backend.h"
-#include "utils/flags.h"
 #include "wayland_server.h"
 
-#include <Wrapland/Client/xdg_shell.h>
-
 #include <QtTest>
-#include <memory>
-#include <vector>
+#include <Wrapland/Client/xdg_shell.h>
 
 struct wlr_input_device;
 
-namespace Wrapland
+namespace Wrapland::Client
 {
-namespace Client
-{
-class AppMenuManager;
-class ConnectionThread;
-class Compositor;
-class IdleInhibitManager;
-class LayerShellV1;
-class Output;
-class PlasmaShell;
-class PlasmaWindowManagement;
-class PointerConstraints;
-class Registry;
-class Seat;
-class ShadowManager;
-class ShmPool;
-class SubCompositor;
 class SubSurface;
 class Surface;
-class XdgActivationV1;
-class XdgDecorationManager;
-}
 }
 
 namespace KWin
 {
-namespace render::wayland
-{
-class compositor;
-}
+class WaylandTestApplication;
+
 namespace win::wayland
 {
-class space;
 class window;
-}
-namespace xwl
-{
-class xwayland;
 }
 
 class Toplevel;
 
 namespace Test
 {
-
-enum class global_selection {
-    seat = 1 << 0,
-    xdg_decoration = 1 << 1,
-    plasma_shell = 1 << 2,
-    window_management = 1 << 3,
-    pointer_constraints = 1 << 4,
-    idle_inhibition = 1 << 5,
-    appmenu = 1 << 6,
-    shadow = 1 << 7,
-    xdg_activation = 1 << 8,
-};
-
-class KWIN_EXPORT client
-{
-public:
-    Wrapland::Client::ConnectionThread* connection{nullptr};
-    std::unique_ptr<QThread> thread;
-    std::unique_ptr<Wrapland::Client::EventQueue> queue;
-    std::unique_ptr<Wrapland::Client::Registry> registry;
-
-    struct {
-        std::unique_ptr<Wrapland::Client::Compositor> compositor;
-        std::unique_ptr<Wrapland::Client::LayerShellV1> layer_shell;
-        std::unique_ptr<Wrapland::Client::SubCompositor> subcompositor;
-        std::unique_ptr<Wrapland::Client::ShadowManager> shadow_manager;
-        std::unique_ptr<Wrapland::Client::XdgShell> xdg_shell;
-        std::unique_ptr<Wrapland::Client::ShmPool> shm;
-        std::unique_ptr<Wrapland::Client::Seat> seat;
-        std::unique_ptr<Wrapland::Client::PlasmaShell> plasma_shell;
-        std::unique_ptr<Wrapland::Client::PlasmaWindowManagement> window_management;
-        std::unique_ptr<Wrapland::Client::PointerConstraints> pointer_constraints;
-        std::vector<std::unique_ptr<Wrapland::Client::Output>> outputs;
-        std::unique_ptr<Wrapland::Client::IdleInhibitManager> idle_inhibit;
-        std::unique_ptr<Wrapland::Client::AppMenuManager> app_menu;
-        std::unique_ptr<Wrapland::Client::XdgActivationV1> xdg_activation;
-        std::unique_ptr<Wrapland::Client::XdgDecorationManager> xdg_decoration;
-    } interfaces;
-
-    client() = default;
-    explicit client(global_selection globals);
-    client(client const&) = delete;
-    client& operator=(client const&) = delete;
-    client(client&& other) noexcept;
-    client& operator=(client&& other) noexcept;
-    ~client();
-
-private:
-    QMetaObject::Connection output_announced;
-    std::vector<QMetaObject::Connection> output_removals;
-
-    void connect_outputs();
-    QMetaObject::Connection output_removal_connection(Wrapland::Client::Output* output);
-    void cleanup();
-};
-
-}
-
-class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
-{
-    Q_OBJECT
-public:
-    wayland_base base;
-    std::unique_ptr<WaylandServer> server;
-    std::unique_ptr<xwl::xwayland> xwayland;
-    std::unique_ptr<win::wayland::space> workspace;
-
-    wlr_input_device* pointer{nullptr};
-    wlr_input_device* keyboard{nullptr};
-    wlr_input_device* touch{nullptr};
-
-    std::vector<Test::client> clients;
-
-    WaylandTestApplication(OperationMode mode,
-                           std::string const& socket_name,
-                           wayland_start_options flags,
-                           int& argc,
-                           char** argv);
-    ~WaylandTestApplication() override;
-
-    bool is_screen_locked() const override;
-
-    wayland_base& get_base() override;
-    WaylandServer* get_wayland_server() override;
-    render::compositor* get_compositor() override;
-    debug::console* create_debug_console() override;
-
-    void start();
-
-private:
-    void handle_server_addons_created();
-    void create_xwayland();
-
-    std::unique_ptr<render::backend::wlroots::backend> render;
-    std::unique_ptr<render::wayland::compositor> compositor;
-};
-
-namespace Test
-{
+class client;
 
 KWIN_EXPORT WaylandTestApplication* app();
 
@@ -341,8 +210,6 @@ int create_test(std::string const& test_name, wayland_start_options flags, int a
 
 }
 }
-
-ENUM_FLAGS(KWin::Test::global_selection)
 
 #define WAYLANDTEST_MAIN_FLAGS(Tester, flags)                                                      \
     int main(int argc, char* argv[])                                                               \

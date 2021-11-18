@@ -14,6 +14,7 @@ namespace Wrapland::Server
 {
 class FakeInput;
 class FakeInputDevice;
+class virtual_keyboard_v1;
 }
 
 namespace KWin::input::wayland
@@ -60,6 +61,7 @@ private:
     void handle_touch_added(input::touch* touch);
     void handle_switch_added(input::switch_device* switch_device);
     void handle_fake_input_device_added(Wrapland::Server::FakeInputDevice* device);
+    void handle_virtual_keyboard_added(Wrapland::Server::virtual_keyboard_v1* virtual_keyboard);
 
     KConfigWatcher::Ptr config_watcher;
     std::unique_ptr<Wrapland::Server::FakeInput> fake_input;
@@ -71,6 +73,8 @@ private:
     };
 
     std::unordered_map<Wrapland::Server::FakeInputDevice*, fake_input_devices> fake_devices;
+    std::unordered_map<Wrapland::Server::virtual_keyboard_v1*, std::unique_ptr<input::keyboard>>
+        virtual_keyboards;
 
     window_selector_filter* window_selector{nullptr};
 };

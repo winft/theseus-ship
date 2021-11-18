@@ -1,8 +1,9 @@
 add_subdirectory(helper)
 
 add_library(KWinIntegrationTestFramework SHARED
-  kwin_wayland_test.cpp
-  test_helpers.cpp
+  lib/app.cpp
+  lib/client.cpp
+  lib/helpers.cpp
   generic_scene_opengl_test.cpp
 )
 
@@ -56,6 +57,7 @@ integrationTest(NAME testScreenEdges SRCS screen_edges.cpp)
 integrationTest(WAYLAND_ONLY NAME testDecorationInput SRCS decoration_input_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testInternalWindow SRCS internal_window.cpp)
 integrationTest(WAYLAND_ONLY NAME testTouchInput SRCS touch_input_test.cpp)
+integrationTest(NAME testInputMethod SRCS input_method.cpp)
 integrationTest(WAYLAND_ONLY NAME testInputStackingOrder SRCS input_stacking_order.cpp)
 integrationTest(NAME testPointerInput SRCS pointer_input.cpp)
 integrationTest(NAME testPlatformCursor SRCS platformcursor.cpp)
@@ -79,11 +81,13 @@ integrationTest(WAYLAND_ONLY NAME testTabBox SRCS tabbox_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testWindowSelection SRCS window_selection_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testPointerConstraints SRCS pointer_constraints_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testKeyboardLayout SRCS keyboard_layout_test.cpp)
+integrationTest(WAYLAND_ONLY NAME testKeyboardKeymap SRCS keyboard_keymap.cpp)
 integrationTest(WAYLAND_ONLY NAME testKeymapCreationFailure SRCS keymap_creation_failure_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testShowingDesktop SRCS showing_desktop_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testDontCrashUseractionsMenu SRCS dont_crash_useractions_menu.cpp)
 integrationTest(WAYLAND_ONLY NAME testBindings SRCS bindings_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testVirtualDesktop SRCS virtual_desktop_test.cpp)
+integrationTest(NAME testVirtualKeyboard SRCS virtual_keyboard.cpp)
 integrationTest(WAYLAND_ONLY NAME testXdgShellClientRules SRCS xdgshellclient_rules_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testIdleInhibition SRCS idle_inhibition_test.cpp)
 integrationTest(WAYLAND_ONLY NAME testColorCorrectNightColor SRCS colorcorrect_nightcolor_test.cpp)

@@ -3,7 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "kwin_wayland_test.h"
+#include "lib/app.h"
 
 #include "platform.h"
 #include "wayland_server.h"

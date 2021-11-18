@@ -176,7 +176,6 @@ WaylandServer::WaylandServer(int socket_fd, wayland_start_options flags)
 
 WaylandServer::~WaylandServer()
 {
-    destroyInputMethodConnection();
 }
 
 void WaylandServer::destroyInternalConnection()
@@ -211,7 +210,6 @@ void WaylandServer::destroyInternalConnection()
 void WaylandServer::terminateClientConnections()
 {
     destroyInternalConnection();
-    destroyInputMethodConnection();
 
     for (auto client : m_display->clients()) {
         client->destroy();
@@ -515,25 +513,6 @@ void WaylandServer::destroyXWaylandConnection()
     disconnect(m_xwayland.destroyConnection);
     m_xwayland.client->destroy();
     m_xwayland.client = nullptr;
-}
-
-int WaylandServer::createInputMethodConnection()
-{
-    const auto socket = createConnection();
-    if (!socket.connection) {
-        return -1;
-    }
-    m_inputMethodServerConnection = socket.connection;
-    return socket.fd;
-}
-
-void WaylandServer::destroyInputMethodConnection()
-{
-    if (!m_inputMethodServerConnection) {
-        return;
-    }
-    m_inputMethodServerConnection->destroy();
-    m_inputMethodServerConnection = nullptr;
 }
 
 void WaylandServer::createDrmLeaseDevice()

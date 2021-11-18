@@ -19,6 +19,7 @@ namespace Server
 {
 class ServerSideDecorationPalette;
 class Appmenu;
+class input_method_popup_surface_v2;
 class LayerSurfaceV1;
 class PlasmaShellSurface;
 class XdgDecoration;
@@ -74,6 +75,7 @@ public:
     Wrapland::Server::XdgShellToplevel* toplevel{nullptr};
     Wrapland::Server::XdgShellPopup* popup{nullptr};
     Wrapland::Server::LayerSurfaceV1* layer_surface{nullptr};
+    Wrapland::Server::input_method_popup_surface_v2* input_method_popup{nullptr};
 
     Wrapland::Server::XdgDecoration* xdg_deco{nullptr};
     Wrapland::Server::PlasmaShellSurface* plasma_shell_surface{nullptr};
@@ -136,7 +138,6 @@ public:
     pid_t pid() const override;
     bool isLocalhost() const override;
     bool isLockScreen() const override;
-    bool isInputMethod() const override;
     bool isInitialPositionSet() const override;
     void showOnScreenEdge() override;
 
@@ -168,6 +169,7 @@ public:
     bool has_pending_repaints() const override;
 
     void updateColorScheme() override;
+    bool isInputMethod() const override;
     bool is_popup_end() const override;
     void killWindow() override;
 

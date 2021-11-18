@@ -10,6 +10,11 @@
 
 #include "base/platform.h"
 
+namespace Wrapland::Server
+{
+class virtual_keyboard_manager_v1;
+}
+
 namespace KWin
 {
 
@@ -45,6 +50,7 @@ class touch;
 
 namespace wayland
 {
+class input_method;
 
 class KWIN_EXPORT platform : public input::platform
 {
@@ -69,6 +75,8 @@ public:
 
     void turn_outputs_on();
 
+    std::unique_ptr<wayland::input_method> input_method;
+    std::unique_ptr<Wrapland::Server::virtual_keyboard_manager_v1> virtual_keyboard;
     std::unique_ptr<input::dpms_filter> dpms_filter;
 
 private:

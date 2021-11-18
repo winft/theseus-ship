@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 *********************************************************************/
+#include "lib/app.h"
 
 #include "libkwineffects/anidata_p.h"
 #include "scripting/effect.h"
@@ -24,7 +25,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "effect_builtins.h"
 #include "effectloader.h"
 #include "effects.h"
-#include "kwin_wayland_test.h"
 #include "platform.h"
 #include "render/compositor.h"
 #include "virtualdesktops.h"

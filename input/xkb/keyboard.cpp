@@ -53,6 +53,7 @@ void keyboard::install_keymap(int fd, uint32_t size)
         update_keymap(map);
     } catch (...) {
         // Do nothing for now.
+        qCWarning(KWIN_XKB) << "Keymap could not be installed from fd" << fd;
     }
 }
 
@@ -107,13 +108,7 @@ void keyboard::update_keymap(std::shared_ptr<xkb::keymap> keymap)
         = xkb_state_serialize_mods(state, xkb_state_component(XKB_STATE_MODS_LOCKED));
 
     evaluate_startup_num_lock();
-
-    if (seat) {
-        seat->keyboards().set_keymap(keymap->cache);
-    }
-
     update_modifiers();
-    forward_modifiers();
 }
 
 void keyboard::evaluate_startup_num_lock()
@@ -273,6 +268,7 @@ void keyboard::update_modifiers()
 void keyboard::forward_modifiers()
 {
     if (seat) {
+        seat->keyboards().set_keymap(keymap->cache);
         seat->keyboards().update_modifiers(
             modifier_state.depressed, modifier_state.latched, modifier_state.locked, layout);
     }

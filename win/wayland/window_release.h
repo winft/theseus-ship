@@ -9,6 +9,8 @@
 
 #include "rules/rule_book.h"
 #include "utils.h"
+#include "win/remnant.h"
+#include "win/stacking_order.h"
 
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
