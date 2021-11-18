@@ -8,7 +8,6 @@
 #include "manager.h"
 
 #include <sys/mman.h>
-#include <system_error>
 #include <xkbcommon/xkbcommon.h>
 
 namespace KWin::input::xkb
@@ -27,7 +26,7 @@ keymap::keymap(int fd, uint32_t size, xkb_context* context)
     if (map == MAP_FAILED) {
         qCDebug(KWIN_XKB) << "Could not map keymap from fd" << fd;
         // TODO(romangg): Throw specific error
-        throw std::system_error();
+        throw std::exception();
     }
 
     auto keymap = xkb_keymap_new_from_string(
@@ -37,7 +36,7 @@ keymap::keymap(int fd, uint32_t size, xkb_context* context)
     if (!keymap) {
         qCDebug(KWIN_XKB) << "Could not get new keymap string from map.";
         // TODO(romangg): Throw specific error
-        throw std::system_error();
+        throw std::exception();
     }
 
     raw = keymap;
