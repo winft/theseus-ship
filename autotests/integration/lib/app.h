@@ -74,4 +74,36 @@ private:
     std::unique_ptr<render::wayland::compositor> compositor;
 };
 
+namespace Test
+{
+
+template<typename Test>
+int create_test(std::string const& test_name, wayland_start_options flags, int argc, char* argv[])
+{
+    auto const socket_name = create_socket_name(test_name);
+    auto mode = Application::OperationModeXwayland;
+#ifdef NO_XWAYLAND
+    mode = KWin::Application::OperationModeWaylandOnly;
+#endif
+
+    try {
+        prepare_app_env(argv[0]);
+        auto app = WaylandTestApplication(mode, socket_name, flags, argc, argv);
+        prepare_sys_env(socket_name);
+        Test test;
+        return QTest::qExec(&test, argc, argv);
+    } catch (std::exception const&) {
+        ::exit(1);
+    }
 }
+
+}
+}
+
+#define WAYLANDTEST_MAIN_FLAGS(Tester, flags)                                                      \
+    int main(int argc, char* argv[])                                                               \
+    {                                                                                              \
+        return KWin::Test::create_test<Tester>(#Tester, flags, argc, argv);                        \
+    }
+
+#define WAYLANDTEST_MAIN(Tester) WAYLANDTEST_MAIN_FLAGS(Tester, KWin::wayland_start_options::none)

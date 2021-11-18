@@ -26,8 +26,6 @@ public:
     touch(Wrapland::Server::FakeInputDevice* device, input::platform* platform);
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;
-    touch(touch&& other) noexcept = default;
-    touch& operator=(touch&& other) noexcept = default;
     ~touch() override = default;
 
     Wrapland::Server::FakeInputDevice* device;

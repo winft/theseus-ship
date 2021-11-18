@@ -29,8 +29,6 @@ public:
     touch(wlr_input_device* dev, input::platform* plat);
     touch(touch const&) = delete;
     touch& operator=(touch const&) = delete;
-    touch(touch&& other) noexcept = default;
-    touch& operator=(touch&& other) noexcept = default;
     ~touch() override = default;
 
 private:
