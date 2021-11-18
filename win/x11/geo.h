@@ -588,6 +588,14 @@ bool configure_should_ignore(Win* win, int& value_mask)
         return false;
     }
 
+    if (is_on_screen_display(win)) {
+        // Only we set the position of OSDs.
+        // TODO(romangg): That fixes a regression in Plasma Workspace [1] where the position of the
+        //                OSD is configured to (0,0). It would be better to fix Plasma.
+        //                [1] https://invent.kde.org/plasma/plasma-workspace/-/commit/e4ea7286.
+        return true;
+    }
+
     if (win->app_no_border) {
         // Without borders do not ignore.
         return false;
