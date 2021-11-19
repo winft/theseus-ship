@@ -33,12 +33,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class QOpenGLFramebufferObject;
 
-namespace Wrapland
-{
-namespace Server
+namespace Wrapland::Server
 {
 class Buffer;
-}
 }
 
 namespace KWin

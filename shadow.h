@@ -30,15 +30,13 @@ class Decoration;
 class DecorationShadow;
 }
 
-namespace Wrapland
-{
-namespace Server
+namespace Wrapland::Server
 {
 class Shadow;
 }
-}
 
-namespace KWin {
+namespace KWin
+{
 
 class Toplevel;
 
