@@ -32,15 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class QAction;
 
-namespace Wrapland
-{
-namespace Server
-{
-class Output;
-class OutputConfigurationV1;
-}
-}
-
 namespace KWin
 {
 namespace base
