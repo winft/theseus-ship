@@ -12,6 +12,8 @@ python <(curl -s $RUN_SCRIPT_URL) -r \
     ${SOURCE_DIR}/base \
     ${SOURCE_DIR}/debug \
     ${SOURCE_DIR}/input \
+    ${SOURCE_DIR}/platformsupport \
+    ${SOURCE_DIR}/plugins/scenes \
     ${SOURCE_DIR}/win \
     ${SOURCE_DIR}/render \
     ${SOURCE_DIR}/rules \

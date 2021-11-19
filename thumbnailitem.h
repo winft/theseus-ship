@@ -17,14 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_THUMBNAILITEM_H
 #define KWIN_THUMBNAILITEM_H
 
 #include <QPointer>
+#include <QQuickPaintedItem>
 #include <QUuid>
 #include <QWeakPointer>
-#include <QQuickPaintedItem>
 
 namespace KWin
 {
@@ -38,17 +37,17 @@ class AbstractThumbnailItem : public QQuickPaintedItem
     Q_OBJECT
     Q_PROPERTY(qreal brightness READ brightness WRITE setBrightness NOTIFY brightnessChanged)
     Q_PROPERTY(qreal saturation READ saturation WRITE setSaturation NOTIFY saturationChanged)
-    Q_PROPERTY(QQuickItem *clipTo READ clipTo WRITE setClipTo NOTIFY clipToChanged)
+    Q_PROPERTY(QQuickItem* clipTo READ clipTo WRITE setClipTo NOTIFY clipToChanged)
 public:
     ~AbstractThumbnailItem() override;
     qreal brightness() const;
     qreal saturation() const;
-    QQuickItem *clipTo() const;
+    QQuickItem* clipTo() const;
 
 public Q_SLOTS:
     void setBrightness(qreal brightness);
     void setSaturation(qreal saturation);
-    void setClipTo(QQuickItem *clip);
+    void setClipTo(QQuickItem* clip);
 
 Q_SIGNALS:
     void brightnessChanged();
@@ -56,7 +55,7 @@ Q_SIGNALS:
     void clipToChanged();
 
 protected:
-    explicit AbstractThumbnailItem(QQuickItem *parent = nullptr);
+    explicit AbstractThumbnailItem(QQuickItem* parent = nullptr);
 
 protected Q_SLOTS:
     virtual void repaint(KWin::EffectWindow* w) = 0;
@@ -80,21 +79,23 @@ class WindowThumbnailItem : public AbstractThumbnailItem
     Q_PROPERTY(QUuid wId READ wId WRITE setWId NOTIFY wIdChanged SCRIPTABLE true)
     Q_PROPERTY(KWin::Toplevel* client READ client WRITE setClient NOTIFY clientChanged)
 public:
-    explicit WindowThumbnailItem(QQuickItem *parent = nullptr);
+    explicit WindowThumbnailItem(QQuickItem* parent = nullptr);
     ~WindowThumbnailItem() override;
 
-    QUuid wId() const {
+    QUuid wId() const
+    {
         return m_wId;
     }
-    void setWId(const QUuid &wId);
+    void setWId(const QUuid& wId);
     Toplevel* client() const;
     void setClient(Toplevel* window);
-    void paint(QPainter *painter) override;
+    void paint(QPainter* painter) override;
 Q_SIGNALS:
-    void wIdChanged(const QUuid &wid);
+    void wIdChanged(const QUuid& wid);
     void clientChanged();
 protected Q_SLOTS:
     void repaint(KWin::EffectWindow* w) override;
+
 private:
     QUuid m_wId;
     Toplevel* m_client;
@@ -105,42 +106,40 @@ class DesktopThumbnailItem : public AbstractThumbnailItem
     Q_OBJECT
     Q_PROPERTY(int desktop READ desktop WRITE setDesktop NOTIFY desktopChanged)
 public:
-    DesktopThumbnailItem(QQuickItem *parent = nullptr);
+    DesktopThumbnailItem(QQuickItem* parent = nullptr);
     ~DesktopThumbnailItem() override;
 
-    int desktop() const {
+    int desktop() const
+    {
         return m_desktop;
     }
     void setDesktop(int desktop);
-    void paint(QPainter *painter) override;
+    void paint(QPainter* painter) override;
 Q_SIGNALS:
     void desktopChanged(int desktop);
 protected Q_SLOTS:
     void repaint(KWin::EffectWindow* w) override;
+
 private:
     int m_desktop;
 };
 
-inline
-qreal AbstractThumbnailItem::brightness() const
+inline qreal AbstractThumbnailItem::brightness() const
 {
     return m_brightness;
 }
 
-inline
-qreal AbstractThumbnailItem::saturation() const
+inline qreal AbstractThumbnailItem::saturation() const
 {
     return m_saturation;
 }
 
-inline
-QQuickItem* AbstractThumbnailItem::clipTo() const
+inline QQuickItem* AbstractThumbnailItem::clipTo() const
 {
     return m_clipToItem.data();
 }
 
-inline
-Toplevel* WindowThumbnailItem::client() const
+inline Toplevel* WindowThumbnailItem::client() const
 {
     return m_client;
 }

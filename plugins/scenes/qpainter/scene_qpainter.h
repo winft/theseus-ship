@@ -21,12 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_SCENE_QPAINTER_H
 
 #include "scene.h"
-#include <platformsupport/scenes/qpainter/backend.h>
 #include "shadow.h"
+#include <platformsupport/scenes/qpainter/backend.h>
 
 #include "decorations/decorationrenderer.h"
 
-namespace KWin {
+namespace KWin
+{
 
 class KWIN_EXPORT SceneQPainter : public Scene
 {
@@ -37,7 +38,8 @@ public:
     bool usesOverlayWindow() const override;
     OverlayWindow* overlayWindow() const override;
 
-    int64_t paint(base::output* output, QRegion damage,
+    int64_t paint(base::output* output,
+                  QRegion damage,
                   std::deque<Toplevel*> const& windows,
                   std::chrono::milliseconds presentTime) override;
 
@@ -45,32 +47,34 @@ public:
 
     CompositingType compositingType() const override;
     bool initFailed() const override;
-    EffectFrame *createEffectFrame(EffectFrameImpl *frame) override;
-    Shadow *createShadow(Toplevel *toplevel) override;
-    Decoration::Renderer *createDecorationRenderer(Decoration::DecoratedClientImpl *impl) override;
-    void screenGeometryChanged(const QSize &size) override;
+    EffectFrame* createEffectFrame(EffectFrameImpl* frame) override;
+    Shadow* createShadow(Toplevel* toplevel) override;
+    Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl* impl) override;
+    void screenGeometryChanged(const QSize& size) override;
 
-    bool animationsSupported() const override {
+    bool animationsSupported() const override
+    {
         return false;
     }
 
-    QPainter *scenePainter() const override;
-    QImage *qpainterRenderBuffer() const override;
+    QPainter* scenePainter() const override;
+    QImage* qpainterRenderBuffer() const override;
 
-    QPainterBackend *backend() const {
+    QPainterBackend* backend() const
+    {
         return m_backend.data();
     }
 
-    static SceneQPainter *createScene(QObject *parent);
+    static SceneQPainter* createScene(QObject* parent);
 
 protected:
     void paintBackground(QRegion region) override;
-    Scene::Window *createWindow(Toplevel *toplevel) override;
+    Scene::Window* createWindow(Toplevel* toplevel) override;
     void paintCursor() override;
-    void paintEffectQuickView(EffectQuickView *w) override;
+    void paintEffectQuickView(EffectQuickView* w) override;
 
 private:
-    explicit SceneQPainter(QPainterBackend *backend, QObject *parent = nullptr);
+    explicit SceneQPainter(QPainterBackend* backend, QObject* parent = nullptr);
     QScopedPointer<QPainterBackend> m_backend;
     QScopedPointer<QPainter> m_painter;
     class Window;
@@ -79,27 +83,29 @@ private:
 class SceneQPainter::Window : public Scene::Window
 {
 public:
-    Window(SceneQPainter *scene, Toplevel *c);
+    Window(SceneQPainter* scene, Toplevel* c);
     ~Window() override;
     void performPaint(int mask, QRegion region, WindowPaintData data) override;
+
 protected:
-    WindowPixmap *createWindowPixmap() override;
+    WindowPixmap* createWindowPixmap() override;
+
 private:
-    void renderShadow(QPainter *painter);
-    void renderWindowDecorations(QPainter *painter);
-    SceneQPainter *m_scene;
+    void renderShadow(QPainter* painter);
+    void renderWindowDecorations(QPainter* painter);
+    SceneQPainter* m_scene;
 };
 
 class QPainterWindowPixmap : public WindowPixmap
 {
 public:
-    explicit QPainterWindowPixmap(Scene::Window *window);
+    explicit QPainterWindowPixmap(Scene::Window* window);
     ~QPainterWindowPixmap() override;
     void create() override;
     bool isValid() const override;
 
     void updateBuffer() override;
-    const QImage &image();
+    const QImage& image();
 
 private:
     QImage m_image;
@@ -108,17 +114,30 @@ private:
 class QPainterEffectFrame : public Scene::EffectFrame
 {
 public:
-    QPainterEffectFrame(EffectFrameImpl *frame, SceneQPainter *scene);
+    QPainterEffectFrame(EffectFrameImpl* frame, SceneQPainter* scene);
     ~QPainterEffectFrame() override;
-    void crossFadeIcon() override {}
-    void crossFadeText() override {}
-    void free() override {}
-    void freeIconFrame() override {}
-    void freeTextFrame() override {}
-    void freeSelection() override {}
+    void crossFadeIcon() override
+    {
+    }
+    void crossFadeText() override
+    {
+    }
+    void free() override
+    {
+    }
+    void freeIconFrame() override
+    {
+    }
+    void freeTextFrame() override
+    {
+    }
+    void freeSelection() override
+    {
+    }
     void render(QRegion region, double opacity, double frameOpacity) override;
+
 private:
-    SceneQPainter *m_scene;
+    SceneQPainter* m_scene;
 };
 
 class SceneQPainterShadow : public Shadow
@@ -127,7 +146,8 @@ public:
     SceneQPainterShadow(Toplevel* toplevel);
     ~SceneQPainterShadow() override;
 
-    QImage &shadowTexture() {
+    QImage& shadowTexture()
+    {
         return m_texture;
     }
 
@@ -143,14 +163,8 @@ class SceneQPainterDecorationRenderer : public Decoration::Renderer
 {
     Q_OBJECT
 public:
-    enum class DecorationPart : int {
-        Left,
-        Top,
-        Right,
-        Bottom,
-        Count
-    };
-    explicit SceneQPainterDecorationRenderer(Decoration::DecoratedClientImpl *client);
+    enum class DecorationPart : int { Left, Top, Right, Bottom, Count };
+    explicit SceneQPainterDecorationRenderer(Decoration::DecoratedClientImpl* client);
     ~SceneQPainterDecorationRenderer() override;
 
     void render() override;
@@ -170,32 +184,28 @@ class KWIN_EXPORT QPainterFactory : public SceneFactory
     Q_PLUGIN_METADATA(IID "org.kde.kwin.Scene" FILE "qpainter.json")
 
 public:
-    explicit QPainterFactory(QObject *parent = nullptr);
+    explicit QPainterFactory(QObject* parent = nullptr);
     ~QPainterFactory() override;
 
-    Scene *create(QObject *parent = nullptr) const override;
+    Scene* create(QObject* parent = nullptr) const override;
 };
 
-inline
-bool SceneQPainter::usesOverlayWindow() const
+inline bool SceneQPainter::usesOverlayWindow() const
 {
     return false;
 }
 
-inline
-OverlayWindow* SceneQPainter::overlayWindow() const
+inline OverlayWindow* SceneQPainter::overlayWindow() const
 {
     return nullptr;
 }
 
-inline
-QPainter* SceneQPainter::scenePainter() const
+inline QPainter* SceneQPainter::scenePainter() const
 {
     return m_painter.data();
 }
 
-inline
-const QImage &QPainterWindowPixmap::image()
+inline const QImage& QPainterWindowPixmap::image()
 {
     return m_image;
 }

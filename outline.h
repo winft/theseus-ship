@@ -17,19 +17,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_OUTLINE_H
 #define KWIN_OUTLINE_H
+
 #include <kwinglobals.h>
-#include <QRect>
+
 #include <QObject>
+#include <QRect>
 
 #include <kwin_export.h>
 
 class QQmlContext;
 class QQmlComponent;
 
-namespace KWin {
+namespace KWin
+{
 class OutlineVisual;
 
 /**
@@ -43,10 +45,12 @@ class OutlineVisual;
  * @author Arthur Arlt
  * @since 4.7
  */
-class KWIN_EXPORT Outline : public QObject {
+class KWIN_EXPORT Outline : public QObject
+{
     Q_OBJECT
     Q_PROPERTY(QRect geometry READ geometry NOTIFY geometryChanged)
-    Q_PROPERTY(QRect visualParentGeometry READ visualParentGeometry NOTIFY visualParentGeometryChanged)
+    Q_PROPERTY(
+        QRect visualParentGeometry READ visualParentGeometry NOTIFY visualParentGeometryChanged)
     Q_PROPERTY(QRect unifiedGeometry READ unifiedGeometry NOTIFY unifiedGeometryChanged)
     Q_PROPERTY(bool active READ isActive NOTIFY activeChanged)
 public:
@@ -58,7 +62,7 @@ public:
      * @param outlineGeometry The geometry of the outline to be shown
      * @see showOutline
      */
-    void setGeometry(const QRect &outlineGeometry);
+    void setGeometry(const QRect& outlineGeometry);
 
     /**
      * Set the visual parent geometry.
@@ -66,7 +70,7 @@ public:
      * @param visualParentGeometry The visual geometry of the visual parent
      * @see showOutline
      */
-    void setVisualParentGeometry(const QRect &visualParentGeometry);
+    void setVisualParentGeometry(const QRect& visualParentGeometry);
 
     /**
      * Shows the outline of a window using either an effect or the X implementation.
@@ -82,7 +86,7 @@ public:
      * @param outlineGeometry The geometry of the outline to be shown
      * @see hideOutline
      */
-    void show(const QRect &outlineGeometry);
+    void show(const QRect& outlineGeometry);
 
     /**
      * Shows the outline for the given @p outlineGeometry animated from @p visualParentGeometry.
@@ -94,7 +98,7 @@ public:
      * @see hideOutline
      * @since 5.10
      */
-    void show(const QRect &outlineGeometry, const QRect &visualParentGeometry);
+    void show(const QRect& outlineGeometry, const QRect& visualParentGeometry);
 
     /**
      * Hides shown outline.
@@ -102,8 +106,8 @@ public:
      */
     void hide();
 
-    const QRect &geometry() const;
-    const QRect &visualParentGeometry() const;
+    const QRect& geometry() const;
+    const QRect& visualParentGeometry() const;
     QRect unifiedGeometry() const;
 
     bool isActive() const;
@@ -129,62 +133,59 @@ private:
 class KWIN_EXPORT OutlineVisual
 {
 public:
-    OutlineVisual(Outline *outline);
+    OutlineVisual(Outline* outline);
     virtual ~OutlineVisual();
     virtual void show() = 0;
     virtual void hide() = 0;
+
 protected:
-    Outline *outline();
-    const Outline *outline() const;
+    Outline* outline();
+    const Outline* outline() const;
+
 private:
-    Outline *m_outline;
+    Outline* m_outline;
 };
 
 class CompositedOutlineVisual : public OutlineVisual
 {
 public:
-    CompositedOutlineVisual(Outline *outline);
+    CompositedOutlineVisual(Outline* outline);
     ~CompositedOutlineVisual() override;
     void show() override;
     void hide() override;
+
 private:
     QScopedPointer<QQmlContext> m_qmlContext;
     QScopedPointer<QQmlComponent> m_qmlComponent;
     QScopedPointer<QObject> m_mainItem;
 };
 
-inline
-bool Outline::isActive() const
+inline bool Outline::isActive() const
 {
     return m_active;
 }
 
-inline
-const QRect &Outline::geometry() const
+inline const QRect& Outline::geometry() const
 {
     return m_outlineGeometry;
 }
 
-inline
-const QRect &Outline::visualParentGeometry() const
+inline const QRect& Outline::visualParentGeometry() const
 {
     return m_visualParentGeometry;
 }
 
-inline
-Outline *OutlineVisual::outline()
+inline Outline* OutlineVisual::outline()
 {
     return m_outline;
 }
 
-inline
-const Outline *OutlineVisual::outline() const
+inline const Outline* OutlineVisual::outline() const
 {
     return m_outline;
 }
 
-inline
-Outline *outline()
+inline Outline* outline()
 {
     return Outline::self();
 }

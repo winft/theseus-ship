@@ -27,9 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-DmabufBuffer::DmabufBuffer(const QVector<Plane> &planes,
+DmabufBuffer::DmabufBuffer(const QVector<Plane>& planes,
                            uint32_t format,
-                           const QSize &size,
+                           const QSize& size,
                            Flags flags)
     : Wrapland::Server::LinuxDmabufBufferV1(format, size)
     , m_planes(planes)
@@ -68,10 +68,10 @@ LinuxDmabuf::~LinuxDmabuf()
 using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
 using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
 
-Wrapland::Server::LinuxDmabufBufferV1* LinuxDmabuf::importBuffer(const QVector<Plane> &planes,
-                                                                         uint32_t format,
-                                                                         const QSize &size,
-                                                                         Flags flags)
+Wrapland::Server::LinuxDmabufBufferV1* LinuxDmabuf::importBuffer(const QVector<Plane>& planes,
+                                                                 uint32_t format,
+                                                                 const QSize& size,
+                                                                 Flags flags)
 {
     Q_UNUSED(planes)
     Q_UNUSED(format)
@@ -81,7 +81,7 @@ Wrapland::Server::LinuxDmabufBufferV1* LinuxDmabuf::importBuffer(const QVector<P
     return nullptr;
 }
 
-void LinuxDmabuf::setSupportedFormatsAndModifiers(QHash<uint32_t, QSet<uint64_t> > &set)
+void LinuxDmabuf::setSupportedFormatsAndModifiers(QHash<uint32_t, QSet<uint64_t>>& set)
 {
     waylandServer()->linux_dmabuf()->setSupportedFormatsWithModifiers(set);
 }

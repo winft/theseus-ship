@@ -42,7 +42,7 @@ OpenGLBackend::~OpenGLBackend()
 {
 }
 
-void OpenGLBackend::setFailed(const QString &reason)
+void OpenGLBackend::setFailed(const QString& reason)
 {
     qCWarning(KWIN_OPENGL) << "Creating the OpenGL rendering failed: " << reason;
     m_failed = true;
@@ -56,7 +56,7 @@ void OpenGLBackend::idle()
     }
 }
 
-void OpenGLBackend::addToDamageHistory(const QRegion &region)
+void OpenGLBackend::addToDamageHistory(const QRegion& region)
 {
     if (m_damageHistory.count() > 10)
         m_damageHistory.removeLast();
@@ -73,7 +73,7 @@ QRegion OpenGLBackend::accumulatedDamageHistory(int bufferAge) const
         for (int i = 0; i < bufferAge - 1; i++)
             region |= m_damageHistory[i];
     } else {
-        const QSize &s = screens()->size();
+        const QSize& s = screens()->size();
         region = QRegion(0, 0, s.width(), s.height());
     }
 
@@ -91,17 +91,19 @@ QRegion OpenGLBackend::prepareRenderingForScreen(base::output* output)
     return output->geometry();
 }
 
-void OpenGLBackend::endRenderingFrameForScreen(base::output* output, const QRegion &damage, const QRegion &damagedRegion)
+void OpenGLBackend::endRenderingFrameForScreen(base::output* output,
+                                               const QRegion& damage,
+                                               const QRegion& damagedRegion)
 {
     Q_UNUSED(output)
     Q_UNUSED(damage)
     Q_UNUSED(damagedRegion)
 }
 
-void OpenGLBackend::copyPixels(const QRegion &region)
+void OpenGLBackend::copyPixels(const QRegion& region)
 {
     const int height = screens()->size().height();
-    for (const QRect &r : region) {
+    for (const QRect& r : region) {
         const int x0 = r.x();
         const int y0 = height - r.y() - r.height();
         const int x1 = r.x() + r.width();

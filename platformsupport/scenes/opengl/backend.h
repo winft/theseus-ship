@@ -41,10 +41,11 @@ class SceneOpenGLTexturePrivate;
 class WindowPixmap;
 
 /**
- * @brief The OpenGLBackend creates and holds the OpenGL context and is responsible for Texture from Pixmap.
+ * @brief The OpenGLBackend creates and holds the OpenGL context and is responsible for Texture from
+ * Pixmap.
  *
- * The OpenGLBackend is an abstract base class used by the SceneOpenGL to abstract away the differences
- * between various OpenGL windowing systems such as GLX and EGL.
+ * The OpenGLBackend is an abstract base class used by the SceneOpenGL to abstract away the
+ * differences between various OpenGL windowing systems such as GLX and EGL.
  *
  * A concrete implementation has to create and release the OpenGL context in a way so that the
  * SceneOpenGL does not have to care about it.
@@ -65,11 +66,12 @@ public:
      * @return Time passes since start of rendering current frame.
      * @see startRenderTimer
      */
-    qint64 renderTime() {
+    qint64 renderTime()
+    {
         return m_renderTimer.nsecsElapsed();
     }
-    virtual void screenGeometryChanged(const QSize &size) = 0;
-    virtual SceneOpenGLTexturePrivate *createBackendTexture(SceneOpenGLTexture *texture) = 0;
+    virtual void screenGeometryChanged(const QSize& size) = 0;
+    virtual SceneOpenGLTexturePrivate* createBackendTexture(SceneOpenGLTexture* texture) = 0;
 
     /**
      * @brief Backend specific code to prepare the rendering of a frame including flushing the
@@ -85,12 +87,17 @@ public:
      * @param renderedRegion The possibly larger region that has been rendered
      * @param damagedRegion The damaged region that should be posted
      */
-    virtual void endRenderingFrame(const QRegion &damage, const QRegion &damagedRegion) = 0;
-    virtual void endRenderingFrameForScreen(base::output* output, const QRegion &damage, const QRegion &damagedRegion);
+    virtual void endRenderingFrame(const QRegion& damage, const QRegion& damagedRegion) = 0;
+    virtual void endRenderingFrameForScreen(base::output* output,
+                                            const QRegion& damage,
+                                            const QRegion& damagedRegion);
     virtual bool makeCurrent() = 0;
     virtual void doneCurrent() = 0;
     virtual bool usesOverlayWindow() const = 0;
-    virtual bool hasSwapEvent() const { return true; }
+    virtual bool hasSwapEvent() const
+    {
+        return true;
+    }
     virtual QRegion prepareRenderingForScreen(base::output* output);
     /**
      * @brief Compositor is going into idle mode, flushes any pending paints.
@@ -100,7 +107,8 @@ public:
     /**
      * @return bool Whether the scene needs to flush a frame.
      */
-    bool hasPendingFlush() const {
+    bool hasPendingFlush() const
+    {
         return !m_lastDamage.isEmpty();
     }
 
@@ -113,7 +121,7 @@ public:
      *
      * @return :OverlayWindow*
      */
-    virtual OverlayWindow *overlayWindow() const;
+    virtual OverlayWindow* overlayWindow() const;
     /**
      * @brief Whether the creation of the Backend failed.
      *
@@ -122,7 +130,8 @@ public:
      *
      * @return bool @c true if the creation of the Backend failed, @c false otherwise.
      */
-    bool isFailed() const {
+    bool isFailed() const
+    {
         return m_failed;
     }
     /**
@@ -133,11 +142,13 @@ public:
      *
      * @return bool @c true if the GL context is direct, @c false if indirect
      */
-    bool isDirectRendering() const {
+    bool isDirectRendering() const
+    {
         return m_directRendering;
     }
 
-    bool supportsBufferAge() const {
+    bool supportsBufferAge() const
+    {
         return m_haveBufferAge;
     }
 
@@ -154,28 +165,30 @@ public:
     /**
      * Saves the given region to damage history.
      */
-    void addToDamageHistory(const QRegion &region);
+    void addToDamageHistory(const QRegion& region);
 
     /**
      * The backend specific extensions (e.g. EGL/GLX extensions).
      *
      * Not the OpenGL (ES) extension!
      */
-    QList<QByteArray> extensions() const {
+    QList<QByteArray> extensions() const
+    {
         return m_extensions;
     }
 
     /**
      * @returns whether the backend specific extensions contains @p extension.
      */
-    bool hasExtension(const QByteArray &extension) const {
+    bool hasExtension(const QByteArray& extension) const
+    {
         return m_extensions.contains(extension);
     }
 
     /**
      * Copy a region of pixels from the current read to the current draw buffer
      */
-    void copyPixels(const QRegion &region);
+    void copyPixels(const QRegion& region);
 
     /**
      * @brief Sets the backend initialization to failed.
@@ -185,7 +198,7 @@ public:
      *
      * @param reason The reason why the initialization failed.
      */
-    void setFailed(const QString &reason);
+    void setFailed(const QString& reason);
 
 protected:
     /**
@@ -201,14 +214,15 @@ protected:
      *
      * @param direct @c true if the OpenGL context is direct, @c false if indirect
      */
-    void setIsDirectRendering(bool direct) {
+    void setIsDirectRendering(bool direct)
+    {
         m_directRendering = direct;
     }
 
-    void setSupportsBufferAge(bool value) {
+    void setSupportsBufferAge(bool value)
+    {
         m_haveBufferAge = value;
     }
-
 
     void setSupportsSurfacelessContext(bool value)
     {
@@ -218,10 +232,12 @@ protected:
     /**
      * @return const QRegion& Damage of previously rendered frame
      */
-    const QRegion &lastDamage() const {
+    const QRegion& lastDamage() const
+    {
         return m_lastDamage;
     }
-    void setLastDamage(const QRegion &damage) {
+    void setLastDamage(const QRegion& damage)
+    {
         m_lastDamage = damage;
     }
     /**
@@ -229,7 +245,8 @@ protected:
      *
      * @see renderTime
      */
-    void startRenderTimer() {
+    void startRenderTimer()
+    {
         m_renderTimer.start();
     }
 
@@ -238,7 +255,8 @@ protected:
      *
      * These are the EGL/GLX extensions, not the OpenGL extensions
      */
-    void setExtensions(const QList<QByteArray> &extensions) {
+    void setExtensions(const QList<QByteArray>& extensions)
+    {
         m_extensions = extensions;
     }
 

@@ -95,7 +95,7 @@ namespace KWin
 // Scene
 //****************************************
 
-Scene::Scene(QObject *parent)
+Scene::Scene(QObject* parent)
     : QObject(parent)
 {
 }
@@ -123,18 +123,23 @@ int64_t Scene::paint([[maybe_unused]] base::output* output,
 }
 
 // returns mask and possibly modified region
-void Scene::paintScreen(int* mask, const QRegion &damage, const QRegion &repaint,
-                        QRegion *updateRegion, QRegion *validRegion,
+void Scene::paintScreen(int* mask,
+                        const QRegion& damage,
+                        const QRegion& repaint,
+                        QRegion* updateRegion,
+                        QRegion* validRegion,
                         std::chrono::milliseconds presentTime,
-                        const QMatrix4x4 &projection)
+                        const QMatrix4x4& projection)
 {
-    const QSize &screenSize = screens()->size();
+    const QSize& screenSize = screens()->size();
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
     *mask = (damage == displayRegion) ? 0 : PAINT_SCREEN_REGION;
 
     if (Q_UNLIKELY(presentTime < m_expectedPresentTimestamp)) {
-        qCDebug(KWIN_CORE, "Provided presentation timestamp is invalid: %ld (current: %ld)",
-                presentTime.count(), m_expectedPresentTimestamp.count());
+        qCDebug(KWIN_CORE,
+                "Provided presentation timestamp is invalid: %ld (current: %ld)",
+                presentTime.count(),
+                m_expectedPresentTimestamp.count());
     } else {
         m_expectedPresentTimestamp = presentTime;
     }
@@ -172,7 +177,8 @@ void Scene::paintScreen(int* mask, const QRegion &damage, const QRegion &repaint
         paintBackground(region);
     }
 
-    ScreenPaintData data(projection, repaint_output ? effects->findScreen(repaint_output->name()) : nullptr);
+    ScreenPaintData data(projection,
+                         repaint_output ? effects->findScreen(repaint_output->name()) : nullptr);
     effects->paintScreen(*mask, region, data);
 
     for (auto const& w : qAsConst(stacking_order)) {
@@ -247,7 +253,7 @@ void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
         paintWindow(d.window, d.mask, d.region, d.quads);
     }
 
-    const QSize &screenSize = screens()->size();
+    const QSize& screenSize = screens()->size();
     damaged_region = QRegion(0, 0, screenSize.width(), screenSize.height());
 }
 
@@ -256,8 +262,7 @@ void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
 // to reduce painting and improve performance.
 void Scene::paintSimpleScreen(int orig_mask, QRegion region)
 {
-    Q_ASSERT((orig_mask & (PAINT_SCREEN_TRANSFORMED
-                         | PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS)) == 0);
+    Q_ASSERT((orig_mask & (PAINT_SCREEN_TRANSFORMED | PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS)) == 0);
     QVector<Phase2Data> phase2data;
     phase2data.reserve(stacking_order.size());
 
@@ -266,10 +271,11 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
 
     // Traverse the scene windows from bottom to top.
     for (int i = 0; i < stacking_order.count(); ++i) {
-        Window *window = stacking_order[i];
-        Toplevel *toplevel = window->window();
+        Window* window = stacking_order[i];
+        Toplevel* toplevel = window->window();
         WindowPrePaintData data;
-        data.mask = orig_mask | (window->isOpaque() ? PAINT_WINDOW_OPAQUE : PAINT_WINDOW_TRANSLUCENT);
+        data.mask
+            = orig_mask | (window->isOpaque() ? PAINT_WINDOW_OPAQUE : PAINT_WINDOW_TRANSLUCENT);
         window->resetPaintingEnabled();
         data.paint = region;
         data.paint |= toplevel->repaints();
@@ -286,11 +292,13 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
             if (toplevel->control) {
                 opaqueFullscreen = toplevel->control->fullscreen();
             }
-            data.clip |= win::content_render_region(toplevel).translated(toplevel->pos() + window->bufferOffset());
+            data.clip |= win::content_render_region(toplevel).translated(toplevel->pos()
+                                                                         + window->bufferOffset());
         } else if (toplevel->hasAlpha() && toplevel->opacity() == 1.0) {
-            auto const clientShape = win::content_render_region(toplevel).translated(win::frame_to_render_pos(toplevel, toplevel->pos()));
-            auto const opaqueShape
-                = toplevel->opaqueRegion().translated(win::frame_to_client_pos(toplevel, window->pos()) - window->pos());
+            auto const clientShape = win::content_render_region(toplevel).translated(
+                win::frame_to_render_pos(toplevel, toplevel->pos()));
+            auto const opaqueShape = toplevel->opaqueRegion().translated(
+                win::frame_to_client_pos(toplevel, window->pos()) - window->pos());
             data.clip = clientShape & opaqueShape;
             if (clientShape == opaqueShape) {
                 data.mask = orig_mask | PAINT_WINDOW_OPAQUE;
@@ -301,7 +309,8 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
 
         // Clip out decoration without alpha when window has not set additional opacity by us.
         // The decoration is drawn in the second pass.
-        if (toplevel->control && !win::decoration_has_alpha(toplevel) && toplevel->opacity() == 1.0) {
+        if (toplevel->control && !win::decoration_has_alpha(toplevel)
+            && toplevel->opacity() == 1.0) {
             data.clip = window->decorationShape().translated(window->pos());
         }
 
@@ -318,7 +327,7 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
         }
         dirtyArea |= data.paint;
         // Schedule the window for painting
-        phase2data.append({ window, data.paint, data.clip, data.mask, data.quads });
+        phase2data.append({window, data.paint, data.clip, data.mask, data.quads});
     }
 
     // Save the part of the repaint region that's exclusively rendered to
@@ -327,7 +336,7 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
     const QRegion repaintClip = repaint_region - dirtyArea;
     dirtyArea |= repaint_region;
 
-    const QSize &screenSize = screens()->size();
+    const QSize& screenSize = screens()->size();
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
     bool fullRepaint(dirtyArea == displayRegion); // spare some expensive region operations
     if (!fullRepaint) {
@@ -340,7 +349,7 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
 
     // This is the occlusion culling pass
     for (int i = phase2data.count() - 1; i >= 0; --i) {
-        Phase2Data *data = &phase2data[i];
+        Phase2Data* data = &phase2data[i];
 
         if (fullRepaint) {
             data->region = displayRegion;
@@ -357,7 +366,8 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
         if (!data->clip.isEmpty() && !(data->mask & PAINT_WINDOW_TRANSLUCENT)) {
             // clip away the opaque regions for all windows below this one
             allclips |= data->clip;
-            // extend the translucent damage for windows below this by remaining (translucent) regions
+            // extend the translucent damage for windows below this by remaining (translucent)
+            // regions
             if (!fullRepaint) {
                 upperTranslucentDamage |= data->region - data->clip;
             }
@@ -375,7 +385,7 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
 
     // Now walk the list bottom to top and draw the windows.
     for (int i = 0; i < phase2data.count(); ++i) {
-        Phase2Data *data = &phase2data[i];
+        Phase2Data* data = &phase2data[i];
 
         // add all regions which have been drawn so far
         paintedArea |= data->region;
@@ -400,13 +410,14 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
     }
 }
 
-void Scene::addToplevel(Toplevel *c)
+void Scene::addToplevel(Toplevel* c)
 {
     Q_ASSERT(!m_windows.contains(c));
-    Scene::Window *w = createWindow(c);
-    m_windows[ c ] = w;
+    Scene::Window* w = createWindow(c);
+    m_windows[c] = w;
     connect(c, &Toplevel::windowClosed, this, &Scene::windowClosed);
-    //A change of scale won't affect the geometry in compositor co-ordinates, but will affect the window quads.
+    // A change of scale won't affect the geometry in compositor co-ordinates, but will affect the
+    // window quads.
     if (c->surface()) {
         connect(c->surface(), &Wrapland::Server::Surface::committed, this, [this, c] {
             if (c->surface()->state().updates & Wrapland::Server::surface_change::scale) {
@@ -414,22 +425,14 @@ void Scene::addToplevel(Toplevel *c)
             }
         });
     }
-    connect(c, &Toplevel::screenScaleChanged, this,
-        [this, c] {
-            windowGeometryShapeChanged(c);
-        }
-    );
+    connect(c, &Toplevel::screenScaleChanged, this, [this, c] { windowGeometryShapeChanged(c); });
     c->effectWindow()->setSceneWindow(w);
     win::update_shadow(c);
     w->updateShadow(win::shadow(c));
-    connect(c, &Toplevel::shadowChanged, this,
-        [w] {
-            w->invalidateQuadsCache();
-        }
-    );
+    connect(c, &Toplevel::shadowChanged, this, [w] { w->invalidateQuadsCache(); });
 }
 
-void Scene::removeToplevel(Toplevel *toplevel)
+void Scene::removeToplevel(Toplevel* toplevel)
 {
     Q_ASSERT(m_windows.contains(toplevel));
     delete m_windows.take(toplevel);
@@ -444,7 +447,7 @@ void Scene::windowClosed(Toplevel* toplevel, Toplevel* deleted)
     }
 
     Q_ASSERT(m_windows.contains(toplevel));
-    Window *window = m_windows.take(toplevel);
+    Window* window = m_windows.take(toplevel);
     window->updateToplevel(deleted);
     if (window->shadow()) {
         window->shadow()->setToplevel(deleted);
@@ -452,11 +455,11 @@ void Scene::windowClosed(Toplevel* toplevel, Toplevel* deleted)
     m_windows[deleted] = window;
 }
 
-void Scene::windowGeometryShapeChanged(Toplevel *c)
+void Scene::windowGeometryShapeChanged(Toplevel* c)
 {
-    if (!m_windows.contains(c))    // this is ok, shape is not valid by default
+    if (!m_windows.contains(c)) // this is ok, shape is not valid by default
         return;
-    Window *w = m_windows[ c ];
+    Window* w = m_windows[c];
     w->invalidateQuadsCache();
 }
 
@@ -465,7 +468,7 @@ void Scene::createStackingOrder(std::deque<Toplevel*> const& toplevels)
     // TODO: cache the stacking_order in case it has not changed
     for (auto const& c : toplevels) {
         assert(m_windows.contains(c));
-        stacking_order.append(m_windows[ c ]);
+        stacking_order.append(m_windows[c]);
     }
 }
 
@@ -474,14 +477,14 @@ void Scene::clearStackingOrder()
     stacking_order.clear();
 }
 
-static Scene::Window *s_recursionCheck = nullptr;
+static Scene::Window* s_recursionCheck = nullptr;
 
 void Scene::paintWindow(Window* w, int mask, QRegion region, WindowQuadList quads)
 {
     // no painting outside visible screen (and no transformations)
-    const QSize &screenSize = screens()->size();
+    const QSize& screenSize = screens()->size();
     region &= QRect(0, 0, screenSize.width(), screenSize.height());
-    if (region.isEmpty())  // completely clipped
+    if (region.isEmpty()) // completely clipped
         return;
     if (w->window()->isDeleted() && w->window()->skipsCloseAnimation()) {
         // should not get painted
@@ -501,42 +504,49 @@ void Scene::paintWindow(Window* w, int mask, QRegion region, WindowQuadList quad
     paintDesktopThumbnails(w);
 }
 
-static void adjustClipRegion(AbstractThumbnailItem *item, QRegion &clippingRegion)
+static void adjustClipRegion(AbstractThumbnailItem* item, QRegion& clippingRegion)
 {
     if (item->clip() && item->clipTo()) {
-        // the x/y positions of the parent item are not correct. The margins are added, though the size seems fine
-        // that's why we have to get the offset by inspecting the anchors properties
-        QQuickItem *parentItem = item->clipTo();
+        // the x/y positions of the parent item are not correct. The margins are added, though the
+        // size seems fine that's why we have to get the offset by inspecting the anchors properties
+        QQuickItem* parentItem = item->clipTo();
         QPointF offset;
         QVariant anchors = parentItem->property("anchors");
         if (anchors.isValid()) {
-            if (QObject *anchorsObject = anchors.value<QObject*>()) {
+            if (QObject* anchorsObject = anchors.value<QObject*>()) {
                 offset.setX(anchorsObject->property("leftMargin").toReal());
                 offset.setY(anchorsObject->property("topMargin").toReal());
             }
         }
-        QRectF rect = QRectF(parentItem->position() - offset, QSizeF(parentItem->width(), parentItem->height()));
-        if (QQuickItem *p = parentItem->parentItem()) {
+        QRectF rect = QRectF(parentItem->position() - offset,
+                             QSizeF(parentItem->width(), parentItem->height()));
+        if (QQuickItem* p = parentItem->parentItem()) {
             rect = p->mapRectToScene(rect);
         }
-        clippingRegion &= rect.adjusted(0,0,-1,-1).translated(item->window()->position()).toRect();
+        clippingRegion
+            &= rect.adjusted(0, 0, -1, -1).translated(item->window()->position()).toRect();
     }
 }
 
-void Scene::paintWindowThumbnails(Scene::Window *w, QRegion region, qreal opacity, qreal brightness, qreal saturation)
+void Scene::paintWindowThumbnails(Scene::Window* w,
+                                  QRegion region,
+                                  qreal opacity,
+                                  qreal brightness,
+                                  qreal saturation)
 {
-    EffectWindowImpl *wImpl = static_cast<EffectWindowImpl*>(effectWindow(w));
-    for (QHash<WindowThumbnailItem*, QPointer<EffectWindowImpl> >::const_iterator it = wImpl->thumbnails().constBegin();
-            it != wImpl->thumbnails().constEnd();
-            ++it) {
+    EffectWindowImpl* wImpl = static_cast<EffectWindowImpl*>(effectWindow(w));
+    for (QHash<WindowThumbnailItem*, QPointer<EffectWindowImpl>>::const_iterator it
+         = wImpl->thumbnails().constBegin();
+         it != wImpl->thumbnails().constEnd();
+         ++it) {
         if (it.value().isNull()) {
             continue;
         }
-        WindowThumbnailItem *item = it.key();
+        WindowThumbnailItem* item = it.key();
         if (!item->isVisible()) {
             continue;
         }
-        EffectWindowImpl *thumb = it.value().data();
+        EffectWindowImpl* thumb = it.value().data();
         WindowPaintData thumbData(thumb, screenProjectionMatrix());
         thumbData.setOpacity(opacity);
         thumbData.setBrightness(brightness * item->brightness());
@@ -555,14 +565,14 @@ void Scene::paintWindowThumbnails(Scene::Window *w, QRegion region, qreal opacit
         if (!item->window()) {
             continue;
         }
-        const QPointF point = item->mapToScene(QPointF(0,0));
-        qreal x = point.x() + w->x() + (item->width() - size.width())/2;
+        const QPointF point = item->mapToScene(QPointF(0, 0));
+        qreal x = point.x() + w->x() + (item->width() - size.width()) / 2;
         qreal y = point.y() + w->y() + (item->height() - size.height()) / 2;
         x -= thumb->x();
         y -= thumb->y();
         // compensate shadow topleft padding
-        x += (thumb->x()-visualThumbRect.x())*thumbData.xScale();
-        y += (thumb->y()-visualThumbRect.y())*thumbData.yScale();
+        x += (thumb->x() - visualThumbRect.x()) * thumbData.xScale();
+        y += (thumb->y() - visualThumbRect.y()) * thumbData.yScale();
         thumbData.setXTranslation(x);
         thumbData.setYTranslation(y);
         int thumbMask = PAINT_WINDOW_TRANSFORMED | PAINT_WINDOW_LANCZOS;
@@ -578,13 +588,13 @@ void Scene::paintWindowThumbnails(Scene::Window *w, QRegion region, qreal opacit
     }
 }
 
-void Scene::paintDesktopThumbnails(Scene::Window *w)
+void Scene::paintDesktopThumbnails(Scene::Window* w)
 {
-    EffectWindowImpl *wImpl = static_cast<EffectWindowImpl*>(effectWindow(w));
+    EffectWindowImpl* wImpl = static_cast<EffectWindowImpl*>(effectWindow(w));
     for (QList<DesktopThumbnailItem*>::const_iterator it = wImpl->desktopThumbnails().constBegin();
-            it != wImpl->desktopThumbnails().constEnd();
-            ++it) {
-        DesktopThumbnailItem *item = *it;
+         it != wImpl->desktopThumbnails().constEnd();
+         ++it) {
+        DesktopThumbnailItem* item = *it;
         if (!item->isVisible()) {
             continue;
         }
@@ -594,27 +604,28 @@ void Scene::paintDesktopThumbnails(Scene::Window *w)
         s_recursionCheck = w;
 
         ScreenPaintData data;
-        const QSize &screenSize = screens()->size();
+        const QSize& screenSize = screens()->size();
         QSize size = screenSize;
 
         size.scale(item->width(), item->height(), Qt::KeepAspectRatio);
         data *= QVector2D(size.width() / double(screenSize.width()),
                           size.height() / double(screenSize.height()));
         const QPointF point = item->mapToScene(item->position());
-        const qreal x = point.x() + w->x() + (item->width() - size.width())/2;
+        const qreal x = point.x() + w->x() + (item->width() - size.width()) / 2;
         const qreal y = point.y() + w->y() + (item->height() - size.height()) / 2;
         const QRect region = QRect(x, y, item->width(), item->height());
         QRegion clippingRegion = region;
         clippingRegion &= QRegion(wImpl->x(), wImpl->y(), wImpl->width(), wImpl->height());
         adjustClipRegion(item, clippingRegion);
         data += QPointF(x, y);
-        const int desktopMask = PAINT_SCREEN_TRANSFORMED | PAINT_WINDOW_TRANSFORMED | PAINT_SCREEN_BACKGROUND_FIRST;
+        const int desktopMask
+            = PAINT_SCREEN_TRANSFORMED | PAINT_WINDOW_TRANSFORMED | PAINT_SCREEN_BACKGROUND_FIRST;
         paintDesktop(item->desktop(), desktopMask, clippingRegion, data);
         s_recursionCheck = nullptr;
     }
 }
 
-void Scene::paintDesktop(int desktop, int mask, const QRegion &region, ScreenPaintData &data)
+void Scene::paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data)
 {
     static_cast<EffectsHandlerImpl*>(effects)->paintDesktop(desktop, mask, region, data);
 }
@@ -628,19 +639,20 @@ void Scene::finalPaintWindow(EffectWindowImpl* w, int mask, QRegion region, Wind
 // will be eventually called from drawWindow()
 void Scene::finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data)
 {
-    if (kwinApp()->is_screen_locked() && !w->window()->isLockScreen() && !w->window()->isInputMethod()) {
+    if (kwinApp()->is_screen_locked() && !w->window()->isLockScreen()
+        && !w->window()->isInputMethod()) {
         return;
     }
     w->sceneWindow()->performPaint(mask, region, data);
 }
 
-void Scene::extendPaintRegion(QRegion &region, bool opaqueFullscreen)
+void Scene::extendPaintRegion(QRegion& region, bool opaqueFullscreen)
 {
     Q_UNUSED(region);
     Q_UNUSED(opaqueFullscreen);
 }
 
-void Scene::screenGeometryChanged(const QSize &size)
+void Scene::screenGeometryChanged(const QSize& size)
 {
     if (!overlayWindow()) {
         return;
@@ -681,12 +693,12 @@ xcb_render_picture_t Scene::xrenderBufferPicture() const
     return XCB_RENDER_PICTURE_NONE;
 }
 
-QPainter *Scene::scenePainter() const
+QPainter* Scene::scenePainter() const
 {
     return nullptr;
 }
 
-QImage *Scene::qpainterRenderBuffer() const
+QImage* Scene::qpainterRenderBuffer() const
 {
     return nullptr;
 }
@@ -702,7 +714,7 @@ QVector<QByteArray> Scene::openGLPlatformInterfaceExtensions() const
 
 uint32_t window_id{0};
 
-Scene::Window::Window(Toplevel * c)
+Scene::Window::Window(Toplevel* c)
     : toplevel(c)
     , filter(ImageFilterFast)
     , m_shadow(nullptr)
@@ -806,7 +818,8 @@ void Scene::Window::resetPaintingEnabled()
     if (toplevel->isDeleted())
         disable_painting |= PAINT_DISABLED_BY_DELETE;
     if (static_cast<EffectsHandlerImpl*>(effects)->isDesktopRendering()) {
-        if (!toplevel->isOnDesktop(static_cast<EffectsHandlerImpl*>(effects)->currentRenderedDesktop())) {
+        if (!toplevel->isOnDesktop(
+                static_cast<EffectsHandlerImpl*>(effects)->currentRenderedDesktop())) {
             disable_painting |= PAINT_DISABLED_BY_DESKTOP;
         }
     } else {
@@ -863,16 +876,21 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
     return ret;
 }
 
-WindowQuadList Scene::Window::makeDecorationQuads(const QRect *rects, const QRegion &region, qreal textureScale) const
+WindowQuadList Scene::Window::makeDecorationQuads(const QRect* rects,
+                                                  const QRegion& region,
+                                                  qreal textureScale) const
 {
     WindowQuadList list;
 
     const int padding = 1;
 
     const QPoint topSpritePosition(padding, padding);
-    const QPoint bottomSpritePosition(padding, topSpritePosition.y() + rects[1].height() + 2 * padding);
-    const QPoint leftSpritePosition(bottomSpritePosition.y() + rects[3].height() + 2 * padding, padding);
-    const QPoint rightSpritePosition(leftSpritePosition.x() + rects[0].width() + 2 * padding, padding);
+    const QPoint bottomSpritePosition(padding,
+                                      topSpritePosition.y() + rects[1].height() + 2 * padding);
+    const QPoint leftSpritePosition(bottomSpritePosition.y() + rects[3].height() + 2 * padding,
+                                    padding);
+    const QPoint rightSpritePosition(leftSpritePosition.x() + rects[0].width() + 2 * padding,
+                                     padding);
 
     const QPoint offsets[4] = {
         QPoint(-rects[0].x(), -rects[0].y()) + leftSpritePosition,
@@ -890,7 +908,7 @@ WindowQuadList Scene::Window::makeDecorationQuads(const QRect *rects, const QReg
 
     for (int i = 0; i < 4; i++) {
         const QRegion intersectedRegion = (region & rects[i]);
-        for (const QRect &r : intersectedRegion) {
+        for (const QRect& r : intersectedRegion) {
             if (!r.isValid())
                 continue;
 
@@ -968,11 +986,11 @@ WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) co
         QRectF sourceRect(contentsRect.topLeft() * textureScale,
                           contentsRect.bottomRight() * textureScale);
 
-        if (const auto *surface = toplevel->surface()) {
+        if (const auto* surface = toplevel->surface()) {
             QRectF const rect = surface->state().source_rectangle;
             if (rect.isValid()) {
-                sourceRect = QRectF(rect.topLeft() * textureScale,
-                                    rect.bottomRight() * textureScale);
+                sourceRect
+                    = QRectF(rect.topLeft() * textureScale, rect.bottomRight() * textureScale);
             } else {
                 auto buffer = surface->state().buffer;
                 // XWayland client's geometry must be taken from their content placement since the
@@ -981,8 +999,8 @@ WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) co
                     // Try to get the source rectangle from the buffer size, what defines the source
                     // size without respect to destination size.
                     auto const origin = contentsRect.topLeft();
-                    auto const rect = QRectF(origin,
-                                             buffer->size() - QSize(origin.x(), origin.y()));
+                    auto const rect
+                        = QRectF(origin, buffer->size() - QSize(origin.x(), origin.y()));
                     Q_ASSERT(rect.isValid());
                     // Make sure a buffer was set already.
                     if (rect.isValid()) {
@@ -1039,7 +1057,7 @@ void Scene::Window::updateShadow(Shadow* shadow)
 //****************************************
 // WindowPixmap
 //****************************************
-WindowPixmap::WindowPixmap(Scene::Window *window)
+WindowPixmap::WindowPixmap(Scene::Window* window)
     : m_window(window)
     , m_pixmap(XCB_PIXMAP_NONE)
     , m_discarded(false)
@@ -1069,13 +1087,14 @@ void WindowPixmap::create()
     }
     XServerGrabber grabber;
     xcb_pixmap_t pix = xcb_generate_id(connection());
-    xcb_void_cookie_t namePixmapCookie = xcb_composite_name_window_pixmap_checked(connection(), toplevel()->frameId(), pix);
+    xcb_void_cookie_t namePixmapCookie
+        = xcb_composite_name_window_pixmap_checked(connection(), toplevel()->frameId(), pix);
     Xcb::WindowAttributes windowAttributes(toplevel()->frameId());
 
     auto win = toplevel();
     auto xcb_frame_geometry = Xcb::WindowGeometry(win->frameId());
 
-    if (xcb_generic_error_t *error = xcb_request_check(connection(), namePixmapCookie)) {
+    if (xcb_generic_error_t* error = xcb_request_check(connection(), namePixmapCookie)) {
         qCDebug(KWIN_CORE) << "Creating window pixmap failed: " << error->error_code;
         free(error);
         return;
@@ -1090,8 +1109,8 @@ void WindowPixmap::create()
 
     auto const render_geo = win::render_geometry(win);
     if (xcb_frame_geometry.size() != render_geo.size()) {
-        qCDebug(KWIN_CORE) << "Creating window pixmap failed by size: " << win
-                           << " : " << xcb_frame_geometry.rect() << " | " << render_geo;
+        qCDebug(KWIN_CORE) << "Creating window pixmap failed by size: " << win << " : "
+                           << xcb_frame_geometry.rect() << " | " << render_geo;
         xcb_free_pixmap(connection(), pix);
         return;
     }
@@ -1133,7 +1152,7 @@ void WindowPixmap::updateBuffer()
     }
 }
 
-Wrapland::Server::Surface *WindowPixmap::surface() const
+Wrapland::Server::Surface* WindowPixmap::surface() const
 {
     return toplevel()->surface();
 }
@@ -1150,7 +1169,7 @@ Scene::EffectFrame::~EffectFrame()
 {
 }
 
-SceneFactory::SceneFactory(QObject *parent)
+SceneFactory::SceneFactory(QObject* parent)
     : QObject(parent)
 {
 }

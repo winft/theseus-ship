@@ -25,10 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KPluginMetaData>
 #include <KSharedConfig>
-// Qt
-#include <QObject>
+
 #include <QFlags>
 #include <QMap>
+#include <QObject>
 #include <QPair>
 #include <QQueue>
 
@@ -48,7 +48,8 @@ enum class BuiltInEffect;
  */
 enum class LoadEffectFlags {
     Load = 1 << 0, ///< Effect should be loaded
-    CheckDefaultFunction = 1 << 2 ///< The Check Default Function needs to be invoked if the Effect provides it
+    CheckDefaultFunction
+    = 1 << 2 ///< The Check Default Function needs to be invoked if the Effect provides it
 };
 
 /**
@@ -92,7 +93,7 @@ public:
      * @param name The name of the Effect to look for.
      * @return bool @c true if the Effect Loader knows this effect, false otherwise
      */
-    virtual bool hasEffect(const QString &name) const = 0;
+    virtual bool hasEffect(const QString& name) const = 0;
 
     /**
      * @brief All the Effects this loader knows of.
@@ -126,10 +127,11 @@ public:
      * @see queryAndLoadAll()
      * @see effectLoaded(KWin::Effect*,const QString&)
      */
-    virtual bool loadEffect(const QString &name) = 0;
+    virtual bool loadEffect(const QString& name) = 0;
 
     /**
-     * @brief The Effect Loader should query its store for all available effects and try to load them.
+     * @brief The Effect Loader should query its store for all available effects and try to load
+     * them.
      *
      * The Effect  Loader is supposed to perform this operation in a highly async way. If there is
      * IO which needs to be performed this should be done in a background thread and a queue should
@@ -162,7 +164,7 @@ public:
      * @param name The name of the Effect to check.
      * @return bool @c true if it is supported, @c false otherwise
      */
-    virtual bool isEffectSupported(const QString &name) const = 0;
+    virtual bool isEffectSupported(const QString& name) const = 0;
 
     /**
      * @brief Clears the load queue, that is all scheduled Effects are discarded from loading.
@@ -177,10 +179,10 @@ Q_SIGNALS:
      * @param name The internal name of the loaded Effect
      * @return void
      */
-    void effectLoaded(KWin::Effect *effect, const QString &name);
+    void effectLoaded(KWin::Effect* effect, const QString& name);
 
 protected:
-    explicit AbstractEffectLoader(QObject *parent = nullptr);
+    explicit AbstractEffectLoader(QObject* parent = nullptr);
     /**
      * @brief Checks the configuration for the Effect identified by @p effectName.
      *
@@ -193,7 +195,7 @@ protected:
      * @param defaultValue Whether the Effect is enabled by default or not.
      * @returns Flags indicating whether the Effect should be loaded and how it should be loaded
      */
-    LoadEffectFlags readConfig(const QString &effectName, bool defaultValue) const;
+    LoadEffectFlags readConfig(const QString& effectName, bool defaultValue) const;
 
 private:
     KSharedConfig::Ptr m_config;
@@ -213,26 +215,27 @@ private:
  * AbstractEffectLoadQueue providing the slots as pure virtual functions and the templated
  * EffectLoadQueue inheriting from AbstractEffectLoadQueue.
  *
- * The queue operates like a normal queue providing enqueue and a scheduleDequeue instead of dequeue.
+ * The queue operates like a normal queue providing enqueue and a scheduleDequeue instead of
+ * dequeue.
  *
  */
 class AbstractEffectLoadQueue : public QObject
 {
     Q_OBJECT
 public:
-    explicit AbstractEffectLoadQueue(QObject *parent = nullptr)
+    explicit AbstractEffectLoadQueue(QObject* parent = nullptr)
         : QObject(parent)
-        {
-        }
+    {
+    }
 protected Q_SLOTS:
     virtual void dequeue() = 0;
 };
 
-template <typename Loader, typename QueueType>
+template<typename Loader, typename QueueType>
 class EffectLoadQueue : public AbstractEffectLoadQueue
 {
 public:
-    explicit EffectLoadQueue(Loader *parent)
+    explicit EffectLoadQueue(Loader* parent)
         : AbstractEffectLoadQueue(parent)
         , m_effectLoader(parent)
         , m_dequeueScheduled(false)
@@ -248,6 +251,7 @@ public:
         m_queue.clear();
         m_dequeueScheduled = false;
     }
+
 protected:
     void dequeue() override
     {
@@ -259,6 +263,7 @@ protected:
         m_effectLoader->loadEffect(pair.first, pair.second);
         scheduleDequeue();
     }
+
 private:
     void scheduleDequeue()
     {
@@ -268,7 +273,7 @@ private:
         m_dequeueScheduled = true;
         QMetaObject::invokeMethod(this, "dequeue", Qt::QueuedConnection);
     }
-    Loader *m_effectLoader;
+    Loader* m_effectLoader;
     bool m_dequeueScheduled;
     QQueue<QPair<QueueType, LoadEffectFlags>> m_queue;
 };
@@ -280,11 +285,11 @@ class BuiltInEffectLoader : public AbstractEffectLoader
 {
     Q_OBJECT
 public:
-    explicit BuiltInEffectLoader(QObject *parent = nullptr);
+    explicit BuiltInEffectLoader(QObject* parent = nullptr);
     ~BuiltInEffectLoader() override;
 
-    bool hasEffect(const QString &name) const override;
-    bool isEffectSupported(const QString &name) const override;
+    bool hasEffect(const QString& name) const override;
+    bool isEffectSupported(const QString& name) const override;
     QStringList listOfKnownEffects() const override;
 
     void clear() override;
@@ -293,9 +298,9 @@ public:
     bool loadEffect(BuiltInEffect effect, LoadEffectFlags flags);
 
 private:
-    bool loadEffect(const QString &name, BuiltInEffect effect, LoadEffectFlags load_flags);
-    QString internalName(const QString &name) const;
-    EffectLoadQueue<BuiltInEffectLoader, BuiltInEffect> *m_queue;
+    bool loadEffect(const QString& name, BuiltInEffect effect, LoadEffectFlags load_flags);
+    QString internalName(const QString& name) const;
+    EffectLoadQueue<BuiltInEffectLoader, BuiltInEffect>* m_queue;
     QMap<BuiltInEffect, Effect*> m_loadedEffects;
 };
 
@@ -309,20 +314,20 @@ public:
     explicit ScriptedEffectLoader(QObject* parent = nullptr);
     ~ScriptedEffectLoader() override;
 
-    bool hasEffect(const QString &name) const override;
-    bool isEffectSupported(const QString &name) const override;
+    bool hasEffect(const QString& name) const override;
+    bool isEffectSupported(const QString& name) const override;
     QStringList listOfKnownEffects() const override;
 
     void clear() override;
     void queryAndLoadAll() override;
-    bool loadEffect(const QString &name) override;
-    bool loadEffect(const KPluginMetaData &effect, LoadEffectFlags flags);
+    bool loadEffect(const QString& name) override;
+    bool loadEffect(const KPluginMetaData& effect, LoadEffectFlags flags);
 
 private:
     QList<KPluginMetaData> findAllEffects() const;
-    KPluginMetaData findEffect(const QString &name) const;
+    KPluginMetaData findEffect(const QString& name) const;
     QStringList m_loadedEffects;
-    EffectLoadQueue< ScriptedEffectLoader, KPluginMetaData > *m_queue;
+    EffectLoadQueue<ScriptedEffectLoader, KPluginMetaData>* m_queue;
     QMetaObject::Connection m_queryConnection;
 };
 
@@ -330,26 +335,26 @@ class PluginEffectLoader : public AbstractEffectLoader
 {
     Q_OBJECT
 public:
-    explicit PluginEffectLoader(QObject *parent = nullptr);
+    explicit PluginEffectLoader(QObject* parent = nullptr);
     ~PluginEffectLoader() override;
 
-    bool hasEffect(const QString &name) const override;
-    bool isEffectSupported(const QString &name) const override;
+    bool hasEffect(const QString& name) const override;
+    bool isEffectSupported(const QString& name) const override;
     QStringList listOfKnownEffects() const override;
 
     void clear() override;
     void queryAndLoadAll() override;
-    bool loadEffect(const QString &name) override;
-    bool loadEffect(const KPluginMetaData &info, LoadEffectFlags load_flags);
+    bool loadEffect(const QString& name) override;
+    bool loadEffect(const KPluginMetaData& info, LoadEffectFlags load_flags);
 
-    void setPluginSubDirectory(const QString &directory);
+    void setPluginSubDirectory(const QString& directory);
 
 private:
     QVector<KPluginMetaData> findAllEffects() const;
-    KPluginMetaData findEffect(const QString &name) const;
-    EffectPluginFactory *factory(const KPluginMetaData &info) const;
+    KPluginMetaData findEffect(const QString& name) const;
+    EffectPluginFactory* factory(const KPluginMetaData& info) const;
     QStringList m_loadedEffects;
-    EffectLoadQueue< PluginEffectLoader, KPluginMetaData> *m_queue;
+    EffectLoadQueue<PluginEffectLoader, KPluginMetaData>* m_queue;
     QString m_pluginSubDirectory;
     QMetaObject::Connection m_queryConnection;
 };
@@ -358,12 +363,12 @@ class EffectLoader : public AbstractEffectLoader
 {
     Q_OBJECT
 public:
-    explicit EffectLoader(QObject *parent = nullptr);
+    explicit EffectLoader(QObject* parent = nullptr);
     ~EffectLoader() override;
-    bool hasEffect(const QString &name) const override;
-    bool isEffectSupported(const QString &name) const override;
+    bool hasEffect(const QString& name) const override;
+    bool isEffectSupported(const QString& name) const override;
     QStringList listOfKnownEffects() const override;
-    bool loadEffect(const QString &name) override;
+    bool loadEffect(const QString& name) override;
     void queryAndLoadAll() override;
     void setConfig(KSharedConfig::Ptr config) override;
     void clear() override;

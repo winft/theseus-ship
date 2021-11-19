@@ -21,14 +21,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "lanczosfilter.h"
 #include "effects.h"
-#include "screens.h"
 #include "options.h"
+#include "screens.h"
 #include "workspace.h"
 
 #include <logging.h>
 
-#include <kwinglutils.h>
 #include <kwinglplatform.h>
+#include <kwinglutils.h>
 
 #include <kwineffects.h>
 
@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-LanczosFilter::LanczosFilter(Scene *parent)
+LanczosFilter::LanczosFilter(Scene* parent)
     : QObject(parent)
     , m_offscreenTex(nullptr)
     , m_offscreenTarget(nullptr)
@@ -71,7 +71,7 @@ void LanczosFilter::init()
     if (!GLRenderTarget::supported())
         return;
 
-    GLPlatform *gl = GLPlatform::instance();
+    GLPlatform* gl = GLPlatform::instance();
     if (!force) {
         // The lanczos filter is reported to be broken with the Intel driver prior SandyBridge
         if (gl->driver() == Driver_Intel && gl->chipClass() < SandyBridge)
@@ -84,28 +84,28 @@ void LanczosFilter::init()
             return;
         }
     }
-    QFile ff(gl->glslVersion() >= kVersionNumber(1, 40) ?
-             QStringLiteral(":/scenes/opengl/shaders/1.40/lanczos-fragment.glsl") :
-             QStringLiteral(":/scenes/opengl/shaders/1.10/lanczos-fragment.glsl"));
+    QFile ff(gl->glslVersion() >= kVersionNumber(1, 40)
+                 ? QStringLiteral(":/scenes/opengl/shaders/1.40/lanczos-fragment.glsl")
+                 : QStringLiteral(":/scenes/opengl/shaders/1.10/lanczos-fragment.glsl"));
     if (!ff.open(QIODevice::ReadOnly)) {
         qCDebug(KWIN_OPENGL) << "Failed to open lanczos shader";
         return;
     }
-    m_shader.reset(ShaderManager::instance()->generateCustomShader(ShaderTrait::MapTexture, QByteArray(), ff.readAll()));
+    m_shader.reset(ShaderManager::instance()->generateCustomShader(
+        ShaderTrait::MapTexture, QByteArray(), ff.readAll()));
     if (m_shader->isValid()) {
         ShaderBinder binder(m_shader.data());
-        m_uKernel     = m_shader->uniformLocation("kernel");
-        m_uOffsets    = m_shader->uniformLocation("offsets");
+        m_uKernel = m_shader->uniformLocation("kernel");
+        m_uOffsets = m_shader->uniformLocation("offsets");
     } else {
         qCDebug(KWIN_OPENGL) << "Shader is not valid";
         m_shader.reset();
     }
 }
 
-
 void LanczosFilter::updateOffscreenSurfaces()
 {
-    const QSize &s = screens()->size();
+    const QSize& s = screens()->size();
     int w = s.width();
     int h = s.height();
 
@@ -137,7 +137,7 @@ static float lanczos(float x, float a)
     return sinc(x) * sinc(x / a);
 }
 
-void LanczosFilter::createKernel(float delta, int *size)
+void LanczosFilter::createKernel(float delta, int* size)
 {
     const float a = 2.0;
 
@@ -172,20 +172,25 @@ void LanczosFilter::createOffsets(int count, float width, Qt::Orientation direct
 {
     m_offsets.fill(QVector2D());
     for (int i = 0; i < count; i++) {
-        m_offsets[i] = (direction == Qt::Horizontal) ?
-                       QVector2D(i / width, 0) : QVector2D(0, i / width);
+        m_offsets[i]
+            = (direction == Qt::Horizontal) ? QVector2D(i / width, 0) : QVector2D(0, i / width);
     }
 }
 
-void LanczosFilter::performPaint(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data)
+void LanczosFilter::performPaint(EffectWindowImpl* w,
+                                 int mask,
+                                 QRegion region,
+                                 WindowPaintData& data)
 {
     if (data.xScale() < 0.9 || data.yScale() < 0.9) {
         if (!m_inited)
             init();
-        const QRect screenRect = Workspace::self()->clientArea(ScreenArea, w->screen(), w->desktop());
+        const QRect screenRect
+            = Workspace::self()->clientArea(ScreenArea, w->screen(), w->desktop());
         // window geometry may not be bigger than screen geometry to fit into the FBO
         QRect winGeo(w->expandedGeometry());
-        if (m_shader && winGeo.width() <= screenRect.width() && winGeo.height() <= screenRect.height()) {
+        if (m_shader && winGeo.width() <= screenRect.width()
+            && winGeo.height() <= screenRect.height()) {
             winGeo.translate(-w->geometry().topLeft());
             double left = winGeo.left();
             double top = winGeo.top();
@@ -197,12 +202,13 @@ void LanczosFilter::performPaint(EffectWindowImpl* w, int mask, QRegion region, 
             int tw = width * data.xScale();
             int th = height * data.yScale();
             const QRect textureRect(tx, ty, tw, th);
-            const bool hardwareClipping = !(QRegion(textureRect)-region).isEmpty();
+            const bool hardwareClipping = !(QRegion(textureRect) - region).isEmpty();
 
             int sw = width;
             int sh = height;
 
-            GLTexture *cachedTexture = static_cast< GLTexture*>(w->data(LanczosCacheRole).value<void*>());
+            GLTexture* cachedTexture
+                = static_cast<GLTexture*>(w->data(LanczosCacheRole).value<void*>());
             if (cachedTexture) {
                 if (cachedTexture->width() == tw && cachedTexture->height() == th) {
                     cachedTexture->bind();
@@ -219,7 +225,7 @@ void LanczosFilter::performPaint(EffectWindowImpl* w, int mask, QRegion region, 
                     ShaderBinder binder(QFlags({ShaderTrait::MapTexture,
                                                 ShaderTrait::Modulate,
                                                 ShaderTrait::AdjustSaturation}));
-                    GLShader *shader = binder.shader();
+                    GLShader* shader = binder.shader();
                     QMatrix4x4 mvp = data.screenProjectionMatrix();
                     mvp.translate(textureRect.x(), textureRect.y());
                     shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
@@ -257,7 +263,8 @@ void LanczosFilter::performPaint(EffectWindowImpl* w, int mask, QRegion region, 
             GLRenderTarget::pushRenderTarget(m_offscreenTarget);
 
             QMatrix4x4 modelViewProjectionMatrix;
-            modelViewProjectionMatrix.ortho(0, m_offscreenTex->width(), m_offscreenTex->height(), 0 , 0, 65535);
+            modelViewProjectionMatrix.ortho(
+                0, m_offscreenTex->width(), m_offscreenTex->height(), 0, 0, 65535);
             thumbData.setProjectionMatrix(modelViewProjectionMatrix);
 
             glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -289,13 +296,19 @@ void LanczosFilter::performPaint(EffectWindowImpl* w, int mask, QRegion region, 
             verts.reserve(12);
             texCoords.reserve(12);
 
-            texCoords << 1.0 << 0.0; verts << tw  << 0.0; // Top right
-            texCoords << 0.0 << 0.0; verts << 0.0 << 0.0; // Top left
-            texCoords << 0.0 << 1.0; verts << 0.0 << sh;  // Bottom left
-            texCoords << 0.0 << 1.0; verts << 0.0 << sh;  // Bottom left
-            texCoords << 1.0 << 1.0; verts << tw  << sh;  // Bottom right
-            texCoords << 1.0 << 0.0; verts << tw  << 0.0; // Top right
-            GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
+            texCoords << 1.0 << 0.0;
+            verts << tw << 0.0; // Top right
+            texCoords << 0.0 << 0.0;
+            verts << 0.0 << 0.0; // Top left
+            texCoords << 0.0 << 1.0;
+            verts << 0.0 << sh; // Bottom left
+            texCoords << 0.0 << 1.0;
+            verts << 0.0 << sh; // Bottom left
+            texCoords << 1.0 << 1.0;
+            verts << tw << sh; // Bottom right
+            texCoords << 1.0 << 0.0;
+            verts << tw << 0.0; // Top right
+            GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
             vbo->reset();
             vbo->setData(6, 2, verts.constData(), texCoords.constData());
             vbo->render(GL_TRIANGLES);
@@ -324,12 +337,12 @@ void LanczosFilter::performPaint(EffectWindowImpl* w, int mask, QRegion region, 
 
             verts.clear();
 
-            verts << tw  << 0.0; // Top right
+            verts << tw << 0.0;  // Top right
             verts << 0.0 << 0.0; // Top left
             verts << 0.0 << th;  // Bottom left
             verts << 0.0 << th;  // Bottom left
-            verts << tw  << th;  // Bottom right
-            verts << tw  << 0.0; // Top right
+            verts << tw << th;   // Bottom right
+            verts << tw << 0.0;  // Top right
             vbo->setData(6, 2, verts.constData(), texCoords.constData());
             vbo->render(GL_TRIANGLES);
 
@@ -338,7 +351,7 @@ void LanczosFilter::performPaint(EffectWindowImpl* w, int mask, QRegion region, 
             ShaderManager::instance()->popShader();
 
             // create cache texture
-            GLTexture *cache = new GLTexture(GL_RGBA8, tw, th);
+            GLTexture* cache = new GLTexture(GL_RGBA8, tw, th);
 
             cache->setFilter(GL_LINEAR);
             cache->setWrapMode(GL_CLAMP_TO_EDGE);
@@ -356,10 +369,9 @@ void LanczosFilter::performPaint(EffectWindowImpl* w, int mask, QRegion region, 
             const qreal rgb = data.brightness() * data.opacity();
             const qreal a = data.opacity();
 
-            ShaderBinder binder(QFlags({ShaderTrait::MapTexture,
-                                        ShaderTrait::Modulate,
-                                        ShaderTrait::AdjustSaturation}));
-            GLShader *shader = binder.shader();
+            ShaderBinder binder(QFlags(
+                {ShaderTrait::MapTexture, ShaderTrait::Modulate, ShaderTrait::AdjustSaturation}));
+            GLShader* shader = binder.shader();
             QMatrix4x4 mvp = data.screenProjectionMatrix();
             mvp.translate(textureRect.x(), textureRect.y());
             shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
@@ -385,7 +397,7 @@ void LanczosFilter::performPaint(EffectWindowImpl* w, int mask, QRegion region, 
     w->sceneWindow()->performPaint(mask, region, data);
 } // End of function
 
-void LanczosFilter::timerEvent(QTimerEvent *event)
+void LanczosFilter::timerEvent(QTimerEvent* event)
 {
     if (event->timerId() == m_timer.timerId()) {
         m_timer.stop();
@@ -397,19 +409,18 @@ void LanczosFilter::timerEvent(QTimerEvent *event)
         m_offscreenTarget = nullptr;
         m_offscreenTex = nullptr;
 
-        workspace()->forEachToplevel([this](Toplevel *toplevel) {
-            discardCacheTexture(toplevel->effectWindow());
-        });
+        workspace()->forEachToplevel(
+            [this](Toplevel* toplevel) { discardCacheTexture(toplevel->effectWindow()); });
 
         m_scene->doneOpenGLContextCurrent();
     }
 }
 
-void LanczosFilter::discardCacheTexture(EffectWindow *w)
+void LanczosFilter::discardCacheTexture(EffectWindow* w)
 {
     QVariant cachedTextureVariant = w->data(LanczosCacheRole);
     if (cachedTextureVariant.isValid()) {
-        delete static_cast< GLTexture*>(cachedTextureVariant.value<void*>());
+        delete static_cast<GLTexture*>(cachedTextureVariant.value<void*>());
         w->setData(LanczosCacheRole, QVariant());
     }
 }
@@ -421,4 +432,3 @@ void LanczosFilter::setUniforms()
 }
 
 } // namespace
-

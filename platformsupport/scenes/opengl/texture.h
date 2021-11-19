@@ -33,18 +33,18 @@ class WindowPixmap;
 class SceneOpenGLTexture : public GLTexture
 {
 public:
-    explicit SceneOpenGLTexture(OpenGLBackend *backend);
+    explicit SceneOpenGLTexture(OpenGLBackend* backend);
     ~SceneOpenGLTexture() override;
 
-    SceneOpenGLTexture & operator = (const SceneOpenGLTexture& tex);
+    SceneOpenGLTexture& operator=(const SceneOpenGLTexture& tex);
 
     void discard() override final;
 
 private:
     SceneOpenGLTexture(SceneOpenGLTexturePrivate& dd);
 
-    bool load(WindowPixmap *pixmap);
-    void updateFromPixmap(WindowPixmap *pixmap);
+    bool load(WindowPixmap* pixmap);
+    void updateFromPixmap(WindowPixmap* pixmap);
 
     Q_DECLARE_PRIVATE(SceneOpenGLTexture)
 
@@ -56,9 +56,9 @@ class SceneOpenGLTexturePrivate : public GLTexturePrivate
 public:
     ~SceneOpenGLTexturePrivate() override;
 
-    virtual bool loadTexture(WindowPixmap *pixmap) = 0;
-    virtual void updateTexture(WindowPixmap *pixmap);
-    virtual OpenGLBackend *backend() = 0;
+    virtual bool loadTexture(WindowPixmap* pixmap) = 0;
+    virtual void updateTexture(WindowPixmap* pixmap);
+    virtual OpenGLBackend* backend() = 0;
 
 protected:
     SceneOpenGLTexturePrivate();

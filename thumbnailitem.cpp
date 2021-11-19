@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "thumbnailitem.h"
 
-#include "render/compositor.h"
 #include "effects.h"
+#include "render/compositor.h"
 #include "win/control.h"
 #include "workspace.h"
-// Qt
+
 #include <QDebug>
 #include <QPainter>
 #include <QQuickWindow>
@@ -31,14 +31,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-AbstractThumbnailItem::AbstractThumbnailItem(QQuickItem *parent)
+AbstractThumbnailItem::AbstractThumbnailItem(QQuickItem* parent)
     : QQuickPaintedItem(parent)
     , m_brightness(1.0)
     , m_saturation(1.0)
     , m_clipToItem()
 {
-    connect(render::compositor::self(), &render::compositor::compositingToggled,
-            this, &AbstractThumbnailItem::compositingToggled);
+    connect(render::compositor::self(),
+            &render::compositor::compositingToggled,
+            this,
+            &AbstractThumbnailItem::compositingToggled);
     compositingToggled();
     QTimer::singleShot(0, this, &AbstractThumbnailItem::init);
 }
@@ -51,7 +53,8 @@ void AbstractThumbnailItem::compositingToggled()
 {
     m_parent.clear();
     if (effects) {
-        connect(effects, &EffectsHandler::windowAdded, this, &AbstractThumbnailItem::effectWindowAdded);
+        connect(
+            effects, &EffectsHandler::windowAdded, this, &AbstractThumbnailItem::effectWindowAdded);
         connect(effects, &EffectsHandler::windowDamaged, this, &AbstractThumbnailItem::repaint);
         effectWindowAdded();
     }
@@ -68,12 +71,12 @@ void AbstractThumbnailItem::init()
 void AbstractThumbnailItem::findParentEffectWindow()
 {
     if (effects) {
-        QQuickWindow *qw = window();
+        QQuickWindow* qw = window();
         if (!qw) {
             qCDebug(KWIN_CORE) << "No QQuickWindow assigned yet";
             return;
         }
-        if (auto *w = static_cast<EffectWindowImpl*>(effects->findWindow(qw))) {
+        if (auto* w = static_cast<EffectWindowImpl*>(effects->findWindow(qw))) {
             m_parent = QPointer<EffectWindowImpl>(w);
         }
     }
@@ -111,7 +114,7 @@ void AbstractThumbnailItem::setSaturation(qreal saturation)
     Q_EMIT saturationChanged();
 }
 
-void AbstractThumbnailItem::setClipTo(QQuickItem *clip)
+void AbstractThumbnailItem::setClipTo(QQuickItem* clip)
 {
     m_clipToItem = QPointer<QQuickItem>(clip);
     Q_EMIT clipToChanged();
@@ -128,14 +131,15 @@ WindowThumbnailItem::~WindowThumbnailItem()
 {
 }
 
-void WindowThumbnailItem::setWId(const QUuid &wId)
+void WindowThumbnailItem::setWId(const QUuid& wId)
 {
     if (m_wId == wId) {
         return;
     }
     m_wId = wId;
     if (m_wId != nullptr) {
-        setClient(workspace()->findAbstractClient([this] (Toplevel const* c) { return c->internalId() == m_wId; }));
+        setClient(workspace()->findAbstractClient(
+            [this](Toplevel const* c) { return c->internalId() == m_wId; }));
     } else if (m_client) {
         m_client = nullptr;
         Q_EMIT clientChanged();
@@ -157,29 +161,34 @@ void WindowThumbnailItem::setClient(Toplevel* window)
     Q_EMIT clientChanged();
 }
 
-void WindowThumbnailItem::paint(QPainter *painter)
+void WindowThumbnailItem::paint(QPainter* painter)
 {
     if (effects) {
         return;
     }
-    auto client = workspace()->findAbstractClient([this] (Toplevel const* c) { return c->internalId() == m_wId; });
+    auto client = workspace()->findAbstractClient(
+        [this](Toplevel const* c) { return c->internalId() == m_wId; });
     if (!client) {
         return;
     }
     auto pixmap = client->control->icon().pixmap(boundingRect().size().toSize());
     const QSize size(boundingRect().size().toSize() - pixmap.size());
-    painter->drawPixmap(boundingRect().adjusted(size.width()/2.0, size.height()/2.0, -size.width()/2.0, -size.height()/2.0).toRect(),
-                        pixmap);
+    painter->drawPixmap(
+        boundingRect()
+            .adjusted(
+                size.width() / 2.0, size.height() / 2.0, -size.width() / 2.0, -size.height() / 2.0)
+            .toRect(),
+        pixmap);
 }
 
-void WindowThumbnailItem::repaint(KWin::EffectWindow *w)
+void WindowThumbnailItem::repaint(KWin::EffectWindow* w)
 {
     if (static_cast<KWin::EffectWindowImpl*>(w)->window()->internalId() == m_wId) {
         update();
     }
 }
 
-DesktopThumbnailItem::DesktopThumbnailItem(QQuickItem *parent)
+DesktopThumbnailItem::DesktopThumbnailItem(QQuickItem* parent)
     : AbstractThumbnailItem(parent)
     , m_desktop(0)
 {
@@ -200,7 +209,7 @@ void DesktopThumbnailItem::setDesktop(int desktop)
     Q_EMIT desktopChanged(m_desktop);
 }
 
-void DesktopThumbnailItem::paint(QPainter *painter)
+void DesktopThumbnailItem::paint(QPainter* painter)
 {
     Q_UNUSED(painter)
     if (effects) {
@@ -209,7 +218,7 @@ void DesktopThumbnailItem::paint(QPainter *painter)
     // TODO: render icon
 }
 
-void DesktopThumbnailItem::repaint(EffectWindow *w)
+void DesktopThumbnailItem::repaint(EffectWindow* w)
 {
     if (w->isOnDesktop(m_desktop)) {
         update();

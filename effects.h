@@ -18,7 +18,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_EFFECTSIMPL_H
 #define KWIN_EFFECTSIMPL_H
 
@@ -26,9 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "scene.h"
 
+#include <Plasma/FrameSvg>
 #include <QHash>
 #include <QMouseEvent>
-#include <Plasma/FrameSvg>
 
 #include <memory>
 
@@ -81,29 +80,39 @@ class KWIN_EXPORT EffectsHandlerImpl : public EffectsHandler
     Q_PROPERTY(QStringList loadedEffects READ loadedEffects)
     Q_PROPERTY(QStringList listOfEffects READ listOfEffects)
 public:
-    EffectsHandlerImpl(render::compositor* compositor, Scene *scene);
+    EffectsHandlerImpl(render::compositor* compositor, Scene* scene);
     ~EffectsHandlerImpl() override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
+    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
     /**
      * Special hook to perform a paintScreen but just with the windows on @p desktop.
      */
     void paintDesktop(int desktop, int mask, QRegion region, ScreenPaintData& data);
     void postPaintScreen() override;
-    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow* w, int mask, const QRegion &region, WindowPaintData& data) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
+    void
+    paintWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data) override;
     void postPaintWindow(EffectWindow* w) override;
-    void paintEffectFrame(EffectFrame* frame, const QRegion &region, double opacity, double frameOpacity) override;
+    void paintEffectFrame(EffectFrame* frame,
+                          const QRegion& region,
+                          double opacity,
+                          double frameOpacity) override;
 
-    Effect *provides(Effect::Feature ef);
+    Effect* provides(Effect::Feature ef);
 
-    void drawWindow(EffectWindow* w, int mask, const QRegion &region, WindowPaintData& data) override;
+    void
+    drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data) override;
 
     void buildQuads(EffectWindow* w, WindowQuadList& quadList) override;
 
     void activateWindow(EffectWindow* c) override;
     EffectWindow* activeWindow() const override;
-    void moveWindow(EffectWindow* w, const QPoint& pos, bool snap = false, double snapAdjust = 1.0) override;
+    void moveWindow(EffectWindow* w,
+                    const QPoint& pos,
+                    bool snap = false,
+                    double snapAdjust = 1.0) override;
     void windowToDesktop(EffectWindow* w, int desktop) override;
     void windowToScreen(EffectWindow* w, int screen) override;
     void setShowingDesktop(bool showing) override;
@@ -132,20 +141,24 @@ public:
     bool grabKeyboard(Effect* effect) override;
     void ungrabKeyboard() override;
     // not performing XGrabPointer
-    void startMouseInterception(Effect *effect, Qt::CursorShape shape) override;
-    void stopMouseInterception(Effect *effect) override;
+    void startMouseInterception(Effect* effect, Qt::CursorShape shape) override;
+    void stopMouseInterception(Effect* effect) override;
     bool isMouseInterception() const;
-    void registerGlobalShortcut(const QKeySequence &shortcut, QAction *action) override;
-    void registerPointerShortcut(Qt::KeyboardModifiers modifiers, Qt::MouseButton pointerButtons, QAction *action) override;
-    void registerAxisShortcut(Qt::KeyboardModifiers modifiers, PointerAxisDirection axis, QAction *action) override;
-    void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction *action) override;
+    void registerGlobalShortcut(const QKeySequence& shortcut, QAction* action) override;
+    void registerPointerShortcut(Qt::KeyboardModifiers modifiers,
+                                 Qt::MouseButton pointerButtons,
+                                 QAction* action) override;
+    void registerAxisShortcut(Qt::KeyboardModifiers modifiers,
+                              PointerAxisDirection axis,
+                              QAction* action) override;
+    void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action) override;
     void* getProxy(QString name) override;
     void startMousePolling() override;
     void stopMousePolling() override;
     EffectWindow* findWindow(WId id) const override;
-    EffectWindow* findWindow(Wrapland::Server::Surface *surf) const override;
-    EffectWindow *findWindow(QWindow *w) const override;
-    EffectWindow *findWindow(const QUuid &id) const override;
+    EffectWindow* findWindow(Wrapland::Server::Surface* surf) const override;
+    EffectWindow* findWindow(QWindow* w) const override;
+    EffectWindow* findWindow(const QUuid& id) const override;
     EffectWindowList stackingOrder() const override;
     void setElevatedWindow(KWin::EffectWindow* w, bool set) override;
 
@@ -155,7 +168,7 @@ public:
     void refTabBox() override;
     void unrefTabBox() override;
     void closeTabBox() override;
-    QList< int > currentTabBoxDesktopList() const override;
+    QList<int> currentTabBoxDesktopList() const override;
     int currentTabBoxDesktop() const override;
     EffectWindow* currentTabBoxWindow() const override;
 
@@ -179,15 +192,15 @@ public:
     WindowQuadType newWindowQuadType() override;
 
     void defineCursor(Qt::CursorShape shape) override;
-    bool checkInputWindowEvent(QMouseEvent *e);
-    bool checkInputWindowEvent(QWheelEvent *e);
+    bool checkInputWindowEvent(QMouseEvent* e);
+    bool checkInputWindowEvent(QWheelEvent* e);
     void checkInputWindowStacking();
 
-    void reserveElectricBorder(ElectricBorder border, Effect *effect) override;
-    void unreserveElectricBorder(ElectricBorder border, Effect *effect) override;
+    void reserveElectricBorder(ElectricBorder border, Effect* effect) override;
+    void unreserveElectricBorder(ElectricBorder border, Effect* effect) override;
 
-    void registerTouchBorder(ElectricBorder border, QAction *action) override;
-    void unregisterTouchBorder(ElectricBorder border, QAction *action) override;
+    void registerTouchBorder(ElectricBorder border, QAction* action) override;
+    void unregisterTouchBorder(ElectricBorder border, QAction* action) override;
 
     unsigned long xrenderBufferPicture() override;
     QPainter* scenePainter() override;
@@ -202,7 +215,10 @@ public:
 
     bool decorationSupportsBlurBehind() const override;
 
-    EffectFrame* effectFrame(EffectFrameStyle style, bool staticSize, const QPoint& position, Qt::Alignment alignment) const override;
+    EffectFrame* effectFrame(EffectFrameStyle style,
+                             bool staticSize,
+                             const QPoint& position,
+                             Qt::Alignment alignment) const override;
 
     QVariant kwinOption(KWinOption kwopt) override;
     bool isScreenLocked() const override;
@@ -210,16 +226,16 @@ public:
     bool makeOpenGLContextCurrent() override;
     void doneOpenGLContextCurrent() override;
 
-    xcb_connection_t *xcbConnection() const override;
+    xcb_connection_t* xcbConnection() const override;
     xcb_window_t x11RootWindow() const override;
 
     // internal (used by kwin core or compositing code)
     void startPaint();
     void grabbedKeyboardEvent(QKeyEvent* e);
     bool hasKeyboardGrab() const;
-    void desktopResized(const QSize &size);
+    void desktopResized(const QSize& size);
 
-    void reloadEffect(Effect *effect) override;
+    void reloadEffect(Effect* effect) override;
     QStringList loadedEffects() const;
     QStringList listOfEffects() const;
     void unloadAllEffects();
@@ -228,19 +244,22 @@ public:
     QStringList activeEffects() const;
 
     /**
-     * @returns Whether we are currently in a desktop rendering process triggered by paintDesktop hook
+     * @returns Whether we are currently in a desktop rendering process triggered by paintDesktop
+     * hook
      */
-    bool isDesktopRendering() const {
+    bool isDesktopRendering() const
+    {
         return m_desktopRendering;
     }
     /**
      * @returns the desktop currently being rendered in the paintDesktop hook.
      */
-    int currentRenderedDesktop() const {
+    int currentRenderedDesktop() const
+    {
         return m_currentRenderedDesktop;
     }
 
-    Wrapland::Server::Display *waylandDisplay() const override;
+    Wrapland::Server::Display* waylandDisplay() const override;
 
     bool animationsSupported() const override;
 
@@ -249,30 +268,33 @@ public:
     void hideCursor() override;
     void showCursor() override;
 
-    void startInteractiveWindowSelection(std::function<void(KWin::EffectWindow*)> callback) override;
-    void startInteractivePositionSelection(std::function<void(const QPoint &)> callback) override;
+    void
+    startInteractiveWindowSelection(std::function<void(KWin::EffectWindow*)> callback) override;
+    void startInteractivePositionSelection(std::function<void(const QPoint&)> callback) override;
 
-    void showOnScreenMessage(const QString &message, const QString &iconName = QString()) override;
+    void showOnScreenMessage(const QString& message, const QString& iconName = QString()) override;
     void hideOnScreenMessage(OnScreenMessageHideFlags flags = OnScreenMessageHideFlags()) override;
 
     KSharedConfigPtr config() const override;
     KSharedConfigPtr inputConfig() const override;
 
-    Scene *scene() const {
+    Scene* scene() const
+    {
         return m_scene;
     }
 
-    bool touchDown(qint32 id, const QPointF &pos, quint32 time);
-    bool touchMotion(qint32 id, const QPointF &pos, quint32 time);
+    bool touchDown(qint32 id, const QPointF& pos, quint32 time);
+    bool touchMotion(qint32 id, const QPointF& pos, quint32 time);
     bool touchUp(qint32 id, quint32 time);
 
-    void highlightWindows(const QVector<EffectWindow *> &windows);
+    void highlightWindows(const QVector<EffectWindow*>& windows);
 
-    bool isPropertyTypeRegistered(xcb_atom_t atom) const {
+    bool isPropertyTypeRegistered(xcb_atom_t atom) const
+    {
         return registered_atoms.contains(atom);
     }
 
-    void windowToDesktops(EffectWindow *w, const QVector<uint> &desktops) override;
+    void windowToDesktops(EffectWindow* w, const QVector<uint>& desktops) override;
 
     /**
      * Finds an effect with the given name.
@@ -281,15 +303,15 @@ public:
      * @returns The effect with the given name @p name, or nullptr if there
      *     is no such effect loaded.
      */
-    Effect *findEffect(const QString &name) const;
+    Effect* findEffect(const QString& name) const;
 
-    void renderEffectQuickView(EffectQuickView *effectQuickView) const override;
+    void renderEffectQuickView(EffectQuickView* effectQuickView) const override;
 
     SessionState sessionState() const override;
-    QList<EffectScreen *> screens() const override;
-    EffectScreen *screenAt(const QPoint &point) const override;
-    EffectScreen *findScreen(const QString &name) const override;
-    EffectScreen *findScreen(int screenId) const override;
+    QList<EffectScreen*> screens() const override;
+    EffectScreen* screenAt(const QPoint& point) const override;
+    EffectScreen* findScreen(const QString& name) const override;
+    EffectScreen* findScreen(int screenId) const override;
 
 public Q_SLOTS:
     void slotCurrentTabAboutToChange(EffectWindow* from, EffectWindow* to);
@@ -303,7 +325,7 @@ public Q_SLOTS:
     Q_SCRIPTABLE void unloadEffect(const QString& name);
     Q_SCRIPTABLE bool isEffectLoaded(const QString& name) const;
     Q_SCRIPTABLE bool isEffectSupported(const QString& name);
-    Q_SCRIPTABLE QList<bool> areEffectsSupported(const QStringList &names);
+    Q_SCRIPTABLE QList<bool> areEffectsSupported(const QStringList& names);
     Q_SCRIPTABLE QString supportInformation(const QString& name) const;
     Q_SCRIPTABLE QString debug(const QString& name, const QString& parameter = QString()) const;
 
@@ -311,24 +333,24 @@ protected Q_SLOTS:
     void slotClientShown(KWin::Toplevel*);
     void slotXdgShellClientShown(KWin::Toplevel*);
     void slotUnmanagedShown(KWin::Toplevel*);
-    void slotWindowClosed(KWin::Toplevel *c, KWin::Toplevel* remnant);
+    void slotWindowClosed(KWin::Toplevel* c, KWin::Toplevel* remnant);
     void slotClientMaximized(KWin::Toplevel* window, win::maximize_mode maxMode);
-    void slotOpacityChanged(KWin::Toplevel *t, qreal oldOpacity);
+    void slotOpacityChanged(KWin::Toplevel* t, qreal oldOpacity);
     void slotClientModalityChanged();
-    void slotGeometryShapeChanged(KWin::Toplevel *t, const QRect &old);
-    void slotFrameGeometryChanged(Toplevel *toplevel, const QRect &oldGeometry);
-    void slotPaddingChanged(KWin::Toplevel *t, const QRect &old);
-    void slotWindowDamaged(KWin::Toplevel *t, const QRegion& r);
+    void slotGeometryShapeChanged(KWin::Toplevel* t, const QRect& old);
+    void slotFrameGeometryChanged(Toplevel* toplevel, const QRect& oldGeometry);
+    void slotPaddingChanged(KWin::Toplevel* t, const QRect& old);
+    void slotWindowDamaged(KWin::Toplevel* t, const QRegion& r);
     void slotOutputEnabled(base::output* output);
     void slotOutputDisabled(base::output* output);
 
 protected:
-    void connectNotify(const QMetaMethod &signal) override;
-    void disconnectNotify(const QMetaMethod &signal) override;
+    void connectNotify(const QMetaMethod& signal) override;
+    void disconnectNotify(const QMetaMethod& signal) override;
     void effectsChanged();
     void setupAbstractClientConnections(Toplevel* window);
-    void setupClientConnections(KWin::win::x11::window *c);
-    void setupUnmanagedConnections(Toplevel *u);
+    void setupClientConnections(KWin::win::x11::window* c);
+    void setupUnmanagedConnections(Toplevel* u);
 
     /**
      * Default implementation does nothing and returns @c true.
@@ -357,15 +379,15 @@ protected:
     Effect* keyboard_grab_effect;
     Effect* fullscreen_effect;
     QList<EffectWindow*> elevated_windows;
-    QMultiMap< int, EffectPair > effect_order;
-    QHash< long, int > registered_atoms;
+    QMultiMap<int, EffectPair> effect_order;
+    QHash<long, int> registered_atoms;
     int next_window_quad_type;
 
 private:
     void registerPropertyType(long atom, bool reg);
-    void destroyEffect(Effect *effect);
+    void destroyEffect(Effect* effect);
 
-    typedef QVector< Effect*> EffectsList;
+    typedef QVector<Effect*> EffectsList;
     typedef EffectsList::const_iterator EffectsIterator;
     EffectsList m_activeEffects;
     EffectsIterator m_currentDrawWindowIterator;
@@ -373,18 +395,18 @@ private:
     EffectsIterator m_currentPaintEffectFrameIterator;
     EffectsIterator m_currentPaintScreenIterator;
     EffectsIterator m_currentBuildQuadsIterator;
-    typedef QHash< QByteArray, QList< Effect*> > PropertyEffectMap;
+    typedef QHash<QByteArray, QList<Effect*>> PropertyEffectMap;
     PropertyEffectMap m_propertiesForEffects;
     QHash<QByteArray, qulonglong> m_managedProperties;
-    render::compositor *m_compositor;
-    Scene *m_scene;
+    render::compositor* m_compositor;
+    Scene* m_scene;
     bool m_desktopRendering;
     int m_currentRenderedDesktop;
     QList<Effect*> m_grabbedMouseEffects;
-    EffectLoader *m_effectLoader;
+    EffectLoader* m_effectLoader;
     int m_trackingCursorChanges;
     std::unique_ptr<win::x11::window_property_notify_filter> m_x11WindowPropertyNotify;
-    QList<EffectScreen *> m_effectScreens;
+    QList<EffectScreen*> m_effectScreens;
 };
 
 class EffectScreenImpl : public EffectScreen
@@ -392,7 +414,7 @@ class EffectScreenImpl : public EffectScreen
     Q_OBJECT
 
 public:
-    explicit EffectScreenImpl(base::output* output, QObject *parent = nullptr);
+    explicit EffectScreenImpl(base::output* output, QObject* parent = nullptr);
 
     base::output* platformOutput() const;
 
@@ -408,17 +430,17 @@ class KWIN_EXPORT EffectWindowImpl : public EffectWindow
 {
     Q_OBJECT
 public:
-    explicit EffectWindowImpl(Toplevel *toplevel);
+    explicit EffectWindowImpl(Toplevel* toplevel);
     ~EffectWindowImpl() override;
 
     void enablePainting(int reason) override;
     void disablePainting(int reason) override;
     bool isPaintingEnabled() override;
 
-    void addRepaint(const QRect &r) override;
+    void addRepaint(const QRect& r) override;
     void addRepaint(int x, int y, int w, int h) override;
     void addRepaintFull() override;
-    void addLayerRepaint(const QRect &r) override;
+    void addLayerRepaint(const QRect& r) override;
     void addLayerRepaint(int x, int y, int w, int h) override;
 
     void refWindow() override;
@@ -486,7 +508,7 @@ public:
     bool isOutline() const override;
     bool isLockScreen() const override;
 
-    Wrapland::Server::Surface *surface() const override;
+    Wrapland::Server::Surface* surface() const override;
     bool isFullScreen() const override;
     bool isUnresponsive() const override;
 
@@ -522,66 +544,72 @@ public:
     void referencePreviousWindowPixmap() override;
     void unreferencePreviousWindowPixmap() override;
 
-    QWindow *internalWindow() const override;
+    QWindow* internalWindow() const override;
 
     const Toplevel* window() const;
     Toplevel* window();
 
-    void setWindow(Toplevel* w);   // internal
-    void setSceneWindow(Scene::Window* w);   // internal
+    void setWindow(Toplevel* w);              // internal
+    void setSceneWindow(Scene::Window* w);    // internal
     const Scene::Window* sceneWindow() const; // internal
-    Scene::Window* sceneWindow(); // internal
+    Scene::Window* sceneWindow();             // internal
 
     void elevate(bool elevate);
 
-    void setData(int role, const QVariant &data) override;
+    void setData(int role, const QVariant& data) override;
     QVariant data(int role) const override;
 
-    void registerThumbnail(AbstractThumbnailItem *item);
-    QHash<WindowThumbnailItem*, QPointer<EffectWindowImpl> > const &thumbnails() const {
+    void registerThumbnail(AbstractThumbnailItem* item);
+    QHash<WindowThumbnailItem*, QPointer<EffectWindowImpl>> const& thumbnails() const
+    {
         return m_thumbnails;
     }
-    QList<DesktopThumbnailItem*> const &desktopThumbnails() const {
+    QList<DesktopThumbnailItem*> const& desktopThumbnails() const
+    {
         return m_desktopThumbnails;
     }
 
 private Q_SLOTS:
-    void thumbnailDestroyed(QObject *object);
+    void thumbnailDestroyed(QObject* object);
     void thumbnailTargetChanged();
-    void desktopThumbnailDestroyed(QObject *object);
+    void desktopThumbnailDestroyed(QObject* object);
+
 private:
-    void insertThumbnail(WindowThumbnailItem *item);
+    void insertThumbnail(WindowThumbnailItem* item);
     Toplevel* toplevel;
     Scene::Window* sw; // This one is used only during paint pass.
     QHash<int, QVariant> dataMap;
-    QHash<WindowThumbnailItem*, QPointer<EffectWindowImpl> > m_thumbnails;
+    QHash<WindowThumbnailItem*, QPointer<EffectWindowImpl>> m_thumbnails;
     QList<DesktopThumbnailItem*> m_desktopThumbnails;
     bool managed = false;
     bool waylandClient;
     bool x11Client;
 };
 
-class EffectWindowGroupImpl
-    : public EffectWindowGroup
+class EffectWindowGroupImpl : public EffectWindowGroup
 {
 public:
     explicit EffectWindowGroupImpl(win::x11::group* g);
     EffectWindowList members() const override;
+
 private:
     win::x11::group* group;
 };
 
-class KWIN_EXPORT EffectFrameImpl
-    : public QObject, public EffectFrame
+class KWIN_EXPORT EffectFrameImpl : public QObject, public EffectFrame
 {
     Q_OBJECT
 public:
-    explicit EffectFrameImpl(EffectFrameStyle style, bool staticSize = true, QPoint position = QPoint(-1, -1),
+    explicit EffectFrameImpl(EffectFrameStyle style,
+                             bool staticSize = true,
+                             QPoint position = QPoint(-1, -1),
                              Qt::Alignment alignment = Qt::AlignCenter);
     ~EffectFrameImpl() override;
 
     void free() override;
-    void render(const QRegion &region = infiniteRegion(), double opacity = 1.0, double frameOpacity = 1.0) override;
+    void render(const QRegion& region = infiniteRegion(),
+                double opacity = 1.0,
+                double frameOpacity = 1.0) override;
     Qt::Alignment alignment() const override;
     void setAlignment(Qt::Alignment alignment) override;
     const QFont& font() const override;
@@ -595,27 +623,34 @@ public:
     void setPosition(const QPoint& point) override;
     const QString& text() const override;
     void setText(const QString& text) override;
-    EffectFrameStyle style() const override {
+    EffectFrameStyle style() const override
+    {
         return m_style;
     }
-    Plasma::FrameSvg& frame() {
+    Plasma::FrameSvg& frame()
+    {
         return m_frame;
     }
-    bool isStatic() const {
+    bool isStatic() const
+    {
         return m_static;
     }
     void finalRender(QRegion region, double opacity, double frameOpacity) const;
-    void setShader(GLShader* shader) override {
+    void setShader(GLShader* shader) override
+    {
         m_shader = shader;
     }
-    GLShader* shader() const override {
+    GLShader* shader() const override
+    {
         return m_shader;
     }
     void setSelection(const QRect& selection) override;
-    const QRect& selection() const {
+    const QRect& selection() const
+    {
         return m_selectionGeometry;
     }
-    Plasma::FrameSvg& selectionFrame() {
+    Plasma::FrameSvg& selectionFrame()
+    {
         return m_selection;
     }
     /**
@@ -627,9 +662,9 @@ private Q_SLOTS:
     void plasmaThemeChanged();
 
 private:
-    Q_DISABLE_COPY(EffectFrameImpl)   // As we need to use Qt slots we cannot copy this class
-    void align(QRect &geometry);   // positions geometry around m_point respecting m_alignment
-    void autoResize(); // Auto-resize if not a static size
+    Q_DISABLE_COPY(EffectFrameImpl) // As we need to use Qt slots we cannot copy this class
+    void align(QRect& geometry);    // positions geometry around m_point respecting m_alignment
+    void autoResize();              // Auto-resize if not a static size
 
     EffectFrameStyle m_style;
     Plasma::FrameSvg m_frame; // TODO: share between all EffectFrames
@@ -651,31 +686,27 @@ private:
     Scene::EffectFrame* m_sceneFrame;
     GLShader* m_shader;
 
-    Plasma::Theme *m_theme;
+    Plasma::Theme* m_theme;
 };
 
-inline
-QList<EffectWindow*> EffectsHandlerImpl::elevatedWindows() const
+inline QList<EffectWindow*> EffectsHandlerImpl::elevatedWindows() const
 {
     if (isScreenLocked())
         return QList<EffectWindow*>();
     return elevated_windows;
 }
 
-inline
-xcb_window_t EffectsHandlerImpl::x11RootWindow() const
+inline xcb_window_t EffectsHandlerImpl::x11RootWindow() const
 {
     return rootWindow();
 }
 
-inline
-xcb_connection_t *EffectsHandlerImpl::xcbConnection() const
+inline xcb_connection_t* EffectsHandlerImpl::xcbConnection() const
 {
     return connection();
 }
 
-inline
-EffectWindowGroupImpl::EffectWindowGroupImpl(win::x11::group* g)
+inline EffectWindowGroupImpl::EffectWindowGroupImpl(win::x11::group* g)
     : group(g)
 {
 }
@@ -683,30 +714,25 @@ EffectWindowGroupImpl::EffectWindowGroupImpl(win::x11::group* g)
 EffectWindow* effectWindow(Toplevel* w);
 EffectWindow* effectWindow(Scene::Window* w);
 
-inline
-const Scene::Window* EffectWindowImpl::sceneWindow() const
+inline const Scene::Window* EffectWindowImpl::sceneWindow() const
 {
     return sw;
 }
 
-inline
-Scene::Window* EffectWindowImpl::sceneWindow()
+inline Scene::Window* EffectWindowImpl::sceneWindow()
 {
     return sw;
 }
 
-inline
-const Toplevel* EffectWindowImpl::window() const
+inline const Toplevel* EffectWindowImpl::window() const
 {
     return toplevel;
 }
 
-inline
-Toplevel* EffectWindowImpl::window()
+inline Toplevel* EffectWindowImpl::window()
 {
     return toplevel;
 }
-
 
 } // namespace
 

@@ -25,7 +25,8 @@ class QRegion;
 class QSize;
 class QString;
 
-namespace KWin {
+namespace KWin
+{
 namespace base
 {
 class output;
@@ -36,7 +37,7 @@ class QPainterBackend
 {
 public:
     virtual ~QPainterBackend();
-    virtual void present(base::output* output, const QRegion &damage) = 0;
+    virtual void present(base::output* output, const QRegion& damage) = 0;
 
     virtual void prepareRenderingFrame() = 0;
 
@@ -47,7 +48,7 @@ public:
      *
      * @param size The new screen size
      */
-    virtual void screenGeometryChanged(const QSize &size);
+    virtual void screenGeometryChanged(const QSize& size);
     /**
      * @brief Whether the creation of the Backend failed.
      *
@@ -56,18 +57,19 @@ public:
      *
      * @return bool @c true if the creation of the Backend failed, @c false otherwise.
      */
-    bool isFailed() const {
+    bool isFailed() const
+    {
         return m_failed;
     }
 
-    virtual QImage *buffer() = 0;
+    virtual QImage* buffer() = 0;
     /**
      * Overload for the case that there is a different buffer per screen.
      * Default implementation just calls buffer.
      * @param screenId The id of the screen as used in Screens
      * @todo Get a better identifier for screen then a counter variable
      */
-    virtual QImage *bufferForScreen(base::output* output) = 0;
+    virtual QImage* bufferForScreen(base::output* output) = 0;
     virtual bool needsFullRepaint() const = 0;
 
 protected:
@@ -80,7 +82,7 @@ protected:
      *
      * @param reason The reason why the initialization failed.
      */
-    void setFailed(const QString &reason);
+    void setFailed(const QString& reason);
 
 private:
     bool m_failed;

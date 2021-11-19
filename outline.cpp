@@ -18,18 +18,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-// own
 #include "outline.h"
 
-#include "render/compositor.h"
 #include "main.h"
 #include "platform.h"
+#include "render/compositor.h"
 #include "scripting/platform.h"
 #include "utils.h"
 #include "workspace.h"
-// Frameworks
+
 #include <KConfigGroup>
-// Qt
+
 #include <QDebug>
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -37,15 +36,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QQuickWindow>
 #include <QStandardPaths>
 
-namespace KWin {
+namespace KWin
+{
 
 KWIN_SINGLETON_FACTORY(Outline)
 
-Outline::Outline(QObject *parent)
+Outline::Outline(QObject* parent)
     : QObject(parent)
     , m_active(false)
 {
-    connect(render::compositor::self(), &render::compositor::compositingToggled, this, &Outline::compositingChanged);
+    connect(render::compositor::self(),
+            &render::compositor::compositingToggled,
+            this,
+            &Outline::compositingChanged);
 }
 
 Outline::~Outline()
@@ -84,7 +87,7 @@ void Outline::show(const QRect& outlineGeometry)
     show(outlineGeometry, QRect());
 }
 
-void Outline::show(const QRect &outlineGeometry, const QRect &visualParentGeometry)
+void Outline::show(const QRect& outlineGeometry, const QRect& visualParentGeometry)
 {
     setGeometry(outlineGeometry);
     setVisualParentGeometry(visualParentGeometry);
@@ -101,7 +104,7 @@ void Outline::setGeometry(const QRect& outlineGeometry)
     Q_EMIT unifiedGeometryChanged();
 }
 
-void Outline::setVisualParentGeometry(const QRect &visualParentGeometry)
+void Outline::setVisualParentGeometry(const QRect& visualParentGeometry)
 {
     if (m_visualParentGeometry == visualParentGeometry) {
         return;
@@ -132,7 +135,7 @@ void Outline::compositingChanged()
     }
 }
 
-OutlineVisual::OutlineVisual(Outline *outline)
+OutlineVisual::OutlineVisual(Outline* outline)
     : m_outline(outline)
 {
 }
@@ -141,7 +144,7 @@ OutlineVisual::~OutlineVisual()
 {
 }
 
-CompositedOutlineVisual::CompositedOutlineVisual(Outline *outline)
+CompositedOutlineVisual::CompositedOutlineVisual(Outline* outline)
     : OutlineVisual(outline)
     , m_qmlContext()
     , m_qmlComponent()
@@ -155,7 +158,7 @@ CompositedOutlineVisual::~CompositedOutlineVisual()
 
 void CompositedOutlineVisual::hide()
 {
-    if (QQuickWindow *w = qobject_cast<QQuickWindow*>(m_mainItem.data())) {
+    if (QQuickWindow* w = qobject_cast<QQuickWindow*>(m_mainItem.data())) {
         w->hide();
         w->destroy();
     }
@@ -169,8 +172,12 @@ void CompositedOutlineVisual::show()
     }
     if (m_qmlComponent.isNull()) {
         m_qmlComponent.reset(new QQmlComponent(workspace()->scripting->qmlEngine()));
-        const QString fileName = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                                 kwinApp()->config()->group(QStringLiteral("Outline")).readEntry("QmlPath", QStringLiteral(KWIN_NAME "/outline/plasma/outline.qml")));
+        const QString fileName = QStandardPaths::locate(
+            QStandardPaths::GenericDataLocation,
+            kwinApp()
+                ->config()
+                ->group(QStringLiteral("Outline"))
+                .readEntry("QmlPath", QStringLiteral(KWIN_NAME "/outline/plasma/outline.qml")));
         if (fileName.isEmpty()) {
             qCDebug(KWIN_CORE) << "Could not locate outline.qml";
             return;
@@ -181,7 +188,7 @@ void CompositedOutlineVisual::show()
         } else {
             m_mainItem.reset(m_qmlComponent->create(m_qmlContext.data()));
         }
-        if (auto w = qobject_cast<QQuickWindow *>(m_mainItem.data())) {
+        if (auto w = qobject_cast<QQuickWindow*>(m_mainItem.data())) {
             w->setProperty("__kwin_outline", true);
         }
     }

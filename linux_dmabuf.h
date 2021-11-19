@@ -21,9 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwin_export.h>
 
-#include <Wrapland/Server/linux_dmabuf_v1.h>
-
 #include <QVector>
+#include <Wrapland/Server/linux_dmabuf_v1.h>
 
 namespace KWin
 {
@@ -34,17 +33,26 @@ public:
     using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
     using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
 
-    DmabufBuffer(const QVector<Plane> &planes,
-                 uint32_t format,
-                 const QSize &size,
-                 Flags flags);
+    DmabufBuffer(const QVector<Plane>& planes, uint32_t format, const QSize& size, Flags flags);
 
     ~DmabufBuffer() override;
 
-    const QVector<Plane> &planes() const { return m_planes; }
-    uint32_t format() const { return m_format; }
-    QSize size() const { return m_size; }
-    Flags flags() const { return m_flags; }
+    const QVector<Plane>& planes() const
+    {
+        return m_planes;
+    }
+    uint32_t format() const
+    {
+        return m_format;
+    }
+    QSize size() const
+    {
+        return m_size;
+    }
+    Flags flags() const
+    {
+        return m_flags;
+    }
 
 private:
     QVector<Plane> m_planes;
@@ -62,13 +70,13 @@ public:
     explicit LinuxDmabuf();
     ~LinuxDmabuf() override;
 
-    Wrapland::Server::LinuxDmabufBufferV1 *importBuffer(const QVector<Plane> &planes,
-                                                                uint32_t format,
-                                                                const QSize &size,
-                                                                Flags flags) override;
+    Wrapland::Server::LinuxDmabufBufferV1* importBuffer(const QVector<Plane>& planes,
+                                                        uint32_t format,
+                                                        const QSize& size,
+                                                        Flags flags) override;
 
 protected:
-    void setSupportedFormatsAndModifiers(QHash<uint32_t, QSet<uint64_t> > &set);
+    void setSupportedFormatsAndModifiers(QHash<uint32_t, QSet<uint64_t>>& set);
 };
 
 }

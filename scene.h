@@ -21,9 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_SCENE_H
 #define KWIN_SCENE_H
 
+#include "kwineffects.h"
 #include "toplevel.h"
 #include "utils.h"
-#include "kwineffects.h"
 
 #include <QElapsedTimer>
 #include <QMatrix4x4>
@@ -64,7 +64,7 @@ class KWIN_EXPORT Scene : public QObject
 {
     Q_OBJECT
 public:
-    explicit Scene(QObject *parent = nullptr);
+    explicit Scene(QObject* parent = nullptr);
     ~Scene() override = 0;
     class EffectFrame;
     class Window;
@@ -73,7 +73,10 @@ public:
     virtual bool initFailed() const = 0;
     virtual CompositingType compositingType() const = 0;
 
-    virtual bool hasPendingFlush() const { return false; }
+    virtual bool hasPendingFlush() const
+    {
+        return false;
+    }
 
     /**
      * The entry point for the main part of the painting pass. Repaints the given screen areas.
@@ -82,9 +85,11 @@ public:
      * @param windows provides the stacking order
      * @return the elapsed time in ns
      */
-    virtual qint64 paint(QRegion damage, std::deque<Toplevel*> const& windows,
+    virtual qint64 paint(QRegion damage,
+                         std::deque<Toplevel*> const& windows,
                          std::chrono::milliseconds presentTime);
-    virtual int64_t paint(base::output* output, QRegion damage,
+    virtual int64_t paint(base::output* output,
+                          QRegion damage,
                           std::deque<Toplevel*> const& windows,
                           std::chrono::milliseconds presentTime);
 
@@ -97,7 +102,7 @@ public:
      * @param toplevel The window to be added.
      * @note You can add a toplevel to scene only once.
      */
-    void addToplevel(Toplevel *toplevel);
+    void addToplevel(Toplevel* toplevel);
 
     /**
      * Removes the Toplevel from the Scene.
@@ -105,14 +110,14 @@ public:
      * @param toplevel The window to be removed.
      * @note You can remove a toplevel from the scene only once.
      */
-    void removeToplevel(Toplevel *toplevel);
+    void removeToplevel(Toplevel* toplevel);
 
     /**
      * @brief Creates the Scene backend of an EffectFrame.
      *
      * @param frame The EffectFrame this Scene::EffectFrame belongs to.
      */
-    virtual Scene::EffectFrame *createEffectFrame(EffectFrameImpl *frame) = 0;
+    virtual Scene::EffectFrame* createEffectFrame(EffectFrameImpl* frame) = 0;
     /**
      * @brief Creates the Scene specific Shadow subclass.
      *
@@ -121,27 +126,27 @@ public:
      *
      * @param toplevel The Toplevel for which the Shadow needs to be created.
      */
-    virtual Shadow *createShadow(Toplevel *toplevel) = 0;
+    virtual Shadow* createShadow(Toplevel* toplevel) = 0;
     /**
      * Method invoked when the screen geometry is changed.
      * Reimplementing classes should also invoke the parent method
      * as it takes care of resizing the overlay window.
      * @param size The new screen geometry size
      */
-    virtual void screenGeometryChanged(const QSize &size);
+    virtual void screenGeometryChanged(const QSize& size);
     // Flags controlling how painting is done.
     enum {
         // Window (or at least part of it) will be painted opaque.
-        PAINT_WINDOW_OPAQUE         = 1 << 0,
+        PAINT_WINDOW_OPAQUE = 1 << 0,
         // Window (or at least part of it) will be painted translucent.
-        PAINT_WINDOW_TRANSLUCENT    = 1 << 1,
+        PAINT_WINDOW_TRANSLUCENT = 1 << 1,
         // Window will be painted with transformed geometry.
-        PAINT_WINDOW_TRANSFORMED    = 1 << 2,
+        PAINT_WINDOW_TRANSFORMED = 1 << 2,
         // Paint only a region of the screen (can be optimized, cannot
         // be used together with TRANSFORMED flags).
-        PAINT_SCREEN_REGION         = 1 << 3,
+        PAINT_SCREEN_REGION = 1 << 3,
         // Whole screen will be painted with transformed geometry.
-        PAINT_SCREEN_TRANSFORMED    = 1 << 4,
+        PAINT_SCREEN_TRANSFORMED = 1 << 4,
         // At least one window will be painted with transformed geometry.
         PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS = 1 << 5,
         // Clear whole background as the very first step, without optimizing it
@@ -171,7 +176,7 @@ public:
 
     virtual void triggerFence();
 
-    virtual Decoration::Renderer *createDecorationRenderer(Decoration::DecoratedClientImpl *) = 0;
+    virtual Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl*) = 0;
 
     /**
      * Whether the Scene is able to drive animations.
@@ -191,13 +196,13 @@ public:
      * The QPainter used by a QPainter based compositor scene.
      * Default implementation returns @c nullptr;
      */
-    virtual QPainter *scenePainter() const;
+    virtual QPainter* scenePainter() const;
 
     /**
      * The render buffer used by a QPainter based compositor.
      * Default implementation returns @c nullptr.
      */
-    virtual QImage *qpainterRenderBuffer() const;
+    virtual QImage* qpainterRenderBuffer() const;
 
     /**
      * The backend specific extensions (e.g. EGL/GLX extensions).
@@ -217,15 +222,19 @@ public Q_SLOTS:
     void windowGeometryShapeChanged(KWin::Toplevel* c);
     // a window has been closed
     void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);
+
 protected:
-    virtual Window *createWindow(Toplevel *toplevel) = 0;
+    virtual Window* createWindow(Toplevel* toplevel) = 0;
     void createStackingOrder(std::deque<Toplevel*> const& toplevels);
     void clearStackingOrder();
     // shared implementation, starts painting the screen
-    void paintScreen(int *mask, const QRegion &damage, const QRegion &repaint,
-                     QRegion *updateRegion, QRegion *validRegion,
+    void paintScreen(int* mask,
+                     const QRegion& damage,
+                     const QRegion& repaint,
+                     QRegion* updateRegion,
+                     QRegion* validRegion,
                      std::chrono::milliseconds presentTime,
-                     const QMatrix4x4 &projection = QMatrix4x4());
+                     const QMatrix4x4& projection = QMatrix4x4());
     // Render cursor texture in case hardware cursor is disabled/non-applicable
     virtual void paintCursor() = 0;
     friend class EffectsHandlerImpl;
@@ -243,17 +252,18 @@ protected:
     // shared implementation, starts painting the window
     virtual void paintWindow(Window* w, int mask, QRegion region, WindowQuadList quads);
     // called after all effects had their drawWindow() called
-    virtual void finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data);
-    // let the scene decide whether it's better to paint more of the screen, eg. in order to allow a buffer swap
-    // the default is NOOP
-    virtual void extendPaintRegion(QRegion &region, bool opaqueFullscreen);
-    virtual void paintDesktop(int desktop, int mask, const QRegion &region, ScreenPaintData &data);
+    virtual void
+    finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data);
+    // let the scene decide whether it's better to paint more of the screen, eg. in order to allow a
+    // buffer swap the default is NOOP
+    virtual void extendPaintRegion(QRegion& region, bool opaqueFullscreen);
+    virtual void paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data);
 
-    virtual void paintEffectQuickView(EffectQuickView *w) = 0;
+    virtual void paintEffectQuickView(EffectQuickView* w) = 0;
 
     // saved data for 2nd pass of optimized screen painting
     struct Phase2Data {
-        Window *window = nullptr;
+        Window* window = nullptr;
         QRegion region;
         QRegion clip;
         int mask = 0;
@@ -276,12 +286,16 @@ protected:
     base::output* repaint_output{nullptr};
 
 private:
-    void paintWindowThumbnails(Scene::Window *w, QRegion region, qreal opacity, qreal brightness, qreal saturation);
-    void paintDesktopThumbnails(Scene::Window *w);
+    void paintWindowThumbnails(Scene::Window* w,
+                               QRegion region,
+                               qreal opacity,
+                               qreal brightness,
+                               qreal saturation);
+    void paintDesktopThumbnails(Scene::Window* w);
     std::chrono::milliseconds m_expectedPresentTimestamp = std::chrono::milliseconds::zero();
-    QHash< Toplevel*, Window* > m_windows;
+    QHash<Toplevel*, Window*> m_windows;
     // windows in their stacking order
-    QVector< Window* > stacking_order;
+    QVector<Window*> stacking_order;
 };
 
 /**
@@ -296,10 +310,10 @@ public:
     /**
      * @returns The created Scene, may be @c nullptr.
      */
-    virtual Scene *create(QObject *parent = nullptr) const = 0;
+    virtual Scene* create(QObject* parent = nullptr) const = 0;
 
 protected:
-    explicit SceneFactory(QObject *parent);
+    explicit SceneFactory(QObject* parent);
 };
 
 // The base class for windows representations in composite backends
@@ -331,15 +345,15 @@ public:
     // Flags explaining why painting should be disabled
     enum {
         // Window will not be painted
-        PAINT_DISABLED                 = 1 << 0,
+        PAINT_DISABLED = 1 << 0,
         // Window will not be painted because it is deleted
-        PAINT_DISABLED_BY_DELETE       = 1 << 1,
+        PAINT_DISABLED_BY_DELETE = 1 << 1,
         // Window will not be painted because of which desktop it's on
-        PAINT_DISABLED_BY_DESKTOP      = 1 << 2,
+        PAINT_DISABLED_BY_DESKTOP = 1 << 2,
         // Window will not be painted because it is minimized
-        PAINT_DISABLED_BY_MINIMIZE     = 1 << 3,
+        PAINT_DISABLED_BY_MINIMIZE = 1 << 3,
         // Window will not be painted because it's not on the current activity
-        PAINT_DISABLED_BY_ACTIVITY     = 1 << 5, /// Deprecated
+        PAINT_DISABLED_BY_ACTIVITY = 1 << 5, /// Deprecated
     };
     void enablePainting(int reason);
     void disablePainting(int reason);
@@ -358,36 +372,45 @@ public:
     void referencePreviousPixmap();
     void unreferencePreviousPixmap();
     void invalidateQuadsCache();
+
 protected:
-    WindowQuadList makeDecorationQuads(const QRect *rects, const QRegion &region, qreal textureScale = 1.0) const;
+    WindowQuadList
+    makeDecorationQuads(const QRect* rects, const QRegion& region, qreal textureScale = 1.0) const;
     WindowQuadList makeContentsQuads(int id, QPoint const& offset = QPoint()) const;
     /**
      * @brief Returns the WindowPixmap for this Window.
      *
      * If the WindowPixmap does not yet exist, this method will invoke createWindowPixmap.
-     * If the WindowPixmap is not valid it tries to create it, in case this succeeds the WindowPixmap is
-     * returned. In case it fails, the previous (and still valid) WindowPixmap is returned.
+     * If the WindowPixmap is not valid it tries to create it, in case this succeeds the
+     * WindowPixmap is returned. In case it fails, the previous (and still valid) WindowPixmap is
+     * returned.
      *
-     * @note This method can return @c NULL as there might neither be a valid previous nor current WindowPixmap
-     * around.
+     * @note This method can return @c NULL as there might neither be a valid previous nor current
+     * WindowPixmap around.
      *
-     * The WindowPixmap gets casted to the type passed in as a template parameter. That way this class does not
-     * need to know the actual WindowPixmap subclass used by the concrete Scene implementations.
+     * The WindowPixmap gets casted to the type passed in as a template parameter. That way this
+     * class does not need to know the actual WindowPixmap subclass used by the concrete Scene
+     * implementations.
      *
      * @return The WindowPixmap casted to T* or @c NULL if there is no valid window pixmap.
      */
-    template<typename T> T *windowPixmap();
-    template<typename T> T *previousWindowPixmap();
+    template<typename T>
+    T* windowPixmap();
+    template<typename T>
+    T* previousWindowPixmap();
     /**
      * @brief Factory method to create a WindowPixmap.
      *
-     * The inheriting classes need to implement this method to create a new instance of their WindowPixmap subclass.
-     * @note Do not use WindowPixmap::create on the created instance. The Scene will take care of that.
+     * The inheriting classes need to implement this method to create a new instance of their
+     * WindowPixmap subclass.
+     * @note Do not use WindowPixmap::create on the created instance. The Scene will take care of
+     * that.
      */
-    virtual WindowPixmap *createWindowPixmap() = 0;
+    virtual WindowPixmap* createWindowPixmap() = 0;
     Toplevel* toplevel;
     ImageFilterType filter;
-    Shadow *m_shadow;
+    Shadow* m_shadow;
+
 private:
     QScopedPointer<WindowPixmap> m_currentPixmap;
     QScopedPointer<WindowPixmap> m_previousPixmap;
@@ -401,18 +424,19 @@ private:
 /**
  * @brief Wrapper for a pixmap of the Scene::Window.
  *
- * This class encapsulates the functionality to get the pixmap for a window. When initialized the pixmap is not yet
- * mapped to the window and isValid will return @c false. The pixmap mapping to the window can be established
- * through @ref create. If it succeeds isValid will return @c true, otherwise it will keep in the non valid
- * state and it can be tried to create the pixmap mapping again (e.g. in the next frame).
+ * This class encapsulates the functionality to get the pixmap for a window. When initialized the
+ * pixmap is not yet mapped to the window and isValid will return @c false. The pixmap mapping to
+ * the window can be established through @ref create. If it succeeds isValid will return @c true,
+ * otherwise it will keep in the non valid state and it can be tried to create the pixmap mapping
+ * again (e.g. in the next frame).
  *
- * This class is not intended to be updated when the pixmap is no longer valid due to e.g. resizing the window.
- * Instead a new instance of this class should be instantiated. The idea behind this is that a valid pixmap does not
- * get destroyed, but can continue to be used. To indicate that a newer pixmap should in generally be around, one can
- * use markAsDiscarded.
+ * This class is not intended to be updated when the pixmap is no longer valid due to e.g. resizing
+ * the window. Instead a new instance of this class should be instantiated. The idea behind this is
+ * that a valid pixmap does not get destroyed, but can continue to be used. To indicate that a newer
+ * pixmap should in generally be around, one can use markAsDiscarded.
  *
- * This class is intended to be inherited for the needs of the compositor backends which need further mapping from
- * the native pixmap to the respective rendering format.
+ * This class is intended to be inherited for the needs of the compositor backends which need
+ * further mapping from the native pixmap to the respective rendering format.
  */
 class KWIN_EXPORT WindowPixmap
 {
@@ -421,11 +445,12 @@ public:
     /**
      * @brief Tries to create the mapping between the Window and the pixmap.
      *
-     * In case this method succeeds in creating the pixmap for the window, isValid will return @c true otherwise
+     * In case this method succeeds in creating the pixmap for the window, isValid will return @c
+     * true otherwise
      * @c false.
      *
-     * Inheriting classes should re-implement this method in case they need to add further functionality for mapping the
-     * native pixmap to the rendering format.
+     * Inheriting classes should re-implement this method in case they need to add further
+     * functionality for mapping the native pixmap to the rendering format.
      */
     virtual void create();
     /**
@@ -439,20 +464,21 @@ public:
     /**
      * @return The Wayland Buffer for this WindowPixmap.
      */
-    Wrapland::Server::Buffer *buffer() const;
-    const QSharedPointer<QOpenGLFramebufferObject> &fbo() const;
+    Wrapland::Server::Buffer* buffer() const;
+    const QSharedPointer<QOpenGLFramebufferObject>& fbo() const;
     QImage internalImage() const;
     /**
-     * @brief Whether this WindowPixmap is considered as discarded. This means the window has changed in a way that a new
-     * WindowPixmap should have been created already.
+     * @brief Whether this WindowPixmap is considered as discarded. This means the window has
+     * changed in a way that a new WindowPixmap should have been created already.
      *
      * @return @c true if this WindowPixmap is considered as discarded, @c false otherwise.
      * @see markAsDiscarded
      */
     bool isDiscarded() const;
     /**
-     * @brief Marks this WindowPixmap as discarded. From now on isDiscarded will return @c true. This method should
-     * only be used by the Window when it changes in a way that a new pixmap is required.
+     * @brief Marks this WindowPixmap as discarded. From now on isDiscarded will return @c true.
+     * This method should only be used by the Window when it changes in a way that a new pixmap is
+     * required.
      *
      * @see isDiscarded
      */
@@ -460,26 +486,27 @@ public:
     /**
      * The size of the pixmap.
      */
-    const QSize &size() const;
+    const QSize& size() const;
     /**
      * The geometry of the Client's content inside the pixmap. In case of a decorated Client the
      * pixmap also contains the decoration which is not rendered into this pixmap, though. This
      * contentsRect tells where inside the complete pixmap the real content is.
      */
-    const QRect &contentsRect() const;
+    const QRect& contentsRect() const;
     /**
      * @brief Returns the Toplevel this WindowPixmap belongs to.
-     * Note: the Toplevel can change over the lifetime of the WindowPixmap in case the Toplevel is copied to Deleted.
+     * Note: the Toplevel can change over the lifetime of the WindowPixmap in case the Toplevel is
+     * copied to Deleted.
      */
-    Toplevel *toplevel() const;
+    Toplevel* toplevel() const;
 
     /**
      * @returns the surface this WindowPixmap references, might be @c null.
      */
-    Wrapland::Server::Surface *surface() const;
+    Wrapland::Server::Surface* surface() const;
 
 protected:
-    explicit WindowPixmap(Scene::Window *window);
+    explicit WindowPixmap(Scene::Window* window);
 
     /**
      * Should be called by the implementing subclasses when the Wayland Buffer changed and needs
@@ -488,7 +515,7 @@ protected:
     virtual void updateBuffer();
 
 private:
-    Scene::Window *m_window;
+    Scene::Window* m_window;
     xcb_pixmap_t m_pixmap;
     QSize m_pixmapSize;
     bool m_discarded;
@@ -515,99 +542,83 @@ protected:
     EffectFrameImpl* m_effectFrame;
 };
 
-inline
-int Scene::Window::x() const
+inline int Scene::Window::x() const
 {
     return toplevel->pos().x();
 }
 
-inline
-int Scene::Window::y() const
+inline int Scene::Window::y() const
 {
     return toplevel->pos().y();
 }
 
-inline
-int Scene::Window::width() const
+inline int Scene::Window::width() const
 {
     return toplevel->size().width();
 }
 
-inline
-int Scene::Window::height() const
+inline int Scene::Window::height() const
 {
     return toplevel->size().height();
 }
 
-inline
-QRect Scene::Window::geometry() const
+inline QRect Scene::Window::geometry() const
 {
     return toplevel->frameGeometry();
 }
 
-inline
-QSize Scene::Window::size() const
+inline QSize Scene::Window::size() const
 {
     return toplevel->size();
 }
 
-inline
-QPoint Scene::Window::pos() const
+inline QPoint Scene::Window::pos() const
 {
     return toplevel->pos();
 }
 
-inline
-QRect Scene::Window::rect() const
+inline QRect Scene::Window::rect() const
 {
     return QRect(QPoint(), toplevel->size());
 }
 
-inline
-Toplevel* Scene::Window::window() const
+inline Toplevel* Scene::Window::window() const
 {
     return toplevel;
 }
 
-inline
-void Scene::Window::updateToplevel(Toplevel* c)
+inline void Scene::Window::updateToplevel(Toplevel* c)
 {
     toplevel = c;
 }
 
-inline
-const Shadow* Scene::Window::shadow() const
+inline const Shadow* Scene::Window::shadow() const
 {
     return m_shadow;
 }
 
-inline
-Shadow* Scene::Window::shadow()
+inline Shadow* Scene::Window::shadow()
 {
     return m_shadow;
 }
 
-inline
-Wrapland::Server::Buffer* WindowPixmap::buffer() const
+inline Wrapland::Server::Buffer* WindowPixmap::buffer() const
 {
     return m_buffer.get();
 }
 
-inline
-const QSharedPointer<QOpenGLFramebufferObject> &WindowPixmap::fbo() const
+inline const QSharedPointer<QOpenGLFramebufferObject>& WindowPixmap::fbo() const
 {
     return m_fbo;
 }
 
-inline
-QImage WindowPixmap::internalImage() const
+inline QImage WindowPixmap::internalImage() const
 {
     return m_internalImage;
 }
 
-template <typename T>
-inline
-T* Scene::Window::windowPixmap()
+template<typename T>
+inline T* Scene::Window::windowPixmap()
 {
     if (m_currentPixmap.isNull()) {
         m_currentPixmap.reset(createWindowPixmap());
@@ -623,46 +634,39 @@ T* Scene::Window::windowPixmap()
     }
 }
 
-template <typename T>
-inline
-T* Scene::Window::previousWindowPixmap()
+template<typename T>
+inline T* Scene::Window::previousWindowPixmap()
 {
     return static_cast<T*>(m_previousPixmap.data());
 }
 
-inline
-Toplevel* WindowPixmap::toplevel() const
+inline Toplevel* WindowPixmap::toplevel() const
 {
     return m_window->window();
 }
 
-inline
-xcb_pixmap_t WindowPixmap::pixmap() const
+inline xcb_pixmap_t WindowPixmap::pixmap() const
 {
     return m_pixmap;
 }
 
-inline
-bool WindowPixmap::isDiscarded() const
+inline bool WindowPixmap::isDiscarded() const
 {
     return m_discarded;
 }
 
-inline
-void WindowPixmap::markAsDiscarded()
+inline void WindowPixmap::markAsDiscarded()
 {
     m_discarded = true;
     m_window->referencePreviousPixmap();
 }
 
-inline
-const QRect &WindowPixmap::contentsRect() const
+inline const QRect& WindowPixmap::contentsRect() const
 {
     return m_contentsRect;
 }
 
-inline
-const QSize &WindowPixmap::size() const
+inline const QSize& WindowPixmap::size() const
 {
     return m_pixmapSize;
 }

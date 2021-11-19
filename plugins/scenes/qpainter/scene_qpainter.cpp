@@ -20,12 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene_qpainter.h"
 
 #include "base/output.h"
-#include "input/cursor.h"
 #include "effects.h"
+#include "input/cursor.h"
 #include "main.h"
+#include "platform.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "platform.h"
 #include <render/compositor.h>
 #include <render/cursor.h>
 
@@ -40,9 +40,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "decorations/decoratedclient.h"
 
+#include <KDecoration2/Decoration>
 #include <QDebug>
 #include <QPainter>
-#include <KDecoration2/Decoration>
 
 #include <cmath>
 
@@ -52,7 +52,7 @@ namespace KWin
 //****************************************
 // SceneQPainter
 //****************************************
-SceneQPainter *SceneQPainter::createScene(QObject *parent)
+SceneQPainter* SceneQPainter::createScene(QObject* parent)
 {
     QScopedPointer<QPainterBackend> backend(kwinApp()->platform->createQPainterBackend());
     if (backend.isNull()) {
@@ -64,7 +64,7 @@ SceneQPainter *SceneQPainter::createScene(QObject *parent)
     return new SceneQPainter(backend.take(), parent);
 }
 
-SceneQPainter::SceneQPainter(QPainterBackend *backend, QObject *parent)
+SceneQPainter::SceneQPainter(QPainterBackend* backend, QObject* parent)
     : Scene(parent)
     , m_backend(backend)
     , m_painter(new QPainter())
@@ -94,7 +94,8 @@ void SceneQPainter::paintGenericScreen(int mask, ScreenPaintData data)
     m_painter->restore();
 }
 
-int64_t SceneQPainter::paint(base::output* output, QRegion damage,
+int64_t SceneQPainter::paint(base::output* output,
+                             QRegion damage,
                              std::deque<Toplevel*> const& toplevels,
                              std::chrono::milliseconds presentTime)
 {
@@ -126,8 +127,8 @@ int64_t SceneQPainter::paint(base::output* output, QRegion damage,
     repaint_output = output;
     QRegion updateRegion, validRegion;
 
-    paintScreen(&mask, damage.intersected(geometry), QRegion(), &updateRegion, &validRegion,
-                presentTime);
+    paintScreen(
+        &mask, damage.intersected(geometry), QRegion(), &updateRegion, &validRegion, presentTime);
     paintCursor();
 
     m_painter->restore();
@@ -144,7 +145,7 @@ int64_t SceneQPainter::paint(base::output* output, QRegion damage,
 void SceneQPainter::paintBackground(QRegion region)
 {
     m_painter->setBrush(Qt::black);
-    for (const QRect &rect : region) {
+    for (const QRect& rect : region) {
         m_painter->drawRect(rect);
     }
 }
@@ -165,9 +166,9 @@ void SceneQPainter::paintCursor()
     cursor->mark_as_rendered();
 }
 
-void SceneQPainter::paintEffectQuickView(EffectQuickView *w)
+void SceneQPainter::paintEffectQuickView(EffectQuickView* w)
 {
-    QPainter *painter = effects->scenePainter();
+    QPainter* painter = effects->scenePainter();
     const QImage buffer = w->bufferAsImage();
     if (buffer.isNull()) {
         return;
@@ -175,28 +176,28 @@ void SceneQPainter::paintEffectQuickView(EffectQuickView *w)
     painter->drawImage(w->geometry(), buffer);
 }
 
-Scene::Window *SceneQPainter::createWindow(Toplevel *toplevel)
+Scene::Window* SceneQPainter::createWindow(Toplevel* toplevel)
 {
     return new SceneQPainter::Window(this, toplevel);
 }
 
-Scene::EffectFrame *SceneQPainter::createEffectFrame(EffectFrameImpl *frame)
+Scene::EffectFrame* SceneQPainter::createEffectFrame(EffectFrameImpl* frame)
 {
     return new QPainterEffectFrame(frame, this);
 }
 
-Shadow *SceneQPainter::createShadow(Toplevel *toplevel)
+Shadow* SceneQPainter::createShadow(Toplevel* toplevel)
 {
     return new SceneQPainterShadow(toplevel);
 }
 
-void SceneQPainter::screenGeometryChanged(const QSize &size)
+void SceneQPainter::screenGeometryChanged(const QSize& size)
 {
     Scene::screenGeometryChanged(size);
     m_backend->screenGeometryChanged(size);
 }
 
-QImage *SceneQPainter::qpainterRenderBuffer() const
+QImage* SceneQPainter::qpainterRenderBuffer() const
 {
     return m_backend->buffer();
 }
@@ -204,7 +205,7 @@ QImage *SceneQPainter::qpainterRenderBuffer() const
 //****************************************
 // SceneQPainter::Window
 //****************************************
-SceneQPainter::Window::Window(SceneQPainter *scene, Toplevel *c)
+SceneQPainter::Window::Window(SceneQPainter* scene, Toplevel* c)
     : Scene::Window(c)
     , m_scene(scene)
 {
@@ -214,7 +215,7 @@ SceneQPainter::Window::~Window()
 {
 }
 
-static bool isXwaylandClient(Toplevel *toplevel)
+static bool isXwaylandClient(Toplevel* toplevel)
 {
     auto client = qobject_cast<win::x11::window*>(toplevel);
     if (client) {
@@ -233,7 +234,7 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
 
     if (region.isEmpty())
         return;
-    QPainterWindowPixmap *pixmap = windowPixmap<QPainterWindowPixmap>();
+    QPainterWindowPixmap* pixmap = windowPixmap<QPainterWindowPixmap>();
     if (!pixmap || !pixmap->isValid()) {
         return;
     }
@@ -242,8 +243,8 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
         toplevel->resetDamage();
     }
 
-    QPainter *scenePainter = m_scene->scenePainter();
-    QPainter *painter = scenePainter;
+    QPainter* scenePainter = m_scene->scenePainter();
+    QPainter* painter = scenePainter;
     painter->save();
     painter->setClipRegion(region);
     painter->setClipping(true);
@@ -263,7 +264,8 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
         tempImage.fill(Qt::transparent);
         tempPainter.begin(&tempImage);
         tempPainter.save();
-        tempPainter.translate(toplevel->frameGeometry().topLeft() - win::visible_rect(toplevel).topLeft());
+        tempPainter.translate(toplevel->frameGeometry().topLeft()
+                              - win::visible_rect(toplevel).topLeft());
         painter = &tempPainter;
     }
     renderShadow(painter);
@@ -305,7 +307,8 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
         tempPainter.fillRect(QRect(QPoint(0, 0), win::visible_rect(toplevel).size()), translucent);
         tempPainter.end();
         painter = scenePainter;
-        painter->drawImage(win::visible_rect(toplevel).topLeft() - toplevel->frameGeometry().topLeft(), tempImage);
+        painter->drawImage(
+            win::visible_rect(toplevel).topLeft() - toplevel->frameGeometry().topLeft(), tempImage);
     }
 
     painter->restore();
@@ -318,23 +321,23 @@ void SceneQPainter::Window::renderShadow(QPainter* painter)
     }
     auto shadow = static_cast<SceneQPainterShadow*>(win::shadow(toplevel));
 
-    const QImage &shadowTexture = shadow->shadowTexture();
-    const WindowQuadList &shadowQuads = shadow->shadowQuads();
+    const QImage& shadowTexture = shadow->shadowTexture();
+    const WindowQuadList& shadowQuads = shadow->shadowQuads();
 
-    for (const auto &q : shadowQuads) {
+    for (const auto& q : shadowQuads) {
         auto topLeft = q[0];
         auto bottomRight = q[2];
-        QRectF target(topLeft.x(), topLeft.y(),
-                      bottomRight.x() - topLeft.x(),
-                      bottomRight.y() - topLeft.y());
-        QRectF source(topLeft.textureX(), topLeft.textureY(),
+        QRectF target(
+            topLeft.x(), topLeft.y(), bottomRight.x() - topLeft.x(), bottomRight.y() - topLeft.y());
+        QRectF source(topLeft.textureX(),
+                      topLeft.textureY(),
                       bottomRight.textureX() - topLeft.textureX(),
                       bottomRight.textureY() - topLeft.textureY());
         painter->drawImage(target, shadowTexture, source);
     }
 }
 
-void SceneQPainter::Window::renderWindowDecorations(QPainter *painter)
+void SceneQPainter::Window::renderWindowDecorations(QPainter* painter)
 {
     // TODO: custom decoration opacity
     auto const& ctrl = toplevel->control;
@@ -344,12 +347,13 @@ void SceneQPainter::Window::renderWindowDecorations(QPainter *painter)
     }
 
     bool noBorder = true;
-    const SceneQPainterDecorationRenderer *renderer = nullptr;
+    const SceneQPainterDecorationRenderer* renderer = nullptr;
     QRect dtr, dlr, drr, dbr;
 
     if (ctrl && !toplevel->noBorder()) {
         if (win::decoration(toplevel)) {
-            if (auto r = static_cast<SceneQPainterDecorationRenderer *>(ctrl->deco().client->renderer())) {
+            if (auto r
+                = static_cast<SceneQPainterDecorationRenderer*>(ctrl->deco().client->renderer())) {
                 r->render();
                 renderer = r;
             }
@@ -359,7 +363,8 @@ void SceneQPainter::Window::renderWindowDecorations(QPainter *painter)
     } else if (remnant && !remnant->no_border) {
         noBorder = false;
         remnant->layout_decoration_rects(dlr, dtr, drr, dbr);
-        renderer = static_cast<const SceneQPainterDecorationRenderer *>(remnant->decoration_renderer);
+        renderer
+            = static_cast<const SceneQPainterDecorationRenderer*>(remnant->decoration_renderer);
     }
     if (noBorder || !renderer) {
         return;
@@ -367,16 +372,18 @@ void SceneQPainter::Window::renderWindowDecorations(QPainter *painter)
 
     painter->drawImage(dtr, renderer->image(SceneQPainterDecorationRenderer::DecorationPart::Top));
     painter->drawImage(dlr, renderer->image(SceneQPainterDecorationRenderer::DecorationPart::Left));
-    painter->drawImage(drr, renderer->image(SceneQPainterDecorationRenderer::DecorationPart::Right));
-    painter->drawImage(dbr, renderer->image(SceneQPainterDecorationRenderer::DecorationPart::Bottom));
+    painter->drawImage(drr,
+                       renderer->image(SceneQPainterDecorationRenderer::DecorationPart::Right));
+    painter->drawImage(dbr,
+                       renderer->image(SceneQPainterDecorationRenderer::DecorationPart::Bottom));
 }
 
-WindowPixmap *SceneQPainter::Window::createWindowPixmap()
+WindowPixmap* SceneQPainter::Window::createWindowPixmap()
 {
     return new QPainterWindowPixmap(this);
 }
 
-Decoration::Renderer *SceneQPainter::createDecorationRenderer(Decoration::DecoratedClientImpl *impl)
+Decoration::Renderer* SceneQPainter::createDecorationRenderer(Decoration::DecoratedClientImpl* impl)
 {
     return new SceneQPainterDecorationRenderer(impl);
 }
@@ -384,7 +391,7 @@ Decoration::Renderer *SceneQPainter::createDecorationRenderer(Decoration::Decora
 //****************************************
 // QPainterWindowPixmap
 //****************************************
-QPainterWindowPixmap::QPainterWindowPixmap(Scene::Window *window)
+QPainterWindowPixmap::QPainterWindowPixmap(Scene::Window* window)
     : WindowPixmap(window)
 {
 }
@@ -446,7 +453,7 @@ bool QPainterWindowPixmap::isValid() const
     return WindowPixmap::isValid();
 }
 
-QPainterEffectFrame::QPainterEffectFrame(EffectFrameImpl *frame, SceneQPainter *scene)
+QPainterEffectFrame::QPainterEffectFrame(EffectFrameImpl* frame, SceneQPainter* scene)
     : Scene::EffectFrame(frame)
     , m_scene(scene)
 {
@@ -464,8 +471,7 @@ void QPainterEffectFrame::render(QRegion region, double opacity, double frameOpa
     if (m_effectFrame->geometry().isEmpty()) {
         return; // Nothing to display
     }
-    QPainter *painter = m_scene->scenePainter();
-
+    QPainter* painter = m_scene->scenePainter();
 
     // Render the actual frame
     if (m_effectFrame->style() == EffectFrameUnstyled) {
@@ -479,18 +485,21 @@ void QPainterEffectFrame::render(QRegion region, double opacity, double frameOpa
         painter->restore();
     } else if (m_effectFrame->style() == EffectFrameStyled) {
         qreal left, top, right, bottom;
-        m_effectFrame->frame().getMargins(left, top, right, bottom);   // m_geometry is the inner geometry
+        m_effectFrame->frame().getMargins(
+            left, top, right, bottom); // m_geometry is the inner geometry
         QRect geom = m_effectFrame->geometry().adjusted(-left, -top, right, bottom);
         painter->drawPixmap(geom, m_effectFrame->frame().framePixmap());
     }
     if (!m_effectFrame->selection().isNull()) {
-        painter->drawPixmap(m_effectFrame->selection(), m_effectFrame->selectionFrame().framePixmap());
+        painter->drawPixmap(m_effectFrame->selection(),
+                            m_effectFrame->selectionFrame().framePixmap());
     }
 
     // Render icon
     if (!m_effectFrame->icon().isNull() && !m_effectFrame->iconSize().isEmpty()) {
         const QPoint topLeft(m_effectFrame->geometry().x(),
-                             m_effectFrame->geometry().center().y() - m_effectFrame->iconSize().height() / 2);
+                             m_effectFrame->geometry().center().y()
+                                 - m_effectFrame->iconSize().height() / 2);
 
         const QRect geom = QRect(topLeft, m_effectFrame->iconSize());
         painter->drawPixmap(geom, m_effectFrame->icon().pixmap(m_effectFrame->iconSize()));
@@ -519,7 +528,8 @@ void QPainterEffectFrame::render(QRegion region, double opacity, double frameOpa
             // TODO: What about no frame? Custom color setting required
             painter->setPen(Qt::white);
         }
-        painter->drawText(rect.translated(m_effectFrame->geometry().topLeft()), m_effectFrame->alignment(), text);
+        painter->drawText(
+            rect.translated(m_effectFrame->geometry().topLeft()), m_effectFrame->alignment(), text);
         painter->restore();
     }
 }
@@ -560,17 +570,16 @@ void SceneQPainterShadow::buildQuads()
                                    topLevel()->size().height() + bottomOffset()));
 
     const int width = std::max({topLeft.width(), left.width(), bottomLeft.width()})
-                    + std::max(top.width(), bottom.width())
-                    + std::max({topRight.width(), right.width(), bottomRight.width()});
+        + std::max(top.width(), bottom.width())
+        + std::max({topRight.width(), right.width(), bottomRight.width()});
     const int height = std::max({topLeft.height(), top.height(), topRight.height()})
-                     + std::max(left.height(), right.height())
-                     + std::max({bottomLeft.height(), bottom.height(), bottomRight.height()});
+        + std::max(left.height(), right.height())
+        + std::max({bottomLeft.height(), bottom.height(), bottomRight.height()});
 
     QRectF topLeftRect(outerRect.topLeft(), topLeft);
     QRectF topRightRect(outerRect.topRight() - QPointF(topRight.width(), 0), topRight);
     QRectF bottomRightRect(
-        outerRect.bottomRight() - QPointF(bottomRight.width(), bottomRight.height()),
-        bottomRight);
+        outerRect.bottomRight() - QPointF(bottomRight.width(), bottomRight.height()), bottomRight);
     QRectF bottomLeftRect(outerRect.bottomLeft() - QPointF(0, bottomLeft.height()), bottomLeft);
 
     // Re-distribute the corner tiles so no one of them is overlapping with others.
@@ -612,10 +621,7 @@ void SceneQPainterShadow::buildQuads()
         drawLeft = false;
     }
 
-    qreal tx1 = 0.0,
-          tx2 = 0.0,
-          ty1 = 0.0,
-          ty2 = 0.0;
+    qreal tx1 = 0.0, tx2 = 0.0, ty1 = 0.0, ty2 = 0.0;
 
     m_shadowQuads.clear();
 
@@ -624,10 +630,10 @@ void SceneQPainterShadow::buildQuads()
     tx2 = topLeftRect.width();
     ty2 = topLeftRect.height();
     WindowQuad topLeftQuad(WindowQuadShadow);
-    topLeftQuad[0] = WindowVertex(topLeftRect.left(),  topLeftRect.top(),    tx1, ty1);
-    topLeftQuad[1] = WindowVertex(topLeftRect.right(), topLeftRect.top(),    tx2, ty1);
+    topLeftQuad[0] = WindowVertex(topLeftRect.left(), topLeftRect.top(), tx1, ty1);
+    topLeftQuad[1] = WindowVertex(topLeftRect.right(), topLeftRect.top(), tx2, ty1);
     topLeftQuad[2] = WindowVertex(topLeftRect.right(), topLeftRect.bottom(), tx2, ty2);
-    topLeftQuad[3] = WindowVertex(topLeftRect.left(),  topLeftRect.bottom(), tx1, ty2);
+    topLeftQuad[3] = WindowVertex(topLeftRect.left(), topLeftRect.bottom(), tx1, ty2);
     m_shadowQuads.append(topLeftQuad);
 
     tx1 = width - topRightRect.width();
@@ -635,10 +641,10 @@ void SceneQPainterShadow::buildQuads()
     tx2 = width;
     ty2 = topRightRect.height();
     WindowQuad topRightQuad(WindowQuadShadow);
-    topRightQuad[0] = WindowVertex(topRightRect.left(),  topRightRect.top(),    tx1, ty1);
-    topRightQuad[1] = WindowVertex(topRightRect.right(), topRightRect.top(),    tx2, ty1);
+    topRightQuad[0] = WindowVertex(topRightRect.left(), topRightRect.top(), tx1, ty1);
+    topRightQuad[1] = WindowVertex(topRightRect.right(), topRightRect.top(), tx2, ty1);
     topRightQuad[2] = WindowVertex(topRightRect.right(), topRightRect.bottom(), tx2, ty2);
-    topRightQuad[3] = WindowVertex(topRightRect.left(),  topRightRect.bottom(), tx1, ty2);
+    topRightQuad[3] = WindowVertex(topRightRect.left(), topRightRect.bottom(), tx1, ty2);
     m_shadowQuads.append(topRightQuad);
 
     tx1 = width - bottomRightRect.width();
@@ -646,10 +652,10 @@ void SceneQPainterShadow::buildQuads()
     ty1 = height - bottomRightRect.height();
     ty2 = height;
     WindowQuad bottomRightQuad(WindowQuadShadow);
-    bottomRightQuad[0] = WindowVertex(bottomRightRect.left(),  bottomRightRect.top(),    tx1, ty1);
-    bottomRightQuad[1] = WindowVertex(bottomRightRect.right(), bottomRightRect.top(),    tx2, ty1);
+    bottomRightQuad[0] = WindowVertex(bottomRightRect.left(), bottomRightRect.top(), tx1, ty1);
+    bottomRightQuad[1] = WindowVertex(bottomRightRect.right(), bottomRightRect.top(), tx2, ty1);
     bottomRightQuad[2] = WindowVertex(bottomRightRect.right(), bottomRightRect.bottom(), tx2, ty2);
-    bottomRightQuad[3] = WindowVertex(bottomRightRect.left(),  bottomRightRect.bottom(), tx1, ty2);
+    bottomRightQuad[3] = WindowVertex(bottomRightRect.left(), bottomRightRect.bottom(), tx1, ty2);
     m_shadowQuads.append(bottomRightQuad);
 
     tx1 = 0.0;
@@ -657,73 +663,65 @@ void SceneQPainterShadow::buildQuads()
     ty1 = height - bottomLeftRect.height();
     ty2 = height;
     WindowQuad bottomLeftQuad(WindowQuadShadow);
-    bottomLeftQuad[0] = WindowVertex(bottomLeftRect.left(),  bottomLeftRect.top(),    tx1, ty1);
-    bottomLeftQuad[1] = WindowVertex(bottomLeftRect.right(), bottomLeftRect.top(),    tx2, ty1);
+    bottomLeftQuad[0] = WindowVertex(bottomLeftRect.left(), bottomLeftRect.top(), tx1, ty1);
+    bottomLeftQuad[1] = WindowVertex(bottomLeftRect.right(), bottomLeftRect.top(), tx2, ty1);
     bottomLeftQuad[2] = WindowVertex(bottomLeftRect.right(), bottomLeftRect.bottom(), tx2, ty2);
-    bottomLeftQuad[3] = WindowVertex(bottomLeftRect.left(),  bottomLeftRect.bottom(), tx1, ty2);
+    bottomLeftQuad[3] = WindowVertex(bottomLeftRect.left(), bottomLeftRect.bottom(), tx1, ty2);
     m_shadowQuads.append(bottomLeftQuad);
 
     if (drawTop) {
-        QRectF topRect(
-            topLeftRect.topRight(),
-            topRightRect.bottomLeft());
+        QRectF topRect(topLeftRect.topRight(), topRightRect.bottomLeft());
         tx1 = topLeft.width();
         ty1 = 0.0;
         tx2 = width - topRight.width();
         ty2 = topRect.height();
         WindowQuad topQuad(WindowQuadShadow);
-        topQuad[0] = WindowVertex(topRect.left(),  topRect.top(),    tx1, ty1);
-        topQuad[1] = WindowVertex(topRect.right(), topRect.top(),    tx2, ty1);
+        topQuad[0] = WindowVertex(topRect.left(), topRect.top(), tx1, ty1);
+        topQuad[1] = WindowVertex(topRect.right(), topRect.top(), tx2, ty1);
         topQuad[2] = WindowVertex(topRect.right(), topRect.bottom(), tx2, ty2);
-        topQuad[3] = WindowVertex(topRect.left(),  topRect.bottom(), tx1, ty2);
+        topQuad[3] = WindowVertex(topRect.left(), topRect.bottom(), tx1, ty2);
         m_shadowQuads.append(topQuad);
     }
 
     if (drawRight) {
-        QRectF rightRect(
-            topRightRect.bottomLeft(),
-            bottomRightRect.topRight());
+        QRectF rightRect(topRightRect.bottomLeft(), bottomRightRect.topRight());
         tx1 = width - rightRect.width();
         ty1 = topRight.height();
         tx2 = width;
         ty2 = height - bottomRight.height();
         WindowQuad rightQuad(WindowQuadShadow);
-        rightQuad[0] = WindowVertex(rightRect.left(),  rightRect.top(),    tx1, ty1);
-        rightQuad[1] = WindowVertex(rightRect.right(), rightRect.top(),    tx2, ty1);
+        rightQuad[0] = WindowVertex(rightRect.left(), rightRect.top(), tx1, ty1);
+        rightQuad[1] = WindowVertex(rightRect.right(), rightRect.top(), tx2, ty1);
         rightQuad[2] = WindowVertex(rightRect.right(), rightRect.bottom(), tx2, ty2);
-        rightQuad[3] = WindowVertex(rightRect.left(),  rightRect.bottom(), tx1, ty2);
+        rightQuad[3] = WindowVertex(rightRect.left(), rightRect.bottom(), tx1, ty2);
         m_shadowQuads.append(rightQuad);
     }
 
     if (drawBottom) {
-        QRectF bottomRect(
-            bottomLeftRect.topRight(),
-            bottomRightRect.bottomLeft());
+        QRectF bottomRect(bottomLeftRect.topRight(), bottomRightRect.bottomLeft());
         tx1 = bottomLeft.width();
         ty1 = height - bottomRect.height();
         tx2 = width - bottomRight.width();
         ty2 = height;
         WindowQuad bottomQuad(WindowQuadShadow);
-        bottomQuad[0] = WindowVertex(bottomRect.left(),  bottomRect.top(),    tx1, ty1);
-        bottomQuad[1] = WindowVertex(bottomRect.right(), bottomRect.top(),    tx2, ty1);
+        bottomQuad[0] = WindowVertex(bottomRect.left(), bottomRect.top(), tx1, ty1);
+        bottomQuad[1] = WindowVertex(bottomRect.right(), bottomRect.top(), tx2, ty1);
         bottomQuad[2] = WindowVertex(bottomRect.right(), bottomRect.bottom(), tx2, ty2);
-        bottomQuad[3] = WindowVertex(bottomRect.left(),  bottomRect.bottom(), tx1, ty2);
+        bottomQuad[3] = WindowVertex(bottomRect.left(), bottomRect.bottom(), tx1, ty2);
         m_shadowQuads.append(bottomQuad);
     }
 
     if (drawLeft) {
-        QRectF leftRect(
-            topLeftRect.bottomLeft(),
-            bottomLeftRect.topRight());
+        QRectF leftRect(topLeftRect.bottomLeft(), bottomLeftRect.topRight());
         tx1 = 0.0;
         ty1 = topLeft.height();
         tx2 = leftRect.width();
         ty2 = height - bottomRight.height();
         WindowQuad leftQuad(WindowQuadShadow);
-        leftQuad[0] = WindowVertex(leftRect.left(),  leftRect.top(),    tx1, ty1);
-        leftQuad[1] = WindowVertex(leftRect.right(), leftRect.top(),    tx2, ty1);
+        leftQuad[0] = WindowVertex(leftRect.left(), leftRect.top(), tx1, ty1);
+        leftQuad[1] = WindowVertex(leftRect.right(), leftRect.top(), tx2, ty1);
         leftQuad[2] = WindowVertex(leftRect.right(), leftRect.bottom(), tx2, ty2);
-        leftQuad[3] = WindowVertex(leftRect.left(),  leftRect.bottom(), tx1, ty2);
+        leftQuad[3] = WindowVertex(leftRect.left(), leftRect.bottom(), tx1, ty2);
         m_shadowQuads.append(leftQuad);
     }
 }
@@ -735,21 +733,21 @@ bool SceneQPainterShadow::prepareBackend()
         return true;
     }
 
-    const QPixmap &topLeft     = shadowPixmap(ShadowElementTopLeft);
-    const QPixmap &top         = shadowPixmap(ShadowElementTop);
-    const QPixmap &topRight    = shadowPixmap(ShadowElementTopRight);
-    const QPixmap &bottomLeft  = shadowPixmap(ShadowElementBottomLeft);
-    const QPixmap &bottom      = shadowPixmap(ShadowElementBottom);
-    const QPixmap &bottomRight = shadowPixmap(ShadowElementBottomRight);
-    const QPixmap &left        = shadowPixmap(ShadowElementLeft);
-    const QPixmap &right       = shadowPixmap(ShadowElementRight);
+    const QPixmap& topLeft = shadowPixmap(ShadowElementTopLeft);
+    const QPixmap& top = shadowPixmap(ShadowElementTop);
+    const QPixmap& topRight = shadowPixmap(ShadowElementTopRight);
+    const QPixmap& bottomLeft = shadowPixmap(ShadowElementBottomLeft);
+    const QPixmap& bottom = shadowPixmap(ShadowElementBottom);
+    const QPixmap& bottomRight = shadowPixmap(ShadowElementBottomRight);
+    const QPixmap& left = shadowPixmap(ShadowElementLeft);
+    const QPixmap& right = shadowPixmap(ShadowElementRight);
 
     const int width = std::max({topLeft.width(), left.width(), bottomLeft.width()})
-                    + std::max(top.width(), bottom.width())
-                    + std::max({topRight.width(), right.width(), bottomRight.width()});
+        + std::max(top.width(), bottom.width())
+        + std::max({topRight.width(), right.width(), bottomRight.width()});
     const int height = std::max({topLeft.height(), top.height(), topRight.height()})
-                     + std::max(left.height(), right.height())
-                     + std::max({bottomLeft.height(), bottom.height(), bottomRight.height()});
+        + std::max(left.height(), right.height())
+        + std::max({bottomLeft.height(), bottom.height(), bottomRight.height()});
 
     if (width == 0 || height == 0) {
         return false;
@@ -763,11 +761,18 @@ bool SceneQPainterShadow::prepareBackend()
     painter.drawPixmap(0, 0, topLeft.width(), topLeft.height(), topLeft);
     painter.drawPixmap(topLeft.width(), 0, top.width(), top.height(), top);
     painter.drawPixmap(width - topRight.width(), 0, topRight.width(), topRight.height(), topRight);
-    painter.drawPixmap(0, height - bottomLeft.height(), bottomLeft.width(), bottomLeft.height(), bottomLeft);
-    painter.drawPixmap(bottomLeft.width(), height - bottom.height(), bottom.width(), bottom.height(), bottom);
-    painter.drawPixmap(width - bottomRight.width(), height - bottomRight.height(), bottomRight.width(), bottomRight.height(), bottomRight);
+    painter.drawPixmap(
+        0, height - bottomLeft.height(), bottomLeft.width(), bottomLeft.height(), bottomLeft);
+    painter.drawPixmap(
+        bottomLeft.width(), height - bottom.height(), bottom.width(), bottom.height(), bottom);
+    painter.drawPixmap(width - bottomRight.width(),
+                       height - bottomRight.height(),
+                       bottomRight.width(),
+                       bottomRight.height(),
+                       bottomRight);
     painter.drawPixmap(0, topLeft.height(), left.width(), left.height(), left);
-    painter.drawPixmap(width - right.width(), topRight.height(), right.width(), right.height(), right);
+    painter.drawPixmap(
+        width - right.width(), topRight.height(), right.width(), right.height(), right);
     painter.end();
 
     m_texture = image;
@@ -778,16 +783,20 @@ bool SceneQPainterShadow::prepareBackend()
 //****************************************
 // QPainterDecorationRenderer
 //****************************************
-SceneQPainterDecorationRenderer::SceneQPainterDecorationRenderer(Decoration::DecoratedClientImpl *client)
+SceneQPainterDecorationRenderer::SceneQPainterDecorationRenderer(
+    Decoration::DecoratedClientImpl* client)
     : Renderer(client)
 {
-    connect(this, &Renderer::renderScheduled,
-            client->client(), static_cast<void (Toplevel::*)(QRegion const&)>(&Toplevel::addRepaint));
+    connect(this,
+            &Renderer::renderScheduled,
+            client->client(),
+            static_cast<void (Toplevel::*)(QRegion const&)>(&Toplevel::addRepaint));
 }
 
 SceneQPainterDecorationRenderer::~SceneQPainterDecorationRenderer() = default;
 
-QImage SceneQPainterDecorationRenderer::image(SceneQPainterDecorationRenderer::DecorationPart part) const
+QImage
+SceneQPainterDecorationRenderer::image(SceneQPainterDecorationRenderer::DecorationPart part) const
 {
     Q_ASSERT(part != DecorationPart::Count);
     return m_images[int(part)];
@@ -810,17 +819,19 @@ void SceneQPainterDecorationRenderer::render()
 
     const QRect top(QPoint(0, 0), imageSize(DecorationPart::Top));
     const QRect left(QPoint(0, top.height()), imageSize(DecorationPart::Left));
-    const QRect right(QPoint(top.width() - imageSize(DecorationPart::Right).width(), top.height()), imageSize(DecorationPart::Right));
+    const QRect right(QPoint(top.width() - imageSize(DecorationPart::Right).width(), top.height()),
+                      imageSize(DecorationPart::Right));
     const QRect bottom(QPoint(0, left.y() + left.height()), imageSize(DecorationPart::Bottom));
 
     const QRect geometry = scheduled.boundingRect();
-    auto renderPart = [this](const QRect &rect, const QRect &partRect, int index) {
+    auto renderPart = [this](const QRect& rect, const QRect& partRect, int index) {
         if (rect.isEmpty()) {
             return;
         }
         QPainter painter(&m_images[index]);
         painter.setRenderHint(QPainter::Antialiasing);
-        painter.setWindow(QRect(partRect.topLeft(), partRect.size() * m_images[index].devicePixelRatio()));
+        painter.setWindow(
+            QRect(partRect.topLeft(), partRect.size() * m_images[index].devicePixelRatio()));
         painter.setClipRect(rect);
         painter.save();
         // clear existing part
@@ -841,11 +852,9 @@ void SceneQPainterDecorationRenderer::resizeImages()
     QRect left, top, right, bottom;
     client()->client()->layoutDecorationRects(left, top, right, bottom);
 
-    auto checkAndCreate = [this](int index, const QSize &size) {
+    auto checkAndCreate = [this](int index, const QSize& size) {
         auto dpr = client()->client()->screenScale();
-        if (m_images[index].size() != size * dpr ||
-            m_images[index].devicePixelRatio() != dpr)
-        {
+        if (m_images[index].size() != size * dpr || m_images[index].devicePixelRatio() != dpr) {
             m_images[index] = QImage(size * dpr, QImage::Format_ARGB32_Premultiplied);
             m_images[index].setDevicePixelRatio(dpr);
             m_images[index].fill(Qt::transparent);
@@ -857,21 +866,20 @@ void SceneQPainterDecorationRenderer::resizeImages()
     checkAndCreate(int(DecorationPart::Bottom), bottom.size());
 }
 
-void SceneQPainterDecorationRenderer::reparent(Toplevel *window)
+void SceneQPainterDecorationRenderer::reparent(Toplevel* window)
 {
     render();
     Renderer::reparent(window);
 }
 
-
-QPainterFactory::QPainterFactory(QObject *parent)
+QPainterFactory::QPainterFactory(QObject* parent)
     : SceneFactory(parent)
 {
 }
 
 QPainterFactory::~QPainterFactory() = default;
 
-Scene *QPainterFactory::create(QObject *parent) const
+Scene* QPainterFactory::create(QObject* parent) const
 {
     auto s = SceneQPainter::createScene(parent);
     if (s && s->initFailed()) {

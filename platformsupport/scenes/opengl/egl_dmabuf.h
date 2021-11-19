@@ -36,27 +36,24 @@ public:
     using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
     using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
 
-    enum class ImportType {
-        Direct,
-        Conversion
-    };
+    enum class ImportType { Direct, Conversion };
 
     EglDmabufBuffer(EGLImage image,
-                    const QVector<Plane> &planes,
+                    const QVector<Plane>& planes,
                     uint32_t format,
-                    const QSize &size,
+                    const QSize& size,
                     Flags flags,
-                    EglDmabuf *interfaceImpl);
+                    EglDmabuf* interfaceImpl);
 
-    EglDmabufBuffer(const QVector<Plane> &planes,
+    EglDmabufBuffer(const QVector<Plane>& planes,
                     uint32_t format,
-                    const QSize &size,
+                    const QSize& size,
                     Flags flags,
-                    EglDmabuf *interfaceImpl);
+                    EglDmabuf* interfaceImpl);
 
     ~EglDmabufBuffer() override;
 
-    void setInterfaceImplementation(EglDmabuf *interfaceImpl);
+    void setInterfaceImplementation(EglDmabuf* interfaceImpl);
     void addImage(EGLImage image);
     void removeImages();
 
@@ -64,7 +61,7 @@ public:
 
 private:
     std::vector<EGLImage> m_images;
-    EglDmabuf *m_interfaceImpl;
+    EglDmabuf* m_interfaceImpl;
     ImportType m_importType;
 };
 
@@ -74,29 +71,25 @@ public:
     using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
     using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
 
-    static EglDmabuf* factory(AbstractEglBackend *backend);
+    static EglDmabuf* factory(AbstractEglBackend* backend);
 
-    explicit EglDmabuf(AbstractEglBackend *backend);
+    explicit EglDmabuf(AbstractEglBackend* backend);
     ~EglDmabuf() override;
 
-    Wrapland::Server::LinuxDmabufBufferV1 *importBuffer(const QVector<Plane> &planes,
-                                                                uint32_t format,
-                                                                const QSize &size,
-                                                                Flags flags) override;
+    Wrapland::Server::LinuxDmabufBufferV1* importBuffer(const QVector<Plane>& planes,
+                                                        uint32_t format,
+                                                        const QSize& size,
+                                                        Flags flags) override;
 
 private:
-    EGLImage createImage(const QVector<Plane> &planes,
-                         uint32_t format,
-                         const QSize &size);
+    EGLImage createImage(const QVector<Plane>& planes, uint32_t format, const QSize& size);
 
-    Wrapland::Server::LinuxDmabufBufferV1 *yuvImport(const QVector<Plane> &planes,
-                                                             uint32_t format,
-                                                             const QSize &size,
-                                                             Flags flags);
+    Wrapland::Server::LinuxDmabufBufferV1*
+    yuvImport(const QVector<Plane>& planes, uint32_t format, const QSize& size, Flags flags);
     QVector<uint32_t> queryFormats();
     void setSupportedFormatsAndModifiers();
 
-    AbstractEglBackend *m_backend;
+    AbstractEglBackend* m_backend;
 
     friend class EglDmabufBuffer;
 };

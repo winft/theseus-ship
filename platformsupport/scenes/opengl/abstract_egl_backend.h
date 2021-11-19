@@ -48,29 +48,33 @@ public:
     ~AbstractEglBackend() override;
     bool makeCurrent() override;
     void doneCurrent() override;
-    SceneOpenGLTexturePrivate *createBackendTexture(SceneOpenGLTexture *texture) override;
+    SceneOpenGLTexturePrivate* createBackendTexture(SceneOpenGLTexture* texture) override;
 
-    EGLDisplay eglDisplay() const {
+    EGLDisplay eglDisplay() const
+    {
         return m_display;
     }
-    EGLContext context() const {
+    EGLContext context() const
+    {
         return m_context;
     }
-    EGLSurface surface() const {
+    EGLSurface surface() const
+    {
         return m_surface;
     }
-    EGLConfig config() const {
+    EGLConfig config() const
+    {
         return m_config;
     }
 
-    bool hasClientExtension(const QByteArray &ext) const;
+    bool hasClientExtension(const QByteArray& ext) const;
     bool isOpenGLES() const;
-    void setConfig(const EGLConfig &config);
-    void setSurface(const EGLSurface &surface);
+    void setConfig(const EGLConfig& config);
+    void setSurface(const EGLSurface& surface);
 
 protected:
     AbstractEglBackend();
-    void setEglDisplay(const EGLDisplay &display);
+    void setEglDisplay(const EGLDisplay& display);
     void cleanup();
     virtual void cleanupSurfaces();
     bool initEglAPI();
@@ -89,43 +93,46 @@ private:
     EGLContext m_context = EGL_NO_CONTEXT;
     EGLConfig m_config = nullptr;
     QList<QByteArray> m_clientExtensions;
-    EglDmabuf *m_dmaBuf = nullptr;
+    EglDmabuf* m_dmaBuf = nullptr;
 };
 
 class KWIN_EXPORT EglTexture : public SceneOpenGLTexturePrivate
 {
 public:
-    EglTexture(SceneOpenGLTexture *texture, AbstractEglBackend *backend);
+    EglTexture(SceneOpenGLTexture* texture, AbstractEglBackend* backend);
     ~EglTexture() override;
-    bool loadTexture(WindowPixmap *pixmap) override;
-    void updateTexture(WindowPixmap *pixmap) override;
-    OpenGLBackend *backend() override;
+    bool loadTexture(WindowPixmap* pixmap) override;
+    void updateTexture(WindowPixmap* pixmap) override;
+    OpenGLBackend* backend() override;
 
 protected:
-    EGLImageKHR image() const {
+    EGLImageKHR image() const
+    {
         return m_image;
     }
-    void setImage(const EGLImageKHR &img) {
+    void setImage(const EGLImageKHR& img)
+    {
         m_image = img;
     }
-    SceneOpenGLTexture *texture() const {
+    SceneOpenGLTexture* texture() const
+    {
         return q;
     }
 
 private:
-    void textureSubImage(int scale, Wrapland::Server::ShmImage const& img, const QRegion &damage);
-    void textureSubImageFromQImage(int scale, const QImage &image, const QRegion &damage);
+    void textureSubImage(int scale, Wrapland::Server::ShmImage const& img, const QRegion& damage);
+    void textureSubImageFromQImage(int scale, const QImage& image, const QRegion& damage);
 
-    bool createTextureImage(const QImage &image);
-    bool loadShmTexture(Wrapland::Server::Buffer *buffer);
-    bool loadEglTexture(Wrapland::Server::Buffer *buffer);
-    bool loadDmabufTexture(Wrapland::Server::Buffer *buffer);
-    bool loadInternalImageObject(WindowPixmap *pixmap);
+    bool createTextureImage(const QImage& image);
+    bool loadShmTexture(Wrapland::Server::Buffer* buffer);
+    bool loadEglTexture(Wrapland::Server::Buffer* buffer);
+    bool loadDmabufTexture(Wrapland::Server::Buffer* buffer);
+    bool loadInternalImageObject(WindowPixmap* pixmap);
     EGLImageKHR attach(Wrapland::Server::Buffer* buffer);
-    bool updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject> &fbo);
-    bool updateFromInternalImageObject(WindowPixmap *pixmap);
-    SceneOpenGLTexture *q;
-    AbstractEglBackend *m_backend;
+    bool updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject>& fbo);
+    bool updateFromInternalImageObject(WindowPixmap* pixmap);
+    SceneOpenGLTexture* q;
+    AbstractEglBackend* m_backend;
     EGLImageKHR m_image;
     bool m_hasSubImageUnpack{false};
 };
