@@ -167,14 +167,16 @@ void basic_thumbnail_item::update_render_notifier()
 {
     disconnect(render_notifier);
 
-    auto scene = singleton_interface::effects;
+    if (!effects) {
+        return;
+    }
 
     if (!window()) {
         return;
     }
 
-    if (scene && scene->compositingType() == OpenGLCompositing) {
-        render_notifier = connect(scene,
+    if (effects->isOpenGLCompositing()) {
+        render_notifier = connect(effects,
                                   &EffectsHandler::frameRendered,
                                   this,
                                   &basic_thumbnail_item::updateOffscreenTexture);
@@ -308,6 +310,7 @@ void window_thumbnail_item::setWId(const QUuid& wId)
         setClient(find_controlled_window(m_wId));
     } else if (m_client) {
         m_client = nullptr;
+        updateImplicitSize();
         Q_EMIT clientChanged();
     }
     Q_EMIT wIdChanged();
@@ -332,6 +335,10 @@ void window_thumbnail_item::setClient(scripting::window* client)
                    &scripting::window::damaged,
                    this,
                    &window_thumbnail_item::invalidateOffscreenTexture);
+        disconnect(m_client,
+                   &scripting::window::frameGeometryChanged,
+                   this,
+                   &window_thumbnail_item::updateImplicitSize);
     }
     m_client = client;
     if (m_client) {
@@ -343,12 +350,26 @@ void window_thumbnail_item::setClient(scripting::window* client)
                 &scripting::window::damaged,
                 this,
                 &window_thumbnail_item::invalidateOffscreenTexture);
+        connect(m_client,
+                &scripting::window::frameGeometryChanged,
+                this,
+                &window_thumbnail_item::updateImplicitSize);
         setWId(m_client->internalId());
     } else {
         setWId(QUuid());
     }
     invalidateOffscreenTexture();
+    updateImplicitSize();
     Q_EMIT clientChanged();
+}
+
+void window_thumbnail_item::updateImplicitSize()
+{
+    QSize frameSize;
+    if (m_client) {
+        frameSize = m_client->frameGeometry().size();
+    }
+    setImplicitSize(frameSize.width(), frameSize.height());
 }
 
 QImage window_thumbnail_item::fallbackImage() const
@@ -487,8 +508,7 @@ QImage desktop_thumbnail_item::fallbackImage() const
 
 QRectF desktop_thumbnail_item::paintedRect() const
 {
-    QSizeF size = QSizeF(singleton_interface::effects->virtualScreenGeometry().size());
-    return centeredSize(boundingRect(), size);
+    return centeredSize(boundingRect(), effects->virtualScreenSize());
 }
 
 void desktop_thumbnail_item::invalidateOffscreenTexture()
