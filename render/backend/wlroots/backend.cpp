@@ -247,9 +247,8 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
         i++;
     }
 
-    uint32_t lessee_id;
-    auto fd = wlr_drm_create_lease(outputs_array.data, outputs_array.size, &lessee_id);
-    if (fd < 0) {
+    auto wlr_lease = wlr_drm_create_lease(outputs_array.data, outputs_array.size, nullptr);
+    if (!wlr_lease) {
         qCWarning(KWIN_WL) << "Error in wlroots backend on lease creation.";
         for (auto& out : outputs) {
             egl->get_output(out).reset_framebuffer();
@@ -257,14 +256,14 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
         throw;
     }
 
-    connect(lease, &Wrapland::Server::drm_lease_v1::resourceDestroyed, this, [this, lessee_id] {
-        wlr_drm_backend_terminate_lease(
-            base::backend::wlroots_get_drm_backend(base.backend.backend), lessee_id);
-        static_cast<render::wayland::compositor*>(compositor::self())->unlock();
-    });
+    QObject::connect(
+        lease, &Wrapland::Server::drm_lease_v1::resourceDestroyed, this, [this, wlr_lease] {
+            wlr_drm_lease_terminate(wlr_lease);
+            static_cast<render::wayland::compositor*>(compositor::self())->unlock();
+        });
 
     static_cast<render::wayland::compositor*>(compositor::self())->lock();
-    lease->grant(fd);
+    lease->grant(wlr_lease->fd);
     qCDebug(KWIN_WL) << "DRM resources have been leased to client";
 #endif
 }
