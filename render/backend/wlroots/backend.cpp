@@ -53,6 +53,10 @@ void handle_new_output(struct wl_listener* listener, void* data)
     auto back = new_output_struct->receiver;
     auto wlr_out = reinterpret_cast<wlr_output*>(data);
 
+#if HAVE_WLR_OUTPUT_INIT_RENDER
+    wlr_output_init_render(wlr_out, back->allocator, back->renderer);
+#endif
+
     if (!wl_list_empty(&wlr_out->modes)) {
         auto mode = wlr_output_preferred_mode(wlr_out);
         wlr_output_set_mode(wlr_out, mode);
@@ -88,6 +92,13 @@ void backend::init()
     // TODO(romangg): Can we omit making a distinction here?
     // Pointer warping is required for tests.
     setSupportsPointerWarping(base::backend::wlroots_get_headless_backend(base.backend.backend));
+
+    // TODO(romangg): Has to be here because in the integration tests base.backend.backend is not
+    //                yet available in the ctor. Can we change that?
+#if HAVE_WLR_OUTPUT_INIT_RENDER
+    renderer = wlr_renderer_autocreate(base.backend.backend);
+    allocator = wlr_allocator_autocreate(base.backend.backend, renderer);
+#endif
 
     new_output.receiver = this;
     new_output.event.notify = handle_new_output;

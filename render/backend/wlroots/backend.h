@@ -40,6 +40,11 @@ public:
     QVector<output*> all_outputs;
     QVector<output*> enabled_outputs;
 
+#if HAVE_WLR_OUTPUT_INIT_RENDER
+    wlr_renderer* renderer{nullptr};
+    wlr_allocator* allocator{nullptr};
+#endif
+
     explicit backend(base::platform<base::backend::wlroots>& base);
     ~backend() override;
 

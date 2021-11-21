@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include <config-kwin.h>
+
 extern "C" {
 #include <wlr/backend.h>
 #include <wlr/types/wlr_buffer.h>
@@ -12,6 +14,9 @@ extern "C" {
 #include <wlr/util/log.h>
 
 #define static
+#if HAVE_WLR_OUTPUT_INIT_RENDER
+#include <wlr/render/allocator.h>
+#endif
 #include <wlr/render/wlr_renderer.h>
 #undef static
 }
