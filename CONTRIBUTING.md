@@ -203,6 +203,43 @@ This is very similar to starting KWinFT from the VT directly.
 The only difference is that we do not redirect the output or copy it with tee to a file
 since we can now easily follow it on the screen of our second device.
 
+#### DRM logging
+In a Wayland session we talk through wlroots directly to the
+[Direct Rendering Manager (DRM)](https://en.wikipedia.org/wiki/Direct_Rendering_Manager)
+subsystem of the Linux kernel
+for showing graphical buffers and configuring outputs.
+
+Debugging issues with it directly can be difficult.
+A first step is to priunt out the DRM logs to dmesg what usually isn't done by default.
+How to enable such DRM logging is described in the
+[wlroots wiki](https://gitlab.freedesktop.org/wlroots/wlroots/-/wikis/DRM-Debugging).
+
+You can also use the following script
+to have a convenient way of enabling it temporarily
+from the command line:
+
+    #!/usr/bin/env bash
+
+    # Enable verbose DRM logging
+    echo 0xFE | sudo tee /sys/module/drm/parameters/debug > /dev/null
+    # Clear kernel logs
+    sudo dmesg -C
+    # Continuously write DRM logs to a file, in the background
+    sudo dmesg -w > $HOME/dmesg.log &
+
+    echo "DRM logging activated. Waiting for Ctrl+C..."
+    ( trap exit SIGINT ; read -r -d '' _ </dev/tty )
+
+    # Disable DRM logging
+    echo 0x00 | sudo tee /sys/module/drm/parameters/debug > /dev/null
+    echo
+    echo "Ctrl+C received. Disabled DRM logging and exit."
+
+Note that the DRM log output is very verbose.
+So only enable it shortly before triggering the faulty behavior
+and disable it directly afterwards again.
+You then find the dmesg log in `$HOME/dmesg.log`.
+
 ### Debugging with GDB
 If the KWinFT process crashes the GNU Debugger (GDB) can often provide valuable information
 about the cause of the crash by reading out a backtrace leading to the crash.
