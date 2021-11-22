@@ -65,6 +65,7 @@ class WindowThumbnailItem : public QQuickItem
     Q_PROPERTY(QQuickItem *clipTo READ clipTo WRITE setClipTo NOTIFY clipToChanged)
     Q_PROPERTY(qreal brightness READ brightness WRITE setBrightness NOTIFY brightnessChanged)
     Q_PROPERTY(qreal saturation READ saturation WRITE setSaturation NOTIFY saturationChanged)
+    Q_PROPERTY(QSize sourceSize READ sourceSize WRITE setSourceSize NOTIFY sourceSizeChanged)
 public:
     explicit WindowThumbnailItem(QQuickItem *parent = nullptr);
     ~WindowThumbnailItem() override;
@@ -77,10 +78,12 @@ public:
     }
     qreal brightness() const;
     qreal saturation() const;
+    QSize sourceSize() const;
     void setWId(qulonglong wId);
     void setClipTo(QQuickItem *clip);
     void setBrightness(qreal brightness);
     void setSaturation(qreal saturation);
+    void setSourceSize(const QSize &size);
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *updatePaintNodeData) override;
 
     enum Thumbnail {
@@ -94,6 +97,7 @@ Q_SIGNALS:
     void clipToChanged();
     void brightnessChanged();
     void saturationChanged();
+    void sourceSizeChanged();
 private:
     void findImage();
     qulonglong m_wId;
@@ -101,6 +105,7 @@ private:
     QQuickItem *m_clipToItem;
     qreal m_brightness;
     qreal m_saturation;
+    QSize m_sourceSize;
 };
 
 } // KWin
