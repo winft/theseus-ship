@@ -3,6 +3,9 @@ add_definitions(-DTRANSLATION_DOMAIN=\"kwin_effects\" -DEFFECT_BUILTINS)
 
 include_directories(${KWIN_SOURCE_DIR})
 
+add_subdirectory(private)
+
+
 function(kwin_add_effect_config name)
     list(REMOVE_ITEM ARGV ${name})
     kcoreaddons_add_plugin(${name} INSTALL_NAMESPACE "kwin/effects/configs" SOURCES ${ARGV})
