@@ -39,7 +39,6 @@ public:
 
     QVector<output*> all_outputs;
     QVector<output*> enabled_outputs;
-    int fd{0};
 
     explicit backend(base::platform<base::backend::wlroots>& base);
     ~backend() override;

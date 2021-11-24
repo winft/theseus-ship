@@ -89,9 +89,6 @@ void backend::init()
     // Pointer warping is required for tests.
     setSupportsPointerWarping(base::backend::wlroots_get_headless_backend(base.backend.backend));
 
-    assert(base.backend.backend);
-    fd = wlr_backend_get_drm_fd(base.backend.backend);
-
     new_output.receiver = this;
     new_output.event.notify = handle_new_output;
     wl_signal_add(&base.backend.backend->events.new_output, &new_output.event);

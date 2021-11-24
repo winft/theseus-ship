@@ -10,4 +10,8 @@ extern "C" {
 #include <wlr/types/wlr_buffer.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/util/log.h>
+
+#define static
+#include <wlr/render/wlr_renderer.h>
+#undef static
 }
