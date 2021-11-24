@@ -12,6 +12,7 @@
 
 #include <kwingl/utils.h>
 
+#include <QGuiApplication>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
@@ -20,6 +21,7 @@
 #include <QQuickItem>
 #include <QQuickRenderControl>
 #include <QQuickWindow>
+#include <QStyleHints>
 #include <QTimer>
 #include <QTouchEvent>
 #include <QWindow>
@@ -79,6 +81,9 @@ public:
     QList<QTouchEvent::TouchPoint> touchPoints;
     Qt::TouchPointStates touchState;
     QTouchDevice* touchDevice;
+
+    ulong lastMousePressTime = 0;
+    Qt::MouseButton lastMousePressButton = Qt::NoButton;
 
     void releaseResources();
 
@@ -309,14 +314,34 @@ void EffectQuickView::forwardMouseEvent(QEvent* e)
     switch (e->type()) {
     case QEvent::MouseMove:
     case QEvent::MouseButtonPress:
-    case QEvent::MouseButtonRelease:
-    case QEvent::MouseButtonDblClick: {
+    case QEvent::MouseButtonRelease: {
         QMouseEvent* me = static_cast<QMouseEvent*>(e);
         const QPoint widgetPos = d->m_view->mapFromGlobal(me->pos());
         QMouseEvent cloneEvent(
             me->type(), widgetPos, me->pos(), me->button(), me->buttons(), me->modifiers());
         QCoreApplication::sendEvent(d->m_view, &cloneEvent);
         e->setAccepted(cloneEvent.isAccepted());
+
+        if (e->type() == QEvent::MouseButtonPress) {
+            const ulong doubleClickInterval
+                = static_cast<ulong>(QGuiApplication::styleHints()->mouseDoubleClickInterval());
+            const bool doubleClick = (me->timestamp() - d->lastMousePressTime < doubleClickInterval)
+                && me->button() == d->lastMousePressButton;
+            d->lastMousePressTime = me->timestamp();
+            d->lastMousePressButton = me->button();
+            if (doubleClick) {
+                d->lastMousePressButton = Qt::NoButton;
+                QMouseEvent doubleClickEvent(QEvent::MouseButtonDblClick,
+                                             me->localPos(),
+                                             me->windowPos(),
+                                             me->screenPos(),
+                                             me->button(),
+                                             me->buttons(),
+                                             me->modifiers());
+                QCoreApplication::sendEvent(d->m_view, &doubleClickEvent);
+            }
+        }
+
         return;
     }
     case QEvent::HoverEnter:

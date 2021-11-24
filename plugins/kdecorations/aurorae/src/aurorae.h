@@ -91,7 +91,6 @@ private:
     QString m_themeName;
 
     KWin::EffectQuickView *m_view;
-    QElapsedTimer m_doubleClickTimer;
 };
 
 class ThemeProvider : public KDecoration2::DecorationThemeProvider
