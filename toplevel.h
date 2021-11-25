@@ -42,12 +42,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class QOpenGLFramebufferObject;
 
-namespace Wrapland
-{
-namespace Server
+namespace Wrapland::Server
 {
 class Surface;
-}
 }
 
 namespace KWin
@@ -57,17 +54,18 @@ namespace base
 {
 class output;
 }
+
 namespace win
 {
-class control;
-class remnant;
-class transient;
-
 namespace x11
 {
 class client_machine;
 class group;
 }
+
+class control;
+class remnant;
+class transient;
 }
 
 class EffectWindowImpl;

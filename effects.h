@@ -32,37 +32,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
 
-namespace Plasma {
+namespace Plasma
+{
 class Theme;
 }
 
-namespace Wrapland
-{
-namespace Server
+namespace Wrapland::Server
 {
 class Display;
-}
 }
 
 class QDBusPendingCallWatcher;
 class QDBusServiceWatcher;
 
-
 namespace KWin
 {
-
-class AbstractThumbnailItem;
-class DesktopThumbnailItem;
-class WindowThumbnailItem;
-
-class Deleted;
-class EffectLoader;
-class Toplevel;
 
 namespace base
 {
 class output;
 }
+
 namespace render
 {
 class compositor;
@@ -74,6 +64,14 @@ class group;
 class window;
 class window_property_notify_filter;
 }
+
+class AbstractThumbnailItem;
+class DesktopThumbnailItem;
+class WindowThumbnailItem;
+
+class Deleted;
+class EffectLoader;
+class Toplevel;
 
 class KWIN_EXPORT EffectsHandlerImpl : public EffectsHandler
 {

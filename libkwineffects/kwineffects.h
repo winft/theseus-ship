@@ -64,11 +64,10 @@ class QAction;
  */
 Q_DECLARE_LOGGING_CATEGORY(KWINEFFECTS)
 
-namespace Wrapland {
-    namespace Server {
-        class Surface;
-        class Display;
-    }
+namespace Wrapland::Server
+{
+class Surface;
+class Display;
 }
 
 namespace KWin

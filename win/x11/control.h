@@ -544,6 +544,9 @@ bool ignore_position_default(Win* win)
     if (is_dialog(win) && win->info->hasNETSupport()) {
         return false;
     }
+    if (is_on_screen_display(win)) {
+        return true;
+    }
     if (is_splash(win)) {
         return true;
     }

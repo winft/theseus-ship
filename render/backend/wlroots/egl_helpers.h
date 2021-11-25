@@ -70,7 +70,13 @@ std::unique_ptr<egl_gbm> get_egl_gbm(Platform const& platform)
         return nullptr;
     }
 
-    auto gbm_dev = gbm_create_device(platform.fd);
+#if HAVE_WLR_OUTPUT_INIT_RENDER
+    auto renderer = platform.renderer;
+#else
+    auto renderer = wlr_backend_get_renderer(platform.base.backend.backend);
+#endif
+
+    auto gbm_dev = gbm_create_device(wlr_renderer_get_drm_fd(renderer));
     if (!gbm_dev) {
         platform.egl->setFailed("Could not create gbm device");
         return nullptr;

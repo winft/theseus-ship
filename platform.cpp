@@ -31,9 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenedge.h"
 #include "colorcorrection/manager.h"
 
-#include <Wrapland/Server/output_configuration_v1.h>
-#include <Wrapland/Server/output_changeset_v1.h>
-
 #include <QX11Info>
 
 #include <cerrno>

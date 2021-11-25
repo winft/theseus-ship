@@ -53,6 +53,10 @@ void handle_new_output(struct wl_listener* listener, void* data)
     auto back = new_output_struct->receiver;
     auto wlr_out = reinterpret_cast<wlr_output*>(data);
 
+#if HAVE_WLR_OUTPUT_INIT_RENDER
+    wlr_output_init_render(wlr_out, back->allocator, back->renderer);
+#endif
+
     if (!wl_list_empty(&wlr_out->modes)) {
         auto mode = wlr_output_preferred_mode(wlr_out);
         wlr_output_set_mode(wlr_out, mode);
@@ -89,8 +93,12 @@ void backend::init()
     // Pointer warping is required for tests.
     setSupportsPointerWarping(base::backend::wlroots_get_headless_backend(base.backend.backend));
 
-    assert(base.backend.backend);
-    fd = wlr_backend_get_drm_fd(base.backend.backend);
+    // TODO(romangg): Has to be here because in the integration tests base.backend.backend is not
+    //                yet available in the ctor. Can we change that?
+#if HAVE_WLR_OUTPUT_INIT_RENDER
+    renderer = wlr_renderer_autocreate(base.backend.backend);
+    allocator = wlr_allocator_autocreate(base.backend.backend, renderer);
+#endif
 
     new_output.receiver = this;
     new_output.event.notify = handle_new_output;
@@ -247,9 +255,8 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
         i++;
     }
 
-    uint32_t lessee_id;
-    auto fd = wlr_drm_create_lease(outputs_array.data, outputs_array.size, &lessee_id);
-    if (fd < 0) {
+    auto wlr_lease = wlr_drm_create_lease(outputs_array.data, outputs_array.size, nullptr);
+    if (!wlr_lease) {
         qCWarning(KWIN_WL) << "Error in wlroots backend on lease creation.";
         for (auto& out : outputs) {
             egl->get_output(out).reset_framebuffer();
@@ -257,14 +264,14 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
         throw;
     }
 
-    connect(lease, &Wrapland::Server::drm_lease_v1::resourceDestroyed, this, [this, lessee_id] {
-        wlr_drm_backend_terminate_lease(
-            base::backend::wlroots_get_drm_backend(base.backend.backend), lessee_id);
-        static_cast<render::wayland::compositor*>(compositor::self())->unlock();
-    });
+    QObject::connect(
+        lease, &Wrapland::Server::drm_lease_v1::resourceDestroyed, this, [this, wlr_lease] {
+            wlr_drm_lease_terminate(wlr_lease);
+            static_cast<render::wayland::compositor*>(compositor::self())->unlock();
+        });
 
     static_cast<render::wayland::compositor*>(compositor::self())->lock();
-    lease->grant(fd);
+    lease->grant(wlr_lease->fd);
     qCDebug(KWIN_WL) << "DRM resources have been leased to client";
 #endif
 }
