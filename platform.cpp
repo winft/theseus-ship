@@ -87,7 +87,7 @@ bool Platform::supportsQpaContext() const
     if (Q_UNLIKELY(!compositor)) {
         return false;
     }
-    if (Scene *scene = compositor->scene()) {
+    if (auto scene = compositor->scene()) {
         return scene->supportsSurfacelessContext();
     }
     return false;
@@ -207,7 +207,7 @@ void Platform::invertScreen()
     }
 }
 
-void Platform::createEffectsHandler(render::compositor *compositor, Scene *scene)
+void Platform::createEffectsHandler(render::compositor *compositor, render::scene *scene)
 {
     new EffectsHandlerImpl(compositor, scene);
 }

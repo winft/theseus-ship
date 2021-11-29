@@ -80,7 +80,7 @@ class KWIN_EXPORT EffectsHandlerImpl : public EffectsHandler
     Q_PROPERTY(QStringList loadedEffects READ loadedEffects)
     Q_PROPERTY(QStringList listOfEffects READ listOfEffects)
 public:
-    EffectsHandlerImpl(render::compositor* compositor, Scene* scene);
+    EffectsHandlerImpl(render::compositor* compositor, render::scene* scene);
     ~EffectsHandlerImpl() override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
@@ -278,7 +278,7 @@ public:
     KSharedConfigPtr config() const override;
     KSharedConfigPtr inputConfig() const override;
 
-    Scene* scene() const
+    render::scene* scene() const
     {
         return m_scene;
     }
@@ -399,7 +399,7 @@ private:
     PropertyEffectMap m_propertiesForEffects;
     QHash<QByteArray, qulonglong> m_managedProperties;
     render::compositor* m_compositor;
-    Scene* m_scene;
+    render::scene* m_scene;
     bool m_desktopRendering;
     int m_currentRenderedDesktop;
     QList<Effect*> m_grabbedMouseEffects;
@@ -549,10 +549,10 @@ public:
     const Toplevel* window() const;
     Toplevel* window();
 
-    void setWindow(Toplevel* w);              // internal
-    void setSceneWindow(Scene::Window* w);    // internal
-    const Scene::Window* sceneWindow() const; // internal
-    Scene::Window* sceneWindow();             // internal
+    void setWindow(Toplevel* w);                      // internal
+    void setSceneWindow(render::scene::Window* w);            // internal
+    const render::scene::Window* sceneWindow() const; // internal
+    render::scene::Window* sceneWindow();             // internal
 
     void elevate(bool elevate);
 
@@ -577,7 +577,7 @@ private Q_SLOTS:
 private:
     void insertThumbnail(WindowThumbnailItem* item);
     Toplevel* toplevel;
-    Scene::Window* sw; // This one is used only during paint pass.
+    render::scene::Window* sw; // This one is used only during paint pass.
     QHash<int, QVariant> dataMap;
     QHash<WindowThumbnailItem*, QPointer<EffectWindowImpl>> m_thumbnails;
     QList<DesktopThumbnailItem*> m_desktopThumbnails;
@@ -683,7 +683,7 @@ private:
     QSize m_iconSize;
     QRect m_selectionGeometry;
 
-    Scene::EffectFrame* m_sceneFrame;
+    render::scene::EffectFrame* m_sceneFrame;
     GLShader* m_shader;
 
     Plasma::Theme* m_theme;
@@ -712,14 +712,14 @@ inline EffectWindowGroupImpl::EffectWindowGroupImpl(win::x11::group* g)
 }
 
 EffectWindow* effectWindow(Toplevel* w);
-EffectWindow* effectWindow(Scene::Window* w);
+EffectWindow* effectWindow(render::scene::Window* w);
 
-inline const Scene::Window* EffectWindowImpl::sceneWindow() const
+inline const render::scene::Window* EffectWindowImpl::sceneWindow() const
 {
     return sw;
 }
 
-inline Scene::Window* EffectWindowImpl::sceneWindow()
+inline render::scene::Window* EffectWindowImpl::sceneWindow()
 {
     return sw;
 }

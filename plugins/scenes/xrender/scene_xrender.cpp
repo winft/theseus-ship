@@ -196,7 +196,7 @@ void x11_overlay_backend::createBuffer()
 void x11_overlay_backend::present(int mask, const QRegion& damage)
 {
     const auto displaySize = screens()->displaySize();
-    if (mask & Scene::PAINT_SCREEN_REGION) {
+    if (mask & render::scene::PAINT_SCREEN_REGION) {
         // Use the damage region as the clip region for the root window
         XFixesRegion frontRegion(damage);
         xcb_xfixes_set_picture_clip_region(connection(), m_front, frontRegion, 0, 0);
@@ -262,7 +262,7 @@ scene* scene::createScene(QObject* parent)
 }
 
 scene::scene(xrender::backend* backend, QObject* parent)
-    : Scene(parent)
+    : render::scene(parent)
     , m_backend(backend)
 {
 }
@@ -304,13 +304,13 @@ qint64 scene::paint(QRegion damage,
 void scene::paintGenericScreen(int mask, ScreenPaintData data)
 {
     screen_paint = data; // save, transformations will be done when painting windows
-    Scene::paintGenericScreen(mask, data);
+    render::scene::paintGenericScreen(mask, data);
 }
 
 void scene::paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data)
 {
     PaintClipper::push(region);
-    KWin::Scene::paintDesktop(desktop, mask, region, data);
+    render::scene::paintDesktop(desktop, mask, region, data);
     PaintClipper::pop(region);
 }
 
@@ -327,12 +327,12 @@ void scene::paintBackground(QRegion region)
                                rects.data());
 }
 
-Scene::Window* scene::createWindow(Toplevel* toplevel)
+render::scene::Window* scene::createWindow(Toplevel* toplevel)
 {
     return new Window(toplevel, this);
 }
 
-Scene::EffectFrame* scene::createEffectFrame(EffectFrameImpl* frame)
+render::scene::EffectFrame* scene::createEffectFrame(EffectFrameImpl* frame)
 {
     return new scene::EffectFrame(frame);
 }
@@ -356,7 +356,7 @@ QRect scene::Window::temp_visibleRect;
 XRenderPicture* scene::Window::s_fadeAlphaPicture = nullptr;
 
 scene::Window::Window(Toplevel* c, xrender::scene* scene)
-    : Scene::Window(c)
+    : render::scene::Window(c)
     , m_scene(scene)
     , format(XRenderUtils::findPictFormat(c->visual()))
 {
@@ -598,7 +598,7 @@ void scene::Window::performPaint(int mask, QRegion region, WindowPaintData data)
     } else {
         xcb_render_set_picture_transform(connection(), pic, xform);
         if (filter == ImageFilterGood) {
-            setPictureFilter(pic, KWin::Scene::ImageFilterGood);
+            setPictureFilter(pic, render::scene::ImageFilterGood);
         }
 
         // BEGIN OF STUPID RADEON HACK
@@ -881,7 +881,7 @@ void scene::Window::performPaint(int mask, QRegion region, WindowPaintData data)
     if (scaled && !blitInTempPixmap) {
         xcb_render_set_picture_transform(connection(), pic, identity);
         if (filter == ImageFilterGood)
-            setPictureFilter(pic, KWin::Scene::ImageFilterFast);
+            setPictureFilter(pic, render::scene::ImageFilterFast);
         if (!get_window()->hasAlpha()) {
             const uint32_t values[] = {XCB_RENDER_REPEAT_NONE};
             xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
@@ -891,14 +891,15 @@ void scene::Window::performPaint(int mask, QRegion region, WindowPaintData data)
         scene_setXRenderOffscreenTarget(*s_tempPicture);
 }
 
-void scene::Window::setPictureFilter(xcb_render_picture_t pic, Scene::ImageFilterType filter)
+void scene::Window::setPictureFilter(xcb_render_picture_t pic,
+                                     render::scene::ImageFilterType filter)
 {
     QByteArray filterName;
     switch (filter) {
-    case KWin::Scene::ImageFilterFast:
+    case render::scene::ImageFilterFast:
         filterName = QByteArray("fast");
         break;
-    case KWin::Scene::ImageFilterGood:
+    case render::scene::ImageFilterGood:
         filterName = QByteArray("good");
         break;
     }
@@ -906,14 +907,14 @@ void scene::Window::setPictureFilter(xcb_render_picture_t pic, Scene::ImageFilte
         connection(), pic, filterName.length(), filterName.constData(), 0, nullptr);
 }
 
-WindowPixmap* scene::Window::createWindowPixmap()
+render::window_pixmap* scene::Window::createWindowPixmap()
 {
     return new window_pixmap(this, format);
 }
 
 void scene::screenGeometryChanged(const QSize& size)
 {
-    Scene::screenGeometryChanged(size);
+    render::scene::screenGeometryChanged(size);
     m_backend->screenGeometryChanged(size);
 }
 
@@ -921,8 +922,8 @@ void scene::screenGeometryChanged(const QSize& size)
 // window_pixmap
 //****************************************
 
-window_pixmap::window_pixmap(Scene::Window* window, xcb_render_pictformat_t format)
-    : WindowPixmap(window)
+window_pixmap::window_pixmap(render::scene::Window* window, xcb_render_pictformat_t format)
+    : render::window_pixmap(window)
     , m_picture(XCB_RENDER_PICTURE_NONE)
     , m_format(format)
 {
@@ -940,7 +941,7 @@ void window_pixmap::create()
     if (isValid()) {
         return;
     }
-    KWin::WindowPixmap::create();
+    render::window_pixmap::create();
     if (!isValid()) {
         return;
     }
@@ -955,7 +956,7 @@ void window_pixmap::create()
 XRenderPicture* scene::EffectFrame::s_effectFrameCircle = nullptr;
 
 scene::EffectFrame::EffectFrame(EffectFrameImpl* frame)
-    : Scene::EffectFrame(frame)
+    : render::scene::EffectFrame(frame)
 {
     m_picture = nullptr;
     m_textPicture = nullptr;
@@ -1555,13 +1556,13 @@ void deco_renderer::reparent(Toplevel* window)
 #undef FIXED_TO_DOUBLE
 
 scene_factory::scene_factory(QObject* parent)
-    : SceneFactory(parent)
+    : render::scene_factory(parent)
 {
 }
 
 scene_factory::~scene_factory() = default;
 
-Scene* scene_factory::create(QObject* parent) const
+render::scene* scene_factory::create(QObject* parent) const
 {
     auto s = scene::createScene(parent);
     if (s && s->initFailed()) {

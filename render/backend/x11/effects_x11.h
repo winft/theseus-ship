@@ -20,7 +20,7 @@ class EffectsHandlerImplX11 : public EffectsHandlerImpl
 {
     Q_OBJECT
 public:
-    explicit EffectsHandlerImplX11(compositor* compositor, Scene* scene);
+    explicit EffectsHandlerImplX11(render::compositor* compositor, render::scene* scene);
     ~EffectsHandlerImplX11() override;
 
     void defineCursor(Qt::CursorShape shape) override;

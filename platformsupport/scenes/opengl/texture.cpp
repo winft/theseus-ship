@@ -45,7 +45,7 @@ void texture::discard()
     d_ptr = d_func()->backend()->createBackendTexture(this);
 }
 
-bool texture::load(WindowPixmap* pixmap)
+bool texture::load(render::window_pixmap* pixmap)
 {
     if (!pixmap->isValid()) {
         return false;
@@ -58,7 +58,7 @@ bool texture::load(WindowPixmap* pixmap)
     return d_func()->loadTexture(pixmap);
 }
 
-void texture::updateFromPixmap(WindowPixmap* pixmap)
+void texture::updateFromPixmap(render::window_pixmap* pixmap)
 {
     d_func()->updateTexture(pixmap);
 }
@@ -71,7 +71,7 @@ texture_private::~texture_private()
 {
 }
 
-void texture_private::updateTexture(WindowPixmap* pixmap)
+void texture_private::updateTexture(render::window_pixmap* pixmap)
 {
     Q_UNUSED(pixmap)
 }

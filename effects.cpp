@@ -125,7 +125,7 @@ static xcb_atom_t registerSupportProperty(const QByteArray& propertyName)
 
 //---------------------
 
-EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, Scene* scene)
+EffectsHandlerImpl::EffectsHandlerImpl(render::compositor* compositor, render::scene* scene)
     : EffectsHandler(scene->compositingType())
     , keyboard_grab_effect(nullptr)
     , fullscreen_effect(nullptr)
@@ -2160,7 +2160,7 @@ void EffectWindowImpl::setWindow(Toplevel* w)
     setParent(w);
 }
 
-void EffectWindowImpl::setSceneWindow(Scene::Window* w)
+void EffectWindowImpl::setSceneWindow(render::scene::Window* w)
 {
     sw = w;
 }
@@ -2267,7 +2267,7 @@ EffectWindow* effectWindow(Toplevel* w)
     return ret;
 }
 
-EffectWindow* effectWindow(Scene::Window* w)
+EffectWindow* effectWindow(render::scene::Window* w)
 {
     auto ret = w->get_window()->effectWindow();
     ret->setSceneWindow(w);

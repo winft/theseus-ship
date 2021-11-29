@@ -35,9 +35,12 @@ class WindowPaintData;
 class GLTexture;
 class GLRenderTarget;
 class GLShader;
-class Scene;
 
-namespace render::gl
+namespace render
+{
+class scene;
+
+namespace gl
 {
 
 class lanczos_filter : public QObject
@@ -45,7 +48,7 @@ class lanczos_filter : public QObject
     Q_OBJECT
 
 public:
-    explicit lanczos_filter(Scene* parent);
+    explicit lanczos_filter(render::scene* parent);
     ~lanczos_filter() override;
     void performPaint(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data);
 
@@ -69,8 +72,9 @@ private:
     int m_uKernel;
     std::array<QVector2D, 16> m_offsets;
     std::array<QVector4D, 16> m_kernel;
-    Scene* m_scene;
+    render::scene* m_scene;
 };
 
+}
 }
 }

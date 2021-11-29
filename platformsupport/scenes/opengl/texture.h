@@ -23,11 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwingltexture.h>
 #include <kwingltexture_p.h>
 
-namespace KWin
+namespace KWin::render
 {
-class WindowPixmap;
+class window_pixmap;
 
-namespace render::gl
+namespace gl
 {
 class backend;
 class texture_private;
@@ -45,8 +45,8 @@ public:
 private:
     texture(texture_private& dd);
 
-    bool load(WindowPixmap* pixmap);
-    void updateFromPixmap(WindowPixmap* pixmap);
+    bool load(render::window_pixmap* pixmap);
+    void updateFromPixmap(render::window_pixmap* pixmap);
 
     inline texture_private* d_func()
     {
@@ -66,8 +66,8 @@ class texture_private : public GLTexturePrivate
 public:
     ~texture_private() override;
 
-    virtual bool loadTexture(WindowPixmap* pixmap) = 0;
-    virtual void updateTexture(WindowPixmap* pixmap);
+    virtual bool loadTexture(render::window_pixmap* pixmap) = 0;
+    virtual void updateTexture(render::window_pixmap* pixmap);
     virtual gl::backend* backend() = 0;
 
 protected:

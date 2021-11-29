@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 
-/*
+/**
  The base class for compositing, implementing shared functionality
  between the OpenGL and XRender backends.
 
@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  by painting the screen, which in turn paints every window. Painting can be affected
  using effects, which are chained. E.g. painting a screen means that actually
  paintScreen() of the first effect is called, which possibly does modifications
- and calls next effect's paintScreen() and so on, until Scene::finalPaintScreen()
+ and calls next effect's paintScreen() and so on, until scene::finalPaintScreen()
  is called.
 
  There are 3 phases of every paint (not necessarily done together):
@@ -63,7 +63,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  repaints during the next painting pass for animations. Effects wanting to
  repaint certain parts can manually damage them during post-paint and repaint
  of these parts will be done during the next paint pass.
-
 */
 
 #include "scene.h"
@@ -88,24 +87,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
 
-namespace KWin
+namespace KWin::render
 {
 
 //****************************************
-// Scene
+// scene
 //****************************************
 
-Scene::Scene(QObject* parent)
+scene::scene(QObject* parent)
     : QObject(parent)
 {
 }
 
-Scene::~Scene()
+scene::~scene()
 {
     Q_ASSERT(m_windows.isEmpty());
 }
 
-qint64 Scene::paint([[maybe_unused]] QRegion damage,
+qint64 scene::paint([[maybe_unused]] QRegion damage,
                     [[maybe_unused]] std::deque<Toplevel*> const& windows,
                     [[maybe_unused]] std::chrono::milliseconds presentTime)
 {
@@ -113,7 +112,7 @@ qint64 Scene::paint([[maybe_unused]] QRegion damage,
     return 0;
 }
 
-int64_t Scene::paint([[maybe_unused]] base::output* output,
+int64_t scene::paint([[maybe_unused]] base::output* output,
                      [[maybe_unused]] QRegion damage,
                      [[maybe_unused]] std::deque<Toplevel*> const& windows,
                      [[maybe_unused]] std::chrono::milliseconds presentTime)
@@ -123,7 +122,7 @@ int64_t Scene::paint([[maybe_unused]] base::output* output,
 }
 
 // returns mask and possibly modified region
-void Scene::paintScreen(int* mask,
+void scene::paintScreen(int* mask,
                         const QRegion& damage,
                         const QRegion& repaint,
                         QRegion* updateRegion,
@@ -199,12 +198,12 @@ void Scene::paintScreen(int* mask,
 }
 
 // Painting pass is optimized away.
-void Scene::idle()
+void scene::idle()
 {
 }
 
 // the function that'll be eventually called by paintScreen() above
-void Scene::finalPaintScreen(int mask, QRegion region, ScreenPaintData& data)
+void scene::finalPaintScreen(int mask, QRegion region, ScreenPaintData& data)
 {
     if (mask & (PAINT_SCREEN_TRANSFORMED | PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS))
         paintGenericScreen(mask, data);
@@ -214,7 +213,7 @@ void Scene::finalPaintScreen(int mask, QRegion region, ScreenPaintData& data)
 
 // The generic painting code that can handle even transformations.
 // It simply paints bottom-to-top.
-void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
+void scene::paintGenericScreen(int orig_mask, ScreenPaintData)
 {
     if (!(orig_mask & PAINT_SCREEN_BACKGROUND_FIRST)) {
         paintBackground(infiniteRegion());
@@ -260,7 +259,7 @@ void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
 // The optimized case without any transformations at all.
 // It can paint only the requested region and can use clipping
 // to reduce painting and improve performance.
-void Scene::paintSimpleScreen(int orig_mask, QRegion region)
+void scene::paintSimpleScreen(int orig_mask, QRegion region)
 {
     Q_ASSERT((orig_mask & (PAINT_SCREEN_TRANSFORMED | PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS)) == 0);
     QVector<Phase2Data> phase2data;
@@ -410,12 +409,12 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
     }
 }
 
-void Scene::addToplevel(Toplevel* c)
+void scene::addToplevel(Toplevel* c)
 {
     Q_ASSERT(!m_windows.contains(c));
-    Scene::Window* w = createWindow(c);
+    auto w = createWindow(c);
     m_windows[c] = w;
-    connect(c, &Toplevel::windowClosed, this, &Scene::windowClosed);
+    connect(c, &Toplevel::windowClosed, this, &scene::windowClosed);
     // A change of scale won't affect the geometry in compositor co-ordinates, but will affect the
     // window quads.
     if (c->surface()) {
@@ -432,14 +431,14 @@ void Scene::addToplevel(Toplevel* c)
     connect(c, &Toplevel::shadowChanged, this, [w] { w->invalidateQuadsCache(); });
 }
 
-void Scene::removeToplevel(Toplevel* toplevel)
+void scene::removeToplevel(Toplevel* toplevel)
 {
     Q_ASSERT(m_windows.contains(toplevel));
     delete m_windows.take(toplevel);
     toplevel->effectWindow()->setSceneWindow(nullptr);
 }
 
-void Scene::windowClosed(Toplevel* toplevel, Toplevel* deleted)
+void scene::windowClosed(Toplevel* toplevel, Toplevel* deleted)
 {
     if (!deleted) {
         removeToplevel(toplevel);
@@ -455,7 +454,7 @@ void Scene::windowClosed(Toplevel* toplevel, Toplevel* deleted)
     m_windows[deleted] = window;
 }
 
-void Scene::windowGeometryShapeChanged(Toplevel* c)
+void scene::windowGeometryShapeChanged(Toplevel* c)
 {
     if (!m_windows.contains(c)) // this is ok, shape is not valid by default
         return;
@@ -463,7 +462,7 @@ void Scene::windowGeometryShapeChanged(Toplevel* c)
     w->invalidateQuadsCache();
 }
 
-void Scene::createStackingOrder(std::deque<Toplevel*> const& toplevels)
+void scene::createStackingOrder(std::deque<Toplevel*> const& toplevels)
 {
     // TODO: cache the stacking_order in case it has not changed
     for (auto const& c : toplevels) {
@@ -472,14 +471,14 @@ void Scene::createStackingOrder(std::deque<Toplevel*> const& toplevels)
     }
 }
 
-void Scene::clearStackingOrder()
+void scene::clearStackingOrder()
 {
     stacking_order.clear();
 }
 
-static Scene::Window* s_recursionCheck = nullptr;
+static scene::Window* s_recursionCheck = nullptr;
 
-void Scene::paintWindow(Window* w, int mask, QRegion region, WindowQuadList quads)
+void scene::paintWindow(Window* w, int mask, QRegion region, WindowQuadList quads)
 {
     // no painting outside visible screen (and no transformations)
     const QSize& screenSize = screens()->size();
@@ -528,7 +527,7 @@ static void adjustClipRegion(AbstractThumbnailItem* item, QRegion& clippingRegio
     }
 }
 
-void Scene::paintWindowThumbnails(Scene::Window* w,
+void scene::paintWindowThumbnails(scene::Window* w,
                                   QRegion region,
                                   qreal opacity,
                                   qreal brightness,
@@ -588,7 +587,7 @@ void Scene::paintWindowThumbnails(Scene::Window* w,
     }
 }
 
-void Scene::paintDesktopThumbnails(Scene::Window* w)
+void scene::paintDesktopThumbnails(scene::Window* w)
 {
     EffectWindowImpl* wImpl = static_cast<EffectWindowImpl*>(effectWindow(w));
     for (QList<DesktopThumbnailItem*>::const_iterator it = wImpl->desktopThumbnails().constBegin();
@@ -625,19 +624,19 @@ void Scene::paintDesktopThumbnails(Scene::Window* w)
     }
 }
 
-void Scene::paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data)
+void scene::paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data)
 {
     static_cast<EffectsHandlerImpl*>(effects)->paintDesktop(desktop, mask, region, data);
 }
 
 // the function that'll be eventually called by paintWindow() above
-void Scene::finalPaintWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data)
+void scene::finalPaintWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data)
 {
     effects->drawWindow(w, mask, region, data);
 }
 
 // will be eventually called from drawWindow()
-void Scene::finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data)
+void scene::finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data)
 {
     if (kwinApp()->is_screen_locked() && !w->window()->isLockScreen()
         && !w->window()->isInputMethod()) {
@@ -646,13 +645,13 @@ void Scene::finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, Windo
     w->sceneWindow()->performPaint(mask, region, data);
 }
 
-void Scene::extendPaintRegion(QRegion& region, bool opaqueFullscreen)
+void scene::extendPaintRegion(QRegion& region, bool opaqueFullscreen)
 {
     Q_UNUSED(region);
     Q_UNUSED(opaqueFullscreen);
 }
 
-void Scene::screenGeometryChanged(const QSize& size)
+void scene::screenGeometryChanged(const QSize& size)
 {
     if (!overlayWindow()) {
         return;
@@ -660,61 +659,61 @@ void Scene::screenGeometryChanged(const QSize& size)
     overlayWindow()->resize(size);
 }
 
-bool Scene::hasSwapEvent() const
+bool scene::hasSwapEvent() const
 {
     return false;
 }
 
-bool Scene::makeOpenGLContextCurrent()
+bool scene::makeOpenGLContextCurrent()
 {
     return false;
 }
 
-void Scene::doneOpenGLContextCurrent()
+void scene::doneOpenGLContextCurrent()
 {
 }
 
-bool Scene::supportsSurfacelessContext() const
+bool scene::supportsSurfacelessContext() const
 {
     return false;
 }
 
-void Scene::triggerFence()
+void scene::triggerFence()
 {
 }
 
-QMatrix4x4 Scene::screenProjectionMatrix() const
+QMatrix4x4 scene::screenProjectionMatrix() const
 {
     return QMatrix4x4();
 }
 
-xcb_render_picture_t Scene::xrenderBufferPicture() const
+xcb_render_picture_t scene::xrenderBufferPicture() const
 {
     return XCB_RENDER_PICTURE_NONE;
 }
 
-QPainter* Scene::scenePainter() const
+QPainter* scene::scenePainter() const
 {
     return nullptr;
 }
 
-QImage* Scene::qpainterRenderBuffer() const
+QImage* scene::qpainterRenderBuffer() const
 {
     return nullptr;
 }
 
-QVector<QByteArray> Scene::openGLPlatformInterfaceExtensions() const
+QVector<QByteArray> scene::openGLPlatformInterfaceExtensions() const
 {
     return QVector<QByteArray>{};
 }
 
 //****************************************
-// Scene::Window
+// scene::Window
 //****************************************
 
 uint32_t window_id{0};
 
-Scene::Window::Window(Toplevel* c)
+scene::Window::Window(Toplevel* c)
     : toplevel(c)
     , filter(ImageFilterFast)
     , m_shadow(nullptr)
@@ -727,24 +726,24 @@ Scene::Window::Window(Toplevel* c)
 {
 }
 
-Scene::Window::~Window()
+scene::Window::~Window()
 {
     delete m_shadow;
 }
 
-uint32_t Scene::Window::id() const
+uint32_t scene::Window::id() const
 {
     return m_id;
 }
 
-void Scene::Window::referencePreviousPixmap()
+void scene::Window::referencePreviousPixmap()
 {
     if (!m_previousPixmap.isNull() && m_previousPixmap->isDiscarded()) {
         m_referencePixmapCounter++;
     }
 }
 
-void Scene::Window::unreferencePreviousPixmap()
+void scene::Window::unreferencePreviousPixmap()
 {
     if (m_previousPixmap.isNull() || !m_previousPixmap->isDiscarded()) {
         return;
@@ -755,7 +754,7 @@ void Scene::Window::unreferencePreviousPixmap()
     }
 }
 
-void Scene::Window::discardPixmap()
+void scene::Window::discardPixmap()
 {
     if (!m_currentPixmap.isNull()) {
         if (m_currentPixmap->isValid()) {
@@ -767,7 +766,7 @@ void Scene::Window::discardPixmap()
     }
 }
 
-void Scene::Window::updatePixmap()
+void scene::Window::updatePixmap()
 {
     if (m_currentPixmap.isNull()) {
         m_currentPixmap.reset(createWindowPixmap());
@@ -777,7 +776,7 @@ void Scene::Window::updatePixmap()
     }
 }
 
-QRegion Scene::Window::decorationShape() const
+QRegion scene::Window::decorationShape() const
 {
     if (!win::decoration(toplevel)) {
         return QRegion();
@@ -785,12 +784,12 @@ QRegion Scene::Window::decorationShape() const
     return QRegion(QRect(QPoint(), toplevel->size())) - win::frame_relative_client_rect(toplevel);
 }
 
-QPoint Scene::Window::bufferOffset() const
+QPoint scene::Window::bufferOffset() const
 {
     return win::render_geometry(toplevel).topLeft() - toplevel->pos();
 }
 
-bool Scene::Window::isVisible() const
+bool scene::Window::isVisible() const
 {
     if (toplevel->isDeleted())
         return false;
@@ -802,17 +801,17 @@ bool Scene::Window::isVisible() const
     return true; // Unmanaged is always visible
 }
 
-bool Scene::Window::isOpaque() const
+bool scene::Window::isOpaque() const
 {
     return toplevel->opacity() == 1.0 && !toplevel->hasAlpha();
 }
 
-bool Scene::Window::isPaintingEnabled() const
+bool scene::Window::isPaintingEnabled() const
 {
     return !disable_painting;
 }
 
-void Scene::Window::resetPaintingEnabled()
+void scene::Window::resetPaintingEnabled()
 {
     disable_painting = 0;
     if (toplevel->isDeleted())
@@ -836,17 +835,17 @@ void Scene::Window::resetPaintingEnabled()
     }
 }
 
-void Scene::Window::enablePainting(int reason)
+void scene::Window::enablePainting(int reason)
 {
     disable_painting &= ~reason;
 }
 
-void Scene::Window::disablePainting(int reason)
+void scene::Window::disablePainting(int reason)
 {
     disable_painting |= reason;
 }
 
-WindowQuadList Scene::Window::buildQuads(bool force) const
+WindowQuadList scene::Window::buildQuads(bool force) const
 {
     if (cached_quad_list != nullptr && !force)
         return *cached_quad_list;
@@ -876,7 +875,7 @@ WindowQuadList Scene::Window::buildQuads(bool force) const
     return ret;
 }
 
-WindowQuadList Scene::Window::makeDecorationQuads(const QRect* rects,
+WindowQuadList scene::Window::makeDecorationQuads(const QRect* rects,
                                                   const QRegion& region,
                                                   qreal textureScale) const
 {
@@ -946,7 +945,7 @@ WindowQuadList Scene::Window::makeDecorationQuads(const QRect* rects,
     return list;
 }
 
-WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) const
+WindowQuadList scene::Window::makeContentsQuads(int id, QPoint const& offset) const
 {
     auto const contentsRegion = win::content_render_region(toplevel);
     if (contentsRegion.isEmpty()) {
@@ -1031,7 +1030,7 @@ WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) co
         if (!sw) {
             continue;
         }
-        if (auto const pixmap = sw->windowPixmap<WindowPixmap>(); !pixmap || !pixmap->isValid()) {
+        if (auto const pixmap = sw->windowPixmap<window_pixmap>(); !pixmap || !pixmap->isValid()) {
             continue;
         }
         quads << sw->makeContentsQuads(sw->id(), offset + child->pos() - toplevel->pos());
@@ -1040,12 +1039,12 @@ WindowQuadList Scene::Window::makeContentsQuads(int id, QPoint const& offset) co
     return quads;
 }
 
-void Scene::Window::invalidateQuadsCache()
+void scene::Window::invalidateQuadsCache()
 {
     cached_quad_list.reset();
 }
 
-void Scene::Window::updateShadow(Shadow* shadow)
+void scene::Window::updateShadow(Shadow* shadow)
 {
     if (m_shadow == shadow) {
         return;
@@ -1055,23 +1054,23 @@ void Scene::Window::updateShadow(Shadow* shadow)
 }
 
 //****************************************
-// WindowPixmap
+// window_pixmap
 //****************************************
-WindowPixmap::WindowPixmap(Scene::Window* window)
+window_pixmap::window_pixmap(scene::Window* window)
     : m_window(window)
     , m_pixmap(XCB_PIXMAP_NONE)
     , m_discarded(false)
 {
 }
 
-WindowPixmap::~WindowPixmap()
+window_pixmap::~window_pixmap()
 {
     if (m_pixmap != XCB_WINDOW_NONE) {
         xcb_free_pixmap(connection(), m_pixmap);
     }
 }
 
-void WindowPixmap::create()
+void window_pixmap::create()
 {
     if (isValid() || toplevel()->isDeleted()) {
         return;
@@ -1124,7 +1123,7 @@ void WindowPixmap::create()
     m_window->unreferencePreviousPixmap();
 }
 
-bool WindowPixmap::isValid() const
+bool window_pixmap::isValid() const
 {
     if (m_buffer || !m_fbo.isNull() || !m_internalImage.isNull()) {
         return true;
@@ -1132,7 +1131,7 @@ bool WindowPixmap::isValid() const
     return m_pixmap != XCB_PIXMAP_NONE;
 }
 
-void WindowPixmap::updateBuffer()
+void window_pixmap::updateBuffer()
 {
     using namespace Wrapland::Server;
     if (auto s = surface()) {
@@ -1152,30 +1151,30 @@ void WindowPixmap::updateBuffer()
     }
 }
 
-Wrapland::Server::Surface* WindowPixmap::surface() const
+Wrapland::Server::Surface* window_pixmap::surface() const
 {
     return toplevel()->surface();
 }
 
 //****************************************
-// Scene::EffectFrame
+// scene::EffectFrame
 //****************************************
-Scene::EffectFrame::EffectFrame(EffectFrameImpl* frame)
+scene::EffectFrame::EffectFrame(EffectFrameImpl* frame)
     : m_effectFrame(frame)
 {
 }
 
-Scene::EffectFrame::~EffectFrame()
+scene::EffectFrame::~EffectFrame()
 {
 }
 
-SceneFactory::SceneFactory(QObject* parent)
+scene_factory::scene_factory(QObject* parent)
     : QObject(parent)
 {
 }
 
-SceneFactory::~SceneFactory()
+scene_factory::~scene_factory()
 {
 }
 
-} // namespace
+}

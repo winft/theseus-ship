@@ -919,7 +919,7 @@ bool GlxTexture::loadTexture(xcb_pixmap_t pixmap, const QSize& size, xcb_visuali
     return true;
 }
 
-bool GlxTexture::loadTexture(WindowPixmap* pixmap)
+bool GlxTexture::loadTexture(render::window_pixmap* pixmap)
 {
     Toplevel* t = pixmap->toplevel();
     return loadTexture(pixmap->pixmap(), win::render_geometry(t).size(), t->visual());

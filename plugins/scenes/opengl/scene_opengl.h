@@ -41,7 +41,7 @@ class SyncManager;
 class SyncObject;
 class window;
 
-class KWIN_EXPORT scene : public Scene
+class KWIN_EXPORT scene : public render::scene
 {
     Q_OBJECT
 public:
@@ -58,7 +58,7 @@ public:
                   std::deque<Toplevel*> const& windows,
                   std::chrono::milliseconds presentTime) override;
 
-    Scene::EffectFrame* createEffectFrame(EffectFrameImpl* frame) override;
+    render::scene::EffectFrame* createEffectFrame(EffectFrameImpl* frame) override;
     Shadow* createShadow(Toplevel* toplevel) override;
     void screenGeometryChanged(const QSize& size) override;
     OverlayWindow* overlayWindow() const override;
@@ -151,7 +151,7 @@ protected:
     void paintSimpleScreen(int mask, QRegion region) override;
     void paintGenericScreen(int mask, ScreenPaintData data) override;
     void doPaintBackground(const QVector<float>& vertices) override;
-    Scene::Window* createWindow(Toplevel* t) override;
+    render::scene::Window* createWindow(Toplevel* t) override;
     void
     finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data) override;
     void updateProjectionMatrix() override;
@@ -171,7 +171,7 @@ private:
 
 class window_pixmap;
 
-class window final : public Scene::Window
+class window final : public render::scene::Window
 {
 public:
     enum Leaf { ShadowLeaf = 0, DecorationLeaf, ContentLeaf, PreviousContentLeaf, LeafCount };
@@ -198,7 +198,7 @@ public:
     window(Toplevel* toplevel, gl::scene* scene);
     ~window() override;
 
-    WindowPixmap* createWindowPixmap() override;
+    render::window_pixmap* createWindowPixmap() override;
     void performPaint(int mask, QRegion region, WindowPaintData data) override;
 
 private:
@@ -220,10 +220,10 @@ private:
     bool m_blendingEnabled = false;
 };
 
-class window_pixmap : public KWin::WindowPixmap
+class window_pixmap : public render::window_pixmap
 {
 public:
-    explicit window_pixmap(Scene::Window* window, gl::scene* scene);
+    explicit window_pixmap(render::scene::Window* window, gl::scene* scene);
     ~window_pixmap() override;
     render::gl::texture* texture() const;
     bool bind();
@@ -234,7 +234,7 @@ private:
     scene* m_scene;
 };
 
-class scene::EffectFrame : public Scene::EffectFrame
+class scene::EffectFrame : public render::scene::EffectFrame
 {
 public:
     EffectFrame(EffectFrameImpl* frame, gl::scene* scene);
@@ -337,17 +337,17 @@ inline render::gl::texture* window_pixmap::texture() const
     return m_texture.data();
 }
 
-class KWIN_EXPORT scene_factory : public KWin::SceneFactory
+class KWIN_EXPORT scene_factory : public render::scene_factory
 {
     Q_OBJECT
-    Q_INTERFACES(KWin::SceneFactory)
+    Q_INTERFACES(KWin::render::scene_factory)
     Q_PLUGIN_METADATA(IID "org.kde.kwin.Scene" FILE "opengl.json")
 
 public:
     explicit scene_factory(QObject* parent = nullptr);
     ~scene_factory() override;
 
-    KWin::Scene* create(QObject* parent = nullptr) const override;
+    render::scene* create(QObject* parent = nullptr) const override;
 };
 
 }

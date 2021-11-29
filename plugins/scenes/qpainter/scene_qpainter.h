@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::qpainter
 {
 
-class KWIN_EXPORT scene : public Scene
+class KWIN_EXPORT scene : public render::scene
 {
     Q_OBJECT
 
@@ -68,7 +68,7 @@ public:
 
 protected:
     void paintBackground(QRegion region) override;
-    Scene::Window* createWindow(Toplevel* toplevel) override;
+    render::scene::Window* createWindow(Toplevel* toplevel) override;
     void paintCursor() override;
     void paintEffectQuickView(EffectQuickView* w) override;
 
@@ -79,15 +79,15 @@ private:
     class Window;
 };
 
-class scene::Window : public Scene::Window
+class scene::Window : public render::scene::Window
 {
 public:
-    Window(scene* scene, Toplevel* c);
+    Window(qpainter::scene* scene, Toplevel* c);
     ~Window() override;
     void performPaint(int mask, QRegion region, WindowPaintData data) override;
 
 protected:
-    WindowPixmap* createWindowPixmap() override;
+    render::window_pixmap* createWindowPixmap() override;
 
 private:
     void renderShadow(QPainter* painter);
@@ -95,10 +95,10 @@ private:
     scene* m_scene;
 };
 
-class window_pixmap : public WindowPixmap
+class window_pixmap : public render::window_pixmap
 {
 public:
-    explicit window_pixmap(Scene::Window* window);
+    explicit window_pixmap(render::scene::Window* window);
     ~window_pixmap() override;
     void create() override;
     bool isValid() const override;
@@ -110,10 +110,10 @@ private:
     QImage m_image;
 };
 
-class effect_frame : public Scene::EffectFrame
+class effect_frame : public scene::EffectFrame
 {
 public:
-    effect_frame(EffectFrameImpl* frame, scene* scene);
+    effect_frame(EffectFrameImpl* frame, qpainter::scene* scene);
     ~effect_frame() override;
     void crossFadeIcon() override
     {
@@ -176,17 +176,17 @@ private:
     QImage m_images[int(DecorationPart::Count)];
 };
 
-class KWIN_EXPORT scene_factory : public SceneFactory
+class KWIN_EXPORT scene_factory : public render::scene_factory
 {
     Q_OBJECT
-    Q_INTERFACES(KWin::SceneFactory)
+    Q_INTERFACES(KWin::render::scene_factory)
     Q_PLUGIN_METADATA(IID "org.kde.kwin.Scene" FILE "qpainter.json")
 
 public:
     explicit scene_factory(QObject* parent = nullptr);
     ~scene_factory() override;
 
-    Scene* create(QObject* parent = nullptr) const override;
+    render::scene* create(QObject* parent = nullptr) const override;
 };
 
 inline bool scene::usesOverlayWindow() const

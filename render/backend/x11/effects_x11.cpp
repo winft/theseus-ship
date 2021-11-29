@@ -18,7 +18,7 @@
 namespace KWin::render::backend::x11
 {
 
-EffectsHandlerImplX11::EffectsHandlerImplX11(compositor* compositor, Scene* scene)
+EffectsHandlerImplX11::EffectsHandlerImplX11(render::compositor* compositor, render::scene* scene)
     : EffectsHandlerImpl(compositor, scene)
 {
     connect(this, &EffectsHandlerImpl::screenGeometryChanged, this, [this](const QSize& size) {

@@ -34,9 +34,12 @@ class output;
 
 class OverlayWindow;
 class SceneOpenGL;
-class WindowPixmap;
 
-namespace render::gl
+namespace render
+{
+class window_pixmap;
+
+namespace gl
 {
 
 class texture;
@@ -295,5 +298,6 @@ private:
     QList<QByteArray> m_extensions;
 };
 
+}
 }
 }

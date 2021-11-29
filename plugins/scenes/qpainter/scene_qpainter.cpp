@@ -65,7 +65,7 @@ scene* scene::createScene(QObject* parent)
 }
 
 scene::scene(qpainter::backend* backend, QObject* parent)
-    : Scene(parent)
+    : render::scene(parent)
     , m_backend(backend)
     , m_painter(new QPainter())
 {
@@ -90,7 +90,7 @@ void scene::paintGenericScreen(int mask, ScreenPaintData data)
     m_painter->save();
     m_painter->translate(data.xTranslation(), data.yTranslation());
     m_painter->scale(data.xScale(), data.yScale());
-    Scene::paintGenericScreen(mask, data);
+    render::scene::paintGenericScreen(mask, data);
     m_painter->restore();
 }
 
@@ -109,7 +109,7 @@ int64_t scene::paint(base::output* output,
 
     auto const needsFullRepaint = m_backend->needsFullRepaint();
     if (needsFullRepaint) {
-        mask |= Scene::PAINT_SCREEN_BACKGROUND_FIRST;
+        mask |= render::scene::PAINT_SCREEN_BACKGROUND_FIRST;
         damage = screens()->geometry();
     }
 
@@ -176,12 +176,12 @@ void scene::paintEffectQuickView(EffectQuickView* w)
     painter->drawImage(w->geometry(), buffer);
 }
 
-Scene::Window* scene::createWindow(Toplevel* toplevel)
+render::scene::Window* scene::createWindow(Toplevel* toplevel)
 {
     return new scene::Window(this, toplevel);
 }
 
-Scene::EffectFrame* scene::createEffectFrame(EffectFrameImpl* frame)
+render::scene::EffectFrame* scene::createEffectFrame(EffectFrameImpl* frame)
 {
     return new effect_frame(frame, this);
 }
@@ -193,7 +193,7 @@ Shadow* scene::createShadow(Toplevel* toplevel)
 
 void scene::screenGeometryChanged(const QSize& size)
 {
-    Scene::screenGeometryChanged(size);
+    render::scene::screenGeometryChanged(size);
     m_backend->screenGeometryChanged(size);
 }
 
@@ -206,7 +206,7 @@ QImage* scene::qpainterRenderBuffer() const
 // scene::Window
 //****************************************
 scene::Window::Window(qpainter::scene* scene, Toplevel* c)
-    : Scene::Window(c)
+    : render::scene::Window(c)
     , m_scene(scene)
 {
 }
@@ -374,7 +374,7 @@ void scene::Window::renderWindowDecorations(QPainter* painter)
     painter->drawImage(dbr, renderer->image(deco_renderer::DecorationPart::Bottom));
 }
 
-WindowPixmap* scene::Window::createWindowPixmap()
+render::window_pixmap* scene::Window::createWindowPixmap()
 {
     return new window_pixmap(this);
 }
@@ -387,8 +387,8 @@ Decoration::Renderer* scene::createDecorationRenderer(Decoration::DecoratedClien
 //****************************************
 // window_pixmap
 //****************************************
-window_pixmap::window_pixmap(Scene::Window* window)
-    : WindowPixmap(window)
+window_pixmap::window_pixmap(render::scene::Window* window)
+    : render::window_pixmap(window)
 {
 }
 
@@ -401,7 +401,7 @@ void window_pixmap::create()
     if (isValid()) {
         return;
     }
-    KWin::WindowPixmap::create();
+    render::window_pixmap::create();
     if (!isValid()) {
         return;
     }
@@ -420,7 +420,7 @@ void window_pixmap::create()
 void window_pixmap::updateBuffer()
 {
     auto oldBuffer = buffer();
-    WindowPixmap::updateBuffer();
+    render::window_pixmap::updateBuffer();
     auto b = buffer();
     if (!surface()) {
         // That's an internal client.
@@ -446,11 +446,11 @@ bool window_pixmap::isValid() const
     if (!m_image.isNull()) {
         return true;
     }
-    return WindowPixmap::isValid();
+    return render::window_pixmap::isValid();
 }
 
 effect_frame::effect_frame(EffectFrameImpl* frame, qpainter::scene* scene)
-    : Scene::EffectFrame(frame)
+    : render::scene::EffectFrame(frame)
     , m_scene(scene)
 {
 }
@@ -867,13 +867,13 @@ void deco_renderer::reparent(Toplevel* window)
 }
 
 scene_factory::scene_factory(QObject* parent)
-    : SceneFactory(parent)
+    : render::scene_factory(parent)
 {
 }
 
 scene_factory::~scene_factory() = default;
 
-Scene* scene_factory::create(QObject* parent) const
+render::scene* scene_factory::create(QObject* parent) const
 {
     auto s = scene::createScene(parent);
     if (s && s->initFailed()) {

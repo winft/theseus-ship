@@ -340,7 +340,8 @@ void X11StandalonePlatform::invertScreen()
     }
 }
 
-void X11StandalonePlatform::createEffectsHandler(render::compositor* compositor, Scene* scene)
+void X11StandalonePlatform::createEffectsHandler(render::compositor* compositor,
+                                                 render::scene* scene)
 {
     new EffectsHandlerImplX11(compositor, scene);
 }

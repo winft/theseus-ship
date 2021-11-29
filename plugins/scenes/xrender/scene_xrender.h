@@ -77,7 +77,7 @@ public:
     /**
      * @brief The compositing buffer hold by this backend.
      *
-     * The Scene composites the new frame into this buffer.
+     * The scene composites the new frame into this buffer.
      *
      * @return xcb_render_picture_t
      */
@@ -147,7 +147,7 @@ private:
     xcb_render_pictformat_t m_format;
 };
 
-class scene : public Scene
+class scene : public render::scene
 {
     Q_OBJECT
 public:
@@ -161,7 +161,7 @@ public:
     qint64 paint(QRegion damage,
                  std::deque<Toplevel*> const& windows,
                  std::chrono::milliseconds presentTime) override;
-    Scene::EffectFrame* createEffectFrame(EffectFrameImpl* frame) override;
+    render::scene::EffectFrame* createEffectFrame(EffectFrameImpl* frame) override;
     Shadow* createShadow(Toplevel* toplevel) override;
     void screenGeometryChanged(const QSize& size) override;
     xcb_render_picture_t xrenderBufferPicture() const override;
@@ -184,7 +184,7 @@ public:
     static scene* createScene(QObject* parent);
 
 protected:
-    Scene::Window* createWindow(Toplevel* toplevel) override;
+    render::scene::Window* createWindow(Toplevel* toplevel) override;
     void paintBackground(QRegion region) override;
     void paintGenericScreen(int mask, ScreenPaintData data) override;
     void paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data) override;
@@ -198,7 +198,7 @@ private:
     QScopedPointer<xrender::backend> m_backend;
 };
 
-class scene::Window : public Scene::Window
+class scene::Window : public render::scene::Window
 {
 public:
     Window(Toplevel* c, xrender::scene* scene);
@@ -209,7 +209,7 @@ public:
     static void cleanup();
 
 protected:
-    WindowPixmap* createWindowPixmap() override;
+    render::window_pixmap* createWindowPixmap() override;
 
 private:
     QRect mapToScreen(int mask, const WindowPaintData& data, const QRect& rect) const;
@@ -226,10 +226,10 @@ private:
     static XRenderPicture* s_fadeAlphaPicture;
 };
 
-class window_pixmap : public WindowPixmap
+class window_pixmap : public render::window_pixmap
 {
 public:
-    explicit window_pixmap(Scene::Window* window, xcb_render_pictformat_t format);
+    explicit window_pixmap(render::scene::Window* window, xcb_render_pictformat_t format);
     ~window_pixmap() override;
     xcb_render_picture_t picture() const;
     void create() override;
@@ -239,7 +239,7 @@ private:
     xcb_render_pictformat_t m_format;
 };
 
-class scene::EffectFrame : public Scene::EffectFrame
+class scene::EffectFrame : public render::scene::EffectFrame
 {
 public:
     EffectFrame(EffectFrameImpl* frame);
@@ -348,17 +348,17 @@ private:
     XRenderPicture* m_pictures[int(DecorationPart::Count)];
 };
 
-class KWIN_EXPORT scene_factory : public SceneFactory
+class KWIN_EXPORT scene_factory : public render::scene_factory
 {
     Q_OBJECT
-    Q_INTERFACES(KWin::SceneFactory)
+    Q_INTERFACES(KWin::render::scene_factory)
     Q_PLUGIN_METADATA(IID "org.kde.kwin.Scene" FILE "xrender.json")
 
 public:
     explicit scene_factory(QObject* parent = nullptr);
     ~scene_factory() override;
 
-    Scene* create(QObject* parent = nullptr) const override;
+    render::scene* create(QObject* parent = nullptr) const override;
 };
 
 }

@@ -101,8 +101,8 @@ class KWIN_EXPORT egl_texture : public render::gl::texture_private
 public:
     egl_texture(render::gl::texture* texture, egl_backend* backend);
     ~egl_texture() override;
-    bool loadTexture(WindowPixmap* pixmap) override;
-    void updateTexture(WindowPixmap* pixmap) override;
+    bool loadTexture(render::window_pixmap* pixmap) override;
+    void updateTexture(render::window_pixmap* pixmap) override;
     render::gl::backend* backend() override;
 
 protected:
@@ -127,10 +127,10 @@ private:
     bool loadShmTexture(Wrapland::Server::Buffer* buffer);
     bool loadEglTexture(Wrapland::Server::Buffer* buffer);
     bool loadDmabufTexture(Wrapland::Server::Buffer* buffer);
-    bool loadInternalImageObject(WindowPixmap* pixmap);
+    bool loadInternalImageObject(render::window_pixmap* pixmap);
     EGLImageKHR attach(Wrapland::Server::Buffer* buffer);
     bool updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject>& fbo);
-    bool updateFromInternalImageObject(WindowPixmap* pixmap);
+    bool updateFromInternalImageObject(render::window_pixmap* pixmap);
     render::gl::texture* q;
     egl_backend* m_backend;
     EGLImageKHR m_image;

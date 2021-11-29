@@ -20,7 +20,6 @@
 
 namespace KWin
 {
-class Scene;
 class Toplevel;
 
 namespace render
@@ -32,6 +31,7 @@ class compositor_selection_owner;
 }
 
 class cursor;
+class scene;
 
 class KWIN_EXPORT compositor : public QObject
 {
@@ -95,7 +95,7 @@ public:
      */
     bool isActive();
 
-    Scene* scene() const
+    render::scene* scene() const
     {
         return m_scene;
     }
@@ -167,7 +167,7 @@ private:
     qint64 m_lastPaintDurations[2]{0};
     int m_paintPeriods{0};
 
-    Scene* m_scene;
+    render::scene* m_scene;
 };
 
 }

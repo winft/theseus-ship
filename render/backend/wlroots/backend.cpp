@@ -156,7 +156,7 @@ gl::backend* backend::createOpenGLBackend()
     return egl;
 }
 
-void backend::createEffectsHandler(render::compositor* compositor, Scene* scene)
+void backend::createEffectsHandler(render::compositor* compositor, render::scene* scene)
 {
     new wayland::effects_handler_impl(compositor, scene);
 }

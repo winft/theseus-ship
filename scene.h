@@ -17,9 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
-#ifndef KWIN_SCENE_H
-#define KWIN_SCENE_H
+#pragma once
 
 #include "kwineffects.h"
 #include "toplevel.h"
@@ -40,6 +38,7 @@ class Buffer;
 
 namespace KWin
 {
+class EffectsHandlerImpl;
 
 namespace base
 {
@@ -57,15 +56,18 @@ class EffectFrameImpl;
 class EffectWindowImpl;
 class OverlayWindow;
 class Shadow;
-class WindowPixmap;
+
+namespace render
+{
+class window_pixmap;
 
 // The base class for compositing backends.
-class KWIN_EXPORT Scene : public QObject
+class KWIN_EXPORT scene : public QObject
 {
     Q_OBJECT
 public:
-    explicit Scene(QObject* parent = nullptr);
-    ~Scene() override = 0;
+    explicit scene(QObject* parent = nullptr);
+    ~scene() override = 0;
     class EffectFrame;
     class Window;
 
@@ -94,7 +96,7 @@ public:
                           std::chrono::milliseconds presentTime);
 
     /**
-     * Adds the Toplevel to the Scene.
+     * Adds the Toplevel to the scene.
      *
      * If the toplevel gets deleted, then the scene will try automatically
      * to re-bind an underlying scene window to the corresponding Deleted.
@@ -105,7 +107,7 @@ public:
     void addToplevel(Toplevel* toplevel);
 
     /**
-     * Removes the Toplevel from the Scene.
+     * Removes the Toplevel from the scene.
      *
      * @param toplevel The window to be removed.
      * @note You can remove a toplevel from the scene only once.
@@ -113,13 +115,13 @@ public:
     void removeToplevel(Toplevel* toplevel);
 
     /**
-     * @brief Creates the Scene backend of an EffectFrame.
+     * @brief Creates the scene backend of an EffectFrame.
      *
-     * @param frame The EffectFrame this Scene::EffectFrame belongs to.
+     * @param frame The EffectFrame this scene::EffectFrame belongs to.
      */
-    virtual Scene::EffectFrame* createEffectFrame(EffectFrameImpl* frame) = 0;
+    virtual scene::EffectFrame* createEffectFrame(EffectFrameImpl* frame) = 0;
     /**
-     * @brief Creates the Scene specific Shadow subclass.
+     * @brief Creates the scene specific Shadow subclass.
      *
      * An implementing class has to create a proper instance. It is not allowed to
      * return @c null.
@@ -170,7 +172,7 @@ public:
     virtual QMatrix4x4 screenProjectionMatrix() const;
 
     /**
-     * Whether the Scene uses an X11 overlay window to perform compositing.
+     * Whether the scene uses an X11 overlay window to perform compositing.
      */
     virtual bool usesOverlayWindow() const = 0;
 
@@ -179,9 +181,9 @@ public:
     virtual Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl*) = 0;
 
     /**
-     * Whether the Scene is able to drive animations.
+     * Whether the scene is able to drive animations.
      * This is used as a hint to the effects system which effects can be supported.
-     * If the Scene performs software rendering it is supposed to return @c false,
+     * If the scene performs software rendering it is supposed to return @c false,
      * if rendering is hardware accelerated it should return @c true.
      */
     virtual bool animationsSupported() const = 0;
@@ -237,7 +239,7 @@ protected:
                      const QMatrix4x4& projection = QMatrix4x4());
     // Render cursor texture in case hardware cursor is disabled/non-applicable
     virtual void paintCursor() = 0;
-    friend class EffectsHandlerImpl;
+    friend class KWin::EffectsHandlerImpl;
     // called after all effects had their paintScreen() called
     void finalPaintScreen(int mask, QRegion region, ScreenPaintData& data);
     // shared implementation of painting the screen in the generic
@@ -270,7 +272,7 @@ protected:
         WindowQuadList quads;
     };
     // The region which actually has been painted by paintScreen() and should be
-    // copied from the buffer to the screen. I.e. the region returned from Scene::paintScreen().
+    // copied from the buffer to the screen. I.e. the region returned from scene::paintScreen().
     // Since prePaintWindow() can extend areas to paint, these changes would have to propagate
     // up all the way from paintSimpleScreen() up to paintScreen(), so save them here rather
     // than propagate them up in arguments.
@@ -286,12 +288,12 @@ protected:
     base::output* repaint_output{nullptr};
 
 private:
-    void paintWindowThumbnails(Scene::Window* w,
+    void paintWindowThumbnails(scene::Window* w,
                                QRegion region,
                                qreal opacity,
                                qreal brightness,
                                qreal saturation);
-    void paintDesktopThumbnails(Scene::Window* w);
+    void paintDesktopThumbnails(scene::Window* w);
     std::chrono::milliseconds m_expectedPresentTimestamp = std::chrono::milliseconds::zero();
     QHash<Toplevel*, Window*> m_windows;
     // windows in their stacking order
@@ -299,25 +301,25 @@ private:
 };
 
 /**
- * Factory class to create a Scene. Needs to be implemented by the plugins.
+ * Factory class to create a scene. Needs to be implemented by the plugins.
  */
-class KWIN_EXPORT SceneFactory : public QObject
+class KWIN_EXPORT scene_factory : public QObject
 {
     Q_OBJECT
 public:
-    ~SceneFactory() override;
+    ~scene_factory() override;
 
     /**
      * @returns The created Scene, may be @c nullptr.
      */
-    virtual Scene* create(QObject* parent = nullptr) const = 0;
+    virtual scene* create(QObject* parent = nullptr) const = 0;
 
 protected:
-    explicit SceneFactory(QObject* parent);
+    explicit scene_factory(QObject* parent);
 };
 
 // The base class for windows representations in composite backends
-class Scene::Window
+class scene::Window
 {
 public:
     Window(Toplevel* c);
@@ -378,42 +380,42 @@ protected:
     makeDecorationQuads(const QRect* rects, const QRegion& region, qreal textureScale = 1.0) const;
     WindowQuadList makeContentsQuads(int id, QPoint const& offset = QPoint()) const;
     /**
-     * @brief Returns the WindowPixmap for this Window.
+     * @brief Returns the window pixmap for this Window.
      *
-     * If the WindowPixmap does not yet exist, this method will invoke createWindowPixmap.
-     * If the WindowPixmap is not valid it tries to create it, in case this succeeds the
-     * WindowPixmap is returned. In case it fails, the previous (and still valid) WindowPixmap is
+     * If the window pixmap does not yet exist, this method will invoke createWindowPixmap.
+     * If the window pixmap is not valid it tries to create it, in case this succeeds the
+     * window pixmap is returned. In case it fails, the previous (and still valid) window pixmap is
      * returned.
      *
      * @note This method can return @c NULL as there might neither be a valid previous nor current
-     * WindowPixmap around.
+     * window pixmap around.
      *
-     * The WindowPixmap gets casted to the type passed in as a template parameter. That way this
-     * class does not need to know the actual WindowPixmap subclass used by the concrete Scene
+     * The window pixmap gets casted to the type passed in as a template parameter. That way this
+     * class does not need to know the actual window pixmap subclass used by the concrete scene
      * implementations.
      *
-     * @return The WindowPixmap casted to T* or @c NULL if there is no valid window pixmap.
+     * @return The window_pixmap casted to T* or @c NULL if there is no valid window pixmap.
      */
     template<typename T>
     T* windowPixmap();
     template<typename T>
     T* previousWindowPixmap();
     /**
-     * @brief Factory method to create a WindowPixmap.
+     * @brief Factory method to create a window_pixmap.
      *
      * The inheriting classes need to implement this method to create a new instance of their
-     * WindowPixmap subclass.
-     * @note Do not use WindowPixmap::create on the created instance. The Scene will take care of
+     * window_pixmap subclass.
+     * @note Do not use window_pixmap::create on the created instance. The scene will take care of
      * that.
      */
-    virtual WindowPixmap* createWindowPixmap() = 0;
+    virtual window_pixmap* createWindowPixmap() = 0;
     Toplevel* toplevel;
     ImageFilterType filter;
     Shadow* m_shadow;
 
 private:
-    QScopedPointer<WindowPixmap> m_currentPixmap;
-    QScopedPointer<WindowPixmap> m_previousPixmap;
+    QScopedPointer<window_pixmap> m_currentPixmap;
+    QScopedPointer<window_pixmap> m_previousPixmap;
     int m_referencePixmapCounter;
     int disable_painting;
     mutable QScopedPointer<WindowQuadList> cached_quad_list;
@@ -422,7 +424,7 @@ private:
 };
 
 /**
- * @brief Wrapper for a pixmap of the Scene::Window.
+ * @brief Wrapper for a pixmap of the scene::Window.
  *
  * This class encapsulates the functionality to get the pixmap for a window. When initialized the
  * pixmap is not yet mapped to the window and isValid will return @c false. The pixmap mapping to
@@ -438,10 +440,10 @@ private:
  * This class is intended to be inherited for the needs of the compositor backends which need
  * further mapping from the native pixmap to the respective rendering format.
  */
-class KWIN_EXPORT WindowPixmap
+class KWIN_EXPORT window_pixmap
 {
 public:
-    virtual ~WindowPixmap();
+    virtual ~window_pixmap();
     /**
      * @brief Tries to create the mapping between the Window and the pixmap.
      *
@@ -462,21 +464,21 @@ public:
      */
     xcb_pixmap_t pixmap() const;
     /**
-     * @return The Wayland Buffer for this WindowPixmap.
+     * @return The Wayland Buffer for this window pixmap.
      */
     Wrapland::Server::Buffer* buffer() const;
     const QSharedPointer<QOpenGLFramebufferObject>& fbo() const;
     QImage internalImage() const;
     /**
-     * @brief Whether this WindowPixmap is considered as discarded. This means the window has
-     * changed in a way that a new WindowPixmap should have been created already.
+     * @brief Whether this window pixmap is considered as discarded. This means the window has
+     * changed in a way that a new window pixmap should have been created already.
      *
-     * @return @c true if this WindowPixmap is considered as discarded, @c false otherwise.
+     * @return @c true if this window pixmap is considered as discarded, @c false otherwise.
      * @see markAsDiscarded
      */
     bool isDiscarded() const;
     /**
-     * @brief Marks this WindowPixmap as discarded. From now on isDiscarded will return @c true.
+     * @brief Marks this window pixmap as discarded. From now on isDiscarded will return @c true.
      * This method should only be used by the Window when it changes in a way that a new pixmap is
      * required.
      *
@@ -494,19 +496,19 @@ public:
      */
     const QRect& contentsRect() const;
     /**
-     * @brief Returns the Toplevel this WindowPixmap belongs to.
-     * Note: the Toplevel can change over the lifetime of the WindowPixmap in case the Toplevel is
+     * @brief Returns the Toplevel this window pixmap belongs to.
+     * Note: the Toplevel can change over the lifetime of the window pixmap in case the Toplevel is
      * copied to Deleted.
      */
     Toplevel* toplevel() const;
 
     /**
-     * @returns the surface this WindowPixmap references, might be @c null.
+     * @returns the surface this window pixmap references, might be @c null.
      */
     Wrapland::Server::Surface* surface() const;
 
 protected:
-    explicit WindowPixmap(Scene::Window* window);
+    explicit window_pixmap(scene::Window* window);
 
     /**
      * Should be called by the implementing subclasses when the Wayland Buffer changed and needs
@@ -515,7 +517,7 @@ protected:
     virtual void updateBuffer();
 
 private:
-    Scene::Window* m_window;
+    scene::Window* m_window;
     xcb_pixmap_t m_pixmap;
     QSize m_pixmapSize;
     bool m_discarded;
@@ -525,7 +527,7 @@ private:
     QImage m_internalImage;
 };
 
-class Scene::EffectFrame
+class scene::EffectFrame
 {
 public:
     EffectFrame(EffectFrameImpl* frame);
@@ -542,83 +544,83 @@ protected:
     EffectFrameImpl* m_effectFrame;
 };
 
-inline int Scene::Window::x() const
+inline int scene::Window::x() const
 {
     return toplevel->pos().x();
 }
 
-inline int Scene::Window::y() const
+inline int scene::Window::y() const
 {
     return toplevel->pos().y();
 }
 
-inline int Scene::Window::width() const
+inline int scene::Window::width() const
 {
     return toplevel->size().width();
 }
 
-inline int Scene::Window::height() const
+inline int scene::Window::height() const
 {
     return toplevel->size().height();
 }
 
-inline QRect Scene::Window::geometry() const
+inline QRect scene::Window::geometry() const
 {
     return toplevel->frameGeometry();
 }
 
-inline QSize Scene::Window::size() const
+inline QSize scene::Window::size() const
 {
     return toplevel->size();
 }
 
-inline QPoint Scene::Window::pos() const
+inline QPoint scene::Window::pos() const
 {
     return toplevel->pos();
 }
 
-inline QRect Scene::Window::rect() const
+inline QRect scene::Window::rect() const
 {
     return QRect(QPoint(), toplevel->size());
 }
 
-inline Toplevel* Scene::Window::get_window() const
+inline Toplevel* scene::Window::get_window() const
 {
     return toplevel;
 }
 
-inline void Scene::Window::updateToplevel(Toplevel* c)
+inline void scene::Window::updateToplevel(Toplevel* c)
 {
     toplevel = c;
 }
 
-inline const Shadow* Scene::Window::shadow() const
+inline const Shadow* scene::Window::shadow() const
 {
     return m_shadow;
 }
 
-inline Shadow* Scene::Window::shadow()
+inline Shadow* scene::Window::shadow()
 {
     return m_shadow;
 }
 
-inline Wrapland::Server::Buffer* WindowPixmap::buffer() const
+inline Wrapland::Server::Buffer* window_pixmap::buffer() const
 {
     return m_buffer.get();
 }
 
-inline const QSharedPointer<QOpenGLFramebufferObject>& WindowPixmap::fbo() const
+inline const QSharedPointer<QOpenGLFramebufferObject>& window_pixmap::fbo() const
 {
     return m_fbo;
 }
 
-inline QImage WindowPixmap::internalImage() const
+inline QImage window_pixmap::internalImage() const
 {
     return m_internalImage;
 }
 
 template<typename T>
-inline T* Scene::Window::windowPixmap()
+inline T* scene::Window::windowPixmap()
 {
     if (m_currentPixmap.isNull()) {
         m_currentPixmap.reset(createWindowPixmap());
@@ -635,44 +637,43 @@ inline T* Scene::Window::windowPixmap()
 }
 
 template<typename T>
-inline T* Scene::Window::previousWindowPixmap()
+inline T* scene::Window::previousWindowPixmap()
 {
     return static_cast<T*>(m_previousPixmap.data());
 }
 
-inline Toplevel* WindowPixmap::toplevel() const
+inline Toplevel* window_pixmap::toplevel() const
 {
     return m_window->get_window();
 }
 
-inline xcb_pixmap_t WindowPixmap::pixmap() const
+inline xcb_pixmap_t window_pixmap::pixmap() const
 {
     return m_pixmap;
 }
 
-inline bool WindowPixmap::isDiscarded() const
+inline bool window_pixmap::isDiscarded() const
 {
     return m_discarded;
 }
 
-inline void WindowPixmap::markAsDiscarded()
+inline void window_pixmap::markAsDiscarded()
 {
     m_discarded = true;
     m_window->referencePreviousPixmap();
 }
 
-inline const QRect& WindowPixmap::contentsRect() const
+inline const QRect& window_pixmap::contentsRect() const
 {
     return m_contentsRect;
 }
 
-inline const QSize& WindowPixmap::size() const
+inline const QSize& window_pixmap::size() const
 {
     return m_pixmapSize;
 }
 
-} // namespace
+}
+}
 
-Q_DECLARE_INTERFACE(KWin::SceneFactory, "org.kde.kwin.Scene")
-
-#endif
+Q_DECLARE_INTERFACE(KWin::render::scene_factory, "org.kde.kwin.Scene")

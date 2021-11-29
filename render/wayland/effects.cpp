@@ -13,7 +13,7 @@
 namespace KWin::render::wayland
 {
 
-effects_handler_impl::effects_handler_impl(render::compositor* compositor, Scene* scene)
+effects_handler_impl::effects_handler_impl(render::compositor* compositor, render::scene* scene)
     : EffectsHandlerImpl(compositor, scene)
 {
     auto space = static_cast<win::wayland::space*>(workspace());

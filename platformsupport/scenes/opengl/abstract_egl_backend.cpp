@@ -354,7 +354,7 @@ render::gl::backend* egl_texture::backend()
     return m_backend;
 }
 
-bool egl_texture::loadTexture(WindowPixmap* pixmap)
+bool egl_texture::loadTexture(render::window_pixmap* pixmap)
 {
     // FIXME: Refactor this method.
 
@@ -380,7 +380,7 @@ bool egl_texture::loadTexture(WindowPixmap* pixmap)
     return loadEglTexture(buffer);
 }
 
-void egl_texture::updateTexture(WindowPixmap* pixmap)
+void egl_texture::updateTexture(render::window_pixmap* pixmap)
 {
     // FIXME: Refactor this method.
 
@@ -707,7 +707,7 @@ bool egl_texture::loadDmabufTexture(Wrapland::Server::Buffer* buffer)
     return true;
 }
 
-bool egl_texture::loadInternalImageObject(WindowPixmap* pixmap)
+bool egl_texture::loadInternalImageObject(render::window_pixmap* pixmap)
 {
     return createTextureImage(pixmap->internalImage());
 }
@@ -757,7 +757,7 @@ bool egl_texture::updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject>& 
     return true;
 }
 
-bool egl_texture::updateFromInternalImageObject(WindowPixmap* pixmap)
+bool egl_texture::updateFromInternalImageObject(render::window_pixmap* pixmap)
 {
     const QImage image = pixmap->internalImage();
     if (image.isNull()) {

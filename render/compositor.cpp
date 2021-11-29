@@ -147,8 +147,8 @@ bool compositor::setupStart()
                 return false;
             });
         if (pluginIt != availablePlugins.end()) {
-            std::unique_ptr<SceneFactory> factory{
-                qobject_cast<SceneFactory*>(pluginIt->instantiate())};
+            std::unique_ptr<scene_factory> factory{
+                qobject_cast<scene_factory*>(pluginIt->instantiate())};
             if (factory) {
                 m_scene = factory->create(this);
                 if (m_scene) {
@@ -195,7 +195,7 @@ bool compositor::setupStart()
         QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
     }
 
-    connect(m_scene, &Scene::resetCompositing, this, &compositor::reinitialize);
+    connect(m_scene, &scene::resetCompositing, this, &compositor::reinitialize);
     Q_EMIT sceneCreated();
 
     return true;
@@ -254,7 +254,7 @@ void compositor::startupWithWorkspace()
 
     // Sets also the 'effects' pointer.
     kwinApp()->platform->createEffectsHandler(this, m_scene);
-    connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &Scene::removeToplevel);
+    connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
     connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
         if (auto eff_impl = static_cast<EffectsHandlerImpl*>(effects)) {

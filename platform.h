@@ -46,7 +46,6 @@ class Edge;
 class OverlayWindow;
 class Outline;
 class OutlineVisual;
-class Scene;
 class Screens;
 class ScreenEdges;
 class Toplevel;
@@ -69,6 +68,8 @@ class backend;
 }
 
 class compositor;
+class scene;
+
 }
 
 class KWIN_EXPORT Outputs : public QVector<base::output*>
@@ -282,7 +283,7 @@ public:
     /**
      * Default implementation creates an EffectsHandlerImp;
      */
-    virtual void createEffectsHandler(render::compositor *compositor, Scene *scene);
+    virtual void createEffectsHandler(render::compositor *compositor, render::scene *scene);
 
     /**
      * The CompositingTypes supported by the Platform.

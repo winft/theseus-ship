@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::gl
 {
 
-lanczos_filter::lanczos_filter(Scene* parent)
+lanczos_filter::lanczos_filter(scene* parent)
     : QObject(parent)
     , m_offscreenTex(nullptr)
     , m_offscreenTarget(nullptr)

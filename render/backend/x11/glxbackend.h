@@ -111,7 +111,7 @@ class GlxTexture : public gl::texture_private
 public:
     ~GlxTexture() override;
     void onDamage() override;
-    bool loadTexture(WindowPixmap* pixmap) override;
+    bool loadTexture(render::window_pixmap* pixmap) override;
     gl::backend* backend() override;
 
 private:

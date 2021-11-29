@@ -314,7 +314,7 @@ bool SyncManager::updateFences()
  ***********************************************/
 
 scene::scene(render::gl::backend* backend, QObject* parent)
-    : Scene(parent)
+    : render::scene(parent)
     , init_ok(true)
     , m_backend(backend)
     , m_syncManager(nullptr)
@@ -520,7 +520,7 @@ bool scene::hasSwapEvent() const
 void scene::idle()
 {
     m_backend->idle();
-    Scene::idle();
+    render::scene::idle();
 }
 
 bool scene::initFailed() const
@@ -894,7 +894,7 @@ void scene::screenGeometryChanged(const QSize& size)
 {
     if (!viewportLimitsMatched(size))
         return;
-    Scene::screenGeometryChanged(size);
+    render::scene::screenGeometryChanged(size);
     glViewport(0, 0, size.width(), size.height());
     m_backend->screenGeometryChanged(size);
     GLRenderTarget::setVirtualScreenSize(size);
@@ -905,7 +905,7 @@ void scene::paintDesktop(int desktop, int mask, const QRegion& region, ScreenPai
     const QRect r = region.boundingRect();
     glEnable(GL_SCISSOR_TEST);
     glScissor(r.x(), screens()->size().height() - r.y() - r.height(), r.width(), r.height());
-    KWin::Scene::paintDesktop(desktop, mask, region, data);
+    render::scene::paintDesktop(desktop, mask, region, data);
     glDisable(GL_SCISSOR_TEST);
 }
 
@@ -948,7 +948,7 @@ bool scene::supportsSurfacelessContext() const
     return m_backend->supportsSurfacelessContext();
 }
 
-Scene::EffectFrame* scene::createEffectFrame(EffectFrameImpl* frame)
+render::scene::EffectFrame* scene::createEffectFrame(EffectFrameImpl* frame)
 {
     return new scene::EffectFrame(frame, this);
 }
@@ -1092,7 +1092,7 @@ void scene2::paintSimpleScreen(int mask, QRegion region)
 {
     m_screenProjectionMatrix = m_projectionMatrix;
 
-    Scene::paintSimpleScreen(mask, region);
+    render::scene::paintSimpleScreen(mask, region);
 }
 
 void scene2::paintGenericScreen(int mask, ScreenPaintData data)
@@ -1101,7 +1101,7 @@ void scene2::paintGenericScreen(int mask, ScreenPaintData data)
 
     m_screenProjectionMatrix = m_projectionMatrix * screenMatrix;
 
-    Scene::paintGenericScreen(mask, data);
+    render::scene::paintGenericScreen(mask, data);
 }
 
 void scene2::doPaintBackground(const QVector<float>& vertices)
@@ -1117,7 +1117,7 @@ void scene2::doPaintBackground(const QVector<float>& vertices)
     vbo->render(GL_TRIANGLES);
 }
 
-Scene::Window* scene2::createWindow(Toplevel* t)
+render::scene::Window* scene2::createWindow(Toplevel* t)
 {
     return new window(t, this);
 }
@@ -1157,7 +1157,7 @@ void scene2::performPaintWindow(EffectWindowImpl* w,
 //****************************************
 
 window::window(Toplevel* toplevel, gl::scene* scene)
-    : Scene::Window(toplevel)
+    : render::scene::Window(toplevel)
     , m_scene(scene)
 {
     m_scene->windows.insert({id(), this});
@@ -1194,7 +1194,7 @@ QMatrix4x4 window::transformation(int mask, const WindowPaintData& data) const
     QMatrix4x4 matrix;
     matrix.translate(x(), y());
 
-    if (!(mask & Scene::PAINT_WINDOW_TRANSFORMED))
+    if (!(mask & render::scene::PAINT_WINDOW_TRANSFORMED))
         return matrix;
 
     matrix.translate(data.translation());
@@ -1220,8 +1220,9 @@ bool window::beginRenderWindow(int mask, const QRegion& region, WindowPaintData&
     if (region.isEmpty())
         return false;
 
-    m_hardwareClipping = region != infiniteRegion() && (mask & Scene::PAINT_WINDOW_TRANSFORMED)
-        && !(mask & Scene::PAINT_SCREEN_TRANSFORMED);
+    m_hardwareClipping = region != infiniteRegion()
+        && (mask & render::scene::PAINT_WINDOW_TRANSFORMED)
+        && !(mask & render::scene::PAINT_SCREEN_TRANSFORMED);
     if (region != infiniteRegion() && !m_hardwareClipping) {
         WindowQuadList quads;
         quads.reserve(data.quads.count());
@@ -1265,14 +1266,15 @@ bool window::beginRenderWindow(int mask, const QRegion& region, WindowPaintData&
 
     // Update the texture filter
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        if (mask & (Scene::PAINT_WINDOW_TRANSFORMED | Scene::PAINT_SCREEN_TRANSFORMED)) {
-            filter = Scene::ImageFilterGood;
+        if (mask
+            & (render::scene::PAINT_WINDOW_TRANSFORMED | render::scene::PAINT_SCREEN_TRANSFORMED)) {
+            filter = render::scene::ImageFilterGood;
         } else {
-            filter = Scene::ImageFilterFast;
+            filter = render::scene::ImageFilterFast;
         }
-        texture->setFilter(filter == Scene::ImageFilterGood ? GL_LINEAR : GL_NEAREST);
+        texture->setFilter(filter == render::scene::ImageFilterGood ? GL_LINEAR : GL_NEAREST);
     } else {
-        filter = Scene::ImageFilterGood;
+        filter = render::scene::ImageFilterGood;
         texture->setFilter(GL_LINEAR);
     }
 
@@ -1321,7 +1323,7 @@ GLTexture* window::getDecorationTexture() const
     return nullptr;
 }
 
-WindowPixmap* window::createWindowPixmap()
+render::window_pixmap* window::createWindowPixmap()
 {
     return new window_pixmap(this, m_scene);
 }
@@ -1428,7 +1430,7 @@ QMatrix4x4 window::modelViewProjectionMatrix(int mask, const WindowPaintData& da
     // If an effect has specified a model-view matrix, we multiply that matrix
     // with the default projection matrix.  If the effect hasn't specified a
     // model-view matrix, mvMatrix will be the identity matrix.
-    if (mask & Scene::PAINT_SCREEN_TRANSFORMED)
+    if (mask & render::scene::PAINT_SCREEN_TRANSFORMED)
         return scene->screenProjectionMatrix() * mvMatrix;
 
     return scene->projectionMatrix() * mvMatrix;
@@ -1610,8 +1612,8 @@ void window::performPaint(int mask, QRegion region, WindowPaintData data)
 // window_pixmap
 //****************************************
 
-window_pixmap::window_pixmap(Scene::Window* window, gl::scene* scene)
-    : WindowPixmap(window)
+window_pixmap::window_pixmap(render::scene::Window* window, gl::scene* scene)
+    : render::window_pixmap(window)
     , m_texture(scene->createTexture())
     , m_scene(scene)
 {
@@ -1675,7 +1677,7 @@ bool window_pixmap::isValid() const
     if (!m_texture->isNull()) {
         return true;
     }
-    return WindowPixmap::isValid();
+    return render::window_pixmap::isValid();
 }
 
 //****************************************
@@ -1686,7 +1688,7 @@ GLTexture* scene::EffectFrame::m_unstyledTexture = nullptr;
 QPixmap* scene::EffectFrame::m_unstyledPixmap = nullptr;
 
 scene::EffectFrame::EffectFrame(EffectFrameImpl* frame, gl::scene* scene)
-    : Scene::EffectFrame(frame)
+    : render::scene::EffectFrame(frame)
     , m_texture(nullptr)
     , m_textTexture(nullptr)
     , m_oldTextTexture(nullptr)
@@ -2776,13 +2778,13 @@ void deco_renderer::reparent(Toplevel* window)
 }
 
 scene_factory::scene_factory(QObject* parent)
-    : KWin::SceneFactory(parent)
+    : render::scene_factory(parent)
 {
 }
 
 scene_factory::~scene_factory() = default;
 
-KWin::Scene* scene_factory::create(QObject* parent) const
+render::scene* scene_factory::create(QObject* parent) const
 {
     qCDebug(KWIN_OPENGL) << "Initializing OpenGL compositing";
 
