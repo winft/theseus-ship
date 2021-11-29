@@ -48,7 +48,7 @@ private:
 /**
  * @brief OpenGL Backend using GLX over an X overlay window.
  */
-class GlxBackend : public OpenGLBackend
+class GlxBackend : public gl::backend
 {
 public:
     GlxBackend(Display* display);
@@ -112,7 +112,7 @@ public:
     ~GlxTexture() override;
     void onDamage() override;
     bool loadTexture(WindowPixmap* pixmap) override;
-    OpenGLBackend* backend() override;
+    gl::backend* backend() override;
 
 private:
     friend class GlxBackend;

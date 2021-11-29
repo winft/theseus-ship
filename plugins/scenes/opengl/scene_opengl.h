@@ -34,8 +34,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+namespace render::gl
+{
+class backend;
+}
+
 class LanczosFilter;
-class OpenGLBackend;
 class OpenGLWindow;
 class SyncManager;
 class SyncObject;
@@ -88,7 +92,7 @@ public:
      */
     SceneOpenGLTexture* createTexture();
 
-    OpenGLBackend* backend() const
+    render::gl::backend* backend() const
     {
         return m_backend;
     }
@@ -100,7 +104,7 @@ public:
     std::unordered_map<uint32_t, OpenGLWindow*> windows;
 
 protected:
-    SceneOpenGL(OpenGLBackend* backend, QObject* parent = nullptr);
+    SceneOpenGL(render::gl::backend* backend, QObject* parent = nullptr);
     void paintBackground(QRegion region) override;
     void extendPaintRegion(QRegion& region, bool opaqueFullscreen) override;
     QMatrix4x4 transformation(int mask, const ScreenPaintData& data) const;
@@ -118,7 +122,7 @@ private:
     bool viewportLimitsMatched(const QSize& size) const;
     std::deque<Toplevel*> get_leads(std::deque<Toplevel*> const& windows);
 
-    OpenGLBackend* m_backend;
+    render::gl::backend* m_backend;
     SyncManager* m_syncManager;
     SyncObject* m_currentFence;
     bool m_debug;
@@ -128,14 +132,14 @@ class SceneOpenGL2 : public SceneOpenGL
 {
     Q_OBJECT
 public:
-    explicit SceneOpenGL2(OpenGLBackend* backend, QObject* parent = nullptr);
+    explicit SceneOpenGL2(render::gl::backend* backend, QObject* parent = nullptr);
     ~SceneOpenGL2() override;
     CompositingType compositingType() const override
     {
         return OpenGLCompositing;
     }
 
-    static bool supported(OpenGLBackend* backend);
+    static bool supported(render::gl::backend* backend);
 
     QMatrix4x4 projectionMatrix() const override
     {

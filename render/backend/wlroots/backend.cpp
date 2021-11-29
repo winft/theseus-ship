@@ -150,7 +150,7 @@ clockid_t backend::clockId() const
     return wlr_backend_get_presentation_clock(base.backend.backend);
 }
 
-OpenGLBackend* backend::createOpenGLBackend()
+gl::backend* backend::createOpenGLBackend()
 {
     egl = new egl_backend(this, base::backend::wlroots_get_headless_backend(base.backend.backend));
     return egl;

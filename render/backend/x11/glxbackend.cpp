@@ -91,7 +91,7 @@ bool SwapEventFilter::event(xcb_generic_event_t* event)
 // -----------------------------------------------------------------------
 
 GlxBackend::GlxBackend(Display* display)
-    : OpenGLBackend()
+    : gl::backend()
     , m_overlayWindow(kwinApp()->platform->createOverlayWindow())
     , window(None)
     , fbconfig(nullptr)
@@ -925,7 +925,7 @@ bool GlxTexture::loadTexture(WindowPixmap* pixmap)
     return loadTexture(pixmap->pixmap(), win::render_geometry(t).size(), t->visual());
 }
 
-OpenGLBackend* GlxTexture::backend()
+gl::backend* GlxTexture::backend()
 {
     return m_backend;
 }

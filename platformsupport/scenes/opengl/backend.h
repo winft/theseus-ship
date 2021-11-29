@@ -18,8 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_SCENE_OPENGL_BACKEND_H
-#define KWIN_SCENE_OPENGL_BACKEND_H
+#pragma once
 
 #include <QElapsedTimer>
 #include <QRegion>
@@ -33,18 +32,20 @@ namespace base
 class output;
 }
 
-class OpenGLBackend;
 class OverlayWindow;
 class SceneOpenGL;
 class SceneOpenGLTexture;
 class SceneOpenGLTexturePrivate;
 class WindowPixmap;
 
+namespace render::gl
+{
+
 /**
- * @brief The OpenGLBackend creates and holds the OpenGL context and is responsible for Texture from
+ * @brief The backend creates and holds the OpenGL context and is responsible for Texture from
  * Pixmap.
  *
- * The OpenGLBackend is an abstract base class used by the SceneOpenGL to abstract away the
+ * The backend is an abstract base class used by the SceneOpenGL to abstract away the
  * differences between various OpenGL windowing systems such as GLX and EGL.
  *
  * A concrete implementation has to create and release the OpenGL context in a way so that the
@@ -55,11 +56,11 @@ class WindowPixmap;
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  */
-class KWIN_EXPORT OpenGLBackend
+class KWIN_EXPORT backend
 {
 public:
-    OpenGLBackend();
-    virtual ~OpenGLBackend();
+    backend();
+    virtual ~backend();
 
     virtual void init() = 0;
     /**
@@ -294,5 +295,4 @@ private:
 };
 
 }
-
-#endif
+}

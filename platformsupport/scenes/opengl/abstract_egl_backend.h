@@ -41,7 +41,7 @@ namespace KWin
 
 class EglDmabuf;
 
-class KWIN_EXPORT AbstractEglBackend : public QObject, public OpenGLBackend
+class KWIN_EXPORT AbstractEglBackend : public QObject, public render::gl::backend
 {
     Q_OBJECT
 public:
@@ -103,7 +103,7 @@ public:
     ~EglTexture() override;
     bool loadTexture(WindowPixmap* pixmap) override;
     void updateTexture(WindowPixmap* pixmap) override;
-    OpenGLBackend* backend() override;
+    render::gl::backend* backend() override;
 
 protected:
     EGLImageKHR image() const

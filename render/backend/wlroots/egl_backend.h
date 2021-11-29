@@ -37,12 +37,12 @@ private:
 
 public:
     std::unique_ptr<egl_gbm> gbm;
-    backend* back;
+    wlroots::backend* back;
     std::vector<egl_output> outputs;
     bool headless{false};
     std::unique_ptr<wlroots::surface> dummy_surface;
 
-    egl_backend(backend* back, bool headless);
+    egl_backend(wlroots::backend* back, bool headless);
     ~egl_backend() override;
 
     void init() override;

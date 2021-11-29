@@ -28,27 +28,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <epoxy/gl.h>
 
-namespace KWin
+namespace KWin::render::gl
 {
 
-OpenGLBackend::OpenGLBackend()
+backend::backend()
     : m_directRendering(false)
     , m_haveBufferAge(false)
     , m_failed(false)
 {
 }
 
-OpenGLBackend::~OpenGLBackend()
+backend::~backend()
 {
 }
 
-void OpenGLBackend::setFailed(const QString& reason)
+void backend::setFailed(const QString& reason)
 {
     qCWarning(KWIN_OPENGL) << "Creating the OpenGL rendering failed: " << reason;
     m_failed = true;
 }
 
-void OpenGLBackend::idle()
+void backend::idle()
 {
     if (hasPendingFlush()) {
         effects->makeOpenGLContextCurrent();
@@ -56,7 +56,7 @@ void OpenGLBackend::idle()
     }
 }
 
-void OpenGLBackend::addToDamageHistory(const QRegion& region)
+void backend::addToDamageHistory(const QRegion& region)
 {
     if (m_damageHistory.count() > 10)
         m_damageHistory.removeLast();
@@ -64,7 +64,7 @@ void OpenGLBackend::addToDamageHistory(const QRegion& region)
     m_damageHistory.prepend(region);
 }
 
-QRegion OpenGLBackend::accumulatedDamageHistory(int bufferAge) const
+QRegion backend::accumulatedDamageHistory(int bufferAge) const
 {
     QRegion region;
 
@@ -80,27 +80,27 @@ QRegion OpenGLBackend::accumulatedDamageHistory(int bufferAge) const
     return region;
 }
 
-OverlayWindow* OpenGLBackend::overlayWindow() const
+OverlayWindow* backend::overlayWindow() const
 {
     return nullptr;
 }
 
-QRegion OpenGLBackend::prepareRenderingForScreen(base::output* output)
+QRegion backend::prepareRenderingForScreen(base::output* output)
 {
     // fallback to repaint complete screen
     return output->geometry();
 }
 
-void OpenGLBackend::endRenderingFrameForScreen(base::output* output,
-                                               const QRegion& damage,
-                                               const QRegion& damagedRegion)
+void backend::endRenderingFrameForScreen(base::output* output,
+                                         const QRegion& damage,
+                                         const QRegion& damagedRegion)
 {
     Q_UNUSED(output)
     Q_UNUSED(damage)
     Q_UNUSED(damagedRegion)
 }
 
-void OpenGLBackend::copyPixels(const QRegion& region)
+void backend::copyPixels(const QRegion& region)
 {
     const int height = screens()->size().height();
     for (const QRect& r : region) {

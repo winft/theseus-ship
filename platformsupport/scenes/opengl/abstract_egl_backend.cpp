@@ -55,7 +55,7 @@ eglQueryWaylandBufferWL_func eglQueryWaylandBufferWL = nullptr;
 
 AbstractEglBackend::AbstractEglBackend()
     : QObject(nullptr)
-    , OpenGLBackend()
+    , render::gl::backend()
 {
     connect(render::compositor::self(),
             &render::compositor::aboutToDestroy,
@@ -349,7 +349,7 @@ EglTexture::~EglTexture()
     }
 }
 
-OpenGLBackend* EglTexture::backend()
+render::gl::backend* EglTexture::backend()
 {
     return m_backend;
 }

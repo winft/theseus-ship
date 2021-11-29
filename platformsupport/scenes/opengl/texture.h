@@ -26,14 +26,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class OpenGLBackend;
+namespace render::gl
+{
+class backend;
+}
+
 class SceneOpenGLTexturePrivate;
 class WindowPixmap;
 
 class SceneOpenGLTexture : public GLTexture
 {
 public:
-    explicit SceneOpenGLTexture(OpenGLBackend* backend);
+    explicit SceneOpenGLTexture(render::gl::backend* backend);
     ~SceneOpenGLTexture() override;
 
     SceneOpenGLTexture& operator=(const SceneOpenGLTexture& tex);
@@ -58,7 +62,7 @@ public:
 
     virtual bool loadTexture(WindowPixmap* pixmap) = 0;
     virtual void updateTexture(WindowPixmap* pixmap);
-    virtual OpenGLBackend* backend() = 0;
+    virtual render::gl::backend* backend() = 0;
 
 protected:
     SceneOpenGLTexturePrivate();

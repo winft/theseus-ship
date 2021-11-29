@@ -31,7 +31,7 @@ egl_output& egl_backend::get_output(base::output* out)
     return *it;
 }
 
-egl_backend::egl_backend(backend* back, bool headless)
+egl_backend::egl_backend(wlroots::backend* back, bool headless)
     : AbstractEglBackend()
     , back{back}
     , headless{headless}
@@ -39,10 +39,10 @@ egl_backend::egl_backend(backend* back, bool headless)
     // Egl is always direct rendering.
     setIsDirectRendering(true);
 
-    connect(back, &backend::output_added, this, [this](auto out) {
+    connect(back, &wlroots::backend::output_added, this, [this](auto out) {
         add_output(static_cast<output*>(out));
     });
-    connect(back, &backend::output_removed, this, [this](auto out) {
+    connect(back, &wlroots::backend::output_removed, this, [this](auto out) {
         outputs.erase(std::remove_if(outputs.begin(),
                                      outputs.end(),
                                      [&out](auto& egl_out) { return egl_out.out == out; }),

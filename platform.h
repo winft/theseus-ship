@@ -44,7 +44,6 @@ class Manager;
 
 class Edge;
 class OverlayWindow;
-class OpenGLBackend;
 class Outline;
 class OutlineVisual;
 class QPainterBackend;
@@ -61,6 +60,11 @@ class DecoratedClientImpl;
 
 namespace render
 {
+namespace gl
+{
+class backend;
+}
+
 class compositor;
 }
 
@@ -81,7 +85,7 @@ class KWIN_EXPORT Platform : public QObject
 public:
     ~Platform() override;
 
-    virtual OpenGLBackend *createOpenGLBackend();
+    virtual render::gl::backend *createOpenGLBackend();
     virtual QPainterBackend *createQPainterBackend();
 
     /**

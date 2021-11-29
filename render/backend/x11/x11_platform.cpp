@@ -91,7 +91,7 @@ QSize X11StandalonePlatform::screenSize() const
     return QSize(screen->width_in_pixels, screen->height_in_pixels);
 }
 
-OpenGLBackend* X11StandalonePlatform::createOpenGLBackend()
+gl::backend* X11StandalonePlatform::createOpenGLBackend()
 {
     switch (options->glPlatformInterface()) {
 #if HAVE_EPOXY_GLX

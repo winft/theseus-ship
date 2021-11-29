@@ -313,7 +313,7 @@ bool SyncManager::updateFences()
  * SceneOpenGL
  ***********************************************/
 
-SceneOpenGL::SceneOpenGL(OpenGLBackend* backend, QObject* parent)
+SceneOpenGL::SceneOpenGL(render::gl::backend* backend, QObject* parent)
     : Scene(parent)
     , init_ok(true)
     , m_backend(backend)
@@ -469,7 +469,7 @@ void SceneOpenGL::initDebugOutput()
 
 SceneOpenGL* SceneOpenGL::createScene(QObject* parent)
 {
-    OpenGLBackend* backend = kwinApp()->platform->createOpenGLBackend();
+    auto backend = kwinApp()->platform->createOpenGLBackend();
     if (!backend) {
         return nullptr;
     }
@@ -976,7 +976,7 @@ QVector<QByteArray> SceneOpenGL::openGLPlatformInterfaceExtensions() const
 //****************************************
 // SceneOpenGL2
 //****************************************
-bool SceneOpenGL2::supported(OpenGLBackend* backend)
+bool SceneOpenGL2::supported(render::gl::backend* backend)
 {
     const QByteArray forceEnv = qgetenv("KWIN_COMPOSE");
     if (!forceEnv.isEmpty()) {
@@ -998,7 +998,7 @@ bool SceneOpenGL2::supported(OpenGLBackend* backend)
     return true;
 }
 
-SceneOpenGL2::SceneOpenGL2(OpenGLBackend* backend, QObject* parent)
+SceneOpenGL2::SceneOpenGL2(render::gl::backend* backend, QObject* parent)
     : SceneOpenGL(backend, parent)
     , m_lanczosFilter(nullptr)
 {
