@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_SCENE_QPAINTER_H
-#define KWIN_SCENE_QPAINTER_H
+#pragma once
 
 #include "scene.h"
 #include "shadow.h"
@@ -26,15 +25,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "decorations/decorationrenderer.h"
 
-namespace KWin
+namespace KWin::render::qpainter
 {
 
-class KWIN_EXPORT SceneQPainter : public Scene
+class KWIN_EXPORT scene : public Scene
 {
     Q_OBJECT
 
 public:
-    ~SceneQPainter() override;
+    ~scene() override;
     bool usesOverlayWindow() const override;
     OverlayWindow* overlayWindow() const override;
 
@@ -60,12 +59,12 @@ public:
     QPainter* scenePainter() const override;
     QImage* qpainterRenderBuffer() const override;
 
-    QPainterBackend* backend() const
+    qpainter::backend* backend() const
     {
         return m_backend.data();
     }
 
-    static SceneQPainter* createScene(QObject* parent);
+    static scene* createScene(QObject* parent);
 
 protected:
     void paintBackground(QRegion region) override;
@@ -74,16 +73,16 @@ protected:
     void paintEffectQuickView(EffectQuickView* w) override;
 
 private:
-    explicit SceneQPainter(QPainterBackend* backend, QObject* parent = nullptr);
-    QScopedPointer<QPainterBackend> m_backend;
+    explicit scene(qpainter::backend* backend, QObject* parent = nullptr);
+    QScopedPointer<qpainter::backend> m_backend;
     QScopedPointer<QPainter> m_painter;
     class Window;
 };
 
-class SceneQPainter::Window : public Scene::Window
+class scene::Window : public Scene::Window
 {
 public:
-    Window(SceneQPainter* scene, Toplevel* c);
+    Window(scene* scene, Toplevel* c);
     ~Window() override;
     void performPaint(int mask, QRegion region, WindowPaintData data) override;
 
@@ -93,14 +92,14 @@ protected:
 private:
     void renderShadow(QPainter* painter);
     void renderWindowDecorations(QPainter* painter);
-    SceneQPainter* m_scene;
+    scene* m_scene;
 };
 
-class QPainterWindowPixmap : public WindowPixmap
+class window_pixmap : public WindowPixmap
 {
 public:
-    explicit QPainterWindowPixmap(Scene::Window* window);
-    ~QPainterWindowPixmap() override;
+    explicit window_pixmap(Scene::Window* window);
+    ~window_pixmap() override;
     void create() override;
     bool isValid() const override;
 
@@ -111,11 +110,11 @@ private:
     QImage m_image;
 };
 
-class QPainterEffectFrame : public Scene::EffectFrame
+class effect_frame : public Scene::EffectFrame
 {
 public:
-    QPainterEffectFrame(EffectFrameImpl* frame, SceneQPainter* scene);
-    ~QPainterEffectFrame() override;
+    effect_frame(EffectFrameImpl* frame, scene* scene);
+    ~effect_frame() override;
     void crossFadeIcon() override
     {
     }
@@ -137,14 +136,14 @@ public:
     void render(QRegion region, double opacity, double frameOpacity) override;
 
 private:
-    SceneQPainter* m_scene;
+    scene* m_scene;
 };
 
-class SceneQPainterShadow : public Shadow
+class shadow : public KWin::Shadow
 {
 public:
-    SceneQPainterShadow(Toplevel* toplevel);
-    ~SceneQPainterShadow() override;
+    shadow(Toplevel* toplevel);
+    ~shadow() override;
 
     QImage& shadowTexture()
     {
@@ -159,13 +158,13 @@ private:
     QImage m_texture;
 };
 
-class SceneQPainterDecorationRenderer : public Decoration::Renderer
+class deco_renderer : public Decoration::Renderer
 {
     Q_OBJECT
 public:
     enum class DecorationPart : int { Left, Top, Right, Bottom, Count };
-    explicit SceneQPainterDecorationRenderer(Decoration::DecoratedClientImpl* client);
-    ~SceneQPainterDecorationRenderer() override;
+    explicit deco_renderer(Decoration::DecoratedClientImpl* client);
+    ~deco_renderer() override;
 
     void render() override;
     void reparent(Toplevel* window) override;
@@ -177,39 +176,37 @@ private:
     QImage m_images[int(DecorationPart::Count)];
 };
 
-class KWIN_EXPORT QPainterFactory : public SceneFactory
+class KWIN_EXPORT scene_factory : public SceneFactory
 {
     Q_OBJECT
     Q_INTERFACES(KWin::SceneFactory)
     Q_PLUGIN_METADATA(IID "org.kde.kwin.Scene" FILE "qpainter.json")
 
 public:
-    explicit QPainterFactory(QObject* parent = nullptr);
-    ~QPainterFactory() override;
+    explicit scene_factory(QObject* parent = nullptr);
+    ~scene_factory() override;
 
     Scene* create(QObject* parent = nullptr) const override;
 };
 
-inline bool SceneQPainter::usesOverlayWindow() const
+inline bool scene::usesOverlayWindow() const
 {
     return false;
 }
 
-inline OverlayWindow* SceneQPainter::overlayWindow() const
+inline OverlayWindow* scene::overlayWindow() const
 {
     return nullptr;
 }
 
-inline QPainter* SceneQPainter::scenePainter() const
+inline QPainter* scene::scenePainter() const
 {
     return m_painter.data();
 }
 
-inline const QImage& QPainterWindowPixmap::image()
+inline const QImage& window_pixmap::image()
 {
     return m_image;
 }
 
-} // KWin
-
-#endif // KWIN_SCENEQPAINTER_H
+}

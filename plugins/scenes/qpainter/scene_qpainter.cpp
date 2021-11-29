@@ -46,46 +46,46 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cmath>
 
-namespace KWin
+namespace KWin::render::qpainter
 {
 
 //****************************************
-// SceneQPainter
+// scene
 //****************************************
-SceneQPainter* SceneQPainter::createScene(QObject* parent)
+scene* scene::createScene(QObject* parent)
 {
-    QScopedPointer<QPainterBackend> backend(kwinApp()->platform->createQPainterBackend());
+    QScopedPointer<qpainter::backend> backend(kwinApp()->platform->createQPainterBackend());
     if (backend.isNull()) {
         return nullptr;
     }
     if (backend->isFailed()) {
         return nullptr;
     }
-    return new SceneQPainter(backend.take(), parent);
+    return new scene(backend.take(), parent);
 }
 
-SceneQPainter::SceneQPainter(QPainterBackend* backend, QObject* parent)
+scene::scene(qpainter::backend* backend, QObject* parent)
     : Scene(parent)
     , m_backend(backend)
     , m_painter(new QPainter())
 {
 }
 
-SceneQPainter::~SceneQPainter()
+scene::~scene()
 {
 }
 
-CompositingType SceneQPainter::compositingType() const
+CompositingType scene::compositingType() const
 {
     return QPainterCompositing;
 }
 
-bool SceneQPainter::initFailed() const
+bool scene::initFailed() const
 {
     return false;
 }
 
-void SceneQPainter::paintGenericScreen(int mask, ScreenPaintData data)
+void scene::paintGenericScreen(int mask, ScreenPaintData data)
 {
     m_painter->save();
     m_painter->translate(data.xTranslation(), data.yTranslation());
@@ -94,10 +94,10 @@ void SceneQPainter::paintGenericScreen(int mask, ScreenPaintData data)
     m_painter->restore();
 }
 
-int64_t SceneQPainter::paint(base::output* output,
-                             QRegion damage,
-                             std::deque<Toplevel*> const& toplevels,
-                             std::chrono::milliseconds presentTime)
+int64_t scene::paint(base::output* output,
+                     QRegion damage,
+                     std::deque<Toplevel*> const& toplevels,
+                     std::chrono::milliseconds presentTime)
 {
     QElapsedTimer renderTimer;
     renderTimer.start();
@@ -142,7 +142,7 @@ int64_t SceneQPainter::paint(base::output* output,
     return renderTimer.nsecsElapsed();
 }
 
-void SceneQPainter::paintBackground(QRegion region)
+void scene::paintBackground(QRegion region)
 {
     m_painter->setBrush(Qt::black);
     for (const QRect& rect : region) {
@@ -150,7 +150,7 @@ void SceneQPainter::paintBackground(QRegion region)
     }
 }
 
-void SceneQPainter::paintCursor()
+void scene::paintCursor()
 {
     auto cursor = render::compositor::self()->software_cursor.get();
     if (!cursor->enabled) {
@@ -166,7 +166,7 @@ void SceneQPainter::paintCursor()
     cursor->mark_as_rendered();
 }
 
-void SceneQPainter::paintEffectQuickView(EffectQuickView* w)
+void scene::paintEffectQuickView(EffectQuickView* w)
 {
     QPainter* painter = effects->scenePainter();
     const QImage buffer = w->bufferAsImage();
@@ -176,42 +176,42 @@ void SceneQPainter::paintEffectQuickView(EffectQuickView* w)
     painter->drawImage(w->geometry(), buffer);
 }
 
-Scene::Window* SceneQPainter::createWindow(Toplevel* toplevel)
+Scene::Window* scene::createWindow(Toplevel* toplevel)
 {
-    return new SceneQPainter::Window(this, toplevel);
+    return new scene::Window(this, toplevel);
 }
 
-Scene::EffectFrame* SceneQPainter::createEffectFrame(EffectFrameImpl* frame)
+Scene::EffectFrame* scene::createEffectFrame(EffectFrameImpl* frame)
 {
-    return new QPainterEffectFrame(frame, this);
+    return new effect_frame(frame, this);
 }
 
-Shadow* SceneQPainter::createShadow(Toplevel* toplevel)
+Shadow* scene::createShadow(Toplevel* toplevel)
 {
-    return new SceneQPainterShadow(toplevel);
+    return new shadow(toplevel);
 }
 
-void SceneQPainter::screenGeometryChanged(const QSize& size)
+void scene::screenGeometryChanged(const QSize& size)
 {
     Scene::screenGeometryChanged(size);
     m_backend->screenGeometryChanged(size);
 }
 
-QImage* SceneQPainter::qpainterRenderBuffer() const
+QImage* scene::qpainterRenderBuffer() const
 {
     return m_backend->buffer();
 }
 
 //****************************************
-// SceneQPainter::Window
+// scene::Window
 //****************************************
-SceneQPainter::Window::Window(SceneQPainter* scene, Toplevel* c)
+scene::Window::Window(qpainter::scene* scene, Toplevel* c)
     : Scene::Window(c)
     , m_scene(scene)
 {
 }
 
-SceneQPainter::Window::~Window()
+scene::Window::~Window()
 {
 }
 
@@ -227,14 +227,14 @@ static bool isXwaylandClient(Toplevel* toplevel)
     return false;
 }
 
-void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintData data)
+void scene::Window::performPaint(int mask, QRegion region, WindowPaintData data)
 {
     if (!(mask & (PAINT_WINDOW_TRANSFORMED | PAINT_SCREEN_TRANSFORMED)))
         region &= win::visible_rect(toplevel);
 
     if (region.isEmpty())
         return;
-    QPainterWindowPixmap* pixmap = windowPixmap<QPainterWindowPixmap>();
+    auto pixmap = windowPixmap<window_pixmap>();
     if (!pixmap || !pixmap->isValid()) {
         return;
     }
@@ -314,12 +314,12 @@ void SceneQPainter::Window::performPaint(int mask, QRegion region, WindowPaintDa
     painter->restore();
 }
 
-void SceneQPainter::Window::renderShadow(QPainter* painter)
+void scene::Window::renderShadow(QPainter* painter)
 {
     if (!win::shadow(toplevel)) {
         return;
     }
-    auto shadow = static_cast<SceneQPainterShadow*>(win::shadow(toplevel));
+    auto shadow = static_cast<qpainter::shadow*>(win::shadow(toplevel));
 
     const QImage& shadowTexture = shadow->shadowTexture();
     const WindowQuadList& shadowQuads = shadow->shadowQuads();
@@ -337,7 +337,7 @@ void SceneQPainter::Window::renderShadow(QPainter* painter)
     }
 }
 
-void SceneQPainter::Window::renderWindowDecorations(QPainter* painter)
+void scene::Window::renderWindowDecorations(QPainter* painter)
 {
     // TODO: custom decoration opacity
     auto const& ctrl = toplevel->control;
@@ -347,13 +347,12 @@ void SceneQPainter::Window::renderWindowDecorations(QPainter* painter)
     }
 
     bool noBorder = true;
-    const SceneQPainterDecorationRenderer* renderer = nullptr;
+    deco_renderer const* renderer = nullptr;
     QRect dtr, dlr, drr, dbr;
 
     if (ctrl && !toplevel->noBorder()) {
         if (win::decoration(toplevel)) {
-            if (auto r
-                = static_cast<SceneQPainterDecorationRenderer*>(ctrl->deco().client->renderer())) {
+            if (auto r = static_cast<deco_renderer*>(ctrl->deco().client->renderer())) {
                 r->render();
                 renderer = r;
             }
@@ -363,44 +362,41 @@ void SceneQPainter::Window::renderWindowDecorations(QPainter* painter)
     } else if (remnant && !remnant->no_border) {
         noBorder = false;
         remnant->layout_decoration_rects(dlr, dtr, drr, dbr);
-        renderer
-            = static_cast<const SceneQPainterDecorationRenderer*>(remnant->decoration_renderer);
+        renderer = static_cast<const deco_renderer*>(remnant->decoration_renderer);
     }
     if (noBorder || !renderer) {
         return;
     }
 
-    painter->drawImage(dtr, renderer->image(SceneQPainterDecorationRenderer::DecorationPart::Top));
-    painter->drawImage(dlr, renderer->image(SceneQPainterDecorationRenderer::DecorationPart::Left));
-    painter->drawImage(drr,
-                       renderer->image(SceneQPainterDecorationRenderer::DecorationPart::Right));
-    painter->drawImage(dbr,
-                       renderer->image(SceneQPainterDecorationRenderer::DecorationPart::Bottom));
+    painter->drawImage(dtr, renderer->image(deco_renderer::DecorationPart::Top));
+    painter->drawImage(dlr, renderer->image(deco_renderer::DecorationPart::Left));
+    painter->drawImage(drr, renderer->image(deco_renderer::DecorationPart::Right));
+    painter->drawImage(dbr, renderer->image(deco_renderer::DecorationPart::Bottom));
 }
 
-WindowPixmap* SceneQPainter::Window::createWindowPixmap()
+WindowPixmap* scene::Window::createWindowPixmap()
 {
-    return new QPainterWindowPixmap(this);
+    return new window_pixmap(this);
 }
 
-Decoration::Renderer* SceneQPainter::createDecorationRenderer(Decoration::DecoratedClientImpl* impl)
+Decoration::Renderer* scene::createDecorationRenderer(Decoration::DecoratedClientImpl* impl)
 {
-    return new SceneQPainterDecorationRenderer(impl);
+    return new deco_renderer(impl);
 }
 
 //****************************************
-// QPainterWindowPixmap
+// window_pixmap
 //****************************************
-QPainterWindowPixmap::QPainterWindowPixmap(Scene::Window* window)
+window_pixmap::window_pixmap(Scene::Window* window)
     : WindowPixmap(window)
 {
 }
 
-QPainterWindowPixmap::~QPainterWindowPixmap()
+window_pixmap::~window_pixmap()
 {
 }
 
-void QPainterWindowPixmap::create()
+void window_pixmap::create()
 {
     if (isValid()) {
         return;
@@ -421,7 +417,7 @@ void QPainterWindowPixmap::create()
     }
 }
 
-void QPainterWindowPixmap::updateBuffer()
+void window_pixmap::updateBuffer()
 {
     auto oldBuffer = buffer();
     WindowPixmap::updateBuffer();
@@ -445,7 +441,7 @@ void QPainterWindowPixmap::updateBuffer()
     }
 }
 
-bool QPainterWindowPixmap::isValid() const
+bool window_pixmap::isValid() const
 {
     if (!m_image.isNull()) {
         return true;
@@ -453,17 +449,17 @@ bool QPainterWindowPixmap::isValid() const
     return WindowPixmap::isValid();
 }
 
-QPainterEffectFrame::QPainterEffectFrame(EffectFrameImpl* frame, SceneQPainter* scene)
+effect_frame::effect_frame(EffectFrameImpl* frame, qpainter::scene* scene)
     : Scene::EffectFrame(frame)
     , m_scene(scene)
 {
 }
 
-QPainterEffectFrame::~QPainterEffectFrame()
+effect_frame::~effect_frame()
 {
 }
 
-void QPainterEffectFrame::render(QRegion region, double opacity, double frameOpacity)
+void effect_frame::render(QRegion region, double opacity, double frameOpacity)
 {
     Q_UNUSED(region)
     Q_UNUSED(opacity)
@@ -537,16 +533,16 @@ void QPainterEffectFrame::render(QRegion region, double opacity, double frameOpa
 //****************************************
 // QPainterShadow
 //****************************************
-SceneQPainterShadow::SceneQPainterShadow(Toplevel* toplevel)
-    : Shadow(toplevel)
+shadow::shadow(Toplevel* toplevel)
+    : KWin::Shadow(toplevel)
 {
 }
 
-SceneQPainterShadow::~SceneQPainterShadow()
+shadow::~shadow()
 {
 }
 
-void SceneQPainterShadow::buildQuads()
+void shadow::buildQuads()
 {
     // Do not draw shadows if window width or window height is less than
     // 5 px. 5 is an arbitrary choice.
@@ -726,7 +722,7 @@ void SceneQPainterShadow::buildQuads()
     }
 }
 
-bool SceneQPainterShadow::prepareBackend()
+bool shadow::prepareBackend()
 {
     if (hasDecorationShadow()) {
         m_texture = decorationShadowImage();
@@ -783,8 +779,7 @@ bool SceneQPainterShadow::prepareBackend()
 //****************************************
 // QPainterDecorationRenderer
 //****************************************
-SceneQPainterDecorationRenderer::SceneQPainterDecorationRenderer(
-    Decoration::DecoratedClientImpl* client)
+deco_renderer::deco_renderer(Decoration::DecoratedClientImpl* client)
     : Renderer(client)
 {
     connect(this,
@@ -793,16 +788,15 @@ SceneQPainterDecorationRenderer::SceneQPainterDecorationRenderer(
             static_cast<void (Toplevel::*)(QRegion const&)>(&Toplevel::addRepaint));
 }
 
-SceneQPainterDecorationRenderer::~SceneQPainterDecorationRenderer() = default;
+deco_renderer::~deco_renderer() = default;
 
-QImage
-SceneQPainterDecorationRenderer::image(SceneQPainterDecorationRenderer::DecorationPart part) const
+QImage deco_renderer::image(deco_renderer::DecorationPart part) const
 {
     Q_ASSERT(part != DecorationPart::Count);
     return m_images[int(part)];
 }
 
-void SceneQPainterDecorationRenderer::render()
+void deco_renderer::render()
 {
     const QRegion scheduled = getScheduled();
     if (scheduled.isEmpty()) {
@@ -847,7 +841,7 @@ void SceneQPainterDecorationRenderer::render()
     renderPart(bottom.intersected(geometry), bottom, int(DecorationPart::Bottom));
 }
 
-void SceneQPainterDecorationRenderer::resizeImages()
+void deco_renderer::resizeImages()
 {
     QRect left, top, right, bottom;
     client()->client()->layoutDecorationRects(left, top, right, bottom);
@@ -866,22 +860,22 @@ void SceneQPainterDecorationRenderer::resizeImages()
     checkAndCreate(int(DecorationPart::Bottom), bottom.size());
 }
 
-void SceneQPainterDecorationRenderer::reparent(Toplevel* window)
+void deco_renderer::reparent(Toplevel* window)
 {
     render();
     Renderer::reparent(window);
 }
 
-QPainterFactory::QPainterFactory(QObject* parent)
+scene_factory::scene_factory(QObject* parent)
     : SceneFactory(parent)
 {
 }
 
-QPainterFactory::~QPainterFactory() = default;
+scene_factory::~scene_factory() = default;
 
-Scene* QPainterFactory::create(QObject* parent) const
+Scene* scene_factory::create(QObject* parent) const
 {
-    auto s = SceneQPainter::createScene(parent);
+    auto s = scene::createScene(parent);
     if (s && s->initFailed()) {
         delete s;
         s = nullptr;

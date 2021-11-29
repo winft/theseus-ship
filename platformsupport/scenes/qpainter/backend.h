@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_SCENE_QPAINTER_BACKEND_H
-#define KWIN_SCENE_QPAINTER_BACKEND_H
+#pragma once
 
 class QImage;
 class QRegion;
@@ -33,10 +32,13 @@ class output;
 }
 class OverlayWindow;
 
-class QPainterBackend
+namespace render::qpainter
+{
+
+class backend
 {
 public:
-    virtual ~QPainterBackend();
+    virtual ~backend();
     virtual void present(base::output* output, const QRegion& damage) = 0;
 
     virtual void prepareRenderingFrame() = 0;
@@ -52,8 +54,8 @@ public:
     /**
      * @brief Whether the creation of the Backend failed.
      *
-     * The SceneQPainter should test whether the Backend got constructed correctly. If this method
-     * returns @c true, the SceneQPainter should not try to start the rendering.
+     * The qpainter::scene should test whether the Backend got constructed correctly. If this method
+     * returns @c true, the qpainter::scene should not try to start the rendering.
      *
      * @return bool @c true if the creation of the Backend failed, @c false otherwise.
      */
@@ -73,7 +75,7 @@ public:
     virtual bool needsFullRepaint() const = 0;
 
 protected:
-    QPainterBackend();
+    backend();
     /**
      * @brief Sets the backend initialization to failed.
      *
@@ -88,6 +90,5 @@ private:
     bool m_failed;
 };
 
-} // KWin
-
-#endif
+}
+}

@@ -46,7 +46,6 @@ class Edge;
 class OverlayWindow;
 class Outline;
 class OutlineVisual;
-class QPainterBackend;
 class Scene;
 class Screens;
 class ScreenEdges;
@@ -61,6 +60,10 @@ class DecoratedClientImpl;
 namespace render
 {
 namespace gl
+{
+class backend;
+}
+namespace qpainter
 {
 class backend;
 }
@@ -86,7 +89,7 @@ public:
     ~Platform() override;
 
     virtual render::gl::backend *createOpenGLBackend();
-    virtual QPainterBackend *createQPainterBackend();
+    virtual render::qpainter::backend *createQPainterBackend();
 
     /**
      * Allows the platform to create a platform specific screen edge.

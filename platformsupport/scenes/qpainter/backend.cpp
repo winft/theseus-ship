@@ -22,24 +22,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QtGlobal>
 
-namespace KWin
+namespace KWin::render::qpainter
 {
 
-QPainterBackend::QPainterBackend()
+backend::backend()
     : m_failed(false)
 {
 }
 
-QPainterBackend::~QPainterBackend()
+backend::~backend()
 {
 }
 
-void QPainterBackend::screenGeometryChanged(const QSize& size)
+void backend::screenGeometryChanged(const QSize& size)
 {
     Q_UNUSED(size)
 }
 
-void QPainterBackend::setFailed(const QString& reason)
+void backend::setFailed(const QString& reason)
 {
     qCWarning(KWIN_QPAINTER) << "Creating the QPainter backend failed: " << reason;
     m_failed = true;

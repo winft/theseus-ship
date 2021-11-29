@@ -58,7 +58,7 @@ render::gl::backend *Platform::createOpenGLBackend()
     return nullptr;
 }
 
-QPainterBackend *Platform::createQPainterBackend()
+render::qpainter::backend *Platform::createQPainterBackend()
 {
     return nullptr;
 }
