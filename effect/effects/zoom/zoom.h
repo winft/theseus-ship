@@ -106,7 +106,6 @@ private Q_SLOTS:
                           Qt::KeyboardModifiers modifiers,
                           Qt::KeyboardModifiers oldmodifiers);
     void slotWindowDamaged();
-    void recreateTexture();
 
 private:
     void showCursor();
@@ -114,6 +113,9 @@ private:
     void moveZoom(int x, int y);
 
 private:
+    GLTexture* ensureCursorTexture();
+    void markCursorTextureDirty();
+
 #if HAVE_ACCESSIBILITY
     ZoomAccessibilityIntegration* m_accessibilityIntegration = nullptr;
 #endif
@@ -133,14 +135,12 @@ private:
     MousePointerType mousePointer;
     int focusDelay;
     QPoint cursorPoint;
-    QPoint cursorHotSpot;
     QPoint focusPoint;
     QPoint prevPoint;
     QTime lastMouseEvent;
     QTime lastFocusEvent;
-    QScopedPointer<GLTexture> texture;
-    int imageWidth;
-    int imageHeight;
+    QScopedPointer<GLTexture> m_cursorTexture;
+    bool m_cursorTextureDirty = false;
     bool isMouseHidden;
     QTimeLine timeline;
     int xMove, yMove;
