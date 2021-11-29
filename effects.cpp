@@ -2269,7 +2269,7 @@ EffectWindow* effectWindow(Toplevel* w)
 
 EffectWindow* effectWindow(Scene::Window* w)
 {
-    EffectWindowImpl* ret = w->window()->effectWindow();
+    auto ret = w->get_window()->effectWindow();
     ret->setSceneWindow(w);
     return ret;
 }

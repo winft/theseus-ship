@@ -1183,7 +1183,7 @@ render::gl::texture* OpenGLWindow::bindTexture()
         return pixmap->texture();
     }
 
-    if (!window()->damage().isEmpty())
+    if (!get_window()->damage().isEmpty())
         m_scene->insertWait();
 
     if (!pixmap->bind()) {

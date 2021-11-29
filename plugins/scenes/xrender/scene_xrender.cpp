@@ -519,10 +519,10 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
         if (toplevel->shape()) {
             // "xeyes" + decoration
             transformed_shape -= bufferToWindowRect(cr);
-            transformed_shape += bufferToWindowRegion(window()->render_region());
+            transformed_shape += bufferToWindowRegion(get_window()->render_region());
         }
     } else {
-        transformed_shape = bufferToWindowRegion(window()->render_region());
+        transformed_shape = bufferToWindowRegion(get_window()->render_region());
     }
     if (auto shadow = win::shadow(toplevel)) {
         transformed_shape |= shadow->shadowRegion();
@@ -617,7 +617,7 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
         // transformation matrix, and doesn't have an alpha channel.
         // Since we only scale the picture, we can work around this by setting
         // the repeat mode to RepeatPad.
-        if (!window()->hasAlpha()) {
+        if (!get_window()->hasAlpha()) {
             const uint32_t values[] = {XCB_RENDER_REPEAT_PAD};
             xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
         }
@@ -888,7 +888,7 @@ void SceneXrender::Window::performPaint(int mask, QRegion region, WindowPaintDat
         xcb_render_set_picture_transform(connection(), pic, identity);
         if (filter == ImageFilterGood)
             setPictureFilter(pic, KWin::Scene::ImageFilterFast);
-        if (!window()->hasAlpha()) {
+        if (!get_window()->hasAlpha()) {
             const uint32_t values[] = {XCB_RENDER_REPEAT_NONE};
             xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
         }

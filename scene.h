@@ -338,7 +338,7 @@ public:
     QRect rect() const;
     // access to the internal window class
     // TODO eventually get rid of this
-    Toplevel* window() const;
+    Toplevel* get_window() const;
     // should the window be painted
     bool isPaintingEnabled() const;
     void resetPaintingEnabled();
@@ -582,7 +582,7 @@ inline QRect Scene::Window::rect() const
     return QRect(QPoint(), toplevel->size());
 }
 
-inline Toplevel* Scene::Window::window() const
+inline Toplevel* Scene::Window::get_window() const
 {
     return toplevel;
 }
@@ -642,7 +642,7 @@ inline T* Scene::Window::previousWindowPixmap()
 
 inline Toplevel* WindowPixmap::toplevel() const
 {
-    return m_window->window();
+    return m_window->get_window();
 }
 
 inline xcb_pixmap_t WindowPixmap::pixmap() const

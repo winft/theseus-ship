@@ -223,7 +223,7 @@ void Scene::paintGenericScreen(int orig_mask, ScreenPaintData)
     phase2.reserve(stacking_order.size());
     for (auto const& w : qAsConst(stacking_order)) {
         // bottom to top
-        Toplevel* topw = w->window();
+        auto topw = w->get_window();
 
         // Reset the repaint_region.
         // This has to be done here because many effects schedule a repaint for
@@ -272,7 +272,7 @@ void Scene::paintSimpleScreen(int orig_mask, QRegion region)
     // Traverse the scene windows from bottom to top.
     for (int i = 0; i < stacking_order.count(); ++i) {
         Window* window = stacking_order[i];
-        Toplevel* toplevel = window->window();
+        auto toplevel = window->get_window();
         WindowPrePaintData data;
         data.mask
             = orig_mask | (window->isOpaque() ? PAINT_WINDOW_OPAQUE : PAINT_WINDOW_TRANSLUCENT);
@@ -486,7 +486,7 @@ void Scene::paintWindow(Window* w, int mask, QRegion region, WindowQuadList quad
     region &= QRect(0, 0, screenSize.width(), screenSize.height());
     if (region.isEmpty()) // completely clipped
         return;
-    if (w->window()->isDeleted() && w->window()->skipsCloseAnimation()) {
+    if (w->get_window()->isDeleted() && w->get_window()->skipsCloseAnimation()) {
         // should not get painted
         return;
     }
@@ -495,7 +495,7 @@ void Scene::paintWindow(Window* w, int mask, QRegion region, WindowQuadList quad
         return;
     }
 
-    WindowPaintData data(w->window()->effectWindow(), screenProjectionMatrix());
+    WindowPaintData data(w->get_window()->effectWindow(), screenProjectionMatrix());
     data.quads = quads;
     effects->paintWindow(effectWindow(w), mask, region, data);
     // paint thumbnails on top of window
