@@ -22,57 +22,56 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "backend.h"
 #include "scene.h"
 
-namespace KWin
+namespace KWin::render::gl
 {
 
-SceneOpenGLTexture::SceneOpenGLTexture(render::gl::backend* backend)
+texture::texture(gl::backend* backend)
     : GLTexture(*backend->createBackendTexture(this))
 {
 }
 
-SceneOpenGLTexture::~SceneOpenGLTexture()
+texture::~texture()
 {
 }
 
-SceneOpenGLTexture& SceneOpenGLTexture::operator=(const SceneOpenGLTexture& tex)
+texture& texture::operator=(texture const& tex)
 {
     d_ptr = tex.d_ptr;
     return *this;
 }
 
-void SceneOpenGLTexture::discard()
+void texture::discard()
 {
     d_ptr = d_func()->backend()->createBackendTexture(this);
 }
 
-bool SceneOpenGLTexture::load(WindowPixmap* pixmap)
+bool texture::load(WindowPixmap* pixmap)
 {
     if (!pixmap->isValid()) {
         return false;
     }
 
     // decrease the reference counter for the old texture
-    d_ptr = d_func()->backend()->createBackendTexture(this); // new TexturePrivate();
+    // new texture_private();
+    d_ptr = d_func()->backend()->createBackendTexture(this);
 
-    Q_D(SceneOpenGLTexture);
-    return d->loadTexture(pixmap);
+    return d_func()->loadTexture(pixmap);
 }
 
-void SceneOpenGLTexture::updateFromPixmap(WindowPixmap* pixmap)
+void texture::updateFromPixmap(WindowPixmap* pixmap)
 {
-    Q_D(SceneOpenGLTexture);
-    d->updateTexture(pixmap);
+    d_func()->updateTexture(pixmap);
 }
 
-SceneOpenGLTexturePrivate::SceneOpenGLTexturePrivate()
-{
-}
-
-SceneOpenGLTexturePrivate::~SceneOpenGLTexturePrivate()
+texture_private::texture_private()
 {
 }
 
-void SceneOpenGLTexturePrivate::updateTexture(WindowPixmap* pixmap)
+texture_private::~texture_private()
+{
+}
+
+void texture_private::updateTexture(WindowPixmap* pixmap)
 {
     Q_UNUSED(pixmap)
 }

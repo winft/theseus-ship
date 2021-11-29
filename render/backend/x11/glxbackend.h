@@ -54,7 +54,7 @@ public:
     GlxBackend(Display* display);
     ~GlxBackend() override;
     void screenGeometryChanged(const QSize& size) override;
-    SceneOpenGLTexturePrivate* createBackendTexture(SceneOpenGLTexture* texture) override;
+    gl::texture_private* createBackendTexture(gl::texture* texture) override;
     QRegion prepareRenderingFrame() override;
     void endRenderingFrame(const QRegion& damage, const QRegion& damagedRegion) override;
     bool makeCurrent() override;
@@ -106,7 +106,7 @@ private:
 /**
  * @brief Texture using an GLXPixmap.
  */
-class GlxTexture : public SceneOpenGLTexturePrivate
+class GlxTexture : public gl::texture_private
 {
 public:
     ~GlxTexture() override;
@@ -116,13 +116,13 @@ public:
 
 private:
     friend class GlxBackend;
-    GlxTexture(SceneOpenGLTexture* texture, GlxBackend* backend);
+    GlxTexture(gl::texture* texture, GlxBackend* backend);
     bool loadTexture(xcb_pixmap_t pix, const QSize& size, xcb_visualid_t visual);
     Display* display() const
     {
         return m_backend->m_x11Display;
     }
-    SceneOpenGLTexture* q;
+    gl::texture* q;
     GlxBackend* m_backend;
     GLXPixmap m_glxpixmap; // the glx pixmap the texture is bound to
 };

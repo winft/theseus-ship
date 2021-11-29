@@ -244,7 +244,7 @@ void egl_backend::screenGeometryChanged(QSize const& size)
     // TODO, create new buffer?
 }
 
-SceneOpenGLTexturePrivate* egl_backend::createBackendTexture(SceneOpenGLTexture* texture)
+gl::texture_private* egl_backend::createBackendTexture(gl::texture* texture)
 {
     return new egl_texture(texture, this);
 }
@@ -367,7 +367,7 @@ bool egl_backend::usesOverlayWindow() const
     return false;
 }
 
-egl_texture::egl_texture(KWin::SceneOpenGLTexture* texture, egl_backend* backend)
+egl_texture::egl_texture(gl::texture* texture, egl_backend* backend)
     : EglTexture(texture, backend)
 {
 }

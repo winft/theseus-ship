@@ -25,50 +25,58 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+class OpenGLWindowPixmap;
+class WindowPixmap;
 
 namespace render::gl
 {
 class backend;
-}
+class texture_private;
 
-class SceneOpenGLTexturePrivate;
-class WindowPixmap;
-
-class SceneOpenGLTexture : public GLTexture
+class texture : public GLTexture
 {
 public:
-    explicit SceneOpenGLTexture(render::gl::backend* backend);
-    ~SceneOpenGLTexture() override;
+    explicit texture(gl::backend* backend);
+    ~texture() override;
 
-    SceneOpenGLTexture& operator=(const SceneOpenGLTexture& tex);
+    texture& operator=(texture const& tex);
 
     void discard() override final;
 
 private:
-    SceneOpenGLTexture(SceneOpenGLTexturePrivate& dd);
+    texture(texture_private& dd);
 
     bool load(WindowPixmap* pixmap);
     void updateFromPixmap(WindowPixmap* pixmap);
 
-    Q_DECLARE_PRIVATE(SceneOpenGLTexture)
+    inline texture_private* d_func()
+    {
+        return reinterpret_cast<texture_private*>(qGetPtrHelper(d_ptr));
+    }
+    inline const texture_private* d_func() const
+    {
+        return reinterpret_cast<texture_private const*>(qGetPtrHelper(d_ptr));
+    }
+    friend class texture_private;
 
-    friend class OpenGLWindowPixmap;
+    friend class KWin::OpenGLWindowPixmap;
 };
 
-class SceneOpenGLTexturePrivate : public GLTexturePrivate
+class texture_private : public GLTexturePrivate
 {
 public:
-    ~SceneOpenGLTexturePrivate() override;
+    ~texture_private() override;
 
     virtual bool loadTexture(WindowPixmap* pixmap) = 0;
     virtual void updateTexture(WindowPixmap* pixmap);
-    virtual render::gl::backend* backend() = 0;
+    virtual gl::backend* backend() = 0;
 
 protected:
-    SceneOpenGLTexturePrivate();
+    texture_private();
 
 private:
-    Q_DISABLE_COPY(SceneOpenGLTexturePrivate)
+    Q_DISABLE_COPY(texture_private)
 };
 
+}
 }

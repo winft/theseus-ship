@@ -862,9 +862,9 @@ void SceneOpenGL::extendPaintRegion(QRegion& region, bool opaqueFullscreen)
     }
 }
 
-SceneOpenGLTexture* SceneOpenGL::createTexture()
+render::gl::texture* SceneOpenGL::createTexture()
 {
-    return new SceneOpenGLTexture(m_backend);
+    return new render::gl::texture(m_backend);
 }
 
 bool SceneOpenGL::viewportLimitsMatched(const QSize& size) const
@@ -1173,7 +1173,7 @@ OpenGLWindow::~OpenGLWindow()
 }
 
 // Bind the window pixmap to an OpenGL texture.
-SceneOpenGLTexture* OpenGLWindow::bindTexture()
+render::gl::texture* OpenGLWindow::bindTexture()
 {
     OpenGLWindowPixmap* pixmap = windowPixmap<OpenGLWindowPixmap>();
     if (!pixmap) {
@@ -1371,7 +1371,7 @@ void OpenGLWindow::setupLeafNodes(std::vector<LeafNode>& nodes,
     }
 
     auto setup_content
-        = [&data, &nodes](int index, OpenGLWindow* window, SceneOpenGLTexture* texture) {
+        = [&data, &nodes](int index, OpenGLWindow* window, render::gl::texture* texture) {
               auto& node = nodes[ContentLeaf + index];
               node.texture = texture;
               node.hasAlpha = !window->isOpaque();

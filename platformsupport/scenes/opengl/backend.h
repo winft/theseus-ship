@@ -34,12 +34,13 @@ class output;
 
 class OverlayWindow;
 class SceneOpenGL;
-class SceneOpenGLTexture;
-class SceneOpenGLTexturePrivate;
 class WindowPixmap;
 
 namespace render::gl
 {
+
+class texture;
+class texture_private;
 
 /**
  * @brief The backend creates and holds the OpenGL context and is responsible for Texture from
@@ -51,7 +52,7 @@ namespace render::gl
  * A concrete implementation has to create and release the OpenGL context in a way so that the
  * SceneOpenGL does not have to care about it.
  *
- * In addition a major task for this class is to generate the SceneOpenGLTexturePrivate which is
+ * In addition a major task for this class is to generate the gl::texture_private which is
  * able to perform the texture from pixmap operation in the given backend.
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
@@ -72,7 +73,7 @@ public:
         return m_renderTimer.nsecsElapsed();
     }
     virtual void screenGeometryChanged(const QSize& size) = 0;
-    virtual SceneOpenGLTexturePrivate* createBackendTexture(SceneOpenGLTexture* texture) = 0;
+    virtual texture_private* createBackendTexture(gl::texture* texture) = 0;
 
     /**
      * @brief Backend specific code to prepare the rendering of a frame including flushing the

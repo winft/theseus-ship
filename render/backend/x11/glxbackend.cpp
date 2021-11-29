@@ -760,7 +760,7 @@ void GlxBackend::screenGeometryChanged(const QSize& size)
     m_bufferAge = 0;
 }
 
-SceneOpenGLTexturePrivate* GlxBackend::createBackendTexture(SceneOpenGLTexture* texture)
+gl::texture_private* GlxBackend::createBackendTexture(gl::texture* texture)
 {
     return new GlxTexture(texture, this);
 }
@@ -845,8 +845,8 @@ bool GlxBackend::hasSwapEvent() const
 /********************************************************
  * GlxTexture
  *******************************************************/
-GlxTexture::GlxTexture(SceneOpenGLTexture* texture, GlxBackend* backend)
-    : SceneOpenGLTexturePrivate()
+GlxTexture::GlxTexture(gl::texture* texture, GlxBackend* backend)
+    : gl::texture_private()
     , q(texture)
     , m_backend(backend)
     , m_glxpixmap(None)

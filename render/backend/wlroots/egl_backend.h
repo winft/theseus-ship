@@ -48,7 +48,7 @@ public:
     void init() override;
 
     void screenGeometryChanged(QSize const& size) override;
-    SceneOpenGLTexturePrivate* createBackendTexture(SceneOpenGLTexture* texture) override;
+    gl::texture_private* createBackendTexture(gl::texture* texture) override;
 
     QRegion prepareRenderingFrame() override;
     void endRenderingFrame(QRegion const& renderedRegion, QRegion const& damagedRegion) override;
@@ -74,7 +74,7 @@ public:
 
 private:
     friend class egl_backend;
-    egl_texture(SceneOpenGLTexture* texture, egl_backend* backend);
+    egl_texture(gl::texture* texture, egl_backend* backend);
 };
 
 }

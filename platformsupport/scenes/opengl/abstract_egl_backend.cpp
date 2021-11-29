@@ -212,7 +212,7 @@ void AbstractEglBackend::doneCurrent()
     eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 }
 
-SceneOpenGLTexturePrivate* AbstractEglBackend::createBackendTexture(SceneOpenGLTexture* texture)
+render::gl::texture_private* AbstractEglBackend::createBackendTexture(render::gl::texture* texture)
 {
     return new EglTexture(texture, this);
 }
@@ -332,8 +332,8 @@ void AbstractEglBackend::setSurface(const EGLSurface& surface)
     kwinApp()->platform->setSceneEglSurface(surface);
 }
 
-EglTexture::EglTexture(SceneOpenGLTexture* texture, AbstractEglBackend* backend)
-    : SceneOpenGLTexturePrivate()
+EglTexture::EglTexture(render::gl::texture* texture, AbstractEglBackend* backend)
+    : render::gl::texture_private()
     , q(texture)
     , m_backend(backend)
     , m_image(EGL_NO_IMAGE_KHR)

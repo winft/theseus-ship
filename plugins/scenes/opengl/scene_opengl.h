@@ -90,7 +90,7 @@ public:
      *
      * @return :SceneOpenGL::Texture*
      */
-    SceneOpenGLTexture* createTexture();
+    render::gl::texture* createTexture();
 
     render::gl::backend* backend() const
     {
@@ -216,7 +216,7 @@ private:
                         WindowPaintData const& data);
     bool beginRenderWindow(int mask, const QRegion& region, WindowPaintData& data);
     void endRenderWindow();
-    SceneOpenGLTexture* bindTexture();
+    render::gl::texture* bindTexture();
 
     SceneOpenGL* m_scene;
     bool m_hardwareClipping = false;
@@ -228,12 +228,12 @@ class OpenGLWindowPixmap : public WindowPixmap
 public:
     explicit OpenGLWindowPixmap(Scene::Window* window, SceneOpenGL* scene);
     ~OpenGLWindowPixmap() override;
-    SceneOpenGLTexture* texture() const;
+    render::gl::texture* texture() const;
     bool bind();
     bool isValid() const override;
 
 private:
-    QScopedPointer<SceneOpenGLTexture> m_texture;
+    QScopedPointer<render::gl::texture> m_texture;
     SceneOpenGL* m_scene;
 };
 
@@ -335,7 +335,7 @@ inline bool SceneOpenGL::usesOverlayWindow() const
     return m_backend->usesOverlayWindow();
 }
 
-inline SceneOpenGLTexture* OpenGLWindowPixmap::texture() const
+inline render::gl::texture* OpenGLWindowPixmap::texture() const
 {
     return m_texture.data();
 }

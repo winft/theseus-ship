@@ -48,7 +48,7 @@ public:
     ~AbstractEglBackend() override;
     bool makeCurrent() override;
     void doneCurrent() override;
-    SceneOpenGLTexturePrivate* createBackendTexture(SceneOpenGLTexture* texture) override;
+    render::gl::texture_private* createBackendTexture(render::gl::texture* texture) override;
 
     EGLDisplay eglDisplay() const
     {
@@ -96,10 +96,10 @@ private:
     EglDmabuf* m_dmaBuf = nullptr;
 };
 
-class KWIN_EXPORT EglTexture : public SceneOpenGLTexturePrivate
+class KWIN_EXPORT EglTexture : public render::gl::texture_private
 {
 public:
-    EglTexture(SceneOpenGLTexture* texture, AbstractEglBackend* backend);
+    EglTexture(render::gl::texture* texture, AbstractEglBackend* backend);
     ~EglTexture() override;
     bool loadTexture(WindowPixmap* pixmap) override;
     void updateTexture(WindowPixmap* pixmap) override;
@@ -114,7 +114,7 @@ protected:
     {
         m_image = img;
     }
-    SceneOpenGLTexture* texture() const
+    render::gl::texture* texture() const
     {
         return q;
     }
@@ -131,7 +131,7 @@ private:
     EGLImageKHR attach(Wrapland::Server::Buffer* buffer);
     bool updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject>& fbo);
     bool updateFromInternalImageObject(WindowPixmap* pixmap);
-    SceneOpenGLTexture* q;
+    render::gl::texture* q;
     AbstractEglBackend* m_backend;
     EGLImageKHR m_image;
     bool m_hasSubImageUnpack{false};
