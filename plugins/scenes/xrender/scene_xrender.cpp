@@ -193,10 +193,10 @@ void x11_overlay_backend::createBuffer()
     setBuffer(b);
 }
 
-void x11_overlay_backend::present(int mask, const QRegion& damage)
+void x11_overlay_backend::present(paint_type mask, const QRegion& damage)
 {
     const auto displaySize = screens()->displaySize();
-    if (mask & render::scene::scene::PAINT_SCREEN_REGION) {
+    if (flags(mask & paint_type::screen_region)) {
         // Use the damage region as the clip region for the root window
         XFixesRegion frontRegion(damage);
         xcb_xfixes_set_picture_clip_region(connection(), m_front, frontRegion, 0, 0);
@@ -288,9 +288,9 @@ qint64 scene::paint(QRegion damage,
 
     createStackingOrder(toplevels);
 
-    int mask = 0;
+    auto mask = paint_type::none;
     QRegion updateRegion, validRegion;
-    paintScreen(&mask, damage, QRegion(), &updateRegion, &validRegion, presentTime);
+    paintScreen(mask, damage, QRegion(), &updateRegion, &validRegion, presentTime);
 
     m_backend->showOverlay();
 
@@ -301,13 +301,13 @@ qint64 scene::paint(QRegion damage,
     return renderTimer.nsecsElapsed();
 }
 
-void scene::paintGenericScreen(int mask, ScreenPaintData data)
+void scene::paintGenericScreen(paint_type mask, ScreenPaintData data)
 {
     screen_paint = data; // save, transformations will be done when painting windows
     render::scene::paintGenericScreen(mask, data);
 }
 
-void scene::paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data)
+void scene::paintDesktop(int desktop, paint_type mask, const QRegion& region, ScreenPaintData& data)
 {
     PaintClipper::push(region);
     render::scene::paintDesktop(desktop, mask, region, data);
@@ -375,11 +375,11 @@ void window::cleanup()
 }
 
 // Maps window coordinates to screen coordinates
-QRect window::mapToScreen(int mask, const WindowPaintData& data, const QRect& rect) const
+QRect window::mapToScreen(paint_type mask, const WindowPaintData& data, const QRect& rect) const
 {
     QRect r = rect;
 
-    if (mask & scene::PAINT_WINDOW_TRANSFORMED) {
+    if (flags(mask & paint_type::window_transformed)) {
         // Apply the window transformation
         r.moveTo(r.x() * data.xScale() + data.xTranslation(),
                  r.y() * data.yScale() + data.yTranslation());
@@ -390,7 +390,7 @@ QRect window::mapToScreen(int mask, const WindowPaintData& data, const QRect& re
     // Move the rectangle to the screen position
     r.translate(x(), y());
 
-    if (mask & scene::PAINT_SCREEN_TRANSFORMED) {
+    if (flags(mask & paint_type::screen_transformed)) {
         // Apply the screen transformation
         r.moveTo(r.x() * scene::screen_paint.xScale() + scene::screen_paint.xTranslation(),
                  r.y() * scene::screen_paint.yScale() + scene::screen_paint.yTranslation());
@@ -402,11 +402,11 @@ QRect window::mapToScreen(int mask, const WindowPaintData& data, const QRect& re
 }
 
 // Maps window coordinates to screen coordinates
-QPoint window::mapToScreen(int mask, const WindowPaintData& data, const QPoint& point) const
+QPoint window::mapToScreen(paint_type mask, const WindowPaintData& data, const QPoint& point) const
 {
     QPoint pt = point;
 
-    if (mask & scene::PAINT_WINDOW_TRANSFORMED) {
+    if (flags(mask & paint_type::window_transformed)) {
         // Apply the window transformation
         pt.rx() = pt.x() * data.xScale() + data.xTranslation();
         pt.ry() = pt.y() * data.yScale() + data.yTranslation();
@@ -415,7 +415,7 @@ QPoint window::mapToScreen(int mask, const WindowPaintData& data, const QPoint& 
     // Move the point to the screen position
     pt += QPoint(x(), y());
 
-    if (mask & scene::PAINT_SCREEN_TRANSFORMED) {
+    if (flags(mask & paint_type::screen_transformed)) {
         // Apply the screen transformation
         pt.rx() = pt.x() * scene::screen_paint.xScale() + scene::screen_paint.xTranslation();
         pt.ry() = pt.y() * scene::screen_paint.yScale() + scene::screen_paint.yTranslation();
@@ -465,21 +465,21 @@ void window::prepareTempPixmap()
 }
 
 // paint the window
-void window::performPaint(int mask, QRegion region, WindowPaintData data)
+void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 {
     setTransformedShape(QRegion()); // maybe nothing will be painted
     // check if there is something to paint
     bool opaque = isOpaque() && qFuzzyCompare(data.opacity(), 1.0);
     /* HACK: It seems this causes painting glitches, disable temporarily
-    if (( mask & scene::PAINT_WINDOW_OPAQUE ) ^ ( mask & scene::PAINT_WINDOW_TRANSLUCENT ))
+    if (( mask & paint_type::window_opaque ) ^ ( mask & scene::PAINT_WINDOW_TRANSLUCENT ))
         { // We are only painting either opaque OR translucent windows, not both
-        if ( mask & scene::PAINT_WINDOW_OPAQUE && !opaque )
+        if ( mask & paint_type::window_opaque && !opaque )
             return; // Only painting opaque and window is translucent
         if ( mask & scene::PAINT_WINDOW_TRANSLUCENT && opaque )
             return; // Only painting translucent and window is opaque
         }*/
     // Intersect the clip region with the rectangle the window occupies on the screen
-    if (!(mask & (scene::PAINT_WINDOW_TRANSFORMED | scene::PAINT_SCREEN_TRANSFORMED)))
+    if (!(mask & (paint_type::window_transformed | paint_type::screen_transformed)))
         region &= win::visible_rect(toplevel);
 
     if (region.isEmpty())
@@ -542,11 +542,11 @@ void window::performPaint(int mask, QRegion region, WindowPaintData data)
                                                     DOUBLE_TO_FIXED(0),
                                                     DOUBLE_TO_FIXED(1)};
 
-    if (mask & scene::PAINT_WINDOW_TRANSFORMED) {
+    if (flags(mask & paint_type::window_transformed)) {
         xscale = data.xScale();
         yscale = data.yScale();
     }
-    if (mask & scene::PAINT_SCREEN_TRANSFORMED) {
+    if (flags(mask & paint_type::screen_transformed)) {
         xscale *= scene::screen_paint.xScale();
         yscale *= scene::screen_paint.yScale();
     }

@@ -419,7 +419,7 @@ void EffectsHandlerImpl::paintScreen(int mask, const QRegion& region, ScreenPain
         (*m_currentPaintScreenIterator++)->paintScreen(mask, region, data);
         --m_currentPaintScreenIterator;
     } else
-        m_scene->finalPaintScreen(mask, region, data);
+        m_scene->finalPaintScreen(static_cast<render::paint_type>(mask), region, data);
 }
 
 void EffectsHandlerImpl::paintDesktop(int desktop, int mask, QRegion region, ScreenPaintData& data)
@@ -467,7 +467,8 @@ void EffectsHandlerImpl::paintWindow(EffectWindow* w,
         (*m_currentPaintWindowIterator++)->paintWindow(w, mask, region, data);
         --m_currentPaintWindowIterator;
     } else
-        m_scene->finalPaintWindow(static_cast<EffectWindowImpl*>(w), mask, region, data);
+        m_scene->finalPaintWindow(
+            static_cast<EffectWindowImpl*>(w), static_cast<render::paint_type>(mask), region, data);
 }
 
 void EffectsHandlerImpl::paintEffectFrame(EffectFrame* frame,
@@ -511,7 +512,8 @@ void EffectsHandlerImpl::drawWindow(EffectWindow* w,
         (*m_currentDrawWindowIterator++)->drawWindow(w, mask, region, data);
         --m_currentDrawWindowIterator;
     } else
-        m_scene->finalDrawWindow(static_cast<EffectWindowImpl*>(w), mask, region, data);
+        m_scene->finalDrawWindow(
+            static_cast<EffectWindowImpl*>(w), static_cast<render::paint_type>(mask), region, data);
 }
 
 void EffectsHandlerImpl::buildQuads(EffectWindow* w, WindowQuadList& quadList)

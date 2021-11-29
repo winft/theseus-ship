@@ -661,11 +661,11 @@ qint64 scene::paint(QRegion damage,
     GLVertexBuffer::setVirtualScreenScale(1);
     GLRenderTarget::setVirtualScreenScale(1);
 
-    int mask = 0;
+    auto mask = paint_type::none;
     updateProjectionMatrix();
 
     // Call generic implementation.
-    paintScreen(&mask, damage, repaint, &update, &valid, presentTime, projectionMatrix());
+    paintScreen(mask, damage, repaint, &update, &valid, presentTime, projectionMatrix());
 
     if (!GLPlatform::instance()->isGLES()) {
         auto const screenSize = screens()->size();
@@ -728,14 +728,14 @@ int64_t scene::paint(base::output* output,
 
     updateProjectionMatrix();
 
-    int mask = 0;
+    auto mask = paint_type::none;
     QRegion update;
     QRegion valid;
     repaint_output = output;
 
     // Call generic implementation.
     paintScreen(
-        &mask, damage.intersected(geo), repaint, &update, &valid, presentTime, projectionMatrix());
+        mask, damage.intersected(geo), repaint, &update, &valid, presentTime, projectionMatrix());
     paintCursor();
 
     GLVertexBuffer::streamingBuffer()->endOfFrame();
@@ -779,12 +779,13 @@ std::deque<Toplevel*> scene::get_leads(std::deque<Toplevel*> const& windows)
     return leads;
 }
 
-QMatrix4x4 scene::transformation(int mask, const ScreenPaintData& data) const
+QMatrix4x4 scene::transformation(paint_type mask, const ScreenPaintData& data) const
 {
     QMatrix4x4 matrix;
 
-    if (!(mask & PAINT_SCREEN_TRANSFORMED))
+    if (!(mask & paint_type::screen_transformed)) {
         return matrix;
+    }
 
     matrix.translate(data.translation());
     const QVector3D scale = data.scale();
@@ -900,7 +901,7 @@ void scene::screenGeometryChanged(const QSize& size)
     GLRenderTarget::setVirtualScreenSize(size);
 }
 
-void scene::paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data)
+void scene::paintDesktop(int desktop, paint_type mask, const QRegion& region, ScreenPaintData& data)
 {
     const QRect r = region.boundingRect();
     glEnable(GL_SCISSOR_TEST);
@@ -1088,14 +1089,14 @@ void scene2::updateProjectionMatrix()
     m_projectionMatrix = createProjectionMatrix();
 }
 
-void scene2::paintSimpleScreen(int mask, QRegion region)
+void scene2::paintSimpleScreen(paint_type mask, QRegion region)
 {
     m_screenProjectionMatrix = m_projectionMatrix;
 
     render::scene::paintSimpleScreen(mask, region);
 }
 
-void scene2::paintGenericScreen(int mask, ScreenPaintData data)
+void scene2::paintGenericScreen(paint_type mask, ScreenPaintData data)
 {
     const QMatrix4x4 screenMatrix = transformation(mask, data);
 
@@ -1122,7 +1123,10 @@ render::window* scene2::createWindow(Toplevel* t)
     return new window(t, this);
 }
 
-void scene2::finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data)
+void scene2::finalDrawWindow(EffectWindowImpl* w,
+                             paint_type mask,
+                             QRegion region,
+                             WindowPaintData& data)
 {
     if (kwinApp()->is_screen_locked() && !w->window()->isLockScreen()
         && !w->window()->isInputMethod()) {
@@ -1132,11 +1136,11 @@ void scene2::finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, Wind
 }
 
 void scene2::performPaintWindow(EffectWindowImpl* w,
-                                int mask,
+                                paint_type mask,
                                 QRegion region,
                                 WindowPaintData& data)
 {
-    if (mask & PAINT_WINDOW_LANCZOS) {
+    if (flags(mask & paint_type::window_lanczos)) {
         if (!lanczos) {
             lanczos = new lanczos_filter(this);
             // reset the lanczos filter when the screen gets resized
@@ -1189,13 +1193,14 @@ render::gl::texture* window::bindTexture()
     ;
 }
 
-QMatrix4x4 window::transformation(int mask, const WindowPaintData& data) const
+QMatrix4x4 window::transformation(paint_type mask, const WindowPaintData& data) const
 {
     QMatrix4x4 matrix;
     matrix.translate(x(), y());
 
-    if (!(mask & render::scene::PAINT_WINDOW_TRANSFORMED))
+    if (!(mask & paint_type::window_transformed)) {
         return matrix;
+    }
 
     matrix.translate(data.translation());
     const QVector3D scale = data.scale();
@@ -1215,14 +1220,13 @@ QMatrix4x4 window::transformation(int mask, const WindowPaintData& data) const
     return matrix;
 }
 
-bool window::beginRenderWindow(int mask, const QRegion& region, WindowPaintData& data)
+bool window::beginRenderWindow(paint_type mask, const QRegion& region, WindowPaintData& data)
 {
     if (region.isEmpty())
         return false;
 
-    m_hardwareClipping = region != infiniteRegion()
-        && (mask & render::scene::PAINT_WINDOW_TRANSFORMED)
-        && !(mask & render::scene::PAINT_SCREEN_TRANSFORMED);
+    m_hardwareClipping = region != infiniteRegion() && flags(mask & paint_type::window_transformed)
+        && !(mask & paint_type::screen_transformed);
     if (region != infiniteRegion() && !m_hardwareClipping) {
         WindowQuadList quads;
         quads.reserve(data.quads.count());
@@ -1266,8 +1270,7 @@ bool window::beginRenderWindow(int mask, const QRegion& region, WindowPaintData&
 
     // Update the texture filter
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        if (mask
-            & (render::scene::PAINT_WINDOW_TRANSFORMED | render::scene::PAINT_SCREEN_TRANSFORMED)) {
+        if (flags(mask & (paint_type::window_transformed | paint_type::screen_transformed))) {
             filter = image_filter_type::good;
         } else {
             filter = image_filter_type::fast;
@@ -1412,7 +1415,7 @@ void window::setupLeafNodes(std::vector<LeafNode>& nodes,
     }
 }
 
-QMatrix4x4 window::modelViewProjectionMatrix(int mask, const WindowPaintData& data) const
+QMatrix4x4 window::modelViewProjectionMatrix(paint_type mask, const WindowPaintData& data) const
 {
     auto scene = static_cast<scene2*>(m_scene);
 
@@ -1430,13 +1433,14 @@ QMatrix4x4 window::modelViewProjectionMatrix(int mask, const WindowPaintData& da
     // If an effect has specified a model-view matrix, we multiply that matrix
     // with the default projection matrix.  If the effect hasn't specified a
     // model-view matrix, mvMatrix will be the identity matrix.
-    if (mask & render::scene::PAINT_SCREEN_TRANSFORMED)
+    if (flags(mask & paint_type::screen_transformed)) {
         return scene->screenProjectionMatrix() * mvMatrix;
+    }
 
     return scene->projectionMatrix() * mvMatrix;
 }
 
-void window::performPaint(int mask, QRegion region, WindowPaintData data)
+void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 {
     if (!beginRenderWindow(mask, region, data))
         return;

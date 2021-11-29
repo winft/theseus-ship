@@ -85,7 +85,7 @@ bool scene::initFailed() const
     return false;
 }
 
-void scene::paintGenericScreen(int mask, ScreenPaintData data)
+void scene::paintGenericScreen(paint_type mask, ScreenPaintData data)
 {
     m_painter->save();
     m_painter->translate(data.xTranslation(), data.yTranslation());
@@ -104,12 +104,12 @@ int64_t scene::paint(base::output* output,
 
     createStackingOrder(toplevels);
 
-    int mask = 0;
+    auto mask = paint_type::none;
     m_backend->prepareRenderingFrame();
 
     auto const needsFullRepaint = m_backend->needsFullRepaint();
     if (needsFullRepaint) {
-        mask |= render::scene::PAINT_SCREEN_BACKGROUND_FIRST;
+        mask |= render::paint_type::screen_background_first;
         damage = screens()->geometry();
     }
 
@@ -128,7 +128,7 @@ int64_t scene::paint(base::output* output,
     QRegion updateRegion, validRegion;
 
     paintScreen(
-        &mask, damage.intersected(geometry), QRegion(), &updateRegion, &validRegion, presentTime);
+        mask, damage.intersected(geometry), QRegion(), &updateRegion, &validRegion, presentTime);
     paintCursor();
 
     m_painter->restore();
@@ -227,9 +227,9 @@ static bool isXwaylandClient(Toplevel* toplevel)
     return false;
 }
 
-void window::performPaint(int mask, QRegion region, WindowPaintData data)
+void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 {
-    if (!(mask & (scene::PAINT_WINDOW_TRANSFORMED | scene::PAINT_SCREEN_TRANSFORMED)))
+    if (!(mask & (paint_type::window_transformed | paint_type::screen_transformed)))
         region &= win::visible_rect(toplevel);
 
     if (region.isEmpty())
@@ -250,7 +250,7 @@ void window::performPaint(int mask, QRegion region, WindowPaintData data)
     painter->setClipping(true);
 
     painter->translate(x(), y());
-    if (mask & scene::PAINT_WINDOW_TRANSFORMED) {
+    if (flags(mask & paint_type::window_transformed)) {
         painter->translate(data.xTranslation(), data.yTranslation());
         painter->scale(data.xScale(), data.yScale());
     }

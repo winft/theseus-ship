@@ -68,6 +68,39 @@ enum class image_filter_type {
     good,
 };
 
+enum class paint_type {
+    none = 0,
+
+    // Window (or at least part of it) will be painted opaque.
+    window_opaque = 1 << 0,
+
+    // Window (or at least part of it) will be painted translucent.
+    window_translucent = 1 << 1,
+
+    // Window will be painted with transformed geometry.
+    window_transformed = 1 << 2,
+
+    // Paint only a region of the screen (can be optimized, cannot
+    // be used together with TRANSFORMED flags).
+    screen_region = 1 << 3,
+
+    // Whole screen will be painted with transformed geometry.
+    screen_transformed = 1 << 4,
+
+    // At least one window will be painted with transformed geometry.
+    screen_with_transformed_windows = 1 << 5,
+
+    // Clear whole background as the very first step, without optimizing it
+    screen_background_first = 1 << 6,
+
+    // decoration_only = 1 << 7 has been removed
+
+    // Window will be painted with a lanczos filter.
+    window_lanczos = 1 << 8
+
+    // screen_with_transformed_windows_without_full_repaints = 1 << 9 has been removed
+};
+
 // The base class for compositing backends.
 class KWIN_EXPORT scene : public QObject
 {
@@ -141,28 +174,7 @@ public:
      * @param size The new screen geometry size
      */
     virtual void screenGeometryChanged(const QSize& size);
-    // Flags controlling how painting is done.
-    enum {
-        // Window (or at least part of it) will be painted opaque.
-        PAINT_WINDOW_OPAQUE = 1 << 0,
-        // Window (or at least part of it) will be painted translucent.
-        PAINT_WINDOW_TRANSLUCENT = 1 << 1,
-        // Window will be painted with transformed geometry.
-        PAINT_WINDOW_TRANSFORMED = 1 << 2,
-        // Paint only a region of the screen (can be optimized, cannot
-        // be used together with TRANSFORMED flags).
-        PAINT_SCREEN_REGION = 1 << 3,
-        // Whole screen will be painted with transformed geometry.
-        PAINT_SCREEN_TRANSFORMED = 1 << 4,
-        // At least one window will be painted with transformed geometry.
-        PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS = 1 << 5,
-        // Clear whole background as the very first step, without optimizing it
-        PAINT_SCREEN_BACKGROUND_FIRST = 1 << 6,
-        // PAINT_DECORATION_ONLY = 1 << 7 has been removed
-        // Window will be painted with a lanczos filter.
-        PAINT_WINDOW_LANCZOS = 1 << 8
-        // PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_WITHOUT_FULL_REPAINTS = 1 << 9 has been removed
-    };
+
     // there's nothing to paint (adjust time_diff later)
     virtual void idle();
     virtual OverlayWindow* overlayWindow() const = 0;
@@ -233,7 +245,7 @@ protected:
     void createStackingOrder(std::deque<Toplevel*> const& toplevels);
     void clearStackingOrder();
     // shared implementation, starts painting the screen
-    void paintScreen(int* mask,
+    void paintScreen(paint_type& mask,
                      const QRegion& damage,
                      const QRegion& repaint,
                      QRegion* updateRegion,
@@ -244,25 +256,27 @@ protected:
     virtual void paintCursor() = 0;
     friend class KWin::EffectsHandlerImpl;
     // called after all effects had their paintScreen() called
-    void finalPaintScreen(int mask, QRegion region, ScreenPaintData& data);
+    void finalPaintScreen(paint_type mask, QRegion region, ScreenPaintData& data);
     // shared implementation of painting the screen in the generic
     // (unoptimized) way
-    virtual void paintGenericScreen(int mask, ScreenPaintData data);
+    virtual void paintGenericScreen(paint_type mask, ScreenPaintData data);
     // shared implementation of painting the screen in an optimized way
-    virtual void paintSimpleScreen(int mask, QRegion region);
+    virtual void paintSimpleScreen(paint_type mask, QRegion region);
     // paint the background (not the desktop background - the whole background)
     virtual void paintBackground(QRegion region) = 0;
     // called after all effects had their paintWindow() called
-    void finalPaintWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data);
+    void
+    finalPaintWindow(EffectWindowImpl* w, paint_type mask, QRegion region, WindowPaintData& data);
     // shared implementation, starts painting the window
-    virtual void paintWindow(window* w, int mask, QRegion region, WindowQuadList quads);
+    virtual void paintWindow(window* w, paint_type mask, QRegion region, WindowQuadList quads);
     // called after all effects had their drawWindow() called
     virtual void
-    finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data);
+    finalDrawWindow(EffectWindowImpl* w, paint_type mask, QRegion region, WindowPaintData& data);
     // let the scene decide whether it's better to paint more of the screen, eg. in order to allow a
     // buffer swap the default is NOOP
     virtual void extendPaintRegion(QRegion& region, bool opaqueFullscreen);
-    virtual void paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data);
+    virtual void
+    paintDesktop(int desktop, paint_type mask, const QRegion& region, ScreenPaintData& data);
 
     virtual void paintEffectQuickView(EffectQuickView* w) = 0;
 
@@ -271,7 +285,7 @@ protected:
         render::window* window = nullptr;
         QRegion region;
         QRegion clip;
-        int mask = 0;
+        paint_type mask{paint_type::none};
         WindowQuadList quads;
     };
     // The region which actually has been painted by paintScreen() and should be
@@ -329,7 +343,7 @@ public:
     virtual ~window();
     uint32_t id() const;
     // perform the actual painting of the window
-    virtual void performPaint(int mask, QRegion region, WindowPaintData data) = 0;
+    virtual void performPaint(paint_type mask, QRegion region, WindowPaintData data) = 0;
     // do any cleanup needed when the window's composite pixmap is discarded
     void discardPixmap();
     void updatePixmap();
@@ -679,4 +693,5 @@ inline const QSize& window_pixmap::size() const
 }
 }
 
+ENUM_FLAGS(KWin::render::paint_type)
 Q_DECLARE_INTERFACE(KWin::render::scene_factory, "org.kde.kwin.Scene")

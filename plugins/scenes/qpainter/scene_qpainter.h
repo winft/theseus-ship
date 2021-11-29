@@ -42,7 +42,7 @@ public:
                   std::deque<Toplevel*> const& windows,
                   std::chrono::milliseconds presentTime) override;
 
-    void paintGenericScreen(int mask, ScreenPaintData data) override;
+    void paintGenericScreen(paint_type mask, ScreenPaintData data) override;
 
     CompositingType compositingType() const override;
     bool initFailed() const override;
@@ -83,7 +83,7 @@ class window : public render::window
 public:
     window(qpainter::scene* scene, Toplevel* c);
     ~window() override;
-    void performPaint(int mask, QRegion region, WindowPaintData data) override;
+    void performPaint(paint_type mask, QRegion region, WindowPaintData data) override;
 
 protected:
     render::window_pixmap* createWindowPixmap() override;

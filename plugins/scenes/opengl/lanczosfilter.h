@@ -38,6 +38,7 @@ class GLShader;
 
 namespace render
 {
+enum class paint_type;
 class scene;
 
 namespace gl
@@ -50,7 +51,7 @@ class lanczos_filter : public QObject
 public:
     explicit lanczos_filter(render::scene* parent);
     ~lanczos_filter() override;
-    void performPaint(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data);
+    void performPaint(EffectWindowImpl* w, paint_type mask, QRegion region, WindowPaintData& data);
 
 protected:
     void timerEvent(QTimerEvent*) override;

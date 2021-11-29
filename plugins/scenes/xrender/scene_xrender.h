@@ -47,7 +47,7 @@ class backend
 {
 public:
     virtual ~backend();
-    virtual void present(int mask, const QRegion& damage) = 0;
+    virtual void present(paint_type mask, const QRegion& damage) = 0;
 
     /**
      * @brief Returns the OverlayWindow used by the backend.
@@ -133,7 +133,7 @@ public:
     x11_overlay_backend();
     ~x11_overlay_backend() override;
 
-    void present(int mask, const QRegion& damage) override;
+    void present(paint_type mask, const QRegion& damage) override;
     OverlayWindow* overlayWindow() override;
     void showOverlay() override;
     void screenGeometryChanged(const QSize& size) override;
@@ -188,8 +188,11 @@ public:
 protected:
     render::window* createWindow(Toplevel* toplevel) override;
     void paintBackground(QRegion region) override;
-    void paintGenericScreen(int mask, ScreenPaintData data) override;
-    void paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data) override;
+    void paintGenericScreen(paint_type mask, ScreenPaintData data) override;
+    void paintDesktop(int desktop,
+                      paint_type mask,
+                      const QRegion& region,
+                      ScreenPaintData& data) override;
     void paintCursor() override;
     void paintEffectQuickView(EffectQuickView* w) override;
 
@@ -203,7 +206,7 @@ class window : public render::window
 public:
     window(Toplevel* c, xrender::scene* scene);
     ~window() override;
-    void performPaint(int mask, QRegion region, WindowPaintData data) override;
+    void performPaint(paint_type mask, QRegion region, WindowPaintData data) override;
     QRegion transformedShape() const;
     void setTransformedShape(const QRegion& shape);
     static void cleanup();
@@ -212,8 +215,8 @@ protected:
     render::window_pixmap* createWindowPixmap() override;
 
 private:
-    QRect mapToScreen(int mask, const WindowPaintData& data, const QRect& rect) const;
-    QPoint mapToScreen(int mask, const WindowPaintData& data, const QPoint& point) const;
+    QRect mapToScreen(paint_type mask, const WindowPaintData& data, const QRect& rect) const;
+    QPoint mapToScreen(paint_type mask, const WindowPaintData& data, const QPoint& point) const;
     QRect bufferToWindowRect(const QRect& rect) const;
     QRegion bufferToWindowRegion(const QRegion& region) const;
     void prepareTempPixmap();

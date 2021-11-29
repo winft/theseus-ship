@@ -103,8 +103,11 @@ protected:
     scene(render::gl::backend* backend, QObject* parent = nullptr);
     void paintBackground(QRegion region) override;
     void extendPaintRegion(QRegion& region, bool opaqueFullscreen) override;
-    QMatrix4x4 transformation(int mask, const ScreenPaintData& data) const;
-    void paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data) override;
+    QMatrix4x4 transformation(paint_type mask, const ScreenPaintData& data) const;
+    void paintDesktop(int desktop,
+                      paint_type mask,
+                      const QRegion& region,
+                      ScreenPaintData& data) override;
     void paintEffectQuickView(EffectQuickView* w) override;
 
     void handleGraphicsReset(GLenum status);
@@ -147,17 +150,20 @@ public:
     }
 
 protected:
-    void paintSimpleScreen(int mask, QRegion region) override;
-    void paintGenericScreen(int mask, ScreenPaintData data) override;
+    void paintSimpleScreen(paint_type mask, QRegion region) override;
+    void paintGenericScreen(paint_type mask, ScreenPaintData data) override;
     void doPaintBackground(const QVector<float>& vertices) override;
     render::window* createWindow(Toplevel* t) override;
-    void
-    finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data) override;
+    void finalDrawWindow(EffectWindowImpl* w,
+                         paint_type mask,
+                         QRegion region,
+                         WindowPaintData& data) override;
     void updateProjectionMatrix() override;
     void paintCursor() override;
 
 private:
-    void performPaintWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data);
+    void
+    performPaintWindow(EffectWindowImpl* w, paint_type mask, QRegion region, WindowPaintData& data);
     QMatrix4x4 createProjectionMatrix() const;
 
 private:
@@ -198,19 +204,19 @@ public:
     ~window() override;
 
     render::window_pixmap* createWindowPixmap() override;
-    void performPaint(int mask, QRegion region, WindowPaintData data) override;
+    void performPaint(paint_type mask, QRegion region, WindowPaintData data) override;
 
 private:
-    QMatrix4x4 transformation(int mask, const WindowPaintData& data) const;
+    QMatrix4x4 transformation(paint_type mask, const WindowPaintData& data) const;
     GLTexture* getDecorationTexture() const;
-    QMatrix4x4 modelViewProjectionMatrix(int mask, const WindowPaintData& data) const;
+    QMatrix4x4 modelViewProjectionMatrix(paint_type mask, const WindowPaintData& data) const;
     QVector4D modulate(float opacity, float brightness) const;
     void setBlendEnabled(bool enabled);
     void setupLeafNodes(std::vector<LeafNode>& nodes,
                         std::vector<WindowQuadList> const& quads,
                         bool has_previous_content,
                         WindowPaintData const& data);
-    bool beginRenderWindow(int mask, const QRegion& region, WindowPaintData& data);
+    bool beginRenderWindow(paint_type mask, const QRegion& region, WindowPaintData& data);
     void endRenderWindow();
     render::gl::texture* bindTexture();
 

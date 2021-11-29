@@ -45,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  by the mask argument, see PAINT_WINDOW_* and PAINT_SCREEN_* flags in scene.h .
  For example an effect that decides to paint a normal windows as translucent
  will need to modify the mask in its prePaintWindow() to include
- the PAINT_WINDOW_TRANSLUCENT flag. The paintWindow() function will then get
+ the paint_type::window_translucent flag. The paintWindow() function will then get
  the mask with this flag turned on and will also paint using transparency.
 
  The paint pass does the actual painting, based on the information collected
@@ -53,8 +53,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  either paintGenericScreen() or optimized paintSimpleScreen() are called.
  Those call paintWindow() on windows (not necessarily all), possibly using
  clipping to optimize performance and calling paintWindow() first with only
- PAINT_WINDOW_OPAQUE to paint the opaque parts and then later
- with PAINT_WINDOW_TRANSLUCENT to paint the transparent parts. Function
+ paint_type::window_opaque to paint the opaque parts and then later
+ with paint_type::window_translucent to paint the transparent parts. Function
  paintWindow() again goes through effects' paintWindow() until
  finalPaintWindow() is called, which calls the window's performPaint() to
  do the actual painting.
@@ -122,7 +122,7 @@ int64_t scene::paint([[maybe_unused]] base::output* output,
 }
 
 // returns mask and possibly modified region
-void scene::paintScreen(int* mask,
+void scene::paintScreen(paint_type& mask,
                         const QRegion& damage,
                         const QRegion& repaint,
                         QRegion* updateRegion,
@@ -132,7 +132,7 @@ void scene::paintScreen(int* mask,
 {
     const QSize& screenSize = screens()->size();
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
-    *mask = (damage == displayRegion) ? 0 : PAINT_SCREEN_REGION;
+    mask = (damage == displayRegion) ? paint_type::none : paint_type::screen_region;
 
     if (Q_UNLIKELY(presentTime < m_expectedPresentTimestamp)) {
         qCDebug(KWIN_CORE,
@@ -149,19 +149,21 @@ void scene::paintScreen(int* mask,
     QRegion region = damage;
 
     ScreenPrePaintData pdata;
-    pdata.mask = *mask;
+    pdata.mask = static_cast<int>(mask);
     pdata.paint = region;
 
     effects->prePaintScreen(pdata, m_expectedPresentTimestamp);
-    *mask = pdata.mask;
+
+    mask = static_cast<paint_type>(pdata.mask);
     region = pdata.paint;
 
-    if (*mask & (PAINT_SCREEN_TRANSFORMED | PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS)) {
+    if (flags(mask
+              & (paint_type::screen_transformed | paint_type::screen_with_transformed_windows))) {
         // Region painting is not possible with transformations,
         // because screen damage doesn't match transformed positions.
-        *mask &= ~PAINT_SCREEN_REGION;
+        mask &= ~paint_type::screen_region;
         region = infiniteRegion();
-    } else if (*mask & PAINT_SCREEN_REGION) {
+    } else if (flags(mask & paint_type::screen_region)) {
         // make sure not to go outside visible screen
         region &= displayRegion;
     } else {
@@ -172,13 +174,13 @@ void scene::paintScreen(int* mask,
     painted_region = region;
     repaint_region = repaint;
 
-    if (*mask & PAINT_SCREEN_BACKGROUND_FIRST) {
+    if (flags(mask & paint_type::screen_background_first)) {
         paintBackground(region);
     }
 
     ScreenPaintData data(projection,
                          repaint_output ? effects->findScreen(repaint_output->name()) : nullptr);
-    effects->paintScreen(*mask, region, data);
+    effects->paintScreen(static_cast<int>(mask), region, data);
 
     for (auto const& w : qAsConst(stacking_order)) {
         effects->postPaintWindow(effectWindow(w));
@@ -203,19 +205,21 @@ void scene::idle()
 }
 
 // the function that'll be eventually called by paintScreen() above
-void scene::finalPaintScreen(int mask, QRegion region, ScreenPaintData& data)
+void scene::finalPaintScreen(paint_type mask, QRegion region, ScreenPaintData& data)
 {
-    if (mask & (PAINT_SCREEN_TRANSFORMED | PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS))
+    if (flags(mask
+              & (paint_type::screen_transformed | paint_type::screen_with_transformed_windows))) {
         paintGenericScreen(mask, data);
-    else
+    } else {
         paintSimpleScreen(mask, region);
+    }
 }
 
 // The generic painting code that can handle even transformations.
 // It simply paints bottom-to-top.
-void scene::paintGenericScreen(int orig_mask, ScreenPaintData)
+void scene::paintGenericScreen(paint_type orig_mask, ScreenPaintData)
 {
-    if (!(orig_mask & PAINT_SCREEN_BACKGROUND_FIRST)) {
+    if (!(orig_mask & paint_type::screen_background_first)) {
         paintBackground(infiniteRegion());
     }
     QVector<Phase2Data> phase2;
@@ -230,7 +234,9 @@ void scene::paintGenericScreen(int orig_mask, ScreenPaintData)
         topw->resetRepaints(repaint_output);
 
         WindowPrePaintData data;
-        data.mask = orig_mask | (w->isOpaque() ? PAINT_WINDOW_OPAQUE : PAINT_WINDOW_TRANSLUCENT);
+        data.mask = static_cast<int>(
+            orig_mask
+            | (w->isOpaque() ? paint_type::window_opaque : paint_type::window_translucent));
         w->resetPaintingEnabled();
         data.paint = infiniteRegion(); // no clipping, so doesn't really matter
         data.clip = QRegion();
@@ -245,7 +251,8 @@ void scene::paintGenericScreen(int orig_mask, ScreenPaintData)
         if (!w->isPaintingEnabled()) {
             continue;
         }
-        phase2.append({w, infiniteRegion(), data.clip, data.mask, data.quads});
+        phase2.append(
+            {w, infiniteRegion(), data.clip, static_cast<paint_type>(data.mask), data.quads});
     }
 
     for (auto const& d : phase2) {
@@ -259,9 +266,11 @@ void scene::paintGenericScreen(int orig_mask, ScreenPaintData)
 // The optimized case without any transformations at all.
 // It can paint only the requested region and can use clipping
 // to reduce painting and improve performance.
-void scene::paintSimpleScreen(int orig_mask, QRegion region)
+void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
 {
-    Q_ASSERT((orig_mask & (PAINT_SCREEN_TRANSFORMED | PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS)) == 0);
+    Q_ASSERT(
+        (orig_mask & (paint_type::screen_transformed | paint_type::screen_with_transformed_windows))
+        == paint_type::none);
     QVector<Phase2Data> phase2data;
     phase2data.reserve(stacking_order.size());
 
@@ -273,8 +282,9 @@ void scene::paintSimpleScreen(int orig_mask, QRegion region)
         auto window = stacking_order[i];
         auto toplevel = window->get_window();
         WindowPrePaintData data;
-        data.mask
-            = orig_mask | (window->isOpaque() ? PAINT_WINDOW_OPAQUE : PAINT_WINDOW_TRANSLUCENT);
+        data.mask = static_cast<int>(
+            orig_mask
+            | (window->isOpaque() ? paint_type::window_opaque : paint_type::window_translucent));
         window->resetPaintingEnabled();
         data.paint = region;
         data.paint |= toplevel->repaints();
@@ -300,7 +310,7 @@ void scene::paintSimpleScreen(int orig_mask, QRegion region)
                 win::frame_to_client_pos(toplevel, window->pos()) - window->pos());
             data.clip = clientShape & opaqueShape;
             if (clientShape == opaqueShape) {
-                data.mask = orig_mask | PAINT_WINDOW_OPAQUE;
+                data.mask = static_cast<int>(orig_mask | paint_type::window_opaque);
             }
         } else {
             data.clip = QRegion();
@@ -326,7 +336,8 @@ void scene::paintSimpleScreen(int orig_mask, QRegion region)
         }
         dirtyArea |= data.paint;
         // Schedule the window for painting
-        phase2data.append({window, data.paint, data.clip, data.mask, data.quads});
+        phase2data.append(
+            {window, data.paint, data.clip, static_cast<paint_type>(data.mask), data.quads});
     }
 
     // Save the part of the repaint region that's exclusively rendered to
@@ -362,7 +373,7 @@ void scene::paintSimpleScreen(int orig_mask, QRegion region)
 
         // Here we rely on WindowPrePaintData::setTranslucent() to remove
         // the clip if needed.
-        if (!data->clip.isEmpty() && !(data->mask & PAINT_WINDOW_TRANSLUCENT)) {
+        if (!data->clip.isEmpty() && !(data->mask & paint_type::window_translucent)) {
             // clip away the opaque regions for all windows below this one
             allclips |= data->clip;
             // extend the translucent damage for windows below this by remaining (translucent)
@@ -377,7 +388,7 @@ void scene::paintSimpleScreen(int orig_mask, QRegion region)
 
     QRegion paintedArea;
     // Fill any areas of the root window not covered by opaque windows
-    if (!(orig_mask & PAINT_SCREEN_BACKGROUND_FIRST)) {
+    if (!(orig_mask & paint_type::screen_background_first)) {
         paintedArea = dirtyArea - allclips;
         paintBackground(paintedArea);
     }
@@ -478,7 +489,7 @@ void scene::clearStackingOrder()
 
 static window* s_recursionCheck = nullptr;
 
-void scene::paintWindow(window* w, int mask, QRegion region, WindowQuadList quads)
+void scene::paintWindow(window* w, paint_type mask, QRegion region, WindowQuadList quads)
 {
     // no painting outside visible screen (and no transformations)
     const QSize& screenSize = screens()->size();
@@ -496,7 +507,7 @@ void scene::paintWindow(window* w, int mask, QRegion region, WindowQuadList quad
 
     WindowPaintData data(w->get_window()->effectWindow(), screenProjectionMatrix());
     data.quads = quads;
-    effects->paintWindow(effectWindow(w), mask, region, data);
+    effects->paintWindow(effectWindow(w), static_cast<int>(mask), region, data);
     // paint thumbnails on top of window
     paintWindowThumbnails(w, region, data.opacity(), data.brightness(), data.saturation());
     // and desktop thumbnails
@@ -574,16 +585,16 @@ void scene::paintWindowThumbnails(window* w,
         y += (thumb->y() - visualThumbRect.y()) * thumbData.yScale();
         thumbData.setXTranslation(x);
         thumbData.setYTranslation(y);
-        int thumbMask = PAINT_WINDOW_TRANSFORMED | PAINT_WINDOW_LANCZOS;
+        auto thumbMask = paint_type::window_transformed | paint_type::window_lanczos;
         if (thumbData.opacity() == 1.0) {
-            thumbMask |= PAINT_WINDOW_OPAQUE;
+            thumbMask |= paint_type::window_opaque;
         } else {
-            thumbMask |= PAINT_WINDOW_TRANSLUCENT;
+            thumbMask |= paint_type::window_translucent;
         }
         QRegion clippingRegion = region;
         clippingRegion &= QRegion(wImpl->x(), wImpl->y(), wImpl->width(), wImpl->height());
         adjustClipRegion(item, clippingRegion);
-        effects->drawWindow(thumb, thumbMask, clippingRegion, thumbData);
+        effects->drawWindow(thumb, static_cast<int>(thumbMask), clippingRegion, thumbData);
     }
 }
 
@@ -617,26 +628,33 @@ void scene::paintDesktopThumbnails(window* w)
         clippingRegion &= QRegion(wImpl->x(), wImpl->y(), wImpl->width(), wImpl->height());
         adjustClipRegion(item, clippingRegion);
         data += QPointF(x, y);
-        const int desktopMask
-            = PAINT_SCREEN_TRANSFORMED | PAINT_WINDOW_TRANSFORMED | PAINT_SCREEN_BACKGROUND_FIRST;
+        auto const desktopMask = paint_type::screen_transformed | paint_type::window_transformed
+            | paint_type::screen_background_first;
         paintDesktop(item->desktop(), desktopMask, clippingRegion, data);
         s_recursionCheck = nullptr;
     }
 }
 
-void scene::paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data)
+void scene::paintDesktop(int desktop, paint_type mask, const QRegion& region, ScreenPaintData& data)
 {
-    static_cast<EffectsHandlerImpl*>(effects)->paintDesktop(desktop, mask, region, data);
+    static_cast<EffectsHandlerImpl*>(effects)->paintDesktop(
+        desktop, static_cast<int>(mask), region, data);
 }
 
 // the function that'll be eventually called by paintWindow() above
-void scene::finalPaintWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data)
+void scene::finalPaintWindow(EffectWindowImpl* w,
+                             paint_type mask,
+                             QRegion region,
+                             WindowPaintData& data)
 {
-    effects->drawWindow(w, mask, region, data);
+    effects->drawWindow(w, static_cast<int>(mask), region, data);
 }
 
 // will be eventually called from drawWindow()
-void scene::finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data)
+void scene::finalDrawWindow(EffectWindowImpl* w,
+                            paint_type mask,
+                            QRegion region,
+                            WindowPaintData& data)
 {
     if (kwinApp()->is_screen_locked() && !w->window()->isLockScreen()
         && !w->window()->isInputMethod()) {
@@ -875,9 +893,8 @@ WindowQuadList window::buildQuads(bool force) const
     return ret;
 }
 
-WindowQuadList window::makeDecorationQuads(const QRect* rects,
-                                                  const QRegion& region,
-                                                  qreal textureScale) const
+WindowQuadList
+window::makeDecorationQuads(const QRect* rects, const QRegion& region, qreal textureScale) const
 {
     WindowQuadList list;
 
