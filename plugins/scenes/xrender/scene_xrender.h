@@ -217,7 +217,7 @@ private:
     QRect bufferToWindowRect(const QRect& rect) const;
     QRegion bufferToWindowRegion(const QRegion& region) const;
     void prepareTempPixmap();
-    void setPictureFilter(xcb_render_picture_t pic, render::scene::ImageFilterType filter);
+    void setPictureFilter(xcb_render_picture_t pic, image_filter_type filter);
     xrender::scene* m_scene;
     xcb_render_pictformat_t format;
     QRegion transformed_shape;

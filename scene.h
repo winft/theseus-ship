@@ -63,6 +63,11 @@ class effect_frame;
 class window;
 class window_pixmap;
 
+enum class image_filter_type {
+    fast,
+    good,
+};
+
 // The base class for compositing backends.
 class KWIN_EXPORT scene : public QObject
 {
@@ -158,8 +163,6 @@ public:
         PAINT_WINDOW_LANCZOS = 1 << 8
         // PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_WITHOUT_FULL_REPAINTS = 1 << 9 has been removed
     };
-    // types of filtering available
-    enum ImageFilterType { ImageFilterFast, ImageFilterGood };
     // there's nothing to paint (adjust time_diff later)
     virtual void idle();
     virtual OverlayWindow* overlayWindow() const = 0;
@@ -410,7 +413,7 @@ protected:
      */
     virtual window_pixmap* createWindowPixmap() = 0;
     Toplevel* toplevel;
-    scene::ImageFilterType filter;
+    image_filter_type filter;
     Shadow* m_shadow;
 
 private:

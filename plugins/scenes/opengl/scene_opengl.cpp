@@ -1268,13 +1268,13 @@ bool window::beginRenderWindow(int mask, const QRegion& region, WindowPaintData&
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
         if (mask
             & (render::scene::PAINT_WINDOW_TRANSFORMED | render::scene::PAINT_SCREEN_TRANSFORMED)) {
-            filter = render::scene::ImageFilterGood;
+            filter = image_filter_type::good;
         } else {
-            filter = render::scene::ImageFilterFast;
+            filter = image_filter_type::fast;
         }
-        texture->setFilter(filter == render::scene::ImageFilterGood ? GL_LINEAR : GL_NEAREST);
+        texture->setFilter(filter == image_filter_type::good ? GL_LINEAR : GL_NEAREST);
     } else {
-        filter = render::scene::ImageFilterGood;
+        filter = image_filter_type::good;
         texture->setFilter(GL_LINEAR);
     }
 

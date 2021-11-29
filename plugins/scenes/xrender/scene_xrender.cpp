@@ -494,7 +494,7 @@ void window::performPaint(int mask, QRegion region, WindowPaintData data)
     toplevel->resetDamage();
 
     // set picture filter
-    filter = scene::ImageFilterFast;
+    filter = image_filter_type::fast;
 
     // do required transformations
     const QRect wr = mapToScreen(mask, data, QRect(0, 0, width(), height()));
@@ -597,8 +597,8 @@ void window::performPaint(int mask, QRegion region, WindowPaintData data)
         }
     } else {
         xcb_render_set_picture_transform(connection(), pic, xform);
-        if (filter == render::scene::ImageFilterGood) {
-            setPictureFilter(pic, render::scene::ImageFilterGood);
+        if (filter == image_filter_type::good) {
+            setPictureFilter(pic, image_filter_type::good);
         }
 
         // BEGIN OF STUPID RADEON HACK
@@ -880,8 +880,8 @@ void window::performPaint(int mask, QRegion region, WindowPaintData data)
     }
     if (scaled && !blitInTempPixmap) {
         xcb_render_set_picture_transform(connection(), pic, identity);
-        if (filter == render::scene::ImageFilterGood)
-            setPictureFilter(pic, render::scene::ImageFilterFast);
+        if (filter == image_filter_type::good)
+            setPictureFilter(pic, image_filter_type::fast);
         if (!get_window()->hasAlpha()) {
             const uint32_t values[] = {XCB_RENDER_REPEAT_NONE};
             xcb_render_change_picture(connection(), pic, XCB_RENDER_CP_REPEAT, values);
@@ -891,14 +891,14 @@ void window::performPaint(int mask, QRegion region, WindowPaintData data)
         scene_setXRenderOffscreenTarget(*s_tempPicture);
 }
 
-void window::setPictureFilter(xcb_render_picture_t pic, render::scene::ImageFilterType filter)
+void window::setPictureFilter(xcb_render_picture_t pic, image_filter_type filter)
 {
     QByteArray filterName;
     switch (filter) {
-    case render::scene::ImageFilterFast:
+    case image_filter_type::fast:
         filterName = QByteArray("fast");
         break;
-    case render::scene::ImageFilterGood:
+    case image_filter_type::good:
         filterName = QByteArray("good");
         break;
     }

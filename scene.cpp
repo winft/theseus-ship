@@ -715,7 +715,7 @@ uint32_t window_id{0};
 
 window::window(Toplevel* c)
     : toplevel(c)
-    , filter(scene::ImageFilterFast)
+    , filter(image_filter_type::fast)
     , m_shadow(nullptr)
     , m_currentPixmap()
     , m_previousPixmap()
