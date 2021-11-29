@@ -1117,7 +1117,7 @@ void scene2::doPaintBackground(const QVector<float>& vertices)
     vbo->render(GL_TRIANGLES);
 }
 
-render::scene::Window* scene2::createWindow(Toplevel* t)
+render::window* scene2::createWindow(Toplevel* t)
 {
     return new window(t, this);
 }
@@ -1157,7 +1157,7 @@ void scene2::performPaintWindow(EffectWindowImpl* w,
 //****************************************
 
 window::window(Toplevel* toplevel, gl::scene* scene)
-    : render::scene::Window(toplevel)
+    : render::window(toplevel)
     , m_scene(scene)
 {
     m_scene->windows.insert({id(), this});
@@ -1612,7 +1612,7 @@ void window::performPaint(int mask, QRegion region, WindowPaintData data)
 // window_pixmap
 //****************************************
 
-window_pixmap::window_pixmap(render::scene::Window* window, gl::scene* scene)
+window_pixmap::window_pixmap(render::window* window, gl::scene* scene)
     : render::window_pixmap(window)
     , m_texture(scene->createTexture())
     , m_scene(scene)

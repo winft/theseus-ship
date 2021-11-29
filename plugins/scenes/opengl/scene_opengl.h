@@ -151,7 +151,7 @@ protected:
     void paintSimpleScreen(int mask, QRegion region) override;
     void paintGenericScreen(int mask, ScreenPaintData data) override;
     void doPaintBackground(const QVector<float>& vertices) override;
-    render::scene::Window* createWindow(Toplevel* t) override;
+    render::window* createWindow(Toplevel* t) override;
     void
     finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data) override;
     void updateProjectionMatrix() override;
@@ -171,7 +171,7 @@ private:
 
 class window_pixmap;
 
-class window final : public render::scene::Window
+class window final : public render::window
 {
 public:
     enum Leaf { ShadowLeaf = 0, DecorationLeaf, ContentLeaf, PreviousContentLeaf, LeafCount };
@@ -223,7 +223,7 @@ private:
 class window_pixmap : public render::window_pixmap
 {
 public:
-    explicit window_pixmap(render::scene::Window* window, gl::scene* scene);
+    explicit window_pixmap(render::window* window, gl::scene* scene);
     ~window_pixmap() override;
     render::gl::texture* texture() const;
     bool bind();

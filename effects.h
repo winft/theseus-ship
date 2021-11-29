@@ -549,10 +549,10 @@ public:
     const Toplevel* window() const;
     Toplevel* window();
 
-    void setWindow(Toplevel* w);                      // internal
-    void setSceneWindow(render::scene::Window* w);            // internal
-    const render::scene::Window* sceneWindow() const; // internal
-    render::scene::Window* sceneWindow();             // internal
+    void setWindow(Toplevel* w);               // internal
+    void setSceneWindow(render::window* w);    // internal
+    const render::window* sceneWindow() const; // internal
+    render::window* sceneWindow();             // internal
 
     void elevate(bool elevate);
 
@@ -577,7 +577,7 @@ private Q_SLOTS:
 private:
     void insertThumbnail(WindowThumbnailItem* item);
     Toplevel* toplevel;
-    render::scene::Window* sw; // This one is used only during paint pass.
+    render::window* sw; // This one is used only during paint pass.
     QHash<int, QVariant> dataMap;
     QHash<WindowThumbnailItem*, QPointer<EffectWindowImpl>> m_thumbnails;
     QList<DesktopThumbnailItem*> m_desktopThumbnails;
@@ -712,14 +712,14 @@ inline EffectWindowGroupImpl::EffectWindowGroupImpl(win::x11::group* g)
 }
 
 EffectWindow* effectWindow(Toplevel* w);
-EffectWindow* effectWindow(render::scene::Window* w);
+EffectWindow* effectWindow(render::window* w);
 
-inline const render::scene::Window* EffectWindowImpl::sceneWindow() const
+inline const render::window* EffectWindowImpl::sceneWindow() const
 {
     return sw;
 }
 
-inline render::scene::Window* EffectWindowImpl::sceneWindow()
+inline render::window* EffectWindowImpl::sceneWindow()
 {
     return sw;
 }

@@ -59,6 +59,7 @@ class Shadow;
 
 namespace render
 {
+class window;
 class window_pixmap;
 
 // The base class for compositing backends.
@@ -69,7 +70,6 @@ public:
     explicit scene(QObject* parent = nullptr);
     ~scene() override = 0;
     class EffectFrame;
-    class Window;
 
     // Returns true if the ctor failed to properly initialize.
     virtual bool initFailed() const = 0;
@@ -226,7 +226,7 @@ public Q_SLOTS:
     void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);
 
 protected:
-    virtual Window* createWindow(Toplevel* toplevel) = 0;
+    virtual window* createWindow(Toplevel* toplevel) = 0;
     void createStackingOrder(std::deque<Toplevel*> const& toplevels);
     void clearStackingOrder();
     // shared implementation, starts painting the screen
@@ -252,7 +252,7 @@ protected:
     // called after all effects had their paintWindow() called
     void finalPaintWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data);
     // shared implementation, starts painting the window
-    virtual void paintWindow(Window* w, int mask, QRegion region, WindowQuadList quads);
+    virtual void paintWindow(window* w, int mask, QRegion region, WindowQuadList quads);
     // called after all effects had their drawWindow() called
     virtual void
     finalDrawWindow(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data);
@@ -265,7 +265,7 @@ protected:
 
     // saved data for 2nd pass of optimized screen painting
     struct Phase2Data {
-        Window* window = nullptr;
+        render::window* window = nullptr;
         QRegion region;
         QRegion clip;
         int mask = 0;
@@ -288,16 +288,16 @@ protected:
     base::output* repaint_output{nullptr};
 
 private:
-    void paintWindowThumbnails(scene::Window* w,
+    void paintWindowThumbnails(window* w,
                                QRegion region,
                                qreal opacity,
                                qreal brightness,
                                qreal saturation);
-    void paintDesktopThumbnails(scene::Window* w);
+    void paintDesktopThumbnails(window* w);
     std::chrono::milliseconds m_expectedPresentTimestamp = std::chrono::milliseconds::zero();
-    QHash<Toplevel*, Window*> m_windows;
+    QHash<Toplevel*, window*> m_windows;
     // windows in their stacking order
-    QVector<Window*> stacking_order;
+    QVector<window*> stacking_order;
 };
 
 /**
@@ -319,11 +319,11 @@ protected:
 };
 
 // The base class for windows representations in composite backends
-class scene::Window
+class KWIN_EXPORT window
 {
 public:
-    Window(Toplevel* c);
-    virtual ~Window();
+    window(Toplevel* c);
+    virtual ~window();
     uint32_t id() const;
     // perform the actual painting of the window
     virtual void performPaint(int mask, QRegion region, WindowPaintData data) = 0;
@@ -410,7 +410,7 @@ protected:
      */
     virtual window_pixmap* createWindowPixmap() = 0;
     Toplevel* toplevel;
-    ImageFilterType filter;
+    scene::ImageFilterType filter;
     Shadow* m_shadow;
 
 private:
@@ -420,11 +420,11 @@ private:
     int disable_painting;
     mutable QScopedPointer<WindowQuadList> cached_quad_list;
     uint32_t const m_id;
-    Q_DISABLE_COPY(Window)
+    Q_DISABLE_COPY(window)
 };
 
 /**
- * @brief Wrapper for a pixmap of the scene::Window.
+ * @brief Wrapper for a pixmap of the window.
  *
  * This class encapsulates the functionality to get the pixmap for a window. When initialized the
  * pixmap is not yet mapped to the window and isValid will return @c false. The pixmap mapping to
@@ -508,7 +508,7 @@ public:
     Wrapland::Server::Surface* surface() const;
 
 protected:
-    explicit window_pixmap(scene::Window* window);
+    explicit window_pixmap(render::window* window);
 
     /**
      * Should be called by the implementing subclasses when the Wayland Buffer changed and needs
@@ -517,7 +517,7 @@ protected:
     virtual void updateBuffer();
 
 private:
-    scene::Window* m_window;
+    render::window* m_window;
     xcb_pixmap_t m_pixmap;
     QSize m_pixmapSize;
     bool m_discarded;
@@ -544,62 +544,62 @@ protected:
     EffectFrameImpl* m_effectFrame;
 };
 
-inline int scene::Window::x() const
+inline int window::x() const
 {
     return toplevel->pos().x();
 }
 
-inline int scene::Window::y() const
+inline int window::y() const
 {
     return toplevel->pos().y();
 }
 
-inline int scene::Window::width() const
+inline int window::width() const
 {
     return toplevel->size().width();
 }
 
-inline int scene::Window::height() const
+inline int window::height() const
 {
     return toplevel->size().height();
 }
 
-inline QRect scene::Window::geometry() const
+inline QRect window::geometry() const
 {
     return toplevel->frameGeometry();
 }
 
-inline QSize scene::Window::size() const
+inline QSize window::size() const
 {
     return toplevel->size();
 }
 
-inline QPoint scene::Window::pos() const
+inline QPoint window::pos() const
 {
     return toplevel->pos();
 }
 
-inline QRect scene::Window::rect() const
+inline QRect window::rect() const
 {
     return QRect(QPoint(), toplevel->size());
 }
 
-inline Toplevel* scene::Window::get_window() const
+inline Toplevel* window::get_window() const
 {
     return toplevel;
 }
 
-inline void scene::Window::updateToplevel(Toplevel* c)
+inline void window::updateToplevel(Toplevel* c)
 {
     toplevel = c;
 }
 
-inline const Shadow* scene::Window::shadow() const
+inline const Shadow* window::shadow() const
 {
     return m_shadow;
 }
 
-inline Shadow* scene::Window::shadow()
+inline Shadow* window::shadow()
 {
     return m_shadow;
 }
@@ -620,7 +620,7 @@ inline QImage window_pixmap::internalImage() const
 }
 
 template<typename T>
-inline T* scene::Window::windowPixmap()
+inline T* window::windowPixmap()
 {
     if (m_currentPixmap.isNull()) {
         m_currentPixmap.reset(createWindowPixmap());
@@ -637,7 +637,7 @@ inline T* scene::Window::windowPixmap()
 }
 
 template<typename T>
-inline T* scene::Window::previousWindowPixmap()
+inline T* window::previousWindowPixmap()
 {
     return static_cast<T*>(m_previousPixmap.data());
 }

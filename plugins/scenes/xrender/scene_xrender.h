@@ -183,8 +183,10 @@ public:
 
     static scene* createScene(QObject* parent);
 
+    static ScreenPaintData screen_paint;
+
 protected:
-    render::scene::Window* createWindow(Toplevel* toplevel) override;
+    render::window* createWindow(Toplevel* toplevel) override;
     void paintBackground(QRegion region) override;
     void paintGenericScreen(int mask, ScreenPaintData data) override;
     void paintDesktop(int desktop, int mask, const QRegion& region, ScreenPaintData& data) override;
@@ -193,16 +195,14 @@ protected:
 
 private:
     explicit scene(xrender::backend* backend, QObject* parent = nullptr);
-    static ScreenPaintData screen_paint;
-    class Window;
     QScopedPointer<xrender::backend> m_backend;
 };
 
-class scene::Window : public render::scene::Window
+class window : public render::window
 {
 public:
-    Window(Toplevel* c, xrender::scene* scene);
-    ~Window() override;
+    window(Toplevel* c, xrender::scene* scene);
+    ~window() override;
     void performPaint(int mask, QRegion region, WindowPaintData data) override;
     QRegion transformedShape() const;
     void setTransformedShape(const QRegion& shape);
@@ -217,7 +217,7 @@ private:
     QRect bufferToWindowRect(const QRect& rect) const;
     QRegion bufferToWindowRegion(const QRegion& region) const;
     void prepareTempPixmap();
-    void setPictureFilter(xcb_render_picture_t pic, ImageFilterType filter);
+    void setPictureFilter(xcb_render_picture_t pic, render::scene::ImageFilterType filter);
     xrender::scene* m_scene;
     xcb_render_pictformat_t format;
     QRegion transformed_shape;
@@ -229,7 +229,7 @@ private:
 class window_pixmap : public render::window_pixmap
 {
 public:
-    explicit window_pixmap(render::scene::Window* window, xcb_render_pictformat_t format);
+    explicit window_pixmap(render::window* window, xcb_render_pictformat_t format);
     ~window_pixmap() override;
     xcb_render_picture_t picture() const;
     void create() override;
@@ -271,12 +271,12 @@ inline xcb_render_picture_t scene::xrenderBufferPicture() const
     return m_backend->buffer();
 }
 
-inline QRegion scene::Window::transformedShape() const
+inline QRegion window::transformedShape() const
 {
     return transformed_shape;
 }
 
-inline void scene::Window::setTransformedShape(const QRegion& shape)
+inline void window::setTransformedShape(const QRegion& shape)
 {
     transformed_shape = shape;
 }

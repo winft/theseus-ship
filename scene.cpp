@@ -270,7 +270,7 @@ void scene::paintSimpleScreen(int orig_mask, QRegion region)
 
     // Traverse the scene windows from bottom to top.
     for (int i = 0; i < stacking_order.count(); ++i) {
-        Window* window = stacking_order[i];
+        auto window = stacking_order[i];
         auto toplevel = window->get_window();
         WindowPrePaintData data;
         data.mask
@@ -446,7 +446,7 @@ void scene::windowClosed(Toplevel* toplevel, Toplevel* deleted)
     }
 
     Q_ASSERT(m_windows.contains(toplevel));
-    Window* window = m_windows.take(toplevel);
+    auto window = m_windows.take(toplevel);
     window->updateToplevel(deleted);
     if (window->shadow()) {
         window->shadow()->setToplevel(deleted);
@@ -458,7 +458,7 @@ void scene::windowGeometryShapeChanged(Toplevel* c)
 {
     if (!m_windows.contains(c)) // this is ok, shape is not valid by default
         return;
-    Window* w = m_windows[c];
+    auto w = m_windows[c];
     w->invalidateQuadsCache();
 }
 
@@ -476,9 +476,9 @@ void scene::clearStackingOrder()
     stacking_order.clear();
 }
 
-static scene::Window* s_recursionCheck = nullptr;
+static window* s_recursionCheck = nullptr;
 
-void scene::paintWindow(Window* w, int mask, QRegion region, WindowQuadList quads)
+void scene::paintWindow(window* w, int mask, QRegion region, WindowQuadList quads)
 {
     // no painting outside visible screen (and no transformations)
     const QSize& screenSize = screens()->size();
@@ -527,7 +527,7 @@ static void adjustClipRegion(AbstractThumbnailItem* item, QRegion& clippingRegio
     }
 }
 
-void scene::paintWindowThumbnails(scene::Window* w,
+void scene::paintWindowThumbnails(window* w,
                                   QRegion region,
                                   qreal opacity,
                                   qreal brightness,
@@ -587,7 +587,7 @@ void scene::paintWindowThumbnails(scene::Window* w,
     }
 }
 
-void scene::paintDesktopThumbnails(scene::Window* w)
+void scene::paintDesktopThumbnails(window* w)
 {
     EffectWindowImpl* wImpl = static_cast<EffectWindowImpl*>(effectWindow(w));
     for (QList<DesktopThumbnailItem*>::const_iterator it = wImpl->desktopThumbnails().constBegin();
@@ -708,14 +708,14 @@ QVector<QByteArray> scene::openGLPlatformInterfaceExtensions() const
 }
 
 //****************************************
-// scene::Window
+// window
 //****************************************
 
 uint32_t window_id{0};
 
-scene::Window::Window(Toplevel* c)
+window::window(Toplevel* c)
     : toplevel(c)
-    , filter(ImageFilterFast)
+    , filter(scene::ImageFilterFast)
     , m_shadow(nullptr)
     , m_currentPixmap()
     , m_previousPixmap()
@@ -726,24 +726,24 @@ scene::Window::Window(Toplevel* c)
 {
 }
 
-scene::Window::~Window()
+window::~window()
 {
     delete m_shadow;
 }
 
-uint32_t scene::Window::id() const
+uint32_t window::id() const
 {
     return m_id;
 }
 
-void scene::Window::referencePreviousPixmap()
+void window::referencePreviousPixmap()
 {
     if (!m_previousPixmap.isNull() && m_previousPixmap->isDiscarded()) {
         m_referencePixmapCounter++;
     }
 }
 
-void scene::Window::unreferencePreviousPixmap()
+void window::unreferencePreviousPixmap()
 {
     if (m_previousPixmap.isNull() || !m_previousPixmap->isDiscarded()) {
         return;
@@ -754,7 +754,7 @@ void scene::Window::unreferencePreviousPixmap()
     }
 }
 
-void scene::Window::discardPixmap()
+void window::discardPixmap()
 {
     if (!m_currentPixmap.isNull()) {
         if (m_currentPixmap->isValid()) {
@@ -766,7 +766,7 @@ void scene::Window::discardPixmap()
     }
 }
 
-void scene::Window::updatePixmap()
+void window::updatePixmap()
 {
     if (m_currentPixmap.isNull()) {
         m_currentPixmap.reset(createWindowPixmap());
@@ -776,7 +776,7 @@ void scene::Window::updatePixmap()
     }
 }
 
-QRegion scene::Window::decorationShape() const
+QRegion window::decorationShape() const
 {
     if (!win::decoration(toplevel)) {
         return QRegion();
@@ -784,12 +784,12 @@ QRegion scene::Window::decorationShape() const
     return QRegion(QRect(QPoint(), toplevel->size())) - win::frame_relative_client_rect(toplevel);
 }
 
-QPoint scene::Window::bufferOffset() const
+QPoint window::bufferOffset() const
 {
     return win::render_geometry(toplevel).topLeft() - toplevel->pos();
 }
 
-bool scene::Window::isVisible() const
+bool window::isVisible() const
 {
     if (toplevel->isDeleted())
         return false;
@@ -801,17 +801,17 @@ bool scene::Window::isVisible() const
     return true; // Unmanaged is always visible
 }
 
-bool scene::Window::isOpaque() const
+bool window::isOpaque() const
 {
     return toplevel->opacity() == 1.0 && !toplevel->hasAlpha();
 }
 
-bool scene::Window::isPaintingEnabled() const
+bool window::isPaintingEnabled() const
 {
     return !disable_painting;
 }
 
-void scene::Window::resetPaintingEnabled()
+void window::resetPaintingEnabled()
 {
     disable_painting = 0;
     if (toplevel->isDeleted())
@@ -835,17 +835,17 @@ void scene::Window::resetPaintingEnabled()
     }
 }
 
-void scene::Window::enablePainting(int reason)
+void window::enablePainting(int reason)
 {
     disable_painting &= ~reason;
 }
 
-void scene::Window::disablePainting(int reason)
+void window::disablePainting(int reason)
 {
     disable_painting |= reason;
 }
 
-WindowQuadList scene::Window::buildQuads(bool force) const
+WindowQuadList window::buildQuads(bool force) const
 {
     if (cached_quad_list != nullptr && !force)
         return *cached_quad_list;
@@ -875,7 +875,7 @@ WindowQuadList scene::Window::buildQuads(bool force) const
     return ret;
 }
 
-WindowQuadList scene::Window::makeDecorationQuads(const QRect* rects,
+WindowQuadList window::makeDecorationQuads(const QRect* rects,
                                                   const QRegion& region,
                                                   qreal textureScale) const
 {
@@ -945,7 +945,7 @@ WindowQuadList scene::Window::makeDecorationQuads(const QRect* rects,
     return list;
 }
 
-WindowQuadList scene::Window::makeContentsQuads(int id, QPoint const& offset) const
+WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
 {
     auto const contentsRegion = win::content_render_region(toplevel);
     if (contentsRegion.isEmpty()) {
@@ -1039,12 +1039,12 @@ WindowQuadList scene::Window::makeContentsQuads(int id, QPoint const& offset) co
     return quads;
 }
 
-void scene::Window::invalidateQuadsCache()
+void window::invalidateQuadsCache()
 {
     cached_quad_list.reset();
 }
 
-void scene::Window::updateShadow(Shadow* shadow)
+void window::updateShadow(Shadow* shadow)
 {
     if (m_shadow == shadow) {
         return;
@@ -1056,7 +1056,7 @@ void scene::Window::updateShadow(Shadow* shadow)
 //****************************************
 // window_pixmap
 //****************************************
-window_pixmap::window_pixmap(scene::Window* window)
+window_pixmap::window_pixmap(render::window* window)
     : m_window(window)
     , m_pixmap(XCB_PIXMAP_NONE)
     , m_discarded(false)

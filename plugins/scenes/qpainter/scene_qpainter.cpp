@@ -176,9 +176,9 @@ void scene::paintEffectQuickView(EffectQuickView* w)
     painter->drawImage(w->geometry(), buffer);
 }
 
-render::scene::Window* scene::createWindow(Toplevel* toplevel)
+render::window* scene::createWindow(Toplevel* toplevel)
 {
-    return new scene::Window(this, toplevel);
+    return new window(this, toplevel);
 }
 
 render::scene::EffectFrame* scene::createEffectFrame(EffectFrameImpl* frame)
@@ -203,15 +203,15 @@ QImage* scene::qpainterRenderBuffer() const
 }
 
 //****************************************
-// scene::Window
+// window
 //****************************************
-scene::Window::Window(qpainter::scene* scene, Toplevel* c)
-    : render::scene::Window(c)
+window::window(qpainter::scene* scene, Toplevel* c)
+    : render::window(c)
     , m_scene(scene)
 {
 }
 
-scene::Window::~Window()
+window::~window()
 {
 }
 
@@ -227,9 +227,9 @@ static bool isXwaylandClient(Toplevel* toplevel)
     return false;
 }
 
-void scene::Window::performPaint(int mask, QRegion region, WindowPaintData data)
+void window::performPaint(int mask, QRegion region, WindowPaintData data)
 {
-    if (!(mask & (PAINT_WINDOW_TRANSFORMED | PAINT_SCREEN_TRANSFORMED)))
+    if (!(mask & (scene::PAINT_WINDOW_TRANSFORMED | scene::PAINT_SCREEN_TRANSFORMED)))
         region &= win::visible_rect(toplevel);
 
     if (region.isEmpty())
@@ -250,7 +250,7 @@ void scene::Window::performPaint(int mask, QRegion region, WindowPaintData data)
     painter->setClipping(true);
 
     painter->translate(x(), y());
-    if (mask & PAINT_WINDOW_TRANSFORMED) {
+    if (mask & scene::PAINT_WINDOW_TRANSFORMED) {
         painter->translate(data.xTranslation(), data.yTranslation());
         painter->scale(data.xScale(), data.yScale());
     }
@@ -314,7 +314,7 @@ void scene::Window::performPaint(int mask, QRegion region, WindowPaintData data)
     painter->restore();
 }
 
-void scene::Window::renderShadow(QPainter* painter)
+void window::renderShadow(QPainter* painter)
 {
     if (!win::shadow(toplevel)) {
         return;
@@ -337,7 +337,7 @@ void scene::Window::renderShadow(QPainter* painter)
     }
 }
 
-void scene::Window::renderWindowDecorations(QPainter* painter)
+void window::renderWindowDecorations(QPainter* painter)
 {
     // TODO: custom decoration opacity
     auto const& ctrl = toplevel->control;
@@ -374,7 +374,7 @@ void scene::Window::renderWindowDecorations(QPainter* painter)
     painter->drawImage(dbr, renderer->image(deco_renderer::DecorationPart::Bottom));
 }
 
-render::window_pixmap* scene::Window::createWindowPixmap()
+render::window_pixmap* window::createWindowPixmap()
 {
     return new window_pixmap(this);
 }
@@ -387,7 +387,7 @@ Decoration::Renderer* scene::createDecorationRenderer(Decoration::DecoratedClien
 //****************************************
 // window_pixmap
 //****************************************
-window_pixmap::window_pixmap(render::scene::Window* window)
+window_pixmap::window_pixmap(render::window* window)
     : render::window_pixmap(window)
 {
 }

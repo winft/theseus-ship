@@ -68,7 +68,7 @@ public:
 
 protected:
     void paintBackground(QRegion region) override;
-    render::scene::Window* createWindow(Toplevel* toplevel) override;
+    render::window* createWindow(Toplevel* toplevel) override;
     void paintCursor() override;
     void paintEffectQuickView(EffectQuickView* w) override;
 
@@ -76,14 +76,13 @@ private:
     explicit scene(qpainter::backend* backend, QObject* parent = nullptr);
     QScopedPointer<qpainter::backend> m_backend;
     QScopedPointer<QPainter> m_painter;
-    class Window;
 };
 
-class scene::Window : public render::scene::Window
+class window : public render::window
 {
 public:
-    Window(qpainter::scene* scene, Toplevel* c);
-    ~Window() override;
+    window(qpainter::scene* scene, Toplevel* c);
+    ~window() override;
     void performPaint(int mask, QRegion region, WindowPaintData data) override;
 
 protected:
@@ -98,7 +97,7 @@ private:
 class window_pixmap : public render::window_pixmap
 {
 public:
-    explicit window_pixmap(render::scene::Window* window);
+    explicit window_pixmap(render::window* window);
     ~window_pixmap() override;
     void create() override;
     bool isValid() const override;

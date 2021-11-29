@@ -2160,7 +2160,7 @@ void EffectWindowImpl::setWindow(Toplevel* w)
     setParent(w);
 }
 
-void EffectWindowImpl::setSceneWindow(render::scene::Window* w)
+void EffectWindowImpl::setSceneWindow(render::window* w)
 {
     sw = w;
 }
@@ -2267,7 +2267,7 @@ EffectWindow* effectWindow(Toplevel* w)
     return ret;
 }
 
-EffectWindow* effectWindow(render::scene::Window* w)
+EffectWindow* effectWindow(render::window* w)
 {
     auto ret = w->get_window()->effectWindow();
     ret->setSceneWindow(w);
