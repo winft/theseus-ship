@@ -17,9 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
-#ifndef KWIN_SCENE_XRENDER_H
-#define KWIN_SCENE_XRENDER_H
+#pragma once
 
 #include "decorations/decorationrenderer.h"
 #include "scene.h"
@@ -35,17 +33,20 @@ namespace Xcb
 class Shm;
 }
 
+namespace render::xrender
+{
+
 /**
- * @brief Backend for the SceneXRender to hold the compositing buffer and take care of buffer
+ * @brief Backend for the scene to hold the compositing buffer and take care of buffer
  * swapping.
  *
  * This class is intended as a small abstraction to support multiple compositing backends in the
- * SceneXRender.
+ * scene.
  */
-class XRenderBackend
+class backend
 {
 public:
-    virtual ~XRenderBackend();
+    virtual ~backend();
     virtual void present(int mask, const QRegion& damage) = 0;
 
     /**
@@ -87,8 +88,8 @@ public:
     /**
      * @brief Whether the creation of the Backend failed.
      *
-     * The SceneXRender should test whether the Backend got constructed correctly. If this method
-     * returns @c true, the SceneXRender should not try to start the rendering.
+     * The scene should test whether the Backend got constructed correctly. If this method
+     * returns @c true, the scene should not try to start the rendering.
      *
      * @return bool @c true if the creation of the Backend failed, @c false otherwise.
      */
@@ -98,7 +99,7 @@ public:
     }
 
 protected:
-    XRenderBackend();
+    backend();
     /**
      * @brief A subclass needs to call this method once it created the compositing back buffer.
      *
@@ -124,13 +125,13 @@ private:
 };
 
 /**
- * @brief XRenderBackend using an X11 Overlay Window as compositing target.
+ * @brief backend using an X11 Overlay Window as compositing target.
  */
-class X11XRenderBackend : public XRenderBackend
+class x11_overlay_backend : public backend
 {
 public:
-    X11XRenderBackend();
-    ~X11XRenderBackend() override;
+    x11_overlay_backend();
+    ~x11_overlay_backend() override;
 
     void present(int mask, const QRegion& damage) override;
     OverlayWindow* overlayWindow() override;
@@ -146,12 +147,12 @@ private:
     xcb_render_pictformat_t m_format;
 };
 
-class SceneXrender : public Scene
+class scene : public Scene
 {
     Q_OBJECT
 public:
     class EffectFrame;
-    ~SceneXrender() override;
+    ~scene() override;
     bool initFailed() const override;
     CompositingType compositingType() const override
     {
@@ -180,7 +181,7 @@ public:
         return true;
     }
 
-    static SceneXrender* createScene(QObject* parent);
+    static scene* createScene(QObject* parent);
 
 protected:
     Scene::Window* createWindow(Toplevel* toplevel) override;
@@ -191,16 +192,16 @@ protected:
     void paintEffectQuickView(EffectQuickView* w) override;
 
 private:
-    explicit SceneXrender(XRenderBackend* backend, QObject* parent = nullptr);
+    explicit scene(xrender::backend* backend, QObject* parent = nullptr);
     static ScreenPaintData screen_paint;
     class Window;
-    QScopedPointer<XRenderBackend> m_backend;
+    QScopedPointer<xrender::backend> m_backend;
 };
 
-class SceneXrender::Window : public Scene::Window
+class scene::Window : public Scene::Window
 {
 public:
-    Window(Toplevel* c, SceneXrender* scene);
+    Window(Toplevel* c, xrender::scene* scene);
     ~Window() override;
     void performPaint(int mask, QRegion region, WindowPaintData data) override;
     QRegion transformedShape() const;
@@ -217,7 +218,7 @@ private:
     QRegion bufferToWindowRegion(const QRegion& region) const;
     void prepareTempPixmap();
     void setPictureFilter(xcb_render_picture_t pic, ImageFilterType filter);
-    SceneXrender* m_scene;
+    xrender::scene* m_scene;
     xcb_render_pictformat_t format;
     QRegion transformed_shape;
     static QRect temp_visibleRect;
@@ -225,11 +226,11 @@ private:
     static XRenderPicture* s_fadeAlphaPicture;
 };
 
-class XRenderWindowPixmap : public WindowPixmap
+class window_pixmap : public WindowPixmap
 {
 public:
-    explicit XRenderWindowPixmap(Scene::Window* window, xcb_render_pictformat_t format);
-    ~XRenderWindowPixmap() override;
+    explicit window_pixmap(Scene::Window* window, xcb_render_pictformat_t format);
+    ~window_pixmap() override;
     xcb_render_picture_t picture() const;
     void create() override;
 
@@ -238,7 +239,7 @@ private:
     xcb_render_pictformat_t m_format;
 };
 
-class SceneXrender::EffectFrame : public Scene::EffectFrame
+class scene::EffectFrame : public Scene::EffectFrame
 {
 public:
     EffectFrame(EffectFrameImpl* frame);
@@ -265,22 +266,22 @@ private:
     static XRenderPicture* s_effectFrameCircle;
 };
 
-inline xcb_render_picture_t SceneXrender::xrenderBufferPicture() const
+inline xcb_render_picture_t scene::xrenderBufferPicture() const
 {
     return m_backend->buffer();
 }
 
-inline QRegion SceneXrender::Window::transformedShape() const
+inline QRegion scene::Window::transformedShape() const
 {
     return transformed_shape;
 }
 
-inline void SceneXrender::Window::setTransformedShape(const QRegion& shape)
+inline void scene::Window::setTransformedShape(const QRegion& shape)
 {
     transformed_shape = shape;
 }
 
-inline xcb_render_picture_t XRenderWindowPixmap::picture() const
+inline xcb_render_picture_t window_pixmap::picture() const
 {
     return m_picture;
 }
@@ -291,10 +292,10 @@ inline xcb_render_picture_t XRenderWindowPixmap::picture() const
  * This class extends Shadow by the elements required for XRender rendering.
  * @author Jacopo De Simoi <wilderkde@gmail.org>
  */
-class SceneXRenderShadow : public Shadow
+class shadow : public KWin::Shadow
 {
 public:
-    explicit SceneXRenderShadow(Toplevel* toplevel);
+    explicit shadow(Toplevel* toplevel);
     using Shadow::ShadowElementBottom;
     using Shadow::ShadowElementBottomLeft;
     using Shadow::ShadowElementBottomRight;
@@ -306,7 +307,7 @@ public:
     using Shadow::ShadowElementTopLeft;
     using Shadow::ShadowElementTopRight;
     using Shadow::shadowPixmap;
-    ~SceneXRenderShadow() override;
+    ~shadow() override;
 
     void layoutShadowRects(QRect& top,
                            QRect& topRight,
@@ -326,13 +327,13 @@ private:
     XRenderPicture* m_pictures[ShadowElementsCount];
 };
 
-class SceneXRenderDecorationRenderer : public Decoration::Renderer
+class deco_renderer : public Decoration::Renderer
 {
     Q_OBJECT
 public:
     enum class DecorationPart : int { Left, Top, Right, Bottom, Count };
-    explicit SceneXRenderDecorationRenderer(Decoration::DecoratedClientImpl* client);
-    ~SceneXRenderDecorationRenderer() override;
+    explicit deco_renderer(Decoration::DecoratedClientImpl* client);
+    ~deco_renderer() override;
 
     void render() override;
     void reparent(Toplevel* window) override;
@@ -347,21 +348,20 @@ private:
     XRenderPicture* m_pictures[int(DecorationPart::Count)];
 };
 
-class KWIN_EXPORT XRenderFactory : public SceneFactory
+class KWIN_EXPORT scene_factory : public SceneFactory
 {
     Q_OBJECT
     Q_INTERFACES(KWin::SceneFactory)
     Q_PLUGIN_METADATA(IID "org.kde.kwin.Scene" FILE "xrender.json")
 
 public:
-    explicit XRenderFactory(QObject* parent = nullptr);
-    ~XRenderFactory() override;
+    explicit scene_factory(QObject* parent = nullptr);
+    ~scene_factory() override;
 
     Scene* create(QObject* parent = nullptr) const override;
 };
 
-} // namespace
-
-#endif
+}
+}
 
 #endif
