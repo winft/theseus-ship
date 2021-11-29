@@ -18,9 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
-#ifndef KWIN_SCENE_OPENGL_H
-#define KWIN_SCENE_OPENGL_H
+#pragma once
 
 #include "scene.h"
 #include "shadow.h"
@@ -34,22 +32,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+class LanczosFilter;
+
 namespace render::gl
 {
 class backend;
-}
-
-class LanczosFilter;
-class OpenGLWindow;
 class SyncManager;
 class SyncObject;
+class window;
 
-class KWIN_EXPORT SceneOpenGL : public Scene
+class KWIN_EXPORT scene : public Scene
 {
     Q_OBJECT
 public:
     class EffectFrame;
-    ~SceneOpenGL() override;
+    ~scene() override;
     bool initFailed() const override;
     bool hasPendingFlush() const override;
 
@@ -88,7 +85,7 @@ public:
     /**
      * @brief Factory method to create a backend specific texture.
      *
-     * @return :SceneOpenGL::Texture*
+     * @return scene::texture*
      */
     render::gl::texture* createTexture();
 
@@ -99,12 +96,12 @@ public:
 
     QVector<QByteArray> openGLPlatformInterfaceExtensions() const override;
 
-    static SceneOpenGL* createScene(QObject* parent);
+    static scene* createScene(QObject* parent);
 
-    std::unordered_map<uint32_t, OpenGLWindow*> windows;
+    std::unordered_map<uint32_t, window*> windows;
 
 protected:
-    SceneOpenGL(render::gl::backend* backend, QObject* parent = nullptr);
+    scene(render::gl::backend* backend, QObject* parent = nullptr);
     void paintBackground(QRegion region) override;
     void extendPaintRegion(QRegion& region, bool opaqueFullscreen) override;
     QMatrix4x4 transformation(int mask, const ScreenPaintData& data) const;
@@ -128,12 +125,12 @@ private:
     bool m_debug;
 };
 
-class SceneOpenGL2 : public SceneOpenGL
+class scene2 : public scene
 {
     Q_OBJECT
 public:
-    explicit SceneOpenGL2(render::gl::backend* backend, QObject* parent = nullptr);
-    ~SceneOpenGL2() override;
+    explicit scene2(render::gl::backend* backend, QObject* parent = nullptr);
+    ~scene2() override;
     CompositingType compositingType() const override
     {
         return OpenGLCompositing;
@@ -172,9 +169,9 @@ private:
     GLuint vao;
 };
 
-class OpenGLWindowPixmap;
+class window_pixmap;
 
-class OpenGLWindow final : public Scene::Window
+class window final : public Scene::Window
 {
 public:
     enum Leaf { ShadowLeaf = 0, DecorationLeaf, ContentLeaf, PreviousContentLeaf, LeafCount };
@@ -198,8 +195,8 @@ public:
         TextureCoordinateType coordinateType;
     };
 
-    OpenGLWindow(Toplevel* toplevel, SceneOpenGL* scene);
-    ~OpenGLWindow() override;
+    window(Toplevel* toplevel, gl::scene* scene);
+    ~window() override;
 
     WindowPixmap* createWindowPixmap() override;
     void performPaint(int mask, QRegion region, WindowPaintData data) override;
@@ -218,29 +215,29 @@ private:
     void endRenderWindow();
     render::gl::texture* bindTexture();
 
-    SceneOpenGL* m_scene;
+    scene* m_scene;
     bool m_hardwareClipping = false;
     bool m_blendingEnabled = false;
 };
 
-class OpenGLWindowPixmap : public WindowPixmap
+class window_pixmap : public KWin::WindowPixmap
 {
 public:
-    explicit OpenGLWindowPixmap(Scene::Window* window, SceneOpenGL* scene);
-    ~OpenGLWindowPixmap() override;
+    explicit window_pixmap(Scene::Window* window, gl::scene* scene);
+    ~window_pixmap() override;
     render::gl::texture* texture() const;
     bool bind();
     bool isValid() const override;
 
 private:
     QScopedPointer<render::gl::texture> m_texture;
-    SceneOpenGL* m_scene;
+    scene* m_scene;
 };
 
-class SceneOpenGL::EffectFrame : public Scene::EffectFrame
+class scene::EffectFrame : public Scene::EffectFrame
 {
 public:
-    EffectFrame(EffectFrameImpl* frame, SceneOpenGL* scene);
+    EffectFrame(EffectFrameImpl* frame, gl::scene* scene);
     ~EffectFrame() override;
 
     void free() override;
@@ -267,7 +264,7 @@ private:
     GLTexture* m_oldIconTexture;
     GLTexture* m_selectionTexture;
     GLVertexBuffer* m_unstyledVBO;
-    SceneOpenGL* m_scene;
+    scene* m_scene;
 
     static GLTexture* m_unstyledTexture;
     static QPixmap*
@@ -281,11 +278,11 @@ private:
  * This class extends Shadow by the Elements required for OpenGL rendering.
  * @author Martin Gräßlin <mgraesslin@kde.org>
  */
-class SceneOpenGLShadow : public Shadow
+class shadow : public KWin::Shadow
 {
 public:
-    explicit SceneOpenGLShadow(Toplevel* toplevel);
-    ~SceneOpenGLShadow() override;
+    explicit shadow(Toplevel* toplevel);
+    ~shadow() override;
 
     GLTexture* shadowTexture()
     {
@@ -300,13 +297,13 @@ private:
     QSharedPointer<GLTexture> m_texture;
 };
 
-class SceneOpenGLDecorationRenderer : public Decoration::Renderer
+class deco_renderer : public Decoration::Renderer
 {
     Q_OBJECT
 public:
     enum class DecorationPart : int { Left, Top, Right, Bottom, Count };
-    explicit SceneOpenGLDecorationRenderer(Decoration::DecoratedClientImpl* client);
-    ~SceneOpenGLDecorationRenderer() override;
+    explicit deco_renderer(Decoration::DecoratedClientImpl* client);
+    ~deco_renderer() override;
 
     void render() override;
     void reparent(Toplevel* window) override;
@@ -325,34 +322,33 @@ private:
     QScopedPointer<GLTexture> m_texture;
 };
 
-inline bool SceneOpenGL::hasPendingFlush() const
+inline bool scene::hasPendingFlush() const
 {
     return m_backend->hasPendingFlush();
 }
 
-inline bool SceneOpenGL::usesOverlayWindow() const
+inline bool scene::usesOverlayWindow() const
 {
     return m_backend->usesOverlayWindow();
 }
 
-inline render::gl::texture* OpenGLWindowPixmap::texture() const
+inline render::gl::texture* window_pixmap::texture() const
 {
     return m_texture.data();
 }
 
-class KWIN_EXPORT OpenGLFactory : public SceneFactory
+class KWIN_EXPORT scene_factory : public KWin::SceneFactory
 {
     Q_OBJECT
     Q_INTERFACES(KWin::SceneFactory)
     Q_PLUGIN_METADATA(IID "org.kde.kwin.Scene" FILE "opengl.json")
 
 public:
-    explicit OpenGLFactory(QObject* parent = nullptr);
-    ~OpenGLFactory() override;
+    explicit scene_factory(QObject* parent = nullptr);
+    ~scene_factory() override;
 
-    Scene* create(QObject* parent = nullptr) const override;
+    KWin::Scene* create(QObject* parent = nullptr) const override;
 };
 
-} // namespace
-
-#endif
+}
+}

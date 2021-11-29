@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class OpenGLWindowPixmap;
 class WindowPixmap;
 
 namespace render::gl
@@ -57,9 +56,9 @@ private:
     {
         return reinterpret_cast<texture_private const*>(qGetPtrHelper(d_ptr));
     }
-    friend class texture_private;
 
-    friend class KWin::OpenGLWindowPixmap;
+    friend class texture_private;
+    friend class window_pixmap;
 };
 
 class texture_private : public GLTexturePrivate
