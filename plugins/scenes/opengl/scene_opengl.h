@@ -32,11 +32,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class LanczosFilter;
 
 namespace render::gl
 {
 class backend;
+class lanczos_filter;
 class SyncManager;
 class SyncObject;
 class window;
@@ -162,7 +162,7 @@ private:
     QMatrix4x4 createProjectionMatrix() const;
 
 private:
-    LanczosFilter* m_lanczosFilter;
+    lanczos_filter* lanczos{nullptr};
     QScopedPointer<GLTexture> m_cursorTexture;
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_screenProjectionMatrix;

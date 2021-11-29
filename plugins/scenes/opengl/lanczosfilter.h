@@ -18,9 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
-#ifndef KWIN_LANCZOSFILTER_P_H
-#define KWIN_LANCZOSFILTER_P_H
+#pragma once
 
 #include <QBasicTimer>
 #include <QObject>
@@ -31,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
 class EffectWindow;
 class EffectWindowImpl;
 class WindowPaintData;
@@ -40,13 +37,16 @@ class GLRenderTarget;
 class GLShader;
 class Scene;
 
-class LanczosFilter : public QObject
+namespace render::gl
+{
+
+class lanczos_filter : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit LanczosFilter(Scene* parent);
-    ~LanczosFilter() override;
+    explicit lanczos_filter(Scene* parent);
+    ~lanczos_filter() override;
     void performPaint(EffectWindowImpl* w, int mask, QRegion region, WindowPaintData& data);
 
 protected:
@@ -72,6 +72,5 @@ private:
     Scene* m_scene;
 };
 
-} // namespace
-
-#endif // KWIN_LANCZOSFILTER_P_H
+}
+}

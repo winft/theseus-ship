@@ -1000,7 +1000,6 @@ bool scene2::supported(render::gl::backend* backend)
 
 scene2::scene2(render::gl::backend* backend, QObject* parent)
     : scene(backend, parent)
-    , m_lanczosFilter(nullptr)
 {
     if (!init_ok) {
         // base ctor already failed
@@ -1045,10 +1044,10 @@ scene2::scene2(render::gl::backend* backend, QObject* parent)
 
 scene2::~scene2()
 {
-    if (m_lanczosFilter) {
+    if (lanczos) {
         makeOpenGLContextCurrent();
-        delete m_lanczosFilter;
-        m_lanczosFilter = nullptr;
+        delete lanczos;
+        lanczos = nullptr;
     }
 }
 
@@ -1138,17 +1137,17 @@ void scene2::performPaintWindow(EffectWindowImpl* w,
                                 WindowPaintData& data)
 {
     if (mask & PAINT_WINDOW_LANCZOS) {
-        if (!m_lanczosFilter) {
-            m_lanczosFilter = new LanczosFilter(this);
+        if (!lanczos) {
+            lanczos = new lanczos_filter(this);
             // reset the lanczos filter when the screen gets resized
             // it will get created next paint
             connect(screens(), &Screens::changed, this, [this]() {
                 makeOpenGLContextCurrent();
-                delete m_lanczosFilter;
-                m_lanczosFilter = nullptr;
+                delete lanczos;
+                lanczos = nullptr;
             });
         }
-        m_lanczosFilter->performPaint(w, mask, region, data);
+        lanczos->performPaint(w, mask, region, data);
     } else
         w->sceneWindow()->performPaint(mask, region, data);
 }

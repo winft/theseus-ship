@@ -18,8 +18,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "lanczosfilter.h"
+
 #include "effects.h"
 #include "options.h"
 #include "screens.h"
@@ -37,10 +37,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cmath>
 
-namespace KWin
+namespace KWin::render::gl
 {
 
-LanczosFilter::LanczosFilter(Scene* parent)
+lanczos_filter::lanczos_filter(Scene* parent)
     : QObject(parent)
     , m_offscreenTex(nullptr)
     , m_offscreenTarget(nullptr)
@@ -52,13 +52,13 @@ LanczosFilter::LanczosFilter(Scene* parent)
 {
 }
 
-LanczosFilter::~LanczosFilter()
+lanczos_filter::~lanczos_filter()
 {
     delete m_offscreenTarget;
     delete m_offscreenTex;
 }
 
-void LanczosFilter::init()
+void lanczos_filter::init()
 {
     if (m_inited)
         return;
@@ -103,7 +103,7 @@ void LanczosFilter::init()
     }
 }
 
-void LanczosFilter::updateOffscreenSurfaces()
+void lanczos_filter::updateOffscreenSurfaces()
 {
     const QSize& s = screens()->size();
     int w = s.width();
@@ -137,7 +137,7 @@ static float lanczos(float x, float a)
     return sinc(x) * sinc(x / a);
 }
 
-void LanczosFilter::createKernel(float delta, int* size)
+void lanczos_filter::createKernel(float delta, int* size)
 {
     const float a = 2.0;
 
@@ -168,7 +168,7 @@ void LanczosFilter::createKernel(float delta, int* size)
     *size = kernelSize;
 }
 
-void LanczosFilter::createOffsets(int count, float width, Qt::Orientation direction)
+void lanczos_filter::createOffsets(int count, float width, Qt::Orientation direction)
 {
     m_offsets.fill(QVector2D());
     for (int i = 0; i < count; i++) {
@@ -177,10 +177,10 @@ void LanczosFilter::createOffsets(int count, float width, Qt::Orientation direct
     }
 }
 
-void LanczosFilter::performPaint(EffectWindowImpl* w,
-                                 int mask,
-                                 QRegion region,
-                                 WindowPaintData& data)
+void lanczos_filter::performPaint(EffectWindowImpl* w,
+                                  int mask,
+                                  QRegion region,
+                                  WindowPaintData& data)
 {
     if (data.xScale() < 0.9 || data.yScale() < 0.9) {
         if (!m_inited)
@@ -397,7 +397,7 @@ void LanczosFilter::performPaint(EffectWindowImpl* w,
     w->sceneWindow()->performPaint(mask, region, data);
 } // End of function
 
-void LanczosFilter::timerEvent(QTimerEvent* event)
+void lanczos_filter::timerEvent(QTimerEvent* event)
 {
     if (event->timerId() == m_timer.timerId()) {
         m_timer.stop();
@@ -416,7 +416,7 @@ void LanczosFilter::timerEvent(QTimerEvent* event)
     }
 }
 
-void LanczosFilter::discardCacheTexture(EffectWindow* w)
+void lanczos_filter::discardCacheTexture(EffectWindow* w)
 {
     QVariant cachedTextureVariant = w->data(LanczosCacheRole);
     if (cachedTextureVariant.isValid()) {
@@ -425,7 +425,7 @@ void LanczosFilter::discardCacheTexture(EffectWindow* w)
     }
 }
 
-void LanczosFilter::setUniforms()
+void lanczos_filter::setUniforms()
 {
     glUniform2fv(m_uOffsets, m_offsets.size(), (const GLfloat*)m_offsets.data());
     glUniform4fv(m_uKernel, m_kernel.size(), (const GLfloat*)m_kernel.data());
