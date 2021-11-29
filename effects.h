@@ -683,7 +683,7 @@ private:
     QSize m_iconSize;
     QRect m_selectionGeometry;
 
-    render::scene::EffectFrame* m_sceneFrame;
+    render::effect_frame* m_sceneFrame;
     GLShader* m_shader;
 
     Plasma::Theme* m_theme;

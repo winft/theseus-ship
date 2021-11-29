@@ -59,6 +59,7 @@ class Shadow;
 
 namespace render
 {
+class effect_frame;
 class window;
 class window_pixmap;
 
@@ -69,7 +70,6 @@ class KWIN_EXPORT scene : public QObject
 public:
     explicit scene(QObject* parent = nullptr);
     ~scene() override = 0;
-    class EffectFrame;
 
     // Returns true if the ctor failed to properly initialize.
     virtual bool initFailed() const = 0;
@@ -115,11 +115,11 @@ public:
     void removeToplevel(Toplevel* toplevel);
 
     /**
-     * @brief Creates the scene backend of an EffectFrame.
+     * @brief Creates the scene backend of an effect frame.
      *
-     * @param frame The EffectFrame this scene::EffectFrame belongs to.
+     * @param frame The effect frame this effect_frame belongs to.
      */
-    virtual scene::EffectFrame* createEffectFrame(EffectFrameImpl* frame) = 0;
+    virtual effect_frame* createEffectFrame(EffectFrameImpl* frame) = 0;
     /**
      * @brief Creates the scene specific Shadow subclass.
      *
@@ -527,11 +527,11 @@ private:
     QImage m_internalImage;
 };
 
-class scene::EffectFrame
+class KWIN_EXPORT effect_frame
 {
 public:
-    EffectFrame(EffectFrameImpl* frame);
-    virtual ~EffectFrame();
+    effect_frame(EffectFrameImpl* frame);
+    virtual ~effect_frame();
     virtual void render(QRegion region, double opacity, double frameOpacity) = 0;
     virtual void free() = 0;
     virtual void freeIconFrame() = 0;

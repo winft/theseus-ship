@@ -270,7 +270,7 @@ scene::scene(xrender::backend* backend, QObject* parent)
 scene::~scene()
 {
     window::cleanup();
-    scene::EffectFrame::cleanup();
+    effect_frame::cleanup();
 }
 
 bool scene::initFailed() const
@@ -332,9 +332,9 @@ render::window* scene::createWindow(Toplevel* toplevel)
     return new window(toplevel, this);
 }
 
-render::scene::EffectFrame* scene::createEffectFrame(EffectFrameImpl* frame)
+render::effect_frame* scene::createEffectFrame(EffectFrameImpl* frame)
 {
-    return new scene::EffectFrame(frame);
+    return new effect_frame(frame);
 }
 
 Shadow* scene::createShadow(Toplevel* toplevel)
@@ -949,13 +949,13 @@ void window_pixmap::create()
 }
 
 //****************************************
-// scene::EffectFrame
+// effect_frame
 //****************************************
 
-XRenderPicture* scene::EffectFrame::s_effectFrameCircle = nullptr;
+XRenderPicture* effect_frame::s_effectFrameCircle = nullptr;
 
-scene::EffectFrame::EffectFrame(EffectFrameImpl* frame)
-    : render::scene::EffectFrame(frame)
+effect_frame::effect_frame(EffectFrameImpl* frame)
+    : render::effect_frame(frame)
 {
     m_picture = nullptr;
     m_textPicture = nullptr;
@@ -963,7 +963,7 @@ scene::EffectFrame::EffectFrame(EffectFrameImpl* frame)
     m_selectionPicture = nullptr;
 }
 
-scene::EffectFrame::~EffectFrame()
+effect_frame::~effect_frame()
 {
     delete m_picture;
     delete m_textPicture;
@@ -971,13 +971,13 @@ scene::EffectFrame::~EffectFrame()
     delete m_selectionPicture;
 }
 
-void scene::EffectFrame::cleanup()
+void effect_frame::cleanup()
 {
     delete s_effectFrameCircle;
     s_effectFrameCircle = nullptr;
 }
 
-void scene::EffectFrame::free()
+void effect_frame::free()
 {
     delete m_picture;
     m_picture = nullptr;
@@ -989,35 +989,35 @@ void scene::EffectFrame::free()
     m_selectionPicture = nullptr;
 }
 
-void scene::EffectFrame::freeIconFrame()
+void effect_frame::freeIconFrame()
 {
     delete m_iconPicture;
     m_iconPicture = nullptr;
 }
 
-void scene::EffectFrame::freeTextFrame()
+void effect_frame::freeTextFrame()
 {
     delete m_textPicture;
     m_textPicture = nullptr;
 }
 
-void scene::EffectFrame::freeSelection()
+void effect_frame::freeSelection()
 {
     delete m_selectionPicture;
     m_selectionPicture = nullptr;
 }
 
-void scene::EffectFrame::crossFadeIcon()
+void effect_frame::crossFadeIcon()
 {
     // TODO: implement me
 }
 
-void scene::EffectFrame::crossFadeText()
+void effect_frame::crossFadeText()
 {
     // TODO: implement me
 }
 
-void scene::EffectFrame::render(QRegion region, double opacity, double frameOpacity)
+void effect_frame::render(QRegion region, double opacity, double frameOpacity)
 {
     Q_UNUSED(region)
     if (m_effectFrame->geometry().isEmpty()) {
@@ -1128,7 +1128,7 @@ void scene::EffectFrame::render(QRegion region, double opacity, double frameOpac
     }
 }
 
-void scene::EffectFrame::renderUnstyled(xcb_render_picture_t pict, const QRect& rect, qreal opacity)
+void effect_frame::renderUnstyled(xcb_render_picture_t pict, const QRect& rect, qreal opacity)
 {
     const int roundness = 5;
     const QRect area = rect.adjusted(-roundness, -roundness, roundness, roundness);
@@ -1237,7 +1237,7 @@ void scene::EffectFrame::renderUnstyled(xcb_render_picture_t pict, const QRect& 
 #undef RENDER_CIRCLE
 }
 
-void scene::EffectFrame::updatePicture()
+void effect_frame::updatePicture()
 {
     delete m_picture;
     m_picture = nullptr;
@@ -1248,7 +1248,7 @@ void scene::EffectFrame::updatePicture()
     }
 }
 
-void scene::EffectFrame::updateTextPicture()
+void effect_frame::updateTextPicture()
 {
     // Mostly copied from SceneOpenGL::EffectFrame::updateTextTexture() above
     delete m_textPicture;

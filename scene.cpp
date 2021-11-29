@@ -1157,14 +1157,14 @@ Wrapland::Server::Surface* window_pixmap::surface() const
 }
 
 //****************************************
-// scene::EffectFrame
+// effect_frame
 //****************************************
-scene::EffectFrame::EffectFrame(EffectFrameImpl* frame)
+effect_frame::effect_frame(EffectFrameImpl* frame)
     : m_effectFrame(frame)
 {
 }
 
-scene::EffectFrame::~EffectFrame()
+effect_frame::~effect_frame()
 {
 }
 

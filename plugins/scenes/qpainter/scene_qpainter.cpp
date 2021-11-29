@@ -181,7 +181,7 @@ render::window* scene::createWindow(Toplevel* toplevel)
     return new window(this, toplevel);
 }
 
-render::scene::EffectFrame* scene::createEffectFrame(EffectFrameImpl* frame)
+render::effect_frame* scene::createEffectFrame(EffectFrameImpl* frame)
 {
     return new effect_frame(frame, this);
 }
@@ -450,7 +450,7 @@ bool window_pixmap::isValid() const
 }
 
 effect_frame::effect_frame(EffectFrameImpl* frame, qpainter::scene* scene)
-    : render::scene::EffectFrame(frame)
+    : render::effect_frame(frame)
     , m_scene(scene)
 {
 }

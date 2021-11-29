@@ -45,7 +45,6 @@ class KWIN_EXPORT scene : public render::scene
 {
     Q_OBJECT
 public:
-    class EffectFrame;
     ~scene() override;
     bool initFailed() const override;
     bool hasPendingFlush() const override;
@@ -58,7 +57,7 @@ public:
                   std::deque<Toplevel*> const& windows,
                   std::chrono::milliseconds presentTime) override;
 
-    render::scene::EffectFrame* createEffectFrame(EffectFrameImpl* frame) override;
+    render::effect_frame* createEffectFrame(EffectFrameImpl* frame) override;
     Shadow* createShadow(Toplevel* toplevel) override;
     void screenGeometryChanged(const QSize& size) override;
     OverlayWindow* overlayWindow() const override;
@@ -234,11 +233,11 @@ private:
     scene* m_scene;
 };
 
-class scene::EffectFrame : public render::scene::EffectFrame
+class effect_frame : public render::effect_frame
 {
 public:
-    EffectFrame(EffectFrameImpl* frame, gl::scene* scene);
-    ~EffectFrame() override;
+    effect_frame(EffectFrameImpl* frame, gl::scene* scene);
+    ~effect_frame() override;
 
     void free() override;
     void freeIconFrame() override;

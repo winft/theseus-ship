@@ -46,7 +46,7 @@ public:
 
     CompositingType compositingType() const override;
     bool initFailed() const override;
-    EffectFrame* createEffectFrame(EffectFrameImpl* frame) override;
+    render::effect_frame* createEffectFrame(EffectFrameImpl* frame) override;
     Shadow* createShadow(Toplevel* toplevel) override;
     Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl* impl) override;
     void screenGeometryChanged(const QSize& size) override;
@@ -109,7 +109,7 @@ private:
     QImage m_image;
 };
 
-class effect_frame : public scene::EffectFrame
+class effect_frame : public render::effect_frame
 {
 public:
     effect_frame(EffectFrameImpl* frame, qpainter::scene* scene);

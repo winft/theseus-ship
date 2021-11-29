@@ -376,7 +376,7 @@ scene::~scene()
     if (init_ok) {
         makeOpenGLContextCurrent();
     }
-    scene::EffectFrame::cleanup();
+    effect_frame::cleanup();
 
     delete m_syncManager;
 
@@ -948,9 +948,9 @@ bool scene::supportsSurfacelessContext() const
     return m_backend->supportsSurfacelessContext();
 }
 
-render::scene::EffectFrame* scene::createEffectFrame(EffectFrameImpl* frame)
+render::effect_frame* scene::createEffectFrame(EffectFrameImpl* frame)
 {
-    return new scene::EffectFrame(frame, this);
+    return new effect_frame(frame, this);
 }
 
 Shadow* scene::createShadow(Toplevel* toplevel)
@@ -1681,14 +1681,14 @@ bool window_pixmap::isValid() const
 }
 
 //****************************************
-// scene::EffectFrame
+// effect_frame
 //****************************************
 
-GLTexture* scene::EffectFrame::m_unstyledTexture = nullptr;
-QPixmap* scene::EffectFrame::m_unstyledPixmap = nullptr;
+GLTexture* effect_frame::m_unstyledTexture = nullptr;
+QPixmap* effect_frame::m_unstyledPixmap = nullptr;
 
-scene::EffectFrame::EffectFrame(EffectFrameImpl* frame, gl::scene* scene)
-    : render::scene::EffectFrame(frame)
+effect_frame::effect_frame(EffectFrameImpl* frame, gl::scene* scene)
+    : render::effect_frame(frame)
     , m_texture(nullptr)
     , m_textTexture(nullptr)
     , m_oldTextTexture(nullptr)
@@ -1701,7 +1701,7 @@ scene::EffectFrame::EffectFrame(EffectFrameImpl* frame, gl::scene* scene)
 {
 }
 
-scene::EffectFrame::~EffectFrame()
+effect_frame::~effect_frame()
 {
     delete m_texture;
     delete m_textTexture;
@@ -1713,7 +1713,7 @@ scene::EffectFrame::~EffectFrame()
     delete m_unstyledVBO;
 }
 
-void scene::EffectFrame::free()
+void effect_frame::free()
 {
     glFlush();
     delete m_texture;
@@ -1734,13 +1734,13 @@ void scene::EffectFrame::free()
     m_oldTextTexture = nullptr;
 }
 
-void scene::EffectFrame::freeIconFrame()
+void effect_frame::freeIconFrame()
 {
     delete m_iconTexture;
     m_iconTexture = nullptr;
 }
 
-void scene::EffectFrame::freeTextFrame()
+void effect_frame::freeTextFrame()
 {
     delete m_textTexture;
     m_textTexture = nullptr;
@@ -1748,27 +1748,27 @@ void scene::EffectFrame::freeTextFrame()
     m_textPixmap = nullptr;
 }
 
-void scene::EffectFrame::freeSelection()
+void effect_frame::freeSelection()
 {
     delete m_selectionTexture;
     m_selectionTexture = nullptr;
 }
 
-void scene::EffectFrame::crossFadeIcon()
+void effect_frame::crossFadeIcon()
 {
     delete m_oldIconTexture;
     m_oldIconTexture = m_iconTexture;
     m_iconTexture = nullptr;
 }
 
-void scene::EffectFrame::crossFadeText()
+void effect_frame::crossFadeText()
 {
     delete m_oldTextTexture;
     m_oldTextTexture = m_textTexture;
     m_textTexture = nullptr;
 }
 
-void scene::EffectFrame::render(QRegion region, double opacity, double frameOpacity)
+void effect_frame::render(QRegion region, double opacity, double frameOpacity)
 {
     if (m_effectFrame->geometry().isEmpty())
         return; // Nothing to display
@@ -2039,7 +2039,7 @@ void scene::EffectFrame::render(QRegion region, double opacity, double frameOpac
     glDisable(GL_BLEND);
 }
 
-void scene::EffectFrame::updateTexture()
+void effect_frame::updateTexture()
 {
     delete m_texture;
     m_texture = nullptr;
@@ -2049,7 +2049,7 @@ void scene::EffectFrame::updateTexture()
     }
 }
 
-void scene::EffectFrame::updateTextTexture()
+void effect_frame::updateTextTexture()
 {
     delete m_textTexture;
     m_textTexture = nullptr;
@@ -2084,7 +2084,7 @@ void scene::EffectFrame::updateTextTexture()
     m_textTexture = new GLTexture(*m_textPixmap);
 }
 
-void scene::EffectFrame::updateUnstyledTexture()
+void effect_frame::updateUnstyledTexture()
 {
     delete m_unstyledTexture;
     m_unstyledTexture = nullptr;
@@ -2103,7 +2103,7 @@ void scene::EffectFrame::updateUnstyledTexture()
     m_unstyledTexture = new GLTexture(*m_unstyledPixmap);
 }
 
-void scene::EffectFrame::cleanup()
+void effect_frame::cleanup()
 {
     delete m_unstyledTexture;
     m_unstyledTexture = nullptr;
