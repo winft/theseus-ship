@@ -1,5 +1,22 @@
 # Changelog
 All notable changes to KWinFT will be documented in this file.
+### [5.23.1](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.23.0...kwinft@5.23.1) (2021-11-30)
+
+
+### Bug Fixes
+
+* adapt to wlroots DRM lease changes ([140d7d2](https://gitlab.com/kwinft/kwinft/commit/140d7d209185c0223f4638a706654578f58705f3))
+* create GBM device with DRM file descriptor of renderer ([9aa21ac](https://gitlab.com/kwinft/kwinft/commit/9aa21acfd9fa2bc449a4130cd49a32b8f31155b8))
+* create wlroots renderer and allocator ourselves ([ee7f998](https://gitlab.com/kwinft/kwinft/commit/ee7f9980ba98a9ab4dd3792f7ea46a3eb8b765f4))
+* **deco:** check serials in move and resize requests ([8182837](https://gitlab.com/kwinft/kwinft/commit/818283739045e7e2c6df46392f63fe7635bf070a))
+* **deco:** ignore the move request for immovable windows ([76fb8d2](https://gitlab.com/kwinft/kwinft/commit/76fb8d21c0c26a7601a53487b714a4652b7c3308))
+* **input:** check on touch capability before accessing touch pool ([4d47897](https://gitlab.com/kwinft/kwinft/commit/4d47897f7cc5bfc1b56bc9798f8d13dc465a187c))
+* **input:** check on touch capability when cancelling a touch sequence ([ac7b326](https://gitlab.com/kwinft/kwinft/commit/ac7b3268dbc3dca13264b4d2d0dc86dc8fea0fdc))
+* **input:** listen for input config changes ([afb07b2](https://gitlab.com/kwinft/kwinft/commit/afb07b244c28d09aaeb0c8e070e5c71c2ac4e7c5))
+* install deprecated virtual keyboard D-Bus interface ([8b49dac](https://gitlab.com/kwinft/kwinft/commit/8b49dacb98d35a66b89b32884dfdbea9f82a029e))
+* **space:** dock with windows go below will be on top and the same layer of above windows ([c772e24](https://gitlab.com/kwinft/kwinft/commit/c772e2405044745f23c6df5667858e20fa95031a))
+* **space:** handle panels set to ¨Windows can cover¨ ([0b5a9ab](https://gitlab.com/kwinft/kwinft/commit/0b5a9ab86b18edae2590d078beccd4edafd69066))
+
 ## [5.23.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.23.0-beta.0...kwinft@5.23.0) (2021-10-14)
 
 
