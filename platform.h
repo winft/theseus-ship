@@ -67,7 +67,6 @@ namespace x11
 {
 class outline;
 class outline_visual;
-class overlay_window;
 }
 
 class compositor;
@@ -252,12 +251,6 @@ public:
     void setInitialOutputScale(qreal scale) {
         m_initialOutputScale = scale;
     }
-
-    /**
-     * Creates the overlay window required for X11 based compositors.
-     * Default implementation returns @c nullptr.
-     */
-    virtual render::x11::overlay_window* createOverlayWindow();
 
     /**
      * Queries the current X11 time stamp of the X server.

@@ -148,11 +148,6 @@ void Platform::setupActionForGlobalAccel(QAction *action)
     Q_UNUSED(action)
 }
 
-render::x11::overlay_window* Platform::createOverlayWindow()
-{
-    return nullptr;
-}
-
 static quint32 monotonicTime()
 {
     timespec ts;

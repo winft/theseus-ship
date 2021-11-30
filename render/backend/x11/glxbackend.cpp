@@ -17,7 +17,7 @@
 #include "render/compositor.h"
 #include "render/gl/texture.h"
 #include "render/scene.h"
-#include "render/x11/overlay_window.h"
+#include "render/x11/overlay_window_impl.h"
 #include "screens.h"
 #include "xcbutils.h"
 
@@ -92,7 +92,7 @@ bool SwapEventFilter::event(xcb_generic_event_t* event)
 
 GlxBackend::GlxBackend(Display* display)
     : gl::backend()
-    , m_overlayWindow(kwinApp()->platform->createOverlayWindow())
+    , m_overlayWindow(new render::x11::overlay_window_impl)
     , window(None)
     , fbconfig(nullptr)
     , glxWindow(None)
