@@ -49,7 +49,6 @@ class DecoratedClientImpl;
 class Renderer;
 }
 
-class AbstractThumbnailItem;
 class Deleted;
 class OverlayWindow;
 

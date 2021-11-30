@@ -58,15 +58,15 @@ class window;
 class window_property_notify_filter;
 }
 
-class AbstractThumbnailItem;
-class DesktopThumbnailItem;
-class WindowThumbnailItem;
-
 class Deleted;
 class Toplevel;
 
 namespace render
 {
+
+class basic_thumbnail_item;
+class desktop_thumbnail_item;
+class window_thumbnail_item;
 
 class effect_loader;
 class compositor;
@@ -558,12 +558,12 @@ public:
     void setData(int role, const QVariant& data) override;
     QVariant data(int role) const override;
 
-    void registerThumbnail(AbstractThumbnailItem* item);
-    QHash<WindowThumbnailItem*, QPointer<effects_window_impl>> const& thumbnails() const
+    void registerThumbnail(basic_thumbnail_item* item);
+    QHash<window_thumbnail_item*, QPointer<effects_window_impl>> const& thumbnails() const
     {
         return m_thumbnails;
     }
-    QList<DesktopThumbnailItem*> const& desktopThumbnails() const
+    QList<desktop_thumbnail_item*> const& desktopThumbnails() const
     {
         return m_desktopThumbnails;
     }
@@ -574,12 +574,12 @@ private Q_SLOTS:
     void desktopThumbnailDestroyed(QObject* object);
 
 private:
-    void insertThumbnail(WindowThumbnailItem* item);
+    void insertThumbnail(window_thumbnail_item* item);
     Toplevel* toplevel;
     render::window* sw; // This one is used only during paint pass.
     QHash<int, QVariant> dataMap;
-    QHash<WindowThumbnailItem*, QPointer<effects_window_impl>> m_thumbnails;
-    QList<DesktopThumbnailItem*> m_desktopThumbnails;
+    QHash<window_thumbnail_item*, QPointer<effects_window_impl>> m_thumbnails;
+    QList<desktop_thumbnail_item*> m_desktopThumbnails;
     bool managed = false;
     bool waylandClient;
     bool x11Client;

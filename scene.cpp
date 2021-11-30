@@ -514,7 +514,7 @@ void scene::paintWindow(window* w, paint_type mask, QRegion region, WindowQuadLi
     paintDesktopThumbnails(w);
 }
 
-static void adjustClipRegion(AbstractThumbnailItem* item, QRegion& clippingRegion)
+static void adjustClipRegion(basic_thumbnail_item* item, QRegion& clippingRegion)
 {
     if (item->clip() && item->clipTo()) {
         // the x/y positions of the parent item are not correct. The margins are added, though the
@@ -545,14 +545,14 @@ void scene::paintWindowThumbnails(window* w,
                                   qreal saturation)
 {
     auto wImpl = static_cast<effects_window_impl*>(effectWindow(w));
-    for (QHash<WindowThumbnailItem*, QPointer<effects_window_impl>>::const_iterator it
+    for (QHash<window_thumbnail_item*, QPointer<effects_window_impl>>::const_iterator it
          = wImpl->thumbnails().constBegin();
          it != wImpl->thumbnails().constEnd();
          ++it) {
         if (it.value().isNull()) {
             continue;
         }
-        WindowThumbnailItem* item = it.key();
+        window_thumbnail_item* item = it.key();
         if (!item->isVisible()) {
             continue;
         }
@@ -601,10 +601,11 @@ void scene::paintWindowThumbnails(window* w,
 void scene::paintDesktopThumbnails(window* w)
 {
     auto wImpl = static_cast<effects_window_impl*>(effectWindow(w));
-    for (QList<DesktopThumbnailItem*>::const_iterator it = wImpl->desktopThumbnails().constBegin();
+    for (QList<desktop_thumbnail_item*>::const_iterator it
+         = wImpl->desktopThumbnails().constBegin();
          it != wImpl->desktopThumbnails().constEnd();
          ++it) {
-        DesktopThumbnailItem* item = *it;
+        desktop_thumbnail_item* item = *it;
         if (!item->isVisible()) {
             continue;
         }

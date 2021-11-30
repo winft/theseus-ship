@@ -2295,16 +2295,16 @@ void effects_window_impl::elevate(bool elevate)
     effects->setElevatedWindow(this, elevate);
 }
 
-void effects_window_impl::registerThumbnail(AbstractThumbnailItem* item)
+void effects_window_impl::registerThumbnail(basic_thumbnail_item* item)
 {
-    if (WindowThumbnailItem* thumb = qobject_cast<WindowThumbnailItem*>(item)) {
+    if (auto thumb = qobject_cast<window_thumbnail_item*>(item)) {
         insertThumbnail(thumb);
         connect(thumb, &QObject::destroyed, this, &effects_window_impl::thumbnailDestroyed);
         connect(thumb,
-                &WindowThumbnailItem::wIdChanged,
+                &window_thumbnail_item::wIdChanged,
                 this,
                 &effects_window_impl::thumbnailTargetChanged);
-    } else if (DesktopThumbnailItem* desktopThumb = qobject_cast<DesktopThumbnailItem*>(item)) {
+    } else if (auto desktopThumb = qobject_cast<desktop_thumbnail_item*>(item)) {
         m_desktopThumbnails.append(desktopThumb);
         connect(desktopThumb,
                 &QObject::destroyed,
@@ -2315,18 +2315,18 @@ void effects_window_impl::registerThumbnail(AbstractThumbnailItem* item)
 
 void effects_window_impl::thumbnailDestroyed(QObject* object)
 {
-    // we know it is a ThumbnailItem
-    m_thumbnails.remove(static_cast<WindowThumbnailItem*>(object));
+    // we know it is a window_thumbnail_item
+    m_thumbnails.remove(static_cast<window_thumbnail_item*>(object));
 }
 
 void effects_window_impl::thumbnailTargetChanged()
 {
-    if (WindowThumbnailItem* item = qobject_cast<WindowThumbnailItem*>(sender())) {
+    if (auto item = qobject_cast<window_thumbnail_item*>(sender())) {
         insertThumbnail(item);
     }
 }
 
-void effects_window_impl::insertThumbnail(WindowThumbnailItem* item)
+void effects_window_impl::insertThumbnail(window_thumbnail_item* item)
 {
     EffectWindow* w = effects->findWindow(item->wId());
     if (w) {
@@ -2339,8 +2339,8 @@ void effects_window_impl::insertThumbnail(WindowThumbnailItem* item)
 
 void effects_window_impl::desktopThumbnailDestroyed(QObject* object)
 {
-    // we know it is a DesktopThumbnailItem
-    m_desktopThumbnails.removeAll(static_cast<DesktopThumbnailItem*>(object));
+    // we know it is a desktop_thumbnail_item
+    m_desktopThumbnails.removeAll(static_cast<desktop_thumbnail_item*>(object));
 }
 
 void effects_window_impl::minimize()
