@@ -162,7 +162,7 @@ public:
                  std::deque<Toplevel*> const& windows,
                  std::chrono::milliseconds presentTime) override;
     render::effect_frame* createEffectFrame(EffectFrameImpl* frame) override;
-    Shadow* createShadow(Toplevel* toplevel) override;
+    render::shadow* createShadow(Toplevel* toplevel) override;
     void screenGeometryChanged(const QSize& size) override;
     xcb_render_picture_t xrenderBufferPicture() const override;
     OverlayWindow* overlayWindow() const override
@@ -295,21 +295,21 @@ inline xcb_render_picture_t window_pixmap::picture() const
  * This class extends Shadow by the elements required for XRender rendering.
  * @author Jacopo De Simoi <wilderkde@gmail.org>
  */
-class shadow : public KWin::Shadow
+class shadow : public render::shadow
 {
 public:
     explicit shadow(Toplevel* toplevel);
-    using Shadow::ShadowElementBottom;
-    using Shadow::ShadowElementBottomLeft;
-    using Shadow::ShadowElementBottomRight;
-    using Shadow::ShadowElementLeft;
-    using Shadow::ShadowElementRight;
-    using Shadow::ShadowElements;
-    using Shadow::ShadowElementsCount;
-    using Shadow::ShadowElementTop;
-    using Shadow::ShadowElementTopLeft;
-    using Shadow::ShadowElementTopRight;
-    using Shadow::shadowPixmap;
+    using render::shadow::ShadowElementBottom;
+    using render::shadow::ShadowElementBottomLeft;
+    using render::shadow::ShadowElementBottomRight;
+    using render::shadow::ShadowElementLeft;
+    using render::shadow::ShadowElementRight;
+    using render::shadow::ShadowElements;
+    using render::shadow::ShadowElementsCount;
+    using render::shadow::ShadowElementTop;
+    using render::shadow::ShadowElementTopLeft;
+    using render::shadow::ShadowElementTopRight;
+    using render::shadow::shadowPixmap;
     ~shadow() override;
 
     void layoutShadowRects(QRect& top,

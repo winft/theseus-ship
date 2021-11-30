@@ -55,11 +55,11 @@ class Deleted;
 class EffectFrameImpl;
 class EffectWindowImpl;
 class OverlayWindow;
-class Shadow;
 
 namespace render
 {
 class effect_frame;
+class shadow;
 class window;
 class window_pixmap;
 
@@ -159,14 +159,14 @@ public:
      */
     virtual effect_frame* createEffectFrame(EffectFrameImpl* frame) = 0;
     /**
-     * @brief Creates the scene specific Shadow subclass.
+     * @brief Creates the scene specific shadow subclass.
      *
      * An implementing class has to create a proper instance. It is not allowed to
      * return @c null.
      *
      * @param toplevel The Toplevel for which the Shadow needs to be created.
      */
-    virtual Shadow* createShadow(Toplevel* toplevel) = 0;
+    virtual shadow* createShadow(Toplevel* toplevel) = 0;
     /**
      * Method invoked when the screen geometry is changed.
      * Reimplementing classes should also invoke the parent method
@@ -391,9 +391,9 @@ public:
     void updateToplevel(Toplevel* c);
     // creates initial quad list for the window
     WindowQuadList buildQuads(bool force = false) const;
-    void updateShadow(Shadow* shadow);
-    const Shadow* shadow() const;
-    Shadow* shadow();
+    void updateShadow(render::shadow* shadow);
+    render::shadow const* shadow() const;
+    render::shadow* shadow();
     void referencePreviousPixmap();
     void unreferencePreviousPixmap();
     void invalidateQuadsCache();
@@ -434,7 +434,7 @@ protected:
     virtual window_pixmap* createWindowPixmap() = 0;
     Toplevel* toplevel;
     image_filter_type filter;
-    Shadow* m_shadow;
+    render::shadow* m_shadow;
 
 private:
     QScopedPointer<window_pixmap> m_currentPixmap;
@@ -617,12 +617,12 @@ inline void window::updateToplevel(Toplevel* c)
     toplevel = c;
 }
 
-inline const Shadow* window::shadow() const
+inline render::shadow const* window::shadow() const
 {
     return m_shadow;
 }
 
-inline Shadow* window::shadow()
+inline render::shadow* window::shadow()
 {
     return m_shadow;
 }

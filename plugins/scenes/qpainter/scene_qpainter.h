@@ -47,7 +47,7 @@ public:
     CompositingType compositingType() const override;
     bool initFailed() const override;
     render::effect_frame* createEffectFrame(EffectFrameImpl* frame) override;
-    Shadow* createShadow(Toplevel* toplevel) override;
+    render::shadow* createShadow(Toplevel* toplevel) override;
     Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl* impl) override;
     void screenGeometryChanged(const QSize& size) override;
 
@@ -138,7 +138,7 @@ private:
     scene* m_scene;
 };
 
-class shadow : public KWin::Shadow
+class shadow : public render::shadow
 {
 public:
     shadow(Toplevel* toplevel);

@@ -186,7 +186,7 @@ render::effect_frame* scene::createEffectFrame(EffectFrameImpl* frame)
     return new effect_frame(frame, this);
 }
 
-Shadow* scene::createShadow(Toplevel* toplevel)
+render::shadow* scene::createShadow(Toplevel* toplevel)
 {
     return new shadow(toplevel);
 }
@@ -534,7 +534,7 @@ void effect_frame::render(QRegion region, double opacity, double frameOpacity)
 // QPainterShadow
 //****************************************
 shadow::shadow(Toplevel* toplevel)
-    : KWin::Shadow(toplevel)
+    : render::shadow(toplevel)
 {
 }
 

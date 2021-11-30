@@ -954,7 +954,7 @@ render::effect_frame* scene::createEffectFrame(EffectFrameImpl* frame)
     return new effect_frame(frame, this);
 }
 
-Shadow* scene::createShadow(Toplevel* toplevel)
+render::shadow* scene::createShadow(Toplevel* toplevel)
 {
     return new shadow(toplevel);
 }
@@ -2191,7 +2191,7 @@ QSharedPointer<GLTexture> DecorationShadowTextureCache::getTexture(gl::shadow* s
 }
 
 shadow::shadow(Toplevel* toplevel)
-    : Shadow(toplevel)
+    : render::shadow(toplevel)
 {
 }
 

@@ -337,7 +337,7 @@ render::effect_frame* scene::createEffectFrame(EffectFrameImpl* frame)
     return new effect_frame(frame);
 }
 
-Shadow* scene::createShadow(Toplevel* toplevel)
+render::shadow* scene::createShadow(Toplevel* toplevel)
 {
     return new shadow(toplevel);
 }
@@ -1287,7 +1287,7 @@ void effect_frame::updateTextPicture()
 }
 
 shadow::shadow(Toplevel* toplevel)
-    : Shadow(toplevel)
+    : render::shadow(toplevel)
 {
     for (int i = 0; i < ShadowElementsCount; ++i) {
         m_pictures[i] = nullptr;
@@ -1361,7 +1361,7 @@ void shadow::layoutShadowRects(QRect& top,
 
 void shadow::buildQuads()
 {
-    Shadow::buildQuads();
+    render::shadow::buildQuads();
 
     if (shadowQuads().count() == 0) {
         return;
@@ -1406,7 +1406,7 @@ bool shadow::prepareBackend()
     return true;
 }
 
-xcb_render_picture_t shadow::picture(Shadow::ShadowElements element) const
+xcb_render_picture_t shadow::picture(render::shadow::ShadowElements element) const
 {
     if (!m_pictures[element]) {
         return XCB_RENDER_PICTURE_NONE;

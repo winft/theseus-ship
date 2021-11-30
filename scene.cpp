@@ -1061,7 +1061,7 @@ void window::invalidateQuadsCache()
     cached_quad_list.reset();
 }
 
-void window::updateShadow(Shadow* shadow)
+void window::updateShadow(render::shadow* shadow)
 {
     if (m_shadow == shadow) {
         return;

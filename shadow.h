@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_SHADOW_H
-#define KWIN_SHADOW_H
+#pragma once
 
 #include <QObject>
 #include <QPixmap>
@@ -40,6 +39,9 @@ namespace KWin
 
 class Toplevel;
 
+namespace render
+{
+
 /**
  * @short Class representing a Window's Shadow to be rendered by the Compositor.
  *
@@ -55,11 +57,11 @@ class Toplevel;
  * @author Martin Gräßlin <mgraesslin@kde.org>
  * @todo React on Toplevel size changes.
  */
-class KWIN_EXPORT Shadow : public QObject
+class KWIN_EXPORT shadow : public QObject
 {
     Q_OBJECT
 public:
-    ~Shadow() override;
+    ~shadow() override;
 
     /**
      * @return Region of the shadow.
@@ -102,7 +104,7 @@ public:
      * @param toplevel The Toplevel for which the shadow should be created
      * @return Created Shadow or @c NULL in case there is no shadow defined.
      */
-    static Shadow* createShadow(Toplevel* toplevel);
+    static shadow* createShadow(Toplevel* toplevel);
 
     /**
      * Reparents the shadow to @p toplevel.
@@ -127,7 +129,7 @@ public Q_SLOTS:
     void geometryChanged();
 
 protected:
-    Shadow(Toplevel* toplevel);
+    shadow(Toplevel* toplevel);
     enum ShadowElements {
         ShadowElementTop,
         ShadowElementTopRight,
@@ -177,9 +179,9 @@ protected:
     void setShadowElement(const QPixmap& shadow, ShadowElements element);
 
 private:
-    static Shadow* createShadowFromX11(Toplevel* toplevel);
-    static Shadow* createShadowFromDecoration(Toplevel* toplevel);
-    static Shadow* createShadowFromWayland(Toplevel* toplevel);
+    static shadow* createShadowFromX11(Toplevel* toplevel);
+    static shadow* createShadowFromDecoration(Toplevel* toplevel);
+    static shadow* createShadowFromWayland(Toplevel* toplevel);
     static QVector<uint32_t> readX11ShadowProperty(xcb_window_t id);
     bool init(const QVector<uint32_t>& data);
     bool init(KDecoration2::Decoration* decoration);
@@ -200,5 +202,4 @@ private:
 };
 
 }
-
-#endif // KWIN_SHADOW_H
+}

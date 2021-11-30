@@ -58,7 +58,7 @@ public:
                   std::chrono::milliseconds presentTime) override;
 
     render::effect_frame* createEffectFrame(EffectFrameImpl* frame) override;
-    Shadow* createShadow(Toplevel* toplevel) override;
+    render::shadow* createShadow(Toplevel* toplevel) override;
     void screenGeometryChanged(const QSize& size) override;
     OverlayWindow* overlayWindow() const override;
     bool usesOverlayWindow() const override;
@@ -283,7 +283,7 @@ private:
  * This class extends Shadow by the Elements required for OpenGL rendering.
  * @author Martin Gräßlin <mgraesslin@kde.org>
  */
-class shadow : public KWin::Shadow
+class shadow : public render::shadow
 {
 public:
     explicit shadow(Toplevel* toplevel);

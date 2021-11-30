@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "shadow.h"
-// kwin
+
 #include "atoms.h"
 #include "effects.h"
 #include "render/compositor.h"
@@ -34,27 +34,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/shadow.h>
 #include <Wrapland/Server/surface.h>
 
-namespace KWin
+namespace KWin::render
 {
 
-Shadow::Shadow(Toplevel* toplevel)
+shadow::shadow(Toplevel* toplevel)
     : m_topLevel(toplevel)
     , m_cachedSize(toplevel->size())
     , m_decorationShadow(nullptr)
 {
-    connect(m_topLevel, &Toplevel::frame_geometry_changed, this, &Shadow::geometryChanged);
+    QObject::connect(m_topLevel, &Toplevel::frame_geometry_changed, this, &shadow::geometryChanged);
 }
 
-Shadow::~Shadow()
+shadow::~shadow()
 {
 }
 
-Shadow* Shadow::createShadow(Toplevel* toplevel)
+shadow* shadow::createShadow(Toplevel* toplevel)
 {
     if (!effects) {
         return nullptr;
     }
-    Shadow* shadow = createShadowFromDecoration(toplevel);
+    auto shadow = createShadowFromDecoration(toplevel);
     if (!shadow && kwinApp()->operationMode() != Application::OperationModeX11) {
         shadow = createShadowFromWayland(toplevel);
     }
@@ -71,11 +71,11 @@ Shadow* Shadow::createShadow(Toplevel* toplevel)
     return shadow;
 }
 
-Shadow* Shadow::createShadowFromX11(Toplevel* toplevel)
+shadow* shadow::createShadowFromX11(Toplevel* toplevel)
 {
-    auto data = Shadow::readX11ShadowProperty(toplevel->xcb_window());
+    auto data = shadow::readX11ShadowProperty(toplevel->xcb_window());
     if (!data.isEmpty()) {
-        Shadow* shadow = render::compositor::self()->scene()->createShadow(toplevel);
+        auto shadow = render::compositor::self()->scene()->createShadow(toplevel);
 
         if (!shadow->init(data)) {
             delete shadow;
@@ -87,7 +87,7 @@ Shadow* Shadow::createShadowFromX11(Toplevel* toplevel)
     }
 }
 
-Shadow* Shadow::createShadowFromDecoration(Toplevel* toplevel)
+shadow* shadow::createShadowFromDecoration(Toplevel* toplevel)
 {
     if (!toplevel || !toplevel->control) {
         return nullptr;
@@ -95,7 +95,7 @@ Shadow* Shadow::createShadowFromDecoration(Toplevel* toplevel)
     if (!win::decoration(toplevel)) {
         return nullptr;
     }
-    Shadow* shadow = render::compositor::self()->scene()->createShadow(toplevel);
+    auto shadow = render::compositor::self()->scene()->createShadow(toplevel);
     if (!shadow->init(win::decoration(toplevel))) {
         delete shadow;
         return nullptr;
@@ -103,7 +103,7 @@ Shadow* Shadow::createShadowFromDecoration(Toplevel* toplevel)
     return shadow;
 }
 
-Shadow* Shadow::createShadowFromWayland(Toplevel* toplevel)
+shadow* shadow::createShadowFromWayland(Toplevel* toplevel)
 {
     auto surface = toplevel->surface();
     if (!surface) {
@@ -113,7 +113,7 @@ Shadow* Shadow::createShadowFromWayland(Toplevel* toplevel)
     if (!s) {
         return nullptr;
     }
-    Shadow* shadow = render::compositor::self()->scene()->createShadow(toplevel);
+    auto shadow = render::compositor::self()->scene()->createShadow(toplevel);
     if (!shadow->init(s)) {
         delete shadow;
         return nullptr;
@@ -121,7 +121,7 @@ Shadow* Shadow::createShadowFromWayland(Toplevel* toplevel)
     return shadow;
 }
 
-QVector<uint32_t> Shadow::readX11ShadowProperty(xcb_window_t id)
+QVector<uint32_t> shadow::readX11ShadowProperty(xcb_window_t id)
 {
     QVector<uint32_t> ret;
     if (id != XCB_WINDOW_NONE) {
@@ -137,7 +137,7 @@ QVector<uint32_t> Shadow::readX11ShadowProperty(xcb_window_t id)
     return ret;
 }
 
-bool Shadow::init(const QVector<uint32_t>& data)
+bool shadow::init(const QVector<uint32_t>& data)
 {
     QVector<Xcb::WindowGeometry> pixmapGeometries(ShadowElementsCount);
     QVector<xcb_get_image_cookie_t> getImageCookies(ShadowElementsCount);
@@ -182,7 +182,7 @@ bool Shadow::init(const QVector<uint32_t>& data)
     return true;
 }
 
-bool Shadow::init(KDecoration2::Decoration* decoration)
+bool shadow::init(KDecoration2::Decoration* decoration)
 {
     if (m_decorationShadow) {
         // disconnect previous connections
@@ -231,7 +231,7 @@ bool Shadow::init(KDecoration2::Decoration* decoration)
     return true;
 }
 
-bool Shadow::init(const QPointer<Wrapland::Server::Shadow>& shadow)
+bool shadow::init(const QPointer<Wrapland::Server::Shadow>& shadow)
 {
     if (!shadow) {
         return false;
@@ -275,7 +275,7 @@ bool Shadow::init(const QPointer<Wrapland::Server::Shadow>& shadow)
     return true;
 }
 
-void Shadow::updateShadowRegion()
+void shadow::updateShadowRegion()
 {
     auto const size = m_topLevel->size();
     const QRect top(0, -m_topOffset, size.width(), m_topOffset);
@@ -287,7 +287,7 @@ void Shadow::updateShadowRegion()
     m_shadowRegion = QRegion(top).united(right).united(bottom).united(left);
 }
 
-void Shadow::buildQuads()
+void shadow::buildQuads()
 {
     // prepare window quads
     m_shadowQuads.clear();
@@ -390,7 +390,7 @@ void Shadow::buildQuads()
     m_shadowQuads.append(leftQuad);
 }
 
-bool Shadow::updateShadow()
+bool shadow::updateShadow()
 {
     if (!m_topLevel) {
         return false;
@@ -417,7 +417,7 @@ bool Shadow::updateShadow()
         }
     }
 
-    auto data = Shadow::readX11ShadowProperty(m_topLevel->xcb_window());
+    auto data = shadow::readX11ShadowProperty(m_topLevel->xcb_window());
     if (data.isEmpty()) {
         return false;
     }
@@ -427,14 +427,14 @@ bool Shadow::updateShadow()
     return true;
 }
 
-void Shadow::setToplevel(Toplevel* topLevel)
+void shadow::setToplevel(Toplevel* topLevel)
 {
     // TODO(romangg): This function works because it is only used to change the toplevel to the
     //                remnant. But in general this would not clean up the connection from the ctor.
     m_topLevel = topLevel;
-    connect(m_topLevel, &Toplevel::frame_geometry_changed, this, &Shadow::geometryChanged);
+    connect(m_topLevel, &Toplevel::frame_geometry_changed, this, &shadow::geometryChanged);
 }
-void Shadow::geometryChanged()
+void shadow::geometryChanged()
 {
     if (m_cachedSize == m_topLevel->size()) {
         return;
@@ -444,7 +444,7 @@ void Shadow::geometryChanged()
     buildQuads();
 }
 
-QImage Shadow::decorationShadowImage() const
+QImage shadow::decorationShadowImage() const
 {
     if (!m_decorationShadow) {
         return QImage();
@@ -452,7 +452,7 @@ QImage Shadow::decorationShadowImage() const
     return m_decorationShadow->shadow();
 }
 
-QSize Shadow::elementSize(Shadow::ShadowElements element) const
+QSize shadow::elementSize(shadow::ShadowElements element) const
 {
     if (m_decorationShadow) {
         switch (element) {
@@ -480,12 +480,12 @@ QSize Shadow::elementSize(Shadow::ShadowElements element) const
     }
 }
 
-QMargins Shadow::margins() const
+QMargins shadow::margins() const
 {
     return QMargins(m_leftOffset, m_topOffset, m_rightOffset, m_topOffset);
 }
 
-void Shadow::setShadowElement(const QPixmap& shadow, Shadow::ShadowElements element)
+void shadow::setShadowElement(const QPixmap& shadow, shadow::ShadowElements element)
 {
     m_shadowElements[element] = shadow;
 }

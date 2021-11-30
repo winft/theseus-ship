@@ -702,7 +702,7 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
 
     QVERIFY(client->effectWindow());
     QVERIFY(client->effectWindow()->sceneWindow());
-    KWin::Shadow* shadow = client->effectWindow()->sceneWindow()->shadow();
+    auto shadow = client->effectWindow()->sceneWindow()->shadow();
     QVERIFY(shadow != nullptr);
 
     const WindowQuadList& quads = shadow->shadowQuads();
@@ -788,7 +788,7 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
 
     QVERIFY(client->effectWindow());
     QVERIFY(client->effectWindow()->sceneWindow());
-    KWin::Shadow* shadow = client->effectWindow()->sceneWindow()->shadow();
+    auto shadow = client->effectWindow()->sceneWindow()->shadow();
     QVERIFY(shadow != nullptr);
 
     WindowQuadList expectedQuads;
