@@ -98,11 +98,6 @@ void backend::setFailed(const QString& reason)
     m_failed = true;
 }
 
-x11::overlay_window* backend::overlayWindow()
-{
-    return m_overlayWindow.data();
-}
-
 void backend::showOverlay()
 {
     if (m_overlayWindow->window()) // show the window only after the first pass, since
@@ -213,11 +208,6 @@ void backend::screenGeometryChanged(const QSize& size)
     init(false);
 }
 
-bool backend::usesOverlayWindow() const
-{
-    return true;
-}
-
 //****************************************
 // scene
 //****************************************
@@ -311,6 +301,16 @@ render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)
 render::shadow* scene::createShadow(Toplevel* toplevel)
 {
     return new shadow(toplevel);
+}
+
+x11::overlay_window* scene::overlayWindow() const
+{
+    return m_backend->m_overlayWindow.data();
+}
+
+bool scene::usesOverlayWindow() const
+{
+    return true;
 }
 
 Decoration::Renderer* scene::createDecorationRenderer(Decoration::DecoratedClientImpl* client)

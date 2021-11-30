@@ -47,18 +47,6 @@ public:
     void present(paint_type mask, const QRegion& damage);
 
     /**
-     * @brief Returns the overlay window used by the backend.
-     *
-     * A backend does not have to use an overlay window, this is mostly for the X world.
-     * In case the backend does not use an overlay window it is allowed to return @c null.
-     * It's the task of the caller to check whether it is @c null.
-     *
-     * @return x11::overlay_window*
-     */
-    x11::overlay_window* overlayWindow();
-    bool usesOverlayWindow() const;
-
-    /**
      * @brief Shows the Overlay Window
      *
      * Default implementation does nothing.
@@ -99,6 +87,8 @@ public:
         return m_failed;
     }
 
+    QScopedPointer<x11::overlay_window> m_overlayWindow;
+
 private:
     /**
      * @brief A subclass needs to call this method once it created the compositing back buffer.
@@ -125,7 +115,6 @@ private:
     xcb_render_picture_t m_buffer{XCB_RENDER_PICTURE_NONE};
     bool m_failed{false};
 
-    QScopedPointer<x11::overlay_window> m_overlayWindow;
     xcb_render_picture_t m_front{XCB_RENDER_PICTURE_NONE};
     xcb_render_pictformat_t m_format{0};
 };
@@ -148,14 +137,8 @@ public:
     render::shadow* createShadow(Toplevel* toplevel) override;
     void screenGeometryChanged(const QSize& size) override;
     xcb_render_picture_t xrenderBufferPicture() const override;
-    x11::overlay_window* overlayWindow() const override
-    {
-        return m_backend->overlayWindow();
-    }
-    bool usesOverlayWindow() const override
-    {
-        return m_backend->usesOverlayWindow();
-    }
+    x11::overlay_window* overlayWindow() const override;
+    bool usesOverlayWindow() const override;
     Decoration::Renderer*
     createDecorationRenderer(Decoration::DecoratedClientImpl* client) override;
 
