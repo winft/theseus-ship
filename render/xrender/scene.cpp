@@ -57,7 +57,7 @@ ScreenPaintData scene::screen_paint;
 // backend
 //****************************************
 backend::backend()
-    : m_overlayWindow(new render::x11::overlay_window_impl)
+    : overlay_window{std::make_unique<render::x11::overlay_window_impl>()}
 {
     if (!Xcb::Extensions::self()->isRenderAvailable()) {
         setFailed("No XRender extension available");
@@ -77,7 +77,7 @@ backend::~backend()
         xcb_render_free_picture(connection(), m_front);
     }
 
-    m_overlayWindow->destroy();
+    overlay_window->destroy();
 
     if (m_buffer) {
         xcb_render_free_picture(connection(), m_buffer);
@@ -100,21 +100,23 @@ void backend::setFailed(const QString& reason)
 
 void backend::showOverlay()
 {
-    if (m_overlayWindow->window()) // show the window only after the first pass, since
-        m_overlayWindow->show();   // that pass may take long
+    // Show the window only after the first pass, since that pass may take long.
+    if (overlay_window->window()) {
+        overlay_window->show();
+    }
 }
 
 void backend::init(bool createOverlay)
 {
     if (m_front != XCB_RENDER_PICTURE_NONE)
         xcb_render_free_picture(connection(), m_front);
-    bool haveOverlay = createOverlay ? m_overlayWindow->create()
-                                     : (m_overlayWindow->window() != XCB_WINDOW_NONE);
+    bool haveOverlay
+        = createOverlay ? overlay_window->create() : (overlay_window->window() != XCB_WINDOW_NONE);
     if (haveOverlay) {
-        m_overlayWindow->setup(XCB_WINDOW_NONE);
+        overlay_window->setup(XCB_WINDOW_NONE);
         ScopedCPointer<xcb_get_window_attributes_reply_t> attribs(xcb_get_window_attributes_reply(
             connection(),
-            xcb_get_window_attributes_unchecked(connection(), m_overlayWindow->window()),
+            xcb_get_window_attributes_unchecked(connection(), overlay_window->window()),
             nullptr));
         if (!attribs) {
             setFailed("Failed getting window attributes for overlay window");
@@ -127,7 +129,7 @@ void backend::init(bool createOverlay)
         }
         m_front = xcb_generate_id(connection());
         xcb_render_create_picture(
-            connection(), m_front, m_overlayWindow->window(), m_format, 0, nullptr);
+            connection(), m_front, overlay_window->window(), m_format, 0, nullptr);
     } else {
         // create XRender picture for the root window
         m_format = XRenderUtils::findPictFormat(defaultScreen()->root_visual);
@@ -305,7 +307,7 @@ render::shadow* scene::createShadow(Toplevel* toplevel)
 
 x11::overlay_window* scene::overlayWindow() const
 {
-    return m_backend->m_overlayWindow.data();
+    return m_backend->overlay_window.get();
 }
 
 bool scene::usesOverlayWindow() const

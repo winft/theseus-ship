@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/scene.h"
 #include "render/shadow.h"
 
+#include <memory>
+
 namespace KWin
 {
 
@@ -87,7 +89,7 @@ public:
         return m_failed;
     }
 
-    QScopedPointer<x11::overlay_window> m_overlayWindow;
+    std::unique_ptr<x11::overlay_window> overlay_window;
 
 private:
     /**
