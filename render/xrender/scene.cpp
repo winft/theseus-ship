@@ -57,8 +57,7 @@ ScreenPaintData scene::screen_paint;
 // backend
 //****************************************
 backend::backend()
-    : m_buffer(XCB_RENDER_PICTURE_NONE)
-    , m_failed(false)
+    : m_overlayWindow(new render::x11::overlay_window_impl)
 {
     if (!Xcb::Extensions::self()->isRenderAvailable()) {
         setFailed("No XRender extension available");
@@ -68,22 +67,21 @@ backend::backend()
         setFailed("No XFixes v3+ extension available");
         return;
     }
+
+    init(true);
 }
 
 backend::~backend()
 {
+    if (m_front) {
+        xcb_render_free_picture(connection(), m_front);
+    }
+
+    m_overlayWindow->destroy();
+
     if (m_buffer) {
         xcb_render_free_picture(connection(), m_buffer);
     }
-}
-
-x11::overlay_window* backend::overlayWindow()
-{
-    return nullptr;
-}
-
-void backend::showOverlay()
-{
 }
 
 void backend::setBuffer(xcb_render_picture_t buffer)
@@ -100,42 +98,18 @@ void backend::setFailed(const QString& reason)
     m_failed = true;
 }
 
-void backend::screenGeometryChanged(const QSize& size)
-{
-    Q_UNUSED(size)
-}
-
-//****************************************
-// x11_overlay_backend
-//****************************************
-x11_overlay_backend::x11_overlay_backend()
-    : m_overlayWindow(new render::x11::overlay_window_impl)
-    , m_front(XCB_RENDER_PICTURE_NONE)
-    , m_format(0)
-{
-    init(true);
-}
-
-x11_overlay_backend::~x11_overlay_backend()
-{
-    if (m_front) {
-        xcb_render_free_picture(connection(), m_front);
-    }
-    m_overlayWindow->destroy();
-}
-
-x11::overlay_window* x11_overlay_backend::overlayWindow()
+x11::overlay_window* backend::overlayWindow()
 {
     return m_overlayWindow.data();
 }
 
-void x11_overlay_backend::showOverlay()
+void backend::showOverlay()
 {
     if (m_overlayWindow->window()) // show the window only after the first pass, since
         m_overlayWindow->show();   // that pass may take long
 }
 
-void x11_overlay_backend::init(bool createOverlay)
+void backend::init(bool createOverlay)
 {
     if (m_front != XCB_RENDER_PICTURE_NONE)
         xcb_render_free_picture(connection(), m_front);
@@ -174,7 +148,7 @@ void x11_overlay_backend::init(bool createOverlay)
     createBuffer();
 }
 
-void x11_overlay_backend::createBuffer()
+void backend::createBuffer()
 {
     xcb_pixmap_t pixmap = xcb_generate_id(connection());
     const auto displaySize = screens()->displaySize();
@@ -190,7 +164,7 @@ void x11_overlay_backend::createBuffer()
     setBuffer(b);
 }
 
-void x11_overlay_backend::present(paint_type mask, const QRegion& damage)
+void backend::present(paint_type mask, const QRegion& damage)
 {
     const auto displaySize = screens()->displaySize();
     if (flags(mask & paint_type::screen_region)) {
@@ -233,13 +207,13 @@ void x11_overlay_backend::present(paint_type mask, const QRegion& damage)
     }
 }
 
-void x11_overlay_backend::screenGeometryChanged(const QSize& size)
+void backend::screenGeometryChanged(const QSize& size)
 {
     Q_UNUSED(size)
     init(false);
 }
 
-bool x11_overlay_backend::usesOverlayWindow() const
+bool backend::usesOverlayWindow() const
 {
     return true;
 }
@@ -251,7 +225,7 @@ bool x11_overlay_backend::usesOverlayWindow() const
 scene* scene::createScene(QObject* parent)
 {
     QScopedPointer<xrender::backend> backend;
-    backend.reset(new x11_overlay_backend);
+    backend.reset(new xrender::backend);
     if (backend->isFailed()) {
         return nullptr;
     }

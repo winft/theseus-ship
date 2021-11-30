@@ -36,16 +36,15 @@ namespace render::xrender
 
 /**
  * @brief Backend for the scene to hold the compositing buffer and take care of buffer
- * swapping.
- *
- * This class is intended as a small abstraction to support multiple compositing backends in the
- * scene.
+ * swapping. Using an X11 Overlay Window as compositing target.
  */
 class backend
 {
 public:
-    virtual ~backend();
-    virtual void present(paint_type mask, const QRegion& damage) = 0;
+    backend();
+    ~backend();
+
+    void present(paint_type mask, const QRegion& damage);
 
     /**
      * @brief Returns the overlay window used by the backend.
@@ -56,14 +55,16 @@ public:
      *
      * @return x11::overlay_window*
      */
-    virtual x11::overlay_window* overlayWindow();
-    virtual bool usesOverlayWindow() const = 0;
+    x11::overlay_window* overlayWindow();
+    bool usesOverlayWindow() const;
+
     /**
      * @brief Shows the Overlay Window
      *
      * Default implementation does nothing.
      */
-    virtual void showOverlay();
+    void showOverlay();
+
     /**
      * @brief React on screen geometry changes.
      *
@@ -71,7 +72,8 @@ public:
      *
      * @param size The new screen size
      */
-    virtual void screenGeometryChanged(const QSize& size);
+    void screenGeometryChanged(const QSize& size);
+
     /**
      * @brief The compositing buffer hold by this backend.
      *
@@ -83,6 +85,7 @@ public:
     {
         return m_buffer;
     }
+
     /**
      * @brief Whether the creation of the Backend failed.
      *
@@ -96,8 +99,7 @@ public:
         return m_failed;
     }
 
-protected:
-    backend();
+private:
     /**
      * @brief A subclass needs to call this method once it created the compositing back buffer.
      *
@@ -115,34 +117,17 @@ protected:
      */
     void setFailed(const QString& reason);
 
-private:
-    // Create the compositing buffer. The root window is not double-buffered,
-    // so it is done manually using this buffer,
-    xcb_render_picture_t m_buffer;
-    bool m_failed;
-};
-
-/**
- * @brief backend using an X11 Overlay Window as compositing target.
- */
-class x11_overlay_backend : public backend
-{
-public:
-    x11_overlay_backend();
-    ~x11_overlay_backend() override;
-
-    void present(paint_type mask, const QRegion& damage) override;
-    x11::overlay_window* overlayWindow() override;
-    void showOverlay() override;
-    void screenGeometryChanged(const QSize& size) override;
-    bool usesOverlayWindow() const override;
-
-private:
     void init(bool createOverlay);
     void createBuffer();
+
+    // Create the compositing buffer. The root window is not double-buffered,
+    // so it is done manually using this buffer,
+    xcb_render_picture_t m_buffer{XCB_RENDER_PICTURE_NONE};
+    bool m_failed{false};
+
     QScopedPointer<x11::overlay_window> m_overlayWindow;
-    xcb_render_picture_t m_front;
-    xcb_render_pictformat_t m_format;
+    xcb_render_picture_t m_front{XCB_RENDER_PICTURE_NONE};
+    xcb_render_pictformat_t m_format{0};
 };
 
 class scene : public render::scene
