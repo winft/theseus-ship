@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "abstract_opengl_context_attribute_builder.h"
 
-namespace KWin
+namespace KWin::render::gl
 {
 
-QDebug AbstractOpenGLContextAttributeBuilder::operator<<(QDebug dbg) const
+QDebug context_attribute_builder::operator<<(QDebug dbg) const
 {
     QDebugStateSaver saver(dbg);
     dbg.nospace() << "\nVersion requested:\t" << isVersionRequested() << "\n";

@@ -21,13 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <kwin_export.h>
 
-namespace KWin
+namespace KWin::render::gl
 {
 
-class KWIN_EXPORT AbstractOpenGLContextAttributeBuilder
+class KWIN_EXPORT context_attribute_builder
 {
 public:
-    virtual ~AbstractOpenGLContextAttributeBuilder()
+    virtual ~context_attribute_builder()
     {
     }
 
@@ -135,7 +135,7 @@ private:
     bool m_highPriority = false;
 };
 
-inline QDebug operator<<(QDebug dbg, const AbstractOpenGLContextAttributeBuilder* attribs)
+inline QDebug operator<<(QDebug dbg, const context_attribute_builder* attribs)
 {
     return attribs->operator<<(dbg);
 }

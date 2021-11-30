@@ -18,11 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "egl_context_attribute_builder.h"
+
 #include <epoxy/egl.h>
 
-namespace KWin
+namespace KWin::render::gl
 {
-std::vector<int> EglContextAttributeBuilder::build() const
+
+std::vector<int> egl_context_attribute_builder::build() const
 {
     std::vector<int> attribs;
     if (isVersionRequested()) {
@@ -60,7 +62,7 @@ std::vector<int> EglContextAttributeBuilder::build() const
     return attribs;
 }
 
-std::vector<int> EglOpenGLESContextAttributeBuilder::build() const
+std::vector<int> egl_gles_context_attribute_builder::build() const
 {
     std::vector<int> attribs;
     attribs.emplace_back(EGL_CONTEXT_CLIENT_VERSION);

@@ -232,67 +232,68 @@ bool egl_backend::createContext()
     const bool haveCreateContext = hasExtension(QByteArrayLiteral("EGL_KHR_create_context"));
     const bool haveContextPriority = hasExtension(QByteArrayLiteral("EGL_IMG_context_priority"));
 
-    std::vector<std::unique_ptr<AbstractOpenGLContextAttributeBuilder>> candidates;
+    std::vector<std::unique_ptr<context_attribute_builder>> candidates;
+
     if (isOpenGLES()) {
         if (haveCreateContext && haveRobustness && haveContextPriority) {
-            auto glesRobustPriority = std::make_unique<EglOpenGLESContextAttributeBuilder>();
+            auto glesRobustPriority = std::make_unique<egl_gles_context_attribute_builder>();
             glesRobustPriority->setVersion(2);
             glesRobustPriority->setRobust(true);
             glesRobustPriority->setHighPriority(true);
             candidates.push_back(std::move(glesRobustPriority));
         }
         if (haveCreateContext && haveRobustness) {
-            auto glesRobust = std::make_unique<EglOpenGLESContextAttributeBuilder>();
+            auto glesRobust = std::make_unique<egl_gles_context_attribute_builder>();
             glesRobust->setVersion(2);
             glesRobust->setRobust(true);
             candidates.push_back(std::move(glesRobust));
         }
         if (haveContextPriority) {
-            auto glesPriority = std::make_unique<EglOpenGLESContextAttributeBuilder>();
+            auto glesPriority = std::make_unique<egl_gles_context_attribute_builder>();
             glesPriority->setVersion(2);
             glesPriority->setHighPriority(true);
             candidates.push_back(std::move(glesPriority));
         }
-        auto gles = std::make_unique<EglOpenGLESContextAttributeBuilder>();
+        auto gles = std::make_unique<egl_gles_context_attribute_builder>();
         gles->setVersion(2);
         candidates.push_back(std::move(gles));
     } else {
         if (options->glCoreProfile() && haveCreateContext) {
             if (haveRobustness && haveContextPriority) {
-                auto robustCorePriority = std::make_unique<EglContextAttributeBuilder>();
+                auto robustCorePriority = std::make_unique<egl_context_attribute_builder>();
                 robustCorePriority->setVersion(3, 1);
                 robustCorePriority->setRobust(true);
                 robustCorePriority->setHighPriority(true);
                 candidates.push_back(std::move(robustCorePriority));
             }
             if (haveRobustness) {
-                auto robustCore = std::make_unique<EglContextAttributeBuilder>();
+                auto robustCore = std::make_unique<egl_context_attribute_builder>();
                 robustCore->setVersion(3, 1);
                 robustCore->setRobust(true);
                 candidates.push_back(std::move(robustCore));
             }
             if (haveContextPriority) {
-                auto corePriority = std::make_unique<EglContextAttributeBuilder>();
+                auto corePriority = std::make_unique<egl_context_attribute_builder>();
                 corePriority->setVersion(3, 1);
                 corePriority->setHighPriority(true);
                 candidates.push_back(std::move(corePriority));
             }
-            auto core = std::make_unique<EglContextAttributeBuilder>();
+            auto core = std::make_unique<egl_context_attribute_builder>();
             core->setVersion(3, 1);
             candidates.push_back(std::move(core));
         }
         if (haveRobustness && haveCreateContext && haveContextPriority) {
-            auto robustPriority = std::make_unique<EglContextAttributeBuilder>();
+            auto robustPriority = std::make_unique<egl_context_attribute_builder>();
             robustPriority->setRobust(true);
             robustPriority->setHighPriority(true);
             candidates.push_back(std::move(robustPriority));
         }
         if (haveRobustness && haveCreateContext) {
-            auto robust = std::make_unique<EglContextAttributeBuilder>();
+            auto robust = std::make_unique<egl_context_attribute_builder>();
             robust->setRobust(true);
             candidates.push_back(std::move(robust));
         }
-        candidates.emplace_back(new EglContextAttributeBuilder);
+        candidates.emplace_back(new egl_context_attribute_builder);
     }
 
     EGLContext ctx = EGL_NO_CONTEXT;
