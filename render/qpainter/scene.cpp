@@ -94,10 +94,10 @@ void scene::paintGenericScreen(paint_type mask, ScreenPaintData data)
     m_painter->restore();
 }
 
-int64_t scene::paint(base::output* output,
-                     QRegion damage,
-                     std::deque<Toplevel*> const& toplevels,
-                     std::chrono::milliseconds presentTime)
+int64_t scene::paint_output(base::output* output,
+                            QRegion damage,
+                            std::deque<Toplevel*> const& toplevels,
+                            std::chrono::milliseconds presentTime)
 {
     QElapsedTimer renderTimer;
     renderTimer.start();

@@ -127,13 +127,13 @@ public:
      * @param windows provides the stacking order
      * @return the elapsed time in ns
      */
-    virtual qint64 paint(QRegion damage,
-                         std::deque<Toplevel*> const& windows,
-                         std::chrono::milliseconds presentTime);
-    virtual int64_t paint(base::output* output,
-                          QRegion damage,
+    virtual int64_t paint(QRegion damage,
                           std::deque<Toplevel*> const& windows,
                           std::chrono::milliseconds presentTime);
+    virtual int64_t paint_output(base::output* output,
+                                 QRegion damage,
+                                 std::deque<Toplevel*> const& windows,
+                                 std::chrono::milliseconds presentTime);
 
     /**
      * Adds the Toplevel to the scene.

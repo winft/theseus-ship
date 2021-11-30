@@ -242,9 +242,9 @@ bool scene::initFailed() const
 }
 
 // the entry point for painting
-qint64 scene::paint(QRegion damage,
-                    std::deque<Toplevel*> const& toplevels,
-                    std::chrono::milliseconds presentTime)
+int64_t scene::paint(QRegion damage,
+                     std::deque<Toplevel*> const& toplevels,
+                     std::chrono::milliseconds presentTime)
 {
     QElapsedTimer renderTimer;
     renderTimer.start();

@@ -102,18 +102,18 @@ scene::~scene()
     Q_ASSERT(m_windows.isEmpty());
 }
 
-qint64 scene::paint([[maybe_unused]] QRegion damage,
-                    [[maybe_unused]] std::deque<Toplevel*> const& windows,
-                    [[maybe_unused]] std::chrono::milliseconds presentTime)
+int64_t scene::paint(QRegion /*damage*/,
+                     std::deque<Toplevel*> const& /*windows*/,
+                     std::chrono::milliseconds /*presentTime*/)
 {
     assert(false);
     return 0;
 }
 
-int64_t scene::paint([[maybe_unused]] base::output* output,
-                     [[maybe_unused]] QRegion damage,
-                     [[maybe_unused]] std::deque<Toplevel*> const& windows,
-                     [[maybe_unused]] std::chrono::milliseconds presentTime)
+int64_t scene::paint_output(base::output* /*output*/,
+                            QRegion /*damage*/,
+                            std::deque<Toplevel*> const& /*windows*/,
+                            std::chrono::milliseconds /*presentTime*/)
 {
     assert(false);
     return 0;

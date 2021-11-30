@@ -38,10 +38,10 @@ public:
     bool usesOverlayWindow() const override;
     render::x11::overlay_window* overlayWindow() const override;
 
-    int64_t paint(base::output* output,
-                  QRegion damage,
-                  std::deque<Toplevel*> const& windows,
-                  std::chrono::milliseconds presentTime) override;
+    int64_t paint_output(base::output* output,
+                         QRegion damage,
+                         std::deque<Toplevel*> const& windows,
+                         std::chrono::milliseconds presentTime) override;
 
     void paintGenericScreen(paint_type mask, ScreenPaintData data) override;
 

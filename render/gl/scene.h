@@ -48,13 +48,13 @@ public:
     bool initFailed() const override;
     bool hasPendingFlush() const override;
 
-    qint64 paint(QRegion damage,
-                 std::deque<Toplevel*> const& windows,
-                 std::chrono::milliseconds presentTime) override;
-    int64_t paint(base::output* output,
-                  QRegion damage,
+    int64_t paint(QRegion damage,
                   std::deque<Toplevel*> const& windows,
                   std::chrono::milliseconds presentTime) override;
+    int64_t paint_output(base::output* output,
+                         QRegion damage,
+                         std::deque<Toplevel*> const& windows,
+                         std::chrono::milliseconds presentTime) override;
 
     render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     render::shadow* createShadow(Toplevel* toplevel) override;

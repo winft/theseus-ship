@@ -132,9 +132,9 @@ public:
     {
         return XRenderCompositing;
     }
-    qint64 paint(QRegion damage,
-                 std::deque<Toplevel*> const& windows,
-                 std::chrono::milliseconds presentTime) override;
+    int64_t paint(QRegion damage,
+                  std::deque<Toplevel*> const& windows,
+                  std::chrono::milliseconds presentTime) override;
     render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     render::shadow* createShadow(Toplevel* toplevel) override;
     void screenGeometryChanged(const QSize& size) override;

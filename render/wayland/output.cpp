@@ -190,7 +190,7 @@ std::deque<Toplevel*> output::run()
 
     // Start the actual painting process.
     auto const duration
-        = std::chrono::nanoseconds(compositor->scene()->paint(base, repaints, windows, now));
+        = std::chrono::nanoseconds(compositor->scene()->paint_output(base, repaints, windows, now));
 
 #if SWAP_TIME_DEBUG
     qDebug().noquote() << "RUN gap:" << to_ms(now_ns - swap_ref_time)

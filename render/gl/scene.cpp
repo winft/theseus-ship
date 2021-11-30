@@ -629,9 +629,9 @@ void scene2::paintCursor()
     glDisable(GL_BLEND);
 }
 
-qint64 scene::paint(QRegion damage,
-                    std::deque<Toplevel*> const& toplevels,
-                    std::chrono::milliseconds presentTime)
+int64_t scene::paint(QRegion damage,
+                     std::deque<Toplevel*> const& toplevels,
+                     std::chrono::milliseconds presentTime)
 {
     // Remove all subordinate transients. These are painted as part of their leads.
     // TODO: Optimize this by *not* painting them as part of their leads if no quad transforming
@@ -698,10 +698,10 @@ qint64 scene::paint(QRegion damage,
     return m_backend->renderTime();
 }
 
-int64_t scene::paint(base::output* output,
-                     QRegion damage,
-                     std::deque<Toplevel*> const& windows,
-                     std::chrono::milliseconds presentTime)
+int64_t scene::paint_output(base::output* output,
+                            QRegion damage,
+                            std::deque<Toplevel*> const& windows,
+                            std::chrono::milliseconds presentTime)
 {
     createStackingOrder(get_leads(windows));
 
