@@ -97,7 +97,7 @@ egl_dmabuf_buffer::egl_dmabuf_buffer(const QVector<Plane>& planes,
                                      const QSize& size,
                                      Flags flags,
                                      egl_dmabuf* interfaceImpl)
-    : DmabufBuffer(planes, format, size, flags)
+    : wayland::dmabuf_buffer(planes, format, size, flags)
     , m_interfaceImpl(interfaceImpl)
 {
     m_importType = ImportType::Conversion;
@@ -274,7 +274,7 @@ egl_dmabuf* egl_dmabuf::factory(egl_backend* backend)
 }
 
 egl_dmabuf::egl_dmabuf(egl_backend* backend)
-    : LinuxDmabuf()
+    : wayland::linux_dmabuf()
     , m_backend(backend)
 {
     auto prevBuffersSet = waylandServer()->linuxDmabufBuffers();
@@ -392,7 +392,7 @@ void egl_dmabuf::setSupportedFormatsAndModifiers()
         set.insert(format, QSet<uint64_t>());
     }
 
-    LinuxDmabuf::setSupportedFormatsAndModifiers(set);
+    wayland::linux_dmabuf::setSupportedFormatsAndModifiers(set);
 }
 
 }

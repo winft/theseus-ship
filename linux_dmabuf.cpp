@@ -24,13 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <unistd.h>
 
-namespace KWin
+namespace KWin::render::wayland
 {
 
-DmabufBuffer::DmabufBuffer(const QVector<Plane>& planes,
-                           uint32_t format,
-                           const QSize& size,
-                           Flags flags)
+dmabuf_buffer::dmabuf_buffer(const QVector<Plane>& planes,
+                             uint32_t format,
+                             const QSize& size,
+                             Flags flags)
     : Wrapland::Server::LinuxDmabufBufferV1(format, size)
     , m_planes(planes)
     , m_format(format)
@@ -40,7 +40,7 @@ DmabufBuffer::DmabufBuffer(const QVector<Plane>& planes,
     waylandServer()->addLinuxDmabufBuffer(this);
 }
 
-DmabufBuffer::~DmabufBuffer()
+dmabuf_buffer::~dmabuf_buffer()
 {
     // Close all open file descriptors
     for (int i = 0; i < m_planes.count(); i++) {
@@ -53,14 +53,14 @@ DmabufBuffer::~DmabufBuffer()
     }
 }
 
-LinuxDmabuf::LinuxDmabuf()
+linux_dmabuf::linux_dmabuf()
     : Wrapland::Server::LinuxDmabufV1::Impl()
 {
     Q_ASSERT(waylandServer());
     waylandServer()->linux_dmabuf()->setImpl(this);
 }
 
-LinuxDmabuf::~LinuxDmabuf()
+linux_dmabuf::~linux_dmabuf()
 {
     waylandServer()->linux_dmabuf()->setImpl(nullptr);
 }
@@ -68,10 +68,10 @@ LinuxDmabuf::~LinuxDmabuf()
 using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
 using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
 
-Wrapland::Server::LinuxDmabufBufferV1* LinuxDmabuf::importBuffer(const QVector<Plane>& planes,
-                                                                 uint32_t format,
-                                                                 const QSize& size,
-                                                                 Flags flags)
+Wrapland::Server::LinuxDmabufBufferV1* linux_dmabuf::importBuffer(const QVector<Plane>& planes,
+                                                                  uint32_t format,
+                                                                  const QSize& size,
+                                                                  Flags flags)
 {
     Q_UNUSED(planes)
     Q_UNUSED(format)
@@ -81,7 +81,7 @@ Wrapland::Server::LinuxDmabufBufferV1* LinuxDmabuf::importBuffer(const QVector<P
     return nullptr;
 }
 
-void LinuxDmabuf::setSupportedFormatsAndModifiers(QHash<uint32_t, QSet<uint64_t>>& set)
+void linux_dmabuf::setSupportedFormatsAndModifiers(QHash<uint32_t, QSet<uint64_t>>& set)
 {
     waylandServer()->linux_dmabuf()->setSupportedFormatsWithModifiers(set);
 }

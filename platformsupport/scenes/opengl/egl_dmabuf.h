@@ -30,7 +30,7 @@ namespace KWin::render::gl
 {
 class egl_dmabuf;
 
-class egl_dmabuf_buffer : public DmabufBuffer
+class egl_dmabuf_buffer : public wayland::dmabuf_buffer
 {
 public:
     using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
@@ -65,7 +65,7 @@ private:
     ImportType m_importType;
 };
 
-class egl_dmabuf : public LinuxDmabuf
+class egl_dmabuf : public wayland::linux_dmabuf
 {
 public:
     using Plane = Wrapland::Server::LinuxDmabufV1::Plane;

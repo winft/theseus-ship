@@ -24,18 +24,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QVector>
 #include <Wrapland/Server/linux_dmabuf_v1.h>
 
-namespace KWin
+namespace KWin::render::wayland
 {
 
-class KWIN_EXPORT DmabufBuffer : public Wrapland::Server::LinuxDmabufBufferV1
+class KWIN_EXPORT dmabuf_buffer : public Wrapland::Server::LinuxDmabufBufferV1
 {
 public:
     using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
     using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
 
-    DmabufBuffer(const QVector<Plane>& planes, uint32_t format, const QSize& size, Flags flags);
+    dmabuf_buffer(const QVector<Plane>& planes, uint32_t format, const QSize& size, Flags flags);
 
-    ~DmabufBuffer() override;
+    ~dmabuf_buffer() override;
 
     const QVector<Plane>& planes() const
     {
@@ -61,14 +61,14 @@ private:
     Flags m_flags;
 };
 
-class KWIN_EXPORT LinuxDmabuf : public Wrapland::Server::LinuxDmabufV1::Impl
+class KWIN_EXPORT linux_dmabuf : public Wrapland::Server::LinuxDmabufV1::Impl
 {
 public:
     using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
     using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
 
-    explicit LinuxDmabuf();
-    ~LinuxDmabuf() override;
+    explicit linux_dmabuf();
+    ~linux_dmabuf() override;
 
     Wrapland::Server::LinuxDmabufBufferV1* importBuffer(const QVector<Plane>& planes,
                                                         uint32_t format,
