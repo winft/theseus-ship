@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
 
-namespace KWin
+namespace KWin::render::gl
 {
 
 typedef GLboolean (*eglBindWaylandDisplayWL_func)(EGLDisplay dpy, wl_display* display);
@@ -53,29 +53,29 @@ eglBindWaylandDisplayWL_func eglBindWaylandDisplayWL = nullptr;
 eglUnbindWaylandDisplayWL_func eglUnbindWaylandDisplayWL = nullptr;
 eglQueryWaylandBufferWL_func eglQueryWaylandBufferWL = nullptr;
 
-AbstractEglBackend::AbstractEglBackend()
+egl_backend::egl_backend()
     : QObject(nullptr)
-    , render::gl::backend()
+    , backend()
 {
     connect(render::compositor::self(),
             &render::compositor::aboutToDestroy,
             this,
-            &AbstractEglBackend::unbindWaylandDisplay);
+            &egl_backend::unbindWaylandDisplay);
 }
 
-AbstractEglBackend::~AbstractEglBackend()
+egl_backend::~egl_backend()
 {
     delete m_dmaBuf;
 }
 
-void AbstractEglBackend::unbindWaylandDisplay()
+void egl_backend::unbindWaylandDisplay()
 {
     if (eglUnbindWaylandDisplayWL && m_display != EGL_NO_DISPLAY) {
         eglUnbindWaylandDisplayWL(m_display, kwinApp()->get_wayland_server()->display()->native());
     }
 }
 
-void AbstractEglBackend::cleanup()
+void egl_backend::cleanup()
 {
     cleanupGL();
     doneCurrent();
@@ -87,14 +87,14 @@ void AbstractEglBackend::cleanup()
     kwinApp()->platform->setSceneEglConfig(nullptr);
 }
 
-void AbstractEglBackend::cleanupSurfaces()
+void egl_backend::cleanupSurfaces()
 {
     if (m_surface != EGL_NO_SURFACE) {
         eglDestroySurface(m_display, m_surface);
     }
 }
 
-bool AbstractEglBackend::initEglAPI()
+bool egl_backend::initEglAPI()
 {
     EGLint major, minor;
     if (eglInitialize(m_display, &major, &minor) == EGL_FALSE) {
@@ -129,7 +129,7 @@ static eglFuncPtr getProcAddress(const char* name)
     return eglGetProcAddress(name);
 }
 
-void AbstractEglBackend::initKWinGL()
+void egl_backend::initKWinGL()
 {
     GLPlatform* glPlatform = GLPlatform::instance();
     glPlatform->detect(EglPlatformInterface);
@@ -137,7 +137,7 @@ void AbstractEglBackend::initKWinGL()
     initGL(&getProcAddress);
 }
 
-void AbstractEglBackend::initBufferAge()
+void egl_backend::initBufferAge()
 {
     setSupportsBufferAge(false);
 
@@ -149,7 +149,7 @@ void AbstractEglBackend::initBufferAge()
     }
 }
 
-void AbstractEglBackend::initWayland()
+void egl_backend::initWayland()
 {
     if (!kwinApp()->get_wayland_server()) {
         return;
@@ -174,10 +174,10 @@ void AbstractEglBackend::initWayland()
     }
 
     Q_ASSERT(!m_dmaBuf);
-    m_dmaBuf = EglDmabuf::factory(this);
+    m_dmaBuf = egl_dmabuf::factory(this);
 }
 
-void AbstractEglBackend::initClientExtensions()
+void egl_backend::initClientExtensions()
 {
     // Get the list of client extensions
     const char* clientExtensionsCString = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
@@ -192,12 +192,12 @@ void AbstractEglBackend::initClientExtensions()
     m_clientExtensions = clientExtensionsString.split(' ');
 }
 
-bool AbstractEglBackend::hasClientExtension(const QByteArray& ext) const
+bool egl_backend::hasClientExtension(const QByteArray& ext) const
 {
     return m_clientExtensions.contains(ext);
 }
 
-bool AbstractEglBackend::makeCurrent()
+bool egl_backend::makeCurrent()
 {
     if (QOpenGLContext* context = QOpenGLContext::currentContext()) {
         // Workaround to tell Qt that no QOpenGLContext is current
@@ -207,17 +207,17 @@ bool AbstractEglBackend::makeCurrent()
     return current;
 }
 
-void AbstractEglBackend::doneCurrent()
+void egl_backend::doneCurrent()
 {
     eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 }
 
-render::gl::texture_private* AbstractEglBackend::createBackendTexture(render::gl::texture* texture)
+render::gl::texture_private* egl_backend::createBackendTexture(render::gl::texture* texture)
 {
-    return new EglTexture(texture, this);
+    return new egl_texture(texture, this);
 }
 
-bool AbstractEglBackend::isOpenGLES() const
+bool egl_backend::isOpenGLES() const
 {
     if (qstrcmp(qgetenv("KWIN_COMPOSE"), "O2ES") == 0) {
         return true;
@@ -225,7 +225,7 @@ bool AbstractEglBackend::isOpenGLES() const
     return QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES;
 }
 
-bool AbstractEglBackend::createContext()
+bool egl_backend::createContext()
 {
     const bool haveRobustness
         = hasExtension(QByteArrayLiteral("EGL_EXT_create_context_robustness"));
@@ -314,25 +314,25 @@ bool AbstractEglBackend::createContext()
     return true;
 }
 
-void AbstractEglBackend::setEglDisplay(const EGLDisplay& display)
+void egl_backend::setEglDisplay(const EGLDisplay& display)
 {
     m_display = display;
     kwinApp()->platform->setSceneEglDisplay(display);
 }
 
-void AbstractEglBackend::setConfig(const EGLConfig& config)
+void egl_backend::setConfig(const EGLConfig& config)
 {
     m_config = config;
     kwinApp()->platform->setSceneEglConfig(config);
 }
 
-void AbstractEglBackend::setSurface(const EGLSurface& surface)
+void egl_backend::setSurface(const EGLSurface& surface)
 {
     m_surface = surface;
     kwinApp()->platform->setSceneEglSurface(surface);
 }
 
-EglTexture::EglTexture(render::gl::texture* texture, AbstractEglBackend* backend)
+egl_texture::egl_texture(render::gl::texture* texture, egl_backend* backend)
     : render::gl::texture_private()
     , q(texture)
     , m_backend(backend)
@@ -342,19 +342,19 @@ EglTexture::EglTexture(render::gl::texture* texture, AbstractEglBackend* backend
     m_hasSubImageUnpack = hasGLExtension(QByteArrayLiteral("GL_EXT_unpack_subimage"));
 }
 
-EglTexture::~EglTexture()
+egl_texture::~egl_texture()
 {
     if (m_image != EGL_NO_IMAGE_KHR) {
         eglDestroyImageKHR(m_backend->eglDisplay(), m_image);
     }
 }
 
-render::gl::backend* EglTexture::backend()
+render::gl::backend* egl_texture::backend()
 {
     return m_backend;
 }
 
-bool EglTexture::loadTexture(WindowPixmap* pixmap)
+bool egl_texture::loadTexture(WindowPixmap* pixmap)
 {
     // FIXME: Refactor this method.
 
@@ -380,7 +380,7 @@ bool EglTexture::loadTexture(WindowPixmap* pixmap)
     return loadEglTexture(buffer);
 }
 
-void EglTexture::updateTexture(WindowPixmap* pixmap)
+void egl_texture::updateTexture(WindowPixmap* pixmap)
 {
     // FIXME: Refactor this method.
 
@@ -395,7 +395,7 @@ void EglTexture::updateTexture(WindowPixmap* pixmap)
         return;
     }
     auto s = pixmap->surface();
-    if (EglDmabufBuffer* dmabuf = static_cast<EglDmabufBuffer*>(buffer->linuxDmabufBuffer())) {
+    if (auto dmabuf = static_cast<egl_dmabuf_buffer*>(buffer->linuxDmabufBuffer())) {
         if (dmabuf->images().size() == 0) {
             return;
         }
@@ -451,7 +451,7 @@ void EglTexture::updateTexture(WindowPixmap* pixmap)
     }
 }
 
-bool EglTexture::createTextureImage(const QImage& image)
+bool egl_texture::createTextureImage(const QImage& image)
 {
     if (image.isNull()) {
         return false;
@@ -517,9 +517,9 @@ bool EglTexture::createTextureImage(const QImage& image)
     return true;
 }
 
-void EglTexture::textureSubImage(int scale,
-                                 Wrapland::Server::ShmImage const& img,
-                                 const QRegion& damage)
+void egl_texture::textureSubImage(int scale,
+                                  Wrapland::Server::ShmImage const& img,
+                                  const QRegion& damage)
 {
     auto prepareSubImage = [this](Wrapland::Server::ShmImage const& img, QRect const& rect) {
         q->bind();
@@ -592,7 +592,7 @@ void EglTexture::textureSubImage(int scale,
     }
 }
 
-void EglTexture::textureSubImageFromQImage(int scale, const QImage& image, const QRegion& damage)
+void egl_texture::textureSubImageFromQImage(int scale, const QImage& image, const QRegion& damage)
 {
     q->bind();
     if (GLPlatform::instance()->isGLES()) {
@@ -652,12 +652,12 @@ void EglTexture::textureSubImageFromQImage(int scale, const QImage& image, const
     q->unbind();
 }
 
-bool EglTexture::loadShmTexture(Wrapland::Server::Buffer* buffer)
+bool egl_texture::loadShmTexture(Wrapland::Server::Buffer* buffer)
 {
     return createTextureImage(buffer->shmImage()->createQImage());
 }
 
-bool EglTexture::loadEglTexture(Wrapland::Server::Buffer* buffer)
+bool egl_texture::loadEglTexture(Wrapland::Server::Buffer* buffer)
 {
     if (!eglQueryWaylandBufferWL) {
         return false;
@@ -682,9 +682,9 @@ bool EglTexture::loadEglTexture(Wrapland::Server::Buffer* buffer)
     return true;
 }
 
-bool EglTexture::loadDmabufTexture(Wrapland::Server::Buffer* buffer)
+bool egl_texture::loadDmabufTexture(Wrapland::Server::Buffer* buffer)
 {
-    auto* dmabuf = static_cast<EglDmabufBuffer*>(buffer->linuxDmabufBuffer());
+    auto* dmabuf = static_cast<egl_dmabuf_buffer*>(buffer->linuxDmabufBuffer());
     if (!dmabuf || dmabuf->images().at(0) == EGL_NO_IMAGE_KHR) {
         qCritical(KWIN_OPENGL) << "Invalid dmabuf-based wl_buffer";
         q->discard();
@@ -707,12 +707,12 @@ bool EglTexture::loadDmabufTexture(Wrapland::Server::Buffer* buffer)
     return true;
 }
 
-bool EglTexture::loadInternalImageObject(WindowPixmap* pixmap)
+bool egl_texture::loadInternalImageObject(WindowPixmap* pixmap)
 {
     return createTextureImage(pixmap->internalImage());
 }
 
-EGLImageKHR EglTexture::attach(Wrapland::Server::Buffer* buffer)
+EGLImageKHR egl_texture::attach(Wrapland::Server::Buffer* buffer)
 {
     EGLint format, yInverted;
     eglQueryWaylandBufferWL(
@@ -743,7 +743,7 @@ EGLImageKHR EglTexture::attach(Wrapland::Server::Buffer* buffer)
     return image;
 }
 
-bool EglTexture::updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject>& fbo)
+bool egl_texture::updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject>& fbo)
 {
     if (fbo.isNull()) {
         return false;
@@ -757,7 +757,7 @@ bool EglTexture::updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject>& f
     return true;
 }
 
-bool EglTexture::updateFromInternalImageObject(WindowPixmap* pixmap)
+bool egl_texture::updateFromInternalImageObject(WindowPixmap* pixmap)
 {
     const QImage image = pixmap->internalImage();
     if (image.isNull()) {

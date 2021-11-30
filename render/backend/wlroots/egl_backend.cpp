@@ -32,7 +32,7 @@ egl_output& egl_backend::get_output(base::output* out)
 }
 
 egl_backend::egl_backend(wlroots::backend* back, bool headless)
-    : AbstractEglBackend()
+    : gl::egl_backend()
     , back{back}
     , headless{headless}
 {
@@ -368,7 +368,7 @@ bool egl_backend::usesOverlayWindow() const
 }
 
 egl_texture::egl_texture(gl::texture* texture, egl_backend* backend)
-    : EglTexture(texture, backend)
+    : gl::egl_texture(texture, backend)
 {
 }
 

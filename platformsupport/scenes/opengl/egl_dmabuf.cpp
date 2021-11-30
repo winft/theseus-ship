@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <unistd.h>
 
-namespace KWin
+namespace KWin::render::gl
 {
 
 typedef EGLBoolean (*eglQueryDmaBufFormatsEXT_func)(EGLDisplay dpy,
@@ -80,50 +80,50 @@ YuvFormat yuvFormats[]
         EGL_TEXTURE_Y_U_V_WL,
         {{1, 1, DRM_FORMAT_R8, 0}, {1, 1, DRM_FORMAT_R8, 1}, {1, 1, DRM_FORMAT_R8, 2}}}};
 
-EglDmabufBuffer::EglDmabufBuffer(EGLImage image,
-                                 const QVector<Plane>& planes,
-                                 uint32_t format,
-                                 const QSize& size,
-                                 Flags flags,
-                                 EglDmabuf* interfaceImpl)
-    : EglDmabufBuffer(planes, format, size, flags, interfaceImpl)
+egl_dmabuf_buffer::egl_dmabuf_buffer(EGLImage image,
+                                     const QVector<Plane>& planes,
+                                     uint32_t format,
+                                     const QSize& size,
+                                     Flags flags,
+                                     egl_dmabuf* interfaceImpl)
+    : egl_dmabuf_buffer(planes, format, size, flags, interfaceImpl)
 {
     m_importType = ImportType::Direct;
     addImage(image);
 }
 
-EglDmabufBuffer::EglDmabufBuffer(const QVector<Plane>& planes,
-                                 uint32_t format,
-                                 const QSize& size,
-                                 Flags flags,
-                                 EglDmabuf* interfaceImpl)
+egl_dmabuf_buffer::egl_dmabuf_buffer(const QVector<Plane>& planes,
+                                     uint32_t format,
+                                     const QSize& size,
+                                     Flags flags,
+                                     egl_dmabuf* interfaceImpl)
     : DmabufBuffer(planes, format, size, flags)
     , m_interfaceImpl(interfaceImpl)
 {
     m_importType = ImportType::Conversion;
 }
 
-EglDmabufBuffer::~EglDmabufBuffer()
+egl_dmabuf_buffer::~egl_dmabuf_buffer()
 {
     removeImages();
 }
 
-std::vector<EGLImage> const& EglDmabufBuffer::images() const
+std::vector<EGLImage> const& egl_dmabuf_buffer::images() const
 {
     return m_images;
 }
 
-void EglDmabufBuffer::setInterfaceImplementation(EglDmabuf* interfaceImpl)
+void egl_dmabuf_buffer::setInterfaceImplementation(egl_dmabuf* interfaceImpl)
 {
     m_interfaceImpl = interfaceImpl;
 }
 
-void EglDmabufBuffer::addImage(EGLImage image)
+void egl_dmabuf_buffer::addImage(EGLImage image)
 {
     m_images.push_back(image);
 }
 
-void EglDmabufBuffer::removeImages()
+void egl_dmabuf_buffer::removeImages()
 {
     for (auto image : m_images) {
         eglDestroyImageKHR(m_interfaceImpl->m_backend->eglDisplay(), image);
@@ -134,7 +134,7 @@ void EglDmabufBuffer::removeImages()
 using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
 using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
 
-EGLImage EglDmabuf::createImage(const QVector<Plane>& planes, uint32_t format, const QSize& size)
+EGLImage egl_dmabuf::createImage(const QVector<Plane>& planes, uint32_t format, const QSize& size)
 {
     const bool hasModifiers
         = eglQueryDmaBufModifiersEXT != nullptr && planes[0].modifier != DRM_FORMAT_MOD_INVALID;
@@ -198,16 +198,16 @@ EGLImage EglDmabuf::createImage(const QVector<Plane>& planes, uint32_t format, c
     return image;
 }
 
-Wrapland::Server::LinuxDmabufBufferV1* EglDmabuf::importBuffer(const QVector<Plane>& planes,
-                                                               uint32_t format,
-                                                               const QSize& size,
-                                                               Flags flags)
+Wrapland::Server::LinuxDmabufBufferV1* egl_dmabuf::importBuffer(const QVector<Plane>& planes,
+                                                                uint32_t format,
+                                                                const QSize& size,
+                                                                Flags flags)
 {
     Q_ASSERT(planes.count() > 0);
 
     // Try first to import as a single image
     if (auto* img = createImage(planes, format, size)) {
-        return new EglDmabufBuffer(img, planes, format, size, flags, this);
+        return new egl_dmabuf_buffer(img, planes, format, size, flags, this);
     }
 
     // TODO: to enable this we must be able to store multiple textures per window pixmap
@@ -219,7 +219,7 @@ Wrapland::Server::LinuxDmabufBufferV1* EglDmabuf::importBuffer(const QVector<Pla
 }
 
 Wrapland::Server::LinuxDmabufBufferV1*
-EglDmabuf::yuvImport(const QVector<Plane>& planes, uint32_t format, const QSize& size, Flags flags)
+egl_dmabuf::yuvImport(const QVector<Plane>& planes, uint32_t format, const QSize& size, Flags flags)
 {
     YuvFormat yuvFormat;
     for (YuvFormat f : yuvFormats) {
@@ -235,7 +235,7 @@ EglDmabuf::yuvImport(const QVector<Plane>& planes, uint32_t format, const QSize&
         return nullptr;
     }
 
-    auto* buf = new EglDmabufBuffer(planes, format, size, flags, this);
+    auto* buf = new egl_dmabuf_buffer(planes, format, size, flags, this);
 
     for (int i = 0; i < yuvFormat.outputPlanes; i++) {
         int planeIndex = yuvFormat.planes[i].planeIndex;
@@ -257,7 +257,7 @@ EglDmabuf::yuvImport(const QVector<Plane>& planes, uint32_t format, const QSize&
     return buf;
 }
 
-EglDmabuf* EglDmabuf::factory(AbstractEglBackend* backend)
+egl_dmabuf* egl_dmabuf::factory(egl_backend* backend)
 {
     if (!backend->hasExtension(QByteArrayLiteral("EGL_EXT_image_dma_buf_import"))) {
         return nullptr;
@@ -270,27 +270,27 @@ EglDmabuf* EglDmabuf::factory(AbstractEglBackend* backend)
             = (eglQueryDmaBufModifiersEXT_func)eglGetProcAddress("eglQueryDmaBufModifiersEXT");
     }
 
-    return new EglDmabuf(backend);
+    return new egl_dmabuf(backend);
 }
 
-EglDmabuf::EglDmabuf(AbstractEglBackend* backend)
+egl_dmabuf::egl_dmabuf(egl_backend* backend)
     : LinuxDmabuf()
     , m_backend(backend)
 {
     auto prevBuffersSet = waylandServer()->linuxDmabufBuffers();
     for (auto* buffer : prevBuffersSet) {
-        auto* buf = static_cast<EglDmabufBuffer*>(buffer);
+        auto* buf = static_cast<egl_dmabuf_buffer*>(buffer);
         buf->setInterfaceImplementation(this);
         buf->addImage(createImage(buf->planes(), buf->format(), buf->size()));
     }
     setSupportedFormatsAndModifiers();
 }
 
-EglDmabuf::~EglDmabuf()
+egl_dmabuf::~egl_dmabuf()
 {
     auto curBuffers = waylandServer()->linuxDmabufBuffers();
     for (auto* buffer : curBuffers) {
-        auto* buf = static_cast<EglDmabufBuffer*>(buffer);
+        auto* buf = static_cast<egl_dmabuf_buffer*>(buffer);
         buf->removeImages();
     }
 }
@@ -334,7 +334,7 @@ void filterFormatsWithMultiplePlanes(QVector<uint32_t>& formats)
     }
 }
 
-QVector<uint32_t> EglDmabuf::queryFormats()
+QVector<uint32_t> egl_dmabuf::queryFormats()
 {
     if (!eglQueryDmaBufFormatsEXT) {
         return QVector<uint32_t>();
@@ -354,7 +354,7 @@ QVector<uint32_t> EglDmabuf::queryFormats()
     return formats;
 }
 
-void EglDmabuf::setSupportedFormatsAndModifiers()
+void egl_dmabuf::setSupportedFormatsAndModifiers()
 {
     auto formats = queryFormats();
     if (formats.count() == 0) {

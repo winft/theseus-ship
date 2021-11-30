@@ -26,11 +26,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QVector>
 
-namespace KWin
+namespace KWin::render::gl
 {
-class EglDmabuf;
+class egl_dmabuf;
 
-class EglDmabufBuffer : public DmabufBuffer
+class egl_dmabuf_buffer : public DmabufBuffer
 {
 public:
     using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
@@ -38,22 +38,22 @@ public:
 
     enum class ImportType { Direct, Conversion };
 
-    EglDmabufBuffer(EGLImage image,
-                    const QVector<Plane>& planes,
-                    uint32_t format,
-                    const QSize& size,
-                    Flags flags,
-                    EglDmabuf* interfaceImpl);
+    egl_dmabuf_buffer(EGLImage image,
+                      const QVector<Plane>& planes,
+                      uint32_t format,
+                      const QSize& size,
+                      Flags flags,
+                      egl_dmabuf* interfaceImpl);
 
-    EglDmabufBuffer(const QVector<Plane>& planes,
-                    uint32_t format,
-                    const QSize& size,
-                    Flags flags,
-                    EglDmabuf* interfaceImpl);
+    egl_dmabuf_buffer(const QVector<Plane>& planes,
+                      uint32_t format,
+                      const QSize& size,
+                      Flags flags,
+                      egl_dmabuf* interfaceImpl);
 
-    ~EglDmabufBuffer() override;
+    ~egl_dmabuf_buffer() override;
 
-    void setInterfaceImplementation(EglDmabuf* interfaceImpl);
+    void setInterfaceImplementation(egl_dmabuf* interfaceImpl);
     void addImage(EGLImage image);
     void removeImages();
 
@@ -61,20 +61,20 @@ public:
 
 private:
     std::vector<EGLImage> m_images;
-    EglDmabuf* m_interfaceImpl;
+    egl_dmabuf* m_interfaceImpl;
     ImportType m_importType;
 };
 
-class EglDmabuf : public LinuxDmabuf
+class egl_dmabuf : public LinuxDmabuf
 {
 public:
     using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
     using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
 
-    static EglDmabuf* factory(AbstractEglBackend* backend);
+    static egl_dmabuf* factory(egl_backend* backend);
 
-    explicit EglDmabuf(AbstractEglBackend* backend);
-    ~EglDmabuf() override;
+    explicit egl_dmabuf(egl_backend* backend);
+    ~egl_dmabuf() override;
 
     Wrapland::Server::LinuxDmabufBufferV1* importBuffer(const QVector<Plane>& planes,
                                                         uint32_t format,
@@ -89,9 +89,9 @@ private:
     QVector<uint32_t> queryFormats();
     void setSupportedFormatsAndModifiers();
 
-    AbstractEglBackend* m_backend;
+    egl_backend* m_backend;
 
-    friend class EglDmabufBuffer;
+    friend class egl_dmabuf_buffer;
 };
 
 }

@@ -19,7 +19,7 @@ class egl_output;
 class output;
 class surface;
 
-class egl_backend : public AbstractEglBackend
+class egl_backend : public gl::egl_backend
 {
     Q_OBJECT
 private:
@@ -67,7 +67,7 @@ protected:
     void cleanupSurfaces() override;
 };
 
-class egl_texture : public EglTexture
+class egl_texture : public gl::egl_texture
 {
 public:
     ~egl_texture() override;

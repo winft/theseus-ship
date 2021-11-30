@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_ABSTRACT_EGL_BACKEND_H
-#define KWIN_ABSTRACT_EGL_BACKEND_H
+#pragma once
+
 #include "backend.h"
 #include "texture.h"
 
@@ -36,16 +36,16 @@ class ShmImage;
 }
 }
 
-namespace KWin
+namespace KWin::render::gl
 {
 
-class EglDmabuf;
+class egl_dmabuf;
 
-class KWIN_EXPORT AbstractEglBackend : public QObject, public render::gl::backend
+class KWIN_EXPORT egl_backend : public QObject, public backend
 {
     Q_OBJECT
 public:
-    ~AbstractEglBackend() override;
+    ~egl_backend() override;
     bool makeCurrent() override;
     void doneCurrent() override;
     render::gl::texture_private* createBackendTexture(render::gl::texture* texture) override;
@@ -73,7 +73,7 @@ public:
     void setSurface(const EGLSurface& surface);
 
 protected:
-    AbstractEglBackend();
+    egl_backend();
     void setEglDisplay(const EGLDisplay& display);
     void cleanup();
     virtual void cleanupSurfaces();
@@ -93,14 +93,14 @@ private:
     EGLContext m_context = EGL_NO_CONTEXT;
     EGLConfig m_config = nullptr;
     QList<QByteArray> m_clientExtensions;
-    EglDmabuf* m_dmaBuf = nullptr;
+    egl_dmabuf* m_dmaBuf = nullptr;
 };
 
-class KWIN_EXPORT EglTexture : public render::gl::texture_private
+class KWIN_EXPORT egl_texture : public render::gl::texture_private
 {
 public:
-    EglTexture(render::gl::texture* texture, AbstractEglBackend* backend);
-    ~EglTexture() override;
+    egl_texture(render::gl::texture* texture, egl_backend* backend);
+    ~egl_texture() override;
     bool loadTexture(WindowPixmap* pixmap) override;
     void updateTexture(WindowPixmap* pixmap) override;
     render::gl::backend* backend() override;
@@ -132,11 +132,9 @@ private:
     bool updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject>& fbo);
     bool updateFromInternalImageObject(WindowPixmap* pixmap);
     render::gl::texture* q;
-    AbstractEglBackend* m_backend;
+    egl_backend* m_backend;
     EGLImageKHR m_image;
     bool m_hasSubImageUnpack{false};
 };
 
 }
-
-#endif
