@@ -23,8 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/scene.h"
 #include "render/shadow.h"
 
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-
 namespace KWin
 {
 
@@ -352,5 +350,3 @@ public:
 
 }
 }
-
-#endif

@@ -452,7 +452,6 @@ set(kwin_SRCS
     render/x11/outline.cpp
     render/x11/overlay_window.cpp
     render/x11/overlay_window_impl.cpp
-    render/xrender/scene.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp
     rules/rules.cpp
@@ -504,6 +503,13 @@ set(kwin_SRCS
     xwl/xwayland_interface.cpp
     perf/ftrace.cpp
 )
+
+if (KWIN_BUILD_XRENDER_COMPOSITING)
+    set(kwin_SRCS
+        ${kwin_SRCS}
+        render/xrender/scene.cpp
+    )
+endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(kwin_SRCS

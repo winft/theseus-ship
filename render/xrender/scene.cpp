@@ -23,8 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "utils.h"
 
-#ifdef KWIN_HAVE_XRENDER_COMPOSITING
-
 #include "decorations/decoratedclient.h"
 #include "main.h"
 #include "platform.h"
@@ -1570,14 +1568,11 @@ render::scene* scene_factory::create(QObject* parent) const
     return s;
 }
 
-} // namespace
-#endif
-
-void KWin::render::xrender::scene::paintCursor()
+void scene::paintCursor()
 {
 }
 
-void KWin::render::xrender::scene::paintEffectQuickView(KWin::EffectQuickView* w)
+void scene::paintEffectQuickView(KWin::EffectQuickView* w)
 {
     const QImage buffer = w->bufferAsImage();
     if (buffer.isNull()) {
@@ -1597,4 +1592,6 @@ void KWin::render::xrender::scene::paintEffectQuickView(KWin::EffectQuickView* w
                          w->geometry().y(),
                          w->geometry().width(),
                          w->geometry().height());
+}
+
 }

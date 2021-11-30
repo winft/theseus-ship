@@ -295,10 +295,12 @@ render::scene* compositor::create_scene(QVector<CompositingType> const& support)
             qCDebug(KWIN_CORE) << "Creating OpenGL scene.";
             return gl::scene_factory().create();
         }
+#ifdef KWIN_HAVE_XRENDER_COMPOSITING
         if (type == XRenderCompositing) {
             qCDebug(KWIN_CORE) << "Creating XRender scene.";
             return xrender::scene_factory().create();
         }
+#endif
     }
     return nullptr;
 }
