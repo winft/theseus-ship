@@ -51,7 +51,7 @@ public:
     void setupActionForGlobalAccel(QAction* action) override;
 
     render::x11::overlay_window* createOverlayWindow() override;
-    OutlineVisual* createOutline(Outline* outline) override;
+    render::x11::outline_visual* createOutline(render::x11::outline* outline) override;
     Decoration::Renderer*
     createDecorationRenderer(Decoration::DecoratedClientImpl* client) override;
 

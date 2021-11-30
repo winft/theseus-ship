@@ -43,8 +43,6 @@ class Manager;
 }
 
 class Edge;
-class Outline;
-class OutlineVisual;
 class Screens;
 class ScreenEdges;
 class Toplevel;
@@ -67,6 +65,8 @@ class backend;
 }
 namespace x11
 {
+class outline;
+class outline_visual;
 class overlay_window;
 }
 
@@ -265,10 +265,10 @@ public:
     void updateXTime();
 
     /**
-     * Creates the OutlineVisual for the given @p outline.
-     * Default implementation creates an OutlineVisual suited for composited usage.
+     * Creates the outline_visual for the given @p outline.
+     * Default implementation creates an outline_visual suited for composited usage.
      */
-    virtual OutlineVisual *createOutline(Outline *outline);
+    virtual render::x11::outline_visual* createOutline(render::x11::outline* outline);
 
     /**
      * Creates the Decoration::Renderer for the given @p client.

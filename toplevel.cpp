@@ -1165,7 +1165,7 @@ void Toplevel::leaveMoveResize()
         ScreenEdges::self()->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
     }
     if (control->electric_maximizing()) {
-        outline()->hide();
+        render::x11::get_outline()->hide();
         win::elevate(this, false);
     }
 }

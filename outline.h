@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_OUTLINE_H
-#define KWIN_OUTLINE_H
+#pragma once
 
 #include <kwinglobals.h>
 
@@ -30,9 +29,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class QQmlContext;
 class QQmlComponent;
 
-namespace KWin
+namespace KWin::render::x11
 {
-class OutlineVisual;
+
+class outline_visual;
 
 /**
  * @short This class is used to show the outline of a given geometry.
@@ -45,7 +45,7 @@ class OutlineVisual;
  * @author Arthur Arlt
  * @since 4.7
  */
-class KWIN_EXPORT Outline : public QObject
+class KWIN_EXPORT outline : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QRect geometry READ geometry NOTIFY geometryChanged)
@@ -54,7 +54,7 @@ class KWIN_EXPORT Outline : public QObject
     Q_PROPERTY(QRect unifiedGeometry READ unifiedGeometry NOTIFY unifiedGeometryChanged)
     Q_PROPERTY(bool active READ isActive NOTIFY activeChanged)
 public:
-    ~Outline() override;
+    ~outline() override;
 
     /**
      * Set the outline geometry.
@@ -123,34 +123,35 @@ Q_SIGNALS:
 
 private:
     void createHelper();
-    QScopedPointer<OutlineVisual> m_visual;
+    QScopedPointer<outline_visual> m_visual;
     QRect m_outlineGeometry;
     QRect m_visualParentGeometry;
     bool m_active;
-    KWIN_SINGLETON(Outline)
+
+    KWIN_SINGLETON(outline)
 };
 
-class KWIN_EXPORT OutlineVisual
+class KWIN_EXPORT outline_visual
 {
 public:
-    OutlineVisual(Outline* outline);
-    virtual ~OutlineVisual();
+    outline_visual(x11::outline* outline);
+    virtual ~outline_visual();
     virtual void show() = 0;
     virtual void hide() = 0;
 
 protected:
-    Outline* outline();
-    const Outline* outline() const;
+    x11::outline* get_outline();
+    x11::outline const* get_outline() const;
 
 private:
-    Outline* m_outline;
+    x11::outline* m_outline;
 };
 
-class CompositedOutlineVisual : public OutlineVisual
+class composited_outline_visual : public outline_visual
 {
 public:
-    CompositedOutlineVisual(Outline* outline);
-    ~CompositedOutlineVisual() override;
+    composited_outline_visual(x11::outline* outline);
+    ~composited_outline_visual() override;
     void show() override;
     void hide() override;
 
@@ -160,36 +161,34 @@ private:
     QScopedPointer<QObject> m_mainItem;
 };
 
-inline bool Outline::isActive() const
+inline bool outline::isActive() const
 {
     return m_active;
 }
 
-inline const QRect& Outline::geometry() const
+inline const QRect& outline::geometry() const
 {
     return m_outlineGeometry;
 }
 
-inline const QRect& Outline::visualParentGeometry() const
+inline const QRect& outline::visualParentGeometry() const
 {
     return m_visualParentGeometry;
 }
 
-inline Outline* OutlineVisual::outline()
+inline x11::outline* outline_visual::get_outline()
 {
     return m_outline;
 }
 
-inline const Outline* OutlineVisual::outline() const
+inline const x11::outline* outline_visual::get_outline() const
 {
     return m_outline;
 }
 
-inline Outline* outline()
+inline x11::outline* get_outline()
 {
-    return Outline::self();
+    return x11::outline::self();
 }
 
 }
-
-#endif

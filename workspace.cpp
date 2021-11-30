@@ -175,7 +175,7 @@ Workspace::Workspace()
 
     new DBusInterface(this);
 
-    Outline::create(this);
+    render::x11::outline::create(this);
 
     initShortcuts();
 

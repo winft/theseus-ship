@@ -181,10 +181,10 @@ void Platform::updateXTime()
     }
 }
 
-OutlineVisual *Platform::createOutline(Outline *outline)
+render::x11::outline_visual* Platform::createOutline(render::x11::outline* outline)
 {
     if (render::compositor::compositing()) {
-       return new CompositedOutlineVisual(outline);
+       return new render::x11::composited_outline_visual(outline);
     }
     return nullptr;
 }

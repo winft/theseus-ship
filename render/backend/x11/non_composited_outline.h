@@ -11,10 +11,10 @@
 namespace KWin::render::backend::x11
 {
 
-class NonCompositedOutlineVisual : public OutlineVisual
+class NonCompositedOutlineVisual : public render::x11::outline_visual
 {
 public:
-    NonCompositedOutlineVisual(Outline* outline);
+    NonCompositedOutlineVisual(render::x11::outline* outline);
     ~NonCompositedOutlineVisual() override;
     void show() override;
     void hide() override;

@@ -275,7 +275,7 @@ render::x11::overlay_window* X11StandalonePlatform::createOverlayWindow()
     return new OverlayWindowX11();
 }
 
-OutlineVisual* X11StandalonePlatform::createOutline(Outline* outline)
+render::x11::outline_visual* X11StandalonePlatform::createOutline(render::x11::outline* outline)
 {
     // first try composited Outline
     auto ret = Platform::createOutline(outline);

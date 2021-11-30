@@ -36,26 +36,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QQuickWindow>
 #include <QStandardPaths>
 
-namespace KWin
+namespace KWin::render::x11
 {
 
-KWIN_SINGLETON_FACTORY(Outline)
+KWIN_SINGLETON_FACTORY(outline)
 
-Outline::Outline(QObject* parent)
+outline::outline(QObject* parent)
     : QObject(parent)
     , m_active(false)
 {
     connect(render::compositor::self(),
             &render::compositor::compositingToggled,
             this,
-            &Outline::compositingChanged);
+            &outline::compositingChanged);
 }
 
-Outline::~Outline()
+outline::~outline()
 {
 }
 
-void Outline::show()
+void outline::show()
 {
     if (m_visual.isNull()) {
         createHelper();
@@ -69,7 +69,7 @@ void Outline::show()
     Q_EMIT activeChanged();
 }
 
-void Outline::hide()
+void outline::hide()
 {
     if (!m_active) {
         return;
@@ -82,19 +82,19 @@ void Outline::hide()
     m_visual->hide();
 }
 
-void Outline::show(const QRect& outlineGeometry)
+void outline::show(const QRect& outlineGeometry)
 {
     show(outlineGeometry, QRect());
 }
 
-void Outline::show(const QRect& outlineGeometry, const QRect& visualParentGeometry)
+void outline::show(const QRect& outlineGeometry, const QRect& visualParentGeometry)
 {
     setGeometry(outlineGeometry);
     setVisualParentGeometry(visualParentGeometry);
     show();
 }
 
-void Outline::setGeometry(const QRect& outlineGeometry)
+void outline::setGeometry(const QRect& outlineGeometry)
 {
     if (m_outlineGeometry == outlineGeometry) {
         return;
@@ -104,7 +104,7 @@ void Outline::setGeometry(const QRect& outlineGeometry)
     Q_EMIT unifiedGeometryChanged();
 }
 
-void Outline::setVisualParentGeometry(const QRect& visualParentGeometry)
+void outline::setVisualParentGeometry(const QRect& visualParentGeometry)
 {
     if (m_visualParentGeometry == visualParentGeometry) {
         return;
@@ -114,12 +114,12 @@ void Outline::setVisualParentGeometry(const QRect& visualParentGeometry)
     Q_EMIT unifiedGeometryChanged();
 }
 
-QRect Outline::unifiedGeometry() const
+QRect outline::unifiedGeometry() const
 {
     return m_outlineGeometry | m_visualParentGeometry;
 }
 
-void Outline::createHelper()
+void outline::createHelper()
 {
     if (!m_visual.isNull()) {
         return;
@@ -127,7 +127,7 @@ void Outline::createHelper()
     m_visual.reset(kwinApp()->platform->createOutline(this));
 }
 
-void Outline::compositingChanged()
+void outline::compositingChanged()
 {
     m_visual.reset();
     if (m_active) {
@@ -135,28 +135,28 @@ void Outline::compositingChanged()
     }
 }
 
-OutlineVisual::OutlineVisual(Outline* outline)
+outline_visual::outline_visual(x11::outline* outline)
     : m_outline(outline)
 {
 }
 
-OutlineVisual::~OutlineVisual()
+outline_visual::~outline_visual()
 {
 }
 
-CompositedOutlineVisual::CompositedOutlineVisual(Outline* outline)
-    : OutlineVisual(outline)
+composited_outline_visual::composited_outline_visual(x11::outline* outline)
+    : outline_visual(outline)
     , m_qmlContext()
     , m_qmlComponent()
     , m_mainItem()
 {
 }
 
-CompositedOutlineVisual::~CompositedOutlineVisual()
+composited_outline_visual::~composited_outline_visual()
 {
 }
 
-void CompositedOutlineVisual::hide()
+void composited_outline_visual::hide()
 {
     if (QQuickWindow* w = qobject_cast<QQuickWindow*>(m_mainItem.data())) {
         w->hide();
@@ -164,11 +164,11 @@ void CompositedOutlineVisual::hide()
     }
 }
 
-void CompositedOutlineVisual::show()
+void composited_outline_visual::show()
 {
     if (m_qmlContext.isNull()) {
         m_qmlContext.reset(new QQmlContext(workspace()->scripting->qmlEngine()));
-        m_qmlContext->setContextProperty(QStringLiteral("outline"), outline());
+        m_qmlContext->setContextProperty(QStringLiteral("outline"), get_outline());
     }
     if (m_qmlComponent.isNull()) {
         m_qmlComponent.reset(new QQmlComponent(workspace()->scripting->qmlEngine()));
