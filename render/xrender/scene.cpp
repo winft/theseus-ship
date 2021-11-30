@@ -1536,12 +1536,7 @@ scene_factory::~scene_factory() = default;
 
 render::scene* scene_factory::create(QObject* parent) const
 {
-    auto s = scene::createScene(parent);
-    if (s && s->initFailed()) {
-        delete s;
-        s = nullptr;
-    }
-    return s;
+    return scene::createScene(parent);
 }
 
 void scene::paintCursor()
