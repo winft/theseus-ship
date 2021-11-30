@@ -110,78 +110,7 @@ target_link_libraries(testXcbWindow
 add_test(NAME kwin-testXcbWindow COMMAND testXcbWindow)
 ecm_mark_as_test(testXcbWindow)
 
-########################################################
-# Test ScriptedEffectLoader
-########################################################
 include_directories(${KWIN_SOURCE_DIR})
-set(testScriptedEffectLoader_SRCS
-    ../render/effect_loader.cpp
-    ../screens.cpp
-    ../scripting/effect.cpp
-    ../scripting/scripting_logging.cpp
-    ../scripting/utils.cpp
-    mock_effectshandler.cpp
-    test_scripted_effectloader.cpp
-)
-kconfig_add_kcfg_files(testScriptedEffectLoader_SRCS ../settings.kcfgc)
-add_executable(testScriptedEffectLoader ${testScriptedEffectLoader_SRCS})
-
-target_link_libraries(testScriptedEffectLoader
-    Qt::Concurrent
-    Qt::Qml
-    Qt::Test
-    Qt::X11Extras
-
-    KF5::ConfigGui
-    KF5::GlobalAccel
-    KF5::I18n
-    KF5::Notifications
-    KF5::Package
-
-    kwin
-    kwineffects
-)
-
-add_test(NAME kwin-testScriptedEffectLoader COMMAND testScriptedEffectLoader)
-ecm_mark_as_test(testScriptedEffectLoader)
-
-########################################################
-# Test PluginEffectLoader
-########################################################
-set(testPluginEffectLoader_SRCS
-    ../render/effect_loader.cpp
-    mock_effectshandler.cpp
-    test_plugin_effectloader.cpp
-)
-add_executable(testPluginEffectLoader ${testPluginEffectLoader_SRCS})
-
-target_link_libraries(testPluginEffectLoader
-    Qt::Concurrent
-    Qt::Qml
-    Qt::Test
-    Qt::X11Extras
-
-    KF5::Package
-
-    kwineffects
-)
-
-add_test(NAME kwin-testPluginEffectLoader COMMAND testPluginEffectLoader)
-ecm_mark_as_test(testPluginEffectLoader)
-
-########################################################
-# FakeEffectPlugin
-########################################################
-add_library(fakeeffectplugin MODULE fakeeffectplugin.cpp)
-set_target_properties(fakeeffectplugin PROPERTIES PREFIX "")
-target_link_libraries(fakeeffectplugin kwineffects)
-
-########################################################
-# FakeEffectPlugin-Version
-########################################################
-add_library(effectversionplugin MODULE fakeeffectplugin_version.cpp)
-set_target_properties(effectversionplugin PROPERTIES PREFIX "")
-target_link_libraries(effectversionplugin kwineffects)
 
 ########################################################
 # Test OnScreenNotification

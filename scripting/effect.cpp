@@ -86,9 +86,6 @@ AnimationSettings animationSettingsFromObject(const QJSValue& object)
         settings.curve = static_cast<QEasingCurve::Type>(curve.toInt());
         settings.set |= AnimationSettings::Curve;
     } else {
-#ifdef KWIN_UNIT_TEST
-        settings.curve = QEasingCurve::Linear;
-#else
         auto get_qt_curve = [](Options::AnimationCurve curve) {
             switch (curve) {
             case Options::AnimationCurve::Quadratic:
@@ -104,7 +101,6 @@ AnimationSettings animationSettingsFromObject(const QJSValue& object)
             }
         };
         settings.curve = get_qt_curve(options->animationCurve());
-#endif
     }
 
     const QJSValue type = object.property(QStringLiteral("type"));
@@ -260,10 +256,8 @@ bool effect::init(const QString& effectName, const QString& pathToScript)
 
     globalObject.setProperty(QStringLiteral("Effect"),
                              m_engine->newQMetaObject(&effect::staticMetaObject));
-#ifndef KWIN_UNIT_TEST
     globalObject.setProperty(QStringLiteral("KWin"),
                              m_engine->newQMetaObject(&qt_script_space::staticMetaObject));
-#endif
     globalObject.setProperty(QStringLiteral("Globals"),
                              m_engine->newQMetaObject(&KWin::staticMetaObject));
     globalObject.setProperty(QStringLiteral("QEasingCurve"),

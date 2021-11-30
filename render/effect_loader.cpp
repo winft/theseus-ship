@@ -307,9 +307,7 @@ bool plugin_effect_loader::loadEffect(const KPluginMetaData& info, load_effect_f
         return false;
     }
 
-#ifndef KWIN_UNIT_TEST
     effects->makeOpenGLContextCurrent();
-#endif
     if (!effectFactory->isSupported()) {
         qCDebug(KWIN_CORE) << "Effect is not supported: " << name;
         return false;
