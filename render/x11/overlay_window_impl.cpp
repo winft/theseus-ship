@@ -3,7 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "overlaywindow_x11.h"
+#include "overlay_window_impl.h"
 
 #include "kwinglobals.h"
 #include "render/x11/compositor.h"
@@ -19,9 +19,9 @@
 #define KWIN_HAVE_XCOMPOSITE_OVERLAY
 #endif
 
-namespace KWin::render::backend::x11
+namespace KWin::render::x11
 {
-OverlayWindowX11::OverlayWindowX11()
+overlay_window_impl::overlay_window_impl()
     : render::x11::overlay_window()
     , base::x11::event_filter(QVector<int>{XCB_EXPOSE, XCB_VISIBILITY_NOTIFY})
     , m_visible(true)
@@ -30,11 +30,11 @@ OverlayWindowX11::OverlayWindowX11()
 {
 }
 
-OverlayWindowX11::~OverlayWindowX11()
+overlay_window_impl::~overlay_window_impl()
 {
 }
 
-bool OverlayWindowX11::create()
+bool overlay_window_impl::create()
 {
     Q_ASSERT(m_window == XCB_WINDOW_NONE);
     if (!Xcb::Extensions::self()->isCompositeOverlayAvailable())
@@ -56,7 +56,7 @@ bool OverlayWindowX11::create()
 #endif
 }
 
-void OverlayWindowX11::setup(xcb_window_t window)
+void overlay_window_impl::setup(xcb_window_t window)
 {
     Q_ASSERT(m_window != XCB_WINDOW_NONE);
     Q_ASSERT(Xcb::Extensions::self()->isShapeInputAvailable());
@@ -72,7 +72,7 @@ void OverlayWindowX11::setup(xcb_window_t window)
     xcb_change_window_attributes(connection(), m_window, XCB_CW_EVENT_MASK, &eventMask);
 }
 
-void OverlayWindowX11::setupInputShape(xcb_window_t window)
+void overlay_window_impl::setupInputShape(xcb_window_t window)
 {
     xcb_shape_rectangles(connection(),
                          XCB_SHAPE_SO_SET,
@@ -85,13 +85,13 @@ void OverlayWindowX11::setupInputShape(xcb_window_t window)
                          nullptr);
 }
 
-void OverlayWindowX11::setNoneBackgroundPixmap(xcb_window_t window)
+void overlay_window_impl::setNoneBackgroundPixmap(xcb_window_t window)
 {
     const uint32_t mask = XCB_BACK_PIXMAP_NONE;
     xcb_change_window_attributes(connection(), window, XCB_CW_BACK_PIXMAP, &mask);
 }
 
-void OverlayWindowX11::show()
+void overlay_window_impl::show()
 {
     Q_ASSERT(m_window != XCB_WINDOW_NONE);
     if (m_shown)
@@ -101,7 +101,7 @@ void OverlayWindowX11::show()
     m_shown = true;
 }
 
-void OverlayWindowX11::hide()
+void overlay_window_impl::hide()
 {
     Q_ASSERT(m_window != XCB_WINDOW_NONE);
     xcb_unmap_window(connection(), m_window);
@@ -110,7 +110,7 @@ void OverlayWindowX11::hide()
     setShape(QRect(0, 0, s.width(), s.height()));
 }
 
-void OverlayWindowX11::setShape(const QRegion& reg)
+void overlay_window_impl::setShape(const QRegion& reg)
 {
     // Avoid setting the same shape again, it causes flicker (apparently it is not a no-op
     // and triggers something).
@@ -130,7 +130,7 @@ void OverlayWindowX11::setShape(const QRegion& reg)
     m_shape = reg;
 }
 
-void OverlayWindowX11::resize(const QSize& size)
+void overlay_window_impl::resize(const QSize& size)
 {
     Q_ASSERT(m_window != XCB_WINDOW_NONE);
     const uint32_t geometry[2]
@@ -140,17 +140,17 @@ void OverlayWindowX11::resize(const QSize& size)
     setShape(QRegion(0, 0, size.width(), size.height()));
 }
 
-bool OverlayWindowX11::isVisible() const
+bool overlay_window_impl::isVisible() const
 {
     return m_visible;
 }
 
-void OverlayWindowX11::setVisibility(bool visible)
+void overlay_window_impl::setVisibility(bool visible)
 {
     m_visible = visible;
 }
 
-void OverlayWindowX11::destroy()
+void overlay_window_impl::destroy()
 {
     if (m_window == XCB_WINDOW_NONE)
         return;
@@ -183,12 +183,12 @@ void OverlayWindowX11::destroy()
     m_shown = false;
 }
 
-xcb_window_t OverlayWindowX11::window() const
+xcb_window_t overlay_window_impl::window() const
 {
     return m_window;
 }
 
-bool OverlayWindowX11::event(xcb_generic_event_t* event)
+bool overlay_window_impl::event(xcb_generic_event_t* event)
 {
     const uint8_t eventType = event->response_type & ~0x80;
     if (eventType == XCB_EXPOSE) {

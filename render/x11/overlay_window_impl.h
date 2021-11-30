@@ -3,21 +3,19 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_OVERLAYWINDOW_X11_H
-#define KWIN_OVERLAYWINDOW_X11_H
+#pragma once
 
 #include "base/x11/event_filter.h"
 #include "render/x11/overlay_window.h"
 
-namespace KWin::render::backend::x11
+namespace KWin::render::x11
 {
 
-class KWIN_EXPORT OverlayWindowX11 : public render::x11::overlay_window,
-                                     public base::x11::event_filter
+class KWIN_EXPORT overlay_window_impl : public overlay_window, public base::x11::event_filter
 {
 public:
-    OverlayWindowX11();
-    ~OverlayWindowX11() override;
+    overlay_window_impl();
+    ~overlay_window_impl() override;
     /// Creates XComposite overlay window, call initOverlay() afterwards
     bool create() override;
     /// Init overlay and the destination window in it
@@ -44,5 +42,3 @@ private:
 };
 
 }
-
-#endif // KWIN_OVERLAYWINDOW_H

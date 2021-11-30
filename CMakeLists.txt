@@ -451,6 +451,7 @@ set(kwin_SRCS
     render/x11/compositor_selection_owner.cpp
     render/x11/outline.cpp
     render/x11/overlay_window.cpp
+    render/x11/overlay_window_impl.cpp
     render/xrender/scene.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp
@@ -680,7 +681,6 @@ set(kwin_X11_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_x11.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/non_composited_outline.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/overlaywindow_x11.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/randr_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/screenedges_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_decoration_renderer.cpp

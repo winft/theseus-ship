@@ -15,9 +15,9 @@
 #include "main_x11.h"
 #include "non_composited_outline.h"
 #include "options.h"
-#include "overlaywindow_x11.h"
 #include "randr_filter.h"
 #include "render/compositor.h"
+#include "render/x11/overlay_window_impl.h"
 #include "screenedges_filter.h"
 #include "screens.h"
 #include "toplevel.h"
@@ -272,7 +272,7 @@ void X11StandalonePlatform::setupActionForGlobalAccel(QAction* action)
 
 render::x11::overlay_window* X11StandalonePlatform::createOverlayWindow()
 {
-    return new OverlayWindowX11();
+    return new render::x11::overlay_window_impl();
 }
 
 render::x11::outline_visual* X11StandalonePlatform::createOutline(render::x11::outline* outline)
