@@ -69,7 +69,7 @@ void ScreenEdgeTest::initTestCase()
 
     // disable all effects to prevent them grabbing edges
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
     for (QString name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);

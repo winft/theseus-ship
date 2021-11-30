@@ -66,7 +66,7 @@ void FadeTest::initTestCase()
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
     for (QString name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -89,9 +89,9 @@ void FadeTest::init()
     // load the translucency effect
     auto e = static_cast<render::effects_handler_impl*>(effects);
     // find the effectsloader
-    auto effectloader = e->findChild<AbstractEffectLoader*>();
+    auto effectloader = e->findChild<render::basic_effect_loader*>();
     QVERIFY(effectloader);
-    QSignalSpy effectLoadedSpy(effectloader, &AbstractEffectLoader::effectLoaded);
+    QSignalSpy effectLoadedSpy(effectloader, &render::basic_effect_loader::effectLoaded);
     QVERIFY(effectLoadedSpy.isValid());
 
     QVERIFY(!e->isEffectLoaded(QStringLiteral("kwin4_effect_fade")));

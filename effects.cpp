@@ -134,12 +134,12 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     , m_scene(scene)
     , m_desktopRendering(false)
     , m_currentRenderedDesktop(0)
-    , m_effectLoader(new EffectLoader(this))
+    , m_effectLoader(new effect_loader(this))
     , m_trackingCursorChanges(0)
 {
     qRegisterMetaType<QVector<KWin::EffectWindow*>>();
     connect(m_effectLoader,
-            &AbstractEffectLoader::effectLoaded,
+            &basic_effect_loader::effectLoaded,
             this,
             [this](Effect* effect, const QString& name) {
                 effect_order.insert(effect->requestedEffectChainPosition(),

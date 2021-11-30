@@ -63,12 +63,12 @@ class DesktopThumbnailItem;
 class WindowThumbnailItem;
 
 class Deleted;
-class EffectLoader;
 class Toplevel;
 
 namespace render
 {
 
+class effect_loader;
 class compositor;
 
 class KWIN_EXPORT effects_handler_impl : public EffectsHandler
@@ -402,7 +402,7 @@ private:
     bool m_desktopRendering;
     int m_currentRenderedDesktop;
     QList<Effect*> m_grabbedMouseEffects;
-    EffectLoader* m_effectLoader;
+    effect_loader* m_effectLoader;
     int m_trackingCursorChanges;
     std::unique_ptr<win::x11::window_property_notify_filter> m_x11WindowPropertyNotify;
     QList<EffectScreen*> m_effectScreens;

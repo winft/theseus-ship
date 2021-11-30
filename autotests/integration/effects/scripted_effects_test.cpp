@@ -126,7 +126,7 @@ bool ScriptedEffectWithDebugSpy::load(const QString& name)
     // used to find the internal effectloader and register ourselves
     auto c = effects->children();
     for (auto it = c.begin(); it != c.end(); ++it) {
-        if (qstrcmp((*it)->metaObject()->className(), "KWin::EffectLoader") != 0) {
+        if (qstrcmp((*it)->metaObject()->className(), "KWin::render::effect_loader") != 0) {
             continue;
         }
         QMetaObject::invokeMethod(
@@ -146,7 +146,7 @@ void ScriptedEffectsTest::initTestCase()
     QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
-    ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
 
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);

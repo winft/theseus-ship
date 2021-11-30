@@ -71,7 +71,7 @@ void PopupOpenCloseAnimationTest::initTestCase()
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);

@@ -32,13 +32,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStringList>
 #include <QtTest>
 Q_DECLARE_METATYPE(KWin::CompositingType)
-Q_DECLARE_METATYPE(KWin::LoadEffectFlags)
+Q_DECLARE_METATYPE(KWin::render::load_effect_flags)
 Q_DECLARE_METATYPE(KWin::BuiltInEffect)
 Q_DECLARE_METATYPE(KWin::Effect*)
 
 Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core")
 
-namespace KWin::scripting
+namespace KWin
+{
+
+namespace scripting
 {
 
 effect* effect::create(const KPluginMetaData&)
@@ -129,7 +132,7 @@ void TestBuiltInEffectLoader::testHasEffect()
     QFETCH(QString, name);
     QFETCH(bool, expected);
 
-    KWin::BuiltInEffectLoader loader;
+    render::builtin_effect_loader loader;
     QCOMPARE(loader.hasEffect(name), expected);
 }
 
@@ -156,7 +159,7 @@ void TestBuiltInEffectLoader::testKnownEffects()
                     << QStringLiteral("windowgeometry") << QStringLiteral("wobblywindows")
                     << QStringLiteral("zoom");
 
-    KWin::BuiltInEffectLoader loader;
+    render::builtin_effect_loader loader;
     QStringList result = loader.listOfKnownEffects();
     QCOMPARE(result.size(), expectedEffects.size());
     std::sort(result.begin(), result.end());
@@ -256,7 +259,7 @@ void TestBuiltInEffectLoader::testSupported()
     MockEffectsHandler mockHandler(type);
     mockHandler.setAnimationsSupported(animationsSupported);
     QCOMPARE(mockHandler.animationsSupported(), animationsSupported);
-    KWin::BuiltInEffectLoader loader;
+    render::builtin_effect_loader loader;
     QCOMPARE(loader.isEffectSupported(name), expected);
 }
 
@@ -349,16 +352,16 @@ void TestBuiltInEffectLoader::testLoadEffect()
 
     QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(
         new MockEffectsHandler(type));
-    KWin::BuiltInEffectLoader loader;
+    render::builtin_effect_loader loader;
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     loader.setConfig(config);
 
     qRegisterMetaType<KWin::Effect*>();
-    QSignalSpy spy(&loader, &KWin::BuiltInEffectLoader::effectLoaded);
+    QSignalSpy spy(&loader, &render::builtin_effect_loader::effectLoaded);
     // connect to signal to ensure that we delete the Effect again as the Effect doesn't have a
     // parent
     connect(&loader,
-            &KWin::BuiltInEffectLoader::effectLoaded,
+            &render::builtin_effect_loader::effectLoaded,
             [&name](KWin::Effect* effect, const QString& effectName) {
                 QCOMPARE(effectName, name);
                 effect->deleteLater();
@@ -402,15 +405,15 @@ void TestBuiltInEffectLoader::testLoadBuiltInEffect_data()
     QTest::addColumn<QString>("name");
     QTest::addColumn<bool>("expected");
     QTest::addColumn<KWin::CompositingType>("type");
-    QTest::addColumn<KWin::LoadEffectFlags>("loadFlags");
+    QTest::addColumn<render::load_effect_flags>("loadFlags");
 
     const KWin::CompositingType xc = KWin::XRenderCompositing;
     const KWin::CompositingType oc = KWin::OpenGLCompositing;
 
     auto const checkDefault
-        = KWin::LoadEffectFlags::Load | KWin::LoadEffectFlags::CheckDefaultFunction;
-    auto const forceFlags = KWin::LoadEffectFlags::Load;
-    auto const dontLoadFlags = KWin::LoadEffectFlags();
+        = render::load_effect_flags::load | render::load_effect_flags::check_default_function;
+    auto const forceFlags = render::load_effect_flags::load;
+    auto const dontLoadFlags = render::load_effect_flags();
 
     // enabled by default, but not supported
     QTest::newRow("blur") << KWin::BuiltInEffect::Blur << QStringLiteral("blur") << false << oc
@@ -453,20 +456,20 @@ void TestBuiltInEffectLoader::testLoadBuiltInEffect()
     QFETCH(QString, name);
     QFETCH(bool, expected);
     QFETCH(KWin::CompositingType, type);
-    QFETCH(KWin::LoadEffectFlags, loadFlags);
+    QFETCH(render::load_effect_flags, loadFlags);
 
     QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(
         new MockEffectsHandler(type));
-    KWin::BuiltInEffectLoader loader;
+    render::builtin_effect_loader loader;
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     loader.setConfig(config);
 
     qRegisterMetaType<KWin::Effect*>();
-    QSignalSpy spy(&loader, &KWin::BuiltInEffectLoader::effectLoaded);
+    QSignalSpy spy(&loader, &render::builtin_effect_loader::effectLoaded);
     // connect to signal to ensure that we delete the Effect again as the Effect doesn't have a
     // parent
     connect(&loader,
-            &KWin::BuiltInEffectLoader::effectLoaded,
+            &render::builtin_effect_loader::effectLoaded,
             [&name](KWin::Effect* effect, const QString& effectName) {
                 QCOMPARE(effectName, name);
                 effect->deleteLater();
@@ -507,7 +510,7 @@ void TestBuiltInEffectLoader::testLoadAllEffects()
 {
     QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(
         new MockEffectsHandler(KWin::XRenderCompositing));
-    KWin::BuiltInEffectLoader loader;
+    render::builtin_effect_loader loader;
 
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
 
@@ -530,10 +533,10 @@ void TestBuiltInEffectLoader::testLoadAllEffects()
     loader.setConfig(config);
 
     qRegisterMetaType<KWin::Effect*>();
-    QSignalSpy spy(&loader, &KWin::BuiltInEffectLoader::effectLoaded);
+    QSignalSpy spy(&loader, &render::builtin_effect_loader::effectLoaded);
     // connect to signal to ensure that we delete the Effect again as the Effect doesn't have a
     // parent
-    connect(&loader, &KWin::BuiltInEffectLoader::effectLoaded, [](KWin::Effect* effect) {
+    connect(&loader, &render::builtin_effect_loader::effectLoaded, [](KWin::Effect* effect) {
         effect->deleteLater();
     });
 
@@ -580,6 +583,8 @@ void TestBuiltInEffectLoader::testLoadAllEffects()
     QCOMPARE(loadedEffects.at(1), QStringLiteral("mouseclick"));
 }
 
+}
+
 Q_CONSTRUCTOR_FUNCTION(forceXcb)
-QTEST_MAIN(TestBuiltInEffectLoader)
+QTEST_MAIN(KWin::TestBuiltInEffectLoader)
 #include "test_builtin_effectloader.moc"
