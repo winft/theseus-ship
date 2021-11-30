@@ -299,17 +299,6 @@ class shadow : public render::shadow
 {
 public:
     explicit shadow(Toplevel* toplevel);
-    using render::shadow::ShadowElementBottom;
-    using render::shadow::ShadowElementBottomLeft;
-    using render::shadow::ShadowElementBottomRight;
-    using render::shadow::ShadowElementLeft;
-    using render::shadow::ShadowElementRight;
-    using render::shadow::ShadowElements;
-    using render::shadow::ShadowElementsCount;
-    using render::shadow::ShadowElementTop;
-    using render::shadow::ShadowElementTopLeft;
-    using render::shadow::ShadowElementTopRight;
-    using render::shadow::shadowPixmap;
     ~shadow() override;
 
     void layoutShadowRects(QRect& top,
@@ -320,14 +309,14 @@ public:
                            QRect& bottomLeft,
                            QRect& Left,
                            QRect& topLeft);
-    xcb_render_picture_t picture(ShadowElements element) const;
+    xcb_render_picture_t picture(shadow_element element) const;
 
 protected:
     void buildQuads() override;
     bool prepareBackend() override;
 
 private:
-    XRenderPicture* m_pictures[ShadowElementsCount];
+    XRenderPicture* m_pictures[static_cast<int>(shadow_element::count)];
 };
 
 class deco_renderer : public Decoration::Renderer

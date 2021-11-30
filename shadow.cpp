@@ -139,10 +139,12 @@ QVector<uint32_t> shadow::readX11ShadowProperty(xcb_window_t id)
 
 bool shadow::init(const QVector<uint32_t>& data)
 {
-    QVector<Xcb::WindowGeometry> pixmapGeometries(ShadowElementsCount);
-    QVector<xcb_get_image_cookie_t> getImageCookies(ShadowElementsCount);
+    constexpr auto element_count = enum_index(shadow_element::count);
+
+    QVector<Xcb::WindowGeometry> pixmapGeometries(element_count);
+    QVector<xcb_get_image_cookie_t> getImageCookies(element_count);
     auto* c = connection();
-    for (int i = 0; i < ShadowElementsCount; ++i) {
+    for (size_t i = 0; i < element_count; ++i) {
         pixmapGeometries[i] = Xcb::WindowGeometry(data[i]);
     }
     auto discardReplies = [&getImageCookies](int start) {
@@ -150,7 +152,7 @@ bool shadow::init(const QVector<uint32_t>& data)
             xcb_discard_reply(connection(), getImageCookies.at(i).sequence);
         }
     };
-    for (int i = 0; i < ShadowElementsCount; ++i) {
+    for (size_t i = 0; i < element_count; ++i) {
         auto& geo = pixmapGeometries[i];
         if (geo.isNull()) {
             discardReplies(0);
@@ -159,7 +161,7 @@ bool shadow::init(const QVector<uint32_t>& data)
         getImageCookies[i] = xcb_get_image_unchecked(
             c, XCB_IMAGE_FORMAT_Z_PIXMAP, data[i], 0, 0, geo->width, geo->height, ~0);
     }
-    for (int i = 0; i < ShadowElementsCount; ++i) {
+    for (size_t i = 0; i < element_count; ++i) {
         auto* reply = xcb_get_image_reply(c, getImageCookies.at(i), nullptr);
         if (!reply) {
             discardReplies(i + 1);
@@ -170,10 +172,10 @@ bool shadow::init(const QVector<uint32_t>& data)
         m_shadowElements[i] = QPixmap::fromImage(image);
         free(reply);
     }
-    m_topOffset = data[ShadowElementsCount];
-    m_rightOffset = data[ShadowElementsCount + 1];
-    m_bottomOffset = data[ShadowElementsCount + 2];
-    m_leftOffset = data[ShadowElementsCount + 3];
+    m_topOffset = data[element_count];
+    m_rightOffset = data[element_count + 1];
+    m_bottomOffset = data[element_count + 2];
+    m_leftOffset = data[element_count + 3];
     updateShadowRegion();
     if (!prepareBackend()) {
         return false;
@@ -237,28 +239,28 @@ bool shadow::init(const QPointer<Wrapland::Server::Shadow>& shadow)
         return false;
     }
 
-    m_shadowElements[ShadowElementTop] = shadow->top()
+    m_shadowElements[enum_index(shadow_element::top)] = shadow->top()
         ? QPixmap::fromImage(shadow->top()->shmImage()->createQImage().copy())
         : QPixmap();
-    m_shadowElements[ShadowElementTopRight] = shadow->topRight()
+    m_shadowElements[enum_index(shadow_element::top_right)] = shadow->topRight()
         ? QPixmap::fromImage(shadow->topRight()->shmImage()->createQImage().copy())
         : QPixmap();
-    m_shadowElements[ShadowElementRight] = shadow->right()
+    m_shadowElements[enum_index(shadow_element::right)] = shadow->right()
         ? QPixmap::fromImage(shadow->right()->shmImage()->createQImage().copy())
         : QPixmap();
-    m_shadowElements[ShadowElementBottomRight] = shadow->bottomRight()
+    m_shadowElements[enum_index(shadow_element::bottom_right)] = shadow->bottomRight()
         ? QPixmap::fromImage(shadow->bottomRight()->shmImage()->createQImage().copy())
         : QPixmap();
-    m_shadowElements[ShadowElementBottom] = shadow->bottom()
+    m_shadowElements[enum_index(shadow_element::bottom)] = shadow->bottom()
         ? QPixmap::fromImage(shadow->bottom()->shmImage()->createQImage().copy())
         : QPixmap();
-    m_shadowElements[ShadowElementBottomLeft] = shadow->bottomLeft()
+    m_shadowElements[enum_index(shadow_element::bottom_left)] = shadow->bottomLeft()
         ? QPixmap::fromImage(shadow->bottomLeft()->shmImage()->createQImage().copy())
         : QPixmap();
-    m_shadowElements[ShadowElementLeft] = shadow->left()
+    m_shadowElements[enum_index(shadow_element::left)] = shadow->left()
         ? QPixmap::fromImage(shadow->left()->shmImage()->createQImage().copy())
         : QPixmap();
-    m_shadowElements[ShadowElementTopLeft] = shadow->topLeft()
+    m_shadowElements[enum_index(shadow_element::top_left)] = shadow->topLeft()
         ? QPixmap::fromImage(shadow->topLeft()->shmImage()->createQImage().copy())
         : QPixmap();
 
@@ -293,14 +295,14 @@ void shadow::buildQuads()
     m_shadowQuads.clear();
 
     auto const size = m_topLevel->size();
-    const QSize top(m_shadowElements[ShadowElementTop].size());
-    const QSize topRight(m_shadowElements[ShadowElementTopRight].size());
-    const QSize right(m_shadowElements[ShadowElementRight].size());
-    const QSize bottomRight(m_shadowElements[ShadowElementBottomRight].size());
-    const QSize bottom(m_shadowElements[ShadowElementBottom].size());
-    const QSize bottomLeft(m_shadowElements[ShadowElementBottomLeft].size());
-    const QSize left(m_shadowElements[ShadowElementLeft].size());
-    const QSize topLeft(m_shadowElements[ShadowElementTopLeft].size());
+    const QSize top(m_shadowElements[enum_index(shadow_element::top)].size());
+    const QSize topRight(m_shadowElements[enum_index(shadow_element::top_right)].size());
+    const QSize right(m_shadowElements[enum_index(shadow_element::right)].size());
+    const QSize bottomRight(m_shadowElements[enum_index(shadow_element::bottom_right)].size());
+    const QSize bottom(m_shadowElements[enum_index(shadow_element::bottom)].size());
+    const QSize bottomLeft(m_shadowElements[enum_index(shadow_element::bottom_left)].size());
+    const QSize left(m_shadowElements[enum_index(shadow_element::left)].size());
+    const QSize topLeft(m_shadowElements[enum_index(shadow_element::top_left)].size());
     if ((left.width() - m_leftOffset > size.width())
         || (right.width() - m_rightOffset > size.width())
         || (top.height() - m_topOffset > size.height())
@@ -452,31 +454,31 @@ QImage shadow::decorationShadowImage() const
     return m_decorationShadow->shadow();
 }
 
-QSize shadow::elementSize(shadow::ShadowElements element) const
+QSize shadow::elementSize(shadow_element element) const
 {
     if (m_decorationShadow) {
         switch (element) {
-        case ShadowElementTop:
+        case shadow_element::top:
             return m_decorationShadow->topGeometry().size();
-        case ShadowElementTopRight:
+        case shadow_element::top_right:
             return m_decorationShadow->topRightGeometry().size();
-        case ShadowElementRight:
+        case shadow_element::right:
             return m_decorationShadow->rightGeometry().size();
-        case ShadowElementBottomRight:
+        case shadow_element::bottom_right:
             return m_decorationShadow->bottomRightGeometry().size();
-        case ShadowElementBottom:
+        case shadow_element::bottom:
             return m_decorationShadow->bottomGeometry().size();
-        case ShadowElementBottomLeft:
+        case shadow_element::bottom_left:
             return m_decorationShadow->bottomLeftGeometry().size();
-        case ShadowElementLeft:
+        case shadow_element::left:
             return m_decorationShadow->leftGeometry().size();
-        case ShadowElementTopLeft:
+        case shadow_element::top_left:
             return m_decorationShadow->topLeftGeometry().size();
         default:
             return QSize();
         }
     } else {
-        return m_shadowElements[element].size();
+        return m_shadowElements[enum_index(element)].size();
     }
 }
 
@@ -485,9 +487,9 @@ QMargins shadow::margins() const
     return QMargins(m_leftOffset, m_topOffset, m_rightOffset, m_topOffset);
 }
 
-void shadow::setShadowElement(const QPixmap& shadow, shadow::ShadowElements element)
+void shadow::setShadowElement(const QPixmap& shadow, shadow_element element)
 {
-    m_shadowElements[element] = shadow;
+    m_shadowElements[enum_index(element)] = shadow;
 }
 
 } // namespace

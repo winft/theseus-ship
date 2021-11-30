@@ -704,7 +704,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 #define RENDER_SHADOW_TILE(_TILE_, _RECT_)                                                         \
     xcb_render_composite(connection(),                                                             \
                          XCB_RENDER_PICT_OP_OVER,                                                  \
-                         m_xrenderShadow->picture(xrender::shadow::ShadowElement##_TILE_),         \
+                         m_xrenderShadow->picture(shadow_element::_TILE_),                         \
                          shadowAlpha,                                                              \
                          renderTarget,                                                             \
                          0,                                                                        \
@@ -722,14 +722,14 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
             if (!opaque) {
                 shadowAlpha = xRenderBlendPicture(data.opacity());
             }
-            RENDER_SHADOW_TILE(TopLeft, stlr);
-            RENDER_SHADOW_TILE(Top, str);
-            RENDER_SHADOW_TILE(TopRight, strr);
-            RENDER_SHADOW_TILE(Left, slr);
-            RENDER_SHADOW_TILE(Right, srr);
-            RENDER_SHADOW_TILE(BottomLeft, sblr);
-            RENDER_SHADOW_TILE(Bottom, sbr);
-            RENDER_SHADOW_TILE(BottomRight, sbrr);
+            RENDER_SHADOW_TILE(top_left, stlr);
+            RENDER_SHADOW_TILE(top, str);
+            RENDER_SHADOW_TILE(top_right, strr);
+            RENDER_SHADOW_TILE(left, slr);
+            RENDER_SHADOW_TILE(right, srr);
+            RENDER_SHADOW_TILE(bottom_left, sblr);
+            RENDER_SHADOW_TILE(bottom, sbr);
+            RENDER_SHADOW_TILE(bottom_right, sbrr);
         }
 #undef RENDER_SHADOW_TILE
 
@@ -1289,14 +1289,14 @@ void effect_frame::updateTextPicture()
 shadow::shadow(Toplevel* toplevel)
     : render::shadow(toplevel)
 {
-    for (int i = 0; i < ShadowElementsCount; ++i) {
+    for (size_t i = 0; i < enum_index(shadow_element::count); ++i) {
         m_pictures[i] = nullptr;
     }
 }
 
 shadow::~shadow()
 {
-    for (int i = 0; i < ShadowElementsCount; ++i) {
+    for (size_t i = 0; i < enum_index(shadow_element::count); ++i) {
         delete m_pictures[i];
     }
 }
@@ -1378,7 +1378,7 @@ bool shadow::prepareBackend()
         QPainter p;
         int x = 0;
         int y = 0;
-        auto drawElement = [this, &x, &y, &p, &shadowImage](ShadowElements element) {
+        auto drawElement = [this, &x, &y, &p, &shadowImage](auto element) {
             QPixmap pix(elementSize(element));
             pix.fill(Qt::transparent);
             p.begin(&pix);
@@ -1387,31 +1387,31 @@ bool shadow::prepareBackend()
             setShadowElement(pix, element);
             return pix.size();
         };
-        x += drawElement(ShadowElementTopLeft).width();
-        x += drawElement(ShadowElementTop).width();
-        y += drawElement(ShadowElementTopRight).height();
-        drawElement(ShadowElementRight);
+        x += drawElement(shadow_element::top_left).width();
+        x += drawElement(shadow_element::top).width();
+        y += drawElement(shadow_element::top_right).height();
+        drawElement(shadow_element::right);
         x = 0;
-        y += drawElement(ShadowElementLeft).height();
-        x += drawElement(ShadowElementBottomLeft).width();
-        x += drawElement(ShadowElementBottom).width();
-        drawElement(ShadowElementBottomRight).width();
+        y += drawElement(shadow_element::left).height();
+        x += drawElement(shadow_element::bottom_left).width();
+        x += drawElement(shadow_element::bottom).width();
+        drawElement(shadow_element::bottom_right).width();
     }
     const uint32_t values[] = {XCB_RENDER_REPEAT_NORMAL};
-    for (int i = 0; i < ShadowElementsCount; ++i) {
+    for (size_t i = 0; i < enum_index(shadow_element::count); ++i) {
         delete m_pictures[i];
-        m_pictures[i] = new XRenderPicture(shadowPixmap(ShadowElements(i)).toImage());
+        m_pictures[i] = new XRenderPicture(shadowPixmap(static_cast<shadow_element>(i)).toImage());
         xcb_render_change_picture(connection(), *m_pictures[i], XCB_RENDER_CP_REPEAT, values);
     }
     return true;
 }
 
-xcb_render_picture_t shadow::picture(render::shadow::ShadowElements element) const
+xcb_render_picture_t shadow::picture(shadow_element element) const
 {
-    if (!m_pictures[element]) {
+    if (!m_pictures[enum_index(element)]) {
         return XCB_RENDER_PICTURE_NONE;
     }
-    return *m_pictures[element];
+    return *m_pictures[enum_index(element)];
 }
 
 deco_renderer::deco_renderer(Decoration::DecoratedClientImpl* client)

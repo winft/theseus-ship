@@ -552,14 +552,14 @@ void shadow::buildQuads()
         return;
     }
 
-    const QSizeF top(elementSize(ShadowElementTop));
-    const QSizeF topRight(elementSize(ShadowElementTopRight));
-    const QSizeF right(elementSize(ShadowElementRight));
-    const QSizeF bottomRight(elementSize(ShadowElementBottomRight));
-    const QSizeF bottom(elementSize(ShadowElementBottom));
-    const QSizeF bottomLeft(elementSize(ShadowElementBottomLeft));
-    const QSizeF left(elementSize(ShadowElementLeft));
-    const QSizeF topLeft(elementSize(ShadowElementTopLeft));
+    const QSizeF top(elementSize(shadow_element::top));
+    const QSizeF topRight(elementSize(shadow_element::top_right));
+    const QSizeF right(elementSize(shadow_element::right));
+    const QSizeF bottomRight(elementSize(shadow_element::bottom_right));
+    const QSizeF bottom(elementSize(shadow_element::bottom));
+    const QSizeF bottomLeft(elementSize(shadow_element::bottom_left));
+    const QSizeF left(elementSize(shadow_element::left));
+    const QSizeF topLeft(elementSize(shadow_element::top_left));
 
     const QRectF outerRect(QPointF(-leftOffset(), -topOffset()),
                            QPointF(topLevel()->size().width() + rightOffset(),
@@ -729,14 +729,14 @@ bool shadow::prepareBackend()
         return true;
     }
 
-    const QPixmap& topLeft = shadowPixmap(ShadowElementTopLeft);
-    const QPixmap& top = shadowPixmap(ShadowElementTop);
-    const QPixmap& topRight = shadowPixmap(ShadowElementTopRight);
-    const QPixmap& bottomLeft = shadowPixmap(ShadowElementBottomLeft);
-    const QPixmap& bottom = shadowPixmap(ShadowElementBottom);
-    const QPixmap& bottomRight = shadowPixmap(ShadowElementBottomRight);
-    const QPixmap& left = shadowPixmap(ShadowElementLeft);
-    const QPixmap& right = shadowPixmap(ShadowElementRight);
+    auto& topLeft = shadowPixmap(shadow_element::top_left);
+    auto& top = shadowPixmap(shadow_element::top);
+    auto& topRight = shadowPixmap(shadow_element::top_right);
+    auto& bottomLeft = shadowPixmap(shadow_element::bottom_left);
+    auto& bottom = shadowPixmap(shadow_element::bottom);
+    auto& bottomRight = shadowPixmap(shadow_element::bottom_right);
+    auto& left = shadowPixmap(shadow_element::left);
+    auto& right = shadowPixmap(shadow_element::right);
 
     const int width = std::max({topLeft.width(), left.width(), bottomLeft.width()})
         + std::max(top.width(), bottom.width())

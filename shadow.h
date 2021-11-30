@@ -42,6 +42,18 @@ class Toplevel;
 namespace render
 {
 
+enum class shadow_element {
+    top,
+    top_right,
+    right,
+    bottom_right,
+    bottom,
+    bottom_left,
+    left,
+    top_left,
+    count,
+};
+
 /**
  * @short Class representing a Window's Shadow to be rendered by the Compositor.
  *
@@ -130,23 +142,13 @@ public Q_SLOTS:
 
 protected:
     shadow(Toplevel* toplevel);
-    enum ShadowElements {
-        ShadowElementTop,
-        ShadowElementTopRight,
-        ShadowElementRight,
-        ShadowElementBottomRight,
-        ShadowElementBottom,
-        ShadowElementBottomLeft,
-        ShadowElementLeft,
-        ShadowElementTopLeft,
-        ShadowElementsCount
-    };
 
-    inline const QPixmap& shadowPixmap(ShadowElements element) const
+    inline const QPixmap& shadowPixmap(shadow_element element) const
     {
-        return m_shadowElements[element];
-    };
-    QSize elementSize(ShadowElements element) const;
+        return m_shadowElements[static_cast<size_t>(element)];
+    }
+
+    QSize elementSize(shadow_element element) const;
 
     int topOffset() const
     {
@@ -176,7 +178,7 @@ protected:
     };
     virtual bool prepareBackend() = 0;
     WindowQuadList m_shadowQuads;
-    void setShadowElement(const QPixmap& shadow, ShadowElements element);
+    void setShadowElement(const QPixmap& shadow, shadow_element element);
 
 private:
     static shadow* createShadowFromX11(Toplevel* toplevel);
@@ -188,7 +190,7 @@ private:
     bool init(const QPointer<Wrapland::Server::Shadow>& shadow);
     Toplevel* m_topLevel;
     // shadow pixmaps
-    QPixmap m_shadowElements[ShadowElementsCount];
+    QPixmap m_shadowElements[static_cast<size_t>(shadow_element::count)];
     // shadow offsets
     int m_topOffset;
     int m_rightOffset;
