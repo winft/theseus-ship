@@ -80,7 +80,7 @@ QRegion backend::accumulatedDamageHistory(int bufferAge) const
     return region;
 }
 
-OverlayWindow* backend::overlayWindow() const
+x11::overlay_window* backend::overlayWindow() const
 {
     return nullptr;
 }

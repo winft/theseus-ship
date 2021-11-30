@@ -43,7 +43,6 @@ class Manager;
 }
 
 class Edge;
-class OverlayWindow;
 class Outline;
 class OutlineVisual;
 class Screens;
@@ -65,6 +64,10 @@ class backend;
 namespace qpainter
 {
 class backend;
+}
+namespace x11
+{
+class overlay_window;
 }
 
 class compositor;
@@ -251,10 +254,10 @@ public:
     }
 
     /**
-     * Creates the OverlayWindow required for X11 based compositors.
+     * Creates the overlay window required for X11 based compositors.
      * Default implementation returns @c nullptr.
      */
-    virtual OverlayWindow *createOverlayWindow();
+    virtual render::x11::overlay_window* createOverlayWindow();
 
     /**
      * Queries the current X11 time stamp of the X server.

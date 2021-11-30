@@ -50,7 +50,6 @@ class Renderer;
 }
 
 class Deleted;
-class OverlayWindow;
 
 namespace render
 {
@@ -60,6 +59,11 @@ class effects_window_impl;
 class shadow;
 class window;
 class window_pixmap;
+
+namespace x11
+{
+class overlay_window;
+}
 
 enum class image_filter_type {
     fast,
@@ -175,7 +179,7 @@ public:
 
     // there's nothing to paint (adjust time_diff later)
     virtual void idle();
-    virtual OverlayWindow* overlayWindow() const = 0;
+    virtual x11::overlay_window* overlayWindow() const = 0;
     virtual bool hasSwapEvent() const;
 
     virtual bool makeOpenGLContextCurrent();

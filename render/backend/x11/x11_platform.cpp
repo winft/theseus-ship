@@ -270,7 +270,7 @@ void X11StandalonePlatform::setupActionForGlobalAccel(QAction* action)
     });
 }
 
-OverlayWindow* X11StandalonePlatform::createOverlayWindow()
+render::x11::overlay_window* X11StandalonePlatform::createOverlayWindow()
 {
     return new OverlayWindowX11();
 }

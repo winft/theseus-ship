@@ -60,7 +60,7 @@ public:
     render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     render::shadow* createShadow(Toplevel* toplevel) override;
     void screenGeometryChanged(const QSize& size) override;
-    OverlayWindow* overlayWindow() const override;
+    x11::overlay_window* overlayWindow() const override;
     bool usesOverlayWindow() const override;
     bool hasSwapEvent() const override;
     bool makeOpenGLContextCurrent() override;

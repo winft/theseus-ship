@@ -30,9 +30,16 @@ namespace base
 {
 class output;
 }
-class OverlayWindow;
 
-namespace render::qpainter
+namespace render
+{
+
+namespace x11
+{
+class overlay_window;
+}
+
+namespace qpainter
 {
 
 class backend
@@ -90,5 +97,6 @@ private:
     bool m_failed;
 };
 
+}
 }
 }

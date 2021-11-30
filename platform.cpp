@@ -148,7 +148,7 @@ void Platform::setupActionForGlobalAccel(QAction *action)
     Q_UNUSED(action)
 }
 
-OverlayWindow *Platform::createOverlayWindow()
+render::x11::overlay_window* Platform::createOverlayWindow()
 {
     return nullptr;
 }

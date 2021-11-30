@@ -79,7 +79,7 @@ backend::~backend()
     }
 }
 
-OverlayWindow* backend::overlayWindow()
+x11::overlay_window* backend::overlayWindow()
 {
     return nullptr;
 }
@@ -126,7 +126,7 @@ x11_overlay_backend::~x11_overlay_backend()
     m_overlayWindow->destroy();
 }
 
-OverlayWindow* x11_overlay_backend::overlayWindow()
+x11::overlay_window* x11_overlay_backend::overlayWindow()
 {
     return m_overlayWindow.data();
 }

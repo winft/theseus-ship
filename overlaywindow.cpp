@@ -19,15 +19,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "overlaywindow.h"
 
-namespace KWin
+namespace KWin::render::x11
 {
 
-OverlayWindow::OverlayWindow()
-{
-}
-
-OverlayWindow::~OverlayWindow()
+overlay_window::overlay_window()
 {
 }
 
-} // namespace KWin
+overlay_window::~overlay_window()
+{
+}
+
+}

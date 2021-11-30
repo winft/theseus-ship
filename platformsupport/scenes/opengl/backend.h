@@ -32,11 +32,16 @@ namespace base
 class output;
 }
 
-class OverlayWindow;
 class SceneOpenGL;
 
 namespace render
 {
+
+namespace x11
+{
+class overlay_window;
+}
+
 class window_pixmap;
 
 namespace gl
@@ -124,9 +129,9 @@ public:
      * In case the backend does not use an OverlayWindow it is allowed to return @c null.
      * It's the task of the caller to check whether it is @c null.
      *
-     * @return :OverlayWindow*
+     * @return x11::overlay_window*
      */
-    virtual OverlayWindow* overlayWindow() const;
+    virtual x11::overlay_window* overlayWindow() const;
     /**
      * @brief Whether the creation of the Backend failed.
      *

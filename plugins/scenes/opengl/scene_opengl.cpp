@@ -506,7 +506,7 @@ scene* scene::createScene(QObject* parent)
     return scene;
 }
 
-OverlayWindow* scene::overlayWindow() const
+x11::overlay_window* scene::overlayWindow() const
 {
     return m_backend->overlayWindow();
 }

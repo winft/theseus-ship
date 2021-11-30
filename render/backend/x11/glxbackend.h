@@ -59,7 +59,7 @@ public:
     void endRenderingFrame(const QRegion& damage, const QRegion& damagedRegion) override;
     bool makeCurrent() override;
     void doneCurrent() override;
-    OverlayWindow* overlayWindow() const override;
+    render::x11::overlay_window* overlayWindow() const override;
     bool usesOverlayWindow() const override;
     bool hasSwapEvent() const override;
     void init() override;
@@ -86,7 +86,7 @@ private:
     /**
      * @brief The OverlayWindow used by this Backend.
      */
-    OverlayWindow* m_overlayWindow;
+    render::x11::overlay_window* m_overlayWindow;
     Window window;
     GLXFBConfig fbconfig;
     GLXWindow glxWindow;

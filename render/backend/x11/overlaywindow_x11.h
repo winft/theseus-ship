@@ -12,7 +12,8 @@
 namespace KWin::render::backend::x11
 {
 
-class KWIN_EXPORT OverlayWindowX11 : public OverlayWindow, public base::x11::event_filter
+class KWIN_EXPORT OverlayWindowX11 : public render::x11::overlay_window,
+                                     public base::x11::event_filter
 {
 public:
     OverlayWindowX11();

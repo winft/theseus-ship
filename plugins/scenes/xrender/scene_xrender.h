@@ -50,15 +50,15 @@ public:
     virtual void present(paint_type mask, const QRegion& damage) = 0;
 
     /**
-     * @brief Returns the OverlayWindow used by the backend.
+     * @brief Returns the overlay window used by the backend.
      *
-     * A backend does not have to use an OverlayWindow, this is mostly for the X world.
-     * In case the backend does not use an OverlayWindow it is allowed to return @c null.
+     * A backend does not have to use an overlay window, this is mostly for the X world.
+     * In case the backend does not use an overlay window it is allowed to return @c null.
      * It's the task of the caller to check whether it is @c null.
      *
-     * @return :OverlayWindow*
+     * @return x11::overlay_window*
      */
-    virtual OverlayWindow* overlayWindow();
+    virtual x11::overlay_window* overlayWindow();
     virtual bool usesOverlayWindow() const = 0;
     /**
      * @brief Shows the Overlay Window
@@ -134,7 +134,7 @@ public:
     ~x11_overlay_backend() override;
 
     void present(paint_type mask, const QRegion& damage) override;
-    OverlayWindow* overlayWindow() override;
+    x11::overlay_window* overlayWindow() override;
     void showOverlay() override;
     void screenGeometryChanged(const QSize& size) override;
     bool usesOverlayWindow() const override;
@@ -142,7 +142,7 @@ public:
 private:
     void init(bool createOverlay);
     void createBuffer();
-    QScopedPointer<OverlayWindow> m_overlayWindow;
+    QScopedPointer<x11::overlay_window> m_overlayWindow;
     xcb_render_picture_t m_front;
     xcb_render_pictformat_t m_format;
 };
@@ -165,7 +165,7 @@ public:
     render::shadow* createShadow(Toplevel* toplevel) override;
     void screenGeometryChanged(const QSize& size) override;
     xcb_render_picture_t xrenderBufferPicture() const override;
-    OverlayWindow* overlayWindow() const override
+    x11::overlay_window* overlayWindow() const override
     {
         return m_backend->overlayWindow();
     }
