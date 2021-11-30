@@ -738,7 +738,6 @@ window::window(Toplevel* c)
     , m_currentPixmap()
     , m_previousPixmap()
     , m_referencePixmapCounter(0)
-    , disable_painting(0)
     , cached_quad_list(nullptr)
     , m_id{window_id++}
 {
@@ -826,39 +825,40 @@ bool window::isOpaque() const
 
 bool window::isPaintingEnabled() const
 {
-    return !disable_painting;
+    return disable_painting == window_paint_disable_type::none;
 }
 
 void window::resetPaintingEnabled()
 {
-    disable_painting = 0;
-    if (toplevel->isDeleted())
-        disable_painting |= PAINT_DISABLED_BY_DELETE;
+    disable_painting = window_paint_disable_type::none;
+    if (toplevel->isDeleted()) {
+        disable_painting |= window_paint_disable_type::by_delete;
+    }
     if (static_cast<EffectsHandlerImpl*>(effects)->isDesktopRendering()) {
         if (!toplevel->isOnDesktop(
                 static_cast<EffectsHandlerImpl*>(effects)->currentRenderedDesktop())) {
-            disable_painting |= PAINT_DISABLED_BY_DESKTOP;
+            disable_painting |= window_paint_disable_type::by_desktop;
         }
     } else {
         if (!toplevel->isOnCurrentDesktop())
-            disable_painting |= PAINT_DISABLED_BY_DESKTOP;
+            disable_painting |= window_paint_disable_type::by_desktop;
     }
     if (toplevel->control) {
         if (toplevel->control->minimized()) {
-            disable_painting |= PAINT_DISABLED_BY_MINIMIZE;
+            disable_painting |= window_paint_disable_type::by_minimize;
         }
         if (toplevel->isHiddenInternal()) {
-            disable_painting |= PAINT_DISABLED;
+            disable_painting |= window_paint_disable_type::unspecified;
         }
     }
 }
 
-void window::enablePainting(int reason)
+void window::enablePainting(window_paint_disable_type reason)
 {
     disable_painting &= ~reason;
 }
 
-void window::disablePainting(int reason)
+void window::disablePainting(window_paint_disable_type reason)
 {
     disable_painting |= reason;
 }

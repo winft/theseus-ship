@@ -1889,12 +1889,12 @@ bool EffectWindowImpl::isPaintingEnabled()
 
 void EffectWindowImpl::enablePainting(int reason)
 {
-    sceneWindow()->enablePainting(reason);
+    sceneWindow()->enablePainting(static_cast<render::window_paint_disable_type>(reason));
 }
 
 void EffectWindowImpl::disablePainting(int reason)
 {
-    sceneWindow()->disablePainting(reason);
+    sceneWindow()->disablePainting(static_cast<render::window_paint_disable_type>(reason));
 }
 
 void EffectWindowImpl::addRepaint(const QRect& r)

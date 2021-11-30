@@ -335,6 +335,25 @@ protected:
     explicit scene_factory(QObject* parent);
 };
 
+enum class window_paint_disable_type {
+    none = 0,
+
+    // Window will not be painted for an unspecified reason
+    unspecified = 1 << 0,
+
+    // Window will not be painted because it is deleted
+    by_delete = 1 << 1,
+
+    // Window will not be painted because of which desktop it's on
+    by_desktop = 1 << 2,
+
+    // Window will not be painted because it is minimized
+    by_minimize = 1 << 3,
+
+    // Window will not be painted because it's not on the current activity
+    by_activity = 1 << 5, /// Deprecated
+};
+
 // The base class for windows representations in composite backends
 class KWIN_EXPORT window
 {
@@ -361,21 +380,8 @@ public:
     // should the window be painted
     bool isPaintingEnabled() const;
     void resetPaintingEnabled();
-    // Flags explaining why painting should be disabled
-    enum {
-        // Window will not be painted
-        PAINT_DISABLED = 1 << 0,
-        // Window will not be painted because it is deleted
-        PAINT_DISABLED_BY_DELETE = 1 << 1,
-        // Window will not be painted because of which desktop it's on
-        PAINT_DISABLED_BY_DESKTOP = 1 << 2,
-        // Window will not be painted because it is minimized
-        PAINT_DISABLED_BY_MINIMIZE = 1 << 3,
-        // Window will not be painted because it's not on the current activity
-        PAINT_DISABLED_BY_ACTIVITY = 1 << 5, /// Deprecated
-    };
-    void enablePainting(int reason);
-    void disablePainting(int reason);
+    void enablePainting(window_paint_disable_type reason);
+    void disablePainting(window_paint_disable_type reason);
     // is the window visible at all
     bool isVisible() const;
     // is the window fully opaque
@@ -434,7 +440,7 @@ private:
     QScopedPointer<window_pixmap> m_currentPixmap;
     QScopedPointer<window_pixmap> m_previousPixmap;
     int m_referencePixmapCounter;
-    int disable_painting;
+    window_paint_disable_type disable_painting{window_paint_disable_type::none};
     mutable QScopedPointer<WindowQuadList> cached_quad_list;
     uint32_t const m_id;
     Q_DISABLE_COPY(window)
@@ -694,4 +700,5 @@ inline const QSize& window_pixmap::size() const
 }
 
 ENUM_FLAGS(KWin::render::paint_type)
+ENUM_FLAGS(KWin::render::window_paint_disable_type)
 Q_DECLARE_INTERFACE(KWin::render::scene_factory, "org.kde.kwin.Scene")
