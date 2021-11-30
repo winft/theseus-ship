@@ -18,8 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "backend.h"
-#include <logging.h>
 
+#include "wayland_logging.h"
 #include <QtGlobal>
 
 namespace KWin::render::qpainter
@@ -41,7 +41,7 @@ void backend::screenGeometryChanged(const QSize& size)
 
 void backend::setFailed(const QString& reason)
 {
-    qCWarning(KWIN_QPAINTER) << "Creating the QPainter backend failed: " << reason;
+    qCWarning(KWIN_WL) << "Creating the QPainter backend failed: " << reason;
     m_failed = true;
 }
 

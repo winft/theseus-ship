@@ -827,6 +827,7 @@ set(kwin_WAYLAND_SRCS
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
    linux_dmabuf.cpp
+   platformsupport/scenes/qpainter/backend.cpp
    plugins/scenes/qpainter/scene_qpainter.cpp
    render/backend/wlroots/backend.cpp
    render/backend/wlroots/buffer.cpp
