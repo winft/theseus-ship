@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "../../effects.h"
+#include "render/effects.h"
 
 namespace KWin::render::wayland
 {

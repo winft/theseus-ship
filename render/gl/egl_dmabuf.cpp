@@ -20,10 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "egl_dmabuf.h"
 
-#include "../../../extern/drm_fourcc.h"
-#include "../../../main.h"
-#include "../../../wayland_server.h"
-#include "kwineglext.h"
+#include "kwin_eglext.h"
+
+#include "extern/drm_fourcc.h"
+#include "main.h"
+#include "wayland_server.h"
 
 #include <unistd.h>
 

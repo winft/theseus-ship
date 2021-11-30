@@ -13,7 +13,7 @@
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationpalette.h"
 #include "decorations/window.h"
-#include "effects.h"
+#include "render/effects.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif

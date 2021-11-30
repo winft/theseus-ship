@@ -4,7 +4,8 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "effects_mouse_interception_x11_filter.h"
-#include "effects.h"
+
+#include "render/effects.h"
 #include "utils.h"
 
 #include <QMouseEvent>

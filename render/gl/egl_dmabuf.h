@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "../../../linux_dmabuf.h"
+#include "egl_backend.h"
 
-#include "abstract_egl_backend.h"
+#include "render/wayland/linux_dmabuf.h"
 
 #include <QVector>
 

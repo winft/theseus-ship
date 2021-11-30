@@ -22,11 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output.h"
 #include <config-kwin.h>
 #include "render/compositor.h"
-#include "effects.h"
+#include "render/effects.h"
 #include <KCoreAddons>
-#include "overlaywindow.h"
-#include "outline.h"
-#include "scene.h"
+#include "render/x11/overlay_window.h"
+#include "render/x11/outline.h"
+#include "render/scene.h"
 #include "screens.h"
 #include "screenedge.h"
 #include "colorcorrection/manager.h"

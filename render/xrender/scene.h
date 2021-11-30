@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "decorations/decorationrenderer.h"
-#include "scene.h"
-#include "shadow.h"
+#include "render/scene.h"
+#include "render/shadow.h"
 
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
 

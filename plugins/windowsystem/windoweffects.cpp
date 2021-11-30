@@ -19,7 +19,7 @@
  */
 #include "windoweffects.h"
 #include "effect_builtins.h"
-#include "../../effects.h"
+#include "../../render/effects.h"
 
 #include <QGuiApplication>
 #include <QWidget>

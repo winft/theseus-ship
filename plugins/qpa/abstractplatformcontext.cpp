@@ -18,8 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "abstractplatformcontext.h"
-#include "egl_context_attribute_builder.h"
+
 #include "eglhelpers.h"
+#include "render/gl/egl_context_attribute_builder.h"
 
 #include <logging.h>
 

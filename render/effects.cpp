@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 
 #include "base/output.h"
-#include "effectloader.h"
+#include "effect_loader.h"
 #include "effectsadaptor.h"
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenlockerwatcher.h"
 #include "screens.h"
 #include "scripting/effect.h"
-#include "thumbnailitem.h"
+#include "thumbnail_item.h"
 #include "virtualdesktops.h"
 #include "workspace.h"
 

@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "effectloader.h"
+#include "effect_loader.h"
 
 #include "effects/effect_builtins.h"
 #include "scripting/effect.h"

@@ -7,7 +7,7 @@
 #ifndef KWIN_EFFECTS_X11_H
 #define KWIN_EFFECTS_X11_H
 
-#include "effects.h"
+#include "render/effects.h"
 #include "xcbutils.h"
 
 #include <memory.h>

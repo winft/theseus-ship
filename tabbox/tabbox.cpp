@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox/tabbox_logging.h"
 #include "tabbox/x11_filter.h"
 
-#include "effects.h"
+#include "render/effects.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"

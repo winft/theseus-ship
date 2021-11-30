@@ -19,17 +19,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "scene_xrender.h"
+#include "scene.h"
 
 #include "utils.h"
 
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
 
 #include "decorations/decoratedclient.h"
-#include "effects.h"
 #include "main.h"
-#include "overlaywindow.h"
 #include "platform.h"
+#include "render/effects.h"
+#include "render/x11/overlay_window.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "xcbutils.h"

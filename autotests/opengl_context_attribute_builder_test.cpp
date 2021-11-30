@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "../abstract_opengl_context_attribute_builder.h"
-#include "../egl_context_attribute_builder.h"
+#include "../render/gl/context_attribute_builder.h"
+#include "../render/gl/egl_context_attribute_builder.h"
 #include <QtTest>
 #include <epoxy/egl.h>
 

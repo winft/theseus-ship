@@ -67,25 +67,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "scene.h"
 
-#include <QQuickWindow>
-#include <QVector2D>
+#include "effects.h"
+#include "shadow.h"
+#include "thumbnail_item.h"
+#include "x11/overlay_window.h"
 
 #include "base/output.h"
-#include "effects.h"
-#include "overlaywindow.h"
 #include "screens.h"
-#include "shadow.h"
-
 #include "win/geo.h"
 #include "win/scene.h"
 #include "win/transient.h"
-
 #include "win/x11/window.h"
-
-#include "thumbnailitem.h"
 
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
+
+#include <QQuickWindow>
+#include <QVector2D>
 
 namespace KWin::render
 {

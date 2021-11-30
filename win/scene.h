@@ -6,8 +6,8 @@
 #pragma once
 
 #include "deco.h"
-#include "effects.h"
-#include "shadow.h"
+#include "render/effects.h"
+#include "render/shadow.h"
 
 namespace KWin::win
 {

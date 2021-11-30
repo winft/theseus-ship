@@ -17,15 +17,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "abstract_egl_backend.h"
-#include "egl_context_attribute_builder.h"
+#include "egl_backend.h"
+
 #include "egl_dmabuf.h"
-#include "kwineglext.h"
+#include "kwin_eglext.h"
+#include "texture.h"
+
+#include "egl_context_attribute_builder.h"
 #include "options.h"
 #include "platform.h"
 #include "render/compositor.h"
-#include "scene.h"
-#include "texture.h"
+#include "render/scene.h"
 #include "wayland_server.h"
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/display.h>

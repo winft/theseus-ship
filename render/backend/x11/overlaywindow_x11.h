@@ -7,7 +7,7 @@
 #define KWIN_OVERLAYWINDOW_X11_H
 
 #include "base/x11/event_filter.h"
-#include "overlaywindow.h"
+#include "render/x11/overlay_window.h"
 
 namespace KWin::render::backend::x11
 {

@@ -9,7 +9,7 @@
 #include "geo.h"
 #include "input/cursor.h"
 #include "net.h"
-#include "outline.h"
+#include "render/x11/outline.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "types.h"

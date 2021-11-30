@@ -17,24 +17,23 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "abstract_opengl_context_attribute_builder.h"
+#pragma once
+#include "context_attribute_builder.h"
+#include <kwin_export.h>
 
 namespace KWin::render::gl
 {
 
-QDebug context_attribute_builder::operator<<(QDebug dbg) const
+class KWIN_EXPORT egl_context_attribute_builder : public context_attribute_builder
 {
-    QDebugStateSaver saver(dbg);
-    dbg.nospace() << "\nVersion requested:\t" << isVersionRequested() << "\n";
-    if (isVersionRequested()) {
-        dbg.nospace() << "Version:\t" << majorVersion() << "." << minorVersion() << "\n";
-    }
-    dbg.nospace() << "Robust:\t" << isRobust() << "\n";
-    dbg.nospace() << "Forward compatible:\t" << isForwardCompatible() << "\n";
-    dbg.nospace() << "Core profile:\t" << isCoreProfile() << "\n";
-    dbg.nospace() << "Compatibility profile:\t" << isCompatibilityProfile() << "\n";
-    dbg.nospace() << "High priority:\t" << isHighPriority();
-    return dbg;
-}
+public:
+    std::vector<int> build() const override;
+};
+
+class KWIN_EXPORT egl_gles_context_attribute_builder : public context_attribute_builder
+{
+public:
+    std::vector<int> build() const override;
+};
 
 }

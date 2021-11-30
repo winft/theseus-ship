@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "clientmodel.h"
 #include "desktopmodel.h"
 #include "tabboxconfig.h"
-#include "thumbnailitem.h"
+#include "render/thumbnail_item.h"
 #include "scripting/platform.h"
 #include "switcheritem.h"
 #include "tabbox_logging.h"

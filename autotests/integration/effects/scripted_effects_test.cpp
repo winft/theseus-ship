@@ -23,10 +23,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "scripting/effect.h"
 
 #include "effect_builtins.h"
-#include "effectloader.h"
-#include "effects.h"
 #include "platform.h"
 #include "render/compositor.h"
+#include "render/effect_loader.h"
+#include "render/effects.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "win/stacking.h"

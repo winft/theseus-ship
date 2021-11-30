@@ -2,7 +2,7 @@
  KWin - the KDE window manager
  This file is part of the KDE project.
 
-Copyright (C) 2017 Martin Flöser <mgraesslin@kde.org>
+Copyright (C) 2011 Arthur Arlt <a.arlt@stud.uni-heidelberg.de>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,23 +17,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#pragma once
-#include "abstract_opengl_context_attribute_builder.h"
-#include <kwin_export.h>
+#include "overlay_window.h"
 
-namespace KWin::render::gl
+namespace KWin::render::x11
 {
 
-class KWIN_EXPORT egl_context_attribute_builder : public context_attribute_builder
+overlay_window::overlay_window()
 {
-public:
-    std::vector<int> build() const override;
-};
+}
 
-class KWIN_EXPORT egl_gles_context_attribute_builder : public context_attribute_builder
+overlay_window::~overlay_window()
 {
-public:
-    std::vector<int> build() const override;
-};
+}
 
 }

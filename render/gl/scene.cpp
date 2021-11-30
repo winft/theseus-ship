@@ -27,22 +27,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "scene_opengl.h"
+#include "scene.h"
 
 #include "base/output.h"
 #include "platform.h"
-#include "platformsupport/scenes/opengl/texture.h"
+#include "texture.h"
 
 #include <kwineffectquickview.h>
 #include <kwinglplatform.h>
 
 #include "decorations/decoratedclient.h"
-#include "effects.h"
 #include "input/cursor.h"
-#include "lanczosfilter.h"
+#include "lanczos_filter.h"
 #include "main.h"
-#include "overlaywindow.h"
+#include "render/effects.h"
 #include "render/x11/compositor.h"
+#include "render/x11/overlay_window.h"
 #include "screens.h"
 #include "utils.h"
 #include <render/compositor.h>

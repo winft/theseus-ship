@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "x11_filter.h"
 
-#include "effects.h"
+#include "render/effects.h"
 #include "screenedge.h"
 #include "tabbox/tabbox.h"
 

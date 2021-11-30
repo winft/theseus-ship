@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "platformsupport/scenes/opengl/abstract_egl_backend.h"
+#include "render/gl/egl_backend.h"
 
 #include <deque>
 #include <memory>

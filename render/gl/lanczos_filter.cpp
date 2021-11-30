@@ -18,10 +18,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "lanczosfilter.h"
+#include "lanczos_filter.h"
 
-#include "effects.h"
 #include "options.h"
+#include "render/effects.h"
 #include "screens.h"
 #include "workspace.h"
 

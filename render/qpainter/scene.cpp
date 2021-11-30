@@ -17,13 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "scene_qpainter.h"
+#include "scene.h"
 
 #include "base/output.h"
-#include "effects.h"
 #include "input/cursor.h"
 #include "main.h"
 #include "platform.h"
+#include "render/effects.h"
 #include "screens.h"
 #include "toplevel.h"
 #include <render/compositor.h>

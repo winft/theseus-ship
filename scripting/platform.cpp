@@ -16,8 +16,8 @@
 #include "window.h"
 
 #include "../options.h"
-#include "../thumbnailitem.h"
 #include "input/redirect.h"
+#include "render/thumbnail_item.h"
 #include "screenedge.h"
 #include "scripting_logging.h"
 #include "workspace.h"

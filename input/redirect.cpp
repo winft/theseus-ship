@@ -18,9 +18,9 @@
 #include "touch_redirect.h"
 
 #include "../platform.h"
-#include "effects.h"
 #include "global_shortcuts_manager.h"
 #include "main.h"
+#include "render/effects.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "utils.h"

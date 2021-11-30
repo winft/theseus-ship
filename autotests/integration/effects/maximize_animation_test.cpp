@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "effectloader.h"
-#include "effects.h"
 #include "platform.h"
-#include "scene.h"
+#include "render/effect_loader.h"
+#include "render/effects.h"
+#include "render/scene.h"
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"

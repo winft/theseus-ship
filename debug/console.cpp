@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_debug_console.h"
 
 #include "render/compositor.h"
-#include "scene.h"
+#include "render/scene.h"
 #include "workspace.h"
 
 #include "win/internal_window.h"

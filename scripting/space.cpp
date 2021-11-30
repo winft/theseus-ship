@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "space.h"
 
-#include "../outline.h"
+#include "render/x11/outline.h"
 
 namespace KWin::scripting
 {

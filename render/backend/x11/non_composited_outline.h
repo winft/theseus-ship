@@ -5,7 +5,8 @@
 */
 #ifndef KWIN_NON_COMPOSITED_OUTLINE_H
 #define KWIN_NON_COMPOSITED_OUTLINE_H
-#include "outline.h"
+
+#include "render/x11/outline.h"
 #include "xcbutils.h"
 
 namespace KWin::render::backend::x11

@@ -5,9 +5,6 @@
 */
 #include "compositor.h"
 
-#include "plugins/scenes/opengl/scene_opengl.h"
-#include "plugins/scenes/qpainter/scene_qpainter.h"
-
 #include "output.h"
 #include "presentation.h"
 #include "utils.h"
@@ -15,7 +12,9 @@
 #include "base/wayland/output.h"
 #include "platform.h"
 #include "render/cursor.h"
-#include "scene.h"
+#include "render/gl/scene.h"
+#include "render/qpainter/scene.h"
+#include "render/scene.h"
 #include "wayland_server.h"
 #include "win/scene.h"
 #include "workspace.h"

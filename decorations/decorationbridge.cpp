@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "settings.h"
 
-#include "scene.h"
+#include "render/scene.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/deco.h"

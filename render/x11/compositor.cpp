@@ -7,15 +7,16 @@
 #include "compositor.h"
 
 #include "compositor_selection_owner.h"
-#include "plugins/scenes/opengl/scene_opengl.h"
-#include "plugins/scenes/xrender/scene_xrender.h"
+#include "overlay_window.h"
 
-#include "effects.h"
-#include "overlaywindow.h"
+#include "render/gl/scene.h"
+#include "render/xrender/scene.h"
+
 #include "perf/ftrace.h"
 #include "platform.h"
-#include "scene.h"
-#include "shadow.h"
+#include "render/effects.h"
+#include "render/scene.h"
+#include "render/shadow.h"
 #include "utils.h"
 #include "workspace.h"
 #include "xcbutils.h"

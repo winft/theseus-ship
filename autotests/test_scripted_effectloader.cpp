@@ -17,9 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "../effectloader.h"
-#include "../scripting/effect.h"
 #include "mock_effectshandler.h"
+#include "render/effect_loader.h"
+#include "scripting/effect.h"
+
 // for mocking
 #include "../input/cursor.h"
 #include "../screenedge.h"

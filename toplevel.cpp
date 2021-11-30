@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output.h"
 #include "atoms.h"
 #include "render/compositor.h"
-#include "effects.h"
+#include "render/effects.h"
 #include "platform.h"
 #include "screens.h"
 #include "shadow.h"

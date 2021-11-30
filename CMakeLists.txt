@@ -365,7 +365,6 @@ include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}/libkwineffects
     ${CMAKE_CURRENT_SOURCE_DIR}/effects
     ${CMAKE_CURRENT_SOURCE_DIR}/tabbox
-    ${CMAKE_CURRENT_SOURCE_DIR}/platformsupport
 )
 
 add_subdirectory(libkwineffects)
@@ -384,7 +383,6 @@ add_subdirectory(helpers)
 ########### next target ###############
 
 set(kwin_SRCS
-    abstract_opengl_context_attribute_builder.cpp
     atoms.cpp
     base/x11/event_filter.cpp
     base/x11/event_filter_container.cpp
@@ -406,9 +404,6 @@ set(kwin_SRCS
     decorations/decorations_logging.cpp
     decorations/settings.cpp
     decorations/window.cpp
-    effectloader.cpp
-    effects.cpp
-    egl_context_attribute_builder.cpp
     input/device_redirect.cpp
     input/event_filter.cpp
     input/event_spy.cpp
@@ -438,23 +433,29 @@ set(kwin_SRCS
     onscreennotification.cpp
     options.cpp
     osd.cpp
-    outline.cpp
-    overlaywindow.cpp
     platform.cpp
-    platformsupport/scenes/opengl/backend.cpp
-    platformsupport/scenes/opengl/texture.cpp
-    plugins/scenes/opengl/lanczosfilter.cpp
-    plugins/scenes/opengl/scene_opengl.cpp
-    plugins/scenes/xrender/scene_xrender.cpp
-    render/x11/compositor.cpp
-    render/x11/compositor_selection_owner.cpp
     render/compositor.cpp
     render/cursor.cpp
+    render/effect_loader.cpp
+    render/effects.cpp
+    render/gl/backend.cpp
+    render/gl/context_attribute_builder.cpp
+    render/gl/egl_context_attribute_builder.cpp
+    render/gl/lanczos_filter.cpp
+    render/gl/scene.cpp
+    render/gl/texture.cpp
+    render/scene.cpp
+    render/shadow.cpp
+    render/thumbnail_item.cpp
+    render/x11/compositor.cpp
+    render/x11/compositor_selection_owner.cpp
+    render/x11/outline.cpp
+    render/x11/overlay_window.cpp
+    render/xrender/scene.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp
     rules/rules.cpp
     rules/window_rules.cpp
-    scene.cpp
     screenedge.cpp
     screenlockerwatcher.cpp
     screens.cpp
@@ -473,9 +474,7 @@ set(kwin_SRCS
     scripting/space.cpp
     seat/session.cpp
     seat/backend/logind/session.cpp
-    shadow.cpp
     sm.cpp
-    thumbnailitem.cpp
     toplevel.cpp
     useractions.cpp
     utils.cpp
@@ -524,7 +523,7 @@ ecm_qt_declare_logging_category(kwin_SRCS
         Critical
 )
 
-qt5_add_resources(kwin_SRCS plugins/scenes/opengl/resources.qrc)
+qt5_add_resources(kwin_SRCS render/gl/resources.qrc)
 
 qt5_add_dbus_adaptor(kwin_SRCS
   scripting/org.kde.kwin.Script.xml
@@ -540,7 +539,7 @@ kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_book_settings_base.kcfgc)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.xml dbusinterface.h KWin::DBusInterface)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.kwin.Compositing.xml dbusinterface.h KWin::CompositorDBusInterface)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.kwin.ColorCorrect.xml colorcorrection/colorcorrectdbusinterface.h KWin::ColorCorrect::ColorCorrectDBusInterface)
-qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} effects.h KWin::render::effects_handler_impl)
+qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_impl)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.VirtualDesktopManager.xml dbusinterface.h KWin::VirtualDesktopManagerDBusInterface)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.Session.xml sm.h KWin::SessionManager)
 
@@ -666,7 +665,7 @@ generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 if(CMAKE_SYSTEM MATCHES "FreeBSD")
     # epoll is required, includes live under ${LOCALBASE}, separate library
     target_include_directories(kwin PUBLIC ${epoll_INCLUDE_DIRS})
-    target_link_libraries(kwin ${kwinLibs} ${epoll_LIBRARIES}) 
+    target_link_libraries(kwin ${kwinLibs} ${epoll_LIBRARIES})
 endif()
 
 
@@ -825,11 +824,10 @@ set(kwin_WAYLAND_SRCS
    input/touch.cpp
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
-   linux_dmabuf.cpp
-   platformsupport/scenes/opengl/abstract_egl_backend.cpp
-   platformsupport/scenes/opengl/egl_dmabuf.cpp
-   platformsupport/scenes/qpainter/backend.cpp
-   plugins/scenes/qpainter/scene_qpainter.cpp
+   render/gl/egl_backend.cpp
+   render/gl/egl_dmabuf.cpp
+   render/qpainter/backend.cpp
+   render/qpainter/scene.cpp
    render/backend/wlroots/backend.cpp
    render/backend/wlroots/buffer.cpp
    render/backend/wlroots/egl_backend.cpp
@@ -837,6 +835,7 @@ set(kwin_WAYLAND_SRCS
    render/backend/wlroots/output.cpp
    render/wayland/compositor.cpp
    render/wayland/effects.cpp
+   render/wayland/linux_dmabuf.cpp
    render/wayland/output.cpp
    render/wayland/presentation.cpp
    seat/backend/wlroots/session.cpp

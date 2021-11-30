@@ -13,11 +13,11 @@
 #include "logging.h"
 // kwin
 #include "options.h"
-#include "overlaywindow.h"
 #include "platform.h"
-#include "platformsupport/scenes/opengl/texture.h"
 #include "render/compositor.h"
-#include "scene.h"
+#include "render/gl/texture.h"
+#include "render/scene.h"
+#include "render/x11/overlay_window.h"
 #include "screens.h"
 #include "xcbutils.h"
 

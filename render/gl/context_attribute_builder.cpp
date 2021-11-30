@@ -2,7 +2,7 @@
  KWin - the KDE window manager
  This file is part of the KDE project.
 
-Copyright (C) 2011 Arthur Arlt <a.arlt@stud.uni-heidelberg.de>
+Copyright (C) 2017 Martin Flöser <mgraesslin@kde.org>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,17 +17,24 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "overlaywindow.h"
+#include "context_attribute_builder.h"
 
-namespace KWin::render::x11
+namespace KWin::render::gl
 {
 
-overlay_window::overlay_window()
+QDebug context_attribute_builder::operator<<(QDebug dbg) const
 {
-}
-
-overlay_window::~overlay_window()
-{
+    QDebugStateSaver saver(dbg);
+    dbg.nospace() << "\nVersion requested:\t" << isVersionRequested() << "\n";
+    if (isVersionRequested()) {
+        dbg.nospace() << "Version:\t" << majorVersion() << "." << minorVersion() << "\n";
+    }
+    dbg.nospace() << "Robust:\t" << isRobust() << "\n";
+    dbg.nospace() << "Forward compatible:\t" << isForwardCompatible() << "\n";
+    dbg.nospace() << "Core profile:\t" << isCoreProfile() << "\n";
+    dbg.nospace() << "Compatibility profile:\t" << isCompatibilityProfile() << "\n";
+    dbg.nospace() << "High priority:\t" << isHighPriority();
+    return dbg;
 }
 
 }

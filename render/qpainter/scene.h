@@ -19,9 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "scene.h"
-#include "shadow.h"
-#include <platformsupport/scenes/qpainter/backend.h>
+#include "backend.h"
+
+#include "render/scene.h"
+#include "render/shadow.h"
 
 #include "decorations/decorationrenderer.h"
 

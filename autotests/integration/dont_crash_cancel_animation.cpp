@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "effectloader.h"
-#include "effects.h"
 #include "platform.h"
 #include "render/compositor.h"
+#include "render/effect_loader.h"
+#include "render/effects.h"
 #include "screens.h"
 #include "scripting/effect.h"
 #include "toplevel.h"

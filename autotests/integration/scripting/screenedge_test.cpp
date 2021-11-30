@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lib/app.h"
 
 #include "effect_builtins.h"
-#include "effectloader.h"
 #include "input/cursor.h"
 #include "platform.h"
+#include "render/effect_loader.h"
 #include "scripting/platform.h"
 #include "scripting/script.h"
 #include "wayland_server.h"
