@@ -15,10 +15,10 @@
 #include "options.h"
 #include "overlaywindow.h"
 #include "platform.h"
+#include "platformsupport/scenes/opengl/texture.h"
 #include "render/compositor.h"
 #include "scene.h"
 #include "screens.h"
-#include "texture.h"
 #include "xcbutils.h"
 
 #include "win/x11/geo.h"

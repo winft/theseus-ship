@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include <kwin_export.h>
 #include <kwingltexture.h>
 #include <kwingltexture_p.h>
 
@@ -32,7 +33,7 @@ namespace gl
 class backend;
 class texture_private;
 
-class texture : public GLTexture
+class KWIN_EXPORT texture : public GLTexture
 {
 public:
     explicit texture(gl::backend* backend);
@@ -61,7 +62,7 @@ private:
     friend class window_pixmap;
 };
 
-class texture_private : public GLTexturePrivate
+class KWIN_EXPORT texture_private : public GLTexturePrivate
 {
 public:
     ~texture_private() override;

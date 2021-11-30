@@ -22,9 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/output.h"
 #include <kwineffects.h>
-#include <logging.h>
 
 #include "screens.h"
+#include "utils.h"
 
 #include <epoxy/gl.h>
 
@@ -44,7 +44,7 @@ backend::~backend()
 
 void backend::setFailed(const QString& reason)
 {
-    qCWarning(KWIN_OPENGL) << "Creating the OpenGL rendering failed: " << reason;
+    qCWarning(KWIN_CORE) << "Creating the OpenGL rendering failed: " << reason;
     m_failed = true;
 }
 

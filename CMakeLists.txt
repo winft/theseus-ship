@@ -441,6 +441,8 @@ set(kwin_SRCS
     outline.cpp
     overlaywindow.cpp
     platform.cpp
+    platformsupport/scenes/opengl/backend.cpp
+    platformsupport/scenes/opengl/texture.cpp
     plugins/scenes/opengl/lanczosfilter.cpp
     plugins/scenes/opengl/scene_opengl.cpp
     plugins/scenes/xrender/scene_xrender.cpp
@@ -623,7 +625,6 @@ set(kwinLibs
     Libinput::Libinput
 
     # For render code
-    SceneOpenGLBackend
     kwinxrenderutils
 )
 
@@ -710,7 +711,6 @@ add_library(kwin_x11_lib STATIC
 target_link_libraries(kwin_x11_lib
     kwin
     kwinxrenderutils
-    SceneOpenGLBackend
     KF5::Crash
     Qt::X11Extras
     XCB::CURSOR
@@ -757,7 +757,6 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
         Critical
 )
 
-add_subdirectory(platformsupport)
 add_subdirectory(plugins)
 
 set(kwin_WAYLAND_SRCS
@@ -827,6 +826,8 @@ set(kwin_WAYLAND_SRCS
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
    linux_dmabuf.cpp
+   platformsupport/scenes/opengl/abstract_egl_backend.cpp
+   platformsupport/scenes/opengl/egl_dmabuf.cpp
    platformsupport/scenes/qpainter/backend.cpp
    plugins/scenes/qpainter/scene_qpainter.cpp
    render/backend/wlroots/backend.cpp
@@ -871,7 +872,6 @@ target_link_libraries(kwin_wayland_lib
 PUBLIC
   kwin
   kwinxrenderutils
-  SceneOpenGLBackend
   gbm::gbm
   Wayland::Server
   wlroots::wlroots

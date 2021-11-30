@@ -30,11 +30,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/surface.h>
-// kwin libs
+
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
-#include <logging.h>
-// Qt
+#include <wayland_logging.h>
+
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
 
@@ -98,25 +98,25 @@ bool egl_backend::initEglAPI()
 {
     EGLint major, minor;
     if (eglInitialize(m_display, &major, &minor) == EGL_FALSE) {
-        qCWarning(KWIN_OPENGL) << "eglInitialize failed";
+        qCWarning(KWIN_WL) << "eglInitialize failed";
         EGLint error = eglGetError();
         if (error != EGL_SUCCESS) {
-            qCWarning(KWIN_OPENGL) << "Error during eglInitialize " << error;
+            qCWarning(KWIN_WL) << "Error during eglInitialize " << error;
         }
         return false;
     }
     EGLint error = eglGetError();
     if (error != EGL_SUCCESS) {
-        qCWarning(KWIN_OPENGL) << "Error during eglInitialize " << error;
+        qCWarning(KWIN_WL) << "Error during eglInitialize " << error;
         return false;
     }
-    qCDebug(KWIN_OPENGL) << "Egl Initialize succeeded";
+    qCDebug(KWIN_WL) << "Egl Initialize succeeded";
 
     if (eglBindAPI(isOpenGLES() ? EGL_OPENGL_ES_API : EGL_OPENGL_API) == EGL_FALSE) {
-        qCCritical(KWIN_OPENGL) << "bind OpenGL API failed";
+        qCCritical(KWIN_WL) << "bind OpenGL API failed";
         return false;
     }
-    qCDebug(KWIN_OPENGL) << "EGL version: " << major << "." << minor;
+    qCDebug(KWIN_WL) << "EGL version: " << major << "." << minor;
     const QByteArray eglExtensions = eglQueryString(m_display, EGL_EXTENSIONS);
     setExtensions(eglExtensions.split(' '));
     setSupportsSurfacelessContext(hasExtension(QByteArrayLiteral("EGL_KHR_surfaceless_context")));
@@ -301,13 +301,13 @@ bool egl_backend::createContext()
         const auto attribs = (*it)->build();
         ctx = eglCreateContext(m_display, config(), EGL_NO_CONTEXT, attribs.data());
         if (ctx != EGL_NO_CONTEXT) {
-            qCDebug(KWIN_OPENGL) << "Created EGL context with attributes:" << (*it).get();
+            qCDebug(KWIN_WL) << "Created EGL context with attributes:" << (*it).get();
             break;
         }
     }
 
     if (ctx == EGL_NO_CONTEXT) {
-        qCCritical(KWIN_OPENGL) << "Create Context failed";
+        qCCritical(KWIN_WL) << "Create Context failed";
         return false;
     }
     m_context = ctx;
@@ -675,7 +675,7 @@ bool egl_texture::loadEglTexture(Wrapland::Server::Buffer* buffer)
     q->unbind();
 
     if (EGL_NO_IMAGE_KHR == m_image) {
-        qCDebug(KWIN_OPENGL) << "failed to create egl image";
+        qCDebug(KWIN_WL) << "failed to create egl image";
         q->discard();
         return false;
     }
@@ -687,7 +687,7 @@ bool egl_texture::loadDmabufTexture(Wrapland::Server::Buffer* buffer)
 {
     auto* dmabuf = static_cast<egl_dmabuf_buffer*>(buffer->linuxDmabufBuffer());
     if (!dmabuf || dmabuf->images().at(0) == EGL_NO_IMAGE_KHR) {
-        qCritical(KWIN_OPENGL) << "Invalid dmabuf-based wl_buffer";
+        qCritical(KWIN_WL) << "Invalid dmabuf-based wl_buffer";
         q->discard();
         return false;
     }
@@ -719,7 +719,7 @@ EGLImageKHR egl_texture::attach(Wrapland::Server::Buffer* buffer)
     eglQueryWaylandBufferWL(
         m_backend->eglDisplay(), buffer->resource(), EGL_TEXTURE_FORMAT, &format);
     if (format != EGL_TEXTURE_RGB && format != EGL_TEXTURE_RGBA) {
-        qCDebug(KWIN_OPENGL) << "Unsupported texture format: " << format;
+        qCDebug(KWIN_WL) << "Unsupported texture format: " << format;
         return EGL_NO_IMAGE_KHR;
     }
     if (!eglQueryWaylandBufferWL(
