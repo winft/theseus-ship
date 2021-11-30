@@ -28,8 +28,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
+namespace render
+{
+class effects_window_impl;
+}
+
 class EffectWindow;
-class EffectWindowImpl;
 class Toplevel;
 
 class AbstractThumbnailItem : public QQuickPaintedItem
@@ -67,7 +71,7 @@ private Q_SLOTS:
 
 private:
     void findParentEffectWindow();
-    QPointer<EffectWindowImpl> m_parent;
+    QPointer<render::effects_window_impl> m_parent;
     qreal m_brightness;
     qreal m_saturation;
     QPointer<QQuickItem> m_clipToItem;

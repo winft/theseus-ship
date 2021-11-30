@@ -466,7 +466,7 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::WindowSelector);
         return;
     }
-    if (effects && static_cast<EffectsHandlerImpl*>(effects)->isMouseInterception()) {
+    if (effects && static_cast<render::effects_handler_impl*>(effects)->isMouseInterception()) {
         setSource(CursorSource::EffectsOverride);
         return;
     }

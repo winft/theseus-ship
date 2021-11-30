@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win::x11
 {
 
-window_property_notify_filter::window_property_notify_filter(EffectsHandlerImpl* effects)
+window_property_notify_filter::window_property_notify_filter(render::effects_handler_impl* effects)
     : base::x11::event_filter(QVector<int>{XCB_PROPERTY_NOTIFY})
     , m_effects(effects)
 {

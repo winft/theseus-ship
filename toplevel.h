@@ -55,6 +55,11 @@ namespace base
 class output;
 }
 
+namespace render
+{
+class effects_window_impl;
+}
+
 namespace win
 {
 namespace x11
@@ -67,8 +72,6 @@ class control;
 class remnant;
 class transient;
 }
-
-class EffectWindowImpl;
 
 /**
  * Enum to describe the reason why a Toplevel has to be released.
@@ -237,8 +240,8 @@ public:
     void addDamageFull();
     virtual void addDamage(const QRegion &damage);
 
-    EffectWindowImpl* effectWindow();
-    const EffectWindowImpl* effectWindow() const;
+    render::effects_window_impl* effectWindow();
+    const render::effects_window_impl* effectWindow() const;
 
     static Toplevel* create_remnant(Toplevel* source);
 
@@ -475,7 +478,7 @@ private:
     mutable bool m_render_shape_valid{false};
     mutable QRegion m_render_shape;
 
-    EffectWindowImpl* effect_window;
+    render::effects_window_impl* effect_window;
     QByteArray resource_name;
     QByteArray resource_class;
     win::x11::client_machine* m_clientMachine;
@@ -850,13 +853,13 @@ inline const QRegion& Toplevel::opaqueRegion() const
 }
 
 inline
-EffectWindowImpl* Toplevel::effectWindow()
+render::effects_window_impl* Toplevel::effectWindow()
 {
     return effect_window;
 }
 
 inline
-const EffectWindowImpl* Toplevel::effectWindow() const
+const render::effects_window_impl* Toplevel::effectWindow() const
 {
     return effect_window;
 }

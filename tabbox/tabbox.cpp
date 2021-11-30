@@ -333,7 +333,7 @@ void TabBoxHandlerImpl::highlightWindows(TabBoxClient *window, QWindow *controll
     if (auto t = workspace()->findInternal(controller)) {
         windows << t->effectWindow();
     }
-    static_cast<EffectsHandlerImpl*>(effects)->highlightWindows(windows);
+    static_cast<render::effects_handler_impl*>(effects)->highlightWindows(windows);
 }
 
 bool TabBoxHandlerImpl::noModifierGrab() const
@@ -819,7 +819,7 @@ bool TabBox::handleMouseEvent(QMouseEvent *event)
 {
     if (!m_isShown && isDisplayed()) {
         // tabbox has been replaced, check effects
-        if (effects && static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowEvent(event)) {
+        if (effects && static_cast<render::effects_handler_impl*>(effects)->checkInputWindowEvent(event)) {
             return true;
         }
     }
@@ -849,7 +849,7 @@ bool TabBox::handleWheelEvent(QWheelEvent *event)
 {
     if (!m_isShown && isDisplayed()) {
         // tabbox has been replaced, check effects
-        if (effects && static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowEvent(event)) {
+        if (effects && static_cast<render::effects_handler_impl*>(effects)->checkInputWindowEvent(event)) {
             return true;
         }
     }

@@ -8,22 +8,22 @@
 
 #include "base/x11/event_filter.h"
 
-namespace KWin
+namespace KWin::render
 {
-class EffectsHandlerImpl;
+class effects_handler_impl;
 
-namespace render::backend::x11
+namespace backend::x11
 {
 
 class EffectsMouseInterceptionX11Filter : public base::x11::event_filter
 {
 public:
-    explicit EffectsMouseInterceptionX11Filter(xcb_window_t window, EffectsHandlerImpl* effects);
+    explicit EffectsMouseInterceptionX11Filter(xcb_window_t window, effects_handler_impl* effects);
 
     bool event(xcb_generic_event_t* event) override;
 
 private:
-    EffectsHandlerImpl* m_effects;
+    effects_handler_impl* m_effects;
     xcb_window_t m_window;
 };
 

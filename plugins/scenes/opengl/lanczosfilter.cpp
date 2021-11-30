@@ -175,7 +175,7 @@ void lanczos_filter::createOffsets(int count, float width, Qt::Orientation direc
     }
 }
 
-void lanczos_filter::performPaint(EffectWindowImpl* w,
+void lanczos_filter::performPaint(effects_window_impl* w,
                                   paint_type mask,
                                   QRegion region,
                                   WindowPaintData& data)

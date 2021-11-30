@@ -121,9 +121,9 @@ bool ScriptedEffectWithDebugSpy::load(const QString& name)
         return false;
     }
 
-    // inject our newly created effect to be registered with the EffectsHandlerImpl::loaded_effects
-    // this is private API so some horrible code is used to find the internal effectloader
-    // and register ourselves
+    // inject our newly created effect to be registered with the
+    // render::effects_handler_impl::loaded_effects this is private API so some horrible code is
+    // used to find the internal effectloader and register ourselves
     auto c = effects->children();
     for (auto it = c.begin(); it != c.end(); ++it) {
         if (qstrcmp((*it)->metaObject()->className(), "KWin::EffectLoader") != 0) {
@@ -134,7 +134,7 @@ bool ScriptedEffectWithDebugSpy::load(const QString& name)
         break;
     }
 
-    return (static_cast<EffectsHandlerImpl*>(effects)->isEffectLoaded(name));
+    return (static_cast<render::effects_handler_impl*>(effects)->isEffectLoaded(name));
 }
 
 void ScriptedEffectsTest::initTestCase()
@@ -182,7 +182,7 @@ void ScriptedEffectsTest::cleanup()
 {
     Test::destroy_wayland_connection();
 
-    auto effectsImpl = static_cast<EffectsHandlerImpl*>(effects);
+    auto effectsImpl = static_cast<render::effects_handler_impl*>(effects);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 

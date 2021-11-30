@@ -332,7 +332,7 @@ bool Toplevel::setupCompositing(bool add_full_damage)
 
     discard_shape();
     damage_region = QRegion(QRect(QPoint(), size()));
-    effect_window = new EffectWindowImpl(this);
+    effect_window = new render::effects_window_impl(this);
 
     render::compositor::self()->scene()->addToplevel(this);
 

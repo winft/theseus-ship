@@ -90,7 +90,7 @@ Win* create_unmanaged_window(xcb_window_t w)
         win->is_outline = internalWindow->property("__kwin_outline").toBool();
     }
     if (effects) {
-        static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking();
+        static_cast<render::effects_handler_impl*>(effects)->checkInputWindowStacking();
     }
     return win;
 }
@@ -100,7 +100,7 @@ void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* e)
 {
     if (effects) {
         // keep them on top
-        static_cast<EffectsHandlerImpl*>(effects)->checkInputWindowStacking();
+        static_cast<render::effects_handler_impl*>(effects)->checkInputWindowStacking();
     }
     QRect newgeom(e->x, e->y, e->width, e->height);
     if (newgeom != win->frameGeometry()) {

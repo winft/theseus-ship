@@ -89,7 +89,7 @@ void TranslucencyTest::initTestCase()
 void TranslucencyTest::init()
 {
     // load the translucency effect
-    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
+    auto e = static_cast<render::effects_handler_impl*>(effects);
     // find the effectsloader
     auto effectloader = e->findChild<AbstractEffectLoader*>();
     QVERIFY(effectloader);
@@ -107,7 +107,7 @@ void TranslucencyTest::init()
 
 void TranslucencyTest::cleanup()
 {
-    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
+    auto e = static_cast<render::effects_handler_impl*>(effects);
     if (e->isEffectLoaded(QStringLiteral("kwin4_effect_translucency"))) {
         e->unloadEffect(QStringLiteral("kwin4_effect_translucency"));
     }

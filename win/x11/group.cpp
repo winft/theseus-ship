@@ -48,7 +48,7 @@ group::group(xcb_window_t leader_P)
         leader_info = new NETWinInfo(
             connection(), leader_P, rootWindow(), NET::Properties(), NET::WM2StartupId);
     }
-    effect_group = new EffectWindowGroupImpl(this);
+    effect_group = new render::effect_window_group_impl(this);
     workspace()->addGroup(this);
 }
 

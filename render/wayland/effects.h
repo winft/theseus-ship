@@ -10,7 +10,7 @@
 namespace KWin::render::wayland
 {
 
-class KWIN_EXPORT effects_handler_impl : public EffectsHandlerImpl
+class KWIN_EXPORT effects_handler_impl : public render::effects_handler_impl
 {
     Q_OBJECT
 public:

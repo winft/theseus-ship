@@ -57,7 +57,7 @@ bool WindowEffects::isEffectAvailable(KWindowEffects::Effect effect)
     if (!effects) {
         return false;
     }
-    auto e = static_cast<EffectsHandlerImpl*>(effects);
+    auto e = static_cast<render::effects_handler_impl*>(effects);
     switch (effect) {
     case KWindowEffects::BackgroundContrast:
         return e->isEffectLoaded(BuiltInEffects::nameForEffect(BuiltInEffect::Contrast));

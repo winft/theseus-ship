@@ -200,7 +200,7 @@ Decoration::Renderer *Platform::createDecorationRenderer(Decoration::DecoratedCl
 void Platform::invertScreen()
 {
     if (effects) {
-        if (Effect *inverter = static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::ScreenInversion)) {
+        if (auto inverter = static_cast<render::effects_handler_impl*>(effects)->provides(Effect::ScreenInversion)) {
             qCDebug(KWIN_CORE) << "inverting screen using Effect plugin";
             QMetaObject::invokeMethod(inverter, "toggleScreenInversion", Qt::DirectConnection);
         }
@@ -209,7 +209,7 @@ void Platform::invertScreen()
 
 void Platform::createEffectsHandler(render::compositor *compositor, render::scene *scene)
 {
-    new EffectsHandlerImpl(compositor, scene);
+    new render::effects_handler_impl(compositor, scene);
 }
 
 QString Platform::supportInformation() const

@@ -331,7 +331,7 @@ render::window* scene::createWindow(Toplevel* toplevel)
     return new window(toplevel, this);
 }
 
-render::effect_frame* scene::createEffectFrame(EffectFrameImpl* frame)
+render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)
 {
     return new effect_frame(frame);
 }
@@ -953,7 +953,7 @@ void window_pixmap::create()
 
 XRenderPicture* effect_frame::s_effectFrameCircle = nullptr;
 
-effect_frame::effect_frame(EffectFrameImpl* frame)
+effect_frame::effect_frame(effect_frame_impl* frame)
     : render::effect_frame(frame)
 {
     m_picture = nullptr;

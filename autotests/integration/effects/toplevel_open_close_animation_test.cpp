@@ -92,7 +92,7 @@ void ToplevelOpenCloseAnimationTest::init()
 
 void ToplevelOpenCloseAnimationTest::cleanup()
 {
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
+    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -115,7 +115,7 @@ void ToplevelOpenCloseAnimationTest::testAnimateToplevels()
     // animate the appearing and the disappearing of toplevel windows.
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
+    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
 
     // Load effect that will be tested.
@@ -168,7 +168,7 @@ void ToplevelOpenCloseAnimationTest::testDontAnimatePopups()
     // to animate popups(e.g. popup menus, tooltips, etc).
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
+    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the main window.

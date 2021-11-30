@@ -1322,20 +1322,23 @@ QString Workspace::supportInformation() const
         }
         support.append(QStringLiteral("\nLoaded Effects:\n"));
         support.append(QStringLiteral("---------------\n"));
-        auto const& loaded_effects = static_cast<EffectsHandlerImpl*>(effects)->loadedEffects();
+        auto const& loaded_effects
+            = static_cast<render::effects_handler_impl*>(effects)->loadedEffects();
         for (auto const& effect : qAsConst(loaded_effects)) {
             support.append(effect + QStringLiteral("\n"));
         }
         support.append(QStringLiteral("\nCurrently Active Effects:\n"));
         support.append(QStringLiteral("-------------------------\n"));
-        auto const& active_effects = static_cast<EffectsHandlerImpl*>(effects)->activeEffects();
+        auto const& active_effects
+            = static_cast<render::effects_handler_impl*>(effects)->activeEffects();
         for (auto const& effect : qAsConst(active_effects)) {
             support.append(effect + QStringLiteral("\n"));
         }
         support.append(QStringLiteral("\nEffect Settings:\n"));
         support.append(QStringLiteral("----------------\n"));
         for (auto const& effect : qAsConst(loaded_effects)) {
-            support.append(static_cast<EffectsHandlerImpl*>(effects)->supportInformation(effect));
+            support.append(
+                static_cast<render::effects_handler_impl*>(effects)->supportInformation(effect));
             support.append(QStringLiteral("\n"));
         }
     } else {
@@ -1600,7 +1603,7 @@ void Workspace::desktopResized()
     ScreenEdges::self()->recreateEdges();
 
     if (effects) {
-        static_cast<EffectsHandlerImpl*>(effects)->desktopResized(geom.size());
+        static_cast<render::effects_handler_impl*>(effects)->desktopResized(geom.size());
     }
 }
 
@@ -3340,7 +3343,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
         }
     }
 
-    if (effects && static_cast<EffectsHandlerImpl*>(effects)->hasKeyboardGrab()
+    if (effects && static_cast<render::effects_handler_impl*>(effects)->hasKeyboardGrab()
         && (eventType == XCB_KEY_PRESS || eventType == XCB_KEY_RELEASE))
         return false; // let Qt process it, it'll be intercepted again in eventFilter()
 
@@ -3527,8 +3530,9 @@ bool Workspace::workspaceEvent(QEvent* e)
 {
     if ((e->type() == QEvent::KeyPress || e->type() == QEvent::KeyRelease
          || e->type() == QEvent::ShortcutOverride)
-        && effects && static_cast<EffectsHandlerImpl*>(effects)->hasKeyboardGrab()) {
-        static_cast<EffectsHandlerImpl*>(effects)->grabbedKeyboardEvent(static_cast<QKeyEvent*>(e));
+        && effects && static_cast<render::effects_handler_impl*>(effects)->hasKeyboardGrab()) {
+        static_cast<render::effects_handler_impl*>(effects)->grabbedKeyboardEvent(
+            static_cast<QKeyEvent*>(e));
         return true;
     }
     return false;

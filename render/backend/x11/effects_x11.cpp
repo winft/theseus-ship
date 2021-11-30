@@ -19,9 +19,9 @@ namespace KWin::render::backend::x11
 {
 
 EffectsHandlerImplX11::EffectsHandlerImplX11(render::compositor* compositor, render::scene* scene)
-    : EffectsHandlerImpl(compositor, scene)
+    : render::effects_handler_impl(compositor, scene)
 {
-    connect(this, &EffectsHandlerImpl::screenGeometryChanged, this, [this](const QSize& size) {
+    connect(this, &EffectsHandlerImplX11::screenGeometryChanged, this, [this](const QSize& size) {
         if (m_mouseInterceptionWindow.isValid()) {
             m_mouseInterceptionWindow.setGeometry(QRect(0, 0, size.width(), size.height()));
         }

@@ -206,7 +206,7 @@ void compositor::startupWithWorkspace()
     connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
     connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
-        if (auto eff_impl = static_cast<EffectsHandlerImpl*>(effects)) {
+        if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
             eff_impl->checkInputWindowStacking();
         }
     });

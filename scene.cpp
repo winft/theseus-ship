@@ -144,7 +144,7 @@ void scene::paintScreen(paint_type& mask,
     }
 
     // preparation step
-    static_cast<EffectsHandlerImpl*>(effects)->startPaint();
+    static_cast<effects_handler_impl*>(effects)->startPaint();
 
     QRegion region = damage;
 
@@ -544,8 +544,8 @@ void scene::paintWindowThumbnails(window* w,
                                   qreal brightness,
                                   qreal saturation)
 {
-    EffectWindowImpl* wImpl = static_cast<EffectWindowImpl*>(effectWindow(w));
-    for (QHash<WindowThumbnailItem*, QPointer<EffectWindowImpl>>::const_iterator it
+    auto wImpl = static_cast<effects_window_impl*>(effectWindow(w));
+    for (QHash<WindowThumbnailItem*, QPointer<effects_window_impl>>::const_iterator it
          = wImpl->thumbnails().constBegin();
          it != wImpl->thumbnails().constEnd();
          ++it) {
@@ -556,7 +556,7 @@ void scene::paintWindowThumbnails(window* w,
         if (!item->isVisible()) {
             continue;
         }
-        EffectWindowImpl* thumb = it.value().data();
+        auto thumb = it.value().data();
         WindowPaintData thumbData(thumb, screenProjectionMatrix());
         thumbData.setOpacity(opacity);
         thumbData.setBrightness(brightness * item->brightness());
@@ -600,7 +600,7 @@ void scene::paintWindowThumbnails(window* w,
 
 void scene::paintDesktopThumbnails(window* w)
 {
-    EffectWindowImpl* wImpl = static_cast<EffectWindowImpl*>(effectWindow(w));
+    auto wImpl = static_cast<effects_window_impl*>(effectWindow(w));
     for (QList<DesktopThumbnailItem*>::const_iterator it = wImpl->desktopThumbnails().constBegin();
          it != wImpl->desktopThumbnails().constEnd();
          ++it) {
@@ -637,12 +637,12 @@ void scene::paintDesktopThumbnails(window* w)
 
 void scene::paintDesktop(int desktop, paint_type mask, const QRegion& region, ScreenPaintData& data)
 {
-    static_cast<EffectsHandlerImpl*>(effects)->paintDesktop(
+    static_cast<effects_handler_impl*>(effects)->paintDesktop(
         desktop, static_cast<int>(mask), region, data);
 }
 
 // the function that'll be eventually called by paintWindow() above
-void scene::finalPaintWindow(EffectWindowImpl* w,
+void scene::finalPaintWindow(effects_window_impl* w,
                              paint_type mask,
                              QRegion region,
                              WindowPaintData& data)
@@ -651,7 +651,7 @@ void scene::finalPaintWindow(EffectWindowImpl* w,
 }
 
 // will be eventually called from drawWindow()
-void scene::finalDrawWindow(EffectWindowImpl* w,
+void scene::finalDrawWindow(effects_window_impl* w,
                             paint_type mask,
                             QRegion region,
                             WindowPaintData& data)
@@ -834,9 +834,9 @@ void window::resetPaintingEnabled()
     if (toplevel->isDeleted()) {
         disable_painting |= window_paint_disable_type::by_delete;
     }
-    if (static_cast<EffectsHandlerImpl*>(effects)->isDesktopRendering()) {
+    if (static_cast<effects_handler_impl*>(effects)->isDesktopRendering()) {
         if (!toplevel->isOnDesktop(
-                static_cast<EffectsHandlerImpl*>(effects)->currentRenderedDesktop())) {
+                static_cast<effects_handler_impl*>(effects)->currentRenderedDesktop())) {
             disable_painting |= window_paint_disable_type::by_desktop;
         }
     } else {
@@ -1176,7 +1176,7 @@ Wrapland::Server::Surface* window_pixmap::surface() const
 //****************************************
 // effect_frame
 //****************************************
-effect_frame::effect_frame(EffectFrameImpl* frame)
+effect_frame::effect_frame(effect_frame_impl* frame)
     : m_effectFrame(frame)
 {
 }

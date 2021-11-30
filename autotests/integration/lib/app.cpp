@@ -111,7 +111,7 @@ WaylandTestApplication::~WaylandTestApplication()
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
     if (effects) {
-        static_cast<EffectsHandlerImpl*>(effects)->unloadAllEffects();
+        static_cast<render::effects_handler_impl*>(effects)->unloadAllEffects();
     }
 
     // Kill Xwayland before terminating its connection.

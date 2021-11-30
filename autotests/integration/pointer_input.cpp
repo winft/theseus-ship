@@ -326,7 +326,7 @@ void PointerInputTest::testWarpingDuringFilter()
     QVERIFY(window->frameGeometry().contains(input::get_cursor()->pos()));
 
     // is PresentWindows effect for top left screen edge loaded
-    QVERIFY(static_cast<EffectsHandlerImpl*>(effects)->isEffectLoaded("presentwindows"));
+    QVERIFY(static_cast<render::effects_handler_impl*>(effects)->isEffectLoaded("presentwindows"));
     QVERIFY(movedSpy.isEmpty());
     quint32 timestamp = 0;
     Test::pointer_motion_absolute(QPoint(0, 0), timestamp++);
@@ -1601,7 +1601,8 @@ void PointerInputTest::testConfineToScreenGeometry()
 
     // unload the Present Windows effect because it pushes back
     // pointer if it's at (0, 0)
-    static_cast<EffectsHandlerImpl*>(effects)->unloadEffect(QStringLiteral("presentwindows"));
+    static_cast<render::effects_handler_impl*>(effects)->unloadEffect(
+        QStringLiteral("presentwindows"));
 
     // setup screen layout
     const QVector<QRect> geometries{QRect(0, 0, 1280, 1024),

@@ -94,7 +94,7 @@ void WindowGeometryTest::cleanup()
 void WindowGeometryTest::testStartup()
 {
     // just a test to load the effect to verify it doesn't crash
-    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
+    auto e = static_cast<render::effects_handler_impl*>(effects);
     QVERIFY(e->isEffectLoaded(BuiltInEffects::nameForEffect(BuiltInEffect::WindowGeometry)));
 }
 

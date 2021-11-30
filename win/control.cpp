@@ -288,7 +288,7 @@ bool control::have_resize_effect() const
 void control::update_have_resize_effect()
 {
     m_have_resize_effect
-        = effects && static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::Resize);
+        = effects && static_cast<render::effects_handler_impl*>(effects)->provides(Effect::Resize);
 }
 
 void control::reset_have_resize_effect()

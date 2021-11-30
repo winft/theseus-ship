@@ -161,7 +161,7 @@ public:
     qint64 paint(QRegion damage,
                  std::deque<Toplevel*> const& windows,
                  std::chrono::milliseconds presentTime) override;
-    render::effect_frame* createEffectFrame(EffectFrameImpl* frame) override;
+    render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     render::shadow* createShadow(Toplevel* toplevel) override;
     void screenGeometryChanged(const QSize& size) override;
     xcb_render_picture_t xrenderBufferPicture() const override;
@@ -245,7 +245,7 @@ private:
 class effect_frame : public render::effect_frame
 {
 public:
-    effect_frame(EffectFrameImpl* frame);
+    effect_frame(effect_frame_impl* frame);
     ~effect_frame() override;
 
     void free() override;

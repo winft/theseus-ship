@@ -38,7 +38,6 @@ class Buffer;
 
 namespace KWin
 {
-class EffectsHandlerImpl;
 
 namespace base
 {
@@ -52,13 +51,13 @@ class Renderer;
 
 class AbstractThumbnailItem;
 class Deleted;
-class EffectFrameImpl;
-class EffectWindowImpl;
 class OverlayWindow;
 
 namespace render
 {
 class effect_frame;
+class effect_frame_impl;
+class effects_window_impl;
 class shadow;
 class window;
 class window_pixmap;
@@ -157,7 +156,7 @@ public:
      *
      * @param frame The effect frame this effect_frame belongs to.
      */
-    virtual effect_frame* createEffectFrame(EffectFrameImpl* frame) = 0;
+    virtual effect_frame* createEffectFrame(effect_frame_impl* frame) = 0;
     /**
      * @brief Creates the scene specific shadow subclass.
      *
@@ -254,7 +253,7 @@ protected:
                      const QMatrix4x4& projection = QMatrix4x4());
     // Render cursor texture in case hardware cursor is disabled/non-applicable
     virtual void paintCursor() = 0;
-    friend class KWin::EffectsHandlerImpl;
+    friend class effects_handler_impl;
     // called after all effects had their paintScreen() called
     void finalPaintScreen(paint_type mask, QRegion region, ScreenPaintData& data);
     // shared implementation of painting the screen in the generic
@@ -265,13 +264,15 @@ protected:
     // paint the background (not the desktop background - the whole background)
     virtual void paintBackground(QRegion region) = 0;
     // called after all effects had their paintWindow() called
-    void
-    finalPaintWindow(EffectWindowImpl* w, paint_type mask, QRegion region, WindowPaintData& data);
+    void finalPaintWindow(effects_window_impl* w,
+                          paint_type mask,
+                          QRegion region,
+                          WindowPaintData& data);
     // shared implementation, starts painting the window
     virtual void paintWindow(window* w, paint_type mask, QRegion region, WindowQuadList quads);
     // called after all effects had their drawWindow() called
     virtual void
-    finalDrawWindow(EffectWindowImpl* w, paint_type mask, QRegion region, WindowPaintData& data);
+    finalDrawWindow(effects_window_impl* w, paint_type mask, QRegion region, WindowPaintData& data);
     // let the scene decide whether it's better to paint more of the screen, eg. in order to allow a
     // buffer swap the default is NOOP
     virtual void extendPaintRegion(QRegion& region, bool opaqueFullscreen);
@@ -553,7 +554,7 @@ private:
 class KWIN_EXPORT effect_frame
 {
 public:
-    effect_frame(EffectFrameImpl* frame);
+    effect_frame(effect_frame_impl* frame);
     virtual ~effect_frame();
     virtual void render(QRegion region, double opacity, double frameOpacity) = 0;
     virtual void free() = 0;
@@ -564,7 +565,7 @@ public:
     virtual void crossFadeText() = 0;
 
 protected:
-    EffectFrameImpl* m_effectFrame;
+    effect_frame_impl* m_effectFrame;
 };
 
 inline int window::x() const

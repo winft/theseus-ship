@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 class EffectWindow;
-class EffectWindowImpl;
 class WindowPaintData;
 class GLTexture;
 class GLRenderTarget;
@@ -38,6 +37,7 @@ class GLShader;
 
 namespace render
 {
+class effects_window_impl;
 enum class paint_type;
 class scene;
 
@@ -51,7 +51,8 @@ class lanczos_filter : public QObject
 public:
     explicit lanczos_filter(render::scene* parent);
     ~lanczos_filter() override;
-    void performPaint(EffectWindowImpl* w, paint_type mask, QRegion region, WindowPaintData& data);
+    void
+    performPaint(effects_window_impl* w, paint_type mask, QRegion region, WindowPaintData& data);
 
 protected:
     void timerEvent(QTimerEvent*) override;

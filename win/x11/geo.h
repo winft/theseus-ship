@@ -940,7 +940,8 @@ void reposition_geometry_tip(Win* win)
     assert(is_move(win) || is_resize(win));
 
     // Position and Size display
-    if (effects && static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::GeometryTip)) {
+    if (effects
+        && static_cast<render::effects_handler_impl*>(effects)->provides(Effect::GeometryTip)) {
         // some effect paints this for us
         return;
     }

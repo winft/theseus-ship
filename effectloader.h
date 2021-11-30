@@ -57,7 +57,7 @@ enum class LoadEffectFlags {
  *
  * The AbstractEffectLoader specifies the methods a concrete loader has to implement and how
  * those methods are expected to perform. Also it provides an interface to the outside world
- * (that is EffectsHandlerImpl).
+ * (that is render::effects_handler_impl).
  *
  * The abstraction is used because there are multiple types of Effects which need to be loaded:
  * @li Built-In Effects

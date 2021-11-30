@@ -76,8 +76,8 @@ void AbstractThumbnailItem::findParentEffectWindow()
             qCDebug(KWIN_CORE) << "No QQuickWindow assigned yet";
             return;
         }
-        if (auto* w = static_cast<EffectWindowImpl*>(effects->findWindow(qw))) {
-            m_parent = QPointer<EffectWindowImpl>(w);
+        if (auto w = static_cast<render::effects_window_impl*>(effects->findWindow(qw))) {
+            m_parent = QPointer<render::effects_window_impl>(w);
         }
     }
 }
@@ -183,7 +183,7 @@ void WindowThumbnailItem::paint(QPainter* painter)
 
 void WindowThumbnailItem::repaint(KWin::EffectWindow* w)
 {
-    if (static_cast<KWin::EffectWindowImpl*>(w)->window()->internalId() == m_wId) {
+    if (static_cast<KWin::render::effects_window_impl*>(w)->window()->internalId() == m_wId) {
         update();
     }
 }

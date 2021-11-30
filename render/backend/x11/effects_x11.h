@@ -16,7 +16,7 @@ namespace KWin::render::backend::x11
 {
 class EffectsMouseInterceptionX11Filter;
 
-class EffectsHandlerImplX11 : public EffectsHandlerImpl
+class EffectsHandlerImplX11 : public render::effects_handler_impl
 {
     Q_OBJECT
 public:

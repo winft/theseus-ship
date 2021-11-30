@@ -57,7 +57,7 @@ public:
                   std::deque<Toplevel*> const& windows,
                   std::chrono::milliseconds presentTime) override;
 
-    render::effect_frame* createEffectFrame(EffectFrameImpl* frame) override;
+    render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     render::shadow* createShadow(Toplevel* toplevel) override;
     void screenGeometryChanged(const QSize& size) override;
     OverlayWindow* overlayWindow() const override;
@@ -154,7 +154,7 @@ protected:
     void paintGenericScreen(paint_type mask, ScreenPaintData data) override;
     void doPaintBackground(const QVector<float>& vertices) override;
     render::window* createWindow(Toplevel* t) override;
-    void finalDrawWindow(EffectWindowImpl* w,
+    void finalDrawWindow(effects_window_impl* w,
                          paint_type mask,
                          QRegion region,
                          WindowPaintData& data) override;
@@ -162,8 +162,10 @@ protected:
     void paintCursor() override;
 
 private:
-    void
-    performPaintWindow(EffectWindowImpl* w, paint_type mask, QRegion region, WindowPaintData& data);
+    void performPaintWindow(effects_window_impl* w,
+                            paint_type mask,
+                            QRegion region,
+                            WindowPaintData& data);
     QMatrix4x4 createProjectionMatrix() const;
 
 private:
@@ -242,7 +244,7 @@ private:
 class effect_frame : public render::effect_frame
 {
 public:
-    effect_frame(EffectFrameImpl* frame, gl::scene* scene);
+    effect_frame(effect_frame_impl* frame, gl::scene* scene);
     ~effect_frame() override;
 
     void free() override;

@@ -18,8 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_EFFECTSIMPL_H
-#define KWIN_EFFECTSIMPL_H
+#pragma once
 
 #include "kwineffects.h"
 
@@ -52,11 +51,6 @@ namespace base
 class output;
 }
 
-namespace render
-{
-class compositor;
-}
-
 namespace win::x11
 {
 class group;
@@ -72,7 +66,12 @@ class Deleted;
 class EffectLoader;
 class Toplevel;
 
-class KWIN_EXPORT EffectsHandlerImpl : public EffectsHandler
+namespace render
+{
+
+class compositor;
+
+class KWIN_EXPORT effects_handler_impl : public EffectsHandler
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Effects")
@@ -80,8 +79,8 @@ class KWIN_EXPORT EffectsHandlerImpl : public EffectsHandler
     Q_PROPERTY(QStringList loadedEffects READ loadedEffects)
     Q_PROPERTY(QStringList listOfEffects READ listOfEffects)
 public:
-    EffectsHandlerImpl(render::compositor* compositor, render::scene* scene);
-    ~EffectsHandlerImpl() override;
+    effects_handler_impl(render::compositor* compositor, render::scene* scene);
+    ~effects_handler_impl() override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
     /**
@@ -409,12 +408,12 @@ private:
     QList<EffectScreen*> m_effectScreens;
 };
 
-class EffectScreenImpl : public EffectScreen
+class effect_screen_impl : public EffectScreen
 {
     Q_OBJECT
 
 public:
-    explicit EffectScreenImpl(base::output* output, QObject* parent = nullptr);
+    explicit effect_screen_impl(base::output* output, QObject* parent = nullptr);
 
     base::output* platformOutput() const;
 
@@ -426,12 +425,12 @@ private:
     base::output* m_platformOutput;
 };
 
-class KWIN_EXPORT EffectWindowImpl : public EffectWindow
+class KWIN_EXPORT effects_window_impl : public EffectWindow
 {
     Q_OBJECT
 public:
-    explicit EffectWindowImpl(Toplevel* toplevel);
-    ~EffectWindowImpl() override;
+    explicit effects_window_impl(Toplevel* toplevel);
+    ~effects_window_impl() override;
 
     void enablePainting(int reason) override;
     void disablePainting(int reason) override;
@@ -560,7 +559,7 @@ public:
     QVariant data(int role) const override;
 
     void registerThumbnail(AbstractThumbnailItem* item);
-    QHash<WindowThumbnailItem*, QPointer<EffectWindowImpl>> const& thumbnails() const
+    QHash<WindowThumbnailItem*, QPointer<effects_window_impl>> const& thumbnails() const
     {
         return m_thumbnails;
     }
@@ -579,32 +578,32 @@ private:
     Toplevel* toplevel;
     render::window* sw; // This one is used only during paint pass.
     QHash<int, QVariant> dataMap;
-    QHash<WindowThumbnailItem*, QPointer<EffectWindowImpl>> m_thumbnails;
+    QHash<WindowThumbnailItem*, QPointer<effects_window_impl>> m_thumbnails;
     QList<DesktopThumbnailItem*> m_desktopThumbnails;
     bool managed = false;
     bool waylandClient;
     bool x11Client;
 };
 
-class EffectWindowGroupImpl : public EffectWindowGroup
+class effect_window_group_impl : public EffectWindowGroup
 {
 public:
-    explicit EffectWindowGroupImpl(win::x11::group* g);
+    explicit effect_window_group_impl(win::x11::group* g);
     EffectWindowList members() const override;
 
 private:
     win::x11::group* group;
 };
 
-class KWIN_EXPORT EffectFrameImpl : public QObject, public EffectFrame
+class KWIN_EXPORT effect_frame_impl : public QObject, public EffectFrame
 {
     Q_OBJECT
 public:
-    explicit EffectFrameImpl(EffectFrameStyle style,
-                             bool staticSize = true,
-                             QPoint position = QPoint(-1, -1),
-                             Qt::Alignment alignment = Qt::AlignCenter);
-    ~EffectFrameImpl() override;
+    explicit effect_frame_impl(EffectFrameStyle style,
+                               bool staticSize = true,
+                               QPoint position = QPoint(-1, -1),
+                               Qt::Alignment alignment = Qt::AlignCenter);
+    ~effect_frame_impl() override;
 
     void free() override;
     void render(const QRegion& region = infiniteRegion(),
@@ -662,9 +661,9 @@ private Q_SLOTS:
     void plasmaThemeChanged();
 
 private:
-    Q_DISABLE_COPY(EffectFrameImpl) // As we need to use Qt slots we cannot copy this class
-    void align(QRect& geometry);    // positions geometry around m_point respecting m_alignment
-    void autoResize();              // Auto-resize if not a static size
+    Q_DISABLE_COPY(effect_frame_impl) // As we need to use Qt slots we cannot copy this class
+    void align(QRect& geometry);      // positions geometry around m_point respecting m_alignment
+    void autoResize();                // Auto-resize if not a static size
 
     EffectFrameStyle m_style;
     Plasma::FrameSvg m_frame; // TODO: share between all EffectFrames
@@ -689,24 +688,24 @@ private:
     Plasma::Theme* m_theme;
 };
 
-inline QList<EffectWindow*> EffectsHandlerImpl::elevatedWindows() const
+inline QList<EffectWindow*> effects_handler_impl::elevatedWindows() const
 {
     if (isScreenLocked())
         return QList<EffectWindow*>();
     return elevated_windows;
 }
 
-inline xcb_window_t EffectsHandlerImpl::x11RootWindow() const
+inline xcb_window_t effects_handler_impl::x11RootWindow() const
 {
     return rootWindow();
 }
 
-inline xcb_connection_t* EffectsHandlerImpl::xcbConnection() const
+inline xcb_connection_t* effects_handler_impl::xcbConnection() const
 {
     return connection();
 }
 
-inline EffectWindowGroupImpl::EffectWindowGroupImpl(win::x11::group* g)
+inline effect_window_group_impl::effect_window_group_impl(win::x11::group* g)
     : group(g)
 {
 }
@@ -714,26 +713,25 @@ inline EffectWindowGroupImpl::EffectWindowGroupImpl(win::x11::group* g)
 EffectWindow* effectWindow(Toplevel* w);
 EffectWindow* effectWindow(render::window* w);
 
-inline const render::window* EffectWindowImpl::sceneWindow() const
+inline const render::window* effects_window_impl::sceneWindow() const
 {
     return sw;
 }
 
-inline render::window* EffectWindowImpl::sceneWindow()
+inline render::window* effects_window_impl::sceneWindow()
 {
     return sw;
 }
 
-inline const Toplevel* EffectWindowImpl::window() const
+inline const Toplevel* effects_window_impl::window() const
 {
     return toplevel;
 }
 
-inline Toplevel* EffectWindowImpl::window()
+inline Toplevel* effects_window_impl::window()
 {
     return toplevel;
 }
 
-} // namespace
-
-#endif
+}
+}

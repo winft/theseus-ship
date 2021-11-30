@@ -13,7 +13,7 @@ namespace KWin::render::backend::x11
 {
 
 EffectsMouseInterceptionX11Filter::EffectsMouseInterceptionX11Filter(xcb_window_t window,
-                                                                     EffectsHandlerImpl* effects)
+                                                                     effects_handler_impl* effects)
     : base::x11::event_filter(QVector<int>{XCB_BUTTON_PRESS, XCB_BUTTON_RELEASE, XCB_MOTION_NOTIFY})
     , m_effects(effects)
     , m_window(window)

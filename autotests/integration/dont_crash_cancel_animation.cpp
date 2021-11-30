@@ -94,7 +94,8 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
                                           Q_ARG(QString, QStringLiteral("crashy"))));
         break;
     }
-    QVERIFY(static_cast<EffectsHandlerImpl*>(effects)->isEffectLoaded(QStringLiteral("crashy")));
+    QVERIFY(static_cast<render::effects_handler_impl*>(effects)->isEffectLoaded(
+        QStringLiteral("crashy")));
 
     using namespace Wrapland::Client;
     // create a window

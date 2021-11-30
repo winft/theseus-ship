@@ -947,7 +947,7 @@ bool scene::supportsSurfacelessContext() const
     return m_backend->supportsSurfacelessContext();
 }
 
-render::effect_frame* scene::createEffectFrame(EffectFrameImpl* frame)
+render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)
 {
     return new effect_frame(frame, this);
 }
@@ -1121,7 +1121,7 @@ render::window* scene2::createWindow(Toplevel* t)
     return new window(t, this);
 }
 
-void scene2::finalDrawWindow(EffectWindowImpl* w,
+void scene2::finalDrawWindow(effects_window_impl* w,
                              paint_type mask,
                              QRegion region,
                              WindowPaintData& data)
@@ -1133,7 +1133,7 @@ void scene2::finalDrawWindow(EffectWindowImpl* w,
     performPaintWindow(w, mask, region, data);
 }
 
-void scene2::performPaintWindow(EffectWindowImpl* w,
+void scene2::performPaintWindow(effects_window_impl* w,
                                 paint_type mask,
                                 QRegion region,
                                 WindowPaintData& data)
@@ -1689,7 +1689,7 @@ bool window_pixmap::isValid() const
 GLTexture* effect_frame::m_unstyledTexture = nullptr;
 QPixmap* effect_frame::m_unstyledPixmap = nullptr;
 
-effect_frame::effect_frame(EffectFrameImpl* frame, gl::scene* scene)
+effect_frame::effect_frame(effect_frame_impl* frame, gl::scene* scene)
     : render::effect_frame(frame)
     , m_texture(nullptr)
     , m_textTexture(nullptr)

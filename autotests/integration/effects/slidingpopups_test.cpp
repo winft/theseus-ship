@@ -105,7 +105,7 @@ void SlidingPopupsTest::init()
 void SlidingPopupsTest::cleanup()
 {
     Test::destroy_wayland_connection();
-    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
+    auto e = static_cast<render::effects_handler_impl*>(effects);
     while (!e->loadedEffects().isEmpty()) {
         const QString effect = e->loadedEffects().first();
         e->unloadEffect(effect);
@@ -159,7 +159,7 @@ void SlidingPopupsTest::testWithOtherEffect()
     // this test verifies that slidingpopups effect grabs the window added role
     // independently of the sequence how the effects are loaded.
     // see BUG 336866
-    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
+    auto e = static_cast<render::effects_handler_impl*>(effects);
     // find the effectsloader
     auto effectloader = e->findChild<AbstractEffectLoader*>();
     QVERIFY(effectloader);
@@ -314,7 +314,7 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     // independently of the sequence how the effects are loaded.
     // see BUG 336866
     // the test is like testWithOtherEffect, but simulates using a Wayland window
-    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
+    auto e = static_cast<render::effects_handler_impl*>(effects);
     // find the effectsloader
     auto effectloader = e->findChild<AbstractEffectLoader*>();
     QVERIFY(effectloader);
