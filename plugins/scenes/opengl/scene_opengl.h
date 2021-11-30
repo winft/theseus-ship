@@ -345,9 +345,6 @@ inline render::gl::texture* window_pixmap::texture() const
 class KWIN_EXPORT scene_factory : public render::scene_factory
 {
     Q_OBJECT
-    Q_INTERFACES(KWin::render::scene_factory)
-    Q_PLUGIN_METADATA(IID "org.kde.kwin.Scene" FILE "opengl.json")
-
 public:
     explicit scene_factory(QObject* parent = nullptr);
     ~scene_factory() override;

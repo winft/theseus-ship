@@ -128,6 +128,7 @@ protected:
      * Continues the startup after Scene And Workspace are created
      */
     void startupWithWorkspace();
+    virtual render::scene* create_scene(QVector<CompositingType> const& support) = 0;
 
     virtual std::deque<Toplevel*> performCompositing() = 0;
     void update_paint_periods(int64_t duration);

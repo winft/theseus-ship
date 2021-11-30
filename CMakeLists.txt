@@ -441,6 +441,9 @@ set(kwin_SRCS
     outline.cpp
     overlaywindow.cpp
     platform.cpp
+    plugins/scenes/opengl/lanczosfilter.cpp
+    plugins/scenes/opengl/scene_opengl.cpp
+    plugins/scenes/xrender/scene_xrender.cpp
     render/x11/compositor.cpp
     render/x11/compositor_selection_owner.cpp
     render/compositor.cpp
@@ -518,6 +521,8 @@ ecm_qt_declare_logging_category(kwin_SRCS
     DEFAULT_SEVERITY
         Critical
 )
+
+qt5_add_resources(kwin_SRCS plugins/scenes/opengl/resources.qrc)
 
 qt5_add_dbus_adaptor(kwin_SRCS
   scripting/org.kde.kwin.Script.xml
@@ -616,6 +621,10 @@ set(kwinLibs
     ${kwin_XCB_LIBS}
     ${kwin_WAYLAND_LIBS}
     Libinput::Libinput
+
+    # For render code
+    SceneOpenGLBackend
+    kwinxrenderutils
 )
 
 add_library(kwin SHARED ${kwin_SRCS})
@@ -818,6 +827,7 @@ set(kwin_WAYLAND_SRCS
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
    linux_dmabuf.cpp
+   plugins/scenes/qpainter/scene_qpainter.cpp
    render/backend/wlroots/backend.cpp
    render/backend/wlroots/buffer.cpp
    render/backend/wlroots/egl_backend.cpp

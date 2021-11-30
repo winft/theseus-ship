@@ -701,4 +701,3 @@ inline const QSize& window_pixmap::size() const
 
 ENUM_FLAGS(KWin::render::paint_type)
 ENUM_FLAGS(KWin::render::window_paint_disable_type)
-Q_DECLARE_INTERFACE(KWin::render::scene_factory, "org.kde.kwin.Scene")

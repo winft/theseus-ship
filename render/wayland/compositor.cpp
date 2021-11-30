@@ -5,6 +5,9 @@
 */
 #include "compositor.h"
 
+#include "plugins/scenes/opengl/scene_opengl.h"
+#include "plugins/scenes/qpainter/scene_qpainter.h"
+
 #include "output.h"
 #include "presentation.h"
 #include "utils.h"
@@ -158,6 +161,21 @@ void compositor::start()
     } else {
         connect(kwinApp(), &Application::workspaceCreated, this, &compositor::startupWithWorkspace);
     }
+}
+
+render::scene* compositor::create_scene(QVector<CompositingType> const& support)
+{
+    for (auto type : support) {
+        if (type == OpenGLCompositing) {
+            qCDebug(KWIN_WL) << "Creating OpenGL scene.";
+            return gl::scene_factory().create();
+        }
+        if (type == QPainterCompositing) {
+            qCDebug(KWIN_WL) << "Creating QPainter scene.";
+            return qpainter::scene_factory().create();
+        }
+    }
+    return nullptr;
 }
 
 std::deque<Toplevel*> compositor::performCompositing()

@@ -96,6 +96,7 @@ public:
 
 protected:
     void start() override;
+    render::scene* create_scene(QVector<CompositingType> const& support) override;
     std::deque<Toplevel*> performCompositing() override;
 
 private:

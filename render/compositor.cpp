@@ -25,9 +25,6 @@
 #include "win/x11/stacking_tree.h"
 #include "x11/compositor_selection_owner.h"
 
-#include <KPluginLoader>
-#include <KPluginMetaData>
-
 #include <QQuickWindow>
 #include <QTimerEvent>
 
@@ -115,55 +112,7 @@ bool compositor::setupStart()
             << "Configured compositor not supported by Platform. Falling back to defaults";
     }
 
-    const auto availablePlugins = KPluginLoader::findPlugins(QStringLiteral("org.kde.kwin.scenes"));
-
-    for (const KPluginMetaData& pluginMetaData : availablePlugins) {
-        qCDebug(KWIN_CORE) << "Available scene plugin:" << pluginMetaData.fileName();
-    }
-
-    for (auto type : qAsConst(supportedCompositors)) {
-        switch (type) {
-        case XRenderCompositing:
-            qCDebug(KWIN_CORE) << "Attempting to load the XRender scene";
-            break;
-        case OpenGLCompositing:
-            qCDebug(KWIN_CORE) << "Attempting to load the OpenGL scene";
-            break;
-        case QPainterCompositing:
-            qCDebug(KWIN_CORE) << "Attempting to load the QPainter scene";
-            break;
-        case NoCompositing:
-            Q_UNREACHABLE();
-        }
-        const auto pluginIt = std::find_if(
-            availablePlugins.begin(), availablePlugins.end(), [type](const auto& plugin) {
-                const auto& metaData = plugin.rawData();
-                auto it = metaData.find(QStringLiteral("CompositingType"));
-                if (it != metaData.end()) {
-                    if ((*it).toInt() == int{type}) {
-                        return true;
-                    }
-                }
-                return false;
-            });
-        if (pluginIt != availablePlugins.end()) {
-            std::unique_ptr<scene_factory> factory{
-                qobject_cast<scene_factory*>(pluginIt->instantiate())};
-            if (factory) {
-                m_scene = factory->create(this);
-                if (m_scene) {
-                    if (!m_scene->initFailed()) {
-                        qCDebug(KWIN_CORE)
-                            << "Instantiated compositing plugin:" << pluginIt->name();
-                        break;
-                    } else {
-                        delete m_scene;
-                        m_scene = nullptr;
-                    }
-                }
-            }
-        }
-    }
+    m_scene = create_scene(supportedCompositors);
 
     if (m_scene == nullptr || m_scene->initFailed()) {
         qCCritical(KWIN_CORE) << "Failed to initialize compositing, compositing disabled";

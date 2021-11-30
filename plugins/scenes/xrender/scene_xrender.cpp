@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "decorations/decoratedclient.h"
 #include "effects.h"
-#include "logging.h"
 #include "main.h"
 #include "overlaywindow.h"
 #include "platform.h"
@@ -99,7 +98,7 @@ void backend::setBuffer(xcb_render_picture_t buffer)
 
 void backend::setFailed(const QString& reason)
 {
-    qCCritical(KWIN_XRENDER) << "Creating the XRender backend failed: " << reason;
+    qCCritical(KWIN_CORE) << "Creating the XRender backend failed: " << reason;
     m_failed = true;
 }
 

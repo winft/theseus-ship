@@ -6,6 +6,10 @@
 */
 #include "compositor.h"
 
+#include "compositor_selection_owner.h"
+#include "plugins/scenes/opengl/scene_opengl.h"
+#include "plugins/scenes/xrender/scene_xrender.h"
+
 #include "effects.h"
 #include "overlaywindow.h"
 #include "perf/ftrace.h"
@@ -16,7 +20,6 @@
 #include "workspace.h"
 #include "xcbutils.h"
 
-#include "render/x11/compositor_selection_owner.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
@@ -282,6 +285,21 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     repaints_region = QRegion();
 
     return true;
+}
+
+render::scene* compositor::create_scene(QVector<CompositingType> const& support)
+{
+    for (auto type : support) {
+        if (type == OpenGLCompositing) {
+            qCDebug(KWIN_CORE) << "Creating OpenGL scene.";
+            return gl::scene_factory().create();
+        }
+        if (type == XRenderCompositing) {
+            qCDebug(KWIN_CORE) << "Creating XRender scene.";
+            return xrender::scene_factory().create();
+        }
+    }
+    return nullptr;
 }
 
 std::deque<Toplevel*> compositor::performCompositing()
