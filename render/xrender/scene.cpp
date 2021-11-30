@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "platform.h"
 #include "render/effects.h"
-#include "render/x11/overlay_window_impl.h"
+#include "render/x11/overlay_window.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "xcbutils.h"
@@ -57,7 +57,7 @@ ScreenPaintData scene::screen_paint;
 // backend
 //****************************************
 backend::backend()
-    : overlay_window{std::make_unique<render::x11::overlay_window_impl>()}
+    : overlay_window{std::make_unique<render::x11::overlay_window>()}
 {
     if (!Xcb::Extensions::self()->isRenderAvailable()) {
         setFailed("No XRender extension available");

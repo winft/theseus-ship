@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "base/x11/event_filter.h"
+
 #include <kwin_export.h>
 
 #include <QRegion>
@@ -27,29 +29,43 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::x11
 {
 
-class KWIN_EXPORT overlay_window
+class KWIN_EXPORT overlay_window : public base::x11::event_filter
 {
 public:
-    virtual ~overlay_window();
+    overlay_window();
+    ~overlay_window();
 
     /// Creates XComposite overlay window, call initOverlay() afterwards
-    virtual bool create() = 0;
+    bool create();
 
     /// Init overlay and the destination window in it
-    virtual void setup(xcb_window_t window) = 0;
-    virtual void show() = 0;
-    virtual void hide() = 0; // hides and resets overlay window
-    virtual void setShape(const QRegion& reg) = 0;
-    virtual void resize(const QSize& size) = 0;
+    void setup(xcb_window_t window);
+    void show();
+
+    /// Hides and resets overlay window
+    void hide();
+    void setShape(const QRegion& reg);
+    void resize(const QSize& size);
 
     /// Destroys XComposite overlay window
-    virtual void destroy() = 0;
-    virtual xcb_window_t window() const = 0;
-    virtual bool isVisible() const = 0;
-    virtual void setVisibility(bool visible) = 0;
+    void destroy();
+    xcb_window_t window() const;
+    bool isVisible() const;
+    void setVisibility(bool visible);
 
-protected:
-    overlay_window();
+    bool event(xcb_generic_event_t* event) override;
+
+private:
+    void setNoneBackgroundPixmap(xcb_window_t window);
+    void setupInputShape(xcb_window_t window);
+
+    bool m_visible;
+
+    // For showOverlay()
+    bool m_shown;
+
+    QRegion m_shape;
+    xcb_window_t m_window;
 };
 
 }

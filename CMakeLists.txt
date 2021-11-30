@@ -451,7 +451,6 @@ set(kwin_SRCS
     render/x11/compositor_selection_owner.cpp
     render/x11/outline.cpp
     render/x11/overlay_window.cpp
-    render/x11/overlay_window_impl.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp
     rules/rules.cpp
