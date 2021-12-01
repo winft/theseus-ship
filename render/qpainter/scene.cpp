@@ -52,18 +52,6 @@ namespace KWin::render::qpainter
 //****************************************
 // scene
 //****************************************
-scene* scene::createScene()
-{
-    QScopedPointer<qpainter::backend> backend(kwinApp()->platform->createQPainterBackend());
-    if (backend.isNull()) {
-        return nullptr;
-    }
-    if (backend->isFailed()) {
-        return nullptr;
-    }
-    return new scene(backend.take());
-}
-
 scene::scene(qpainter::backend* backend)
     : m_backend(backend)
     , m_painter(new QPainter())
@@ -866,7 +854,16 @@ void deco_renderer::reparent(Toplevel* window)
 
 render::scene* create_scene()
 {
-    auto s = scene::createScene();
+    QScopedPointer<qpainter::backend> backend(kwinApp()->platform->createQPainterBackend());
+    if (backend.isNull()) {
+        return nullptr;
+    }
+    if (backend->isFailed()) {
+        return nullptr;
+    }
+
+    auto s = new scene(backend.take());
+
     if (s && s->initFailed()) {
         delete s;
         s = nullptr;

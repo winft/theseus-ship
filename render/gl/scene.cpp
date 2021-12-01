@@ -465,46 +465,6 @@ void scene::initDebugOutput()
                          message.constData());
 }
 
-scene* scene::createScene()
-{
-    auto backend = kwinApp()->platform->createOpenGLBackend();
-    if (!backend) {
-        return nullptr;
-    }
-    if (!backend->isFailed()) {
-        backend->init();
-    }
-    if (backend->isFailed()) {
-        delete backend;
-        return nullptr;
-    }
-    gl::scene* scene = nullptr;
-    // first let's try an OpenGL 2 scene
-    if (scene2::supported(backend)) {
-        scene = new scene2(backend);
-        if (scene->initFailed()) {
-            delete scene;
-            scene = nullptr;
-        } else {
-            return scene;
-        }
-    }
-    if (!scene) {
-        if (GLPlatform::instance()->recommendedCompositor() == XRenderCompositing) {
-            qCCritical(KWIN_CORE)
-                << "OpenGL driver recommends XRender based compositing. Falling back to XRender.";
-            qCCritical(KWIN_CORE)
-                << "To overwrite the detection use the environment variable KWIN_COMPOSE";
-            qCCritical(KWIN_CORE)
-                << "For more information see "
-                   "https://community.kde.org/KWin/Environment_Variables#KWIN_COMPOSE";
-        }
-        delete backend;
-    }
-
-    return scene;
-}
-
 x11::overlay_window* scene::overlayWindow() const
 {
     return m_backend->overlayWindow();
@@ -2778,6 +2738,58 @@ void deco_renderer::reparent(Toplevel* window)
     Renderer::reparent(window);
 }
 
+backend* create_backend()
+{
+    auto backend = kwinApp()->platform->createOpenGLBackend();
+    if (!backend) {
+        return nullptr;
+    }
+    if (!backend->isFailed()) {
+        backend->init();
+    }
+    if (backend->isFailed()) {
+        delete backend;
+        return nullptr;
+    }
+    return backend;
+}
+
+render::scene* create_scene_impl()
+{
+    auto backend = create_backend();
+    if (!backend) {
+        return nullptr;
+    }
+
+    gl::scene* scene{nullptr};
+
+    // first let's try an OpenGL 2 scene
+    if (scene2::supported(backend)) {
+        scene = new scene2(backend);
+        if (scene->initFailed()) {
+            delete scene;
+            scene = nullptr;
+        } else {
+            return scene;
+        }
+    }
+
+    if (!scene) {
+        if (GLPlatform::instance()->recommendedCompositor() == XRenderCompositing) {
+            qCCritical(KWIN_CORE)
+                << "OpenGL driver recommends XRender based compositing. Falling back to XRender.";
+            qCCritical(KWIN_CORE)
+                << "To overwrite the detection use the environment variable KWIN_COMPOSE";
+            qCCritical(KWIN_CORE)
+                << "For more information see "
+                   "https://community.kde.org/KWin/Environment_Variables#KWIN_COMPOSE";
+        }
+        delete backend;
+    }
+
+    return scene;
+}
+
 render::scene* create_scene()
 {
     qCDebug(KWIN_CORE) << "Initializing OpenGL compositing";
@@ -2787,13 +2799,16 @@ render::scene* create_scene()
         qCWarning(KWIN_CORE) << "KWin has detected that your OpenGL library is unsafe to use";
         return nullptr;
     }
+
     kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PreInit);
-    auto s = scene::createScene();
+    auto s = create_scene_impl();
     kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PostInit);
+
     if (s && s->initFailed()) {
         delete s;
         return nullptr;
     }
+
     return s;
 }
 

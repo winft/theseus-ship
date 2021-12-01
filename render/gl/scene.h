@@ -94,8 +94,6 @@ public:
 
     QVector<QByteArray> openGLPlatformInterfaceExtensions() const override;
 
-    static scene* createScene();
-
     std::unordered_map<uint32_t, window*> windows;
 
 protected:

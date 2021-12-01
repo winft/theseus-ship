@@ -34,7 +34,9 @@ class KWIN_EXPORT scene : public render::scene
     Q_OBJECT
 
 public:
+    explicit scene(qpainter::backend* backend);
     ~scene() override;
+
     bool usesOverlayWindow() const override;
     render::x11::overlay_window* overlayWindow() const override;
 
@@ -65,8 +67,6 @@ public:
         return m_backend.data();
     }
 
-    static scene* createScene();
-
 protected:
     void paintBackground(QRegion region) override;
     render::window* createWindow(Toplevel* toplevel) override;
@@ -74,7 +74,6 @@ protected:
     void paintEffectQuickView(EffectQuickView* w) override;
 
 private:
-    explicit scene(qpainter::backend* backend);
     QScopedPointer<qpainter::backend> m_backend;
     QScopedPointer<QPainter> m_painter;
 };
