@@ -126,8 +126,10 @@ void egl_dmabuf_buffer::addImage(EGLImage image)
 
 void egl_dmabuf_buffer::removeImages()
 {
-    for (auto image : m_images) {
-        eglDestroyImageKHR(m_interfaceImpl->m_backend->eglDisplay(), image);
+    if (m_interfaceImpl) {
+        for (auto image : m_images) {
+            eglDestroyImageKHR(m_interfaceImpl->m_backend->eglDisplay(), image);
+        }
     }
     m_images.clear();
 }
@@ -292,7 +294,7 @@ egl_dmabuf::~egl_dmabuf()
     auto curBuffers = waylandServer()->linuxDmabufBuffers();
     for (auto* buffer : curBuffers) {
         auto* buf = static_cast<egl_dmabuf_buffer*>(buffer);
-        buf->removeImages();
+        buf->setInterfaceImplementation(nullptr);
     }
 }
 
