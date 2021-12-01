@@ -154,10 +154,7 @@ public:
     void* getProxy(QString name) override;
     void startMousePolling() override;
     void stopMousePolling() override;
-    EffectWindow* findWindow(WId id) const override;
-    EffectWindow* findWindow(Wrapland::Server::Surface* surf) const override;
-    EffectWindow* findWindow(QWindow* w) const override;
-    EffectWindow* findWindow(const QUuid& id) const override;
+
     EffectWindowList stackingOrder() const override;
     void setElevatedWindow(KWin::EffectWindow* w, bool set) override;
 
@@ -350,6 +347,11 @@ protected:
     void setupAbstractClientConnections(Toplevel* window);
     void setupClientConnections(KWin::win::x11::window* c);
     void setupUnmanagedConnections(Toplevel* u);
+
+    EffectWindow* find_window_by_wid(WId id) const override;
+    EffectWindow* find_window_by_surface(Wrapland::Server::Surface* surface) const override;
+    EffectWindow* find_window_by_qwindow(QWindow* w) const override;
+    EffectWindow* find_window_by_uuid(const QUuid& id) const override;
 
     /**
      * Default implementation does nothing and returns @c true.

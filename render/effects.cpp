@@ -1135,7 +1135,7 @@ WindowQuadType effects_handler_impl::newWindowQuadType()
     return WindowQuadType(next_window_quad_type++);
 }
 
-EffectWindow* effects_handler_impl::findWindow(WId id) const
+EffectWindow* effects_handler_impl::find_window_by_wid(WId id) const
 {
     if (auto w = Workspace::self()->findClient(win::x11::predicate_match::window, id)) {
         return w->effectWindow();
@@ -1146,12 +1146,13 @@ EffectWindow* effects_handler_impl::findWindow(WId id) const
     return nullptr;
 }
 
-EffectWindow* effects_handler_impl::findWindow(Wrapland::Server::Surface* /*surf*/) const
+EffectWindow*
+effects_handler_impl::find_window_by_surface(Wrapland::Server::Surface* /*surface*/) const
 {
     return nullptr;
 }
 
-EffectWindow* effects_handler_impl::findWindow(QWindow* w) const
+EffectWindow* effects_handler_impl::find_window_by_qwindow(QWindow* w) const
 {
     if (Toplevel* toplevel = workspace()->findInternal(w)) {
         return toplevel->effectWindow();
@@ -1159,7 +1160,7 @@ EffectWindow* effects_handler_impl::findWindow(QWindow* w) const
     return nullptr;
 }
 
-EffectWindow* effects_handler_impl::findWindow(const QUuid& id) const
+EffectWindow* effects_handler_impl::find_window_by_uuid(const QUuid& id) const
 {
     auto const toplevel
         = workspace()->findToplevel([&id](Toplevel const* t) { return t->internalId() == id; });

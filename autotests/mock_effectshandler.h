@@ -179,22 +179,21 @@ public:
     {
         return nullptr;
     }
-    KWin::EffectWindow* findWindow(WId) const override
+    KWin::EffectWindow* find_window_by_wid(WId /*id*/) const override
     {
         return nullptr;
     }
-    KWin::EffectWindow* findWindow(Wrapland::Server::Surface*) const override
+    KWin::EffectWindow*
+    find_window_by_surface(Wrapland::Server::Surface* /*surface*/) const override
     {
         return nullptr;
     }
-    KWin::EffectWindow* findWindow(QWindow* w) const override
+    KWin::EffectWindow* find_window_by_qwindow(QWindow* /*window*/) const override
     {
-        Q_UNUSED(w)
         return nullptr;
     }
-    KWin::EffectWindow* findWindow(const QUuid& id) const override
+    KWin::EffectWindow* find_window_by_uuid(QUuid const& /*id*/) const override
     {
-        Q_UNUSED(id)
         return nullptr;
     }
     void* getProxy(QString) override
