@@ -894,9 +894,6 @@ void scene::handle_screen_geometry_change(QSize const& size)
     if (!viewportLimitsMatched(size)) {
         return;
     }
-    if (overlayWindow()) {
-        overlayWindow()->resize(size);
-    }
     glViewport(0, 0, size.width(), size.height());
     m_backend->screenGeometryChanged(size);
     GLRenderTarget::setVirtualScreenSize(size);
