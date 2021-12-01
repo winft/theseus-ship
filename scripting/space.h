@@ -27,8 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
-#include <QApplication>
-#include <QDesktopWidget>
 #include <QObject>
 #include <QQmlListProperty>
 #include <QRect>
@@ -473,6 +471,9 @@ public:
     static window* atClientList(QQmlListProperty<KWin::scripting::window>* clients, int index);
 };
 
+// TODO Plasma 6: Remove it.
+void connect_legacy_screen_resize(space* receiver);
+
 template<typename Space, typename RefSpace>
 class template_space : public Space
 {
@@ -525,9 +526,8 @@ public:
                 Q_UNUSED(previousCount)
                 Q_EMIT Space::numberScreensChanged(currentCount);
             });
-        // TODO Plasma 6: Remove it.
-        QObject::connect(
-            QApplication::desktop(), &QDesktopWidget::resized, this, &space::screenResized);
+
+        connect_legacy_screen_resize(this);
 
         for (auto client : ref_space->allClientList()) {
             Space::handle_client_added(client);

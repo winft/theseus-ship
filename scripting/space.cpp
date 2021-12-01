@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "render/x11/outline.h"
 
+#include <QApplication>
+#include <QDesktopWidget>
+
 namespace KWin::scripting
 {
 
@@ -246,4 +249,10 @@ window* declarative_script_space::atClientList(QQmlListProperty<window>* clients
     }
 }
 
-} // KWin
+void connect_legacy_screen_resize(space* receiver)
+{
+    QObject::connect(
+        QApplication::desktop(), &QDesktopWidget::resized, receiver, &space::screenResized);
+}
+
+}
