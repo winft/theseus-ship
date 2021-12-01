@@ -2769,8 +2769,6 @@ render::scene* create_scene_impl()
         if (scene->initFailed()) {
             delete scene;
             scene = nullptr;
-        } else {
-            return scene;
         }
     }
 
@@ -2801,15 +2799,10 @@ render::scene* create_scene()
     }
 
     kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PreInit);
-    auto s = create_scene_impl();
+    auto scene = create_scene_impl();
     kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PostInit);
 
-    if (s && s->initFailed()) {
-        delete s;
-        return nullptr;
-    }
-
-    return s;
+    return scene;
 }
 
 }
