@@ -214,16 +214,6 @@ void backend::screenGeometryChanged(const QSize& size)
 // scene
 //****************************************
 
-scene* scene::createScene()
-{
-    QScopedPointer<xrender::backend> backend;
-    backend.reset(new xrender::backend);
-    if (backend->isFailed()) {
-        return nullptr;
-    }
-    return new scene(backend.take());
-}
-
 scene::scene(xrender::backend* backend)
     : render::scene()
     , m_backend(backend)
@@ -1526,11 +1516,14 @@ void deco_renderer::reparent(Toplevel* window)
 #undef DOUBLE_TO_FIXED
 #undef FIXED_TO_DOUBLE
 
-scene_factory::~scene_factory() = default;
-
-render::scene* scene_factory::create() const
+render::scene* create_scene()
 {
-    return scene::createScene();
+    QScopedPointer<xrender::backend> backend;
+    backend.reset(new xrender::backend);
+    if (backend->isFailed()) {
+        return nullptr;
+    }
+    return new scene(backend.take());
 }
 
 void scene::paintCursor()

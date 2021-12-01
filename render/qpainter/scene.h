@@ -176,14 +176,7 @@ private:
     QImage m_images[int(DecorationPart::Count)];
 };
 
-class KWIN_EXPORT scene_factory : public render::scene_factory
-{
-    Q_OBJECT
-public:
-    ~scene_factory() override;
-
-    render::scene* create() const override;
-};
+KWIN_EXPORT render::scene* create_scene();
 
 inline bool scene::usesOverlayWindow() const
 {

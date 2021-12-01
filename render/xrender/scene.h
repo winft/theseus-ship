@@ -125,7 +125,7 @@ class scene : public render::scene
 {
     Q_OBJECT
 public:
-    class EffectFrame;
+    explicit scene(xrender::backend* backend);
     ~scene() override;
     bool initFailed() const override;
     CompositingType compositingType() const override
@@ -149,8 +149,6 @@ public:
         return true;
     }
 
-    static scene* createScene();
-
     static ScreenPaintData screen_paint;
 
 protected:
@@ -165,7 +163,6 @@ protected:
     void paintEffectQuickView(EffectQuickView* w) override;
 
 private:
-    explicit scene(xrender::backend* backend);
     QScopedPointer<xrender::backend> m_backend;
 };
 
@@ -308,14 +305,7 @@ private:
     XRenderPicture* m_pictures[int(DecorationPart::Count)];
 };
 
-class KWIN_EXPORT scene_factory : public render::scene_factory
-{
-    Q_OBJECT
-public:
-    ~scene_factory() override;
-
-    render::scene* create() const override;
-};
+KWIN_EXPORT render::scene* create_scene();
 
 }
 }

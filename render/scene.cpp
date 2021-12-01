@@ -1171,6 +1171,4 @@ effect_frame::~effect_frame()
 {
 }
 
-scene_factory::~scene_factory() = default;
-
 }

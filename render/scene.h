@@ -320,24 +320,6 @@ private:
     QVector<window*> stacking_order;
 };
 
-/**
- * Factory class to create a scene. Needs to be implemented by the plugins.
- */
-class KWIN_EXPORT scene_factory : public QObject
-{
-    Q_OBJECT
-public:
-    ~scene_factory() override;
-
-    /**
-     * @returns The created Scene, may be @c nullptr.
-     */
-    virtual scene* create() const = 0;
-
-protected:
-    scene_factory() = default;
-};
-
 enum class window_paint_disable_type {
     none = 0,
 

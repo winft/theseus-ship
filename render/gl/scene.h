@@ -343,12 +343,7 @@ inline render::gl::texture* window_pixmap::texture() const
     return m_texture.data();
 }
 
-class KWIN_EXPORT scene_factory : public render::scene_factory
-{
-    Q_OBJECT
-public:
-    render::scene* create() const override;
-};
+KWIN_EXPORT render::scene* create_scene();
 
 }
 }

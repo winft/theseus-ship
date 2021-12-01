@@ -167,11 +167,11 @@ render::scene* compositor::create_scene(QVector<CompositingType> const& support)
     for (auto type : support) {
         if (type == OpenGLCompositing) {
             qCDebug(KWIN_WL) << "Creating OpenGL scene.";
-            return gl::scene_factory().create();
+            return gl::create_scene();
         }
         if (type == QPainterCompositing) {
             qCDebug(KWIN_WL) << "Creating QPainter scene.";
-            return qpainter::scene_factory().create();
+            return qpainter::create_scene();
         }
     }
     return nullptr;

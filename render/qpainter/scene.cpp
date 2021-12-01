@@ -864,9 +864,7 @@ void deco_renderer::reparent(Toplevel* window)
     Renderer::reparent(window);
 }
 
-scene_factory::~scene_factory() = default;
-
-render::scene* scene_factory::create() const
+render::scene* create_scene()
 {
     auto s = scene::createScene();
     if (s && s->initFailed()) {
@@ -876,4 +874,4 @@ render::scene* scene_factory::create() const
     return s;
 }
 
-} // KWin
+}

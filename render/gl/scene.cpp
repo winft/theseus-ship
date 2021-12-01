@@ -2778,7 +2778,7 @@ void deco_renderer::reparent(Toplevel* window)
     Renderer::reparent(window);
 }
 
-render::scene* scene_factory::create() const
+render::scene* create_scene()
 {
     qCDebug(KWIN_CORE) << "Initializing OpenGL compositing";
 
@@ -2797,4 +2797,4 @@ render::scene* scene_factory::create() const
     return s;
 }
 
-} // namespace
+}
