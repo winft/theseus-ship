@@ -2173,7 +2173,7 @@ QSharedPointer<GLTexture> DecorationShadowTextureCache::getTexture(gl::shadow* s
 {
     Q_ASSERT(shadow->hasDecorationShadow());
     unregister(shadow);
-    const auto& decoShadow = shadow->decorationShadow();
+    auto const decoShadow = shadow->decorationShadow().toStrongRef();
     Q_ASSERT(!decoShadow.isNull());
     auto it = m_cache.find(decoShadow.data());
     if (it != m_cache.end()) {
