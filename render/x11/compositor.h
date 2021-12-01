@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include "overlay_window.h"
 #include "render/compositor.h"
 
 #include <QObject>
@@ -14,6 +15,7 @@
 #include <QTimer>
 
 #include <deque>
+#include <memory>
 
 namespace KWin
 {
@@ -93,6 +95,11 @@ public:
     bool isOverlayWindowVisible() const;
 
     void updateClientCompositeBlocking(Toplevel* window = nullptr);
+
+    /**
+     * @brief The overlay window used by the backend, if any.
+     */
+    x11::overlay_window* overlay_window{nullptr};
 
 protected:
     void start() override;

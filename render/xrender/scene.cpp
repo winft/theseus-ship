@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "platform.h"
 #include "render/effects.h"
+#include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
 #include "screens.h"
 #include "toplevel.h"
@@ -39,11 +40,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffectquickview.h>
 #include <kwinxrenderutils.h>
 
-#include <xcb/xfixes.h>
-
-#include <QDebug>
 #include <QPainter>
 #include <QtMath>
+#include <cassert>
+#include <xcb/xfixes.h>
 
 namespace KWin::render::xrender
 {
@@ -56,7 +56,7 @@ ScreenPaintData scene::screen_paint;
 //****************************************
 // backend
 //****************************************
-backend::backend(render::compositor* /*compositor*/)
+backend::backend(render::compositor* compositor)
     : overlay_window{std::make_unique<render::x11::overlay_window>()}
 {
     if (!Xcb::Extensions::self()->isRenderAvailable()) {
@@ -67,6 +67,10 @@ backend::backend(render::compositor* /*compositor*/)
         setFailed("No XFixes v3+ extension available");
         return;
     }
+
+    auto x11_compositor = dynamic_cast<render::x11::compositor*>(compositor);
+    assert(x11_compositor);
+    x11_compositor->overlay_window = overlay_window.get();
 
     init(true);
 }
@@ -82,6 +86,7 @@ backend::~backend()
     if (m_buffer) {
         xcb_render_free_picture(connection(), m_buffer);
     }
+    overlay_window.reset();
 }
 
 void backend::setBuffer(xcb_render_picture_t buffer)

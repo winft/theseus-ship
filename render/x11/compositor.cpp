@@ -7,7 +7,6 @@
 #include "compositor.h"
 
 #include "compositor_selection_owner.h"
-#include "overlay_window.h"
 
 #include "render/gl/scene.h"
 #include "render/xrender/scene.h"
@@ -57,6 +56,8 @@ compositor::compositor()
     m_releaseSelectionTimer.setInterval(compositor_lost_message_delay);
     connect(
         &m_releaseSelectionTimer, &QTimer::timeout, this, &compositor::releaseCompositorSelection);
+    QObject::connect(
+        this, &compositor::aboutToToggleCompositing, this, [this] { overlay_window = nullptr; });
 
     start();
 }

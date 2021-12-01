@@ -17,6 +17,7 @@
 #include "render/compositor.h"
 #include "render/gl/texture.h"
 #include "render/scene.h"
+#include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
 #include "screens.h"
 #include "xcbutils.h"
@@ -36,6 +37,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <cassert>
 #include <deque>
 #if HAVE_DL_LIBRARY
 #include <dlfcn.h>
@@ -101,6 +103,10 @@ GlxBackend::GlxBackend(Display* display, render::compositor* compositor)
     , m_x11Display(display)
     , compositor{compositor}
 {
+    auto x11_compositor = dynamic_cast<render::x11::compositor*>(compositor);
+    assert(x11_compositor);
+    x11_compositor->overlay_window = overlay_window.get();
+
     // Force initialization of GLX integration in the Qt's xcb backend
     // to make it call XESetWireToEvent callbacks, which is required
     // by Mesa when using DRI2.
