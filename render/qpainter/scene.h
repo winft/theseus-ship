@@ -65,7 +65,7 @@ public:
         return m_backend.data();
     }
 
-    static scene* createScene(QObject* parent);
+    static scene* createScene();
 
 protected:
     void paintBackground(QRegion region) override;
@@ -74,7 +74,7 @@ protected:
     void paintEffectQuickView(EffectQuickView* w) override;
 
 private:
-    explicit scene(qpainter::backend* backend, QObject* parent = nullptr);
+    explicit scene(qpainter::backend* backend);
     QScopedPointer<qpainter::backend> m_backend;
     QScopedPointer<QPainter> m_painter;
 };
@@ -180,10 +180,9 @@ class KWIN_EXPORT scene_factory : public render::scene_factory
 {
     Q_OBJECT
 public:
-    explicit scene_factory(QObject* parent = nullptr);
     ~scene_factory() override;
 
-    render::scene* create(QObject* parent = nullptr) const override;
+    render::scene* create() const override;
 };
 
 inline bool scene::usesOverlayWindow() const

@@ -149,7 +149,7 @@ public:
         return true;
     }
 
-    static scene* createScene(QObject* parent);
+    static scene* createScene();
 
     static ScreenPaintData screen_paint;
 
@@ -165,7 +165,7 @@ protected:
     void paintEffectQuickView(EffectQuickView* w) override;
 
 private:
-    explicit scene(xrender::backend* backend, QObject* parent = nullptr);
+    explicit scene(xrender::backend* backend);
     QScopedPointer<xrender::backend> m_backend;
 };
 
@@ -312,10 +312,9 @@ class KWIN_EXPORT scene_factory : public render::scene_factory
 {
     Q_OBJECT
 public:
-    explicit scene_factory(QObject* parent = nullptr);
     ~scene_factory() override;
 
-    render::scene* create(QObject* parent = nullptr) const override;
+    render::scene* create() const override;
 };
 
 }

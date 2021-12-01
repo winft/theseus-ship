@@ -312,9 +312,8 @@ bool SyncManager::updateFences()
  * scene
  ***********************************************/
 
-scene::scene(render::gl::backend* backend, QObject* parent)
-    : render::scene(parent)
-    , init_ok(true)
+scene::scene(render::gl::backend* backend)
+    : init_ok(true)
     , m_backend(backend)
     , m_syncManager(nullptr)
     , m_currentFence(nullptr)
@@ -466,7 +465,7 @@ void scene::initDebugOutput()
                          message.constData());
 }
 
-scene* scene::createScene(QObject* parent)
+scene* scene::createScene()
 {
     auto backend = kwinApp()->platform->createOpenGLBackend();
     if (!backend) {
@@ -482,7 +481,7 @@ scene* scene::createScene(QObject* parent)
     gl::scene* scene = nullptr;
     // first let's try an OpenGL 2 scene
     if (scene2::supported(backend)) {
-        scene = new scene2(backend, parent);
+        scene = new scene2(backend);
         if (scene->initFailed()) {
             delete scene;
             scene = nullptr;
@@ -997,8 +996,8 @@ bool scene2::supported(render::gl::backend* backend)
     return true;
 }
 
-scene2::scene2(render::gl::backend* backend, QObject* parent)
-    : scene(backend, parent)
+scene2::scene2(render::gl::backend* backend)
+    : scene(backend)
 {
     if (!init_ok) {
         // base ctor already failed
@@ -2779,14 +2778,7 @@ void deco_renderer::reparent(Toplevel* window)
     Renderer::reparent(window);
 }
 
-scene_factory::scene_factory(QObject* parent)
-    : render::scene_factory(parent)
-{
-}
-
-scene_factory::~scene_factory() = default;
-
-render::scene* scene_factory::create(QObject* parent) const
+render::scene* scene_factory::create() const
 {
     qCDebug(KWIN_CORE) << "Initializing OpenGL compositing";
 
@@ -2796,7 +2788,7 @@ render::scene* scene_factory::create(QObject* parent) const
         return nullptr;
     }
     kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PreInit);
-    auto s = scene::createScene(parent);
+    auto s = scene::createScene();
     kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PostInit);
     if (s && s->initFailed()) {
         delete s;

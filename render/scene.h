@@ -108,7 +108,6 @@ class KWIN_EXPORT scene : public QObject
 {
     Q_OBJECT
 public:
-    explicit scene(QObject* parent = nullptr);
     ~scene() override = 0;
 
     // Returns true if the ctor failed to properly initialize.
@@ -333,10 +332,10 @@ public:
     /**
      * @returns The created Scene, may be @c nullptr.
      */
-    virtual scene* create(QObject* parent = nullptr) const = 0;
+    virtual scene* create() const = 0;
 
 protected:
-    explicit scene_factory(QObject* parent);
+    scene_factory() = default;
 };
 
 enum class window_paint_disable_type {

@@ -95,10 +95,7 @@ public:
      */
     bool isActive();
 
-    render::scene* scene() const
-    {
-        return m_scene;
-    }
+    render::scene* scene() const;
 
     static bool compositing();
 
@@ -168,7 +165,7 @@ private:
     qint64 m_lastPaintDurations[2]{0};
     int m_paintPeriods{0};
 
-    render::scene* m_scene;
+    std::unique_ptr<render::scene> m_scene;
 };
 
 }

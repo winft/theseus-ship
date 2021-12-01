@@ -50,7 +50,6 @@ compositor::compositor()
     , m_selectionOwner(nullptr)
     , m_delay(0)
     , m_bufferSwapPending(false)
-    , m_scene(nullptr)
 {
     connect(options, &Options::configChanged, this, &compositor::configChanged);
     connect(options, &Options::animationSpeedChanged, this, &compositor::configChanged);
@@ -112,14 +111,13 @@ bool compositor::setupStart()
             << "Configured compositor not supported by Platform. Falling back to defaults";
     }
 
-    m_scene = create_scene(supportedCompositors);
+    m_scene.reset(create_scene(supportedCompositors));
 
-    if (m_scene == nullptr || m_scene->initFailed()) {
+    if (!m_scene || m_scene->initFailed()) {
         qCCritical(KWIN_CORE) << "Failed to initialize compositing, compositing disabled";
         m_state = State::Off;
 
-        delete m_scene;
-        m_scene = nullptr;
+        m_scene.reset();
 
         if (m_selectionOwner) {
             m_selectionOwner->disown();
@@ -144,7 +142,7 @@ bool compositor::setupStart()
         QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
     }
 
-    connect(m_scene, &scene::resetCompositing, this, &compositor::reinitialize);
+    connect(scene(), &scene::resetCompositing, this, &compositor::reinitialize);
     Q_EMIT sceneCreated();
 
     return true;
@@ -202,8 +200,8 @@ void compositor::startupWithWorkspace()
     setupX11Support();
 
     // Sets also the 'effects' pointer.
-    kwinApp()->platform->createEffectsHandler(this, m_scene);
-    connect(Workspace::self(), &Workspace::deletedRemoved, m_scene, &scene::removeToplevel);
+    kwinApp()->platform->createEffectsHandler(this, scene());
+    connect(Workspace::self(), &Workspace::deletedRemoved, scene(), &scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
     connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
         if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
@@ -276,8 +274,7 @@ void compositor::stop()
         }
     }
 
-    delete m_scene;
-    m_scene = nullptr;
+    m_scene.reset();
     m_bufferSwapPending = false;
     compositeTimer.stop();
     repaints_region = QRegion();
@@ -459,6 +456,11 @@ void compositor::setCompositeTimer()
 bool compositor::isActive()
 {
     return m_state == State::On;
+}
+
+render::scene* compositor::scene() const
+{
+    return m_scene.get();
 }
 
 int compositor::refreshRate() const

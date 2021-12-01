@@ -52,7 +52,7 @@ namespace KWin::render::qpainter
 //****************************************
 // scene
 //****************************************
-scene* scene::createScene(QObject* parent)
+scene* scene::createScene()
 {
     QScopedPointer<qpainter::backend> backend(kwinApp()->platform->createQPainterBackend());
     if (backend.isNull()) {
@@ -61,12 +61,11 @@ scene* scene::createScene(QObject* parent)
     if (backend->isFailed()) {
         return nullptr;
     }
-    return new scene(backend.take(), parent);
+    return new scene(backend.take());
 }
 
-scene::scene(qpainter::backend* backend, QObject* parent)
-    : render::scene(parent)
-    , m_backend(backend)
+scene::scene(qpainter::backend* backend)
+    : m_backend(backend)
     , m_painter(new QPainter())
 {
 }
@@ -865,16 +864,11 @@ void deco_renderer::reparent(Toplevel* window)
     Renderer::reparent(window);
 }
 
-scene_factory::scene_factory(QObject* parent)
-    : render::scene_factory(parent)
-{
-}
-
 scene_factory::~scene_factory() = default;
 
-render::scene* scene_factory::create(QObject* parent) const
+render::scene* scene_factory::create() const
 {
-    auto s = scene::createScene(parent);
+    auto s = scene::createScene();
     if (s && s->initFailed()) {
         delete s;
         s = nullptr;

@@ -92,11 +92,6 @@ namespace KWin::render
 // scene
 //****************************************
 
-scene::scene(QObject* parent)
-    : QObject(parent)
-{
-}
-
 scene::~scene()
 {
     Q_ASSERT(m_windows.isEmpty());
@@ -1176,13 +1171,6 @@ effect_frame::~effect_frame()
 {
 }
 
-scene_factory::scene_factory(QObject* parent)
-    : QObject(parent)
-{
-}
-
-scene_factory::~scene_factory()
-{
-}
+scene_factory::~scene_factory() = default;
 
 }

@@ -214,18 +214,18 @@ void backend::screenGeometryChanged(const QSize& size)
 // scene
 //****************************************
 
-scene* scene::createScene(QObject* parent)
+scene* scene::createScene()
 {
     QScopedPointer<xrender::backend> backend;
     backend.reset(new xrender::backend);
     if (backend->isFailed()) {
         return nullptr;
     }
-    return new scene(backend.take(), parent);
+    return new scene(backend.take());
 }
 
-scene::scene(xrender::backend* backend, QObject* parent)
-    : render::scene(parent)
+scene::scene(xrender::backend* backend)
+    : render::scene()
     , m_backend(backend)
 {
 }
@@ -1526,16 +1526,11 @@ void deco_renderer::reparent(Toplevel* window)
 #undef DOUBLE_TO_FIXED
 #undef FIXED_TO_DOUBLE
 
-scene_factory::scene_factory(QObject* parent)
-    : render::scene_factory(parent)
-{
-}
-
 scene_factory::~scene_factory() = default;
 
-render::scene* scene_factory::create(QObject* parent) const
+render::scene* scene_factory::create() const
 {
-    return scene::createScene(parent);
+    return scene::createScene();
 }
 
 void scene::paintCursor()

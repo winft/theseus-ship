@@ -94,12 +94,12 @@ public:
 
     QVector<QByteArray> openGLPlatformInterfaceExtensions() const override;
 
-    static scene* createScene(QObject* parent);
+    static scene* createScene();
 
     std::unordered_map<uint32_t, window*> windows;
 
 protected:
-    scene(render::gl::backend* backend, QObject* parent = nullptr);
+    explicit scene(render::gl::backend* backend);
     void paintBackground(QRegion region) override;
     void extendPaintRegion(QRegion& region, bool opaqueFullscreen) override;
     QMatrix4x4 transformation(paint_type mask, const ScreenPaintData& data) const;
@@ -130,7 +130,7 @@ class scene2 : public scene
 {
     Q_OBJECT
 public:
-    explicit scene2(render::gl::backend* backend, QObject* parent = nullptr);
+    explicit scene2(render::gl::backend* backend);
     ~scene2() override;
     CompositingType compositingType() const override
     {
@@ -347,10 +347,7 @@ class KWIN_EXPORT scene_factory : public render::scene_factory
 {
     Q_OBJECT
 public:
-    explicit scene_factory(QObject* parent = nullptr);
-    ~scene_factory() override;
-
-    render::scene* create(QObject* parent = nullptr) const override;
+    render::scene* create() const override;
 };
 
 }
