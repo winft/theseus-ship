@@ -1026,9 +1026,9 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
         }
         quads << createQuad(contentsRect, sourceRect);
     } else {
-        for (QRectF const& contentsRect : contentsRegion) {
-            QRectF const sourceRect(contentsRect.topLeft() * textureScale,
-                                    contentsRect.bottomRight() * textureScale);
+        for (auto const& contentsRect : contentsRegion) {
+            auto const sourceRect = QRectF(contentsRect.topLeft() * textureScale,
+                                           contentsRect.bottomRight() * textureScale);
             quads << createQuad(contentsRect, sourceRect);
         }
     }
