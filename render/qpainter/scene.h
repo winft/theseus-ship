@@ -50,7 +50,7 @@ public:
     render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     render::shadow* createShadow(Toplevel* toplevel) override;
     Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl* impl) override;
-    void screenGeometryChanged(const QSize& size) override;
+    void handle_screen_geometry_change(QSize const& size) override;
 
     bool animationsSupported() const override
     {

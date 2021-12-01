@@ -668,14 +668,6 @@ void scene::extendPaintRegion(QRegion& region, bool opaqueFullscreen)
     Q_UNUSED(opaqueFullscreen);
 }
 
-void scene::screenGeometryChanged(const QSize& size)
-{
-    if (!overlayWindow()) {
-        return;
-    }
-    overlayWindow()->resize(size);
-}
-
 bool scene::hasSwapEvent() const
 {
     return false;

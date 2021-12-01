@@ -137,7 +137,7 @@ public:
                   std::chrono::milliseconds presentTime) override;
     render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     render::shadow* createShadow(Toplevel* toplevel) override;
-    void screenGeometryChanged(const QSize& size) override;
+    void handle_screen_geometry_change(QSize const& size) override;
     xcb_render_picture_t xrenderBufferPicture() const override;
     x11::overlay_window* overlayWindow() const override;
     bool usesOverlayWindow() const override;

@@ -191,9 +191,8 @@ render::shadow* scene::createShadow(Toplevel* toplevel)
     return new shadow(toplevel);
 }
 
-void scene::screenGeometryChanged(const QSize& size)
+void scene::handle_screen_geometry_change(QSize const& size)
 {
-    render::scene::screenGeometryChanged(size);
     m_backend->screenGeometryChanged(size);
 }
 

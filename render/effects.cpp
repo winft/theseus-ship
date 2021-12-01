@@ -883,7 +883,7 @@ bool effects_handler_impl::hasKeyboardGrab() const
 
 void effects_handler_impl::desktopResized(const QSize& size)
 {
-    m_scene->screenGeometryChanged(size);
+    m_scene->handle_screen_geometry_change(size);
     Q_EMIT screenGeometryChanged(size);
 }
 

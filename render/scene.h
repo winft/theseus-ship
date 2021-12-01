@@ -175,7 +175,7 @@ public:
      * as it takes care of resizing the overlay window.
      * @param size The new screen geometry size
      */
-    virtual void screenGeometryChanged(const QSize& size);
+    virtual void handle_screen_geometry_change(QSize const& size) = 0;
 
     // there's nothing to paint (adjust time_diff later)
     virtual void idle();

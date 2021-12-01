@@ -889,11 +889,14 @@ bool scene::viewportLimitsMatched(const QSize& size) const
     return true;
 }
 
-void scene::screenGeometryChanged(const QSize& size)
+void scene::handle_screen_geometry_change(QSize const& size)
 {
-    if (!viewportLimitsMatched(size))
+    if (!viewportLimitsMatched(size)) {
         return;
-    render::scene::screenGeometryChanged(size);
+    }
+    if (overlayWindow()) {
+        overlayWindow()->resize(size);
+    }
     glViewport(0, 0, size.width(), size.height());
     m_backend->screenGeometryChanged(size);
     GLRenderTarget::setVirtualScreenSize(size);

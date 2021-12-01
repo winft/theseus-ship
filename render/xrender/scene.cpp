@@ -206,7 +206,7 @@ void backend::present(paint_type mask, const QRegion& damage)
 
 void backend::screenGeometryChanged(const QSize& size)
 {
-    Q_UNUSED(size)
+    overlay_window->resize(size);
     init(false);
 }
 
@@ -884,9 +884,8 @@ render::window_pixmap* window::createWindowPixmap()
     return new window_pixmap(this, format);
 }
 
-void scene::screenGeometryChanged(const QSize& size)
+void scene::handle_screen_geometry_change(QSize const& size)
 {
-    render::scene::screenGeometryChanged(size);
     m_backend->screenGeometryChanged(size);
 }
 
