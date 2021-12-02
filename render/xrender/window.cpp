@@ -6,6 +6,7 @@
 */
 #include "window.h"
 
+#include "backend.h"
 #include "scene.h"
 #include "shadow.h"
 
@@ -583,6 +584,11 @@ render::window_pixmap* window::createWindowPixmap()
 void scene::handle_screen_geometry_change(QSize const& size)
 {
     m_backend->screenGeometryChanged(size);
+}
+
+xcb_render_picture_t scene::xrenderBufferPicture() const
+{
+    return m_backend->buffer();
 }
 
 QRegion window::transformedShape() const

@@ -510,6 +510,7 @@ set(kwin_SRCS
 if (KWIN_BUILD_XRENDER_COMPOSITING)
     set(kwin_SRCS
         ${kwin_SRCS}
+        render/xrender/backend.cpp
         render/xrender/effect_frame.cpp
         render/xrender/scene.cpp
         render/xrender/shadow.cpp
