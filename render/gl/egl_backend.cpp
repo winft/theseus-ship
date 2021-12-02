@@ -260,7 +260,7 @@ bool egl_backend::createContext()
         gles->setVersion(2);
         candidates.push_back(std::move(gles));
     } else {
-        if (options->glCoreProfile() && haveCreateContext) {
+        if (haveCreateContext) {
             if (haveRobustness && haveContextPriority) {
                 auto robustCorePriority = std::make_unique<egl_context_attribute_builder>();
                 robustCorePriority->setVersion(3, 1);

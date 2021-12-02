@@ -81,23 +81,9 @@ void GenericSceneOpenGLTest::initTestCase()
     QCOMPARE(kwinApp()->platform->selectedCompositor(), KWin::OpenGLCompositing);
 }
 
-void GenericSceneOpenGLTest::testRestart_data()
-{
-    QTest::addColumn<bool>("core");
-
-    QTest::newRow("GLCore") << true;
-    QTest::newRow("Legacy") << false;
-}
-
 void GenericSceneOpenGLTest::testRestart()
 {
     // simple restart of the OpenGL compositor without any windows being shown
-
-    // setup opengl compositing options
-    auto compositingGroup = kwinApp()->config()->group("Compositing");
-    QFETCH(bool, core);
-    compositingGroup.writeEntry("GLCore", core);
-    compositingGroup.sync();
 
     QSignalSpy sceneCreatedSpy(render::compositor::self(), &render::compositor::sceneCreated);
     QVERIFY(sceneCreatedSpy.isValid());

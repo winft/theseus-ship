@@ -112,7 +112,6 @@ Options::Options(QObject *parent)
     , m_vBlankTime(Options::defaultVBlankTime())
     , m_glStrictBinding(Options::defaultGlStrictBinding())
     , m_glStrictBindingFollowsDriver(Options::defaultGlStrictBindingFollowsDriver())
-    , m_glCoreProfile(Options::defaultGLCoreProfile())
     , m_glPlatformInterface(Options::defaultGlPlatformInterface())
     , m_windowsBlockCompositing(true)
     , m_animationCurve(AnimationCurve::Linear)
@@ -612,15 +611,6 @@ void Options::setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver)
     Q_EMIT glStrictBindingFollowsDriverChanged();
 }
 
-void Options::setGLCoreProfile(bool value)
-{
-    if (m_glCoreProfile == value) {
-        return;
-    }
-    m_glCoreProfile = value;
-    Q_EMIT glCoreProfileChanged();
-}
-
 void Options::setWindowsBlockCompositing(bool value)
 {
     if (m_windowsBlockCompositing == value) {
@@ -866,7 +856,6 @@ void Options::reloadCompositingSettings(bool force)
     if (!isGlStrictBindingFollowsDriver()) {
         setGlStrictBinding(config.readEntry("GLStrictBinding", Options::defaultGlStrictBinding()));
     }
-    setGLCoreProfile(config.readEntry("GLCore", Options::defaultGLCoreProfile()));
 
     HiddenPreviews previews = Options::defaultHiddenPreviews();
     // 4 - off, 5 - shown, 6 - always, other are old values

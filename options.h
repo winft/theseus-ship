@@ -167,7 +167,6 @@ class KWIN_EXPORT Options : public QObject
      * If @c false glStrictBinding is set from a config value and not updated during scene initialization.
      */
     Q_PROPERTY(bool glStrictBindingFollowsDriver READ isGlStrictBindingFollowsDriver WRITE setGlStrictBindingFollowsDriver NOTIFY glStrictBindingFollowsDriverChanged)
-    Q_PROPERTY(bool glCoreProfile READ glCoreProfile WRITE setGLCoreProfile NOTIFY glCoreProfileChanged)
     Q_PROPERTY(KWin::OpenGLPlatformInterface glPlatformInterface READ glPlatformInterface WRITE setGlPlatformInterface NOTIFY glPlatformInterfaceChanged)
     Q_PROPERTY(bool windowsBlockCompositing READ windowsBlockCompositing WRITE setWindowsBlockCompositing NOTIFY windowsBlockCompositingChanged)
 public:
@@ -533,9 +532,6 @@ public:
     bool isGlStrictBindingFollowsDriver() const {
         return m_glStrictBindingFollowsDriver;
     }
-    bool glCoreProfile() const {
-        return m_glCoreProfile;
-    }
     OpenGLPlatformInterface glPlatformInterface() const {
         return m_glPlatformInterface;
     }
@@ -600,7 +596,6 @@ public:
     void setVBlankTime(qint64 vBlankTime);
     void setGlStrictBinding(bool glStrictBinding);
     void setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver);
-    void setGLCoreProfile(bool glCoreProfile);
     void setGlPlatformInterface(OpenGLPlatformInterface interface);
     void setWindowsBlockCompositing(bool set);
     void setAnimationCurve(AnimationCurve curve);
@@ -693,9 +688,6 @@ public:
     static bool defaultGlStrictBindingFollowsDriver() {
         return true;
     }
-    static bool defaultGLCoreProfile() {
-        return false;
-    }
     static OpenGLPlatformInterface defaultGlPlatformInterface() {
         return kwinApp()->shouldUseWaylandForCompositing() ? EglPlatformInterface : GlxPlatformInterface;
     }
@@ -763,7 +755,6 @@ Q_SIGNALS:
     void vBlankTimeChanged();
     void glStrictBindingChanged();
     void glStrictBindingFollowsDriverChanged();
-    void glCoreProfileChanged();
     void glPlatformInterfaceChanged();
     void windowsBlockCompositingChanged();
     void animationSpeedChanged();
@@ -803,7 +794,6 @@ private:
     qint64 m_vBlankTime;
     bool m_glStrictBinding;
     bool m_glStrictBindingFollowsDriver;
-    bool m_glCoreProfile;
     OpenGLPlatformInterface m_glPlatformInterface;
     bool m_windowsBlockCompositing;
     AnimationCurve m_animationCurve;
