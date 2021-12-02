@@ -29,10 +29,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <unordered_map>
 
-namespace KWin
+namespace KWin::render
 {
 
-namespace render::gl
+class compositor;
+
+namespace gl
 {
 class backend;
 class lanczos_filter;
@@ -147,71 +149,6 @@ private:
     GLuint vao;
 };
 
-class window_pixmap;
-
-class window final : public render::window
-{
-public:
-    enum Leaf { ShadowLeaf = 0, DecorationLeaf, ContentLeaf, PreviousContentLeaf, LeafCount };
-
-    struct LeafNode {
-        LeafNode()
-            : texture(nullptr)
-            , firstVertex(0)
-            , vertexCount(0)
-            , opacity(1.0)
-            , hasAlpha(false)
-            , coordinateType(UnnormalizedCoordinates)
-        {
-        }
-
-        GLTexture* texture;
-        int firstVertex;
-        int vertexCount;
-        float opacity;
-        bool hasAlpha;
-        TextureCoordinateType coordinateType;
-    };
-
-    window(Toplevel* toplevel, gl::scene* scene);
-    ~window() override;
-
-    render::window_pixmap* createWindowPixmap() override;
-    void performPaint(paint_type mask, QRegion region, WindowPaintData data) override;
-
-private:
-    QMatrix4x4 transformation(paint_type mask, const WindowPaintData& data) const;
-    GLTexture* getDecorationTexture() const;
-    QMatrix4x4 modelViewProjectionMatrix(paint_type mask, const WindowPaintData& data) const;
-    QVector4D modulate(float opacity, float brightness) const;
-    void setBlendEnabled(bool enabled);
-    void setupLeafNodes(std::vector<LeafNode>& nodes,
-                        std::vector<WindowQuadList> const& quads,
-                        bool has_previous_content,
-                        WindowPaintData const& data);
-    bool beginRenderWindow(paint_type mask, const QRegion& region, WindowPaintData& data);
-    void endRenderWindow();
-    render::gl::texture* bindTexture();
-
-    scene* m_scene;
-    bool m_hardwareClipping = false;
-    bool m_blendingEnabled = false;
-};
-
-class window_pixmap : public render::window_pixmap
-{
-public:
-    explicit window_pixmap(render::window* window, gl::scene* scene);
-    ~window_pixmap() override;
-    render::gl::texture* texture() const;
-    bool bind();
-    bool isValid() const override;
-
-private:
-    QScopedPointer<render::gl::texture> m_texture;
-    scene* m_scene;
-};
-
 class effect_frame : public render::effect_frame
 {
 public:
@@ -303,11 +240,6 @@ private:
 inline bool scene::hasPendingFlush() const
 {
     return m_backend->hasPendingFlush();
-}
-
-inline render::gl::texture* window_pixmap::texture() const
-{
-    return m_texture.data();
 }
 
 KWIN_EXPORT render::scene* create_scene(render::compositor* compositor);

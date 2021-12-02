@@ -444,9 +444,11 @@ set(kwin_SRCS
     render/gl/lanczos_filter.cpp
     render/gl/scene.cpp
     render/gl/texture.cpp
+    render/gl/window.cpp
     render/scene.cpp
     render/shadow.cpp
     render/thumbnail_item.cpp
+    render/window.cpp
     render/x11/compositor.cpp
     render/x11/compositor_selection_owner.cpp
     render/x11/outline.cpp
@@ -507,6 +509,7 @@ if (KWIN_BUILD_XRENDER_COMPOSITING)
     set(kwin_SRCS
         ${kwin_SRCS}
         render/xrender/scene.cpp
+        render/xrender/window.cpp
     )
 endif()
 
@@ -833,6 +836,7 @@ set(kwin_WAYLAND_SRCS
    render/gl/egl_dmabuf.cpp
    render/qpainter/backend.cpp
    render/qpainter/scene.cpp
+   render/qpainter/window.cpp
    render/backend/wlroots/backend.cpp
    render/backend/wlroots/buffer.cpp
    render/backend/wlroots/egl_backend.cpp

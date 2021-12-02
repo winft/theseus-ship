@@ -9,6 +9,7 @@
 #include "helpers.h"
 
 #include "input/qt_event.h"
+#include "main.h"
 #include "render/effects.h"
 #include "wayland_server.h"
 

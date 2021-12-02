@@ -75,37 +75,6 @@ private:
     QScopedPointer<QPainter> m_painter;
 };
 
-class window : public render::window
-{
-public:
-    window(qpainter::scene* scene, Toplevel* c);
-    ~window() override;
-    void performPaint(paint_type mask, QRegion region, WindowPaintData data) override;
-
-protected:
-    render::window_pixmap* createWindowPixmap() override;
-
-private:
-    void renderShadow(QPainter* painter);
-    void renderWindowDecorations(QPainter* painter);
-    scene* m_scene;
-};
-
-class window_pixmap : public render::window_pixmap
-{
-public:
-    explicit window_pixmap(render::window* window);
-    ~window_pixmap() override;
-    void create() override;
-    bool isValid() const override;
-
-    void updateBuffer() override;
-    const QImage& image();
-
-private:
-    QImage m_image;
-};
-
 class effect_frame : public render::effect_frame
 {
 public:
@@ -177,11 +146,6 @@ KWIN_EXPORT render::scene* create_scene();
 inline QPainter* scene::scenePainter() const
 {
     return m_painter.data();
-}
-
-inline const QImage& window_pixmap::image()
-{
-    return m_image;
 }
 
 }

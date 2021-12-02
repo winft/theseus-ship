@@ -25,16 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
 
-namespace KWin
+namespace KWin::render
 {
 
-namespace Xcb
-{
-class Shm;
-}
-
-namespace render
-{
+class compositor;
 
 namespace x11
 {
@@ -173,47 +167,6 @@ private:
     QScopedPointer<xrender::backend> m_backend;
 };
 
-class window : public render::window
-{
-public:
-    window(Toplevel* c, xrender::scene* scene);
-    ~window() override;
-    void performPaint(paint_type mask, QRegion region, WindowPaintData data) override;
-    QRegion transformedShape() const;
-    void setTransformedShape(const QRegion& shape);
-    static void cleanup();
-
-protected:
-    render::window_pixmap* createWindowPixmap() override;
-
-private:
-    QRect mapToScreen(paint_type mask, const WindowPaintData& data, const QRect& rect) const;
-    QPoint mapToScreen(paint_type mask, const WindowPaintData& data, const QPoint& point) const;
-    QRect bufferToWindowRect(const QRect& rect) const;
-    QRegion bufferToWindowRegion(const QRegion& region) const;
-    void prepareTempPixmap();
-    void setPictureFilter(xcb_render_picture_t pic, image_filter_type filter);
-    xrender::scene* m_scene;
-    xcb_render_pictformat_t format;
-    QRegion transformed_shape;
-    static QRect temp_visibleRect;
-    static XRenderPicture* s_tempPicture;
-    static XRenderPicture* s_fadeAlphaPicture;
-};
-
-class window_pixmap : public render::window_pixmap
-{
-public:
-    explicit window_pixmap(render::window* window, xcb_render_pictformat_t format);
-    ~window_pixmap() override;
-    xcb_render_picture_t picture() const;
-    void create() override;
-
-private:
-    xcb_render_picture_t m_picture;
-    xcb_render_pictformat_t m_format;
-};
-
 class effect_frame : public render::effect_frame
 {
 public:
@@ -244,21 +197,6 @@ private:
 inline xcb_render_picture_t scene::xrenderBufferPicture() const
 {
     return m_backend->buffer();
-}
-
-inline QRegion window::transformedShape() const
-{
-    return transformed_shape;
-}
-
-inline void window::setTransformedShape(const QRegion& shape)
-{
-    transformed_shape = shape;
-}
-
-inline xcb_render_picture_t window_pixmap::picture() const
-{
-    return m_picture;
 }
 
 /**
@@ -314,6 +252,5 @@ private:
 
 KWIN_EXPORT render::scene* create_scene(render::compositor* compositor);
 
-}
 }
 }

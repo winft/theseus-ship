@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/output.h"
 #include <config-kwin.h>
+#include "main.h"
 #include "render/compositor.h"
 #include "render/effects.h"
 #include <KCoreAddons>

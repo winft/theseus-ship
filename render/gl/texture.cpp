@@ -19,8 +19,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "texture.h"
+
 #include "backend.h"
-#include "scene.h"
+#include "window.h"
 
 namespace KWin::render::gl
 {

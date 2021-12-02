@@ -8,6 +8,7 @@
 #include "deco.h"
 #include "render/effects.h"
 #include "render/shadow.h"
+#include "render/window.h"
 
 namespace KWin::win
 {

@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effects.h"
 #include "screenedge.h"
 #include "tabbox/tabbox.h"
+#include "xcbutils.h"
 
 #include <KKeyServer>
 

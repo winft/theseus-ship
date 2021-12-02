@@ -27,8 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "platform.h"
 #include "render/compositor.h"
-#include "render/scene.h"
+#include "render/window.h"
+#include "toplevel.h"
 #include "wayland_server.h"
+
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/surface.h>

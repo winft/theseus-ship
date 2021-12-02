@@ -16,6 +16,7 @@
 #include "render/effects.h"
 #include "render/scene.h"
 #include "render/shadow.h"
+#include "toplevel.h"
 #include "utils.h"
 #include "workspace.h"
 #include "xcbutils.h"

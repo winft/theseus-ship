@@ -20,9 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lanczos_filter.h"
 
+#include "window.h"
+
 #include "options.h"
 #include "render/effects.h"
 #include "screens.h"
+#include "toplevel.h"
 #include "workspace.h"
 
 #include <kwinglplatform.h>
@@ -38,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::gl
 {
 
-lanczos_filter::lanczos_filter(scene* parent)
+lanczos_filter::lanczos_filter(render::scene* parent)
     : QObject(parent)
     , m_offscreenTex(nullptr)
     , m_offscreenTarget(nullptr)
