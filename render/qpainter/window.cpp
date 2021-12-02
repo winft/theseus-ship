@@ -6,6 +6,7 @@
 */
 #include "window.h"
 
+#include "deco_renderer.h"
 #include "scene.h"
 #include "shadow.h"
 

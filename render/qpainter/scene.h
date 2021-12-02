@@ -23,8 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "render/scene.h"
 
-#include "decorations/decorationrenderer.h"
-
 namespace KWin::render
 {
 
@@ -77,24 +75,6 @@ protected:
 private:
     QScopedPointer<qpainter::backend> m_backend;
     QScopedPointer<QPainter> m_painter;
-};
-
-class deco_renderer : public Decoration::Renderer
-{
-    Q_OBJECT
-public:
-    enum class DecorationPart : int { Left, Top, Right, Bottom, Count };
-    explicit deco_renderer(Decoration::DecoratedClientImpl* client);
-    ~deco_renderer() override;
-
-    void render() override;
-    void reparent(Toplevel* window) override;
-
-    QImage image(DecorationPart part) const;
-
-private:
-    void resizeImages();
-    QImage m_images[int(DecorationPart::Count)];
 };
 
 KWIN_EXPORT render::scene* create_scene();

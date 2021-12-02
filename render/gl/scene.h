@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "backend.h"
 
-#include "decorations/decorationrenderer.h"
 #include "kwinglutils.h"
 #include "render/scene.h"
 #include "render/shadow.h"
@@ -147,31 +146,6 @@ private:
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_screenProjectionMatrix;
     GLuint vao;
-};
-
-class deco_renderer : public Decoration::Renderer
-{
-    Q_OBJECT
-public:
-    enum class DecorationPart : int { Left, Top, Right, Bottom, Count };
-    explicit deco_renderer(Decoration::DecoratedClientImpl* client);
-    ~deco_renderer() override;
-
-    void render() override;
-    void reparent(Toplevel* window) override;
-
-    GLTexture* texture()
-    {
-        return m_texture.data();
-    }
-    GLTexture* texture() const
-    {
-        return m_texture.data();
-    }
-
-private:
-    void resizeTexture();
-    QScopedPointer<GLTexture> m_texture;
 };
 
 inline bool scene::hasPendingFlush() const
