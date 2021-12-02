@@ -44,6 +44,7 @@ class KWIN_EXPORT scene : public render::scene
 {
     Q_OBJECT
 public:
+    explicit scene(render::gl::backend* backend);
     ~scene() override;
     bool initFailed() const override;
     bool hasPendingFlush() const override;
@@ -59,13 +60,15 @@ public:
     render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     render::shadow* createShadow(Toplevel* toplevel) override;
     void handle_screen_geometry_change(QSize const& size) override;
+    CompositingType compositingType() const override;
     bool hasSwapEvent() const override;
     bool makeOpenGLContextCurrent() override;
     void doneOpenGLContextCurrent() override;
     bool supportsSurfacelessContext() const override;
     Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl* impl) override;
     void triggerFence() override;
-    virtual QMatrix4x4 projectionMatrix() const = 0;
+    QMatrix4x4 projectionMatrix() const;
+    QMatrix4x4 screenProjectionMatrix() const override;
     bool animationsSupported() const override;
 
     void insertWait();
@@ -92,10 +95,20 @@ public:
 
     QVector<QByteArray> openGLPlatformInterfaceExtensions() const override;
 
+    static bool supported(render::gl::backend* backend);
+
     std::unordered_map<uint32_t, window*> windows;
 
 protected:
-    explicit scene(render::gl::backend* backend);
+    void paintSimpleScreen(paint_type mask, QRegion region) override;
+    void paintGenericScreen(paint_type mask, ScreenPaintData data) override;
+    render::window* createWindow(Toplevel* t) override;
+    void finalDrawWindow(effects_window_impl* w,
+                         paint_type mask,
+                         QRegion region,
+                         WindowPaintData& data) override;
+    void paintCursor() override;
+
     void paintBackground(QRegion region) override;
     void extendPaintRegion(QRegion& region, bool opaqueFullscreen) override;
     QMatrix4x4 transformation(paint_type mask, const ScreenPaintData& data) const;
@@ -107,63 +120,26 @@ protected:
 
     void handleGraphicsReset(GLenum status);
 
-    virtual void doPaintBackground(const QVector<float>& vertices) = 0;
-    virtual void updateProjectionMatrix() = 0;
+    void doPaintBackground(const QVector<float>& vertices);
+    void updateProjectionMatrix();
 
-    bool init_ok;
+    bool init_ok{true};
 
 private:
     bool viewportLimitsMatched(const QSize& size) const;
     std::deque<Toplevel*> get_leads(std::deque<Toplevel*> const& windows);
 
-    render::gl::backend* m_backend;
-    SyncManager* m_syncManager;
-    SyncObject* m_currentFence;
-    bool m_debug;
-};
-
-class scene2 : public scene
-{
-    Q_OBJECT
-public:
-    explicit scene2(render::gl::backend* backend);
-    ~scene2() override;
-    CompositingType compositingType() const override
-    {
-        return OpenGLCompositing;
-    }
-
-    static bool supported(render::gl::backend* backend);
-
-    QMatrix4x4 projectionMatrix() const override
-    {
-        return m_projectionMatrix;
-    }
-    QMatrix4x4 screenProjectionMatrix() const override
-    {
-        return m_screenProjectionMatrix;
-    }
-
-protected:
-    void paintSimpleScreen(paint_type mask, QRegion region) override;
-    void paintGenericScreen(paint_type mask, ScreenPaintData data) override;
-    void doPaintBackground(const QVector<float>& vertices) override;
-    render::window* createWindow(Toplevel* t) override;
-    void finalDrawWindow(effects_window_impl* w,
-                         paint_type mask,
-                         QRegion region,
-                         WindowPaintData& data) override;
-    void updateProjectionMatrix() override;
-    void paintCursor() override;
-
-private:
     void performPaintWindow(effects_window_impl* w,
                             paint_type mask,
                             QRegion region,
                             WindowPaintData& data);
     QMatrix4x4 createProjectionMatrix() const;
 
-private:
+    render::gl::backend* m_backend;
+    SyncManager* m_syncManager{nullptr};
+    SyncObject* m_currentFence{nullptr};
+    bool m_debug{false};
+
     lanczos_filter* lanczos{nullptr};
     QScopedPointer<GLTexture> m_cursorTexture;
     QMatrix4x4 m_projectionMatrix;
