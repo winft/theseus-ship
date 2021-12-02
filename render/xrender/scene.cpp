@@ -56,7 +56,7 @@ ScreenPaintData scene::screen_paint;
 //****************************************
 // backend
 //****************************************
-backend::backend()
+backend::backend(render::compositor* /*compositor*/)
     : overlay_window{std::make_unique<render::x11::overlay_window>()}
 {
     if (!Xcb::Extensions::self()->isRenderAvailable()) {
@@ -1516,10 +1516,10 @@ void deco_renderer::reparent(Toplevel* window)
 #undef DOUBLE_TO_FIXED
 #undef FIXED_TO_DOUBLE
 
-render::scene* create_scene()
+render::scene* create_scene(render::compositor* compositor)
 {
     QScopedPointer<xrender::backend> backend;
-    backend.reset(new xrender::backend);
+    backend.reset(new xrender::backend(compositor));
     if (backend->isFailed()) {
         return nullptr;
     }

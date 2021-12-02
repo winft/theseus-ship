@@ -15,7 +15,12 @@
 #include <memory>
 #include <xcb/glx.h>
 
-namespace KWin::render::backend::x11
+namespace KWin::render
+{
+
+class compositor;
+
+namespace backend::x11
 {
 
 // GLX_MESA_swap_interval
@@ -51,7 +56,7 @@ private:
 class GlxBackend : public gl::backend
 {
 public:
-    GlxBackend(Display* display);
+    GlxBackend(Display* display, render::compositor* compositor);
     ~GlxBackend() override;
     void screenGeometryChanged(const QSize& size) override;
     gl::texture_private* createBackendTexture(gl::texture* texture) override;
@@ -100,6 +105,8 @@ private:
     bool m_haveEXTSwapControl = false;
     bool m_needsCompositeTimerStart = false;
     Display* m_x11Display;
+    render::compositor* compositor;
+
     friend class GlxTexture;
 };
 
@@ -127,5 +134,7 @@ private:
     GLXPixmap m_glxpixmap; // the glx pixmap the texture is bound to
 };
 
-} // namespace
+}
+}
+
 #endif // KWIN_GLX_BACKEND_H

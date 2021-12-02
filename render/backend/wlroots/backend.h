@@ -36,6 +36,7 @@ class KWIN_EXPORT backend : public Platform
 public:
     base::platform<base::backend::wlroots>& base;
     egl_backend* egl{nullptr};
+    render::compositor* compositor{nullptr};
 
     QVector<output*> all_outputs;
     QVector<output*> enabled_outputs;
@@ -48,7 +49,7 @@ public:
     explicit backend(base::platform<base::backend::wlroots>& base);
     ~backend() override;
 
-    gl::backend* createOpenGLBackend() override;
+    gl::backend* createOpenGLBackend(render::compositor* compositor) override;
     void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
 
     void init();

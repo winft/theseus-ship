@@ -2738,9 +2738,9 @@ void deco_renderer::reparent(Toplevel* window)
     Renderer::reparent(window);
 }
 
-backend* create_backend()
+backend* create_backend(render::compositor* compositor)
 {
-    auto backend = kwinApp()->platform->createOpenGLBackend();
+    auto backend = kwinApp()->platform->createOpenGLBackend(compositor);
     if (!backend) {
         return nullptr;
     }
@@ -2754,9 +2754,9 @@ backend* create_backend()
     return backend;
 }
 
-render::scene* create_scene_impl()
+render::scene* create_scene_impl(render::compositor* compositor)
 {
-    auto backend = create_backend();
+    auto backend = create_backend(compositor);
     if (!backend) {
         return nullptr;
     }
@@ -2788,7 +2788,7 @@ render::scene* create_scene_impl()
     return scene;
 }
 
-render::scene* create_scene()
+render::scene* create_scene(render::compositor* compositor)
 {
     qCDebug(KWIN_CORE) << "Initializing OpenGL compositing";
 
@@ -2799,7 +2799,7 @@ render::scene* create_scene()
     }
 
     kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PreInit);
-    auto scene = create_scene_impl();
+    auto scene = create_scene_impl(compositor);
     kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PostInit);
 
     return scene;

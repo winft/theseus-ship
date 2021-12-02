@@ -43,7 +43,7 @@ namespace render::xrender
 class backend
 {
 public:
-    backend();
+    backend(render::compositor* compositor);
     ~backend();
 
     void present(paint_type mask, const QRegion& damage);
@@ -125,8 +125,9 @@ class scene : public render::scene
 {
     Q_OBJECT
 public:
-    explicit scene(xrender::backend* backend);
+    scene(xrender::backend* backend);
     ~scene() override;
+
     bool initFailed() const override;
     CompositingType compositingType() const override
     {
@@ -305,7 +306,7 @@ private:
     XRenderPicture* m_pictures[int(DecorationPart::Count)];
 };
 
-KWIN_EXPORT render::scene* create_scene();
+KWIN_EXPORT render::scene* create_scene(render::compositor* compositor);
 
 }
 }

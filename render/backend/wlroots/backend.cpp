@@ -150,8 +150,9 @@ clockid_t backend::clockId() const
     return wlr_backend_get_presentation_clock(base.backend.backend);
 }
 
-gl::backend* backend::createOpenGLBackend()
+gl::backend* backend::createOpenGLBackend(render::compositor* compositor)
 {
+    this->compositor = compositor;
     egl = new egl_backend(this, base::backend::wlroots_get_headless_backend(base.backend.backend));
     return egl;
 }
@@ -267,10 +268,10 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
     QObject::connect(
         lease, &Wrapland::Server::drm_lease_v1::resourceDestroyed, this, [this, wlr_lease] {
             wlr_drm_lease_terminate(wlr_lease);
-            static_cast<render::wayland::compositor*>(compositor::self())->unlock();
+            static_cast<render::wayland::compositor*>(compositor)->unlock();
         });
 
-    static_cast<render::wayland::compositor*>(compositor::self())->lock();
+    static_cast<render::wayland::compositor*>(compositor)->lock();
     lease->grant(wlr_lease->fd);
     qCDebug(KWIN_WL) << "DRM resources have been leased to client";
 #endif

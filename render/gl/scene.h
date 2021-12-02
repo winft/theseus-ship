@@ -341,7 +341,7 @@ inline render::gl::texture* window_pixmap::texture() const
     return m_texture.data();
 }
 
-KWIN_EXPORT render::scene* create_scene();
+KWIN_EXPORT render::scene* create_scene(render::compositor* compositor);
 
 }
 }

@@ -90,13 +90,13 @@ QSize X11StandalonePlatform::screenSize() const
     return QSize(screen->width_in_pixels, screen->height_in_pixels);
 }
 
-gl::backend* X11StandalonePlatform::createOpenGLBackend()
+gl::backend* X11StandalonePlatform::createOpenGLBackend(render::compositor* compositor)
 {
     switch (options->glPlatformInterface()) {
 #if HAVE_EPOXY_GLX
     case GlxPlatformInterface:
         if (hasGlx()) {
-            return new GlxBackend(m_x11Display);
+            return new GlxBackend(m_x11Display, compositor);
         } else {
             qCWarning(KWIN_X11STANDALONE) << "Glx not available, trying EGL instead.";
             // no break, needs fall-through

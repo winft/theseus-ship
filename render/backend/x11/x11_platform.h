@@ -40,7 +40,7 @@ public:
 
     void init();
 
-    gl::backend* createOpenGLBackend() override;
+    gl::backend* createOpenGLBackend(render::compositor* compositor) override;
     Edge* createScreenEdge(ScreenEdges* parent) override;
     bool requiresCompositing() const override;
     bool compositingPossible() const override;

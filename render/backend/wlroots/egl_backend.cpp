@@ -321,7 +321,7 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
     auto& out = get_output(output);
     renderFramebufferToSurface(out);
 
-    auto compositor = static_cast<wayland::compositor*>(render::compositor::self());
+    auto compositor = static_cast<wayland::compositor*>(back->compositor);
     auto render_output = compositor->outputs.at(out.out).get();
     if (GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
         render_output->last_timer_queries.emplace_back();

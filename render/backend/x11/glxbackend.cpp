@@ -90,7 +90,7 @@ bool SwapEventFilter::event(xcb_generic_event_t* event)
 
 // -----------------------------------------------------------------------
 
-GlxBackend::GlxBackend(Display* display)
+GlxBackend::GlxBackend(Display* display, render::compositor* compositor)
     : gl::backend()
     , m_overlayWindow(new render::x11::overlay_window)
     , window(None)
@@ -99,6 +99,7 @@ GlxBackend::GlxBackend(Display* display)
     , ctx(nullptr)
     , m_bufferAge(0)
     , m_x11Display(display)
+    , compositor{compositor}
 {
     // Force initialization of GLX integration in the Qt's xcb backend
     // to make it call XESetWireToEvent callbacks, which is required
@@ -717,7 +718,7 @@ void GlxBackend::present()
     if (canSwapBuffers) {
         if (supportsSwapEvents()) {
             m_needsCompositeTimerStart = false;
-            render::compositor::self()->aboutToSwapBuffers();
+            compositor->aboutToSwapBuffers();
         }
 
         glXSwapBuffers(display(), glxWindow);

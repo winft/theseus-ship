@@ -53,7 +53,7 @@ Platform::~Platform()
     }
 }
 
-render::gl::backend *Platform::createOpenGLBackend()
+render::gl::backend *Platform::createOpenGLBackend(render::compositor* /*compositor*/)
 {
     return nullptr;
 }
