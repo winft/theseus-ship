@@ -149,31 +149,6 @@ private:
     GLuint vao;
 };
 
-/**
- * @short OpenGL implementation of Shadow.
- *
- * This class extends Shadow by the Elements required for OpenGL rendering.
- * @author Martin Gräßlin <mgraesslin@kde.org>
- */
-class shadow : public render::shadow
-{
-public:
-    explicit shadow(Toplevel* toplevel);
-    ~shadow() override;
-
-    GLTexture* shadowTexture()
-    {
-        return m_texture.data();
-    }
-
-protected:
-    void buildQuads() override;
-    bool prepareBackend() override;
-
-private:
-    QSharedPointer<GLTexture> m_texture;
-};
-
 class deco_renderer : public Decoration::Renderer
 {
     Q_OBJECT

@@ -7,6 +7,7 @@
 #include "window.h"
 
 #include "scene.h"
+#include "shadow.h"
 
 #include "win/geo.h"
 #include "win/x11/window.h"

@@ -9,6 +9,7 @@
 #include "window.h"
 
 #include "scene.h"
+#include "shadow.h"
 #include "texture.h"
 
 #include "win/geo.h"

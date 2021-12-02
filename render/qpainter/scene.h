@@ -22,11 +22,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "backend.h"
 
 #include "render/scene.h"
-#include "render/shadow.h"
 
 #include "decorations/decorationrenderer.h"
 
-namespace KWin::render::qpainter
+namespace KWin::render
+{
+
+class shadow;
+
+namespace qpainter
 {
 
 class KWIN_EXPORT scene : public render::scene
@@ -75,25 +79,6 @@ private:
     QScopedPointer<QPainter> m_painter;
 };
 
-class shadow : public render::shadow
-{
-public:
-    shadow(Toplevel* toplevel);
-    ~shadow() override;
-
-    QImage& shadowTexture()
-    {
-        return m_texture;
-    }
-
-protected:
-    void buildQuads() override;
-    bool prepareBackend() override;
-
-private:
-    QImage m_texture;
-};
-
 class deco_renderer : public Decoration::Renderer
 {
     Q_OBJECT
@@ -119,4 +104,5 @@ inline QPainter* scene::scenePainter() const
     return m_painter.data();
 }
 
+}
 }

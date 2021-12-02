@@ -444,6 +444,7 @@ set(kwin_SRCS
     render/gl/egl_context_attribute_builder.cpp
     render/gl/lanczos_filter.cpp
     render/gl/scene.cpp
+    render/gl/shadow.cpp
     render/gl/texture.cpp
     render/gl/window.cpp
     render/scene.cpp
@@ -511,6 +512,7 @@ if (KWIN_BUILD_XRENDER_COMPOSITING)
         ${kwin_SRCS}
         render/xrender/effect_frame.cpp
         render/xrender/scene.cpp
+        render/xrender/shadow.cpp
         render/xrender/window.cpp
     )
 endif()
@@ -839,6 +841,7 @@ set(kwin_WAYLAND_SRCS
    render/qpainter/backend.cpp
    render/qpainter/effect_frame.cpp
    render/qpainter/scene.cpp
+   render/qpainter/shadow.cpp
    render/qpainter/window.cpp
    render/backend/wlroots/backend.cpp
    render/backend/wlroots/buffer.cpp
