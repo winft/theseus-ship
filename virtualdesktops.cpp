@@ -60,13 +60,13 @@ void VirtualDesktopManager::setVirtualDesktopManagement(Wrapland::Server::Plasma
     m_virtualDesktopManagement = management;
 
     auto createPlasmaVirtualDesktop = [this](VirtualDesktop *desktop) {
-        auto pvd = m_virtualDesktopManagement->createDesktop(desktop->id(), desktop->x11DesktopNumber() - 1);
-        pvd->setName(desktop->name());
+        auto pvd = m_virtualDesktopManagement->createDesktop(desktop->id().toStdString(), desktop->x11DesktopNumber() - 1);
+        pvd->setName(desktop->name().toStdString());
         pvd->sendDone();
 
         connect(desktop, &VirtualDesktop::nameChanged, pvd,
             [desktop, pvd] {
-                pvd->setName(desktop->name());
+                pvd->setName(desktop->name().toStdString());
                 pvd->sendDone();
             }
         );
@@ -89,23 +89,23 @@ void VirtualDesktopManager::setVirtualDesktopManagement(Wrapland::Server::Plasma
     //handle removed: from VirtualDesktopManager to the wayland interface
     connect(this, &VirtualDesktopManager::desktopRemoved, m_virtualDesktopManagement,
         [this](VirtualDesktop *desktop) {
-            m_virtualDesktopManagement->removeDesktop(desktop->id());
+            m_virtualDesktopManagement->removeDesktop(desktop->id().toStdString());
         }
     );
 
     //create a new desktop when the client asks to
     connect (m_virtualDesktopManagement, &PlasmaVirtualDesktopManager::desktopCreateRequested, this,
-        [this](const QString &name, quint32 position) {
-            createVirtualDesktop(position, name);
+        [this](auto const& name, quint32 position) {
+            createVirtualDesktop(position, QString::fromStdString(name));
         }
     );
 
     //remove when the client asks to
     connect (m_virtualDesktopManagement, &PlasmaVirtualDesktopManager::desktopRemoveRequested, this,
-        [this](const QString &id) {
+        [this](auto const& id) {
             //here there can be some nice kauthorized check?
             //remove only from VirtualDesktopManager, the other connections will remove it from m_virtualDesktopManagement as well
-            removeVirtualDesktop(id.toUtf8());
+            removeVirtualDesktop(id.c_str());
         }
     );
 
@@ -116,8 +116,8 @@ void VirtualDesktopManager::setVirtualDesktopManagement(Wrapland::Server::Plasma
 
     connect(this, &VirtualDesktopManager::currentChanged, m_virtualDesktopManagement,
         [this]() {
-            for (auto *deskInt : m_virtualDesktopManagement->desktops()) {
-                if (deskInt->id() == currentDesktop()->id()) {
+            for (auto deskInt : m_virtualDesktopManagement->desktops()) {
+                if (deskInt->id() == currentDesktop()->id().toStdString()) {
                     deskInt->setActive(true);
                 } else {
                     deskInt->setActive(false);

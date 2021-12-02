@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPair>
 #include <QDateTime>
 
+#include <KConfigWatcher>
+
 class QTimer;
 
 namespace KWin
@@ -95,18 +97,6 @@ public:
     Manager(QObject *parent);
     void init();
 
-    /**
-     * Get current configuration
-     * @see changeConfiguration
-     * @since 5.12
-     */
-    QHash<QString, QVariant> info() const;
-    /**
-     * Change configuration
-     * @see info
-     * @since 5.12
-     */
-    bool changeConfiguration(QHash<QString, QVariant> data);
     void autoLocationUpdate(double latitude, double longitude);
 
     /**
@@ -200,15 +190,13 @@ public:
     qint64 scheduledTransitionDuration() const;
 
     // for auto tests
-    void reparseConfigAndReset();
+    void reconfigure();
 
 public Q_SLOTS:
     void resetSlowUpdateStartTimer();
     void quickAdjust();
 
 Q_SIGNALS:
-    void configChange(QHash<QString, QVariant> data);
-
     /**
      * Emitted whenever the night color manager is blocked or unblocked.
      */
@@ -320,6 +308,8 @@ private:
 
     int m_failedCommitAttempts = 0;
     int m_inhibitReferenceCount = 0;
+
+    KConfigWatcher::Ptr m_configWatcher;
 
     // The Workspace class needs to call initShortcuts during initialization.
     friend class KWin::Workspace;

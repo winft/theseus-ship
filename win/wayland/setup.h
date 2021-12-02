@@ -170,7 +170,7 @@ void setup_plasma_management(Win* win)
         });
 
     for (auto const vd : win->desktops()) {
-        plasma_win->addPlasmaVirtualDesktop(vd->id());
+        plasma_win->addPlasmaVirtualDesktop(vd->id().toStdString());
     }
 
     // Only for the legacy mechanism.

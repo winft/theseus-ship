@@ -179,10 +179,11 @@ void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
             management->setOnAllDesktops(false);
             auto currentDesktops = management->plasmaVirtualDesktops();
             for (auto desktop : desktops) {
-                if (!currentDesktops.contains(desktop->id())) {
-                    management->addPlasmaVirtualDesktop(desktop->id());
+                auto id = desktop->id().toStdString();
+                if (!contains(currentDesktops, id)) {
+                    management->addPlasmaVirtualDesktop(id);
                 } else {
-                    currentDesktops.removeOne(desktop->id());
+                    remove_all(currentDesktops, id);
                 }
             }
             for (auto desktop : currentDesktops) {
