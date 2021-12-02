@@ -88,10 +88,7 @@ private:
     int visualDepth(xcb_visualid_t visual) const;
     FBConfigInfo* infoForVisual(xcb_visualid_t visual);
 
-    /**
-     * @brief The OverlayWindow used by this Backend.
-     */
-    render::x11::overlay_window* m_overlayWindow;
+    std::unique_ptr<render::x11::overlay_window> overlay_window;
     Window window;
     GLXFBConfig fbconfig;
     GLXWindow glxWindow;

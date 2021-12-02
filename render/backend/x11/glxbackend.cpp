@@ -92,7 +92,7 @@ bool SwapEventFilter::event(xcb_generic_event_t* event)
 
 GlxBackend::GlxBackend(Display* display, render::compositor* compositor)
     : gl::backend()
-    , m_overlayWindow(new render::x11::overlay_window)
+    , overlay_window{std::make_unique<render::x11::overlay_window>()}
     , window(None)
     , fbconfig(nullptr)
     , glxWindow(None)
@@ -110,7 +110,7 @@ GlxBackend::GlxBackend(Display* display, render::compositor* compositor)
 GlxBackend::~GlxBackend()
 {
     if (isFailed()) {
-        m_overlayWindow->destroy();
+        overlay_window->destroy();
     }
     // TODO: cleanup in error case
     // do cleanup after initBuffer()
@@ -130,8 +130,7 @@ GlxBackend::~GlxBackend()
     qDeleteAll(m_fbconfigHash);
     m_fbconfigHash.clear();
 
-    overlayWindow()->destroy();
-    delete m_overlayWindow;
+    overlay_window->destroy();
 }
 
 typedef void (*glXFuncPtr)();
@@ -326,7 +325,7 @@ bool GlxBackend::initBuffer()
     if (!initFbConfig())
         return false;
 
-    if (overlayWindow()->create()) {
+    if (overlay_window->create()) {
         xcb_connection_t* const c = connection();
 
         // Try to create double-buffered window in the overlay
@@ -348,7 +347,7 @@ bool GlxBackend::initBuffer()
         xcb_create_window(c,
                           visualDepth(visual),
                           window,
-                          overlayWindow()->window(),
+                          overlay_window->window(),
                           0,
                           0,
                           size.width(),
@@ -360,7 +359,7 @@ bool GlxBackend::initBuffer()
                           &colormap);
 
         glxWindow = glXCreateWindow(display(), fbconfig, window, nullptr);
-        overlayWindow()->setup(window);
+        overlay_window->setup(window);
     } else {
         qCCritical(KWIN_X11STANDALONE) << "Failed to create overlay window";
         return false;
@@ -748,11 +747,11 @@ void GlxBackend::present()
 
 void GlxBackend::screenGeometryChanged(const QSize& size)
 {
-    overlayWindow()->resize(size);
+    overlay_window->resize(size);
     doneCurrent();
 
     XMoveResizeWindow(display(), window, 0, 0, size.width(), size.height());
-    overlayWindow()->setup(window);
+    overlay_window->setup(window);
     Xcb::sync();
 
     makeCurrent();
@@ -801,8 +800,10 @@ void GlxBackend::endRenderingFrame(const QRegion& renderedRegion, const QRegion&
     setLastDamage(renderedRegion);
     present();
 
-    if (overlayWindow()->window()) // show the window only after the first pass,
-        overlayWindow()->show();   // since that pass may take long
+    // Show the window only after the first pass, since that pass may take long.
+    if (overlay_window->window()) {
+        overlay_window->show();
+    }
 
     // Save the damaged region to history
     if (supportsBufferAge())
@@ -826,7 +827,7 @@ void GlxBackend::doneCurrent()
 
 render::x11::overlay_window* GlxBackend::overlayWindow() const
 {
-    return m_overlayWindow;
+    return overlay_window.get();
 }
 
 bool GlxBackend::usesOverlayWindow() const
