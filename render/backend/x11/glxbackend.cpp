@@ -831,16 +831,6 @@ void GlxBackend::doneCurrent()
     glXMakeCurrent(display(), None, nullptr);
 }
 
-render::x11::overlay_window* GlxBackend::overlayWindow() const
-{
-    return overlay_window.get();
-}
-
-bool GlxBackend::usesOverlayWindow() const
-{
-    return true;
-}
-
 bool GlxBackend::supportsSwapEvents() const
 {
     return m_swapEventFilter != nullptr;

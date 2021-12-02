@@ -18,6 +18,11 @@
 namespace KWin::render
 {
 
+namespace x11
+{
+class overlay_window;
+}
+
 class compositor;
 
 namespace backend::x11
@@ -64,8 +69,6 @@ public:
     void endRenderingFrame(const QRegion& damage, const QRegion& damagedRegion) override;
     bool makeCurrent() override;
     void doneCurrent() override;
-    render::x11::overlay_window* overlayWindow() const override;
-    bool usesOverlayWindow() const override;
     bool hasSwapEvent() const override;
     void init() override;
 

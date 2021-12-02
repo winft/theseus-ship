@@ -80,11 +80,6 @@ QRegion backend::accumulatedDamageHistory(int bufferAge) const
     return region;
 }
 
-x11::overlay_window* backend::overlayWindow() const
-{
-    return nullptr;
-}
-
 QRegion backend::prepareRenderingForScreen(base::output* output)
 {
     // fallback to repaint complete screen

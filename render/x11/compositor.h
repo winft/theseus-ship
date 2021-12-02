@@ -89,11 +89,6 @@ public:
      */
     bool checkForOverlayWindow(WId w) const;
 
-    /**
-     * @returns Whether the Scene's Overlay X Window is visible.
-     */
-    bool isOverlayWindowVisible() const;
-
     void updateClientCompositeBlocking(Toplevel* window = nullptr);
 
     /**

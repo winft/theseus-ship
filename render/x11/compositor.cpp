@@ -178,34 +178,19 @@ void compositor::configChanged()
 
 bool compositor::checkForOverlayWindow(WId w) const
 {
-    if (!scene()) {
-        // No scene, so it cannot be the overlay window.
-        return false;
-    }
-    if (!scene()->overlayWindow()) {
+    if (!overlay_window) {
         // No overlay window, it cannot be the overlay.
         return false;
     }
     // Compare the window ID's.
-    return w == scene()->overlayWindow()->window();
-}
-
-bool compositor::isOverlayWindowVisible() const
-{
-    if (!scene()) {
-        return false;
-    }
-    if (!scene()->overlayWindow()) {
-        return false;
-    }
-    return scene()->overlayWindow()->isVisible();
+    return w == overlay_window->window();
 }
 
 bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows)
 {
     compositeTimer.stop();
 
-    if (scene()->usesOverlayWindow() && !isOverlayWindowVisible()) {
+    if (overlay_window && !overlay_window->isVisible()) {
         // Abort since nothing is visible.
         return false;
     }

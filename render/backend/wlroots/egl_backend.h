@@ -58,8 +58,6 @@ public:
                                     QRegion const& damagedRegion) override;
     QRegion prepareRenderingForScreen(base::output* output) override;
 
-    bool usesOverlayWindow() const override;
-
     egl_output& get_output(base::output* out);
 
 protected:

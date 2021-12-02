@@ -300,16 +300,6 @@ render::shadow* scene::createShadow(Toplevel* toplevel)
     return new shadow(toplevel);
 }
 
-x11::overlay_window* scene::overlayWindow() const
-{
-    return m_backend->overlay_window.get();
-}
-
-bool scene::usesOverlayWindow() const
-{
-    return true;
-}
-
 Decoration::Renderer* scene::createDecorationRenderer(Decoration::DecoratedClientImpl* client)
 {
     return new deco_renderer(client);

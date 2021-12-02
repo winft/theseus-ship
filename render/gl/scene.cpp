@@ -465,11 +465,6 @@ void scene::initDebugOutput()
                          message.constData());
 }
 
-x11::overlay_window* scene::overlayWindow() const
-{
-    return m_backend->overlayWindow();
-}
-
 bool scene::hasSwapEvent() const
 {
     return m_backend->hasSwapEvent();

@@ -362,11 +362,6 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
     }
 }
 
-bool egl_backend::usesOverlayWindow() const
-{
-    return false;
-}
-
 egl_texture::egl_texture(gl::texture* texture, egl_backend* backend)
     : gl::egl_texture(texture, backend)
 {

@@ -60,11 +60,6 @@ class shadow;
 class window;
 class window_pixmap;
 
-namespace x11
-{
-class overlay_window;
-}
-
 enum class image_filter_type {
     fast,
     good,
@@ -178,7 +173,6 @@ public:
 
     // there's nothing to paint (adjust time_diff later)
     virtual void idle();
-    virtual x11::overlay_window* overlayWindow() const = 0;
     virtual bool hasSwapEvent() const;
 
     virtual bool makeOpenGLContextCurrent();
@@ -186,11 +180,6 @@ public:
     virtual bool supportsSurfacelessContext() const;
 
     virtual QMatrix4x4 screenProjectionMatrix() const;
-
-    /**
-     * Whether the scene uses an X11 overlay window to perform compositing.
-     */
-    virtual bool usesOverlayWindow() const = 0;
 
     virtual void triggerFence();
 

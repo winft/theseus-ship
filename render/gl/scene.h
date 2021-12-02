@@ -59,8 +59,6 @@ public:
     render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     render::shadow* createShadow(Toplevel* toplevel) override;
     void handle_screen_geometry_change(QSize const& size) override;
-    x11::overlay_window* overlayWindow() const override;
-    bool usesOverlayWindow() const override;
     bool hasSwapEvent() const override;
     bool makeOpenGLContextCurrent() override;
     void doneOpenGLContextCurrent() override;
@@ -329,11 +327,6 @@ private:
 inline bool scene::hasPendingFlush() const
 {
     return m_backend->hasPendingFlush();
-}
-
-inline bool scene::usesOverlayWindow() const
-{
-    return m_backend->usesOverlayWindow();
 }
 
 inline render::gl::texture* window_pixmap::texture() const

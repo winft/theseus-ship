@@ -37,11 +37,6 @@ class SceneOpenGL;
 namespace render
 {
 
-namespace x11
-{
-class overlay_window;
-}
-
 class window_pixmap;
 
 namespace gl
@@ -103,7 +98,6 @@ public:
                                             const QRegion& damagedRegion);
     virtual bool makeCurrent() = 0;
     virtual void doneCurrent() = 0;
-    virtual bool usesOverlayWindow() const = 0;
     virtual bool hasSwapEvent() const
     {
         return true;
@@ -122,16 +116,6 @@ public:
         return !m_lastDamage.isEmpty();
     }
 
-    /**
-     * @brief Returns the OverlayWindow used by the backend.
-     *
-     * A backend does not have to use an OverlayWindow, this is mostly for the X world.
-     * In case the backend does not use an OverlayWindow it is allowed to return @c null.
-     * It's the task of the caller to check whether it is @c null.
-     *
-     * @return x11::overlay_window*
-     */
-    virtual x11::overlay_window* overlayWindow() const;
     /**
      * @brief Whether the creation of the Backend failed.
      *

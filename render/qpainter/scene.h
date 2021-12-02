@@ -37,9 +37,6 @@ public:
     explicit scene(qpainter::backend* backend);
     ~scene() override;
 
-    bool usesOverlayWindow() const override;
-    render::x11::overlay_window* overlayWindow() const override;
-
     int64_t paint_output(base::output* output,
                          QRegion damage,
                          std::deque<Toplevel*> const& windows,
@@ -176,16 +173,6 @@ private:
 };
 
 KWIN_EXPORT render::scene* create_scene();
-
-inline bool scene::usesOverlayWindow() const
-{
-    return false;
-}
-
-inline render::x11::overlay_window* scene::overlayWindow() const
-{
-    return nullptr;
-}
 
 inline QPainter* scene::scenePainter() const
 {

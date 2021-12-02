@@ -33,7 +33,15 @@ namespace Xcb
 class Shm;
 }
 
-namespace render::xrender
+namespace render
+{
+
+namespace x11
+{
+class overlay_window;
+}
+
+namespace xrender
 {
 
 /**
@@ -140,8 +148,6 @@ public:
     render::shadow* createShadow(Toplevel* toplevel) override;
     void handle_screen_geometry_change(QSize const& size) override;
     xcb_render_picture_t xrenderBufferPicture() const override;
-    x11::overlay_window* overlayWindow() const override;
-    bool usesOverlayWindow() const override;
     Decoration::Renderer*
     createDecorationRenderer(Decoration::DecoratedClientImpl* client) override;
 
@@ -308,5 +314,6 @@ private:
 
 KWIN_EXPORT render::scene* create_scene(render::compositor* compositor);
 
+}
 }
 }
