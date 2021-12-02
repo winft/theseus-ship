@@ -75,35 +75,6 @@ private:
     QScopedPointer<QPainter> m_painter;
 };
 
-class effect_frame : public render::effect_frame
-{
-public:
-    effect_frame(effect_frame_impl* frame, qpainter::scene* scene);
-    ~effect_frame() override;
-    void crossFadeIcon() override
-    {
-    }
-    void crossFadeText() override
-    {
-    }
-    void free() override
-    {
-    }
-    void freeIconFrame() override
-    {
-    }
-    void freeTextFrame() override
-    {
-    }
-    void freeSelection() override
-    {
-    }
-    void render(QRegion region, double opacity, double frameOpacity) override;
-
-private:
-    scene* m_scene;
-};
-
 class shadow : public render::shadow
 {
 public:

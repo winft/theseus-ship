@@ -57,6 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "platform.h"
 #include "render/compositor.h"
+#include "render/effect_frame.h"
 #include "xcbutils.h"
 
 #include "decorations/decorationbridge.h"

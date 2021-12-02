@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "scene.h"
 
+#include "effect_frame.h"
 #include "window.h"
 
 #include "base/output.h"
@@ -27,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
-#include "render/effects.h"
 #include "screens.h"
 #include "toplevel.h"
 
@@ -39,7 +39,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decoratedclient.h"
 
 #include <KDecoration2/Decoration>
-#include <QDebug>
 #include <QPainter>
 
 #include <cmath>
@@ -47,9 +46,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::qpainter
 {
 
-//****************************************
-// scene
-//****************************************
 scene::scene(qpainter::backend* backend)
     : m_backend(backend)
     , m_painter(new QPainter())
@@ -189,87 +185,6 @@ void scene::handle_screen_geometry_change(QSize const& size)
 QImage* scene::qpainterRenderBuffer() const
 {
     return m_backend->buffer();
-}
-
-effect_frame::effect_frame(effect_frame_impl* frame, qpainter::scene* scene)
-    : render::effect_frame(frame)
-    , m_scene(scene)
-{
-}
-
-effect_frame::~effect_frame()
-{
-}
-
-void effect_frame::render(QRegion region, double opacity, double frameOpacity)
-{
-    Q_UNUSED(region)
-    Q_UNUSED(opacity)
-    // TODO: adjust opacity
-    if (m_effectFrame->geometry().isEmpty()) {
-        return; // Nothing to display
-    }
-    QPainter* painter = m_scene->scenePainter();
-
-    // Render the actual frame
-    if (m_effectFrame->style() == EffectFrameUnstyled) {
-        painter->save();
-        painter->setPen(Qt::NoPen);
-        QColor color(Qt::black);
-        color.setAlphaF(frameOpacity);
-        painter->setBrush(color);
-        painter->setRenderHint(QPainter::Antialiasing);
-        painter->drawRoundedRect(m_effectFrame->geometry().adjusted(-5, -5, 5, 5), 5.0, 5.0);
-        painter->restore();
-    } else if (m_effectFrame->style() == EffectFrameStyled) {
-        qreal left, top, right, bottom;
-        m_effectFrame->frame().getMargins(
-            left, top, right, bottom); // m_geometry is the inner geometry
-        QRect geom = m_effectFrame->geometry().adjusted(-left, -top, right, bottom);
-        painter->drawPixmap(geom, m_effectFrame->frame().framePixmap());
-    }
-    if (!m_effectFrame->selection().isNull()) {
-        painter->drawPixmap(m_effectFrame->selection(),
-                            m_effectFrame->selectionFrame().framePixmap());
-    }
-
-    // Render icon
-    if (!m_effectFrame->icon().isNull() && !m_effectFrame->iconSize().isEmpty()) {
-        const QPoint topLeft(m_effectFrame->geometry().x(),
-                             m_effectFrame->geometry().center().y()
-                                 - m_effectFrame->iconSize().height() / 2);
-
-        const QRect geom = QRect(topLeft, m_effectFrame->iconSize());
-        painter->drawPixmap(geom, m_effectFrame->icon().pixmap(m_effectFrame->iconSize()));
-    }
-
-    // Render text
-    if (!m_effectFrame->text().isEmpty()) {
-        // Determine position on texture to paint text
-        QRect rect(QPoint(0, 0), m_effectFrame->geometry().size());
-        if (!m_effectFrame->icon().isNull() && !m_effectFrame->iconSize().isEmpty()) {
-            rect.setLeft(m_effectFrame->iconSize().width());
-        }
-
-        // If static size elide text as required
-        QString text = m_effectFrame->text();
-        if (m_effectFrame->isStatic()) {
-            QFontMetrics metrics(m_effectFrame->text());
-            text = metrics.elidedText(text, Qt::ElideRight, rect.width());
-        }
-
-        painter->save();
-        painter->setFont(m_effectFrame->font());
-        if (m_effectFrame->style() == EffectFrameStyled) {
-            painter->setPen(m_effectFrame->styledTextColor());
-        } else {
-            // TODO: What about no frame? Custom color setting required
-            painter->setPen(Qt::white);
-        }
-        painter->drawText(
-            rect.translated(m_effectFrame->geometry().topLeft()), m_effectFrame->alignment(), text);
-        painter->restore();
-    }
 }
 
 //****************************************

@@ -708,16 +708,4 @@ QVector<QByteArray> scene::openGLPlatformInterfaceExtensions() const
     return QVector<QByteArray>{};
 }
 
-//****************************************
-// effect_frame
-//****************************************
-effect_frame::effect_frame(effect_frame_impl* frame)
-    : m_effectFrame(frame)
-{
-}
-
-effect_frame::~effect_frame()
-{
-}
-
 }
