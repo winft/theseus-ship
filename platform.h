@@ -236,18 +236,6 @@ public:
     bool supportsPointerWarping() const {
         return m_pointerWarping;
     }
-    int initialOutputCount() const {
-        return m_initialOutputCount;
-    }
-    void setInitialOutputCount(int count) {
-        m_initialOutputCount = count;
-    }
-    qreal initialOutputScale() const {
-        return m_initialOutputScale;
-    }
-    void setInitialOutputScale(qreal scale) {
-        m_initialOutputScale = scale;
-    }
 
     /**
      * Queries the current X11 time stamp of the X server.
@@ -362,8 +350,6 @@ protected:
 private:
     QSize m_initialWindowSize;
     bool m_pointerWarping = false;
-    int m_initialOutputCount = 1;
-    qreal m_initialOutputScale = 1;
     EGLDisplay m_eglDisplay;
     EGLConfig m_eglConfig = nullptr;
     EGLContext m_context = EGL_NO_CONTEXT;

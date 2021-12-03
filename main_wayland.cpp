@@ -495,9 +495,6 @@ int main(int argc, char * argv[])
         a.setSessionArgument(parser.value(exitWithSessionOption));
     }
 
-    QSize initialWindowSize;
-    qreal outputScale = 1;
-
     KWin::wayland_start_options flags;
     if (parser.isSet(screenLockerOption)) {
         flags = KWin::wayland_start_options::lock_screen;
@@ -517,11 +514,6 @@ int main(int argc, char * argv[])
     }
 
     a.init_platforms();
-
-    if (initialWindowSize.isValid()) {
-        a.platform->setInitialWindowSize(initialWindowSize);
-    }
-    a.platform->setInitialOutputScale(outputScale);
 
     if (auto const& name = a.server->display()->socket_name(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
