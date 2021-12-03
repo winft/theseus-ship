@@ -46,8 +46,7 @@ class KWinCompositingKCM : public KCModule
     Q_OBJECT
 public:
     enum CompositingTypeIndex {
-        OPENGL31_INDEX = 0,
-        OPENGL20_INDEX,
+        OPENGL_INDEX = 0,
         XRENDER_INDEX
     };
 
@@ -137,8 +136,7 @@ void KWinCompositingKCM::init()
     );
 
     // compositing type
-    m_form.backend->addItem(i18n("OpenGL 3.1"), CompositingTypeIndex::OPENGL31_INDEX);
-    m_form.backend->addItem(i18n("OpenGL 2.0"), CompositingTypeIndex::OPENGL20_INDEX);
+    m_form.backend->addItem(i18n("OpenGL"), CompositingTypeIndex::OPENGL_INDEX);
     m_form.backend->addItem(i18n("XRender"), CompositingTypeIndex::XRENDER_INDEX);
 
     connect(m_form.backend, currentIndexChangedSignal, this, &KWinCompositingKCM::onBackendChanged);
@@ -156,38 +154,31 @@ void KWinCompositingKCM::onBackendChanged()
 void KWinCompositingKCM::updateUnmanagedItemStatus()
 {
     int backend = KWinCompositingSetting::EnumBackend::OpenGL;
-    bool glCore = true;
     const int currentType = m_form.backend->currentData().toInt();
     switch (currentType) {
-    case CompositingTypeIndex::OPENGL31_INDEX:
+    case CompositingTypeIndex::OPENGL_INDEX:
         // default already set
-        break;
-    case CompositingTypeIndex::OPENGL20_INDEX:
-        glCore = false;
         break;
     case CompositingTypeIndex::XRENDER_INDEX:
         backend = KWinCompositingSetting::EnumBackend::XRender;
-        glCore = false;
         break;
     }
     const auto animationDuration = s_animationMultipliers[m_form.animationDurationFactor->value()];
 
     const bool inPlasma = isRunningPlasma();
 
-    bool changed = glCore != m_settings->glCore();
-    changed |= backend != m_settings->backend();
+    auto changed = backend != m_settings->backend();
     if (!inPlasma) {
       changed |= (animationDuration != m_settings->animationDurationFactor());
     }
     unmanagedWidgetChangeState(changed);
 
-    bool defaulted = glCore == m_settings->defaultGlCoreValue();
-    defaulted &= backend == m_settings->defaultBackendValue();
+    auto defaulted = backend == m_settings->defaultBackendValue();
     if (!inPlasma) {
         defaulted &= animationDuration == m_settings->defaultAnimationDurationFactorValue();
     }
 
-    m_form.backend->setProperty("_kde_highlight_neutral", defaultsIndicatorsVisible() && (backend != m_settings->defaultBackendValue() || glCore != m_settings->defaultGlCoreValue()));
+    m_form.backend->setProperty("_kde_highlight_neutral", defaultsIndicatorsVisible() && (backend != m_settings->defaultBackendValue()));
     m_form.backend->update();
 
     unmanagedWidgetDefaultState(defaulted);
@@ -206,14 +197,9 @@ void KWinCompositingKCM::load()
     m_form.animationDurationFactor->setDisabled(m_settings->isAnimationDurationFactorImmutable());
 
     m_settings->findItem("Backend")->readConfig(m_settings->config());
-    m_settings->findItem("glCore")->readConfig(m_settings->config());
 
     if (m_settings->backend() == KWinCompositingSetting::EnumBackend::OpenGL) {
-        if (m_settings->glCore()) {
-            m_form.backend->setCurrentIndex(CompositingTypeIndex::OPENGL31_INDEX);
-        } else {
-            m_form.backend->setCurrentIndex(CompositingTypeIndex::OPENGL20_INDEX);
-        }
+        m_form.backend->setCurrentIndex(CompositingTypeIndex::OPENGL_INDEX);
     } else {
         m_form.backend->setCurrentIndex(CompositingTypeIndex::XRENDER_INDEX);
     }
@@ -227,7 +213,7 @@ void KWinCompositingKCM::defaults()
     KCModule::defaults();
 
     // unmanaged widgets
-    m_form.backend->setCurrentIndex(CompositingTypeIndex::OPENGL20_INDEX);
+    m_form.backend->setCurrentIndex(CompositingTypeIndex::OPENGL_INDEX);
     if (!isRunningPlasma()) {
         // corresponds to 1.0 seconds in s_animationMultipliers
         m_form.animationDurationFactor->setValue(3);
@@ -237,23 +223,16 @@ void KWinCompositingKCM::defaults()
 void KWinCompositingKCM::save()
 {
     int backend = KWinCompositingSetting::EnumBackend::OpenGL;
-    bool glCore = true;
     const int currentType = m_form.backend->currentData().toInt();
     switch (currentType) {
-    case CompositingTypeIndex::OPENGL31_INDEX:
+    case CompositingTypeIndex::OPENGL_INDEX:
         // default already set
-        break;
-    case CompositingTypeIndex::OPENGL20_INDEX:
-        backend = KWinCompositingSetting::EnumBackend::OpenGL;
-        glCore = false;
         break;
     case CompositingTypeIndex::XRENDER_INDEX:
         backend = KWinCompositingSetting::EnumBackend::XRender;
-        glCore = false;
         break;
     }
     m_settings->setBackend(backend);
-    m_settings->setGlCore(glCore);
 
     if (!isRunningPlasma()) {
         const auto animationDuration = s_animationMultipliers[m_form.animationDurationFactor->value()];

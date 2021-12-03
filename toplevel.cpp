@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output.h"
 #include "atoms.h"
 #include "render/compositor.h"
-#include "effects.h"
+#include "render/effects.h"
 #include "platform.h"
 #include "screens.h"
 #include "shadow.h"
@@ -332,7 +332,7 @@ bool Toplevel::setupCompositing(bool add_full_damage)
 
     discard_shape();
     damage_region = QRegion(QRect(QPoint(), size()));
-    effect_window = new EffectWindowImpl(this);
+    effect_window = new render::effects_window_impl(this);
 
     render::compositor::self()->scene()->addToplevel(this);
 
@@ -1165,7 +1165,7 @@ void Toplevel::leaveMoveResize()
         ScreenEdges::self()->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
     }
     if (control->electric_maximizing()) {
-        outline()->hide();
+        render::x11::get_outline()->hide();
         win::elevate(this, false);
     }
 }

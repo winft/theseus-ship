@@ -23,7 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class EffectsHandlerImpl;
+namespace render
+{
+class effects_handler_impl;
+}
 
 namespace win::x11
 {
@@ -31,12 +34,12 @@ namespace win::x11
 class window_property_notify_filter : public base::x11::event_filter
 {
 public:
-    explicit window_property_notify_filter(EffectsHandlerImpl* effects);
+    explicit window_property_notify_filter(render::effects_handler_impl* effects);
 
     bool event(xcb_generic_event_t* event) override;
 
 private:
-    EffectsHandlerImpl* m_effects;
+    render::effects_handler_impl* m_effects;
 };
 
 }

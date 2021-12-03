@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include "overlay_window.h"
 #include "render/compositor.h"
 
 #include <QObject>
@@ -14,6 +15,7 @@
 #include <QTimer>
 
 #include <deque>
+#include <memory>
 
 namespace KWin
 {
@@ -87,15 +89,16 @@ public:
      */
     bool checkForOverlayWindow(WId w) const;
 
-    /**
-     * @returns Whether the Scene's Overlay X Window is visible.
-     */
-    bool isOverlayWindowVisible() const;
-
     void updateClientCompositeBlocking(Toplevel* window = nullptr);
+
+    /**
+     * @brief The overlay window used by the backend, if any.
+     */
+    x11::overlay_window* overlay_window{nullptr};
 
 protected:
     void start() override;
+    render::scene* create_scene(QVector<CompositingType> const& support) override;
     std::deque<Toplevel*> performCompositing() override;
 
 private:

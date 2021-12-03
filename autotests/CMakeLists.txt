@@ -114,7 +114,7 @@ ecm_mark_as_test(testXcbWindow)
 # Test BuiltInEffectLoader
 ########################################################
 set(testBuiltInEffectLoader_SRCS
-    ../effectloader.cpp
+    ../render/effect_loader.cpp
     mock_effectshandler.cpp
     test_builtin_effectloader.cpp
 )
@@ -141,7 +141,7 @@ ecm_mark_as_test(testBuiltInEffectLoader)
 ########################################################
 include_directories(${KWIN_SOURCE_DIR})
 set(testScriptedEffectLoader_SRCS
-    ../effectloader.cpp
+    ../render/effect_loader.cpp
     ../screens.cpp
     ../scripting/effect.cpp
     ../scripting/scripting_logging.cpp
@@ -176,7 +176,7 @@ ecm_mark_as_test(testScriptedEffectLoader)
 # Test PluginEffectLoader
 ########################################################
 set(testPluginEffectLoader_SRCS
-    ../effectloader.cpp
+    ../render/effect_loader.cpp
     mock_effectshandler.cpp
     test_plugin_effectloader.cpp
 )
@@ -261,8 +261,8 @@ add_test(NAME kwin-testX11TimestampUpdate COMMAND testX11TimestampUpdate)
 ecm_mark_as_test(testX11TimestampUpdate)
 
 set(testOpenGLContextAttributeBuilder_SRCS
-    ../abstract_opengl_context_attribute_builder.cpp
-    ../egl_context_attribute_builder.cpp
+    ../render/gl/context_attribute_builder.cpp
+    ../render/gl/egl_context_attribute_builder.cpp
     opengl_context_attribute_builder_test.cpp
 )
 

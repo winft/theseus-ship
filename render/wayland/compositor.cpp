@@ -12,7 +12,9 @@
 #include "base/wayland/output.h"
 #include "platform.h"
 #include "render/cursor.h"
-#include "scene.h"
+#include "render/gl/scene.h"
+#include "render/qpainter/scene.h"
+#include "render/scene.h"
 #include "wayland_server.h"
 #include "win/scene.h"
 #include "workspace.h"
@@ -158,6 +160,21 @@ void compositor::start()
     } else {
         connect(kwinApp(), &Application::workspaceCreated, this, &compositor::startupWithWorkspace);
     }
+}
+
+render::scene* compositor::create_scene(QVector<CompositingType> const& support)
+{
+    for (auto type : support) {
+        if (type == OpenGLCompositing) {
+            qCDebug(KWIN_WL) << "Creating OpenGL scene.";
+            return gl::create_scene(this);
+        }
+        if (type == QPainterCompositing) {
+            qCDebug(KWIN_WL) << "Creating QPainter scene.";
+            return qpainter::create_scene();
+        }
+    }
+    return nullptr;
 }
 
 std::deque<Toplevel*> compositor::performCompositing()

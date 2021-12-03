@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "../abstract_opengl_context_attribute_builder.h"
-#include "../egl_context_attribute_builder.h"
+#include "../render/gl/context_attribute_builder.h"
+#include "../render/gl/egl_context_attribute_builder.h"
 #include <QtTest>
 #include <epoxy/egl.h>
 
@@ -54,7 +54,7 @@ private Q_SLOTS:
     void testGlx();
 };
 
-class MockOpenGLContextAttributeBuilder : public AbstractOpenGLContextAttributeBuilder
+class MockOpenGLContextAttributeBuilder : public render::gl::context_attribute_builder
 {
 public:
     std::vector<int> build() const override;
@@ -397,7 +397,7 @@ void OpenGLContextAttributeBuilderTest::testEgl()
     QFETCH(bool, compatibilityProfile);
     QFETCH(bool, highPriority);
 
-    EglContextAttributeBuilder builder;
+    render::gl::egl_context_attribute_builder builder;
     if (requestVersion) {
         builder.setVersion(major, minor);
     }
@@ -451,7 +451,7 @@ void OpenGLContextAttributeBuilderTest::testGles()
     QFETCH(bool, robust);
     QFETCH(bool, highPriority);
 
-    EglOpenGLESContextAttributeBuilder builder;
+    render::gl::egl_gles_context_attribute_builder builder;
     builder.setVersion(2);
     builder.setRobust(robust);
     builder.setHighPriority(highPriority);

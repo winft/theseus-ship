@@ -18,9 +18,9 @@
 #include "touch_redirect.h"
 
 #include "../platform.h"
-#include "effects.h"
 #include "global_shortcuts_manager.h"
 #include "main.h"
+#include "render/effects.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "utils.h"
@@ -91,7 +91,7 @@ Toplevel* redirect::findToplevel(const QPoint& pos)
     // TODO: check whether the unmanaged wants input events at all
     if (!kwinApp()->is_screen_locked()) {
         // if an effect overrides the cursor we don't have a window to focus
-        if (effects && static_cast<EffectsHandlerImpl*>(effects)->isMouseInterception()) {
+        if (effects && static_cast<render::effects_handler_impl*>(effects)->isMouseInterception()) {
             return nullptr;
         }
         auto const& unmanaged = Workspace::self()->unmanagedList();

@@ -10,9 +10,9 @@
 
 #include "cursor_theme.h"
 
-#include "effects.h"
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
+#include "render/effects.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "win/control.h"
@@ -466,7 +466,7 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::WindowSelector);
         return;
     }
-    if (effects && static_cast<EffectsHandlerImpl*>(effects)->isMouseInterception()) {
+    if (effects && static_cast<render::effects_handler_impl*>(effects)->isMouseInterception()) {
         setSource(CursorSource::EffectsOverride);
         return;
     }

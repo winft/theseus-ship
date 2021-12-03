@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "colorcorrection/manager.h"
 #include "render/compositor.h"
 #include "workspace.h"
-#include "effects.h"
+#include "render/effects.h"
 #include "platform.h"
 #include "rules/rule_book.h"
 #include "screens.h"

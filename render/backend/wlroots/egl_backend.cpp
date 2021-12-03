@@ -31,18 +31,18 @@ egl_output& egl_backend::get_output(base::output* out)
     return *it;
 }
 
-egl_backend::egl_backend(backend* back, bool headless)
-    : AbstractEglBackend()
+egl_backend::egl_backend(wlroots::backend* back, bool headless)
+    : gl::egl_backend()
     , back{back}
     , headless{headless}
 {
     // Egl is always direct rendering.
     setIsDirectRendering(true);
 
-    connect(back, &backend::output_added, this, [this](auto out) {
+    connect(back, &wlroots::backend::output_added, this, [this](auto out) {
         add_output(static_cast<output*>(out));
     });
-    connect(back, &backend::output_removed, this, [this](auto out) {
+    connect(back, &wlroots::backend::output_removed, this, [this](auto out) {
         outputs.erase(std::remove_if(outputs.begin(),
                                      outputs.end(),
                                      [&out](auto& egl_out) { return egl_out.out == out; }),
@@ -244,7 +244,7 @@ void egl_backend::screenGeometryChanged(QSize const& size)
     // TODO, create new buffer?
 }
 
-SceneOpenGLTexturePrivate* egl_backend::createBackendTexture(SceneOpenGLTexture* texture)
+gl::texture_private* egl_backend::createBackendTexture(gl::texture* texture)
 {
     return new egl_texture(texture, this);
 }
@@ -321,7 +321,7 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
     auto& out = get_output(output);
     renderFramebufferToSurface(out);
 
-    auto compositor = static_cast<wayland::compositor*>(render::compositor::self());
+    auto compositor = static_cast<wayland::compositor*>(back->compositor);
     auto render_output = compositor->outputs.at(out.out).get();
     if (GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
         render_output->last_timer_queries.emplace_back();
@@ -362,13 +362,8 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
     }
 }
 
-bool egl_backend::usesOverlayWindow() const
-{
-    return false;
-}
-
-egl_texture::egl_texture(KWin::SceneOpenGLTexture* texture, egl_backend* backend)
-    : EglTexture(texture, backend)
+egl_texture::egl_texture(gl::texture* texture, egl_backend* backend)
+    : gl::egl_texture(texture, backend)
 {
 }
 

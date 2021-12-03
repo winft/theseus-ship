@@ -20,11 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lib/app.h"
 
 #include "effect_builtins.h"
-#include "effectloader.h"
-#include "effects.h"
 #include "platform.h"
 #include "render/compositor.h"
-#include "scene.h"
+#include "render/effect_loader.h"
+#include "render/effects.h"
+#include "render/scene.h"
 #include "wayland_server.h"
 #include "workspace.h"
 
@@ -72,7 +72,7 @@ void SlidingPopupsTest::initTestCase()
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
     for (QString name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -105,7 +105,7 @@ void SlidingPopupsTest::init()
 void SlidingPopupsTest::cleanup()
 {
     Test::destroy_wayland_connection();
-    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
+    auto e = static_cast<render::effects_handler_impl*>(effects);
     while (!e->loadedEffects().isEmpty()) {
         const QString effect = e->loadedEffects().first();
         e->unloadEffect(effect);
@@ -159,11 +159,11 @@ void SlidingPopupsTest::testWithOtherEffect()
     // this test verifies that slidingpopups effect grabs the window added role
     // independently of the sequence how the effects are loaded.
     // see BUG 336866
-    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
+    auto e = static_cast<render::effects_handler_impl*>(effects);
     // find the effectsloader
-    auto effectloader = e->findChild<AbstractEffectLoader*>();
+    auto effectloader = e->findChild<render::basic_effect_loader*>();
     QVERIFY(effectloader);
-    QSignalSpy effectLoadedSpy(effectloader, &AbstractEffectLoader::effectLoaded);
+    QSignalSpy effectLoadedSpy(effectloader, &render::basic_effect_loader::effectLoaded);
     QVERIFY(effectLoadedSpy.isValid());
 
     Effect* slidingPoupus = nullptr;
@@ -314,11 +314,11 @@ void SlidingPopupsTest::testWithOtherEffectWayland()
     // independently of the sequence how the effects are loaded.
     // see BUG 336866
     // the test is like testWithOtherEffect, but simulates using a Wayland window
-    EffectsHandlerImpl* e = static_cast<EffectsHandlerImpl*>(effects);
+    auto e = static_cast<render::effects_handler_impl*>(effects);
     // find the effectsloader
-    auto effectloader = e->findChild<AbstractEffectLoader*>();
+    auto effectloader = e->findChild<render::basic_effect_loader*>();
     QVERIFY(effectloader);
-    QSignalSpy effectLoadedSpy(effectloader, &AbstractEffectLoader::effectLoaded);
+    QSignalSpy effectLoadedSpy(effectloader, &render::basic_effect_loader::effectLoaded);
     QVERIFY(effectLoadedSpy.isValid());
 
     Effect* slidingPoupus = nullptr;

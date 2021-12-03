@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "perf/ftrace.h"
 #include "platform.h"
 #include "kwinadaptor.h"
-#include "scene.h"
+#include "render/scene.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/geo.h"

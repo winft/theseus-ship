@@ -21,12 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/output.h"
 #include <config-kwin.h>
+#include "main.h"
 #include "render/compositor.h"
-#include "effects.h"
+#include "render/effects.h"
 #include <KCoreAddons>
-#include "overlaywindow.h"
-#include "outline.h"
-#include "scene.h"
+#include "render/x11/overlay_window.h"
+#include "render/x11/outline.h"
+#include "render/scene.h"
 #include "screens.h"
 #include "screenedge.h"
 #include "colorcorrection/manager.h"
@@ -53,12 +54,12 @@ Platform::~Platform()
     }
 }
 
-OpenGLBackend *Platform::createOpenGLBackend()
+render::gl::backend *Platform::createOpenGLBackend(render::compositor* /*compositor*/)
 {
     return nullptr;
 }
 
-QPainterBackend *Platform::createQPainterBackend()
+render::qpainter::backend *Platform::createQPainterBackend()
 {
     return nullptr;
 }
@@ -87,7 +88,7 @@ bool Platform::supportsQpaContext() const
     if (Q_UNLIKELY(!compositor)) {
         return false;
     }
-    if (Scene *scene = compositor->scene()) {
+    if (auto scene = compositor->scene()) {
         return scene->supportsSurfacelessContext();
     }
     return false;
@@ -148,11 +149,6 @@ void Platform::setupActionForGlobalAccel(QAction *action)
     Q_UNUSED(action)
 }
 
-OverlayWindow *Platform::createOverlayWindow()
-{
-    return nullptr;
-}
-
 static quint32 monotonicTime()
 {
     timespec ts;
@@ -181,10 +177,10 @@ void Platform::updateXTime()
     }
 }
 
-OutlineVisual *Platform::createOutline(Outline *outline)
+render::x11::outline_visual* Platform::createOutline(render::x11::outline* outline)
 {
     if (render::compositor::compositing()) {
-       return new CompositedOutlineVisual(outline);
+       return new render::x11::composited_outline_visual(outline);
     }
     return nullptr;
 }
@@ -200,16 +196,16 @@ Decoration::Renderer *Platform::createDecorationRenderer(Decoration::DecoratedCl
 void Platform::invertScreen()
 {
     if (effects) {
-        if (Effect *inverter = static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::ScreenInversion)) {
+        if (auto inverter = static_cast<render::effects_handler_impl*>(effects)->provides(Effect::ScreenInversion)) {
             qCDebug(KWIN_CORE) << "inverting screen using Effect plugin";
             QMetaObject::invokeMethod(inverter, "toggleScreenInversion", Qt::DirectConnection);
         }
     }
 }
 
-void Platform::createEffectsHandler(render::compositor *compositor, Scene *scene)
+void Platform::createEffectsHandler(render::compositor *compositor, render::scene *scene)
 {
-    new EffectsHandlerImpl(compositor, scene);
+    new render::effects_handler_impl(compositor, scene);
 }
 
 QString Platform::supportInformation() const

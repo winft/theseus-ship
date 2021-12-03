@@ -39,11 +39,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/surface.h>
 
 #include "effect_builtins.h"
-#include "effectloader.h"
-#include "effects.h"
 #include "platform.h"
 #include "render/compositor.h"
-#include "shadow.h"
+#include "render/effect_loader.h"
+#include "render/effects.h"
+#include "render/shadow.h"
+#include "render/window.h"
 #include "wayland_server.h"
 #include "workspace.h"
 
@@ -121,7 +122,7 @@ void SceneOpenGLShadowTest::initTestCase()
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
     for (QString name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -702,7 +703,7 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
 
     QVERIFY(client->effectWindow());
     QVERIFY(client->effectWindow()->sceneWindow());
-    KWin::Shadow* shadow = client->effectWindow()->sceneWindow()->shadow();
+    auto shadow = client->effectWindow()->sceneWindow()->shadow();
     QVERIFY(shadow != nullptr);
 
     const WindowQuadList& quads = shadow->shadowQuads();
@@ -788,7 +789,7 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
 
     QVERIFY(client->effectWindow());
     QVERIFY(client->effectWindow()->sceneWindow());
-    KWin::Shadow* shadow = client->effectWindow()->sceneWindow()->shadow();
+    auto shadow = client->effectWindow()->sceneWindow()->shadow();
     QVERIFY(shadow != nullptr);
 
     WindowQuadList expectedQuads;

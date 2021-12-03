@@ -13,12 +13,13 @@
 #include "logging.h"
 // kwin
 #include "options.h"
-#include "overlaywindow.h"
 #include "platform.h"
 #include "render/compositor.h"
-#include "scene.h"
+#include "render/gl/texture.h"
+#include "render/scene.h"
+#include "render/x11/compositor.h"
+#include "render/x11/overlay_window.h"
 #include "screens.h"
-#include "texture.h"
 #include "xcbutils.h"
 
 #include "win/x11/geo.h"
@@ -36,6 +37,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <cassert>
 #include <deque>
 #if HAVE_DL_LIBRARY
 #include <dlfcn.h>
@@ -90,16 +92,21 @@ bool SwapEventFilter::event(xcb_generic_event_t* event)
 
 // -----------------------------------------------------------------------
 
-GlxBackend::GlxBackend(Display* display)
-    : OpenGLBackend()
-    , m_overlayWindow(kwinApp()->platform->createOverlayWindow())
+GlxBackend::GlxBackend(Display* display, render::compositor* compositor)
+    : gl::backend()
+    , overlay_window{std::make_unique<render::x11::overlay_window>()}
     , window(None)
     , fbconfig(nullptr)
     , glxWindow(None)
     , ctx(nullptr)
     , m_bufferAge(0)
     , m_x11Display(display)
+    , compositor{compositor}
 {
+    auto x11_compositor = dynamic_cast<render::x11::compositor*>(compositor);
+    assert(x11_compositor);
+    x11_compositor->overlay_window = overlay_window.get();
+
     // Force initialization of GLX integration in the Qt's xcb backend
     // to make it call XESetWireToEvent callbacks, which is required
     // by Mesa when using DRI2.
@@ -109,7 +116,7 @@ GlxBackend::GlxBackend(Display* display)
 GlxBackend::~GlxBackend()
 {
     if (isFailed()) {
-        m_overlayWindow->destroy();
+        overlay_window->destroy();
     }
     // TODO: cleanup in error case
     // do cleanup after initBuffer()
@@ -129,8 +136,7 @@ GlxBackend::~GlxBackend()
     qDeleteAll(m_fbconfigHash);
     m_fbconfigHash.clear();
 
-    overlayWindow()->destroy();
-    delete m_overlayWindow;
+    overlay_window->destroy();
 }
 
 typedef void (*glXFuncPtr)();
@@ -253,39 +259,41 @@ bool GlxBackend::initRenderingContext()
             = hasExtension(QByteArrayLiteral("GLX_NV_robustness_video_memory_purge"));
 
         std::vector<GlxContextAttributeBuilder> candidates;
-        if (options->glCoreProfile()) {
-            if (have_robustness) {
-                if (haveVideoMemoryPurge) {
-                    GlxContextAttributeBuilder purgeMemoryCore;
-                    purgeMemoryCore.setVersion(3, 1);
-                    purgeMemoryCore.setRobust(true);
-                    purgeMemoryCore.setResetOnVideoMemoryPurge(true);
-                    candidates.emplace_back(std::move(purgeMemoryCore));
-                }
-                GlxContextAttributeBuilder robustCore;
-                robustCore.setVersion(3, 1);
-                robustCore.setRobust(true);
-                candidates.emplace_back(std::move(robustCore));
+
+        // core
+        if (have_robustness) {
+            if (haveVideoMemoryPurge) {
+                GlxContextAttributeBuilder purgeMemoryCore;
+                purgeMemoryCore.setVersion(3, 1);
+                purgeMemoryCore.setRobust(true);
+                purgeMemoryCore.setResetOnVideoMemoryPurge(true);
+                candidates.emplace_back(std::move(purgeMemoryCore));
             }
-            GlxContextAttributeBuilder core;
-            core.setVersion(3, 1);
-            candidates.emplace_back(std::move(core));
-        } else {
-            if (have_robustness) {
-                if (haveVideoMemoryPurge) {
-                    GlxContextAttributeBuilder purgeMemoryLegacy;
-                    purgeMemoryLegacy.setRobust(true);
-                    purgeMemoryLegacy.setResetOnVideoMemoryPurge(true);
-                    candidates.emplace_back(std::move(purgeMemoryLegacy));
-                }
-                GlxContextAttributeBuilder robustLegacy;
-                robustLegacy.setRobust(true);
-                candidates.emplace_back(std::move(robustLegacy));
-            }
-            GlxContextAttributeBuilder legacy;
-            legacy.setVersion(2, 1);
-            candidates.emplace_back(std::move(legacy));
+            GlxContextAttributeBuilder robustCore;
+            robustCore.setVersion(3, 1);
+            robustCore.setRobust(true);
+            candidates.emplace_back(std::move(robustCore));
         }
+        GlxContextAttributeBuilder core;
+        core.setVersion(3, 1);
+        candidates.emplace_back(std::move(core));
+
+        // legacy
+        if (have_robustness) {
+            if (haveVideoMemoryPurge) {
+                GlxContextAttributeBuilder purgeMemoryLegacy;
+                purgeMemoryLegacy.setRobust(true);
+                purgeMemoryLegacy.setResetOnVideoMemoryPurge(true);
+                candidates.emplace_back(std::move(purgeMemoryLegacy));
+            }
+            GlxContextAttributeBuilder robustLegacy;
+            robustLegacy.setRobust(true);
+            candidates.emplace_back(std::move(robustLegacy));
+        }
+        GlxContextAttributeBuilder legacy;
+        legacy.setVersion(2, 1);
+        candidates.emplace_back(std::move(legacy));
+
         for (auto it = candidates.begin(); it != candidates.end(); it++) {
             const auto attribs = it->build();
             ctx = glXCreateContextAttribsARB(display(), fbconfig, nullptr, true, attribs.data());
@@ -325,7 +333,7 @@ bool GlxBackend::initBuffer()
     if (!initFbConfig())
         return false;
 
-    if (overlayWindow()->create()) {
+    if (overlay_window->create()) {
         xcb_connection_t* const c = connection();
 
         // Try to create double-buffered window in the overlay
@@ -347,7 +355,7 @@ bool GlxBackend::initBuffer()
         xcb_create_window(c,
                           visualDepth(visual),
                           window,
-                          overlayWindow()->window(),
+                          overlay_window->window(),
                           0,
                           0,
                           size.width(),
@@ -359,7 +367,7 @@ bool GlxBackend::initBuffer()
                           &colormap);
 
         glxWindow = glXCreateWindow(display(), fbconfig, window, nullptr);
-        overlayWindow()->setup(window);
+        overlay_window->setup(window);
     } else {
         qCCritical(KWIN_X11STANDALONE) << "Failed to create overlay window";
         return false;
@@ -717,7 +725,7 @@ void GlxBackend::present()
     if (canSwapBuffers) {
         if (supportsSwapEvents()) {
             m_needsCompositeTimerStart = false;
-            render::compositor::self()->aboutToSwapBuffers();
+            compositor->aboutToSwapBuffers();
         }
 
         glXSwapBuffers(display(), glxWindow);
@@ -747,10 +755,11 @@ void GlxBackend::present()
 
 void GlxBackend::screenGeometryChanged(const QSize& size)
 {
+    overlay_window->resize(size);
     doneCurrent();
 
     XMoveResizeWindow(display(), window, 0, 0, size.width(), size.height());
-    overlayWindow()->setup(window);
+    overlay_window->setup(window);
     Xcb::sync();
 
     makeCurrent();
@@ -760,7 +769,7 @@ void GlxBackend::screenGeometryChanged(const QSize& size)
     m_bufferAge = 0;
 }
 
-SceneOpenGLTexturePrivate* GlxBackend::createBackendTexture(SceneOpenGLTexture* texture)
+gl::texture_private* GlxBackend::createBackendTexture(gl::texture* texture)
 {
     return new GlxTexture(texture, this);
 }
@@ -799,8 +808,10 @@ void GlxBackend::endRenderingFrame(const QRegion& renderedRegion, const QRegion&
     setLastDamage(renderedRegion);
     present();
 
-    if (overlayWindow()->window()) // show the window only after the first pass,
-        overlayWindow()->show();   // since that pass may take long
+    // Show the window only after the first pass, since that pass may take long.
+    if (overlay_window->window()) {
+        overlay_window->show();
+    }
 
     // Save the damaged region to history
     if (supportsBufferAge())
@@ -822,16 +833,6 @@ void GlxBackend::doneCurrent()
     glXMakeCurrent(display(), None, nullptr);
 }
 
-OverlayWindow* GlxBackend::overlayWindow() const
-{
-    return m_overlayWindow;
-}
-
-bool GlxBackend::usesOverlayWindow() const
-{
-    return true;
-}
-
 bool GlxBackend::supportsSwapEvents() const
 {
     return m_swapEventFilter != nullptr;
@@ -845,8 +846,8 @@ bool GlxBackend::hasSwapEvent() const
 /********************************************************
  * GlxTexture
  *******************************************************/
-GlxTexture::GlxTexture(SceneOpenGLTexture* texture, GlxBackend* backend)
-    : SceneOpenGLTexturePrivate()
+GlxTexture::GlxTexture(gl::texture* texture, GlxBackend* backend)
+    : gl::texture_private()
     , q(texture)
     , m_backend(backend)
     , m_glxpixmap(None)
@@ -919,13 +920,13 @@ bool GlxTexture::loadTexture(xcb_pixmap_t pixmap, const QSize& size, xcb_visuali
     return true;
 }
 
-bool GlxTexture::loadTexture(WindowPixmap* pixmap)
+bool GlxTexture::loadTexture(render::window_pixmap* pixmap)
 {
     Toplevel* t = pixmap->toplevel();
     return loadTexture(pixmap->pixmap(), win::render_geometry(t).size(), t->visual());
 }
 
-OpenGLBackend* GlxTexture::backend()
+gl::backend* GlxTexture::backend()
 {
     return m_backend;
 }

@@ -13,8 +13,8 @@
 namespace KWin::render::wayland
 {
 
-effects_handler_impl::effects_handler_impl(render::compositor* compositor, Scene* scene)
-    : EffectsHandlerImpl(compositor, scene)
+effects_handler_impl::effects_handler_impl(render::compositor* compositor, render::scene* scene)
+    : render::effects_handler_impl(compositor, scene)
 {
     auto space = static_cast<win::wayland::space*>(workspace());
 
@@ -46,9 +46,9 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, Scene
     }
 }
 
-EffectWindow* effects_handler_impl::findWindow(Wrapland::Server::Surface* surf) const
+EffectWindow* effects_handler_impl::find_window_by_surface(Wrapland::Server::Surface* surface) const
 {
-    if (auto win = static_cast<win::wayland::space*>(workspace())->find_window(surf)) {
+    if (auto win = static_cast<win::wayland::space*>(workspace())->find_window(surface)) {
         return win->effectWindow();
     }
     return nullptr;

@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "platform.h"
 #include "render/compositor.h"
-#include "scene.h"
+#include "render/scene.h"
 #include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"

@@ -6,17 +6,21 @@
 */
 #include "compositor.h"
 
-#include "effects.h"
-#include "overlaywindow.h"
+#include "compositor_selection_owner.h"
+
+#include "render/gl/scene.h"
+#include "render/xrender/scene.h"
+
 #include "perf/ftrace.h"
 #include "platform.h"
-#include "scene.h"
-#include "shadow.h"
+#include "render/effects.h"
+#include "render/scene.h"
+#include "render/shadow.h"
+#include "toplevel.h"
 #include "utils.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
-#include "render/x11/compositor_selection_owner.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
@@ -53,6 +57,8 @@ compositor::compositor()
     m_releaseSelectionTimer.setInterval(compositor_lost_message_delay);
     connect(
         &m_releaseSelectionTimer, &QTimer::timeout, this, &compositor::releaseCompositorSelection);
+    QObject::connect(
+        this, &compositor::aboutToToggleCompositing, this, [this] { overlay_window = nullptr; });
 
     start();
 }
@@ -173,34 +179,19 @@ void compositor::configChanged()
 
 bool compositor::checkForOverlayWindow(WId w) const
 {
-    if (!scene()) {
-        // No scene, so it cannot be the overlay window.
-        return false;
-    }
-    if (!scene()->overlayWindow()) {
+    if (!overlay_window) {
         // No overlay window, it cannot be the overlay.
         return false;
     }
     // Compare the window ID's.
-    return w == scene()->overlayWindow()->window();
-}
-
-bool compositor::isOverlayWindowVisible() const
-{
-    if (!scene()) {
-        return false;
-    }
-    if (!scene()->overlayWindow()) {
-        return false;
-    }
-    return scene()->overlayWindow()->isVisible();
+    return w == overlay_window->window();
 }
 
 bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& windows)
 {
     compositeTimer.stop();
 
-    if (scene()->usesOverlayWindow() && !isOverlayWindowVisible()) {
+    if (overlay_window && !overlay_window->isVisible()) {
         // Abort since nothing is visible.
         return false;
     }
@@ -231,8 +222,8 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     }
 
     // Move elevated windows to the top of the stacking order
-    for (EffectWindow* c : static_cast<EffectsHandlerImpl*>(effects)->elevatedWindows()) {
-        auto t = static_cast<EffectWindowImpl*>(c)->window();
+    for (auto c : static_cast<effects_handler_impl*>(effects)->elevatedWindows()) {
+        auto t = static_cast<effects_window_impl*>(c)->window();
         remove_all(windows, t);
         windows.push_back(t);
     }
@@ -282,6 +273,23 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
     repaints_region = QRegion();
 
     return true;
+}
+
+render::scene* compositor::create_scene(QVector<CompositingType> const& support)
+{
+    for (auto type : support) {
+        if (type == OpenGLCompositing) {
+            qCDebug(KWIN_CORE) << "Creating OpenGL scene.";
+            return gl::create_scene(this);
+        }
+#ifdef KWIN_HAVE_XRENDER_COMPOSITING
+        if (type == XRenderCompositing) {
+            qCDebug(KWIN_CORE) << "Creating XRender scene.";
+            return xrender::create_scene(this);
+        }
+#endif
+    }
+    return nullptr;
 }
 
 std::deque<Toplevel*> compositor::performCompositing()

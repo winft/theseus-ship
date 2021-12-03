@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "debug/wayland_console.h"
 #include "platform.h"
-#include "effects.h"
+#include "render/effects.h"
 #include "render/wayland/compositor.h"
 #include "screenlockerwatcher.h"
 #include "seat/backend/logind/session.h"
@@ -137,7 +137,7 @@ ApplicationWayland::~ApplicationWayland()
 
     // need to unload all effects prior to destroying X connection as they might do X calls
     if (effects) {
-        static_cast<EffectsHandlerImpl*>(effects)->unloadAllEffects();
+        static_cast<render::effects_handler_impl*>(effects)->unloadAllEffects();
     }
 
     if (exit_with_process && exit_with_process->state() != QProcess::NotRunning) {

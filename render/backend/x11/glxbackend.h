@@ -6,16 +6,26 @@
 #ifndef KWIN_GLX_BACKEND_H
 #define KWIN_GLX_BACKEND_H
 
-#include "backend.h"
 #include "base/x11/event_filter.h"
-#include "texture.h"
+#include "render/gl/backend.h"
+#include "render/gl/texture.h"
 
 #include <epoxy/glx.h>
 #include <fixx11h.h>
 #include <memory>
 #include <xcb/glx.h>
 
-namespace KWin::render::backend::x11
+namespace KWin::render
+{
+
+namespace x11
+{
+class overlay_window;
+}
+
+class compositor;
+
+namespace backend::x11
 {
 
 // GLX_MESA_swap_interval
@@ -48,19 +58,17 @@ private:
 /**
  * @brief OpenGL Backend using GLX over an X overlay window.
  */
-class GlxBackend : public OpenGLBackend
+class GlxBackend : public gl::backend
 {
 public:
-    GlxBackend(Display* display);
+    GlxBackend(Display* display, render::compositor* compositor);
     ~GlxBackend() override;
     void screenGeometryChanged(const QSize& size) override;
-    SceneOpenGLTexturePrivate* createBackendTexture(SceneOpenGLTexture* texture) override;
+    gl::texture_private* createBackendTexture(gl::texture* texture) override;
     QRegion prepareRenderingFrame() override;
     void endRenderingFrame(const QRegion& damage, const QRegion& damagedRegion) override;
     bool makeCurrent() override;
     void doneCurrent() override;
-    OverlayWindow* overlayWindow() const override;
-    bool usesOverlayWindow() const override;
     bool hasSwapEvent() const override;
     void init() override;
 
@@ -83,10 +91,7 @@ private:
     int visualDepth(xcb_visualid_t visual) const;
     FBConfigInfo* infoForVisual(xcb_visualid_t visual);
 
-    /**
-     * @brief The OverlayWindow used by this Backend.
-     */
-    OverlayWindow* m_overlayWindow;
+    std::unique_ptr<render::x11::overlay_window> overlay_window;
     Window window;
     GLXFBConfig fbconfig;
     GLXWindow glxWindow;
@@ -100,32 +105,36 @@ private:
     bool m_haveEXTSwapControl = false;
     bool m_needsCompositeTimerStart = false;
     Display* m_x11Display;
+    render::compositor* compositor;
+
     friend class GlxTexture;
 };
 
 /**
  * @brief Texture using an GLXPixmap.
  */
-class GlxTexture : public SceneOpenGLTexturePrivate
+class GlxTexture : public gl::texture_private
 {
 public:
     ~GlxTexture() override;
     void onDamage() override;
-    bool loadTexture(WindowPixmap* pixmap) override;
-    OpenGLBackend* backend() override;
+    bool loadTexture(render::window_pixmap* pixmap) override;
+    gl::backend* backend() override;
 
 private:
     friend class GlxBackend;
-    GlxTexture(SceneOpenGLTexture* texture, GlxBackend* backend);
+    GlxTexture(gl::texture* texture, GlxBackend* backend);
     bool loadTexture(xcb_pixmap_t pix, const QSize& size, xcb_visualid_t visual);
     Display* display() const
     {
         return m_backend->m_x11Display;
     }
-    SceneOpenGLTexture* q;
+    gl::texture* q;
     GlxBackend* m_backend;
     GLXPixmap m_glxpixmap; // the glx pixmap the texture is bound to
 };
 
-} // namespace
+}
+}
+
 #endif // KWIN_GLX_BACKEND_H

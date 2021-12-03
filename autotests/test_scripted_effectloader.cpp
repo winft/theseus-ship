@@ -17,9 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "../effectloader.h"
-#include "../scripting/effect.h"
 #include "mock_effectshandler.h"
+#include "render/effect_loader.h"
+#include "scripting/effect.h"
+
 // for mocking
 #include "../input/cursor.h"
 #include "../screenedge.h"
@@ -31,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Qt
 #include <QStringList>
 #include <QtTest>
-Q_DECLARE_METATYPE(KWin::LoadEffectFlags)
+Q_DECLARE_METATYPE(KWin::render::load_effect_flags)
 Q_DECLARE_METATYPE(KWin::Effect*)
 Q_DECLARE_METATYPE(KSharedConfigPtr)
 
@@ -65,8 +66,6 @@ QPoint cursor::pos()
 {
     return s_cursorPos;
 }
-}
-
 }
 
 class TestScriptedEffectLoader : public QObject
@@ -164,7 +163,7 @@ void TestScriptedEffectLoader::testHasEffect()
 
     QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(
         new MockEffectsHandler(KWin::XRenderCompositing));
-    KWin::ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
     QCOMPARE(loader.hasEffect(name), expected);
 
     // each available effect should also be supported
@@ -195,7 +194,7 @@ void TestScriptedEffectLoader::testKnownEffects()
                     << QStringLiteral("kwin4_effect_translucency")
                     << QStringLiteral("kwin4_effect_windowaperture");
 
-    KWin::ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
     QStringList result = loader.listOfKnownEffects();
     // at least as many effects as we expect - system running the test could have more effects
     QVERIFY(result.size() >= expectedEffects.size());
@@ -238,16 +237,16 @@ void TestScriptedEffectLoader::testLoadEffect()
 
     QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(
         new MockEffectsHandler(KWin::XRenderCompositing));
-    KWin::ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     loader.setConfig(config);
 
     qRegisterMetaType<KWin::Effect*>();
-    QSignalSpy spy(&loader, &KWin::ScriptedEffectLoader::effectLoaded);
+    QSignalSpy spy(&loader, &render::scripted_effect_loader::effectLoaded);
     // connect to signal to ensure that we delete the Effect again as the Effect doesn't have a
     // parent
     connect(&loader,
-            &KWin::ScriptedEffectLoader::effectLoaded,
+            &render::scripted_effect_loader::effectLoaded,
             [&name](KWin::Effect* effect, const QString& effectName) {
                 QCOMPARE(effectName, name.toLower());
                 effect->deleteLater();
@@ -288,12 +287,12 @@ void TestScriptedEffectLoader::testLoadScriptedEffect_data()
 {
     QTest::addColumn<QString>("name");
     QTest::addColumn<bool>("expected");
-    QTest::addColumn<KWin::LoadEffectFlags>("loadFlags");
+    QTest::addColumn<render::load_effect_flags>("loadFlags");
 
     auto const checkDefault
-        = KWin::LoadEffectFlags::Load | KWin::LoadEffectFlags::CheckDefaultFunction;
-    auto const forceFlags = KWin::LoadEffectFlags::Load;
-    auto const dontLoadFlags = KWin::LoadEffectFlags();
+        = render::load_effect_flags::load | render::load_effect_flags::check_default_function;
+    auto const forceFlags = render::load_effect_flags::load;
+    auto const dontLoadFlags = render::load_effect_flags();
 
     // enabled by default
     QTest::newRow("Fade") << QStringLiteral("kwin4_effect_fade") << true << checkDefault;
@@ -314,11 +313,11 @@ void TestScriptedEffectLoader::testLoadScriptedEffect()
 {
     QFETCH(QString, name);
     QFETCH(bool, expected);
-    QFETCH(KWin::LoadEffectFlags, loadFlags);
+    QFETCH(render::load_effect_flags, loadFlags);
 
     QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(
         new MockEffectsHandler(KWin::XRenderCompositing));
-    KWin::ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     loader.setConfig(config);
 
@@ -331,11 +330,11 @@ void TestScriptedEffectLoader::testLoadScriptedEffect()
     QCOMPARE(services.count(), 1);
 
     qRegisterMetaType<KWin::Effect*>();
-    QSignalSpy spy(&loader, &KWin::ScriptedEffectLoader::effectLoaded);
+    QSignalSpy spy(&loader, &render::scripted_effect_loader::effectLoaded);
     // connect to signal to ensure that we delete the Effect again as the Effect doesn't have a
     // parent
     connect(&loader,
-            &KWin::ScriptedEffectLoader::effectLoaded,
+            &render::scripted_effect_loader::effectLoaded,
             [&name](KWin::Effect* effect, const QString& effectName) {
                 QCOMPARE(effectName, name.toLower());
                 effect->deleteLater();
@@ -376,7 +375,7 @@ void TestScriptedEffectLoader::testLoadAllEffects()
 {
     QScopedPointer<MockEffectsHandler, QScopedPointerDeleteLater> mockHandler(
         new MockEffectsHandler(KWin::XRenderCompositing));
-    KWin::ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
 
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
 
@@ -407,10 +406,10 @@ void TestScriptedEffectLoader::testLoadAllEffects()
     loader.setConfig(config);
 
     qRegisterMetaType<KWin::Effect*>();
-    QSignalSpy spy(&loader, &KWin::ScriptedEffectLoader::effectLoaded);
+    QSignalSpy spy(&loader, &render::scripted_effect_loader::effectLoaded);
     // connect to signal to ensure that we delete the Effect again as the Effect doesn't have a
     // parent
-    connect(&loader, &KWin::ScriptedEffectLoader::effectLoaded, [](KWin::Effect* effect) {
+    connect(&loader, &render::scripted_effect_loader::effectLoaded, [](KWin::Effect* effect) {
         effect->deleteLater();
     });
 
@@ -460,7 +459,7 @@ void TestScriptedEffectLoader::testCancelLoadAllEffects()
 {
     // this test verifies that no test gets loaded when the loader gets cleared
     MockEffectsHandler mockHandler(KWin::XRenderCompositing);
-    KWin::ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
 
     // prepare the configuration to hard enable/disable the effects we want to load
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -472,7 +471,7 @@ void TestScriptedEffectLoader::testCancelLoadAllEffects()
     loader.setConfig(config);
 
     qRegisterMetaType<KWin::Effect*>();
-    QSignalSpy spy(&loader, &KWin::ScriptedEffectLoader::effectLoaded);
+    QSignalSpy spy(&loader, &render::scripted_effect_loader::effectLoaded);
     QVERIFY(spy.isValid());
 
     loader.queryAndLoadAll();
@@ -483,5 +482,7 @@ void TestScriptedEffectLoader::testCancelLoadAllEffects()
     QVERIFY(spy.isEmpty());
 }
 
-QTEST_MAIN(TestScriptedEffectLoader)
+}
+
+QTEST_MAIN(KWin::TestScriptedEffectLoader)
 #include "test_scripted_effectloader.moc"

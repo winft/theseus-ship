@@ -19,9 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "x11_filter.h"
 
-#include "effects.h"
+#include "render/effects.h"
 #include "screenedge.h"
 #include "tabbox/tabbox.h"
+#include "xcbutils.h"
 
 #include <KKeyServer>
 
@@ -54,7 +55,8 @@ bool X11Filter::event(xcb_generic_event_t* event)
         xcb_allow_events(connection(), XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
         const auto tab = TabBox::TabBox::self();
         if (!tab->isShown() && tab->isDisplayed()) {
-            if (effects && static_cast<EffectsHandlerImpl*>(effects)->isMouseInterception()) {
+            if (effects
+                && static_cast<render::effects_handler_impl*>(effects)->isMouseInterception()) {
                 // pass on to effects, effects will filter out the event
                 return false;
             }

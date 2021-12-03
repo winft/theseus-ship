@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "effectloader.h"
-#include "effects.h"
 #include "platform.h"
+#include "render/effect_loader.h"
+#include "render/effects.h"
 #include "toplevel.h"
 #include "useractions.h"
 #include "wayland_server.h"
@@ -71,7 +71,7 @@ void PopupOpenCloseAnimationTest::initTestCase()
 
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
     for (const QString& name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -92,7 +92,7 @@ void PopupOpenCloseAnimationTest::init()
 
 void PopupOpenCloseAnimationTest::cleanup()
 {
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
+    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
@@ -106,7 +106,7 @@ void PopupOpenCloseAnimationTest::testAnimatePopups()
     // to animate popups(e.g. popup menus, tooltips, etc).
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
+    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the main window.
@@ -167,7 +167,7 @@ void PopupOpenCloseAnimationTest::testAnimateUserActionsPopup()
     // to animate the user actions popup.
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
+    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the test client.
@@ -219,7 +219,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     // to animate decoration tooltips.
 
     // Make sure that we have the right effects ptr.
-    auto effectsImpl = qobject_cast<EffectsHandlerImpl*>(effects);
+    auto effectsImpl = qobject_cast<render::effects_handler_impl*>(effects);
     QVERIFY(effectsImpl);
 
     // Create the test client.

@@ -365,7 +365,6 @@ include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}/libkwineffects
     ${CMAKE_CURRENT_SOURCE_DIR}/effects
     ${CMAKE_CURRENT_SOURCE_DIR}/tabbox
-    ${CMAKE_CURRENT_SOURCE_DIR}/platformsupport
 )
 
 add_subdirectory(libkwineffects)
@@ -384,7 +383,6 @@ add_subdirectory(helpers)
 ########### next target ###############
 
 set(kwin_SRCS
-    abstract_opengl_context_attribute_builder.cpp
     atoms.cpp
     base/x11/event_filter.cpp
     base/x11/event_filter_container.cpp
@@ -406,9 +404,6 @@ set(kwin_SRCS
     decorations/decorations_logging.cpp
     decorations/settings.cpp
     decorations/window.cpp
-    effectloader.cpp
-    effects.cpp
-    egl_context_attribute_builder.cpp
     input/device_redirect.cpp
     input/event_filter.cpp
     input/event_spy.cpp
@@ -438,18 +433,33 @@ set(kwin_SRCS
     onscreennotification.cpp
     options.cpp
     osd.cpp
-    outline.cpp
-    overlaywindow.cpp
     platform.cpp
-    render/x11/compositor.cpp
-    render/x11/compositor_selection_owner.cpp
     render/compositor.cpp
     render/cursor.cpp
+    render/effect_loader.cpp
+    render/effects.cpp
+    render/gl/backend.cpp
+    render/gl/context_attribute_builder.cpp
+    render/gl/deco_renderer.cpp
+    render/gl/effect_frame.cpp
+    render/gl/egl_context_attribute_builder.cpp
+    render/gl/lanczos_filter.cpp
+    render/gl/scene.cpp
+    render/gl/shadow.cpp
+    render/gl/texture.cpp
+    render/gl/window.cpp
+    render/scene.cpp
+    render/shadow.cpp
+    render/thumbnail_item.cpp
+    render/window.cpp
+    render/x11/compositor.cpp
+    render/x11/compositor_selection_owner.cpp
+    render/x11/outline.cpp
+    render/x11/overlay_window.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp
     rules/rules.cpp
     rules/window_rules.cpp
-    scene.cpp
     screenedge.cpp
     screenlockerwatcher.cpp
     screens.cpp
@@ -468,9 +478,7 @@ set(kwin_SRCS
     scripting/space.cpp
     seat/session.cpp
     seat/backend/logind/session.cpp
-    shadow.cpp
     sm.cpp
-    thumbnailitem.cpp
     toplevel.cpp
     useractions.cpp
     utils.cpp
@@ -500,6 +508,18 @@ set(kwin_SRCS
     perf/ftrace.cpp
 )
 
+if (KWIN_BUILD_XRENDER_COMPOSITING)
+    set(kwin_SRCS
+        ${kwin_SRCS}
+        render/xrender/backend.cpp
+        render/xrender/deco_renderer.cpp
+        render/xrender/effect_frame.cpp
+        render/xrender/scene.cpp
+        render/xrender/shadow.cpp
+        render/xrender/window.cpp
+    )
+endif()
+
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(kwin_SRCS
         ${kwin_SRCS}
@@ -519,6 +539,8 @@ ecm_qt_declare_logging_category(kwin_SRCS
         Critical
 )
 
+qt5_add_resources(kwin_SRCS render/gl/resources.qrc)
+
 qt5_add_dbus_adaptor(kwin_SRCS
   scripting/org.kde.kwin.Script.xml
   scripting/script.h
@@ -533,7 +555,7 @@ kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_book_settings_base.kcfgc)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.xml dbusinterface.h KWin::DBusInterface)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.kwin.Compositing.xml dbusinterface.h KWin::CompositorDBusInterface)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.kwin.ColorCorrect.xml colorcorrection/colorcorrectdbusinterface.h KWin::ColorCorrect::ColorCorrectDBusInterface)
-qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} effects.h KWin::EffectsHandlerImpl)
+qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_impl)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.VirtualDesktopManager.xml dbusinterface.h KWin::VirtualDesktopManagerDBusInterface)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.Session.xml sm.h KWin::SessionManager)
 
@@ -616,6 +638,9 @@ set(kwinLibs
     ${kwin_XCB_LIBS}
     ${kwin_WAYLAND_LIBS}
     Libinput::Libinput
+
+    # For render code
+    kwinxrenderutils
 )
 
 add_library(kwin SHARED ${kwin_SRCS})
@@ -656,7 +681,7 @@ generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
 if(CMAKE_SYSTEM MATCHES "FreeBSD")
     # epoll is required, includes live under ${LOCALBASE}, separate library
     target_include_directories(kwin PUBLIC ${epoll_INCLUDE_DIRS})
-    target_link_libraries(kwin ${kwinLibs} ${epoll_LIBRARIES}) 
+    target_link_libraries(kwin ${kwinLibs} ${epoll_LIBRARIES})
 endif()
 
 
@@ -671,7 +696,6 @@ set(kwin_X11_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_x11.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/non_composited_outline.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/overlaywindow_x11.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/randr_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/screenedges_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_decoration_renderer.cpp
@@ -701,7 +725,6 @@ add_library(kwin_x11_lib STATIC
 target_link_libraries(kwin_x11_lib
     kwin
     kwinxrenderutils
-    SceneOpenGLBackend
     KF5::Crash
     Qt::X11Extras
     XCB::CURSOR
@@ -748,7 +771,6 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
         Critical
 )
 
-add_subdirectory(platformsupport)
 add_subdirectory(plugins)
 
 set(kwin_WAYLAND_SRCS
@@ -817,7 +839,14 @@ set(kwin_WAYLAND_SRCS
    input/touch.cpp
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
-   linux_dmabuf.cpp
+   render/gl/egl_backend.cpp
+   render/gl/egl_dmabuf.cpp
+   render/qpainter/backend.cpp
+   render/qpainter/deco_renderer.cpp
+   render/qpainter/effect_frame.cpp
+   render/qpainter/scene.cpp
+   render/qpainter/shadow.cpp
+   render/qpainter/window.cpp
    render/backend/wlroots/backend.cpp
    render/backend/wlroots/buffer.cpp
    render/backend/wlroots/egl_backend.cpp
@@ -825,6 +854,7 @@ set(kwin_WAYLAND_SRCS
    render/backend/wlroots/output.cpp
    render/wayland/compositor.cpp
    render/wayland/effects.cpp
+   render/wayland/linux_dmabuf.cpp
    render/wayland/output.cpp
    render/wayland/presentation.cpp
    seat/backend/wlroots/session.cpp
@@ -860,7 +890,6 @@ target_link_libraries(kwin_wayland_lib
 PUBLIC
   kwin
   kwinxrenderutils
-  SceneOpenGLBackend
   gbm::gbm
   Wayland::Server
   wlroots::wlroots

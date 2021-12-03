@@ -176,6 +176,13 @@ void remove_all_if(V& container, F&& f)
     container.erase(std::remove_if(container.begin(), container.end(), f), container.end());
 }
 
+/// Returns the number an enum value corresponds to. Helpful for enum classes.
+template<typename Enum>
+constexpr auto enum_index(Enum enumerator) noexcept
+{
+    return static_cast<std::underlying_type_t<Enum>>(enumerator);
+}
+
 /**
  * Helper class to acquire and release a lock inside a scope.
  */

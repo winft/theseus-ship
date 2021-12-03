@@ -40,7 +40,7 @@ public:
 
     void init();
 
-    OpenGLBackend* createOpenGLBackend() override;
+    gl::backend* createOpenGLBackend(render::compositor* compositor) override;
     Edge* createScreenEdge(ScreenEdges* parent) override;
     bool requiresCompositing() const override;
     bool compositingPossible() const override;
@@ -50,15 +50,14 @@ public:
 
     void setupActionForGlobalAccel(QAction* action) override;
 
-    OverlayWindow* createOverlayWindow() override;
-    OutlineVisual* createOutline(Outline* outline) override;
+    render::x11::outline_visual* createOutline(render::x11::outline* outline) override;
     Decoration::Renderer*
     createDecorationRenderer(Decoration::DecoratedClientImpl* client) override;
 
     QSize screenSize() const override;
     void invertScreen() override;
 
-    void createEffectsHandler(render::compositor* compositor, Scene* scene) override;
+    void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
     QVector<CompositingType> supportedCompositors() const override;
 
     void initOutputs();

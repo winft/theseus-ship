@@ -1089,8 +1089,8 @@ public:
     virtual double animationTimeFactor() const = 0;
     virtual WindowQuadType newWindowQuadType() = 0;
 
-    Q_SCRIPTABLE virtual KWin::EffectWindow* findWindow(WId id) const = 0;
-    Q_SCRIPTABLE virtual KWin::EffectWindow* findWindow(Wrapland::Server::Surface *surf) const = 0;
+    Q_SCRIPTABLE KWin::EffectWindow* findWindow(WId id) const;
+    Q_SCRIPTABLE KWin::EffectWindow* findWindow(Wrapland::Server::Surface *surf) const;
     /**
      * Finds the EffectWindow for the internal window @p w.
      * If there is no such window @c null is returned.
@@ -1100,14 +1100,15 @@ public:
      *
      * @since 5.16
      */
-    Q_SCRIPTABLE virtual KWin::EffectWindow *findWindow(QWindow *w) const = 0;
+    Q_SCRIPTABLE KWin::EffectWindow* findWindow(QWindow *w) const;
     /**
      * Finds the EffectWindow for the Toplevel with KWin internal @p id.
      * If there is no such window @c null is returned.
      *
      * @since 5.16
      */
-    Q_SCRIPTABLE virtual KWin::EffectWindow *findWindow(const QUuid &id) const = 0;
+    Q_SCRIPTABLE KWin::EffectWindow* findWindow(const QUuid &id) const;
+
     virtual EffectWindowList stackingOrder() const = 0;
     // window will be temporarily painted as if being at the top of the stack
     Q_SCRIPTABLE virtual void setElevatedWindow(KWin::EffectWindow* w, bool set) = 0;
@@ -1861,6 +1862,11 @@ Q_SIGNALS:
     void windowExpandedGeometryChanged(KWin::EffectWindow *window);
 
 protected:
+    virtual EffectWindow* find_window_by_wid(WId id) const = 0;
+    virtual EffectWindow* find_window_by_surface(Wrapland::Server::Surface* surface) const = 0;
+    virtual EffectWindow* find_window_by_qwindow(QWindow* window) const = 0;
+    virtual EffectWindow* find_window_by_uuid(QUuid const& id) const = 0;
+
     QVector< EffectPair > loaded_effects;
     //QHash< QString, EffectFactory* > effect_factories;
     CompositingType compositing_type;

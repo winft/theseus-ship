@@ -28,7 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class EffectWindowGroupImpl;
+namespace render
+{
+class effect_window_group_impl;
+}
 
 namespace win::x11
 {
@@ -52,7 +55,7 @@ public:
     xcb_timestamp_t userTime() const;
     void ref();
     void deref();
-    EffectWindowGroupImpl* effectGroup();
+    render::effect_window_group_impl* effectGroup();
 
 private:
     void startupIdChanged();
@@ -62,7 +65,7 @@ private:
     NETWinInfo* leader_info;
     xcb_timestamp_t user_time;
     int refcount;
-    EffectWindowGroupImpl* effect_group;
+    render::effect_window_group_impl* effect_group;
 };
 
 inline xcb_window_t group::leader() const
@@ -90,7 +93,7 @@ inline xcb_timestamp_t group::userTime() const
     return user_time;
 }
 
-inline EffectWindowGroupImpl* group::effectGroup()
+inline render::effect_window_group_impl* group::effectGroup()
 {
     return effect_group;
 }

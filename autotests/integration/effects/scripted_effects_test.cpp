@@ -23,10 +23,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "scripting/effect.h"
 
 #include "effect_builtins.h"
-#include "effectloader.h"
-#include "effects.h"
 #include "platform.h"
 #include "render/compositor.h"
+#include "render/effect_loader.h"
+#include "render/effects.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "win/stacking.h"
@@ -121,12 +121,12 @@ bool ScriptedEffectWithDebugSpy::load(const QString& name)
         return false;
     }
 
-    // inject our newly created effect to be registered with the EffectsHandlerImpl::loaded_effects
-    // this is private API so some horrible code is used to find the internal effectloader
-    // and register ourselves
+    // inject our newly created effect to be registered with the
+    // render::effects_handler_impl::loaded_effects this is private API so some horrible code is
+    // used to find the internal effectloader and register ourselves
     auto c = effects->children();
     for (auto it = c.begin(); it != c.end(); ++it) {
-        if (qstrcmp((*it)->metaObject()->className(), "KWin::EffectLoader") != 0) {
+        if (qstrcmp((*it)->metaObject()->className(), "KWin::render::effect_loader") != 0) {
             continue;
         }
         QMetaObject::invokeMethod(
@@ -134,7 +134,7 @@ bool ScriptedEffectWithDebugSpy::load(const QString& name)
         break;
     }
 
-    return (static_cast<EffectsHandlerImpl*>(effects)->isEffectLoaded(name));
+    return (static_cast<render::effects_handler_impl*>(effects)->isEffectLoaded(name));
 }
 
 void ScriptedEffectsTest::initTestCase()
@@ -146,7 +146,7 @@ void ScriptedEffectsTest::initTestCase()
     QVERIFY(startup_spy.isValid());
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
-    ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
 
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
@@ -182,7 +182,7 @@ void ScriptedEffectsTest::cleanup()
 {
     Test::destroy_wayland_connection();
 
-    auto effectsImpl = static_cast<EffectsHandlerImpl*>(effects);
+    auto effectsImpl = static_cast<render::effects_handler_impl*>(effects);
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 

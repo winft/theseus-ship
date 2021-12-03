@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "group.h"
-#include "effects.h"
+#include "render/effects.h"
 #include "workspace.h"
 
 #include "win/control.h"
@@ -48,7 +48,7 @@ group::group(xcb_window_t leader_P)
         leader_info = new NETWinInfo(
             connection(), leader_P, rootWindow(), NET::Properties(), NET::WM2StartupId);
     }
-    effect_group = new EffectWindowGroupImpl(this);
+    effect_group = new render::effect_window_group_impl(this);
     workspace()->addGroup(this);
 }
 

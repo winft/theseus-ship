@@ -13,7 +13,7 @@
 #include "decorations/decoratedclient.h"
 #include "decorations/decorationpalette.h"
 #include "decorations/window.h"
-#include "effects.h"
+#include "render/effects.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
@@ -288,7 +288,7 @@ bool control::have_resize_effect() const
 void control::update_have_resize_effect()
 {
     m_have_resize_effect
-        = effects && static_cast<EffectsHandlerImpl*>(effects)->provides(Effect::Resize);
+        = effects && static_cast<render::effects_handler_impl*>(effects)->provides(Effect::Resize);
 }
 
 void control::reset_have_resize_effect()

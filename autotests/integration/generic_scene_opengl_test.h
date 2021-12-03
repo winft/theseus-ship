@@ -37,7 +37,6 @@ protected:
 private Q_SLOTS:
     void initTestCase();
     void cleanup();
-    void testRestart_data();
     void testRestart();
 
 private:

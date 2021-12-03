@@ -764,6 +764,26 @@ bool EffectsHandler::isOpenGLCompositing() const
     return compositing_type & OpenGLCompositing;
 }
 
+EffectWindow* EffectsHandler::findWindow(WId id) const
+{
+    return find_window_by_wid(id);
+}
+
+EffectWindow* EffectsHandler::findWindow(Wrapland::Server::Surface* surface) const
+{
+    return find_window_by_surface(surface);
+}
+
+EffectWindow* EffectsHandler::findWindow(QWindow* window) const
+{
+    return find_window_by_qwindow(window);
+}
+
+EffectWindow* EffectsHandler::findWindow(QUuid const& id) const
+{
+    return find_window_by_uuid(id);
+}
+
 EffectsHandler* effects = nullptr;
 
 EffectScreen::EffectScreen(QObject *parent)

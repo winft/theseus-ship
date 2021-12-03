@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "../../base/wayland/output.h"
 #include "../../debug/wayland_console.h"
-#include "../../effects.h"
 #include "../../input/backend/wlroots/platform.h"
 #include "../../input/wayland/cursor.h"
 #include "../../input/wayland/platform.h"
@@ -34,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../win/wayland/space.h"
 #include "../../xcbutils.h"
 #include "../../xwl/xwayland.h"
+#include "render/effects.h"
 
 #include <KCrash>
 #include <KPluginMetaData>
@@ -111,7 +111,7 @@ WaylandTestApplication::~WaylandTestApplication()
     // need to unload all effects prior to destroying X connection as they might do X calls
     // also before destroy Workspace, as effects might call into Workspace
     if (effects) {
-        static_cast<EffectsHandlerImpl*>(effects)->unloadAllEffects();
+        static_cast<render::effects_handler_impl*>(effects)->unloadAllEffects();
     }
 
     // Kill Xwayland before terminating its connection.

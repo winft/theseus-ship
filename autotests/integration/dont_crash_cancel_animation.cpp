@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "effectloader.h"
-#include "effects.h"
 #include "platform.h"
 #include "render/compositor.h"
+#include "render/effect_loader.h"
+#include "render/effects.h"
 #include "screens.h"
 #include "scripting/effect.h"
 #include "toplevel.h"
@@ -85,7 +85,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
 
     const auto children = effects->children();
     for (auto it = children.begin(); it != children.end(); ++it) {
-        if (qstrcmp((*it)->metaObject()->className(), "KWin::EffectLoader") != 0) {
+        if (qstrcmp((*it)->metaObject()->className(), "KWin::render::effect_loader") != 0) {
             continue;
         }
         QVERIFY(QMetaObject::invokeMethod(*it,
@@ -94,7 +94,8 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
                                           Q_ARG(QString, QStringLiteral("crashy"))));
         break;
     }
-    QVERIFY(static_cast<EffectsHandlerImpl*>(effects)->isEffectLoaded(QStringLiteral("crashy")));
+    QVERIFY(static_cast<render::effects_handler_impl*>(effects)->isEffectLoaded(
+        QStringLiteral("crashy")));
 
     using namespace Wrapland::Client;
     // create a window

@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "generic_scene_opengl_test.h"
 #include "effect_builtins.h"
-#include "effectloader.h"
 #include "platform.h"
 #include "render/compositor.h"
-#include "scene.h"
+#include "render/effect_loader.h"
+#include "render/scene.h"
 #include "wayland_server.h"
 
 #include "win/wayland/window.h"
@@ -58,7 +58,7 @@ void GenericSceneOpenGLTest::initTestCase()
     // disable all effects - we don't want to have it interact with the rendering
     auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     KConfigGroup plugins(config, QStringLiteral("Plugins"));
-    ScriptedEffectLoader loader;
+    render::scripted_effect_loader loader;
     const auto builtinNames = BuiltInEffects::availableEffectNames() << loader.listOfKnownEffects();
     for (QString name : builtinNames) {
         plugins.writeEntry(name + QStringLiteral("Enabled"), false);
@@ -81,23 +81,9 @@ void GenericSceneOpenGLTest::initTestCase()
     QCOMPARE(kwinApp()->platform->selectedCompositor(), KWin::OpenGLCompositing);
 }
 
-void GenericSceneOpenGLTest::testRestart_data()
-{
-    QTest::addColumn<bool>("core");
-
-    QTest::newRow("GLCore") << true;
-    QTest::newRow("Legacy") << false;
-}
-
 void GenericSceneOpenGLTest::testRestart()
 {
     // simple restart of the OpenGL compositor without any windows being shown
-
-    // setup opengl compositing options
-    auto compositingGroup = kwinApp()->config()->group("Compositing");
-    QFETCH(bool, core);
-    compositingGroup.writeEntry("GLCore", core);
-    compositingGroup.sync();
 
     QSignalSpy sceneCreatedSpy(render::compositor::self(), &render::compositor::sceneCreated);
     QVERIFY(sceneCreatedSpy.isValid());

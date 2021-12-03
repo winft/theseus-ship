@@ -15,7 +15,6 @@
 #include "main_x11.h"
 #include "non_composited_outline.h"
 #include "options.h"
-#include "overlaywindow_x11.h"
 #include "randr_filter.h"
 #include "render/compositor.h"
 #include "screenedges_filter.h"
@@ -91,13 +90,13 @@ QSize X11StandalonePlatform::screenSize() const
     return QSize(screen->width_in_pixels, screen->height_in_pixels);
 }
 
-OpenGLBackend* X11StandalonePlatform::createOpenGLBackend()
+gl::backend* X11StandalonePlatform::createOpenGLBackend(render::compositor* compositor)
 {
     switch (options->glPlatformInterface()) {
 #if HAVE_EPOXY_GLX
     case GlxPlatformInterface:
         if (hasGlx()) {
-            return new GlxBackend(m_x11Display);
+            return new GlxBackend(m_x11Display, compositor);
         } else {
             qCWarning(KWIN_X11STANDALONE) << "Glx not available, trying EGL instead.";
             // no break, needs fall-through
@@ -270,12 +269,7 @@ void X11StandalonePlatform::setupActionForGlobalAccel(QAction* action)
     });
 }
 
-OverlayWindow* X11StandalonePlatform::createOverlayWindow()
-{
-    return new OverlayWindowX11();
-}
-
-OutlineVisual* X11StandalonePlatform::createOutline(Outline* outline)
+render::x11::outline_visual* X11StandalonePlatform::createOutline(render::x11::outline* outline)
 {
     // first try composited Outline
     auto ret = Platform::createOutline(outline);
@@ -340,7 +334,8 @@ void X11StandalonePlatform::invertScreen()
     }
 }
 
-void X11StandalonePlatform::createEffectsHandler(render::compositor* compositor, Scene* scene)
+void X11StandalonePlatform::createEffectsHandler(render::compositor* compositor,
+                                                 render::scene* scene)
 {
     new EffectsHandlerImplX11(compositor, scene);
 }

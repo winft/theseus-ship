@@ -20,7 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "space.h"
 
-#include "../outline.h"
+#include "render/x11/outline.h"
+
+#include <QApplication>
+#include <QDesktopWidget>
 
 namespace KWin::scripting
 {
@@ -147,17 +150,17 @@ void space::setupClientConnections(window* window)
 
 void space::showOutline(const QRect& geometry)
 {
-    outline()->show(geometry);
+    render::x11::get_outline()->show(geometry);
 }
 
 void space::showOutline(int x, int y, int width, int height)
 {
-    outline()->show(QRect(x, y, width, height));
+    render::x11::get_outline()->show(QRect(x, y, width, height));
 }
 
 void space::hideOutline()
 {
-    outline()->hide();
+    render::x11::get_outline()->hide();
 }
 
 window* space::getClient(qulonglong windowId)
@@ -246,4 +249,10 @@ window* declarative_script_space::atClientList(QQmlListProperty<window>* clients
     }
 }
 
-} // KWin
+void connect_legacy_screen_resize(space* receiver)
+{
+    QObject::connect(
+        QApplication::desktop(), &QDesktopWidget::resized, receiver, &space::screenResized);
+}
+
+}

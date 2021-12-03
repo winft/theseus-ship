@@ -11,7 +11,7 @@
 #include "shadow.h"
 #include "types.h"
 
-#include "outline.h"
+#include "render/x11/outline.h"
 #include "workspace.h"
 
 #include <QRect>
@@ -365,11 +365,11 @@ void set_electric_maximizing(Win* win, bool maximizing)
     win->control->set_electric_maximizing(maximizing);
 
     if (maximizing) {
-        outline()->show(
+        render::x11::get_outline()->show(
             electric_border_maximize_geometry(win, input::get_cursor()->pos(), win->desktop()),
             win->control->move_resize().geometry);
     } else {
-        outline()->hide();
+        render::x11::get_outline()->hide();
     }
 
     elevate(win, maximizing);

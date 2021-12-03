@@ -20,7 +20,6 @@
 
 namespace KWin
 {
-class Scene;
 class Toplevel;
 
 namespace render
@@ -32,6 +31,7 @@ class compositor_selection_owner;
 }
 
 class cursor;
+class scene;
 
 class KWIN_EXPORT compositor : public QObject
 {
@@ -95,10 +95,7 @@ public:
      */
     bool isActive();
 
-    Scene* scene() const
-    {
-        return m_scene;
-    }
+    render::scene* scene() const;
 
     static bool compositing();
 
@@ -128,6 +125,7 @@ protected:
      * Continues the startup after Scene And Workspace are created
      */
     void startupWithWorkspace();
+    virtual render::scene* create_scene(QVector<CompositingType> const& support) = 0;
 
     virtual std::deque<Toplevel*> performCompositing() = 0;
     void update_paint_periods(int64_t duration);
@@ -167,7 +165,7 @@ private:
     qint64 m_lastPaintDurations[2]{0};
     int m_paintPeriods{0};
 
-    Scene* m_scene;
+    std::unique_ptr<render::scene> m_scene;
 };
 
 }

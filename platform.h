@@ -43,12 +43,6 @@ class Manager;
 }
 
 class Edge;
-class OverlayWindow;
-class OpenGLBackend;
-class Outline;
-class OutlineVisual;
-class QPainterBackend;
-class Scene;
 class Screens;
 class ScreenEdges;
 class Toplevel;
@@ -61,7 +55,23 @@ class DecoratedClientImpl;
 
 namespace render
 {
+namespace gl
+{
+class backend;
+}
+namespace qpainter
+{
+class backend;
+}
+namespace x11
+{
+class outline;
+class outline_visual;
+}
+
 class compositor;
+class scene;
+
 }
 
 class KWIN_EXPORT Outputs : public QVector<base::output*>
@@ -81,8 +91,8 @@ class KWIN_EXPORT Platform : public QObject
 public:
     ~Platform() override;
 
-    virtual OpenGLBackend *createOpenGLBackend();
-    virtual QPainterBackend *createQPainterBackend();
+    virtual render::gl::backend *createOpenGLBackend(render::compositor* compositor);
+    virtual render::qpainter::backend *createQPainterBackend();
 
     /**
      * Allows the platform to create a platform specific screen edge.
@@ -243,21 +253,15 @@ public:
     }
 
     /**
-     * Creates the OverlayWindow required for X11 based compositors.
-     * Default implementation returns @c nullptr.
-     */
-    virtual OverlayWindow *createOverlayWindow();
-
-    /**
      * Queries the current X11 time stamp of the X server.
      */
     void updateXTime();
 
     /**
-     * Creates the OutlineVisual for the given @p outline.
-     * Default implementation creates an OutlineVisual suited for composited usage.
+     * Creates the outline_visual for the given @p outline.
+     * Default implementation creates an outline_visual suited for composited usage.
      */
-    virtual OutlineVisual *createOutline(Outline *outline);
+    virtual render::x11::outline_visual* createOutline(render::x11::outline* outline);
 
     /**
      * Creates the Decoration::Renderer for the given @p client.
@@ -275,7 +279,7 @@ public:
     /**
      * Default implementation creates an EffectsHandlerImp;
      */
-    virtual void createEffectsHandler(render::compositor *compositor, Scene *scene);
+    virtual void createEffectsHandler(render::compositor *compositor, render::scene *scene);
 
     /**
      * The CompositingTypes supported by the Platform.

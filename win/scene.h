@@ -6,8 +6,9 @@
 #pragma once
 
 #include "deco.h"
-#include "effects.h"
-#include "shadow.h"
+#include "render/effects.h"
+#include "render/shadow.h"
+#include "render/window.h"
 
 namespace KWin::win
 {
@@ -94,7 +95,7 @@ auto update_shadow(Win* win)
         }
         Q_EMIT win->shadowChanged();
     } else if (win->effectWindow()) {
-        Shadow::createShadow(win);
+        render::shadow::createShadow(win);
     }
 
     if (auto shdw = shadow(win)) {

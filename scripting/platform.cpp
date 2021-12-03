@@ -16,8 +16,8 @@
 #include "window.h"
 
 #include "../options.h"
-#include "../thumbnailitem.h"
 #include "input/redirect.h"
+#include "render/thumbnail_item.h"
 #include "screenedge.h"
 #include "scripting_logging.h"
 #include "workspace.h"
@@ -59,8 +59,8 @@ platform::~platform()
 
 void platform::init()
 {
-    qmlRegisterType<DesktopThumbnailItem>("org.kde.kwin", 2, 0, "DesktopThumbnailItem");
-    qmlRegisterType<WindowThumbnailItem>("org.kde.kwin", 2, 0, "ThumbnailItem");
+    qmlRegisterType<render::desktop_thumbnail_item>("org.kde.kwin", 2, 0, "DesktopThumbnailItem");
+    qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 2, 0, "ThumbnailItem");
     qmlRegisterType<dbus_call>("org.kde.kwin", 2, 0, "DBusCall");
     qmlRegisterType<screen_edge_item>("org.kde.kwin", 2, 0, "ScreenEdgeItem");
     qmlRegisterType<models::v2::client_model>();
@@ -73,7 +73,7 @@ void platform::init()
         "org.kde.kwin", 2, 1, "ClientModelByScreenAndActivity");
     qmlRegisterType<models::v2::client_filter_model>("org.kde.kwin", 2, 0, "ClientFilterModel");
 
-    qmlRegisterType<WindowThumbnailItem>("org.kde.kwin", 3, 0, "WindowThumbnailItem");
+    qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 3, 0, "WindowThumbnailItem");
     qmlRegisterType<dbus_call>("org.kde.kwin", 3, 0, "DBusCall");
     qmlRegisterType<screen_edge_item>("org.kde.kwin", 3, 0, "ScreenEdgeItem");
     qmlRegisterType<models::v3::client_model>("org.kde.kwin", 3, 0, "ClientModel");

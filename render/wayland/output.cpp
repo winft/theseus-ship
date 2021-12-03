@@ -116,8 +116,8 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     }
 
     // Move elevated windows to the top of the stacking order
-    for (auto effect_window : static_cast<EffectsHandlerImpl*>(effects)->elevatedWindows()) {
-        auto window = static_cast<EffectWindowImpl*>(effect_window)->window();
+    for (auto effect_window : static_cast<effects_handler_impl*>(effects)->elevatedWindows()) {
+        auto window = static_cast<effects_window_impl*>(effect_window)->window();
         remove_all(windows, window);
         windows.push_back(window);
     }
@@ -190,7 +190,7 @@ std::deque<Toplevel*> output::run()
 
     // Start the actual painting process.
     auto const duration
-        = std::chrono::nanoseconds(compositor->scene()->paint(base, repaints, windows, now));
+        = std::chrono::nanoseconds(compositor->scene()->paint_output(base, repaints, windows, now));
 
 #if SWAP_TIME_DEBUG
     qDebug().noquote() << "RUN gap:" << to_ms(now_ns - swap_ref_time)
