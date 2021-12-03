@@ -456,16 +456,12 @@ int main(int argc, char * argv[])
     QCommandLineOption waylandSocketOption(QStringList{QStringLiteral("s"), QStringLiteral("socket")},
                                            i18n("Name of the Wayland socket to listen on. If not set \"wayland-0\" is used."),
                                            QStringLiteral("socket"));
-    QCommandLineOption waylandDisplayOption(QStringLiteral("wayland-display"),
-                                            i18n("The Wayland Display to use in windowed mode on platform Wayland."),
-                                            QStringLiteral("display"));
 
     QCommandLineParser parser;
     a.setupCommandLine(&parser);
 
     parser.addOption(xwaylandOption);
     parser.addOption(waylandSocketOption);
-    parser.addOption(waylandDisplayOption);
 
     QCommandLineOption libinputOption(QStringLiteral("libinput"),
                                       i18n("Enable libinput support for input events processing. Note: never use in a nested session.	(deprecated)"));
@@ -500,12 +496,7 @@ int main(int argc, char * argv[])
     }
 
     QSize initialWindowSize;
-    QByteArray deviceIdentifier;
     qreal outputScale = 1;
-
-    if (parser.isSet(waylandDisplayOption)) {
-        deviceIdentifier = parser.value(waylandDisplayOption).toUtf8();
-    }
 
     KWin::wayland_start_options flags;
     if (parser.isSet(screenLockerOption)) {
@@ -527,9 +518,6 @@ int main(int argc, char * argv[])
 
     a.init_platforms();
 
-    if (!deviceIdentifier.isEmpty()) {
-        a.platform->setDeviceIdentifier(deviceIdentifier);
-    }
     if (initialWindowSize.isValid()) {
         a.platform->setInitialWindowSize(initialWindowSize);
     }

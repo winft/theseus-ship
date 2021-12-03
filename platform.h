@@ -233,9 +233,6 @@ public:
     void setInitialWindowSize(const QSize &size) {
         m_initialWindowSize = size;
     }
-    void setDeviceIdentifier(const QByteArray &identifier) {
-        m_deviceIdentifier = identifier;
-    }
     bool supportsPointerWarping() const {
         return m_pointerWarping;
     }
@@ -342,9 +339,6 @@ public:
     }
 
     virtual clockid_t clockId() const;
-    QByteArray deviceIdentifier() const {
-        return m_deviceIdentifier;
-    }
     void repaint(const QRect &rect);
 
 Q_SIGNALS:
@@ -367,7 +361,6 @@ protected:
 
 private:
     QSize m_initialWindowSize;
-    QByteArray m_deviceIdentifier;
     bool m_pointerWarping = false;
     int m_initialOutputCount = 1;
     qreal m_initialOutputScale = 1;
