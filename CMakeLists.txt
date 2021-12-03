@@ -934,6 +934,12 @@ if (HAVE_LIBCAP)
     )
 endif()
 
+# Required for Plasma Wayland session. It expects a binary with this name to launch on startup.
+add_custom_target(kwin_wayland_wrapper ALL COMMAND
+    ${CMAKE_COMMAND} -E create_symlink
+    kwin_wayland ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/kwin_wayland_wrapper
+)
+
 ########### install files ###############
 
 install(FILES kwin.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR} RENAME ${KWIN_NAME}.kcfg)
@@ -983,3 +989,8 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/KWinDBusInterfaceConfig.cmake
 
 ecm_install_configured_files(INPUT plasma-kwin_x11.service.in plasma-kwin_wayland.service.in @ONLY
             DESTINATION ${SYSTEMD_USER_UNIT_INSTALL_DIR})
+
+install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/kwin_wayland_wrapper
+    DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
+)
