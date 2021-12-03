@@ -411,6 +411,7 @@ set(kwin_SRCS
     render/thumbnail_item.cpp
     render/x11/compositor_selection_owner.cpp
     scripting/dbus_call.cpp
+    scripting/desktop_background_item.cpp
     scripting/js_engine_global_methods_wrapper.cpp
     scripting/screen_edge_item.cpp
     scripting/effect.cpp

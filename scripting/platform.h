@@ -10,6 +10,7 @@
 #include "dbus_call.h"
 #include "screen_edge_item.h"
 #include "script.h"
+#include "scripting/desktop_background_item.h"
 #include "space.h"
 #include "v2/client_model.h"
 #include "v3/client_model.h"
@@ -119,6 +120,7 @@ public:
             "org.kde.kwin", 2, 1, "ClientModelByScreenAndActivity");
         qmlRegisterType<models::v2::client_filter_model>("org.kde.kwin", 2, 0, "ClientFilterModel");
 
+        qmlRegisterType<desktop_background_item>("org.kde.kwin", 3, 0, "DesktopBackgroundItem");
         qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 3, 0, "WindowThumbnailItem");
         qmlRegisterType<dbus_call>("org.kde.kwin", 3, 0, "DBusCall");
         qmlRegisterType<screen_edge_item>("org.kde.kwin", 3, 0, "ScreenEdgeItem");
