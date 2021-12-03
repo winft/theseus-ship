@@ -47,6 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KPluginMetaData>
 #include <KQuickAddons/QtQuickSettings>
 #include <KShell>
+#include <UpdateLaunchEnvironmentJob>
 
 // Qt
 #include <qplatformdefs.h>
@@ -334,6 +335,15 @@ void ApplicationWayland::startSession()
             p->deleteLater();
         }
     }
+
+    // Need to create a launch environment job for Plasma components to catch up in a systemd boot.
+    // This implies we're running in a full Plasma session i.e. when we use the wrapper (that's
+    // there the service name comes from), but we can also do it in a plain setup without session.
+    // Registering the service names indicates that we're live and all env vars are exported.
+    auto env_sync_job = new UpdateLaunchEnvironmentJob(process_environment);
+    QObject::connect(env_sync_job, &UpdateLaunchEnvironmentJob::finished, this, []() {
+        QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWinWrapper"));
+    });
 
     Q_EMIT startup_finished();
 }

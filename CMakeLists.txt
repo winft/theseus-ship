@@ -91,6 +91,11 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
     XmlGui
 )
 
+# Required frameworks by Wayland binary
+find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
+    DBusAddons
+)
+
 # optional frameworks
 find_package(KF5DocTools ${KF5_MIN_VERSION} CONFIG)
 set_package_properties(KF5DocTools PROPERTIES
@@ -910,6 +915,7 @@ target_link_libraries(kwin_wayland
     KF5WindowSystemKWinPlugin
     KWinQpaPlugin
     KF5::Crash
+    KF5::DBusAddons
 )
 
 if (HAVE_LIBCAP)
