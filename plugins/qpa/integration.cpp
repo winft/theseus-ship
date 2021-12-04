@@ -135,25 +135,9 @@ QStringList Integration::themeNames() const
     return QStringList({QLatin1String(QGenericUnixTheme::name)});
 }
 
-/**
- * Whether our Compositing EGL display allows a surface less context so that a sharing context could
- * be created.
- */
-bool supports_qpa_context()
-{
-    auto compositor = render::compositor::self();
-    if (Q_UNLIKELY(!compositor)) {
-        return false;
-    }
-    if (auto scene = compositor->scene()) {
-        return scene->supportsSurfacelessContext();
-    }
-    return false;
-}
-
 QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext* context) const
 {
-    if (supports_qpa_context()) {
+    if (render::compositor::self()->scene()->supportsSurfacelessContext()) {
         return new SharingPlatformContext(context);
     }
     if (kwinApp()->platform->sceneEglDisplay() != EGL_NO_DISPLAY) {
