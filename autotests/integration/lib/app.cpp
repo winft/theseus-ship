@@ -202,35 +202,41 @@ void WaylandTestApplication::start()
     ScreenLockerWatcher::self()->initialize();
 }
 
-void WaylandTestApplication::set_outputs(int count,
-                                         QVector<QRect> const& geometries,
+void WaylandTestApplication::set_outputs(size_t count)
+{
+    auto geometries = QVector<QRect>();
+    auto size = render->initialWindowSize();
+    auto width = 0;
+
+    for (size_t i = 0; i < count; i++) {
+        geometries.push_back({QPoint(width, 0), size});
+        width += size.width();
+    }
+
+    set_outputs(geometries);
+}
+
+void WaylandTestApplication::set_outputs(QVector<QRect> const& geometries)
+{
+    set_outputs(geometries, QVector<double>(geometries.size(), 1.));
+}
+
+void WaylandTestApplication::set_outputs(QVector<QRect> const& geometries,
                                          QVector<double> const& scales)
 {
-    assert(geometries.size() == 0 || geometries.size() == count);
-    assert(scales.size() == 0 || scales.size() == count);
+    assert(geometries.size() == scales.size());
 
     auto outputs_copy = render->all_outputs;
     for (auto output : outputs_copy) {
         delete output;
     }
 
-    auto sum_width = 0;
-    for (int i = 0; i < count; i++) {
-        auto const scale = scales.size() ? scales.at(i) : 1.;
-        auto const size
-            = (geometries.size() ? geometries.at(i).size() : render->initialWindowSize()) * scale;
+    for (int i = 0; i < geometries.size(); i++) {
+        auto const scale = scales.at(i);
+        auto const size = geometries.at(i).size() * scale;
 
         wlr_headless_add_output(base.backend.backend, size.width(), size.height());
-
-        auto added_output = render->all_outputs.back();
-
-        if (geometries.size()) {
-            added_output->force_geometry(geometries.at(i));
-        } else {
-            auto const geo = QRect(QPoint(sum_width, 0), render->initialWindowSize() * scale);
-            added_output->force_geometry(geo);
-            sum_width += geo.width();
-        }
+        render->all_outputs.back()->force_geometry(geometries.at(i));
     }
 
     // Update again in case of force geometry change.

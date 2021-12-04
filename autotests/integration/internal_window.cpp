@@ -688,7 +688,6 @@ void InternalWindowTest::testPopup()
 void InternalWindowTest::testScale()
 {
     Test::app()->set_outputs(
-        2,
         QVector<QRect>({QRect(0, 0, 1280, 1024), QRect(1280 / 2, 0, 1280, 1024)}),
         QVector<double>({2, 2}));
 

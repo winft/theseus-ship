@@ -374,7 +374,7 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     QVERIFY(screensChangedSpy.isValid());
 
     // Now let's remove the screen containing the cursor.
-    Test::app()->set_outputs(1, QVector<QRect>{QRect(0, 0, 1280, 1024)});
+    Test::app()->set_outputs(QVector<QRect>{QRect(0, 0, 1280, 1024)});
     QCOMPARE(screensChangedSpy.count(), 4);
     QCOMPARE(screens()->count(), 1);
 
@@ -1604,7 +1604,7 @@ void PointerInputTest::testConfineToScreenGeometry()
                                     QRect(1280, 0, 1280, 1024),
                                     QRect(2560, 0, 1280, 1024),
                                     QRect(1280, 1024, 1280, 1024)};
-    Test::app()->set_outputs(geometries.count(), geometries);
+    Test::app()->set_outputs(geometries);
 
     QCOMPARE(screens()->count(), geometries.count());
     QCOMPARE(screens()->geometry(0), geometries.at(0));

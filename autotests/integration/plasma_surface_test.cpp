@@ -238,7 +238,7 @@ void PlasmaSurfaceTest::testOSDPlacement()
     QVERIFY(screensChangedSpy.isValid());
 
     const QVector<QRect> geometries{QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)};
-    Test::app()->set_outputs(2, geometries);
+    Test::app()->set_outputs(geometries);
 
     QCOMPARE(screensChangedSpy.count(), screens()->count() + 2);
     QCOMPARE(screens()->count(), 2);

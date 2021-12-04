@@ -66,9 +66,9 @@ public:
 
     void start();
 
-    void set_outputs(int count,
-                     QVector<QRect> const& geometries = QVector<QRect>(),
-                     QVector<double> const& scales = QVector<double>());
+    void set_outputs(size_t count);
+    void set_outputs(QVector<QRect> const& geometries);
+    void set_outputs(QVector<QRect> const& geometries, QVector<double> const& scales);
 
 private:
     void handle_server_addons_created();

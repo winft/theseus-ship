@@ -538,7 +538,7 @@ void ActivationTest::stackScreensHorizontally()
         QRect(1280, 0, 1280, 1024),
     };
 
-    Test::app()->set_outputs(screenGeometries.count(), screenGeometries);
+    Test::app()->set_outputs(screenGeometries);
 }
 
 void ActivationTest::stackScreensVertically()
@@ -548,7 +548,7 @@ void ActivationTest::stackScreensVertically()
         QRect(0, 1024, 1280, 1024),
     };
 
-    Test::app()->set_outputs(screenGeometries.count(), screenGeometries);
+    Test::app()->set_outputs(screenGeometries);
 }
 
 }
