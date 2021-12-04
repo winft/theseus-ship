@@ -236,12 +236,10 @@ void PlasmaSurfaceTest::testOSDPlacement()
     // change the screen size
     QSignalSpy screensChangedSpy(screens(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
+
     const QVector<QRect> geometries{QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(Test::app(),
-                              "set_outputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, 2),
-                              Q_ARG(QVector<QRect>, geometries));
+    Test::app()->set_outputs(2, geometries);
+
     QCOMPARE(screensChangedSpy.count(), screens()->count() + 2);
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), geometries.at(0));

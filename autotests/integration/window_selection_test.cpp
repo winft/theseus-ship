@@ -74,7 +74,7 @@ void TestWindowSelection::initTestCase()
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
     Test::app()->start();
-    QMetaObject::invokeMethod(Test::app(), "set_outputs", Qt::DirectConnection, Q_ARG(int, 2));
+    Test::app()->set_outputs(2);
     QVERIFY(startup_spy.size() || startup_spy.wait());
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));

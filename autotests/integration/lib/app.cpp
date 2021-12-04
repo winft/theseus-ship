@@ -202,7 +202,9 @@ void WaylandTestApplication::start()
     ScreenLockerWatcher::self()->initialize();
 }
 
-void WaylandTestApplication::set_outputs(int count, QVector<QRect> geometries, QVector<int> scales)
+void WaylandTestApplication::set_outputs(int count,
+                                         QVector<QRect> const& geometries,
+                                         QVector<int> const& scales)
 {
     assert(geometries.size() == 0 || geometries.size() == count);
     assert(scales.size() == 0 || scales.size() == count);

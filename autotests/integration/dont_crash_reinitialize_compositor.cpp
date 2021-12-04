@@ -74,7 +74,7 @@ void DontCrashReinitializeCompositorTest::initTestCase()
     qputenv("KWIN_EFFECTS_FORCE_ANIMATIONS", QByteArrayLiteral("1"));
 
     Test::app()->start();
-    QMetaObject::invokeMethod(Test::app(), "set_outputs", Qt::DirectConnection, Q_ARG(int, 2));
+    Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.count() || startup_spy.wait());
     QCOMPARE(screens()->count(), 2);

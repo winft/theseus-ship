@@ -172,7 +172,7 @@ void PointerInputTest::initTestCase()
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
     Test::app()->start();
-    QMetaObject::invokeMethod(Test::app(), "set_outputs", Qt::DirectConnection, Q_ARG(int, 2));
+    Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.wait());
     QCOMPARE(screens()->count(), 2);
@@ -374,11 +374,7 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     QVERIFY(screensChangedSpy.isValid());
 
     // Now let's remove the screen containing the cursor.
-    QMetaObject::invokeMethod(Test::app(),
-                              "set_outputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, 1),
-                              Q_ARG(QVector<QRect>, QVector<QRect>{QRect(0, 0, 1280, 1024)}));
+    Test::app()->set_outputs(1, QVector<QRect>{QRect(0, 0, 1280, 1024)});
     QCOMPARE(screensChangedSpy.count(), 4);
     QCOMPARE(screens()->count(), 1);
 
@@ -1608,11 +1604,8 @@ void PointerInputTest::testConfineToScreenGeometry()
                                     QRect(1280, 0, 1280, 1024),
                                     QRect(2560, 0, 1280, 1024),
                                     QRect(1280, 1024, 1280, 1024)};
-    QMetaObject::invokeMethod(Test::app(),
-                              "set_outputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, geometries.count()),
-                              Q_ARG(QVector<QRect>, geometries));
+    Test::app()->set_outputs(geometries.count(), geometries);
+
     QCOMPARE(screens()->count(), geometries.count());
     QCOMPARE(screens()->geometry(0), geometries.at(0));
     QCOMPARE(screens()->geometry(1), geometries.at(1));

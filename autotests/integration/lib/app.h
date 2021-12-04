@@ -66,9 +66,9 @@ public:
 
     void start();
 
-    Q_INVOKABLE void set_outputs(int count,
-                                 QVector<QRect> geometries = QVector<QRect>(),
-                                 QVector<int> scales = QVector<int>());
+    void set_outputs(int count,
+                     QVector<QRect> const& geometries = QVector<QRect>(),
+                     QVector<int> const& scales = QVector<int>());
 
 private:
     void handle_server_addons_created();

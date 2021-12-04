@@ -96,12 +96,10 @@ void ScreenChangesTest::testScreenAddRemove()
     // let's announce a new output
     QSignalSpy screensChangedSpy(screens(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
+
     const QVector<QRect> geometries{QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(Test::app(),
-                              "set_outputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, 2),
-                              Q_ARG(QVector<QRect>, geometries));
+    Test::app()->set_outputs(2, geometries);
+
     QCOMPARE(screensChangedSpy.count(), screens()->count() + 2);
     QCOMPARE(screens()->count(), 2);
     QCOMPARE(screens()->geometry(0), geometries.at(0));
@@ -167,11 +165,8 @@ void ScreenChangesTest::testScreenAddRemove()
     QVERIFY(o2RemovedSpy.isValid());
 
     const QVector<QRect> geometries2{QRect(0, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(Test::app(),
-                              "set_outputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, 1),
-                              Q_ARG(QVector<QRect>, geometries2));
+    Test::app()->set_outputs(1, geometries2);
+
     QCOMPARE(screensChangedSpy.count(), screens()->count() + 3);
     QCOMPARE(screens()->count(), 1);
     QCOMPARE(screens()->geometry(0), geometries2.at(0));

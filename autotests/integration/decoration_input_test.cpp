@@ -167,7 +167,7 @@ void DecorationInputTest::initTestCase()
     kwinApp()->setConfig(config);
 
     Test::app()->start();
-    QMetaObject::invokeMethod(Test::app(), "set_outputs", Qt::DirectConnection, Q_ARG(int, 2));
+    Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
     QCOMPARE(screens()->count(), 2);

@@ -65,7 +65,7 @@ void ActivationTest::initTestCase()
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     Test::app()->start();
-    QMetaObject::invokeMethod(Test::app(), "set_outputs", Qt::DirectConnection, Q_ARG(int, 2));
+    Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
     QCOMPARE(screens()->count(), 2);
@@ -543,12 +543,7 @@ void ActivationTest::stackScreensHorizontally()
         1,
     };
 
-    QMetaObject::invokeMethod(Test::app(),
-                              "set_outputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, screenGeometries.count()),
-                              Q_ARG(QVector<QRect>, screenGeometries),
-                              Q_ARG(QVector<int>, screenScales));
+    Test::app()->set_outputs(screenGeometries.count(), screenGeometries, screenScales);
 }
 
 void ActivationTest::stackScreensVertically()
@@ -563,12 +558,7 @@ void ActivationTest::stackScreensVertically()
         1,
     };
 
-    QMetaObject::invokeMethod(Test::app(),
-                              "set_outputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, screenGeometries.count()),
-                              Q_ARG(QVector<QRect>, screenGeometries),
-                              Q_ARG(QVector<int>, screenScales));
+    Test::app()->set_outputs(screenGeometries.count(), screenGeometries, screenScales);
 }
 
 }

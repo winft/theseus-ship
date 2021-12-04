@@ -288,13 +288,9 @@ void TestScreenEdges::testCreatingInitialEdges()
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}}};
-    QMetaObject::invokeMethod(Test::app(),
-                              "set_outputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, geometries.count()),
-                              Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
-                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1)));
-
+    Test::app()->set_outputs(geometries.count(),
+                             QVector<QRect>::fromList(geometries),
+                             QVector<int>(geometries.count(), 1));
     QCOMPARE(changedSpy.count(), 1);
 
     // let's update the layout and verify that we have edges
@@ -379,12 +375,9 @@ void TestScreenEdges::testCallback()
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
-    QMetaObject::invokeMethod(Test::app(),
-                              "set_outputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, geometries.count()),
-                              Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
-                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1)));
+    Test::app()->set_outputs(geometries.count(),
+                             QVector<QRect>::fromList(geometries),
+                             QVector<int>(geometries.count(), 1));
 
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
@@ -605,12 +598,9 @@ void TestScreenEdges::test_overlapping_edges()
     QFETCH(QRect, geo2);
 
     QList<QRect> geometries{{geo1, geo2}};
-    QMetaObject::invokeMethod(Test::app(),
-                              "set_outputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, geometries.count()),
-                              Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
-                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1)));
+    Test::app()->set_outputs(geometries.count(),
+                             QVector<QRect>::fromList(geometries),
+                             QVector<int>(geometries.count(), 1));
 
     QCOMPARE(changedSpy.count(), geometries.size() + 3);
 
@@ -646,12 +636,9 @@ void TestScreenEdges::testPushBack()
     config->sync();
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
-    QMetaObject::invokeMethod(Test::app(),
-                              "set_outputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, geometries.count()),
-                              Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
-                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1)));
+    Test::app()->set_outputs(geometries.count(),
+                             QVector<QRect>::fromList(geometries),
+                             QVector<int>(geometries.count(), 1));
 
     auto screenEdges = ScreenEdges::self();
     screenEdges->setConfig(config);
