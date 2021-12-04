@@ -114,7 +114,7 @@ void backend::init(bool createOverlay)
 void backend::createBuffer()
 {
     xcb_pixmap_t pixmap = xcb_generate_id(connection());
-    const auto displaySize = screens()->displaySize();
+    const auto displaySize = Screens::self()->displaySize();
     xcb_create_pixmap(connection(),
                       Xcb::defaultDepth(),
                       pixmap,
@@ -129,7 +129,7 @@ void backend::createBuffer()
 
 void backend::present(paint_type mask, QRegion const& damage)
 {
-    const auto displaySize = screens()->displaySize();
+    const auto displaySize = Screens::self()->displaySize();
     if (flags(mask & paint_type::screen_region)) {
         // Use the damage region as the clip region for the root window
         XFixesRegion frontRegion(damage);

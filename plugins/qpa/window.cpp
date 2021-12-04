@@ -37,7 +37,7 @@ static quint32 s_windowId = 0;
 Window::Window(QWindow *window)
     : QPlatformWindow(window)
     , m_windowId(++s_windowId)
-    , m_scale(screens()->maxScale())
+    , m_scale(Screens::self()->maxScale())
 {
 }
 

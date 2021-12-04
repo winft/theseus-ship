@@ -103,7 +103,7 @@ void VirtualDesktopTest::initTestCase()
 void VirtualDesktopTest::init()
 {
     Test::setup_wayland_connection();
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     VirtualDesktopManager::self()->setCount(1);
     VirtualDesktopManager::self()->setCurrent(0u);
 }

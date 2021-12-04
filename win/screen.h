@@ -24,13 +24,13 @@ namespace KWin::win
 template<typename Win>
 bool on_screen(Win* win, int screen)
 {
-    return screens()->geometry(screen).intersects(win->frameGeometry());
+    return Screens::self()->geometry(screen).intersects(win->frameGeometry());
 }
 
 template<typename Win>
 bool on_active_screen(Win* win)
 {
-    return on_screen(win, screens()->current());
+    return on_screen(win, Screens::self()->current());
 }
 
 template<typename Win>
@@ -39,7 +39,7 @@ void send_to_screen(Win* win, int new_screen)
     new_screen = win->control->rules().checkScreen(new_screen);
 
     if (win->control->active()) {
-        screens()->setCurrent(new_screen);
+        Screens::self()->setCurrent(new_screen);
         // might impact the layer of a fullscreen window
         for (auto cc : workspace()->allClientList()) {
             if (cc->control->fullscreen() && cc->screen() == new_screen) {

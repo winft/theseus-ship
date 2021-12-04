@@ -24,7 +24,7 @@ cursor_theme::cursor_theme(Wrapland::Client::ShmPool* shm)
     : m_theme(nullptr)
     , m_shm(shm)
 {
-    QObject::connect(screens(), &Screens::maxScaleChanged, this, &cursor_theme::loadTheme);
+    QObject::connect(Screens::self(), &Screens::maxScaleChanged, this, &cursor_theme::loadTheme);
 }
 
 cursor_theme::~cursor_theme()
@@ -44,7 +44,7 @@ void cursor_theme::loadTheme()
         size = 24;
     }
 
-    size *= screens()->maxScale();
+    size *= Screens::self()->maxScale();
 
     auto theme = wl_cursor_theme_load(c->theme_name().toUtf8().constData(), size, m_shm->shm());
     if (theme) {

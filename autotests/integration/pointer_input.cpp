@@ -90,7 +90,7 @@ PlatformCursorImage loadReferenceThemeCursor(const T& shape)
         return PlatformCursorImage{};
     }
 
-    const qreal scale = screens()->maxScale();
+    const qreal scale = Screens::self()->maxScale();
     QImage image = buffer->shmImage()->createQImage().copy();
     image.setDevicePixelRatio(scale);
 
@@ -174,9 +174,9 @@ void PointerInputTest::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->geometry(1), QRect(1280, 0, 1280, 1024));
 }
 
 void PointerInputTest::init()
@@ -187,7 +187,7 @@ void PointerInputTest::init()
     m_compositor = Test::get_client().interfaces.compositor.get();
     m_seat = Test::get_client().interfaces.seat.get();
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -369,13 +369,13 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     QVERIFY(window);
     QVERIFY(!window->frameGeometry().contains(input::get_cursor()->pos()));
 
-    QSignalSpy screensChangedSpy(screens(), &Screens::changed);
+    QSignalSpy screensChangedSpy(Screens::self(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
 
     // Now let's remove the screen containing the cursor.
     Test::app()->set_outputs({{0, 0, 1280, 1024}});
     QCOMPARE(screensChangedSpy.count(), 4);
-    QCOMPARE(screens()->count(), 1);
+    QCOMPARE(Screens::self()->count(), 1);
 
     // This should have warped the cursor.
     QCOMPARE(input::get_cursor()->pos(), QPoint(639, 511));
@@ -1603,11 +1603,11 @@ void PointerInputTest::testConfineToScreenGeometry()
         {0, 0, 1280, 1024}, {1280, 0, 1280, 1024}, {2560, 0, 1280, 1024}, {1280, 1024, 1280, 1024}};
     Test::app()->set_outputs(geometries);
 
-    QCOMPARE(screens()->count(), geometries.size());
-    QCOMPARE(screens()->geometry(0), geometries.at(0));
-    QCOMPARE(screens()->geometry(1), geometries.at(1));
-    QCOMPARE(screens()->geometry(2), geometries.at(2));
-    QCOMPARE(screens()->geometry(3), geometries.at(3));
+    QCOMPARE(Screens::self()->count(), geometries.size());
+    QCOMPARE(Screens::self()->geometry(0), geometries.at(0));
+    QCOMPARE(Screens::self()->geometry(1), geometries.at(1));
+    QCOMPARE(Screens::self()->geometry(2), geometries.at(2));
+    QCOMPARE(Screens::self()->geometry(3), geometries.at(3));
 
     // move pointer to initial position
     QFETCH(QPoint, startPos);

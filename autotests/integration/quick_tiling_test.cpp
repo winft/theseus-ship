@@ -116,9 +116,9 @@ void QuickTilingTest::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->geometry(1), QRect(1280, 0, 1280, 1024));
 }
 
 void QuickTilingTest::init()
@@ -127,7 +127,7 @@ void QuickTilingTest::init()
     m_connection = Test::get_client().connection;
     m_compositor = Test::get_client().interfaces.compositor.get();
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
 }
 
 void QuickTilingTest::cleanup()
@@ -793,7 +793,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     // vertically maximize the window
     win::maximize(client, flags(client->maximizeMode() ^ win::maximize_mode::vertical));
     QCOMPARE(client->frameGeometry().width(), origGeo.width());
-    QCOMPARE(client->size().height(), screens()->size(client->screen()).height());
+    QCOMPARE(client->size().height(), Screens::self()->size(client->screen()).height());
     QCOMPARE(client->restore_geometries.maximize, origGeo);
 
     // now quick tile

@@ -85,7 +85,7 @@ void Integration::initialize()
     // connect to the startup_finished signal. At this point everything has been created.
     connect(kwinApp(), &Application::startup_finished, this,
         [this] {
-            connect(screens(), &Screens::changed, this, &Integration::initScreens);
+            connect(Screens::self(), &Screens::changed, this, &Integration::initScreens);
             initScreens();
         }
     );
@@ -151,8 +151,8 @@ QPlatformOpenGLContext *Integration::createPlatformOpenGLContext(QOpenGLContext 
 void Integration::initScreens()
 {
     QVector<Screen*> newScreens;
-    newScreens.reserve(qMax(screens()->count(), 1));
-    for (int i = 0; i < screens()->count(); i++) {
+    newScreens.reserve(qMax(Screens::self()->count(), 1));
+    for (int i = 0; i < Screens::self()->count(); i++) {
         auto screen = new Screen(i);
         QWindowSystemInterface::handleScreenAdded(screen);
         newScreens << screen;

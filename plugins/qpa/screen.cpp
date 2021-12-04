@@ -47,12 +47,12 @@ QImage::Format Screen::format() const
 
 QRect Screen::geometry() const
 {
-    return m_screen != -1 ? screens()->geometry(m_screen) : QRect(0, 0, 1, 1);
+    return m_screen != -1 ? Screens::self()->geometry(m_screen) : QRect(0, 0, 1, 1);
 }
 
 QSizeF Screen::physicalSize() const
 {
-    return m_screen != -1 ? screens()->physicalSize(m_screen) : QPlatformScreen::physicalSize();
+    return m_screen != -1 ? Screens::self()->physicalSize(m_screen) : QPlatformScreen::physicalSize();
 }
 
 QPlatformCursor *Screen::cursor() const
@@ -72,12 +72,12 @@ QDpi Screen::logicalDpi() const
 
 qreal Screen::devicePixelRatio() const
 {
-    return m_screen != -1 ? screens()->scale(m_screen) : 1.0;
+    return m_screen != -1 ? Screens::self()->scale(m_screen) : 1.0;
 }
 
 QString Screen::name() const
 {
-    return m_screen != -1 ? screens()->name(m_screen) : QString();
+    return m_screen != -1 ? Screens::self()->name(m_screen) : QString();
 }
 
 }

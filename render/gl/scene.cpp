@@ -313,7 +313,7 @@ scene::scene(render::gl::backend* backend)
         init_ok = false;
         return;
     }
-    if (!viewportLimitsMatched(screens()->size()))
+    if (!viewportLimitsMatched(Screens::self()->size()))
         return;
 
     // perform Scene specific checks
@@ -365,9 +365,9 @@ scene::scene(render::gl::backend* backend)
         return;
     }
 
-    const QSize& s = screens()->size();
+    const QSize& s = Screens::self()->size();
     GLRenderTarget::setVirtualScreenSize(s);
-    GLRenderTarget::setVirtualScreenGeometry(screens()->geometry());
+    GLRenderTarget::setVirtualScreenGeometry(Screens::self()->geometry());
 
     // push one shader on the stack so that one is always bound
     ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
@@ -658,8 +658,8 @@ int64_t scene::paint(QRegion damage,
         return 0;
     }
 
-    GLVertexBuffer::setVirtualScreenGeometry(screens()->geometry());
-    GLRenderTarget::setVirtualScreenGeometry(screens()->geometry());
+    GLVertexBuffer::setVirtualScreenGeometry(Screens::self()->geometry());
+    GLRenderTarget::setVirtualScreenGeometry(Screens::self()->geometry());
     GLVertexBuffer::setVirtualScreenScale(1);
     GLRenderTarget::setVirtualScreenScale(1);
 
@@ -670,7 +670,7 @@ int64_t scene::paint(QRegion damage,
     paintScreen(mask, damage, repaint, &update, &valid, presentTime, projectionMatrix());
 
     if (!GLPlatform::instance()->isGLES()) {
-        auto const screenSize = screens()->size();
+        auto const screenSize = Screens::self()->size();
         auto const displayRegion = QRegion(0, 0, screenSize.width(), screenSize.height());
 
         // Copy dirty parts from front to backbuffer.
@@ -843,7 +843,7 @@ void scene::extendPaintRegion(QRegion& region, bool opaqueFullscreen)
         return;
     }
 
-    const QSize& screenSize = screens()->size();
+    const QSize& screenSize = Screens::self()->size();
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
 
     uint damagedPixels = 0;
@@ -906,7 +906,7 @@ void scene::paintDesktop(int desktop, paint_type mask, const QRegion& region, Sc
 {
     const QRect r = region.boundingRect();
     glEnable(GL_SCISSOR_TEST);
-    glScissor(r.x(), screens()->size().height() - r.y() - r.height(), r.width(), r.height());
+    glScissor(r.x(), Screens::self()->size().height() - r.y() - r.height(), r.width(), r.height());
     render::scene::paintDesktop(desktop, mask, region, data);
     glDisable(GL_SCISSOR_TEST);
 }
@@ -1017,7 +1017,7 @@ QMatrix4x4 scene::createProjectionMatrix() const
     // Create a second matrix that transforms screen coordinates
     // to world coordinates.
     const float scaleFactor = 1.1 * std::tan(fovY * M_PI / 360.0f) / yMax;
-    const QSize size = screens()->size();
+    const QSize size = Screens::self()->size();
 
     QMatrix4x4 matrix;
     matrix.translate(xMin * scaleFactor, yMax * scaleFactor, -1.1);
@@ -1090,7 +1090,7 @@ void scene::performPaintWindow(effects_window_impl* w,
             lanczos = new lanczos_filter(this);
             // reset the lanczos filter when the screen gets resized
             // it will get created next paint
-            connect(screens(), &Screens::changed, this, [this]() {
+            connect(Screens::self(), &Screens::changed, this, [this]() {
                 makeOpenGLContextCurrent();
                 delete lanczos;
                 lanczos = nullptr;

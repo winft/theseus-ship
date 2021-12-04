@@ -82,9 +82,9 @@ void input_method_test::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->geometry(1), QRect(1280, 0, 1280, 1024));
 }
 
 void input_method_test::init()
@@ -108,7 +108,7 @@ void input_method_test::init()
     QVERIFY(input_method_spy.wait());
     QVERIFY(waylandServer()->seat()->get_input_method_v2());
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
 }
 
 void input_method_test::cleanup()

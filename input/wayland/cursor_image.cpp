@@ -439,7 +439,7 @@ void cursor_image::loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Ima
         if (!buffer) {
             return;
         }
-        auto scale = screens()->maxScale();
+        auto scale = Screens::self()->maxScale();
         int hotSpotX = qRound(cursor->hotspot_x / scale);
         int hotSpotY = qRound(cursor->hotspot_y / scale);
         QImage img = buffer->shmImage()->createQImage().copy();

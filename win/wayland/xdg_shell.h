@@ -368,8 +368,8 @@ void update_screen_edge(Win* win)
     Qt::Edges edges;
     auto const geometry = win->frameGeometry();
 
-    for (int i = 0; i < screens()->count(); i++) {
-        auto const screen_geo = screens()->geometry(i);
+    for (int i = 0; i < Screens::self()->count(); i++) {
+        auto const screen_geo = Screens::self()->geometry(i);
         if (screen_geo.left() == geometry.left()) {
             edges |= Qt::LeftEdge;
         }

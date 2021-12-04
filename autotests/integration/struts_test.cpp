@@ -88,9 +88,9 @@ void StrutsTest::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->geometry(1), QRect(1280, 0, 1280, 1024));
 }
 
 void StrutsTest::init()
@@ -99,7 +99,7 @@ void StrutsTest::init()
     m_compositor = Test::get_client().interfaces.compositor.get();
     m_plasmaShell = Test::get_client().interfaces.plasma_shell.get();
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -628,9 +628,9 @@ void StrutsTest::test363804()
     // two screens in a vertical setup, aligned to right border with panel on the bottom screen
     auto const geometries = std::vector<QRect>{{0, 0, 1920, 1080}, {554, 1080, 1366, 768}};
     Test::app()->set_outputs(geometries);
-    QCOMPARE(screens()->geometry(0), geometries.at(0));
-    QCOMPARE(screens()->geometry(1), geometries.at(1));
-    QCOMPARE(screens()->geometry(), QRect(0, 0, 1920, 1848));
+    QCOMPARE(Screens::self()->geometry(0), geometries.at(0));
+    QCOMPARE(Screens::self()->geometry(1), geometries.at(1));
+    QCOMPARE(Screens::self()->geometry(), QRect(0, 0, 1920, 1848));
 
     // create an xcb window
     auto c = create_xcb_connection();
@@ -712,9 +712,9 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     // area
     auto const geometries = std::vector<QRect>{{0, 282, 1366, 768}, {1366, 0, 1680, 1050}};
     Test::app()->set_outputs(geometries);
-    QCOMPARE(screens()->geometry(0), geometries.at(0));
-    QCOMPARE(screens()->geometry(1), geometries.at(1));
-    QCOMPARE(screens()->geometry(), QRect(0, 0, 3046, 1050));
+    QCOMPARE(Screens::self()->geometry(0), geometries.at(0));
+    QCOMPARE(Screens::self()->geometry(1), geometries.at(1));
+    QCOMPARE(Screens::self()->geometry(), QRect(0, 0, 3046, 1050));
 
     // create the panel
     auto c = create_xcb_connection();
@@ -840,9 +840,9 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     // left screen must be smaller than right screen
     auto const geometries = std::vector<QRect>{{0, 282, 1366, 768}, {1366, 0, 1680, 1050}};
     Test::app()->set_outputs(geometries);
-    QCOMPARE(screens()->geometry(0), geometries.at(0));
-    QCOMPARE(screens()->geometry(1), geometries.at(1));
-    QCOMPARE(screens()->geometry(), QRect(0, 0, 3046, 1050));
+    QCOMPARE(Screens::self()->geometry(0), geometries.at(0));
+    QCOMPARE(Screens::self()->geometry(1), geometries.at(1));
+    QCOMPARE(Screens::self()->geometry(), QRect(0, 0, 3046, 1050));
 
     // create the panel on the right screen, left edge
     auto c = create_xcb_connection();

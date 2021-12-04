@@ -90,7 +90,7 @@ TabBoxHandlerImpl::~TabBoxHandlerImpl()
 
 int TabBoxHandlerImpl::activeScreen() const
 {
-    return screens()->current();
+    return Screens::self()->current();
 }
 
 int TabBoxHandlerImpl::currentDesktop() const
@@ -229,9 +229,9 @@ bool TabBoxHandlerImpl::checkMultiScreen(TabBoxClient* client) const
     case TabBoxConfig::IgnoreMultiScreen:
         return true;
     case TabBoxConfig::ExcludeCurrentScreenClients:
-        return current->screen() != screens()->current();
+        return current->screen() != Screens::self()->current();
     default:       // TabBoxConfig::OnlyCurrentScreenClients
-        return current->screen() == screens()->current();
+        return current->screen() == Screens::self()->current();
     }
 }
 
@@ -309,7 +309,7 @@ void TabBoxHandlerImpl::elevateClient(TabBoxClient *c, QWindow *tabbox, bool b) 
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::desktopClient() const
 {
     for (auto const& window : workspace()->stacking_order->sorted()) {
-        if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop() && window->screen() == screens()->current()) {
+        if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop() && window->screen() == Screens::self()->current()) {
             return window->control->tabbox();
         }
     }

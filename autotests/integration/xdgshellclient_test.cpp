@@ -133,9 +133,9 @@ void TestXdgShellClient::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->geometry(1), QRect(1280, 0, 1280, 1024));
 }
 
 void TestXdgShellClient::init()
@@ -143,7 +143,7 @@ void TestXdgShellClient::init()
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration
                                    | Test::global_selection::appmenu);
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(1280, 512));
 }
 
@@ -451,7 +451,7 @@ void TestXdgShellClient::testFullscreen()
     // After round-trip the server configures the window to the size of the screen.
     QVERIFY(sizeChangeRequestedSpy.wait());
     QCOMPARE(sizeChangeRequestedSpy.count(), 2);
-    QCOMPARE(sizeChangeRequestedSpy.last().first().toSize(), screens()->size(0));
+    QCOMPARE(sizeChangeRequestedSpy.last().first().toSize(), Screens::self()->size(0));
 
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface, sizeChangeRequestedSpy.last().first().toSize(), Qt::red);
@@ -461,7 +461,7 @@ void TestXdgShellClient::testFullscreen()
 
     QVERIFY(c->control->fullscreen());
     QVERIFY(!win::decoration(c));
-    QCOMPARE(win::frame_to_client_size(c, c->size()), screens()->size(0));
+    QCOMPARE(win::frame_to_client_size(c, c->size()), Screens::self()->size(0));
     QVERIFY(!geometryChangedSpy.isEmpty());
 
     QVERIFY(c->control->fullscreen());
@@ -505,7 +505,7 @@ void TestXdgShellClient::testFullscreenRestore()
     const auto state
         = configureRequestedSpy.first()[1].value<Wrapland::Client::XdgShellToplevel::States>();
 
-    QCOMPARE(size, screens()->size(0));
+    QCOMPARE(size, Screens::self()->size(0));
     QVERIFY(state & Wrapland::Client::XdgShellToplevel::State::Fullscreen);
     shell_surface->ackConfigure(configureRequestedSpy.first()[2].toUInt());
 
@@ -591,7 +591,7 @@ void TestXdgShellClient::testUserSetFullscreen()
     QVERIFY(!c->control->fullscreen());
 
     QTRY_COMPARE(configureRequestedSpy.count(), 3);
-    QCOMPARE(configureRequestedSpy.at(2).at(0).toSize(), screens()->size(0));
+    QCOMPARE(configureRequestedSpy.at(2).at(0).toSize(), Screens::self()->size(0));
 
     const auto states
         = configureRequestedSpy.at(2).at(1).value<Wrapland::Client::XdgShellToplevel::States>();
@@ -607,7 +607,7 @@ void TestXdgShellClient::testUserSetFullscreen()
 
     QFETCH(bool, send_fs_geo);
     if (send_fs_geo) {
-        Test::render(surface, screens()->size(0), Qt::green);
+        Test::render(surface, Screens::self()->size(0), Qt::green);
     }
 
     QCOMPARE(geometry_spy.wait(100), send_fs_geo);
@@ -718,7 +718,7 @@ void TestXdgShellClient::testMaximizedToFullscreen()
     QCOMPARE(configureRequestedSpy.count(), 1);
 
     // With or without deco on fullscreen clients will be requested to provide the screeen size.
-    QCOMPARE(configureRequestedSpy.last().first().toSize(), screens()->size(0));
+    QCOMPARE(configureRequestedSpy.last().first().toSize(), Screens::self()->size(0));
 
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface, sizeChangeRequestedSpy.last().first().toSize(), Qt::red);
@@ -776,10 +776,10 @@ void TestXdgShellClient::testWindowOpensLargerThanScreen()
     Test::init_xdg_shell_toplevel(surface, shellSurface);
     QCOMPARE(deco->mode(), XdgDecoration::Mode::ServerSide);
 
-    auto c = Test::render_and_wait_for_shown(surface, screens()->size(0), Qt::blue);
+    auto c = Test::render_and_wait_for_shown(surface, Screens::self()->size(0), Qt::blue);
     QVERIFY(c);
     QVERIFY(c->control->active());
-    QCOMPARE(win::frame_to_client_size(c, c->size()), screens()->size(0));
+    QCOMPARE(win::frame_to_client_size(c, c->size()), Screens::self()->size(0));
     QVERIFY(win::decoration(c));
     QVERIFY(sizeChangeRequestedSpy.wait());
 }

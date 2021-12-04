@@ -381,7 +381,7 @@ void UserActionsMenu::menuAboutToShow()
     } else {
         initDesktopPopup();
     }
-    if (screens()->count() == 1 || (!m_client->isMovable() && !m_client->isMovableAcrossScreens())) {
+    if (Screens::self()->count() == 1 || (!m_client->isMovable() && !m_client->isMovableAcrossScreens())) {
         delete m_screenMenu;
         m_screenMenu = nullptr;
     } else {
@@ -592,10 +592,10 @@ void UserActionsMenu::screenPopupAboutToShow()
     m_screenMenu->setPalette(m_client->control->palette().q_palette());
     QActionGroup *group = new QActionGroup(m_screenMenu);
 
-    for (int i = 0; i<screens()->count(); ++i) {
+    for (int i = 0; i<Screens::self()->count(); ++i) {
         // assumption: there are not more than 9 screens attached.
         QAction *action = m_screenMenu->addAction(i18nc("@item:inmenu List of all Screens to send a window to. First argument is a number, second the output identifier. E.g. Screen 1 (HDMI1)",
-                                                        "Screen &%1 (%2)", (i+1), screens()->name(i)));
+                                                        "Screen &%1 (%2)", (i+1), Screens::self()->name(i)));
         action->setData(i);
         action->setCheckable(true);
         if (m_client && i == m_client->screen()) {
@@ -700,7 +700,7 @@ void UserActionsMenu::slotSendToScreen(QAction *action)
     if (m_client.isNull()) {
         return;
     }
-    if (screen >= screens()->count()) {
+    if (screen >= Screens::self()->count()) {
         return;
     }
 
@@ -1197,7 +1197,7 @@ void Workspace::slotWindowToDesktop(uint i)
 
 static bool screenSwitchImpossible()
 {
-    if (!screens()->isCurrentFollowsMouse())
+    if (!Screens::self()->isCurrentFollowsMouse())
         return false;
     QStringList args;
     args << QStringLiteral("--passivepopup") << i18n("The window manager is configured to consider the screen with the mouse on it as active one.\n"
@@ -1219,14 +1219,14 @@ void Workspace::slotSwitchToNextScreen()
 {
     if (screenSwitchImpossible())
         return;
-    setCurrentScreen((screens()->current() + 1) % screens()->count());
+    setCurrentScreen((Screens::self()->current() + 1) % Screens::self()->count());
 }
 
 void Workspace::slotSwitchToPrevScreen()
 {
     if (screenSwitchImpossible())
         return;
-    setCurrentScreen((screens()->current() + screens()->count() - 1) % screens()->count());
+    setCurrentScreen((Screens::self()->current() + Screens::self()->count() - 1) % Screens::self()->count());
 }
 
 void Workspace::slotWindowToScreen()
@@ -1235,7 +1235,7 @@ void Workspace::slotWindowToScreen()
         const int i = senderValue(sender());
         if (i < 0)
             return;
-        if (i >= 0 && i <= screens()->count()) {
+        if (i >= 0 && i <= Screens::self()->count()) {
             sendClientToScreen(active_client, i);
         }
     }
@@ -1244,13 +1244,13 @@ void Workspace::slotWindowToScreen()
 void Workspace::slotWindowToNextScreen()
 {
     if (USABLE_ACTIVE_CLIENT)
-        sendClientToScreen(active_client, (active_client->screen() + 1) % screens()->count());
+        sendClientToScreen(active_client, (active_client->screen() + 1) % Screens::self()->count());
 }
 
 void Workspace::slotWindowToPrevScreen()
 {
     if (USABLE_ACTIVE_CLIENT)
-        sendClientToScreen(active_client, (active_client->screen() + screens()->count() - 1) % screens()->count());
+        sendClientToScreen(active_client, (active_client->screen() + Screens::self()->count() - 1) % Screens::self()->count());
 }
 
 /**
@@ -1491,13 +1491,13 @@ void Workspace::switchWindow(Direction direction)
         auto opposite = [&] {
             switch(direction) {
             case DirectionNorth:
-                return QPoint(curPos.x(), screens()->geometry().height());
+                return QPoint(curPos.x(), Screens::self()->geometry().height());
             case DirectionSouth:
                 return QPoint(curPos.x(), 0);
             case DirectionEast:
                 return QPoint(0, curPos.y());
             case DirectionWest:
-                return QPoint(screens()->geometry().width(), curPos.y());
+                return QPoint(Screens::self()->geometry().width(), curPos.y());
             default:
                 Q_UNREACHABLE();
             }

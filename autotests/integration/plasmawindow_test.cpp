@@ -81,9 +81,9 @@ void PlasmaWindowTest::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->geometry(1), QRect(1280, 0, 1280, 1024));
     setenv("QMLSCENE_DEVICE", "softwarecontext", true);
 }
 
@@ -93,7 +93,7 @@ void PlasmaWindowTest::init()
     m_windowManagement = Test::get_client().interfaces.window_management.get();
     m_compositor = Test::get_client().interfaces.compositor.get();
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -284,8 +284,8 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
 
     // The lock screen creates one client per screen.
-    QVERIFY(clientAddedSpy.count() == screens()->count() || clientAddedSpy.wait());
-    QTRY_COMPARE(clientAddedSpy.count(), screens()->count());
+    QVERIFY(clientAddedSpy.count() == Screens::self()->count() || clientAddedSpy.wait());
+    QTRY_COMPARE(clientAddedSpy.count(), Screens::self()->count());
 
     QVERIFY(clientAddedSpy.first().first().value<win::wayland::window*>()->isLockScreen());
 

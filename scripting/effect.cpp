@@ -672,12 +672,12 @@ QJSValue effect::readConfig(const QString& key, const QJSValue& defaultValue)
 
 int effect::displayWidth() const
 {
-    return screens()->displaySize().width();
+    return Screens::self()->displaySize().width();
 }
 
 int effect::displayHeight() const
 {
-    return screens()->displaySize().height();
+    return Screens::self()->displaySize().height();
 }
 
 int effect::animationTime(int defaultTime) const

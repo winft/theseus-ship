@@ -93,7 +93,7 @@ int64_t scene::paint_output(base::output* output,
     auto const needsFullRepaint = m_backend->needsFullRepaint();
     if (needsFullRepaint) {
         mask |= render::paint_type::screen_background_first;
-        damage = screens()->geometry();
+        damage = Screens::self()->geometry();
     }
 
     auto const geometry = output->geometry();

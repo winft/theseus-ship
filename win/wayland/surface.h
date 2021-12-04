@@ -49,7 +49,7 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
         win->notifiers.frame_update_outputs = QObject::connect(
             win, &Toplevel::frame_geometry_changed, win, [win] { update_surface_outputs(win); });
         win->notifiers.screens_update_outputs = QObject::connect(
-            screens(), &Screens::changed, win, [win] { update_surface_outputs(win); });
+            Screens::self(), &Screens::changed, win, [win] { update_surface_outputs(win); });
     }
 
     win->m_surface = surface;

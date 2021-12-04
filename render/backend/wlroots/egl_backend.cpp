@@ -257,7 +257,7 @@ QRegion egl_backend::prepareRenderingFrame()
 
 void egl_backend::setViewport(egl_output const& egl_out) const
 {
-    auto const& overall = screens()->size();
+    auto const& overall = Screens::self()->size();
     auto const& geo = egl_out.out->geometry();
     auto const& view = egl_out.out->view_geometry();
 

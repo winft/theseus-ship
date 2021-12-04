@@ -353,7 +353,7 @@ void compositor::addRepaint([[maybe_unused]] QRegion const& region)
 
 void compositor::addRepaintFull()
 {
-    auto const size = screens()->size();
+    auto const size = Screens::self()->size();
     addRepaint(QRegion(0, 0, size.width(), size.height()));
 }
 

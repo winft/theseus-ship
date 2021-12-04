@@ -216,12 +216,6 @@ QRect Screens::geometry() const
     return QRect(QPoint(0,0), size());
 }
 
-inline
-Screens *screens()
-{
-    return Screens::self();
-}
-
 }
 
 #endif // KWIN_SCREENS_H

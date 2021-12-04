@@ -62,7 +62,7 @@ bool overlay_window::create()
     m_window = overlay->overlay_win;
     if (m_window == XCB_WINDOW_NONE)
         return false;
-    resize(screens()->size());
+    resize(Screens::self()->size());
     return true;
 #else
     return false;
@@ -75,7 +75,7 @@ void overlay_window::setup(xcb_window_t window)
     Q_ASSERT(Xcb::Extensions::self()->isShapeInputAvailable());
     setNoneBackgroundPixmap(m_window);
     m_shape = QRegion();
-    const QSize& s = screens()->size();
+    const QSize& s = Screens::self()->size();
     setShape(QRect(0, 0, s.width(), s.height()));
     if (window != XCB_WINDOW_NONE) {
         setNoneBackgroundPixmap(window);
@@ -119,7 +119,7 @@ void overlay_window::hide()
     Q_ASSERT(m_window != XCB_WINDOW_NONE);
     xcb_unmap_window(connection(), m_window);
     m_shown = false;
-    const QSize& s = screens()->size();
+    const QSize& s = Screens::self()->size();
     setShape(QRect(0, 0, s.width(), s.height()));
 }
 
@@ -168,7 +168,7 @@ void overlay_window::destroy()
     if (m_window == XCB_WINDOW_NONE)
         return;
     // reset the overlay shape
-    const QSize& s = screens()->size();
+    const QSize& s = Screens::self()->size();
     xcb_rectangle_t rec
         = {0, 0, static_cast<uint16_t>(s.width()), static_cast<uint16_t>(s.height())};
     xcb_shape_rectangles(connection(),

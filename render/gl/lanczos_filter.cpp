@@ -106,7 +106,7 @@ void lanczos_filter::init()
 
 void lanczos_filter::updateOffscreenSurfaces()
 {
-    const QSize& s = screens()->size();
+    const QSize& s = Screens::self()->size();
     int w = s.width();
     int h = s.height();
 

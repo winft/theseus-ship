@@ -295,7 +295,7 @@ abstract_level* abstract_level::create(const QList<client_model::LevelRestrictio
         return nullptr;
     }
     case client_model::ScreenRestriction:
-        for (int i = 0; i < screens()->count(); ++i) {
+        for (int i = 0; i < Screens::self()->count(); ++i) {
             auto childLevel = create(childRestrictions, childrenRestrictions, model, currentLevel);
             if (!childLevel) {
                 continue;
@@ -373,7 +373,7 @@ fork_level::fork_level(const QList<client_model::LevelRestriction>& childRestric
             &VirtualDesktopManager::countChanged,
             this,
             &fork_level::desktopCountChanged);
-    connect(screens(), &Screens::countChanged, this, &fork_level::screenCountChanged);
+    connect(Screens::self(), &Screens::countChanged, this, &fork_level::screenCountChanged);
 }
 
 fork_level::~fork_level()

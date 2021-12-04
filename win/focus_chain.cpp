@@ -64,7 +64,7 @@ void focus_chain::resize(uint previousSize, uint newSize)
 
 Toplevel* focus_chain::getForActivation(uint desktop) const
 {
-    return getForActivation(desktop, screens()->current());
+    return getForActivation(desktop, Screens::self()->current());
 }
 
 Toplevel* focus_chain::getForActivation(uint desktop, int screen) const
@@ -211,7 +211,7 @@ bool focus_chain::isUsableFocusCandidate(Toplevel* window, Toplevel* prev) const
 {
     return window != prev && window->isShown() && window->isOnCurrentDesktop()
         && (!m_separateScreenFocus
-            || win::on_screen(window, prev ? prev->screen() : screens()->current()));
+            || win::on_screen(window, prev ? prev->screen() : Screens::self()->current()));
 }
 
 Toplevel* focus_chain::nextForDesktop(Toplevel* reference, uint desktop) const

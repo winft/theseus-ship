@@ -69,7 +69,7 @@ void handle_new_output(struct wl_listener* listener, void* data)
         }
     }
 
-    auto const screens_width = std::max(screens()->size().width(), 0);
+    auto const screens_width = std::max(Screens::self()->size().width(), 0);
 
     auto out = new output(wlr_out, back);
     back->all_outputs << out;
