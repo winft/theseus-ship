@@ -54,7 +54,6 @@ public:
     Decoration::Renderer*
     createDecorationRenderer(Decoration::DecoratedClientImpl* client) override;
 
-    QSize screenSize() const override;
     void invertScreen() override;
 
     void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;

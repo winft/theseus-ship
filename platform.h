@@ -150,29 +150,6 @@ public:
     }
 
     /**
-     * Implementing subclasses should provide a size in case the backend represents
-     * a basic screen and uses the BasicScreens.
-     *
-     * Base implementation returns an invalid size.
-     */
-    virtual QSize screenSize() const;
-    /**
-     * Implementing subclasses should provide all geometries in case the backend represents
-     * a basic screen and uses the BasicScreens.
-     *
-     * Base implementation returns one QRect positioned at 0/0 with screenSize() as size.
-     */
-    virtual QVector<QRect> screenGeometries() const;
-
-    /**
-     * Implementing subclasses should provide all geometries in case the backend represents
-     * a basic screen and uses the BasicScreens.
-     *
-     * Base implementation returns a screen with a scale of 1.
-     */
-    virtual QVector<qreal> screenScales() const;
-
-    /**
      * Whether the Platform requires compositing for rendering.
      * Default implementation returns @c true. If the implementing Platform allows to be used
      * without compositing (e.g. rendering is done by the windowing system), re-implement this method.
@@ -318,11 +295,6 @@ public:
     void repaint(const QRect &rect);
 
 Q_SIGNALS:
-    /**
-     * Emitted by backends using a one screen (nested window) approach and when the size of that changes.
-     */
-    void screenSizeChanged();
-
     void output_added(base::output* output);
     void output_removed(base::output* output);
 

@@ -99,21 +99,6 @@ void Platform::setSceneEglDisplay(EGLDisplay display)
     m_eglDisplay = display;
 }
 
-QSize Platform::screenSize() const
-{
-    return Screens::self()->size();
-}
-
-QVector<QRect> Platform::screenGeometries() const
-{
-    return QVector<QRect>({QRect(QPoint(0, 0), screenSize())});
-}
-
-QVector<qreal> Platform::screenScales() const
-{
-    return QVector<qreal>({1});
-}
-
 bool Platform::requiresCompositing() const
 {
     return true;
