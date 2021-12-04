@@ -204,6 +204,11 @@ void ApplicationWayland::start()
         setOperationMode(OperationModeXwayland);
     }
 
+    base.backend = base::backend::wlroots(waylandServer()->display());
+
+    render.reset(new render::backend::wlroots::backend(base));
+    platform = render.get();
+
     createOptions();
 
     auto session = new seat::backend::wlroots::session(base.backend.backend);
@@ -242,14 +247,6 @@ void ApplicationWayland::handle_server_addons_created()
     } else {
         startSession();
     }
-}
-
-void ApplicationWayland::init_platforms()
-{
-    base.backend = base::backend::wlroots(waylandServer()->display());
-
-    render.reset(new render::backend::wlroots::backend(base));
-    platform = render.get();
 }
 
 void ApplicationWayland::create_xwayland()
@@ -512,8 +509,6 @@ int main(int argc, char * argv[])
         std::cerr << "FATAL ERROR: could not create Wayland server" << std::endl;
         return 1;
     }
-
-    a.init_platforms();
 
     if (auto const& name = a.server->display()->socket_name(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());

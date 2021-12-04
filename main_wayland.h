@@ -87,8 +87,6 @@ public:
         return m_environment;
     }
 
-    void init_platforms();
-
 private:
     void handle_server_addons_created();
     void create_xwayland();
