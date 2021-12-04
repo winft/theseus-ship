@@ -150,17 +150,17 @@ void space::setupClientConnections(window* window)
 
 void space::showOutline(const QRect& geometry)
 {
-    render::x11::get_outline()->show(geometry);
+    workspace()->outline->show(geometry);
 }
 
 void space::showOutline(int x, int y, int width, int height)
 {
-    render::x11::get_outline()->show(QRect(x, y, width, height));
+    workspace()->outline->show(QRect(x, y, width, height));
 }
 
 void space::hideOutline()
 {
-    render::x11::get_outline()->hide();
+    workspace()->outline->hide();
 }
 
 window* space::getClient(qulonglong windowId)

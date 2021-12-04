@@ -54,6 +54,7 @@ class KWIN_EXPORT outline : public QObject
     Q_PROPERTY(QRect unifiedGeometry READ unifiedGeometry NOTIFY unifiedGeometryChanged)
     Q_PROPERTY(bool active READ isActive NOTIFY activeChanged)
 public:
+    outline();
     ~outline() override;
 
     /**
@@ -127,8 +128,6 @@ private:
     QRect m_outlineGeometry;
     QRect m_visualParentGeometry;
     bool m_active;
-
-    KWIN_SINGLETON(outline)
 };
 
 class KWIN_EXPORT outline_visual
@@ -184,11 +183,6 @@ inline x11::outline* outline_visual::get_outline()
 inline const x11::outline* outline_visual::get_outline() const
 {
     return m_outline;
-}
-
-inline x11::outline* get_outline()
-{
-    return x11::outline::self();
 }
 
 }

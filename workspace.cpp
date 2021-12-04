@@ -114,6 +114,7 @@ Workspace* Workspace::_self = nullptr;
 
 Workspace::Workspace()
     : QObject(nullptr)
+    , outline(std::make_unique<render::x11::outline>())
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
     , m_userActionsMenu(new UserActionsMenu(this))
@@ -174,8 +175,6 @@ Workspace::Workspace()
             [this](const QString& name) { storeSession(name, SMSavePhase2); });
 
     new DBusInterface(this);
-
-    render::x11::outline::create(this);
 
     initShortcuts();
 
