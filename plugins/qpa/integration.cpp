@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window.h"
 #include "../../main.h"
 #include "../../platform.h"
+#include "../../render/compositor.h"
+#include "../../render/scene.h"
 #include "../../screens.h"
 
 #include <QCoreApplication>
@@ -133,9 +135,25 @@ QStringList Integration::themeNames() const
     return QStringList({QLatin1String(QGenericUnixTheme::name)});
 }
 
-QPlatformOpenGLContext *Integration::createPlatformOpenGLContext(QOpenGLContext *context) const
+/**
+ * Whether our Compositing EGL display allows a surface less context so that a sharing context could
+ * be created.
+ */
+bool supports_qpa_context()
 {
-    if (kwinApp()->platform->supportsQpaContext()) {
+    auto compositor = render::compositor::self();
+    if (Q_UNLIKELY(!compositor)) {
+        return false;
+    }
+    if (auto scene = compositor->scene()) {
+        return scene->supportsSurfacelessContext();
+    }
+    return false;
+}
+
+QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext* context) const
+{
+    if (supports_qpa_context()) {
         return new SharingPlatformContext(context);
     }
     if (kwinApp()->platform->sceneEglDisplay() != EGL_NO_DISPLAY) {

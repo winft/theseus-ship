@@ -77,18 +77,6 @@ void Platform::repaint(const QRect &rect)
     render::compositor::self()->addRepaint(rect);
 }
 
-bool Platform::supportsQpaContext() const
-{
-    auto compositor = render::compositor::self();
-    if (Q_UNLIKELY(!compositor)) {
-        return false;
-    }
-    if (auto scene = compositor->scene()) {
-        return scene->supportsSurfacelessContext();
-    }
-    return false;
-}
-
 EGLDisplay KWin::Platform::sceneEglDisplay() const
 {
     return m_eglDisplay;

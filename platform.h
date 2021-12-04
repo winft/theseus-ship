@@ -100,11 +100,6 @@ public:
      */
     virtual Edge *createScreenEdge(ScreenEdges *parent);
     /**
-     * Whether our Compositing EGL display allows a surface less context
-     * so that a sharing context could be created.
-     */
-    virtual bool supportsQpaContext() const;
-    /**
      * The EGLDisplay used by the compositing scene.
      */
     EGLDisplay sceneEglDisplay() const;
