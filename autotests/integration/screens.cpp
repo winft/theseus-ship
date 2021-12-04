@@ -81,8 +81,7 @@ void TestScreens::init()
     Test::setup_wayland_connection();
     m_compositor = Test::get_client().interfaces.compositor.get();
 
-    QMetaObject::invokeMethod(
-        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 1));
+    QMetaObject::invokeMethod(Test::app(), "set_outputs", Qt::DirectConnection, Q_ARG(int, 1));
     Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
@@ -174,8 +173,8 @@ void TestScreens::testSize()
     QVERIFY(sizeChangedSpy.isValid());
 
     QFETCH(QList<QRect>, geometries);
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
@@ -195,8 +194,8 @@ void TestScreens::testCount()
 
     // change to two screens
     QList<QRect> geometries{{QRect{0, 0, 100, 200}, QRect{100, 0, 100, 200}}};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
@@ -209,8 +208,8 @@ void TestScreens::testCount()
 
     // go back to one screen
     geometries.takeLast();
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
@@ -226,8 +225,8 @@ void TestScreens::testCount()
     QVERIFY(changedSpy.isValid());
     countChangedSpy.clear();
 
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
@@ -266,8 +265,8 @@ void TestScreens::testIntersecting()
     QVERIFY(changedSpy.isValid());
 
     QFETCH(QList<QRect>, geometries);
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
@@ -308,8 +307,8 @@ void TestScreens::testCurrentClient()
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 100, 100}, QRect{100, 0, 100, 100}}};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
@@ -393,8 +392,8 @@ void TestScreens::testCurrentWithFollowsMouse()
     QCOMPARE(screens->current(), 0);
 
     QFETCH(QList<QRect>, geometries);
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
@@ -434,8 +433,8 @@ void TestScreens::testCurrentPoint()
     screens->setCurrentFollowsMouse(false);
 
     QFETCH(QList<QRect>, geometries);
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),

@@ -33,7 +33,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../win/wayland/space.h"
 #include "../../xcbutils.h"
 #include "../../xwl/xwayland.h"
+#include "render/backend/wlroots/output.h"
 #include "render/effects.h"
+#include "screens.h"
 
 #include <KCrash>
 #include <KPluginMetaData>
@@ -198,6 +200,39 @@ void WaylandTestApplication::start()
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
     ScreenLockerWatcher::self()->initialize();
+}
+
+void WaylandTestApplication::set_outputs(int count, QVector<QRect> geometries, QVector<int> scales)
+{
+    assert(geometries.size() == 0 || geometries.size() == count);
+    assert(scales.size() == 0 || scales.size() == count);
+
+    auto outputs_copy = render->all_outputs;
+    for (auto output : outputs_copy) {
+        delete output;
+    }
+
+    auto sum_width = 0;
+    for (int i = 0; i < count; i++) {
+        auto const scale = scales.size() ? scales.at(i) : 1.;
+        auto const size
+            = (geometries.size() ? geometries.at(i).size() : render->initialWindowSize()) * scale;
+
+        wlr_headless_add_output(base.backend.backend, size.width(), size.height());
+
+        auto added_output = render->all_outputs.back();
+
+        if (geometries.size()) {
+            added_output->force_geometry(geometries.at(i));
+        } else {
+            auto const geo = QRect(QPoint(sum_width, 0), render->initialWindowSize() * scale);
+            added_output->force_geometry(geo);
+            sum_width += geo.width();
+        }
+    }
+
+    // Update again in case of force geometry change.
+    Screens::self()->updateAll();
 }
 
 void WaylandTestApplication::handle_server_addons_created()

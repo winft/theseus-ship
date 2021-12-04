@@ -66,6 +66,10 @@ public:
 
     void start();
 
+    Q_INVOKABLE void set_outputs(int count,
+                                 QVector<QRect> geometries = QVector<QRect>(),
+                                 QVector<int> scales = QVector<int>());
+
 private:
     void handle_server_addons_created();
     void create_xwayland();

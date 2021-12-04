@@ -74,8 +74,7 @@ void TransientPlacementTest::initTestCase()
     kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     Test::app()->start();
-    QMetaObject::invokeMethod(
-        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(Test::app(), "set_outputs", Qt::DirectConnection, Q_ARG(int, 2));
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
     QCOMPARE(screens()->count(), 2);

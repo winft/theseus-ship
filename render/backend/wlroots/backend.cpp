@@ -277,37 +277,4 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
 #endif
 }
 
-void backend::setVirtualOutputs(int count, QVector<QRect> geometries, QVector<int> scales)
-{
-    assert(geometries.size() == 0 || geometries.size() == count);
-    assert(scales.size() == 0 || scales.size() == count);
-
-    auto outputs_copy = all_outputs;
-    for (auto output : outputs_copy) {
-        delete output;
-    }
-
-    auto sum_width = 0;
-    for (int i = 0; i < count; i++) {
-        auto const scale = scales.size() ? scales.at(i) : 1.;
-        auto const size
-            = (geometries.size() ? geometries.at(i).size() : initialWindowSize()) * scale;
-
-        wlr_headless_add_output(base.backend.backend, size.width(), size.height());
-
-        auto added_output = all_outputs.back();
-
-        if (geometries.size()) {
-            added_output->force_geometry(geometries.at(i));
-        } else {
-            auto const geo = QRect(QPoint(sum_width, 0), initialWindowSize() * scale);
-            added_output->force_geometry(geo);
-            sum_width += geo.width();
-        }
-    }
-
-    // Update again in case of force geometry change.
-    Screens::self()->updateAll();
-}
-
 }

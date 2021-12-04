@@ -63,11 +63,6 @@ public:
 
     QString supportInformation() const override;
 
-    // TODO(romangg): Used for integration tests. Make this a standalone function.
-    Q_INVOKABLE void setVirtualOutputs(int count,
-                                       QVector<QRect> geometries = QVector<QRect>(),
-                                       QVector<int> scales = QVector<int>());
-
 protected:
     clockid_t clockId() const override;
 

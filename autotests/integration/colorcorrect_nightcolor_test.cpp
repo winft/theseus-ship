@@ -50,8 +50,7 @@ void ColorCorrectNightColorTest::initTestCase()
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     Test::app()->start();
-    QMetaObject::invokeMethod(
-        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(Test::app(), "set_outputs", Qt::DirectConnection, Q_ARG(int, 2));
     QVERIFY(startup_spy.size() || startup_spy.wait());
 }
 

@@ -172,8 +172,7 @@ void PointerInputTest::initTestCase()
     qputenv("XKB_DEFAULT_RULES", "evdev");
 
     Test::app()->start();
-    QMetaObject::invokeMethod(
-        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(Test::app(), "set_outputs", Qt::DirectConnection, Q_ARG(int, 2));
 
     QVERIFY(startup_spy.wait());
     QCOMPARE(screens()->count(), 2);
@@ -375,8 +374,8 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     QVERIFY(screensChangedSpy.isValid());
 
     // Now let's remove the screen containing the cursor.
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, 1),
                               Q_ARG(QVector<QRect>, QVector<QRect>{QRect(0, 0, 1280, 1024)}));
@@ -385,7 +384,7 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
 
     // This should have warped the cursor.
     QCOMPARE(input::get_cursor()->pos(), QPoint(639, 511));
-    QEXPECT_FAIL("", "setVirtualOutputs removes an output and moves the window.", Abort);
+    QEXPECT_FAIL("", "set_outputs removes an output and moves the window.", Abort);
     qDebug() << "Fails with:" << window->frameGeometry() << "not containing"
              << input::get_cursor()->pos();
     QVERIFY(window->frameGeometry().contains(input::get_cursor()->pos()));
@@ -1609,8 +1608,8 @@ void PointerInputTest::testConfineToScreenGeometry()
                                     QRect(1280, 0, 1280, 1024),
                                     QRect(2560, 0, 1280, 1024),
                                     QRect(1280, 1024, 1280, 1024)};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, geometries));

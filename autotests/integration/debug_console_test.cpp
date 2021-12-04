@@ -63,11 +63,10 @@ void DebugConsoleTest::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
+    Test::app()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     Test::app()->start();
-    QMetaObject::invokeMethod(
-        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    QMetaObject::invokeMethod(Test::app(), "set_outputs", Qt::DirectConnection, Q_ARG(int, 2));
 
     QVERIFY(startup_spy.wait());
     QCOMPARE(screens()->count(), 2);

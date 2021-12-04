@@ -288,8 +288,8 @@ void TestScreenEdges::testCreatingInitialEdges()
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}}};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
@@ -379,8 +379,8 @@ void TestScreenEdges::testCallback()
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
@@ -605,8 +605,8 @@ void TestScreenEdges::test_overlapping_edges()
     QFETCH(QRect, geo2);
 
     QList<QRect> geometries{{geo1, geo2}};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
@@ -646,8 +646,8 @@ void TestScreenEdges::testPushBack()
     config->sync();
 
     QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
+    QMetaObject::invokeMethod(Test::app(),
+                              "set_outputs",
                               Qt::DirectConnection,
                               Q_ARG(int, geometries.count()),
                               Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
