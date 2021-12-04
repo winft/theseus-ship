@@ -130,12 +130,7 @@ bool compositor::setupStart()
         return false;
     }
 
-    CompositingType compositingType = m_scene->compositingType();
-    if (compositingType & OpenGLCompositing) {
-        // Override for OpenGl sub-type OpenGL2Compositing.
-        compositingType = OpenGLCompositing;
-    }
-    kwinApp()->platform->setSelectedCompositor(compositingType);
+    kwinApp()->platform->setSelectedCompositor(m_scene->compositingType());
 
     if (!Workspace::self() && m_scene && m_scene->compositingType() == QPainterCompositing) {
         // Force Software QtQuick on first startup with QPainter.

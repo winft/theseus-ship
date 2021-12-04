@@ -40,16 +40,9 @@ KWIN_EXPORT Q_NAMESPACE
 
 enum CompositingType {
     NoCompositing = 0,
-    /**
-     * Used as a flag whether OpenGL based compositing is used.
-     * The flag is or-ed to the enum values of the specific OpenGL types.
-     * The actual Compositors use the or @c OpenGLCompositing
-     * flags. If you need to know whether OpenGL is used, either and the flag or
-     * use EffectsHandler::isOpenGLCompositing().
-     */
     OpenGLCompositing = 1,
-    XRenderCompositing = 1<<1,
-    QPainterCompositing = 1<< 2,
+    XRenderCompositing = 2,
+    QPainterCompositing = 3,
 };
 
 enum OpenGLPlatformInterface {
