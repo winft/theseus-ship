@@ -204,7 +204,7 @@ void WaylandTestApplication::start()
 
 void WaylandTestApplication::set_outputs(int count,
                                          QVector<QRect> const& geometries,
-                                         QVector<int> const& scales)
+                                         QVector<double> const& scales)
 {
     assert(geometries.size() == 0 || geometries.size() == count);
     assert(scales.size() == 0 || scales.size() == count);
