@@ -23,15 +23,6 @@ Qt::MouseButtons KWin::input::redirect::qtButtonStates() const
     return Qt::NoButton;
 }
 
-void KWin::input::redirect::warpPointer(const QPointF&)
-{
-}
-
-bool KWin::input::redirect::supportsPointerWarping() const
-{
-    return false;
-}
-
 QPointF KWin::input::redirect::globalPointer() const
 {
     return QPointF();

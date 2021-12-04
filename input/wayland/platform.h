@@ -10,6 +10,8 @@
 
 #include "base/platform.h"
 
+#include <QPointF>
+
 namespace Wrapland::Server
 {
 class virtual_keyboard_manager_v1;
@@ -72,6 +74,7 @@ public:
     void start_interactive_position_selection(std::function<void(QPoint const&)> callback) override;
 
     void turn_outputs_on();
+    void warp_pointer(QPointF const& pos, uint32_t time);
 
     std::unique_ptr<wayland::input_method> input_method;
     std::unique_ptr<Wrapland::Server::virtual_keyboard_manager_v1> virtual_keyboard;

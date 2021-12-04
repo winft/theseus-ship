@@ -40,8 +40,7 @@ public:
     void init();
 
     void updateAfterScreenChange() override;
-    bool supportsWarping() const override;
-    void warp(QPointF const& pos) override;
+    void warp(QPointF const& pos);
 
     QPointF pos() const override;
     Qt::MouseButtons buttons() const override;

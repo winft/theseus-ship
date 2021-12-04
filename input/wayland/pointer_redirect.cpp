@@ -620,9 +620,6 @@ void pointer_redirect::updatePointerConstraints()
     if (s != waylandServer()->seat()->pointers().get_focus().surface) {
         return;
     }
-    if (!supportsWarping()) {
-        return;
-    }
     const bool canConstrain = constraints.enabled && focus() == workspace()->activeClient();
     const auto cf = s->confinedPointer();
     if (cf) {
@@ -823,9 +820,7 @@ void pointer_redirect::update_button(button_event const& event)
 
 void pointer_redirect::warp(QPointF const& pos)
 {
-    if (supportsWarping()) {
-        processMotion(pos, waylandServer()->seat()->timestamp());
-    }
+    processMotion(pos, waylandServer()->seat()->timestamp());
 }
 
 QPointF pointer_redirect::pos() const
@@ -836,11 +831,6 @@ QPointF pointer_redirect::pos() const
 Qt::MouseButtons pointer_redirect::buttons() const
 {
     return qt_buttons;
-}
-
-bool pointer_redirect::supportsWarping() const
-{
-    return true;
 }
 
 void pointer_redirect::updateAfterScreenChange()

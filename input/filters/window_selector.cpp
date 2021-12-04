@@ -14,6 +14,7 @@
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
 #include "input/redirect.h"
+#include "input/wayland/platform.h"
 #include "input/xkb/keyboard.h"
 #include "main.h"
 #include "wayland_server.h"
@@ -73,28 +74,30 @@ bool window_selector_filter::key(key_event const& event)
         } else if (qt_key == Qt::Key_Enter || qt_key == Qt::Key_Return || qt_key == Qt::Key_Space) {
             accept(kwinApp()->input->redirect->globalPointer());
         }
-        if (kwinApp()->input->redirect->supportsPointerWarping()) {
-            int mx = 0;
-            int my = 0;
-            if (qt_key == Qt::Key_Left) {
-                mx = -10;
-            }
-            if (qt_key == Qt::Key_Right) {
-                mx = 10;
-            }
-            if (qt_key == Qt::Key_Up) {
-                my = -10;
-            }
-            if (qt_key == Qt::Key_Down) {
-                my = 10;
-            }
-            if (event.base.dev->xkb->qt_modifiers & Qt::ControlModifier) {
-                mx /= 10;
-                my /= 10;
-            }
-            kwinApp()->input->redirect->warpPointer(kwinApp()->input->redirect->globalPointer()
-                                                    + QPointF(mx, my));
+
+        int mx = 0;
+        int my = 0;
+        if (qt_key == Qt::Key_Left) {
+            mx = -10;
         }
+        if (qt_key == Qt::Key_Right) {
+            mx = 10;
+        }
+        if (qt_key == Qt::Key_Up) {
+            my = -10;
+        }
+        if (qt_key == Qt::Key_Down) {
+            my = 10;
+        }
+        if (event.base.dev->xkb->qt_modifiers & Qt::ControlModifier) {
+            mx /= 10;
+            my /= 10;
+        }
+
+        auto platform = static_cast<input::wayland::platform*>(kwinApp()->input.get());
+        auto const pos = kwinApp()->input->redirect->globalPointer() + QPointF(mx, my);
+
+        platform->warp_pointer(pos, event.base.time_msec);
     }
     // filter out while selecting a window
     return true;
