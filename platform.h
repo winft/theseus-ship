@@ -230,9 +230,6 @@ public:
      */
     virtual void setupActionForGlobalAccel(QAction *action);
 
-    void setInitialWindowSize(const QSize &size) {
-        m_initialWindowSize = size;
-    }
     bool supportsPointerWarping() const {
         return m_pointerWarping;
     }
@@ -322,10 +319,6 @@ public:
         m_selectedCompositor = type;
     }
 
-    QSize initialWindowSize() const {
-        return m_initialWindowSize;
-    }
-
     virtual clockid_t clockId() const;
     void repaint(const QRect &rect);
 
@@ -348,7 +341,6 @@ protected:
     }
 
 private:
-    QSize m_initialWindowSize;
     bool m_pointerWarping = false;
     EGLDisplay m_eglDisplay;
     EGLConfig m_eglConfig = nullptr;

@@ -56,7 +56,6 @@ void DontCrashEmptyDecorationTest::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     // this test needs to enforce OpenGL compositing to get into the crashy condition
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));

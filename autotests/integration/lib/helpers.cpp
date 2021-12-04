@@ -30,11 +30,6 @@ namespace Clt = Wrapland::Client;
 namespace KWin::Test
 {
 
-output::output()
-    : output(QRect(QPoint(), app()->platform->initialWindowSize()))
-{
-}
-
 output::output(QRect const& geometry)
     : output(geometry, 1.)
 {

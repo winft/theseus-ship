@@ -38,7 +38,6 @@ namespace Test
 class client;
 
 struct KWIN_EXPORT output {
-    output();
     output(QRect const& geometry);
     output(QRect const& geometry, double scale);
 

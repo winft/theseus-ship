@@ -65,7 +65,6 @@ void keyboard_keymap_test::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     Test::app()->start();
     Test::app()->set_outputs(2);

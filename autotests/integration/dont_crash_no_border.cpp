@@ -57,7 +57,6 @@ void DontCrashNoBorder::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     KSharedConfig::Ptr config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     config->group("org.kde.kdecoration2").writeEntry("NoPlugin", true);

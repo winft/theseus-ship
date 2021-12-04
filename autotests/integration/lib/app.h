@@ -66,6 +66,7 @@ public:
 
     void start();
 
+    /// Sets @ref count horizontally lined up outputs with a default size of 1280x1024 at scale 1.
     void set_outputs(size_t count);
     void set_outputs(std::vector<QRect> const& geometries);
     void set_outputs(std::vector<Test::output> const& outputs);

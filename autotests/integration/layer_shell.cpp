@@ -54,15 +54,16 @@ void layer_shell_test::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1000, 500));
 
     Test::app()->start();
-    Test::app()->set_outputs(2);
-
     QVERIFY(startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1000, 500));
-    QCOMPARE(screens()->geometry(1), QRect(1000, 0, 1000, 500));
+
+    auto geometries = std::vector<QRect>{{0, 0, 1000, 500}, {1000, 0, 1000, 500}};
+    Test::app()->set_outputs(geometries);
+
+    QCOMPARE(screens()->count(), geometries.size());
+    QCOMPARE(screens()->geometry(0), geometries.at(0));
+    QCOMPARE(screens()->geometry(1), geometries.at(1));
 }
 
 void layer_shell_test::init()

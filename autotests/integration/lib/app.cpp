@@ -205,7 +205,7 @@ void WaylandTestApplication::start()
 void WaylandTestApplication::set_outputs(size_t count)
 {
     auto outputs = std::vector<Test::output>();
-    auto size = render->initialWindowSize();
+    auto const size = QSize(1280, 1024);
     auto width = 0;
 
     for (size_t i = 0; i < count; i++) {
