@@ -47,6 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KPluginMetaData>
 #include <KQuickAddons/QtQuickSettings>
 #include <KShell>
+#include <UpdateLaunchEnvironmentJob>
 
 // Qt
 #include <qplatformdefs.h>
@@ -335,6 +336,15 @@ void ApplicationWayland::startSession()
         }
     }
 
+    // Need to create a launch environment job for Plasma components to catch up in a systemd boot.
+    // This implies we're running in a full Plasma session i.e. when we use the wrapper (that's
+    // there the service name comes from), but we can also do it in a plain setup without session.
+    // Registering the service names indicates that we're live and all env vars are exported.
+    auto env_sync_job = new UpdateLaunchEnvironmentJob(process_environment);
+    QObject::connect(env_sync_job, &UpdateLaunchEnvironmentJob::finished, this, []() {
+        QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWinWrapper"));
+    });
+
     Q_EMIT startup_finished();
 }
 
@@ -449,16 +459,12 @@ int main(int argc, char * argv[])
     QCommandLineOption waylandDisplayOption(QStringLiteral("wayland-display"),
                                             i18n("The Wayland Display to use in windowed mode on platform Wayland."),
                                             QStringLiteral("display"));
-    QCommandLineOption wayland_socket_fd_option(QStringLiteral("wayland_fd"),
-                                    i18n("Wayland socket to use for incoming connections."),
-                                    QStringLiteral("wayland_fd"));
 
     QCommandLineParser parser;
     a.setupCommandLine(&parser);
 
     parser.addOption(xwaylandOption);
     parser.addOption(waylandSocketOption);
-    parser.addOption(wayland_socket_fd_option);
     parser.addOption(waylandDisplayOption);
 
     QCommandLineOption libinputOption(QStringLiteral("libinput"),
@@ -501,8 +507,6 @@ int main(int argc, char * argv[])
         deviceIdentifier = parser.value(waylandDisplayOption).toUtf8();
     }
 
-    auto const wrapped_process = parser.isSet(wayland_socket_fd_option);
-
     KWin::wayland_start_options flags;
     if (parser.isSet(screenLockerOption)) {
         flags = KWin::wayland_start_options::lock_screen;
@@ -514,47 +518,14 @@ int main(int argc, char * argv[])
     }
 
     try {
-        if (parser.isSet(wayland_socket_fd_option)) {
-            bool ok;
-            auto fd = parser.value(wayland_socket_fd_option).toInt(&ok);
-
-            if (!ok) {
-                std::cerr << "FATAL ERROR: could not parse socket fd" << std::endl;
-                throw std::exception();
-            }
-
-            // Ensure fd is not leaked to children.
-            fcntl(fd, F_SETFD, O_CLOEXEC);
-            a.server.reset(new KWin::WaylandServer(fd, flags));
-        } else {
-            auto const socket_name = parser.value(waylandSocketOption).toStdString();
-            a.server.reset(new KWin::WaylandServer(socket_name, flags));
-        }
+        auto const socket_name = parser.value(waylandSocketOption).toStdString();
+        a.server.reset(new KWin::WaylandServer(socket_name, flags));
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: could not create Wayland server" << std::endl;
         return 1;
     }
 
-
-    if (wrapped_process) {
-        // If we run with the wrapper, we must temporarily unset the WAYLAND_DISPLAY environment
-        // variable for the wlroots backend initialization. Otherwise wlroots would select its
-        // nested Wayland backend.
-        assert(qEnvironmentVariableIsSet("WAYLAND_DISPLAY"));
-        auto const display_to_use = qgetenv("WAYLAND_DISPLAY");
-        qunsetenv("WAYLAND_DISPLAY");
-
-        if (parser.isSet(waylandDisplayOption)) {
-            // If we are indeed in a nested Wayland session set WAYLAND_DISPLAY to the host
-            // session's one, so wlroots does select its Wayland backend.
-            qputenv("WAYLAND_DISPLAY", parser.value(waylandDisplayOption).toUtf8());
-        }
-
-        a.init_platforms();
-        qputenv("WAYLAND_DISPLAY", display_to_use);
-    } else {
-        a.init_platforms();
-    }
+    a.init_platforms();
 
     if (!deviceIdentifier.isEmpty()) {
         a.platform->setDeviceIdentifier(deviceIdentifier);

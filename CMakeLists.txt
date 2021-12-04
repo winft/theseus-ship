@@ -91,6 +91,11 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
     XmlGui
 )
 
+# Required frameworks by Wayland binary
+find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
+    DBusAddons
+)
+
 # optional frameworks
 find_package(KF5DocTools ${KF5_MIN_VERSION} CONFIG)
 set_package_properties(KF5DocTools PROPERTIES
@@ -910,6 +915,7 @@ target_link_libraries(kwin_wayland
     KF5WindowSystemKWinPlugin
     KWinQpaPlugin
     KF5::Crash
+    KF5::DBusAddons
 )
 
 if (HAVE_LIBCAP)
@@ -927,6 +933,12 @@ if (HAVE_LIBCAP)
                 \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_BINDIR}/kwin_wayland)"
     )
 endif()
+
+# Required for Plasma Wayland session. It expects a binary with this name to launch on startup.
+add_custom_target(kwin_wayland_wrapper ALL COMMAND
+    ${CMAKE_COMMAND} -E create_symlink
+    kwin_wayland ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/kwin_wayland_wrapper
+)
 
 ########### install files ###############
 
@@ -975,8 +987,10 @@ configure_package_config_file(KWinDBusInterfaceConfig.cmake.in
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/KWinDBusInterfaceConfig.cmake
     DESTINATION ${CMAKECONFIG_INSTALL_DIR})
 
-
-# plasma-kwin_wayland.service.in is currently disabled as plasma-workspace currently launches
-# kwin-wayland explicitly. Porting this is currently blocked on propogating DISPLAY
-ecm_install_configured_files(INPUT plasma-kwin_x11.service.in @ONLY
+ecm_install_configured_files(INPUT plasma-kwin_x11.service.in plasma-kwin_wayland.service.in @ONLY
             DESTINATION ${SYSTEMD_USER_UNIT_INSTALL_DIR})
+
+install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/kwin_wayland_wrapper
+    DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
+)
