@@ -89,10 +89,6 @@ void handle_new_output(struct wl_listener* listener, void* data)
 
 void backend::init()
 {
-    // TODO(romangg): Can we omit making a distinction here?
-    // Pointer warping is required for tests.
-    setSupportsPointerWarping(base::backend::wlroots_get_headless_backend(base.backend.backend));
-
     // TODO(romangg): Has to be here because in the integration tests base.backend.backend is not
     //                yet available in the ctor. Can we change that?
 #if HAVE_WLR_OUTPUT_INIT_RENDER

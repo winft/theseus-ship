@@ -824,7 +824,6 @@ void pointer_redirect::update_button(button_event const& event)
 void pointer_redirect::warp(QPointF const& pos)
 {
     if (supportsWarping()) {
-        kwinApp()->platform->warpPointer(pos);
         processMotion(pos, waylandServer()->seat()->timestamp());
     }
 }

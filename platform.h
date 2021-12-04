@@ -99,7 +99,6 @@ public:
      * The default implementation creates a Edge.
      */
     virtual Edge *createScreenEdge(ScreenEdges *parent);
-    virtual void warpPointer(const QPointF &globalPos);
     /**
      * Whether our Compositing EGL display allows a surface less context
      * so that a sharing context could be created.
@@ -230,10 +229,6 @@ public:
      */
     virtual void setupActionForGlobalAccel(QAction *action);
 
-    bool supportsPointerWarping() const {
-        return m_pointerWarping;
-    }
-
     /**
      * Queries the current X11 time stamp of the X server.
      */
@@ -333,15 +328,11 @@ Q_SIGNALS:
 
 protected:
     Platform();
-    void setSupportsPointerWarping(bool set) {
-        m_pointerWarping = set;
-    }
     void setSupportsGammaControl(bool set) {
         m_supportsGammaControl = set;
     }
 
 private:
-    bool m_pointerWarping = false;
     EGLDisplay m_eglDisplay;
     EGLConfig m_eglConfig = nullptr;
     EGLContext m_context = EGL_NO_CONTEXT;

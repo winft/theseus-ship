@@ -77,11 +77,6 @@ void Platform::repaint(const QRect &rect)
     render::compositor::self()->addRepaint(rect);
 }
 
-void Platform::warpPointer(const QPointF &globalPos)
-{
-    Q_UNUSED(globalPos)
-}
-
 bool Platform::supportsQpaContext() const
 {
     auto compositor = render::compositor::self();
