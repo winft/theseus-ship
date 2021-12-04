@@ -287,7 +287,6 @@ public:
     }
 
     virtual clockid_t clockId() const;
-    void repaint(const QRect &rect);
 
 Q_SIGNALS:
     void output_added(base::output* output);

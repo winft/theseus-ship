@@ -69,14 +69,6 @@ Edge *Platform::createScreenEdge(ScreenEdges *edges)
     return new Edge(edges);
 }
 
-void Platform::repaint(const QRect &rect)
-{
-    if (!render::compositor::self()) {
-        return;
-    }
-    render::compositor::self()->addRepaint(rect);
-}
-
 EGLDisplay KWin::Platform::sceneEglDisplay() const
 {
     return m_eglDisplay;
