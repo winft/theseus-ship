@@ -37,6 +37,16 @@ namespace Test
 {
 class client;
 
+struct KWIN_EXPORT output {
+    output();
+    output(QRect const& geometry);
+    output(QRect const& geometry, double scale);
+
+    // Geometry in logical space.
+    QRect geometry;
+    double scale;
+};
+
 KWIN_EXPORT WaylandTestApplication* app();
 
 /**

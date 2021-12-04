@@ -204,39 +204,39 @@ void WaylandTestApplication::start()
 
 void WaylandTestApplication::set_outputs(size_t count)
 {
-    auto geometries = QVector<QRect>();
+    auto outputs = QVector<Test::output>();
     auto size = render->initialWindowSize();
     auto width = 0;
 
     for (size_t i = 0; i < count; i++) {
-        geometries.push_back({QPoint(width, 0), size});
+        outputs.push_back({{QPoint(width, 0), size}});
         width += size.width();
     }
 
-    set_outputs(geometries);
+    set_outputs(outputs);
 }
 
 void WaylandTestApplication::set_outputs(QVector<QRect> const& geometries)
 {
-    set_outputs(geometries, QVector<double>(geometries.size(), 1.));
+    auto outputs = QVector<Test::output>();
+    for (auto&& geo : geometries) {
+        outputs.push_back(geo);
+    }
+    set_outputs(outputs);
 }
 
-void WaylandTestApplication::set_outputs(QVector<QRect> const& geometries,
-                                         QVector<double> const& scales)
+void WaylandTestApplication::set_outputs(QVector<Test::output> const& outputs)
 {
-    assert(geometries.size() == scales.size());
-
     auto outputs_copy = render->all_outputs;
     for (auto output : outputs_copy) {
         delete output;
     }
 
-    for (int i = 0; i < geometries.size(); i++) {
-        auto const scale = scales.at(i);
-        auto const size = geometries.at(i).size() * scale;
+    for (auto&& output : outputs) {
+        auto const size = output.geometry.size() * output.scale;
 
         wlr_headless_add_output(base.backend.backend, size.width(), size.height());
-        render->all_outputs.back()->force_geometry(geometries.at(i));
+        render->all_outputs.back()->force_geometry(output.geometry);
     }
 
     // Update again in case of force geometry change.

@@ -68,7 +68,7 @@ public:
 
     void set_outputs(size_t count);
     void set_outputs(QVector<QRect> const& geometries);
-    void set_outputs(QVector<QRect> const& geometries, QVector<double> const& scales);
+    void set_outputs(QVector<Test::output> const& outputs);
 
 private:
     void handle_server_addons_created();

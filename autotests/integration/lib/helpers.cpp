@@ -30,6 +30,22 @@ namespace Clt = Wrapland::Client;
 namespace KWin::Test
 {
 
+output::output()
+    : output(QRect(QPoint(), app()->platform->initialWindowSize()))
+{
+}
+
+output::output(QRect const& geometry)
+    : output(geometry, 1.)
+{
+}
+
+output::output(QRect const& geometry, double scale)
+    : geometry{geometry}
+    , scale{scale}
+{
+}
+
 WaylandTestApplication* app()
 {
     return static_cast<WaylandTestApplication*>(kwinApp());
