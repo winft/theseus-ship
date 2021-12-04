@@ -36,7 +36,7 @@ platform::platform(wayland_base const& base)
     auto redirect_ptr = new wayland::redirect(this);
     redirect.reset(redirect_ptr);
 
-    cursor = std::make_unique<wayland::cursor>(redirect_ptr);
+    cursor = std::make_unique<wayland::cursor>(this);
     input_method = std::make_unique<wayland::input_method>(waylandServer());
     virtual_keyboard = waylandServer()->display()->create_virtual_keyboard_manager_v1();
 }

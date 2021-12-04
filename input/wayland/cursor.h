@@ -14,20 +14,15 @@
 namespace KWin::input::wayland
 {
 class cursor_image;
-class redirect;
+class platform;
 
-/**
- * @brief Implementation using the InputRedirection framework to get pointer positions.
- *
- * Does not support warping of cursor.
- */
 class KWIN_EXPORT cursor : public input::cursor
 {
     Q_OBJECT
 public:
     std::unique_ptr<wayland::cursor_image> cursor_image;
 
-    cursor(wayland::redirect* redirect);
+    cursor(wayland::platform* platform);
     ~cursor() override;
 
     QImage image() const override;
@@ -48,7 +43,7 @@ private:
     void slot_modifiers_changed(Qt::KeyboardModifiers mods, Qt::KeyboardModifiers oldMods);
 
     Qt::MouseButtons m_currentButtons{Qt::NoButton};
-    wayland::redirect* redirect;
+    wayland::platform* platform;
 };
 
 }
