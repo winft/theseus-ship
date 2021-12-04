@@ -287,8 +287,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     QSignalSpy changedSpy(screens(), &Screens::changed);
     QVERIFY(changedSpy.isValid());
 
-    QList<QRect> geometries{{QRect{0, 0, 1024, 768}}};
-    Test::app()->set_outputs(QVector<QRect>::fromList(geometries));
+    Test::app()->set_outputs({{0, 0, 1024, 768}});
     QCOMPARE(changedSpy.count(), 1);
 
     // let's update the layout and verify that we have edges
@@ -372,8 +371,8 @@ void TestScreenEdges::testCallback()
     QSignalSpy changedSpy(screens(), &Screens::changed);
     QVERIFY(changedSpy.isValid());
 
-    QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
-    Test::app()->set_outputs(QVector<QRect>::fromList(geometries));
+    auto const geometries = std::vector<QRect>{{0, 0, 1024, 768}, {200, 768, 1024, 768}};
+    Test::app()->set_outputs(geometries);
 
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
@@ -593,8 +592,8 @@ void TestScreenEdges::test_overlapping_edges()
     QFETCH(QRect, geo1);
     QFETCH(QRect, geo2);
 
-    QList<QRect> geometries{{geo1, geo2}};
-    Test::app()->set_outputs(QVector<QRect>::fromList(geometries));
+    auto const geometries = std::vector<QRect>{geo1, geo2};
+    Test::app()->set_outputs(geometries);
 
     QCOMPARE(changedSpy.count(), geometries.size() + 3);
 
@@ -629,8 +628,8 @@ void TestScreenEdges::testPushBack()
     config->group("Windows").writeEntry("ElectricBorderPushbackPixels", pushback);
     config->sync();
 
-    QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
-    Test::app()->set_outputs(QVector<QRect>::fromList(geometries));
+    auto const geometries = std::vector<QRect>{{0, 0, 1024, 768}, {200, 768, 1024, 768}};
+    Test::app()->set_outputs(geometries);
 
     auto screenEdges = ScreenEdges::self();
     screenEdges->setConfig(config);

@@ -533,22 +533,14 @@ void ActivationTest::testSwitchToWindowFullScreen()
 
 void ActivationTest::stackScreensHorizontally()
 {
-    const QVector<QRect> screenGeometries{
-        QRect(0, 0, 1280, 1024),
-        QRect(1280, 0, 1280, 1024),
-    };
-
-    Test::app()->set_outputs(screenGeometries);
+    auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};
+    Test::app()->set_outputs(geometries);
 }
 
 void ActivationTest::stackScreensVertically()
 {
-    const QVector<QRect> screenGeometries{
-        QRect(0, 0, 1280, 1024),
-        QRect(0, 1024, 1280, 1024),
-    };
-
-    Test::app()->set_outputs(screenGeometries);
+    auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {0, 1024, 1280, 1024}};
+    Test::app()->set_outputs(geometries);
 }
 
 }

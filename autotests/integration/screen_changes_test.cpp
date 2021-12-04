@@ -97,7 +97,7 @@ void ScreenChangesTest::testScreenAddRemove()
     QSignalSpy screensChangedSpy(screens(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
 
-    const QVector<QRect> geometries{QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)};
+    auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};
     Test::app()->set_outputs(geometries);
 
     QCOMPARE(screensChangedSpy.count(), screens()->count() + 2);
@@ -164,7 +164,7 @@ void ScreenChangesTest::testScreenAddRemove()
     QSignalSpy o2RemovedSpy(o2.get(), &Output::removed);
     QVERIFY(o2RemovedSpy.isValid());
 
-    const QVector<QRect> geometries2{QRect(0, 0, 1280, 1024)};
+    auto const geometries2 = std::vector<QRect>{{0, 0, 1280, 1024}};
     Test::app()->set_outputs(geometries2);
 
     QCOMPARE(screensChangedSpy.count(), screens()->count() + 3);

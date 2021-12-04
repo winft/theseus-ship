@@ -687,8 +687,7 @@ void InternalWindowTest::testPopup()
 
 void InternalWindowTest::testScale()
 {
-    Test::app()->set_outputs(
-        QVector<Test::output>({{QRect(0, 0, 1280, 1024), 2}, {QRect(1280 / 2, 0, 1280, 1024), 2}}));
+    Test::app()->set_outputs({{{QRect(0, 0, 1280, 1024), 2}, {QRect(1280 / 2, 0, 1280, 1024), 2}}});
 
     QSignalSpy clientAddedSpy(workspace(), &Workspace::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());

@@ -204,7 +204,7 @@ void WaylandTestApplication::start()
 
 void WaylandTestApplication::set_outputs(size_t count)
 {
-    auto outputs = QVector<Test::output>();
+    auto outputs = std::vector<Test::output>();
     auto size = render->initialWindowSize();
     auto width = 0;
 
@@ -216,16 +216,16 @@ void WaylandTestApplication::set_outputs(size_t count)
     set_outputs(outputs);
 }
 
-void WaylandTestApplication::set_outputs(QVector<QRect> const& geometries)
+void WaylandTestApplication::set_outputs(std::vector<QRect> const& geometries)
 {
-    auto outputs = QVector<Test::output>();
+    auto outputs = std::vector<Test::output>();
     for (auto&& geo : geometries) {
         outputs.push_back(geo);
     }
     set_outputs(outputs);
 }
 
-void WaylandTestApplication::set_outputs(QVector<Test::output> const& outputs)
+void WaylandTestApplication::set_outputs(std::vector<Test::output> const& outputs)
 {
     auto outputs_copy = render->all_outputs;
     for (auto output : outputs_copy) {

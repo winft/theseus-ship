@@ -148,6 +148,18 @@ void TestScreens::testReconfigure()
     QCOMPARE(screens->isCurrentFollowsMouse(), setting);
 }
 
+auto to_vector(QList<QRect> const& list)
+{
+    std::vector<QRect> vector;
+    vector.resize(list.size());
+    size_t count{0};
+    for (auto const& element : list) {
+        vector.at(count) = element;
+        count++;
+    }
+    return vector;
+}
+
 void TestScreens::testSize_data()
 {
     QTest::addColumn<QList<QRect>>("geometries");
@@ -173,7 +185,7 @@ void TestScreens::testSize()
     QVERIFY(sizeChangedSpy.isValid());
 
     QFETCH(QList<QRect>, geometries);
-    Test::app()->set_outputs(QVector<QRect>::fromList(geometries));
+    Test::app()->set_outputs(to_vector(geometries));
 
     QTEST(sizeChangedSpy.count(), "changeCount");
     QTEST(screens->size(), "expectedSize");
@@ -189,7 +201,7 @@ void TestScreens::testCount()
 
     // change to two screens
     QList<QRect> geometries{{QRect{0, 0, 100, 200}, QRect{100, 0, 100, 200}}};
-    Test::app()->set_outputs(QVector<QRect>::fromList(geometries));
+    Test::app()->set_outputs(to_vector(geometries));
 
     QCOMPARE(countChangedSpy.count(), 3);
     QCOMPARE(screens->count(), 2);
@@ -198,7 +210,7 @@ void TestScreens::testCount()
 
     // go back to one screen
     geometries.takeLast();
-    Test::app()->set_outputs(QVector<QRect>::fromList(geometries));
+    Test::app()->set_outputs(to_vector(geometries));
 
     QCOMPARE(countChangedSpy.count(), 3);
     QCOMPARE(countChangedSpy.last().first().toInt(), 0);
@@ -210,7 +222,7 @@ void TestScreens::testCount()
     QVERIFY(changedSpy.isValid());
     countChangedSpy.clear();
 
-    Test::app()->set_outputs(QVector<QRect>::fromList(geometries));
+    Test::app()->set_outputs(to_vector(geometries));
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
     QCOMPARE(countChangedSpy.count(), 2);
 }
@@ -244,7 +256,7 @@ void TestScreens::testIntersecting()
     QVERIFY(changedSpy.isValid());
 
     QFETCH(QList<QRect>, geometries);
-    Test::app()->set_outputs(QVector<QRect>::fromList(geometries));
+    Test::app()->set_outputs(to_vector(geometries));
 
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
@@ -281,7 +293,7 @@ void TestScreens::testCurrentClient()
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 100, 100}, QRect{100, 0, 100, 100}}};
-    Test::app()->set_outputs(QVector<QRect>::fromList(geometries));
+    Test::app()->set_outputs(to_vector(geometries));
 
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
@@ -361,7 +373,7 @@ void TestScreens::testCurrentWithFollowsMouse()
     QCOMPARE(screens->current(), 0);
 
     QFETCH(QList<QRect>, geometries);
-    Test::app()->set_outputs(QVector<QRect>::fromList(geometries));
+    Test::app()->set_outputs(to_vector(geometries));
 
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
@@ -397,7 +409,7 @@ void TestScreens::testCurrentPoint()
     screens->setCurrentFollowsMouse(false);
 
     QFETCH(QList<QRect>, geometries);
-    Test::app()->set_outputs(QVector<QRect>::fromList(geometries));
+    Test::app()->set_outputs(to_vector(geometries));
 
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 

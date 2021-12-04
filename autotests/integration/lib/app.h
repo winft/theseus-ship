@@ -67,8 +67,8 @@ public:
     void start();
 
     void set_outputs(size_t count);
-    void set_outputs(QVector<QRect> const& geometries);
-    void set_outputs(QVector<Test::output> const& outputs);
+    void set_outputs(std::vector<QRect> const& geometries);
+    void set_outputs(std::vector<Test::output> const& outputs);
 
 private:
     void handle_server_addons_created();
