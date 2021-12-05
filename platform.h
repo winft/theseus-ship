@@ -310,6 +310,4 @@ private:
 
 }
 
-Q_DECLARE_INTERFACE(KWin::Platform, "org.kde.kwin.Platform")
-
 #endif
