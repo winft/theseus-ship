@@ -9,6 +9,7 @@
 #include "presentation.h"
 #include "utils.h"
 
+#include "base/platform.h"
 #include "base/wayland/output.h"
 #include "platform.h"
 #include "render/cursor.h"
@@ -66,12 +67,12 @@ compositor::compositor()
         outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
     }
 
-    connect(kwinApp()->platform, &Platform::output_added, this, [this](auto output) {
+    connect(&kwinApp()->get_base(), &base::platform::output_added, this, [this](auto output) {
         auto wl_out = static_cast<base::wayland::output*>(output);
         outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
     });
 
-    connect(kwinApp()->platform, &Platform::output_removed, this, [this](auto output) {
+    connect(&kwinApp()->get_base(), &base::platform::output_removed, this, [this](auto output) {
         for (auto it = outputs.begin(); it != outputs.end(); ++it) {
             if (it->first == output) {
                 outputs.erase(it);

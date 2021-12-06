@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effects.h"
 
 #include "base/output.h"
+#include "base/platform.h"
 #include "effect_loader.h"
 #include "effectsadaptor.h"
 #include "input/cursor.h"
@@ -277,12 +278,12 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         }
     }
 
-    connect(kwinApp()->platform,
-            &Platform::output_added,
+    connect(&kwinApp()->get_base(),
+            &base::platform::output_added,
             this,
             &effects_handler_impl::slotOutputEnabled);
-    connect(kwinApp()->platform,
-            &Platform::output_removed,
+    connect(&kwinApp()->get_base(),
+            &base::platform::output_removed,
             this,
             &effects_handler_impl::slotOutputDisabled);
 

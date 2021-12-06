@@ -82,7 +82,7 @@ void handle_new_output(struct wl_listener* listener, void* data)
         out->force_geometry(shifted_geo);
     }
 
-    Q_EMIT back->output_added(out);
+    Q_EMIT back->base.output_added(out);
     Screens::self()->updateAll();
 }
 
@@ -124,13 +124,13 @@ void backend::enableOutput(output* output, bool enable)
         Q_ASSERT(!enabled_outputs.contains(output));
         enabled_outputs << output;
         base.outputs.push_back(output);
-        Q_EMIT output_added(output);
+        Q_EMIT base.output_added(output);
     } else {
         Q_ASSERT(enabled_outputs.contains(output));
         enabled_outputs.removeOne(output);
         Q_ASSERT(!enabled_outputs.contains(output));
         remove_all(base.outputs, output);
-        Q_EMIT output_removed(output);
+        Q_EMIT base.output_removed(output);
     }
 
     auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
