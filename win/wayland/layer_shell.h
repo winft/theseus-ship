@@ -160,7 +160,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         block_geometry_updates(win, false);
 
         if (!win->layer_surface->output()) {
-            auto current_index = screens()->current();
+            auto current_index = Screens::self()->current();
             auto output = kwinApp()->platform->enabledOutputs().at(current_index);
             win->layer_surface->set_output(
                 static_cast<base::wayland::output*>(output)->wrapland_output());

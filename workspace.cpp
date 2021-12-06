@@ -114,6 +114,7 @@ Workspace* Workspace::_self = nullptr;
 
 Workspace::Workspace()
     : QObject(nullptr)
+    , outline(std::make_unique<render::x11::outline>())
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
     , m_userActionsMenu(new UserActionsMenu(this))
@@ -174,8 +175,6 @@ Workspace::Workspace()
             [this](const QString& name) { storeSession(name, SMSavePhase2); });
 
     new DBusInterface(this);
-
-    render::x11::outline::create(this);
 
     initShortcuts();
 
@@ -400,8 +399,8 @@ void Workspace::initWithX11()
         rootInfo->setDesktopViewport(VirtualDesktopManager::self()->count(), *viewports);
         delete[] viewports;
         QRect geom;
-        for (int i = 0; i < screens()->count(); i++) {
-            geom |= screens()->geometry(i);
+        for (int i = 0; i < Screens::self()->count(); i++) {
+            geom |= Screens::self()->geometry(i);
         }
         NETSize desktop_geometry;
         desktop_geometry.width = geom.width();
@@ -1178,23 +1177,23 @@ QString Workspace::supportInformation() const
     support.append(QStringLiteral("Multi-Head: "));
     support.append(QStringLiteral("not supported anymore\n"));
     support.append(QStringLiteral("Active screen follows mouse: "));
-    if (screens()->isCurrentFollowsMouse())
+    if (Screens::self()->isCurrentFollowsMouse())
         support.append(QStringLiteral(" yes\n"));
     else
         support.append(QStringLiteral(" no\n"));
-    support.append(QStringLiteral("Number of Screens: %1\n\n").arg(screens()->count()));
-    for (int i = 0; i < screens()->count(); ++i) {
-        const QRect geo = screens()->geometry(i);
+    support.append(QStringLiteral("Number of Screens: %1\n\n").arg(Screens::self()->count()));
+    for (int i = 0; i < Screens::self()->count(); ++i) {
+        const QRect geo = Screens::self()->geometry(i);
         support.append(QStringLiteral("Screen %1:\n").arg(i));
         support.append(QStringLiteral("---------\n"));
-        support.append(QStringLiteral("Name: %1\n").arg(screens()->name(i)));
+        support.append(QStringLiteral("Name: %1\n").arg(Screens::self()->name(i)));
         support.append(QStringLiteral("Geometry: %1,%2,%3x%4\n")
                            .arg(geo.x())
                            .arg(geo.y())
                            .arg(geo.width())
                            .arg(geo.height()));
-        support.append(QStringLiteral("Scale: %1\n").arg(screens()->scale(i)));
-        support.append(QStringLiteral("Refresh Rate: %1\n\n").arg(screens()->refreshRate(i)));
+        support.append(QStringLiteral("Scale: %1\n").arg(Screens::self()->scale(i)));
+        support.append(QStringLiteral("Refresh Rate: %1\n\n").arg(Screens::self()->refreshRate(i)));
     }
     support.append(QStringLiteral("\nCompositing\n"));
     support.append(QStringLiteral("===========\n"));
@@ -1469,7 +1468,7 @@ void Workspace::addInternalClient(win::internal_window* client)
     win::update_layer(client);
 
     if (client->placeable()) {
-        auto const area = clientArea(PlacementArea, screens()->current(), client->desktop());
+        auto const area = clientArea(PlacementArea, Screens::self()->current(), client->desktop());
         win::place(client, area);
     }
 
@@ -1588,7 +1587,7 @@ void Workspace::checkTransients(Toplevel* window)
  */
 void Workspace::desktopResized()
 {
-    QRect geom = screens()->geometry();
+    QRect geom = Screens::self()->geometry();
     if (win::x11::rootInfo()) {
         NETSize desktop_geometry;
         desktop_geometry.width = geom.width();
@@ -1609,10 +1608,10 @@ void Workspace::desktopResized()
 
 void Workspace::saveOldScreenSizes()
 {
-    olddisplaysize = screens()->displaySize();
+    olddisplaysize = Screens::self()->displaySize();
     oldscreensizes.clear();
-    for (int i = 0; i < screens()->count(); ++i)
-        oldscreensizes.push_back(screens()->geometry(i));
+    for (int i = 0; i < Screens::self()->count(); ++i)
+        oldscreensizes.push_back(Screens::self()->geometry(i));
 }
 
 /**
@@ -1717,16 +1716,16 @@ QRect Workspace::clientArea(clientAreaOption opt, int screen, int desktop) const
     if (desktop == NETWinInfo::OnAllDesktops || desktop == 0)
         desktop = VirtualDesktopManager::self()->current();
     if (screen == -1) {
-        screen = screens()->current();
+        screen = Screens::self()->current();
     }
-    const QSize displaySize = screens()->displaySize();
+    const QSize displaySize = Screens::self()->displaySize();
 
     QRect sarea, warea;
     sarea = (!areas.screen.empty()
              // screens may be missing during KWin initialization or screen config changes
              && screen < static_cast<int>(areas.screen[desktop].size()))
         ? areas.screen[desktop][screen]
-        : screens()->geometry(screen);
+        : Screens::self()->geometry(screen);
     warea = areas.work[desktop].isNull() ? QRect(0, 0, displaySize.width(), displaySize.height())
                                          : areas.work[desktop];
 
@@ -1738,7 +1737,7 @@ QRect Workspace::clientArea(clientAreaOption opt, int screen, int desktop) const
     case FullScreenArea:
     case MovementArea:
     case ScreenArea:
-        return screens()->geometry(screen);
+        return Screens::self()->geometry(screen);
     case WorkArea:
         return warea;
     case FullArea:
@@ -1749,7 +1748,7 @@ QRect Workspace::clientArea(clientAreaOption opt, int screen, int desktop) const
 
 QRect Workspace::clientArea(clientAreaOption opt, const QPoint& p, int desktop) const
 {
-    return clientArea(opt, screens()->number(p), desktop);
+    return clientArea(opt, Screens::self()->number(p), desktop);
 }
 
 QRect Workspace::clientArea(clientAreaOption opt, Toplevel const* window) const
@@ -1835,7 +1834,7 @@ Workspace::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted,
     if (options->windowSnapZone() || !borderSnapZone.isNull() || options->centerSnapZone()) {
 
         const bool sOWO = options->isSnapOnlyWhenOverlapping();
-        const int screen = screens()->number(pos + QRect(QPoint(), window->size()).center());
+        const int screen = Screens::self()->number(pos + QRect(QPoint(), window->size()).center());
 
         if (maxRect.isNull()) {
             maxRect = clientArea(MovementArea, screen, window->desktop());
@@ -1869,14 +1868,14 @@ Workspace::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted,
             // snap to titlebar / snap to window borders on inner screen edges
             if (frameMargins.left()
                 && (flags(window->maximizeMode() & win::maximize_mode::horizontal)
-                    || screens()->intersecting(
+                    || Screens::self()->intersecting(
                            geo.translated(maxRect.x() - (frameMargins.left() + geo.x()), 0))
                         > 1)) {
                 frameMargins.setLeft(0);
             }
             if (frameMargins.right()
                 && (flags(window->maximizeMode() & win::maximize_mode::horizontal)
-                    || screens()->intersecting(
+                    || Screens::self()->intersecting(
                            geo.translated(maxRect.right() + frameMargins.right() - geo.right(), 0))
                         > 1)) {
                 frameMargins.setRight(0);
@@ -1886,7 +1885,7 @@ Workspace::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted,
             }
             if (frameMargins.bottom()
                 && (flags(window->maximizeMode() & win::maximize_mode::vertical)
-                    || screens()->intersecting(geo.translated(
+                    || Screens::self()->intersecting(geo.translated(
                            0, maxRect.bottom() + frameMargins.bottom() - geo.bottom()))
                         > 1)) {
                 frameMargins.setBottom(0);
@@ -2435,7 +2434,7 @@ int Workspace::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge)
     auto const right = newX - win::frame_margins(window).left();
     auto frameGeometry = window->geometry_update.frame;
     frameGeometry.moveRight(right);
-    if (screens()->intersecting(frameGeometry) < 2) {
+    if (Screens::self()->intersecting(frameGeometry) < 2) {
         newX = right;
     }
 
@@ -2477,7 +2476,7 @@ int Workspace::packPositionRight(Toplevel const* window, int oldX, bool rightEdg
     auto const right = newX + win::frame_margins(window).right();
     auto frameGeometry = window->geometry_update.frame;
     frameGeometry.moveRight(right);
-    if (screens()->intersecting(frameGeometry) < 2) {
+    if (Screens::self()->intersecting(frameGeometry) < 2) {
         newX = right;
     }
 
@@ -2551,7 +2550,7 @@ int Workspace::packPositionDown(Toplevel const* window, int oldY, bool bottomEdg
     auto const bottom = newY + win::frame_margins(window).bottom();
     auto frameGeometry = window->geometry_update.frame;
     frameGeometry.moveBottom(bottom);
-    if (screens()->intersecting(frameGeometry) < 2) {
+    if (Screens::self()->intersecting(frameGeometry) < 2) {
         newY = bottom;
     }
 
@@ -2779,7 +2778,7 @@ void Workspace::setActiveClient(Toplevel* window)
 
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer
         // status on > 1 screens
-        if (screens()->count() > 1) {
+        if (Screens::self()->count() > 1) {
             for (auto it = m_allClients.begin(); it != m_allClients.end(); ++it) {
                 if (*it != active_client && (*it)->layer() == win::layer::active
                     && (*it)->screen() == active_client->screen()) {
@@ -2917,7 +2916,7 @@ void Workspace::request_focus(Toplevel* window, bool raise, bool force_focus)
     }
 
     if (!win::on_active_screen(window)) {
-        screens()->setCurrent(window->screen());
+        Screens::self()->setCurrent(window->screen());
     }
 }
 
@@ -2994,7 +2993,7 @@ bool Workspace::activateNextClient(Toplevel* window)
         get_focus = win::find_desktop(this, true, desktop); // to not break the state
 
     if (!get_focus && options->isNextFocusPrefersMouse()) {
-        get_focus = clientUnderMouse(window ? window->screen() : screens()->current());
+        get_focus = clientUnderMouse(window ? window->screen() : Screens::self()->current());
         if (get_focus && (get_focus == window || win::is_desktop(get_focus))) {
             // should rather not happen, but it cannot get the focus. rest of usability is tested
             // above
@@ -3034,7 +3033,7 @@ bool Workspace::activateNextClient(Toplevel* window)
 
 void Workspace::setCurrentScreen(int new_screen)
 {
-    if (new_screen < 0 || new_screen >= screens()->count())
+    if (new_screen < 0 || new_screen >= Screens::self()->count())
         return;
     if (!options->focusPolicyIsReasonable())
         return;
@@ -3047,7 +3046,7 @@ void Workspace::setCurrentScreen(int new_screen)
     if (get_focus != nullptr && get_focus != mostRecentlyActivatedClient()) {
         request_focus(get_focus);
     }
-    screens()->setCurrent(new_screen);
+    Screens::self()->setCurrent(new_screen);
 }
 
 void Workspace::gotFocusIn(Toplevel const* window)

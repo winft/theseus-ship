@@ -71,16 +71,14 @@ void TransientPlacementTest::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     Test::app()->start();
-    QMetaObject::invokeMethod(
-        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->geometry(1), QRect(1280, 0, 1280, 1024));
 }
 
 void TransientPlacementTest::init()
@@ -88,7 +86,7 @@ void TransientPlacementTest::init()
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration
                                    | Test::global_selection::plasma_shell);
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -343,7 +341,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
 
     // Put the panel at the lower screen border.
     plasmaSurface->setRole(PlasmaShellSurface::Role::Panel);
-    plasmaSurface->setPosition(QPoint(0, screens()->geometry(0).height() - 50));
+    plasmaSurface->setPosition(QPoint(0, Screens::self()->geometry(0).height() - 50));
     plasmaSurface->setPanelBehavior(PlasmaShellSurface::PanelBehavior::AlwaysVisible);
 
     // Placement area still full screen.
@@ -355,7 +353,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(dock);
     QCOMPARE(dock->windowType(), NET::Dock);
     QVERIFY(win::is_dock(dock));
-    QCOMPARE(dock->frameGeometry(), QRect(0, screens()->geometry(0).height() - 50, 1280, 50));
+    QCOMPARE(dock->frameGeometry(), QRect(0, Screens::self()->geometry(0).height() - 50, 1280, 50));
     QCOMPARE(dock->hasStrut(), true);
     QVERIFY(workspace()->clientArea(PlacementArea, 0, 1)
             != workspace()->clientArea(FullScreenArea, 0, 1));
@@ -370,10 +368,10 @@ void TransientPlacementTest::testXdgPopupWithPanel()
 
     QVERIFY(!win::decoration(parent));
 
-    win::move(parent, {0, screens()->geometry(0).height() - 300});
+    win::move(parent, {0, Screens::self()->geometry(0).height() - 300});
     win::keep_in_area(parent, workspace()->clientArea(PlacementArea, parent), false);
     QCOMPARE(parent->frameGeometry(),
-             QRect(0, screens()->geometry(0).height() - 600 - 50, 800, 600));
+             QRect(0, Screens::self()->geometry(0).height() - 600 - 50, 800, 600));
 
     auto transientSurface = Test::create_surface();
     QVERIFY(transientSurface);
@@ -389,7 +387,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
 
     QVERIFY(!win::decoration(transient));
     QCOMPARE(transient->frameGeometry(),
-             QRect(50, screens()->geometry(0).height() - 200 - 50, 200, 200));
+             QRect(50, Screens::self()->geometry(0).height() - 200 - 50, 200, 200));
 
     transientShellSurface.reset();
     transientSurface.reset();
@@ -405,7 +403,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(geometryShapeChangedSpy.isValid());
     Test::render(parentSurface, fullscreenSpy.first().at(0).toSize(), Qt::red);
     QVERIFY(geometryShapeChangedSpy.wait());
-    QCOMPARE(parent->frameGeometry(), screens()->geometry(0));
+    QCOMPARE(parent->frameGeometry(), Screens::self()->geometry(0));
     QVERIFY(parent->control->fullscreen());
 
     // another transient, with same hints as before from bottom of window
@@ -413,7 +411,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
     QVERIFY(transientSurface);
 
     XdgPositioner positioner2(QSize(200, 200),
-                              QRect(50, screens()->geometry(0).height() - 100, 200, 200));
+                              QRect(50, Screens::self()->geometry(0).height() - 100, 200, 200));
     positioner2.setConstraints(XdgPositioner::Constraint::SlideY);
 
     transientShellSurface
@@ -424,7 +422,7 @@ void TransientPlacementTest::testXdgPopupWithPanel()
 
     QVERIFY(!win::decoration(transient));
     QCOMPARE(transient->frameGeometry(),
-             QRect(50, screens()->geometry(0).height() - 200, 200, 200));
+             QRect(50, Screens::self()->geometry(0).height() - 200, 200, 200));
 }
 
 }

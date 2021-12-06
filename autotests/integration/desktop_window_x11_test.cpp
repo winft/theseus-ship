@@ -57,21 +57,19 @@ void X11DesktopWindowTest::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     Test::app()->start();
-    QMetaObject::invokeMethod(
-        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->geometry(1), QRect(1280, 0, 1280, 1024));
 }
 
 void X11DesktopWindowTest::init()
 {
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

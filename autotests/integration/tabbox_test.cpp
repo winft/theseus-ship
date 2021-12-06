@@ -60,7 +60,6 @@ void TabBoxTest::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     KSharedConfigPtr c = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
     c->group("TabBox").writeEntry("ShowTabBox", false);
@@ -75,7 +74,7 @@ void TabBoxTest::initTestCase()
 void TabBoxTest::init()
 {
     Test::setup_wayland_connection();
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

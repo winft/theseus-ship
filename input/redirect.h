@@ -87,9 +87,6 @@ public:
 
     void cancelTouch();
 
-    bool supportsPointerWarping() const;
-    void warpPointer(const QPointF& pos);
-
     /**
      * Adds the @p filter to the list of event filters at the last relevant position.
      *

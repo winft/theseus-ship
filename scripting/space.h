@@ -518,14 +518,17 @@ public:
         QObject::connect(
             vds, &VirtualDesktopManager::layoutChanged, this, &space::desktopLayoutChanged);
 
-        QObject::connect(screens(), &Screens::sizeChanged, this, &space::virtualScreenSizeChanged);
         QObject::connect(
-            screens(), &Screens::geometryChanged, this, &space::virtualScreenGeometryChanged);
+            Screens::self(), &Screens::sizeChanged, this, &space::virtualScreenSizeChanged);
         QObject::connect(
-            screens(), &Screens::countChanged, this, [this](int previousCount, int currentCount) {
-                Q_UNUSED(previousCount)
-                Q_EMIT Space::numberScreensChanged(currentCount);
-            });
+            Screens::self(), &Screens::geometryChanged, this, &space::virtualScreenGeometryChanged);
+        QObject::connect(Screens::self(),
+                         &Screens::countChanged,
+                         this,
+                         [this](int previousCount, int currentCount) {
+                             Q_UNUSED(previousCount)
+                             Q_EMIT Space::numberScreensChanged(currentCount);
+                         });
 
         connect_legacy_screen_resize(this);
 
@@ -561,7 +564,7 @@ public:
 
     void sendClientToScreen(KWin::scripting::window* client, int screen) override
     {
-        if (screen < 0 || screen >= screens()->count()) {
+        if (screen < 0 || screen >= Screens::self()->count()) {
             return;
         }
         ref_space->sendClientToScreen(client->client(), screen);

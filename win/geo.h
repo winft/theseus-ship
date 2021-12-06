@@ -365,11 +365,11 @@ void set_electric_maximizing(Win* win, bool maximizing)
     win->control->set_electric_maximizing(maximizing);
 
     if (maximizing) {
-        render::x11::get_outline()->show(
+        workspace()->outline->show(
             electric_border_maximize_geometry(win, input::get_cursor()->pos(), win->desktop()),
             win->control->move_resize().geometry);
     } else {
-        render::x11::get_outline()->hide();
+        workspace()->outline->hide();
     }
 
     elevate(win, maximizing);

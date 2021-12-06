@@ -33,7 +33,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../win/wayland/space.h"
 #include "../../xcbutils.h"
 #include "../../xwl/xwayland.h"
+#include "render/backend/wlroots/output.h"
 #include "render/effects.h"
+#include "screens.h"
 
 #include <KCrash>
 #include <KPluginMetaData>
@@ -198,6 +200,47 @@ void WaylandTestApplication::start()
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
     ScreenLockerWatcher::self()->initialize();
+}
+
+void WaylandTestApplication::set_outputs(size_t count)
+{
+    auto outputs = std::vector<Test::output>();
+    auto const size = QSize(1280, 1024);
+    auto width = 0;
+
+    for (size_t i = 0; i < count; i++) {
+        outputs.push_back({{QPoint(width, 0), size}});
+        width += size.width();
+    }
+
+    set_outputs(outputs);
+}
+
+void WaylandTestApplication::set_outputs(std::vector<QRect> const& geometries)
+{
+    auto outputs = std::vector<Test::output>();
+    for (auto&& geo : geometries) {
+        outputs.push_back(geo);
+    }
+    set_outputs(outputs);
+}
+
+void WaylandTestApplication::set_outputs(std::vector<Test::output> const& outputs)
+{
+    auto outputs_copy = render->all_outputs;
+    for (auto output : outputs_copy) {
+        delete output;
+    }
+
+    for (auto&& output : outputs) {
+        auto const size = output.geometry.size() * output.scale;
+
+        wlr_headless_add_output(base.backend.backend, size.width(), size.height());
+        render->all_outputs.back()->force_geometry(output.geometry);
+    }
+
+    // Update again in case of force geometry change.
+    Screens::self()->updateAll();
 }
 
 void WaylandTestApplication::handle_server_addons_created()

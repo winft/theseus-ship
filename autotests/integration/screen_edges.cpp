@@ -77,7 +77,6 @@ void TestScreenEdges::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
@@ -253,7 +252,7 @@ void TestScreenEdges::testCreatingInitialEdges()
         Xcb::WindowGeometry geo(edgeWindows[index]);
         return geo.rect();
     };
-    QRect sg = screens()->geometry();
+    QRect sg = Screens::self()->geometry();
     const int co = screenEdges->cornerOffset();
     QList<QRect> expectedGeometries{
         QRect(0, 0, 1, 1),
@@ -284,24 +283,17 @@ void TestScreenEdges::testCreatingInitialEdges()
         QCOMPARE(e->activatesForTouchGesture(), false);
     }
 
-    QSignalSpy changedSpy(screens(), &Screens::changed);
+    QSignalSpy changedSpy(Screens::self(), &Screens::changed);
     QVERIFY(changedSpy.isValid());
 
-    QList<QRect> geometries{{QRect{0, 0, 1024, 768}}};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, geometries.count()),
-                              Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
-                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1)));
-
+    Test::app()->set_outputs({{0, 0, 1024, 768}});
     QCOMPARE(changedSpy.count(), 1);
 
     // let's update the layout and verify that we have edges
     screenEdges->recreateEdges();
     edgeWindows = screenEdges->windows();
     QCOMPARE(edgeWindows.size(), 16);
-    sg = screens()->geometry();
+    sg = Screens::self()->geometry();
     expectedGeometries = QList<QRect>{QRect(0, 0, 1, 1),
                                       QRect(0, 0, co, co),
                                       QRect(0, sg.bottom(), 1, 1),
@@ -375,16 +367,11 @@ void TestScreenEdges::testCreatingInitialEdges()
 
 void TestScreenEdges::testCallback()
 {
-    QSignalSpy changedSpy(screens(), &Screens::changed);
+    QSignalSpy changedSpy(Screens::self(), &Screens::changed);
     QVERIFY(changedSpy.isValid());
 
-    QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, geometries.count()),
-                              Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
-                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1)));
+    auto const geometries = std::vector<QRect>{{0, 0, 1024, 768}, {200, 768, 1024, 768}};
+    Test::app()->set_outputs(geometries);
 
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
@@ -598,19 +585,14 @@ void TestScreenEdges::test_overlapping_edges_data()
 
 void TestScreenEdges::test_overlapping_edges()
 {
-    QSignalSpy changedSpy(screens(), &Screens::changed);
+    QSignalSpy changedSpy(Screens::self(), &Screens::changed);
     QVERIFY(changedSpy.isValid());
 
     QFETCH(QRect, geo1);
     QFETCH(QRect, geo2);
 
-    QList<QRect> geometries{{geo1, geo2}};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, geometries.count()),
-                              Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
-                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1)));
+    auto const geometries = std::vector<QRect>{geo1, geo2};
+    Test::app()->set_outputs(geometries);
 
     QCOMPARE(changedSpy.count(), geometries.size() + 3);
 
@@ -645,13 +627,8 @@ void TestScreenEdges::testPushBack()
     config->group("Windows").writeEntry("ElectricBorderPushbackPixels", pushback);
     config->sync();
 
-    QList<QRect> geometries{{QRect{0, 0, 1024, 768}, QRect{200, 768, 1024, 768}}};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, geometries.count()),
-                              Q_ARG(QVector<QRect>, QVector<QRect>::fromList(geometries)),
-                              Q_ARG(QVector<int>, QVector<int>(geometries.count(), 1)));
+    auto const geometries = std::vector<QRect>{{0, 0, 1024, 768}, {200, 768, 1024, 768}};
+    Test::app()->set_outputs(geometries);
 
     auto screenEdges = ScreenEdges::self();
     screenEdges->setConfig(config);
@@ -720,7 +697,7 @@ void TestScreenEdges::testFullScreenBlocking()
     QVERIFY(spy.isEmpty());
     QCOMPARE(input::get_cursor()->pos(), QPoint(1, 50));
 
-    client->setFrameGeometry(screens()->geometry());
+    client->setFrameGeometry(Screens::self()->geometry());
     win::set_active(client, true);
     client->setFullScreen(true);
     Workspace::self()->setActiveClient(client);
@@ -765,7 +742,7 @@ void TestScreenEdges::testFullScreenBlocking()
     QCOMPARE(input::get_cursor()->pos(), QPoint(1, 50));
 
     // just to be sure, let's set geometry back
-    client->setFrameGeometry(screens()->geometry());
+    client->setFrameGeometry(Screens::self()->geometry());
     Q_EMIT screenEdges->checkBlocking();
     input::get_cursor()->set_pos(0, 50);
     QVERIFY(spy.isEmpty());
@@ -827,7 +804,7 @@ void TestScreenEdges::testClientEdge()
     }
 
     // now let's try to set it and activate it
-    client->setFrameGeometry(screens()->geometry());
+    client->setFrameGeometry(Screens::self()->geometry());
     client->hideClient(true);
     screenEdges->reserve(client, KWin::ElectricLeft);
     QCOMPARE(client->isHiddenInternal(), true);
@@ -888,7 +865,7 @@ void TestScreenEdges::testClientEdge()
     QCOMPARE(input::get_cursor()->pos(), QPoint(50, 0));
 
     // set to windows can cover
-    client->setFrameGeometry(screens()->geometry());
+    client->setFrameGeometry(Screens::self()->geometry());
     client->hideClient(false);
     win::set_keep_below(client, true);
     screenEdges->reserve(client, KWin::ElectricLeft);

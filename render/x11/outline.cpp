@@ -28,23 +28,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #include <KConfigGroup>
-
 #include <QDebug>
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickWindow>
 #include <QStandardPaths>
+#include <cassert>
 
 namespace KWin::render::x11
 {
 
-KWIN_SINGLETON_FACTORY(outline)
-
-outline::outline(QObject* parent)
-    : QObject(parent)
-    , m_active(false)
+outline::outline()
+    : m_active(false)
 {
+    assert(render::compositor::self());
     connect(render::compositor::self(),
             &render::compositor::compositingToggled,
             this,

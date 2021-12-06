@@ -556,10 +556,10 @@ bool ignore_position_default(Win* win)
 template<typename Win>
 QRect place_unmapped(Win* win, QRect& frame_geo, KStartupInfoData const& asn_data)
 {
-    auto screen = asn_data.xinerama() == -1 ? screens()->current() : asn_data.xinerama();
+    auto screen = asn_data.xinerama() == -1 ? Screens::self()->current() : asn_data.xinerama();
     screen = win->control->rules().checkScreen(screen, true);
     auto area = workspace()->clientArea(
-        PlacementArea, screens()->geometry(screen).center(), win->desktop());
+        PlacementArea, Screens::self()->geometry(screen).center(), win->desktop());
 
     // Desktop windows' positions are not placed by us.
     auto must_place = !is_desktop(win);

@@ -206,17 +206,15 @@ void LockScreenTest::initTestCase()
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
 
     Test::app()->start();
-    QMetaObject::invokeMethod(
-        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->geometry(1), QRect(1280, 0, 1280, 1024));
 
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
@@ -233,7 +231,7 @@ void LockScreenTest::init()
     m_shm = Test::get_client().interfaces.shm.get();
     m_seat = Test::get_client().interfaces.seat.get();
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

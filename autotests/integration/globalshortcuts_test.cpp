@@ -78,7 +78,6 @@ void GlobalShortcutsTest::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
     qputenv("KWIN_XKB_DEFAULT_KEYMAP", "1");
@@ -92,7 +91,7 @@ void GlobalShortcutsTest::initTestCase()
 void GlobalShortcutsTest::init()
 {
     Test::setup_wayland_connection();
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 
     input::xkb::get_primary_xkb_keyboard()->switch_to_layout(0);

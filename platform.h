@@ -99,12 +99,6 @@ public:
      * The default implementation creates a Edge.
      */
     virtual Edge *createScreenEdge(ScreenEdges *parent);
-    virtual void warpPointer(const QPointF &globalPos);
-    /**
-     * Whether our Compositing EGL display allows a surface less context
-     * so that a sharing context could be created.
-     */
-    virtual bool supportsQpaContext() const;
     /**
      * The EGLDisplay used by the compositing scene.
      */
@@ -149,29 +143,6 @@ public:
     void setSceneEglConfig(EGLConfig config) {
         m_eglConfig = config;
     }
-
-    /**
-     * Implementing subclasses should provide a size in case the backend represents
-     * a basic screen and uses the BasicScreens.
-     *
-     * Base implementation returns an invalid size.
-     */
-    virtual QSize screenSize() const;
-    /**
-     * Implementing subclasses should provide all geometries in case the backend represents
-     * a basic screen and uses the BasicScreens.
-     *
-     * Base implementation returns one QRect positioned at 0/0 with screenSize() as size.
-     */
-    virtual QVector<QRect> screenGeometries() const;
-
-    /**
-     * Implementing subclasses should provide all geometries in case the backend represents
-     * a basic screen and uses the BasicScreens.
-     *
-     * Base implementation returns a screen with a scale of 1.
-     */
-    virtual QVector<qreal> screenScales() const;
 
     /**
      * Whether the Platform requires compositing for rendering.
@@ -229,28 +200,6 @@ public:
      * @since 5.10
      */
     virtual void setupActionForGlobalAccel(QAction *action);
-
-    void setInitialWindowSize(const QSize &size) {
-        m_initialWindowSize = size;
-    }
-    void setDeviceIdentifier(const QByteArray &identifier) {
-        m_deviceIdentifier = identifier;
-    }
-    bool supportsPointerWarping() const {
-        return m_pointerWarping;
-    }
-    int initialOutputCount() const {
-        return m_initialOutputCount;
-    }
-    void setInitialOutputCount(int count) {
-        m_initialOutputCount = count;
-    }
-    qreal initialOutputScale() const {
-        return m_initialOutputScale;
-    }
-    void setInitialOutputScale(qreal scale) {
-        m_initialOutputScale = scale;
-    }
 
     /**
      * Queries the current X11 time stamp of the X server.
@@ -337,40 +286,19 @@ public:
         m_selectedCompositor = type;
     }
 
-    QSize initialWindowSize() const {
-        return m_initialWindowSize;
-    }
-
     virtual clockid_t clockId() const;
-    QByteArray deviceIdentifier() const {
-        return m_deviceIdentifier;
-    }
-    void repaint(const QRect &rect);
 
 Q_SIGNALS:
-    /**
-     * Emitted by backends using a one screen (nested window) approach and when the size of that changes.
-     */
-    void screenSizeChanged();
-
     void output_added(base::output* output);
     void output_removed(base::output* output);
 
 protected:
     Platform();
-    void setSupportsPointerWarping(bool set) {
-        m_pointerWarping = set;
-    }
     void setSupportsGammaControl(bool set) {
         m_supportsGammaControl = set;
     }
 
 private:
-    QSize m_initialWindowSize;
-    QByteArray m_deviceIdentifier;
-    bool m_pointerWarping = false;
-    int m_initialOutputCount = 1;
-    qreal m_initialOutputScale = 1;
     EGLDisplay m_eglDisplay;
     EGLConfig m_eglConfig = nullptr;
     EGLContext m_context = EGL_NO_CONTEXT;
@@ -381,7 +309,5 @@ private:
 };
 
 }
-
-Q_DECLARE_INTERFACE(KWin::Platform, "org.kde.kwin.Platform")
 
 #endif

@@ -131,7 +131,7 @@ QWindow* get_internal_window()
         if (!w->isVisible()) {
             continue;
         }
-        if (!screens()->geometry().contains(w->geometry())) {
+        if (!Screens::self()->geometry().contains(w->geometry())) {
             continue;
         }
         if (w->property("_q_showWithoutActivating").toBool()) {

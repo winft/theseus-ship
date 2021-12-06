@@ -42,10 +42,6 @@ class Toplevel;
 class KWIN_EXPORT Screens : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int count READ count WRITE setCount NOTIFY countChanged)
-    Q_PROPERTY(int current READ current WRITE setCurrent NOTIFY currentChanged)
-    Q_PROPERTY(bool currentFollowsMouse READ isCurrentFollowsMouse WRITE setCurrentFollowsMouse)
-
 public:
     ~Screens() override;
     /**
@@ -214,12 +210,6 @@ inline
 QRect Screens::geometry() const
 {
     return QRect(QPoint(0,0), size());
-}
-
-inline
-Screens *screens()
-{
-    return Screens::self();
 }
 
 }

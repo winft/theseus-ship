@@ -20,7 +20,7 @@ std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
     std::deque<Toplevel*> layers[layer_count];
 
     // build the order from layers
-    QVector<QMap<group*, layer>> minimum_layer(qMax(screens()->count(), 1));
+    QVector<QMap<group*, layer>> minimum_layer(qMax(Screens::self()->count(), 1));
 
     for (auto const& win : list) {
         auto l = win->layer();

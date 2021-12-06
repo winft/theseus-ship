@@ -7,6 +7,7 @@
 
 #include "cursor.h"
 #include "input_method.h"
+#include "pointer_redirect.h"
 #include "redirect.h"
 
 #include "base/backend/wlroots.h"
@@ -36,7 +37,7 @@ platform::platform(wayland_base const& base)
     auto redirect_ptr = new wayland::redirect(this);
     redirect.reset(redirect_ptr);
 
-    cursor = std::make_unique<wayland::cursor>(redirect_ptr);
+    cursor = std::make_unique<wayland::cursor>(this);
     input_method = std::make_unique<wayland::input_method>(waylandServer());
     virtual_keyboard = waylandServer()->display()->create_virtual_keyboard_manager_v1();
 }
@@ -117,6 +118,15 @@ void platform::start_interactive_position_selection(std::function<void(QPoint co
 void platform::turn_outputs_on()
 {
     base::wayland::turn_outputs_on(base, dpms_filter);
+}
+
+void platform::warp_pointer(QPointF const& pos, uint32_t time)
+{
+    if (pointers.empty()) {
+        return;
+    }
+
+    redirect->pointer()->processMotion(pos, time, pointers.front());
 }
 
 void add_dbus(input::platform* platform)

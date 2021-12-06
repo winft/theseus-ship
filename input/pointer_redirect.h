@@ -31,13 +31,6 @@ public:
     virtual void updateAfterScreenChange()
     {
     }
-    virtual bool supportsWarping() const
-    {
-        return false;
-    }
-    virtual void warp(QPointF const& /*pos*/)
-    {
-    }
     virtual QPointF pos() const
     {
         return {};

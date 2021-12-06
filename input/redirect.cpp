@@ -175,16 +175,6 @@ void redirect::registerGlobalAccel(KGlobalAccelInterface* interface)
     m_shortcuts->setKGlobalAccelInterface(interface);
 }
 
-void redirect::warpPointer(const QPointF& pos)
-{
-    m_pointer->warp(pos);
-}
-
-bool redirect::supportsPointerWarping() const
-{
-    return m_pointer->supportsWarping();
-}
-
 QPointF redirect::globalPointer() const
 {
     return m_pointer->pos();

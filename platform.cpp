@@ -69,31 +69,6 @@ Edge *Platform::createScreenEdge(ScreenEdges *edges)
     return new Edge(edges);
 }
 
-void Platform::repaint(const QRect &rect)
-{
-    if (!render::compositor::self()) {
-        return;
-    }
-    render::compositor::self()->addRepaint(rect);
-}
-
-void Platform::warpPointer(const QPointF &globalPos)
-{
-    Q_UNUSED(globalPos)
-}
-
-bool Platform::supportsQpaContext() const
-{
-    auto compositor = render::compositor::self();
-    if (Q_UNLIKELY(!compositor)) {
-        return false;
-    }
-    if (auto scene = compositor->scene()) {
-        return scene->supportsSurfacelessContext();
-    }
-    return false;
-}
-
 EGLDisplay KWin::Platform::sceneEglDisplay() const
 {
     return m_eglDisplay;
@@ -102,21 +77,6 @@ EGLDisplay KWin::Platform::sceneEglDisplay() const
 void Platform::setSceneEglDisplay(EGLDisplay display)
 {
     m_eglDisplay = display;
-}
-
-QSize Platform::screenSize() const
-{
-    return Screens::self()->size();
-}
-
-QVector<QRect> Platform::screenGeometries() const
-{
-    return QVector<QRect>({QRect(QPoint(0, 0), screenSize())});
-}
-
-QVector<qreal> Platform::screenScales() const
-{
-    return QVector<qreal>({1});
 }
 
 bool Platform::requiresCompositing() const

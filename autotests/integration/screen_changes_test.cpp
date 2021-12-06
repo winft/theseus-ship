@@ -48,7 +48,6 @@ void ScreenChangesTest::initTestCase()
 {
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
@@ -58,7 +57,7 @@ void ScreenChangesTest::init()
 {
     Test::setup_wayland_connection();
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -87,25 +86,23 @@ void ScreenChangesTest::testScreenAddRemove()
     auto xdgOutputManager = registry.createXdgOutputManager(xdgOMData.name, xdgOMData.version);
 
     // should be one output
-    QCOMPARE(screens()->count(), 1);
+    QCOMPARE(Screens::self()->count(), 1);
     QCOMPARE(outputAnnouncedSpy.count(), 1);
     const quint32 firstOutputId = outputAnnouncedSpy.first().first().value<quint32>();
     QVERIFY(firstOutputId != 0u);
     outputAnnouncedSpy.clear();
 
     // let's announce a new output
-    QSignalSpy screensChangedSpy(screens(), &Screens::changed);
+    QSignalSpy screensChangedSpy(Screens::self(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
-    const QVector<QRect> geometries{QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, 2),
-                              Q_ARG(QVector<QRect>, geometries));
-    QCOMPARE(screensChangedSpy.count(), screens()->count() + 2);
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), geometries.at(0));
-    QCOMPARE(screens()->geometry(1), geometries.at(1));
+
+    auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};
+    Test::app()->set_outputs(geometries);
+
+    QCOMPARE(screensChangedSpy.count(), Screens::self()->count() + 2);
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), geometries.at(0));
+    QCOMPARE(Screens::self()->geometry(1), geometries.at(1));
 
     // this should result in it getting announced, two new outputs are added...
     QVERIFY(outputAnnouncedSpy.count() > 1 || outputAnnouncedSpy.wait());
@@ -166,15 +163,12 @@ void ScreenChangesTest::testScreenAddRemove()
     QSignalSpy o2RemovedSpy(o2.get(), &Output::removed);
     QVERIFY(o2RemovedSpy.isValid());
 
-    const QVector<QRect> geometries2{QRect(0, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, 1),
-                              Q_ARG(QVector<QRect>, geometries2));
-    QCOMPARE(screensChangedSpy.count(), screens()->count() + 3);
-    QCOMPARE(screens()->count(), 1);
-    QCOMPARE(screens()->geometry(0), geometries2.at(0));
+    auto const geometries2 = std::vector<QRect>{{0, 0, 1280, 1024}};
+    Test::app()->set_outputs(geometries2);
+
+    QCOMPARE(screensChangedSpy.count(), Screens::self()->count() + 3);
+    QCOMPARE(Screens::self()->count(), 1);
+    QCOMPARE(Screens::self()->geometry(0), geometries2.at(0));
 
     QVERIFY(outputAnnouncedSpy.count() > 0 || outputAnnouncedSpy.wait());
     QCOMPARE(outputAnnouncedSpy.count(), 1);

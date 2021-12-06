@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window.h"
 #include "../../main.h"
 #include "../../platform.h"
+#include "../../render/compositor.h"
+#include "../../render/scene.h"
 #include "../../screens.h"
 
 #include <QCoreApplication>
@@ -85,7 +87,7 @@ void Integration::initialize()
     // connect to the startup_finished signal. At this point everything has been created.
     connect(kwinApp(), &Application::startup_finished, this,
         [this] {
-            connect(screens(), &Screens::changed, this, &Integration::initScreens);
+            connect(Screens::self(), &Screens::changed, this, &Integration::initScreens);
             initScreens();
         }
     );
@@ -133,9 +135,9 @@ QStringList Integration::themeNames() const
     return QStringList({QLatin1String(QGenericUnixTheme::name)});
 }
 
-QPlatformOpenGLContext *Integration::createPlatformOpenGLContext(QOpenGLContext *context) const
+QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext* context) const
 {
-    if (kwinApp()->platform->supportsQpaContext()) {
+    if (render::compositor::self()->scene()->supportsSurfacelessContext()) {
         return new SharingPlatformContext(context);
     }
     if (kwinApp()->platform->sceneEglDisplay() != EGL_NO_DISPLAY) {
@@ -151,8 +153,8 @@ QPlatformOpenGLContext *Integration::createPlatformOpenGLContext(QOpenGLContext 
 void Integration::initScreens()
 {
     QVector<Screen*> newScreens;
-    newScreens.reserve(qMax(screens()->count(), 1));
-    for (int i = 0; i < screens()->count(); i++) {
+    newScreens.reserve(qMax(Screens::self()->count(), 1));
+    for (int i = 0; i < Screens::self()->count(); i++) {
         auto screen = new Screen(i);
         QWindowSystemInterface::handleScreenAdded(screen);
         newScreens << screen;

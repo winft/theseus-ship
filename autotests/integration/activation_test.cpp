@@ -62,23 +62,21 @@ void ActivationTest::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     Test::app()->start();
-    QMetaObject::invokeMethod(
-        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->geometry(1), QRect(1280, 0, 1280, 1024));
 }
 
 void ActivationTest::init()
 {
     Test::setup_wayland_connection();
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -534,42 +532,14 @@ void ActivationTest::testSwitchToWindowFullScreen()
 
 void ActivationTest::stackScreensHorizontally()
 {
-    const QVector<QRect> screenGeometries{
-        QRect(0, 0, 1280, 1024),
-        QRect(1280, 0, 1280, 1024),
-    };
-
-    const QVector<int> screenScales{
-        1,
-        1,
-    };
-
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, screenGeometries.count()),
-                              Q_ARG(QVector<QRect>, screenGeometries),
-                              Q_ARG(QVector<int>, screenScales));
+    auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};
+    Test::app()->set_outputs(geometries);
 }
 
 void ActivationTest::stackScreensVertically()
 {
-    const QVector<QRect> screenGeometries{
-        QRect(0, 0, 1280, 1024),
-        QRect(0, 1024, 1280, 1024),
-    };
-
-    const QVector<int> screenScales{
-        1,
-        1,
-    };
-
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, screenGeometries.count()),
-                              Q_ARG(QVector<QRect>, screenGeometries),
-                              Q_ARG(QVector<int>, screenScales));
+    auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {0, 1024, 1280, 1024}};
+    Test::app()->set_outputs(geometries);
 }
 
 }

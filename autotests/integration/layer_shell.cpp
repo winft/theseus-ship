@@ -54,23 +54,23 @@ void layer_shell_test::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1000, 500));
 
     Test::app()->start();
-    QMetaObject::invokeMethod(
-        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
-
     QVERIFY(startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1000, 500));
-    QCOMPARE(screens()->geometry(1), QRect(1000, 0, 1000, 500));
+
+    auto geometries = std::vector<QRect>{{0, 0, 1000, 500}, {1000, 0, 1000, 500}};
+    Test::app()->set_outputs(geometries);
+
+    QCOMPARE(Screens::self()->count(), geometries.size());
+    QCOMPARE(Screens::self()->geometry(0), geometries.at(0));
+    QCOMPARE(Screens::self()->geometry(1), geometries.at(1));
 }
 
 void layer_shell_test::init()
 {
     Test::setup_wayland_connection();
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(1280, 512));
 }
 
@@ -185,7 +185,7 @@ void layer_shell_test::test_create()
     configure_payload payload;
     init_ack_layer_surface(surface.get(), layer_surface.get(), payload);
 
-    auto const output1_geo = screens()->geometry(1);
+    auto const output1_geo = Screens::self()->geometry(1);
     QCOMPARE(payload.size, output1_geo.size());
 
     auto render_size = QSize(100, 50);

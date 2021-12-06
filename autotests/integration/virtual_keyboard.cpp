@@ -73,16 +73,14 @@ void virtual_keyboard_test::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     Test::app()->start();
-    QMetaObject::invokeMethod(
-        kwinApp()->platform, "setVirtualOutputs", Qt::DirectConnection, Q_ARG(int, 2));
+    Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(screens()->geometry(1), QRect(1280, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Screens::self()->geometry(1), QRect(1280, 0, 1280, 1024));
 }
 
 std::unique_ptr<Wrapland::Client::virtual_keyboard_v1> create_virtual_keyboard(Test::client& client)
@@ -135,7 +133,7 @@ void virtual_keyboard_test::init()
                              | Test::global_selection::virtual_keyboard_manager_v1);
     focus_client = create_focus_client();
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
 }
 
 void virtual_keyboard_test::cleanup()

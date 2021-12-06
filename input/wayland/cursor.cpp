@@ -8,18 +8,23 @@
 #include "cursor.h"
 
 #include "cursor_image.h"
+#include "platform.h"
 #include "redirect.h"
 
 #include "input/xkb/helpers.h"
+#include "wayland_server.h"
+
+#include <Wrapland/Server/seat.h>
 
 namespace KWin::input::wayland
 {
 
-cursor::cursor(wayland::redirect* redirect)
+cursor::cursor(wayland::platform* platform)
     : input::cursor()
     , cursor_image{std::make_unique<wayland::cursor_image>()}
-    , redirect{redirect}
+    , platform{platform}
 {
+    auto redirect = platform->redirect.get();
     QObject::connect(redirect, &redirect::globalPointerChanged, this, &cursor::slot_pos_changed);
     QObject::connect(
         redirect, &redirect::pointerButtonStateChanged, this, &cursor::slot_pointer_button_changed);
@@ -51,10 +56,8 @@ PlatformCursorImage cursor::platform_image() const
 
 void cursor::do_set_pos()
 {
-    if (redirect->supportsPointerWarping()) {
-        redirect->warpPointer(current_pos());
-    }
-    slot_pos_changed(redirect->globalPointer());
+    platform->warp_pointer(current_pos(), waylandServer()->seat()->timestamp());
+    slot_pos_changed(platform->redirect->globalPointer());
     Q_EMIT pos_changed(current_pos());
 }
 
@@ -81,7 +84,7 @@ void cursor::slot_modifiers_changed(Qt::KeyboardModifiers mods, Qt::KeyboardModi
 void cursor::slot_pointer_button_changed()
 {
     Qt::MouseButtons const oldButtons = m_currentButtons;
-    m_currentButtons = redirect->qtButtonStates();
+    m_currentButtons = platform->redirect->qtButtonStates();
 
     auto const pos = current_pos();
     auto mods = get_keyboard_modifiers();

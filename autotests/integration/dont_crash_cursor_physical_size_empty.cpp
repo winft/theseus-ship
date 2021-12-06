@@ -58,7 +58,7 @@ void DontCrashCursorPhysicalSizeEmpty::init()
 {
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
 
-    screens()->setCurrent(0);
+    Screens::self()->setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -73,7 +73,6 @@ void DontCrashCursorPhysicalSizeEmpty::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     if (!QStandardPaths::locateAll(QStandardPaths::GenericDataLocation,
                                    QStringLiteral("icons/DMZ-White/index.theme"))

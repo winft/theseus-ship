@@ -69,7 +69,7 @@ void handle_new_output(struct wl_listener* listener, void* data)
         }
     }
 
-    auto const screens_width = std::max(screens()->size().width(), 0);
+    auto const screens_width = std::max(Screens::self()->size().width(), 0);
 
     auto out = new output(wlr_out, back);
     back->all_outputs << out;
@@ -89,10 +89,6 @@ void handle_new_output(struct wl_listener* listener, void* data)
 
 void backend::init()
 {
-    // TODO(romangg): Can we omit making a distinction here?
-    // Pointer warping is required for tests.
-    setSupportsPointerWarping(base::backend::wlroots_get_headless_backend(base.backend.backend));
-
     // TODO(romangg): Has to be here because in the integration tests base.backend.backend is not
     //                yet available in the ctor. Can we change that?
 #if HAVE_WLR_OUTPUT_INIT_RENDER
@@ -275,39 +271,6 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
     lease->grant(wlr_lease->fd);
     qCDebug(KWIN_WL) << "DRM resources have been leased to client";
 #endif
-}
-
-void backend::setVirtualOutputs(int count, QVector<QRect> geometries, QVector<int> scales)
-{
-    assert(geometries.size() == 0 || geometries.size() == count);
-    assert(scales.size() == 0 || scales.size() == count);
-
-    auto outputs_copy = all_outputs;
-    for (auto output : outputs_copy) {
-        delete output;
-    }
-
-    auto sum_width = 0;
-    for (int i = 0; i < count; i++) {
-        auto const scale = scales.size() ? scales.at(i) : 1.;
-        auto const size
-            = (geometries.size() ? geometries.at(i).size() : initialWindowSize()) * scale;
-
-        wlr_headless_add_output(base.backend.backend, size.width(), size.height());
-
-        auto added_output = all_outputs.back();
-
-        if (geometries.size()) {
-            added_output->force_geometry(geometries.at(i));
-        } else {
-            auto const geo = QRect(QPoint(sum_width, 0), initialWindowSize() * scale);
-            added_output->force_geometry(geo);
-            sum_width += geo.width();
-        }
-    }
-
-    // Update again in case of force geometry change.
-    Screens::self()->updateAll();
 }
 
 }

@@ -204,6 +204,11 @@ void ApplicationWayland::start()
         setOperationMode(OperationModeXwayland);
     }
 
+    base.backend = base::backend::wlroots(waylandServer()->display());
+
+    render.reset(new render::backend::wlroots::backend(base));
+    platform = render.get();
+
     createOptions();
 
     auto session = new seat::backend::wlroots::session(base.backend.backend);
@@ -242,14 +247,6 @@ void ApplicationWayland::handle_server_addons_created()
     } else {
         startSession();
     }
-}
-
-void ApplicationWayland::init_platforms()
-{
-    base.backend = base::backend::wlroots(waylandServer()->display());
-
-    render.reset(new render::backend::wlroots::backend(base));
-    platform = render.get();
 }
 
 void ApplicationWayland::create_xwayland()
@@ -456,16 +453,12 @@ int main(int argc, char * argv[])
     QCommandLineOption waylandSocketOption(QStringList{QStringLiteral("s"), QStringLiteral("socket")},
                                            i18n("Name of the Wayland socket to listen on. If not set \"wayland-0\" is used."),
                                            QStringLiteral("socket"));
-    QCommandLineOption waylandDisplayOption(QStringLiteral("wayland-display"),
-                                            i18n("The Wayland Display to use in windowed mode on platform Wayland."),
-                                            QStringLiteral("display"));
 
     QCommandLineParser parser;
     a.setupCommandLine(&parser);
 
     parser.addOption(xwaylandOption);
     parser.addOption(waylandSocketOption);
-    parser.addOption(waylandDisplayOption);
 
     QCommandLineOption libinputOption(QStringLiteral("libinput"),
                                       i18n("Enable libinput support for input events processing. Note: never use in a nested session.	(deprecated)"));
@@ -499,14 +492,6 @@ int main(int argc, char * argv[])
         a.setSessionArgument(parser.value(exitWithSessionOption));
     }
 
-    QSize initialWindowSize;
-    QByteArray deviceIdentifier;
-    qreal outputScale = 1;
-
-    if (parser.isSet(waylandDisplayOption)) {
-        deviceIdentifier = parser.value(waylandDisplayOption).toUtf8();
-    }
-
     KWin::wayland_start_options flags;
     if (parser.isSet(screenLockerOption)) {
         flags = KWin::wayland_start_options::lock_screen;
@@ -524,16 +509,6 @@ int main(int argc, char * argv[])
         std::cerr << "FATAL ERROR: could not create Wayland server" << std::endl;
         return 1;
     }
-
-    a.init_platforms();
-
-    if (!deviceIdentifier.isEmpty()) {
-        a.platform->setDeviceIdentifier(deviceIdentifier);
-    }
-    if (initialWindowSize.isValid()) {
-        a.platform->setInitialWindowSize(initialWindowSize);
-    }
-    a.platform->setInitialOutputScale(outputScale);
 
     if (auto const& name = a.server->display()->socket_name(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());

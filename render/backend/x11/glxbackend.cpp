@@ -349,7 +349,7 @@ bool GlxBackend::initBuffer()
         xcb_colormap_t colormap = xcb_generate_id(c);
         xcb_create_colormap(c, false, colormap, rootWindow(), visual);
 
-        const QSize size = screens()->size();
+        const QSize size = Screens::self()->size();
 
         window = xcb_generate_id(c);
         xcb_create_window(c,
@@ -717,7 +717,7 @@ void GlxBackend::present()
     if (lastDamage().isEmpty())
         return;
 
-    const QSize& screenSize = screens()->size();
+    const QSize& screenSize = Screens::self()->size();
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
     const bool canSwapBuffers = supportsBufferAge() || (lastDamage() == displayRegion);
     m_needsCompositeTimerStart = true;

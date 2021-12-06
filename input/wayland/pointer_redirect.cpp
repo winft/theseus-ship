@@ -41,8 +41,8 @@ namespace KWin::input::wayland
 
 static bool screenContainsPos(QPointF const& pos)
 {
-    for (int i = 0; i < screens()->count(); ++i) {
-        if (screens()->geometry(i).contains(pos.toPoint())) {
+    for (int i = 0; i < Screens::self()->count(); ++i) {
+        if (Screens::self()->geometry(i).contains(pos.toPoint())) {
             return true;
         }
     }
@@ -65,7 +65,7 @@ void pointer_redirect::init()
     device_redirect_init(this);
 
     QObject::connect(
-        screens(), &Screens::changed, this, &pointer_redirect::updateAfterScreenChange);
+        Screens::self(), &Screens::changed, this, &pointer_redirect::updateAfterScreenChange);
     if (waylandServer()->hasScreenLockerIntegration()) {
         QObject::connect(
             ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
@@ -104,7 +104,7 @@ void pointer_redirect::init()
                      setupMoveResizeConnection);
 
     // warp the cursor to center of screen
-    warp(screens()->geometry().center());
+    warp(Screens::self()->geometry().center());
     updateAfterScreenChange();
 
     auto wayland_cursor = dynamic_cast<wayland::cursor*>(input::get_cursor());
@@ -153,7 +153,7 @@ void pointer_redirect::update_to_reset()
 void pointer_redirect::processMotion(QPointF const& pos, uint32_t time, input::pointer* device)
 {
     // Events for motion_absolute_event have positioning relative to screen size.
-    auto const ssize = screens()->size();
+    auto const ssize = Screens::self()->size();
     auto const rel_pos = QPointF(pos.x() / ssize.width(), pos.y() / ssize.height());
 
     auto event = motion_absolute_event{rel_pos, {device, time}};
@@ -243,7 +243,7 @@ void pointer_redirect::process_motion_absolute(motion_absolute_event const& even
         return;
     }
 
-    auto const ssize = screens()->size();
+    auto const ssize = Screens::self()->size();
     auto const pos = QPointF(ssize.width() * event.pos.x(), ssize.height() * event.pos.y());
 
     PositionUpdateBlocker blocker(this);
@@ -620,9 +620,6 @@ void pointer_redirect::updatePointerConstraints()
     if (s != waylandServer()->seat()->pointers().get_focus().surface) {
         return;
     }
-    if (!supportsWarping()) {
-        return;
-    }
     const bool canConstrain = constraints.enabled && focus() == workspace()->activeClient();
     const auto cf = s->confinedPointer();
     if (cf) {
@@ -784,11 +781,11 @@ void pointer_redirect::update_position(const QPointF& pos)
     // verify that at least one screen contains the pointer position
     QPointF p = pos;
     if (!screenContainsPos(p)) {
-        const QRectF unitedScreensGeometry = screens()->geometry();
+        const QRectF unitedScreensGeometry = Screens::self()->geometry();
         p = confineToBoundingBox(p, unitedScreensGeometry);
         if (!screenContainsPos(p)) {
             const QRectF currentScreenGeometry
-                = screens()->geometry(screens()->number(m_pos.toPoint()));
+                = Screens::self()->geometry(Screens::self()->number(m_pos.toPoint()));
             p = confineToBoundingBox(p, currentScreenGeometry);
         }
     }
@@ -823,10 +820,7 @@ void pointer_redirect::update_button(button_event const& event)
 
 void pointer_redirect::warp(QPointF const& pos)
 {
-    if (supportsWarping()) {
-        kwinApp()->platform->warpPointer(pos);
-        processMotion(pos, waylandServer()->seat()->timestamp());
-    }
+    processMotion(pos, waylandServer()->seat()->timestamp());
 }
 
 QPointF pointer_redirect::pos() const
@@ -839,11 +833,6 @@ Qt::MouseButtons pointer_redirect::buttons() const
     return qt_buttons;
 }
 
-bool pointer_redirect::supportsWarping() const
-{
-    return true;
-}
-
 void pointer_redirect::updateAfterScreenChange()
 {
     if (screenContainsPos(m_pos)) {
@@ -851,7 +840,8 @@ void pointer_redirect::updateAfterScreenChange()
         return;
     }
     // pointer no longer on a screen, reposition to closes screen
-    const QPointF pos = screens()->geometry(screens()->number(m_pos.toPoint())).center();
+    const QPointF pos
+        = Screens::self()->geometry(Screens::self()->number(m_pos.toPoint())).center();
     // TODO: better way to get timestamps
     processMotion(pos, waylandServer()->seat()->timestamp());
 }

@@ -71,7 +71,6 @@ void X11ClientTest::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
     kwinApp()->setConfig(KSharedConfig::openConfig(QString(), KConfig::SimpleConfig));
 
     Test::app()->start();
@@ -178,7 +177,7 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
 {
     // this test verifies that an X11 fullscreen window does not stay in the active layer
     // when a Wayland window is active, see BUG: 375759
-    QCOMPARE(screens()->count(), 1);
+    QCOMPARE(Screens::self()->count(), 1);
 
     // first create an X11 window
     auto c = create_xcb_connection();

@@ -73,7 +73,7 @@ QRegion backend::accumulatedDamageHistory(int bufferAge) const
         for (int i = 0; i < bufferAge - 1; i++)
             region |= m_damageHistory[i];
     } else {
-        const QSize& s = screens()->size();
+        const QSize& s = Screens::self()->size();
         region = QRegion(0, 0, s.width(), s.height());
     }
 
@@ -97,7 +97,7 @@ void backend::endRenderingFrameForScreen(base::output* output,
 
 void backend::copyPixels(const QRegion& region)
 {
-    const int height = screens()->size().height();
+    const int height = Screens::self()->size().height();
     for (const QRect& r : region) {
         const int x0 = r.x();
         const int y0 = height - r.y() - r.height();

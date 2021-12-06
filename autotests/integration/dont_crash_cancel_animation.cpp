@@ -55,8 +55,6 @@ void DontCrashCancelAnimationFromAnimationEndedTest::initTestCase()
 {
     qRegisterMetaType<win::wayland::window*>();
 
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
-
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
 

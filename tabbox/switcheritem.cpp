@@ -43,7 +43,7 @@ SwitcherItem::SwitcherItem(QObject *parent)
             setCurrentIndex(tabBox->currentIndex().row());
         }
     });
-    connect(screens(), &Screens::changed, this, &SwitcherItem::screenGeometryChanged);
+    connect(Screens::self(), &Screens::changed, this, &SwitcherItem::screenGeometryChanged);
     connect(render::compositor::self(), &render::compositor::compositingToggled, this, &SwitcherItem::compositingChanged);
 }
 
@@ -80,7 +80,7 @@ void SwitcherItem::setVisible(bool visible)
 
 QRect SwitcherItem::screenGeometry() const
 {
-    return screens()->geometry(screens()->current());
+    return Screens::self()->geometry(Screens::self()->current());
 }
 
 void SwitcherItem::setCurrentIndex(int index)

@@ -81,15 +81,6 @@ void X11StandalonePlatform::init()
     m_randrFilter.reset(new RandrFilter(this));
 }
 
-QSize X11StandalonePlatform::screenSize() const
-{
-    auto screen = defaultScreen();
-    if (!screen) {
-        return Screens::self()->size();
-    }
-    return QSize(screen->width_in_pixels, screen->height_in_pixels);
-}
-
 gl::backend* X11StandalonePlatform::createOpenGLBackend(render::compositor* compositor)
 {
     switch (options->glPlatformInterface()) {

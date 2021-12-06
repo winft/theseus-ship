@@ -398,7 +398,7 @@ void Edge::switchDesktop(QPoint const& cursorPos)
         const uint interimDesktop = desktop;
         desktop = vds->toLeft(desktop, vds->isNavigationWrappingAround());
         if (desktop != interimDesktop)
-            pos.setX(screens()->size().width() - 1 - OFFSET);
+            pos.setX(Screens::self()->size().width() - 1 - OFFSET);
     } else if (isRight()) {
         const uint interimDesktop = desktop;
         desktop = vds->toRight(desktop, vds->isNavigationWrappingAround());
@@ -410,7 +410,7 @@ void Edge::switchDesktop(QPoint const& cursorPos)
         const uint interimDesktop = desktop;
         desktop = vds->above(desktop, vds->isNavigationWrappingAround());
         if (desktop != interimDesktop)
-            pos.setY(screens()->size().height() - 1 - OFFSET);
+            pos.setY(Screens::self()->size().height() - 1 - OFFSET);
     } else if (isBottom()) {
         const uint interimDesktop = desktop;
         desktop = vds->below(desktop, vds->isNavigationWrappingAround());
@@ -523,8 +523,9 @@ void Edge::setGeometry(QRect const& geometry)
 
     if (isScreenEdge()) {
         m_gesture->setStartGeometry(m_geometry);
-        m_gesture->setMinimumDelta(QSizeF(MINIMUM_DELTA, MINIMUM_DELTA)
-                                   / screens()->scale(screens()->number(m_geometry.center())));
+        m_gesture->setMinimumDelta(
+            QSizeF(MINIMUM_DELTA, MINIMUM_DELTA)
+            / Screens::self()->scale(Screens::self()->number(m_geometry.center())));
     }
 }
 
@@ -913,7 +914,7 @@ void ScreenEdges::updateLayout()
 
 static bool isLeftScreen(QRect const& screen, QRect const& fullArea)
 {
-    if (screens()->count() == 1) {
+    if (Screens::self()->count() == 1) {
         return true;
     }
     if (screen.x() == fullArea.x()) {
@@ -921,8 +922,8 @@ static bool isLeftScreen(QRect const& screen, QRect const& fullArea)
     }
     // the screen is also on the left in case of a vertical layout with a second screen
     // more to the left. In that case no screen ends left of screen's x coord
-    for (int i = 0; i < screens()->count(); ++i) {
-        const QRect otherGeo = screens()->geometry(i);
+    for (int i = 0; i < Screens::self()->count(); ++i) {
+        const QRect otherGeo = Screens::self()->geometry(i);
         if (otherGeo == screen) {
             // that's our screen to test
             continue;
@@ -938,7 +939,7 @@ static bool isLeftScreen(QRect const& screen, QRect const& fullArea)
 
 static bool isRightScreen(QRect const& screen, QRect const& fullArea)
 {
-    if (screens()->count() == 1) {
+    if (Screens::self()->count() == 1) {
         return true;
     }
     if (screen.x() + screen.width() == fullArea.x() + fullArea.width()) {
@@ -946,8 +947,8 @@ static bool isRightScreen(QRect const& screen, QRect const& fullArea)
     }
     // the screen is also on the right in case of a vertical layout with a second screen
     // more to the right. In that case no screen starts right of this screen
-    for (int i = 0; i < screens()->count(); ++i) {
-        const QRect otherGeo = screens()->geometry(i);
+    for (int i = 0; i < Screens::self()->count(); ++i) {
+        const QRect otherGeo = Screens::self()->geometry(i);
         if (otherGeo == screen) {
             // that's our screen to test
             continue;
@@ -963,7 +964,7 @@ static bool isRightScreen(QRect const& screen, QRect const& fullArea)
 
 static bool isTopScreen(QRect const& screen, QRect const& fullArea)
 {
-    if (screens()->count() == 1) {
+    if (Screens::self()->count() == 1) {
         return true;
     }
     if (screen.y() == fullArea.y()) {
@@ -971,8 +972,8 @@ static bool isTopScreen(QRect const& screen, QRect const& fullArea)
     }
     // the screen is also top most in case of a horizontal layout with a second screen
     // more to the top. In that case no screen ends above screen's y coord
-    for (int i = 0; i < screens()->count(); ++i) {
-        const QRect otherGeo = screens()->geometry(i);
+    for (int i = 0; i < Screens::self()->count(); ++i) {
+        const QRect otherGeo = Screens::self()->geometry(i);
         if (otherGeo == screen) {
             // that's our screen to test
             continue;
@@ -988,7 +989,7 @@ static bool isTopScreen(QRect const& screen, QRect const& fullArea)
 
 static bool isBottomScreen(QRect const& screen, QRect const& fullArea)
 {
-    if (screens()->count() == 1) {
+    if (Screens::self()->count() == 1) {
         return true;
     }
     if (screen.y() + screen.height() == fullArea.y() + fullArea.height()) {
@@ -996,8 +997,8 @@ static bool isBottomScreen(QRect const& screen, QRect const& fullArea)
     }
     // the screen is also bottom most in case of a horizontal layout with a second screen
     // more below. In that case no screen starts below screen's y coord + height
-    for (int i = 0; i < screens()->count(); ++i) {
-        const QRect otherGeo = screens()->geometry(i);
+    for (int i = 0; i < Screens::self()->count(); ++i) {
+        const QRect otherGeo = Screens::self()->geometry(i);
         if (otherGeo == screen) {
             // that's our screen to test
             continue;
@@ -1015,10 +1016,10 @@ void ScreenEdges::recreateEdges()
 {
     auto oldEdges = m_edges;
     m_edges.clear();
-    const QRect fullArea = screens()->geometry();
+    const QRect fullArea = Screens::self()->geometry();
     QRegion processedRegion;
-    for (int i = 0; i < screens()->count(); ++i) {
-        const QRegion screen = QRegion(screens()->geometry(i)).subtracted(processedRegion);
+    for (int i = 0; i < Screens::self()->count(); ++i) {
+        const QRegion screen = QRegion(Screens::self()->geometry(i)).subtracted(processedRegion);
         processedRegion += screen;
         for (QRect const& screenPart : screen) {
             if (isLeftScreen(screenPart, fullArea)) {
@@ -1299,8 +1300,8 @@ void ScreenEdges::createEdgeForClient(Toplevel* window, ElectricBorder border)
     QRect const geo = window->frameGeometry();
     QRect const fullArea = workspace()->clientArea(FullArea, 0, 1);
 
-    for (int i = 0; i < screens()->count(); ++i) {
-        const QRect screen = screens()->geometry(i);
+    for (int i = 0; i < Screens::self()->count(); ++i) {
+        const QRect screen = Screens::self()->geometry(i);
         if (!screen.contains(geo)) {
             // ignoring Clients having a geometry overlapping with multiple screens
             // this would make the code more complex. If it's needed in future it can be added

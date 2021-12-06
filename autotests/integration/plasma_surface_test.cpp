@@ -79,7 +79,6 @@ void PlasmaSurfaceTest::initTestCase()
 
     QSignalSpy startup_spy(kwinApp(), &Application::startup_finished);
     QVERIFY(startup_spy.isValid());
-    kwinApp()->platform->setInitialWindowSize(QSize(1280, 1024));
 
     Test::app()->start();
     QVERIFY(startup_spy.size() || startup_spy.wait());
@@ -234,18 +233,16 @@ void PlasmaSurfaceTest::testOSDPlacement()
     QCOMPARE(c->frameGeometry(), QRect(590, 657, 100, 50));
 
     // change the screen size
-    QSignalSpy screensChangedSpy(screens(), &Screens::changed);
+    QSignalSpy screensChangedSpy(Screens::self(), &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
-    const QVector<QRect> geometries{QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)};
-    QMetaObject::invokeMethod(kwinApp()->platform,
-                              "setVirtualOutputs",
-                              Qt::DirectConnection,
-                              Q_ARG(int, 2),
-                              Q_ARG(QVector<QRect>, geometries));
-    QCOMPARE(screensChangedSpy.count(), screens()->count() + 2);
-    QCOMPARE(screens()->count(), 2);
-    QCOMPARE(screens()->geometry(0), geometries.at(0));
-    QCOMPARE(screens()->geometry(1), geometries.at(1));
+
+    auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};
+    Test::app()->set_outputs(geometries);
+
+    QCOMPARE(screensChangedSpy.count(), Screens::self()->count() + 2);
+    QCOMPARE(Screens::self()->count(), 2);
+    QCOMPARE(Screens::self()->geometry(0), geometries.at(0));
+    QCOMPARE(Screens::self()->geometry(1), geometries.at(1));
     QCOMPARE(c->frameGeometry(), QRect(590, 657, 100, 50));
 
     // change size of window
