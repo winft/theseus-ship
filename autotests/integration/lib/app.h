@@ -39,7 +39,7 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 {
     Q_OBJECT
 public:
-    wayland_base base;
+    base::backend::wlroots base;
     std::unique_ptr<WaylandServer> server;
     std::unique_ptr<xwl::xwayland> xwayland;
     std::unique_ptr<win::wayland::space> workspace;
@@ -59,7 +59,7 @@ public:
 
     bool is_screen_locked() const override;
 
-    wayland_base& get_base() override;
+    base::wayland::platform& get_base() override;
     WaylandServer* get_wayland_server() override;
     render::compositor* get_compositor() override;
     debug::console* create_debug_console() override;

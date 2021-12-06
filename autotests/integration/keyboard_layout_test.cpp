@@ -124,8 +124,7 @@ private:
 wlr_input_device* keyboard_layout_test::create_keyboard()
 {
     keyboards_index++;
-    return wlr_headless_add_input_device(Test::app()->base.backend.backend,
-                                         WLR_INPUT_DEVICE_KEYBOARD);
+    return wlr_headless_add_input_device(Test::app()->base.backend, WLR_INPUT_DEVICE_KEYBOARD);
 }
 
 void remove_input_device(wlr_input_device* device)

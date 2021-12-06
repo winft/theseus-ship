@@ -29,7 +29,7 @@
 namespace KWin::input::wayland
 {
 
-platform::platform(wayland_base const& base)
+platform::platform(base::wayland::platform const& base)
     : base{base}
 {
     config = kwinApp()->inputConfig();

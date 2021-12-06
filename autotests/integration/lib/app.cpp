@@ -95,7 +95,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    base.backend = base::backend::wlroots();
+    base = base::backend::wlroots();
     server.reset(new WaylandServer(socket_name, flags));
 
     render.reset(new render::backend::wlroots::backend(base));
@@ -142,7 +142,7 @@ bool WaylandTestApplication::is_screen_locked() const
     return server->is_screen_locked();
 }
 
-wayland_base& WaylandTestApplication::get_base()
+base::wayland::platform& WaylandTestApplication::get_base()
 {
     return base;
 }
@@ -168,7 +168,7 @@ void WaylandTestApplication::start()
 
     auto headless_backend = wlr_headless_backend_create(waylandServer()->display()->native());
     wlr_headless_add_output(headless_backend, 1280, 1024);
-    base.backend.init(headless_backend);
+    base.init(headless_backend);
 
     createOptions();
 
@@ -235,7 +235,7 @@ void WaylandTestApplication::set_outputs(std::vector<Test::output> const& output
     for (auto&& output : outputs) {
         auto const size = output.geometry.size() * output.scale;
 
-        wlr_headless_add_output(base.backend.backend, size.width(), size.height());
+        wlr_headless_add_output(base.backend, size.width(), size.height());
         render->all_outputs.back()->force_geometry(output.geometry);
     }
 

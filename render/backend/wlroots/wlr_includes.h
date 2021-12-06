@@ -9,6 +9,7 @@
 
 extern "C" {
 #include <wlr/backend.h>
+#include <wlr/backend/drm.h>
 #include <wlr/types/wlr_buffer.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/util/log.h>

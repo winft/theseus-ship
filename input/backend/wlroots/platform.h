@@ -39,7 +39,7 @@ class KWIN_EXPORT platform : public input::wayland::platform
 {
     Q_OBJECT
 public:
-    platform(wayland_base const& base);
+    platform(base::wayland::platform const& base);
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     ~platform() override = default;

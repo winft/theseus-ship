@@ -8,7 +8,7 @@
 #include "wlr_includes.h"
 
 #include "base/backend/wlroots.h"
-#include "base/platform.h"
+#include "base/utils.h"
 #include "platform.h"
 
 #include <Wrapland/Server/drm_lease_v1.h>
@@ -18,11 +18,6 @@ struct gbm_device;
 
 namespace KWin
 {
-
-namespace base::wayland
-{
-class output;
-}
 
 namespace render::backend::wlroots
 {
@@ -34,7 +29,7 @@ class KWIN_EXPORT backend : public Platform
 {
     Q_OBJECT
 public:
-    base::platform<base::backend::wlroots>& base;
+    base::backend::wlroots& base;
     egl_backend* egl{nullptr};
     render::compositor* compositor{nullptr};
 
@@ -46,7 +41,7 @@ public:
     wlr_allocator* allocator{nullptr};
 #endif
 
-    explicit backend(base::platform<base::backend::wlroots>& base);
+    explicit backend(base::backend::wlroots& base);
     ~backend() override;
 
     gl::backend* createOpenGLBackend(render::compositor* compositor) override;

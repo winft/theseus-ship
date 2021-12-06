@@ -73,7 +73,7 @@ std::unique_ptr<egl_gbm> get_egl_gbm(Platform const& platform)
 #if HAVE_WLR_OUTPUT_INIT_RENDER
     auto renderer = platform.renderer;
 #else
-    auto renderer = wlr_backend_get_renderer(platform.base.backend.backend);
+    auto renderer = wlr_backend_get_renderer(platform.base.backend);
 #endif
 
     auto gbm_dev = gbm_create_device(wlr_renderer_get_drm_fd(renderer));

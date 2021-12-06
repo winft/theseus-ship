@@ -11,7 +11,6 @@
 #include "output.h"
 #include "wlr_helpers.h"
 
-#include "base/platform.h"
 #include "base/wayland/output_helpers.h"
 #include "input/wayland/platform.h"
 #include "main.h"
@@ -27,7 +26,7 @@ namespace KWin::render::backend::wlroots
 
 static auto align_horizontal{false};
 
-backend::backend(base::platform<base::backend::wlroots>& base)
+backend::backend(base::backend::wlroots& base)
     : base{base}
 {
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
@@ -75,7 +74,7 @@ void handle_new_output(struct wl_listener* listener, void* data)
     back->all_outputs << out;
     back->base.all_outputs.push_back(out);
     back->enabled_outputs << out;
-    back->base.enabled_outputs.push_back(out);
+    back->base.outputs.push_back(out);
 
     if (align_horizontal) {
         auto shifted_geo = out->geometry();
@@ -89,20 +88,20 @@ void handle_new_output(struct wl_listener* listener, void* data)
 
 void backend::init()
 {
-    // TODO(romangg): Has to be here because in the integration tests base.backend.backend is not
-    //                yet available in the ctor. Can we change that?
+    // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
+    //                available in the ctor. Can we change that?
 #if HAVE_WLR_OUTPUT_INIT_RENDER
-    renderer = wlr_renderer_autocreate(base.backend.backend);
-    allocator = wlr_allocator_autocreate(base.backend.backend, renderer);
+    renderer = wlr_renderer_autocreate(base.backend);
+    allocator = wlr_allocator_autocreate(base.backend, renderer);
 #endif
 
     new_output.receiver = this;
     new_output.event.notify = handle_new_output;
-    wl_signal_add(&base.backend.backend->events.new_output, &new_output.event);
+    wl_signal_add(&base.backend->events.new_output, &new_output.event);
 
     init_drm_leasing();
 
-    if (!wlr_backend_start(base.backend.backend)) {
+    if (!wlr_backend_start(base.backend)) {
         throw std::exception();
     }
 
@@ -124,13 +123,13 @@ void backend::enableOutput(output* output, bool enable)
     if (enable) {
         Q_ASSERT(!enabled_outputs.contains(output));
         enabled_outputs << output;
-        base.enabled_outputs.push_back(output);
+        base.outputs.push_back(output);
         Q_EMIT output_added(output);
     } else {
         Q_ASSERT(enabled_outputs.contains(output));
         enabled_outputs.removeOne(output);
         Q_ASSERT(!enabled_outputs.contains(output));
-        remove_all(base.enabled_outputs, output);
+        remove_all(base.outputs, output);
         Q_EMIT output_removed(output);
     }
 
@@ -143,13 +142,13 @@ void backend::enableOutput(output* output, bool enable)
 
 clockid_t backend::clockId() const
 {
-    return wlr_backend_get_presentation_clock(base.backend.backend);
+    return wlr_backend_get_presentation_clock(base.backend);
 }
 
 gl::backend* backend::createOpenGLBackend(render::compositor* compositor)
 {
     this->compositor = compositor;
-    egl = new egl_backend(this, base::backend::wlroots_get_headless_backend(base.backend.backend));
+    egl = new egl_backend(this, base::backend::wlroots_get_headless_backend(base.backend));
     return egl;
 }
 
@@ -193,7 +192,7 @@ struct outputs_array_wrap {
 void backend::init_drm_leasing()
 {
 #if HAVE_WLR_DRM_LEASE
-    auto drm_backend = base::backend::wlroots_get_drm_backend(base.backend.backend);
+    auto drm_backend = base::backend::wlroots_get_drm_backend(base.backend);
     if (!drm_backend) {
         return;
     }

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/utils.h"
+#include "base/wayland/platform.h"
 
 #include <kwin_export.h>
 
@@ -25,15 +26,7 @@ namespace Wrapland::Server
 class Display;
 }
 
-namespace KWin::base
-{
-
-namespace wayland
-{
-class output;
-}
-
-namespace backend
+namespace KWin::base::backend
 {
 
 inline wlr_backend* wlroots_get_backend(wlr_backend* backend,
@@ -69,11 +62,9 @@ inline wlr_backend* wlroots_get_headless_backend(wlr_backend* backend)
     return wlroots_get_backend(backend, wlr_backend_is_headless);
 }
 
-class KWIN_EXPORT wlroots
+class KWIN_EXPORT wlroots : public base::wayland::platform
 {
 public:
-    using output = base::wayland::output;
-
     wlr_backend* backend{nullptr};
 
     // TODO(romangg): remove all but one ctor once the startup sequence is cleaned up.
@@ -86,7 +77,7 @@ public:
     wlroots& operator=(wlroots const&) = delete;
     wlroots(wlroots&& other) noexcept;
     wlroots& operator=(wlroots&& other) noexcept;
-    ~wlroots();
+    ~wlroots() override;
 
     wlr_session* session() const
     {
@@ -97,5 +88,4 @@ private:
     std::unique_ptr<event_receiver<wlroots>> destroyed;
 };
 
-}
 }
