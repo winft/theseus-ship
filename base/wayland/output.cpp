@@ -319,7 +319,7 @@ void output::dpms_set_on()
         m_output->set_dpms_mode(Wrapland::Server::Output::DpmsMode::On);
     }
 
-    auto& wlroots_base = static_cast<ApplicationWaylandAbstract*>(kwinApp())->get_base();
+    auto& wlroots_base = static_cast<platform&>(kwinApp()->get_base());
     auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
     base::wayland::check_outputs_on(wlroots_base, wayland_input->dpms_filter);
 

@@ -44,6 +44,7 @@ public:
     X11TestApplication(int& argc, char** argv);
     ~X11TestApplication() override;
 
+    base::platform& get_base() override;
     render::compositor* get_compositor() override;
     debug::console* create_debug_console() override;
 
@@ -73,6 +74,11 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
 
 X11TestApplication::~X11TestApplication()
 {
+}
+
+base::platform& X11TestApplication::get_base()
+{
+    return base;
 }
 
 render::compositor* X11TestApplication::get_compositor()

@@ -47,11 +47,9 @@ class console;
 
 namespace base
 {
-namespace wayland
-{
-class output;
+
 class platform;
-}
+
 namespace x11
 {
 class event_filter_manager;
@@ -116,6 +114,7 @@ public:
 
     ~Application() override;
 
+    virtual base::platform& get_base() = 0;
     virtual render::compositor* get_compositor() = 0;
 
     void setConfigLock(bool lock);
@@ -287,8 +286,6 @@ class KWIN_EXPORT ApplicationWaylandAbstract : public Application
     Q_OBJECT
 public:
     ~ApplicationWaylandAbstract() override = 0;
-
-    virtual base::wayland::platform& get_base() = 0;
 
 protected:
     friend class xwl::xwayland;

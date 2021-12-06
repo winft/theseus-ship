@@ -258,7 +258,7 @@ void WaylandServer::create_globals()
             &OutputManagementV1::configurationChangeRequested,
             this,
             [](Wrapland::Server::OutputConfigurationV1* config) {
-                auto& base = static_cast<ApplicationWaylandAbstract*>(kwinApp())->get_base();
+                auto& base = static_cast<base::wayland::platform&>(kwinApp()->get_base());
                 base::wayland::request_outputs_change(base, config);
             });
 
