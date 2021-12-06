@@ -96,7 +96,7 @@ private:
     QProcessEnvironment m_environment;
     QString m_sessionArgument;
 
-    std::unique_ptr<base::backend::wlroots> base;
+    std::unique_ptr<base::backend::wlroots::platform> base;
     std::unique_ptr<render::backend::wlroots::backend> render;
     std::unique_ptr<xwl::xwayland> xwayland;
 

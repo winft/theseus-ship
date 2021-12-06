@@ -6,7 +6,7 @@
 */
 #include "lib/app.h"
 
-#include "base/backend/wlroots.h"
+#include "base/backend/wlroots/platform.h"
 #include "input/dbus/keyboard_layouts_v2.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"

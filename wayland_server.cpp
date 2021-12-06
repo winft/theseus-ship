@@ -6,7 +6,7 @@
 */
 #include "wayland_server.h"
 
-#include "base/backend/wlroots.h"
+#include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
 #include "base/wayland/output_helpers.h"
 #include "platform.h"

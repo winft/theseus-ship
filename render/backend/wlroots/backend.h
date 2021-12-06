@@ -7,7 +7,7 @@
 
 #include "wlr_includes.h"
 
-#include "base/backend/wlroots.h"
+#include "base/backend/wlroots/platform.h"
 #include "base/utils.h"
 #include "platform.h"
 
@@ -29,7 +29,7 @@ class KWIN_EXPORT backend : public Platform
 {
     Q_OBJECT
 public:
-    base::backend::wlroots& base;
+    base::backend::wlroots::platform& base;
     egl_backend* egl{nullptr};
     render::compositor* compositor{nullptr};
 
@@ -41,7 +41,7 @@ public:
     wlr_allocator* allocator{nullptr};
 #endif
 
-    explicit backend(base::backend::wlroots& base);
+    explicit backend(base::backend::wlroots::platform& base);
     ~backend() override;
 
     gl::backend* createOpenGLBackend(render::compositor* compositor) override;

@@ -54,7 +54,7 @@ platform::platform(base::wayland::platform const& base)
     add_device.receiver = this;
     add_device.event.notify = handle_device;
 
-    auto wlroots_base = dynamic_cast<base::backend::wlroots const*>(&base);
+    auto wlroots_base = dynamic_cast<base::backend::wlroots::platform const*>(&base);
     assert(wlroots_base);
     wl_signal_add(&wlroots_base->backend->events.new_input, &add_device.event);
 }

@@ -9,7 +9,7 @@
 #include "client.h"
 #include "helpers.h"
 
-#include "base/backend/wlroots.h"
+#include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
 #include "main.h"
 #include "render/backend/wlroots/backend.h"
@@ -39,7 +39,7 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 {
     Q_OBJECT
 public:
-    base::backend::wlroots base;
+    base::backend::wlroots::platform base;
     std::unique_ptr<WaylandServer> server;
     std::unique_ptr<xwl::xwayland> xwayland;
     std::unique_ptr<win::wayland::space> workspace;

@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include <config-kwin.h>
 
-#include "base/backend/wlroots.h"
+#include "base/backend/wlroots/platform.h"
 #include "debug/wayland_console.h"
 #include "platform.h"
 #include "render/effects.h"
@@ -205,7 +205,7 @@ void ApplicationWayland::start()
         setOperationMode(OperationModeXwayland);
     }
 
-    base = std::make_unique<base::backend::wlroots>(waylandServer()->display());
+    base = std::make_unique<base::backend::wlroots::platform>(waylandServer()->display());
 
     render.reset(new render::backend::wlroots::backend(*base));
     platform = render.get();

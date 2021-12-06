@@ -780,7 +780,7 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
 add_subdirectory(plugins)
 
 set(kwin_WAYLAND_SRCS
-   base/backend/wlroots.cpp
+   base/backend/wlroots/platform.cpp
    base/wayland/idle_inhibition.cpp
    base/wayland/output.cpp
    debug/input_device_model.cpp

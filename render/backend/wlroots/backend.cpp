@@ -26,7 +26,7 @@ namespace KWin::render::backend::wlroots
 
 static auto align_horizontal{false};
 
-backend::backend(base::backend::wlroots& base)
+backend::backend(base::backend::wlroots::platform& base)
     : base{base}
 {
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
@@ -147,7 +147,7 @@ clockid_t backend::clockId() const
 gl::backend* backend::createOpenGLBackend(render::compositor* compositor)
 {
     this->compositor = compositor;
-    egl = new egl_backend(this, base::backend::wlroots_get_headless_backend(base.backend));
+    egl = new egl_backend(this, base::backend::wlroots::get_headless_backend(base.backend));
     return egl;
 }
 
@@ -191,7 +191,7 @@ struct outputs_array_wrap {
 void backend::init_drm_leasing()
 {
 #if HAVE_WLR_DRM_LEASE
-    auto drm_backend = base::backend::wlroots_get_drm_backend(base.backend);
+    auto drm_backend = base::backend::wlroots::get_drm_backend(base.backend);
     if (!drm_backend) {
         return;
     }

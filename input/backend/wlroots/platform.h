@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "base/backend/wlroots.h"
+#include "base/backend/wlroots/platform.h"
 #include "input/wayland/platform.h"
 
 #include <kwin_export.h>

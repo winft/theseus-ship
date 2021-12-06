@@ -3,43 +3,43 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "wlroots.h"
+#include "platform.h"
 
 #include <Wrapland/Server/display.h>
 
-namespace KWin::base::backend
+namespace KWin::base::backend::wlroots
 {
 
 void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
 {
-    event_receiver<wlroots>* event_receiver_struct
+    event_receiver<platform>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
     auto wlr = event_receiver_struct->receiver;
 
     wlr->backend = nullptr;
 }
 
-wlroots::wlroots()
-    : destroyed{std::make_unique<event_receiver<wlroots>>()}
+platform::platform()
+    : destroyed{std::make_unique<event_receiver<platform>>()}
 {
 }
 
-wlroots::wlroots(Wrapland::Server::Display* display)
-    : wlroots()
+platform::platform(Wrapland::Server::Display* display)
+    : platform()
 {
     wlr_log_init(WLR_DEBUG, nullptr);
     backend = wlr_backend_autocreate(display->native());
     init(backend);
 }
 
-wlroots::wlroots(wlr_backend* backend)
-    : wlroots()
+platform::platform(wlr_backend* backend)
+    : platform()
 {
     this->backend = backend;
     init(backend);
 }
 
-void wlroots::init(wlr_backend* backend)
+void platform::init(wlr_backend* backend)
 {
     // TODO(romangg): Make this dependent on KWIN_WL debug verbosity.
     wlr_log_init(WLR_DEBUG, nullptr);
@@ -51,12 +51,12 @@ void wlroots::init(wlr_backend* backend)
     wl_signal_add(&backend->events.destroy, &destroyed->event);
 }
 
-wlroots::wlroots(wlroots&& other) noexcept
+platform::platform(platform&& other) noexcept
 {
     *this = std::move(other);
 }
 
-wlroots& wlroots::operator=(wlroots&& other) noexcept
+platform& platform::operator=(platform&& other) noexcept
 {
     backend = other.backend;
     destroyed = std::move(other.destroyed);
@@ -65,7 +65,7 @@ wlroots& wlroots::operator=(wlroots&& other) noexcept
     return *this;
 }
 
-wlroots::~wlroots()
+platform::~platform()
 {
     if (backend) {
         wlr_backend_destroy(backend);
