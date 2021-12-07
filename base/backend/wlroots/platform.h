@@ -66,11 +66,9 @@ class KWIN_EXPORT platform : public base::wayland::platform
 public:
     wlr_backend* backend{nullptr};
 
-    // TODO(romangg): remove all but one ctor once the startup sequence is cleaned up.
-    platform();
+    platform() = default;
     explicit platform(Wrapland::Server::Display* display);
     explicit platform(wlr_backend* backend);
-    void init(wlr_backend* backend);
 
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;

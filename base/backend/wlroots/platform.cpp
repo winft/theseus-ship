@@ -21,27 +21,13 @@ static void handle_destroy(struct wl_listener* listener, void* /*data*/)
     wlr->backend = nullptr;
 }
 
-platform::platform()
-    : destroyed{std::make_unique<event_receiver<platform>>()}
-{
-}
-
 platform::platform(Wrapland::Server::Display* display)
-    : platform()
+    : platform(wlr_backend_autocreate(display->native()))
 {
-    wlr_log_init(WLR_DEBUG, nullptr);
-    backend = wlr_backend_autocreate(display->native());
-    init(backend);
 }
 
 platform::platform(wlr_backend* backend)
-    : platform()
-{
-    this->backend = backend;
-    init(backend);
-}
-
-void platform::init(wlr_backend* backend)
+    : destroyed{std::make_unique<event_receiver<platform>>()}
 {
     // TODO(romangg): Make this dependent on KWIN_WL debug verbosity.
     wlr_log_init(WLR_DEBUG, nullptr);

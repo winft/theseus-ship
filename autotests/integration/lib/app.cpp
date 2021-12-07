@@ -95,8 +95,9 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    base = base::backend::wlroots::platform();
     server.reset(new WaylandServer(socket_name, flags));
+    base = base::backend::wlroots::platform(
+        wlr_headless_backend_create(server->display()->native()));
 
     render.reset(new render::backend::wlroots::backend(base));
     platform = render.get();
@@ -166,9 +167,8 @@ void WaylandTestApplication::start()
 {
     prepare_start();
 
-    auto headless_backend = wlr_headless_backend_create(waylandServer()->display()->native());
+    auto headless_backend = base::backend::wlroots::get_headless_backend(base.backend);
     wlr_headless_add_output(headless_backend, 1280, 1024);
-    base.init(headless_backend);
 
     createOptions();
 
