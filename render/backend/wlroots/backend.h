@@ -7,6 +7,7 @@
 
 #include "wlr_includes.h"
 
+#include "base/backend/wlroots/output.h"
 #include "base/backend/wlroots/platform.h"
 #include "base/utils.h"
 #include "platform.h"
@@ -23,7 +24,6 @@ namespace render::backend::wlroots
 {
 
 class egl_backend;
-class output;
 
 class KWIN_EXPORT backend : public Platform
 {
@@ -33,8 +33,8 @@ public:
     egl_backend* egl{nullptr};
     render::compositor* compositor{nullptr};
 
-    QVector<output*> all_outputs;
-    QVector<output*> enabled_outputs;
+    QVector<base::backend::wlroots::output*> all_outputs;
+    QVector<base::backend::wlroots::output*> enabled_outputs;
 
 #if HAVE_WLR_OUTPUT_INIT_RENDER
     wlr_renderer* renderer{nullptr};
@@ -51,8 +51,6 @@ public:
 
     Outputs outputs() const override;
     Outputs enabledOutputs() const override;
-
-    void enableOutput(output* output, bool enable);
 
     QVector<CompositingType> supportedCompositors() const override;
 

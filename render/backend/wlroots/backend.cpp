@@ -11,6 +11,7 @@
 #include "output.h"
 #include "wlr_helpers.h"
 
+#include "base/backend/wlroots/output.h"
 #include "base/wayland/output_helpers.h"
 #include "input/wayland/platform.h"
 #include "main.h"
@@ -32,18 +33,28 @@ backend::backend(base::backend::wlroots::platform& base)
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 
     setSupportsGammaControl(true);
+
+    QObject::connect(
+        &base, &base::backend::wlroots::platform::output_added, this, [this](auto&& output) {
+            auto wlr_out = static_cast<base::backend::wlroots::output*>(output);
+            all_outputs << wlr_out;
+            enabled_outputs << wlr_out;
+
+            auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
+            base::wayland::check_outputs_on(this->base, wayland_input->dpms_filter);
+        });
+    QObject::connect(
+        &base, &base::backend::wlroots::platform::output_removed, this, [this](auto&& output) {
+            auto wlr_out = static_cast<base::backend::wlroots::output*>(output);
+            enabled_outputs.removeOne(wlr_out);
+            all_outputs.removeOne(wlr_out);
+
+            auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
+            base::wayland::check_outputs_on(this->base, wayland_input->dpms_filter);
+        });
 }
 
-backend::~backend()
-{
-    for (auto output : all_outputs) {
-        // Outputs are currently deleted through Qt parent-child relation.
-        output->back = nullptr;
-        delete output;
-    }
-    all_outputs.clear();
-    base.all_outputs.clear();
-}
+backend::~backend() = default;
 
 void handle_new_output(struct wl_listener* listener, void* data)
 {
@@ -70,11 +81,12 @@ void handle_new_output(struct wl_listener* listener, void* data)
 
     auto const screens_width = std::max(Screens::self()->size().width(), 0);
 
-    auto out = new output(wlr_out, back);
-    back->all_outputs << out;
+    auto out = new base::backend::wlroots::output(wlr_out, &back->base);
+    out->render = std::make_unique<output>(*out);
     back->base.all_outputs.push_back(out);
-    back->enabled_outputs << out;
     back->base.outputs.push_back(out);
+
+    Q_EMIT back->base.output_added(out);
 
     if (align_horizontal) {
         auto shifted_geo = out->geometry();
@@ -82,7 +94,6 @@ void handle_new_output(struct wl_listener* listener, void* data)
         out->force_geometry(shifted_geo);
     }
 
-    Q_EMIT back->base.output_added(out);
     Screens::self()->updateAll();
 }
 
@@ -116,27 +127,6 @@ Outputs backend::outputs() const
 Outputs backend::enabledOutputs() const
 {
     return enabled_outputs;
-}
-
-void backend::enableOutput(output* output, bool enable)
-{
-    if (enable) {
-        Q_ASSERT(!enabled_outputs.contains(output));
-        enabled_outputs << output;
-        base.outputs.push_back(output);
-        Q_EMIT base.output_added(output);
-    } else {
-        Q_ASSERT(enabled_outputs.contains(output));
-        enabled_outputs.removeOne(output);
-        Q_ASSERT(!enabled_outputs.contains(output));
-        remove_all(base.outputs, output);
-        Q_EMIT base.output_removed(output);
-    }
-
-    auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
-    base::wayland::check_outputs_on(base, wayland_input->dpms_filter);
-
-    Screens::self()->updateAll();
 }
 
 clockid_t backend::clockId() const
@@ -234,17 +224,18 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
     }
 
     for (auto& con : lease->connectors()) {
-        auto out = static_cast<output*>(base::wayland::find_output(base, con->output()));
+        auto out = static_cast<base::backend::wlroots::output*>(
+            base::wayland::find_output(base, con->output()));
         assert(out);
-        outputs.push_back(out);
+        outputs.push_back(out->render.get());
     }
 
     auto outputs_array = outputs_array_wrap(outputs.size());
 
     size_t i{0};
     for (auto& out : outputs) {
-        egl->get_output(out).cleanup_framebuffer();
-        outputs_array.data[i] = out->native;
+        egl->get_output(&out->base).cleanup_framebuffer();
+        outputs_array.data[i] = out->base.native;
         i++;
     }
 
@@ -252,7 +243,7 @@ void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1
     if (!wlr_lease) {
         qCWarning(KWIN_WL) << "Error in wlroots backend on lease creation.";
         for (auto& out : outputs) {
-            egl->get_output(out).reset_framebuffer();
+            egl->get_output(&out->base).reset_framebuffer();
         }
         throw;
     }

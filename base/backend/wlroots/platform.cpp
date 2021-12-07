@@ -5,12 +5,14 @@
 */
 #include "platform.h"
 
+#include "output.h"
+
 #include <Wrapland/Server/display.h>
 
 namespace KWin::base::backend::wlroots
 {
 
-void handle_destroy(struct wl_listener* listener, [[maybe_unused]] void* data)
+static void handle_destroy(struct wl_listener* listener, void* /*data*/)
 {
     event_receiver<platform>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
@@ -67,6 +69,10 @@ platform& platform::operator=(platform&& other) noexcept
 
 platform::~platform()
 {
+    for (auto output : all_outputs) {
+        static_cast<wlroots::output*>(output)->platform = nullptr;
+        delete output;
+    }
     if (backend) {
         wlr_backend_destroy(backend);
     }
