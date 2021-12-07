@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 
 #include "base/output.h"
+#include "base/platform.h"
 
 #include "input/cursor.h"
 #include "utils.h"
@@ -34,28 +35,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-Screens *Screens::s_self = nullptr;
-Screens *Screens::create(QObject *parent)
+Screens* Screens::self()
 {
-    Q_ASSERT(!s_self);
-    s_self = new Screens(parent);
-    Q_ASSERT(s_self);
-    s_self->init();
-    return s_self;
+    return &kwinApp()->get_base().screens;
 }
 
-Screens::Screens(QObject *parent)
-    : QObject(parent)
-    , m_count(0)
+Screens::Screens()
+    : m_count(0)
     , m_current(0)
     , m_currentFollowsMouse(false)
     , m_maxScale(1.0)
 {
+    init();
 }
 
 Screens::~Screens()
 {
-    s_self = nullptr;
 }
 
 void Screens::init()

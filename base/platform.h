@@ -6,6 +6,7 @@
 #pragma once
 
 #include "kwin_export.h"
+#include "screens.h"
 
 #include <QObject>
 #include <vector>
@@ -28,6 +29,8 @@ public:
 
     // Makes a copy of all outputs. Only for external use. Prefer subclass objects instead.
     virtual std::vector<output*> get_outputs() const = 0;
+
+    Screens screens;
 
 Q_SIGNALS:
     void output_added(output*);

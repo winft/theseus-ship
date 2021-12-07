@@ -43,6 +43,7 @@ class KWIN_EXPORT Screens : public QObject
 {
     Q_OBJECT
 public:
+    Screens();
     ~Screens() override;
     /**
      * @internal
@@ -142,6 +143,8 @@ public:
 
     void updateAll();
 
+    static Screens* self();
+
 public Q_SLOTS:
     void reconfigure();
 
@@ -185,7 +188,6 @@ private:
     QSize m_boundingSize;
     qreal m_maxScale;
 
-    KWIN_SINGLETON(Screens)
 };
 
 inline
