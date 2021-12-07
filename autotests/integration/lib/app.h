@@ -39,8 +39,8 @@ class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
 {
     Q_OBJECT
 public:
-    base::backend::wlroots::platform base;
     std::unique_ptr<WaylandServer> server;
+    base::backend::wlroots::platform base;
     std::unique_ptr<xwl::xwayland> xwayland;
     std::unique_ptr<win::wayland::space> workspace;
 
