@@ -8,7 +8,10 @@
 namespace KWin::base
 {
 
-platform::platform() = default;
+platform::platform()
+    : screens{*this}
+{
+}
 
 platform::~platform() = default;
 
