@@ -79,7 +79,7 @@ void handle_new_output(struct wl_listener* listener, void* data)
         }
     }
 
-    auto const screens_width = std::max(Screens::self()->size().width(), 0);
+    auto const screens_width = std::max(back->base.screens.size().width(), 0);
 
     auto out = new base::backend::wlroots::output(wlr_out, &back->base);
     out->render = std::make_unique<output>(*out);
@@ -94,7 +94,7 @@ void handle_new_output(struct wl_listener* listener, void* data)
         out->force_geometry(shifted_geo);
     }
 
-    Screens::self()->updateAll();
+    back->base.screens.updateAll();
 }
 
 void backend::init()
@@ -116,7 +116,7 @@ void backend::init()
         throw std::exception();
     }
 
-    Screens::self()->updateAll();
+    base.screens.updateAll();
 }
 
 Outputs backend::outputs() const

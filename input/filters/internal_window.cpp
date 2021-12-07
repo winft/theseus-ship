@@ -8,6 +8,7 @@
 
 #include "helpers.h"
 
+#include "base/platform.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
@@ -131,7 +132,7 @@ QWindow* get_internal_window()
         if (!w->isVisible()) {
             continue;
         }
-        if (!Screens::self()->geometry().contains(w->geometry())) {
+        if (!kwinApp()->get_base().screens.geometry().contains(w->geometry())) {
             continue;
         }
         if (w->property("_q_showWithoutActivating").toBool()) {

@@ -246,7 +246,7 @@ bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sou
     }
 
     if (m_screenName.has_value()) {
-        if (Screens::self()->name(client->screen()) != m_screenName) {
+        if (kwinApp()->get_base().screens.name(client->screen()) != m_screenName) {
             return false;
         }
     }

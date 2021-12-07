@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "integration.h"
+
+#include "base/platform.h"
 #include "backingstore.h"
 #include "offscreensurface.h"
 #include "screen.h"
@@ -87,7 +89,7 @@ void Integration::initialize()
     // connect to the startup_finished signal. At this point everything has been created.
     connect(kwinApp(), &Application::startup_finished, this,
         [this] {
-            connect(Screens::self(), &Screens::changed, this, &Integration::initScreens);
+            connect(&kwinApp()->get_base().screens, &Screens::changed, this, &Integration::initScreens);
             initScreens();
         }
     );
@@ -152,9 +154,11 @@ QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext*
 
 void Integration::initScreens()
 {
+    auto const& screens = kwinApp()->get_base().screens;
     QVector<Screen*> newScreens;
-    newScreens.reserve(qMax(Screens::self()->count(), 1));
-    for (int i = 0; i < Screens::self()->count(); i++) {
+
+    newScreens.reserve(qMax(screens.count(), 1));
+    for (int i = 0; i < screens.count(); i++) {
         auto screen = new Screen(i);
         QWindowSystemInterface::handleScreenAdded(screen);
         newScreens << screen;

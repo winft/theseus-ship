@@ -63,9 +63,9 @@ void X11StandalonePlatform::init()
     }
 
     initOutputs();
-    Screens::self()->updateAll();
+    base.screens.updateAll();
 
-    connect(Screens::self(), &Screens::changed, this, [] {
+    connect(&base.screens, &Screens::changed, this, [] {
         if (!workspace()->compositing()) {
             return;
         }

@@ -6,6 +6,8 @@
 #include "x11_output.h"
 
 #include "base/gamma_ramp.h"
+#include "base/platform.h"
+#include "main.h"
 #include "screens.h"
 
 namespace KWin::render::backend::x11
@@ -26,7 +28,9 @@ QRect X11Output::geometry() const
     if (m_geometry.isValid()) {
         return m_geometry;
     }
-    return QRect(QPoint(0, 0), Screens::self()->displaySize()); // xinerama, lacks RandR
+
+    // xinerama, lacks RandR
+    return QRect(QPoint(0, 0), kwinApp()->get_base().screens.displaySize());
 }
 
 void X11Output::set_geometry(QRect set)

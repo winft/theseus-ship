@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "suncalc.h"
 #include <colorcorrect_logging.h>
 
+#include "base/platform.h"
 #include <main.h>
 #include <platform.h>
 #include "base/gamma_ramp.h"
@@ -96,7 +97,7 @@ void Manager::init()
         return;
     }
 
-    connect(Screens::self(), &Screens::countChanged, this, &Manager::hardReset);
+    connect(&kwinApp()->get_base().screens, &Screens::countChanged, this, &Manager::hardReset);
 
     connect(kwinApp()->session.get(), &seat::session::sessionActiveChanged, this,
             [this](bool active) {

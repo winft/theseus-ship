@@ -81,7 +81,7 @@ void TestScreens::init()
     m_compositor = Test::get_client().interfaces.compositor.get();
 
     Test::app()->set_outputs(1);
-    Screens::self()->setCurrent(0);
+    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -92,20 +92,20 @@ void TestScreens::cleanup()
 
 void TestScreens::testCurrentFollowsMouse()
 {
-    auto screens = Screens::self();
-    QVERIFY(!screens->isCurrentFollowsMouse());
-    screens->setCurrentFollowsMouse(true);
-    QVERIFY(screens->isCurrentFollowsMouse());
+    auto& screens = Test::app()->base.screens;
+    QVERIFY(!screens.isCurrentFollowsMouse());
+    screens.setCurrentFollowsMouse(true);
+    QVERIFY(screens.isCurrentFollowsMouse());
     // setting to same should not do anything
-    screens->setCurrentFollowsMouse(true);
-    QVERIFY(screens->isCurrentFollowsMouse());
+    screens.setCurrentFollowsMouse(true);
+    QVERIFY(screens.isCurrentFollowsMouse());
 
     // setting back to other value
-    screens->setCurrentFollowsMouse(false);
-    QVERIFY(!screens->isCurrentFollowsMouse());
+    screens.setCurrentFollowsMouse(false);
+    QVERIFY(!screens.isCurrentFollowsMouse());
     // setting to same should not do anything
-    screens->setCurrentFollowsMouse(false);
-    QVERIFY(!screens->isCurrentFollowsMouse());
+    screens.setCurrentFollowsMouse(false);
+    QVERIFY(!screens.isCurrentFollowsMouse());
 }
 
 void TestScreens::testReconfigure_data()
@@ -123,10 +123,10 @@ void TestScreens::testReconfigure_data()
 
 void TestScreens::testReconfigure()
 {
-    auto screens = Screens::self();
-    screens->reconfigure();
+    auto& screens = Test::app()->base.screens;
+    screens.reconfigure();
 
-    QTEST(screens->isCurrentFollowsMouse(), "expectedDefault");
+    QTEST(screens.isCurrentFollowsMouse(), "expectedDefault");
 
     QFETCH(QString, focusPolicy);
 
@@ -135,16 +135,16 @@ void TestScreens::testReconfigure()
     config->group("Windows").sync();
     config->sync();
 
-    screens->setConfig(config);
-    screens->reconfigure();
+    screens.setConfig(config);
+    screens.reconfigure();
 
-    QTEST(screens->isCurrentFollowsMouse(), "expectedDefault");
+    QTEST(screens.isCurrentFollowsMouse(), "expectedDefault");
 
     QFETCH(bool, setting);
     config->group("Windows").writeEntry("ActiveMouseScreen", setting);
     config->sync();
-    screens->reconfigure();
-    QCOMPARE(screens->isCurrentFollowsMouse(), setting);
+    screens.reconfigure();
+    QCOMPARE(screens.isCurrentFollowsMouse(), setting);
 }
 
 auto to_vector(QList<QRect> const& list)
@@ -179,31 +179,31 @@ void TestScreens::testSize_data()
 
 void TestScreens::testSize()
 {
-    auto screens = Screens::self();
-    QSignalSpy sizeChangedSpy(screens, &KWin::Screens::sizeChanged);
+    auto& screens = Test::app()->base.screens;
+    QSignalSpy sizeChangedSpy(&screens, &KWin::Screens::sizeChanged);
     QVERIFY(sizeChangedSpy.isValid());
 
     QFETCH(QList<QRect>, geometries);
     Test::app()->set_outputs(to_vector(geometries));
 
     QTEST(sizeChangedSpy.count(), "changeCount");
-    QTEST(screens->size(), "expectedSize");
+    QTEST(screens.size(), "expectedSize");
 }
 
 void TestScreens::testCount()
 {
-    auto screens = Screens::self();
-    QSignalSpy countChangedSpy(screens, &KWin::Screens::countChanged);
+    auto& screens = Test::app()->base.screens;
+    QSignalSpy countChangedSpy(&screens, &KWin::Screens::countChanged);
     QVERIFY(countChangedSpy.isValid());
 
-    QCOMPARE(screens->count(), 1);
+    QCOMPARE(screens.count(), 1);
 
     // change to two screens
     QList<QRect> geometries{{QRect{0, 0, 100, 200}, QRect{100, 0, 100, 200}}};
     Test::app()->set_outputs(to_vector(geometries));
 
     QCOMPARE(countChangedSpy.count(), 3);
-    QCOMPARE(screens->count(), 2);
+    QCOMPARE(screens.count(), 2);
 
     countChangedSpy.clear();
 
@@ -214,10 +214,10 @@ void TestScreens::testCount()
     QCOMPARE(countChangedSpy.count(), 3);
     QCOMPARE(countChangedSpy.last().first().toInt(), 0);
     QCOMPARE(countChangedSpy.last().last().toInt(), 1);
-    QCOMPARE(screens->count(), 1);
+    QCOMPARE(screens.count(), 1);
 
     // Setting the same geometries should emit the signal again.
-    QSignalSpy changedSpy(screens, &Screens::changed);
+    QSignalSpy changedSpy(&screens, &Screens::changed);
     QVERIFY(changedSpy.isValid());
     countChangedSpy.clear();
 
@@ -250,8 +250,8 @@ void TestScreens::testIntersecting_data()
 
 void TestScreens::testIntersecting()
 {
-    auto screens = Screens::self();
-    QSignalSpy changedSpy(screens, &KWin::Screens::changed);
+    auto& screens = Test::app()->base.screens;
+    QSignalSpy changedSpy(&screens, &KWin::Screens::changed);
     QVERIFY(changedSpy.isValid());
 
     QFETCH(QList<QRect>, geometries);
@@ -260,8 +260,8 @@ void TestScreens::testIntersecting()
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
     QFETCH(QRect, testGeometry);
-    QCOMPARE(screens->count(), geometries.count());
-    QTEST(screens->intersecting(testGeometry), "expectedCount");
+    QCOMPARE(screens.count(), geometries.count());
+    QTEST(screens.intersecting(testGeometry), "expectedCount");
 }
 
 void TestScreens::testCurrent_data()
@@ -275,20 +275,20 @@ void TestScreens::testCurrent_data()
 
 void TestScreens::testCurrent()
 {
-    auto screens = Screens::self();
-    QSignalSpy currentChangedSpy(screens, &KWin::Screens::currentChanged);
+    auto& screens = Test::app()->base.screens;
+    QSignalSpy currentChangedSpy(&screens, &KWin::Screens::currentChanged);
     QVERIFY(currentChangedSpy.isValid());
 
     QFETCH(int, current);
-    screens->setCurrent(current);
-    QCOMPARE(screens->current(), current);
+    screens.setCurrent(current);
+    QCOMPARE(screens.current(), current);
     QTEST(!currentChangedSpy.isEmpty(), "signal");
 }
 
 void TestScreens::testCurrentClient()
 {
-    auto screens = Screens::self();
-    QSignalSpy changedSpy(screens, &KWin::Screens::changed);
+    auto& screens = Test::app()->base.screens;
+    QSignalSpy changedSpy(&screens, &KWin::Screens::changed);
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 100, 100}, QRect{100, 0, 100, 100}}};
@@ -296,7 +296,7 @@ void TestScreens::testCurrentClient()
 
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
-    QSignalSpy currentChangedSpy(screens, &KWin::Screens::currentChanged);
+    QSignalSpy currentChangedSpy(&screens, &KWin::Screens::currentChanged);
     QVERIFY(currentChangedSpy.isValid());
 
     // Create a window.
@@ -319,29 +319,29 @@ void TestScreens::testCurrentClient()
     QCOMPARE(Workspace::self()->activeClient(), nullptr);
 
     // it's not the active client, so changing won't work
-    screens->setCurrent(client);
+    screens.setCurrent(client);
     QVERIFY(currentChangedSpy.isEmpty());
-    QCOMPARE(screens->current(), 0);
+    QCOMPARE(screens.current(), 0);
 
     // making the client active should affect things
     win::set_active(client, true);
     Workspace::self()->setActiveClient(client);
 
     // first of all current should be changed just by the fact that there is an active client
-    QCOMPARE(screens->current(), 1);
+    QCOMPARE(screens.current(), 1);
     // but also calling setCurrent should emit the changed signal
-    screens->setCurrent(client);
+    screens.setCurrent(client);
     QCOMPARE(currentChangedSpy.count(), 1);
-    QCOMPARE(screens->current(), 1);
+    QCOMPARE(screens.current(), 1);
 
     // setting current with the same client again should not change, though
-    screens->setCurrent(client);
+    screens.setCurrent(client);
     QCOMPARE(currentChangedSpy.count(), 1);
 
     // and it should even still be on screen 1 if we make the client non-current again
     Workspace::self()->setActiveClient(nullptr);
     win::set_active(client, false);
-    QCOMPARE(screens->current(), 1);
+    QCOMPARE(screens.current(), 1);
 }
 
 void TestScreens::testCurrentWithFollowsMouse_data()
@@ -364,12 +364,12 @@ void TestScreens::testCurrentWithFollowsMouse_data()
 
 void TestScreens::testCurrentWithFollowsMouse()
 {
-    auto screens = Screens::self();
-    QSignalSpy changedSpy(screens, &KWin::Screens::changed);
+    auto& screens = Test::app()->base.screens;
+    QSignalSpy changedSpy(&screens, &KWin::Screens::changed);
     QVERIFY(changedSpy.isValid());
-    screens->setCurrentFollowsMouse(true);
+    screens.setCurrentFollowsMouse(true);
     Test::pointer_motion_absolute(QPointF(0, 0), 1);
-    QCOMPARE(screens->current(), 0);
+    QCOMPARE(screens.current(), 0);
 
     QFETCH(QList<QRect>, geometries);
     Test::app()->set_outputs(to_vector(geometries));
@@ -379,7 +379,7 @@ void TestScreens::testCurrentWithFollowsMouse()
     QFETCH(QPoint, cursorPos);
     Test::pointer_motion_absolute(cursorPos, 2);
     //    KWin::s_cursorPos = cursorPos;
-    QTEST(screens->current(), "expected");
+    QTEST(screens.current(), "expected");
 }
 
 void TestScreens::testCurrentPoint_data()
@@ -402,10 +402,10 @@ void TestScreens::testCurrentPoint_data()
 
 void TestScreens::testCurrentPoint()
 {
-    auto screens = Screens::self();
-    QSignalSpy changedSpy(screens, &KWin::Screens::changed);
+    auto& screens = Test::app()->base.screens;
+    QSignalSpy changedSpy(&screens, &KWin::Screens::changed);
     QVERIFY(changedSpy.isValid());
-    screens->setCurrentFollowsMouse(false);
+    screens.setCurrentFollowsMouse(false);
 
     QFETCH(QList<QRect>, geometries);
     Test::app()->set_outputs(to_vector(geometries));
@@ -413,8 +413,8 @@ void TestScreens::testCurrentPoint()
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
     QFETCH(QPoint, cursorPos);
-    screens->setCurrent(cursorPos);
-    QTEST(screens->current(), "expected");
+    screens.setCurrent(cursorPos);
+    QTEST(screens.current(), "expected");
 }
 
 }

@@ -41,8 +41,10 @@ namespace KWin::input::wayland
 
 static bool screenContainsPos(QPointF const& pos)
 {
-    for (int i = 0; i < Screens::self()->count(); ++i) {
-        if (Screens::self()->geometry(i).contains(pos.toPoint())) {
+    auto const& screens = kwinApp()->get_base().screens;
+
+    for (int i = 0; i < screens.count(); ++i) {
+        if (screens.geometry(i).contains(pos.toPoint())) {
             return true;
         }
     }
@@ -62,10 +64,11 @@ pointer_redirect::pointer_redirect(input::redirect* redirect)
 
 void pointer_redirect::init()
 {
+    auto const& screens = kwinApp()->get_base().screens;
+
     device_redirect_init(this);
 
-    QObject::connect(
-        Screens::self(), &Screens::changed, this, &pointer_redirect::updateAfterScreenChange);
+    QObject::connect(&screens, &Screens::changed, this, &pointer_redirect::updateAfterScreenChange);
     if (waylandServer()->hasScreenLockerIntegration()) {
         QObject::connect(
             ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
@@ -104,7 +107,7 @@ void pointer_redirect::init()
                      setupMoveResizeConnection);
 
     // warp the cursor to center of screen
-    warp(Screens::self()->geometry().center());
+    warp(screens.geometry().center());
     updateAfterScreenChange();
 
     auto wayland_cursor = dynamic_cast<wayland::cursor*>(input::get_cursor());
@@ -153,7 +156,7 @@ void pointer_redirect::update_to_reset()
 void pointer_redirect::processMotion(QPointF const& pos, uint32_t time, input::pointer* device)
 {
     // Events for motion_absolute_event have positioning relative to screen size.
-    auto const ssize = Screens::self()->size();
+    auto const ssize = kwinApp()->get_base().screens.size();
     auto const rel_pos = QPointF(pos.x() / ssize.width(), pos.y() / ssize.height());
 
     auto event = motion_absolute_event{rel_pos, {device, time}};
@@ -243,7 +246,7 @@ void pointer_redirect::process_motion_absolute(motion_absolute_event const& even
         return;
     }
 
-    auto const ssize = Screens::self()->size();
+    auto const ssize = kwinApp()->get_base().screens.size();
     auto const pos = QPointF(ssize.width() * event.pos.x(), ssize.height() * event.pos.y());
 
     PositionUpdateBlocker blocker(this);
@@ -781,11 +784,13 @@ void pointer_redirect::update_position(const QPointF& pos)
     // verify that at least one screen contains the pointer position
     QPointF p = pos;
     if (!screenContainsPos(p)) {
-        const QRectF unitedScreensGeometry = Screens::self()->geometry();
+        auto const& screens = kwinApp()->get_base().screens;
+
+        QRectF const unitedScreensGeometry = screens.geometry();
         p = confineToBoundingBox(p, unitedScreensGeometry);
+
         if (!screenContainsPos(p)) {
-            const QRectF currentScreenGeometry
-                = Screens::self()->geometry(Screens::self()->number(m_pos.toPoint()));
+            QRectF const currentScreenGeometry = screens.geometry(screens.number(m_pos.toPoint()));
             p = confineToBoundingBox(p, currentScreenGeometry);
         }
     }
@@ -839,9 +844,11 @@ void pointer_redirect::updateAfterScreenChange()
         // pointer still on a screen
         return;
     }
+
     // pointer no longer on a screen, reposition to closes screen
-    const QPointF pos
-        = Screens::self()->geometry(Screens::self()->number(m_pos.toPoint())).center();
+    auto const& screens = kwinApp()->get_base().screens;
+    const QPointF pos = screens.geometry(screens.number(m_pos.toPoint())).center();
+
     // TODO: better way to get timestamps
     processMotion(pos, waylandServer()->seat()->timestamp());
 }

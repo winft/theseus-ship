@@ -11,7 +11,9 @@
 #include "glxbackend.h"
 #include "glx_context_attribute_builder.h"
 #include "logging.h"
-// kwin
+
+#include "base/platform.h"
+#include "main.h"
 #include "options.h"
 #include "platform.h"
 #include "render/compositor.h"
@@ -349,7 +351,7 @@ bool GlxBackend::initBuffer()
         xcb_colormap_t colormap = xcb_generate_id(c);
         xcb_create_colormap(c, false, colormap, rootWindow(), visual);
 
-        const QSize size = Screens::self()->size();
+        auto const& size = kwinApp()->get_base().screens.size();
 
         window = xcb_generate_id(c);
         xcb_create_window(c,
@@ -717,7 +719,7 @@ void GlxBackend::present()
     if (lastDamage().isEmpty())
         return;
 
-    const QSize& screenSize = Screens::self()->size();
+    auto const& screenSize = kwinApp()->get_base().screens.size();
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
     const bool canSwapBuffers = supportsBufferAge() || (lastDamage() == displayRegion);
     m_needsCompositeTimerStart = true;

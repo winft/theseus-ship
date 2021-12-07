@@ -23,22 +23,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 
 #include "input/cursor.h"
-#include "utils.h"
 #include "settings.h"
 #include "win/control.h"
 #include "win/screen.h"
 #include <workspace.h>
-#include <config-kwin.h>
-#include "platform.h"
 #include "toplevel.h"
 
 namespace KWin
 {
-
-Screens* Screens::self()
-{
-    return &kwinApp()->get_base().screens;
-}
 
 Screens::Screens(base::platform const& base)
     : m_count(0)

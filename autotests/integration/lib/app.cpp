@@ -240,7 +240,7 @@ void WaylandTestApplication::set_outputs(std::vector<Test::output> const& output
     }
 
     // Update again in case of force geometry change.
-    Screens::self()->updateAll();
+    base.screens.updateAll();
 }
 
 void WaylandTestApplication::handle_server_addons_created()

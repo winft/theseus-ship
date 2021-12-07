@@ -6,6 +6,7 @@
 */
 #include "backend.h"
 
+#include "base/platform.h"
 #include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
 #include "screens.h"
@@ -114,7 +115,7 @@ void backend::init(bool createOverlay)
 void backend::createBuffer()
 {
     xcb_pixmap_t pixmap = xcb_generate_id(connection());
-    const auto displaySize = Screens::self()->displaySize();
+    auto const displaySize = kwinApp()->get_base().screens.displaySize();
     xcb_create_pixmap(connection(),
                       Xcb::defaultDepth(),
                       pixmap,
@@ -129,7 +130,7 @@ void backend::createBuffer()
 
 void backend::present(paint_type mask, QRegion const& damage)
 {
-    const auto displaySize = Screens::self()->displaySize();
+    auto const displaySize = kwinApp()->get_base().screens.displaySize();
     if (flags(mask & paint_type::screen_region)) {
         // Use the damage region as the clip region for the root window
         XFixesRegion frontRegion(damage);

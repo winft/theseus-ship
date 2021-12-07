@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window.h"
 
 #include "base/output.h"
+#include "base/platform.h"
 #include "input/cursor.h"
 #include "main.h"
 #include "platform.h"
@@ -93,7 +94,7 @@ int64_t scene::paint_output(base::output* output,
     auto const needsFullRepaint = m_backend->needsFullRepaint();
     if (needsFullRepaint) {
         mask |= render::paint_type::screen_background_first;
-        damage = Screens::self()->geometry();
+        damage = kwinApp()->get_base().screens.geometry();
     }
 
     auto const geometry = output->geometry();

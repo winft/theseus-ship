@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "window.h"
 
+#include "base/platform.h"
 #include "options.h"
 #include "render/effects.h"
 #include "screens.h"
@@ -106,7 +107,7 @@ void lanczos_filter::init()
 
 void lanczos_filter::updateOffscreenSurfaces()
 {
-    const QSize& s = Screens::self()->size();
+    auto const& s = kwinApp()->get_base().screens.size();
     int w = s.width();
     int h = s.height();
 

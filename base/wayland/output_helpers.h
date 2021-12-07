@@ -32,7 +32,7 @@ base::wayland::output* find_output(Base const& base, Wrapland::Server::Output co
 }
 
 template<typename Base>
-void request_outputs_change(Base const& base, Wrapland::Server::OutputConfigurationV1* config)
+void request_outputs_change(Base& base, Wrapland::Server::OutputConfigurationV1* config)
 {
     auto const& changes = config->changes();
 
@@ -49,7 +49,7 @@ void request_outputs_change(Base const& base, Wrapland::Server::OutputConfigurat
         output->apply_changes(changeset);
     }
 
-    Screens::self()->updateAll();
+    base.screens.updateAll();
     config->setApplied();
 }
 

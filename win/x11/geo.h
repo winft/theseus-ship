@@ -675,7 +675,7 @@ void configure_position_size_from_request(Win* win,
     auto const frame_size = size_for_client_size(win, client_size, size_mode::any, false);
     auto const frame_rect = QRect(frame_pos, frame_size);
 
-    if (auto screen = Screens::self()->number(frame_rect.center());
+    if (auto screen = kwinApp()->get_base().screens.number(frame_rect.center());
         screen != win->control->rules().checkScreen(screen)) {
         // not allowed by rule
         return;
@@ -975,11 +975,12 @@ void reposition_geometry_tip(Win* win)
 inline QRect fullscreen_monitors_area(NETFullscreenMonitors requestedTopology)
 {
     QRect top, bottom, left, right, total;
+    auto const& screens = kwinApp()->get_base().screens;
 
-    top = Screens::self()->geometry(requestedTopology.top);
-    bottom = Screens::self()->geometry(requestedTopology.bottom);
-    left = Screens::self()->geometry(requestedTopology.left);
-    right = Screens::self()->geometry(requestedTopology.right);
+    top = screens.geometry(requestedTopology.top);
+    bottom = screens.geometry(requestedTopology.bottom);
+    left = screens.geometry(requestedTopology.left);
+    right = screens.geometry(requestedTopology.right);
     total = top.united(bottom.united(left.united(right)));
 
     return total;
@@ -988,7 +989,7 @@ inline QRect fullscreen_monitors_area(NETFullscreenMonitors requestedTopology)
 template<typename Win>
 void update_fullscreen_monitors(Win* win, NETFullscreenMonitors topology)
 {
-    auto count = Screens::self()->count();
+    auto count = kwinApp()->get_base().screens.count();
 
     if (topology.top >= count || topology.bottom >= count || topology.left >= count
         || topology.right >= count) {
@@ -1008,7 +1009,7 @@ NETExtendedStrut strut(Win const* win)
 {
     NETExtendedStrut ext = win->info->extendedStrut();
     NETStrut str = win->info->strut();
-    auto const displaySize = Screens::self()->displaySize();
+    auto const displaySize = kwinApp()->get_base().screens.displaySize();
 
     if (ext.left_width == 0 && ext.right_width == 0 && ext.top_width == 0 && ext.bottom_width == 0
         && (str.left != 0 || str.right != 0 || str.top != 0 || str.bottom != 0)) {
@@ -1059,7 +1060,7 @@ QRect adjusted_client_area(Win const* win, QRect const& desktopArea, QRect const
     // HACK: workarea handling is not xinerama aware, so if this strut
     // reserves place at a xinerama edge that's inside the virtual screen,
     // ignore the strut for workspace setting.
-    if (area == QRect(QPoint(0, 0), Screens::self()->displaySize())) {
+    if (area == QRect(QPoint(0, 0), kwinApp()->get_base().screens.displaySize())) {
         if (stareaL.left() < screenarea.left())
             stareaL = QRect();
         if (stareaR.right() > screenarea.right())
@@ -1100,7 +1101,7 @@ StrutRect strut_rect(Win const* win, StrutArea area)
     // Not valid
     assert(area != StrutAreaAll);
 
-    auto const displaySize = Screens::self()->displaySize();
+    auto const displaySize = kwinApp()->get_base().screens.displaySize();
     NETExtendedStrut strutArea = strut(win);
 
     switch (area) {
@@ -1165,9 +1166,11 @@ bool has_offscreen_xinerama_strut(Win const* win)
     region += strut_rect(win, StrutAreaBottom);
     region += strut_rect(win, StrutAreaLeft);
 
+    auto const& screens = kwinApp()->get_base().screens;
+
     // Remove all visible areas so that only the invisible remain
-    for (int i = 0; i < Screens::self()->count(); i++) {
-        region -= Screens::self()->geometry(i);
+    for (int i = 0; i < screens.count(); i++) {
+        region -= screens.geometry(i);
     }
 
     // If there's anything left then we have an offscreen strut

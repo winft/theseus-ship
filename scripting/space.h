@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "window.h"
 
+#include "base/platform.h"
 #include "screens.h"
 #include "virtualdesktops.h"
 #include "win/wayland/window.h"
@@ -518,15 +519,14 @@ public:
         QObject::connect(
             vds, &VirtualDesktopManager::layoutChanged, this, &space::desktopLayoutChanged);
 
+        auto& screens = kwinApp()->get_base().screens;
+        QObject::connect(&screens, &Screens::sizeChanged, this, &space::virtualScreenSizeChanged);
         QObject::connect(
-            Screens::self(), &Screens::sizeChanged, this, &space::virtualScreenSizeChanged);
-        QObject::connect(
-            Screens::self(), &Screens::geometryChanged, this, &space::virtualScreenGeometryChanged);
-        QObject::connect(Screens::self(),
+            &screens, &Screens::geometryChanged, this, &space::virtualScreenGeometryChanged);
+        QObject::connect(&screens,
                          &Screens::countChanged,
                          this,
-                         [this](int previousCount, int currentCount) {
-                             Q_UNUSED(previousCount)
+                         [this](int /*previousCount*/, int currentCount) {
                              Q_EMIT Space::numberScreensChanged(currentCount);
                          });
 
@@ -564,7 +564,7 @@ public:
 
     void sendClientToScreen(KWin::scripting::window* client, int screen) override
     {
-        if (screen < 0 || screen >= Screens::self()->count()) {
+        if (screen < 0 || screen >= kwinApp()->get_base().screens.count()) {
             return;
         }
         ref_space->sendClientToScreen(client->client(), screen);

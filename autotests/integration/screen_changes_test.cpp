@@ -57,7 +57,7 @@ void ScreenChangesTest::init()
 {
     Test::setup_wayland_connection();
 
-    Screens::self()->setCurrent(0);
+    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -86,23 +86,23 @@ void ScreenChangesTest::testScreenAddRemove()
     auto xdgOutputManager = registry.createXdgOutputManager(xdgOMData.name, xdgOMData.version);
 
     // should be one output
-    QCOMPARE(Screens::self()->count(), 1);
+    QCOMPARE(Test::app()->base.screens.count(), 1);
     QCOMPARE(outputAnnouncedSpy.count(), 1);
     const quint32 firstOutputId = outputAnnouncedSpy.first().first().value<quint32>();
     QVERIFY(firstOutputId != 0u);
     outputAnnouncedSpy.clear();
 
     // let's announce a new output
-    QSignalSpy screensChangedSpy(Screens::self(), &Screens::changed);
+    QSignalSpy screensChangedSpy(&Test::app()->base.screens, &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
 
     auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};
     Test::app()->set_outputs(geometries);
 
-    QCOMPARE(screensChangedSpy.count(), Screens::self()->count() + 2);
-    QCOMPARE(Screens::self()->count(), 2);
-    QCOMPARE(Screens::self()->geometry(0), geometries.at(0));
-    QCOMPARE(Screens::self()->geometry(1), geometries.at(1));
+    QCOMPARE(screensChangedSpy.count(), Test::app()->base.screens.count() + 2);
+    QCOMPARE(Test::app()->base.screens.count(), 2);
+    QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
+    QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
 
     // this should result in it getting announced, two new outputs are added...
     QVERIFY(outputAnnouncedSpy.count() > 1 || outputAnnouncedSpy.wait());
@@ -166,9 +166,9 @@ void ScreenChangesTest::testScreenAddRemove()
     auto const geometries2 = std::vector<QRect>{{0, 0, 1280, 1024}};
     Test::app()->set_outputs(geometries2);
 
-    QCOMPARE(screensChangedSpy.count(), Screens::self()->count() + 3);
-    QCOMPARE(Screens::self()->count(), 1);
-    QCOMPARE(Screens::self()->geometry(0), geometries2.at(0));
+    QCOMPARE(screensChangedSpy.count(), Test::app()->base.screens.count() + 3);
+    QCOMPARE(Test::app()->base.screens.count(), 1);
+    QCOMPARE(Test::app()->base.screens.geometry(0), geometries2.at(0));
 
     QVERIFY(outputAnnouncedSpy.count() > 0 || outputAnnouncedSpy.wait());
     QCOMPARE(outputAnnouncedSpy.count(), 1);

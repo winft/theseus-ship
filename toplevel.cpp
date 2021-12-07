@@ -75,8 +75,10 @@ Toplevel::Toplevel(win::transient* transient)
     });
 
     connect(this, &Toplevel::damaged, this, &Toplevel::needsRepaint);
-    connect(Screens::self(), &Screens::changed, this, &Toplevel::checkScreen);
-    connect(Screens::self(), &Screens::countChanged, this, &Toplevel::checkScreen);
+
+    auto& screens = kwinApp()->get_base().screens;
+    connect(&screens, &Screens::changed, this, &Toplevel::checkScreen);
+    connect(&screens, &Screens::countChanged, this, &Toplevel::checkScreen);
 
     setupCheckScreenConnection();
 }
@@ -632,19 +634,21 @@ void Toplevel::deleteEffectWindow()
 
 void Toplevel::checkScreen()
 {
-    if (Screens::self()->count() == 1) {
+    auto const& screens = kwinApp()->get_base().screens;
+
+    if (screens.count() == 1) {
         if (m_screen != 0) {
             m_screen = 0;
             Q_EMIT screenChanged();
         }
     } else {
-        const int s = Screens::self()->number(frameGeometry().center());
+        auto const s = screens.number(frameGeometry().center());
         if (s != m_screen) {
             m_screen = s;
             Q_EMIT screenChanged();
         }
     }
-    qreal newScale = Screens::self()->scale(m_screen);
+    qreal newScale = screens.scale(m_screen);
     if (newScale != m_screenScale) {
         m_screenScale = newScale;
         Q_EMIT screenScaleChanged();

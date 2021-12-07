@@ -19,8 +19,8 @@ void update_space_areas(Window* win,
                         std::vector<QRect> const& screens_geos,
                         space_areas& areas)
 {
-    auto const screens = Screens::self();
-    auto const screens_count = screens->count();
+    auto const& screens = kwinApp()->get_base().screens;
+    auto const screens_count = screens.count();
     auto const desktops_count = static_cast<int>(VirtualDesktopManager::self()->count());
 
     // Assuming that only docks have "struts" and that all docks have a strut.
@@ -71,10 +71,10 @@ void update_space_areas(Window* win,
         return StrutAreaInvalid;
     };
 
-    auto const strut = margins(screens->geometry(win->screen()));
+    auto const strut = margins(screens.geometry(win->screen()));
     auto const strut_region
         = StrutRects{StrutRect(win->frameGeometry(), margins_to_strut_area(strut))};
-    auto rect = desktop_area - margins(screens->geometry());
+    auto rect = desktop_area - margins(screens.geometry());
 
     if (win->isOnAllDesktops()) {
         for (int desktop = 1; desktop <= desktops_count; ++desktop) {

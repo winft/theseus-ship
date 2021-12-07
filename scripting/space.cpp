@@ -103,7 +103,7 @@ QSize space::workspaceSize() const
 
 QSize space::displaySize() const
 {
-    return Screens::self()->displaySize();
+    return kwinApp()->get_base().screens.displaySize();
 }
 
 int space::displayWidth() const
@@ -195,22 +195,22 @@ int space::workspaceWidth() const
 
 int space::numScreens() const
 {
-    return Screens::self()->count();
+    return kwinApp()->get_base().screens.count();
 }
 
 int space::activeScreen() const
 {
-    return Screens::self()->current();
+    return kwinApp()->get_base().screens.current();
 }
 
 QRect space::virtualScreenGeometry() const
 {
-    return Screens::self()->geometry();
+    return kwinApp()->get_base().screens.geometry();
 }
 
 QSize space::virtualScreenSize() const
 {
-    return Screens::self()->size();
+    return kwinApp()->get_base().screens.size();
 }
 
 QList<window*> qt_script_space::clientList() const

@@ -294,8 +294,9 @@ abstract_level* abstract_level::create(const QList<client_model::LevelRestrictio
     case client_model::ActivityRestriction: {
         return nullptr;
     }
-    case client_model::ScreenRestriction:
-        for (int i = 0; i < Screens::self()->count(); ++i) {
+    case client_model::ScreenRestriction: {
+        auto screen_count = kwinApp()->get_base().screens.count();
+        for (int i = 0; i < screen_count; ++i) {
             auto childLevel = create(childRestrictions, childrenRestrictions, model, currentLevel);
             if (!childLevel) {
                 continue;
@@ -304,6 +305,7 @@ abstract_level* abstract_level::create(const QList<client_model::LevelRestrictio
             currentLevel->addChild(childLevel);
         }
         break;
+    }
     case client_model::VirtualDesktopRestriction:
         for (uint i = 1; i <= VirtualDesktopManager::self()->count(); ++i) {
             auto childLevel = create(childRestrictions, childrenRestrictions, model, currentLevel);
@@ -373,7 +375,10 @@ fork_level::fork_level(const QList<client_model::LevelRestriction>& childRestric
             &VirtualDesktopManager::countChanged,
             this,
             &fork_level::desktopCountChanged);
-    connect(Screens::self(), &Screens::countChanged, this, &fork_level::screenCountChanged);
+    connect(&kwinApp()->get_base().screens,
+            &Screens::countChanged,
+            this,
+            &fork_level::screenCountChanged);
 }
 
 fork_level::~fork_level()

@@ -381,7 +381,7 @@ void UserActionsMenu::menuAboutToShow()
     } else {
         initDesktopPopup();
     }
-    if (Screens::self()->count() == 1 || (!m_client->isMovable() && !m_client->isMovableAcrossScreens())) {
+    if (kwinApp()->get_base().screens.count() == 1 || (!m_client->isMovable() && !m_client->isMovableAcrossScreens())) {
         delete m_screenMenu;
         m_screenMenu = nullptr;
     } else {
@@ -589,13 +589,15 @@ void UserActionsMenu::screenPopupAboutToShow()
     if (!m_client) {
         return;
     }
+
     m_screenMenu->setPalette(m_client->control->palette().q_palette());
     QActionGroup *group = new QActionGroup(m_screenMenu);
+    auto const& screens = kwinApp()->get_base().screens;
 
-    for (int i = 0; i<Screens::self()->count(); ++i) {
+    for (int i = 0; i< screens.count(); ++i) {
         // assumption: there are not more than 9 screens attached.
         QAction *action = m_screenMenu->addAction(i18nc("@item:inmenu List of all Screens to send a window to. First argument is a number, second the output identifier. E.g. Screen 1 (HDMI1)",
-                                                        "Screen &%1 (%2)", (i+1), Screens::self()->name(i)));
+                                                        "Screen &%1 (%2)", (i+1), screens.name(i)));
         action->setData(i);
         action->setCheckable(true);
         if (m_client && i == m_client->screen()) {
@@ -700,7 +702,7 @@ void UserActionsMenu::slotSendToScreen(QAction *action)
     if (m_client.isNull()) {
         return;
     }
-    if (screen >= Screens::self()->count()) {
+    if (screen >= kwinApp()->get_base().screens.count()) {
         return;
     }
 
@@ -1197,7 +1199,7 @@ void Workspace::slotWindowToDesktop(uint i)
 
 static bool screenSwitchImpossible()
 {
-    if (!Screens::self()->isCurrentFollowsMouse())
+    if (!kwinApp()->get_base().screens.isCurrentFollowsMouse())
         return false;
     QStringList args;
     args << QStringLiteral("--passivepopup") << i18n("The window manager is configured to consider the screen with the mouse on it as active one.\n"
@@ -1217,16 +1219,20 @@ void Workspace::slotSwitchToScreen()
 
 void Workspace::slotSwitchToNextScreen()
 {
-    if (screenSwitchImpossible())
+    if (screenSwitchImpossible()) {
         return;
-    setCurrentScreen((Screens::self()->current() + 1) % Screens::self()->count());
+    }
+    auto const& screens = kwinApp()->get_base().screens;
+    setCurrentScreen((screens.current() + 1) % screens.count());
 }
 
 void Workspace::slotSwitchToPrevScreen()
 {
-    if (screenSwitchImpossible())
+    if (screenSwitchImpossible()) {
         return;
-    setCurrentScreen((Screens::self()->current() + Screens::self()->count() - 1) % Screens::self()->count());
+    }
+    auto const& screens = kwinApp()->get_base().screens;
+    setCurrentScreen((screens.current() + screens.count() - 1) % screens.count());
 }
 
 void Workspace::slotWindowToScreen()
@@ -1235,7 +1241,7 @@ void Workspace::slotWindowToScreen()
         const int i = senderValue(sender());
         if (i < 0)
             return;
-        if (i >= 0 && i <= Screens::self()->count()) {
+        if (i >= 0 && i <= kwinApp()->get_base().screens.count()) {
             sendClientToScreen(active_client, i);
         }
     }
@@ -1243,14 +1249,17 @@ void Workspace::slotWindowToScreen()
 
 void Workspace::slotWindowToNextScreen()
 {
-    if (USABLE_ACTIVE_CLIENT)
-        sendClientToScreen(active_client, (active_client->screen() + 1) % Screens::self()->count());
+    if (USABLE_ACTIVE_CLIENT) {
+        sendClientToScreen(active_client, (active_client->screen() + 1) % kwinApp()->get_base().screens.count());
+    }
 }
 
 void Workspace::slotWindowToPrevScreen()
 {
-    if (USABLE_ACTIVE_CLIENT)
-        sendClientToScreen(active_client, (active_client->screen() + Screens::self()->count() - 1) % Screens::self()->count());
+    if (USABLE_ACTIVE_CLIENT) {
+        auto const& screens = kwinApp()->get_base().screens;
+        sendClientToScreen(active_client, (active_client->screen() + screens.count() - 1) % screens.count());
+    }
 }
 
 /**
@@ -1491,13 +1500,13 @@ void Workspace::switchWindow(Direction direction)
         auto opposite = [&] {
             switch(direction) {
             case DirectionNorth:
-                return QPoint(curPos.x(), Screens::self()->geometry().height());
+                return QPoint(curPos.x(), kwinApp()->get_base().screens.geometry().height());
             case DirectionSouth:
                 return QPoint(curPos.x(), 0);
             case DirectionEast:
                 return QPoint(0, curPos.y());
             case DirectionWest:
-                return QPoint(Screens::self()->geometry().width(), curPos.y());
+                return QPoint(kwinApp()->get_base().screens.geometry().width(), curPos.y());
             default:
                 Q_UNREACHABLE();
             }

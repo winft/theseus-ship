@@ -19,8 +19,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "options.h"
+
+#include "base/platform.h"
 #include "config-kwin.h"
 #include "utils.h"
 #include "platform.h"
@@ -52,25 +53,27 @@ int Options::currentRefreshRate()
     QString syncScreenName(QLatin1String("primary screen"));
     if (options->refreshRate() > 0) {  // use manually configured refresh rate
         rate = options->refreshRate();
-    } else if (Screens::self()->count() > 0) {
+    } else if (kwinApp()->get_base().screens.count() > 0) {
         // prefer the refreshrate calculated from the screens mode information
         // at least the nvidia driver reports 50Hz BS ... *again*!
+        auto const& screens = kwinApp()->get_base().screens;
         int syncScreen = 0;
-        if (Screens::self()->count() > 1) {
+        if (screens.count() > 1) {
             const QByteArray syncDisplayDevice(qgetenv("__GL_SYNC_DISPLAY_DEVICE"));
             // if __GL_SYNC_DISPLAY_DEVICE is exported, the GPU shall sync to that device
             // so we try to use its refresh rate
             if (!syncDisplayDevice.isEmpty()) {
-                for (int i = 0; i < Screens::self()->count(); ++i) {
-                    if (Screens::self()->name(i) == syncDisplayDevice) {
-                        syncScreenName = Screens::self()->name(i);
+                for (int i = 0; i < screens.count(); ++i) {
+                    if (screens.name(i) == syncDisplayDevice) {
+                        syncScreenName = screens.name(i);
                         syncScreen = i;
                         break;
                     }
                 }
             }
         }
-        rate = qRound(Screens::self()->refreshRate(syncScreen)); // TODO forward float precision?
+        // TODO forward float precision?
+        rate = qRound(screens.refreshRate(syncScreen));
     }
 
     // 0Hz or less is invalid, so we fallback to a default rate

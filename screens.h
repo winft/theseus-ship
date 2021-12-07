@@ -144,8 +144,6 @@ public:
 
     void updateAll();
 
-    static Screens* self();
-
 public Q_SLOTS:
     void reconfigure();
 
