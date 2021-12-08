@@ -139,6 +139,8 @@ public:
                 Q_UNUSED(jsEngine)
                 return new template_space<qt_script_space, Space>(&this->space);
             });
+        qmlRegisterSingletonInstance(
+            "org.kde.kwin", 3, 0, "Options", space.base.options->qobject.get());
 
         qmlRegisterAnonymousType<window>("org.kde.kwin", 2);
         qmlRegisterType<win::virtual_desktop>();
@@ -146,12 +148,14 @@ public:
         qmlRegisterAnonymousType<window>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);
 
+        // TODO Plasma 6: Drop context properties.
         qt_space = std::make_unique<template_space<qt_script_space, Space>>(&space);
         qml_engine->rootContext()->setContextProperty("workspace", qt_space.get());
         qml_engine->rootContext()->setContextProperty("options", space.base.options->qobject.get());
 
         decl_space = std::make_unique<template_space<declarative_script_space, Space>>(&space);
         declarative_script_shared_context->setContextProperty("workspace", decl_space.get());
+
         // QQmlListProperty interfaces only work via properties, rebind them as functions here
         QQmlExpression expr(declarative_script_shared_context,
                             nullptr,
