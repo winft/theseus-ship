@@ -45,15 +45,6 @@ void ClockSkewNotifier::unloadNotifierEngine()
     engine = nullptr;
 }
 
-ClockSkewNotifier::ClockSkewNotifier(QObject* parent)
-    : QObject(parent)
-{
-}
-
-ClockSkewNotifier::~ClockSkewNotifier()
-{
-}
-
 void ClockSkewNotifier::set_active(bool set)
 {
     if (is_active == set) {

@@ -35,9 +35,6 @@ class ClockSkewNotifier : public QObject
 {
     Q_OBJECT
 public:
-    explicit ClockSkewNotifier(QObject* parent = nullptr);
-    ~ClockSkewNotifier() override;
-
     /**
      * Sets the active status of the clock skew notifier to @p active.
      *

@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDateTime>
 #include <QObject>
 #include <QPair>
+#include <memory>
 
 class QTimer;
 
@@ -267,7 +268,7 @@ private:
     void setMode(NightColorMode mode);
 
     ColorCorrectDBusInterface* m_iface;
-    ClockSkewNotifier* m_skewNotifier;
+    std::unique_ptr<ClockSkewNotifier> clock_skew_notifier;
 
     // Specifies whether Night Color is enabled.
     bool m_active = false;

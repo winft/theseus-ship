@@ -55,9 +55,9 @@ static bool checkLocation(double lat, double lng)
 
 Manager::Manager(QObject* parent)
     : QObject(parent)
+    , clock_skew_notifier{std::make_unique<ClockSkewNotifier>()}
 {
     m_iface = new ColorCorrectDBusInterface(this);
-    m_skewNotifier = new ClockSkewNotifier(this);
 
     connect(kwinApp(), &Application::startup_finished, this, &Manager::init);
 
@@ -107,7 +107,7 @@ void Manager::init()
             }
         });
 
-    connect(m_skewNotifier, &ClockSkewNotifier::clockSkewed, this, [this]() {
+    connect(clock_skew_notifier.get(), &ClockSkewNotifier::clockSkewed, this, [this]() {
         // check if we're resuming from suspend - in this case do a hard reset
         // Note: We're using the time clock to detect a suspend phase instead of connecting to the
         //       provided logind dbus signal, because this signal would be received way too late.
@@ -757,7 +757,7 @@ void Manager::setEnabled(bool enabled)
         return;
     }
     m_active = enabled;
-    m_skewNotifier->set_active(enabled);
+    clock_skew_notifier->set_active(enabled);
     Q_EMIT enabledChanged();
 }
 
