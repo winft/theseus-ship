@@ -389,14 +389,14 @@ add_subdirectory(helpers)
 
 set(kwin_SRCS
     atoms.cpp
+    base/os/clock/skew_notifier.cpp
+    base/os/clock/skew_notifier_engine.cpp
     base/x11/event_filter.cpp
     base/x11/event_filter_container.cpp
     base/x11/event_filter_manager.cpp
     base/gamma_ramp.cpp
     base/output.cpp
     base/platform.cpp
-    colorcorrection/clockskewnotifier.cpp
-    colorcorrection/clockskewnotifierengine.cpp
     colorcorrection/colorcorrectdbusinterface.cpp
     colorcorrection/manager.cpp
     colorcorrection/suncalc.cpp
@@ -529,7 +529,7 @@ endif()
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(kwin_SRCS
         ${kwin_SRCS}
-        colorcorrection/clockskewnotifierengine_linux.cpp
+        base/os/clock/linux_skew_notifier_engine.cpp
     )
 endif()
 

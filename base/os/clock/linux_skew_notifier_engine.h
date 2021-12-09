@@ -17,7 +17,7 @@
  */
 #pragma once
 
-#include "clockskewnotifierengine_p.h"
+#include "skew_notifier_engine.h"
 
 namespace KWin::base::os::clock
 {

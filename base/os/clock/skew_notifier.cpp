@@ -15,22 +15,45 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-#include "clockskewnotifierengine_p.h"
-
-#if defined(Q_OS_LINUX)
-#include "clockskewnotifierengine_linux.h"
-#endif
+#include "skew_notifier.h"
 
 namespace KWin::base::os::clock
 {
 
-std::unique_ptr<skew_notifier_engine> skew_notifier_engine::create()
+void skew_notifier::load_engine()
 {
-#if defined(Q_OS_LINUX)
-    return linux_skew_notifier_engine::create();
-#else
-    return nullptr;
-#endif
+    engine = skew_notifier_engine::create();
+
+    if (engine) {
+        QObject::connect(engine.get(), &skew_notifier_engine::skewed, this, &skew_notifier::skewed);
+    }
+}
+
+void skew_notifier::unload_engine()
+{
+    if (!engine) {
+        return;
+    }
+
+    QObject::disconnect(engine.get(), &skew_notifier_engine::skewed, this, &skew_notifier::skewed);
+    engine->deleteLater();
+
+    engine = nullptr;
+}
+
+void skew_notifier::set_active(bool set)
+{
+    if (is_active == set) {
+        return;
+    }
+
+    is_active = set;
+
+    if (is_active) {
+        load_engine();
+    } else {
+        unload_engine();
+    }
 }
 
 }

@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "manager.h"
 
-#include "clockskewnotifier.h"
+#include "base/os/clock/skew_notifier.h"
 #include "colorcorrectdbusinterface.h"
 #include "suncalc.h"
 #include <colorcorrect_logging.h>
