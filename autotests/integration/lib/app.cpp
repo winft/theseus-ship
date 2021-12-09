@@ -191,7 +191,7 @@ void WaylandTestApplication::start()
 
     // Must set physical size for calculation of screen edges corner offset.
     // TODO(romangg): Make the corner offset calculation not depend on that.
-    auto out = dynamic_cast<base::wayland::output*>(kwinApp()->platform->enabledOutputs().at(0));
+    auto out = base.outputs.at(0);
     out->wrapland_output()->set_physical_size(QSize(1280, 1024));
 
     compositor = std::make_unique<render::wayland::compositor>();
@@ -227,7 +227,7 @@ void WaylandTestApplication::set_outputs(std::vector<QRect> const& geometries)
 
 void WaylandTestApplication::set_outputs(std::vector<Test::output> const& outputs)
 {
-    auto outputs_copy = render->all_outputs;
+    auto outputs_copy = base.all_outputs;
     for (auto output : outputs_copy) {
         delete output;
     }
@@ -236,7 +236,7 @@ void WaylandTestApplication::set_outputs(std::vector<Test::output> const& output
         auto const size = output.geometry.size() * output.scale;
 
         wlr_headless_add_output(base.backend, size.width(), size.height());
-        render->all_outputs.back()->force_geometry(output.geometry);
+        base.all_outputs.back()->force_geometry(output.geometry);
     }
 
     // Update again in case of force geometry change.

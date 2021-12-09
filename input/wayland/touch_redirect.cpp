@@ -14,6 +14,7 @@
 #include "input/touch.h"
 
 #include "../../platform.h"
+#include "base/platform.h"
 #include "base/wayland/output.h"
 #include "wayland_server.h"
 #include "win/input.h"
@@ -181,7 +182,7 @@ QPointF get_abs_pos(QPointF const& pos, touch* dev)
     auto out = dev->output;
 
     if (!out) {
-        auto const& outs = kwinApp()->platform->enabledOutputs();
+        auto const& outs = kwinApp()->get_base().get_outputs();
         if (outs.empty()) {
             return QPointF();
         }

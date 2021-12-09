@@ -113,8 +113,8 @@ bool egl_backend::init_rendering_context()
         return false;
     }
 
-    for (auto out : back->all_outputs) {
-        add_output(out->render.get());
+    for (auto& out : back->base.all_outputs) {
+        add_output(static_cast<base::backend::wlroots::output*>(out)->render.get());
     }
 
     // AbstractEglBackend expects a surface to be set but this is not relevant as we render per

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/output.h"
+#include "base/platform.h"
 #include "main.h"
 #include "platform.h"
 #include "win/scene.h"
@@ -19,7 +20,7 @@ namespace render::wayland
 template<typename Win>
 base::output* max_coverage_output(Win* window)
 {
-    auto const enabled_outputs = kwinApp()->platform->enabledOutputs();
+    auto const enabled_outputs = kwinApp()->get_base().get_outputs();
     if (enabled_outputs.empty()) {
         return nullptr;
     }

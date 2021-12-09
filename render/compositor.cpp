@@ -462,7 +462,7 @@ render::scene* compositor::scene() const
 int compositor::refreshRate() const
 {
     int max_refresh_rate = 60000;
-    for (auto output : kwinApp()->platform->outputs()) {
+    for (auto output : kwinApp()->get_base().get_outputs()) {
         auto const rate = output->refresh_rate();
         if (rate > max_refresh_rate) {
             max_refresh_rate = rate;

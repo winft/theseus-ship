@@ -62,7 +62,7 @@ compositor::compositor()
             this,
             &compositor::destroyCompositorSelection);
 
-    for (auto output : kwinApp()->platform->enabledOutputs()) {
+    for (auto output : kwinApp()->get_base().get_outputs()) {
         auto wl_out = static_cast<base::wayland::output*>(output);
         outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
     }

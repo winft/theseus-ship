@@ -60,9 +60,6 @@ public:
     void initOutputs();
     void updateOutputs();
 
-    Outputs outputs() const override;
-    Outputs enabledOutputs() const override;
-
 private:
     /**
      * Tests whether GLX is supported and returns @c true

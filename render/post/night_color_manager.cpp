@@ -671,7 +671,7 @@ int night_color_manager::current_target_temp() const
 
 void night_color_manager::commit_gamma_ramps(int temperature)
 {
-    const auto outs = kwinApp()->platform->outputs();
+    const auto outs = kwinApp()->get_base().get_outputs();
 
     for (auto* o : outs) {
         int rampsize = o->gamma_ramp_size();

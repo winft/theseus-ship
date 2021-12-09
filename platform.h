@@ -73,17 +73,6 @@ class scene;
 
 }
 
-class KWIN_EXPORT Outputs : public QVector<base::output*>
-{
-public:
-    Outputs(){};
-    template <typename T>
-    Outputs(const QVector<T> &other) {
-        resize(other.size());
-        std::copy(other.constBegin(), other.constEnd(), begin());
-    }
-};
-
 class KWIN_EXPORT Platform : public QObject
 {
     Q_OBJECT
@@ -230,15 +219,6 @@ public:
      * @since 5.11
      */
     virtual QVector<CompositingType> supportedCompositors() const = 0;
-
-    // outputs with connections (org_kde_kwin_outputdevice)
-    virtual Outputs outputs() const {
-        return Outputs();
-    }
-    // actively compositing outputs (wl_output)
-    virtual Outputs enabledOutputs() const {
-        return Outputs();
-    }
 
     /**
      * A string of information to include in kwin debug output

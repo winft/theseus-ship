@@ -34,19 +34,11 @@ backend::backend(base::backend::wlroots::platform& base)
 
     QObject::connect(
         &base, &base::backend::wlroots::platform::output_added, this, [this](auto&& output) {
-            auto wlr_out = static_cast<base::backend::wlroots::output*>(output);
-            all_outputs << wlr_out;
-            enabled_outputs << wlr_out;
-
             auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
             base::wayland::check_outputs_on(this->base, wayland_input->dpms_filter);
         });
     QObject::connect(
         &base, &base::backend::wlroots::platform::output_removed, this, [this](auto&& output) {
-            auto wlr_out = static_cast<base::backend::wlroots::output*>(output);
-            enabled_outputs.removeOne(wlr_out);
-            all_outputs.removeOne(wlr_out);
-
             auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
             base::wayland::check_outputs_on(this->base, wayland_input->dpms_filter);
         });
@@ -115,16 +107,6 @@ void backend::init()
     }
 
     base.screens.updateAll();
-}
-
-Outputs backend::outputs() const
-{
-    return all_outputs;
-}
-
-Outputs backend::enabledOutputs() const
-{
-    return enabled_outputs;
 }
 
 clockid_t backend::clockId() const

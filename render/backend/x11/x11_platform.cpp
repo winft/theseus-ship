@@ -454,14 +454,4 @@ void X11StandalonePlatform::doUpdateOutputs()
     }
 }
 
-Outputs X11StandalonePlatform::outputs() const
-{
-    return m_outputs;
-}
-
-Outputs X11StandalonePlatform::enabledOutputs() const
-{
-    return m_outputs;
-}
-
 }

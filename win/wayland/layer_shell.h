@@ -161,7 +161,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
 
         if (!win->layer_surface->output()) {
             auto current_index = kwinApp()->get_base().screens.current();
-            auto output = kwinApp()->platform->enabledOutputs().at(current_index);
+            auto output = kwinApp()->get_base().get_outputs().at(current_index);
             win->layer_surface->set_output(
                 static_cast<base::wayland::output*>(output)->wrapland_output());
         }

@@ -66,7 +66,7 @@ base::wayland::output* touch::get_output() const
         return nullptr;
     }
 
-    auto const& outputs = kwinApp()->platform->enabledOutputs();
+    auto const& outputs = kwinApp()->get_base().get_outputs();
     if (outputs.empty()) {
         // Might be too early.
         return nullptr;

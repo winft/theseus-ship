@@ -33,9 +33,6 @@ public:
     egl_backend* egl{nullptr};
     render::compositor* compositor{nullptr};
 
-    QVector<base::backend::wlroots::output*> all_outputs;
-    QVector<base::backend::wlroots::output*> enabled_outputs;
-
 #if HAVE_WLR_OUTPUT_INIT_RENDER
     wlr_renderer* renderer{nullptr};
     wlr_allocator* allocator{nullptr};
@@ -48,9 +45,6 @@ public:
     void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
 
     void init();
-
-    Outputs outputs() const override;
-    Outputs enabledOutputs() const override;
 
     QVector<CompositingType> supportedCompositors() const override;
 
