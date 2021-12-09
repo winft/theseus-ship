@@ -18,6 +18,7 @@
 #pragma once
 
 #include <QObject>
+#include <memory>
 
 namespace KWin
 {
@@ -27,10 +28,10 @@ class ClockSkewNotifierEngine : public QObject
     Q_OBJECT
 
 public:
-    static ClockSkewNotifierEngine* create(QObject* parent);
+    static std::unique_ptr<ClockSkewNotifierEngine> create();
 
 protected:
-    explicit ClockSkewNotifierEngine(QObject* parent);
+    ClockSkewNotifierEngine() = default;
 
 Q_SIGNALS:
     void clockSkewed();

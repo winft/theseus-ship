@@ -24,18 +24,13 @@
 namespace KWin
 {
 
-ClockSkewNotifierEngine* ClockSkewNotifierEngine::create(QObject* parent)
+std::unique_ptr<ClockSkewNotifierEngine> ClockSkewNotifierEngine::create()
 {
 #if defined(Q_OS_LINUX)
-    return LinuxClockSkewNotifierEngine::create(parent);
+    return LinuxClockSkewNotifierEngine::create();
 #else
     return nullptr;
 #endif
-}
-
-ClockSkewNotifierEngine::ClockSkewNotifierEngine(QObject* parent)
-    : QObject(parent)
-{
 }
 
 }

@@ -17,18 +17,18 @@
  */
 #include "clockskewnotifier.h"
 
-#include "clockskewnotifierengine_p.h"
-
 namespace KWin
 {
 
 void ClockSkewNotifier::loadNotifierEngine()
 {
-    engine = ClockSkewNotifierEngine::create(this);
+    engine = ClockSkewNotifierEngine::create();
 
     if (engine) {
-        QObject::connect(
-            engine, &ClockSkewNotifierEngine::clockSkewed, this, &ClockSkewNotifier::clockSkewed);
+        QObject::connect(engine.get(),
+                         &ClockSkewNotifierEngine::clockSkewed,
+                         this,
+                         &ClockSkewNotifier::clockSkewed);
     }
 }
 
@@ -39,7 +39,7 @@ void ClockSkewNotifier::unloadNotifierEngine()
     }
 
     QObject::disconnect(
-        engine, &ClockSkewNotifierEngine::clockSkewed, this, &ClockSkewNotifier::clockSkewed);
+        engine.get(), &ClockSkewNotifierEngine::clockSkewed, this, &ClockSkewNotifier::clockSkewed);
     engine->deleteLater();
 
     engine = nullptr;

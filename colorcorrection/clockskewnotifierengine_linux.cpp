@@ -31,7 +31,7 @@
 namespace KWin
 {
 
-LinuxClockSkewNotifierEngine* LinuxClockSkewNotifierEngine::create(QObject* parent)
+std::unique_ptr<LinuxClockSkewNotifierEngine> LinuxClockSkewNotifierEngine::create()
 {
     const int fd = timerfd_create(CLOCK_REALTIME, O_CLOEXEC | O_NONBLOCK);
     if (fd == -1) {
@@ -48,11 +48,11 @@ LinuxClockSkewNotifierEngine* LinuxClockSkewNotifierEngine::create(QObject* pare
         return nullptr;
     }
 
-    return new LinuxClockSkewNotifierEngine(fd, parent);
+    return std::make_unique<LinuxClockSkewNotifierEngine>(fd);
 }
 
-LinuxClockSkewNotifierEngine::LinuxClockSkewNotifierEngine(int fd, QObject* parent)
-    : ClockSkewNotifierEngine(parent)
+LinuxClockSkewNotifierEngine::LinuxClockSkewNotifierEngine(int fd)
+    : ClockSkewNotifierEngine()
     , m_fd(fd)
 {
     const QSocketNotifier* notifier = new QSocketNotifier(fd, QSocketNotifier::Read, this);

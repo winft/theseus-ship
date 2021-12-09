@@ -17,12 +17,13 @@
  */
 #pragma once
 
+#include "clockskewnotifierengine_p.h"
+
 #include <QObject>
+#include <memory>
 
 namespace KWin
 {
-
-class ClockSkewNotifierEngine;
 
 /**
  * The ClockSkewNotifier class provides a way for monitoring system clock changes.
@@ -54,7 +55,7 @@ private:
     void loadNotifierEngine();
     void unloadNotifierEngine();
 
-    ClockSkewNotifierEngine* engine{nullptr};
+    std::unique_ptr<ClockSkewNotifierEngine> engine;
     bool is_active{false};
 };
 
