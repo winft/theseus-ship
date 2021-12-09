@@ -24,7 +24,7 @@
 namespace KWin
 {
 
-ClockSkewNotifierEngine *ClockSkewNotifierEngine::create(QObject *parent)
+ClockSkewNotifierEngine* ClockSkewNotifierEngine::create(QObject* parent)
 {
 #if defined(Q_OS_LINUX)
     return LinuxClockSkewNotifierEngine::create(parent);
@@ -33,7 +33,7 @@ ClockSkewNotifierEngine *ClockSkewNotifierEngine::create(QObject *parent)
 #endif
 }
 
-ClockSkewNotifierEngine::ClockSkewNotifierEngine(QObject *parent)
+ClockSkewNotifierEngine::ClockSkewNotifierEngine(QObject* parent)
     : QObject(parent)
 {
 }

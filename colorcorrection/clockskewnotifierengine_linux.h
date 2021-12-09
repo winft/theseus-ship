@@ -30,13 +30,13 @@ class LinuxClockSkewNotifierEngine : public ClockSkewNotifierEngine
 public:
     ~LinuxClockSkewNotifierEngine() override;
 
-    static LinuxClockSkewNotifierEngine *create(QObject *parent);
+    static LinuxClockSkewNotifierEngine* create(QObject* parent);
 
 private Q_SLOTS:
     void handleTimerCancelled();
 
 private:
-    LinuxClockSkewNotifierEngine(int fd, QObject *parent);
+    LinuxClockSkewNotifierEngine(int fd, QObject* parent);
 
     int m_fd;
 };

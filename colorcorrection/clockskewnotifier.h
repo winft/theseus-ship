@@ -36,7 +36,7 @@ class ClockSkewNotifier : public QObject
     Q_PROPERTY(bool active READ isActive WRITE setActive NOTIFY activeChanged)
 
 public:
-    explicit ClockSkewNotifier(QObject *parent = nullptr);
+    explicit ClockSkewNotifier(QObject* parent = nullptr);
     ~ClockSkewNotifier() override;
 
     /**

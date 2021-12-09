@@ -28,8 +28,8 @@ public:
     void loadNotifierEngine();
     void unloadNotifierEngine();
 
-    ClockSkewNotifier *notifier = nullptr;
-    ClockSkewNotifierEngine *engine = nullptr;
+    ClockSkewNotifier* notifier = nullptr;
+    ClockSkewNotifierEngine* engine = nullptr;
     bool isActive = false;
 };
 
@@ -38,7 +38,10 @@ void ClockSkewNotifier::Private::loadNotifierEngine()
     engine = ClockSkewNotifierEngine::create(notifier);
 
     if (engine) {
-        QObject::connect(engine, &ClockSkewNotifierEngine::clockSkewed, notifier, &ClockSkewNotifier::clockSkewed);
+        QObject::connect(engine,
+                         &ClockSkewNotifierEngine::clockSkewed,
+                         notifier,
+                         &ClockSkewNotifier::clockSkewed);
     }
 }
 
@@ -48,13 +51,14 @@ void ClockSkewNotifier::Private::unloadNotifierEngine()
         return;
     }
 
-    QObject::disconnect(engine, &ClockSkewNotifierEngine::clockSkewed, notifier, &ClockSkewNotifier::clockSkewed);
+    QObject::disconnect(
+        engine, &ClockSkewNotifierEngine::clockSkewed, notifier, &ClockSkewNotifier::clockSkewed);
     engine->deleteLater();
 
     engine = nullptr;
 }
 
-ClockSkewNotifier::ClockSkewNotifier(QObject *parent)
+ClockSkewNotifier::ClockSkewNotifier(QObject* parent)
     : QObject(parent)
     , d(new Private)
 {

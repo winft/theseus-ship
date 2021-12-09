@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_SUNCALCULATOR_H
 
 #include <QDate>
-#include <QTime>
 #include <QPair>
+#include <QTime>
 
 namespace KWin
 {
@@ -38,8 +38,8 @@ namespace ColorCorrect
  * @since 5.12
  */
 
-QPair<QDateTime, QDateTime> calculateSunTimings(const QDateTime &dateTime, double latitude, double longitude, bool morning);
-
+QPair<QDateTime, QDateTime>
+calculateSunTimings(const QDateTime& dateTime, double latitude, double longitude, bool morning);
 
 }
 }

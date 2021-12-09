@@ -23,14 +23,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "suncalc.h"
 #include <colorcorrect_logging.h>
 
+#include "base/gamma_ramp.h"
 #include "base/platform.h"
+#include <base/output.h>
 #include <main.h>
 #include <platform.h>
-#include "base/gamma_ramp.h"
-#include <base/output.h>
 #include <screens.h>
-#include <workspace.h>
 #include <seat/session.h>
+#include <workspace.h>
 
 #include <colorcorrect_settings.h>
 
@@ -41,8 +41,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDBusConnection>
 #include <QTimer>
 
-namespace KWin {
-namespace ColorCorrect {
+namespace KWin
+{
+namespace ColorCorrect
+{
 
 static const int QUICK_ADJUST_DURATION = 2000;
 static const int TEMPERATURE_STEP = 50;
@@ -52,7 +54,7 @@ static bool checkLocation(double lat, double lng)
     return -90 <= lat && lat <= 90 && -180 <= lng && lng <= 180;
 }
 
-Manager::Manager(QObject *parent)
+Manager::Manager(QObject* parent)
     : QObject(parent)
 {
     m_iface = new ColorCorrectDBusInterface(this);
@@ -67,16 +69,14 @@ Manager::Manager(QObject *parent)
             ? QStringLiteral("preferences-desktop-display-nightcolor-off")
             : QStringLiteral("preferences-desktop-display-nightcolor-on");
 
-        const QString text = isInhibited()
-            ? i18nc("Night Color was disabled", "Night Color Off")
-            : i18nc("Night Color was enabled", "Night Color On");
+        const QString text = isInhibited() ? i18nc("Night Color was disabled", "Night Color Off")
+                                           : i18nc("Night Color was enabled", "Night Color On");
 
-        QDBusMessage message = QDBusMessage::createMethodCall(
-            QStringLiteral("org.kde.plasmashell"),
-            QStringLiteral("/org/kde/osdService"),
-            QStringLiteral("org.kde.osdService"),
-            QStringLiteral("showText"));
-        message.setArguments({ iconName, text });
+        QDBusMessage message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
+                                                              QStringLiteral("/org/kde/osdService"),
+                                                              QStringLiteral("org.kde.osdService"),
+                                                              QStringLiteral("showText"));
+        message.setArguments({iconName, text});
 
         QDBusConnection::sessionBus().asyncCall(message);
     });
@@ -99,15 +99,14 @@ void Manager::init()
 
     connect(&kwinApp()->get_base().screens, &Screens::countChanged, this, &Manager::hardReset);
 
-    connect(kwinApp()->session.get(), &seat::session::sessionActiveChanged, this,
-            [this](bool active) {
-                if (active) {
-                    hardReset();
-                } else {
-                    cancelAllTimers();
-                }
+    connect(
+        kwinApp()->session.get(), &seat::session::sessionActiveChanged, this, [this](bool active) {
+            if (active) {
+                hardReset();
+            } else {
+                cancelAllTimers();
             }
-    );
+        });
 
     connect(m_skewNotifier, &ClockSkewNotifier::clockSkewed, this, [this]() {
         // check if we're resuming from suspend - in this case do a hard reset
@@ -117,13 +116,16 @@ void Manager::init()
                                                               "/org/freedesktop/login1",
                                                               "org.freedesktop.DBus.Properties",
                                                               QStringLiteral("Get"));
-        message.setArguments(QVariantList({"org.freedesktop.login1.Manager", QStringLiteral("PreparingForSleep")}));
+        message.setArguments(
+            QVariantList({"org.freedesktop.login1.Manager", QStringLiteral("PreparingForSleep")}));
         QDBusReply<QVariant> reply = QDBusConnection::systemBus().call(message);
         bool comingFromSuspend;
         if (reply.isValid()) {
             comingFromSuspend = reply.value().toBool();
         } else {
-            qCDebug(KWIN_COLORCORRECTION) << "Failed to get PreparingForSleep Property of logind session:" << reply.error().message();
+            qCDebug(KWIN_COLORCORRECTION)
+                << "Failed to get PreparingForSleep Property of logind session:"
+                << reply.error().message();
             // Always do a hard reset in case we have no further information.
             comingFromSuspend = true;
         }
@@ -252,17 +254,18 @@ void Manager::initShortcuts()
         KGlobalAccel::self()->removeAllShortcuts(&toggleActionLegacy);
     }
 
-    QAction *toggleAction = new QAction(this);
+    QAction* toggleAction = new QAction(this);
     toggleAction->setProperty("componentName", QStringLiteral(KWIN_NAME));
     toggleAction->setObjectName(QStringLiteral("Toggle Night Color"));
     toggleAction->setText(i18n("Toggle Night Color"));
     KGlobalAccel::setGlobalShortcut(toggleAction, QList<QKeySequence>());
-    kwinApp()->input->redirect->registerShortcut(QKeySequence(), toggleAction, this, &Manager::toggle);
+    kwinApp()->input->redirect->registerShortcut(
+        QKeySequence(), toggleAction, this, &Manager::toggle);
 }
 
 void Manager::readConfig()
 {
-    Settings *s = Settings::self();
+    Settings* s = Settings::self();
     s->load();
 
     setEnabled(s->active());
@@ -311,8 +314,8 @@ void Manager::readConfig()
     int diffME = mrB.msecsTo(evB);
     if (diffME <= 0) {
         // morning not strictly before evening - use defaults
-        mrB = QTime(6,0);
-        evB = QTime(18,0);
+        mrB = QTime(6, 0);
+        evB = QTime(18, 0);
         diffME = mrB.msecsTo(evB);
     }
     int diffMin = qMin(diffME, MSC_DAY - diffME);
@@ -320,8 +323,8 @@ void Manager::readConfig()
     int trTime = s->transitionTime() * 1000 * 60;
     if (trTime < 0 || diffMin <= trTime) {
         // transition time too long - use defaults
-        mrB = QTime(6,0);
-        evB = QTime(18,0);
+        mrB = QTime(6, 0);
+        evB = QTime(18, 0);
         trTime = FALLBACK_SLOW_UPDATE_TIME;
     }
     m_morning = mrB;
@@ -334,7 +337,8 @@ void Manager::resetAllTimers()
     cancelAllTimers();
     if (isAvailable()) {
         setRunning(isEnabled() && !isInhibited());
-        // we do this also for active being false in order to reset the temperature back to the day value
+        // we do this also for active being false in order to reset the temperature back to the day
+        // value
         resetQuickAdjustTimer();
     } else {
         setRunning(false);
@@ -454,9 +458,13 @@ void Manager::resetSlowUpdateTimer()
         m_slowUpdateTimer = new QTimer(this);
         m_slowUpdateTimer->setSingleShot(false);
         if (isDay) {
-            connect(m_slowUpdateTimer, &QTimer::timeout, this, [this]() {slowUpdate(m_dayTargetTemp);});
+            connect(m_slowUpdateTimer, &QTimer::timeout, this, [this]() {
+                slowUpdate(m_dayTargetTemp);
+            });
         } else {
-            connect(m_slowUpdateTimer, &QTimer::timeout, this, [this]() {slowUpdate(m_nightTargetTemp);});
+            connect(m_slowUpdateTimer, &QTimer::timeout, this, [this]() {
+                slowUpdate(m_nightTargetTemp);
+            });
         }
 
         // calculate interval such as temperature is changed by TEMPERATURE_STEP K per timer timeout
@@ -489,7 +497,8 @@ void Manager::slowUpdate(int targetTemp)
 
 void Manager::updateTargetTemperature()
 {
-    const int targetTemperature = mode() != NightColorMode::Constant && daylight() ? m_dayTargetTemp : m_nightTargetTemp;
+    const int targetTemperature
+        = mode() != NightColorMode::Constant && daylight() ? m_dayTargetTemp : m_nightTargetTemp;
 
     if (m_targetTemperature == targetTemperature) {
         return;
@@ -577,7 +586,10 @@ void Manager::updateTransitionTimings(bool force)
     Q_EMIT scheduledTransitionTimingsChanged();
 }
 
-DateTimes Manager::getSunTimings(const QDateTime &dateTime, double latitude, double longitude, bool morning) const
+DateTimes Manager::getSunTimings(const QDateTime& dateTime,
+                                 double latitude,
+                                 double longitude,
+                                 bool morning) const
 {
     DateTimes dateTimes = calculateSunTimings(dateTime, latitude, longitude, morning);
     // At locations near the poles it is possible, that we can't
@@ -587,16 +599,16 @@ DateTimes Manager::getSunTimings(const QDateTime &dateTime, double latitude, dou
     const bool endDefined = !dateTimes.second.isNull();
     if (!beginDefined || !endDefined) {
         if (beginDefined) {
-            dateTimes.second = dateTimes.first.addMSecs( FALLBACK_SLOW_UPDATE_TIME );
+            dateTimes.second = dateTimes.first.addMSecs(FALLBACK_SLOW_UPDATE_TIME);
         } else if (endDefined) {
-            dateTimes.first = dateTimes.second.addMSecs( - FALLBACK_SLOW_UPDATE_TIME );
+            dateTimes.first = dateTimes.second.addMSecs(-FALLBACK_SLOW_UPDATE_TIME);
         } else {
             // Just use default values for morning and evening, but the user
             // will probably deactivate Night Color anyway if he is living
             // in a region without clear sun rise and set.
             const QTime referenceTime = morning ? QTime(6, 0) : QTime(18, 0);
             dateTimes.first = QDateTime(dateTime.date(), referenceTime);
-            dateTimes.second = dateTimes.first.addMSecs( FALLBACK_SLOW_UPDATE_TIME );
+            dateTimes.second = dateTimes.first.addMSecs(FALLBACK_SLOW_UPDATE_TIME);
         }
     }
     return dateTimes;
@@ -604,11 +616,11 @@ DateTimes Manager::getSunTimings(const QDateTime &dateTime, double latitude, dou
 
 bool Manager::checkAutomaticSunTimings() const
 {
-    if (m_prev.first.isValid() && m_prev.second.isValid() &&
-            m_next.first.isValid() && m_next.second.isValid()) {
+    if (m_prev.first.isValid() && m_prev.second.isValid() && m_next.first.isValid()
+        && m_next.second.isValid()) {
         const QDateTime todayNow = QDateTime::currentDateTime();
-        return m_prev.first <= todayNow && todayNow < m_next.first &&
-                m_prev.first.msecsTo(m_next.first) < MSC_DAY * 23./24;
+        return m_prev.first <= todayNow && todayNow < m_next.first
+            && m_prev.first.msecsTo(m_next.first) < MSC_DAY * 23. / 24;
     }
     return false;
 }
@@ -625,16 +637,18 @@ int Manager::currentTargetTemp() const
     }
 
     if (m_mode == NightColorMode::Constant) {
-       return m_nightTargetTemp;
+        return m_nightTargetTemp;
     }
 
     const QDateTime todayNow = QDateTime::currentDateTime();
 
     auto f = [this, todayNow](int target1, int target2) {
         if (todayNow <= m_prev.second) {
-            double residueQuota = todayNow.msecsTo(m_prev.second) / (double)m_prev.first.msecsTo(m_prev.second);
+            double residueQuota
+                = todayNow.msecsTo(m_prev.second) / (double)m_prev.first.msecsTo(m_prev.second);
 
-            double ret = (int)((1. - residueQuota) * (double)target2 + residueQuota * (double)target1);
+            double ret
+                = (int)((1. - residueQuota) * (double)target2 + residueQuota * (double)target1);
             // remove single digits
             ret = ((int)(0.1 * ret)) * 10;
             return (int)ret;
@@ -654,7 +668,7 @@ void Manager::commitGammaRamps(int temperature)
 {
     const auto outs = kwinApp()->platform->outputs();
 
-    for (auto *o : outs) {
+    for (auto* o : outs) {
         int rampsize = o->gamma_ramp_size();
         base::gamma_ramp ramp(rampsize);
 
@@ -662,30 +676,33 @@ void Manager::commitGammaRamps(int temperature)
          * The gamma calculation below is based on the Redshift app:
          * https://github.com/jonls/redshift
          */
-        uint16_t *red = ramp.red();
-        uint16_t *green = ramp.green();
-        uint16_t *blue = ramp.blue();
+        uint16_t* red = ramp.red();
+        uint16_t* green = ramp.green();
+        uint16_t* blue = ramp.blue();
 
         // linear default state
         for (int i = 0; i < rampsize; i++) {
-                uint16_t value = (double)i / rampsize * (UINT16_MAX + 1);
-                red[i] = value;
-                green[i] = value;
-                blue[i] = value;
+            uint16_t value = (double)i / rampsize * (UINT16_MAX + 1);
+            red[i] = value;
+            green[i] = value;
+            blue[i] = value;
         }
 
         // approximate white point
         float whitePoint[3];
         float alpha = (temperature % 100) / 100.;
         int bbCIndex = ((temperature - 1000) / 100) * 3;
-        whitePoint[0] = (1. - alpha) * blackbodyColor[bbCIndex] + alpha * blackbodyColor[bbCIndex + 3];
-        whitePoint[1] = (1. - alpha) * blackbodyColor[bbCIndex + 1] + alpha * blackbodyColor[bbCIndex + 4];
-        whitePoint[2] = (1. - alpha) * blackbodyColor[bbCIndex + 2] + alpha * blackbodyColor[bbCIndex + 5];
+        whitePoint[0]
+            = (1. - alpha) * blackbodyColor[bbCIndex] + alpha * blackbodyColor[bbCIndex + 3];
+        whitePoint[1]
+            = (1. - alpha) * blackbodyColor[bbCIndex + 1] + alpha * blackbodyColor[bbCIndex + 4];
+        whitePoint[2]
+            = (1. - alpha) * blackbodyColor[bbCIndex + 2] + alpha * blackbodyColor[bbCIndex + 5];
 
         for (int i = 0; i < rampsize; i++) {
-            red[i] = qreal(red[i]) / (UINT16_MAX+1) * whitePoint[0] * (UINT16_MAX+1);
-            green[i] = qreal(green[i]) / (UINT16_MAX+1) * whitePoint[1] * (UINT16_MAX+1);
-            blue[i] = qreal(blue[i]) / (UINT16_MAX+1) * whitePoint[2] * (UINT16_MAX+1);
+            red[i] = qreal(red[i]) / (UINT16_MAX + 1) * whitePoint[0] * (UINT16_MAX + 1);
+            green[i] = qreal(green[i]) / (UINT16_MAX + 1) * whitePoint[1] * (UINT16_MAX + 1);
+            blue[i] = qreal(blue[i]) / (UINT16_MAX + 1) * whitePoint[2] * (UINT16_MAX + 1);
         }
 
         if (o->set_gamma_ramp(ramp)) {
@@ -694,12 +711,16 @@ void Manager::commitGammaRamps(int temperature)
         } else {
             m_failedCommitAttempts++;
             if (m_failedCommitAttempts < 10) {
-                qCWarning(KWIN_COLORCORRECTION).nospace() << "Committing Gamma Ramp failed for output " << o->name() <<
-                         ". Trying " << (10 - m_failedCommitAttempts) << " times more.";
+                qCWarning(KWIN_COLORCORRECTION).nospace()
+                    << "Committing Gamma Ramp failed for output " << o->name() << ". Trying "
+                    << (10 - m_failedCommitAttempts) << " times more.";
             } else {
-                // TODO: On multi monitor setups we could try to rollback earlier changes for already committed outputs
-                qCWarning(KWIN_COLORCORRECTION) << "Gamma Ramp commit failed too often. Deactivating color correction for now.";
-                m_failedCommitAttempts = 0; // reset so we can try again later (i.e. after suspend phase or config change)
+                // TODO: On multi monitor setups we could try to rollback earlier changes for
+                // already committed outputs
+                qCWarning(KWIN_COLORCORRECTION)
+                    << "Gamma Ramp commit failed too often. Deactivating color correction for now.";
+                m_failedCommitAttempts = 0; // reset so we can try again later (i.e. after suspend
+                                            // phase or config change)
                 setRunning(false);
                 cancelAllTimers();
             }
@@ -723,7 +744,7 @@ void Manager::autoLocationUpdate(double latitude, double longitude)
     m_latAuto = latitude;
     m_lngAuto = longitude;
 
-    Settings *s = Settings::self();
+    Settings* s = Settings::self();
     s->setLatitudeAuto(latitude);
     s->setLongitudeAuto(longitude);
     s->save();

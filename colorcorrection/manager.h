@@ -23,11 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "constants.h"
 #include <kwin_export.h>
 
+#include <KConfigWatcher>
+#include <QDateTime>
 #include <QObject>
 #include <QPair>
-#include <QDateTime>
-
-#include <KConfigWatcher>
 
 class QTimer;
 
@@ -40,8 +39,8 @@ class Workspace;
 namespace ColorCorrect
 {
 
-typedef QPair<QDateTime,QDateTime> DateTimes;
-typedef QPair<QTime,QTime> Times;
+typedef QPair<QDateTime, QDateTime> DateTimes;
+typedef QPair<QTime, QTime> Times;
 
 class ColorCorrectDBusInterface;
 
@@ -94,7 +93,7 @@ class KWIN_EXPORT Manager : public QObject
     Q_OBJECT
 
 public:
-    Manager(QObject *parent);
+    Manager(QObject* parent);
     void init();
 
     void autoLocationUpdate(double latitude, double longitude);
@@ -256,7 +255,8 @@ private:
 
     void updateTargetTemperature();
     void updateTransitionTimings(bool force);
-    DateTimes getSunTimings(const QDateTime &dateTime, double latitude, double longitude, bool morning) const;
+    DateTimes
+    getSunTimings(const QDateTime& dateTime, double latitude, double longitude, bool morning) const;
     bool checkAutomaticSunTimings() const;
     bool daylight() const;
 
@@ -267,8 +267,8 @@ private:
     void setCurrentTemperature(int temperature);
     void setMode(NightColorMode mode);
 
-    ColorCorrectDBusInterface *m_iface;
-    ClockSkewNotifier *m_skewNotifier;
+    ColorCorrectDBusInterface* m_iface;
+    ClockSkewNotifier* m_skewNotifier;
 
     // Specifies whether Night Color is enabled.
     bool m_active = false;
@@ -286,8 +286,8 @@ private:
     DateTimes m_next = DateTimes();
 
     // manual times from config
-    QTime m_morning = QTime(6,0);
-    QTime m_evening = QTime(18,0);
+    QTime m_morning = QTime(6, 0);
+    QTime m_evening = QTime(18, 0);
     int m_trTime = 30; // saved in minutes > 1
 
     // auto location provided by work space
@@ -297,9 +297,9 @@ private:
     double m_latFixed;
     double m_lngFixed;
 
-    QTimer *m_slowUpdateStartTimer = nullptr;
-    QTimer *m_slowUpdateTimer = nullptr;
-    QTimer *m_quickAdjustTimer = nullptr;
+    QTimer* m_slowUpdateStartTimer = nullptr;
+    QTimer* m_slowUpdateTimer = nullptr;
+    QTimer* m_quickAdjustTimer = nullptr;
 
     int m_currentTemp = NEUTRAL_TEMPERATURE;
     int m_targetTemperature = NEUTRAL_TEMPERATURE;

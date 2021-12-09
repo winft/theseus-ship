@@ -49,7 +49,7 @@ class ColorCorrectDBusInterface : public QObject, public QDBusContext
     Q_PROPERTY(quint32 scheduledTransitionDuration READ scheduledTransitionDuration)
 
 public:
-    explicit ColorCorrectDBusInterface(Manager *parent);
+    explicit ColorCorrectDBusInterface(Manager* parent);
     ~ColorCorrectDBusInterface() override = default;
 
     bool isInhibited() const;
@@ -84,13 +84,13 @@ public Q_SLOTS:
     void uninhibit(uint cookie);
 
 private Q_SLOTS:
-    void removeInhibitorService(const QString &serviceName);
+    void removeInhibitorService(const QString& serviceName);
 
 private:
-    void uninhibit(const QString &serviceName, uint cookie);
+    void uninhibit(const QString& serviceName, uint cookie);
 
-    Manager *m_manager;
-    QDBusServiceWatcher *m_inhibitorWatcher;
+    Manager* m_manager;
+    QDBusServiceWatcher* m_inhibitorWatcher;
     QMultiHash<QString, uint> m_inhibitors;
     uint m_lastInhibitionCookie = 0;
 };
