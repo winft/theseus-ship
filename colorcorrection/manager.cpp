@@ -202,7 +202,9 @@ bool Manager::isRunning() const
 
 bool Manager::isAvailable() const
 {
-    return kwinApp()->platform->supportsGammaControl();
+    // TODO(romangg): That depended in the past on the hardware backend in use. But right now all
+    //                backends support gamma control. We might remove this in the future.
+    return true;
 }
 
 int Manager::currentTemperature() const

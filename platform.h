@@ -237,14 +237,6 @@ public:
      */
     virtual QVector<CompositingType> supportedCompositors() const = 0;
 
-    /**
-     * Whether gamma control is supported by the backend.
-     * @since 5.12
-     */
-    bool supportsGammaControl() const {
-        return m_supportsGammaControl;
-    }
-
     ColorCorrect::Manager *colorCorrectManager() {
         return m_colorCorrect;
     }
@@ -290,9 +282,6 @@ public:
 
 protected:
     Platform();
-    void setSupportsGammaControl(bool set) {
-        m_supportsGammaControl = set;
-    }
 
 private:
     EGLDisplay m_eglDisplay;
@@ -300,7 +289,6 @@ private:
     EGLContext m_context = EGL_NO_CONTEXT;
     EGLSurface m_surface = EGL_NO_SURFACE;
     ColorCorrect::Manager *m_colorCorrect = nullptr;
-    bool m_supportsGammaControl = false;
     CompositingType m_selectedCompositor = NoCompositing;
 };
 

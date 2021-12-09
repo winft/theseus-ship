@@ -42,7 +42,6 @@ X11StandalonePlatform::X11StandalonePlatform(base::x11::platform& base)
     : m_x11Display(QX11Info::display())
     , base{base}
 {
-    setSupportsGammaControl(true);
 }
 
 X11StandalonePlatform::~X11StandalonePlatform()

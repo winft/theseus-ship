@@ -32,8 +32,6 @@ backend::backend(base::backend::wlroots::platform& base)
 {
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 
-    setSupportsGammaControl(true);
-
     QObject::connect(
         &base, &base::backend::wlroots::platform::output_added, this, [this](auto&& output) {
             auto wlr_out = static_cast<base::backend::wlroots::output*>(output);
