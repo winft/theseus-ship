@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/os/clock/skew_notifier.h"
 #include "color_correct_dbus_interface.h"
 #include "suncalc.h"
-#include <colorcorrect_logging.h>
 
 #include "base/gamma_ramp.h"
 #include "base/platform.h"
@@ -126,9 +125,8 @@ void night_color_manager::init()
         if (reply.isValid()) {
             comingFromSuspend = reply.value().toBool();
         } else {
-            qCDebug(KWIN_COLORCORRECTION)
-                << "Failed to get PreparingForSleep Property of logind session:"
-                << reply.error().message();
+            qCDebug(KWIN_CORE) << "Failed to get PreparingForSleep Property of logind session:"
+                               << reply.error().message();
             // Always do a hard reset in case we have no further information.
             comingFromSuspend = true;
         }
@@ -435,7 +433,7 @@ void night_color_manager::reset_slow_update_start_timer()
 
     const int diff = QDateTime::currentDateTime().msecsTo(next_transition.first);
     if (diff <= 0) {
-        qCCritical(KWIN_COLORCORRECTION) << "Error in time calculation. Deactivating Night Color.";
+        qCCritical(KWIN_CORE) << "Error in time calculation. Deactivating Night Color.";
         return;
     }
     slow_update_start_timer->start(diff);
@@ -717,13 +715,13 @@ void night_color_manager::commit_gamma_ramps(int temperature)
         } else {
             failed_commit_attempts++;
             if (failed_commit_attempts < 10) {
-                qCWarning(KWIN_COLORCORRECTION).nospace()
+                qCWarning(KWIN_CORE).nospace()
                     << "Committing Gamma Ramp failed for output " << o->name() << ". Trying "
                     << (10 - failed_commit_attempts) << " times more.";
             } else {
                 // TODO: On multi monitor setups we could try to rollback earlier changes for
                 // already committed outputs
-                qCWarning(KWIN_COLORCORRECTION)
+                qCWarning(KWIN_CORE)
                     << "Gamma Ramp commit failed too often. Deactivating color correction for now.";
                 failed_commit_attempts = 0; // reset so we can try again later (i.e. after suspend
                                             // phase or config change)
@@ -736,7 +734,7 @@ void night_color_manager::commit_gamma_ramps(int temperature)
 
 void night_color_manager::auto_location_update(double latitude, double longitude)
 {
-    qCDebug(KWIN_COLORCORRECTION, "Received new location (lat: %f, lng: %f)", latitude, longitude);
+    qCDebug(KWIN_CORE, "Received new location (lat: %f, lng: %f)", latitude, longitude);
 
     if (!checkLocation(latitude, longitude)) {
         return;

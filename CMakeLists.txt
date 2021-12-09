@@ -533,18 +533,6 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     )
 endif()
 
-include(ECMQtDeclareLoggingCategory)
-ecm_qt_declare_logging_category(kwin_SRCS
-    HEADER
-        colorcorrect_logging.h
-    IDENTIFIER
-        KWIN_COLORCORRECTION
-    CATEGORY_NAME
-        kwin_colorcorrection
-    DEFAULT_SEVERITY
-        Critical
-)
-
 qt5_add_resources(kwin_SRCS render/gl/resources.qrc)
 
 qt5_add_dbus_adaptor(kwin_SRCS
