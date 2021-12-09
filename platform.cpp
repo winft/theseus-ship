@@ -40,9 +40,9 @@ namespace KWin
 {
 
 Platform::Platform()
-    : m_eglDisplay(EGL_NO_DISPLAY)
+    : night_color{std::make_unique<render::post::night_color_manager>()}
+    , m_eglDisplay(EGL_NO_DISPLAY)
 {
-    m_colorCorrect = new render::post::night_color_manager(this);
 }
 
 Platform::~Platform()

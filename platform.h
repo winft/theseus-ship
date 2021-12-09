@@ -238,10 +238,6 @@ public:
      */
     virtual QVector<CompositingType> supportedCompositors() const = 0;
 
-    render::post::night_color_manager *colorCorrectManager() {
-        return m_colorCorrect;
-    }
-
     // outputs with connections (org_kde_kwin_outputdevice)
     virtual Outputs outputs() const {
         return Outputs();
@@ -281,6 +277,8 @@ public:
 
     virtual clockid_t clockId() const;
 
+    std::unique_ptr<render::post::night_color_manager> night_color;
+
 protected:
     Platform();
 
@@ -289,7 +287,6 @@ private:
     EGLConfig m_eglConfig = nullptr;
     EGLContext m_context = EGL_NO_CONTEXT;
     EGLSurface m_surface = EGL_NO_SURFACE;
-    render::post::night_color_manager *m_colorCorrect = nullptr;
     CompositingType m_selectedCompositor = NoCompositing;
 };
 

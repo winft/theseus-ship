@@ -52,9 +52,8 @@ static bool checkLocation(double lat, double lng)
     return -90 <= lat && lat <= 90 && -180 <= lng && lng <= 180;
 }
 
-night_color_manager::night_color_manager(QObject* parent)
-    : QObject(parent)
-    , dbus{std::make_unique<color_correct_dbus_interface>(this)}
+night_color_manager::night_color_manager()
+    : dbus{std::make_unique<color_correct_dbus_interface>(this)}
     , clock_skew_notifier{std::make_unique<base::os::clock::skew_notifier>()}
 {
     connect(kwinApp(), &Application::startup_finished, this, &night_color_manager::init);
@@ -78,6 +77,8 @@ night_color_manager::night_color_manager(QObject* parent)
         QDBusConnection::sessionBus().asyncCall(message);
     });
 }
+
+night_color_manager::~night_color_manager() = default;
 
 void night_color_manager::init()
 {

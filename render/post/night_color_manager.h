@@ -97,7 +97,9 @@ class KWIN_EXPORT night_color_manager : public QObject
     Q_OBJECT
 
 public:
-    night_color_manager(QObject* parent);
+    night_color_manager();
+    ~night_color_manager();
+
     void init();
 
     void auto_location_update(double latitude, double longitude);
