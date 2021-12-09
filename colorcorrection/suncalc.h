@@ -17,17 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_SUNCALCULATOR_H
-#define KWIN_SUNCALCULATOR_H
+#pragma once
 
 #include <QDate>
 #include <QPair>
 #include <QTime>
 
-namespace KWin
-{
-
-namespace ColorCorrect
+namespace KWin::ColorCorrect
 {
 
 /**
@@ -42,6 +38,3 @@ QPair<QDateTime, QDateTime>
 calculateSunTimings(const QDateTime& dateTime, double latitude, double longitude, bool morning);
 
 }
-}
-
-#endif // KWIN_SUNCALCULATOR_H

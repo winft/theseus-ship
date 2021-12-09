@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "manager.h"
+
 #include "clockskewnotifier.h"
 #include "colorcorrectdbusinterface.h"
 #include "suncalc.h"
@@ -41,9 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDBusConnection>
 #include <QTimer>
 
-namespace KWin
-{
-namespace ColorCorrect
+namespace KWin::ColorCorrect
 {
 
 static const int QUICK_ADJUST_DURATION = 2000;
@@ -789,5 +788,4 @@ void Manager::setMode(NightColorMode mode)
     Q_EMIT modeChanged();
 }
 
-}
 }

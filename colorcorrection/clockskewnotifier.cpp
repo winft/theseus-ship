@@ -15,8 +15,8 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 #include "clockskewnotifier.h"
+
 #include "clockskewnotifierengine_p.h"
 
 namespace KWin
@@ -91,4 +91,4 @@ void ClockSkewNotifier::setActive(bool set)
     Q_EMIT activeChanged();
 }
 
-} // namespace KWin
+}

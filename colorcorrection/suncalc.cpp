@@ -18,15 +18,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "suncalc.h"
+
 #include "constants.h"
 
 #include <QDateTime>
 #include <QTimeZone>
 #include <QtMath>
 
-namespace KWin
-{
-namespace ColorCorrect
+namespace KWin::ColorCorrect
 {
 
 #define TWILIGHT_NAUT -12.0
@@ -166,5 +165,4 @@ calculateSunTimings(const QDateTime& dateTime, double latitude, double longitude
     return {dateTimeBegin, dateTimeEnd};
 }
 
-}
 }
