@@ -757,7 +757,7 @@ void Manager::setEnabled(bool enabled)
         return;
     }
     m_active = enabled;
-    m_skewNotifier->setActive(enabled);
+    m_skewNotifier->set_active(enabled);
     Q_EMIT enabledChanged();
 }
 

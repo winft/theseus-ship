@@ -34,16 +34,9 @@ class ClockSkewNotifierEngine;
 class ClockSkewNotifier : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(bool active READ isActive WRITE setActive NOTIFY activeChanged)
-
 public:
     explicit ClockSkewNotifier(QObject* parent = nullptr);
     ~ClockSkewNotifier() override;
-
-    /**
-     * Returns @c true if the notifier is active; otherwise returns @c false.
-     */
-    bool isActive() const;
 
     /**
      * Sets the active status of the clock skew notifier to @p active.
@@ -51,17 +44,10 @@ public:
      * clockSkewed() signal won't be emitted while the notifier is inactive.
      *
      * The notifier is inactive by default.
-     *
-     * @see activeChanged
      */
-    void setActive(bool active);
+    void set_active(bool active);
 
 Q_SIGNALS:
-    /**
-     * This signal is emitted whenever the active property is changed.
-     */
-    void activeChanged();
-
     /**
      * This signal is emitted whenever the system clock is changed.
      */

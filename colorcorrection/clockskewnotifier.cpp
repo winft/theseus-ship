@@ -54,12 +54,7 @@ ClockSkewNotifier::~ClockSkewNotifier()
 {
 }
 
-bool ClockSkewNotifier::isActive() const
-{
-    return is_active;
-}
-
-void ClockSkewNotifier::setActive(bool set)
+void ClockSkewNotifier::set_active(bool set)
 {
     if (is_active == set) {
         return;
@@ -72,8 +67,6 @@ void ClockSkewNotifier::setActive(bool set)
     } else {
         unloadNotifierEngine();
     }
-
-    Q_EMIT activeChanged();
 }
 
 }
