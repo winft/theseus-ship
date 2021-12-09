@@ -40,16 +40,6 @@ class QCommandLineParser;
 namespace KWin
 {
 
-namespace base
-{
-namespace backend
-{
-class wlroots;
-}
-template<typename Backend>
-class platform;
-}
-
 namespace debug
 {
 class console;
@@ -57,10 +47,9 @@ class console;
 
 namespace base
 {
-namespace wayland
-{
-class output;
-}
+
+class platform;
+
 namespace x11
 {
 class event_filter_manager;
@@ -79,8 +68,6 @@ class session;
 
 class Platform;
 class WaylandServer;
-
-using wayland_base = base::platform<base::backend::wlroots>;
 
 class XcbEventFilter : public QAbstractNativeEventFilter
 {
@@ -127,6 +114,7 @@ public:
 
     ~Application() override;
 
+    virtual base::platform& get_base() = 0;
     virtual render::compositor* get_compositor() = 0;
 
     void setConfigLock(bool lock);
@@ -298,8 +286,6 @@ class KWIN_EXPORT ApplicationWaylandAbstract : public Application
     Q_OBJECT
 public:
     ~ApplicationWaylandAbstract() override = 0;
-
-    virtual wayland_base& get_base() = 0;
 
 protected:
     friend class xwl::xwayland;

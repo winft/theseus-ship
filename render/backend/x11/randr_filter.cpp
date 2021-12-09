@@ -23,7 +23,8 @@ RandrFilter::RandrFilter(X11StandalonePlatform* backend)
 {
     m_changedTimer->setSingleShot(true);
     m_changedTimer->setInterval(100);
-    QObject::connect(m_changedTimer, &QTimer::timeout, Screens::self(), &Screens::updateAll);
+    QObject::connect(
+        m_changedTimer, &QTimer::timeout, &kwinApp()->get_base().screens, &Screens::updateAll);
 }
 
 bool RandrFilter::event(xcb_generic_event_t* event)

@@ -58,7 +58,7 @@ void DontCrashCursorPhysicalSizeEmpty::init()
 {
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
 
-    Screens::self()->setCurrent(0);
+    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

@@ -72,7 +72,7 @@ bool egl_output::reset(output* out)
 {
     this->out = out;
 
-    auto size = out->mode_size();
+    auto size = out->base.mode_size();
 
     auto surf = egl_back->headless ? create_headless_surface(*egl_back->back, size)
                                    : create_surface(*egl_back->back, size);
@@ -90,10 +90,11 @@ bool egl_output::reset_framebuffer()
 {
     cleanup_framebuffer();
 
-    auto const view_geo = out->view_geometry();
-    auto const centered_view = out->mode_size() != view_geo.size() || !view_geo.topLeft().isNull();
+    auto const view_geo = out->base.view_geometry();
+    auto const centered_view
+        = out->base.mode_size() != view_geo.size() || !view_geo.topLeft().isNull();
 
-    if (out->transform() == base::wayland::output_transform::normal && !centered_view) {
+    if (out->base.transform() == base::wayland::output_transform::normal && !centered_view) {
         // No need to create intermediate framebuffer.
         return true;
     }
@@ -146,23 +147,24 @@ bool egl_output::make_current() const
 bool egl_output::present(buffer* buf)
 {
     auto drop_buffer = [buf] { wlr_buffer_drop(&buf->native.base); };
-    auto render_output
-        = static_cast<wayland::compositor*>(render::compositor::self())->outputs.at(out).get();
+    auto render_output = static_cast<wayland::compositor*>(render::compositor::self())
+                             ->outputs.at(const_cast<base::backend::wlroots::output*>(&out->base))
+                             .get();
 
     render_output->swap_pending = true;
-    wlr_output_attach_buffer(out->native, &buf->native.base);
+    wlr_output_attach_buffer(out->base.native, &buf->native.base);
 
-    if (!out->native->enabled) {
-        wlr_output_enable(out->native, true);
+    if (!out->base.native->enabled) {
+        wlr_output_enable(out->base.native, true);
     }
 
-    if (!wlr_output_test(out->native)) {
+    if (!wlr_output_test(out->base.native)) {
         qCWarning(KWIN_WL) << "Atomic output test failed on present.";
         reset(out);
         drop_buffer();
         return false;
     }
-    if (!wlr_output_commit(out->native)) {
+    if (!wlr_output_commit(out->base.native)) {
         qCWarning(KWIN_WL) << "Atomic output commit failed on present.";
         reset(out);
         drop_buffer();

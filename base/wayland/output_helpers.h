@@ -32,7 +32,7 @@ base::wayland::output* find_output(Base const& base, Wrapland::Server::Output co
 }
 
 template<typename Base>
-void request_outputs_change(Base const& base, Wrapland::Server::OutputConfigurationV1* config)
+void request_outputs_change(Base& base, Wrapland::Server::OutputConfigurationV1* config)
 {
     auto const& changes = config->changes();
 
@@ -49,7 +49,7 @@ void request_outputs_change(Base const& base, Wrapland::Server::OutputConfigurat
         output->apply_changes(changeset);
     }
 
-    Screens::self()->updateAll();
+    base.screens.updateAll();
     config->setApplied();
 }
 
@@ -58,7 +58,7 @@ void turn_outputs_on(Base const& base, Filter& filter)
 {
     filter.reset();
 
-    for (auto& out : base.enabled_outputs) {
+    for (auto& out : base.outputs) {
         out->update_dpms(base::dpms_mode::on);
     }
 }
@@ -71,7 +71,7 @@ void check_outputs_on(Base const& base, Filter& filter)
         return;
     }
 
-    auto const& outs = base.enabled_outputs;
+    auto const& outs = base.outputs;
     if (std::all_of(outs.cbegin(), outs.cend(), [](auto&& out) { return out->is_dpms_on(); })) {
         // All outputs are on, disable the filter.
         filter.reset();

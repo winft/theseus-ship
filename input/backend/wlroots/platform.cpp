@@ -12,6 +12,8 @@
 
 #include "input/logging.h"
 
+#include <cassert>
+
 namespace KWin::input::backend::wlroots
 {
 
@@ -46,12 +48,15 @@ void handle_device(struct wl_listener* listener, [[maybe_unused]] void* data)
     }
 }
 
-platform::platform(wayland_base const& base)
+platform::platform(base::wayland::platform const& base)
     : wayland::platform(base)
 {
     add_device.receiver = this;
     add_device.event.notify = handle_device;
-    wl_signal_add(&base.backend.backend->events.new_input, &add_device.event);
+
+    auto wlroots_base = dynamic_cast<base::backend::wlroots::platform const*>(&base);
+    assert(wlroots_base);
+    wl_signal_add(&wlroots_base->backend->events.new_input, &add_device.event);
 }
 
 }

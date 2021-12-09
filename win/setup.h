@@ -89,8 +89,10 @@ void setup_window_control_connections(Win* win)
                          }
                          geometry_updates_blocker blocker(win);
 
-                         auto const area = workspace()->clientArea(
-                             PlacementArea, Screens::self()->current(), win->desktop());
+                         auto const area
+                             = workspace()->clientArea(PlacementArea,
+                                                       kwinApp()->get_base().screens.current(),
+                                                       win->desktop());
 
                          win::place(win, area);
                      });

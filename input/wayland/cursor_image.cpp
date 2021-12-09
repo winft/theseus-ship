@@ -10,6 +10,7 @@
 
 #include "cursor_theme.h"
 
+#include "base/platform.h"
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "render/effects.h"
@@ -439,7 +440,7 @@ void cursor_image::loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Ima
         if (!buffer) {
             return;
         }
-        auto scale = Screens::self()->maxScale();
+        auto scale = kwinApp()->get_base().screens.maxScale();
         int hotSpotX = qRound(cursor->hotspot_x / scale);
         int hotSpotY = qRound(cursor->hotspot_y / scale);
         QImage img = buffer->shmImage()->createQImage().copy();

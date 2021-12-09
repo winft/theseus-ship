@@ -25,16 +25,16 @@ void update_space_areas(Window* win,
         return;
     }
 
-    auto const screens = Screens::self();
-    auto const screens_count = screens->count();
+    auto const& screens = kwinApp()->get_base().screens;
+    auto const screens_count = screens.count();
     auto const desktops_count = static_cast<int>(VirtualDesktopManager::self()->count());
 
     auto client_area = adjusted_client_area(win, desktop_area, desktop_area);
 
     // Sanity check that a strut doesn't exclude a complete screen geometry. This is a violation
     // to EWMH, as KWin just ignores the strut.
-    for (int screen = 0; screen < screens->count(); screen++) {
-        if (!client_area.intersects(screens->geometry(screen))) {
+    for (int screen = 0; screen < screens.count(); screen++) {
+        if (!client_area.intersects(screens.geometry(screen))) {
             // TODO(romangg): Can we give this again a logging category?
             qDebug() << "Adjusted client area would exclude a complete screen, ignore.";
             client_area = desktop_area;
@@ -43,7 +43,7 @@ void update_space_areas(Window* win,
     }
 
     auto strut_region = win::x11::strut_rects(win);
-    auto const clientsScreenRect = screens->geometry(win->screen());
+    auto const clientsScreenRect = screens.geometry(win->screen());
 
     for (auto strut = strut_region.begin(); strut != strut_region.end(); strut++) {
         *strut = StrutRect((*strut).intersected(clientsScreenRect), (*strut).area());

@@ -288,10 +288,6 @@ public:
 
     virtual clockid_t clockId() const;
 
-Q_SIGNALS:
-    void output_added(base::output* output);
-    void output_removed(base::output* output);
-
 protected:
     Platform();
     void setSupportsGammaControl(bool set) {

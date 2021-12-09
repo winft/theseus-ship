@@ -35,6 +35,7 @@ namespace KWin
 namespace base
 {
 class output;
+class platform;
 }
 class Platform;
 class Toplevel;
@@ -43,6 +44,7 @@ class KWIN_EXPORT Screens : public QObject
 {
     Q_OBJECT
 public:
+    Screens(base::platform const& base);
     ~Screens() override;
     /**
      * @internal
@@ -185,7 +187,7 @@ private:
     QSize m_boundingSize;
     qreal m_maxScale;
 
-    KWIN_SINGLETON(Screens)
+    base::platform const& base;
 };
 
 inline

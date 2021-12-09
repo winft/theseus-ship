@@ -43,8 +43,6 @@ Platform::Platform()
     : m_eglDisplay(EGL_NO_DISPLAY)
 {
     m_colorCorrect = new ColorCorrect::Manager(this);
-
-    Screens::create(this);
 }
 
 Platform::~Platform()

@@ -149,7 +149,8 @@ void space::handle_window_added(wayland::window* window)
         window->updateDecoration(false);
         win::update_layer(window);
 
-        auto const area = clientArea(PlacementArea, Screens::self()->current(), window->desktop());
+        auto const area
+            = clientArea(PlacementArea, kwinApp()->get_base().screens.current(), window->desktop());
         auto placementDone = false;
 
         if (window->isInitialPositionSet()) {

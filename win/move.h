@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "base/platform.h"
 #include "deco.h"
 #include "geo.h"
 #include "input/cursor.h"
@@ -224,7 +225,7 @@ void check_workspace_position(Win* win,
         return;
     }
 
-    if (Screens::self()->count() == 0) {
+    if (kwinApp()->get_base().screens.count() == 0) {
         return;
     }
 
@@ -447,36 +448,38 @@ void check_workspace_position(Win* win,
         padding[1] = padding[3] = 0;
     }
 
+    auto const& screens = kwinApp()->get_base().screens;
+
     if (save[Left] || keep[Left]) {
         frame_geo.moveLeft(std::max(left_max, screenArea.x()) - padding[0]);
     }
-    if (padding[0] && Screens::self()->intersecting(frame_geo) > 1) {
+    if (padding[0] && screens.intersecting(frame_geo) > 1) {
         frame_geo.moveLeft(frame_geo.left() + padding[0]);
     }
     if (save[Top] || keep[Top]) {
         frame_geo.moveTop(std::max(top_max, screenArea.y()) - padding[1]);
     }
-    if (padding[1] && Screens::self()->intersecting(frame_geo) > 1) {
+    if (padding[1] && screens.intersecting(frame_geo) > 1) {
         frame_geo.moveTop(frame_geo.top() + padding[1]);
     }
     if (save[Right] || keep[Right]) {
         frame_geo.moveRight(std::min(right_max - 1, screenArea.right()) + padding[2]);
     }
-    if (padding[2] && Screens::self()->intersecting(frame_geo) > 1) {
+    if (padding[2] && screens.intersecting(frame_geo) > 1) {
         frame_geo.moveRight(frame_geo.right() - padding[2]);
     }
     if (old_frame_geo.x() >= old_left_max && frame_geo.x() < left_max) {
         frame_geo.setLeft(std::max(left_max, screenArea.x()));
     } else if (old_client_geo.x() >= old_left_max && frame_geo.x() + border[Left] < left_max) {
         frame_geo.setLeft(std::max(left_max, screenArea.x()) - border[Left]);
-        if (Screens::self()->intersecting(frame_geo) > 1) {
+        if (screens.intersecting(frame_geo) > 1) {
             frame_geo.setLeft(frame_geo.left() + border[Left]);
         }
     }
     if (save[Bottom] || keep[Bottom]) {
         frame_geo.moveBottom(std::min(bottom_max - 1, screenArea.bottom()) + padding[3]);
     }
-    if (padding[3] && Screens::self()->intersecting(frame_geo) > 1) {
+    if (padding[3] && screens.intersecting(frame_geo) > 1) {
         frame_geo.moveBottom(frame_geo.bottom() - padding[3]);
     }
 
@@ -484,7 +487,7 @@ void check_workspace_position(Win* win,
         frame_geo.setTop(std::max(top_max, screenArea.y()));
     } else if (old_client_geo.y() >= old_top_max && frame_geo.y() + border[Top] < top_max) {
         frame_geo.setTop(std::max(top_max, screenArea.y()) - border[Top]);
-        if (Screens::self()->intersecting(frame_geo) > 1) {
+        if (screens.intersecting(frame_geo) > 1) {
             frame_geo.setTop(frame_geo.top() + border[Top]);
         }
     }
@@ -525,15 +528,16 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
 {
     auto mode = quicktiles::none;
     bool inner_border = false;
+    auto const& screens = kwinApp()->get_base().screens;
 
-    for (int i = 0; i < Screens::self()->count(); ++i) {
-        if (!Screens::self()->geometry(i).contains(QPoint(xroot, yroot))) {
+    for (int i = 0; i < screens.count(); ++i) {
+        if (!screens.geometry(i).contains(QPoint(xroot, yroot))) {
             continue;
         }
 
-        auto in_screen = [i](const QPoint& pt) {
-            for (int j = 0; j < Screens::self()->count(); ++j) {
-                if (j != i && Screens::self()->geometry(j).contains(pt)) {
+        auto in_screen = [i, &screens](const QPoint& pt) {
+            for (int j = 0; j < screens.count(); ++j) {
+                if (j != i && screens.geometry(j).contains(pt)) {
                     return true;
                 }
             }
@@ -674,19 +678,19 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 
             // TODO(romangg): Once we use size_t consistently for screens identification replace
             // these (currentyl implicit casted) types with auto.
-            size_t const screens_count = Screens::self()->count();
-            size_t const old_screen = win->screen();
+            auto const& screens = kwinApp()->get_base().screens;
+            auto const old_screen = win->screen();
             auto screen = old_screen;
 
-            std::vector<QRect> screens_geos(screens_count);
-            screens_geos.resize(screens_count);
+            std::vector<QRect> screens_geos(screens.count());
+            screens_geos.resize(screens.count());
 
-            for (size_t i = 0; i < screens_count; ++i) {
+            for (int i = 0; i < screens.count(); ++i) {
                 // Geoemtry cache.
-                screens_geos[i] = Screens::self()->geometry(i);
+                screens_geos[i] = screens.geometry(i);
             }
 
-            for (size_t i = 0; i < screens_count; ++i) {
+            for (int i = 0; i < screens.count(); ++i) {
                 if (i == old_screen) {
                     continue;
                 }
@@ -795,7 +799,7 @@ bool start_move_resize(Win* win)
         return false;
     }
     if (win->control->fullscreen()
-        && (Screens::self()->count() < 2 || !win->isMovableAcrossScreens())) {
+        && (kwinApp()->get_base().screens.count() < 2 || !win->isMovableAcrossScreens())) {
         return false;
     }
     if (!win->doStartMoveResize()) {
@@ -1082,7 +1086,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         if (!win->isMovable()) {
             // isMovableAcrossScreens() must have been true to get here
             // Special moving of maximized windows on Xinerama screens
-            int screen = Screens::self()->number(globalPos);
+            int screen = kwinApp()->get_base().screens.number(globalPos);
             if (win->control->fullscreen())
                 mov_res.geometry = workspace()->clientArea(FullScreenArea, screen, 0);
             else {
@@ -1134,7 +1138,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
                     // break by moving the window slightly downwards, but it won't stuck) see bug
                     // #274466 and bug #301805 for why we can't just match the titlearea against the
                     // screen
-                    if (Screens::self()->count() > 1) { // optimization
+                    if (kwinApp()->get_base().screens.count() > 1) { // optimization
                         // TODO: could be useful on partial screen struts (half-width panels etc.)
                         int newTitleTop = -1;
                         for (auto const& r : strut) {

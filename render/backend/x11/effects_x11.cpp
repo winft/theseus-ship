@@ -5,6 +5,8 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "effects_x11.h"
+
+#include "base/platform.h"
 #include "effects_mouse_interception_x11_filter.h"
 #include "input/cursor.h"
 #include "screenedge.h"
@@ -64,7 +66,7 @@ void EffectsHandlerImplX11::doStartMouseInterception(Qt::CursorShape shape)
     // NOTE: it is intended to not perform an XPointerGrab on X11. See documentation in
     // kwineffects.h The mouse grab is implemented by using a full screen input only window
     if (!m_mouseInterceptionWindow.isValid()) {
-        const QSize& s = Screens::self()->size();
+        auto const& s = kwinApp()->get_base().screens.size();
         const QRect geo(0, 0, s.width(), s.height());
         const uint32_t mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
         const uint32_t values[] = {true,

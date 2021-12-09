@@ -202,6 +202,11 @@ void ApplicationX11::lostSelection()
     quit();
 }
 
+base::platform& ApplicationX11::get_base()
+{
+    return base;
+}
+
 render::compositor* ApplicationX11::get_compositor()
 {
     return compositor.get();

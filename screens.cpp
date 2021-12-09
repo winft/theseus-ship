@@ -20,42 +20,30 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 
 #include "base/output.h"
+#include "base/platform.h"
 
 #include "input/cursor.h"
-#include "utils.h"
 #include "settings.h"
 #include "win/control.h"
 #include "win/screen.h"
 #include <workspace.h>
-#include <config-kwin.h>
-#include "platform.h"
 #include "toplevel.h"
 
 namespace KWin
 {
 
-Screens *Screens::s_self = nullptr;
-Screens *Screens::create(QObject *parent)
-{
-    Q_ASSERT(!s_self);
-    s_self = new Screens(parent);
-    Q_ASSERT(s_self);
-    s_self->init();
-    return s_self;
-}
-
-Screens::Screens(QObject *parent)
-    : QObject(parent)
-    , m_count(0)
+Screens::Screens(base::platform const& base)
+    : m_count(0)
     , m_current(0)
     , m_currentFollowsMouse(false)
     , m_maxScale(1.0)
+    , base{base}
 {
+    init();
 }
 
 Screens::~Screens()
 {
-    s_self = nullptr;
 }
 
 void Screens::init()
@@ -149,7 +137,8 @@ void Screens::updateSize()
 
 void Screens::updateCount()
 {
-    setCount(kwinApp()->platform->enabledOutputs().size());
+    auto size = base.get_outputs().size();
+    setCount(size);
 }
 
 void Screens::setCount(int count)
@@ -262,15 +251,19 @@ int Screens::physicalDpiY(int screen) const
 
 base::output* Screens::findOutput(int screen) const
 {
-    return kwinApp()->platform->enabledOutputs().value(screen);
+    auto const& outputs = base.get_outputs();
+    if (outputs.empty()) {
+        return nullptr;
+    }
+    return outputs.at(screen);
 }
 
 int Screens::number(const QPoint &pos) const
 {
     int bestScreen = 0;
     int minDistance = INT_MAX;
-    const auto outputs = kwinApp()->platform->enabledOutputs();
-    for (int i = 0; i < outputs.size(); ++i) {
+    auto const outputs = base.get_outputs();
+    for (size_t i = 0; i < outputs.size(); ++i) {
         const QRect &geo = outputs[i]->geometry();
         if (geo.contains(pos)) {
             return i;

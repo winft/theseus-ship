@@ -62,14 +62,14 @@ void X11DesktopWindowTest::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.wait());
-    QCOMPARE(Screens::self()->count(), 2);
-    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(Screens::self()->geometry(1), QRect(1280, 0, 1280, 1024));
+    QCOMPARE(Test::app()->base.screens.count(), 2);
+    QCOMPARE(Test::app()->base.screens.geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Test::app()->base.screens.geometry(1), QRect(1280, 0, 1280, 1024));
 }
 
 void X11DesktopWindowTest::init()
 {
-    Screens::self()->setCurrent(0);
+    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

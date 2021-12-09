@@ -12,9 +12,9 @@ namespace KWin::render::backend::wlroots
 {
 
 template<typename Output>
-int rotation_in_degree(Output* out)
+int rotation_in_degree(Output&& out)
 {
-    switch (out->native->transform) {
+    switch (out.native->transform) {
     case WL_OUTPUT_TRANSFORM_NORMAL:
     case WL_OUTPUT_TRANSFORM_FLIPPED:
         return 0;
@@ -33,10 +33,10 @@ int rotation_in_degree(Output* out)
 }
 
 template<typename Output>
-bool has_portrait_transform(Output* out)
+bool has_portrait_transform(Output&& out)
 {
     using Tr = base::wayland::output_transform;
-    auto const& transform = out->transform();
+    auto const& transform = out.transform();
     return transform == Tr::rotated_90 || transform == Tr::rotated_270
         || transform == Tr::flipped_90 || transform == Tr::flipped_270;
 }

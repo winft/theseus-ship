@@ -10,7 +10,7 @@
 #include "pointer_redirect.h"
 #include "redirect.h"
 
-#include "base/backend/wlroots.h"
+#include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
 #include "base/wayland/output_helpers.h"
 #include "input/dbus/dbus.h"
@@ -29,7 +29,7 @@
 namespace KWin::input::wayland
 {
 
-platform::platform(wayland_base const& base)
+platform::platform(base::wayland::platform const& base)
     : base{base}
 {
     config = kwinApp()->inputConfig();

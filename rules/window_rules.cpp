@@ -261,7 +261,7 @@ int WindowRules::checkScreen(int screen, bool init) const
         if ((*it)->applyScreen(ret, init))
             break;
     }
-    if (ret >= Screens::self()->count())
+    if (ret >= kwinApp()->get_base().screens.count())
         ret = screen;
     return ret;
 }

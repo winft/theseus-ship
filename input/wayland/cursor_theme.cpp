@@ -6,6 +6,8 @@
 */
 #include "cursor_theme.h"
 
+#include "base/platform.h"
+#include "main.h"
 #include "screens.h"
 #include "wayland_server.h"
 
@@ -24,7 +26,8 @@ cursor_theme::cursor_theme(Wrapland::Client::ShmPool* shm)
     : m_theme(nullptr)
     , m_shm(shm)
 {
-    QObject::connect(Screens::self(), &Screens::maxScaleChanged, this, &cursor_theme::loadTheme);
+    QObject::connect(
+        &kwinApp()->get_base().screens, &Screens::maxScaleChanged, this, &cursor_theme::loadTheme);
 }
 
 cursor_theme::~cursor_theme()
@@ -44,7 +47,7 @@ void cursor_theme::loadTheme()
         size = 24;
     }
 
-    size *= Screens::self()->maxScale();
+    size *= kwinApp()->get_base().screens.maxScale();
 
     auto theme = wl_cursor_theme_load(c->theme_name().toUtf8().constData(), size, m_shm->shm());
     if (theme) {

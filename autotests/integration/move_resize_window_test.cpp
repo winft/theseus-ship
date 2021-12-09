@@ -97,8 +97,8 @@ void MoveResizeWindowTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    QCOMPARE(Screens::self()->count(), 1);
-    QCOMPARE(Screens::self()->geometry(0), QRect(0, 0, 1280, 1024));
+    QCOMPARE(Test::app()->base.screens.count(), 1);
+    QCOMPARE(Test::app()->base.screens.geometry(0), QRect(0, 0, 1280, 1024));
 }
 
 void MoveResizeWindowTest::init()
@@ -109,7 +109,7 @@ void MoveResizeWindowTest::init()
     m_connection = Test::get_client().connection;
     m_compositor = Test::get_client().interfaces.compositor.get();
 
-    Screens::self()->setCurrent(0);
+    Test::app()->base.screens.setCurrent(0);
 }
 
 void MoveResizeWindowTest::cleanup()
@@ -717,7 +717,7 @@ void MoveResizeWindowTest::testNetMove()
     const QRect origGeo = client->frameGeometry();
 
     // let's move the cursor outside the window
-    input::get_cursor()->set_pos(Screens::self()->geometry(0).center());
+    input::get_cursor()->set_pos(Test::app()->base.screens.geometry(0).center());
     QVERIFY(!origGeo.contains(input::get_cursor()->pos()));
 
     QSignalSpy moveStartSpy(client, &win::x11::window::clientStartUserMovedResized);
@@ -1166,7 +1166,7 @@ void MoveResizeWindowTest::testSetFullScreenWhenMoving()
     states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
     QVERIFY(states.testFlag(XdgShellToplevel::State::Fullscreen));
 
-    QCOMPARE(configureRequestedSpy.last().first().toSize(), Screens::self()->size(0));
+    QCOMPARE(configureRequestedSpy.last().first().toSize(), Test::app()->base.screens.size(0));
 
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface, configureRequestedSpy.last().first().toSize(), Qt::red);

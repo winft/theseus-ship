@@ -7,6 +7,7 @@
 #include "egl_backend.h"
 
 #include "backend.h"
+#include "base/backend/wlroots/output.h"
 #include "egl_helpers.h"
 #include "egl_output.h"
 #include "output.h"
@@ -23,10 +24,11 @@
 namespace KWin::render::backend::wlroots
 {
 
-egl_output& egl_backend::get_output(base::output* out)
+egl_output& egl_backend::get_output(base::output const* out)
 {
-    auto it = std::find_if(
-        outputs.begin(), outputs.end(), [this, out](auto& egl_out) { return egl_out.out == out; });
+    auto it = std::find_if(outputs.begin(), outputs.end(), [this, out](auto& egl_out) {
+        return &egl_out.out->base == out;
+    });
     assert(it != outputs.end());
     return *it;
 }
@@ -39,13 +41,13 @@ egl_backend::egl_backend(wlroots::backend* back, bool headless)
     // Egl is always direct rendering.
     setIsDirectRendering(true);
 
-    connect(back, &wlroots::backend::output_added, this, [this](auto out) {
-        add_output(static_cast<output*>(out));
+    connect(&back->base, &base::platform::output_added, this, [this](auto out) {
+        add_output(static_cast<base::backend::wlroots::output*>(out)->render.get());
     });
-    connect(back, &wlroots::backend::output_removed, this, [this](auto out) {
+    connect(&back->base, &base::platform::output_removed, this, [this](auto out) {
         outputs.erase(std::remove_if(outputs.begin(),
                                      outputs.end(),
-                                     [&out](auto& egl_out) { return egl_out.out == out; }),
+                                     [&out](auto& egl_out) { return &egl_out.out->base == out; }),
                       outputs.end());
     });
 }
@@ -112,7 +114,7 @@ bool egl_backend::init_rendering_context()
     }
 
     for (auto out : back->all_outputs) {
-        add_output(out);
+        add_output(out->render.get());
     }
 
     // AbstractEglBackend expects a surface to be set but this is not relevant as we render per
@@ -139,8 +141,8 @@ void egl_backend::add_output(output* out)
 
     outputs.push_back(std::move(egl_out));
 
-    connect(out, &output::mode_changed, this, [out, this] {
-        auto& egl_out = get_output(out);
+    connect(&out->base, &base::backend::wlroots::output::mode_changed, this, [out, this] {
+        auto& egl_out = get_output(&out->base);
         egl_out.reset(out);
     });
 }
@@ -207,8 +209,8 @@ void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
     GLuint clearColor[4] = {0, 0, 0, 0};
     glClearBufferuiv(GL_COLOR, 0, clearColor);
 
-    auto geo = egl_out.out->view_geometry();
-    if (has_portrait_transform(egl_out.out)) {
+    auto geo = egl_out.out->base.view_geometry();
+    if (has_portrait_transform(egl_out.out->base)) {
         geo = geo.transposed();
         geo.moveTopLeft(geo.topLeft().transposed());
     }
@@ -217,7 +219,7 @@ void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
     auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
 
     QMatrix4x4 rotationMatrix;
-    rotationMatrix.rotate(rotation_in_degree(egl_out.out), 0, 0, 1);
+    rotationMatrix.rotate(rotation_in_degree(egl_out.out->base), 0, 0, 1);
     shader->setUniform(GLShader::ModelViewProjectionMatrix, rotationMatrix);
 
     glBindTexture(GL_TEXTURE_2D, egl_out.render.texture);
@@ -257,9 +259,9 @@ QRegion egl_backend::prepareRenderingFrame()
 
 void egl_backend::setViewport(egl_output const& egl_out) const
 {
-    auto const& overall = Screens::self()->size();
-    auto const& geo = egl_out.out->geometry();
-    auto const& view = egl_out.out->view_geometry();
+    auto const& overall = back->base.screens.size();
+    auto const& geo = egl_out.out->base.geometry();
+    auto const& view = egl_out.out->base.view_geometry();
 
     auto const width_ratio = view.width() / (double)geo.width();
     auto const height_ratio = view.height() / (double)geo.height();
@@ -322,7 +324,8 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
     renderFramebufferToSurface(out);
 
     auto compositor = static_cast<wayland::compositor*>(back->compositor);
-    auto render_output = compositor->outputs.at(out.out).get();
+    auto render_output
+        = compositor->outputs.at(const_cast<base::backend::wlroots::output*>(&out.out->base)).get();
     if (GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
         render_output->last_timer_queries.emplace_back();
     }

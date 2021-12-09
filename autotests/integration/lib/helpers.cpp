@@ -442,7 +442,7 @@ void pointer_motion_absolute(QPointF const& position, uint32_t time)
     event.device = app->pointer;
     event.time_msec = time;
 
-    auto const screens_size = Screens::self()->size();
+    auto const screens_size = kwinApp()->get_base().screens.size();
     event.x = position.x() / screens_size.width();
     event.y = position.y() / screens_size.height();
 
@@ -552,8 +552,9 @@ KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_input_de
 
 QPointF get_relative_touch_position(QPointF const& pos)
 {
-    auto screen_number = Screens::self()->number(pos.toPoint());
-    auto output_size = Screens::self()->size(screen_number);
+    auto const& screens = kwinApp()->get_base().screens;
+    auto screen_number = screens.number(pos.toPoint());
+    auto output_size = screens.size(screen_number);
 
     return QPointF(pos.x() / output_size.width(), pos.y() / output_size.height());
 }

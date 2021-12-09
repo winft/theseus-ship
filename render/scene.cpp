@@ -73,6 +73,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window.h"
 
 #include "base/output.h"
+#include "base/platform.h"
 #include "screens.h"
 #include "win/geo.h"
 
@@ -120,7 +121,7 @@ void scene::paintScreen(paint_type& mask,
                         std::chrono::milliseconds presentTime,
                         const QMatrix4x4& projection)
 {
-    const QSize& screenSize = Screens::self()->size();
+    auto const& screenSize = kwinApp()->get_base().screens.size();
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
     mask = (damage == displayRegion) ? paint_type::none : paint_type::screen_region;
 
@@ -249,7 +250,7 @@ void scene::paintGenericScreen(paint_type orig_mask, ScreenPaintData)
         paintWindow(d.window, d.mask, d.region, d.quads);
     }
 
-    const QSize& screenSize = Screens::self()->size();
+    auto const& screenSize = kwinApp()->get_base().screens.size();
     damaged_region = QRegion(0, 0, screenSize.width(), screenSize.height());
 }
 
@@ -336,7 +337,7 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
     const QRegion repaintClip = repaint_region - dirtyArea;
     dirtyArea |= repaint_region;
 
-    const QSize& screenSize = Screens::self()->size();
+    auto const& screenSize = kwinApp()->get_base().screens.size();
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
     bool fullRepaint(dirtyArea == displayRegion); // spare some expensive region operations
     if (!fullRepaint) {
@@ -482,7 +483,7 @@ static window* s_recursionCheck = nullptr;
 void scene::paintWindow(window* w, paint_type mask, QRegion region, WindowQuadList quads)
 {
     // no painting outside visible screen (and no transformations)
-    const QSize& screenSize = Screens::self()->size();
+    auto const& screenSize = kwinApp()->get_base().screens.size();
     region &= QRect(0, 0, screenSize.width(), screenSize.height());
     if (region.isEmpty()) // completely clipped
         return;
@@ -605,7 +606,7 @@ void scene::paintDesktopThumbnails(window* w)
         s_recursionCheck = w;
 
         ScreenPaintData data;
-        const QSize& screenSize = Screens::self()->size();
+        auto const& screenSize = kwinApp()->get_base().screens.size();
         QSize size = screenSize;
 
         size.scale(item->width(), item->height(), Qt::KeepAspectRatio);

@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window.h"
 
 #include "base/output.h"
+#include "base/platform.h"
 #include "platform.h"
 #include "texture.h"
 
@@ -313,7 +314,7 @@ scene::scene(render::gl::backend* backend)
         init_ok = false;
         return;
     }
-    if (!viewportLimitsMatched(Screens::self()->size()))
+    if (!viewportLimitsMatched(kwinApp()->get_base().screens.size()))
         return;
 
     // perform Scene specific checks
@@ -365,9 +366,9 @@ scene::scene(render::gl::backend* backend)
         return;
     }
 
-    const QSize& s = Screens::self()->size();
+    auto const& s = kwinApp()->get_base().screens.size();
     GLRenderTarget::setVirtualScreenSize(s);
-    GLRenderTarget::setVirtualScreenGeometry(Screens::self()->geometry());
+    GLRenderTarget::setVirtualScreenGeometry(kwinApp()->get_base().screens.geometry());
 
     // push one shader on the stack so that one is always bound
     ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
@@ -658,8 +659,8 @@ int64_t scene::paint(QRegion damage,
         return 0;
     }
 
-    GLVertexBuffer::setVirtualScreenGeometry(Screens::self()->geometry());
-    GLRenderTarget::setVirtualScreenGeometry(Screens::self()->geometry());
+    GLVertexBuffer::setVirtualScreenGeometry(kwinApp()->get_base().screens.geometry());
+    GLRenderTarget::setVirtualScreenGeometry(kwinApp()->get_base().screens.geometry());
     GLVertexBuffer::setVirtualScreenScale(1);
     GLRenderTarget::setVirtualScreenScale(1);
 
@@ -670,7 +671,7 @@ int64_t scene::paint(QRegion damage,
     paintScreen(mask, damage, repaint, &update, &valid, presentTime, projectionMatrix());
 
     if (!GLPlatform::instance()->isGLES()) {
-        auto const screenSize = Screens::self()->size();
+        auto const screenSize = kwinApp()->get_base().screens.size();
         auto const displayRegion = QRegion(0, 0, screenSize.width(), screenSize.height());
 
         // Copy dirty parts from front to backbuffer.
@@ -843,7 +844,7 @@ void scene::extendPaintRegion(QRegion& region, bool opaqueFullscreen)
         return;
     }
 
-    const QSize& screenSize = Screens::self()->size();
+    auto const& screenSize = kwinApp()->get_base().screens.size();
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
 
     uint damagedPixels = 0;
@@ -906,7 +907,10 @@ void scene::paintDesktop(int desktop, paint_type mask, const QRegion& region, Sc
 {
     const QRect r = region.boundingRect();
     glEnable(GL_SCISSOR_TEST);
-    glScissor(r.x(), Screens::self()->size().height() - r.y() - r.height(), r.width(), r.height());
+    glScissor(r.x(),
+              kwinApp()->get_base().screens.size().height() - r.y() - r.height(),
+              r.width(),
+              r.height());
     render::scene::paintDesktop(desktop, mask, region, data);
     glDisable(GL_SCISSOR_TEST);
 }
@@ -1017,7 +1021,7 @@ QMatrix4x4 scene::createProjectionMatrix() const
     // Create a second matrix that transforms screen coordinates
     // to world coordinates.
     const float scaleFactor = 1.1 * std::tan(fovY * M_PI / 360.0f) / yMax;
-    const QSize size = Screens::self()->size();
+    auto const& size = kwinApp()->get_base().screens.size();
 
     QMatrix4x4 matrix;
     matrix.translate(xMin * scaleFactor, yMax * scaleFactor, -1.1);
@@ -1090,7 +1094,7 @@ void scene::performPaintWindow(effects_window_impl* w,
             lanczos = new lanczos_filter(this);
             // reset the lanczos filter when the screen gets resized
             // it will get created next paint
-            connect(Screens::self(), &Screens::changed, this, [this]() {
+            connect(&kwinApp()->get_base().screens, &Screens::changed, this, [this]() {
                 makeOpenGLContextCurrent();
                 delete lanczos;
                 lanczos = nullptr;

@@ -233,16 +233,16 @@ void PlasmaSurfaceTest::testOSDPlacement()
     QCOMPARE(c->frameGeometry(), QRect(590, 657, 100, 50));
 
     // change the screen size
-    QSignalSpy screensChangedSpy(Screens::self(), &Screens::changed);
+    QSignalSpy screensChangedSpy(&Test::app()->base.screens, &Screens::changed);
     QVERIFY(screensChangedSpy.isValid());
 
     auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};
     Test::app()->set_outputs(geometries);
 
-    QCOMPARE(screensChangedSpy.count(), Screens::self()->count() + 2);
-    QCOMPARE(Screens::self()->count(), 2);
-    QCOMPARE(Screens::self()->geometry(0), geometries.at(0));
-    QCOMPARE(Screens::self()->geometry(1), geometries.at(1));
+    QCOMPARE(screensChangedSpy.count(), Test::app()->base.screens.count() + 2);
+    QCOMPARE(Test::app()->base.screens.count(), 2);
+    QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
+    QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
     QCOMPARE(c->frameGeometry(), QRect(590, 657, 100, 50));
 
     // change size of window

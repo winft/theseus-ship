@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 #include <config-kwin.h>
 
+#include "base/backend/wlroots/platform.h"
 #include "debug/wayland_console.h"
 #include "platform.h"
 #include "render/effects.h"
@@ -176,9 +177,9 @@ bool ApplicationWayland::is_screen_locked() const
     return server->is_screen_locked();
 }
 
-wayland_base& ApplicationWayland::get_base()
+base::platform& ApplicationWayland::get_base()
 {
-    return base;
+    return *base;
 }
 
 WaylandServer* ApplicationWayland::get_wayland_server()
@@ -204,18 +205,18 @@ void ApplicationWayland::start()
         setOperationMode(OperationModeXwayland);
     }
 
-    base.backend = base::backend::wlroots(waylandServer()->display());
+    base = std::make_unique<base::backend::wlroots::platform>(waylandServer()->display());
 
-    render.reset(new render::backend::wlroots::backend(base));
+    render.reset(new render::backend::wlroots::backend(*base));
     platform = render.get();
 
     createOptions();
 
-    auto session = new seat::backend::wlroots::session(base.backend.backend);
+    auto session = new seat::backend::wlroots::session(base->backend);
     this->session.reset(session);
     session->take_control();
 
-    input.reset(new input::backend::wlroots::platform(base));
+    input.reset(new input::backend::wlroots::platform(*base));
     input::wayland::add_dbus(input.get());
     input->redirect->install_shortcuts();
 

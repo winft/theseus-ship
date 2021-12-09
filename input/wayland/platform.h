@@ -20,18 +20,10 @@ class virtual_keyboard_manager_v1;
 namespace KWin
 {
 
-namespace base
+namespace base::wayland
 {
-namespace backend
-{
-class wlroots;
-}
-
-template<typename Backend>
 class platform;
 }
-
-using wayland_base = base::platform<base::backend::wlroots>;
 
 namespace input
 {
@@ -58,7 +50,7 @@ class KWIN_EXPORT platform : public input::platform
 {
     Q_OBJECT
 public:
-    platform(wayland_base const& base);
+    platform(base::wayland::platform const& base);
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     ~platform() override;
@@ -81,7 +73,7 @@ public:
     std::unique_ptr<input::dpms_filter> dpms_filter;
 
 private:
-    wayland_base const& base;
+    base::wayland::platform const& base;
     bool touchpads_enabled{true};
 };
 

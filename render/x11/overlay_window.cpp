@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "overlay_window.h"
 
+#include "base/platform.h"
 #include "kwinglobals.h"
 #include "render/x11/compositor.h"
 #include "screens.h"
@@ -62,7 +63,7 @@ bool overlay_window::create()
     m_window = overlay->overlay_win;
     if (m_window == XCB_WINDOW_NONE)
         return false;
-    resize(Screens::self()->size());
+    resize(kwinApp()->get_base().screens.size());
     return true;
 #else
     return false;
@@ -75,7 +76,7 @@ void overlay_window::setup(xcb_window_t window)
     Q_ASSERT(Xcb::Extensions::self()->isShapeInputAvailable());
     setNoneBackgroundPixmap(m_window);
     m_shape = QRegion();
-    const QSize& s = Screens::self()->size();
+    auto const& s = kwinApp()->get_base().screens.size();
     setShape(QRect(0, 0, s.width(), s.height()));
     if (window != XCB_WINDOW_NONE) {
         setNoneBackgroundPixmap(window);
@@ -119,7 +120,7 @@ void overlay_window::hide()
     Q_ASSERT(m_window != XCB_WINDOW_NONE);
     xcb_unmap_window(connection(), m_window);
     m_shown = false;
-    const QSize& s = Screens::self()->size();
+    auto const& s = kwinApp()->get_base().screens.size();
     setShape(QRect(0, 0, s.width(), s.height()));
 }
 
@@ -168,7 +169,7 @@ void overlay_window::destroy()
     if (m_window == XCB_WINDOW_NONE)
         return;
     // reset the overlay shape
-    const QSize& s = Screens::self()->size();
+    auto const& s = kwinApp()->get_base().screens.size();
     xcb_rectangle_t rec
         = {0, 0, static_cast<uint16_t>(s.width()), static_cast<uint16_t>(s.height())};
     xcb_shape_rectangles(connection(),

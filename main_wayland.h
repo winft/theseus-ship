@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "main.h"
 
-#include "base/backend/wlroots.h"
 #include "base/platform.h"
 #include "render/backend/wlroots/backend.h"
 
@@ -63,7 +62,7 @@ public:
 
     bool is_screen_locked() const override;
 
-    wayland_base& get_base() override;
+    base::platform& get_base() override;
     WaylandServer* get_wayland_server() override;
     render::compositor* get_compositor() override;
     debug::console* create_debug_console() override;
@@ -97,7 +96,7 @@ private:
     QProcessEnvironment m_environment;
     QString m_sessionArgument;
 
-    wayland_base base;
+    std::unique_ptr<base::backend::wlroots::platform> base;
     std::unique_ptr<render::backend::wlroots::backend> render;
     std::unique_ptr<xwl::xwayland> xwayland;
 

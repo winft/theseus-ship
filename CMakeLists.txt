@@ -394,6 +394,7 @@ set(kwin_SRCS
     base/x11/event_filter_manager.cpp
     base/gamma_ramp.cpp
     base/output.cpp
+    base/platform.cpp
     colorcorrection/clockskewnotifier.cpp
     colorcorrection/clockskewnotifierengine.cpp
     colorcorrection/colorcorrectdbusinterface.cpp
@@ -779,7 +780,8 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
 add_subdirectory(plugins)
 
 set(kwin_WAYLAND_SRCS
-   base/backend/wlroots.cpp
+   base/backend/wlroots/output.cpp
+   base/backend/wlroots/platform.cpp
    base/wayland/idle_inhibition.cpp
    base/wayland/output.cpp
    debug/input_device_model.cpp

@@ -7,6 +7,7 @@
 #include "compositor.h"
 
 #include "base/output.h"
+#include "base/platform.h"
 #include "cursor.h"
 #include "dbusinterface.h"
 #include "effects.h"
@@ -348,7 +349,7 @@ void compositor::addRepaint([[maybe_unused]] QRegion const& region)
 
 void compositor::addRepaintFull()
 {
-    auto const size = Screens::self()->size();
+    auto const size = kwinApp()->get_base().screens.size();
     addRepaint(QRegion(0, 0, size.width(), size.height()));
 }
 

@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "base/backend/wlroots.h"
+#include "base/backend/wlroots/platform.h"
 #include "input/wayland/platform.h"
 
 #include <kwin_export.h>
@@ -39,7 +39,7 @@ class KWIN_EXPORT platform : public input::wayland::platform
 {
     Q_OBJECT
 public:
-    platform(wayland_base const& base);
+    platform(base::wayland::platform const& base);
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     ~platform() override = default;

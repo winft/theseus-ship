@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox/tabbox_logging.h"
 #include "tabbox/x11_filter.h"
 
+#include "base/platform.h"
 #include "render/effects.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
@@ -90,7 +91,7 @@ TabBoxHandlerImpl::~TabBoxHandlerImpl()
 
 int TabBoxHandlerImpl::activeScreen() const
 {
-    return Screens::self()->current();
+    return kwinApp()->get_base().screens.current();
 }
 
 int TabBoxHandlerImpl::currentDesktop() const
@@ -229,9 +230,9 @@ bool TabBoxHandlerImpl::checkMultiScreen(TabBoxClient* client) const
     case TabBoxConfig::IgnoreMultiScreen:
         return true;
     case TabBoxConfig::ExcludeCurrentScreenClients:
-        return current->screen() != Screens::self()->current();
+        return current->screen() != kwinApp()->get_base().screens.current();
     default:       // TabBoxConfig::OnlyCurrentScreenClients
-        return current->screen() == Screens::self()->current();
+        return current->screen() == kwinApp()->get_base().screens.current();
     }
 }
 
@@ -309,7 +310,7 @@ void TabBoxHandlerImpl::elevateClient(TabBoxClient *c, QWindow *tabbox, bool b) 
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::desktopClient() const
 {
     for (auto const& window : workspace()->stacking_order->sorted()) {
-        if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop() && window->screen() == Screens::self()->current()) {
+        if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop() && window->screen() == kwinApp()->get_base().screens.current()) {
             return window->control->tabbox();
         }
     }

@@ -5,27 +5,36 @@
 */
 #pragma once
 
+#include "kwin_export.h"
+#include "screens.h"
+
+#include <QObject>
 #include <vector>
 
 namespace KWin::base
 {
 
-template<typename Backend>
-class platform
-{
-public:
-    using output = typename Backend::output;
+class output;
 
-    platform() = default;
+class KWIN_EXPORT platform : public QObject
+{
+    Q_OBJECT
+public:
+    platform();
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     platform(platform&& other) noexcept = default;
     platform& operator=(platform&& other) noexcept = default;
-    ~platform() = default;
+    ~platform() override;
 
-    Backend backend;
-    std::vector<output*> all_outputs;
-    std::vector<output*> enabled_outputs;
+    // Makes a copy of all outputs. Only for external use. Prefer subclass objects instead.
+    virtual std::vector<output*> get_outputs() const = 0;
+
+    Screens screens;
+
+Q_SIGNALS:
+    void output_added(output*);
+    void output_removed(output*);
 };
 
 }

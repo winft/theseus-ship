@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/utils.h"
+#include "base/wayland/platform.h"
 
 #include <kwin_export.h>
 
@@ -25,19 +26,10 @@ namespace Wrapland::Server
 class Display;
 }
 
-namespace KWin::base
+namespace KWin::base::backend::wlroots
 {
 
-namespace wayland
-{
-class output;
-}
-
-namespace backend
-{
-
-inline wlr_backend* wlroots_get_backend(wlr_backend* backend,
-                                        std::function<bool(wlr_backend*)> check)
+inline wlr_backend* get_backend(wlr_backend* backend, std::function<bool(wlr_backend*)> check)
 {
     if (!wlr_backend_is_multi(backend)) {
         return check(backend) ? backend : nullptr;
@@ -59,34 +51,30 @@ inline wlr_backend* wlroots_get_backend(wlr_backend* backend,
     return data.backend;
 }
 
-inline wlr_backend* wlroots_get_drm_backend(wlr_backend* backend)
+inline wlr_backend* get_drm_backend(wlr_backend* backend)
 {
-    return wlroots_get_backend(backend, wlr_backend_is_drm);
+    return get_backend(backend, wlr_backend_is_drm);
 }
 
-inline wlr_backend* wlroots_get_headless_backend(wlr_backend* backend)
+inline wlr_backend* get_headless_backend(wlr_backend* backend)
 {
-    return wlroots_get_backend(backend, wlr_backend_is_headless);
+    return get_backend(backend, wlr_backend_is_headless);
 }
 
-class KWIN_EXPORT wlroots
+class KWIN_EXPORT platform : public base::wayland::platform
 {
 public:
-    using output = base::wayland::output;
-
     wlr_backend* backend{nullptr};
 
-    // TODO(romangg): remove all but one ctor once the startup sequence is cleaned up.
-    wlroots();
-    explicit wlroots(Wrapland::Server::Display* display);
-    explicit wlroots(wlr_backend* backend);
-    void init(wlr_backend* backend);
+    platform() = default;
+    explicit platform(Wrapland::Server::Display* display);
+    explicit platform(wlr_backend* backend);
 
-    wlroots(wlroots const&) = delete;
-    wlroots& operator=(wlroots const&) = delete;
-    wlroots(wlroots&& other) noexcept;
-    wlroots& operator=(wlroots&& other) noexcept;
-    ~wlroots();
+    platform(platform const&) = delete;
+    platform& operator=(platform const&) = delete;
+    platform(platform&& other) noexcept;
+    platform& operator=(platform&& other) noexcept;
+    ~platform() override;
 
     wlr_session* session() const
     {
@@ -94,8 +82,7 @@ public:
     }
 
 private:
-    std::unique_ptr<event_receiver<wlroots>> destroyed;
+    std::unique_ptr<event_receiver<platform>> destroyed;
 };
 
-}
 }

@@ -6,6 +6,7 @@
 #include "touch.h"
 
 #include "../platform.h"
+#include "base/platform.h"
 #include "base/wayland/output.h"
 #include "main.h"
 #include "screens.h"
@@ -40,7 +41,7 @@ touch::touch(input::platform* platform)
 {
     platform->touchs.push_back(this);
 
-    QObject::connect(Screens::self(), &Screens::changed, this, [this] {
+    QObject::connect(&kwinApp()->get_base().screens, &Screens::changed, this, [this] {
         if (!control) {
             return;
         }

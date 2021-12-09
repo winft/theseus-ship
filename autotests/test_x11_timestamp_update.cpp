@@ -44,12 +44,13 @@ public:
     X11TestApplication(int& argc, char** argv);
     ~X11TestApplication() override;
 
+    base::platform& get_base() override;
     render::compositor* get_compositor() override;
     debug::console* create_debug_console() override;
 
     void start();
 
-    base::platform<base::backend::x11> base;
+    base::x11::platform base;
     std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
     std::unique_ptr<render::x11::compositor> compositor;
     std::unique_ptr<win::x11::space> workspace;
@@ -73,6 +74,11 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
 
 X11TestApplication::~X11TestApplication()
 {
+}
+
+base::platform& X11TestApplication::get_base()
+{
+    return base;
 }
 
 render::compositor* X11TestApplication::get_compositor()

@@ -18,7 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "switcheritem.h"
-// KWin
+
+#include "base/platform.h"
+#include "main.h"
 #include "render/compositor.h"
 #include "tabboxhandler.h"
 #include "screens.h"
@@ -43,7 +45,7 @@ SwitcherItem::SwitcherItem(QObject *parent)
             setCurrentIndex(tabBox->currentIndex().row());
         }
     });
-    connect(Screens::self(), &Screens::changed, this, &SwitcherItem::screenGeometryChanged);
+    connect(&kwinApp()->get_base().screens, &Screens::changed, this, &SwitcherItem::screenGeometryChanged);
     connect(render::compositor::self(), &render::compositor::compositingToggled, this, &SwitcherItem::compositingChanged);
 }
 
@@ -80,7 +82,8 @@ void SwitcherItem::setVisible(bool visible)
 
 QRect SwitcherItem::screenGeometry() const
 {
-    return Screens::self()->geometry(Screens::self()->current());
+    auto& screens = kwinApp()->get_base().screens;
+    return screens.geometry(screens.current());
 }
 
 void SwitcherItem::setCurrentIndex(int index)

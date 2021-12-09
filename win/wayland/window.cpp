@@ -874,8 +874,8 @@ void window::handle_commit()
         // Plasma surfaces might set their position late. So check again initial position being set.
         if (must_place && !isInitialPositionSet()) {
             must_place = false;
-            auto const area
-                = workspace()->clientArea(PlacementArea, Screens::self()->current(), desktop());
+            auto const area = workspace()->clientArea(
+                PlacementArea, kwinApp()->get_base().screens.current(), desktop());
             placeIn(area);
         }
     } else if (layer_surface) {
