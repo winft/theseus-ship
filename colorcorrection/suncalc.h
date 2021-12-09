@@ -34,7 +34,9 @@ namespace KWin::ColorCorrect
  * @since 5.12
  */
 
-QPair<QDateTime, QDateTime>
-calculateSunTimings(const QDateTime& dateTime, double latitude, double longitude, bool morning);
+QPair<QDateTime, QDateTime> calculate_sun_timings(const QDateTime& dateTime,
+                                                  double latitude,
+                                                  double longitude,
+                                                  bool at_morning);
 
 }

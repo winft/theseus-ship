@@ -49,11 +49,11 @@ Q_SIGNALS:
     /**
      * This signal is emitted whenever the system clock is changed.
      */
-    void clockSkewed();
+    void skewed();
 
 private:
-    void loadNotifierEngine();
-    void unloadNotifierEngine();
+    void load_engine();
+    void unload_engine();
 
     std::unique_ptr<ClockSkewNotifierEngine> engine;
     bool is_active{false};

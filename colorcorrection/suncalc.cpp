@@ -33,7 +33,7 @@ namespace KWin::ColorCorrect
 #define SUN_RISE_SET -0.833
 #define SUN_HIGH 2.0
 
-static QTime convertToLocalTime(const QDateTime& when, const QTime& utcTime)
+static QTime convert_to_local_time(const QDateTime& when, const QTime& utcTime)
 {
     const QTimeZone timeZone = QTimeZone::systemTimeZone();
     const int utcOffset = timeZone.offsetFromUtc(when);
@@ -41,7 +41,7 @@ static QTime convertToLocalTime(const QDateTime& when, const QTime& utcTime)
 }
 
 QPair<QDateTime, QDateTime>
-calculateSunTimings(const QDateTime& dateTime, double latitude, double longitude, bool morning)
+calculate_sun_timings(const QDateTime& dateTime, double latitude, double longitude, bool at_morning)
 {
     // calculations based on https://aa.quae.nl/en/reken/zonpositie.html
     // accuracy: +/- 5min
@@ -134,7 +134,7 @@ calculateSunTimings(const QDateTime& dateTime, double latitude, double longitude
     const double juNoon = getTransit(juPrompt);
 
     double begin, end;
-    if (morning) {
+    if (at_morning) {
         begin = getSunMorning(TWILIGHT_CIVIL, juNoon);
         end = getSunMorning(SUN_HIGH, juNoon);
     } else {
@@ -151,14 +151,14 @@ calculateSunTimings(const QDateTime& dateTime, double latitude, double longitude
     if (!std::isnan(begin)) {
         const double dayFraction = begin - int(begin);
         const QTime utcTime = QTime::fromMSecsSinceStartOfDay(dayFraction * MSC_DAY);
-        const QTime localTime = convertToLocalTime(dateTime, utcTime);
+        const QTime localTime = convert_to_local_time(dateTime, utcTime);
         dateTimeBegin = QDateTime(dateTime.date(), localTime);
     }
 
     if (!std::isnan(end)) {
         const double dayFraction = end - int(end);
         const QTime utcTime = QTime::fromMSecsSinceStartOfDay(dayFraction * MSC_DAY);
-        const QTime localTime = convertToLocalTime(dateTime, utcTime);
+        const QTime localTime = convert_to_local_time(dateTime, utcTime);
         dateTimeEnd = QDateTime(dateTime.date(), localTime);
     }
 

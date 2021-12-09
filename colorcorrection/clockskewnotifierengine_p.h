@@ -34,7 +34,7 @@ protected:
     ClockSkewNotifierEngine() = default;
 
 Q_SIGNALS:
-    void clockSkewed();
+    void skewed();
 };
 
 }

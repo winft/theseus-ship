@@ -59,7 +59,7 @@ LinuxClockSkewNotifierEngine::LinuxClockSkewNotifierEngine(int fd)
     connect(notifier,
             &QSocketNotifier::activated,
             this,
-            &LinuxClockSkewNotifierEngine::handleTimerCancelled);
+            &LinuxClockSkewNotifierEngine::handle_timer_cancelled);
 }
 
 LinuxClockSkewNotifierEngine::~LinuxClockSkewNotifierEngine()
@@ -67,12 +67,12 @@ LinuxClockSkewNotifierEngine::~LinuxClockSkewNotifierEngine()
     close(m_fd);
 }
 
-void LinuxClockSkewNotifierEngine::handleTimerCancelled()
+void LinuxClockSkewNotifierEngine::handle_timer_cancelled()
 {
     uint64_t expirationCount;
     read(m_fd, &expirationCount, sizeof(expirationCount));
 
-    Q_EMIT clockSkewed();
+    Q_EMIT skewed();
 }
 
 }

@@ -20,26 +20,24 @@
 namespace KWin
 {
 
-void ClockSkewNotifier::loadNotifierEngine()
+void ClockSkewNotifier::load_engine()
 {
     engine = ClockSkewNotifierEngine::create();
 
     if (engine) {
-        QObject::connect(engine.get(),
-                         &ClockSkewNotifierEngine::clockSkewed,
-                         this,
-                         &ClockSkewNotifier::clockSkewed);
+        QObject::connect(
+            engine.get(), &ClockSkewNotifierEngine::skewed, this, &ClockSkewNotifier::skewed);
     }
 }
 
-void ClockSkewNotifier::unloadNotifierEngine()
+void ClockSkewNotifier::unload_engine()
 {
     if (!engine) {
         return;
     }
 
     QObject::disconnect(
-        engine.get(), &ClockSkewNotifierEngine::clockSkewed, this, &ClockSkewNotifier::clockSkewed);
+        engine.get(), &ClockSkewNotifierEngine::skewed, this, &ClockSkewNotifier::skewed);
     engine->deleteLater();
 
     engine = nullptr;
@@ -54,9 +52,9 @@ void ClockSkewNotifier::set_active(bool set)
     is_active = set;
 
     if (is_active) {
-        loadNotifierEngine();
+        load_engine();
     } else {
-        unloadNotifierEngine();
+        unload_engine();
     }
 }
 

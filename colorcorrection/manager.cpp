@@ -61,14 +61,14 @@ Manager::Manager(QObject* parent)
     connect(kwinApp(), &Application::startup_finished, this, &Manager::init);
 
     // Display a message when Night Color is (un)inhibited.
-    connect(this, &Manager::inhibitedChanged, this, [this] {
+    connect(this, &Manager::inhibited_changed, this, [this] {
         // TODO: Maybe use different icons?
-        const QString iconName = isInhibited()
+        const QString iconName = is_inhibited()
             ? QStringLiteral("preferences-desktop-display-nightcolor-off")
             : QStringLiteral("preferences-desktop-display-nightcolor-on");
 
-        const QString text = isInhibited() ? i18nc("Night Color was disabled", "Night Color Off")
-                                           : i18nc("Night Color was enabled", "Night Color On");
+        const QString text = is_inhibited() ? i18nc("Night Color was disabled", "Night Color Off")
+                                            : i18nc("Night Color was enabled", "Night Color On");
 
         QDBusMessage message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
                                                               QStringLiteral("/org/kde/osdService"),
@@ -84,29 +84,29 @@ void Manager::init()
 {
     Settings::instance(kwinApp()->config());
 
-    m_configWatcher = KConfigWatcher::create(kwinApp()->config());
+    config_watcher = KConfigWatcher::create(kwinApp()->config());
     QObject::connect(
-        m_configWatcher.data(), &KConfigWatcher::configChanged, this, &Manager::reconfigure);
+        config_watcher.data(), &KConfigWatcher::configChanged, this, &Manager::reconfigure);
 
     // we may always read in the current config
-    readConfig();
+    read_config();
 
-    if (!isAvailable()) {
+    if (!is_available()) {
         return;
     }
 
-    connect(&kwinApp()->get_base().screens, &Screens::countChanged, this, &Manager::hardReset);
+    connect(&kwinApp()->get_base().screens, &Screens::countChanged, this, &Manager::hard_reset);
 
     connect(
         kwinApp()->session.get(), &seat::session::sessionActiveChanged, this, [this](bool active) {
             if (active) {
-                hardReset();
+                hard_reset();
             } else {
-                cancelAllTimers();
+                cancel_all_timers();
             }
         });
 
-    connect(clock_skew_notifier.get(), &ClockSkewNotifier::clockSkewed, this, [this]() {
+    connect(clock_skew_notifier.get(), &ClockSkewNotifier::skewed, this, [this]() {
         // check if we're resuming from suspend - in this case do a hard reset
         // Note: We're using the time clock to detect a suspend phase instead of connecting to the
         //       provided logind dbus signal, because this signal would be received way too late.
@@ -129,92 +129,92 @@ void Manager::init()
         }
 
         if (comingFromSuspend) {
-            hardReset();
+            hard_reset();
         } else {
-            resetAllTimers();
+            reset_all_timers();
         }
     });
 
-    hardReset();
+    hard_reset();
 }
 
-void Manager::hardReset()
+void Manager::hard_reset()
 {
-    cancelAllTimers();
+    cancel_all_timers();
 
-    updateTransitionTimings(true);
-    updateTargetTemperature();
+    update_transition_timings(true);
+    update_target_temperature();
 
-    if (isAvailable() && isEnabled() && !isInhibited()) {
-        setRunning(true);
-        commitGammaRamps(currentTargetTemp());
+    if (is_available() && is_enabled() && !is_inhibited()) {
+        set_running(true);
+        commit_gamma_ramps(current_target_temp());
     }
-    resetAllTimers();
+    reset_all_timers();
 }
 
 void Manager::reconfigure()
 {
-    cancelAllTimers();
-    readConfig();
-    resetAllTimers();
+    cancel_all_timers();
+    read_config();
+    reset_all_timers();
 }
 
 void Manager::toggle()
 {
-    m_isGloballyInhibited = !m_isGloballyInhibited;
-    m_isGloballyInhibited ? inhibit() : uninhibit();
+    is_globally_inhibited = !is_globally_inhibited;
+    is_globally_inhibited ? inhibit() : uninhibit();
 }
 
-bool Manager::isInhibited() const
+bool Manager::is_inhibited() const
 {
-    return m_inhibitReferenceCount;
+    return inhibit_reference_count;
 }
 
 void Manager::inhibit()
 {
-    m_inhibitReferenceCount++;
+    inhibit_reference_count++;
 
-    if (m_inhibitReferenceCount == 1) {
-        resetAllTimers();
-        Q_EMIT inhibitedChanged();
+    if (inhibit_reference_count == 1) {
+        reset_all_timers();
+        Q_EMIT inhibited_changed();
     }
 }
 
 void Manager::uninhibit()
 {
-    m_inhibitReferenceCount--;
+    inhibit_reference_count--;
 
-    if (!m_inhibitReferenceCount) {
-        resetAllTimers();
-        Q_EMIT inhibitedChanged();
+    if (!inhibit_reference_count) {
+        reset_all_timers();
+        Q_EMIT inhibited_changed();
     }
 }
 
-bool Manager::isEnabled() const
+bool Manager::is_enabled() const
 {
-    return m_active;
+    return enabled;
 }
 
-bool Manager::isRunning() const
+bool Manager::is_running() const
 {
     return m_running;
 }
 
-bool Manager::isAvailable() const
+bool Manager::is_available() const
 {
     // TODO(romangg): That depended in the past on the hardware backend in use. But right now all
     //                backends support gamma control. We might remove this in the future.
     return true;
 }
 
-int Manager::currentTemperature() const
+int Manager::current_temperature() const
 {
-    return m_currentTemp;
+    return current_temp;
 }
 
-int Manager::targetTemperature() const
+int Manager::get_target_temperature() const
 {
-    return m_targetTemperature;
+    return target_temp;
 }
 
 NightColorMode Manager::mode() const
@@ -222,27 +222,27 @@ NightColorMode Manager::mode() const
     return m_mode;
 }
 
-QDateTime Manager::previousTransitionDateTime() const
+QDateTime Manager::previous_transition_date_time() const
 {
-    return m_prev.first;
+    return prev_transition.first;
 }
 
-qint64 Manager::previousTransitionDuration() const
+qint64 Manager::previous_transition_duration() const
 {
-    return m_prev.first.msecsTo(m_prev.second);
+    return prev_transition.first.msecsTo(prev_transition.second);
 }
 
-QDateTime Manager::scheduledTransitionDateTime() const
+QDateTime Manager::scheduled_transition_date_time() const
 {
-    return m_next.first;
+    return next_transition.first;
 }
 
-qint64 Manager::scheduledTransitionDuration() const
+qint64 Manager::scheduled_transition_duration() const
 {
-    return m_next.first.msecsTo(m_next.second);
+    return next_transition.first.msecsTo(next_transition.second);
 }
 
-void Manager::initShortcuts()
+void Manager::init_shortcuts()
 {
     // legacy shortcut with localized key (to avoid breaking existing config)
     if (i18n("Toggle Night Color") != QStringLiteral("Toggle Night Color")) {
@@ -261,12 +261,12 @@ void Manager::initShortcuts()
         QKeySequence(), toggleAction, this, &Manager::toggle);
 }
 
-void Manager::readConfig()
+void Manager::read_config()
 {
     Settings* s = Settings::self();
     s->load();
 
-    setEnabled(s->active());
+    set_enabled(s->active());
 
     const NightColorMode mode = s->mode();
     switch (s->mode()) {
@@ -274,15 +274,15 @@ void Manager::readConfig()
     case NightColorMode::Location:
     case NightColorMode::Timings:
     case NightColorMode::Constant:
-        setMode(mode);
+        set_mode(mode);
         break;
     default:
         // Fallback for invalid setting values.
-        setMode(NightColorMode::Automatic);
+        set_mode(NightColorMode::Automatic);
         break;
     }
 
-    m_nightTargetTemp = qBound(MIN_TEMPERATURE, s->nightTemperature(), NEUTRAL_TEMPERATURE);
+    night_target_temp = qBound(MIN_TEMPERATURE, s->nightTemperature(), NEUTRAL_TEMPERATURE);
 
     double lat, lng;
     auto correctReadin = [&lat, &lng]() {
@@ -296,14 +296,14 @@ void Manager::readConfig()
     lat = s->latitudeAuto();
     lng = s->longitudeAuto();
     correctReadin();
-    m_latAuto = lat;
-    m_lngAuto = lng;
+    lat_auto = lat;
+    lng_auto = lng;
     // fixed location
     lat = s->latitudeFixed();
     lng = s->longitudeFixed();
     correctReadin();
-    m_latFixed = lat;
-    m_lngFixed = lng;
+    lat_fixed = lat;
+    lng_fixed = lng;
 
     // fixed timings
     QTime mrB = QTime::fromString(s->morningBeginFixed(), "hhmm");
@@ -325,88 +325,88 @@ void Manager::readConfig()
         evB = QTime(18, 0);
         trTime = FALLBACK_SLOW_UPDATE_TIME;
     }
-    m_morning = mrB;
-    m_evening = evB;
-    m_trTime = qMax(trTime / 1000 / 60, 1);
+    morning_time = mrB;
+    evening_time = evB;
+    transition_time = qMax(trTime / 1000 / 60, 1);
 }
 
-void Manager::resetAllTimers()
+void Manager::reset_all_timers()
 {
-    cancelAllTimers();
-    if (isAvailable()) {
-        setRunning(isEnabled() && !isInhibited());
+    cancel_all_timers();
+    if (is_available()) {
+        set_running(is_enabled() && !is_inhibited());
         // we do this also for active being false in order to reset the temperature back to the day
         // value
-        resetQuickAdjustTimer();
+        reset_quick_adjust_timer();
     } else {
-        setRunning(false);
+        set_running(false);
     }
 }
 
-void Manager::cancelAllTimers()
+void Manager::cancel_all_timers()
 {
-    delete m_slowUpdateStartTimer;
-    delete m_slowUpdateTimer;
-    delete m_quickAdjustTimer;
+    delete slow_update_start_timer;
+    delete slow_update_timer;
+    delete quick_adjust_timer;
 
-    m_slowUpdateStartTimer = nullptr;
-    m_slowUpdateTimer = nullptr;
-    m_quickAdjustTimer = nullptr;
+    slow_update_start_timer = nullptr;
+    slow_update_timer = nullptr;
+    quick_adjust_timer = nullptr;
 }
 
-void Manager::resetQuickAdjustTimer()
+void Manager::reset_quick_adjust_timer()
 {
-    updateTransitionTimings(false);
-    updateTargetTemperature();
+    update_transition_timings(false);
+    update_target_temperature();
 
-    int tempDiff = qAbs(currentTargetTemp() - m_currentTemp);
+    int tempDiff = qAbs(current_target_temp() - current_temp);
     // allow tolerance of one TEMPERATURE_STEP to compensate if a slow update is coincidental
     if (tempDiff > TEMPERATURE_STEP) {
-        cancelAllTimers();
-        m_quickAdjustTimer = new QTimer(this);
-        m_quickAdjustTimer->setSingleShot(false);
-        connect(m_quickAdjustTimer, &QTimer::timeout, this, &Manager::quickAdjust);
+        cancel_all_timers();
+        quick_adjust_timer = new QTimer(this);
+        quick_adjust_timer->setSingleShot(false);
+        connect(quick_adjust_timer, &QTimer::timeout, this, &Manager::quick_adjust);
 
         int interval = QUICK_ADJUST_DURATION / (tempDiff / TEMPERATURE_STEP);
         if (interval == 0) {
             interval = 1;
         }
-        m_quickAdjustTimer->start(interval);
+        quick_adjust_timer->start(interval);
     } else {
-        resetSlowUpdateStartTimer();
+        reset_slow_update_start_timer();
     }
 }
 
-void Manager::quickAdjust()
+void Manager::quick_adjust()
 {
-    if (!m_quickAdjustTimer) {
+    if (!quick_adjust_timer) {
         return;
     }
 
     int nextTemp;
-    const int targetTemp = currentTargetTemp();
+    auto const targetTemp = current_target_temp();
 
-    if (m_currentTemp < targetTemp) {
-        nextTemp = qMin(m_currentTemp + TEMPERATURE_STEP, targetTemp);
+    if (current_temp < targetTemp) {
+        nextTemp = qMin(current_temp + TEMPERATURE_STEP, targetTemp);
     } else {
-        nextTemp = qMax(m_currentTemp - TEMPERATURE_STEP, targetTemp);
+        nextTemp = qMax(current_temp - TEMPERATURE_STEP, targetTemp);
     }
-    commitGammaRamps(nextTemp);
+    commit_gamma_ramps(nextTemp);
 
     if (nextTemp == targetTemp) {
         // stop timer, we reached the target temp
-        delete m_quickAdjustTimer;
-        m_quickAdjustTimer = nullptr;
-        resetSlowUpdateStartTimer();
+        delete quick_adjust_timer;
+        quick_adjust_timer = nullptr;
+        reset_slow_update_start_timer();
     }
 }
 
-void Manager::resetSlowUpdateStartTimer()
+void Manager::reset_slow_update_start_timer()
 {
-    delete m_slowUpdateStartTimer;
-    m_slowUpdateStartTimer = nullptr;
+    delete slow_update_start_timer;
+    slow_update_start_timer = nullptr;
 
-    if (!m_running || m_quickAdjustTimer) {
+    if (!m_running || quick_adjust_timer) {
         // only reenable the slow update start timer when quick adjust is not active anymore
         return;
     }
@@ -418,178 +418,179 @@ void Manager::resetSlowUpdateStartTimer()
     }
 
     // set up the next slow update
-    m_slowUpdateStartTimer = new QTimer(this);
-    m_slowUpdateStartTimer->setSingleShot(true);
-    connect(m_slowUpdateStartTimer, &QTimer::timeout, this, &Manager::resetSlowUpdateStartTimer);
+    slow_update_start_timer = new QTimer(this);
+    slow_update_start_timer->setSingleShot(true);
+    connect(
+        slow_update_start_timer, &QTimer::timeout, this, &Manager::reset_slow_update_start_timer);
 
-    updateTransitionTimings(false);
-    updateTargetTemperature();
+    update_transition_timings(false);
+    update_target_temperature();
 
-    const int diff = QDateTime::currentDateTime().msecsTo(m_next.first);
+    const int diff = QDateTime::currentDateTime().msecsTo(next_transition.first);
     if (diff <= 0) {
         qCCritical(KWIN_COLORCORRECTION) << "Error in time calculation. Deactivating Night Color.";
         return;
     }
-    m_slowUpdateStartTimer->start(diff);
+    slow_update_start_timer->start(diff);
 
     // start the current slow update
-    resetSlowUpdateTimer();
+    reset_slow_update_timer();
 }
 
-void Manager::resetSlowUpdateTimer()
+void Manager::reset_slow_update_timer()
 {
-    delete m_slowUpdateTimer;
-    m_slowUpdateTimer = nullptr;
+    delete slow_update_timer;
+    slow_update_timer = nullptr;
 
     const QDateTime now = QDateTime::currentDateTime();
     const bool isDay = daylight();
-    const int targetTemp = isDay ? m_dayTargetTemp : m_nightTargetTemp;
+    const int targetTemp = isDay ? day_target_temp : night_target_temp;
 
     // We've reached the target color temperature or the transition time is zero.
-    if (m_prev.first == m_prev.second || m_currentTemp == targetTemp) {
-        commitGammaRamps(targetTemp);
+    if (prev_transition.first == prev_transition.second || current_temp == targetTemp) {
+        commit_gamma_ramps(targetTemp);
         return;
     }
 
-    if (m_prev.first <= now && now <= m_prev.second) {
-        int availTime = now.msecsTo(m_prev.second);
-        m_slowUpdateTimer = new QTimer(this);
-        m_slowUpdateTimer->setSingleShot(false);
+    if (prev_transition.first <= now && now <= prev_transition.second) {
+        int availTime = now.msecsTo(prev_transition.second);
+        slow_update_timer = new QTimer(this);
+        slow_update_timer->setSingleShot(false);
         if (isDay) {
-            connect(m_slowUpdateTimer, &QTimer::timeout, this, [this]() {
-                slowUpdate(m_dayTargetTemp);
+            connect(slow_update_timer, &QTimer::timeout, this, [this]() {
+                slow_update(day_target_temp);
             });
         } else {
-            connect(m_slowUpdateTimer, &QTimer::timeout, this, [this]() {
-                slowUpdate(m_nightTargetTemp);
+            connect(slow_update_timer, &QTimer::timeout, this, [this]() {
+                slow_update(night_target_temp);
             });
         }
 
         // calculate interval such as temperature is changed by TEMPERATURE_STEP K per timer timeout
-        int interval = availTime * TEMPERATURE_STEP / qAbs(targetTemp - m_currentTemp);
+        int interval = availTime * TEMPERATURE_STEP / qAbs(targetTemp - current_temp);
         if (interval == 0) {
             interval = 1;
         }
-        m_slowUpdateTimer->start(interval);
+        slow_update_timer->start(interval);
     }
 }
 
-void Manager::slowUpdate(int targetTemp)
+void Manager::slow_update(int targetTemp)
 {
-    if (!m_slowUpdateTimer) {
+    if (!slow_update_timer) {
         return;
     }
     int nextTemp;
-    if (m_currentTemp < targetTemp) {
-        nextTemp = qMin(m_currentTemp + TEMPERATURE_STEP, targetTemp);
+    if (current_temp < targetTemp) {
+        nextTemp = qMin(current_temp + TEMPERATURE_STEP, targetTemp);
     } else {
-        nextTemp = qMax(m_currentTemp - TEMPERATURE_STEP, targetTemp);
+        nextTemp = qMax(current_temp - TEMPERATURE_STEP, targetTemp);
     }
-    commitGammaRamps(nextTemp);
+    commit_gamma_ramps(nextTemp);
     if (nextTemp == targetTemp) {
         // stop timer, we reached the target temp
-        delete m_slowUpdateTimer;
-        m_slowUpdateTimer = nullptr;
+        delete slow_update_timer;
+        slow_update_timer = nullptr;
     }
 }
 
-void Manager::updateTargetTemperature()
+void Manager::update_target_temperature()
 {
     const int targetTemperature
-        = mode() != NightColorMode::Constant && daylight() ? m_dayTargetTemp : m_nightTargetTemp;
+        = mode() != NightColorMode::Constant && daylight() ? day_target_temp : night_target_temp;
 
-    if (m_targetTemperature == targetTemperature) {
+    if (target_temp == targetTemperature) {
         return;
     }
 
-    m_targetTemperature = targetTemperature;
+    target_temp = targetTemperature;
 
-    Q_EMIT targetTemperatureChanged();
+    Q_EMIT target_temperature_changed();
 }
 
-void Manager::updateTransitionTimings(bool force)
+void Manager::update_transition_timings(bool force)
 {
     if (m_mode == NightColorMode::Constant) {
-        m_next = DateTimes();
-        m_prev = DateTimes();
-        Q_EMIT previousTransitionTimingsChanged();
-        Q_EMIT scheduledTransitionTimingsChanged();
+        next_transition = DateTimes();
+        prev_transition = DateTimes();
+        Q_EMIT previous_transition_timings_changed();
+        Q_EMIT scheduled_transition_timings_changed();
         return;
     }
 
     const QDateTime todayNow = QDateTime::currentDateTime();
 
     if (m_mode == NightColorMode::Timings) {
-        const QDateTime morB = QDateTime(todayNow.date(), m_morning);
-        const QDateTime morE = morB.addSecs(m_trTime * 60);
-        const QDateTime eveB = QDateTime(todayNow.date(), m_evening);
-        const QDateTime eveE = eveB.addSecs(m_trTime * 60);
+        const QDateTime morB = QDateTime(todayNow.date(), morning_time);
+        const QDateTime morE = morB.addSecs(transition_time * 60);
+        const QDateTime eveB = QDateTime(todayNow.date(), evening_time);
+        const QDateTime eveE = eveB.addSecs(transition_time * 60);
 
         if (morB <= todayNow && todayNow < eveB) {
-            m_next = DateTimes(eveB, eveE);
-            m_prev = DateTimes(morB, morE);
+            next_transition = DateTimes(eveB, eveE);
+            prev_transition = DateTimes(morB, morE);
         } else if (todayNow < morB) {
-            m_next = DateTimes(morB, morE);
-            m_prev = DateTimes(eveB.addDays(-1), eveE.addDays(-1));
+            next_transition = DateTimes(morB, morE);
+            prev_transition = DateTimes(eveB.addDays(-1), eveE.addDays(-1));
         } else {
-            m_next = DateTimes(morB.addDays(1), morE.addDays(1));
-            m_prev = DateTimes(eveB, eveE);
+            next_transition = DateTimes(morB.addDays(1), morE.addDays(1));
+            prev_transition = DateTimes(eveB, eveE);
         }
-        Q_EMIT previousTransitionTimingsChanged();
-        Q_EMIT scheduledTransitionTimingsChanged();
+        Q_EMIT previous_transition_timings_changed();
+        Q_EMIT scheduled_transition_timings_changed();
         return;
     }
 
     double lat, lng;
     if (m_mode == NightColorMode::Automatic) {
-        lat = m_latAuto;
-        lng = m_lngAuto;
+        lat = lat_auto;
+        lng = lng_auto;
     } else {
-        lat = m_latFixed;
-        lng = m_lngFixed;
+        lat = lat_fixed;
+        lng = lng_fixed;
     }
 
     if (!force) {
         // first try by only switching the timings
         if (daylight()) {
             // next is morning
-            m_prev = m_next;
-            m_next = getSunTimings(todayNow.addDays(1), lat, lng, true);
+            prev_transition = next_transition;
+            next_transition = get_sun_timings(todayNow.addDays(1), lat, lng, true);
         } else {
             // next is evening
-            m_prev = m_next;
-            m_next = getSunTimings(todayNow, lat, lng, false);
+            prev_transition = next_transition;
+            next_transition = get_sun_timings(todayNow, lat, lng, false);
         }
     }
 
-    if (force || !checkAutomaticSunTimings()) {
+    if (force || !check_automatic_sun_timings()) {
         // in case this fails, reset them
-        DateTimes morning = getSunTimings(todayNow, lat, lng, true);
+        DateTimes morning = get_sun_timings(todayNow, lat, lng, true);
         if (todayNow < morning.first) {
-            m_prev = getSunTimings(todayNow.addDays(-1), lat, lng, false);
-            m_next = morning;
+            prev_transition = get_sun_timings(todayNow.addDays(-1), lat, lng, false);
+            next_transition = morning;
         } else {
-            DateTimes evening = getSunTimings(todayNow, lat, lng, false);
+            DateTimes evening = get_sun_timings(todayNow, lat, lng, false);
             if (todayNow < evening.first) {
-                m_prev = morning;
-                m_next = evening;
+                prev_transition = morning;
+                next_transition = evening;
             } else {
-                m_prev = evening;
-                m_next = getSunTimings(todayNow.addDays(1), lat, lng, true);
+                prev_transition = evening;
+                next_transition = get_sun_timings(todayNow.addDays(1), lat, lng, true);
             }
         }
     }
 
-    Q_EMIT previousTransitionTimingsChanged();
-    Q_EMIT scheduledTransitionTimingsChanged();
+    Q_EMIT previous_transition_timings_changed();
+    Q_EMIT scheduled_transition_timings_changed();
 }
 
-DateTimes Manager::getSunTimings(const QDateTime& dateTime,
-                                 double latitude,
-                                 double longitude,
-                                 bool morning) const
+DateTimes Manager::get_sun_timings(const QDateTime& dateTime,
+                                   double latitude,
+                                   double longitude,
+                                   bool at_morning) const
 {
-    DateTimes dateTimes = calculateSunTimings(dateTime, latitude, longitude, morning);
+    auto dateTimes = calculate_sun_timings(dateTime, latitude, longitude, at_morning);
     // At locations near the poles it is possible, that we can't
     // calculate some or all sun timings (midnight sun).
     // In this case try to fallback to sensible default values.
@@ -604,7 +605,7 @@ DateTimes Manager::getSunTimings(const QDateTime& dateTime,
             // Just use default values for morning and evening, but the user
             // will probably deactivate Night Color anyway if he is living
             // in a region without clear sun rise and set.
-            const QTime referenceTime = morning ? QTime(6, 0) : QTime(18, 0);
+            const QTime referenceTime = at_morning ? QTime(6, 0) : QTime(18, 0);
             dateTimes.first = QDateTime(dateTime.date(), referenceTime);
             dateTimes.second = dateTimes.first.addMSecs(FALLBACK_SLOW_UPDATE_TIME);
         }
@@ -612,38 +613,38 @@ DateTimes Manager::getSunTimings(const QDateTime& dateTime,
     return dateTimes;
 }
 
-bool Manager::checkAutomaticSunTimings() const
+bool Manager::check_automatic_sun_timings() const
 {
-    if (m_prev.first.isValid() && m_prev.second.isValid() && m_next.first.isValid()
-        && m_next.second.isValid()) {
+    if (prev_transition.first.isValid() && prev_transition.second.isValid()
+        && next_transition.first.isValid() && next_transition.second.isValid()) {
         const QDateTime todayNow = QDateTime::currentDateTime();
-        return m_prev.first <= todayNow && todayNow < m_next.first
-            && m_prev.first.msecsTo(m_next.first) < MSC_DAY * 23. / 24;
+        return prev_transition.first <= todayNow && todayNow < next_transition.first
+            && prev_transition.first.msecsTo(next_transition.first) < MSC_DAY * 23. / 24;
     }
     return false;
 }
 
 bool Manager::daylight() const
 {
-    return m_prev.first.date() == m_next.first.date();
+    return prev_transition.first.date() == next_transition.first.date();
 }
 
-int Manager::currentTargetTemp() const
+int Manager::current_target_temp() const
 {
     if (!m_running) {
         return NEUTRAL_TEMPERATURE;
     }
 
     if (m_mode == NightColorMode::Constant) {
-        return m_nightTargetTemp;
+        return night_target_temp;
     }
 
     const QDateTime todayNow = QDateTime::currentDateTime();
 
     auto f = [this, todayNow](int target1, int target2) {
-        if (todayNow <= m_prev.second) {
-            double residueQuota
-                = todayNow.msecsTo(m_prev.second) / (double)m_prev.first.msecsTo(m_prev.second);
+        if (todayNow <= prev_transition.second) {
+            double residueQuota = todayNow.msecsTo(prev_transition.second)
+                / (double)prev_transition.first.msecsTo(prev_transition.second);
 
             double ret
                 = (int)((1. - residueQuota) * (double)target2 + residueQuota * (double)target1);
@@ -656,13 +657,13 @@ int Manager::currentTargetTemp() const
     };
 
     if (daylight()) {
-        return f(m_nightTargetTemp, m_dayTargetTemp);
+        return f(night_target_temp, day_target_temp);
     } else {
-        return f(m_dayTargetTemp, m_nightTargetTemp);
+        return f(day_target_temp, night_target_temp);
     }
 }
 
-void Manager::commitGammaRamps(int temperature)
+void Manager::commit_gamma_ramps(int temperature)
 {
     const auto outs = kwinApp()->platform->outputs();
 
@@ -704,29 +705,29 @@ void Manager::commitGammaRamps(int temperature)
         }
 
         if (o->set_gamma_ramp(ramp)) {
-            setCurrentTemperature(temperature);
-            m_failedCommitAttempts = 0;
+            set_current_temperature(temperature);
+            failed_commit_attempts = 0;
         } else {
-            m_failedCommitAttempts++;
-            if (m_failedCommitAttempts < 10) {
+            failed_commit_attempts++;
+            if (failed_commit_attempts < 10) {
                 qCWarning(KWIN_COLORCORRECTION).nospace()
                     << "Committing Gamma Ramp failed for output " << o->name() << ". Trying "
-                    << (10 - m_failedCommitAttempts) << " times more.";
+                    << (10 - failed_commit_attempts) << " times more.";
             } else {
                 // TODO: On multi monitor setups we could try to rollback earlier changes for
                 // already committed outputs
                 qCWarning(KWIN_COLORCORRECTION)
                     << "Gamma Ramp commit failed too often. Deactivating color correction for now.";
-                m_failedCommitAttempts = 0; // reset so we can try again later (i.e. after suspend
+                failed_commit_attempts = 0; // reset so we can try again later (i.e. after suspend
                                             // phase or config change)
-                setRunning(false);
-                cancelAllTimers();
+                set_running(false);
+                cancel_all_timers();
             }
         }
     }
 }
 
-void Manager::autoLocationUpdate(double latitude, double longitude)
+void Manager::auto_location_update(double latitude, double longitude)
 {
     qCDebug(KWIN_COLORCORRECTION, "Received new location (lat: %f, lng: %f)", latitude, longitude);
 
@@ -735,32 +736,32 @@ void Manager::autoLocationUpdate(double latitude, double longitude)
     }
 
     // we tolerate small deviations with minimal impact on sun timings
-    if (qAbs(m_latAuto - latitude) < 2 && qAbs(m_lngAuto - longitude) < 1) {
+    if (qAbs(lat_auto - latitude) < 2 && qAbs(lng_auto - longitude) < 1) {
         return;
     }
-    cancelAllTimers();
-    m_latAuto = latitude;
-    m_lngAuto = longitude;
+    cancel_all_timers();
+    lat_auto = latitude;
+    lng_auto = longitude;
 
     Settings* s = Settings::self();
     s->setLatitudeAuto(latitude);
     s->setLongitudeAuto(longitude);
     s->save();
 
-    resetAllTimers();
+    reset_all_timers();
 }
 
-void Manager::setEnabled(bool enabled)
+void Manager::set_enabled(bool enable)
 {
-    if (m_active == enabled) {
+    if (enabled == enable) {
         return;
     }
-    m_active = enabled;
+    enabled = enable;
     clock_skew_notifier->set_active(enabled);
-    Q_EMIT enabledChanged();
+    Q_EMIT enabled_changed();
 }
 
-void Manager::setRunning(bool running)
+void Manager::set_running(bool running)
 {
     if (m_running == running) {
         return;
@@ -769,22 +770,22 @@ void Manager::setRunning(bool running)
     Q_EMIT runningChanged();
 }
 
-void Manager::setCurrentTemperature(int temperature)
+void Manager::set_current_temperature(int temperature)
 {
-    if (m_currentTemp == temperature) {
+    if (current_temp == temperature) {
         return;
     }
-    m_currentTemp = temperature;
-    Q_EMIT currentTemperatureChanged();
+    current_temp = temperature;
+    Q_EMIT current_temperature_changed();
 }
 
-void Manager::setMode(NightColorMode mode)
+void Manager::set_mode(NightColorMode mode)
 {
     if (m_mode == mode) {
         return;
     }
     m_mode = mode;
-    Q_EMIT modeChanged();
+    Q_EMIT mode_changed();
 }
 
 }

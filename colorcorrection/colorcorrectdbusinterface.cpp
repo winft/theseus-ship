@@ -39,9 +39,9 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
             this,
             &ColorCorrectDBusInterface::removeInhibitorService);
 
-    connect(m_manager, &Manager::inhibitedChanged, this, [this] {
+    connect(m_manager, &Manager::inhibited_changed, this, [this] {
         QVariantMap changedProperties;
-        changedProperties.insert(QStringLiteral("inhibited"), m_manager->isInhibited());
+        changedProperties.insert(QStringLiteral("inhibited"), m_manager->is_inhibited());
 
         QDBusMessage message
             = QDBusMessage::createSignal(QStringLiteral("/ColorCorrect"),
@@ -57,9 +57,9 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::enabledChanged, this, [this] {
+    connect(m_manager, &Manager::enabled_changed, this, [this] {
         QVariantMap changedProperties;
-        changedProperties.insert(QStringLiteral("enabled"), m_manager->isEnabled());
+        changedProperties.insert(QStringLiteral("enabled"), m_manager->is_enabled());
 
         QDBusMessage message
             = QDBusMessage::createSignal(QStringLiteral("/ColorCorrect"),
@@ -77,7 +77,7 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
 
     connect(m_manager, &Manager::runningChanged, this, [this] {
         QVariantMap changedProperties;
-        changedProperties.insert(QStringLiteral("running"), m_manager->isRunning());
+        changedProperties.insert(QStringLiteral("running"), m_manager->is_running());
 
         QDBusMessage message
             = QDBusMessage::createSignal(QStringLiteral("/ColorCorrect"),
@@ -93,10 +93,10 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::currentTemperatureChanged, this, [this] {
+    connect(m_manager, &Manager::current_temperature_changed, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("currentTemperature"),
-                                 m_manager->currentTemperature());
+                                 m_manager->current_temperature());
 
         QDBusMessage message
             = QDBusMessage::createSignal(QStringLiteral("/ColorCorrect"),
@@ -112,10 +112,10 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::targetTemperatureChanged, this, [this] {
+    connect(m_manager, &Manager::target_temperature_changed, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("targetTemperature"),
-                                 m_manager->targetTemperature());
+                                 m_manager->get_target_temperature());
 
         QDBusMessage message
             = QDBusMessage::createSignal(QStringLiteral("/ColorCorrect"),
@@ -131,7 +131,7 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::modeChanged, this, [this] {
+    connect(m_manager, &Manager::mode_changed, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("mode"), uint(m_manager->mode()));
 
@@ -149,7 +149,7 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::previousTransitionTimingsChanged, this, [this] {
+    connect(m_manager, &Manager::previous_transition_timings_changed, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("previousTransitionDateTime"),
                                  previousTransitionDateTime());
@@ -170,7 +170,7 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::scheduledTransitionTimingsChanged, this, [this] {
+    connect(m_manager, &Manager::scheduled_transition_timings_changed, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("scheduledTransitionDateTime"),
                                  scheduledTransitionDateTime());
@@ -197,32 +197,32 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
 
 bool ColorCorrectDBusInterface::isInhibited() const
 {
-    return m_manager->isInhibited();
+    return m_manager->is_inhibited();
 }
 
 bool ColorCorrectDBusInterface::isEnabled() const
 {
-    return m_manager->isEnabled();
+    return m_manager->is_enabled();
 }
 
 bool ColorCorrectDBusInterface::isRunning() const
 {
-    return m_manager->isRunning();
+    return m_manager->is_running();
 }
 
 bool ColorCorrectDBusInterface::isAvailable() const
 {
-    return m_manager->isAvailable();
+    return m_manager->is_available();
 }
 
 int ColorCorrectDBusInterface::currentTemperature() const
 {
-    return m_manager->currentTemperature();
+    return m_manager->current_temperature();
 }
 
 int ColorCorrectDBusInterface::targetTemperature() const
 {
-    return m_manager->targetTemperature();
+    return m_manager->get_target_temperature();
 }
 
 int ColorCorrectDBusInterface::mode() const
@@ -232,7 +232,7 @@ int ColorCorrectDBusInterface::mode() const
 
 quint64 ColorCorrectDBusInterface::previousTransitionDateTime() const
 {
-    const QDateTime dateTime = m_manager->previousTransitionDateTime();
+    auto const dateTime = m_manager->previous_transition_date_time();
     if (dateTime.isValid()) {
         return quint64(dateTime.toSecsSinceEpoch());
     }
@@ -241,12 +241,12 @@ quint64 ColorCorrectDBusInterface::previousTransitionDateTime() const
 
 quint32 ColorCorrectDBusInterface::previousTransitionDuration() const
 {
-    return quint32(m_manager->previousTransitionDuration());
+    return quint32(m_manager->previous_transition_duration());
 }
 
 quint64 ColorCorrectDBusInterface::scheduledTransitionDateTime() const
 {
-    const QDateTime dateTime = m_manager->scheduledTransitionDateTime();
+    const QDateTime dateTime = m_manager->scheduled_transition_date_time();
     if (dateTime.isValid()) {
         return quint64(dateTime.toSecsSinceEpoch());
     }
@@ -255,12 +255,12 @@ quint64 ColorCorrectDBusInterface::scheduledTransitionDateTime() const
 
 quint32 ColorCorrectDBusInterface::scheduledTransitionDuration() const
 {
-    return quint32(m_manager->scheduledTransitionDuration());
+    return quint32(m_manager->scheduled_transition_duration());
 }
 
 void ColorCorrectDBusInterface::nightColorAutoLocationUpdate(double latitude, double longitude)
 {
-    m_manager->autoLocationUpdate(latitude, longitude);
+    m_manager->auto_location_update(latitude, longitude);
 }
 
 uint ColorCorrectDBusInterface::inhibit()

@@ -92,7 +92,7 @@ void ColorCorrectNightColorTest::testConfigRead()
     ColorCorrect::Manager* manager = kwinApp()->platform->colorCorrectManager();
     manager->reconfigure();
 
-    QCOMPARE(manager->isEnabled(), activeDefault);
+    QCOMPARE(manager->is_enabled(), activeDefault);
     QCOMPARE(manager->mode(), modeDefault);
 
     cfgGroup.writeEntry("Active", active);
@@ -101,7 +101,7 @@ void ColorCorrectNightColorTest::testConfigRead()
 
     manager->reconfigure();
 
-    QCOMPARE(manager->isEnabled(), active);
+    QCOMPARE(manager->is_enabled(), active);
     if (mode > 3 || mode < 0) {
         QCOMPARE(manager->mode(), 0);
     } else {

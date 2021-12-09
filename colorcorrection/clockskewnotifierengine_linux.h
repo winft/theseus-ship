@@ -33,7 +33,7 @@ public:
     static std::unique_ptr<LinuxClockSkewNotifierEngine> create();
 
 private Q_SLOTS:
-    void handleTimerCancelled();
+    void handle_timer_cancelled();
 
 private:
     int m_fd;

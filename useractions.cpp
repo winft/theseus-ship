@@ -999,7 +999,7 @@ DEF6(I18N_NOOP("Invert Screen Colors"),            0, kwinApp()->platform, Platf
     TabBox::TabBox::self()->initShortcuts();
 #endif
     VirtualDesktopManager::self()->initShortcuts();
-    kwinApp()->platform->colorCorrectManager()->initShortcuts();
+    kwinApp()->platform->colorCorrectManager()->init_shortcuts();
     m_userActionsMenu->discard(); // so that it's recreated next time
 }
 
