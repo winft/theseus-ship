@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTimeZone>
 #include <QtMath>
 
-namespace KWin::ColorCorrect
+namespace KWin::render::post
 {
 
 #define TWILIGHT_NAUT -12.0

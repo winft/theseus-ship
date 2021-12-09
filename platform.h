@@ -38,9 +38,6 @@ namespace base
 {
 class output;
 }
-namespace ColorCorrect {
-class Manager;
-}
 
 class Edge;
 class Screens;
@@ -58,6 +55,10 @@ namespace render
 namespace gl
 {
 class backend;
+}
+namespace post
+{
+class night_color_manager;
 }
 namespace qpainter
 {
@@ -237,7 +238,7 @@ public:
      */
     virtual QVector<CompositingType> supportedCompositors() const = 0;
 
-    ColorCorrect::Manager *colorCorrectManager() {
+    render::post::night_color_manager *colorCorrectManager() {
         return m_colorCorrect;
     }
 
@@ -288,7 +289,7 @@ private:
     EGLConfig m_eglConfig = nullptr;
     EGLContext m_context = EGL_NO_CONTEXT;
     EGLSurface m_surface = EGL_NO_SURFACE;
-    ColorCorrect::Manager *m_colorCorrect = nullptr;
+    render::post::night_color_manager *m_colorCorrect = nullptr;
     CompositingType m_selectedCompositor = NoCompositing;
 };
 

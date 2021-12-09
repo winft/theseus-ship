@@ -22,12 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QObject>
 #include <QtDBus>
 
-namespace KWin::ColorCorrect
+namespace KWin::render::post
 {
 
-class Manager;
+class night_color_manager;
 
-class ColorCorrectDBusInterface : public QObject, public QDBusContext
+class color_correct_dbus_interface : public QObject, public QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.ColorCorrect")
@@ -44,8 +44,8 @@ class ColorCorrectDBusInterface : public QObject, public QDBusContext
     Q_PROPERTY(quint32 scheduledTransitionDuration READ scheduledTransitionDuration)
 
 public:
-    explicit ColorCorrectDBusInterface(Manager* manager);
-    ~ColorCorrectDBusInterface() override = default;
+    explicit color_correct_dbus_interface(night_color_manager* manager);
+    ~color_correct_dbus_interface() override = default;
 
     bool isInhibited() const;
     bool isEnabled() const;
@@ -84,7 +84,7 @@ private Q_SLOTS:
 private:
     void uninhibit(const QString& serviceName, uint cookie);
 
-    Manager* m_manager;
+    night_color_manager* m_manager;
     QDBusServiceWatcher* m_inhibitorWatcher;
     QMultiHash<QString, uint> m_inhibitors;
     uint m_lastInhibitionCookie = 0;

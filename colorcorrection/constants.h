@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-namespace KWin::ColorCorrect
+namespace KWin::render::post
 {
 
 static const int MSC_DAY = 86400000;
@@ -36,7 +36,7 @@ static const int FALLBACK_SLOW_UPDATE_TIME = 1800000; /* 30 minutes */
  * See the following file for more information:
  * https://github.com/jonls/redshift/blob/master/README-colorramp
  */
-static const float blackbodyColor[] = {
+static const float blackbody_color[] = {
     1.00000000, 0.18172716, 0.00000000,     /* 1000K */
     1.00000000, 0.25503671, 0.00000000,     /* 1100K */
     1.00000000, 0.30942099, 0.00000000,     /* 1200K */

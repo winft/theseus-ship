@@ -42,7 +42,7 @@ namespace KWin
 Platform::Platform()
     : m_eglDisplay(EGL_NO_DISPLAY)
 {
-    m_colorCorrect = new ColorCorrect::Manager(this);
+    m_colorCorrect = new render::post::night_color_manager(this);
 }
 
 Platform::~Platform()

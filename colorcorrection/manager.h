@@ -40,40 +40,40 @@ class skew_notifier;
 
 class Workspace;
 
-namespace ColorCorrect
+namespace render::post
 {
 
 typedef QPair<QDateTime, QDateTime> DateTimes;
 typedef QPair<QTime, QTime> Times;
 
-class ColorCorrectDBusInterface;
+class color_correct_dbus_interface;
 
 /**
  * This enum type is used to specify operation mode of the night color manager.
  */
-enum NightColorMode {
+enum night_color_mode {
     /**
      * Color temperature is computed based on the current position of the Sun.
      *
      * Location of the user is provided by Plasma.
      */
-    Automatic,
+    automatic,
     /**
      * Color temperature is computed based on the current position of the Sun.
      *
      * Location of the user is provided by themselves.
      */
-    Location,
+    location,
     /**
      * Color temperature is computed based on the current time.
      *
      * Sunrise and sunset times have to be specified by the user.
      */
-    Timings,
+    timings,
     /**
      * Color temperature is constant thoughout the day.
      */
-    Constant,
+    constant,
 };
 
 /**
@@ -92,12 +92,12 @@ enum NightColorMode {
  *
  * With the Constant mode, screen color temperature is always constant.
  */
-class KWIN_EXPORT Manager : public QObject
+class KWIN_EXPORT night_color_manager : public QObject
 {
     Q_OBJECT
 
 public:
-    Manager(QObject* parent);
+    night_color_manager(QObject* parent);
     void init();
 
     void auto_location_update(double latitude, double longitude);
@@ -166,7 +166,7 @@ public:
     /**
      * Returns the mode in which Night Color is operating.
      */
-    NightColorMode mode() const;
+    night_color_mode mode() const;
 
     /**
      * Returns the datetime that specifies when the previous screen color temperature transition
@@ -271,9 +271,9 @@ private:
     void set_enabled(bool enable);
     void set_running(bool running);
     void set_current_temperature(int temperature);
-    void set_mode(NightColorMode mode);
+    void set_mode(night_color_mode mode);
 
-    std::unique_ptr<ColorCorrectDBusInterface> dbus;
+    std::unique_ptr<color_correct_dbus_interface> dbus;
     std::unique_ptr<base::os::clock::skew_notifier> clock_skew_notifier;
 
     // Specifies whether Night Color is enabled.
@@ -285,7 +285,7 @@ private:
     // Specifies whether Night Color is inhibited globally.
     bool is_globally_inhibited = false;
 
-    NightColorMode m_mode = NightColorMode::Automatic;
+    night_color_mode m_mode{night_color_mode::automatic};
 
     // the previous and next sunrise/sunset intervals - in UTC time
     DateTimes prev_transition = DateTimes();

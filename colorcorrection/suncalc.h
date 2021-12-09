@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPair>
 #include <QTime>
 
-namespace KWin::ColorCorrect
+namespace KWin::render::post
 {
 
 /**

@@ -89,7 +89,7 @@ void ColorCorrectNightColorTest::testConfigRead()
     cfgGroup.writeEntry("Mode", modeDefault);
 
     kwinApp()->config()->sync();
-    ColorCorrect::Manager* manager = kwinApp()->platform->colorCorrectManager();
+    auto manager = kwinApp()->platform->colorCorrectManager();
     manager->reconfigure();
 
     QCOMPARE(manager->is_enabled(), activeDefault);

@@ -1,5 +1,5 @@
 File=colorcorrect_settings.kcfg
-NameSpace=KWin::ColorCorrect
+NameSpace=KWin::render::post
 ClassName=Settings
 Singleton=true
 Mutators=true

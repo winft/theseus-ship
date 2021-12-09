@@ -25,10 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QDBusMessage>
 
-namespace KWin::ColorCorrect
+namespace KWin::render::post
 {
 
-ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
+color_correct_dbus_interface::color_correct_dbus_interface(night_color_manager* manager)
     : m_manager(manager)
     , m_inhibitorWatcher(new QDBusServiceWatcher(this))
 {
@@ -37,9 +37,9 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
     connect(m_inhibitorWatcher,
             &QDBusServiceWatcher::serviceUnregistered,
             this,
-            &ColorCorrectDBusInterface::removeInhibitorService);
+            &color_correct_dbus_interface::removeInhibitorService);
 
-    connect(m_manager, &Manager::inhibited_changed, this, [this] {
+    connect(m_manager, &night_color_manager::inhibited_changed, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("inhibited"), m_manager->is_inhibited());
 
@@ -57,7 +57,7 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::enabled_changed, this, [this] {
+    connect(m_manager, &night_color_manager::enabled_changed, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("enabled"), m_manager->is_enabled());
 
@@ -75,7 +75,7 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::runningChanged, this, [this] {
+    connect(m_manager, &night_color_manager::runningChanged, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("running"), m_manager->is_running());
 
@@ -93,7 +93,7 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::current_temperature_changed, this, [this] {
+    connect(m_manager, &night_color_manager::current_temperature_changed, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("currentTemperature"),
                                  m_manager->current_temperature());
@@ -112,7 +112,7 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::target_temperature_changed, this, [this] {
+    connect(m_manager, &night_color_manager::target_temperature_changed, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("targetTemperature"),
                                  m_manager->get_target_temperature());
@@ -131,7 +131,7 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::mode_changed, this, [this] {
+    connect(m_manager, &night_color_manager::mode_changed, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("mode"), uint(m_manager->mode()));
 
@@ -149,7 +149,7 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::previous_transition_timings_changed, this, [this] {
+    connect(m_manager, &night_color_manager::previous_transition_timings_changed, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("previousTransitionDateTime"),
                                  previousTransitionDateTime());
@@ -170,7 +170,7 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
         QDBusConnection::sessionBus().send(message);
     });
 
-    connect(m_manager, &Manager::scheduled_transition_timings_changed, this, [this] {
+    connect(m_manager, &night_color_manager::scheduled_transition_timings_changed, this, [this] {
         QVariantMap changedProperties;
         changedProperties.insert(QStringLiteral("scheduledTransitionDateTime"),
                                  scheduledTransitionDateTime());
@@ -195,42 +195,42 @@ ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/ColorCorrect"), this);
 }
 
-bool ColorCorrectDBusInterface::isInhibited() const
+bool color_correct_dbus_interface::isInhibited() const
 {
     return m_manager->is_inhibited();
 }
 
-bool ColorCorrectDBusInterface::isEnabled() const
+bool color_correct_dbus_interface::isEnabled() const
 {
     return m_manager->is_enabled();
 }
 
-bool ColorCorrectDBusInterface::isRunning() const
+bool color_correct_dbus_interface::isRunning() const
 {
     return m_manager->is_running();
 }
 
-bool ColorCorrectDBusInterface::isAvailable() const
+bool color_correct_dbus_interface::isAvailable() const
 {
     return m_manager->is_available();
 }
 
-int ColorCorrectDBusInterface::currentTemperature() const
+int color_correct_dbus_interface::currentTemperature() const
 {
     return m_manager->current_temperature();
 }
 
-int ColorCorrectDBusInterface::targetTemperature() const
+int color_correct_dbus_interface::targetTemperature() const
 {
     return m_manager->get_target_temperature();
 }
 
-int ColorCorrectDBusInterface::mode() const
+int color_correct_dbus_interface::mode() const
 {
     return m_manager->mode();
 }
 
-quint64 ColorCorrectDBusInterface::previousTransitionDateTime() const
+quint64 color_correct_dbus_interface::previousTransitionDateTime() const
 {
     auto const dateTime = m_manager->previous_transition_date_time();
     if (dateTime.isValid()) {
@@ -239,12 +239,12 @@ quint64 ColorCorrectDBusInterface::previousTransitionDateTime() const
     return 0;
 }
 
-quint32 ColorCorrectDBusInterface::previousTransitionDuration() const
+quint32 color_correct_dbus_interface::previousTransitionDuration() const
 {
     return quint32(m_manager->previous_transition_duration());
 }
 
-quint64 ColorCorrectDBusInterface::scheduledTransitionDateTime() const
+quint64 color_correct_dbus_interface::scheduledTransitionDateTime() const
 {
     const QDateTime dateTime = m_manager->scheduled_transition_date_time();
     if (dateTime.isValid()) {
@@ -253,17 +253,17 @@ quint64 ColorCorrectDBusInterface::scheduledTransitionDateTime() const
     return 0;
 }
 
-quint32 ColorCorrectDBusInterface::scheduledTransitionDuration() const
+quint32 color_correct_dbus_interface::scheduledTransitionDuration() const
 {
     return quint32(m_manager->scheduled_transition_duration());
 }
 
-void ColorCorrectDBusInterface::nightColorAutoLocationUpdate(double latitude, double longitude)
+void color_correct_dbus_interface::nightColorAutoLocationUpdate(double latitude, double longitude)
 {
     m_manager->auto_location_update(latitude, longitude);
 }
 
-uint ColorCorrectDBusInterface::inhibit()
+uint color_correct_dbus_interface::inhibit()
 {
     const QString serviceName = QDBusContext::message().service();
 
@@ -278,14 +278,14 @@ uint ColorCorrectDBusInterface::inhibit()
     return m_lastInhibitionCookie;
 }
 
-void ColorCorrectDBusInterface::uninhibit(uint cookie)
+void color_correct_dbus_interface::uninhibit(uint cookie)
 {
     const QString serviceName = QDBusContext::message().service();
 
     uninhibit(serviceName, cookie);
 }
 
-void ColorCorrectDBusInterface::uninhibit(const QString& serviceName, uint cookie)
+void color_correct_dbus_interface::uninhibit(const QString& serviceName, uint cookie)
 {
     const int removedCount = m_inhibitors.remove(serviceName, cookie);
     if (!removedCount) {
@@ -299,7 +299,7 @@ void ColorCorrectDBusInterface::uninhibit(const QString& serviceName, uint cooki
     m_manager->uninhibit();
 }
 
-void ColorCorrectDBusInterface::removeInhibitorService(const QString& serviceName)
+void color_correct_dbus_interface::removeInhibitorService(const QString& serviceName)
 {
     const auto cookies = m_inhibitors.values(serviceName);
     for (const uint& cookie : cookies) {
