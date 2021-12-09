@@ -19,18 +19,18 @@
 
 #include "clockskewnotifierengine_p.h"
 
-namespace KWin
+namespace KWin::base::os::clock
 {
 
-class LinuxClockSkewNotifierEngine : public ClockSkewNotifierEngine
+class linux_skew_notifier_engine : public skew_notifier_engine
 {
     Q_OBJECT
 
 public:
-    LinuxClockSkewNotifierEngine(int fd);
-    ~LinuxClockSkewNotifierEngine() override;
+    linux_skew_notifier_engine(int fd);
+    ~linux_skew_notifier_engine() override;
 
-    static std::unique_ptr<LinuxClockSkewNotifierEngine> create();
+    static std::unique_ptr<linux_skew_notifier_engine> create();
 
 private Q_SLOTS:
     void handle_timer_cancelled();

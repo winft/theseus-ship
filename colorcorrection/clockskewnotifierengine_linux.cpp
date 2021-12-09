@@ -28,10 +28,10 @@
 #define TFD_TIMER_CANCEL_ON_SET (1 << 1)
 #endif
 
-namespace KWin
+namespace KWin::base::os::clock
 {
 
-std::unique_ptr<LinuxClockSkewNotifierEngine> LinuxClockSkewNotifierEngine::create()
+std::unique_ptr<linux_skew_notifier_engine> linux_skew_notifier_engine::create()
 {
     const int fd = timerfd_create(CLOCK_REALTIME, O_CLOEXEC | O_NONBLOCK);
     if (fd == -1) {
@@ -48,26 +48,26 @@ std::unique_ptr<LinuxClockSkewNotifierEngine> LinuxClockSkewNotifierEngine::crea
         return nullptr;
     }
 
-    return std::make_unique<LinuxClockSkewNotifierEngine>(fd);
+    return std::make_unique<linux_skew_notifier_engine>(fd);
 }
 
-LinuxClockSkewNotifierEngine::LinuxClockSkewNotifierEngine(int fd)
-    : ClockSkewNotifierEngine()
+linux_skew_notifier_engine::linux_skew_notifier_engine(int fd)
+    : skew_notifier_engine()
     , m_fd(fd)
 {
     const QSocketNotifier* notifier = new QSocketNotifier(fd, QSocketNotifier::Read, this);
     connect(notifier,
             &QSocketNotifier::activated,
             this,
-            &LinuxClockSkewNotifierEngine::handle_timer_cancelled);
+            &linux_skew_notifier_engine::handle_timer_cancelled);
 }
 
-LinuxClockSkewNotifierEngine::~LinuxClockSkewNotifierEngine()
+linux_skew_notifier_engine::~linux_skew_notifier_engine()
 {
     close(m_fd);
 }
 
-void LinuxClockSkewNotifierEngine::handle_timer_cancelled()
+void linux_skew_notifier_engine::handle_timer_cancelled()
 {
     uint64_t expirationCount;
     read(m_fd, &expirationCount, sizeof(expirationCount));

@@ -33,7 +33,11 @@ class QTimer;
 namespace KWin
 {
 
-class ClockSkewNotifier;
+namespace base::os::clock
+{
+class skew_notifier;
+}
+
 class Workspace;
 
 namespace ColorCorrect
@@ -270,7 +274,7 @@ private:
     void set_mode(NightColorMode mode);
 
     std::unique_ptr<ColorCorrectDBusInterface> dbus;
-    std::unique_ptr<ClockSkewNotifier> clock_skew_notifier;
+    std::unique_ptr<base::os::clock::skew_notifier> clock_skew_notifier;
 
     // Specifies whether Night Color is enabled.
     bool enabled = false;

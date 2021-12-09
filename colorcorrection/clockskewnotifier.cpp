@@ -17,33 +17,31 @@
  */
 #include "clockskewnotifier.h"
 
-namespace KWin
+namespace KWin::base::os::clock
 {
 
-void ClockSkewNotifier::load_engine()
+void skew_notifier::load_engine()
 {
-    engine = ClockSkewNotifierEngine::create();
+    engine = skew_notifier_engine::create();
 
     if (engine) {
-        QObject::connect(
-            engine.get(), &ClockSkewNotifierEngine::skewed, this, &ClockSkewNotifier::skewed);
+        QObject::connect(engine.get(), &skew_notifier_engine::skewed, this, &skew_notifier::skewed);
     }
 }
 
-void ClockSkewNotifier::unload_engine()
+void skew_notifier::unload_engine()
 {
     if (!engine) {
         return;
     }
 
-    QObject::disconnect(
-        engine.get(), &ClockSkewNotifierEngine::skewed, this, &ClockSkewNotifier::skewed);
+    QObject::disconnect(engine.get(), &skew_notifier_engine::skewed, this, &skew_notifier::skewed);
     engine->deleteLater();
 
     engine = nullptr;
 }
 
-void ClockSkewNotifier::set_active(bool set)
+void skew_notifier::set_active(bool set)
 {
     if (is_active == set) {
         return;

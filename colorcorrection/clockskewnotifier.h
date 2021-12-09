@@ -22,17 +22,17 @@
 #include <QObject>
 #include <memory>
 
-namespace KWin
+namespace KWin::base::os::clock
 {
 
 /**
- * The ClockSkewNotifier class provides a way for monitoring system clock changes.
+ * The skew_notifier class provides a way for monitoring system clock changes.
  *
- * The ClockSkewNotifier class makes it possible to detect discontinuous changes to
+ * The skew_notifier class makes it possible to detect discontinuous changes to
  * the system clock. Such changes are usually initiated by the user adjusting values
  * in the Date and Time KCM or calls made to functions like settimeofday().
  */
-class ClockSkewNotifier : public QObject
+class skew_notifier : public QObject
 {
     Q_OBJECT
 public:
@@ -55,7 +55,7 @@ private:
     void load_engine();
     void unload_engine();
 
-    std::unique_ptr<ClockSkewNotifierEngine> engine;
+    std::unique_ptr<skew_notifier_engine> engine;
     bool is_active{false};
 };
 

@@ -20,18 +20,18 @@
 #include <QObject>
 #include <memory>
 
-namespace KWin
+namespace KWin::base::os::clock
 {
 
-class ClockSkewNotifierEngine : public QObject
+class skew_notifier_engine : public QObject
 {
     Q_OBJECT
 
 public:
-    static std::unique_ptr<ClockSkewNotifierEngine> create();
+    static std::unique_ptr<skew_notifier_engine> create();
 
 protected:
-    ClockSkewNotifierEngine() = default;
+    skew_notifier_engine() = default;
 
 Q_SIGNALS:
     void skewed();

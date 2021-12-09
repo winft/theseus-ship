@@ -21,13 +21,13 @@
 #include "clockskewnotifierengine_linux.h"
 #endif
 
-namespace KWin
+namespace KWin::base::os::clock
 {
 
-std::unique_ptr<ClockSkewNotifierEngine> ClockSkewNotifierEngine::create()
+std::unique_ptr<skew_notifier_engine> skew_notifier_engine::create()
 {
 #if defined(Q_OS_LINUX)
-    return LinuxClockSkewNotifierEngine::create();
+    return linux_skew_notifier_engine::create();
 #else
     return nullptr;
 #endif
