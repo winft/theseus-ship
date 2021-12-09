@@ -397,9 +397,9 @@ set(kwin_SRCS
     base/gamma_ramp.cpp
     base/output.cpp
     base/platform.cpp
-    colorcorrection/colorcorrectdbusinterface.cpp
-    colorcorrection/manager.cpp
-    colorcorrection/suncalc.cpp
+    render/post/color_correct_dbus_interface.cpp
+    render/post/night_color_manager.cpp
+    render/post/suncalc.cpp
     dbusinterface.cpp
     debug/console.cpp
     debug/x11_console.cpp
@@ -554,7 +554,7 @@ qt5_add_dbus_adaptor(kwin_SRCS
 )
 
 kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)
-kconfig_add_kcfg_files(kwin_SRCS colorcorrection/colorcorrect_settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_book_settings_base.kcfgc)
 
@@ -562,7 +562,7 @@ qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.xml dbusinterface.h KWin::DBusInterf
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.kwin.Compositing.xml dbusinterface.h KWin::CompositorDBusInterface)
 qt5_add_dbus_adaptor(kwin_SRCS
     org.kde.kwin.ColorCorrect.xml
-    colorcorrection/colorcorrectdbusinterface.h
+    render/post/color_correct_dbus_interface.h
     KWin::render::post::color_correct_dbus_interface
 )
 qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_impl)
@@ -949,7 +949,10 @@ add_custom_target(kwin_wayland_wrapper ALL COMMAND
 ########### install files ###############
 
 install(FILES kwin.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR} RENAME ${KWIN_NAME}.kcfg)
-install(FILES colorcorrection/colorcorrect_settings.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR} RENAME ${KWIN_NAME}_colorcorrect.kcfg)
+install(FILES render/post/kconfig/color_correct_settings.kcfg
+    DESTINATION ${KDE_INSTALL_KCFGDIR}
+    RENAME ${KWIN_NAME}_colorcorrect.kcfg
+)
 install(FILES kwin.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFY5RCDIR} RENAME ${KWIN_NAME}.notifyrc)
 install(
     FILES

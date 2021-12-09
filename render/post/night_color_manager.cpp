@@ -17,10 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "manager.h"
+#include "night_color_manager.h"
 
 #include "base/os/clock/skew_notifier.h"
-#include "colorcorrectdbusinterface.h"
+#include "color_correct_dbus_interface.h"
 #include "suncalc.h"
 #include <colorcorrect_logging.h>
 
@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <seat/session.h>
 #include <workspace.h>
 
-#include <colorcorrect_settings.h>
+#include <color_correct_settings.h>
 
 #include <KGlobalAccel>
 #include <KLocalizedString>

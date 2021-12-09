@@ -1,8 +1,8 @@
-File=colorcorrect_settings.kcfg
+File=color_correct_settings.kcfg
 NameSpace=KWin::render::post
 ClassName=Settings
 Singleton=true
 Mutators=true
 # manager.h is needed for NightColorMode
-IncludeFiles=colorcorrection/manager.h
+IncludeFiles=render/post/night_color_manager.h
 UseEnumTypes=true

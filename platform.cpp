@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/scene.h"
 #include "screens.h"
 #include "screenedge.h"
-#include "colorcorrection/manager.h"
+#include "render/post/night_color_manager.h"
 
 #include <QX11Info>
 

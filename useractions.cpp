@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "useractions.h"
 #include "input/cursor.h"
-#include "colorcorrection/manager.h"
+#include "render/post/night_color_manager.h"
 #include "render/compositor.h"
 #include "workspace.h"
 #include "render/effects.h"
