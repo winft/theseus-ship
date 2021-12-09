@@ -52,12 +52,8 @@ class event_filter;
 
 namespace render
 {
-namespace x11
-{
-class outline;
-}
-
 class compositor;
+class outline;
 }
 
 namespace scripting
@@ -100,7 +96,7 @@ public:
     std::vector<Toplevel*> m_windows;
 
     std::unique_ptr<scripting::platform> scripting;
-    std::unique_ptr<render::x11::outline> outline;
+    std::unique_ptr<render::outline> outline;
     std::unique_ptr<win::screen_edger> edges;
 
     explicit Workspace();

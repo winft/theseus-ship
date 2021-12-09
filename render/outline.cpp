@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStandardPaths>
 #include <cassert>
 
-namespace KWin::render::x11
+namespace KWin::render
 {
 
 outline::outline()
@@ -133,7 +133,7 @@ void outline::compositingChanged()
     }
 }
 
-outline_visual::outline_visual(x11::outline* outline)
+outline_visual::outline_visual(render::outline* outline)
     : m_outline(outline)
 {
 }
@@ -142,7 +142,7 @@ outline_visual::~outline_visual()
 {
 }
 
-composited_outline_visual::composited_outline_visual(x11::outline* outline)
+composited_outline_visual::composited_outline_visual(render::outline* outline)
     : outline_visual(outline)
     , m_qmlContext()
     , m_qmlComponent()

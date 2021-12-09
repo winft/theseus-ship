@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "space.h"
 
-#include "render/x11/outline.h"
+#include "render/outline.h"
 
 #include <QApplication>
 #include <QDesktopWidget>

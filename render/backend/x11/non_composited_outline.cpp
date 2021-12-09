@@ -14,8 +14,8 @@
 namespace KWin::render::backend::x11
 {
 
-NonCompositedOutlineVisual::NonCompositedOutlineVisual(render::x11::outline* outline)
-    : render::x11::outline_visual(outline)
+NonCompositedOutlineVisual::NonCompositedOutlineVisual(render::outline* outline)
+    : outline_visual(outline)
     , m_initialized(false)
 {
 }

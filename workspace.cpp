@@ -33,8 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "moving_client_x11_filter.h"
 #include "platform.h"
 #include "render/effects.h"
+#include "render/outline.h"
 #include "render/x11/compositor.h"
-#include "render/x11/outline.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
 #include "screens.h"
@@ -114,7 +114,7 @@ Workspace* Workspace::_self = nullptr;
 
 Workspace::Workspace()
     : QObject(nullptr)
-    , outline(std::make_unique<render::x11::outline>())
+    , outline(std::make_unique<render::outline>())
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
     , m_userActionsMenu(new UserActionsMenu(this))

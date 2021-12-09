@@ -454,13 +454,13 @@ set(kwin_SRCS
     render/gl/shadow.cpp
     render/gl/texture.cpp
     render/gl/window.cpp
+    render/outline.cpp
     render/scene.cpp
     render/shadow.cpp
     render/thumbnail_item.cpp
     render/window.cpp
     render/x11/compositor.cpp
     render/x11/compositor_selection_owner.cpp
-    render/x11/outline.cpp
     render/x11/overlay_window.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp

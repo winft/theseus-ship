@@ -6,16 +6,16 @@
 #ifndef KWIN_NON_COMPOSITED_OUTLINE_H
 #define KWIN_NON_COMPOSITED_OUTLINE_H
 
-#include "render/x11/outline.h"
+#include "render/outline.h"
 #include "xcbutils.h"
 
 namespace KWin::render::backend::x11
 {
 
-class NonCompositedOutlineVisual : public render::x11::outline_visual
+class NonCompositedOutlineVisual : public outline_visual
 {
 public:
-    NonCompositedOutlineVisual(render::x11::outline* outline);
+    NonCompositedOutlineVisual(render::outline* outline);
     ~NonCompositedOutlineVisual() override;
     void show() override;
     void hide() override;

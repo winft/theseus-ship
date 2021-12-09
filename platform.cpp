@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effects.h"
 #include <KCoreAddons>
 #include "render/x11/overlay_window.h"
-#include "render/x11/outline.h"
+#include "render/outline.h"
 #include "render/scene.h"
 #include "screens.h"
 #include "render/post/night_color_manager.h"
@@ -129,10 +129,10 @@ void Platform::updateXTime()
     }
 }
 
-render::x11::outline_visual* Platform::createOutline(render::x11::outline* outline)
+render::outline_visual* Platform::createOutline(render::outline* outline)
 {
     if (render::compositor::compositing()) {
-       return new render::x11::composited_outline_visual(outline);
+       return new render::composited_outline_visual(outline);
     }
     return nullptr;
 }

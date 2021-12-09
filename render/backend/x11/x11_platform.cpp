@@ -249,7 +249,7 @@ void X11StandalonePlatform::setupActionForGlobalAccel(QAction* action)
     });
 }
 
-render::x11::outline_visual* X11StandalonePlatform::createOutline(render::x11::outline* outline)
+outline_visual* X11StandalonePlatform::createOutline(render::outline* outline)
 {
     // first try composited Outline
     auto ret = Platform::createOutline(outline);

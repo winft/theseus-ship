@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class QQmlContext;
 class QQmlComponent;
 
-namespace KWin::render::x11
+namespace KWin::render
 {
 
 class outline_visual;
@@ -133,23 +133,23 @@ private:
 class KWIN_EXPORT outline_visual
 {
 public:
-    outline_visual(x11::outline* outline);
+    outline_visual(render::outline* outline);
     virtual ~outline_visual();
     virtual void show() = 0;
     virtual void hide() = 0;
 
 protected:
-    x11::outline* get_outline();
-    x11::outline const* get_outline() const;
+    outline* get_outline();
+    outline const* get_outline() const;
 
 private:
-    x11::outline* m_outline;
+    render::outline* m_outline;
 };
 
 class composited_outline_visual : public outline_visual
 {
 public:
-    composited_outline_visual(x11::outline* outline);
+    composited_outline_visual(render::outline* outline);
     ~composited_outline_visual() override;
     void show() override;
     void hide() override;
@@ -175,12 +175,12 @@ inline const QRect& outline::visualParentGeometry() const
     return m_visualParentGeometry;
 }
 
-inline x11::outline* outline_visual::get_outline()
+inline outline* outline_visual::get_outline()
 {
     return m_outline;
 }
 
-inline const x11::outline* outline_visual::get_outline() const
+inline const outline* outline_visual::get_outline() const
 {
     return m_outline;
 }
