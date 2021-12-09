@@ -22,6 +22,8 @@
 namespace KWin
 {
 
+class ClockSkewNotifierEngine;
+
 /**
  * The ClockSkewNotifier class provides a way for monitoring system clock changes.
  *
@@ -66,8 +68,11 @@ Q_SIGNALS:
     void clockSkewed();
 
 private:
-    class Private;
-    QScopedPointer<Private> d;
+    void loadNotifierEngine();
+    void unloadNotifierEngine();
+
+    ClockSkewNotifierEngine* engine{nullptr};
+    bool is_active{false};
 };
 
 }

@@ -22,37 +22,24 @@
 namespace KWin
 {
 
-class ClockSkewNotifier::Private
+void ClockSkewNotifier::loadNotifierEngine()
 {
-public:
-    void loadNotifierEngine();
-    void unloadNotifierEngine();
-
-    ClockSkewNotifier* notifier = nullptr;
-    ClockSkewNotifierEngine* engine = nullptr;
-    bool isActive = false;
-};
-
-void ClockSkewNotifier::Private::loadNotifierEngine()
-{
-    engine = ClockSkewNotifierEngine::create(notifier);
+    engine = ClockSkewNotifierEngine::create(this);
 
     if (engine) {
-        QObject::connect(engine,
-                         &ClockSkewNotifierEngine::clockSkewed,
-                         notifier,
-                         &ClockSkewNotifier::clockSkewed);
+        QObject::connect(
+            engine, &ClockSkewNotifierEngine::clockSkewed, this, &ClockSkewNotifier::clockSkewed);
     }
 }
 
-void ClockSkewNotifier::Private::unloadNotifierEngine()
+void ClockSkewNotifier::unloadNotifierEngine()
 {
     if (!engine) {
         return;
     }
 
     QObject::disconnect(
-        engine, &ClockSkewNotifierEngine::clockSkewed, notifier, &ClockSkewNotifier::clockSkewed);
+        engine, &ClockSkewNotifierEngine::clockSkewed, this, &ClockSkewNotifier::clockSkewed);
     engine->deleteLater();
 
     engine = nullptr;
@@ -60,9 +47,7 @@ void ClockSkewNotifier::Private::unloadNotifierEngine()
 
 ClockSkewNotifier::ClockSkewNotifier(QObject* parent)
     : QObject(parent)
-    , d(new Private)
 {
-    d->notifier = this;
 }
 
 ClockSkewNotifier::~ClockSkewNotifier()
@@ -71,21 +56,21 @@ ClockSkewNotifier::~ClockSkewNotifier()
 
 bool ClockSkewNotifier::isActive() const
 {
-    return d->isActive;
+    return is_active;
 }
 
 void ClockSkewNotifier::setActive(bool set)
 {
-    if (d->isActive == set) {
+    if (is_active == set) {
         return;
     }
 
-    d->isActive = set;
+    is_active = set;
 
-    if (d->isActive) {
-        d->loadNotifierEngine();
+    if (is_active) {
+        loadNotifierEngine();
     } else {
-        d->unloadNotifierEngine();
+        unloadNotifierEngine();
     }
 
     Q_EMIT activeChanged();
