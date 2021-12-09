@@ -44,7 +44,7 @@ class ColorCorrectDBusInterface : public QObject, public QDBusContext
     Q_PROPERTY(quint32 scheduledTransitionDuration READ scheduledTransitionDuration)
 
 public:
-    explicit ColorCorrectDBusInterface(Manager* parent);
+    explicit ColorCorrectDBusInterface(Manager* manager);
     ~ColorCorrectDBusInterface() override = default;
 
     bool isInhibited() const;

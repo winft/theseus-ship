@@ -267,7 +267,7 @@ private:
     void setCurrentTemperature(int temperature);
     void setMode(NightColorMode mode);
 
-    ColorCorrectDBusInterface* m_iface;
+    std::unique_ptr<ColorCorrectDBusInterface> dbus;
     std::unique_ptr<ClockSkewNotifier> clock_skew_notifier;
 
     // Specifies whether Night Color is enabled.

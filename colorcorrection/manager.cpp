@@ -55,10 +55,9 @@ static bool checkLocation(double lat, double lng)
 
 Manager::Manager(QObject* parent)
     : QObject(parent)
+    , dbus{std::make_unique<ColorCorrectDBusInterface>(this)}
     , clock_skew_notifier{std::make_unique<ClockSkewNotifier>()}
 {
-    m_iface = new ColorCorrectDBusInterface(this);
-
     connect(kwinApp(), &Application::startup_finished, this, &Manager::init);
 
     // Display a message when Night Color is (un)inhibited.

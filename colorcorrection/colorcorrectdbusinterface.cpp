@@ -28,9 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::ColorCorrect
 {
 
-ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* parent)
-    : QObject(parent)
-    , m_manager(parent)
+ColorCorrectDBusInterface::ColorCorrectDBusInterface(Manager* manager)
+    : m_manager(manager)
     , m_inhibitorWatcher(new QDBusServiceWatcher(this))
 {
     m_inhibitorWatcher->setConnection(QDBusConnection::sessionBus());
