@@ -114,7 +114,7 @@ bool TestObject::callback(KWin::ElectricBorder border)
 
 void TestScreenEdges::testInit()
 {
-    auto screenEdges = ScreenEdges::self();
+    auto& screenEdges = workspace()->edges;
     screenEdges->init();
     QCOMPARE(screenEdges->isDesktopSwitching(), false);
     QCOMPARE(screenEdges->isDesktopSwitchingMovingClients(), false);
@@ -213,7 +213,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     config->group("Windows").writeEntry("ElectricBorders", 2 /*ElectricAlways*/);
     config->sync();
 
-    auto screenEdges = ScreenEdges::self();
+    auto& screenEdges = workspace()->edges;
     screenEdges->setConfig(config);
     screenEdges->init();
     // we don't have multiple desktops, so it's returning false
@@ -375,7 +375,7 @@ void TestScreenEdges::testCallback()
 
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
-    auto screenEdges = ScreenEdges::self();
+    auto& screenEdges = workspace()->edges;
     screenEdges->init();
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
@@ -521,7 +521,7 @@ void TestScreenEdges::testCallback()
 
 void TestScreenEdges::testCallbackWithCheck()
 {
-    auto screenEdges = ScreenEdges::self();
+    auto& screenEdges = workspace()->edges;
     screenEdges->init();
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
@@ -596,7 +596,7 @@ void TestScreenEdges::test_overlapping_edges()
 
     QCOMPARE(changedSpy.count(), geometries.size() + 3);
 
-    auto screenEdges = ScreenEdges::self();
+    auto& screenEdges = workspace()->edges;
     screenEdges->init();
 }
 
@@ -630,7 +630,7 @@ void TestScreenEdges::testPushBack()
     auto const geometries = std::vector<QRect>{{0, 0, 1024, 768}, {200, 768, 1024, 768}};
     Test::app()->set_outputs(geometries);
 
-    auto screenEdges = ScreenEdges::self();
+    auto& screenEdges = workspace()->edges;
     screenEdges->setConfig(config);
     screenEdges->init();
     TestObject callback;
@@ -675,7 +675,7 @@ void TestScreenEdges::testFullScreenBlocking()
     auto client = workspace()->activeClient();
     QVERIFY(client);
 
-    auto screenEdges = ScreenEdges::self();
+    auto& screenEdges = workspace()->edges;
     screenEdges->setConfig(config);
     screenEdges->init();
     TestObject callback;
@@ -778,7 +778,7 @@ void TestScreenEdges::testClientEdge()
     QVERIFY(client);
 
     client->setFrameGeometry(QRect(10, 50, 10, 50));
-    auto screenEdges = ScreenEdges::self();
+    auto& screenEdges = workspace()->edges;
     screenEdges->init();
 
     screenEdges->reserve(client, KWin::ElectricBottom);
@@ -889,7 +889,7 @@ void TestScreenEdges::testTouchEdge()
     group.writeEntry("Right", "krunner");
     config->sync();
 
-    auto screenEdges = ScreenEdges::self();
+    auto& screenEdges = workspace()->edges;
     screenEdges->setConfig(config);
     screenEdges->init();
 
@@ -924,7 +924,7 @@ void TestScreenEdges::testTouchEdge()
     });
     QVERIFY(it != edges.constEnd());
 
-    QSignalSpy approachingSpy(screenEdges, &ScreenEdges::approaching);
+    QSignalSpy approachingSpy(screenEdges.get(), &ScreenEdges::approaching);
     QVERIFY(approachingSpy.isValid());
 
     auto setPos = [](const QPoint& pos) { input::get_cursor()->set_pos(pos); };
@@ -983,7 +983,7 @@ void TestScreenEdges::testTouchCallback()
     group.writeEntry("Right", "none");
     config->sync();
 
-    auto screenEdges = ScreenEdges::self();
+    auto& screenEdges = workspace()->edges;
     screenEdges->setConfig(config);
     screenEdges->init();
 
@@ -1008,7 +1008,7 @@ void TestScreenEdges::testTouchCallback()
     QAction action;
     QSignalSpy actionTriggeredSpy(&action, &QAction::triggered);
     QVERIFY(actionTriggeredSpy.isValid());
-    QSignalSpy approachingSpy(screenEdges, &ScreenEdges::approaching);
+    QSignalSpy approachingSpy(screenEdges.get(), &ScreenEdges::approaching);
     QVERIFY(approachingSpy.isValid());
 
     // reserve on edge

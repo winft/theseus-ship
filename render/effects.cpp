@@ -222,7 +222,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     connect(tabBox, &TabBox::TabBox::tabBoxClosed, this, &EffectsHandler::tabBoxClosed);
     connect(tabBox, &TabBox::TabBox::tabBoxKeyEvent, this, &EffectsHandler::tabBoxKeyEvent);
 #endif
-    connect(ScreenEdges::self(),
+    connect(workspace()->edges.get(),
             &ScreenEdges::approaching,
             this,
             &EffectsHandler::screenEdgeApproaching);
@@ -1414,22 +1414,22 @@ QPoint effects_handler_impl::cursorPos() const
 
 void effects_handler_impl::reserveElectricBorder(ElectricBorder border, Effect* effect)
 {
-    ScreenEdges::self()->reserve(border, effect, "borderActivated");
+    workspace()->edges->reserve(border, effect, "borderActivated");
 }
 
 void effects_handler_impl::unreserveElectricBorder(ElectricBorder border, Effect* effect)
 {
-    ScreenEdges::self()->unreserve(border, effect);
+    workspace()->edges->unreserve(border, effect);
 }
 
 void effects_handler_impl::registerTouchBorder(ElectricBorder border, QAction* action)
 {
-    ScreenEdges::self()->reserveTouch(border, action);
+    workspace()->edges->reserveTouch(border, action);
 }
 
 void effects_handler_impl::unregisterTouchBorder(ElectricBorder border, QAction* action)
 {
-    ScreenEdges::self()->unreserveTouch(border, action);
+    workspace()->edges->unreserveTouch(border, action);
 }
 
 unsigned long effects_handler_impl::xrenderBufferPicture()
@@ -1627,9 +1627,9 @@ QVariant effects_handler_impl::kwinOption(KWinOption kwopt)
             ? Qt::TopLeftCorner
             : Qt::TopRightCorner;
     case SwitchDesktopOnScreenEdge:
-        return ScreenEdges::self()->isDesktopSwitching();
+        return workspace()->edges->isDesktopSwitching();
     case SwitchDesktopOnScreenEdgeMovingWindows:
-        return ScreenEdges::self()->isDesktopSwitchingMovingClients();
+        return workspace()->edges->isDesktopSwitchingMovingClients();
     default:
         return QVariant(); // an invalid one
     }

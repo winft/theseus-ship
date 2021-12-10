@@ -713,11 +713,6 @@ void Edge::setClient(Toplevel* window)
  * ScreenEdges
  *********************************************************/
 
-ScreenEdges* ScreenEdges::self()
-{
-    return workspace()->edges.get();
-}
-
 ScreenEdges::ScreenEdges()
     : m_desktopSwitching(false)
     , m_desktopSwitchingMovingClients(false)

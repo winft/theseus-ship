@@ -76,7 +76,7 @@ void stack_screen_edges_under_override_redirect(Space* /*space*/)
     std::vector<xcb_window_t> windows;
     windows.push_back(rootInfo()->supportWindow());
 
-    auto const edges_wins = ScreenEdges::self()->windows();
+    auto const edges_wins = workspace()->edges->windows();
     windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());
 
     Xcb::restackWindows(windows);

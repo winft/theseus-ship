@@ -131,7 +131,7 @@ void stacking_order::propagate_clients(bool propagate_new_clients)
     // windows (e.g. popups).
     newWindowStack.push_back(x11::rootInfo()->supportWindow());
 
-    auto const edges_wins = ScreenEdges::self()->windows();
+    auto const edges_wins = workspace()->edges->windows();
     newWindowStack.insert(newWindowStack.end(), edges_wins.begin(), edges_wins.end());
 
     newWindowStack.insert(newWindowStack.end(), manual_overlays.begin(), manual_overlays.end());

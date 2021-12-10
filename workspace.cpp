@@ -185,7 +185,7 @@ Workspace::Workspace()
     screens.reconfigure();
     connect(options, &Options::configChanged, &screens, &Screens::reconfigure);
 
-    ScreenEdges* screenEdges = ScreenEdges::self();
+    auto screenEdges = workspace()->edges.get();
     screenEdges->setConfig(config);
     screenEdges->init();
     connect(options, &Options::configChanged, screenEdges, &ScreenEdges::reconfigure);
@@ -1161,7 +1161,7 @@ QString Workspace::supportInformation() const
     }
     support.append(QStringLiteral("\nScreen Edges\n"));
     support.append(QStringLiteral("============\n"));
-    const QMetaObject* metaScreenEdges = ScreenEdges::self()->metaObject();
+    auto const metaScreenEdges = workspace()->edges->metaObject();
     for (int i = 0; i < metaScreenEdges->propertyCount(); ++i) {
         const QMetaProperty property = metaScreenEdges->property(i);
         if (QLatin1String(property.name()) == QLatin1String("objectName")) {
@@ -1169,7 +1169,7 @@ QString Workspace::supportInformation() const
         }
         support.append(QStringLiteral("%1: %2\n")
                            .arg(property.name())
-                           .arg(printProperty(ScreenEdges::self()->property(property.name()))));
+                           .arg(printProperty(workspace()->edges->property(property.name()))));
     }
     support.append(QStringLiteral("\nScreens\n"));
     support.append(QStringLiteral("=======\n"));
@@ -1601,7 +1601,7 @@ void Workspace::desktopResized()
     saveOldScreenSizes(); // after updateClientArea(), so that one still uses the previous one
 
     // TODO: emit a signal instead and remove the deep function calls into edges and effects
-    ScreenEdges::self()->recreateEdges();
+    workspace()->edges->recreateEdges();
 
     if (effects) {
         static_cast<render::effects_handler_impl*>(effects)->desktopResized(geom.size());

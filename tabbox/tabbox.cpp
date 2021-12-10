@@ -738,7 +738,7 @@ void TabBox::reconfigure()
     QString borderConfig = QStringLiteral("BorderActivate");
     for (int i = 0; i < 2; ++i) {
         for (auto const& border : qAsConst(*borders)) {
-            ScreenEdges::self()->unreserve(border, this);
+            workspace()->edges->unreserve(border, this);
         }
         borders->clear();
         QStringList list = config.readEntry(borderConfig, QStringList());
@@ -748,7 +748,7 @@ void TabBox::reconfigure()
             if (!ok)
                 continue;
             borders->append(ElectricBorder(i));
-            ScreenEdges::self()->reserve(ElectricBorder(i), this, "toggle");
+            workspace()->edges->reserve(ElectricBorder(i), this, "toggle");
         }
         borders = &m_borderAlternativeActivate;
         borderConfig = QStringLiteral("BorderAlternativeActivate");
@@ -770,7 +770,7 @@ void TabBox::reconfigure()
             }
             QAction *a = new QAction(this);
             connect(a, &QAction::triggered, this, std::bind(&TabBox::toggleMode, this, mode));
-            ScreenEdges::self()->reserveTouch(ElectricBorder(i), a);
+            workspace()->edges->reserveTouch(ElectricBorder(i), a);
             actions.insert(ElectricBorder(i), a);
         }
     };

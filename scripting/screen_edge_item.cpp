@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screen_edge_item.h"
 
 #include "screenedge.h"
+#include "workspace.h"
 #include <config-kwin.h>
 
 #include <QAction>
@@ -69,10 +70,10 @@ void screen_edge_item::enableEdge()
     }
     switch (m_mode) {
     case Mode::Pointer:
-        ScreenEdges::self()->reserve(static_cast<ElectricBorder>(m_edge), this, "borderActivated");
+        workspace()->edges->reserve(static_cast<ElectricBorder>(m_edge), this, "borderActivated");
         break;
     case Mode::Touch:
-        ScreenEdges::self()->reserveTouch(static_cast<ElectricBorder>(m_edge), m_action);
+        workspace()->edges->reserveTouch(static_cast<ElectricBorder>(m_edge), m_action);
         break;
     default:
         Q_UNREACHABLE();
@@ -86,10 +87,10 @@ void screen_edge_item::disableEdge()
     }
     switch (m_mode) {
     case Mode::Pointer:
-        ScreenEdges::self()->unreserve(static_cast<ElectricBorder>(m_edge), this);
+        workspace()->edges->unreserve(static_cast<ElectricBorder>(m_edge), this);
         break;
     case Mode::Touch:
-        ScreenEdges::self()->unreserveTouch(static_cast<ElectricBorder>(m_edge), m_action);
+        workspace()->edges->unreserveTouch(static_cast<ElectricBorder>(m_edge), m_action);
         break;
     default:
         Q_UNREACHABLE();

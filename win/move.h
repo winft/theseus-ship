@@ -846,8 +846,8 @@ bool start_move_resize(Win* win)
 
     Q_EMIT win->clientStartUserMovedResized(win);
 
-    if (ScreenEdges::self()->isDesktopSwitchingMovingClients()) {
-        ScreenEdges::self()->reserveDesktopSwitching(true, Qt::Vertical | Qt::Horizontal);
+    if (workspace()->edges->isDesktopSwitchingMovingClients()) {
+        workspace()->edges->reserveDesktopSwitching(true, Qt::Vertical | Qt::Horizontal);
     }
 
     return true;
@@ -1191,7 +1191,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
     }
 
     if (is_move(win)) {
-        ScreenEdges::self()->check(globalPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC));
+        workspace()->edges->check(globalPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC));
     }
 }
 
