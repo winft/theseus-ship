@@ -389,17 +389,17 @@ add_subdirectory(helpers)
 
 set(kwin_SRCS
     atoms.cpp
+    base/os/clock/skew_notifier.cpp
+    base/os/clock/skew_notifier_engine.cpp
     base/x11/event_filter.cpp
     base/x11/event_filter_container.cpp
     base/x11/event_filter_manager.cpp
     base/gamma_ramp.cpp
     base/output.cpp
     base/platform.cpp
-    colorcorrection/clockskewnotifier.cpp
-    colorcorrection/clockskewnotifierengine.cpp
-    colorcorrection/colorcorrectdbusinterface.cpp
-    colorcorrection/manager.cpp
-    colorcorrection/suncalc.cpp
+    render/post/color_correct_dbus_interface.cpp
+    render/post/night_color_manager.cpp
+    render/post/suncalc.cpp
     dbusinterface.cpp
     debug/console.cpp
     debug/x11_console.cpp
@@ -529,21 +529,9 @@ endif()
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(kwin_SRCS
         ${kwin_SRCS}
-        colorcorrection/clockskewnotifierengine_linux.cpp
+        base/os/clock/linux_skew_notifier_engine.cpp
     )
 endif()
-
-include(ECMQtDeclareLoggingCategory)
-ecm_qt_declare_logging_category(kwin_SRCS
-    HEADER
-        colorcorrect_logging.h
-    IDENTIFIER
-        KWIN_COLORCORRECTION
-    CATEGORY_NAME
-        kwin_colorcorrection
-    DEFAULT_SEVERITY
-        Critical
-)
 
 qt5_add_resources(kwin_SRCS render/gl/resources.qrc)
 
@@ -554,13 +542,17 @@ qt5_add_dbus_adaptor(kwin_SRCS
 )
 
 kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)
-kconfig_add_kcfg_files(kwin_SRCS colorcorrection/colorcorrect_settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_book_settings_base.kcfgc)
 
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.xml dbusinterface.h KWin::DBusInterface)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.kwin.Compositing.xml dbusinterface.h KWin::CompositorDBusInterface)
-qt5_add_dbus_adaptor(kwin_SRCS org.kde.kwin.ColorCorrect.xml colorcorrection/colorcorrectdbusinterface.h KWin::ColorCorrect::ColorCorrectDBusInterface)
+qt5_add_dbus_adaptor(kwin_SRCS
+    org.kde.kwin.ColorCorrect.xml
+    render/post/color_correct_dbus_interface.h
+    KWin::render::post::color_correct_dbus_interface
+)
 qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_impl)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.VirtualDesktopManager.xml dbusinterface.h KWin::VirtualDesktopManagerDBusInterface)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.Session.xml sm.h KWin::SessionManager)
@@ -945,7 +937,10 @@ add_custom_target(kwin_wayland_wrapper ALL COMMAND
 ########### install files ###############
 
 install(FILES kwin.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR} RENAME ${KWIN_NAME}.kcfg)
-install(FILES colorcorrection/colorcorrect_settings.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR} RENAME ${KWIN_NAME}_colorcorrect.kcfg)
+install(FILES render/post/kconfig/color_correct_settings.kcfg
+    DESTINATION ${KDE_INSTALL_KCFGDIR}
+    RENAME ${KWIN_NAME}_colorcorrect.kcfg
+)
 install(FILES kwin.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFY5RCDIR} RENAME ${KWIN_NAME}.notifyrc)
 install(
     FILES

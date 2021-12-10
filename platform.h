@@ -38,9 +38,6 @@ namespace base
 {
 class output;
 }
-namespace ColorCorrect {
-class Manager;
-}
 
 class Edge;
 class Screens;
@@ -58,6 +55,10 @@ namespace render
 namespace gl
 {
 class backend;
+}
+namespace post
+{
+class night_color_manager;
 }
 namespace qpainter
 {
@@ -237,18 +238,6 @@ public:
      */
     virtual QVector<CompositingType> supportedCompositors() const = 0;
 
-    /**
-     * Whether gamma control is supported by the backend.
-     * @since 5.12
-     */
-    bool supportsGammaControl() const {
-        return m_supportsGammaControl;
-    }
-
-    ColorCorrect::Manager *colorCorrectManager() {
-        return m_colorCorrect;
-    }
-
     // outputs with connections (org_kde_kwin_outputdevice)
     virtual Outputs outputs() const {
         return Outputs();
@@ -288,19 +277,16 @@ public:
 
     virtual clockid_t clockId() const;
 
+    std::unique_ptr<render::post::night_color_manager> night_color;
+
 protected:
     Platform();
-    void setSupportsGammaControl(bool set) {
-        m_supportsGammaControl = set;
-    }
 
 private:
     EGLDisplay m_eglDisplay;
     EGLConfig m_eglConfig = nullptr;
     EGLContext m_context = EGL_NO_CONTEXT;
     EGLSurface m_surface = EGL_NO_SURFACE;
-    ColorCorrect::Manager *m_colorCorrect = nullptr;
-    bool m_supportsGammaControl = false;
     CompositingType m_selectedCompositor = NoCompositing;
 };
 

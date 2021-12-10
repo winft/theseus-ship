@@ -15,26 +15,28 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 #pragma once
 
-#include <QObject>
+#include "skew_notifier_engine.h"
 
-namespace KWin
+namespace KWin::base::os::clock
 {
 
-class ClockSkewNotifierEngine : public QObject
+class linux_skew_notifier_engine : public skew_notifier_engine
 {
     Q_OBJECT
 
 public:
-    static ClockSkewNotifierEngine *create(QObject *parent);
+    linux_skew_notifier_engine(int fd);
+    ~linux_skew_notifier_engine() override;
 
-protected:
-    explicit ClockSkewNotifierEngine(QObject *parent);
+    static std::unique_ptr<linux_skew_notifier_engine> create();
 
-Q_SIGNALS:
-    void clockSkewed();
+private Q_SLOTS:
+    void handle_timer_cancelled();
+
+private:
+    int m_fd;
 };
 
-} // namespace KWin
+}

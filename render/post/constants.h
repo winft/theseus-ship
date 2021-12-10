@@ -17,20 +17,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_NIGHTCOLOR_CONSTANTS_H
-#define KWIN_NIGHTCOLOR_CONSTANTS_H
+#pragma once
 
-namespace KWin
-{
-namespace ColorCorrect
+namespace KWin::render::post
 {
 
 static const int MSC_DAY = 86400000;
 static const int MIN_TEMPERATURE = 1000;
 static const int NEUTRAL_TEMPERATURE = 6500;
 static const int DEFAULT_NIGHT_TEMPERATURE = 4500;
-static const int FALLBACK_SLOW_UPDATE_TIME = 1800000;   /* 30 minutes */
+static const int FALLBACK_SLOW_UPDATE_TIME = 1800000; /* 30 minutes */
 
+// clang-format off
 /**
  * Whitepoint values for temperatures at 100K intervals.
  * These will be interpolated for the actual temperature.
@@ -38,7 +36,7 @@ static const int FALLBACK_SLOW_UPDATE_TIME = 1800000;   /* 30 minutes */
  * See the following file for more information:
  * https://github.com/jonls/redshift/blob/master/README-colorramp
  */
-static const float blackbodyColor[] = {
+static const float blackbody_color[] = {
     1.00000000, 0.18172716, 0.00000000,     /* 1000K */
     1.00000000, 0.25503671, 0.00000000,     /* 1100K */
     1.00000000, 0.30942099, 0.00000000,     /* 1200K */
@@ -282,8 +280,6 @@ static const float blackbodyColor[] = {
     0.62774186, 0.75306977, 1.00000000,     /* 25000K */
     0.62740336, 0.75282962, 1.00000000
 };
+// clang-format on
 
 }
-}
-
-#endif // KWIN_NIGHTCOLOR_CONSTANTS_H

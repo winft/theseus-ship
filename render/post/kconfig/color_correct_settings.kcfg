@@ -15,13 +15,13 @@
             <default>true</default>
         </entry>
         <entry name="Mode" type="Enum">
-            <choices name="KWin::ColorCorrect::NightColorMode">
+            <choices name="KWin::render::post::night_color_mode">
                 <choice name="Automatic"/>
                 <choice name="Location"/>
                 <choice name="Times"/>
                 <choice name="Constant"/>
             </choices>
-            <default>NightColorMode::Automatic</default>
+            <default>night_color_mode::automatic</default>
         </entry>
         <entry name="NightTemperatureEnabled" type="Bool">
             <default>true</default>

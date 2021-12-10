@@ -17,22 +17,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
-#ifndef KWIN_NIGHTCOLOR_DBUS_INTERFACE_H
-#define KWIN_NIGHTCOLOR_DBUS_INTERFACE_H
+#pragma once
 
 #include <QObject>
 #include <QtDBus>
 
-namespace KWin
+namespace KWin::render::post
 {
 
-namespace ColorCorrect
-{
+class night_color_manager;
 
-class Manager;
-
-class ColorCorrectDBusInterface : public QObject, public QDBusContext
+class color_correct_dbus_interface : public QObject, public QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.ColorCorrect")
@@ -49,8 +44,8 @@ class ColorCorrectDBusInterface : public QObject, public QDBusContext
     Q_PROPERTY(quint32 scheduledTransitionDuration READ scheduledTransitionDuration)
 
 public:
-    explicit ColorCorrectDBusInterface(Manager *parent);
-    ~ColorCorrectDBusInterface() override = default;
+    explicit color_correct_dbus_interface(night_color_manager* manager);
+    ~color_correct_dbus_interface() override = default;
 
     bool isInhibited() const;
     bool isEnabled() const;
@@ -84,19 +79,15 @@ public Q_SLOTS:
     void uninhibit(uint cookie);
 
 private Q_SLOTS:
-    void removeInhibitorService(const QString &serviceName);
+    void removeInhibitorService(const QString& serviceName);
 
 private:
-    void uninhibit(const QString &serviceName, uint cookie);
+    void uninhibit(const QString& serviceName, uint cookie);
 
-    Manager *m_manager;
-    QDBusServiceWatcher *m_inhibitorWatcher;
+    night_color_manager* m_manager;
+    QDBusServiceWatcher* m_inhibitorWatcher;
     QMultiHash<QString, uint> m_inhibitors;
     uint m_lastInhibitionCookie = 0;
 };
 
 }
-
-}
-
-#endif // KWIN_NIGHTCOLOR_DBUS_INTERFACE_H

@@ -15,60 +15,48 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 #pragma once
 
-#include <QObject>
+#include "skew_notifier_engine.h"
 
-namespace KWin
+#include <QObject>
+#include <memory>
+
+namespace KWin::base::os::clock
 {
 
 /**
- * The ClockSkewNotifier class provides a way for monitoring system clock changes.
+ * The skew_notifier class provides a way for monitoring system clock changes.
  *
- * The ClockSkewNotifier class makes it possible to detect discontinuous changes to
+ * The skew_notifier class makes it possible to detect discontinuous changes to
  * the system clock. Such changes are usually initiated by the user adjusting values
  * in the Date and Time KCM or calls made to functions like settimeofday().
  */
-class ClockSkewNotifier : public QObject
+class skew_notifier : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(bool active READ isActive WRITE setActive NOTIFY activeChanged)
-
 public:
-    explicit ClockSkewNotifier(QObject *parent = nullptr);
-    ~ClockSkewNotifier() override;
-
-    /**
-     * Returns @c true if the notifier is active; otherwise returns @c false.
-     */
-    bool isActive() const;
-
     /**
      * Sets the active status of the clock skew notifier to @p active.
      *
      * clockSkewed() signal won't be emitted while the notifier is inactive.
      *
      * The notifier is inactive by default.
-     *
-     * @see activeChanged
      */
-    void setActive(bool active);
+    void set_active(bool active);
 
 Q_SIGNALS:
     /**
-     * This signal is emitted whenever the active property is changed.
-     */
-    void activeChanged();
-
-    /**
      * This signal is emitted whenever the system clock is changed.
      */
-    void clockSkewed();
+    void skewed();
 
 private:
-    class Private;
-    QScopedPointer<Private> d;
+    void load_engine();
+    void unload_engine();
+
+    std::unique_ptr<skew_notifier_engine> engine;
+    bool is_active{false};
 };
 
-} // namespace KWin
+}

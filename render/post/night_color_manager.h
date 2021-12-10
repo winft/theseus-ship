@@ -17,60 +17,63 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_COLORCORRECT_MANAGER_H
-#define KWIN_COLORCORRECT_MANAGER_H
+#pragma once
 
 #include "constants.h"
 #include <kwin_export.h>
 
+#include <KConfigWatcher>
+#include <QDateTime>
 #include <QObject>
 #include <QPair>
-#include <QDateTime>
-
-#include <KConfigWatcher>
+#include <memory>
 
 class QTimer;
 
 namespace KWin
 {
 
-class ClockSkewNotifier;
+namespace base::os::clock
+{
+class skew_notifier;
+}
+
 class Workspace;
 
-namespace ColorCorrect
+namespace render::post
 {
 
-typedef QPair<QDateTime,QDateTime> DateTimes;
-typedef QPair<QTime,QTime> Times;
+typedef QPair<QDateTime, QDateTime> DateTimes;
+typedef QPair<QTime, QTime> Times;
 
-class ColorCorrectDBusInterface;
+class color_correct_dbus_interface;
 
 /**
  * This enum type is used to specify operation mode of the night color manager.
  */
-enum NightColorMode {
+enum night_color_mode {
     /**
      * Color temperature is computed based on the current position of the Sun.
      *
      * Location of the user is provided by Plasma.
      */
-    Automatic,
+    automatic,
     /**
      * Color temperature is computed based on the current position of the Sun.
      *
      * Location of the user is provided by themselves.
      */
-    Location,
+    location,
     /**
      * Color temperature is computed based on the current time.
      *
      * Sunrise and sunset times have to be specified by the user.
      */
-    Timings,
+    timings,
     /**
      * Color temperature is constant thoughout the day.
      */
-    Constant,
+    constant,
 };
 
 /**
@@ -89,15 +92,17 @@ enum NightColorMode {
  *
  * With the Constant mode, screen color temperature is always constant.
  */
-class KWIN_EXPORT Manager : public QObject
+class KWIN_EXPORT night_color_manager : public QObject
 {
     Q_OBJECT
 
 public:
-    Manager(QObject *parent);
+    night_color_manager();
+    ~night_color_manager();
+
     void init();
 
-    void autoLocationUpdate(double latitude, double longitude);
+    void auto_location_update(double latitude, double longitude);
 
     /**
      * Toggles the active state of the filter.
@@ -120,7 +125,7 @@ public:
     /**
      * Returns @c true if the night color manager is blocked; otherwise @c false.
      */
-    bool isInhibited() const;
+    bool is_inhibited() const;
 
     /**
      * Temporarily blocks the night color manager.
@@ -138,74 +143,74 @@ public:
     /**
      * Returns @c true if Night Color is enabled; otherwise @c false.
      */
-    bool isEnabled() const;
+    bool is_enabled() const;
 
     /**
      * Returns @c true if Night Color is currently running; otherwise @c false.
      */
-    bool isRunning() const;
+    bool is_running() const;
 
     /**
      * Returns @c true if Night Color is supported by platform; otherwise @c false.
      */
-    bool isAvailable() const;
+    bool is_available() const;
 
     /**
      * Returns the current screen color temperature.
      */
-    int currentTemperature() const;
+    int current_temperature() const;
 
     /**
      * Returns the target screen color temperature.
      */
-    int targetTemperature() const;
+    int get_target_temperature() const;
 
     /**
      * Returns the mode in which Night Color is operating.
      */
-    NightColorMode mode() const;
+    night_color_mode mode() const;
 
     /**
      * Returns the datetime that specifies when the previous screen color temperature transition
      * had started. Notice that when Night Color operates in the Constant mode, the returned date
      * time object is not valid.
      */
-    QDateTime previousTransitionDateTime() const;
+    QDateTime previous_transition_date_time() const;
 
     /**
      * Returns the duration of the previous screen color temperature transition, in milliseconds.
      */
-    qint64 previousTransitionDuration() const;
+    qint64 previous_transition_duration() const;
 
     /**
      * Returns the datetime that specifies when the next screen color temperature transition will
      * start. Notice that when Night Color operates in the Constant mode, the returned date time
      * object is not valid.
      */
-    QDateTime scheduledTransitionDateTime() const;
+    QDateTime scheduled_transition_date_time() const;
 
     /**
      * Returns the duration of the next screen color temperature transition, in milliseconds.
      */
-    qint64 scheduledTransitionDuration() const;
+    qint64 scheduled_transition_duration() const;
 
     // for auto tests
     void reconfigure();
 
 public Q_SLOTS:
-    void resetSlowUpdateStartTimer();
-    void quickAdjust();
+    void reset_slow_update_start_timer();
+    void quick_adjust();
 
 Q_SIGNALS:
     /**
      * Emitted whenever the night color manager is blocked or unblocked.
      */
-    void inhibitedChanged();
+    void inhibited_changed();
 
     /**
      * Emitted whenever the night color manager is enabled or disabled.
      */
-    void enabledChanged();
+    void enabled_changed();
 
     /**
      * Emitted whenever the night color manager starts or stops running.
@@ -215,107 +220,111 @@ Q_SIGNALS:
     /**
      * Emitted whenever the current screen color temperature has changed.
      */
-    void currentTemperatureChanged();
+    void current_temperature_changed();
 
     /**
      * Emitted whenever the target screen color temperature has changed.
      */
-    void targetTemperatureChanged();
+    void target_temperature_changed();
 
     /**
      * Emitted whenver the operation mode has changed.
      */
-    void modeChanged();
+    void mode_changed();
 
     /**
      * Emitted whenever the timings of the previous color temperature transition have changed.
      */
-    void previousTransitionTimingsChanged();
+    void previous_transition_timings_changed();
 
     /**
      * Emitted whenever the timings of the next color temperature transition have changed.
      */
-    void scheduledTransitionTimingsChanged();
+    void scheduled_transition_timings_changed();
 
 private:
-    void initShortcuts();
-    void readConfig();
-    void hardReset();
-    void slowUpdate(int targetTemp);
-    void resetAllTimers();
-    int currentTargetTemp() const;
-    void cancelAllTimers();
+    void init_shortcuts();
+    void read_config();
+    void hard_reset();
+    void slow_update(int targetTemp);
+    void reset_all_timers();
+    int current_target_temp() const;
+    void cancel_all_timers();
     /**
      * Quick shift on manual change to current target Temperature
      */
-    void resetQuickAdjustTimer();
+    void reset_quick_adjust_timer();
     /**
      * Slow shift to daytime target Temperature
      */
-    void resetSlowUpdateTimer();
+    void reset_slow_update_timer();
 
-    void updateTargetTemperature();
-    void updateTransitionTimings(bool force);
-    DateTimes getSunTimings(const QDateTime &dateTime, double latitude, double longitude, bool morning) const;
-    bool checkAutomaticSunTimings() const;
+    void update_target_temperature();
+    void update_transition_timings(bool force);
+    DateTimes get_sun_timings(const QDateTime& dateTime,
+                              double latitude,
+                              double longitude,
+                              bool at_morning) const;
+    bool check_automatic_sun_timings() const;
     bool daylight() const;
 
-    void commitGammaRamps(int temperature);
+    void commit_gamma_ramps(int temperature);
 
-    void setEnabled(bool enabled);
-    void setRunning(bool running);
-    void setCurrentTemperature(int temperature);
-    void setMode(NightColorMode mode);
+    void set_enabled(bool enable);
+    void set_running(bool running);
+    void set_current_temperature(int temperature);
+    void set_mode(night_color_mode mode);
 
-    ColorCorrectDBusInterface *m_iface;
-    ClockSkewNotifier *m_skewNotifier;
+    std::unique_ptr<color_correct_dbus_interface> dbus;
+    std::unique_ptr<base::os::clock::skew_notifier> clock_skew_notifier;
 
     // Specifies whether Night Color is enabled.
-    bool m_active = false;
+    bool enabled = false;
 
     // Specifies whether Night Color is currently running.
     bool m_running = false;
 
     // Specifies whether Night Color is inhibited globally.
-    bool m_isGloballyInhibited = false;
+    bool is_globally_inhibited = false;
 
-    NightColorMode m_mode = NightColorMode::Automatic;
+    night_color_mode m_mode{night_color_mode::automatic};
 
     // the previous and next sunrise/sunset intervals - in UTC time
-    DateTimes m_prev = DateTimes();
-    DateTimes m_next = DateTimes();
+    DateTimes prev_transition = DateTimes();
+    DateTimes next_transition = DateTimes();
 
     // manual times from config
-    QTime m_morning = QTime(6,0);
-    QTime m_evening = QTime(18,0);
-    int m_trTime = 30; // saved in minutes > 1
+    QTime morning_time{QTime(6, 0)};
+    QTime evening_time{QTime(18, 0)};
+
+    // saved in minutes > 1
+    int transition_time{30};
 
     // auto location provided by work space
-    double m_latAuto;
-    double m_lngAuto;
+    double lat_auto;
+    double lng_auto;
+
     // manual location from config
-    double m_latFixed;
-    double m_lngFixed;
+    double lat_fixed;
+    double lng_fixed;
 
-    QTimer *m_slowUpdateStartTimer = nullptr;
-    QTimer *m_slowUpdateTimer = nullptr;
-    QTimer *m_quickAdjustTimer = nullptr;
+    QTimer* slow_update_start_timer{nullptr};
+    QTimer* slow_update_timer{nullptr};
+    QTimer* quick_adjust_timer{nullptr};
 
-    int m_currentTemp = NEUTRAL_TEMPERATURE;
-    int m_targetTemperature = NEUTRAL_TEMPERATURE;
-    int m_dayTargetTemp = NEUTRAL_TEMPERATURE;
-    int m_nightTargetTemp = DEFAULT_NIGHT_TEMPERATURE;
+    int current_temp{NEUTRAL_TEMPERATURE};
+    int target_temp{NEUTRAL_TEMPERATURE};
+    int day_target_temp{NEUTRAL_TEMPERATURE};
+    int night_target_temp{DEFAULT_NIGHT_TEMPERATURE};
 
-    int m_failedCommitAttempts = 0;
-    int m_inhibitReferenceCount = 0;
+    int failed_commit_attempts{0};
+    int inhibit_reference_count{0};
 
-    KConfigWatcher::Ptr m_configWatcher;
+    KConfigWatcher::Ptr config_watcher;
 
-    // The Workspace class needs to call initShortcuts during initialization.
+    // The Workspace class needs to call init_shortcuts during initialization.
     friend class KWin::Workspace;
 };
 
 }
 }
-
-#endif // KWIN_COLORCORRECT_MANAGER_H

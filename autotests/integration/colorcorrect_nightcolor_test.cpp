@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "colorcorrection/constants.h"
-#include "colorcorrection/manager.h"
 #include "platform.h"
+#include "render/post/constants.h"
+#include "render/post/night_color_manager.h"
 #include "wayland_server.h"
 
 #include <KConfigGroup>
@@ -89,10 +89,10 @@ void ColorCorrectNightColorTest::testConfigRead()
     cfgGroup.writeEntry("Mode", modeDefault);
 
     kwinApp()->config()->sync();
-    ColorCorrect::Manager* manager = kwinApp()->platform->colorCorrectManager();
+    auto& manager = kwinApp()->platform->night_color;
     manager->reconfigure();
 
-    QCOMPARE(manager->isEnabled(), activeDefault);
+    QCOMPARE(manager->is_enabled(), activeDefault);
     QCOMPARE(manager->mode(), modeDefault);
 
     cfgGroup.writeEntry("Active", active);
@@ -101,7 +101,7 @@ void ColorCorrectNightColorTest::testConfigRead()
 
     manager->reconfigure();
 
-    QCOMPARE(manager->isEnabled(), active);
+    QCOMPARE(manager->is_enabled(), active);
     if (mode > 3 || mode < 0) {
         QCOMPARE(manager->mode(), 0);
     } else {
