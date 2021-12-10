@@ -846,7 +846,7 @@ bool start_move_resize(Win* win)
 
     Q_EMIT win->clientStartUserMovedResized(win);
 
-    if (workspace()->edges->isDesktopSwitchingMovingClients()) {
+    if (workspace()->edges->desktop_switching.when_moving_client) {
         workspace()->edges->reserveDesktopSwitching(true, Qt::Vertical | Qt::Horizontal);
     }
 

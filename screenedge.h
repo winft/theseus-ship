@@ -184,8 +184,8 @@ private:
  * When the mouse enters one of the screen edges the following values are used to determine whether
  * the action should be triggered or the cursor be pushed back
  * @li Time difference between two entering events is not larger than a certain threshold
- * @li Time difference between two entering events is larger than @ref timeThreshold
- * @li Time difference between two activations is larger than @ref reActivateThreshold
+ * @li Time difference between two entering events is larger than @ref time_threshold
+ * @li Time difference between two activations is larger than @ref reactivate_threshold
  * @li Distance between two enter events is not larger than a defined pixel distance
  * These checks are performed in @ref Edge
  *
@@ -194,20 +194,6 @@ private:
 class KWIN_EXPORT ScreenEdges : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(bool desktopSwitching READ isDesktopSwitching)
-    Q_PROPERTY(bool desktopSwitchingMovingClients READ isDesktopSwitchingMovingClients)
-    Q_PROPERTY(QSize cursorPushBackDistance READ cursorPushBackDistance)
-    Q_PROPERTY(int timeThreshold READ timeThreshold)
-    Q_PROPERTY(int reActivateThreshold READ reActivationThreshold)
-    Q_PROPERTY(int actionTopLeft READ actionTopLeft)
-    Q_PROPERTY(int actionTop READ actionTop)
-    Q_PROPERTY(int actionTopRight READ actionTopRight)
-    Q_PROPERTY(int actionRight READ actionRight)
-    Q_PROPERTY(int actionBottomRight READ actionBottomRight)
-    Q_PROPERTY(int actionBottom READ actionBottom)
-    Q_PROPERTY(int actionBottomLeft READ actionBottomLeft)
-    Q_PROPERTY(int actionLeft READ actionLeft)
-
 public:
     ScreenEdges();
     ~ScreenEdges() override;
@@ -313,28 +299,6 @@ public:
      */
     std::vector<xcb_window_t> windows() const;
 
-    bool isDesktopSwitching() const;
-    bool isDesktopSwitchingMovingClients() const;
-    QSize const& cursorPushBackDistance() const;
-
-    /**
-     * Minimum time between the push back of the cursor and the activation by re-entering the edge.
-     */
-    int timeThreshold() const;
-    /**
-     * Minimum time between triggers
-     */
-    int reActivationThreshold() const;
-
-    ElectricBorderAction actionTopLeft() const;
-    ElectricBorderAction actionTop() const;
-    ElectricBorderAction actionTopRight() const;
-    ElectricBorderAction actionRight() const;
-    ElectricBorderAction actionBottomRight() const;
-    ElectricBorderAction actionBottom() const;
-    ElectricBorderAction actionBottomLeft() const;
-    ElectricBorderAction actionLeft() const;
-
     bool handleDndNotify(xcb_window_t window, QPoint const& point);
     bool handleEnterNotifiy(xcb_window_t window, QPoint const& point, QDateTime const& timestamp);
 
@@ -343,6 +307,29 @@ public:
 
     /// The (dpi dependent) length, reserved for the active corners of each edge - 1/3"
     int corner_offset;
+    QSize cursor_push_back_distance;
+
+    struct {
+        ElectricBorderAction top_left{ElectricActionNone};
+        ElectricBorderAction top{ElectricActionNone};
+        ElectricBorderAction top_right{ElectricActionNone};
+        ElectricBorderAction right{ElectricActionNone};
+        ElectricBorderAction bottom_right{ElectricActionNone};
+        ElectricBorderAction bottom{ElectricActionNone};
+        ElectricBorderAction bottom_left{ElectricActionNone};
+        ElectricBorderAction left{ElectricActionNone};
+    } actions;
+
+    struct {
+        bool always{false};
+        bool when_moving_client{false};
+    } desktop_switching;
+
+    /// Minimum time between the push back of the cursor and the activation by re-entering the edge.
+    int time_threshold{0};
+
+    /// Minimum time between triggers
+    int reactivate_threshold{0};
 
 public Q_SLOTS:
     void reconfigure();
@@ -373,9 +360,6 @@ private:
     };
 
     void setDesktopSwitching(bool enable);
-    void setCursorPushBackDistance(QSize const& distance);
-    void setTimeThreshold(int threshold);
-    void setReActivationThreshold(int threshold);
 
     void createHorizontalEdge(ElectricBorder border, QRect const& screen, QRect const& fullArea);
     void createVerticalEdge(ElectricBorder border, QRect const& screen, QRect const& fullArea);
@@ -395,24 +379,8 @@ private:
     void createEdgeForClient(Toplevel* window, ElectricBorder border);
     void deleteEdgeForClient(Toplevel* window);
 
-    bool desktop_switching{false};
-    bool desktop_switching_moving_clients{false};
-    QSize cursor_push_back_distance;
-
-    int time_threshold{0};
-    int reactivate_threshold{0};
-
     Qt::Orientations virtual_desktop_layout{};
     std::vector<Edge*> edges;
-
-    ElectricBorderAction m_actionTopLeft;
-    ElectricBorderAction m_actionTop;
-    ElectricBorderAction m_actionTopRight;
-    ElectricBorderAction m_actionRight;
-    ElectricBorderAction m_actionBottomRight;
-    ElectricBorderAction m_actionBottom;
-    ElectricBorderAction m_actionBottomLeft;
-    ElectricBorderAction m_actionLeft;
 
     QMap<ElectricBorder, ElectricBorderAction> touch_actions;
 };
@@ -458,76 +426,5 @@ inline Toplevel* Edge::client() const
 {
     return window;
 }
-
-/**********************************************************
- * Inlines ScreenEdges
- *********************************************************/
-
-inline const QSize& ScreenEdges::cursorPushBackDistance() const
-{
-    return cursor_push_back_distance;
-}
-
-inline bool ScreenEdges::isDesktopSwitching() const
-{
-    return desktop_switching;
-}
-
-inline bool ScreenEdges::isDesktopSwitchingMovingClients() const
-{
-    return desktop_switching_moving_clients;
-}
-
-inline int ScreenEdges::reActivationThreshold() const
-{
-    return reactivate_threshold;
-}
-
-inline int ScreenEdges::timeThreshold() const
-{
-    return time_threshold;
-}
-
-inline void ScreenEdges::setCursorPushBackDistance(QSize const& distance)
-{
-    cursor_push_back_distance = distance;
-}
-
-inline void ScreenEdges::setDesktopSwitching(bool enable)
-{
-    if (enable == desktop_switching) {
-        return;
-    }
-    desktop_switching = enable;
-    reserveDesktopSwitching(enable, virtual_desktop_layout);
-}
-
-inline void ScreenEdges::setReActivationThreshold(int threshold)
-{
-    Q_ASSERT(threshold >= time_threshold);
-    reactivate_threshold = threshold;
-}
-
-inline void ScreenEdges::setTimeThreshold(int threshold)
-{
-    time_threshold = threshold;
-}
-
-#define ACTION(name)                                                                               \
-    inline ElectricBorderAction ScreenEdges::name() const                                          \
-    {                                                                                              \
-        return m_##name;                                                                           \
-    }
-
-ACTION(actionTopLeft)
-ACTION(actionTop)
-ACTION(actionTopRight)
-ACTION(actionRight)
-ACTION(actionBottomRight)
-ACTION(actionBottom)
-ACTION(actionBottomLeft)
-ACTION(actionLeft)
-
-#undef ACTION
 
 }

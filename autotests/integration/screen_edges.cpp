@@ -116,19 +116,19 @@ void TestScreenEdges::testInit()
 {
     auto& screenEdges = workspace()->edges;
     screenEdges->init();
-    QCOMPARE(screenEdges->isDesktopSwitching(), false);
-    QCOMPARE(screenEdges->isDesktopSwitchingMovingClients(), false);
-    QCOMPARE(screenEdges->timeThreshold(), 150);
-    QCOMPARE(screenEdges->reActivationThreshold(), 350);
-    QCOMPARE(screenEdges->cursorPushBackDistance(), QSize(1, 1));
-    QCOMPARE(screenEdges->actionTopLeft(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionTop(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionTopRight(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionRight(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionBottomRight(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionBottom(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionBottomLeft(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionLeft(), ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->desktop_switching.always, false);
+    QCOMPARE(screenEdges->desktop_switching.when_moving_client, false);
+    QCOMPARE(screenEdges->time_threshold, 150);
+    QCOMPARE(screenEdges->reactivate_threshold, 350);
+    QCOMPARE(screenEdges->cursor_push_back_distance, QSize(1, 1));
+    QCOMPARE(screenEdges->actions.top_left, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.top, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.top_right, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.right, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.bottom_right, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.bottom, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.bottom_left, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.left, ElectricBorderAction::ElectricActionNone);
 
     QList<Edge*> edges = screenEdges->findChildren<Edge*>(QString(), Qt::FindDirectChildrenOnly);
     QCOMPARE(edges.size(), 8);
@@ -217,16 +217,16 @@ void TestScreenEdges::testCreatingInitialEdges()
     screenEdges->config = config;
     screenEdges->init();
     // we don't have multiple desktops, so it's returning false
-    QCOMPARE(screenEdges->isDesktopSwitching(), true);
-    QCOMPARE(screenEdges->isDesktopSwitchingMovingClients(), true);
-    QCOMPARE(screenEdges->actionTopLeft(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionTop(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionTopRight(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionRight(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionBottomRight(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionBottom(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionBottomLeft(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionLeft(), ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->desktop_switching.always, true);
+    QCOMPARE(screenEdges->desktop_switching.when_moving_client, true);
+    QCOMPARE(screenEdges->actions.top_left, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.top, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.top_right, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.right, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.bottom_right, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.bottom, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.bottom_left, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.left, ElectricBorderAction::ElectricActionNone);
 
     QCOMPARE(screenEdges->windows().size(), 0);
 
@@ -317,8 +317,8 @@ void TestScreenEdges::testCreatingInitialEdges()
     // disable desktop switching again
     config->group("Windows").writeEntry("ElectricBorders", 1 /*ElectricMoveOnly*/);
     screenEdges->reconfigure();
-    QCOMPARE(screenEdges->isDesktopSwitching(), false);
-    QCOMPARE(screenEdges->isDesktopSwitchingMovingClients(), true);
+    QCOMPARE(screenEdges->desktop_switching.always, false);
+    QCOMPARE(screenEdges->desktop_switching.when_moving_client, true);
     QCOMPARE(screenEdges->windows().size(), 0);
     edges = screenEdges->findChildren<Edge*>(QString(), Qt::FindDirectChildrenOnly);
     QCOMPARE(edges.size(), 8);
@@ -895,16 +895,16 @@ void TestScreenEdges::testTouchEdge()
 
     // we don't have multiple desktops, so it's returning false
     QEXPECT_FAIL("", "Possible on Wayland. Needs investigation.", Abort);
-    QCOMPARE(screenEdges->isDesktopSwitching(), false);
-    QCOMPARE(screenEdges->isDesktopSwitchingMovingClients(), false);
-    QCOMPARE(screenEdges->actionTopLeft(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionTop(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionTopRight(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionRight(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionBottomRight(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionBottom(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionBottomLeft(), ElectricBorderAction::ElectricActionNone);
-    QCOMPARE(screenEdges->actionLeft(), ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->desktop_switching.always, false);
+    QCOMPARE(screenEdges->desktop_switching.when_moving_client, false);
+    QCOMPARE(screenEdges->actions.top_left, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.top, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.top_right, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.right, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.bottom_right, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.bottom, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.bottom_left, ElectricBorderAction::ElectricActionNone);
+    QCOMPARE(screenEdges->actions.left, ElectricBorderAction::ElectricActionNone);
 
     QList<Edge*> edges = screenEdges->findChildren<Edge*>(QString(), Qt::FindDirectChildrenOnly);
     QCOMPARE(edges.size(), 8);

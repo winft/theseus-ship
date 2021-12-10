@@ -1627,9 +1627,9 @@ QVariant effects_handler_impl::kwinOption(KWinOption kwopt)
             ? Qt::TopLeftCorner
             : Qt::TopRightCorner;
     case SwitchDesktopOnScreenEdge:
-        return workspace()->edges->isDesktopSwitching();
+        return workspace()->edges->desktop_switching.always;
     case SwitchDesktopOnScreenEdgeMovingWindows:
-        return workspace()->edges->isDesktopSwitchingMovingClients();
+        return workspace()->edges->desktop_switching.when_moving_client;
     default:
         return QVariant(); // an invalid one
     }

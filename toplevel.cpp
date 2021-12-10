@@ -1165,7 +1165,7 @@ void Toplevel::leaveMoveResize()
 {
     workspace()->setMoveResizeClient(nullptr);
     control->move_resize().enabled = false;
-    if (workspace()->edges->isDesktopSwitchingMovingClients()) {
+    if (workspace()->edges->desktop_switching.when_moving_client) {
         workspace()->edges->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
     }
     if (control->electric_maximizing()) {

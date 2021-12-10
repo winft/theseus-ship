@@ -145,10 +145,10 @@ bool Edge::activatesForPointer() const
     if (window) {
         return true;
     }
-    if (edges->isDesktopSwitching()) {
+    if (edges->desktop_switching.always) {
         return true;
     }
-    if (edges->isDesktopSwitchingMovingClients()) {
+    if (edges->desktop_switching.when_moving_client) {
         auto c = Workspace::self()->moveResizeClient();
         if (c && !win::is_resize(c)) {
             return true;
@@ -216,13 +216,13 @@ bool Edge::check(QPoint const& cursorPos, QDateTime const& triggerTime, bool for
     }
     if (last_trigger_time.isValid()
         && last_trigger_time.msecsTo(triggerTime)
-            < edges->reActivationThreshold() - edges->timeThreshold()) {
+            < edges->reactivate_threshold - edges->time_threshold) {
         // still in cooldown
         return false;
     }
 
     // no pushback so we have to activate at once
-    bool directActivate = forceNoPushBack || edges->cursorPushBackDistance().isNull() || window;
+    bool directActivate = forceNoPushBack || edges->cursor_push_back_distance.isNull() || window;
     if (directActivate || canActivate(cursorPos, triggerTime)) {
         markAsTriggered(cursorPos, triggerTime);
         handle(cursorPos);
@@ -251,18 +251,18 @@ bool Edge::canActivate(QPoint const& cursorPos, QDateTime const& triggerTime)
     // cursor from the corner after successful activation) either condition means that "this is the
     // first event in a new attempt"
     if (!last_reset_time.isValid()
-        || last_reset_time.msecsTo(triggerTime) > edges->reActivationThreshold()) {
+        || last_reset_time.msecsTo(triggerTime) > edges->reactivate_threshold) {
         last_reset_time = triggerTime;
         return false;
     }
 
     if (last_trigger_time.isValid()
         && last_trigger_time.msecsTo(triggerTime)
-            < edges->reActivationThreshold() - edges->timeThreshold()) {
+            < edges->reactivate_threshold - edges->time_threshold) {
         return false;
     }
 
-    if (last_reset_time.msecsTo(triggerTime) < edges->timeThreshold()) {
+    if (last_reset_time.msecsTo(triggerTime) < edges->time_threshold) {
         return false;
     }
 
@@ -277,8 +277,9 @@ void Edge::handle(QPoint const& cursorPos)
 {
     auto movingClient = Workspace::self()->moveResizeClient();
 
-    if ((edges->isDesktopSwitchingMovingClients() && movingClient && !win::is_resize(movingClient))
-        || (edges->isDesktopSwitching() && isScreenEdge())) {
+    if ((edges->desktop_switching.when_moving_client && movingClient
+         && !win::is_resize(movingClient))
+        || (edges->desktop_switching.always && isScreenEdge())) {
         // always switch desktops in case:
         // moving a Client and option for switch on client move is enabled
         // or switch on screen edge is enabled
@@ -305,7 +306,7 @@ void Edge::handle(QPoint const& cursorPos)
         return;
     }
 
-    if (edges->isDesktopSwitching() && isCorner()) {
+    if (edges->desktop_switching.always && isCorner()) {
         // try again desktop switching for the corner
         switchDesktop(cursorPos);
     }
@@ -446,7 +447,7 @@ void Edge::pushCursorBack(QPoint const& cursorPos)
     int x = cursorPos.x();
     int y = cursorPos.y();
 
-    auto const& distance = edges->cursorPushBackDistance();
+    auto const& distance = edges->cursor_push_back_distance;
 
     if (isLeft()) {
         x += distance.width();
@@ -709,14 +710,6 @@ void Edge::setClient(Toplevel* window)
 
 ScreenEdges::ScreenEdges()
     : gesture_recognizer{std::make_unique<input::gesture_recognizer>()}
-    , m_actionTopLeft(ElectricActionNone)
-    , m_actionTop(ElectricActionNone)
-    , m_actionTopRight(ElectricActionNone)
-    , m_actionRight(ElectricActionNone)
-    , m_actionBottomRight(ElectricActionNone)
-    , m_actionBottom(ElectricActionNone)
-    , m_actionBottomLeft(ElectricActionNone)
-    , m_actionLeft(ElectricActionNone)
 {
     auto const& screens = kwinApp()->get_base().screens;
     corner_offset = (screens.physicalDpiX(0) + screens.physicalDpiY(0) + 5) / 6;
@@ -752,49 +745,52 @@ void ScreenEdges::reconfigure()
     if (!config) {
         return;
     }
+
     // TODO: migrate settings to a group ScreenEdges
     auto windowsConfig = config->group("Windows");
-    setTimeThreshold(windowsConfig.readEntry("ElectricBorderDelay", 150));
-    setReActivationThreshold(
-        qMax(timeThreshold() + 50, windowsConfig.readEntry("ElectricBorderCooldown", 350)));
+
+    time_threshold = windowsConfig.readEntry("ElectricBorderDelay", 150);
+    reactivate_threshold
+        = qMax(time_threshold + 50, windowsConfig.readEntry("ElectricBorderCooldown", 350));
+
     int desktopSwitching
         = windowsConfig.readEntry("ElectricBorders", static_cast<int>(ElectricDisabled));
     if (desktopSwitching == ElectricDisabled) {
         setDesktopSwitching(false);
-        desktop_switching_moving_clients = false;
+        desktop_switching.when_moving_client = false;
     } else if (desktopSwitching == ElectricMoveOnly) {
         setDesktopSwitching(false);
-        desktop_switching_moving_clients = true;
+        desktop_switching.when_moving_client = true;
     } else if (desktopSwitching == ElectricAlways) {
         setDesktopSwitching(true);
-        desktop_switching_moving_clients = true;
+        desktop_switching.when_moving_client = true;
     }
     const int pushBack = windowsConfig.readEntry("ElectricBorderPushbackPixels", 1);
     cursor_push_back_distance = QSize(pushBack, pushBack);
 
     auto borderConfig = config->group("ElectricBorders");
     setActionForBorder(ElectricTopLeft,
-                       &m_actionTopLeft,
+                       &actions.top_left,
                        electricBorderAction(borderConfig.readEntry("TopLeft", "None")));
     setActionForBorder(
-        ElectricTop, &m_actionTop, electricBorderAction(borderConfig.readEntry("Top", "None")));
+        ElectricTop, &actions.top, electricBorderAction(borderConfig.readEntry("Top", "None")));
     setActionForBorder(ElectricTopRight,
-                       &m_actionTopRight,
+                       &actions.top_right,
                        electricBorderAction(borderConfig.readEntry("TopRight", "None")));
     setActionForBorder(ElectricRight,
-                       &m_actionRight,
+                       &actions.right,
                        electricBorderAction(borderConfig.readEntry("Right", "None")));
     setActionForBorder(ElectricBottomRight,
-                       &m_actionBottomRight,
+                       &actions.bottom_right,
                        electricBorderAction(borderConfig.readEntry("BottomRight", "None")));
     setActionForBorder(ElectricBottom,
-                       &m_actionBottom,
+                       &actions.bottom,
                        electricBorderAction(borderConfig.readEntry("Bottom", "None")));
     setActionForBorder(ElectricBottomLeft,
-                       &m_actionBottomLeft,
+                       &actions.bottom_left,
                        electricBorderAction(borderConfig.readEntry("BottomLeft", "None")));
     setActionForBorder(
-        ElectricLeft, &m_actionLeft, electricBorderAction(borderConfig.readEntry("Left", "None")));
+        ElectricLeft, &actions.left, electricBorderAction(borderConfig.readEntry("Left", "None")));
 
     borderConfig = config->group("TouchEdges");
     setActionForTouchBorder(ElectricTop,
@@ -890,11 +886,11 @@ void ScreenEdges::updateLayout()
     if (newLayout == virtual_desktop_layout) {
         return;
     }
-    if (isDesktopSwitching()) {
+    if (desktop_switching.always) {
         reserveDesktopSwitching(false, virtual_desktop_layout);
     }
     virtual_desktop_layout = newLayout;
-    if (isDesktopSwitching()) {
+    if (desktop_switching.always) {
         reserveDesktopSwitching(true, virtual_desktop_layout);
     }
 }
@@ -1058,6 +1054,15 @@ void ScreenEdges::recreateEdges()
     qDeleteAll(oldEdges);
 }
 
+void ScreenEdges::setDesktopSwitching(bool enable)
+{
+    if (enable == desktop_switching.always) {
+        return;
+    }
+    desktop_switching.always = enable;
+    reserveDesktopSwitching(enable, virtual_desktop_layout);
+}
+
 void ScreenEdges::createVerticalEdge(ElectricBorder border,
                                      QRect const& screen,
                                      QRect const& fullArea)
@@ -1150,7 +1155,7 @@ Edge* ScreenEdges::createEdge(ElectricBorder border,
             edge->set_touch_action(touchAction);
         }
     }
-    if (isDesktopSwitching()) {
+    if (desktop_switching.always) {
         if (edge->isCorner()) {
             edge->reserve();
         } else {
@@ -1173,21 +1178,21 @@ ElectricBorderAction ScreenEdges::actionForEdge(Edge* edge) const
 {
     switch (edge->border) {
     case ElectricTopLeft:
-        return m_actionTopLeft;
+        return actions.top_left;
     case ElectricTop:
-        return m_actionTop;
+        return actions.top;
     case ElectricTopRight:
-        return m_actionTopRight;
+        return actions.top_right;
     case ElectricRight:
-        return m_actionRight;
+        return actions.right;
     case ElectricBottomRight:
-        return m_actionBottomRight;
+        return actions.bottom_right;
     case ElectricBottom:
-        return m_actionBottom;
+        return actions.bottom;
     case ElectricBottomLeft:
-        return m_actionBottomLeft;
+        return actions.bottom_left;
     case ElectricLeft:
-        return m_actionLeft;
+        return actions.left;
     default:
         // fall through
         break;

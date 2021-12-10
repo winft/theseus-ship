@@ -85,8 +85,8 @@ void ScreenEdgeTest::initTestCase()
     QVERIFY(startup_spy.wait());
     QVERIFY(workspace()->scripting);
 
-    workspace()->edges->setTimeThreshold(0);
-    workspace()->edges->setReActivationThreshold(0);
+    workspace()->edges->time_threshold = 0;
+    workspace()->edges->reactivate_threshold = 0;
 }
 
 void ScreenEdgeTest::init()
