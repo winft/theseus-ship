@@ -131,7 +131,7 @@ Workspace::Workspace()
     m_quickTileCombineTimer->setSingleShot(true);
 
     RuleBook::create(this)->load();
-    ScreenEdges::create(this);
+    edges = std::make_unique<ScreenEdges>();
 
     // VirtualDesktopManager needs to be created prior to init shortcuts
     // and prior to TabBox, due to TabBox connecting to signals

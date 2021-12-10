@@ -40,7 +40,6 @@ Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core")
 
 namespace KWin
 {
-ScreenEdges* ScreenEdges::s_self = nullptr;
 
 void ScreenEdges::reserve(ElectricBorder, QObject*, const char*)
 {

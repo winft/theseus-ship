@@ -224,6 +224,9 @@ class KWIN_EXPORT ScreenEdges : public QObject
     Q_PROPERTY(int actionLeft READ actionLeft)
 
 public:
+    static ScreenEdges* self();
+
+    ScreenEdges();
     ~ScreenEdges() override;
     /**
      * @internal
@@ -439,8 +442,6 @@ private:
     QMap<ElectricBorder, ElectricBorderAction> m_touchActions;
     int m_cornerOffset;
     std::unique_ptr<input::gesture_recognizer> m_gestureRecognizer;
-
-    KWIN_SINGLETON(ScreenEdges)
 };
 
 /**********************************************************

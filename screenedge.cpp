@@ -712,11 +712,14 @@ void Edge::setClient(Toplevel* window)
 /**********************************************************
  * ScreenEdges
  *********************************************************/
-KWIN_SINGLETON_FACTORY(ScreenEdges)
 
-ScreenEdges::ScreenEdges(QObject* parent)
-    : QObject(parent)
-    , m_desktopSwitching(false)
+ScreenEdges* ScreenEdges::self()
+{
+    return workspace()->edges.get();
+}
+
+ScreenEdges::ScreenEdges()
+    : m_desktopSwitching(false)
     , m_desktopSwitchingMovingClients(false)
     , m_timeThreshold(0)
     , m_reactivateThreshold(0)
@@ -737,10 +740,7 @@ ScreenEdges::ScreenEdges(QObject* parent)
     connect(workspace(), &Workspace::clientRemoved, this, &ScreenEdges::deleteEdgeForClient);
 }
 
-ScreenEdges::~ScreenEdges()
-{
-    s_self = nullptr;
-}
+ScreenEdges::~ScreenEdges() = default;
 
 void ScreenEdges::init()
 {
