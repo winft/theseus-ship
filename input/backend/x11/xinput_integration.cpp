@@ -140,7 +140,7 @@ public:
                 = QPointF(fixed1616ToReal(e->event_x), fixed1616ToReal(e->event_y));
             if (e->detail == m_trackingTouchId) {
                 const auto last = m_lastTouchPositions.value(e->detail);
-                workspace()->edges->gestureRecognizer()->updateSwipeGesture(
+                workspace()->edges->gesture_recognizer->updateSwipeGesture(
                     QSizeF(touchPosition.x() - last.x(), touchPosition.y() - last.y()));
             }
             m_lastTouchPositions.insert(e->detail, touchPosition);
@@ -149,7 +149,7 @@ public:
         case XI_TouchEnd: {
             auto e = reinterpret_cast<xXIDeviceEvent*>(event);
             if (e->detail == m_trackingTouchId) {
-                workspace()->edges->gestureRecognizer()->endSwipeGesture();
+                workspace()->edges->gesture_recognizer->endSwipeGesture();
             }
             m_lastTouchPositions.remove(e->detail);
             m_trackingTouchId = 0;
@@ -161,7 +161,7 @@ public:
             if (it == m_lastTouchPositions.constEnd()) {
                 XIAllowTouchEvents(display(), e->deviceid, e->sourceid, e->touchid, XIRejectTouch);
             } else {
-                if (workspace()->edges->gestureRecognizer()->startSwipeGesture(it.value()) > 0) {
+                if (workspace()->edges->gesture_recognizer->startSwipeGesture(it.value()) > 0) {
                     m_trackingTouchId = e->touchid;
                 }
                 XIAllowTouchEvents(display(),

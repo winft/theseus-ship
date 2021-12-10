@@ -53,28 +53,18 @@ public:
     bool triggersFor(QPoint const& cursorPos) const;
     bool check(QPoint const& cursorPos, QDateTime const& triggerTime, bool forceNoPushBack = false);
     void markAsTriggered(const QPoint& cursorPos, QDateTime const& triggerTime);
-    bool isReserved() const;
-
-    QRect const& approachGeometry() const;
-    ElectricBorder border() const;
 
     void reserve(QObject* object, const char* slot);
-    QHash<QObject*, QByteArray> const& callBacks() const;
     void reserveTouchCallBack(QAction* action);
     void unreserveTouchCallBack(QAction* action);
 
-    std::vector<QAction*> touchCallBacks() const
-    {
-        return m_touchActions;
-    }
-
     void startApproaching();
     void stopApproaching();
-    bool isApproaching() const;
     void setClient(Toplevel* window);
     Toplevel* client() const;
-    QRect const& geometry() const;
-    void setTouchAction(ElectricBorderAction action);
+
+    void set_pointer_action(ElectricBorderAction action);
+    void set_touch_action(ElectricBorderAction action);
 
     bool activatesForPointer() const;
     bool activatesForTouchGesture() const;
@@ -83,7 +73,7 @@ public:
      * The window id of the native window representing the edge.
      * Default implementation returns @c 0, which means no window.
      */
-    virtual quint32 window() const;
+    virtual quint32 window_id() const;
     /**
      * The approach window is a special window to notice when get close to the screen border but
      * not yet triggering the border.
@@ -92,12 +82,20 @@ public:
      */
     virtual quint32 approachWindow() const;
 
+    QRect geometry;
+    ElectricBorder border{ElectricNone};
+    std::vector<QAction*> touch_actions;
+    int reserved_count{0};
+    QHash<QObject*, QByteArray> callbacks;
+
+    bool is_approaching{false};
+    QRect approach_geometry;
+
 public Q_SLOTS:
     void reserve();
     void unreserve();
     void unreserve(QObject* object);
     void setBorder(ElectricBorder border);
-    void setAction(ElectricBorderAction action);
     void setGeometry(QRect const& geometry);
     void updateApproaching(QPoint const& point);
     void checkBlocking();
@@ -107,17 +105,14 @@ Q_SIGNALS:
     void activatesForTouchGestureChanged();
 
 protected:
-    ScreenEdges* edges();
-    ScreenEdges const* edges() const;
-
-    bool isBlocked() const;
-
     virtual void doGeometryUpdate();
     virtual void doActivate();
     virtual void doDeactivate();
     virtual void doStartApproaching();
     virtual void doStopApproaching();
     virtual void doUpdateBlocking();
+
+    bool is_blocked{false};
 
 private:
     void activate();
@@ -127,40 +122,30 @@ private:
     bool handleAction(ElectricBorderAction action);
     bool handlePointerAction()
     {
-        return handleAction(m_action);
+        return handleAction(pointer_action);
     }
     bool handleTouchAction()
     {
-        return handleAction(m_touchAction);
+        return handleAction(touch_action);
     }
     bool handleByCallback();
     void handleTouchCallback();
     void switchDesktop(QPoint const& cursorPos);
     void pushCursorBack(QPoint const& cursorPos);
 
-    ScreenEdges* m_edges;
-    ElectricBorder m_border;
-    ElectricBorderAction m_action;
-    ElectricBorderAction m_touchAction = ElectricActionNone;
-    int m_reserved;
+    ScreenEdges* edges;
+    ElectricBorderAction pointer_action{ElectricActionNone};
+    ElectricBorderAction touch_action{ElectricActionNone};
 
-    QRect m_geometry;
-    QRect m_approachGeometry;
+    QDateTime last_trigger_time;
+    QDateTime last_reset_time;
+    QPoint triggered_point;
 
-    QDateTime m_lastTrigger;
-    QDateTime m_lastReset;
-    QPoint m_triggeredPoint;
+    int last_approaching_factor{0};
+    bool push_back_is_blocked{false};
 
-    QHash<QObject*, QByteArray> m_callBacks;
-
-    bool m_approaching;
-    int m_lastApproachingFactor;
-    bool m_blocked;
-    bool m_pushBackBlocked;
-
-    Toplevel* m_client;
-    std::unique_ptr<input::swipe_gesture> m_gesture;
-    std::vector<QAction*> m_touchActions;
+    Toplevel* window{nullptr};
+    std::unique_ptr<input::swipe_gesture> gesture;
 };
 
 /**
@@ -226,10 +211,7 @@ class KWIN_EXPORT ScreenEdges : public QObject
 public:
     ScreenEdges();
     ~ScreenEdges() override;
-    /**
-     * @internal
-     */
-    void setConfig(KSharedConfig::Ptr config);
+
     /**
      * Initialize the screen edges.
      * @internal
@@ -245,10 +227,6 @@ public:
      * you want to chek on a DnD event
      */
     void check(QPoint const& pos, QDateTime const& now, bool forceNoPushBack = false);
-    /**
-     * The (dpi dependent) length, reserved for the active corners of each edge - 1/3"
-     */
-    int cornerOffset() const;
 
     /**
      * Mark the specified screen edge as reserved. This method is provided for external activation
@@ -357,13 +335,14 @@ public:
     ElectricBorderAction actionBottomLeft() const;
     ElectricBorderAction actionLeft() const;
 
-    input::gesture_recognizer* gestureRecognizer() const
-    {
-        return m_gestureRecognizer.get();
-    }
-
     bool handleDndNotify(xcb_window_t window, QPoint const& point);
     bool handleEnterNotifiy(xcb_window_t window, QPoint const& point, QDateTime const& timestamp);
+
+    std::unique_ptr<input::gesture_recognizer> gesture_recognizer;
+    KSharedConfig::Ptr config;
+
+    /// The (dpi dependent) length, reserved for the active corners of each edge - 1/3"
+    int corner_offset;
 
 public Q_SLOTS:
     void reconfigure();
@@ -394,7 +373,6 @@ private:
     };
 
     void setDesktopSwitching(bool enable);
-    void setDesktopSwitchingMovingClients(bool enable);
     void setCursorPushBackDistance(QSize const& distance);
     void setTimeThreshold(int threshold);
     void setReActivationThreshold(int threshold);
@@ -417,16 +395,15 @@ private:
     void createEdgeForClient(Toplevel* window, ElectricBorder border);
     void deleteEdgeForClient(Toplevel* window);
 
-    bool m_desktopSwitching;
-    bool m_desktopSwitchingMovingClients;
-    QSize m_cursorPushBackDistance;
+    bool desktop_switching{false};
+    bool desktop_switching_moving_clients{false};
+    QSize cursor_push_back_distance;
 
-    int m_timeThreshold;
-    int m_reactivateThreshold;
+    int time_threshold{0};
+    int reactivate_threshold{0};
 
-    Qt::Orientations m_virtualDesktopLayout;
-    std::vector<Edge*> m_edges;
-    KSharedConfig::Ptr m_config;
+    Qt::Orientations virtual_desktop_layout{};
+    std::vector<Edge*> edges;
 
     ElectricBorderAction m_actionTopLeft;
     ElectricBorderAction m_actionTop;
@@ -437,9 +414,7 @@ private:
     ElectricBorderAction m_actionBottomLeft;
     ElectricBorderAction m_actionLeft;
 
-    QMap<ElectricBorder, ElectricBorderAction> m_touchActions;
-    int m_cornerOffset;
-    std::unique_ptr<input::gesture_recognizer> m_gestureRecognizer;
+    QMap<ElectricBorder, ElectricBorderAction> touch_actions;
 };
 
 /**********************************************************
@@ -448,160 +423,94 @@ private:
 
 inline bool Edge::isBottom() const
 {
-    return m_border == ElectricBottom || m_border == ElectricBottomLeft
-        || m_border == ElectricBottomRight;
+    return border == ElectricBottom || border == ElectricBottomLeft
+        || border == ElectricBottomRight;
 }
 
 inline bool Edge::isLeft() const
 {
-    return m_border == ElectricLeft || m_border == ElectricTopLeft
-        || m_border == ElectricBottomLeft;
+    return border == ElectricLeft || border == ElectricTopLeft || border == ElectricBottomLeft;
 }
 
 inline bool Edge::isRight() const
 {
-    return m_border == ElectricRight || m_border == ElectricTopRight
-        || m_border == ElectricBottomRight;
+    return border == ElectricRight || border == ElectricTopRight || border == ElectricBottomRight;
 }
 
 inline bool Edge::isTop() const
 {
-    return m_border == ElectricTop || m_border == ElectricTopLeft || m_border == ElectricTopRight;
+    return border == ElectricTop || border == ElectricTopLeft || border == ElectricTopRight;
 }
 
 inline bool Edge::isCorner() const
 {
-    return m_border == ElectricTopLeft || m_border == ElectricTopRight
-        || m_border == ElectricBottomRight || m_border == ElectricBottomLeft;
+    return border == ElectricTopLeft || border == ElectricTopRight || border == ElectricBottomRight
+        || border == ElectricBottomLeft;
 }
 
 inline bool Edge::isScreenEdge() const
 {
-    return m_border == ElectricLeft || m_border == ElectricRight || m_border == ElectricTop
-        || m_border == ElectricBottom;
-}
-
-inline bool Edge::isReserved() const
-{
-    return m_reserved != 0;
-}
-
-inline void Edge::setAction(ElectricBorderAction action)
-{
-    m_action = action;
-}
-
-inline ScreenEdges* Edge::edges()
-{
-    return m_edges;
-}
-
-inline const ScreenEdges* Edge::edges() const
-{
-    return m_edges;
-}
-
-inline const QRect& Edge::geometry() const
-{
-    return m_geometry;
-}
-
-inline const QRect& Edge::approachGeometry() const
-{
-    return m_approachGeometry;
-}
-
-inline ElectricBorder Edge::border() const
-{
-    return m_border;
-}
-
-inline const QHash<QObject*, QByteArray>& Edge::callBacks() const
-{
-    return m_callBacks;
-}
-
-inline bool Edge::isBlocked() const
-{
-    return m_blocked;
+    return border == ElectricLeft || border == ElectricRight || border == ElectricTop
+        || border == ElectricBottom;
 }
 
 inline Toplevel* Edge::client() const
 {
-    return m_client;
-}
-
-inline bool Edge::isApproaching() const
-{
-    return m_approaching;
+    return window;
 }
 
 /**********************************************************
  * Inlines ScreenEdges
  *********************************************************/
-inline void ScreenEdges::setConfig(KSharedConfig::Ptr config)
-{
-    m_config = config;
-}
-
-inline int ScreenEdges::cornerOffset() const
-{
-    return m_cornerOffset;
-}
 
 inline const QSize& ScreenEdges::cursorPushBackDistance() const
 {
-    return m_cursorPushBackDistance;
+    return cursor_push_back_distance;
 }
 
 inline bool ScreenEdges::isDesktopSwitching() const
 {
-    return m_desktopSwitching;
+    return desktop_switching;
 }
 
 inline bool ScreenEdges::isDesktopSwitchingMovingClients() const
 {
-    return m_desktopSwitchingMovingClients;
+    return desktop_switching_moving_clients;
 }
 
 inline int ScreenEdges::reActivationThreshold() const
 {
-    return m_reactivateThreshold;
+    return reactivate_threshold;
 }
 
 inline int ScreenEdges::timeThreshold() const
 {
-    return m_timeThreshold;
+    return time_threshold;
 }
 
 inline void ScreenEdges::setCursorPushBackDistance(QSize const& distance)
 {
-    m_cursorPushBackDistance = distance;
+    cursor_push_back_distance = distance;
 }
 
 inline void ScreenEdges::setDesktopSwitching(bool enable)
 {
-    if (enable == m_desktopSwitching) {
+    if (enable == desktop_switching) {
         return;
     }
-    m_desktopSwitching = enable;
-    reserveDesktopSwitching(enable, m_virtualDesktopLayout);
-}
-
-inline void ScreenEdges::setDesktopSwitchingMovingClients(bool enable)
-{
-    m_desktopSwitchingMovingClients = enable;
+    desktop_switching = enable;
+    reserveDesktopSwitching(enable, virtual_desktop_layout);
 }
 
 inline void ScreenEdges::setReActivationThreshold(int threshold)
 {
-    Q_ASSERT(threshold >= m_timeThreshold);
-    m_reactivateThreshold = threshold;
+    Q_ASSERT(threshold >= time_threshold);
+    reactivate_threshold = threshold;
 }
 
 inline void ScreenEdges::setTimeThreshold(int threshold)
 {
-    m_timeThreshold = threshold;
+    time_threshold = threshold;
 }
 
 #define ACTION(name)                                                                               \

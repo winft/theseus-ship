@@ -47,7 +47,7 @@ void WindowBasedEdge::createWindow()
     const uint32_t values[] = {true,
                                XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW
                                    | XCB_EVENT_MASK_POINTER_MOTION};
-    m_window.create(geometry(), XCB_WINDOW_CLASS_INPUT_ONLY, mask, values);
+    m_window.create(geometry, XCB_WINDOW_CLASS_INPUT_ONLY, mask, values);
     m_window.map();
     // Set XdndAware on the windows, so that DND enter events are received (#86998)
     xcb_atom_t version = 4; // XDND version
@@ -69,22 +69,22 @@ void WindowBasedEdge::createApproachWindow()
     if (m_approachWindow.isValid()) {
         return;
     }
-    if (!approachGeometry().isValid()) {
+    if (!approach_geometry.isValid()) {
         return;
     }
     const uint32_t mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
     const uint32_t values[] = {true,
                                XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW
                                    | XCB_EVENT_MASK_POINTER_MOTION};
-    m_approachWindow.create(approachGeometry(), XCB_WINDOW_CLASS_INPUT_ONLY, mask, values);
+    m_approachWindow.create(approach_geometry, XCB_WINDOW_CLASS_INPUT_ONLY, mask, values);
     m_approachWindow.map();
 }
 
 void WindowBasedEdge::doGeometryUpdate()
 {
-    m_window.setGeometry(geometry());
+    m_window.setGeometry(geometry);
     if (m_approachWindow.isValid()) {
-        m_approachWindow.setGeometry(approachGeometry());
+        m_approachWindow.setGeometry(approach_geometry);
     }
 }
 
@@ -115,10 +115,10 @@ void WindowBasedEdge::doStopApproaching()
 
 void WindowBasedEdge::doUpdateBlocking()
 {
-    if (!isReserved()) {
+    if (reserved_count == 0) {
         return;
     }
-    if (isBlocked()) {
+    if (is_blocked) {
         m_window.unmap();
         m_approachWindow.unmap();
     } else {

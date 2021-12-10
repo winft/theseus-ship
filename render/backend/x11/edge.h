@@ -22,7 +22,7 @@ public:
     explicit WindowBasedEdge(ScreenEdges* parent);
     ~WindowBasedEdge() override;
 
-    quint32 window() const override;
+    quint32 window_id() const override;
     /**
      * The approach window is a special window to notice when get close to the screen border but
      * not yet triggering the border.
@@ -45,7 +45,7 @@ private:
     QMetaObject::Connection m_cursorPollingConnection;
 };
 
-inline quint32 WindowBasedEdge::window() const
+inline quint32 WindowBasedEdge::window_id() const
 {
     return m_window;
 }

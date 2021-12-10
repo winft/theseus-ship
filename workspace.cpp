@@ -186,7 +186,7 @@ Workspace::Workspace()
     connect(options, &Options::configChanged, &screens, &Screens::reconfigure);
 
     auto screenEdges = workspace()->edges.get();
-    screenEdges->setConfig(config);
+    screenEdges->config = config;
     screenEdges->init();
     connect(options, &Options::configChanged, screenEdges, &ScreenEdges::reconfigure);
     connect(VirtualDesktopManager::self(),
