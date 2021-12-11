@@ -117,8 +117,8 @@ void backend::createEffectsHandler(render::compositor* compositor, render::scene
 
 QVector<CompositingType> backend::supportedCompositors() const
 {
-    if (selectedCompositor() != NoCompositing) {
-        return {selectedCompositor()};
+    if (selected_compositor != NoCompositing) {
+        return {selected_compositor};
     }
     return QVector<CompositingType>{OpenGLCompositing};
 }

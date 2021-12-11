@@ -27,8 +27,8 @@ Platform::Platform()
 
 Platform::~Platform()
 {
-    if (m_eglDisplay != EGL_NO_DISPLAY) {
-        eglTerminate(m_eglDisplay);
+    if (egl_display != EGL_NO_DISPLAY) {
+        eglTerminate(egl_display);
     }
 }
 
@@ -40,16 +40,6 @@ render::gl::backend* Platform::createOpenGLBackend(render::compositor* /*composi
 render::qpainter::backend* Platform::createQPainterBackend()
 {
     return nullptr;
-}
-
-EGLDisplay Platform::sceneEglDisplay() const
-{
-    return m_eglDisplay;
-}
-
-void Platform::setSceneEglDisplay(EGLDisplay display)
-{
-    m_eglDisplay = display;
 }
 
 bool Platform::requiresCompositing() const

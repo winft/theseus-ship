@@ -58,62 +58,6 @@ public:
     virtual render::qpainter::backend* createQPainterBackend();
 
     /**
-     * The EGLDisplay used by the compositing scene.
-     */
-    EGLDisplay sceneEglDisplay() const;
-    void setSceneEglDisplay(EGLDisplay display);
-
-    /**
-     * The EGLContext used by the compositing scene.
-     */
-    virtual EGLContext sceneEglContext() const
-    {
-        return m_context;
-    }
-
-    /**
-     * Sets the @p context used by the compositing scene.
-     */
-    void setSceneEglContext(EGLContext context)
-    {
-        m_context = context;
-    }
-
-    /**
-     * The first (in case of multiple) EGLSurface used by the compositing scene.
-     */
-    EGLSurface sceneEglSurface() const
-    {
-        return m_surface;
-    }
-
-    /**
-     * Sets the first @p surface used by the compositing scene.
-     * @see sceneEglSurface
-     */
-    void setSceneEglSurface(EGLSurface surface)
-    {
-        m_surface = surface;
-    }
-
-    /**
-     * The EglConfig used by the compositing scene.
-     */
-    EGLConfig sceneEglConfig() const
-    {
-        return m_eglConfig;
-    }
-
-    /**
-     * Sets the @p config used by the compositing scene.
-     * @see sceneEglConfig
-     */
-    void setSceneEglConfig(EGLConfig config)
-    {
-        m_eglConfig = config;
-    }
-
-    /**
      * Whether the Platform requires compositing for rendering.
      * Default implementation returns @c true. If the implementing Platform allows to be used
      * without compositing (e.g. rendering is done by the windowing system), re-implement this
@@ -208,38 +152,24 @@ public:
      */
     virtual QVector<CompositingType> supportedCompositors() const = 0;
 
-    /**
-     * The compositor plugin which got selected from @ref supportedCompositors.
-     * Prior to selecting a compositor this returns @c NoCompositing.
-     *
-     * This method allows the platforms to limit the offerings in @ref supportedCompositors
-     * in case they do not support runtime compositor switching
-     */
-    CompositingType selectedCompositor() const
-    {
-        return m_selectedCompositor;
-    }
-    /**
-     * Used by Compositor to set the used compositor.
-     */
-    void setSelectedCompositor(CompositingType type)
-    {
-        m_selectedCompositor = type;
-    }
-
     virtual clockid_t clockId() const;
 
     std::unique_ptr<render::post::night_color_manager> night_color;
 
+    /**
+     * The compositor plugin which got selected from @ref supportedCompositors. Prior to selecting
+     * this returns @c NoCompositing. Allows to limit the offerings in @ref supportedCompositors
+     * in case they do not support runtime compositor switching.
+     */
+    CompositingType selected_compositor{NoCompositing};
+
+    EGLDisplay egl_display{EGL_NO_DISPLAY};
+    EGLContext egl_context{EGL_NO_CONTEXT};
+    EGLConfig egl_config{nullptr};
+    EGLSurface egl_surface{EGL_NO_SURFACE};
+
 protected:
     Platform();
-
-private:
-    EGLDisplay m_eglDisplay{EGL_NO_DISPLAY};
-    EGLConfig m_eglConfig{nullptr};
-    EGLContext m_context{EGL_NO_CONTEXT};
-    EGLSurface m_surface{EGL_NO_SURFACE};
-    CompositingType m_selectedCompositor{NoCompositing};
 };
 
 }

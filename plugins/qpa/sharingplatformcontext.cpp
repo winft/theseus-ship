@@ -42,7 +42,7 @@ SharingPlatformContext::SharingPlatformContext(QOpenGLContext *context)
 }
 
 SharingPlatformContext::SharingPlatformContext(QOpenGLContext *context, const EGLSurface &surface, EGLConfig config)
-    : AbstractPlatformContext(context, kwinApp()->platform->sceneEglDisplay(), config)
+    : AbstractPlatformContext(context, kwinApp()->platform->egl_display, config)
     , m_surface(surface)
 {
     create();
@@ -119,7 +119,7 @@ void SharingPlatformContext::create()
         qCWarning(KWIN_QPA) << "Could not bind API.";
         return;
     }
-    createContext(kwinApp()->platform->sceneEglContext());
+    createContext(kwinApp()->platform->egl_context);
 }
 
 }

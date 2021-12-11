@@ -131,7 +131,7 @@ bool compositor::setupStart()
         return false;
     }
 
-    kwinApp()->platform->setSelectedCompositor(m_scene->compositingType());
+    kwinApp()->platform->selected_compositor = m_scene->compositingType();
 
     if (!Workspace::self() && m_scene && m_scene->compositingType() == QPainterCompositing) {
         // Force Software QtQuick on first startup with QPainter.
