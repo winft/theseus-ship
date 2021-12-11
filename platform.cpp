@@ -1,38 +1,20 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2015 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2015 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "platform.h"
 
-#include "base/output.h"
-#include <config-kwin.h>
+#include "config-kwin.h"
 #include "main.h"
 #include "render/compositor.h"
 #include "render/effects.h"
-#include <KCoreAddons>
-#include "render/x11/overlay_window.h"
 #include "render/outline.h"
-#include "render/scene.h"
-#include "screens.h"
 #include "render/post/night_color_manager.h"
+#include "render/scene.h"
 
 #include <QX11Info>
-
 #include <cerrno>
 
 namespace KWin
@@ -40,7 +22,6 @@ namespace KWin
 
 Platform::Platform()
     : night_color{std::make_unique<render::post::night_color_manager>()}
-    , m_eglDisplay(EGL_NO_DISPLAY)
 {
 }
 
@@ -51,17 +32,17 @@ Platform::~Platform()
     }
 }
 
-render::gl::backend *Platform::createOpenGLBackend(render::compositor* /*compositor*/)
+render::gl::backend* Platform::createOpenGLBackend(render::compositor* /*compositor*/)
 {
     return nullptr;
 }
 
-render::qpainter::backend *Platform::createQPainterBackend()
+render::qpainter::backend* Platform::createQPainterBackend()
 {
     return nullptr;
 }
 
-EGLDisplay KWin::Platform::sceneEglDisplay() const
+EGLDisplay Platform::sceneEglDisplay() const
 {
     return m_eglDisplay;
 }
@@ -96,7 +77,7 @@ void Platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
     Q_UNUSED(safePoint)
 }
 
-void Platform::setupActionForGlobalAccel(QAction *action)
+void Platform::setupActionForGlobalAccel(QAction* action)
 {
     Q_UNUSED(action)
 }
@@ -132,12 +113,12 @@ void Platform::updateXTime()
 render::outline_visual* Platform::createOutline(render::outline* outline)
 {
     if (render::compositor::compositing()) {
-       return new render::composited_outline_visual(outline);
+        return new render::composited_outline_visual(outline);
     }
     return nullptr;
 }
 
-Decoration::Renderer *Platform::createDecorationRenderer(Decoration::DecoratedClientImpl *client)
+Decoration::Renderer* Platform::createDecorationRenderer(Decoration::DecoratedClientImpl* client)
 {
     if (render::compositor::self()->scene()) {
         return render::compositor::self()->scene()->createDecorationRenderer(client);
@@ -148,14 +129,15 @@ Decoration::Renderer *Platform::createDecorationRenderer(Decoration::DecoratedCl
 void Platform::invertScreen()
 {
     if (effects) {
-        if (auto inverter = static_cast<render::effects_handler_impl*>(effects)->provides(Effect::ScreenInversion)) {
+        if (auto inverter = static_cast<render::effects_handler_impl*>(effects)->provides(
+                Effect::ScreenInversion)) {
             qCDebug(KWIN_CORE) << "inverting screen using Effect plugin";
             QMetaObject::invokeMethod(inverter, "toggleScreenInversion", Qt::DirectConnection);
         }
     }
 }
 
-void Platform::createEffectsHandler(render::compositor *compositor, render::scene *scene)
+void Platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
 {
     new render::effects_handler_impl(compositor, scene);
 }

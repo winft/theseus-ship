@@ -1,46 +1,24 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2015 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2015 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-#ifndef KWIN_PLATFORM_H
-#define KWIN_PLATFORM_H
-#include <kwin_export.h>
-#include <kwinglobals.h>
-#include <epoxy/egl.h>
 #include "input/redirect.h"
 
-#include <QImage>
-#include <QObject>
+#include <kwin_export.h>
+#include <kwinglobals.h>
 
-#include <functional>
+#include <QObject>
+#include <epoxy/egl.h>
 #include <memory>
 
 class QAction;
 
 namespace KWin
 {
-namespace base
-{
-class output;
-}
-
-class Screens;
-class Toplevel;
 
 namespace Decoration
 {
@@ -76,58 +54,70 @@ class KWIN_EXPORT Platform : public QObject
 public:
     ~Platform() override;
 
-    virtual render::gl::backend *createOpenGLBackend(render::compositor* compositor);
-    virtual render::qpainter::backend *createQPainterBackend();
+    virtual render::gl::backend* createOpenGLBackend(render::compositor* compositor);
+    virtual render::qpainter::backend* createQPainterBackend();
 
     /**
      * The EGLDisplay used by the compositing scene.
      */
     EGLDisplay sceneEglDisplay() const;
     void setSceneEglDisplay(EGLDisplay display);
+
     /**
      * The EGLContext used by the compositing scene.
      */
-    virtual EGLContext sceneEglContext() const {
+    virtual EGLContext sceneEglContext() const
+    {
         return m_context;
     }
+
     /**
      * Sets the @p context used by the compositing scene.
      */
-    void setSceneEglContext(EGLContext context) {
+    void setSceneEglContext(EGLContext context)
+    {
         m_context = context;
     }
+
     /**
      * The first (in case of multiple) EGLSurface used by the compositing scene.
      */
-    EGLSurface sceneEglSurface() const {
+    EGLSurface sceneEglSurface() const
+    {
         return m_surface;
     }
+
     /**
      * Sets the first @p surface used by the compositing scene.
      * @see sceneEglSurface
      */
-    void setSceneEglSurface(EGLSurface surface) {
+    void setSceneEglSurface(EGLSurface surface)
+    {
         m_surface = surface;
     }
 
     /**
      * The EglConfig used by the compositing scene.
      */
-    EGLConfig sceneEglConfig() const {
+    EGLConfig sceneEglConfig() const
+    {
         return m_eglConfig;
     }
+
     /**
      * Sets the @p config used by the compositing scene.
      * @see sceneEglConfig
      */
-    void setSceneEglConfig(EGLConfig config) {
+    void setSceneEglConfig(EGLConfig config)
+    {
         m_eglConfig = config;
     }
 
     /**
      * Whether the Platform requires compositing for rendering.
      * Default implementation returns @c true. If the implementing Platform allows to be used
-     * without compositing (e.g. rendering is done by the windowing system), re-implement this method.
+     * without compositing (e.g. rendering is done by the windowing system), re-implement this
+     * method.
      */
     virtual bool requiresCompositing() const;
     /**
@@ -179,7 +169,7 @@ public:
      * @param action The action which will be used with KGlobalAccel.
      * @since 5.10
      */
-    virtual void setupActionForGlobalAccel(QAction *action);
+    virtual void setupActionForGlobalAccel(QAction* action);
 
     /**
      * Queries the current X11 time stamp of the X server.
@@ -195,9 +185,10 @@ public:
     /**
      * Creates the Decoration::Renderer for the given @p client.
      *
-     * The default implementation creates a Renderer suited for the Compositor, @c nullptr if there is no Compositor.
+     * The default implementation creates a Renderer suited for the Compositor, @c nullptr if there
+     * is no Compositor.
      */
-    virtual Decoration::Renderer *createDecorationRenderer(Decoration::DecoratedClientImpl *client);
+    virtual Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl* client);
 
     /**
      * Platform specific way to invert the screen.
@@ -208,7 +199,7 @@ public:
     /**
      * Default implementation creates an EffectsHandlerImp;
      */
-    virtual void createEffectsHandler(render::compositor *compositor, render::scene *scene);
+    virtual void createEffectsHandler(render::compositor* compositor, render::scene* scene);
 
     /**
      * The CompositingTypes supported by the Platform.
@@ -244,13 +235,11 @@ protected:
     Platform();
 
 private:
-    EGLDisplay m_eglDisplay;
-    EGLConfig m_eglConfig = nullptr;
-    EGLContext m_context = EGL_NO_CONTEXT;
-    EGLSurface m_surface = EGL_NO_SURFACE;
-    CompositingType m_selectedCompositor = NoCompositing;
+    EGLDisplay m_eglDisplay{EGL_NO_DISPLAY};
+    EGLConfig m_eglConfig{nullptr};
+    EGLContext m_context{EGL_NO_CONTEXT};
+    EGLSurface m_surface{EGL_NO_SURFACE};
+    CompositingType m_selectedCompositor{NoCompositing};
 };
 
 }
-
-#endif
