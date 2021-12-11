@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/x11/outline.h"
 #include "render/scene.h"
 #include "screens.h"
-#include "win/screen_edges.h"
 #include "render/post/night_color_manager.h"
 
 #include <QX11Info>
@@ -60,11 +59,6 @@ render::gl::backend *Platform::createOpenGLBackend(render::compositor* /*composi
 render::qpainter::backend *Platform::createQPainterBackend()
 {
     return nullptr;
-}
-
-win::screen_edge *Platform::createScreenEdge(win::screen_edger *edges)
-{
-    return new win::screen_edge(edges);
 }
 
 EGLDisplay KWin::Platform::sceneEglDisplay() const

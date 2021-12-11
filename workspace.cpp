@@ -1450,6 +1450,11 @@ void Workspace::setWasUserInteraction()
     QTimer::singleShot(0, this, [this] { m_wasUserInteractionFilter.reset(); });
 }
 
+win::screen_edge* Workspace::create_screen_edge()
+{
+    return new win::screen_edge(edges.get());
+}
+
 void Workspace::updateTabbox()
 {
 #ifdef KWIN_BUILD_TABBOX

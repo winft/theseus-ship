@@ -13,7 +13,6 @@
 #include "input/cursor.h"
 #include "input/gestures.h"
 #include "main.h"
-#include "platform.h"
 #include "screens.h"
 #include "win/move.h"
 #include "workspace.h"
@@ -1133,9 +1132,9 @@ screen_edge* screen_edger::createEdge(ElectricBorder border,
                                       bool createAction)
 {
 #ifdef KWIN_UNIT_TEST
-    auto edge = new WindowBasedEdge(this);
+    auto edge = new x11::screen_edge(this);
 #else
-    auto edge = kwinApp()->platform->createScreenEdge(this);
+    auto edge = workspace()->create_screen_edge();
 #endif
     // Edges can not have negative size.
     assert(width >= 0);

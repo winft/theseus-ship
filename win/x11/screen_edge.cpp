@@ -7,38 +7,39 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "edge.h"
+#include "screen_edge.h"
+
 #include "atoms.h"
 #include "input/cursor.h"
 
 namespace KWin::render::backend::x11
 {
 
-WindowBasedEdge::WindowBasedEdge(win::screen_edger* edger)
+screen_edge::screen_edge(win::screen_edger* edger)
     : win::screen_edge(edger)
     , m_window(XCB_WINDOW_NONE)
     , m_approachWindow(XCB_WINDOW_NONE)
 {
 }
 
-WindowBasedEdge::~WindowBasedEdge()
+screen_edge::~screen_edge()
 {
 }
 
-void WindowBasedEdge::doActivate()
+void screen_edge::doActivate()
 {
     createWindow();
     createApproachWindow();
     doUpdateBlocking();
 }
 
-void WindowBasedEdge::doDeactivate()
+void screen_edge::doDeactivate()
 {
     m_window.reset();
     m_approachWindow.reset();
 }
 
-void WindowBasedEdge::createWindow()
+void screen_edge::createWindow()
 {
     if (m_window.isValid()) {
         return;
@@ -61,7 +62,7 @@ void WindowBasedEdge::createWindow()
                         (unsigned char*)(&version));
 }
 
-void WindowBasedEdge::createApproachWindow()
+void screen_edge::createApproachWindow()
 {
     if (!activatesForPointer()) {
         return;
@@ -80,7 +81,7 @@ void WindowBasedEdge::createApproachWindow()
     m_approachWindow.map();
 }
 
-void WindowBasedEdge::doGeometryUpdate()
+void screen_edge::doGeometryUpdate()
 {
     m_window.setGeometry(geometry);
     if (m_approachWindow.isValid()) {
@@ -88,7 +89,7 @@ void WindowBasedEdge::doGeometryUpdate()
     }
 }
 
-void WindowBasedEdge::doStartApproaching()
+void screen_edge::doStartApproaching()
 {
     if (!activatesForPointer()) {
         return;
@@ -97,12 +98,12 @@ void WindowBasedEdge::doStartApproaching()
     auto cursor = input::get_cursor();
 #ifndef KWIN_UNIT_TEST
     m_cursorPollingConnection
-        = connect(cursor, &input::cursor::pos_changed, this, &WindowBasedEdge::updateApproaching);
+        = connect(cursor, &input::cursor::pos_changed, this, &screen_edge::updateApproaching);
 #endif
     cursor->start_mouse_polling();
 }
 
-void WindowBasedEdge::doStopApproaching()
+void screen_edge::doStopApproaching()
 {
     if (!m_cursorPollingConnection) {
         return;
@@ -113,7 +114,7 @@ void WindowBasedEdge::doStopApproaching()
     m_approachWindow.map();
 }
 
-void WindowBasedEdge::doUpdateBlocking()
+void screen_edge::doUpdateBlocking()
 {
     if (reserved_count == 0) {
         return;

@@ -73,12 +73,6 @@ class scene;
 
 }
 
-namespace win
-{
-class screen_edge;
-class screen_edger;
-}
-
 class KWIN_EXPORT Outputs : public QVector<base::output*>
 {
 public:
@@ -99,11 +93,6 @@ public:
     virtual render::gl::backend *createOpenGLBackend(render::compositor* compositor);
     virtual render::qpainter::backend *createQPainterBackend();
 
-    /**
-     * Allows the platform to create a platform specific screen edge.
-     * The default implementation creates a Edge.
-     */
-    virtual win::screen_edge *createScreenEdge(win::screen_edger *parent);
     /**
      * The EGLDisplay used by the compositing scene.
      */

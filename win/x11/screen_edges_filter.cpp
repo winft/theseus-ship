@@ -3,7 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "screenedges_filter.h"
+#include "screen_edges_filter.h"
 
 #include "atoms.h"
 #include "win/screen_edges.h"
@@ -12,15 +12,15 @@
 #include <QWidget>
 #include <xcb/xcb.h>
 
-namespace KWin::render::backend::x11
+namespace KWin::win::x11
 {
 
-ScreenEdgesFilter::ScreenEdgesFilter()
+screen_edges_filter::screen_edges_filter()
     : base::x11::event_filter(QVector<int>{XCB_MOTION_NOTIFY, XCB_ENTER_NOTIFY, XCB_CLIENT_MESSAGE})
 {
 }
 
-bool ScreenEdgesFilter::event(xcb_generic_event_t* event)
+bool screen_edges_filter::event(xcb_generic_event_t* event)
 {
     const uint8_t eventType = event->response_type & ~0x80;
     switch (eventType) {

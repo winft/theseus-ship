@@ -28,10 +28,15 @@ public:
     space();
     ~space() override;
 
+    win::screen_edge* create_screen_edge() override;
+
 protected:
     void update_space_area_from_windows(QRect const& desktop_area,
                                         std::vector<QRect> const& screens_geos,
                                         win::space_areas& areas) override;
+
+private:
+    std::unique_ptr<base::x11::event_filter> edges_filter;
 };
 
 template<typename Space, typename Window>

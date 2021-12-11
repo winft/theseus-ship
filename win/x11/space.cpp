@@ -5,6 +5,8 @@
 */
 #include "space.h"
 
+#include "screen_edge.h"
+#include "screen_edges_filter.h"
 #include "space_areas.h"
 #include "window.h"
 
@@ -30,6 +32,14 @@ space::space()
 
 space::~space()
 {
+}
+
+win::screen_edge* space::create_screen_edge()
+{
+    if (!edges_filter) {
+        edges_filter = std::make_unique<screen_edges_filter>();
+    }
+    return new screen_edge(edges.get());
 }
 
 void space::update_space_area_from_windows(QRect const& desktop_area,

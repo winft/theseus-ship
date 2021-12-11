@@ -75,6 +75,7 @@ namespace win
 {
 enum class activation;
 class internal_window;
+class screen_edge;
 class screen_edger;
 class stacking_order;
 
@@ -414,6 +415,7 @@ public:
 
     void remove_window(Toplevel* window);
 
+    virtual win::screen_edge* create_screen_edge();
     virtual QRect get_icon_geometry(Toplevel const* win) const;
 
 public Q_SLOTS:
