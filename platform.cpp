@@ -62,9 +62,9 @@ render::qpainter::backend *Platform::createQPainterBackend()
     return nullptr;
 }
 
-Edge *Platform::createScreenEdge(ScreenEdges *edges)
+win::screen_edge *Platform::createScreenEdge(win::screen_edger *edges)
 {
-    return new Edge(edges);
+    return new win::screen_edge(edges);
 }
 
 EGLDisplay KWin::Platform::sceneEglDisplay() const

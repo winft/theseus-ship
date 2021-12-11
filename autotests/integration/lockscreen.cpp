@@ -458,7 +458,7 @@ void LockScreenTest::testKeyboard()
 
 void LockScreenTest::testScreenEdge()
 {
-    QSignalSpy screenEdgeSpy(workspace()->edges.get(), &ScreenEdges::approaching);
+    QSignalSpy screenEdgeSpy(workspace()->edges.get(), &win::screen_edger::approaching);
     QVERIFY(screenEdgeSpy.isValid());
     QCOMPARE(screenEdgeSpy.count(), 0);
 

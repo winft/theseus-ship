@@ -27,7 +27,6 @@ class QMouseEvent;
 namespace KWin
 {
 
-class ScreenEdges;
 class Toplevel;
 
 namespace input
@@ -36,12 +35,17 @@ class gesture_recognizer;
 class swipe_gesture;
 }
 
-class KWIN_EXPORT Edge : public QObject
+namespace win
+{
+
+class screen_edger;
+
+class KWIN_EXPORT screen_edge : public QObject
 {
     Q_OBJECT
 public:
-    explicit Edge(ScreenEdges* parent);
-    ~Edge() override;
+    explicit screen_edge(screen_edger* edger);
+    ~screen_edge() override;
 
     bool isLeft() const;
     bool isTop() const;
@@ -133,7 +137,7 @@ private:
     void switchDesktop(QPoint const& cursorPos);
     void pushCursorBack(QPoint const& cursorPos);
 
-    ScreenEdges* edges;
+    screen_edger* edger;
     ElectricBorderAction pointer_action{ElectricActionNone};
     ElectricBorderAction touch_action{ElectricActionNone};
 
@@ -152,11 +156,11 @@ private:
  * @short Class for controlling screen edges.
  *
  * The screen edge functionality is split into three parts:
- * @li This manager class ScreenEdges
+ * @li This manager class screen_edger
  * @li abstract class @ref Edge
  * @li specific implementation of @ref Edge, e.g. WindowBasedEdge
  *
- * The ScreenEdges creates an @ref Edge for each screen edge which is also an edge in the
+ * The screen_edger creates an @ref Edge for each screen edge which is also an edge in the
  * combination of all screens. E.g. if there are two screens, no Edge is created between the
  * screens, but at all other edges even if the screens have a different dimension.
  *
@@ -166,7 +170,7 @@ private:
  * it would be very difficult to trigger a corner between two screens (one pixel target not visually
  * outlined).
  *
- * The ScreenEdges are used for one of the following functionality:
+ * Screen edges are used for one of the following functionality:
  * @li switch virtual desktop (see property @ref desktopSwitching)
  * @li switch virtual desktop when moving a window (see property @ref desktopSwitchingMovingClients)
  * @li trigger a pre-defined action (see properties @ref actionTop and similar)
@@ -191,12 +195,12 @@ private:
  *
  * @todo change way how Effects/Scripts can reserve an edge and are notified.
  */
-class KWIN_EXPORT ScreenEdges : public QObject
+class KWIN_EXPORT screen_edger : public QObject
 {
     Q_OBJECT
 public:
-    ScreenEdges();
-    ~ScreenEdges() override;
+    screen_edger();
+    ~screen_edger() override;
 
     /**
      * Initialize the screen edges.
@@ -363,68 +367,69 @@ private:
 
     void createHorizontalEdge(ElectricBorder border, QRect const& screen, QRect const& fullArea);
     void createVerticalEdge(ElectricBorder border, QRect const& screen, QRect const& fullArea);
-    Edge* createEdge(ElectricBorder border,
-                     int x,
-                     int y,
-                     int width,
-                     int height,
-                     bool createAction = true);
+    screen_edge* createEdge(ElectricBorder border,
+                            int x,
+                            int y,
+                            int width,
+                            int height,
+                            bool createAction = true);
 
     void setActionForBorder(ElectricBorder border,
                             ElectricBorderAction* oldValue,
                             ElectricBorderAction newValue);
     void setActionForTouchBorder(ElectricBorder border, ElectricBorderAction newValue);
-    ElectricBorderAction actionForEdge(Edge* edge) const;
-    ElectricBorderAction actionForTouchEdge(Edge* edge) const;
+    ElectricBorderAction actionForEdge(screen_edge* edge) const;
+    ElectricBorderAction actionForTouchEdge(screen_edge* edge) const;
     void createEdgeForClient(Toplevel* window, ElectricBorder border);
     void deleteEdgeForClient(Toplevel* window);
 
     Qt::Orientations virtual_desktop_layout{};
-    std::vector<Edge*> edges;
+    std::vector<screen_edge*> edges;
 
     QMap<ElectricBorder, ElectricBorderAction> touch_actions;
 };
 
 /**********************************************************
- * Inlines Edge
+ * Inlines screen_edge
  *********************************************************/
 
-inline bool Edge::isBottom() const
+inline bool screen_edge::isBottom() const
 {
     return border == ElectricBottom || border == ElectricBottomLeft
         || border == ElectricBottomRight;
 }
 
-inline bool Edge::isLeft() const
+inline bool screen_edge::isLeft() const
 {
     return border == ElectricLeft || border == ElectricTopLeft || border == ElectricBottomLeft;
 }
 
-inline bool Edge::isRight() const
+inline bool screen_edge::isRight() const
 {
     return border == ElectricRight || border == ElectricTopRight || border == ElectricBottomRight;
 }
 
-inline bool Edge::isTop() const
+inline bool screen_edge::isTop() const
 {
     return border == ElectricTop || border == ElectricTopLeft || border == ElectricTopRight;
 }
 
-inline bool Edge::isCorner() const
+inline bool screen_edge::isCorner() const
 {
     return border == ElectricTopLeft || border == ElectricTopRight || border == ElectricBottomRight
         || border == ElectricBottomLeft;
 }
 
-inline bool Edge::isScreenEdge() const
+inline bool screen_edge::isScreenEdge() const
 {
     return border == ElectricLeft || border == ElectricRight || border == ElectricTop
         || border == ElectricBottom;
 }
 
-inline Toplevel* Edge::client() const
+inline Toplevel* screen_edge::client() const
 {
     return window;
 }
 
+}
 }

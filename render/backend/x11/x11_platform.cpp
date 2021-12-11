@@ -100,7 +100,7 @@ gl::backend* X11StandalonePlatform::createOpenGLBackend(render::compositor* comp
     }
 }
 
-Edge* X11StandalonePlatform::createScreenEdge(ScreenEdges* edges)
+win::screen_edge* X11StandalonePlatform::createScreenEdge(win::screen_edger* edges)
 {
     if (m_screenEdgesFilter.isNull()) {
         m_screenEdgesFilter.reset(new ScreenEdgesFilter);

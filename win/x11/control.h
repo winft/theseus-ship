@@ -648,7 +648,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
     QObject::connect(win,
                      &win::x11::window::client_fullscreen_set,
                      workspace()->edges.get(),
-                     &ScreenEdges::checkBlocking);
+                     &screen_edger::checkBlocking);
 
     // From this place on, manage() must not return false
     win->control.reset(new x11_control(win));

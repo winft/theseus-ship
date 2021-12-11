@@ -131,7 +131,7 @@ Workspace::Workspace()
     m_quickTileCombineTimer->setSingleShot(true);
 
     RuleBook::create(this)->load();
-    edges = std::make_unique<ScreenEdges>();
+    edges = std::make_unique<win::screen_edger>();
 
     // VirtualDesktopManager needs to be created prior to init shortcuts
     // and prior to TabBox, due to TabBox connecting to signals
@@ -188,12 +188,12 @@ Workspace::Workspace()
     auto screenEdges = workspace()->edges.get();
     screenEdges->config = config;
     screenEdges->init();
-    connect(options, &Options::configChanged, screenEdges, &ScreenEdges::reconfigure);
+    connect(options, &Options::configChanged, screenEdges, &win::screen_edger::reconfigure);
     connect(VirtualDesktopManager::self(),
             &VirtualDesktopManager::layoutChanged,
             screenEdges,
-            &ScreenEdges::updateLayout);
-    connect(this, &Workspace::clientActivated, screenEdges, &ScreenEdges::checkBlocking);
+            &win::screen_edger::updateLayout);
+    connect(this, &Workspace::clientActivated, screenEdges, &win::screen_edger::checkBlocking);
 
     auto* focusChain = win::focus_chain::create(this);
     connect(this, &Workspace::clientRemoved, focusChain, &win::focus_chain::remove);

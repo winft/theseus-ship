@@ -15,11 +15,11 @@
 namespace KWin::render::backend::x11
 {
 
-class WindowBasedEdge : public Edge
+class WindowBasedEdge : public win::screen_edge
 {
     Q_OBJECT
 public:
-    explicit WindowBasedEdge(ScreenEdges* parent);
+    explicit WindowBasedEdge(win::screen_edger* edger);
     ~WindowBasedEdge() override;
 
     quint32 window_id() const override;

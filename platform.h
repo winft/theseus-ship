@@ -39,9 +39,7 @@ namespace base
 class output;
 }
 
-class Edge;
 class Screens;
-class ScreenEdges;
 class Toplevel;
 
 namespace Decoration
@@ -75,6 +73,12 @@ class scene;
 
 }
 
+namespace win
+{
+class screen_edge;
+class screen_edger;
+}
+
 class KWIN_EXPORT Outputs : public QVector<base::output*>
 {
 public:
@@ -99,7 +103,7 @@ public:
      * Allows the platform to create a platform specific screen edge.
      * The default implementation creates a Edge.
      */
-    virtual Edge *createScreenEdge(ScreenEdges *parent);
+    virtual win::screen_edge *createScreenEdge(win::screen_edger *parent);
     /**
      * The EGLDisplay used by the compositing scene.
      */

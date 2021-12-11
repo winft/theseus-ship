@@ -223,7 +223,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     connect(tabBox, &TabBox::TabBox::tabBoxKeyEvent, this, &EffectsHandler::tabBoxKeyEvent);
 #endif
     connect(workspace()->edges.get(),
-            &ScreenEdges::approaching,
+            &win::screen_edger::approaching,
             this,
             &EffectsHandler::screenEdgeApproaching);
     connect(ScreenLockerWatcher::self(),

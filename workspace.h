@@ -75,6 +75,7 @@ namespace win
 {
 enum class activation;
 class internal_window;
+class screen_edger;
 class stacking_order;
 
 namespace x11
@@ -87,7 +88,6 @@ class stacking_tree;
 }
 
 class KillWindow;
-class ScreenEdges;
 class ShortcutDialog;
 class Toplevel;
 class UserActionsMenu;
@@ -100,7 +100,7 @@ public:
 
     std::unique_ptr<scripting::platform> scripting;
     std::unique_ptr<render::x11::outline> outline;
-    std::unique_ptr<ScreenEdges> edges;
+    std::unique_ptr<win::screen_edger> edges;
 
     explicit Workspace();
     ~Workspace() override;

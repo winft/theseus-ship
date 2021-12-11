@@ -41,15 +41,15 @@ Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core")
 namespace KWin
 {
 
-void ScreenEdges::reserve(ElectricBorder, QObject*, const char*)
+void win::screen_edger::reserve(ElectricBorder, QObject*, const char*)
 {
 }
 
-void ScreenEdges::unreserve(ElectricBorder, QObject*)
+void win::screen_edger::unreserve(ElectricBorder, QObject*)
 {
 }
 
-void ScreenEdges::reserveTouch(ElectricBorder, QAction*)
+void win::screen_edger::reserveTouch(ElectricBorder, QAction*)
 {
 }
 

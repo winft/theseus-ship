@@ -14,8 +14,8 @@
 namespace KWin::render::backend::x11
 {
 
-WindowBasedEdge::WindowBasedEdge(ScreenEdges* parent)
-    : Edge(parent)
+WindowBasedEdge::WindowBasedEdge(win::screen_edger* edger)
+    : win::screen_edge(edger)
     , m_window(XCB_WINDOW_NONE)
     , m_approachWindow(XCB_WINDOW_NONE)
 {
