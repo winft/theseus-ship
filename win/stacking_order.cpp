@@ -16,7 +16,7 @@
 #include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
 
-#include "screenedge.h"
+#include "screen_edges.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "workspace.h"

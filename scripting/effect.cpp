@@ -14,18 +14,17 @@
 #include "utils.h"
 
 #include "../options.h"
-#include "../screenedge.h"
 #include "../screens.h"
 
 #include "input/redirect.h"
-#include "screenedge.h"
 #include "screens.h"
-// KDE
+#include "win/screen_edges.h"
+
 #include <KConfigGroup>
 #include <KGlobalAccel>
 #include <KPluginMetaData>
 #include <kconfigloader.h>
-// Qt
+
 #include <QAction>
 #include <QFile>
 #include <QQmlEngine>

@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #define private public
-#include "screenedge.h"
+#include "win/screen_edges.h"
 #undef private
 
 #include <KConfigGroup>

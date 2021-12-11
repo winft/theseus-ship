@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // for mocking
 #include "../input/cursor.h"
-#include "../screenedge.h"
 #include "input/redirect.h"
+#include "win/screen_edges.h"
 // KDE
 #include <KConfig>
 #include <KConfigGroup>

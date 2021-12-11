@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "screen_edge_item.h"
 
-#include "screenedge.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 #include <config-kwin.h>
 

@@ -8,7 +8,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "screenedge.h"
+#include "screen_edges.h"
 
 #include "input/cursor.h"
 #include "input/gestures.h"

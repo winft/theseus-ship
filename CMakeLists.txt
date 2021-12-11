@@ -466,7 +466,6 @@ set(kwin_SRCS
     rules/rule_book_settings.cpp
     rules/rules.cpp
     rules/window_rules.cpp
-    screenedge.cpp
     screenlockerwatcher.cpp
     screens.cpp
     scripting/dbus_call.cpp
@@ -496,6 +495,7 @@ set(kwin_SRCS
     win/focus_chain.cpp
     win/internal_window.cpp
     win/remnant.cpp
+    win/screen_edges.cpp
     win/stacking_order.cpp
     win/transient.cpp
     win/x11/client_machine.cpp

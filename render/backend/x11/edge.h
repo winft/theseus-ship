@@ -9,7 +9,8 @@
 */
 #ifndef KWIN_EDGE_H
 #define KWIN_EDGE_H
-#include "screenedge.h"
+
+#include "win/screen_edges.h"
 #include "xcbutils.h"
 
 namespace KWin::render::backend::x11

@@ -6,7 +6,7 @@
 #include "screenedges_filter.h"
 
 #include "atoms.h"
-#include "screenedge.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 
 #include <QWidget>

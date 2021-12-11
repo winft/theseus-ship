@@ -11,7 +11,7 @@
 #include "input/cursor.h"
 #include "net.h"
 #include "render/x11/outline.h"
-#include "screenedge.h"
+#include "screen_edges.h"
 #include "screens.h"
 #include "types.h"
 #include "workspace.h"

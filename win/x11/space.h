@@ -11,8 +11,8 @@
 
 #include "win/stacking_order.h"
 
-#include "screenedge.h"
 #include "utils.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 #include "xcbutils.h"
 

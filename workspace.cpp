@@ -37,9 +37,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/x11/outline.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
-#include "screenedge.h"
 #include "screens.h"
 #include "scripting/platform.h"
+#include "win/screen_edges.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif

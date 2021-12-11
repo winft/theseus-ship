@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "input/cursor.h"
 #include "platform.h"
-#include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
@@ -29,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/geo.h"
 #include "win/input.h"
+#include "win/screen_edges.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"

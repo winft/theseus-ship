@@ -37,9 +37,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
-#include "screenedge.h"
 #include "screens.h"
 #include "virtualdesktops.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 #include "xcbutils.h"
 

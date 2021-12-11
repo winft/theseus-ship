@@ -23,13 +23,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "render/compositor.h"
 #include "render/scene.h"
-#include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
 #include <kwineffects.h>
 
 #include "win/deco.h"
+#include "win/screen_edges.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>

@@ -9,9 +9,9 @@
 #include "base/platform.h"
 #include "effects_mouse_interception_x11_filter.h"
 #include "input/cursor.h"
-#include "screenedge.h"
 #include "screens.h"
 #include "utils.h"
+#include "win/screen_edges.h"
 #include "win/x11/space.h"
 #include "workspace.h"
 

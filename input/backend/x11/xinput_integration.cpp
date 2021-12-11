@@ -19,7 +19,7 @@
 #include "input/spies/modifier_only_shortcuts.h"
 #include "main.h"
 #include "platform.h"
-#include "screenedge.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 
 #include <kwinglobals.h>

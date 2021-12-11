@@ -32,12 +32,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "kwineffectquickview.h"
 #include "kwinglutils.h"
-#include "screenedge.h"
 #include "screenlockerwatcher.h"
 #include "screens.h"
 #include "scripting/effect.h"
 #include "thumbnail_item.h"
 #include "virtualdesktops.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 
 #include "win/control.h"

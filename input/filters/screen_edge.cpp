@@ -9,8 +9,8 @@
 #include "input/gestures.h"
 #include "input/qt_event.h"
 #include "main.h"
-#include "screenedge.h"
 #include "wayland_server.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 
 #include <Wrapland/Server/seat.h>

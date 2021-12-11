@@ -18,7 +18,7 @@
 
 #include "../options.h"
 #include "input/redirect.h"
-#include "screenedge.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 
 #include <KConfigGroup>
