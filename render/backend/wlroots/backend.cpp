@@ -134,16 +134,6 @@ QVector<CompositingType> backend::supportedCompositors() const
     return QVector<CompositingType>{OpenGLCompositing};
 }
 
-QString backend::supportInformation() const
-{
-    QString supportInfo;
-    QDebug s(&supportInfo);
-    s.nospace();
-    s << "Name: "
-      << "wlroots" << endl;
-    return supportInfo;
-}
-
 struct outputs_array_wrap {
     outputs_array_wrap(size_t size)
         : size{size}

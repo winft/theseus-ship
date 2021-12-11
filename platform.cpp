@@ -160,11 +160,6 @@ void Platform::createEffectsHandler(render::compositor *compositor, render::scen
     new render::effects_handler_impl(compositor, scene);
 }
 
-QString Platform::supportInformation() const
-{
-    return QStringLiteral("Name: %1\n").arg(metaObject()->className());
-}
-
 clockid_t Platform::clockId() const
 {
     return CLOCK_MONOTONIC;

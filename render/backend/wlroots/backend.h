@@ -48,8 +48,6 @@ public:
 
     QVector<CompositingType> supportedCompositors() const override;
 
-    QString supportInformation() const override;
-
 protected:
     clockid_t clockId() const override;
 
