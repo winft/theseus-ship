@@ -31,17 +31,6 @@ backend::backend(base::backend::wlroots::platform& base)
     : base{base}
 {
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
-
-    QObject::connect(
-        &base, &base::backend::wlroots::platform::output_added, this, [this](auto&& output) {
-            auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
-            base::wayland::check_outputs_on(this->base, wayland_input->dpms_filter);
-        });
-    QObject::connect(
-        &base, &base::backend::wlroots::platform::output_removed, this, [this](auto&& output) {
-            auto wayland_input = static_cast<input::wayland::platform*>(kwinApp()->input.get());
-            base::wayland::check_outputs_on(this->base, wayland_input->dpms_filter);
-        });
 }
 
 backend::~backend() = default;

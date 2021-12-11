@@ -40,6 +40,13 @@ platform::platform(base::wayland::platform const& base)
     cursor = std::make_unique<wayland::cursor>(this);
     input_method = std::make_unique<wayland::input_method>(waylandServer());
     virtual_keyboard = waylandServer()->display()->create_virtual_keyboard_manager_v1();
+
+    QObject::connect(&base, &base::backend::wlroots::platform::output_added, this, [this] {
+        base::wayland::check_outputs_on(this->base, dpms_filter);
+    });
+    QObject::connect(&base, &base::backend::wlroots::platform::output_removed, this, [this] {
+        base::wayland::check_outputs_on(this->base, dpms_filter);
+    });
 }
 
 platform::~platform() = default;
