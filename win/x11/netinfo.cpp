@@ -251,7 +251,7 @@ void root_info::moveResize(xcb_window_t w, int x_root, int y_root, unsigned long
     auto c = Workspace::self()->findClient(win::x11::predicate_match::window, w);
     if (c) {
         // otherwise grabbing may have old timestamp - this message should include timestamp
-        updateXTime();
+        kwinApp()->update_x11_time_from_clock();
         win::x11::net_move_resize(c, x_root, y_root, (Direction)direction);
     }
 }

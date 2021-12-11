@@ -116,11 +116,6 @@ public:
     virtual void setupActionForGlobalAccel(QAction* action);
 
     /**
-     * Queries the current X11 time stamp of the X server.
-     */
-    void updateXTime();
-
-    /**
      * Creates the outline_visual for the given @p outline.
      * Default implementation creates an outline_visual suited for composited usage.
      */

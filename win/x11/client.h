@@ -275,7 +275,7 @@ void send_sync_request(Win* win)
     }
 
     if (win->sync_request.timestamp >= xTime()) {
-        updateXTime();
+        kwinApp()->update_x11_time_from_clock();
     }
 
     auto const number_lo = (win->sync_request.update_request_number << 32) >> 32;

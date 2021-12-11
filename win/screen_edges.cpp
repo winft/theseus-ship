@@ -1506,7 +1506,7 @@ bool screen_edger::handleDndNotify(xcb_window_t window, QPoint const& point)
             continue;
         }
         if (edge->reserved_count > 0 && edge->window_id() == window) {
-            updateXTime();
+            kwinApp()->update_x11_time_from_clock();
             edge->check(point, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC), true);
             return true;
         }

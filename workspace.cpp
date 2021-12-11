@@ -318,7 +318,9 @@ void Workspace::initWithX11()
     if (Xcb::Extensions::self()->isSyncAvailable()) {
         m_syncAlarmFilter.reset(new win::x11::sync_alarm_filter);
     }
-    updateXTime(); // Needed for proper initialization of user_time in Client ctor
+
+    // Needed for proper initialization of user_time in Client ctor
+    kwinApp()->update_x11_time_from_clock();
 
     const uint32_t nullFocusValues[] = {true};
     m_nullFocus.reset(new Xcb::Window(QRect(-1, -1, 1, 1),
@@ -3227,7 +3229,7 @@ void Workspace::restoreFocus()
     // a timestamp *sigh*, kwin's timestamp would be older than the timestamp
     // that was used by whoever caused the focus change, and therefore
     // the attempt to restore the focus would fail due to old timestamp
-    updateXTime();
+    kwinApp()->update_x11_time_from_clock();
     if (should_get_focus.size() > 0) {
         request_focus(should_get_focus.back());
     } else if (last_active_client) {
@@ -3398,7 +3400,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
         if (event->parent == rootWindow() && !QWidget::find(event->window)
             && !event->override_redirect) {
             // see comments for allowClientActivation()
-            updateXTime();
+            kwinApp()->update_x11_time_from_clock();
             const xcb_timestamp_t t = xTime();
             xcb_change_property(connection(),
                                 XCB_PROP_MODE_REPLACE,
@@ -3421,7 +3423,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
         return true;
     }
     case XCB_MAP_REQUEST: {
-        updateXTime();
+        kwinApp()->update_x11_time_from_clock();
 
         const auto* event = reinterpret_cast<xcb_map_request_event_t*>(e);
         if (auto c = findClient(win::x11::predicate_match::window, event->window)) {
@@ -3503,8 +3505,10 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
                 || event->detail == XCB_NOTIFY_DETAIL_POINTER_ROOT
                 || event->detail == XCB_NOTIFY_DETAIL_INFERIOR)) {
             Xcb::CurrentInput currentInput;
-            updateXTime(); // focusToNull() uses xTime(), which is old now (FocusIn has no
-                           // timestamp)
+
+            // focusToNull() uses xTime(), which is old now (FocusIn has no timestamp)
+            kwinApp()->update_x11_time_from_clock();
+
             // it seems we can "loose" focus reversions when the closing client hold a grab
             // => catch the typical pattern (though we don't want the focus on the root anyway)
             // #348935

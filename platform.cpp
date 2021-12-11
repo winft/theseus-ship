@@ -14,7 +14,6 @@
 #include "render/post/night_color_manager.h"
 #include "render/scene.h"
 
-#include <QX11Info>
 #include <cerrno>
 
 namespace KWin
@@ -70,34 +69,6 @@ void Platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
 void Platform::setupActionForGlobalAccel(QAction* action)
 {
     Q_UNUSED(action)
-}
-
-static quint32 monotonicTime()
-{
-    timespec ts;
-
-    const int result = clock_gettime(CLOCK_MONOTONIC, &ts);
-    if (result)
-        qCWarning(KWIN_CORE, "Failed to query monotonic time: %s", strerror(errno));
-
-    return ts.tv_sec * 1000 + ts.tv_nsec / 1000000L;
-}
-
-void Platform::updateXTime()
-{
-    switch (kwinApp()->operationMode()) {
-    case Application::OperationModeX11:
-        kwinApp()->setX11Time(QX11Info::getTimestamp(), Application::TimestampUpdate::Always);
-        break;
-
-    case Application::OperationModeXwayland:
-        kwinApp()->setX11Time(monotonicTime(), Application::TimestampUpdate::Always);
-        break;
-
-    default:
-        // Do not update the current X11 time stamp if it's the Wayland only session.
-        break;
-    }
 }
 
 render::outline_visual* Platform::createOutline(render::outline* outline)

@@ -165,7 +165,9 @@ public:
             m_x11Time = timestamp;
         }
     }
-    void updateX11Time(xcb_generic_event_t *event);
+
+    void update_x11_time_from_clock();
+    void update_x11_time_from_event(xcb_generic_event_t *event);
 
     static void setCrashCount(int count);
     static bool wasCrash();
