@@ -252,10 +252,10 @@ int Screens::physicalDpiY(int screen) const
 base::output* Screens::findOutput(int screen) const
 {
     auto const& outputs = base.get_outputs();
-    if (outputs.empty()) {
-        return nullptr;
+    if (static_cast<int>(outputs.size()) > screen) {
+        return outputs.at(screen);
     }
-    return outputs.at(screen);
+    return nullptr;
 }
 
 int Screens::number(const QPoint &pos) const
