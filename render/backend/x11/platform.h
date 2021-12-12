@@ -82,8 +82,6 @@ private:
     base::x11::platform& base;
 
     QScopedPointer<base::x11::event_filter> m_randrFilter;
-
-    QVector<output*> m_outputs;
 };
 
 }

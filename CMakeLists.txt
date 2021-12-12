@@ -686,6 +686,7 @@ endif()
 
 
 set(kwin_X11_SRCS
+   base/x11/output.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/cursor.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/platform.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/window_selector.cpp
@@ -695,7 +696,6 @@ set(kwin_X11_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/mouse_intercept_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/non_composited_outline.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/output.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/platform.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/randr_filter.cpp
 )

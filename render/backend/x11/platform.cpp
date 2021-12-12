@@ -19,6 +19,7 @@
 #include "glx_backend.h"
 #endif
 
+#include "base/x11/output.h"
 #include "main_x11.h"
 #include "options.h"
 #include "randr_filter.h"
@@ -56,7 +57,6 @@ platform::~platform()
         delete m_openGLFreezeProtectionThread;
     }
     XRenderUtils::cleanup();
-    qDeleteAll(m_outputs);
 }
 
 void platform::init()
@@ -338,19 +338,16 @@ template<typename T>
 void platform::doUpdateOutputs()
 {
     auto fallback = [this]() {
-        auto o = new output;
-        o->set_gamma_ramp_size(0);
-        o->set_refresh_rate(-1.0f);
-        o->set_name(QStringLiteral("Fallback"));
-        m_outputs << o;
-        base.outputs.push_back(o);
+        auto o = std::make_unique<base::x11::output>(base);
+        o->data.gamma_ramp_size = 0;
+        o->data.refresh_rate = -1.0f;
+        o->data.name = QStringLiteral("Fallback");
+        base.outputs.push_back(std::move(o));
     };
 
     // TODO: instead of resetting all outputs, check if new output is added/removed
     //       or still available and leave still available outputs in m_outputs
     //       untouched (like in DRM backend)
-    qDeleteAll(m_outputs);
-    m_outputs.clear();
     base.outputs.clear();
 
     if (!Xcb::Extensions::self()->isRandrAvailable()) {
@@ -406,11 +403,11 @@ void platform::doUpdateOutputs()
             // drm platform do this.
             Xcb::RandR::CrtcGamma gamma(crtc);
 
-            auto o = new output;
-            o->set_crtc(crtc);
-            o->set_gamma_ramp_size(gamma.isNull() ? 0 : gamma->size);
-            o->set_geometry(geo);
-            o->set_refresh_rate(refreshRate * 1000);
+            auto o = std::make_unique<base::x11::output>(base);
+            o->data.crtc = crtc;
+            o->data.gamma_ramp_size = gamma.isNull() ? 0 : gamma->size;
+            o->data.geometry = geo;
+            o->data.refresh_rate = refreshRate * 1000;
 
             for (int j = 0; j < info->num_outputs; ++j) {
                 Xcb::RandR::OutputInfo outputInfo(outputInfos.at(j));
@@ -430,17 +427,16 @@ void platform::doUpdateOutputs()
                 case XCB_RANDR_ROTATION_REFLECT_Y:
                     break;
                 }
-                o->set_name(outputInfo.name());
-                o->set_physical_size(physicalSize);
+                o->data.name = outputInfo.name();
+                o->data.physical_size = physicalSize;
                 break;
             }
 
-            m_outputs << o;
-            base.outputs.push_back(o);
+            base.outputs.push_back(std::move(o));
         }
     }
 
-    if (m_outputs.isEmpty()) {
+    if (base.outputs.empty()) {
         fallback();
     }
 }
