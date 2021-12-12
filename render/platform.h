@@ -15,8 +15,6 @@
 #include <epoxy/egl.h>
 #include <memory>
 
-class QAction;
-
 namespace KWin
 {
 
@@ -101,22 +99,6 @@ public:
      * @see openGLCompositingIsBroken.
      */
     virtual void createOpenGLSafePoint(OpenGLSafePoint safePoint);
-
-    /**
-     * Platform specific preparation for an @p action which is used for KGlobalAccel.
-     *
-     * A platform might need to do preparation for an @p action before
-     * it can be used with KGlobalAccel.
-     *
-     * Code using KGlobalAccel should invoke this method for the @p action
-     * prior to setting up any shortcuts and connections.
-     *
-     * The default implementation does nothing.
-     *
-     * @param action The action which will be used with KGlobalAccel.
-     * @since 5.10
-     */
-    virtual void setupActionForGlobalAccel(QAction* action);
 
     /**
      * Creates the outline_visual for the given @p outline.

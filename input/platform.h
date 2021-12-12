@@ -14,6 +14,8 @@
 #include <memory>
 #include <vector>
 
+class QAction;
+
 namespace KWin
 {
 class Toplevel;
@@ -52,6 +54,22 @@ public:
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     ~platform() override;
+
+    /**
+     * Platform specific preparation for an @p action which is used for KGlobalAccel.
+     *
+     * A platform might need to do preparation for an @p action before
+     * it can be used with KGlobalAccel.
+     *
+     * Code using KGlobalAccel should invoke this method for the @p action
+     * prior to setting up any shortcuts and connections.
+     *
+     * The default implementation does nothing.
+     *
+     * @param action The action which will be used with KGlobalAccel.
+     * @since 5.10
+     */
+    virtual void setup_action_for_global_accel(QAction* action);
 
     /**
      * Starts an interactive window selection process.

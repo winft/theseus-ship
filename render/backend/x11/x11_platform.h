@@ -47,8 +47,6 @@ public:
     bool openGLCompositingIsBroken() const override;
     void createOpenGLSafePoint(OpenGLSafePoint safePoint) override;
 
-    void setupActionForGlobalAccel(QAction* action) override;
-
     outline_visual* createOutline(render::outline* outline) override;
     Decoration::Renderer*
     createDecorationRenderer(Decoration::DecoratedClientImpl* client) override;

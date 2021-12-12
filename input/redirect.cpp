@@ -148,7 +148,7 @@ Toplevel* redirect::findManagedToplevel(const QPoint& pos)
 void redirect::registerShortcut(const QKeySequence& shortcut, QAction* action)
 {
     Q_UNUSED(shortcut)
-    kwinApp()->platform->setupActionForGlobalAccel(action);
+    kwinApp()->input->setup_action_for_global_accel(action);
 }
 
 void redirect::registerPointerShortcut(Qt::KeyboardModifiers modifiers,

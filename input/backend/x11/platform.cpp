@@ -46,6 +46,18 @@ platform::platform()
 
 platform::~platform() = default;
 
+void platform::setup_action_for_global_accel(QAction* action)
+{
+    QObject::connect(action, &QAction::triggered, this, [action] {
+        auto timestamp = action->property("org.kde.kglobalaccel.activationTimestamp");
+        bool ok = false;
+        auto const time = timestamp.toULongLong(&ok);
+        if (ok) {
+            kwinApp()->setX11Time(time);
+        }
+    });
+}
+
 #if HAVE_X11_XINPUT
 void platform::create_cursor()
 {

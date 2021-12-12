@@ -25,6 +25,8 @@ public:
     platform& operator=(platform const&) = delete;
     ~platform() override;
 
+    void setup_action_for_global_accel(QAction* action) override;
+
     void start_interactive_window_selection(std::function<void(KWin::Toplevel*)> callback,
                                             QByteArray const& cursorName = QByteArray()) override;
     void start_interactive_position_selection(std::function<void(QPoint const&)> callback) override;

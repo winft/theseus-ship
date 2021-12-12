@@ -238,18 +238,6 @@ void X11StandalonePlatform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
     }
 }
 
-void X11StandalonePlatform::setupActionForGlobalAccel(QAction* action)
-{
-    connect(action, &QAction::triggered, kwinApp(), [action] {
-        QVariant timestamp = action->property("org.kde.kglobalaccel.activationTimestamp");
-        bool ok = false;
-        const quint32 t = timestamp.toULongLong(&ok);
-        if (ok) {
-            kwinApp()->setX11Time(t);
-        }
-    });
-}
-
 outline_visual* X11StandalonePlatform::createOutline(render::outline* outline)
 {
     // first try composited Outline

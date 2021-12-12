@@ -67,11 +67,6 @@ void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
     Q_UNUSED(safePoint)
 }
 
-void platform::setupActionForGlobalAccel(QAction* action)
-{
-    Q_UNUSED(action)
-}
-
 render::outline_visual* platform::createOutline(render::outline* outline)
 {
     if (render::compositor::compositing()) {

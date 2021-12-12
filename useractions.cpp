@@ -1054,7 +1054,7 @@ void Workspace::clientShortcutUpdated(Toplevel* window)
     if (!window->control->shortcut().isEmpty()) {
         if (action == nullptr) { // new shortcut
             action = new QAction(this);
-            kwinApp()->platform->setupActionForGlobalAccel(action);
+            kwinApp()->input->setup_action_for_global_accel(action);
             action->setProperty("componentName", QStringLiteral(KWIN_NAME));
             action->setObjectName(key);
             action->setText(i18n("Activate Window (%1)", win::caption(window)));
