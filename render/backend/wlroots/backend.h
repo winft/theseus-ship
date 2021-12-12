@@ -25,7 +25,7 @@ namespace render::backend::wlroots
 
 class egl_backend;
 
-class KWIN_EXPORT backend : public Platform
+class KWIN_EXPORT backend : public render::platform
 {
     Q_OBJECT
 public:

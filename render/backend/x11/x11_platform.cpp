@@ -252,7 +252,7 @@ void X11StandalonePlatform::setupActionForGlobalAccel(QAction* action)
 outline_visual* X11StandalonePlatform::createOutline(render::outline* outline)
 {
     // first try composited Outline
-    auto ret = Platform::createOutline(outline);
+    auto ret = render::platform::createOutline(outline);
     if (!ret) {
         ret = new NonCompositedOutlineVisual(outline);
     }
@@ -262,7 +262,7 @@ outline_visual* X11StandalonePlatform::createOutline(render::outline* outline)
 Decoration::Renderer*
 X11StandalonePlatform::createDecorationRenderer(Decoration::DecoratedClientImpl* client)
 {
-    auto renderer = Platform::createDecorationRenderer(client);
+    auto renderer = render::platform::createDecorationRenderer(client);
     if (!renderer) {
         renderer = new X11DecoRenderer(client);
     }
@@ -310,7 +310,7 @@ void X11StandalonePlatform::invertScreen()
         }
     }
     if (!succeeded) {
-        Platform::invertScreen();
+        render::platform::invertScreen();
     }
 }
 

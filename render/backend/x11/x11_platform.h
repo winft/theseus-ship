@@ -30,7 +30,7 @@ namespace render::backend::x11
 {
 class X11Output;
 
-class KWIN_EXPORT X11StandalonePlatform : public Platform
+class KWIN_EXPORT X11StandalonePlatform : public render::platform
 {
     Q_OBJECT
 public:

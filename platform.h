@@ -46,13 +46,11 @@ class outline;
 class outline_visual;
 class scene;
 
-}
-
-class KWIN_EXPORT Platform : public QObject
+class KWIN_EXPORT platform : public QObject
 {
     Q_OBJECT
 public:
-    ~Platform() override;
+    ~platform() override;
 
     virtual render::gl::backend* createOpenGLBackend(render::compositor* compositor);
     virtual render::qpainter::backend* createQPainterBackend();
@@ -164,7 +162,8 @@ public:
     EGLSurface egl_surface{EGL_NO_SURFACE};
 
 protected:
-    Platform();
+    platform();
 };
 
+}
 }

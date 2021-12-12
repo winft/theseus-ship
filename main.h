@@ -59,6 +59,7 @@ class event_filter_manager;
 namespace render
 {
 class compositor;
+class platform;
 }
 
 namespace seat
@@ -66,7 +67,6 @@ namespace seat
 class session;
 }
 
-class Platform;
 class WaylandServer;
 
 class XcbEventFilter : public QAbstractNativeEventFilter
@@ -107,7 +107,7 @@ public:
         OperationModeXwayland
     };
 
-    Platform* platform{nullptr};
+    render::platform* platform{nullptr};
     std::unique_ptr<seat::session> session;
     std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<input::platform> input;

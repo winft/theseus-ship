@@ -16,62 +16,62 @@
 
 #include <cerrno>
 
-namespace KWin
+namespace KWin::render
 {
 
-Platform::Platform()
+platform::platform()
     : night_color{std::make_unique<render::post::night_color_manager>()}
 {
 }
 
-Platform::~Platform()
+platform::~platform()
 {
     if (egl_display != EGL_NO_DISPLAY) {
         eglTerminate(egl_display);
     }
 }
 
-render::gl::backend* Platform::createOpenGLBackend(render::compositor* /*compositor*/)
+render::gl::backend* platform::createOpenGLBackend(render::compositor* /*compositor*/)
 {
     return nullptr;
 }
 
-render::qpainter::backend* Platform::createQPainterBackend()
+render::qpainter::backend* platform::createQPainterBackend()
 {
     return nullptr;
 }
 
-bool Platform::requiresCompositing() const
+bool platform::requiresCompositing() const
 {
     return true;
 }
 
-bool Platform::compositingPossible() const
+bool platform::compositingPossible() const
 {
     return true;
 }
 
-QString Platform::compositingNotPossibleReason() const
+QString platform::compositingNotPossibleReason() const
 {
     return QString();
 }
 
-bool Platform::openGLCompositingIsBroken() const
+bool platform::openGLCompositingIsBroken() const
 {
     return false;
 }
 
-void Platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
+void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
 {
     Q_UNUSED(safePoint)
 }
 
-void Platform::setupActionForGlobalAccel(QAction* action)
+void platform::setupActionForGlobalAccel(QAction* action)
 {
     Q_UNUSED(action)
 }
 
-render::outline_visual* Platform::createOutline(render::outline* outline)
+render::outline_visual* platform::createOutline(render::outline* outline)
 {
     if (render::compositor::compositing()) {
         return new render::composited_outline_visual(outline);
@@ -79,7 +79,7 @@ render::outline_visual* Platform::createOutline(render::outline* outline)
     return nullptr;
 }
 
-Decoration::Renderer* Platform::createDecorationRenderer(Decoration::DecoratedClientImpl* client)
+Decoration::Renderer* platform::createDecorationRenderer(Decoration::DecoratedClientImpl* client)
 {
     if (render::compositor::self()->scene()) {
         return render::compositor::self()->scene()->createDecorationRenderer(client);
@@ -87,7 +87,7 @@ Decoration::Renderer* Platform::createDecorationRenderer(Decoration::DecoratedCl
     return nullptr;
 }
 
-void Platform::invertScreen()
+void platform::invertScreen()
 {
     if (effects) {
         if (auto inverter = static_cast<render::effects_handler_impl*>(effects)->provides(
@@ -98,12 +98,12 @@ void Platform::invertScreen()
     }
 }
 
-void Platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
+void platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
 {
     new render::effects_handler_impl(compositor, scene);
 }
 
-clockid_t Platform::clockId() const
+clockid_t platform::clockId() const
 {
     return CLOCK_MONOTONIC;
 }
