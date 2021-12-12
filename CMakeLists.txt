@@ -693,7 +693,6 @@ set(kwin_X11_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/deco_renderer.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/mouse_intercept_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/non_composited_outline.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/output.cpp
@@ -715,6 +714,18 @@ if (HAVE_EPOXY_GLX)
         ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_context_attribute_builder.cpp
     )
 endif()
+
+include(ECMQtDeclareLoggingCategory)
+ecm_qt_declare_logging_category(kwin_X11_SRCS
+    HEADER
+        x11_logging.h
+    IDENTIFIER
+        KWIN_X11
+    CATEGORY_NAME
+        kwin_x11
+    DEFAULT_SEVERITY
+        Critical
+)
 
 add_library(kwin_x11_lib STATIC
   ${kwin_X11_SRCS}
@@ -757,7 +768,7 @@ set(kwin_XWAYLAND_SRCS
    xwl/selection_data.h
    xwl/sources.h
 )
-include(ECMQtDeclareLoggingCategory)
+
 ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
     HEADER
         xwayland_logging.h

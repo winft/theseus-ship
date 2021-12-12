@@ -9,17 +9,18 @@
 #include <config-kwin.h>
 #include <kwinconfig.h>
 
+#include "deco_renderer.h"
+#include "effects.h"
+#include "non_composited_outline.h"
+#include "output.h"
+#include "x11_logging.h"
+
 #if HAVE_EPOXY_GLX
 #include "glx_backend.h"
 #endif
 
-#include "deco_renderer.h"
-#include "effects.h"
-#include "logging.h"
 #include "main_x11.h"
-#include "non_composited_outline.h"
 #include "options.h"
-#include "output.h"
 #include "randr_filter.h"
 #include "render/compositor.h"
 #include "screens.h"
@@ -91,7 +92,7 @@ gl::backend* platform::createOpenGLBackend(render::compositor* compositor)
         if (hasGlx()) {
             return new glx_backend(m_x11Display, compositor);
         } else {
-            qCWarning(KWIN_X11STANDALONE) << "Glx not available, trying EGL instead.";
+            qCWarning(KWIN_X11) << "Glx not available, trying EGL instead.";
             // no break, needs fall-through
             Q_FALLTHROUGH();
         }
@@ -156,11 +157,11 @@ bool platform::compositingPossible() const
         return false;
 
     if (!Xcb::Extensions::self()->isCompositeAvailable()) {
-        qCDebug(KWIN_X11STANDALONE) << "No composite extension available";
+        qCDebug(KWIN_X11) << "No composite extension available";
         return false;
     }
     if (!Xcb::Extensions::self()->isDamageAvailable()) {
-        qCDebug(KWIN_X11STANDALONE) << "No damage extension available";
+        qCDebug(KWIN_X11) << "No damage extension available";
         return false;
     }
     if (hasGlx())
@@ -174,7 +175,7 @@ bool platform::compositingPossible() const
     } else if (qstrcmp(qgetenv("KWIN_COMPOSE"), "O2ES") == 0) {
         return true;
     }
-    qCDebug(KWIN_X11STANDALONE) << "No OpenGL or XRender/XFixes support";
+    qCDebug(KWIN_X11) << "No OpenGL or XRender/XFixes support";
     return false;
 }
 
@@ -280,8 +281,7 @@ void platform::invertScreen()
                     continue;
                 }
                 if (gamma->size) {
-                    qCDebug(KWIN_X11STANDALONE)
-                        << "inverting screen using xcb_randr_set_crtc_gamma";
+                    qCDebug(KWIN_X11) << "inverting screen using xcb_randr_set_crtc_gamma";
                     const int half = gamma->size / 2 + 1;
 
                     uint16_t* red = gamma.red();

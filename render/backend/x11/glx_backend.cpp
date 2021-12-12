@@ -10,7 +10,7 @@
 #include "glx_backend.h"
 
 #include "glx_context_attribute_builder.h"
-#include "logging.h"
+#include "x11_logging.h"
 
 #include "base/platform.h"
 #include "main.h"
@@ -218,7 +218,7 @@ void glx_backend::init()
     } else if (m_haveMESASwapControl) {
         glXSwapIntervalMESA(1);
     } else {
-        qCWarning(KWIN_X11STANDALONE) << "NO VSYNC! glSwapInterval is not supported";
+        qCWarning(KWIN_X11) << "NO VSYNC! glSwapInterval is not supported";
     }
 
     if (glPlatform->isVirtualBox()) {
@@ -231,7 +231,7 @@ void glx_backend::init()
 
     setIsDirectRendering(bool(glXIsDirect(display(), ctx)));
 
-    qCDebug(KWIN_X11STANDALONE) << "Direct rendering:" << isDirectRendering();
+    qCDebug(KWIN_X11) << "Direct rendering:" << isDirectRendering();
 }
 
 bool glx_backend::checkVersion()
@@ -299,7 +299,7 @@ bool glx_backend::initRenderingContext()
             const auto attribs = it->build();
             ctx = glXCreateContextAttribsARB(display(), fbconfig, nullptr, true, attribs.data());
             if (ctx) {
-                qCDebug(KWIN_X11STANDALONE) << "Created GLX context with attributes:" << &(*it);
+                qCDebug(KWIN_X11) << "Created GLX context with attributes:" << &(*it);
                 break;
             }
         }
@@ -309,12 +309,12 @@ bool glx_backend::initRenderingContext()
         ctx = glXCreateNewContext(display(), fbconfig, GLX_RGBA_TYPE, nullptr, direct);
 
     if (!ctx) {
-        qCDebug(KWIN_X11STANDALONE) << "Failed to create an OpenGL context.";
+        qCDebug(KWIN_X11) << "Failed to create an OpenGL context.";
         return false;
     }
 
     if (!glXMakeCurrent(display(), glxWindow, ctx)) {
-        qCDebug(KWIN_X11STANDALONE) << "Failed to make the OpenGL context current.";
+        qCDebug(KWIN_X11) << "Failed to make the OpenGL context current.";
         glXDestroyContext(display(), ctx);
         ctx = nullptr;
         return false;
@@ -342,8 +342,7 @@ bool glx_backend::initBuffer()
         glXGetFBConfigAttrib(display(), fbconfig, GLX_VISUAL_ID, (int*)&visual);
 
         if (!visual) {
-            qCCritical(KWIN_X11STANDALONE)
-                << "The GLXFBConfig does not have an associated X visual";
+            qCCritical(KWIN_X11) << "The GLXFBConfig does not have an associated X visual";
             return false;
         }
 
@@ -370,7 +369,7 @@ bool glx_backend::initBuffer()
         glxWindow = glXCreateWindow(display(), fbconfig, window, nullptr);
         overlay_window->setup(window);
     } else {
-        qCCritical(KWIN_X11STANDALONE) << "Failed to create overlay window";
+        qCCritical(KWIN_X11) << "Failed to create overlay window";
         return false;
     }
 
@@ -496,7 +495,7 @@ bool glx_backend::initFbConfig()
         glXGetFBConfigAttrib(display(), fbconfig, GLX_STENCIL_SIZE, &stencil);
         glXGetFBConfigAttrib(display(), fbconfig, GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB, &srgb);
 
-        qCDebug(KWIN_X11STANDALONE,
+        qCDebug(KWIN_X11,
                 "Choosing GLXFBConfig %#x X visual %#x depth %d RGBA %d:%d:%d:%d ZS %d:%d sRGB: %d",
                 fbconfig_id,
                 visual_id,
@@ -511,7 +510,7 @@ bool glx_backend::initFbConfig()
     }
 
     if (fbconfig == nullptr) {
-        qCCritical(KWIN_X11STANDALONE) << "Failed to find a usable framebuffer configuration";
+        qCCritical(KWIN_X11) << "Failed to find a usable framebuffer configuration";
         return false;
     }
 
@@ -574,7 +573,7 @@ fb_config_info* glx_backend::infoForVisual(xcb_visualid_t visual)
     const xcb_render_directformat_t* direct = XRenderUtils::findPictFormatInfo(format);
 
     if (!direct) {
-        qCCritical(KWIN_X11STANDALONE).nospace()
+        qCCritical(KWIN_X11).nospace()
             << "Could not find a picture format for visual 0x" << hex << visual;
         return info;
     }
@@ -621,7 +620,7 @@ fb_config_info* glx_backend::infoForVisual(xcb_visualid_t visual)
     GLXFBConfig* configs = glXChooseFBConfig(display(), DefaultScreen(display()), attribs, &count);
 
     if (count < 1) {
-        qCCritical(KWIN_X11STANDALONE).nospace()
+        qCCritical(KWIN_X11).nospace()
             << "Could not find a framebuffer configuration for visual 0x" << hex << visual;
         return info;
     }
@@ -706,7 +705,7 @@ fb_config_info* glx_backend::infoForVisual(xcb_visualid_t visual)
         glXGetFBConfigAttrib(display(), info->fbconfig, GLX_FBCONFIG_ID, &fbc_id);
         glXGetFBConfigAttrib(display(), info->fbconfig, GLX_VISUAL_ID, &visual_id);
 
-        qCDebug(KWIN_X11STANDALONE).nospace()
+        qCDebug(KWIN_X11).nospace()
             << "Using FBConfig 0x" << hex << fbc_id << " for visual 0x" << hex << visual_id;
     }
 
