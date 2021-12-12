@@ -6,10 +6,10 @@
 */
 #include "egl_output.h"
 
-#include "backend.h"
 #include "egl_backend.h"
 #include "egl_helpers.h"
 #include "output.h"
+#include "platform.h"
 #include "surface.h"
 
 #include "render/wayland/compositor.h"
@@ -74,8 +74,8 @@ bool egl_output::reset(output* out)
 
     auto size = out->base.mode_size();
 
-    auto surf = egl_back->headless ? create_headless_surface(*egl_back->back, size)
-                                   : create_surface(*egl_back->back, size);
+    auto surf = egl_back->headless ? create_headless_surface(egl_back->platform, size)
+                                   : create_surface(egl_back->platform, size);
     if (!surf) {
         qCWarning(KWIN_WL) << "Not able to create surface on output reset.";
         return false;

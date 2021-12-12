@@ -25,7 +25,7 @@ namespace render::backend::wlroots
 
 class egl_backend;
 
-class KWIN_EXPORT backend : public render::platform
+class KWIN_EXPORT platform : public render::platform
 {
     Q_OBJECT
 public:
@@ -38,8 +38,8 @@ public:
     wlr_allocator* allocator{nullptr};
 #endif
 
-    explicit backend(base::backend::wlroots::platform& base);
-    ~backend() override;
+    explicit platform(base::backend::wlroots::platform& base);
+    ~platform() override;
 
     gl::backend* createOpenGLBackend(render::compositor* compositor) override;
     void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
@@ -53,7 +53,7 @@ private:
     void process_drm_leased(Wrapland::Server::drm_lease_v1* lease);
 
     clockid_t m_clockId;
-    base::event_receiver<backend> new_output;
+    base::event_receiver<platform> new_output;
 };
 
 }

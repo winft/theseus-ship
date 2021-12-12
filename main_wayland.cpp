@@ -206,7 +206,7 @@ void ApplicationWayland::start()
 
     base = std::make_unique<base::backend::wlroots::platform>(waylandServer()->display());
 
-    render.reset(new render::backend::wlroots::backend(*base));
+    render.reset(new render::backend::wlroots::platform(*base));
     platform = render.get();
 
     createOptions();

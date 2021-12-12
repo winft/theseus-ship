@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/platform.h"
 #include "main.h"
 #include "platform.h"
-#include "render/backend/wlroots/backend.h"
+#include "render/backend/wlroots/platform.h"
 #include "render/compositor.h"
 #include "screens.h"
 #include "wayland_logging.h"

@@ -3,7 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "backend.h"
+#include "platform.h"
 
 #include "buffer.h"
 #include "egl_backend.h"
@@ -27,18 +27,18 @@ namespace KWin::render::backend::wlroots
 
 static auto align_horizontal{false};
 
-backend::backend(base::backend::wlroots::platform& base)
+platform::platform(base::backend::wlroots::platform& base)
     : render::platform(base)
     , base{base}
 {
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 }
 
-backend::~backend() = default;
+platform::~platform() = default;
 
 void handle_new_output(struct wl_listener* listener, void* data)
 {
-    base::event_receiver<backend>* new_output_struct
+    base::event_receiver<platform>* new_output_struct
         = wl_container_of(listener, new_output_struct, event);
     auto back = new_output_struct->receiver;
     auto wlr_out = reinterpret_cast<wlr_output*>(data);
@@ -77,7 +77,7 @@ void handle_new_output(struct wl_listener* listener, void* data)
     back->base.screens.updateAll();
 }
 
-void backend::init()
+void platform::init()
 {
     // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
     //                available in the ctor. Can we change that?
@@ -99,19 +99,19 @@ void backend::init()
     base.screens.updateAll();
 }
 
-gl::backend* backend::createOpenGLBackend(render::compositor* compositor)
+gl::backend* platform::createOpenGLBackend(render::compositor* compositor)
 {
     this->compositor = compositor;
-    egl = new egl_backend(this, base::backend::wlroots::get_headless_backend(base.backend));
+    egl = new egl_backend(*this, base::backend::wlroots::get_headless_backend(base.backend));
     return egl;
 }
 
-void backend::createEffectsHandler(render::compositor* compositor, render::scene* scene)
+void platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
 {
     new wayland::effects_handler_impl(compositor, scene);
 }
 
-QVector<CompositingType> backend::supportedCompositors() const
+QVector<CompositingType> platform::supportedCompositors() const
 {
     if (selected_compositor != NoCompositing) {
         return {selected_compositor};
@@ -133,7 +133,7 @@ struct outputs_array_wrap {
     size_t size;
 };
 
-void backend::init_drm_leasing()
+void platform::init_drm_leasing()
 {
 #if HAVE_WLR_DRM_LEASE
     auto drm_backend = base::backend::wlroots::get_drm_backend(base.backend);
@@ -166,7 +166,7 @@ void backend::init_drm_leasing()
 #endif
 }
 
-void backend::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1* lease)
+void platform::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1* lease)
 {
 #if HAVE_WLR_DRM_LEASE
     std::vector<output*> outputs;

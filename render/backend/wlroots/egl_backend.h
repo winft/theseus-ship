@@ -13,7 +13,7 @@
 namespace KWin::render::backend::wlroots
 {
 
-class backend;
+class platform;
 class egl_gbm;
 class egl_output;
 class output;
@@ -37,12 +37,12 @@ private:
 
 public:
     std::unique_ptr<egl_gbm> gbm;
-    wlroots::backend* back;
+    wlroots::platform& platform;
     std::vector<egl_output> outputs;
     bool headless{false};
     std::unique_ptr<wlroots::surface> dummy_surface;
 
-    egl_backend(wlroots::backend* back, bool headless);
+    egl_backend(wlroots::platform& platform, bool headless);
     ~egl_backend() override;
 
     void init() override;

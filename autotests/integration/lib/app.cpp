@@ -98,7 +98,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     base = base::backend::wlroots::platform(
         wlr_headless_backend_create(server->display()->native()));
 
-    render.reset(new render::backend::wlroots::backend(base));
+    render.reset(new render::backend::wlroots::platform(base));
     platform = render.get();
 
     auto environment = QProcessEnvironment::systemEnvironment();

@@ -6,11 +6,11 @@
 */
 #include "egl_backend.h"
 
-#include "backend.h"
 #include "base/backend/wlroots/output.h"
 #include "egl_helpers.h"
 #include "egl_output.h"
 #include "output.h"
+#include "platform.h"
 #include "surface.h"
 #include "wlr_helpers.h"
 
@@ -33,18 +33,18 @@ egl_output& egl_backend::get_output(base::output const* out)
     return *it;
 }
 
-egl_backend::egl_backend(wlroots::backend* back, bool headless)
+egl_backend::egl_backend(wlroots::platform& platform, bool headless)
     : gl::egl_backend()
-    , back{back}
+    , platform{platform}
     , headless{headless}
 {
     // Egl is always direct rendering.
     setIsDirectRendering(true);
 
-    connect(&back->base, &base::platform::output_added, this, [this](auto out) {
+    connect(&platform.base, &base::platform::output_added, this, [this](auto out) {
         add_output(static_cast<base::backend::wlroots::output*>(out)->render.get());
     });
-    connect(&back->base, &base::platform::output_removed, this, [this](auto out) {
+    connect(&platform.base, &base::platform::output_removed, this, [this](auto out) {
         outputs.erase(std::remove_if(outputs.begin(),
                                      outputs.end(),
                                      [&out](auto& egl_out) { return &egl_out.out->base == out; }),
@@ -87,7 +87,7 @@ void egl_backend::init()
 bool egl_backend::init_platform()
 {
     if (headless) {
-        auto egl_display = get_egl_headless(*back);
+        auto egl_display = get_egl_headless(platform);
         if (egl_display == EGL_NO_DISPLAY) {
             return false;
         }
@@ -95,7 +95,7 @@ bool egl_backend::init_platform()
         return true;
     }
 
-    auto gbm = get_egl_gbm(*back);
+    auto gbm = get_egl_gbm(platform);
     if (!gbm) {
         return false;
     }
@@ -113,15 +113,15 @@ bool egl_backend::init_rendering_context()
         return false;
     }
 
-    for (auto& out : back->base.all_outputs) {
+    for (auto& out : platform.base.all_outputs) {
         add_output(static_cast<base::backend::wlroots::output*>(out)->render.get());
     }
 
     // AbstractEglBackend expects a surface to be set but this is not relevant as we render per
     // output and make the context current here on that output's surface. For simplicity we just
     // create a dummy surface and keep that constantly set over the run time.
-    dummy_surface = headless ? create_headless_surface(*back, QSize(800, 600))
-                             : create_surface(*back, QSize(800, 600));
+    dummy_surface = headless ? create_headless_surface(platform, QSize(800, 600))
+                             : create_surface(platform, QSize(800, 600));
     setSurface(dummy_surface->egl);
 
     if (outputs.empty()) {
@@ -259,7 +259,7 @@ QRegion egl_backend::prepareRenderingFrame()
 
 void egl_backend::setViewport(egl_output const& egl_out) const
 {
-    auto const& overall = back->base.screens.size();
+    auto const& overall = platform.base.screens.size();
     auto const& geo = egl_out.out->base.geometry();
     auto const& view = egl_out.out->base.view_geometry();
 
@@ -323,7 +323,7 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
     auto& out = get_output(output);
     renderFramebufferToSurface(out);
 
-    auto compositor = static_cast<wayland::compositor*>(back->compositor);
+    auto compositor = static_cast<wayland::compositor*>(platform.compositor);
     auto render_output
         = compositor->outputs.at(const_cast<base::backend::wlroots::output*>(&out.out->base)).get();
     if (GLPlatform::instance()->supports(GLFeature::TimerQuery)) {

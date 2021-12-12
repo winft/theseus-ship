@@ -5,7 +5,7 @@
 */
 #include "output.h"
 
-#include "backend.h"
+#include "platform.h"
 #include "wlr_includes.h"
 
 #include "base/gamma_ramp.h"

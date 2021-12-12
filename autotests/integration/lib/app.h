@@ -12,7 +12,7 @@
 #include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
 #include "main.h"
-#include "render/backend/wlroots/backend.h"
+#include "render/backend/wlroots/platform.h"
 #include "wayland_server.h"
 
 #include <memory>
@@ -75,7 +75,7 @@ private:
     void handle_server_addons_created();
     void create_xwayland();
 
-    std::unique_ptr<render::backend::wlroots::backend> render;
+    std::unique_ptr<render::backend::wlroots::platform> render;
     std::unique_ptr<render::wayland::compositor> compositor;
 };
 
