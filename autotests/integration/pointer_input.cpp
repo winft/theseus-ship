@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "platform.h"
 #include "render/effects.h"
-#include "screenedge.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -35,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects.h>
 
 #include "win/move.h"
+#include "win/screen_edges.h"
 #include "win/stacking.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"

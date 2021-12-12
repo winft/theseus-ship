@@ -14,18 +14,17 @@
 #include "utils.h"
 
 #include "../options.h"
-#include "../screenedge.h"
 #include "../screens.h"
 
 #include "input/redirect.h"
-#include "screenedge.h"
 #include "screens.h"
-// KDE
+#include "win/screen_edges.h"
+
 #include <KConfigGroup>
 #include <KGlobalAccel>
 #include <KPluginMetaData>
 #include <kconfigloader.h>
-// Qt
+
 #include <QAction>
 #include <QFile>
 #include <QQmlEngine>
@@ -694,7 +693,7 @@ bool effect::registerScreenEdge(int edge, const QJSValue& callback)
     auto it = screenEdgeCallbacks().find(edge);
     if (it == screenEdgeCallbacks().end()) {
         // not yet registered
-        ScreenEdges::self()->reserve(
+        workspace()->edges->reserve(
             static_cast<KWin::ElectricBorder>(edge), this, "borderActivated");
         screenEdgeCallbacks().insert(edge, QJSValueList{callback});
     } else {
@@ -710,7 +709,7 @@ bool effect::unregisterScreenEdge(int edge)
         // not previously registered
         return false;
     }
-    ScreenEdges::self()->unreserve(static_cast<KWin::ElectricBorder>(edge), this);
+    workspace()->edges->unreserve(static_cast<KWin::ElectricBorder>(edge), this);
     screenEdgeCallbacks().erase(it);
     return true;
 }
@@ -726,7 +725,7 @@ bool effect::registerTouchScreenEdge(int edge, const QJSValue& callback)
     }
     QAction* action = new QAction(this);
     connect(action, &QAction::triggered, this, [callback]() { QJSValue(callback).call(); });
-    ScreenEdges::self()->reserveTouch(KWin::ElectricBorder(edge), action);
+    workspace()->edges->reserveTouch(KWin::ElectricBorder(edge), action);
     m_touchScreenEdgeCallbacks.insert(edge, action);
     return true;
 }

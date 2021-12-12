@@ -7,22 +7,22 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_EDGE_H
-#define KWIN_EDGE_H
-#include "screenedge.h"
+#pragma once
+
+#include "win/screen_edges.h"
 #include "xcbutils.h"
 
 namespace KWin::render::backend::x11
 {
 
-class WindowBasedEdge : public Edge
+class screen_edge : public win::screen_edge
 {
     Q_OBJECT
 public:
-    explicit WindowBasedEdge(ScreenEdges* parent);
-    ~WindowBasedEdge() override;
+    explicit screen_edge(win::screen_edger* edger);
+    ~screen_edge() override;
 
-    quint32 window() const override;
+    quint32 window_id() const override;
     /**
      * The approach window is a special window to notice when get close to the screen border but
      * not yet triggering the border.
@@ -45,16 +45,14 @@ private:
     QMetaObject::Connection m_cursorPollingConnection;
 };
 
-inline quint32 WindowBasedEdge::window() const
+inline quint32 screen_edge::window_id() const
 {
     return m_window;
 }
 
-inline quint32 WindowBasedEdge::approachWindow() const
+inline quint32 screen_edge::approachWindow() const
 {
     return m_approachWindow;
 }
 
 }
-
-#endif

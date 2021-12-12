@@ -37,9 +37,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/x11/outline.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
-#include "screenedge.h"
 #include "screens.h"
 #include "scripting/platform.h"
+#include "win/screen_edges.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
@@ -131,7 +131,7 @@ Workspace::Workspace()
     m_quickTileCombineTimer->setSingleShot(true);
 
     RuleBook::create(this)->load();
-    ScreenEdges::create(this);
+    edges = std::make_unique<win::screen_edger>();
 
     // VirtualDesktopManager needs to be created prior to init shortcuts
     // and prior to TabBox, due to TabBox connecting to signals
@@ -185,15 +185,15 @@ Workspace::Workspace()
     screens.reconfigure();
     connect(options, &Options::configChanged, &screens, &Screens::reconfigure);
 
-    ScreenEdges* screenEdges = ScreenEdges::self();
-    screenEdges->setConfig(config);
+    auto screenEdges = workspace()->edges.get();
+    screenEdges->config = config;
     screenEdges->init();
-    connect(options, &Options::configChanged, screenEdges, &ScreenEdges::reconfigure);
+    connect(options, &Options::configChanged, screenEdges, &win::screen_edger::reconfigure);
     connect(VirtualDesktopManager::self(),
             &VirtualDesktopManager::layoutChanged,
             screenEdges,
-            &ScreenEdges::updateLayout);
-    connect(this, &Workspace::clientActivated, screenEdges, &ScreenEdges::checkBlocking);
+            &win::screen_edger::updateLayout);
+    connect(this, &Workspace::clientActivated, screenEdges, &win::screen_edger::checkBlocking);
 
     auto* focusChain = win::focus_chain::create(this);
     connect(this, &Workspace::clientRemoved, focusChain, &win::focus_chain::remove);
@@ -1161,7 +1161,7 @@ QString Workspace::supportInformation() const
     }
     support.append(QStringLiteral("\nScreen Edges\n"));
     support.append(QStringLiteral("============\n"));
-    const QMetaObject* metaScreenEdges = ScreenEdges::self()->metaObject();
+    auto const metaScreenEdges = workspace()->edges->metaObject();
     for (int i = 0; i < metaScreenEdges->propertyCount(); ++i) {
         const QMetaProperty property = metaScreenEdges->property(i);
         if (QLatin1String(property.name()) == QLatin1String("objectName")) {
@@ -1169,7 +1169,7 @@ QString Workspace::supportInformation() const
         }
         support.append(QStringLiteral("%1: %2\n")
                            .arg(property.name())
-                           .arg(printProperty(ScreenEdges::self()->property(property.name()))));
+                           .arg(printProperty(workspace()->edges->property(property.name()))));
     }
     support.append(QStringLiteral("\nScreens\n"));
     support.append(QStringLiteral("=======\n"));
@@ -1450,6 +1450,11 @@ void Workspace::setWasUserInteraction()
     QTimer::singleShot(0, this, [this] { m_wasUserInteractionFilter.reset(); });
 }
 
+win::screen_edge* Workspace::create_screen_edge()
+{
+    return new win::screen_edge(edges.get());
+}
+
 void Workspace::updateTabbox()
 {
 #ifdef KWIN_BUILD_TABBOX
@@ -1601,7 +1606,7 @@ void Workspace::desktopResized()
     saveOldScreenSizes(); // after updateClientArea(), so that one still uses the previous one
 
     // TODO: emit a signal instead and remove the deep function calls into edges and effects
-    ScreenEdges::self()->recreateEdges();
+    workspace()->edges->recreateEdges();
 
     if (effects) {
         static_cast<render::effects_handler_impl*>(effects)->desktopResized(geom.size());

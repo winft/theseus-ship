@@ -75,6 +75,8 @@ namespace win
 {
 enum class activation;
 class internal_window;
+class screen_edge;
+class screen_edger;
 class stacking_order;
 
 namespace x11
@@ -99,6 +101,7 @@ public:
 
     std::unique_ptr<scripting::platform> scripting;
     std::unique_ptr<render::x11::outline> outline;
+    std::unique_ptr<win::screen_edger> edges;
 
     explicit Workspace();
     ~Workspace() override;
@@ -412,6 +415,7 @@ public:
 
     void remove_window(Toplevel* window);
 
+    virtual win::screen_edge* create_screen_edge();
     virtual QRect get_icon_geometry(Toplevel const* win) const;
 
 public Q_SLOTS:

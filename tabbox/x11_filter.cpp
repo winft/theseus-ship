@@ -20,8 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "x11_filter.h"
 
 #include "render/effects.h"
-#include "screenedge.h"
 #include "tabbox/tabbox.h"
+#include "win/screen_edges.h"
+#include "workspace.h"
 #include "xcbutils.h"
 
 #include <KKeyServer>
@@ -108,7 +109,7 @@ void X11Filter::motion(xcb_generic_event_t* event)
     auto* mouseEvent = reinterpret_cast<xcb_motion_notify_event_t*>(event);
     const QPoint rootPos(mouseEvent->root_x, mouseEvent->root_y);
     // TODO: this should be in ScreenEdges directly
-    ScreenEdges::self()->check(rootPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC), true);
+    workspace()->edges->check(rootPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC), true);
     xcb_allow_events(connection(), XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
 }
 

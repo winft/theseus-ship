@@ -466,7 +466,6 @@ set(kwin_SRCS
     rules/rule_book_settings.cpp
     rules/rules.cpp
     rules/window_rules.cpp
-    screenedge.cpp
     screenlockerwatcher.cpp
     screens.cpp
     scripting/dbus_call.cpp
@@ -496,6 +495,7 @@ set(kwin_SRCS
     win/focus_chain.cpp
     win/internal_window.cpp
     win/remnant.cpp
+    win/screen_edges.cpp
     win/stacking_order.cpp
     win/transient.cpp
     win/x11/client_machine.cpp
@@ -503,6 +503,8 @@ set(kwin_SRCS
     win/x11/group.cpp
     win/x11/netinfo.cpp
     win/x11/root_info_filter.cpp
+    win/x11/screen_edge.cpp
+    win/x11/screen_edges_filter.cpp
     win/x11/space.cpp
     win/x11/stacking_tree.cpp
     win/x11/sync_alarm_filter.cpp
@@ -689,13 +691,11 @@ set(kwin_X11_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/window_selector.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/xfixes_cursor_event_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/edge.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_mouse_interception_x11_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_x11.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/non_composited_outline.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/randr_filter.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/screenedges_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_decoration_renderer.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_output.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_platform.cpp

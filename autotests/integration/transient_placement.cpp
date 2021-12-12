@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "input/cursor.h"
 #include "platform.h"
-#include "screenedge.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -31,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/control.h"
 #include "win/deco.h"
 #include "win/move.h"
+#include "win/screen_edges.h"
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>

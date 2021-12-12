@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // for mocking
 #include "../input/cursor.h"
-#include "../screenedge.h"
 #include "input/redirect.h"
+#include "win/screen_edges.h"
 // KDE
 #include <KConfig>
 #include <KConfigGroup>
@@ -40,17 +40,16 @@ Q_LOGGING_CATEGORY(KWIN_CORE, "kwin_core")
 
 namespace KWin
 {
-ScreenEdges* ScreenEdges::s_self = nullptr;
 
-void ScreenEdges::reserve(ElectricBorder, QObject*, const char*)
+void win::screen_edger::reserve(ElectricBorder, QObject*, const char*)
 {
 }
 
-void ScreenEdges::unreserve(ElectricBorder, QObject*)
+void win::screen_edger::unreserve(ElectricBorder, QObject*)
 {
 }
 
-void ScreenEdges::reserveTouch(ElectricBorder, QAction*)
+void win::screen_edger::reserveTouch(ElectricBorder, QAction*)
 {
 }
 

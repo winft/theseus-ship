@@ -647,8 +647,8 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
 
     QObject::connect(win,
                      &win::x11::window::client_fullscreen_set,
-                     ScreenEdges::self(),
-                     &ScreenEdges::checkBlocking);
+                     workspace()->edges.get(),
+                     &screen_edger::checkBlocking);
 
     // From this place on, manage() must not return false
     win->control.reset(new x11_control(win));
@@ -1621,7 +1621,7 @@ void read_show_on_screen_edge(Win* win, Xcb::Property& property)
             win->connections.edge_remove
                 = QObject::connect(win, &Win::keepBelowChanged, win, [win]() {
                       if (!win->control->keep_below()) {
-                          ScreenEdges::self()->reserve(win, ElectricNone);
+                          workspace()->edges->reserve(win, ElectricNone);
                       }
                   });
         } else {
@@ -1631,14 +1631,14 @@ void read_show_on_screen_edge(Win* win, Xcb::Property& property)
             win->connections.edge_geometry
                 = QObject::connect(win, &Win::frame_geometry_changed, win, [win, border]() {
                       win->hideClient(true);
-                      ScreenEdges::self()->reserve(win, border);
+                      workspace()->edges->reserve(win, border);
                   });
         }
 
         if (successfullyHidden) {
-            ScreenEdges::self()->reserve(win, border);
+            workspace()->edges->reserve(win, border);
         } else {
-            ScreenEdges::self()->reserve(win, ElectricNone);
+            workspace()->edges->reserve(win, ElectricNone);
         }
     } else if (!property.isNull() && property->type != XCB_ATOM_NONE) {
         // property value is incorrect, delete the property
@@ -1650,7 +1650,7 @@ void read_show_on_screen_edge(Win* win, Xcb::Property& property)
 
         // this will call showOnScreenEdge to reset the state
         QObject::disconnect(win->connections.edge_geometry);
-        ScreenEdges::self()->reserve(win, ElectricNone);
+        workspace()->edges->reserve(win, ElectricNone);
     }
 }
 

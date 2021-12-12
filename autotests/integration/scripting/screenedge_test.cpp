@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "workspace.h"
 
 #define private public
-#include "screenedge.h"
+#include "win/screen_edges.h"
 #undef private
 
 #include <KConfigGroup>
@@ -85,8 +85,8 @@ void ScreenEdgeTest::initTestCase()
     QVERIFY(startup_spy.wait());
     QVERIFY(workspace()->scripting);
 
-    ScreenEdges::self()->setTimeThreshold(0);
-    ScreenEdges::self()->setReActivationThreshold(0);
+    workspace()->edges->time_threshold = 0;
+    workspace()->edges->reactivate_threshold = 0;
 }
 
 void ScreenEdgeTest::init()

@@ -342,14 +342,14 @@ void update_screen_edge(Win* win)
 {
     using PSS = Wrapland::Server::PlasmaShellSurface;
 
-    if (!ScreenEdges::self()) {
+    if (!workspace()->edges) {
         return;
     }
 
     auto const& plasma_surface = win->plasma_shell_surface;
 
     if (!win->mapped || !plasma_surface || plasma_surface->role() != PSS::Role::Panel) {
-        ScreenEdges::self()->reserve(win, ElectricNone);
+        workspace()->edges->reserve(win, ElectricNone);
         return;
     }
 
@@ -360,7 +360,7 @@ void update_screen_edge(Win* win)
 
     if (!is_auto_hidden && !can_get_covered) {
         // Simple case with space being reserved for the panel.
-        ScreenEdges::self()->reserve(win, ElectricNone);
+        workspace()->edges->reserve(win, ElectricNone);
         return;
     }
 
@@ -424,7 +424,7 @@ void update_screen_edge(Win* win)
     if (edges.testFlag(Qt::BottomEdge)) {
         border = ElectricBottom;
     }
-    ScreenEdges::self()->reserve(win, border);
+    workspace()->edges->reserve(win, border);
 }
 
 template<typename Win>
@@ -503,7 +503,7 @@ void install_plasma_shell_surface(Win* win, Wrapland::Server::PlasmaShellSurface
         });
         QObject::connect(surface, &PSS::panelAutoHideShowRequested, win, [win] {
             win->hideClient(false);
-            ScreenEdges::self()->reserve(win, ElectricNone);
+            workspace()->edges->reserve(win, ElectricNone);
             win->plasma_shell_surface->showAutoHidingPanel();
         });
 

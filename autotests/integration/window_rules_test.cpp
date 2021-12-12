@@ -24,13 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
-#include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
 #include "win/wayland/space.h"
 #include "workspace.h"
 
 #include "win/deco.h"
+#include "win/screen_edges.h"
 #include "win/x11/window.h"
 
 #include <netwm.h>

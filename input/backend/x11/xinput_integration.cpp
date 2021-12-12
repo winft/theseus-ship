@@ -19,7 +19,8 @@
 #include "input/spies/modifier_only_shortcuts.h"
 #include "main.h"
 #include "platform.h"
-#include "screenedge.h"
+#include "win/screen_edges.h"
+#include "workspace.h"
 
 #include <kwinglobals.h>
 
@@ -139,7 +140,7 @@ public:
                 = QPointF(fixed1616ToReal(e->event_x), fixed1616ToReal(e->event_y));
             if (e->detail == m_trackingTouchId) {
                 const auto last = m_lastTouchPositions.value(e->detail);
-                ScreenEdges::self()->gestureRecognizer()->updateSwipeGesture(
+                workspace()->edges->gesture_recognizer->updateSwipeGesture(
                     QSizeF(touchPosition.x() - last.x(), touchPosition.y() - last.y()));
             }
             m_lastTouchPositions.insert(e->detail, touchPosition);
@@ -148,7 +149,7 @@ public:
         case XI_TouchEnd: {
             auto e = reinterpret_cast<xXIDeviceEvent*>(event);
             if (e->detail == m_trackingTouchId) {
-                ScreenEdges::self()->gestureRecognizer()->endSwipeGesture();
+                workspace()->edges->gesture_recognizer->endSwipeGesture();
             }
             m_lastTouchPositions.remove(e->detail);
             m_trackingTouchId = 0;
@@ -160,7 +161,7 @@ public:
             if (it == m_lastTouchPositions.constEnd()) {
                 XIAllowTouchEvents(display(), e->deviceid, e->sourceid, e->touchid, XIRejectTouch);
             } else {
-                if (ScreenEdges::self()->gestureRecognizer()->startSwipeGesture(it.value()) > 0) {
+                if (workspace()->edges->gesture_recognizer->startSwipeGesture(it.value()) > 0) {
                     m_trackingTouchId = e->touchid;
                 }
                 XIAllowTouchEvents(display(),

@@ -32,12 +32,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "kwineffectquickview.h"
 #include "kwinglutils.h"
-#include "screenedge.h"
 #include "screenlockerwatcher.h"
 #include "screens.h"
 #include "scripting/effect.h"
 #include "thumbnail_item.h"
 #include "virtualdesktops.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 
 #include "win/control.h"
@@ -222,8 +222,8 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     connect(tabBox, &TabBox::TabBox::tabBoxClosed, this, &EffectsHandler::tabBoxClosed);
     connect(tabBox, &TabBox::TabBox::tabBoxKeyEvent, this, &EffectsHandler::tabBoxKeyEvent);
 #endif
-    connect(ScreenEdges::self(),
-            &ScreenEdges::approaching,
+    connect(workspace()->edges.get(),
+            &win::screen_edger::approaching,
             this,
             &EffectsHandler::screenEdgeApproaching);
     connect(ScreenLockerWatcher::self(),
@@ -1414,22 +1414,22 @@ QPoint effects_handler_impl::cursorPos() const
 
 void effects_handler_impl::reserveElectricBorder(ElectricBorder border, Effect* effect)
 {
-    ScreenEdges::self()->reserve(border, effect, "borderActivated");
+    workspace()->edges->reserve(border, effect, "borderActivated");
 }
 
 void effects_handler_impl::unreserveElectricBorder(ElectricBorder border, Effect* effect)
 {
-    ScreenEdges::self()->unreserve(border, effect);
+    workspace()->edges->unreserve(border, effect);
 }
 
 void effects_handler_impl::registerTouchBorder(ElectricBorder border, QAction* action)
 {
-    ScreenEdges::self()->reserveTouch(border, action);
+    workspace()->edges->reserveTouch(border, action);
 }
 
 void effects_handler_impl::unregisterTouchBorder(ElectricBorder border, QAction* action)
 {
-    ScreenEdges::self()->unreserveTouch(border, action);
+    workspace()->edges->unreserveTouch(border, action);
 }
 
 unsigned long effects_handler_impl::xrenderBufferPicture()
@@ -1627,9 +1627,9 @@ QVariant effects_handler_impl::kwinOption(KWinOption kwopt)
             ? Qt::TopLeftCorner
             : Qt::TopRightCorner;
     case SwitchDesktopOnScreenEdge:
-        return ScreenEdges::self()->isDesktopSwitching();
+        return workspace()->edges->desktop_switching.always;
     case SwitchDesktopOnScreenEdgeMovingWindows:
-        return ScreenEdges::self()->isDesktopSwitchingMovingClients();
+        return workspace()->edges->desktop_switching.when_moving_client;
     default:
         return QVariant(); // an invalid one
     }

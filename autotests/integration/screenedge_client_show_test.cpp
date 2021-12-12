@@ -21,9 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "input/cursor.h"
 #include "platform.h"
-#include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 #include <kwineffects.h>
 

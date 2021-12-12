@@ -11,7 +11,7 @@
 #include "input/cursor.h"
 #include "net.h"
 #include "render/x11/outline.h"
-#include "screenedge.h"
+#include "screen_edges.h"
 #include "screens.h"
 #include "types.h"
 #include "workspace.h"
@@ -846,8 +846,8 @@ bool start_move_resize(Win* win)
 
     Q_EMIT win->clientStartUserMovedResized(win);
 
-    if (ScreenEdges::self()->isDesktopSwitchingMovingClients()) {
-        ScreenEdges::self()->reserveDesktopSwitching(true, Qt::Vertical | Qt::Horizontal);
+    if (workspace()->edges->desktop_switching.when_moving_client) {
+        workspace()->edges->reserveDesktopSwitching(true, Qt::Vertical | Qt::Horizontal);
     }
 
     return true;
@@ -1191,7 +1191,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
     }
 
     if (is_move(win)) {
-        ScreenEdges::self()->check(globalPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC));
+        workspace()->edges->check(globalPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC));
     }
 }
 

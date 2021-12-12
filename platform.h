@@ -39,9 +39,7 @@ namespace base
 class output;
 }
 
-class Edge;
 class Screens;
-class ScreenEdges;
 class Toplevel;
 
 namespace Decoration
@@ -95,11 +93,6 @@ public:
     virtual render::gl::backend *createOpenGLBackend(render::compositor* compositor);
     virtual render::qpainter::backend *createQPainterBackend();
 
-    /**
-     * Allows the platform to create a platform specific screen edge.
-     * The default implementation creates a Edge.
-     */
-    virtual Edge *createScreenEdge(ScreenEdges *parent);
     /**
      * The EGLDisplay used by the compositing scene.
      */

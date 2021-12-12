@@ -40,7 +40,6 @@ public:
     void init();
 
     gl::backend* createOpenGLBackend(render::compositor* compositor) override;
-    Edge* createScreenEdge(ScreenEdges* parent) override;
     bool requiresCompositing() const override;
     bool compositingPossible() const override;
     QString compositingNotPossibleReason() const override;
@@ -86,7 +85,6 @@ private:
     Display* m_x11Display;
     base::x11::platform& base;
 
-    QScopedPointer<base::x11::event_filter> m_screenEdgesFilter;
     QScopedPointer<base::x11::event_filter> m_randrFilter;
 
     QVector<X11Output*> m_outputs;

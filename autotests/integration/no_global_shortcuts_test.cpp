@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
 #include "platform.h"
-#include "screenedge.h"
 #include "screens.h"
 #include "wayland_server.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 
 #include <KConfigGroup>
@@ -323,7 +323,7 @@ void NoGlobalShortcutsTest::testAxisShortcut()
 void NoGlobalShortcutsTest::testScreenEdge()
 {
     // based on LockScreenTest::testScreenEdge
-    QSignalSpy screenEdgeSpy(ScreenEdges::self(), &ScreenEdges::approaching);
+    QSignalSpy screenEdgeSpy(workspace()->edges.get(), &win::screen_edger::approaching);
     QVERIFY(screenEdgeSpy.isValid());
     QCOMPARE(screenEdgeSpy.count(), 0);
 

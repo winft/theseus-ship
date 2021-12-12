@@ -11,8 +11,8 @@
 
 #include "win/stacking_order.h"
 
-#include "screenedge.h"
 #include "utils.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -28,10 +28,15 @@ public:
     space();
     ~space() override;
 
+    win::screen_edge* create_screen_edge() override;
+
 protected:
     void update_space_area_from_windows(QRect const& desktop_area,
                                         std::vector<QRect> const& screens_geos,
                                         win::space_areas& areas) override;
+
+private:
+    std::unique_ptr<base::x11::event_filter> edges_filter;
 };
 
 template<typename Space, typename Window>
@@ -76,7 +81,7 @@ void stack_screen_edges_under_override_redirect(Space* /*space*/)
     std::vector<xcb_window_t> windows;
     windows.push_back(rootInfo()->supportWindow());
 
-    auto const edges_wins = ScreenEdges::self()->windows();
+    auto const edges_wins = workspace()->edges->windows();
     windows.insert(windows.end(), edges_wins.begin(), edges_wins.end());
 
     Xcb::restackWindows(windows);

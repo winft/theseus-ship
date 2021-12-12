@@ -18,8 +18,8 @@
 #include "../options.h"
 #include "input/redirect.h"
 #include "render/thumbnail_item.h"
-#include "screenedge.h"
 #include "scripting_logging.h"
+#include "win/screen_edges.h"
 #include "workspace.h"
 
 #include "win/x11/window.h"

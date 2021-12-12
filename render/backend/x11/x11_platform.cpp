@@ -4,7 +4,6 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "x11_platform.h"
-#include "edge.h"
 #include <config-kwin.h>
 #include <kwinconfig.h>
 #if HAVE_EPOXY_GLX
@@ -17,7 +16,6 @@
 #include "options.h"
 #include "randr_filter.h"
 #include "render/compositor.h"
-#include "screenedges_filter.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "workspace.h"
@@ -98,14 +96,6 @@ gl::backend* X11StandalonePlatform::createOpenGLBackend(render::compositor* comp
         // no backend available
         return nullptr;
     }
-}
-
-Edge* X11StandalonePlatform::createScreenEdge(ScreenEdges* edges)
-{
-    if (m_screenEdgesFilter.isNull()) {
-        m_screenEdgesFilter.reset(new ScreenEdgesFilter);
-    }
-    return new WindowBasedEdge(edges);
 }
 
 bool X11StandalonePlatform::requiresCompositing() const
