@@ -94,7 +94,7 @@ debug::console* X11TestApplication::create_debug_console()
 void X11TestApplication::start()
 {
     prepare_start();
-    compositor = std::make_unique<render::x11::compositor>();
+    compositor = std::make_unique<render::x11::compositor>(*render);
     workspace = std::make_unique<win::x11::space>();
     Q_EMIT workspaceCreated();
 }

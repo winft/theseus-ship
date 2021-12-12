@@ -46,8 +46,9 @@ compositor* compositor::self()
     return qobject_cast<compositor*>(render::compositor::self());
 }
 
-compositor::compositor()
-    : m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
+compositor::compositor(render::platform& platform)
+    : render::compositor(platform)
+    , m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
 {
     if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED")) {
         m_framesToTestForSafety = qEnvironmentVariableIntValue("KWIN_MAX_FRAMES_TESTED");
@@ -78,7 +79,7 @@ void compositor::start()
         }
         qCDebug(KWIN_CORE) << "Compositing is suspended, reason:" << reasons;
         return;
-    } else if (!kwinApp()->platform->compositingPossible()) {
+    } else if (!platform.compositingPossible()) {
         qCCritical(KWIN_CORE) << "Compositing is not possible";
         return;
     }
@@ -328,11 +329,11 @@ void compositor::create_opengl_safepoint(OpenGLSafePoint safepoint)
         return;
     }
 
-    kwinApp()->platform->createOpenGLSafePoint(safepoint);
+    platform.createOpenGLSafePoint(safepoint);
 
     if (safepoint == OpenGLSafePoint::PostFrame) {
         if (--m_framesToTestForSafety == 0) {
-            kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PostLastGuardedFrame);
+            platform.createOpenGLSafePoint(OpenGLSafePoint::PostLastGuardedFrame);
         }
     }
 }

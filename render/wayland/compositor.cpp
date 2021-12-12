@@ -45,10 +45,11 @@ void compositor::check_idle()
     scene()->idle();
 }
 
-compositor::compositor()
-    : presentation(new render::wayland::presentation(this))
+compositor::compositor(render::platform& platform)
+    : render::compositor(platform)
+    , presentation(new render::wayland::presentation(this))
 {
-    if (!presentation->init_clock(kwinApp()->platform->clockId())) {
+    if (!presentation->init_clock(platform.clockId())) {
         qCCritical(KWIN_WL) << "Presentation clock failed. Exit.";
         qApp->quit();
     }
@@ -62,17 +63,17 @@ compositor::compositor()
             this,
             &compositor::destroyCompositorSelection);
 
-    for (auto output : kwinApp()->get_base().get_outputs()) {
+    for (auto output : platform.base.get_outputs()) {
         auto wl_out = static_cast<base::wayland::output*>(output);
         outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
     }
 
-    connect(&kwinApp()->get_base(), &base::platform::output_added, this, [this](auto output) {
+    connect(&platform.base, &base::platform::output_added, this, [this](auto output) {
         auto wl_out = static_cast<base::wayland::output*>(output);
         outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
     });
 
-    connect(&kwinApp()->get_base(), &base::platform::output_removed, this, [this](auto output) {
+    connect(&platform.base, &base::platform::output_removed, this, [this](auto output) {
         for (auto it = outputs.begin(); it != outputs.end(); ++it) {
             if (it->first == output) {
                 outputs.erase(it);

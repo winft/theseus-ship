@@ -232,7 +232,7 @@ void ApplicationWayland::start()
 
     tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
 
-    compositor = std::make_unique<render::wayland::compositor>();
+    compositor = std::make_unique<render::wayland::compositor>(*render);
     workspace = std::make_unique<win::wayland::space>(server.get());
     Q_EMIT workspaceCreated();
 

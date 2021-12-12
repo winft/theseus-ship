@@ -263,7 +263,7 @@ void ApplicationX11::start()
             ::exit(1);
         }
 
-        compositor = std::make_unique<render::x11::compositor>();
+        compositor = std::make_unique<render::x11::compositor>(*render);
         workspace = std::make_unique<win::x11::space>();
         Q_EMIT workspaceCreated();
 
