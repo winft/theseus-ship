@@ -99,11 +99,6 @@ void backend::init()
     base.screens.updateAll();
 }
 
-clockid_t backend::clockId() const
-{
-    return wlr_backend_get_presentation_clock(base.backend);
-}
-
 gl::backend* backend::createOpenGLBackend(render::compositor* compositor)
 {
     this->compositor = compositor;

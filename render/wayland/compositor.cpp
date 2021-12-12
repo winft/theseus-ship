@@ -49,7 +49,7 @@ compositor::compositor(render::platform& platform)
     : render::compositor(platform)
     , presentation(new render::wayland::presentation(this))
 {
-    if (!presentation->init_clock(platform.clockId())) {
+    if (!presentation->init_clock(platform.base.get_clockid())) {
         qCCritical(KWIN_WL) << "Presentation clock failed. Exit.";
         qApp->quit();
     }

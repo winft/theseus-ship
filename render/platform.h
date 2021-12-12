@@ -150,8 +150,6 @@ public:
      */
     virtual QVector<CompositingType> supportedCompositors() const = 0;
 
-    virtual clockid_t clockId() const;
-
     std::unique_ptr<render::post::night_color_manager> night_color;
 
     /**

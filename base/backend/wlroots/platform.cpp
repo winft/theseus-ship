@@ -64,4 +64,14 @@ platform::~platform()
     }
 }
 
+wlr_session* platform::session() const
+{
+    return wlr_backend_get_session(backend);
+}
+
+clockid_t platform::get_clockid() const
+{
+    return wlr_backend_get_presentation_clock(backend);
+}
+
 }

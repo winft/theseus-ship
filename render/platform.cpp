@@ -104,9 +104,4 @@ void platform::createEffectsHandler(render::compositor* compositor, render::scen
     new render::effects_handler_impl(compositor, scene);
 }
 
-clockid_t platform::clockId() const
-{
-    return CLOCK_MONOTONIC;
-}
-
 }

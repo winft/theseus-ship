@@ -48,9 +48,6 @@ public:
 
     QVector<CompositingType> supportedCompositors() const override;
 
-protected:
-    clockid_t clockId() const override;
-
 private:
     void init_drm_leasing();
     void process_drm_leased(Wrapland::Server::drm_lease_v1* lease);
