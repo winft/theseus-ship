@@ -18,7 +18,7 @@ namespace KWin::input
 class keyboard;
 class pointer;
 
-namespace backend::x11
+namespace x11
 {
 
 class XInputEventFilter;

@@ -9,7 +9,7 @@
 #include "window_selector.h"
 
 #if HAVE_X11_XINPUT
-#include "input/backend/x11/xinput_integration.h"
+#include "input/x11/xinput_integration.h"
 #endif
 
 #include "input/keyboard_redirect.h"
@@ -19,7 +19,7 @@
 
 #include <QX11Info>
 
-namespace KWin::input::backend::x11
+namespace KWin::input::x11
 {
 
 platform::platform()

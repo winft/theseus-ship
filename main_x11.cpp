@@ -11,7 +11,7 @@
 #include <config-kwin.h>
 
 #include "debug/x11_console.h"
-#include "input/backend/x11/platform.h"
+#include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
 #include "screenlockerwatcher.h"
@@ -252,7 +252,7 @@ void ApplicationX11::start()
 
         session.reset(new seat::backend::logind::session());
 
-        auto input = new input::backend::x11::platform;
+        auto input = new input::x11::platform;
         this->input.reset(input);
         input->redirect->install_shortcuts();
 

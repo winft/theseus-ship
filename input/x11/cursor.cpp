@@ -14,7 +14,7 @@
 
 #include <xcb/xcb_cursor.h>
 
-namespace KWin::input::backend::x11
+namespace KWin::input::x11
 {
 
 cursor::cursor(bool xInputSupport)

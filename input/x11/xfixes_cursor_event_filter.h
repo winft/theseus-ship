@@ -8,7 +8,7 @@
 
 #include "base/x11/event_filter.h"
 
-namespace KWin::input::backend::x11
+namespace KWin::input::x11
 {
 class cursor;
 

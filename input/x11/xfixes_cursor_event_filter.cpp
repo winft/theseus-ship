@@ -8,7 +8,7 @@
 #include "cursor.h"
 #include "xcbutils.h"
 
-namespace KWin::input::backend::x11
+namespace KWin::input::x11
 {
 
 xfixes_cursor_event_filter::xfixes_cursor_event_filter(cursor* cursor)

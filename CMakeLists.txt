@@ -686,10 +686,10 @@ endif()
 
 
 set(kwin_X11_SRCS
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/cursor.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/platform.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/window_selector.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/xfixes_cursor_event_filter.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/cursor.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/platform.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/window_selector.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/xfixes_cursor_event_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_mouse_interception_x11_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_x11.cpp
@@ -704,7 +704,7 @@ set(kwin_X11_SRCS
 if (HAVE_X11_XINPUT)
     set(kwin_X11_SRCS
         ${kwin_X11_SRCS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/xinput_integration.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/xinput_integration.cpp
     )
 endif()
 

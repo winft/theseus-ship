@@ -10,7 +10,7 @@
 
 #include <memory>
 
-namespace KWin::input::backend::x11
+namespace KWin::input::x11
 {
 class xfixes_cursor_event_filter;
 

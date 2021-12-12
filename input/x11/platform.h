@@ -10,7 +10,7 @@
 #include <config-kwin.h>
 #include <memory>
 
-namespace KWin::input::backend::x11
+namespace KWin::input::x11
 {
 
 class window_selector;

@@ -10,7 +10,7 @@
 #include "input/pointer.h"
 #include "main.h"
 
-namespace KWin::input::backend::x11
+namespace KWin::input::x11
 {
 
 inline void pointer_button_pressed(uint32_t button, uint32_t time, input::pointer* pointer)
