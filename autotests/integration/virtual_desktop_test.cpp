@@ -7,7 +7,6 @@
 #include "lib/app.h"
 
 #include "main.h"
-#include "platform.h"
 #include "screens.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"

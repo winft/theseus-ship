@@ -13,7 +13,6 @@
 #include "base/output.h"
 #include "input/cursor.h"
 #include "main.h"
-#include "platform.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
 #include "screens.h"

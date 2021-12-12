@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "killwindow.h"
 #include "moving_client_x11_filter.h"
-#include "platform.h"
 #include "render/effects.h"
 #include "render/outline.h"
 #include "render/x11/compositor.h"

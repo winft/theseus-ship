@@ -15,7 +15,7 @@
 
 #include "base/wayland/output.h"
 #include "input/keyboard_redirect.h"
-#include "platform.h"
+#include "input/redirect.h"
 #include "render/compositor.h"
 #include "screens.h"
 #include "wayland_server.h"

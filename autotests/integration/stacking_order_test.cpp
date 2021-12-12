@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "atoms.h"
 #include "main.h"
-#include "platform.h"
 #include "toplevel.h"
 #include "utils.h"
 #include "wayland_server.h"

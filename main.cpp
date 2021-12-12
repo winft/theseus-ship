@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 
 #include "base/x11/event_filter_manager.h"
-#include "platform.h"
 #include "atoms.h"
 #include "render/compositor.h"
 #include "input/global_shortcuts_manager.h"

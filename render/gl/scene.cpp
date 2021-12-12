@@ -36,7 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/output.h"
 #include "base/platform.h"
-#include "platform.h"
 #include "texture.h"
 
 #include <kwineffectquickview.h>
@@ -49,6 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "render/cursor.h"
 #include "render/effects.h"
+#include "render/platform.h"
 #include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
 #include "screens.h"

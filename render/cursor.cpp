@@ -10,7 +10,6 @@
 #include <input/platform.h>
 #include <input/pointer_redirect.h>
 #include <main.h>
-#include <platform.h>
 
 namespace KWin::render
 {

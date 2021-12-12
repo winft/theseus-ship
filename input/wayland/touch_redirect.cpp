@@ -13,7 +13,6 @@
 #include "input/event_spy.h"
 #include "input/touch.h"
 
-#include "../../platform.h"
 #include "base/platform.h"
 #include "base/wayland/output.h"
 #include "wayland_server.h"

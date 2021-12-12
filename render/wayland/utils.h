@@ -8,7 +8,6 @@
 #include "base/output.h"
 #include "base/platform.h"
 #include "main.h"
-#include "platform.h"
 #include "win/scene.h"
 
 namespace KWin

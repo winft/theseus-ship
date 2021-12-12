@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "input/cursor.h"
 #include "options.h"
-#include "platform.h"
+#include "render/platform.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/geo.h"

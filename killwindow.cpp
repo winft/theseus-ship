@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <input/platform.h>
 #include "main.h"
-#include "platform.h"
 #include "osd.h"
 #include "toplevel.h"
 

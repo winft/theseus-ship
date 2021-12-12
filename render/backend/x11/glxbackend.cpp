@@ -15,7 +15,6 @@
 #include "base/platform.h"
 #include "main.h"
 #include "options.h"
-#include "platform.h"
 #include "render/compositor.h"
 #include "render/gl/texture.h"
 #include "render/scene.h"

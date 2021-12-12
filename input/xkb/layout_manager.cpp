@@ -10,12 +10,12 @@
 #include "helpers.h"
 #include "layout_policies.h"
 
-#include "../../platform.h"
 #include "input/dbus/keyboard_layout.h"
 #include "input/dbus/keyboard_layouts_v2.h"
 #include "input/event.h"
 #include "input/keyboard.h"
 #include "main.h"
+#include "render/platform.h"
 
 #include <KGlobalAccel>
 #include <QAction>

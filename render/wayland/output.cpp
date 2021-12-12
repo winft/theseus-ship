@@ -11,7 +11,6 @@
 
 #include "base/wayland/output.h"
 #include "effects.h"
-#include "platform.h"
 #include "wayland_logging.h"
 #include "wayland_server.h"
 #include "win/transient.h"

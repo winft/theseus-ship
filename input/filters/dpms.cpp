@@ -9,7 +9,6 @@
 
 #include "base/wayland/output_helpers.h"
 #include "main.h"
-#include "platform.h"
 #include "wayland_server.h"
 
 #include <QApplication>

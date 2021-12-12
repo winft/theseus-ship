@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lib/app.h"
 
 #include "input/cursor.h"
-#include "platform.h"
 #include "render/compositor.h"
 #include "render/scene.h"
 #include "screens.h"

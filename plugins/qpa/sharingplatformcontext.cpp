@@ -18,12 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "sharingplatformcontext.h"
+
 #include "offscreensurface.h"
+#include "render/platform.h"
 #include "window.h"
 
 #include "../../win/internal_window.h"
 #include "../../main.h"
-#include "../../platform.h"
 
 #include <logging.h>
 

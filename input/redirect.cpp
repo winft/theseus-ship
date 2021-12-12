@@ -17,10 +17,10 @@
 #include "tablet_redirect.h"
 #include "touch_redirect.h"
 
-#include "../platform.h"
 #include "global_shortcuts_manager.h"
 #include "main.h"
 #include "render/effects.h"
+#include "render/platform.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "utils.h"

@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "egl_context_attribute_builder.h"
 #include "options.h"
-#include "platform.h"
 #include "render/compositor.h"
+#include "render/platform.h"
 #include "render/window.h"
 #include "toplevel.h"
 #include "wayland_server.h"

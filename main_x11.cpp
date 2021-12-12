@@ -11,7 +11,6 @@
 #include <config-kwin.h>
 
 #include "debug/x11_console.h"
-#include "platform.h"
 #include "input/backend/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"

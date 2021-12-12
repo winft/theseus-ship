@@ -12,8 +12,8 @@
 #include "render/xrender/scene.h"
 
 #include "perf/ftrace.h"
-#include "platform.h"
 #include "render/effects.h"
+#include "render/platform.h"
 #include "render/scene.h"
 #include "render/shadow.h"
 #include "toplevel.h"

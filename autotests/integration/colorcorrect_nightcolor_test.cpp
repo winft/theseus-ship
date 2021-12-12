@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "platform.h"
+#include "render/platform.h"
 #include "render/post/constants.h"
 #include "render/post/night_color_manager.h"
 #include "wayland_server.h"

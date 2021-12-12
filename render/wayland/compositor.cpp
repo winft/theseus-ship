@@ -11,9 +11,9 @@
 
 #include "base/platform.h"
 #include "base/wayland/output.h"
-#include "platform.h"
 #include "render/cursor.h"
 #include "render/gl/scene.h"
+#include "render/platform.h"
 #include "render/qpainter/scene.h"
 #include "render/scene.h"
 #include "wayland_server.h"

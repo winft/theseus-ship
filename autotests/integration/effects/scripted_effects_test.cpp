@@ -23,7 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "scripting/effect.h"
 
 #include "effect_builtins.h"
-#include "platform.h"
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"

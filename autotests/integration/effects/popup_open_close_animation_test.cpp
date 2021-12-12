@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "platform.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "toplevel.h"

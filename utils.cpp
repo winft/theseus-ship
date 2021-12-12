@@ -35,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 
 #include "atoms.h"
-#include "platform.h"
 #include "workspace.h"
 
 #include <csignal>

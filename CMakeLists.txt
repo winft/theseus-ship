@@ -439,7 +439,6 @@ set(kwin_SRCS
     onscreennotification.cpp
     options.cpp
     osd.cpp
-    platform.cpp
     render/compositor.cpp
     render/cursor.cpp
     render/effect_loader.cpp
@@ -455,6 +454,7 @@ set(kwin_SRCS
     render/gl/texture.cpp
     render/gl/window.cpp
     render/outline.cpp
+    render/platform.cpp
     render/scene.cpp
     render/shadow.cpp
     render/thumbnail_item.cpp

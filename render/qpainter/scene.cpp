@@ -28,9 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "input/cursor.h"
 #include "main.h"
-#include "platform.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
+#include "render/platform.h"
 #include "screens.h"
 #include "toplevel.h"
 

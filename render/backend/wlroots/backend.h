@@ -10,7 +10,7 @@
 #include "base/backend/wlroots/output.h"
 #include "base/backend/wlroots/platform.h"
 #include "base/utils.h"
-#include "platform.h"
+#include "render/platform.h"
 
 #include <Wrapland/Server/drm_lease_v1.h>
 #include <variant>

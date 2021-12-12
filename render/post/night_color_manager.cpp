@@ -25,9 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/gamma_ramp.h"
 #include "base/platform.h"
+#include "input/redirect.h"
 #include <base/output.h>
 #include <main.h>
-#include <platform.h>
 #include <screens.h>
 #include <seat/session.h>
 #include <workspace.h>

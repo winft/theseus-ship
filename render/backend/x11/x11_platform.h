@@ -5,7 +5,8 @@
 */
 #ifndef KWIN_X11_PLATFORM_H
 #define KWIN_X11_PLATFORM_H
-#include "platform.h"
+
+#include "render/platform.h"
 
 #include "base/x11/platform.h"
 

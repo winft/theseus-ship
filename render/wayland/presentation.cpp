@@ -7,7 +7,6 @@
 
 #include "base/wayland/output.h"
 #include "main.h"
-#include "platform.h"
 #include "render/wayland/output.h"
 #include "toplevel.h"
 #include "utils.h"

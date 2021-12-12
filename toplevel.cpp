@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "render/compositor.h"
 #include "render/effects.h"
-#include "platform.h"
 #include "screens.h"
 #include "shadow.h"
 #include "workspace.h"

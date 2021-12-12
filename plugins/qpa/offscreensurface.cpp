@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "offscreensurface.h"
 #include "eglhelpers.h"
 #include "main.h"
-#include "platform.h"
+#include "render/platform.h"
 
 #include <QOffscreenSurface>
 

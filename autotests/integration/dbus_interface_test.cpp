@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lib/app.h"
 
 #include "atoms.h"
-#include "platform.h"
 #include "rules/rules.h"
 #include "screens.h"
 #include "virtualdesktops.h"

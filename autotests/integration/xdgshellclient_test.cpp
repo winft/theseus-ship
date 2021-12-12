@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorationbridge.h"
 #include "decorations/settings.h"
 #include "input/cursor.h"
-#include "platform.h"
 #include "render/effects.h"
 #include "screens.h"
 #include "wayland_server.h"

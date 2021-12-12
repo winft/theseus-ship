@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "workspace.h"
 #include "render/effects.h"
-#include "platform.h"
+#include "render/platform.h"
 #include "rules/rule_book.h"
 #include "screens.h"
 #include "utils.h"
