@@ -35,8 +35,10 @@ protected:
     void doCheckInputWindowStacking() override;
 
 private:
-    Xcb::Window m_mouseInterceptionWindow;
-    std::unique_ptr<mouse_intercept_filter> m_x11MouseInterception;
+    struct {
+        Xcb::Window window;
+        std::unique_ptr<mouse_intercept_filter> filter;
+    } mouse_intercept;
 };
 
 }
