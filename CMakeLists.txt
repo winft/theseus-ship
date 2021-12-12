@@ -691,14 +691,14 @@ set(kwin_X11_SRCS
    ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/window_selector.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/xfixes_cursor_event_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_mouse_interception_x11_filter.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_x11.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/deco_renderer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/logging.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/mouse_intercept_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/non_composited_outline.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/output.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/platform.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/randr_filter.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_decoration_renderer.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_output.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_platform.cpp
 )
 
 if (HAVE_X11_XINPUT)
@@ -711,7 +711,7 @@ endif()
 if (HAVE_EPOXY_GLX)
     set(kwin_X11_SRCS
         ${kwin_X11_SRCS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glxbackend.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_backend.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_context_attribute_builder.cpp
     )
 endif()

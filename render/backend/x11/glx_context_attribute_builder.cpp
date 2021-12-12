@@ -4,6 +4,7 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "glx_context_attribute_builder.h"
+
 #include <epoxy/glx.h>
 
 #ifndef GLX_GENERATE_RESET_ON_VIDEO_MEMORY_PURGE_NV
@@ -13,7 +14,7 @@
 namespace KWin::render::backend::x11
 {
 
-std::vector<int> GlxContextAttributeBuilder::build() const
+std::vector<int> glx_context_attribute_builder::build() const
 {
     std::vector<int> attribs;
     if (isVersionRequested()) {

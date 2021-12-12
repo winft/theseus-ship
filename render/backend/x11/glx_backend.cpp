@@ -7,8 +7,8 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-// own
-#include "glxbackend.h"
+#include "glx_backend.h"
+
 #include "glx_context_attribute_builder.h"
 #include "logging.h"
 
@@ -67,7 +67,7 @@ typedef struct xcb_glx_buffer_swap_complete_event_t {
 namespace KWin::render::backend::x11
 {
 
-SwapEventFilter::SwapEventFilter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable)
+swap_event_filter::swap_event_filter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable)
     : base::x11::event_filter(Xcb::Extensions::self()->glxEventBase()
                               + XCB_GLX_BUFFER_SWAP_COMPLETE)
     , m_drawable(drawable)
@@ -75,7 +75,7 @@ SwapEventFilter::SwapEventFilter(xcb_drawable_t drawable, xcb_glx_drawable_t glx
 {
 }
 
-bool SwapEventFilter::event(xcb_generic_event_t* event)
+bool swap_event_filter::event(xcb_generic_event_t* event)
 {
     xcb_glx_buffer_swap_complete_event_t* ev
         = reinterpret_cast<xcb_glx_buffer_swap_complete_event_t*>(event);
@@ -93,7 +93,7 @@ bool SwapEventFilter::event(xcb_generic_event_t* event)
 
 // -----------------------------------------------------------------------
 
-GlxBackend::GlxBackend(Display* display, render::compositor* compositor)
+glx_backend::glx_backend(Display* display, render::compositor* compositor)
     : gl::backend()
     , overlay_window{std::make_unique<render::x11::overlay_window>()}
     , window(None)
@@ -114,7 +114,7 @@ GlxBackend::GlxBackend(Display* display, render::compositor* compositor)
     QOpenGLContext::supportsThreadedOpenGL();
 }
 
-GlxBackend::~GlxBackend()
+glx_backend::~glx_backend()
 {
     if (isFailed()) {
         overlay_window->destroy();
@@ -156,7 +156,7 @@ static glXFuncPtr getProcAddress(const char* name)
 }
 glXSwapIntervalMESA_func glXSwapIntervalMESA;
 
-void GlxBackend::init()
+void glx_backend::init()
 {
     // Require at least GLX 1.3
     if (!checkVersion()) {
@@ -200,7 +200,7 @@ void GlxBackend::init()
     // See BUG 342582.
     if (hasExtension(QByteArrayLiteral("GLX_INTEL_swap_event"))
         && qgetenv("KWIN_USE_INTEL_SWAP_EVENT") != QByteArrayLiteral("0")) {
-        m_swapEventFilter = std::make_unique<SwapEventFilter>(window, glxWindow);
+        swap_filter = std::make_unique<swap_event_filter>(window, glxWindow);
         glXSelectEvent(display(), glxWindow, GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK);
     }
 
@@ -234,21 +234,21 @@ void GlxBackend::init()
     qCDebug(KWIN_X11STANDALONE) << "Direct rendering:" << isDirectRendering();
 }
 
-bool GlxBackend::checkVersion()
+bool glx_backend::checkVersion()
 {
     int major, minor;
     glXQueryVersion(display(), &major, &minor);
     return kVersionNumber(major, minor) >= kVersionNumber(1, 3);
 }
 
-void GlxBackend::initExtensions()
+void glx_backend::initExtensions()
 {
     const QByteArray string
         = (const char*)glXQueryExtensionsString(display(), QX11Info::appScreen());
     setExtensions(string.split(' '));
 }
 
-bool GlxBackend::initRenderingContext()
+bool glx_backend::initRenderingContext()
 {
     const bool direct = true;
 
@@ -259,39 +259,39 @@ bool GlxBackend::initRenderingContext()
         const bool haveVideoMemoryPurge
             = hasExtension(QByteArrayLiteral("GLX_NV_robustness_video_memory_purge"));
 
-        std::vector<GlxContextAttributeBuilder> candidates;
+        std::vector<glx_context_attribute_builder> candidates;
 
         // core
         if (have_robustness) {
             if (haveVideoMemoryPurge) {
-                GlxContextAttributeBuilder purgeMemoryCore;
+                glx_context_attribute_builder purgeMemoryCore;
                 purgeMemoryCore.setVersion(3, 1);
                 purgeMemoryCore.setRobust(true);
                 purgeMemoryCore.setResetOnVideoMemoryPurge(true);
                 candidates.emplace_back(std::move(purgeMemoryCore));
             }
-            GlxContextAttributeBuilder robustCore;
+            glx_context_attribute_builder robustCore;
             robustCore.setVersion(3, 1);
             robustCore.setRobust(true);
             candidates.emplace_back(std::move(robustCore));
         }
-        GlxContextAttributeBuilder core;
+        glx_context_attribute_builder core;
         core.setVersion(3, 1);
         candidates.emplace_back(std::move(core));
 
         // legacy
         if (have_robustness) {
             if (haveVideoMemoryPurge) {
-                GlxContextAttributeBuilder purgeMemoryLegacy;
+                glx_context_attribute_builder purgeMemoryLegacy;
                 purgeMemoryLegacy.setRobust(true);
                 purgeMemoryLegacy.setResetOnVideoMemoryPurge(true);
                 candidates.emplace_back(std::move(purgeMemoryLegacy));
             }
-            GlxContextAttributeBuilder robustLegacy;
+            glx_context_attribute_builder robustLegacy;
             robustLegacy.setRobust(true);
             candidates.emplace_back(std::move(robustLegacy));
         }
-        GlxContextAttributeBuilder legacy;
+        glx_context_attribute_builder legacy;
         legacy.setVersion(2, 1);
         candidates.emplace_back(std::move(legacy));
 
@@ -329,7 +329,7 @@ bool GlxBackend::initRenderingContext()
     return true;
 }
 
-bool GlxBackend::initBuffer()
+bool glx_backend::initBuffer()
 {
     if (!initFbConfig())
         return false;
@@ -377,7 +377,7 @@ bool GlxBackend::initBuffer()
     return true;
 }
 
-bool GlxBackend::initFbConfig()
+bool glx_backend::initFbConfig()
 {
     const int attribs[] = {GLX_RENDER_TYPE,
                            GLX_RGBA_BIT,
@@ -518,7 +518,7 @@ bool GlxBackend::initFbConfig()
     return true;
 }
 
-void GlxBackend::initVisualDepthHashTable()
+void glx_backend::initVisualDepthHashTable()
 {
     const xcb_setup_t* setup = xcb_get_setup(connection());
 
@@ -534,7 +534,7 @@ void GlxBackend::initVisualDepthHashTable()
     }
 }
 
-int GlxBackend::visualDepth(xcb_visualid_t visual) const
+int glx_backend::visualDepth(xcb_visualid_t visual) const
 {
     return m_visualDepthHash.value(visual);
 }
@@ -555,14 +555,14 @@ static inline int bitCount(uint32_t mask)
 #endif
 }
 
-FBConfigInfo* GlxBackend::infoForVisual(xcb_visualid_t visual)
+fb_config_info* glx_backend::infoForVisual(xcb_visualid_t visual)
 {
     auto it = m_fbconfigHash.constFind(visual);
     if (it != m_fbconfigHash.constEnd()) {
         return it.value();
     }
 
-    FBConfigInfo* info = new FBConfigInfo;
+    auto info = new fb_config_info;
     m_fbconfigHash.insert(visual, info);
     info->fbconfig = nullptr;
     info->bind_texture_format = 0;
@@ -713,7 +713,7 @@ FBConfigInfo* GlxBackend::infoForVisual(xcb_visualid_t visual)
     return info;
 }
 
-void GlxBackend::present()
+void glx_backend::present()
 {
     if (lastDamage().isEmpty())
         return;
@@ -754,7 +754,7 @@ void GlxBackend::present()
     }
 }
 
-void GlxBackend::screenGeometryChanged(const QSize& size)
+void glx_backend::screenGeometryChanged(const QSize& size)
 {
     overlay_window->resize(size);
     doneCurrent();
@@ -770,12 +770,12 @@ void GlxBackend::screenGeometryChanged(const QSize& size)
     m_bufferAge = 0;
 }
 
-gl::texture_private* GlxBackend::createBackendTexture(gl::texture* texture)
+gl::texture_private* glx_backend::createBackendTexture(gl::texture* texture)
 {
     return new GlxTexture(texture, this);
 }
 
-QRegion GlxBackend::prepareRenderingFrame()
+QRegion glx_backend::prepareRenderingFrame()
 {
     QRegion repaint;
 
@@ -787,7 +787,7 @@ QRegion GlxBackend::prepareRenderingFrame()
     return repaint;
 }
 
-void GlxBackend::endRenderingFrame(const QRegion& renderedRegion, const QRegion& damagedRegion)
+void glx_backend::endRenderingFrame(const QRegion& renderedRegion, const QRegion& damagedRegion)
 {
     if (damagedRegion.isEmpty()) {
         setLastDamage(QRegion());
@@ -819,7 +819,7 @@ void GlxBackend::endRenderingFrame(const QRegion& renderedRegion, const QRegion&
         addToDamageHistory(damagedRegion);
 }
 
-bool GlxBackend::makeCurrent()
+bool glx_backend::makeCurrent()
 {
     if (QOpenGLContext* context = QOpenGLContext::currentContext()) {
         // Workaround to tell Qt that no QOpenGLContext is current
@@ -829,17 +829,17 @@ bool GlxBackend::makeCurrent()
     return current;
 }
 
-void GlxBackend::doneCurrent()
+void glx_backend::doneCurrent()
 {
     glXMakeCurrent(display(), None, nullptr);
 }
 
-bool GlxBackend::supportsSwapEvents() const
+bool glx_backend::supportsSwapEvents() const
 {
-    return m_swapEventFilter != nullptr;
+    return swap_filter != nullptr;
 }
 
-bool GlxBackend::hasSwapEvent() const
+bool glx_backend::hasSwapEvent() const
 {
     return !m_needsCompositeTimerStart;
 }
@@ -847,7 +847,7 @@ bool GlxBackend::hasSwapEvent() const
 /********************************************************
  * GlxTexture
  *******************************************************/
-GlxTexture::GlxTexture(gl::texture* texture, GlxBackend* backend)
+GlxTexture::GlxTexture(gl::texture* texture, glx_backend* backend)
     : gl::texture_private()
     , q(texture)
     , m_backend(backend)
@@ -880,7 +880,7 @@ bool GlxTexture::loadTexture(xcb_pixmap_t pixmap, const QSize& size, xcb_visuali
     if (pixmap == XCB_NONE || size.isEmpty() || visual == XCB_NONE)
         return false;
 
-    const FBConfigInfo* info = m_backend->infoForVisual(visual);
+    auto const info = m_backend->infoForVisual(visual);
     if (!info || info->fbconfig == nullptr)
         return false;
 
@@ -932,4 +932,4 @@ gl::backend* GlxTexture::backend()
     return m_backend;
 }
 
-} // namespace
+}

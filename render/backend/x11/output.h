@@ -3,8 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_X11_OUTPUT_H
-#define KWIN_X11_OUTPUT_H
+#pragma once
 
 #include "base/output.h"
 #include <kwin_export.h>
@@ -20,7 +19,7 @@ namespace KWin::render::backend::x11
 /**
  * X11 output representation
  */
-class KWIN_EXPORT X11Output : public base::output
+class KWIN_EXPORT output : public base::output
 {
     Q_OBJECT
 
@@ -51,9 +50,7 @@ private:
     int m_gamma_ramp_size;
     int m_refresh_rate;
 
-    friend class X11StandalonePlatform;
+    friend class platform;
 };
 
 }
-
-#endif

@@ -221,7 +221,7 @@ void ApplicationX11::start()
     prepare_start();
     ScreenLockerWatcher::self()->initialize();
 
-    render.reset(new render::backend::x11::X11StandalonePlatform(base));
+    render.reset(new render::backend::x11::platform(base));
     platform = render.get();
 
     crashChecking();

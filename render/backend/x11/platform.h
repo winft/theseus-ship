@@ -1,10 +1,10 @@
 /*
     SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_X11_PLATFORM_H
-#define KWIN_X11_PLATFORM_H
+#pragma once
 
 #include "render/platform.h"
 
@@ -29,14 +29,14 @@ class event_filter;
 
 namespace render::backend::x11
 {
-class X11Output;
+class output;
 
-class KWIN_EXPORT X11StandalonePlatform : public render::platform
+class KWIN_EXPORT platform : public render::platform
 {
     Q_OBJECT
 public:
-    X11StandalonePlatform(base::x11::platform& base);
-    ~X11StandalonePlatform() override;
+    platform(base::x11::platform& base);
+    ~platform() override;
 
     void init();
 
@@ -83,10 +83,8 @@ private:
 
     QScopedPointer<base::x11::event_filter> m_randrFilter;
 
-    QVector<X11Output*> m_outputs;
+    QVector<output*> m_outputs;
 };
 
 }
 }
-
-#endif

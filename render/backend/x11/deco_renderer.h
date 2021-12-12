@@ -3,8 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_DECORATION_X11_RENDERER_H
-#define KWIN_DECORATION_X11_RENDERER_H
+#pragma once
 
 #include "decorations/decorationrenderer.h"
 
@@ -15,12 +14,12 @@ class QTimer;
 namespace KWin::render::backend::x11
 {
 
-class X11DecoRenderer : public Decoration::Renderer
+class deco_renderer : public Decoration::Renderer
 {
     Q_OBJECT
 public:
-    explicit X11DecoRenderer(Decoration::DecoratedClientImpl* client);
-    ~X11DecoRenderer() override;
+    explicit deco_renderer(Decoration::DecoratedClientImpl* client);
+    ~deco_renderer() override;
 
     void reparent(Toplevel* window) override;
 
@@ -33,5 +32,3 @@ private:
 };
 
 }
-
-#endif

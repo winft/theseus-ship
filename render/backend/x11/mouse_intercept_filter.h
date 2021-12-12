@@ -10,15 +10,16 @@
 
 namespace KWin::render
 {
-class effects_handler_impl;
 
 namespace backend::x11
 {
 
-class EffectsMouseInterceptionX11Filter : public base::x11::event_filter
+class effects_handler_impl;
+
+class mouse_intercept_filter : public base::x11::event_filter
 {
 public:
-    explicit EffectsMouseInterceptionX11Filter(xcb_window_t window, effects_handler_impl* effects);
+    explicit mouse_intercept_filter(xcb_window_t window, effects_handler_impl* effects);
 
     bool event(xcb_generic_event_t* event) override;
 

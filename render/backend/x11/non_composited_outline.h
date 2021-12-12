@@ -3,8 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_NON_COMPOSITED_OUTLINE_H
-#define KWIN_NON_COMPOSITED_OUTLINE_H
+#pragma once
 
 #include "render/outline.h"
 #include "xcbutils.h"
@@ -12,11 +11,11 @@
 namespace KWin::render::backend::x11
 {
 
-class NonCompositedOutlineVisual : public outline_visual
+class non_composited_outline : public outline_visual
 {
 public:
-    NonCompositedOutlineVisual(render::outline* outline);
-    ~NonCompositedOutlineVisual() override;
+    non_composited_outline(render::outline* outline);
+    ~non_composited_outline() override;
     void show() override;
     void hide() override;
 
@@ -32,7 +31,7 @@ private:
 };
 
 template<typename T>
-inline void NonCompositedOutlineVisual::forEachWindow(T method)
+inline void non_composited_outline::forEachWindow(T method)
 {
     (m_topOutline.*method)();
     (m_rightOutline.*method)();
@@ -41,5 +40,3 @@ inline void NonCompositedOutlineVisual::forEachWindow(T method)
 }
 
 }
-
-#endif

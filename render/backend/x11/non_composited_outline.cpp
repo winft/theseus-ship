@@ -14,17 +14,17 @@
 namespace KWin::render::backend::x11
 {
 
-NonCompositedOutlineVisual::NonCompositedOutlineVisual(render::outline* outline)
+non_composited_outline::non_composited_outline(render::outline* outline)
     : outline_visual(outline)
     , m_initialized(false)
 {
 }
 
-NonCompositedOutlineVisual::~NonCompositedOutlineVisual()
+non_composited_outline::~non_composited_outline()
 {
 }
 
-void NonCompositedOutlineVisual::show()
+void non_composited_outline::show()
 {
     if (!m_initialized) {
         const QRect geo(0, 0, 1, 1);
@@ -129,9 +129,9 @@ void NonCompositedOutlineVisual::show()
     forEachWindow(&Xcb::Window::map);
 }
 
-void NonCompositedOutlineVisual::hide()
+void non_composited_outline::hide()
 {
     forEachWindow(&Xcb::Window::unmap);
 }
 
-} // namespace
+}

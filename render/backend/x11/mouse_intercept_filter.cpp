@@ -3,9 +3,9 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "effects_mouse_interception_x11_filter.h"
+#include "mouse_intercept_filter.h"
 
-#include "render/effects.h"
+#include "effects.h"
 #include "utils.h"
 
 #include <QMouseEvent>
@@ -13,15 +13,14 @@
 namespace KWin::render::backend::x11
 {
 
-EffectsMouseInterceptionX11Filter::EffectsMouseInterceptionX11Filter(xcb_window_t window,
-                                                                     effects_handler_impl* effects)
+mouse_intercept_filter::mouse_intercept_filter(xcb_window_t window, effects_handler_impl* effects)
     : base::x11::event_filter(QVector<int>{XCB_BUTTON_PRESS, XCB_BUTTON_RELEASE, XCB_MOTION_NOTIFY})
     , m_effects(effects)
     , m_window(window)
 {
 }
 
-bool EffectsMouseInterceptionX11Filter::event(xcb_generic_event_t* event)
+bool mouse_intercept_filter::event(xcb_generic_event_t* event)
 {
     const uint8_t eventType = event->response_type & ~0x80;
     if (eventType == XCB_BUTTON_PRESS || eventType == XCB_BUTTON_RELEASE) {

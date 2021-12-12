@@ -1,26 +1,30 @@
 /*
     SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "x11_platform.h"
+#include "platform.h"
+
 #include <config-kwin.h>
 #include <kwinconfig.h>
+
 #if HAVE_EPOXY_GLX
-#include "glxbackend.h"
+#include "glx_backend.h"
 #endif
-#include "effects_x11.h"
+
+#include "deco_renderer.h"
+#include "effects.h"
 #include "logging.h"
 #include "main_x11.h"
 #include "non_composited_outline.h"
 #include "options.h"
+#include "output.h"
 #include "randr_filter.h"
 #include "render/compositor.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "workspace.h"
-#include "x11_decoration_renderer.h"
-#include "x11_output.h"
 #include "xcbutils.h"
 
 #include <kwinxrenderutils.h>
@@ -36,14 +40,14 @@
 namespace KWin::render::backend::x11
 {
 
-X11StandalonePlatform::X11StandalonePlatform(base::x11::platform& base)
+platform::platform(base::x11::platform& base)
     : render::platform(base)
     , m_x11Display(QX11Info::display())
     , base{base}
 {
 }
 
-X11StandalonePlatform::~X11StandalonePlatform()
+platform::~platform()
 {
     if (m_openGLFreezeProtectionThread) {
         m_openGLFreezeProtectionThread->quit();
@@ -54,7 +58,7 @@ X11StandalonePlatform::~X11StandalonePlatform()
     qDeleteAll(m_outputs);
 }
 
-void X11StandalonePlatform::init()
+void platform::init()
 {
     if (!QX11Info::isPlatformX11()) {
         throw std::exception();
@@ -79,13 +83,13 @@ void X11StandalonePlatform::init()
     m_randrFilter.reset(new RandrFilter(this));
 }
 
-gl::backend* X11StandalonePlatform::createOpenGLBackend(render::compositor* compositor)
+gl::backend* platform::createOpenGLBackend(render::compositor* compositor)
 {
     switch (options->glPlatformInterface()) {
 #if HAVE_EPOXY_GLX
     case GlxPlatformInterface:
         if (hasGlx()) {
-            return new GlxBackend(m_x11Display, compositor);
+            return new glx_backend(m_x11Display, compositor);
         } else {
             qCWarning(KWIN_X11STANDALONE) << "Glx not available, trying EGL instead.";
             // no break, needs fall-through
@@ -99,18 +103,18 @@ gl::backend* X11StandalonePlatform::createOpenGLBackend(render::compositor* comp
     }
 }
 
-bool X11StandalonePlatform::requiresCompositing() const
+bool platform::requiresCompositing() const
 {
     return false;
 }
 
-bool X11StandalonePlatform::openGLCompositingIsBroken() const
+bool platform::openGLCompositingIsBroken() const
 {
     const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
     return KConfigGroup(kwinApp()->config(), "Compositing").readEntry(unsafeKey, false);
 }
 
-QString X11StandalonePlatform::compositingNotPossibleReason() const
+QString platform::compositingNotPossibleReason() const
 {
     // first off, check whether we figured that we'll crash on detection because of a buggy driver
     KConfigGroup gl_workaround_group(kwinApp()->config(), "Compositing");
@@ -142,7 +146,7 @@ QString X11StandalonePlatform::compositingNotPossibleReason() const
     return QString();
 }
 
-bool X11StandalonePlatform::compositingPossible() const
+bool platform::compositingPossible() const
 {
     // first off, check whether we figured that we'll crash on detection because of a buggy driver
     KConfigGroup gl_workaround_group(kwinApp()->config(), "Compositing");
@@ -174,12 +178,12 @@ bool X11StandalonePlatform::compositingPossible() const
     return false;
 }
 
-bool X11StandalonePlatform::hasGlx()
+bool platform::hasGlx()
 {
     return Xcb::Extensions::self()->hasGlx();
 }
 
-void X11StandalonePlatform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
+void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
 {
     const QString unsafeKey = QLatin1String("OpenGLIsUnsafe");
     auto group = KConfigGroup(kwinApp()->config(), "Compositing");
@@ -238,27 +242,26 @@ void X11StandalonePlatform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
     }
 }
 
-outline_visual* X11StandalonePlatform::createOutline(render::outline* outline)
+outline_visual* platform::createOutline(render::outline* outline)
 {
     // first try composited Outline
     auto ret = render::platform::createOutline(outline);
     if (!ret) {
-        ret = new NonCompositedOutlineVisual(outline);
+        ret = new non_composited_outline(outline);
     }
     return ret;
 }
 
-Decoration::Renderer*
-X11StandalonePlatform::createDecorationRenderer(Decoration::DecoratedClientImpl* client)
+Decoration::Renderer* platform::createDecorationRenderer(Decoration::DecoratedClientImpl* client)
 {
     auto renderer = render::platform::createDecorationRenderer(client);
     if (!renderer) {
-        renderer = new X11DecoRenderer(client);
+        renderer = new deco_renderer(client);
     }
     return renderer;
 }
 
-void X11StandalonePlatform::invertScreen()
+void platform::invertScreen()
 {
     using namespace Xcb::RandR;
     bool succeeded = false;
@@ -303,13 +306,12 @@ void X11StandalonePlatform::invertScreen()
     }
 }
 
-void X11StandalonePlatform::createEffectsHandler(render::compositor* compositor,
-                                                 render::scene* scene)
+void platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
 {
-    new EffectsHandlerImplX11(compositor, scene);
+    new effects_handler_impl(compositor, scene);
 }
 
-QVector<CompositingType> X11StandalonePlatform::supportedCompositors() const
+QVector<CompositingType> platform::supportedCompositors() const
 {
     QVector<CompositingType> compositors;
 #if HAVE_EPOXY_GLX
@@ -322,21 +324,21 @@ QVector<CompositingType> X11StandalonePlatform::supportedCompositors() const
     return compositors;
 }
 
-void X11StandalonePlatform::initOutputs()
+void platform::initOutputs()
 {
     doUpdateOutputs<Xcb::RandR::ScreenResources>();
 }
 
-void X11StandalonePlatform::updateOutputs()
+void platform::updateOutputs()
 {
     doUpdateOutputs<Xcb::RandR::CurrentResources>();
 }
 
 template<typename T>
-void X11StandalonePlatform::doUpdateOutputs()
+void platform::doUpdateOutputs()
 {
     auto fallback = [this]() {
-        auto o = new X11Output;
+        auto o = new output;
         o->set_gamma_ramp_size(0);
         o->set_refresh_rate(-1.0f);
         o->set_name(QStringLiteral("Fallback"));
@@ -404,7 +406,7 @@ void X11StandalonePlatform::doUpdateOutputs()
             // drm platform do this.
             Xcb::RandR::CrtcGamma gamma(crtc);
 
-            auto o = new X11Output;
+            auto o = new output;
             o->set_crtc(crtc);
             o->set_gamma_ramp_size(gamma.isNull() ? 0 : gamma->size);
             o->set_geometry(geo);

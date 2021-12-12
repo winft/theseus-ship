@@ -3,8 +3,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_GLX_BACKEND_H
-#define KWIN_GLX_BACKEND_H
+#pragma once
 
 #include "base/x11/event_filter.h"
 #include "render/gl/backend.h"
@@ -32,7 +31,7 @@ namespace backend::x11
 using glXSwapIntervalMESA_func = int (*)(unsigned int interval);
 extern glXSwapIntervalMESA_func glXSwapIntervalMESA;
 
-class FBConfigInfo
+class fb_config_info
 {
 public:
     GLXFBConfig fbconfig;
@@ -44,10 +43,10 @@ public:
 
 // ------------------------------------------------------------------
 
-class SwapEventFilter : public base::x11::event_filter
+class swap_event_filter : public base::x11::event_filter
 {
 public:
-    SwapEventFilter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable);
+    swap_event_filter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable);
     bool event(xcb_generic_event_t* event) override;
 
 private:
@@ -58,11 +57,11 @@ private:
 /**
  * @brief OpenGL Backend using GLX over an X overlay window.
  */
-class GlxBackend : public gl::backend
+class glx_backend : public gl::backend
 {
 public:
-    GlxBackend(Display* display, render::compositor* compositor);
-    ~GlxBackend() override;
+    glx_backend(Display* display, render::compositor* compositor);
+    ~glx_backend() override;
     void screenGeometryChanged(const QSize& size) override;
     gl::texture_private* createBackendTexture(gl::texture* texture) override;
     QRegion prepareRenderingFrame() override;
@@ -89,16 +88,16 @@ private:
     bool supportsSwapEvents() const;
 
     int visualDepth(xcb_visualid_t visual) const;
-    FBConfigInfo* infoForVisual(xcb_visualid_t visual);
+    fb_config_info* infoForVisual(xcb_visualid_t visual);
 
     std::unique_ptr<render::x11::overlay_window> overlay_window;
     Window window;
     GLXFBConfig fbconfig;
     GLXWindow glxWindow;
     GLXContext ctx;
-    QHash<xcb_visualid_t, FBConfigInfo*> m_fbconfigHash;
+    QHash<xcb_visualid_t, fb_config_info*> m_fbconfigHash;
     QHash<xcb_visualid_t, int> m_visualDepthHash;
-    std::unique_ptr<SwapEventFilter> m_swapEventFilter;
+    std::unique_ptr<swap_event_filter> swap_filter;
     int m_bufferAge;
     bool m_haveMESACopySubBuffer = false;
     bool m_haveMESASwapControl = false;
@@ -122,19 +121,21 @@ public:
     gl::backend* backend() override;
 
 private:
-    friend class GlxBackend;
-    GlxTexture(gl::texture* texture, GlxBackend* backend);
+    friend class glx_backend;
+    GlxTexture(gl::texture* texture, glx_backend* backend);
+
     bool loadTexture(xcb_pixmap_t pix, const QSize& size, xcb_visualid_t visual);
     Display* display() const
     {
         return m_backend->m_x11Display;
     }
+
     gl::texture* q;
-    GlxBackend* m_backend;
-    GLXPixmap m_glxpixmap; // the glx pixmap the texture is bound to
+    glx_backend* m_backend;
+
+    // the glx pixmap the texture is bound to
+    GLXPixmap m_glxpixmap;
 };
 
 }
 }
-
-#endif // KWIN_GLX_BACKEND_H
