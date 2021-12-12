@@ -20,6 +20,11 @@ class QAction;
 namespace KWin
 {
 
+namespace base
+{
+class platform;
+}
+
 namespace Decoration
 {
 class Renderer;
@@ -161,8 +166,10 @@ public:
     EGLConfig egl_config{nullptr};
     EGLSurface egl_surface{EGL_NO_SURFACE};
 
+    base::platform& base;
+
 protected:
-    platform();
+    platform(base::platform& base);
 };
 
 }

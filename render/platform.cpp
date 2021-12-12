@@ -19,8 +19,9 @@
 namespace KWin::render
 {
 
-platform::platform()
+platform::platform(base::platform& base)
     : night_color{std::make_unique<render::post::night_color_manager>()}
+    , base{base}
 {
 }
 
