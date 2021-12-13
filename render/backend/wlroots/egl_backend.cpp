@@ -19,6 +19,7 @@
 #include "screens.h"
 
 #include <kwinglplatform.h>
+#include <stdexcept>
 #include <wayland_logging.h>
 
 namespace KWin::render::backend::wlroots
@@ -50,38 +51,31 @@ egl_backend::egl_backend(wlroots::platform& platform, bool headless)
                                      [&out](auto& egl_out) { return &egl_out.out->base == out; }),
                       outputs.end());
     });
+
+    initClientExtensions();
+
+    if (!init_platform()) {
+        throw std::runtime_error("Could not initialize EGL backend");
+    }
+    if (!initEglAPI()) {
+        throw std::runtime_error("Could not initialize EGL API");
+    }
+    if (!init_buffer_configs(this)) {
+        throw std::runtime_error("Could not initialize buffer configs");
+    }
+    if (!init_rendering_context()) {
+        throw std::runtime_error("Could not initialize rendering context");
+    }
+
+    initKWinGL();
+    initBufferAge();
+    initWayland();
 }
 
 egl_backend::~egl_backend()
 {
     outputs.clear();
     cleanup();
-}
-
-void egl_backend::init()
-{
-    initClientExtensions();
-
-    if (!init_platform()) {
-        setFailed("Could not initialize EGL backend.");
-        return;
-    }
-    if (!initEglAPI()) {
-        setFailed("Could not initialize EGL API.");
-        return;
-    }
-    if (!init_buffer_configs(this)) {
-        setFailed("Could not initialize buffer configs.");
-        return;
-    }
-    if (!init_rendering_context()) {
-        setFailed("Could not initialize rendering context");
-        return;
-    }
-
-    initKWinGL();
-    initBufferAge();
-    initWayland();
 }
 
 bool egl_backend::init_platform()

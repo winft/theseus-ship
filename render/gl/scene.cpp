@@ -60,6 +60,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
 
+#include <stdexcept>
 #include <unistd.h>
 
 #include <QMatrix4x4>
@@ -311,12 +312,10 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
     : render::scene(compositor)
     , m_backend(backend)
 {
-    if (m_backend->isFailed()) {
-        init_ok = false;
+    if (!viewportLimitsMatched(compositor.platform.base.screens.size())) {
+        // TODO(romangg): throw?
         return;
     }
-    if (!viewportLimitsMatched(compositor.platform.base.screens.size()))
-        return;
 
     // perform Scene specific checks
     GLPlatform* glPlatform = GLPlatform::instance();
@@ -1108,18 +1107,12 @@ void scene::performPaintWindow(effects_window_impl* w,
 
 backend* create_backend(render::compositor& compositor)
 {
-    auto backend = compositor.platform.createOpenGLBackend(compositor);
-    if (!backend) {
+    try {
+        return compositor.platform.createOpenGLBackend(compositor);
+    } catch (std::runtime_error& error) {
+        qCWarning(KWIN_CORE) << "Creating OpenGL backend failed:" << error.what();
         return nullptr;
     }
-    if (!backend->isFailed()) {
-        backend->init();
-    }
-    if (backend->isFailed()) {
-        delete backend;
-        return nullptr;
-    }
-    return backend;
 }
 
 render::scene* create_scene_impl(render::compositor& compositor)

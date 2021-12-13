@@ -36,18 +36,11 @@ namespace KWin::render::gl
 backend::backend()
     : m_directRendering(false)
     , m_haveBufferAge(false)
-    , m_failed(false)
 {
 }
 
 backend::~backend()
 {
-}
-
-void backend::setFailed(const QString& reason)
-{
-    qCWarning(KWIN_CORE) << "Creating the OpenGL rendering failed: " << reason;
-    m_failed = true;
 }
 
 void backend::idle()

@@ -69,14 +69,13 @@ public:
     bool makeCurrent() override;
     void doneCurrent() override;
     bool hasSwapEvent() const override;
-    void init() override;
 
 protected:
     void present() override;
 
 private:
     bool initBuffer();
-    bool checkVersion();
+    void check_glx_version();
     void initExtensions();
     bool initRenderingContext();
     bool initFbConfig();

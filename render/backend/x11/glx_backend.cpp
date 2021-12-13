@@ -40,6 +40,8 @@
 #include <algorithm>
 #include <cassert>
 #include <deque>
+#include <stdexcept>
+
 #if HAVE_DL_LIBRARY
 #include <dlfcn.h>
 #endif
@@ -91,7 +93,22 @@ bool swap_event_filter::event(xcb_generic_event_t* event)
     return false;
 }
 
-// -----------------------------------------------------------------------
+glXSwapIntervalMESA_func glXSwapIntervalMESA;
+
+typedef void (*glXFuncPtr)();
+
+static glXFuncPtr getProcAddress(const char* name)
+{
+    glXFuncPtr ret = nullptr;
+#if HAVE_EPOXY_GLX
+    ret = glXGetProcAddress((const GLubyte*)name);
+#endif
+#if HAVE_DL_LIBRARY
+    if (ret == nullptr)
+        ret = (glXFuncPtr)dlsym(RTLD_DEFAULT, name);
+#endif
+    return ret;
+}
 
 glx_backend::glx_backend(Display* display, render::compositor& compositor)
     : gl::backend()
@@ -112,13 +129,78 @@ glx_backend::glx_backend(Display* display, render::compositor& compositor)
     // to make it call XESetWireToEvent callbacks, which is required
     // by Mesa when using DRI2.
     QOpenGLContext::supportsThreadedOpenGL();
+
+    check_glx_version();
+    initExtensions();
+
+    // resolve glXSwapIntervalMESA if available
+    if (hasExtension(QByteArrayLiteral("GLX_MESA_swap_control"))) {
+        glXSwapIntervalMESA = (glXSwapIntervalMESA_func)getProcAddress("glXSwapIntervalMESA");
+    } else {
+        glXSwapIntervalMESA = nullptr;
+    }
+
+    initVisualDepthHashTable();
+
+    if (!initBuffer()) {
+        throw std::runtime_error("Could not initialize the buffer");
+    }
+
+    if (!initRenderingContext()) {
+        throw std::runtime_error("Could not initialize rendering context");
+    }
+
+    // Initialize OpenGL
+    GLPlatform* glPlatform = GLPlatform::instance();
+    glPlatform->detect(GlxPlatformInterface);
+    glPlatform->printResults();
+    initGL(&getProcAddress);
+
+    // Check whether certain features are supported
+    m_haveMESACopySubBuffer = hasExtension(QByteArrayLiteral("GLX_MESA_copy_sub_buffer"));
+    m_haveMESASwapControl = hasExtension(QByteArrayLiteral("GLX_MESA_swap_control"));
+    m_haveEXTSwapControl = hasExtension(QByteArrayLiteral("GLX_EXT_swap_control"));
+
+    // Allow to disable Intel swap event with env variable. There were problems in the past.
+    // See BUG 342582.
+    if (hasExtension(QByteArrayLiteral("GLX_INTEL_swap_event"))
+        && qgetenv("KWIN_USE_INTEL_SWAP_EVENT") != QByteArrayLiteral("0")) {
+        swap_filter = std::make_unique<swap_event_filter>(window, glxWindow);
+        glXSelectEvent(display, glxWindow, GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK);
+    }
+
+    setSupportsBufferAge(false);
+
+    if (hasExtension(QByteArrayLiteral("GLX_EXT_buffer_age"))) {
+        const QByteArray useBufferAge = qgetenv("KWIN_USE_BUFFER_AGE");
+
+        if (useBufferAge != "0")
+            setSupportsBufferAge(true);
+    }
+
+    if (m_haveEXTSwapControl) {
+        glXSwapIntervalEXT(display, glxWindow, 1);
+    } else if (m_haveMESASwapControl) {
+        glXSwapIntervalMESA(1);
+    } else {
+        qCWarning(KWIN_X11) << "NO VSYNC! glSwapInterval is not supported";
+    }
+
+    if (glPlatform->isVirtualBox()) {
+        // VirtualBox does not support glxQueryDrawable
+        // this should actually be in kwinglutils_funcs, but QueryDrawable seems not to be provided
+        // by an extension and the GLPlatform has not been initialized at the moment when initGLX()
+        // is called.
+        glXQueryDrawable = nullptr;
+    }
+
+    setIsDirectRendering(bool(glXIsDirect(display, ctx)));
+
+    qCDebug(KWIN_X11) << "Direct rendering:" << isDirectRendering();
 }
 
 glx_backend::~glx_backend()
 {
-    if (isFailed()) {
-        overlay_window->destroy();
-    }
     // TODO: cleanup in error case
     // do cleanup after initBuffer()
     cleanupGL();
@@ -140,105 +222,13 @@ glx_backend::~glx_backend()
     overlay_window->destroy();
 }
 
-typedef void (*glXFuncPtr)();
-
-static glXFuncPtr getProcAddress(const char* name)
-{
-    glXFuncPtr ret = nullptr;
-#if HAVE_EPOXY_GLX
-    ret = glXGetProcAddress((const GLubyte*)name);
-#endif
-#if HAVE_DL_LIBRARY
-    if (ret == nullptr)
-        ret = (glXFuncPtr)dlsym(RTLD_DEFAULT, name);
-#endif
-    return ret;
-}
-glXSwapIntervalMESA_func glXSwapIntervalMESA;
-
-void glx_backend::init()
-{
-    // Require at least GLX 1.3
-    if (!checkVersion()) {
-        setFailed(QStringLiteral("Requires at least GLX 1.3"));
-        return;
-    }
-
-    initExtensions();
-
-    // resolve glXSwapIntervalMESA if available
-    if (hasExtension(QByteArrayLiteral("GLX_MESA_swap_control"))) {
-        glXSwapIntervalMESA = (glXSwapIntervalMESA_func)getProcAddress("glXSwapIntervalMESA");
-    } else {
-        glXSwapIntervalMESA = nullptr;
-    }
-
-    initVisualDepthHashTable();
-
-    if (!initBuffer()) {
-        setFailed(QStringLiteral("Could not initialize the buffer"));
-        return;
-    }
-
-    if (!initRenderingContext()) {
-        setFailed(QStringLiteral("Could not initialize rendering context"));
-        return;
-    }
-
-    // Initialize OpenGL
-    GLPlatform* glPlatform = GLPlatform::instance();
-    glPlatform->detect(GlxPlatformInterface);
-    glPlatform->printResults();
-    initGL(&getProcAddress);
-
-    // Check whether certain features are supported
-    m_haveMESACopySubBuffer = hasExtension(QByteArrayLiteral("GLX_MESA_copy_sub_buffer"));
-    m_haveMESASwapControl = hasExtension(QByteArrayLiteral("GLX_MESA_swap_control"));
-    m_haveEXTSwapControl = hasExtension(QByteArrayLiteral("GLX_EXT_swap_control"));
-
-    // Allow to disable Intel swap event with env variable. There were problems in the past.
-    // See BUG 342582.
-    if (hasExtension(QByteArrayLiteral("GLX_INTEL_swap_event"))
-        && qgetenv("KWIN_USE_INTEL_SWAP_EVENT") != QByteArrayLiteral("0")) {
-        swap_filter = std::make_unique<swap_event_filter>(window, glxWindow);
-        glXSelectEvent(display(), glxWindow, GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK);
-    }
-
-    setSupportsBufferAge(false);
-
-    if (hasExtension(QByteArrayLiteral("GLX_EXT_buffer_age"))) {
-        const QByteArray useBufferAge = qgetenv("KWIN_USE_BUFFER_AGE");
-
-        if (useBufferAge != "0")
-            setSupportsBufferAge(true);
-    }
-
-    if (m_haveEXTSwapControl) {
-        glXSwapIntervalEXT(display(), glxWindow, 1);
-    } else if (m_haveMESASwapControl) {
-        glXSwapIntervalMESA(1);
-    } else {
-        qCWarning(KWIN_X11) << "NO VSYNC! glSwapInterval is not supported";
-    }
-
-    if (glPlatform->isVirtualBox()) {
-        // VirtualBox does not support glxQueryDrawable
-        // this should actually be in kwinglutils_funcs, but QueryDrawable seems not to be provided
-        // by an extension and the GLPlatform has not been initialized at the moment when initGLX()
-        // is called.
-        glXQueryDrawable = nullptr;
-    }
-
-    setIsDirectRendering(bool(glXIsDirect(display(), ctx)));
-
-    qCDebug(KWIN_X11) << "Direct rendering:" << isDirectRendering();
-}
-
-bool glx_backend::checkVersion()
+void glx_backend::check_glx_version()
 {
     int major, minor;
     glXQueryVersion(display(), &major, &minor);
-    return kVersionNumber(major, minor) >= kVersionNumber(1, 3);
+    if (kVersionNumber(major, minor) < kVersionNumber(1, 3)) {
+        throw std::runtime_error("Requires at least GLX 1.3");
+    }
 }
 
 void glx_backend::initExtensions()

@@ -45,8 +45,6 @@ public:
     egl_backend(wlroots::platform& platform, bool headless);
     ~egl_backend() override;
 
-    void init() override;
-
     void screenGeometryChanged(QSize const& size) override;
     gl::texture_private* createBackendTexture(gl::texture* texture) override;
 

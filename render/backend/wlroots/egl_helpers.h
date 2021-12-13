@@ -11,6 +11,7 @@
 
 #include <epoxy/egl.h>
 #include <memory>
+#include <stdexcept>
 
 namespace KWin::render::backend::wlroots
 {
@@ -41,14 +42,13 @@ public:
 };
 
 template<typename Egl>
-EGLDisplay get_egl_headless(Egl& egl)
+EGLDisplay get_egl_headless(Egl const& egl)
 {
     auto const has_mesa_headless
         = egl.hasClientExtension(QByteArrayLiteral("EGL_MESA_platform_surfaceless"));
 
     if (!has_mesa_headless) {
-        egl.setFailed("Missing EGL_MESA_platform_surfaceless extension.");
-        return nullptr;
+        throw std::runtime_error("Missing EGL_MESA_platform_surfaceless extension");
     }
 
     return eglGetPlatformDisplayEXT(EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY, nullptr);
@@ -62,10 +62,9 @@ std::unique_ptr<egl_gbm> get_egl_gbm(Platform const& platform, Egl const& egl)
 
     if (!egl.hasClientExtension(QByteArrayLiteral("EGL_EXT_platform_base"))
         || (!has_mesa_gbm && !has_khr_gbm)) {
-        platform.egl->setFailed(
-            "Missing one or more extensions between EGL_EXT_platform_base, "
-            "EGL_MESA_platform_gbm, EGL_KHR_platform_gbm");
-        return nullptr;
+        throw std::runtime_error(
+            "Missing one or more extensions between EGL_EXT_platform_base, EGL_MESA_platform_gbm, "
+            "EGL_KHR_platform_gbm");
     }
 
 #if HAVE_WLR_OUTPUT_INIT_RENDER
@@ -76,8 +75,7 @@ std::unique_ptr<egl_gbm> get_egl_gbm(Platform const& platform, Egl const& egl)
 
     auto gbm_dev = gbm_create_device(wlr_renderer_get_drm_fd(renderer));
     if (!gbm_dev) {
-        platform.egl->setFailed("Could not create gbm device");
-        return nullptr;
+        throw std::runtime_error("Could not create gbm device");
     }
 
     auto const egl_platform = has_mesa_gbm ? EGL_PLATFORM_GBM_MESA : EGL_PLATFORM_GBM_KHR;
