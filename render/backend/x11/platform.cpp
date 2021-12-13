@@ -42,6 +42,21 @@
 namespace KWin::render::backend::x11
 {
 
+/**
+ * Tests whether GLX is supported and returns @c true
+ * in case KWin is compiled with OpenGL support and GLX
+ * is available.
+ *
+ * If KWin is compiled with OpenGL ES or without OpenGL at
+ * all, @c false is returned.
+ * @returns @c true if GLX is available, @c false otherwise and if not build with OpenGL
+ * support.
+ */
+static bool has_glx()
+{
+    return Xcb::Extensions::self()->hasGlx();
+}
+
 platform::platform(base::x11::platform& base)
     : render::platform(base)
     , m_x11Display(QX11Info::display())
@@ -89,7 +104,7 @@ gl::backend* platform::createOpenGLBackend(render::compositor* compositor)
     switch (options->glPlatformInterface()) {
 #if HAVE_EPOXY_GLX
     case GlxPlatformInterface:
-        if (hasGlx()) {
+        if (has_glx()) {
             return new glx_backend(m_x11Display, compositor);
         } else {
             qCWarning(KWIN_X11) << "Glx not available, trying EGL instead.";
@@ -135,10 +150,10 @@ QString platform::compositingNotPossibleReason() const
         return i18n("Required X extensions (XComposite and XDamage) are not available.");
     }
 #if !defined(KWIN_HAVE_XRENDER_COMPOSITING)
-    if (!hasGlx())
+    if (!has_glx())
         return i18n("GLX/OpenGL are not available and only OpenGL support is compiled.");
 #else
-    if (!(hasGlx()
+    if (!(has_glx()
           || (Xcb::Extensions::self()->isRenderAvailable()
               && Xcb::Extensions::self()->isFixesAvailable()))) {
         return i18n("GLX/OpenGL and XRender/XFixes are not available.");
@@ -164,7 +179,7 @@ bool platform::compositingPossible() const
         qCDebug(KWIN_X11) << "No damage extension available";
         return false;
     }
-    if (hasGlx())
+    if (has_glx())
         return true;
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
     if (Xcb::Extensions::self()->isRenderAvailable() && Xcb::Extensions::self()->isFixesAvailable())
@@ -177,11 +192,6 @@ bool platform::compositingPossible() const
     }
     qCDebug(KWIN_X11) << "No OpenGL or XRender/XFixes support";
     return false;
-}
-
-bool platform::hasGlx()
-{
-    return Xcb::Extensions::self()->hasGlx();
 }
 
 void platform::createOpenGLSafePoint(OpenGLSafePoint safePoint)
