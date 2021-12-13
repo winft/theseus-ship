@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/platform.h"
 #include "main.h"
 #include "platform.h"
-#include "render/backend/wlroots/platform.h"
 #include "render/compositor.h"
+#include "render/wayland/output.h"
 #include "screens.h"
 #include "wayland_logging.h"
 #include "wayland_server.h"
@@ -42,6 +42,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin::base::wayland
 {
+
+output::~output() = default;
 
 QString output::name() const
 {

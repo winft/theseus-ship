@@ -14,15 +14,7 @@
 
 struct wlr_output;
 
-namespace KWin
-{
-
-namespace render::backend::wlroots
-{
-class output;
-}
-
-namespace base::backend::wlroots
+namespace KWin::base::backend::wlroots
 {
 
 class platform;
@@ -44,7 +36,6 @@ public:
 
     wlr_output* native;
     wlroots::platform* platform;
-    std::unique_ptr<render::backend::wlroots::output> render;
 
 private:
     bool disable_native();
@@ -54,5 +45,4 @@ private:
     base::event_receiver<output> destroy_rec;
 };
 
-}
 }

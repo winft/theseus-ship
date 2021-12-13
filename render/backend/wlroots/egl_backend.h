@@ -53,7 +53,7 @@ public:
                                     QRegion const& damagedRegion) override;
     QRegion prepareRenderingForScreen(base::output* output) override;
 
-    egl_output& get_output(base::output const* out);
+    std::unique_ptr<egl_output>& get_egl_out(base::output const* out);
 
 protected:
     void present() override;

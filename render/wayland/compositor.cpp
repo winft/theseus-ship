@@ -9,8 +9,9 @@
 #include "presentation.h"
 #include "utils.h"
 
-#include "base/platform.h"
-#include "base/wayland/output.h"
+#include "base/backend/wlroots/output.h"
+#include "base/wayland/platform.h"
+#include "render/backend/wlroots/output.h"
 #include "render/cursor.h"
 #include "render/gl/scene.h"
 #include "render/platform.h"
@@ -25,20 +26,30 @@
 namespace KWin::render::wayland
 {
 
+base::wayland::platform& get_platform(base::platform& platform)
+{
+    return static_cast<base::wayland::platform&>(platform);
+}
+
+base::backend::wlroots::output* get_output(base::output* out)
+{
+    return static_cast<base::backend::wlroots::output*>(out);
+}
+
 void compositor::addRepaint(QRegion const& region)
 {
     if (locked) {
         return;
     }
-    for (auto& [key, output] : outputs) {
-        output->add_repaint(region);
+    for (auto& output : get_platform(platform.base).outputs) {
+        get_output(output)->render->add_repaint(region);
     }
 }
 
 void compositor::check_idle()
 {
-    for (auto& [key, output] : outputs) {
-        if (!output->idle) {
+    for (auto& output : get_platform(platform.base).outputs) {
+        if (!get_output(output)->render->idle) {
             return;
         }
     }
@@ -63,23 +74,7 @@ compositor::compositor(render::platform& platform)
             this,
             &compositor::destroyCompositorSelection);
 
-    for (auto output : platform.base.get_outputs()) {
-        auto wl_out = static_cast<base::wayland::output*>(output);
-        outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
-    }
-
-    connect(&platform.base, &base::platform::output_added, this, [this](auto output) {
-        auto wl_out = static_cast<base::wayland::output*>(output);
-        outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
-    });
-
     connect(&platform.base, &base::platform::output_removed, this, [this](auto output) {
-        for (auto it = outputs.begin(); it != outputs.end(); ++it) {
-            if (it->first == output) {
-                outputs.erase(it);
-                break;
-            }
-        }
         if (auto workspace = Workspace::self()) {
             for (auto& win : workspace->windows()) {
                 remove_all(win->repaint_outputs, output);
@@ -88,8 +83,8 @@ compositor::compositor(render::platform& platform)
     });
 
     connect(workspace(), &Workspace::destroyed, this, [this] {
-        for (auto& [key, output] : outputs) {
-            output->delay_timer.stop();
+        for (auto& output : get_platform(this->platform.base).outputs) {
+            get_output(output)->render->delay_timer.stop();
         }
     });
 
@@ -104,9 +99,9 @@ void compositor::schedule_repaint(Toplevel* window)
         return;
     }
 
-    for (auto& [base, output] : outputs) {
-        if (!win::visible_rect(window).intersected(base->geometry()).isEmpty()) {
-            output->set_delay_timer();
+    for (auto& output : get_platform(this->platform.base).outputs) {
+        if (!win::visible_rect(window).intersected(output->geometry()).isEmpty()) {
+            get_output(output)->render->set_delay_timer();
         }
     }
 }
@@ -117,12 +112,9 @@ void compositor::schedule_frame_callback(Toplevel* window)
         return;
     }
 
-    auto max_out = static_cast<base::wayland::output*>(max_coverage_output(window));
-    if (!max_out) {
-        return;
+    if (auto max_out = static_cast<base::wayland::output*>(max_coverage_output(window))) {
+        get_output(max_out)->render->request_frame(window);
     }
-
-    outputs[max_out]->request_frame(window);
 }
 
 void compositor::toggleCompositing()
@@ -181,8 +173,8 @@ render::scene* compositor::create_scene(QVector<CompositingType> const& support)
 
 std::deque<Toplevel*> compositor::performCompositing()
 {
-    for (auto& [output, render_output] : outputs) {
-        render_output->run();
+    for (auto& output : get_platform(platform.base).outputs) {
+        get_output(output)->render->run();
     }
 
     return std::deque<Toplevel*>();

@@ -49,7 +49,6 @@ public:
     void unlock();
 
     render::wayland::presentation* presentation;
-    std::map<base::wayland::output*, std::unique_ptr<render::wayland::output>> outputs;
 
 protected:
     void start() override;

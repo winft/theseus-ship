@@ -7,9 +7,11 @@
 
 #include "compositor.h"
 #include "presentation.h"
+#include "render/platform.h"
 #include "utils.h"
 
 #include "base/wayland/output.h"
+#include "base/wayland/platform.h"
 #include "effects.h"
 #include "wayland_logging.h"
 #include "wayland_server.h"
@@ -29,16 +31,21 @@ namespace KWin::render::wayland
 
 static int s_index{0};
 
-output::output(base::wayland::output* base, wayland::compositor* compositor)
+static compositor* get_compositor(render::platform& platform)
+{
+    return static_cast<wayland::compositor*>(platform.compositor.get());
+}
+
+output::output(base::wayland::output& base, render::platform& platform)
     : index{++s_index}
-    , compositor{compositor}
+    , platform{platform}
     , base{base}
 {
 }
 
 void output::add_repaint(QRegion const& region)
 {
-    auto const capped_region = region.intersected(base->geometry());
+    auto const capped_region = region.intersected(base.geometry());
     if (capped_region.isEmpty()) {
         return;
     }
@@ -53,18 +60,18 @@ bool output::prepare_repaint(Toplevel* win)
     }
 
     auto const repaints = win->repaints();
-    if (repaints.intersected(base->geometry()).isEmpty()) {
+    if (repaints.intersected(base.geometry()).isEmpty()) {
         // TODO(romangg): Remove win from windows list?
         return false;
     }
 
-    for (auto& [other_base, other_output] : compositor->outputs) {
-        if (other_output.get() == this) {
+    for (auto& output : static_cast<base::wayland::platform&>(platform.base).outputs) {
+        if (output == &base) {
             continue;
         }
-        auto const capped_region = repaints.intersected(other_base->geometry());
+        auto const capped_region = repaints.intersected(output->geometry());
         if (!capped_region.isEmpty()) {
-            other_output->add_repaint(capped_region);
+            output->render->add_repaint(capped_region);
         }
     }
 
@@ -81,7 +88,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     if (swap_pending) {
         return false;
     }
-    if (compositor->is_locked()) {
+    if (get_compositor(platform)->is_locked()) {
         return false;
     }
 
@@ -96,7 +103,7 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
         } else if (win->surface()
                    && win->surface()->client() != waylandServer()->xWaylandConnection()
                    && (win->surface()->state().updates & Wrapland::Server::surface_change::frame)
-                   && max_coverage_output(win) == base) {
+                   && max_coverage_output(win) == &base) {
             frame_windows.push_back(win);
         }
         if (win->resetAndFetchDamage()) {
@@ -123,14 +130,14 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
 
     if (repaints_region.isEmpty() && !has_window_repaints) {
         idle = true;
-        compositor->check_idle();
+        get_compositor(platform)->check_idle();
 
         // This means the next time we composite it is done without timer delay.
         delay = std::chrono::nanoseconds::zero();
 
         if (!frame_windows.empty()) {
             // Some windows want a frame event still.
-            compositor->presentation->frame(this, frame_windows);
+            get_compositor(platform)->presentation->frame(this, frame_windows);
         }
         return false;
     }
@@ -188,8 +195,8 @@ std::deque<Toplevel*> output::run()
     auto now = std::chrono::duration_cast<std::chrono::milliseconds>(now_ns);
 
     // Start the actual painting process.
-    auto const duration
-        = std::chrono::nanoseconds(compositor->scene()->paint_output(base, repaints, windows, now));
+    auto const duration = std::chrono::nanoseconds(
+        get_compositor(platform)->scene()->paint_output(&base, repaints, windows, now));
 
 #if SWAP_TIME_DEBUG
     qDebug().noquote() << "RUN gap:" << to_ms(now_ns - swap_ref_time)
@@ -201,7 +208,7 @@ std::deque<Toplevel*> output::run()
     retard_next_run();
 
     if (!windows.empty()) {
-        compositor->presentation->lock(this, windows);
+        get_compositor(platform)->presentation->lock(this, windows);
     }
 
     Perf::Ftrace::end(ftrace_identifier, msc);
@@ -223,12 +230,12 @@ void output::dry_run()
         }
         frame_windows.push_back(win);
     }
-    compositor->presentation->frame(this, frame_windows);
+    get_compositor(platform)->presentation->frame(this, frame_windows);
 }
 
 void output::swapped(presentation_data const& data)
 {
-    compositor->presentation->presented(this, data);
+    get_compositor(platform)->presentation->presented(this, data);
 
     if (!swap_pending) {
         qCWarning(KWIN_WL) << "render::wayland::output::swapped called but no swap pending.";
@@ -243,7 +250,7 @@ void output::swapped(presentation_data const& data)
 
 std::chrono::nanoseconds output::refresh_length() const
 {
-    return std::chrono::nanoseconds(1000 * 1000 * (1000 * 1000 / base->refresh_rate()));
+    return std::chrono::nanoseconds(1000 * 1000 * (1000 * 1000 / base.refresh_rate()));
 }
 
 void output::set_delay(presentation_data const& data)
@@ -314,7 +321,7 @@ void output::set_delay(presentation_data const& data)
 
 void output::set_delay_timer()
 {
-    if (delay_timer.isActive() || swap_pending || !base->is_dpms_on()) {
+    if (delay_timer.isActive() || swap_pending || !base.is_dpms_on()) {
         // Abort since we will composite when the timer runs out or the timer will only get
         // started at buffer swap.
         return;
@@ -332,12 +339,12 @@ void output::set_delay_timer()
 
 void output::request_frame(Toplevel* window)
 {
-    if (swap_pending || delay_timer.isActive() || frame_timer.isActive() || !base->is_dpms_on()) {
+    if (swap_pending || delay_timer.isActive() || frame_timer.isActive() || !base.is_dpms_on()) {
         // Frame will be received when timer runs out.
         return;
     }
 
-    compositor->presentation->frame(this, {window});
+    get_compositor(platform)->presentation->frame(this, {window});
     frame_timer.start(
         std::chrono::duration_cast<std::chrono::milliseconds>(refresh_length()).count(), this);
 }
@@ -357,7 +364,7 @@ void output::timerEvent(QTimerEvent* event)
 
 void output::retard_next_run()
 {
-    if (compositor->scene()->hasSwapEvent()) {
+    if (get_compositor(platform)->scene()->hasSwapEvent()) {
         // We wait on an explicit callback from the backend to unlock next composition runs.
         return;
     }

@@ -27,6 +27,11 @@ namespace KWin::render::backend::wlroots
 
 static auto align_horizontal{false};
 
+output& get_output(std::unique_ptr<render::wayland::output>& output)
+{
+    return static_cast<wlroots::output&>(*output);
+}
+
 platform::platform(base::backend::wlroots::platform& base)
     : render::platform(base)
     , base{base}
@@ -63,14 +68,15 @@ void handle_new_output(struct wl_listener* listener, void* data)
 
     auto out = new base::backend::wlroots::output(wlr_out, &back->base);
 
-    out->render = std::make_unique<output>(*out);
+    out->render = std::make_unique<output>(*out, *back);
 
     if (back->egl) {
-        out->render->egl = std::make_unique<egl_output>(*out->render, back->egl);
+        get_output(out->render).egl
+            = std::make_unique<egl_output>(static_cast<output&>(*out->render), back->egl);
     }
 
     QObject::connect(out, &base::backend::wlroots::output::mode_changed, out, [out] {
-        out->render->egl->reset();
+        get_output(out->render).egl->reset();
     });
 
     back->base.all_outputs.push_back(out);
@@ -191,15 +197,15 @@ void platform::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v
         auto out = static_cast<base::backend::wlroots::output*>(
             base::wayland::find_output(base, con->output()));
         assert(out);
-        outputs.push_back(out->render.get());
+        outputs.push_back(&get_output(out->render));
     }
 
     auto outputs_array = outputs_array_wrap(outputs.size());
 
     size_t i{0};
     for (auto& out : outputs) {
-        egl->get_output(&out->base).cleanup_framebuffer();
-        outputs_array.data[i] = out->base.native;
+        out->egl->cleanup_framebuffer();
+        outputs_array.data[i] = static_cast<base::backend::wlroots::output&>(out->base).native;
         i++;
     }
 
@@ -207,7 +213,7 @@ void platform::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v
     if (!wlr_lease) {
         qCWarning(KWIN_WL) << "Error in wlroots backend on lease creation.";
         for (auto& out : outputs) {
-            egl->get_output(&out->base).reset_framebuffer();
+            out->egl->reset_framebuffer();
         }
         throw;
     }
