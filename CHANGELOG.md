@@ -1,5 +1,12 @@
 # Changelog
 All notable changes to KWinFT will be documented in this file.
+### [5.23.2](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.23.1...kwinft@5.23.2) (2021-12-13)
+
+
+### Bug Fixes
+
+* **space:** ignore OSD position hints and configure events ([c411d74](https://gitlab.com/kwinft/kwinft/commit/c411d740838ad224430051b830bdfaa271361179))
+
 ### [5.23.1](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.23.0...kwinft@5.23.1) (2021-11-30)
 
 
