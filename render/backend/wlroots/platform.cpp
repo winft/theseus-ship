@@ -62,7 +62,18 @@ void handle_new_output(struct wl_listener* listener, void* data)
     auto const screens_width = std::max(back->base.screens.size().width(), 0);
 
     auto out = new base::backend::wlroots::output(wlr_out, &back->base);
+
     out->render = std::make_unique<output>(*out);
+
+    if (back->egl) {
+        out->render->egl = std::make_unique<egl_output>(out->render.get(), back->egl);
+        out->render->egl->reset(out->render.get());
+    }
+
+    QObject::connect(out, &base::backend::wlroots::output::mode_changed, out, [out] {
+        out->render->egl->reset(out->render.get());
+    });
+
     back->base.all_outputs.push_back(out);
     back->base.outputs.push_back(out);
 

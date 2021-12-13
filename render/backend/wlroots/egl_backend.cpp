@@ -27,11 +27,7 @@ namespace KWin::render::backend::wlroots
 
 egl_output& egl_backend::get_output(base::output const* out)
 {
-    auto it = std::find_if(outputs.begin(), outputs.end(), [this, out](auto& egl_out) {
-        return &egl_out.out->base == out;
-    });
-    assert(it != outputs.end());
-    return *it;
+    return *static_cast<base::backend::wlroots::output const*>(out)->render->egl;
 }
 
 egl_backend::egl_backend(wlroots::platform& platform, bool headless)
@@ -41,16 +37,6 @@ egl_backend::egl_backend(wlroots::platform& platform, bool headless)
 {
     // Egl is always direct rendering.
     setIsDirectRendering(true);
-
-    connect(&platform.base, &base::platform::output_added, this, [this](auto out) {
-        add_output(static_cast<base::backend::wlroots::output*>(out)->render.get());
-    });
-    connect(&platform.base, &base::platform::output_removed, this, [this](auto out) {
-        outputs.erase(std::remove_if(outputs.begin(),
-                                     outputs.end(),
-                                     [&out](auto& egl_out) { return &egl_out.out->base == out; }),
-                      outputs.end());
-    });
 
     initClientExtensions();
 
@@ -74,7 +60,7 @@ egl_backend::egl_backend(wlroots::platform& platform, bool headless)
 
 egl_backend::~egl_backend()
 {
-    outputs.clear();
+    cleanupSurfaces();
     cleanup();
 }
 
@@ -108,7 +94,9 @@ bool egl_backend::init_rendering_context()
     }
 
     for (auto& out : platform.base.all_outputs) {
-        add_output(static_cast<base::backend::wlroots::output*>(out)->render.get());
+        auto wlr_out = static_cast<base::backend::wlroots::output*>(out);
+        wlr_out->render->egl = std::make_unique<egl_output>(wlr_out->render.get(), this);
+        wlr_out->render->egl->reset(wlr_out->render.get());
     }
 
     // AbstractEglBackend expects a surface to be set but this is not relevant as we render per
@@ -118,32 +106,19 @@ bool egl_backend::init_rendering_context()
                              : create_surface(*this, QSize(800, 600));
     setSurface(dummy_surface->egl);
 
-    if (outputs.empty()) {
+    if (platform.base.all_outputs.empty()) {
         // In case no outputs are connected make the context current with our dummy surface.
         return make_current(dummy_surface->egl, *this);
     }
 
-    return outputs.front().make_current();
-}
-
-void egl_backend::add_output(output* out)
-{
-    auto egl_out = egl_output(out, this);
-    if (!egl_out.reset(out)) {
-        return;
-    }
-
-    outputs.push_back(std::move(egl_out));
-
-    connect(&out->base, &base::backend::wlroots::output::mode_changed, this, [out, this] {
-        auto& egl_out = get_output(&out->base);
-        egl_out.reset(out);
-    });
+    return get_output(platform.base.all_outputs.front()).make_current();
 }
 
 void egl_backend::cleanupSurfaces()
 {
-    outputs.clear();
+    for (auto out : platform.base.all_outputs) {
+        static_cast<base::backend::wlroots::output*>(out)->render->egl.reset();
+    }
 }
 
 const float vertices[] = {

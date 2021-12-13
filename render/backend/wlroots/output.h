@@ -17,16 +17,20 @@ struct wlr_output;
 namespace KWin::render::backend::wlroots
 {
 
+class egl_output;
+
 class output
 {
 
 public:
-    base::backend::wlroots::output const& base;
-
     output(base::backend::wlroots::output const& base);
+    ~output();
 
     void reset();
     void disable();
+
+    std::unique_ptr<egl_output> egl;
+    base::backend::wlroots::output const& base;
 
 private:
     base::event_receiver<output> present_rec;

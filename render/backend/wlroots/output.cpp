@@ -5,6 +5,7 @@
 */
 #include "output.h"
 
+#include "egl_output.h"
 #include "platform.h"
 #include "wlr_includes.h"
 
@@ -74,6 +75,8 @@ output::output(base::backend::wlroots::output const& base)
     present_rec.event.notify = handle_present;
     wl_signal_add(&base.native->events.present, &present_rec.event);
 }
+
+output::~output() = default;
 
 void output::disable()
 {

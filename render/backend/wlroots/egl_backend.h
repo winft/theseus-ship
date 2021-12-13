@@ -26,8 +26,6 @@ private:
     bool init_platform();
     bool init_rendering_context();
 
-    void add_output(output* out);
-
     void setViewport(egl_output const& egl_out) const;
 
     void initRenderTarget(egl_output& egl_out);
@@ -38,7 +36,6 @@ private:
 public:
     std::unique_ptr<egl_gbm> gbm;
     wlroots::platform& platform;
-    std::vector<egl_output> outputs;
     bool headless{false};
     std::unique_ptr<wlroots::surface> dummy_surface;
 
