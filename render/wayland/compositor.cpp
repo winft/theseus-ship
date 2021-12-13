@@ -173,7 +173,7 @@ render::scene* compositor::create_scene(QVector<CompositingType> const& support)
         }
         if (type == QPainterCompositing) {
             qCDebug(KWIN_WL) << "Creating QPainter scene.";
-            return qpainter::create_scene();
+            return qpainter::create_scene(*this);
         }
     }
     return nullptr;

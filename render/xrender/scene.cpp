@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window.h"
 
 #include "render/effects.h"
+#include "render/platform.h"
 #include "render/shadow.h"
 #include "toplevel.h"
 
@@ -43,8 +44,8 @@ namespace KWin::render::xrender
 
 ScreenPaintData scene::screen_paint;
 
-scene::scene(xrender::backend* backend)
-    : render::scene()
+scene::scene(xrender::backend* backend, render::compositor& compositor)
+    : render::scene(compositor)
     , m_backend(backend)
 {
 }
@@ -136,7 +137,7 @@ render::scene* create_scene(render::compositor& compositor)
     if (backend->isFailed()) {
         return nullptr;
     }
-    return new scene(backend.take());
+    return new scene(backend.take(), compositor);
 }
 
 void scene::paintCursor()

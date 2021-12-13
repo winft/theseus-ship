@@ -307,14 +307,15 @@ bool SyncManager::updateFences()
  * scene
  ***********************************************/
 
-scene::scene(render::gl::backend* backend)
-    : m_backend(backend)
+scene::scene(render::gl::backend* backend, render::compositor& compositor)
+    : render::scene(compositor)
+    , m_backend(backend)
 {
     if (m_backend->isFailed()) {
         init_ok = false;
         return;
     }
-    if (!viewportLimitsMatched(kwinApp()->get_base().screens.size()))
+    if (!viewportLimitsMatched(compositor.platform.base.screens.size()))
         return;
 
     // perform Scene specific checks
@@ -366,9 +367,9 @@ scene::scene(render::gl::backend* backend)
         return;
     }
 
-    auto const& s = kwinApp()->get_base().screens.size();
+    auto const& s = compositor.platform.base.screens.size();
     GLRenderTarget::setVirtualScreenSize(s);
-    GLRenderTarget::setVirtualScreenGeometry(kwinApp()->get_base().screens.geometry());
+    GLRenderTarget::setVirtualScreenGeometry(compositor.platform.base.screens.geometry());
 
     // push one shader on the stack so that one is always bound
     ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
@@ -659,8 +660,8 @@ int64_t scene::paint(QRegion damage,
         return 0;
     }
 
-    GLVertexBuffer::setVirtualScreenGeometry(kwinApp()->get_base().screens.geometry());
-    GLRenderTarget::setVirtualScreenGeometry(kwinApp()->get_base().screens.geometry());
+    GLVertexBuffer::setVirtualScreenGeometry(compositor.platform.base.screens.geometry());
+    GLRenderTarget::setVirtualScreenGeometry(compositor.platform.base.screens.geometry());
     GLVertexBuffer::setVirtualScreenScale(1);
     GLRenderTarget::setVirtualScreenScale(1);
 
@@ -671,7 +672,7 @@ int64_t scene::paint(QRegion damage,
     paintScreen(mask, damage, repaint, &update, &valid, presentTime, projectionMatrix());
 
     if (!GLPlatform::instance()->isGLES()) {
-        auto const screenSize = kwinApp()->get_base().screens.size();
+        auto const screenSize = compositor.platform.base.screens.size();
         auto const displayRegion = QRegion(0, 0, screenSize.width(), screenSize.height());
 
         // Copy dirty parts from front to backbuffer.
@@ -844,7 +845,7 @@ void scene::extendPaintRegion(QRegion& region, bool opaqueFullscreen)
         return;
     }
 
-    auto const& screenSize = kwinApp()->get_base().screens.size();
+    auto const& screenSize = compositor.platform.base.screens.size();
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
 
     uint damagedPixels = 0;
@@ -908,7 +909,7 @@ void scene::paintDesktop(int desktop, paint_type mask, const QRegion& region, Sc
     const QRect r = region.boundingRect();
     glEnable(GL_SCISSOR_TEST);
     glScissor(r.x(),
-              kwinApp()->get_base().screens.size().height() - r.y() - r.height(),
+              compositor.platform.base.screens.size().height() - r.y() - r.height(),
               r.width(),
               r.height());
     render::scene::paintDesktop(desktop, mask, region, data);
@@ -1021,7 +1022,7 @@ QMatrix4x4 scene::createProjectionMatrix() const
     // Create a second matrix that transforms screen coordinates
     // to world coordinates.
     const float scaleFactor = 1.1 * std::tan(fovY * M_PI / 360.0f) / yMax;
-    auto const& size = kwinApp()->get_base().screens.size();
+    auto const& size = compositor.platform.base.screens.size();
 
     QMatrix4x4 matrix;
     matrix.translate(xMin * scaleFactor, yMax * scaleFactor, -1.1);
@@ -1094,7 +1095,7 @@ void scene::performPaintWindow(effects_window_impl* w,
             lanczos = new lanczos_filter(this);
             // reset the lanczos filter when the screen gets resized
             // it will get created next paint
-            connect(&kwinApp()->get_base().screens, &Screens::changed, this, [this]() {
+            connect(&compositor.platform.base.screens, &Screens::changed, this, [this]() {
                 makeOpenGLContextCurrent();
                 delete lanczos;
                 lanczos = nullptr;
@@ -1107,7 +1108,7 @@ void scene::performPaintWindow(effects_window_impl* w,
 
 backend* create_backend(render::compositor& compositor)
 {
-    auto backend = kwinApp()->platform->createOpenGLBackend(compositor);
+    auto backend = compositor.platform.createOpenGLBackend(compositor);
     if (!backend) {
         return nullptr;
     }
@@ -1132,7 +1133,7 @@ render::scene* create_scene_impl(render::compositor& compositor)
 
     // first let's try an OpenGL 2 scene
     if (scene::supported(backend)) {
-        scene = new gl::scene(backend);
+        scene = new gl::scene(backend, compositor);
         if (scene->initFailed()) {
             delete scene;
             scene = nullptr;

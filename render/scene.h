@@ -54,6 +54,7 @@ class Renderer;
 
 namespace render
 {
+class compositor;
 class effect_frame;
 class effect_frame_impl;
 class effects_window_impl;
@@ -66,6 +67,7 @@ class KWIN_EXPORT scene : public QObject
 {
     Q_OBJECT
 public:
+    explicit scene(render::compositor& compositor);
     ~scene() override = 0;
 
     // Returns true if the ctor failed to properly initialize.
@@ -182,6 +184,8 @@ public:
      * Default implementation returns empty list
      */
     virtual QVector<QByteArray> openGLPlatformInterfaceExtensions() const;
+
+    render::compositor& compositor;
 
 Q_SIGNALS:
     void frameRendered();
