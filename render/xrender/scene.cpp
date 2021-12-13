@@ -129,7 +129,7 @@ Decoration::Renderer* scene::createDecorationRenderer(Decoration::DecoratedClien
     return new deco_renderer(client);
 }
 
-render::scene* create_scene(render::compositor* compositor)
+render::scene* create_scene(render::compositor& compositor)
 {
     QScopedPointer<xrender::backend> backend;
     backend.reset(new xrender::backend(compositor));

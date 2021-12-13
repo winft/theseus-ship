@@ -18,7 +18,7 @@
 namespace KWin::render::xrender
 {
 
-backend::backend(render::compositor* compositor)
+backend::backend(render::compositor& compositor)
     : overlay_window{std::make_unique<render::x11::overlay_window>()}
 {
     if (!Xcb::Extensions::self()->isRenderAvailable()) {
@@ -30,7 +30,7 @@ backend::backend(render::compositor* compositor)
         return;
     }
 
-    auto x11_compositor = dynamic_cast<render::x11::compositor*>(compositor);
+    auto x11_compositor = dynamic_cast<render::x11::compositor*>(&compositor);
     assert(x11_compositor);
     x11_compositor->overlay_window = overlay_window.get();
 

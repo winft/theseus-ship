@@ -41,7 +41,7 @@ public:
     explicit platform(base::backend::wlroots::platform& base);
     ~platform() override;
 
-    gl::backend* createOpenGLBackend(render::compositor* compositor) override;
+    gl::backend* createOpenGLBackend(render::compositor& compositor) override;
     void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
 
     void init();

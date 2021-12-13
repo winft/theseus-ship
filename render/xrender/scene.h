@@ -75,7 +75,7 @@ private:
     QScopedPointer<xrender::backend> m_backend;
 };
 
-KWIN_EXPORT render::scene* create_scene(render::compositor* compositor);
+KWIN_EXPORT render::scene* create_scene(render::compositor& compositor);
 
 }
 }

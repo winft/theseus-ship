@@ -99,9 +99,9 @@ void platform::init()
     base.screens.updateAll();
 }
 
-gl::backend* platform::createOpenGLBackend(render::compositor* compositor)
+gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
 {
-    this->compositor = compositor;
+    this->compositor = &compositor;
     egl = new egl_backend(*this, base::backend::wlroots::get_headless_backend(base.backend));
     return egl;
 }

@@ -34,7 +34,7 @@ namespace xrender
 class backend
 {
 public:
-    backend(render::compositor* compositor);
+    backend(render::compositor& compositor);
     ~backend();
 
     void present(paint_type mask, QRegion const& damage);

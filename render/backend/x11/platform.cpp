@@ -99,7 +99,7 @@ void platform::init()
     m_randrFilter.reset(new RandrFilter(this));
 }
 
-gl::backend* platform::createOpenGLBackend(render::compositor* compositor)
+gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
 {
     switch (options->glPlatformInterface()) {
 #if HAVE_EPOXY_GLX

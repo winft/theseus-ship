@@ -153,7 +153,7 @@ inline bool scene::hasPendingFlush() const
     return m_backend->hasPendingFlush();
 }
 
-KWIN_EXPORT render::scene* create_scene(render::compositor* compositor);
+KWIN_EXPORT render::scene* create_scene(render::compositor& compositor);
 
 }
 }

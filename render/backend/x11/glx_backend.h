@@ -60,7 +60,7 @@ private:
 class glx_backend : public gl::backend
 {
 public:
-    glx_backend(Display* display, render::compositor* compositor);
+    glx_backend(Display* display, render::compositor& compositor);
     ~glx_backend() override;
     void screenGeometryChanged(const QSize& size) override;
     gl::texture_private* createBackendTexture(gl::texture* texture) override;
@@ -104,7 +104,7 @@ private:
     bool m_haveEXTSwapControl = false;
     bool m_needsCompositeTimerStart = false;
     Display* m_x11Display;
-    render::compositor* compositor;
+    render::compositor& compositor;
 
     friend class GlxTexture;
 };

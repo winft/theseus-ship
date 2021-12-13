@@ -1105,7 +1105,7 @@ void scene::performPaintWindow(effects_window_impl* w,
         w->sceneWindow()->performPaint(mask, region, data);
 }
 
-backend* create_backend(render::compositor* compositor)
+backend* create_backend(render::compositor& compositor)
 {
     auto backend = kwinApp()->platform->createOpenGLBackend(compositor);
     if (!backend) {
@@ -1121,7 +1121,7 @@ backend* create_backend(render::compositor* compositor)
     return backend;
 }
 
-render::scene* create_scene_impl(render::compositor* compositor)
+render::scene* create_scene_impl(render::compositor& compositor)
 {
     auto backend = create_backend(compositor);
     if (!backend) {
@@ -1155,19 +1155,19 @@ render::scene* create_scene_impl(render::compositor* compositor)
     return scene;
 }
 
-render::scene* create_scene(render::compositor* compositor)
+render::scene* create_scene(render::compositor& compositor)
 {
     qCDebug(KWIN_CORE) << "Initializing OpenGL compositing";
 
     // Some broken drivers crash on glXQuery() so to prevent constant KWin crashes:
-    if (kwinApp()->platform->openGLCompositingIsBroken()) {
+    if (compositor.platform.openGLCompositingIsBroken()) {
         qCWarning(KWIN_CORE) << "KWin has detected that your OpenGL library is unsafe to use";
         return nullptr;
     }
 
-    kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PreInit);
+    compositor.platform.createOpenGLSafePoint(OpenGLSafePoint::PreInit);
     auto scene = create_scene_impl(compositor);
-    kwinApp()->platform->createOpenGLSafePoint(OpenGLSafePoint::PostInit);
+    compositor.platform.createOpenGLSafePoint(OpenGLSafePoint::PostInit);
 
     return scene;
 }

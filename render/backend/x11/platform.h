@@ -40,7 +40,7 @@ public:
 
     void init();
 
-    gl::backend* createOpenGLBackend(render::compositor* compositor) override;
+    gl::backend* createOpenGLBackend(render::compositor& compositor) override;
     bool requiresCompositing() const override;
     bool compositingPossible() const override;
     QString compositingNotPossibleReason() const override;

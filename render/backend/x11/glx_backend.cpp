@@ -93,7 +93,7 @@ bool swap_event_filter::event(xcb_generic_event_t* event)
 
 // -----------------------------------------------------------------------
 
-glx_backend::glx_backend(Display* display, render::compositor* compositor)
+glx_backend::glx_backend(Display* display, render::compositor& compositor)
     : gl::backend()
     , overlay_window{std::make_unique<render::x11::overlay_window>()}
     , window(None)
@@ -104,7 +104,7 @@ glx_backend::glx_backend(Display* display, render::compositor* compositor)
     , m_x11Display(display)
     , compositor{compositor}
 {
-    auto x11_compositor = dynamic_cast<render::x11::compositor*>(compositor);
+    auto x11_compositor = dynamic_cast<render::x11::compositor*>(&compositor);
     assert(x11_compositor);
     x11_compositor->overlay_window = overlay_window.get();
 
@@ -725,7 +725,7 @@ void glx_backend::present()
     if (canSwapBuffers) {
         if (supportsSwapEvents()) {
             m_needsCompositeTimerStart = false;
-            compositor->aboutToSwapBuffers();
+            compositor.aboutToSwapBuffers();
         }
 
         glXSwapBuffers(display(), glxWindow);

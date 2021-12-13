@@ -55,7 +55,7 @@ class KWIN_EXPORT platform : public QObject
 public:
     ~platform() override;
 
-    virtual render::gl::backend* createOpenGLBackend(render::compositor* compositor);
+    virtual render::gl::backend* createOpenGLBackend(render::compositor& compositor);
     virtual render::qpainter::backend* createQPainterBackend();
 
     /**
