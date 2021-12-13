@@ -74,8 +74,8 @@ bool egl_output::reset(output* out)
 
     auto size = out->base.mode_size();
 
-    auto surf = egl_back->headless ? create_headless_surface(egl_back->platform, size)
-                                   : create_surface(egl_back->platform, size);
+    auto surf = egl_back->headless ? create_headless_surface(*egl_back, size)
+                                   : create_surface(*egl_back, size);
     if (!surf) {
         qCWarning(KWIN_WL) << "Not able to create surface on output reset.";
         return false;
@@ -141,7 +141,7 @@ bool egl_output::reset_framebuffer()
 
 bool egl_output::make_current() const
 {
-    return wlroots::make_current(surf->egl, egl_back);
+    return wlroots::make_current(surf->egl, *egl_back);
 }
 
 bool egl_output::present(buffer* buf)

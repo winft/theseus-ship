@@ -87,7 +87,7 @@ void egl_backend::init()
 bool egl_backend::init_platform()
 {
     if (headless) {
-        auto egl_display = get_egl_headless(platform);
+        auto egl_display = get_egl_headless(*this);
         if (egl_display == EGL_NO_DISPLAY) {
             return false;
         }
@@ -95,7 +95,7 @@ bool egl_backend::init_platform()
         return true;
     }
 
-    auto gbm = get_egl_gbm(platform);
+    auto gbm = get_egl_gbm(platform, *this);
     if (!gbm) {
         return false;
     }
@@ -120,13 +120,13 @@ bool egl_backend::init_rendering_context()
     // AbstractEglBackend expects a surface to be set but this is not relevant as we render per
     // output and make the context current here on that output's surface. For simplicity we just
     // create a dummy surface and keep that constantly set over the run time.
-    dummy_surface = headless ? create_headless_surface(platform, QSize(800, 600))
-                             : create_surface(platform, QSize(800, 600));
+    dummy_surface = headless ? create_headless_surface(*this, QSize(800, 600))
+                             : create_surface(*this, QSize(800, 600));
     setSurface(dummy_surface->egl);
 
     if (outputs.empty()) {
         // In case no outputs are connected make the context current with our dummy surface.
-        return make_current(dummy_surface->egl, this);
+        return make_current(dummy_surface->egl, *this);
     }
 
     return outputs.front().make_current();

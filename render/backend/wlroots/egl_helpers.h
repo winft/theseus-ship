@@ -40,29 +40,27 @@ public:
     egl_gbm& operator=(egl_gbm&&) noexcept = default;
 };
 
-template<typename Platform>
-EGLDisplay get_egl_headless(Platform const& platform)
+template<typename Egl>
+EGLDisplay get_egl_headless(Egl& egl)
 {
     auto const has_mesa_headless
-        = platform.egl->hasClientExtension(QByteArrayLiteral("EGL_MESA_platform_surfaceless"));
+        = egl.hasClientExtension(QByteArrayLiteral("EGL_MESA_platform_surfaceless"));
 
     if (!has_mesa_headless) {
-        platform.egl->setFailed("Missing EGL_MESA_platform_surfaceless extension.");
+        egl.setFailed("Missing EGL_MESA_platform_surfaceless extension.");
         return nullptr;
     }
 
     return eglGetPlatformDisplayEXT(EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY, nullptr);
 }
 
-template<typename Platform>
-std::unique_ptr<egl_gbm> get_egl_gbm(Platform const& platform)
+template<typename Platform, typename Egl>
+std::unique_ptr<egl_gbm> get_egl_gbm(Platform const& platform, Egl const& egl)
 {
-    auto const has_mesa_gbm
-        = platform.egl->hasClientExtension(QByteArrayLiteral("EGL_MESA_platform_gbm"));
-    auto const has_khr_gbm
-        = platform.egl->hasClientExtension(QByteArrayLiteral("EGL_KHR_platform_gbm"));
+    auto const has_mesa_gbm = egl.hasClientExtension(QByteArrayLiteral("EGL_MESA_platform_gbm"));
+    auto const has_khr_gbm = egl.hasClientExtension(QByteArrayLiteral("EGL_KHR_platform_gbm"));
 
-    if (!platform.egl->hasClientExtension(QByteArrayLiteral("EGL_EXT_platform_base"))
+    if (!egl.hasClientExtension(QByteArrayLiteral("EGL_EXT_platform_base"))
         || (!has_mesa_gbm && !has_khr_gbm)) {
         platform.egl->setFailed(
             "Missing one or more extensions between EGL_EXT_platform_base, "
@@ -92,10 +90,10 @@ std::unique_ptr<egl_gbm> get_egl_gbm(Platform const& platform)
     return std::make_unique<egl_gbm>(egl_display, gbm_dev);
 }
 
-template<typename Platform>
-gbm_surface* create_gbm_surface(Platform const& platform, QSize const& size)
+template<typename Egl>
+gbm_surface* create_gbm_surface(Egl const& egl, QSize const& size)
 {
-    auto surface = gbm_surface_create(platform.egl->gbm->gbm_dev,
+    auto surface = gbm_surface_create(egl.gbm->gbm_dev,
                                       size.width(),
                                       size.height(),
                                       GBM_FORMAT_ARGB8888,
@@ -106,37 +104,35 @@ gbm_surface* create_gbm_surface(Platform const& platform, QSize const& size)
     return surface;
 }
 
-template<typename Platform>
-EGLSurface create_egl_surface(Platform const& platform, gbm_surface* gbm_surf)
+template<typename Egl>
+EGLSurface create_egl_surface(Egl const& egl, gbm_surface* gbm_surf)
 {
-    auto egl_surface = eglCreatePlatformWindowSurfaceEXT(platform.egl->eglDisplay(),
-                                                         platform.egl->config(),
-                                                         reinterpret_cast<void*>(gbm_surf),
-                                                         nullptr);
+    auto egl_surf = eglCreatePlatformWindowSurfaceEXT(
+        egl.eglDisplay(), egl.config(), reinterpret_cast<void*>(gbm_surf), nullptr);
 
-    if (egl_surface == EGL_NO_SURFACE) {
+    if (egl_surf == EGL_NO_SURFACE) {
         qCCritical(KWIN_WL) << "Creating EGL surface failed";
     }
 
-    return egl_surface;
+    return egl_surf;
 }
 
-template<typename Platform>
-std::unique_ptr<surface> create_surface(Platform const& platform, QSize const& size)
+template<typename Egl>
+std::unique_ptr<surface> create_surface(Egl const& egl, QSize const& size)
 {
-    auto gbm = create_gbm_surface(platform, size);
-    if (!gbm) {
+    auto gbm_surf = create_gbm_surface(egl, size);
+    if (!gbm_surf) {
         return nullptr;
     }
-    auto egl = create_egl_surface(platform, gbm);
-    if (!egl) {
+    auto egl_surf = create_egl_surface(egl, gbm_surf);
+    if (!egl_surf) {
         return nullptr;
     }
-    return std::make_unique<surface>(gbm, egl, platform.egl->eglDisplay(), size);
+    return std::make_unique<surface>(gbm_surf, egl_surf, egl.eglDisplay(), size);
 }
 
-template<typename Platform>
-std::unique_ptr<surface> create_headless_surface(Platform const& platform, QSize const& size)
+template<typename Egl>
+std::unique_ptr<surface> create_headless_surface(Egl const& egl, QSize const& size)
 {
     EGLint const attribs[] = {
         EGL_HEIGHT,
@@ -145,11 +141,11 @@ std::unique_ptr<surface> create_headless_surface(Platform const& platform, QSize
         size.width(),
         EGL_NONE,
     };
-    auto egl = eglCreatePbufferSurface(platform.egl->eglDisplay(), platform.egl->config(), attribs);
-    if (!egl) {
+    auto egl_surf = eglCreatePbufferSurface(egl.eglDisplay(), egl.config(), attribs);
+    if (!egl_surf) {
         return nullptr;
     }
-    return std::make_unique<surface>(nullptr, egl, platform.egl->eglDisplay(), size);
+    return std::make_unique<surface>(nullptr, egl_surf, egl.eglDisplay(), size);
 }
 
 template<typename EglBackend>
@@ -227,14 +223,13 @@ bool init_buffer_configs(EglBackend* egl_back)
 }
 
 template<typename EglBackend>
-bool make_current(EGLSurface surface, EglBackend* egl_back)
+bool make_current(EGLSurface surface, EglBackend& egl_back)
 {
     if (surface == EGL_NO_SURFACE) {
         qCCritical(KWIN_WL) << "Make Context Current failed: no surface";
         return false;
     }
-    if (eglMakeCurrent(egl_back->eglDisplay(), surface, surface, egl_back->context())
-        == EGL_FALSE) {
+    if (eglMakeCurrent(egl_back.eglDisplay(), surface, surface, egl_back.context()) == EGL_FALSE) {
         qCCritical(KWIN_WL) << "Make Context Current failed:" << eglGetError();
         return false;
     }
