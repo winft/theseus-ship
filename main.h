@@ -115,7 +115,7 @@ public:
     ~Application() override;
 
     virtual base::platform& get_base() = 0;
-    virtual render::compositor* get_compositor() = 0;
+    virtual render::platform* get_render() = 0;
 
     void setConfigLock(bool lock);
 

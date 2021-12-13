@@ -142,7 +142,7 @@ bool WaylandTestApplication::is_screen_locked() const
     return server->is_screen_locked();
 }
 
-base::wayland::platform& WaylandTestApplication::get_base()
+base::platform& WaylandTestApplication::get_base()
 {
     return base;
 }
@@ -152,9 +152,9 @@ WaylandServer* WaylandTestApplication::get_wayland_server()
     return server.get();
 }
 
-render::compositor* WaylandTestApplication::get_compositor()
+render::platform* WaylandTestApplication::get_render()
 {
-    return render->compositor.get();
+    return render.get();
 }
 
 debug::console* WaylandTestApplication::create_debug_console()

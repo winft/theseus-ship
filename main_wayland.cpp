@@ -186,9 +186,9 @@ WaylandServer* ApplicationWayland::get_wayland_server()
     return server.get();
 }
 
-render::compositor* ApplicationWayland::get_compositor()
+render::platform* ApplicationWayland::get_render()
 {
-    return render->compositor.get();
+    return render.get();
 }
 
 debug::console* ApplicationWayland::create_debug_console()

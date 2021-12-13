@@ -45,7 +45,7 @@ public:
     ~X11TestApplication() override;
 
     base::platform& get_base() override;
-    render::compositor* get_compositor() override;
+    render::platform* get_render() override;
     debug::console* create_debug_console() override;
 
     void start();
@@ -81,9 +81,9 @@ base::platform& X11TestApplication::get_base()
     return base;
 }
 
-render::compositor* X11TestApplication::get_compositor()
+render::platform* X11TestApplication::get_render()
 {
-    return compositor.get();
+    return render.get();
 }
 
 debug::console* X11TestApplication::create_debug_console()

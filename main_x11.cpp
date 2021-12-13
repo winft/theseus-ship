@@ -206,9 +206,9 @@ base::platform& ApplicationX11::get_base()
     return base;
 }
 
-render::compositor* ApplicationX11::get_compositor()
+render::platform* ApplicationX11::get_render()
 {
-    return render->compositor.get();
+    return render.get();
 }
 
 debug::console* ApplicationX11::create_debug_console()
