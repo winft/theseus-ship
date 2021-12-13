@@ -22,10 +22,6 @@ struct wlr_input_device;
 
 namespace KWin
 {
-namespace render::wayland
-{
-class compositor;
-}
 namespace win::wayland
 {
 class space;
@@ -76,7 +72,6 @@ private:
     void create_xwayland();
 
     std::unique_ptr<render::backend::wlroots::platform> render;
-    std::unique_ptr<render::wayland::compositor> compositor;
 };
 
 namespace Test

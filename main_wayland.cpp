@@ -158,14 +158,14 @@ ApplicationWayland::~ApplicationWayland()
 
     waylandServer()->terminateClientConnections();
 
-    if (compositor) {
+    if (render->compositor) {
         // Block compositor to prevent further compositing from crashing with a null workspace.
         // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-        compositor->lock();
+        static_cast<render::wayland::compositor*>(render->compositor.get())->lock();
     }
 
     workspace.reset();
-    compositor.reset();
+    render->compositor.reset();
 }
 
 bool ApplicationWayland::is_screen_locked() const
@@ -188,7 +188,7 @@ WaylandServer* ApplicationWayland::get_wayland_server()
 
 render::compositor* ApplicationWayland::get_compositor()
 {
-    return compositor.get();
+    return render->compositor.get();
 }
 
 debug::console* ApplicationWayland::create_debug_console()
@@ -232,7 +232,7 @@ void ApplicationWayland::start()
 
     tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
 
-    compositor = std::make_unique<render::wayland::compositor>(*render);
+    render->compositor = std::make_unique<render::wayland::compositor>(*render);
     workspace = std::make_unique<win::wayland::space>(server.get());
     Q_EMIT workspaceCreated();
 

@@ -15,10 +15,6 @@
 
 namespace KWin
 {
-namespace render::x11
-{
-class compositor;
-}
 namespace win::x11
 {
 class space;
@@ -57,7 +53,6 @@ private:
     base::x11::platform base;
     std::unique_ptr<render::backend::x11::platform> render;
     std::unique_ptr<win::x11::space> workspace;
-    std::unique_ptr<render::x11::compositor> compositor;
 
     QScopedPointer<KWinSelectionOwner> owner;
     bool m_replace;

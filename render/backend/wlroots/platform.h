@@ -31,7 +31,6 @@ class KWIN_EXPORT platform : public render::platform
 public:
     base::backend::wlroots::platform& base;
     egl_backend* egl{nullptr};
-    render::compositor* compositor{nullptr};
 
 #if HAVE_WLR_OUTPUT_INIT_RENDER
     wlr_renderer* renderer{nullptr};

@@ -323,7 +323,7 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
     auto& out = get_output(output);
     renderFramebufferToSurface(out);
 
-    auto compositor = static_cast<wayland::compositor*>(platform.compositor);
+    auto compositor = static_cast<wayland::compositor*>(platform.compositor.get());
     auto render_output
         = compositor->outputs.at(const_cast<base::backend::wlroots::output*>(&out.out->base)).get();
     if (GLPlatform::instance()->supports(GLFeature::TimerQuery)) {

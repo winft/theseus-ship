@@ -36,10 +36,6 @@ namespace input::dbus
 {
 class tablet_mode_manager;
 }
-namespace render::wayland
-{
-class compositor;
-}
 namespace win::wayland
 {
 class space;
@@ -55,7 +51,6 @@ class ApplicationWayland : public ApplicationWaylandAbstract
 public:
     std::unique_ptr<WaylandServer> server;
     std::unique_ptr<win::wayland::space> workspace;
-    std::unique_ptr<render::wayland::compositor> compositor;
 
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;

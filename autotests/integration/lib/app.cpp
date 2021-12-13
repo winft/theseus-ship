@@ -128,10 +128,10 @@ WaylandTestApplication::~WaylandTestApplication()
 
     // Block compositor to prevent further compositing from crashing with a null workspace.
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    compositor->lock();
+    static_cast<render::wayland::compositor*>(render->compositor.get())->lock();
 
     workspace.reset();
-    compositor.reset();
+    render->compositor.reset();
 }
 
 bool WaylandTestApplication::is_screen_locked() const
@@ -154,7 +154,7 @@ WaylandServer* WaylandTestApplication::get_wayland_server()
 
 render::compositor* WaylandTestApplication::get_compositor()
 {
-    return compositor.get();
+    return render->compositor.get();
 }
 
 debug::console* WaylandTestApplication::create_debug_console()
@@ -193,7 +193,7 @@ void WaylandTestApplication::start()
     auto out = base.outputs.at(0);
     out->wrapland_output()->set_physical_size(QSize(1280, 1024));
 
-    compositor = std::make_unique<render::wayland::compositor>(*render);
+    render->compositor = std::make_unique<render::wayland::compositor>(*render);
     workspace = std::make_unique<win::wayland::space>(server.get());
     Q_EMIT workspaceCreated();
 

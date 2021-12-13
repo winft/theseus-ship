@@ -99,9 +99,8 @@ void platform::init()
     base.screens.updateAll();
 }
 
-gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
+gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
 {
-    this->compositor = &compositor;
     egl = new egl_backend(*this, base::backend::wlroots::get_headless_backend(base.backend));
     return egl;
 }
@@ -206,10 +205,10 @@ void platform::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v
     QObject::connect(
         lease, &Wrapland::Server::drm_lease_v1::resourceDestroyed, this, [this, wlr_lease] {
             wlr_drm_lease_terminate(wlr_lease);
-            static_cast<render::wayland::compositor*>(compositor)->unlock();
+            static_cast<render::wayland::compositor*>(compositor.get())->unlock();
         });
 
-    static_cast<render::wayland::compositor*>(compositor)->lock();
+    static_cast<render::wayland::compositor*>(compositor.get())->lock();
     lease->grant(wlr_lease->fd);
     qCDebug(KWIN_WL) << "DRM resources have been leased to client";
 #endif

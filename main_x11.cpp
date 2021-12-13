@@ -181,7 +181,7 @@ ApplicationX11::~ApplicationX11()
 {
     setTerminating();
     workspace.reset();
-    compositor.reset();
+    render->compositor.reset();
     if (!owner.isNull() && owner->ownerWindow() != XCB_WINDOW_NONE)   // If there was no --replace (no new WM)
         Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
 }
@@ -195,7 +195,7 @@ void ApplicationX11::lostSelection()
 {
     sendPostedEvents();
     workspace.reset();
-    compositor.reset();
+    render->compositor.reset();
     // Remove windowmanager privileges
     Xcb::selectInput(rootWindow(), XCB_EVENT_MASK_PROPERTY_CHANGE);
     quit();
@@ -208,7 +208,7 @@ base::platform& ApplicationX11::get_base()
 
 render::compositor* ApplicationX11::get_compositor()
 {
-    return compositor.get();
+    return render->compositor.get();
 }
 
 debug::console* ApplicationX11::create_debug_console()
@@ -263,7 +263,7 @@ void ApplicationX11::start()
             ::exit(1);
         }
 
-        compositor = std::make_unique<render::x11::compositor>(*render);
+        render->compositor = std::make_unique<render::x11::compositor>(*render);
         workspace = std::make_unique<win::x11::space>();
         Q_EMIT workspaceCreated();
 

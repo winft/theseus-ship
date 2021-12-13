@@ -146,6 +146,7 @@ public:
     EGLConfig egl_config{nullptr};
     EGLSurface egl_surface{EGL_NO_SURFACE};
 
+    std::unique_ptr<render::compositor> compositor;
     base::platform& base;
 
 protected:
