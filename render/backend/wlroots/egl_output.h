@@ -38,14 +38,14 @@ public:
         std::shared_ptr<GLVertexBuffer> vbo;
     } render;
 
-    egl_output(output* out, egl_backend* egl_back);
+    egl_output(output& out, egl_backend* egl_back);
     egl_output(egl_output const&) = delete;
     egl_output& operator=(egl_output const&) = delete;
     egl_output(egl_output&& other) noexcept;
     egl_output& operator=(egl_output&& other) noexcept;
     ~egl_output();
 
-    bool reset(output* out);
+    bool reset();
 
     bool reset_framebuffer();
     void cleanup_framebuffer();

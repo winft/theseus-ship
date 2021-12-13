@@ -21,10 +21,11 @@
 namespace KWin::render::backend::wlroots
 {
 
-egl_output::egl_output(output* out, egl_backend* egl_back)
-    : out{out}
+egl_output::egl_output(output& out, egl_backend* egl_back)
+    : out{&out}
     , egl_back{egl_back}
 {
+    reset();
 }
 
 egl_output::egl_output(egl_output&& other) noexcept
@@ -68,10 +69,8 @@ void egl_output::cleanup_framebuffer()
     render.framebuffer = 0;
 }
 
-bool egl_output::reset(output* out)
+bool egl_output::reset()
 {
-    this->out = out;
-
     auto size = out->base.mode_size();
 
     auto surf = egl_back->headless ? create_headless_surface(*egl_back, size)
@@ -160,13 +159,13 @@ bool egl_output::present(buffer* buf)
 
     if (!wlr_output_test(out->base.native)) {
         qCWarning(KWIN_WL) << "Atomic output test failed on present.";
-        reset(out);
+        reset();
         drop_buffer();
         return false;
     }
     if (!wlr_output_commit(out->base.native)) {
         qCWarning(KWIN_WL) << "Atomic output commit failed on present.";
-        reset(out);
+        reset();
         drop_buffer();
         return false;
     }

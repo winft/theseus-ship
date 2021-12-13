@@ -95,8 +95,7 @@ bool egl_backend::init_rendering_context()
 
     for (auto& out : platform.base.all_outputs) {
         auto wlr_out = static_cast<base::backend::wlroots::output*>(out);
-        wlr_out->render->egl = std::make_unique<egl_output>(wlr_out->render.get(), this);
-        wlr_out->render->egl->reset(wlr_out->render.get());
+        wlr_out->render->egl = std::make_unique<egl_output>(*wlr_out->render, this);
     }
 
     // AbstractEglBackend expects a surface to be set but this is not relevant as we render per
