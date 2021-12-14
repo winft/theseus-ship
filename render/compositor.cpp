@@ -197,15 +197,6 @@ void compositor::startupWithWorkspace()
         Qt::UniqueConnection);
     setupX11Support();
 
-    // Sets also the 'effects' pointer.
-    platform.createEffectsHandler(this, scene());
-    connect(Workspace::self(), &Workspace::deletedRemoved, scene(), &scene::removeToplevel);
-    connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
-    connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
-        if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
-            eff_impl->checkInputWindowStacking();
-        }
-    });
     connect(workspace()->stacking_order,
             &win::stacking_order::changed,
             this,
@@ -220,6 +211,16 @@ void compositor::startupWithWorkspace()
             win::update_shadow(client);
         }
     }
+
+    // Sets also the 'effects' pointer.
+    platform.createEffectsHandler(this, scene());
+    connect(Workspace::self(), &Workspace::deletedRemoved, scene(), &scene::removeToplevel);
+    connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
+    connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
+        if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
+            eff_impl->checkInputWindowStacking();
+        }
+    });
 
     m_state = State::On;
     Q_EMIT compositingToggled(true);
