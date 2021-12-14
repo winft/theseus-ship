@@ -43,7 +43,15 @@ class OutputChangesetV1;
 }
 }
 
-namespace KWin::base::wayland
+namespace KWin
+{
+
+namespace render::wayland
+{
+class output;
+}
+
+namespace base::wayland
 {
 
 /**
@@ -53,6 +61,8 @@ class KWIN_EXPORT output : public base::output
 {
     Q_OBJECT
 public:
+    ~output();
+
     QString name() const override;
 
     /**
@@ -129,6 +139,8 @@ public:
 
     QSize orientate_size(QSize const& size) const;
 
+    std::unique_ptr<render::wayland::output> render;
+
 Q_SIGNALS:
     void mode_changed();
 
@@ -189,4 +201,5 @@ private:
     bool m_supports_dpms = false;
 };
 
+}
 }

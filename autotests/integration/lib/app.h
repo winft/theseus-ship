@@ -12,7 +12,7 @@
 #include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
 #include "main.h"
-#include "render/backend/wlroots/backend.h"
+#include "render/backend/wlroots/platform.h"
 #include "wayland_server.h"
 
 #include <memory>
@@ -22,10 +22,6 @@ struct wlr_input_device;
 
 namespace KWin
 {
-namespace render::wayland
-{
-class compositor;
-}
 namespace win::wayland
 {
 class space;
@@ -59,9 +55,9 @@ public:
 
     bool is_screen_locked() const override;
 
-    base::wayland::platform& get_base() override;
+    base::platform& get_base() override;
     WaylandServer* get_wayland_server() override;
-    render::compositor* get_compositor() override;
+    render::platform* get_render() override;
     debug::console* create_debug_console() override;
 
     void start();
@@ -75,8 +71,7 @@ private:
     void handle_server_addons_created();
     void create_xwayland();
 
-    std::unique_ptr<render::backend::wlroots::backend> render;
-    std::unique_ptr<render::wayland::compositor> compositor;
+    std::unique_ptr<render::backend::wlroots::platform> render;
 };
 
 namespace Test

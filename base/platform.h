@@ -27,7 +27,9 @@ public:
     platform& operator=(platform&& other) noexcept = default;
     ~platform() override;
 
-    // Makes a copy of all outputs. Only for external use. Prefer subclass objects instead.
+    virtual clockid_t get_clockid() const;
+
+    /// Makes a copy of all outputs. Only for external use. Prefer subclass objects instead.
     virtual std::vector<output*> get_outputs() const = 0;
 
     Screens screens;

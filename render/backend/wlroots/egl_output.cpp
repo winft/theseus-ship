@@ -6,14 +6,12 @@
 */
 #include "egl_output.h"
 
-#include "backend.h"
 #include "egl_backend.h"
 #include "egl_helpers.h"
 #include "output.h"
+#include "platform.h"
 #include "surface.h"
 
-#include "render/wayland/compositor.h"
-#include "render/wayland/output.h"
 #include "screens.h"
 
 #include <wayland_logging.h>
@@ -21,10 +19,16 @@
 namespace KWin::render::backend::wlroots
 {
 
-egl_output::egl_output(output* out, egl_backend* egl_back)
-    : out{out}
+static base::backend::wlroots::output& get_base(base::wayland::output& output)
+{
+    return static_cast<base::backend::wlroots::output&>(output);
+}
+
+egl_output::egl_output(output& out, egl_backend* egl_back)
+    : out{&out}
     , egl_back{egl_back}
 {
+    reset();
 }
 
 egl_output::egl_output(egl_output&& other) noexcept
@@ -68,14 +72,12 @@ void egl_output::cleanup_framebuffer()
     render.framebuffer = 0;
 }
 
-bool egl_output::reset(output* out)
+bool egl_output::reset()
 {
-    this->out = out;
-
     auto size = out->base.mode_size();
 
-    auto surf = egl_back->headless ? create_headless_surface(*egl_back->back, size)
-                                   : create_surface(*egl_back->back, size);
+    auto surf = egl_back->headless ? create_headless_surface(*egl_back, size)
+                                   : create_surface(*egl_back, size);
     if (!surf) {
         qCWarning(KWIN_WL) << "Not able to create surface on output reset.";
         return false;
@@ -141,32 +143,31 @@ bool egl_output::reset_framebuffer()
 
 bool egl_output::make_current() const
 {
-    return wlroots::make_current(surf->egl, egl_back);
+    return wlroots::make_current(surf->egl, *egl_back);
 }
 
 bool egl_output::present(buffer* buf)
 {
     auto drop_buffer = [buf] { wlr_buffer_drop(&buf->native.base); };
-    auto render_output = static_cast<wayland::compositor*>(render::compositor::self())
-                             ->outputs.at(const_cast<base::backend::wlroots::output*>(&out->base))
-                             .get();
 
-    render_output->swap_pending = true;
-    wlr_output_attach_buffer(out->base.native, &buf->native.base);
+    auto& base = get_base(out->base);
+    out->swap_pending = true;
 
-    if (!out->base.native->enabled) {
-        wlr_output_enable(out->base.native, true);
+    wlr_output_attach_buffer(base.native, &buf->native.base);
+
+    if (!base.native->enabled) {
+        wlr_output_enable(base.native, true);
     }
 
-    if (!wlr_output_test(out->base.native)) {
+    if (!wlr_output_test(base.native)) {
         qCWarning(KWIN_WL) << "Atomic output test failed on present.";
-        reset(out);
+        reset();
         drop_buffer();
         return false;
     }
-    if (!wlr_output_commit(out->base.native)) {
+    if (!wlr_output_commit(base.native)) {
         qCWarning(KWIN_WL) << "Atomic output commit failed on present.";
-        reset(out);
+        reset();
         drop_buffer();
         return false;
     }

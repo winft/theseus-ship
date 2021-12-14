@@ -9,7 +9,6 @@
 #include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
 #include "base/wayland/output_helpers.h"
-#include "platform.h"
 #include "screens.h"
 #include "service_utils.h"
 #include "virtualdesktops.h"

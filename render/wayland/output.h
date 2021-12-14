@@ -35,20 +35,24 @@ namespace base::wayland
 {
 class output;
 }
-namespace render::wayland
+
+namespace render
 {
-class compositor;
+
+class platform;
+
+namespace wayland
+{
 struct presentation_data;
 
 class KWIN_EXPORT output : public QObject
 {
     int index;
-    wayland::compositor* compositor{nullptr};
 
     ulong msc{0};
 
     // Compositing delay.
-    std::chrono::nanoseconds delay;
+    std::chrono::nanoseconds delay{0};
 
     duration_record paint_durations;
     duration_record render_durations;
@@ -67,7 +71,8 @@ class KWIN_EXPORT output : public QObject
     void timerEvent(QTimerEvent* event) override;
 
 public:
-    base::wayland::output* base;
+    render::platform& platform;
+    base::wayland::output& base;
     std::map<uint32_t, Wrapland::Server::Surface*> assigned_surfaces;
 
     bool idle{true};
@@ -76,7 +81,7 @@ public:
     QBasicTimer frame_timer;
     std::vector<render::gl::timer_query> last_timer_queries;
 
-    output(base::wayland::output* base, wayland::compositor* compositor);
+    output(base::wayland::output& base, render::platform& platform);
 
     void add_repaint(QRegion const& region);
     void set_delay(presentation_data const& data);
@@ -89,5 +94,6 @@ public:
     void swapped(presentation_data const& data);
 };
 
+}
 }
 }

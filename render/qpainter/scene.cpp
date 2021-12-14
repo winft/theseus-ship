@@ -28,9 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "input/cursor.h"
 #include "main.h"
-#include "platform.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
+#include "render/platform.h"
 #include "screens.h"
 #include "toplevel.h"
 
@@ -49,8 +49,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::qpainter
 {
 
-scene::scene(qpainter::backend* backend)
-    : m_backend(backend)
+scene::scene(qpainter::backend* backend, render::compositor& compositor)
+    : render::scene(compositor)
+    , m_backend(backend)
     , m_painter(new QPainter())
 {
 }
@@ -94,7 +95,7 @@ int64_t scene::paint_output(base::output* output,
     auto const needsFullRepaint = m_backend->needsFullRepaint();
     if (needsFullRepaint) {
         mask |= render::paint_type::screen_background_first;
-        damage = kwinApp()->get_base().screens.geometry();
+        damage = compositor.platform.base.screens.geometry();
     }
 
     auto const geometry = output->geometry();
@@ -190,9 +191,9 @@ QImage* scene::qpainterRenderBuffer() const
     return m_backend->buffer();
 }
 
-render::scene* create_scene()
+render::scene* create_scene(render::compositor& compositor)
 {
-    QScopedPointer<qpainter::backend> backend(kwinApp()->platform->createQPainterBackend());
+    QScopedPointer<qpainter::backend> backend(compositor.platform.createQPainterBackend());
     if (backend.isNull()) {
         return nullptr;
     }
@@ -200,7 +201,7 @@ render::scene* create_scene()
         return nullptr;
     }
 
-    auto s = new scene(backend.take());
+    auto s = new scene(backend.take(), compositor);
 
     if (s && s->initFailed()) {
         delete s;

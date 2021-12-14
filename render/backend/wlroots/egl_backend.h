@@ -13,7 +13,7 @@
 namespace KWin::render::backend::wlroots
 {
 
-class backend;
+class platform;
 class egl_gbm;
 class egl_output;
 class output;
@@ -26,8 +26,6 @@ private:
     bool init_platform();
     bool init_rendering_context();
 
-    void add_output(output* out);
-
     void setViewport(egl_output const& egl_out) const;
 
     void initRenderTarget(egl_output& egl_out);
@@ -37,15 +35,12 @@ private:
 
 public:
     std::unique_ptr<egl_gbm> gbm;
-    wlroots::backend* back;
-    std::vector<egl_output> outputs;
+    wlroots::platform& platform;
     bool headless{false};
     std::unique_ptr<wlroots::surface> dummy_surface;
 
-    egl_backend(wlroots::backend* back, bool headless);
+    egl_backend(wlroots::platform& platform, bool headless);
     ~egl_backend() override;
-
-    void init() override;
 
     void screenGeometryChanged(QSize const& size) override;
     gl::texture_private* createBackendTexture(gl::texture* texture) override;
@@ -58,7 +53,7 @@ public:
                                     QRegion const& damagedRegion) override;
     QRegion prepareRenderingForScreen(base::output* output) override;
 
-    egl_output& get_output(base::output const* out);
+    std::unique_ptr<egl_output>& get_egl_out(base::output const* out);
 
 protected:
     void present() override;

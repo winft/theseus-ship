@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../input/wayland/cursor.h"
 #include "../../input/wayland/platform.h"
 #include "../../input/wayland/redirect.h"
-#include "../../platform.h"
 #include "../../render/wayland/compositor.h"
 #include "../../screenlockerwatcher.h"
 #include "../../seat/backend/wlroots/session.h"
@@ -99,7 +98,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     base = base::backend::wlroots::platform(
         wlr_headless_backend_create(server->display()->native()));
 
-    render.reset(new render::backend::wlroots::backend(base));
+    render.reset(new render::backend::wlroots::platform(base));
     platform = render.get();
 
     auto environment = QProcessEnvironment::systemEnvironment();
@@ -129,10 +128,10 @@ WaylandTestApplication::~WaylandTestApplication()
 
     // Block compositor to prevent further compositing from crashing with a null workspace.
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    compositor->lock();
+    static_cast<render::wayland::compositor*>(render->compositor.get())->lock();
 
     workspace.reset();
-    compositor.reset();
+    render->compositor.reset();
 }
 
 bool WaylandTestApplication::is_screen_locked() const
@@ -143,7 +142,7 @@ bool WaylandTestApplication::is_screen_locked() const
     return server->is_screen_locked();
 }
 
-base::wayland::platform& WaylandTestApplication::get_base()
+base::platform& WaylandTestApplication::get_base()
 {
     return base;
 }
@@ -153,9 +152,9 @@ WaylandServer* WaylandTestApplication::get_wayland_server()
     return server.get();
 }
 
-render::compositor* WaylandTestApplication::get_compositor()
+render::platform* WaylandTestApplication::get_render()
 {
-    return compositor.get();
+    return render.get();
 }
 
 debug::console* WaylandTestApplication::create_debug_console()
@@ -191,10 +190,10 @@ void WaylandTestApplication::start()
 
     // Must set physical size for calculation of screen edges corner offset.
     // TODO(romangg): Make the corner offset calculation not depend on that.
-    auto out = dynamic_cast<base::wayland::output*>(kwinApp()->platform->enabledOutputs().at(0));
+    auto out = base.outputs.at(0);
     out->wrapland_output()->set_physical_size(QSize(1280, 1024));
 
-    compositor = std::make_unique<render::wayland::compositor>();
+    render->compositor = std::make_unique<render::wayland::compositor>(*render);
     workspace = std::make_unique<win::wayland::space>(server.get());
     Q_EMIT workspaceCreated();
 
@@ -227,7 +226,7 @@ void WaylandTestApplication::set_outputs(std::vector<QRect> const& geometries)
 
 void WaylandTestApplication::set_outputs(std::vector<Test::output> const& outputs)
 {
-    auto outputs_copy = render->all_outputs;
+    auto outputs_copy = base.all_outputs;
     for (auto output : outputs_copy) {
         delete output;
     }
@@ -236,7 +235,7 @@ void WaylandTestApplication::set_outputs(std::vector<Test::output> const& output
         auto const size = output.geometry.size() * output.scale;
 
         wlr_headless_add_output(base.backend, size.width(), size.height());
-        render->all_outputs.back()->force_geometry(output.geometry);
+        base.all_outputs.back()->force_geometry(output.geometry);
     }
 
     // Update again in case of force geometry change.

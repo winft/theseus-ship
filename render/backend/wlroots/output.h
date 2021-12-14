@@ -7,6 +7,7 @@
 
 #include "base/backend/wlroots/output.h"
 #include "base/utils.h"
+#include "render/wayland/output.h"
 
 #include <Wrapland/Server/drm_lease_v1.h>
 
@@ -17,16 +18,18 @@ struct wlr_output;
 namespace KWin::render::backend::wlroots
 {
 
-class output
+class egl_output;
+
+class output : public wayland::output
 {
-
 public:
-    base::backend::wlroots::output const& base;
-
-    output(base::backend::wlroots::output const& base);
+    output(base::backend::wlroots::output& base, render::platform& platform);
+    ~output();
 
     void reset();
     void disable();
+
+    std::unique_ptr<egl_output> egl;
 
 private:
     base::event_receiver<output> present_rec;

@@ -17,10 +17,10 @@
 #include "tablet_redirect.h"
 #include "touch_redirect.h"
 
-#include "../platform.h"
 #include "global_shortcuts_manager.h"
 #include "main.h"
 #include "render/effects.h"
+#include "render/platform.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "utils.h"
@@ -148,7 +148,7 @@ Toplevel* redirect::findManagedToplevel(const QPoint& pos)
 void redirect::registerShortcut(const QKeySequence& shortcut, QAction* action)
 {
     Q_UNUSED(shortcut)
-    kwinApp()->platform->setupActionForGlobalAccel(action);
+    kwinApp()->input->setup_action_for_global_accel(action);
 }
 
 void redirect::registerPointerShortcut(Qt::KeyboardModifiers modifiers,

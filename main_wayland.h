@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 
 #include "base/platform.h"
-#include "render/backend/wlroots/backend.h"
+#include "render/backend/wlroots/platform.h"
 
 #include <QProcessEnvironment>
 #include <memory>
@@ -35,10 +35,6 @@ class WaylandServer;
 namespace input::dbus
 {
 class tablet_mode_manager;
-}
-namespace render::wayland
-{
-class compositor;
 }
 namespace win::wayland
 {
@@ -55,7 +51,6 @@ class ApplicationWayland : public ApplicationWaylandAbstract
 public:
     std::unique_ptr<WaylandServer> server;
     std::unique_ptr<win::wayland::space> workspace;
-    std::unique_ptr<render::wayland::compositor> compositor;
 
     ApplicationWayland(int &argc, char **argv);
     ~ApplicationWayland() override;
@@ -64,7 +59,7 @@ public:
 
     base::platform& get_base() override;
     WaylandServer* get_wayland_server() override;
-    render::compositor* get_compositor() override;
+    render::platform* get_render() override;
     debug::console* create_debug_console() override;
 
     void start();
@@ -97,7 +92,7 @@ private:
     QString m_sessionArgument;
 
     std::unique_ptr<base::backend::wlroots::platform> base;
-    std::unique_ptr<render::backend::wlroots::backend> render;
+    std::unique_ptr<render::backend::wlroots::platform> render;
     std::unique_ptr<xwl::xwayland> xwayland;
 
     std::unique_ptr<input::dbus::tablet_mode_manager> tablet_mode_manager;

@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "atoms.h"
 #include "input/cursor.h"
-#include "platform.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
 #include "screens.h"

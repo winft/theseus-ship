@@ -21,12 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "render/scene.h"
 
-namespace KWin::render
-{
-
-class compositor;
-
-namespace xrender
+namespace KWin::render::xrender
 {
 
 class backend;
@@ -35,7 +30,7 @@ class scene : public render::scene
 {
     Q_OBJECT
 public:
-    scene(xrender::backend* backend);
+    scene(xrender::backend* backend, render::compositor& compositor);
     ~scene() override;
 
     bool initFailed() const override;
@@ -75,7 +70,6 @@ private:
     QScopedPointer<xrender::backend> m_backend;
 };
 
-KWIN_EXPORT render::scene* create_scene(render::compositor* compositor);
+KWIN_EXPORT render::scene* create_scene(render::compositor& compositor);
 
-}
 }

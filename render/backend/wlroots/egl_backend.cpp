@@ -6,77 +6,49 @@
 */
 #include "egl_backend.h"
 
-#include "backend.h"
 #include "base/backend/wlroots/output.h"
 #include "egl_helpers.h"
 #include "egl_output.h"
 #include "output.h"
+#include "platform.h"
 #include "surface.h"
 #include "wlr_helpers.h"
 
-#include "render/wayland/compositor.h"
-#include "render/wayland/output.h"
 #include "screens.h"
 
 #include <kwinglplatform.h>
+#include <stdexcept>
 #include <wayland_logging.h>
 
 namespace KWin::render::backend::wlroots
 {
 
-egl_output& egl_backend::get_output(base::output const* out)
+std::unique_ptr<egl_output>& egl_backend::get_egl_out(base::output const* out)
 {
-    auto it = std::find_if(outputs.begin(), outputs.end(), [this, out](auto& egl_out) {
-        return &egl_out.out->base == out;
-    });
-    assert(it != outputs.end());
-    return *it;
+    return static_cast<output*>(static_cast<base::wayland::output const*>(out)->render.get())->egl;
 }
 
-egl_backend::egl_backend(wlroots::backend* back, bool headless)
+egl_backend::egl_backend(wlroots::platform& platform, bool headless)
     : gl::egl_backend()
-    , back{back}
+    , platform{platform}
     , headless{headless}
 {
     // Egl is always direct rendering.
     setIsDirectRendering(true);
 
-    connect(&back->base, &base::platform::output_added, this, [this](auto out) {
-        add_output(static_cast<base::backend::wlroots::output*>(out)->render.get());
-    });
-    connect(&back->base, &base::platform::output_removed, this, [this](auto out) {
-        outputs.erase(std::remove_if(outputs.begin(),
-                                     outputs.end(),
-                                     [&out](auto& egl_out) { return &egl_out.out->base == out; }),
-                      outputs.end());
-    });
-}
-
-egl_backend::~egl_backend()
-{
-    outputs.clear();
-    cleanup();
-}
-
-void egl_backend::init()
-{
     initClientExtensions();
 
     if (!init_platform()) {
-        setFailed("Could not initialize EGL backend.");
-        return;
+        throw std::runtime_error("Could not initialize EGL backend");
     }
     if (!initEglAPI()) {
-        setFailed("Could not initialize EGL API.");
-        return;
+        throw std::runtime_error("Could not initialize EGL API");
     }
     if (!init_buffer_configs(this)) {
-        setFailed("Could not initialize buffer configs.");
-        return;
+        throw std::runtime_error("Could not initialize buffer configs");
     }
     if (!init_rendering_context()) {
-        setFailed("Could not initialize rendering context");
-        return;
+        throw std::runtime_error("Could not initialize rendering context");
     }
 
     initKWinGL();
@@ -84,10 +56,16 @@ void egl_backend::init()
     initWayland();
 }
 
+egl_backend::~egl_backend()
+{
+    cleanupSurfaces();
+    cleanup();
+}
+
 bool egl_backend::init_platform()
 {
     if (headless) {
-        auto egl_display = get_egl_headless(*back);
+        auto egl_display = get_egl_headless(*this);
         if (egl_display == EGL_NO_DISPLAY) {
             return false;
         }
@@ -95,7 +73,7 @@ bool egl_backend::init_platform()
         return true;
     }
 
-    auto gbm = get_egl_gbm(*back);
+    auto gbm = get_egl_gbm(platform, *this);
     if (!gbm) {
         return false;
     }
@@ -113,43 +91,31 @@ bool egl_backend::init_rendering_context()
         return false;
     }
 
-    for (auto out : back->all_outputs) {
-        add_output(out->render.get());
+    for (auto& out : platform.base.all_outputs) {
+        auto render = static_cast<output*>(static_cast<base::wayland::output*>(out)->render.get());
+        get_egl_out(out) = std::make_unique<egl_output>(*render, this);
     }
 
     // AbstractEglBackend expects a surface to be set but this is not relevant as we render per
     // output and make the context current here on that output's surface. For simplicity we just
     // create a dummy surface and keep that constantly set over the run time.
-    dummy_surface = headless ? create_headless_surface(*back, QSize(800, 600))
-                             : create_surface(*back, QSize(800, 600));
+    dummy_surface = headless ? create_headless_surface(*this, QSize(800, 600))
+                             : create_surface(*this, QSize(800, 600));
     setSurface(dummy_surface->egl);
 
-    if (outputs.empty()) {
+    if (platform.base.all_outputs.empty()) {
         // In case no outputs are connected make the context current with our dummy surface.
-        return make_current(dummy_surface->egl, this);
+        return make_current(dummy_surface->egl, *this);
     }
 
-    return outputs.front().make_current();
-}
-
-void egl_backend::add_output(output* out)
-{
-    auto egl_out = egl_output(out, this);
-    if (!egl_out.reset(out)) {
-        return;
-    }
-
-    outputs.push_back(std::move(egl_out));
-
-    connect(&out->base, &base::backend::wlroots::output::mode_changed, this, [out, this] {
-        auto& egl_out = get_output(&out->base);
-        egl_out.reset(out);
-    });
+    return get_egl_out(platform.base.all_outputs.front())->make_current();
 }
 
 void egl_backend::cleanupSurfaces()
 {
-    outputs.clear();
+    for (auto out : platform.base.all_outputs) {
+        get_egl_out(out).reset();
+    }
 }
 
 const float vertices[] = {
@@ -219,7 +185,11 @@ void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
     auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
 
     QMatrix4x4 rotationMatrix;
-    rotationMatrix.rotate(rotation_in_degree(egl_out.out->base), 0, 0, 1);
+    rotationMatrix.rotate(
+        rotation_in_degree(static_cast<base::backend::wlroots::output&>(egl_out.out->base)),
+        0,
+        0,
+        1);
     shader->setUniform(GLShader::ModelViewProjectionMatrix, rotationMatrix);
 
     glBindTexture(GL_TEXTURE_2D, egl_out.render.texture);
@@ -259,7 +229,7 @@ QRegion egl_backend::prepareRenderingFrame()
 
 void egl_backend::setViewport(egl_output const& egl_out) const
 {
-    auto const& overall = back->base.screens.size();
+    auto const& overall = platform.base.screens.size();
     auto const& geo = egl_out.out->base.geometry();
     auto const& view = egl_out.out->base.view_geometry();
 
@@ -274,28 +244,28 @@ void egl_backend::setViewport(egl_output const& egl_out) const
 
 QRegion egl_backend::prepareRenderingForScreen(base::output* output)
 {
-    auto const& out = get_output(output);
+    auto const& out = get_egl_out(output);
 
-    out.make_current();
-    prepareRenderFramebuffer(out);
-    setViewport(out);
+    out->make_current();
+    prepareRenderFramebuffer(*out);
+    setViewport(*out);
 
     if (!supportsBufferAge()) {
         // If buffer age exenstion is not supported we always repaint the whole output as we don't
         // know the status of the back buffer we render to.
         return output->geometry();
     }
-    if (out.render.framebuffer) {
+    if (out->render.framebuffer) {
         // If we render to the extra frame buffer, do not use buffer age. It leads to artifacts.
         // TODO(romangg): Can we make use of buffer age even in this case somehow?
         return output->geometry();
     }
-    if (out.bufferAge == 0) {
+    if (out->bufferAge == 0) {
         // If buffer age is 0, the contents of the back buffer we now will render to are undefined
         // and it has to be repainted completely.
         return output->geometry();
     }
-    if (out.bufferAge > static_cast<int>(out.damageHistory.size())) {
+    if (out->bufferAge > static_cast<int>(out->damageHistory.size())) {
         // If buffer age is older than our damage history has recorded we do not have all damage
         // logged for that age and we need to repaint completely.
         return output->geometry();
@@ -304,8 +274,8 @@ QRegion egl_backend::prepareRenderingForScreen(base::output* output)
     // But if all conditions are satisfied we can look up our damage history up until to the buffer
     // age and repaint only that.
     QRegion region;
-    for (int i = 0; i < out.bufferAge - 1; i++) {
-        region |= out.damageHistory[i];
+    for (int i = 0; i < out->bufferAge - 1; i++) {
+        region |= out->damageHistory[i];
     }
     return region;
 }
@@ -320,14 +290,11 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
                                              QRegion const& renderedRegion,
                                              QRegion const& damagedRegion)
 {
-    auto& out = get_output(output);
-    renderFramebufferToSurface(out);
+    auto& out = get_egl_out(output);
+    renderFramebufferToSurface(*out);
 
-    auto compositor = static_cast<wayland::compositor*>(back->compositor);
-    auto render_output
-        = compositor->outputs.at(const_cast<base::backend::wlroots::output*>(&out.out->base)).get();
     if (GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
-        render_output->last_timer_queries.emplace_back();
+        out->out->last_timer_queries.emplace_back();
     }
 
     if (damagedRegion.intersected(output->geometry()).isEmpty()) {
@@ -342,26 +309,26 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
             glFlush();
         }
 
-        out.bufferAge = 1;
+        out->bufferAge = 1;
         return;
     }
 
-    eglSwapBuffers(eglDisplay(), out.surf->egl);
-    auto buffer = out.create_buffer();
+    eglSwapBuffers(eglDisplay(), out->surf->egl);
+    auto buffer = out->create_buffer();
 
-    if (!out.present(buffer)) {
-        out.bufferAge = 0;
-        render_output->swap_pending = false;
+    if (!out->present(buffer)) {
+        out->bufferAge = 0;
+        out->out->swap_pending = false;
         return;
     }
 
     if (supportsBufferAge()) {
-        eglQuerySurface(eglDisplay(), out.surf->egl, EGL_BUFFER_AGE_EXT, &out.bufferAge);
+        eglQuerySurface(eglDisplay(), out->surf->egl, EGL_BUFFER_AGE_EXT, &out->bufferAge);
 
-        if (out.damageHistory.size() > 10) {
-            out.damageHistory.pop_back();
+        if (out->damageHistory.size() > 10) {
+            out->damageHistory.pop_back();
         }
-        out.damageHistory.push_front(damagedRegion.intersected(output->geometry()));
+        out->damageHistory.push_front(damagedRegion.intersected(output->geometry()));
     }
 }
 

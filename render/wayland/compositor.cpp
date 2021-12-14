@@ -9,11 +9,12 @@
 #include "presentation.h"
 #include "utils.h"
 
-#include "base/platform.h"
-#include "base/wayland/output.h"
-#include "platform.h"
+#include "base/backend/wlroots/output.h"
+#include "base/wayland/platform.h"
+#include "render/backend/wlroots/output.h"
 #include "render/cursor.h"
 #include "render/gl/scene.h"
+#include "render/platform.h"
 #include "render/qpainter/scene.h"
 #include "render/scene.h"
 #include "wayland_server.h"
@@ -25,30 +26,41 @@
 namespace KWin::render::wayland
 {
 
+base::wayland::platform& get_platform(base::platform& platform)
+{
+    return static_cast<base::wayland::platform&>(platform);
+}
+
+base::backend::wlroots::output* get_output(base::output* out)
+{
+    return static_cast<base::backend::wlroots::output*>(out);
+}
+
 void compositor::addRepaint(QRegion const& region)
 {
     if (locked) {
         return;
     }
-    for (auto& [key, output] : outputs) {
-        output->add_repaint(region);
+    for (auto& output : get_platform(platform.base).outputs) {
+        get_output(output)->render->add_repaint(region);
     }
 }
 
 void compositor::check_idle()
 {
-    for (auto& [key, output] : outputs) {
-        if (!output->idle) {
+    for (auto& output : get_platform(platform.base).outputs) {
+        if (!get_output(output)->render->idle) {
             return;
         }
     }
     scene()->idle();
 }
 
-compositor::compositor()
-    : presentation(new render::wayland::presentation(this))
+compositor::compositor(render::platform& platform)
+    : render::compositor(platform)
+    , presentation(new render::wayland::presentation(this))
 {
-    if (!presentation->init_clock(kwinApp()->platform->clockId())) {
+    if (!presentation->init_clock(platform.base.get_clockid())) {
         qCCritical(KWIN_WL) << "Presentation clock failed. Exit.";
         qApp->quit();
     }
@@ -62,23 +74,7 @@ compositor::compositor()
             this,
             &compositor::destroyCompositorSelection);
 
-    for (auto output : kwinApp()->platform->enabledOutputs()) {
-        auto wl_out = static_cast<base::wayland::output*>(output);
-        outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
-    }
-
-    connect(&kwinApp()->get_base(), &base::platform::output_added, this, [this](auto output) {
-        auto wl_out = static_cast<base::wayland::output*>(output);
-        outputs.emplace(wl_out, new render::wayland::output(wl_out, this));
-    });
-
-    connect(&kwinApp()->get_base(), &base::platform::output_removed, this, [this](auto output) {
-        for (auto it = outputs.begin(); it != outputs.end(); ++it) {
-            if (it->first == output) {
-                outputs.erase(it);
-                break;
-            }
-        }
+    connect(&platform.base, &base::platform::output_removed, this, [this](auto output) {
         if (auto workspace = Workspace::self()) {
             for (auto& win : workspace->windows()) {
                 remove_all(win->repaint_outputs, output);
@@ -87,8 +83,8 @@ compositor::compositor()
     });
 
     connect(workspace(), &Workspace::destroyed, this, [this] {
-        for (auto& [key, output] : outputs) {
-            output->delay_timer.stop();
+        for (auto& output : get_platform(this->platform.base).outputs) {
+            get_output(output)->render->delay_timer.stop();
         }
     });
 
@@ -103,9 +99,9 @@ void compositor::schedule_repaint(Toplevel* window)
         return;
     }
 
-    for (auto& [base, output] : outputs) {
-        if (!win::visible_rect(window).intersected(base->geometry()).isEmpty()) {
-            output->set_delay_timer();
+    for (auto& output : get_platform(this->platform.base).outputs) {
+        if (!win::visible_rect(window).intersected(output->geometry()).isEmpty()) {
+            get_output(output)->render->set_delay_timer();
         }
     }
 }
@@ -116,12 +112,9 @@ void compositor::schedule_frame_callback(Toplevel* window)
         return;
     }
 
-    auto max_out = static_cast<base::wayland::output*>(max_coverage_output(window));
-    if (!max_out) {
-        return;
+    if (auto max_out = static_cast<base::wayland::output*>(max_coverage_output(window))) {
+        get_output(max_out)->render->request_frame(window);
     }
-
-    outputs[max_out]->request_frame(window);
 }
 
 void compositor::toggleCompositing()
@@ -168,11 +161,11 @@ render::scene* compositor::create_scene(QVector<CompositingType> const& support)
     for (auto type : support) {
         if (type == OpenGLCompositing) {
             qCDebug(KWIN_WL) << "Creating OpenGL scene.";
-            return gl::create_scene(this);
+            return gl::create_scene(*this);
         }
         if (type == QPainterCompositing) {
             qCDebug(KWIN_WL) << "Creating QPainter scene.";
-            return qpainter::create_scene();
+            return qpainter::create_scene(*this);
         }
     }
     return nullptr;
@@ -180,8 +173,8 @@ render::scene* compositor::create_scene(QVector<CompositingType> const& support)
 
 std::deque<Toplevel*> compositor::performCompositing()
 {
-    for (auto& [output, render_output] : outputs) {
-        render_output->run();
+    for (auto& output : get_platform(platform.base).outputs) {
+        get_output(output)->render->run();
     }
 
     return std::deque<Toplevel*>();

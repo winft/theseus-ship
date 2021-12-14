@@ -11,17 +11,17 @@ class QTimer;
 
 namespace KWin::render::backend::x11
 {
-class X11StandalonePlatform;
+class platform;
 
 class RandrFilter : public base::x11::event_filter
 {
 public:
-    explicit RandrFilter(X11StandalonePlatform* backend);
+    explicit RandrFilter(x11::platform* platform);
 
     bool event(xcb_generic_event_t* event) override;
 
 private:
-    X11StandalonePlatform* m_backend;
+    x11::platform* platform;
     QTimer* m_changedTimer;
 };
 

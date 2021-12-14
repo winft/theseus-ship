@@ -18,10 +18,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "generic_scene_opengl_test.h"
+
 #include "effect_builtins.h"
-#include "platform.h"
 #include "render/compositor.h"
 #include "render/effect_loader.h"
+#include "render/platform.h"
 #include "render/scene.h"
 #include "wayland_server.h"
 
@@ -77,7 +78,7 @@ void GenericSceneOpenGLTest::initTestCase()
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
-    QCOMPARE(kwinApp()->platform->selectedCompositor(), KWin::OpenGLCompositing);
+    QCOMPARE(kwinApp()->platform->selected_compositor, KWin::OpenGLCompositing);
 }
 
 void GenericSceneOpenGLTest::testRestart()
@@ -94,7 +95,7 @@ void GenericSceneOpenGLTest::testRestart()
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
-    QCOMPARE(kwinApp()->platform->selectedCompositor(), KWin::OpenGLCompositing);
+    QCOMPARE(kwinApp()->platform->selected_compositor, KWin::OpenGLCompositing);
 
     // trigger a repaint
     render::compositor::self()->addRepaintFull();

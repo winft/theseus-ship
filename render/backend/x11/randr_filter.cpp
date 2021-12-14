@@ -6,8 +6,8 @@
 #include "randr_filter.h"
 
 #include "atoms.h"
+#include "platform.h"
 #include "screens.h"
-#include "x11_platform.h"
 
 #include <xcb/xcb.h>
 
@@ -16,10 +16,10 @@
 namespace KWin::render::backend::x11
 {
 
-RandrFilter::RandrFilter(X11StandalonePlatform* backend)
+RandrFilter::RandrFilter(x11::platform* platform)
     : base::x11::event_filter(Xcb::Extensions::self()->randrNotifyEvent())
-    , m_backend(backend)
-    , m_changedTimer(new QTimer(backend))
+    , platform(platform)
+    , m_changedTimer(new QTimer(platform))
 {
     m_changedTimer->setSingleShot(true);
     m_changedTimer->setInterval(100);
@@ -31,7 +31,7 @@ bool RandrFilter::event(xcb_generic_event_t* event)
 {
     Q_ASSERT((event->response_type & ~0x80) == Xcb::Extensions::self()->randrNotifyEvent());
 
-    m_backend->updateOutputs();
+    platform->updateOutputs();
 
     // Let's try to gather a few XRandR events, unlikely that there is just one.
     m_changedTimer->start();

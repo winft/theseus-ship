@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 
 #include "base/x11/event_filter_manager.h"
-#include "platform.h"
 #include "atoms.h"
 #include "render/compositor.h"
 #include "input/global_shortcuts_manager.h"
@@ -52,6 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStandardPaths>
 #include <QTranslator>
 #include <QLibraryInfo>
+#include <QX11Info>
 
 // system
 #ifdef HAVE_UNISTD_H
@@ -289,7 +289,35 @@ void Application::setupEventFilters()
     installNativeEventFilter(m_eventFilter.data());
 }
 
-void Application::updateX11Time(xcb_generic_event_t *event)
+static uint32_t get_monotonic_time()
+{
+    timespec ts;
+
+    const int result = clock_gettime(CLOCK_MONOTONIC, &ts);
+    if (result)
+        qCWarning(KWIN_CORE, "Failed to query monotonic time: %s", strerror(errno));
+
+    return ts.tv_sec * 1000 + ts.tv_nsec / 1000000L;
+}
+
+void Application::update_x11_time_from_clock()
+{
+    switch (m_operationMode) {
+    case Application::OperationModeX11:
+        setX11Time(QX11Info::getTimestamp(), Application::TimestampUpdate::Always);
+        break;
+
+    case Application::OperationModeXwayland:
+        setX11Time(get_monotonic_time(), Application::TimestampUpdate::Always);
+        break;
+
+    default:
+        // Do not update the current X11 time stamp if it's the Wayland only session.
+        break;
+    }
+}
+
+void Application::update_x11_time_from_event(xcb_generic_event_t *event)
 {
     xcb_timestamp_t time = XCB_TIME_CURRENT_TIME;
     const uint8_t eventType = event->response_type & ~0x80;
@@ -370,7 +398,7 @@ bool XcbEventFilter::nativeEventFilter(const QByteArray &eventType, void *messag
         return false;
     }
     auto event = static_cast<xcb_generic_event_t *>(message);
-    kwinApp()->updateX11Time(event);
+    kwinApp()->update_x11_time_from_event(event);
     if (!Workspace::self()) {
         // Workspace not yet created
         return false;

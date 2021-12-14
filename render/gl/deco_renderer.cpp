@@ -12,7 +12,6 @@
 #include "window.h"
 
 #include "base/output.h"
-#include "platform.h"
 #include "texture.h"
 
 #include <kwineffectquickview.h>

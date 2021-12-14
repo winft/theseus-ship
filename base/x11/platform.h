@@ -8,6 +8,7 @@
 #include "base/output.h"
 #include "base/platform.h"
 
+#include <memory>
 #include <vector>
 
 namespace KWin::base::x11
@@ -16,11 +17,15 @@ namespace KWin::base::x11
 class platform : public base::platform
 {
 public:
-    std::vector<output*> outputs;
+    std::vector<std::unique_ptr<output>> outputs;
 
     std::vector<base::output*> get_outputs() const override
     {
-        return outputs;
+        std::vector<base::output*> vec;
+        for (auto&& output : outputs) {
+            vec.push_back(output.get());
+        }
+        return vec;
     }
 };
 

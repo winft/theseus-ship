@@ -35,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 
 #include "atoms.h"
-#include "platform.h"
 #include "workspace.h"
 
 #include <csignal>
@@ -85,10 +84,6 @@ Process::Process(QObject *parent)
 Process::~Process() = default;
 
 #ifndef KCMRULES
-void updateXTime()
-{
-    kwinApp()->platform->updateXTime();
-}
 
 static int server_grab_count = 0;
 

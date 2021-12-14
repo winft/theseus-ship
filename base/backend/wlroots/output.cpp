@@ -22,6 +22,12 @@
 namespace KWin::base::backend::wlroots
 {
 
+static render::backend::wlroots::output*
+get_render(std::unique_ptr<render::wayland::output>& output)
+{
+    return static_cast<render::backend::wlroots::output*>(output.get());
+}
+
 static void handle_destroy(wl_listener* listener, void* /*data*/)
 {
     base::event_receiver<output>* event_receiver_struct
@@ -127,7 +133,7 @@ bool output::disable_native()
         return false;
     }
 
-    render->disable();
+    get_render(render)->disable();
     wlr_output_commit(native);
 
     return true;
@@ -137,7 +143,7 @@ void output::update_enablement(bool enable)
 {
     if (enable) {
         platform->enable_output(this);
-        render->reset();
+        get_render(render)->reset();
     } else {
         disable_native();
         platform->disable_output(this);
@@ -149,7 +155,7 @@ void output::update_dpms(base::dpms_mode mode)
     auto set_on = mode == base::dpms_mode::on;
 
     if (set_on) {
-        render->reset();
+        get_render(render)->reset();
         dpms_set_on();
     } else if (disable_native()) {
         dpms_set_off(mode);
@@ -168,7 +174,7 @@ void output::update_mode(int mode_index)
         if (count == mode_index) {
             wlr_output_set_mode(native, wlr_mode);
             if (wlr_output_test(native)) {
-                render->reset();
+                get_render(render)->reset();
             } else {
                 qCWarning(KWIN_WL) << "Failed test commit on update mode call.";
                 // Set previous mode.
@@ -191,7 +197,7 @@ void output::update_transform(base::wayland::output_transform transform)
     wlr_output_set_transform(native, to_wl_transform(transform));
 
     if (wlr_output_test(native)) {
-        render->reset();
+        get_render(render)->reset();
     } else {
         qCWarning(KWIN_WL) << "Failed test commit on update transform call.";
         // Set previous transform.
@@ -209,7 +215,7 @@ bool output::set_gamma_ramp(base::gamma_ramp const& gamma)
     wlr_output_set_gamma(native, gamma.size(), gamma.red(), gamma.green(), gamma.blue());
 
     if (wlr_output_test(native)) {
-        render->reset();
+        get_render(render)->reset();
         return true;
     } else {
         qCWarning(KWIN_WL) << "Failed test commit on set gamma ramp call.";

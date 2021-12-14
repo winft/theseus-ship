@@ -59,6 +59,7 @@ class event_filter_manager;
 namespace render
 {
 class compositor;
+class platform;
 }
 
 namespace seat
@@ -66,7 +67,6 @@ namespace seat
 class session;
 }
 
-class Platform;
 class WaylandServer;
 
 class XcbEventFilter : public QAbstractNativeEventFilter
@@ -107,7 +107,7 @@ public:
         OperationModeXwayland
     };
 
-    Platform* platform{nullptr};
+    render::platform* platform{nullptr};
     std::unique_ptr<seat::session> session;
     std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<input::platform> input;
@@ -115,7 +115,7 @@ public:
     ~Application() override;
 
     virtual base::platform& get_base() = 0;
-    virtual render::compositor* get_compositor() = 0;
+    virtual render::platform* get_render() = 0;
 
     void setConfigLock(bool lock);
 
@@ -165,7 +165,9 @@ public:
             m_x11Time = timestamp;
         }
     }
-    void updateX11Time(xcb_generic_event_t *event);
+
+    void update_x11_time_from_clock();
+    void update_x11_time_from_event(xcb_generic_event_t *event);
 
     static void setCrashCount(int count);
     static bool wasCrash();

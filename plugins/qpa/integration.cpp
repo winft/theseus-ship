@@ -23,11 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "backingstore.h"
 #include "offscreensurface.h"
+#include "render/platform.h"
 #include "screen.h"
 #include "sharingplatformcontext.h"
 #include "window.h"
 #include "../../main.h"
-#include "../../platform.h"
 #include "../../render/compositor.h"
 #include "../../render/scene.h"
 #include "../../screens.h"
@@ -142,11 +142,11 @@ QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext*
     if (render::compositor::self()->scene()->supportsSurfacelessContext()) {
         return new SharingPlatformContext(context);
     }
-    if (kwinApp()->platform->sceneEglDisplay() != EGL_NO_DISPLAY) {
-        auto s = kwinApp()->platform->sceneEglSurface();
+    if (kwinApp()->platform->egl_display != EGL_NO_DISPLAY) {
+        auto s = kwinApp()->platform->egl_surface;
         if (s != EGL_NO_SURFACE) {
             // try a SharingPlatformContext with a created surface
-            return new SharingPlatformContext(context, s, kwinApp()->platform->sceneEglConfig());
+            return new SharingPlatformContext(context, s, kwinApp()->platform->egl_config);
         }
     }
     return nullptr;

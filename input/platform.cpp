@@ -39,4 +39,8 @@ platform::~platform()
     }
 }
 
+void platform::setup_action_for_global_accel(QAction* /*action*/)
+{
+}
+
 }

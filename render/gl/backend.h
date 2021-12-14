@@ -66,7 +66,6 @@ public:
     backend();
     virtual ~backend();
 
-    virtual void init() = 0;
     /**
      * @return Time passes since start of rendering current frame.
      * @see startRenderTimer
@@ -116,18 +115,6 @@ public:
         return !m_lastDamage.isEmpty();
     }
 
-    /**
-     * @brief Whether the creation of the Backend failed.
-     *
-     * The SceneOpenGL should test whether the Backend got constructed correctly. If this method
-     * returns @c true, the SceneOpenGL should not try to start the rendering.
-     *
-     * @return bool @c true if the creation of the Backend failed, @c false otherwise.
-     */
-    bool isFailed() const
-    {
-        return m_failed;
-    }
     /**
      * @brief Whether the backend uses direct rendering.
      *
@@ -183,16 +170,6 @@ public:
      * Copy a region of pixels from the current read to the current draw buffer
      */
     void copyPixels(const QRegion& region);
-
-    /**
-     * @brief Sets the backend initialization to failed.
-     *
-     * This method should be called by the concrete subclass in case the initialization failed.
-     * The given @p reason is logged as a warning.
-     *
-     * @param reason The reason why the initialization failed.
-     */
-    void setFailed(const QString& reason);
 
 protected:
     /**
@@ -267,10 +244,6 @@ private:
      * @brief Whether the backend supports EGL_KHR_surfaceless_context.
      */
     bool m_haveSurfacelessContext = false;
-    /**
-     * @brief Whether the initialization failed, of course default to @c false.
-     */
-    bool m_failed;
     /**
      * @brief Damaged region of previously rendered frame.
      */

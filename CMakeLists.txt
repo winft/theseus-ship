@@ -439,7 +439,6 @@ set(kwin_SRCS
     onscreennotification.cpp
     options.cpp
     osd.cpp
-    platform.cpp
     render/compositor.cpp
     render/cursor.cpp
     render/effect_loader.cpp
@@ -454,13 +453,14 @@ set(kwin_SRCS
     render/gl/shadow.cpp
     render/gl/texture.cpp
     render/gl/window.cpp
+    render/outline.cpp
+    render/platform.cpp
     render/scene.cpp
     render/shadow.cpp
     render/thumbnail_item.cpp
     render/window.cpp
     render/x11/compositor.cpp
     render/x11/compositor_selection_owner.cpp
-    render/x11/outline.cpp
     render/x11/overlay_window.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp
@@ -686,35 +686,46 @@ endif()
 
 
 set(kwin_X11_SRCS
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/cursor.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/platform.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/window_selector.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/xfixes_cursor_event_filter.cpp
+   base/x11/output.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/cursor.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/platform.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/window_selector.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/xfixes_cursor_event_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_mouse_interception_x11_filter.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects_x11.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/logging.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/deco_renderer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/mouse_intercept_filter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/non_composited_outline.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/platform.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/randr_filter.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_decoration_renderer.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_output.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/x11_platform.cpp
 )
 
 if (HAVE_X11_XINPUT)
     set(kwin_X11_SRCS
         ${kwin_X11_SRCS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/input/backend/x11/xinput_integration.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/xinput_integration.cpp
     )
 endif()
 
 if (HAVE_EPOXY_GLX)
     set(kwin_X11_SRCS
         ${kwin_X11_SRCS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glxbackend.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_backend.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/glx_context_attribute_builder.cpp
     )
 endif()
+
+include(ECMQtDeclareLoggingCategory)
+ecm_qt_declare_logging_category(kwin_X11_SRCS
+    HEADER
+        x11_logging.h
+    IDENTIFIER
+        KWIN_X11
+    CATEGORY_NAME
+        kwin_x11
+    DEFAULT_SEVERITY
+        Critical
+)
 
 add_library(kwin_x11_lib STATIC
   ${kwin_X11_SRCS}
@@ -757,7 +768,7 @@ set(kwin_XWAYLAND_SRCS
    xwl/selection_data.h
    xwl/sources.h
 )
-include(ECMQtDeclareLoggingCategory)
+
 ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
     HEADER
         xwayland_logging.h
@@ -846,7 +857,7 @@ set(kwin_WAYLAND_SRCS
    render/qpainter/scene.cpp
    render/qpainter/shadow.cpp
    render/qpainter/window.cpp
-   render/backend/wlroots/backend.cpp
+   render/backend/wlroots/platform.cpp
    render/backend/wlroots/buffer.cpp
    render/backend/wlroots/egl_backend.cpp
    render/backend/wlroots/egl_output.cpp

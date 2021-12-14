@@ -8,7 +8,6 @@
 #include "fullscreen.h"
 #include "layer_shell.h"
 #include "maximize.h"
-#include "render/wayland/compositor.h"
 #include "setup.h"
 #include "subsurface.h"
 #include "surface.h"
@@ -24,6 +23,8 @@
 #include "win/transient.h"
 
 #include "decorations/window.h"
+#include "render/compositor.h"
+#include "render/platform.h"
 #include "rules/rules.h"
 #include "utils.h"
 #include "wayland_server.h"
@@ -865,7 +866,7 @@ void window::handle_commit()
     if (!surface()->state().damage.isEmpty()) {
         addDamage(surface()->state().damage);
     } else if (surface()->state().updates & Wrapland::Server::surface_change::frame) {
-        kwinApp()->get_compositor()->schedule_frame_callback(this);
+        kwinApp()->get_render()->compositor->schedule_frame_callback(this);
     }
 
     if (toplevel || popup) {

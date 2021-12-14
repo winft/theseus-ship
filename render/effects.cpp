@@ -287,7 +287,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             this,
             &effects_handler_impl::slotOutputDisabled);
 
-    const QVector<base::output*> outputs = kwinApp()->platform->enabledOutputs();
+    auto const outputs = kwinApp()->get_base().get_outputs();
     for (base::output* output : outputs) {
         slotOutputEnabled(output);
     }

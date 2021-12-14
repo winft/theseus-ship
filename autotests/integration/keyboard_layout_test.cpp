@@ -11,7 +11,6 @@
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
-#include "platform.h"
 #include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "workspace.h"

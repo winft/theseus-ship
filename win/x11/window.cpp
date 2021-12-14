@@ -484,7 +484,7 @@ void window::takeFocus()
     }
 
     if (info->supportsProtocol(NET::TakeFocusProtocol)) {
-        updateXTime();
+        kwinApp()->update_x11_time_from_clock();
         send_client_message(xcb_window(), atoms->wm_protocols, atoms->wm_take_focus);
     }
 
@@ -981,7 +981,7 @@ bool window::doStartMoveResize()
     xcb_windows.grab.map();
     xcb_windows.grab.raise();
 
-    updateXTime();
+    kwinApp()->update_x11_time_from_clock();
     auto const cookie = xcb_grab_pointer_unchecked(
         connection(),
         false,

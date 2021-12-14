@@ -11,7 +11,7 @@
 #include "shadow.h"
 #include "types.h"
 
-#include "render/x11/outline.h"
+#include "render/outline.h"
 #include "workspace.h"
 
 #include <QRect>

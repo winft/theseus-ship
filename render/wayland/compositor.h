@@ -15,14 +15,17 @@
 
 namespace KWin
 {
+
 class Toplevel;
 
 namespace base::wayland
 {
 class output;
 }
+
 namespace render::wayland
 {
+
 class output;
 class presentation;
 struct presentation_data;
@@ -31,7 +34,7 @@ class KWIN_EXPORT compositor : public render::compositor
 {
     Q_OBJECT
 public:
-    compositor();
+    compositor(render::platform& platform);
     ~compositor();
 
     void schedule_repaint(Toplevel* window) override;
@@ -46,7 +49,6 @@ public:
     void unlock();
 
     render::wayland::presentation* presentation;
-    std::map<base::wayland::output*, std::unique_ptr<render::wayland::output>> outputs;
 
 protected:
     void start() override;

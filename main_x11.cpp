@@ -11,8 +11,7 @@
 #include <config-kwin.h>
 
 #include "debug/x11_console.h"
-#include "platform.h"
-#include "input/backend/x11/platform.h"
+#include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
 #include "screenlockerwatcher.h"
@@ -182,7 +181,7 @@ ApplicationX11::~ApplicationX11()
 {
     setTerminating();
     workspace.reset();
-    compositor.reset();
+    render->compositor.reset();
     if (!owner.isNull() && owner->ownerWindow() != XCB_WINDOW_NONE)   // If there was no --replace (no new WM)
         Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
 }
@@ -196,7 +195,7 @@ void ApplicationX11::lostSelection()
 {
     sendPostedEvents();
     workspace.reset();
-    compositor.reset();
+    render->compositor.reset();
     // Remove windowmanager privileges
     Xcb::selectInput(rootWindow(), XCB_EVENT_MASK_PROPERTY_CHANGE);
     quit();
@@ -207,9 +206,9 @@ base::platform& ApplicationX11::get_base()
     return base;
 }
 
-render::compositor* ApplicationX11::get_compositor()
+render::platform* ApplicationX11::get_render()
 {
-    return compositor.get();
+    return render.get();
 }
 
 debug::console* ApplicationX11::create_debug_console()
@@ -222,7 +221,7 @@ void ApplicationX11::start()
     prepare_start();
     ScreenLockerWatcher::self()->initialize();
 
-    render.reset(new render::backend::x11::X11StandalonePlatform(base));
+    render.reset(new render::backend::x11::platform(base));
     platform = render.get();
 
     crashChecking();
@@ -253,7 +252,7 @@ void ApplicationX11::start()
 
         session.reset(new seat::backend::logind::session());
 
-        auto input = new input::backend::x11::platform;
+        auto input = new input::x11::platform;
         this->input.reset(input);
         input->redirect->install_shortcuts();
 
@@ -264,7 +263,7 @@ void ApplicationX11::start()
             ::exit(1);
         }
 
-        compositor = std::make_unique<render::x11::compositor>();
+        render->compositor = std::make_unique<render::x11::compositor>(*render);
         workspace = std::make_unique<win::x11::space>();
         Q_EMIT workspaceCreated();
 

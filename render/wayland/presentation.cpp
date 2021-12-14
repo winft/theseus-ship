@@ -7,7 +7,6 @@
 
 #include "base/wayland/output.h"
 #include "main.h"
-#include "platform.h"
 #include "render/wayland/output.h"
 #include "toplevel.h"
 #include "utils.h"
@@ -60,7 +59,7 @@ void presentation::frame(render::wayland::output* output, std::deque<Toplevel*> 
 
     for (auto& win : windows) {
         assert(win->surface());
-        assert(max_coverage_output(win) == output->base);
+        assert(max_coverage_output(win) == &output->base);
 
         // TODO (romangg): Split this up to do on every subsurface (annexed transient) separately.
         win->surface()->frameRendered(now);
@@ -82,7 +81,7 @@ void presentation::lock(render::wayland::output* output, std::deque<Toplevel*> c
 
         // Check if this window should be locked to the output. We use maximum coverage for that.
         auto max_out = max_coverage_output(win);
-        if (max_out != output->base) {
+        if (max_out != &output->base) {
             // Window not mostly on this output. We lock it to max_out when it presents.
             continue;
         }
@@ -90,7 +89,7 @@ void presentation::lock(render::wayland::output* output, std::deque<Toplevel*> c
         // TODO (romangg): Split this up to do on every subsurface (annexed transient) separately.
         surface->frameRendered(now);
 
-        auto const id = surface->lockPresentation(output->base->wrapland_output());
+        auto const id = surface->lockPresentation(output->base.wrapland_output());
         if (id != 0) {
             output->assigned_surfaces.emplace(id, surface);
             connect(surface, &Wrapland::Server::Surface::resourceDestroyed, output, [output, id]() {
@@ -144,7 +143,7 @@ void timespec_to_proto(std::chrono::nanoseconds const& time,
 
 void presentation::presented(render::wayland::output* output, presentation_data const& data)
 {
-    if (!output->base->is_enabled()) {
+    if (!output->base.is_enabled()) {
         // Output disabled, discards will be sent from Wrapland.
         return;
     }

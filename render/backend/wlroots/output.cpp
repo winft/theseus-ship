@@ -5,7 +5,8 @@
 */
 #include "output.h"
 
-#include "backend.h"
+#include "egl_output.h"
+#include "platform.h"
 #include "wlr_includes.h"
 
 #include "base/gamma_ramp.h"
@@ -59,34 +60,28 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
                                          std::chrono::nanoseconds(event->refresh),
                                          to_presentation_kinds(event->flags)};
 
-    if (auto compositor = static_cast<wayland::compositor*>(compositor::self())) {
-        auto render_output
-            = compositor->outputs.at(const_cast<base::backend::wlroots::output*>(&output->base))
-                  .get();
-        render_output->swapped(pres_data);
-    }
+    output->swapped(pres_data);
 }
 
-output::output(base::backend::wlroots::output const& base)
-    : base{base}
+output::output(base::backend::wlroots::output& base, render::platform& platform)
+    : wayland::output(base, platform)
 {
     present_rec.receiver = this;
     present_rec.event.notify = handle_present;
     wl_signal_add(&base.native->events.present, &present_rec.event);
 }
 
+output::~output() = default;
+
 void output::disable()
 {
-    auto compositor = static_cast<wayland::compositor*>(compositor::self());
-    auto render_output
-        = compositor->outputs.at(const_cast<base::backend::wlroots::output*>(&base)).get();
-    render_output->delay_timer.stop();
-    render_output->frame_timer.stop();
+    delay_timer.stop();
+    frame_timer.stop();
 }
 
 void output::reset()
 {
-    compositor::self()->addRepaint(base.geometry());
+    platform.compositor->addRepaint(base.geometry());
 }
 
 }

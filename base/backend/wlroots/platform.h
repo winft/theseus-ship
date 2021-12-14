@@ -76,10 +76,8 @@ public:
     platform& operator=(platform&& other) noexcept;
     ~platform() override;
 
-    wlr_session* session() const
-    {
-        return wlr_backend_get_session(backend);
-    }
+    wlr_session* session() const;
+    clockid_t get_clockid() const override;
 
 private:
     std::unique_ptr<event_receiver<platform>> destroyed;

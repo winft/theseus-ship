@@ -159,7 +159,7 @@ void group::updateUserTime(xcb_timestamp_t time)
 {
     // copy of win::x11::update_user_time in control.h
     if (time == XCB_CURRENT_TIME) {
-        updateXTime();
+        kwinApp()->update_x11_time_from_clock();
         time = xTime();
     }
     if (time != -1U

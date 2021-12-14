@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "render/compositor.h"
 #include "render/effects.h"
-#include "platform.h"
 #include "screens.h"
 #include "shadow.h"
 #include "workspace.h"
@@ -591,7 +590,7 @@ void Toplevel::add_repaint_outputs(QRegion const& region)
         // On X11 we do not paint per output.
         return;
     }
-    for (auto& out : kwinApp()->platform->enabledOutputs()) {
+    for (auto& out : kwinApp()->get_base().get_outputs()) {
         if (contains(repaint_outputs, out)) {
             continue;
         }

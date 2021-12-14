@@ -526,7 +526,7 @@ void OpenGLContextAttributeBuilderTest::testGlx()
     QFETCH(bool, robust);
     QFETCH(bool, videoPurge);
 
-    render::backend::x11::GlxContextAttributeBuilder builder;
+    render::backend::x11::glx_context_attribute_builder builder;
     if (requestVersion) {
         builder.setVersion(major, minor);
     }

@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "workspace.h"
 #include "render/effects.h"
-#include "platform.h"
+#include "render/platform.h"
 #include "rules/rule_book.h"
 #include "screens.h"
 #include "utils.h"
@@ -986,7 +986,7 @@ DEF(I18N_NOOP("Kill Window"),                      Qt::CTRL + Qt::ALT + Qt::Key_
 DEF6(I18N_NOOP("Suspend Compositing"),             Qt::SHIFT + Qt::ALT + Qt::Key_F12,
                                                    render::compositor::self(),
                                                    render::compositor::toggleCompositing);
-DEF6(I18N_NOOP("Invert Screen Colors"),            0, kwinApp()->platform, Platform::invertScreen);
+DEF6(I18N_NOOP("Invert Screen Colors"),            0, kwinApp()->platform, render::platform::invertScreen);
 
 #undef DEF
 #undef DEF2
@@ -1054,7 +1054,7 @@ void Workspace::clientShortcutUpdated(Toplevel* window)
     if (!window->control->shortcut().isEmpty()) {
         if (action == nullptr) { // new shortcut
             action = new QAction(this);
-            kwinApp()->platform->setupActionForGlobalAccel(action);
+            kwinApp()->input->setup_action_for_global_accel(action);
             action->setProperty("componentName", QStringLiteral(KWIN_NAME));
             action->setObjectName(key);
             action->setText(i18n("Activate Window (%1)", win::caption(window)));

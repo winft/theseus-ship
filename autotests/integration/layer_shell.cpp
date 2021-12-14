@@ -5,7 +5,6 @@
 */
 #include "lib/app.h"
 
-#include "platform.h"
 #include "wayland_server.h"
 #include "win/screen.h"
 #include "win/wayland/space.h"

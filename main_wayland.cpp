@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/backend/wlroots/platform.h"
 #include "debug/wayland_console.h"
-#include "platform.h"
 #include "render/effects.h"
 #include "render/wayland/compositor.h"
 #include "screenlockerwatcher.h"
@@ -159,14 +158,14 @@ ApplicationWayland::~ApplicationWayland()
 
     waylandServer()->terminateClientConnections();
 
-    if (compositor) {
+    if (render->compositor) {
         // Block compositor to prevent further compositing from crashing with a null workspace.
         // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-        compositor->lock();
+        static_cast<render::wayland::compositor*>(render->compositor.get())->lock();
     }
 
     workspace.reset();
-    compositor.reset();
+    render->compositor.reset();
 }
 
 bool ApplicationWayland::is_screen_locked() const
@@ -187,9 +186,9 @@ WaylandServer* ApplicationWayland::get_wayland_server()
     return server.get();
 }
 
-render::compositor* ApplicationWayland::get_compositor()
+render::platform* ApplicationWayland::get_render()
 {
-    return compositor.get();
+    return render.get();
 }
 
 debug::console* ApplicationWayland::create_debug_console()
@@ -207,7 +206,7 @@ void ApplicationWayland::start()
 
     base = std::make_unique<base::backend::wlroots::platform>(waylandServer()->display());
 
-    render.reset(new render::backend::wlroots::backend(*base));
+    render.reset(new render::backend::wlroots::platform(*base));
     platform = render.get();
 
     createOptions();
@@ -233,7 +232,7 @@ void ApplicationWayland::start()
 
     tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
 
-    compositor = std::make_unique<render::wayland::compositor>();
+    render->compositor = std::make_unique<render::wayland::compositor>(*render);
     workspace = std::make_unique<win::wayland::space>(server.get());
     Q_EMIT workspaceCreated();
 

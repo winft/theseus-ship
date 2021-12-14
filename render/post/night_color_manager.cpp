@@ -25,9 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/gamma_ramp.h"
 #include "base/platform.h"
+#include "input/redirect.h"
 #include <base/output.h>
 #include <main.h>
-#include <platform.h>
 #include <screens.h>
 #include <seat/session.h>
 #include <workspace.h>
@@ -671,7 +671,7 @@ int night_color_manager::current_target_temp() const
 
 void night_color_manager::commit_gamma_ramps(int temperature)
 {
-    const auto outs = kwinApp()->platform->outputs();
+    const auto outs = kwinApp()->get_base().get_outputs();
 
     for (auto* o : outs) {
         int rampsize = o->gamma_ramp_size();

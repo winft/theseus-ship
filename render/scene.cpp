@@ -90,6 +90,11 @@ namespace KWin::render
 // scene
 //****************************************
 
+scene::scene(render::compositor& compositor)
+    : compositor{compositor}
+{
+}
+
 scene::~scene()
 {
     Q_ASSERT(m_windows.isEmpty());

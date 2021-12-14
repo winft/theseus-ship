@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 #include "win/x11/space.h"
 
-#include "render/backend/x11/x11_platform.h"
+#include "render/backend/x11/platform.h"
 #include "render/x11/compositor.h"
 
 namespace KWin
@@ -45,13 +45,13 @@ public:
     ~X11TestApplication() override;
 
     base::platform& get_base() override;
-    render::compositor* get_compositor() override;
+    render::platform* get_render() override;
     debug::console* create_debug_console() override;
 
     void start();
 
     base::x11::platform base;
-    std::unique_ptr<render::backend::x11::X11StandalonePlatform> render;
+    std::unique_ptr<render::backend::x11::platform> render;
     std::unique_ptr<render::x11::compositor> compositor;
     std::unique_ptr<win::x11::space> workspace;
 };
@@ -68,7 +68,7 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    render.reset(new render::backend::x11::X11StandalonePlatform(base));
+    render.reset(new render::backend::x11::platform(base));
     platform = render.get();
 }
 
@@ -81,9 +81,9 @@ base::platform& X11TestApplication::get_base()
     return base;
 }
 
-render::compositor* X11TestApplication::get_compositor()
+render::platform* X11TestApplication::get_render()
 {
-    return compositor.get();
+    return render.get();
 }
 
 debug::console* X11TestApplication::create_debug_console()
@@ -94,7 +94,7 @@ debug::console* X11TestApplication::create_debug_console()
 void X11TestApplication::start()
 {
     prepare_start();
-    compositor = std::make_unique<render::x11::compositor>();
+    compositor = std::make_unique<render::x11::compositor>(*render);
     workspace = std::make_unique<win::x11::space>();
     Q_EMIT workspaceCreated();
 }
@@ -114,7 +114,7 @@ void X11TimestampUpdateTest::testGrabAfterServerTime()
     // this test tries to grab the X keyboard with a timestamp in future
     // that should fail, but after updating the X11 timestamp, it should
     // work again
-    KWin::updateXTime();
+    KWin::kwinApp()->update_x11_time_from_clock();
     QCOMPARE(KWin::grabXKeyboard(), true);
     KWin::ungrabXKeyboard();
 
@@ -125,7 +125,7 @@ void X11TimestampUpdateTest::testGrabAfterServerTime()
     QCOMPARE(KWin::grabXKeyboard(), false);
 
     // let's update timestamp, now it should work again
-    KWin::updateXTime();
+    KWin::kwinApp()->update_x11_time_from_clock();
     QCOMPARE(KWin::grabXKeyboard(), true);
     KWin::ungrabXKeyboard();
 }
@@ -137,7 +137,7 @@ void X11TimestampUpdateTest::testBeforeLastGrabTime()
     // timestamp it should work again
 
     // first set the grab timestamp
-    KWin::updateXTime();
+    KWin::kwinApp()->update_x11_time_from_clock();
     QCOMPARE(KWin::grabXKeyboard(), true);
     KWin::ungrabXKeyboard();
 
@@ -151,7 +151,7 @@ void X11TimestampUpdateTest::testBeforeLastGrabTime()
     QCOMPARE(KWin::grabXKeyboard(), false);
 
     // let's update timestamp, now it should work again
-    KWin::updateXTime();
+    KWin::kwinApp()->update_x11_time_from_clock();
     QVERIFY(KWin::xTime() >= timestamp);
     QCOMPARE(KWin::grabXKeyboard(), true);
     KWin::ungrabXKeyboard();

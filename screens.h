@@ -37,7 +37,6 @@ namespace base
 class output;
 class platform;
 }
-class Platform;
 class Toplevel;
 
 class KWIN_EXPORT Screens : public QObject

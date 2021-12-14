@@ -37,16 +37,17 @@ constexpr auto compositor_lost_message_delay = 2000;
 
 compositor* compositor::self()
 {
-    return kwinApp()->get_compositor();
+    return kwinApp()->get_render()->compositor.get();
 }
 
 bool compositor::compositing()
 {
-    return kwinApp()->get_compositor() != nullptr && kwinApp()->get_compositor()->isActive();
+    return kwinApp()->get_render()->compositor && kwinApp()->get_render()->compositor->isActive();
 }
 
-compositor::compositor()
+compositor::compositor(render::platform& platform)
     : software_cursor{std::make_unique<cursor>(kwinApp()->input.get())}
+    , platform{platform}
     , m_state(State::Off)
     , m_selectionOwner(nullptr)
     , m_delay(0)
@@ -100,7 +101,7 @@ bool compositor::setupStart()
 
     Q_EMIT aboutToToggleCompositing();
 
-    auto supportedCompositors = kwinApp()->platform->supportedCompositors();
+    auto supportedCompositors = platform.supportedCompositors();
     const auto userConfigIt = std::find(
         supportedCompositors.begin(), supportedCompositors.end(), options->compositingMode());
 
@@ -131,7 +132,7 @@ bool compositor::setupStart()
         return false;
     }
 
-    kwinApp()->platform->setSelectedCompositor(m_scene->compositingType());
+    platform.selected_compositor = m_scene->compositingType();
 
     if (!Workspace::self() && m_scene && m_scene->compositingType() == QPainterCompositing) {
         // Force Software QtQuick on first startup with QPainter.
@@ -196,7 +197,7 @@ void compositor::startupWithWorkspace()
     setupX11Support();
 
     // Sets also the 'effects' pointer.
-    kwinApp()->platform->createEffectsHandler(this, scene());
+    platform.createEffectsHandler(this, scene());
     connect(Workspace::self(), &Workspace::deletedRemoved, scene(), &scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
     connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
@@ -349,7 +350,7 @@ void compositor::addRepaint([[maybe_unused]] QRegion const& region)
 
 void compositor::addRepaintFull()
 {
-    auto const size = kwinApp()->get_base().screens.size();
+    auto const size = platform.base.screens.size();
     addRepaint(QRegion(0, 0, size.width(), size.height()));
 }
 
@@ -462,7 +463,7 @@ render::scene* compositor::scene() const
 int compositor::refreshRate() const
 {
     int max_refresh_rate = 60000;
-    for (auto output : kwinApp()->platform->outputs()) {
+    for (auto output : platform.base.get_outputs()) {
         auto const rate = output->refresh_rate();
         if (rate > max_refresh_rate) {
             max_refresh_rate = rate;

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "input/filters/dpms.h"
+#include "input/redirect.h"
 
 #include <memory>
 

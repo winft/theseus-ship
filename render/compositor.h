@@ -25,6 +25,8 @@ class Toplevel;
 namespace render
 {
 
+class platform;
+
 namespace x11
 {
 class compositor_selection_owner;
@@ -46,6 +48,7 @@ public:
 
     // TODO(romangg): Only relevant for Wayland. Put in child class.
     std::unique_ptr<cursor> software_cursor;
+    render::platform& platform;
 
     ~compositor() override;
     static compositor* self();
@@ -110,7 +113,7 @@ Q_SIGNALS:
     void sceneCreated();
 
 protected:
-    compositor();
+    compositor(render::platform& platform);
     void timerEvent(QTimerEvent* te) override;
 
     virtual void start() = 0;

@@ -10,12 +10,12 @@
 #include "helpers.h"
 #include "layout_policies.h"
 
-#include "../../platform.h"
 #include "input/dbus/keyboard_layout.h"
 #include "input/dbus/keyboard_layouts_v2.h"
 #include "input/event.h"
 #include "input/keyboard.h"
 #include "main.h"
+#include "render/platform.h"
 
 #include <KGlobalAccel>
 #include <QAction>
@@ -43,7 +43,7 @@ void layout_manager::init()
     const QKeySequence sequence = QKeySequence(Qt::ALT + Qt::CTRL + Qt::Key_K);
     KGlobalAccel::self()->setDefaultShortcut(switchKeyboardAction, QList<QKeySequence>({sequence}));
     KGlobalAccel::self()->setShortcut(switchKeyboardAction, QList<QKeySequence>({sequence}));
-    kwinApp()->platform->setupActionForGlobalAccel(switchKeyboardAction);
+    kwinApp()->input->setup_action_for_global_accel(switchKeyboardAction);
     QObject::connect(
         switchKeyboardAction, &QAction::triggered, this, &layout_manager::switchToNextLayout);
 

@@ -40,7 +40,7 @@ public:
     Q_ENUM(SuspendReason)
     Q_FLAG(SuspendReasons)
 
-    compositor();
+    compositor(render::platform& platform);
     static compositor* self();
 
     void schedule_repaint();
