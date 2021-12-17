@@ -44,6 +44,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinglutils.h>
 #include <kwinglplatform.h>
 
+Q_LOGGING_CATEGORY(KWIN_CUBE, "kwin_effect_cube", QtWarningMsg)
+
 namespace KWin
 {
 
@@ -319,7 +321,7 @@ bool CubeEffect::loadShader()
 
     cylinderShader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture | ShaderTrait::AdjustSaturation | ShaderTrait::Modulate, QStringLiteral("cylinder.vert"), QString());
     if (!cylinderShader->isValid()) {
-        qCCritical(KWINEFFECTS) << "The cylinder shader failed to load!";
+        qCCritical(KWIN_CUBE) << "The cylinder shader failed to load!";
         return false;
     } else {
         ShaderBinder binder(cylinderShader);
@@ -330,7 +332,7 @@ bool CubeEffect::loadShader()
 
     sphereShader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture | ShaderTrait::AdjustSaturation | ShaderTrait::Modulate, QStringLiteral("sphere.vert"), QString());
     if (!sphereShader->isValid()) {
-        qCCritical(KWINEFFECTS) << "The sphere shader failed to load!";
+        qCCritical(KWIN_CUBE) << "The sphere shader failed to load!";
         return false;
     } else {
         ShaderBinder binder(sphereShader);
@@ -1105,7 +1107,7 @@ void CubeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPa
     ShaderManager *shaderManager = ShaderManager::instance();
     if (activated && cube_painting) {
         region= infiniteRegion(); // we need to explicitly prevent any clipping, bug #325432
-        //qCDebug(KWINEFFECTS) << w->caption();
+        //qCDebug(KWIN_CUBE) << w->caption();
         float opacity = cubeOpacity;
         if (animationState == AnimationState::Start) {
             opacity = 1.0 - (1.0 - opacity) * timeLine.value();
@@ -1369,13 +1371,13 @@ bool CubeEffect::borderActivated(ElectricBorder border)
 
 void CubeEffect::toggleCube()
 {
-    qCDebug(KWINEFFECTS) << "toggle cube";
+    qCDebug(KWIN_CUBE) << "toggle cube";
     toggle(Cube);
 }
 
 void CubeEffect::toggleCylinder()
 {
-    qCDebug(KWINEFFECTS) << "toggle cylinder";
+    qCDebug(KWIN_CUBE) << "toggle cylinder";
     if (!useShaders)
         useShaders = loadShader();
     if (useShaders)
@@ -1384,7 +1386,7 @@ void CubeEffect::toggleCylinder()
 
 void CubeEffect::toggleSphere()
 {
-    qCDebug(KWINEFFECTS) << "toggle sphere";
+    qCDebug(KWIN_CUBE) << "toggle sphere";
     if (!useShaders)
         useShaders = loadShader();
     if (useShaders)
@@ -1458,21 +1460,21 @@ void CubeEffect::grabbedKeyboardEvent(QKeyEvent* e)
         switch(key) {
         // wrap only on autorepeat
         case Qt::Key_Left:
-            qCDebug(KWINEFFECTS) << "left";
+            qCDebug(KWIN_CUBE) << "left";
             if (animations.count() < effects->numberOfDesktops())
                 animations.enqueue(AnimationState::Left);
             break;
         case Qt::Key_Right:
-            qCDebug(KWINEFFECTS) << "right";
+            qCDebug(KWIN_CUBE) << "right";
             if (animations.count() < effects->numberOfDesktops())
                 animations.enqueue(AnimationState::Right);
             break;
         case Qt::Key_Up:
-            qCDebug(KWINEFFECTS) << "up";
+            qCDebug(KWIN_CUBE) << "up";
             verticalAnimations.enqueue(VerticalAnimationState::Upwards);
             break;
         case Qt::Key_Down:
-            qCDebug(KWINEFFECTS) << "down";
+            qCDebug(KWIN_CUBE) << "down";
             verticalAnimations.enqueue(VerticalAnimationState::Downwards);
         break;
         case Qt::Key_Escape:
@@ -1577,7 +1579,7 @@ void CubeEffect::setActive(bool active)
         animationState = AnimationState::None;
         verticalAnimationState = VerticalAnimationState::None;
         effects->setActiveFullScreenEffect(this);
-        qCDebug(KWINEFFECTS) << "Cube is activated";
+        qCDebug(KWIN_CUBE) << "Cube is activated";
         currentAngle = 0.0;
         verticalCurrentAngle = 0.0;
         if (reflection) {

@@ -45,6 +45,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <climits>
 #include <cmath>
 
+Q_LOGGING_CATEGORY(KWIN_PRESENTWINDOWS, "kwin_effect_presentwindows", QtWarningMsg)
+
 namespace KWin
 {
 
@@ -942,7 +944,7 @@ void PresentWindowsEffect::slotPropertyNotify(EffectWindow* w, long a)
         for (int i = 0; i < length; i++) {
             EffectWindow* foundWin = effects->findWindow(data[i]);
             if (!foundWin) {
-                qCDebug(KWINEFFECTS) << "Invalid window targetted for present windows. Requested:" << data[i];
+                qCDebug(KWIN_PRESENTWINDOWS) << "Invalid window targetted for present windows. Requested:" << data[i];
                 continue;
             }
             m_selectedWindows.append(foundWin);
@@ -1213,7 +1215,7 @@ void PresentWindowsEffect::calculateWindowTransformationsKompose(EffectWindowLis
         rows = (int)ceil(sqrt((double)windowlist.count()));
         columns = (int)ceil((double)windowlist.count() / (double)rows);
     }
-    //qCDebug(KWINEFFECTS) << "Using " << rows << " rows & " << columns << " columns for " << windowlist.count() << " clients";
+    //qCDebug(KWIN_PRESENTWINDOWS) << "Using " << rows << " rows & " << columns << " columns for " << windowlist.count() << " clients";
 
     // Calculate width & height
     int w = (availRect.width() - (columns + 1) * spacing) / columns;
@@ -1316,7 +1318,7 @@ void PresentWindowsEffect::calculateWindowTransformationsKompose(EffectWindowLis
 //                 winData->slot = pos;
             motionManager.moveWindow(window, target);
 
-            //qCDebug(KWINEFFECTS) << "Window '" << window->caption() << "' gets moved to (" <<
+            //qCDebug(KWIN_PRESENTWINDOWS) << "Window '" << window->caption() << "' gets moved to (" <<
             //        mWindowData[window].area.left() << "; " << mWindowData[window].area.right() <<
             //        "), scale: " << mWindowData[window].scale << endl;
         }

@@ -19,6 +19,8 @@
 #include <xcb/xcb_image.h>
 #endif
 
+Q_LOGGING_CATEGORY(KWIN_SCREENSHOT, "kwin_effect_screenshot", QtWarningMsg)
+
 namespace KWin
 {
 
