@@ -36,9 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QVBoxLayout>
 
-K_PLUGIN_FACTORY_WITH_JSON(DesktopGridEffectConfigFactory,
-                           "desktopgrid_config.json",
-                           registerPlugin<KWin::DesktopGridEffectConfig>();)
+K_PLUGIN_CLASS(KWin::DesktopGridEffectConfig)
 
 namespace KWin
 {

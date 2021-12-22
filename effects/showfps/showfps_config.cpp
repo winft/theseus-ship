@@ -29,9 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KAboutData>
 #include <KPluginFactory>
 
-K_PLUGIN_FACTORY_WITH_JSON(ShowFpsEffectConfigFactory,
-                           "showfps_config.json",
-                           registerPlugin<KWin::ShowFpsEffectConfig>();)
+K_PLUGIN_CLASS(KWin::ShowFpsEffectConfig)
 
 namespace KWin
 {
