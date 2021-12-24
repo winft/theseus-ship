@@ -22,7 +22,6 @@
 #include "win/remnant.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
-#include "win/x11/geometry_tip.h"
 
 #include "decorations/window.h"
 #include "rules/rules.h"
@@ -32,8 +31,6 @@
 
 namespace KWin::win::x11
 {
-
-geometry_tip* window::geometry_tip{nullptr};
 
 window::window()
     : Toplevel(new x11::transient(this))
@@ -1026,12 +1023,6 @@ void window::leaveMoveResize()
         move_needs_server_update = false;
     }
 
-    if (geometry_tip) {
-        geometry_tip->hide();
-        delete geometry_tip;
-        geometry_tip = nullptr;
-    }
-
     if (move_resize_has_keyboard_grab) {
         ungrabXKeyboard();
     }
@@ -1078,11 +1069,6 @@ void window::doResizeSync()
     } else {
         pending_configures.front().geometry.frame = frame_geo;
     }
-}
-
-void window::doPerformMoveResize()
-{
-    reposition_geometry_tip(this);
 }
 
 }

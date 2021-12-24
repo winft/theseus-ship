@@ -16,7 +16,6 @@
 
 namespace KWin::win::x11
 {
-class geometry_tip;
 
 constexpr long client_win_mask = XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE
     | XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_KEYMAP_STATE
@@ -156,9 +155,6 @@ public:
 
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
 
-    // TODO(romangg): Make non-static? Or remove geometry tips completely?
-    static x11::geometry_tip* geometry_tip;
-
     window();
     ~window();
 
@@ -234,7 +230,6 @@ public:
     bool doStartMoveResize() override;
     void leaveMoveResize() override;
     void doResizeSync() override;
-    void doPerformMoveResize() override;
     bool isWaitingForMoveResizeSync() const override;
 
     bool belongsToSameApplication(Toplevel const* other,

@@ -511,7 +511,6 @@ set(kwin_SRCS
     win/virtual_desktops.cpp
     win/x11/client_machine.cpp
     win/x11/color_mapper.cpp
-    win/x11/geometry_tip.cpp
     win/x11/group.cpp
     win/x11/netinfo.cpp
     win/x11/root_info_filter.cpp
