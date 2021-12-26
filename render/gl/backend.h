@@ -167,6 +167,26 @@ public:
     }
 
     /**
+     * Sets the platform-specific @p extensions.
+     *
+     * These are the EGL/GLX extensions, not the OpenGL extensions
+     */
+    void setExtensions(const QList<QByteArray>& extensions)
+    {
+        m_extensions = extensions;
+    }
+
+    void setSupportsSurfacelessContext(bool value)
+    {
+        m_haveSurfacelessContext = value;
+    }
+
+    void setSupportsBufferAge(bool value)
+    {
+        m_haveBufferAge = value;
+    }
+
+    /**
      * Copy a region of pixels from the current read to the current draw buffer
      */
     void copyPixels(const QRegion& region);
@@ -190,16 +210,6 @@ protected:
         m_directRendering = direct;
     }
 
-    void setSupportsBufferAge(bool value)
-    {
-        m_haveBufferAge = value;
-    }
-
-    void setSupportsSurfacelessContext(bool value)
-    {
-        m_haveSurfacelessContext = value;
-    }
-
     /**
      * @return const QRegion& Damage of previously rendered frame
      */
@@ -219,16 +229,6 @@ protected:
     void startRenderTimer()
     {
         m_renderTimer.start();
-    }
-
-    /**
-     * Sets the platform-specific @p extensions.
-     *
-     * These are the EGL/GLX extensions, not the OpenGL extensions
-     */
-    void setExtensions(const QList<QByteArray>& extensions)
-    {
-        m_extensions = extensions;
     }
 
 private:

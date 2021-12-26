@@ -16,6 +16,7 @@
 #include "main.h"
 #include "options.h"
 #include "render/compositor.h"
+#include "render/gl/gl.h"
 #include "render/gl/texture.h"
 #include "render/scene.h"
 #include "render/x11/compositor.h"
@@ -150,11 +151,7 @@ glx_backend::glx_backend(Display* display, render::compositor& compositor)
         throw std::runtime_error("Could not initialize rendering context");
     }
 
-    // Initialize OpenGL
-    GLPlatform* glPlatform = GLPlatform::instance();
-    glPlatform->detect(GlxPlatformInterface);
-    glPlatform->printResults();
-    initGL(&getProcAddress);
+    gl::init_gl(GlxPlatformInterface, getProcAddress);
 
     // Check whether certain features are supported
     m_haveMESACopySubBuffer = hasExtension(QByteArrayLiteral("GLX_MESA_copy_sub_buffer"));
@@ -186,7 +183,7 @@ glx_backend::glx_backend(Display* display, render::compositor& compositor)
         qCWarning(KWIN_X11) << "NO VSYNC! glSwapInterval is not supported";
     }
 
-    if (glPlatform->isVirtualBox()) {
+    if (GLPlatform::instance()->isVirtualBox()) {
         // VirtualBox does not support glxQueryDrawable
         // this should actually be in kwinglutils_funcs, but QueryDrawable seems not to be provided
         // by an extension and the GLPlatform has not been initialized at the moment when initGLX()

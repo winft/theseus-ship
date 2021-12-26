@@ -60,10 +60,6 @@ protected:
     egl_backend();
     void cleanup();
     virtual void cleanupSurfaces();
-    bool initEglAPI();
-    void initKWinGL();
-    void initBufferAge();
-    void initClientExtensions();
 };
 
 class KWIN_EXPORT egl_texture : public render::gl::texture_private

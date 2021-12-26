@@ -118,4 +118,70 @@ EGLContext create_egl_context(Backend const& backend)
     return ctx;
 }
 
+template<typename Backend>
+bool init_egl_api(Backend& backend)
+{
+    EGLint major, minor;
+
+    if (eglInitialize(backend.data.base.display, &major, &minor) == EGL_FALSE) {
+        qCWarning(KWIN_WL) << "eglInitialize failed";
+        EGLint error = eglGetError();
+        if (error != EGL_SUCCESS) {
+            qCWarning(KWIN_WL) << "Error during eglInitialize " << error;
+        }
+        return false;
+    }
+
+    EGLint error = eglGetError();
+    if (error != EGL_SUCCESS) {
+        qCWarning(KWIN_WL) << "Error during eglInitialize " << error;
+        return false;
+    }
+
+    qCDebug(KWIN_WL) << "Egl Initialize succeeded";
+
+    if (eglBindAPI(is_gles_render() ? EGL_OPENGL_ES_API : EGL_OPENGL_API) == EGL_FALSE) {
+        qCCritical(KWIN_WL) << "bind OpenGL API failed";
+        return false;
+    }
+
+    qCDebug(KWIN_WL) << "EGL version: " << major << "." << minor;
+
+    QByteArray const extensions = eglQueryString(backend.data.base.display, EGL_EXTENSIONS);
+    backend.setExtensions(extensions.split(' '));
+    backend.setSupportsSurfacelessContext(
+        backend.hasExtension(QByteArrayLiteral("EGL_KHR_surfaceless_context")));
+
+    return true;
+}
+
+template<typename Backend>
+void init_buffer_age(Backend& backend)
+{
+    backend.setSupportsBufferAge(false);
+
+    if (backend.hasExtension(QByteArrayLiteral("EGL_EXT_buffer_age"))) {
+        QByteArray const useBufferAge = qgetenv("KWIN_USE_BUFFER_AGE");
+
+        if (useBufferAge != "0")
+            backend.setSupportsBufferAge(true);
+    }
+}
+
+template<typename Backend>
+void init_client_extensions(Backend& backend)
+{
+    // Get the list of client extensions
+    char const* cstring = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+    auto const extensions = QByteArray::fromRawData(cstring, qstrlen(cstring));
+
+    if (extensions.isEmpty()) {
+        // If eglQueryString() returned NULL, the implementation doesn't support
+        // EGL_EXT_client_extensions. Expect an EGL_BAD_DISPLAY error.
+        (void)eglGetError();
+    }
+
+    backend.data.base.client_extensions = extensions.split(' ');
+}
+
 }

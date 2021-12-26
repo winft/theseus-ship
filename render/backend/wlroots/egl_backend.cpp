@@ -12,6 +12,7 @@
 #include "output.h"
 #include "platform.h"
 #include "render/gl/egl.h"
+#include "render/gl/gl.h"
 #include "render/wayland/egl.h"
 #include "surface.h"
 #include "wlr_helpers.h"
@@ -24,6 +25,12 @@
 
 namespace KWin::render::backend::wlroots
 {
+
+using eglFuncPtr = void (*)();
+static eglFuncPtr get_proc_address(char const* name)
+{
+    return eglGetProcAddress(name);
+}
 
 std::unique_ptr<egl_output>& egl_backend::get_egl_out(base::output const* out)
 {
@@ -40,12 +47,12 @@ egl_backend::egl_backend(wlroots::platform& platform, bool headless)
     // Egl is always direct rendering.
     setIsDirectRendering(true);
 
-    initClientExtensions();
+    gl::init_client_extensions(*this);
 
     if (!init_platform()) {
         throw std::runtime_error("Could not initialize EGL backend");
     }
-    if (!initEglAPI()) {
+    if (!gl::init_egl_api(*this)) {
         throw std::runtime_error("Could not initialize EGL API");
     }
     if (!init_buffer_configs(this)) {
@@ -55,8 +62,8 @@ egl_backend::egl_backend(wlroots::platform& platform, bool headless)
         throw std::runtime_error("Could not initialize rendering context");
     }
 
-    initKWinGL();
-    initBufferAge();
+    gl::init_gl(EglPlatformInterface, get_proc_address);
+    gl::init_buffer_age(*this);
     wayland::init_egl(*this, data);
 }
 
