@@ -314,7 +314,7 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
         return;
     }
 
-    eglSwapBuffers(eglDisplay(), out->surf->egl);
+    eglSwapBuffers(data.base.display, out->surf->egl);
     auto buffer = out->create_buffer();
 
     if (!out->present(buffer)) {
@@ -324,7 +324,7 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
     }
 
     if (supportsBufferAge()) {
-        eglQuerySurface(eglDisplay(), out->surf->egl, EGL_BUFFER_AGE_EXT, &out->bufferAge);
+        eglQuerySurface(data.base.display, out->surf->egl, EGL_BUFFER_AGE_EXT, &out->bufferAge);
 
         if (out->damageHistory.size() > 10) {
             out->damageHistory.pop_back();

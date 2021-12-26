@@ -66,7 +66,7 @@ void egl_backend::cleanup()
 {
     cleanupGL();
     doneCurrent();
-    eglDestroyContext(m_display, m_context);
+    eglDestroyContext(data.base.display, data.base.context);
     cleanupSurfaces();
     eglReleaseThread();
     kwinApp()->platform->egl_context = EGL_NO_CONTEXT;
@@ -76,15 +76,15 @@ void egl_backend::cleanup()
 
 void egl_backend::cleanupSurfaces()
 {
-    if (m_surface != EGL_NO_SURFACE) {
-        eglDestroySurface(m_display, m_surface);
+    if (data.base.surface != EGL_NO_SURFACE) {
+        eglDestroySurface(data.base.display, data.base.surface);
     }
 }
 
 bool egl_backend::initEglAPI()
 {
     EGLint major, minor;
-    if (eglInitialize(m_display, &major, &minor) == EGL_FALSE) {
+    if (eglInitialize(data.base.display, &major, &minor) == EGL_FALSE) {
         qCWarning(KWIN_WL) << "eglInitialize failed";
         EGLint error = eglGetError();
         if (error != EGL_SUCCESS) {
@@ -104,7 +104,7 @@ bool egl_backend::initEglAPI()
         return false;
     }
     qCDebug(KWIN_WL) << "EGL version: " << major << "." << minor;
-    const QByteArray eglExtensions = eglQueryString(m_display, EGL_EXTENSIONS);
+    const QByteArray eglExtensions = eglQueryString(data.base.display, EGL_EXTENSIONS);
     setExtensions(eglExtensions.split(' '));
     setSupportsSurfacelessContext(hasExtension(QByteArrayLiteral("EGL_KHR_surfaceless_context")));
     return true;
@@ -148,12 +148,12 @@ void egl_backend::initClientExtensions()
         (void)eglGetError();
     }
 
-    m_clientExtensions = clientExtensionsString.split(' ');
+    data.base.client_extensions = clientExtensionsString.split(' ');
 }
 
 bool egl_backend::hasClientExtension(const QByteArray& ext) const
 {
-    return m_clientExtensions.contains(ext);
+    return data.base.client_extensions.contains(ext);
 }
 
 bool egl_backend::makeCurrent()
@@ -162,13 +162,14 @@ bool egl_backend::makeCurrent()
         // Workaround to tell Qt that no QOpenGLContext is current
         context->doneCurrent();
     }
-    const bool current = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
+    const bool current = eglMakeCurrent(
+        data.base.display, data.base.surface, data.base.surface, data.base.context);
     return current;
 }
 
 void egl_backend::doneCurrent()
 {
-    eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglMakeCurrent(data.base.display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 }
 
 render::gl::texture_private* egl_backend::createBackendTexture(render::gl::texture* texture)
@@ -258,7 +259,7 @@ bool egl_backend::createContext()
     EGLContext ctx = EGL_NO_CONTEXT;
     for (auto it = candidates.begin(); it != candidates.end(); it++) {
         const auto attribs = (*it)->build();
-        ctx = eglCreateContext(m_display, config(), EGL_NO_CONTEXT, attribs.data());
+        ctx = eglCreateContext(data.base.display, data.base.config, EGL_NO_CONTEXT, attribs.data());
         if (ctx != EGL_NO_CONTEXT) {
             qCDebug(KWIN_WL) << "Created EGL context with attributes:" << (*it).get();
             break;
@@ -269,26 +270,26 @@ bool egl_backend::createContext()
         qCCritical(KWIN_WL) << "Create Context failed";
         return false;
     }
-    m_context = ctx;
-    kwinApp()->platform->egl_context = m_context;
+    data.base.context = ctx;
+    kwinApp()->platform->egl_context = data.base.context;
     return true;
 }
 
 void egl_backend::setEglDisplay(const EGLDisplay& display)
 {
-    m_display = display;
+    data.base.display = display;
     kwinApp()->platform->egl_display = display;
 }
 
 void egl_backend::setConfig(const EGLConfig& config)
 {
-    m_config = config;
+    data.base.config = config;
     kwinApp()->platform->egl_config = config;
 }
 
 void egl_backend::setSurface(const EGLSurface& surface)
 {
-    m_surface = surface;
+    data.base.surface = surface;
     kwinApp()->platform->egl_surface = surface;
 }
 
@@ -305,7 +306,7 @@ egl_texture::egl_texture(render::gl::texture* texture, egl_backend* backend)
 egl_texture::~egl_texture()
 {
     if (m_image != EGL_NO_IMAGE_KHR) {
-        eglDestroyImageKHR(m_backend->eglDisplay(), m_image);
+        eglDestroyImageKHR(m_backend->data.base.display, m_image);
     }
 }
 
@@ -363,7 +364,7 @@ void egl_texture::updateTexture(render::window_pixmap* pixmap)
         glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES)dmabuf->images().at(0)); // TODO
         q->unbind();
         if (m_image != EGL_NO_IMAGE_KHR) {
-            eglDestroyImageKHR(m_backend->eglDisplay(), m_image);
+            eglDestroyImageKHR(m_backend->data.base.display, m_image);
         }
         m_image = EGL_NO_IMAGE_KHR; // The wl_buffer has ownership of the image
         // The origin in a dmabuf-buffer is at the upper-left corner, so the meaning
@@ -380,7 +381,7 @@ void egl_texture::updateTexture(render::window_pixmap* pixmap)
         q->unbind();
         if (image != EGL_NO_IMAGE_KHR) {
             if (m_image != EGL_NO_IMAGE_KHR) {
-                eglDestroyImageKHR(m_backend->eglDisplay(), m_image);
+                eglDestroyImageKHR(m_backend->data.base.display, m_image);
             }
             m_image = image;
         }
@@ -676,20 +677,22 @@ EGLImageKHR egl_texture::attach(Wrapland::Server::Buffer* buffer)
 {
     EGLint format, yInverted;
     m_backend->data.query_wl_buffer(
-        m_backend->eglDisplay(), buffer->resource(), EGL_TEXTURE_FORMAT, &format);
+        m_backend->data.base.display, buffer->resource(), EGL_TEXTURE_FORMAT, &format);
     if (format != EGL_TEXTURE_RGB && format != EGL_TEXTURE_RGBA) {
         qCDebug(KWIN_WL) << "Unsupported texture format: " << format;
         return EGL_NO_IMAGE_KHR;
     }
-    if (!m_backend->data.query_wl_buffer(
-            m_backend->eglDisplay(), buffer->resource(), EGL_WAYLAND_Y_INVERTED_WL, &yInverted)) {
+    if (!m_backend->data.query_wl_buffer(m_backend->data.base.display,
+                                         buffer->resource(),
+                                         EGL_WAYLAND_Y_INVERTED_WL,
+                                         &yInverted)) {
         // if EGL_WAYLAND_Y_INVERTED_WL is not supported wl_buffer should be treated as if value
         // were EGL_TRUE
         yInverted = EGL_TRUE;
     }
 
     const EGLint attribs[] = {EGL_WAYLAND_PLANE_WL, 0, EGL_NONE};
-    EGLImageKHR image = eglCreateImageKHR(m_backend->eglDisplay(),
+    EGLImageKHR image = eglCreateImageKHR(m_backend->data.base.display,
                                           EGL_NO_CONTEXT,
                                           EGL_WAYLAND_BUFFER_WL,
                                           (EGLClientBuffer)buffer->resource(),

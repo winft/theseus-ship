@@ -128,7 +128,7 @@ void egl_dmabuf_buffer::removeImages()
 {
     if (m_interfaceImpl) {
         for (auto image : m_images) {
-            eglDestroyImageKHR(m_interfaceImpl->m_backend->eglDisplay(), image);
+            eglDestroyImageKHR(m_interfaceImpl->m_backend->data.base.display, image);
         }
     }
     m_images.clear();
@@ -189,7 +189,7 @@ EGLImage egl_dmabuf::createImage(const QVector<Plane>& planes, uint32_t format, 
 
     attribs << EGL_NONE;
 
-    EGLImage image = eglCreateImageKHR(m_backend->eglDisplay(),
+    EGLImage image = eglCreateImageKHR(m_backend->data.base.display,
                                        EGL_NO_CONTEXT,
                                        EGL_LINUX_DMA_BUF_EXT,
                                        (EGLClientBuffer) nullptr,
@@ -344,14 +344,14 @@ QVector<uint32_t> egl_dmabuf::queryFormats()
     }
 
     EGLint count = 0;
-    EGLBoolean success = eglQueryDmaBufFormatsEXT(m_backend->eglDisplay(), 0, nullptr, &count);
+    EGLBoolean success = eglQueryDmaBufFormatsEXT(m_backend->data.base.display, 0, nullptr, &count);
     if (!success || count == 0) {
         return QVector<uint32_t>();
     }
 
     QVector<uint32_t> formats(count);
     if (!eglQueryDmaBufFormatsEXT(
-            m_backend->eglDisplay(), count, (EGLint*)formats.data(), &count)) {
+            m_backend->data.base.display, count, (EGLint*)formats.data(), &count)) {
         return QVector<uint32_t>();
     }
     return formats;
@@ -373,11 +373,11 @@ void egl_dmabuf::setSupportedFormatsAndModifiers()
         if (eglQueryDmaBufModifiersEXT != nullptr) {
             EGLint count = 0;
             EGLBoolean success = eglQueryDmaBufModifiersEXT(
-                m_backend->eglDisplay(), format, 0, nullptr, nullptr, &count);
+                m_backend->data.base.display, format, 0, nullptr, nullptr, &count);
 
             if (success && count > 0) {
                 QVector<uint64_t> modifiers(count);
-                if (eglQueryDmaBufModifiersEXT(m_backend->eglDisplay(),
+                if (eglQueryDmaBufModifiersEXT(m_backend->data.base.display,
                                                format,
                                                count,
                                                modifiers.data(),

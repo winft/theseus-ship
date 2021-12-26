@@ -51,23 +51,6 @@ public:
     void doneCurrent() override;
     render::gl::texture_private* createBackendTexture(render::gl::texture* texture) override;
 
-    EGLDisplay eglDisplay() const
-    {
-        return m_display;
-    }
-    EGLContext context() const
-    {
-        return m_context;
-    }
-    EGLSurface surface() const
-    {
-        return m_surface;
-    }
-    EGLConfig config() const
-    {
-        return m_config;
-    }
-
     bool hasClientExtension(const QByteArray& ext) const;
     bool isOpenGLES() const;
     void setConfig(const EGLConfig& config);
@@ -87,13 +70,6 @@ protected:
     void initClientExtensions();
 
     bool createContext();
-
-private:
-    EGLDisplay m_display = EGL_NO_DISPLAY;
-    EGLSurface m_surface = EGL_NO_SURFACE;
-    EGLContext m_context = EGL_NO_CONTEXT;
-    EGLConfig m_config = nullptr;
-    QList<QByteArray> m_clientExtensions;
 };
 
 class KWIN_EXPORT egl_texture : public render::gl::texture_private

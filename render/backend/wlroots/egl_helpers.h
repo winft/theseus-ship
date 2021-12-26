@@ -106,7 +106,7 @@ template<typename Egl>
 EGLSurface create_egl_surface(Egl const& egl, gbm_surface* gbm_surf)
 {
     auto egl_surf = eglCreatePlatformWindowSurfaceEXT(
-        egl.eglDisplay(), egl.config(), reinterpret_cast<void*>(gbm_surf), nullptr);
+        egl.data.base.display, egl.data.base.config, reinterpret_cast<void*>(gbm_surf), nullptr);
 
     if (egl_surf == EGL_NO_SURFACE) {
         qCCritical(KWIN_WL) << "Creating EGL surface failed";
@@ -126,7 +126,7 @@ std::unique_ptr<surface> create_surface(Egl const& egl, QSize const& size)
     if (!egl_surf) {
         return nullptr;
     }
-    return std::make_unique<surface>(gbm_surf, egl_surf, egl.eglDisplay(), size);
+    return std::make_unique<surface>(gbm_surf, egl_surf, egl.data.base.display, size);
 }
 
 template<typename Egl>
@@ -139,11 +139,11 @@ std::unique_ptr<surface> create_headless_surface(Egl const& egl, QSize const& si
         size.width(),
         EGL_NONE,
     };
-    auto egl_surf = eglCreatePbufferSurface(egl.eglDisplay(), egl.config(), attribs);
+    auto egl_surf = eglCreatePbufferSurface(egl.data.base.display, egl.data.base.config, attribs);
     if (!egl_surf) {
         return nullptr;
     }
-    return std::make_unique<surface>(nullptr, egl_surf, egl.eglDisplay(), size);
+    return std::make_unique<surface>(nullptr, egl_surf, egl.data.base.display, size);
 }
 
 template<typename EglBackend>
@@ -169,7 +169,7 @@ bool init_buffer_configs(EglBackend* egl_back)
 
     EGLint count;
     EGLConfig configs[1024];
-    auto display = egl_back->eglDisplay();
+    auto display = egl_back->data.base.display;
 
     if (!eglChooseConfig(
             display, config_attribs, configs, sizeof(configs) / sizeof(EGLConfig), &count)) {
@@ -227,7 +227,8 @@ bool make_current(EGLSurface surface, EglBackend& egl_back)
         qCCritical(KWIN_WL) << "Make Context Current failed: no surface";
         return false;
     }
-    if (eglMakeCurrent(egl_back.eglDisplay(), surface, surface, egl_back.context()) == EGL_FALSE) {
+    if (eglMakeCurrent(egl_back.data.base.display, surface, surface, egl_back.data.base.context)
+        == EGL_FALSE) {
         qCCritical(KWIN_WL) << "Make Context Current failed:" << eglGetError();
         return false;
     }
