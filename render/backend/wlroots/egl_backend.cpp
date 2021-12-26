@@ -54,7 +54,7 @@ egl_backend::egl_backend(wlroots::platform& platform, bool headless)
 
     initKWinGL();
     initBufferAge();
-    wayland::init_egl(*this);
+    wayland::init_egl(*this, data);
 }
 
 egl_backend::~egl_backend()

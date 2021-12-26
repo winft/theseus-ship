@@ -45,13 +45,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
 
-namespace KWin::render::wayland
-{
-eglBindWaylandDisplayWL_func eglBindWaylandDisplayWL{nullptr};
-eglUnbindWaylandDisplayWL_func eglUnbindWaylandDisplayWL{nullptr};
-eglQueryWaylandBufferWL_func eglQueryWaylandBufferWL{nullptr};
-}
-
 namespace KWin::render::gl
 {
 
@@ -60,7 +53,7 @@ egl_backend::egl_backend()
     , backend()
 {
     connect(render::compositor::self(), &render::compositor::aboutToDestroy, this, [this] {
-        wayland::unbind_egl_display(*this);
+        wayland::unbind_egl_display(*this, data);
     });
 }
 
@@ -626,7 +619,7 @@ bool egl_texture::loadShmTexture(Wrapland::Server::Buffer* buffer)
 
 bool egl_texture::loadEglTexture(Wrapland::Server::Buffer* buffer)
 {
-    if (!wayland::eglQueryWaylandBufferWL) {
+    if (!m_backend->data.query_wl_buffer) {
         return false;
     }
     if (!buffer->resource()) {
@@ -682,13 +675,13 @@ bool egl_texture::loadInternalImageObject(render::window_pixmap* pixmap)
 EGLImageKHR egl_texture::attach(Wrapland::Server::Buffer* buffer)
 {
     EGLint format, yInverted;
-    wayland::eglQueryWaylandBufferWL(
+    m_backend->data.query_wl_buffer(
         m_backend->eglDisplay(), buffer->resource(), EGL_TEXTURE_FORMAT, &format);
     if (format != EGL_TEXTURE_RGB && format != EGL_TEXTURE_RGBA) {
         qCDebug(KWIN_WL) << "Unsupported texture format: " << format;
         return EGL_NO_IMAGE_KHR;
     }
-    if (!wayland::eglQueryWaylandBufferWL(
+    if (!m_backend->data.query_wl_buffer(
             m_backend->eglDisplay(), buffer->resource(), EGL_WAYLAND_Y_INVERTED_WL, &yInverted)) {
         // if EGL_WAYLAND_Y_INVERTED_WL is not supported wl_buffer should be treated as if value
         // were EGL_TRUE

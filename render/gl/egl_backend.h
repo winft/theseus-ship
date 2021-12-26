@@ -22,8 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "backend.h"
 #include "texture.h"
 
+#include "render/wayland/egl_data.h"
+
 #include <QObject>
-#include <epoxy/egl.h>
 
 class QOpenGLFramebufferObject;
 
@@ -73,6 +74,7 @@ public:
     void setSurface(const EGLSurface& surface);
 
     egl_dmabuf* dmabuf{nullptr};
+    wayland::egl_data data;
 
 protected:
     egl_backend();
