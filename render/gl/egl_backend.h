@@ -53,15 +53,12 @@ public:
 
     bool hasClientExtension(const QByteArray& ext) const;
     bool isOpenGLES() const;
-    void setConfig(const EGLConfig& config);
-    void setSurface(const EGLSurface& surface);
 
     egl_dmabuf* dmabuf{nullptr};
     wayland::egl_data data;
 
 protected:
     egl_backend();
-    void setEglDisplay(const EGLDisplay& display);
     void cleanup();
     virtual void cleanupSurfaces();
     bool initEglAPI();

@@ -271,21 +271,6 @@ bool egl_backend::createContext()
     return true;
 }
 
-void egl_backend::setEglDisplay(const EGLDisplay& display)
-{
-    data.base.display = display;
-}
-
-void egl_backend::setConfig(const EGLConfig& config)
-{
-    data.base.config = config;
-}
-
-void egl_backend::setSurface(const EGLSurface& surface)
-{
-    data.base.surface = surface;
-}
-
 egl_texture::egl_texture(render::gl::texture* texture, egl_backend* backend)
     : render::gl::texture_private()
     , q(texture)

@@ -74,7 +74,7 @@ bool egl_backend::init_platform()
         if (egl_display == EGL_NO_DISPLAY) {
             return false;
         }
-        setEglDisplay(egl_display);
+        data.base.display = egl_display;
         platform.egl_display_to_terminate = egl_display;
         return true;
     }
@@ -85,7 +85,7 @@ bool egl_backend::init_platform()
     }
 
     assert(gbm->egl_display != EGL_NO_DISPLAY);
-    setEglDisplay(gbm->egl_display);
+    data.base.display = gbm->egl_display;
     platform.egl_display_to_terminate = gbm->egl_display;
 
     this->gbm = std::move(gbm);
@@ -108,7 +108,7 @@ bool egl_backend::init_rendering_context()
     // create a dummy surface and keep that constantly set over the run time.
     dummy_surface = headless ? create_headless_surface(*this, QSize(800, 600))
                              : create_surface(*this, QSize(800, 600));
-    setSurface(dummy_surface->egl);
+    data.base.surface = dummy_surface->egl;
 
     if (platform.base.all_outputs.empty()) {
         // In case no outputs are connected make the context current with our dummy surface.

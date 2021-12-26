@@ -184,7 +184,7 @@ bool init_buffer_configs(EglBackend* egl_back)
             qCCritical(KWIN_WL) << "No suitable config for headless backend found.";
             return false;
         }
-        egl_back->setConfig(configs[0]);
+        egl_back->data.base.config = configs[0];
         return true;
     }
 
@@ -210,7 +210,7 @@ bool init_buffer_configs(EglBackend* egl_back)
         }
 
         if ((gbmFormat == GBM_FORMAT_XRGB8888) || (gbmFormat == GBM_FORMAT_ARGB8888)) {
-            egl_back->setConfig(configs[i]);
+            egl_back->data.base.config = configs[i];
             return true;
         }
     }
