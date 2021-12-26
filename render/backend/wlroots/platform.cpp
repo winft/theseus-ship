@@ -39,7 +39,12 @@ platform::platform(base::backend::wlroots::platform& base)
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 }
 
-platform::~platform() = default;
+platform::~platform()
+{
+    if (egl_display_to_terminate != EGL_NO_DISPLAY) {
+        eglTerminate(egl_display_to_terminate);
+    }
+}
 
 void handle_new_output(struct wl_listener* listener, void* data)
 {

@@ -69,9 +69,6 @@ void egl_backend::cleanup()
     eglDestroyContext(data.base.display, data.base.context);
     cleanupSurfaces();
     eglReleaseThread();
-    kwinApp()->platform->egl_context = EGL_NO_CONTEXT;
-    kwinApp()->platform->egl_surface = EGL_NO_SURFACE;
-    kwinApp()->platform->egl_config = nullptr;
 }
 
 void egl_backend::cleanupSurfaces()
@@ -271,26 +268,22 @@ bool egl_backend::createContext()
         return false;
     }
     data.base.context = ctx;
-    kwinApp()->platform->egl_context = data.base.context;
     return true;
 }
 
 void egl_backend::setEglDisplay(const EGLDisplay& display)
 {
     data.base.display = display;
-    kwinApp()->platform->egl_display = display;
 }
 
 void egl_backend::setConfig(const EGLConfig& config)
 {
     data.base.config = config;
-    kwinApp()->platform->egl_config = config;
 }
 
 void egl_backend::setSurface(const EGLSurface& surface)
 {
     data.base.surface = surface;
-    kwinApp()->platform->egl_surface = surface;
 }
 
 egl_texture::egl_texture(render::gl::texture* texture, egl_backend* backend)

@@ -32,7 +32,7 @@ namespace QPA
 
 OffscreenSurface::OffscreenSurface(QOffscreenSurface *surface)
     : QPlatformOffscreenSurface(surface)
-    , m_eglDisplay(kwinApp()->platform->egl_display)
+    , m_eglDisplay(kwinApp()->platform->egl_data->display)
 {
     const QSize size = surface->size();
 

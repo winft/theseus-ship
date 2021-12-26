@@ -34,6 +34,8 @@ egl_backend::egl_backend(wlroots::platform& platform, bool headless)
     , platform{platform}
     , headless{headless}
 {
+    platform.egl_data = &data.base;
+
     // Egl is always direct rendering.
     setIsDirectRendering(true);
 
@@ -61,6 +63,8 @@ egl_backend::~egl_backend()
 {
     cleanupSurfaces();
     cleanup();
+
+    platform.egl_data = nullptr;
 }
 
 bool egl_backend::init_platform()
@@ -71,6 +75,7 @@ bool egl_backend::init_platform()
             return false;
         }
         setEglDisplay(egl_display);
+        platform.egl_display_to_terminate = egl_display;
         return true;
     }
 
@@ -81,6 +86,7 @@ bool egl_backend::init_platform()
 
     assert(gbm->egl_display != EGL_NO_DISPLAY);
     setEglDisplay(gbm->egl_display);
+    platform.egl_display_to_terminate = gbm->egl_display;
 
     this->gbm = std::move(gbm);
     return true;

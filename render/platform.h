@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "gl/egl_data.h"
 #include "input/redirect.h"
 
 #include <kwin_export.h>
@@ -141,13 +142,10 @@ public:
      */
     CompositingType selected_compositor{NoCompositing};
 
-    EGLDisplay egl_display{EGL_NO_DISPLAY};
-    EGLContext egl_context{EGL_NO_CONTEXT};
-    EGLConfig egl_config{nullptr};
-    EGLSurface egl_surface{EGL_NO_SURFACE};
-
     std::unique_ptr<render::compositor> compositor;
     base::platform& base;
+
+    gl::egl_data* egl_data{nullptr};
 
 protected:
     platform(base::platform& base);
