@@ -11,6 +11,7 @@
 #include "egl_output.h"
 #include "output.h"
 #include "platform.h"
+#include "render/wayland/egl.h"
 #include "surface.h"
 #include "wlr_helpers.h"
 
@@ -53,7 +54,7 @@ egl_backend::egl_backend(wlroots::platform& platform, bool headless)
 
     initKWinGL();
     initBufferAge();
-    initWayland();
+    wayland::init_egl(*this);
 }
 
 egl_backend::~egl_backend()

@@ -72,6 +72,8 @@ public:
     void setConfig(const EGLConfig& config);
     void setSurface(const EGLSurface& surface);
 
+    egl_dmabuf* dmabuf{nullptr};
+
 protected:
     egl_backend();
     void setEglDisplay(const EGLDisplay& display);
@@ -81,19 +83,15 @@ protected:
     void initKWinGL();
     void initBufferAge();
     void initClientExtensions();
-    void initWayland();
 
     bool createContext();
 
 private:
-    void unbindWaylandDisplay();
-
     EGLDisplay m_display = EGL_NO_DISPLAY;
     EGLSurface m_surface = EGL_NO_SURFACE;
     EGLContext m_context = EGL_NO_CONTEXT;
     EGLConfig m_config = nullptr;
     QList<QByteArray> m_clientExtensions;
-    egl_dmabuf* m_dmaBuf = nullptr;
 };
 
 class KWIN_EXPORT egl_texture : public render::gl::texture_private

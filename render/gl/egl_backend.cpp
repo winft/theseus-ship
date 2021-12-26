@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "options.h"
 #include "render/compositor.h"
 #include "render/platform.h"
+#include "render/wayland/egl.h"
 #include "render/window.h"
 #include "toplevel.h"
 #include "wayland_server.h"
@@ -44,39 +45,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
 
+namespace KWin::render::wayland
+{
+eglBindWaylandDisplayWL_func eglBindWaylandDisplayWL{nullptr};
+eglUnbindWaylandDisplayWL_func eglUnbindWaylandDisplayWL{nullptr};
+eglQueryWaylandBufferWL_func eglQueryWaylandBufferWL{nullptr};
+}
+
 namespace KWin::render::gl
 {
-
-typedef GLboolean (*eglBindWaylandDisplayWL_func)(EGLDisplay dpy, wl_display* display);
-typedef GLboolean (*eglUnbindWaylandDisplayWL_func)(EGLDisplay dpy, wl_display* display);
-typedef GLboolean (*eglQueryWaylandBufferWL_func)(EGLDisplay dpy,
-                                                  struct wl_resource* buffer,
-                                                  EGLint attribute,
-                                                  EGLint* value);
-eglBindWaylandDisplayWL_func eglBindWaylandDisplayWL = nullptr;
-eglUnbindWaylandDisplayWL_func eglUnbindWaylandDisplayWL = nullptr;
-eglQueryWaylandBufferWL_func eglQueryWaylandBufferWL = nullptr;
 
 egl_backend::egl_backend()
     : QObject(nullptr)
     , backend()
 {
-    connect(render::compositor::self(),
-            &render::compositor::aboutToDestroy,
-            this,
-            &egl_backend::unbindWaylandDisplay);
+    connect(render::compositor::self(), &render::compositor::aboutToDestroy, this, [this] {
+        wayland::unbind_egl_display(*this);
+    });
 }
 
 egl_backend::~egl_backend()
 {
-    delete m_dmaBuf;
-}
-
-void egl_backend::unbindWaylandDisplay()
-{
-    if (eglUnbindWaylandDisplayWL && m_display != EGL_NO_DISPLAY) {
-        eglUnbindWaylandDisplayWL(m_display, kwinApp()->get_wayland_server()->display()->native());
-    }
+    delete dmabuf;
 }
 
 void egl_backend::cleanup()
@@ -151,34 +141,6 @@ void egl_backend::initBufferAge()
         if (useBufferAge != "0")
             setSupportsBufferAge(true);
     }
-}
-
-void egl_backend::initWayland()
-{
-    if (!kwinApp()->get_wayland_server()) {
-        return;
-    }
-    if (hasExtension(QByteArrayLiteral("EGL_WL_bind_wayland_display"))) {
-        eglBindWaylandDisplayWL
-            = (eglBindWaylandDisplayWL_func)eglGetProcAddress("eglBindWaylandDisplayWL");
-        eglUnbindWaylandDisplayWL
-            = (eglUnbindWaylandDisplayWL_func)eglGetProcAddress("eglUnbindWaylandDisplayWL");
-        eglQueryWaylandBufferWL
-            = (eglQueryWaylandBufferWL_func)eglGetProcAddress("eglQueryWaylandBufferWL");
-        // only bind if not already done
-        if (auto wl_display = waylandServer()->display();
-            wl_display->eglDisplay() != eglDisplay()) {
-            if (!eglBindWaylandDisplayWL(eglDisplay(), wl_display->native())) {
-                eglUnbindWaylandDisplayWL = nullptr;
-                eglQueryWaylandBufferWL = nullptr;
-            } else {
-                wl_display->setEglDisplay(eglDisplay());
-            }
-        }
-    }
-
-    Q_ASSERT(!m_dmaBuf);
-    m_dmaBuf = egl_dmabuf::factory(this);
 }
 
 void egl_backend::initClientExtensions()
@@ -664,7 +626,7 @@ bool egl_texture::loadShmTexture(Wrapland::Server::Buffer* buffer)
 
 bool egl_texture::loadEglTexture(Wrapland::Server::Buffer* buffer)
 {
-    if (!eglQueryWaylandBufferWL) {
+    if (!wayland::eglQueryWaylandBufferWL) {
         return false;
     }
     if (!buffer->resource()) {
@@ -720,13 +682,13 @@ bool egl_texture::loadInternalImageObject(render::window_pixmap* pixmap)
 EGLImageKHR egl_texture::attach(Wrapland::Server::Buffer* buffer)
 {
     EGLint format, yInverted;
-    eglQueryWaylandBufferWL(
+    wayland::eglQueryWaylandBufferWL(
         m_backend->eglDisplay(), buffer->resource(), EGL_TEXTURE_FORMAT, &format);
     if (format != EGL_TEXTURE_RGB && format != EGL_TEXTURE_RGBA) {
         qCDebug(KWIN_WL) << "Unsupported texture format: " << format;
         return EGL_NO_IMAGE_KHR;
     }
-    if (!eglQueryWaylandBufferWL(
+    if (!wayland::eglQueryWaylandBufferWL(
             m_backend->eglDisplay(), buffer->resource(), EGL_WAYLAND_Y_INVERTED_WL, &yInverted)) {
         // if EGL_WAYLAND_Y_INVERTED_WL is not supported wl_buffer should be treated as if value
         // were EGL_TRUE
