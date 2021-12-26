@@ -70,6 +70,14 @@ public:
     void doneCurrent() override;
     bool hasSwapEvent() const override;
 
+    Display* display() const
+    {
+        return m_x11Display;
+    }
+
+    GLXFBConfig fbconfig{nullptr};
+    GLXWindow glxWindow{None};
+
 protected:
     void present() override;
 
@@ -77,13 +85,8 @@ private:
     bool initBuffer();
     void check_glx_version();
     void initExtensions();
-    bool initRenderingContext();
     bool initFbConfig();
     void initVisualDepthHashTable();
-    Display* display() const
-    {
-        return m_x11Display;
-    }
     bool supportsSwapEvents() const;
 
     int visualDepth(xcb_visualid_t visual) const;
@@ -91,8 +94,6 @@ private:
 
     std::unique_ptr<render::x11::overlay_window> overlay_window;
     Window window;
-    GLXFBConfig fbconfig;
-    GLXWindow glxWindow;
     GLXContext ctx;
     QHash<xcb_visualid_t, fb_config_info*> m_fbconfigHash;
     QHash<xcb_visualid_t, int> m_visualDepthHash;

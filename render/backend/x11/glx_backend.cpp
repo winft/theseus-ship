@@ -9,7 +9,7 @@
 */
 #include "glx_backend.h"
 
-#include "glx_context_attribute_builder.h"
+#include "glx.h"
 #include "x11_logging.h"
 
 #include "base/platform.h"
@@ -34,7 +34,6 @@
 // Qt
 #include <QOpenGLContext>
 #include <QX11Info>
-#include <QtPlatformHeaders/QGLXNativeContext>
 // system
 #include <unistd.h>
 
@@ -115,8 +114,6 @@ glx_backend::glx_backend(Display* display, render::compositor& compositor)
     : gl::backend()
     , overlay_window{std::make_unique<render::x11::overlay_window>()}
     , window(None)
-    , fbconfig(nullptr)
-    , glxWindow(None)
     , ctx(nullptr)
     , m_bufferAge(0)
     , m_x11Display(display)
@@ -147,7 +144,8 @@ glx_backend::glx_backend(Display* display, render::compositor& compositor)
         throw std::runtime_error("Could not initialize the buffer");
     }
 
-    if (!initRenderingContext()) {
+    ctx = create_glx_context(*this);
+    if (!ctx) {
         throw std::runtime_error("Could not initialize rendering context");
     }
 
@@ -233,87 +231,6 @@ void glx_backend::initExtensions()
     const QByteArray string
         = (const char*)glXQueryExtensionsString(display(), QX11Info::appScreen());
     setExtensions(string.split(' '));
-}
-
-bool glx_backend::initRenderingContext()
-{
-    const bool direct = true;
-
-    // Use glXCreateContextAttribsARB() when it's available
-    if (hasExtension(QByteArrayLiteral("GLX_ARB_create_context"))) {
-        const bool have_robustness
-            = hasExtension(QByteArrayLiteral("GLX_ARB_create_context_robustness"));
-        const bool haveVideoMemoryPurge
-            = hasExtension(QByteArrayLiteral("GLX_NV_robustness_video_memory_purge"));
-
-        std::vector<glx_context_attribute_builder> candidates;
-
-        // core
-        if (have_robustness) {
-            if (haveVideoMemoryPurge) {
-                glx_context_attribute_builder purgeMemoryCore;
-                purgeMemoryCore.setVersion(3, 1);
-                purgeMemoryCore.setRobust(true);
-                purgeMemoryCore.setResetOnVideoMemoryPurge(true);
-                candidates.emplace_back(std::move(purgeMemoryCore));
-            }
-            glx_context_attribute_builder robustCore;
-            robustCore.setVersion(3, 1);
-            robustCore.setRobust(true);
-            candidates.emplace_back(std::move(robustCore));
-        }
-        glx_context_attribute_builder core;
-        core.setVersion(3, 1);
-        candidates.emplace_back(std::move(core));
-
-        // legacy
-        if (have_robustness) {
-            if (haveVideoMemoryPurge) {
-                glx_context_attribute_builder purgeMemoryLegacy;
-                purgeMemoryLegacy.setRobust(true);
-                purgeMemoryLegacy.setResetOnVideoMemoryPurge(true);
-                candidates.emplace_back(std::move(purgeMemoryLegacy));
-            }
-            glx_context_attribute_builder robustLegacy;
-            robustLegacy.setRobust(true);
-            candidates.emplace_back(std::move(robustLegacy));
-        }
-        glx_context_attribute_builder legacy;
-        legacy.setVersion(2, 1);
-        candidates.emplace_back(std::move(legacy));
-
-        for (auto it = candidates.begin(); it != candidates.end(); it++) {
-            const auto attribs = it->build();
-            ctx = glXCreateContextAttribsARB(display(), fbconfig, nullptr, true, attribs.data());
-            if (ctx) {
-                qCDebug(KWIN_X11) << "Created GLX context with attributes:" << &(*it);
-                break;
-            }
-        }
-    }
-
-    if (!ctx)
-        ctx = glXCreateNewContext(display(), fbconfig, GLX_RGBA_TYPE, nullptr, direct);
-
-    if (!ctx) {
-        qCDebug(KWIN_X11) << "Failed to create an OpenGL context.";
-        return false;
-    }
-
-    if (!glXMakeCurrent(display(), glxWindow, ctx)) {
-        qCDebug(KWIN_X11) << "Failed to make the OpenGL context current.";
-        glXDestroyContext(display(), ctx);
-        ctx = nullptr;
-        return false;
-    }
-
-    auto qtContext = new QOpenGLContext;
-    QGLXNativeContext native(ctx, display());
-    qtContext->setNativeHandle(QVariant::fromValue(native));
-    qtContext->create();
-    EffectQuickView::setShareContext(std::unique_ptr<QOpenGLContext>(qtContext));
-
-    return true;
 }
 
 bool glx_backend::initBuffer()
