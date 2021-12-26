@@ -7,6 +7,7 @@
 
 #include "surface.h"
 
+#include "render/gl/egl.h"
 #include <wayland_logging.h>
 
 #include <epoxy/egl.h>
@@ -161,7 +162,7 @@ bool init_buffer_configs(EglBackend* egl_back)
         EGL_ALPHA_SIZE,
         0,
         EGL_RENDERABLE_TYPE,
-        egl_back->isOpenGLES() ? EGL_OPENGL_ES2_BIT : EGL_OPENGL_BIT,
+        gl::is_gles_render() ? EGL_OPENGL_ES2_BIT : EGL_OPENGL_BIT,
         EGL_CONFIG_CAVEAT,
         EGL_NONE,
         EGL_NONE,

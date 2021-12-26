@@ -11,6 +11,7 @@
 #include "egl_output.h"
 #include "output.h"
 #include "platform.h"
+#include "render/gl/egl.h"
 #include "render/wayland/egl.h"
 #include "surface.h"
 #include "wlr_helpers.h"
@@ -94,7 +95,9 @@ bool egl_backend::init_platform()
 
 bool egl_backend::init_rendering_context()
 {
-    if (!createContext()) {
+    data.base.context = gl::create_egl_context(*this);
+
+    if (data.base.context == EGL_NO_CONTEXT) {
         return false;
     }
 

@@ -52,7 +52,6 @@ public:
     render::gl::texture_private* createBackendTexture(render::gl::texture* texture) override;
 
     bool hasClientExtension(const QByteArray& ext) const;
-    bool isOpenGLES() const;
 
     egl_dmabuf* dmabuf{nullptr};
     wayland::egl_data data;
@@ -65,8 +64,6 @@ protected:
     void initKWinGL();
     void initBufferAge();
     void initClientExtensions();
-
-    bool createContext();
 };
 
 class KWIN_EXPORT egl_texture : public render::gl::texture_private
