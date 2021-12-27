@@ -10,228 +10,56 @@
 #include "glx_backend.h"
 
 #include "glx.h"
-#include "glx_fb_config.h"
 #include "x11_logging.h"
 
 #include "base/platform.h"
 #include "main.h"
 #include "options.h"
-#include "render/compositor.h"
-#include "render/gl/gl.h"
 #include "render/gl/texture.h"
 #include "render/scene.h"
-#include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
 #include "screens.h"
 #include "xcbutils.h"
 
 #include "win/x11/geo.h"
 
-// kwin libs
 #include <kwineffectquickview.h>
-#include <kwinglplatform.h>
 #include <kwinglutils.h>
 #include <kwinxrenderutils.h>
-// Qt
-#include <QOpenGLContext>
-#include <QX11Info>
-// system
-#include <unistd.h>
 
+#include <QOpenGLContext>
 #include <algorithm>
 #include <cassert>
 #include <deque>
-#include <stdexcept>
-
-#if HAVE_DL_LIBRARY
-#include <dlfcn.h>
-#endif
-
-#ifndef XCB_GLX_BUFFER_SWAP_COMPLETE
-#define XCB_GLX_BUFFER_SWAP_COMPLETE 1
-typedef struct xcb_glx_buffer_swap_complete_event_t {
-    uint8_t response_type;       /**<  */
-    uint8_t pad0;                /**<  */
-    uint16_t sequence;           /**<  */
-    uint16_t event_type;         /**<  */
-    uint8_t pad1[2];             /**<  */
-    xcb_glx_drawable_t drawable; /**<  */
-    uint32_t ust_hi;             /**<  */
-    uint32_t ust_lo;             /**<  */
-    uint32_t msc_hi;             /**<  */
-    uint32_t msc_lo;             /**<  */
-    uint32_t sbc;                /**<  */
-} xcb_glx_buffer_swap_complete_event_t;
-#endif
-
 #include <memory>
+#include <stdexcept>
 #include <tuple>
+#include <unistd.h>
 
 namespace KWin::render::backend::x11
 {
 
-swap_event_filter::swap_event_filter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable)
-    : base::x11::event_filter(Xcb::Extensions::self()->glxEventBase()
-                              + XCB_GLX_BUFFER_SWAP_COMPLETE)
-    , m_drawable(drawable)
-    , m_glxDrawable(glxDrawable)
-{
-}
-
-bool swap_event_filter::event(xcb_generic_event_t* event)
-{
-    xcb_glx_buffer_swap_complete_event_t* ev
-        = reinterpret_cast<xcb_glx_buffer_swap_complete_event_t*>(event);
-
-    // The drawable field is the X drawable when the event was synthesized
-    // by a WireToEvent handler, and the GLX drawable when the event was
-    // received over the wire
-    if (ev->drawable == m_drawable || ev->drawable == m_glxDrawable) {
-        render::compositor::self()->bufferSwapComplete();
-        return true;
-    }
-
-    return false;
-}
-
-glXSwapIntervalMESA_func glXSwapIntervalMESA;
-
-typedef void (*glXFuncPtr)();
-
-static glXFuncPtr getProcAddress(const char* name)
-{
-    glXFuncPtr ret = nullptr;
-#if HAVE_EPOXY_GLX
-    ret = glXGetProcAddress((const GLubyte*)name);
-#endif
-#if HAVE_DL_LIBRARY
-    if (ret == nullptr)
-        ret = (glXFuncPtr)dlsym(RTLD_DEFAULT, name);
-#endif
-    return ret;
-}
-
 glx_backend::glx_backend(Display* display, render::compositor& compositor)
     : gl::backend()
-    , overlay_window{std::make_unique<render::x11::overlay_window>()}
-    , ctx(nullptr)
     , m_bufferAge(0)
-    , m_x11Display(display)
     , compositor{compositor}
 {
-    auto x11_compositor = dynamic_cast<render::x11::compositor*>(&compositor);
-    assert(x11_compositor);
-    x11_compositor->overlay_window = overlay_window.get();
-
-    // Force initialization of GLX integration in the Qt's xcb backend
-    // to make it call XESetWireToEvent callbacks, which is required
-    // by Mesa when using DRI2.
-    QOpenGLContext::supportsThreadedOpenGL();
-
-    check_glx_version();
-    set_glx_extensions(*this);
-
-    // resolve glXSwapIntervalMESA if available
-    if (hasExtension(QByteArrayLiteral("GLX_MESA_swap_control"))) {
-        glXSwapIntervalMESA = (glXSwapIntervalMESA_func)getProcAddress("glXSwapIntervalMESA");
-    } else {
-        glXSwapIntervalMESA = nullptr;
-    }
-
-    populate_visual_depth_hash_table(m_visualDepthHash);
-
-    if (!init_glx_buffer(*this)) {
-        throw std::runtime_error("Could not initialize the buffer");
-    }
-
-    ctx = create_glx_context(*this);
-    if (!ctx) {
-        throw std::runtime_error("Could not initialize rendering context");
-    }
-
-    gl::init_gl(GlxPlatformInterface, getProcAddress);
-
-    // Check whether certain features are supported
-    m_haveMESACopySubBuffer = hasExtension(QByteArrayLiteral("GLX_MESA_copy_sub_buffer"));
-    m_haveMESASwapControl = hasExtension(QByteArrayLiteral("GLX_MESA_swap_control"));
-    m_haveEXTSwapControl = hasExtension(QByteArrayLiteral("GLX_EXT_swap_control"));
-
-    // Allow to disable Intel swap event with env variable. There were problems in the past.
-    // See BUG 342582.
-    if (hasExtension(QByteArrayLiteral("GLX_INTEL_swap_event"))
-        && qgetenv("KWIN_USE_INTEL_SWAP_EVENT") != QByteArrayLiteral("0")) {
-        swap_filter = std::make_unique<swap_event_filter>(window, glxWindow);
-        glXSelectEvent(display, glxWindow, GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK);
-    }
-
-    setSupportsBufferAge(false);
-
-    if (hasExtension(QByteArrayLiteral("GLX_EXT_buffer_age"))) {
-        const QByteArray useBufferAge = qgetenv("KWIN_USE_BUFFER_AGE");
-
-        if (useBufferAge != "0")
-            setSupportsBufferAge(true);
-    }
-
-    if (m_haveEXTSwapControl) {
-        glXSwapIntervalEXT(display, glxWindow, 1);
-    } else if (m_haveMESASwapControl) {
-        glXSwapIntervalMESA(1);
-    } else {
-        qCWarning(KWIN_X11) << "NO VSYNC! glSwapInterval is not supported";
-    }
-
-    if (GLPlatform::instance()->isVirtualBox()) {
-        // VirtualBox does not support glxQueryDrawable
-        // this should actually be in kwinglutils_funcs, but QueryDrawable seems not to be provided
-        // by an extension and the GLPlatform has not been initialized at the moment when initGLX()
-        // is called.
-        glXQueryDrawable = nullptr;
-    }
-
-    setIsDirectRendering(bool(glXIsDirect(display, ctx)));
-
-    qCDebug(KWIN_X11) << "Direct rendering:" << isDirectRendering();
+    start_glx_backend(display, compositor, *this);
 }
 
 glx_backend::~glx_backend()
 {
-    // TODO: cleanup in error case
-    // do cleanup after initBuffer()
-    cleanupGL();
-    doneCurrent();
-    EffectQuickView::setShareContext(nullptr);
-
-    if (ctx)
-        glXDestroyContext(display(), ctx);
-
-    if (glxWindow)
-        glXDestroyWindow(display(), glxWindow);
-
-    if (window)
-        XDestroyWindow(display(), window);
-
-    for (auto& [key, val] : fb_configs) {
-        delete val;
+    if (!data.display) {
+        // Already cleaned up.
+        return;
     }
-    fb_configs.clear();
-
-    overlay_window->destroy();
-}
-
-void glx_backend::check_glx_version()
-{
-    int major, minor;
-    glXQueryVersion(display(), &major, &minor);
-    if (kVersionNumber(major, minor) < kVersionNumber(1, 3)) {
-        throw std::runtime_error("Requires at least GLX 1.3");
-    }
+    tear_down_glx_backend(*this);
 }
 
 int glx_backend::visualDepth(xcb_visualid_t visual) const
 {
-    auto it = m_visualDepthHash.find(visual);
-    return it == m_visualDepthHash.end() ? 0 : it->second;
+    auto it = visual_depth_hash.find(visual);
+    return it == visual_depth_hash.end() ? 0 : it->second;
 }
 
 void glx_backend::present()
@@ -250,16 +78,17 @@ void glx_backend::present()
             compositor.aboutToSwapBuffers();
         }
 
-        glXSwapBuffers(display(), glxWindow);
+        glXSwapBuffers(data.display, data.window);
 
         if (supportsBufferAge()) {
-            glXQueryDrawable(display(), glxWindow, GLX_BACK_BUFFER_AGE_EXT, (GLuint*)&m_bufferAge);
+            glXQueryDrawable(
+                data.display, data.window, GLX_BACK_BUFFER_AGE_EXT, (GLuint*)&m_bufferAge);
         }
-    } else if (m_haveMESACopySubBuffer) {
+    } else if (data.extensions.mesa_copy_sub_buffer) {
         for (const QRect& r : lastDamage()) {
             // convert to OpenGL coordinates
             int y = screenSize.height() - r.y() - r.height();
-            glXCopySubBufferMESA(display(), glxWindow, r.x(), y, r.width(), r.height());
+            glXCopySubBufferMESA(data.display, data.window, r.x(), y, r.width(), r.height());
         }
     } else {
         // Copy Pixels (horribly slow on Mesa).
@@ -271,7 +100,7 @@ void glx_backend::present()
     setLastDamage(QRegion());
     if (!supportsBufferAge()) {
         glXWaitGL();
-        XFlush(display());
+        XFlush(data.display);
     }
 }
 
@@ -280,7 +109,7 @@ void glx_backend::screenGeometryChanged(const QSize& size)
     overlay_window->resize(size);
     doneCurrent();
 
-    XMoveResizeWindow(display(), window, 0, 0, size.width(), size.height());
+    XMoveResizeWindow(data.display, window, 0, 0, size.width(), size.height());
     overlay_window->setup(window);
     Xcb::sync();
 
@@ -346,18 +175,18 @@ bool glx_backend::makeCurrent()
         // Workaround to tell Qt that no QOpenGLContext is current
         context->doneCurrent();
     }
-    const bool current = glXMakeCurrent(display(), glxWindow, ctx);
+    const bool current = glXMakeCurrent(data.display, data.window, data.context);
     return current;
 }
 
 void glx_backend::doneCurrent()
 {
-    glXMakeCurrent(display(), None, nullptr);
+    glXMakeCurrent(data.display, None, nullptr);
 }
 
 bool glx_backend::supportsSwapEvents() const
 {
-    return swap_filter != nullptr;
+    return data.swap_filter != nullptr;
 }
 
 bool glx_backend::hasSwapEvent() const

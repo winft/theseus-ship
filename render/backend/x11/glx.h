@@ -6,21 +6,32 @@
 #pragma once
 
 #include "glx_context_attribute_builder.h"
+#include "glx_data.h"
+#include "glx_fb_config.h"
 
 #include "base/platform.h"
+#include "render/gl/gl.h"
+#include "render/x11/compositor.h"
 #include "x11_logging.h"
 #include "xcbutils.h"
 #include <kwineffectquickview.h>
 #include <kwinglplatform.h>
 
 #include <QOpenGLContext>
+#include <QVariant>
 #include <QX11Info>
 #include <QtPlatformHeaders/QGLXNativeContext>
+#include <cassert>
 #include <deque>
 #include <epoxy/glx.h>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 #include <xcb/xproto.h>
+
+#if HAVE_DL_LIBRARY
+#include <dlfcn.h>
+#endif
 
 namespace KWin::render::backend::x11
 {
@@ -29,14 +40,14 @@ template<typename Backend>
 void set_glx_extensions(Backend& backend)
 {
     QByteArray const string
-        = (const char*)glXQueryExtensionsString(backend.display(), QX11Info::appScreen());
+        = (const char*)glXQueryExtensionsString(backend.data.display, QX11Info::appScreen());
     backend.setExtensions(string.split(' '));
 }
 
 template<typename Backend>
 GLXFBConfig create_glx_fb_config(Backend const& backend)
 {
-    auto display = backend.display();
+    auto display = backend.data.display;
 
     int const attribs[] = {GLX_RENDER_TYPE,
                            GLX_RGBA_BIT,
@@ -180,8 +191,8 @@ GLXFBConfig create_glx_fb_config(Backend const& backend)
 template<typename Backend>
 bool init_glx_buffer(Backend& backend)
 {
-    backend.fbconfig = create_glx_fb_config(backend);
-    if (!backend.fbconfig) {
+    backend.data.fbconfig = create_glx_fb_config(backend);
+    if (!backend.data.fbconfig) {
         return false;
     }
 
@@ -190,7 +201,8 @@ bool init_glx_buffer(Backend& backend)
 
         // Try to create double-buffered window in the overlay
         xcb_visualid_t visual;
-        glXGetFBConfigAttrib(backend.display(), backend.fbconfig, GLX_VISUAL_ID, (int*)&visual);
+        glXGetFBConfigAttrib(
+            backend.data.display, backend.data.fbconfig, GLX_VISUAL_ID, (int*)&visual);
 
         if (!visual) {
             qCCritical(KWIN_X11) << "The GLXFBConfig does not have an associated X visual";
@@ -217,8 +229,8 @@ bool init_glx_buffer(Backend& backend)
                           XCB_CW_COLORMAP,
                           &colormap);
 
-        backend.glxWindow
-            = glXCreateWindow(backend.display(), backend.fbconfig, backend.window, nullptr);
+        backend.data.window
+            = glXCreateWindow(backend.data.display, backend.data.fbconfig, backend.window, nullptr);
         backend.overlay_window->setup(backend.window);
     } else {
         qCCritical(KWIN_X11) << "Failed to create overlay window";
@@ -297,7 +309,7 @@ GLXContext create_glx_context(Backend const& backend)
         for (auto& candidate : candidates) {
             auto const attribs = candidate.build();
             ctx = glXCreateContextAttribsARB(
-                backend.display(), backend.fbconfig, nullptr, true, attribs.data());
+                backend.data.display, backend.data.fbconfig, nullptr, true, attribs.data());
             if (ctx) {
                 qCDebug(KWIN_X11) << "Created GLX context with attributes:" << &candidate;
                 break;
@@ -307,7 +319,7 @@ GLXContext create_glx_context(Backend const& backend)
 
     if (!ctx) {
         ctx = glXCreateNewContext(
-            backend.display(), backend.fbconfig, GLX_RGBA_TYPE, nullptr, direct);
+            backend.data.display, backend.data.fbconfig, GLX_RGBA_TYPE, nullptr, direct);
     }
 
     if (!ctx) {
@@ -315,19 +327,157 @@ GLXContext create_glx_context(Backend const& backend)
         return nullptr;
     }
 
-    if (!glXMakeCurrent(backend.display(), backend.glxWindow, ctx)) {
+    if (!glXMakeCurrent(backend.data.display, backend.data.window, ctx)) {
         qCDebug(KWIN_X11) << "Failed to make the OpenGL context current.";
-        glXDestroyContext(backend.display(), ctx);
+        glXDestroyContext(backend.data.display, ctx);
         return nullptr;
     }
 
     auto qtContext = new QOpenGLContext;
-    QGLXNativeContext native(ctx, backend.display());
+    QGLXNativeContext native(ctx, backend.data.display);
     qtContext->setNativeHandle(QVariant::fromValue(native));
     qtContext->create();
     EffectQuickView::setShareContext(std::unique_ptr<QOpenGLContext>(qtContext));
 
     return ctx;
+}
+
+static void check_glx_version(Display* display)
+{
+    int major, minor;
+    glXQueryVersion(display, &major, &minor);
+    if (kVersionNumber(major, minor) < kVersionNumber(1, 3)) {
+        throw std::runtime_error("Requires at least GLX 1.3");
+    }
+}
+
+typedef void (*glXFuncPtr)();
+
+static glXFuncPtr getProcAddress(const char* name)
+{
+    glXFuncPtr ret = nullptr;
+#if HAVE_EPOXY_GLX
+    ret = glXGetProcAddress((const GLubyte*)name);
+#endif
+#if HAVE_DL_LIBRARY
+    if (ret == nullptr) {
+        ret = (glXFuncPtr)dlsym(RTLD_DEFAULT, name);
+    }
+#endif
+    return ret;
+}
+
+template<typename Backend>
+void start_glx_backend(Display* display, render::compositor& compositor, Backend& backend)
+{
+    backend.data.display = display;
+    backend.overlay_window = std::make_unique<render::x11::overlay_window>();
+
+    auto x11_compositor = dynamic_cast<render::x11::compositor*>(&compositor);
+    assert(x11_compositor);
+    x11_compositor->overlay_window = backend.overlay_window.get();
+
+    // Force initialization of GLX integration in the Qt's xcb backend
+    // to make it call XESetWireToEvent callbacks, which is required
+    // by Mesa when using DRI2.
+    QOpenGLContext::supportsThreadedOpenGL();
+
+    check_glx_version(display);
+    set_glx_extensions(backend);
+
+    if (backend.hasExtension(QByteArrayLiteral("GLX_MESA_swap_control"))) {
+        backend.data.swap_interval_mesa = reinterpret_cast<glx_data::swap_interval_mesa_func>(
+            getProcAddress("glXSwapIntervalMESA"));
+    }
+
+    populate_visual_depth_hash_table(backend.visual_depth_hash);
+
+    if (!init_glx_buffer(backend)) {
+        throw std::runtime_error("Could not initialize the buffer");
+    }
+
+    backend.data.context = create_glx_context(backend);
+    if (!backend.data.context) {
+        throw std::runtime_error("Could not initialize rendering context");
+    }
+
+    gl::init_gl(GlxPlatformInterface, getProcAddress);
+
+    // Check whether certain features are supported
+    backend.data.extensions.mesa_copy_sub_buffer
+        = backend.hasExtension(QByteArrayLiteral("GLX_MESA_copy_sub_buffer"));
+    backend.data.extensions.mesa_swap_control
+        = backend.hasExtension(QByteArrayLiteral("GLX_MESA_swap_control"));
+    backend.data.extensions.ext_swap_control
+        = backend.hasExtension(QByteArrayLiteral("GLX_EXT_swap_control"));
+
+    // Allow to disable Intel swap event with env variable. There were problems in the past.
+    // See BUG 342582.
+    if (backend.hasExtension(QByteArrayLiteral("GLX_INTEL_swap_event"))
+        && qgetenv("KWIN_USE_INTEL_SWAP_EVENT") != QByteArrayLiteral("0")) {
+        backend.data.swap_filter
+            = std::make_unique<swap_event_filter>(backend.window, backend.data.window);
+        glXSelectEvent(display, backend.data.window, GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK);
+    }
+
+    backend.setSupportsBufferAge(false);
+
+    if (backend.hasExtension(QByteArrayLiteral("GLX_EXT_buffer_age"))) {
+        const QByteArray useBufferAge = qgetenv("KWIN_USE_BUFFER_AGE");
+
+        if (useBufferAge != "0")
+            backend.setSupportsBufferAge(true);
+    }
+
+    if (backend.data.extensions.ext_swap_control) {
+        glXSwapIntervalEXT(display, backend.data.window, 1);
+    } else if (backend.data.extensions.mesa_swap_control) {
+        glXSwapIntervalMESA(1);
+    } else {
+        qCWarning(KWIN_X11) << "NO VSYNC! glSwapInterval is not supported";
+    }
+
+    if (GLPlatform::instance()->isVirtualBox()) {
+        // VirtualBox does not support glxQueryDrawable
+        // this should actually be in kwinglutils_funcs, but QueryDrawable seems not to be provided
+        // by an extension and the GLPlatform has not been initialized at the moment when initGLX()
+        // is called.
+        glXQueryDrawable = nullptr;
+    }
+
+    backend.setIsDirectRendering(bool(glXIsDirect(display, backend.data.context)));
+    qCDebug(KWIN_X11) << "Direct rendering:" << backend.isDirectRendering();
+}
+
+template<typename Backend>
+void tear_down_glx_backend(Backend& backend)
+{
+    // TODO: cleanup in error case
+    // do cleanup after initBuffer()
+    cleanupGL();
+    backend.doneCurrent();
+    EffectQuickView::setShareContext(nullptr);
+
+    if (backend.data.context) {
+        glXDestroyContext(backend.data.display, backend.data.context);
+    }
+
+    if (backend.data.window) {
+        glXDestroyWindow(backend.data.display, backend.data.window);
+    }
+
+    if (backend.window) {
+        XDestroyWindow(backend.data.display, backend.window);
+    }
+
+    for (auto& [key, val] : backend.fb_configs) {
+        delete val;
+    }
+    backend.fb_configs.clear();
+
+    backend.overlay_window->destroy();
+    backend.overlay_window.reset();
+    backend.data = {};
 }
 
 }

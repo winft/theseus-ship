@@ -102,7 +102,7 @@ fb_config_info* fb_config_info_for_visual(xcb_visualid_t visual, Backend& backen
            0,
            0};
 
-    auto display = backend.display();
+    auto display = backend.data.display;
     int count = 0;
     GLXFBConfig* configs = glXChooseFBConfig(display, DefaultScreen(display), attribs, &count);
 

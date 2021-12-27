@@ -176,6 +176,20 @@ public:
         m_extensions = extensions;
     }
 
+    /**
+     * @brief Sets whether the OpenGL context is direct.
+     *
+     * Should be called by the concrete subclass once it is determined whether the OpenGL context is
+     * direct or indirect.
+     * If the subclass does not call this method, the backend defaults to @c false.
+     *
+     * @param direct @c true if the OpenGL context is direct, @c false if indirect
+     */
+    void setIsDirectRendering(bool direct)
+    {
+        m_directRendering = direct;
+    }
+
     void setSupportsSurfacelessContext(bool value)
     {
         m_haveSurfacelessContext = value;
@@ -196,19 +210,6 @@ protected:
      * @brief Backend specific flushing of frame to screen.
      */
     virtual void present() = 0;
-    /**
-     * @brief Sets whether the OpenGL context is direct.
-     *
-     * Should be called by the concrete subclass once it is determined whether the OpenGL context is
-     * direct or indirect.
-     * If the subclass does not call this method, the backend defaults to @c false.
-     *
-     * @param direct @c true if the OpenGL context is direct, @c false if indirect
-     */
-    void setIsDirectRendering(bool direct)
-    {
-        m_directRendering = direct;
-    }
 
     /**
      * @return const QRegion& Damage of previously rendered frame

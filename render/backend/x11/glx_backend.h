@@ -5,9 +5,11 @@
 */
 #pragma once
 
-#include "base/x11/event_filter.h"
 #include "render/gl/backend.h"
 #include "render/gl/texture.h"
+
+// Must be included late because of Qt.
+#include "glx_data.h"
 
 #include <epoxy/glx.h>
 #include <fixx11h.h>
@@ -30,23 +32,6 @@ namespace backend::x11
 
 class fb_config_info;
 
-// GLX_MESA_swap_interval
-using glXSwapIntervalMESA_func = int (*)(unsigned int interval);
-extern glXSwapIntervalMESA_func glXSwapIntervalMESA;
-
-// ------------------------------------------------------------------
-
-class swap_event_filter : public base::x11::event_filter
-{
-public:
-    swap_event_filter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable);
-    bool event(xcb_generic_event_t* event) override;
-
-private:
-    xcb_drawable_t m_drawable;
-    xcb_glx_drawable_t m_glxDrawable;
-};
-
 /**
  * @brief OpenGL Backend using GLX over an X overlay window.
  */
@@ -63,35 +48,24 @@ public:
     void doneCurrent() override;
     bool hasSwapEvent() const override;
 
-    Display* display() const
-    {
-        return m_x11Display;
-    }
     int visualDepth(xcb_visualid_t visual) const;
 
-    GLXFBConfig fbconfig{nullptr};
-    GLXWindow glxWindow{None};
+    glx_data data;
+
     Window window{None};
     std::unique_ptr<render::x11::overlay_window> overlay_window;
-
     std::unordered_map<xcb_visualid_t, fb_config_info*> fb_configs;
+    std::unordered_map<xcb_visualid_t, int> visual_depth_hash;
 
 protected:
     void present() override;
 
 private:
-    void check_glx_version();
     bool supportsSwapEvents() const;
 
-    GLXContext ctx;
-    std::unordered_map<xcb_visualid_t, int> m_visualDepthHash;
-    std::unique_ptr<swap_event_filter> swap_filter;
     int m_bufferAge;
-    bool m_haveMESACopySubBuffer = false;
-    bool m_haveMESASwapControl = false;
-    bool m_haveEXTSwapControl = false;
     bool m_needsCompositeTimerStart = false;
-    Display* m_x11Display;
+
     render::compositor& compositor;
 };
 
@@ -113,7 +87,7 @@ private:
     bool loadTexture(xcb_pixmap_t pix, const QSize& size, xcb_visualid_t visual);
     Display* display() const
     {
-        return m_backend->display();
+        return m_backend->data.display;
     }
 
     gl::texture* q;
