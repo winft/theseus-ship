@@ -75,26 +75,22 @@ public:
     {
         return m_x11Display;
     }
+    int visualDepth(xcb_visualid_t visual) const;
 
     GLXFBConfig fbconfig{nullptr};
     GLXWindow glxWindow{None};
+    Window window{None};
+    std::unique_ptr<render::x11::overlay_window> overlay_window;
 
 protected:
     void present() override;
 
 private:
-    bool initBuffer();
     void check_glx_version();
-    void initExtensions();
-    bool initFbConfig();
-    void initVisualDepthHashTable();
     bool supportsSwapEvents() const;
 
-    int visualDepth(xcb_visualid_t visual) const;
     fb_config_info* infoForVisual(xcb_visualid_t visual);
 
-    std::unique_ptr<render::x11::overlay_window> overlay_window;
-    Window window;
     GLXContext ctx;
     std::unordered_map<xcb_visualid_t, fb_config_info*> m_fbconfigHash;
     std::unordered_map<xcb_visualid_t, int> m_visualDepthHash;
