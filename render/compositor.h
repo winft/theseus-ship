@@ -117,7 +117,7 @@ protected:
     void timerEvent(QTimerEvent* te) override;
 
     virtual void start() = 0;
-    void stop();
+    void stop(bool on_shutdown);
 
     /**
      * @brief Prepares start.

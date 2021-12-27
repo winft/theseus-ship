@@ -7,6 +7,7 @@
 
 #include "kwinglobals.h"
 #include "kwinglplatform.h"
+#include "kwinglutils.h"
 
 #include <epoxy/egl.h>
 

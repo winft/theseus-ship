@@ -141,7 +141,7 @@ void compositor::suspend(compositor::SuspendReason reason)
         }
     }
     m_releaseSelectionTimer.start();
-    stop();
+    stop(false);
 }
 
 void compositor::resume(compositor::SuspendReason reason)
@@ -172,7 +172,7 @@ void compositor::configChanged()
 {
     if (m_suspended) {
         // TODO(romangg): start the release selection timer?
-        stop();
+        stop(false);
         return;
     }
     render::compositor::configChanged();

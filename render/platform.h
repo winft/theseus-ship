@@ -59,6 +59,9 @@ public:
     virtual render::gl::backend* createOpenGLBackend(render::compositor& compositor);
     virtual render::qpainter::backend* createQPainterBackend();
 
+    // TODO(romangg): Remove the boolean trap.
+    virtual void render_stop(bool on_shutdown) = 0;
+
     /**
      * Whether the Platform requires compositing for rendering.
      * Default implementation returns @c true. If the implementing Platform allows to be used

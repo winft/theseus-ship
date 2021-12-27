@@ -77,7 +77,7 @@ void handle_new_output(struct wl_listener* listener, void* data)
 
     if (back->egl) {
         get_output(out->render).egl
-            = std::make_unique<egl_output>(static_cast<output&>(*out->render), back->egl);
+            = std::make_unique<egl_output>(static_cast<output&>(*out->render), back->egl.get());
     }
 
     QObject::connect(out, &base::backend::wlroots::output::mode_changed, out, [out] {
@@ -122,8 +122,19 @@ void platform::init()
 
 gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
 {
-    egl = new egl_backend(*this, base::backend::wlroots::get_headless_backend(base.backend));
-    return egl;
+    if (!egl) {
+        egl = std::make_unique<egl_backend>(
+            *this, base::backend::wlroots::get_headless_backend(base.backend));
+    }
+    return egl.get();
+}
+
+void platform::render_stop(bool on_shutdown)
+{
+    assert(egl);
+    if (on_shutdown) {
+        egl->tear_down();
+    }
 }
 
 void platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)

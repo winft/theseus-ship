@@ -47,6 +47,10 @@ class KWIN_EXPORT egl_backend : public QObject, public backend
     Q_OBJECT
 public:
     ~egl_backend() override;
+
+    void cleanup();
+    virtual void cleanupSurfaces();
+
     bool makeCurrent() override;
     void doneCurrent() override;
     render::gl::texture_private* createBackendTexture(render::gl::texture* texture) override;
@@ -58,8 +62,6 @@ public:
 
 protected:
     egl_backend();
-    void cleanup();
-    virtual void cleanupSurfaces();
 };
 
 class KWIN_EXPORT egl_texture : public render::gl::texture_private

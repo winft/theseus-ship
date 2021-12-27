@@ -6,6 +6,8 @@
 */
 #include "platform.h"
 
+#include "glx.h"
+
 #include <config-kwin.h>
 #include <kwinconfig.h>
 
@@ -101,11 +103,17 @@ void platform::init()
 
 gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
 {
+    if (gl_backend) {
+        start_glx_backend(m_x11Display, compositor, *gl_backend);
+        return gl_backend.get();
+    }
+
     switch (options->glPlatformInterface()) {
 #if HAVE_EPOXY_GLX
     case GlxPlatformInterface:
         if (has_glx()) {
-            return new glx_backend(m_x11Display, compositor);
+            gl_backend = std::make_unique<glx_backend>(m_x11Display, compositor);
+            return gl_backend.get();
         } else {
             qCWarning(KWIN_X11) << "Glx not available, trying EGL instead.";
             // no break, needs fall-through
@@ -117,6 +125,12 @@ gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
         // no backend available
         return nullptr;
     }
+}
+
+void platform::render_stop(bool /*on_shutdown*/)
+{
+    assert(gl_backend);
+    tear_down_glx_backend(*gl_backend);
 }
 
 bool platform::requiresCompositing() const

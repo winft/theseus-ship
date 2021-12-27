@@ -57,10 +57,7 @@ egl_backend::egl_backend()
     });
 }
 
-egl_backend::~egl_backend()
-{
-    delete dmabuf;
-}
+egl_backend::~egl_backend() = default;
 
 void egl_backend::cleanup()
 {
@@ -69,12 +66,16 @@ void egl_backend::cleanup()
     eglDestroyContext(data.base.display, data.base.context);
     cleanupSurfaces();
     eglReleaseThread();
+
+    delete dmabuf;
+    dmabuf = nullptr;
 }
 
 void egl_backend::cleanupSurfaces()
 {
     if (data.base.surface != EGL_NO_SURFACE) {
         eglDestroySurface(data.base.display, data.base.surface);
+        data.base.surface = EGL_NO_SURFACE;
     }
 }
 

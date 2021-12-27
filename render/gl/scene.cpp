@@ -412,9 +412,6 @@ scene::~scene()
     effect_frame::cleanup();
 
     delete m_syncManager;
-
-    // backend might be still needed for a different scene
-    delete m_backend;
 }
 
 void scene::initDebugOutput()
@@ -1143,7 +1140,7 @@ render::scene* create_scene_impl(render::compositor& compositor)
                 << "For more information see "
                    "https://community.kde.org/KWin/Environment_Variables#KWIN_COMPOSE";
         }
-        delete backend;
+        compositor.platform.render_stop(false);
     }
 
     return scene;

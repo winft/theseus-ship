@@ -44,6 +44,7 @@ public:
 
     void start();
     void tear_down();
+    void cleanupSurfaces() override;
 
     void screenGeometryChanged(QSize const& size) override;
     gl::texture_private* createBackendTexture(gl::texture* texture) override;
@@ -60,7 +61,6 @@ public:
 
 protected:
     void present() override;
-    void cleanupSurfaces() override;
 };
 
 class egl_texture : public gl::egl_texture

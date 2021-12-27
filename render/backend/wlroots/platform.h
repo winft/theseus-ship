@@ -30,7 +30,7 @@ class KWIN_EXPORT platform : public render::platform
     Q_OBJECT
 public:
     base::backend::wlroots::platform& base;
-    egl_backend* egl{nullptr};
+    std::unique_ptr<egl_backend> egl;
 
 #if HAVE_WLR_OUTPUT_INIT_RENDER
     wlr_renderer* renderer{nullptr};
@@ -41,6 +41,8 @@ public:
     ~platform() override;
 
     gl::backend* createOpenGLBackend(render::compositor& compositor) override;
+    void render_stop(bool on_shutdown) override;
+
     void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
 
     void init();
