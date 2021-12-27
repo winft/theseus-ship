@@ -28,19 +28,11 @@ class compositor;
 namespace backend::x11
 {
 
+class fb_config_info;
+
 // GLX_MESA_swap_interval
 using glXSwapIntervalMESA_func = int (*)(unsigned int interval);
 extern glXSwapIntervalMESA_func glXSwapIntervalMESA;
-
-class fb_config_info
-{
-public:
-    GLXFBConfig fbconfig;
-    int bind_texture_format;
-    int texture_targets;
-    int y_inverted;
-    int mipmap;
-};
 
 // ------------------------------------------------------------------
 
@@ -82,6 +74,8 @@ public:
     Window window{None};
     std::unique_ptr<render::x11::overlay_window> overlay_window;
 
+    std::unordered_map<xcb_visualid_t, fb_config_info*> fb_configs;
+
 protected:
     void present() override;
 
@@ -89,10 +83,7 @@ private:
     void check_glx_version();
     bool supportsSwapEvents() const;
 
-    fb_config_info* infoForVisual(xcb_visualid_t visual);
-
     GLXContext ctx;
-    std::unordered_map<xcb_visualid_t, fb_config_info*> m_fbconfigHash;
     std::unordered_map<xcb_visualid_t, int> m_visualDepthHash;
     std::unique_ptr<swap_event_filter> swap_filter;
     int m_bufferAge;
@@ -102,8 +93,6 @@ private:
     bool m_needsCompositeTimerStart = false;
     Display* m_x11Display;
     render::compositor& compositor;
-
-    friend class GlxTexture;
 };
 
 /**
@@ -124,7 +113,7 @@ private:
     bool loadTexture(xcb_pixmap_t pix, const QSize& size, xcb_visualid_t visual);
     Display* display() const
     {
-        return m_backend->m_x11Display;
+        return m_backend->display();
     }
 
     gl::texture* q;
