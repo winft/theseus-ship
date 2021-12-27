@@ -12,6 +12,7 @@
 #include <epoxy/glx.h>
 #include <fixx11h.h>
 #include <memory>
+#include <unordered_map>
 #include <xcb/glx.h>
 
 namespace KWin::render
@@ -95,8 +96,8 @@ private:
     std::unique_ptr<render::x11::overlay_window> overlay_window;
     Window window;
     GLXContext ctx;
-    QHash<xcb_visualid_t, fb_config_info*> m_fbconfigHash;
-    QHash<xcb_visualid_t, int> m_visualDepthHash;
+    std::unordered_map<xcb_visualid_t, fb_config_info*> m_fbconfigHash;
+    std::unordered_map<xcb_visualid_t, int> m_visualDepthHash;
     std::unique_ptr<swap_event_filter> swap_filter;
     int m_bufferAge;
     bool m_haveMESACopySubBuffer = false;

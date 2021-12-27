@@ -211,7 +211,9 @@ glx_backend::~glx_backend()
     if (window)
         XDestroyWindow(display(), window);
 
-    qDeleteAll(m_fbconfigHash);
+    for (auto& [key, val] : m_fbconfigHash) {
+        delete val;
+    }
     m_fbconfigHash.clear();
 
     overlay_window->destroy();
@@ -432,14 +434,15 @@ void glx_backend::initVisualDepthHashTable()
             const xcb_visualtype_t* visuals = xcb_depth_visuals(depth.data);
 
             for (int i = 0; i < len; i++)
-                m_visualDepthHash.insert(visuals[i].visual_id, depth.data->depth);
+                m_visualDepthHash.insert({visuals[i].visual_id, depth.data->depth});
         }
     }
 }
 
 int glx_backend::visualDepth(xcb_visualid_t visual) const
 {
-    return m_visualDepthHash.value(visual);
+    auto it = m_visualDepthHash.find(visual);
+    return it == m_visualDepthHash.end() ? 0 : it->second;
 }
 
 static inline int bitCount(uint32_t mask)
@@ -460,13 +463,13 @@ static inline int bitCount(uint32_t mask)
 
 fb_config_info* glx_backend::infoForVisual(xcb_visualid_t visual)
 {
-    auto it = m_fbconfigHash.constFind(visual);
-    if (it != m_fbconfigHash.constEnd()) {
-        return it.value();
+    auto it = m_fbconfigHash.find(visual);
+    if (it != m_fbconfigHash.end()) {
+        return it->second;
     }
 
     auto info = new fb_config_info;
-    m_fbconfigHash.insert(visual, info);
+    m_fbconfigHash.insert({visual, info});
     info->fbconfig = nullptr;
     info->bind_texture_format = 0;
     info->texture_targets = 0;
