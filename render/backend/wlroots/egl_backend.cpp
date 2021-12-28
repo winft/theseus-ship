@@ -46,7 +46,16 @@ egl_backend::egl_backend(wlroots::platform& platform, bool headless)
 
     // Egl is always direct rendering.
     setIsDirectRendering(true);
+    start();
+}
 
+egl_backend::~egl_backend()
+{
+    tear_down();
+}
+
+void egl_backend::start()
+{
     gl::init_client_extensions(*this);
 
     if (!init_platform()) {
@@ -65,14 +74,6 @@ egl_backend::egl_backend(wlroots::platform& platform, bool headless)
     gl::init_gl(EglPlatformInterface, get_proc_address);
     gl::init_buffer_age(*this);
     wayland::init_egl(*this, data);
-}
-
-egl_backend::~egl_backend()
-{
-    cleanupSurfaces();
-    cleanup();
-
-    platform.egl_data = nullptr;
 }
 
 bool egl_backend::init_platform()
@@ -126,6 +127,23 @@ bool egl_backend::init_rendering_context()
     }
 
     return get_egl_out(platform.base.all_outputs.front())->make_current();
+}
+
+void egl_backend::tear_down()
+{
+    if (!platform.egl_data) {
+        // Already cleaned up.
+        return;
+    }
+
+    cleanupSurfaces();
+    dummy_surface.reset();
+
+    cleanup();
+    gbm.reset();
+
+    platform.egl_data = nullptr;
+    data = {};
 }
 
 void egl_backend::cleanupSurfaces()
