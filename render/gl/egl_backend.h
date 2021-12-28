@@ -67,6 +67,12 @@ public:
     void updateTexture(render::window_pixmap* pixmap) override;
     render::gl::backend* backend() override;
 
+    render::gl::texture* q;
+    EGLImageKHR m_image{EGL_NO_IMAGE_KHR};
+    bool m_hasSubImageUnpack{false};
+
+    egl_backend* m_backend;
+
 protected:
     EGLImageKHR image() const
     {
@@ -80,23 +86,6 @@ protected:
     {
         return q;
     }
-
-private:
-    void textureSubImage(int scale, Wrapland::Server::ShmImage const& img, const QRegion& damage);
-    void textureSubImageFromQImage(int scale, const QImage& image, const QRegion& damage);
-
-    bool createTextureImage(const QImage& image);
-    bool loadShmTexture(Wrapland::Server::Buffer* buffer);
-    bool loadEglTexture(Wrapland::Server::Buffer* buffer);
-    bool loadDmabufTexture(Wrapland::Server::Buffer* buffer);
-    bool loadInternalImageObject(render::window_pixmap* pixmap);
-    EGLImageKHR attach(Wrapland::Server::Buffer* buffer);
-    bool updateFromFBO(const QSharedPointer<QOpenGLFramebufferObject>& fbo);
-    bool updateFromInternalImageObject(render::window_pixmap* pixmap);
-    render::gl::texture* q;
-    egl_backend* m_backend;
-    EGLImageKHR m_image;
-    bool m_hasSubImageUnpack{false};
 };
 
 }
