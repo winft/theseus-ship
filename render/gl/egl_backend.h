@@ -24,8 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "render/wayland/egl_data.h"
 
-#include <QObject>
-
 class QOpenGLFramebufferObject;
 
 namespace Wrapland
@@ -42,9 +40,8 @@ namespace KWin::render::gl
 
 class egl_dmabuf;
 
-class KWIN_EXPORT egl_backend : public QObject, public backend
+class KWIN_EXPORT egl_backend : public backend
 {
-    Q_OBJECT
 public:
     ~egl_backend() override;
 
@@ -59,9 +56,6 @@ public:
 
     egl_dmabuf* dmabuf{nullptr};
     wayland::egl_data data;
-
-protected:
-    egl_backend();
 };
 
 class KWIN_EXPORT egl_texture : public render::gl::texture_private

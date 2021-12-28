@@ -17,6 +17,7 @@
 #include "main.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/effects.h"
+#include "render/wayland/egl.h"
 #include "screens.h"
 #include "wayland_server.h"
 
@@ -133,6 +134,7 @@ void platform::render_stop(bool on_shutdown)
 {
     assert(egl);
     if (on_shutdown) {
+        wayland::unbind_egl_display(*egl, egl->data);
         egl->tear_down();
     }
 }

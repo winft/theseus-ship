@@ -21,7 +21,6 @@ class surface;
 
 class egl_backend : public gl::egl_backend
 {
-    Q_OBJECT
 private:
     bool init_platform();
     bool init_rendering_context();
