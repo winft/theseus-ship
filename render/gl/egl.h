@@ -16,14 +16,6 @@
 namespace KWin::render::gl
 {
 
-static bool is_gles_render()
-{
-    if (qstrcmp(qgetenv("KWIN_COMPOSE"), "O2ES") == 0) {
-        return true;
-    }
-    return QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES;
-}
-
 template<typename Backend>
 EGLContext create_egl_context(Backend const& backend)
 {
@@ -36,68 +28,29 @@ EGLContext create_egl_context(Backend const& backend)
 
     std::vector<std::unique_ptr<context_attribute_builder>> candidates;
 
-    if (is_gles_render()) {
-        if (have_create_context && have_robustness && have_context_priority) {
-            auto glesRobustPriority = std::make_unique<egl_gles_context_attribute_builder>();
-            glesRobustPriority->setVersion(2);
-            glesRobustPriority->setRobust(true);
-            glesRobustPriority->setHighPriority(true);
-            candidates.push_back(std::move(glesRobustPriority));
-        }
-        if (have_create_context && have_robustness) {
-            auto glesRobust = std::make_unique<egl_gles_context_attribute_builder>();
-            glesRobust->setVersion(2);
-            glesRobust->setRobust(true);
-            candidates.push_back(std::move(glesRobust));
-        }
-        if (have_context_priority) {
-            auto glesPriority = std::make_unique<egl_gles_context_attribute_builder>();
-            glesPriority->setVersion(2);
-            glesPriority->setHighPriority(true);
-            candidates.push_back(std::move(glesPriority));
-        }
-
-        auto gles = std::make_unique<egl_gles_context_attribute_builder>();
-        gles->setVersion(2);
-        candidates.push_back(std::move(gles));
-    } else {
-        if (have_create_context) {
-            if (have_robustness && have_context_priority) {
-                auto robustCorePriority = std::make_unique<egl_context_attribute_builder>();
-                robustCorePriority->setVersion(3, 1);
-                robustCorePriority->setRobust(true);
-                robustCorePriority->setHighPriority(true);
-                candidates.push_back(std::move(robustCorePriority));
-            }
-            if (have_robustness) {
-                auto robustCore = std::make_unique<egl_context_attribute_builder>();
-                robustCore->setVersion(3, 1);
-                robustCore->setRobust(true);
-                candidates.push_back(std::move(robustCore));
-            }
-            if (have_context_priority) {
-                auto corePriority = std::make_unique<egl_context_attribute_builder>();
-                corePriority->setVersion(3, 1);
-                corePriority->setHighPriority(true);
-                candidates.push_back(std::move(corePriority));
-            }
-            auto core = std::make_unique<egl_context_attribute_builder>();
-            core->setVersion(3, 1);
-            candidates.push_back(std::move(core));
-        }
-        if (have_robustness && have_create_context && have_context_priority) {
-            auto robustPriority = std::make_unique<egl_context_attribute_builder>();
-            robustPriority->setRobust(true);
-            robustPriority->setHighPriority(true);
-            candidates.push_back(std::move(robustPriority));
-        }
-        if (have_robustness && have_create_context) {
-            auto robust = std::make_unique<egl_context_attribute_builder>();
-            robust->setRobust(true);
-            candidates.push_back(std::move(robust));
-        }
-        candidates.emplace_back(new egl_context_attribute_builder);
+    if (have_create_context && have_robustness && have_context_priority) {
+        auto glesRobustPriority = std::make_unique<egl_gles_context_attribute_builder>();
+        glesRobustPriority->setVersion(2);
+        glesRobustPriority->setRobust(true);
+        glesRobustPriority->setHighPriority(true);
+        candidates.push_back(std::move(glesRobustPriority));
     }
+    if (have_create_context && have_robustness) {
+        auto glesRobust = std::make_unique<egl_gles_context_attribute_builder>();
+        glesRobust->setVersion(2);
+        glesRobust->setRobust(true);
+        candidates.push_back(std::move(glesRobust));
+    }
+    if (have_context_priority) {
+        auto glesPriority = std::make_unique<egl_gles_context_attribute_builder>();
+        glesPriority->setVersion(2);
+        glesPriority->setHighPriority(true);
+        candidates.push_back(std::move(glesPriority));
+    }
+
+    auto gles = std::make_unique<egl_gles_context_attribute_builder>();
+    gles->setVersion(2);
+    candidates.push_back(std::move(gles));
 
     auto ctx = EGL_NO_CONTEXT;
     for (auto& candidate : candidates) {
@@ -140,7 +93,7 @@ bool init_egl_api(Backend& backend)
 
     qCDebug(KWIN_WL) << "Egl Initialize succeeded";
 
-    if (eglBindAPI(is_gles_render() ? EGL_OPENGL_ES_API : EGL_OPENGL_API) == EGL_FALSE) {
+    if (eglBindAPI(EGL_OPENGL_ES_API) == EGL_FALSE) {
         qCCritical(KWIN_WL) << "bind OpenGL API failed";
         return false;
     }
