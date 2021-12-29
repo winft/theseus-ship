@@ -741,7 +741,10 @@ int64_t scene::paint_output(base::output* output,
 
     GLVertexBuffer::streamingBuffer()->endOfFrame();
     m_backend->endRenderingFrameForScreen(output, valid, update);
+
+    m_backend->makeCurrent();
     GLVertexBuffer::streamingBuffer()->framePosted();
+    m_backend->doneCurrent();
 
     clearStackingOrder();
     repaint_output = nullptr;

@@ -43,10 +43,6 @@ public:
 
     wlr_renderer* renderer{nullptr};
     wlr_allocator* allocator{nullptr};
-
-    // Needed for final cleanup on platform destroy.
-    // TODO(romangg): Can we make this unnecessary.
-    EGLDisplay egl_display_to_terminate{EGL_NO_DISPLAY};
 };
 
 }

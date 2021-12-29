@@ -115,7 +115,7 @@ void egl_dmabuf_buffer::removeImages()
 {
     if (m_interfaceImpl) {
         for (auto image : m_images) {
-            eglDestroyImageKHR(m_interfaceImpl->data.base.display, image);
+            m_interfaceImpl->data.base.destroy_image_khr(m_interfaceImpl->data.base.display, image);
         }
     }
     m_images.clear();
@@ -176,11 +176,11 @@ EGLImage egl_dmabuf::createImage(const QVector<Plane>& planes, uint32_t format, 
 
     attribs << EGL_NONE;
 
-    EGLImage image = eglCreateImageKHR(data.base.display,
-                                       EGL_NO_CONTEXT,
-                                       EGL_LINUX_DMA_BUF_EXT,
-                                       (EGLClientBuffer) nullptr,
-                                       attribs.data());
+    auto image = data.base.create_image_khr(data.base.display,
+                                            EGL_NO_CONTEXT,
+                                            EGL_LINUX_DMA_BUF_EXT,
+                                            (EGLClientBuffer) nullptr,
+                                            attribs.data());
     if (image == EGL_NO_IMAGE_KHR) {
         return nullptr;
     }

@@ -15,10 +15,8 @@
 namespace KWin::render::backend::wlroots
 {
 
-class buffer;
 class egl_backend;
 class output;
-class surface;
 
 class egl_output
 {
@@ -34,13 +32,10 @@ public:
     bool reset_framebuffer();
     void cleanup_framebuffer();
 
-    bool make_current() const;
-    bool present(buffer* buf);
-
-    buffer* create_buffer();
+    void make_current() const;
+    bool present();
 
     output* out;
-    std::unique_ptr<surface> surf;
     int bufferAge{0};
     egl_backend* egl_back;
 

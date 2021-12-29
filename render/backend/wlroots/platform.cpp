@@ -28,12 +28,7 @@ platform::platform(base::backend::wlroots::platform& base)
 {
 }
 
-platform::~platform()
-{
-    if (egl_display_to_terminate != EGL_NO_DISPLAY) {
-        eglTerminate(egl_display_to_terminate);
-    }
-}
+platform::~platform() = default;
 
 void platform::init()
 {
@@ -52,8 +47,7 @@ void platform::init()
 gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
 {
     if (!egl) {
-        egl = std::make_unique<egl_backend>(
-            *this, base::backend::wlroots::get_headless_backend(base.backend));
+        egl = std::make_unique<egl_backend>(*this);
     }
     return egl.get();
 }
