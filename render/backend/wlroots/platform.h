@@ -29,6 +29,16 @@ class KWIN_EXPORT platform : public render::platform
 {
     Q_OBJECT
 public:
+    explicit platform(base::backend::wlroots::platform& base);
+    ~platform() override;
+
+    void init();
+    void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
+    QVector<CompositingType> supportedCompositors() const override;
+
+    gl::backend* createOpenGLBackend(render::compositor& compositor) override;
+    void render_stop(bool on_shutdown) override;
+
     base::backend::wlroots::platform& base;
     std::unique_ptr<egl_backend> egl;
 
@@ -36,18 +46,6 @@ public:
     wlr_renderer* renderer{nullptr};
     wlr_allocator* allocator{nullptr};
 #endif
-
-    explicit platform(base::backend::wlroots::platform& base);
-    ~platform() override;
-
-    gl::backend* createOpenGLBackend(render::compositor& compositor) override;
-    void render_stop(bool on_shutdown) override;
-
-    void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
-
-    void init();
-
-    QVector<CompositingType> supportedCompositors() const override;
 
     // Needed for final cleanup on platform destroy.
     // TODO(romangg): Can we make this unnecessary.

@@ -33,20 +33,6 @@ output& get_output(std::unique_ptr<render::wayland::output>& output)
     return static_cast<wlroots::output&>(*output);
 }
 
-platform::platform(base::backend::wlroots::platform& base)
-    : render::platform(base)
-    , base{base}
-{
-    align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
-}
-
-platform::~platform()
-{
-    if (egl_display_to_terminate != EGL_NO_DISPLAY) {
-        eglTerminate(egl_display_to_terminate);
-    }
-}
-
 void handle_new_output(struct wl_listener* listener, void* data)
 {
     base::event_receiver<platform>* new_output_struct
@@ -97,6 +83,20 @@ void handle_new_output(struct wl_listener* listener, void* data)
     }
 
     back->base.screens.updateAll();
+}
+
+platform::platform(base::backend::wlroots::platform& base)
+    : render::platform(base)
+    , base{base}
+{
+    align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
+}
+
+platform::~platform()
+{
+    if (egl_display_to_terminate != EGL_NO_DISPLAY) {
+        eglTerminate(egl_display_to_terminate);
+    }
 }
 
 void platform::init()
@@ -152,20 +152,6 @@ QVector<CompositingType> platform::supportedCompositors() const
     return QVector<CompositingType>{OpenGLCompositing};
 }
 
-struct outputs_array_wrap {
-    outputs_array_wrap(size_t size)
-        : size{size}
-    {
-        data = new wlr_output*[size];
-    }
-    ~outputs_array_wrap()
-    {
-        delete[] data;
-    }
-    wlr_output** data{nullptr};
-    size_t size;
-};
-
 void platform::init_drm_leasing()
 {
 #if HAVE_WLR_DRM_LEASE
@@ -198,6 +184,20 @@ void platform::init_drm_leasing()
             });
 #endif
 }
+
+struct outputs_array_wrap {
+    outputs_array_wrap(size_t size)
+        : size{size}
+    {
+        data = new wlr_output*[size];
+    }
+    ~outputs_array_wrap()
+    {
+        delete[] data;
+    }
+    wlr_output** data{nullptr};
+    size_t size;
+};
 
 void platform::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1* lease)
 {

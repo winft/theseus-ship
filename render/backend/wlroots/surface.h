@@ -22,11 +22,6 @@ private:
     EGLDisplay egl_display;
 
 public:
-    std::vector<buffer*> buffers;
-    gbm_surface* gbm{nullptr};
-    EGLSurface egl{EGL_NO_SURFACE};
-    QSize size;
-
     surface(gbm_surface* gbm_surf, EGLSurface egl_surf, EGLDisplay egl_display, QSize const& size)
         : egl_display{egl_display}
         , gbm{gbm_surf}
@@ -34,6 +29,11 @@ public:
         , size{size}
     {
     }
+
+    surface(surface const&) = delete;
+    surface& operator=(surface const&) = delete;
+    surface(surface&&) noexcept = default;
+    surface& operator=(surface&&) noexcept = default;
 
     ~surface()
     {
@@ -46,10 +46,10 @@ public:
         }
     }
 
-    surface(surface const&) = delete;
-    surface& operator=(surface const&) = delete;
-    surface(surface&&) noexcept = default;
-    surface& operator=(surface&&) noexcept = default;
+    std::vector<buffer*> buffers;
+    gbm_surface* gbm{nullptr};
+    EGLSurface egl{EGL_NO_SURFACE};
+    QSize size;
 };
 
 }

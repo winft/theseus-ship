@@ -23,28 +23,24 @@ struct wlr_buffer_override {
 
 class buffer
 {
-private:
-    bool set_dmabuf_attributes();
-
 public:
+    buffer(surface* surf, bool headless);
+    buffer(buffer const&) = delete;
+    buffer& operator=(buffer const&) = delete;
+    buffer(buffer&&) noexcept = default;
+    buffer& operator=(buffer&&) noexcept = default;
+    ~buffer();
+
+    QSize size() const;
+
     gbm_bo* bo{nullptr};
     surface* surf;
 
     wlr_buffer_override native;
     wlr_dmabuf_attributes dmabuf;
 
-    QSize size() const
-    {
-        return QSize(native.base.width, native.base.height);
-    }
-
-    buffer(surface* surf, bool headless);
-    buffer(buffer const&) = delete;
-    buffer& operator=(buffer const&) = delete;
-    buffer(buffer&&) noexcept = default;
-    buffer& operator=(buffer&&) noexcept = default;
-
-    ~buffer();
+private:
+    bool set_dmabuf_attributes();
 };
 
 }

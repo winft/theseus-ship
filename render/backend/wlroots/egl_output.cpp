@@ -60,18 +60,6 @@ buffer* egl_output::create_buffer()
     return new buffer(surf.get(), egl_back->headless);
 }
 
-void egl_output::cleanup_framebuffer()
-{
-    if (!render.framebuffer) {
-        return;
-    }
-    make_current();
-    glDeleteTextures(1, &render.texture);
-    render.texture = 0;
-    glDeleteFramebuffers(1, &render.framebuffer);
-    render.framebuffer = 0;
-}
-
 bool egl_output::reset()
 {
     auto size = out->base.mode_size();
@@ -139,6 +127,18 @@ bool egl_output::reset_framebuffer()
     GLRenderTarget::setKWinFramebuffer(0);
 
     return true;
+}
+
+void egl_output::cleanup_framebuffer()
+{
+    if (!render.framebuffer) {
+        return;
+    }
+    make_current();
+    glDeleteTextures(1, &render.texture);
+    render.texture = 0;
+    glDeleteFramebuffers(1, &render.framebuffer);
+    render.framebuffer = 0;
 }
 
 bool egl_output::make_current() const

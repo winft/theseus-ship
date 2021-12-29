@@ -153,92 +153,6 @@ void egl_backend::cleanupSurfaces()
     }
 }
 
-const float vertices[] = {
-    -1.0f,
-    1.0f,
-    -1.0f,
-    -1.0f,
-    1.0f,
-    -1.0f,
-
-    -1.0f,
-    1.0f,
-    1.0f,
-    -1.0f,
-    1.0f,
-    1.0f,
-};
-
-const float texCoords[] = {
-    0.0f,
-    1.0f,
-    0.0f,
-    0.0f,
-    1.0f,
-    0.0f,
-
-    0.0f,
-    1.0f,
-    1.0f,
-    0.0f,
-    1.0f,
-    1.0f,
-};
-
-void egl_backend::initRenderTarget(egl_output& egl_out)
-{
-    if (egl_out.render.vbo) {
-        // Already initialized.
-        return;
-    }
-    std::shared_ptr<GLVertexBuffer> vbo(new GLVertexBuffer(KWin::GLVertexBuffer::Static));
-    vbo->setData(6, 2, vertices, texCoords);
-    egl_out.render.vbo = vbo;
-}
-
-void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
-{
-    if (!egl_out.render.framebuffer) {
-        // No additional render target.
-        return;
-    }
-    initRenderTarget(egl_out);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    GLRenderTarget::setKWinFramebuffer(0);
-
-    GLuint clearColor[4] = {0, 0, 0, 0};
-    glClearBufferuiv(GL_COLOR, 0, clearColor);
-
-    auto geo = egl_out.out->base.view_geometry();
-    if (has_portrait_transform(egl_out.out->base)) {
-        geo = geo.transposed();
-        geo.moveTopLeft(geo.topLeft().transposed());
-    }
-    glViewport(geo.x(), geo.y(), geo.width(), geo.height());
-
-    auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
-
-    QMatrix4x4 rotationMatrix;
-    rotationMatrix.rotate(
-        rotation_in_degree(static_cast<base::backend::wlroots::output&>(egl_out.out->base)),
-        0,
-        0,
-        1);
-    shader->setUniform(GLShader::ModelViewProjectionMatrix, rotationMatrix);
-
-    glBindTexture(GL_TEXTURE_2D, egl_out.render.texture);
-    egl_out.render.vbo->render(GL_TRIANGLES);
-    ShaderManager::instance()->popShader();
-}
-
-void egl_backend::prepareRenderFramebuffer(egl_output const& egl_out) const
-{
-    // When render.framebuffer is 0 we may just reset to the screen framebuffer.
-    glBindFramebuffer(GL_FRAMEBUFFER, egl_out.render.framebuffer);
-    GLRenderTarget::setKWinFramebuffer(egl_out.render.framebuffer);
-}
-
 void egl_backend::present()
 {
     // Not in use. This backend does per-screen rendering.
@@ -260,21 +174,6 @@ QRegion egl_backend::prepareRenderingFrame()
 {
     startRenderTimer();
     return QRegion();
-}
-
-void egl_backend::setViewport(egl_output const& egl_out) const
-{
-    auto const& overall = platform.base.screens.size();
-    auto const& geo = egl_out.out->base.geometry();
-    auto const& view = egl_out.out->base.view_geometry();
-
-    auto const width_ratio = view.width() / (double)geo.width();
-    auto const height_ratio = view.height() / (double)geo.height();
-
-    glViewport(-geo.x() * width_ratio,
-               (geo.height() - overall.height() + geo.y()) * height_ratio,
-               overall.width() * width_ratio,
-               overall.height() * height_ratio);
 }
 
 QRegion egl_backend::prepareRenderingForScreen(base::output* output)
@@ -365,6 +264,107 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
         }
         out->damageHistory.push_front(damagedRegion.intersected(output->geometry()));
     }
+}
+
+void egl_backend::prepareRenderFramebuffer(egl_output const& egl_out) const
+{
+    // When render.framebuffer is 0 we may just reset to the screen framebuffer.
+    glBindFramebuffer(GL_FRAMEBUFFER, egl_out.render.framebuffer);
+    GLRenderTarget::setKWinFramebuffer(egl_out.render.framebuffer);
+}
+
+void egl_backend::setViewport(egl_output const& egl_out) const
+{
+    auto const& overall = platform.base.screens.size();
+    auto const& geo = egl_out.out->base.geometry();
+    auto const& view = egl_out.out->base.view_geometry();
+
+    auto const width_ratio = view.width() / (double)geo.width();
+    auto const height_ratio = view.height() / (double)geo.height();
+
+    glViewport(-geo.x() * width_ratio,
+               (geo.height() - overall.height() + geo.y()) * height_ratio,
+               overall.width() * width_ratio,
+               overall.height() * height_ratio);
+}
+
+const float vertices[] = {
+    -1.0f,
+    1.0f,
+    -1.0f,
+    -1.0f,
+    1.0f,
+    -1.0f,
+
+    -1.0f,
+    1.0f,
+    1.0f,
+    -1.0f,
+    1.0f,
+    1.0f,
+};
+
+const float texCoords[] = {
+    0.0f,
+    1.0f,
+    0.0f,
+    0.0f,
+    1.0f,
+    0.0f,
+
+    0.0f,
+    1.0f,
+    1.0f,
+    0.0f,
+    1.0f,
+    1.0f,
+};
+
+void egl_backend::initRenderTarget(egl_output& egl_out)
+{
+    if (egl_out.render.vbo) {
+        // Already initialized.
+        return;
+    }
+    std::shared_ptr<GLVertexBuffer> vbo(new GLVertexBuffer(KWin::GLVertexBuffer::Static));
+    vbo->setData(6, 2, vertices, texCoords);
+    egl_out.render.vbo = vbo;
+}
+
+void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
+{
+    if (!egl_out.render.framebuffer) {
+        // No additional render target.
+        return;
+    }
+    initRenderTarget(egl_out);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    GLRenderTarget::setKWinFramebuffer(0);
+
+    GLuint clearColor[4] = {0, 0, 0, 0};
+    glClearBufferuiv(GL_COLOR, 0, clearColor);
+
+    auto geo = egl_out.out->base.view_geometry();
+    if (has_portrait_transform(egl_out.out->base)) {
+        geo = geo.transposed();
+        geo.moveTopLeft(geo.topLeft().transposed());
+    }
+    glViewport(geo.x(), geo.y(), geo.width(), geo.height());
+
+    auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
+
+    QMatrix4x4 rotationMatrix;
+    rotationMatrix.rotate(
+        rotation_in_degree(static_cast<base::backend::wlroots::output&>(egl_out.out->base)),
+        0,
+        0,
+        1);
+    shader->setUniform(GLShader::ModelViewProjectionMatrix, rotationMatrix);
+
+    glBindTexture(GL_TEXTURE_2D, egl_out.render.texture);
+    egl_out.render.vbo->render(GL_TRIANGLES);
+    ShaderManager::instance()->popShader();
 }
 
 egl_texture::egl_texture(gl::texture* texture, egl_backend* backend)

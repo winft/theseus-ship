@@ -100,6 +100,11 @@ buffer::~buffer()
     }
 }
 
+QSize buffer::size() const
+{
+    return QSize(native.base.width, native.base.height);
+}
+
 bool buffer::set_dmabuf_attributes()
 {
     wlr_dmabuf_attributes attribs = {};
