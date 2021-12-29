@@ -6,19 +6,22 @@
 */
 #include "egl_backend.h"
 
-#include "base/backend/wlroots/output.h"
 #include "egl_helpers.h"
 #include "egl_output.h"
+#include "egl_texture.h"
 #include "output.h"
 #include "platform.h"
-#include "render/gl/egl.h"
-#include "render/gl/gl.h"
-#include "render/wayland/egl.h"
 #include "surface.h"
 #include "wlr_helpers.h"
 
+#include "base/backend/wlroots/output.h"
+#include "render/gl/egl.h"
+#include "render/gl/gl.h"
+#include "render/wayland/egl.h"
+
 #include "screens.h"
 
+#include <QOpenGLContext>
 #include <kwinglplatform.h>
 #include <stdexcept>
 #include <wayland_logging.h>
@@ -38,7 +41,7 @@ std::unique_ptr<egl_output>& egl_backend::get_egl_out(base::output const* out)
 }
 
 egl_backend::egl_backend(wlroots::platform& platform, bool headless)
-    : gl::egl_backend()
+    : gl::backend()
     , platform{platform}
     , headless{headless}
 {
@@ -52,6 +55,11 @@ egl_backend::egl_backend(wlroots::platform& platform, bool headless)
 egl_backend::~egl_backend()
 {
     tear_down();
+}
+
+bool egl_backend::hasClientExtension(const QByteArray& ext) const
+{
+    return data.base.client_extensions.contains(ext);
 }
 
 void egl_backend::start()
@@ -146,6 +154,18 @@ void egl_backend::tear_down()
     data = {};
 }
 
+void egl_backend::cleanup()
+{
+    cleanupGL();
+    doneCurrent();
+    eglDestroyContext(data.base.display, data.base.context);
+    cleanupSurfaces();
+    eglReleaseThread();
+
+    delete dmabuf;
+    dmabuf = nullptr;
+}
+
 void egl_backend::cleanupSurfaces()
 {
     for (auto out : platform.base.all_outputs) {
@@ -157,6 +177,22 @@ void egl_backend::present()
 {
     // Not in use. This backend does per-screen rendering.
     Q_UNREACHABLE();
+}
+
+bool egl_backend::makeCurrent()
+{
+    if (auto context = QOpenGLContext::currentContext()) {
+        // Workaround to tell Qt that no QOpenGLContext is current
+        context->doneCurrent();
+    }
+    auto const current = eglMakeCurrent(
+        data.base.display, data.base.surface, data.base.surface, data.base.context);
+    return current;
+}
+
+void egl_backend::doneCurrent()
+{
+    eglMakeCurrent(data.base.display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 }
 
 void egl_backend::screenGeometryChanged(QSize const& size)
@@ -366,12 +402,5 @@ void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
     egl_out.render.vbo->render(GL_TRIANGLES);
     ShaderManager::instance()->popShader();
 }
-
-egl_texture::egl_texture(gl::texture* texture, egl_backend* backend)
-    : gl::egl_texture(texture, backend)
-{
-}
-
-egl_texture::~egl_texture() = default;
 
 }

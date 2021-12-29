@@ -5,13 +5,12 @@
 */
 #pragma once
 
+#include "kwingltexture.h"
+
 #include <QRegion>
-
 #include <deque>
-#include <memory>
-
 #include <epoxy/egl.h>
-#include <kwingltexture.h>
+#include <memory>
 
 namespace KWin::render::backend::wlroots
 {

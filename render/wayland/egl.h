@@ -44,7 +44,7 @@ void init_egl(Backend& backend, egl_data& egl)
     }
 
     assert(!backend.dmabuf);
-    backend.dmabuf = gl::egl_dmabuf::factory(&backend);
+    backend.dmabuf = gl::egl_dmabuf_factory(backend);
 }
 
 template<typename Backend>

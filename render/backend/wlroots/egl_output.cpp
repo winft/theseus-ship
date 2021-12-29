@@ -12,9 +12,9 @@
 #include "platform.h"
 #include "surface.h"
 
+#include "kwinglutils.h"
 #include "screens.h"
-
-#include <wayland_logging.h>
+#include "wayland_logging.h"
 
 namespace KWin::render::backend::wlroots
 {

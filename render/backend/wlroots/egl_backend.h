@@ -5,12 +5,20 @@
 */
 #pragma once
 
-#include "render/gl/egl_backend.h"
+#include "render/gl/backend.h"
+#include "render/wayland/egl_data.h"
 
-#include <deque>
 #include <memory>
 
-namespace KWin::render::backend::wlroots
+namespace KWin::render
+{
+
+namespace gl
+{
+class egl_dmabuf;
+}
+
+namespace backend::wlroots
 {
 
 class platform;
@@ -19,7 +27,7 @@ class egl_output;
 class output;
 class surface;
 
-class egl_backend : public gl::egl_backend
+class egl_backend : public gl::backend
 {
 public:
     egl_backend(wlroots::platform& platform, bool headless);
@@ -27,7 +35,12 @@ public:
 
     void start();
     void tear_down();
-    void cleanupSurfaces() override;
+
+    void cleanup();
+    void cleanupSurfaces();
+
+    bool makeCurrent() override;
+    void doneCurrent() override;
 
     void screenGeometryChanged(QSize const& size) override;
     gl::texture_private* createBackendTexture(gl::texture* texture) override;
@@ -40,12 +53,16 @@ public:
                                     QRegion const& damage,
                                     QRegion const& damagedRegion) override;
 
+    bool hasClientExtension(const QByteArray& ext) const;
     std::unique_ptr<egl_output>& get_egl_out(base::output const* out);
 
     std::unique_ptr<egl_gbm> gbm;
     wlroots::platform& platform;
     bool headless{false};
     std::unique_ptr<wlroots::surface> dummy_surface;
+
+    gl::egl_dmabuf* dmabuf{nullptr};
+    wayland::egl_data data;
 
 protected:
     void present() override;
@@ -61,14 +78,5 @@ private:
     void renderFramebufferToSurface(egl_output& egl_out);
 };
 
-class egl_texture : public gl::egl_texture
-{
-public:
-    ~egl_texture() override;
-
-private:
-    friend class egl_backend;
-    egl_texture(gl::texture* texture, egl_backend* backend);
-};
-
+}
 }

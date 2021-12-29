@@ -31,19 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::gl
 {
 
-typedef EGLBoolean (*eglQueryDmaBufFormatsEXT_func)(EGLDisplay dpy,
-                                                    EGLint max_formats,
-                                                    EGLint* formats,
-                                                    EGLint* num_formats);
-typedef EGLBoolean (*eglQueryDmaBufModifiersEXT_func)(EGLDisplay dpy,
-                                                      EGLint format,
-                                                      EGLint max_modifiers,
-                                                      EGLuint64KHR* modifiers,
-                                                      EGLBoolean* external_only,
-                                                      EGLint* num_modifiers);
-eglQueryDmaBufFormatsEXT_func eglQueryDmaBufFormatsEXT = nullptr;
-eglQueryDmaBufModifiersEXT_func eglQueryDmaBufModifiersEXT = nullptr;
-
 struct YuvPlane {
     int widthDivisor = 0;
     int heightDivisor = 0;
@@ -128,7 +115,7 @@ void egl_dmabuf_buffer::removeImages()
 {
     if (m_interfaceImpl) {
         for (auto image : m_images) {
-            eglDestroyImageKHR(m_interfaceImpl->m_backend->data.base.display, image);
+            eglDestroyImageKHR(m_interfaceImpl->data.display, image);
         }
     }
     m_images.clear();
@@ -189,7 +176,7 @@ EGLImage egl_dmabuf::createImage(const QVector<Plane>& planes, uint32_t format, 
 
     attribs << EGL_NONE;
 
-    EGLImage image = eglCreateImageKHR(m_backend->data.base.display,
+    EGLImage image = eglCreateImageKHR(data.display,
                                        EGL_NO_CONTEXT,
                                        EGL_LINUX_DMA_BUF_EXT,
                                        (EGLClientBuffer) nullptr,
@@ -260,25 +247,8 @@ egl_dmabuf::yuvImport(const QVector<Plane>& planes, uint32_t format, const QSize
     return buf;
 }
 
-egl_dmabuf* egl_dmabuf::factory(egl_backend* backend)
-{
-    if (!backend->hasExtension(QByteArrayLiteral("EGL_EXT_image_dma_buf_import"))) {
-        return nullptr;
-    }
-
-    if (backend->hasExtension(QByteArrayLiteral("EGL_EXT_image_dma_buf_import_modifiers"))) {
-        eglQueryDmaBufFormatsEXT
-            = (eglQueryDmaBufFormatsEXT_func)eglGetProcAddress("eglQueryDmaBufFormatsEXT");
-        eglQueryDmaBufModifiersEXT
-            = (eglQueryDmaBufModifiersEXT_func)eglGetProcAddress("eglQueryDmaBufModifiersEXT");
-    }
-
-    return new egl_dmabuf(backend);
-}
-
-egl_dmabuf::egl_dmabuf(egl_backend* backend)
-    : wayland::linux_dmabuf()
-    , m_backend(backend)
+egl_dmabuf::egl_dmabuf(egl_dmabuf_data const& data)
+    : data{data}
 {
     auto prevBuffersSet = waylandServer()->linuxDmabufBuffers();
     for (auto* buffer : prevBuffersSet) {
@@ -344,14 +314,13 @@ QVector<uint32_t> egl_dmabuf::queryFormats()
     }
 
     EGLint count = 0;
-    EGLBoolean success = eglQueryDmaBufFormatsEXT(m_backend->data.base.display, 0, nullptr, &count);
+    EGLBoolean success = eglQueryDmaBufFormatsEXT(data.display, 0, nullptr, &count);
     if (!success || count == 0) {
         return QVector<uint32_t>();
     }
 
     QVector<uint32_t> formats(count);
-    if (!eglQueryDmaBufFormatsEXT(
-            m_backend->data.base.display, count, (EGLint*)formats.data(), &count)) {
+    if (!eglQueryDmaBufFormatsEXT(data.display, count, (EGLint*)formats.data(), &count)) {
         return QVector<uint32_t>();
     }
     return formats;
@@ -372,17 +341,13 @@ void egl_dmabuf::setSupportedFormatsAndModifiers()
     for (auto format : qAsConst(formats)) {
         if (eglQueryDmaBufModifiersEXT != nullptr) {
             EGLint count = 0;
-            EGLBoolean success = eglQueryDmaBufModifiersEXT(
-                m_backend->data.base.display, format, 0, nullptr, nullptr, &count);
+            EGLBoolean success
+                = eglQueryDmaBufModifiersEXT(data.display, format, 0, nullptr, nullptr, &count);
 
             if (success && count > 0) {
                 QVector<uint64_t> modifiers(count);
-                if (eglQueryDmaBufModifiersEXT(m_backend->data.base.display,
-                                               format,
-                                               count,
-                                               modifiers.data(),
-                                               nullptr,
-                                               &count)) {
+                if (eglQueryDmaBufModifiersEXT(
+                        data.display, format, count, modifiers.data(), nullptr, &count)) {
                     QSet<uint64_t> modifiersSet;
                     for (auto mod : qAsConst(modifiers)) {
                         modifiersSet.insert(mod);

@@ -20,11 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "egl_backend.h"
-
 #include "render/wayland/linux_dmabuf.h"
 
 #include <QVector>
+#include <cassert>
+#include <epoxy/egl.h>
 
 namespace KWin::render::gl
 {
@@ -65,15 +65,29 @@ private:
     ImportType m_importType;
 };
 
+struct egl_dmabuf_data {
+    EGLDisplay display{EGL_NO_DISPLAY};
+
+    using query_formats_ext_func
+        = EGLBoolean (*)(EGLDisplay dpy, EGLint max_formats, EGLint* formats, EGLint* num_formats);
+    using query_modifiers_ext_func = EGLBoolean (*)(EGLDisplay dpy,
+                                                    EGLint format,
+                                                    EGLint max_modifiers,
+                                                    EGLuint64KHR* modifiers,
+                                                    EGLBoolean* external_only,
+                                                    EGLint* num_modifiers);
+
+    query_formats_ext_func query_formats_ext{nullptr};
+    query_modifiers_ext_func query_modifiers_ext{nullptr};
+};
+
 class egl_dmabuf : public wayland::linux_dmabuf
 {
 public:
     using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
     using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
 
-    static egl_dmabuf* factory(egl_backend* backend);
-
-    explicit egl_dmabuf(egl_backend* backend);
+    explicit egl_dmabuf(egl_dmabuf_data const& data);
     ~egl_dmabuf() override;
 
     Wrapland::Server::LinuxDmabufBufferV1* importBuffer(const QVector<Plane>& planes,
@@ -89,9 +103,31 @@ private:
     QVector<uint32_t> queryFormats();
     void setSupportedFormatsAndModifiers();
 
-    egl_backend* m_backend;
+    egl_dmabuf_data data;
 
     friend class egl_dmabuf_buffer;
 };
+
+template<typename Backend>
+static egl_dmabuf* egl_dmabuf_factory(Backend& backend)
+{
+    assert(backend.data.base.display != EGL_NO_DISPLAY);
+
+    if (!backend.hasExtension(QByteArrayLiteral("EGL_EXT_image_dma_buf_import"))) {
+        return nullptr;
+    }
+
+    egl_dmabuf_data data;
+    data.display = backend.data.base.display;
+
+    if (backend.hasExtension(QByteArrayLiteral("EGL_EXT_image_dma_buf_import_modifiers"))) {
+        data.query_formats_ext = reinterpret_cast<egl_dmabuf_data::query_formats_ext_func>(
+            eglGetProcAddress("eglQueryDmaBufFormatsEXT"));
+        data.query_modifiers_ext = reinterpret_cast<egl_dmabuf_data::query_modifiers_ext_func>(
+            eglGetProcAddress("eglQueryDmaBufModifiersEXT"));
+    }
+
+    return new egl_dmabuf(data);
+}
 
 }
