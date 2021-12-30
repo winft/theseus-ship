@@ -7,8 +7,12 @@
 
 #include "base/utils.h"
 #include "base/wayland/platform.h"
+#include "config-kwin.h"
+#include "kwin_export.h"
 
-#include <kwin_export.h>
+#if HAVE_WLR_DRM_LEASE
+#include "drm_lease.h"
+#endif
 
 #include <functional>
 #include <memory>
@@ -28,6 +32,8 @@ class Display;
 
 namespace KWin::base::backend::wlroots
 {
+
+class non_desktop_output;
 
 inline wlr_backend* get_backend(wlr_backend* backend, std::function<bool(wlr_backend*)> check)
 {
@@ -64,8 +70,6 @@ inline wlr_backend* get_headless_backend(wlr_backend* backend)
 class KWIN_EXPORT platform : public base::wayland::platform
 {
 public:
-    wlr_backend* backend{nullptr};
-
     platform() = default;
     explicit platform(Wrapland::Server::Display* display);
     explicit platform(wlr_backend* backend);
@@ -79,9 +83,15 @@ public:
     wlr_session* session() const;
     clockid_t get_clockid() const override;
 
-    void setup_drm_leasing();
+#if HAVE_WLR_DRM_LEASE
+    std::vector<std::unique_ptr<drm_lease>> leases;
+    std::vector<non_desktop_output*> non_desktop_outputs;
+#endif
+    wlr_backend* backend{nullptr};
 
 private:
+    void setup_drm_leasing();
+
     std::unique_ptr<event_receiver<platform>> destroyed;
     std::unique_ptr<event_receiver<platform>> new_output;
 };

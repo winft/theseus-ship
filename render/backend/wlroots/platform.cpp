@@ -44,8 +44,6 @@ void platform::init()
     allocator = wlr_allocator_autocreate(base.backend, renderer);
 #endif
 
-    base.setup_drm_leasing();
-
     if (!wlr_backend_start(base.backend)) {
         throw std::exception();
     }

@@ -8,13 +8,11 @@
 #include "platform.h"
 
 #include "base/gamma_ramp.h"
-#include "main.h"
 #include "render/backend/wlroots/output.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/presentation.h"
 #include "screens.h"
 #include "utils.h"
-#include "wayland_server.h"
 
 #include <chrono>
 #include <wayland_logging.h>
@@ -94,7 +92,6 @@ output::output(wlr_output* wlr_out, wlroots::platform* platform)
                     modes,
                     current_mode.id != -1 ? &current_mode : nullptr);
     render = std::make_unique<render::backend::wlroots::output>(*this, *platform->render);
-    create_lease_connector();
 }
 
 output::~output()
@@ -109,17 +106,6 @@ output::~output()
         Q_EMIT platform->output_removed(this);
         platform->screens.updateAll();
     }
-}
-
-void output::create_lease_connector()
-{
-    auto lease_device = waylandServer()->drm_lease_device();
-    if (!lease_device) {
-        return;
-    }
-
-    lease_connector.reset(lease_device->create_connector(base::wayland::output::wrapland_output()));
-    base::wayland::output::wrapland_output()->set_connector_id(wlr_drm_connector_get_id(native));
 }
 
 bool output::disable_native()

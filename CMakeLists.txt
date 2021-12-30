@@ -873,6 +873,14 @@ set(kwin_WAYLAND_SRCS
    win/wayland/window.cpp
 )
 
+if (HAVE_WLR_DRM_LEASE)
+  set(kwin_WAYLAND_SRCS
+    ${kwin_WAYLAND_SRCS}
+    base/backend/wlroots/drm_lease.cpp
+    base/backend/wlroots/non_desktop_output.cpp
+  )
+endif()
+
 if (KWIN_BUILD_TABBOX)
   set(kwin_WAYLAND_SRCS
     ${kwin_WAYLAND_SRCS}

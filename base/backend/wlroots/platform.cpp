@@ -7,18 +7,17 @@
 
 #include "output.h"
 
-#include "base/wayland/output_helpers.h"
-#include "config-kwin.h"
+#if HAVE_WLR_DRM_LEASE
+#include "non_desktop_output.h"
+#endif
+
 #include "main.h"
-#include "render/backend/wlroots/egl_output.h"
 #include "render/backend/wlroots/output.h"
 #include "render/backend/wlroots/platform.h"
-#include "render/wayland/compositor.h"
 #include "wayland_logging.h"
 #include "wayland_server.h"
 
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/drm_lease_v1.h>
 #include <stdexcept>
 
 namespace KWin::base::backend::wlroots
@@ -79,6 +78,13 @@ void handle_new_output(struct wl_listener* listener, void* data)
     auto platform = new_output_struct->receiver;
     auto native = reinterpret_cast<wlr_output*>(data);
 
+#if HAVE_WLR_DRM_LEASE
+    if (native->non_desktop) {
+        platform->non_desktop_outputs.push_back(new non_desktop_output(native, platform));
+        return;
+    }
+#endif
+
     try {
         add_new_output(*platform, native);
     } catch (std::runtime_error const& e) {
@@ -109,6 +115,8 @@ platform::platform(wlr_backend* backend)
     new_output->receiver = this;
     new_output->event.notify = handle_new_output;
     wl_signal_add(&backend->events.new_output, &new_output->event);
+
+    setup_drm_leasing();
 }
 
 platform::platform(platform&& other) noexcept
@@ -133,6 +141,12 @@ platform::~platform()
         static_cast<wlroots::output*>(output)->platform = nullptr;
         delete output;
     }
+#if HAVE_WLR_DRM_LEASE
+    for (auto output : non_desktop_outputs) {
+        output->platform = nullptr;
+        delete output;
+    }
+#endif
     if (backend) {
         wlr_backend_destroy(backend);
     }
@@ -149,68 +163,40 @@ clockid_t platform::get_clockid() const
 }
 
 #if HAVE_WLR_DRM_LEASE
-struct outputs_array_wrap {
-    outputs_array_wrap(size_t size)
-        : size{size}
-    {
-        data = new wlr_output*[size];
-    }
-    ~outputs_array_wrap()
-    {
-        delete[] data;
-    }
-    wlr_output** data{nullptr};
-    size_t size;
-};
-
 void process_drm_leased(wlroots::platform& platform, Wrapland::Server::drm_lease_v1* lease)
 {
-    std::vector<render::backend::wlroots::output*> outputs;
+    std::vector<non_desktop_output*> outputs;
 
     qCDebug(KWIN_WL) << "Client tries to lease DRM resources.";
 
     if (lease->connectors().empty()) {
-        qCDebug(KWIN_WL) << "Lease request has no connectors specified.";
-        throw;
+        throw std::runtime_error("Lease request has no connectors specified");
     }
 
-    for (auto& con : lease->connectors()) {
-        auto out = static_cast<output*>(wayland::find_output(platform, con->output()));
-        assert(out);
-        outputs.push_back(&static_cast<render::backend::wlroots::output&>(*out->render));
-    }
-
-    auto outputs_array = outputs_array_wrap(outputs.size());
-
-    size_t i{0};
-    for (auto& out : outputs) {
-        out->egl->cleanup_framebuffer();
-        outputs_array.data[i] = static_cast<output&>(out->base).native;
-        i++;
-    }
-
-    auto wlr_lease = wlr_drm_create_lease(outputs_array.data, outputs_array.size, nullptr);
-    if (!wlr_lease) {
-        qCWarning(KWIN_WL) << "Error in wlroots backend on lease creation.";
-        for (auto& out : outputs) {
-            out->egl->reset_framebuffer();
+    for (auto& output : platform.non_desktop_outputs) {
+        for (auto& con : lease->connectors()) {
+            if (wlr_drm_connector_get_id(output->native) != con->id()) {
+                continue;
+            }
+            if (output->lease) {
+                qCDebug(KWIN_WL) << "Failed lease," << output->native->name << "already leased";
+                lease->finish();
+                return;
+            }
+            outputs.push_back(output);
+            break;
         }
-        throw;
     }
 
-    auto compositor
-        = static_cast<render::backend::wlroots::platform&>(*platform.render).compositor.get();
+    platform.leases.push_back(std::make_unique<drm_lease>(lease, outputs));
+    auto drm_lease = platform.leases.back().get();
+    auto plat_ptr = &platform;
 
-    QObject::connect(lease,
-                     &Wrapland::Server::drm_lease_v1::resourceDestroyed,
-                     &platform,
-                     [compositor, wlr_lease] {
-                         wlr_drm_lease_terminate(wlr_lease);
-                         static_cast<render::wayland::compositor*>(compositor)->unlock();
-                     });
+    QObject::connect(drm_lease, &drm_lease::finished, plat_ptr, [plat_ptr, drm_lease] {
+        remove_all_if(plat_ptr->leases,
+                      [drm_lease](auto& lease) { return lease.get() == drm_lease; });
+    });
 
-    static_cast<render::wayland::compositor*>(compositor)->lock();
-    lease->grant(wlr_lease->fd);
     qCDebug(KWIN_WL) << "DRM resources have been leased to client";
 }
 
@@ -238,8 +224,12 @@ void platform::setup_drm_leasing()
             [this](auto lease) {
                 try {
                     process_drm_leased(*this, lease);
+                } catch (std::runtime_error const& e) {
+                    qCDebug(KWIN_WL) << "Creating lease failed:" << e.what();
+                    lease->finish();
+
                 } catch (...) {
-                    qCWarning(KWIN_WL) << "Creating lease failed.";
+                    qCWarning(KWIN_WL) << "Creating lease failed for unknown reason.";
                     lease->finish();
                 }
             });
