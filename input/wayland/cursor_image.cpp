@@ -111,11 +111,6 @@ void cursor_image::setup_move_resize(Toplevel* window)
 void cursor_image::markAsRendered()
 {
     if (m_currentSource == CursorSource::DragAndDrop) {
-        // always sending a frame rendered to the drag icon surface to not freeze QtWayland (see
-        // https://bugreports.qt.io/browse/QTBUG-51599 )
-        if (auto drag_icon = waylandServer()->seat()->drags().get_source().surfaces.icon) {
-            drag_icon->frameRendered(m_surfaceRenderedTimer.elapsed());
-        }
         auto p = waylandServer()->seat()->drags().get_source().pointer;
         if (!p) {
             return;
