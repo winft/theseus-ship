@@ -5,6 +5,8 @@
 */
 #include "platform.h"
 
+#include "render/platform.h"
+
 namespace KWin::base
 {
 

@@ -98,8 +98,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     base = base::backend::wlroots::platform(
         wlr_headless_backend_create(server->display()->native()));
 
-    render.reset(new render::backend::wlroots::platform(base));
-    platform = render.get();
+    base.render = std::make_unique<render::backend::wlroots::platform>(base);
 
     auto environment = QProcessEnvironment::systemEnvironment();
     environment.insert(QStringLiteral("WAYLAND_DISPLAY"), socket_name.c_str());
@@ -128,10 +127,10 @@ WaylandTestApplication::~WaylandTestApplication()
 
     // Block compositor to prevent further compositing from crashing with a null workspace.
     // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-    static_cast<render::wayland::compositor*>(render->compositor.get())->lock();
+    static_cast<render::wayland::compositor*>(base.render->compositor.get())->lock();
 
     workspace.reset();
-    render->compositor.reset();
+    base.render->compositor.reset();
 }
 
 bool WaylandTestApplication::is_screen_locked() const
@@ -150,11 +149,6 @@ base::platform& WaylandTestApplication::get_base()
 WaylandServer* WaylandTestApplication::get_wayland_server()
 {
     return server.get();
-}
-
-render::platform* WaylandTestApplication::get_render()
-{
-    return render.get();
 }
 
 debug::console* WaylandTestApplication::create_debug_console()
@@ -182,7 +176,7 @@ void WaylandTestApplication::start()
     touch = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_TOUCH);
 
     try {
-        render->init();
+        static_cast<render::backend::wlroots::platform*>(base.render.get())->init();
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         ::exit(1);
@@ -193,7 +187,7 @@ void WaylandTestApplication::start()
     auto out = base.outputs.at(0);
     out->wrapland_output()->set_physical_size(QSize(1280, 1024));
 
-    render->compositor = std::make_unique<render::wayland::compositor>(*render);
+    base.render->compositor = std::make_unique<render::wayland::compositor>(*base.render);
     workspace = std::make_unique<win::wayland::space>(server.get());
     Q_EMIT workspaceCreated();
 

@@ -9,11 +9,19 @@
 #include "screens.h"
 
 #include <QObject>
+#include <memory>
 #include <vector>
 
-namespace KWin::base
+namespace KWin
 {
 
+namespace render
+{
+class platform;
+}
+
+namespace base
+{
 class output;
 
 class KWIN_EXPORT platform : public QObject
@@ -33,10 +41,12 @@ public:
     virtual std::vector<output*> get_outputs() const = 0;
 
     Screens screens;
+    std::unique_ptr<render::platform> render;
 
 Q_SIGNALS:
     void output_added(output*);
     void output_removed(output*);
 };
 
+}
 }

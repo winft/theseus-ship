@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "sharingplatformcontext.h"
 
+#include "base/platform.h"
 #include "offscreensurface.h"
 #include "render/platform.h"
 #include "window.h"
@@ -43,7 +44,7 @@ SharingPlatformContext::SharingPlatformContext(QOpenGLContext *context)
 }
 
 SharingPlatformContext::SharingPlatformContext(QOpenGLContext *context, const EGLSurface &surface, EGLConfig config)
-    : AbstractPlatformContext(context, kwinApp()->platform->egl_data->display, config)
+    : AbstractPlatformContext(context, kwinApp()->get_base().render->egl_data->display, config)
     , m_surface(surface)
 {
     create();
@@ -120,7 +121,7 @@ void SharingPlatformContext::create()
         qCWarning(KWIN_QPA) << "Could not bind API.";
         return;
     }
-    createContext(kwinApp()->platform->egl_data->context);
+    createContext(kwinApp()->get_base().render->egl_data->context);
 }
 
 }

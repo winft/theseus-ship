@@ -54,12 +54,7 @@ namespace x11
 {
 class event_filter_manager;
 }
-}
 
-namespace render
-{
-class compositor;
-class platform;
 }
 
 namespace seat
@@ -107,7 +102,6 @@ public:
         OperationModeXwayland
     };
 
-    render::platform* platform{nullptr};
     std::unique_ptr<seat::session> session;
     std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<input::platform> input;
@@ -115,7 +109,6 @@ public:
     ~Application() override;
 
     virtual base::platform& get_base() = 0;
-    virtual render::platform* get_render() = 0;
 
     void setConfigLock(bool lock);
 

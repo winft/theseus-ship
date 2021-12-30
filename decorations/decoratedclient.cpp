@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorationbridge.h"
 #include "decorationpalette.h"
 #include "decorationrenderer.h"
+
+#include "base/platform.h"
 #include "render/compositor.h"
 #include "input/cursor.h"
 #include "options.h"
@@ -384,7 +386,7 @@ bool DecoratedClientImpl::isApplicationMenuActive() const
 
 void DecoratedClientImpl::createRenderer()
 {
-    m_renderer = kwinApp()->platform->createDecorationRenderer(this);
+    m_renderer = kwinApp()->get_base().render->createDecorationRenderer(this);
 }
 
 void DecoratedClientImpl::destroyRenderer()

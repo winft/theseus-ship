@@ -274,7 +274,7 @@ CompositorDBusInterface::CompositorDBusInterface(render::compositor *parent)
 
 QString CompositorDBusInterface::compositingNotPossibleReason() const
 {
-    return kwinApp()->platform->compositingNotPossibleReason();
+    return kwinApp()->get_base().render->compositingNotPossibleReason();
 }
 
 QString CompositorDBusInterface::compositingType() const
@@ -306,17 +306,17 @@ bool CompositorDBusInterface::isActive() const
 
 bool CompositorDBusInterface::isCompositingPossible() const
 {
-    return kwinApp()->platform->compositingPossible();
+    return kwinApp()->get_base().render->compositingPossible();
 }
 
 bool CompositorDBusInterface::isOpenGLBroken() const
 {
-    return kwinApp()->platform->openGLCompositingIsBroken();
+    return kwinApp()->get_base().render->openGLCompositingIsBroken();
 }
 
 bool CompositorDBusInterface::platformRequiresCompositing() const
 {
-    return kwinApp()->platform->requiresCompositing();
+    return kwinApp()->get_base().render->requiresCompositing();
 }
 
 void CompositorDBusInterface::resume()
