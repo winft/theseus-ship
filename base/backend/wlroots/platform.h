@@ -81,6 +81,7 @@ public:
 
 private:
     std::unique_ptr<event_receiver<platform>> destroyed;
+    std::unique_ptr<event_receiver<platform>> new_output;
 };
 
 }

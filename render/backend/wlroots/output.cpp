@@ -10,6 +10,7 @@
 #include "wlr_includes.h"
 
 #include "base/gamma_ramp.h"
+#include "config-kwin.h"
 #include "main.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
@@ -18,6 +19,7 @@
 #include "wayland_server.h"
 
 #include <chrono>
+#include <stdexcept>
 #include <wayland_logging.h>
 
 namespace KWin::render::backend::wlroots
@@ -66,6 +68,15 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
 output::output(base::backend::wlroots::output& base, render::platform& platform)
     : wayland::output(base, platform)
 {
+    auto& render = static_cast<wlroots::platform&>(platform);
+
+    if (render.egl) {
+        egl = std::make_unique<egl_output>(*this, render.egl.get());
+    }
+
+    QObject::connect(
+        &base, &base::backend::wlroots::output::mode_changed, this, [this] { egl->reset(); });
+
     present_rec.receiver = this;
     present_rec.event.notify = handle_present;
     wl_signal_add(&base.native->events.present, &present_rec.event);

@@ -93,7 +93,7 @@ output::output(wlr_output* wlr_out, wlroots::platform* platform)
                     QSize(wlr_out->phys_width, wlr_out->phys_height),
                     modes,
                     current_mode.id != -1 ? &current_mode : nullptr);
-
+    render = std::make_unique<render::backend::wlroots::output>(*this, *platform->render);
     create_lease_connector();
 }
 

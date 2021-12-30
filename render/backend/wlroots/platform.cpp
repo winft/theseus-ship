@@ -26,70 +26,15 @@
 namespace KWin::render::backend::wlroots
 {
 
-static auto align_horizontal{false};
-
 output& get_output(std::unique_ptr<render::wayland::output>& output)
 {
     return static_cast<wlroots::output&>(*output);
-}
-
-void handle_new_output(struct wl_listener* listener, void* data)
-{
-    base::event_receiver<platform>* new_output_struct
-        = wl_container_of(listener, new_output_struct, event);
-    auto back = new_output_struct->receiver;
-    auto wlr_out = reinterpret_cast<wlr_output*>(data);
-
-#if HAVE_WLR_OUTPUT_INIT_RENDER
-    wlr_output_init_render(wlr_out, back->allocator, back->renderer);
-#endif
-
-    if (!wl_list_empty(&wlr_out->modes)) {
-        auto mode = wlr_output_preferred_mode(wlr_out);
-        wlr_output_set_mode(wlr_out, mode);
-        wlr_output_enable(wlr_out, true);
-        if (!wlr_output_test(wlr_out)) {
-            return;
-        }
-        if (!wlr_output_commit(wlr_out)) {
-            return;
-        }
-    }
-
-    auto const screens_width = std::max(back->base.screens.size().width(), 0);
-
-    auto out = new base::backend::wlroots::output(wlr_out, &back->base);
-
-    out->render = std::make_unique<output>(*out, *back);
-
-    if (back->egl) {
-        get_output(out->render).egl
-            = std::make_unique<egl_output>(static_cast<output&>(*out->render), back->egl.get());
-    }
-
-    QObject::connect(out, &base::backend::wlroots::output::mode_changed, out, [out] {
-        get_output(out->render).egl->reset();
-    });
-
-    back->base.all_outputs.push_back(out);
-    back->base.outputs.push_back(out);
-
-    Q_EMIT back->base.output_added(out);
-
-    if (align_horizontal) {
-        auto shifted_geo = out->geometry();
-        shifted_geo.moveLeft(screens_width);
-        out->force_geometry(shifted_geo);
-    }
-
-    back->base.screens.updateAll();
 }
 
 platform::platform(base::backend::wlroots::platform& base)
     : render::platform(base)
     , base{base}
 {
-    align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 }
 
 platform::~platform()
@@ -107,10 +52,6 @@ void platform::init()
     renderer = wlr_renderer_autocreate(base.backend);
     allocator = wlr_allocator_autocreate(base.backend, renderer);
 #endif
-
-    new_output.receiver = this;
-    new_output.event.notify = handle_new_output;
-    wl_signal_add(&base.backend->events.new_output, &new_output.event);
 
     init_drm_leasing();
 

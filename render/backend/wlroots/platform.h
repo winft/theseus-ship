@@ -56,7 +56,6 @@ private:
     void process_drm_leased(Wrapland::Server::drm_lease_v1* lease);
 
     clockid_t m_clockId;
-    base::event_receiver<platform> new_output;
 };
 
 }
