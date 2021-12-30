@@ -79,6 +79,8 @@ public:
     wlr_session* session() const;
     clockid_t get_clockid() const override;
 
+    void setup_drm_leasing();
+
 private:
     std::unique_ptr<event_receiver<platform>> destroyed;
     std::unique_ptr<event_receiver<platform>> new_output;
