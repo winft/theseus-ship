@@ -29,6 +29,7 @@ class event_filter;
 
 namespace render::backend::x11
 {
+class glx_backend;
 class output;
 
 class KWIN_EXPORT platform : public render::platform
@@ -41,6 +42,8 @@ public:
     void init();
 
     gl::backend* createOpenGLBackend(render::compositor& compositor) override;
+    void render_stop(bool on_shutdown) override;
+
     bool requiresCompositing() const override;
     bool compositingPossible() const override;
     QString compositingNotPossibleReason() const override;
@@ -68,6 +71,8 @@ private:
 
     Display* m_x11Display;
     base::x11::platform& base;
+
+    std::unique_ptr<glx_backend> gl_backend;
 
     QScopedPointer<base::x11::event_filter> m_randrFilter;
 };

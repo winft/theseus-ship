@@ -5,12 +5,20 @@
 */
 #pragma once
 
-#include "render/gl/egl_backend.h"
+#include "render/gl/backend.h"
+#include "render/wayland/egl_data.h"
 
-#include <deque>
 #include <memory>
 
-namespace KWin::render::backend::wlroots
+namespace KWin::render
+{
+
+namespace gl
+{
+class egl_dmabuf;
+}
+
+namespace backend::wlroots
 {
 
 class platform;
@@ -19,28 +27,20 @@ class egl_output;
 class output;
 class surface;
 
-class egl_backend : public gl::egl_backend
+class egl_backend : public gl::backend
 {
-    Q_OBJECT
-private:
-    bool init_platform();
-    bool init_rendering_context();
-
-    void setViewport(egl_output const& egl_out) const;
-
-    void initRenderTarget(egl_output& egl_out);
-
-    void prepareRenderFramebuffer(egl_output const& egl_out) const;
-    void renderFramebufferToSurface(egl_output& egl_out);
-
 public:
-    std::unique_ptr<egl_gbm> gbm;
-    wlroots::platform& platform;
-    bool headless{false};
-    std::unique_ptr<wlroots::surface> dummy_surface;
-
     egl_backend(wlroots::platform& platform, bool headless);
     ~egl_backend() override;
+
+    void start();
+    void tear_down();
+
+    void cleanup();
+    void cleanupSurfaces();
+
+    bool makeCurrent() override;
+    void doneCurrent() override;
 
     void screenGeometryChanged(QSize const& size) override;
     gl::texture_private* createBackendTexture(gl::texture* texture) override;
@@ -48,26 +48,35 @@ public:
     QRegion prepareRenderingFrame() override;
     void endRenderingFrame(QRegion const& renderedRegion, QRegion const& damagedRegion) override;
 
+    QRegion prepareRenderingForScreen(base::output* output) override;
     void endRenderingFrameForScreen(base::output* output,
                                     QRegion const& damage,
                                     QRegion const& damagedRegion) override;
-    QRegion prepareRenderingForScreen(base::output* output) override;
 
+    bool hasClientExtension(const QByteArray& ext) const;
     std::unique_ptr<egl_output>& get_egl_out(base::output const* out);
+
+    std::unique_ptr<egl_gbm> gbm;
+    wlroots::platform& platform;
+    bool headless{false};
+    std::unique_ptr<wlroots::surface> dummy_surface;
+
+    gl::egl_dmabuf* dmabuf{nullptr};
+    wayland::egl_data data;
 
 protected:
     void present() override;
-    void cleanupSurfaces() override;
-};
-
-class egl_texture : public gl::egl_texture
-{
-public:
-    ~egl_texture() override;
 
 private:
-    friend class egl_backend;
-    egl_texture(gl::texture* texture, egl_backend* backend);
+    bool init_platform();
+    bool init_rendering_context();
+
+    void setViewport(egl_output const& egl_out) const;
+    void initRenderTarget(egl_output& egl_out);
+
+    void prepareRenderFramebuffer(egl_output const& egl_out) const;
+    void renderFramebufferToSurface(egl_output& egl_out);
 };
 
+}
 }

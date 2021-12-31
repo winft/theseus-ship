@@ -5,13 +5,12 @@
 */
 #pragma once
 
+#include "kwingltexture.h"
+
 #include <QRegion>
-
 #include <deque>
-#include <memory>
-
 #include <epoxy/egl.h>
-#include <kwingltexture.h>
+#include <memory>
 
 namespace KWin::render::backend::wlroots
 {
@@ -24,6 +23,22 @@ class surface;
 class egl_output
 {
 public:
+    egl_output(output& out, egl_backend* egl_back);
+    egl_output(egl_output const&) = delete;
+    egl_output& operator=(egl_output const&) = delete;
+    egl_output(egl_output&& other) noexcept;
+    egl_output& operator=(egl_output&& other) noexcept;
+    ~egl_output();
+
+    bool reset();
+    bool reset_framebuffer();
+    void cleanup_framebuffer();
+
+    bool make_current() const;
+    bool present(buffer* buf);
+
+    buffer* create_buffer();
+
     output* out;
     std::unique_ptr<surface> surf;
     int bufferAge{0};
@@ -37,23 +52,6 @@ public:
         GLuint texture = 0;
         std::shared_ptr<GLVertexBuffer> vbo;
     } render;
-
-    egl_output(output& out, egl_backend* egl_back);
-    egl_output(egl_output const&) = delete;
-    egl_output& operator=(egl_output const&) = delete;
-    egl_output(egl_output&& other) noexcept;
-    egl_output& operator=(egl_output&& other) noexcept;
-    ~egl_output();
-
-    bool reset();
-
-    bool reset_framebuffer();
-    void cleanup_framebuffer();
-
-    bool make_current() const;
-    bool present(buffer* buf);
-
-    buffer* create_buffer();
 };
 
 }

@@ -17,6 +17,7 @@
 #include "main.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/effects.h"
+#include "render/wayland/egl.h"
 #include "screens.h"
 #include "wayland_server.h"
 
@@ -31,15 +32,6 @@ output& get_output(std::unique_ptr<render::wayland::output>& output)
 {
     return static_cast<wlroots::output&>(*output);
 }
-
-platform::platform(base::backend::wlroots::platform& base)
-    : render::platform(base)
-    , base{base}
-{
-    align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
-}
-
-platform::~platform() = default;
 
 void handle_new_output(struct wl_listener* listener, void* data)
 {
@@ -72,7 +64,7 @@ void handle_new_output(struct wl_listener* listener, void* data)
 
     if (back->egl) {
         get_output(out->render).egl
-            = std::make_unique<egl_output>(static_cast<output&>(*out->render), back->egl);
+            = std::make_unique<egl_output>(static_cast<output&>(*out->render), back->egl.get());
     }
 
     QObject::connect(out, &base::backend::wlroots::output::mode_changed, out, [out] {
@@ -91,6 +83,20 @@ void handle_new_output(struct wl_listener* listener, void* data)
     }
 
     back->base.screens.updateAll();
+}
+
+platform::platform(base::backend::wlroots::platform& base)
+    : render::platform(base)
+    , base{base}
+{
+    align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
+}
+
+platform::~platform()
+{
+    if (egl_display_to_terminate != EGL_NO_DISPLAY) {
+        eglTerminate(egl_display_to_terminate);
+    }
 }
 
 void platform::init()
@@ -117,8 +123,20 @@ void platform::init()
 
 gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
 {
-    egl = new egl_backend(*this, base::backend::wlroots::get_headless_backend(base.backend));
-    return egl;
+    if (!egl) {
+        egl = std::make_unique<egl_backend>(
+            *this, base::backend::wlroots::get_headless_backend(base.backend));
+    }
+    return egl.get();
+}
+
+void platform::render_stop(bool on_shutdown)
+{
+    assert(egl);
+    if (on_shutdown) {
+        wayland::unbind_egl_display(*egl, egl->data);
+        egl->tear_down();
+    }
 }
 
 void platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
@@ -133,20 +151,6 @@ QVector<CompositingType> platform::supportedCompositors() const
     }
     return QVector<CompositingType>{OpenGLCompositing};
 }
-
-struct outputs_array_wrap {
-    outputs_array_wrap(size_t size)
-        : size{size}
-    {
-        data = new wlr_output*[size];
-    }
-    ~outputs_array_wrap()
-    {
-        delete[] data;
-    }
-    wlr_output** data{nullptr};
-    size_t size;
-};
 
 void platform::init_drm_leasing()
 {
@@ -180,6 +184,20 @@ void platform::init_drm_leasing()
             });
 #endif
 }
+
+struct outputs_array_wrap {
+    outputs_array_wrap(size_t size)
+        : size{size}
+    {
+        data = new wlr_output*[size];
+    }
+    ~outputs_array_wrap()
+    {
+        delete[] data;
+    }
+    wlr_output** data{nullptr};
+    size_t size;
+};
 
 void platform::process_drm_leased([[maybe_unused]] Wrapland::Server::drm_lease_v1* lease)
 {

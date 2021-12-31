@@ -70,7 +70,7 @@ compositor::compositor(render::platform& platform)
 compositor::~compositor()
 {
     Q_EMIT aboutToDestroy();
-    stop();
+    stop(true);
     deleteUnusedSupportProperties();
     destroyCompositorSelection();
 }
@@ -113,6 +113,7 @@ bool compositor::setupStart()
             << "Configured compositor not supported by Platform. Falling back to defaults";
     }
 
+    assert(!m_scene);
     m_scene.reset(create_scene(supportedCompositors));
 
     if (!m_scene || m_scene->initFailed()) {
@@ -153,8 +154,9 @@ void compositor::claimCompositorSelection()
         char selection_name[100];
         sprintf(selection_name, "_NET_WM_CM_S%d", kwinApp()->x11ScreenNumber());
         m_selectionOwner = new CompositorSelectionOwner(selection_name);
-        connect(
-            m_selectionOwner, &CompositorSelectionOwner::lostOwnership, this, &compositor::stop);
+        connect(m_selectionOwner, &CompositorSelectionOwner::lostOwnership, this, [this] {
+            stop(false);
+        });
     }
 
     if (!m_selectionOwner) {
@@ -239,7 +241,7 @@ void compositor::schedule_frame_callback(Toplevel* /*window*/)
     // Only needed on Wayland.
 }
 
-void compositor::stop()
+void compositor::stop(bool on_shutdown)
 {
     if (m_state == State::Off || m_state == State::Stopping) {
         return;
@@ -271,7 +273,10 @@ void compositor::stop()
         }
     }
 
+    assert(m_scene);
     m_scene.reset();
+    platform.render_stop(on_shutdown);
+
     m_bufferSwapPending = false;
     compositeTimer.stop();
     repaints_region = QRegion();
@@ -325,7 +330,7 @@ void compositor::reinitialize()
     kwinApp()->config()->reparseConfiguration();
 
     // Restart compositing
-    stop();
+    stop(false);
     start();
 
     if (effects) {

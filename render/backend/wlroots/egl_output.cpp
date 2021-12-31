@@ -12,9 +12,9 @@
 #include "platform.h"
 #include "surface.h"
 
+#include "kwinglutils.h"
 #include "screens.h"
-
-#include <wayland_logging.h>
+#include "wayland_logging.h"
 
 namespace KWin::render::backend::wlroots
 {
@@ -58,18 +58,6 @@ egl_output::~egl_output()
 buffer* egl_output::create_buffer()
 {
     return new buffer(surf.get(), egl_back->headless);
-}
-
-void egl_output::cleanup_framebuffer()
-{
-    if (!render.framebuffer) {
-        return;
-    }
-    make_current();
-    glDeleteTextures(1, &render.texture);
-    render.texture = 0;
-    glDeleteFramebuffers(1, &render.framebuffer);
-    render.framebuffer = 0;
 }
 
 bool egl_output::reset()
@@ -139,6 +127,18 @@ bool egl_output::reset_framebuffer()
     GLRenderTarget::setKWinFramebuffer(0);
 
     return true;
+}
+
+void egl_output::cleanup_framebuffer()
+{
+    if (!render.framebuffer) {
+        return;
+    }
+    make_current();
+    glDeleteTextures(1, &render.texture);
+    render.texture = 0;
+    glDeleteFramebuffers(1, &render.framebuffer);
+    render.framebuffer = 0;
 }
 
 bool egl_output::make_current() const

@@ -25,12 +25,7 @@ platform::platform(base::platform& base)
 {
 }
 
-platform::~platform()
-{
-    if (egl_display != EGL_NO_DISPLAY) {
-        eglTerminate(egl_display);
-    }
-}
+platform::~platform() = default;
 
 render::gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
 {

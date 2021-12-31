@@ -849,7 +849,6 @@ set(kwin_WAYLAND_SRCS
    input/touch.cpp
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
-   render/gl/egl_backend.cpp
    render/gl/egl_dmabuf.cpp
    render/qpainter/backend.cpp
    render/qpainter/deco_renderer.cpp
@@ -861,6 +860,7 @@ set(kwin_WAYLAND_SRCS
    render/backend/wlroots/buffer.cpp
    render/backend/wlroots/egl_backend.cpp
    render/backend/wlroots/egl_output.cpp
+   render/backend/wlroots/egl_texture.cpp
    render/backend/wlroots/output.cpp
    render/wayland/compositor.cpp
    render/wayland/effects.cpp

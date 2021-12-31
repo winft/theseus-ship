@@ -9,697 +9,57 @@
 */
 #include "glx_backend.h"
 
-#include "glx_context_attribute_builder.h"
+#include "glx.h"
 #include "x11_logging.h"
 
 #include "base/platform.h"
 #include "main.h"
 #include "options.h"
-#include "render/compositor.h"
 #include "render/gl/texture.h"
 #include "render/scene.h"
-#include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
 #include "screens.h"
 #include "xcbutils.h"
 
 #include "win/x11/geo.h"
 
-// kwin libs
 #include <kwineffectquickview.h>
-#include <kwinglplatform.h>
 #include <kwinglutils.h>
 #include <kwinxrenderutils.h>
-// Qt
-#include <QOpenGLContext>
-#include <QX11Info>
-#include <QtPlatformHeaders/QGLXNativeContext>
-// system
-#include <unistd.h>
 
+#include <QOpenGLContext>
 #include <algorithm>
 #include <cassert>
 #include <deque>
-#include <stdexcept>
-
-#if HAVE_DL_LIBRARY
-#include <dlfcn.h>
-#endif
-
-#ifndef XCB_GLX_BUFFER_SWAP_COMPLETE
-#define XCB_GLX_BUFFER_SWAP_COMPLETE 1
-typedef struct xcb_glx_buffer_swap_complete_event_t {
-    uint8_t response_type;       /**<  */
-    uint8_t pad0;                /**<  */
-    uint16_t sequence;           /**<  */
-    uint16_t event_type;         /**<  */
-    uint8_t pad1[2];             /**<  */
-    xcb_glx_drawable_t drawable; /**<  */
-    uint32_t ust_hi;             /**<  */
-    uint32_t ust_lo;             /**<  */
-    uint32_t msc_hi;             /**<  */
-    uint32_t msc_lo;             /**<  */
-    uint32_t sbc;                /**<  */
-} xcb_glx_buffer_swap_complete_event_t;
-#endif
-
 #include <memory>
+#include <stdexcept>
 #include <tuple>
+#include <unistd.h>
 
 namespace KWin::render::backend::x11
 {
 
-swap_event_filter::swap_event_filter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable)
-    : base::x11::event_filter(Xcb::Extensions::self()->glxEventBase()
-                              + XCB_GLX_BUFFER_SWAP_COMPLETE)
-    , m_drawable(drawable)
-    , m_glxDrawable(glxDrawable)
-{
-}
-
-bool swap_event_filter::event(xcb_generic_event_t* event)
-{
-    xcb_glx_buffer_swap_complete_event_t* ev
-        = reinterpret_cast<xcb_glx_buffer_swap_complete_event_t*>(event);
-
-    // The drawable field is the X drawable when the event was synthesized
-    // by a WireToEvent handler, and the GLX drawable when the event was
-    // received over the wire
-    if (ev->drawable == m_drawable || ev->drawable == m_glxDrawable) {
-        render::compositor::self()->bufferSwapComplete();
-        return true;
-    }
-
-    return false;
-}
-
-glXSwapIntervalMESA_func glXSwapIntervalMESA;
-
-typedef void (*glXFuncPtr)();
-
-static glXFuncPtr getProcAddress(const char* name)
-{
-    glXFuncPtr ret = nullptr;
-#if HAVE_EPOXY_GLX
-    ret = glXGetProcAddress((const GLubyte*)name);
-#endif
-#if HAVE_DL_LIBRARY
-    if (ret == nullptr)
-        ret = (glXFuncPtr)dlsym(RTLD_DEFAULT, name);
-#endif
-    return ret;
-}
-
 glx_backend::glx_backend(Display* display, render::compositor& compositor)
     : gl::backend()
-    , overlay_window{std::make_unique<render::x11::overlay_window>()}
-    , window(None)
-    , fbconfig(nullptr)
-    , glxWindow(None)
-    , ctx(nullptr)
     , m_bufferAge(0)
-    , m_x11Display(display)
     , compositor{compositor}
 {
-    auto x11_compositor = dynamic_cast<render::x11::compositor*>(&compositor);
-    assert(x11_compositor);
-    x11_compositor->overlay_window = overlay_window.get();
-
-    // Force initialization of GLX integration in the Qt's xcb backend
-    // to make it call XESetWireToEvent callbacks, which is required
-    // by Mesa when using DRI2.
-    QOpenGLContext::supportsThreadedOpenGL();
-
-    check_glx_version();
-    initExtensions();
-
-    // resolve glXSwapIntervalMESA if available
-    if (hasExtension(QByteArrayLiteral("GLX_MESA_swap_control"))) {
-        glXSwapIntervalMESA = (glXSwapIntervalMESA_func)getProcAddress("glXSwapIntervalMESA");
-    } else {
-        glXSwapIntervalMESA = nullptr;
-    }
-
-    initVisualDepthHashTable();
-
-    if (!initBuffer()) {
-        throw std::runtime_error("Could not initialize the buffer");
-    }
-
-    if (!initRenderingContext()) {
-        throw std::runtime_error("Could not initialize rendering context");
-    }
-
-    // Initialize OpenGL
-    GLPlatform* glPlatform = GLPlatform::instance();
-    glPlatform->detect(GlxPlatformInterface);
-    glPlatform->printResults();
-    initGL(&getProcAddress);
-
-    // Check whether certain features are supported
-    m_haveMESACopySubBuffer = hasExtension(QByteArrayLiteral("GLX_MESA_copy_sub_buffer"));
-    m_haveMESASwapControl = hasExtension(QByteArrayLiteral("GLX_MESA_swap_control"));
-    m_haveEXTSwapControl = hasExtension(QByteArrayLiteral("GLX_EXT_swap_control"));
-
-    // Allow to disable Intel swap event with env variable. There were problems in the past.
-    // See BUG 342582.
-    if (hasExtension(QByteArrayLiteral("GLX_INTEL_swap_event"))
-        && qgetenv("KWIN_USE_INTEL_SWAP_EVENT") != QByteArrayLiteral("0")) {
-        swap_filter = std::make_unique<swap_event_filter>(window, glxWindow);
-        glXSelectEvent(display, glxWindow, GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK);
-    }
-
-    setSupportsBufferAge(false);
-
-    if (hasExtension(QByteArrayLiteral("GLX_EXT_buffer_age"))) {
-        const QByteArray useBufferAge = qgetenv("KWIN_USE_BUFFER_AGE");
-
-        if (useBufferAge != "0")
-            setSupportsBufferAge(true);
-    }
-
-    if (m_haveEXTSwapControl) {
-        glXSwapIntervalEXT(display, glxWindow, 1);
-    } else if (m_haveMESASwapControl) {
-        glXSwapIntervalMESA(1);
-    } else {
-        qCWarning(KWIN_X11) << "NO VSYNC! glSwapInterval is not supported";
-    }
-
-    if (glPlatform->isVirtualBox()) {
-        // VirtualBox does not support glxQueryDrawable
-        // this should actually be in kwinglutils_funcs, but QueryDrawable seems not to be provided
-        // by an extension and the GLPlatform has not been initialized at the moment when initGLX()
-        // is called.
-        glXQueryDrawable = nullptr;
-    }
-
-    setIsDirectRendering(bool(glXIsDirect(display, ctx)));
-
-    qCDebug(KWIN_X11) << "Direct rendering:" << isDirectRendering();
+    start_glx_backend(display, compositor, *this);
 }
 
 glx_backend::~glx_backend()
 {
-    // TODO: cleanup in error case
-    // do cleanup after initBuffer()
-    cleanupGL();
-    doneCurrent();
-    EffectQuickView::setShareContext(nullptr);
-
-    if (ctx)
-        glXDestroyContext(display(), ctx);
-
-    if (glxWindow)
-        glXDestroyWindow(display(), glxWindow);
-
-    if (window)
-        XDestroyWindow(display(), window);
-
-    qDeleteAll(m_fbconfigHash);
-    m_fbconfigHash.clear();
-
-    overlay_window->destroy();
-}
-
-void glx_backend::check_glx_version()
-{
-    int major, minor;
-    glXQueryVersion(display(), &major, &minor);
-    if (kVersionNumber(major, minor) < kVersionNumber(1, 3)) {
-        throw std::runtime_error("Requires at least GLX 1.3");
+    if (!data.display) {
+        // Already cleaned up.
+        return;
     }
-}
-
-void glx_backend::initExtensions()
-{
-    const QByteArray string
-        = (const char*)glXQueryExtensionsString(display(), QX11Info::appScreen());
-    setExtensions(string.split(' '));
-}
-
-bool glx_backend::initRenderingContext()
-{
-    const bool direct = true;
-
-    // Use glXCreateContextAttribsARB() when it's available
-    if (hasExtension(QByteArrayLiteral("GLX_ARB_create_context"))) {
-        const bool have_robustness
-            = hasExtension(QByteArrayLiteral("GLX_ARB_create_context_robustness"));
-        const bool haveVideoMemoryPurge
-            = hasExtension(QByteArrayLiteral("GLX_NV_robustness_video_memory_purge"));
-
-        std::vector<glx_context_attribute_builder> candidates;
-
-        // core
-        if (have_robustness) {
-            if (haveVideoMemoryPurge) {
-                glx_context_attribute_builder purgeMemoryCore;
-                purgeMemoryCore.setVersion(3, 1);
-                purgeMemoryCore.setRobust(true);
-                purgeMemoryCore.setResetOnVideoMemoryPurge(true);
-                candidates.emplace_back(std::move(purgeMemoryCore));
-            }
-            glx_context_attribute_builder robustCore;
-            robustCore.setVersion(3, 1);
-            robustCore.setRobust(true);
-            candidates.emplace_back(std::move(robustCore));
-        }
-        glx_context_attribute_builder core;
-        core.setVersion(3, 1);
-        candidates.emplace_back(std::move(core));
-
-        // legacy
-        if (have_robustness) {
-            if (haveVideoMemoryPurge) {
-                glx_context_attribute_builder purgeMemoryLegacy;
-                purgeMemoryLegacy.setRobust(true);
-                purgeMemoryLegacy.setResetOnVideoMemoryPurge(true);
-                candidates.emplace_back(std::move(purgeMemoryLegacy));
-            }
-            glx_context_attribute_builder robustLegacy;
-            robustLegacy.setRobust(true);
-            candidates.emplace_back(std::move(robustLegacy));
-        }
-        glx_context_attribute_builder legacy;
-        legacy.setVersion(2, 1);
-        candidates.emplace_back(std::move(legacy));
-
-        for (auto it = candidates.begin(); it != candidates.end(); it++) {
-            const auto attribs = it->build();
-            ctx = glXCreateContextAttribsARB(display(), fbconfig, nullptr, true, attribs.data());
-            if (ctx) {
-                qCDebug(KWIN_X11) << "Created GLX context with attributes:" << &(*it);
-                break;
-            }
-        }
-    }
-
-    if (!ctx)
-        ctx = glXCreateNewContext(display(), fbconfig, GLX_RGBA_TYPE, nullptr, direct);
-
-    if (!ctx) {
-        qCDebug(KWIN_X11) << "Failed to create an OpenGL context.";
-        return false;
-    }
-
-    if (!glXMakeCurrent(display(), glxWindow, ctx)) {
-        qCDebug(KWIN_X11) << "Failed to make the OpenGL context current.";
-        glXDestroyContext(display(), ctx);
-        ctx = nullptr;
-        return false;
-    }
-
-    auto qtContext = new QOpenGLContext;
-    QGLXNativeContext native(ctx, display());
-    qtContext->setNativeHandle(QVariant::fromValue(native));
-    qtContext->create();
-    EffectQuickView::setShareContext(std::unique_ptr<QOpenGLContext>(qtContext));
-
-    return true;
-}
-
-bool glx_backend::initBuffer()
-{
-    if (!initFbConfig())
-        return false;
-
-    if (overlay_window->create()) {
-        xcb_connection_t* const c = connection();
-
-        // Try to create double-buffered window in the overlay
-        xcb_visualid_t visual;
-        glXGetFBConfigAttrib(display(), fbconfig, GLX_VISUAL_ID, (int*)&visual);
-
-        if (!visual) {
-            qCCritical(KWIN_X11) << "The GLXFBConfig does not have an associated X visual";
-            return false;
-        }
-
-        xcb_colormap_t colormap = xcb_generate_id(c);
-        xcb_create_colormap(c, false, colormap, rootWindow(), visual);
-
-        auto const& size = kwinApp()->get_base().screens.size();
-
-        window = xcb_generate_id(c);
-        xcb_create_window(c,
-                          visualDepth(visual),
-                          window,
-                          overlay_window->window(),
-                          0,
-                          0,
-                          size.width(),
-                          size.height(),
-                          0,
-                          XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                          visual,
-                          XCB_CW_COLORMAP,
-                          &colormap);
-
-        glxWindow = glXCreateWindow(display(), fbconfig, window, nullptr);
-        overlay_window->setup(window);
-    } else {
-        qCCritical(KWIN_X11) << "Failed to create overlay window";
-        return false;
-    }
-
-    return true;
-}
-
-bool glx_backend::initFbConfig()
-{
-    const int attribs[] = {GLX_RENDER_TYPE,
-                           GLX_RGBA_BIT,
-                           GLX_DRAWABLE_TYPE,
-                           GLX_WINDOW_BIT,
-                           GLX_RED_SIZE,
-                           1,
-                           GLX_GREEN_SIZE,
-                           1,
-                           GLX_BLUE_SIZE,
-                           1,
-                           GLX_ALPHA_SIZE,
-                           0,
-                           GLX_DEPTH_SIZE,
-                           0,
-                           GLX_STENCIL_SIZE,
-                           0,
-                           GLX_CONFIG_CAVEAT,
-                           GLX_NONE,
-                           GLX_DOUBLEBUFFER,
-                           true,
-                           0};
-
-    const int attribs_srgb[] = {GLX_RENDER_TYPE,
-                                GLX_RGBA_BIT,
-                                GLX_DRAWABLE_TYPE,
-                                GLX_WINDOW_BIT,
-                                GLX_RED_SIZE,
-                                1,
-                                GLX_GREEN_SIZE,
-                                1,
-                                GLX_BLUE_SIZE,
-                                1,
-                                GLX_ALPHA_SIZE,
-                                0,
-                                GLX_DEPTH_SIZE,
-                                0,
-                                GLX_STENCIL_SIZE,
-                                0,
-                                GLX_CONFIG_CAVEAT,
-                                GLX_NONE,
-                                GLX_DOUBLEBUFFER,
-                                true,
-                                GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB,
-                                true,
-                                0};
-
-    bool llvmpipe = false;
-
-    // Note that we cannot use GLPlatform::driver() here, because it has not been initialized at
-    // this point
-    if (hasExtension(QByteArrayLiteral("GLX_MESA_query_renderer"))) {
-        const QByteArray device = glXQueryRendererStringMESA(
-            display(), DefaultScreen(display()), 0, GLX_RENDERER_DEVICE_ID_MESA);
-        if (device.contains(QByteArrayLiteral("llvmpipe"))) {
-            llvmpipe = true;
-        }
-    }
-
-    // Try to find a double buffered sRGB capable configuration
-    int count = 0;
-    GLXFBConfig* configs = nullptr;
-
-    // Don't request an sRGB configuration with LLVMpipe when the default depth is 16. See bug
-    // #408594.
-    if (!llvmpipe || Xcb::defaultDepth() > 16) {
-        configs = glXChooseFBConfig(display(), DefaultScreen(display()), attribs_srgb, &count);
-    }
-
-    if (count == 0) {
-        // Try to find a double buffered non-sRGB capable configuration
-        configs = glXChooseFBConfig(display(), DefaultScreen(display()), attribs, &count);
-    }
-
-    struct FBConfig {
-        GLXFBConfig config;
-        int depth;
-        int stencil;
-    };
-
-    std::deque<FBConfig> candidates;
-
-    for (int i = 0; i < count; i++) {
-        int depth, stencil;
-        glXGetFBConfigAttrib(display(), configs[i], GLX_DEPTH_SIZE, &depth);
-        glXGetFBConfigAttrib(display(), configs[i], GLX_STENCIL_SIZE, &stencil);
-
-        candidates.emplace_back(FBConfig{configs[i], depth, stencil});
-    }
-
-    if (count > 0)
-        XFree(configs);
-
-    std::stable_sort(
-        candidates.begin(), candidates.end(), [](const FBConfig& left, const FBConfig& right) {
-            if (left.depth < right.depth)
-                return true;
-
-            if (left.stencil < right.stencil)
-                return true;
-
-            return false;
-        });
-
-    if (candidates.size() > 0) {
-        fbconfig = candidates.front().config;
-
-        int fbconfig_id, visual_id, red, green, blue, alpha, depth, stencil, srgb;
-        glXGetFBConfigAttrib(display(), fbconfig, GLX_FBCONFIG_ID, &fbconfig_id);
-        glXGetFBConfigAttrib(display(), fbconfig, GLX_VISUAL_ID, &visual_id);
-        glXGetFBConfigAttrib(display(), fbconfig, GLX_RED_SIZE, &red);
-        glXGetFBConfigAttrib(display(), fbconfig, GLX_GREEN_SIZE, &green);
-        glXGetFBConfigAttrib(display(), fbconfig, GLX_BLUE_SIZE, &blue);
-        glXGetFBConfigAttrib(display(), fbconfig, GLX_ALPHA_SIZE, &alpha);
-        glXGetFBConfigAttrib(display(), fbconfig, GLX_DEPTH_SIZE, &depth);
-        glXGetFBConfigAttrib(display(), fbconfig, GLX_STENCIL_SIZE, &stencil);
-        glXGetFBConfigAttrib(display(), fbconfig, GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB, &srgb);
-
-        qCDebug(KWIN_X11,
-                "Choosing GLXFBConfig %#x X visual %#x depth %d RGBA %d:%d:%d:%d ZS %d:%d sRGB: %d",
-                fbconfig_id,
-                visual_id,
-                visualDepth(visual_id),
-                red,
-                green,
-                blue,
-                alpha,
-                depth,
-                stencil,
-                srgb);
-    }
-
-    if (fbconfig == nullptr) {
-        qCCritical(KWIN_X11) << "Failed to find a usable framebuffer configuration";
-        return false;
-    }
-
-    return true;
-}
-
-void glx_backend::initVisualDepthHashTable()
-{
-    const xcb_setup_t* setup = xcb_get_setup(connection());
-
-    for (auto screen = xcb_setup_roots_iterator(setup); screen.rem; xcb_screen_next(&screen)) {
-        for (auto depth = xcb_screen_allowed_depths_iterator(screen.data); depth.rem;
-             xcb_depth_next(&depth)) {
-            const int len = xcb_depth_visuals_length(depth.data);
-            const xcb_visualtype_t* visuals = xcb_depth_visuals(depth.data);
-
-            for (int i = 0; i < len; i++)
-                m_visualDepthHash.insert(visuals[i].visual_id, depth.data->depth);
-        }
-    }
+    tear_down_glx_backend(*this);
 }
 
 int glx_backend::visualDepth(xcb_visualid_t visual) const
 {
-    return m_visualDepthHash.value(visual);
-}
-
-static inline int bitCount(uint32_t mask)
-{
-#if defined(__GNUC__)
-    return __builtin_popcount(mask);
-#else
-    int count = 0;
-
-    while (mask) {
-        count += (mask & 1);
-        mask >>= 1;
-    }
-
-    return count;
-#endif
-}
-
-fb_config_info* glx_backend::infoForVisual(xcb_visualid_t visual)
-{
-    auto it = m_fbconfigHash.constFind(visual);
-    if (it != m_fbconfigHash.constEnd()) {
-        return it.value();
-    }
-
-    auto info = new fb_config_info;
-    m_fbconfigHash.insert(visual, info);
-    info->fbconfig = nullptr;
-    info->bind_texture_format = 0;
-    info->texture_targets = 0;
-    info->y_inverted = 0;
-    info->mipmap = 0;
-
-    const xcb_render_pictformat_t format = XRenderUtils::findPictFormat(visual);
-    const xcb_render_directformat_t* direct = XRenderUtils::findPictFormatInfo(format);
-
-    if (!direct) {
-        qCCritical(KWIN_X11).nospace()
-            << "Could not find a picture format for visual 0x" << hex << visual;
-        return info;
-    }
-
-    const int red_bits = bitCount(direct->red_mask);
-    const int green_bits = bitCount(direct->green_mask);
-    const int blue_bits = bitCount(direct->blue_mask);
-    const int alpha_bits = bitCount(direct->alpha_mask);
-
-    const int depth = visualDepth(visual);
-
-    const auto rgb_sizes = std::tie(red_bits, green_bits, blue_bits);
-
-    const int attribs[]
-        = {GLX_RENDER_TYPE,
-           GLX_RGBA_BIT,
-           GLX_DRAWABLE_TYPE,
-           GLX_WINDOW_BIT | GLX_PIXMAP_BIT,
-           GLX_X_VISUAL_TYPE,
-           GLX_TRUE_COLOR,
-           GLX_X_RENDERABLE,
-           True,
-           GLX_CONFIG_CAVEAT,
-           int(GLX_DONT_CARE), // The ARGB32 visual is marked non-conformant in Catalyst
-           GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT,
-           int(GLX_DONT_CARE), // The ARGB32 visual is marked sRGB capable in mesa/i965
-           GLX_BUFFER_SIZE,
-           red_bits + green_bits + blue_bits + alpha_bits,
-           GLX_RED_SIZE,
-           red_bits,
-           GLX_GREEN_SIZE,
-           green_bits,
-           GLX_BLUE_SIZE,
-           blue_bits,
-           GLX_ALPHA_SIZE,
-           alpha_bits,
-           GLX_STENCIL_SIZE,
-           0,
-           GLX_DEPTH_SIZE,
-           0,
-           0};
-
-    int count = 0;
-    GLXFBConfig* configs = glXChooseFBConfig(display(), DefaultScreen(display()), attribs, &count);
-
-    if (count < 1) {
-        qCCritical(KWIN_X11).nospace()
-            << "Could not find a framebuffer configuration for visual 0x" << hex << visual;
-        return info;
-    }
-
-    struct FBConfig {
-        GLXFBConfig config;
-        int depth;
-        int stencil;
-        int format;
-    };
-
-    std::deque<FBConfig> candidates;
-
-    for (int i = 0; i < count; i++) {
-        int red, green, blue;
-        glXGetFBConfigAttrib(display(), configs[i], GLX_RED_SIZE, &red);
-        glXGetFBConfigAttrib(display(), configs[i], GLX_GREEN_SIZE, &green);
-        glXGetFBConfigAttrib(display(), configs[i], GLX_BLUE_SIZE, &blue);
-
-        if (std::tie(red, green, blue) != rgb_sizes)
-            continue;
-
-        xcb_visualid_t visual;
-        glXGetFBConfigAttrib(display(), configs[i], GLX_VISUAL_ID, (int*)&visual);
-
-        if (visualDepth(visual) != depth)
-            continue;
-
-        int bind_rgb, bind_rgba;
-        glXGetFBConfigAttrib(display(), configs[i], GLX_BIND_TO_TEXTURE_RGBA_EXT, &bind_rgba);
-        glXGetFBConfigAttrib(display(), configs[i], GLX_BIND_TO_TEXTURE_RGB_EXT, &bind_rgb);
-
-        if (!bind_rgb && !bind_rgba)
-            continue;
-
-        int depth, stencil;
-        glXGetFBConfigAttrib(display(), configs[i], GLX_DEPTH_SIZE, &depth);
-        glXGetFBConfigAttrib(display(), configs[i], GLX_STENCIL_SIZE, &stencil);
-
-        int texture_format;
-        if (alpha_bits)
-            texture_format = bind_rgba ? GLX_TEXTURE_FORMAT_RGBA_EXT : GLX_TEXTURE_FORMAT_RGB_EXT;
-        else
-            texture_format = bind_rgb ? GLX_TEXTURE_FORMAT_RGB_EXT : GLX_TEXTURE_FORMAT_RGBA_EXT;
-
-        candidates.emplace_back(FBConfig{configs[i], depth, stencil, texture_format});
-    }
-
-    if (count > 0)
-        XFree(configs);
-
-    std::stable_sort(
-        candidates.begin(), candidates.end(), [](const FBConfig& left, const FBConfig& right) {
-            if (left.depth < right.depth)
-                return true;
-
-            if (left.stencil < right.stencil)
-                return true;
-
-            return false;
-        });
-
-    if (candidates.size() > 0) {
-        const FBConfig& candidate = candidates.front();
-
-        int y_inverted, texture_targets;
-        glXGetFBConfigAttrib(
-            display(), candidate.config, GLX_BIND_TO_TEXTURE_TARGETS_EXT, &texture_targets);
-        glXGetFBConfigAttrib(display(), candidate.config, GLX_Y_INVERTED_EXT, &y_inverted);
-
-        info->fbconfig = candidate.config;
-        info->bind_texture_format = candidate.format;
-        info->texture_targets = texture_targets;
-        info->y_inverted = y_inverted;
-        info->mipmap = 0;
-    }
-
-    if (info->fbconfig) {
-        int fbc_id = 0;
-        int visual_id = 0;
-
-        glXGetFBConfigAttrib(display(), info->fbconfig, GLX_FBCONFIG_ID, &fbc_id);
-        glXGetFBConfigAttrib(display(), info->fbconfig, GLX_VISUAL_ID, &visual_id);
-
-        qCDebug(KWIN_X11).nospace()
-            << "Using FBConfig 0x" << hex << fbc_id << " for visual 0x" << hex << visual_id;
-    }
-
-    return info;
+    auto it = visual_depth_hash.find(visual);
+    return it == visual_depth_hash.end() ? 0 : it->second;
 }
 
 void glx_backend::present()
@@ -718,16 +78,17 @@ void glx_backend::present()
             compositor.aboutToSwapBuffers();
         }
 
-        glXSwapBuffers(display(), glxWindow);
+        glXSwapBuffers(data.display, data.window);
 
         if (supportsBufferAge()) {
-            glXQueryDrawable(display(), glxWindow, GLX_BACK_BUFFER_AGE_EXT, (GLuint*)&m_bufferAge);
+            glXQueryDrawable(
+                data.display, data.window, GLX_BACK_BUFFER_AGE_EXT, (GLuint*)&m_bufferAge);
         }
-    } else if (m_haveMESACopySubBuffer) {
+    } else if (data.extensions.mesa_copy_sub_buffer) {
         for (const QRect& r : lastDamage()) {
             // convert to OpenGL coordinates
             int y = screenSize.height() - r.y() - r.height();
-            glXCopySubBufferMESA(display(), glxWindow, r.x(), y, r.width(), r.height());
+            glXCopySubBufferMESA(data.display, data.window, r.x(), y, r.width(), r.height());
         }
     } else {
         // Copy Pixels (horribly slow on Mesa).
@@ -739,7 +100,7 @@ void glx_backend::present()
     setLastDamage(QRegion());
     if (!supportsBufferAge()) {
         glXWaitGL();
-        XFlush(display());
+        XFlush(data.display);
     }
 }
 
@@ -748,7 +109,7 @@ void glx_backend::screenGeometryChanged(const QSize& size)
     overlay_window->resize(size);
     doneCurrent();
 
-    XMoveResizeWindow(display(), window, 0, 0, size.width(), size.height());
+    XMoveResizeWindow(data.display, window, 0, 0, size.width(), size.height());
     overlay_window->setup(window);
     Xcb::sync();
 
@@ -814,18 +175,18 @@ bool glx_backend::makeCurrent()
         // Workaround to tell Qt that no QOpenGLContext is current
         context->doneCurrent();
     }
-    const bool current = glXMakeCurrent(display(), glxWindow, ctx);
+    const bool current = glXMakeCurrent(data.display, data.window, data.context);
     return current;
 }
 
 void glx_backend::doneCurrent()
 {
-    glXMakeCurrent(display(), None, nullptr);
+    glXMakeCurrent(data.display, None, nullptr);
 }
 
 bool glx_backend::supportsSwapEvents() const
 {
-    return swap_filter != nullptr;
+    return data.swap_filter != nullptr;
 }
 
 bool glx_backend::hasSwapEvent() const
@@ -869,7 +230,7 @@ bool GlxTexture::loadTexture(xcb_pixmap_t pixmap, const QSize& size, xcb_visuali
     if (pixmap == XCB_NONE || size.isEmpty() || visual == XCB_NONE)
         return false;
 
-    auto const info = m_backend->infoForVisual(visual);
+    auto const info = fb_config_info_for_visual(visual, *m_backend);
     if (!info || info->fbconfig == nullptr)
         return false;
 
