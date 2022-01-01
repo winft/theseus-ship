@@ -37,12 +37,13 @@ constexpr auto compositor_lost_message_delay = 2000;
 
 compositor* compositor::self()
 {
-    return kwinApp()->get_render()->compositor.get();
+    return kwinApp()->get_base().render->compositor.get();
 }
 
 bool compositor::compositing()
 {
-    return kwinApp()->get_render()->compositor && kwinApp()->get_render()->compositor->isActive();
+    auto const& compositor = kwinApp()->get_base().render->compositor;
+    return compositor && compositor->isActive();
 }
 
 compositor::compositor(render::platform& platform)

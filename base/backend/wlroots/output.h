@@ -8,8 +8,6 @@
 #include "base/utils.h"
 #include "base/wayland/output.h"
 
-#include <Wrapland/Server/drm_lease_v1.h>
-
 #include <wayland-server-core.h>
 
 struct wlr_output;
@@ -39,9 +37,6 @@ public:
 
 private:
     bool disable_native();
-    void create_lease_connector();
-
-    std::unique_ptr<Wrapland::Server::drm_lease_connector_v1> lease_connector;
     base::event_receiver<output> destroy_rec;
 };
 

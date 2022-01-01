@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/backend/wlroots/platform.h"
 #include "debug/wayland_console.h"
+#include "render/backend/wlroots/platform.h"
 #include "render/effects.h"
 #include "render/wayland/compositor.h"
 #include "screenlockerwatcher.h"
@@ -158,14 +159,14 @@ ApplicationWayland::~ApplicationWayland()
 
     waylandServer()->terminateClientConnections();
 
-    if (render->compositor) {
+    if (base->render->compositor) {
         // Block compositor to prevent further compositing from crashing with a null workspace.
         // TODO(romangg): Instead we should kill the compositor before that or remove all outputs.
-        static_cast<render::wayland::compositor*>(render->compositor.get())->lock();
+        static_cast<render::wayland::compositor*>(base->render->compositor.get())->lock();
     }
 
     workspace.reset();
-    render->compositor.reset();
+    base->render->compositor.reset();
 }
 
 bool ApplicationWayland::is_screen_locked() const
@@ -186,11 +187,6 @@ WaylandServer* ApplicationWayland::get_wayland_server()
     return server.get();
 }
 
-render::platform* ApplicationWayland::get_render()
-{
-    return render.get();
-}
-
 debug::console* ApplicationWayland::create_debug_console()
 {
     return new debug::wayland_console;
@@ -206,8 +202,8 @@ void ApplicationWayland::start()
 
     base = std::make_unique<base::backend::wlroots::platform>(waylandServer()->display());
 
-    render.reset(new render::backend::wlroots::platform(*base));
-    platform = render.get();
+    base->render = std::make_unique<render::backend::wlroots::platform>(*base);
+    auto render = static_cast<render::backend::wlroots::platform*>(base->render.get());
 
     createOptions();
 

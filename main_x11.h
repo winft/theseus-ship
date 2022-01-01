@@ -30,7 +30,6 @@ public:
     ~ApplicationX11() override;
 
     base::platform& get_base() override;
-    render::platform* get_render() override;
     debug::console* create_debug_console() override;
 
     void start();
@@ -51,7 +50,6 @@ private:
     static void crashHandler(int signal);
 
     base::x11::platform base;
-    std::unique_ptr<render::backend::x11::platform> render;
     std::unique_ptr<win::x11::space> workspace;
 
     QScopedPointer<KWinSelectionOwner> owner;

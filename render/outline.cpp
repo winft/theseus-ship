@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "outline.h"
 
+#include "base/platform.h"
 #include "main.h"
 #include "platform.h"
 #include "render/compositor.h"
@@ -122,7 +123,7 @@ void outline::createHelper()
     if (!m_visual.isNull()) {
         return;
     }
-    m_visual.reset(kwinApp()->platform->createOutline(this));
+    m_visual.reset(kwinApp()->get_base().render->createOutline(this));
 }
 
 void outline::compositingChanged()

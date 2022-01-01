@@ -986,7 +986,7 @@ DEF(I18N_NOOP("Kill Window"),                      Qt::CTRL + Qt::ALT + Qt::Key_
 DEF6(I18N_NOOP("Suspend Compositing"),             Qt::SHIFT + Qt::ALT + Qt::Key_F12,
                                                    render::compositor::self(),
                                                    render::compositor::toggleCompositing);
-DEF6(I18N_NOOP("Invert Screen Colors"),            0, kwinApp()->platform, render::platform::invertScreen);
+DEF6(I18N_NOOP("Invert Screen Colors"),            0, kwinApp()->get_base().render.get(), render::platform::invertScreen);
 
 #undef DEF
 #undef DEF2
@@ -999,7 +999,7 @@ DEF6(I18N_NOOP("Invert Screen Colors"),            0, kwinApp()->platform, rende
     TabBox::TabBox::self()->initShortcuts();
 #endif
     VirtualDesktopManager::self()->initShortcuts();
-    kwinApp()->platform->night_color->init_shortcuts();
+    kwinApp()->get_base().render->night_color->init_shortcuts();
     m_userActionsMenu->discard(); // so that it's recreated next time
 }
 

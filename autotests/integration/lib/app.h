@@ -57,7 +57,6 @@ public:
 
     base::platform& get_base() override;
     WaylandServer* get_wayland_server() override;
-    render::platform* get_render() override;
     debug::console* create_debug_console() override;
 
     void start();
@@ -70,8 +69,6 @@ public:
 private:
     void handle_server_addons_created();
     void create_xwayland();
-
-    std::unique_ptr<render::backend::wlroots::platform> render;
 };
 
 namespace Test

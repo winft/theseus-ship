@@ -866,7 +866,7 @@ void window::handle_commit()
     if (!surface()->state().damage.isEmpty()) {
         addDamage(surface()->state().damage);
     } else if (surface()->state().updates & Wrapland::Server::surface_change::frame) {
-        kwinApp()->get_render()->compositor->schedule_frame_callback(this);
+        kwinApp()->get_base().render->compositor->schedule_frame_callback(this);
     }
 
     if (toplevel || popup) {

@@ -181,7 +181,7 @@ ApplicationX11::~ApplicationX11()
 {
     setTerminating();
     workspace.reset();
-    render->compositor.reset();
+    base.render->compositor.reset();
     if (!owner.isNull() && owner->ownerWindow() != XCB_WINDOW_NONE)   // If there was no --replace (no new WM)
         Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
 }
@@ -195,7 +195,7 @@ void ApplicationX11::lostSelection()
 {
     sendPostedEvents();
     workspace.reset();
-    render->compositor.reset();
+    base.render->compositor.reset();
     // Remove windowmanager privileges
     Xcb::selectInput(rootWindow(), XCB_EVENT_MASK_PROPERTY_CHANGE);
     quit();
@@ -204,11 +204,6 @@ void ApplicationX11::lostSelection()
 base::platform& ApplicationX11::get_base()
 {
     return base;
-}
-
-render::platform* ApplicationX11::get_render()
-{
-    return render.get();
 }
 
 debug::console* ApplicationX11::create_debug_console()
@@ -221,8 +216,7 @@ void ApplicationX11::start()
     prepare_start();
     ScreenLockerWatcher::self()->initialize();
 
-    render.reset(new render::backend::x11::platform(base));
-    platform = render.get();
+    base.render = std::make_unique<render::backend::x11::platform>(base);
 
     crashChecking();
     Application::setX11ScreenNumber(QX11Info::appScreen());
@@ -256,6 +250,7 @@ void ApplicationX11::start()
         this->input.reset(input);
         input->redirect->install_shortcuts();
 
+        auto render = static_cast<render::backend::x11::platform*>(base.render.get());
         try {
             render->init();
         } catch (std::exception const&) {

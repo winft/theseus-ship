@@ -45,13 +45,11 @@ public:
     ~X11TestApplication() override;
 
     base::platform& get_base() override;
-    render::platform* get_render() override;
     debug::console* create_debug_console() override;
 
     void start();
 
     base::x11::platform base;
-    std::unique_ptr<render::backend::x11::platform> render;
     std::unique_ptr<render::x11::compositor> compositor;
     std::unique_ptr<win::x11::space> workspace;
 };
@@ -68,8 +66,7 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    render.reset(new render::backend::x11::platform(base));
-    platform = render.get();
+    base.render = std::make_unique<render::backend::x11::platform>(base);
 }
 
 X11TestApplication::~X11TestApplication()
@@ -81,11 +78,6 @@ base::platform& X11TestApplication::get_base()
     return base;
 }
 
-render::platform* X11TestApplication::get_render()
-{
-    return render.get();
-}
-
 debug::console* X11TestApplication::create_debug_console()
 {
     return new debug::x11_console;
@@ -94,7 +86,7 @@ debug::console* X11TestApplication::create_debug_console()
 void X11TestApplication::start()
 {
     prepare_start();
-    compositor = std::make_unique<render::x11::compositor>(*render);
+    compositor = std::make_unique<render::x11::compositor>(*base.render);
     workspace = std::make_unique<win::x11::space>();
     Q_EMIT workspaceCreated();
 }

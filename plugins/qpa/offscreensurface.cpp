@@ -17,8 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "offscreensurface.h"
+
+#include "base/platform.h"
 #include "eglhelpers.h"
 #include "main.h"
 #include "render/platform.h"
@@ -32,7 +33,7 @@ namespace QPA
 
 OffscreenSurface::OffscreenSurface(QOffscreenSurface *surface)
     : QPlatformOffscreenSurface(surface)
-    , m_eglDisplay(kwinApp()->platform->egl_data->display)
+    , m_eglDisplay(kwinApp()->get_base().render->egl_data->display)
 {
     const QSize size = surface->size();
 
