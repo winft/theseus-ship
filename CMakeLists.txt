@@ -286,14 +286,6 @@ set_package_properties(QAccessibilityClient PROPERTIES
 )
 set(HAVE_ACCESSIBILITY ${QAccessibilityClient_FOUND})
 
-if(CMAKE_SYSTEM MATCHES "FreeBSD")
-    find_package(epoll)
-    set_package_properties(epoll PROPERTIES DESCRIPTION "I/O event notification facility"
-        TYPE REQUIRED
-        PURPOSE "Needed for running kwin_wayland"
-    )
-endif()
-
 include(ECMQMLModules)
 ecm_find_qmlmodule(QtQuick 2.3)
 ecm_find_qmlmodule(QtQuick.Controls 1.2)
@@ -684,13 +676,6 @@ if (KWIN_BUILD_TABBOX)
 endif()
 
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
-
-if(CMAKE_SYSTEM MATCHES "FreeBSD")
-    # epoll is required, includes live under ${LOCALBASE}, separate library
-    target_include_directories(kwin PUBLIC ${epoll_INCLUDE_DIRS})
-    target_link_libraries(kwin ${kwinLibs} ${epoll_LIBRARIES})
-endif()
-
 
 set(kwin_X11_SRCS
    base/backend/x11/platform.cpp
