@@ -51,6 +51,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLibraryInfo>
 #include <QX11Info>
 
+#include <cerrno>
+
 // system
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
