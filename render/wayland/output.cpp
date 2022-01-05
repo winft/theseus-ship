@@ -150,14 +150,12 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     // TODO? This cannot be used so carelessly - needs protections against broken clients, the
     // window should not get focus before it's displayed, handle unredirected windows properly and
     // so on.
-    for (auto win : windows) {
-        if (!win->readyForPainting()) {
-            windows.erase(std::remove(windows.begin(), windows.end(), win), windows.end());
-        }
-        if (kwinApp()->is_screen_locked() && !win->isLockScreen() && !win->isInputMethod()) {
-            windows.erase(std::remove(windows.begin(), windows.end(), win), windows.end());
-        }
-    }
+    remove_all_if(windows, [](auto& win) {
+        auto screen_lock_filtered
+            = kwinApp()->is_screen_locked() && !win->isLockScreen() && !win->isInputMethod();
+
+        return !win->readyForPainting() || screen_lock_filtered;
+    });
 
     // Submit pending output repaints and clear the pending field, so that post-pass can add new
     // repaints for the next repaint.
