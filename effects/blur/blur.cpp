@@ -757,7 +757,7 @@ void BlurEffect::doBlur(const QRegion& shape, const QRect& screen, const float o
     vbo->unbindArrays();
 }
 
-void BlurEffect::upscaleRenderToScreen(GLVertexBuffer *vbo, int vboStart, int blurRectCount, const QMatrix4x4 &screenProjection, QPoint windowPosition)
+void BlurEffect::upscaleRenderToScreen(GLVertexBuffer *vbo, int vboStart, int blurRectCount, const QMatrix4x4 &screenProjection, QPoint /*windowPosition*/)
 {
     m_renderTextures[1].bind();
 

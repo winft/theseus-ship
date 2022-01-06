@@ -628,7 +628,7 @@ void AnimationEffect::postPaintScreen()
         bool invalidateLayerRect = false;
         int animCounter = 0;
         for (auto anim = entry->first.begin(); anim != entry->first.end();) {
-            if (anim->isActive() || anim->startTime > clock() && !anim->waitAtSource) {
+            if (anim->isActive() || (anim->startTime > clock() && !anim->waitAtSource)) {
                 ++anim;
                 ++animCounter;
                 continue;
