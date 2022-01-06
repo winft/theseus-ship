@@ -199,6 +199,7 @@ private:
     void update_theme(QString const& name, int size);
     void load_theme_from_kconfig();
 
+    QHash<QByteArray, xcb_cursor_t> m_cursors;
     QPoint m_pos;
     int m_mousePollingCounter;
     int m_cursorTrackingCounter;

@@ -610,6 +610,7 @@ set(kwin_XCB_LIBS
     XCB::COMPOSITE
     XCB::DAMAGE
     XCB::GLX
+    XCB::CURSOR
     XCB::ICCCM
     XCB::KEYSYMS
     XCB::RANDR
@@ -736,7 +737,6 @@ target_link_libraries(kwin_x11_lib
     kwinxrenderutils
     KF5::Crash
     Qt::X11Extras
-    XCB::CURSOR
 )
 
 if (HAVE_X11_XINPUT)
