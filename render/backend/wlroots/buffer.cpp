@@ -40,15 +40,15 @@ bool buffer_get_dmabuf(wlr_buffer* wlr_buffer, wlr_dmabuf_attributes* attribs)
 constexpr wlr_buffer_impl buffer_impl = {
     .destroy = buffer_destroy,
     .get_dmabuf = buffer_get_dmabuf,
-    nullptr,
-    nullptr,
+    .begin_data_ptr_access = nullptr,
+    .end_data_ptr_access = nullptr,
 };
 
 constexpr wlr_buffer_impl buffer_headless_impl = {
     .destroy = buffer_destroy,
     .get_dmabuf = nullptr,
-    nullptr,
-    nullptr,
+    .begin_data_ptr_access = nullptr,
+    .end_data_ptr_access = nullptr,
 };
 
 wlr_buffer_override* get_buffer_override(wlr_buffer* buffer)
