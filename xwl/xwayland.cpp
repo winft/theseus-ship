@@ -110,7 +110,7 @@ xwayland::xwayland(Application* app, std::function<void(int)> status_callback)
 
     xcb_connection_fd = sx[0];
 
-    xwayland_process = new Process(this);
+    xwayland_process = new QProcess(this);
     xwayland_process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
     xwayland_process->setProgram(QStringLiteral("Xwayland"));
 

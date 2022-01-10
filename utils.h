@@ -34,7 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPoint>
 #include <QRect>
 #include <QScopedPointer>
-#include <QProcess>
 // system
 #include <climits>
 KWIN_EXPORT Q_DECLARE_LOGGING_CATEGORY(KWIN_CORE)
@@ -102,22 +101,6 @@ Qt::MouseButton x11ToQtMouseButton(int button);
 Qt::MouseButton KWIN_EXPORT x11ToQtMouseButton(int button);
 Qt::MouseButtons KWIN_EXPORT x11ToQtMouseButtons(int state);
 Qt::KeyboardModifiers KWIN_EXPORT x11ToQtKeyboardModifiers(int state);
-
-/**
- * QProcess subclass which unblocks SIGUSR in the child process.
- */
-class KWIN_EXPORT Process : public QProcess
-{
-    Q_OBJECT
-public:
-    explicit Process(QObject *parent = nullptr);
-    ~Process() override;
-
-#ifndef KCMRULES
-protected:
-    void setupChildProcess() override;
-#endif
-};
 
 template<typename V, typename T>
 auto find(V const& container, T const& arg)

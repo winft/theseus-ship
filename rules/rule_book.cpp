@@ -100,7 +100,7 @@ void RuleBook::edit(Toplevel* window, bool whole_app)
     args << QStringLiteral("--uuid") << window->internalId().toString();
     if (whole_app)
         args << QStringLiteral("--whole-app");
-    QProcess* p = new Process(this);
+    auto p = new QProcess(this);
     p->setArguments(args);
     p->setProcessEnvironment(kwinApp()->processStartupEnvironment());
     const QFileInfo buildDirBinary{QDir{QCoreApplication::applicationDirPath()},
