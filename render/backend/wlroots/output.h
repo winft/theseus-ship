@@ -33,6 +33,7 @@ public:
 
 private:
     base::event_receiver<output> present_rec;
+    base::event_receiver<output> frame_rec;
 };
 
 }

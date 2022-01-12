@@ -44,7 +44,7 @@ wayland::presentation_kinds to_presentation_kinds(uint32_t wlr_flags)
     return flags;
 }
 
-void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
+void handle_present(wl_listener* listener, void* data)
 {
     base::event_receiver<output>* event_receiver_struct
         = wl_container_of(listener, event_receiver_struct, event);
@@ -62,7 +62,16 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
                                          std::chrono::nanoseconds(event->refresh),
                                          to_presentation_kinds(event->flags)};
 
-    output->swapped(pres_data);
+    output->presented(pres_data);
+}
+
+void handle_frame(wl_listener* listener, void* /*data*/)
+{
+    base::event_receiver<output>* event_receiver_struct
+        = wl_container_of(listener, event_receiver_struct, event);
+    auto output = event_receiver_struct->receiver;
+
+    output->frame();
 }
 
 output::output(base::backend::wlroots::output& base, render::platform& platform)
@@ -80,6 +89,10 @@ output::output(base::backend::wlroots::output& base, render::platform& platform)
     present_rec.receiver = this;
     present_rec.event.notify = handle_present;
     wl_signal_add(&base.native->events.present, &present_rec.event);
+
+    frame_rec.receiver = this;
+    frame_rec.event.notify = handle_frame;
+    wl_signal_add(&base.native->events.frame, &frame_rec.event);
 }
 
 output::~output() = default;

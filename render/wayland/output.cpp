@@ -6,7 +6,6 @@
 #include "output.h"
 
 #include "compositor.h"
-#include "presentation.h"
 #include "render/platform.h"
 #include "utils.h"
 
@@ -231,17 +230,23 @@ void output::dry_run()
     get_compositor(platform)->presentation->frame(this, frame_windows);
 }
 
-void output::swapped(presentation_data const& data)
+void output::presented(presentation_data const& data)
 {
     get_compositor(platform)->presentation->presented(this, data);
+    last_presentation = data;
+}
+
+void output::frame()
+{
+    get_compositor(platform)->presentation->presented(this, last_presentation);
 
     if (!swap_pending) {
-        qCWarning(KWIN_WL) << "render::wayland::output::swapped called but no swap pending.";
+        qCWarning(KWIN_WL) << "render::wayland::output::presented called but no swap pending.";
         return;
     }
     swap_pending = false;
 
-    set_delay(data);
+    set_delay(last_presentation);
     delay_timer.stop();
     set_delay_timer();
 }
