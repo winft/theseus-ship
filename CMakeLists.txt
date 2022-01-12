@@ -183,10 +183,15 @@ set_package_properties(Libinput PROPERTIES TYPE REQUIRED PURPOSE "Required for i
 find_package(gbm)
 set_package_properties(gbm PROPERTIES TYPE OPTIONAL PURPOSE "Required for Wayland session.")
 
+find_package(Pixman)
+set_package_properties(Pixman PROPERTIES
+    TYPE REQUIRED
+    PURPOSE "Required for building wlroots backend."
+)
 find_package(wlroots 0.14.0)
 set_package_properties(wlroots PROPERTIES
     TYPE REQUIRED
-    PURPOSE "Required for building experimental wlroots backend."
+    PURPOSE "Required for building wlroots backend."
 )
 if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.15.0)
   set(HAVE_WLR_TOUCH_FRAME 1)
@@ -911,6 +916,7 @@ PUBLIC
   gbm::gbm
   Wayland::Server
   wlroots::wlroots
+  Pixman::Pixman
 )
 
 set_target_properties(kwin_wayland_lib PROPERTIES
