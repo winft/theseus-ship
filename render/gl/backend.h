@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <QElapsedTimer>
+#include <QMatrix4x4>
 #include <QRegion>
 
 #include <kwin_export.h>
@@ -204,6 +205,11 @@ public:
      * Copy a region of pixels from the current read to the current draw buffer
      */
     void copyPixels(const QRegion& region);
+
+    /**
+     * For final backend-specific corrections to the scene projection matrix. Defaults to identity.
+     */
+    QMatrix4x4 transformation;
 
 protected:
     /**

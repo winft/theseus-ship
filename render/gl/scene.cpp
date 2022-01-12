@@ -1028,7 +1028,7 @@ QMatrix4x4 scene::createProjectionMatrix() const
                  0.001);
 
     // Combine the matrices
-    return projection * matrix;
+    return m_backend->transformation * projection * matrix;
 }
 
 void scene::updateProjectionMatrix()
