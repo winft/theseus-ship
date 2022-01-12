@@ -39,23 +39,15 @@ namespace QPA
 {
 
 SharingPlatformContext::SharingPlatformContext(QOpenGLContext *context)
-    : SharingPlatformContext(context, EGL_NO_SURFACE)
-{
-}
-
-SharingPlatformContext::SharingPlatformContext(QOpenGLContext *context, const EGLSurface &surface, EGLConfig config)
-    : AbstractPlatformContext(context, kwinApp()->get_base().render->egl_data->display, config)
-    , m_surface(surface)
+    : AbstractPlatformContext(context, kwinApp()->get_base().render->egl_data->display, nullptr)
 {
     create();
 }
 
 bool SharingPlatformContext::makeCurrent(QPlatformSurface *surface)
 {
-    EGLSurface eglSurface;
-    if (surface->surface()->surfaceClass() == QSurface::Window) {
-        eglSurface = m_surface;
-    } else {
+    EGLSurface eglSurface{EGL_NO_SURFACE};
+    if (surface->surface()->surfaceClass() != QSurface::Window) {
         eglSurface = static_cast<OffscreenSurface *>(surface)->nativeHandle();
     }
 
