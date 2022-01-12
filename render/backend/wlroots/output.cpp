@@ -68,9 +68,9 @@ void handle_present(wl_listener* listener, [[maybe_unused]] void* data)
 output::output(base::backend::wlroots::output& base, render::platform& platform)
     : wayland::output(base, platform)
 {
-    auto& render = static_cast<wlroots::platform&>(platform);
+    swap_pending = base.native->frame_pending;
 
-    if (render.egl) {
+    if (auto& render = static_cast<wlroots::platform&>(platform); render.egl) {
         egl = std::make_unique<egl_output>(*this, render.egl.get());
     }
 
