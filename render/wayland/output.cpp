@@ -6,12 +6,14 @@
 #include "output.h"
 
 #include "compositor.h"
-#include "render/platform.h"
+#include "effects.h"
 #include "utils.h"
+
+#include "render/gl/scene.h"
+#include "render/platform.h"
 
 #include "base/wayland/output.h"
 #include "base/wayland/platform.h"
-#include "effects.h"
 #include "wayland_logging.h"
 #include "wayland_server.h"
 #include "win/transient.h"
@@ -261,6 +263,8 @@ void output::set_delay(presentation_data const& data)
     if (!GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
         return;
     }
+
+    static_cast<gl::scene*>(platform.compositor->scene())->backend()->makeCurrent();
 
 #if SWAP_TIME_DEBUG
     qDebug() << "";
