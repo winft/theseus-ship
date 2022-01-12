@@ -402,7 +402,7 @@ scene::~scene()
     }
 
     // Need to reset early, otherwise the GL context is gone.
-    m_cursorTexture.reset();
+    sw_cursor.texture.reset();
 
     if (lanczos) {
         delete lanczos;
@@ -591,26 +591,27 @@ void scene::paintCursor()
     }
 
     // lazy init texture cursor only in case we need software rendering
-    if (!m_cursorTexture) {
-        auto updateCursorTexture = [this] {
-            // don't paint if no image for cursor is set
-            auto const img = render::compositor::self()->software_cursor->image();
-            if (img.isNull()) {
-                return;
-            }
-            m_cursorTexture.reset(new GLTexture(img));
-        };
+    if (sw_cursor.dirty) {
+        auto const img = render::compositor::self()->software_cursor->image();
 
-        // init now
-        updateCursorTexture();
+        // If there was no new image we are still dirty and try to update again next paint cycle.
+        sw_cursor.dirty = img.isNull();
+
+        // With an image we update the texture, or if one was never set before create a default one.
+        if (!img.isNull() || !sw_cursor.texture) {
+            sw_cursor.texture.reset(new GLTexture(img));
+        }
 
         // handle shape update on case cursor image changed
-        connect(cursor, &render::cursor::changed, this, updateCursorTexture);
+        if (!sw_cursor.notifier) {
+            sw_cursor.notifier = connect(
+                cursor, &render::cursor::changed, this, [this] { sw_cursor.dirty = true; });
+        }
     }
 
     // get cursor position in projection coordinates
     auto const cursorPos = input::get_cursor()->pos() - cursor->hotspot();
-    const QRect cursorRect(0, 0, m_cursorTexture->width(), m_cursorTexture->height());
+    auto const cursorRect = QRect(0, 0, sw_cursor.texture->width(), sw_cursor.texture->height());
     QMatrix4x4 mvp = m_projectionMatrix;
     mvp.translate(cursorPos.x(), cursorPos.y());
 
@@ -619,11 +620,11 @@ void scene::paintCursor()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // paint texture in cursor offset
-    m_cursorTexture->bind();
+    sw_cursor.texture->bind();
     ShaderBinder binder(ShaderTrait::MapTexture);
     binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
-    m_cursorTexture->render(QRegion(cursorRect), cursorRect);
-    m_cursorTexture->unbind();
+    sw_cursor.texture->render(QRegion(cursorRect), cursorRect);
+    sw_cursor.texture->unbind();
 
     cursor->mark_as_rendered();
 

@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/scene.h"
 #include "render/shadow.h"
 
+#include <memory>
 #include <unordered_map>
 
 namespace KWin::render
@@ -142,7 +143,13 @@ private:
     bool m_debug{false};
 
     lanczos_filter* lanczos{nullptr};
-    QScopedPointer<GLTexture> m_cursorTexture;
+
+    struct {
+        std::unique_ptr<GLTexture> texture;
+        bool dirty{true};
+        QMetaObject::Connection notifier;
+    } sw_cursor;
+
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_screenProjectionMatrix;
     GLuint vao;
