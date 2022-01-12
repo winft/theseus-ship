@@ -50,7 +50,7 @@ protected:
     EGLContext eglContext() const {
         return m_context;
     }
-    void createContext(EGLContext shareContext = EGL_NO_CONTEXT);
+    void createContext(EGLContext shareContext);
 
 private:
     EGLDisplay m_eglDisplay;
