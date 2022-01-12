@@ -33,11 +33,7 @@ public:
     egl_backend(wlroots::platform& platform, bool headless);
     ~egl_backend() override;
 
-    void start();
     void tear_down();
-
-    void cleanup();
-    void cleanupSurfaces();
 
     bool makeCurrent() override;
     void doneCurrent() override;
@@ -68,6 +64,9 @@ protected:
     void present() override;
 
 private:
+    void cleanup();
+    void cleanupSurfaces();
+
     bool init_platform();
     bool init_rendering_context();
 

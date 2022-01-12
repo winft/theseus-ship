@@ -49,21 +49,7 @@ egl_backend::egl_backend(wlroots::platform& platform, bool headless)
 
     // Egl is always direct rendering.
     setIsDirectRendering(true);
-    start();
-}
 
-egl_backend::~egl_backend()
-{
-    tear_down();
-}
-
-bool egl_backend::hasClientExtension(const QByteArray& ext) const
-{
-    return data.base.client_extensions.contains(ext);
-}
-
-void egl_backend::start()
-{
     gl::init_client_extensions(*this);
 
     if (!init_platform()) {
@@ -82,6 +68,16 @@ void egl_backend::start()
     gl::init_gl(EglPlatformInterface, get_proc_address);
     gl::init_buffer_age(*this);
     wayland::init_egl(*this, data);
+}
+
+egl_backend::~egl_backend()
+{
+    tear_down();
+}
+
+bool egl_backend::hasClientExtension(const QByteArray& ext) const
+{
+    return data.base.client_extensions.contains(ext);
 }
 
 bool egl_backend::init_platform()
