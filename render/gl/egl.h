@@ -100,11 +100,7 @@ bool init_egl_api(Backend& backend)
 
     qCDebug(KWIN_WL) << "EGL version: " << major << "." << minor;
 
-    QByteArray const extensions = eglQueryString(backend.data.base.display, EGL_EXTENSIONS);
-    backend.setExtensions(extensions.split(' '));
-    backend.setSupportsSurfacelessContext(
-        backend.hasExtension(QByteArrayLiteral("EGL_KHR_surfaceless_context")));
-
+    init_server_extensions(backend);
     return true;
 }
 
@@ -119,6 +115,15 @@ void init_buffer_age(Backend& backend)
         if (useBufferAge != "0")
             backend.setSupportsBufferAge(true);
     }
+}
+
+template<typename Backend>
+void init_server_extensions(Backend& backend)
+{
+    QByteArray const extensions = eglQueryString(backend.data.base.display, EGL_EXTENSIONS);
+    backend.setExtensions(extensions.split(' '));
+    backend.setSupportsSurfacelessContext(
+        backend.hasExtension(QByteArrayLiteral("EGL_KHR_surfaceless_context")));
 }
 
 template<typename Backend>
