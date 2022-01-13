@@ -2,6 +2,7 @@
 # Effect
 set(coverswitch_SOURCES
     coverswitch.cpp
+    coverswitch.qrc
     main.cpp
 )
 kconfig_add_kcfg_files(coverswitch_SOURCES

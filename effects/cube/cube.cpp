@@ -46,6 +46,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Q_LOGGING_CATEGORY(KWIN_CUBE, "kwin_effect_cube", QtWarningMsg)
 
+static void ensureResources()
+{
+    // Must initialize resources manually because the effect is a static lib.
+    Q_INIT_RESOURCE(cube);
+}
+
 namespace KWin
 {
 
@@ -93,8 +99,15 @@ CubeEffect::CubeEffect()
     desktopNameFont.setPointSize(14);
 
     if (effects->compositingType() == OpenGLCompositing) {
-        m_reflectionShader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture, QString(), QStringLiteral("cube-reflection.glsl"));
-        m_capShader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture, QString(), QStringLiteral("cube-cap.glsl"));
+        ensureResources();
+        m_reflectionShader = ShaderManager::instance()->generateShaderFromResources(
+            ShaderTrait::MapTexture,
+            QString(),
+            QStringLiteral(":/effects/cube/shaders/cube-reflection.frag"));
+        m_capShader = ShaderManager::instance()->generateShaderFromResources(
+            ShaderTrait::MapTexture,
+            QString(),
+            QStringLiteral(":/effects/cube/shaders/cube-cap.frag"));
     } else {
         m_reflectionShader = nullptr;
         m_capShader = nullptr;
@@ -319,7 +332,10 @@ bool CubeEffect::loadShader()
             (effects->compositingType() == OpenGLCompositing)))
         return false;
 
-    cylinderShader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture | ShaderTrait::AdjustSaturation | ShaderTrait::Modulate, QStringLiteral("cylinder.vert"), QString());
+    cylinderShader = ShaderManager::instance()->generateShaderFromResources(
+        ShaderTrait::MapTexture | ShaderTrait::AdjustSaturation | ShaderTrait::Modulate,
+        QStringLiteral(":/effects/cube/shaders/cylinder.vert"),
+        QString());
     if (!cylinderShader->isValid()) {
         qCCritical(KWIN_CUBE) << "The cylinder shader failed to load!";
         return false;
@@ -330,7 +346,10 @@ bool CubeEffect::loadShader()
         cylinderShader->setUniform("width", (float)rect.width() * 0.5f);
     }
 
-    sphereShader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture | ShaderTrait::AdjustSaturation | ShaderTrait::Modulate, QStringLiteral("sphere.vert"), QString());
+    sphereShader = ShaderManager::instance()->generateShaderFromResources(
+        ShaderTrait::MapTexture | ShaderTrait::AdjustSaturation | ShaderTrait::Modulate,
+        QStringLiteral(":/effects/cube/shaders/sphere.vert"),
+        QString());
     if (!sphereShader->isValid()) {
         qCCritical(KWIN_CUBE) << "The sphere shader failed to load!";
         return false;

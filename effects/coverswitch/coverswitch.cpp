@@ -36,6 +36,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cmath>
 
+static void ensureResources()
+{
+    // Must initialize resources manually because the effect is a static lib.
+    Q_INIT_RESOURCE(coverswitch);
+}
+
 namespace KWin
 {
 
@@ -64,7 +70,11 @@ CoverSwitchEffect::CoverSwitchEffect()
     captionFont.setPointSize(captionFont.pointSize() * 2);
 
     if (effects->compositingType() == OpenGLCompositing) {
-        m_reflectionShader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture, QString(), QStringLiteral("coverswitch-reflection.glsl"));
+        ensureResources();
+        m_reflectionShader = ShaderManager::instance()->generateShaderFromResources(
+            ShaderTrait::MapTexture,
+            QString(),
+            QStringLiteral(":/effects/invert/shaders/coverswitch-reflection.frag"));
     } else {
         m_reflectionShader = nullptr;
     }

@@ -40,6 +40,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Q_LOGGING_CATEGORY(KWIN_LOOKINGGLASS, "kwin_effect_lookingglass", QtWarningMsg)
 
+static void ensureResources()
+{
+    // Must initialize resources manually because the effect is a static lib.
+    Q_INIT_RESOURCE(lookingglass);
+}
+
 namespace KWin
 {
 
@@ -102,6 +108,8 @@ void LookingGlassEffect::reconfigure(ReconfigureFlags)
 
 bool LookingGlassEffect::loadData()
 {
+    ensureResources();
+
     const QSize screenSize = effects->virtualScreenSize();
     int texw = screenSize.width();
     int texh = screenSize.height();
@@ -117,7 +125,7 @@ bool LookingGlassEffect::loadData()
         return false;
     }
 
-    m_shader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture, QString(), QStringLiteral("lookingglass.frag"));
+    m_shader = ShaderManager::instance()->generateShaderFromResources(ShaderTrait::MapTexture, QString(), QStringLiteral(":/effects/lookingglass/shaders/lookingglass.frag"));
     if (m_shader->isValid()) {
         ShaderBinder binder(m_shader);
         m_shader->setUniform("u_textureSize", QVector2D(screenSize.width(), screenSize.height()));
