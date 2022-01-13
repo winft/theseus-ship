@@ -100,11 +100,11 @@ CubeEffect::CubeEffect()
 
     if (effects->compositingType() == OpenGLCompositing) {
         ensureResources();
-        m_reflectionShader = ShaderManager::instance()->generateShaderFromResources(
+        m_reflectionShader = ShaderManager::instance()->generateShaderFromFile(
             ShaderTrait::MapTexture,
             QString(),
             QStringLiteral(":/effects/cube/shaders/cube-reflection.frag"));
-        m_capShader = ShaderManager::instance()->generateShaderFromResources(
+        m_capShader = ShaderManager::instance()->generateShaderFromFile(
             ShaderTrait::MapTexture,
             QString(),
             QStringLiteral(":/effects/cube/shaders/cube-cap.frag"));
@@ -332,7 +332,7 @@ bool CubeEffect::loadShader()
             (effects->compositingType() == OpenGLCompositing)))
         return false;
 
-    cylinderShader = ShaderManager::instance()->generateShaderFromResources(
+    cylinderShader = ShaderManager::instance()->generateShaderFromFile(
         ShaderTrait::MapTexture | ShaderTrait::AdjustSaturation | ShaderTrait::Modulate,
         QStringLiteral(":/effects/cube/shaders/cylinder.vert"),
         QString());
@@ -346,7 +346,7 @@ bool CubeEffect::loadShader()
         cylinderShader->setUniform("width", (float)rect.width() * 0.5f);
     }
 
-    sphereShader = ShaderManager::instance()->generateShaderFromResources(
+    sphereShader = ShaderManager::instance()->generateShaderFromFile(
         ShaderTrait::MapTexture | ShaderTrait::AdjustSaturation | ShaderTrait::Modulate,
         QStringLiteral(":/effects/cube/shaders/sphere.vert"),
         QString());

@@ -71,7 +71,7 @@ CoverSwitchEffect::CoverSwitchEffect()
 
     if (effects->compositingType() == OpenGLCompositing) {
         ensureResources();
-        m_reflectionShader = ShaderManager::instance()->generateShaderFromResources(
+        m_reflectionShader = ShaderManager::instance()->generateShaderFromFile(
             ShaderTrait::MapTexture,
             QString(),
             QStringLiteral(":/effects/invert/shaders/coverswitch-reflection.frag"));
