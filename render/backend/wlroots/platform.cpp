@@ -30,12 +30,21 @@ platform::platform(base::backend::wlroots::platform& base)
 
 platform::~platform() = default;
 
+template<typename Render>
+std::unique_ptr<Render> create_render_backend(wlroots::platform& platform,
+                                              std::string const& wlroots_name)
+{
+    setenv("WLR_RENDERER", wlroots_name.c_str(), true);
+    platform.renderer = wlr_renderer_autocreate(platform.base.backend);
+    platform.allocator = wlr_allocator_autocreate(platform.base.backend, platform.renderer);
+    return std::make_unique<Render>(platform);
+}
+
 void platform::init()
 {
     // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
     //                available in the ctor. Can we change that?
-    renderer = wlr_renderer_autocreate(base.backend);
-    allocator = wlr_allocator_autocreate(base.backend, renderer);
+    egl = create_render_backend<egl_backend>(*this, "gles2");
 
     if (!wlr_backend_start(base.backend)) {
         throw std::exception();
@@ -46,9 +55,8 @@ void platform::init()
 
 gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
 {
-    if (!egl) {
-        egl = std::make_unique<egl_backend>(*this);
-    }
+    assert(egl);
+    wlr_egl_make_current(egl->native);
     return egl.get();
 }
 
