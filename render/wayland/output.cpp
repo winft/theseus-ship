@@ -260,11 +260,15 @@ std::chrono::nanoseconds output::refresh_length() const
 
 void output::set_delay(presentation_data const& data)
 {
+    auto scene = platform.compositor->scene();
+    if (scene->compositingType() != CompositingType::OpenGLCompositing) {
+        return;
+    }
     if (!GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
         return;
     }
 
-    static_cast<gl::scene*>(platform.compositor->scene())->backend()->makeCurrent();
+    static_cast<gl::scene*>(scene)->backend()->makeCurrent();
 
 #if SWAP_TIME_DEBUG
     qDebug() << "";
