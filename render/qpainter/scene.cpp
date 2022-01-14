@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/platform.h"
 #include "screens.h"
 #include "toplevel.h"
+#include "wayland_logging.h"
 
 #include <kwineffectquickview.h>
 
@@ -90,7 +91,7 @@ int64_t scene::paint_output(base::output* output,
     createStackingOrder(toplevels);
 
     auto mask = paint_type::none;
-    m_backend->prepareRenderingFrame();
+    m_backend->begin_render(*output);
 
     auto const needsFullRepaint = m_backend->needsFullRepaint();
     if (needsFullRepaint) {
@@ -181,33 +182,34 @@ Decoration::Renderer* scene::createDecorationRenderer(Decoration::DecoratedClien
     return new deco_renderer(impl);
 }
 
-void scene::handle_screen_geometry_change(QSize const& size)
+void scene::handle_screen_geometry_change(QSize const& /*size*/)
 {
-    m_backend->screenGeometryChanged(size);
 }
 
-QImage* scene::qpainterRenderBuffer() const
+backend* create_backend(render::compositor& compositor)
 {
-    return m_backend->buffer();
+    try {
+        return compositor.platform.createQPainterBackend(compositor);
+    } catch (std::runtime_error& error) {
+        qCWarning(KWIN_WL) << "Creating QPainter backend failed:" << error.what();
+        return nullptr;
+    }
 }
 
 render::scene* create_scene(render::compositor& compositor)
 {
-    QScopedPointer<qpainter::backend> backend(compositor.platform.createQPainterBackend());
-    if (backend.isNull()) {
-        return nullptr;
-    }
-    if (backend->isFailed()) {
+    auto backend = create_backend(compositor);
+    if (!backend) {
         return nullptr;
     }
 
-    auto s = new scene(backend.take(), compositor);
+    auto scene = new qpainter::scene(backend, compositor);
 
-    if (s && s->initFailed()) {
-        delete s;
-        s = nullptr;
+    if (scene && scene->initFailed()) {
+        delete scene;
+        scene = nullptr;
     }
-    return s;
+    return scene;
 }
 
 }
