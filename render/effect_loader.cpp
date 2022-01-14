@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "effect_loader.h"
 
+#include "../utils.h"
 #include "effects/effect_builtins.h"
 #include "scripting/effect.h"
-#include "utils.h"
 #include <config-kwin.h>
 #include <kwineffects.h>
 

@@ -41,6 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffectquickview.h>
 #include <kwinglplatform.h>
 
+#include "../../utils.h"
 #include "decorations/decoratedclient.h"
 #include "input/cursor.h"
 #include "lanczos_filter.h"
@@ -52,7 +53,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
 #include "screens.h"
-#include "utils.h"
 
 #include "win/geo.h"
 #include "win/transient.h"

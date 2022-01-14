@@ -6,16 +6,18 @@
 */
 #include "compositor.h"
 
+#include "effects.h"
+#include "platform.h"
+#include "utils.h"
+
+#include "../utils.h"
 #include "base/output.h"
 #include "base/platform.h"
 #include "cursor.h"
 #include "dbusinterface.h"
-#include "effects.h"
 #include "perf/ftrace.h"
-#include "platform.h"
 #include "scene.h"
 #include "screens.h"
-#include "utils.h"
 #include "wayland_server.h"
 #include "workspace.h"
 
@@ -102,20 +104,10 @@ bool compositor::setupStart()
 
     Q_EMIT aboutToToggleCompositing();
 
-    auto supportedCompositors = platform.supportedCompositors();
-    const auto userConfigIt = std::find(
-        supportedCompositors.begin(), supportedCompositors.end(), options->compositingMode());
-
-    if (userConfigIt != supportedCompositors.end()) {
-        supportedCompositors.erase(userConfigIt);
-        supportedCompositors.prepend(options->compositingMode());
-    } else {
-        qCWarning(KWIN_CORE)
-            << "Configured compositor not supported by Platform. Falling back to defaults";
-    }
+    auto supported_render_types = get_supported_render_types(platform);
 
     assert(!m_scene);
-    m_scene.reset(create_scene(supportedCompositors));
+    m_scene.reset(create_scene(supported_render_types));
 
     if (!m_scene || m_scene->initFailed()) {
         qCCritical(KWIN_CORE) << "Failed to initialize compositing, compositing disabled";
@@ -126,7 +118,7 @@ bool compositor::setupStart()
         if (m_selectionOwner) {
             m_selectionOwner->disown();
         }
-        if (!supportedCompositors.contains(NoCompositing)) {
+        if (!supported_render_types.contains(NoCompositing)) {
             qCCritical(KWIN_CORE) << "The used windowing system requires compositing";
             qCCritical(KWIN_CORE) << "We are going to quit KWin now as it is broken";
             qApp->quit();

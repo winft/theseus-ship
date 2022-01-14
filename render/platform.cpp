@@ -6,6 +6,7 @@
 */
 #include "platform.h"
 
+#include "../utils.h"
 #include "config-kwin.h"
 #include "main.h"
 #include "render/compositor.h"
