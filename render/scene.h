@@ -171,12 +171,6 @@ public:
     virtual QPainter* scenePainter() const;
 
     /**
-     * The render buffer used by a QPainter based compositor.
-     * Default implementation returns @c nullptr.
-     */
-    virtual QImage* qpainterRenderBuffer() const;
-
-    /**
      * The backend specific extensions (e.g. EGL/GLX extensions).
      *
      * Not the OpenGL (ES) extension!

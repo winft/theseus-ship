@@ -19,6 +19,7 @@ namespace KWin::render::backend::wlroots
 {
 
 class egl_output;
+class qpainter_output;
 
 class output : public wayland::output
 {
@@ -30,6 +31,7 @@ public:
     void disable();
 
     std::unique_ptr<egl_output> egl;
+    std::unique_ptr<qpainter_output> qpainter;
 
 private:
     base::event_receiver<output> present_rec;

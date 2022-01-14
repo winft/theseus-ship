@@ -32,5 +32,6 @@ extern "C" {
 #include <wlr/render/allocator.h>
 #include <wlr/render/egl.h>
 #include <wlr/render/gles2.h>
+#include <wlr/render/pixman.h>
 #undef static
 }

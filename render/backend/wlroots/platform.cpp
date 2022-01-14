@@ -5,13 +5,14 @@
 */
 #include "platform.h"
 
-#include "buffer.h"
 #include "egl_backend.h"
 #include "output.h"
+#include "qpainter_backend.h"
 #include "wlr_helpers.h"
 
 #include "base/backend/wlroots/output.h"
 #include "input/wayland/platform.h"
+#include "render/utils.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/effects.h"
 #include "render/wayland/egl.h"
@@ -44,7 +45,16 @@ void platform::init()
 {
     // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
     //                available in the ctor. Can we change that?
-    egl = create_render_backend<egl_backend>(*this, "gles2");
+    for (auto render_type : get_supported_render_types(*this)) {
+        if (render_type == OpenGLCompositing) {
+            egl = create_render_backend<egl_backend>(*this, "gles2");
+            break;
+        }
+        if (render_type == QPainterCompositing) {
+            qpainter = create_render_backend<qpainter_backend>(*this, "pixman");
+            break;
+        }
+    }
 
     if (!wlr_backend_start(base.backend)) {
         throw std::exception();
@@ -60,10 +70,15 @@ gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)
     return egl.get();
 }
 
+qpainter::backend* platform::createQPainterBackend(render::compositor& /*compositor*/)
+{
+    assert(qpainter);
+    return qpainter.get();
+}
+
 void platform::render_stop(bool on_shutdown)
 {
-    assert(egl);
-    if (on_shutdown) {
+    if (egl && on_shutdown) {
         wayland::unbind_egl_display(*egl, egl->data);
         egl->tear_down();
     }
@@ -79,7 +94,7 @@ QVector<CompositingType> platform::supportedCompositors() const
     if (selected_compositor != NoCompositing) {
         return {selected_compositor};
     }
-    return QVector<CompositingType>{OpenGLCompositing};
+    return QVector<CompositingType>{OpenGLCompositing, QPainterCompositing};
 }
 
 }

@@ -7,6 +7,7 @@
 
 #include "egl_output.h"
 #include "platform.h"
+#include "qpainter_output.h"
 #include "wlr_includes.h"
 
 #include "base/gamma_ramp.h"
@@ -79,12 +80,15 @@ output::output(base::backend::wlroots::output& base, render::platform& platform)
 {
     swap_pending = base.native->frame_pending;
 
-    if (auto& render = static_cast<wlroots::platform&>(platform); render.egl) {
+    auto& render = static_cast<wlroots::platform&>(platform);
+    if (render.egl) {
         egl = std::make_unique<egl_output>(*this, render.egl.get());
+        QObject::connect(
+            &base, &base::backend::wlroots::output::mode_changed, this, [this] { egl->reset(); });
+    } else {
+        assert(render.qpainter);
+        qpainter = std::make_unique<qpainter_output>(*this, *render.qpainter);
     }
-
-    QObject::connect(
-        &base, &base::backend::wlroots::output::mode_changed, this, [this] { egl->reset(); });
 
     present_rec.receiver = this;
     present_rec.event.notify = handle_present;
