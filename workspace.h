@@ -609,8 +609,6 @@ private:
 
     static Workspace* _self;
 
-    bool workspaceInit{true};
-
     KStartupInfo* startup{nullptr};
 
     win::space_areas areas;
@@ -653,11 +651,6 @@ private:
     xcb_colormap_t m_default;
     xcb_colormap_t m_installed;
 };
-
-inline bool Workspace::initializing() const
-{
-    return workspaceInit;
-}
 
 inline Toplevel* Workspace::activeClient() const
 {

@@ -258,11 +258,6 @@ Workspace::Workspace()
     initWithX11();
     scripting = std::make_unique<scripting::platform>();
 
-    // SELI TODO: This won't work with unreasonable focus policies,
-    // and maybe in rare cases also if the selected client doesn't
-    // want focus
-    workspaceInit = false;
-
     // Start the scripting platform, but first process all events.
     // TODO(romangg): Can we also do this through a simple call?
     QMetaObject::invokeMethod(scripting.get(), "start", Qt::QueuedConnection);
