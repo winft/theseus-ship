@@ -12,8 +12,6 @@
 #include <QAbstractEventDispatcher>
 #include <QTimer>
 
-#include <xcb/xcb_cursor.h>
-
 namespace KWin::input::x11
 {
 
@@ -31,8 +29,6 @@ cursor::cursor(bool xInputSupport)
     // TODO: How often do we really need to poll?
     m_mousePollingTimer->setInterval(50);
     QObject::connect(m_mousePollingTimer, &QTimer::timeout, this, &cursor::mouse_polled);
-
-    QObject::connect(this, &input::cursor::theme_changed, this, [this] { m_cursors.clear(); });
 
     if (m_hasXInput) {
         QObject::connect(qApp->eventDispatcher(),
@@ -160,46 +156,6 @@ void cursor::mouse_polled()
         lastPos = current_pos();
         lastMask = m_buttonMask;
     }
-}
-
-xcb_cursor_t cursor::x11_cursor(input::cursor_shape shape)
-{
-    return x11_cursor(shape.name());
-}
-
-xcb_cursor_t cursor::x11_cursor(const QByteArray& name)
-{
-    auto it = m_cursors.constFind(name);
-    if (it != m_cursors.constEnd()) {
-        return it.value();
-    }
-    return create_cursor(name);
-}
-
-xcb_cursor_t cursor::create_cursor(const QByteArray& name)
-{
-    if (name.isEmpty()) {
-        return XCB_CURSOR_NONE;
-    }
-    xcb_cursor_context_t* ctx;
-    if (xcb_cursor_context_new(connection(), defaultScreen(), &ctx) < 0) {
-        return XCB_CURSOR_NONE;
-    }
-    xcb_cursor_t cursor = xcb_cursor_load_cursor(ctx, name.constData());
-    if (cursor == XCB_CURSOR_NONE) {
-        const auto& names = alternative_names(name);
-        for (auto cit = names.begin(); cit != names.end(); ++cit) {
-            cursor = xcb_cursor_load_cursor(ctx, (*cit).constData());
-            if (cursor != XCB_CURSOR_NONE) {
-                break;
-            }
-        }
-    }
-    if (cursor != XCB_CURSOR_NONE) {
-        m_cursors.insert(name, cursor);
-    }
-    xcb_cursor_context_free(ctx);
-    return cursor;
 }
 
 void cursor::notify_cursor_changed()

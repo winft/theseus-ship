@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xwayland.h"
 #include "data_bridge.h"
 
+#include "input/cursor.h"
 #include "main_wayland.h"
 #include "utils.h"
 #include "wayland_server.h"
@@ -256,6 +257,11 @@ void xwayland::continue_startup_with_x11()
               stderr);
         status_callback(1);
         return;
+    }
+
+    auto mouseCursor = input::get_cursor();
+    if (mouseCursor) {
+        Xcb::defineCursor(app->x11RootWindow(), mouseCursor->x11_cursor(Qt::ArrowCursor));
     }
 
     auto env = app->processStartupEnvironment();

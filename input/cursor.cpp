@@ -18,6 +18,8 @@
 #include <QDBusConnection>
 #include <QHash>
 
+#include <xcb/xcb_cursor.h>
+
 namespace KWin::input
 {
 
@@ -68,6 +70,7 @@ void cursor::update_theme(QString const& name, int size)
     if (m_themeName != name || m_themeSize != size) {
         m_themeName = name;
         m_themeSize = size;
+        m_cursors.clear();
         Q_EMIT theme_changed();
     }
 }
@@ -164,14 +167,44 @@ void cursor::set_pos(int x, int y)
     cursor::set_pos(QPoint(x, y));
 }
 
-xcb_cursor_t cursor::x11_cursor([[maybe_unused]] cursor_shape shape)
+xcb_cursor_t cursor::x11_cursor(cursor_shape shape)
 {
-    return XCB_CURSOR_NONE;
+    return x11_cursor(shape.name());
 }
 
-xcb_cursor_t cursor::x11_cursor([[maybe_unused]] QByteArray const& name)
+xcb_cursor_t cursor::x11_cursor(QByteArray const& name)
 {
-    return XCB_CURSOR_NONE;
+    Q_ASSERT(kwinApp()->x11Connection());
+    auto it = m_cursors.constFind(name);
+    if (it != m_cursors.constEnd()) {
+        return it.value();
+    }
+
+    if (name.isEmpty()) {
+        return XCB_CURSOR_NONE;
+    }
+
+    xcb_cursor_context_t* ctx;
+    if (xcb_cursor_context_new(kwinApp()->x11Connection(), defaultScreen(), &ctx) < 0) {
+        return XCB_CURSOR_NONE;
+    }
+
+    xcb_cursor_t cursor = xcb_cursor_load_cursor(ctx, name.constData());
+    if (cursor == XCB_CURSOR_NONE) {
+        const auto& names = cursor::alternative_names(name);
+        for (const QByteArray& cursorName : names) {
+            cursor = xcb_cursor_load_cursor(ctx, cursorName.constData());
+            if (cursor != XCB_CURSOR_NONE) {
+                break;
+            }
+        }
+    }
+    if (cursor != XCB_CURSOR_NONE) {
+        m_cursors.insert(name, cursor);
+    }
+
+    xcb_cursor_context_free(ctx);
+    return cursor;
 }
 
 void cursor::do_set_pos()

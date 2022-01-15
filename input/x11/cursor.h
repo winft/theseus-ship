@@ -36,9 +36,6 @@ public:
     void notify_cursor_changed();
 
 protected:
-    xcb_cursor_t x11_cursor(input::cursor_shape shape) override;
-    xcb_cursor_t x11_cursor(const QByteArray& name) override;
-
     void do_set_pos() override;
     void do_get_pos() override;
 
@@ -61,8 +58,6 @@ private:
     void mouse_polled();
     void about_to_block();
 
-    xcb_cursor_t create_cursor(const QByteArray& name);
-    QHash<QByteArray, xcb_cursor_t> m_cursors;
     xcb_timestamp_t m_timeStamp;
     uint16_t m_buttonMask;
     QTimer* m_resetTimeStampTimer;
