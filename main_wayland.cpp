@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
 #include "input/dbus/tablet_mode_manager.h"
+#include "scripting/platform.h"
 #include "wayland_server.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
@@ -231,6 +232,8 @@ void ApplicationWayland::start()
     render->compositor = std::make_unique<render::wayland::compositor>(*render);
     workspace = std::make_unique<win::wayland::space>(server.get());
     Q_EMIT workspaceCreated();
+
+    workspace->scripting = std::make_unique<scripting::platform>();
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
     ScreenLockerWatcher::self()->initialize();

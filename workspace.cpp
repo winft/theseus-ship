@@ -256,13 +256,6 @@ Workspace::Workspace()
     });
 
     initWithX11();
-    scripting = std::make_unique<scripting::platform>();
-
-    // Start the scripting platform, but first process all events.
-    // TODO(romangg): Can we also do this through a simple call?
-    QMetaObject::invokeMethod(scripting.get(), "start", Qt::QueuedConnection);
-
-    // TODO: ungrabXServer()
 }
 
 void Workspace::initWithX11()

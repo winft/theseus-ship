@@ -15,6 +15,7 @@
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
 #include "screenlockerwatcher.h"
+#include "scripting/platform.h"
 #include "seat/backend/logind/session.h"
 #include "sm.h"
 #include "win/x11/space.h"
@@ -261,6 +262,8 @@ void ApplicationX11::start()
         render->compositor = std::make_unique<render::x11::compositor>(*render);
         workspace = std::make_unique<win::x11::space>();
         Q_EMIT workspaceCreated();
+
+        workspace->scripting = std::make_unique<scripting::platform>();
 
         Q_EMIT startup_finished();
 

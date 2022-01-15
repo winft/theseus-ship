@@ -50,6 +50,10 @@ platform::platform()
                                                  this,
                                                  QDBusConnection::ExportScriptableContents
                                                      | QDBusConnection::ExportScriptableInvokables);
+
+    // Start the scripting platform, but first process all events.
+    // TODO(romangg): Can we also do this through a simple call?
+    QMetaObject::invokeMethod(this, "start", Qt::QueuedConnection);
 }
 
 platform::~platform()
