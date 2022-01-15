@@ -128,9 +128,6 @@ wlr_input_device* keyboard_layout_test::create_keyboard()
 
 void remove_input_device(wlr_input_device* device)
 {
-#if !HAVE_WLR_HEADLESS_UNLINK_INPUT_DEVICE
-    wl_list_remove(&device->link);
-#endif
     wlr_input_device_destroy(device);
 }
 

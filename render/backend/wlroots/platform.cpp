@@ -39,10 +39,8 @@ void platform::init()
 {
     // TODO(romangg): Has to be here because in the integration tests base.backend is not yet
     //                available in the ctor. Can we change that?
-#if HAVE_WLR_OUTPUT_INIT_RENDER
     renderer = wlr_renderer_autocreate(base.backend);
     allocator = wlr_allocator_autocreate(base.backend, renderer);
-#endif
 
     if (!wlr_backend_start(base.backend)) {
         throw std::exception();

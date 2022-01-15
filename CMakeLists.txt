@@ -188,17 +188,11 @@ set_package_properties(Pixman PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building wlroots backend."
 )
-find_package(wlroots 0.14.0)
+find_package(wlroots 0.15.0)
 set_package_properties(wlroots PROPERTIES
     TYPE REQUIRED
     PURPOSE "Required for building wlroots backend."
 )
-if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.15.0)
-  set(HAVE_WLR_TOUCH_FRAME 1)
-  set(HAVE_WLR_DRM_LEASE 1)
-  set(HAVE_WLR_HEADLESS_UNLINK_INPUT_DEVICE 1)
-  set(HAVE_WLR_OUTPUT_INIT_RENDER 1)
-endif()
 
 find_package(X11)
 set_package_properties(X11 PROPERTIES
@@ -788,6 +782,8 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
 add_subdirectory(plugins)
 
 set(kwin_WAYLAND_SRCS
+   base/backend/wlroots/drm_lease.cpp
+   base/backend/wlroots/non_desktop_output.cpp
    base/backend/wlroots/output.cpp
    base/backend/wlroots/platform.cpp
    base/wayland/idle_inhibition.cpp
@@ -877,14 +873,6 @@ set(kwin_WAYLAND_SRCS
    win/wayland/space.cpp
    win/wayland/window.cpp
 )
-
-if (HAVE_WLR_DRM_LEASE)
-  set(kwin_WAYLAND_SRCS
-    ${kwin_WAYLAND_SRCS}
-    base/backend/wlroots/drm_lease.cpp
-    base/backend/wlroots/non_desktop_output.cpp
-  )
-endif()
 
 if (KWIN_BUILD_TABBOX)
   set(kwin_WAYLAND_SRCS

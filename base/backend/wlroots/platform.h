@@ -5,14 +5,11 @@
 */
 #pragma once
 
+#include "drm_lease.h"
+
 #include "base/utils.h"
 #include "base/wayland/platform.h"
-#include "config-kwin.h"
 #include "kwin_export.h"
-
-#if HAVE_WLR_DRM_LEASE
-#include "drm_lease.h"
-#endif
 
 #include <functional>
 #include <memory>
@@ -83,10 +80,8 @@ public:
     wlr_session* session() const;
     clockid_t get_clockid() const override;
 
-#if HAVE_WLR_DRM_LEASE
     std::vector<std::unique_ptr<drm_lease>> leases;
     std::vector<non_desktop_output*> non_desktop_outputs;
-#endif
     wlr_backend* backend{nullptr};
 
 private:

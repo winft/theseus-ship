@@ -41,10 +41,8 @@ public:
     base::backend::wlroots::platform& base;
     std::unique_ptr<egl_backend> egl;
 
-#if HAVE_WLR_OUTPUT_INIT_RENDER
     wlr_renderer* renderer{nullptr};
     wlr_allocator* allocator{nullptr};
-#endif
 
     // Needed for final cleanup on platform destroy.
     // TODO(romangg): Can we make this unnecessary.
