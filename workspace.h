@@ -109,7 +109,7 @@ public:
 
     void clear_x11();
 
-    bool workspaceEvent(xcb_generic_event_t*);
+    bool workspaceEvent(xcb_generic_event_t* event);
     bool workspaceEvent(QEvent*);
 
     bool hasClient(win::x11::window const*);

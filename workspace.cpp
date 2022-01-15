@@ -3283,16 +3283,18 @@ QVector<QByteArray> s_xcbEerrors({QByteArrayLiteral("Success"),
 /**
  * Handles workspace specific XCB event
  */
-bool Workspace::workspaceEvent(xcb_generic_event_t* e)
+bool Workspace::workspaceEvent(xcb_generic_event_t* event)
 {
-    const uint8_t eventType = e->response_type & ~0x80;
-    if (!eventType) {
+    uint8_t const event_type = event->response_type & ~0x80;
+    if (!event_type) {
         // let's check whether it's an error from one of the extensions KWin uses
-        xcb_generic_error_t* error = reinterpret_cast<xcb_generic_error_t*>(e);
-        const QVector<Xcb::ExtensionData> extensions = Xcb::Extensions::self()->extensions();
-        for (const auto& extension : extensions) {
+        auto error = reinterpret_cast<xcb_generic_error_t*>(event);
+        auto const extensions = Xcb::Extensions::self()->extensions();
+
+        for (auto const& extension : extensions) {
             if (error->major_code == extension.majorOpcode) {
                 QByteArray errorName;
+
                 if (error->error_code < s_xcbEerrors.size()) {
                     errorName = s_xcbEerrors.at(error->error_code);
                 } else if (error->error_code >= extension.errorBase) {
@@ -3301,9 +3303,11 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
                         errorName = extension.errorCodes.at(index);
                     }
                 }
+
                 if (errorName.isEmpty()) {
                     errorName = QByteArrayLiteral("Unknown");
                 }
+
                 qCWarning(KWIN_CORE,
                           "XCB error: %d (%s), sequence: %d, resource id: %d, major code: %d (%s), "
                           "minor code: %d (%s)",
@@ -3320,90 +3324,92 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
                 return true;
             }
         }
+
         return false;
     }
 
-    if (eventType == XCB_GE_GENERIC) {
-        xcb_ge_generic_event_t* ge = reinterpret_cast<xcb_ge_generic_event_t*>(e);
+    if (event_type == XCB_GE_GENERIC) {
+        auto gen_event = reinterpret_cast<xcb_ge_generic_event_t*>(event);
 
         // We need to make a shadow copy of the event filter list because an activated event
         // filter may mutate it by removing or installing another event filter.
-        auto const eventFilters = kwinApp()->x11_event_filters->generic_filters;
+        auto const event_filters = kwinApp()->x11_event_filters->generic_filters;
 
-        for (auto container : eventFilters) {
+        for (auto container : event_filters) {
             if (!container) {
                 continue;
             }
             auto filter = container->filter();
-            if (filter->extension() == ge->extension
-                && filter->genericEventTypes().contains(ge->event_type) && filter->event(e)) {
+            if (filter->extension() == gen_event->extension
+                && filter->genericEventTypes().contains(gen_event->event_type)
+                && filter->event(event)) {
                 return true;
             }
         }
     } else {
         // We need to make a shadow copy of the event filter list because an activated event
         // filter may mutate it by removing or installing another event filter.
-        auto const eventFilters = kwinApp()->x11_event_filters->filters;
+        auto const event_filters = kwinApp()->x11_event_filters->filters;
 
-        for (auto container : eventFilters) {
+        for (auto container : event_filters) {
             if (!container) {
                 continue;
             }
             auto filter = container->filter();
-            if (filter->eventTypes().contains(eventType) && filter->event(e)) {
+            if (filter->eventTypes().contains(event_type) && filter->event(event)) {
                 return true;
             }
         }
     }
 
     if (effects && static_cast<render::effects_handler_impl*>(effects)->hasKeyboardGrab()
-        && (eventType == XCB_KEY_PRESS || eventType == XCB_KEY_RELEASE))
+        && (event_type == XCB_KEY_PRESS || event_type == XCB_KEY_RELEASE))
         return false; // let Qt process it, it'll be intercepted again in eventFilter()
 
     // events that should be handled before Clients can get them
-    switch (eventType) {
+    switch (event_type) {
     case XCB_CONFIGURE_NOTIFY:
-        if (reinterpret_cast<xcb_configure_notify_event_t*>(e)->event == rootWindow())
+        if (reinterpret_cast<xcb_configure_notify_event_t*>(event)->event == rootWindow())
             x_stacking_tree->mark_as_dirty();
         break;
     };
 
-    auto const eventWindow = win::x11::find_event_window(e);
-    if (eventWindow != XCB_WINDOW_NONE) {
-        if (auto c = findClient(win::x11::predicate_match::window, eventWindow)) {
-            if (win::x11::window_event(c, e)) {
+    auto const event_window = win::x11::find_event_window(event);
+    if (event_window != XCB_WINDOW_NONE) {
+        if (auto c = findClient(win::x11::predicate_match::window, event_window)) {
+            if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto c = findClient(win::x11::predicate_match::wrapper_id, eventWindow)) {
-            if (win::x11::window_event(c, e)) {
+        } else if (auto c = findClient(win::x11::predicate_match::wrapper_id, event_window)) {
+            if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto c = findClient(win::x11::predicate_match::frame_id, eventWindow)) {
-            if (win::x11::window_event(c, e)) {
+        } else if (auto c = findClient(win::x11::predicate_match::frame_id, event_window)) {
+            if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto c = findClient(win::x11::predicate_match::input_id, eventWindow)) {
-            if (win::x11::window_event(c, e)) {
+        } else if (auto c = findClient(win::x11::predicate_match::input_id, event_window)) {
+            if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto unmanaged = findUnmanaged(eventWindow)) {
-            if (win::x11::unmanaged_event(unmanaged, e)) {
+        } else if (auto unmanaged = findUnmanaged(event_window)) {
+            if (win::x11::unmanaged_event(unmanaged, event)) {
                 return true;
             }
         }
     }
 
-    switch (eventType) {
+    switch (event_type) {
     case XCB_CREATE_NOTIFY: {
-        const auto* event = reinterpret_cast<xcb_create_notify_event_t*>(e);
-        if (event->parent == rootWindow() && !QWidget::find(event->window)
-            && !event->override_redirect) {
+        auto create_event = reinterpret_cast<xcb_create_notify_event_t*>(event);
+        if (create_event->parent == rootWindow() && !QWidget::find(create_event->window)
+            && !create_event->override_redirect) {
             // see comments for allowClientActivation()
             kwinApp()->update_x11_time_from_clock();
             const xcb_timestamp_t t = xTime();
             xcb_change_property(connection(),
                                 XCB_PROP_MODE_REPLACE,
-                                event->window,
+                                create_event->window,
                                 atoms->kde_net_wm_user_creation_time,
                                 XCB_ATOM_CARDINAL,
                                 32,
@@ -3412,25 +3418,30 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
         }
         break;
     }
+
     case XCB_UNMAP_NOTIFY: {
-        const auto* event = reinterpret_cast<xcb_unmap_notify_event_t*>(e);
-        return (event->event != event->window); // hide wm typical event from Qt
+        auto unmap_event = reinterpret_cast<xcb_unmap_notify_event_t*>(event);
+
+        // hide wm typical event from Qt
+        return (unmap_event->event != unmap_event->window);
     }
+
     case XCB_REPARENT_NOTIFY: {
         // do not confuse Qt with these events. After all, _we_ are the
         // window manager who does the reparenting.
         return true;
     }
+
     case XCB_MAP_REQUEST: {
         kwinApp()->update_x11_time_from_clock();
+        auto map_req_event = reinterpret_cast<xcb_map_request_event_t*>(event);
 
-        const auto* event = reinterpret_cast<xcb_map_request_event_t*>(e);
-        if (auto c = findClient(win::x11::predicate_match::window, event->window)) {
-            // e->xmaprequest.window is different from e->xany.window
+        if (auto c = findClient(win::x11::predicate_match::window, map_req_event->window)) {
+            // event->xmaprequest.window is different from event->xany.window
             // TODO this shouldn't be necessary now
-            win::x11::window_event(c, e);
+            win::x11::window_event(c, event);
             win::focus_chain::self()->update(c, win::focus_chain::Update);
-        } else if (true /*|| e->xmaprequest.parent != root */) {
+        } else if (true /*|| event->xmaprequest.parent != root */) {
             // NOTICE don't check for the parent being the root window, this breaks when some app
             // unmaps a window, changes something and immediately maps it back, without giving KWin
             // a chance to reparent it back to root
@@ -3438,71 +3449,81 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
             // children of WindowWrapper (=clients), the check is AFAIK useless anyway
             // NOTICE: The save-set support in X11Client::mapRequestEvent() actually requires that
             // this code doesn't check the parent to be root.
-            if (!createClient(event->window, false)) {
-                xcb_map_window(connection(), event->window);
+            if (!createClient(map_req_event->window, false)) {
+                xcb_map_window(connection(), map_req_event->window);
                 const uint32_t values[] = {XCB_STACK_MODE_ABOVE};
                 xcb_configure_window(
-                    connection(), event->window, XCB_CONFIG_WINDOW_STACK_MODE, values);
+                    connection(), map_req_event->window, XCB_CONFIG_WINDOW_STACK_MODE, values);
             }
         }
+
         return true;
     }
+
     case XCB_MAP_NOTIFY: {
-        const auto* event = reinterpret_cast<xcb_map_notify_event_t*>(e);
-        if (event->override_redirect) {
-            auto c = findUnmanaged(event->window);
-            if (c == nullptr)
-                c = createUnmanaged(event->window);
+        auto map_event = reinterpret_cast<xcb_map_notify_event_t*>(event);
+
+        if (map_event->override_redirect) {
+            auto c = findUnmanaged(map_event->window);
+            if (c == nullptr) {
+                c = createUnmanaged(map_event->window);
+            }
+
             if (c) {
                 // if hasScheduledRelease is true, it means a unamp and map sequence has occurred.
                 // since release is scheduled after map notify, this old Unmanaged will get released
                 // before KWIN has chance to remanage it again. so release it right now.
                 if (c->has_scheduled_release) {
                     win::x11::release_window(c, false);
-                    c = createUnmanaged(event->window);
+                    c = createUnmanaged(map_event->window);
                 }
                 if (c) {
-                    return win::x11::unmanaged_event(c, e);
+                    return win::x11::unmanaged_event(c, event);
                 }
             }
         }
-        return (event->event != event->window); // hide wm typical event from Qt
+
+        // hide wm typical event from Qt
+        return (map_event->event != map_event->window);
     }
 
     case XCB_CONFIGURE_REQUEST: {
-        const auto* event = reinterpret_cast<xcb_configure_request_event_t*>(e);
-        if (event->parent == rootWindow()) {
+        auto cfg_req_event = reinterpret_cast<xcb_configure_request_event_t*>(event);
+
+        if (cfg_req_event->parent == rootWindow()) {
             uint32_t values[5] = {0, 0, 0, 0, 0};
-            const uint32_t value_mask = event->value_mask
+            const uint32_t value_mask = cfg_req_event->value_mask
                 & (XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH
                    | XCB_CONFIG_WINDOW_HEIGHT | XCB_CONFIG_WINDOW_BORDER_WIDTH);
             int i = 0;
             if (value_mask & XCB_CONFIG_WINDOW_X) {
-                values[i++] = event->x;
+                values[i++] = cfg_req_event->x;
             }
             if (value_mask & XCB_CONFIG_WINDOW_Y) {
-                values[i++] = event->y;
+                values[i++] = cfg_req_event->y;
             }
             if (value_mask & XCB_CONFIG_WINDOW_WIDTH) {
-                values[i++] = event->width;
+                values[i++] = cfg_req_event->width;
             }
             if (value_mask & XCB_CONFIG_WINDOW_HEIGHT) {
-                values[i++] = event->height;
+                values[i++] = cfg_req_event->height;
             }
             if (value_mask & XCB_CONFIG_WINDOW_BORDER_WIDTH) {
-                values[i++] = event->border_width;
+                values[i++] = cfg_req_event->border_width;
             }
-            xcb_configure_window(connection(), event->window, value_mask, values);
+            xcb_configure_window(connection(), cfg_req_event->window, value_mask, values);
             return true;
         }
+
         break;
     }
+
     case XCB_FOCUS_IN: {
-        const auto* event = reinterpret_cast<xcb_focus_in_event_t*>(e);
-        if (event->event == rootWindow()
-            && (event->detail == XCB_NOTIFY_DETAIL_NONE
-                || event->detail == XCB_NOTIFY_DETAIL_POINTER_ROOT
-                || event->detail == XCB_NOTIFY_DETAIL_INFERIOR)) {
+        auto focus_event = reinterpret_cast<xcb_focus_in_event_t*>(event);
+        if (focus_event->event == rootWindow()
+            && (focus_event->detail == XCB_NOTIFY_DETAIL_NONE
+                || focus_event->detail == XCB_NOTIFY_DETAIL_POINTER_ROOT
+                || focus_event->detail == XCB_NOTIFY_DETAIL_INFERIOR)) {
             Xcb::CurrentInput currentInput;
 
             // focusToNull() uses xTime(), which is old now (FocusIn has no timestamp)
@@ -3512,7 +3533,7 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
             // => catch the typical pattern (though we don't want the focus on the root anyway)
             // #348935
             const bool lostFocusPointerToRoot = currentInput->focus == rootWindow()
-                && event->detail == XCB_NOTIFY_DETAIL_INFERIOR;
+                && focus_event->detail == XCB_NOTIFY_DETAIL_INFERIOR;
             if (!currentInput.isNull()
                 && (currentInput->focus == XCB_WINDOW_NONE
                     || currentInput->focus == XCB_INPUT_FOCUS_POINTER_ROOT
@@ -3530,11 +3551,15 @@ bool Workspace::workspaceEvent(xcb_generic_event_t* e)
         }
     }
         // fall through
+
     case XCB_FOCUS_OUT:
-        return true; // always eat these, they would tell Qt that KWin is the active app
+        // always eat these, they would tell Qt that KWin is the active app
+        return true;
+
     default:
         break;
     }
+
     return false;
 }
 
