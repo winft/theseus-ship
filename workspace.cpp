@@ -77,6 +77,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KStartupInfo>
 
 #include <QtConcurrentRun>
+#include <cassert>
 #include <memory>
 
 namespace KWin
@@ -254,21 +255,11 @@ Workspace::Workspace()
             active_client->control->update_mouse_grab();
         }
     });
-
-    initWithX11();
 }
 
-void Workspace::initWithX11()
+void Workspace::init_x11()
 {
-    if (!kwinApp()->x11Connection()) {
-        connect(kwinApp(),
-                &Application::x11ConnectionChanged,
-                this,
-                &Workspace::initWithX11,
-                Qt::UniqueConnection);
-        return;
-    }
-    disconnect(kwinApp(), &Application::x11ConnectionChanged, this, &Workspace::initWithX11);
+    assert(kwinApp()->x11Connection());
 
     atoms->retrieveHelpers();
 

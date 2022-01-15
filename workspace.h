@@ -109,6 +109,7 @@ public:
         return _self;
     }
 
+    void init_x11();
     void clear_x11();
 
     bool workspaceEvent(QEvent*);
@@ -532,7 +533,6 @@ Q_SIGNALS:
     void surface_id_changed(KWin::Toplevel*, quint32);
 
 private:
-    void initWithX11();
     void initShortcuts();
     template<typename Slot>
     void initShortcut(const QString& actionName,

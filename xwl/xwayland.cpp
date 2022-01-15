@@ -269,6 +269,7 @@ void xwayland::continue_startup_with_x11()
     app->setProcessStartupEnvironment(env);
 
     status_callback(0);
+    Workspace::self()->init_x11();
     Q_EMIT app->x11ConnectionChanged();
 
     // Trigger possible errors, there's still a chance to abort

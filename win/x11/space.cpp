@@ -28,6 +28,8 @@ space::space()
                 sendClientToDesktop(window, desktop_count, true);
             }
         });
+
+    init_x11();
 }
 
 space::~space()
