@@ -99,6 +99,8 @@ public:
     std::unique_ptr<render::outline> outline;
     std::unique_ptr<win::screen_edger> edges;
 
+    render::compositor* m_compositor{nullptr};
+
     explicit Workspace();
     ~Workspace() override;
 
@@ -109,7 +111,6 @@ public:
 
     void clear_x11();
 
-    bool workspaceEvent(xcb_generic_event_t* event);
     bool workspaceEvent(QEvent*);
 
     bool hasClient(win::x11::window const*);
@@ -267,7 +268,6 @@ public:
     SessionManager* sessionManager() const;
 
 private:
-    render::compositor* m_compositor{nullptr};
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
@@ -388,6 +388,9 @@ public:
     {
         return client_keys_dialog;
     }
+
+    void addClient(win::x11::window* c);
+    void addUnmanaged(Toplevel* c);
 
     /**
      * Adds the internal client to Workspace.
@@ -549,12 +552,6 @@ private:
 
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t* geom);
     void saveOldScreenSizes();
-
-    /// This is the right way to create a new client
-    win::x11::window* createClient(xcb_window_t w, bool is_mapped);
-    void addClient(win::x11::window* c);
-    win::x11::window* createUnmanaged(xcb_window_t w);
-    void addUnmanaged(Toplevel* c);
 
     void closeActivePopup();
     void updateClientArea(bool force);

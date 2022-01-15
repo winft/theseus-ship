@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "screenlockerwatcher.h"
 #include "sm.h"
+#include "win/x11/space_event.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -403,7 +404,7 @@ bool XcbEventFilter::nativeEventFilter(const QByteArray &eventType, void *messag
         // Workspace not yet created
         return false;
     }
-    return Workspace::self()->workspaceEvent(event);
+    return win::x11::space_event(*Workspace::self(), event);
 }
 
 QProcessEnvironment Application::processStartupEnvironment() const
