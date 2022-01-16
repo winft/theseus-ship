@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xwayland.h"
 #include "data_bridge.h"
 
+#include "base/x11/xcb_event_filter.h"
 #include "input/cursor.h"
 #include "main_wayland.h"
 #include "utils.h"
@@ -75,6 +76,7 @@ namespace KWin::xwl
 
 xwayland::xwayland(Application* app, std::function<void(int)> status_callback)
     : xwayland_interface()
+    , event_filter{std::make_unique<base::x11::xcb_event_filter>()}
     , app{app}
     , status_callback{status_callback}
 {
@@ -243,7 +245,7 @@ void xwayland::continue_startup_with_x11()
     owner.claim(true);
 
     app->createAtoms();
-    app->setupEventFilters();
+    app->installNativeEventFilter(event_filter.get());
 
     // Check  whether another windowmanager is running
     uint32_t const maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};

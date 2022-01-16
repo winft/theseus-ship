@@ -15,6 +15,12 @@
 
 namespace KWin
 {
+
+namespace base::x11
+{
+class xcb_event_filter;
+}
+
 namespace win::x11
 {
 class space;
@@ -53,6 +59,7 @@ private:
     std::unique_ptr<win::x11::space> workspace;
 
     QScopedPointer<KWinSelectionOwner> owner;
+    std::unique_ptr<base::x11::xcb_event_filter> event_filter;
     bool m_replace;
 };
 

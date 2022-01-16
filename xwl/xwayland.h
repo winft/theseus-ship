@@ -31,6 +31,12 @@ class xcb_screen_t;
 
 namespace KWin
 {
+
+namespace base::x11
+{
+class xcb_event_filter;
+}
+
 class Application;
 
 namespace xwl
@@ -62,6 +68,7 @@ private:
     x11_data basic_data;
 
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
+    std::unique_ptr<base::x11::xcb_event_filter> event_filter;
 
     Application* app;
     std::function<void(int code)> status_callback;

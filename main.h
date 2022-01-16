@@ -52,7 +52,6 @@ class platform;
 namespace x11
 {
 class event_filter_manager;
-class xcb_event_filter;
 }
 
 }
@@ -250,7 +249,6 @@ protected:
     static int crashes;
 
 private:
-    QScopedPointer<base::x11::xcb_event_filter> m_eventFilter;
     bool m_configLock;
     KSharedConfigPtr m_config;
     KSharedConfigPtr m_kxkbConfig;

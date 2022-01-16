@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 
 #include "base/x11/event_filter_manager.h"
-#include "base/x11/xcb_event_filter.h"
 #include "atoms.h"
 #include "render/compositor.h"
 #include "input/global_shortcuts_manager.h"
@@ -93,7 +92,6 @@ int Application::x11ScreenNumber()
 Application::Application(Application::OperationMode mode, int &argc, char **argv)
     : QApplication(argc, argv)
     , x11_event_filters{new base::x11::event_filter_manager}
-    , m_eventFilter(new base::x11::xcb_event_filter())
     , m_configLock(false)
     , m_config()
     , m_kxkbConfig()
@@ -283,11 +281,6 @@ void Application::createOptions()
     options = new Options;
     options->loadConfig();
     options->loadCompositingConfig(false);
-}
-
-void Application::setupEventFilters()
-{
-    installNativeEventFilter(m_eventFilter.data());
 }
 
 static uint32_t get_monotonic_time()

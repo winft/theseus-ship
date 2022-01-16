@@ -6,6 +6,8 @@
 */
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QObject>
 
 namespace KWin::base::x11
@@ -13,7 +15,7 @@ namespace KWin::base::x11
 
 class event_filter;
 
-class event_filter_container : public QObject
+class KWIN_EXPORT event_filter_container : public QObject
 {
     Q_OBJECT
 

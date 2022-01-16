@@ -10,6 +10,7 @@
 
 #include <config-kwin.h>
 
+#include "base/x11/xcb_event_filter.h"
 #include "debug/x11_console.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
@@ -172,6 +173,7 @@ xcb_atom_t KWinSelectionOwner::xa_version = XCB_ATOM_NONE;
 ApplicationX11::ApplicationX11(int &argc, char **argv)
     : Application(OperationModeX11, argc, argv)
     , owner()
+    , event_filter{std::make_unique<base::x11::xcb_event_filter>()}
     , m_replace(false)
 {
     setX11Connection(QX11Info::connection());
@@ -229,7 +231,7 @@ void ApplicationX11::start()
     });
     connect(owner.data(), &KSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
     connect(owner.data(), &KSelectionOwner::claimedOwnership, [this]{
-        setupEventFilters();
+        installNativeEventFilter(event_filter.get());
         createOptions();
 
         // Check  whether another windowmanager is running
