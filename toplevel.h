@@ -87,6 +87,8 @@ class KWIN_EXPORT Toplevel : public QObject
     Q_OBJECT
 
 public:
+    constexpr static bool is_toplevel{true};
+
     struct {
         QString normal;
         // suffix added to normal caption (e.g. shortcut, machine name, etc.).
@@ -123,6 +125,7 @@ public:
 
     // Relative to client geometry.
     QRegion damage_region;
+    xcb_damage_damage_t damage_handle{XCB_NONE};
 
     // Relative to frame geometry.
     QRegion repaints_region;
@@ -134,6 +137,7 @@ public:
      * Records all outputs that still need to be repainted for the current repaint regions.
      */
     std::vector<base::output*> repaint_outputs;
+    render::effects_window_impl* effect_window{nullptr};
 
     explicit Toplevel();
     ~Toplevel() override;
@@ -470,7 +474,6 @@ private:
     // when adding new data members, check also copyToDeleted()
     QUuid m_internalId;
     Xcb::Window m_client;
-    xcb_damage_damage_t damage_handle;
 
     QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};
@@ -478,7 +481,6 @@ private:
     mutable bool m_render_shape_valid{false};
     mutable QRegion m_render_shape;
 
-    render::effects_window_impl* effect_window;
     QByteArray resource_name;
     QByteArray resource_class;
     win::x11::client_machine* m_clientMachine;

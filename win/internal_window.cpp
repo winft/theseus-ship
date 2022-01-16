@@ -117,6 +117,12 @@ internal_window::internal_window(QWindow* window)
 
 internal_window::~internal_window() = default;
 
+bool internal_window::setupCompositing([[maybe_unused]] bool add_full_damage)
+{
+    assert(!add_full_damage);
+    return win::setup_compositing(*this, false);
+}
+
 bool internal_window::eventFilter(QObject* watched, QEvent* event)
 {
     if (watched == m_internalWindow && event->type() == QEvent::DynamicPropertyChange) {

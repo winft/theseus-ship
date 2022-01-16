@@ -6,9 +6,12 @@
 #pragma once
 
 #include "deco.h"
+#include "render/compositor.h"
 #include "render/effects.h"
 #include "render/shadow.h"
 #include "render/window.h"
+
+#include <cassert>
 
 namespace KWin::win
 {
@@ -110,6 +113,45 @@ auto update_shadow(Win* win)
         dirty_rect.translate(win->pos());
         win->addLayerRepaint(dirty_rect);
     }
+}
+
+template<typename Win>
+bool setup_compositing(Win& win, bool add_full_damage)
+{
+    static_assert(!Win::is_toplevel);
+    assert(!win.remnant());
+
+    if (!compositing()) {
+        return false;
+    }
+
+    if (win.damage_handle != XCB_NONE) {
+        return false;
+    }
+
+    if (kwinApp()->operationMode() == Application::OperationModeX11) {
+        assert(!win.surface());
+        win.damage_handle = xcb_generate_id(connection());
+        xcb_damage_create(
+            connection(), win.damage_handle, win.frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
+    }
+
+    win.discard_shape();
+    win.damage_region = QRegion(QRect(QPoint(), win.size()));
+    win.effect_window = new render::effects_window_impl(&win);
+
+    render::compositor::self()->scene()->addToplevel(&win);
+
+    if (add_full_damage) {
+        // With unmanaged windows there is a race condition between the client painting the window
+        // and us setting up damage tracking.  If the client wins we won't get a damage event even
+        // though the window has been painted.  To avoid this we mark the whole window as damaged
+        // and schedule a repaint immediately after creating the damage object.
+        // TODO: move this out of the class.
+        win.addDamageFull();
+    }
+
+    return true;
 }
 
 /**

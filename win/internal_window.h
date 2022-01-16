@@ -31,9 +31,12 @@ class KWIN_EXPORT internal_window : public Toplevel
     Q_OBJECT
 
 public:
+    constexpr static bool is_toplevel{false};
+
     explicit internal_window(QWindow* window);
     ~internal_window() override;
 
+    bool setupCompositing(bool add_full_damage) override;
     bool eventFilter(QObject* watched, QEvent* event) override;
 
     qreal bufferScale() const override;

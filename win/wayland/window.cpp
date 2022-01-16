@@ -81,6 +81,12 @@ bool window::is_wayland_window() const
     return true;
 }
 
+bool window::setupCompositing([[maybe_unused]] bool add_full_damage)
+{
+    assert(!add_full_damage);
+    return win::setup_compositing(*this, false);
+}
+
 NET::WindowType window::windowType([[maybe_unused]] bool direct,
                                    [[maybe_unused]] int supported_types) const
 {

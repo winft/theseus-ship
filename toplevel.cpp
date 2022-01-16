@@ -51,9 +51,7 @@ Toplevel::Toplevel()
 Toplevel::Toplevel(win::transient* transient)
     : m_internalId(QUuid::createUuid())
     , m_client()
-    , damage_handle(XCB_NONE)
     , is_shape(false)
-    , effect_window(nullptr)
     , m_clientMachine(new win::x11::client_machine(this))
     , m_wmClientLeader(XCB_WINDOW_NONE)
     , m_damageReplyPending(false)
@@ -313,38 +311,11 @@ bool Toplevel::isOutline() const
     return is_outline;
 }
 
-bool Toplevel::setupCompositing(bool add_full_damage)
+bool Toplevel::setupCompositing(bool /*add_full_damage*/)
 {
-    assert(!remnant());
-
-    if (!win::compositing())
-        return false;
-
-    if (damage_handle != XCB_NONE)
-        return false;
-
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        assert(!surface());
-        damage_handle = xcb_generate_id(connection());
-        xcb_damage_create(connection(), damage_handle, frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
-    }
-
-    discard_shape();
-    damage_region = QRegion(QRect(QPoint(), size()));
-    effect_window = new render::effects_window_impl(this);
-
-    render::compositor::self()->scene()->addToplevel(this);
-
-    if (add_full_damage) {
-        // With unmanaged windows there is a race condition between the client painting the window
-        // and us setting up damage tracking.  If the client wins we won't get a damage event even
-        // though the window has been painted.  To avoid this we mark the whole window as damaged
-        // and schedule a repaint immediately after creating the damage object.
-        // TODO: move this out of the class.
-        addDamageFull();
-    }
-
-    return true;
+    // Should never be called, always through the child classes instead.
+    assert(false);
+    return false;
 }
 
 void Toplevel::finishCompositing(ReleaseReason releaseReason)

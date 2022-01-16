@@ -245,16 +245,7 @@ QRect window::iconGeometry() const
 
 bool window::setupCompositing(bool add_full_damage)
 {
-    if (!Toplevel::setupCompositing(add_full_damage)) {
-        return false;
-    }
-
-    if (control) {
-        // for internalKeep()
-        update_visibility(this);
-    }
-
-    return true;
+    return x11::setup_compositing(*this, add_full_damage);
 }
 
 void window::finishCompositing(ReleaseReason releaseReason)

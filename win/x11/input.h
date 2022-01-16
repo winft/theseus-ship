@@ -15,6 +15,8 @@ namespace KWin::win::x11
 template<typename Win>
 void update_input_window(Win* win, QRect const& frame_geo)
 {
+    static_assert(!Win::is_toplevel);
+
     if (!Xcb::Extensions::self()->isShapeInputAvailable()) {
         return;
     }
