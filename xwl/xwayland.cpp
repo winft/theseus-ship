@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main_wayland.h"
 #include "utils.h"
 #include "wayland_server.h"
+#include "win/x11/space_setup.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -162,7 +163,7 @@ xwayland::~xwayland()
 
     disconnect(xwayland_fail_notifier);
 
-    Workspace::self()->clear_x11();
+    win::x11::clear_space(*Workspace::self());
 
     if (app->x11Connection()) {
         Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
@@ -269,7 +270,7 @@ void xwayland::continue_startup_with_x11()
     app->setProcessStartupEnvironment(env);
 
     status_callback(0);
-    Workspace::self()->init_x11();
+    win::x11::init_space(*Workspace::self());
     Q_EMIT app->x11ConnectionChanged();
 
     // Trigger possible errors, there's still a chance to abort

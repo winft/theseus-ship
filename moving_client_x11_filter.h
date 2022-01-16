@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class MovingClientX11Filter : public base::x11::event_filter
+class KWIN_EXPORT MovingClientX11Filter : public base::x11::event_filter
 {
 public:
     explicit MovingClientX11Filter();

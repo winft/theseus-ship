@@ -8,6 +8,7 @@
 #include "screen_edge.h"
 #include "screen_edges_filter.h"
 #include "space_areas.h"
+#include "space_setup.h"
 #include "window.h"
 
 namespace KWin::win::x11
@@ -29,7 +30,7 @@ space::space()
             }
         });
 
-    init_x11();
+    init_space(*this);
 }
 
 space::~space()

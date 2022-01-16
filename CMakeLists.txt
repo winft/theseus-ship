@@ -498,6 +498,7 @@ set(kwin_SRCS
     win/stacking_order.cpp
     win/transient.cpp
     win/x11/client_machine.cpp
+    win/x11/color_mapper.cpp
     win/x11/geometry_tip.cpp
     win/x11/group.cpp
     win/x11/netinfo.cpp

@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QProcess>
 // system
 #include <climits>
-Q_DECLARE_LOGGING_CATEGORY(KWIN_CORE)
+KWIN_EXPORT Q_DECLARE_LOGGING_CATEGORY(KWIN_CORE)
 Q_DECLARE_LOGGING_CATEGORY(KWIN_PERF)
 namespace KWin
 {

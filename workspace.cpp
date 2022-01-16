@@ -64,7 +64,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/group.h"
 #include "win/x11/netinfo.h"
 #include "win/x11/space_areas.h"
-#include "win/x11/space_event.h"
+#include "win/x11/space_setup.h"
 #include "win/x11/stacking_tree.h"
 #include "win/x11/sync_alarm_filter.h"
 #include "win/x11/transient.h"
@@ -82,31 +82,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-
-ColorMapper::ColorMapper(QObject* parent)
-    : QObject(parent)
-    , m_default(defaultScreen()->default_colormap)
-    , m_installed(defaultScreen()->default_colormap)
-{
-}
-
-ColorMapper::~ColorMapper()
-{
-}
-
-void ColorMapper::update()
-{
-    xcb_colormap_t cmap = m_default;
-    if (auto c = dynamic_cast<win::x11::window*>(Workspace::self()->activeClient())) {
-        if (c->colormap != XCB_COLORMAP_NONE) {
-            cmap = c->colormap;
-        }
-    }
-    if (cmap != m_installed) {
-        xcb_install_colormap(connection(), cmap);
-        m_installed = cmap;
-    }
-}
 
 Workspace* Workspace::_self = nullptr;
 
@@ -257,204 +232,13 @@ Workspace::Workspace()
     });
 }
 
-void Workspace::init_x11()
-{
-    assert(kwinApp()->x11Connection());
-
-    atoms->retrieveHelpers();
-
-    // first initialize the extensions
-    Xcb::Extensions::self();
-    ColorMapper* colormaps = new ColorMapper(this);
-    connect(this, &Workspace::clientActivated, colormaps, &ColorMapper::update);
-
-    // Call this before XSelectInput() on the root window
-    startup = new KStartupInfo(
-        KStartupInfo::DisableKWinModule | KStartupInfo::AnnounceSilenceChanges, this);
-
-    // Select windowmanager privileges
-    selectWmInputEventMask();
-
-    // Compatibility
-    int32_t data = 1;
-
-    xcb_change_property(connection(),
-                        XCB_PROP_MODE_APPEND,
-                        rootWindow(),
-                        atoms->kwin_running,
-                        atoms->kwin_running,
-                        32,
-                        1,
-                        &data);
-
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        m_wasUserInteractionFilter.reset(new WasUserInteractionX11Filter);
-        m_movingClientFilter.reset(new MovingClientX11Filter);
-    }
-    if (Xcb::Extensions::self()->isSyncAvailable()) {
-        m_syncAlarmFilter.reset(new win::x11::sync_alarm_filter);
-    }
-
-    // Needed for proper initialization of user_time in Client ctor
-    kwinApp()->update_x11_time_from_clock();
-
-    const uint32_t nullFocusValues[] = {true};
-    m_nullFocus.reset(new Xcb::Window(QRect(-1, -1, 1, 1),
-                                      XCB_WINDOW_CLASS_INPUT_ONLY,
-                                      XCB_CW_OVERRIDE_REDIRECT,
-                                      nullFocusValues));
-    m_nullFocus->map();
-
-    auto* rootInfo = win::x11::root_info::create();
-    const auto vds = VirtualDesktopManager::self();
-    vds->setRootInfo(rootInfo);
-    rootInfo->activate();
-
-    // TODO: only in X11 mode
-    // Extra NETRootInfo instance in Client mode is needed to get the values of the properties
-    NETRootInfo client_info(connection(), NET::ActiveWindow | NET::CurrentDesktop);
-    if (!qApp->isSessionRestored()) {
-        m_initialDesktop = client_info.currentDesktop();
-        vds->setCurrent(m_initialDesktop);
-    }
-
-    // TODO: better value
-    rootInfo->setActiveWindow(XCB_WINDOW_NONE);
-    focusToNull();
-
-    if (!qApp->isSessionRestored())
-        ++block_focus; // Because it will be set below
-
-    {
-        // Begin updates blocker block
-        Blocker blocker(stacking_order);
-
-        Xcb::Tree tree(rootWindow());
-        xcb_window_t* wins = xcb_query_tree_children(tree.data());
-
-        QVector<Xcb::WindowAttributes> windowAttributes(tree->children_len);
-        QVector<Xcb::WindowGeometry> windowGeometries(tree->children_len);
-
-        // Request the attributes and geometries of all toplevel windows
-        for (int i = 0; i < tree->children_len; i++) {
-            windowAttributes[i] = Xcb::WindowAttributes(wins[i]);
-            windowGeometries[i] = Xcb::WindowGeometry(wins[i]);
-        }
-
-        // Get the replies
-        for (int i = 0; i < tree->children_len; i++) {
-            Xcb::WindowAttributes attr(windowAttributes.at(i));
-
-            if (attr.isNull()) {
-                continue;
-            }
-
-            if (attr->override_redirect) {
-                if (attr->map_state == XCB_MAP_STATE_VIEWABLE
-                    && attr->_class != XCB_WINDOW_CLASS_INPUT_ONLY)
-                    // ### This will request the attributes again
-                    win::x11::create_unmanaged_window(*this, wins[i]);
-            } else if (attr->map_state != XCB_MAP_STATE_UNMAPPED) {
-                if (Application::wasCrash()) {
-                    fixPositionAfterCrash(wins[i], windowGeometries.at(i).data());
-                }
-
-                // ### This will request the attributes again
-                win::x11::create_controlled_window(*this, wins[i], true);
-            }
-        }
-
-        // Propagate clients, will really happen at the end of the updates blocker block
-        stacking_order->update(true);
-
-        saveOldScreenSizes();
-        updateClientArea();
-
-        // NETWM spec says we have to set it to (0,0) if we don't support it
-        NETPoint* viewports = new NETPoint[VirtualDesktopManager::self()->count()];
-        rootInfo->setDesktopViewport(VirtualDesktopManager::self()->count(), *viewports);
-        delete[] viewports;
-        QRect geom;
-        auto const& screens = kwinApp()->get_base().screens;
-        for (int i = 0; i < screens.count(); i++) {
-            geom |= screens.geometry(i);
-        }
-        NETSize desktop_geometry;
-        desktop_geometry.width = geom.width();
-        desktop_geometry.height = geom.height();
-        rootInfo->setDesktopGeometry(desktop_geometry);
-        setShowingDesktop(false);
-
-    } // End updates blocker block
-
-    // TODO: only on X11?
-    Toplevel* new_active_client = nullptr;
-    if (!qApp->isSessionRestored()) {
-        --block_focus;
-        new_active_client
-            = findClient(win::x11::predicate_match::window, client_info.activeWindow());
-    }
-    if (new_active_client == nullptr && activeClient() == nullptr && should_get_focus.size() == 0) {
-        // No client activated in manage()
-        if (new_active_client == nullptr)
-            new_active_client
-                = win::top_client_on_desktop(this, VirtualDesktopManager::self()->current(), -1);
-        if (new_active_client == nullptr) {
-            new_active_client
-                = win::find_desktop(this, true, VirtualDesktopManager::self()->current());
-        }
-    }
-    if (new_active_client != nullptr)
-        activateClient(new_active_client);
-}
-
-void Workspace::clear_x11()
-{
-    stacking_order->lock();
-
-    // Use stacking_order, so that kwin --replace keeps stacking order
-    auto const stack = stacking_order->sorted();
-
-    // "mutex" the stackingorder, since anything trying to access it from now on will find
-    // many dangeling pointers and crash
-    stacking_order->win_stack.clear();
-
-    // Only release windows on X11.
-    auto is_x11 = kwinApp()->operationMode() == Application::OperationModeX11;
-
-    for (auto it = stack.cbegin(), end = stack.cend(); it != end; ++it) {
-        auto c = qobject_cast<win::x11::window*>(const_cast<Toplevel*>(*it));
-        if (!c) {
-            continue;
-        }
-
-        win::x11::release_window(c, is_x11);
-
-        // No removeClient() is called, it does more than just removing.
-        // However, remove from some lists to e.g. prevent performTransiencyCheck()
-        // from crashing.
-        remove_all(m_allClients, c);
-        remove_all(m_windows, c);
-    }
-
-    for (auto const& unmanaged : unmanagedList()) {
-        win::x11::release_window(static_cast<win::x11::window*>(unmanaged), is_x11);
-        remove_all(m_windows, unmanaged);
-        remove_all(stacking_order->pre_stack, unmanaged);
-    }
-
-    win::x11::window::cleanupX11();
-
-    stacking_order->unlock();
-}
-
 Workspace::~Workspace()
 {
     stacking_order->lock();
 
     // TODO: grabXServer();
 
-    clear_x11();
+    win::x11::clear_space(*this);
 
     for (auto const& window : m_windows) {
         if (auto internal = qobject_cast<win::internal_window*>(window)) {
@@ -801,22 +585,6 @@ void Workspace::resetClientAreas(uint desktopCount)
     areas.screen.clear();
 
     updateClientArea(true);
-}
-
-void Workspace::selectWmInputEventMask()
-{
-    uint32_t presentMask = 0;
-    Xcb::WindowAttributes attr(rootWindow());
-    if (!attr.isNull()) {
-        presentMask = attr->your_event_mask;
-    }
-
-    Xcb::selectInput(rootWindow(),
-                     presentMask | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_PROPERTY_CHANGE
-                         | XCB_EVENT_MASK_COLOR_MAP_CHANGE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT
-                         | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_FOCUS_CHANGE
-                         | // For NotifyDetailNone
-                         XCB_EVENT_MASK_EXPOSURE);
 }
 
 /**

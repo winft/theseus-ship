@@ -37,7 +37,7 @@ namespace win::x11
 {
 class window;
 
-class group
+class KWIN_EXPORT group
 {
 public:
     group(xcb_window_t leader);

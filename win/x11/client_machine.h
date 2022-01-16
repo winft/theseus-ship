@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "kwin_export.h"
+
 #include <QObject>
 #include <xcb/xcb.h>
 
@@ -60,7 +62,7 @@ private:
     QFutureWatcher<int>* m_ownAddressWatcher;
 };
 
-class client_machine : public QObject
+class KWIN_EXPORT client_machine : public QObject
 {
     Q_OBJECT
 public:

@@ -36,7 +36,9 @@ namespace Decoration
 
 class Renderer;
 
-class DecoratedClientImpl : public QObject, public KDecoration2::ApplicationMenuEnabledDecoratedClientPrivate
+class KWIN_EXPORT DecoratedClientImpl
+        : public QObject,
+          public KDecoration2::ApplicationMenuEnabledDecoratedClientPrivate
 {
     Q_OBJECT
 public:
