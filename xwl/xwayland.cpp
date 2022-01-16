@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main_wayland.h"
 #include "utils.h"
 #include "wayland_server.h"
+#include "win/wayland/space.h"
 #include "win/x11/space_setup.h"
 #include "workspace.h"
 #include "xcbutils.h"
@@ -245,7 +246,8 @@ void xwayland::continue_startup_with_x11()
 
     app->createAtoms();
 
-    event_filter = std::make_unique<base::x11::xcb_event_filter>(*Workspace::self());
+    auto space = static_cast<win::wayland::space*>(Workspace::self());
+    event_filter = std::make_unique<base::x11::xcb_event_filter<win::wayland::space>>(*space);
     app->installNativeEventFilter(event_filter.get());
 
     // Check  whether another windowmanager is running

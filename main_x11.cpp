@@ -264,7 +264,7 @@ void ApplicationX11::start()
 
         workspace = std::make_unique<win::x11::space>();
 
-        event_filter = std::make_unique<base::x11::xcb_event_filter>(*workspace);
+        event_filter = std::make_unique<base::x11::xcb_event_filter<win::x11::space>>(*workspace);
         installNativeEventFilter(event_filter.get());
 
         Q_EMIT workspaceCreated();

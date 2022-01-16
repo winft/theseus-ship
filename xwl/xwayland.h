@@ -34,7 +34,13 @@ namespace KWin
 
 namespace base::x11
 {
+template<typename Space>
 class xcb_event_filter;
+}
+
+namespace win::wayland
+{
+class space;
 }
 
 class Application;
@@ -68,7 +74,7 @@ private:
     x11_data basic_data;
 
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
-    std::unique_ptr<base::x11::xcb_event_filter> event_filter;
+    std::unique_ptr<base::x11::xcb_event_filter<win::wayland::space>> event_filter;
 
     Application* app;
     std::function<void(int code)> status_callback;

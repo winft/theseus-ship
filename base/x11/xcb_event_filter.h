@@ -6,7 +6,6 @@
 #pragma once
 
 #include "win/x11/space_event.h"
-#include "workspace.h"
 
 #include <QAbstractNativeEventFilter>
 #include <xcb/xcb.h>
@@ -14,10 +13,11 @@
 namespace KWin::base::x11
 {
 
+template<typename Space>
 class xcb_event_filter : public QAbstractNativeEventFilter
 {
 public:
-    xcb_event_filter(Workspace& space)
+    xcb_event_filter(Space& space)
         : space{space}
     {
     }
@@ -36,7 +36,7 @@ public:
     }
 
 private:
-    Workspace& space;
+    Space& space;
 };
 
 }
