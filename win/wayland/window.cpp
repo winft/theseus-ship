@@ -8,6 +8,7 @@
 #include "fullscreen.h"
 #include "layer_shell.h"
 #include "maximize.h"
+#include "scene.h"
 #include "setup.h"
 #include "subsurface.h"
 #include "surface.h"
@@ -85,6 +86,12 @@ bool window::setupCompositing([[maybe_unused]] bool add_full_damage)
 {
     assert(!add_full_damage);
     return win::setup_compositing(*this, false);
+}
+
+void window::add_scene_window_addon()
+{
+    assert(surface());
+    setup_scale_scene_notify(*this);
 }
 
 NET::WindowType window::windowType([[maybe_unused]] bool direct,

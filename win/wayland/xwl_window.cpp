@@ -5,6 +5,7 @@
 */
 #include "xwl_window.h"
 
+#include "scene.h"
 #include "win/x11/scene.h"
 
 #include <Wrapland/Server/surface.h>
@@ -20,6 +21,13 @@ qreal xwl_window::bufferScale() const
 bool xwl_window::setupCompositing(bool add_full_damage)
 {
     return x11::setup_compositing(*this, add_full_damage);
+}
+
+void xwl_window::add_scene_window_addon()
+{
+    if (surface()) {
+        setup_scale_scene_notify(*this);
+    }
 }
 
 }

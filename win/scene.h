@@ -11,7 +11,6 @@
 #include "render/shadow.h"
 #include "render/window.h"
 
-#include <Wrapland/Server/surface.h>
 #include <cassert>
 
 namespace KWin::win
@@ -133,24 +132,16 @@ void add_scene_window(Scene& scene, Win& win)
     scene.m_windows[&win] = scn_win;
 
     QObject::connect(&win, &Win::windowClosed, &scene, &Scene::windowClosed);
-
-    // A change of scale won't affect the geometry in compositor co-ordinates, but will affect the
-    // window quads.
-    if (win.surface()) {
-        QObject::connect(win.surface(), &Wrapland::Server::Surface::committed, &scene, [&] {
-            if (win.surface()->state().updates & Wrapland::Server::surface_change::scale) {
-                scene.windowGeometryShapeChanged(&win);
-            }
-        });
-    }
-
     QObject::connect(
         &win, &Win::screenScaleChanged, &scene, [&] { scene.windowGeometryShapeChanged(&win); });
     win.effectWindow()->setSceneWindow(scn_win);
+
     win::update_shadow(&win);
     scn_win->updateShadow(win::shadow(&win));
     QObject::connect(
         &win, &Win::shadowChanged, &scene, [scn_win] { scn_win->invalidateQuadsCache(); });
+
+    win.add_scene_window_addon();
 }
 
 template<typename Win>

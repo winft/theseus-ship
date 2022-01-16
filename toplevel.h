@@ -220,6 +220,7 @@ public:
     int depth() const;
     bool hasAlpha() const;
     virtual bool setupCompositing(bool add_full_damage);
+    virtual void add_scene_window_addon();
     virtual void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release);
 
     Q_INVOKABLE void addRepaint(int x, int y, int w, int h);

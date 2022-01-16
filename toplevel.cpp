@@ -318,6 +318,10 @@ bool Toplevel::setupCompositing(bool /*add_full_damage*/)
     return false;
 }
 
+void Toplevel::add_scene_window_addon()
+{
+}
+
 void Toplevel::finishCompositing(ReleaseReason releaseReason)
 {
     assert(!remnant());

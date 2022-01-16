@@ -98,6 +98,7 @@ public:
     qreal bufferScale() const override;
     bool is_wayland_window() const override;
     bool setupCompositing(bool add_full_damage) override;
+    void add_scene_window_addon() override;
 
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     QByteArray windowRole() const override;

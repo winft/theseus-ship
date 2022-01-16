@@ -16,6 +16,7 @@ class KWIN_EXPORT xwl_window : public x11::window
 public:
     qreal bufferScale() const override;
     bool setupCompositing(bool add_full_damage) override;
+    void add_scene_window_addon() override;
 };
 
 }
