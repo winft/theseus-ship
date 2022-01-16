@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 
 #include "base/x11/event_filter_manager.h"
+#include "base/x11/xcb_event_filter.h"
 #include "atoms.h"
 #include "render/compositor.h"
 #include "input/global_shortcuts_manager.h"
@@ -34,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "screenlockerwatcher.h"
 #include "sm.h"
-#include "win/x11/space_event.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -93,7 +93,7 @@ int Application::x11ScreenNumber()
 Application::Application(Application::OperationMode mode, int &argc, char **argv)
     : QApplication(argc, argv)
     , x11_event_filters{new base::x11::event_filter_manager}
-    , m_eventFilter(new XcbEventFilter())
+    , m_eventFilter(new base::x11::xcb_event_filter())
     , m_configLock(false)
     , m_config()
     , m_kxkbConfig()
@@ -390,21 +390,6 @@ void Application::update_x11_time_from_event(xcb_generic_event_t *event)
         break;
     }
     setX11Time(time);
-}
-
-bool XcbEventFilter::nativeEventFilter(const QByteArray &eventType, void *message, long int *result)
-{
-    Q_UNUSED(result)
-    if (eventType != "xcb_generic_event_t") {
-        return false;
-    }
-    auto event = static_cast<xcb_generic_event_t *>(message);
-    kwinApp()->update_x11_time_from_event(event);
-    if (!Workspace::self()) {
-        // Workspace not yet created
-        return false;
-    }
-    return win::x11::space_event(*Workspace::self(), event);
 }
 
 QProcessEnvironment Application::processStartupEnvironment() const

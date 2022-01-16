@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KSharedConfig>
 
 #include <QApplication>
-#include <QAbstractNativeEventFilter>
 #include <QProcessEnvironment>
 
 #include <memory>
@@ -53,6 +52,7 @@ class platform;
 namespace x11
 {
 class event_filter_manager;
+class xcb_event_filter;
 }
 
 }
@@ -63,12 +63,6 @@ class session;
 }
 
 class WaylandServer;
-
-class XcbEventFilter : public QAbstractNativeEventFilter
-{
-public:
-    bool nativeEventFilter(const QByteArray &eventType, void *message, long int *result) override;
-};
 
 class KWIN_EXPORT Application : public  QApplication
 {
@@ -256,7 +250,7 @@ protected:
     static int crashes;
 
 private:
-    QScopedPointer<XcbEventFilter> m_eventFilter;
+    QScopedPointer<base::x11::xcb_event_filter> m_eventFilter;
     bool m_configLock;
     KSharedConfigPtr m_config;
     KSharedConfigPtr m_kxkbConfig;
