@@ -71,6 +71,11 @@ window::window(WS::Surface* surface)
     setupCompositing(false);
 }
 
+qreal window::bufferScale() const
+{
+    return surface()->state().scale;
+}
+
 bool window::is_wayland_window() const
 {
     return true;

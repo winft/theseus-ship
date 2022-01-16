@@ -275,7 +275,7 @@ void xwayland::continue_startup_with_x11()
     app->setProcessStartupEnvironment(env);
 
     status_callback(0);
-    win::x11::init_space(*Workspace::self());
+    win::x11::init_space(*static_cast<win::wayland::space*>(Workspace::self()));
     Q_EMIT app->x11ConnectionChanged();
 
     // Trigger possible errors, there's still a chance to abort

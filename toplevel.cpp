@@ -38,8 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/netinfo.h"
 #include "win/x11/xcb.h"
 
-#include <Wrapland/Server/surface.h>
-
 #include <QDebug>
 
 namespace KWin
@@ -677,10 +675,7 @@ qreal Toplevel::screenScale() const
 
 qreal Toplevel::bufferScale() const
 {
-    if (m_remnant) {
-        return m_remnant->buffer_scale;
-    }
-    return surface() ? surface()->state().scale : 1;
+    return m_remnant ? m_remnant->buffer_scale : 1.;
 }
 
 bool Toplevel::wantsShadowToBeRendered() const

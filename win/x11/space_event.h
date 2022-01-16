@@ -8,7 +8,6 @@
 #include "event.h"
 #include "stacking_tree.h"
 #include "unmanaged.h"
-#include "window.h"
 
 #include "../utils.h"
 #include "base/x11/event_filter.h"
@@ -22,11 +21,13 @@ namespace KWin::win::x11
 {
 
 template<typename Space>
-win::x11::window* create_controlled_window(Space& space, xcb_window_t xcb_window, bool is_mapped)
+auto create_controlled_window(Space& space, xcb_window_t xcb_window, bool is_mapped) ->
+    typename Space::x11_window*
 {
     Blocker blocker(space.stacking_order);
 
-    auto window = win::x11::create_controlled_window<win::x11::window>(xcb_window, is_mapped);
+    auto window
+        = win::x11::create_controlled_window<typename Space::x11_window>(xcb_window, is_mapped);
     if (window) {
         space.addClient(window);
     }
@@ -35,7 +36,7 @@ win::x11::window* create_controlled_window(Space& space, xcb_window_t xcb_window
 }
 
 template<typename Space>
-win::x11::window* create_unmanaged_window(Space& space, xcb_window_t xcb_window)
+auto create_unmanaged_window(Space& space, xcb_window_t xcb_window) -> typename Space::x11_window*
 {
     // TODO(romangg): this check is not right here!
     if (auto compositor = render::x11::compositor::self()) {
@@ -44,7 +45,7 @@ win::x11::window* create_unmanaged_window(Space& space, xcb_window_t xcb_window)
         }
     }
 
-    auto window = win::x11::create_unmanaged_window<win::x11::window>(xcb_window);
+    auto window = win::x11::create_unmanaged_window<typename Space::x11_window>(xcb_window);
     if (!window) {
         return nullptr;
     }

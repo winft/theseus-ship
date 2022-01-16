@@ -11,7 +11,6 @@
 #include "win/space.h"
 
 #include "render/effects.h"
-#include "toplevel.h"
 #include "utils.h"
 #include "xcbutils.h"
 

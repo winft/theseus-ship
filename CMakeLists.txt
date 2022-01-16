@@ -873,6 +873,7 @@ set(kwin_WAYLAND_SRCS
    wayland_server.cpp
    win/wayland/space.cpp
    win/wayland/window.cpp
+   win/wayland/xwl_window.cpp
 )
 
 if (KWIN_BUILD_TABBOX)

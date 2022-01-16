@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "xwl_window.h"
+
 #include "workspace.h"
 
 #include <kwin_export.h>
@@ -36,6 +38,8 @@ class KWIN_EXPORT space : public Workspace
 {
     Q_OBJECT
 public:
+    using x11_window = xwl_window;
+
     space(WaylandServer* server);
     ~space() override;
 
