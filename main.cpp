@@ -412,12 +412,7 @@ QProcessEnvironment Application::processStartupEnvironment() const
     return QProcessEnvironment::systemEnvironment();
 }
 
-ApplicationWaylandAbstract::ApplicationWaylandAbstract(OperationMode mode, int &argc, char **argv)
-    : Application(mode, argc, argv)
-{
-}
-
-ApplicationWaylandAbstract::~ApplicationWaylandAbstract()
+void Application::setProcessStartupEnvironment(QProcessEnvironment const& /*environment*/)
 {
 }
 

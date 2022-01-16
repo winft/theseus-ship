@@ -44,7 +44,7 @@ namespace xwl
 class xwayland;
 }
 
-class ApplicationWayland : public ApplicationWaylandAbstract
+class ApplicationWayland : public Application
 {
     Q_OBJECT
 public:

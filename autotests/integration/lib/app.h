@@ -31,7 +31,7 @@ namespace xwl
 class xwayland;
 }
 
-class KWIN_EXPORT WaylandTestApplication : public ApplicationWaylandAbstract
+class KWIN_EXPORT WaylandTestApplication : public Application
 {
     Q_OBJECT
 public:
