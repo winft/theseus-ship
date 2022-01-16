@@ -173,7 +173,6 @@ xcb_atom_t KWinSelectionOwner::xa_version = XCB_ATOM_NONE;
 ApplicationX11::ApplicationX11(int &argc, char **argv)
     : Application(OperationModeX11, argc, argv)
     , owner()
-    , event_filter{std::make_unique<base::x11::xcb_event_filter>()}
     , m_replace(false)
 {
     setX11Connection(QX11Info::connection());
@@ -197,6 +196,7 @@ void ApplicationX11::setReplace(bool replace)
 void ApplicationX11::lostSelection()
 {
     sendPostedEvents();
+    event_filter.reset();
     workspace.reset();
     base.render->compositor.reset();
     // Remove windowmanager privileges
@@ -231,7 +231,6 @@ void ApplicationX11::start()
     });
     connect(owner.data(), &KSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
     connect(owner.data(), &KSelectionOwner::claimedOwnership, [this]{
-        installNativeEventFilter(event_filter.get());
         createOptions();
 
         // Check  whether another windowmanager is running
@@ -262,7 +261,12 @@ void ApplicationX11::start()
         }
 
         render->compositor = std::make_unique<render::x11::compositor>(*render);
+
         workspace = std::make_unique<win::x11::space>();
+
+        event_filter = std::make_unique<base::x11::xcb_event_filter>(*workspace);
+        installNativeEventFilter(event_filter.get());
+
         Q_EMIT workspaceCreated();
 
         workspace->scripting = std::make_unique<scripting::platform>();

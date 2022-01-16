@@ -17,6 +17,11 @@ namespace KWin::base::x11
 class xcb_event_filter : public QAbstractNativeEventFilter
 {
 public:
+    xcb_event_filter(Workspace& space)
+        : space{space}
+    {
+    }
+
     bool
     nativeEventFilter(QByteArray const& event_type, void* message, long int* /*result*/) override
     {
@@ -27,14 +32,11 @@ public:
         auto event = static_cast<xcb_generic_event_t*>(message);
         kwinApp()->update_x11_time_from_event(event);
 
-        if (!Workspace::self()) {
-            // Workspace not yet created
-            // TODO(romangg): remove this check.
-            return false;
-        }
-
-        return win::x11::space_event(*Workspace::self(), event);
+        return win::x11::space_event(space, event);
     }
+
+private:
+    Workspace& space;
 };
 
 }

@@ -76,7 +76,6 @@ namespace KWin::xwl
 
 xwayland::xwayland(Application* app, std::function<void(int)> status_callback)
     : xwayland_interface()
-    , event_filter{std::make_unique<base::x11::xcb_event_filter>()}
     , app{app}
     , status_callback{status_callback}
 {
@@ -245,6 +244,8 @@ void xwayland::continue_startup_with_x11()
     owner.claim(true);
 
     app->createAtoms();
+
+    event_filter = std::make_unique<base::x11::xcb_event_filter>(*Workspace::self());
     app->installNativeEventFilter(event_filter.get());
 
     // Check  whether another windowmanager is running
