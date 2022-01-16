@@ -11,6 +11,7 @@
 #include "render/shadow.h"
 #include "render/window.h"
 
+#include <Wrapland/Server/surface.h>
 #include <cassert>
 
 namespace KWin::win
@@ -115,6 +116,43 @@ auto update_shadow(Win* win)
     }
 }
 
+/**
+ * Adds the window to the scene.
+ *
+ * If the window gets deleted, then the scene will try automatically
+ * to re-bind an underlying scene window to the corresponding remnant.
+ *
+ * @param win The window to be added.
+ * @note You can add a toplevel to scene only once.
+ */
+template<typename Scene, typename Win>
+void add_scene_window(Scene& scene, Win& win)
+{
+    assert(!scene.m_windows.contains(&win));
+    auto scn_win = scene.createWindow(&win);
+    scene.m_windows[&win] = scn_win;
+
+    QObject::connect(&win, &Win::windowClosed, &scene, &Scene::windowClosed);
+
+    // A change of scale won't affect the geometry in compositor co-ordinates, but will affect the
+    // window quads.
+    if (win.surface()) {
+        QObject::connect(win.surface(), &Wrapland::Server::Surface::committed, &scene, [&] {
+            if (win.surface()->state().updates & Wrapland::Server::surface_change::scale) {
+                scene.windowGeometryShapeChanged(&win);
+            }
+        });
+    }
+
+    QObject::connect(
+        &win, &Win::screenScaleChanged, &scene, [&] { scene.windowGeometryShapeChanged(&win); });
+    win.effectWindow()->setSceneWindow(scn_win);
+    win::update_shadow(&win);
+    scn_win->updateShadow(win::shadow(&win));
+    QObject::connect(
+        &win, &Win::shadowChanged, &scene, [scn_win] { scn_win->invalidateQuadsCache(); });
+}
+
 template<typename Win>
 bool setup_compositing(Win& win, bool add_full_damage)
 {
@@ -140,7 +178,7 @@ bool setup_compositing(Win& win, bool add_full_damage)
     win.damage_region = QRegion(QRect(QPoint(), win.size()));
     win.effect_window = new render::effects_window_impl(&win);
 
-    render::compositor::self()->scene()->addToplevel(&win);
+    add_scene_window(*render::compositor::self()->scene(), win);
 
     if (add_full_damage) {
         // With unmanaged windows there is a race condition between the client painting the window

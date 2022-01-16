@@ -77,9 +77,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "win/geo.h"
 
-#include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/surface.h>
-
 #include <QQuickWindow>
 #include <QVector2D>
 
@@ -414,28 +411,6 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
         // full repaints.
         damaged_region = paintedArea - repaintClip;
     }
-}
-
-void scene::addToplevel(Toplevel* c)
-{
-    Q_ASSERT(!m_windows.contains(c));
-    auto w = createWindow(c);
-    m_windows[c] = w;
-    connect(c, &Toplevel::windowClosed, this, &scene::windowClosed);
-    // A change of scale won't affect the geometry in compositor co-ordinates, but will affect the
-    // window quads.
-    if (c->surface()) {
-        connect(c->surface(), &Wrapland::Server::Surface::committed, this, [this, c] {
-            if (c->surface()->state().updates & Wrapland::Server::surface_change::scale) {
-                windowGeometryShapeChanged(c);
-            }
-        });
-    }
-    connect(c, &Toplevel::screenScaleChanged, this, [this, c] { windowGeometryShapeChanged(c); });
-    c->effectWindow()->setSceneWindow(w);
-    win::update_shadow(c);
-    w->updateShadow(win::shadow(c));
-    connect(c, &Toplevel::shadowChanged, this, [w] { w->invalidateQuadsCache(); });
 }
 
 void scene::removeToplevel(Toplevel* toplevel)
