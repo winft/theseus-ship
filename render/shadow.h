@@ -94,6 +94,10 @@ public:
         return m_shadowQuads;
     };
 
+    static shadow* createShadowFromX11(Toplevel* toplevel);
+    static shadow* createShadowFromDecoration(Toplevel* toplevel);
+    static shadow* createShadowFromWayland(Toplevel* toplevel);
+
     /**
      * This method updates the Shadow when the property has been changed.
      * It is the responsibility of the owner of the Shadow to call this method
@@ -105,18 +109,6 @@ public:
      * anymore.
      */
     virtual bool updateShadow();
-
-    /**
-     * Factory Method to create the shadow from the property.
-     * This method takes care of creating an instance of the
-     * Shadow class for the current Compositing Backend.
-     *
-     * If there is no shadow defined for @p toplevel this method
-     * will return @c NULL.
-     * @param toplevel The Toplevel for which the shadow should be created
-     * @return Created Shadow or @c NULL in case there is no shadow defined.
-     */
-    static shadow* createShadow(Toplevel* toplevel);
 
     /**
      * Reparents the shadow to @p toplevel.
@@ -181,9 +173,6 @@ protected:
     void setShadowElement(const QPixmap& shadow, shadow_element element);
 
 private:
-    static shadow* createShadowFromX11(Toplevel* toplevel);
-    static shadow* createShadowFromDecoration(Toplevel* toplevel);
-    static shadow* createShadowFromWayland(Toplevel* toplevel);
     static QVector<uint32_t> readX11ShadowProperty(xcb_window_t id);
     bool init(const QVector<uint32_t>& data);
     bool init(KDecoration2::Decoration* decoration);

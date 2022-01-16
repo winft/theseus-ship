@@ -49,28 +49,6 @@ shadow::~shadow()
 {
 }
 
-shadow* shadow::createShadow(Toplevel* toplevel)
-{
-    if (!effects) {
-        return nullptr;
-    }
-    auto shadow = createShadowFromDecoration(toplevel);
-    if (!shadow && kwinApp()->operationMode() != Application::OperationModeX11) {
-        shadow = createShadowFromWayland(toplevel);
-    }
-    if (!shadow && kwinApp()->x11Connection()) {
-        shadow = createShadowFromX11(toplevel);
-    }
-    if (!shadow) {
-        return nullptr;
-    }
-    if (toplevel->effectWindow() && toplevel->effectWindow()->sceneWindow()) {
-        toplevel->effectWindow()->sceneWindow()->updateShadow(shadow);
-        Q_EMIT toplevel->shadowChanged();
-    }
-    return shadow;
-}
-
 shadow* shadow::createShadowFromX11(Toplevel* toplevel)
 {
     auto data = shadow::readX11ShadowProperty(toplevel->xcb_window());

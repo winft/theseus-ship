@@ -351,6 +351,23 @@ void window::invalidateQuadsCache()
     cached_quad_list.reset();
 }
 
+void window::create_shadow()
+{
+    auto shadow = shadow::createShadowFromDecoration(toplevel);
+
+    if (!shadow && kwinApp()->operationMode() != Application::OperationModeX11) {
+        shadow = shadow::createShadowFromWayland(toplevel);
+    }
+    if (!shadow && kwinApp()->x11Connection()) {
+        shadow = shadow::createShadowFromX11(toplevel);
+    }
+
+    if (shadow) {
+        updateShadow(shadow);
+        Q_EMIT toplevel->shadowChanged();
+    }
+}
+
 void window::updateShadow(render::shadow* shadow)
 {
     if (m_shadow == shadow) {

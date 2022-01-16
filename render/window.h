@@ -72,6 +72,7 @@ public:
     // creates initial quad list for the window
     WindowQuadList buildQuads(bool force = false) const;
 
+    void create_shadow();
     void updateShadow(render::shadow* shadow);
     render::shadow const* shadow() const;
     render::shadow* shadow();

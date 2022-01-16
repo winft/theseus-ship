@@ -97,8 +97,8 @@ auto update_shadow(Win* win)
             scene_window(win)->updateShadow(nullptr);
         }
         Q_EMIT win->shadowChanged();
-    } else if (win->effectWindow()) {
-        render::shadow::createShadow(win);
+    } else if (auto sc_win = scene_window(win)) {
+        sc_win->create_shadow();
     }
 
     if (auto shdw = shadow(win)) {

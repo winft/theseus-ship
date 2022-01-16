@@ -57,9 +57,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/geo.h"
 #include "win/transient.h"
 
-#include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/surface.h>
-
 #include <stdexcept>
 #include <unistd.h>
 
