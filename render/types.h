@@ -69,5 +69,17 @@ enum class window_paint_disable_type {
 
 }
 
+enum class shadow_element {
+    top,
+    top_right,
+    right,
+    bottom_right,
+    bottom,
+    bottom_left,
+    left,
+    top_left,
+    count,
+};
+
 ENUM_FLAGS(KWin::render::paint_type)
 ENUM_FLAGS(KWin::render::window_paint_disable_type)

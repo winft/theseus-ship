@@ -6,8 +6,11 @@
 */
 #include "window.h"
 
+#include "deco_shadow.h"
 #include "effects.h"
 #include "shadow.h"
+#include "wayland/shadow.h"
+#include "x11/shadow.h"
 
 #include "toplevel.h"
 #include "win/geo.h"
@@ -353,13 +356,13 @@ void window::invalidateQuadsCache()
 
 void window::create_shadow()
 {
-    auto shadow = shadow::createShadowFromDecoration(toplevel);
+    auto shadow = create_deco_shadow<render::shadow>(*toplevel);
 
     if (!shadow && kwinApp()->operationMode() != Application::OperationModeX11) {
-        shadow = shadow::createShadowFromWayland(toplevel);
+        shadow = wayland::create_shadow<render::shadow>(*toplevel);
     }
     if (!shadow && kwinApp()->x11Connection()) {
-        shadow = shadow::createShadowFromX11(toplevel);
+        shadow = x11::create_shadow<render::shadow>(*toplevel);
     }
 
     if (shadow) {
