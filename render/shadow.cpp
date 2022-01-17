@@ -168,9 +168,7 @@ void shadow::buildQuads()
 
 bool shadow::updateShadow()
 {
-    if (!m_topLevel) {
-        return false;
-    }
+    assert(m_topLevel);
 
     if (m_decorationShadow) {
         if (m_topLevel->control) {
@@ -203,13 +201,6 @@ bool shadow::updateShadow()
     return true;
 }
 
-void shadow::setToplevel(Toplevel* topLevel)
-{
-    // TODO(romangg): This function works because it is only used to change the toplevel to the
-    //                remnant. But in general this would not clean up the connection from the ctor.
-    m_topLevel = topLevel;
-    connect(m_topLevel, &Toplevel::frame_geometry_changed, this, &shadow::geometryChanged);
-}
 void shadow::geometryChanged()
 {
     if (m_cachedSize == m_topLevel->size()) {

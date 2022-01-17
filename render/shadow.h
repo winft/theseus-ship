@@ -96,13 +96,6 @@ public:
      */
     bool updateShadow();
 
-    /**
-     * Reparents the shadow to @p toplevel.
-     * Used when a window is deleted.
-     * @param toplevel The new parent
-     */
-    void setToplevel(Toplevel* toplevel);
-
     bool hasDecorationShadow() const
     {
         return !m_decorationShadow.isNull();

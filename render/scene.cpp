@@ -430,9 +430,12 @@ void scene::windowClosed(Toplevel* toplevel, Toplevel* deleted)
     Q_ASSERT(m_windows.contains(toplevel));
     auto window = m_windows.take(toplevel);
     window->updateToplevel(deleted);
-    if (window->shadow()) {
-        window->shadow()->setToplevel(deleted);
+
+    if (auto shadow = window->shadow()) {
+        shadow->m_topLevel = deleted;
+        connect(deleted, &Toplevel::frame_geometry_changed, shadow, &shadow::geometryChanged);
     }
+
     m_windows[deleted] = window;
 }
 
