@@ -34,9 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationShadow>
 
-#include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/surface.h>
-
 namespace KWin::render
 {
 
@@ -182,12 +179,8 @@ bool shadow::updateShadow()
     }
 
     if (kwinApp()->operationMode() != Application::OperationModeX11) {
-        if (m_topLevel && m_topLevel->surface()) {
-            if (const auto& s = m_topLevel->surface()->state().shadow) {
-                if (wayland::update_shadow(*this, s)) {
-                    return true;
-                }
-            }
+        if (wayland::update_shadow(*this)) {
+            return true;
         }
     }
 

@@ -13,13 +13,20 @@
 #include <QPointer>
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/shadow.h>
+#include <Wrapland/Server/surface.h>
 
 namespace KWin::render::wayland
 {
 
 template<typename Shadow>
-bool update_shadow(Shadow& impl, QPointer<Wrapland::Server::Shadow> const& shadow)
+bool update_shadow(Shadow& impl)
 {
+    auto surface = impl.m_topLevel->surface();
+    if (!surface) {
+        return false;
+    }
+
+    auto const& shadow = surface->state().shadow;
     if (!shadow) {
         return false;
     }
@@ -68,17 +75,12 @@ template<typename Shadow, typename Win>
 Shadow* create_shadow(Win& win)
 {
     auto surface = win.surface();
-    if (!surface) {
-        return nullptr;
-    }
-
-    auto const surface_shadow = surface->state().shadow;
-    if (!surface_shadow) {
+    if (!surface || !surface->state().shadow) {
         return nullptr;
     }
 
     auto shadow = render::compositor::self()->scene()->createShadow(&win);
-    if (!update_shadow(*shadow, surface_shadow)) {
+    if (!update_shadow(*shadow)) {
         delete shadow;
         return nullptr;
     }
