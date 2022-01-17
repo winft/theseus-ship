@@ -58,6 +58,7 @@ class output;
 namespace render
 {
 class effects_window_impl;
+class window;
 }
 
 namespace win
@@ -88,6 +89,8 @@ class KWIN_EXPORT Toplevel : public QObject
 
 public:
     constexpr static bool is_toplevel{true};
+
+    std::unique_ptr<render::window> render;
 
     struct {
         QString normal;
@@ -137,7 +140,6 @@ public:
      * Records all outputs that still need to be repainted for the current repaint regions.
      */
     std::vector<base::output*> repaint_outputs;
-    render::effects_window_impl* effect_window{nullptr};
 
     explicit Toplevel();
     ~Toplevel() override;
@@ -245,9 +247,6 @@ public:
     void addDamageFull();
     virtual void addDamage(const QRegion &damage);
 
-    render::effects_window_impl* effectWindow();
-    const render::effects_window_impl* effectWindow() const;
-
     static Toplevel* create_remnant(Toplevel* source);
 
     /**
@@ -343,7 +342,6 @@ public:
     virtual void damageNotifyEvent();
     void clientMessageEvent(xcb_client_message_event_t *e);
     void discardWindowPixmap();
-    void deleteEffectWindow();
 
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
 
@@ -853,18 +851,6 @@ inline bool Toplevel::hasAlpha() const
 inline const QRegion& Toplevel::opaqueRegion() const
 {
     return opaque_region;
-}
-
-inline
-render::effects_window_impl* Toplevel::effectWindow()
-{
-    return effect_window;
-}
-
-inline
-const render::effects_window_impl* Toplevel::effectWindow() const
-{
-    return effect_window;
 }
 
 inline QByteArray Toplevel::resourceName() const

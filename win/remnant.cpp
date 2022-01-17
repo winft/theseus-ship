@@ -122,8 +122,6 @@ remnant::~remnant()
     if (workspace()) {
         workspace()->removeDeleted(win);
     }
-
-    win->deleteEffectWindow();
 }
 
 void remnant::ref()

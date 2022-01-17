@@ -207,8 +207,9 @@ void layer_shell_test::test_create()
     QVERIFY(!window->isMovableAcrossScreens());
     QVERIFY(!window->isResizable());
     QVERIFY(!window->isInternal());
-    QVERIFY(window->effectWindow());
-    QVERIFY(!window->effectWindow()->internalWindow());
+    QVERIFY(window->render);
+    QVERIFY(window->render->effect);
+    QVERIFY(!window->render->effect->internalWindow());
 
     // Surface is centered.
     QCOMPARE(window->frameGeometry(),

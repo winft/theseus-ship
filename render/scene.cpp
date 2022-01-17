@@ -176,7 +176,7 @@ void scene::paintScreen(paint_type& mask,
     effects->paintScreen(static_cast<int>(mask), region, data);
 
     for (auto const& w : qAsConst(stacking_order)) {
-        effects->postPaintWindow(effectWindow(w));
+        effects->postPaintWindow(w->effect.get());
     }
 
     effects->postPaintScreen();
@@ -235,7 +235,7 @@ void scene::paintGenericScreen(paint_type orig_mask, ScreenPaintData)
         data.clip = QRegion();
         data.quads = w->buildQuads();
         // preparation step
-        effects->prePaintWindow(effectWindow(w), data, m_expectedPresentTimestamp);
+        effects->prePaintWindow(w->effect.get(), data, m_expectedPresentTimestamp);
 #if !defined(QT_NO_DEBUG)
         if (data.quads.isTransformed()) {
             qFatal("Pre-paint calls are not allowed to transform quads!");
@@ -318,7 +318,7 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
 
         data.quads = window->buildQuads();
         // preparation step
-        effects->prePaintWindow(effectWindow(window), data, m_expectedPresentTimestamp);
+        effects->prePaintWindow(window->effect.get(), data, m_expectedPresentTimestamp);
 #if !defined(QT_NO_DEBUG)
         if (data.quads.isTransformed()) {
             qFatal("Pre-paint calls are not allowed to transform quads!");
@@ -416,8 +416,8 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
 void scene::removeToplevel(Toplevel* toplevel)
 {
     Q_ASSERT(m_windows.contains(toplevel));
-    delete m_windows.take(toplevel);
-    toplevel->effectWindow()->setSceneWindow(nullptr);
+    m_windows.take(toplevel);
+    toplevel->render.reset();
 }
 
 void scene::windowClosed(Toplevel* toplevel, Toplevel* deleted)
@@ -476,9 +476,9 @@ void scene::paintWindow(window* w, paint_type mask, QRegion region, WindowQuadLi
         return;
     }
 
-    WindowPaintData data(w->get_window()->effectWindow(), screenProjectionMatrix());
+    WindowPaintData data(w->effect.get(), screenProjectionMatrix());
     data.quads = quads;
-    effects->paintWindow(effectWindow(w), static_cast<int>(mask), region, data);
+    effects->paintWindow(w->effect.get(), static_cast<int>(mask), region, data);
     // paint thumbnails on top of window
     paintWindowThumbnails(w, region, data.opacity(), data.brightness(), data.saturation());
     // and desktop thumbnails
@@ -515,7 +515,7 @@ void scene::paintWindowThumbnails(window* w,
                                   qreal brightness,
                                   qreal saturation)
 {
-    auto wImpl = static_cast<effects_window_impl*>(effectWindow(w));
+    auto wImpl = static_cast<effects_window_impl*>(w->effect.get());
     for (QHash<window_thumbnail_item*, QPointer<effects_window_impl>>::const_iterator it
          = wImpl->thumbnails().constBegin();
          it != wImpl->thumbnails().constEnd();
@@ -571,7 +571,7 @@ void scene::paintWindowThumbnails(window* w,
 
 void scene::paintDesktopThumbnails(window* w)
 {
-    auto wImpl = static_cast<effects_window_impl*>(effectWindow(w));
+    auto wImpl = static_cast<effects_window_impl*>(w->effect.get());
     for (QList<desktop_thumbnail_item*>::const_iterator it
          = wImpl->desktopThumbnails().constBegin();
          it != wImpl->desktopThumbnails().constEnd();

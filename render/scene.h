@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <xcb/render.h>
 
 #include <deque>
+#include <memory>
 
 class QOpenGLFramebufferObject;
 
@@ -94,7 +95,7 @@ public:
                                  std::deque<Toplevel*> const& windows,
                                  std::chrono::milliseconds presentTime);
 
-    virtual window* createWindow(Toplevel* toplevel) = 0;
+    virtual std::unique_ptr<render::window> createWindow(Toplevel* toplevel) = 0;
     /**
      * Removes the Toplevel from the scene.
      *

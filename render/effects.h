@@ -713,7 +713,6 @@ inline effect_window_group_impl::effect_window_group_impl(win::x11::group* g)
 }
 
 EffectWindow* effectWindow(Toplevel* w);
-EffectWindow* effectWindow(render::window* w);
 
 inline const render::window* effects_window_impl::sceneWindow() const
 {

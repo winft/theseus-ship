@@ -9,6 +9,7 @@
 #include "compositor_selection_owner.h"
 
 #include "render/gl/scene.h"
+#include "render/window.h"
 #include "render/xrender/scene.h"
 
 #include "perf/ftrace.h"
@@ -235,12 +236,13 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
         if (win->transient()->annexed) {
             win = win::lead_of_annexed_transient(win);
         }
-        if (win->effectWindow()) {
-            const QVariant texture = win->effectWindow()->data(LanczosCacheRole);
-            if (texture.isValid()) {
-                delete static_cast<GLTexture*>(texture.value<void*>());
-                win->effectWindow()->setData(LanczosCacheRole, QVariant());
-            }
+        assert(win->render);
+        assert(win->render->effect);
+
+        auto const texture = win->render->effect->data(LanczosCacheRole);
+        if (texture.isValid()) {
+            delete static_cast<GLTexture*>(texture.value<void*>());
+            win->render->effect->setData(LanczosCacheRole, QVariant());
         }
 
         win->getDamageRegionReply();

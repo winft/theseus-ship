@@ -24,8 +24,7 @@ inline bool compositing()
 template<typename Win>
 auto scene_window(Win* win)
 {
-    auto eff_win = win->effectWindow();
-    return eff_win ? eff_win->sceneWindow() : nullptr;
+    return win->render.get();
 }
 
 /**
@@ -128,13 +127,19 @@ template<typename Scene, typename Win>
 void add_scene_window(Scene& scene, Win& win)
 {
     assert(!scene.m_windows.contains(&win));
-    auto scn_win = scene.createWindow(&win);
+    assert(!win.render);
+
+    win.render = scene.createWindow(&win);
+    auto scn_win = win.render.get();
+
+    win.render->effect = std::make_unique<render::effects_window_impl>(&win);
+
     scene.m_windows[&win] = scn_win;
 
     QObject::connect(&win, &Win::windowClosed, &scene, &Scene::windowClosed);
     QObject::connect(
         &win, &Win::screenScaleChanged, &scene, [&] { scene.windowGeometryShapeChanged(&win); });
-    win.effectWindow()->setSceneWindow(scn_win);
+    win.render->effect->setSceneWindow(scn_win);
 
     win::update_shadow(&win);
     scn_win->updateShadow(win::shadow(&win));
@@ -167,7 +172,6 @@ bool setup_compositing(Win& win, bool add_full_damage)
 
     win.discard_shape();
     win.damage_region = QRegion(QRect(QPoint(), win.size()));
-    win.effect_window = new render::effects_window_impl(&win);
 
     add_scene_window(*render::compositor::self()->scene(), win);
 
@@ -190,10 +194,12 @@ bool setup_compositing(Win& win, bool add_full_damage)
 template<typename Win>
 void elevate(Win* win, bool elevate)
 {
-    if (auto effect_win = win->effectWindow()) {
-        effect_win->elevate(elevate);
-        win->addWorkspaceRepaint(visible_rect(win));
+    if (!win->render) {
+        return;
     }
+
+    win->render->effect->elevate(elevate);
+    win->addWorkspaceRepaint(visible_rect(win));
 }
 
 }

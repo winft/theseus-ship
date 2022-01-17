@@ -160,9 +160,12 @@ void Toplevel::copyToDeleted(Toplevel* c)
     repaints_region = c->repaints_region;
     layer_repaints_region = c->layer_repaints_region;
     is_shape = c->is_shape;
-    effect_window = c->effect_window;
-    if (effect_window != nullptr)
-        effect_window->setWindow(this);
+
+    render = std::move(c->render);
+    if (render) {
+        render->effect->setWindow(this);
+    }
+
     resource_name = c->resourceName();
     resource_class = c->resourceClass();
     m_clientMachine = c->m_clientMachine;
@@ -329,9 +332,9 @@ void Toplevel::finishCompositing(ReleaseReason releaseReason)
     if (kwinApp()->operationMode() == Application::OperationModeX11 && damage_handle == XCB_NONE)
         return;
 
-    if (effect_window->window() == this) { // otherwise it's already passed to Deleted, don't free data
+    if (render) {
         discardWindowPixmap();
-        delete effect_window;
+        render.reset();
     }
 
     if (damage_handle != XCB_NONE &&
@@ -342,7 +345,6 @@ void Toplevel::finishCompositing(ReleaseReason releaseReason)
     damage_handle = XCB_NONE;
     damage_region = QRegion();
     repaints_region = QRegion();
-    effect_window = nullptr;
 }
 
 void Toplevel::discardWindowPixmap()
@@ -596,12 +598,6 @@ void Toplevel::setReadyForPainting()
             Q_EMIT windowShown(this);
         }
     }
-}
-
-void Toplevel::deleteEffectWindow()
-{
-    delete effect_window;
-    effect_window = nullptr;
 }
 
 void Toplevel::checkScreen()

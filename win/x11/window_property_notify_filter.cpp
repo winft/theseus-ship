@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window_property_notify_filter.h"
 
 #include "render/effects.h"
+#include "render/window.h"
 #include "workspace.h"
 
 #include "win/x11/window.h"
@@ -43,9 +44,9 @@ bool window_property_notify_filter::event(xcb_generic_event_t* event)
         Q_EMIT m_effects->propertyNotify(nullptr, pe->atom);
     } else if (const auto c
                = workspace()->findClient(win::x11::predicate_match::window, pe->window)) {
-        Q_EMIT m_effects->propertyNotify(c->effectWindow(), pe->atom);
+        Q_EMIT m_effects->propertyNotify(c->render->effect.get(), pe->atom);
     } else if (const auto c = workspace()->findUnmanaged(pe->window)) {
-        Q_EMIT m_effects->propertyNotify(c->effectWindow(), pe->atom);
+        Q_EMIT m_effects->propertyNotify(c->render->effect.get(), pe->atom);
     }
     return false;
 }

@@ -10,6 +10,8 @@
 
 #include "kwineffects.h"
 
+#include <memory>
+
 class QOpenGLFramebufferObject;
 
 namespace Wrapland::Server
@@ -24,6 +26,7 @@ class Toplevel;
 
 namespace render
 {
+class effects_window_impl;
 class shadow;
 class window_pixmap;
 
@@ -80,6 +83,8 @@ public:
     void referencePreviousPixmap();
     void unreferencePreviousPixmap();
     void invalidateQuadsCache();
+
+    std::unique_ptr<effects_window_impl> effect;
 
 protected:
     WindowQuadList

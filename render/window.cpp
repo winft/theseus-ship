@@ -178,7 +178,7 @@ WindowQuadList window::buildQuads(bool force) const
         ret << m_shadow->shadowQuads();
     }
 
-    effects->buildQuads(toplevel->effectWindow(), ret);
+    effects->buildQuads(effect.get(), ret);
     cached_quad_list.reset(new WindowQuadList(ret));
     return ret;
 }

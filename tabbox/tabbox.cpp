@@ -329,10 +329,10 @@ void TabBoxHandlerImpl::highlightWindows(TabBoxClient *window, QWindow *controll
     }
     QVector<EffectWindow*> windows;
     if (window) {
-        windows << static_cast<TabBoxClientImpl*>(window)->client()->effectWindow();
+        windows << static_cast<TabBoxClientImpl*>(window)->client()->render->effect.get();
     }
     if (auto t = workspace()->findInternal(controller)) {
-        windows << t->effectWindow();
+        windows << t->render->effect.get();
     }
     static_cast<render::effects_handler_impl*>(effects)->highlightWindows(windows);
 }

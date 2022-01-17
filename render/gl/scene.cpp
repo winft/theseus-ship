@@ -1065,9 +1065,9 @@ void scene::doPaintBackground(const QVector<float>& vertices)
     vbo->render(GL_TRIANGLES);
 }
 
-render::window* scene::createWindow(Toplevel* t)
+std::unique_ptr<render::window> scene::createWindow(Toplevel* t)
 {
-    return new window(t, this);
+    return std::make_unique<window>(t, this);
 }
 
 void scene::finalDrawWindow(effects_window_impl* w,
