@@ -89,6 +89,7 @@ public:
 
     std::function<void(Toplevel*, std::shared_ptr<Wrapland::Server::Buffer>&)>
         update_wayland_buffer;
+    std::function<QRectF(Toplevel*, QRectF const&)> get_wayland_viewport;
 
 protected:
     WindowQuadList

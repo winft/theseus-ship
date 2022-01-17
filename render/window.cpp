@@ -14,9 +14,6 @@
 #include "win/geo.h"
 #include "win/transient.h"
 
-#include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/surface.h>
-
 namespace KWin::render
 {
 
@@ -292,28 +289,9 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
         QRectF const contentsRect = *contentsRegion.begin();
         QRectF sourceRect(contentsRect.topLeft() * textureScale,
                           contentsRect.bottomRight() * textureScale);
-
-        if (const auto* surface = toplevel->surface()) {
-            QRectF const rect = surface->state().source_rectangle;
-            if (rect.isValid()) {
-                sourceRect
-                    = QRectF(rect.topLeft() * textureScale, rect.bottomRight() * textureScale);
-            } else {
-                auto buffer = surface->state().buffer;
-                // XWayland client's geometry must be taken from their content placement since the
-                // buffer size is not in sync.
-                if (buffer && !toplevel->isClient()) {
-                    // Try to get the source rectangle from the buffer size, what defines the source
-                    // size without respect to destination size.
-                    auto const origin = contentsRect.topLeft();
-                    auto const rect
-                        = QRectF(origin, buffer->size() - QSize(origin.x(), origin.y()));
-                    Q_ASSERT(rect.isValid());
-                    // Make sure a buffer was set already.
-                    if (rect.isValid()) {
-                        sourceRect = rect;
-                    }
-                }
+        if (get_wayland_viewport) {
+            if (auto vp = get_wayland_viewport(toplevel, contentsRect); vp.isValid()) {
+                sourceRect = vp;
             }
         }
         quads << createQuad(contentsRect, sourceRect);

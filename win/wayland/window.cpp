@@ -92,9 +92,32 @@ bool window::setupCompositing([[maybe_unused]] bool add_full_damage)
 void window::add_scene_window_addon()
 {
     assert(surface());
+
     auto update_buffer_helper = [](auto window, auto& target) { update_buffer(*window, target); };
+    auto get_viewport = [](auto window, auto contentsRect) {
+        if (!window->surface()) {
+            // Can happen on remnant.
+            return QRectF();
+        }
+        if (auto rect = get_scaled_source_rectangle(*window); rect.isValid()) {
+            return rect;
+        }
+
+        auto buffer = window->surface()->state().buffer;
+        if (buffer) {
+            // Try to get the source rectangle from the buffer size, what defines the source
+            // size without respect to destination size.
+            auto const origin = contentsRect.topLeft();
+            auto const rect = QRectF(origin, buffer->size() - QSize(origin.x(), origin.y()));
+            assert(rect.isValid());
+            return rect;
+        }
+
+        return QRectF();
+    };
 
     render->update_wayland_buffer = update_buffer_helper;
+    render->get_wayland_viewport = get_viewport;
     render->shadow_windowing.create = render::wayland::create_shadow<render::shadow, Toplevel>;
     render->shadow_windowing.update = render::wayland::update_shadow<render::shadow>;
 

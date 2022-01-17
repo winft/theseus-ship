@@ -34,6 +34,16 @@ void update_buffer(Win& win, std::shared_ptr<Wrapland::Server::Buffer>& target)
 }
 
 template<typename Win>
+QRectF get_scaled_source_rectangle(Win& win)
+{
+    if (auto const rect = win.surface()->state().source_rectangle; rect.isValid()) {
+        auto scale = win.bufferScale();
+        return QRectF(rect.topLeft() * scale, rect.bottomRight() * scale);
+    }
+    return {};
+}
+
+template<typename Win>
 void setup_scale_scene_notify(Win& win)
 {
     assert(win.surface());

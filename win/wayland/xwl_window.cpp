@@ -26,8 +26,14 @@ bool xwl_window::setupCompositing(bool add_full_damage)
 void xwl_window::add_scene_window_addon()
 {
     auto update_buffer_helper = [](auto window, auto& target) { update_buffer(*window, target); };
+    auto get_viewport = [](auto window, auto /*contentsRect*/) {
+        // XWayland client's geometry must be taken from their content placement since the
+        // buffer size is not in sync. So we only consider an explicitly set source rectangle.
+        return window->surface() ? get_scaled_source_rectangle(*window) : QRectF();
+    };
 
     render->update_wayland_buffer = update_buffer_helper;
+    render->get_wayland_viewport = get_viewport;
 
     if (surface()) {
         setup_scale_scene_notify(*this);
