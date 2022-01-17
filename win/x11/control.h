@@ -797,6 +797,9 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
     init_minimize = win->control->rules().checkMinimize(init_minimize, !isMapped);
     win->user_no_border = win->control->rules().checkNoBorder(win->user_no_border, !isMapped);
 
+    // We setup compositing already here so a desktop presence change can access effects.
+    win->setupCompositing(false);
+
     // Initial desktop placement
     int desk = 0;
     if (session) {
@@ -1116,7 +1119,6 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
             info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
         });
 
-    win->setupCompositing(false);
     return win;
 }
 
