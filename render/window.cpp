@@ -9,8 +9,6 @@
 #include "deco_shadow.h"
 #include "effects.h"
 #include "shadow.h"
-#include "wayland/shadow.h"
-#include "x11/shadow.h"
 
 #include "toplevel.h"
 #include "win/geo.h"
@@ -358,11 +356,8 @@ void window::create_shadow()
 {
     auto shadow = create_deco_shadow<render::shadow>(*toplevel);
 
-    if (!shadow && kwinApp()->operationMode() != Application::OperationModeX11) {
-        shadow = wayland::create_shadow<render::shadow>(*toplevel);
-    }
-    if (!shadow && kwinApp()->x11Connection()) {
-        shadow = x11::create_shadow<render::shadow>(*toplevel);
+    if (!shadow && shadow_windowing.create) {
+        shadow = shadow_windowing.create(*toplevel);
     }
 
     if (shadow) {

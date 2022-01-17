@@ -25,8 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "effects.h"
 #include "toplevel.h"
-#include "wayland/shadow.h"
-#include "x11/shadow.h"
 
 #include "win/deco.h"
 #include "win/scene.h"
@@ -178,20 +176,11 @@ bool shadow::updateShadow()
         return false;
     }
 
-    if (kwinApp()->operationMode() != Application::OperationModeX11) {
-        if (wayland::update_shadow(*this)) {
-            return true;
-        }
+    if (auto& win_update = m_topLevel->render->shadow_windowing.update; win_update) {
+        return win_update(*this);
     }
 
-    auto data = x11::read_shadow_property(m_topLevel->xcb_window());
-    if (data.isEmpty()) {
-        return false;
-    }
-
-    x11::update_shadow(*this, data);
-
-    return true;
+    return false;
 }
 
 void shadow::geometryChanged()

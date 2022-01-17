@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QPixmap>
+#include <functional>
 #include <kwineffects.h>
 
 namespace KDecoration2
@@ -43,6 +44,13 @@ class Toplevel;
 
 namespace render
 {
+
+class shadow;
+
+struct shadow_windowing_integration {
+    std::function<shadow*(Toplevel&)> create;
+    std::function<bool(shadow&)> update;
+};
 
 /**
  * @short Class representing a Window's Shadow to be rendered by the Compositor.

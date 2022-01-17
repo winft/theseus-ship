@@ -16,6 +16,7 @@
 #include "unmanaged.h"
 #include "window_release.h"
 
+#include "render/x11/shadow.h"
 #include "win/deco.h"
 #include "win/layers.h"
 #include "win/remnant.h"
@@ -267,6 +268,12 @@ void window::setBlockingCompositing(bool block)
     if (usedToBlock != blocks_compositing) {
         Q_EMIT blockingCompositingChanged(blocks_compositing ? this : nullptr);
     }
+}
+
+void window::add_scene_window_addon()
+{
+    render->shadow_windowing.create = render::x11::create_shadow<render::shadow, Toplevel>;
+    render->shadow_windowing.update = render::x11::read_and_update_shadow<render::shadow>;
 }
 
 void window::damageNotifyEvent()

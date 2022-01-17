@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "shadow.h"
 #include "types.h"
 
 #include "kwineffects.h"
@@ -27,7 +28,6 @@ class Toplevel;
 namespace render
 {
 class effects_window_impl;
-class shadow;
 class window_pixmap;
 
 class KWIN_EXPORT window
@@ -85,6 +85,7 @@ public:
     void invalidateQuadsCache();
 
     std::unique_ptr<effects_window_impl> effect;
+    shadow_windowing_integration shadow_windowing;
 
 protected:
     WindowQuadList

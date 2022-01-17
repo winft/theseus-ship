@@ -73,8 +73,10 @@ bool update_shadow(Shadow& impl, QVector<uint32_t> const& data)
     return true;
 }
 
-static QVector<uint32_t> read_shadow_property(xcb_window_t id)
+template<typename Win>
+QVector<uint32_t> read_shadow_property(Win const& win)
 {
+    auto id = win.xcb_window();
     if (id == XCB_WINDOW_NONE) {
         return {};
     }
@@ -96,10 +98,20 @@ static QVector<uint32_t> read_shadow_property(xcb_window_t id)
     return ret;
 }
 
+template<typename Shadow>
+bool read_and_update_shadow(Shadow& impl)
+{
+    auto data = read_shadow_property(*impl.m_topLevel);
+    if (data.isEmpty()) {
+        return false;
+    }
+    return update_shadow(impl, data);
+}
+
 template<typename Shadow, typename Win>
 Shadow* create_shadow(Win& win)
 {
-    auto data = read_shadow_property(win.xcb_window());
+    auto data = read_shadow_property(win);
     if (data.isEmpty()) {
         return nullptr;
     }
