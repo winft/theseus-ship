@@ -593,8 +593,6 @@ set(kwin_KDE_LIBS
 
     KDecoration2::KDecoration
     KDecoration2::KDecoration2Private
-
-    PW::KScreenLocker
 )
 
 set(kwin_XLIB_LIBS
@@ -618,14 +616,9 @@ set(kwin_XCB_LIBS
     XCB::XFIXES
 )
 
-set(kwin_WAYLAND_LIBS
-    WraplandClient
-    WraplandServer
-    KF5::WaylandServer
-    Wayland::Cursor
+set(kwin_INPUT_LIBS
     XKB::XKB
     Qt5::XkbCommonSupportPrivate
-    Threads::Threads
 )
 
 set(kwinLibs
@@ -634,8 +627,7 @@ set(kwinLibs
     ${kwin_KDE_LIBS}
     ${kwin_XLIB_LIBS}
     ${kwin_XCB_LIBS}
-    ${kwin_WAYLAND_LIBS}
-    Libinput::Libinput
+    ${kwin_INPUT_LIBS}
 
     # For render code
     kwinxrenderutils
@@ -731,7 +723,6 @@ add_library(kwin_x11_lib STATIC
 
 target_link_libraries(kwin_x11_lib
     kwin
-    kwinxrenderutils
     KF5::Crash
     Qt::X11Extras
 )
@@ -899,10 +890,15 @@ add_library(kwin_wayland_lib SHARED
 target_link_libraries(kwin_wayland_lib
 PUBLIC
   kwin
-  kwinxrenderutils
+  WraplandClient
+  WraplandServer
   Wayland::Server
+  Wayland::Cursor
   wlroots::wlroots
   Pixman::Pixman
+  Libinput::Libinput
+  Threads::Threads
+  PW::KScreenLocker
 )
 
 set_target_properties(kwin_wayland_lib PROPERTIES
