@@ -467,13 +467,30 @@ void configure_request_event(Win* win, xcb_configure_request_event_t* e)
     // may get XRANDR resize event before kwin), but check it's still at the bottom?
 }
 
+template<typename Win>
+void property_notify_event_prepare(Win& win, xcb_property_notify_event_t* event)
+{
+    if (event->window != win.xcb_window()) {
+        // ignore frame/wrapper
+        return;
+    }
+
+    if (event->atom == atoms->wm_client_leader) {
+        win.getWmClientLeader();
+    } else if (event->atom == atoms->kde_net_wm_shadow) {
+        win::update_shadow(&win);
+    } else if (event->atom == atoms->kde_skip_close_animation) {
+        win.getSkipCloseAnimation();
+    }
+}
+
 /**
  * Handles property changes of the client window
  */
 template<typename Win>
 void property_notify_event(Win* win, xcb_property_notify_event_t* e)
 {
-    static_cast<Toplevel*>(win)->Toplevel::propertyNotifyEvent(e);
+    property_notify_event_prepare(*win, e);
 
     if (e->window != win->xcb_window()) {
         // ignore frame/wrapper

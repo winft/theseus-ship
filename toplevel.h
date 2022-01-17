@@ -338,7 +338,6 @@ public:
     void setWindowHandles(xcb_window_t w);
     void disownDataPassedToDeleted();
 
-    virtual void propertyNotifyEvent(xcb_property_notify_event_t *e);
     virtual void damageNotifyEvent();
     void clientMessageEvent(xcb_client_message_event_t *e);
     void discardWindowPixmap();

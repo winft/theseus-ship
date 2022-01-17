@@ -1221,22 +1221,6 @@ void Toplevel::setWindowHandles(xcb_window_t w)
     m_client.reset(w, false);
 }
 
-void Toplevel::propertyNotifyEvent(xcb_property_notify_event_t* e)
-{
-    if (e->window != xcb_window())
-        return; // ignore frame/wrapper
-    switch (e->atom) {
-    default:
-        if (e->atom == atoms->wm_client_leader)
-            getWmClientLeader();
-        else if (e->atom == atoms->kde_net_wm_shadow)
-            win::update_shadow(this);
-        else if (e->atom == atoms->kde_skip_close_animation)
-            getSkipCloseAnimation();
-        break;
-    }
-}
-
 void Toplevel::clientMessageEvent(xcb_client_message_event_t* e)
 {
     if (e->type == atoms->wl_surface_id) {
