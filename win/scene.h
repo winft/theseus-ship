@@ -21,12 +21,6 @@ inline bool compositing()
     return Workspace::self() && Workspace::self()->compositing();
 }
 
-template<typename Win>
-auto scene_window(Win* win)
-{
-    return win->render.get();
-}
-
 /**
  * Returns the pointer to the window's shadow. A shadow is only available if Compositing is enabled
  * and on X11 if the corresponding X window has the shadow property set.
@@ -36,8 +30,7 @@ auto scene_window(Win* win)
 template<typename Win>
 auto shadow(Win* win)
 {
-    auto sc_win = scene_window(win);
-    return sc_win ? sc_win->shadow() : nullptr;
+    return win->render ? win->render->shadow() : nullptr;
 }
 
 template<typename Win>
@@ -93,11 +86,11 @@ auto update_shadow(Win* win)
     if (auto shdw = shadow(win)) {
         dirty_rect = shdw->shadowRegion().boundingRect();
         if (!shdw->updateShadow()) {
-            scene_window(win)->updateShadow(nullptr);
+            win->render->updateShadow(nullptr);
         }
         Q_EMIT win->shadowChanged();
-    } else if (auto sc_win = scene_window(win)) {
-        sc_win->create_shadow();
+    } else if (win->render) {
+        win->render->create_shadow();
     }
 
     if (auto shdw = shadow(win)) {

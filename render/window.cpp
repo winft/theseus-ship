@@ -333,7 +333,7 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
             // will become one too what can cause artficats before the child cleanup timer fires.
             continue;
         }
-        auto sw = win::scene_window(child);
+        auto& sw = child->render;
         if (!sw) {
             continue;
         }

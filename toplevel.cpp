@@ -350,8 +350,8 @@ void Toplevel::finishCompositing(ReleaseReason releaseReason)
 void Toplevel::discardWindowPixmap()
 {
     addDamageFull();
-    if (auto scene_window = win::scene_window(this)) {
-        scene_window->discardPixmap();
+    if (render) {
+        render->discardPixmap();
     }
 }
 
@@ -778,8 +778,8 @@ void Toplevel::discard_shape()
 
 void Toplevel::discard_quads()
 {
-    if (auto scene_window = win::scene_window(this)) {
-        scene_window->invalidateQuadsCache();
+    if (render) {
+        render->invalidateQuadsCache();
         addRepaintFull();
     }
     if (transient()->annexed) {
