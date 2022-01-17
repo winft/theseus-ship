@@ -15,6 +15,25 @@ namespace KWin::win::wayland
 {
 
 template<typename Win>
+void update_buffer(Win& win, std::shared_ptr<Wrapland::Server::Buffer>& target)
+{
+    if (!win.surface()) {
+        return;
+    }
+
+    auto& buffer = win.surface()->state().buffer;
+    if (!buffer) {
+        return;
+    }
+
+    if (target.get() == buffer.get()) {
+        return;
+    }
+
+    target = buffer;
+}
+
+template<typename Win>
 void setup_scale_scene_notify(Win& win)
 {
     assert(win.surface());

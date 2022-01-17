@@ -92,8 +92,12 @@ bool window::setupCompositing([[maybe_unused]] bool add_full_damage)
 void window::add_scene_window_addon()
 {
     assert(surface());
+    auto update_buffer_helper = [](auto window, auto& target) { update_buffer(*window, target); };
+
+    render->update_wayland_buffer = update_buffer_helper;
     render->shadow_windowing.create = render::wayland::create_shadow<render::shadow, Toplevel>;
     render->shadow_windowing.update = render::wayland::update_shadow<render::shadow>;
+
     setup_scale_scene_notify(*this);
 }
 

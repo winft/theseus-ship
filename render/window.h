@@ -87,6 +87,9 @@ public:
     std::unique_ptr<effects_window_impl> effect;
     shadow_windowing_integration shadow_windowing;
 
+    std::function<void(Toplevel*, std::shared_ptr<Wrapland::Server::Buffer>&)>
+        update_wayland_buffer;
+
 protected:
     WindowQuadList
     makeDecorationQuads(const QRect* rects, const QRegion& region, qreal textureScale = 1.0) const;

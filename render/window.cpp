@@ -516,14 +516,8 @@ bool window_pixmap::isValid() const
 void window_pixmap::updateBuffer()
 {
     using namespace Wrapland::Server;
-    if (auto s = surface()) {
-        if (auto b = s->state().buffer) {
-            if (b == m_buffer) {
-                // no change
-                return;
-            }
-            m_buffer = b;
-        }
+    if (m_window->update_wayland_buffer) {
+        m_window->update_wayland_buffer(toplevel(), m_buffer);
     } else if (toplevel()->internalFramebufferObject()) {
         m_fbo = toplevel()->internalFramebufferObject();
     } else if (!toplevel()->internalImageObject().isNull()) {

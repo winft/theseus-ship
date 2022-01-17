@@ -25,6 +25,10 @@ bool xwl_window::setupCompositing(bool add_full_damage)
 
 void xwl_window::add_scene_window_addon()
 {
+    auto update_buffer_helper = [](auto window, auto& target) { update_buffer(*window, target); };
+
+    render->update_wayland_buffer = update_buffer_helper;
+
     if (surface()) {
         setup_scale_scene_notify(*this);
     }
