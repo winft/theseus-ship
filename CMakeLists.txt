@@ -1040,7 +1040,7 @@ ecm_install_configured_files(
   INPUT
     desktop/kde/plasma-kwin_x11.service.in
     desktop/kde/plasma-kwin_wayland.service.in
-  @ONLY DESTINATION ${SYSTEMD_USER_UNIT_INSTALL_DIR}
+  @ONLY DESTINATION ${KDE_INSTALL_SYSTEMDUSERUNITDIR}
 )
 
 install(
