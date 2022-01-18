@@ -11,6 +11,8 @@
 #include "input/event.h"
 #include "input/types.h"
 
+#include <functional>
+
 struct xkb_compose_state;
 struct xkb_context;
 struct xkb_keymap;
@@ -21,13 +23,14 @@ typedef uint32_t xkb_led_index_t;
 typedef uint32_t xkb_keysym_t;
 typedef uint32_t xkb_layout_index_t;
 
-namespace Wrapland::Server
-{
-class Seat;
-}
-
 namespace KWin::input::xkb
 {
+
+struct modifiers {
+    xkb_mod_index_t depressed{0};
+    xkb_mod_index_t latched{0};
+    xkb_mod_index_t locked{0};
+};
 
 class KWIN_EXPORT keyboard : public QObject
 {
@@ -70,7 +73,7 @@ public:
     uint32_t layouts_count() const;
 
     /**
-     * Forwards the current modifier state to the Wayland seat
+     * Forwards the current modifier state to the windowing system.
      */
     void forward_modifiers();
 
@@ -87,7 +90,7 @@ public:
     bool foreign_owned{false};
     bool startup_num_lock_done{false};
 
-    Wrapland::Server::Seat* seat{nullptr};
+    std::function<void(xkb::keymap*, modifiers const&, uint32_t)> forward_modifiers_impl;
 
 Q_SIGNALS:
     void layout_changed();
@@ -116,11 +119,7 @@ private:
         xkb_led_index_t scroll{0};
     } leds_indices;
 
-    struct {
-        xkb_mod_index_t depressed{0};
-        xkb_mod_index_t latched{0};
-        xkb_mod_index_t locked{0};
-    } modifier_state;
+    modifiers modifier_state;
 
     Qt::KeyboardModifiers qt_modifiers_consumed{Qt::NoModifier};
     xkb_compose_state* compose_state{nullptr};
