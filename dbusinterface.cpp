@@ -20,19 +20,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // own
 #include "dbusinterface.h"
-#include "compositingadaptor.h"
 #include "virtualdesktopmanageradaptor.h"
 
 // kwin
 #include "atoms.h"
-#include "render/x11/compositor.h"
 #include "debug/console.h"
 #include <input/platform.h>
 #include "main.h"
 #include "perf/ftrace.h"
 #include "kwinadaptor.h"
-#include "render/platform.h"
-#include "render/scene.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/geo.h"
@@ -40,8 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/virtual_desktops.h"
 #include "workspace.h"
 
-// Qt
-#include <QOpenGLContext>
 #include <QDBusServiceWatcher>
 
 namespace KWin
@@ -246,109 +240,6 @@ QVariantMap DBusInterface::getWindowInfo(const QString &uuid)
         return {};
     }
 }
-
-CompositorDBusInterface::CompositorDBusInterface(render::compositor *parent)
-    : QObject(parent)
-    , m_compositor(parent)
-{
-    connect(m_compositor, &render::compositor::compositingToggled,
-            this, &CompositorDBusInterface::compositingToggled);
-    new CompositingAdaptor(this);
-    QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(QStringLiteral("/Compositor"), this);
-    dbus.connect(QString(), QStringLiteral("/Compositor"), QStringLiteral("org.kde.kwin.Compositing"),
-                 QStringLiteral("reinit"), this, SLOT(reinitialize()));
-}
-
-QString CompositorDBusInterface::compositingNotPossibleReason() const
-{
-    return kwinApp()->get_base().render->compositingNotPossibleReason();
-}
-
-QString CompositorDBusInterface::compositingType() const
-{
-    if (!m_compositor->scene()) {
-        return QStringLiteral("none");
-    }
-    switch (m_compositor->scene()->compositingType()) {
-    case XRenderCompositing:
-        return QStringLiteral("xrender");
-    case OpenGLCompositing:
-        if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
-            return QStringLiteral("gles");
-        } else {
-            return QStringLiteral("gl2");
-        }
-    case QPainterCompositing:
-        return QStringLiteral("qpainter");
-    case NoCompositing:
-    default:
-        return QStringLiteral("none");
-    }
-}
-
-bool CompositorDBusInterface::isActive() const
-{
-    return m_compositor->isActive();
-}
-
-bool CompositorDBusInterface::isCompositingPossible() const
-{
-    return kwinApp()->get_base().render->compositingPossible();
-}
-
-bool CompositorDBusInterface::isOpenGLBroken() const
-{
-    return kwinApp()->get_base().render->openGLCompositingIsBroken();
-}
-
-bool CompositorDBusInterface::platformRequiresCompositing() const
-{
-    return kwinApp()->get_base().render->requiresCompositing();
-}
-
-void CompositorDBusInterface::resume()
-{
-    using X11Compositor = render::x11::compositor;
-
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        static_cast<X11Compositor*>(m_compositor)->resume(X11Compositor::ScriptSuspend);
-    }
-}
-
-void CompositorDBusInterface::suspend()
-{
-    using X11Compositor = render::x11::compositor;
-
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        static_cast<X11Compositor*>(m_compositor)->suspend(X11Compositor::ScriptSuspend);
-    }
-}
-
-void CompositorDBusInterface::reinitialize()
-{
-    m_compositor->reinitialize();
-}
-
-QStringList CompositorDBusInterface::supportedOpenGLPlatformInterfaces() const
-{
-    QStringList interfaces;
-    bool supportsGlx = false;
-#if HAVE_EPOXY_GLX
-    supportsGlx = (kwinApp()->operationMode() == Application::OperationModeX11);
-#endif
-    if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
-        supportsGlx = false;
-    }
-    if (supportsGlx) {
-        interfaces << QStringLiteral("glx");
-    }
-    interfaces << QStringLiteral("egl");
-    return interfaces;
-}
-
-
-
 
 VirtualDesktopManagerDBusInterface::VirtualDesktopManagerDBusInterface(win::virtual_desktop_manager *parent)
     : QObject(parent)

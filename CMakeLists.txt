@@ -437,6 +437,7 @@ set(kwin_SRCS
     osd.cpp
     render/compositor.cpp
     render/cursor.cpp
+    render/dbus/compositing.cpp
     render/effect_loader.cpp
     render/effects.cpp
     render/gl/backend.cpp
@@ -546,7 +547,11 @@ kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_book_settings_base.kcfgc)
 
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.xml dbusinterface.h KWin::DBusInterface)
-qt5_add_dbus_adaptor(kwin_SRCS org.kde.kwin.Compositing.xml dbusinterface.h KWin::CompositorDBusInterface)
+qt5_add_dbus_adaptor(kwin_SRCS
+  render/dbus/org.kde.kwin.Compositing.xml
+  render/dbus/compositing.h
+  KWin::render::dbus::compositing
+)
 qt5_add_dbus_adaptor(kwin_SRCS
     org.kde.kwin.ColorCorrect.xml
     render/post/color_correct_dbus_interface.h
@@ -954,7 +959,7 @@ install(
         org.kde.KWin.VirtualDesktopManager.xml
         org.kde.KWin.xml
         org.kde.kwin.ColorCorrect.xml
-        org.kde.kwin.Compositing.xml
+        render/dbus/org.kde.kwin.Compositing.xml
         org.kde.kwin.Effects.xml
 
         # Still needs to be installed as plasma-workspace expects it at compile time.
