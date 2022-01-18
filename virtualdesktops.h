@@ -1,34 +1,20 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2012 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2012 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #ifndef KWIN_VIRTUAL_DESKTOPS_H
 #define KWIN_VIRTUAL_DESKTOPS_H
-// KWin
-#include <kwinglobals.h>
+
 #include <kwin_export.h>
-// Qt includes
+#include <kwinglobals.h>
+
 #include <QObject>
 #include <QPoint>
 #include <QPointer>
 #include <QSize>
 
-// KDE includes
 #include <KConfig>
 #include <KSharedConfig>
 
@@ -44,7 +30,8 @@ class PlasmaVirtualDesktopManager;
 }
 }
 
-namespace KWin {
+namespace KWin
+{
 
 class KWIN_EXPORT VirtualDesktop : public QObject
 {
@@ -52,22 +39,26 @@ class KWIN_EXPORT VirtualDesktop : public QObject
     Q_PROPERTY(QByteArray id READ id CONSTANT)
     Q_PROPERTY(uint x11DesktopNumber READ x11DesktopNumber NOTIFY x11DesktopNumberChanged)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
+
 public:
-    explicit VirtualDesktop(QObject *parent = nullptr);
+    explicit VirtualDesktop(QObject* parent = nullptr);
     ~VirtualDesktop() override;
 
-    void setId(const QByteArray &id);
-    QByteArray id() const {
+    void setId(const QByteArray& id);
+    QByteArray id() const
+    {
         return m_id;
     }
 
-    void setName(const QString &name);
-    QString name() const {
+    void setName(const QString& name);
+    QString name() const
+    {
         return m_name;
     }
 
     void setX11DesktopNumber(uint number);
-    uint x11DesktopNumber() const {
+    uint x11DesktopNumber() const
+    {
         return m_x11DesktopNumber;
     }
 
@@ -83,7 +74,6 @@ private:
     QByteArray m_id;
     QString m_name;
     int m_x11DesktopNumber = 0;
-
 };
 
 /**
@@ -99,7 +89,11 @@ class KWIN_EXPORT VirtualDesktopGrid
 public:
     VirtualDesktopGrid();
     ~VirtualDesktopGrid();
-    void update(const QSize &size, Qt::Orientation orientation, const QVector<VirtualDesktop*> &desktops);
+
+    void update(const QSize& size,
+                Qt::Orientation orientation,
+                const QVector<VirtualDesktop*>& desktops);
+
     /**
      * @returns The coords of desktop @a id in grid units.
      */
@@ -107,15 +101,17 @@ public:
     /**
      * @returns The coords of desktop @a vd in grid units.
      */
-    QPoint gridCoords(VirtualDesktop *vd) const;
+    QPoint gridCoords(VirtualDesktop* vd) const;
+
     /**
      * @returns The desktop at the point @a coords or 0 if no desktop exists at that
      * point. @a coords is to be in grid units.
      */
-    VirtualDesktop *at(const QPoint &coords) const;
+    VirtualDesktop* at(const QPoint& coords) const;
     int width() const;
     int height() const;
-    const QSize &size() const;
+    const QSize& size() const;
+
 private:
     QSize m_size;
     QVector<QVector<VirtualDesktop*>> m_grid;
@@ -130,9 +126,9 @@ private:
  * changes to the number of virtual desktops and the current virtual desktop need to go through this
  * manager.
  *
- * On all changes a signal is emitted and interested parties should connect to the signal. The manager
- * itself does not interact with other parts of the system. E.g. it does not hide/show windows of
- * desktop changes. This is outside the scope of this manager.
+ * On all changes a signal is emitted and interested parties should connect to the signal. The
+ * manager itself does not interact with other parts of the system. E.g. it does not hide/show
+ * windows of desktop changes. This is outside the scope of this manager.
  *
  * Internally the manager organizes the virtual desktops in a grid allowing to navigate over the
  * virtual desktops. For this a set of convenient methods are available which allow to get the id
@@ -142,6 +138,7 @@ private:
 class KWIN_EXPORT VirtualDesktopManager : public QObject
 {
     Q_OBJECT
+
     /**
      * The number of virtual desktops currently available.
      * The ids of the virtual desktops are in the range [1, VirtualDesktopManager::maximum()].
@@ -154,17 +151,19 @@ class KWIN_EXPORT VirtualDesktopManager : public QObject
     /**
      * Whether navigation in the desktop layout wraps around at the borders.
      */
-    Q_PROPERTY(bool navigationWrappingAround READ isNavigationWrappingAround WRITE setNavigationWrappingAround NOTIFY navigationWrappingAroundChanged)
+    Q_PROPERTY(bool navigationWrappingAround READ isNavigationWrappingAround WRITE
+                   setNavigationWrappingAround NOTIFY navigationWrappingAroundChanged)
+
 public:
     ~VirtualDesktopManager() override;
     /**
      * @internal, for X11 case
      */
-    void setRootInfo(NETRootInfo *info);
+    void setRootInfo(NETRootInfo* info);
     /**
      * @internal, for Wayland case
      */
-    void setVirtualDesktopManagement(Wrapland::Server::PlasmaVirtualDesktopManager *management);
+    void setVirtualDesktopManagement(Wrapland::Server::PlasmaVirtualDesktopManager* management);
     /**
      * @internal
      */
@@ -192,13 +191,13 @@ public:
      * @see setCurrent
      * @see currentChanged
      */
-    VirtualDesktop *currentDesktop() const;
+    VirtualDesktop* currentDesktop() const;
     /**
      * Moves to the desktop through the algorithm described by Direction.
      * @param wrap If @c true wraps around to the other side of the layout
      * @see setCurrent
      */
-    template <typename Direction>
+    template<typename Direction>
     void moveTo(bool wrap = false);
 
     /**
@@ -216,7 +215,7 @@ public:
     /**
      * @returns The layout aware virtual desktop grid used by this manager.
      */
-    const VirtualDesktopGrid &grid() const;
+    const VirtualDesktopGrid& grid() const;
 
     /**
      * @returns The ID of the desktop above desktop @a id. Wraps around to the bottom of
@@ -227,7 +226,7 @@ public:
      * @returns The desktop above desktop @a desktop. Wraps around to the bottom of
      * the layout if @a wrap is set. If @a desktop is @c null use the current one.
      */
-    VirtualDesktop *above(VirtualDesktop *desktop, bool wrap = true) const;
+    VirtualDesktop* above(VirtualDesktop* desktop, bool wrap = true) const;
     /**
      * @returns The ID of the desktop to the right of desktop @a id. Wraps around to the
      * left of the layout if @a wrap is set. If @a id is not set use the current one.
@@ -237,7 +236,7 @@ public:
      * @returns The desktop to the right of desktop @a desktop. Wraps around to the
      * left of the layout if @a wrap is set. If @a desktop is @c null use the current one.
      */
-    VirtualDesktop *toRight(VirtualDesktop *desktop, bool wrap = true) const;
+    VirtualDesktop* toRight(VirtualDesktop* desktop, bool wrap = true) const;
     /**
      * @returns The ID of the desktop below desktop @a id. Wraps around to the top of the
      * layout if @a wrap is set. If @a id is not set use the current one.
@@ -247,7 +246,7 @@ public:
      * @returns The desktop below desktop @a desktop. Wraps around to the top of the
      * layout if @a wrap is set. If @a desktop is @c null use the current one.
      */
-    VirtualDesktop *below(VirtualDesktop *desktop, bool wrap = true) const;
+    VirtualDesktop* below(VirtualDesktop* desktop, bool wrap = true) const;
     /**
      * @returns The ID of the desktop to the left of desktop @a id. Wraps around to the
      * right of the layout if @a wrap is set. If @a id is not set use the current one.
@@ -257,45 +256,48 @@ public:
      * @returns The desktop to the left of desktop @a desktop. Wraps around to the
      * right of the layout if @a wrap is set. If @a desktop is @c null use the current one.
      */
-    VirtualDesktop *toLeft(VirtualDesktop *desktop, bool wrap = true) const;
+    VirtualDesktop* toLeft(VirtualDesktop* desktop, bool wrap = true) const;
     /**
      * @returns The desktop after the desktop @a desktop. Wraps around to the first
      * desktop if @a wrap is set. If @a desktop is @c null use the current desktop.
      */
-    VirtualDesktop *next(VirtualDesktop *desktop = nullptr, bool wrap = true) const;
+    VirtualDesktop* next(VirtualDesktop* desktop = nullptr, bool wrap = true) const;
     /**
      * @returns The desktop in front of the desktop @a desktop. Wraps around to the
      * last desktop if @a wrap is set. If @a desktop is @c null use the current desktop.
      */
-    VirtualDesktop *previous(VirtualDesktop *desktop = nullptr, bool wrap = true) const;
+    VirtualDesktop* previous(VirtualDesktop* desktop = nullptr, bool wrap = true) const;
 
     void initShortcuts();
 
     /**
      * @returns all currently managed VirtualDesktops
      */
-    QVector<VirtualDesktop*> desktops() const {
+    QVector<VirtualDesktop*> desktops() const
+    {
         return m_desktops;
     }
 
     /**
      * @returns The VirtualDesktop for the x11 @p id, if no such VirtualDesktop @c null is returned
      */
-    VirtualDesktop *desktopForX11Id(uint id) const;
+    VirtualDesktop* desktopForX11Id(uint id) const;
 
     /**
-     * @returns The VirtualDesktop for the internal desktop string @p id, if no such VirtualDesktop @c null is returned
+     * @returns The VirtualDesktop for the internal desktop string @p id, if no such VirtualDesktop
+     * @c null is returned
      */
-    VirtualDesktop *desktopForId(const QByteArray &id) const;
+    VirtualDesktop* desktopForId(const QByteArray& id) const;
 
     /**
      * Create a new virtual desktop at the requested position.
-     * The difference with setCount is that setCount always adds new desktops at the end of the chain. The Id is automatically generated.
+     * The difference with setCount is that setCount always adds new desktops at the end of the
+     * chain. The Id is automatically generated.
      * @param position The position of the desktop. It should be in range [0, count].
      * @param name The name for the new desktop, if empty the default name will be used.
      * @returns the new VirtualDesktop, nullptr if we reached the maximum number of desktops
      */
-     VirtualDesktop *createVirtualDesktop(uint position, const QString &name = QString());
+    VirtualDesktop* createVirtualDesktop(uint position, const QString& name = QString());
 
     /**
      * Remove the virtual desktop identified by id, if it exists
@@ -303,7 +305,7 @@ public:
      * not only the last one.
      * @param id the string id of the desktop to remove
      */
-    void removeVirtualDesktop(const QByteArray &id);
+    void removeVirtualDesktop(const QByteArray& id);
 
     /**
      * Updates the net root info for new number of desktops
@@ -324,9 +326,9 @@ public Q_SLOTS:
      * It is the callers responsibility to either check the numberOfDesktops or connect to the
      * countChanged signal.
      *
-     * In case the @ref current desktop is on a desktop higher than the new count, the current desktop
-     * is changed to be the new desktop with highest id. In that situation the signal desktopRemoved
-     * is emitted.
+     * In case the @ref current desktop is on a desktop higher than the new count, the current
+     * desktop is changed to be the new desktop with highest id. In that situation the signal
+     * desktopRemoved is emitted.
      * @param count The new number of desktops to use
      * @see count
      * @see maximum
@@ -350,9 +352,10 @@ public Q_SLOTS:
      * @see currentChanged
      * @see moveTo
      */
-    bool setCurrent(VirtualDesktop *current);
+    bool setCurrent(VirtualDesktop* current);
     /**
-     * Updates the layout to a new number of rows. The number of columns will be calculated accordingly
+     * Updates the layout to a new number of rows. The number of columns will be calculated
+     * accordingly
      */
     void setRows(uint rows);
     /**
@@ -392,7 +395,7 @@ Q_SIGNALS:
      * A new desktop has been created
      * @param desktop the new just crated desktop
      */
-    void desktopCreated(KWin::VirtualDesktop *desktop);
+    void desktopCreated(KWin::VirtualDesktop* desktop);
 
     /**
      * A desktop has been removed and is about to be deleted
@@ -400,7 +403,7 @@ Q_SIGNALS:
      *          It's guaranteed to stil la valid pointer when the signal arrives,
      *          but it's about to be deleted.
      */
-    void desktopRemoved(KWin::VirtualDesktop *desktop);
+    void desktopRemoved(KWin::VirtualDesktop* desktop);
 
     /**
      * Signal emitted whenever the current desktop changes.
@@ -455,7 +458,8 @@ private:
     /**
      * Generate a desktop layout from EWMH _NET_DESKTOP_LAYOUT property parameters.
      */
-    void setNETDesktopLayout(Qt::Orientation orientation, uint width, uint height, int startingCorner);
+    void
+    setNETDesktopLayout(Qt::Orientation orientation, uint width, uint height, int startingCorner);
     /**
      * @returns A default name for the given @p desktop
      */
@@ -474,7 +478,11 @@ private:
      * @param key The global shortcut for the action
      * @param slot The slot to invoke when the action is triggered
      */
-    QAction *addAction(const QString &name, const KLocalizedString &label, uint value, const QKeySequence &key, void (VirtualDesktopManager::*slot)());
+    QAction* addAction(const QString& name,
+                       const KLocalizedString& label,
+                       uint value,
+                       const QKeySequence& key,
+                       void (VirtualDesktopManager::*slot)());
     /**
      * Creates an action and connects it to the @p slot in this Manager.
      * Overloaded method for the case that no additional value needs to be passed to the action and
@@ -483,7 +491,8 @@ private:
      * @param label The localized name for the action to be created
      * @param slot The slot to invoke when the action is triggered
      */
-    QAction *addAction(const QString &name, const QString &label, void (VirtualDesktopManager::*slot)());
+    QAction*
+    addAction(const QString& name, const QString& label, void (VirtualDesktopManager::*slot)());
 
     QVector<VirtualDesktop*> m_desktops;
     QPointer<VirtualDesktop> m_current;
@@ -491,8 +500,8 @@ private:
     bool m_navigationWrapsAround;
     VirtualDesktopGrid m_grid;
     // TODO: QPointer
-    NETRootInfo *m_rootInfo;
-    Wrapland::Server::PlasmaVirtualDesktopManager *m_virtualDesktopManagement = nullptr;
+    NETRootInfo* m_rootInfo;
+    Wrapland::Server::PlasmaVirtualDesktopManager* m_virtualDesktopManagement = nullptr;
     KSharedConfig::Ptr m_config;
 
     KWIN_SINGLETON_VARIABLE(VirtualDesktopManager, s_manager)
@@ -505,21 +514,28 @@ private:
 class DesktopAbove
 {
 public:
-    DesktopAbove() {}
+    DesktopAbove()
+    {
+    }
     /**
-     * @param desktop The desktop from which the desktop above should be selected. If @c 0 the current desktop is used
+     * @param desktop The desktop from which the desktop above should be selected. If @c 0 the
+     * current desktop is used
      * @param wrap Whether to wrap around if already topmost desktop
      * @returns Id of the desktop above @p desktop
      */
-    uint operator() (uint desktop, bool wrap) {
-        return (*this)(VirtualDesktopManager::self()->desktopForX11Id(desktop), wrap)->x11DesktopNumber();
+    uint operator()(uint desktop, bool wrap)
+    {
+        return (*this)(VirtualDesktopManager::self()->desktopForX11Id(desktop), wrap)
+            ->x11DesktopNumber();
     }
     /**
-     * @param desktop The desktop from which the desktop above should be selected. If @c 0 the current desktop is used
+     * @param desktop The desktop from which the desktop above should be selected. If @c 0 the
+     * current desktop is used
      * @param wrap Whether to wrap around if already topmost desktop
      * @returns the desktop above @p desktop
      */
-    VirtualDesktop *operator() (VirtualDesktop *desktop, bool wrap) {
+    VirtualDesktop* operator()(VirtualDesktop* desktop, bool wrap)
+    {
         return VirtualDesktopManager::self()->above(desktop, wrap);
     }
 };
@@ -531,21 +547,28 @@ public:
 class DesktopBelow
 {
 public:
-    DesktopBelow() {}
+    DesktopBelow()
+    {
+    }
     /**
-     * @param desktop The desktop from which the desktop below should be selected. If @c 0 the current desktop is used
+     * @param desktop The desktop from which the desktop below should be selected. If @c 0 the
+     * current desktop is used
      * @param wrap Whether to wrap around if already lowest desktop
      * @returns Id of the desktop below @p desktop
      */
-    uint operator() (uint desktop, bool wrap) {
-        return (*this)(VirtualDesktopManager::self()->desktopForX11Id(desktop), wrap)->x11DesktopNumber();
+    uint operator()(uint desktop, bool wrap)
+    {
+        return (*this)(VirtualDesktopManager::self()->desktopForX11Id(desktop), wrap)
+            ->x11DesktopNumber();
     }
     /**
-     * @param desktop The desktop from which the desktop below should be selected. If @c 0 the current desktop is used
+     * @param desktop The desktop from which the desktop below should be selected. If @c 0 the
+     * current desktop is used
      * @param wrap Whether to wrap around if already lowest desktop
      * @returns the desktop below @p desktop
      */
-    VirtualDesktop *operator() (VirtualDesktop *desktop, bool wrap) {
+    VirtualDesktop* operator()(VirtualDesktop* desktop, bool wrap)
+    {
         return VirtualDesktopManager::self()->below(desktop, wrap);
     }
 };
@@ -557,21 +580,28 @@ public:
 class DesktopLeft
 {
 public:
-    DesktopLeft() {}
+    DesktopLeft()
+    {
+    }
     /**
-     * @param desktop The desktop from which the desktop on the left should be selected. If @c 0 the current desktop is used
+     * @param desktop The desktop from which the desktop on the left should be selected. If @c 0 the
+     * current desktop is used
      * @param wrap Whether to wrap around if already leftmost desktop
      * @returns Id of the desktop left of @p desktop
      */
-    uint operator() (uint desktop, bool wrap) {
-        return (*this)(VirtualDesktopManager::self()->desktopForX11Id(desktop), wrap)->x11DesktopNumber();
+    uint operator()(uint desktop, bool wrap)
+    {
+        return (*this)(VirtualDesktopManager::self()->desktopForX11Id(desktop), wrap)
+            ->x11DesktopNumber();
     }
     /**
-     * @param desktop The desktop from which the desktop on the left should be selected. If @c 0 the current desktop is used
+     * @param desktop The desktop from which the desktop on the left should be selected. If @c 0 the
+     * current desktop is used
      * @param wrap Whether to wrap around if already leftmost desktop
      * @returns the desktop left of @p desktop
      */
-    VirtualDesktop *operator() (VirtualDesktop *desktop, bool wrap) {
+    VirtualDesktop* operator()(VirtualDesktop* desktop, bool wrap)
+    {
         return VirtualDesktopManager::self()->toLeft(desktop, wrap);
     }
 };
@@ -583,21 +613,28 @@ public:
 class DesktopRight
 {
 public:
-    DesktopRight() {}
+    DesktopRight()
+    {
+    }
     /**
-     * @param desktop The desktop from which the desktop on the right should be selected. If @c 0 the current desktop is used
+     * @param desktop The desktop from which the desktop on the right should be selected. If @c 0
+     * the current desktop is used
      * @param wrap Whether to wrap around if already rightmost desktop
      * @returns Id of the desktop right of @p desktop
      */
-    uint operator() (uint desktop, bool wrap) {
-        return (*this)(VirtualDesktopManager::self()->desktopForX11Id(desktop), wrap)->x11DesktopNumber();
+    uint operator()(uint desktop, bool wrap)
+    {
+        return (*this)(VirtualDesktopManager::self()->desktopForX11Id(desktop), wrap)
+            ->x11DesktopNumber();
     }
     /**
-     * @param desktop The desktop from which the desktop on the right should be selected. If @c 0 the current desktop is used
+     * @param desktop The desktop from which the desktop on the right should be selected. If @c 0
+     * the current desktop is used
      * @param wrap Whether to wrap around if already rightmost desktop
      * @returns the desktop right of @p desktop
      */
-    VirtualDesktop *operator() (VirtualDesktop *desktop, bool wrap) {
+    VirtualDesktop* operator()(VirtualDesktop* desktop, bool wrap)
+    {
         return VirtualDesktopManager::self()->toRight(desktop, wrap);
     }
 };
@@ -609,21 +646,28 @@ public:
 class DesktopNext
 {
 public:
-    DesktopNext() {}
+    DesktopNext()
+    {
+    }
     /**
-     * @param desktop The desktop from which the next desktop should be selected. If @c 0 the current desktop is used
+     * @param desktop The desktop from which the next desktop should be selected. If @c 0 the
+     * current desktop is used
      * @param wrap Whether to wrap around if already last desktop
      * @returns Id of the next desktop
      */
-    uint operator() (uint desktop, bool wrap) {
-        return (*this)(VirtualDesktopManager::self()->desktopForX11Id(desktop), wrap)->x11DesktopNumber();
+    uint operator()(uint desktop, bool wrap)
+    {
+        return (*this)(VirtualDesktopManager::self()->desktopForX11Id(desktop), wrap)
+            ->x11DesktopNumber();
     }
     /**
-     * @param desktop The desktop from which the next desktop should be selected. If @c 0 the current desktop is used
+     * @param desktop The desktop from which the next desktop should be selected. If @c 0 the
+     * current desktop is used
      * @param wrap Whether to wrap around if already last desktop
      * @returns the next desktop
      */
-    VirtualDesktop *operator() (VirtualDesktop *desktop, bool wrap) {
+    VirtualDesktop* operator()(VirtualDesktop* desktop, bool wrap)
+    {
         return VirtualDesktopManager::self()->next(desktop, wrap);
     }
 };
@@ -635,21 +679,28 @@ public:
 class DesktopPrevious
 {
 public:
-    DesktopPrevious() {}
+    DesktopPrevious()
+    {
+    }
     /**
-     * @param desktop The desktop from which the previous desktop should be selected. If @c 0 the current desktop is used
+     * @param desktop The desktop from which the previous desktop should be selected. If @c 0 the
+     * current desktop is used
      * @param wrap Whether to wrap around if already first desktop
      * @returns Id of the previous desktop
      */
-    uint operator() (uint desktop, bool wrap) {
-        return (*this)(VirtualDesktopManager::self()->desktopForX11Id(desktop), wrap)->x11DesktopNumber();
+    uint operator()(uint desktop, bool wrap)
+    {
+        return (*this)(VirtualDesktopManager::self()->desktopForX11Id(desktop), wrap)
+            ->x11DesktopNumber();
     }
     /**
-     * @param desktop The desktop from which the previous desktop should be selected. If @c 0 the current desktop is used
+     * @param desktop The desktop from which the previous desktop should be selected. If @c 0 the
+     * current desktop is used
      * @param wrap Whether to wrap around if already first desktop
      * @returns the previous desktop
      */
-    VirtualDesktop *operator() (VirtualDesktop *desktop, bool wrap) {
+    VirtualDesktop* operator()(VirtualDesktop* desktop, bool wrap)
+    {
         return VirtualDesktopManager::self()->previous(desktop, wrap);
     }
 };
@@ -661,70 +712,63 @@ public:
  * @param wrap Whether desktop navigation wraps around at the borders of the layout
  * @returns The next desktop in specified direction
  */
-template <typename Direction>
+template<typename Direction>
 uint getDesktop(int desktop = 0, bool wrap = true);
 
-template <typename Direction>
+template<typename Direction>
 uint getDesktop(int d, bool wrap)
 {
     Direction direction;
     return direction(d, wrap);
 }
 
-inline
-int VirtualDesktopGrid::width() const
+inline int VirtualDesktopGrid::width() const
 {
     return m_size.width();
 }
 
-inline
-int VirtualDesktopGrid::height() const
+inline int VirtualDesktopGrid::height() const
 {
     return m_size.height();
 }
 
-inline
-const QSize &VirtualDesktopGrid::size() const
+inline const QSize& VirtualDesktopGrid::size() const
 {
     return m_size;
 }
 
-inline
-uint VirtualDesktopManager::maximum()
+inline uint VirtualDesktopManager::maximum()
 {
     return 20;
 }
 
-inline
-uint VirtualDesktopManager::count() const
+inline uint VirtualDesktopManager::count() const
 {
     return m_desktops.count();
 }
 
-inline
-bool VirtualDesktopManager::isNavigationWrappingAround() const
+inline bool VirtualDesktopManager::isNavigationWrappingAround() const
 {
     return m_navigationWrapsAround;
 }
 
-inline
-void VirtualDesktopManager::setConfig(KSharedConfig::Ptr config)
+inline void VirtualDesktopManager::setConfig(KSharedConfig::Ptr config)
 {
     m_config = std::move(config);
 }
 
-inline
-const VirtualDesktopGrid &VirtualDesktopManager::grid() const
+inline const VirtualDesktopGrid& VirtualDesktopManager::grid() const
 {
     return m_grid;
 }
 
-template <typename Direction>
+template<typename Direction>
 void VirtualDesktopManager::moveTo(bool wrap)
 {
     Direction functor;
     setCurrent(functor(nullptr, wrap));
 }
 
-} // namespace KWin
+}
+
 #endif
