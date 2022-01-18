@@ -35,7 +35,7 @@ bool add_to_devices(Dev dev, Target& target, Ctrl const&... cmp)
 
     auto check_add_device = [&dev, &target](auto cmp) {
         if (cmp && cmp->metadata.sys_name == dev->control->metadata.sys_name) {
-            target = dev->control;
+            target = dev->control.get();
             return true;
         }
         return false;
@@ -95,7 +95,7 @@ void add_device(Dev dev, Manager manager)
     }
 
     auto sys_name = dev->control->metadata.sys_name;
-    manager->devices.push_back(new device(dev->control, manager));
+    manager->devices.push_back(new device(dev->control.get(), manager));
 
     Q_EMIT manager->deviceAdded(sys_name.c_str());
 }
@@ -110,24 +110,25 @@ bool remove_from_devices(Dev dev, Dbus_dev dbus_dev)
     auto& pc = dbus_dev->pointer_ctrl;
     auto& sc = dbus_dev->switch_ctrl;
     auto& tc = dbus_dev->touch_ctrl;
+    auto dev_ctrl = dev->control.get();
 
     if constexpr (std::is_same_v<decltype(dev), input::keyboard*>) {
-        if (kc == dev->control) {
+        if (kc == dev_ctrl) {
             kc = nullptr;
             return !(pc || sc || tc);
         }
     } else if constexpr (std::is_same_v<decltype(dev), input::pointer*>) {
-        if (pc == dev->control) {
+        if (pc == dev_ctrl) {
             pc = nullptr;
             return !(kc || sc || tc);
         }
     } else if constexpr (std::is_same_v<decltype(dev), input::switch_device*>) {
-        if (sc == dev->control) {
+        if (sc == dev_ctrl) {
             sc = nullptr;
             return !(kc || pc || tc);
         }
     } else if constexpr (std::is_same_v<decltype(dev), input::touch*>) {
-        if (tc == dev->control) {
+        if (tc == dev_ctrl) {
             tc = nullptr;
             return !(kc || pc || sc);
         }

@@ -122,7 +122,7 @@ QVector<layout_names_v2> keyboard_layouts_v2::getLayoutsList(uint keyboard) cons
 
 void keyboard_layouts_v2::handle_keyboard_added(input::keyboard* keyboard)
 {
-    auto ctrl = keyboard->control;
+    auto& ctrl = keyboard->control;
     if (!ctrl || !ctrl->is_alpha_numeric_keyboard()) {
         return;
     }

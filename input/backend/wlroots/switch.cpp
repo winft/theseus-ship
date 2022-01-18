@@ -47,7 +47,7 @@ switch_device::switch_device(wlr_input_device* dev, input::platform* platform)
     backend = dev->switch_device;
 
     if (auto libinput = get_libinput_device(dev)) {
-        control = new switch_control(libinput, platform);
+        control = std::make_unique<switch_control>(libinput, platform);
     }
 
     destroyed.receiver = this;

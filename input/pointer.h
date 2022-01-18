@@ -22,7 +22,7 @@ class KWIN_EXPORT pointer : public QObject
     Q_OBJECT
 public:
     input::platform* platform;
-    control::pointer* control{nullptr};
+    std::unique_ptr<control::pointer> control;
 
     pointer(input::platform* platform);
     pointer(pointer const&) = delete;
