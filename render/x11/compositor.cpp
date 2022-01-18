@@ -280,19 +280,32 @@ bool compositor::prepare_composition(QRegion& repaints, std::deque<Toplevel*>& w
 
 render::scene* compositor::create_scene(QVector<CompositingType> const& support)
 {
+    render::scene* scene{nullptr};
+
     for (auto type : support) {
         if (type == OpenGLCompositing) {
             qCDebug(KWIN_CORE) << "Creating OpenGL scene.";
-            return gl::create_scene(*this);
+            scene = gl::create_scene(*this);
+            break;
         }
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
         if (type == XRenderCompositing) {
             qCDebug(KWIN_CORE) << "Creating XRender scene.";
-            return xrender::create_scene(*this);
+            scene = xrender::create_scene(*this);
+            break;
         }
 #endif
     }
-    return nullptr;
+
+    if (scene) {
+        scene->windowing_integration.handle_viewport_limits_alarm = [this] {
+            qCDebug(KWIN_CORE) << "Suspending compositing because viewport limits are not met";
+            QTimer::singleShot(
+                0, this, [this] { suspend(render::x11::compositor::AllReasonSuspend); });
+        };
+    }
+
+    return scene;
 }
 
 std::deque<Toplevel*> compositor::performCompositing()

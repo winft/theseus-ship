@@ -63,6 +63,10 @@ class shadow;
 class window;
 class window_pixmap;
 
+struct scene_windowing_integration {
+    std::function<void(void)> handle_viewport_limits_alarm;
+};
+
 // The base class for compositing backends.
 class KWIN_EXPORT scene : public QObject
 {
@@ -172,6 +176,7 @@ public:
 
     QHash<Toplevel*, window*> m_windows;
     render::compositor& compositor;
+    scene_windowing_integration windowing_integration;
 
 Q_SIGNALS:
     void frameRendered();
