@@ -4,30 +4,25 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_VIRTUAL_DESKTOPS_H
-#define KWIN_VIRTUAL_DESKTOPS_H
+#pragma once
 
-#include <kwin_export.h>
-#include <kwinglobals.h>
+#include "kwin_export.h"
+#include "kwinglobals.h"
 
+#include <KConfig>
+#include <KSharedConfig>
 #include <QObject>
 #include <QPoint>
 #include <QPointer>
 #include <QSize>
 
-#include <KConfig>
-#include <KSharedConfig>
-
 class KLocalizedString;
 class NETRootInfo;
 class QAction;
 
-namespace Wrapland
-{
-namespace Server
+namespace Wrapland::Server
 {
 class PlasmaVirtualDesktopManager;
-}
 }
 
 namespace KWin
@@ -44,13 +39,13 @@ public:
     explicit VirtualDesktop(QObject* parent = nullptr);
     ~VirtualDesktop() override;
 
-    void setId(const QByteArray& id);
+    void setId(QByteArray const& id);
     QByteArray id() const
     {
         return m_id;
     }
 
-    void setName(const QString& name);
+    void setName(QString const& name);
     QString name() const
     {
         return m_name;
@@ -90,9 +85,9 @@ public:
     VirtualDesktopGrid();
     ~VirtualDesktopGrid();
 
-    void update(const QSize& size,
+    void update(QSize const& size,
                 Qt::Orientation orientation,
-                const QVector<VirtualDesktop*>& desktops);
+                QVector<VirtualDesktop*> const& desktops);
 
     /**
      * @returns The coords of desktop @a id in grid units.
@@ -110,7 +105,7 @@ public:
     VirtualDesktop* at(const QPoint& coords) const;
     int width() const;
     int height() const;
-    const QSize& size() const;
+    QSize const& size() const;
 
 private:
     QSize m_size;
@@ -287,7 +282,7 @@ public:
      * @returns The VirtualDesktop for the internal desktop string @p id, if no such VirtualDesktop
      * @c null is returned
      */
-    VirtualDesktop* desktopForId(const QByteArray& id) const;
+    VirtualDesktop* desktopForId(QByteArray const& id) const;
 
     /**
      * Create a new virtual desktop at the requested position.
@@ -297,7 +292,7 @@ public:
      * @param name The name for the new desktop, if empty the default name will be used.
      * @returns the new VirtualDesktop, nullptr if we reached the maximum number of desktops
      */
-    VirtualDesktop* createVirtualDesktop(uint position, const QString& name = QString());
+    VirtualDesktop* createVirtualDesktop(uint position, QString const& name = QString());
 
     /**
      * Remove the virtual desktop identified by id, if it exists
@@ -305,7 +300,7 @@ public:
      * not only the last one.
      * @param id the string id of the desktop to remove
      */
-    void removeVirtualDesktop(const QByteArray& id);
+    void removeVirtualDesktop(QByteArray const& id);
 
     /**
      * Updates the net root info for new number of desktops
@@ -478,10 +473,10 @@ private:
      * @param key The global shortcut for the action
      * @param slot The slot to invoke when the action is triggered
      */
-    QAction* addAction(const QString& name,
-                       const KLocalizedString& label,
+    QAction* addAction(QString const& name,
+                       KLocalizedString const& label,
                        uint value,
-                       const QKeySequence& key,
+                       QKeySequence const& key,
                        void (VirtualDesktopManager::*slot)());
     /**
      * Creates an action and connects it to the @p slot in this Manager.
@@ -492,7 +487,7 @@ private:
      * @param slot The slot to invoke when the action is triggered
      */
     QAction*
-    addAction(const QString& name, const QString& label, void (VirtualDesktopManager::*slot)());
+    addAction(QString const& name, QString const& label, void (VirtualDesktopManager::*slot)());
 
     QVector<VirtualDesktop*> m_desktops;
     QPointer<VirtualDesktop> m_current;
@@ -732,7 +727,7 @@ inline int VirtualDesktopGrid::height() const
     return m_size.height();
 }
 
-inline const QSize& VirtualDesktopGrid::size() const
+inline QSize const& VirtualDesktopGrid::size() const
 {
     return m_size;
 }
@@ -757,7 +752,7 @@ inline void VirtualDesktopManager::setConfig(KSharedConfig::Ptr config)
     m_config = std::move(config);
 }
 
-inline const VirtualDesktopGrid& VirtualDesktopManager::grid() const
+inline VirtualDesktopGrid const& VirtualDesktopManager::grid() const
 {
     return m_grid;
 }
@@ -770,5 +765,3 @@ void VirtualDesktopManager::moveTo(bool wrap)
 }
 
 }
-
-#endif
