@@ -106,13 +106,13 @@ Workspace::Workspace()
     RuleBook::create(this)->load();
     edges = std::make_unique<win::screen_edger>();
 
-    // VirtualDesktopManager needs to be created prior to init shortcuts
+    // win::virtual_desktop_manager needs to be created prior to init shortcuts
     // and prior to TabBox, due to TabBox connecting to signals
     // actual initialization happens in init()
-    VirtualDesktopManager::create(this);
+    win::virtual_desktop_manager::create(this);
 
     // dbus interface
-    new VirtualDesktopManagerDBusInterface(VirtualDesktopManager::self());
+    new VirtualDesktopManagerDBusInterface(win::virtual_desktop_manager::self());
 
 #ifdef KWIN_BUILD_TABBOX
     // need to create the tabbox before compositing scene is setup
@@ -162,8 +162,8 @@ Workspace::Workspace()
     screenEdges->config = config;
     screenEdges->init();
     connect(options, &Options::configChanged, screenEdges, &win::screen_edger::reconfigure);
-    connect(VirtualDesktopManager::self(),
-            &VirtualDesktopManager::layoutChanged,
+    connect(win::virtual_desktop_manager::self(),
+            &win::virtual_desktop_manager::layoutChanged,
             screenEdges,
             &win::screen_edger::updateLayout);
     connect(this, &Workspace::clientActivated, screenEdges, &win::screen_edger::checkBlocking);
@@ -171,12 +171,12 @@ Workspace::Workspace()
     auto* focusChain = win::focus_chain::create(this);
     connect(this, &Workspace::clientRemoved, focusChain, &win::focus_chain::remove);
     connect(this, &Workspace::clientActivated, focusChain, &win::focus_chain::setActiveClient);
-    connect(VirtualDesktopManager::self(),
-            &VirtualDesktopManager::countChanged,
+    connect(win::virtual_desktop_manager::self(),
+            &win::virtual_desktop_manager::countChanged,
             focusChain,
             &win::focus_chain::resize);
-    connect(VirtualDesktopManager::self(),
-            &VirtualDesktopManager::currentChanged,
+    connect(win::virtual_desktop_manager::self(),
+            &win::virtual_desktop_manager::currentChanged,
             focusChain,
             &win::focus_chain::setCurrentDesktop);
     connect(options,
@@ -185,16 +185,20 @@ Workspace::Workspace()
             &win::focus_chain::setSeparateScreenFocus);
     focusChain->setSeparateScreenFocus(options->isSeparateScreenFocus());
 
-    // create VirtualDesktopManager and perform dependency injection
-    VirtualDesktopManager* vds = VirtualDesktopManager::self();
-    connect(vds, &VirtualDesktopManager::countChanged, this, &Workspace::slotDesktopCountChanged);
-    connect(
-        vds, &VirtualDesktopManager::currentChanged, this, &Workspace::slotCurrentDesktopChanged);
+    auto vds = win::virtual_desktop_manager::self();
+    connect(vds,
+            &win::virtual_desktop_manager::countChanged,
+            this,
+            &Workspace::slotDesktopCountChanged);
+    connect(vds,
+            &win::virtual_desktop_manager::currentChanged,
+            this,
+            &Workspace::slotCurrentDesktopChanged);
     vds->setNavigationWrappingAround(options->isRollOverDesktops());
     connect(options,
             &Options::rollOverDesktopsChanged,
             vds,
-            &VirtualDesktopManager::setNavigationWrappingAround);
+            &win::virtual_desktop_manager::setNavigationWrappingAround);
     vds->setConfig(config);
 
     // positioning object needs to be created before the virtual desktops are loaded.
@@ -206,8 +210,8 @@ Workspace::Workspace()
     // load is needed to be called again when starting xwayalnd to sync to RootInfo, see BUG 385260
     vds->save();
 
-    if (!VirtualDesktopManager::self()->setCurrent(m_initialDesktop))
-        VirtualDesktopManager::self()->setCurrent(1);
+    if (!win::virtual_desktop_manager::self()->setCurrent(m_initialDesktop))
+        win::virtual_desktop_manager::self()->setCurrent(1);
 
     reconfigureTimer.setSingleShot(true);
     updateToolWindowsTimer.setSingleShot(true);
@@ -313,7 +317,8 @@ void Workspace::addClient(win::x11::window* c)
         win::raise_window(this, c);
         // If there's no active client, make this desktop the active one
         if (activeClient() == nullptr && should_get_focus.size() == 0)
-            activateClient(win::find_desktop(this, true, VirtualDesktopManager::self()->current()));
+            activateClient(
+                win::find_desktop(this, true, win::virtual_desktop_manager::self()->current()));
     }
     win::x11::check_active_modal<win::x11::window>();
     checkTransients(c);
@@ -595,7 +600,7 @@ void Workspace::resetClientAreas(uint desktopCount)
 void Workspace::sendClientToDesktop(Toplevel* window, int desk, bool dont_activate)
 {
     if ((desk < 1 && desk != NET::OnAllDesktops)
-        || desk > static_cast<int>(VirtualDesktopManager::self()->count())) {
+        || desk > static_cast<int>(win::virtual_desktop_manager::self()->count())) {
         return;
     }
     auto old_desktop = window->desktop();
@@ -607,7 +612,7 @@ void Workspace::sendClientToDesktop(Toplevel* window, int desk, bool dont_activa
     }
     desk = window->desktop(); // Client did range checking
 
-    if (window->isOnDesktop(VirtualDesktopManager::self()->current())) {
+    if (window->isOnDesktop(win::virtual_desktop_manager::self()->current())) {
         if (win::wants_tab_focus(window) && options->focusPolicyIsReasonable() && !was_on_desktop
             && // for stickyness changes
             !dont_activate) {
@@ -712,8 +717,8 @@ void Workspace::setShowingDesktop(bool showing)
     if (showing_desktop && topDesk) {
         request_focus(topDesk);
     } else if (!showing_desktop && changed) {
-        const auto client
-            = win::focus_chain::self()->getForActivation(VirtualDesktopManager::self()->current());
+        const auto client = win::focus_chain::self()->getForActivation(
+            win::virtual_desktop_manager::self()->current());
         if (client) {
             activateClient(client);
         }
@@ -1351,7 +1356,7 @@ void Workspace::updateClientArea(bool force)
 {
     auto const& screens = kwinApp()->get_base().screens;
     auto const screens_count = screens.count();
-    auto const desktops_count = static_cast<int>(VirtualDesktopManager::self()->count());
+    auto const desktops_count = static_cast<int>(win::virtual_desktop_manager::self()->count());
 
     // To be determined are new:
     // * work areas,
@@ -1438,7 +1443,7 @@ QRect Workspace::clientArea(clientAreaOption opt, int screen, int desktop) const
     auto const& screens = kwinApp()->get_base().screens;
 
     if (desktop == NETWinInfo::OnAllDesktops || desktop == 0)
-        desktop = VirtualDesktopManager::self()->current();
+        desktop = win::virtual_desktop_manager::self()->current();
     if (screen == -1) {
         screen = screens.current();
     }
@@ -1483,7 +1488,7 @@ QRect Workspace::clientArea(clientAreaOption opt, Toplevel const* window) const
 static QRegion strutsToRegion(int desktop, StrutAreas areas, std::vector<StrutRects> const& struts)
 {
     if (desktop == NETWinInfo::OnAllDesktops || desktop == 0)
-        desktop = VirtualDesktopManager::self()->current();
+        desktop = win::virtual_desktop_manager::self()->current();
     QRegion region;
     const StrutRects& rects = struts[desktop];
     for (const StrutRect& rect : rects) {
@@ -1840,7 +1845,7 @@ QRect Workspace::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::p
             deltaX = int(snap);
             deltaY = int(snap);
             for (auto l = m_allClients.cbegin(); l != m_allClients.cend(); ++l) {
-                if ((*l)->isOnDesktop(VirtualDesktopManager::self()->current())
+                if ((*l)->isOnDesktop(win::virtual_desktop_manager::self()->current())
                     && !(*l)->control->minimized() && (*l) != window) {
                     lx = (*l)->pos().x() - 1;
                     ly = (*l)->pos().y() - 1;
@@ -2167,7 +2172,7 @@ int Workspace::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge)
     }
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
-        ? VirtualDesktopManager::self()->current()
+        ? win::virtual_desktop_manager::self()->current()
         : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
         if (win::is_irrelevant(*it, window, desktop)) {
@@ -2209,7 +2214,7 @@ int Workspace::packPositionRight(Toplevel const* window, int oldX, bool rightEdg
     }
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
-        ? VirtualDesktopManager::self()->current()
+        ? win::virtual_desktop_manager::self()->current()
         : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
         if (win::is_irrelevant(*it, window, desktop)) {
@@ -2242,7 +2247,7 @@ int Workspace::packPositionUp(Toplevel const* window, int oldY, bool topEdge) co
     }
 
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
-        ? VirtualDesktopManager::self()->current()
+        ? win::virtual_desktop_manager::self()->current()
         : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
         if (win::is_irrelevant(*it, window, desktop)) {
@@ -2282,7 +2287,7 @@ int Workspace::packPositionDown(Toplevel const* window, int oldY, bool bottomEdg
         return oldY;
     }
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
-        ? VirtualDesktopManager::self()->current()
+        ? win::virtual_desktop_manager::self()->current()
         : window->desktop();
     for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
         if (win::is_irrelevant(*it, window, desktop)) {
@@ -2551,7 +2556,7 @@ void Workspace::activateClient(Toplevel* window, bool force)
     win::raise_window(this, window);
     if (!window->isOnCurrentDesktop()) {
         ++block_focus;
-        VirtualDesktopManager::self()->setCurrent(window->desktop());
+        win::virtual_desktop_manager::self()->setCurrent(window->desktop());
         --block_focus;
     }
     if (window->control->minimized()) {
@@ -2711,7 +2716,7 @@ bool Workspace::activateNextClient(Toplevel* window)
 
     Toplevel* get_focus = nullptr;
 
-    const int desktop = VirtualDesktopManager::self()->current();
+    const int desktop = win::virtual_desktop_manager::self()->current();
 
     if (!get_focus && showingDesktop())
         get_focus = win::find_desktop(this, true, desktop); // to not break the state
@@ -2767,7 +2772,7 @@ void Workspace::setCurrentScreen(int new_screen)
         return;
     }
     closeActivePopup();
-    const int desktop = VirtualDesktopManager::self()->current();
+    const int desktop = win::virtual_desktop_manager::self()->current();
     auto get_focus = win::focus_chain::self()->getForActivation(desktop, new_screen);
     if (get_focus == nullptr) {
         get_focus = win::find_desktop(this, true, desktop);

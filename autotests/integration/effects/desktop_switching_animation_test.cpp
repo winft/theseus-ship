@@ -91,7 +91,7 @@ void DesktopSwitchingAnimationTest::cleanup()
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 
-    VirtualDesktopManager::self()->setCount(1);
+    win::virtual_desktop_manager::self()->setCount(1);
 
     Test::destroy_wayland_connection();
 }
@@ -111,9 +111,9 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops()
     // try to animate switching between desktops.
 
     // We need at least 2 virtual desktops for the test.
-    VirtualDesktopManager::self()->setCount(2);
-    QCOMPARE(VirtualDesktopManager::self()->current(), 1u);
-    QCOMPARE(VirtualDesktopManager::self()->count(), 2u);
+    win::virtual_desktop_manager::self()->setCount(2);
+    QCOMPARE(win::virtual_desktop_manager::self()->current(), 1u);
+    QCOMPARE(win::virtual_desktop_manager::self()->count(), 2u);
 
     // The Fade Desktop effect will do nothing if there are no clients to fade,
     // so we have to create a dummy test client.
@@ -125,7 +125,7 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops()
     auto client = Test::render_and_wait_for_shown(surface, QSize(100, 50), Qt::blue);
     QVERIFY(client);
     QCOMPARE(client->desktops().count(), 1);
-    QCOMPARE(client->desktops().first(), VirtualDesktopManager::self()->desktops().first());
+    QCOMPARE(client->desktops().first(), win::virtual_desktop_manager::self()->desktops().first());
 
     // Load effect that will be tested.
     QFETCH(QString, effectName);
@@ -139,8 +139,8 @@ void DesktopSwitchingAnimationTest::testSwitchDesktops()
     QVERIFY(!effect->isActive());
 
     // Switch to the second virtual desktop.
-    VirtualDesktopManager::self()->setCurrent(2u);
-    QCOMPARE(VirtualDesktopManager::self()->current(), 2u);
+    win::virtual_desktop_manager::self()->setCurrent(2u);
+    QCOMPARE(win::virtual_desktop_manager::self()->current(), 2u);
     QVERIFY(effect->isActive());
     QCOMPARE(effects->activeFullScreenEffect(), effect);
 

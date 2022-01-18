@@ -33,8 +33,8 @@ client_level::client_level(client_model* model, abstract_level* parent)
 {
     auto ws_wrap = workspace()->scripting->workspaceWrapper();
 
-    connect(VirtualDesktopManager::self(),
-            &VirtualDesktopManager::currentChanged,
+    connect(win::virtual_desktop_manager::self(),
+            &win::virtual_desktop_manager::currentChanged,
             this,
             &client_level::reInit);
     connect(ws_wrap, &space::clientAdded, this, &client_level::clientAdded);
@@ -307,7 +307,7 @@ abstract_level* abstract_level::create(const QList<client_model::LevelRestrictio
         break;
     }
     case client_model::VirtualDesktopRestriction:
-        for (uint i = 1; i <= VirtualDesktopManager::self()->count(); ++i) {
+        for (uint i = 1; i <= win::virtual_desktop_manager::self()->count(); ++i) {
             auto childLevel = create(childRestrictions, childrenRestrictions, model, currentLevel);
             if (!childLevel) {
                 continue;
@@ -371,8 +371,8 @@ fork_level::fork_level(const QList<client_model::LevelRestriction>& childRestric
     : abstract_level(model, parent)
     , m_childRestrictions(childRestrictions)
 {
-    connect(VirtualDesktopManager::self(),
-            &VirtualDesktopManager::countChanged,
+    connect(win::virtual_desktop_manager::self(),
+            &win::virtual_desktop_manager::countChanged,
             this,
             &fork_level::desktopCountChanged);
     connect(&kwinApp()->get_base().screens,

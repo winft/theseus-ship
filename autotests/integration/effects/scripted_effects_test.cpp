@@ -168,7 +168,7 @@ void ScriptedEffectsTest::initTestCase()
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 
-    KWin::VirtualDesktopManager::self()->setCount(2);
+    win::virtual_desktop_manager::self()->setCount(2);
 }
 
 void ScriptedEffectsTest::init()
@@ -184,7 +184,7 @@ void ScriptedEffectsTest::cleanup()
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 
-    KWin::VirtualDesktopManager::self()->setCurrent(1);
+    win::virtual_desktop_manager::self()->setCurrent(1);
 }
 
 void ScriptedEffectsTest::testEffectsHandler()
@@ -227,7 +227,7 @@ void ScriptedEffectsTest::testEffectsHandler()
     waitFor("windowClosed - WindowA");
 
     // desktop management
-    KWin::VirtualDesktopManager::self()->setCurrent(2);
+    win::virtual_desktop_manager::self()->setCurrent(2);
     waitFor("desktopChanged - 1 2");
 }
 
@@ -407,7 +407,7 @@ void ScriptedEffectsTest::testFullScreenEffect()
     QCOMPARE(effectMain->isActiveFullScreenEffect(), false);
 
     // trigger animation
-    KWin::VirtualDesktopManager::self()->setCurrent(2);
+    win::virtual_desktop_manager::self()->setCurrent(2);
 
     QCOMPARE(effects->activeFullScreenEffect(), effectMain);
     QCOMPARE(effects->hasActiveFullScreenEffect(), true);
@@ -421,7 +421,7 @@ void ScriptedEffectsTest::testFullScreenEffect()
 
     // after 500ms trigger another full screen animation
     QTest::qWait(500);
-    KWin::VirtualDesktopManager::self()->setCurrent(1);
+    win::virtual_desktop_manager::self()->setCurrent(1);
     QCOMPARE(effects->activeFullScreenEffect(), effectMain);
 
     // after 1000ms (+a safety margin for time based tests) we should still be the active full

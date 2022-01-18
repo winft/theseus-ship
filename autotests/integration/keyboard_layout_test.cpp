@@ -629,17 +629,17 @@ void keyboard_layout_test::test_virtual_desktop_policy()
     QCOMPARE(xkb->layouts_count(), 3u);
     QCOMPARE(xkb->layout_name(), "English (US)");
 
-    VirtualDesktopManager::self()->setCount(4);
-    QCOMPARE(VirtualDesktopManager::self()->count(), 4u);
-    auto desktops = VirtualDesktopManager::self()->desktops();
+    win::virtual_desktop_manager::self()->setCount(4);
+    QCOMPARE(win::virtual_desktop_manager::self()->count(), 4u);
+    auto desktops = win::virtual_desktop_manager::self()->desktops();
     QCOMPARE(desktops.count(), 4);
 
     // Give desktops different layouts.
     uint desktop, layout;
-    for (desktop = 0; desktop < VirtualDesktopManager::self()->count(); ++desktop) {
+    for (desktop = 0; desktop < win::virtual_desktop_manager::self()->count(); ++desktop) {
         // Switch to another virtual desktop.
-        VirtualDesktopManager::self()->setCurrent(desktops.at(desktop));
-        QCOMPARE(desktops.at(desktop), VirtualDesktopManager::self()->currentDesktop());
+        win::virtual_desktop_manager::self()->setCurrent(desktops.at(desktop));
+        QCOMPARE(desktops.at(desktop), win::virtual_desktop_manager::self()->currentDesktop());
 
         // Should be reset to English.
         QCOMPARE(xkb->layout, 0);
@@ -655,39 +655,39 @@ void keyboard_layout_test::test_virtual_desktop_policy()
 
     // check layout set on desktop switching as intended
     for (--desktop;;) {
-        QCOMPARE(desktops.at(desktop), VirtualDesktopManager::self()->currentDesktop());
+        QCOMPARE(desktops.at(desktop), win::virtual_desktop_manager::self()->currentDesktop());
 
         layout = (desktop + 1) % xkb->layouts_count();
         QCOMPARE(xkb->layout, layout);
 
-        if (--desktop >= VirtualDesktopManager::self()->count()) {
+        if (--desktop >= win::virtual_desktop_manager::self()->count()) {
             // overflow
             break;
         }
-        VirtualDesktopManager::self()->setCurrent(desktops.at(desktop));
+        win::virtual_desktop_manager::self()->setCurrent(desktops.at(desktop));
     }
 
     // Remove virtual desktops.
     desktop = 0;
     auto const deletedDesktop = desktops.last();
-    VirtualDesktopManager::self()->setCount(1);
+    win::virtual_desktop_manager::self()->setCount(1);
     QCOMPARE(xkb->layout, layout = (desktop + 1) % xkb->layouts_count());
     QCOMPARE(xkb->layout_name(), "German");
 
     // Add another desktop.
-    VirtualDesktopManager::self()->setCount(2);
+    win::virtual_desktop_manager::self()->setCount(2);
 
     // Switching to it should result in going to default.
-    desktops = VirtualDesktopManager::self()->desktops();
+    desktops = win::virtual_desktop_manager::self()->desktops();
     QCOMPARE(desktops.count(), 2);
-    QCOMPARE(desktops.first(), VirtualDesktopManager::self()->currentDesktop());
+    QCOMPARE(desktops.first(), win::virtual_desktop_manager::self()->currentDesktop());
 
-    VirtualDesktopManager::self()->setCurrent(desktops.last());
+    win::virtual_desktop_manager::self()->setCurrent(desktops.last());
     QCOMPARE(xkb->layout_name(), "English (US)");
 
     // Check there are no more layouts left in config than the last actual non-default layouts
     // number.
-    QSignalSpy deletedDesktopSpy(deletedDesktop, &VirtualDesktop::aboutToBeDestroyed);
+    QSignalSpy deletedDesktopSpy(deletedDesktop, &win::virtual_desktop::aboutToBeDestroyed);
     QVERIFY(deletedDesktopSpy.isValid());
     QVERIFY(deletedDesktopSpy.wait());
     reset_layouts();

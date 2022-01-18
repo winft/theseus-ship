@@ -99,8 +99,8 @@ virtual_desktop_layout_policy::virtual_desktop_layout_policy(layout_manager* man
                                                              KConfigGroup const& config)
     : layout_policy(manager, config)
 {
-    QObject::connect(VirtualDesktopManager::self(),
-                     &VirtualDesktopManager::currentChanged,
+    QObject::connect(win::virtual_desktop_manager::self(),
+                     &win::virtual_desktop_manager::currentChanged,
                      this,
                      &virtual_desktop_layout_policy::handle_desktop_change);
 
@@ -123,9 +123,9 @@ virtual_desktop_layout_policy::virtual_desktop_layout_policy(layout_manager* man
     QObject::connect(
         workspace()->sessionManager(), &SessionManager::loadSessionRequested, this, [this] {
             if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
-                auto const& desktops = VirtualDesktopManager::self()->desktops();
+                auto const& desktops = win::virtual_desktop_manager::self()->desktops();
 
-                for (KWin::VirtualDesktop* const desktop : desktops) {
+                for (auto const desktop : desktops) {
                     uint const layout = this->config.readEntry(
                         default_layout_entry_key()
                             % QLatin1String(QByteArray::number(desktop->x11DesktopNumber())),
@@ -134,7 +134,7 @@ virtual_desktop_layout_policy::virtual_desktop_layout_policy(layout_manager* man
                     if (layout) {
                         layouts.insert({desktop, layout});
                         QObject::connect(desktop,
-                                         &VirtualDesktop::aboutToBeDestroyed,
+                                         &win::virtual_desktop::aboutToBeDestroyed,
                                          this,
                                          [this, desktop] { layouts.erase(desktop); });
                     }
@@ -165,14 +165,14 @@ uint32_t getLayout(T const& layouts, U const& reference)
 
 void virtual_desktop_layout_policy::handle_desktop_change()
 {
-    if (auto desktop = VirtualDesktopManager::self()->currentDesktop()) {
+    if (auto desktop = win::virtual_desktop_manager::self()->currentDesktop()) {
         set_layout(getLayout(layouts, desktop));
     }
 }
 
 void virtual_desktop_layout_policy::handle_layout_change(uint index)
 {
-    auto desktop = VirtualDesktopManager::self()->currentDesktop();
+    auto desktop = win::virtual_desktop_manager::self()->currentDesktop();
     if (!desktop) {
         return;
     }
@@ -181,7 +181,7 @@ void virtual_desktop_layout_policy::handle_layout_change(uint index)
 
     if (it == layouts.end()) {
         layouts.insert({desktop, index});
-        QObject::connect(desktop, &VirtualDesktop::aboutToBeDestroyed, this, [this, desktop] {
+        QObject::connect(desktop, &win::virtual_desktop::aboutToBeDestroyed, this, [this, desktop] {
             layouts.erase(desktop);
         });
     } else {

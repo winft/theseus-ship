@@ -24,10 +24,10 @@ bool root_info_filter::event(xcb_generic_event_t* event)
     info->event(event, &dirtyProtocols, &dirtyProtocols2);
 
     if (dirtyProtocols & NET::DesktopNames) {
-        VirtualDesktopManager::self()->save();
+        virtual_desktop_manager::self()->save();
     }
     if (dirtyProtocols2 & NET::WM2DesktopLayout) {
-        VirtualDesktopManager::self()->updateLayout();
+        virtual_desktop_manager::self()->updateLayout();
     }
     return false;
 }

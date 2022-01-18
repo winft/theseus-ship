@@ -28,11 +28,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class VirtualDesktopManager;
 
 namespace render
 {
 class compositor;
+}
+
+namespace win
+{
+class virtual_desktop_manager;
 }
 
 /**
@@ -191,7 +195,7 @@ class VirtualDesktopManagerDBusInterface : public QObject
 
     /**
      * The number of virtual desktops currently available.
-     * The ids of the virtual desktops are in the range [1, VirtualDesktopManager::maximum()].
+     * The ids of the virtual desktops are in the range [1, win::virtual_desktop_manager::maximum()].
      */
     Q_PROPERTY(uint count READ count NOTIFY countChanged)
     /**
@@ -213,7 +217,7 @@ class VirtualDesktopManagerDBusInterface : public QObject
     Q_PROPERTY(KWin::DBusDesktopDataVector desktops READ desktops NOTIFY desktopsChanged);
 
 public:
-    VirtualDesktopManagerDBusInterface(VirtualDesktopManager *parent);
+    VirtualDesktopManagerDBusInterface(win::virtual_desktop_manager* parent);
     ~VirtualDesktopManagerDBusInterface() override = default;
 
     uint count() const;
@@ -249,7 +253,7 @@ public Q_SLOTS:
     void removeDesktop(const QString &id);
 
 private:
-    VirtualDesktopManager *m_manager;
+    win::virtual_desktop_manager* m_manager;
 };
 
 } // namespace

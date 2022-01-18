@@ -241,15 +241,15 @@ public Q_SLOTS:
 #define SWITCH_VD_SLOT(name, direction)                                                            \
     void name()                                                                                    \
     {                                                                                              \
-        VirtualDesktopManager::self()->moveTo<direction>(options->isRollOverDesktops());           \
+        win::virtual_desktop_manager::self()->moveTo<direction>(options->isRollOverDesktops());    \
     }
 
-    SWITCH_VD_SLOT(slotSwitchDesktopNext, DesktopNext)
-    SWITCH_VD_SLOT(slotSwitchDesktopPrevious, DesktopPrevious)
-    SWITCH_VD_SLOT(slotSwitchDesktopRight, DesktopRight)
-    SWITCH_VD_SLOT(slotSwitchDesktopLeft, DesktopLeft)
-    SWITCH_VD_SLOT(slotSwitchDesktopUp, DesktopAbove)
-    SWITCH_VD_SLOT(slotSwitchDesktopDown, DesktopBelow)
+    SWITCH_VD_SLOT(slotSwitchDesktopNext, win::virtual_desktop_next)
+    SWITCH_VD_SLOT(slotSwitchDesktopPrevious, win::virtual_desktop_previous)
+    SWITCH_VD_SLOT(slotSwitchDesktopRight, win::virtual_desktop_right)
+    SWITCH_VD_SLOT(slotSwitchDesktopLeft, win::virtual_desktop_left)
+    SWITCH_VD_SLOT(slotSwitchDesktopUp, win::virtual_desktop_above)
+    SWITCH_VD_SLOT(slotSwitchDesktopDown, win::virtual_desktop_below)
 
     virtual void slotSwitchToNextScreen() = 0;
     virtual void slotWindowToNextScreen() = 0;
@@ -482,7 +482,7 @@ public:
     template_space(RefSpace* ref_space)
         : ref_space{ref_space}
     {
-        auto vds = KWin::VirtualDesktopManager::self();
+        auto vds = win::virtual_desktop_manager::self();
 
         QObject::connect(
             ref_space, &RefSpace::desktopPresenceChanged, this, [this](auto client, auto desktop) {
@@ -515,9 +515,9 @@ public:
                          });
 
         QObject::connect(
-            vds, &VirtualDesktopManager::countChanged, this, &space::numberDesktopsChanged);
+            vds, &win::virtual_desktop_manager::countChanged, this, &space::numberDesktopsChanged);
         QObject::connect(
-            vds, &VirtualDesktopManager::layoutChanged, this, &space::desktopLayoutChanged);
+            vds, &win::virtual_desktop_manager::layoutChanged, this, &space::desktopLayoutChanged);
 
         auto& screens = kwinApp()->get_base().screens;
         QObject::connect(&screens, &Screens::sizeChanged, this, &space::virtualScreenSizeChanged);

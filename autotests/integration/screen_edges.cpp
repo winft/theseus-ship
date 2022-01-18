@@ -233,7 +233,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     // set some reasonable virtual desktops
     config->group("Desktops").writeEntry("Number", 4);
     config->sync();
-    auto vd = VirtualDesktopManager::self();
+    auto vd = win::virtual_desktop_manager::self();
     vd->setConfig(config);
     vd->load();
     vd->updateLayout();

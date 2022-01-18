@@ -131,7 +131,7 @@ void Workspace::storeSession(const QString &sessionName, SMSavePhase phase)
         // but both Qt and KDE treat phase1 and phase2 separately,
         // which results in different sessionkey and different config file :(
         session_active_client = active_client;
-        session_desktop = VirtualDesktopManager::self()->current();
+        session_desktop = win::virtual_desktop_manager::self()->current();
     } else if (phase == SMSavePhase2) {
         cg.writeEntry("count", count);
         cg.writeEntry("active", session_active_client);
@@ -139,7 +139,7 @@ void Workspace::storeSession(const QString &sessionName, SMSavePhase phase)
     } else { // SMSavePhase2Full
         cg.writeEntry("count", count);
         cg.writeEntry("active", session_active_client);
-        cg.writeEntry("desktop", VirtualDesktopManager::self()->current());
+        cg.writeEntry("desktop", win::virtual_desktop_manager::self()->current());
     }
     config->sync(); // it previously did some "revert to defaults" stuff for phase1 I think
 }

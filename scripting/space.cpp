@@ -64,22 +64,22 @@ window* space::get_window(Toplevel* client) const
 
 int space::currentDesktop() const
 {
-    return VirtualDesktopManager::self()->current();
+    return win::virtual_desktop_manager::self()->current();
 }
 
 int space::numberOfDesktops() const
 {
-    return VirtualDesktopManager::self()->count();
+    return win::virtual_desktop_manager::self()->count();
 }
 
 void space::setCurrentDesktop(int desktop)
 {
-    VirtualDesktopManager::self()->setCurrent(desktop);
+    win::virtual_desktop_manager::self()->setCurrent(desktop);
 }
 
 void space::setNumberOfDesktops(int count)
 {
-    VirtualDesktopManager::self()->setCount(count);
+    win::virtual_desktop_manager::self()->setCount(count);
 }
 
 QString space::currentActivity() const
@@ -118,22 +118,22 @@ int space::displayHeight() const
 
 QString space::desktopName(int desktop) const
 {
-    return VirtualDesktopManager::self()->name(desktop);
+    return win::virtual_desktop_manager::self()->name(desktop);
 }
 
 void space::createDesktop(int position, const QString& name) const
 {
-    VirtualDesktopManager::self()->createVirtualDesktop(position, name);
+    win::virtual_desktop_manager::self()->createVirtualDesktop(position, name);
 }
 
 void space::removeDesktop(int position) const
 {
-    VirtualDesktop* vd = VirtualDesktopManager::self()->desktopForX11Id(position + 1);
+    auto vd = win::virtual_desktop_manager::self()->desktopForX11Id(position + 1);
     if (!vd) {
         return;
     }
 
-    VirtualDesktopManager::self()->removeVirtualDesktop(vd->id());
+    win::virtual_desktop_manager::self()->removeVirtualDesktop(vd->id());
 }
 
 void space::setupAbstractClientConnections(window* window)
@@ -170,7 +170,7 @@ window* space::getClient(qulonglong windowId)
 
 QSize space::desktopGridSize() const
 {
-    return VirtualDesktopManager::self()->grid().size();
+    return win::virtual_desktop_manager::self()->grid().size();
 }
 
 int space::desktopGridWidth() const

@@ -35,8 +35,8 @@ void device_redirect_init(Dev* dev)
     QObject::connect(workspace(), &Workspace::clientMinimizedChanged, dev, [dev] {
         device_redirect_update(dev);
     });
-    QObject::connect(VirtualDesktopManager::self(),
-                     &VirtualDesktopManager::currentChanged,
+    QObject::connect(win::virtual_desktop_manager::self(),
+                     &win::virtual_desktop_manager::currentChanged,
                      dev,
                      [dev] { device_redirect_update(dev); });
 }

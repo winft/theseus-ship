@@ -80,9 +80,9 @@ TabBoxHandlerImpl::TabBoxHandlerImpl(TabBox* tabBox)
     , m_desktopFocusChain(new DesktopChainManager(this))
 {
     // connects for DesktopFocusChainManager
-    VirtualDesktopManager *vds = VirtualDesktopManager::self();
-    connect(vds, &VirtualDesktopManager::countChanged, m_desktopFocusChain, &DesktopChainManager::resize);
-    connect(vds, &VirtualDesktopManager::currentChanged, m_desktopFocusChain, &DesktopChainManager::addDesktop);
+    auto vds = win::virtual_desktop_manager::self();
+    connect(vds, &win::virtual_desktop_manager::countChanged, m_desktopFocusChain, &DesktopChainManager::resize);
+    connect(vds, &win::virtual_desktop_manager::currentChanged, m_desktopFocusChain, &DesktopChainManager::addDesktop);
 }
 
 TabBoxHandlerImpl::~TabBoxHandlerImpl()
@@ -96,21 +96,21 @@ int TabBoxHandlerImpl::activeScreen() const
 
 int TabBoxHandlerImpl::currentDesktop() const
 {
-    return VirtualDesktopManager::self()->current();
+    return win::virtual_desktop_manager::self()->current();
 }
 
 QString TabBoxHandlerImpl::desktopName(TabBoxClient* client) const
 {
     if (TabBoxClientImpl* c = static_cast< TabBoxClientImpl* >(client)) {
         if (!c->client()->isOnAllDesktops())
-            return VirtualDesktopManager::self()->name(c->client()->desktop());
+            return win::virtual_desktop_manager::self()->name(c->client()->desktop());
     }
-    return VirtualDesktopManager::self()->name(VirtualDesktopManager::self()->current());
+    return win::virtual_desktop_manager::self()->name(win::virtual_desktop_manager::self()->current());
 }
 
 QString TabBoxHandlerImpl::desktopName(int desktop) const
 {
-    return VirtualDesktopManager::self()->name(desktop);
+    return win::virtual_desktop_manager::self()->name(desktop);
 }
 
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::nextClientFocusChain(TabBoxClient* client) const
@@ -148,7 +148,7 @@ int TabBoxHandlerImpl::nextDesktopFocusChain(int desktop) const
 
 int TabBoxHandlerImpl::numberOfDesktops() const
 {
-    return VirtualDesktopManager::self()->count();
+    return win::virtual_desktop_manager::self()->count();
 }
 
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::activeClient() const
@@ -613,7 +613,7 @@ void TabBox::reset(bool partial_reset)
         m_tabBox->createModel();
 
         if (!partial_reset)
-            setCurrentDesktop(VirtualDesktopManager::self()->current());
+            setCurrentDesktop(win::virtual_desktop_manager::self()->current());
         break;
     }
 
@@ -1413,20 +1413,20 @@ void TabBox::modifiersReleased()
         m_tabGrab = old_tab_grab;
         if (desktop != -1) {
             setCurrentDesktop(desktop);
-            VirtualDesktopManager::self()->setCurrent(desktop);
+            win::virtual_desktop_manager::self()->setCurrent(desktop);
         }
     }
 }
 
 int TabBox::nextDesktopStatic(int iDesktop) const
 {
-    DesktopNext functor;
+    win::virtual_desktop_next functor;
     return functor(iDesktop, true);
 }
 
 int TabBox::previousDesktopStatic(int iDesktop) const
 {
-    DesktopPrevious functor;
+    win::virtual_desktop_previous functor;
     return functor(iDesktop, true);
 }
 

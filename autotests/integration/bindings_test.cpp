@@ -224,7 +224,8 @@ void BindingsTest::testWindowToDesktop_data()
 void BindingsTest::testWindowToDesktop()
 {
     // first go to desktop one
-    VirtualDesktopManager::self()->setCurrent(VirtualDesktopManager::self()->desktops().first());
+    win::virtual_desktop_manager::self()->setCurrent(
+        win::virtual_desktop_manager::self()->desktops().first());
 
     // now create a window
     std::unique_ptr<Surface> surface(Test::create_surface());
@@ -235,7 +236,7 @@ void BindingsTest::testWindowToDesktop()
     QCOMPARE(workspace()->activeClient(), c);
 
     QFETCH(int, desktop);
-    VirtualDesktopManager::self()->setCount(desktop);
+    win::virtual_desktop_manager::self()->setCount(desktop);
 
     // now trigger the shortcut
     auto invokeShortcut = [](int desktop) {

@@ -282,7 +282,7 @@ void place_smart(Win* window, const QRect& area, placement /*next*/)
     int x_optimal, y_optimal;
     int possible;
     int desktop = window->desktop() == 0 || window->isOnAllDesktops()
-        ? VirtualDesktopManager::self()->current()
+        ? virtual_desktop_manager::self()->current()
         : window->desktop();
 
     int cxl, cxr, cyt, cyb; // temp coords

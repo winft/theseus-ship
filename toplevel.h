@@ -195,8 +195,8 @@ public:
      * isOnDesktop() instead.
      */
     virtual int desktop() const;
-    QVector<VirtualDesktop *> desktops() const;
-    void set_desktops(QVector<VirtualDesktop*> const& desktops);
+    QVector<win::virtual_desktop*> desktops() const;
+    void set_desktops(QVector<win::virtual_desktop*> const& desktops);
 
     bool isOnDesktop(int d) const;
     bool isOnCurrentDesktop() const;
@@ -490,7 +490,7 @@ private:
     bool m_skipCloseAnimation;
     // when adding new data members, check also copyToDeleted()
     qreal m_screenScale = 1.0;
-    QVector<VirtualDesktop*> m_desktops;
+    QVector<win::virtual_desktop*> m_desktops;
 
     win::remnant* m_remnant{nullptr};
     std::unique_ptr<win::transient> m_transient;

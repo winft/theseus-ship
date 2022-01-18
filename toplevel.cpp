@@ -848,12 +848,12 @@ int Toplevel::desktop() const
     return m_desktops.isEmpty() ? (int)NET::OnAllDesktops : m_desktops.last()->x11DesktopNumber();
 }
 
-QVector<VirtualDesktop *> Toplevel::desktops() const
+QVector<win::virtual_desktop*> Toplevel::desktops() const
 {
     return m_desktops;
 }
 
-void Toplevel::set_desktops(QVector<VirtualDesktop*> const& desktops)
+void Toplevel::set_desktops(QVector<win::virtual_desktop*> const& desktops)
 {
     m_desktops = desktops;
 }

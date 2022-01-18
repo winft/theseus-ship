@@ -838,7 +838,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
             if (on_all) {
                 desk = NET::OnAllDesktops;
             } else if (on_current) {
-                desk = VirtualDesktopManager::self()->current();
+                desk = virtual_desktop_manager::self()->current();
             } else if (maincl != nullptr) {
                 desk = maincl->desktop();
             }
@@ -857,13 +857,13 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
     if (desk == 0) {
         // Assume window wants to be visible on the current desktop
         desk = is_desktop(win) ? static_cast<int>(NET::OnAllDesktops)
-                               : VirtualDesktopManager::self()->current();
+                               : virtual_desktop_manager::self()->current();
     }
     desk = win->control->rules().checkDesktop(desk, !isMapped);
 
     if (desk != NET::OnAllDesktops) {
         // Do range check
-        desk = qBound(1, desk, static_cast<int>(VirtualDesktopManager::self()->count()));
+        desk = qBound(1, desk, static_cast<int>(virtual_desktop_manager::self()->count()));
     }
 
     set_desktop(win, desk);
@@ -1044,7 +1044,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed
         if (!win->isOnCurrentDesktop() && !isMapped && !session && (allow || isSessionSaving)) {
-            VirtualDesktopManager::self()->setCurrent(win->desktop());
+            virtual_desktop_manager::self()->setCurrent(win->desktop());
         }
 
         if (win->isOnCurrentDesktop() && !isMapped && !allow
@@ -1511,7 +1511,7 @@ void startup_id_changed(Win* win)
     // If the ASN contains desktop, move it to the desktop, otherwise move it to the current
     // desktop (since the new ASN should make the window act like if it's a new application
     // launched). However don't affect the window's desktop if it's set to be on all desktops.
-    int desktop = VirtualDesktopManager::self()->current();
+    int desktop = virtual_desktop_manager::self()->current();
     if (asn_data.desktop() != 0)
         desktop = asn_data.desktop();
     if (!win->isOnAllDesktops()) {

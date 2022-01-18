@@ -144,22 +144,22 @@ bool DBusInterface::stopActivity(const QString& /*in0*/)
 
 int DBusInterface::currentDesktop()
 {
-    return VirtualDesktopManager::self()->current();
+    return win::virtual_desktop_manager::self()->current();
 }
 
 bool DBusInterface::setCurrentDesktop(int desktop)
 {
-    return VirtualDesktopManager::self()->setCurrent(desktop);
+    return win::virtual_desktop_manager::self()->setCurrent(desktop);
 }
 
 void DBusInterface::nextDesktop()
 {
-    VirtualDesktopManager::self()->moveTo<DesktopNext>();
+    win::virtual_desktop_manager::self()->moveTo<win::virtual_desktop_next>();
 }
 
 void DBusInterface::previousDesktop()
 {
-    VirtualDesktopManager::self()->moveTo<DesktopPrevious>();
+    win::virtual_desktop_manager::self()->moveTo<win::virtual_desktop_previous>();
 }
 
 void DBusInterface::showDebugConsole()
@@ -362,7 +362,7 @@ QStringList CompositorDBusInterface::supportedOpenGLPlatformInterfaces() const
 
 
 
-VirtualDesktopManagerDBusInterface::VirtualDesktopManagerDBusInterface(VirtualDesktopManager *parent)
+VirtualDesktopManagerDBusInterface::VirtualDesktopManagerDBusInterface(win::virtual_desktop_manager *parent)
     : QObject(parent)
     , m_manager(parent)
 {
@@ -375,7 +375,7 @@ VirtualDesktopManagerDBusInterface::VirtualDesktopManagerDBusInterface(VirtualDe
         this
     );
 
-    connect(m_manager, &VirtualDesktopManager::currentChanged, this,
+    connect(m_manager, &win::virtual_desktop_manager::currentChanged, this,
         [this](uint previousDesktop, uint newDesktop) {
             Q_UNUSED(previousDesktop);
             Q_UNUSED(newDesktop);
@@ -383,7 +383,7 @@ VirtualDesktopManagerDBusInterface::VirtualDesktopManagerDBusInterface(VirtualDe
         }
     );
 
-    connect(m_manager, &VirtualDesktopManager::countChanged, this,
+    connect(m_manager, &win::virtual_desktop_manager::countChanged, this,
         [this](uint previousCount, uint newCount) {
             Q_UNUSED(previousCount);
             Q_EMIT countChanged(newCount);
@@ -391,23 +391,23 @@ VirtualDesktopManagerDBusInterface::VirtualDesktopManagerDBusInterface(VirtualDe
         }
     );
 
-    connect(m_manager, &VirtualDesktopManager::navigationWrappingAroundChanged, this,
+    connect(m_manager, &win::virtual_desktop_manager::navigationWrappingAroundChanged, this,
         [this]() {
             Q_EMIT navigationWrappingAroundChanged(isNavigationWrappingAround());
         }
     );
 
-    connect(m_manager, &VirtualDesktopManager::rowsChanged, this, &VirtualDesktopManagerDBusInterface::rowsChanged);
+    connect(m_manager, &win::virtual_desktop_manager::rowsChanged, this, &VirtualDesktopManagerDBusInterface::rowsChanged);
 
-    for (auto *vd : m_manager->desktops()) {
-        connect(vd, &VirtualDesktop::x11DesktopNumberChanged, this,
+    for (auto vd : m_manager->desktops()) {
+        connect(vd, &win::virtual_desktop::x11DesktopNumberChanged, this,
             [this, vd]() {
                 DBusDesktopDataStruct data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
                 Q_EMIT desktopDataChanged(vd->id(), data);
                 Q_EMIT desktopsChanged(desktops());
             }
         );
-        connect(vd, &VirtualDesktop::nameChanged, this,
+        connect(vd, &win::virtual_desktop::nameChanged, this,
             [this, vd]() {
                 DBusDesktopDataStruct data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
                 Q_EMIT desktopDataChanged(vd->id(), data);
@@ -415,16 +415,16 @@ VirtualDesktopManagerDBusInterface::VirtualDesktopManagerDBusInterface(VirtualDe
             }
         );
     }
-    connect(m_manager, &VirtualDesktopManager::desktopCreated, this,
-        [this](VirtualDesktop *vd) {
-            connect(vd, &VirtualDesktop::x11DesktopNumberChanged, this,
+    connect(m_manager, &win::virtual_desktop_manager::desktopCreated, this,
+        [this](auto vd) {
+            connect(vd, &win::virtual_desktop::x11DesktopNumberChanged, this,
                 [this, vd]() {
                     DBusDesktopDataStruct data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
                     Q_EMIT desktopDataChanged(vd->id(), data);
                     Q_EMIT desktopsChanged(desktops());
                 }
             );
-            connect(vd, &VirtualDesktop::nameChanged, this,
+            connect(vd, &win::virtual_desktop::nameChanged, this,
                 [this, vd]() {
                     DBusDesktopDataStruct data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
                     Q_EMIT desktopDataChanged(vd->id(), data);
@@ -436,8 +436,8 @@ VirtualDesktopManagerDBusInterface::VirtualDesktopManagerDBusInterface(VirtualDe
             Q_EMIT desktopsChanged(desktops());
         }
     );
-    connect(m_manager, &VirtualDesktopManager::desktopRemoved, this,
-        [this](VirtualDesktop *vd) {
+    connect(m_manager, &win::virtual_desktop_manager::desktopRemoved, this,
+        [this](auto vd) {
             Q_EMIT desktopRemoved(vd->id());
             Q_EMIT desktopsChanged(desktops());
         }
@@ -503,7 +503,7 @@ DBusDesktopDataVector VirtualDesktopManagerDBusInterface::desktops() const
 
     std::transform(desks.constBegin(), desks.constEnd(),
         std::back_inserter(desktopVect),
-        [] (const VirtualDesktop *vd) {
+        [] (auto vd) {
             return DBusDesktopDataStruct{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
         }
     );
@@ -518,7 +518,7 @@ void VirtualDesktopManagerDBusInterface::createDesktop(uint position, const QStr
 
 void VirtualDesktopManagerDBusInterface::setDesktopName(const QString &id, const QString &name)
 {
-    VirtualDesktop *vd = m_manager->desktopForId(id.toUtf8());
+    auto vd = m_manager->desktopForId(id.toUtf8());
     if (!vd) {
         return;
     }

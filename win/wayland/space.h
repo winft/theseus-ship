@@ -20,14 +20,16 @@ class Surface;
 
 namespace KWin
 {
-class VirtualDesktop;
 
 namespace win
 {
+
 namespace x11
 {
 class window;
 }
+
+class virtual_desktop;
 
 namespace wayland
 {
@@ -62,7 +64,7 @@ protected:
 
 private:
     void handle_x11_window_added(x11::window* window);
-    void handle_desktop_removed(VirtualDesktop* desktop);
+    void handle_desktop_removed(virtual_desktop* desktop);
 };
 
 }

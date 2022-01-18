@@ -375,7 +375,7 @@ void WaylandServer::initWorkspace()
 {
     auto ws = static_cast<win::wayland::space*>(workspace());
 
-    VirtualDesktopManager::self()->setVirtualDesktopManagement(virtual_desktop_management());
+    win::virtual_desktop_manager::self()->setVirtualDesktopManagement(virtual_desktop_management());
 
     if (window_management()) {
         connect(ws, &Workspace::showingDesktopChanged, this, [this](bool set) {

@@ -12,8 +12,13 @@
 
 namespace KWin
 {
+
+namespace win
+{
+class virtual_desktop;
+}
+
 class Toplevel;
-class VirtualDesktop;
 
 namespace input::xkb
 {
@@ -90,7 +95,7 @@ protected:
 private:
     void handle_desktop_change();
 
-    std::unordered_map<VirtualDesktop*, uint32_t> layouts;
+    std::unordered_map<win::virtual_desktop*, uint32_t> layouts;
 };
 
 class window_layout_policy : public layout_policy

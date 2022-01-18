@@ -105,8 +105,8 @@ space::space(WaylandServer* server)
     // For Xwayland windows we need to setup Plasma management too.
     QObject::connect(this, &Workspace::clientAdded, this, &space::handle_x11_window_added);
 
-    QObject::connect(VirtualDesktopManager::self(),
-                     &VirtualDesktopManager::desktopRemoved,
+    QObject::connect(virtual_desktop_manager::self(),
+                     &virtual_desktop_manager::desktopRemoved,
                      this,
                      &space::handle_desktop_removed);
 }
@@ -263,7 +263,7 @@ void space::handle_x11_window_added(x11::window* window)
     }
 }
 
-void space::handle_desktop_removed(VirtualDesktop* desktop)
+void space::handle_desktop_removed(virtual_desktop* desktop)
 {
     for (auto const& client : m_allClients) {
         if (!client->desktops().contains(desktop)) {
@@ -275,7 +275,7 @@ void space::handle_desktop_removed(VirtualDesktop* desktop)
         } else {
             sendClientToDesktop(
                 client,
-                qMin(desktop->x11DesktopNumber(), VirtualDesktopManager::self()->count()),
+                qMin(desktop->x11DesktopNumber(), virtual_desktop_manager::self()->count()),
                 true);
         }
     }

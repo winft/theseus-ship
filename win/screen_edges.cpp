@@ -380,7 +380,7 @@ void screen_edge::switchDesktop(QPoint const& cursorPos)
 {
     QPoint pos(cursorPos);
     auto const& screens = kwinApp()->get_base().screens;
-    VirtualDesktopManager* vds = VirtualDesktopManager::self();
+    auto vds = virtual_desktop_manager::self();
     uint const oldDesktop = vds->current();
     uint desktop = oldDesktop;
     int const OFFSET = 2;
@@ -874,7 +874,7 @@ void screen_edger::setActionForTouchBorder(ElectricBorder border, ElectricBorder
 
 void screen_edger::updateLayout()
 {
-    const QSize desktopMatrix = VirtualDesktopManager::self()->grid().size();
+    auto const desktopMatrix = virtual_desktop_manager::self()->grid().size();
     Qt::Orientations newLayout = {};
     if (desktopMatrix.width() > 1) {
         newLayout |= Qt::Horizontal;

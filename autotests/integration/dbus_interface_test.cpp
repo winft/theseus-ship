@@ -78,7 +78,7 @@ void TestDbusInterface::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    VirtualDesktopManager::self()->setCount(4);
+    win::virtual_desktop_manager::self()->setCount(4);
 }
 
 void TestDbusInterface::init()

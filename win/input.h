@@ -29,7 +29,7 @@ bool is_most_recently_raised(Win* win)
 {
     // The last toplevel in the unconstrained stacking order is the most recently raised one.
     auto last = top_client_on_desktop(
-        workspace(), VirtualDesktopManager::self()->current(), -1, true, false);
+        workspace(), virtual_desktop_manager::self()->current(), -1, true, false);
     return last == win;
 }
 
@@ -299,7 +299,7 @@ void enter_event(Win* win, const QPoint& globalPos)
     if (options->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
         && workspace()->focusChangeEnabled() && globalPos != workspace()->focusMousePosition()
         && top_client_on_desktop(workspace(),
-                                 VirtualDesktopManager::self()->current(),
+                                 virtual_desktop_manager::self()->current(),
                                  options->isSeparateScreenFocus() ? win->screen() : -1)
             != win) {
         win->control->start_auto_raise();
