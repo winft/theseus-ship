@@ -180,9 +180,6 @@ set_package_properties(Threads PROPERTIES
 find_package(Libinput 1.9)
 set_package_properties(Libinput PROPERTIES TYPE REQUIRED PURPOSE "Required for input handling on Wayland.")
 
-find_package(gbm)
-set_package_properties(gbm PROPERTIES TYPE OPTIONAL PURPOSE "Required for Wayland session.")
-
 find_package(Pixman)
 set_package_properties(Pixman PROPERTIES
     TYPE REQUIRED
@@ -903,7 +900,6 @@ target_link_libraries(kwin_wayland_lib
 PUBLIC
   kwin
   kwinxrenderutils
-  gbm::gbm
   Wayland::Server
   wlroots::wlroots
   Pixman::Pixman
