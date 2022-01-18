@@ -100,16 +100,10 @@ void DBusInterface::announceService()
                         atoms->utf8_string, 8, service.size(), service.constData());
 }
 
-// wrap void methods with no arguments to Workspace
-#define WRAP(name) \
-void DBusInterface::name() \
-{\
-    Workspace::self()->name();\
+void DBusInterface::reconfigure()
+{
+    Workspace::self()->reconfigure();
 }
-
-WRAP(reconfigure)
-
-#undef WRAP
 
 void DBusInterface::killWindow()
 {
@@ -121,16 +115,10 @@ void DBusInterface::unclutterDesktop()
     win::unclutter_desktop();
 }
 
-// wrap returning methods with no arguments to Workspace
-#define WRAP( rettype, name ) \
-rettype DBusInterface::name( ) \
-{\
-    return Workspace::self()->name(); \
+QString DBusInterface::supportInformation( )
+{
+    return Workspace::self()->supportInformation();
 }
-
-WRAP(QString, supportInformation)
-
-#undef WRAP
 
 bool DBusInterface::startActivity(const QString& /*in0*/)
 {
