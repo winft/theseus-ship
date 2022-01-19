@@ -456,9 +456,7 @@ set(kwin_SRCS
     render/shadow.cpp
     render/thumbnail_item.cpp
     render/window.cpp
-    render/x11/compositor.cpp
     render/x11/compositor_selection_owner.cpp
-    render/x11/overlay_window.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp
     rules/rules.cpp
@@ -514,18 +512,6 @@ set(kwin_SRCS
     xwl/xwayland_interface.cpp
     perf/ftrace.cpp
 )
-
-if (KWIN_BUILD_XRENDER_COMPOSITING)
-    set(kwin_SRCS
-        ${kwin_SRCS}
-        render/xrender/backend.cpp
-        render/xrender/deco_renderer.cpp
-        render/xrender/effect_frame.cpp
-        render/xrender/scene.cpp
-        render/xrender/shadow.cpp
-        render/xrender/window.cpp
-    )
-endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(kwin_SRCS
@@ -687,18 +673,32 @@ endif()
 
 set(kwin_X11_SRCS
    base/x11/output.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/cursor.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/platform.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/window_selector.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/xfixes_cursor_event_filter.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/deco_renderer.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/mouse_intercept_filter.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/non_composited_outline.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/platform.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/randr_filter.cpp
+   input/x11/cursor.cpp
+   input/x11/platform.cpp
+   input/x11/window_selector.cpp
+   input/x11/xfixes_cursor_event_filter.cpp
+   input/logging.cpp
+   render/backend/x11/deco_renderer.cpp
+   render/backend/x11/effects.cpp
+   render/backend/x11/mouse_intercept_filter.cpp
+   render/backend/x11/non_composited_outline.cpp
+   render/backend/x11/platform.cpp
+   render/backend/x11/randr_filter.cpp
+   render/x11/compositor.cpp
+   render/x11/overlay_window.cpp
 )
+
+if (KWIN_HAVE_XRENDER_COMPOSITING)
+  set(kwin_X11_SRCS
+    ${kwin_X11_SRCS}
+    render/xrender/backend.cpp
+    render/xrender/deco_renderer.cpp
+    render/xrender/effect_frame.cpp
+    render/xrender/scene.cpp
+    render/xrender/shadow.cpp
+    render/xrender/window.cpp
+  )
+endif()
 
 if (HAVE_X11_XINPUT)
     set(kwin_X11_SRCS
