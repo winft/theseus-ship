@@ -42,7 +42,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorationbridge.h"
 #include "main.h"
 #include "useractions.h"
-#include "virtualdesktops.h"
 #include "was_user_interaction_x11_filter.h"
 #include "xcbutils.h"
 
@@ -58,6 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 #include "win/util.h"
+#include "win/virtual_desktops.h"
 
 #include "win/x11/control.h"
 #include "win/x11/event.h"

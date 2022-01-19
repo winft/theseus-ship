@@ -10,10 +10,10 @@
 
 #include "input/redirect.h"
 #include "toplevel.h"
-#include "virtualdesktops.h"
 #include "win/geo.h"
 #include "win/internal_window.h"
 #include "win/stacking_order.h"
+#include "win/virtual_desktops.h"
 #include "workspace.h"
 
 #include <QWindow>

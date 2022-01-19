@@ -483,7 +483,6 @@ set(kwin_SRCS
     toplevel.cpp
     useractions.cpp
     utils.cpp
-    virtualdesktops.cpp
     virtualdesktopsdbustypes.cpp
     was_user_interaction_x11_filter.cpp
     win/app_menu.cpp
@@ -494,6 +493,7 @@ set(kwin_SRCS
     win/screen_edges.cpp
     win/stacking_order.cpp
     win/transient.cpp
+    win/virtual_desktops.cpp
     win/x11/client_machine.cpp
     win/x11/color_mapper.cpp
     win/x11/geometry_tip.cpp

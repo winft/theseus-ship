@@ -11,10 +11,10 @@
 #include "stacking.h"
 #include "transient.h"
 #include "types.h"
+#include "virtual_desktops.h"
 
 #include "main.h"
 #include "screens.h"
-#include "virtualdesktops.h"
 
 #include <Wrapland/Server/plasma_window.h>
 

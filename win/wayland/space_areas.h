@@ -7,8 +7,8 @@
 
 #include "screens.h"
 #include "utils.h"
-#include "virtualdesktops.h"
 #include "win/space_areas.h"
+#include "win/virtual_desktops.h"
 
 namespace KWin::win::wayland
 {

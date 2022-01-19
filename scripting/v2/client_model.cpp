@@ -11,8 +11,8 @@
 
 #include "screens.h"
 #include "toplevel.h"
-#include "virtualdesktops.h"
 #include "wayland_server.h"
+#include "win/virtual_desktops.h"
 #include "workspace.h"
 #include <config-kwin.h>
 

@@ -37,8 +37,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/control.h"
 #include "win/geo.h"
 #include "win/placement.h"
+#include "win/virtual_desktops.h"
 #include "workspace.h"
-#include "virtualdesktops.h"
 
 // Qt
 #include <QOpenGLContext>

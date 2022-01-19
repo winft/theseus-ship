@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/platform.h"
 #include "screens.h"
-#include "virtualdesktops.h"
+#include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 

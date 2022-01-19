@@ -21,12 +21,12 @@
 
 #include "base/wayland/idle_inhibition.h"
 #include "screens.h"
-#include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "win/input.h"
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/stacking_order.h"
+#include "win/virtual_desktops.h"
 #include "win/x11/space_areas.h"
 #include "win/x11/stacking_tree.h"
 #include "xwl/surface.h"

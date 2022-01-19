@@ -24,13 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scripting/platform.h"
 #include "scripting/script.h"
 #include "useractions.h"
-#include "virtualdesktops.h"
 #include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/control.h"
 #include "win/move.h"
+#include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
+#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 

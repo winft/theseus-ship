@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "win/control.h"
 #include "win/meta.h"
@@ -13,6 +12,7 @@
 #include "win/screen.h"
 #include "win/stacking.h"
 #include "win/types.h"
+#include "win/virtual_desktops.h"
 
 #include <Wrapland/Server/plasma_window.h>
 

@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "rules/rules.h"
 #include "utils.h"
-#include "virtualdesktops.h"
+#include "win/virtual_desktops.h"
 #include "xcbutils.h"
 // KDE
 #include <NETWM>

@@ -5,7 +5,7 @@
 */
 #include "root_info_filter.h"
 
-#include "virtualdesktops.h"
+#include "win/virtual_desktops.h"
 #include "win/x11/netinfo.h"
 
 namespace KWin::win::x11

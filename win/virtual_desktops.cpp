@@ -5,7 +5,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "virtualdesktops.h"
+#include "virtual_desktops.h"
 
 #include "input/redirect.h"
 #include "main.h"

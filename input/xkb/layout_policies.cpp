@@ -10,12 +10,12 @@
 #include "layout_manager.h"
 
 #include "toplevel.h"
-#include "virtualdesktops.h"
 #include "workspace.h"
 
 #include "win/control.h"
 #include "win/net.h"
 #include "win/util.h"
+#include "win/virtual_desktops.h"
 
 namespace KWin
 {

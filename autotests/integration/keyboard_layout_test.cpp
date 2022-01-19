@@ -11,11 +11,10 @@
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
-#include "virtualdesktops.h"
 #include "wayland_server.h"
-#include "workspace.h"
-
+#include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
+#include "workspace.h"
 
 #include <KConfigGroup>
 #include <KGlobalAccel>

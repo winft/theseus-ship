@@ -43,7 +43,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rule_book.h"
 #include "screens.h"
 #include "utils.h"
-#include "virtualdesktops.h"
 #include "scripting/platform.h"
 
 #include "win/app_menu.h"
@@ -53,6 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/net.h"
 #include "win/screen.h"
 #include "win/stacking_order.h"
+#include "win/virtual_desktops.h"
 #include "win/x11/window.h"
 
 #include <KProcess>

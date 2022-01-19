@@ -26,9 +26,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
-#include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "win/stacking.h"
+#include "win/virtual_desktops.h"
 #include "workspace.h"
 
 #include <QJSValue>

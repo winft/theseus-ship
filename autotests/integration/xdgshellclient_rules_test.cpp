@@ -24,15 +24,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rule_book.h"
 #include "rules/rules.h"
 #include "screens.h"
-#include "virtualdesktops.h"
 #include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/setup.h"
+#include "win/virtual_desktops.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
+#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
