@@ -25,7 +25,10 @@ class Toplevel;
 namespace render
 {
 
-class platform;
+namespace dbus
+{
+class compositing;
+}
 
 namespace x11
 {
@@ -33,6 +36,7 @@ class compositor_selection_owner;
 }
 
 class cursor;
+class platform;
 class scene;
 
 class KWIN_EXPORT compositor : public QObject
@@ -145,6 +149,7 @@ protected:
     QBasicTimer compositeTimer;
     qint64 m_delay;
     bool m_bufferSwapPending;
+    dbus::compositing* dbus{nullptr};
 
 private:
     void claimCompositorSelection();

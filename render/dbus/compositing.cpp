@@ -9,21 +9,20 @@
 #include "compositingadaptor.h"
 
 #include "base/platform.h"
+#include "render/compositor.h"
 #include "render/platform.h"
 #include "render/scene.h"
-#include "render/x11/compositor.h"
-#include "workspace.h"
 
 #include <QOpenGLContext>
 
 namespace KWin::render::dbus
 {
 
-compositing::compositing(render::compositor* parent)
-    : QObject(parent)
-    , m_compositor(parent)
+compositing::compositing(render::platform& platform)
+    : QObject(&platform)
+    , platform{platform}
 {
-    connect(m_compositor,
+    connect(platform.compositor.get(),
             &render::compositor::compositingToggled,
             this,
             &compositing::compositingToggled);
@@ -40,15 +39,15 @@ compositing::compositing(render::compositor* parent)
 
 QString compositing::compositingNotPossibleReason() const
 {
-    return kwinApp()->get_base().render->compositingNotPossibleReason();
+    return platform.compositingNotPossibleReason();
 }
 
 QString compositing::compositingType() const
 {
-    if (!m_compositor->scene()) {
+    if (!platform.compositor->scene()) {
         return QStringLiteral("none");
     }
-    switch (m_compositor->scene()->compositingType()) {
+    switch (platform.compositor->scene()->compositingType()) {
     case XRenderCompositing:
         return QStringLiteral("xrender");
     case OpenGLCompositing:
@@ -67,62 +66,46 @@ QString compositing::compositingType() const
 
 bool compositing::isActive() const
 {
-    return m_compositor->isActive();
+    return platform.compositor->isActive();
 }
 
 bool compositing::isCompositingPossible() const
 {
-    return kwinApp()->get_base().render->compositingPossible();
+    return platform.compositingPossible();
 }
 
 bool compositing::isOpenGLBroken() const
 {
-    return kwinApp()->get_base().render->openGLCompositingIsBroken();
+    return platform.openGLCompositingIsBroken();
 }
 
 bool compositing::platformRequiresCompositing() const
 {
-    return kwinApp()->get_base().render->requiresCompositing();
+    return platform.requiresCompositing();
 }
 
 void compositing::resume()
 {
-    using X11Compositor = render::x11::compositor;
-
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        static_cast<X11Compositor*>(m_compositor)->resume(X11Compositor::ScriptSuspend);
+    if (integration.resume) {
+        integration.resume();
     }
 }
 
 void compositing::suspend()
 {
-    using X11Compositor = render::x11::compositor;
-
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        static_cast<X11Compositor*>(m_compositor)->suspend(X11Compositor::ScriptSuspend);
+    if (integration.suspend) {
+        integration.suspend();
     }
 }
 
 void compositing::reinitialize()
 {
-    m_compositor->reinitialize();
+    platform.compositor->reinitialize();
 }
 
 QStringList compositing::supportedOpenGLPlatformInterfaces() const
 {
-    QStringList interfaces;
-    bool supportsGlx = false;
-#if HAVE_EPOXY_GLX
-    supportsGlx = (kwinApp()->operationMode() == Application::OperationModeX11);
-#endif
-    if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
-        supportsGlx = false;
-    }
-    if (supportsGlx) {
-        interfaces << QStringLiteral("glx");
-    }
-    interfaces << QStringLiteral("egl");
-    return interfaces;
+    return integration.get_types();
 }
 
 }

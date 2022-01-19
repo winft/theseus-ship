@@ -6,16 +6,25 @@
 */
 #pragma once
 
+#include "kwinglobals.h"
+
 #include <QObject>
 #include <QtDBus>
+#include <functional>
 
 namespace KWin::render
 {
 
-class compositor;
+class platform;
 
 namespace dbus
 {
+
+struct compositing_integration {
+    std::function<QStringList(void)> get_types;
+    std::function<void(void)> resume;
+    std::function<void(void)> suspend;
+};
 
 class compositing : public QObject
 {
@@ -62,7 +71,7 @@ class compositing : public QObject
     Q_PROPERTY(bool platformRequiresCompositing READ platformRequiresCompositing)
 
 public:
-    explicit compositing(render::compositor* parent);
+    explicit compositing(render::platform& platform);
     ~compositing() override = default;
 
     bool isActive() const;
@@ -72,6 +81,8 @@ public:
     QString compositingType() const;
     QStringList supportedOpenGLPlatformInterfaces() const;
     bool platformRequiresCompositing() const;
+
+    compositing_integration integration;
 
 public Q_SLOTS:
     /**
@@ -114,7 +125,7 @@ Q_SIGNALS:
     void compositingToggled(bool active);
 
 private:
-    render::compositor* m_compositor;
+    render::platform& platform;
 };
 
 }

@@ -13,6 +13,7 @@
 #include "base/wayland/platform.h"
 #include "render/backend/wlroots/output.h"
 #include "render/cursor.h"
+#include "render/dbus/compositing.h"
 #include "render/gl/scene.h"
 #include "render/platform.h"
 #include "render/qpainter/scene.h"
@@ -60,6 +61,8 @@ compositor::compositor(render::platform& platform)
     : render::compositor(platform)
     , presentation(new render::wayland::presentation(this))
 {
+    dbus->integration.get_types = [] { return QStringList{"egl"}; };
+
     if (!presentation->init_clock(platform.base.get_clockid())) {
         qCCritical(KWIN_WL) << "Presentation clock failed. Exit.";
         qApp->quit();

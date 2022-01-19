@@ -8,6 +8,7 @@
 
 #include "compositor_selection_owner.h"
 
+#include "render/dbus/compositing.h"
 #include "render/gl/scene.h"
 #include "render/window.h"
 #include "render/xrender/scene.h"
@@ -51,6 +52,10 @@ compositor::compositor(render::platform& platform)
     : render::compositor(platform)
     , m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
 {
+    dbus->integration.get_types = [] { return QStringList{"glx"}; };
+    dbus->integration.resume = [this] { resume(ScriptSuspend); };
+    dbus->integration.suspend = [this] { suspend(ScriptSuspend); };
+
     if (qEnvironmentVariableIsSet("KWIN_MAX_FRAMES_TESTED")) {
         m_framesToTestForSafety = qEnvironmentVariableIntValue("KWIN_MAX_FRAMES_TESTED");
     }

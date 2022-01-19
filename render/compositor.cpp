@@ -67,7 +67,7 @@ compositor::compositor(render::platform& platform)
             &compositor::deleteUnusedSupportProperties);
 
     // register DBus
-    new dbus::compositing(this);
+    dbus = new dbus::compositing(platform);
 }
 
 compositor::~compositor()
