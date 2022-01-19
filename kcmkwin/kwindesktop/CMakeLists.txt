@@ -4,7 +4,7 @@ add_definitions(-DTRANSLATION_DOMAIN=\"kcm_kwin_virtualdesktops\")
 ########### next target ###############
 
 set(kcm_kwin_virtualdesktops_PART_SRCS
-    ../../virtualdesktopsdbustypes.cpp
+    ../../win/dbus/virtual_desktop_types.cpp
     animationsmodel.cpp
     desktopsmodel.cpp
     virtualdesktops.cpp

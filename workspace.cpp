@@ -47,6 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "win/app_menu.h"
 #include "win/controlling.h"
+#include "win/dbus/virtual_desktop_manager.h"
 #include "win/focus_chain.h"
 #include "win/input.h"
 #include "win/internal_window.h"
@@ -112,7 +113,7 @@ Workspace::Workspace()
     win::virtual_desktop_manager::create(this);
 
     // dbus interface
-    new VirtualDesktopManagerDBusInterface(win::virtual_desktop_manager::self());
+    new win::dbus::virtual_desktop_manager(win::virtual_desktop_manager::self());
 
 #ifdef KWIN_BUILD_TABBOX
     // need to create the tabbox before compositing scene is setup

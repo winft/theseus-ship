@@ -4,7 +4,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "virtualdesktopsdbustypes.h"
+#include "virtual_desktop_types.h"
 
 // Marshall the virtual_desktop_data into a D-BUS argument
 QDBusArgument const& operator<<(QDBusArgument& argument,

@@ -9,8 +9,6 @@
 #include <QObject>
 #include <QtDBus>
 
-#include "virtualdesktopsdbustypes.h"
-
 namespace KWin::render
 {
 

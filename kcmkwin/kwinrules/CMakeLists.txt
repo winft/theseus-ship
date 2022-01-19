@@ -11,7 +11,7 @@ set(kwinrules_SRCS
     ../../input/x11/cursor.cpp
     ../../rules/rules.cpp
     ../../utils.cpp
-    ../../virtualdesktopsdbustypes.cpp
+    ../../win/dbus/virtual_desktop_types.cpp
     kwinsrc.cpp
     optionsmodel.cpp
     ruleitem.cpp

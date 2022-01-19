@@ -484,10 +484,11 @@ set(kwin_SRCS
     toplevel.cpp
     useractions.cpp
     utils.cpp
-    virtualdesktopsdbustypes.cpp
     was_user_interaction_x11_filter.cpp
     win/app_menu.cpp
     win/control.cpp
+    win/dbus/virtual_desktop_manager.cpp
+    win/dbus/virtual_desktop_types.cpp
     win/focus_chain.cpp
     win/internal_window.cpp
     win/remnant.cpp
@@ -558,7 +559,11 @@ qt5_add_dbus_adaptor(kwin_SRCS
     KWin::render::post::color_correct_dbus_interface
 )
 qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_impl)
-qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.VirtualDesktopManager.xml dbusinterface.h KWin::VirtualDesktopManagerDBusInterface)
+qt5_add_dbus_adaptor(kwin_SRCS
+    win/dbus/org.kde.KWin.VirtualDesktopManager.xml
+    win/dbus/virtual_desktop_manager.h
+    KWin::win::dbus::virtual_desktop_manager
+)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.Session.xml sm.h KWin::SessionManager)
 
 qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf5_org.freedesktop.ScreenSaver.xml screenlocker_interface)
@@ -956,7 +961,7 @@ install(FILES render/post/kconfig/color_correct_settings.kcfg
 install(FILES kwin.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFY5RCDIR} RENAME ${KWIN_NAME}.notifyrc)
 install(
     FILES
-        org.kde.KWin.VirtualDesktopManager.xml
+        win/dbus/org.kde.KWin.VirtualDesktopManager.xml
         org.kde.KWin.xml
         org.kde.kwin.ColorCorrect.xml
         render/dbus/org.kde.kwin.Compositing.xml

@@ -24,7 +24,7 @@
 #include "ruleitem.h"
 #include "rules/rules.h"
 #include "rule_settings.h"
-#include <virtualdesktopsdbustypes.h>
+#include "win/dbus/virtual_desktop_types.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
