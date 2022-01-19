@@ -1,25 +1,10 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2012 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2012 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
-#ifndef KWIN_DBUS_INTERFACE_H
-#define KWIN_DBUS_INTERFACE_H
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
 
 #include <QObject>
 #include <QtDBus>
@@ -41,34 +26,38 @@ namespace KWin
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  */
-class DBusInterface: public QObject, protected QDBusContext
+class DBusInterface : public QObject, protected QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin")
+
 public:
-    explicit DBusInterface(QObject *parent);
+    explicit DBusInterface(QObject* parent);
     ~DBusInterface() override;
 
-public: // PROPERTIES
-public Q_SLOTS: // METHODS
+public Q_SLOTS:
     int currentDesktop();
     Q_NOREPLY void killWindow();
+
     void nextDesktop();
     void previousDesktop();
+
     Q_NOREPLY void reconfigure();
     bool setCurrentDesktop(int desktop);
-    bool startActivity(const QString &in0);
-    bool stopActivity(const QString &in0);
+
+    bool startActivity(const QString& in0);
+    bool stopActivity(const QString& in0);
+
     QString supportInformation();
     Q_NOREPLY void unclutterDesktop();
     Q_NOREPLY void showDebugConsole();
     void enableFtrace(bool enable);
 
     QVariantMap queryWindowInfo();
-    QVariantMap getWindowInfo(const QString &uuid);
+    QVariantMap getWindowInfo(const QString& uuid);
 
 private Q_SLOTS:
-    void becomeKWinService(const QString &service);
+    void becomeKWinService(const QString& service);
 
 private:
     void announceService();
@@ -76,6 +65,4 @@ private:
     QDBusMessage m_replyQueryWindowInfo;
 };
 
-} // namespace
-
-#endif // KWIN_DBUS_INTERFACE_H
+}
