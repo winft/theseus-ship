@@ -1849,6 +1849,11 @@ void effects_handler_impl::slotOutputDisabled(base::output* output)
     }
 }
 
+bool effects_handler_impl::isCursorHidden() const
+{
+    return input::get_cursor()->is_hidden();
+}
+
 //****************************************
 // effect_screen_impl
 //****************************************

@@ -308,6 +308,7 @@ public:
     EffectScreen* screenAt(const QPoint& point) const override;
     EffectScreen* findScreen(const QString& name) const override;
     EffectScreen* findScreen(int screenId) const override;
+    bool isCursorHidden() const override;
 
 public Q_SLOTS:
     void slotCurrentTabAboutToChange(EffectWindow* from, EffectWindow* to);
