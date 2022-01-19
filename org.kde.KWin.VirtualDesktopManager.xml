@@ -6,7 +6,8 @@
     <property name="rows" type="u" access="readwrite"/>
     <property name="navigationWrappingAround" type="b" access="readwrite"/>
     <property name="desktops" type="a(iss)" access="read">
-        <annotation name="org.qtproject.QtDBus.QtTypeName" value="KWin::DBusDesktopDataVector"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName"
+        value="KWin::win::dbus::virtual_desktop_data_vector"/>
     </property>
 
     <signal name="countChanged">
@@ -23,12 +24,14 @@
     </signal>
     <signal name="desktopDataChanged">
       <arg name="id" type="s" direction="out"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="KWin::DBusDesktopDataStruct"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out1"
+        value="KWin::win::dbus::virtual_desktop_data"/>
       <arg name="desktopData" type="(iss)" direction="out"/>
     </signal>
     <signal name="desktopCreated">
       <arg name="id" type="s" direction="out"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="KWin::DBusDesktopDataStruct"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out1"
+        value="KWin::win::dbus::virtual_desktop_data"/>
       <arg name="desktopData" type="(iss)" direction="out"/>
     </signal>
     <signal name="desktopRemoved">

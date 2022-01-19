@@ -1,29 +1,14 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2018 Marco Martin <mart@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2018 Marco Martin <mart@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
-// own
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "virtualdesktopsdbustypes.h"
 
-
-// Marshall the DBusDesktopDataStruct data into a D-BUS argument
-const QDBusArgument &operator<<(QDBusArgument &argument, const KWin::DBusDesktopDataStruct &desk)
+// Marshall the virtual_desktop_data into a D-BUS argument
+QDBusArgument const& operator<<(QDBusArgument& argument,
+                                KWin::win::dbus::virtual_desktop_data const& desk)
 {
     argument.beginStructure();
     argument << desk.position;
@@ -32,8 +17,10 @@ const QDBusArgument &operator<<(QDBusArgument &argument, const KWin::DBusDesktop
     argument.endStructure();
     return argument;
 }
+
 // Retrieve
-const QDBusArgument &operator>>(const QDBusArgument &argument, KWin::DBusDesktopDataStruct &desk)
+QDBusArgument const& operator>>(QDBusArgument const& argument,
+                                KWin::win::dbus::virtual_desktop_data& desk)
 {
     argument.beginStructure();
     argument >> desk.position;
@@ -43,23 +30,27 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, KWin::DBusDesktop
     return argument;
 }
 
-const QDBusArgument &operator<<(QDBusArgument &argument, const KWin::DBusDesktopDataVector &deskVector)
+const QDBusArgument& operator<<(QDBusArgument& argument,
+                                KWin::win::dbus::virtual_desktop_data_vector const& deskVector)
 {
-    argument.beginArray(qMetaTypeId<KWin::DBusDesktopDataStruct>());
+    argument.beginArray(qMetaTypeId<KWin::win::dbus::virtual_desktop_data>());
+
     for (int i = 0; i < deskVector.size(); ++i) {
         argument << deskVector[i];
     }
+
     argument.endArray();
     return argument;
 }
 
-const QDBusArgument &operator>>(const QDBusArgument &argument, KWin::DBusDesktopDataVector &deskVector)
+const QDBusArgument& operator>>(QDBusArgument const& argument,
+                                KWin::win::dbus::virtual_desktop_data_vector& deskVector)
 {
     argument.beginArray();
     deskVector.clear();
 
     while (!argument.atEnd()) {
-        KWin::DBusDesktopDataStruct element;
+        KWin::win::dbus::virtual_desktop_data element;
         argument >> element;
         deskVector.append(element);
     }

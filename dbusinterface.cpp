@@ -245,8 +245,8 @@ VirtualDesktopManagerDBusInterface::VirtualDesktopManagerDBusInterface(win::virt
     : QObject(parent)
     , m_manager(parent)
 {
-    qDBusRegisterMetaType<KWin::DBusDesktopDataStruct>();
-    qDBusRegisterMetaType<KWin::DBusDesktopDataVector>();
+    qDBusRegisterMetaType<KWin::win::dbus::virtual_desktop_data>();
+    qDBusRegisterMetaType<KWin::win::dbus::virtual_desktop_data_vector>();
 
     new VirtualDesktopManagerAdaptor(this);
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/VirtualDesktopManager"),
@@ -281,14 +281,14 @@ VirtualDesktopManagerDBusInterface::VirtualDesktopManagerDBusInterface(win::virt
     for (auto vd : m_manager->desktops()) {
         connect(vd, &win::virtual_desktop::x11DesktopNumberChanged, this,
             [this, vd]() {
-                DBusDesktopDataStruct data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
+                win::dbus::virtual_desktop_data data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
                 Q_EMIT desktopDataChanged(vd->id(), data);
                 Q_EMIT desktopsChanged(desktops());
             }
         );
         connect(vd, &win::virtual_desktop::nameChanged, this,
             [this, vd]() {
-                DBusDesktopDataStruct data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
+                win::dbus::virtual_desktop_data data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
                 Q_EMIT desktopDataChanged(vd->id(), data);
                 Q_EMIT desktopsChanged(desktops());
             }
@@ -298,19 +298,19 @@ VirtualDesktopManagerDBusInterface::VirtualDesktopManagerDBusInterface(win::virt
         [this](auto vd) {
             connect(vd, &win::virtual_desktop::x11DesktopNumberChanged, this,
                 [this, vd]() {
-                    DBusDesktopDataStruct data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
+                    win::dbus::virtual_desktop_data data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
                     Q_EMIT desktopDataChanged(vd->id(), data);
                     Q_EMIT desktopsChanged(desktops());
                 }
             );
             connect(vd, &win::virtual_desktop::nameChanged, this,
                 [this, vd]() {
-                    DBusDesktopDataStruct data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
+                    win::dbus::virtual_desktop_data data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
                     Q_EMIT desktopDataChanged(vd->id(), data);
                     Q_EMIT desktopsChanged(desktops());
                 }
             );
-            DBusDesktopDataStruct data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
+            win::dbus::virtual_desktop_data data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
             Q_EMIT desktopCreated(vd->id(), data);
             Q_EMIT desktopsChanged(desktops());
         }
@@ -374,16 +374,16 @@ bool VirtualDesktopManagerDBusInterface::isNavigationWrappingAround() const
     return m_manager->isNavigationWrappingAround();
 }
 
-DBusDesktopDataVector VirtualDesktopManagerDBusInterface::desktops() const
+win::dbus::virtual_desktop_data_vector VirtualDesktopManagerDBusInterface::desktops() const
 {
     const auto desks = m_manager->desktops();
-    DBusDesktopDataVector desktopVect;
+    win::dbus::virtual_desktop_data_vector desktopVect;
     desktopVect.reserve(m_manager->count());
 
     std::transform(desks.constBegin(), desks.constEnd(),
         std::back_inserter(desktopVect),
         [] (auto vd) {
-            return DBusDesktopDataStruct{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
+            return win::dbus::virtual_desktop_data{.position = vd->x11DesktopNumber() - 1, .id = vd->id(), .name = vd->name()};
         }
     );
 

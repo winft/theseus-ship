@@ -1,47 +1,36 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2018 Marco Martin <mart@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2018 Marco Martin <mart@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
-#ifndef KWIN_VIRTUALDESKTOPS_DBUS_TYPES_H
-#define KWIN_VIRTUALDESKTOPS_DBUS_TYPES_H
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
 
 #include <QtDBus>
 
-namespace KWin
+namespace KWin::win::dbus
 {
 
-struct DBusDesktopDataStruct {
+struct virtual_desktop_data {
     uint position;
     QString id;
     QString name;
 };
-typedef QVector<DBusDesktopDataStruct> DBusDesktopDataVector;
+
+using virtual_desktop_data_vector = QVector<virtual_desktop_data>;
+
 }
 
-const QDBusArgument &operator<<(QDBusArgument &argument, const KWin::DBusDesktopDataStruct &desk);
-const QDBusArgument &operator>>(const QDBusArgument &argument, KWin::DBusDesktopDataStruct &desk);
+QDBusArgument const& operator<<(QDBusArgument& argument,
+                                KWin::win::dbus::virtual_desktop_data const& desk);
+QDBusArgument const& operator>>(QDBusArgument const& argument,
+                                KWin::win::dbus::virtual_desktop_data& desk);
 
-Q_DECLARE_METATYPE(KWin::DBusDesktopDataStruct)
+Q_DECLARE_METATYPE(KWin::win::dbus::virtual_desktop_data)
 
-const QDBusArgument &operator<<(QDBusArgument &argument, const KWin::DBusDesktopDataVector &deskVector);
-const QDBusArgument &operator>>(const QDBusArgument &argument, KWin::DBusDesktopDataVector &deskVector);
+QDBusArgument const& operator<<(QDBusArgument& argument,
+                                KWin::win::dbus::virtual_desktop_data_vector const& deskVector);
+QDBusArgument const& operator>>(QDBusArgument const& argument,
+                                KWin::win::dbus::virtual_desktop_data_vector& deskVector);
 
-Q_DECLARE_METATYPE(KWin::DBusDesktopDataVector)
-
-#endif // KWIN_VIRTUALDESKTOPS_DBUS_TYPES_H
+Q_DECLARE_METATYPE(KWin::win::dbus::virtual_desktop_data_vector)

@@ -111,7 +111,7 @@ class VirtualDesktopManagerDBusInterface : public QObject
     /**
      * list of key/value pairs which every one of them is representing a desktop
      */
-    Q_PROPERTY(KWin::DBusDesktopDataVector desktops READ desktops NOTIFY desktopsChanged);
+    Q_PROPERTY(KWin::win::dbus::virtual_desktop_data_vector desktops READ desktops NOTIFY desktopsChanged);
 
 public:
     VirtualDesktopManagerDBusInterface(win::virtual_desktop_manager* parent);
@@ -128,16 +128,16 @@ public:
     void setNavigationWrappingAround(bool wraps);
     bool isNavigationWrappingAround() const;
 
-    KWin::DBusDesktopDataVector desktops() const;
+    KWin::win::dbus::virtual_desktop_data_vector desktops() const;
 
 Q_SIGNALS:
     void countChanged(uint count);
     void rowsChanged(uint rows);
     void currentChanged(const QString &id);
     void navigationWrappingAroundChanged(bool wraps);
-    void desktopsChanged(KWin::DBusDesktopDataVector);
-    void desktopDataChanged(const QString &id, KWin::DBusDesktopDataStruct);
-    void desktopCreated(const QString &id, KWin::DBusDesktopDataStruct);
+    void desktopsChanged(KWin::win::dbus::virtual_desktop_data_vector);
+    void desktopDataChanged(const QString &id, KWin::win::dbus::virtual_desktop_data);
+    void desktopCreated(const QString &id, KWin::win::dbus::virtual_desktop_data);
     void desktopRemoved(const QString &id);
 
 public Q_SLOTS:
