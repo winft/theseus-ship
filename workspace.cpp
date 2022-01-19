@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinglplatform.h>
 
 #include "atoms.h"
-#include "dbusinterface.h"
+#include "base/dbus/kwin.h"
 #include "input/cursor.h"
 #include "killwindow.h"
 #include "moving_client_x11_filter.h"
@@ -146,7 +146,7 @@ Workspace::Workspace()
             this,
             [this](const QString& name) { storeSession(name, SMSavePhase2); });
 
-    new DBusInterface(this);
+    new base::dbus::kwin(this);
 
     initShortcuts();
 

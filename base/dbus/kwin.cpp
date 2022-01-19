@@ -4,9 +4,8 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "dbusinterface.h"
+#include "kwin.h"
 
-// kwin
 #include "atoms.h"
 #include "debug/console.h"
 #include "kwinadaptor.h"
@@ -21,10 +20,10 @@
 
 #include <QDBusServiceWatcher>
 
-namespace KWin
+namespace KWin::base::dbus
 {
 
-DBusInterface::DBusInterface(QObject* parent)
+kwin::kwin(QObject* parent)
     : QObject(parent)
     , m_serviceName(QStringLiteral("org.kde.KWin"))
 {
@@ -41,10 +40,7 @@ DBusInterface::DBusInterface(QObject* parent)
     if (!dbus.registerService(m_serviceName)) {
         QDBusServiceWatcher* dog = new QDBusServiceWatcher(
             m_serviceName, dbus, QDBusServiceWatcher::WatchForUnregistration, this);
-        connect(dog,
-                &QDBusServiceWatcher::serviceUnregistered,
-                this,
-                &DBusInterface::becomeKWinService);
+        connect(dog, &QDBusServiceWatcher::serviceUnregistered, this, &kwin::becomeKWinService);
     } else {
         announceService();
     }
@@ -55,10 +51,10 @@ DBusInterface::DBusInterface(QObject* parent)
                  QStringLiteral("reloadConfig"),
                  Workspace::self(),
                  SLOT(slotReloadConfig()));
-    connect(kwinApp(), &Application::x11ConnectionChanged, this, &DBusInterface::announceService);
+    connect(kwinApp(), &Application::x11ConnectionChanged, this, &kwin::announceService);
 }
 
-void DBusInterface::becomeKWinService(const QString& service)
+void kwin::becomeKWinService(const QString& service)
 {
     // TODO: this watchdog exists to make really safe that we at some point get the service
     // but it's probably no longer needed since we explicitly unregister the service with the
@@ -70,7 +66,7 @@ void DBusInterface::becomeKWinService(const QString& service)
     }
 }
 
-DBusInterface::~DBusInterface()
+kwin::~kwin()
 {
     QDBusConnection::sessionBus().unregisterService(m_serviceName);
 
@@ -84,7 +80,7 @@ DBusInterface::~DBusInterface()
     }
 }
 
-void DBusInterface::announceService()
+void kwin::announceService()
 {
     if (!kwinApp()->x11Connection()) {
         return;
@@ -100,63 +96,63 @@ void DBusInterface::announceService()
                         service.constData());
 }
 
-void DBusInterface::reconfigure()
+void kwin::reconfigure()
 {
     Workspace::self()->reconfigure();
 }
 
-void DBusInterface::killWindow()
+void kwin::killWindow()
 {
     Workspace::self()->slotKillWindow();
 }
 
-void DBusInterface::unclutterDesktop()
+void kwin::unclutterDesktop()
 {
     win::unclutter_desktop();
 }
 
-QString DBusInterface::supportInformation()
+QString kwin::supportInformation()
 {
     return Workspace::self()->supportInformation();
 }
 
-bool DBusInterface::startActivity(const QString& /*in0*/)
+bool kwin::startActivity(const QString& /*in0*/)
 {
     return false;
 }
 
-bool DBusInterface::stopActivity(const QString& /*in0*/)
+bool kwin::stopActivity(const QString& /*in0*/)
 {
     return false;
 }
 
-int DBusInterface::currentDesktop()
+int kwin::currentDesktop()
 {
     return win::virtual_desktop_manager::self()->current();
 }
 
-bool DBusInterface::setCurrentDesktop(int desktop)
+bool kwin::setCurrentDesktop(int desktop)
 {
     return win::virtual_desktop_manager::self()->setCurrent(desktop);
 }
 
-void DBusInterface::nextDesktop()
+void kwin::nextDesktop()
 {
     win::virtual_desktop_manager::self()->moveTo<win::virtual_desktop_next>();
 }
 
-void DBusInterface::previousDesktop()
+void kwin::previousDesktop()
 {
     win::virtual_desktop_manager::self()->moveTo<win::virtual_desktop_previous>();
 }
 
-void DBusInterface::showDebugConsole()
+void kwin::showDebugConsole()
 {
     auto console = kwinApp()->create_debug_console();
     console->show();
 }
 
-void DBusInterface::enableFtrace(bool enable)
+void kwin::enableFtrace(bool enable)
 {
     const QString name = QStringLiteral("org.kde.kwin.enableFtrace");
 #if HAVE_PERF
@@ -213,7 +209,7 @@ QVariantMap clientToVariantMap(Toplevel const* c)
 
 }
 
-QVariantMap DBusInterface::queryWindowInfo()
+QVariantMap kwin::queryWindowInfo()
 {
     m_replyQueryWindowInfo = message();
     setDelayedReply(true);
@@ -238,7 +234,7 @@ QVariantMap DBusInterface::queryWindowInfo()
     return QVariantMap{};
 }
 
-QVariantMap DBusInterface::getWindowInfo(const QString& uuid)
+QVariantMap kwin::getWindowInfo(const QString& uuid)
 {
     auto const id = QUuid::fromString(uuid);
     auto const client = workspace()->findAbstractClient(

@@ -9,7 +9,7 @@
 #include <QObject>
 #include <QtDBus>
 
-namespace KWin
+namespace KWin::base::dbus
 {
 
 /**
@@ -26,14 +26,14 @@ namespace KWin
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  */
-class DBusInterface : public QObject, protected QDBusContext
+class kwin : public QObject, protected QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin")
 
 public:
-    explicit DBusInterface(QObject* parent);
-    ~DBusInterface() override;
+    explicit kwin(QObject* parent);
+    ~kwin() override;
 
 public Q_SLOTS:
     int currentDesktop();

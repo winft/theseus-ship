@@ -385,6 +385,7 @@ add_subdirectory(helpers)
 
 set(kwin_SRCS
     atoms.cpp
+    base/dbus/kwin.cpp
     base/os/clock/skew_notifier.cpp
     base/os/clock/skew_notifier_engine.cpp
     base/x11/event_filter.cpp
@@ -396,7 +397,6 @@ set(kwin_SRCS
     render/post/color_correct_dbus_interface.cpp
     render/post/night_color_manager.cpp
     render/post/suncalc.cpp
-    dbusinterface.cpp
     debug/console.cpp
     debug/x11_console.cpp
     decorations/decoratedclient.cpp
@@ -547,7 +547,7 @@ kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfg
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_book_settings_base.kcfgc)
 
-qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.xml dbusinterface.h KWin::DBusInterface)
+qt5_add_dbus_adaptor(kwin_SRCS base/dbus/org.kde.KWin.xml base/dbus/kwin.h KWin::base::dbus::kwin)
 qt5_add_dbus_adaptor(kwin_SRCS
   render/dbus/org.kde.kwin.Compositing.xml
   render/dbus/compositing.h
@@ -962,7 +962,7 @@ install(FILES kwin.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFY5RCDIR} RENAME ${KW
 install(
     FILES
         win/dbus/org.kde.KWin.VirtualDesktopManager.xml
-        org.kde.KWin.xml
+        base/dbus/org.kde.KWin.xml
         org.kde.kwin.ColorCorrect.xml
         render/dbus/org.kde.kwin.Compositing.xml
         org.kde.kwin.Effects.xml
