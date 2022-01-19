@@ -39,10 +39,11 @@ template<typename Space>
 auto create_unmanaged_window(Space& space, xcb_window_t xcb_window) -> typename Space::x11_window*
 {
     // TODO(romangg): this check is not right here!
-    if (auto compositor = render::x11::compositor::self()) {
-        if (compositor->checkForOverlayWindow(xcb_window)) {
-            return nullptr;
-        }
+    auto compositor = render::compositor::self();
+    assert(compositor);
+    if (auto& is_overlay = compositor->x11_integration.is_overlay_window;
+        is_overlay && is_overlay(xcb_window)) {
+        return nullptr;
     }
 
     auto window = win::x11::create_unmanaged_window<typename Space::x11_window>(xcb_window);

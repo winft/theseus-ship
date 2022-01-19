@@ -52,6 +52,9 @@ compositor::compositor(render::platform& platform)
     : render::compositor(platform)
     , m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
 {
+    x11_integration.is_overlay_window = [this](auto win) { return checkForOverlayWindow(win); };
+    x11_integration.update_blocking
+        = [this](auto win) { return updateClientCompositeBlocking(win); };
     dbus->integration.get_types = [] { return QStringList{"glx"}; };
     dbus->integration.resume = [this] { resume(ScriptSuspend); };
     dbus->integration.suspend = [this] { suspend(ScriptSuspend); };

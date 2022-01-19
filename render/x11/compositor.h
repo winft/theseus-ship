@@ -89,7 +89,7 @@ public:
      */
     bool checkForOverlayWindow(WId w) const;
 
-    void updateClientCompositeBlocking(Toplevel* window = nullptr);
+    void updateClientCompositeBlocking(Toplevel* window);
 
     /**
      * @brief The overlay window used by the backend, if any.

@@ -11,7 +11,6 @@
 #include "geo.h"
 #include "meta.h"
 #include "netinfo.h"
-#include "render/x11/compositor.h"
 #include "space.h"
 #include "window.h"
 #include "xcb.h"
@@ -638,11 +637,11 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
 
     setup_space_window_connections(workspace(), win);
 
-    if (auto compositor = render::x11::compositor::self()) {
+    if (auto comp = render::compositor::self(); comp->x11_integration.update_blocking) {
         QObject::connect(win,
                          &win::x11::window::blockingCompositingChanged,
-                         compositor,
-                         &render::x11::compositor::updateClientCompositeBlocking);
+                         comp,
+                         [comp](auto window) { comp->x11_integration.update_blocking(window); });
     }
 
     QObject::connect(win,

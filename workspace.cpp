@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "moving_client_x11_filter.h"
 #include "render/effects.h"
 #include "render/outline.h"
-#include "render/x11/compositor.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
 #include "screens.h"
@@ -431,9 +430,9 @@ void Workspace::removeDeleted(Toplevel* window)
 
     x_stacking_tree->mark_as_dirty();
 
-    if (auto compositor = render::x11::compositor::self();
-        compositor && window->remnant()->control) {
-        compositor->updateClientCompositeBlocking();
+    if (auto& update_block = m_compositor->x11_integration.update_blocking;
+        update_block && window->remnant()->control) {
+        update_block(nullptr);
     }
 }
 

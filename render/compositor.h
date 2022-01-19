@@ -39,6 +39,11 @@ class cursor;
 class platform;
 class scene;
 
+struct compositor_x11_integration {
+    std::function<bool(xcb_window_t)> is_overlay_window;
+    std::function<void(Toplevel*)> update_blocking;
+};
+
 class KWIN_EXPORT compositor : public QObject
 {
     Q_OBJECT
@@ -49,10 +54,6 @@ public:
         Starting,
         Stopping,
     };
-
-    // TODO(romangg): Only relevant for Wayland. Put in child class.
-    std::unique_ptr<cursor> software_cursor;
-    render::platform& platform;
 
     ~compositor() override;
     static compositor* self();
@@ -109,6 +110,11 @@ public:
     // for delayed supportproperty management of effects
     void keepSupportProperty(xcb_atom_t atom);
     void removeSupportProperty(xcb_atom_t atom);
+
+    // TODO(romangg): Only relevant for Wayland. Put in child class.
+    std::unique_ptr<cursor> software_cursor;
+    compositor_x11_integration x11_integration;
+    render::platform& platform;
 
 Q_SIGNALS:
     void compositingToggled(bool active);
