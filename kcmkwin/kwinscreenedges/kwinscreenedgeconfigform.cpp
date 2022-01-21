@@ -56,6 +56,7 @@ void KWinScreenEdgesConfigForm::setElectricBorderCornerRatio(double value)
 void KWinScreenEdgesConfigForm::setDefaultElectricBorderCornerRatio(double value)
 {
     m_defaultCornerRatio = value;
+    updateDefaultIndicators();
 }
 
 double KWinScreenEdgesConfigForm::electricBorderCornerRatio() const
