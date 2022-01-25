@@ -402,6 +402,15 @@ void dropNiceCapability()
 
 int main(int argc, char * argv[])
 {
+    // Redirect stderr output. This is useful as a workaround for missing logs in systemd journal
+    // when launching a full Plasma session.
+    if (auto log_path = getenv("KWIN_LOG_PATH")) {
+        if (!freopen(log_path, "w", stderr)) {
+            std::cerr << "Failed to open '" << log_path << "' for writing stderr." << std::endl;
+            return 1;
+        }
+    }
+
     if (getuid() == 0) {
         std::cerr << "kwin_wayland does not support running as root." << std::endl;
         return 1;

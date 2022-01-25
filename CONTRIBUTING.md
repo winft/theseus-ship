@@ -207,6 +207,25 @@ This is very similar to starting KWinFT from the VT directly.
 The only difference is that we do not redirect the output or copy it with tee to a file
 since we can now easily follow it on the screen of our second device.
 
+#### Troubleshooting full session logging with systemd
+As described above we can issue `dbus-run-session startplasma-wayland`
+to run KWinFT as part of a full Plasma session.
+In this case KWinFT is executed as a D-Bus activated systemd service
+and its log should be found in the system journal as described [above](#simple-session-logging).
+
+But there is currently the issue that the logs are not found in the journal
+when we launch the Plasma session through the `dbus-run-session` command.
+This is a problem in the Wayland session as we can't restart KWinFT from within
+and has been [reported upstream](https://github.com/systemd/systemd/issues/22242).
+
+But for now a workaround is available for the Wayland session
+to still allow retrieving KWinFT's logs.
+For that set the environment variable `KWIN_LOG_PATH`
+to specify a file where KWinFT's stderr output should be redirected:
+
+    export KWIN_LOG_PATH="$HOME/kwinft-wayland.log"
+    dbus-run-session startplasma-wayland
+
 #### DRM logging
 In a Wayland session we talk through wlroots directly to the
 [Direct Rendering Manager (DRM)](https://en.wikipedia.org/wiki/Direct_Rendering_Manager)
