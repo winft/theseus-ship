@@ -64,13 +64,17 @@ In the same way other logging categories above can be switched on and off by cha
 boolean value in this file. The change will become active after a restart of KWinFT.
 
 #### Simple session logging
-If you start KWinFT after reboot through SDDM as part of a full Plasma session you can find its log
-output in files in the directory `$HOME/.local/share/sddm/`.
+If you start KWinFT through SDDM as part of a full Plasma session
+you find its log output in the systemd journal.
 
-For the last active Wayland session including a potential check the file *wayland-session.log*,
-respectively for an X11 session check *xorg-session.log*.
-You can get live updates if you open the file with tail in follow mode with the command
-`tail -f <path>`
+You can retrieve its output specifically with:
+
+    journalctl --user -u plasma-kwin_x11
+    journalctl --user -u plasma-kwin_wayland
+
+You can get live updates with the `-f` flag.
+Note also that in an X11 session we have the possibility to restart KWinFT.
+In this case only the first execution will log to the journal.
 
 #### Live logging in a terminal
 ##### X11: In-session logging
