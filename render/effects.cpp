@@ -1633,12 +1633,14 @@ EffectFrame* effects_handler_impl::effectFrame(EffectFrameStyle style,
 QVariant effects_handler_impl::kwinOption(KWinOption kwopt)
 {
     switch (kwopt) {
-    case CloseButtonCorner:
+    case CloseButtonCorner: {
         // TODO: this could become per window and be derived from the actual position in the deco
-        return Decoration::DecorationBridge::self()->settings()->decorationButtonsLeft().contains(
-                   KDecoration2::DecorationButtonType::Close)
+        auto deco_settings = Decoration::DecorationBridge::self()->settings();
+        auto close_enum = KDecoration2::DecorationButtonType::Close;
+        return deco_settings && deco_settings->decorationButtonsLeft().contains(close_enum)
             ? Qt::TopLeftCorner
             : Qt::TopRightCorner;
+    }
     case SwitchDesktopOnScreenEdge:
         return workspace()->edges->desktop_switching.always;
     case SwitchDesktopOnScreenEdgeMovingWindows:
