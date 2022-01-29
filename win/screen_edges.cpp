@@ -409,14 +409,12 @@ void screen_edge::switchDesktop(QPoint const& cursorPos)
             pos.setY(OFFSET);
     }
 
-#ifndef KWIN_UNIT_TEST
     if (auto c = Workspace::self()->moveResizeClient()) {
         if (c->control->rules().checkDesktop(desktop) != int(desktop)) {
             // user attempts to move a client to another desktop where it is ruleforced to not be
             return;
         }
     }
-#endif
 
     vds->setCurrent(desktop);
 
@@ -1148,11 +1146,8 @@ screen_edge* screen_edger::createEdge(ElectricBorder border,
                                       int height,
                                       bool createAction)
 {
-#ifdef KWIN_UNIT_TEST
-    auto edge = new x11::screen_edge(this);
-#else
     auto edge = workspace()->create_screen_edge();
-#endif
+
     // Edges can not have negative size.
     assert(width >= 0);
     assert(height >= 0);
