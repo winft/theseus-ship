@@ -9,9 +9,7 @@ add_library(KWinIntegrationTestFramework SHARED
 
 target_link_libraries(KWinIntegrationTestFramework
 PUBLIC
-  kwin
   kwin_wayland_lib
-  kwin4_effect_builtins
   Qt::Test
 PRIVATE
   KF5::Crash

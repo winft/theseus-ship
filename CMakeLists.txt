@@ -567,7 +567,6 @@ ki18n_wrap_ui(kwin_SRCS
 
 set(kwin_OWN_LIBS
     kwineffects
-    kwin4_effect_builtins
 )
 
 set(kwin_QT_LIBS
@@ -734,16 +733,19 @@ add_library(kwin_x11_lib STATIC
 )
 
 target_link_libraries(kwin_x11_lib
+PUBLIC
     kwin
     KF5::Crash
+PRIVATE
     Qt::X11Extras
+    kwin4_effect_builtins
 )
 
 if (HAVE_X11_XINPUT)
-    target_link_libraries(kwin_x11_lib ${X11_Xinput_LIB})
+    target_link_libraries(kwin_x11_lib PRIVATE ${X11_Xinput_LIB})
 endif()
 if (HAVE_DL_LIBRARY)
-    target_link_libraries(kwin_x11_lib ${DL_LIBRARY})
+    target_link_libraries(kwin_x11_lib PRIVATE ${DL_LIBRARY})
 endif()
 
 add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
@@ -911,6 +913,8 @@ PUBLIC
   Libinput::Libinput
   Threads::Threads
   PW::KScreenLocker
+PRIVATE
+  kwin4_effect_builtins
 )
 
 set_target_properties(kwin_wayland_lib PROPERTIES
