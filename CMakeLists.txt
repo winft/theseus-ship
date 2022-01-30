@@ -751,7 +751,6 @@ PUBLIC
     KF5::Crash
 PRIVATE
     Qt::X11Extras
-    kwin4_effect_builtins
 )
 
 if (HAVE_X11_XINPUT)
@@ -762,7 +761,10 @@ if (HAVE_DL_LIBRARY)
 endif()
 
 add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
-target_link_libraries(kwin_x11 kwin_x11_lib)
+target_link_libraries(kwin_x11
+  kwin_x11_lib
+  kwin4_effect_builtins
+)
 
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
