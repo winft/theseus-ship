@@ -110,8 +110,10 @@ void cursor_image::setup_move_resize(Toplevel* window)
 
 void cursor_image::markAsRendered()
 {
+    auto seat = waylandServer()->seat();
+
     if (m_currentSource == CursorSource::DragAndDrop) {
-        auto p = waylandServer()->seat()->drags().get_source().pointer;
+        auto p = seat->drags().get_source().pointer;
         if (!p) {
             return;
         }
@@ -131,7 +133,11 @@ void cursor_image::markAsRendered()
         return;
     }
 
-    auto const pointer_focus = waylandServer()->seat()->pointers().get_focus();
+    if (!seat->hasPointer()) {
+        return;
+    }
+
+    auto const pointer_focus = seat->pointers().get_focus();
     if (pointer_focus.devices.empty()) {
         return;
     }
