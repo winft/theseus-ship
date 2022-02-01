@@ -26,9 +26,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
-#include "virtualdesktops.h"
 #include "wayland_server.h"
 #include "win/stacking.h"
+#include "win/virtual_desktops.h"
 #include "workspace.h"
 
 #include <QJSValue>
@@ -168,7 +168,7 @@ void ScriptedEffectsTest::initTestCase()
     QVERIFY(scene);
     QCOMPARE(scene->compositingType(), KWin::OpenGLCompositing);
 
-    KWin::VirtualDesktopManager::self()->setCount(2);
+    win::virtual_desktop_manager::self()->setCount(2);
 }
 
 void ScriptedEffectsTest::init()
@@ -184,7 +184,7 @@ void ScriptedEffectsTest::cleanup()
     effectsImpl->unloadAllEffects();
     QVERIFY(effectsImpl->loadedEffects().isEmpty());
 
-    KWin::VirtualDesktopManager::self()->setCurrent(1);
+    win::virtual_desktop_manager::self()->setCurrent(1);
 }
 
 void ScriptedEffectsTest::testEffectsHandler()
@@ -227,7 +227,7 @@ void ScriptedEffectsTest::testEffectsHandler()
     waitFor("windowClosed - WindowA");
 
     // desktop management
-    KWin::VirtualDesktopManager::self()->setCurrent(2);
+    win::virtual_desktop_manager::self()->setCurrent(2);
     waitFor("desktopChanged - 1 2");
 }
 
@@ -296,7 +296,7 @@ void ScriptedEffectsTest::testAnimations()
     {
         const auto state = effect->state();
         QCOMPARE(state.count(), 1);
-        QCOMPARE(state.firstKey(), c->effectWindow());
+        QCOMPARE(state.firstKey(), c->render->effect.get());
         const auto& animationsForWindow = state.first().first;
         QCOMPARE(animationsForWindow.count(), animationCount);
         QCOMPARE(animationsForWindow[0].timeLine.duration(), 100ms);
@@ -407,7 +407,7 @@ void ScriptedEffectsTest::testFullScreenEffect()
     QCOMPARE(effectMain->isActiveFullScreenEffect(), false);
 
     // trigger animation
-    KWin::VirtualDesktopManager::self()->setCurrent(2);
+    win::virtual_desktop_manager::self()->setCurrent(2);
 
     QCOMPARE(effects->activeFullScreenEffect(), effectMain);
     QCOMPARE(effects->hasActiveFullScreenEffect(), true);
@@ -421,7 +421,7 @@ void ScriptedEffectsTest::testFullScreenEffect()
 
     // after 500ms trigger another full screen animation
     QTest::qWait(500);
-    KWin::VirtualDesktopManager::self()->setCurrent(1);
+    win::virtual_desktop_manager::self()->setCurrent(1);
     QCOMPARE(effects->activeFullScreenEffect(), effectMain);
 
     // after 1000ms (+a safety margin for time based tests) we should still be the active full
@@ -516,7 +516,7 @@ void ScriptedEffectsTest::testGrab()
     // the test effect should grab the test client successfully
     QCOMPARE(effectOutputSpy.count(), 1);
     QCOMPARE(effectOutputSpy.first().first(), QStringLiteral("ok"));
-    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void*>(), effect);
+    QCOMPARE(c->render->effect->data(WindowAddedGrabRole).value<void*>(), effect);
 }
 
 void ScriptedEffectsTest::testGrabAlreadyGrabbedWindow()
@@ -549,7 +549,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindow()
     // effect that initially held the grab should still hold the grab
     QCOMPARE(ownerOutputSpy.count(), 1);
     QCOMPARE(ownerOutputSpy.first().first(), QStringLiteral("ok"));
-    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void*>(), owner);
+    QCOMPARE(c->render->effect->data(WindowAddedGrabRole).value<void*>(), owner);
 
     // effect that tried to grab already grabbed window should fail miserably
     QCOMPARE(grabberOutputSpy.count(), 1);
@@ -590,7 +590,7 @@ void ScriptedEffectsTest::testGrabAlreadyGrabbedWindowForced()
     // effect that grabbed the test client forcefully should now hold the grab
     QCOMPARE(thiefOutputSpy.count(), 1);
     QCOMPARE(thiefOutputSpy.first().first(), QStringLiteral("ok"));
-    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void*>(), thief);
+    QCOMPARE(c->render->effect->data(WindowAddedGrabRole).value<void*>(), thief);
 }
 
 void ScriptedEffectsTest::testUngrab()
@@ -617,7 +617,7 @@ void ScriptedEffectsTest::testUngrab()
     // the test effect should grab the test client successfully
     QCOMPARE(effectOutputSpy.count(), 1);
     QCOMPARE(effectOutputSpy.first().first(), QStringLiteral("ok"));
-    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void*>(), effect);
+    QCOMPARE(c->render->effect->data(WindowAddedGrabRole).value<void*>(), effect);
 
     // when the test effect sees that a window was minimized, it will try to ungrab it
     effectOutputSpy.clear();
@@ -625,7 +625,7 @@ void ScriptedEffectsTest::testUngrab()
 
     QCOMPARE(effectOutputSpy.count(), 1);
     QCOMPARE(effectOutputSpy.first().first(), QStringLiteral("ok"));
-    QCOMPARE(c->effectWindow()->data(WindowAddedGrabRole).value<void*>(), nullptr);
+    QCOMPARE(c->render->effect->data(WindowAddedGrabRole).value<void*>(), nullptr);
 }
 
 void ScriptedEffectsTest::testRedirect_data()
@@ -668,7 +668,7 @@ void ScriptedEffectsTest::testRedirect()
     {
         const auto state = effect->state();
         QCOMPARE(state.count(), 1);
-        QCOMPARE(state.firstKey(), c->effectWindow());
+        QCOMPARE(state.firstKey(), c->render->effect.get());
         const QList<AniData> animations = state.first().first;
         QCOMPARE(animations.count(), 1);
         QTRY_COMPARE(animations[0].timeLine.direction(), TimeLine::Forward);
@@ -690,7 +690,7 @@ void ScriptedEffectsTest::testRedirect()
     {
         const auto state = effect->state();
         QCOMPARE(state.count(), 1);
-        QCOMPARE(state.firstKey(), c->effectWindow());
+        QCOMPARE(state.firstKey(), c->render->effect.get());
         const QList<AniData> animations = state.first().first;
         QCOMPARE(animations.count(), 1);
         QCOMPARE(animations[0].timeLine.direction(), TimeLine::Backward);
@@ -708,7 +708,7 @@ void ScriptedEffectsTest::testRedirect()
     } else {
         const auto state = effect->state();
         QCOMPARE(state.count(), 1);
-        QCOMPARE(state.firstKey(), c->effectWindow());
+        QCOMPARE(state.firstKey(), c->render->effect.get());
         const QList<AniData> animations = state.first().first;
         QCOMPARE(animations.count(), 1);
         QCOMPARE(animations[0].timeLine.direction(), TimeLine::Backward);
@@ -745,7 +745,7 @@ void ScriptedEffectsTest::testComplete()
     {
         const auto state = effect->state();
         QCOMPARE(state.count(), 1);
-        QCOMPARE(state.firstKey(), c->effectWindow());
+        QCOMPARE(state.firstKey(), c->render->effect.get());
         const QList<AniData> animations = state.first().first;
         QTRY_COMPARE(animations.count(), 1);
         QTRY_VERIFY(around(animations[0].timeLine.elapsed(), 0ms, 100ms));
@@ -758,7 +758,7 @@ void ScriptedEffectsTest::testComplete()
     {
         const auto state = effect->state();
         QCOMPARE(state.count(), 1);
-        QCOMPARE(state.firstKey(), c->effectWindow());
+        QCOMPARE(state.firstKey(), c->render->effect.get());
         const QList<AniData> animations = state.first().first;
         QCOMPARE(animations.count(), 1);
         QVERIFY(around(animations[0].timeLine.elapsed(), 250ms, 100ms));
@@ -778,7 +778,7 @@ void ScriptedEffectsTest::testComplete()
     {
         const auto state = effect->state();
         QCOMPARE(state.count(), 1);
-        QCOMPARE(state.firstKey(), c->effectWindow());
+        QCOMPARE(state.firstKey(), c->render->effect.get());
         const QList<AniData> animations = state.first().first;
         QCOMPARE(animations.count(), 1);
         QCOMPARE(animations[0].timeLine.elapsed(), 1000ms);

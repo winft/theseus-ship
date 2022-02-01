@@ -92,7 +92,6 @@ int Application::x11ScreenNumber()
 Application::Application(Application::OperationMode mode, int &argc, char **argv)
     : QApplication(argc, argv)
     , x11_event_filters{new base::x11::event_filter_manager}
-    , m_eventFilter(new XcbEventFilter())
     , m_configLock(false)
     , m_config()
     , m_kxkbConfig()
@@ -284,11 +283,6 @@ void Application::createOptions()
     options->loadCompositingConfig(false);
 }
 
-void Application::setupEventFilters()
-{
-    installNativeEventFilter(m_eventFilter.data());
-}
-
 static uint32_t get_monotonic_time()
 {
     timespec ts;
@@ -391,32 +385,12 @@ void Application::update_x11_time_from_event(xcb_generic_event_t *event)
     setX11Time(time);
 }
 
-bool XcbEventFilter::nativeEventFilter(const QByteArray &eventType, void *message, long int *result)
-{
-    Q_UNUSED(result)
-    if (eventType != "xcb_generic_event_t") {
-        return false;
-    }
-    auto event = static_cast<xcb_generic_event_t *>(message);
-    kwinApp()->update_x11_time_from_event(event);
-    if (!Workspace::self()) {
-        // Workspace not yet created
-        return false;
-    }
-    return Workspace::self()->workspaceEvent(event);
-}
-
 QProcessEnvironment Application::processStartupEnvironment() const
 {
     return QProcessEnvironment::systemEnvironment();
 }
 
-ApplicationWaylandAbstract::ApplicationWaylandAbstract(OperationMode mode, int &argc, char **argv)
-    : Application(mode, argc, argv)
-{
-}
-
-ApplicationWaylandAbstract::~ApplicationWaylandAbstract()
+void Application::setProcessStartupEnvironment(QProcessEnvironment const& /*environment*/)
 {
 }
 

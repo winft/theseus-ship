@@ -11,10 +11,10 @@
 #include "base/wayland/output_helpers.h"
 #include "screens.h"
 #include "service_utils.h"
-#include "virtualdesktops.h"
 #include "wayland_logging.h"
 #include "workspace.h"
 
+#include "win/virtual_desktops.h"
 #include "win/wayland/space.h"
 #include "win/wayland/surface.h"
 #include "win/wayland/xdg_activation.h"
@@ -375,7 +375,7 @@ void WaylandServer::initWorkspace()
 {
     auto ws = static_cast<win::wayland::space*>(workspace());
 
-    VirtualDesktopManager::self()->setVirtualDesktopManagement(virtual_desktop_management());
+    win::virtual_desktop_manager::self()->setVirtualDesktopManagement(virtual_desktop_management());
 
     if (window_management()) {
         connect(ws, &Workspace::showingDesktopChanged, this, [this](bool set) {

@@ -11,7 +11,6 @@
 #include "geo.h"
 #include "meta.h"
 #include "netinfo.h"
-#include "render/x11/compositor.h"
 #include "space.h"
 #include "window.h"
 #include "xcb.h"
@@ -638,11 +637,11 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
 
     setup_space_window_connections(workspace(), win);
 
-    if (auto compositor = render::x11::compositor::self()) {
+    if (auto comp = render::compositor::self(); comp->x11_integration.update_blocking) {
         QObject::connect(win,
                          &win::x11::window::blockingCompositingChanged,
-                         compositor,
-                         &render::x11::compositor::updateClientCompositeBlocking);
+                         comp,
+                         [comp](auto window) { comp->x11_integration.update_blocking(window); });
     }
 
     QObject::connect(win,
@@ -797,6 +796,9 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
     init_minimize = win->control->rules().checkMinimize(init_minimize, !isMapped);
     win->user_no_border = win->control->rules().checkNoBorder(win->user_no_border, !isMapped);
 
+    // We setup compositing already here so a desktop presence change can access effects.
+    win->setupCompositing(false);
+
     // Initial desktop placement
     int desk = 0;
     if (session) {
@@ -835,7 +837,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
             if (on_all) {
                 desk = NET::OnAllDesktops;
             } else if (on_current) {
-                desk = VirtualDesktopManager::self()->current();
+                desk = virtual_desktop_manager::self()->current();
             } else if (maincl != nullptr) {
                 desk = maincl->desktop();
             }
@@ -854,13 +856,13 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
     if (desk == 0) {
         // Assume window wants to be visible on the current desktop
         desk = is_desktop(win) ? static_cast<int>(NET::OnAllDesktops)
-                               : VirtualDesktopManager::self()->current();
+                               : virtual_desktop_manager::self()->current();
     }
     desk = win->control->rules().checkDesktop(desk, !isMapped);
 
     if (desk != NET::OnAllDesktops) {
         // Do range check
-        desk = qBound(1, desk, static_cast<int>(VirtualDesktopManager::self()->count()));
+        desk = qBound(1, desk, static_cast<int>(virtual_desktop_manager::self()->count()));
     }
 
     set_desktop(win, desk);
@@ -1041,7 +1043,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed
         if (!win->isOnCurrentDesktop() && !isMapped && !session && (allow || isSessionSaving)) {
-            VirtualDesktopManager::self()->setCurrent(win->desktop());
+            virtual_desktop_manager::self()->setCurrent(win->desktop());
         }
 
         if (win->isOnCurrentDesktop() && !isMapped && !allow
@@ -1116,7 +1118,6 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
             info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
         });
 
-    win->setupCompositing(false);
     return win;
 }
 
@@ -1509,7 +1510,7 @@ void startup_id_changed(Win* win)
     // If the ASN contains desktop, move it to the desktop, otherwise move it to the current
     // desktop (since the new ASN should make the window act like if it's a new application
     // launched). However don't affect the window's desktop if it's set to be on all desktops.
-    int desktop = VirtualDesktopManager::self()->current();
+    int desktop = virtual_desktop_manager::self()->current();
     if (asn_data.desktop() != 0)
         desktop = asn_data.desktop();
     if (!win->isOnAllDesktops()) {

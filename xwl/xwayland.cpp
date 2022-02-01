@@ -21,10 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xwayland.h"
 #include "data_bridge.h"
 
+#include "base/x11/xcb_event_filter.h"
 #include "input/cursor.h"
 #include "main_wayland.h"
 #include "utils.h"
 #include "wayland_server.h"
+#include "win/wayland/space.h"
+#include "win/x11/space_setup.h"
 #include "workspace.h"
 #include "xcbutils.h"
 
@@ -72,7 +75,7 @@ static void readDisplay(int pipe)
 namespace KWin::xwl
 {
 
-xwayland::xwayland(ApplicationWaylandAbstract* app, std::function<void(int)> status_callback)
+xwayland::xwayland(Application* app, std::function<void(int)> status_callback)
     : xwayland_interface()
     , app{app}
     , status_callback{status_callback}
@@ -162,7 +165,7 @@ xwayland::~xwayland()
 
     disconnect(xwayland_fail_notifier);
 
-    Workspace::self()->clear_x11();
+    win::x11::clear_space(*Workspace::self());
 
     if (app->x11Connection()) {
         Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
@@ -242,7 +245,10 @@ void xwayland::continue_startup_with_x11()
     owner.claim(true);
 
     app->createAtoms();
-    app->setupEventFilters();
+
+    auto space = static_cast<win::wayland::space*>(Workspace::self());
+    event_filter = std::make_unique<base::x11::xcb_event_filter<win::wayland::space>>(*space);
+    app->installNativeEventFilter(event_filter.get());
 
     // Check  whether another windowmanager is running
     uint32_t const maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
@@ -269,6 +275,7 @@ void xwayland::continue_startup_with_x11()
     app->setProcessStartupEnvironment(env);
 
     status_callback(0);
+    win::x11::init_space(*static_cast<win::wayland::space*>(Workspace::self()));
     Q_EMIT app->x11ConnectionChanged();
 
     // Trigger possible errors, there's still a chance to abort

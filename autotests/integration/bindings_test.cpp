@@ -24,13 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scripting/platform.h"
 #include "scripting/script.h"
 #include "useractions.h"
-#include "virtualdesktops.h"
 #include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/control.h"
 #include "win/move.h"
+#include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
+#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 
@@ -224,7 +223,8 @@ void BindingsTest::testWindowToDesktop_data()
 void BindingsTest::testWindowToDesktop()
 {
     // first go to desktop one
-    VirtualDesktopManager::self()->setCurrent(VirtualDesktopManager::self()->desktops().first());
+    win::virtual_desktop_manager::self()->setCurrent(
+        win::virtual_desktop_manager::self()->desktops().first());
 
     // now create a window
     std::unique_ptr<Surface> surface(Test::create_surface());
@@ -235,7 +235,7 @@ void BindingsTest::testWindowToDesktop()
     QCOMPARE(workspace()->activeClient(), c);
 
     QFETCH(int, desktop);
-    VirtualDesktopManager::self()->setCount(desktop);
+    win::virtual_desktop_manager::self()->setCount(desktop);
 
     // now trigger the shortcut
     auto invokeShortcut = [](int desktop) {

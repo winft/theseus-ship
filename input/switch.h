@@ -22,7 +22,7 @@ class KWIN_EXPORT switch_device : public QObject
     Q_OBJECT
 public:
     input::platform* platform;
-    control::switch_device* control{nullptr};
+    std::unique_ptr<control::switch_device> control;
 
     switch_device(input::platform* platform);
     switch_device(switch_device const&) = delete;

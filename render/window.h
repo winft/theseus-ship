@@ -6,9 +6,12 @@
 */
 #pragma once
 
+#include "shadow.h"
 #include "types.h"
 
 #include "kwineffects.h"
+
+#include <memory>
 
 class QOpenGLFramebufferObject;
 
@@ -24,7 +27,7 @@ class Toplevel;
 
 namespace render
 {
-class shadow;
+class effects_window_impl;
 class window_pixmap;
 
 class KWIN_EXPORT window
@@ -72,6 +75,7 @@ public:
     // creates initial quad list for the window
     WindowQuadList buildQuads(bool force = false) const;
 
+    void create_shadow();
     void updateShadow(render::shadow* shadow);
     render::shadow const* shadow() const;
     render::shadow* shadow();
@@ -79,6 +83,13 @@ public:
     void referencePreviousPixmap();
     void unreferencePreviousPixmap();
     void invalidateQuadsCache();
+
+    std::unique_ptr<effects_window_impl> effect;
+    shadow_windowing_integration shadow_windowing;
+
+    std::function<void(Toplevel*, std::shared_ptr<Wrapland::Server::Buffer>&)>
+        update_wayland_buffer;
+    std::function<QRectF(Toplevel*, QRectF const&)> get_wayland_viewport;
 
 protected:
     WindowQuadList

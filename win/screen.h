@@ -11,10 +11,10 @@
 #include "stacking.h"
 #include "transient.h"
 #include "types.h"
+#include "virtual_desktops.h"
 
 #include "main.h"
 #include "screens.h"
-#include "virtualdesktops.h"
 
 #include <Wrapland/Server/plasma_window.h>
 
@@ -144,7 +144,7 @@ bool on_desktop(Win* win, int d)
 {
     return (kwinApp()->operationMode() == Application::OperationModeWaylandOnly
                     || kwinApp()->operationMode() == Application::OperationModeXwayland
-                ? win->desktops().contains(VirtualDesktopManager::self()->desktopForX11Id(d))
+                ? win->desktops().contains(virtual_desktop_manager::self()->desktopForX11Id(d))
                 : win->desktop() == d)
         || on_all_desktops(win);
 }
@@ -152,15 +152,15 @@ bool on_desktop(Win* win, int d)
 template<typename Win>
 bool on_current_desktop(Win* win)
 {
-    return on_desktop(win, VirtualDesktopManager::self()->current());
+    return on_desktop(win, virtual_desktop_manager::self()->current());
 }
 
 template<typename Win>
-void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
+void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
 {
     // On x11 we can have only one desktop at a time.
     if (kwinApp()->operationMode() == Application::OperationModeX11 && desktops.size() > 1) {
-        desktops = QVector<VirtualDesktop*>({desktops.last()});
+        desktops = QVector<virtual_desktop*>({desktops.last()});
     }
 
     if (desktops == win->desktops()) {
@@ -234,16 +234,16 @@ void set_desktops(Win* win, QVector<VirtualDesktop*> desktops)
 template<typename Win>
 void set_desktop(Win* win, int desktop)
 {
-    auto const desktops_count = static_cast<int>(VirtualDesktopManager::self()->count());
+    auto const desktops_count = static_cast<int>(virtual_desktop_manager::self()->count());
     if (desktop != NET::OnAllDesktops) {
         // Check range.
         desktop = std::max(1, std::min(desktops_count, desktop));
     }
     desktop = std::min(desktops_count, win->control->rules().checkDesktop(desktop));
 
-    QVector<VirtualDesktop*> desktops;
+    QVector<virtual_desktop*> desktops;
     if (desktop != NET::OnAllDesktops) {
-        desktops << VirtualDesktopManager::self()->desktopForX11Id(desktop);
+        desktops << virtual_desktop_manager::self()->desktopForX11Id(desktop);
     }
     set_desktops(win, desktops);
 }
@@ -258,7 +258,7 @@ void set_on_all_desktops(Win* win, bool set)
     if (set) {
         set_desktop(win, NET::OnAllDesktops);
     } else {
-        set_desktop(win, VirtualDesktopManager::self()->current());
+        set_desktop(win, virtual_desktop_manager::self()->current());
     }
 }
 
@@ -268,15 +268,14 @@ QVector<uint> x11_desktop_ids(Win* win)
     auto const desks = win->desktops();
     QVector<uint> x11_ids;
     x11_ids.reserve(desks.count());
-    std::transform(desks.constBegin(),
-                   desks.constEnd(),
-                   std::back_inserter(x11_ids),
-                   [](VirtualDesktop const* vd) { return vd->x11DesktopNumber(); });
+    std::transform(desks.constBegin(), desks.constEnd(), std::back_inserter(x11_ids), [](auto vd) {
+        return vd->x11DesktopNumber();
+    });
     return x11_ids;
 }
 
 template<typename Win>
-void enter_desktop(Win* win, VirtualDesktop* virtualDesktop)
+void enter_desktop(Win* win, virtual_desktop* virtualDesktop)
 {
     if (win->desktops().contains(virtualDesktop)) {
         return;
@@ -287,11 +286,11 @@ void enter_desktop(Win* win, VirtualDesktop* virtualDesktop)
 }
 
 template<typename Win>
-void leave_desktop(Win* win, VirtualDesktop* virtualDesktop)
+void leave_desktop(Win* win, virtual_desktop* virtualDesktop)
 {
-    QVector<VirtualDesktop*> currentDesktops;
+    QVector<virtual_desktop*> currentDesktops;
     if (win->desktops().isEmpty()) {
-        currentDesktops = VirtualDesktopManager::self()->desktops();
+        currentDesktops = virtual_desktop_manager::self()->desktops();
     } else {
         currentDesktops = win->desktops();
     }

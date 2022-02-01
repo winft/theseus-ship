@@ -111,7 +111,7 @@ touch::touch(wlr_input_device* dev, input::platform* platform)
     backend = dev->touch;
 
     if (auto libinput = get_libinput_device(dev)) {
-        control = new touch_control(libinput, platform);
+        control = std::make_unique<touch_control>(libinput, platform);
     }
     output = get_output();
 

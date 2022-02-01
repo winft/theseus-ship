@@ -64,13 +64,17 @@ In the same way other logging categories above can be switched on and off by cha
 boolean value in this file. The change will become active after a restart of KWinFT.
 
 #### Simple session logging
-If you start KWinFT after reboot through SDDM as part of a full Plasma session you can find its log
-output in files in the directory `$HOME/.local/share/sddm/`.
+If you start KWinFT through SDDM as part of a full Plasma session
+you find its log output in the systemd journal.
 
-For the last active Wayland session including a potential check the file *wayland-session.log*,
-respectively for an X11 session check *xorg-session.log*.
-You can get live updates if you open the file with tail in follow mode with the command
-`tail -f <path>`
+You can retrieve its output specifically with:
+
+    journalctl --user -u plasma-kwin_x11
+    journalctl --user -u plasma-kwin_wayland
+
+You can get live updates with the `-f` flag.
+Note also that in an X11 session we have the possibility to restart KWinFT.
+In this case only the first execution will log to the journal.
 
 #### Live logging in a terminal
 ##### X11: In-session logging
@@ -202,6 +206,25 @@ Or as part of a full Plasma session with:
 This is very similar to starting KWinFT from the VT directly.
 The only difference is that we do not redirect the output or copy it with tee to a file
 since we can now easily follow it on the screen of our second device.
+
+#### Troubleshooting full session logging with systemd
+As described above we can issue `dbus-run-session startplasma-wayland`
+to run KWinFT as part of a full Plasma session.
+In this case KWinFT is executed as a D-Bus activated systemd service
+and its log should be found in the system journal as described [above](#simple-session-logging).
+
+But there is currently the issue that the logs are not found in the journal
+when we launch the Plasma session through the `dbus-run-session` command.
+This is a problem in the Wayland session as we can't restart KWinFT from within
+and has been [reported upstream](https://github.com/systemd/systemd/issues/22242).
+
+But for now a workaround is available for the Wayland session
+to still allow retrieving KWinFT's logs.
+For that set the environment variable `KWIN_LOG_PATH`
+to specify a file where KWinFT's stderr output should be redirected:
+
+    export KWIN_LOG_PATH="$HOME/kwinft-wayland.log"
+    dbus-run-session startplasma-wayland
 
 #### DRM logging
 In a Wayland session we talk through wlroots directly to the

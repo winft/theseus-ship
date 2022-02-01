@@ -33,6 +33,8 @@ class KWIN_EXPORT window : public Toplevel
 {
     Q_OBJECT
 public:
+    constexpr static bool is_toplevel{false};
+
     bool initialized{false};
     NET::WindowType window_type{NET::Normal};
 
@@ -93,7 +95,10 @@ public:
     window(Wrapland::Server::Surface* surface);
     ~window() = default;
 
+    qreal bufferScale() const override;
     bool is_wayland_window() const override;
+    bool setupCompositing(bool add_full_damage) override;
+    void add_scene_window_addon() override;
 
     NET::WindowType windowType(bool direct = false, int supported_types = 0) const override;
     QByteArray windowRole() const override;

@@ -8,6 +8,7 @@
 #include "fullscreen.h"
 #include "layer_shell.h"
 #include "maximize.h"
+#include "scene.h"
 #include "setup.h"
 #include "subsurface.h"
 #include "surface.h"
@@ -25,6 +26,7 @@
 #include "decorations/window.h"
 #include "render/compositor.h"
 #include "render/platform.h"
+#include "render/wayland/shadow.h"
 #include "rules/rules.h"
 #include "utils.h"
 #include "wayland_server.h"
@@ -71,9 +73,55 @@ window::window(WS::Surface* surface)
     setupCompositing(false);
 }
 
+qreal window::bufferScale() const
+{
+    return surface()->state().scale;
+}
+
 bool window::is_wayland_window() const
 {
     return true;
+}
+
+bool window::setupCompositing([[maybe_unused]] bool add_full_damage)
+{
+    assert(!add_full_damage);
+    return win::setup_compositing(*this, false);
+}
+
+void window::add_scene_window_addon()
+{
+    assert(surface());
+
+    auto update_buffer_helper = [](auto window, auto& target) { update_buffer(*window, target); };
+    auto get_viewport = [](auto window, auto contentsRect) {
+        if (!window->surface()) {
+            // Can happen on remnant.
+            return QRectF();
+        }
+        if (auto rect = get_scaled_source_rectangle(*window); rect.isValid()) {
+            return rect;
+        }
+
+        auto buffer = window->surface()->state().buffer;
+        if (buffer) {
+            // Try to get the source rectangle from the buffer size, what defines the source
+            // size without respect to destination size.
+            auto const origin = contentsRect.topLeft();
+            auto const rect = QRectF(origin, buffer->size() - QSize(origin.x(), origin.y()));
+            assert(rect.isValid());
+            return rect;
+        }
+
+        return QRectF();
+    };
+
+    render->update_wayland_buffer = update_buffer_helper;
+    render->get_wayland_viewport = get_viewport;
+    render->shadow_windowing.create = render::wayland::create_shadow<render::shadow, Toplevel>;
+    render->shadow_windowing.update = render::wayland::update_shadow<render::shadow>;
+
+    setup_scale_scene_notify(*this);
 }
 
 NET::WindowType window::windowType([[maybe_unused]] bool direct,

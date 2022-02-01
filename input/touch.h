@@ -30,7 +30,7 @@ class KWIN_EXPORT touch : public QObject
     Q_OBJECT
 public:
     input::platform* platform;
-    control::touch* control{nullptr};
+    std::unique_ptr<control::touch> control;
     base::wayland::output* output{nullptr};
 
     touch(input::platform* platform);

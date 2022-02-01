@@ -24,7 +24,7 @@
 #include "ruleitem.h"
 #include "rules/rules.h"
 #include "rule_settings.h"
-#include <virtualdesktopsdbustypes.h>
+#include "win/dbus/virtual_desktop_types.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
@@ -119,7 +119,7 @@ private Q_SLOTS:
 private:
     QList<RuleItem *> m_ruleList;
     QHash<QString, RuleItem *> m_rules;
-    DBusDesktopDataVector m_virtualDesktops;
+    win::dbus::virtual_desktop_data_vector m_virtualDesktops;
     RuleSettings *m_settings;
 };
 

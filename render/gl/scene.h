@@ -104,7 +104,7 @@ public:
 protected:
     void paintSimpleScreen(paint_type mask, QRegion region) override;
     void paintGenericScreen(paint_type mask, ScreenPaintData data) override;
-    render::window* createWindow(Toplevel* t) override;
+    std::unique_ptr<render::window> createWindow(Toplevel* t) override;
     void finalDrawWindow(effects_window_impl* w,
                          paint_type mask,
                          QRegion region,

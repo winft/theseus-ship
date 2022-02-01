@@ -25,6 +25,8 @@ class KWIN_EXPORT space : public Workspace
 {
     Q_OBJECT
 public:
+    using x11_window = window;
+
     space();
     ~space() override;
 

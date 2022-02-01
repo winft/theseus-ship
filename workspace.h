@@ -99,6 +99,24 @@ public:
     std::unique_ptr<render::outline> outline;
     std::unique_ptr<win::screen_edger> edges;
 
+    render::compositor* m_compositor{nullptr};
+    KStartupInfo* startup{nullptr};
+
+    QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
+    QScopedPointer<base::x11::event_filter> m_movingClientFilter;
+    QScopedPointer<base::x11::event_filter> m_syncAlarmFilter;
+
+    int m_initialDesktop{1};
+    QScopedPointer<Xcb::Window> m_nullFocus;
+
+    std::vector<Toplevel*> m_allClients;
+
+    // Last is most recent.
+    std::deque<Toplevel*> should_get_focus;
+    std::deque<Toplevel*> attention_chain;
+
+    int block_focus{0};
+
     explicit Workspace();
     ~Workspace() override;
 
@@ -107,9 +125,6 @@ public:
         return _self;
     }
 
-    void clear_x11();
-
-    bool workspaceEvent(xcb_generic_event_t*);
     bool workspaceEvent(QEvent*);
 
     bool hasClient(win::x11::window const*);
@@ -267,7 +282,6 @@ public:
     SessionManager* sessionManager() const;
 
 private:
-    render::compositor* m_compositor{nullptr};
     QTimer* m_quickTileCombineTimer{nullptr};
     win::quicktiles m_lastTilingMode{win::quicktiles::none};
 
@@ -389,6 +403,9 @@ public:
         return client_keys_dialog;
     }
 
+    void addClient(win::x11::window* c);
+    void addUnmanaged(Toplevel* c);
+
     /**
      * Adds the internal client to Workspace.
      *
@@ -413,6 +430,9 @@ public:
 
     virtual win::screen_edge* create_screen_edge();
     virtual QRect get_icon_geometry(Toplevel const* win) const;
+
+    void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t* geom);
+    void saveOldScreenSizes();
 
 public Q_SLOTS:
     void performWindowOperation(KWin::Toplevel* window, Options::WindowOperation op);
@@ -482,14 +502,12 @@ protected:
                                                 std::vector<QRect> const& screens_geos,
                                                 win::space_areas& areas);
 
-    std::vector<Toplevel*> m_allClients;
     Toplevel* last_active_client{nullptr};
     Toplevel* delayfocus_client{nullptr};
     Toplevel* client_keys_client{nullptr};
 
 private Q_SLOTS:
     void desktopResized();
-    void selectWmInputEventMask();
     void slotUpdateToolWindows();
     void delayFocus();
     void slotReloadConfig();
@@ -529,7 +547,6 @@ Q_SIGNALS:
     void surface_id_changed(KWin::Toplevel*, quint32);
 
 private:
-    void initWithX11();
     void initShortcuts();
     template<typename Slot>
     void initShortcut(const QString& actionName,
@@ -547,15 +564,6 @@ private:
     void setupWindowShortcut(Toplevel* window);
     bool switchWindow(Toplevel* c, Direction direction, QPoint curPos, int desktop);
 
-    void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t* geom);
-    void saveOldScreenSizes();
-
-    /// This is the right way to create a new client
-    win::x11::window* createClient(xcb_window_t w, bool is_mapped);
-    void addClient(win::x11::window* c);
-    win::x11::window* createUnmanaged(xcb_window_t w);
-    void addUnmanaged(Toplevel* c);
-
     void closeActivePopup();
     void updateClientArea(bool force);
     void resetClientAreas(uint desktopCount);
@@ -565,7 +573,6 @@ private:
     QWidget* active_popup{nullptr};
     Toplevel* active_popup_client{nullptr};
 
-    int m_initialDesktop{1};
     void loadSessionInfo(const QString& sessionName);
     void addSessionInfo(KConfigGroup& cg);
 
@@ -577,22 +584,15 @@ private:
     QTimer* delayFocusTimer{nullptr};
     QPoint focusMousePos;
 
-    // Last is most recent.
-    std::deque<Toplevel*> should_get_focus;
-    std::deque<Toplevel*> attention_chain;
-
     bool showing_desktop{false};
     int m_remnant_count{0};
 
     std::vector<win::x11::group*> groups;
 
     bool was_user_interaction{false};
-    QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
 
     int session_active_client;
     int session_desktop;
-
-    int block_focus{0};
 
     /**
      * Holds the menu containing the user actions which is shown
@@ -612,10 +612,6 @@ private:
 
     static Workspace* _self;
 
-    bool workspaceInit{true};
-
-    KStartupInfo* startup{nullptr};
-
     win::space_areas areas;
 
     // Array of the previous restricted areas that window cannot be moved into
@@ -629,12 +625,7 @@ private:
 
     int set_active_client_recursion{0};
 
-    QScopedPointer<Xcb::Window> m_nullFocus;
-
     QScopedPointer<KillWindow> m_windowKiller;
-
-    QScopedPointer<base::x11::event_filter> m_movingClientFilter;
-    QScopedPointer<base::x11::event_filter> m_syncAlarmFilter;
 
     SessionManager* m_sessionManager;
 
@@ -642,25 +633,6 @@ private:
     friend bool performTransiencyCheck();
     friend Workspace* workspace();
 };
-
-class ColorMapper : public QObject
-{
-    Q_OBJECT
-public:
-    ColorMapper(QObject* parent);
-    ~ColorMapper() override;
-public Q_SLOTS:
-    void update();
-
-private:
-    xcb_colormap_t m_default;
-    xcb_colormap_t m_installed;
-};
-
-inline bool Workspace::initializing() const
-{
-    return workspaceInit;
-}
 
 inline Toplevel* Workspace::activeClient() const
 {

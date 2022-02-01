@@ -347,7 +347,10 @@ void redirect::handle_keyboard_added(input::keyboard* keyboard)
         reconfigure();
     }
 
-    keyboard->xkb->seat = waylandServer()->seat();
+    keyboard->xkb->forward_modifiers_impl = [seat](auto keymap, auto&& mods, auto layout) {
+        seat->keyboards().set_keymap(keymap->cache);
+        seat->keyboards().update_modifiers(mods.depressed, mods.latched, mods.locked, layout);
+    };
     keyboard->xkb->update_from_default();
 
     platform->update_keyboard_leds(keyboard->xkb->leds);

@@ -617,10 +617,9 @@ void SceneQPainterShadowTest::testShadowTileOverlaps()
     QCOMPARE(decoShadow->paddingLeft(), SHADOW_PADDING_LEFT);
 
     // Get shadow.
-    QVERIFY(client->effectWindow());
-    QVERIFY(client->effectWindow()->sceneWindow());
-    QVERIFY(client->effectWindow()->sceneWindow()->shadow());
-    auto* shadow = client->effectWindow()->sceneWindow()->shadow();
+    QVERIFY(client->render);
+    QVERIFY(client->render->shadow());
+    auto* shadow = client->render->shadow();
 
     // Validate shadow quads.
     const WindowQuadList& quads = shadow->shadowQuads();
@@ -733,12 +732,10 @@ void SceneQPainterShadowTest::testShadowTextureReconstruction()
     QCOMPARE(shadowIface->offset().bottom(), 128.0);
 
     // Get SceneQPainterShadow's texture.
-    QVERIFY(client->effectWindow());
-    QVERIFY(client->effectWindow()->sceneWindow());
-    QVERIFY(client->effectWindow()->sceneWindow()->shadow());
+    QVERIFY(client->render);
+    QVERIFY(client->render->shadow());
     auto& shadowTexture
-        = static_cast<render::qpainter::shadow*>(client->effectWindow()->sceneWindow()->shadow())
-              ->shadowTexture();
+        = static_cast<render::qpainter::shadow*>(client->render->shadow())->shadowTexture();
 
     QCOMPARE(shadowTexture, referenceShadowTexture);
 }

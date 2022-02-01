@@ -16,6 +16,7 @@
 #include "unmanaged.h"
 #include "window_release.h"
 
+#include "render/x11/shadow.h"
 #include "win/deco.h"
 #include "win/layers.h"
 #include "win/remnant.h"
@@ -245,16 +246,7 @@ QRect window::iconGeometry() const
 
 bool window::setupCompositing(bool add_full_damage)
 {
-    if (!Toplevel::setupCompositing(add_full_damage)) {
-        return false;
-    }
-
-    if (control) {
-        // for internalKeep()
-        update_visibility(this);
-    }
-
-    return true;
+    return x11::setup_compositing(*this, add_full_damage);
 }
 
 void window::finishCompositing(ReleaseReason releaseReason)
@@ -276,6 +268,12 @@ void window::setBlockingCompositing(bool block)
     if (usedToBlock != blocks_compositing) {
         Q_EMIT blockingCompositingChanged(blocks_compositing ? this : nullptr);
     }
+}
+
+void window::add_scene_window_addon()
+{
+    render->shadow_windowing.create = render::x11::create_shadow<render::shadow, Toplevel>;
+    render->shadow_windowing.update = render::x11::read_and_update_shadow<render::shadow>;
 }
 
 void window::damageNotifyEvent()

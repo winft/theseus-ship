@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "root_info_filter.h"
 
-#include "virtualdesktops.h"
+#include "win/virtual_desktops.h"
 #include "workspace.h"
 
 #include "win/controlling.h"
@@ -179,12 +179,12 @@ root_info::root_info(xcb_window_t w,
 
 void root_info::changeNumberOfDesktops(int n)
 {
-    VirtualDesktopManager::self()->setCount(n);
+    virtual_desktop_manager::self()->setCount(n);
 }
 
 void root_info::changeCurrentDesktop(int d)
 {
-    VirtualDesktopManager::self()->setCurrent(d);
+    virtual_desktop_manager::self()->setCurrent(d);
 }
 
 void root_info::changeActiveWindow(xcb_window_t w,

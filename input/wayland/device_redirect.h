@@ -10,10 +10,10 @@
 
 #include "input/redirect.h"
 #include "toplevel.h"
-#include "virtualdesktops.h"
 #include "win/geo.h"
 #include "win/internal_window.h"
 #include "win/stacking_order.h"
+#include "win/virtual_desktops.h"
 #include "workspace.h"
 
 #include <QWindow>
@@ -35,8 +35,8 @@ void device_redirect_init(Dev* dev)
     QObject::connect(workspace(), &Workspace::clientMinimizedChanged, dev, [dev] {
         device_redirect_update(dev);
     });
-    QObject::connect(VirtualDesktopManager::self(),
-                     &VirtualDesktopManager::currentChanged,
+    QObject::connect(win::virtual_desktop_manager::self(),
+                     &win::virtual_desktop_manager::currentChanged,
                      dev,
                      [dev] { device_redirect_update(dev); });
 }

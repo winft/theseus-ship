@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KWin
 #include "decorationbridge.h"
 #include "render/compositor.h"
-#include "virtualdesktops.h"
+#include "win/virtual_desktops.h"
 #include "workspace.h"
 
 #include "win/app_menu.h"
@@ -47,7 +47,7 @@ SettingsImpl::SettingsImpl(KDecoration2::DecorationSettings *parent)
 
     auto c = connect(render::compositor::self(), &render::compositor::compositingToggled,
             parent, &KDecoration2::DecorationSettings::alphaChannelSupportedChanged);
-    connect(VirtualDesktopManager::self(), &VirtualDesktopManager::countChanged, this,
+    connect(win::virtual_desktop_manager::self(), &win::virtual_desktop_manager::countChanged, this,
         [parent](uint previous, uint current) {
             if (previous != 1 && current != 1) {
                 return;
@@ -74,7 +74,7 @@ bool SettingsImpl::isAlphaChannelSupported() const
 
 bool SettingsImpl::isOnAllDesktopsAvailable() const
 {
-    return VirtualDesktopManager::self()->count() > 1;
+    return win::virtual_desktop_manager::self()->count() > 1;
 }
 
 bool SettingsImpl::isCloseOnDoubleClickOnMenu() const

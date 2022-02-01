@@ -6,15 +6,13 @@
 */
 #include "window.h"
 
+#include "deco_shadow.h"
 #include "effects.h"
 #include "shadow.h"
 
 #include "toplevel.h"
 #include "win/geo.h"
 #include "win/transient.h"
-
-#include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/surface.h>
 
 namespace KWin::render
 {
@@ -178,7 +176,7 @@ WindowQuadList window::buildQuads(bool force) const
         ret << m_shadow->shadowQuads();
     }
 
-    effects->buildQuads(toplevel->effectWindow(), ret);
+    effects->buildQuads(effect.get(), ret);
     cached_quad_list.reset(new WindowQuadList(ret));
     return ret;
 }
@@ -291,28 +289,9 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
         QRectF const contentsRect = *contentsRegion.begin();
         QRectF sourceRect(contentsRect.topLeft() * textureScale,
                           contentsRect.bottomRight() * textureScale);
-
-        if (const auto* surface = toplevel->surface()) {
-            QRectF const rect = surface->state().source_rectangle;
-            if (rect.isValid()) {
-                sourceRect
-                    = QRectF(rect.topLeft() * textureScale, rect.bottomRight() * textureScale);
-            } else {
-                auto buffer = surface->state().buffer;
-                // XWayland client's geometry must be taken from their content placement since the
-                // buffer size is not in sync.
-                if (buffer && !toplevel->isClient()) {
-                    // Try to get the source rectangle from the buffer size, what defines the source
-                    // size without respect to destination size.
-                    auto const origin = contentsRect.topLeft();
-                    auto const rect
-                        = QRectF(origin, buffer->size() - QSize(origin.x(), origin.y()));
-                    Q_ASSERT(rect.isValid());
-                    // Make sure a buffer was set already.
-                    if (rect.isValid()) {
-                        sourceRect = rect;
-                    }
-                }
+        if (get_wayland_viewport) {
+            if (auto vp = get_wayland_viewport(toplevel, contentsRect); vp.isValid()) {
+                sourceRect = vp;
             }
         }
         quads << createQuad(contentsRect, sourceRect);
@@ -333,7 +312,7 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
             // will become one too what can cause artficats before the child cleanup timer fires.
             continue;
         }
-        auto sw = win::scene_window(child);
+        auto& sw = child->render;
         if (!sw) {
             continue;
         }
@@ -349,6 +328,20 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
 void window::invalidateQuadsCache()
 {
     cached_quad_list.reset();
+}
+
+void window::create_shadow()
+{
+    auto shadow = create_deco_shadow<render::shadow>(*toplevel);
+
+    if (!shadow && shadow_windowing.create) {
+        shadow = shadow_windowing.create(*toplevel);
+    }
+
+    if (shadow) {
+        updateShadow(shadow);
+        Q_EMIT toplevel->shadowChanged();
+    }
 }
 
 void window::updateShadow(render::shadow* shadow)
@@ -501,14 +494,8 @@ bool window_pixmap::isValid() const
 void window_pixmap::updateBuffer()
 {
     using namespace Wrapland::Server;
-    if (auto s = surface()) {
-        if (auto b = s->state().buffer) {
-            if (b == m_buffer) {
-                // no change
-                return;
-            }
-            m_buffer = b;
-        }
+    if (m_window->update_wayland_buffer) {
+        m_window->update_wayland_buffer(toplevel(), m_buffer);
     } else if (toplevel()->internalFramebufferObject()) {
         m_fbo = toplevel()->internalFramebufferObject();
     } else if (!toplevel()->internalImageObject().isNull()) {

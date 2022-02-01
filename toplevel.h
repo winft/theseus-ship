@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "rules/rules.h"
 #include "utils.h"
-#include "virtualdesktops.h"
+#include "win/virtual_desktops.h"
 #include "xcbutils.h"
 // KDE
 #include <NETWM>
@@ -58,6 +58,7 @@ class output;
 namespace render
 {
 class effects_window_impl;
+class window;
 }
 
 namespace win
@@ -87,6 +88,10 @@ class KWIN_EXPORT Toplevel : public QObject
     Q_OBJECT
 
 public:
+    constexpr static bool is_toplevel{true};
+
+    std::unique_ptr<render::window> render;
+
     struct {
         QString normal;
         // suffix added to normal caption (e.g. shortcut, machine name, etc.).
@@ -123,6 +128,7 @@ public:
 
     // Relative to client geometry.
     QRegion damage_region;
+    xcb_damage_damage_t damage_handle{XCB_NONE};
 
     // Relative to frame geometry.
     QRegion repaints_region;
@@ -189,8 +195,8 @@ public:
      * isOnDesktop() instead.
      */
     virtual int desktop() const;
-    QVector<VirtualDesktop *> desktops() const;
-    void set_desktops(QVector<VirtualDesktop*> const& desktops);
+    QVector<win::virtual_desktop*> desktops() const;
+    void set_desktops(QVector<win::virtual_desktop*> const& desktops);
 
     bool isOnDesktop(int d) const;
     bool isOnCurrentDesktop() const;
@@ -216,6 +222,7 @@ public:
     int depth() const;
     bool hasAlpha() const;
     virtual bool setupCompositing(bool add_full_damage);
+    virtual void add_scene_window_addon();
     virtual void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release);
 
     Q_INVOKABLE void addRepaint(int x, int y, int w, int h);
@@ -239,9 +246,6 @@ public:
 
     void addDamageFull();
     virtual void addDamage(const QRegion &damage);
-
-    render::effects_window_impl* effectWindow();
-    const render::effects_window_impl* effectWindow() const;
 
     static Toplevel* create_remnant(Toplevel* source);
 
@@ -334,11 +338,9 @@ public:
     void setWindowHandles(xcb_window_t w);
     void disownDataPassedToDeleted();
 
-    virtual void propertyNotifyEvent(xcb_property_notify_event_t *e);
     virtual void damageNotifyEvent();
     void clientMessageEvent(xcb_client_message_event_t *e);
     void discardWindowPixmap();
-    void deleteEffectWindow();
 
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
 
@@ -470,7 +472,6 @@ private:
     // when adding new data members, check also copyToDeleted()
     QUuid m_internalId;
     Xcb::Window m_client;
-    xcb_damage_damage_t damage_handle;
 
     QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};
@@ -478,7 +479,6 @@ private:
     mutable bool m_render_shape_valid{false};
     mutable QRegion m_render_shape;
 
-    render::effects_window_impl* effect_window;
     QByteArray resource_name;
     QByteArray resource_class;
     win::x11::client_machine* m_clientMachine;
@@ -490,7 +490,7 @@ private:
     bool m_skipCloseAnimation;
     // when adding new data members, check also copyToDeleted()
     qreal m_screenScale = 1.0;
-    QVector<VirtualDesktop*> m_desktops;
+    QVector<win::virtual_desktop*> m_desktops;
 
     win::remnant* m_remnant{nullptr};
     std::unique_ptr<win::transient> m_transient;
@@ -850,18 +850,6 @@ inline bool Toplevel::hasAlpha() const
 inline const QRegion& Toplevel::opaqueRegion() const
 {
     return opaque_region;
-}
-
-inline
-render::effects_window_impl* Toplevel::effectWindow()
-{
-    return effect_window;
-}
-
-inline
-const render::effects_window_impl* Toplevel::effectWindow() const
-{
-    return effect_window;
 }
 
 inline QByteArray Toplevel::resourceName() const

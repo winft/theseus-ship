@@ -8,6 +8,7 @@
 #include "screen_edge.h"
 #include "screen_edges_filter.h"
 #include "space_areas.h"
+#include "space_setup.h"
 #include "window.h"
 
 namespace KWin::win::x11
@@ -16,8 +17,8 @@ namespace KWin::win::x11
 space::space()
 {
     QObject::connect(
-        VirtualDesktopManager::self(), &VirtualDesktopManager::desktopRemoved, this, [this] {
-            auto const desktop_count = static_cast<int>(VirtualDesktopManager::self()->count());
+        virtual_desktop_manager::self(), &virtual_desktop_manager::desktopRemoved, this, [this] {
+            auto const desktop_count = static_cast<int>(virtual_desktop_manager::self()->count());
             for (auto const& window : m_allClients) {
                 if (window->isOnAllDesktops()) {
                     continue;
@@ -28,6 +29,8 @@ space::space()
                 sendClientToDesktop(window, desktop_count, true);
             }
         });
+
+    init_space(*this);
 }
 
 space::~space()

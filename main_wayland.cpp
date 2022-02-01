@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
 #include "input/dbus/tablet_mode_manager.h"
+#include "scripting/platform.h"
 #include "wayland_server.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
@@ -126,7 +127,7 @@ void gainRealTime(RealTimeFlags flags = RealTimeFlags::DontReset)
 //************************************
 
 ApplicationWayland::ApplicationWayland(int &argc, char **argv)
-    : ApplicationWaylandAbstract(OperationModeWaylandOnly, argc, argv)
+    : Application(OperationModeWaylandOnly, argc, argv)
 {
 }
 
@@ -231,6 +232,8 @@ void ApplicationWayland::start()
     render->compositor = std::make_unique<render::wayland::compositor>(*render);
     workspace = std::make_unique<win::wayland::space>(server.get());
     Q_EMIT workspaceCreated();
+
+    workspace->scripting = std::make_unique<scripting::platform>();
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
     ScreenLockerWatcher::self()->initialize();
@@ -402,6 +405,15 @@ void dropNiceCapability()
 
 int main(int argc, char * argv[])
 {
+    // Redirect stderr output. This is useful as a workaround for missing logs in systemd journal
+    // when launching a full Plasma session.
+    if (auto log_path = getenv("KWIN_LOG_PATH")) {
+        if (!freopen(log_path, "w", stderr)) {
+            std::cerr << "Failed to open '" << log_path << "' for writing stderr." << std::endl;
+            return 1;
+        }
+    }
+
     if (getuid() == 0) {
         std::cerr << "kwin_wayland does not support running as root." << std::endl;
         return 1;

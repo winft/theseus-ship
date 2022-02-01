@@ -785,10 +785,11 @@ void InternalWindowTest::testEffectWindow()
     QTRY_COMPARE(clientAddedSpy.count(), 1);
     auto internalClient = clientAddedSpy.first().first().value<win::internal_window*>();
     QVERIFY(internalClient);
-    QVERIFY(internalClient->effectWindow());
-    QCOMPARE(internalClient->effectWindow()->internalWindow(), &win);
+    QVERIFY(internalClient->render);
+    QVERIFY(internalClient->render->effect);
+    QCOMPARE(internalClient->render->effect->internalWindow(), &win);
 
-    QCOMPARE(effects->findWindow(&win), internalClient->effectWindow());
+    QCOMPARE(effects->findWindow(&win), internalClient->render->effect.get());
     QCOMPARE(effects->findWindow(&win)->internalWindow(), &win);
 }
 

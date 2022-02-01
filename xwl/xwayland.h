@@ -31,7 +31,19 @@ class xcb_screen_t;
 
 namespace KWin
 {
-class ApplicationWaylandAbstract;
+
+namespace base::x11
+{
+template<typename Space>
+class xcb_event_filter;
+}
+
+namespace win::wayland
+{
+class space;
+}
+
+class Application;
 
 namespace xwl
 {
@@ -45,7 +57,7 @@ public:
     /** The @ref status_callback is called once with 0 code when Xwayland is ready, other codes
      *  indicate a critical error happened at runtime.
      */
-    xwayland(ApplicationWaylandAbstract* app, std::function<void(int code)> status_callback);
+    xwayland(Application* app, std::function<void(int code)> status_callback);
     ~xwayland() override;
 
     std::unique_ptr<xwl::data_bridge> data_bridge;
@@ -62,8 +74,9 @@ private:
     x11_data basic_data;
 
     std::unique_ptr<QSocketNotifier> xcb_read_notifier;
+    std::unique_ptr<base::x11::xcb_event_filter<win::wayland::space>> event_filter;
 
-    ApplicationWaylandAbstract* app;
+    Application* app;
     std::function<void(int code)> status_callback;
 
     Q_DISABLE_COPY(xwayland)

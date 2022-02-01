@@ -14,8 +14,8 @@
 #include "base/output.h"
 #include "base/platform.h"
 #include "cursor.h"
-#include "dbusinterface.h"
 #include "perf/ftrace.h"
+#include "render/dbus/compositing.h"
 #include "scene.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -67,7 +67,7 @@ compositor::compositor(render::platform& platform)
             &compositor::deleteUnusedSupportProperties);
 
     // register DBus
-    new CompositorDBusInterface(this);
+    dbus = new dbus::compositing(platform);
 }
 
 compositor::~compositor()

@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win::x11
 {
 
-class sync_alarm_filter : public base::x11::event_filter
+class KWIN_EXPORT sync_alarm_filter : public base::x11::event_filter
 {
 public:
     sync_alarm_filter();

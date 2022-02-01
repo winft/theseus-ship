@@ -56,7 +56,7 @@ public:
     static ScreenPaintData screen_paint;
 
 protected:
-    render::window* createWindow(Toplevel* toplevel) override;
+    std::unique_ptr<render::window> createWindow(Toplevel* toplevel) override;
     void paintBackground(QRegion region) override;
     void paintGenericScreen(paint_type mask, ScreenPaintData data) override;
     void paintDesktop(int desktop,

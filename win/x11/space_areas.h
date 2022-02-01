@@ -9,8 +9,8 @@
 
 #include "screens.h"
 #include "utils.h"
-#include "virtualdesktops.h"
 #include "win/space_areas.h"
+#include "win/virtual_desktops.h"
 
 namespace KWin::win::x11
 {
@@ -27,7 +27,7 @@ void update_space_areas(Window* win,
 
     auto const& screens = kwinApp()->get_base().screens;
     auto const screens_count = screens.count();
-    auto const desktops_count = static_cast<int>(VirtualDesktopManager::self()->count());
+    auto const desktops_count = static_cast<int>(virtual_desktop_manager::self()->count());
 
     auto client_area = adjusted_client_area(win, desktop_area, desktop_area);
 

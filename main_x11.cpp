@@ -10,11 +10,13 @@
 
 #include <config-kwin.h>
 
+#include "base/x11/xcb_event_filter.h"
 #include "debug/x11_console.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
 #include "screenlockerwatcher.h"
+#include "scripting/platform.h"
 #include "seat/backend/logind/session.h"
 #include "sm.h"
 #include "win/x11/space.h"
@@ -194,6 +196,7 @@ void ApplicationX11::setReplace(bool replace)
 void ApplicationX11::lostSelection()
 {
     sendPostedEvents();
+    event_filter.reset();
     workspace.reset();
     base.render->compositor.reset();
     // Remove windowmanager privileges
@@ -228,7 +231,6 @@ void ApplicationX11::start()
     });
     connect(owner.data(), &KSelectionOwner::lostOwnership, this, &ApplicationX11::lostSelection);
     connect(owner.data(), &KSelectionOwner::claimedOwnership, [this]{
-        setupEventFilters();
         createOptions();
 
         // Check  whether another windowmanager is running
@@ -259,8 +261,15 @@ void ApplicationX11::start()
         }
 
         render->compositor = std::make_unique<render::x11::compositor>(*render);
+
         workspace = std::make_unique<win::x11::space>();
+
+        event_filter = std::make_unique<base::x11::xcb_event_filter<win::x11::space>>(*workspace);
+        installNativeEventFilter(event_filter.get());
+
         Q_EMIT workspaceCreated();
+
+        workspace->scripting = std::make_unique<scripting::platform>();
 
         Q_EMIT startup_finished();
 

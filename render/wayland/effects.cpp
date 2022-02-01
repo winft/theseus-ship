@@ -5,6 +5,7 @@
 */
 #include "effects.h"
 
+#include "render/window.h"
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "win/wayland/space.h"
@@ -49,7 +50,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
 EffectWindow* effects_handler_impl::find_window_by_surface(Wrapland::Server::Surface* surface) const
 {
     if (auto win = static_cast<win::wayland::space*>(workspace())->find_window(surface)) {
-        return win->effectWindow();
+        return win->render->effect.get();
     }
     return nullptr;
 }

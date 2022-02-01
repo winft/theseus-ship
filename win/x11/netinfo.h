@@ -91,7 +91,7 @@ inline root_info* rootInfo()
 /**
  * NET WM Protocol handler class
  */
-class win_info : public NETWinInfo
+class KWIN_EXPORT win_info : public NETWinInfo
 {
 public:
     win_info(win::x11::window* c,

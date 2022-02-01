@@ -605,10 +605,9 @@ void SceneOpenGLShadowTest::testShadowTileOverlaps()
     QCOMPARE(decoShadow->paddingLeft(), SHADOW_PADDING_LEFT);
 
     // Get shadow.
-    QVERIFY(client->effectWindow());
-    QVERIFY(client->effectWindow()->sceneWindow());
-    QVERIFY(client->effectWindow()->sceneWindow()->shadow());
-    auto* shadow = client->effectWindow()->sceneWindow()->shadow();
+    QVERIFY(client->render);
+    QVERIFY(client->render->effect);
+    auto shadow = client->render->shadow();
 
     // Validate shadow quads.
     const WindowQuadList& quads = shadow->shadowQuads();
@@ -699,9 +698,9 @@ void SceneOpenGLShadowTest::testNoCornerShadowTiles()
     QCOMPARE(shadowIface->offset().right(), 128.0);
     QCOMPARE(shadowIface->offset().bottom(), 128.0);
 
-    QVERIFY(client->effectWindow());
-    QVERIFY(client->effectWindow()->sceneWindow());
-    auto shadow = client->effectWindow()->sceneWindow()->shadow();
+    QVERIFY(client->render);
+    QVERIFY(client->render->effect);
+    auto shadow = client->render->shadow();
     QVERIFY(shadow != nullptr);
 
     const WindowQuadList& quads = shadow->shadowQuads();
@@ -785,9 +784,9 @@ void SceneOpenGLShadowTest::testDistributeHugeCornerTiles()
     QCOMPARE(shadowIface->offset().right(), 256.0);
     QCOMPARE(shadowIface->offset().bottom(), 0.0);
 
-    QVERIFY(client->effectWindow());
-    QVERIFY(client->effectWindow()->sceneWindow());
-    auto shadow = client->effectWindow()->sceneWindow()->shadow();
+    QVERIFY(client->render);
+    QVERIFY(client->render->effect);
+    auto shadow = client->render->shadow();
     QVERIFY(shadow != nullptr);
 
     WindowQuadList expectedQuads;

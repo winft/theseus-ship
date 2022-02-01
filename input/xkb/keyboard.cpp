@@ -14,9 +14,6 @@
 
 #include <KConfigGroup>
 
-#include <Wrapland/Server/keyboard_pool.h>
-#include <Wrapland/Server/seat.h>
-
 #include <QTemporaryFile>
 #include <QtXkbCommonSupport/private/qxkbcommon_p.h>
 
@@ -267,10 +264,8 @@ void keyboard::update_modifiers()
 
 void keyboard::forward_modifiers()
 {
-    if (seat) {
-        seat->keyboards().set_keymap(keymap->cache);
-        seat->keyboards().update_modifiers(
-            modifier_state.depressed, modifier_state.latched, modifier_state.locked, layout);
+    if (forward_modifiers_impl) {
+        forward_modifiers_impl(keymap.get(), modifier_state, layout);
     }
 }
 

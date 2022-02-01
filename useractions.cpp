@@ -43,7 +43,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rule_book.h"
 #include "screens.h"
 #include "utils.h"
-#include "virtualdesktops.h"
 #include "scripting/platform.h"
 
 #include "win/app_menu.h"
@@ -53,6 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/net.h"
 #include "win/screen.h"
 #include "win/stacking_order.h"
+#include "win/virtual_desktops.h"
 #include "win/x11/window.h"
 
 #include <KProcess>
@@ -373,7 +373,7 @@ void UserActionsMenu::menuAboutToShow()
     if (m_client.isNull() || !m_menu)
         return;
 
-    if (VirtualDesktopManager::self()->count() == 1) {
+    if (win::virtual_desktop_manager::self()->count() == 1) {
         delete m_desktopMenu;
         m_desktopMenu = nullptr;
         delete m_multipleDesktopsMenu;
@@ -479,7 +479,7 @@ void UserActionsMenu::desktopPopupAboutToShow()
 {
     if (!m_desktopMenu)
         return;
-    const VirtualDesktopManager *vds = VirtualDesktopManager::self();
+    auto const vds = win::virtual_desktop_manager::self();
 
     m_desktopMenu->clear();
     if (m_client) {
@@ -525,7 +525,7 @@ void UserActionsMenu::multipleDesktopsPopupAboutToShow()
 {
     if (!m_multipleDesktopsMenu)
         return;
-    const VirtualDesktopManager *vds = VirtualDesktopManager::self();
+    auto const vds = win::virtual_desktop_manager::self();
 
     m_multipleDesktopsMenu->clear();
     if (m_client) {
@@ -650,7 +650,7 @@ void UserActionsMenu::slotSendToDesktop(QAction *action)
     if (m_client.isNull())
         return;
     Workspace *ws = Workspace::self();
-    VirtualDesktopManager *vds = VirtualDesktopManager::self();
+    auto vds = win::virtual_desktop_manager::self();
     if (desk == 0) {
         // the 'on_all_desktops' menu entry
         if (m_client) {
@@ -675,7 +675,7 @@ void UserActionsMenu::slotToggleOnVirtualDesktop(QAction *action)
     }
     ShowOnDesktopActionData data = action->data().value<ShowOnDesktopActionData>();
 
-    VirtualDesktopManager *vds = VirtualDesktopManager::self();
+    auto vds = win::virtual_desktop_manager::self();
     if (data.desktop == 0) {
         // the 'on_all_desktops' menu entry
         win::set_on_all_desktops(m_client.data(), !m_client->isOnAllDesktops());
@@ -687,7 +687,7 @@ void UserActionsMenu::slotToggleOnVirtualDesktop(QAction *action)
     if (data.moveToSingle) {
         win::set_desktop(m_client.data(), data.desktop);
     } else {
-    auto virtualDesktop = VirtualDesktopManager::self()->desktopForX11Id(data.desktop);
+    auto virtualDesktop = win::virtual_desktop_manager::self()->desktopForX11Id(data.desktop);
         if (m_client->desktops().contains(virtualDesktop)) {
             win::leave_desktop(m_client.data(), virtualDesktop);
         } else {
@@ -998,7 +998,7 @@ DEF6(I18N_NOOP("Invert Screen Colors"),            0, kwinApp()->get_base().rend
 #ifdef KWIN_BUILD_TABBOX
     TabBox::TabBox::self()->initShortcuts();
 #endif
-    VirtualDesktopManager::self()->initShortcuts();
+    win::virtual_desktop_manager::self()->initShortcuts();
     kwinApp()->get_base().render->night_color->init_shortcuts();
     m_userActionsMenu->discard(); // so that it's recreated next time
 }
@@ -1192,7 +1192,7 @@ void Workspace::slotWindowToDesktop(uint i)
         if (i < 1)
             return;
 
-        if (i >= 1 && i <= VirtualDesktopManager::self()->count())
+        if (i >= 1 && i <= win::virtual_desktop_manager::self()->count())
             sendClientToDesktop(active_client, i, true);
     }
 }
@@ -1326,7 +1326,7 @@ void Workspace::slotWindowLower()
                     request_focus(next);
             } else {
                 activateClient(
-                    win::top_client_on_desktop(workspace(), VirtualDesktopManager::self()->current(), -1));
+                    win::top_client_on_desktop(workspace(), win::virtual_desktop_manager::self()->current(), -1));
             }
         }
     }
@@ -1387,7 +1387,7 @@ void Workspace::slotToggleShowDesktop()
 template <typename Direction>
 void windowToDesktop(Toplevel* window)
 {
-    VirtualDesktopManager *vds = VirtualDesktopManager::self();
+    auto vds = win::virtual_desktop_manager::self();
     Workspace *ws = Workspace::self();
     Direction functor;
     // TODO: why is options->isRollOverDesktops() not honored?
@@ -1410,7 +1410,7 @@ void Workspace::slotWindowToNextDesktop()
 
 void Workspace::windowToNextDesktop(Toplevel* window)
 {
-    windowToDesktop<DesktopNext>(window);
+    windowToDesktop<win::virtual_desktop_next>(window);
 }
 
 /**
@@ -1424,13 +1424,13 @@ void Workspace::slotWindowToPreviousDesktop()
 
 void Workspace::windowToPreviousDesktop(Toplevel* window)
 {
-    windowToDesktop<DesktopPrevious>(window);
+    windowToDesktop<win::virtual_desktop_previous>(window);
 }
 
 template <typename Direction>
 void activeClientToDesktop()
 {
-    VirtualDesktopManager *vds = VirtualDesktopManager::self();
+    auto vds = win::virtual_desktop_manager::self();
     Workspace *ws = Workspace::self();
     const int current = vds->current();
     Direction functor;
@@ -1446,28 +1446,28 @@ void activeClientToDesktop()
 void Workspace::slotWindowToDesktopRight()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        activeClientToDesktop<DesktopRight>();
+        activeClientToDesktop<win::virtual_desktop_right>();
     }
 }
 
 void Workspace::slotWindowToDesktopLeft()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        activeClientToDesktop<DesktopLeft>();
+        activeClientToDesktop<win::virtual_desktop_left>();
     }
 }
 
 void Workspace::slotWindowToDesktopUp()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        activeClientToDesktop<DesktopAbove>();
+        activeClientToDesktop<win::virtual_desktop_above>();
     }
 }
 
 void Workspace::slotWindowToDesktopDown()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        activeClientToDesktop<DesktopBelow>();
+        activeClientToDesktop<win::virtual_desktop_below>();
     }
 }
 
@@ -1490,7 +1490,7 @@ void Workspace::switchWindow(Direction direction)
     if (!active_client)
         return;
     auto c = active_client;
-    int desktopNumber = c->isOnAllDesktops() ? VirtualDesktopManager::self()->current() : c->desktop();
+    int desktopNumber = c->isOnAllDesktops() ? win::virtual_desktop_manager::self()->current() : c->desktop();
 
     // Centre of the active window
     QPoint curPos(c->pos().x() + c->size().width() / 2,

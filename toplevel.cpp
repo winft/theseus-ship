@@ -38,8 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/netinfo.h"
 #include "win/x11/xcb.h"
 
-#include <Wrapland/Server/surface.h>
-
 #include <QDebug>
 
 namespace KWin
@@ -53,9 +51,7 @@ Toplevel::Toplevel()
 Toplevel::Toplevel(win::transient* transient)
     : m_internalId(QUuid::createUuid())
     , m_client()
-    , damage_handle(XCB_NONE)
     , is_shape(false)
-    , effect_window(nullptr)
     , m_clientMachine(new win::x11::client_machine(this))
     , m_wmClientLeader(XCB_WINDOW_NONE)
     , m_damageReplyPending(false)
@@ -164,9 +160,12 @@ void Toplevel::copyToDeleted(Toplevel* c)
     repaints_region = c->repaints_region;
     layer_repaints_region = c->layer_repaints_region;
     is_shape = c->is_shape;
-    effect_window = c->effect_window;
-    if (effect_window != nullptr)
-        effect_window->setWindow(this);
+
+    render = std::move(c->render);
+    if (render) {
+        render->effect->setWindow(this);
+    }
+
     resource_name = c->resourceName();
     resource_class = c->resourceClass();
     m_clientMachine = c->m_clientMachine;
@@ -315,38 +314,15 @@ bool Toplevel::isOutline() const
     return is_outline;
 }
 
-bool Toplevel::setupCompositing(bool add_full_damage)
+bool Toplevel::setupCompositing(bool /*add_full_damage*/)
 {
-    assert(!remnant());
+    // Should never be called, always through the child classes instead.
+    assert(false);
+    return false;
+}
 
-    if (!win::compositing())
-        return false;
-
-    if (damage_handle != XCB_NONE)
-        return false;
-
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        assert(!surface());
-        damage_handle = xcb_generate_id(connection());
-        xcb_damage_create(connection(), damage_handle, frameId(), XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY);
-    }
-
-    discard_shape();
-    damage_region = QRegion(QRect(QPoint(), size()));
-    effect_window = new render::effects_window_impl(this);
-
-    render::compositor::self()->scene()->addToplevel(this);
-
-    if (add_full_damage) {
-        // With unmanaged windows there is a race condition between the client painting the window
-        // and us setting up damage tracking.  If the client wins we won't get a damage event even
-        // though the window has been painted.  To avoid this we mark the whole window as damaged
-        // and schedule a repaint immediately after creating the damage object.
-        // TODO: move this out of the class.
-        addDamageFull();
-    }
-
-    return true;
+void Toplevel::add_scene_window_addon()
+{
 }
 
 void Toplevel::finishCompositing(ReleaseReason releaseReason)
@@ -356,9 +332,9 @@ void Toplevel::finishCompositing(ReleaseReason releaseReason)
     if (kwinApp()->operationMode() == Application::OperationModeX11 && damage_handle == XCB_NONE)
         return;
 
-    if (effect_window->window() == this) { // otherwise it's already passed to Deleted, don't free data
+    if (render) {
         discardWindowPixmap();
-        delete effect_window;
+        render.reset();
     }
 
     if (damage_handle != XCB_NONE &&
@@ -369,14 +345,13 @@ void Toplevel::finishCompositing(ReleaseReason releaseReason)
     damage_handle = XCB_NONE;
     damage_region = QRegion();
     repaints_region = QRegion();
-    effect_window = nullptr;
 }
 
 void Toplevel::discardWindowPixmap()
 {
     addDamageFull();
-    if (auto scene_window = win::scene_window(this)) {
-        scene_window->discardPixmap();
+    if (render) {
+        render->discardPixmap();
     }
 }
 
@@ -625,12 +600,6 @@ void Toplevel::setReadyForPainting()
     }
 }
 
-void Toplevel::deleteEffectWindow()
-{
-    delete effect_window;
-    effect_window = nullptr;
-}
-
 void Toplevel::checkScreen()
 {
     auto const& screens = kwinApp()->get_base().screens;
@@ -677,10 +646,7 @@ qreal Toplevel::screenScale() const
 
 qreal Toplevel::bufferScale() const
 {
-    if (m_remnant) {
-        return m_remnant->buffer_scale;
-    }
-    return surface() ? surface()->state().scale : 1;
+    return m_remnant ? m_remnant->buffer_scale : 1.;
 }
 
 bool Toplevel::wantsShadowToBeRendered() const
@@ -812,8 +778,8 @@ void Toplevel::discard_shape()
 
 void Toplevel::discard_quads()
 {
-    if (auto scene_window = win::scene_window(this)) {
-        scene_window->invalidateQuadsCache();
+    if (render) {
+        render->invalidateQuadsCache();
         addRepaintFull();
     }
     if (transient()->annexed) {
@@ -882,12 +848,12 @@ int Toplevel::desktop() const
     return m_desktops.isEmpty() ? (int)NET::OnAllDesktops : m_desktops.last()->x11DesktopNumber();
 }
 
-QVector<VirtualDesktop *> Toplevel::desktops() const
+QVector<win::virtual_desktop*> Toplevel::desktops() const
 {
     return m_desktops;
 }
 
-void Toplevel::set_desktops(QVector<VirtualDesktop*> const& desktops)
+void Toplevel::set_desktops(QVector<win::virtual_desktop*> const& desktops)
 {
     m_desktops = desktops;
 }
@@ -1253,22 +1219,6 @@ void Toplevel::setWindowHandles(xcb_window_t w)
 {
     Q_ASSERT(!m_client.isValid() && w != XCB_WINDOW_NONE);
     m_client.reset(w, false);
-}
-
-void Toplevel::propertyNotifyEvent(xcb_property_notify_event_t* e)
-{
-    if (e->window != xcb_window())
-        return; // ignore frame/wrapper
-    switch (e->atom) {
-    default:
-        if (e->atom == atoms->wm_client_leader)
-            getWmClientLeader();
-        else if (e->atom == atoms->kde_net_wm_shadow)
-            win::update_shadow(this);
-        else if (e->atom == atoms->kde_skip_close_animation)
-            getSkipCloseAnimation();
-        break;
-    }
 }
 
 void Toplevel::clientMessageEvent(xcb_client_message_event_t* e)

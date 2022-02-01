@@ -21,7 +21,7 @@ class KWIN_EXPORT keyboard : public QObject
     Q_OBJECT
 public:
     input::platform* platform;
-    control::keyboard* control{nullptr};
+    std::unique_ptr<control::keyboard> control;
     std::unique_ptr<xkb::keyboard> xkb;
 
     keyboard(input::platform* platform);

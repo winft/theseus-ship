@@ -412,7 +412,7 @@ void lanczos_filter::timerEvent(QTimerEvent* event)
         m_offscreenTex = nullptr;
 
         workspace()->forEachToplevel(
-            [this](Toplevel* toplevel) { discardCacheTexture(toplevel->effectWindow()); });
+            [this](Toplevel* toplevel) { discardCacheTexture(toplevel->render->effect.get()); });
 
         m_scene->doneOpenGLContextCurrent();
     }

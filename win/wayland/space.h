@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "xwl_window.h"
+
 #include "workspace.h"
 
 #include <kwin_export.h>
@@ -18,14 +20,16 @@ class Surface;
 
 namespace KWin
 {
-class VirtualDesktop;
 
 namespace win
 {
+
 namespace x11
 {
 class window;
 }
+
+class virtual_desktop;
 
 namespace wayland
 {
@@ -36,6 +40,8 @@ class KWIN_EXPORT space : public Workspace
 {
     Q_OBJECT
 public:
+    using x11_window = xwl_window;
+
     space(WaylandServer* server);
     ~space() override;
 
@@ -58,7 +64,7 @@ protected:
 
 private:
     void handle_x11_window_added(x11::window* window);
-    void handle_desktop_removed(VirtualDesktop* desktop);
+    void handle_desktop_removed(virtual_desktop* desktop);
 };
 
 }

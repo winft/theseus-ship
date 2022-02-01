@@ -185,8 +185,9 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(client->isMovableAcrossScreens());
     QVERIFY(client->isResizable());
     QCOMPARE(client->isInternal(), false);
-    QVERIFY(client->effectWindow());
-    QVERIFY(!client->effectWindow()->internalWindow());
+    QVERIFY(client->render);
+    QVERIFY(client->render->effect);
+    QVERIFY(!client->render->effect->internalWindow());
     QCOMPARE(client->internalId().isNull(), false);
     const auto uuid = client->internalId();
     QUuid deletedUuid;
@@ -210,7 +211,8 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(windowClosedSpy.isEmpty());
     QVERIFY(!workspace()->activeClient());
     QCOMPARE(effectsWindowHiddenSpy.count(), 1);
-    QCOMPARE(effectsWindowHiddenSpy.first().first().value<EffectWindow*>(), client->effectWindow());
+    QCOMPARE(effectsWindowHiddenSpy.first().first().value<EffectWindow*>(),
+             client->render->effect.get());
 
     QSignalSpy windowShownSpy(client, &win::wayland::window::windowShown);
     QVERIFY(windowShownSpy.isValid());
@@ -225,7 +227,8 @@ void TestXdgShellClient::testMapUnmapMap()
     QVERIFY(!client->hasAlpha());
     QCOMPARE(workspace()->activeClient(), client);
     QCOMPARE(effectsWindowShownSpy.count(), 1);
-    QCOMPARE(effectsWindowShownSpy.first().first().value<EffectWindow*>(), client->effectWindow());
+    QCOMPARE(effectsWindowShownSpy.first().first().value<EffectWindow*>(),
+             client->render->effect.get());
 
     // let's unmap again
     surface->attachBuffer(Buffer::Ptr());
@@ -237,7 +240,8 @@ void TestXdgShellClient::testMapUnmapMap()
     QCOMPARE(client->internalId(), uuid);
     QVERIFY(windowClosedSpy.isEmpty());
     QCOMPARE(effectsWindowHiddenSpy.count(), 2);
-    QCOMPARE(effectsWindowHiddenSpy.last().first().value<EffectWindow*>(), client->effectWindow());
+    QCOMPARE(effectsWindowHiddenSpy.last().first().value<EffectWindow*>(),
+             client->render->effect.get());
 
     shellSurface.reset();
     surface.reset();
@@ -277,7 +281,7 @@ void TestXdgShellClient::testDesktopPresenceChanged()
     QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(0).value<Toplevel*>(), c);
     QCOMPARE(desktopPresenceChangedWorkspaceSpy.first().at(1).toInt(), 1);
     QCOMPARE(desktopPresenceChangedEffectsSpy.first().at(0).value<EffectWindow*>(),
-             c->effectWindow());
+             c->render->effect.get());
     QCOMPARE(desktopPresenceChangedEffectsSpy.first().at(1).toInt(), 1);
     QCOMPARE(desktopPresenceChangedEffectsSpy.first().at(2).toInt(), 2);
 }
@@ -1053,7 +1057,7 @@ void TestXdgShellClient::testSendClientWithTransientToDesktop()
     // this test verifies that when sending a client to a desktop all transients are also send to
     // that desktop
 
-    VirtualDesktopManager::self()->setCount(2);
+    win::virtual_desktop_manager::self()->setCount(2);
     std::unique_ptr<Surface> surface{Test::create_surface()};
     std::unique_ptr<XdgShellToplevel> shellSurface(Test::create_xdg_shell_toplevel(surface));
 

@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KSharedConfig>
 
 #include <QApplication>
-#include <QAbstractNativeEventFilter>
 #include <QProcessEnvironment>
 
 #include <memory>
@@ -63,12 +62,6 @@ class session;
 }
 
 class WaylandServer;
-
-class XcbEventFilter : public QAbstractNativeEventFilter
-{
-public:
-    bool nativeEventFilter(const QByteArray &eventType, void *message, long int *result) override;
-};
 
 class KWIN_EXPORT Application : public  QApplication
 {
@@ -142,6 +135,10 @@ public:
     void setOperationMode(OperationMode mode);
     bool shouldUseWaylandForCompositing() const;
 
+    void createAtoms();
+    void destroyAtoms();
+
+    void setupEventFilters();
     void setupTranslator();
     void setupCommandLine(QCommandLineParser *parser);
     void processCommandLine(QCommandLineParser *parser);
@@ -189,13 +186,33 @@ public:
     }
 
     /**
+     * Inheriting classes should use this method to set the X11 root window
+     * before accessing any X11 specific code pathes.
+     */
+    void setX11RootWindow(xcb_window_t root) {
+        m_rootWindow = root;
+    }
+
+    /**
      * @returns the X11 xcb connection
      */
     xcb_connection_t *x11Connection() const {
         return m_connection;
     }
 
+    /**
+     * Inheriting classes should use this method to set the xcb connection
+     * before accessing any X11 specific code pathes.
+     */
+    void setX11Connection(xcb_connection_t *c, bool emit_change = true) {
+        m_connection = c;
+        if (emit_change) {
+            Q_EMIT x11ConnectionChanged();
+        }
+    }
+
     virtual QProcessEnvironment processStartupEnvironment() const;
+    virtual void setProcessStartupEnvironment(QProcessEnvironment const& environment);
 
     bool isTerminating() const {
         return m_terminating;
@@ -222,28 +239,7 @@ protected:
 
     void prepare_start();
 
-    void createAtoms();
     void createOptions();
-    void setupEventFilters();
-
-    /**
-     * Inheriting classes should use this method to set the X11 root window
-     * before accessing any X11 specific code pathes.
-     */
-    void setX11RootWindow(xcb_window_t root) {
-        m_rootWindow = root;
-    }
-    /**
-     * Inheriting classes should use this method to set the xcb connection
-     * before accessing any X11 specific code pathes.
-     */
-    void setX11Connection(xcb_connection_t *c, bool emit_change = true) {
-        m_connection = c;
-        if (emit_change) {
-            Q_EMIT x11ConnectionChanged();
-        }
-    }
-    void destroyAtoms();
 
     void setTerminating() {
         m_terminating = true;
@@ -253,7 +249,6 @@ protected:
     static int crashes;
 
 private:
-    QScopedPointer<XcbEventFilter> m_eventFilter;
     bool m_configLock;
     KSharedConfigPtr m_config;
     KSharedConfigPtr m_kxkbConfig;
@@ -270,26 +265,6 @@ inline static Application *kwinApp()
 {
     return static_cast<Application*>(QCoreApplication::instance());
 }
-
-namespace xwl
-{
-class xwayland;
-}
-
-class KWIN_EXPORT ApplicationWaylandAbstract : public Application
-{
-    Q_OBJECT
-public:
-    ~ApplicationWaylandAbstract() override = 0;
-
-protected:
-    friend class xwl::xwayland;
-
-    ApplicationWaylandAbstract(OperationMode mode, int &argc, char **argv);
-    virtual void setProcessStartupEnvironment(const QProcessEnvironment &environment) {
-        Q_UNUSED(environment);
-    }
-};
 
 inline WaylandServer* waylandServer()
 {

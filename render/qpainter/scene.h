@@ -67,7 +67,7 @@ public:
 
 protected:
     void paintBackground(QRegion region) override;
-    render::window* createWindow(Toplevel* toplevel) override;
+    std::unique_ptr<render::window> createWindow(Toplevel* toplevel) override;
     void paintCursor() override;
     void paintEffectQuickView(EffectQuickView* w) override;
 

@@ -50,15 +50,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/cursor.h"
 #include "render/effects.h"
 #include "render/platform.h"
-#include "render/x11/compositor.h"
-#include "render/x11/overlay_window.h"
 #include "screens.h"
 
 #include "win/geo.h"
 #include "win/transient.h"
-
-#include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/surface.h>
 
 #include <stdexcept>
 #include <unistd.h>
@@ -874,23 +869,18 @@ render::gl::texture* scene::createTexture()
 
 bool scene::viewportLimitsMatched(const QSize& size) const
 {
-    if (kwinApp()->operationMode() != Application::OperationModeX11) {
-        // TODO: On Wayland we can't suspend. Find a solution that works here as well!
+    if (!windowing_integration.handle_viewport_limits_alarm) {
+        // If we have now way of reacting to the alarm this check is useless.
         return true;
     }
+
     GLint limit[2];
     glGetIntegerv(GL_MAX_VIEWPORT_DIMS, limit);
     if (limit[0] < size.width() || limit[1] < size.height()) {
-        auto compositor = static_cast<render::x11::compositor*>(render::compositor::self());
-        QMetaObject::invokeMethod(
-            compositor,
-            [compositor]() {
-                qCDebug(KWIN_CORE) << "Suspending compositing because viewport limits are not met";
-                compositor->suspend(render::x11::compositor::AllReasonSuspend);
-            },
-            Qt::QueuedConnection);
+        windowing_integration.handle_viewport_limits_alarm();
         return false;
     }
+
     return true;
 }
 
@@ -1068,9 +1058,9 @@ void scene::doPaintBackground(const QVector<float>& vertices)
     vbo->render(GL_TRIANGLES);
 }
 
-render::window* scene::createWindow(Toplevel* t)
+std::unique_ptr<render::window> scene::createWindow(Toplevel* t)
 {
-    return new window(t, this);
+    return std::make_unique<window>(t, this);
 }
 
 void scene::finalDrawWindow(effects_window_impl* w,

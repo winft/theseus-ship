@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <xcb/render.h>
 
 #include <deque>
+#include <memory>
 
 class QOpenGLFramebufferObject;
 
@@ -62,6 +63,10 @@ class shadow;
 class window;
 class window_pixmap;
 
+struct scene_windowing_integration {
+    std::function<void(void)> handle_viewport_limits_alarm;
+};
+
 // The base class for compositing backends.
 class KWIN_EXPORT scene : public QObject
 {
@@ -94,17 +99,7 @@ public:
                                  std::deque<Toplevel*> const& windows,
                                  std::chrono::milliseconds presentTime);
 
-    /**
-     * Adds the Toplevel to the scene.
-     *
-     * If the toplevel gets deleted, then the scene will try automatically
-     * to re-bind an underlying scene window to the corresponding Deleted.
-     *
-     * @param toplevel The window to be added.
-     * @note You can add a toplevel to scene only once.
-     */
-    void addToplevel(Toplevel* toplevel);
-
+    virtual std::unique_ptr<render::window> createWindow(Toplevel* toplevel) = 0;
     /**
      * Removes the Toplevel from the scene.
      *
@@ -179,7 +174,9 @@ public:
      */
     virtual QVector<QByteArray> openGLPlatformInterfaceExtensions() const;
 
+    QHash<Toplevel*, window*> m_windows;
     render::compositor& compositor;
+    scene_windowing_integration windowing_integration;
 
 Q_SIGNALS:
     void frameRendered();
@@ -192,7 +189,6 @@ public Q_SLOTS:
     void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);
 
 protected:
-    virtual window* createWindow(Toplevel* toplevel) = 0;
     void createStackingOrder(std::deque<Toplevel*> const& toplevels);
     void clearStackingOrder();
     // shared implementation, starts painting the screen
@@ -265,7 +261,6 @@ private:
                                qreal saturation);
     void paintDesktopThumbnails(window* w);
     std::chrono::milliseconds m_expectedPresentTimestamp = std::chrono::milliseconds::zero();
-    QHash<Toplevel*, window*> m_windows;
     // windows in their stacking order
     QVector<window*> stacking_order;
 };

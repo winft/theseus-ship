@@ -112,12 +112,12 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
             if (win->transient()->annexed) {
                 win = win::lead_of_annexed_transient(win);
             }
-            if (win->effectWindow()) {
-                auto const texture = win->effectWindow()->data(LanczosCacheRole);
-                if (texture.isValid()) {
-                    delete static_cast<GLTexture*>(texture.value<void*>());
-                    win->effectWindow()->setData(LanczosCacheRole, QVariant());
-                }
+            assert(win->render);
+            assert(win->render->effect);
+            auto const texture = win->render->effect->data(LanczosCacheRole);
+            if (texture.isValid()) {
+                delete static_cast<GLTexture*>(texture.value<void*>());
+                win->render->effect->setData(LanczosCacheRole, QVariant());
             }
         }
     }

@@ -25,15 +25,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "atoms.h"
 #include "rules/rules.h"
 #include "screens.h"
-#include "virtualdesktops.h"
 #include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/controlling.h"
 #include "win/move.h"
 #include "win/stacking.h"
+#include "win/virtual_desktops.h"
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
+#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 
@@ -78,7 +77,7 @@ void TestDbusInterface::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    VirtualDesktopManager::self()->setCount(4);
+    win::virtual_desktop_manager::self()->setCount(4);
 }
 
 void TestDbusInterface::init()

@@ -5,13 +5,13 @@
 */
 #pragma once
 
+#include "event.h"
 #include "window_release.h"
 
 #include "win/remnant.h"
 #include "win/space.h"
 
 #include "render/effects.h"
-#include "toplevel.h"
 #include "utils.h"
 #include "xcbutils.h"
 
@@ -177,7 +177,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
         unmanaged_configure_event(win, reinterpret_cast<xcb_configure_notify_event_t*>(e));
         break;
     case XCB_PROPERTY_NOTIFY:
-        win->propertyNotifyEvent(reinterpret_cast<xcb_property_notify_event_t*>(e));
+        property_notify_event_prepare(*win, reinterpret_cast<xcb_property_notify_event_t*>(e));
         break;
     case XCB_CLIENT_MESSAGE:
         win->clientMessageEvent(reinterpret_cast<xcb_client_message_event_t*>(e));

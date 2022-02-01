@@ -110,9 +110,9 @@ void scene::paintBackground(QRegion region)
                                rects.data());
 }
 
-render::window* scene::createWindow(Toplevel* toplevel)
+std::unique_ptr<render::window> scene::createWindow(Toplevel* toplevel)
 {
-    return new window(toplevel, this);
+    return std::make_unique<window>(toplevel, this);
 }
 
 render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)

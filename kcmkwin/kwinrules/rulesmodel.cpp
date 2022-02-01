@@ -43,8 +43,8 @@ RulesModel::RulesModel(QObject *parent)
     qmlRegisterUncreatableType<RulesModel>("org.kde.kcms.kwinrules", 1, 0, "RulesModel",
                                                  QStringLiteral("Do not create objects of type RulesModel"));
 
-    qDBusRegisterMetaType<KWin::DBusDesktopDataStruct>();
-    qDBusRegisterMetaType<KWin::DBusDesktopDataVector>();
+    qDBusRegisterMetaType<KWin::win::dbus::virtual_desktop_data>();
+    qDBusRegisterMetaType<KWin::win::dbus::virtual_desktop_data_vector>();
 
     populateRuleList();
 }
@@ -712,7 +712,7 @@ QList<OptionsModel::Data> RulesModel::windowTypesModelData() const
 QList<OptionsModel::Data> RulesModel::virtualDesktopsModelData() const
 {
     QList<OptionsModel::Data> modelData;
-    for (const DBusDesktopDataStruct &desktop : m_virtualDesktops) {
+    for (auto const& desktop : m_virtualDesktops) {
         modelData << OptionsModel::Data{
             desktop.position + 1,  // "desktop" setting uses the desktop position (int) starting at 1
             QString::number(desktop.position + 1).rightJustified(2) + QStringLiteral(": ") + desktop.name,
@@ -824,7 +824,7 @@ void RulesModel::updateVirtualDesktops()
                 if (!reply.isValid()) {
                     return;
                 }
-                m_virtualDesktops = qdbus_cast<KWin::DBusDesktopDataVector>(reply.value());
+                m_virtualDesktops = qdbus_cast<KWin::win::dbus::virtual_desktop_data_vector>(reply.value());
                 Q_EMIT virtualDesktopsUpdated();
             }
     );

@@ -180,9 +180,6 @@ set_package_properties(Threads PROPERTIES
 find_package(Libinput 1.9)
 set_package_properties(Libinput PROPERTIES TYPE REQUIRED PURPOSE "Required for input handling on Wayland.")
 
-find_package(gbm)
-set_package_properties(gbm PROPERTIES TYPE OPTIONAL PURPOSE "Required for Wayland session.")
-
 find_package(Pixman)
 set_package_properties(Pixman PROPERTIES
     TYPE REQUIRED
@@ -388,6 +385,7 @@ add_subdirectory(helpers)
 
 set(kwin_SRCS
     atoms.cpp
+    base/dbus/kwin.cpp
     base/os/clock/skew_notifier.cpp
     base/os/clock/skew_notifier_engine.cpp
     base/x11/event_filter.cpp
@@ -399,7 +397,6 @@ set(kwin_SRCS
     render/post/color_correct_dbus_interface.cpp
     render/post/night_color_manager.cpp
     render/post/suncalc.cpp
-    dbusinterface.cpp
     debug/console.cpp
     debug/x11_console.cpp
     decorations/decoratedclient.cpp
@@ -440,6 +437,7 @@ set(kwin_SRCS
     osd.cpp
     render/compositor.cpp
     render/cursor.cpp
+    render/dbus/compositing.cpp
     render/effect_loader.cpp
     render/effects.cpp
     render/gl/backend.cpp
@@ -458,9 +456,7 @@ set(kwin_SRCS
     render/shadow.cpp
     render/thumbnail_item.cpp
     render/window.cpp
-    render/x11/compositor.cpp
     render/x11/compositor_selection_owner.cpp
-    render/x11/overlay_window.cpp
     rules/rule_book.cpp
     rules/rule_book_settings.cpp
     rules/rules.cpp
@@ -486,18 +482,20 @@ set(kwin_SRCS
     toplevel.cpp
     useractions.cpp
     utils.cpp
-    virtualdesktops.cpp
-    virtualdesktopsdbustypes.cpp
     was_user_interaction_x11_filter.cpp
     win/app_menu.cpp
     win/control.cpp
+    win/dbus/virtual_desktop_manager.cpp
+    win/dbus/virtual_desktop_types.cpp
     win/focus_chain.cpp
     win/internal_window.cpp
     win/remnant.cpp
     win/screen_edges.cpp
     win/stacking_order.cpp
     win/transient.cpp
+    win/virtual_desktops.cpp
     win/x11/client_machine.cpp
+    win/x11/color_mapper.cpp
     win/x11/geometry_tip.cpp
     win/x11/group.cpp
     win/x11/netinfo.cpp
@@ -514,18 +512,6 @@ set(kwin_SRCS
     xwl/xwayland_interface.cpp
     perf/ftrace.cpp
 )
-
-if (KWIN_BUILD_XRENDER_COMPOSITING)
-    set(kwin_SRCS
-        ${kwin_SRCS}
-        render/xrender/backend.cpp
-        render/xrender/deco_renderer.cpp
-        render/xrender/effect_frame.cpp
-        render/xrender/scene.cpp
-        render/xrender/shadow.cpp
-        render/xrender/window.cpp
-    )
-endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(kwin_SRCS
@@ -547,15 +533,23 @@ kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfg
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_book_settings_base.kcfgc)
 
-qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.xml dbusinterface.h KWin::DBusInterface)
-qt5_add_dbus_adaptor(kwin_SRCS org.kde.kwin.Compositing.xml dbusinterface.h KWin::CompositorDBusInterface)
+qt5_add_dbus_adaptor(kwin_SRCS base/dbus/org.kde.KWin.xml base/dbus/kwin.h KWin::base::dbus::kwin)
+qt5_add_dbus_adaptor(kwin_SRCS
+  render/dbus/org.kde.kwin.Compositing.xml
+  render/dbus/compositing.h
+  KWin::render::dbus::compositing
+)
 qt5_add_dbus_adaptor(kwin_SRCS
     org.kde.kwin.ColorCorrect.xml
     render/post/color_correct_dbus_interface.h
     KWin::render::post::color_correct_dbus_interface
 )
 qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_impl)
-qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.VirtualDesktopManager.xml dbusinterface.h KWin::VirtualDesktopManagerDBusInterface)
+qt5_add_dbus_adaptor(kwin_SRCS
+    win/dbus/org.kde.KWin.VirtualDesktopManager.xml
+    win/dbus/virtual_desktop_manager.h
+    KWin::win::dbus::virtual_desktop_manager
+)
 qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.Session.xml sm.h KWin::SessionManager)
 
 qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf5_org.freedesktop.ScreenSaver.xml screenlocker_interface)
@@ -595,8 +589,6 @@ set(kwin_KDE_LIBS
 
     KDecoration2::KDecoration
     KDecoration2::KDecoration2Private
-
-    PW::KScreenLocker
 )
 
 set(kwin_XLIB_LIBS
@@ -620,14 +612,9 @@ set(kwin_XCB_LIBS
     XCB::XFIXES
 )
 
-set(kwin_WAYLAND_LIBS
-    WraplandClient
-    WraplandServer
-    KF5::WaylandServer
-    Wayland::Cursor
+set(kwin_INPUT_LIBS
     XKB::XKB
     Qt5::XkbCommonSupportPrivate
-    Threads::Threads
 )
 
 set(kwinLibs
@@ -636,8 +623,7 @@ set(kwinLibs
     ${kwin_KDE_LIBS}
     ${kwin_XLIB_LIBS}
     ${kwin_XCB_LIBS}
-    ${kwin_WAYLAND_LIBS}
-    Libinput::Libinput
+    ${kwin_INPUT_LIBS}
 
     # For render code
     kwinxrenderutils
@@ -687,18 +673,32 @@ endif()
 
 set(kwin_X11_SRCS
    base/x11/output.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/cursor.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/platform.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/window_selector.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/x11/xfixes_cursor_event_filter.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/input/logging.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/deco_renderer.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/effects.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/mouse_intercept_filter.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/non_composited_outline.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/platform.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/render/backend/x11/randr_filter.cpp
+   input/x11/cursor.cpp
+   input/x11/platform.cpp
+   input/x11/window_selector.cpp
+   input/x11/xfixes_cursor_event_filter.cpp
+   input/logging.cpp
+   render/backend/x11/deco_renderer.cpp
+   render/backend/x11/effects.cpp
+   render/backend/x11/mouse_intercept_filter.cpp
+   render/backend/x11/non_composited_outline.cpp
+   render/backend/x11/platform.cpp
+   render/backend/x11/randr_filter.cpp
+   render/x11/compositor.cpp
+   render/x11/overlay_window.cpp
 )
+
+if (KWIN_HAVE_XRENDER_COMPOSITING)
+  set(kwin_X11_SRCS
+    ${kwin_X11_SRCS}
+    render/xrender/backend.cpp
+    render/xrender/deco_renderer.cpp
+    render/xrender/effect_frame.cpp
+    render/xrender/scene.cpp
+    render/xrender/shadow.cpp
+    render/xrender/window.cpp
+  )
+endif()
 
 if (HAVE_X11_XINPUT)
     set(kwin_X11_SRCS
@@ -733,7 +733,6 @@ add_library(kwin_x11_lib STATIC
 
 target_link_libraries(kwin_x11_lib
     kwin
-    kwinxrenderutils
     KF5::Crash
     Qt::X11Extras
 )
@@ -872,6 +871,7 @@ set(kwin_WAYLAND_SRCS
    wayland_server.cpp
    win/wayland/space.cpp
    win/wayland/window.cpp
+   win/wayland/xwl_window.cpp
 )
 
 if (KWIN_BUILD_TABBOX)
@@ -900,11 +900,15 @@ add_library(kwin_wayland_lib SHARED
 target_link_libraries(kwin_wayland_lib
 PUBLIC
   kwin
-  kwinxrenderutils
-  gbm::gbm
+  WraplandClient
+  WraplandServer
   Wayland::Server
+  Wayland::Cursor
   wlroots::wlroots
   Pixman::Pixman
+  Libinput::Libinput
+  Threads::Threads
+  PW::KScreenLocker
 )
 
 set_target_properties(kwin_wayland_lib PROPERTIES
@@ -957,10 +961,10 @@ install(FILES render/post/kconfig/color_correct_settings.kcfg
 install(FILES kwin.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFY5RCDIR} RENAME ${KWIN_NAME}.notifyrc)
 install(
     FILES
-        org.kde.KWin.VirtualDesktopManager.xml
-        org.kde.KWin.xml
+        win/dbus/org.kde.KWin.VirtualDesktopManager.xml
+        base/dbus/org.kde.KWin.xml
         org.kde.kwin.ColorCorrect.xml
-        org.kde.kwin.Compositing.xml
+        render/dbus/org.kde.kwin.Compositing.xml
         org.kde.kwin.Effects.xml
 
         # Still needs to be installed as plasma-workspace expects it at compile time.
