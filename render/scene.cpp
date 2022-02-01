@@ -704,11 +704,6 @@ QPainter* scene::scenePainter() const
     return nullptr;
 }
 
-QImage* scene::qpainterRenderBuffer() const
-{
-    return nullptr;
-}
-
 QVector<QByteArray> scene::openGLPlatformInterfaceExtensions() const
 {
     return QVector<QByteArray>{};

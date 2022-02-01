@@ -43,8 +43,6 @@ public:
 
 private:
     void create();
-
-    EGLSurface m_surface;
 };
 
 }

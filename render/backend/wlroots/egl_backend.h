@@ -10,6 +10,8 @@
 
 #include <memory>
 
+struct wlr_egl;
+
 namespace KWin::render
 {
 
@@ -22,22 +24,16 @@ namespace backend::wlroots
 {
 
 class platform;
-class egl_gbm;
 class egl_output;
 class output;
-class surface;
 
 class egl_backend : public gl::backend
 {
 public:
-    egl_backend(wlroots::platform& platform, bool headless);
+    egl_backend(wlroots::platform& platform);
     ~egl_backend() override;
 
-    void start();
     void tear_down();
-
-    void cleanup();
-    void cleanupSurfaces();
 
     bool makeCurrent() override;
     void doneCurrent() override;
@@ -56,20 +52,19 @@ public:
     bool hasClientExtension(const QByteArray& ext) const;
     std::unique_ptr<egl_output>& get_egl_out(base::output const* out);
 
-    std::unique_ptr<egl_gbm> gbm;
     wlroots::platform& platform;
-    bool headless{false};
-    std::unique_ptr<wlroots::surface> dummy_surface;
 
     gl::egl_dmabuf* dmabuf{nullptr};
     wayland::egl_data data;
+
+    wlr_egl* native{nullptr};
 
 protected:
     void present() override;
 
 private:
-    bool init_platform();
-    bool init_rendering_context();
+    void cleanup();
+    void cleanupSurfaces();
 
     void setViewport(egl_output const& egl_out) const;
     void initRenderTarget(egl_output& egl_out);

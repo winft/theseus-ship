@@ -5,11 +5,8 @@
 */
 #include "platform.h"
 
-#include "output.h"
-
-#if HAVE_WLR_DRM_LEASE
 #include "non_desktop_output.h"
-#endif
+#include "output.h"
 
 #include "main.h"
 #include "render/backend/wlroots/output.h"
@@ -38,10 +35,8 @@ void add_new_output(wlroots::platform& platform, wlr_output* native)
 {
     auto const screens_width = std::max(platform.screens.size().width(), 0);
 
-#if HAVE_WLR_OUTPUT_INIT_RENDER
     auto& render = static_cast<render::backend::wlroots::platform&>(*platform.render);
     wlr_output_init_render(native, render.allocator, render.renderer);
-#endif
 
     if (!wl_list_empty(&native->modes)) {
         auto mode = wlr_output_preferred_mode(native);
@@ -78,12 +73,10 @@ void handle_new_output(struct wl_listener* listener, void* data)
     auto platform = new_output_struct->receiver;
     auto native = reinterpret_cast<wlr_output*>(data);
 
-#if HAVE_WLR_DRM_LEASE
     if (native->non_desktop) {
         platform->non_desktop_outputs.push_back(new non_desktop_output(native, platform));
         return;
     }
-#endif
 
     try {
         add_new_output(*platform, native);
@@ -141,12 +134,10 @@ platform::~platform()
         static_cast<wlroots::output*>(output)->platform = nullptr;
         delete output;
     }
-#if HAVE_WLR_DRM_LEASE
     for (auto output : non_desktop_outputs) {
         output->platform = nullptr;
         delete output;
     }
-#endif
     if (backend) {
         wlr_backend_destroy(backend);
     }
@@ -162,7 +153,6 @@ clockid_t platform::get_clockid() const
     return wlr_backend_get_presentation_clock(backend);
 }
 
-#if HAVE_WLR_DRM_LEASE
 void process_drm_leased(wlroots::platform& platform, Wrapland::Server::drm_lease_v1* lease)
 {
     std::vector<non_desktop_output*> outputs;
@@ -234,10 +224,5 @@ void platform::setup_drm_leasing()
                 }
             });
 }
-#else
-void platform::setup_drm_leasing()
-{
-}
-#endif
 
 }

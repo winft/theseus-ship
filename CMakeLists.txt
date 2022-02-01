@@ -183,17 +183,16 @@ set_package_properties(Libinput PROPERTIES TYPE REQUIRED PURPOSE "Required for i
 find_package(gbm)
 set_package_properties(gbm PROPERTIES TYPE OPTIONAL PURPOSE "Required for Wayland session.")
 
-find_package(wlroots 0.14.0)
+find_package(Pixman)
+set_package_properties(Pixman PROPERTIES
+    TYPE REQUIRED
+    PURPOSE "Required for building wlroots backend."
+)
+find_package(wlroots 0.15.0)
 set_package_properties(wlroots PROPERTIES
     TYPE REQUIRED
-    PURPOSE "Required for building experimental wlroots backend."
+    PURPOSE "Required for building wlroots backend."
 )
-if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.15.0)
-  set(HAVE_WLR_TOUCH_FRAME 1)
-  set(HAVE_WLR_DRM_LEASE 1)
-  set(HAVE_WLR_HEADLESS_UNLINK_INPUT_DEVICE 1)
-  set(HAVE_WLR_OUTPUT_INIT_RENDER 1)
-endif()
 
 find_package(X11)
 set_package_properties(X11 PROPERTIES
@@ -783,6 +782,8 @@ ecm_qt_declare_logging_category(kwin_XWAYLAND_SRCS
 add_subdirectory(plugins)
 
 set(kwin_WAYLAND_SRCS
+   base/backend/wlroots/drm_lease.cpp
+   base/backend/wlroots/non_desktop_output.cpp
    base/backend/wlroots/output.cpp
    base/backend/wlroots/platform.cpp
    base/wayland/idle_inhibition.cpp
@@ -850,18 +851,18 @@ set(kwin_WAYLAND_SRCS
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
    render/gl/egl_dmabuf.cpp
-   render/qpainter/backend.cpp
    render/qpainter/deco_renderer.cpp
    render/qpainter/effect_frame.cpp
    render/qpainter/scene.cpp
    render/qpainter/shadow.cpp
    render/qpainter/window.cpp
    render/backend/wlroots/platform.cpp
-   render/backend/wlroots/buffer.cpp
    render/backend/wlroots/egl_backend.cpp
    render/backend/wlroots/egl_output.cpp
    render/backend/wlroots/egl_texture.cpp
    render/backend/wlroots/output.cpp
+   render/backend/wlroots/qpainter_backend.cpp
+   render/backend/wlroots/qpainter_output.cpp
    render/wayland/compositor.cpp
    render/wayland/effects.cpp
    render/wayland/linux_dmabuf.cpp
@@ -872,14 +873,6 @@ set(kwin_WAYLAND_SRCS
    win/wayland/space.cpp
    win/wayland/window.cpp
 )
-
-if (HAVE_WLR_DRM_LEASE)
-  set(kwin_WAYLAND_SRCS
-    ${kwin_WAYLAND_SRCS}
-    base/backend/wlroots/drm_lease.cpp
-    base/backend/wlroots/non_desktop_output.cpp
-  )
-endif()
 
 if (KWIN_BUILD_TABBOX)
   set(kwin_WAYLAND_SRCS
@@ -911,6 +904,7 @@ PUBLIC
   gbm::gbm
   Wayland::Server
   wlroots::wlroots
+  Pixman::Pixman
 )
 
 set_target_properties(kwin_wayland_lib PROPERTIES

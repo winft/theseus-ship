@@ -7,10 +7,8 @@
 #include "egl_output.h"
 
 #include "egl_backend.h"
-#include "egl_helpers.h"
 #include "output.h"
 #include "platform.h"
-#include "surface.h"
 
 #include "kwinglutils.h"
 #include "screens.h"
@@ -39,7 +37,6 @@ egl_output::egl_output(egl_output&& other) noexcept
 egl_output& egl_output::operator=(egl_output&& other) noexcept
 {
     out = other.out;
-    surf = std::move(other.surf);
     bufferAge = other.bufferAge;
     egl_back = other.egl_back;
     damageHistory = std::move(other.damageHistory);
@@ -55,23 +52,8 @@ egl_output::~egl_output()
     cleanup_framebuffer();
 }
 
-buffer* egl_output::create_buffer()
-{
-    return new buffer(surf.get(), egl_back->headless);
-}
-
 bool egl_output::reset()
 {
-    auto size = out->base.mode_size();
-
-    auto surf = egl_back->headless ? create_headless_surface(*egl_back, size)
-                                   : create_surface(*egl_back, size);
-    if (!surf) {
-        qCWarning(KWIN_WL) << "Not able to create surface on output reset.";
-        return false;
-    }
-
-    this->surf = std::move(surf);
     reset_framebuffer();
     return true;
 }
@@ -95,7 +77,6 @@ bool egl_output::reset_framebuffer()
 
     glGenFramebuffers(1, &render.framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, render.framebuffer);
-    GLRenderTarget::setKWinFramebuffer(render.framebuffer);
 
     glGenTextures(1, &render.texture);
     glBindTexture(GL_TEXTURE_2D, render.texture);
@@ -123,9 +104,6 @@ bool egl_output::reset_framebuffer()
         return false;
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    GLRenderTarget::setKWinFramebuffer(0);
-
     return true;
 }
 
@@ -141,19 +119,15 @@ void egl_output::cleanup_framebuffer()
     render.framebuffer = 0;
 }
 
-bool egl_output::make_current() const
+void egl_output::make_current() const
 {
-    return wlroots::make_current(surf->egl, *egl_back);
+    wlr_egl_make_current(egl_back->native);
 }
 
-bool egl_output::present(buffer* buf)
+bool egl_output::present()
 {
-    auto drop_buffer = [buf] { wlr_buffer_drop(&buf->native.base); };
-
     auto& base = get_base(out->base);
     out->swap_pending = true;
-
-    wlr_output_attach_buffer(base.native, &buf->native.base);
 
     if (!base.native->enabled) {
         wlr_output_enable(base.native, true);
@@ -161,17 +135,15 @@ bool egl_output::present(buffer* buf)
 
     if (!wlr_output_test(base.native)) {
         qCWarning(KWIN_WL) << "Atomic output test failed on present.";
+        wlr_output_rollback(base.native);
         reset();
-        drop_buffer();
         return false;
     }
     if (!wlr_output_commit(base.native)) {
         qCWarning(KWIN_WL) << "Atomic output commit failed on present.";
         reset();
-        drop_buffer();
         return false;
     }
-    drop_buffer();
     return true;
 }
 

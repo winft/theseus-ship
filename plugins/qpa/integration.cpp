@@ -142,14 +142,6 @@ QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext*
     if (render::compositor::self()->scene()->supportsSurfacelessContext()) {
         return new SharingPlatformContext(context);
     }
-    if (auto& egl_data = kwinApp()->get_base().render->egl_data;
-        egl_data->display != EGL_NO_DISPLAY) {
-        auto s = egl_data->surface;
-        if (s != EGL_NO_SURFACE) {
-            // try a SharingPlatformContext with a created surface
-            return new SharingPlatformContext(context, s, egl_data->config);
-        }
-    }
     return nullptr;
 }
 

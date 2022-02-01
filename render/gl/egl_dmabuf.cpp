@@ -115,7 +115,7 @@ void egl_dmabuf_buffer::removeImages()
 {
     if (m_interfaceImpl) {
         for (auto image : m_images) {
-            eglDestroyImageKHR(m_interfaceImpl->data.display, image);
+            m_interfaceImpl->data.base.destroy_image_khr(m_interfaceImpl->data.base.display, image);
         }
     }
     m_images.clear();
@@ -176,11 +176,11 @@ EGLImage egl_dmabuf::createImage(const QVector<Plane>& planes, uint32_t format, 
 
     attribs << EGL_NONE;
 
-    EGLImage image = eglCreateImageKHR(data.display,
-                                       EGL_NO_CONTEXT,
-                                       EGL_LINUX_DMA_BUF_EXT,
-                                       (EGLClientBuffer) nullptr,
-                                       attribs.data());
+    auto image = data.base.create_image_khr(data.base.display,
+                                            EGL_NO_CONTEXT,
+                                            EGL_LINUX_DMA_BUF_EXT,
+                                            (EGLClientBuffer) nullptr,
+                                            attribs.data());
     if (image == EGL_NO_IMAGE_KHR) {
         return nullptr;
     }
@@ -314,13 +314,13 @@ QVector<uint32_t> egl_dmabuf::queryFormats()
     }
 
     EGLint count = 0;
-    EGLBoolean success = eglQueryDmaBufFormatsEXT(data.display, 0, nullptr, &count);
+    EGLBoolean success = eglQueryDmaBufFormatsEXT(data.base.display, 0, nullptr, &count);
     if (!success || count == 0) {
         return QVector<uint32_t>();
     }
 
     QVector<uint32_t> formats(count);
-    if (!eglQueryDmaBufFormatsEXT(data.display, count, (EGLint*)formats.data(), &count)) {
+    if (!eglQueryDmaBufFormatsEXT(data.base.display, count, (EGLint*)formats.data(), &count)) {
         return QVector<uint32_t>();
     }
     return formats;
@@ -341,13 +341,13 @@ void egl_dmabuf::setSupportedFormatsAndModifiers()
     for (auto format : qAsConst(formats)) {
         if (eglQueryDmaBufModifiersEXT != nullptr) {
             EGLint count = 0;
-            EGLBoolean success
-                = eglQueryDmaBufModifiersEXT(data.display, format, 0, nullptr, nullptr, &count);
+            EGLBoolean success = eglQueryDmaBufModifiersEXT(
+                data.base.display, format, 0, nullptr, nullptr, &count);
 
             if (success && count > 0) {
                 QVector<uint64_t> modifiers(count);
                 if (eglQueryDmaBufModifiersEXT(
-                        data.display, format, count, modifiers.data(), nullptr, &count)) {
+                        data.base.display, format, count, modifiers.data(), nullptr, &count)) {
                     QSet<uint64_t> modifiersSet;
                     for (auto mod : qAsConst(modifiers)) {
                         modifiersSet.insert(mod);

@@ -57,7 +57,7 @@ public:
     ~platform() override;
 
     virtual render::gl::backend* createOpenGLBackend(render::compositor& compositor);
-    virtual render::qpainter::backend* createQPainterBackend();
+    virtual render::qpainter::backend* createQPainterBackend(render::compositor& compositor);
 
     // TODO(romangg): Remove the boolean trap.
     virtual void render_stop(bool on_shutdown) = 0;

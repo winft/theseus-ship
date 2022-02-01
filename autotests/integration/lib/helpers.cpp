@@ -369,6 +369,9 @@ void prepare_app_env(std::string const& qpa_plugin_path)
     setenv("XDG_CURRENT_DESKTOP", "KDE", true);
     setenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL", "0", true);
 
+    // Run tests by default with QPainter. Individual tests may override when they require GL.
+    setenv("KWIN_COMPOSE", "Q", true);
+
     unsetenv("KDE_FULL_SESSION");
     unsetenv("KDE_SESSION_VERSION");
     unsetenv("XDG_SESSION_DESKTOP");

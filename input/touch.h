@@ -8,8 +8,7 @@
 #include "control/touch.h"
 #include "event.h"
 
-#include <config-kwin.h>
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <QObject>
 #include <QPointF>
@@ -47,9 +46,7 @@ Q_SIGNALS:
     void up(touch_up_event);
     void motion(touch_motion_event);
     void cancel(touch_cancel_event);
-#if HAVE_WLR_TOUCH_FRAME
     void frame();
-#endif
 };
 
 }

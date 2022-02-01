@@ -59,11 +59,10 @@ public:
     }
 
     QPainter* scenePainter() const override;
-    QImage* qpainterRenderBuffer() const override;
 
     qpainter::backend* backend() const
     {
-        return m_backend.data();
+        return m_backend;
     }
 
 protected:
@@ -73,7 +72,7 @@ protected:
     void paintEffectQuickView(EffectQuickView* w) override;
 
 private:
-    QScopedPointer<qpainter::backend> m_backend;
+    qpainter::backend* m_backend;
     QScopedPointer<QPainter> m_painter;
 };
 

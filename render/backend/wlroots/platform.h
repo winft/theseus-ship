@@ -23,6 +23,7 @@ namespace render::backend::wlroots
 {
 
 class egl_backend;
+class qpainter_backend;
 
 class KWIN_EXPORT platform : public render::platform
 {
@@ -36,19 +37,15 @@ public:
     QVector<CompositingType> supportedCompositors() const override;
 
     gl::backend* createOpenGLBackend(render::compositor& compositor) override;
+    qpainter::backend* createQPainterBackend(render::compositor& compositor) override;
     void render_stop(bool on_shutdown) override;
 
     base::backend::wlroots::platform& base;
     std::unique_ptr<egl_backend> egl;
+    std::unique_ptr<qpainter_backend> qpainter;
 
-#if HAVE_WLR_OUTPUT_INIT_RENDER
     wlr_renderer* renderer{nullptr};
     wlr_allocator* allocator{nullptr};
-#endif
-
-    // Needed for final cleanup on platform destroy.
-    // TODO(romangg): Can we make this unnecessary.
-    EGLDisplay egl_display_to_terminate{EGL_NO_DISPLAY};
 };
 
 }

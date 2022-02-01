@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "egl_data.h"
+
 #include "render/wayland/linux_dmabuf.h"
 
 #include <QVector>
@@ -66,7 +68,7 @@ private:
 };
 
 struct egl_dmabuf_data {
-    EGLDisplay display{EGL_NO_DISPLAY};
+    egl_data base;
 
     using query_formats_ext_func
         = EGLBoolean (*)(EGLDisplay dpy, EGLint max_formats, EGLint* formats, EGLint* num_formats);
@@ -95,6 +97,8 @@ public:
                                                         const QSize& size,
                                                         Flags flags) override;
 
+    egl_dmabuf_data data;
+
 private:
     EGLImage createImage(const QVector<Plane>& planes, uint32_t format, const QSize& size);
 
@@ -102,8 +106,6 @@ private:
     yuvImport(const QVector<Plane>& planes, uint32_t format, const QSize& size, Flags flags);
     QVector<uint32_t> queryFormats();
     void setSupportedFormatsAndModifiers();
-
-    egl_dmabuf_data data;
 
     friend class egl_dmabuf_buffer;
 };
@@ -118,7 +120,7 @@ static egl_dmabuf* egl_dmabuf_factory(Backend& backend)
     }
 
     egl_dmabuf_data data;
-    data.display = backend.data.base.display;
+    data.base = backend.data.base;
 
     if (backend.hasExtension(QByteArrayLiteral("EGL_EXT_image_dma_buf_import_modifiers"))) {
         data.query_formats_ext = reinterpret_cast<egl_dmabuf_data::query_formats_ext_func>(

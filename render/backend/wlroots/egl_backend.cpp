@@ -6,12 +6,10 @@
 */
 #include "egl_backend.h"
 
-#include "egl_helpers.h"
 #include "egl_output.h"
 #include "egl_texture.h"
 #include "output.h"
 #include "platform.h"
-#include "surface.h"
 #include "wlr_helpers.h"
 
 #include "base/backend/wlroots/output.h"
@@ -40,16 +38,37 @@ std::unique_ptr<egl_output>& egl_backend::get_egl_out(base::output const* out)
     return static_cast<output*>(static_cast<base::wayland::output const*>(out)->render.get())->egl;
 }
 
-egl_backend::egl_backend(wlroots::platform& platform, bool headless)
+egl_backend::egl_backend(wlroots::platform& platform)
     : gl::backend()
     , platform{platform}
-    , headless{headless}
 {
+    native = wlr_gles2_renderer_get_egl(platform.renderer);
+
+    data.base.display = native->display;
+    data.base.context = native->context;
+
+    data.query_wl_buffer = native->procs.eglQueryWaylandBufferWL;
+    data.base.create_image_khr = native->procs.eglCreateImageKHR;
+    data.base.destroy_image_khr = native->procs.eglDestroyImageKHR;
+
     platform.egl_data = &data.base;
 
     // Egl is always direct rendering.
     setIsDirectRendering(true);
-    start();
+
+    gl::init_client_extensions(*this);
+    gl::init_server_extensions(*this);
+
+    for (auto& out : platform.base.all_outputs) {
+        auto render = static_cast<output*>(static_cast<base::wayland::output*>(out)->render.get());
+        get_egl_out(out) = std::make_unique<egl_output>(*render, this);
+    }
+
+    wlr_egl_make_current(native);
+
+    gl::init_gl(EglPlatformInterface, get_proc_address);
+    gl::init_buffer_age(*this);
+    wayland::init_egl(*this, data);
 }
 
 egl_backend::~egl_backend()
@@ -62,81 +81,6 @@ bool egl_backend::hasClientExtension(const QByteArray& ext) const
     return data.base.client_extensions.contains(ext);
 }
 
-void egl_backend::start()
-{
-    gl::init_client_extensions(*this);
-
-    if (!init_platform()) {
-        throw std::runtime_error("Could not initialize EGL backend");
-    }
-    if (!gl::init_egl_api(*this)) {
-        throw std::runtime_error("Could not initialize EGL API");
-    }
-    if (!init_buffer_configs(this)) {
-        throw std::runtime_error("Could not initialize buffer configs");
-    }
-    if (!init_rendering_context()) {
-        throw std::runtime_error("Could not initialize rendering context");
-    }
-
-    gl::init_gl(EglPlatformInterface, get_proc_address);
-    gl::init_buffer_age(*this);
-    wayland::init_egl(*this, data);
-}
-
-bool egl_backend::init_platform()
-{
-    if (headless) {
-        auto egl_display = get_egl_headless(*this);
-        if (egl_display == EGL_NO_DISPLAY) {
-            return false;
-        }
-        data.base.display = egl_display;
-        platform.egl_display_to_terminate = egl_display;
-        return true;
-    }
-
-    auto gbm = get_egl_gbm(platform, *this);
-    if (!gbm) {
-        return false;
-    }
-
-    assert(gbm->egl_display != EGL_NO_DISPLAY);
-    data.base.display = gbm->egl_display;
-    platform.egl_display_to_terminate = gbm->egl_display;
-
-    this->gbm = std::move(gbm);
-    return true;
-}
-
-bool egl_backend::init_rendering_context()
-{
-    data.base.context = gl::create_egl_context(*this);
-
-    if (data.base.context == EGL_NO_CONTEXT) {
-        return false;
-    }
-
-    for (auto& out : platform.base.all_outputs) {
-        auto render = static_cast<output*>(static_cast<base::wayland::output*>(out)->render.get());
-        get_egl_out(out) = std::make_unique<egl_output>(*render, this);
-    }
-
-    // AbstractEglBackend expects a surface to be set but this is not relevant as we render per
-    // output and make the context current here on that output's surface. For simplicity we just
-    // create a dummy surface and keep that constantly set over the run time.
-    dummy_surface = headless ? create_headless_surface(*this, QSize(800, 600))
-                             : create_surface(*this, QSize(800, 600));
-    data.base.surface = dummy_surface->egl;
-
-    if (platform.base.all_outputs.empty()) {
-        // In case no outputs are connected make the context current with our dummy surface.
-        return make_current(dummy_surface->egl, *this);
-    }
-
-    return get_egl_out(platform.base.all_outputs.front())->make_current();
-}
-
 void egl_backend::tear_down()
 {
     if (!platform.egl_data) {
@@ -144,11 +88,7 @@ void egl_backend::tear_down()
         return;
     }
 
-    cleanupSurfaces();
-    dummy_surface.reset();
-
     cleanup();
-    gbm.reset();
 
     platform.egl_data = nullptr;
     data = {};
@@ -158,9 +98,7 @@ void egl_backend::cleanup()
 {
     cleanupGL();
     doneCurrent();
-    eglDestroyContext(data.base.display, data.base.context);
     cleanupSurfaces();
-    eglReleaseThread();
 
     delete dmabuf;
     dmabuf = nullptr;
@@ -185,14 +123,13 @@ bool egl_backend::makeCurrent()
         // Workaround to tell Qt that no QOpenGLContext is current
         context->doneCurrent();
     }
-    auto const current = eglMakeCurrent(
-        data.base.display, data.base.surface, data.base.surface, data.base.context);
-    return current;
+    wlr_egl_make_current(native);
+    return wlr_egl_is_current(native);
 }
 
 void egl_backend::doneCurrent()
 {
-    eglMakeCurrent(data.base.display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    wlr_egl_unset_current(native);
 }
 
 void egl_backend::screenGeometryChanged(QSize const& size)
@@ -216,7 +153,16 @@ QRegion egl_backend::prepareRenderingForScreen(base::output* output)
 {
     auto const& out = get_egl_out(output);
 
-    out->make_current();
+    auto native_out = static_cast<base::backend::wlroots::output*>(output)->native;
+    wlr_output_attach_render(native_out, &out->bufferAge);
+    wlr_renderer_begin(platform.renderer, output->geometry().width(), output->geometry().height());
+
+    GLRenderTarget::setKWinFramebuffer(wlr_gles2_renderer_get_current_fbo(platform.renderer));
+
+    QMatrix4x4 flip_180;
+    flip_180(1, 1) = -1;
+    transformation = flip_180;
+
     prepareRenderFramebuffer(*out);
     setViewport(*out);
 
@@ -256,16 +202,34 @@ void egl_backend::endRenderingFrame(QRegion const& renderedRegion, QRegion const
     Q_UNUSED(damagedRegion)
 }
 
+void set_output_damage(base::backend::wlroots::output* output, QRegion const& src_damage)
+{
+    auto damage = create_pixman_region(src_damage);
+
+    int width, height;
+    wlr_output_transformed_resolution(output->native, &width, &height);
+
+    enum wl_output_transform transform = wlr_output_transform_invert(output->native->transform);
+    wlr_region_transform(&damage, &damage, transform, width, height);
+
+    wlr_output_set_damage(output->native, &damage);
+    pixman_region32_fini(&damage);
+}
+
 void egl_backend::endRenderingFrameForScreen(base::output* output,
                                              QRegion const& renderedRegion,
                                              QRegion const& damagedRegion)
 {
     auto& out = get_egl_out(output);
+    auto impl_out = static_cast<base::backend::wlroots::output*>(output);
+
     renderFramebufferToSurface(*out);
 
     if (GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
         out->out->last_timer_queries.emplace_back();
     }
+
+    wlr_renderer_end(platform.renderer);
 
     if (damagedRegion.intersected(output->geometry()).isEmpty()) {
         // If the damaged region of a window is fully occluded, the only
@@ -279,22 +243,18 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
             glFlush();
         }
 
-        out->bufferAge = 1;
+        wlr_output_rollback(impl_out->native);
         return;
     }
 
-    eglSwapBuffers(data.base.display, out->surf->egl);
-    auto buffer = out->create_buffer();
+    set_output_damage(impl_out, damagedRegion.translated(-output->geometry().topLeft()));
 
-    if (!out->present(buffer)) {
-        out->bufferAge = 0;
+    if (!out->present()) {
         out->out->swap_pending = false;
         return;
     }
 
     if (supportsBufferAge()) {
-        eglQuerySurface(data.base.display, out->surf->egl, EGL_BUFFER_AGE_EXT, &out->bufferAge);
-
         if (out->damageHistory.size() > 10) {
             out->damageHistory.pop_back();
         }
@@ -304,7 +264,9 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
 
 void egl_backend::prepareRenderFramebuffer(egl_output const& egl_out) const
 {
-    // When render.framebuffer is 0 we may just reset to the screen framebuffer.
+    if (!egl_out.render.framebuffer) {
+        return;
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, egl_out.render.framebuffer);
     GLRenderTarget::setKWinFramebuffer(egl_out.render.framebuffer);
 }
@@ -319,7 +281,7 @@ void egl_backend::setViewport(egl_output const& egl_out) const
     auto const height_ratio = view.height() / (double)geo.height();
 
     glViewport(-geo.x() * width_ratio,
-               (geo.height() - overall.height() + geo.y()) * height_ratio,
+               -geo.y() * height_ratio,
                overall.width() * width_ratio,
                overall.height() * height_ratio);
 }
@@ -375,8 +337,9 @@ void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
     }
     initRenderTarget(egl_out);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    GLRenderTarget::setKWinFramebuffer(0);
+    auto wlr_fbo = wlr_gles2_renderer_get_current_fbo(platform.renderer);
+    glBindFramebuffer(GL_FRAMEBUFFER, wlr_fbo);
+    GLRenderTarget::setKWinFramebuffer(wlr_fbo);
 
     GLuint clearColor[4] = {0, 0, 0, 0};
     glClearBufferuiv(GL_COLOR, 0, clearColor);

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "duration_record.h"
+#include "presentation.h"
 #include "render/gl/timer_query.h"
 
 #include <kwin_export.h>
@@ -43,7 +44,6 @@ class platform;
 
 namespace wayland
 {
-struct presentation_data;
 
 class KWIN_EXPORT output : public QObject
 {
@@ -54,6 +54,7 @@ class KWIN_EXPORT output : public QObject
     // Compositing delay.
     std::chrono::nanoseconds delay{0};
 
+    presentation_data last_presentation;
     duration_record paint_durations;
     duration_record render_durations;
 
@@ -91,7 +92,8 @@ public:
     std::deque<Toplevel*> run();
     void dry_run();
 
-    void swapped(presentation_data const& data);
+    void presented(presentation_data const& data);
+    void frame();
 };
 
 }

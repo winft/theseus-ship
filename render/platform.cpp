@@ -6,6 +6,7 @@
 */
 #include "platform.h"
 
+#include "../utils.h"
 #include "config-kwin.h"
 #include "main.h"
 #include "render/compositor.h"
@@ -32,7 +33,7 @@ render::gl::backend* platform::createOpenGLBackend(render::compositor& /*composi
     return nullptr;
 }
 
-render::qpainter::backend* platform::createQPainterBackend()
+render::qpainter::backend* platform::createQPainterBackend(render::compositor& /*compositor*/)
 {
     return nullptr;
 }

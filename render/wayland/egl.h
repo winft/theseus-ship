@@ -28,15 +28,12 @@ void init_egl(Backend& backend, egl_data& egl)
             eglGetProcAddress("eglBindWaylandDisplayWL"));
         egl.unbind_wl_display = reinterpret_cast<egl_data::unbind_wl_display_func>(
             eglGetProcAddress("eglUnbindWaylandDisplayWL"));
-        egl.query_wl_buffer = reinterpret_cast<egl_data::query_wl_buffer_func>(
-            eglGetProcAddress("eglQueryWaylandBufferWL"));
 
         // only bind if not already done
         if (auto wl_display = waylandServer()->display();
             wl_display->eglDisplay() != backend.data.base.display) {
             if (!egl.bind_wl_display(backend.data.base.display, wl_display->native())) {
                 egl.unbind_wl_display = nullptr;
-                egl.query_wl_buffer = nullptr;
             } else {
                 wl_display->setEglDisplay(backend.data.base.display);
             }

@@ -8,8 +8,6 @@
 #include "base/utils.h"
 #include "input/touch.h"
 
-#include <config-kwin.h>
-
 extern "C" {
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_touch.h>
@@ -37,9 +35,7 @@ private:
     er up_rec;
     er motion_rec;
     er cancel_rec;
-#if HAVE_WLR_TOUCH_FRAME
     er frame_rec;
-#endif
 };
 
 }

@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "types.h"
 
+#include "../utils.h"
 #include "kwineffects.h"
-#include "utils.h"
 
 #include <QMatrix4x4>
 #include <xcb/render.h>
@@ -169,12 +169,6 @@ public:
      * Default implementation returns @c nullptr;
      */
     virtual QPainter* scenePainter() const;
-
-    /**
-     * The render buffer used by a QPainter based compositor.
-     * Default implementation returns @c nullptr.
-     */
-    virtual QImage* qpainterRenderBuffer() const;
 
     /**
      * The backend specific extensions (e.g. EGL/GLX extensions).

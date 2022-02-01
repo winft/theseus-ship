@@ -209,10 +209,6 @@ void touch_redirect::process_down(touch_down_event const& event)
     kwinApp()->input->redirect->processFilters(
         std::bind(&input::event_filter::touch_down, std::placeholders::_1, event_abs));
     window_already_updated_this_cycle = false;
-
-#if !HAVE_WLR_TOUCH_FRAME
-    frame();
-#endif
 }
 
 void touch_redirect::process_up(touch_up_event const& event)
@@ -230,10 +226,6 @@ void touch_redirect::process_up(touch_up_event const& event)
     if (m_touches == 0) {
         device_redirect_update(this);
     }
-
-#if !HAVE_WLR_TOUCH_FRAME
-    frame();
-#endif
 }
 
 void touch_redirect::process_motion(touch_motion_event const& event)
@@ -250,10 +242,6 @@ void touch_redirect::process_motion(touch_motion_event const& event)
         std::bind(&input::event_filter::touch_motion, std::placeholders::_1, event_abs));
 
     window_already_updated_this_cycle = false;
-
-#if !HAVE_WLR_TOUCH_FRAME
-    frame();
-#endif
 }
 
 void touch_redirect::cancel()

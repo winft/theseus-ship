@@ -6,13 +6,14 @@
 #include "output.h"
 
 #include "compositor.h"
-#include "presentation.h"
-#include "render/platform.h"
+#include "effects.h"
 #include "utils.h"
+
+#include "render/gl/scene.h"
+#include "render/platform.h"
 
 #include "base/wayland/output.h"
 #include "base/wayland/platform.h"
-#include "effects.h"
 #include "wayland_logging.h"
 #include "wayland_server.h"
 #include "win/transient.h"
@@ -231,17 +232,23 @@ void output::dry_run()
     get_compositor(platform)->presentation->frame(this, frame_windows);
 }
 
-void output::swapped(presentation_data const& data)
+void output::presented(presentation_data const& data)
 {
     get_compositor(platform)->presentation->presented(this, data);
+    last_presentation = data;
+}
+
+void output::frame()
+{
+    get_compositor(platform)->presentation->presented(this, last_presentation);
 
     if (!swap_pending) {
-        qCWarning(KWIN_WL) << "render::wayland::output::swapped called but no swap pending.";
+        qCWarning(KWIN_WL) << "render::wayland::output::presented called but no swap pending.";
         return;
     }
     swap_pending = false;
 
-    set_delay(data);
+    set_delay(last_presentation);
     delay_timer.stop();
     set_delay_timer();
 }
@@ -253,9 +260,15 @@ std::chrono::nanoseconds output::refresh_length() const
 
 void output::set_delay(presentation_data const& data)
 {
+    auto scene = platform.compositor->scene();
+    if (scene->compositingType() != CompositingType::OpenGLCompositing) {
+        return;
+    }
     if (!GLPlatform::instance()->supports(GLFeature::TimerQuery)) {
         return;
     }
+
+    static_cast<gl::scene*>(scene)->backend()->makeCurrent();
 
 #if SWAP_TIME_DEBUG
     qDebug() << "";

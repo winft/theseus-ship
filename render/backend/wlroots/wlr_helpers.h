@@ -41,4 +41,18 @@ bool has_portrait_transform(Output&& out)
         || transform == Tr::flipped_90 || transform == Tr::flipped_270;
 }
 
+template<typename Region>
+pixman_region32_t create_pixman_region(Region const& src_region)
+{
+    pixman_region32_t region;
+    std::vector<pixman_box32> boxes;
+
+    for (auto it = src_region.cbegin(); it != src_region.cend(); it++) {
+        boxes.push_back({it->left(), it->top(), it->right(), it->bottom()});
+    }
+
+    pixman_region32_init_rects(&region, boxes.data(), boxes.size());
+    return region;
+}
+
 }

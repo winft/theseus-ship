@@ -371,9 +371,7 @@ void redirect::handle_touch_added(input::touch* touch)
     QObject::connect(touch, &touch::up, touch_red, &input::touch_redirect::process_up);
     QObject::connect(touch, &touch::motion, touch_red, &input::touch_redirect::process_motion);
     QObject::connect(touch, &touch::cancel, touch_red, &input::touch_redirect::cancel);
-#if HAVE_WLR_TOUCH_FRAME
     QObject::connect(touch, &touch::frame, touch_red, &input::touch_redirect::frame);
-#endif
 
     if (auto seat = find_seat()) {
         seat->setHasTouch(true);

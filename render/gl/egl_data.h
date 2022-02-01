@@ -16,9 +16,17 @@ namespace KWin::render::gl
 
 struct egl_data {
     EGLDisplay display{EGL_NO_DISPLAY};
-    EGLSurface surface{EGL_NO_SURFACE};
     EGLContext context{EGL_NO_CONTEXT};
-    EGLConfig config{nullptr};
+
+    using create_image_khr_func = EGLImageKHR (*)(EGLDisplay dpy,
+                                                  EGLContext ctx,
+                                                  EGLenum target,
+                                                  EGLClientBuffer buffer,
+                                                  const EGLint* attrib_list);
+    using destroy_image_khr_func = EGLBoolean (*)(EGLDisplay dpy, EGLImageKHR image);
+
+    create_image_khr_func create_image_khr{nullptr};
+    destroy_image_khr_func destroy_image_khr{nullptr};
 
     QList<QByteArray> client_extensions;
 };

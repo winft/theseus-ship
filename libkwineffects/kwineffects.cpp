@@ -761,7 +761,7 @@ CompositingType EffectsHandler::compositingType() const
 
 bool EffectsHandler::isOpenGLCompositing() const
 {
-    return compositing_type & OpenGLCompositing;
+    return compositing_type == OpenGLCompositing;
 }
 
 EffectWindow* EffectsHandler::findWindow(WId id) const
