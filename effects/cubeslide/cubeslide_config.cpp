@@ -28,9 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KPluginFactory>
 #include <QVBoxLayout>
 
-K_PLUGIN_FACTORY_WITH_JSON(CubeSlideEffectConfigFactory,
-                           "cubeslide_config.json",
-                           registerPlugin<KWin::CubeSlideEffectConfig>();)
+K_PLUGIN_CLASS(KWin::CubeSlideEffectConfig)
 
 namespace KWin
 {

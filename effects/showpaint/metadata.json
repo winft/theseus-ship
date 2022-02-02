@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Category": "Tools",
+        "Description": "Highlight areas of the desktop that have been recently updated",
+        "EnabledByDefault": false,
+        "Id": "showpaint",
+        "License": "GPL",
+        "Name": "Show Paint"
+    },
+    "X-KDE-ConfigModule": "kwin_showpaint_config"
+}

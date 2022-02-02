@@ -36,9 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWidget>
 #include <QVBoxLayout>
 
-K_PLUGIN_FACTORY_WITH_JSON(ThumbnailAsideEffectConfigFactory,
-                           "thumbnailaside_config.json",
-                           registerPlugin<KWin::ThumbnailAsideEffectConfig>();)
+K_PLUGIN_CLASS(KWin::ThumbnailAsideEffectConfig)
 
 namespace KWin
 {

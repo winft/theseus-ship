@@ -147,7 +147,7 @@ typedef QList< KWin::EffectWindow* > EffectWindowList;
  *  @li Icon Name of the icon of the effect
  *  @li Comment Short description of the effect
  *  @li Type must be "Service"
- *  @li X-KDE-ServiceTypes must be "KWin/Effect"
+ *  @li X-KDE-ServiceTypes must be "KWin/Effect" for scripted effects
  *  @li X-KDE-PluginInfo-Name effect's internal name as passed to the KWIN_EFFECT macro plus "kwin4_effect_" prefix
  *  @li X-KDE-PluginInfo-Category effect's category. Should be one of Appearance, Accessibility, Window Management, Demos, Tests, Misc
  *  @li X-KDE-PluginInfo-EnabledByDefault whether the effect should be enabled by default (use sparingly). Default is false
@@ -360,7 +360,7 @@ public:
     enum Feature {
         Nothing = 0,
         Resize,
-        GeometryTip,
+        GeometryTip, /**< @deprecated */
         Outline, /**< @deprecated */
         ScreenInversion,
         Blur,
@@ -733,7 +733,8 @@ public:
     virtual KWin::Effect *createEffect() const = 0;
 };
 
-# define EffectPluginFactory_iid "org.kde.kwin.EffectPluginFactory" KWIN_PLUGIN_VERSION_STRING
+#define EffectPluginFactory_iid "org.kde.kwin.EffectPluginFactory" KWIN_PLUGIN_VERSION_STRING
+#define KWIN_PLUGIN_FACTORY_NAME KPLUGINFACTORY_PLUGIN_CLASS_INTERNAL_NAME
 
 /**
  * Defines an EffectPluginFactory sub class with customized isSupported and enabledByDefault methods.
@@ -751,15 +752,15 @@ public:
  * @param supported Source code to go into the isSupported() method, must return a boolean
  * @param enabled Source code to go into the enabledByDefault() method, must return a boolean
  */
-#define KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED( factoryName, className, jsonFile, supported, enabled ) \
-    class factoryName : public KWin::EffectPluginFactory \
+#define KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED(className, jsonFile, supported, enabled ) \
+    class KWIN_PLUGIN_FACTORY_NAME : public KWin::EffectPluginFactory \
     { \
         Q_OBJECT \
         Q_PLUGIN_METADATA(IID EffectPluginFactory_iid FILE jsonFile) \
         Q_INTERFACES(KPluginFactory) \
     public: \
-        explicit factoryName() {} \
-        ~factoryName() {} \
+        explicit KWIN_PLUGIN_FACTORY_NAME() {} \
+        ~KWIN_PLUGIN_FACTORY_NAME() {} \
         bool isSupported() const override { \
             supported \
         } \
@@ -771,14 +772,14 @@ public:
         } \
     };
 
-#define KWIN_EFFECT_FACTORY_ENABLED( factoryName, className, jsonFile, enabled ) \
-    KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED( factoryName, className, jsonFile, return true;, enabled )
+#define KWIN_EFFECT_FACTORY_ENABLED(className, jsonFile, enabled ) \
+    KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED(className, jsonFile, return true;, enabled )
 
-#define KWIN_EFFECT_FACTORY_SUPPORTED( factoryName, className, jsonFile, supported ) \
-    KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED( factoryName, className, jsonFile, supported, return true; )
+#define KWIN_EFFECT_FACTORY_SUPPORTED(className, jsonFile, supported ) \
+    KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED(className, jsonFile, supported, return true; )
 
-#define KWIN_EFFECT_FACTORY( factoryName, className, jsonFile ) \
-    KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED( factoryName, className, jsonFile, return true;, return true; )
+#define KWIN_EFFECT_FACTORY(className, jsonFile ) \
+    KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED(className, jsonFile, return true;, return true; )
 
 
 
@@ -1296,6 +1297,11 @@ public:
      * @since 5.9
      */
     virtual void showCursor() = 0;
+
+    /**
+     * @returns Whether or not the cursor is currently hidden
+     */
+    virtual bool isCursorHidden() const = 0;
 
     /**
      * Starts an interactive window selection process.

@@ -36,9 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QVBoxLayout>
 #include <QColor>
 
-K_PLUGIN_FACTORY_WITH_JSON(CubeEffectConfigFactory,
-                           "cube_config.json",
-                           registerPlugin<KWin::CubeEffectConfig>();)
+K_PLUGIN_CLASS(KWin::CubeEffectConfig)
 
 namespace KWin
 {

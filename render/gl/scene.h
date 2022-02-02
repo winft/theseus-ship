@@ -77,12 +77,6 @@ public:
 
     void idle() override;
 
-    bool debug() const
-    {
-        return m_debug;
-    }
-    void initDebugOutput();
-
     /**
      * @brief Factory method to create a backend specific texture.
      *
@@ -140,7 +134,6 @@ private:
     render::gl::backend* m_backend;
     SyncManager* m_syncManager{nullptr};
     SyncObject* m_currentFence{nullptr};
-    bool m_debug{false};
 
     lanczos_filter* lanczos{nullptr};
 

@@ -1,0 +1,14 @@
+{
+    "KPlugin": {
+        "Category": "Window Management",
+        "Description": "Zoom out so all desktops are displayed side-by-side in a grid",
+        "EnabledByDefault": true,
+        "Id": "desktopgrid",
+        "License": "GPL",
+        "Name": "Desktop Grid"
+    },
+    "X-KDE-ConfigModule": "kwin_desktopgrid_config",
+    "org.kde.kwin.effect": {
+        "video": "https://files.kde.org/plasma/kwin/effect-videos/desktop_grid.mp4"
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "KPlugin": {
+        "Category": "Accessibility",
+        "Description": "Magnify the entire desktop",
+        "EnabledByDefault": true,
+        "Id": "zoom",
+        "License": "GPL",
+        "Name": "Zoom"
+    },
+    "X-KDE-ConfigModule": "kwin_zoom_config",
+    "org.kde.kwin.effect": {
+        "exclusiveGroup": "magnifiers",
+        "video": "https://files.kde.org/plasma/kwin/effect-videos/zoom.ogv"
+    }
+}

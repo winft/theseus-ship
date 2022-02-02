@@ -65,6 +65,11 @@ SlidingPopupsEffect::SlidingPopupsEffect()
             this, &SlidingPopupsEffect::stopAnimations);
 
     reconfigure(ReconfigureAll);
+
+    const EffectWindowList windows = effects->stackingOrder();
+    for (EffectWindow *window : windows) {
+        setupSlideData(window);
+    }
 }
 
 SlidingPopupsEffect::~SlidingPopupsEffect()
@@ -190,13 +195,13 @@ void SlidingPopupsEffect::postPaintWindow(EffectWindow *w)
             }
             m_animations.erase(animationIt);
         }
-        w->addRepaintFull();
+        effects->addRepaint(w->expandedGeometry());
     }
 
     effects->postPaintWindow(w);
 }
 
-void SlidingPopupsEffect::slotWindowAdded(EffectWindow *w)
+void SlidingPopupsEffect::setupSlideData(EffectWindow *w)
 {
     //X11
     if (m_atom != XCB_ATOM_NONE) {
@@ -217,7 +222,11 @@ void SlidingPopupsEffect::slotWindowAdded(EffectWindow *w)
         internal->installEventFilter(this);
         setupInternalWindowSlide(w);
     }
+}
 
+void SlidingPopupsEffect::slotWindowAdded(EffectWindow *w)
+{
+    setupSlideData(w);
     slideIn(w);
 }
 

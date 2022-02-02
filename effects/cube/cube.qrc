@@ -1,0 +1,12 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="/effects/cube/">
+  <file>shaders/cube-cap.frag</file>
+  <file>shaders/cube-cap_core.frag</file>
+  <file>shaders/cube-reflection.frag</file>
+  <file>shaders/cube-reflection_core.frag</file>
+  <file>shaders/cylinder.vert</file>
+  <file>shaders/cylinder_core.vert</file>
+  <file>shaders/sphere.vert</file>
+  <file>shaders/sphere_core.vert</file>
+</qresource>
+</RCC>

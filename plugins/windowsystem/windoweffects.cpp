@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "windoweffects.h"
-#include "effect_builtins.h"
+
 #include "../../render/effects.h"
 
 #include <QGuiApplication>
@@ -60,11 +60,11 @@ bool WindowEffects::isEffectAvailable(KWindowEffects::Effect effect)
     auto e = static_cast<render::effects_handler_impl*>(effects);
     switch (effect) {
     case KWindowEffects::BackgroundContrast:
-        return e->isEffectLoaded(BuiltInEffects::nameForEffect(BuiltInEffect::Contrast));
+        return e->isEffectLoaded(QStringLiteral("contrast"));
     case KWindowEffects::BlurBehind:
-        return e->isEffectLoaded(BuiltInEffects::nameForEffect(BuiltInEffect::Blur));
+        return e->isEffectLoaded(QStringLiteral("blur"));
     case KWindowEffects::Slide:
-        return e->isEffectLoaded(BuiltInEffects::nameForEffect(BuiltInEffect::SlidingPopups));
+        return e->isEffectLoaded(QStringLiteral("slidingpopups"));
     default:
         // plugin does not provide integration for other effects
         return false;

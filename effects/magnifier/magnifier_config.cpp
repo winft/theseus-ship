@@ -37,9 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWidget>
 #include <QVBoxLayout>
 
-K_PLUGIN_FACTORY_WITH_JSON(MagnifierEffectConfigFactory,
-                           "magnifier_config.json",
-                           registerPlugin<KWin::MagnifierEffectConfig>();)
+K_PLUGIN_CLASS(KWin::MagnifierEffectConfig)
 
 namespace KWin
 {

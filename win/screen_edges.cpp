@@ -409,14 +409,12 @@ void screen_edge::switchDesktop(QPoint const& cursorPos)
             pos.setY(OFFSET);
     }
 
-#ifndef KWIN_UNIT_TEST
     if (auto c = Workspace::self()->moveResizeClient()) {
         if (c->control->rules().checkDesktop(desktop) != int(desktop)) {
             // user attempts to move a client to another desktop where it is ruleforced to not be
             return;
         }
     }
-#endif
 
     vds->setCurrent(desktop);
 
@@ -476,36 +474,36 @@ void screen_edge::setGeometry(QRect const& geometry)
     int width = geometry.width();
     int height = geometry.height();
 
-    int const size = edger->corner_offset;
+    int const offset = edger->corner_offset;
 
     if (isCorner()) {
         if (isRight()) {
-            x = x - size + 1;
+            x = x + width - offset;
         }
         if (isBottom()) {
-            y = y - size + 1;
+            y = y + height - offset;
         }
-        width = size;
-        height = size;
+        width = offset;
+        height = offset;
     } else {
         if (isLeft()) {
-            y += size + 1;
-            width = size;
-            height = height - size * 2;
+            y += offset;
+            width = offset;
+            height = height - offset * 2;
         } else if (isRight()) {
-            x = x - size + 1;
-            y += size;
-            width = size;
-            height = height - size * 2;
+            x = x + width - offset;
+            y += offset;
+            width = offset;
+            height = height - offset * 2;
         } else if (isTop()) {
-            x += size;
-            width = width - size * 2;
-            height = size;
+            x += offset;
+            width = width - offset * 2;
+            height = offset;
         } else if (isBottom()) {
-            x += size;
-            y = y - size + 1;
-            width = width - size * 2;
-            height = size;
+            x += offset;
+            y = y + height - offset;
+            width = width - offset * 2;
+            height = offset;
         }
     }
 
@@ -903,20 +901,24 @@ static bool isLeftScreen(QRect const& screen, QRect const& fullArea)
     if (screen.x() == fullArea.x()) {
         return true;
     }
-    // the screen is also on the left in case of a vertical layout with a second screen
-    // more to the left. In that case no screen ends left of screen's x coord
+
+    // If any other screen has a right edge against our left edge, then this screen is not a left
+    // screen.
     for (int i = 0; i < screens.count(); ++i) {
         const QRect otherGeo = screens.geometry(i);
         if (otherGeo == screen) {
             // that's our screen to test
             continue;
         }
-        if (otherGeo.x() + otherGeo.width() <= screen.x()) {
-            // other screen is completely in the left
+        if (screen.x() == otherGeo.x() + otherGeo.width()
+            && screen.y() < otherGeo.y() + otherGeo.height()
+            && screen.y() + screen.height() > otherGeo.y()) {
+            // There is a screen to the left.
             return false;
         }
     }
-    // did not find a screen left of our current screen, so it is the left most
+
+    // No screen exists to the left, so this is a left screen.
     return true;
 }
 
@@ -929,20 +931,24 @@ static bool isRightScreen(QRect const& screen, QRect const& fullArea)
     if (screen.x() + screen.width() == fullArea.x() + fullArea.width()) {
         return true;
     }
-    // the screen is also on the right in case of a vertical layout with a second screen
-    // more to the right. In that case no screen starts right of this screen
+
+    // If any other screen has any left edge against any of our right edge, then this screen is not
+    // a right screen.
     for (int i = 0; i < screens.count(); ++i) {
         const QRect otherGeo = screens.geometry(i);
         if (otherGeo == screen) {
             // that's our screen to test
             continue;
         }
-        if (otherGeo.x() >= screen.x() + screen.width()) {
-            // other screen is completely in the right
+        if (screen.x() + screen.width() == otherGeo.x()
+            && screen.y() < otherGeo.y() + otherGeo.height()
+            && screen.y() + screen.height() > otherGeo.y()) {
+            // There is a screen to the right.
             return false;
         }
     }
-    // did not find a screen right of our current screen, so it is the right most
+
+    // No screen exists to the right, so this is a right screen.
     return true;
 }
 
@@ -955,20 +961,24 @@ static bool isTopScreen(QRect const& screen, QRect const& fullArea)
     if (screen.y() == fullArea.y()) {
         return true;
     }
-    // the screen is also top most in case of a horizontal layout with a second screen
-    // more to the top. In that case no screen ends above screen's y coord
+
+    // If any other screen has any bottom edge against any of our top edge, then this screen is not
+    // a top screen.
     for (int i = 0; i < screens.count(); ++i) {
         const QRect otherGeo = screens.geometry(i);
         if (otherGeo == screen) {
             // that's our screen to test
             continue;
         }
-        if (otherGeo.y() + otherGeo.height() <= screen.y()) {
-            // other screen is completely above
+        if (screen.y() == otherGeo.y() + otherGeo.height()
+            && screen.x() < otherGeo.x() + otherGeo.width()
+            && screen.x() + screen.width() > otherGeo.x()) {
+            // There is a screen to the top.
             return false;
         }
     }
-    // did not find a screen above our current screen, so it is the top most
+
+    // No screen exists to the top, so this is a top screen.
     return true;
 }
 
@@ -981,20 +991,25 @@ static bool isBottomScreen(QRect const& screen, QRect const& fullArea)
     if (screen.y() + screen.height() == fullArea.y() + fullArea.height()) {
         return true;
     }
-    // the screen is also bottom most in case of a horizontal layout with a second screen
-    // more below. In that case no screen starts below screen's y coord + height
+
+    // If any other screen has any top edge against any of our bottom edge, then this screen is not
+    // a bottom screen.
     for (int i = 0; i < screens.count(); ++i) {
         const QRect otherGeo = screens.geometry(i);
         if (otherGeo == screen) {
             // that's our screen to test
             continue;
         }
-        if (otherGeo.y() >= screen.y() + screen.height()) {
-            // other screen is completely below
+
+        if (screen.y() + screen.height() == otherGeo.y()
+            && screen.x() < otherGeo.x() + otherGeo.width()
+            && screen.x() + screen.width() > otherGeo.x()) {
+            // There is a screen to the bottom.
             return false;
         }
     }
-    // did not find a screen below our current screen, so it is the bottom most
+
+    // No screen exists to the bottom, so this is a bottom screen.
     return true;
 }
 
@@ -1131,11 +1146,8 @@ screen_edge* screen_edger::createEdge(ElectricBorder border,
                                       int height,
                                       bool createAction)
 {
-#ifdef KWIN_UNIT_TEST
-    auto edge = new x11::screen_edge(this);
-#else
     auto edge = workspace()->create_screen_edge();
-#endif
+
     // Edges can not have negative size.
     assert(width >= 0);
     assert(height >= 0);

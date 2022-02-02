@@ -1,0 +1,15 @@
+{
+    "KPlugin": {
+        "Category": "Accessibility",
+        "Description": "A screen magnifier that looks like a fisheye lens",
+        "EnabledByDefault": false,
+        "Id": "lookingglass",
+        "License": "GPL",
+        "Name": "Looking Glass"
+    },
+    "X-KDE-ConfigModule": "kwin_lookingglass_config",
+    "org.kde.kwin.effect": {
+        "exclusiveGroup": "magnifiers",
+        "video": "https://files.kde.org/plasma/kwin/effect-videos/looking_glass.ogv"
+    }
+}

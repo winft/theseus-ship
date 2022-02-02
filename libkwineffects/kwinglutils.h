@@ -273,9 +273,6 @@ public:
 
     /**
      * Creates a custom shader with the given @p traits and custom @p vertexFile and or @p fragmentFile.
-     * The file names specified in @p vertexFile and @p fragmentFile are relative paths to the shaders
-     * resource file shipped together with KWin. This means this method can only be used for built-in
-     * effects, for 3rd party effects generateCustomShader should be used.
      *
      * If the @p vertexFile is empty a vertex shader with the given @p traits is generated.
      * If it is not empty the @p vertexFile is used as the source for the vertex shader.
@@ -285,20 +282,16 @@ public:
      * So if both @p vertexFile and @p fragmentFile are provided the @p traits are ignored.
      * If neither are provided a new shader following the @p traits is generated.
      *
+     * If a custom shader stage is provided and core profile is used, the final file path will
+     * be resolved by appending "_core" to the basename.
+     *
      * @param traits The shader traits for generating the shader
      * @param vertexFile optional vertex shader source code to be used instead of shader traits
      * @param fragmentFile optional fragment shader source code to be used instead of shader traits
      * @return new generated shader
      * @see generateCustomShader
-     * @since 5.6
      */
-    GLShader *generateShaderFromResources(ShaderTraits traits, const QString &vertexFile = QString(), const QString &fragmentFile = QString());
-
-    /**
-     * Compiles and tests the dynamically generated shaders.
-     * Returns true if successful and false otherwise.
-     */
-    bool selfTest();
+    GLShader *generateShaderFromFile(ShaderTraits traits, const QString &vertexFile = QString(), const QString &fragmentFile = QString());
 
     /**
      * @return a pointer to the ShaderManager instance
@@ -323,7 +316,6 @@ private:
 
     QStack<GLShader*> m_boundShaders;
     QHash<ShaderTraits, GLShader *> m_shaderHash;
-    QString m_resourcePath;
     static ShaderManager *s_shaderManager;
 };
 
@@ -764,11 +756,11 @@ public:
     void endOfFrame();
 
     /**
-     * Notifies the vertex buffer that we have posted the frame.
+     * Notifies the vertex buffer that we are about to paint a frame.
      *
      * @internal
      */
-    void framePosted();
+    void beginFrame();
 
     /**
      * @internal

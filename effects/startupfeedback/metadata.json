@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Category": "Appearance",
+        "Description": "Helper effect for startup feedback",
+        "EnabledByDefault": true,
+        "Id": "startupfeedback",
+        "License": "GPL",
+        "Name": "Startup Feedback"
+    },
+    "org.kde.kwin.effect": {
+        "internal": true
+    }
+}

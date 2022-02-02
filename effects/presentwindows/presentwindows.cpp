@@ -45,6 +45,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <climits>
 #include <cmath>
 
+Q_LOGGING_CATEGORY(KWIN_PRESENTWINDOWS, "kwin_effect_presentwindows", QtWarningMsg)
+
 namespace KWin
 {
 
@@ -633,28 +635,35 @@ void PresentWindowsEffect::inputEventUpdate(const QPoint &pos, QEvent::Type type
     EffectWindow *highlightCandidate = nullptr;
     for (int i = 0; i < windows.size(); ++i) {
         DataHash::const_iterator winData = m_windowData.constFind(windows.at(i));
-        if (winData == m_windowData.constEnd())
+        if (winData == m_windowData.constEnd()) {
             continue;
+        }
 
         if (m_motionManager.transformedGeometry(windows.at(i)).contains(pos) &&
                 winData->visible && !winData->deleted) {
             hovering = true;
-            if (windows.at(i) && m_highlightedWindow != windows.at(i))
+            if (windows.at(i) && m_highlightedWindow != windows.at(i)) {
                 highlightCandidate = windows.at(i);
+            }
             break;
         }
     }
 
-    if (!hovering)
-        setHighlightedWindow(nullptr);
-    if (m_highlightedWindow && m_motionManager.transformedGeometry(m_highlightedWindow).contains(pos))
+    if (!hovering) {
+        if (m_windowFilter.isEmpty()) {
+            setHighlightedWindow(nullptr);
+        }
+    }
+    if (m_highlightedWindow && m_motionManager.transformedGeometry(m_highlightedWindow).contains(pos)) {
         updateCloseWindow();
-    else if (m_closeView)
+    } else if (m_closeView) {
         m_closeView->hide();
+    }
 
     if (type == QEvent::MouseButtonRelease) {
-        if (highlightCandidate)
+        if (highlightCandidate) {
             setHighlightedWindow(highlightCandidate);
+        }
         if (button == Qt::LeftButton) {
             if (hovering) {
                 // mouse is hovering above a window - use MouseActionsWindow
@@ -682,8 +691,9 @@ void PresentWindowsEffect::inputEventUpdate(const QPoint &pos, QEvent::Type type
                 mouseActionDesktop(m_rightButtonDesktop);
             }
         }
-    } else if (highlightCandidate && !m_motionManager.areWindowsMoving())
+    } else if (highlightCandidate && !m_motionManager.areWindowsMoving() && m_windowFilter.isEmpty()) {
         setHighlightedWindow(highlightCandidate);
+    }
 }
 
 bool PresentWindowsEffect::touchDown(qint32 id, const QPointF &pos, quint32 time)
@@ -869,6 +879,7 @@ void PresentWindowsEffect::grabbedKeyboardEvent(QKeyEvent *e)
             return; // HACK: Workaround for Qt bug on unbound keys (#178547)
         default:
             if (!e->text().isEmpty()) {
+                setHighlightedWindow(nullptr);
                 m_windowFilter.append(e->text());
                 updateFilterFrame();
                 rearrangeWindows();
@@ -942,7 +953,7 @@ void PresentWindowsEffect::slotPropertyNotify(EffectWindow* w, long a)
         for (int i = 0; i < length; i++) {
             EffectWindow* foundWin = effects->findWindow(data[i]);
             if (!foundWin) {
-                qCDebug(KWINEFFECTS) << "Invalid window targetted for present windows. Requested:" << data[i];
+                qCDebug(KWIN_PRESENTWINDOWS) << "Invalid window targetted for present windows. Requested:" << data[i];
                 continue;
             }
             m_selectedWindows.append(foundWin);
@@ -1213,7 +1224,7 @@ void PresentWindowsEffect::calculateWindowTransformationsKompose(EffectWindowLis
         rows = (int)ceil(sqrt((double)windowlist.count()));
         columns = (int)ceil((double)windowlist.count() / (double)rows);
     }
-    //qCDebug(KWINEFFECTS) << "Using " << rows << " rows & " << columns << " columns for " << windowlist.count() << " clients";
+    //qCDebug(KWIN_PRESENTWINDOWS) << "Using " << rows << " rows & " << columns << " columns for " << windowlist.count() << " clients";
 
     // Calculate width & height
     int w = (availRect.width() - (columns + 1) * spacing) / columns;
@@ -1316,7 +1327,7 @@ void PresentWindowsEffect::calculateWindowTransformationsKompose(EffectWindowLis
 //                 winData->slot = pos;
             motionManager.moveWindow(window, target);
 
-            //qCDebug(KWINEFFECTS) << "Window '" << window->caption() << "' gets moved to (" <<
+            //qCDebug(KWIN_PRESENTWINDOWS) << "Window '" << window->caption() << "' gets moved to (" <<
             //        mWindowData[window].area.left() << "; " << mWindowData[window].area.right() <<
             //        "), scale: " << mWindowData[window].scale << endl;
         }

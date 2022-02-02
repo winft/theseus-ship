@@ -7,7 +7,8 @@ set(PROJECT_VERSION_MAJOR 5)
 set(CMAKE_C_STANDARD 99)
 
 set(QT_MIN_VERSION "5.15.0")
-set(KF5_MIN_VERSION "5.74.0")
+set(KF5_MIN_VERSION "5.89")
+set(KDE_COMPILERSETTINGS_LEVEL "5.84")
 
 find_package(ECM ${KF5_MIN_VERSION} REQUIRED NO_MODULE)
 
@@ -111,7 +112,7 @@ set_package_properties(KF5Kirigami2 PROPERTIES
     TYPE RUNTIME
 )
 
-find_package(KDecoration2 5.18.0 CONFIG REQUIRED)
+find_package(KDecoration2 ${PROJECT_VERSION} CONFIG REQUIRED)
 
 find_package(KScreenLocker CONFIG REQUIRED)
 set_package_properties(KScreenLocker PROPERTIES
@@ -141,7 +142,7 @@ set_package_properties(EGL PROPERTIES
     PURPOSE "Required to build KWin with EGL support"
 )
 
-find_package(epoxy)
+find_package(epoxy 1.3)
 set_package_properties(epoxy PROPERTIES
     DESCRIPTION "libepoxy"
     URL "https://github.com/anholt/libepoxy"
@@ -373,6 +374,19 @@ if (KWIN_BUILD_KCMS)
     add_subdirectory(kcmkwin)
 endif()
 
+include(ECMSetupQtPluginMacroNames)
+ecm_setup_qtplugin_macro_names(
+    JSON_ARG2
+        "KWIN_EFFECT_FACTORY"
+    JSON_ARG3
+        "KWIN_EFFECT_FACTORY_ENABLED"
+        "KWIN_EFFECT_FACTORY_SUPPORTED"
+    JSON_ARG4
+        "KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED"
+    CONFIG_CODE_VARIABLE
+        PACKAGE_SETUP_AUTOMOC_VARIABLES
+)
+
 add_subdirectory(data)
 
 add_subdirectory(effects)
@@ -473,6 +487,7 @@ set(kwin_SRCS
     scripting/scripting_logging.cpp
     scripting/v2/client_model.cpp
     scripting/v3/client_model.cpp
+    scripting/v3/virtual_desktop_model.cpp
     scripting/utils.cpp
     scripting/window.cpp
     scripting/space.cpp
@@ -496,7 +511,6 @@ set(kwin_SRCS
     win/virtual_desktops.cpp
     win/x11/client_machine.cpp
     win/x11/color_mapper.cpp
-    win/x11/geometry_tip.cpp
     win/x11/group.cpp
     win/x11/netinfo.cpp
     win/x11/root_info_filter.cpp
@@ -565,7 +579,6 @@ ki18n_wrap_ui(kwin_SRCS
 
 set(kwin_OWN_LIBS
     kwineffects
-    kwin4_effect_builtins
 )
 
 set(kwin_QT_LIBS
@@ -732,20 +745,25 @@ add_library(kwin_x11_lib STATIC
 )
 
 target_link_libraries(kwin_x11_lib
+PUBLIC
     kwin
     KF5::Crash
+PRIVATE
     Qt::X11Extras
 )
 
 if (HAVE_X11_XINPUT)
-    target_link_libraries(kwin_x11_lib ${X11_Xinput_LIB})
+    target_link_libraries(kwin_x11_lib PRIVATE ${X11_Xinput_LIB})
 endif()
 if (HAVE_DL_LIBRARY)
-    target_link_libraries(kwin_x11_lib ${DL_LIBRARY})
+    target_link_libraries(kwin_x11_lib PRIVATE ${DL_LIBRARY})
 endif()
 
 add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
-target_link_libraries(kwin_x11 kwin_x11_lib)
+target_link_libraries(kwin_x11
+  kwin_x11_lib
+  kwin4_effect_builtins
+)
 
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
@@ -909,6 +927,8 @@ PUBLIC
   Libinput::Libinput
   Threads::Threads
   PW::KScreenLocker
+PRIVATE
+  kwin4_effect_builtins
 )
 
 set_target_properties(kwin_wayland_lib PROPERTIES

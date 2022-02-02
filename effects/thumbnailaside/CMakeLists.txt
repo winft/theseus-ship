@@ -1,10 +1,24 @@
 #######################################
+# Effect
+
+set(thumbnailaside_SOURCES
+    main.cpp
+    thumbnailaside.cpp
+)
+
+kconfig_add_kcfg_files(thumbnailaside_SOURCES
+    thumbnailasideconfig.kcfgc
+)
+
+kwin4_add_effect_module(kwin4_effect_thumbnailaside ${thumbnailaside_SOURCES})
+
+#######################################
 # Config
 set(kwin_thumbnailaside_config_SRCS thumbnailaside_config.cpp)
 ki18n_wrap_ui(kwin_thumbnailaside_config_SRCS thumbnailaside_config.ui)
 kconfig_add_kcfg_files(kwin_thumbnailaside_config_SRCS thumbnailasideconfig.kcfgc)
 
-add_library(kwin_thumbnailaside_config MODULE ${kwin_thumbnailaside_config_SRCS})
+kwin_add_effect_config(kwin_thumbnailaside_config ${kwin_thumbnailaside_config_SRCS})
 
 target_link_libraries(kwin_thumbnailaside_config
     KF5::ConfigWidgets
@@ -12,13 +26,4 @@ target_link_libraries(kwin_thumbnailaside_config
     KF5::I18n
     KF5::XmlGui
     KWinEffectsInterface
-)
-
-kcoreaddons_desktop_to_json(kwin_thumbnailaside_config thumbnailaside_config.desktop SERVICE_TYPES kcmodule.desktop)
-
-install(
-    TARGETS
-        kwin_thumbnailaside_config
-    DESTINATION
-        ${PLUGIN_INSTALL_DIR}/kwin/effects/configs
 )

@@ -61,6 +61,94 @@ static QList<QByteArray> glExtensions;
 
 // Functions
 
+static void initDebugOutput()
+{
+    static bool enabled = qEnvironmentVariableIntValue("KWIN_GL_DEBUG");
+    if (!enabled) {
+        return;
+    }
+
+    const bool have_KHR_debug = hasGLExtension(QByteArrayLiteral("GL_KHR_debug"));
+    const bool have_ARB_debug = hasGLExtension(QByteArrayLiteral("GL_ARB_debug_output"));
+    if (!have_KHR_debug && !have_ARB_debug)
+        return;
+
+    if (!have_ARB_debug) {
+        // if we don't have ARB debug, but only KHR debug we need to verify whether the context is a
+        // debug context it should work without as well, but empirical tests show: no it doesn't
+        if (GLPlatform::instance()->isGLES()) {
+            if (!hasGLVersion(3, 2)) {
+                // empirical data shows extension doesn't work
+                return;
+            }
+        } else if (!hasGLVersion(3, 0)) {
+            return;
+        }
+        // can only be queried with either OpenGL >= 3.0 or OpenGL ES of at least 3.1
+        GLint value = 0;
+        glGetIntegerv(GL_CONTEXT_FLAGS, &value);
+        if (!(value & GL_CONTEXT_FLAG_DEBUG_BIT)) {
+            return;
+        }
+    }
+
+    // Set the callback function
+    auto callback = [](GLenum source,
+                       GLenum type,
+                       GLuint id,
+                       GLenum severity,
+                       GLsizei length,
+                       const GLchar* message,
+                       const GLvoid* userParam) {
+        Q_UNUSED(source)
+        Q_UNUSED(severity)
+        Q_UNUSED(userParam)
+        while (length && std::isspace(message[length - 1])) {
+            --length;
+        }
+
+        switch (type) {
+        case GL_DEBUG_TYPE_ERROR:
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+            qCWarning(LIBKWINGLUTILS, "%#x: %.*s", id, length, message);
+            break;
+
+        case GL_DEBUG_TYPE_OTHER:
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        case GL_DEBUG_TYPE_PORTABILITY:
+        case GL_DEBUG_TYPE_PERFORMANCE:
+        default:
+            qCDebug(LIBKWINGLUTILS, "%#x: %.*s", id, length, message);
+            break;
+        }
+    };
+
+    glDebugMessageCallback(callback, nullptr);
+
+    // This state exists only in GL_KHR_debug
+    if (have_KHR_debug)
+        glEnable(GL_DEBUG_OUTPUT);
+
+#if !defined(QT_NO_DEBUG)
+    // Enable all debug messages
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+#else
+    // Enable error messages
+    glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+    glDebugMessageControl(
+        GL_DONT_CARE, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+#endif
+
+    // Insert a test message
+    const QByteArray message = QByteArrayLiteral("OpenGL debug output initialized");
+    glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION,
+                         GL_DEBUG_TYPE_OTHER,
+                         0,
+                         GL_DEBUG_SEVERITY_LOW,
+                         message.length(),
+                         message.constData());
+}
+
 void initGL(const std::function<resolveFuncPtr(const char*)> &resolveFunction)
 {
     // Get list of supported OpenGL extensions
@@ -77,6 +165,8 @@ void initGL(const std::function<resolveFuncPtr(const char*)> &resolveFunction)
 
     // handle OpenGL extensions functions
     glResolveFunctions(resolveFunction);
+
+    initDebugOutput();
 
     GLTexturePrivate::initStatic();
     GLRenderTarget::initStatic();
@@ -547,12 +637,6 @@ void ShaderManager::cleanup()
 
 ShaderManager::ShaderManager()
 {
-    const qint64 coreVersionNumber = GLPlatform::instance()->isGLES() ? kVersionNumber(3, 0) : kVersionNumber(1, 40);
-    if (GLPlatform::instance()->glslVersion() >= coreVersionNumber) {
-        m_resourcePath = QStringLiteral(":/effect-shaders-1.40/");
-    } else {
-        m_resourcePath = QStringLiteral(":/effect-shaders-1.10/");
-    }
 }
 
 ShaderManager::~ShaderManager()
@@ -563,215 +647,6 @@ ShaderManager::~ShaderManager()
 
     qDeleteAll(m_shaderHash);
     m_shaderHash.clear();
-}
-
-static bool fuzzyCompare(const QVector4D &lhs, const QVector4D &rhs)
-{
-    const float epsilon = 1.0f / 255.0f;
-
-    return lhs[0] >= rhs[0] - epsilon && lhs[0] <= rhs[0] + epsilon &&
-           lhs[1] >= rhs[1] - epsilon && lhs[1] <= rhs[1] + epsilon &&
-           lhs[2] >= rhs[2] - epsilon && lhs[2] <= rhs[2] + epsilon &&
-           lhs[3] >= rhs[3] - epsilon && lhs[3] <= rhs[3] + epsilon;
-}
-
-static bool checkPixel(int x, int y, const QVector4D &expected, const char *file, int line)
-{
-    uint8_t data[4];
-    glReadnPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, 4, data);
-
-    const QVector4D pixel{data[0] / 255.f, data[1] / 255.f, data[2] / 255.f, data[3] / 255.f};
-
-    if (fuzzyCompare(pixel, expected))
-        return true;
-
-    QMessageLogger(file, line, nullptr).warning() << "Pixel was" << pixel << "expected" << expected;
-    return false;
-}
-
-#define CHECK_PIXEL(x, y, expected) \
-    checkPixel(x, y, expected, __FILE__, __LINE__)
-
-static QVector4D adjustSaturation(const QVector4D &color, float saturation)
-{
-    const float gray = QVector3D::dotProduct(color.toVector3D(), {0.2126, 0.7152, 0.0722});
-    return QVector4D{gray, gray, gray, color.w()} * (1.0f - saturation) + color * saturation;
-}
-
-bool ShaderManager::selfTest()
-{
-    bool pass = true;
-
-    if (!GLRenderTarget::supported()) {
-        qCWarning(LIBKWINGLUTILS) << "Framebuffer objects not supported - skipping shader tests";
-        return true;
-    }
-    if (GLPlatform::instance()->isNvidia() && GLPlatform::instance()->glRendererString().contains("Quadro")) {
-        qCWarning(LIBKWINGLUTILS) << "Skipping self test as it is reported to return false positive results on Quadro hardware";
-        return true;
-    }
-    if (GLPlatform::instance()->isMesaDriver() && GLPlatform::instance()->mesaVersion() >= kVersionNumber(17, 0)) {
-        qCWarning(LIBKWINGLUTILS) << "Skipping self test as it is reported to return false positive results on Mesa drivers";
-        return true;
-    }
-
-    // Create the source texture
-    QImage image(2, 2, QImage::Format_ARGB32_Premultiplied);
-    image.setPixel(0, 0, 0xffff0000); // Red
-    image.setPixel(1, 0, 0xff00ff00); // Green
-    image.setPixel(0, 1, 0xff0000ff); // Blue
-    image.setPixel(1, 1, 0xffffffff); // White
-
-    GLTexture src(image);
-    src.setFilter(GL_NEAREST);
-
-    // Create the render target
-    GLTexture dst(GL_RGBA8, 32, 32);
-
-    GLRenderTarget fbo(dst);
-    GLRenderTarget::pushRenderTarget(&fbo);
-
-    // Set up the vertex buffer
-    GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
-
-    const GLVertexAttrib attribs[] {
-        { VA_Position, 2, GL_FLOAT, offsetof(GLVertex2D, position) },
-        { VA_TexCoord, 2, GL_FLOAT, offsetof(GLVertex2D, texcoord) },
-    };
-
-    vbo->setAttribLayout(attribs, 2, sizeof(GLVertex2D));
-
-    GLVertex2D *verts = (GLVertex2D*) vbo->map(6 * sizeof(GLVertex2D));
-    verts[0] = GLVertex2D{{0,   0}, {0, 0}}; // Top left
-    verts[1] = GLVertex2D{{0,  32}, {0, 1}}; // Bottom left
-    verts[2] = GLVertex2D{{32,  0}, {1, 0}}; // Top right
-
-    verts[3] = GLVertex2D{{32,  0}, {1, 0}}; // Top right
-    verts[4] = GLVertex2D{{0,  32}, {0, 1}}; // Bottom left
-    verts[5] = GLVertex2D{{32, 32}, {1, 1}}; // Bottom right
-    vbo->unmap();
-
-    vbo->bindArrays();
-
-    glViewport(0, 0, 32, 32);
-    glClearColor(0, 0, 0, 0);
-
-    // Set up the projection matrix
-    QMatrix4x4 matrix;
-    matrix.ortho(QRect(0, 0, 32, 32));
-
-    // Bind the source texture
-    src.bind();
-
-    const QVector4D red   {1.0f, 0.0f, 0.0f, 1.0f};
-    const QVector4D green {0.0f, 1.0f, 0.0f, 1.0f};
-    const QVector4D blue  {0.0f, 0.0f, 1.0f, 1.0f};
-    const QVector4D white {1.0f, 1.0f, 1.0f, 1.0f};
-
-    // Note: To see the line number in error messages, set
-    //       QT_MESSAGE_PATTERN="%{message} (%{file}:%{line})"
-
-    // Test solid color
-    GLShader *shader = pushShader(ShaderTrait::UniformColor);
-    if (shader->isValid()) {
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        shader->setUniform(GLShader::ModelViewProjectionMatrix, matrix);
-        shader->setUniform(GLShader::Color, green);
-        vbo->draw(GL_TRIANGLES, 0, 6);
-
-        pass = CHECK_PIXEL(8,  24, green) && pass;
-        pass = CHECK_PIXEL(24, 24, green) && pass;
-        pass = CHECK_PIXEL(8,   8, green) && pass;
-        pass = CHECK_PIXEL(24,  8, green) && pass;
-    } else {
-        pass = false;
-    }
-    popShader();
-
-    // Test texture mapping
-    shader = pushShader(ShaderTrait::MapTexture);
-    if (shader->isValid()) {
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        shader->setUniform(GLShader::ModelViewProjectionMatrix, matrix);
-        vbo->draw(GL_TRIANGLES, 0, 6);
-
-        pass = CHECK_PIXEL(8,  24, red)   && pass;
-        pass = CHECK_PIXEL(24, 24, green) && pass;
-        pass = CHECK_PIXEL(8,   8, blue)  && pass;
-        pass = CHECK_PIXEL(24,  8, white) && pass;
-    } else {
-        pass = false;
-    }
-    popShader();
-
-    // Test saturation filter
-    shader = pushShader(ShaderTrait::MapTexture | ShaderTrait::AdjustSaturation);
-    if (shader->isValid()) {
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        const float saturation = .3;
-
-        shader->setUniform(GLShader::ModelViewProjectionMatrix, matrix);
-        shader->setUniform(GLShader::Saturation, saturation);
-        vbo->draw(GL_TRIANGLES, 0, 6);
-
-        pass = CHECK_PIXEL(8,  24, adjustSaturation(red,   saturation)) && pass;
-        pass = CHECK_PIXEL(24, 24, adjustSaturation(green, saturation)) && pass;
-        pass = CHECK_PIXEL(8,  8,  adjustSaturation(blue,  saturation)) && pass;
-        pass = CHECK_PIXEL(24, 8,  adjustSaturation(white, saturation)) && pass;
-    } else {
-        pass = false;
-    }
-    popShader();
-
-    // Test modulation filter
-    shader = pushShader(ShaderTrait::MapTexture | ShaderTrait::Modulate);
-    if (shader->isValid()) {
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        const QVector4D modulation{.3f, .4f, .5f, .6f};
-
-        shader->setUniform(GLShader::ModelViewProjectionMatrix, matrix);
-        shader->setUniform(GLShader::ModulationConstant, modulation);
-        vbo->draw(GL_TRIANGLES, 0, 6);
-
-        pass = CHECK_PIXEL(8,  24, red   * modulation) && pass;
-        pass = CHECK_PIXEL(24, 24, green * modulation) && pass;
-        pass = CHECK_PIXEL(8,   8, blue  * modulation) && pass;
-        pass = CHECK_PIXEL(24,  8, white * modulation) && pass;
-    } else {
-        pass = false;
-    }
-    popShader();
-
-    // Test saturation + modulation
-    shader = pushShader(ShaderTrait::MapTexture | ShaderTrait::AdjustSaturation | ShaderTrait::Modulate);
-    if (shader->isValid()) {
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        const QVector4D modulation{.3f, .4f, .5f, .6f};
-        const float saturation = .3;
-
-        shader->setUniform(GLShader::ModelViewProjectionMatrix, matrix);
-        shader->setUniform(GLShader::ModulationConstant, modulation);
-        shader->setUniform(GLShader::Saturation, saturation);
-        vbo->draw(GL_TRIANGLES, 0, 6);
-
-        pass = CHECK_PIXEL(8,  24, adjustSaturation(red   * modulation, saturation)) && pass;
-        pass = CHECK_PIXEL(24, 24, adjustSaturation(green * modulation, saturation)) && pass;
-        pass = CHECK_PIXEL(8,  8,  adjustSaturation(blue  * modulation, saturation)) && pass;
-        pass = CHECK_PIXEL(24, 8,  adjustSaturation(white * modulation, saturation)) && pass;
-    } else {
-        pass = false;
-    }
-    popShader();
-
-    vbo->unbindArrays();
-    GLRenderTarget::popRenderTarget();
-
-    return pass;
 }
 
 QByteArray ShaderManager::generateVertexSource(ShaderTraits traits) const
@@ -921,26 +796,49 @@ GLShader *ShaderManager::generateCustomShader(ShaderTraits traits, const QByteAr
     return shader;
 }
 
-GLShader *ShaderManager::generateShaderFromResources(ShaderTraits traits, const QString &vertexFile, const QString &fragmentFile)
+static QString resolveShaderFilePath(const QString &filePath)
 {
-    auto loadShaderFile = [this] (const QString &fileName) {
-        QFile file(m_resourcePath + fileName);
+    QString suffix;
+    QString extension;
+
+    const qint64 coreVersionNumber = GLPlatform::instance()->isGLES() ? kVersionNumber(3, 0) : kVersionNumber(1, 40);
+    if (GLPlatform::instance()->glslVersion() >= coreVersionNumber) {
+        suffix = QStringLiteral("_core");
+    }
+
+    if (filePath.endsWith(QStringLiteral(".frag"))) {
+        extension = QStringLiteral(".frag");
+    } else if (filePath.endsWith(QStringLiteral(".vert"))) {
+        extension = QStringLiteral(".vert");
+    } else {
+        qCWarning(LIBKWINGLUTILS) << filePath << "must end either with .vert or .frag";
+        return QString();
+    }
+
+    const QString prefix = filePath.chopped(extension.size());
+    return prefix + suffix + extension;
+}
+
+GLShader *ShaderManager::generateShaderFromFile(ShaderTraits traits, const QString &vertexFile, const QString &fragmentFile)
+{
+    auto loadShaderFile = [](const QString &filePath) {
+        QFile file(filePath);
         if (file.open(QIODevice::ReadOnly)) {
             return file.readAll();
         }
-        qCCritical(LIBKWINGLUTILS) << "Failed to read shader " << fileName;
+        qCCritical(LIBKWINGLUTILS) << "Failed to read shader " << filePath;
         return QByteArray();
     };
     QByteArray vertexSource;
     QByteArray fragmentSource;
     if (!vertexFile.isEmpty()) {
-        vertexSource = loadShaderFile(vertexFile);
+        vertexSource = loadShaderFile(resolveShaderFilePath(vertexFile));
         if (vertexSource.isEmpty()) {
             return new GLShader();
         }
     }
     if (!fragmentFile.isEmpty()) {
-        fragmentSource = loadShaderFile(fragmentFile);
+        fragmentSource = loadShaderFile(resolveShaderFilePath(fragmentFile));
         if (fragmentSource.isEmpty()) {
             return new GLShader();
         }
@@ -2239,7 +2137,7 @@ void GLVertexBuffer::endOfFrame()
     }
 }
 
-void GLVertexBuffer::framePosted()
+void GLVertexBuffer::beginFrame()
 {
     if (!d->persistent)
         return;

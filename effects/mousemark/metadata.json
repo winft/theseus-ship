@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Category": "Appearance",
+        "Description": "Allows you to draw lines on the desktop",
+        "EnabledByDefault": false,
+        "Id": "mousemark",
+        "License": "GPL",
+        "Name": "Mouse Mark"
+    },
+    "X-KDE-ConfigModule": "kwin_mousemark_config"
+}

@@ -30,9 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QVBoxLayout>
 
-K_PLUGIN_FACTORY_WITH_JSON(MagicLampEffectConfigFactory,
-                           "magiclamp_config.json",
-                           registerPlugin<KWin::MagicLampEffectConfig>();)
+K_PLUGIN_CLASS(KWin::MagicLampEffectConfig)
 
 namespace KWin
 {

@@ -51,7 +51,7 @@ static void writeBufferToPipe(int fileDescriptor, const QByteArray &buffer)
     QFile file;
     if (!file.open(fileDescriptor, QIODevice::WriteOnly, QFileDevice::AutoCloseHandle)) {
         close(fileDescriptor);
-        qCWarning(KWINEFFECTS) << Q_FUNC_INFO << "failed to open pipe:" << file.errorString();
+        qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "failed to open pipe:" << file.errorString();
         return;
     }
 
@@ -65,21 +65,21 @@ static void writeBufferToPipe(int fileDescriptor, const QByteArray &buffer)
         const int ready = poll(pfds, 1, 60000);
         if (ready < 0) {
             if (errno != EINTR) {
-                qCWarning(KWINEFFECTS) << Q_FUNC_INFO << "poll() failed:" << strerror(errno);
+                qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "poll() failed:" << strerror(errno);
                 return;
             }
         } else if (ready == 0) {
-            qCWarning(KWINEFFECTS) << Q_FUNC_INFO << "timed out writing to pipe";
+            qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "timed out writing to pipe";
             return;
         } else if (!(pfds[0].revents & POLLOUT)) {
-            qCWarning(KWINEFFECTS) << Q_FUNC_INFO << "pipe is broken";
+            qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "pipe is broken";
             return;
         } else {
             const char *chunk = buffer.constData() + (buffer.size() - remainingSize);
             const qint64 writtenCount = file.write(chunk, remainingSize);
 
             if (writtenCount < 0) {
-                qCWarning(KWINEFFECTS) << Q_FUNC_INFO << "write() failed:" << file.errorString();
+                qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "write() failed:" << file.errorString();
                 return;
             }
 
@@ -273,6 +273,11 @@ ScreenShotDBusInterface2::~ScreenShotDBusInterface2()
     QDBusConnection::sessionBus().unregisterObject(s_dbusObjectPath);
 }
 
+int ScreenShotDBusInterface2::version() const
+{
+    return 2;
+}
+
 bool ScreenShotDBusInterface2::checkPermissions() const
 {
     if (!calledFromDBus()) {
@@ -294,6 +299,32 @@ bool ScreenShotDBusInterface2::checkPermissions() const
     return true;
 }
 
+QVariantMap ScreenShotDBusInterface2::CaptureActiveWindow(const QVariantMap &options,
+                                                          QDBusUnixFileDescriptor pipe)
+{
+    if (!checkPermissions()) {
+        return QVariantMap();
+    }
+
+    EffectWindow *window = effects->activeWindow();
+    if (!window) {
+        sendErrorReply(s_errorInvalidWindow, s_errorInvalidWindowMessage);
+        return QVariantMap();
+    }
+
+    const int fileDescriptor = dup(pipe.fileDescriptor());
+    if (fileDescriptor == -1) {
+        sendErrorReply(s_errorFileDescriptor, s_errorFileDescriptorMessage);
+        return QVariantMap();
+    }
+
+    takeScreenShot(window, screenShotFlagsFromOptions(options),
+                   new ScreenShotSinkPipe2(fileDescriptor, message()));
+
+    setDelayedReply(true);
+    return QVariantMap();
+}
+
 QVariantMap ScreenShotDBusInterface2::CaptureWindow(const QString &handle,
                                                     const QVariantMap &options,
                                                     QDBusUnixFileDescriptor pipe)
@@ -309,7 +340,7 @@ QVariantMap ScreenShotDBusInterface2::CaptureWindow(const QString &handle,
         if (ok) {
             window = effects->findWindow(winId);
         } else {
-            qCWarning(KWINEFFECTS) << "Invalid handle:" << handle;
+            qCWarning(KWIN_SCREENSHOT) << "Invalid handle:" << handle;
         }
     }
     if (!window) {
@@ -366,6 +397,32 @@ QVariantMap ScreenShotDBusInterface2::CaptureScreen(const QString &name,
     }
 
     EffectScreen *screen = effects->findScreen(name);
+    if (!screen) {
+        sendErrorReply(s_errorInvalidScreen, s_errorInvalidScreenMessage);
+        return QVariantMap();
+    }
+
+    const int fileDescriptor = dup(pipe.fileDescriptor());
+    if (fileDescriptor == -1) {
+        sendErrorReply(s_errorFileDescriptor, s_errorFileDescriptorMessage);
+        return QVariantMap();
+    }
+
+    takeScreenShot(screen, screenShotFlagsFromOptions(options),
+                   new ScreenShotSinkPipe2(fileDescriptor, message()));
+
+    setDelayedReply(true);
+    return QVariantMap();
+}
+
+QVariantMap ScreenShotDBusInterface2::CaptureActiveScreen(const QVariantMap &options,
+                                                          QDBusUnixFileDescriptor pipe)
+{
+    if (!checkPermissions()) {
+        return QVariantMap();
+    }
+
+    auto screen = effects->findScreen(effects->activeScreen());
     if (!screen) {
         sendErrorReply(s_errorInvalidScreen, s_errorInvalidScreenMessage);
         return QVariantMap();

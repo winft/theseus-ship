@@ -29,9 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAction>
 
-K_PLUGIN_FACTORY_WITH_JSON(ShowPaintEffectConfigFactory,
-                           "showpaint_config.json",
-                           registerPlugin<KWin::ShowPaintEffectConfig>();)
+K_PLUGIN_CLASS(KWin::ShowPaintEffectConfig)
 
 namespace KWin
 {

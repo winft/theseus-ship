@@ -322,7 +322,7 @@ void UserActionsMenu::init()
                     args << QStringLiteral("--desktopfile") << path;
                 }
                 args << configModules(false);
-                QProcess *p = new Process(this);
+                QProcess *p = new QProcess(this);
                 p->setArguments(args);
                 p->setProcessEnvironment(kwinApp()->processStartupEnvironment());
                 p->setProgram(QStringLiteral("kcmshell5"));
@@ -773,7 +773,7 @@ void ShortcutDialog::keySequenceChanged()
     // Check if the key sequence is used currently
     QString sc = seq.toString();
     // NOTICE - seq.toString() & the entries in "conflicting" randomly get invalidated after the next call (if no sc has been set & conflicting isn't empty?!)
-    QList<KGlobalShortcutInfo> conflicting = KGlobalAccel::getGlobalShortcutsByKey(seq);
+    QList<KGlobalShortcutInfo> conflicting = KGlobalAccel::globalShortcutsByKey(seq);
     if (!conflicting.isEmpty()) {
         const KGlobalShortcutInfo &conflict = conflicting.at(0);
         m_ui.warning->setText(i18nc("'%1' is a keyboard shortcut like 'ctrl+w'",
@@ -1638,13 +1638,23 @@ bool Workspace::shortcutAvailable(const QKeySequence &cut, Toplevel* ignore) con
     if (ignore && cut == ignore->control->shortcut())
         return true;
 
-    if (!KGlobalAccel::getGlobalShortcutsByKey(cut).isEmpty()) {
-        return false;
-    }
-    for (auto const& client : m_allClients) {
-        if (client != ignore && client->control->shortcut() == cut)
+    // Check if the shortcut is already registered.
+    auto const registeredShortcuts = KGlobalAccel::globalShortcutsByKey(cut);
+    for (auto const& shortcut : registeredShortcuts) {
+        // Only return "not available" if is not a client activation shortcut, as it may be no
+        // longer valid.
+        if (!shortcut.uniqueName().startsWith(QStringLiteral("_k_session:"))) {
             return false;
+        }
     }
+
+    // Check now conflicts with activation shortcuts for current clients.
+    for (const auto client : m_allClients) {
+        if (client != ignore && client->control->shortcut() == cut) {
+            return false;
+        }
+    }
+
     return true;
 }
 

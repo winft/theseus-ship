@@ -193,7 +193,7 @@ void SheetEffect::slotWindowClosed(EffectWindow *w)
         return;
     }
 
-    if (!isSheetWindow(w)) {
+    if (!isSheetWindow(w) || w->skipsCloseAnimation()) {
         return;
     }
 

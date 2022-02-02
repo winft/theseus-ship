@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTest>
 #include <QX11Info>
 
-#include <KPluginLoader>
 #include <KPluginMetaData>
 
 #include <memory>
@@ -60,8 +59,8 @@ X11TestApplication::X11TestApplication(int& argc, char** argv)
     setX11Connection(QX11Info::connection());
     setX11RootWindow(QX11Info::appRootWindow());
 
-    // move directory containing executable to front, so that KPluginLoader prefers the plugins in
-    // the build dir over system installed ones
+    // move directory containing executable to front, so that KPluginMetaData::findPluginById
+    // prefers the plugins in the build dir over system installed ones
     const auto ownPath = libraryPaths().last();
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);

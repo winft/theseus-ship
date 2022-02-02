@@ -13,6 +13,8 @@
 #include <QImage>
 #include <QObject>
 
+Q_DECLARE_LOGGING_CATEGORY(KWIN_SCREENSHOT)
+
 namespace KWin
 {
 

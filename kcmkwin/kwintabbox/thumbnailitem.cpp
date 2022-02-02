@@ -111,6 +111,7 @@ WindowThumbnailItem::WindowThumbnailItem(QQuickItem* parent)
     , m_clipToItem(nullptr)
     , m_brightness(1.0)
     , m_saturation(1.0)
+    , m_sourceSize(QSize())
 {
     setFlag(ItemHasContents);
 }
@@ -150,6 +151,12 @@ void WindowThumbnailItem::findImage()
         break;
     case Dolphin:
         imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "kwin/kcm_kwintabbox/dolphin.png");
+        break;
+    case Desktop:
+        imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "wallpapers/Next/contents/screenshot.png");
+        if (imagePath.isNull()) {
+            imagePath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "kwin/kcm_kwintabbox/desktop.png");
+        }
         break;
     default:
         // ignore
@@ -196,6 +203,11 @@ qreal WindowThumbnailItem::saturation() const
     return m_saturation;
 }
 
+QSize WindowThumbnailItem::sourceSize() const
+{
+    return m_sourceSize;
+}
+
 void WindowThumbnailItem::setBrightness(qreal brightness)
 {
     if (m_brightness == brightness) {
@@ -214,6 +226,16 @@ void WindowThumbnailItem::setSaturation(qreal saturation)
     m_saturation = saturation;
     update();
     Q_EMIT saturationChanged();
+}
+
+void WindowThumbnailItem::setSourceSize(const QSize &size)
+{
+    if (m_sourceSize == size) {
+        return;
+    }
+    m_sourceSize = size;
+    update();
+    Q_EMIT sourceSizeChanged();
 }
 
 } // namespace KWin

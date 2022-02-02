@@ -30,9 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KAboutData>
 #include <KPluginFactory>
 
-K_PLUGIN_FACTORY_WITH_JSON(DimInactiveEffectConfigFactory,
-                           "diminactive_config.json",
-                           registerPlugin<KWin::DimInactiveEffectConfig>();)
+K_PLUGIN_CLASS(KWin::DimInactiveEffectConfig)
 
 namespace KWin
 {

@@ -48,3 +48,9 @@ Script=kwin-5.21-desktop-grid-click-behavior.py,python
 Id=remove-placement-cascade
 File=kwinrc
 Script=kwin-5.23-placement.pl,perl
+
+# Enable the Scale effect by default.
+Id=enable-scale-effect-by-default
+File=kwinrc
+Group=Plugins
+Key=kwin4_effect_fadeEnabled,kwin4_effect_scaleEnabled

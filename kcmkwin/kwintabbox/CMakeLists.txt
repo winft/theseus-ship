@@ -32,13 +32,16 @@ target_link_libraries(kcm_kwintabbox
     KF5::Service
 
     XCB::XCB
-
-    kwin4_effect_builtins
 )
 
 install(TARGETS kcm_kwintabbox DESTINATION ${PLUGIN_INSTALL_DIR} )
 
 ########### install files ###############
 install(FILES kwintabbox.desktop DESTINATION ${KDE_INSTALL_KSERVICES5DIR})
-install(FILES thumbnails/konqueror.png thumbnails/kmail.png thumbnails/systemsettings.png thumbnails/dolphin.png DESTINATION ${KDE_INSTALL_DATADIR}/kwin/kcm_kwintabbox)
+install(FILES thumbnails/konqueror.png
+              thumbnails/kmail.png
+              thumbnails/systemsettings.png
+              thumbnails/dolphin.png
+              thumbnails/desktop.png
+        DESTINATION ${KDE_INSTALL_DATADIR}/kwin/kcm_kwintabbox)
 install(FILES kwinswitcher.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})

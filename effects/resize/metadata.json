@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Category": "Window Management",
+        "Description": "Resizes windows with a fast texture scale instead of updating contents",
+        "EnabledByDefault": false,
+        "Id": "resize",
+        "License": "GPL",
+        "Name": "Resize Window"
+    },
+    "X-KDE-ConfigModule": "kwin_resize_config"
+}

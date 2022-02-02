@@ -1,0 +1,10 @@
+{
+    "KPlugin": {
+        "Category": "Appearance",
+        "Description": "Closed windows fall into pieces",
+        "EnabledByDefault": false,
+        "Id": "fallapart",
+        "License": "GPL",
+        "Name": "Fall Apart"
+    }
+}

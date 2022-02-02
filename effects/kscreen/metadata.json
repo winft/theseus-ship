@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Category": "Appearance",
+        "Description": "Helper Effect for KScreen",
+        "EnabledByDefault": true,
+        "Id": "kscreen",
+        "License": "GPL",
+        "Name": "Kscreen"
+    },
+    "org.kde.kwin.effect": {
+        "internal": true
+    }
+}

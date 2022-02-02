@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Category": "Appearance",
+        "Description": "Helper effect for screenshot tools",
+        "EnabledByDefault": true,
+        "Id": "screenshot",
+        "License": "GPL",
+        "Name": "Screenshot"
+    },
+    "org.kde.kwin.effect": {
+        "internal": true
+    }
+}

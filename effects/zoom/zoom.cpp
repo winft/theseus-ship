@@ -42,6 +42,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <xcb/render.h>
 #endif
 
+Q_LOGGING_CATEGORY(KWIN_ZOOM, "kwin_effect_zoom", QtWarningMsg)
+
 namespace KWin
 {
 
@@ -227,7 +229,7 @@ void ZoomEffect::recreateTexture()
 #endif
     }
     else {
-        qCDebug(KWINEFFECTS) << "Falling back to proportional mouse tracking!";
+        qCDebug(KWIN_ZOOM) << "Falling back to proportional mouse tracking!";
         mouseTracking = MouseTrackingProportional;
     }
 }

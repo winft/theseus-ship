@@ -47,6 +47,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 3: fading in
  */
 
+Q_LOGGING_CATEGORY(KWIN_KSCREEN, "kwin_effect_kscreen", QtWarningMsg)
+
 namespace KWin
 {
 
@@ -177,7 +179,7 @@ void KscreenEffect::propertyNotify(EffectWindow *window, long int atom)
         effects->addRepaintFull();
         return;
     }
-    qCDebug(KWINEFFECTS) << "Incorrect Property state, immediate stop: " << data[0];
+    qCDebug(KWIN_KSCREEN) << "Incorrect Property state, immediate stop: " << data[0];
     m_state = StateNormal;
     effects->addRepaintFull();
 }

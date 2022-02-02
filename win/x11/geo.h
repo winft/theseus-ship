@@ -10,7 +10,6 @@
 
 #include "win/setup.h"
 #include "win/space.h"
-#include "win/x11/geometry_tip.h"
 
 #include <xcb/xcb_icccm.h>
 
@@ -932,40 +931,6 @@ void sync_geometry(Win* win, QRect const& frame_geo)
         win->sync_request.update_request_number,
         {frame_geo, client_geo, win->geometry_update.max_mode, win->geometry_update.fullscreen},
     });
-}
-
-template<typename Win>
-void reposition_geometry_tip(Win* win)
-{
-    assert(is_move(win) || is_resize(win));
-
-    // Position and Size display
-    if (effects
-        && static_cast<render::effects_handler_impl*>(effects)->provides(Effect::GeometryTip)) {
-        // some effect paints this for us
-        return;
-    }
-    if (!options->showGeometryTip()) {
-        return;
-    }
-
-    if (!win->geometry_tip) {
-        win->geometry_tip = new geometry_tip(&win->geometry_hints);
-    }
-
-    // Position of the frame, size of the window itself.
-    auto geo = win->control->move_resize().geometry;
-    auto const frame_size = win->size();
-    auto const client_size = frame_to_client_size(win, frame_size);
-
-    geo.setWidth(geo.width() - (frame_size.width() - client_size.width()));
-    geo.setHeight(geo.height() - (frame_size.height() - client_size.height()));
-
-    win->geometry_tip->setGeometry(geo);
-    if (!win->geometry_tip->isVisible()) {
-        win->geometry_tip->show();
-    }
-    win->geometry_tip->raise();
 }
 
 /**

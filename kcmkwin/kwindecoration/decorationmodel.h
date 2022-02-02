@@ -22,6 +22,7 @@
 
 #include "utils.h"
 
+#include <KDecoration2/DecorationThemeProvider>
 #include <QAbstractListModel>
 
 namespace KDecoration2
@@ -59,14 +60,7 @@ public Q_SLOTS:
     void init();
 
 private:
-    struct Data {
-        QString pluginName;
-        QString themeName;
-        QString visibleName;
-        bool configuration = false;
-        KDecoration2::BorderSize recommendedBorderSize = KDecoration2::BorderSize::Normal;
-    };
-    std::vector<Data> m_plugins;
+    std::vector<KDecoration2::DecorationThemeMetaData> m_plugins;
     QStringList m_knsProviders;
 };
 

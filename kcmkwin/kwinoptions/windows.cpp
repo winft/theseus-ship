@@ -39,7 +39,6 @@
 
 #include "windows.h"
 #include "kwinoptions_settings.h"
-#include <effect_builtins.h>
 #include <kwin_effects_interface.h>
 
 #include "kwinoptions_settings.h"
@@ -349,15 +348,6 @@ void KMovingConfig::save(void)
         QDBusMessage message =
             QDBusMessage::createSignal("/KWin", "org.kde.KWin", "reloadConfig");
         QDBusConnection::sessionBus().send(message);
-    }
-    // and reconfigure the effect
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
-    if (m_settings->geometryTip()) {
-        interface.loadEffect(KWin::BuiltInEffects::nameForEffect(KWin::BuiltInEffect::WindowGeometry));
-    } else {
-        interface.unloadEffect(KWin::BuiltInEffects::nameForEffect(KWin::BuiltInEffect::WindowGeometry));
     }
 }
 

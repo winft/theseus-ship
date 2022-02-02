@@ -30,12 +30,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QObject>
 #include <QPair>
 #include <QQueue>
+#include <QStaticPlugin>
 
 namespace KWin
 {
 class Effect;
 class EffectPluginFactory;
-enum class BuiltInEffect;
 
 namespace render
 {
@@ -63,7 +63,7 @@ enum class load_effect_flags {
  * (that is render::effects_handler_impl).
  *
  * The abstraction is used because there are multiple types of Effects which need to be loaded:
- * @li Built-In Effects
+ * @li Static Effects
  * @li Scripted Effects
  * @li Binary Plugin Effects
  *
@@ -282,32 +282,6 @@ private:
 };
 
 /**
- * @brief Can load the Built-In-Effects
- */
-class builtin_effect_loader : public basic_effect_loader
-{
-    Q_OBJECT
-public:
-    explicit builtin_effect_loader(QObject* parent = nullptr);
-    ~builtin_effect_loader() override;
-
-    bool hasEffect(const QString& name) const override;
-    bool isEffectSupported(const QString& name) const override;
-    QStringList listOfKnownEffects() const override;
-
-    void clear() override;
-    void queryAndLoadAll() override;
-    bool loadEffect(const QString& name) override;
-    bool loadEffect(BuiltInEffect effect, load_effect_flags flags);
-
-private:
-    bool loadEffect(const QString& name, BuiltInEffect effect, load_effect_flags load_flags);
-    QString internalName(const QString& name) const;
-    effect_load_queue<builtin_effect_loader, BuiltInEffect>* m_queue;
-    QMap<BuiltInEffect, Effect*> m_loadedEffects;
-};
-
-/**
  * @brief Can load scripted Effects
  */
 class KWIN_EXPORT scripted_effect_loader : public basic_effect_loader
@@ -357,12 +331,10 @@ private:
     KPluginMetaData findEffect(const QString& name) const;
     EffectPluginFactory* factory(const KPluginMetaData& info) const;
     QStringList m_loadedEffects;
-    effect_load_queue<plugin_effect_loader, KPluginMetaData>* m_queue;
     QString m_pluginSubDirectory;
-    QMetaObject::Connection m_queryConnection;
 };
 
-class effect_loader : public basic_effect_loader
+class KWIN_EXPORT effect_loader : public basic_effect_loader
 {
     Q_OBJECT
 public:

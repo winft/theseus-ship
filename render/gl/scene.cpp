@@ -66,17 +66,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <xcb/sync.h>
 
-// HACK: workaround for libepoxy < 1.3
-#ifndef GL_GUILTY_CONTEXT_RESET
-#define GL_GUILTY_CONTEXT_RESET 0x8253
-#endif
-#ifndef GL_INNOCENT_CONTEXT_RESET
-#define GL_INNOCENT_CONTEXT_RESET 0x8254
-#endif
-#ifndef GL_UNKNOWN_CONTEXT_RESET
-#define GL_UNKNOWN_CONTEXT_RESET 0x8255
-#endif
-
 namespace KWin::render::gl
 {
 
@@ -312,24 +301,7 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
         return;
     }
 
-    // perform Scene specific checks
     GLPlatform* glPlatform = GLPlatform::instance();
-    if (!glPlatform->isGLES()
-        && !hasGLExtension(QByteArrayLiteral("GL_ARB_texture_non_power_of_two"))
-        && !hasGLExtension(QByteArrayLiteral("GL_ARB_texture_rectangle"))) {
-        qCCritical(KWIN_CORE)
-            << "GL_ARB_texture_non_power_of_two and GL_ARB_texture_rectangle missing";
-        init_ok = false;
-        return; // error
-    }
-    if (glPlatform->isMesaDriver() && glPlatform->mesaVersion() < kVersionNumber(10, 0)) {
-        qCCritical(KWIN_CORE) << "KWin requires at least Mesa 10.0 for OpenGL compositing.";
-        init_ok = false;
-        return;
-    }
-
-    m_debug = qstrcmp(qgetenv("KWIN_GL_DEBUG"), "1") == 0;
-    initDebugOutput();
 
     // set strict binding
     if (options->isGlStrictBindingFollowsDriver()) {
@@ -361,29 +333,11 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
         return;
     }
 
-    auto const& s = compositor.platform.base.screens.size();
-    GLRenderTarget::setVirtualScreenSize(s);
-    GLRenderTarget::setVirtualScreenGeometry(compositor.platform.base.screens.geometry());
-
-    // push one shader on the stack so that one is always bound
-    ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
-    if (checkGLError("Init")) {
-        qCCritical(KWIN_CORE) << "OpenGL 2 compositing setup failed";
-        init_ok = false;
-        return;
-    }
-
     // It is not legal to not have a vertex array object bound in a core context
     if (!GLPlatform::instance()->isGLES()
         && hasGLExtension(QByteArrayLiteral("GL_ARB_vertex_array_object"))) {
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
-    }
-
-    if (!ShaderManager::instance()->selfTest()) {
-        qCCritical(KWIN_CORE) << "ShaderManager self test failed";
-        init_ok = false;
-        return;
     }
 
     qCDebug(KWIN_CORE) << "OpenGL 2 compositing successfully initialized";
@@ -407,89 +361,6 @@ scene::~scene()
     effect_frame::cleanup();
 
     delete m_syncManager;
-}
-
-void scene::initDebugOutput()
-{
-    const bool have_KHR_debug = hasGLExtension(QByteArrayLiteral("GL_KHR_debug"));
-    const bool have_ARB_debug = hasGLExtension(QByteArrayLiteral("GL_ARB_debug_output"));
-    if (!have_KHR_debug && !have_ARB_debug)
-        return;
-
-    if (!have_ARB_debug) {
-        // if we don't have ARB debug, but only KHR debug we need to verify whether the context is a
-        // debug context it should work without as well, but empirical tests show: no it doesn't
-        if (GLPlatform::instance()->isGLES()) {
-            if (!hasGLVersion(3, 2)) {
-                // empirical data shows extension doesn't work
-                return;
-            }
-        } else if (!hasGLVersion(3, 0)) {
-            return;
-        }
-        // can only be queried with either OpenGL >= 3.0 or OpenGL ES of at least 3.1
-        GLint value = 0;
-        glGetIntegerv(GL_CONTEXT_FLAGS, &value);
-        if (!(value & GL_CONTEXT_FLAG_DEBUG_BIT)) {
-            return;
-        }
-    }
-
-    // Set the callback function
-    auto callback = [](GLenum source,
-                       GLenum type,
-                       GLuint id,
-                       GLenum severity,
-                       GLsizei length,
-                       const GLchar* message,
-                       const GLvoid* userParam) {
-        Q_UNUSED(source)
-        Q_UNUSED(severity)
-        Q_UNUSED(userParam)
-        while (length && std::isspace(message[length - 1])) {
-            --length;
-        }
-
-        switch (type) {
-        case GL_DEBUG_TYPE_ERROR:
-        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-            qCWarning(KWIN_CORE, "%#x: %.*s", id, length, message);
-            break;
-
-        case GL_DEBUG_TYPE_OTHER:
-        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-        case GL_DEBUG_TYPE_PORTABILITY:
-        case GL_DEBUG_TYPE_PERFORMANCE:
-        default:
-            qCDebug(KWIN_CORE, "%#x: %.*s", id, length, message);
-            break;
-        }
-    };
-
-    glDebugMessageCallback(callback, nullptr);
-
-    // This state exists only in GL_KHR_debug
-    if (have_KHR_debug)
-        glEnable(GL_DEBUG_OUTPUT);
-
-#if !defined(QT_NO_DEBUG)
-    // Enable all debug messages
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-#else
-    // Enable error messages
-    glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-    glDebugMessageControl(
-        GL_DONT_CARE, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-#endif
-
-    // Insert a test message
-    const QByteArray message = QByteArrayLiteral("OpenGL debug output initialized");
-    glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION,
-                         GL_DEBUG_TYPE_OTHER,
-                         0,
-                         GL_DEBUG_SEVERITY_LOW,
-                         message.length(),
-                         message.constData());
 }
 
 CompositingType scene::compositingType() const
@@ -645,6 +516,7 @@ int64_t scene::paint(QRegion damage,
 
     m_backend->makeCurrent();
     auto const repaint = m_backend->prepareRenderingFrame();
+    GLVertexBuffer::streamingBuffer()->beginFrame();
 
     GLenum const status = glGetGraphicsResetStatus();
     if (status != GL_NO_ERROR) {
@@ -679,7 +551,6 @@ int64_t scene::paint(QRegion damage,
 
     GLVertexBuffer::streamingBuffer()->endOfFrame();
     m_backend->endRenderingFrame(valid, update);
-    GLVertexBuffer::streamingBuffer()->framePosted();
 
     if (m_currentFence) {
         if (!m_syncManager->updateFences()) {
@@ -707,6 +578,7 @@ int64_t scene::paint_output(base::output* output,
 
     // Makes context current on the output.
     auto const repaint = m_backend->prepareRenderingForScreen(output);
+    GLVertexBuffer::streamingBuffer()->beginFrame();
 
     auto const geo = output->geometry();
     auto const scaling = output->scale();
@@ -736,10 +608,6 @@ int64_t scene::paint_output(base::output* output,
 
     GLVertexBuffer::streamingBuffer()->endOfFrame();
     m_backend->endRenderingFrameForScreen(output, valid, update);
-
-    m_backend->makeCurrent();
-    GLVertexBuffer::streamingBuffer()->framePosted();
-    m_backend->doneCurrent();
 
     clearStackingOrder();
     repaint_output = nullptr;
@@ -1083,13 +951,6 @@ void scene::performPaintWindow(effects_window_impl* w,
     if (flags(mask & paint_type::window_lanczos)) {
         if (!lanczos) {
             lanczos = new lanczos_filter(this);
-            // reset the lanczos filter when the screen gets resized
-            // it will get created next paint
-            connect(&compositor.platform.base.screens, &Screens::changed, this, [this]() {
-                makeOpenGLContextCurrent();
-                delete lanczos;
-                lanczos = nullptr;
-            });
         }
         lanczos->performPaint(w, mask, region, data);
     } else

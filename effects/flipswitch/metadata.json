@@ -1,0 +1,14 @@
+{
+    "KPlugin": {
+        "Category": "Virtual Desktop Switching Animation",
+        "Description": "Flip through windows that are in a stack for the alt+tab window switcher",
+        "EnabledByDefault": false,
+        "Id": "flipswitch",
+        "License": "GPL",
+        "Name": "Flip Switch"
+    },
+    "X-KDE-ConfigModule": "kwin_flipswitch_config",
+    "org.kde.kwin.effect": {
+        "video": "https://files.kde.org/plasma/kwin/effect-videos/flip_switch.mp4"
+    }
+}

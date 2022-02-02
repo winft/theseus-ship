@@ -26,7 +26,6 @@
 #include <KConfigGroup>
 #include <KCrash>
 #include <KLocalizedString>
-#include <KPluginLoader>
 #include <KPluginMetaData>
 #include <KSelectionOwner>
 #include <KQuickAddons/QtQuickSettings>

@@ -19,7 +19,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "main.h"
-#include <effect_builtins.h>
 #include <kwin_effects_interface.h>
 
 // Qt
@@ -39,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KLocalizedString>
 #include <KPluginFactory>
 #include <KTitleWidget>
-#include <KNewStuff3/KNS3/QtQuickDialogWrapper>
+#include <KNS3/Button>
 // Plasma
 #include <KPackage/Package>
 #include <KPackage/PackageLoader>
@@ -70,8 +69,12 @@ KWinTabBoxConfig::KWinTabBoxConfig(QWidget* parent, const QVariantList& args)
     tabWidget->addTab(m_primaryTabBoxUi, i18n("Main"));
     tabWidget->addTab(m_alternativeTabBoxUi, i18n("Alternative"));
 
-    QPushButton* ghnsButton = new QPushButton(QIcon::fromTheme(QStringLiteral("get-hot-new-stuff")), i18n("Get New Task Switchers..."));
-    connect(ghnsButton, &QAbstractButton::clicked, this, &KWinTabBoxConfig::slotGHNS);
+    KNS3::Button *ghnsButton = new KNS3::Button(i18n("Get New Task Switchers..."), QStringLiteral("kwinswitcher.knsrc"), this);
+    connect(ghnsButton, &KNS3::Button::dialogFinished, this, [this] (auto changedEntries) {
+        if (!changedEntries.isEmpty()) {
+            initLayoutLists();
+        }
+    });
 
     QHBoxLayout* buttonBar = new QHBoxLayout();
     QSpacerItem* buttonBarSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
@@ -147,8 +150,8 @@ static QList<KPackage::Package> availableLnFPackages()
 void KWinTabBoxConfig::initLayoutLists()
 {
     // search the effect names
-    m_coverSwitch = BuiltInEffects::effectData(BuiltInEffect::CoverSwitch).name;
-    m_flipSwitch = BuiltInEffects::effectData(BuiltInEffect::FlipSwitch).name;
+    m_coverSwitch = "coverswitch";
+    m_flipSwitch = "flipswitch";
 
     QList<KPluginMetaData> offers = KPackage::PackageLoader::self()->listPackages("KWin/WindowSwitcher");
     QStringList layoutNames, layoutPlugins, layoutPaths;
@@ -188,12 +191,12 @@ void KWinTabBoxConfig::initLayoutLists()
     for (int i=0; i<2; ++i) {
         QStandardItemModel *model = new QStandardItemModel;
 
-        QStandardItem *coverItem = new QStandardItem(BuiltInEffects::effectData(BuiltInEffect::CoverSwitch).displayName);
+        QStandardItem *coverItem = new QStandardItem("Cover Switch");
         coverItem->setData(m_coverSwitch, Qt::UserRole);
         coverItem->setData(false, KWinTabBoxConfigForm::AddonEffect);
         model->appendRow(coverItem);
 
-        QStandardItem *flipItem = new QStandardItem(BuiltInEffects::effectData(BuiltInEffect::FlipSwitch).displayName);
+        QStandardItem *flipItem = new QStandardItem("Flip Switch");
         flipItem->setData(m_flipSwitch, Qt::UserRole);
         flipItem->setData(false, KWinTabBoxConfigForm::AddonEffect);
         model->appendRow(flipItem);
@@ -379,8 +382,8 @@ void KWinTabBoxConfig::save()
     OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
                                              QStringLiteral("/Effects"),
                                              QDBusConnection::sessionBus());
-    interface.reconfigureEffect(BuiltInEffects::nameForEffect(BuiltInEffect::CoverSwitch));
-    interface.reconfigureEffect(BuiltInEffects::nameForEffect(BuiltInEffect::FlipSwitch));
+    interface.reconfigureEffect("coverswitch");
+    interface.reconfigureEffect("flipswitch");
 }
 
 void KWinTabBoxConfig::defaults()
@@ -438,68 +441,9 @@ void KWinTabBoxConfig::configureEffectClicked()
 
     if (form->effectComboCurrentData(KWinTabBoxConfigForm::AddonEffect).toBool()) {
         // Show the preview for addon effect
-        new LayoutPreview(form->effectComboCurrentData(KWinTabBoxConfigForm::LayoutPath).toString(), this);
-    } else {
-        // For builtin effect, display a configuration dialog
-        QPointer<QDialog> configDialog = new QDialog(this);
-        configDialog->setLayout(new QVBoxLayout);
-        configDialog->setWindowTitle(form->effectComboCurrentData(Qt::DisplayRole).toString());
-        QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel|QDialogButtonBox::RestoreDefaults, configDialog);
-        connect(buttonBox, &QDialogButtonBox::accepted, configDialog.data(), &QDialog::accept);
-        connect(buttonBox, &QDialogButtonBox::rejected, configDialog.data(), &QDialog::reject);
-
-        const QString name = form->effectComboCurrentData().toString();
-
-        auto filter = [name](const KPluginMetaData &md) -> bool
-        {
-            const QStringList parentComponents = KPluginMetaData::readStringList(md.rawData(), QStringLiteral("X-KDE-ParentComponents"));
-            return parentComponents.contains(name);
-        };
-
-        const QVector<KPluginMetaData> plugins = KPluginLoader::findPlugins(QStringLiteral("kwin/effects/configs/"), filter);
-
-        if (plugins.isEmpty()) {
-            delete configDialog;
-            return;
-        }
-
-        KCModule *kcm = nullptr;
-
-        KPluginLoader loader(plugins.first().fileName());
-        KPluginFactory *factory = loader.factory();
-        if (!factory) {
-            qWarning() << "Error loading plugin:" << loader.errorString();
-        } else {
-            kcm = factory->create<KCModule>(configDialog);
-        }
-
-        if (!kcm) {
-            delete configDialog;
-            return;
-        }
-
-        connect(buttonBox->button(QDialogButtonBox::RestoreDefaults), &QPushButton::clicked, kcm, &KCModule::defaults);
-
-        QWidget *showWidget = new QWidget(configDialog);
-        QVBoxLayout *layout = new QVBoxLayout;
-        showWidget->setLayout(layout);
-        layout->addWidget(kcm);
-        configDialog->layout()->addWidget(showWidget);
-        configDialog->layout()->addWidget(buttonBox);
-
-        if (configDialog->exec() == QDialog::Accepted) {
-            kcm->save();
-        } else {
-            kcm->load();
-        }
-        delete configDialog;
-    }
-}
-
-void KWinTabBoxConfig::slotGHNS()
-{
-    if (!KNS3::QtQuickDialogWrapper("kwinswitcher.knsrc").exec().isEmpty()) {
-        initLayoutLists();
+        new LayoutPreview(form->effectComboCurrentData(KWinTabBoxConfigForm::LayoutPath).toString(),
+                          form->showDesktopMode(),
+                          this);
     }
 }
 

@@ -2,6 +2,13 @@
 # Effect
 
 # Source files
-set(kwin4_effect_builtins_sources ${kwin4_effect_builtins_sources}
-    fallapart/fallapart.cpp
+set(fallapart_SOURCES
+    fallapart.cpp
+    main.cpp
 )
+
+kconfig_add_kcfg_files(fallapart_SOURCES
+    fallapartconfig.kcfgc
+)
+
+kwin4_add_effect_module(kwin4_effect_fallapart ${fallapart_SOURCES})
