@@ -141,6 +141,31 @@ public:
         return false;
     }
 
+    bool pinch_begin(pinch_begin_event const& event) override
+    {
+        if (event.fingers >= 3) {
+            this->redirect.platform.shortcuts->processPinchStart(event.fingers);
+        }
+        return false;
+    }
+
+    bool pinch_update(pinch_update_event const& event) override
+    {
+        this->redirect.platform.shortcuts->processPinchUpdate(
+            event.scale, event.rotation, QSizeF(event.delta.x(), event.delta.y()));
+        return false;
+    }
+
+    bool pinch_end(pinch_end_event const& event) override
+    {
+        if (event.cancelled) {
+            this->redirect.platform.shortcuts->processPinchCancel();
+        } else {
+            this->redirect.platform.shortcuts->processPinchEnd();
+        }
+        return false;
+    }
+
 private:
     QTimer* m_powerDown = nullptr;
 };

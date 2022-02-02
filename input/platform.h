@@ -98,11 +98,42 @@ void platform_register_axis_shortcut(Platform& platform,
 }
 
 template<typename Platform>
+void platform_register_realtime_touchpad_swipe_shortcut(Platform& platform,
+                                                        SwipeDirection direction,
+                                                        uint fingerCount,
+                                                        QAction* action,
+                                                        std::function<void(qreal)> cb)
+{
+    platform.shortcuts->registerRealtimeTouchpadSwipe(action, cb, direction, fingerCount);
+}
+
+template<typename Platform>
 void platform_register_touchpad_swipe_shortcut(Platform& platform,
                                                SwipeDirection direction,
+                                               uint fingerCount,
                                                QAction* action)
 {
-    platform.shortcuts->registerTouchpadSwipe(action, direction);
+    platform.shortcuts->registerTouchpadSwipe(action, direction, fingerCount);
+}
+
+template<typename Platform>
+void platform_register_touchpad_pinch_shortcut(Platform& platform,
+                                               PinchDirection direction,
+                                               uint fingerCount,
+                                               QAction* action)
+{
+    platform.shortcuts->registerTouchpadPinch(action, direction, fingerCount);
+}
+
+template<typename Platform>
+void platform_register_realtime_touchpad_pinch_shortcut(Platform& platform,
+                                                        PinchDirection direction,
+                                                        uint fingerCount,
+                                                        QAction* onUp,
+                                                        std::function<void(qreal)> progressCallback)
+{
+    platform.shortcuts->registerRealtimeTouchpadPinch(
+        onUp, progressCallback, direction, fingerCount);
 }
 
 template<typename Platform>

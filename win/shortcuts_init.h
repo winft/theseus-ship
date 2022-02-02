@@ -124,14 +124,15 @@ void shortcuts_init_virtual_desktops(Space& space)
                                                  QStringLiteral("Switch to Next Desktop"),
                                                  i18n("Switch to Next Desktop"),
                                                  [manager] { manager->slotNext(); });
-    input::platform_register_touchpad_swipe_shortcut(input, SwipeDirection::Right, nextAction);
+    input::platform_register_touchpad_swipe_shortcut(input, SwipeDirection::Right, 4, nextAction);
 
     auto previousAction = add_virtual_desktop_action(*manager,
                                                      input,
                                                      QStringLiteral("Switch to Previous Desktop"),
                                                      i18n("Switch to Previous Desktop"),
                                                      [manager] { manager->slotPrevious(); });
-    input::platform_register_touchpad_swipe_shortcut(input, SwipeDirection::Left, previousAction);
+    input::platform_register_touchpad_swipe_shortcut(
+        input, SwipeDirection::Left, 4, previousAction);
 
     add_virtual_desktop_action(*manager,
                                input,

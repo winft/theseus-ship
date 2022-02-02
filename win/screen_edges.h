@@ -99,9 +99,9 @@ public:
             [this] {
                 if (reserved_count > 0) {
                     if (activatesForTouchGesture()) {
-                        this->edger->gesture_recognizer->registerGesture(gesture.get());
+                        this->edger->gesture_recognizer->registerSwipeGesture(gesture.get());
                     } else {
-                        this->edger->gesture_recognizer->unregisterGesture(gesture.get());
+                        this->edger->gesture_recognizer->unregisterSwipeGesture(gesture.get());
                     }
                 }
             });
@@ -586,14 +586,14 @@ private:
     void activate()
     {
         if (activatesForTouchGesture()) {
-            edger->gesture_recognizer->registerGesture(gesture.get());
+            edger->gesture_recognizer->registerSwipeGesture(gesture.get());
         }
         doActivate();
     }
 
     void deactivate()
     {
-        edger->gesture_recognizer->unregisterGesture(gesture.get());
+        edger->gesture_recognizer->unregisterSwipeGesture(gesture.get());
         doDeactivate();
     }
 

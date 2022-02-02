@@ -59,8 +59,12 @@ bool global_shortcuts_manager::addIfNotExists(global_shortcut sc)
         }
     }
 
-    if (std::holds_alternative<FourFingerSwipeShortcut>(sc.shortcut())) {
-        m_gestureRecognizer->registerGesture(sc.swipeGesture());
+    if (std::holds_alternative<SwipeShortcut>(sc.shortcut())
+        || std::holds_alternative<RealtimeFeedbackSwipeShortcut>(sc.shortcut())) {
+        m_gestureRecognizer->registerSwipeGesture(sc.swipeGesture());
+    } else if (std::holds_alternative<PinchShortcut>(sc.shortcut())
+               || std::holds_alternative<RealtimeFeedbackPinchShortcut>(sc.shortcut())) {
+        m_gestureRecognizer->registerPinchGesture(sc.pinchGesture());
     }
     QObject::connect(
         sc.action(), &QAction::destroyed, this, &global_shortcuts_manager::objectDeleted);
@@ -82,9 +86,38 @@ void global_shortcuts_manager::registerAxisShortcut(QAction* action,
     addIfNotExists(global_shortcut(PointerAxisShortcut{modifiers, axis}, action));
 }
 
-void global_shortcuts_manager::registerTouchpadSwipe(QAction* action, SwipeDirection direction)
+void global_shortcuts_manager::registerTouchpadSwipe(QAction* action,
+                                                     SwipeDirection direction,
+                                                     uint fingerCount)
 {
-    addIfNotExists(global_shortcut(FourFingerSwipeShortcut{direction}, action));
+    addIfNotExists(global_shortcut(SwipeShortcut{direction, fingerCount}, action));
+}
+
+void global_shortcuts_manager::registerRealtimeTouchpadSwipe(
+    QAction* action,
+    std::function<void(qreal)> progressCallback,
+    SwipeDirection direction,
+    uint fingerCount)
+{
+    addIfNotExists(global_shortcut(
+        RealtimeFeedbackSwipeShortcut{direction, progressCallback, fingerCount}, action));
+}
+
+void global_shortcuts_manager::registerTouchpadPinch(QAction* action,
+                                                     PinchDirection direction,
+                                                     uint fingerCount)
+{
+    addIfNotExists(global_shortcut(PinchShortcut{direction, fingerCount}, action));
+}
+
+void global_shortcuts_manager::registerRealtimeTouchpadPinch(
+    QAction* onUp,
+    std::function<void(qreal)> progressCallback,
+    PinchDirection direction,
+    uint fingerCount)
+{
+    addIfNotExists(global_shortcut(
+        RealtimeFeedbackPinchShortcut{direction, progressCallback, fingerCount}, onUp));
 }
 
 bool global_shortcuts_manager::processKey(Qt::KeyboardModifiers mods, int keyQt)
@@ -179,6 +212,28 @@ void global_shortcuts_manager::processSwipeEnd()
 {
     m_gestureRecognizer->endSwipeGesture();
     // TODO: cancel on Wayland Seat if one triggered
+}
+
+void global_shortcuts_manager::processPinchStart(uint fingerCount)
+{
+    m_gestureRecognizer->startPinchGesture(fingerCount);
+}
+
+void global_shortcuts_manager::processPinchUpdate(qreal scale,
+                                                  qreal angleDelta,
+                                                  QSizeF const& delta)
+{
+    m_gestureRecognizer->updatePinchGesture(scale, angleDelta, delta);
+}
+
+void global_shortcuts_manager::processPinchCancel()
+{
+    m_gestureRecognizer->cancelPinchGesture();
+}
+
+void global_shortcuts_manager::processPinchEnd()
+{
+    m_gestureRecognizer->endPinchGesture();
 }
 
 }

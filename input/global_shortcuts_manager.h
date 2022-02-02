@@ -58,7 +58,19 @@ public:
                               Qt::KeyboardModifiers modifiers,
                               PointerAxisDirection axis);
 
-    void registerTouchpadSwipe(QAction* action, SwipeDirection direction);
+    void registerTouchpadSwipe(QAction* action, SwipeDirection direction, uint fingerCount = 4);
+
+    void registerRealtimeTouchpadSwipe(QAction* onUp,
+                                       std::function<void(qreal)> progressCallback,
+                                       SwipeDirection direction,
+                                       uint fingerCount = 4);
+
+    void registerTouchpadPinch(QAction* action, PinchDirection direction, uint fingerCount = 4);
+
+    void registerRealtimeTouchpadPinch(QAction* onUp,
+                                       std::function<void(qreal)> progressCallback,
+                                       PinchDirection direction,
+                                       uint fingerCount = 4);
 
     /**
      * @brief Processes a key event to decide whether a shortcut needs to be triggered.
@@ -91,6 +103,11 @@ public:
     void processSwipeUpdate(const QSizeF& delta);
     void processSwipeCancel();
     void processSwipeEnd();
+
+    void processPinchStart(uint fingerCount);
+    void processPinchUpdate(qreal scale, qreal angleDelta, const QSizeF& delta);
+    void processPinchCancel();
+    void processPinchEnd();
 
     void setKGlobalAccelInterface(KGlobalAccelInterface* interface)
     {

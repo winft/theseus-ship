@@ -92,7 +92,7 @@ PresentWindowsEffect::PresentWindowsEffect()
 
     shortcutAll = KGlobalAccel::self()->shortcut(exposeAllAction);
     effects->registerGlobalShortcut(static_cast<Qt::Key>(Qt::CTRL) + Qt::Key_F10, exposeAllAction);
-    effects->registerTouchpadSwipeShortcut(SwipeDirection::Down, exposeAllAction);
+    effects->registerTouchpadSwipeShortcut(SwipeDirection::Down, 4, exposeAllAction);
     connect(
         exposeAllAction, &QAction::triggered, this, &PresentWindowsEffect::toggleActiveAllDesktops);
 

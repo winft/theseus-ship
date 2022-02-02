@@ -676,10 +676,38 @@ public:
             *compositor.platform.base.input, modifiers, axis, action);
     }
 
-    void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action) override
+    void registerRealtimeTouchpadSwipeShortcut(SwipeDirection dir,
+                                               uint fingerCount,
+                                               QAction* onUp,
+                                               std::function<void(qreal)> progressCallback) override
+    {
+        input::platform_register_realtime_touchpad_swipe_shortcut(
+            *compositor.platform.base.input, dir, fingerCount, onUp, progressCallback);
+    }
+
+    void registerTouchpadSwipeShortcut(SwipeDirection direction,
+                                       uint fingerCount,
+                                       QAction* action) override
     {
         input::platform_register_touchpad_swipe_shortcut(
-            *compositor.platform.base.input, direction, action);
+            *compositor.platform.base.input, direction, fingerCount, action);
+    }
+
+    void registerRealtimeTouchpadPinchShortcut(PinchDirection dir,
+                                               uint fingerCount,
+                                               QAction* onUp,
+                                               std::function<void(qreal)> progressCallback) override
+    {
+        input::platform_register_realtime_touchpad_pinch_shortcut(
+            *compositor.platform.base.input, dir, fingerCount, onUp, progressCallback);
+    }
+
+    void registerTouchpadPinchShortcut(PinchDirection direction,
+                                       uint fingerCount,
+                                       QAction* action) override
+    {
+        input::platform_register_touchpad_pinch_shortcut(
+            *compositor.platform.base.input, direction, fingerCount, action);
     }
 
     void startMousePolling() override
