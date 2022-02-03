@@ -6,13 +6,13 @@
 #pragma once
 
 #include "color_mapper.h"
+#include "moving_window_filter.h"
 #include "space_event.h"
 #include "sync_alarm_filter.h"
 
 #include "atoms.h"
 #include "base/x11/user_interaction_filter.h"
 #include "main.h"
-#include "moving_client_x11_filter.h"
 #include "utils.h"
 
 #include <KStartupInfo>
