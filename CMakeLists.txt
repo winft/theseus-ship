@@ -497,7 +497,6 @@ set(kwin_SRCS
     toplevel.cpp
     useractions.cpp
     utils.cpp
-    was_user_interaction_x11_filter.cpp
     win/app_menu.cpp
     win/control.cpp
     win/dbus/virtual_desktop_manager.cpp

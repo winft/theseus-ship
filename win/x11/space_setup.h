@@ -68,7 +68,7 @@ void init_space(Space& space)
                         &data);
 
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        space.m_wasUserInteractionFilter.reset(new WasUserInteractionX11Filter);
+        space.m_wasUserInteractionFilter.reset(new base::x11::user_interaction_filter);
         space.m_movingClientFilter.reset(new MovingClientX11Filter);
     }
     if (Xcb::Extensions::self()->isSyncAvailable()) {
