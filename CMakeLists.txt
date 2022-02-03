@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(KWinFT)
-set(PROJECT_VERSION "5.23.80")
+set(PROJECT_VERSION "5.23.90")
 set(PROJECT_VERSION_MAJOR 5)
 
 set(CMAKE_C_STANDARD 99)
