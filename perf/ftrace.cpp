@@ -33,22 +33,22 @@ namespace Ftrace
 {
 
 #if HAVE_PERF
-void mark(const QString &message)
+void mark(const QString& message)
 {
     FtraceImpl::self()->print(message);
 }
-void begin(const QString &message, ulong ctx)
+void begin(const QString& message, ulong ctx)
 {
     FtraceImpl::self()->printBegin(message, ctx);
 }
-void end(const QString &message, ulong ctx)
+void end(const QString& message, ulong ctx)
 {
     FtraceImpl::self()->printEnd(message, ctx);
 }
 
-bool valid(QObject *parent, bool create)
+bool valid(QObject* parent, bool create)
 {
-    if(FtraceImpl::self()) {
+    if (FtraceImpl::self()) {
         return true;
     }
     if (!create) {
@@ -62,22 +62,22 @@ bool setEnabled(bool enable)
     return FtraceImpl::self()->setEnabled(enable);
 }
 #else
-void mark(const QString &message)
+void mark(const QString& message)
 {
     Q_UNUSED(message)
 }
-void begin(const QString &message, ulong ctx)
+void begin(const QString& message, ulong ctx)
 {
     Q_UNUSED(message)
     Q_UNUSED(ctx)
 }
-void end(const QString &message, ulong ctx)
+void end(const QString& message, ulong ctx)
 {
     Q_UNUSED(message)
     Q_UNUSED(ctx)
 }
 
-bool valid(QObject *parent, bool create)
+bool valid(QObject* parent, bool create)
 {
     Q_UNUSED(parent)
     Q_UNUSED(create)

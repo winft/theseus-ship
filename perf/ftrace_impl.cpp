@@ -29,24 +29,23 @@ namespace KWin
 namespace Perf
 {
 
-void writeFunctionEnabled(QFile *file, const QString &message)
+void writeFunctionEnabled(QFile* file, const QString& message)
 {
     file->write(message.toLatin1());
     file->flush();
 }
 
-void writeFunctionDisabled(QFile *file, const QString &message)
+void writeFunctionDisabled(QFile* file, const QString& message)
 {
     Q_UNUSED(file)
     Q_UNUSED(message)
 }
 
-void (*s_writeFunction)(QFile *file, const QString &message) = writeFunctionDisabled;
-
+void (*s_writeFunction)(QFile* file, const QString& message) = writeFunctionDisabled;
 
 KWIN_SINGLETON_FACTORY(FtraceImpl)
 
-FtraceImpl::FtraceImpl(QObject *parent)
+FtraceImpl::FtraceImpl(QObject* parent)
     : QObject(parent)
 {
     if (qEnvironmentVariableIsSet("KWIN_PERF_FTRACE")) {
@@ -63,7 +62,8 @@ bool FtraceImpl::setEnabled(bool enable)
     }
     if (enable) {
         if (!findFile()) {
-            qCWarning(KWIN_PERF) << "Ftrace marking not available. Try reenabling after issue is solved.";
+            qCWarning(KWIN_PERF)
+                << "Ftrace marking not available. Try reenabling after issue is solved.";
             return false;
         }
         s_writeFunction = writeFunctionEnabled;
@@ -75,17 +75,17 @@ bool FtraceImpl::setEnabled(bool enable)
     return true;
 }
 
-void FtraceImpl::print(const QString &message)
+void FtraceImpl::print(const QString& message)
 {
     (*s_writeFunction)(m_file, message);
 }
 
-void FtraceImpl::printBegin(const QString &message, ulong ctx)
+void FtraceImpl::printBegin(const QString& message, ulong ctx)
 {
     (*s_writeFunction)(m_file, message + QStringLiteral(" (begin_ctx=%1)").arg(ctx));
 }
 
-void FtraceImpl::printEnd(const QString &message, ulong ctx)
+void FtraceImpl::printEnd(const QString& message, ulong ctx)
 {
     (*s_writeFunction)(m_file, message + QStringLiteral(" (end_ctx=%1)").arg(ctx));
 }
@@ -95,11 +95,11 @@ bool FtraceImpl::findFile()
     QFile mountsFile("/proc/mounts");
     if (!mountsFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qCWarning(KWIN_PERF)
-                << "No access to mounts file. Can not determine trace marker file location.";
+            << "No access to mounts file. Can not determine trace marker file location.";
         return false;
     }
 
-    auto lineInfo = [](const QString &line) {
+    auto lineInfo = [](const QString& line) {
         const int start = line.indexOf(' ') + 1;
         const int end = line.indexOf(' ', start);
         const QString dirPath(line.mid(start, end - start));
@@ -114,7 +114,7 @@ bool FtraceImpl::findFile()
 
     const QString name1("tracefs");
     const QString name2("debugfs");
-    auto nameCompare = [](const QString &line, const QString &name) {
+    auto nameCompare = [](const QString& line, const QString& name) {
         const auto lineSplit = line.split(' ');
         if (lineSplit.size() <= 2) {
             return false;

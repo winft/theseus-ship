@@ -31,7 +31,7 @@ namespace Perf
 /**
  * Provides an interface to mark the Ftrace output for debugging.
  */
-class FtraceImpl: public QObject
+class FtraceImpl : public QObject
 {
     Q_OBJECT
 public:
@@ -44,14 +44,14 @@ public:
      * @return True if setting enablement succeeded, else false
      */
     bool setEnabled(bool enable);
-    void print(const QString &message);
-    void printBegin(const QString &message, ulong ctx);
-    void printEnd(const QString &message, ulong ctx);
+    void print(const QString& message);
+    void printBegin(const QString& message, ulong ctx);
+    void printEnd(const QString& message, ulong ctx);
 
 private:
     bool findFile();
 
-    QFile *m_file = nullptr;
+    QFile* m_file = nullptr;
 
     KWIN_SINGLETON(FtraceImpl)
 };
