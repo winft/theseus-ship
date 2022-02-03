@@ -445,7 +445,6 @@ set(kwin_SRCS
     input/xkb/manager.cpp
     killwindow.cpp
     main.cpp
-    moving_client_x11_filter.cpp
     onscreennotification.cpp
     options.cpp
     osd.cpp

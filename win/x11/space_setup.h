@@ -70,7 +70,7 @@ void init_space(Space& space)
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
         space.m_wasUserInteractionFilter.reset(
             new base::x11::user_interaction_filter([&space] { space.setWasUserInteraction(); }));
-        space.m_movingClientFilter.reset(new MovingClientX11Filter);
+        space.m_movingClientFilter.reset(new moving_window_filter(space));
     }
     if (Xcb::Extensions::self()->isSyncAvailable()) {
         space.m_syncAlarmFilter.reset(new sync_alarm_filter);
