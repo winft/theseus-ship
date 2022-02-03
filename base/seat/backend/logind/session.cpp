@@ -6,7 +6,7 @@
 */
 #include "session.h"
 
-#include "../utils.h"
+#include "../../../../utils.h"
 
 #include <QCoreApplication>
 #include <QDBusConnectionInterface>
@@ -50,7 +50,7 @@ const QDBusArgument& operator>>(const QDBusArgument& argument, DBusLogindSeat& s
 
 Q_DECLARE_METATYPE(DBusLogindSeat)
 
-namespace KWin::seat::backend::logind
+namespace KWin::base::seat::backend::logind
 {
 
 static QString const s_login1Name = QStringLiteral("logind");
@@ -72,7 +72,7 @@ static QString const s_ck2ActiveProperty = QStringLiteral("active");
 static QString const s_dbusPropertiesInterface = QStringLiteral("org.freedesktop.DBus.Properties");
 
 session::session(QDBusConnection const& connection)
-    : KWin::seat::session()
+    : seat::session()
     , m_bus(connection)
     , m_connected(false)
     , m_sessionControl(false)

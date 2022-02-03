@@ -26,11 +26,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../input/wayland/redirect.h"
 #include "../../render/wayland/compositor.h"
 #include "../../screenlockerwatcher.h"
-#include "../../seat/backend/wlroots/session.h"
 #include "../../wayland_server.h"
 #include "../../win/wayland/space.h"
 #include "../../xcbutils.h"
 #include "../../xwl/xwayland.h"
+#include "base/seat/backend/wlroots/session.h"
 #include "debug/console/wayland/wayland_console.h"
 #include "render/backend/wlroots/output.h"
 #include "render/effects.h"
@@ -166,7 +166,7 @@ void WaylandTestApplication::start()
 
     createOptions();
 
-    session = std::make_unique<seat::backend::wlroots::session>(headless_backend);
+    session = std::make_unique<base::seat::backend::wlroots::session>(headless_backend);
 
     input = std::make_unique<input::backend::wlroots::platform>(base);
     input::wayland::add_dbus(input.get());

@@ -6,13 +6,13 @@
 */
 #pragma once
 
-#include "../../session.h"
+#include "base/seat/session.h"
 
 #include <QDBusConnection>
 
 class QDBusServiceWatcher;
 
-namespace KWin::seat::backend::logind
+namespace KWin::base::seat::backend::logind
 {
 
 class KWIN_EXPORT session : public seat::session

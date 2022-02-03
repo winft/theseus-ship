@@ -17,6 +17,5 @@ python <(curl -s $RUN_SCRIPT_URL) -r \
     ${SOURCE_DIR}/render \
     ${SOURCE_DIR}/rules \
     ${SOURCE_DIR}/scripting \
-    ${SOURCE_DIR}/seat \
     ${SOURCE_DIR}/utils \
     ${SOURCE_DIR}/xwl

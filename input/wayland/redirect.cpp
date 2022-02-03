@@ -42,8 +42,8 @@
 #include "input/filters/window_selector.h"
 #include "input/spies/touch_hide_cursor.h"
 
+#include "base/seat/session.h"
 #include "main.h"
-#include "seat/session.h"
 #include "wayland_server.h"
 
 #include <Wrapland/Server/display.h>

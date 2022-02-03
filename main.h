@@ -47,18 +47,18 @@ class console;
 namespace base
 {
 
-class platform;
+namespace seat
+{
+class session;
+}
 
 namespace x11
 {
 class event_filter_manager;
 }
 
-}
+class platform;
 
-namespace seat
-{
-class session;
 }
 
 class WaylandServer;
@@ -95,7 +95,7 @@ public:
         OperationModeXwayland
     };
 
-    std::unique_ptr<seat::session> session;
+    std::unique_ptr<base::seat::session> session;
     std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<input::platform> input;
 

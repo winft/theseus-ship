@@ -5,7 +5,7 @@
 */
 #include "session.h"
 
-namespace KWin::seat
+namespace KWin::base::seat
 {
 
 session::session()

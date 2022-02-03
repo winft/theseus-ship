@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "../../session.h"
+#include "base/seat/session.h"
 #include "base/utils.h"
 
 #include <vector>
@@ -15,7 +15,7 @@ struct wlr_backend;
 struct wlr_device;
 struct wlr_session;
 
-namespace KWin::seat::backend::wlroots
+namespace KWin::base::seat::backend::wlroots
 {
 
 class session;
@@ -24,8 +24,8 @@ class KWIN_EXPORT session : public seat::session
 {
     Q_OBJECT
 public:
-    base::event_receiver<session> active_changed;
-    base::event_receiver<session> destroyed;
+    event_receiver<session> active_changed;
+    event_receiver<session> destroyed;
     wlr_session* native{nullptr};
     std::vector<wlr_device*> taken_devices;
 

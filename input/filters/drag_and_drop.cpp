@@ -9,7 +9,6 @@
 #include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
-#include "seat/session.h"
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "workspace.h"

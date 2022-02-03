@@ -10,6 +10,7 @@
 
 #include <config-kwin.h>
 
+#include "base/seat/backend/logind/session.h"
 #include "base/x11/xcb_event_filter.h"
 #include "debug/console/x11/x11_console.h"
 #include "input/x11/platform.h"
@@ -17,7 +18,6 @@
 #include "render/x11/compositor.h"
 #include "screenlockerwatcher.h"
 #include "scripting/platform.h"
-#include "seat/backend/logind/session.h"
 #include "sm.h"
 #include "win/x11/space.h"
 #include "workspace.h"
@@ -245,7 +245,7 @@ void ApplicationX11::start()
                 ::exit(1);
         }
 
-        session.reset(new seat::backend::logind::session());
+        session.reset(new base::seat::backend::logind::session());
 
         auto input = new input::x11::platform;
         this->input.reset(input);

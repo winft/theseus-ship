@@ -22,13 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 
 #include "base/backend/wlroots/platform.h"
+#include "base/seat/backend/wlroots/session.h"
 #include "debug/console/wayland/wayland_console.h"
 #include "render/backend/wlroots/platform.h"
 #include "render/effects.h"
 #include "render/wayland/compositor.h"
 #include "screenlockerwatcher.h"
-#include "seat/backend/logind/session.h"
-#include "seat/backend/wlroots/session.h"
 #include "input/backend/wlroots/platform.h"
 #include "input/wayland/cursor.h"
 #include "input/wayland/platform.h"
@@ -53,6 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Qt
 #include <qplatformdefs.h>
 #include <QCommandLineParser>
+#include <QDBusConnection>
 #include <QFileInfo>
 #include <QProcess>
 #include <QStyle>
@@ -207,7 +207,7 @@ void ApplicationWayland::start()
 
     createOptions();
 
-    auto session = new seat::backend::wlroots::session(base->backend);
+    auto session = new base::seat::backend::wlroots::session(base->backend);
     this->session.reset(session);
     session->take_control();
 

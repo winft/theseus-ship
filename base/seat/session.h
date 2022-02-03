@@ -9,7 +9,7 @@
 
 #include <QObject>
 
-namespace KWin::seat
+namespace KWin::base::seat
 {
 
 class KWIN_EXPORT session : public QObject

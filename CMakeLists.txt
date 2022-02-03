@@ -402,6 +402,8 @@ set(kwin_SRCS
     base/dbus/kwin.cpp
     base/os/clock/skew_notifier.cpp
     base/os/clock/skew_notifier_engine.cpp
+    base/seat/session.cpp
+    base/seat/backend/logind/session.cpp
     base/x11/event_filter.cpp
     base/x11/event_filter_container.cpp
     base/x11/event_filter_manager.cpp
@@ -490,8 +492,6 @@ set(kwin_SRCS
     scripting/utils.cpp
     scripting/window.cpp
     scripting/space.cpp
-    seat/session.cpp
-    seat/backend/logind/session.cpp
     sm.cpp
     toplevel.cpp
     useractions.cpp
@@ -801,6 +801,7 @@ set(kwin_WAYLAND_SRCS
    base/backend/wlroots/non_desktop_output.cpp
    base/backend/wlroots/output.cpp
    base/backend/wlroots/platform.cpp
+   base/seat/backend/wlroots/session.cpp
    base/wayland/idle_inhibition.cpp
    base/wayland/output.cpp
    debug/console/wayland/input_device_model.cpp
@@ -883,7 +884,6 @@ set(kwin_WAYLAND_SRCS
    render/wayland/linux_dmabuf.cpp
    render/wayland/output.cpp
    render/wayland/presentation.cpp
-   seat/backend/wlroots/session.cpp
    wayland_server.cpp
    win/wayland/space.cpp
    win/wayland/window.cpp
