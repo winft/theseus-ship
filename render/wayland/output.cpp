@@ -9,11 +9,11 @@
 #include "effects.h"
 #include "utils.h"
 
-#include "render/gl/scene.h"
-#include "render/platform.h"
-
 #include "base/wayland/output.h"
 #include "base/wayland/platform.h"
+#include "debug/perf/ftrace.h"
+#include "render/gl/scene.h"
+#include "render/platform.h"
 #include "wayland_logging.h"
 #include "wayland_server.h"
 #include "win/transient.h"
@@ -22,8 +22,6 @@
 
 #include <kwinglplatform.h>
 #include <kwingltexture.h>
-
-#include "perf/ftrace.h"
 
 #include <Wrapland/Server/surface.h>
 

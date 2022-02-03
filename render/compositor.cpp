@@ -14,7 +14,7 @@
 #include "base/output.h"
 #include "base/platform.h"
 #include "cursor.h"
-#include "perf/ftrace.h"
+#include "debug/perf/ftrace.h"
 #include "render/dbus/compositing.h"
 #include "scene.h"
 #include "screens.h"

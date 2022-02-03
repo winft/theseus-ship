@@ -412,6 +412,7 @@ set(kwin_SRCS
     render/post/night_color_manager.cpp
     render/post/suncalc.cpp
     debug/console/console.cpp
+    debug/perf/ftrace.cpp
     decorations/decoratedclient.cpp
     decorations/decorationbridge.cpp
     decorations/decorationpalette.cpp
@@ -523,7 +524,6 @@ set(kwin_SRCS
     workspace.cpp
     xcbutils.cpp
     xwl/xwayland_interface.cpp
-    perf/ftrace.cpp
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -656,7 +656,7 @@ target_precompile_headers(kwin PRIVATE
 target_link_libraries(kwin ${kwinLibs} kwinglutils epoxy::epoxy)
 
 if(HAVE_PERF)
-    target_sources(kwin PRIVATE perf/ftrace_impl.cpp)
+    target_sources(kwin PRIVATE debug/perf/ftrace_impl.cpp)
 endif()
 
 if (KWIN_BUILD_TABBOX)

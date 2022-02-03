@@ -8,9 +8,9 @@
 
 #include "atoms.h"
 #include "debug/console/console.h"
+#include "debug/perf/ftrace.h"
 #include "kwinadaptor.h"
 #include "main.h"
-#include "perf/ftrace.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/geo.h"
