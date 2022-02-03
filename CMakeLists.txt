@@ -398,7 +398,6 @@ add_subdirectory(helpers)
 ########### next target ###############
 
 set(kwin_SRCS
-    atoms.cpp
     base/dbus/kwin.cpp
     base/os/clock/skew_notifier.cpp
     base/os/clock/skew_notifier_engine.cpp
