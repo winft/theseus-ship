@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "app.h"
 
 #include "../../base/wayland/output.h"
-#include "../../debug/wayland_console.h"
 #include "../../input/backend/wlroots/platform.h"
 #include "../../input/wayland/cursor.h"
 #include "../../input/wayland/platform.h"
@@ -32,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../win/wayland/space.h"
 #include "../../xcbutils.h"
 #include "../../xwl/xwayland.h"
+#include "debug/console/wayland/wayland_console.h"
 #include "render/backend/wlroots/output.h"
 #include "render/effects.h"
 #include "screens.h"

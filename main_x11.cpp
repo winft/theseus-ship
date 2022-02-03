@@ -11,7 +11,7 @@
 #include <config-kwin.h>
 
 #include "base/x11/xcb_event_filter.h"
-#include "debug/x11_console.h"
+#include "debug/console/x11/x11_console.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"

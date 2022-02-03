@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 
 #include "base/backend/wlroots/platform.h"
-#include "debug/wayland_console.h"
+#include "debug/console/wayland/wayland_console.h"
 #include "render/backend/wlroots/platform.h"
 #include "render/effects.h"
 #include "render/wayland/compositor.h"

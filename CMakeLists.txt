@@ -411,8 +411,7 @@ set(kwin_SRCS
     render/post/color_correct_dbus_interface.cpp
     render/post/night_color_manager.cpp
     render/post/suncalc.cpp
-    debug/console.cpp
-    debug/x11_console.cpp
+    debug/console/console.cpp
     decorations/decoratedclient.cpp
     decorations/decorationbridge.cpp
     decorations/decorationpalette.cpp
@@ -571,7 +570,7 @@ qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.sc
 qt5_add_dbus_interface(kwin_SRCS org.kde.kappmenu.xml appmenu_interface)
 
 ki18n_wrap_ui(kwin_SRCS
-    debug/debug_console.ui
+    debug/console/debug_console.ui
     shortcutdialog.ui
 )
 
@@ -686,6 +685,7 @@ endif()
 
 set(kwin_X11_SRCS
    base/x11/output.cpp
+   debug/console/x11/x11_console.cpp
    input/x11/cursor.cpp
    input/x11/platform.cpp
    input/x11/window_selector.cpp
@@ -805,10 +805,10 @@ set(kwin_WAYLAND_SRCS
    base/backend/wlroots/platform.cpp
    base/wayland/idle_inhibition.cpp
    base/wayland/output.cpp
-   debug/input_device_model.cpp
-   debug/input_filter.cpp
-   debug/surface_tree_model.cpp
-   debug/wayland_console.cpp
+   debug/console/wayland/input_device_model.cpp
+   debug/console/wayland/input_filter.cpp
+   debug/console/wayland/surface_tree_model.cpp
+   debug/console/wayland/wayland_console.cpp
    input/backend/wlroots/keyboard.cpp
    input/backend/wlroots/platform.cpp
    input/backend/wlroots/pointer.cpp

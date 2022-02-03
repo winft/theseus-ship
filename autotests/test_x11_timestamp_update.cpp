@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
 
-#include "debug/x11_console.h"
+#include "debug/console/x11/x11_console.h"
 #include "main.h"
 #include "utils.h"
 #include "win/x11/space.h"
