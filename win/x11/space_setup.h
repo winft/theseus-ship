@@ -10,10 +10,10 @@
 #include "sync_alarm_filter.h"
 
 #include "atoms.h"
+#include "base/x11/user_interaction_filter.h"
 #include "main.h"
 #include "moving_client_x11_filter.h"
 #include "utils.h"
-#include "was_user_interaction_x11_filter.h"
 
 #include <KStartupInfo>
 

@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "atoms.h"
 #include "base/dbus/kwin.h"
+#include "base/x11/user_interaction_filter.h"
 #include "input/cursor.h"
 #include "killwindow.h"
 #include "moving_client_x11_filter.h"
@@ -41,7 +42,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorationbridge.h"
 #include "main.h"
 #include "useractions.h"
-#include "was_user_interaction_x11_filter.h"
 #include "xcbutils.h"
 
 #include "win/app_menu.h"
