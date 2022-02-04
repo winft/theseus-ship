@@ -6,7 +6,6 @@
 */
 #pragma once
 
-#include "atoms.h"
 #include "render/compositor.h"
 #include "render/scene.h"
 #include "render/shadow.h"
@@ -74,14 +73,14 @@ bool update_shadow(Shadow& impl, QVector<uint32_t> const& data)
 }
 
 template<typename Win>
-QVector<uint32_t> read_shadow_property(Win const& win)
+QVector<uint32_t> read_shadow_property(Win const& win, Xcb::Atom const& shadow_atom)
 {
     auto id = win.xcb_window();
     if (id == XCB_WINDOW_NONE) {
         return {};
     }
 
-    Xcb::Property property(false, id, atoms->kde_net_wm_shadow, XCB_ATOM_CARDINAL, 0, 12);
+    Xcb::Property property(false, id, shadow_atom, XCB_ATOM_CARDINAL, 0, 12);
     auto shadow = property.value<uint32_t*>();
 
     if (!shadow) {
@@ -99,9 +98,9 @@ QVector<uint32_t> read_shadow_property(Win const& win)
 }
 
 template<typename Shadow>
-bool read_and_update_shadow(Shadow& impl)
+bool read_and_update_shadow(Shadow& impl, Xcb::Atom const& shadow_atom)
 {
-    auto data = read_shadow_property(*impl.m_topLevel);
+    auto data = read_shadow_property(*impl.m_topLevel, shadow_atom);
     if (data.isEmpty()) {
         return false;
     }
@@ -109,9 +108,9 @@ bool read_and_update_shadow(Shadow& impl)
 }
 
 template<typename Shadow, typename Win>
-Shadow* create_shadow(Win& win)
+Shadow* create_shadow(Win& win, Xcb::Atom const& shadow_atom)
 {
-    auto data = read_shadow_property(win);
+    auto data = read_shadow_property(win, shadow_atom);
     if (data.isEmpty()) {
         return nullptr;
     }

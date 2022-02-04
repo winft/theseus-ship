@@ -269,8 +269,13 @@ void window::setBlockingCompositing(bool block)
 
 void window::add_scene_window_addon()
 {
-    render->shadow_windowing.create = render::x11::create_shadow<render::shadow, Toplevel>;
-    render->shadow_windowing.update = render::x11::read_and_update_shadow<render::shadow>;
+    render->shadow_windowing.create = [](auto&& win) {
+        return render::x11::create_shadow<render::shadow, Toplevel>(win, atoms->kde_net_wm_shadow);
+    };
+    render->shadow_windowing.update = [](auto&& shadow) {
+        return render::x11::read_and_update_shadow<render::shadow>(shadow,
+                                                                   atoms->kde_net_wm_shadow);
+    };
 }
 
 void window::damageNotifyEvent()
