@@ -57,7 +57,7 @@ private:
     int block_stacking_updates{0};
 
     // Propagate all clients after next update
-    bool blocked_propagating_new_clients;
+    bool blocked_propagating_new_clients{false};
 
     bool restacking_required{false};
 
