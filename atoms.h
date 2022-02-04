@@ -52,7 +52,6 @@ public:
         , kde_color_sheme{QByteArrayLiteral("_KDE_NET_WM_COLOR_SCHEME"), con}
         , kde_skip_close_animation{QByteArrayLiteral("_KDE_NET_WM_SKIP_CLOSE_ANIMATION"), con}
         , kde_screen_edge_show{QByteArrayLiteral("_KDE_NET_WM_SCREEN_EDGE_SHOW"), con}
-        , kwin_dbus_service{QByteArrayLiteral("_ORG_KDE_KWIN_DBUS_SERVICE"), con}
         , utf8_string{QByteArrayLiteral("UTF8_STRING"), con}
         , text{QByteArrayLiteral("TEXT"), con}
         , uri_list{QByteArrayLiteral("text/uri-list"), con}
@@ -113,7 +112,6 @@ public:
     Xcb::Atom kde_color_sheme;
     Xcb::Atom kde_skip_close_animation;
     Xcb::Atom kde_screen_edge_show;
-    Xcb::Atom kwin_dbus_service;
     Xcb::Atom utf8_string;
     Xcb::Atom text;
     Xcb::Atom uri_list;
