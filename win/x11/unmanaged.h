@@ -18,9 +18,18 @@
 namespace KWin::win::x11
 {
 
-template<typename Win>
-Win* create_unmanaged_window(xcb_window_t w)
+template<typename Space>
+auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x11_window*
 {
+    using Win = typename Space::x11_window;
+
+    auto compositor = render::compositor::self();
+    assert(compositor);
+    if (auto& is_overlay = compositor->x11_integration.is_overlay_window;
+        is_overlay && is_overlay(w)) {
+        return nullptr;
+    }
+
     // Window types that are supported as unmanaged (mainly for compositing).
     NET::WindowTypes constexpr supported_default_types = NET::NormalMask | NET::DesktopMask
         | NET::DockMask | NET::ToolbarMask | NET::MenuMask
@@ -92,6 +101,14 @@ Win* create_unmanaged_window(xcb_window_t w)
     if (effects) {
         static_cast<render::effects_handler_impl*>(effects)->checkInputWindowStacking();
     }
+
+    QObject::connect(win, &Win::needsRepaint, space.m_compositor, [win] {
+        render::compositor::self()->schedule_repaint(win);
+    });
+
+    space.addUnmanaged(win);
+    Q_EMIT space.unmanagedAdded(win);
+
     return win;
 }
 

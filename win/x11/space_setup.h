@@ -122,7 +122,7 @@ void init_space(Space& space)
                 if (attr->map_state == XCB_MAP_STATE_VIEWABLE
                     && attr->_class != XCB_WINDOW_CLASS_INPUT_ONLY)
                     // ### This will request the attributes again
-                    win::x11::create_unmanaged_window(space, wins[i]);
+                    create_unmanaged_window(wins[i], space);
             } else if (attr->map_state != XCB_MAP_STATE_UNMAPPED) {
                 if (Application::wasCrash()) {
                     space.fixPositionAfterCrash(wins[i], windowGeometries.at(i).data());

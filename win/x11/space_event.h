@@ -20,32 +20,6 @@
 namespace KWin::win::x11
 {
 
-template<typename Space>
-auto create_unmanaged_window(Space& space, xcb_window_t xcb_window) -> typename Space::x11_window*
-{
-    // TODO(romangg): this check is not right here!
-    auto compositor = render::compositor::self();
-    assert(compositor);
-    if (auto& is_overlay = compositor->x11_integration.is_overlay_window;
-        is_overlay && is_overlay(xcb_window)) {
-        return nullptr;
-    }
-
-    auto window = win::x11::create_unmanaged_window<typename Space::x11_window>(xcb_window);
-    if (!window) {
-        return nullptr;
-    }
-
-    QObject::connect(window, &win::x11::window::needsRepaint, space.m_compositor, [window] {
-        render::compositor::self()->schedule_repaint(window);
-    });
-
-    space.addUnmanaged(window);
-    Q_EMIT space.unmanagedAdded(window);
-
-    return window;
-}
-
 // TODO(romangg): make this constexpr with C++20.
 static std::vector<std::string> xcb_errors({"Success",
                                             "BadRequest",
@@ -251,7 +225,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         if (map_event->override_redirect) {
             auto c = space.findUnmanaged(map_event->window);
             if (c == nullptr) {
-                c = create_unmanaged_window(space, map_event->window);
+                c = create_unmanaged_window(map_event->window, space);
             }
 
             if (c) {
@@ -260,7 +234,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
                 // before KWIN has chance to remanage it again. so release it right now.
                 if (c->has_scheduled_release) {
                     win::x11::release_window(c, false);
-                    c = create_unmanaged_window(space, map_event->window);
+                    c = create_unmanaged_window(map_event->window, space);
                 }
                 if (c) {
                     return win::x11::unmanaged_event(c, event);
