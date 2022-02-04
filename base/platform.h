@@ -29,10 +29,6 @@ class KWIN_EXPORT platform : public QObject
     Q_OBJECT
 public:
     platform();
-    platform(platform const&) = delete;
-    platform& operator=(platform const&) = delete;
-    platform(platform&& other) noexcept = default;
-    platform& operator=(platform&& other) noexcept = default;
     ~platform() override;
 
     virtual clockid_t get_clockid() const;
@@ -42,6 +38,9 @@ public:
 
     Screens screens;
     std::unique_ptr<render::platform> render;
+
+private:
+    Q_DISABLE_COPY(platform)
 
 Q_SIGNALS:
     void output_added(output*);
