@@ -77,7 +77,7 @@ compositor::compositor(render::platform& platform)
             this,
             &compositor::destroyCompositorSelection);
 
-    connect(&platform.base, &base::platform::output_removed, this, [this](auto output) {
+    connect(&platform.base, &base::platform::output_removed, this, [](auto output) {
         if (auto workspace = Workspace::self()) {
             for (auto& win : workspace->windows()) {
                 remove_all(win->repaint_outputs, output);

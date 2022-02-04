@@ -152,7 +152,7 @@ GLXFBConfig create_glx_fb_config(Backend const& backend)
         return false;
     });
 
-    GLXFBConfig fbconfig;
+    GLXFBConfig fbconfig{nullptr};
     if (candidates.size() > 0) {
         fbconfig = candidates.front().config;
 
