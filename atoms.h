@@ -17,8 +17,7 @@ class Atoms
 {
 public:
     explicit Atoms(xcb_connection_t* con)
-        : kwin_running{QByteArrayLiteral("KWIN_RUNNING"), con}
-        , wm_protocols{QByteArrayLiteral("WM_PROTOCOLS"), con}
+        : wm_protocols{QByteArrayLiteral("WM_PROTOCOLS"), con}
         , wm_delete_window{QByteArrayLiteral("WM_DELETE_WINDOW"), con}
         , wm_take_focus{QByteArrayLiteral("WM_TAKE_FOCUS"), con}
         , wm_change_state{QByteArrayLiteral("WM_CHANGE_STATE"), con}
@@ -78,7 +77,6 @@ public:
     {
     }
 
-    Xcb::Atom kwin_running;
     Xcb::Atom wm_protocols;
     Xcb::Atom wm_delete_window;
     Xcb::Atom wm_take_focus;

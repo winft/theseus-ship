@@ -55,18 +55,6 @@ void init_space(Space& space)
     // Select windowmanager privileges
     select_wm_input_event_mask();
 
-    // Compatibility
-    int32_t data = 1;
-
-    xcb_change_property(connection(),
-                        XCB_PROP_MODE_APPEND,
-                        rootWindow(),
-                        atoms->kwin_running,
-                        atoms->kwin_running,
-                        32,
-                        1,
-                        &data);
-
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
         space.m_wasUserInteractionFilter.reset(
             new base::x11::user_interaction_filter([&space] { space.setWasUserInteraction(); }));

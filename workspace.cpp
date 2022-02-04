@@ -249,10 +249,6 @@ Workspace::~Workspace()
 
     assert(m_windows.empty());
 
-    if (auto c = kwinApp()->x11Connection()) {
-        xcb_delete_property(c, kwinApp()->x11RootWindow(), atoms->kwin_running);
-    }
-
     delete stacking_order;
 
     delete RuleBook::self();
