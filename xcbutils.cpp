@@ -1,56 +1,40 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2006 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2012 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2006 Lubos Lunak <l.lunak@kde.org>
-Copyright (C) 2012 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "xcbutils.h"
 #include "utils.h"
-// Qt
-#include <QDebug>
-// xcb
+
 #include <xcb/composite.h>
 #include <xcb/damage.h>
+#include <xcb/glx.h>
 #include <xcb/randr.h>
 #include <xcb/render.h>
 #include <xcb/shape.h>
 #include <xcb/sync.h>
 #include <xcb/xfixes.h>
-#include <xcb/glx.h>
-// system
+
 #include <sys/shm.h>
 #include <sys/types.h>
 
-namespace KWin {
+namespace KWin::Xcb
+{
 
-namespace Xcb {
-
-static const int COMPOSITE_MAX_MAJOR = 0;
-static const int COMPOSITE_MAX_MINOR = 4;
-static const int DAMAGE_MAX_MAJOR = 1;
-static const int DAMAGE_MIN_MAJOR = 1;
-static const int SYNC_MAX_MAJOR = 3;
-static const int SYNC_MAX_MINOR = 0;
-static const int RANDR_MAX_MAJOR = 1;
-static const int RANDR_MAX_MINOR = 4;
-static const int RENDER_MAX_MAJOR = 0;
-static const int RENDER_MAX_MINOR = 11;
-static const int XFIXES_MAX_MAJOR = 5;
-static const int XFIXES_MAX_MINOR = 0;
+static int const COMPOSITE_MAX_MAJOR = 0;
+static int const COMPOSITE_MAX_MINOR = 4;
+static int const DAMAGE_MAX_MAJOR = 1;
+static int const DAMAGE_MIN_MAJOR = 1;
+static int const SYNC_MAX_MAJOR = 3;
+static int const SYNC_MAX_MINOR = 0;
+static int const RANDR_MAX_MAJOR = 1;
+static int const RANDR_MAX_MINOR = 4;
+static int const RENDER_MAX_MAJOR = 0;
+static int const RENDER_MAX_MINOR = 11;
+static int const XFIXES_MAX_MAJOR = 5;
+static int const XFIXES_MAX_MINOR = 0;
 
 QVector<QByteArray> shapeOpCodes()
 {
@@ -245,26 +229,17 @@ QVector<QByteArray> syncOpCodes()
 {
     // see https://www.x.org/releases/X11R7.7/doc/xextproto/sync.html
     // extracted from <xcb/sync.h>
-    return QVector<QByteArray>({QByteArrayLiteral("Initialize"),
-                                QByteArrayLiteral("ListSystemCounters"),
-                                QByteArrayLiteral("CreateCounter"),
-                                QByteArrayLiteral("DestroyCounter"),
-                                QByteArrayLiteral("QueryCounter"),
-                                QByteArrayLiteral("Await"),
-                                QByteArrayLiteral("ChangeCounter"),
-                                QByteArrayLiteral("SetCounter"),
-                                QByteArrayLiteral("CreateAlarm"),
-                                QByteArrayLiteral("ChangeAlarm"),
-                                QByteArrayLiteral("DestroyAlarm"),
-                                QByteArrayLiteral("QueryAlarm"),
-                                QByteArrayLiteral("SetPriority"),
-                                QByteArrayLiteral("GetPriority"),
-                                QByteArrayLiteral("CreateFence"),
-                                QByteArrayLiteral("TriggerFence"),
-                                QByteArrayLiteral("ResetFence"),
-                                QByteArrayLiteral("DestroyFence"),
-                                QByteArrayLiteral("QueryFence"),
-                                QByteArrayLiteral("AwaitFence")});
+    return QVector<QByteArray>(
+        {QByteArrayLiteral("Initialize"),    QByteArrayLiteral("ListSystemCounters"),
+         QByteArrayLiteral("CreateCounter"), QByteArrayLiteral("DestroyCounter"),
+         QByteArrayLiteral("QueryCounter"),  QByteArrayLiteral("Await"),
+         QByteArrayLiteral("ChangeCounter"), QByteArrayLiteral("SetCounter"),
+         QByteArrayLiteral("CreateAlarm"),   QByteArrayLiteral("ChangeAlarm"),
+         QByteArrayLiteral("DestroyAlarm"),  QByteArrayLiteral("QueryAlarm"),
+         QByteArrayLiteral("SetPriority"),   QByteArrayLiteral("GetPriority"),
+         QByteArrayLiteral("CreateFence"),   QByteArrayLiteral("TriggerFence"),
+         QByteArrayLiteral("ResetFence"),    QByteArrayLiteral("DestroyFence"),
+         QByteArrayLiteral("QueryFence"),    QByteArrayLiteral("AwaitFence")});
 }
 
 static QVector<QByteArray> glxOpCodes()
@@ -313,22 +288,20 @@ static QVector<QByteArray> glxOpCodes()
 
 static QVector<QByteArray> glxErrorCodes()
 {
-    return QVector<QByteArray>{
-        QByteArrayLiteral("BadContext"),
-        QByteArrayLiteral("BadContextState"),
-        QByteArrayLiteral("BadDrawable"),
-        QByteArrayLiteral("BadPixmap"),
-        QByteArrayLiteral("BadContextTag"),
-        QByteArrayLiteral("BadCurrentWindow"),
-        QByteArrayLiteral("BadRenderRequest"),
-        QByteArrayLiteral("BadLargeRequest"),
-        QByteArrayLiteral("UnsupportedPrivateRequest"),
-        QByteArrayLiteral("BadFBConfig"),
-        QByteArrayLiteral("BadPbuffer"),
-        QByteArrayLiteral("BadCurrentDrawable"),
-        QByteArrayLiteral("BadWindow"),
-        QByteArrayLiteral("GLXBadProfileARB")
-    };
+    return QVector<QByteArray>{QByteArrayLiteral("BadContext"),
+                               QByteArrayLiteral("BadContextState"),
+                               QByteArrayLiteral("BadDrawable"),
+                               QByteArrayLiteral("BadPixmap"),
+                               QByteArrayLiteral("BadContextTag"),
+                               QByteArrayLiteral("BadCurrentWindow"),
+                               QByteArrayLiteral("BadRenderRequest"),
+                               QByteArrayLiteral("BadLargeRequest"),
+                               QByteArrayLiteral("UnsupportedPrivateRequest"),
+                               QByteArrayLiteral("BadFBConfig"),
+                               QByteArrayLiteral("BadPbuffer"),
+                               QByteArrayLiteral("BadCurrentDrawable"),
+                               QByteArrayLiteral("BadWindow"),
+                               QByteArrayLiteral("GLXBadProfileARB")};
 }
 
 ExtensionData::ExtensionData()
@@ -341,15 +314,15 @@ ExtensionData::ExtensionData()
 }
 
 template<typename reply, typename T, typename F>
-void Extensions::initVersion(T cookie, F f, ExtensionData *dataToFill)
+void Extensions::initVersion(T cookie, F f, ExtensionData* dataToFill)
 {
     ScopedCPointer<reply> version(f(connection(), cookie, nullptr));
     dataToFill->version = version->major_version * 0x10 + version->minor_version;
 }
 
-Extensions *Extensions::s_self = nullptr;
+Extensions* Extensions::s_self = nullptr;
 
-Extensions *Extensions::self()
+Extensions* Extensions::self()
 {
     if (!s_self) {
         s_self = new Extensions();
@@ -374,7 +347,7 @@ Extensions::~Extensions()
 
 void Extensions::init()
 {
-    xcb_connection_t *c = connection();
+    auto c = connection();
     xcb_prefetch_extension_data(c, &xcb_shape_id);
     xcb_prefetch_extension_data(c, &xcb_randr_id);
     xcb_prefetch_extension_data(c, &xcb_damage_id);
@@ -384,28 +357,28 @@ void Extensions::init()
     xcb_prefetch_extension_data(c, &xcb_sync_id);
     xcb_prefetch_extension_data(c, &xcb_glx_id);
 
-    m_shape.name     = QByteArray("SHAPE");
-    m_randr.name     = QByteArray("RANDR");
-    m_damage.name    = QByteArray("DAMAGE");
+    m_shape.name = QByteArray("SHAPE");
+    m_randr.name = QByteArray("RANDR");
+    m_damage.name = QByteArray("DAMAGE");
     m_composite.name = QByteArray("Composite");
-    m_fixes.name     = QByteArray("XFIXES");
-    m_render.name    = QByteArray("RENDER");
-    m_sync.name      = QByteArray("SYNC");
-    m_glx.name       = QByteArray("GLX");
+    m_fixes.name = QByteArray("XFIXES");
+    m_render.name = QByteArray("RENDER");
+    m_sync.name = QByteArray("SYNC");
+    m_glx.name = QByteArray("GLX");
 
-    m_shape.opCodes     = shapeOpCodes();
-    m_randr.opCodes     = randrOpCodes();
-    m_damage.opCodes    = damageOpCodes();
+    m_shape.opCodes = shapeOpCodes();
+    m_randr.opCodes = randrOpCodes();
+    m_damage.opCodes = damageOpCodes();
     m_composite.opCodes = compositeOpCodes();
-    m_fixes.opCodes     = fixesOpCodes();
-    m_render.opCodes    = renderOpCodes();
-    m_sync.opCodes      = syncOpCodes();
-    m_glx.opCodes       = glxOpCodes();
+    m_fixes.opCodes = fixesOpCodes();
+    m_render.opCodes = renderOpCodes();
+    m_sync.opCodes = syncOpCodes();
+    m_glx.opCodes = glxOpCodes();
 
-    m_randr.errorCodes  = randrErrorCodes();
+    m_randr.errorCodes = randrErrorCodes();
     m_damage.errorCodes = damageErrorCodes();
-    m_fixes.errorCodes  = fixesErrorCodes();
-    m_glx.errorCodes    = glxErrorCodes();
+    m_fixes.errorCodes = fixesErrorCodes();
+    m_glx.errorCodes = glxErrorCodes();
 
     extensionQueryReply(xcb_get_extension_data(c, &xcb_shape_id), &m_shape);
     extensionQueryReply(xcb_get_extension_data(c, &xcb_randr_id), &m_randr);
@@ -424,6 +397,7 @@ void Extensions::init()
     xcb_xfixes_query_version_cookie_t xfixesVersion;
     xcb_render_query_version_cookie_t renderVersion;
     xcb_sync_initialize_cookie_t syncVersion;
+
     if (m_shape.present) {
         shapeVersion = xcb_shape_query_version_unchecked(c);
     }
@@ -435,7 +409,8 @@ void Extensions::init()
         damageVersion = xcb_damage_query_version_unchecked(c, DAMAGE_MAX_MAJOR, DAMAGE_MIN_MAJOR);
     }
     if (m_composite.present) {
-        compositeVersion = xcb_composite_query_version_unchecked(c, COMPOSITE_MAX_MAJOR, COMPOSITE_MAX_MINOR);
+        compositeVersion
+            = xcb_composite_query_version_unchecked(c, COMPOSITE_MAX_MAJOR, COMPOSITE_MAX_MINOR);
     }
     if (m_fixes.present) {
         xfixesVersion = xcb_xfixes_query_version_unchecked(c, XFIXES_MAX_MAJOR, XFIXES_MAX_MINOR);
@@ -446,38 +421,47 @@ void Extensions::init()
     if (m_sync.present) {
         syncVersion = xcb_sync_initialize(c, SYNC_MAX_MAJOR, SYNC_MAX_MINOR);
     }
+
     // handle replies
     if (m_shape.present) {
-        initVersion<xcb_shape_query_version_reply_t>(shapeVersion, &xcb_shape_query_version_reply, &m_shape);
+        initVersion<xcb_shape_query_version_reply_t>(
+            shapeVersion, &xcb_shape_query_version_reply, &m_shape);
     }
     if (m_randr.present) {
-        initVersion<xcb_randr_query_version_reply_t>(randrVersion, &xcb_randr_query_version_reply, &m_randr);
+        initVersion<xcb_randr_query_version_reply_t>(
+            randrVersion, &xcb_randr_query_version_reply, &m_randr);
     }
     if (m_damage.present) {
-        initVersion<xcb_damage_query_version_reply_t>(damageVersion, &xcb_damage_query_version_reply, &m_damage);
+        initVersion<xcb_damage_query_version_reply_t>(
+            damageVersion, &xcb_damage_query_version_reply, &m_damage);
     }
     if (m_composite.present) {
-        initVersion<xcb_composite_query_version_reply_t>(compositeVersion, &xcb_composite_query_version_reply, &m_composite);
+        initVersion<xcb_composite_query_version_reply_t>(
+            compositeVersion, &xcb_composite_query_version_reply, &m_composite);
     }
     if (m_fixes.present) {
-        initVersion<xcb_xfixes_query_version_reply_t>(xfixesVersion, &xcb_xfixes_query_version_reply, &m_fixes);
+        initVersion<xcb_xfixes_query_version_reply_t>(
+            xfixesVersion, &xcb_xfixes_query_version_reply, &m_fixes);
     }
     if (m_render.present) {
-        initVersion<xcb_render_query_version_reply_t>(renderVersion, &xcb_render_query_version_reply, &m_render);
+        initVersion<xcb_render_query_version_reply_t>(
+            renderVersion, &xcb_render_query_version_reply, &m_render);
     }
     if (m_sync.present) {
         initVersion<xcb_sync_initialize_reply_t>(syncVersion, &xcb_sync_initialize_reply, &m_sync);
     }
+
     qCDebug(KWIN_CORE) << "Extensions: shape: 0x" << QString::number(m_shape.version, 16)
-                 << " composite: 0x" << QString::number(m_composite.version, 16)
-                 << " render: 0x" << QString::number(m_render.version, 16)
-                 << " fixes: 0x" << QString::number(m_fixes.version, 16)
-                 << " randr: 0x" << QString::number(m_randr.version, 16)
-                 << " sync: 0x" << QString::number(m_sync.version, 16)
-                 << " damage: 0x " << QString::number(m_damage.version, 16);
+                       << " composite: 0x" << QString::number(m_composite.version, 16)
+                       << " render: 0x" << QString::number(m_render.version, 16) << " fixes: 0x"
+                       << QString::number(m_fixes.version, 16) << " randr: 0x"
+                       << QString::number(m_randr.version, 16) << " sync: 0x"
+                       << QString::number(m_sync.version, 16) << " damage: 0x "
+                       << QString::number(m_damage.version, 16);
 }
 
-void Extensions::extensionQueryReply(const xcb_query_extension_reply_t *extension, ExtensionData *dataToFill)
+void Extensions::extensionQueryReply(const xcb_query_extension_reply_t* extension,
+                                     ExtensionData* dataToFill)
 {
     if (!extension) {
         return;
@@ -498,11 +482,13 @@ bool Extensions::hasShape(xcb_window_t w) const
     if (!isShapeAvailable()) {
         return false;
     }
+
     ScopedCPointer<xcb_shape_query_extents_reply_t> extents(xcb_shape_query_extents_reply(
         connection(), xcb_shape_query_extents_unchecked(connection(), w), nullptr));
     if (extents.isNull()) {
         return false;
     }
+
     return extents->bounding_shaped > 0;
 }
 
@@ -543,16 +529,7 @@ int Extensions::syncAlarmNotifyEvent() const
 
 QVector<ExtensionData> Extensions::extensions() const
 {
-    return {
-        m_shape,
-        m_randr,
-        m_damage,
-        m_composite,
-        m_render,
-        m_fixes,
-        m_sync,
-        m_glx
-    };
+    return {m_shape, m_randr, m_damage, m_composite, m_render, m_fixes, m_sync, m_glx};
 }
 
 //****************************************
@@ -578,34 +555,40 @@ Shm::~Shm()
 
 bool Shm::init()
 {
-    const xcb_query_extension_reply_t *ext = xcb_get_extension_data(connection(), &xcb_shm_id);
+    auto ext = xcb_get_extension_data(connection(), &xcb_shm_id);
     if (!ext || !ext->present) {
         qCDebug(KWIN_CORE) << "SHM extension not available";
         return false;
     }
-    ScopedCPointer<xcb_shm_query_version_reply_t> version(xcb_shm_query_version_reply(connection(),
-        xcb_shm_query_version_unchecked(connection()), nullptr));
+
+    ScopedCPointer<xcb_shm_query_version_reply_t> version(xcb_shm_query_version_reply(
+        connection(), xcb_shm_query_version_unchecked(connection()), nullptr));
     if (version.isNull()) {
         qCDebug(KWIN_CORE) << "Failed to get SHM extension version information";
         return false;
     }
     m_pixmapFormat = version->pixmap_format;
-    const int MAXSIZE = 4096 * 2048 * 4; // TODO check there are not larger windows
+
+    // TODO check there are not larger windows
+    int const MAXSIZE = 4096 * 2048 * 4;
     m_shmId = shmget(IPC_PRIVATE, MAXSIZE, IPC_CREAT | 0600);
+
     if (m_shmId < 0) {
         qCDebug(KWIN_CORE) << "Failed to allocate SHM segment";
         return false;
     }
+
     m_buffer = shmat(m_shmId, nullptr, 0 /*read/write*/);
     if (-1 == reinterpret_cast<long>(m_buffer)) {
         qCDebug(KWIN_CORE) << "Failed to attach SHM segment";
         shmctl(m_shmId, IPC_RMID, nullptr);
         return false;
     }
-    shmctl(m_shmId, IPC_RMID, nullptr);
 
+    shmctl(m_shmId, IPC_RMID, nullptr);
     m_segment = xcb_generate_id(connection());
-    const xcb_void_cookie_t cookie = xcb_shm_attach_checked(connection(), m_segment, m_shmId, false);
+
+    auto const cookie = xcb_shm_attach_checked(connection(), m_segment, m_shmId, false);
     ScopedCPointer<xcb_generic_error_t> error(xcb_request_check(connection(), cookie));
     if (!error.isNull()) {
         qCDebug(KWIN_CORE) << "xcb_shm_attach error: " << error->error_code;
@@ -616,5 +599,4 @@ bool Shm::init()
     return true;
 }
 
-} // namespace Xcb
-} // namespace KWin
+}
