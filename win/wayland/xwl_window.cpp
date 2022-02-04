@@ -13,6 +13,11 @@
 namespace KWin::win::wayland
 {
 
+xwl_window::xwl_window(Workspace& space)
+    : window(space)
+{
+}
+
 qreal xwl_window::bufferScale() const
 {
     return surface() ? surface()->state().scale : 1;

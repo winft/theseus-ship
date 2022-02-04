@@ -52,7 +52,7 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
         return nullptr;
     }
 
-    auto win = new Win;
+    auto win = new Win(space);
 
     win->supported_default_types = supported_default_types;
     win->set_layer(win::layer::unmanaged);

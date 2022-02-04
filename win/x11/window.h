@@ -54,6 +54,11 @@ class KWIN_EXPORT window : public Toplevel
 public:
     constexpr static bool is_toplevel{false};
 
+    explicit window(Workspace& space);
+    ~window();
+
+    Workspace& space;
+
     QString iconic_caption;
 
     struct {
@@ -154,9 +159,6 @@ public:
     x11::group* in_group{nullptr};
 
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
-
-    window();
-    ~window();
 
     bool isClient() const override;
     xcb_window_t frameId() const override;

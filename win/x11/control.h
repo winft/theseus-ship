@@ -633,7 +633,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
         return nullptr;
     }
 
-    auto win = new Win;
+    auto win = new Win(space);
 
     // So that decorations don't start with size being (0,0).
     win->set_frame_geometry(QRect(0, 0, 100, 100));

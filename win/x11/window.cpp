@@ -32,8 +32,9 @@
 namespace KWin::win::x11
 {
 
-window::window()
+window::window(Workspace& space)
     : Toplevel(new x11::transient(this))
+    , space{space}
     , motif_hints(atoms->motif_wm_hints)
 {
 }
@@ -488,7 +489,7 @@ void window::takeFocus()
         send_client_message(xcb_window(), atoms->wm_protocols, atoms->wm_take_focus);
     }
 
-    workspace()->setShouldGetFocus(this);
+    space.setShouldGetFocus(this);
     auto breakShowingDesktop = !control->keep_above();
 
     if (breakShowingDesktop) {
@@ -501,7 +502,7 @@ void window::takeFocus()
     }
 
     if (breakShowingDesktop) {
-        workspace()->setShowingDesktop(false);
+        space.setShowingDesktop(false);
     }
 }
 
@@ -570,7 +571,7 @@ void window::setShortcutInternal()
 {
     updateCaption();
 #if 0
-    workspace()->clientShortcutUpdated(this);
+    space.clientShortcutUpdated(this);
 #else
     // Workaround for kwin<->kglobalaccel deadlock, when KWin has X grab and the kded
     // kglobalaccel module tries to create the key grab. KWin should preferably grab
@@ -722,7 +723,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     // TODO(romangg): Remove?
     kwinApp()->get_base().screens.setCurrent(this);
-    workspace()->stacking_order->update();
+    space.stacking_order->update();
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));
 
@@ -737,7 +738,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     // Must be done after signal is emitted so the screen margins are update.
     if (hasStrut()) {
-        workspace()->updateClientArea();
+        space.updateClientArea();
     }
 }
 
@@ -797,7 +798,7 @@ void window::do_set_fullscreen(bool full)
     if (old_full) {
         // May cause focus leave.
         // TODO: Must always be done when fullscreening to other output allowed.
-        workspace()->updateFocusMousePosition(input::get_cursor()->pos());
+        space.updateFocusMousePosition(input::get_cursor()->pos());
     }
 
     control->set_fullscreen(full);
@@ -1022,7 +1023,7 @@ void window::clientMessageEvent(xcb_client_message_event_t* e)
     }
 
     m_surfaceId = e->data.data32[0];
-    Q_EMIT workspace()->surface_id_changed(this, m_surfaceId);
+    Q_EMIT space.surface_id_changed(this, m_surfaceId);
     Q_EMIT surfaceIdChanged(m_surfaceId);
 }
 
@@ -1051,7 +1052,7 @@ void window::doMinimize()
 {
     update_visibility(this);
     update_allowed_actions(this);
-    workspace()->updateMinimizedOfTransients(this);
+    space.updateMinimizedOfTransients(this);
 }
 
 void window::showOnScreenEdge()
@@ -1070,7 +1071,7 @@ bool window::doStartMoveResize()
     // This reportedly improves smoothness of the moveresize operation,
     // something with Enter/LeaveNotify events, looks like XFree performance problem or something
     // *shrug* (https://lists.kde.org/?t=107302193400001&r=1&w=2)
-    QRect r = workspace()->clientArea(FullArea, this);
+    auto r = space.clientArea(FullArea, this);
 
     xcb_windows.grab.create(r, XCB_WINDOW_CLASS_INPUT_ONLY, 0, nullptr, rootWindow());
     xcb_windows.grab.map();
