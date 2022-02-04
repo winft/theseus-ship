@@ -273,7 +273,7 @@ WaylandServer* Application::get_wayland_server()
 
 void Application::createAtoms()
 {
-    atoms = new Atoms;
+    atoms = new Atoms(connection());
 }
 
 void Application::createOptions()

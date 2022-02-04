@@ -88,7 +88,7 @@ void VirtualDesktopTest::initTestCase()
 
     if (kwinApp()->x11Connection()) {
         // verify the current desktop x11 property on startup, see BUG: 391034
-        Xcb::Atom currentDesktopAtom("_NET_CURRENT_DESKTOP");
+        Xcb::Atom currentDesktopAtom("_NET_CURRENT_DESKTOP", connection());
         QVERIFY(currentDesktopAtom.isValid());
         Xcb::Property currentDesktop(
             0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);
@@ -732,7 +732,7 @@ void VirtualDesktopTest::testNetCurrentDesktop()
     win::virtual_desktop_manager::self()->setCount(4);
     QCOMPARE(win::virtual_desktop_manager::self()->count(), 4u);
 
-    Xcb::Atom currentDesktopAtom("_NET_CURRENT_DESKTOP");
+    Xcb::Atom currentDesktopAtom("_NET_CURRENT_DESKTOP", connection());
     QVERIFY(currentDesktopAtom.isValid());
     Xcb::Property currentDesktop(
         0, kwinApp()->x11RootWindow(), currentDesktopAtom, XCB_ATOM_CARDINAL, 0, 1);

@@ -164,7 +164,7 @@ void ScreenEdgeHelper::moveToFloating()
 
 ScreenEdgeHelperX11::ScreenEdgeHelperX11(QWidget *widget, QObject *parent)
     : ScreenEdgeHelper(widget, parent)
-    , m_atom(QByteArrayLiteral("_KDE_NET_WM_SCREEN_EDGE_SHOW"))
+    , m_atom{QByteArrayLiteral("_KDE_NET_WM_SCREEN_EDGE_SHOW"), QX11Info::connection()}
 {
 }
 

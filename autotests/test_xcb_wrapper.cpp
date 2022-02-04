@@ -381,7 +381,7 @@ void TestXcbWrapper::testPropertyByteArray()
     QCOMPARE(QByteArray(StringProperty(testWindow, XCB_ATOM_WM_NAME)), QByteArray());
 
     // verify non existing property
-    Xcb::Atom invalid(QByteArrayLiteral("INVALID_ATOM"));
+    Xcb::Atom invalid(QByteArrayLiteral("INVALID_ATOM"), connection());
     prop = Property(false, testWindow, invalid, XCB_ATOM_STRING, 0, 100000);
     QCOMPARE(prop.toByteArray(), QByteArray());
     QCOMPARE(prop.toByteArray(&ok), QByteArray());
@@ -398,7 +398,7 @@ void TestXcbWrapper::testPropertyByteArray()
 void TestXcbWrapper::testPropertyBool()
 {
     Window testWindow(createWindow());
-    Atom blockCompositing(QByteArrayLiteral("_KDE_NET_WM_BLOCK_COMPOSITING"));
+    Atom blockCompositing(QByteArrayLiteral("_KDE_NET_WM_BLOCK_COMPOSITING"), connection());
     QVERIFY(blockCompositing != XCB_ATOM_NONE);
     NETWinInfo info(QX11Info::connection(),
                     testWindow,
@@ -437,7 +437,7 @@ void TestXcbWrapper::testPropertyBool()
 
 void TestXcbWrapper::testAtom()
 {
-    Atom atom(QByteArrayLiteral("WM_CLIENT_MACHINE"));
+    Atom atom(QByteArrayLiteral("WM_CLIENT_MACHINE"), connection());
     QCOMPARE(atom.name(), QByteArrayLiteral("WM_CLIENT_MACHINE"));
     QVERIFY(atom == XCB_ATOM_WM_CLIENT_MACHINE);
     QVERIFY(atom.isValid());
@@ -449,13 +449,13 @@ void TestXcbWrapper::testAtom()
     QCOMPARE(atom2.name(), QByteArrayLiteral("WM_CLIENT_MACHINE"));
 
     // destroy before retrieved
-    Atom atom3(QByteArrayLiteral("WM_CLIENT_MACHINE"));
+    Atom atom3(QByteArrayLiteral("WM_CLIENT_MACHINE"), connection());
     QCOMPARE(atom3.name(), QByteArrayLiteral("WM_CLIENT_MACHINE"));
 }
 
 void TestXcbWrapper::testMotifEmpty()
 {
-    Atom atom(QByteArrayLiteral("_MOTIF_WM_HINTS"));
+    Atom atom(QByteArrayLiteral("_MOTIF_WM_HINTS"), connection());
     MotifHints hints(atom);
     // pre init
     QCOMPARE(hints.hasDecoration(), false);
@@ -537,7 +537,7 @@ void TestXcbWrapper::testMotif_data()
 
 void TestXcbWrapper::testMotif()
 {
-    Atom atom(QByteArrayLiteral("_MOTIF_WM_HINTS"));
+    Atom atom(QByteArrayLiteral("_MOTIF_WM_HINTS"), connection());
     QFETCH(quint32, flags);
     QFETCH(quint32, functions);
     QFETCH(quint32, decorations);

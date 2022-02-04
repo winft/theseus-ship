@@ -488,19 +488,20 @@ public:
 class Atom
 {
 public:
-    explicit Atom(const QByteArray& name,
-                  bool onlyIfExists = false,
-                  xcb_connection_t* c = connection())
-        : m_connection(c)
-        , m_cookie(xcb_intern_atom_unchecked(m_connection,
-                                             onlyIfExists,
+    Atom(QByteArray const& name, xcb_connection_t* connection)
+        : Atom(name, false, connection)
+    {
+    }
+    Atom(QByteArray const& name, bool only_if_exists, xcb_connection_t* connection)
+        : m_connection(connection)
+        , m_cookie(xcb_intern_atom_unchecked(connection,
+                                             only_if_exists,
                                              name.length(),
                                              name.constData()))
         , m_name(name)
     {
     }
 
-    Atom() = delete;
     Atom(Atom const& other)
     {
         *this = other;
