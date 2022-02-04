@@ -153,6 +153,4 @@ private:
     bool m_helpersRetrieved;
 };
 
-extern KWIN_EXPORT Atoms* atoms;
-
 }

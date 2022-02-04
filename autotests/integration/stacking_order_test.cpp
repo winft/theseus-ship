@@ -143,14 +143,14 @@ static xcb_window_t createGroupWindow(xcb_connection_t* conn,
         leaderWid = wid;
     }
 
-    xcb_change_property(conn,                    // c
-                        XCB_PROP_MODE_REPLACE,   // mode
-                        wid,                     // window
-                        atoms->wm_client_leader, // property
-                        XCB_ATOM_WINDOW,         // type
-                        32,                      // format
-                        1,                       // data_len
-                        &leaderWid               // data
+    xcb_change_property(conn,                                 // c
+                        XCB_PROP_MODE_REPLACE,                // mode
+                        wid,                                  // window
+                        workspace()->atoms->wm_client_leader, // property
+                        XCB_ATOM_WINDOW,                      // type
+                        32,                                   // format
+                        1,                                    // data_len
+                        &leaderWid                            // data
     );
 
     return wid;

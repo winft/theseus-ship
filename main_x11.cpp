@@ -280,8 +280,6 @@ void ApplicationX11::start()
     // we need to do an XSync here, otherwise the QPA might crash us later on
     Xcb::sync();
     owner->claim(m_replace || wasCrash(), true);
-
-    createAtoms();
 }
 
 bool ApplicationX11::notify(QObject* o, QEvent* e)

@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_WORKSPACE_H
 #define KWIN_WORKSPACE_H
 
+#include "atoms.h"
 #include "options.h"
 #include "sm.h"
 #include "utils.h"
@@ -101,6 +102,7 @@ public:
 
     render::compositor* m_compositor{nullptr};
     KStartupInfo* startup{nullptr};
+    std::unique_ptr<Atoms> atoms;
 
     QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
     QScopedPointer<base::x11::event_filter> m_movingClientFilter;

@@ -664,8 +664,14 @@ void X11ClientTest::testFullscreenWindowGroups()
     xcb_icccm_size_hints_set_position(&hints, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w, &hints);
-    xcb_change_property(
-        c.get(), XCB_PROP_MODE_REPLACE, w, atoms->wm_client_leader, XCB_ATOM_WINDOW, 32, 1, &w);
+    xcb_change_property(c.get(),
+                        XCB_PROP_MODE_REPLACE,
+                        w,
+                        workspace()->atoms->wm_client_leader,
+                        XCB_ATOM_WINDOW,
+                        32,
+                        1,
+                        &w);
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
@@ -704,8 +710,14 @@ void X11ClientTest::testFullscreenWindowGroups()
     xcb_icccm_size_hints_set_position(&hints2, 1, windowGeometry.x(), windowGeometry.y());
     xcb_icccm_size_hints_set_size(&hints2, 1, windowGeometry.width(), windowGeometry.height());
     xcb_icccm_set_wm_normal_hints(c.get(), w2, &hints2);
-    xcb_change_property(
-        c.get(), XCB_PROP_MODE_REPLACE, w2, atoms->wm_client_leader, XCB_ATOM_WINDOW, 32, 1, &w);
+    xcb_change_property(c.get(),
+                        XCB_PROP_MODE_REPLACE,
+                        w2,
+                        workspace()->atoms->wm_client_leader,
+                        XCB_ATOM_WINDOW,
+                        32,
+                        1,
+                        &w);
     xcb_map_window(c.get(), w2);
     xcb_flush(c.get());
 
@@ -765,7 +777,7 @@ void X11ClientTest::testActivateFocusedWindow()
     xcb_change_property(connection.get(),
                         XCB_PROP_MODE_REPLACE,
                         window1,
-                        atoms->wm_client_leader,
+                        workspace()->atoms->wm_client_leader,
                         XCB_ATOM_WINDOW,
                         32,
                         1,
@@ -797,7 +809,7 @@ void X11ClientTest::testActivateFocusedWindow()
     xcb_change_property(connection.get(),
                         XCB_PROP_MODE_REPLACE,
                         window2,
-                        atoms->wm_client_leader,
+                        workspace()->atoms->wm_client_leader,
                         XCB_ATOM_WINDOW,
                         32,
                         1,

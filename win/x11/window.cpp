@@ -35,7 +35,7 @@ namespace KWin::win::x11
 window::window(Workspace& space)
     : Toplevel(new x11::transient(this))
     , space{space}
-    , motif_hints(atoms->motif_wm_hints)
+    , motif_hints(space.atoms->motif_wm_hints)
 {
 }
 
@@ -101,7 +101,8 @@ bool window::providesContextHelp() const
 void window::showContextHelp()
 {
     if (info->supportsProtocol(NET::ContextHelpProtocol)) {
-        send_client_message(xcb_window(), atoms->wm_protocols, atoms->net_wm_context_help);
+        send_client_message(
+            xcb_window(), space.atoms->wm_protocols, space.atoms->net_wm_context_help);
     }
 }
 
@@ -270,10 +271,11 @@ void window::setBlockingCompositing(bool block)
 
 void window::add_scene_window_addon()
 {
-    render->shadow_windowing.create = [](auto&& win) {
+    auto& atoms = space.atoms;
+    render->shadow_windowing.create = [&](auto&& win) {
         return render::x11::create_shadow<render::shadow, Toplevel>(win, atoms->kde_net_wm_shadow);
     };
-    render->shadow_windowing.update = [](auto&& shadow) {
+    render->shadow_windowing.update = [&](auto&& shadow) {
         return render::x11::read_and_update_shadow<render::shadow>(shadow,
                                                                    atoms->kde_net_wm_shadow);
     };
@@ -327,7 +329,7 @@ void window::closeWindow()
     update_user_time(this);
 
     if (info->supportsProtocol(NET::DeleteWindowProtocol)) {
-        send_client_message(xcb_window(), atoms->wm_protocols, atoms->wm_delete_window);
+        send_client_message(xcb_window(), space.atoms->wm_protocols, space.atoms->wm_delete_window);
         ping(this);
     } else {
         // Client will not react on wm_delete_window. We have not choice
@@ -486,7 +488,7 @@ void window::takeFocus()
 
     if (info->supportsProtocol(NET::TakeFocusProtocol)) {
         kwinApp()->update_x11_time_from_clock();
-        send_client_message(xcb_window(), atoms->wm_protocols, atoms->wm_take_focus);
+        send_client_message(xcb_window(), space.atoms->wm_protocols, space.atoms->wm_take_focus);
     }
 
     space.setShouldGetFocus(this);
@@ -950,7 +952,8 @@ void window::getWmClientMachine()
 
 Xcb::Property window::fetchWmClientLeader() const
 {
-    return Xcb::Property(false, xcb_window(), atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
+    return Xcb::Property(
+        false, xcb_window(), space.atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
 }
 
 void window::readWmClientLeader(Xcb::Property& prop)
@@ -977,7 +980,7 @@ void window::getWmOpaqueRegion()
 
 void window::getSkipCloseAnimation()
 {
-    setSkipCloseAnimation(fetch_skip_close_animation(xcb_window()).toBool());
+    setSkipCloseAnimation(fetch_skip_close_animation(*this).toBool());
 }
 
 void window::detectShape(xcb_window_t id)
@@ -995,9 +998,9 @@ void window::detectShape(xcb_window_t id)
  */
 QByteArray window::sessionId() const
 {
-    QByteArray result = Xcb::StringProperty(xcb_window(), atoms->sm_client_id);
+    QByteArray result = Xcb::StringProperty(xcb_window(), space.atoms->sm_client_id);
     if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
-        result = Xcb::StringProperty(m_wmClientLeader, atoms->sm_client_id);
+        result = Xcb::StringProperty(m_wmClientLeader, space.atoms->sm_client_id);
     }
     return result;
 }
@@ -1018,7 +1021,7 @@ QByteArray window::wmCommand()
 
 void window::clientMessageEvent(xcb_client_message_event_t* e)
 {
-    if (e->type != atoms->wl_surface_id) {
+    if (e->type != space.atoms->wl_surface_id) {
         return;
     }
 
@@ -1061,7 +1064,7 @@ void window::showOnScreenEdge()
 
     hideClient(false);
     win::set_keep_below(this, false);
-    xcb_delete_property(connection(), xcb_window(), atoms->kde_screen_edge_show);
+    xcb_delete_property(connection(), xcb_window(), space.atoms->kde_screen_edge_show);
 }
 
 bool window::doStartMoveResize()

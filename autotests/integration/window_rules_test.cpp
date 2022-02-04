@@ -139,7 +139,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     xcb_change_property(c.get(),
                         XCB_PROP_MODE_REPLACE,
                         w,
-                        atoms->wm_window_role,
+                        workspace()->atoms->wm_window_role,
                         XCB_ATOM_STRING,
                         8,
                         role.length(),

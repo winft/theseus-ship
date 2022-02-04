@@ -416,7 +416,7 @@ void client_message_event(Win* win, xcb_client_message_event_t* e)
     }
 
     // WM_STATE
-    if (e->type == atoms->wm_change_state) {
+    if (e->type == win->space.atoms->wm_change_state) {
         if (e->data.data32[0] == XCB_ICCCM_WM_STATE_ICONIC) {
             win::set_minimized(win, true);
         }
@@ -476,6 +476,7 @@ void property_notify_event_prepare(Win& win, xcb_property_notify_event_t* event)
         return;
     }
 
+    auto& atoms = win.space.atoms;
     if (event->atom == atoms->wm_client_leader) {
         win.getWmClientLeader();
     } else if (event->atom == atoms->kde_net_wm_shadow) {
@@ -498,6 +499,7 @@ void property_notify_event(Win* win, xcb_property_notify_event_t* e)
         return;
     }
 
+    auto& atoms = win->space.atoms;
     switch (e->atom) {
     case XCB_ATOM_WM_NORMAL_HINTS:
         get_wm_normal_hints(win);

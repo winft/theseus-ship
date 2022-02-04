@@ -124,6 +124,7 @@ void release_window(Win* win, bool on_shutdown)
         win->info->setState(NET::States(), win->info->state());
     }
 
+    auto& atoms = win->space.atoms;
     win->xcb_windows.client.deleteProperty(atoms->kde_net_wm_user_creation_time);
     win->xcb_windows.client.deleteProperty(atoms->net_frame_extents);
     win->xcb_windows.client.deleteProperty(atoms->kde_net_wm_frame_strut);

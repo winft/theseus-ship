@@ -10,7 +10,6 @@
 #include "space_event.h"
 #include "sync_alarm_filter.h"
 
-#include "atoms.h"
 #include "base/x11/user_interaction_filter.h"
 #include "main.h"
 #include "utils.h"
@@ -41,7 +40,7 @@ void init_space(Space& space)
 {
     assert(kwinApp()->x11Connection());
 
-    atoms->retrieveHelpers();
+    space.atoms->retrieveHelpers();
 
     // first initialize the extensions
     Xcb::Extensions::self();

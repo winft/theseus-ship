@@ -13,8 +13,6 @@
 #include "win/meta.h"
 #include "win/setup.h"
 
-#include "atoms.h"
-
 #include <xcb/sync.h>
 #include <xcb/xcb_icccm.h>
 
@@ -31,6 +29,8 @@ void export_mapping_state(Win* win, int state)
 {
     assert(win->xcb_windows.client != XCB_WINDOW_NONE);
     assert(!win->deleting || state == XCB_ICCCM_WM_STATE_WITHDRAWN);
+
+    auto& atoms = win->space.atoms;
 
     if (state == XCB_ICCCM_WM_STATE_WITHDRAWN) {
         win->xcb_windows.client.deleteProperty(atoms->wm_state);
@@ -212,8 +212,12 @@ void get_sync_counter(Win* win)
         return;
     }
 
-    Xcb::Property syncProp(
-        false, win->xcb_window(), atoms->net_wm_sync_request_counter, XCB_ATOM_CARDINAL, 0, 1);
+    Xcb::Property syncProp(false,
+                           win->xcb_window(),
+                           win->space.atoms->net_wm_sync_request_counter,
+                           XCB_ATOM_CARDINAL,
+                           0,
+                           1);
     auto const counter = syncProp.value<xcb_sync_counter_t>(XCB_NONE);
 
     if (counter == XCB_NONE) {
@@ -282,6 +286,7 @@ void send_sync_request(Win* win)
     auto const number_hi = win->sync_request.update_request_number >> 32;
 
     // Send the message to client
+    auto& atoms = win->space.atoms;
     send_client_message(
         win->xcb_window(), atoms->wm_protocols, atoms->net_wm_sync_request, number_lo, number_hi);
 
@@ -309,7 +314,7 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     auto getEmulatedXWaylandSize = [win, &client_geo]() {
         auto property = Xcb::Property(false,
                                       win->xcb_window(),
-                                      atoms->xwayland_randr_emu_monitor_rects,
+                                      win->space.atoms->xwayland_randr_emu_monitor_rects,
                                       XCB_ATOM_CARDINAL,
                                       0,
                                       1000);

@@ -169,7 +169,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             xcb_change_property(connection(),
                                 XCB_PROP_MODE_REPLACE,
                                 create_event->window,
-                                atoms->kde_net_wm_user_creation_time,
+                                space.atoms->kde_net_wm_user_creation_time,
                                 XCB_ATOM_CARDINAL,
                                 32,
                                 1,

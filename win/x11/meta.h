@@ -17,14 +17,15 @@
 namespace KWin::win::x11
 {
 
-inline QString read_name_property(xcb_window_t w, xcb_atom_t atom)
+template<typename Win>
+QString read_name_property(Win& win, xcb_atom_t atom)
 {
-    auto const cookie = xcb_icccm_get_text_property_unchecked(connection(), w, atom);
+    auto const cookie = xcb_icccm_get_text_property_unchecked(connection(), win.xcb_window(), atom);
     xcb_icccm_get_text_property_reply_t reply;
 
     if (xcb_icccm_get_wm_name_reply(connection(), cookie, &reply, nullptr)) {
         QString retVal;
-        if (reply.encoding == atoms->utf8_string) {
+        if (reply.encoding == win.space.atoms->utf8_string) {
             retVal = QString::fromUtf8(QByteArray(reply.name, reply.name_len));
         } else if (reply.encoding == XCB_ATOM_STRING) {
             retVal = QString::fromLocal8Bit(QByteArray(reply.name, reply.name_len));
@@ -43,7 +44,7 @@ QString read_name(Win* win)
         return QString::fromUtf8(win->info->name()).simplified();
     }
 
-    return read_name_property(win->xcb_window(), XCB_ATOM_WM_NAME);
+    return read_name_property(*win, XCB_ATOM_WM_NAME);
 }
 
 // The list is taken from https://www.unicode.org/reports/tr9/ (#154840)
@@ -147,7 +148,7 @@ void fetch_iconic_name(Win* win)
     if (win->info->iconName() && win->info->iconName()[0] != '\0') {
         s = QString::fromUtf8(win->info->iconName());
     } else {
-        s = read_name_property(win->xcb_window(), XCB_ATOM_WM_ICON_NAME);
+        s = read_name_property(*win, XCB_ATOM_WM_ICON_NAME);
     }
 
     if (s == win->iconic_caption) {

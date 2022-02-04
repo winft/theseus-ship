@@ -843,7 +843,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     xcb_change_property(c.get(),
                         XCB_PROP_MODE_REPLACE,
                         w,
-                        atoms->kde_screen_edge_show,
+                        workspace()->atoms->kde_screen_edge_show,
                         XCB_ATOM_CARDINAL,
                         32,
                         1,

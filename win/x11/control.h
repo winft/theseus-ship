@@ -705,7 +705,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
         | NET::WM2OpaqueRegion | NET::WM2DesktopFileName | NET::WM2GTKFrameExtents;
 
     auto wmClientLeaderCookie = win->fetchWmClientLeader();
-    auto skipCloseAnimationCookie = fetch_skip_close_animation(win->xcb_window());
+    auto skipCloseAnimationCookie = fetch_skip_close_animation(*win);
     auto showOnScreenEdgeCookie = fetch_show_on_screen_edge(win);
     auto firstInTabBoxCookie = fetch_first_in_tabbox(win);
     auto transientCookie = fetch_transient(win);
@@ -1394,8 +1394,12 @@ void update_user_time(Win* win, xcb_timestamp_t time = XCB_TIME_CURRENT_TIME)
 template<typename Win>
 xcb_timestamp_t read_user_creation_time(Win* win)
 {
-    Xcb::Property prop(
-        false, win->xcb_window(), atoms->kde_net_wm_user_creation_time, XCB_ATOM_CARDINAL, 0, 1);
+    Xcb::Property prop(false,
+                       win->xcb_window(),
+                       win->space.atoms->kde_net_wm_user_creation_time,
+                       XCB_ATOM_CARDINAL,
+                       0,
+                       1);
     return prop.value<xcb_timestamp_t>(-1);
 }
 
@@ -1549,6 +1553,7 @@ void update_urgency(Win* win)
 template<typename Win>
 Xcb::Property fetch_first_in_tabbox(Win* win)
 {
+    auto& atoms = win->space.atoms;
     return Xcb::Property(false,
                          win->xcb_windows.client,
                          atoms->kde_first_in_window_list,
@@ -1560,7 +1565,8 @@ Xcb::Property fetch_first_in_tabbox(Win* win)
 template<typename Win>
 void read_first_in_tabbox(Win* win, Xcb::Property& property)
 {
-    win->control->set_first_in_tabbox(property.toBool(32, atoms->kde_first_in_window_list));
+    win->control->set_first_in_tabbox(
+        property.toBool(32, win->space.atoms->kde_first_in_window_list));
 }
 
 template<typename Win>
@@ -1583,7 +1589,7 @@ template<typename Win>
 Xcb::Property fetch_show_on_screen_edge(Win* win)
 {
     return Xcb::Property(
-        false, win->xcb_window(), atoms->kde_screen_edge_show, XCB_ATOM_CARDINAL, 0, 1);
+        false, win->xcb_window(), win->space.atoms->kde_screen_edge_show, XCB_ATOM_CARDINAL, 0, 1);
 }
 
 template<typename Win>
@@ -1648,7 +1654,8 @@ void read_show_on_screen_edge(Win* win, Xcb::Property& property)
     } else if (!property.isNull() && property->type != XCB_ATOM_NONE) {
         // property value is incorrect, delete the property
         // so that the client knows that it is not hidden
-        xcb_delete_property(connection(), win->xcb_window(), atoms->kde_screen_edge_show);
+        xcb_delete_property(
+            connection(), win->xcb_window(), win->space.atoms->kde_screen_edge_show);
     } else {
         // restore
         // TODO: add proper unreserve
@@ -1669,7 +1676,8 @@ void update_show_on_screen_edge(Win* win)
 template<typename Win>
 Xcb::StringProperty fetch_application_menu_service_name(Win* win)
 {
-    return Xcb::StringProperty(win->xcb_windows.client, atoms->kde_net_wm_appmenu_service_name);
+    return Xcb::StringProperty(win->xcb_windows.client,
+                               win->space.atoms->kde_net_wm_appmenu_service_name);
 }
 
 template<typename Win>
@@ -1689,7 +1697,8 @@ void check_application_menu_service_name(Win* win)
 template<typename Win>
 Xcb::StringProperty fetch_application_menu_object_path(Win* win)
 {
-    return Xcb::StringProperty(win->xcb_windows.client, atoms->kde_net_wm_appmenu_object_path);
+    return Xcb::StringProperty(win->xcb_windows.client,
+                               win->space.atoms->kde_net_wm_appmenu_object_path);
 }
 
 template<typename Win>

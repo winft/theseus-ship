@@ -135,9 +135,6 @@ public:
     void setOperationMode(OperationMode mode);
     bool shouldUseWaylandForCompositing() const;
 
-    void createAtoms();
-    void destroyAtoms();
-
     void setupEventFilters();
     void setupTranslator();
     void setupCommandLine(QCommandLineParser *parser);

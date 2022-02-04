@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/seat/session.h"
 #include "base/x11/event_filter_manager.h"
-#include "atoms.h"
 #include "debug/perf/ftrace.h"
 #include "render/compositor.h"
 #include "input/global_shortcuts_manager.h"
@@ -74,8 +73,6 @@ namespace KWin
 {
 
 Options* options;
-
-Atoms* atoms;
 
 int Application::crashes = 0;
 
@@ -159,13 +156,6 @@ void Application::prepare_start()
 Application::~Application()
 {
     delete options;
-    destroyAtoms();
-}
-
-void Application::destroyAtoms()
-{
-    delete atoms;
-    atoms = nullptr;
 }
 
 void Application::resetCrashesCount()
@@ -269,11 +259,6 @@ bool Application::is_screen_locked() const
 WaylandServer* Application::get_wayland_server()
 {
     return nullptr;
-}
-
-void Application::createAtoms()
-{
-    atoms = new Atoms(connection());
 }
 
 void Application::createOptions()

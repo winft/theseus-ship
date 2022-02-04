@@ -15,10 +15,9 @@
 namespace KWin::win::x11
 {
 
-screen_edge::screen_edge(win::screen_edger* edger)
+screen_edge::screen_edge(win::screen_edger* edger, Atoms& atoms)
     : win::screen_edge(edger)
-    , m_window(XCB_WINDOW_NONE)
-    , m_approachWindow(XCB_WINDOW_NONE)
+    , atoms{atoms}
 {
 }
 
@@ -55,7 +54,7 @@ void screen_edge::createWindow()
     xcb_change_property(connection(),
                         XCB_PROP_MODE_REPLACE,
                         m_window,
-                        atoms->xdnd_aware,
+                        atoms.xdnd_aware,
                         XCB_ATOM_ATOM,
                         32,
                         1,

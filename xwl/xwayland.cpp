@@ -169,7 +169,7 @@ xwayland::~xwayland()
 
     if (app->x11Connection()) {
         Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
-        app->destroyAtoms();
+        Workspace::self()->atoms.reset();
         Q_EMIT app->x11ConnectionAboutToBeDestroyed();
         app->setX11Connection(nullptr);
         xcb_disconnect(app->x11Connection());
@@ -244,11 +244,10 @@ void xwayland::continue_startup_with_x11()
     KSelectionOwner owner("WM_S0", basic_data.connection, app->x11RootWindow());
     owner.claim(true);
 
-    app->createAtoms();
-    assert(atoms);
-    basic_data.atoms = atoms;
-
     auto space = static_cast<win::wayland::space*>(Workspace::self());
+    space->atoms = std::make_unique<Atoms>(basic_data.connection);
+    basic_data.atoms = space->atoms.get();
+
     event_filter = std::make_unique<base::x11::xcb_event_filter<win::wayland::space>>(*space);
     app->installNativeEventFilter(event_filter.get());
 

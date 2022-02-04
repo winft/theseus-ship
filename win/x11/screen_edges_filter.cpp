@@ -46,7 +46,7 @@ bool screen_edges_filter::event(xcb_generic_event_t* event)
     }
     case XCB_CLIENT_MESSAGE: {
         const auto ce = reinterpret_cast<xcb_client_message_event_t*>(event);
-        if (ce->type != atoms->xdnd_position) {
+        if (ce->type != workspace()->atoms->xdnd_position) {
             return false;
         }
         return workspace()->edges->handleDndNotify(

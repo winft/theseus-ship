@@ -225,7 +225,7 @@ void get_motif_hints(Win* win, bool initial = false)
 template<typename Win>
 Xcb::StringProperty fetch_color_scheme(Win* win)
 {
-    return Xcb::StringProperty(win->xcb_windows.client, atoms->kde_color_sheme);
+    return Xcb::StringProperty(win->xcb_windows.client, win->space.atoms->kde_color_sheme);
 }
 
 template<typename Win>
