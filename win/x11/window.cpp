@@ -1015,6 +1015,17 @@ QByteArray window::wmCommand()
     return result;
 }
 
+void window::clientMessageEvent(xcb_client_message_event_t* e)
+{
+    if (e->type != atoms->wl_surface_id) {
+        return;
+    }
+
+    m_surfaceId = e->data.data32[0];
+    Q_EMIT workspace()->surface_id_changed(this, m_surfaceId);
+    Q_EMIT surfaceIdChanged(m_surfaceId);
+}
+
 bool window::resourceMatch(window const* c1, window const* c2)
 {
     return c1->resourceClass() == c2->resourceClass();

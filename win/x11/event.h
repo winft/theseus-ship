@@ -409,7 +409,8 @@ void destroy_notify_event(Win* win, xcb_destroy_notify_event_t* e)
 template<typename Win>
 void client_message_event(Win* win, xcb_client_message_event_t* e)
 {
-    static_cast<Toplevel*>(win)->Toplevel::clientMessageEvent(e);
+    win->clientMessageEvent(e);
+
     if (e->window != win->xcb_window()) {
         return; // ignore frame/wrapper
     }

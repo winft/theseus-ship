@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 
 #include "base/output.h"
-#include "atoms.h"
 #include "render/compositor.h"
 #include "render/effects.h"
 #include "screens.h"
@@ -1134,16 +1133,6 @@ void Toplevel::setWindowHandles(xcb_window_t w)
     Q_ASSERT(!m_client.isValid() && w != XCB_WINDOW_NONE);
     m_client.reset(w, false);
 }
-
-void Toplevel::clientMessageEvent(xcb_client_message_event_t* e)
-{
-    if (e->type == atoms->wl_surface_id) {
-        m_surfaceId = e->data.data32[0];
-        Q_EMIT workspace()->surface_id_changed(this, m_surfaceId);
-        Q_EMIT surfaceIdChanged(m_surfaceId);
-    }
-}
-
 
 }
 

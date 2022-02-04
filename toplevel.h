@@ -324,7 +324,6 @@ public:
     void disownDataPassedToDeleted();
 
     virtual void damageNotifyEvent();
-    void clientMessageEvent(xcb_client_message_event_t *e);
     void discardWindowPixmap();
 
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());

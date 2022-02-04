@@ -271,6 +271,9 @@ public:
     QByteArray sessionId() const;
     QByteArray wmCommand();
 
+    // TODO(romangg): only required with Xwayland, move it to the child class.
+    void clientMessageEvent(xcb_client_message_event_t* e);
+
     static bool resourceMatch(window const* c1, window const* c2);
     void debug(QDebug& stream) const override;
 
