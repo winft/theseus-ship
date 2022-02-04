@@ -21,21 +21,6 @@ namespace KWin::win::x11
 {
 
 template<typename Space>
-auto create_controlled_window(Space& space, xcb_window_t xcb_window, bool is_mapped) ->
-    typename Space::x11_window*
-{
-    Blocker blocker(space.stacking_order);
-
-    auto window
-        = win::x11::create_controlled_window<typename Space::x11_window>(xcb_window, is_mapped);
-    if (window) {
-        space.addClient(window);
-    }
-
-    return window;
-}
-
-template<typename Space>
 auto create_unmanaged_window(Space& space, xcb_window_t xcb_window) -> typename Space::x11_window*
 {
     // TODO(romangg): this check is not right here!
@@ -249,7 +234,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             // children of WindowWrapper (=clients), the check is AFAIK useless anyway
             // NOTICE: The save-set support in X11Client::mapRequestEvent() actually requires that
             // this code doesn't check the parent to be root.
-            if (!create_controlled_window(space, map_req_event->window, false)) {
+            if (!create_controlled_window(map_req_event->window, false, space)) {
                 xcb_map_window(connection(), map_req_event->window);
                 const uint32_t values[] = {XCB_STACK_MODE_ABOVE};
                 xcb_configure_window(

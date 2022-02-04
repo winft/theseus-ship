@@ -619,10 +619,13 @@ QRect place_on_taking_control(Win* win,
  * reparenting, initial geometry, initial state, placement, etc.
  * Returns false if KWin is not going to manage this window.
  */
-template<typename Win>
-Win* create_controlled_window(xcb_window_t w, bool isMapped)
+template<typename Space>
+auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
+    typename Space::x11_window*
 {
-    Blocker blocker(workspace()->stacking_order);
+    using Win = typename Space::x11_window;
+
+    Blocker blocker(space.stacking_order);
 
     Xcb::WindowAttributes attr(w);
     Xcb::WindowGeometry windowGeometry(w);
@@ -635,7 +638,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
     // So that decorations don't start with size being (0,0).
     win->set_frame_geometry(QRect(0, 0, 100, 100));
 
-    setup_space_window_connections(workspace(), win);
+    setup_space_window_connections(&space, win);
 
     if (auto comp = render::compositor::self(); comp->x11_integration.update_blocking) {
         QObject::connect(win,
@@ -646,7 +649,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
 
     QObject::connect(win,
                      &win::x11::window::client_fullscreen_set,
-                     workspace()->edges.get(),
+                     space.edges.get(),
                      &screen_edger::checkBlocking);
 
     // From this place on, manage() must not return false
@@ -776,7 +779,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
 
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    auto asn_valid = workspace()->checkStartupNotification(win->xcb_window(), asn_id, asn_data);
+    auto asn_valid = space.checkStartupNotification(win->xcb_window(), asn_id, asn_data);
 
     // Make sure that the input window is created before we update the stacking order
     // TODO(romangg): Does it matter that the frame geometry is not set yet here?
@@ -784,7 +787,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
 
     update_layer(win);
 
-    auto session = workspace()->takeSessionInfo(win);
+    auto session = space.takeSessionInfo(win);
     if (session) {
         init_minimize = session->minimized;
         win->user_no_border = session->noBorder;
@@ -868,7 +871,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
     set_desktop(win, desk);
     win->info->setDesktop(desk);
 
-    workspace()->updateOnAllDesktopsOfTransients(win);
+    space.updateOnAllDesktopsOfTransients(win);
 
     win->client_frame_extents = gtk_frame_extents(win);
     win->geometry_update.original.client_frame_extents = win->client_frame_extents;
@@ -913,7 +916,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
 
     // If a dialog is shown for minimized window, minimize it too
     if (!init_minimize && win->transient()->lead()
-        && workspace()->sessionManager()->state() != SessionState::Saving) {
+        && space.sessionManager()->state() != SessionState::Saving) {
         bool visible_parent = false;
 
         for (auto const& lead : win->transient()->leads()) {
@@ -1020,7 +1023,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
 
     if (session && session->stackingOrder != -1) {
         win->sm_stacking_order = session->stackingOrder;
-        restore_session_stacking_order(workspace(), win);
+        restore_session_stacking_order(&space, win);
     }
 
     if (!compositing()) {
@@ -1032,13 +1035,13 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
         bool allow;
         if (session) {
             allow = session->active
-                && (!workspace()->wasUserInteraction() || workspace()->activeClient() == nullptr
-                    || is_desktop(workspace()->activeClient()));
+                && (!space.wasUserInteraction() || space.activeClient() == nullptr
+                    || is_desktop(space.activeClient()));
         } else {
-            allow = workspace()->allowClientActivation(win, win->userTime(), false);
+            allow = space.allowClientActivation(win, win->userTime(), false);
         }
 
-        auto const isSessionSaving = workspace()->sessionManager()->state() == SessionState::Saving;
+        auto const isSessionSaving = space.sessionManager()->state() == SessionState::Saving;
 
         // If session saving, force showing new windows (i.e. "save file?" dialogs etc.)
         // also force if activation is allowed
@@ -1057,7 +1060,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
             if (allow && win->isOnCurrentDesktop()) {
                 if (!is_special_window(win)) {
                     if (options->focusPolicyIsReasonable() && wants_tab_focus(win)) {
-                        workspace()->request_focus(win);
+                        space.request_focus(win);
                     }
                 }
             } else if (!session && !is_special_window(win)) {
@@ -1118,6 +1121,7 @@ Win* create_controlled_window(xcb_window_t w, bool isMapped)
             info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
         });
 
+    space.addClient(win);
     return win;
 }
 

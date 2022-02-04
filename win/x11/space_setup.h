@@ -129,7 +129,7 @@ void init_space(Space& space)
                 }
 
                 // ### This will request the attributes again
-                win::x11::create_controlled_window(space, wins[i], true);
+                create_controlled_window(wins[i], true, space);
             }
         }
 
