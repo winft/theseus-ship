@@ -251,8 +251,27 @@ public:
     void updateColorScheme() override;
     void killWindow() override;
 
+    void getResourceClass();
+    void getWmClientMachine();
+
+    Xcb::Property fetchWmClientLeader() const;
+    void readWmClientLeader(Xcb::Property& p);
+    void getWmClientLeader();
+
+    /**
+     * This function fetches the opaque region from this Toplevel.
+     * Will only be called on corresponding property changes and for initialization.
+     */
+    void getWmOpaqueRegion();
+    void getSkipCloseAnimation();
+
+    void detectShape(xcb_window_t id);
     void update_input_shape();
 
+    QByteArray sessionId() const;
+    QByteArray wmCommand();
+
+    static bool resourceMatch(window const* c1, window const* c2);
     void debug(QDebug& stream) const override;
 
 Q_SIGNALS:

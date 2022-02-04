@@ -203,16 +203,13 @@ public:
     bool isOnAllDesktops() const;
 
     virtual QByteArray windowRole() const;
-    QByteArray sessionId() const;
     QByteArray resourceName() const;
     QByteArray resourceClass() const;
-    QByteArray wmCommand();
     QByteArray wmClientMachine(bool use_localhost) const;
     win::x11::client_machine const* clientMachine() const;
     virtual bool isLocalhost() const;
     xcb_window_t wmClientLeader() const;
     virtual pid_t pid() const;
-    static bool resourceMatch(const Toplevel* c1, const Toplevel* c2);
 
     bool readyForPainting() const; // true if the window has been already painted its contents
     xcb_visualid_t visual() const;
@@ -323,18 +320,6 @@ public:
     virtual bool belongsToDesktop() const;
     virtual void checkTransient(Toplevel* window);
 
-    void getResourceClass();
-    void getWmClientLeader();
-    void getWmClientMachine();
-    void detectShape(xcb_window_t id);
-
-    /**
-     * This function fetches the opaque region from this Toplevel.
-     * Will only be called on corresponding property changes and for initialization.
-     */
-    void getWmOpaqueRegion();
-    void getSkipCloseAnimation();
-
     void setWindowHandles(xcb_window_t w);
     void disownDataPassedToDeleted();
 
@@ -343,9 +328,6 @@ public:
     void discardWindowPixmap();
 
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
-
-    Xcb::Property fetchWmClientLeader() const;
-    void readWmClientLeader(Xcb::Property &p);
 
     NETWinInfo* info{nullptr};
     Wrapland::Server::Surface* m_surface{nullptr};
@@ -466,25 +448,27 @@ protected:
     QSharedPointer<QOpenGLFramebufferObject> m_internalFBO;
     QImage m_internalImage;
 
+    bool is_shape{false};
+    QRegion opaque_region;
+
+    win::x11::client_machine* m_clientMachine;
+    xcb_window_t m_wmClientLeader{XCB_WINDOW_NONE};
+
 private:
     void add_repaint_outputs(QRegion const& region);
 
     // when adding new data members, check also copyToDeleted()
     QUuid m_internalId;
-    Xcb::Window m_client;
+    Xcb::Window m_client{};
 
     QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};
-    bool is_shape;
     mutable bool m_render_shape_valid{false};
     mutable QRegion m_render_shape;
 
     QByteArray resource_name;
     QByteArray resource_class;
-    win::x11::client_machine* m_clientMachine;
-    xcb_window_t m_wmClientLeader;
     bool m_damageReplyPending;
-    QRegion opaque_region;
     xcb_xfixes_fetch_region_cookie_t m_regionCookie;
     int m_screen;
     bool m_skipCloseAnimation;

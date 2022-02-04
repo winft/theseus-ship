@@ -936,6 +936,90 @@ void window::killWindow()
     destroy_window(this);
 }
 
+void window::getResourceClass()
+{
+    setResourceClass(QByteArray(info->windowClassName()).toLower(),
+                     QByteArray(info->windowClassClass()).toLower());
+}
+
+void window::getWmClientMachine()
+{
+    m_clientMachine->resolve(xcb_window(), wmClientLeader());
+}
+
+Xcb::Property window::fetchWmClientLeader() const
+{
+    return Xcb::Property(false, xcb_window(), atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
+}
+
+void window::readWmClientLeader(Xcb::Property& prop)
+{
+    m_wmClientLeader = prop.value<xcb_window_t>(xcb_window());
+}
+
+void window::getWmClientLeader()
+{
+    auto prop = fetchWmClientLeader();
+    readWmClientLeader(prop);
+}
+
+void window::getWmOpaqueRegion()
+{
+    const auto rects = info->opaqueRegion();
+    QRegion new_opaque_region;
+    for (const auto& r : rects) {
+        new_opaque_region += QRect(r.pos.x, r.pos.y, r.size.width, r.size.height);
+    }
+
+    opaque_region = new_opaque_region;
+}
+
+void window::getSkipCloseAnimation()
+{
+    setSkipCloseAnimation(fetch_skip_close_animation(xcb_window()).toBool());
+}
+
+void window::detectShape(xcb_window_t id)
+{
+    const bool wasShape = is_shape;
+    is_shape = Xcb::Extensions::self()->hasShape(id);
+    if (wasShape != is_shape) {
+        Q_EMIT shapedChanged();
+    }
+}
+
+/**
+ * Returns sessionId for this client,
+ * taken either from its window or from the leader window.
+ */
+QByteArray window::sessionId() const
+{
+    QByteArray result = Xcb::StringProperty(xcb_window(), atoms->sm_client_id);
+    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
+        result = Xcb::StringProperty(m_wmClientLeader, atoms->sm_client_id);
+    }
+    return result;
+}
+
+/**
+ * Returns command property for this client,
+ * taken either from its window or from the leader window.
+ */
+QByteArray window::wmCommand()
+{
+    QByteArray result = Xcb::StringProperty(xcb_window(), XCB_ATOM_WM_COMMAND);
+    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
+        result = Xcb::StringProperty(m_wmClientLeader, XCB_ATOM_WM_COMMAND);
+    }
+    result.replace(0, ' ');
+    return result;
+}
+
+bool window::resourceMatch(window const* c1, window const* c2)
+{
+    return c1->resourceClass() == c2->resourceClass();
+}
+
 void window::debug(QDebug& stream) const
 {
     std::string type = "unmanaged";

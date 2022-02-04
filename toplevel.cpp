@@ -49,11 +49,8 @@ Toplevel::Toplevel()
 }
 
 Toplevel::Toplevel(win::transient* transient)
-    : m_internalId(QUuid::createUuid())
-    , m_client()
-    , is_shape(false)
-    , m_clientMachine(new win::x11::client_machine(this))
-    , m_wmClientLeader(XCB_WINDOW_NONE)
+    : m_clientMachine(new win::x11::client_machine(this))
+    , m_internalId(QUuid::createUuid())
     , m_damageReplyPending(false)
     , m_screen(0)
     , m_skipCloseAnimation(false)
@@ -122,15 +119,6 @@ NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_
     return wt;
 }
 
-void Toplevel::detectShape(xcb_window_t id)
-{
-    const bool wasShape = is_shape;
-    is_shape = Xcb::Extensions::self()->hasShape(id);
-    if (wasShape != is_shape) {
-        Q_EMIT shapedChanged();
-    }
-}
-
 Toplevel* Toplevel::create_remnant(Toplevel* source)
 {
     auto win = new Toplevel();
@@ -189,54 +177,6 @@ void Toplevel::disownDataPassedToDeleted()
     info = nullptr;
 }
 
-Xcb::Property Toplevel::fetchWmClientLeader() const
-{
-    return Xcb::Property(false, xcb_window(), atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
-}
-
-void Toplevel::readWmClientLeader(Xcb::Property &prop)
-{
-    m_wmClientLeader = prop.value<xcb_window_t>(xcb_window());
-}
-
-void Toplevel::getWmClientLeader()
-{
-    auto prop = fetchWmClientLeader();
-    readWmClientLeader(prop);
-}
-
-/**
- * Returns sessionId for this client,
- * taken either from its window or from the leader window.
- */
-QByteArray Toplevel::sessionId() const
-{
-    QByteArray result = Xcb::StringProperty(xcb_window(), atoms->sm_client_id);
-    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
-        result = Xcb::StringProperty(m_wmClientLeader, atoms->sm_client_id);
-    }
-    return result;
-}
-
-/**
- * Returns command property for this client,
- * taken either from its window or from the leader window.
- */
-QByteArray Toplevel::wmCommand()
-{
-    QByteArray result = Xcb::StringProperty(xcb_window(), XCB_ATOM_WM_COMMAND);
-    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
-        result = Xcb::StringProperty(m_wmClientLeader, XCB_ATOM_WM_COMMAND);
-    }
-    result.replace(0, ' ');
-    return result;
-}
-
-void Toplevel::getWmClientMachine()
-{
-    m_clientMachine->resolve(xcb_window(), wmClientLeader());
-}
-
 /**
  * Returns client machine for this client,
  * taken either from its window or from the leader window.
@@ -266,21 +206,11 @@ xcb_window_t Toplevel::wmClientLeader() const
     return xcb_window();
 }
 
-void Toplevel::getResourceClass()
-{
-    setResourceClass(QByteArray(info->windowClassName()).toLower(), QByteArray(info->windowClassClass()).toLower());
-}
-
 void Toplevel::setResourceClass(const QByteArray &name, const QByteArray &className)
 {
     resource_name  = name;
     resource_class = className;
     Q_EMIT windowClassChanged();
-}
-
-bool Toplevel::resourceMatch(const Toplevel *c1, const Toplevel *c2)
-{
-    return c1->resourceClass() == c2->resourceClass();
 }
 
 double Toplevel::opacity() const
@@ -654,17 +584,6 @@ bool Toplevel::wantsShadowToBeRendered() const
     return true;
 }
 
-void Toplevel::getWmOpaqueRegion()
-{
-    const auto rects = info->opaqueRegion();
-    QRegion new_opaque_region;
-    for (const auto &r : rects) {
-        new_opaque_region += QRect(r.pos.x, r.pos.y, r.size.width, r.size.height);
-    }
-
-    opaque_region = new_opaque_region;
-}
-
 bool Toplevel::is_wayland_window() const
 {
     return false;
@@ -691,11 +610,6 @@ xcb_window_t Toplevel::frameId() const
         return m_remnant->frame;
     }
     return m_client;
-}
-
-void Toplevel::getSkipCloseAnimation()
-{
-    setSkipCloseAnimation(win::x11::fetch_skip_close_animation(xcb_window()).toBool());
 }
 
 void Toplevel::debug(QDebug& stream) const
