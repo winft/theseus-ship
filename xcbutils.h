@@ -492,18 +492,44 @@ public:
                   bool onlyIfExists = false,
                   xcb_connection_t* c = connection())
         : m_connection(c)
-        , m_retrieved(false)
         , m_cookie(xcb_intern_atom_unchecked(m_connection,
                                              onlyIfExists,
                                              name.length(),
                                              name.constData()))
-        , m_atom(XCB_ATOM_NONE)
         , m_name(name)
     {
     }
 
     Atom() = delete;
-    Atom(const Atom&) = delete;
+    Atom(Atom const& other)
+    {
+        *this = other;
+    }
+
+    Atom& operator=(Atom const& other)
+    {
+        if (this == &other) {
+            return *this;
+        }
+
+        m_connection = other.m_connection;
+        m_name = other.m_name;
+        m_retrieved = other.m_retrieved;
+
+        if (m_retrieved) {
+            m_atom = other.m_atom;
+            m_cookie.sequence = 0;
+        } else {
+            // Set only_if_exists to true because the other has already created it if false.
+            m_cookie = xcb_intern_atom_unchecked(
+                m_connection, true, m_name.length(), m_name.constData());
+        }
+
+        return *this;
+    }
+
+    Atom(Atom&& other) noexcept = default;
+    Atom& operator=(Atom&& other) noexcept = default;
 
     ~Atom()
     {
@@ -547,9 +573,9 @@ private:
         m_retrieved = true;
     }
     xcb_connection_t* m_connection;
-    bool m_retrieved;
+    bool m_retrieved{false};
     xcb_intern_atom_cookie_t m_cookie;
-    xcb_atom_t m_atom;
+    xcb_atom_t m_atom{XCB_ATOM_NONE};
     QByteArray m_name;
 };
 
