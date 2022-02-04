@@ -57,7 +57,7 @@ SettingsImpl::SettingsImpl(KDecoration2::DecorationSettings *parent)
     );
     // prevent changes in Decoration due to compositor being destroyed
     connect(render::compositor::self(), &render::compositor::aboutToDestroy, this,
-        [this, c] {
+        [c] {
             disconnect(c);
         }
     );

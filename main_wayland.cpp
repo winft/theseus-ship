@@ -499,7 +499,7 @@ int main(int argc, char * argv[])
         a.setSessionArgument(parser.value(exitWithSessionOption));
     }
 
-    KWin::wayland_start_options flags;
+    auto flags = KWin::wayland_start_options::none;
     if (parser.isSet(screenLockerOption)) {
         flags = KWin::wayland_start_options::lock_screen;
     } else if (parser.isSet(noScreenLockerOption)) {

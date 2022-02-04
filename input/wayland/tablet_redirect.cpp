@@ -55,7 +55,7 @@ void tablet_redirect::tabletToolEvent(redirect::TabletEventType type,
 {
     last_position = pos;
 
-    QEvent::Type t;
+    auto t = QEvent::None;
     switch (type) {
     case redirect::Axis:
         t = QEvent::TabletMove;
