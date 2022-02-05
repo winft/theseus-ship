@@ -757,8 +757,8 @@ endif()
 add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
 target_link_libraries(kwin_x11
   kwin_x11_lib
-  kwin4_effect_builtins
 )
+kcoreaddons_target_static_plugins(kwin_x11 "kwin/effects/plugins")
 
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
@@ -923,8 +923,11 @@ PUBLIC
   Libinput::Libinput
   Threads::Threads
   PW::KScreenLocker
-PRIVATE
-  kwin4_effect_builtins
+)
+
+kcoreaddons_target_static_plugins(
+  kwin_wayland_lib "kwin/effects/plugins"
+  LINK_OPTION "PRIVATE"
 )
 
 set_target_properties(kwin_wayland_lib PROPERTIES
