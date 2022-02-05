@@ -78,7 +78,7 @@ void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_eve
     sel->data.source_int.reset(new data_source_ext);
     sel->data.x11_source->set_source(sel->data.source_int.get());
 
-    sel->xdrag.reset(new x11_drag(sel->data.x11_source.get()));
+    sel->xdrag.reset(new x11_drag(*sel->data.x11_source));
 
     QObject::connect(sel->data.qobject.get(),
                      &q_selection::transfer_finished,

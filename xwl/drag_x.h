@@ -46,7 +46,7 @@ class x11_drag : public drag
     Q_OBJECT
 
 public:
-    explicit x11_drag(x11_source_ext* source);
+    explicit x11_drag(x11_source_ext& source);
     ~x11_drag() override;
 
     drag_event_reply move_filter(Toplevel* target, QPoint const& pos) override;
@@ -64,7 +64,7 @@ private:
 
     bool check_for_finished();
 
-    x11_source_ext* source;
+    x11_source_ext& source;
     mime_atoms offers;
     std::vector<std::pair<xcb_timestamp_t, bool>> data_requests;
 
@@ -78,7 +78,7 @@ class wl_visit : public QObject
     Q_OBJECT
 
 public:
-    wl_visit(Toplevel* target, x11_source_ext* source);
+    wl_visit(Toplevel* target, x11_source_ext& source);
     ~wl_visit() override;
 
     bool handle_client_message(xcb_client_message_event_t* event);
@@ -129,7 +129,7 @@ private:
     xcb_window_t window;
 
     xcb_window_t source_window = XCB_WINDOW_NONE;
-    x11_source_ext* source;
+    x11_source_ext& source;
 
     uint32_t m_version = 0;
 

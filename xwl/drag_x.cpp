@@ -42,22 +42,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-x11_drag::x11_drag(x11_source_ext* source)
+x11_drag::x11_drag(x11_source_ext& source)
     : source{source}
 {
-    connect(source->get_qobject(),
+    connect(source.get_qobject(),
             &q_x11_source::transfer_ready,
             this,
             [this](xcb_atom_t target, qint32 fd) {
                 Q_UNUSED(target);
                 Q_UNUSED(fd);
-                data_requests.emplace_back(this->source->timestamp, false);
+                data_requests.emplace_back(this->source.timestamp, false);
             });
 
-    connect(source->get_source(), &data_source_ext::accepted, this, [this](auto /*mime_type*/) {
-        // TODO(romangg): handle?
-    });
-    connect(source->get_source(), &data_source_ext::dropped, this, [this] {
+    QObject::connect(
+        source.get_source(), &data_source_ext::accepted, this, [this](auto /*mime_type*/) {
+            // TODO(romangg): handle?
+        });
+    QObject::connect(source.get_source(), &data_source_ext::dropped, this, [this] {
         if (visit) {
             connect(visit.get(), &wl_visit::finish, this, [this](wl_visit* visit) {
                 Q_UNUSED(visit);
@@ -77,7 +78,7 @@ x11_drag::x11_drag(x11_source_ext* source)
         }
         check_for_finished();
     });
-    connect(source->get_source(), &data_source_ext::finished, this, [this] {
+    QObject::connect(source.get_source(), &data_source_ext::finished, this, [this] {
         // this call is not reliably initiated by Wayland clients
         check_for_finished();
     });
@@ -168,7 +169,7 @@ void x11_drag::handle_transfer_finished(xcb_timestamp_t time)
 
 void x11_drag::set_offers(mime_atoms const& offers)
 {
-    source->offers = offers;
+    source.offers = offers;
 
     if (offers.empty()) {
         // There are no offers, so just directly set the drag target,
@@ -189,7 +190,7 @@ void x11_drag::set_offers(mime_atoms const& offers)
     this->offers = offers;
 
     for (auto const& mimePair : offers) {
-        source->get_source()->offer(mimePair.id);
+        source.get_source()->offer(mimePair.id);
     }
 
     set_drag_target();
@@ -229,12 +230,11 @@ bool x11_drag::check_for_finished()
     return transfersFinished;
 }
 
-wl_visit::wl_visit(Toplevel* target, x11_source_ext* source)
-    : QObject()
-    , target{target}
+wl_visit::wl_visit(Toplevel* target, x11_source_ext& source)
+    : target{target}
     , source{source}
 {
-    auto xcb_con = source->x11.connection;
+    auto xcb_con = source.x11.connection;
 
     window = xcb_generate_id(xcb_con);
     uint32_t const dndValues[]
@@ -250,7 +250,7 @@ wl_visit::wl_visit(Toplevel* target, x11_source_ext* source)
                       8192, // TODO: get current screen size and connect to changes
                       0,
                       XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                      source->x11.screen->root_visual,
+                      source.x11.screen->root_visual,
                       XCB_CW_EVENT_MASK,
                       dndValues);
 
@@ -270,8 +270,8 @@ wl_visit::~wl_visit()
 {
     // TODO(romangg): Use the x11_data here. But we must ensure the Dnd object still exists at this
     //                point, i.e. use explicit ownership through smart pointer only.
-    xcb_destroy_window(source->x11.connection, window);
-    xcb_flush(source->x11.connection);
+    xcb_destroy_window(source.x11.connection, window);
+    xcb_flush(source.x11.connection);
 }
 
 bool wl_visit::leave()
@@ -340,7 +340,7 @@ bool wl_visit::handle_enter(xcb_client_message_event_t* event)
 
 void wl_visit::get_mimes_from_win_property(mime_atoms& offers)
 {
-    auto cookie = xcb_get_property(source->x11.connection,
+    auto cookie = xcb_get_property(source.x11.connection,
                                    0,
                                    source_window,
                                    atoms->xdnd_type_list,
@@ -348,7 +348,7 @@ void wl_visit::get_mimes_from_win_property(mime_atoms& offers)
                                    0,
                                    0x1fffffff);
 
-    auto reply = xcb_get_property_reply(source->x11.connection, cookie, nullptr);
+    auto reply = xcb_get_property_reply(source.x11.connection, cookie, nullptr);
     if (reply == nullptr) {
         return;
     }
@@ -386,7 +386,7 @@ bool wl_visit::handle_position(xcb_client_message_event_t* event)
     auto const pos = data->data32[2];
     Q_UNUSED(pos);
 
-    source->timestamp = data->data32[3];
+    source.timestamp = data->data32[3];
 
     xcb_atom_t actionAtom = m_version > 1 ? data->data32[4] : atoms->xdnd_action_copy;
     auto action = atom_to_client_action(actionAtom);
@@ -400,7 +400,7 @@ bool wl_visit::handle_position(xcb_client_message_event_t* event)
     if (this->action != action) {
         this->action = action;
         action_atom = actionAtom;
-        source->get_source()->set_actions(action);
+        source.get_source()->set_actions(action);
     }
 
     send_status();
@@ -413,7 +413,7 @@ bool wl_visit::handle_drop(xcb_client_message_event_t* event)
 
     auto data = &event->data;
     source_window = data->data32[0];
-    source->timestamp = data->data32[2];
+    source.timestamp = data->data32[2];
 
     // We do nothing more here, the drop is being processed through the x11_source object.
     do_finish();
@@ -470,7 +470,7 @@ bool wl_visit::target_accepts_action() const
     if (action == dnd_action::none) {
         return false;
     }
-    auto const src_action = source->get_source()->action;
+    auto const src_action = source.get_source()->action;
     return src_action == action || src_action == dnd_action::copy;
 }
 
@@ -480,12 +480,12 @@ void wl_visit::unmap_proxy_window()
         return;
     }
 
-    xcb_unmap_window(source->x11.connection, window);
+    xcb_unmap_window(source.x11.connection, window);
 
     workspace()->stacking_order->remove_manual_overlay(window);
     workspace()->stacking_order->update(true);
 
-    xcb_flush(source->x11.connection);
+    xcb_flush(source.x11.connection);
     mapped = false;
 }
 
