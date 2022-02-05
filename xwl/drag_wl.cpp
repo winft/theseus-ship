@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::xwl
 {
 
-wl_drag::wl_drag(Wrapland::Server::data_source* source, xcb_window_t proxy_window)
+wl_drag::wl_drag(wl_source<Wrapland::Server::data_source> const& source, xcb_window_t proxy_window)
     : source{source}
     , proxy_window{proxy_window}
 {
@@ -98,7 +98,7 @@ bool wl_drag::end()
 }
 
 x11_visit::x11_visit(Toplevel* target,
-                     Wrapland::Server::data_source* source,
+                     wl_source<Wrapland::Server::data_source> const& source,
                      xcb_window_t drag_window)
     : QObject()
     , target(target)
@@ -106,7 +106,7 @@ x11_visit::x11_visit(Toplevel* target,
     , drag_window{drag_window}
 {
     // first check supported DND version
-    auto xcb_con = kwinApp()->x11Connection();
+    auto xcb_con = source.x11.connection;
     auto cookie = xcb_get_property(
         xcb_con, 0, target->xcb_window(), atoms->xdnd_aware, XCB_GET_PROPERTY_TYPE_ANY, 0, 1);
 
@@ -259,7 +259,7 @@ void x11_visit::receive_offer()
     enter();
     update_actions();
 
-    notifiers.action = connect(source,
+    notifiers.action = connect(source.server_source,
                                &Wrapland::Server::data_source::supported_dnd_actions_changed,
                                this,
                                &x11_visit::update_actions);
@@ -287,7 +287,7 @@ void x11_visit::send_enter()
     data.data32[0] = drag_window;
     data.data32[1] = version << 24;
 
-    auto const mimeTypesNames = source->mime_types();
+    auto const mimeTypesNames = source.server_source->mime_types();
     auto const mimesCount = mimeTypesNames.size();
     size_t cnt = 0;
     size_t totalCnt = 0;
@@ -326,7 +326,7 @@ void x11_visit::send_enter()
             }
         }
 
-        xcb_change_property(kwinApp()->x11Connection(),
+        xcb_change_property(source.x11.connection,
                             XCB_PROP_MODE_REPLACE,
                             drag_window,
                             atoms->xdnd_type_list,
@@ -363,7 +363,7 @@ void x11_visit::send_leave()
 void x11_visit::update_actions()
 {
     auto const old_proposed = actions.proposed;
-    auto const supported = source->supported_dnd_actions();
+    auto const supported = source.server_source->supported_dnd_actions();
 
     if (supported.testFlag(actions.preferred)) {
         actions.proposed = actions.preferred;

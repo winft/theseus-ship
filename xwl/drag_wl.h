@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "drag.h"
+#include "sources.h"
 
 #include <QPoint>
 #include <memory>
@@ -45,14 +46,14 @@ class wl_drag : public drag
     Q_OBJECT
 
 public:
-    wl_drag(Wrapland::Server::data_source* source, xcb_window_t proxy_window);
+    wl_drag(wl_source<Wrapland::Server::data_source> const& source, xcb_window_t proxy_window);
 
     drag_event_reply move_filter(Toplevel* target, QPoint const& pos) override;
     bool handle_client_message(xcb_client_message_event_t* event) override;
     bool end() override;
 
 private:
-    Wrapland::Server::data_source* source;
+    wl_source<Wrapland::Server::data_source> const& source;
     xcb_window_t proxy_window;
     std::unique_ptr<x11_visit> visit;
 
@@ -67,7 +68,9 @@ class x11_visit : public QObject
 public:
     // TODO: handle ask action
 
-    x11_visit(Toplevel* target, Wrapland::Server::data_source* source, xcb_window_t drag_window);
+    x11_visit(Toplevel* target,
+              wl_source<Wrapland::Server::data_source> const& source,
+              xcb_window_t drag_window);
 
     bool handle_client_message(xcb_client_message_event_t* event);
 
@@ -103,7 +106,7 @@ private:
     void stop_connections();
 
     Toplevel* target;
-    Wrapland::Server::data_source* source;
+    wl_source<Wrapland::Server::data_source> const& source;
     xcb_window_t drag_window;
     uint32_t version = 0;
 
