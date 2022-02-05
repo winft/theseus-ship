@@ -60,6 +60,7 @@ private:
     bool handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event);
 
     xcb_query_extension_reply_t const* xfixes{nullptr};
+    x11_data const& x11;
 
     std::unique_ptr<xwl::clipboard> clipboard;
     std::unique_ptr<drag_and_drop> dnd;

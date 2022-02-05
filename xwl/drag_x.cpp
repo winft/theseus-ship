@@ -255,8 +255,14 @@ wl_visit::wl_visit(Toplevel* target, x11_source_ext& source)
                       dndValues);
 
     uint32_t version = drag_and_drop::version();
-    xcb_change_property(
-        xcb_con, XCB_PROP_MODE_REPLACE, window, atoms->xdnd_aware, XCB_ATOM_ATOM, 32, 1, &version);
+    xcb_change_property(xcb_con,
+                        XCB_PROP_MODE_REPLACE,
+                        window,
+                        source.x11.atoms->xdnd_aware,
+                        XCB_ATOM_ATOM,
+                        32,
+                        1,
+                        &version);
 
     xcb_map_window(xcb_con, window);
     workspace()->stacking_order->add_manual_overlay(window);
@@ -286,6 +292,7 @@ bool wl_visit::handle_client_message(xcb_client_message_event_t* event)
         return false;
     }
 
+    auto atoms = source.x11.atoms;
     if (event->type == atoms->xdnd_enter) {
         return handle_enter(event);
     } else if (event->type == atoms->xdnd_position) {
@@ -322,7 +329,7 @@ bool wl_visit::handle_enter(xcb_client_message_event_t* event)
         // message has only max 3 types (which are directly in data)
         for (size_t i = 0; i < 3; i++) {
             xcb_atom_t mimeAtom = data->data32[2 + i];
-            auto const mimeStrings = atom_to_mime_types(mimeAtom);
+            auto const mimeStrings = atom_to_mime_types(mimeAtom, *source.x11.atoms);
             for (auto const& mime : mimeStrings) {
                 if (!hasMimeName(offers, mime)) {
                     offers.emplace_back(mime, mimeAtom);
@@ -343,7 +350,7 @@ void wl_visit::get_mimes_from_win_property(mime_atoms& offers)
     auto cookie = xcb_get_property(source.x11.connection,
                                    0,
                                    source_window,
-                                   atoms->xdnd_type_list,
+                                   source.x11.atoms->xdnd_type_list,
                                    XCB_GET_PROPERTY_TYPE_ANY,
                                    0,
                                    0x1fffffff);
@@ -360,7 +367,7 @@ void wl_visit::get_mimes_from_win_property(mime_atoms& offers)
 
     auto mimeAtoms = static_cast<xcb_atom_t*>(xcb_get_property_value(reply));
     for (size_t i = 0; i < reply->value_len; ++i) {
-        auto const mimeStrings = atom_to_mime_types(mimeAtoms[i]);
+        auto const mimeStrings = atom_to_mime_types(mimeAtoms[i], *source.x11.atoms);
         for (auto const& mime : mimeStrings) {
             if (!hasMimeName(offers, mime)) {
                 offers.emplace_back(mime, mimeAtoms[i]);
@@ -388,8 +395,9 @@ bool wl_visit::handle_position(xcb_client_message_event_t* event)
 
     source.timestamp = data->data32[3];
 
+    auto atoms = source.x11.atoms;
     xcb_atom_t actionAtom = m_version > 1 ? data->data32[4] : atoms->xdnd_action_copy;
-    auto action = atom_to_client_action(actionAtom);
+    auto action = atom_to_client_action(actionAtom, *atoms);
 
     if (action == dnd_action::none) {
         // copy action is always possible in XDND
@@ -450,7 +458,7 @@ void wl_visit::send_status()
     data.data32[1] = flags;
     data.data32[4] = flags & (1 << 0) ? action_atom : static_cast<uint32_t>(XCB_ATOM_NONE);
 
-    send_client_message(source.x11.connection, source_window, atoms->xdnd_status, &data);
+    send_client_message(source.x11.connection, source_window, source.x11.atoms->xdnd_status, &data);
 }
 
 void wl_visit::send_finished()
@@ -462,7 +470,8 @@ void wl_visit::send_finished()
     data.data32[1] = accepted;
     data.data32[2] = accepted ? action_atom : static_cast<uint32_t>(XCB_ATOM_NONE);
 
-    send_client_message(source.x11.connection, source_window, atoms->xdnd_finished, &data);
+    send_client_message(
+        source.x11.connection, source_window, source.x11.atoms->xdnd_finished, &data);
 }
 
 bool wl_visit::target_accepts_action() const

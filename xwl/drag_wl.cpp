@@ -107,8 +107,13 @@ x11_visit::x11_visit(Toplevel* target,
 {
     // first check supported DND version
     auto xcb_con = source.x11.connection;
-    auto cookie = xcb_get_property(
-        xcb_con, 0, target->xcb_window(), atoms->xdnd_aware, XCB_GET_PROPERTY_TYPE_ANY, 0, 1);
+    auto cookie = xcb_get_property(xcb_con,
+                                   0,
+                                   target->xcb_window(),
+                                   source.x11.atoms->xdnd_aware,
+                                   XCB_GET_PROPERTY_TYPE_ANY,
+                                   0,
+                                   1);
 
     auto reply = xcb_get_property_reply(xcb_con, cookie, nullptr);
     if (!reply) {
@@ -147,6 +152,7 @@ x11_visit::x11_visit(Toplevel* target,
 
 bool x11_visit::handle_client_message(xcb_client_message_event_t* event)
 {
+    auto atoms = source.x11.atoms;
     if (event->type == atoms->xdnd_status) {
         return handle_status(event);
     } else if (event->type == atoms->xdnd_finished) {
@@ -173,7 +179,7 @@ bool x11_visit::handle_status(xcb_client_message_event_t* event)
 
     if (!state.dropped) {
         // as long as the drop is not yet done determine requested action
-        actions.preferred = atom_to_client_action(actionAtom);
+        actions.preferred = atom_to_client_action(actionAtom, *source.x11.atoms);
         update_actions();
     }
 
@@ -230,9 +236,10 @@ void x11_visit::send_position(QPointF const& globalPos)
     data.data32[0] = drag_window;
     data.data32[2] = (x << 16) | y;
     data.data32[3] = XCB_CURRENT_TIME;
-    data.data32[4] = client_action_to_atom(actions.proposed);
+    data.data32[4] = client_action_to_atom(actions.proposed, *source.x11.atoms);
 
-    send_client_message(source.x11.connection, target->xcb_window(), atoms->xdnd_position, &data);
+    send_client_message(
+        source.x11.connection, target->xcb_window(), source.x11.atoms->xdnd_position, &data);
 }
 
 void x11_visit::leave()
@@ -297,7 +304,7 @@ void x11_visit::send_enter()
         if (totalCnt == 3) {
             break;
         }
-        auto const atom = mime_type_to_atom(mimeName.c_str());
+        auto const atom = mime_type_to_atom(mimeName.c_str(), *source.x11.atoms);
 
         if (atom != XCB_ATOM_NONE) {
             data.data32[cnt + 2] = atom;
@@ -319,7 +326,7 @@ void x11_visit::send_enter()
 
         size_t cnt = 0;
         for (auto const& mimeName : mimeTypesNames) {
-            auto const atom = mime_type_to_atom(mimeName.c_str());
+            auto const atom = mime_type_to_atom(mimeName.c_str(), *source.x11.atoms);
             if (atom != XCB_ATOM_NONE) {
                 targets[cnt] = atom;
                 cnt++;
@@ -329,14 +336,15 @@ void x11_visit::send_enter()
         xcb_change_property(source.x11.connection,
                             XCB_PROP_MODE_REPLACE,
                             drag_window,
-                            atoms->xdnd_type_list,
+                            source.x11.atoms->xdnd_type_list,
                             XCB_ATOM_ATOM,
                             32,
                             cnt,
                             targets.data());
     }
 
-    send_client_message(source.x11.connection, target->xcb_window(), atoms->xdnd_enter, &data);
+    send_client_message(
+        source.x11.connection, target->xcb_window(), source.x11.atoms->xdnd_enter, &data);
 }
 
 void x11_visit::send_drop(uint32_t time)
@@ -345,7 +353,8 @@ void x11_visit::send_drop(uint32_t time)
     data.data32[0] = drag_window;
     data.data32[2] = time;
 
-    send_client_message(source.x11.connection, target->xcb_window(), atoms->xdnd_drop, &data);
+    send_client_message(
+        source.x11.connection, target->xcb_window(), source.x11.atoms->xdnd_drop, &data);
 
     if (version < 2) {
         do_finish();
@@ -357,7 +366,8 @@ void x11_visit::send_leave()
     xcb_client_message_data_t data = {{0}};
     data.data32[0] = drag_window;
 
-    send_client_message(source.x11.connection, target->xcb_window(), atoms->xdnd_leave, &data);
+    send_client_message(
+        source.x11.connection, target->xcb_window(), source.x11.atoms->xdnd_leave, &data);
 }
 
 void x11_visit::update_actions()
@@ -380,8 +390,8 @@ void x11_visit::update_actions()
 
     auto const pref = actions.preferred != dnd_action::none ? actions.preferred : dnd_action::copy;
 
-    // We assume the X client supports Move, but this might be wrong - then the drag just cancels,
-    // if the user tries to force it.
+    // We assume the X client supports Move, but this might be wrong - then the drag just
+    // cancels, if the user tries to force it.
     waylandServer()->seat()->drags().target_actions_update(
         QFlags({dnd_action::copy, dnd_action::move}), pref);
 }
@@ -433,5 +443,4 @@ void x11_visit::stop_connections()
     disconnect(notifiers.action);
     notifiers.action = QMetaObject::Connection();
 }
-
 }

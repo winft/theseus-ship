@@ -137,7 +137,7 @@ uint32_t drag_and_drop::version()
 drag_and_drop::drag_and_drop(x11_data const& x11)
 {
     data = create_selection_data<Wrapland::Server::data_source, data_source_ext>(
-        atoms->xdnd_selection, x11);
+        x11.atoms->xdnd_selection, x11);
 
     // TODO(romangg): for window size get current screen size and connect to changes.
     register_x11_selection(this, QSize(8192, 8192));
@@ -147,7 +147,7 @@ drag_and_drop::drag_and_drop(x11_data const& x11)
     xcb_change_property(xcb_con,
                         XCB_PROP_MODE_REPLACE,
                         data.window,
-                        atoms->xdnd_aware,
+                        x11.atoms->xdnd_aware,
                         XCB_ATOM_ATOM,
                         32,
                         1,

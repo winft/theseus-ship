@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "atoms.h"
+#include "types.h"
 
 #include <QPoint>
 #include <Wrapland/Server/drag_pool.h>
@@ -36,13 +36,13 @@ enum class drag_event_reply;
 
 using dnd_action = Wrapland::Server::dnd_action;
 
-inline dnd_action atom_to_client_action(xcb_atom_t atom)
+inline dnd_action atom_to_client_action(xcb_atom_t atom, Atoms const& atoms)
 {
-    if (atom == atoms->xdnd_action_copy) {
+    if (atom == atoms.xdnd_action_copy) {
         return dnd_action::copy;
-    } else if (atom == atoms->xdnd_action_move) {
+    } else if (atom == atoms.xdnd_action_move) {
         return dnd_action::move;
-    } else if (atom == atoms->xdnd_action_ask) {
+    } else if (atom == atoms.xdnd_action_ask) {
         // we currently do not support it - need some test client first
         return dnd_action::none;
         // return dnd_action::Ask;
@@ -50,16 +50,16 @@ inline dnd_action atom_to_client_action(xcb_atom_t atom)
     return dnd_action::none;
 }
 
-inline xcb_atom_t client_action_to_atom(dnd_action action)
+inline xcb_atom_t client_action_to_atom(dnd_action action, Atoms const& atoms)
 {
     if (action == dnd_action::copy) {
-        return atoms->xdnd_action_copy;
+        return atoms.xdnd_action_copy;
     } else if (action == dnd_action::move) {
-        return atoms->xdnd_action_move;
+        return atoms.xdnd_action_move;
     } else if (action == dnd_action::ask) {
         // we currently do not support it - need some test client first
         return XCB_ATOM_NONE;
-        // return atoms->xdnd_action_ask;
+        // return atoms.xdnd_action_ask;
     }
     return XCB_ATOM_NONE;
 }

@@ -19,8 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "transfer.h"
 
-#include "atoms.h"
-
 #include <unistd.h>
 #include <xwayland_logging.h>
 
@@ -30,8 +28,13 @@ namespace KWin::xwl
 // in Bytes: equals 64KB
 constexpr uint32_t s_incrChunkSize = 63 * 1024;
 
-transfer::transfer(xcb_atom_t selection, qint32 fd, xcb_timestamp_t timestamp, QObject* parent)
+transfer::transfer(xcb_atom_t selection,
+                   qint32 fd,
+                   xcb_timestamp_t timestamp,
+                   Atoms const& atoms,
+                   QObject* parent)
     : QObject(parent)
+    , atoms{atoms}
     , atom{selection}
     , fd{fd}
     , timestamp{timestamp}
@@ -77,8 +80,9 @@ void transfer::close_fd()
 wl_to_x11_transfer::wl_to_x11_transfer(xcb_atom_t selection,
                                        xcb_selection_request_event_t* request,
                                        qint32 fd,
+                                       Atoms const& atoms,
                                        QObject* parent)
-    : transfer(selection, fd, 0, parent)
+    : transfer(selection, fd, 0, atoms, parent)
     , request(request)
 {
 }
@@ -135,7 +139,7 @@ void wl_to_x11_transfer::start_incr()
                         XCB_PROP_MODE_REPLACE,
                         request->requestor,
                         request->property,
-                        atoms->incr,
+                        atoms.incr,
                         32,
                         1,
                         &chunkSpace);
@@ -259,7 +263,7 @@ x11_to_wl_transfer::x11_to_wl_transfer(xcb_atom_t selection,
                                        xcb_window_t parentWindow,
                                        x11_data const& x11,
                                        QObject* parent)
-    : transfer(selection, fd, timestamp, parent)
+    : transfer(selection, fd, timestamp, *x11.atoms, parent)
 {
     // create transfer window
     auto xcb_con = kwinApp()->x11Connection();
@@ -279,7 +283,7 @@ x11_to_wl_transfer::x11_to_wl_transfer(xcb_atom_t selection,
                       XCB_CW_EVENT_MASK,
                       values);
     // convert selection
-    xcb_convert_selection(xcb_con, window, selection, target, atoms->wl_selection, timestamp);
+    xcb_convert_selection(xcb_con, window, selection, target, atoms.wl_selection, timestamp);
     xcb_flush(xcb_con);
 }
 
@@ -296,7 +300,7 @@ x11_to_wl_transfer::~x11_to_wl_transfer()
 bool x11_to_wl_transfer::handle_property_notify(xcb_property_notify_event_t* event)
 {
     if (event->window == window) {
-        if (event->state == XCB_PROPERTY_NEW_VALUE && event->atom == atoms->wl_selection) {
+        if (event->state == XCB_PROPERTY_NEW_VALUE && event->atom == atoms.wl_selection) {
             get_incr_chunk();
         }
         return true;
@@ -316,7 +320,7 @@ bool x11_to_wl_transfer::handle_selection_notify(xcb_selection_notify_event_t* e
         qCWarning(KWIN_XWL) << "Incoming X selection conversion failed";
         return true;
     }
-    if (event->target == atoms->targets) {
+    if (event->target == atoms.targets) {
         qCWarning(KWIN_XWL) << "Received targets too late";
         // TODO: or allow it?
         return true;
@@ -328,9 +332,9 @@ bool x11_to_wl_transfer::handle_selection_notify(xcb_selection_notify_event_t* e
         return true;
     }
 
-    if (event->target == atoms->netscape_url) {
+    if (event->target == atoms.netscape_url) {
         receiver = new netscape_url_receiver;
-    } else if (event->target == atoms->moz_url) {
+    } else if (event->target == atoms.moz_url) {
         receiver = new moz_url_receiver;
     } else {
         receiver = new data_receiver;
@@ -343,7 +347,7 @@ void x11_to_wl_transfer::start_transfer()
 {
     auto xcb_con = kwinApp()->x11Connection();
     auto cookie = xcb_get_property(
-        xcb_con, 1, window, atoms->wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 0x1fffffff);
+        xcb_con, 1, window, atoms.wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 0x1fffffff);
 
     auto reply = xcb_get_property_reply(xcb_con, cookie, nullptr);
     if (reply == nullptr) {
@@ -352,7 +356,7 @@ void x11_to_wl_transfer::start_transfer()
         return;
     }
 
-    if (reply->type == atoms->incr) {
+    if (reply->type == atoms.incr) {
         set_incr(true);
         free(reply);
     } else {
@@ -376,7 +380,7 @@ void x11_to_wl_transfer::get_incr_chunk()
     auto xcb_con = kwinApp()->x11Connection();
 
     auto cookie = xcb_get_property(
-        xcb_con, 0, window, atoms->wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 0x1fffffff);
+        xcb_con, 0, window, atoms.wl_selection, XCB_GET_PROPERTY_TYPE_ANY, 0, 0x1fffffff);
 
     auto reply = xcb_get_property_reply(xcb_con, cookie, nullptr);
     if (!reply) {
@@ -533,7 +537,7 @@ void x11_to_wl_transfer::data_source_write()
         if (get_incr()) {
             clear_socket_notifier();
             auto xcb_con = kwinApp()->x11Connection();
-            xcb_delete_property(xcb_con, window, atoms->wl_selection);
+            xcb_delete_property(xcb_con, window, atoms.wl_selection);
             xcb_flush(xcb_con);
         } else {
             // transfer complete
