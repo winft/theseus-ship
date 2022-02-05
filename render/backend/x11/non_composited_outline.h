@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/x11/xcb/window.h"
 #include "render/outline.h"
-#include "xcbutils.h"
 
 namespace KWin::render::backend::x11
 {

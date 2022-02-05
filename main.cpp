@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/seat/session.h"
 #include "base/x11/event_filter_manager.h"
+#include "base/x11/xcb/extensions.h"
 #include "debug/perf/ftrace.h"
 #include "render/compositor.h"
 #include "input/global_shortcuts_manager.h"
@@ -34,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screenlockerwatcher.h"
 #include "sm.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include <kwineffects.h>
 

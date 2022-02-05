@@ -15,6 +15,7 @@
 #include "window.h"
 #include "xcb.h"
 
+#include "base/x11/xcb/proto.h"
 #include "win/control.h"
 #include "win/controlling.h"
 #include "win/input.h"

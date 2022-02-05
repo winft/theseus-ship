@@ -17,6 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "base/x11/xcb/atom.h"
+
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QMenu>
@@ -29,7 +31,6 @@
 #include <QWidget>
 #include <QCheckBox>
 #include <QX11Info>
-#include "../xcbutils.h"
 
 #include <KWindowSystem>
 

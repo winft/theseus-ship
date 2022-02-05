@@ -20,7 +20,6 @@
 #include "toplevel.h"
 #include "utils.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include "win/stacking_order.h"
 #include "win/transient.h"

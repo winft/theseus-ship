@@ -8,7 +8,7 @@
 */
 #pragma once
 
-#include "xcbutils.h"
+#include "xcb/atom.h"
 
 namespace KWin::base::x11
 {

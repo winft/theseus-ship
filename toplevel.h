@@ -21,13 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_TOPLEVEL_H
 #define KWIN_TOPLEVEL_H
 
-// kwin
+#include "base/x11/xcb/window.h"
 #include "input/cursor.h"
 #include "rules/rules.h"
 #include "utils.h"
 #include "win/virtual_desktops.h"
-#include "xcbutils.h"
-// KDE
+
 #include <NETWM>
 // Qt
 #include <QObject>

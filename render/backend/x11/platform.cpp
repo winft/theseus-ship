@@ -22,6 +22,8 @@
 #endif
 
 #include "base/x11/output.h"
+#include "base/x11/xcb/extensions.h"
+#include "base/x11/xcb/randr.h"
 #include "main_x11.h"
 #include "options.h"
 #include "randr_filter.h"
@@ -29,7 +31,6 @@
 #include "screens.h"
 #include "toplevel.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include <kwinxrenderutils.h>
 

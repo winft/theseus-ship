@@ -8,12 +8,11 @@
 #include "event.h"
 #include "window_release.h"
 
-#include "win/remnant.h"
-#include "win/space.h"
-
+#include "base/x11/xcb/proto.h"
 #include "render/effects.h"
 #include "utils.h"
-#include "xcbutils.h"
+#include "win/remnant.h"
+#include "win/space.h"
 
 namespace KWin::win::x11
 {

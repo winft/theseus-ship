@@ -18,14 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "testutils.h"
-// KWin
-#include "../xcbutils.h"
-// Qt
+
+#include "base/x11/xcb/proto.h"
+#include "base/x11/xcb/window.h"
+
 #include <QApplication>
 #include <QX11Info>
 #include <QtTest>
-// xcb
-#include <xcb/xcb.h>
 
 using namespace KWin;
 

@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "xcbutils.h"
+#include "base/x11/xcb/property.h"
 
 namespace KWin::win::x11
 {

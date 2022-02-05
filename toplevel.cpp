@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "shadow.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include "win/input.h"
 #include "win/remnant.h"

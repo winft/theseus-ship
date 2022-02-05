@@ -10,6 +10,7 @@
 #include "effects.h"
 #include "shadow.h"
 
+#include "base/x11/xcb/proto.h"
 #include "toplevel.h"
 #include "win/geo.h"
 #include "win/transient.h"

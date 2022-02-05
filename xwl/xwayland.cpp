@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xwayland.h"
 #include "data_bridge.h"
 
+#include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb_event_filter.h"
 #include "input/cursor.h"
 #include "main_wayland.h"
@@ -29,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/wayland/space.h"
 #include "win/x11/space_setup.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include <KLocalizedString>
 #include <KSelectionOwner>

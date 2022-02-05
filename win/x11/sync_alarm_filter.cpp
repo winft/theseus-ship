@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "sync_alarm_filter.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
+#include "base/x11/xcb/extensions.h"
 #include "win/x11/geo.h"
 #include "win/x11/window.h"
 

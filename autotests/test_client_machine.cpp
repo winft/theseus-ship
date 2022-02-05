@@ -18,16 +18,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "testutils.h"
-// KWin
-#include "../win/x11/client_machine.h"
-#include "../xcbutils.h"
-// Qt
+
+#include "base/x11/xcb/window.h"
+#include "win/x11/client_machine.h"
+
 #include <QApplication>
 #include <QX11Info>
 #include <QtTest>
-// xcb
-#include <xcb/xcb.h>
-// system
+
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>

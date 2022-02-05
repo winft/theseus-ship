@@ -6,10 +6,10 @@
 */
 #pragma once
 
+#include "base/x11/xcb/proto.h"
 #include "render/compositor.h"
 #include "render/scene.h"
 #include "render/shadow.h"
-#include "xcbutils.h"
 
 #include <QVector>
 

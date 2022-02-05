@@ -13,13 +13,13 @@
 #include "x11_logging.h"
 
 #include "base/platform.h"
+#include "base/x11/xcb/helpers.h"
 #include "main.h"
 #include "options.h"
 #include "render/gl/texture.h"
 #include "render/scene.h"
 #include "render/x11/overlay_window.h"
 #include "screens.h"
-#include "xcbutils.h"
 
 #include "win/x11/geo.h"
 

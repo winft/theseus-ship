@@ -7,6 +7,7 @@
 
 #include "window.h"
 
+#include "base/x11/xcb/extensions.h"
 #include "win/deco.h"
 
 namespace KWin::win::x11

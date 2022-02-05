@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox/x11_filter.h"
 
 #include "base/platform.h"
+#include "base/x11/xcb/proto.h"
 #include "render/effects.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
@@ -41,7 +42,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/screen_edges.h"
 #include "win/virtual_desktops.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include "win/controlling.h"
 #include "win/focus_chain.h"

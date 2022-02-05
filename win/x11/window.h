@@ -7,6 +7,8 @@
 
 #include "toplevel.h"
 
+#include "base/x11/xcb/geometry_hints.h"
+#include "base/x11/xcb/motif_hints.h"
 #include "win/meta.h"
 
 #include <xcb/sync.h>

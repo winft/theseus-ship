@@ -10,11 +10,11 @@
 #include "glx_fb_config.h"
 
 #include "base/platform.h"
+#include "base/x11/xcb/helpers.h"
 #include "main.h"
 #include "render/gl/gl.h"
 #include "render/x11/compositor.h"
 #include "x11_logging.h"
-#include "xcbutils.h"
 #include <kwineffectquickview.h>
 #include <kwinglplatform.h>
 

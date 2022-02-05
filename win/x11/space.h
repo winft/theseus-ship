@@ -9,12 +9,11 @@
 
 #include "netinfo.h"
 
-#include "win/stacking_order.h"
-
+#include "base/x11/xcb/helpers.h"
 #include "utils.h"
 #include "win/screen_edges.h"
+#include "win/stacking_order.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include <vector>
 

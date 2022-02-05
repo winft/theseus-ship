@@ -17,7 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "../xcbutils.h"
+#include "base/x11/xcb/atom.h"
+#include "base/x11/xcb/property.h"
+#include "base/x11/xcb/proto.h"
+
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDebug>

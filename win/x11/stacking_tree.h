@@ -7,9 +7,9 @@
 */
 #pragma once
 
-#include <kwin_export.h>
+#include "base/x11/xcb/proto.h"
+#include "kwin_export.h"
 
-#include "xcbutils.h"
 #include <deque>
 #include <memory>
 

@@ -11,6 +11,7 @@
 #include <config-kwin.h>
 
 #include "base/seat/backend/logind/session.h"
+#include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb_event_filter.h"
 #include "debug/console/x11/x11_console.h"
 #include "input/x11/platform.h"
@@ -21,7 +22,6 @@
 #include "sm.h"
 #include "win/x11/space.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include <KConfigGroup>
 #include <KCrash>

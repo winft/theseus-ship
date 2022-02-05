@@ -6,8 +6,8 @@
 */
 #pragma once
 
+#include "base/x11/xcb/window.h"
 #include "render/effects.h"
-#include "xcbutils.h"
 
 #include <memory.h>
 

@@ -10,8 +10,8 @@
 #pragma once
 
 #include "base/x11/atoms.h"
+#include "base/x11/xcb/window.h"
 #include "win/screen_edges.h"
-#include "xcbutils.h"
 
 namespace KWin::win::x11
 {

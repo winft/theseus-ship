@@ -6,8 +6,8 @@
 #pragma once
 
 #include "base/x11/event_filter.h"
+#include "base/x11/xcb/extensions.h"
 #include "render/compositor.h"
-#include "xcbutils.h"
 
 #include <xcb/glx.h>
 

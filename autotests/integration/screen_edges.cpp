@@ -20,17 +20,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/x11/xcb/proto.h"
 #include "input/cursor.h"
 #include "input/gestures.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "wayland_server.h"
 #include "win/screen_edges.h"
-#include "workspace.h"
-
 #include "win/stacking.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
+#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>

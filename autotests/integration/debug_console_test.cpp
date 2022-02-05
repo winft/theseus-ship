@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/x11/xcb/window.h"
 #include "debug/console/wayland/wayland_console.h"
 #include "screens.h"
 #include "wayland_server.h"
@@ -27,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/internal_window.h"
 #include "win/wayland/window.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>

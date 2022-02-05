@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../screenlockerwatcher.h"
 #include "../../wayland_server.h"
 #include "../../win/wayland/space.h"
-#include "../../xcbutils.h"
 #include "../../xwl/xwayland.h"
 #include "base/seat/backend/wlroots/session.h"
 #include "debug/console/wayland/wayland_console.h"

@@ -18,9 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "testutils.h"
-// KWin
-#include "../xcbutils.h"
-// Qt
+
+#include "base/x11/xcb/atom.h"
+#include "base/x11/xcb/motif_hints.h"
+#include "base/x11/xcb/proto.h"
+#include "base/x11/xcb/window.h"
+
 #include <QApplication>
 #include <QX11Info>
 #include <QtTest>
@@ -285,11 +288,11 @@ void TestXcbWrapper::testCurrentInput()
     m_testWindow.focus(XCB_INPUT_FOCUS_PARENT, QX11Info::appTime());
     xcb_flush(c);
 
-    base::x11::xcb::current_input input;
+    base::x11::xcb::input_focus input;
     QCOMPARE(input.window(), (xcb_window_t)m_testWindow);
 
     // creating a copy should make the input object have no window any more
-    base::x11::xcb::current_input input2(input);
+    base::x11::xcb::input_focus input2(input);
     QCOMPARE(input2.window(), (xcb_window_t)m_testWindow);
     QCOMPARE(input.window(), xcb_window_t(XCB_WINDOW_NONE));
 }

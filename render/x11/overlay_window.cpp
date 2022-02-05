@@ -20,12 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "overlay_window.h"
 
 #include "base/platform.h"
+#include "base/x11/xcb/extensions.h"
+#include "base/x11/xcb/helpers.h"
+#include "base/x11/xcb/proto.h"
 #include "kwinglobals.h"
 #include "main.h"
 #include "render/x11/compositor.h"
 #include "screens.h"
 #include "utils.h"
-#include "xcbutils.h"
 
 #include <QVector>
 

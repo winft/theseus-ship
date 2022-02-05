@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/dbus/kwin.h"
 #include "base/x11/user_interaction_filter.h"
+#include "base/x11/xcb/extensions.h"
 #include "input/cursor.h"
 #include "killwindow.h"
 #include "render/effects.h"
@@ -40,7 +41,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorationbridge.h"
 #include "main.h"
 #include "useractions.h"
-#include "xcbutils.h"
 
 #include "win/app_menu.h"
 #include "win/controlling.h"

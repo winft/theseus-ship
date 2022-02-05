@@ -1,7 +1,7 @@
 # KI18N Translation Domain for this library
 add_definitions(-DTRANSLATION_DOMAIN=\"kwin_effects\" -DEFFECT_BUILTINS)
 
-include_directories(${KWIN_SOURCE_DIR}) # for xcbutils.h
+include_directories(${KWIN_SOURCE_DIR})
 
 function(kwin_add_effect_config name)
     list(REMOVE_ITEM ARGV ${name})
