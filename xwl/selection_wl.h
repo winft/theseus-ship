@@ -229,8 +229,8 @@ inline void send_wl_selection_targets(x11_data const& x11,
 }
 
 /// Returns the file descriptor to write in or -1 on error.
-template<typename ServerSource>
-int selection_wl_start_transfer(ServerSource server_source, xcb_selection_request_event_t* event)
+template<typename Source>
+int selection_wl_start_transfer(Source&& source, xcb_selection_request_event_t* event)
 {
     auto const targets = atom_to_mime_types(event->target);
     if (targets.empty()) {
@@ -249,7 +249,7 @@ int selection_wl_start_transfer(ServerSource server_source, xcb_selection_reques
     };
 
     // check supported mimes
-    auto const offers = server_source->mime_types();
+    auto const offers = source->server_source->mime_types();
     auto const mimeIt = std::find_if(offers.begin(), offers.end(), cmp);
     if (mimeIt == offers.end()) {
         // Requested Mime not supported. Not sending selection.
@@ -262,7 +262,7 @@ int selection_wl_start_transfer(ServerSource server_source, xcb_selection_reques
         return -1;
     }
 
-    server_source->request_data(*mimeIt, p[1]);
+    source->server_source->request_data(*mimeIt, p[1]);
     return p[0];
 }
 
@@ -279,7 +279,7 @@ bool selection_wl_handle_request(Source&& source, xcb_selection_request_event_t*
         send_selection_notify(x11.connection, event, true);
     } else {
         // try to send mime data
-        if (auto fd = selection_wl_start_transfer(source->server_source, event); fd > 0) {
+        if (auto fd = selection_wl_start_transfer(source, event); fd > 0) {
             Q_EMIT source->get_qobject()->transfer_ready(new xcb_selection_request_event_t(*event),
                                                          fd);
         } else {
