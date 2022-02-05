@@ -31,7 +31,7 @@ constexpr uint32_t s_incrChunkSize = 63 * 1024;
 transfer::transfer(xcb_atom_t selection,
                    qint32 fd,
                    xcb_timestamp_t timestamp,
-                   Atoms const& atoms,
+                   base::x11::atoms const& atoms,
                    QObject* parent)
     : QObject(parent)
     , atoms{atoms}
@@ -80,7 +80,7 @@ void transfer::close_fd()
 wl_to_x11_transfer::wl_to_x11_transfer(xcb_atom_t selection,
                                        xcb_selection_request_event_t* request,
                                        qint32 fd,
-                                       Atoms const& atoms,
+                                       base::x11::atoms const& atoms,
                                        QObject* parent)
     : transfer(selection, fd, 0, atoms, parent)
     , request(request)

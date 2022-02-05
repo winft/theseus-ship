@@ -15,7 +15,6 @@
 #include "win/input.h"
 #include "win/meta.h"
 
-#include "atoms.h"
 #include "workspace.h"
 
 #include <kkeyserver.h>

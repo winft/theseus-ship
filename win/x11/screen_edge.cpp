@@ -9,13 +9,12 @@
 */
 #include "screen_edge.h"
 
-#include "atoms.h"
 #include "input/cursor.h"
 
 namespace KWin::win::x11
 {
 
-screen_edge::screen_edge(win::screen_edger* edger, Atoms& atoms)
+screen_edge::screen_edge(win::screen_edger* edger, base::x11::atoms& atoms)
     : win::screen_edge(edger)
     , atoms{atoms}
 {

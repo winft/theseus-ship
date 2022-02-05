@@ -5,9 +5,9 @@
 */
 #include "randr_filter.h"
 
-#include "atoms.h"
 #include "platform.h"
 #include "screens.h"
+#include "xcbutils.h"
 
 #include <xcb/xcb.h>
 

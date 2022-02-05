@@ -6,7 +6,6 @@
 */
 #include "kwin.h"
 
-#include "atoms.h"
 #include "debug/console/console.h"
 #include "debug/perf/ftrace.h"
 #include "kwinadaptor.h"

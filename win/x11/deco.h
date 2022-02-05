@@ -12,7 +12,6 @@
 #include "win/move.h"
 #include "win/scene.h"
 
-#include "atoms.h"
 #include "decorations/decorationbridge.h"
 #include "decorations/window.h"
 #include "render/compositor.h"

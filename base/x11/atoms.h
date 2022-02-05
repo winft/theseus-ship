@@ -10,13 +10,13 @@
 
 #include "xcbutils.h"
 
-namespace KWin
+namespace KWin::base::x11
 {
 
-class Atoms
+class atoms
 {
 public:
-    explicit Atoms(xcb_connection_t* con)
+    explicit atoms(xcb_connection_t* con)
         : wm_protocols{QByteArrayLiteral("WM_PROTOCOLS"), con}
         , wm_delete_window{QByteArrayLiteral("WM_DELETE_WINDOW"), con}
         , wm_take_focus{QByteArrayLiteral("WM_TAKE_FOCUS"), con}

@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "atoms.h"
 #include "xcbutils.h"
 
 namespace KWin::win::x11

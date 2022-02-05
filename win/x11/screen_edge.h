@@ -9,7 +9,7 @@
 */
 #pragma once
 
-#include "atoms.h"
+#include "base/x11/atoms.h"
 #include "win/screen_edges.h"
 #include "xcbutils.h"
 
@@ -20,7 +20,7 @@ class screen_edge : public win::screen_edge
 {
     Q_OBJECT
 public:
-    screen_edge(win::screen_edger* edger, Atoms& atoms);
+    screen_edge(win::screen_edger* edger, base::x11::atoms& atoms);
     ~screen_edge() override;
 
     quint32 window_id() const override;
@@ -45,7 +45,7 @@ private:
     Xcb::Window m_window{XCB_WINDOW_NONE};
     Xcb::Window m_approachWindow{XCB_WINDOW_NONE};
     QMetaObject::Connection m_cursorPollingConnection;
-    Atoms& atoms;
+    base::x11::atoms& atoms;
 };
 
 inline quint32 screen_edge::window_id() const

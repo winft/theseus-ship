@@ -5,7 +5,7 @@
 */
 #include "screen_edges_filter.h"
 
-#include "atoms.h"
+#include "base/x11/atoms.h"
 #include "win/screen_edges.h"
 #include "workspace.h"
 

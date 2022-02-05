@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include "atoms.h"
+#include "base/x11/atoms.h"
 
 #include <string>
 #include <xcb/xcb.h>
@@ -19,7 +19,7 @@ inline xcb_atom_t mime_type_to_atom_literal(std::string const& mime_type)
     return Xcb::Atom(mime_type.c_str(), false, kwinApp()->x11Connection());
 }
 
-inline xcb_atom_t mime_type_to_atom(std::string const& mime_type, Atoms const& atoms)
+inline xcb_atom_t mime_type_to_atom(std::string const& mime_type, base::x11::atoms const& atoms)
 {
     if (mime_type == "text/plain;charset=utf-8") {
         return atoms.utf8_string;
@@ -49,7 +49,7 @@ inline std::string atom_name(xcb_atom_t atom)
     return name;
 }
 
-inline std::vector<std::string> atom_to_mime_types(xcb_atom_t atom, Atoms const& atoms)
+inline std::vector<std::string> atom_to_mime_types(xcb_atom_t atom, base::x11::atoms const& atoms)
 {
     std::vector<std::string> mime_types;
 

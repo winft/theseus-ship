@@ -36,7 +36,7 @@ enum class drag_event_reply;
 
 using dnd_action = Wrapland::Server::dnd_action;
 
-inline dnd_action atom_to_client_action(xcb_atom_t atom, Atoms const& atoms)
+inline dnd_action atom_to_client_action(xcb_atom_t atom, base::x11::atoms const& atoms)
 {
     if (atom == atoms.xdnd_action_copy) {
         return dnd_action::copy;
@@ -50,7 +50,7 @@ inline dnd_action atom_to_client_action(xcb_atom_t atom, Atoms const& atoms)
     return dnd_action::none;
 }
 
-inline xcb_atom_t client_action_to_atom(dnd_action action, Atoms const& atoms)
+inline xcb_atom_t client_action_to_atom(dnd_action action, base::x11::atoms const& atoms)
 {
     if (action == dnd_action::copy) {
         return atoms.xdnd_action_copy;

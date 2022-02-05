@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "atoms.h"
+#include "base/x11/atoms.h"
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"

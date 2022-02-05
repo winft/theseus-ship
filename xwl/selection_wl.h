@@ -12,7 +12,6 @@
 #include "transfer.h"
 #include "types.h"
 
-#include "atoms.h"
 #include "win/x11/window.h"
 #include "workspace.h"
 

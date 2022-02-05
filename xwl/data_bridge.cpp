@@ -23,8 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dnd.h"
 #include "primary_selection.h"
 
-#include "atoms.h"
-
 namespace KWin::xwl
 {
 

@@ -16,7 +16,7 @@ namespace KWin::win::x11
 
 space::space()
 {
-    atoms = std::make_unique<Atoms>(connection());
+    atoms = std::make_unique<base::x11::atoms>(connection());
     edges = std::make_unique<win::screen_edger>(*this);
 
     QObject::connect(

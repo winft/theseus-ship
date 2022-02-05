@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwinglplatform.h>
 
-#include "atoms.h"
 #include "base/dbus/kwin.h"
 #include "base/x11/user_interaction_filter.h"
 #include "input/cursor.h"

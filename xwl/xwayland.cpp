@@ -245,7 +245,7 @@ void xwayland::continue_startup_with_x11()
     owner.claim(true);
 
     auto space = static_cast<win::wayland::space*>(Workspace::self());
-    space->atoms = std::make_unique<Atoms>(basic_data.connection);
+    space->atoms = std::make_unique<base::x11::atoms>(basic_data.connection);
     basic_data.atoms = space->atoms.get();
 
     event_filter = std::make_unique<base::x11::xcb_event_filter<win::wayland::space>>(*space);
