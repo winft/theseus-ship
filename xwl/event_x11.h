@@ -53,16 +53,6 @@ bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* e
     return true;
 }
 
-inline void get_x11_targets(xcb_connection_t* con,
-                            xcb_window_t const window,
-                            xcb_atom_t const atom,
-                            xcb_timestamp_t time)
-{
-    /* will lead to a selection request event for the new owner */
-    xcb_convert_selection(con, window, atom, atoms->targets, atoms->wl_selection, time);
-    xcb_flush(con);
-}
-
 template<typename Selection>
 void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
 {
@@ -85,8 +75,14 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
     create_x11_source(sel, event);
 
     if (auto const& source = sel->data.x11_source) {
-        get_x11_targets(
-            source->x11.connection, sel->data.requestor_window, sel->data.atom, source->timestamp);
+        /* Gets X11 targets, will lead to a selection request event for the new owner. */
+        xcb_convert_selection(source->x11.connection,
+                              sel->data.requestor_window,
+                              sel->data.atom,
+                              atoms->targets,
+                              atoms->wl_selection,
+                              source->timestamp);
+        xcb_flush(source->x11.connection);
     }
 }
 
