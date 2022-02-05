@@ -166,7 +166,7 @@ void stacking_order::propagate_clients(bool propagate_new_clients)
     // TODO isn't it too inefficient to restack always all clients?
     // TODO don't restack not visible windows?
     Q_ASSERT(newWindowStack.at(0) == x11::rootInfo()->supportWindow());
-    Xcb::restackWindows(newWindowStack);
+    base::x11::xcb::restack_windows(newWindowStack);
 
     int pos = 0;
     xcb_window_t* cl(nullptr);

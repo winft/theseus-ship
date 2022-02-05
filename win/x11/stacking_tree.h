@@ -30,7 +30,7 @@ private:
     void update();
 
     std::deque<Toplevel*> winlist;
-    std::unique_ptr<Xcb::Tree> xcbtree;
+    std::unique_ptr<base::x11::xcb::tree> xcbtree;
     bool is_dirty{false};
 };
 

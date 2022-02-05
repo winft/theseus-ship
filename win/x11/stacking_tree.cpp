@@ -20,7 +20,7 @@ void stacking_tree::mark_as_dirty()
 {
     is_dirty = true;
     if (kwinApp()->x11Connection()) {
-        xcbtree.reset(new Xcb::Tree(kwinApp()->x11RootWindow()));
+        xcbtree.reset(new base::x11::xcb::tree(kwinApp()->x11RootWindow()));
     }
 }
 
@@ -38,8 +38,8 @@ void stacking_tree::update()
     // use our own stacking order, not the X one, as they may differ
     winlist = workspace()->stacking_order->sorted();
 
-    if (xcbtree && !xcbtree->isNull()) {
-        std::unique_ptr<Xcb::Tree> tree{std::move(xcbtree)};
+    if (xcbtree && !xcbtree->is_null()) {
+        std::unique_ptr<base::x11::xcb::tree> tree{std::move(xcbtree)};
         xcb_window_t* windows = tree->children();
         const auto count = tree->data()->children_len;
 

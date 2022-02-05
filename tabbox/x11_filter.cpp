@@ -142,7 +142,7 @@ void X11Filter::keyRelease(xcb_generic_event_t* event)
     if (mod_index == -1)
         release = true;
     else {
-        Xcb::ModifierMapping xmk;
+        base::x11::xcb::modifier_mapping xmk;
         if (xmk) {
             xcb_keycode_t* keycodes = xmk.keycodes();
             const int maxIndex = xmk.size();

@@ -381,7 +381,7 @@ void TabBoxHandler::show()
     }
     if (d->config.isHighlightWindows()) {
         if (kwinApp()->x11Connection()) {
-            Xcb::sync();
+            base::x11::xcb::sync();
         }
         // TODO this should be
         // QMetaObject::invokeMethod(this, "initHighlightWindows", Qt::QueuedConnection);

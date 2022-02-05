@@ -48,7 +48,15 @@ namespace KWin
 
 namespace base::x11
 {
+
+namespace xcb
+{
+class tree;
+class window;
+}
+
 class event_filter;
+
 }
 
 namespace render
@@ -60,12 +68,6 @@ class outline;
 namespace scripting
 {
 class platform;
-}
-
-namespace Xcb
-{
-class Tree;
-class Window;
 }
 
 namespace win
@@ -109,7 +111,7 @@ public:
     QScopedPointer<base::x11::event_filter> m_syncAlarmFilter;
 
     int m_initialDesktop{1};
-    QScopedPointer<Xcb::Window> m_nullFocus;
+    QScopedPointer<base::x11::xcb::window> m_nullFocus;
 
     std::vector<Toplevel*> m_allClients;
 

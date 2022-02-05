@@ -42,8 +42,8 @@ private:
     void createWindow();
     void createApproachWindow();
 
-    Xcb::Window m_window{XCB_WINDOW_NONE};
-    Xcb::Window m_approachWindow{XCB_WINDOW_NONE};
+    base::x11::xcb::window m_window{XCB_WINDOW_NONE};
+    base::x11::xcb::window m_approachWindow{XCB_WINDOW_NONE};
     QMetaObject::Connection m_cursorPollingConnection;
     base::x11::atoms& atoms;
 };

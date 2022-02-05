@@ -458,7 +458,7 @@ private:
 
     // when adding new data members, check also copyToDeleted()
     QUuid m_internalId;
-    Xcb::Window m_client{};
+    base::x11::xcb::window m_client{};
 
     QRect m_frameGeometry;
     win::layer m_layer{win::layer::unknown};

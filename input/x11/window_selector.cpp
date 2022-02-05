@@ -225,8 +225,8 @@ void window_selector::handleKeyPress(xcb_keycode_t keycode, uint16_t state)
 
 void window_selector::selectWindowUnderPointer()
 {
-    Xcb::Pointer pointer(rootWindow());
-    if (!pointer.isNull() && pointer->child != XCB_WINDOW_NONE) {
+    base::x11::xcb::pointer pointer(rootWindow());
+    if (!pointer.is_null() && pointer->child != XCB_WINDOW_NONE) {
         selectWindowId(pointer->child);
     }
 }
@@ -254,7 +254,7 @@ void window_selector::selectWindowId(xcb_window_t window_to_select)
         if (client) {
             break; // Found the client
         }
-        Xcb::Tree tree(window);
+        base::x11::xcb::tree tree(window);
         if (window == tree->root) {
             // We didn't find the client, probably an override-redirect window
             break;

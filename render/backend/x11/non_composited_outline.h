@@ -24,10 +24,10 @@ private:
     template<typename T>
     void forEachWindow(T method);
     bool m_initialized;
-    Xcb::Window m_topOutline;
-    Xcb::Window m_rightOutline;
-    Xcb::Window m_bottomOutline;
-    Xcb::Window m_leftOutline;
+    base::x11::xcb::window m_topOutline;
+    base::x11::xcb::window m_rightOutline;
+    base::x11::xcb::window m_bottomOutline;
+    base::x11::xcb::window m_leftOutline;
 };
 
 template<typename T>

@@ -52,14 +52,14 @@ void TestXcbWindow::initTestCase()
 
 void TestXcbWindow::defaultCtor()
 {
-    Xcb::Window window;
-    QCOMPARE(window.isValid(), false);
+    base::x11::xcb::window window;
+    QCOMPARE(window.is_valid(), false);
     xcb_window_t wId = window;
     QCOMPARE(wId, noneWindow());
 
     xcb_window_t nativeWindow = createWindow();
-    Xcb::Window window2(nativeWindow);
-    QCOMPARE(window2.isValid(), true);
+    base::x11::xcb::window window2(nativeWindow);
+    QCOMPARE(window2.is_valid(), true);
     wId = window2;
     QCOMPARE(wId, nativeWindow);
 }
@@ -68,11 +68,11 @@ void TestXcbWindow::ctor()
 {
     const QRect geometry(0, 0, 10, 10);
     const uint32_t values[] = {true};
-    Xcb::Window window(geometry, XCB_CW_OVERRIDE_REDIRECT, values);
-    QCOMPARE(window.isValid(), true);
+    base::x11::xcb::window window(geometry, XCB_CW_OVERRIDE_REDIRECT, values);
+    QCOMPARE(window.is_valid(), true);
     QVERIFY(window != XCB_WINDOW_NONE);
-    Xcb::WindowGeometry windowGeometry(window);
-    QCOMPARE(windowGeometry.isNull(), false);
+    base::x11::xcb::window_geometry windowGeometry(window);
+    QCOMPARE(windowGeometry.is_null(), false);
     QCOMPARE(windowGeometry.rect(), geometry);
 }
 
@@ -80,33 +80,34 @@ void TestXcbWindow::classCtor()
 {
     const QRect geometry(0, 0, 10, 10);
     const uint32_t values[] = {true};
-    Xcb::Window window(geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
-    QCOMPARE(window.isValid(), true);
+    base::x11::xcb::window window(
+        geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
+    QCOMPARE(window.is_valid(), true);
     QVERIFY(window != XCB_WINDOW_NONE);
-    Xcb::WindowGeometry windowGeometry(window);
-    QCOMPARE(windowGeometry.isNull(), false);
+    base::x11::xcb::window_geometry windowGeometry(window);
+    QCOMPARE(windowGeometry.is_null(), false);
     QCOMPARE(windowGeometry.rect(), geometry);
 
-    Xcb::WindowAttributes attribs(window);
-    QCOMPARE(attribs.isNull(), false);
+    base::x11::xcb::window_attributes attribs(window);
+    QCOMPARE(attribs.is_null(), false);
     QVERIFY(attribs->_class == XCB_WINDOW_CLASS_INPUT_ONLY);
 }
 
 void TestXcbWindow::create()
 {
-    Xcb::Window window;
-    QCOMPARE(window.isValid(), false);
+    base::x11::xcb::window window;
+    QCOMPARE(window.is_valid(), false);
     xcb_window_t wId = window;
     QCOMPARE(wId, noneWindow());
 
     const QRect geometry(0, 0, 10, 10);
     const uint32_t values[] = {true};
     window.create(geometry, XCB_CW_OVERRIDE_REDIRECT, values);
-    QCOMPARE(window.isValid(), true);
+    QCOMPARE(window.is_valid(), true);
     QVERIFY(window != XCB_WINDOW_NONE);
     // and reset again
     window.reset();
-    QCOMPARE(window.isValid(), false);
+    QCOMPARE(window.is_valid(), false);
     QVERIFY(window == XCB_WINDOW_NONE);
 }
 
@@ -114,19 +115,20 @@ void TestXcbWindow::mapUnmap()
 {
     const QRect geometry(0, 0, 10, 10);
     const uint32_t values[] = {true};
-    Xcb::Window window(geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
-    Xcb::WindowAttributes attribs(window);
-    QCOMPARE(attribs.isNull(), false);
+    base::x11::xcb::window window(
+        geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
+    base::x11::xcb::window_attributes attribs(window);
+    QCOMPARE(attribs.is_null(), false);
     QVERIFY(attribs->map_state == XCB_MAP_STATE_UNMAPPED);
 
     window.map();
-    Xcb::WindowAttributes attribs2(window);
-    QCOMPARE(attribs2.isNull(), false);
+    base::x11::xcb::window_attributes attribs2(window);
+    QCOMPARE(attribs2.is_null(), false);
     QVERIFY(attribs2->map_state != XCB_MAP_STATE_UNMAPPED);
 
     window.unmap();
-    Xcb::WindowAttributes attribs3(window);
-    QCOMPARE(attribs3.isNull(), false);
+    base::x11::xcb::window_attributes attribs3(window);
+    QCOMPARE(attribs3.is_null(), false);
     QVERIFY(attribs3->map_state == XCB_MAP_STATE_UNMAPPED);
 
     // map, unmap shouldn't fail for an invalid window, it's just ignored
@@ -139,30 +141,31 @@ void TestXcbWindow::geometry()
 {
     const QRect geometry(0, 0, 10, 10);
     const uint32_t values[] = {true};
-    Xcb::Window window(geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
-    Xcb::WindowGeometry windowGeometry(window);
-    QCOMPARE(windowGeometry.isNull(), false);
+    base::x11::xcb::window window(
+        geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
+    base::x11::xcb::window_geometry windowGeometry(window);
+    QCOMPARE(windowGeometry.is_null(), false);
     QCOMPARE(windowGeometry.rect(), geometry);
 
     const QRect geometry2(10, 20, 100, 200);
-    window.setGeometry(geometry2);
-    Xcb::WindowGeometry windowGeometry2(window);
-    QCOMPARE(windowGeometry2.isNull(), false);
+    window.set_geometry(geometry2);
+    base::x11::xcb::window_geometry windowGeometry2(window);
+    QCOMPARE(windowGeometry2.is_null(), false);
     QCOMPARE(windowGeometry2.rect(), geometry2);
 
     // setting a geometry on an invalid window should be ignored
     window.reset();
-    window.setGeometry(geometry2);
-    Xcb::WindowGeometry windowGeometry3(window);
-    QCOMPARE(windowGeometry3.isNull(), true);
+    window.set_geometry(geometry2);
+    base::x11::xcb::window_geometry windowGeometry3(window);
+    QCOMPARE(windowGeometry3.is_null(), true);
 }
 
 void TestXcbWindow::destroy()
 {
     const QRect geometry(0, 0, 10, 10);
     const uint32_t values[] = {true};
-    Xcb::Window window(geometry, XCB_CW_OVERRIDE_REDIRECT, values);
-    QCOMPARE(window.isValid(), true);
+    base::x11::xcb::window window(geometry, XCB_CW_OVERRIDE_REDIRECT, values);
+    QCOMPARE(window.is_valid(), true);
     xcb_window_t wId = window;
 
     window.create(geometry, XCB_CW_OVERRIDE_REDIRECT, values);
@@ -177,8 +180,8 @@ void TestXcbWindow::destroy()
 
     // test the same for the dtor
     {
-        Xcb::Window scopedWindow(geometry, XCB_CW_OVERRIDE_REDIRECT, values);
-        QVERIFY(scopedWindow.isValid());
+        base::x11::xcb::window scopedWindow(geometry, XCB_CW_OVERRIDE_REDIRECT, values);
+        QVERIFY(scopedWindow.is_valid());
         wId = scopedWindow;
     }
     error = nullptr;
@@ -192,7 +195,7 @@ void TestXcbWindow::destroy()
 
 void TestXcbWindow::destroyNotManaged()
 {
-    Xcb::Window window;
+    base::x11::xcb::window window;
     // just destroy the non-existing window
     window.reset();
 
@@ -200,7 +203,7 @@ void TestXcbWindow::destroyNotManaged()
     window.reset(createWindow(), false);
     xcb_window_t w = window;
     window.reset();
-    Xcb::WindowAttributes attribs(w);
+    base::x11::xcb::window_attributes attribs(w);
     QVERIFY(attribs);
 }
 

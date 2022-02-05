@@ -123,7 +123,8 @@ void TestClientMachine::hostName()
 {
     const QRect geometry(0, 0, 10, 10);
     const uint32_t values[] = {true};
-    Xcb::Window window(geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
+    base::x11::xcb::window window(
+        geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
     QFETCH(QByteArray, hostName);
     QFETCH(bool, local);
     setClientMachineProperty(window, hostName);
@@ -147,7 +148,8 @@ void TestClientMachine::emptyHostName()
 {
     const QRect geometry(0, 0, 10, 10);
     const uint32_t values[] = {true};
-    Xcb::Window window(geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
+    base::x11::xcb::window window(
+        geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
     win::x11::client_machine clientMachine;
     QSignalSpy spy(&clientMachine, &win::x11::client_machine::localhostChanged);
     clientMachine.resolve(window, XCB_WINDOW_NONE);

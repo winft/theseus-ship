@@ -36,7 +36,7 @@ protected:
 
 private:
     struct {
-        Xcb::Window window;
+        base::x11::xcb::window window;
         std::unique_ptr<mouse_intercept_filter> filter;
     } mouse_intercept;
 };

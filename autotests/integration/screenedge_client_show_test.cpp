@@ -120,7 +120,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowHideX11()
     auto c = create_xcb_connection();
     QVERIFY(!xcb_connection_has_error(c.get()));
     // atom for the screenedge show hide functionality
-    Xcb::Atom atom(QByteArrayLiteral("_KDE_NET_WM_SCREEN_EDGE_SHOW"), false, c.get());
+    base::x11::xcb::atom atom(QByteArrayLiteral("_KDE_NET_WM_SCREEN_EDGE_SHOW"), false, c.get());
 
     xcb_window_t w = xcb_generate_id(c.get());
     QFETCH(QRect, windowGeometry);
@@ -237,7 +237,7 @@ void ScreenEdgeClientShowTest::testScreenEdgeShowX11Touch()
     auto c = create_xcb_connection();
     QVERIFY(!xcb_connection_has_error(c.get()));
     // atom for the screenedge show hide functionality
-    Xcb::Atom atom(QByteArrayLiteral("_KDE_NET_WM_SCREEN_EDGE_SHOW"), false, c.get());
+    base::x11::xcb::atom atom(QByteArrayLiteral("_KDE_NET_WM_SCREEN_EDGE_SHOW"), false, c.get());
 
     xcb_window_t w = xcb_generate_id(c.get());
     QFETCH(QRect, windowGeometry);

@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <xcb/xcb_icccm.h>
 
 using namespace KWin;
-using namespace KWin::Xcb;
 
 class TestXcbSizeHints : public QObject
 {
@@ -47,7 +46,7 @@ private Q_SLOTS:
     void geometryHintsBeforeRead();
 
 private:
-    Window m_testWindow;
+    base::x11::xcb::window m_testWindow;
 };
 
 void TestXcbSizeHints::initTestCase()
@@ -61,7 +60,7 @@ void TestXcbSizeHints::init()
     const uint32_t values[] = {true};
     m_testWindow.create(
         QRect(0, 0, 10, 10), XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
-    QVERIFY(m_testWindow.isValid());
+    QVERIFY(m_testWindow.is_valid());
 }
 
 void TestXcbSizeHints::cleanup()
@@ -221,24 +220,24 @@ void TestXcbSizeHints::testSizeHints()
     xcb_icccm_set_wm_normal_hints(QX11Info::connection(), m_testWindow, &hints);
     xcb_flush(QX11Info::connection());
 
-    GeometryHints geoHints;
+    base::x11::xcb::geometry_hints geoHints;
     geoHints.init(m_testWindow);
     geoHints.read();
-    QCOMPARE(geoHints.hasAspect(), minAspect.isValid() && maxAspect.isValid());
-    QCOMPARE(geoHints.hasBaseSize(), baseSize.isValid());
-    QCOMPARE(geoHints.hasMaxSize(), maxSize.isValid());
-    QCOMPARE(geoHints.hasMinSize(), minSize.isValid());
-    QCOMPARE(geoHints.hasPosition(), !userPos.isNull());
-    QCOMPARE(geoHints.hasResizeIncrements(), resizeInc.isValid());
-    QCOMPARE(geoHints.hasSize(), userSize.isValid());
-    QCOMPARE(geoHints.hasWindowGravity(), gravity != 0);
-    QTEST(geoHints.baseSize(), "expectedBaseSize");
-    QTEST(geoHints.maxAspect(), "expectedMaxAspect");
-    QTEST(geoHints.maxSize(), "expectedMaxSize");
-    QTEST(geoHints.minAspect(), "expectedMinAspect");
-    QTEST(geoHints.minSize(), "expectedMinSize");
-    QTEST(geoHints.resizeIncrements(), "expectedResizeIncrements");
-    QTEST(qint32(geoHints.windowGravity()), "expectedGravity");
+    QCOMPARE(geoHints.has_aspect(), minAspect.isValid() && maxAspect.isValid());
+    QCOMPARE(geoHints.has_base_size(), baseSize.isValid());
+    QCOMPARE(geoHints.has_max_size(), maxSize.isValid());
+    QCOMPARE(geoHints.has_min_size(), minSize.isValid());
+    QCOMPARE(geoHints.has_position(), !userPos.isNull());
+    QCOMPARE(geoHints.has_resize_increments(), resizeInc.isValid());
+    QCOMPARE(geoHints.has_size(), userSize.isValid());
+    QCOMPARE(geoHints.has_window_gravity(), gravity != 0);
+    QTEST(geoHints.base_size(), "expectedBaseSize");
+    QTEST(geoHints.max_aspect(), "expectedMaxAspect");
+    QTEST(geoHints.max_size(), "expectedMaxSize");
+    QTEST(geoHints.min_aspect(), "expectedMinAspect");
+    QTEST(geoHints.min_size(), "expectedMinSize");
+    QTEST(geoHints.resize_increments(), "expectedResizeIncrements");
+    QTEST(qint32(geoHints.window_gravity()), "expectedGravity");
 
     auto sizeHints = geoHints.m_sizeHints;
     QVERIFY(sizeHints);
@@ -262,7 +261,7 @@ void TestXcbSizeHints::testSizeHints()
     QCOMPARE(sizeHints->winGravity, gravity);
 
     // copy
-    GeometryHints::NormalHints::SizeHints sizeHints2 = *sizeHints;
+    base::x11::xcb::geometry_hints::normal_hints::size_hints sizeHints2 = *sizeHints;
     QTEST(sizeHints2.flags, "expectedFlags");
     QTEST(sizeHints2.pad[0], "expectedPad0");
     QTEST(sizeHints2.pad[1], "expectedPad1");
@@ -290,25 +289,25 @@ void TestXcbSizeHints::testSizeHintsEmpty()
     xcb_icccm_set_wm_normal_hints(QX11Info::connection(), m_testWindow, &xcbHints);
     xcb_flush(QX11Info::connection());
 
-    GeometryHints hints;
+    base::x11::xcb::geometry_hints hints;
     hints.init(m_testWindow);
     hints.read();
-    QVERIFY(!hints.hasAspect());
-    QVERIFY(!hints.hasBaseSize());
-    QVERIFY(!hints.hasMaxSize());
-    QVERIFY(!hints.hasMinSize());
-    QVERIFY(!hints.hasPosition());
-    QVERIFY(!hints.hasResizeIncrements());
-    QVERIFY(!hints.hasSize());
-    QVERIFY(!hints.hasWindowGravity());
+    QVERIFY(!hints.has_aspect());
+    QVERIFY(!hints.has_base_size());
+    QVERIFY(!hints.has_max_size());
+    QVERIFY(!hints.has_min_size());
+    QVERIFY(!hints.has_position());
+    QVERIFY(!hints.has_resize_increments());
+    QVERIFY(!hints.has_size());
+    QVERIFY(!hints.has_window_gravity());
 
-    QCOMPARE(hints.baseSize(), QSize(0, 0));
-    QCOMPARE(hints.maxAspect(), QSize(INT_MAX, 1));
-    QCOMPARE(hints.maxSize(), QSize(INT_MAX, INT_MAX));
-    QCOMPARE(hints.minAspect(), QSize(1, INT_MAX));
-    QCOMPARE(hints.minSize(), QSize(0, 0));
-    QCOMPARE(hints.resizeIncrements(), QSize(1, 1));
-    QCOMPARE(hints.windowGravity(), XCB_GRAVITY_NORTH_WEST);
+    QCOMPARE(hints.base_size(), QSize(0, 0));
+    QCOMPARE(hints.max_aspect(), QSize(INT_MAX, 1));
+    QCOMPARE(hints.max_size(), QSize(INT_MAX, INT_MAX));
+    QCOMPARE(hints.min_aspect(), QSize(1, INT_MAX));
+    QCOMPARE(hints.min_size(), QSize(0, 0));
+    QCOMPARE(hints.resize_increments(), QSize(1, 1));
+    QCOMPARE(hints.window_gravity(), XCB_GRAVITY_NORTH_WEST);
 
     auto sizeHints = hints.m_sizeHints;
     QVERIFY(sizeHints);
@@ -334,47 +333,47 @@ void TestXcbSizeHints::testSizeHintsEmpty()
 
 void TestXcbSizeHints::testSizeHintsNotSet()
 {
-    GeometryHints hints;
+    base::x11::xcb::geometry_hints hints;
     hints.init(m_testWindow);
     hints.read();
     QVERIFY(!hints.m_sizeHints);
-    QVERIFY(!hints.hasAspect());
-    QVERIFY(!hints.hasBaseSize());
-    QVERIFY(!hints.hasMaxSize());
-    QVERIFY(!hints.hasMinSize());
-    QVERIFY(!hints.hasPosition());
-    QVERIFY(!hints.hasResizeIncrements());
-    QVERIFY(!hints.hasSize());
-    QVERIFY(!hints.hasWindowGravity());
+    QVERIFY(!hints.has_aspect());
+    QVERIFY(!hints.has_base_size());
+    QVERIFY(!hints.has_max_size());
+    QVERIFY(!hints.has_min_size());
+    QVERIFY(!hints.has_position());
+    QVERIFY(!hints.has_resize_increments());
+    QVERIFY(!hints.has_size());
+    QVERIFY(!hints.has_window_gravity());
 
-    QCOMPARE(hints.baseSize(), QSize(0, 0));
-    QCOMPARE(hints.maxAspect(), QSize(INT_MAX, 1));
-    QCOMPARE(hints.maxSize(), QSize(INT_MAX, INT_MAX));
-    QCOMPARE(hints.minAspect(), QSize(1, INT_MAX));
-    QCOMPARE(hints.minSize(), QSize(0, 0));
-    QCOMPARE(hints.resizeIncrements(), QSize(1, 1));
-    QCOMPARE(hints.windowGravity(), XCB_GRAVITY_NORTH_WEST);
+    QCOMPARE(hints.base_size(), QSize(0, 0));
+    QCOMPARE(hints.max_aspect(), QSize(INT_MAX, 1));
+    QCOMPARE(hints.max_size(), QSize(INT_MAX, INT_MAX));
+    QCOMPARE(hints.min_aspect(), QSize(1, INT_MAX));
+    QCOMPARE(hints.min_size(), QSize(0, 0));
+    QCOMPARE(hints.resize_increments(), QSize(1, 1));
+    QCOMPARE(hints.window_gravity(), XCB_GRAVITY_NORTH_WEST);
 }
 
 void TestXcbSizeHints::geometryHintsBeforeInit()
 {
-    GeometryHints hints;
-    QVERIFY(!hints.hasAspect());
-    QVERIFY(!hints.hasBaseSize());
-    QVERIFY(!hints.hasMaxSize());
-    QVERIFY(!hints.hasMinSize());
-    QVERIFY(!hints.hasPosition());
-    QVERIFY(!hints.hasResizeIncrements());
-    QVERIFY(!hints.hasSize());
-    QVERIFY(!hints.hasWindowGravity());
+    base::x11::xcb::geometry_hints hints;
+    QVERIFY(!hints.has_aspect());
+    QVERIFY(!hints.has_base_size());
+    QVERIFY(!hints.has_max_size());
+    QVERIFY(!hints.has_min_size());
+    QVERIFY(!hints.has_position());
+    QVERIFY(!hints.has_resize_increments());
+    QVERIFY(!hints.has_size());
+    QVERIFY(!hints.has_window_gravity());
 
-    QCOMPARE(hints.baseSize(), QSize(0, 0));
-    QCOMPARE(hints.maxAspect(), QSize(INT_MAX, 1));
-    QCOMPARE(hints.maxSize(), QSize(INT_MAX, INT_MAX));
-    QCOMPARE(hints.minAspect(), QSize(1, INT_MAX));
-    QCOMPARE(hints.minSize(), QSize(0, 0));
-    QCOMPARE(hints.resizeIncrements(), QSize(1, 1));
-    QCOMPARE(hints.windowGravity(), XCB_GRAVITY_NORTH_WEST);
+    QCOMPARE(hints.base_size(), QSize(0, 0));
+    QCOMPARE(hints.max_aspect(), QSize(INT_MAX, 1));
+    QCOMPARE(hints.max_size(), QSize(INT_MAX, INT_MAX));
+    QCOMPARE(hints.min_aspect(), QSize(1, INT_MAX));
+    QCOMPARE(hints.min_size(), QSize(0, 0));
+    QCOMPARE(hints.resize_increments(), QSize(1, 1));
+    QCOMPARE(hints.window_gravity(), XCB_GRAVITY_NORTH_WEST);
 }
 
 void TestXcbSizeHints::geometryHintsBeforeRead()
@@ -385,24 +384,24 @@ void TestXcbSizeHints::geometryHintsBeforeRead()
     xcb_icccm_set_wm_normal_hints(QX11Info::connection(), m_testWindow, &xcbHints);
     xcb_flush(QX11Info::connection());
 
-    GeometryHints hints;
+    base::x11::xcb::geometry_hints hints;
     hints.init(m_testWindow);
-    QVERIFY(!hints.hasAspect());
-    QVERIFY(!hints.hasBaseSize());
-    QVERIFY(!hints.hasMaxSize());
-    QVERIFY(!hints.hasMinSize());
-    QVERIFY(!hints.hasPosition());
-    QVERIFY(!hints.hasResizeIncrements());
-    QVERIFY(!hints.hasSize());
-    QVERIFY(!hints.hasWindowGravity());
+    QVERIFY(!hints.has_aspect());
+    QVERIFY(!hints.has_base_size());
+    QVERIFY(!hints.has_max_size());
+    QVERIFY(!hints.has_min_size());
+    QVERIFY(!hints.has_position());
+    QVERIFY(!hints.has_resize_increments());
+    QVERIFY(!hints.has_size());
+    QVERIFY(!hints.has_window_gravity());
 
-    QCOMPARE(hints.baseSize(), QSize(0, 0));
-    QCOMPARE(hints.maxAspect(), QSize(INT_MAX, 1));
-    QCOMPARE(hints.maxSize(), QSize(INT_MAX, INT_MAX));
-    QCOMPARE(hints.minAspect(), QSize(1, INT_MAX));
-    QCOMPARE(hints.minSize(), QSize(0, 0));
-    QCOMPARE(hints.resizeIncrements(), QSize(1, 1));
-    QCOMPARE(hints.windowGravity(), XCB_GRAVITY_NORTH_WEST);
+    QCOMPARE(hints.base_size(), QSize(0, 0));
+    QCOMPARE(hints.max_aspect(), QSize(INT_MAX, 1));
+    QCOMPARE(hints.max_size(), QSize(INT_MAX, INT_MAX));
+    QCOMPARE(hints.min_aspect(), QSize(1, INT_MAX));
+    QCOMPARE(hints.min_size(), QSize(0, 0));
+    QCOMPARE(hints.resize_increments(), QSize(1, 1));
+    QCOMPARE(hints.window_gravity(), XCB_GRAVITY_NORTH_WEST);
 }
 
 Q_CONSTRUCTOR_FUNCTION(forceXcb)

@@ -28,10 +28,10 @@ void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Re
 
     // Don't affect our own windows.
     if (!QWidget::find(win->xcb_window()) && releaseReason != ReleaseReason::Destroyed) {
-        if (Xcb::Extensions::self()->isShapeAvailable()) {
+        if (base::x11::xcb::extensions::self()->is_shape_available()) {
             xcb_shape_select_input(connection(), win->xcb_window(), false);
         }
-        Xcb::selectInput(win->xcb_window(), XCB_EVENT_MASK_NO_EVENT);
+        base::x11::xcb::select_input(win->xcb_window(), XCB_EVENT_MASK_NO_EVENT);
     }
 
     if (releaseReason != ReleaseReason::KWinShutsDown) {
@@ -125,15 +125,15 @@ void release_window(Win* win, bool on_shutdown)
     }
 
     auto& atoms = win->space.atoms;
-    win->xcb_windows.client.deleteProperty(atoms->kde_net_wm_user_creation_time);
-    win->xcb_windows.client.deleteProperty(atoms->net_frame_extents);
-    win->xcb_windows.client.deleteProperty(atoms->kde_net_wm_frame_strut);
+    win->xcb_windows.client.delete_property(atoms->kde_net_wm_user_creation_time);
+    win->xcb_windows.client.delete_property(atoms->net_frame_extents);
+    win->xcb_windows.client.delete_property(atoms->kde_net_wm_frame_strut);
 
     auto const client_rect = frame_to_client_rect(win, win->frameGeometry());
     win->xcb_windows.client.reparent(rootWindow(), client_rect.x(), client_rect.y());
 
     xcb_change_save_set(connection(), XCB_SET_MODE_DELETE, win->xcb_windows.client);
-    win->xcb_windows.client.selectInput(XCB_EVENT_MASK_NO_EVENT);
+    win->xcb_windows.client.select_input(XCB_EVENT_MASK_NO_EVENT);
 
     if (on_shutdown) {
         // Map the window, so it can be found after another WM is started

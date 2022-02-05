@@ -357,11 +357,11 @@ void Application::update_x11_time_from_event(xcb_generic_event_t *event)
         return;
     default:
         // extension handling
-        if (Xcb::Extensions::self()) {
-            if (eventType == Xcb::Extensions::self()->shapeNotifyEvent()) {
+        if (base::x11::xcb::extensions::self()) {
+            if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()) {
                 time = reinterpret_cast<xcb_shape_notify_event_t*>(event)->server_time;
             }
-            if (eventType == Xcb::Extensions::self()->damageNotifyEvent()) {
+            if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {
                 time = reinterpret_cast<xcb_damage_notify_event_t*>(event)->timestamp;
             }
         }

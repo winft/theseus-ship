@@ -708,7 +708,7 @@ void TabBox::hide(bool abort)
         qCDebug(KWIN_TABBOX) << "Tab box was not properly closed by an effect";
     m_tabBox->hide(abort);
     if (kwinApp()->x11Connection()) {
-        Xcb::sync();
+        base::x11::xcb::sync();
     }
 }
 
@@ -893,7 +893,7 @@ struct KeySymbolsDeleter
  */
 static bool areKeySymXsDepressed(const uint keySyms[], int nKeySyms)
 {
-    Xcb::QueryKeymap keys;
+    base::x11::xcb::query_keymap keys;
 
     QScopedPointer<xcb_key_symbols_t, KeySymbolsDeleter> symbols(xcb_key_symbols_alloc(connection()));
     if (symbols.isNull() || !keys) {

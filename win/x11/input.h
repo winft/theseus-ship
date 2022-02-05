@@ -17,7 +17,7 @@ void update_input_window(Win* win, QRect const& frame_geo)
 {
     static_assert(!Win::is_toplevel);
 
-    if (!Xcb::Extensions::self()->isShapeInputAvailable()) {
+    if (!base::x11::xcb::extensions::self()->is_shape_input_available()) {
         return;
     }
 
@@ -54,7 +54,7 @@ void update_input_window(Win* win, QRect const& frame_geo)
     // Move the region to input window coordinates
     region.translate(-win->input_offset);
 
-    if (!win->xcb_windows.input.isValid()) {
+    if (!win->xcb_windows.input.is_valid()) {
         auto const mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
         uint32_t const values[] = {true,
                                    XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW
@@ -65,10 +65,10 @@ void update_input_window(Win* win, QRect const& frame_geo)
             win->xcb_windows.input.map();
         }
     } else {
-        win->xcb_windows.input.setGeometry(bounds);
+        win->xcb_windows.input.set_geometry(bounds);
     }
 
-    auto const rects = Xcb::regionToRects(region);
+    auto const rects = base::x11::xcb::qt_region_to_rects(region);
     xcb_shape_rectangles(connection(),
                          XCB_SHAPE_SO_SET,
                          XCB_SHAPE_SK_INPUT,

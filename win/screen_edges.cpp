@@ -1536,7 +1536,7 @@ bool screen_edger::handleDndNotify(xcb_window_t window, QPoint const& point)
 
 void screen_edger::ensureOnTop()
 {
-    Xcb::restackWindowsWithRaise(windows());
+    base::x11::xcb::restack_windows_with_raise(windows());
 }
 
 std::vector<xcb_window_t> screen_edger::windows() const

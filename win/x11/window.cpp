@@ -149,10 +149,10 @@ bool window::wantsShadowToBeRendered() const
 
 QSize window::resizeIncrements() const
 {
-    return geometry_hints.resizeIncrements();
+    return geometry_hints.resize_increments();
 }
 
-static Xcb::Window shape_helper_window(XCB_WINDOW_NONE);
+static base::x11::xcb::window shape_helper_window(XCB_WINDOW_NONE);
 
 void window::cleanupX11()
 {
@@ -166,7 +166,7 @@ void window::update_input_shape()
         return;
     }
 
-    if (!Xcb::Extensions::self()->isShapeInputAvailable()) {
+    if (!base::x11::xcb::extensions::self()->is_shape_input_available()) {
         return;
     }
     // There appears to be no way to find out if a window has input
@@ -179,7 +179,7 @@ void window::update_input_shape()
     // until the real shape of the client is added and that can make
     // the window lose focus (which is a problem with mouse focus policies)
     // TODO: It seems there is, after all - XShapeGetRectangles() - but maybe this is better
-    if (!shape_helper_window.isValid()) {
+    if (!shape_helper_window.is_valid()) {
         shape_helper_window.create(QRect(0, 0, 1, 1));
     }
 
@@ -340,17 +340,17 @@ void window::closeWindow()
 
 QSize window::minSize() const
 {
-    return control->rules().checkMinSize(geometry_hints.minSize());
+    return control->rules().checkMinSize(geometry_hints.min_size());
 }
 
 QSize window::maxSize() const
 {
-    return control->rules().checkMaxSize(geometry_hints.maxSize());
+    return control->rules().checkMaxSize(geometry_hints.max_size());
 }
 
 QSize window::basicUnit() const
 {
-    return geometry_hints.resizeIncrements();
+    return geometry_hints.resize_increments();
 }
 
 bool window::isCloseable() const
@@ -950,13 +950,13 @@ void window::getWmClientMachine()
     m_clientMachine->resolve(xcb_window(), wmClientLeader());
 }
 
-Xcb::Property window::fetchWmClientLeader() const
+base::x11::xcb::property window::fetchWmClientLeader() const
 {
-    return Xcb::Property(
+    return base::x11::xcb::property(
         false, xcb_window(), space.atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
 }
 
-void window::readWmClientLeader(Xcb::Property& prop)
+void window::readWmClientLeader(base::x11::xcb::property& prop)
 {
     m_wmClientLeader = prop.value<xcb_window_t>(xcb_window());
 }
@@ -980,13 +980,13 @@ void window::getWmOpaqueRegion()
 
 void window::getSkipCloseAnimation()
 {
-    setSkipCloseAnimation(fetch_skip_close_animation(*this).toBool());
+    setSkipCloseAnimation(fetch_skip_close_animation(*this).to_bool());
 }
 
 void window::detectShape(xcb_window_t id)
 {
     const bool wasShape = is_shape;
-    is_shape = Xcb::Extensions::self()->hasShape(id);
+    is_shape = base::x11::xcb::extensions::self()->has_shape(id);
     if (wasShape != is_shape) {
         Q_EMIT shapedChanged();
     }
@@ -998,9 +998,9 @@ void window::detectShape(xcb_window_t id)
  */
 QByteArray window::sessionId() const
 {
-    QByteArray result = Xcb::StringProperty(xcb_window(), space.atoms->sm_client_id);
+    QByteArray result = base::x11::xcb::string_property(xcb_window(), space.atoms->sm_client_id);
     if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
-        result = Xcb::StringProperty(m_wmClientLeader, space.atoms->sm_client_id);
+        result = base::x11::xcb::string_property(m_wmClientLeader, space.atoms->sm_client_id);
     }
     return result;
 }
@@ -1011,9 +1011,9 @@ QByteArray window::sessionId() const
  */
 QByteArray window::wmCommand()
 {
-    QByteArray result = Xcb::StringProperty(xcb_window(), XCB_ATOM_WM_COMMAND);
+    QByteArray result = base::x11::xcb::string_property(xcb_window(), XCB_ATOM_WM_COMMAND);
     if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
-        result = Xcb::StringProperty(m_wmClientLeader, XCB_ATOM_WM_COMMAND);
+        result = base::x11::xcb::string_property(m_wmClientLeader, XCB_ATOM_WM_COMMAND);
     }
     result.replace(0, ' ');
     return result;

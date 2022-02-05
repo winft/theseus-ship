@@ -63,20 +63,20 @@ public:
 
     struct {
         // Most outer window that encompasses all other windows.
-        Xcb::Window outer{};
+        base::x11::xcb::window outer{};
 
         // Window with the same dimensions as client.
         // TODO(romangg): Why do we need this again?
-        Xcb::Window wrapper{};
+        base::x11::xcb::window wrapper{};
 
         // The actual client window.
-        Xcb::Window client{};
+        base::x11::xcb::window client{};
 
         // Including decoration.
-        Xcb::Window input{};
+        base::x11::xcb::window input{};
 
         // For move-resize operations.
-        Xcb::Window grab{};
+        base::x11::xcb::window grab{};
     } xcb_windows;
 
     bool blocks_compositing{false};
@@ -146,8 +146,8 @@ public:
 
     mapping_state mapping{mapping_state::withdrawn};
 
-    Xcb::GeometryHints geometry_hints;
-    Xcb::MotifHints motif_hints;
+    base::x11::xcb::geometry_hints geometry_hints;
+    base::x11::xcb::motif_hints motif_hints;
 
     QTimer* focus_out_timer{nullptr};
     QTimer* ping_timer{nullptr};
@@ -256,8 +256,8 @@ public:
     void getResourceClass();
     void getWmClientMachine();
 
-    Xcb::Property fetchWmClientLeader() const;
-    void readWmClientLeader(Xcb::Property& p);
+    base::x11::xcb::property fetchWmClientLeader() const;
+    void readWmClientLeader(base::x11::xcb::property& p);
     void getWmClientLeader();
 
     /**

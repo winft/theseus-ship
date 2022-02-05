@@ -22,17 +22,18 @@ namespace KWin::win::x11
 static void select_wm_input_event_mask()
 {
     uint32_t presentMask = 0;
-    Xcb::WindowAttributes attr(rootWindow());
-    if (!attr.isNull()) {
+    base::x11::xcb::window_attributes attr(rootWindow());
+    if (!attr.is_null()) {
         presentMask = attr->your_event_mask;
     }
 
-    Xcb::selectInput(rootWindow(),
-                     presentMask | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_PROPERTY_CHANGE
-                         | XCB_EVENT_MASK_COLOR_MAP_CHANGE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT
-                         | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_FOCUS_CHANGE
-                         | // For NotifyDetailNone
-                         XCB_EVENT_MASK_EXPOSURE);
+    base::x11::xcb::select_input(
+        rootWindow(),
+        presentMask | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_PROPERTY_CHANGE
+            | XCB_EVENT_MASK_COLOR_MAP_CHANGE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT
+            | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_FOCUS_CHANGE
+            | // For NotifyDetailNone
+            XCB_EVENT_MASK_EXPOSURE);
 }
 
 template<typename Space>
@@ -43,7 +44,7 @@ void init_space(Space& space)
     space.atoms->retrieveHelpers();
 
     // first initialize the extensions
-    Xcb::Extensions::self();
+    base::x11::xcb::extensions::self();
     auto colormaps = new color_mapper(&space);
     QObject::connect(&space, &Space::clientActivated, colormaps, &color_mapper::update);
 
@@ -59,7 +60,7 @@ void init_space(Space& space)
             new base::x11::user_interaction_filter([&space] { space.setWasUserInteraction(); }));
         space.m_movingClientFilter.reset(new moving_window_filter(space));
     }
-    if (Xcb::Extensions::self()->isSyncAvailable()) {
+    if (base::x11::xcb::extensions::self()->is_sync_available()) {
         space.m_syncAlarmFilter.reset(new sync_alarm_filter);
     }
 
@@ -67,10 +68,10 @@ void init_space(Space& space)
     kwinApp()->update_x11_time_from_clock();
 
     const uint32_t nullFocusValues[] = {true};
-    space.m_nullFocus.reset(new Xcb::Window(QRect(-1, -1, 1, 1),
-                                            XCB_WINDOW_CLASS_INPUT_ONLY,
-                                            XCB_CW_OVERRIDE_REDIRECT,
-                                            nullFocusValues));
+    space.m_nullFocus.reset(new base::x11::xcb::window(QRect(-1, -1, 1, 1),
+                                                       XCB_WINDOW_CLASS_INPUT_ONLY,
+                                                       XCB_CW_OVERRIDE_REDIRECT,
+                                                       nullFocusValues));
     space.m_nullFocus->map();
 
     auto rootInfo = win::x11::root_info::create();
@@ -97,23 +98,23 @@ void init_space(Space& space)
         // Begin updates blocker block
         Blocker blocker(space.stacking_order);
 
-        Xcb::Tree tree(rootWindow());
+        base::x11::xcb::tree tree(rootWindow());
         xcb_window_t* wins = xcb_query_tree_children(tree.data());
 
-        QVector<Xcb::WindowAttributes> windowAttributes(tree->children_len);
-        QVector<Xcb::WindowGeometry> windowGeometries(tree->children_len);
+        QVector<base::x11::xcb::window_attributes> windowAttributes(tree->children_len);
+        QVector<base::x11::xcb::window_geometry> windowGeometries(tree->children_len);
 
         // Request the attributes and geometries of all toplevel windows
         for (int i = 0; i < tree->children_len; i++) {
-            windowAttributes[i] = Xcb::WindowAttributes(wins[i]);
-            windowGeometries[i] = Xcb::WindowGeometry(wins[i]);
+            windowAttributes[i] = base::x11::xcb::window_attributes(wins[i]);
+            windowGeometries[i] = base::x11::xcb::window_geometry(wins[i]);
         }
 
         // Get the replies
         for (int i = 0; i < tree->children_len; i++) {
-            Xcb::WindowAttributes attr(windowAttributes.at(i));
+            base::x11::xcb::window_attributes attr(windowAttributes.at(i));
 
-            if (attr.isNull()) {
+            if (attr.is_null()) {
                 continue;
             }
 

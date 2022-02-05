@@ -79,10 +79,10 @@ static inline xcb_window_t find_event_window(xcb_generic_event_t* event)
         return reinterpret_cast<xcb_client_message_event_t*>(event)->window;
     default:
         // extension handling
-        if (eventType == Xcb::Extensions::self()->shapeNotifyEvent()) {
+        if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()) {
             return reinterpret_cast<xcb_shape_notify_event_t*>(event)->affected_window;
         }
-        if (eventType == Xcb::Extensions::self()->damageNotifyEvent()) {
+        if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {
             return reinterpret_cast<xcb_damage_notify_event_t*>(event)->drawable;
         }
         return XCB_WINDOW_NONE;
@@ -306,14 +306,14 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         break;
     }
     default:
-        if (eventType == Xcb::Extensions::self()->shapeNotifyEvent()
+        if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()
             && reinterpret_cast<xcb_shape_notify_event_t*>(e)->affected_window
                 == win->xcb_window()) {
             // workaround for #19644
             win->detectShape(win->xcb_window());
             update_shape(win);
         }
-        if (eventType == Xcb::Extensions::self()->damageNotifyEvent()
+        if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()
             && reinterpret_cast<xcb_damage_notify_event_t*>(e)->drawable == win->frameId()) {
             win->damageNotifyEvent();
         }
@@ -381,7 +381,7 @@ void unmap_notify_event(Win* win, xcb_unmap_notify_event_t* e)
     // check whether this is result of an XReparentWindow - client then won't be parented by wrapper
     // in this case do not release the client (causes reparent to root, removal from saveSet and
     // what not) but just destroy the client
-    Xcb::Tree tree(win->xcb_windows.client);
+    base::x11::xcb::tree tree(win->xcb_windows.client);
     xcb_window_t daddy = tree.parent();
 
     if (daddy == win->xcb_windows.wrapper) {
@@ -442,7 +442,7 @@ void configure_request_event(Win* win, xcb_configure_request_event_t* e)
 
     if (e->value_mask & XCB_CONFIG_WINDOW_BORDER_WIDTH) {
         // first, get rid of a window border
-        win->xcb_windows.client.setBorderWidth(0);
+        win->xcb_windows.client.set_border_width(0);
     }
 
     if (e->value_mask
@@ -582,7 +582,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
         // if this window is another client, but not if it's a popup ... maybe after KDE3.1 :(
         // (repeat after me 'AARGHL!')
         if (!lostMouse && e->detail != XCB_NOTIFY_DETAIL_INFERIOR) {
-            Xcb::Pointer pointer(win->frameId());
+            base::x11::xcb::pointer pointer(win->frameId());
             if (!pointer || !pointer->same_screen || pointer->child == XCB_WINDOW_NONE) {
                 // really lost the mouse
                 lostMouse = true;

@@ -56,7 +56,7 @@ namespace KWin::render::backend::x11
  */
 static bool has_glx()
 {
-    return Xcb::Extensions::self()->hasGlx();
+    return base::x11::xcb::extensions::self()->has_glx();
 }
 
 platform::platform(base::x11::platform& base)
@@ -159,8 +159,8 @@ QString platform::compositingNotPossibleReason() const
             "crash!</b></p>"
             "<p>Alternatively, you might want to use the XRender backend instead.</p>");
 
-    if (!Xcb::Extensions::self()->isCompositeAvailable()
-        || !Xcb::Extensions::self()->isDamageAvailable()) {
+    if (!base::x11::xcb::extensions::self()->is_composite_available()
+        || !base::x11::xcb::extensions::self()->is_damage_available()) {
         return i18n("Required X extensions (XComposite and XDamage) are not available.");
     }
 #if !defined(KWIN_HAVE_XRENDER_COMPOSITING)
@@ -168,8 +168,8 @@ QString platform::compositingNotPossibleReason() const
         return i18n("GLX/OpenGL are not available and only OpenGL support is compiled.");
 #else
     if (!(has_glx()
-          || (Xcb::Extensions::self()->isRenderAvailable()
-              && Xcb::Extensions::self()->isFixesAvailable()))) {
+          || (base::x11::xcb::extensions::self()->is_render_available()
+              && base::x11::xcb::extensions::self()->is_fixes_available()))) {
         return i18n("GLX/OpenGL and XRender/XFixes are not available.");
     }
 #endif
@@ -185,19 +185,21 @@ bool platform::compositingPossible() const
         && gl_workaround_group.readEntry(unsafeKey, false))
         return false;
 
-    if (!Xcb::Extensions::self()->isCompositeAvailable()) {
+    if (!base::x11::xcb::extensions::self()->is_composite_available()) {
         qCDebug(KWIN_X11) << "No composite extension available";
         return false;
     }
-    if (!Xcb::Extensions::self()->isDamageAvailable()) {
+    if (!base::x11::xcb::extensions::self()->is_damage_available()) {
         qCDebug(KWIN_X11) << "No damage extension available";
         return false;
     }
     if (has_glx())
         return true;
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
-    if (Xcb::Extensions::self()->isRenderAvailable() && Xcb::Extensions::self()->isFixesAvailable())
+    if (base::x11::xcb::extensions::self()->is_render_available()
+        && base::x11::xcb::extensions::self()->is_fixes_available()) {
         return true;
+    }
 #endif
     if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
         return true;
@@ -288,20 +290,20 @@ Decoration::Renderer* platform::createDecorationRenderer(Decoration::DecoratedCl
 
 void platform::invertScreen()
 {
-    using namespace Xcb::RandR;
     bool succeeded = false;
 
-    if (Xcb::Extensions::self()->isRandrAvailable()) {
+    if (base::x11::xcb::extensions::self()->is_randr_available()) {
         const auto active_client = workspace()->activeClient();
-        ScreenResources res((active_client && active_client->xcb_window() != XCB_WINDOW_NONE)
-                                ? active_client->xcb_window()
-                                : rootWindow());
+        base::x11::xcb::randr::screen_resources res(
+            (active_client && active_client->xcb_window() != XCB_WINDOW_NONE)
+                ? active_client->xcb_window()
+                : rootWindow());
 
-        if (!res.isNull()) {
+        if (!res.is_null()) {
             for (int j = 0; j < res->num_crtcs; ++j) {
                 auto crtc = res.crtcs()[j];
-                CrtcGamma gamma(crtc);
-                if (gamma.isNull()) {
+                base::x11::xcb::randr::crtc_gamma gamma(crtc);
+                if (gamma.is_null()) {
                     continue;
                 }
                 if (gamma->size) {
@@ -350,12 +352,12 @@ QVector<CompositingType> platform::supportedCompositors() const
 
 void platform::initOutputs()
 {
-    doUpdateOutputs<Xcb::RandR::ScreenResources>();
+    doUpdateOutputs<base::x11::xcb::randr::screen_resources>();
 }
 
 void platform::updateOutputs()
 {
-    doUpdateOutputs<Xcb::RandR::CurrentResources>();
+    doUpdateOutputs<base::x11::xcb::randr::current_resources>();
 }
 
 template<typename T>
@@ -374,31 +376,33 @@ void platform::doUpdateOutputs()
     //       untouched (like in DRM backend)
     base.outputs.clear();
 
-    if (!Xcb::Extensions::self()->isRandrAvailable()) {
+    if (!base::x11::xcb::extensions::self()->is_randr_available()) {
         fallback();
         return;
     }
     T resources(rootWindow());
-    if (resources.isNull()) {
+    if (resources.is_null()) {
         fallback();
         return;
     }
     xcb_randr_crtc_t* crtcs = resources.crtcs();
     xcb_randr_mode_info_t* modes = resources.modes();
 
-    QVector<Xcb::RandR::CrtcInfo> infos(resources->num_crtcs);
+    QVector<base::x11::xcb::randr::crtc_info> infos(resources->num_crtcs);
     for (int i = 0; i < resources->num_crtcs; ++i) {
-        infos[i] = Xcb::RandR::CrtcInfo(crtcs[i], resources->config_timestamp);
+        infos[i] = base::x11::xcb::randr::crtc_info(crtcs[i], resources->config_timestamp);
     }
 
     for (int i = 0; i < resources->num_crtcs; ++i) {
-        Xcb::RandR::CrtcInfo info(infos.at(i));
+        base::x11::xcb::randr::crtc_info info(infos.at(i));
 
         xcb_randr_output_t* outputs = info.outputs();
-        QVector<Xcb::RandR::OutputInfo> outputInfos(outputs ? resources->num_outputs : 0);
+        QVector<base::x11::xcb::randr::output_info> outputInfos(outputs ? resources->num_outputs
+                                                                        : 0);
         if (outputs) {
             for (int i = 0; i < resources->num_outputs; ++i) {
-                outputInfos[i] = Xcb::RandR::OutputInfo(outputs[i], resources->config_timestamp);
+                outputInfos[i]
+                    = base::x11::xcb::randr::output_info(outputs[i], resources->config_timestamp);
             }
         }
 
@@ -425,16 +429,16 @@ void platform::doUpdateOutputs()
             // TODO: Perhaps the output has to save the inherited gamma ramp and
             // restore it during tear down. Currently neither standalone x11 nor
             // drm platform do this.
-            Xcb::RandR::CrtcGamma gamma(crtc);
+            base::x11::xcb::randr::crtc_gamma gamma(crtc);
 
             auto o = std::make_unique<base::x11::output>(base);
             o->data.crtc = crtc;
-            o->data.gamma_ramp_size = gamma.isNull() ? 0 : gamma->size;
+            o->data.gamma_ramp_size = gamma.is_null() ? 0 : gamma->size;
             o->data.geometry = geo;
             o->data.refresh_rate = refreshRate * 1000;
 
             for (int j = 0; j < info->num_outputs; ++j) {
-                Xcb::RandR::OutputInfo outputInfo(outputInfos.at(j));
+                base::x11::xcb::randr::output_info outputInfo(outputInfos.at(j));
                 if (outputInfo->crtc != crtc) {
                     continue;
                 }

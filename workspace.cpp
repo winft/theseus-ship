@@ -261,7 +261,7 @@ Workspace::~Workspace()
 
     // TODO: ungrabXServer();
 
-    Xcb::Extensions::destroy();
+    base::x11::xcb::extensions::destroy();
     _self = nullptr;
 }
 
@@ -817,7 +817,7 @@ QString Workspace::supportInformation() const
         support.append(QStringLiteral("Protocol Version/Revision: %1/%2\n")
                            .arg(x11setup->protocol_major_version)
                            .arg(x11setup->protocol_minor_version));
-        const auto extensions = Xcb::Extensions::self()->extensions();
+        auto const extensions = base::x11::xcb::extensions::self()->get_data();
         for (const auto& e : extensions) {
             support.append(QStringLiteral("%1: %2; Version: 0x%3\n")
                                .arg(QString::fromUtf8(e.name))

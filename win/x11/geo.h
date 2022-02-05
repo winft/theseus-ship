@@ -67,7 +67,7 @@ void update_shape(Win* win)
         detect_no_border(win);
         win->app_no_border = win->user_no_border;
         win->user_no_border = win->control->rules().checkNoBorder(win->user_no_border
-                                                                  || win->motif_hints.noBorder());
+                                                                  || win->motif_hints.no_border());
         win->updateDecoration(true);
     }
 
@@ -207,13 +207,13 @@ void handle_sync(Win* win, xcb_sync_int64_t counter_value)
 template<typename Win>
 void get_wm_normal_hints(Win* win)
 {
-    auto const hadFixedAspect = win->geometry_hints.hasAspect();
+    auto const hadFixedAspect = win->geometry_hints.has_aspect();
 
     // roundtrip to X server
     win->geometry_hints.fetch();
     win->geometry_hints.read();
 
-    if (!hadFixedAspect && win->geometry_hints.hasAspect()) {
+    if (!hadFixedAspect && win->geometry_hints.has_aspect()) {
         // align to eventual new constraints
         win::maximize(win, win->max_mode);
     }
@@ -254,8 +254,8 @@ QSize client_size_base_adjust(Win const* win, QSize const& client_size)
 {
     auto const& hints = win->geometry_hints;
 
-    auto const bsize = hints.hasBaseSize() ? hints.baseSize() : hints.minSize();
-    auto const increments = hints.resizeIncrements();
+    auto const bsize = hints.has_base_size() ? hints.base_size() : hints.min_size();
+    auto const increments = hints.resize_increments();
 
     auto increment_grid_align = [](int original_length, int base_length, int increment) {
         // TODO(romangg): This static_cast does absolutely nothing, does it? But then everything
@@ -278,7 +278,7 @@ QSize size_aspect_adjust(Win const* win,
                          QSize const& max_size,
                          win::size_mode mode)
 {
-    if (!win->geometry_hints.hasAspect()) {
+    if (!win->geometry_hints.has_aspect()) {
         return client_size;
     }
 
@@ -299,18 +299,18 @@ QSize size_aspect_adjust(Win const* win,
      */
 
     // use doubles, because the values can be MAX_INT and multiplying would go wrong otherwise
-    double const min_aspect_w = win->geometry_hints.minAspect().width();
-    double const min_aspect_h = win->geometry_hints.minAspect().height();
-    double const max_aspect_w = win->geometry_hints.maxAspect().width();
-    double const max_aspect_h = win->geometry_hints.maxAspect().height();
+    double const min_aspect_w = win->geometry_hints.min_aspect().width();
+    double const min_aspect_h = win->geometry_hints.min_aspect().height();
+    double const max_aspect_w = win->geometry_hints.max_aspect().width();
+    double const max_aspect_h = win->geometry_hints.max_aspect().height();
 
-    auto const width_inc = win->geometry_hints.resizeIncrements().width();
-    auto const height_inc = win->geometry_hints.resizeIncrements().height();
+    auto const width_inc = win->geometry_hints.resize_increments().width();
+    auto const height_inc = win->geometry_hints.resize_increments().height();
 
     // According to ICCCM 4.1.2.3 PMinSize should be a fallback for PBaseSize for size
     // increments, but not for aspect ratio. Since this code comes from FVWM, handles both at
     // the same time, and I have no idea how it works, let's hope nobody relies on that.
-    auto const baseSize = win->geometry_hints.baseSize();
+    auto const baseSize = win->geometry_hints.base_size();
 
     // TODO(romangg): Why?
     auto cl_width = client_size.width() - baseSize.width();
@@ -555,7 +555,7 @@ QPoint gravity_adjustment(Win* win, xcb_gravity_t gravity)
 template<typename Win>
 QPoint calculate_gravitation(Win* win, bool invert)
 {
-    auto const adjustment = gravity_adjustment(win, win->geometry_hints.windowGravity());
+    auto const adjustment = gravity_adjustment(win, win->geometry_hints.window_gravity());
 
     // translate from client movement to frame movement
     auto const dx = adjustment.x() - win::left_border(win);
@@ -755,7 +755,7 @@ void configure_request(Win* win,
 
     if (gravity == 0) {
         // default (nonsense) value for the argument
-        gravity = win->geometry_hints.windowGravity();
+        gravity = win->geometry_hints.window_gravity();
     }
 
     sync_suppressor sync_sup(win);
@@ -777,7 +777,7 @@ void resize_with_gravity(Win* win, QSize const& size, xcb_gravity_t gravity)
     auto height = tmp_size.height();
 
     if (gravity == 0) {
-        gravity = win->geometry_hints.windowGravity();
+        gravity = win->geometry_hints.window_gravity();
     }
 
     auto pos_x = win->synced_geometry.frame.x();
@@ -885,8 +885,8 @@ bool update_server_geometry(Win* win, QRect const& frame_geo)
 
     if (old_outer_geo.size() != outer_geo.size() || old_rel_wrapper_geo != rel_wrapper_geo
         || !win->first_geo_synced) {
-        win->xcb_windows.outer.setGeometry(outer_geo);
-        win->xcb_windows.wrapper.setGeometry(rel_wrapper_geo);
+        win->xcb_windows.outer.set_geometry(outer_geo);
+        win->xcb_windows.wrapper.set_geometry(rel_wrapper_geo);
         win->xcb_windows.client.resize(rel_wrapper_geo.size());
 
         update_shape(win);

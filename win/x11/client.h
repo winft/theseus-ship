@@ -33,7 +33,7 @@ void export_mapping_state(Win* win, int state)
     auto& atoms = win->space.atoms;
 
     if (state == XCB_ICCCM_WM_STATE_WITHDRAWN) {
-        win->xcb_windows.client.deleteProperty(atoms->wm_state);
+        win->xcb_windows.client.delete_property(atoms->wm_state);
         return;
     }
 
@@ -42,7 +42,7 @@ void export_mapping_state(Win* win, int state)
     int32_t data[2];
     data[0] = state;
     data[1] = XCB_NONE;
-    win->xcb_windows.client.changeProperty(atoms->wm_state, atoms->wm_state, 32, 2, data);
+    win->xcb_windows.client.change_property(atoms->wm_state, atoms->wm_state, 32, 2, data);
 }
 
 inline void send_client_message(xcb_window_t w,
@@ -205,19 +205,19 @@ inline bool wants_sync_counter()
 template<typename Win>
 void get_sync_counter(Win* win)
 {
-    if (!Xcb::Extensions::self()->isSyncAvailable()) {
+    if (!base::x11::xcb::extensions::self()->is_sync_available()) {
         return;
     }
     if (!wants_sync_counter()) {
         return;
     }
 
-    Xcb::Property syncProp(false,
-                           win->xcb_window(),
-                           win->space.atoms->net_wm_sync_request_counter,
-                           XCB_ATOM_CARDINAL,
-                           0,
-                           1);
+    base::x11::xcb::property syncProp(false,
+                                      win->xcb_window(),
+                                      win->space.atoms->net_wm_sync_request_counter,
+                                      XCB_ATOM_CARDINAL,
+                                      0,
+                                      1);
     auto const counter = syncProp.value<xcb_sync_counter_t>(XCB_NONE);
 
     if (counter == XCB_NONE) {
@@ -312,12 +312,12 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
     c.width = client_geo.width();
     c.height = client_geo.height();
     auto getEmulatedXWaylandSize = [win, &client_geo]() {
-        auto property = Xcb::Property(false,
-                                      win->xcb_window(),
-                                      win->space.atoms->xwayland_randr_emu_monitor_rects,
-                                      XCB_ATOM_CARDINAL,
-                                      0,
-                                      1000);
+        auto property = base::x11::xcb::property(false,
+                                                 win->xcb_window(),
+                                                 win->space.atoms->xwayland_randr_emu_monitor_rects,
+                                                 XCB_ATOM_CARDINAL,
+                                                 0,
+                                                 1000);
         if (!property) {
             return QSize();
         }

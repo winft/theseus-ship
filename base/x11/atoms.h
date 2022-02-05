@@ -76,58 +76,58 @@ public:
     {
     }
 
-    Xcb::Atom wm_protocols;
-    Xcb::Atom wm_delete_window;
-    Xcb::Atom wm_take_focus;
-    Xcb::Atom wm_change_state;
-    Xcb::Atom wm_client_leader;
-    Xcb::Atom wm_window_role;
-    Xcb::Atom wm_state;
-    Xcb::Atom sm_client_id;
+    xcb::atom wm_protocols;
+    xcb::atom wm_delete_window;
+    xcb::atom wm_take_focus;
+    xcb::atom wm_change_state;
+    xcb::atom wm_client_leader;
+    xcb::atom wm_window_role;
+    xcb::atom wm_state;
+    xcb::atom sm_client_id;
 
-    Xcb::Atom motif_wm_hints;
-    Xcb::Atom net_wm_context_help;
-    Xcb::Atom net_wm_ping;
-    Xcb::Atom net_wm_user_time;
-    Xcb::Atom kde_net_wm_user_creation_time;
-    Xcb::Atom net_wm_window_opacity;
-    Xcb::Atom xdnd_selection;
-    Xcb::Atom xdnd_aware;
-    Xcb::Atom xdnd_enter;
-    Xcb::Atom xdnd_type_list;
-    Xcb::Atom xdnd_position;
-    Xcb::Atom xdnd_status;
-    Xcb::Atom xdnd_action_copy;
-    Xcb::Atom xdnd_action_move;
-    Xcb::Atom xdnd_action_ask;
-    Xcb::Atom xdnd_drop;
-    Xcb::Atom xdnd_leave;
-    Xcb::Atom xdnd_finished;
-    Xcb::Atom net_frame_extents;
-    Xcb::Atom kde_net_wm_frame_strut;
-    Xcb::Atom net_wm_sync_request_counter;
-    Xcb::Atom net_wm_sync_request;
-    Xcb::Atom kde_net_wm_shadow;
-    Xcb::Atom kde_first_in_window_list;
-    Xcb::Atom kde_color_sheme;
-    Xcb::Atom kde_skip_close_animation;
-    Xcb::Atom kde_screen_edge_show;
-    Xcb::Atom utf8_string;
-    Xcb::Atom text;
-    Xcb::Atom uri_list;
-    Xcb::Atom netscape_url;
-    Xcb::Atom moz_url;
-    Xcb::Atom wl_surface_id;
-    Xcb::Atom kde_net_wm_appmenu_service_name;
-    Xcb::Atom kde_net_wm_appmenu_object_path;
-    Xcb::Atom clipboard;
-    Xcb::Atom timestamp;
-    Xcb::Atom targets;
-    Xcb::Atom delete_atom;
-    Xcb::Atom incr;
-    Xcb::Atom wl_selection;
-    Xcb::Atom primary_selection;
-    Xcb::Atom xwayland_randr_emu_monitor_rects;
+    xcb::atom motif_wm_hints;
+    xcb::atom net_wm_context_help;
+    xcb::atom net_wm_ping;
+    xcb::atom net_wm_user_time;
+    xcb::atom kde_net_wm_user_creation_time;
+    xcb::atom net_wm_window_opacity;
+    xcb::atom xdnd_selection;
+    xcb::atom xdnd_aware;
+    xcb::atom xdnd_enter;
+    xcb::atom xdnd_type_list;
+    xcb::atom xdnd_position;
+    xcb::atom xdnd_status;
+    xcb::atom xdnd_action_copy;
+    xcb::atom xdnd_action_move;
+    xcb::atom xdnd_action_ask;
+    xcb::atom xdnd_drop;
+    xcb::atom xdnd_leave;
+    xcb::atom xdnd_finished;
+    xcb::atom net_frame_extents;
+    xcb::atom kde_net_wm_frame_strut;
+    xcb::atom net_wm_sync_request_counter;
+    xcb::atom net_wm_sync_request;
+    xcb::atom kde_net_wm_shadow;
+    xcb::atom kde_first_in_window_list;
+    xcb::atom kde_color_sheme;
+    xcb::atom kde_skip_close_animation;
+    xcb::atom kde_screen_edge_show;
+    xcb::atom utf8_string;
+    xcb::atom text;
+    xcb::atom uri_list;
+    xcb::atom netscape_url;
+    xcb::atom moz_url;
+    xcb::atom wl_surface_id;
+    xcb::atom kde_net_wm_appmenu_service_name;
+    xcb::atom kde_net_wm_appmenu_object_path;
+    xcb::atom clipboard;
+    xcb::atom timestamp;
+    xcb::atom targets;
+    xcb::atom delete_atom;
+    xcb::atom incr;
+    xcb::atom wl_selection;
+    xcb::atom primary_selection;
+    xcb::atom xwayland_randr_emu_monitor_rects;
 
     /**
      * @internal
@@ -148,8 +148,8 @@ public:
 
 private:
     // helper atoms we need to resolve to "announce" support (see #172028)
-    Xcb::Atom m_dtSmWindowInfo;
-    Xcb::Atom m_motifSupport;
+    xcb::atom m_dtSmWindowInfo;
+    xcb::atom m_motifSupport;
     bool m_helpersRetrieved;
 };
 

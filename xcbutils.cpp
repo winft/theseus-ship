@@ -20,7 +20,7 @@
 #include <sys/shm.h>
 #include <sys/types.h>
 
-namespace KWin::Xcb
+namespace KWin::base::x11::xcb
 {
 
 static int const COMPOSITE_MAX_MAJOR = 0;
@@ -304,7 +304,7 @@ static QVector<QByteArray> glxErrorCodes()
                                QByteArrayLiteral("GLXBadProfileARB")};
 }
 
-ExtensionData::ExtensionData()
+extension_data::extension_data()
     : version(0)
     , eventBase(0)
     , errorBase(0)
@@ -314,38 +314,38 @@ ExtensionData::ExtensionData()
 }
 
 template<typename reply, typename T, typename F>
-void Extensions::initVersion(T cookie, F f, ExtensionData* dataToFill)
+void extensions::init_version(T cookie, F f, extension_data* dataToFill)
 {
     unique_cptr<reply> version(f(connection(), cookie, nullptr));
     dataToFill->version = version->major_version * 0x10 + version->minor_version;
 }
 
-Extensions* Extensions::s_self = nullptr;
+extensions* extensions::s_self = nullptr;
 
-Extensions* Extensions::self()
+extensions* extensions::self()
 {
     if (!s_self) {
-        s_self = new Extensions();
+        s_self = new extensions();
     }
     return s_self;
 }
 
-void Extensions::destroy()
+void extensions::destroy()
 {
     delete s_self;
     s_self = nullptr;
 }
 
-Extensions::Extensions()
+extensions::extensions()
 {
     init();
 }
 
-Extensions::~Extensions()
+extensions::~extensions()
 {
 }
 
-void Extensions::init()
+void extensions::init()
 {
     auto c = connection();
     xcb_prefetch_extension_data(c, &xcb_shape_id);
@@ -380,14 +380,14 @@ void Extensions::init()
     m_fixes.errorCodes = fixesErrorCodes();
     m_glx.errorCodes = glxErrorCodes();
 
-    extensionQueryReply(xcb_get_extension_data(c, &xcb_shape_id), &m_shape);
-    extensionQueryReply(xcb_get_extension_data(c, &xcb_randr_id), &m_randr);
-    extensionQueryReply(xcb_get_extension_data(c, &xcb_damage_id), &m_damage);
-    extensionQueryReply(xcb_get_extension_data(c, &xcb_composite_id), &m_composite);
-    extensionQueryReply(xcb_get_extension_data(c, &xcb_xfixes_id), &m_fixes);
-    extensionQueryReply(xcb_get_extension_data(c, &xcb_render_id), &m_render);
-    extensionQueryReply(xcb_get_extension_data(c, &xcb_sync_id), &m_sync);
-    extensionQueryReply(xcb_get_extension_data(c, &xcb_glx_id), &m_glx);
+    query_reply(xcb_get_extension_data(c, &xcb_shape_id), &m_shape);
+    query_reply(xcb_get_extension_data(c, &xcb_randr_id), &m_randr);
+    query_reply(xcb_get_extension_data(c, &xcb_damage_id), &m_damage);
+    query_reply(xcb_get_extension_data(c, &xcb_composite_id), &m_composite);
+    query_reply(xcb_get_extension_data(c, &xcb_xfixes_id), &m_fixes);
+    query_reply(xcb_get_extension_data(c, &xcb_render_id), &m_render);
+    query_reply(xcb_get_extension_data(c, &xcb_sync_id), &m_sync);
+    query_reply(xcb_get_extension_data(c, &xcb_glx_id), &m_glx);
 
     // extension specific queries
     xcb_shape_query_version_cookie_t shapeVersion;
@@ -424,34 +424,34 @@ void Extensions::init()
 
     // handle replies
     if (m_shape.present) {
-        initVersion<xcb_shape_query_version_reply_t>(
+        init_version<xcb_shape_query_version_reply_t>(
             shapeVersion, &xcb_shape_query_version_reply, &m_shape);
     }
     if (m_randr.present) {
-        initVersion<xcb_randr_query_version_reply_t>(
+        init_version<xcb_randr_query_version_reply_t>(
             randrVersion, &xcb_randr_query_version_reply, &m_randr);
     }
     if (m_damage.present) {
-        initVersion<xcb_damage_query_version_reply_t>(
+        init_version<xcb_damage_query_version_reply_t>(
             damageVersion, &xcb_damage_query_version_reply, &m_damage);
     }
     if (m_composite.present) {
-        initVersion<xcb_composite_query_version_reply_t>(
+        init_version<xcb_composite_query_version_reply_t>(
             compositeVersion, &xcb_composite_query_version_reply, &m_composite);
     }
     if (m_fixes.present) {
-        initVersion<xcb_xfixes_query_version_reply_t>(
+        init_version<xcb_xfixes_query_version_reply_t>(
             xfixesVersion, &xcb_xfixes_query_version_reply, &m_fixes);
     }
     if (m_render.present) {
-        initVersion<xcb_render_query_version_reply_t>(
+        init_version<xcb_render_query_version_reply_t>(
             renderVersion, &xcb_render_query_version_reply, &m_render);
     }
     if (m_sync.present) {
-        initVersion<xcb_sync_initialize_reply_t>(syncVersion, &xcb_sync_initialize_reply, &m_sync);
+        init_version<xcb_sync_initialize_reply_t>(syncVersion, &xcb_sync_initialize_reply, &m_sync);
     }
 
-    qCDebug(KWIN_CORE) << "Extensions: shape: 0x" << QString::number(m_shape.version, 16)
+    qCDebug(KWIN_CORE) << "extensions: shape: 0x" << QString::number(m_shape.version, 16)
                        << " composite: 0x" << QString::number(m_composite.version, 16)
                        << " render: 0x" << QString::number(m_render.version, 16) << " fixes: 0x"
                        << QString::number(m_fixes.version, 16) << " randr: 0x"
@@ -460,8 +460,8 @@ void Extensions::init()
                        << QString::number(m_damage.version, 16);
 }
 
-void Extensions::extensionQueryReply(const xcb_query_extension_reply_t* extension,
-                                     ExtensionData* dataToFill)
+void extensions::query_reply(xcb_query_extension_reply_t const* extension,
+                             extension_data* dataToFill)
 {
     if (!extension) {
         return;
@@ -472,14 +472,14 @@ void Extensions::extensionQueryReply(const xcb_query_extension_reply_t* extensio
     dataToFill->majorOpcode = extension->major_opcode;
 }
 
-int Extensions::damageNotifyEvent() const
+int extensions::damage_notify_event() const
 {
     return m_damage.eventBase + XCB_DAMAGE_NOTIFY;
 }
 
-bool Extensions::hasShape(xcb_window_t w) const
+bool extensions::has_shape(xcb_window_t w) const
 {
-    if (!isShapeAvailable()) {
+    if (!is_shape_available()) {
         return false;
     }
 
@@ -492,60 +492,60 @@ bool Extensions::hasShape(xcb_window_t w) const
     return extents->bounding_shaped > 0;
 }
 
-bool Extensions::isCompositeOverlayAvailable() const
+bool extensions::is_composite_overlay_available() const
 {
     return m_composite.version >= 0x03; // 0.3
 }
 
-bool Extensions::isFixesRegionAvailable() const
+bool extensions::is_fixes_region_available() const
 {
     return m_fixes.version >= 0x30; // 3
 }
 
-int Extensions::fixesCursorNotifyEvent() const
+int extensions::fixes_cursor_notify_event() const
 {
     return m_fixes.eventBase + XCB_XFIXES_CURSOR_NOTIFY;
 }
 
-bool Extensions::isShapeInputAvailable() const
+bool extensions::is_shape_input_available() const
 {
     return m_shape.version >= 0x11; // 1.1
 }
 
-int Extensions::randrNotifyEvent() const
+int extensions::randr_notify_event() const
 {
     return m_randr.eventBase + XCB_RANDR_SCREEN_CHANGE_NOTIFY;
 }
 
-int Extensions::shapeNotifyEvent() const
+int extensions::shape_notify_event() const
 {
     return m_shape.eventBase + XCB_SHAPE_NOTIFY;
 }
 
-int Extensions::syncAlarmNotifyEvent() const
+int extensions::sync_alarm_notify_event() const
 {
     return m_sync.eventBase + XCB_SYNC_ALARM_NOTIFY;
 }
 
-QVector<ExtensionData> Extensions::extensions() const
+QVector<extension_data> extensions::get_data() const
 {
     return {m_shape, m_randr, m_damage, m_composite, m_render, m_fixes, m_sync, m_glx};
 }
 
 //****************************************
-// Shm
+// shm
 //****************************************
-Shm::Shm()
+shm::shm()
     : m_shmId(-1)
     , m_buffer(nullptr)
     , m_segment(XCB_NONE)
     , m_valid(false)
-    , m_pixmapFormat(XCB_IMAGE_FORMAT_XY_BITMAP)
+    , m_pixmap_format(XCB_IMAGE_FORMAT_XY_BITMAP)
 {
     m_valid = init();
 }
 
-Shm::~Shm()
+shm::~shm()
 {
     if (m_valid) {
         xcb_shm_detach(connection(), m_segment);
@@ -553,7 +553,7 @@ Shm::~Shm()
     }
 }
 
-bool Shm::init()
+bool shm::init()
 {
     auto ext = xcb_get_extension_data(connection(), &xcb_shm_id);
     if (!ext || !ext->present) {
@@ -567,7 +567,7 @@ bool Shm::init()
         qCDebug(KWIN_CORE) << "Failed to get SHM extension version information";
         return false;
     }
-    m_pixmapFormat = version->pixmap_format;
+    m_pixmap_format = version->pixmap_format;
 
     // TODO check there are not larger windows
     int const MAXSIZE = 4096 * 2048 * 4;

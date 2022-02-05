@@ -76,8 +76,8 @@ static QByteArray readWindowProperty(xcb_window_t win, xcb_atom_t atom, xcb_atom
     }
     uint32_t len = 32768;
     for (;;) {
-        Xcb::Property prop(false, win, atom, XCB_ATOM_ANY, 0, len);
-        if (prop.isNull()) {
+        base::x11::xcb::property prop(false, win, atom, XCB_ATOM_ANY, 0, len);
+        if (prop.is_null()) {
             // get property failed
             return QByteArray();
         }
@@ -85,7 +85,7 @@ static QByteArray readWindowProperty(xcb_window_t win, xcb_atom_t atom, xcb_atom
             len *= 2;
             continue;
         }
-        return prop.toByteArray(format, type);
+        return prop.to_byte_array(format, type);
     }
 }
 

@@ -39,7 +39,7 @@ void screen_edge::doDeactivate()
 
 void screen_edge::createWindow()
 {
-    if (m_window.isValid()) {
+    if (m_window.is_valid()) {
         return;
     }
     const uint32_t mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
@@ -65,7 +65,7 @@ void screen_edge::createApproachWindow()
     if (!activatesForPointer()) {
         return;
     }
-    if (m_approachWindow.isValid()) {
+    if (m_approachWindow.is_valid()) {
         return;
     }
     if (!approach_geometry.isValid()) {
@@ -81,9 +81,9 @@ void screen_edge::createApproachWindow()
 
 void screen_edge::doGeometryUpdate()
 {
-    m_window.setGeometry(geometry);
-    if (m_approachWindow.isValid()) {
-        m_approachWindow.setGeometry(approach_geometry);
+    m_window.set_geometry(geometry);
+    if (m_approachWindow.is_valid()) {
+        m_approachWindow.set_geometry(approach_geometry);
     }
 }
 

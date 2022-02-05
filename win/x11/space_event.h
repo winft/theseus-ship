@@ -48,7 +48,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     if (!event_type) {
         // let's check whether it's an error from one of the extensions KWin uses
         auto error = reinterpret_cast<xcb_generic_error_t*>(event);
-        auto const extensions = Xcb::Extensions::self()->extensions();
+        auto const extensions = base::x11::xcb::extensions::self()->get_data();
 
         for (auto const& extension : extensions) {
             if (error->major_code == extension.majorOpcode) {
@@ -283,7 +283,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             && (focus_event->detail == XCB_NOTIFY_DETAIL_NONE
                 || focus_event->detail == XCB_NOTIFY_DETAIL_POINTER_ROOT
                 || focus_event->detail == XCB_NOTIFY_DETAIL_INFERIOR)) {
-            Xcb::CurrentInput currentInput;
+            base::x11::xcb::current_input currentInput;
 
             // focusToNull() uses xTime(), which is old now (FocusIn has no timestamp)
             kwinApp()->update_x11_time_from_clock();
@@ -293,7 +293,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             // #348935
             const bool lostFocusPointerToRoot = currentInput->focus == rootWindow()
                 && focus_event->detail == XCB_NOTIFY_DETAIL_INFERIOR;
-            if (!currentInput.isNull()
+            if (!currentInput.is_null()
                 && (currentInput->focus == XCB_WINDOW_NONE
                     || currentInput->focus == XCB_INPUT_FOCUS_POINTER_ROOT
                     || lostFocusPointerToRoot)) {

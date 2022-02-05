@@ -16,27 +16,28 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 #include "../xcbutils.h"
 #include <QApplication>
-#include <QDebug>
 #include <QCommandLineParser>
-#include <QLabel>
+#include <QDebug>
 #include <QFormLayout>
+#include <QLabel>
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QX11Info>
 
 static QVector<uint32_t> readShadow(quint32 windowId)
 {
-    KWin::Xcb::Atom atom(QByteArrayLiteral("_KDE_NET_WM_SHADOW"), false, QX11Info::connection());
+    KWin::base::x11::xcb::atom atom(
+        QByteArrayLiteral("_KDE_NET_WM_SHADOW"), false, QX11Info::connection());
     QVector<uint32_t> ret;
     if (windowId != XCB_WINDOW) {
-        KWin::Xcb::Property property(false, windowId, atom, XCB_ATOM_CARDINAL, 0, 12);
-        uint32_t *shadow = property.value<uint32_t*>();
+        KWin::base::x11::xcb::property property(false, windowId, atom, XCB_ATOM_CARDINAL, 0, 12);
+        uint32_t* shadow = property.value<uint32_t*>();
         if (shadow) {
             ret.reserve(12);
-            for (int i=0; i<12; ++i) {
+            for (int i = 0; i < 12; ++i) {
                 ret << shadow[i];
             }
         } else {
@@ -48,15 +49,15 @@ static QVector<uint32_t> readShadow(quint32 windowId)
     return ret;
 }
 
-static QVector<QPixmap> getPixmaps(const QVector<uint32_t> &data)
+static QVector<QPixmap> getPixmaps(const QVector<uint32_t>& data)
 {
     QVector<QPixmap> ret;
     static const int ShadowElementsCount = 8;
-    QVector<KWin::Xcb::WindowGeometry> pixmapGeometries(ShadowElementsCount);
+    QVector<KWin::base::x11::xcb::window_geometry> pixmapGeometries(ShadowElementsCount);
     QVector<xcb_get_image_cookie_t> getImageCookies(ShadowElementsCount);
-    auto *c = KWin::connection();
+    auto* c = KWin::connection();
     for (int i = 0; i < ShadowElementsCount; ++i) {
-        pixmapGeometries[i] = KWin::Xcb::WindowGeometry(data[i]);
+        pixmapGeometries[i] = KWin::base::x11::xcb::window_geometry(data[i]);
     }
     auto discardReplies = [&getImageCookies](int start) {
         for (int i = start; i < getImageCookies.size(); ++i) {
@@ -64,21 +65,21 @@ static QVector<QPixmap> getPixmaps(const QVector<uint32_t> &data)
         }
     };
     for (int i = 0; i < ShadowElementsCount; ++i) {
-        auto &geo = pixmapGeometries[i];
-        if (geo.isNull()) {
+        auto& geo = pixmapGeometries[i];
+        if (geo.is_null()) {
             discardReplies(0);
             return QVector<QPixmap>();
         }
-        getImageCookies[i] = xcb_get_image_unchecked(c, XCB_IMAGE_FORMAT_Z_PIXMAP, data[i],
-                                                     0, 0, geo->width, geo->height, ~0);
+        getImageCookies[i] = xcb_get_image_unchecked(
+            c, XCB_IMAGE_FORMAT_Z_PIXMAP, data[i], 0, 0, geo->width, geo->height, ~0);
     }
     for (int i = 0; i < ShadowElementsCount; ++i) {
-        auto *reply = xcb_get_image_reply(c, getImageCookies.at(i), nullptr);
+        auto* reply = xcb_get_image_reply(c, getImageCookies.at(i), nullptr);
         if (!reply) {
-            discardReplies(i+1);
+            discardReplies(i + 1);
             return QVector<QPixmap>();
         }
-        auto &geo = pixmapGeometries[i];
+        auto& geo = pixmapGeometries[i];
         QImage image(xcb_get_image_data(reply), geo->width, geo->height, QImage::Format_ARGB32);
         ret << QPixmap::fromImage(image);
         free(reply);
@@ -86,14 +87,15 @@ static QVector<QPixmap> getPixmaps(const QVector<uint32_t> &data)
     return ret;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     qputenv("QT_QPA_PLATFORM", "xcb");
     QApplication app(argc, argv);
     app.setProperty("x11Connection", QVariant::fromValue<void*>(QX11Info::connection()));
 
     QCommandLineParser parser;
-    parser.addPositionalArgument(QStringLiteral("windowId"), QStringLiteral("The X11 windowId from which to read the shadow"));
+    parser.addPositionalArgument(QStringLiteral("windowId"),
+                                 QStringLiteral("The X11 windowId from which to read the shadow"));
     parser.addHelpOption();
     parser.process(app);
 
@@ -118,9 +120,9 @@ int main(int argc, char **argv)
     }
 
     QScopedPointer<QWidget> widget(new QWidget());
-    QFormLayout *layout = new QFormLayout(widget.data());
-    for (const auto &pix : pixmaps) {
-        QLabel *l = new QLabel(widget.data());
+    QFormLayout* layout = new QFormLayout(widget.data());
+    for (const auto& pix : pixmaps) {
+        QLabel* l = new QLabel(widget.data());
         l->setPixmap(pix);
         layout->addRow(QStringLiteral("%1x%2:").arg(pix.width()).arg(pix.height()), l);
     }

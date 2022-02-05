@@ -77,7 +77,7 @@ public:
 
         if (TabBox::TabBox::self()->forcedGlobalMouseGrab()) {
             // see TabBox::establishTabBoxGrab()
-            m_window->xcb_windows.wrapper.grabButton(XCB_GRAB_MODE_SYNC, XCB_GRAB_MODE_ASYNC);
+            m_window->xcb_windows.wrapper.grab_button(XCB_GRAB_MODE_SYNC, XCB_GRAB_MODE_ASYNC);
             return;
         }
 
@@ -190,9 +190,9 @@ void embed_client(Win* win,
     // We don't want the window to be destroyed when we quit
     xcb_change_save_set(conn, XCB_SET_MODE_INSERT, win->xcb_windows.client);
 
-    win->xcb_windows.client.selectInput(zero_value);
+    win->xcb_windows.client.select_input(zero_value);
     win->xcb_windows.client.unmap();
-    win->xcb_windows.client.setBorderWidth(zero_value);
+    win->xcb_windows.client.set_border_width(zero_value);
 
     // Note: These values must match the order in the xcb_cw_t enum
     uint32_t const cw_values[] = {
@@ -260,9 +260,9 @@ void embed_client(Win* win,
     // We could specify the event masks when we create the windows, but the original
     // Xlib code didn't.  Let's preserve that behavior here for now so we don't end up
     // receiving any unexpected events from the wrapper creation or the reparenting.
-    win->xcb_windows.outer.selectInput(frame_event_mask);
-    win->xcb_windows.wrapper.selectInput(wrapper_event_mask);
-    win->xcb_windows.client.selectInput(client_event_mask);
+    win->xcb_windows.outer.select_input(frame_event_mask);
+    win->xcb_windows.wrapper.select_input(wrapper_event_mask);
+    win->xcb_windows.client.select_input(client_event_mask);
 
     win->control->update_mouse_grab();
 }
@@ -278,7 +278,7 @@ bool position_via_hint(Win* win, QRect const& geo, bool ignore_default, QRect& p
         // Hint is to be ignored via rule.
         return false;
     }
-    if (!win->geometry_hints.hasPosition()) {
+    if (!win->geometry_hints.has_position()) {
         return false;
     }
 
@@ -627,9 +627,9 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     Blocker blocker(space.stacking_order);
 
-    Xcb::WindowAttributes attr(w);
-    Xcb::WindowGeometry windowGeometry(w);
-    if (attr.isNull() || windowGeometry.isNull()) {
+    base::x11::xcb::window_attributes attr(w);
+    base::x11::xcb::window_geometry windowGeometry(w);
+    if (attr.is_null() || windowGeometry.is_null()) {
         return nullptr;
     }
 
@@ -672,9 +672,9 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     QObject::connect(win, &window::moveResizeCursorChanged, win, [win](input::cursor_shape cursor) {
         auto nativeCursor = input::get_cursor()->x11_cursor(cursor);
-        win->xcb_windows.outer.defineCursor(nativeCursor);
-        if (win->xcb_windows.input.isValid()) {
-            win->xcb_windows.input.defineCursor(nativeCursor);
+        win->xcb_windows.outer.define_cursor(nativeCursor);
+        if (win->xcb_windows.input.is_valid()) {
+            win->xcb_windows.input.define_cursor(nativeCursor);
         }
         if (win->control->move_resize().enabled) {
             // changing window attributes doesn't change cursor if there's pointer grab active
@@ -736,7 +736,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     QObject::connect(win, &Win::windowClassChanged, win, [win] { evaluate_rules(win); });
 
-    if (Xcb::Extensions::self()->isShapeAvailable()) {
+    if (base::x11::xcb::extensions::self()->is_shape_available()) {
         xcb_shape_select_input(connection(), win->xcb_window(), true);
     }
 
@@ -763,7 +763,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     win->geometry_hints.read();
     get_motif_hints(win, true);
     win->getWmOpaqueRegion();
-    win->setSkipCloseAnimation(skipCloseAnimationCookie.toBool());
+    win->setSkipCloseAnimation(skipCloseAnimationCookie.to_bool());
 
     // TODO: Try to obey all state information from info->state()
 
@@ -1394,12 +1394,12 @@ void update_user_time(Win* win, xcb_timestamp_t time = XCB_TIME_CURRENT_TIME)
 template<typename Win>
 xcb_timestamp_t read_user_creation_time(Win* win)
 {
-    Xcb::Property prop(false,
-                       win->xcb_window(),
-                       win->space.atoms->kde_net_wm_user_creation_time,
-                       XCB_ATOM_CARDINAL,
-                       0,
-                       1);
+    base::x11::xcb::property prop(false,
+                                  win->xcb_window(),
+                                  win->space.atoms->kde_net_wm_user_creation_time,
+                                  XCB_ATOM_CARDINAL,
+                                  0,
+                                  1);
     return prop.value<xcb_timestamp_t>(-1);
 }
 
@@ -1551,22 +1551,22 @@ void update_urgency(Win* win)
 }
 
 template<typename Win>
-Xcb::Property fetch_first_in_tabbox(Win* win)
+base::x11::xcb::property fetch_first_in_tabbox(Win* win)
 {
     auto& atoms = win->space.atoms;
-    return Xcb::Property(false,
-                         win->xcb_windows.client,
-                         atoms->kde_first_in_window_list,
-                         atoms->kde_first_in_window_list,
-                         0,
-                         1);
+    return base::x11::xcb::property(false,
+                                    win->xcb_windows.client,
+                                    atoms->kde_first_in_window_list,
+                                    atoms->kde_first_in_window_list,
+                                    0,
+                                    1);
 }
 
 template<typename Win>
-void read_first_in_tabbox(Win* win, Xcb::Property& property)
+void read_first_in_tabbox(Win* win, base::x11::xcb::property& property)
 {
     win->control->set_first_in_tabbox(
-        property.toBool(32, win->space.atoms->kde_first_in_window_list));
+        property.to_bool(32, win->space.atoms->kde_first_in_window_list));
 }
 
 template<typename Win>
@@ -1586,14 +1586,14 @@ void cancel_focus_out_timer(Win* win)
 }
 
 template<typename Win>
-Xcb::Property fetch_show_on_screen_edge(Win* win)
+base::x11::xcb::property fetch_show_on_screen_edge(Win* win)
 {
-    return Xcb::Property(
+    return base::x11::xcb::property(
         false, win->xcb_window(), win->space.atoms->kde_screen_edge_show, XCB_ATOM_CARDINAL, 0, 1);
 }
 
 template<typename Win>
-void read_show_on_screen_edge(Win* win, Xcb::Property& property)
+void read_show_on_screen_edge(Win* win, base::x11::xcb::property& property)
 {
     // value comes in two parts, edge in the lower byte
     // then the type in the upper byte
@@ -1651,7 +1651,7 @@ void read_show_on_screen_edge(Win* win, Xcb::Property& property)
         } else {
             workspace()->edges->reserve(win, ElectricNone);
         }
-    } else if (!property.isNull() && property->type != XCB_ATOM_NONE) {
+    } else if (!property.is_null() && property->type != XCB_ATOM_NONE) {
         // property value is incorrect, delete the property
         // so that the client knows that it is not hidden
         xcb_delete_property(
@@ -1674,14 +1674,14 @@ void update_show_on_screen_edge(Win* win)
 }
 
 template<typename Win>
-Xcb::StringProperty fetch_application_menu_service_name(Win* win)
+base::x11::xcb::string_property fetch_application_menu_service_name(Win* win)
 {
-    return Xcb::StringProperty(win->xcb_windows.client,
-                               win->space.atoms->kde_net_wm_appmenu_service_name);
+    return base::x11::xcb::string_property(win->xcb_windows.client,
+                                           win->space.atoms->kde_net_wm_appmenu_service_name);
 }
 
 template<typename Win>
-void read_application_menu_service_name(Win* win, Xcb::StringProperty& property)
+void read_application_menu_service_name(Win* win, base::x11::xcb::string_property& property)
 {
     auto const& [_, path] = win->control->application_menu();
     win->control->update_application_menu({QString::fromUtf8(property), path});
@@ -1695,14 +1695,14 @@ void check_application_menu_service_name(Win* win)
 }
 
 template<typename Win>
-Xcb::StringProperty fetch_application_menu_object_path(Win* win)
+base::x11::xcb::string_property fetch_application_menu_object_path(Win* win)
 {
-    return Xcb::StringProperty(win->xcb_windows.client,
-                               win->space.atoms->kde_net_wm_appmenu_object_path);
+    return base::x11::xcb::string_property(win->xcb_windows.client,
+                                           win->space.atoms->kde_net_wm_appmenu_object_path);
 }
 
 template<typename Win>
-void read_application_menu_object_path(Win* win, Xcb::StringProperty& property)
+void read_application_menu_object_path(Win* win, base::x11::xcb::string_property& property)
 {
     auto const& [name, _] = win->control->application_menu();
     win->control->update_application_menu({name, QString::fromUtf8(property)});

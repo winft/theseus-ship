@@ -184,7 +184,7 @@ ApplicationX11::~ApplicationX11()
     workspace.reset();
     base.render->compositor.reset();
     if (!owner.isNull() && owner->ownerWindow() != XCB_WINDOW_NONE)   // If there was no --replace (no new WM)
-        Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
+        base::x11::xcb::set_input_focus(XCB_INPUT_FOCUS_POINTER_ROOT);
 }
 
 void ApplicationX11::setReplace(bool replace)
@@ -199,7 +199,7 @@ void ApplicationX11::lostSelection()
     workspace.reset();
     base.render->compositor.reset();
     // Remove windowmanager privileges
-    Xcb::selectInput(rootWindow(), XCB_EVENT_MASK_PROPERTY_CHANGE);
+    base::x11::xcb::select_input(rootWindow(), XCB_EVENT_MASK_PROPERTY_CHANGE);
     quit();
 }
 
@@ -272,12 +272,12 @@ void ApplicationX11::start()
         Q_EMIT startup_finished();
 
         // Trigger possible errors, there's still a chance to abort.
-        Xcb::sync();
+        base::x11::xcb::sync();
         kwinApp()->notifyKSplash();
     });
 
     // we need to do an XSync here, otherwise the QPA might crash us later on
-    Xcb::sync();
+    base::x11::xcb::sync();
     owner->claim(m_replace || wasCrash(), true);
 }
 

@@ -18,7 +18,7 @@ namespace KWin::render::backend::x11
 {
 
 RandrFilter::RandrFilter(x11::platform* platform)
-    : base::x11::event_filter(Xcb::Extensions::self()->randrNotifyEvent())
+    : base::x11::event_filter(base::x11::xcb::extensions::self()->randr_notify_event())
     , platform(platform)
     , m_changedTimer(new QTimer(platform))
 {
@@ -30,7 +30,8 @@ RandrFilter::RandrFilter(x11::platform* platform)
 
 bool RandrFilter::event(xcb_generic_event_t* event)
 {
-    Q_ASSERT((event->response_type & ~0x80) == Xcb::Extensions::self()->randrNotifyEvent());
+    Q_ASSERT((event->response_type & ~0x80)
+             == base::x11::xcb::extensions::self()->randr_notify_event());
 
     platform->updateOutputs();
 

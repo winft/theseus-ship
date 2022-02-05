@@ -17,7 +17,7 @@ namespace KWin::xwl
 
 inline xcb_atom_t mime_type_to_atom_literal(std::string const& mime_type)
 {
-    return Xcb::Atom(mime_type.c_str(), false, kwinApp()->x11Connection());
+    return base::x11::xcb::atom(mime_type.c_str(), false, kwinApp()->x11Connection());
 }
 
 inline xcb_atom_t mime_type_to_atom(std::string const& mime_type, base::x11::atoms const& atoms)

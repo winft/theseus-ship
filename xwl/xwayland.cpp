@@ -168,7 +168,7 @@ xwayland::~xwayland()
     win::x11::clear_space(*Workspace::self());
 
     if (app->x11Connection()) {
-        Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
+        base::x11::xcb::set_input_focus(XCB_INPUT_FOCUS_POINTER_ROOT);
         Workspace::self()->atoms.reset();
         Q_EMIT app->x11ConnectionAboutToBeDestroyed();
         app->setX11Connection(nullptr);
@@ -269,7 +269,8 @@ void xwayland::continue_startup_with_x11()
 
     auto mouseCursor = input::get_cursor();
     if (mouseCursor) {
-        Xcb::defineCursor(app->x11RootWindow(), mouseCursor->x11_cursor(Qt::ArrowCursor));
+        base::x11::xcb::define_cursor(app->x11RootWindow(),
+                                      mouseCursor->x11_cursor(Qt::ArrowCursor));
     }
 
     auto env = app->processStartupEnvironment();
@@ -281,7 +282,7 @@ void xwayland::continue_startup_with_x11()
     Q_EMIT app->x11ConnectionChanged();
 
     // Trigger possible errors, there's still a chance to abort
-    Xcb::sync();
+    base::x11::xcb::sync();
 
     data_bridge.reset(new xwl::data_bridge(basic_data));
 }

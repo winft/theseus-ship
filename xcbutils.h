@@ -20,32 +20,29 @@
 
 class TestXcbSizeHints;
 
-namespace KWin
-{
-
-namespace Xcb
+namespace KWin::base::x11::xcb
 {
 
 using WindowId = xcb_window_t;
 
 // forward declaration of methods
-static void defineCursor(xcb_window_t window, xcb_cursor_t cursor);
-static void setInputFocus(xcb_window_t window,
-                          uint8_t revertTo = XCB_INPUT_FOCUS_POINTER_ROOT,
-                          xcb_timestamp_t time = xTime());
-static void moveWindow(xcb_window_t window, const QPoint& pos);
-static void moveWindow(xcb_window_t window, uint32_t x, uint32_t y);
-static void lowerWindow(xcb_window_t window);
-static void selectInput(xcb_window_t window, uint32_t events);
+static void define_cursor(xcb_window_t window, xcb_cursor_t cursor);
+static void set_input_focus(xcb_window_t window,
+                            uint8_t revertTo = XCB_INPUT_FOCUS_POINTER_ROOT,
+                            xcb_timestamp_t time = xTime());
+static void move_window(xcb_window_t window, const QPoint& pos);
+static void move_window(xcb_window_t window, uint32_t x, uint32_t y);
+static void lower_window(xcb_window_t window);
+static void select_input(xcb_window_t window, uint32_t events);
 
 /**
  * @brief Variadic template to wrap an xcb request.
  *
  * This struct is part of the generic implementation to wrap xcb requests
  * and fetching their reply. Each request is represented by two templated
- * elements: WrapperData and Wrapper.
+ * elements: wrapper_data and wrapper.
  *
- * The WrapperData defines the following types:
+ * The wrapper_data defines the following types:
  * @li reply_type of the xcb request
  * @li cookie_type of the xcb request
  * @li function pointer type for the xcb request
@@ -53,12 +50,12 @@ static void selectInput(xcb_window_t window, uint32_t events);
  * This uses variadic template arguments thus it can be used to specify any
  * xcb request.
  *
- * As the WrapperData does not specify the actual function pointers one needs
+ * As the wrapper_data does not specify the actual function pointers one needs
  * to derive another struct which specifies the function pointer requestFunc and
  * the function pointer replyFunc as static constexpr of type reply_func and
  * reply_type respectively. E.g. for the command xcb_get_geometry:
  * @code
- * struct GeometryData : public WrapperData< xcb_get_geometry_reply_t, xcb_get_geometry_cookie_t,
+ * struct geometry_data : public wrapper_data< xcb_get_geometry_reply_t, xcb_get_geometry_cookie_t,
  * xcb_drawable_t >
  * {
  *    static constexpr request_func requestFunc = &xcb_get_geometry_unchecked;
@@ -69,37 +66,37 @@ static void selectInput(xcb_window_t window, uint32_t events);
  * To simplify this definition the macro XCB_WRAPPER_DATA is provided.
  * For the same xcb command this looks like this:
  * @code
- * XCB_WRAPPER_DATA(GeometryData, xcb_get_geometry, xcb_drawable_t)
+ * XCB_WRAPPER_DATA(geometry_data, xcb_get_geometry, xcb_drawable_t)
  * @endcode
  *
- * The derived WrapperData has to be passed as first template argument to Wrapper. The other
- * template arguments of Wrapper are the same variadic template arguments as passed into
- * WrapperData. This is ensured at compile time and will cause a compile error in case there
- * is a mismatch of the variadic template arguments passed to WrapperData and Wrapper.
- * Passing another type than a struct derived from WrapperData to Wrapper will result in a
+ * The derived wrapper_data has to be passed as first template argument to wrapper. The other
+ * template arguments of wrapper are the same variadic template arguments as passed into
+ * wrapper_data. This is ensured at compile time and will cause a compile error in case there
+ * is a mismatch of the variadic template arguments passed to wrapper_data and wrapper.
+ * Passing another type than a struct derived from wrapper_data to wrapper will result in a
  * compile error. The following code snippets won't compile:
  * @code
- * XCB_WRAPPER_DATA(GeometryData, xcb_get_geometry, xcb_drawable_t)
- * // fails with "static assertion failed: Argument miss-match between Wrapper and WrapperData"
- * class IncorrectArguments : public Wrapper<GeometryData, uint8_t>
+ * XCB_WRAPPER_DATA(geometry_data, xcb_get_geometry, xcb_drawable_t)
+ * // fails with "static assertion failed: Argument miss-match between wrapper and wrapper_data"
+ * class IncorrectArguments : public wrapper<geometry_data, uint8_t>
  * {
  * public:
  *     IncorrectArguments() = default;
- *     IncorrectArguments(xcb_window_t window) : Wrapper<GeometryData, uint8_t>(window) {}
+ *     IncorrectArguments(xcb_window_t window) : wrapper<geometry_data, uint8_t>(window) {}
  * };
  *
- * // fails with "static assertion failed: Data template argument must be derived from WrapperData"
- * class WrapperDataDirectly : public Wrapper<WrapperData<xcb_get_geometry_reply_t,
+ * // fails with "static assertion failed: Data template argument must be derived from wrapper_data"
+ * class wrapper_dataDirectly : public wrapper<wrapper_data<xcb_get_geometry_reply_t,
  * xcb_get_geometry_request_t, xcb_drawable_t>, xcb_drawable_t>
  * {
  * public:
- *     WrapperDataDirectly() = default;
- *     WrapperDataDirectly(xcb_window_t window) : Wrapper<WrapperData<xcb_get_geometry_reply_t,
+ *     wrapper_dataDirectly() = default;
+ *     wrapper_dataDirectly(xcb_window_t window) : wrapper<wrapper_data<xcb_get_geometry_reply_t,
  * xcb_get_geometry_request_t, xcb_drawable_t>, xcb_drawable_t>(window) {}
  * };
  *
- * // fails with "static assertion failed: Data template argument must be derived from WrapperData"
- * struct FakeWrapperData
+ * // fails with "static assertion failed: Data template argument must be derived from wrapper_data"
+ * struct Fakewrapper_data
  * {
  *     typedef xcb_get_geometry_reply_t reply_type;
  *     typedef xcb_get_geometry_cookie_t cookie_type;
@@ -110,29 +107,29 @@ static void selectInput(xcb_window_t window, uint32_t events);
  *     static constexpr request_func requestFunc = &xcb_get_geometry_unchecked;
  *     static constexpr reply_func replyFunc = &xcb_get_geometry_reply;
  * };
- * class NotDerivedFromWrapperData : public Wrapper<FakeWrapperData, xcb_drawable_t>
+ * class NotDerivedFromwrapper_data : public wrapper<Fakewrapper_data, xcb_drawable_t>
  * {
  * public:
- *     NotDerivedFromWrapperData() = default;
- *     NotDerivedFromWrapperData(xcb_window_t window) : Wrapper<FakeWrapperData,
+ *     NotDerivedFromwrapper_data() = default;
+ *     NotDerivedFromwrapper_data(xcb_window_t window) : wrapper<Fakewrapper_data,
  * xcb_drawable_t>(window) {}
  * };
  * @endcode
  *
- * The Wrapper provides an easy to use RAII API which calls the WrapperData's requestFunc in
+ * The wrapper provides an easy to use RAII API which calls the wrapper_data's requestFunc in
  * the ctor and fetches the reply the first time it is used. In addition the dtor takes care
- * of freeing the reply if it got fetched, otherwise it discards the reply. The Wrapper can
+ * of freeing the reply if it got fetched, otherwise it discards the reply. The wrapper can
  * be used as if it were the reply_type directly.
  *
- * There are several command wrappers defined which either subclass Wrapper to add methods to
+ * There are several command wrappers defined which either subclass wrapper to add methods to
  * simplify the usage of the result_type or use a typedef. To add a new typedef one can use the
- * macro XCB_WRAPPER which creates the WrapperData struct as XCB_WRAPPER_DATA does and the
+ * macro XCB_WRAPPER which creates the wrapper_data struct as XCB_WRAPPER_DATA does and the
  * typedef. E.g:
  * @code
  * XCB_WRAPPER(Geometry, xcb_get_geometry, xcb_drawable_t)
  * @endcode
  *
- * creates a typedef Geometry and the struct GeometryData.
+ * creates a typedef Geometry and the struct geometry_data.
  *
  * Overall this allows to simplify the Xcb usage. For example consider the
  * following xcb code snippet:
@@ -148,27 +145,27 @@ static void selectInput(xcb_window_t window, uint32_t events);
  * free(reply);
  * @endcode
  *
- * With the help of the Wrapper class this can be simplified to:
+ * With the help of the wrapper class this can be simplified to:
  * @code
  * xcb_window_t w; // some window
- * Xcb::Geometry geo(w);
- * if (!geo.isNull()) {
+ * xcb::Geometry geo(w);
+ * if (!geo.is_null()) {
  *     geo->x; // do something with the geometry
  * }
  * @endcode
  *
  * @see XCB_WRAPPER_DATA
  * @see XCB_WRAPPER
- * @see Wrapper
- * @see WindowAttributes
- * @see OverlayWindow
- * @see WindowGeometry
- * @see Tree
- * @see CurrentInput
- * @see TransientFor
+ * @see wrapper
+ * @see window_attributes
+ * @see overlay_window
+ * @see window_geometry
+ * @see tree
+ * @see current_input
+ * @see transient_for
  */
 template<typename Reply, typename Cookie, typename... Args>
-struct WrapperData {
+struct wrapper_data {
     /**
      * @brief The type returned by the xcb reply function.
      */
@@ -198,12 +195,12 @@ struct WrapperData {
 };
 
 /**
- * @brief Partial template specialization for WrapperData with no further arguments.
+ * @brief Partial template specialization for wrapper_data with no further arguments.
  *
  * This will be used for xcb requests just taking the xcb_connection_t* argument.
  */
 template<typename Reply, typename Cookie>
-struct WrapperData<Reply, Cookie> {
+struct wrapper_data<Reply, Cookie> {
     typedef Reply reply_type;
     typedef Cookie cookie_type;
     typedef std::tuple<> argument_types;
@@ -215,21 +212,21 @@ struct WrapperData<Reply, Cookie> {
 /**
  * @brief Abstract base class for the wrapper.
  *
- * This class contains the complete functionality of the Wrapper. It's only an abstract
+ * This class contains the complete functionality of the wrapper. It's only an abstract
  * base class to provide partial template specialization for more specific constructors.
  */
 template<typename Data>
-class AbstractWrapper
+class abstract_wrapper
 {
 public:
     using Cookie = typename Data::cookie_type;
     using Reply = typename Data::reply_type;
 
-    virtual ~AbstractWrapper()
+    virtual ~abstract_wrapper()
     {
         cleanup();
     }
-    inline AbstractWrapper& operator=(const AbstractWrapper& other)
+    inline abstract_wrapper& operator=(const abstract_wrapper& other)
     {
         if (this != &other) {
             // if we had managed a reply, free it
@@ -240,49 +237,49 @@ public:
             m_window = other.m_window;
             m_reply = other.m_reply;
             // take over the responsibility for the reply pointer
-            takeFromOther(const_cast<AbstractWrapper&>(other));
+            take_from_other(const_cast<abstract_wrapper&>(other));
         }
         return *this;
     }
 
     inline const Reply* operator->()
     {
-        getReply();
+        get_reply();
         return m_reply;
     }
-    inline bool isNull()
+    inline bool is_null()
     {
-        getReply();
+        get_reply();
         return m_reply == nullptr;
     }
-    inline bool isNull() const
+    inline bool is_null() const
     {
-        const_cast<AbstractWrapper*>(this)->getReply();
+        const_cast<abstract_wrapper*>(this)->get_reply();
         return m_reply == NULL;
     }
     inline operator bool()
     {
-        return !isNull();
+        return !is_null();
     }
     inline operator bool() const
     {
-        return !isNull();
+        return !is_null();
     }
     inline const Reply* data()
     {
-        getReply();
+        get_reply();
         return m_reply;
     }
     inline const Reply* data() const
     {
-        const_cast<AbstractWrapper*>(this)->getReply();
+        const_cast<abstract_wrapper*>(this)->get_reply();
         return m_reply;
     }
     inline WindowId window() const
     {
         return m_window;
     }
-    inline bool isRetrieved() const
+    inline bool is_retrieved() const
     {
         return m_retrieved;
     }
@@ -295,7 +292,7 @@ public:
      */
     inline Reply* take()
     {
-        getReply();
+        get_reply();
         Reply* ret = m_reply;
         m_reply = nullptr;
         m_window = XCB_WINDOW_NONE;
@@ -303,29 +300,29 @@ public:
     }
 
 protected:
-    AbstractWrapper()
+    abstract_wrapper()
         : m_retrieved(false)
         , m_window(XCB_WINDOW_NONE)
         , m_reply(nullptr)
     {
         m_cookie.sequence = 0;
     }
-    explicit AbstractWrapper(WindowId window, Cookie cookie)
+    explicit abstract_wrapper(WindowId window, Cookie cookie)
         : m_retrieved(false)
         , m_cookie(cookie)
         , m_window(window)
         , m_reply(nullptr)
     {
     }
-    explicit AbstractWrapper(const AbstractWrapper& other)
+    explicit abstract_wrapper(const abstract_wrapper& other)
         : m_retrieved(other.m_retrieved)
         , m_cookie(other.m_cookie)
         , m_window(other.m_window)
         , m_reply(nullptr)
     {
-        takeFromOther(const_cast<AbstractWrapper&>(other));
+        take_from_other(const_cast<abstract_wrapper&>(other));
     }
-    void getReply()
+    void get_reply()
     {
         if (m_retrieved || !m_cookie.sequence) {
             return;
@@ -343,7 +340,7 @@ private:
             free(m_reply);
         }
     }
-    inline void takeFromOther(AbstractWrapper& other)
+    inline void take_from_other(abstract_wrapper& other)
     {
         if (m_retrieved) {
             m_reply = other.take();
@@ -363,7 +360,7 @@ private:
 /**
  * @brief Template to compare the arguments of two std::tuple.
  *
- * @internal Used by static_assert in Wrapper
+ * @internal Used by static_assert in wrapper
  */
 template<typename T1, typename T2, std::size_t I>
 struct tupleCompare {
@@ -387,37 +384,37 @@ struct tupleCompare<T1, T2, 0> {
 };
 
 /**
- * @brief Wrapper taking a WrapperData as first template argument and xcb request args as variadic
+ * @brief wrapper taking a wrapper_data as first template argument and xcb request args as variadic
  * args.
  */
 template<typename Data, typename... Args>
-class Wrapper : public AbstractWrapper<Data>
+class wrapper : public abstract_wrapper<Data>
 {
 public:
     static_assert(!std::is_same<Data,
-                                Xcb::WrapperData<typename Data::reply_type,
-                                                 typename Data::cookie_type,
-                                                 Args...>>::value,
-                  "Data template argument must be derived from WrapperData");
+                                xcb::wrapper_data<typename Data::reply_type,
+                                                  typename Data::cookie_type,
+                                                  Args...>>::value,
+                  "Data template argument must be derived from wrapper_data");
     static_assert(
         std::is_base_of<
-            Xcb::WrapperData<typename Data::reply_type, typename Data::cookie_type, Args...>,
+            xcb::wrapper_data<typename Data::reply_type, typename Data::cookie_type, Args...>,
             Data>::value,
-        "Data template argument must be derived from WrapperData");
+        "Data template argument must be derived from wrapper_data");
     static_assert(sizeof...(Args) == Data::argumentCount,
-                  "Wrapper and WrapperData need to have same template argument count");
+                  "Wrapper and wrapper_data need to have same template argument count");
     static_assert(tupleCompare<std::tuple<Args...>,
                                typename Data::argument_types,
                                sizeof...(Args) - 1>::value,
-                  "Argument miss-match between Wrapper and WrapperData");
+                  "Argument miss-match between Wrapper and wrapper_data");
 
-    Wrapper() = default;
-    explicit Wrapper(Args... args)
-        : AbstractWrapper<Data>(XCB_WINDOW_NONE, Data::requestFunc(connection(), args...))
+    wrapper() = default;
+    explicit wrapper(Args... args)
+        : abstract_wrapper<Data>(XCB_WINDOW_NONE, Data::requestFunc(connection(), args...))
     {
     }
-    explicit Wrapper(xcb_window_t w, Args... args)
-        : AbstractWrapper<Data>(w, Data::requestFunc(connection(), args...))
+    explicit wrapper(xcb_window_t w, Args... args)
+        : abstract_wrapper<Data>(w, Data::requestFunc(connection(), args...))
     {
     }
 };
@@ -426,31 +423,31 @@ public:
  * @brief Template specialization for xcb_window_t being first variadic argument.
  */
 template<typename Data, typename... Args>
-class Wrapper<Data, xcb_window_t, Args...> : public AbstractWrapper<Data>
+class wrapper<Data, xcb_window_t, Args...> : public abstract_wrapper<Data>
 {
 public:
     static_assert(!std::is_same<Data,
-                                Xcb::WrapperData<typename Data::reply_type,
-                                                 typename Data::cookie_type,
-                                                 xcb_window_t,
-                                                 Args...>>::value,
-                  "Data template argument must be derived from WrapperData");
-    static_assert(std::is_base_of<Xcb::WrapperData<typename Data::reply_type,
-                                                   typename Data::cookie_type,
-                                                   xcb_window_t,
-                                                   Args...>,
+                                xcb::wrapper_data<typename Data::reply_type,
+                                                  typename Data::cookie_type,
+                                                  xcb_window_t,
+                                                  Args...>>::value,
+                  "Data template argument must be derived from wrapper_data");
+    static_assert(std::is_base_of<xcb::wrapper_data<typename Data::reply_type,
+                                                    typename Data::cookie_type,
+                                                    xcb_window_t,
+                                                    Args...>,
                                   Data>::value,
-                  "Data template argument must be derived from WrapperData");
+                  "Data template argument must be derived from wrapper_data");
     static_assert(sizeof...(Args) + 1 == Data::argumentCount,
-                  "Wrapper and WrapperData need to have same template argument count");
+                  "wrapper and wrapper_data need to have same template argument count");
     static_assert(tupleCompare<std::tuple<xcb_window_t, Args...>,
                                typename Data::argument_types,
                                sizeof...(Args)>::value,
-                  "Argument miss-match between Wrapper and WrapperData");
+                  "Argument miss-match between wrapper and wrapper_data");
 
-    Wrapper() = default;
-    explicit Wrapper(xcb_window_t w, Args... args)
-        : AbstractWrapper<Data>(w, Data::requestFunc(connection(), w, args...))
+    wrapper() = default;
+    explicit wrapper(xcb_window_t w, Args... args)
+        : abstract_wrapper<Data>(w, Data::requestFunc(connection(), w, args...))
     {
     }
 };
@@ -461,34 +458,34 @@ public:
  * It's needed to prevent ambiguous constructors being generated.
  */
 template<typename Data>
-class Wrapper<Data> : public AbstractWrapper<Data>
+class wrapper<Data> : public abstract_wrapper<Data>
 {
 public:
     static_assert(!std::is_same<Data,
-                                Xcb::WrapperData<typename Data::reply_type,
-                                                 typename Data::cookie_type>>::value,
-                  "Data template argument must be derived from WrapperData");
+                                xcb::wrapper_data<typename Data::reply_type,
+                                                  typename Data::cookie_type>>::value,
+                  "Data template argument must be derived from wrapper_data");
     static_assert(
-        std::is_base_of<Xcb::WrapperData<typename Data::reply_type, typename Data::cookie_type>,
+        std::is_base_of<xcb::wrapper_data<typename Data::reply_type, typename Data::cookie_type>,
                         Data>::value,
-        "Data template argument must be derived from WrapperData");
+        "Data template argument must be derived from wrapper_data");
     static_assert(Data::argumentCount == 0,
-                  "Wrapper for no arguments constructed with WrapperData with arguments");
+                  "wrapper for no arguments constructed with wrapper_data with arguments");
 
-    explicit Wrapper()
-        : AbstractWrapper<Data>(XCB_WINDOW_NONE, Data::requestFunc(connection()))
+    explicit wrapper()
+        : abstract_wrapper<Data>(XCB_WINDOW_NONE, Data::requestFunc(connection()))
     {
     }
 };
 
-class Atom
+class atom
 {
 public:
-    Atom(QByteArray const& name, xcb_connection_t* connection)
-        : Atom(name, false, connection)
+    atom(QByteArray const& name, xcb_connection_t* connection)
+        : atom(name, false, connection)
     {
     }
-    Atom(QByteArray const& name, bool only_if_exists, xcb_connection_t* connection)
+    atom(QByteArray const& name, bool only_if_exists, xcb_connection_t* connection)
         : m_connection(connection)
         , m_cookie(xcb_intern_atom_unchecked(connection,
                                              only_if_exists,
@@ -498,12 +495,12 @@ public:
     {
     }
 
-    Atom(Atom const& other)
+    atom(atom const& other)
     {
         *this = other;
     }
 
-    Atom& operator=(Atom const& other)
+    atom& operator=(atom const& other)
     {
         if (this == &other) {
             return *this;
@@ -525,10 +522,10 @@ public:
         return *this;
     }
 
-    Atom(Atom&& other) noexcept = default;
-    Atom& operator=(Atom&& other) noexcept = default;
+    atom(atom&& other) noexcept = default;
+    atom& operator=(atom&& other) noexcept = default;
 
-    ~Atom()
+    ~atom()
     {
         if (!m_retrieved && m_cookie.sequence) {
             xcb_discard_reply(m_connection, m_cookie.sequence);
@@ -537,17 +534,17 @@ public:
 
     operator xcb_atom_t() const
     {
-        (const_cast<Atom*>(this))->getReply();
+        (const_cast<atom*>(this))->get_reply();
         return m_atom;
     }
-    bool isValid()
+    bool is_valid()
     {
-        getReply();
+        get_reply();
         return m_atom != XCB_ATOM_NONE;
     }
-    bool isValid() const
+    bool is_valid() const
     {
-        (const_cast<Atom*>(this))->getReply();
+        (const_cast<atom*>(this))->get_reply();
         return m_atom != XCB_ATOM_NONE;
     }
 
@@ -557,7 +554,7 @@ public:
     }
 
 private:
-    void getReply()
+    void get_reply()
     {
         if (m_retrieved || !m_cookie.sequence) {
             return;
@@ -577,10 +574,10 @@ private:
 };
 
 /**
- * @brief Macro to create the WrapperData subclass.
+ * @brief Macro to create the wrapper_data subclass.
  *
  * Creates a struct with name @p __NAME__ for the xcb request identified by @p __REQUEST__.
- * The variadic arguments are used to pass as template arguments to the WrapperData.
+ * The variadic arguments are used to pass as template arguments to the wrapper_data.
  *
  * The @p __REQUEST__ is the common prefix of the cookie type, reply type, request function and
  * reply function. E.g. "xcb_get_geometry" is used to create:
@@ -589,47 +586,47 @@ private:
  * @li request function pointer xcb_get_geometry_unchecked
  * @li reply function pointer xcb_get_geometry_reply
  *
- * @param __NAME__ The name of the WrapperData subclass
+ * @param __NAME__ The name of the wrapper_data subclass
  * @param __REQUEST__ The name of the xcb request, e.g. xcb_get_geometry
  * @param __VA_ARGS__ The variadic template arguments, e.g. xcb_drawable_t
  * @see XCB_WRAPPER
  */
 #define XCB_WRAPPER_DATA(__NAME__, __REQUEST__, ...)                                               \
     struct __NAME__                                                                                \
-        : public WrapperData<__REQUEST__##_reply_t, __REQUEST__##_cookie_t, __VA_ARGS__> {         \
+        : public wrapper_data<__REQUEST__##_reply_t, __REQUEST__##_cookie_t, __VA_ARGS__> {        \
         static constexpr request_func requestFunc = &__REQUEST__##_unchecked;                      \
         static constexpr reply_func replyFunc = &__REQUEST__##_reply;                              \
     };
 
 /**
- * @brief Macro to create Wrapper typedef and WrapperData.
+ * @brief Macro to create wrapper typedef and wrapper_data.
  *
  * This macro expands the XCB_WRAPPER_DATA macro and creates an additional
- * typedef for Wrapper with name @p __NAME__. The created WrapperData is also derived
+ * typedef for Wrapper with name @p __NAME__. The created wrapper_data is also derived
  * from @p __NAME__ with "Data" as suffix.
  *
- * @param __NAME__ The name for the Wrapper typedef
+ * @param __NAME__ The name for the wrapper typedef
  * @param __REQUEST__ The name of the xcb request, passed to XCB_WRAPPER_DATA
- * @param __VA_ARGS__ The variadic template arguments for Wrapper and WrapperData
+ * @param __VA_ARGS__ The variadic template arguments for wrapper and wrapper_data
  * @see XCB_WRAPPER_DATA
  */
 #define XCB_WRAPPER(__NAME__, __REQUEST__, ...)                                                    \
     XCB_WRAPPER_DATA(__NAME__##Data, __REQUEST__, __VA_ARGS__)                                     \
-    typedef Wrapper<__NAME__##Data, __VA_ARGS__> __NAME__;
+    typedef wrapper<__NAME__##Data, __VA_ARGS__> __NAME__;
 
-XCB_WRAPPER(WindowAttributes, xcb_get_window_attributes, xcb_window_t)
-XCB_WRAPPER(OverlayWindow, xcb_composite_get_overlay_window, xcb_window_t)
+XCB_WRAPPER(window_attributes, xcb_get_window_attributes, xcb_window_t)
+XCB_WRAPPER(overlay_window, xcb_composite_get_overlay_window, xcb_window_t)
 
-XCB_WRAPPER_DATA(GeometryData, xcb_get_geometry, xcb_drawable_t)
-class WindowGeometry : public Wrapper<GeometryData, xcb_window_t>
+XCB_WRAPPER_DATA(geometry_data, xcb_get_geometry, xcb_drawable_t)
+class window_geometry : public wrapper<geometry_data, xcb_window_t>
 {
 public:
-    WindowGeometry()
-        : Wrapper<GeometryData, xcb_window_t>()
+    window_geometry()
+        : wrapper<geometry_data, xcb_window_t>()
     {
     }
-    explicit WindowGeometry(xcb_window_t window)
-        : Wrapper<GeometryData, xcb_window_t>(window)
+    explicit window_geometry(xcb_window_t window)
+        : wrapper<geometry_data, xcb_window_t>(window)
     {
     }
 
@@ -652,99 +649,100 @@ public:
     }
 };
 
-XCB_WRAPPER_DATA(TreeData, xcb_query_tree, xcb_window_t)
-class Tree : public Wrapper<TreeData, xcb_window_t>
+XCB_WRAPPER_DATA(tree_data, xcb_query_tree, xcb_window_t)
+class tree : public wrapper<tree_data, xcb_window_t>
 {
 public:
-    explicit Tree(WindowId window)
-        : Wrapper<TreeData, xcb_window_t>(window)
+    explicit tree(WindowId window)
+        : wrapper<tree_data, xcb_window_t>(window)
     {
     }
 
     inline WindowId* children()
     {
-        if (isNull() || data()->children_len == 0) {
+        if (is_null() || data()->children_len == 0) {
             return nullptr;
         }
         return xcb_query_tree_children(data());
     }
     inline xcb_window_t parent()
     {
-        if (isNull())
+        if (is_null())
             return XCB_WINDOW_NONE;
         return (*this)->parent;
     }
 };
 
-XCB_WRAPPER(Pointer, xcb_query_pointer, xcb_window_t)
+XCB_WRAPPER(pointer, xcb_query_pointer, xcb_window_t)
 
-struct CurrentInputData
-    : public WrapperData<xcb_get_input_focus_reply_t, xcb_get_input_focus_cookie_t> {
+struct current_input_data
+    : public wrapper_data<xcb_get_input_focus_reply_t, xcb_get_input_focus_cookie_t> {
     static constexpr request_func requestFunc = &xcb_get_input_focus_unchecked;
     static constexpr reply_func replyFunc = &xcb_get_input_focus_reply;
 };
 
-class CurrentInput : public Wrapper<CurrentInputData>
+class current_input : public wrapper<current_input_data>
 {
 public:
-    CurrentInput()
-        : Wrapper<CurrentInputData>()
+    current_input()
+        : wrapper<current_input_data>()
     {
     }
 
     inline xcb_window_t window()
     {
-        if (isNull())
+        if (is_null())
             return XCB_WINDOW_NONE;
         return (*this)->focus;
     }
 };
 
-struct QueryKeymapData : public WrapperData<xcb_query_keymap_reply_t, xcb_query_keymap_cookie_t> {
+struct query_keymap_data
+    : public wrapper_data<xcb_query_keymap_reply_t, xcb_query_keymap_cookie_t> {
     static constexpr request_func requestFunc = &xcb_query_keymap_unchecked;
     static constexpr reply_func replyFunc = &xcb_query_keymap_reply;
 };
 
-class QueryKeymap : public Wrapper<QueryKeymapData>
+class query_keymap : public wrapper<query_keymap_data>
 {
 public:
-    QueryKeymap()
-        : Wrapper<QueryKeymapData>()
+    query_keymap()
+        : wrapper<query_keymap_data>()
     {
     }
 };
 
-struct ModifierMappingData
-    : public WrapperData<xcb_get_modifier_mapping_reply_t, xcb_get_modifier_mapping_cookie_t> {
+struct modifier_mapping_data
+    : public wrapper_data<xcb_get_modifier_mapping_reply_t, xcb_get_modifier_mapping_cookie_t> {
     static constexpr request_func requestFunc = &xcb_get_modifier_mapping_unchecked;
     static constexpr reply_func replyFunc = &xcb_get_modifier_mapping_reply;
 };
 
-class ModifierMapping : public Wrapper<ModifierMappingData>
+class modifier_mapping : public wrapper<modifier_mapping_data>
 {
 public:
-    ModifierMapping()
-        : Wrapper<ModifierMappingData>()
+    modifier_mapping()
+        : wrapper<modifier_mapping_data>()
     {
     }
 
     inline xcb_keycode_t* keycodes()
     {
-        if (isNull()) {
+        if (is_null()) {
             return nullptr;
         }
         return xcb_get_modifier_mapping_keycodes(data());
     }
     inline int size()
     {
-        if (isNull()) {
+        if (is_null()) {
             return 0;
         }
         return xcb_get_modifier_mapping_keycodes_length(data());
     }
 };
 
-XCB_WRAPPER_DATA(PropertyData,
+XCB_WRAPPER_DATA(property_data,
                  xcb_get_property,
                  uint8_t,
                  xcb_window_t,
@@ -752,7 +750,7 @@ XCB_WRAPPER_DATA(PropertyData,
                  xcb_atom_t,
                  uint32_t,
                  uint32_t)
-class Property : public Wrapper<PropertyData,
+class property : public wrapper<property_data,
                                 uint8_t,
                                 xcb_window_t,
                                 xcb_atom_t,
@@ -761,37 +759,43 @@ class Property : public Wrapper<PropertyData,
                                 uint32_t>
 {
 public:
-    Property()
-        : Wrapper<PropertyData, uint8_t, xcb_window_t, xcb_atom_t, xcb_atom_t, uint32_t, uint32_t>()
+    property()
+        : wrapper<property_data,
+                  uint8_t,
+                  xcb_window_t,
+                  xcb_atom_t,
+                  xcb_atom_t,
+                  uint32_t,
+                  uint32_t>()
         , m_type(XCB_ATOM_NONE)
     {
     }
-    Property(const Property& other)
-        : Wrapper<PropertyData, uint8_t, xcb_window_t, xcb_atom_t, xcb_atom_t, uint32_t, uint32_t>(
+    property(property const& other)
+        : wrapper<property_data, uint8_t, xcb_window_t, xcb_atom_t, xcb_atom_t, uint32_t, uint32_t>(
             other)
         , m_type(other.m_type)
     {
     }
-    explicit Property(uint8_t _delete,
+    explicit property(uint8_t _delete,
                       xcb_window_t window,
-                      xcb_atom_t property,
+                      xcb_atom_t prop,
                       xcb_atom_t type,
                       uint32_t long_offset,
                       uint32_t long_length)
-        : Wrapper<PropertyData, uint8_t, xcb_window_t, xcb_atom_t, xcb_atom_t, uint32_t, uint32_t>(
+        : wrapper<property_data, uint8_t, xcb_window_t, xcb_atom_t, xcb_atom_t, uint32_t, uint32_t>(
             window,
             _delete,
             window,
-            property,
+            prop,
             type,
             long_offset,
             long_length)
         , m_type(type)
     {
     }
-    Property& operator=(const Property& other)
+    property& operator=(property const& other)
     {
-        Wrapper<PropertyData, uint8_t, xcb_window_t, xcb_atom_t, xcb_atom_t, uint32_t, uint32_t>::
+        wrapper<property_data, uint8_t, xcb_window_t, xcb_atom_t, xcb_atom_t, uint32_t, uint32_t>::
         operator=(other);
         m_type = other.m_type;
         return *this;
@@ -883,7 +887,7 @@ public:
         if (ok) {
             *ok = false;
         }
-        const PropertyData::reply_type* reply = data();
+        property_data::reply_type const* reply = data();
         if (!reply) {
             return defaultValue;
         }
@@ -909,7 +913,7 @@ public:
      * In case of error this method returns a null QByteArray.
      */
     inline QByteArray
-    toByteArray(uint8_t format = 8, xcb_atom_t type = XCB_ATOM_STRING, bool* ok = nullptr)
+    to_byte_array(uint8_t format = 8, xcb_atom_t type = XCB_ATOM_STRING, bool* ok = nullptr)
     {
         bool valueOk = false;
         const char* reply = value<const char*>(format, type, nullptr, &valueOk);
@@ -929,9 +933,9 @@ public:
     /**
      * @brief Overloaded method for convenience.
      */
-    inline QByteArray toByteArray(bool* ok)
+    inline QByteArray to_byte_array(bool* ok)
     {
-        return toByteArray(8, m_type, ok);
+        return to_byte_array(8, m_type, ok);
     }
     /**
      * @brief Reads the property as a boolean value.
@@ -949,7 +953,8 @@ public:
      * @return bool The first element interpreted as a boolean value or @c false in error case
      * @see value
      */
-    inline bool toBool(uint8_t format = 32, xcb_atom_t type = XCB_ATOM_CARDINAL, bool* ok = nullptr)
+    inline bool
+    to_bool(uint8_t format = 32, xcb_atom_t type = XCB_ATOM_CARDINAL, bool* ok = nullptr)
     {
         bool* reply = value<bool*>(format, type, nullptr, ok);
         if (!reply) {
@@ -966,34 +971,34 @@ public:
     /**
      * @brief Overloaded method for convenience.
      */
-    inline bool toBool(bool* ok)
+    inline bool to_bool(bool* ok)
     {
-        return toBool(32, m_type, ok);
+        return to_bool(32, m_type, ok);
     }
 
 private:
     xcb_atom_t m_type;
 };
 
-class StringProperty : public Property
+class string_property : public property
 {
 public:
-    StringProperty() = default;
-    explicit StringProperty(xcb_window_t w, xcb_atom_t p)
-        : Property(false, w, p, XCB_ATOM_STRING, 0, 10000)
+    string_property() = default;
+    explicit string_property(xcb_window_t w, xcb_atom_t p)
+        : property(false, w, p, XCB_ATOM_STRING, 0, 10000)
     {
     }
     operator QByteArray()
     {
-        return toByteArray();
+        return to_byte_array();
     }
 };
 
-class TransientFor : public Property
+class transient_for : public property
 {
 public:
-    explicit TransientFor(WindowId window)
-        : Property(0, window, XCB_ATOM_WM_TRANSIENT_FOR, XCB_ATOM_WINDOW, 0, 1)
+    explicit transient_for(WindowId window)
+        : property(0, window, XCB_ATOM_WM_TRANSIENT_FOR, XCB_ATOM_WINDOW, 0, 1)
     {
     }
 
@@ -1002,7 +1007,7 @@ public:
      * @param prop WM_TRANSIENT_FOR property value.
      * @returns @c true on success, @c false otherwise
      */
-    inline bool getTransientFor(WindowId* prop)
+    inline bool get_transient_for(WindowId* prop)
     {
         WindowId* windows = value<WindowId*>();
         if (!windows) {
@@ -1014,10 +1019,10 @@ public:
     }
 };
 
-class GeometryHints
+class geometry_hints
 {
 public:
-    GeometryHints() = default;
+    geometry_hints() = default;
     void init(xcb_window_t window)
     {
         Q_ASSERT(window);
@@ -1034,95 +1039,95 @@ public:
             return;
         }
         m_sizeHints = nullptr;
-        m_hints = NormalHints(m_window);
+        m_hints = normal_hints(m_window);
     }
     void read()
     {
         m_sizeHints = m_hints.sizeHints();
     }
 
-    bool hasPosition() const
+    bool has_position() const
     {
-        return testFlag(NormalHints::SizeHints::UserPosition)
-            || testFlag(NormalHints::SizeHints::ProgramPosition);
+        return test_flag(normal_hints::size_hints::user_position)
+            || test_flag(normal_hints::size_hints::program_position);
     }
-    bool hasSize() const
+    bool has_size() const
     {
-        return testFlag(NormalHints::SizeHints::UserSize)
-            || testFlag(NormalHints::SizeHints::ProgramSize);
+        return test_flag(normal_hints::size_hints::user_size)
+            || test_flag(normal_hints::size_hints::program_size);
     }
-    bool hasMinSize() const
+    bool has_min_size() const
     {
-        return testFlag(NormalHints::SizeHints::MinSize);
+        return test_flag(normal_hints::size_hints::min_size);
     }
-    bool hasMaxSize() const
+    bool has_max_size() const
     {
-        return testFlag(NormalHints::SizeHints::MaxSize);
+        return test_flag(normal_hints::size_hints::max_size);
     }
-    bool hasResizeIncrements() const
+    bool has_resize_increments() const
     {
-        return testFlag(NormalHints::SizeHints::ResizeIncrements);
+        return test_flag(normal_hints::size_hints::resize_increments);
     }
-    bool hasAspect() const
+    bool has_aspect() const
     {
-        return testFlag(NormalHints::SizeHints::Aspect);
+        return test_flag(normal_hints::size_hints::aspect);
     }
-    bool hasBaseSize() const
+    bool has_base_size() const
     {
-        return testFlag(NormalHints::SizeHints::BaseSize);
+        return test_flag(normal_hints::size_hints::base_size);
     }
-    bool hasWindowGravity() const
+    bool has_window_gravity() const
     {
-        return testFlag(NormalHints::SizeHints::WindowGravity);
+        return test_flag(normal_hints::size_hints::window_gravity);
     }
-    QSize maxSize() const
+    QSize max_size() const
     {
-        if (!hasMaxSize()) {
+        if (!has_max_size()) {
             return QSize(INT_MAX, INT_MAX);
         }
         return QSize(qMax(m_sizeHints->maxWidth, 1), qMax(m_sizeHints->maxHeight, 1));
     }
-    QSize minSize() const
+    QSize min_size() const
     {
-        if (!hasMinSize()) {
+        if (!has_min_size()) {
             // according to ICCCM 4.1.23 base size should be used as a fallback
-            return baseSize();
+            return base_size();
         }
         return QSize(m_sizeHints->minWidth, m_sizeHints->minHeight);
     }
-    QSize baseSize() const
+    QSize base_size() const
     {
-        // Note: not using minSize as fallback
-        if (!hasBaseSize()) {
+        // Note: not using min_size as fallback
+        if (!has_base_size()) {
             return QSize(0, 0);
         }
         return QSize(m_sizeHints->baseWidth, m_sizeHints->baseHeight);
     }
-    QSize resizeIncrements() const
+    QSize resize_increments() const
     {
-        if (!hasResizeIncrements()) {
+        if (!has_resize_increments()) {
             return QSize(1, 1);
         }
         return QSize(qMax(m_sizeHints->widthInc, 1), qMax(m_sizeHints->heightInc, 1));
     }
-    xcb_gravity_t windowGravity() const
+    xcb_gravity_t window_gravity() const
     {
-        if (!hasWindowGravity()) {
+        if (!has_window_gravity()) {
             return XCB_GRAVITY_NORTH_WEST;
         }
         return xcb_gravity_t(m_sizeHints->winGravity);
     }
-    QSize minAspect() const
+    QSize min_aspect() const
     {
-        if (!hasAspect()) {
+        if (!has_aspect()) {
             return QSize(1, INT_MAX);
         }
         // prevent division by zero
         return QSize(m_sizeHints->minAspect[0], qMax(m_sizeHints->minAspect[1], 1));
     }
-    QSize maxAspect() const
+    QSize max_aspect() const
     {
-        if (!hasAspect()) {
+        if (!has_aspect()) {
             return QSize(INT_MAX, 1);
         }
         // prevent division by zero
@@ -1131,23 +1136,23 @@ public:
 
 private:
     /**
-     * NormalHints as specified in ICCCM 4.1.2.3.
+     * normal_hints as specified in ICCCM 4.1.2.3.
      */
-    class NormalHints : public Property
+    class normal_hints : public property
     {
     public:
-        struct SizeHints {
+        struct size_hints {
             enum Flags {
-                UserPosition = 1,
-                UserSize = 2,
-                ProgramPosition = 4,
-                ProgramSize = 8,
-                MinSize = 16,
-                MaxSize = 32,
-                ResizeIncrements = 64,
-                Aspect = 128,
-                BaseSize = 256,
-                WindowGravity = 512
+                user_position = 1,
+                user_size = 2,
+                program_position = 4,
+                program_size = 8,
+                min_size = 16,
+                max_size = 32,
+                resize_increments = 64,
+                aspect = 128,
+                base_size = 256,
+                window_gravity = 512
             };
             qint32 flags = 0;
             qint32 pad[4] = {0, 0, 0, 0};
@@ -1163,34 +1168,37 @@ private:
             qint32 baseHeight = 0;
             qint32 winGravity = 0;
         };
-        explicit NormalHints()
-            : Property(){};
-        explicit NormalHints(WindowId window)
-            : Property(0, window, XCB_ATOM_WM_NORMAL_HINTS, XCB_ATOM_WM_SIZE_HINTS, 0, 18)
+        explicit normal_hints()
+            : property(){};
+        explicit normal_hints(WindowId window)
+            : property(0, window, XCB_ATOM_WM_NORMAL_HINTS, XCB_ATOM_WM_SIZE_HINTS, 0, 18)
         {
         }
-        inline SizeHints* sizeHints()
+        inline size_hints* sizeHints()
         {
-            return value<SizeHints*>(32, XCB_ATOM_WM_SIZE_HINTS, nullptr);
+            return value<size_hints*>(32, XCB_ATOM_WM_SIZE_HINTS, nullptr);
         }
     };
+
     friend TestXcbSizeHints;
-    bool testFlag(NormalHints::SizeHints::Flags flag) const
+
+    bool test_flag(normal_hints::size_hints::Flags flag) const
     {
         if (!m_window || !m_sizeHints) {
             return false;
         }
         return m_sizeHints->flags & flag;
     }
+
     xcb_window_t m_window = XCB_WINDOW_NONE;
-    NormalHints m_hints;
-    NormalHints::SizeHints* m_sizeHints = nullptr;
+    normal_hints m_hints;
+    normal_hints::size_hints* m_sizeHints = nullptr;
 };
 
-class MotifHints
+class motif_hints
 {
 public:
-    MotifHints(xcb_atom_t atom)
+    motif_hints(xcb_atom_t atom)
         : m_atom(atom)
     {
     }
@@ -1210,22 +1218,22 @@ public:
             return;
         }
         m_hints = nullptr;
-        m_prop = Property(0, m_window, m_atom, m_atom, 0, 5);
+        m_prop = property(0, m_window, m_atom, m_atom, 0, 5);
     }
     void read()
     {
-        m_hints = m_prop.value<MwmHints*>(32, m_atom, nullptr);
+        m_hints = m_prop.value<mwm_hints*>(32, m_atom, nullptr);
     }
-    bool hasDecoration() const
+    bool has_decoration() const
     {
         if (!m_window || !m_hints) {
             return false;
         }
         return m_hints->flags & uint32_t(Hints::Decorations);
     }
-    bool noBorder() const
+    bool no_border() const
     {
-        if (!hasDecoration()) {
+        if (!has_decoration()) {
             return false;
         }
         return !m_hints->decorations;
@@ -1252,7 +1260,7 @@ public:
     }
 
 private:
-    struct MwmHints {
+    struct mwm_hints {
         uint32_t flags;
         uint32_t functions;
         uint32_t decorations;
@@ -1284,53 +1292,54 @@ private:
         return !set_value;
     }
     xcb_window_t m_window = XCB_WINDOW_NONE;
-    Property m_prop;
+    property m_prop;
     xcb_atom_t m_atom;
-    MwmHints* m_hints = nullptr;
+    mwm_hints* m_hints = nullptr;
 };
 
-namespace RandR
+namespace randr
 {
-XCB_WRAPPER(ScreenInfo, xcb_randr_get_screen_info, xcb_window_t)
 
-XCB_WRAPPER_DATA(ScreenResourcesData, xcb_randr_get_screen_resources, xcb_window_t)
-class ScreenResources : public Wrapper<ScreenResourcesData, xcb_window_t>
+XCB_WRAPPER(screen_info, xcb_randr_get_screen_info, xcb_window_t)
+
+XCB_WRAPPER_DATA(screen_resources_data, xcb_randr_get_screen_resources, xcb_window_t)
+class screen_resources : public wrapper<screen_resources_data, xcb_window_t>
 {
 public:
-    explicit ScreenResources(WindowId window)
-        : Wrapper<ScreenResourcesData, xcb_window_t>(window)
+    explicit screen_resources(WindowId window)
+        : wrapper<screen_resources_data, xcb_window_t>(window)
     {
     }
 
     inline xcb_randr_crtc_t* crtcs()
     {
-        if (isNull()) {
+        if (is_null()) {
             return nullptr;
         }
         return xcb_randr_get_screen_resources_crtcs(data());
     }
     inline xcb_randr_mode_info_t* modes()
     {
-        if (isNull()) {
+        if (is_null()) {
             return nullptr;
         }
         return xcb_randr_get_screen_resources_modes(data());
     }
     inline uint8_t* names()
     {
-        if (isNull()) {
+        if (is_null()) {
             return nullptr;
         }
         return xcb_randr_get_screen_resources_names(data());
     }
 };
 
-XCB_WRAPPER_DATA(CrtcGammaData, xcb_randr_get_crtc_gamma, xcb_randr_crtc_t)
-class CrtcGamma : public Wrapper<CrtcGammaData, xcb_randr_crtc_t>
+XCB_WRAPPER_DATA(crtc_gamma_data, xcb_randr_get_crtc_gamma, xcb_randr_crtc_t)
+class crtc_gamma : public wrapper<crtc_gamma_data, xcb_randr_crtc_t>
 {
 public:
-    explicit CrtcGamma(xcb_randr_crtc_t c)
-        : Wrapper<CrtcGammaData, xcb_randr_crtc_t>(c)
+    explicit crtc_gamma(xcb_randr_crtc_t c)
+        : wrapper<crtc_gamma_data, xcb_randr_crtc_t>(c)
     {
     }
 
@@ -1348,20 +1357,20 @@ public:
     }
 };
 
-XCB_WRAPPER_DATA(CrtcInfoData, xcb_randr_get_crtc_info, xcb_randr_crtc_t, xcb_timestamp_t)
-class CrtcInfo : public Wrapper<CrtcInfoData, xcb_randr_crtc_t, xcb_timestamp_t>
+XCB_WRAPPER_DATA(crtc_info_data, xcb_randr_get_crtc_info, xcb_randr_crtc_t, xcb_timestamp_t)
+class crtc_info : public wrapper<crtc_info_data, xcb_randr_crtc_t, xcb_timestamp_t>
 {
 public:
-    CrtcInfo() = default;
-    CrtcInfo(const CrtcInfo&) = default;
-    explicit CrtcInfo(xcb_randr_crtc_t c, xcb_timestamp_t t)
-        : Wrapper<CrtcInfoData, xcb_randr_crtc_t, xcb_timestamp_t>(c, t)
+    crtc_info() = default;
+    crtc_info(crtc_info const&) = default;
+    explicit crtc_info(xcb_randr_crtc_t c, xcb_timestamp_t t)
+        : wrapper<crtc_info_data, xcb_randr_crtc_t, xcb_timestamp_t>(c, t)
     {
     }
 
     inline QRect rect()
     {
-        const CrtcInfoData::reply_type* info = data();
+        const crtc_info_data::reply_type* info = data();
         if (!info || info->num_outputs == 0 || info->mode == XCB_NONE
             || info->status != XCB_RANDR_SET_CONFIG_SUCCESS) {
             return QRect();
@@ -1370,7 +1379,7 @@ public:
     }
     inline xcb_randr_output_t* outputs()
     {
-        const CrtcInfoData::reply_type* info = data();
+        const crtc_info_data::reply_type* info = data();
         if (!info || info->num_outputs == 0 || info->mode == XCB_NONE
             || info->status != XCB_RANDR_SET_CONFIG_SUCCESS) {
             return nullptr;
@@ -1379,20 +1388,20 @@ public:
     }
 };
 
-XCB_WRAPPER_DATA(OutputInfoData, xcb_randr_get_output_info, xcb_randr_output_t, xcb_timestamp_t)
-class OutputInfo : public Wrapper<OutputInfoData, xcb_randr_output_t, xcb_timestamp_t>
+XCB_WRAPPER_DATA(output_info_data, xcb_randr_get_output_info, xcb_randr_output_t, xcb_timestamp_t)
+class output_info : public wrapper<output_info_data, xcb_randr_output_t, xcb_timestamp_t>
 {
 public:
-    OutputInfo() = default;
-    OutputInfo(const OutputInfo&) = default;
-    explicit OutputInfo(xcb_randr_output_t c, xcb_timestamp_t t)
-        : Wrapper<OutputInfoData, xcb_randr_output_t, xcb_timestamp_t>(c, t)
+    output_info() = default;
+    output_info(output_info const&) = default;
+    explicit output_info(xcb_randr_output_t c, xcb_timestamp_t t)
+        : wrapper<output_info_data, xcb_randr_output_t, xcb_timestamp_t>(c, t)
     {
     }
 
     inline QString name()
     {
-        const OutputInfoData::reply_type* info = data();
+        const output_info_data::reply_type* info = data();
         if (!info || info->num_crtcs == 0 || info->num_modes == 0
             || info->status != XCB_RANDR_SET_CONFIG_SUCCESS) {
             return QString();
@@ -1402,32 +1411,32 @@ public:
     }
 };
 
-XCB_WRAPPER_DATA(CurrentResourcesData, xcb_randr_get_screen_resources_current, xcb_window_t)
-class CurrentResources : public Wrapper<CurrentResourcesData, xcb_window_t>
+XCB_WRAPPER_DATA(current_resources_data, xcb_randr_get_screen_resources_current, xcb_window_t)
+class current_resources : public wrapper<current_resources_data, xcb_window_t>
 {
 public:
-    explicit CurrentResources(WindowId window)
-        : Wrapper<CurrentResourcesData, xcb_window_t>(window)
+    explicit current_resources(WindowId window)
+        : wrapper<current_resources_data, xcb_window_t>(window)
     {
     }
 
     inline xcb_randr_crtc_t* crtcs()
     {
-        if (isNull()) {
+        if (is_null()) {
             return nullptr;
         }
         return xcb_randr_get_screen_resources_current_crtcs(data());
     }
     inline xcb_randr_mode_info_t* modes()
     {
-        if (isNull()) {
+        if (is_null()) {
             return nullptr;
         }
         return xcb_randr_get_screen_resources_current_modes(data());
     }
 };
 
-XCB_WRAPPER(SetCrtcConfig,
+XCB_WRAPPER(set_crtc_config,
             xcb_randr_set_crtc_config,
             xcb_randr_crtc_t,
             xcb_timestamp_t,
@@ -1440,10 +1449,10 @@ XCB_WRAPPER(SetCrtcConfig,
             const xcb_randr_output_t*)
 }
 
-class ExtensionData
+class extension_data
 {
 public:
-    ExtensionData();
+    extension_data();
     int version;
     int eventBase;
     int errorBase;
@@ -1454,92 +1463,91 @@ public:
     QVector<QByteArray> errorCodes;
 };
 
-class KWIN_EXPORT Extensions
+class KWIN_EXPORT extensions
 {
 public:
-    bool isShapeAvailable() const
+    bool is_shape_available() const
     {
         return m_shape.version > 0;
     }
-    bool isShapeInputAvailable() const;
-    int shapeNotifyEvent() const;
-    bool hasShape(xcb_window_t w) const;
+    bool is_shape_input_available() const;
+    int shape_notify_event() const;
+    bool has_shape(xcb_window_t w) const;
 
-    bool isRandrAvailable() const
+    bool is_randr_available() const
     {
         return m_randr.present;
     }
-    int randrNotifyEvent() const;
+    int randr_notify_event() const;
 
-    bool isDamageAvailable() const
+    bool is_damage_available() const
     {
         return m_damage.present;
     }
-    int damageNotifyEvent() const;
+    int damage_notify_event() const;
 
-    bool isCompositeAvailable() const
+    bool is_composite_available() const
     {
         return m_composite.version > 0;
     }
-    bool isCompositeOverlayAvailable() const;
-    bool isRenderAvailable() const
+    bool is_composite_overlay_available() const;
+    bool is_render_available() const
     {
         return m_render.version > 0;
     }
 
-    bool isFixesAvailable() const
+    bool is_fixes_available() const
     {
         return m_fixes.version > 0;
     }
-    int fixesCursorNotifyEvent() const;
-    bool isFixesRegionAvailable() const;
+    int fixes_cursor_notify_event() const;
+    bool is_fixes_region_available() const;
 
-    bool isSyncAvailable() const
+    bool is_sync_available() const
     {
         return m_sync.present;
     }
-    int syncAlarmNotifyEvent() const;
+    int sync_alarm_notify_event() const;
 
-    QVector<ExtensionData> extensions() const;
+    QVector<extension_data> get_data() const;
 
-    bool hasGlx() const
+    bool has_glx() const
     {
         return m_glx.present;
     }
-    int glxEventBase() const
+    int glx_event_base() const
     {
         return m_glx.eventBase;
     }
-    int glxMajorOpcode() const
+    int glx_major_opcode() const
     {
         return m_glx.majorOpcode;
     }
 
-    static Extensions* self();
+    static extensions* self();
     static void destroy();
 
 private:
-    Extensions();
-    ~Extensions();
+    extensions();
+    ~extensions();
 
     void init();
 
     template<typename reply, typename T, typename F>
-    void initVersion(T cookie, F f, ExtensionData* dataToFill);
+    void init_version(T cookie, F f, extension_data* dataToFill);
 
-    void extensionQueryReply(const xcb_query_extension_reply_t* extension,
-                             ExtensionData* dataToFill);
+    void query_reply(xcb_query_extension_reply_t const* extension, extension_data* dataToFill);
 
-    ExtensionData m_shape;
-    ExtensionData m_randr;
-    ExtensionData m_damage;
-    ExtensionData m_composite;
-    ExtensionData m_render;
-    ExtensionData m_fixes;
-    ExtensionData m_sync;
-    ExtensionData m_glx;
+    extension_data m_shape;
+    extension_data m_randr;
+    extension_data m_damage;
+    extension_data m_composite;
+    extension_data m_render;
+    extension_data m_fixes;
+    extension_data m_sync;
+    extension_data m_glx;
 
-    static Extensions* s_self;
+    static extensions* s_self;
 };
 
 /**
@@ -1551,22 +1559,22 @@ private:
  * For the cases that one is more interested in wrapping the xcb methods the constructor which takes
  * an existing window and the @ref reset method allow to disable the RAII functionality.
  */
-class Window
+class window
 {
 public:
     /**
-     * Takes over responsibility of @p window. If @p window is not provided an invalid Window is
+     * Takes over responsibility of @p win. If @p win is not provided an invalid window is
      * created. Use @ref create to set an xcb_window_t later on.
      *
      * If @p destroy is @c true the window will be destroyed together with this object, if @c false
      * the window will be kept around. This is useful if you are not interested in the RAII
      * capabilities but still want to use a window like an object.
      *
-     * @param window The window to manage.
+     * @param win The window to manage.
      * @param destroy Whether the window should be destroyed together with the object.
      * @see reset
      */
-    Window(xcb_window_t window = XCB_WINDOW_NONE, bool destroy = true);
+    window(xcb_window_t win = XCB_WINDOW_NONE, bool destroy = true);
     /**
      * Creates an xcb_window_t and manages it. It's a convenient method to create a window with
      * depth, class and visual being copied from parent and border being @c 0.
@@ -1575,7 +1583,7 @@ public:
      * @param values The values to be passed to xcb_create_window
      * @param parent The parent window
      */
-    Window(const QRect& geometry,
+    window(const QRect& geometry,
            uint32_t mask = 0,
            const uint32_t* values = nullptr,
            xcb_window_t parent = rootWindow());
@@ -1588,13 +1596,13 @@ public:
      * @param values The values to be passed to xcb_create_window
      * @param parent The parent window
      */
-    Window(const QRect& geometry,
+    window(const QRect& geometry,
            uint16_t windowClass,
            uint32_t mask = 0,
            const uint32_t* values = nullptr,
            xcb_window_t parent = rootWindow());
-    Window(const Window& other) = delete;
-    ~Window();
+    window(const window& other) = delete;
+    ~window();
 
     /**
      * Creates a new window for which the responsibility is taken over. If a window had been managed
@@ -1627,16 +1635,16 @@ public:
                 const uint32_t* values = nullptr,
                 xcb_window_t parent = rootWindow());
     /**
-     * Frees the existing window and starts to manage the new @p window.
+     * Frees the existing window and starts to manage the new @p win.
      * If @p destroy is @c true the new managed window will be destroyed together with this
      * object or when reset is called again. If @p destroy is @c false the window will not
      * be destroyed. It is then the responsibility of the caller to destroy the window.
      */
-    void reset(xcb_window_t window = XCB_WINDOW_NONE, bool destroy = true);
+    void reset(xcb_window_t win = XCB_WINDOW_NONE, bool destroy = true);
     /**
      * @returns @c true if a window is managed, @c false otherwise.
      */
-    bool isValid() const;
+    bool is_valid() const;
     inline const QRect& geometry() const
     {
         return m_logicGeometry;
@@ -1645,8 +1653,8 @@ public:
      * Configures the window with a new geometry.
      * @param geometry The new window geometry to be used
      */
-    void setGeometry(const QRect& geometry);
-    void setGeometry(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+    void set_geometry(const QRect& geometry);
+    void set_geometry(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
     void move(const QPoint& pos);
     void move(uint32_t x, uint32_t y);
     void resize(const QSize& size);
@@ -1656,117 +1664,118 @@ public:
     void map();
     void unmap();
     void reparent(xcb_window_t parent, int x = 0, int y = 0);
-    void changeProperty(xcb_atom_t property,
-                        xcb_atom_t type,
-                        uint8_t format,
-                        uint32_t length,
-                        const void* data,
-                        uint8_t mode = XCB_PROP_MODE_REPLACE);
-    void deleteProperty(xcb_atom_t property);
-    void setBorderWidth(uint32_t width);
-    void grabButton(uint8_t pointerMode,
-                    uint8_t keyboardmode,
-                    uint16_t modifiers = XCB_MOD_MASK_ANY,
-                    uint8_t button = XCB_BUTTON_INDEX_ANY,
-                    uint16_t eventMask = XCB_EVENT_MASK_BUTTON_PRESS,
-                    xcb_window_t confineTo = XCB_WINDOW_NONE,
-                    xcb_cursor_t cursor = XCB_CURSOR_NONE,
-                    bool ownerEvents = false);
-    void ungrabButton(uint16_t modifiers = XCB_MOD_MASK_ANY, uint8_t button = XCB_BUTTON_INDEX_ANY);
+    void change_property(xcb_atom_t prop,
+                         xcb_atom_t type,
+                         uint8_t format,
+                         uint32_t length,
+                         const void* data,
+                         uint8_t mode = XCB_PROP_MODE_REPLACE);
+    void delete_property(xcb_atom_t prop);
+    void set_border_width(uint32_t width);
+    void grab_button(uint8_t pointerMode,
+                     uint8_t keyboardmode,
+                     uint16_t modifiers = XCB_MOD_MASK_ANY,
+                     uint8_t button = XCB_BUTTON_INDEX_ANY,
+                     uint16_t eventMask = XCB_EVENT_MASK_BUTTON_PRESS,
+                     xcb_window_t confineTo = XCB_WINDOW_NONE,
+                     xcb_cursor_t cursor = XCB_CURSOR_NONE,
+                     bool ownerEvents = false);
+    void ungrab_button(uint16_t modifiers = XCB_MOD_MASK_ANY,
+                       uint8_t button = XCB_BUTTON_INDEX_ANY);
     /**
      * Clears the window area. Same as xcb_clear_area with x, y, width, height being @c 0.
      */
     void clear();
-    void setBackgroundPixmap(xcb_pixmap_t pixmap);
-    void defineCursor(xcb_cursor_t cursor);
+    void set_background_pixmap(xcb_pixmap_t pixmap);
+    void define_cursor(xcb_cursor_t cursor);
     void focus(uint8_t revertTo = XCB_INPUT_FOCUS_POINTER_ROOT,
                xcb_timestamp_t time = XCB_TIME_CURRENT_TIME);
-    void selectInput(uint32_t events);
+    void select_input(uint32_t events);
     void kill();
     operator xcb_window_t() const;
 
 private:
-    xcb_window_t doCreate(const QRect& geometry,
-                          uint16_t windowClass,
-                          uint32_t mask = 0,
-                          const uint32_t* values = nullptr,
-                          xcb_window_t parent = rootWindow());
+    xcb_window_t do_create(const QRect& geometry,
+                           uint16_t windowClass,
+                           uint32_t mask = 0,
+                           const uint32_t* values = nullptr,
+                           xcb_window_t parent = rootWindow());
     void destroy();
     xcb_window_t m_window;
     bool m_destroy;
     QRect m_logicGeometry;
 };
 
-inline Window::Window(xcb_window_t window, bool destroy)
-    : m_window(window)
+inline window::window(xcb_window_t win, bool destroy)
+    : m_window(win)
     , m_destroy(destroy)
 {
 }
 
-inline Window::Window(const QRect& geometry,
+inline window::window(const QRect& geometry,
                       uint32_t mask,
                       const uint32_t* values,
                       xcb_window_t parent)
-    : m_window(doCreate(geometry, XCB_COPY_FROM_PARENT, mask, values, parent))
+    : m_window(do_create(geometry, XCB_COPY_FROM_PARENT, mask, values, parent))
     , m_destroy(true)
 {
 }
 
-inline Window::Window(const QRect& geometry,
+inline window::window(const QRect& geometry,
                       uint16_t windowClass,
                       uint32_t mask,
                       const uint32_t* values,
                       xcb_window_t parent)
-    : m_window(doCreate(geometry, windowClass, mask, values, parent))
+    : m_window(do_create(geometry, windowClass, mask, values, parent))
     , m_destroy(true)
 {
 }
 
-inline Window::~Window()
+inline window::~window()
 {
     destroy();
 }
 
-inline void Window::destroy()
+inline void window::destroy()
 {
-    if (!isValid() || !m_destroy) {
+    if (!is_valid() || !m_destroy) {
         return;
     }
     xcb_destroy_window(connection(), m_window);
     m_window = XCB_WINDOW_NONE;
 }
 
-inline bool Window::isValid() const
+inline bool window::is_valid() const
 {
     return m_window != XCB_WINDOW_NONE;
 }
 
-inline Window::operator xcb_window_t() const
+inline window::operator xcb_window_t() const
 {
     return m_window;
 }
 
-inline void Window::create(const QRect& geometry,
+inline void window::create(const QRect& geometry,
                            uint16_t windowClass,
                            uint32_t mask,
                            const uint32_t* values,
                            xcb_window_t parent)
 {
     destroy();
-    m_window = doCreate(geometry, windowClass, mask, values, parent);
+    m_window = do_create(geometry, windowClass, mask, values, parent);
 }
 
 inline void
-Window::create(const QRect& geometry, uint32_t mask, const uint32_t* values, xcb_window_t parent)
+window::create(const QRect& geometry, uint32_t mask, const uint32_t* values, xcb_window_t parent)
 {
     create(geometry, XCB_COPY_FROM_PARENT, mask, values, parent);
 }
 
-inline xcb_window_t Window::doCreate(const QRect& geometry,
-                                     uint16_t windowClass,
-                                     uint32_t mask,
-                                     const uint32_t* values,
-                                     xcb_window_t parent)
+inline xcb_window_t window::do_create(QRect const& geometry,
+                                      uint16_t windowClass,
+                                      uint32_t mask,
+                                      const uint32_t* values,
+                                      xcb_window_t parent)
 {
     m_logicGeometry = geometry;
     xcb_window_t w = xcb_generate_id(connection());
@@ -1786,22 +1795,22 @@ inline xcb_window_t Window::doCreate(const QRect& geometry,
     return w;
 }
 
-inline void Window::reset(xcb_window_t window, bool shouldDestroy)
+inline void window::reset(xcb_window_t window, bool shouldDestroy)
 {
     destroy();
     m_window = window;
     m_destroy = shouldDestroy;
 }
 
-inline void Window::setGeometry(const QRect& geometry)
+inline void window::set_geometry(const QRect& geometry)
 {
-    setGeometry(geometry.x(), geometry.y(), geometry.width(), geometry.height());
+    set_geometry(geometry.x(), geometry.y(), geometry.width(), geometry.height());
 }
 
-inline void Window::setGeometry(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+inline void window::set_geometry(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
     m_logicGeometry.setRect(x, y, width, height);
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
     const uint16_t mask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH
@@ -1810,29 +1819,29 @@ inline void Window::setGeometry(uint32_t x, uint32_t y, uint32_t width, uint32_t
     xcb_configure_window(connection(), m_window, mask, values);
 }
 
-inline void Window::move(const QPoint& pos)
+inline void window::move(const QPoint& pos)
 {
     move(pos.x(), pos.y());
 }
 
-inline void Window::move(uint32_t x, uint32_t y)
+inline void window::move(uint32_t x, uint32_t y)
 {
     m_logicGeometry.moveTo(x, y);
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
-    moveWindow(m_window, x, y);
+    move_window(m_window, x, y);
 }
 
-inline void Window::resize(const QSize& size)
+inline void window::resize(const QSize& size)
 {
     resize(size.width(), size.height());
 }
 
-inline void Window::resize(uint32_t width, uint32_t height)
+inline void window::resize(uint32_t width, uint32_t height)
 {
     m_logicGeometry.setSize(QSize(width, height));
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
     const uint16_t mask = XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT;
@@ -1840,80 +1849,80 @@ inline void Window::resize(uint32_t width, uint32_t height)
     xcb_configure_window(connection(), m_window, mask, values);
 }
 
-inline void Window::raise()
+inline void window::raise()
 {
     const uint32_t values[] = {XCB_STACK_MODE_ABOVE};
     xcb_configure_window(connection(), m_window, XCB_CONFIG_WINDOW_STACK_MODE, values);
 }
 
-inline void Window::lower()
+inline void window::lower()
 {
-    lowerWindow(m_window);
+    lower_window(m_window);
 }
 
-inline void Window::map()
+inline void window::map()
 {
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
     xcb_map_window(connection(), m_window);
 }
 
-inline void Window::unmap()
+inline void window::unmap()
 {
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
     xcb_unmap_window(connection(), m_window);
 }
 
-inline void Window::reparent(xcb_window_t parent, int x, int y)
+inline void window::reparent(xcb_window_t parent, int x, int y)
 {
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
     xcb_reparent_window(connection(), m_window, parent, x, y);
 }
 
-inline void Window::changeProperty(xcb_atom_t property,
-                                   xcb_atom_t type,
-                                   uint8_t format,
-                                   uint32_t length,
-                                   const void* data,
-                                   uint8_t mode)
+inline void window::change_property(xcb_atom_t prop,
+                                    xcb_atom_t type,
+                                    uint8_t format,
+                                    uint32_t length,
+                                    const void* data,
+                                    uint8_t mode)
 {
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
-    xcb_change_property(connection(), mode, m_window, property, type, format, length, data);
+    xcb_change_property(connection(), mode, m_window, prop, type, format, length, data);
 }
 
-inline void Window::deleteProperty(xcb_atom_t property)
+inline void window::delete_property(xcb_atom_t prop)
 {
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
-    xcb_delete_property(connection(), m_window, property);
+    xcb_delete_property(connection(), m_window, prop);
 }
 
-inline void Window::setBorderWidth(uint32_t width)
+inline void window::set_border_width(uint32_t width)
 {
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
     xcb_configure_window(connection(), m_window, XCB_CONFIG_WINDOW_BORDER_WIDTH, &width);
 }
 
-inline void Window::grabButton(uint8_t pointerMode,
-                               uint8_t keyboardmode,
-                               uint16_t modifiers,
-                               uint8_t button,
-                               uint16_t eventMask,
-                               xcb_window_t confineTo,
-                               xcb_cursor_t cursor,
-                               bool ownerEvents)
+inline void window::grab_button(uint8_t pointerMode,
+                                uint8_t keyboardmode,
+                                uint16_t modifiers,
+                                uint8_t button,
+                                uint16_t eventMask,
+                                xcb_window_t confineTo,
+                                xcb_cursor_t cursor,
+                                bool ownerEvents)
 {
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
     xcb_grab_button(connection(),
@@ -1928,53 +1937,53 @@ inline void Window::grabButton(uint8_t pointerMode,
                     modifiers);
 }
 
-inline void Window::ungrabButton(uint16_t modifiers, uint8_t button)
+inline void window::ungrab_button(uint16_t modifiers, uint8_t button)
 {
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
     xcb_ungrab_button(connection(), button, m_window, modifiers);
 }
 
-inline void Window::clear()
+inline void window::clear()
 {
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
     xcb_clear_area(connection(), false, m_window, 0, 0, 0, 0);
 }
 
-inline void Window::setBackgroundPixmap(xcb_pixmap_t pixmap)
+inline void window::set_background_pixmap(xcb_pixmap_t pixmap)
 {
-    if (!isValid()) {
+    if (!is_valid()) {
         return;
     }
     const uint32_t values[] = {pixmap};
     xcb_change_window_attributes(connection(), m_window, XCB_CW_BACK_PIXMAP, values);
 }
 
-inline void Window::defineCursor(xcb_cursor_t cursor)
+inline void window::define_cursor(xcb_cursor_t cursor)
 {
-    Xcb::defineCursor(m_window, cursor);
+    xcb::define_cursor(m_window, cursor);
 }
 
-inline void Window::focus(uint8_t revertTo, xcb_timestamp_t time)
+inline void window::focus(uint8_t revertTo, xcb_timestamp_t time)
 {
-    setInputFocus(m_window, revertTo, time);
+    set_input_focus(m_window, revertTo, time);
 }
 
-inline void Window::selectInput(uint32_t events)
+inline void window::select_input(uint32_t events)
 {
-    Xcb::selectInput(m_window, events);
+    xcb::select_input(m_window, events);
 }
 
-inline void Window::kill()
+inline void window::kill()
 {
     xcb_kill_client(connection(), m_window);
 }
 
 // helper functions
-static inline void moveResizeWindow(WindowId window, const QRect& geometry)
+static inline void move_resize_window(WindowId window, const QRect& geometry)
 {
     const uint16_t mask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH
         | XCB_CONFIG_WINDOW_HEIGHT;
@@ -1985,26 +1994,26 @@ static inline void moveResizeWindow(WindowId window, const QRect& geometry)
     xcb_configure_window(connection(), window, mask, values);
 }
 
-static inline void moveWindow(xcb_window_t window, const QPoint& pos)
+static inline void move_window(xcb_window_t window, const QPoint& pos)
 {
-    moveWindow(window, pos.x(), pos.y());
+    move_window(window, pos.x(), pos.y());
 }
 
-static inline void moveWindow(xcb_window_t window, uint32_t x, uint32_t y)
+static inline void move_window(xcb_window_t window, uint32_t x, uint32_t y)
 {
     const uint16_t mask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y;
     const uint32_t values[] = {x, y};
     xcb_configure_window(connection(), window, mask, values);
 }
 
-static inline void lowerWindow(xcb_window_t window)
+static inline void lower_window(xcb_window_t window)
 {
     const uint32_t values[] = {XCB_STACK_MODE_BELOW};
     xcb_configure_window(connection(), window, XCB_CONFIG_WINDOW_STACK_MODE, values);
 }
 
 static inline WindowId
-createInputWindow(const QRect& geometry, uint32_t mask, const uint32_t* values)
+create_input_window(const QRect& geometry, uint32_t mask, const uint32_t* values)
 {
     WindowId window = xcb_generate_id(connection());
     xcb_create_window(connection(),
@@ -2023,7 +2032,7 @@ createInputWindow(const QRect& geometry, uint32_t mask, const uint32_t* values)
     return window;
 }
 
-static inline void restackWindows(std::vector<xcb_window_t> const& windows)
+static inline void restack_windows(std::vector<xcb_window_t> const& windows)
 {
     if (windows.size() < 2) {
         // only one window, nothing to do
@@ -2036,17 +2045,17 @@ static inline void restackWindows(std::vector<xcb_window_t> const& windows)
     }
 }
 
-static inline void restackWindowsWithRaise(std::vector<xcb_window_t> const& windows)
+static inline void restack_windows_with_raise(std::vector<xcb_window_t> const& windows)
 {
     if (windows.empty()) {
         return;
     }
     const uint32_t values[] = {XCB_STACK_MODE_ABOVE};
     xcb_configure_window(connection(), windows.front(), XCB_CONFIG_WINDOW_STACK_MODE, values);
-    restackWindows(windows);
+    restack_windows(windows);
 }
 
-static inline int defaultDepth(int screen)
+static inline int default_depth(int screen)
 {
     static int depth = 0;
     if (depth != 0) {
@@ -2062,7 +2071,7 @@ static inline int defaultDepth(int screen)
     return depth;
 }
 
-static inline xcb_rectangle_t fromQt(const QRect& rect)
+static inline xcb_rectangle_t qt_rect_to_rect(QRect const& rect)
 {
     xcb_rectangle_t rectangle;
     rectangle.x = rect.x();
@@ -2072,27 +2081,27 @@ static inline xcb_rectangle_t fromQt(const QRect& rect)
     return rectangle;
 }
 
-static inline QVector<xcb_rectangle_t> regionToRects(const QRegion& region)
+static inline QVector<xcb_rectangle_t> qt_region_to_rects(QRegion const& region)
 {
     QVector<xcb_rectangle_t> rects;
     rects.reserve(region.rectCount());
     for (const QRect& rect : region) {
-        rects.append(Xcb::fromQt(rect));
+        rects.append(xcb::qt_rect_to_rect(rect));
     }
     return rects;
 }
 
-static inline void defineCursor(xcb_window_t window, xcb_cursor_t cursor)
+static inline void define_cursor(xcb_window_t window, xcb_cursor_t cursor)
 {
     xcb_change_window_attributes(connection(), window, XCB_CW_CURSOR, &cursor);
 }
 
-static inline void setInputFocus(xcb_window_t window, uint8_t revertTo, xcb_timestamp_t time)
+static inline void set_input_focus(xcb_window_t window, uint8_t revertTo, xcb_timestamp_t time)
 {
     xcb_set_input_focus(connection(), revertTo, window, time);
 }
 
-static inline void setTransientFor(xcb_window_t window, xcb_window_t transient_for_window)
+static inline void set_transient_for(xcb_window_t window, xcb_window_t transient_for_window)
 {
     xcb_change_property(connection(),
                         XCB_PROP_MODE_REPLACE,
@@ -2115,7 +2124,7 @@ static inline void sync()
     }
 }
 
-void selectInput(xcb_window_t window, uint32_t events)
+void select_input(xcb_window_t window, uint32_t events)
 {
     xcb_change_window_attributes(connection(), window, XCB_CW_EVENT_MASK, &events);
 }
@@ -2123,16 +2132,17 @@ void selectInput(xcb_window_t window, uint32_t events)
 /**
  * @brief Small helper class to encapsulate SHM related functionality.
  */
-class Shm
+class shm
 {
 public:
-    Shm();
-    ~Shm();
-    int shmId() const;
+    shm();
+    ~shm();
+
+    int id() const;
     void* buffer() const;
     xcb_shm_seg_t segment() const;
-    bool isValid() const;
-    uint8_t pixmapFormat() const;
+    bool is_valid() const;
+    uint8_t pixmap_format() const;
 
 private:
     bool init();
@@ -2140,33 +2150,32 @@ private:
     void* m_buffer;
     xcb_shm_seg_t m_segment;
     bool m_valid;
-    uint8_t m_pixmapFormat;
+    uint8_t m_pixmap_format;
 };
 
-inline void* Shm::buffer() const
+inline void* shm::buffer() const
 {
     return m_buffer;
 }
 
-inline bool Shm::isValid() const
+inline bool shm::is_valid() const
 {
     return m_valid;
 }
 
-inline xcb_shm_seg_t Shm::segment() const
+inline xcb_shm_seg_t shm::segment() const
 {
     return m_segment;
 }
 
-inline int Shm::shmId() const
+inline int shm::id() const
 {
     return m_shmId;
 }
 
-inline uint8_t Shm::pixmapFormat() const
+inline uint8_t shm::pixmap_format() const
 {
-    return m_pixmapFormat;
+    return m_pixmap_format;
 }
 
-}
 }

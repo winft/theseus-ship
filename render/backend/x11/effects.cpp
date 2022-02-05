@@ -24,8 +24,8 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     : render::effects_handler_impl(compositor, scene)
 {
     connect(this, &effects_handler_impl::screenGeometryChanged, this, [this](const QSize& size) {
-        if (mouse_intercept.window.isValid()) {
-            mouse_intercept.window.setGeometry(QRect(0, 0, size.width(), size.height()));
+        if (mouse_intercept.window.is_valid()) {
+            mouse_intercept.window.set_geometry(QRect(0, 0, size.width(), size.height()));
         }
     });
 }
@@ -65,14 +65,14 @@ void effects_handler_impl::doStartMouseInterception(Qt::CursorShape shape)
 {
     // NOTE: it is intended to not perform an XPointerGrab on X11. See documentation in
     // kwineffects.h The mouse grab is implemented by using a full screen input only window
-    if (!mouse_intercept.window.isValid()) {
+    if (!mouse_intercept.window.is_valid()) {
         auto const& s = kwinApp()->get_base().screens.size();
         const QRect geo(0, 0, s.width(), s.height());
         const uint32_t mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
         const uint32_t values[] = {true,
                                    XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
                                        | XCB_EVENT_MASK_POINTER_MOTION};
-        mouse_intercept.window.reset(Xcb::createInputWindow(geo, mask, values));
+        mouse_intercept.window.reset(base::x11::xcb::create_input_window(geo, mask, values));
         defineCursor(shape);
     } else {
         defineCursor(shape);
@@ -98,7 +98,7 @@ void effects_handler_impl::defineCursor(Qt::CursorShape shape)
 {
     auto const c = input::get_cursor()->x11_cursor(shape);
     if (c != XCB_CURSOR_NONE) {
-        mouse_intercept.window.defineCursor(c);
+        mouse_intercept.window.define_cursor(c);
     }
 }
 

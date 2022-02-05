@@ -150,7 +150,7 @@ void XWaylandInputTest::testPointerEnterLeave()
     QSignalSpy leftSpy(&eventReader, &X11EventReaderHelper::left);
     QVERIFY(leftSpy.isValid());
     // atom for the screenedge show hide functionality
-    Xcb::Atom atom(QByteArrayLiteral("_KDE_NET_WM_SCREEN_EDGE_SHOW"), false, c.get());
+    base::x11::xcb::atom atom(QByteArrayLiteral("_KDE_NET_WM_SCREEN_EDGE_SHOW"), false, c.get());
 
     xcb_window_t w = xcb_generate_id(c.get());
     const QRect windowGeometry = QRect(0, 0, 100, 200);

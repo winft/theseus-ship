@@ -22,11 +22,11 @@ namespace KWin::render::xrender
 backend::backend(render::compositor& compositor)
     : overlay_window{std::make_unique<render::x11::overlay_window>()}
 {
-    if (!Xcb::Extensions::self()->isRenderAvailable()) {
+    if (!base::x11::xcb::extensions::self()->is_render_available()) {
         setFailed("No XRender extension available");
         return;
     }
-    if (!Xcb::Extensions::self()->isFixesRegionAvailable()) {
+    if (!base::x11::xcb::extensions::self()->is_fixes_region_available()) {
         setFailed("No XFixes v3+ extension available");
         return;
     }
@@ -118,7 +118,7 @@ void backend::createBuffer()
     xcb_pixmap_t pixmap = xcb_generate_id(connection());
     auto const displaySize = kwinApp()->get_base().screens.displaySize();
     xcb_create_pixmap(connection(),
-                      Xcb::defaultDepth(kwinApp()->x11ScreenNumber()),
+                      base::x11::xcb::default_depth(kwinApp()->x11ScreenNumber()),
                       pixmap,
                       rootWindow(),
                       displaySize.width(),

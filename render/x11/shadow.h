@@ -9,6 +9,7 @@
 #include "render/compositor.h"
 #include "render/scene.h"
 #include "render/shadow.h"
+#include "xcbutils.h"
 
 #include <QVector>
 
@@ -20,12 +21,12 @@ bool update_shadow(Shadow& impl, QVector<uint32_t> const& data)
 {
     constexpr auto element_count = enum_index(shadow_element::count);
 
-    QVector<Xcb::WindowGeometry> pixmapGeometries(element_count);
+    QVector<base::x11::xcb::window_geometry> pixmapGeometries(element_count);
     QVector<xcb_get_image_cookie_t> getImageCookies(element_count);
     auto c = connection();
 
     for (size_t i = 0; i < element_count; ++i) {
-        pixmapGeometries[i] = Xcb::WindowGeometry(data[i]);
+        pixmapGeometries[i] = base::x11::xcb::window_geometry(data[i]);
     }
 
     auto discardReplies = [&getImageCookies](int start) {
@@ -36,7 +37,7 @@ bool update_shadow(Shadow& impl, QVector<uint32_t> const& data)
 
     for (size_t i = 0; i < element_count; ++i) {
         auto& geo = pixmapGeometries[i];
-        if (geo.isNull()) {
+        if (geo.is_null()) {
             discardReplies(0);
             return false;
         }
@@ -73,14 +74,14 @@ bool update_shadow(Shadow& impl, QVector<uint32_t> const& data)
 }
 
 template<typename Win>
-QVector<uint32_t> read_shadow_property(Win const& win, Xcb::Atom const& shadow_atom)
+QVector<uint32_t> read_shadow_property(Win const& win, base::x11::xcb::atom const& shadow_atom)
 {
     auto id = win.xcb_window();
     if (id == XCB_WINDOW_NONE) {
         return {};
     }
 
-    Xcb::Property property(false, id, shadow_atom, XCB_ATOM_CARDINAL, 0, 12);
+    base::x11::xcb::property property(false, id, shadow_atom, XCB_ATOM_CARDINAL, 0, 12);
     auto shadow = property.value<uint32_t*>();
 
     if (!shadow) {
@@ -98,7 +99,7 @@ QVector<uint32_t> read_shadow_property(Win const& win, Xcb::Atom const& shadow_a
 }
 
 template<typename Shadow>
-bool read_and_update_shadow(Shadow& impl, Xcb::Atom const& shadow_atom)
+bool read_and_update_shadow(Shadow& impl, base::x11::xcb::atom const& shadow_atom)
 {
     auto data = read_shadow_property(*impl.m_topLevel, shadow_atom);
     if (data.isEmpty()) {
@@ -108,7 +109,7 @@ bool read_and_update_shadow(Shadow& impl, Xcb::Atom const& shadow_atom)
 }
 
 template<typename Shadow, typename Win>
-Shadow* create_shadow(Win& win, Xcb::Atom const& shadow_atom)
+Shadow* create_shadow(Win& win, base::x11::xcb::atom const& shadow_atom)
 {
     auto data = read_shadow_property(win, shadow_atom);
     if (data.isEmpty()) {

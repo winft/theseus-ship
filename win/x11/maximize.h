@@ -21,7 +21,7 @@ void update_no_border(x11::window* win)
     }
 
     auto app_no_border = win->app_no_border;
-    auto motif_no_border = win->motif_hints.hasDecoration() && win->motif_hints.noBorder();
+    auto motif_no_border = win->motif_hints.has_decoration() && win->motif_hints.no_border();
     auto max_fully = win->geometry_update.max_mode == maximize_mode::full;
     auto no_border = app_no_border || motif_no_border || max_fully;
 
@@ -31,7 +31,7 @@ void update_no_border(x11::window* win)
 template<>
 void respect_maximizing_aspect(x11::window* win, maximize_mode& mode)
 {
-    if (!win->geometry_hints.hasAspect()) {
+    if (!win->geometry_hints.has_aspect()) {
         return;
     }
     if (mode != maximize_mode::vertical && mode != maximize_mode::horizontal) {
@@ -42,8 +42,8 @@ void respect_maximizing_aspect(x11::window* win, maximize_mode& mode)
     }
 
     // fixed aspect; on dimensional maximization obey aspect
-    auto const min_aspect = win->geometry_hints.minAspect();
-    auto const max_aspect = win->geometry_hints.maxAspect();
+    auto const min_aspect = win->geometry_hints.min_aspect();
+    auto const max_aspect = win->geometry_hints.max_aspect();
 
     auto const old_mode = win->geometry_update.max_mode;
     auto const area = get_maximizing_area(win);

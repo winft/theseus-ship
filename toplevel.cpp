@@ -1130,7 +1130,7 @@ QRect Toplevel::iconGeometry() const
 
 void Toplevel::setWindowHandles(xcb_window_t w)
 {
-    Q_ASSERT(!m_client.isValid() && w != XCB_WINDOW_NONE);
+    Q_ASSERT(!m_client.is_valid() && w != XCB_WINDOW_NONE);
     m_client.reset(w, false);
 }
 

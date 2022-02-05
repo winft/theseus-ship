@@ -30,7 +30,8 @@ namespace KWin::win::x11
 {
 
 sync_alarm_filter::sync_alarm_filter()
-    : base::x11::event_filter(QVector<int>{Xcb::Extensions::self()->syncAlarmNotifyEvent()})
+    : base::x11::event_filter(
+        QVector<int>{base::x11::xcb::extensions::self()->sync_alarm_notify_event()})
 {
 }
 
