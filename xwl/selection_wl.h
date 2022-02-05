@@ -23,7 +23,9 @@
 namespace KWin::xwl
 {
 
-inline void send_selection_notify(xcb_selection_request_event_t* event, bool success)
+inline void send_selection_notify(xcb_connection_t* connection,
+                                  xcb_selection_request_event_t* event,
+                                  bool success)
 {
     xcb_selection_notify_event_t notify;
     notify.response_type = XCB_SELECTION_NOTIFY;
@@ -34,9 +36,8 @@ inline void send_selection_notify(xcb_selection_request_event_t* event, bool suc
     notify.target = event->target;
     notify.property = success ? event->property : xcb_atom_t(XCB_ATOM_NONE);
 
-    auto xcb_con = kwinApp()->x11Connection();
-    xcb_send_event(xcb_con, 0, event->requestor, XCB_EVENT_MASK_NO_EVENT, (char const*)&notify);
-    xcb_flush(xcb_con);
+    xcb_send_event(connection, 0, event->requestor, XCB_EVENT_MASK_NO_EVENT, (char const*)&notify);
+    xcb_flush(connection);
 }
 
 // must be called in order to provide data from Wl to X
@@ -79,7 +80,9 @@ void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event,
     QObject::connect(transfer,
                      &wl_to_x11_transfer::selection_notify,
                      sel->data.qobject.get(),
-                     &send_selection_notify);
+                     [con = sel->data.x11.connection](auto event, auto success) {
+                         send_selection_notify(con, event, success);
+                     });
     QObject::connect(
         transfer, &wl_to_x11_transfer::finished, sel->data.qobject.get(), [sel, transfer]() {
             Q_EMIT sel->data.qobject->transfer_finished(transfer->get_timestamp());
@@ -195,7 +198,7 @@ inline void send_wl_selection_timestamp(x11_data const& x11,
                         1,
                         &time);
 
-    send_selection_notify(event, true);
+    send_selection_notify(x11.connection, event, true);
 }
 
 inline void send_wl_selection_targets(x11_data const& x11,
@@ -222,7 +225,7 @@ inline void send_wl_selection_targets(x11_data const& x11,
                         cnt,
                         targets.data());
 
-    send_selection_notify(event, true);
+    send_selection_notify(x11.connection, event, true);
 }
 
 /// Returns the file descriptor to write in or -1 on error.
@@ -266,19 +269,21 @@ int selection_wl_start_transfer(ServerSource server_source, xcb_selection_reques
 template<typename Source>
 bool selection_wl_handle_request(Source&& source, xcb_selection_request_event_t* event)
 {
+    auto& x11 = source->x11;
+
     if (event->target == atoms->targets) {
-        send_wl_selection_targets(source->x11, event, source->offers);
+        send_wl_selection_targets(x11, event, source->offers);
     } else if (event->target == atoms->timestamp) {
-        send_wl_selection_timestamp(source->x11, event, source->timestamp);
+        send_wl_selection_timestamp(x11, event, source->timestamp);
     } else if (event->target == atoms->delete_atom) {
-        send_selection_notify(event, true);
+        send_selection_notify(x11.connection, event, true);
     } else {
         // try to send mime data
         if (auto fd = selection_wl_start_transfer(source->server_source, event); fd > 0) {
             Q_EMIT source->get_qobject()->transfer_ready(new xcb_selection_request_event_t(*event),
                                                          fd);
         } else {
-            send_selection_notify(event, false);
+            send_selection_notify(x11.connection, event, false);
         }
     }
     return true;

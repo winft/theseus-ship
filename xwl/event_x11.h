@@ -132,7 +132,7 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
     if (qobject_cast<win::x11::window*>(workspace()->activeClient()) == nullptr) {
         // Receiving Wayland selection not allowed when no Xwayland surface active
         // filter the event, but don't act upon it
-        send_selection_notify(event, false);
+        send_selection_notify(sel->data.x11.connection, event, false);
         return true;
     }
 
@@ -140,7 +140,7 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
         if (event->time < sel->data.timestamp) {
             // cancel earlier attempts at receiving a selection
             // TODO: is this for sure without problems?
-            send_selection_notify(event, false);
+            send_selection_notify(sel->data.x11.connection, event, false);
             return true;
         }
         return false;
