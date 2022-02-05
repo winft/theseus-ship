@@ -407,7 +407,6 @@ set(kwin_SRCS
     base/x11/event_filter_container.cpp
     base/x11/event_filter_manager.cpp
     base/x11/xcb/extensions.cpp
-    base/x11/xcb/shm.cpp
     base/gamma_ramp.cpp
     base/output.cpp
     base/platform.cpp
