@@ -7,6 +7,7 @@
 #pragma once
 
 #include "base/x11/atoms.h"
+#include "main.h"
 
 #include <string>
 #include <xcb/xcb.h>

@@ -5,6 +5,7 @@
 */
 #include "randr_filter.h"
 
+#include "main.h"
 #include "platform.h"
 #include "screens.h"
 #include "xcbutils.h"

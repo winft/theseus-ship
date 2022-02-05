@@ -7,6 +7,7 @@
 #include "backend.h"
 
 #include "base/platform.h"
+#include "main.h"
 #include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
 #include "screens.h"
@@ -117,7 +118,7 @@ void backend::createBuffer()
     xcb_pixmap_t pixmap = xcb_generate_id(connection());
     auto const displaySize = kwinApp()->get_base().screens.displaySize();
     xcb_create_pixmap(connection(),
-                      Xcb::defaultDepth(),
+                      Xcb::defaultDepth(kwinApp()->x11ScreenNumber()),
                       pixmap,
                       rootWindow(),
                       displaySize.width(),

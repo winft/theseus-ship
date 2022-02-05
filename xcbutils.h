@@ -6,7 +6,6 @@
 */
 #pragma once
 
-#include "main.h"
 #include <kwinglobals.h>
 
 #include <QRect>
@@ -2050,13 +2049,12 @@ static inline void restackWindowsWithRaise(std::vector<xcb_window_t> const& wind
     restackWindows(windows);
 }
 
-static inline int defaultDepth()
+static inline int defaultDepth(int screen)
 {
     static int depth = 0;
     if (depth != 0) {
         return depth;
     }
-    int screen = kwinApp()->x11ScreenNumber();
     for (xcb_screen_iterator_t it = xcb_setup_roots_iterator(xcb_get_setup(connection())); it.rem;
          --screen, xcb_screen_next(&it)) {
         if (screen == 0) {

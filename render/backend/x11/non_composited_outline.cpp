@@ -4,11 +4,11 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-// own
 #include "non_composited_outline.h"
-// KWin libs
-#include <kwinxrenderutils.h>
-// xcb
+
+#include "kwinxrenderutils.h"
+#include "main.h"
+
 #include <xcb/render.h>
 
 namespace KWin::render::backend::x11
@@ -37,7 +37,7 @@ void non_composited_outline::show()
         m_initialized = true;
     }
 
-    const int defaultDepth = Xcb::defaultDepth();
+    const int defaultDepth = Xcb::defaultDepth(kwinApp()->x11ScreenNumber());
 
     const QRect& outlineGeometry = get_outline()->geometry();
     // left/right parts are between top/bottom, they don't reach as far as the corners

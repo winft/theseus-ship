@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "transfer.h"
 
+#include "main.h"
+
 #include <unistd.h>
 #include <xwayland_logging.h>
 
