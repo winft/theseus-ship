@@ -10,6 +10,7 @@
 #include "selection_data.h"
 #include "sources.h"
 #include "transfer.h"
+#include "types.h"
 
 #include "atoms.h"
 #include "win/x11/window.h"
@@ -181,11 +182,11 @@ void handle_wl_selection_change(Selection* sel)
     handle_wl_selection_client_change(sel);
 }
 
-inline void send_wl_selection_timestamp(xcb_connection_t* con,
+inline void send_wl_selection_timestamp(x11_data const& x11,
                                         xcb_selection_request_event_t* event,
                                         xcb_timestamp_t time)
 {
-    xcb_change_property(con,
+    xcb_change_property(x11.connection,
                         XCB_PROP_MODE_REPLACE,
                         event->requestor,
                         event->property,
@@ -197,7 +198,7 @@ inline void send_wl_selection_timestamp(xcb_connection_t* con,
     send_selection_notify(event, true);
 }
 
-inline void send_wl_selection_targets(xcb_connection_t* con,
+inline void send_wl_selection_targets(x11_data const& x11,
                                       xcb_selection_request_event_t* event,
                                       std::vector<std::string> const& offers)
 {
@@ -212,7 +213,7 @@ inline void send_wl_selection_targets(xcb_connection_t* con,
         cnt++;
     }
 
-    xcb_change_property(con,
+    xcb_change_property(x11.connection,
                         XCB_PROP_MODE_REPLACE,
                         event->requestor,
                         event->property,
@@ -263,14 +264,12 @@ int selection_wl_start_transfer(ServerSource server_source, xcb_selection_reques
 }
 
 template<typename Source>
-bool selection_wl_handle_request(Source&& source,
-                                 xcb_connection_t* con,
-                                 xcb_selection_request_event_t* event)
+bool selection_wl_handle_request(Source&& source, xcb_selection_request_event_t* event)
 {
     if (event->target == atoms->targets) {
-        send_wl_selection_targets(con, event, source->offers);
+        send_wl_selection_targets(source->x11, event, source->offers);
     } else if (event->target == atoms->timestamp) {
-        send_wl_selection_timestamp(con, event, source->timestamp);
+        send_wl_selection_timestamp(source->x11, event, source->timestamp);
     } else if (event->target == atoms->delete_atom) {
         send_selection_notify(event, true);
     } else {
