@@ -128,7 +128,7 @@ void handle_wl_selection_client_change(Selection* sel)
     }
 
     using server_source = std::remove_pointer_t<decltype(srv_src)>;
-    auto wls = new wl_source<server_source>(srv_src, sel->data.x11.connection);
+    auto wls = new wl_source<server_source>(srv_src, sel->data.x11);
 
     set_wl_source(sel, wls);
     own_selection(sel, true);

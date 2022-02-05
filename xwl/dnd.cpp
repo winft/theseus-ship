@@ -197,7 +197,7 @@ void drag_and_drop::start_drag()
 
     // New Wl to X drag, init drag and Wl source.
     wldrag.reset(new wl_drag(srv_src, data.window));
-    auto source = new wl_source<Wrapland::Server::data_source>(srv_src, data.x11.connection);
+    auto source = new wl_source<Wrapland::Server::data_source>(srv_src, data.x11);
     set_wl_source(this, source);
     own_selection(this, true);
 }
