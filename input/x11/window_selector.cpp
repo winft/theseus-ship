@@ -73,25 +73,25 @@ void window_selector::start(std::function<void(const QPoint&)> callback)
 bool window_selector::activate(const QByteArray& cursorName)
 {
     xcb_cursor_t cursor = createCursor(cursorName);
-
     xcb_connection_t* c = connection();
-    ScopedCPointer<xcb_grab_pointer_reply_t> grabPointer(xcb_grab_pointer_reply(
+
+    auto cookie = xcb_grab_pointer_unchecked(
         c,
-        xcb_grab_pointer_unchecked(c,
-                                   false,
-                                   rootWindow(),
-                                   XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
-                                       | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_ENTER_WINDOW
-                                       | XCB_EVENT_MASK_LEAVE_WINDOW,
-                                   XCB_GRAB_MODE_ASYNC,
-                                   XCB_GRAB_MODE_ASYNC,
-                                   XCB_WINDOW_NONE,
-                                   cursor,
-                                   XCB_TIME_CURRENT_TIME),
-        nullptr));
-    if (grabPointer.isNull() || grabPointer->status != XCB_GRAB_STATUS_SUCCESS) {
+        false,
+        rootWindow(),
+        XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION
+            | XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW,
+        XCB_GRAB_MODE_ASYNC,
+        XCB_GRAB_MODE_ASYNC,
+        XCB_WINDOW_NONE,
+        cursor,
+        XCB_TIME_CURRENT_TIME);
+
+    unique_cptr<xcb_grab_pointer_reply_t> reply(xcb_grab_pointer_reply(c, cookie, nullptr));
+    if (!reply || reply->status != XCB_GRAB_STATUS_SUCCESS) {
         return false;
     }
+
     const bool grabbed = grabXKeyboard();
     if (grabbed) {
         grabXServer();

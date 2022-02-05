@@ -137,11 +137,11 @@ private:
         KSelectionOwner::getAtoms();
         if (xa_version == XCB_ATOM_NONE) {
             const QByteArray name(QByteArrayLiteral("VERSION"));
-            ScopedCPointer<xcb_intern_atom_reply_t> atom(xcb_intern_atom_reply(
+            unique_cptr<xcb_intern_atom_reply_t> atom(xcb_intern_atom_reply(
                 connection(),
                 xcb_intern_atom_unchecked(connection(), false, name.length(), name.constData()),
                 nullptr));
-            if (!atom.isNull()) {
+            if (atom) {
                 xa_version = atom->atom;
             }
         }
@@ -152,11 +152,11 @@ private:
             screen_P = QX11Info::appScreen();
         QByteArray screen(QByteArrayLiteral("WM_S"));
         screen.append(QByteArray::number(screen_P));
-        ScopedCPointer<xcb_intern_atom_reply_t> atom(xcb_intern_atom_reply(
+        unique_cptr<xcb_intern_atom_reply_t> atom(xcb_intern_atom_reply(
             connection(),
             xcb_intern_atom_unchecked(connection(), false, screen.length(), screen.constData()),
             nullptr));
-        if (atom.isNull()) {
+        if (!atom) {
             return XCB_ATOM_NONE;
         }
         return atom->atom;
@@ -234,12 +234,11 @@ void ApplicationX11::start()
 
         // Check  whether another windowmanager is running
         const uint32_t maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
-        ScopedCPointer<xcb_generic_error_t> redirectCheck(xcb_request_check(connection(),
-                                                                            xcb_change_window_attributes_checked(connection(),
-                                                                                                                 rootWindow(),
-                                                                                                                 XCB_CW_EVENT_MASK,
-                                                                                                                 maskValues)));
-        if (!redirectCheck.isNull()) {
+        unique_cptr<xcb_generic_error_t> redirectCheck(
+            xcb_request_check(connection(),
+                              xcb_change_window_attributes_checked(
+                                  connection(), rootWindow(), XCB_CW_EVENT_MASK, maskValues)));
+        if (redirectCheck) {
             fputs(i18n("kwin: another window manager is running (try using --replace)\n").toLocal8Bit().constData(), stderr);
             if (!wasCrash()) // if this is a crash-restart, DrKonqi may have stopped the process w/o killing the connection
                 ::exit(1);

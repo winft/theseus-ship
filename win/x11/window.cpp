@@ -1093,9 +1093,9 @@ bool window::doStartMoveResize()
         input::get_cursor()->x11_cursor(control->move_resize().cursor),
         xTime());
 
-    ScopedCPointer<xcb_grab_pointer_reply_t> pointerGrab(
+    unique_cptr<xcb_grab_pointer_reply_t> pointerGrab(
         xcb_grab_pointer_reply(connection(), cookie, nullptr));
-    if (!pointerGrab.isNull() && pointerGrab->status == XCB_GRAB_STATUS_SUCCESS) {
+    if (pointerGrab && pointerGrab->status == XCB_GRAB_STATUS_SUCCESS) {
         has_grab = true;
     }
 

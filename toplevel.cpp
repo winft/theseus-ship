@@ -719,14 +719,14 @@ QRegion Toplevel::render_region() const
 
         auto cookie
             = xcb_shape_get_rectangles_unchecked(connection(), frameId(), XCB_SHAPE_SK_BOUNDING);
-        ScopedCPointer<xcb_shape_get_rectangles_reply_t> reply(
+        unique_cptr<xcb_shape_get_rectangles_reply_t> reply(
             xcb_shape_get_rectangles_reply(connection(), cookie, nullptr));
-        if (reply.isNull()) {
+        if (!reply) {
             return QRegion();
         }
 
-        auto const rects = xcb_shape_get_rectangles_rectangles(reply.data());
-        auto const rect_count = xcb_shape_get_rectangles_rectangles_length(reply.data());
+        auto const rects = xcb_shape_get_rectangles_rectangles(reply.get());
+        auto const rect_count = xcb_shape_get_rectangles_rectangles_length(reply.get());
         for (int i = 0; i < rect_count; ++i) {
             m_render_shape += QRegion(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
         }

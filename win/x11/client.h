@@ -244,9 +244,9 @@ void get_sync_counter(Win* win)
 
     auto const alarm_id = xcb_generate_id(con);
     auto cookie = xcb_sync_create_alarm_checked(con, alarm_id, mask, values);
-    ScopedCPointer<xcb_generic_error_t> error(xcb_request_check(con, cookie));
+    unique_cptr<xcb_generic_error_t> error(xcb_request_check(con, cookie));
 
-    if (!error.isNull()) {
+    if (error) {
         qCWarning(KWIN_CORE) << "Error creating _NET_WM_SYNC_REQUEST alarm for: " << win;
         return;
     }
@@ -346,13 +346,13 @@ void send_synthetic_configure_notify(Win* win, QRect const& client_geo)
             c.height = emulatedSize.height();
 
             uint32_t const values[] = {c.width, c.height};
-            ScopedCPointer<xcb_generic_error_t> error(xcb_request_check(
+            unique_cptr<xcb_generic_error_t> error(xcb_request_check(
                 connection(),
                 xcb_configure_window_checked(connection(),
                                              c.window,
                                              XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
                                              values)));
-            if (!error.isNull()) {
+            if (error) {
                 qCDebug(KWIN_CORE) << "Error on emulating XWayland size: " << error->error_code;
             }
         }

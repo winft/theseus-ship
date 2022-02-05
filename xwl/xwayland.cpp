@@ -253,11 +253,12 @@ void xwayland::continue_startup_with_x11()
 
     // Check  whether another windowmanager is running
     uint32_t const maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
-    ScopedCPointer<xcb_generic_error_t> redirectCheck(
+    unique_cptr<xcb_generic_error_t> redirectCheck(
         xcb_request_check(connection(),
                           xcb_change_window_attributes_checked(
                               connection(), rootWindow(), XCB_CW_EVENT_MASK, maskValues)));
-    if (!redirectCheck.isNull()) {
+
+    if (redirectCheck) {
         fputs(i18n("kwin_wayland: an X11 window manager is running on the X11 Display.\n")
                   .toLocal8Bit()
                   .constData(),

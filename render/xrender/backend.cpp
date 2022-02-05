@@ -82,7 +82,7 @@ void backend::init(bool createOverlay)
         = createOverlay ? overlay_window->create() : (overlay_window->window() != XCB_WINDOW_NONE);
     if (haveOverlay) {
         overlay_window->setup(XCB_WINDOW_NONE);
-        ScopedCPointer<xcb_get_window_attributes_reply_t> attribs(xcb_get_window_attributes_reply(
+        unique_cptr<xcb_get_window_attributes_reply_t> attribs(xcb_get_window_attributes_reply(
             connection(),
             xcb_get_window_attributes_unchecked(connection(), overlay_window->window()),
             nullptr));
