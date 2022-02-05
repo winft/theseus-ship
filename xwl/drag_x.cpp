@@ -450,7 +450,7 @@ void wl_visit::send_status()
     data.data32[1] = flags;
     data.data32[4] = flags & (1 << 0) ? action_atom : static_cast<uint32_t>(XCB_ATOM_NONE);
 
-    send_client_message(source_window, atoms->xdnd_status, &data);
+    send_client_message(source.x11.connection, source_window, atoms->xdnd_status, &data);
 }
 
 void wl_visit::send_finished()
@@ -462,7 +462,7 @@ void wl_visit::send_finished()
     data.data32[1] = accepted;
     data.data32[2] = accepted ? action_atom : static_cast<uint32_t>(XCB_ATOM_NONE);
 
-    send_client_message(source_window, atoms->xdnd_finished, &data);
+    send_client_message(source.x11.connection, source_window, atoms->xdnd_finished, &data);
 }
 
 bool wl_visit::target_accepts_action() const

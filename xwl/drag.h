@@ -64,8 +64,10 @@ inline xcb_atom_t client_action_to_atom(dnd_action action)
     return XCB_ATOM_NONE;
 }
 
-inline void
-send_client_message(xcb_window_t target, xcb_atom_t type, xcb_client_message_data_t* data)
+inline void send_client_message(xcb_connection_t* connection,
+                                xcb_window_t target,
+                                xcb_atom_t type,
+                                xcb_client_message_data_t* data)
 {
     xcb_client_message_event_t event{
         XCB_CLIENT_MESSAGE, // response_type
@@ -76,9 +78,9 @@ send_client_message(xcb_window_t target, xcb_atom_t type, xcb_client_message_dat
         *data,              // data
     };
 
-    auto con = kwinApp()->x11Connection();
-    xcb_send_event(con, 0, target, XCB_EVENT_MASK_NO_EVENT, reinterpret_cast<char const*>(&event));
-    xcb_flush(con);
+    xcb_send_event(
+        connection, 0, target, XCB_EVENT_MASK_NO_EVENT, reinterpret_cast<char const*>(&event));
+    xcb_flush(connection);
 }
 
 /**
