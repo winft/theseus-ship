@@ -389,7 +389,7 @@ bool wl_visit::handle_position(xcb_client_message_event_t* event)
     source->timestamp = data->data32[3];
 
     xcb_atom_t actionAtom = m_version > 1 ? data->data32[4] : atoms->xdnd_action_copy;
-    auto action = drag::atom_to_client_action(actionAtom);
+    auto action = atom_to_client_action(actionAtom);
 
     if (action == dnd_action::none) {
         // copy action is always possible in XDND
@@ -450,7 +450,7 @@ void wl_visit::send_status()
     data.data32[1] = flags;
     data.data32[4] = flags & (1 << 0) ? action_atom : static_cast<uint32_t>(XCB_ATOM_NONE);
 
-    drag::send_client_message(source_window, atoms->xdnd_status, &data);
+    send_client_message(source_window, atoms->xdnd_status, &data);
 }
 
 void wl_visit::send_finished()
@@ -462,7 +462,7 @@ void wl_visit::send_finished()
     data.data32[1] = accepted;
     data.data32[2] = accepted ? action_atom : static_cast<uint32_t>(XCB_ATOM_NONE);
 
-    drag::send_client_message(source_window, atoms->xdnd_finished, &data);
+    send_client_message(source_window, atoms->xdnd_finished, &data);
 }
 
 bool wl_visit::target_accepts_action() const

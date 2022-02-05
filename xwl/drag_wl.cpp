@@ -173,7 +173,7 @@ bool x11_visit::handle_status(xcb_client_message_event_t* event)
 
     if (!state.dropped) {
         // as long as the drop is not yet done determine requested action
-        actions.preferred = drag::atom_to_client_action(actionAtom);
+        actions.preferred = atom_to_client_action(actionAtom);
         update_actions();
     }
 
@@ -230,9 +230,9 @@ void x11_visit::send_position(QPointF const& globalPos)
     data.data32[0] = drag_window;
     data.data32[2] = (x << 16) | y;
     data.data32[3] = XCB_CURRENT_TIME;
-    data.data32[4] = drag::client_action_to_atom(actions.proposed);
+    data.data32[4] = client_action_to_atom(actions.proposed);
 
-    drag::send_client_message(target->xcb_window(), atoms->xdnd_position, &data);
+    send_client_message(target->xcb_window(), atoms->xdnd_position, &data);
 }
 
 void x11_visit::leave()
@@ -336,7 +336,7 @@ void x11_visit::send_enter()
                             targets.data());
     }
 
-    drag::send_client_message(target->xcb_window(), atoms->xdnd_enter, &data);
+    send_client_message(target->xcb_window(), atoms->xdnd_enter, &data);
 }
 
 void x11_visit::send_drop(uint32_t time)
@@ -345,7 +345,7 @@ void x11_visit::send_drop(uint32_t time)
     data.data32[0] = drag_window;
     data.data32[2] = time;
 
-    drag::send_client_message(target->xcb_window(), atoms->xdnd_drop, &data);
+    send_client_message(target->xcb_window(), atoms->xdnd_drop, &data);
 
     if (version < 2) {
         do_finish();
@@ -357,7 +357,7 @@ void x11_visit::send_leave()
     xcb_client_message_data_t data = {{0}};
     data.data32[0] = drag_window;
 
-    drag::send_client_message(target->xcb_window(), atoms->xdnd_leave, &data);
+    send_client_message(target->xcb_window(), atoms->xdnd_leave, &data);
 }
 
 void x11_visit::update_actions()
