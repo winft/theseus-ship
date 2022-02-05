@@ -19,14 +19,14 @@ namespace KWin::base::x11::xcb
  */
 
 XCB_WRAPPER_DATA(geometry_data, xcb_get_geometry, xcb_drawable_t)
-class window_geometry : public wrapper<geometry_data, xcb_window_t>
+class geometry : public wrapper<geometry_data, xcb_window_t>
 {
 public:
-    window_geometry()
+    geometry()
         : wrapper<geometry_data, xcb_window_t>()
     {
     }
-    explicit window_geometry(xcb_window_t window)
+    explicit geometry(xcb_window_t window)
         : wrapper<geometry_data, xcb_window_t>(window)
     {
     }

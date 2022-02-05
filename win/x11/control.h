@@ -629,7 +629,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     Blocker blocker(space.stacking_order);
 
     base::x11::xcb::window_attributes attr(w);
-    base::x11::xcb::window_geometry windowGeometry(w);
+    base::x11::xcb::geometry windowGeometry(w);
     if (attr.is_null() || windowGeometry.is_null()) {
         return nullptr;
     }

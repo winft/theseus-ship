@@ -60,8 +60,8 @@ private Q_SLOTS:
     void testMotif();
 
 private:
-    void testEmpty(base::x11::xcb::window_geometry& geometry);
-    void testGeometry(base::x11::xcb::window_geometry& geometry, const QRect& rect);
+    void testEmpty(base::x11::xcb::geometry& geometry);
+    void testGeometry(base::x11::xcb::geometry& geometry, const QRect& rect);
     base::x11::xcb::window m_testWindow;
 };
 
@@ -84,7 +84,7 @@ void TestXcbWrapper::cleanup()
     m_testWindow.reset();
 }
 
-void TestXcbWrapper::testEmpty(base::x11::xcb::window_geometry& geometry)
+void TestXcbWrapper::testEmpty(base::x11::xcb::geometry& geometry)
 {
     QCOMPARE(geometry.window(), noneWindow());
     QVERIFY(!geometry.data());
@@ -93,7 +93,7 @@ void TestXcbWrapper::testEmpty(base::x11::xcb::window_geometry& geometry)
     QVERIFY(!geometry);
 }
 
-void TestXcbWrapper::testGeometry(base::x11::xcb::window_geometry& geometry, const QRect& rect)
+void TestXcbWrapper::testGeometry(base::x11::xcb::geometry& geometry, const QRect& rect)
 {
     QCOMPARE(geometry.window(), (xcb_window_t)m_testWindow);
     // now lets retrieve some data
@@ -110,22 +110,22 @@ void TestXcbWrapper::testGeometry(base::x11::xcb::window_geometry& geometry, con
 
 void TestXcbWrapper::defaultCtor()
 {
-    base::x11::xcb::window_geometry geometry;
+    base::x11::xcb::geometry geometry;
     testEmpty(geometry);
     QVERIFY(!geometry.is_retrieved());
 }
 
 void TestXcbWrapper::normalCtor()
 {
-    base::x11::xcb::window_geometry geometry(m_testWindow);
+    base::x11::xcb::geometry geometry(m_testWindow);
     QVERIFY(!geometry.is_retrieved());
     testGeometry(geometry, QRect(0, 0, 10, 10));
 }
 
 void TestXcbWrapper::copyCtorEmpty()
 {
-    base::x11::xcb::window_geometry geometry;
-    base::x11::xcb::window_geometry other(geometry);
+    base::x11::xcb::geometry geometry;
+    base::x11::xcb::geometry other(geometry);
     testEmpty(geometry);
     QVERIFY(geometry.is_retrieved());
     testEmpty(other);
@@ -134,9 +134,9 @@ void TestXcbWrapper::copyCtorEmpty()
 
 void TestXcbWrapper::copyCtorBeforeRetrieve()
 {
-    base::x11::xcb::window_geometry geometry(m_testWindow);
+    base::x11::xcb::geometry geometry(m_testWindow);
     QVERIFY(!geometry.is_retrieved());
-    base::x11::xcb::window_geometry other(geometry);
+    base::x11::xcb::geometry other(geometry);
     testEmpty(geometry);
     QVERIFY(geometry.is_retrieved());
 
@@ -146,11 +146,11 @@ void TestXcbWrapper::copyCtorBeforeRetrieve()
 
 void TestXcbWrapper::copyCtorAfterRetrieve()
 {
-    base::x11::xcb::window_geometry geometry(m_testWindow);
+    base::x11::xcb::geometry geometry(m_testWindow);
     QVERIFY(geometry);
     QVERIFY(geometry.is_retrieved());
     QCOMPARE(geometry.rect(), QRect(0, 0, 10, 10));
-    base::x11::xcb::window_geometry other(geometry);
+    base::x11::xcb::geometry other(geometry);
     testEmpty(geometry);
     QVERIFY(geometry.is_retrieved());
 
@@ -160,8 +160,8 @@ void TestXcbWrapper::copyCtorAfterRetrieve()
 
 void TestXcbWrapper::assignementEmpty()
 {
-    base::x11::xcb::window_geometry geometry;
-    base::x11::xcb::window_geometry other;
+    base::x11::xcb::geometry geometry;
+    base::x11::xcb::geometry other;
     testEmpty(geometry);
     testEmpty(other);
 
@@ -183,18 +183,18 @@ void TestXcbWrapper::assignementEmpty()
 
 void TestXcbWrapper::assignmentBeforeRetrieve()
 {
-    base::x11::xcb::window_geometry geometry(m_testWindow);
-    base::x11::xcb::window_geometry other = geometry;
+    base::x11::xcb::geometry geometry(m_testWindow);
+    base::x11::xcb::geometry other = geometry;
     QVERIFY(geometry.is_retrieved());
     testEmpty(geometry);
 
     QVERIFY(!other.is_retrieved());
     testGeometry(other, QRect(0, 0, 10, 10));
 
-    other = base::x11::xcb::window_geometry(m_testWindow);
+    other = base::x11::xcb::geometry(m_testWindow);
     QVERIFY(!other.is_retrieved());
     QCOMPARE(other.window(), (xcb_window_t)m_testWindow);
-    other = base::x11::xcb::window_geometry();
+    other = base::x11::xcb::geometry();
     testEmpty(geometry);
 
     QT_WARNING_PUSH
@@ -208,10 +208,10 @@ void TestXcbWrapper::assignmentBeforeRetrieve()
 
 void TestXcbWrapper::assignmentAfterRetrieve()
 {
-    base::x11::xcb::window_geometry geometry(m_testWindow);
+    base::x11::xcb::geometry geometry(m_testWindow);
     QVERIFY(geometry);
     QVERIFY(geometry.is_retrieved());
-    base::x11::xcb::window_geometry other = geometry;
+    base::x11::xcb::geometry other = geometry;
     testEmpty(geometry);
 
     QVERIFY(other.is_retrieved());
@@ -227,7 +227,7 @@ void TestXcbWrapper::assignmentAfterRetrieve()
     QT_WARNING_POP
 
     // set to empty again
-    other = base::x11::xcb::window_geometry();
+    other = base::x11::xcb::geometry();
     testEmpty(other);
 }
 
@@ -236,13 +236,13 @@ void TestXcbWrapper::discard()
     // discard of reply cannot be tested properly as we cannot check whether the reply has been
     // discarded therefore it's more or less just a test to ensure that it doesn't crash and the
     // code paths are taken.
-    base::x11::xcb::window_geometry* geometry = new base::x11::xcb::window_geometry();
+    base::x11::xcb::geometry* geometry = new base::x11::xcb::geometry();
     delete geometry;
 
-    geometry = new base::x11::xcb::window_geometry(m_testWindow);
+    geometry = new base::x11::xcb::geometry(m_testWindow);
     delete geometry;
 
-    geometry = new base::x11::xcb::window_geometry(m_testWindow);
+    geometry = new base::x11::xcb::geometry(m_testWindow);
     QVERIFY(geometry->data());
     delete geometry;
 }

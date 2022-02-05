@@ -260,7 +260,7 @@ void TestScreenEdges::testCreatingInitialEdges()
     QCOMPARE(edgeWindows.size(), 12);
 
     auto testWindowGeometry = [&](int index) {
-        base::x11::xcb::window_geometry geo(edgeWindows[index]);
+        base::x11::xcb::geometry geo(edgeWindows[index]);
         return geo.rect();
     };
     QRect sg = Test::app()->base.screens.geometry();

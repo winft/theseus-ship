@@ -56,11 +56,11 @@ static QVector<QPixmap> getPixmaps(const QVector<uint32_t>& data)
 {
     QVector<QPixmap> ret;
     static const int ShadowElementsCount = 8;
-    QVector<KWin::base::x11::xcb::window_geometry> pixmapGeometries(ShadowElementsCount);
+    QVector<KWin::base::x11::xcb::geometry> pixmapGeometries(ShadowElementsCount);
     QVector<xcb_get_image_cookie_t> getImageCookies(ShadowElementsCount);
     auto* c = KWin::connection();
     for (int i = 0; i < ShadowElementsCount; ++i) {
-        pixmapGeometries[i] = KWin::base::x11::xcb::window_geometry(data[i]);
+        pixmapGeometries[i] = KWin::base::x11::xcb::geometry(data[i]);
     }
     auto discardReplies = [&getImageCookies](int start) {
         for (int i = start; i < getImageCookies.size(); ++i) {

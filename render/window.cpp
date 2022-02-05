@@ -452,7 +452,7 @@ void window_pixmap::create()
     base::x11::xcb::window_attributes windowAttributes(toplevel()->frameId());
 
     auto win = toplevel();
-    auto xcb_frame_geometry = base::x11::xcb::window_geometry(win->frameId());
+    auto xcb_frame_geometry = base::x11::xcb::geometry(win->frameId());
 
     if (xcb_generic_error_t* error = xcb_request_check(connection(), namePixmapCookie)) {
         qCDebug(KWIN_CORE) << "Creating window pixmap failed: " << error->error_code;

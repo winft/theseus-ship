@@ -21,12 +21,12 @@ bool update_shadow(Shadow& impl, QVector<uint32_t> const& data)
 {
     constexpr auto element_count = enum_index(shadow_element::count);
 
-    QVector<base::x11::xcb::window_geometry> pixmapGeometries(element_count);
+    QVector<base::x11::xcb::geometry> pixmapGeometries(element_count);
     QVector<xcb_get_image_cookie_t> getImageCookies(element_count);
     auto c = connection();
 
     for (size_t i = 0; i < element_count; ++i) {
-        pixmapGeometries[i] = base::x11::xcb::window_geometry(data[i]);
+        pixmapGeometries[i] = base::x11::xcb::geometry(data[i]);
     }
 
     auto discardReplies = [&getImageCookies](int start) {

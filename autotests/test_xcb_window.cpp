@@ -70,7 +70,7 @@ void TestXcbWindow::ctor()
     base::x11::xcb::window window(geometry, XCB_CW_OVERRIDE_REDIRECT, values);
     QCOMPARE(window.is_valid(), true);
     QVERIFY(window != XCB_WINDOW_NONE);
-    base::x11::xcb::window_geometry windowGeometry(window);
+    base::x11::xcb::geometry windowGeometry(window);
     QCOMPARE(windowGeometry.is_null(), false);
     QCOMPARE(windowGeometry.rect(), geometry);
 }
@@ -83,7 +83,7 @@ void TestXcbWindow::classCtor()
         geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
     QCOMPARE(window.is_valid(), true);
     QVERIFY(window != XCB_WINDOW_NONE);
-    base::x11::xcb::window_geometry windowGeometry(window);
+    base::x11::xcb::geometry windowGeometry(window);
     QCOMPARE(windowGeometry.is_null(), false);
     QCOMPARE(windowGeometry.rect(), geometry);
 
@@ -142,20 +142,20 @@ void TestXcbWindow::geometry()
     const uint32_t values[] = {true};
     base::x11::xcb::window window(
         geometry, XCB_WINDOW_CLASS_INPUT_ONLY, XCB_CW_OVERRIDE_REDIRECT, values);
-    base::x11::xcb::window_geometry windowGeometry(window);
+    base::x11::xcb::geometry windowGeometry(window);
     QCOMPARE(windowGeometry.is_null(), false);
     QCOMPARE(windowGeometry.rect(), geometry);
 
     const QRect geometry2(10, 20, 100, 200);
     window.set_geometry(geometry2);
-    base::x11::xcb::window_geometry windowGeometry2(window);
+    base::x11::xcb::geometry windowGeometry2(window);
     QCOMPARE(windowGeometry2.is_null(), false);
     QCOMPARE(windowGeometry2.rect(), geometry2);
 
     // setting a geometry on an invalid window should be ignored
     window.reset();
     window.set_geometry(geometry2);
-    base::x11::xcb::window_geometry windowGeometry3(window);
+    base::x11::xcb::geometry windowGeometry3(window);
     QCOMPARE(windowGeometry3.is_null(), true);
 }
 

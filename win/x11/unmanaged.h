@@ -39,7 +39,7 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
 
     XServerGrabber xserverGrabber;
     base::x11::xcb::window_attributes attr(w);
-    base::x11::xcb::window_geometry geo(w);
+    base::x11::xcb::geometry geo(w);
 
     if (attr.is_null() || attr->map_state != XCB_MAP_STATE_VIEWABLE) {
         return nullptr;

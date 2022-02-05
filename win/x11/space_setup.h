@@ -102,12 +102,12 @@ void init_space(Space& space)
         xcb_window_t* wins = xcb_query_tree_children(tree.data());
 
         QVector<base::x11::xcb::window_attributes> windowAttributes(tree->children_len);
-        QVector<base::x11::xcb::window_geometry> windowGeometries(tree->children_len);
+        QVector<base::x11::xcb::geometry> windowGeometries(tree->children_len);
 
         // Request the attributes and geometries of all toplevel windows
         for (int i = 0; i < tree->children_len; i++) {
             windowAttributes[i] = base::x11::xcb::window_attributes(wins[i]);
-            windowGeometries[i] = base::x11::xcb::window_geometry(wins[i]);
+            windowGeometries[i] = base::x11::xcb::geometry(wins[i]);
         }
 
         // Get the replies
