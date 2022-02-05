@@ -20,7 +20,7 @@ XCB_WRAPPER_DATA(screen_resources_data, xcb_randr_get_screen_resources, xcb_wind
 class screen_resources : public wrapper<screen_resources_data, xcb_window_t>
 {
 public:
-    explicit screen_resources(WindowId window)
+    explicit screen_resources(xcb_window_t window)
         : wrapper<screen_resources_data, xcb_window_t>(window)
     {
     }
@@ -129,7 +129,7 @@ XCB_WRAPPER_DATA(current_resources_data, xcb_randr_get_screen_resources_current,
 class current_resources : public wrapper<current_resources_data, xcb_window_t>
 {
 public:
-    explicit current_resources(WindowId window)
+    explicit current_resources(xcb_window_t window)
         : wrapper<current_resources_data, xcb_window_t>(window)
     {
     }

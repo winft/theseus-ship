@@ -19,9 +19,7 @@
 namespace KWin::base::x11::xcb
 {
 
-using WindowId = xcb_window_t;
-
-inline void move_resize_window(WindowId window, const QRect& geometry)
+inline void move_resize_window(xcb_window_t window, const QRect& geometry)
 {
     const uint16_t mask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH
         | XCB_CONFIG_WINDOW_HEIGHT;
@@ -50,9 +48,10 @@ inline void lower_window(xcb_window_t window)
     xcb_configure_window(connection(), window, XCB_CONFIG_WINDOW_STACK_MODE, values);
 }
 
-inline WindowId create_input_window(const QRect& geometry, uint32_t mask, const uint32_t* values)
+inline xcb_window_t
+create_input_window(const QRect& geometry, uint32_t mask, const uint32_t* values)
 {
-    WindowId window = xcb_generate_id(connection());
+    auto window = xcb_generate_id(connection());
     xcb_create_window(connection(),
                       0,
                       window,

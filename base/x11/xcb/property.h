@@ -268,7 +268,7 @@ public:
 class transient_for : public property
 {
 public:
-    explicit transient_for(WindowId window)
+    explicit transient_for(xcb_window_t window)
         : property(0, window, XCB_ATOM_WM_TRANSIENT_FOR, XCB_ATOM_WINDOW, 0, 1)
     {
     }
@@ -278,9 +278,9 @@ public:
      * @param prop WM_TRANSIENT_FOR property value.
      * @returns @c true on success, @c false otherwise
      */
-    inline bool get_transient_for(WindowId* prop)
+    inline bool get_transient_for(xcb_window_t* prop)
     {
-        WindowId* windows = value<WindowId*>();
+        auto windows = value<xcb_window_t*>();
         if (!windows) {
             return false;
         }

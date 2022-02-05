@@ -126,12 +126,12 @@ XCB_WRAPPER_DATA(tree_data, xcb_query_tree, xcb_window_t)
 class tree : public wrapper<tree_data, xcb_window_t>
 {
 public:
-    explicit tree(WindowId window)
+    explicit tree(xcb_window_t window)
         : wrapper<tree_data, xcb_window_t>(window)
     {
     }
 
-    inline WindowId* children()
+    inline xcb_window_t* children()
     {
         if (is_null() || data()->children_len == 0) {
             return nullptr;

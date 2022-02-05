@@ -166,7 +166,7 @@ private:
         };
         explicit normal_hints()
             : property(){};
-        explicit normal_hints(WindowId window)
+        explicit normal_hints(xcb_window_t window)
             : property(0, window, XCB_ATOM_WM_NORMAL_HINTS, XCB_ATOM_WM_SIZE_HINTS, 0, 18)
         {
         }

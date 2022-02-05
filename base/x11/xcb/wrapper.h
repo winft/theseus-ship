@@ -13,8 +13,6 @@
 namespace KWin::base::x11::xcb
 {
 
-using WindowId = xcb_window_t;
-
 /**
  * @brief Variadic template to wrap an xcb request.
  *
@@ -255,7 +253,7 @@ public:
         const_cast<abstract_wrapper*>(this)->get_reply();
         return m_reply;
     }
-    inline WindowId window() const
+    inline xcb_window_t window() const
     {
         return m_window;
     }
@@ -287,7 +285,7 @@ protected:
     {
         m_cookie.sequence = 0;
     }
-    explicit abstract_wrapper(WindowId window, Cookie cookie)
+    explicit abstract_wrapper(xcb_window_t window, Cookie cookie)
         : m_retrieved(false)
         , m_cookie(cookie)
         , m_window(window)
@@ -333,7 +331,7 @@ private:
 
     bool m_retrieved;
     Cookie m_cookie;
-    WindowId m_window;
+    xcb_window_t m_window;
     Reply* m_reply;
 };
 
