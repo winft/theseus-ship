@@ -101,12 +101,14 @@ inline void finalize_shell_window_creation(window* win)
 {
     namespace WS = Wrapland::Server;
 
-    QObject::connect(
-        waylandServer(), &WaylandServer::foreignTransientChanged, win, [win](WS::Surface* child) {
-            if (child == win->surface()) {
-                handle_parent_changed(win);
-            }
-        });
+    QObject::connect(waylandServer(),
+                     &base::wayland::server::foreignTransientChanged,
+                     win,
+                     [win](WS::Surface* child) {
+                         if (child == win->surface()) {
+                             handle_parent_changed(win);
+                         }
+                     });
 
     auto handle_first_commit = [win] {
         QObject::disconnect(win->surface(), &WS::Surface::committed, win, nullptr);

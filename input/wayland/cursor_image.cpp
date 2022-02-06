@@ -279,7 +279,7 @@ void cursor_image::loadTheme()
     if (waylandServer()->internalShmPool()) {
         m_cursorTheme = std::make_unique<cursor_theme>(waylandServer()->internalShmPool());
         QObject::connect(waylandServer(),
-                         &WaylandServer::terminatingInternalClientConnection,
+                         &base::wayland::server::terminatingInternalClientConnection,
                          this,
                          [this] { m_cursorTheme.reset(); });
     }

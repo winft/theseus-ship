@@ -29,16 +29,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 KWinIdleTimePoller::KWinIdleTimePoller(QObject *parent)
     : AbstractSystemPoller(parent)
 {
-    connect(KWin::waylandServer(), &KWin::WaylandServer::terminatingInternalClientConnection, this,
-        [this] {
-            qDeleteAll(m_timeouts);
-            m_timeouts.clear();
-            delete m_seat;
-            m_seat = nullptr;
-            delete m_idle;
-            m_idle = nullptr;
-        }
-    );
+    QObject::connect(KWin::waylandServer(),
+                     &KWin::base::wayland::server::terminatingInternalClientConnection,
+                     this,
+                     [this] {
+                         qDeleteAll(m_timeouts);
+                         m_timeouts.clear();
+                         delete m_seat;
+                         m_seat = nullptr;
+                         delete m_idle;
+                         m_idle = nullptr;
+                     });
 }
 
 KWinIdleTimePoller::~KWinIdleTimePoller() = default;

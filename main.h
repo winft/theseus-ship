@@ -52,6 +52,11 @@ namespace seat
 class session;
 }
 
+namespace wayland
+{
+class server;
+}
+
 namespace x11
 {
 class event_filter_manager;
@@ -60,8 +65,6 @@ class event_filter_manager;
 class platform;
 
 }
-
-class WaylandServer;
 
 class KWIN_EXPORT Application : public  QApplication
 {
@@ -221,7 +224,7 @@ public:
 
     virtual bool is_screen_locked() const;
 
-    virtual WaylandServer* get_wayland_server();
+    virtual base::wayland::server* get_wayland_server();
     virtual debug::console* create_debug_console() = 0;
 
 Q_SIGNALS:
@@ -263,7 +266,7 @@ inline static Application *kwinApp()
     return static_cast<Application*>(QCoreApplication::instance());
 }
 
-inline WaylandServer* waylandServer()
+inline base::wayland::server* waylandServer()
 {
     return kwinApp()->get_wayland_server();
 }

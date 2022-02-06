@@ -182,7 +182,7 @@ base::platform& ApplicationWayland::get_base()
     return *base;
 }
 
-WaylandServer* ApplicationWayland::get_wayland_server()
+base::wayland::server* ApplicationWayland::get_wayland_server()
 {
     return server.get();
 }
@@ -499,19 +499,19 @@ int main(int argc, char * argv[])
         a.setSessionArgument(parser.value(exitWithSessionOption));
     }
 
-    auto flags = KWin::wayland_start_options::none;
+    auto flags = KWin::base::wayland::start_options::none;
     if (parser.isSet(screenLockerOption)) {
-        flags = KWin::wayland_start_options::lock_screen;
+        flags = KWin::base::wayland::start_options::lock_screen;
     } else if (parser.isSet(noScreenLockerOption)) {
-        flags = KWin::wayland_start_options::no_lock_screen_integration;
+        flags = KWin::base::wayland::start_options::no_lock_screen_integration;
     }
     if (parser.isSet(noGlobalShortcutsOption)) {
-        flags |= KWin::wayland_start_options::no_global_shortcuts;
+        flags |= KWin::base::wayland::start_options::no_global_shortcuts;
     }
 
     try {
         auto const socket_name = parser.value(waylandSocketOption).toStdString();
-        a.server.reset(new KWin::WaylandServer(socket_name, flags));
+        a.server.reset(new KWin::base::wayland::server(socket_name, flags));
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: could not create Wayland server" << std::endl;
         return 1;

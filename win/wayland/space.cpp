@@ -38,7 +38,7 @@
 namespace KWin::win::wayland
 {
 
-space::space(WaylandServer* server)
+space::space(base::wayland::server* server)
     : server{server}
 {
     namespace WS = Wrapland::Server;

@@ -54,27 +54,27 @@ class XdgShell;
 }
 }
 
-namespace KWin
+namespace KWin::base::wayland
 {
 
-enum class wayland_start_options {
+enum class start_options {
     none = 0x0,
     lock_screen = 0x1,
     no_lock_screen_integration = 0x2,
     no_global_shortcuts = 0x4,
 };
 
-class KWIN_EXPORT WaylandServer : public QObject
+class KWIN_EXPORT server : public QObject
 {
     Q_OBJECT
 public:
-    static WaylandServer* self();
+    static server* self();
 
     std::unique_ptr<Wrapland::Server::globals> globals;
 
-    WaylandServer(std::string const& socket, wayland_start_options flags);
-    WaylandServer(int socket_fd, wayland_start_options flags);
-    ~WaylandServer() override;
+    server(std::string const& socket, start_options flags);
+    server(int socket_fd, start_options flags);
+    ~server() override;
 
     void terminateClientConnections();
 
@@ -205,7 +205,7 @@ Q_SIGNALS:
     void foreignTransientChanged(Wrapland::Server::Surface* child);
 
 private:
-    explicit WaylandServer(wayland_start_options flags);
+    explicit server(start_options flags);
 
     void create_globals();
     void createInternalConnection(std::function<void(bool)> callback);
@@ -240,9 +240,9 @@ private:
     } m_internalConnection;
 
     QHash<Wrapland::Server::Client*, quint16> m_clientIds;
-    wayland_start_options m_initFlags;
+    start_options m_initFlags;
 };
 
 }
 
-ENUM_FLAGS(KWin::wayland_start_options)
+ENUM_FLAGS(KWin::base::wayland::start_options)

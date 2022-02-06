@@ -256,7 +256,7 @@ bool Application::is_screen_locked() const
     return false;
 }
 
-WaylandServer* Application::get_wayland_server()
+base::wayland::server* Application::get_wayland_server()
 {
     return nullptr;
 }

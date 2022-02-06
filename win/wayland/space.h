@@ -42,7 +42,7 @@ class KWIN_EXPORT space : public Workspace
 public:
     using x11_window = xwl_window;
 
-    space(WaylandServer* server);
+    space(base::wayland::server* server);
     ~space() override;
 
     QRect get_icon_geometry(Toplevel const* win) const override;
@@ -53,7 +53,7 @@ public:
     void handle_window_added(wayland::window* window);
     void handle_window_removed(wayland::window* window);
 
-    WaylandServer* server;
+    base::wayland::server* server;
     std::unique_ptr<win::wayland::xdg_activation> activation;
     QVector<Wrapland::Server::PlasmaShellSurface*> plasma_shell_surfaces;
 

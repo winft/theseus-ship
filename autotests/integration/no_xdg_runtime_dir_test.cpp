@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
         Test::prepare_app_env(argv[0]);
         auto app = WaylandTestApplication(mode,
                                           Test::create_socket_name("KWin::NoXdgRuntimeDirTest"),
-                                          wayland_start_options::none,
+                                          base::wayland::start_options::none,
                                           argc,
                                           argv);
     } catch (...) {

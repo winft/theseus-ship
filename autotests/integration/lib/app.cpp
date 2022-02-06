@@ -72,7 +72,7 @@ Q_CONSTRUCTOR_FUNCTION(disable_dr_konqi)
 
 WaylandTestApplication::WaylandTestApplication(OperationMode mode,
                                                std::string const& socket_name,
-                                               wayland_start_options flags,
+                                               base::wayland::start_options flags,
                                                int& argc,
                                                char** argv)
     : Application(mode, argc, argv)
@@ -94,7 +94,7 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    server.reset(new WaylandServer(socket_name, flags));
+    server.reset(new base::wayland::server(socket_name, flags));
     base = base::backend::wlroots::platform(
         wlr_headless_backend_create(server->display()->native()));
 
@@ -146,7 +146,7 @@ base::platform& WaylandTestApplication::get_base()
     return base;
 }
 
-WaylandServer* WaylandTestApplication::get_wayland_server()
+base::wayland::server* WaylandTestApplication::get_wayland_server()
 {
     return server.get();
 }

@@ -334,5 +334,5 @@ void NoGlobalShortcutsTest::testScreenEdge()
 }
 
 WAYLANDTEST_MAIN_FLAGS(KWin::NoGlobalShortcutsTest,
-                       KWin::wayland_start_options::no_global_shortcuts)
+                       KWin::base::wayland::start_options::no_global_shortcuts)
 #include "no_global_shortcuts_test.moc"

@@ -41,7 +41,7 @@
 
 #include <KScreenLocker/KsldApp>
 
-namespace KWin
+namespace KWin::base::wayland
 {
 
 class KWinDisplay : public Wrapland::Server::FilteredDisplay
@@ -142,7 +142,7 @@ public:
     }
 };
 
-WaylandServer::WaylandServer(wayland_start_options flags)
+server::server(start_options flags)
     : globals{std::make_unique<Wrapland::Server::globals>()}
     , m_display(std::make_unique<KWinDisplay>())
     , m_initFlags{flags}
@@ -151,8 +151,8 @@ WaylandServer::WaylandServer(wayland_start_options flags)
     qRegisterMetaType<Wrapland::Server::Output::DpmsMode>();
 }
 
-WaylandServer::WaylandServer(std::string const& socket, wayland_start_options flags)
-    : WaylandServer(flags)
+server::server(std::string const& socket, start_options flags)
+    : server(flags)
 
 {
     m_display->set_socket_name(socket);
@@ -160,8 +160,8 @@ WaylandServer::WaylandServer(std::string const& socket, wayland_start_options fl
     create_globals();
 }
 
-WaylandServer::WaylandServer(int socket_fd, wayland_start_options flags)
-    : WaylandServer(flags)
+server::server(int socket_fd, start_options flags)
+    : server(flags)
 
 {
     m_display->add_socket_fd(socket_fd);
@@ -169,11 +169,11 @@ WaylandServer::WaylandServer(int socket_fd, wayland_start_options flags)
     create_globals();
 }
 
-WaylandServer::~WaylandServer()
+server::~server()
 {
 }
 
-void WaylandServer::destroyInternalConnection()
+void server::destroyInternalConnection()
 {
     Q_EMIT terminatingInternalClientConnection();
     if (m_internalConnection.client) {
@@ -202,7 +202,7 @@ void WaylandServer::destroyInternalConnection()
     }
 }
 
-void WaylandServer::terminateClientConnections()
+void server::terminateClientConnections()
 {
     destroyInternalConnection();
 
@@ -211,7 +211,7 @@ void WaylandServer::terminateClientConnections()
     }
 }
 
-void WaylandServer::create_globals()
+void server::create_globals()
 {
     if (!m_display->running()) {
         qCCritical(KWIN_WL) << "Wayland server failed to start.";
@@ -269,22 +269,22 @@ void WaylandServer::create_globals()
     globals->relative_pointer_manager_v1 = m_display->createRelativePointerManager();
 }
 
-Wrapland::Server::Display* WaylandServer::display() const
+Wrapland::Server::Display* server::display() const
 {
     return m_display.get();
 }
 
-Wrapland::Server::Compositor* WaylandServer::compositor() const
+Wrapland::Server::Compositor* server::compositor() const
 {
     return globals->compositor.get();
 }
 
-Wrapland::Server::Subcompositor* WaylandServer::subcompositor() const
+Wrapland::Server::Subcompositor* server::subcompositor() const
 {
     return globals->subcompositor.get();
 }
 
-Wrapland::Server::LinuxDmabufV1* WaylandServer::linux_dmabuf()
+Wrapland::Server::LinuxDmabufV1* server::linux_dmabuf()
 {
     if (!globals->linux_dmabuf_v1) {
         globals->linux_dmabuf_v1 = m_display->createLinuxDmabuf();
@@ -292,17 +292,17 @@ Wrapland::Server::LinuxDmabufV1* WaylandServer::linux_dmabuf()
     return globals->linux_dmabuf_v1.get();
 }
 
-Wrapland::Server::Viewporter* WaylandServer::viewporter() const
+Wrapland::Server::Viewporter* server::viewporter() const
 {
     return globals->viewporter.get();
 }
 
-Wrapland::Server::PresentationManager* WaylandServer::presentation_manager() const
+Wrapland::Server::PresentationManager* server::presentation_manager() const
 {
     return globals->presentation_manager.get();
 }
 
-Wrapland::Server::Seat* WaylandServer::seat() const
+Wrapland::Server::Seat* server::seat() const
 {
     if (globals->seats.empty()) {
         return nullptr;
@@ -310,65 +310,63 @@ Wrapland::Server::Seat* WaylandServer::seat() const
     return globals->seats.front().get();
 }
 
-Wrapland::Server::data_device_manager* WaylandServer::data_device_manager() const
+Wrapland::Server::data_device_manager* server::data_device_manager() const
 {
     return globals->data_device_manager.get();
 }
 
-Wrapland::Server::primary_selection_device_manager*
-WaylandServer::primary_selection_device_manager() const
+Wrapland::Server::primary_selection_device_manager* server::primary_selection_device_manager() const
 {
     return globals->primary_selection_device_manager.get();
 }
 
-Wrapland::Server::XdgShell* WaylandServer::xdg_shell() const
+Wrapland::Server::XdgShell* server::xdg_shell() const
 {
     return globals->xdg_shell.get();
 }
 
-Wrapland::Server::XdgActivationV1* WaylandServer::xdg_activation() const
+Wrapland::Server::XdgActivationV1* server::xdg_activation() const
 {
     return globals->xdg_activation_v1.get();
 }
 
-Wrapland::Server::PlasmaVirtualDesktopManager* WaylandServer::virtual_desktop_management() const
+Wrapland::Server::PlasmaVirtualDesktopManager* server::virtual_desktop_management() const
 {
     return globals->plasma_virtual_desktop_manager.get();
 }
 
-Wrapland::Server::LayerShellV1* WaylandServer::layer_shell() const
+Wrapland::Server::LayerShellV1* server::layer_shell() const
 {
     return globals->layer_shell_v1.get();
 }
 
-Wrapland::Server::PlasmaWindowManager* WaylandServer::window_management() const
+Wrapland::Server::PlasmaWindowManager* server::window_management() const
 {
     return globals->plasma_window_manager.get();
 }
 
-Wrapland::Server::KdeIdle* WaylandServer::kde_idle() const
+Wrapland::Server::KdeIdle* server::kde_idle() const
 {
     return globals->kde_idle.get();
 }
 
-Wrapland::Server::drm_lease_device_v1* WaylandServer::drm_lease_device() const
+Wrapland::Server::drm_lease_device_v1* server::drm_lease_device() const
 {
     return globals->drm_lease_device_v1.get();
 }
 
-void WaylandServer::create_presentation_manager()
+void server::create_presentation_manager()
 {
     Q_ASSERT(!globals->presentation_manager);
     globals->presentation_manager = m_display->createPresentationManager();
 }
 
-Wrapland::Server::Surface*
-WaylandServer::findForeignParentForSurface(Wrapland::Server::Surface* surface)
+Wrapland::Server::Surface* server::findForeignParentForSurface(Wrapland::Server::Surface* surface)
 {
     return globals->xdg_foreign->parentOf(surface);
 }
 
-void WaylandServer::initWorkspace()
+void server::initWorkspace()
 {
     auto ws = static_cast<win::wayland::space*>(workspace());
 
@@ -402,7 +400,7 @@ void WaylandServer::initWorkspace()
     });
 }
 
-void WaylandServer::initScreenLocker()
+void server::initScreenLocker()
 {
     if (!hasScreenLockerIntegration()) {
         return;
@@ -454,14 +452,14 @@ void WaylandServer::initScreenLocker()
                 ScreenLocker::KSldApp::self()->setWaylandFd(-1);
             });
 
-    if (flags(m_initFlags & wayland_start_options::lock_screen)) {
+    if (flags(m_initFlags & start_options::lock_screen)) {
         ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
     }
 
     Q_EMIT screenlocker_initialized();
 }
 
-WaylandServer::SocketPairConnection WaylandServer::createConnection()
+server::SocketPairConnection server::createConnection()
 {
     SocketPairConnection ret;
     int sx[2];
@@ -474,7 +472,7 @@ WaylandServer::SocketPairConnection WaylandServer::createConnection()
     return ret;
 }
 
-int WaylandServer::createScreenLockerConnection()
+int server::createScreenLockerConnection()
 {
     const auto socket = createConnection();
     if (!socket.connection) {
@@ -487,7 +485,7 @@ int WaylandServer::createScreenLockerConnection()
     return socket.fd;
 }
 
-int WaylandServer::createXWaylandConnection()
+int server::createXWaylandConnection()
 {
     const auto socket = createConnection();
     if (!socket.connection) {
@@ -501,7 +499,7 @@ int WaylandServer::createXWaylandConnection()
     return socket.fd;
 }
 
-void WaylandServer::destroyXWaylandConnection()
+void server::destroyXWaylandConnection()
 {
     if (!m_xwayland.client) {
         return;
@@ -511,14 +509,14 @@ void WaylandServer::destroyXWaylandConnection()
     m_xwayland.client = nullptr;
 }
 
-void WaylandServer::createDrmLeaseDevice()
+void server::createDrmLeaseDevice()
 {
     if (!drm_lease_device()) {
         globals->drm_lease_device_v1 = m_display->createDrmLeaseDeviceV1();
     }
 }
 
-void WaylandServer::create_addons(std::function<void()> callback)
+void server::create_addons(std::function<void()> callback)
 {
     auto handle_client_created = [this, callback](auto client_created) {
         initWorkspace();
@@ -530,7 +528,7 @@ void WaylandServer::create_addons(std::function<void()> callback)
     createInternalConnection(handle_client_created);
 }
 
-void WaylandServer::createInternalConnection(std::function<void(bool)> callback)
+void server::createInternalConnection(std::function<void(bool)> callback)
 {
     const auto socket = createConnection();
     if (!socket.connection) {
@@ -587,7 +585,7 @@ void WaylandServer::createInternalConnection(std::function<void(bool)> callback)
     m_internalConnection.client->establishConnection();
 }
 
-void WaylandServer::dispatch()
+void server::dispatch()
 {
     if (!m_display) {
         return;
@@ -598,7 +596,7 @@ void WaylandServer::dispatch()
     m_display->dispatchEvents(0);
 }
 
-bool WaylandServer::is_screen_locked() const
+bool server::is_screen_locked() const
 {
     if (!hasScreenLockerIntegration()) {
         return false;
@@ -607,24 +605,24 @@ bool WaylandServer::is_screen_locked() const
         || ScreenLocker::KSldApp::self()->lockState() == ScreenLocker::KSldApp::AcquiringLock;
 }
 
-bool WaylandServer::hasScreenLockerIntegration() const
+bool server::hasScreenLockerIntegration() const
 {
-    return !(m_initFlags & wayland_start_options::no_lock_screen_integration);
+    return !(m_initFlags & start_options::no_lock_screen_integration);
 }
 
-bool WaylandServer::hasGlobalShortcutSupport() const
+bool server::hasGlobalShortcutSupport() const
 {
-    return !(m_initFlags & wayland_start_options::no_global_shortcuts);
+    return !(m_initFlags & start_options::no_global_shortcuts);
 }
 
-void WaylandServer::simulateUserActivity()
+void server::simulateUserActivity()
 {
     if (globals->kde_idle) {
         globals->kde_idle->simulateUserActivity();
     }
 }
 
-void WaylandServer::updateKeyState(input::keyboard_leds leds)
+void server::updateKeyState(input::keyboard_leds leds)
 {
     if (!globals->key_state) {
         return;

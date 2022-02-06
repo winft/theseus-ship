@@ -77,7 +77,7 @@ namespace KWin::input::wayland
 using Wrapland::Server::input_method_keyboard_grab_v2;
 using Wrapland::Server::input_method_popup_surface_v2;
 
-input_method::input_method(WaylandServer* server)
+input_method::input_method(base::wayland::server* server)
 {
     auto seat = server->seat();
 

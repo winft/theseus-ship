@@ -359,7 +359,7 @@ void redirect::handle_keyboard_added(input::keyboard* keyboard)
     QObject::connect(keyboard->xkb.get(),
                      &xkb::keyboard::leds_changed,
                      waylandServer(),
-                     &WaylandServer::updateKeyState);
+                     &base::wayland::server::updateKeyState);
     QObject::connect(keyboard->xkb.get(),
                      &xkb::keyboard::leds_changed,
                      platform,
