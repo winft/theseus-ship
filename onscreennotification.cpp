@@ -1,24 +1,9 @@
 /*
- * Copyright 2016  Martin Graesslin <mgraesslin@kde.org>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License or (at your option) version 3 or any later version
- * accepted by the membership of KDE e.V. (or its successor approved
- * by the membership of KDE e.V.), which shall act as a proxy
- * defined in Section 14 of version 3 of the license.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
+    SPDX-FileCopyrightText: 2016 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "onscreennotification.h"
 #include "input/event.h"
 #include "input/event_spy.h"
@@ -28,12 +13,12 @@
 #include <input/pointer_redirect.h>
 
 #include <QPropertyAnimation>
-#include <QStandardPaths>
-#include <QTimer>
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickWindow>
+#include <QStandardPaths>
+#include <QTimer>
 
 #include <KConfigGroup>
 
@@ -44,14 +29,15 @@ using namespace KWin;
 class KWin::OnScreenNotificationInputEventSpy : public input::event_spy
 {
 public:
-    explicit OnScreenNotificationInputEventSpy(OnScreenNotification *parent);
+    explicit OnScreenNotificationInputEventSpy(OnScreenNotification* parent);
 
     void motion(input::motion_event const& event) override;
+
 private:
-    OnScreenNotification *m_parent;
+    OnScreenNotification* m_parent;
 };
 
-OnScreenNotificationInputEventSpy::OnScreenNotificationInputEventSpy(OnScreenNotification *parent)
+OnScreenNotificationInputEventSpy::OnScreenNotificationInputEventSpy(OnScreenNotification* parent)
     : m_parent(parent)
 {
 }
@@ -62,29 +48,27 @@ void OnScreenNotificationInputEventSpy::motion([[maybe_unused]] input::motion_ev
     m_parent->setContainsPointer(m_parent->geometry().contains(pos.toPoint()));
 }
 
-
-OnScreenNotification::OnScreenNotification(QObject *parent)
+OnScreenNotification::OnScreenNotification(QObject* parent)
     : QObject(parent)
     , m_timer(new QTimer(this))
 {
     m_timer->setSingleShot(true);
-    connect(m_timer, &QTimer::timeout, this, std::bind(&OnScreenNotification::setVisible, this, false));
-    connect(this, &OnScreenNotification::visibleChanged, this,
-        [this] {
-            if (m_visible) {
-                show();
-            } else {
-                m_timer->stop();
-                m_spy.reset();
-                m_containsPointer = false;
-            }
+    connect(
+        m_timer, &QTimer::timeout, this, std::bind(&OnScreenNotification::setVisible, this, false));
+    connect(this, &OnScreenNotification::visibleChanged, this, [this] {
+        if (m_visible) {
+            show();
+        } else {
+            m_timer->stop();
+            m_spy.reset();
+            m_containsPointer = false;
         }
-    );
+    });
 }
 
 OnScreenNotification::~OnScreenNotification()
 {
-    if (QQuickWindow *w = qobject_cast<QQuickWindow*>(m_mainItem.data())) {
+    if (QQuickWindow* w = qobject_cast<QQuickWindow*>(m_mainItem.data())) {
         w->hide();
         w->destroy();
     }
@@ -95,7 +79,7 @@ void OnScreenNotification::setConfig(KSharedConfigPtr config)
     m_config = config;
 }
 
-void OnScreenNotification::setEngine(QQmlEngine *engine)
+void OnScreenNotification::setEngine(QQmlEngine* engine)
 {
     m_qmlEngine = engine;
 }
@@ -119,7 +103,7 @@ QString OnScreenNotification::message() const
     return m_message;
 }
 
-void OnScreenNotification::setMessage(const QString &message)
+void OnScreenNotification::setMessage(const QString& message)
 {
     if (m_message == message) {
         return;
@@ -133,7 +117,7 @@ QString OnScreenNotification::iconName() const
     return m_iconName;
 }
 
-void OnScreenNotification::setIconName(const QString &iconName)
+void OnScreenNotification::setIconName(const QString& iconName)
 {
     if (m_iconName == iconName) {
         return;
@@ -185,8 +169,11 @@ void OnScreenNotification::ensureQmlComponent()
         return;
     }
     m_qmlComponent.reset(new QQmlComponent(m_qmlEngine));
-    const QString fileName = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                                m_config->group(QStringLiteral("OnScreenNotification")).readEntry("QmlPath", QStringLiteral(KWIN_NAME "/onscreennotification/plasma/main.qml")));
+    const QString fileName = QStandardPaths::locate(
+        QStandardPaths::GenericDataLocation,
+        m_config->group(QStringLiteral("OnScreenNotification"))
+            .readEntry("QmlPath",
+                       QStringLiteral(KWIN_NAME "/onscreennotification/plasma/main.qml")));
     if (fileName.isEmpty()) {
         return;
     }
@@ -216,7 +203,7 @@ void OnScreenNotification::createInputSpy()
 
 QRect OnScreenNotification::geometry() const
 {
-    if (QQuickWindow *w = qobject_cast<QQuickWindow*>(m_mainItem.data())) {
+    if (QQuickWindow* w = qobject_cast<QQuickWindow*>(m_mainItem.data())) {
         return w->geometry();
     }
     return QRect();
@@ -231,13 +218,14 @@ void OnScreenNotification::setContainsPointer(bool contains)
     if (!m_animation) {
         return;
     }
-    m_animation->setDirection(m_containsPointer ? QAbstractAnimation::Forward : QAbstractAnimation::Backward);
+    m_animation->setDirection(m_containsPointer ? QAbstractAnimation::Forward
+                                                : QAbstractAnimation::Backward);
     m_animation->start();
 }
 
 void OnScreenNotification::setSkipCloseAnimation(bool skip)
 {
-    if (QQuickWindow *w = qobject_cast<QQuickWindow*>(m_mainItem.data())) {
+    if (QQuickWindow* w = qobject_cast<QQuickWindow*>(m_mainItem.data())) {
         w->setProperty("KWIN_SKIP_CLOSE_ANIMATION", skip);
     }
 }
