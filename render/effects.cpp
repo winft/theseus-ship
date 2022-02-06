@@ -1761,11 +1761,11 @@ void effects_handler_impl::showOnScreenMessage(const QString& message, const QSt
 
 void effects_handler_impl::hideOnScreenMessage(OnScreenMessageHideFlags flags)
 {
-    OSD::HideFlags osdFlags;
+    OSD::osd_hide_flags internal_flags{};
     if (flags.testFlag(OnScreenMessageHideFlag::SkipsCloseAnimation)) {
-        osdFlags |= OSD::HideFlag::SkipCloseAnimation;
+        internal_flags |= OSD::osd_hide_flags::skip_close_animation;
     }
-    OSD::hide(osdFlags);
+    OSD::hide(internal_flags);
 }
 
 KSharedConfigPtr effects_handler_impl::config() const
