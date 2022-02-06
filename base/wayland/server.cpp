@@ -6,11 +6,11 @@
 */
 #include "server.h"
 
+#include "filtered_display.h"
 #include "output_helpers.h"
 
 #include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
-#include "service_utils.h"
 #include "wayland_logging.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/space.h"
@@ -28,123 +28,18 @@
 
 #include <Wrapland/Server/client.h>
 #include <Wrapland/Server/display.h>
-#include <Wrapland/Server/filtered_display.h>
 #include <Wrapland/Server/globals.h>
 #include <Wrapland/Server/surface.h>
 
-#include <QCryptographicHash>
-#include <QFile>
-#include <QThread>
-
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-
 #include <KScreenLocker/KsldApp>
+#include <QThread>
+#include <sys/socket.h>
 
 namespace KWin::base::wayland
 {
 
-class KWinDisplay : public Wrapland::Server::FilteredDisplay
-{
-public:
-    KWinDisplay()
-        : Wrapland::Server::FilteredDisplay()
-    {
-    }
-
-    static QByteArray sha256(const QString& fileName)
-    {
-        QFile f(fileName);
-        if (f.open(QFile::ReadOnly)) {
-            QCryptographicHash hash(QCryptographicHash::Sha256);
-            if (hash.addData(&f)) {
-                return hash.result();
-            }
-        }
-        return QByteArray();
-    }
-
-    bool isTrustedOrigin(Wrapland::Server::Client* client) const
-    {
-        const auto fullPathSha = sha256(QString::fromStdString(client->executablePath()));
-        const auto localSha = sha256(QLatin1String("/proc/") + QString::number(client->processId())
-                                     + QLatin1String("/exe"));
-        const bool trusted = !localSha.isEmpty() && fullPathSha == localSha;
-
-        if (!trusted) {
-            qCWarning(KWIN_WL) << "Could not trust" << client->executablePath().c_str() << "sha"
-                               << localSha << fullPathSha;
-        }
-
-        return trusted;
-    }
-
-    QStringList fetchRequestedInterfaces(Wrapland::Server::Client* client) const
-    {
-        return KWin::fetchRequestedInterfaces(client->executablePath().c_str());
-    }
-
-    const QSet<QByteArray> interfacesBlackList = {"org_kde_kwin_remote_access_manager",
-                                                  "org_kde_plasma_window_management",
-                                                  "org_kde_kwin_fake_input",
-                                                  "org_kde_kwin_keystate"};
-    QSet<QString> m_reported;
-
-    bool allowInterface(Wrapland::Server::Client* client, const QByteArray& interfaceName) override
-    {
-        if (client->processId() == getpid()) {
-            return true;
-        }
-
-        if (!interfacesBlackList.contains(interfaceName)) {
-            return true;
-        }
-
-        if (client->executablePath().empty()) {
-            qCDebug(KWIN_WL) << "Could not identify process with pid" << client->processId();
-            return false;
-        }
-
-        {
-            auto requestedInterfaces = client->property("requestedInterfaces");
-            if (requestedInterfaces.isNull()) {
-                requestedInterfaces = fetchRequestedInterfaces(client);
-                client->setProperty("requestedInterfaces", requestedInterfaces);
-            }
-            if (!requestedInterfaces.toStringList().contains(QString::fromUtf8(interfaceName))) {
-                if (KWIN_WL().isDebugEnabled()) {
-                    const QString id = QString::fromStdString(client->executablePath())
-                        + QLatin1Char('|') + QString::fromUtf8(interfaceName);
-                    if (!m_reported.contains({id})) {
-                        m_reported.insert(id);
-                        qCDebug(KWIN_WL)
-                            << "Interface" << interfaceName << "not in X-KDE-Wayland-Interfaces of"
-                            << client->executablePath().c_str();
-                    }
-                }
-                return false;
-            }
-        }
-
-        {
-            auto trustedOrigin = client->property("isPrivileged");
-            if (trustedOrigin.isNull()) {
-                trustedOrigin = isTrustedOrigin(client);
-                client->setProperty("isPrivileged", trustedOrigin);
-            }
-
-            if (!trustedOrigin.toBool()) {
-                return false;
-            }
-        }
-        qCDebug(KWIN_WL) << "authorized" << client->executablePath().c_str() << interfaceName;
-        return true;
-    }
-};
-
 server::server(start_options flags)
-    : display(std::make_unique<KWinDisplay>())
+    : display(std::make_unique<filtered_display>())
     , globals{std::make_unique<Wrapland::Server::globals>()}
     , m_initFlags{flags}
 
