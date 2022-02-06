@@ -84,7 +84,7 @@ PlatformCursorImage loadReferenceThemeCursor(const T& shape)
 
     auto bufferId = Wrapland::Client::Buffer::getId(b);
     auto wlResource = waylandServer()->internal_connection.server->getResource(bufferId);
-    auto buffer = Wrapland::Server::Buffer::get(waylandServer()->display(), wlResource);
+    auto buffer = Wrapland::Server::Buffer::get(waylandServer()->display.get(), wlResource);
     if (!buffer) {
         return PlatformCursorImage{};
     }

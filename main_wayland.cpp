@@ -200,7 +200,7 @@ void ApplicationWayland::start()
         setOperationMode(OperationModeXwayland);
     }
 
-    base = std::make_unique<base::backend::wlroots::platform>(waylandServer()->display());
+    base = std::make_unique<base::backend::wlroots::platform>(waylandServer()->display.get());
 
     base->render = std::make_unique<render::backend::wlroots::platform>(*base);
     auto render = static_cast<render::backend::wlroots::platform*>(base->render.get());
@@ -517,7 +517,7 @@ int main(int argc, char * argv[])
         return 1;
     }
 
-    if (auto const& name = a.server->display()->socket_name(); !name.empty()) {
+    if (auto const& name = a.server->display->socket_name(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
     }
 

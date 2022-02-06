@@ -76,8 +76,6 @@ public:
 
     void terminateClientConnections();
 
-    Wrapland::Server::Display* display() const;
-
     Wrapland::Server::Compositor* compositor() const;
     Wrapland::Server::Subcompositor* subcompositor() const;
     Wrapland::Server::LinuxDmabufV1* linux_dmabuf();
@@ -161,6 +159,7 @@ public:
     void simulateUserActivity();
     void updateKeyState(input::keyboard_leds leds);
 
+    std::unique_ptr<Wrapland::Server::Display> display;
     std::unique_ptr<Wrapland::Server::globals> globals;
 
     struct {
@@ -193,8 +192,6 @@ private:
     template<class T>
     void createSurface(T* surface);
     void initScreenLocker();
-
-    std::unique_ptr<Wrapland::Server::Display> m_display;
 
     struct {
         Wrapland::Server::Client* client = nullptr;

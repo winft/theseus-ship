@@ -247,7 +247,7 @@ void output::init_interfaces(std::string const& name,
                              Wrapland::Server::Output::Mode* current_mode)
 {
     Q_ASSERT(!m_output);
-    m_output = std::make_unique<Wrapland::Server::Output>(waylandServer()->display());
+    m_output = std::make_unique<Wrapland::Server::Output>(waylandServer()->display.get());
 
     m_output->set_name(name);
     m_output->set_make(make);

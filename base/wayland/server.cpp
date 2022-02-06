@@ -145,7 +145,7 @@ public:
 
 server::server(start_options flags)
     : globals{std::make_unique<Wrapland::Server::globals>()}
-    , m_display(std::make_unique<KWinDisplay>())
+    , display(std::make_unique<KWinDisplay>())
     , m_initFlags{flags}
 
 {
@@ -156,8 +156,8 @@ server::server(std::string const& socket, start_options flags)
     : server(flags)
 
 {
-    m_display->set_socket_name(socket);
-    m_display->start(Wrapland::Server::Display::StartMode::ConnectToSocket);
+    display->set_socket_name(socket);
+    display->start(Wrapland::Server::Display::StartMode::ConnectToSocket);
     create_globals();
 }
 
@@ -165,8 +165,8 @@ server::server(int socket_fd, start_options flags)
     : server(flags)
 
 {
-    m_display->add_socket_fd(socket_fd);
-    m_display->start(Wrapland::Server::Display::StartMode::ConnectClientsOnly);
+    display->add_socket_fd(socket_fd);
+    display->start(Wrapland::Server::Display::StartMode::ConnectClientsOnly);
     create_globals();
 }
 
@@ -207,49 +207,49 @@ void server::terminateClientConnections()
 {
     destroyInternalConnection();
 
-    for (auto client : m_display->clients()) {
+    for (auto client : display->clients()) {
         client->destroy();
     }
 }
 
 void server::create_globals()
 {
-    if (!m_display->running()) {
+    if (!display->running()) {
         qCCritical(KWIN_WL) << "Wayland server failed to start.";
         throw std::exception();
     }
 
-    globals->compositor = m_display->createCompositor();
-    globals->xdg_shell = m_display->createXdgShell();
+    globals->compositor = display->createCompositor();
+    globals->xdg_shell = display->createXdgShell();
 
-    globals->xdg_decoration_manager = m_display->createXdgDecorationManager(xdg_shell());
-    m_display->createShm();
-    globals->seats.push_back(m_display->createSeat());
+    globals->xdg_decoration_manager = display->createXdgDecorationManager(xdg_shell());
+    display->createShm();
+    globals->seats.push_back(display->createSeat());
 
-    globals->pointer_gestures_v1 = m_display->createPointerGestures();
-    globals->pointer_constraints_v1 = m_display->createPointerConstraints();
-    globals->data_device_manager = m_display->createDataDeviceManager();
-    globals->primary_selection_device_manager = m_display->createPrimarySelectionDeviceManager();
-    globals->data_control_manager_v1 = m_display->create_data_control_manager_v1();
-    globals->kde_idle = m_display->createIdle();
-    globals->idle_inhibit_manager_v1 = m_display->createIdleInhibitManager();
+    globals->pointer_gestures_v1 = display->createPointerGestures();
+    globals->pointer_constraints_v1 = display->createPointerConstraints();
+    globals->data_device_manager = display->createDataDeviceManager();
+    globals->primary_selection_device_manager = display->createPrimarySelectionDeviceManager();
+    globals->data_control_manager_v1 = display->create_data_control_manager_v1();
+    globals->kde_idle = display->createIdle();
+    globals->idle_inhibit_manager_v1 = display->createIdleInhibitManager();
 
-    globals->plasma_shell = m_display->createPlasmaShell();
-    globals->appmenu_manager = m_display->createAppmenuManager();
+    globals->plasma_shell = display->createPlasmaShell();
+    globals->appmenu_manager = display->createAppmenuManager();
 
     globals->server_side_decoration_palette_manager
-        = m_display->createServerSideDecorationPaletteManager();
-    globals->plasma_window_manager = m_display->createPlasmaWindowManager();
+        = display->createServerSideDecorationPaletteManager();
+    globals->plasma_window_manager = display->createPlasmaWindowManager();
     globals->plasma_window_manager->setShowingDesktopState(
         Wrapland::Server::PlasmaWindowManager::ShowingDesktopState::Disabled);
 
-    globals->plasma_virtual_desktop_manager = m_display->createPlasmaVirtualDesktopManager();
+    globals->plasma_virtual_desktop_manager = display->createPlasmaVirtualDesktopManager();
     globals->plasma_window_manager->setVirtualDesktopManager(virtual_desktop_management());
 
-    globals->shadow_manager = m_display->createShadowManager();
-    globals->dpms_manager = m_display->createDpmsManager();
+    globals->shadow_manager = display->createShadowManager();
+    globals->dpms_manager = display->createDpmsManager();
 
-    globals->output_management_v1 = m_display->createOutputManagementV1();
+    globals->output_management_v1 = display->createOutputManagementV1();
     connect(globals->output_management_v1.get(),
             &Wrapland::Server::OutputManagementV1::configurationChangeRequested,
             this,
@@ -258,21 +258,16 @@ void server::create_globals()
                 base::wayland::request_outputs_change(base, config);
             });
 
-    globals->subcompositor = m_display->createSubCompositor();
-    globals->layer_shell_v1 = m_display->createLayerShellV1();
+    globals->subcompositor = display->createSubCompositor();
+    globals->layer_shell_v1 = display->createLayerShellV1();
 
-    globals->xdg_activation_v1 = m_display->createXdgActivationV1();
-    globals->xdg_foreign = m_display->createXdgForeign();
+    globals->xdg_activation_v1 = display->createXdgActivationV1();
+    globals->xdg_foreign = display->createXdgForeign();
 
-    globals->key_state = m_display->createKeyState();
-    globals->viewporter = m_display->createViewporter();
+    globals->key_state = display->createKeyState();
+    globals->viewporter = display->createViewporter();
 
-    globals->relative_pointer_manager_v1 = m_display->createRelativePointerManager();
-}
-
-Wrapland::Server::Display* server::display() const
-{
-    return m_display.get();
+    globals->relative_pointer_manager_v1 = display->createRelativePointerManager();
 }
 
 Wrapland::Server::Compositor* server::compositor() const
@@ -288,7 +283,7 @@ Wrapland::Server::Subcompositor* server::subcompositor() const
 Wrapland::Server::LinuxDmabufV1* server::linux_dmabuf()
 {
     if (!globals->linux_dmabuf_v1) {
-        globals->linux_dmabuf_v1 = m_display->createLinuxDmabuf();
+        globals->linux_dmabuf_v1 = display->createLinuxDmabuf();
     }
     return globals->linux_dmabuf_v1.get();
 }
@@ -359,7 +354,7 @@ Wrapland::Server::drm_lease_device_v1* server::drm_lease_device() const
 void server::create_presentation_manager()
 {
     Q_ASSERT(!globals->presentation_manager);
-    globals->presentation_manager = m_display->createPresentationManager();
+    globals->presentation_manager = display->createPresentationManager();
 }
 
 Wrapland::Server::Surface* server::findForeignParentForSurface(Wrapland::Server::Surface* surface)
@@ -426,7 +421,7 @@ void server::initScreenLocker()
                 }
                 ScreenLocker::KSldApp::self()->setWaylandFd(clientFd);
 
-                for (auto* seat : m_display->seats()) {
+                for (auto* seat : display->seats()) {
                     connect(seat,
                             &Wrapland::Server::Seat::timestampChanged,
                             screenLockerApp,
@@ -444,7 +439,7 @@ void server::initScreenLocker()
                     m_screenLockerClientConnection = nullptr;
                 }
 
-                for (auto* seat : m_display->seats()) {
+                for (auto* seat : display->seats()) {
                     disconnect(seat,
                                &Wrapland::Server::Seat::timestampChanged,
                                screenLockerApp,
@@ -468,7 +463,7 @@ server::SocketPairConnection server::createConnection()
         qCWarning(KWIN_WL) << "Could not create socket";
         return ret;
     }
-    ret.connection = m_display->createClient(sx[0]);
+    ret.connection = display->createClient(sx[0]);
     ret.fd = sx[1];
     return ret;
 }
@@ -513,7 +508,7 @@ void server::destroyXWaylandConnection()
 void server::createDrmLeaseDevice()
 {
     if (!drm_lease_device()) {
-        globals->drm_lease_device_v1 = m_display->createDrmLeaseDeviceV1();
+        globals->drm_lease_device_v1 = display->createDrmLeaseDeviceV1();
     }
 }
 
@@ -588,13 +583,13 @@ void server::createInternalConnection(std::function<void(bool)> callback)
 
 void server::dispatch()
 {
-    if (!m_display) {
+    if (!display) {
         return;
     }
     if (internal_connection.server) {
         internal_connection.server->flush();
     }
-    m_display->dispatchEvents(0);
+    display->dispatchEvents(0);
 }
 
 bool server::is_screen_locked() const

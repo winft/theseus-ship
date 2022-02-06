@@ -101,8 +101,7 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     QVERIFY(win::decoration(c));
 
     // destroy physical size
-    Wrapland::Server::Display* display = waylandServer()->display();
-    auto output = display->outputs().front()->output();
+    auto output = waylandServer()->display->outputs().front()->output();
     output->set_physical_size(QSize(0, 0));
 
     // and fake a cursor theme change, so that the theme gets recreated

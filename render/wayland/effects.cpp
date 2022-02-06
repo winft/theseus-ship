@@ -57,7 +57,7 @@ EffectWindow* effects_handler_impl::find_window_by_surface(Wrapland::Server::Sur
 
 Wrapland::Server::Display* effects_handler_impl::waylandDisplay() const
 {
-    return waylandServer()->display();
+    return waylandServer()->display.get();
 }
 
 }

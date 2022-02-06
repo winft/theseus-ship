@@ -166,7 +166,7 @@ void redirect::setup_workspace()
 
     setup_devices();
 
-    fake_input = waylandServer()->display()->createFakeInput();
+    fake_input = waylandServer()->display->createFakeInput();
     QObject::connect(fake_input.get(),
                      &Wrapland::Server::FakeInput::deviceCreated,
                      this,

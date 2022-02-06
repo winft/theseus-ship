@@ -30,12 +30,12 @@ void init_egl(Backend& backend, egl_data& egl)
             eglGetProcAddress("eglUnbindWaylandDisplayWL"));
 
         // only bind if not already done
-        if (auto wl_display = waylandServer()->display();
-            wl_display->eglDisplay() != backend.data.base.display) {
-            if (!egl.bind_wl_display(backend.data.base.display, wl_display->native())) {
+        if (auto&& display = waylandServer()->display;
+            display->eglDisplay() != backend.data.base.display) {
+            if (!egl.bind_wl_display(backend.data.base.display, display->native())) {
                 egl.unbind_wl_display = nullptr;
             } else {
-                wl_display->setEglDisplay(backend.data.base.display);
+                display->setEglDisplay(backend.data.base.display);
             }
         }
     }
@@ -49,7 +49,7 @@ void unbind_egl_display(Backend& backend, egl_data const& egl)
 {
     if (egl.unbind_wl_display && backend.data.base.display != EGL_NO_DISPLAY) {
         egl.unbind_wl_display(backend.data.base.display,
-                              kwinApp()->get_wayland_server()->display()->native());
+                              kwinApp()->get_wayland_server()->display->native());
     }
 }
 

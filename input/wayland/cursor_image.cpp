@@ -444,7 +444,7 @@ void cursor_image::loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Ima
         waylandServer()->internal_connection.client->flush();
         waylandServer()->dispatch();
         auto buffer = Wrapland::Server::Buffer::get(
-            waylandServer()->display(),
+            waylandServer()->display.get(),
             waylandServer()->internal_connection.server->getResource(
                 Wrapland::Client::Buffer::getId(b)));
         if (!buffer) {

@@ -21,7 +21,7 @@ void update_surface_outputs(Win* win)
 {
     std::vector<Wrapland::Server::Output*> surface_outputs;
 
-    auto const outputs = waylandServer()->display()->outputs();
+    auto const outputs = waylandServer()->display->outputs();
     for (auto output : outputs) {
         if (win->frameGeometry().intersects(output->output()->geometry().toRect())) {
             surface_outputs.push_back(output->output());

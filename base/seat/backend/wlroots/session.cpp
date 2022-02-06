@@ -79,7 +79,7 @@ void session::take_control()
 {
     // TODO(romangg): assert instead?
     if (!native) {
-        native = wlr_session_create(waylandServer()->display()->native());
+        native = wlr_session_create(waylandServer()->display->native());
         if (!native) {
             // TODO(romangg): error handling?
             qCCritical(KWIN_WL) << "Could not take control.";
