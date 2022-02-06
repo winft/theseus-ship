@@ -7,9 +7,9 @@
 
 #include "egl_data.h"
 
+#include "base/wayland/server.h"
 #include "main.h"
 #include "render/gl/egl_dmabuf.h"
-#include "wayland_server.h"
 
 #include <Wrapland/Server/display.h>
 

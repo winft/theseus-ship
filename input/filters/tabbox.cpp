@@ -8,6 +8,7 @@
 
 #include "helpers.h"
 
+#include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
@@ -15,7 +16,6 @@
 #include "input/xkb/helpers.h"
 #include "main.h"
 #include "tabbox/tabbox.h"
-#include "wayland_server.h"
 #include "workspace.h"
 
 #include <Wrapland/Server/seat.h>

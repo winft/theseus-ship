@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/backend/wlroots/platform.h"
 #include "base/seat/backend/wlroots/session.h"
+#include "base/wayland/server.h"
 #include "debug/console/wayland/wayland_console.h"
 #include "render/backend/wlroots/platform.h"
 #include "render/effects.h"
@@ -34,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/wayland/redirect.h"
 #include "input/dbus/tablet_mode_manager.h"
 #include "scripting/platform.h"
-#include "wayland_server.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
 

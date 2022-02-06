@@ -8,12 +8,11 @@
 
 #include "device_redirect.h"
 
+#include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/event_filter.h"
 #include "input/event_spy.h"
-
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "workspace.h"
 
 #include <cassert>

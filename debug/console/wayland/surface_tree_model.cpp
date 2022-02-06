@@ -6,8 +6,8 @@
 */
 #include "surface_tree_model.h"
 
+#include "base/wayland/server.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"

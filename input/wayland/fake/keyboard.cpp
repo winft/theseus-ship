@@ -5,10 +5,10 @@
 */
 #include "keyboard.h"
 
+#include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
 #include "input/redirect.h"
 #include "main.h"
-#include "wayland_server.h"
 
 #include <Wrapland/Server/fake_input.h>
 

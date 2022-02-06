@@ -19,17 +19,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "render/effects.h"
 #include "screens.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/deco.h"
 #include "win/internal_window.h"
 #include "win/move.h"
 #include "win/net.h"
 #include "win/x11/stacking_tree.h"
+#include "workspace.h"
 
 #include <QPainter>
 #include <QRasterWindow>

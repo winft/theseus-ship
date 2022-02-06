@@ -10,7 +10,6 @@
 
 #include "screenlockerwatcher.h"
 #include "screens.h"
-#include "wayland_server.h"
 
 #include "input/backend/wlroots/keyboard.h"
 #include "input/backend/wlroots/pointer.h"

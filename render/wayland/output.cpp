@@ -11,11 +11,11 @@
 
 #include "base/wayland/output.h"
 #include "base/wayland/platform.h"
+#include "base/wayland/server.h"
 #include "debug/perf/ftrace.h"
 #include "render/gl/scene.h"
 #include "render/platform.h"
 #include "wayland_logging.h"
-#include "wayland_server.h"
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
 #include "workspace.h"

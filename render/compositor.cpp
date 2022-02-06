@@ -13,12 +13,12 @@
 #include "../utils.h"
 #include "base/output.h"
 #include "base/platform.h"
+#include "base/wayland/server.h"
 #include "cursor.h"
 #include "debug/perf/ftrace.h"
 #include "render/dbus/compositing.h"
 #include "scene.h"
 #include "screens.h"
-#include "wayland_server.h"
 #include "workspace.h"
 
 #include "win/net.h"

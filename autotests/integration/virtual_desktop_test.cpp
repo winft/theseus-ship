@@ -6,9 +6,9 @@
 */
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "main.h"
 #include "screens.h"
-#include "wayland_server.h"
 #include "win/screen.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/window.h"

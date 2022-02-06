@@ -19,15 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/move.h"
 #include "win/x11/window.h"
+#include "workspace.h"
 
 #include <KConfigGroup>
 

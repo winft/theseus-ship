@@ -19,12 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "screens.h"
 #include "scripting/platform.h"
 #include "scripting/script.h"
 #include "useractions.h"
-#include "wayland_server.h"
 #include "win/control.h"
 #include "win/move.h"
 #include "win/virtual_desktops.h"

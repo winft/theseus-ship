@@ -19,13 +19,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "libkwineffects/anidata_p.h"
-#include "scripting/effect.h"
-
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
-#include "wayland_server.h"
+#include "scripting/effect.h"
 #include "win/stacking.h"
 #include "win/virtual_desktops.h"
 #include "workspace.h"

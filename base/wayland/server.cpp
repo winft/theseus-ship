@@ -4,11 +4,12 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "wayland_server.h"
+#include "server.h"
+
+#include "output_helpers.h"
 
 #include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
-#include "base/wayland/output_helpers.h"
 #include "service_utils.h"
 #include "wayland_logging.h"
 #include "win/virtual_desktops.h"

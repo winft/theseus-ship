@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "render/platform.h"
 #include "render/post/constants.h"
 #include "render/post/night_color_manager.h"
-#include "wayland_server.h"
 
 #include <KConfigGroup>
 

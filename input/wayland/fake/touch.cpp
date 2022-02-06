@@ -5,11 +5,11 @@
 */
 #include "touch.h"
 
+#include "base/wayland/server.h"
 #include "input/platform.h"
 #include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
-#include "wayland_server.h"
 
 #include <Wrapland/Server/fake_input.h>
 

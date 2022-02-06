@@ -8,8 +8,8 @@
 
 #include "types.h"
 
+#include "base/wayland/server.h"
 #include "main.h"
-#include "wayland_server.h"
 
 #include <QtTest>
 #include <Wrapland/Client/xdg_shell.h>

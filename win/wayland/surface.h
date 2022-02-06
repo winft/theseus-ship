@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/wayland/server.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/surface.h>

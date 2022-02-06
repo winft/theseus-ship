@@ -20,8 +20,8 @@
 #include "xdg_shell.h"
 
 #include "base/wayland/idle_inhibition.h"
+#include "base/wayland/server.h"
 #include "screens.h"
-#include "wayland_server.h"
 #include "win/input.h"
 #include "win/screen.h"
 #include "win/setup.h"

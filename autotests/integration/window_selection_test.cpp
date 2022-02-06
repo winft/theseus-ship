@@ -19,15 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/wayland/device_redirect.h"
 #include "screens.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/wayland/window.h"
+#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/keyboard.h>

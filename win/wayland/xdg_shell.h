@@ -10,16 +10,15 @@
 #include "window.h"
 #include "window_release.h"
 
+#include "base/wayland/server.h"
+#include "render/compositor.h"
+#include "toplevel.h"
+#include "wayland_logging.h"
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/meta.h"
 #include "win/setup.h"
 #include "win/transient.h"
-
-#include "render/compositor.h"
-#include "toplevel.h"
-#include "wayland_logging.h"
-#include "wayland_server.h"
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/appmenu.h>

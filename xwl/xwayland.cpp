@@ -21,12 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xwayland.h"
 #include "data_bridge.h"
 
+#include "base/wayland/server.h"
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb_event_filter.h"
 #include "input/cursor.h"
 #include "main_wayland.h"
 #include "utils.h"
-#include "wayland_server.h"
 #include "win/wayland/space.h"
 #include "win/x11/space_setup.h"
 #include "workspace.h"

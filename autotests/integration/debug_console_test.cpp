@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "base/x11/xcb/window.h"
 #include "debug/console/wayland/wayland_console.h"
 #include "screens.h"
-#include "wayland_server.h"
 #include "win/control.h"
 #include "win/deco.h"
 #include "win/internal_window.h"

@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../input/wayland/redirect.h"
 #include "../../render/wayland/compositor.h"
 #include "../../screenlockerwatcher.h"
-#include "../../wayland_server.h"
 #include "../../win/wayland/space.h"
 #include "../../xwl/xwayland.h"
 #include "base/seat/backend/wlroots/session.h"

@@ -15,7 +15,7 @@
 
 #include "base/platform.h"
 #include "base/wayland/output.h"
-#include "wayland_server.h"
+#include "base/wayland/server.h"
 #include "win/input.h"
 #include "workspace.h"
 

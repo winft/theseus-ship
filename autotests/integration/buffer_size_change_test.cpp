@@ -19,9 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "generic_scene_opengl_test.h"
 
+#include "base/wayland/server.h"
 #include "render/compositor.h"
-#include "wayland_server.h"
-
 #include "win/wayland/window.h"
 
 #include <Wrapland/Client/subsurface.h>

@@ -8,13 +8,13 @@
 
 #include "helpers.h"
 
+#include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
 #include "input/qt_event.h"
 #include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 

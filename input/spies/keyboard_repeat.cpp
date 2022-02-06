@@ -7,11 +7,11 @@
 */
 #include "keyboard_repeat.h"
 
+#include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/keyboard.h"
 #include "input/xkb/keyboard.h"
 #include "main.h"
-#include "wayland_server.h"
 
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>

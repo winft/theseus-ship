@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/layout_manager.h"
-#include "wayland_server.h"
 #include "win/virtual_desktops.h"
 #include "workspace.h"
 

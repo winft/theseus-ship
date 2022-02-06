@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "sources.h"
 #include "types.h"
 
+#include "base/wayland/server.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "win/stacking_order.h"
 #include "workspace.h"
 

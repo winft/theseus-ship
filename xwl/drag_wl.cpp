@@ -22,10 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dnd.h"
 #include "mime.h"
 
-#include "wayland_server.h"
-#include "workspace.h"
-
+#include "base/wayland/server.h"
 #include "win/x11/window.h"
+#include "workspace.h"
 
 #include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>

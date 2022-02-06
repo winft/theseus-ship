@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "base/x11/xcb/proto.h"
 #include "input/cursor.h"
 #include "kwineffects.h"
 #include "screens.h"
-#include "wayland_server.h"
 #include "win/deco.h"
 #include "win/screen_edges.h"
 #include "win/wayland/window.h"

@@ -19,34 +19,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include <algorithm>
-
-#include <QByteArray>
-#include <QDir>
-#include <QObject>
-#include <QPair>
-#include <QVector>
-
-#include <KDecoration2/Decoration>
-#include <KDecoration2/DecorationShadow>
-
-#include <Wrapland/Client/shadow.h>
-#include <Wrapland/Client/shm_pool.h>
-#include <Wrapland/Client/surface.h>
-#include <Wrapland/Client/xdgdecoration.h>
-
-#include <Wrapland/Server/shadow.h>
-#include <Wrapland/Server/surface.h>
-
+#include "base/wayland/server.h"
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "render/shadow.h"
 #include "render/window.h"
-#include "wayland_server.h"
+#include "win/deco.h"
 #include "workspace.h"
 
-#include "win/deco.h"
+#include <KDecoration2/Decoration>
+#include <KDecoration2/DecorationShadow>
+#include <QByteArray>
+#include <QDir>
+#include <QObject>
+#include <QPair>
+#include <QVector>
+#include <Wrapland/Client/shadow.h>
+#include <Wrapland/Client/shm_pool.h>
+#include <Wrapland/Client/surface.h>
+#include <Wrapland/Client/xdgdecoration.h>
+#include <Wrapland/Server/shadow.h>
+#include <Wrapland/Server/surface.h>
+#include <algorithm>
 
 Q_DECLARE_METATYPE(KWin::WindowQuadList);
 

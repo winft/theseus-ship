@@ -5,8 +5,8 @@
 */
 #include "session.h"
 
+#include "base/wayland/server.h"
 #include "main.h"
-#include "wayland_server.h"
 
 #include <wayland_logging.h>
 

@@ -8,8 +8,8 @@
 #include "dpms.h"
 
 #include "base/wayland/output_helpers.h"
+#include "base/wayland/server.h"
 #include "main.h"
-#include "wayland_server.h"
 
 #include <QApplication>
 #include <QTimer>

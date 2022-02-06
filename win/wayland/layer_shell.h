@@ -14,11 +14,11 @@
 #include "win/transient.h"
 
 #include "base/wayland/output.h"
+#include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
 #include "input/redirect.h"
 #include "render/compositor.h"
 #include "screens.h"
-#include "wayland_server.h"
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/layer_shell_v1.h>

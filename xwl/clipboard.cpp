@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "selection_x11.h"
 #include "sources_ext.h"
 
-#include "wayland_server.h"
+#include "base/wayland/server.h"
 
 #include <Wrapland/Server/seat.h>
 

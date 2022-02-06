@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "wayland_server.h"
+#include "base/wayland/server.h"
 
 namespace KWin
 {

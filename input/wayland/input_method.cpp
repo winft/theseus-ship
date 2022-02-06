@@ -6,11 +6,11 @@
 */
 #include "input_method.h"
 
+#include "base/wayland/server.h"
 #include "input/filters/keyboard_grab.h"
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
 #include "render/compositor.h"
-#include "wayland_server.h"
 #include "win/scene.h"
 #include "win/transient.h"
 #include "win/wayland/popup_placement.h"

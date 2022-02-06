@@ -7,26 +7,24 @@
 #include "lib/app.h"
 
 #include "base/backend/wlroots/platform.h"
+#include "base/wayland/server.h"
 #include "input/dbus/keyboard_layouts_v2.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
-#include "wayland_server.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
 #include "workspace.h"
 
 #include <KConfigGroup>
 #include <KGlobalAccel>
-
-#include <Wrapland/Client/surface.h>
-
 #include <QAction>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDBusMessage>
 #include <QDBusMetaType>
 #include <QDBusPendingCall>
+#include <Wrapland/Client/surface.h>
 
 #include <linux/input.h>
 

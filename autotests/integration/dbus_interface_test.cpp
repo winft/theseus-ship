@@ -22,10 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "base/x11/atoms.h"
 #include "rules/rules.h"
 #include "screens.h"
-#include "wayland_server.h"
 #include "win/controlling.h"
 #include "win/move.h"
 #include "win/stacking.h"

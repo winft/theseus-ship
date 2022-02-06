@@ -19,19 +19,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "base/x11/atoms.h"
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "screens.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/meta.h"
 #include "win/stacking_order.h"
 #include "win/wayland/window.h"
 #include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
+#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 

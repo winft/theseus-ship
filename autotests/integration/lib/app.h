@@ -11,9 +11,9 @@
 
 #include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
+#include "base/wayland/server.h"
 #include "main.h"
 #include "render/backend/wlroots/platform.h"
-#include "wayland_server.h"
 
 #include <memory>
 #include <vector>

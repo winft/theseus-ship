@@ -8,6 +8,7 @@
 
 #include "redirect.h"
 
+#include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/event_filter.h"
 #include "input/event_spy.h"
@@ -16,10 +17,8 @@
 #include "input/spies/modifier_only_shortcuts.h"
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
-
 #include "main.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "win/stacking_order.h"
 #include "win/wayland/window.h"
 #include "workspace.h"

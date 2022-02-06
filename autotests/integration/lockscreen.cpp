@@ -20,12 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "render/compositor.h"
 #include "render/scene.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "win/screen_edges.h"
 #include "workspace.h"
 

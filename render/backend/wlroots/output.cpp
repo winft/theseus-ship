@@ -11,13 +11,13 @@
 #include "wlr_includes.h"
 
 #include "base/gamma_ramp.h"
+#include "base/wayland/server.h"
 #include "config-kwin.h"
 #include "main.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
 #include "render/wayland/presentation.h"
 #include "screens.h"
-#include "wayland_server.h"
 
 #include <chrono>
 #include <stdexcept>
