@@ -216,7 +216,7 @@ debug::console* ApplicationX11::create_debug_console()
 void ApplicationX11::start()
 {
     prepare_start();
-    screen_locker_watcher::self()->initialize();
+    kwinApp()->screen_locker_watcher->initialize();
 
     base.render = std::make_unique<render::backend::x11::platform>(base);
 

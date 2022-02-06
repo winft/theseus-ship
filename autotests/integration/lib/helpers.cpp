@@ -301,7 +301,8 @@ void lock_screen()
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(screen_locker_watcher::self(), &screen_locker_watcher::locked);
+    QSignalSpy lockWatcherSpy(kwinApp()->screen_locker_watcher.get(),
+                              &screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
@@ -312,7 +313,7 @@ void lock_screen()
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 2);
 
-    QVERIFY(screen_locker_watcher::self()->is_locked());
+    QVERIFY(kwinApp()->screen_locker_watcher->is_locked());
 }
 
 void unlock_screen()
@@ -320,7 +321,8 @@ void unlock_screen()
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(screen_locker_watcher::self(), &screen_locker_watcher::locked);
+    QSignalSpy lockWatcherSpy(kwinApp()->screen_locker_watcher.get(),
+                              &screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
     auto const children = ScreenLocker::KSldApp::self()->children();
@@ -352,7 +354,7 @@ void unlock_screen()
 
     QVERIFY(!kwinApp()->is_screen_locked());
 
-    QVERIFY(!screen_locker_watcher::self()->is_locked());
+    QVERIFY(!kwinApp()->screen_locker_watcher->is_locked());
 }
 
 void prepare_app_env(std::string const& qpa_plugin_path)

@@ -66,6 +66,8 @@ class platform;
 
 }
 
+class screen_locker_watcher;
+
 class KWIN_EXPORT Application : public  QApplication
 {
     Q_OBJECT
@@ -97,10 +99,6 @@ public:
          */
         OperationModeXwayland
     };
-
-    std::unique_ptr<base::seat::session> session;
-    std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
-    std::unique_ptr<input::platform> input;
 
     ~Application() override;
 
@@ -226,6 +224,11 @@ public:
 
     virtual base::wayland::server* get_wayland_server();
     virtual debug::console* create_debug_console() = 0;
+
+    std::unique_ptr<base::seat::session> session;
+    std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
+    std::unique_ptr<input::platform> input;
+    std::unique_ptr<KWin::screen_locker_watcher> screen_locker_watcher;
 
 Q_SIGNALS:
     void x11ConnectionChanged();

@@ -150,7 +150,7 @@ void Application::prepare_start()
         m_inputConfig = KSharedConfig::openConfig(QStringLiteral("kcminputrc"), KConfig::NoGlobals);
     }
 
-    screen_locker_watcher::create(this);
+    screen_locker_watcher = std::make_unique<KWin::screen_locker_watcher>();
 }
 
 Application::~Application()

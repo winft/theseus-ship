@@ -18,13 +18,10 @@
 namespace KWin
 {
 
-KWIN_SINGLETON_FACTORY(screen_locker_watcher)
-
 static QString const SCREEN_LOCKER_SERVICE_NAME = QStringLiteral("org.freedesktop.ScreenSaver");
 
-screen_locker_watcher::screen_locker_watcher(QObject* parent)
-    : QObject(parent)
-    , m_serviceWatcher{new QDBusServiceWatcher(this)}
+screen_locker_watcher::screen_locker_watcher()
+    : m_serviceWatcher{new QDBusServiceWatcher(this)}
 {
 }
 

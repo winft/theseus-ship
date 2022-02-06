@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include "kwinglobals.h"
+#include "kwin_export.h"
 
 #include <QObject>
 
@@ -22,10 +22,9 @@ class KWIN_EXPORT screen_locker_watcher : public QObject
 {
     Q_OBJECT
 public:
-    ~screen_locker_watcher() override = default;
+    screen_locker_watcher();
 
     void initialize();
-
     bool is_locked() const;
 
 Q_SIGNALS:
@@ -45,8 +44,6 @@ private:
     OrgKdeScreensaverInterface* m_kdeInterface{nullptr};
     QDBusServiceWatcher* m_serviceWatcher;
     bool m_locked{false};
-
-    KWIN_SINGLETON(screen_locker_watcher)
 };
 
 }

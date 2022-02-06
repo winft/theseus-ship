@@ -237,11 +237,11 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             &win::screen_edger::approaching,
             this,
             &EffectsHandler::screenEdgeApproaching);
-    connect(screen_locker_watcher::self(),
+    connect(kwinApp()->screen_locker_watcher.get(),
             &screen_locker_watcher::locked,
             this,
             &EffectsHandler::screenLockingChanged);
-    connect(screen_locker_watcher::self(),
+    connect(kwinApp()->screen_locker_watcher.get(),
             &screen_locker_watcher::about_to_lock,
             this,
             &EffectsHandler::screenAboutToLock);
@@ -1673,7 +1673,7 @@ QString effects_handler_impl::supportInformation(const QString& name) const
 
 bool effects_handler_impl::isScreenLocked() const
 {
-    return screen_locker_watcher::self()->is_locked();
+    return kwinApp()->screen_locker_watcher->is_locked();
 }
 
 QString effects_handler_impl::debug(const QString& name, const QString& parameter) const
