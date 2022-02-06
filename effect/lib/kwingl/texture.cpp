@@ -17,6 +17,8 @@
 
 #include "texture_p.h"
 
+#include <kwineffects/types.h>
+
 #include <QImage>
 #include <QMatrix4x4>
 #include <QPixmap>
@@ -510,6 +512,11 @@ void GLTexture::unbind()
 {
     Q_D(GLTexture);
     glBindTexture(d->m_target, 0);
+}
+
+void GLTexture::render(const QRect& rect)
+{
+    render(infiniteRegion(), rect, false);
 }
 
 void GLTexture::render(const QRegion& region, const QRect& rect, bool hardwareClipping)

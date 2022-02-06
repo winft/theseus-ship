@@ -782,7 +782,7 @@ void scene::paintEffectQuickView(EffectQuickView* w)
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     t->bind();
-    t->render(QRegion(infiniteRegion()), w->geometry());
+    t->render(w->geometry());
     t->unbind();
     glDisable(GL_BLEND);
 
