@@ -12,16 +12,16 @@
 
 #include <QQmlEngine>
 
-namespace KWin
-{
-namespace OSD
+namespace KWin::OSD
 {
 
 static OnScreenNotification* create()
 {
     auto osd = new OnScreenNotification(workspace());
+
     osd->setConfig(kwinApp()->config());
     osd->setEngine(workspace()->scripting->qmlEngine());
+
     return osd;
 }
 
@@ -31,12 +31,13 @@ static OnScreenNotification* osd()
     return s_osd;
 }
 
-void show(const QString& message, const QString& iconName, int timeout)
+void show(QString const& message, QString const& iconName, int timeout)
 {
     if (!kwinApp()->shouldUseWaylandForCompositing()) {
         // FIXME: only supported on Wayland
         return;
     }
+
     auto notification = osd();
     notification->setIconName(iconName);
     notification->setMessage(message);
@@ -44,12 +45,12 @@ void show(const QString& message, const QString& iconName, int timeout)
     notification->setVisible(true);
 }
 
-void show(const QString& message, int timeout)
+void show(QString const& message, int timeout)
 {
     show(message, QString(), timeout);
 }
 
-void show(const QString& message, const QString& iconName)
+void show(QString const& message, QString const& iconName)
 {
     show(message, iconName, 0);
 }
@@ -60,9 +61,9 @@ void hide(HideFlags flags)
         // FIXME: only supported on Wayland
         return;
     }
+
     osd()->setSkipCloseAnimation(flags.testFlag(HideFlag::SkipCloseAnimation));
     osd()->setVisible(false);
 }
 
-}
 }

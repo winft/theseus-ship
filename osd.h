@@ -4,20 +4,17 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_OSD_H
-#define KWIN_OSD_H
+#pragma once
 
 #include <QFlags>
 #include <QString>
 
-namespace KWin
-{
-namespace OSD
+namespace KWin::OSD
 {
 
-void show(const QString& message, const QString& iconName = QString());
-void show(const QString& message, int timeout);
-void show(const QString& message, const QString& iconName, int timeout);
+void show(QString const& message, QString const& iconName = QString());
+void show(QString const& message, int timeout);
+void show(QString const& message, QString const& iconName, int timeout);
 
 enum class HideFlag { SkipCloseAnimation = 1 };
 Q_DECLARE_FLAGS(HideFlags, HideFlag)
@@ -25,6 +22,3 @@ Q_DECLARE_FLAGS(HideFlags, HideFlag)
 void hide(HideFlags flags = HideFlags());
 
 }
-}
-
-#endif

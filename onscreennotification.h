@@ -4,17 +4,17 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_ONSCREENNOTIFICATION_H
-#define KWIN_ONSCREENNOTIFICATION_H
+#pragma once
 
 #include <QObject>
 
 #include <KSharedConfig>
+#include <memory>
 
 class QPropertyAnimation;
 class QTimer;
-class QQmlContext;
 class QQmlComponent;
+class QQmlContext;
 class QQmlEngine;
 
 namespace KWin
@@ -33,6 +33,7 @@ class OnScreenNotification : public QObject
 public:
     explicit OnScreenNotification(QObject* parent = nullptr);
     ~OnScreenNotification() override;
+
     bool isVisible() const;
     QString message() const;
     QString iconName() const;
@@ -62,19 +63,19 @@ private:
     void ensureQmlContext();
     void ensureQmlComponent();
     void createInputSpy();
-    bool m_visible = false;
+
+    bool m_visible{false};
     QString m_message;
     QString m_iconName;
     QTimer* m_timer;
     KSharedConfigPtr m_config;
-    QScopedPointer<QQmlContext> m_qmlContext;
-    QScopedPointer<QQmlComponent> m_qmlComponent;
-    QQmlEngine* m_qmlEngine = nullptr;
-    QScopedPointer<QObject> m_mainItem;
-    QScopedPointer<OnScreenNotificationInputEventSpy> m_spy;
-    QPropertyAnimation* m_animation = nullptr;
-    bool m_containsPointer = false;
+    std::unique_ptr<QQmlContext> m_qmlContext;
+    std::unique_ptr<QQmlComponent> m_qmlComponent;
+    QQmlEngine* m_qmlEngine{nullptr};
+    std::unique_ptr<QObject> m_mainItem;
+    std::unique_ptr<OnScreenNotificationInputEventSpy> m_spy;
+    QPropertyAnimation* m_animation{nullptr};
+    bool m_containsPointer{false};
 };
-}
 
-#endif // KWIN_ONSCREENNOTIFICATION_H
+}
