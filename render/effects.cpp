@@ -1756,16 +1756,16 @@ void effects_handler_impl::startInteractivePositionSelection(
 
 void effects_handler_impl::showOnScreenMessage(const QString& message, const QString& iconName)
 {
-    OSD::show(message, iconName);
+    win::osd_show(message, iconName);
 }
 
 void effects_handler_impl::hideOnScreenMessage(OnScreenMessageHideFlags flags)
 {
-    OSD::osd_hide_flags internal_flags{};
+    win::osd_hide_flags internal_flags{};
     if (flags.testFlag(OnScreenMessageHideFlag::SkipsCloseAnimation)) {
-        internal_flags |= OSD::osd_hide_flags::skip_close_animation;
+        internal_flags |= win::osd_hide_flags::skip_close_animation;
     }
-    OSD::hide(internal_flags);
+    win::osd_hide(internal_flags);
 }
 
 KSharedConfigPtr effects_handler_impl::config() const

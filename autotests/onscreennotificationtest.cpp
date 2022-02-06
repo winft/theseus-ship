@@ -47,11 +47,9 @@ void input::redirect::uninstallInputEventSpy(input::event_spy* spy)
 
 }
 
-using KWin::OnScreenNotification;
-
 void OnScreenNotificationTest::show()
 {
-    OnScreenNotification notification;
+    KWin::win::osd_notification notification;
     auto config = KSharedConfig::openConfig(QString(), KSharedConfig::SimpleConfig);
     KConfigGroup group = config->group("OnScreenNotification");
     group.writeEntry(QStringLiteral("QmlPath"), QString("/does/not/exist.qml"));
@@ -60,7 +58,7 @@ void OnScreenNotificationTest::show()
     notification.setEngine(new QQmlEngine(&notification));
     notification.setMessage(QStringLiteral("Some text so that we see it in the test"));
 
-    QSignalSpy visibleChangedSpy(&notification, &OnScreenNotification::visibleChanged);
+    QSignalSpy visibleChangedSpy(&notification, &KWin::win::osd_notification::visibleChanged);
     QCOMPARE(notification.isVisible(), false);
     notification.setVisible(true);
     QCOMPARE(notification.isVisible(), true);
@@ -91,8 +89,8 @@ void OnScreenNotificationTest::show()
 
 void OnScreenNotificationTest::timeout()
 {
-    OnScreenNotification notification;
-    QSignalSpy timeoutChangedSpy(&notification, &OnScreenNotification::timeoutChanged);
+    KWin::win::osd_notification notification;
+    QSignalSpy timeoutChangedSpy(&notification, &KWin::win::osd_notification::timeoutChanged);
     QCOMPARE(notification.timeout(), 0);
     notification.setTimeout(1000);
     QCOMPARE(notification.timeout(), 1000);
@@ -106,8 +104,8 @@ void OnScreenNotificationTest::timeout()
 
 void OnScreenNotificationTest::iconName()
 {
-    OnScreenNotification notification;
-    QSignalSpy iconNameChangedSpy(&notification, &OnScreenNotification::iconNameChanged);
+    KWin::win::osd_notification notification;
+    QSignalSpy iconNameChangedSpy(&notification, &KWin::win::osd_notification::iconNameChanged);
     QVERIFY(iconNameChangedSpy.isValid());
     QCOMPARE(notification.iconName(), QString());
     notification.setIconName(QStringLiteral("foo"));
@@ -122,8 +120,8 @@ void OnScreenNotificationTest::iconName()
 
 void OnScreenNotificationTest::message()
 {
-    OnScreenNotification notification;
-    QSignalSpy messageChangedSpy(&notification, &OnScreenNotification::messageChanged);
+    KWin::win::osd_notification notification;
+    QSignalSpy messageChangedSpy(&notification, &KWin::win::osd_notification::messageChanged);
     QVERIFY(messageChangedSpy.isValid());
     QCOMPARE(notification.message(), QString());
     notification.setMessage(QStringLiteral("foo"));

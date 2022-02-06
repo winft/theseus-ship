@@ -17,12 +17,12 @@ class QQmlComponent;
 class QQmlContext;
 class QQmlEngine;
 
-namespace KWin
+namespace KWin::win
 {
 
-class OnScreenNotificationInputEventSpy;
+class osd_notification_input_spy;
 
-class OnScreenNotification : public QObject
+class osd_notification : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
@@ -31,8 +31,8 @@ class OnScreenNotification : public QObject
     Q_PROPERTY(int timeout READ timeout WRITE setTimeout NOTIFY timeoutChanged)
 
 public:
-    explicit OnScreenNotification(QObject* parent = nullptr);
-    ~OnScreenNotification() override;
+    explicit osd_notification(QObject* parent = nullptr);
+    ~osd_notification() override;
 
     bool isVisible() const;
     QString message() const;
@@ -73,7 +73,7 @@ private:
     std::unique_ptr<QQmlComponent> m_qmlComponent;
     QQmlEngine* m_qmlEngine{nullptr};
     std::unique_ptr<QObject> m_mainItem;
-    std::unique_ptr<OnScreenNotificationInputEventSpy> m_spy;
+    std::unique_ptr<osd_notification_input_spy> m_spy;
     QPropertyAnimation* m_animation{nullptr};
     bool m_containsPointer{false};
 };

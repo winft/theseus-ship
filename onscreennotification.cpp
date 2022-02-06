@@ -25,39 +25,39 @@
 #include <cassert>
 #include <functional>
 
-namespace KWin
+namespace KWin::win
 {
 
-class OnScreenNotificationInputEventSpy : public input::event_spy
+class osd_notification_input_spy : public input::event_spy
 {
 public:
-    explicit OnScreenNotificationInputEventSpy(OnScreenNotification* parent);
+    explicit osd_notification_input_spy(osd_notification* parent);
 
     void motion(input::motion_event const& event) override;
 
 private:
-    OnScreenNotification* m_parent;
+    osd_notification* m_parent;
 };
 
-OnScreenNotificationInputEventSpy::OnScreenNotificationInputEventSpy(OnScreenNotification* parent)
+osd_notification_input_spy::osd_notification_input_spy(osd_notification* parent)
     : m_parent(parent)
 {
 }
 
-void OnScreenNotificationInputEventSpy::motion(input::motion_event const& /*event*/)
+void osd_notification_input_spy::motion(input::motion_event const& /*event*/)
 {
     auto const pos = kwinApp()->input->redirect->pointer()->pos();
     m_parent->setContainsPointer(m_parent->geometry().contains(pos.toPoint()));
 }
 
-OnScreenNotification::OnScreenNotification(QObject* parent)
+osd_notification::osd_notification(QObject* parent)
     : QObject(parent)
     , m_timer(new QTimer(this))
 {
     m_timer->setSingleShot(true);
     QObject::connect(
-        m_timer, &QTimer::timeout, this, std::bind(&OnScreenNotification::setVisible, this, false));
-    QObject::connect(this, &OnScreenNotification::visibleChanged, this, [this] {
+        m_timer, &QTimer::timeout, this, std::bind(&osd_notification::setVisible, this, false));
+    QObject::connect(this, &osd_notification::visibleChanged, this, [this] {
         if (m_visible) {
             show();
         } else {
@@ -68,7 +68,7 @@ OnScreenNotification::OnScreenNotification(QObject* parent)
     });
 }
 
-OnScreenNotification::~OnScreenNotification()
+osd_notification::~osd_notification()
 {
     if (auto win = qobject_cast<QQuickWindow*>(m_mainItem.get())) {
         win->hide();
@@ -76,22 +76,22 @@ OnScreenNotification::~OnScreenNotification()
     }
 }
 
-void OnScreenNotification::setConfig(KSharedConfigPtr config)
+void osd_notification::setConfig(KSharedConfigPtr config)
 {
     m_config = config;
 }
 
-void OnScreenNotification::setEngine(QQmlEngine* engine)
+void osd_notification::setEngine(QQmlEngine* engine)
 {
     m_qmlEngine = engine;
 }
 
-bool OnScreenNotification::isVisible() const
+bool osd_notification::isVisible() const
 {
     return m_visible;
 }
 
-void OnScreenNotification::setVisible(bool visible)
+void osd_notification::setVisible(bool visible)
 {
     if (m_visible == visible) {
         return;
@@ -101,12 +101,12 @@ void OnScreenNotification::setVisible(bool visible)
     Q_EMIT visibleChanged();
 }
 
-QString OnScreenNotification::message() const
+QString osd_notification::message() const
 {
     return m_message;
 }
 
-void OnScreenNotification::setMessage(const QString& message)
+void osd_notification::setMessage(const QString& message)
 {
     if (m_message == message) {
         return;
@@ -116,12 +116,12 @@ void OnScreenNotification::setMessage(const QString& message)
     Q_EMIT messageChanged();
 }
 
-QString OnScreenNotification::iconName() const
+QString osd_notification::iconName() const
 {
     return m_iconName;
 }
 
-void OnScreenNotification::setIconName(const QString& iconName)
+void osd_notification::setIconName(const QString& iconName)
 {
     if (m_iconName == iconName) {
         return;
@@ -131,12 +131,12 @@ void OnScreenNotification::setIconName(const QString& iconName)
     Q_EMIT iconNameChanged();
 }
 
-int OnScreenNotification::timeout() const
+int osd_notification::timeout() const
 {
     return m_timer->interval();
 }
 
-void OnScreenNotification::setTimeout(int timeout)
+void osd_notification::setTimeout(int timeout)
 {
     if (m_timer->interval() == timeout) {
         return;
@@ -146,7 +146,7 @@ void OnScreenNotification::setTimeout(int timeout)
     Q_EMIT timeoutChanged();
 }
 
-void OnScreenNotification::show()
+void osd_notification::show()
 {
     assert(m_visible);
 
@@ -159,7 +159,7 @@ void OnScreenNotification::show()
     }
 }
 
-void OnScreenNotification::ensureQmlContext()
+void osd_notification::ensureQmlContext()
 {
     assert(m_qmlEngine);
 
@@ -171,7 +171,7 @@ void OnScreenNotification::ensureQmlContext()
     m_qmlContext->setContextProperty(QStringLiteral("osd"), this);
 }
 
-void OnScreenNotification::ensureQmlComponent()
+void osd_notification::ensureQmlComponent()
 {
     assert(m_config);
     assert(m_qmlEngine);
@@ -184,9 +184,8 @@ void OnScreenNotification::ensureQmlComponent()
 
     auto const fileName = QStandardPaths::locate(
         QStandardPaths::GenericDataLocation,
-        m_config->group(QStringLiteral("OnScreenNotification"))
-            .readEntry("QmlPath",
-                       QStringLiteral(KWIN_NAME "/onscreennotification/plasma/main.qml")));
+        m_config->group(QStringLiteral("osd_notification"))
+            .readEntry("QmlPath", QStringLiteral(KWIN_NAME "/osd_notification/plasma/main.qml")));
 
     if (fileName.isEmpty()) {
         return;
@@ -201,7 +200,7 @@ void OnScreenNotification::ensureQmlComponent()
     }
 }
 
-void OnScreenNotification::createInputSpy()
+void osd_notification::createInputSpy()
 {
     assert(!m_spy);
 
@@ -210,7 +209,7 @@ void OnScreenNotification::createInputSpy()
         return;
     }
 
-    m_spy.reset(new OnScreenNotificationInputEventSpy(this));
+    m_spy.reset(new osd_notification_input_spy(this));
     kwinApp()->input->redirect->installInputEventSpy(m_spy.get());
 
     if (!m_animation) {
@@ -222,7 +221,7 @@ void OnScreenNotification::createInputSpy()
     }
 }
 
-QRect OnScreenNotification::geometry() const
+QRect osd_notification::geometry() const
 {
     if (auto win = qobject_cast<QQuickWindow*>(m_mainItem.get())) {
         return win->geometry();
@@ -230,7 +229,7 @@ QRect OnScreenNotification::geometry() const
     return QRect();
 }
 
-void OnScreenNotification::setContainsPointer(bool contains)
+void osd_notification::setContainsPointer(bool contains)
 {
     if (m_containsPointer == contains) {
         return;
@@ -244,7 +243,7 @@ void OnScreenNotification::setContainsPointer(bool contains)
     m_animation->start();
 }
 
-void OnScreenNotification::setSkipCloseAnimation(bool skip)
+void osd_notification::setSkipCloseAnimation(bool skip)
 {
     if (auto win = qobject_cast<QQuickWindow*>(m_mainItem.get())) {
         win->setProperty("KWIN_SKIP_CLOSE_ANIMATION", skip);

@@ -5,6 +5,7 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "osd.h"
+
 #include "main.h"
 #include "onscreennotification.h"
 #include "scripting/platform.h"
@@ -12,12 +13,12 @@
 
 #include <QQmlEngine>
 
-namespace KWin::OSD
+namespace KWin::win
 {
 
-static OnScreenNotification* create()
+static osd_notification* create()
 {
-    auto osd = new OnScreenNotification(workspace());
+    auto osd = new osd_notification(workspace());
 
     osd->setConfig(kwinApp()->config());
     osd->setEngine(workspace()->scripting->qmlEngine());
@@ -25,13 +26,13 @@ static OnScreenNotification* create()
     return osd;
 }
 
-static OnScreenNotification* osd()
+static osd_notification* osd()
 {
-    static OnScreenNotification* s_osd = create();
+    static osd_notification* s_osd = create();
     return s_osd;
 }
 
-void show(QString const& message, QString const& iconName, int timeout)
+void osd_show(QString const& message, QString const& iconName, int timeout)
 {
     if (!kwinApp()->shouldUseWaylandForCompositing()) {
         // FIXME: only supported on Wayland
@@ -45,17 +46,17 @@ void show(QString const& message, QString const& iconName, int timeout)
     notification->setVisible(true);
 }
 
-void show(QString const& message, int timeout)
+void osd_show(QString const& message, int timeout)
 {
-    show(message, QString(), timeout);
+    osd_show(message, QString(), timeout);
 }
 
-void show(QString const& message, QString const& iconName)
+void osd_show(QString const& message, QString const& iconName)
 {
-    show(message, iconName, 0);
+    osd_show(message, iconName, 0);
 }
 
-void hide(osd_hide_flags hide_flags)
+void osd_hide(osd_hide_flags hide_flags)
 {
     if (!kwinApp()->shouldUseWaylandForCompositing()) {
         // FIXME: only supported on Wayland
