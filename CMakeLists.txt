@@ -448,9 +448,7 @@ set(kwin_SRCS
     input/xkb/manager.cpp
     killwindow.cpp
     main.cpp
-    onscreennotification.cpp
     options.cpp
-    osd.cpp
     render/compositor.cpp
     render/cursor.cpp
     render/dbus/compositing.cpp
@@ -502,6 +500,8 @@ set(kwin_SRCS
     win/dbus/virtual_desktop_types.cpp
     win/focus_chain.cpp
     win/internal_window.cpp
+    win/osd_notification.cpp
+    win/osd.cpp
     win/remnant.cpp
     win/screen_edges.cpp
     win/stacking_order.cpp

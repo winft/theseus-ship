@@ -4,13 +4,15 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "onscreennotification.h"
+#include "osd_notification.h"
+
+#include "config-kwin.h"
+
 #include "input/event.h"
 #include "input/event_spy.h"
+#include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "main.h"
-#include <config-kwin.h>
-#include <input/pointer_redirect.h>
 
 #include <QPropertyAnimation>
 #include <QQmlComponent>

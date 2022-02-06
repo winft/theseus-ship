@@ -7,7 +7,7 @@
 #include "osd.h"
 
 #include "main.h"
-#include "onscreennotification.h"
+#include "osd_notification.h"
 #include "scripting/platform.h"
 #include "workspace.h"
 
