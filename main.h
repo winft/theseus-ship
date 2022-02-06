@@ -66,7 +66,10 @@ class platform;
 
 }
 
+namespace desktop
+{
 class screen_locker_watcher;
+}
 
 class KWIN_EXPORT Application : public  QApplication
 {
@@ -228,7 +231,7 @@ public:
     std::unique_ptr<base::seat::session> session;
     std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<input::platform> input;
-    std::unique_ptr<KWin::screen_locker_watcher> screen_locker_watcher;
+    std::unique_ptr<desktop::screen_locker_watcher> screen_locker_watcher;
 
 Q_SIGNALS:
     void x11ConnectionChanged();

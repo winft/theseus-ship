@@ -26,13 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/event_filter_manager.h"
 #include "base/x11/xcb/extensions.h"
 #include "debug/perf/ftrace.h"
+#include "desktop/screen_locker_watcher.h"
 #include "render/compositor.h"
 #include "input/global_shortcuts_manager.h"
 #include "input/platform.h"
 #include "input/redirect.h"
 #include "options.h"
 #include "screens.h"
-#include "screenlockerwatcher.h"
 #include "sm.h"
 #include "workspace.h"
 
@@ -150,7 +150,7 @@ void Application::prepare_start()
         m_inputConfig = KSharedConfig::openConfig(QStringLiteral("kcminputrc"), KConfig::NoGlobals);
     }
 
-    screen_locker_watcher = std::make_unique<KWin::screen_locker_watcher>();
+    screen_locker_watcher = std::make_unique<desktop::screen_locker_watcher>();
 }
 
 Application::~Application()

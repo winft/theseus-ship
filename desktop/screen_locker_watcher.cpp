@@ -4,7 +4,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "screenlockerwatcher.h"
+#include "screen_locker_watcher.h"
 
 #include "main.h"
 
@@ -15,7 +15,7 @@
 #include "kscreenlocker_interface.h"
 #include "screenlocker_interface.h"
 
-namespace KWin
+namespace KWin::desktop
 {
 
 static QString const SCREEN_LOCKER_SERVICE_NAME = QStringLiteral("org.freedesktop.ScreenSaver");

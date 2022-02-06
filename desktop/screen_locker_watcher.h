@@ -15,7 +15,7 @@ class OrgKdeScreensaverInterface;
 class QDBusServiceWatcher;
 class QDBusPendingCallWatcher;
 
-namespace KWin
+namespace KWin::desktop
 {
 
 class KWIN_EXPORT screen_locker_watcher : public QObject

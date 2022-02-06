@@ -19,21 +19,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "app.h"
 
-#include "../../base/wayland/output.h"
-#include "../../input/backend/wlroots/platform.h"
-#include "../../input/wayland/cursor.h"
-#include "../../input/wayland/platform.h"
-#include "../../input/wayland/redirect.h"
-#include "../../render/wayland/compositor.h"
-#include "../../screenlockerwatcher.h"
-#include "../../win/wayland/space.h"
-#include "../../xwl/xwayland.h"
 #include "base/seat/backend/wlroots/session.h"
+#include "base/wayland/output.h"
 #include "debug/console/wayland/wayland_console.h"
+#include "desktop/screen_locker_watcher.h"
+#include "input/backend/wlroots/platform.h"
+#include "input/wayland/cursor.h"
+#include "input/wayland/platform.h"
+#include "input/wayland/redirect.h"
 #include "render/backend/wlroots/output.h"
 #include "render/effects.h"
+#include "render/wayland/compositor.h"
 #include "screens.h"
 #include "scripting/platform.h"
+#include "win/wayland/space.h"
+#include "xwl/xwayland.h"
 
 #include <KCrash>
 #include <KPluginMetaData>

@@ -8,12 +8,11 @@
 
 #include "app.h"
 
-#include "screenlockerwatcher.h"
-#include "screens.h"
-
+#include "desktop/screen_locker_watcher.h"
 #include "input/backend/wlroots/keyboard.h"
 #include "input/backend/wlroots/pointer.h"
 #include "input/backend/wlroots/touch.h"
+#include "screens.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
@@ -302,7 +301,7 @@ void lock_screen()
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
     QSignalSpy lockWatcherSpy(kwinApp()->screen_locker_watcher.get(),
-                              &screen_locker_watcher::locked);
+                              &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
@@ -322,7 +321,7 @@ void unlock_screen()
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
     QSignalSpy lockWatcherSpy(kwinApp()->screen_locker_watcher.get(),
-                              &screen_locker_watcher::locked);
+                              &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
     auto const children = ScreenLocker::KSldApp::self()->children();

@@ -22,35 +22,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/output.h"
 #include "base/platform.h"
+#include "desktop/screen_locker_watcher.h"
 #include "effect_loader.h"
 #include "effectsadaptor.h"
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
-#include "osd.h"
-#ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
-#endif
 #include "kwineffectquickview.h"
 #include "kwinglutils.h"
-#include "screenlockerwatcher.h"
+#include "osd.h"
 #include "screens.h"
 #include "scripting/effect.h"
 #include "thumbnail_item.h"
-#include "win/screen_edges.h"
-#include "win/virtual_desktops.h"
-#include "workspace.h"
-
 #include "win/control.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/remnant.h"
 #include "win/screen.h"
+#include "win/screen_edges.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
+#include "win/virtual_desktops.h"
 #include "win/x11/group.h"
 #include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
 #include "win/x11/window_property_notify_filter.h"
+#include "workspace.h"
+
+#ifdef KWIN_BUILD_TABBOX
+#include "tabbox.h"
+#endif
 
 #include <QDebug>
 
@@ -238,11 +238,11 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             this,
             &EffectsHandler::screenEdgeApproaching);
     connect(kwinApp()->screen_locker_watcher.get(),
-            &screen_locker_watcher::locked,
+            &desktop::screen_locker_watcher::locked,
             this,
             &EffectsHandler::screenLockingChanged);
     connect(kwinApp()->screen_locker_watcher.get(),
-            &screen_locker_watcher::about_to_lock,
+            &desktop::screen_locker_watcher::about_to_lock,
             this,
             &EffectsHandler::screenAboutToLock);
 

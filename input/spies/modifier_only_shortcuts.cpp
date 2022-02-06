@@ -19,12 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "modifier_only_shortcuts.h"
 
+#include "desktop/screen_locker_watcher.h"
 #include "input/event.h"
 #include "input/keyboard.h"
 #include "input/qt_event.h"
 #include "input/xkb/helpers.h"
 #include "options.h"
-#include "screenlockerwatcher.h"
 #include "workspace.h"
 
 #include <QDBusConnection>
@@ -39,7 +39,7 @@ modifier_only_shortcuts_spy::modifier_only_shortcuts_spy()
     , event_spy()
 {
     QObject::connect(kwinApp()->screen_locker_watcher.get(),
-                     &screen_locker_watcher::locked,
+                     &desktop::screen_locker_watcher::locked,
                      this,
                      &modifier_only_shortcuts_spy::reset);
 }

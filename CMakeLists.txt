@@ -410,6 +410,7 @@ set(kwin_SRCS
     base/gamma_ramp.cpp
     base/output.cpp
     base/platform.cpp
+    desktop/screen_locker_watcher.cpp
     render/post/color_correct_dbus_interface.cpp
     render/post/night_color_manager.cpp
     render/post/suncalc.cpp
@@ -476,7 +477,6 @@ set(kwin_SRCS
     rules/rule_book_settings.cpp
     rules/rules.cpp
     rules/window_rules.cpp
-    screenlockerwatcher.cpp
     screens.cpp
     scripting/dbus_call.cpp
     scripting/js_engine_global_methods_wrapper.cpp
