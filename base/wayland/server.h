@@ -70,8 +70,6 @@ class KWIN_EXPORT server : public QObject
 public:
     static server* self();
 
-    std::unique_ptr<Wrapland::Server::globals> globals;
-
     server(std::string const& socket, start_options flags);
     server(int socket_fd, start_options flags);
     ~server() override;
@@ -163,18 +161,7 @@ public:
     void simulateUserActivity();
     void updateKeyState(input::keyboard_leds leds);
 
-    QSet<Wrapland::Server::LinuxDmabufBufferV1*> linuxDmabufBuffers() const
-    {
-        return m_linuxDmabufBuffers;
-    }
-    void addLinuxDmabufBuffer(Wrapland::Server::LinuxDmabufBufferV1* buffer)
-    {
-        m_linuxDmabufBuffers << buffer;
-    }
-    void removeLinuxDmabufBuffer(Wrapland::Server::LinuxDmabufBufferV1* buffer)
-    {
-        m_linuxDmabufBuffers.remove(buffer);
-    }
+    std::unique_ptr<Wrapland::Server::globals> globals;
 
     struct {
         Wrapland::Server::Client* server{nullptr};
@@ -187,6 +174,8 @@ public:
         Wrapland::Client::ShmPool* shm{nullptr};
 
     } internal_connection;
+
+    QSet<Wrapland::Server::LinuxDmabufBufferV1*> dmabuf_buffers;
 
 Q_SIGNALS:
     void terminatingInternalClientConnection();
@@ -206,8 +195,6 @@ private:
     void initScreenLocker();
 
     std::unique_ptr<Wrapland::Server::Display> m_display;
-
-    QSet<Wrapland::Server::LinuxDmabufBufferV1*> m_linuxDmabufBuffers;
 
     struct {
         Wrapland::Server::Client* client = nullptr;
