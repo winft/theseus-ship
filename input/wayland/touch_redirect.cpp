@@ -38,7 +38,7 @@ void touch_redirect::init()
 {
     device_redirect_init(this);
 
-    if (waylandServer()->hasScreenLockerIntegration()) {
+    if (waylandServer()->has_screen_locker_integration()) {
         QObject::connect(
             ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
                 if (!waylandServer()->seat()->hasTouch()) {

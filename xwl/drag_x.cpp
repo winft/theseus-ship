@@ -109,7 +109,7 @@ drag_event_reply x11_drag::move_filter(Toplevel* target, QPoint const& pos)
     }
 
     if (!target || !target->surface()
-        || target->surface()->client() == waylandServer()->xWaylandConnection()) {
+        || target->surface()->client() == waylandServer()->xwayland_connection()) {
         // Currently there is no target or target is an Xwayland window.
         // Handled here and by X directly.
         if (target && target->surface() && target->control) {

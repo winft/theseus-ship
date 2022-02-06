@@ -27,7 +27,7 @@ touch::touch(Wrapland::Server::FakeInputDevice* device, input::platform* platfor
                          // TODO: Fix time
                          this->platform->redirect->touch()->process_down(
                              {static_cast<int32_t>(id), pos, nullptr, 0});
-                         waylandServer()->simulateUserActivity();
+                         waylandServer()->simulate_user_activity();
                      });
     QObject::connect(device,
                      &Wrapland::Server::FakeInputDevice::touchMotionRequested,
@@ -36,13 +36,13 @@ touch::touch(Wrapland::Server::FakeInputDevice* device, input::platform* platfor
                          // TODO: Fix time
                          this->platform->redirect->touch()->process_motion(
                              {static_cast<int32_t>(id), pos, nullptr, 0});
-                         waylandServer()->simulateUserActivity();
+                         waylandServer()->simulate_user_activity();
                      });
     QObject::connect(
         device, &Wrapland::Server::FakeInputDevice::touchUpRequested, this, [this](auto id) {
             // TODO: Fix time
             this->platform->redirect->touch()->process_up({static_cast<int32_t>(id), nullptr, 0});
-            waylandServer()->simulateUserActivity();
+            waylandServer()->simulate_user_activity();
         });
     QObject::connect(device,
                      &Wrapland::Server::FakeInputDevice::touchCancelRequested,

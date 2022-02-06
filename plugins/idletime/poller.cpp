@@ -30,7 +30,7 @@ KWinIdleTimePoller::KWinIdleTimePoller(QObject *parent)
     : AbstractSystemPoller(parent)
 {
     QObject::connect(KWin::waylandServer(),
-                     &KWin::base::wayland::server::terminatingInternalClientConnection,
+                     &KWin::base::wayland::server::terminating_internal_client_connection,
                      this,
                      [this] {
                          qDeleteAll(m_timeouts);

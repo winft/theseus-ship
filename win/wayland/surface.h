@@ -56,7 +56,7 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
 
     win->m_surface = surface;
 
-    if (surface->client() == waylandServer()->xWaylandConnection()) {
+    if (surface->client() == waylandServer()->xwayland_connection()) {
         QObject::connect(win->m_surface, &Wrapland::Server::Surface::committed, win, [win] {
             if (!win->m_surface->state().damage.isEmpty()) {
                 win->addDamage(win->m_surface->state().damage);

@@ -96,7 +96,7 @@ xwayland::xwayland(Application* app, std::function<void(int)> status_callback)
                                 "Failed to dup socket to open XCB connection");
     }
 
-    auto const waylandSocket = waylandServer()->createXWaylandConnection();
+    auto const waylandSocket = waylandServer()->create_xwayland_connection();
     if (waylandSocket == -1) {
         close(fd);
         throw std::runtime_error("Failed to open socket for Xwayland");
@@ -184,7 +184,7 @@ xwayland::~xwayland()
     delete xwayland_process;
     xwayland_process = nullptr;
 
-    waylandServer()->destroyXWaylandConnection();
+    waylandServer()->destroy_xwayland_connection();
 }
 
 void xwayland::continue_startup_with_x11()

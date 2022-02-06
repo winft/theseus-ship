@@ -47,7 +47,7 @@ bool fake_tablet_filter::tabletToolEvent(QTabletEvent* event)
         qCWarning(KWIN_INPUT) << "Unexpected tablet event type" << event;
         break;
     }
-    waylandServer()->simulateUserActivity();
+    waylandServer()->simulate_user_activity();
     return true;
 }
 

@@ -149,7 +149,7 @@ bool window::isLocalhost() const
 
 bool window::isLockScreen() const
 {
-    return surface()->client() == waylandServer()->screenLockerClientConnection();
+    return surface()->client() == waylandServer()->screen_locker_client_connection;
 }
 
 void window::updateCaption()

@@ -102,37 +102,33 @@ public:
     /**
      * @returns a parent of a surface imported with the foreign protocol, if any
      */
-    Wrapland::Server::Surface* findForeignParentForSurface(Wrapland::Server::Surface* surface);
+    Wrapland::Server::Surface* find_foreign_parent_for_surface(Wrapland::Server::Surface* surface);
 
     /**
      * @returns file descriptor for Xwayland to connect to.
      */
-    int createXWaylandConnection();
-    void destroyXWaylandConnection();
+    int create_xwayland_connection();
+    void destroy_xwayland_connection();
 
-    void createDrmLeaseDevice();
+    void create_drm_lease_device();
 
     bool is_screen_locked() const;
     /**
      * @returns whether integration with KScreenLocker is available.
      */
-    bool hasScreenLockerIntegration() const;
+    bool has_screen_locker_integration() const;
 
     /**
      * @returns whether any kind of global shortcuts are supported.
      */
-    bool hasGlobalShortcutSupport() const;
+    bool has_global_shortcut_support() const;
 
     void create_addons(std::function<void()> callback);
-    void initWorkspace();
+    void init_workspace();
 
-    Wrapland::Server::Client* xWaylandConnection() const
+    Wrapland::Server::Client* xwayland_connection() const
     {
         return m_xwayland.client;
-    }
-    Wrapland::Server::Client* screenLockerClientConnection() const
-    {
-        return m_screenLockerClientConnection;
     }
 
     void dispatch();
@@ -141,7 +137,7 @@ public:
      * Struct containing information for a created Wayland connection through a
      * socketpair.
      */
-    struct SocketPairConnection {
+    struct socket_pair_connection {
         /**
          * ServerSide Connection
          */
@@ -154,10 +150,10 @@ public:
     /**
      * Creates a Wayland connection using a socket pair.
      */
-    SocketPairConnection createConnection();
+    socket_pair_connection create_connection();
 
-    void simulateUserActivity();
-    void updateKeyState(input::keyboard_leds leds);
+    void simulate_user_activity();
+    void update_key_state(input::keyboard_leds leds);
 
     std::unique_ptr<Wrapland::Server::Display> display;
     std::unique_ptr<Wrapland::Server::globals> globals;
@@ -175,30 +171,27 @@ public:
     } internal_connection;
 
     QSet<Wrapland::Server::LinuxDmabufBufferV1*> dmabuf_buffers;
+    Wrapland::Server::Client* screen_locker_client_connection{nullptr};
 
 Q_SIGNALS:
-    void terminatingInternalClientConnection();
+    void terminating_internal_client_connection();
     void screenlocker_initialized();
-    void foreignTransientChanged(Wrapland::Server::Surface* child);
+    void foreign_transient_changed(Wrapland::Server::Surface* child);
 
 private:
     explicit server(start_options flags);
 
     void create_globals();
-    void createInternalConnection(std::function<void(bool)> callback);
-    int createScreenLockerConnection();
+    void create_internal_connection(std::function<void(bool)> callback);
+    int create_screen_locker_connection();
 
-    void destroyInternalConnection();
-    template<class T>
-    void createSurface(T* surface);
-    void initScreenLocker();
+    void destroy_internal_connection();
+    void init_screen_locker();
 
     struct {
         Wrapland::Server::Client* client = nullptr;
         QMetaObject::Connection destroyConnection;
     } m_xwayland;
-
-    Wrapland::Server::Client* m_screenLockerClientConnection = nullptr;
 
     QHash<Wrapland::Server::Client*, quint16> m_clientIds;
     start_options m_initFlags;

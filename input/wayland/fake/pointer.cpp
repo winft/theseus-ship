@@ -29,7 +29,7 @@ pointer::pointer(Wrapland::Server::FakeInputDevice* device, input::platform* pla
             auto redirect = this->platform->redirect.get();
             redirect->pointer()->process_motion_absolute(
                 {redirect->globalPointer() + QPointF(delta.width(), delta.height()), this, 0});
-            waylandServer()->simulateUserActivity();
+            waylandServer()->simulate_user_activity();
         });
     QObject::connect(
         device,
@@ -38,7 +38,7 @@ pointer::pointer(Wrapland::Server::FakeInputDevice* device, input::platform* pla
         [this](auto const& pos) {
             // TODO: Fix time
             this->platform->redirect->pointer()->process_motion_absolute({pos, this, 0});
-            waylandServer()->simulateUserActivity();
+            waylandServer()->simulate_user_activity();
         });
 
     QObject::connect(device,
@@ -48,7 +48,7 @@ pointer::pointer(Wrapland::Server::FakeInputDevice* device, input::platform* pla
                          // TODO: Fix time
                          this->platform->redirect->pointer()->process_button(
                              {button, button_state::pressed, this, 0});
-                         waylandServer()->simulateUserActivity();
+                         waylandServer()->simulate_user_activity();
                      });
     QObject::connect(device,
                      &Wrapland::Server::FakeInputDevice::pointerButtonReleaseRequested,
@@ -57,7 +57,7 @@ pointer::pointer(Wrapland::Server::FakeInputDevice* device, input::platform* pla
                          // TODO: Fix time
                          this->platform->redirect->pointer()->process_button(
                              {button, button_state::released, this, 0});
-                         waylandServer()->simulateUserActivity();
+                         waylandServer()->simulate_user_activity();
                      });
     QObject::connect(device,
                      &Wrapland::Server::FakeInputDevice::pointerAxisRequested,
@@ -69,7 +69,7 @@ pointer::pointer(Wrapland::Server::FakeInputDevice* device, input::platform* pla
                          // TODO: Fix time
                          this->platform->redirect->pointer()->process_axis(
                              {axis_source::unknown, axis, delta, 0, this, 0});
-                         waylandServer()->simulateUserActivity();
+                         waylandServer()->simulate_user_activity();
                      });
 }
 

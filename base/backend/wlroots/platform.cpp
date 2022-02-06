@@ -198,7 +198,7 @@ void platform::setup_drm_leasing()
     }
 
     auto server = waylandServer();
-    server->createDrmLeaseDevice();
+    server->create_drm_lease_device();
 
     connect(server->drm_lease_device(),
             &Wrapland::Server::drm_lease_device_v1::needs_new_client_fd,

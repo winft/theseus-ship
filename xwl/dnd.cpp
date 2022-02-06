@@ -57,7 +57,7 @@ void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_eve
         return;
     }
 
-    if (originSurface->client() != waylandServer()->xWaylandConnection()) {
+    if (originSurface->client() != waylandServer()->xwayland_connection()) {
         // focused surface client is not Xwayland - do not allow drag to start
         // TODO: can we make this stronger (window id comparison)?
         return;

@@ -54,7 +54,7 @@ cursor_image::cursor_image()
         reevaluteSource();
     });
 
-    if (waylandServer()->hasScreenLockerIntegration()) {
+    if (waylandServer()->has_screen_locker_integration()) {
         QObject::connect(ScreenLocker::KSldApp::self(),
                          &ScreenLocker::KSldApp::lockStateChanged,
                          this,
@@ -279,7 +279,7 @@ void cursor_image::loadTheme()
     if (waylandServer()->internal_connection.shm) {
         m_cursorTheme = std::make_unique<cursor_theme>(waylandServer()->internal_connection.shm);
         QObject::connect(waylandServer(),
-                         &base::wayland::server::terminatingInternalClientConnection,
+                         &base::wayland::server::terminating_internal_client_connection,
                          this,
                          [this] { m_cursorTheme.reset(); });
     }

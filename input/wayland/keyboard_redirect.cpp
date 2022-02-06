@@ -98,7 +98,7 @@ void keyboard_redirect::init()
     layout_manager = std::make_unique<xkb::layout_manager>(kwinApp()->input->xkb, config);
     layout_manager->init();
 
-    if (waylandServer()->hasGlobalShortcutSupport()) {
+    if (waylandServer()->has_global_shortcut_support()) {
         redirect->installInputEventSpy(new modifier_only_shortcuts_spy);
     }
 
@@ -119,7 +119,7 @@ void keyboard_redirect::init()
         }
         update();
     });
-    if (waylandServer()->hasScreenLockerIntegration()) {
+    if (waylandServer()->has_screen_locker_integration()) {
         QObject::connect(ScreenLocker::KSldApp::self(),
                          &ScreenLocker::KSldApp::lockStateChanged,
                          this,

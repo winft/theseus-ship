@@ -144,8 +144,8 @@ public:
 };
 
 server::server(start_options flags)
-    : globals{std::make_unique<Wrapland::Server::globals>()}
-    , display(std::make_unique<KWinDisplay>())
+    : display(std::make_unique<KWinDisplay>())
+    , globals{std::make_unique<Wrapland::Server::globals>()}
     , m_initFlags{flags}
 
 {
@@ -174,9 +174,9 @@ server::~server()
 {
 }
 
-void server::destroyInternalConnection()
+void server::destroy_internal_connection()
 {
-    Q_EMIT terminatingInternalClientConnection();
+    Q_EMIT terminating_internal_client_connection();
     if (internal_connection.client) {
         // delete all connections hold by plugins like e.g. widget style
         const auto connections = Wrapland::Client::ConnectionThread::connections();
@@ -205,7 +205,7 @@ void server::destroyInternalConnection()
 
 void server::terminateClientConnections()
 {
-    destroyInternalConnection();
+    destroy_internal_connection();
 
     for (auto client : display->clients()) {
         client->destroy();
@@ -357,12 +357,13 @@ void server::create_presentation_manager()
     globals->presentation_manager = display->createPresentationManager();
 }
 
-Wrapland::Server::Surface* server::findForeignParentForSurface(Wrapland::Server::Surface* surface)
+Wrapland::Server::Surface*
+server::find_foreign_parent_for_surface(Wrapland::Server::Surface* surface)
 {
     return globals->xdg_foreign->parentOf(surface);
 }
 
-void server::initWorkspace()
+void server::init_workspace()
 {
     auto ws = static_cast<win::wayland::space*>(workspace());
 
@@ -390,15 +391,15 @@ void server::initWorkspace()
 
     // For Xwayland windows
     QObject::connect(ws, &Workspace::surface_id_changed, this, [this](auto window, auto id) {
-        if (auto surface = compositor()->getSurface(id, xWaylandConnection())) {
+        if (auto surface = compositor()->getSurface(id, xwayland_connection())) {
             win::wayland::set_surface(window, surface);
         }
     });
 }
 
-void server::initScreenLocker()
+void server::init_screen_locker()
 {
-    if (!hasScreenLockerIntegration()) {
+    if (!has_screen_locker_integration()) {
         return;
     }
 
@@ -411,11 +412,11 @@ void server::initScreenLocker()
             &ScreenLocker::KSldApp::aboutToLock,
             this,
             [this, screenLockerApp]() {
-                if (m_screenLockerClientConnection) {
+                if (screen_locker_client_connection) {
                     // Already sent data to KScreenLocker.
                     return;
                 }
-                int clientFd = createScreenLockerConnection();
+                int clientFd = create_screen_locker_connection();
                 if (clientFd < 0) {
                     return;
                 }
@@ -433,10 +434,10 @@ void server::initScreenLocker()
             &ScreenLocker::KSldApp::unlocked,
             this,
             [this, screenLockerApp]() {
-                if (m_screenLockerClientConnection) {
-                    m_screenLockerClientConnection->destroy();
-                    delete m_screenLockerClientConnection;
-                    m_screenLockerClientConnection = nullptr;
+                if (screen_locker_client_connection) {
+                    screen_locker_client_connection->destroy();
+                    delete screen_locker_client_connection;
+                    screen_locker_client_connection = nullptr;
                 }
 
                 for (auto* seat : display->seats()) {
@@ -455,9 +456,9 @@ void server::initScreenLocker()
     Q_EMIT screenlocker_initialized();
 }
 
-server::SocketPairConnection server::createConnection()
+server::socket_pair_connection server::create_connection()
 {
-    SocketPairConnection ret;
+    socket_pair_connection ret;
     int sx[2];
     if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) < 0) {
         qCWarning(KWIN_WL) << "Could not create socket";
@@ -468,22 +469,22 @@ server::SocketPairConnection server::createConnection()
     return ret;
 }
 
-int server::createScreenLockerConnection()
+int server::create_screen_locker_connection()
 {
-    const auto socket = createConnection();
+    const auto socket = create_connection();
     if (!socket.connection) {
         return -1;
     }
-    m_screenLockerClientConnection = socket.connection;
-    connect(m_screenLockerClientConnection, &Wrapland::Server::Client::disconnected, this, [this] {
-        m_screenLockerClientConnection = nullptr;
+    screen_locker_client_connection = socket.connection;
+    connect(screen_locker_client_connection, &Wrapland::Server::Client::disconnected, this, [this] {
+        screen_locker_client_connection = nullptr;
     });
     return socket.fd;
 }
 
-int server::createXWaylandConnection()
+int server::create_xwayland_connection()
 {
-    const auto socket = createConnection();
+    const auto socket = create_connection();
     if (!socket.connection) {
         return -1;
     }
@@ -495,7 +496,7 @@ int server::createXWaylandConnection()
     return socket.fd;
 }
 
-void server::destroyXWaylandConnection()
+void server::destroy_xwayland_connection()
 {
     if (!m_xwayland.client) {
         return;
@@ -505,7 +506,7 @@ void server::destroyXWaylandConnection()
     m_xwayland.client = nullptr;
 }
 
-void server::createDrmLeaseDevice()
+void server::create_drm_lease_device()
 {
     if (!drm_lease_device()) {
         globals->drm_lease_device_v1 = display->createDrmLeaseDeviceV1();
@@ -515,18 +516,18 @@ void server::createDrmLeaseDevice()
 void server::create_addons(std::function<void()> callback)
 {
     auto handle_client_created = [this, callback](auto client_created) {
-        initWorkspace();
-        if (client_created && hasScreenLockerIntegration()) {
-            initScreenLocker();
+        init_workspace();
+        if (client_created && has_screen_locker_integration()) {
+            init_screen_locker();
         }
         callback();
     };
-    createInternalConnection(handle_client_created);
+    create_internal_connection(handle_client_created);
 }
 
-void server::createInternalConnection(std::function<void(bool)> callback)
+void server::create_internal_connection(std::function<void(bool)> callback)
 {
-    const auto socket = createConnection();
+    const auto socket = create_connection();
     if (!socket.connection) {
         callback(false);
         return;
@@ -594,31 +595,31 @@ void server::dispatch()
 
 bool server::is_screen_locked() const
 {
-    if (!hasScreenLockerIntegration()) {
+    if (!has_screen_locker_integration()) {
         return false;
     }
     return ScreenLocker::KSldApp::self()->lockState() == ScreenLocker::KSldApp::Locked
         || ScreenLocker::KSldApp::self()->lockState() == ScreenLocker::KSldApp::AcquiringLock;
 }
 
-bool server::hasScreenLockerIntegration() const
+bool server::has_screen_locker_integration() const
 {
     return !(m_initFlags & start_options::no_lock_screen_integration);
 }
 
-bool server::hasGlobalShortcutSupport() const
+bool server::has_global_shortcut_support() const
 {
     return !(m_initFlags & start_options::no_global_shortcuts);
 }
 
-void server::simulateUserActivity()
+void server::simulate_user_activity()
 {
     if (globals->kde_idle) {
         globals->kde_idle->simulateUserActivity();
     }
 }
 
-void server::updateKeyState(input::keyboard_leds leds)
+void server::update_key_state(input::keyboard_leds leds)
 {
     if (!globals->key_state) {
         return;

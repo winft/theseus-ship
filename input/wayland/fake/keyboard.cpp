@@ -26,7 +26,7 @@ keyboard::keyboard(Wrapland::Server::FakeInputDevice* device, input::platform* p
                          // TODO: Fix time
                          this->platform->redirect->keyboard()->process_key(
                              {button, key_state::pressed, false, this, 0});
-                         waylandServer()->simulateUserActivity();
+                         waylandServer()->simulate_user_activity();
                      });
     QObject::connect(device,
                      &Wrapland::Server::FakeInputDevice::keyboardKeyReleaseRequested,
@@ -35,7 +35,7 @@ keyboard::keyboard(Wrapland::Server::FakeInputDevice* device, input::platform* p
                          // TODO: Fix time
                          this->platform->redirect->keyboard()->process_key(
                              {button, key_state::released, false, this, 0});
-                         waylandServer()->simulateUserActivity();
+                         waylandServer()->simulate_user_activity();
                      });
 }
 
