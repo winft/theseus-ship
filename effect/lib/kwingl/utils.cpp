@@ -1047,10 +1047,6 @@ GLRenderTarget::~GLRenderTarget()
 
 bool GLRenderTarget::enable()
 {
-    if (!mValid) {
-        initFBO();
-    }
-
     if (!valid()) {
         qCCritical(LIBKWINGLUTILS) << "Can't enable invalid render target!";
         return false;
@@ -1065,10 +1061,6 @@ bool GLRenderTarget::enable()
 
 bool GLRenderTarget::disable()
 {
-    if (!mValid) {
-        initFBO();
-    }
-
     if (!valid()) {
         qCCritical(LIBKWINGLUTILS) << "Can't disable invalid render target!";
         return false;
@@ -1175,12 +1167,8 @@ void GLRenderTarget::blitFromFramebuffer(const QRect& source,
                                          const QRect& destination,
                                          GLenum filter)
 {
-    if (!GLRenderTarget::blitSupported()) {
+    if (!valid()) {
         return;
-    }
-
-    if (!mValid) {
-        initFBO();
     }
 
     GLRenderTarget::pushRenderTarget(this);
