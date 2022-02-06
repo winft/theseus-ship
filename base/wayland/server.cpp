@@ -177,29 +177,29 @@ server::~server()
 void server::destroyInternalConnection()
 {
     Q_EMIT terminatingInternalClientConnection();
-    if (m_internalConnection.client) {
+    if (internal_connection.client) {
         // delete all connections hold by plugins like e.g. widget style
         const auto connections = Wrapland::Client::ConnectionThread::connections();
         for (auto c : connections) {
-            if (c == m_internalConnection.client) {
+            if (c == internal_connection.client) {
                 continue;
             }
             Q_EMIT c->establishedChanged(false);
         }
 
-        delete m_internalConnection.registry;
-        delete m_internalConnection.compositor;
-        delete m_internalConnection.seat;
-        delete m_internalConnection.shm;
+        delete internal_connection.registry;
+        delete internal_connection.compositor;
+        delete internal_connection.seat;
+        delete internal_connection.shm;
         dispatch();
-        delete m_internalConnection.queue;
-        m_internalConnection.client->deleteLater();
-        m_internalConnection.clientThread->quit();
-        m_internalConnection.clientThread->wait();
-        delete m_internalConnection.clientThread;
-        m_internalConnection.client = nullptr;
-        m_internalConnection.server->destroy();
-        m_internalConnection.server = nullptr;
+        delete internal_connection.queue;
+        internal_connection.client->deleteLater();
+        internal_connection.clientThread->quit();
+        internal_connection.clientThread->wait();
+        delete internal_connection.clientThread;
+        internal_connection.client = nullptr;
+        internal_connection.server->destroy();
+        internal_connection.server = nullptr;
     }
 }
 
@@ -536,15 +536,15 @@ void server::createInternalConnection(std::function<void(bool)> callback)
         callback(false);
         return;
     }
-    m_internalConnection.server = socket.connection;
+    internal_connection.server = socket.connection;
     using namespace Wrapland::Client;
-    m_internalConnection.client = new ConnectionThread();
-    m_internalConnection.client->setSocketFd(socket.fd);
-    m_internalConnection.clientThread = new QThread;
-    m_internalConnection.client->moveToThread(m_internalConnection.clientThread);
-    m_internalConnection.clientThread->start();
+    internal_connection.client = new ConnectionThread();
+    internal_connection.client->setSocketFd(socket.fd);
+    internal_connection.clientThread = new QThread;
+    internal_connection.client->moveToThread(internal_connection.clientThread);
+    internal_connection.clientThread->start();
 
-    connect(m_internalConnection.client,
+    connect(internal_connection.client,
             &ConnectionThread::establishedChanged,
             this,
             [this, callback](bool established) {
@@ -553,11 +553,11 @@ void server::createInternalConnection(std::function<void(bool)> callback)
                 }
                 auto registry = new Registry;
                 auto eventQueue = new EventQueue;
-                eventQueue->setup(m_internalConnection.client);
+                eventQueue->setup(internal_connection.client);
                 registry->setEventQueue(eventQueue);
-                registry->create(m_internalConnection.client);
-                m_internalConnection.registry = registry;
-                m_internalConnection.queue = eventQueue;
+                registry->create(internal_connection.client);
+                internal_connection.registry = registry;
+                internal_connection.queue = eventQueue;
 
                 connect(
                     registry,
@@ -571,11 +571,11 @@ void server::createInternalConnection(std::function<void(bool)> callback)
                                   return (registry->*creator)(iface.name, iface.version, nullptr);
                               };
 
-                        m_internalConnection.shm
+                        internal_connection.shm
                             = create_interface(Registry::Interface::Shm, &Registry::createShmPool);
-                        m_internalConnection.compositor = create_interface(
+                        internal_connection.compositor = create_interface(
                             Registry::Interface::Compositor, &Registry::createCompositor);
-                        m_internalConnection.seat
+                        internal_connection.seat
                             = create_interface(Registry::Interface::Seat, &Registry::createSeat);
                         callback(true);
                     },
@@ -583,7 +583,7 @@ void server::createInternalConnection(std::function<void(bool)> callback)
 
                 registry->setup();
             });
-    m_internalConnection.client->establishConnection();
+    internal_connection.client->establishConnection();
 }
 
 void server::dispatch()
@@ -591,8 +591,8 @@ void server::dispatch()
     if (!m_display) {
         return;
     }
-    if (m_internalConnection.server) {
-        m_internalConnection.server->flush();
+    if (internal_connection.server) {
+        internal_connection.server->flush();
     }
     m_display->dispatchEvents(0);
 }

@@ -276,8 +276,8 @@ void cursor_image::loadTheme()
     }
 
     // check whether we can create it
-    if (waylandServer()->internalShmPool()) {
-        m_cursorTheme = std::make_unique<cursor_theme>(waylandServer()->internalShmPool());
+    if (waylandServer()->internal_connection.shm) {
+        m_cursorTheme = std::make_unique<cursor_theme>(waylandServer()->internal_connection.shm);
         QObject::connect(waylandServer(),
                          &base::wayland::server::terminatingInternalClientConnection,
                          this,
@@ -441,11 +441,12 @@ void cursor_image::loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Ima
         if (!b) {
             return;
         }
-        waylandServer()->internalClientConection()->flush();
+        waylandServer()->internal_connection.client->flush();
         waylandServer()->dispatch();
         auto buffer = Wrapland::Server::Buffer::get(
             waylandServer()->display(),
-            waylandServer()->internalConnection()->getResource(Wrapland::Client::Buffer::getId(b)));
+            waylandServer()->internal_connection.server->getResource(
+                Wrapland::Client::Buffer::getId(b)));
         if (!buffer) {
             return;
         }

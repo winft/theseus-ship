@@ -134,34 +134,11 @@ public:
     {
         return m_xwayland.client;
     }
-    Wrapland::Server::Client* internalConnection() const
-    {
-        return m_internalConnection.server;
-    }
     Wrapland::Server::Client* screenLockerClientConnection() const
     {
         return m_screenLockerClientConnection;
     }
-    Wrapland::Client::Compositor* internalCompositor()
-    {
-        return m_internalConnection.compositor;
-    }
-    Wrapland::Client::Seat* internalSeat()
-    {
-        return m_internalConnection.seat;
-    }
-    Wrapland::Client::ShmPool* internalShmPool()
-    {
-        return m_internalConnection.shm;
-    }
-    Wrapland::Client::ConnectionThread* internalClientConection()
-    {
-        return m_internalConnection.client;
-    }
-    Wrapland::Client::Registry* internalClientRegistry()
-    {
-        return m_internalConnection.registry;
-    }
+
     void dispatch();
 
     /**
@@ -199,6 +176,18 @@ public:
         m_linuxDmabufBuffers.remove(buffer);
     }
 
+    struct {
+        Wrapland::Server::Client* server{nullptr};
+        Wrapland::Client::ConnectionThread* client{nullptr};
+        QThread* clientThread{nullptr};
+        Wrapland::Client::Registry* registry{nullptr};
+        Wrapland::Client::Compositor* compositor{nullptr};
+        Wrapland::Client::EventQueue* queue{nullptr};
+        Wrapland::Client::Seat* seat{nullptr};
+        Wrapland::Client::ShmPool* shm{nullptr};
+
+    } internal_connection;
+
 Q_SIGNALS:
     void terminatingInternalClientConnection();
     void screenlocker_initialized();
@@ -226,18 +215,6 @@ private:
     } m_xwayland;
 
     Wrapland::Server::Client* m_screenLockerClientConnection = nullptr;
-
-    struct {
-        Wrapland::Server::Client* server = nullptr;
-        Wrapland::Client::ConnectionThread* client = nullptr;
-        QThread* clientThread = nullptr;
-        Wrapland::Client::Registry* registry = nullptr;
-        Wrapland::Client::Compositor* compositor = nullptr;
-        Wrapland::Client::EventQueue* queue = nullptr;
-        Wrapland::Client::Seat* seat = nullptr;
-        Wrapland::Client::ShmPool* shm = nullptr;
-
-    } m_internalConnection;
 
     QHash<Wrapland::Server::Client*, quint16> m_clientIds;
     start_options m_initFlags;

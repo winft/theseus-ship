@@ -51,7 +51,7 @@ bool KWinIdleTimePoller::isAvailable()
 
 bool KWinIdleTimePoller::setUpPoller()
 {
-    auto registry = KWin::waylandServer()->internalClientRegistry();
+    auto registry = KWin::waylandServer()->internal_connection.registry;
     if (!m_seat) {
         const auto iface = registry->interface(Wrapland::Client::Registry::Interface::Seat);
         m_seat = registry->createSeat(iface.name, iface.version, this);
