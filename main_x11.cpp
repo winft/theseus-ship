@@ -216,7 +216,7 @@ debug::console* ApplicationX11::create_debug_console()
 void ApplicationX11::start()
 {
     prepare_start();
-    ScreenLockerWatcher::self()->initialize();
+    screen_locker_watcher::self()->initialize();
 
     base.render = std::make_unique<render::backend::x11::platform>(base);
 

@@ -1,22 +1,9 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2013 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2013 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #ifndef KWIN_SCREENLOCKERWATCHER_H
 #define KWIN_SCREENLOCKERWATCHER_H
 
@@ -32,30 +19,30 @@ class QDBusPendingCallWatcher;
 namespace KWin
 {
 
-class KWIN_EXPORT ScreenLockerWatcher : public QObject
+class KWIN_EXPORT screen_locker_watcher : public QObject
 {
     Q_OBJECT
 public:
-    ~ScreenLockerWatcher() override;
+    ~screen_locker_watcher() override;
     void initialize();
 
-    bool isLocked() const
+    bool is_locked() const
     {
         return m_locked;
     }
 
 Q_SIGNALS:
     void locked(bool locked);
-    void aboutToLock();
+    void about_to_lock();
 
 private Q_SLOTS:
-    void setLocked(bool activated);
-    void activeQueried(QDBusPendingCallWatcher* watcher);
-    void serviceOwnerChanged(const QString& serviceName,
-                             const QString& oldOwner,
-                             const QString& newOwner);
-    void serviceRegisteredQueried();
-    void serviceOwnerQueried();
+    void set_locked(bool activated);
+    void active_queried(QDBusPendingCallWatcher* watcher);
+    void service_owner_changed(const QString& service_name,
+                               const QString& old_owner,
+                               const QString& new_owner);
+    void service_registered_queried();
+    void service_owner_queried();
 
 private:
     OrgFreedesktopScreenSaverInterface* m_interface = nullptr;
@@ -63,7 +50,7 @@ private:
     QDBusServiceWatcher* m_serviceWatcher;
     bool m_locked;
 
-    KWIN_SINGLETON(ScreenLockerWatcher)
+    KWIN_SINGLETON(screen_locker_watcher)
 };
 
 }

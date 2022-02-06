@@ -192,7 +192,7 @@ void WaylandTestApplication::start()
     workspace->scripting = std::make_unique<scripting::platform>();
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
-    ScreenLockerWatcher::self()->initialize();
+    screen_locker_watcher::self()->initialize();
 }
 
 void WaylandTestApplication::set_outputs(size_t count)

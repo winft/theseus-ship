@@ -1,22 +1,9 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2013 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2013 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "screenlockerwatcher.h"
 
 #include "main.h"
@@ -31,27 +18,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-KWIN_SINGLETON_FACTORY(ScreenLockerWatcher)
+KWIN_SINGLETON_FACTORY(screen_locker_watcher)
 
 static const QString SCREEN_LOCKER_SERVICE_NAME = QStringLiteral("org.freedesktop.ScreenSaver");
 
-ScreenLockerWatcher::ScreenLockerWatcher(QObject* parent)
+screen_locker_watcher::screen_locker_watcher(QObject* parent)
     : QObject(parent)
     , m_serviceWatcher(new QDBusServiceWatcher(this))
     , m_locked(false)
 {
 }
 
-ScreenLockerWatcher::~ScreenLockerWatcher()
+screen_locker_watcher::~screen_locker_watcher()
 {
 }
 
-void ScreenLockerWatcher::initialize()
+void screen_locker_watcher::initialize()
 {
     connect(m_serviceWatcher,
             &QDBusServiceWatcher::serviceOwnerChanged,
             this,
-            &ScreenLockerWatcher::serviceOwnerChanged);
+            &screen_locker_watcher::service_owner_changed);
     m_serviceWatcher->setWatchMode(QDBusServiceWatcher::WatchForOwnerChange);
     m_serviceWatcher->addWatchedService(SCREEN_LOCKER_SERVICE_NAME);
     // check whether service is registered
@@ -59,7 +46,7 @@ void ScreenLockerWatcher::initialize()
     connect(watcher,
             &QFutureWatcher<QDBusReply<bool>>::finished,
             this,
-            &ScreenLockerWatcher::serviceRegisteredQueried);
+            &screen_locker_watcher::service_registered_queried);
     connect(watcher,
             &QFutureWatcher<QDBusReply<bool>>::canceled,
             watcher,
@@ -69,12 +56,11 @@ void ScreenLockerWatcher::initialize()
                                          SCREEN_LOCKER_SERVICE_NAME));
 }
 
-void ScreenLockerWatcher::serviceOwnerChanged(const QString& serviceName,
-                                              const QString& oldOwner,
-                                              const QString& newOwner)
+void screen_locker_watcher::service_owner_changed(const QString& service_name,
+                                                  const QString& /*old_owner*/,
+                                                  const QString& new_owner)
 {
-    Q_UNUSED(oldOwner)
-    if (serviceName != SCREEN_LOCKER_SERVICE_NAME) {
+    if (service_name != SCREEN_LOCKER_SERVICE_NAME) {
         return;
     }
     delete m_interface;
@@ -83,27 +69,29 @@ void ScreenLockerWatcher::serviceOwnerChanged(const QString& serviceName,
     m_kdeInterface = nullptr;
 
     m_locked = false;
-    if (!newOwner.isEmpty()) {
+    if (!new_owner.isEmpty()) {
         m_interface = new OrgFreedesktopScreenSaverInterface(
-            newOwner, QStringLiteral("/ScreenSaver"), QDBusConnection::sessionBus(), this);
+            new_owner, QStringLiteral("/ScreenSaver"), QDBusConnection::sessionBus(), this);
         m_kdeInterface = new OrgKdeScreensaverInterface(
-            newOwner, QStringLiteral("/ScreenSaver"), QDBusConnection::sessionBus(), this);
+            new_owner, QStringLiteral("/ScreenSaver"), QDBusConnection::sessionBus(), this);
         connect(m_interface,
                 &OrgFreedesktopScreenSaverInterface::ActiveChanged,
                 this,
-                &ScreenLockerWatcher::setLocked);
+                &screen_locker_watcher::set_locked);
         QDBusPendingCallWatcher* watcher
             = new QDBusPendingCallWatcher(m_interface->GetActive(), this);
-        connect(
-            watcher, &QDBusPendingCallWatcher::finished, this, &ScreenLockerWatcher::activeQueried);
+        connect(watcher,
+                &QDBusPendingCallWatcher::finished,
+                this,
+                &screen_locker_watcher::active_queried);
         connect(m_kdeInterface,
                 &OrgKdeScreensaverInterface::AboutToLock,
                 this,
-                &ScreenLockerWatcher::aboutToLock);
+                &screen_locker_watcher::about_to_lock);
     }
 }
 
-void ScreenLockerWatcher::serviceRegisteredQueried()
+void screen_locker_watcher::service_registered_queried()
 {
     QFutureWatcher<QDBusReply<bool>>* watcher
         = dynamic_cast<QFutureWatcher<QDBusReply<bool>>*>(sender());
@@ -117,7 +105,7 @@ void ScreenLockerWatcher::serviceRegisteredQueried()
         connect(ownerWatcher,
                 &QFutureWatcher<QDBusReply<QString>>::finished,
                 this,
-                &ScreenLockerWatcher::serviceOwnerQueried);
+                &screen_locker_watcher::service_owner_queried);
         connect(ownerWatcher,
                 &QFutureWatcher<QDBusReply<QString>>::canceled,
                 ownerWatcher,
@@ -129,7 +117,7 @@ void ScreenLockerWatcher::serviceRegisteredQueried()
     watcher->deleteLater();
 }
 
-void ScreenLockerWatcher::serviceOwnerQueried()
+void screen_locker_watcher::service_owner_queried()
 {
     QFutureWatcher<QDBusReply<QString>>* watcher
         = dynamic_cast<QFutureWatcher<QDBusReply<QString>>*>(sender());
@@ -138,22 +126,22 @@ void ScreenLockerWatcher::serviceOwnerQueried()
     }
     const QDBusReply<QString> reply = watcher->result();
     if (reply.isValid()) {
-        serviceOwnerChanged(SCREEN_LOCKER_SERVICE_NAME, QString(), reply.value());
+        service_owner_changed(SCREEN_LOCKER_SERVICE_NAME, QString(), reply.value());
     }
 
     watcher->deleteLater();
 }
 
-void ScreenLockerWatcher::activeQueried(QDBusPendingCallWatcher* watcher)
+void screen_locker_watcher::active_queried(QDBusPendingCallWatcher* watcher)
 {
     QDBusPendingReply<bool> reply = *watcher;
     if (!reply.isError()) {
-        setLocked(reply.value());
+        set_locked(reply.value());
     }
     watcher->deleteLater();
 }
 
-void ScreenLockerWatcher::setLocked(bool activated)
+void screen_locker_watcher::set_locked(bool activated)
 {
     if (m_locked == activated) {
         return;
