@@ -7,9 +7,8 @@
 #pragma once
 
 #include "input/types.h"
+#include "kwinglobals.h"
 #include "utils/flags.h"
-
-#include <kwinglobals.h>
 
 #include <QObject>
 #include <QSet>
@@ -57,13 +56,6 @@ class XdgShell;
 
 namespace KWin
 {
-
-namespace win::wayland
-{
-class window;
-}
-
-class Toplevel;
 
 enum class wayland_start_options {
     none = 0x0,

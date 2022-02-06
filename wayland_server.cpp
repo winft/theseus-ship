@@ -9,15 +9,13 @@
 #include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
 #include "base/wayland/output_helpers.h"
-#include "screens.h"
 #include "service_utils.h"
 #include "wayland_logging.h"
-#include "workspace.h"
-
 #include "win/virtual_desktops.h"
 #include "win/wayland/space.h"
 #include "win/wayland/surface.h"
 #include "win/wayland/xdg_activation.h"
+#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
@@ -42,8 +40,6 @@
 #include <unistd.h>
 
 #include <KScreenLocker/KsldApp>
-
-using namespace Wrapland::Server;
 
 namespace KWin
 {
@@ -244,7 +240,7 @@ void WaylandServer::create_globals()
         = m_display->createServerSideDecorationPaletteManager();
     globals->plasma_window_manager = m_display->createPlasmaWindowManager();
     globals->plasma_window_manager->setShowingDesktopState(
-        PlasmaWindowManager::ShowingDesktopState::Disabled);
+        Wrapland::Server::PlasmaWindowManager::ShowingDesktopState::Disabled);
 
     globals->plasma_virtual_desktop_manager = m_display->createPlasmaVirtualDesktopManager();
     globals->plasma_window_manager->setVirtualDesktopManager(virtual_desktop_management());
@@ -254,7 +250,7 @@ void WaylandServer::create_globals()
 
     globals->output_management_v1 = m_display->createOutputManagementV1();
     connect(globals->output_management_v1.get(),
-            &OutputManagementV1::configurationChangeRequested,
+            &Wrapland::Server::OutputManagementV1::configurationChangeRequested,
             this,
             [](Wrapland::Server::OutputConfigurationV1* config) {
                 auto& base = static_cast<base::wayland::platform&>(kwinApp()->get_base());
@@ -366,7 +362,8 @@ void WaylandServer::create_presentation_manager()
     globals->presentation_manager = m_display->createPresentationManager();
 }
 
-Surface* WaylandServer::findForeignParentForSurface(Surface* surface)
+Wrapland::Server::Surface*
+WaylandServer::findForeignParentForSurface(Wrapland::Server::Surface* surface)
 {
     return globals->xdg_foreign->parentOf(surface);
 }
@@ -629,21 +626,22 @@ void WaylandServer::simulateUserActivity()
 
 void WaylandServer::updateKeyState(input::keyboard_leds leds)
 {
-    if (!globals->key_state)
+    if (!globals->key_state) {
         return;
+    }
 
-    globals->key_state->setState(KeyState::Key::CapsLock,
-                                 flags(leds & input::keyboard_leds::caps_lock)
-                                     ? KeyState::State::Locked
-                                     : KeyState::State::Unlocked);
-    globals->key_state->setState(KeyState::Key::NumLock,
-                                 flags(leds & input::keyboard_leds::num_lock)
-                                     ? KeyState::State::Locked
-                                     : KeyState::State::Unlocked);
-    globals->key_state->setState(KeyState::Key::ScrollLock,
-                                 flags(leds & input::keyboard_leds::scroll_lock)
-                                     ? KeyState::State::Locked
-                                     : KeyState::State::Unlocked);
+    using key = Wrapland::Server::KeyState::Key;
+    using state = Wrapland::Server::KeyState::State;
+
+    globals->key_state->setState(key::CapsLock,
+                                 flags(leds & input::keyboard_leds::caps_lock) ? state::Locked
+                                                                               : state::Unlocked);
+    globals->key_state->setState(key::NumLock,
+                                 flags(leds & input::keyboard_leds::num_lock) ? state::Locked
+                                                                              : state::Unlocked);
+    globals->key_state->setState(key::ScrollLock,
+                                 flags(leds & input::keyboard_leds::scroll_lock) ? state::Locked
+                                                                                 : state::Unlocked);
 }
 
 }
