@@ -692,6 +692,26 @@ public:
 
     virtual QImage blit_from_framebuffer(QRect const& geometry, double scale) const = 0;
 
+    /**
+     * Returns the rect that's currently being repainted, in the logical pixels.
+     */
+    virtual QRect renderTargetRect() const = 0;
+    /**
+     * Returns the device pixel ratio of the current render target.
+     */
+    virtual qreal renderTargetScale() const = 0;
+
+    /**
+     * Maps the given @a rect from the global screen cordinates to the render
+     * target local coordinate system.
+     */
+    QRect mapToRenderTarget(QRect const& rect) const;
+    /**
+     * Maps the given @a region from the global screen coordinates to the render
+     * target local coordinate system.
+     */
+    QRegion mapToRenderTarget(QRegion const& region) const;
+
 Q_SIGNALS:
     /**
      * This signal is emitted whenever a new @a screen is added to the system.

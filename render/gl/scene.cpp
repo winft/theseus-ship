@@ -518,11 +518,8 @@ int64_t scene::paint(QRegion damage,
         return 0;
     }
 
-    auto const screen_geo = QRect({}, kwinApp()->get_base().topology.size);
-    GLVertexBuffer::setVirtualScreenGeometry(screen_geo);
-    GLRenderTarget::setVirtualScreenGeometry(screen_geo);
-    GLVertexBuffer::setVirtualScreenScale(1);
-    GLRenderTarget::setVirtualScreenScale(1);
+    setRenderTargetRect(QRect({}, kwinApp()->get_base().topology.size));
+    setRenderTargetScale(1.);
 
     auto mask = paint_type::none;
     updateProjectionMatrix();
@@ -531,7 +528,8 @@ int64_t scene::paint(QRegion damage,
     paintScreen(mask, damage, repaint, &update, &valid, presentTime, projectionMatrix());
 
     if (!GLPlatform::instance()->isGLES()) {
-        auto const displayRegion = QRegion(0, 0, screen_geo.width(), screen_geo.height());
+        auto const displayRegion
+            = QRegion(0, 0, renderTargetRect().width(), renderTargetRect().height());
 
         // Copy dirty parts from front to backbuffer.
         if (!m_backend->supportsBufferAge() && GLPlatform::instance()->driver() == Driver_NVidia
@@ -574,13 +572,8 @@ int64_t scene::paint_output(base::output* output,
     auto const repaint = m_backend->prepareRenderingForScreen(output);
     GLVertexBuffer::streamingBuffer()->beginFrame();
 
-    auto const geo = output->geometry();
-    auto const scaling = output->scale();
-
-    GLVertexBuffer::setVirtualScreenGeometry(geo);
-    GLRenderTarget::setVirtualScreenGeometry(geo);
-    GLVertexBuffer::setVirtualScreenScale(scaling);
-    GLRenderTarget::setVirtualScreenScale(scaling);
+    setRenderTargetRect(output->geometry());
+    setRenderTargetScale(output->scale());
 
     GLenum const status = glGetGraphicsResetStatus();
     if (status != GL_NO_ERROR) {
@@ -596,8 +589,13 @@ int64_t scene::paint_output(base::output* output,
     repaint_output = output;
 
     // Call generic implementation.
-    paintScreen(
-        mask, damage.intersected(geo), repaint, &update, &valid, presentTime, projectionMatrix());
+    paintScreen(mask,
+                damage.intersected(renderTargetRect()),
+                repaint,
+                &update,
+                &valid,
+                presentTime,
+                projectionMatrix());
     paintCursor();
 
     GLVertexBuffer::streamingBuffer()->endOfFrame();
@@ -753,7 +751,6 @@ void scene::handle_screen_geometry_change(QSize const& size)
     }
     glViewport(0, 0, size.width(), size.height());
     m_backend->screenGeometryChanged(size);
-    GLRenderTarget::setVirtualScreenSize(size);
 }
 
 void scene::paintDesktop(int desktop, paint_type mask, const QRegion& region, ScreenPaintData& data)

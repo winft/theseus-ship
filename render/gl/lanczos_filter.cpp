@@ -204,8 +204,14 @@ void lanczos_filter::performPaint(effects_window_impl* w,
             int sw = width;
             int sh = height;
 
+            QRegion scissor = infiniteRegion();
+            if (hardwareClipping) {
+                scissor = m_scene->mapToRenderTarget(region);
+            }
+
             GLTexture* cachedTexture
                 = static_cast<GLTexture*>(w->data(LanczosCacheRole).value<void*>());
+
             if (cachedTexture) {
                 if (cachedTexture->width() == tw && cachedTexture->height() == th) {
                     cachedTexture->bind();
@@ -229,7 +235,7 @@ void lanczos_filter::performPaint(effects_window_impl* w,
                     shader->setUniform(GLShader::ModulationConstant, QVector4D(rgb, rgb, rgb, a));
                     shader->setUniform(GLShader::Saturation, data.saturation());
 
-                    cachedTexture->render(region, textureRect, hardwareClipping);
+                    cachedTexture->render(scissor, textureRect, hardwareClipping);
 
                     glDisable(GL_BLEND);
                     if (hardwareClipping) {
@@ -375,7 +381,7 @@ void lanczos_filter::performPaint(effects_window_impl* w,
             shader->setUniform(GLShader::ModulationConstant, QVector4D(rgb, rgb, rgb, a));
             shader->setUniform(GLShader::Saturation, data.saturation());
 
-            cache->render(region, textureRect, hardwareClipping);
+            cache->render(scissor, textureRect, hardwareClipping);
 
             glDisable(GL_BLEND);
 

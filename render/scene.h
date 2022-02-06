@@ -173,6 +173,13 @@ public:
      */
     virtual QVector<QByteArray> openGLPlatformInterfaceExtensions() const;
 
+    QRect renderTargetRect() const;
+    void setRenderTargetRect(const QRect& rect);
+    qreal renderTargetScale() const;
+    void setRenderTargetScale(qreal scale);
+
+    QRegion mapToRenderTarget(const QRegion& region) const;
+
     QHash<Toplevel*, window*> m_windows;
     render::compositor& compositor;
     scene_windowing_integration windowing_integration;
@@ -262,6 +269,9 @@ private:
     std::chrono::milliseconds m_expectedPresentTimestamp = std::chrono::milliseconds::zero();
     // windows in their stacking order
     QVector<window*> stacking_order;
+
+    QRect m_renderTargetRect;
+    qreal m_renderTargetScale = 1;
 };
 
 }

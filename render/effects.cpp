@@ -1816,7 +1816,7 @@ QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double
 
         GLTexture texture(GL_RGBA8, nativeSize.width(), nativeSize.height());
         GLRenderTarget target(texture);
-        target.blitFromFramebuffer(geometry);
+        target.blitFromFramebuffer(mapToRenderTarget(geometry));
 
         // Copy content from framebuffer into image.
         texture.bind();
@@ -1841,6 +1841,16 @@ QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double
     image = image.transformed((flip_vert * gl_backend->transformation).toTransform());
     image.setDevicePixelRatio(scale);
     return image;
+}
+
+QRect effects_handler_impl::renderTargetRect() const
+{
+    return m_scene->renderTargetRect();
+}
+
+qreal effects_handler_impl::renderTargetScale() const
+{
+    return m_scene->renderTargetScale();
 }
 
 //****************************************

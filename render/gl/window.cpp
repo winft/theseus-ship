@@ -442,6 +442,12 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 
     float opacity = -1.0;
 
+    // The scissor region must be in the render target local coordinate system.
+    QRegion scissorRegion = infiniteRegion();
+    if (m_hardwareClipping) {
+        scissorRegion = m_scene->mapToRenderTarget(region);
+    }
+
     for (size_t i = 0; i < quads.size(); i++) {
         if (nodes[i].vertexCount == 0)
             continue;
@@ -458,8 +464,11 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         nodes[i].texture->setWrapMode(GL_CLAMP_TO_EDGE);
         nodes[i].texture->bind();
 
-        vbo->draw(
-            region, primitiveType, nodes[i].firstVertex, nodes[i].vertexCount, m_hardwareClipping);
+        vbo->draw(scissorRegion,
+                  primitiveType,
+                  nodes[i].firstVertex,
+                  nodes[i].vertexCount,
+                  m_hardwareClipping);
     }
 
     vbo->unbindArrays();

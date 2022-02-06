@@ -79,12 +79,12 @@ void ColorPickerEffect::postPaintScreen()
     if (m_scheduledPosition != QPoint(-1, -1)
         && (!m_paintedScreen || m_paintedScreen->geometry().contains(m_scheduledPosition))) {
         uint8_t data[3];
-        const QRect geo = GLRenderTarget::virtualScreenGeometry();
+        auto const geo = effects->renderTargetRect();
         const QPoint screenPosition(m_scheduledPosition.x() - geo.x(),
                                     m_scheduledPosition.y() - geo.y());
-        const QPoint texturePosition(screenPosition.x() * GLRenderTarget::virtualScreenScale(),
+        const QPoint texturePosition(screenPosition.x() * effects->renderTargetScale(),
                                      (geo.height() - screenPosition.y())
-                                         * GLRenderTarget::virtualScreenScale());
+                                         * effects->renderTargetScale());
 
         glReadnPixels(
             texturePosition.x(), texturePosition.y(), 1, 1, GL_RGB, GL_UNSIGNED_BYTE, 3, data);

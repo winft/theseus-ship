@@ -320,6 +320,9 @@ public:
     bool isCursorHidden() const override;
     QImage blit_from_framebuffer(QRect const& geometry, double scale) const override;
 
+    QRect renderTargetRect() const override;
+    qreal renderTargetScale() const override;
+
     using PropertyEffectMap = QHash<QByteArray, QList<Effect*>>;
     PropertyEffectMap m_propertiesForEffects;
     QHash<QByteArray, qulonglong> m_managedProperties;

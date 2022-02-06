@@ -942,10 +942,6 @@ GLShader* ShaderManager::loadShaderFromCode(const QByteArray& vertexSource,
 bool GLRenderTarget::sSupported = false;
 bool GLRenderTarget::s_blitSupported = false;
 QStack<GLRenderTarget*> GLRenderTarget::s_renderTargets = QStack<GLRenderTarget*>();
-QSize GLRenderTarget::s_virtualScreenSize;
-QRect GLRenderTarget::s_virtualScreenGeometry;
-qreal GLRenderTarget::s_virtualScreenScale = 1.0;
-GLint GLRenderTarget::s_virtualScreenViewport[4];
 
 void GLRenderTarget::initStatic()
 {
@@ -987,18 +983,12 @@ GLRenderTarget* GLRenderTarget::currentRenderTarget()
 
 void GLRenderTarget::pushRenderTarget(GLRenderTarget* target)
 {
-    if (s_renderTargets.isEmpty()) {
-        glGetIntegerv(GL_VIEWPORT, s_virtualScreenViewport);
-    }
     target->bind();
     s_renderTargets.push(target);
 }
 
 void GLRenderTarget::pushRenderTargets(QStack<GLRenderTarget*> targets)
 {
-    if (s_renderTargets.isEmpty()) {
-        glGetIntegerv(GL_VIEWPORT, s_virtualScreenViewport);
-    }
     targets.top()->bind();
     s_renderTargets.append(targets);
 }
@@ -1010,12 +1000,6 @@ GLRenderTarget* GLRenderTarget::popRenderTarget()
 
     if (!s_renderTargets.isEmpty()) {
         s_renderTargets.top()->bind();
-    } else {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(s_virtualScreenViewport[0],
-                   s_virtualScreenViewport[1],
-                   s_virtualScreenViewport[2],
-                   s_virtualScreenViewport[3]);
     }
 
     return target;
@@ -1044,6 +1028,11 @@ GLRenderTarget::~GLRenderTarget()
     if (mValid && !mForeign) {
         glDeleteFramebuffers(1, &mFramebuffer);
     }
+}
+
+QSize GLRenderTarget::size() const
+{
+    return mTexture ? mTexture->size() : mViewport.size();
 }
 
 void GLRenderTarget::bind()
@@ -1172,23 +1161,24 @@ void GLRenderTarget::blitFromFramebuffer(const QRect& source,
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFramebuffer);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, top ? top->mFramebuffer : 0);
 
-    auto const size = mTexture ? mTexture->size() : mViewport.size();
-    const QRect s = source.isNull() ? s_virtualScreenGeometry : source;
-    const QRect d = destination.isNull() ? QRect(0, 0, size.width(), size.height()) : destination;
+    auto const ssize = top->size();
+    auto const dsize = size();
+    auto const s = source.isNull() ? QRect(QPoint(0, 0), ssize) : source;
+    auto const d = destination.isNull() ? QRect(QPoint(0, 0), dsize) : destination;
+
+    const GLuint srcX0 = s.x();
+    const GLuint srcY0 = ssize.height() - (s.y() + s.height());
+    const GLuint srcX1 = s.x() + s.width();
+    const GLuint srcY1 = ssize.height() - s.y();
+
+    const GLuint dstX0 = d.x();
+    const GLuint dstY0 = dsize.height() - (d.y() + d.height());
+    const GLuint dstX1 = d.x() + d.width();
+    const GLuint dstY1 = dsize.height() - d.y();
 
     glBlitFramebuffer(
-        (s.x() - s_virtualScreenGeometry.x()) * s_virtualScreenScale,
-        (s_virtualScreenGeometry.height() - (s.y() - s_virtualScreenGeometry.y() + s.height()))
-            * s_virtualScreenScale,
-        (s.x() - s_virtualScreenGeometry.x() + s.width()) * s_virtualScreenScale,
-        (s_virtualScreenGeometry.height() - (s.y() - s_virtualScreenGeometry.y()))
-            * s_virtualScreenScale,
-        d.x(),
-        size.height() - d.y() - d.height(),
-        d.x() + d.width(),
-        size.height() - d.y(),
-        GL_COLOR_BUFFER_BIT,
-        filter);
+        srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, GL_COLOR_BUFFER_BIT, filter);
+
     GLRenderTarget::popRenderTarget();
 }
 
@@ -1904,8 +1894,6 @@ GLvoid* GLVertexBufferPrivate::mapNextFreeRange(size_t size)
 //*********************************
 // GLVertexBuffer
 //*********************************
-QRect GLVertexBuffer::s_virtualScreenGeometry;
-qreal GLVertexBuffer::s_virtualScreenScale;
 
 GLVertexBuffer::GLVertexBuffer(UsageHint hint)
     : d(new GLVertexBufferPrivate(hint))
@@ -2083,13 +2071,12 @@ void GLVertexBuffer::draw(const QRegion& region,
             glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
         } else {
             // Clip using scissoring
-            for (const QRect& r : region) {
-                glScissor((r.x() - s_virtualScreenGeometry.x()) * s_virtualScreenScale,
-                          (s_virtualScreenGeometry.height() + s_virtualScreenGeometry.y() - r.y()
-                           - r.height())
-                              * s_virtualScreenScale,
-                          r.width() * s_virtualScreenScale,
-                          r.height() * s_virtualScreenScale);
+            auto renderTarget = GLRenderTarget::currentRenderTarget();
+            for (auto const& r : region) {
+                glScissor(r.x(),
+                          renderTarget->size().height() - (r.y() + r.height()),
+                          r.width(),
+                          r.height());
                 glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, nullptr, first);
             }
         }
@@ -2100,13 +2087,10 @@ void GLVertexBuffer::draw(const QRegion& region,
         glDrawArrays(primitiveMode, first, count);
     } else {
         // Clip using scissoring
-        for (const QRect& r : region) {
-            glScissor((r.x() - s_virtualScreenGeometry.x()) * s_virtualScreenScale,
-                      (s_virtualScreenGeometry.height() + s_virtualScreenGeometry.y() - r.y()
-                       - r.height())
-                          * s_virtualScreenScale,
-                      r.width() * s_virtualScreenScale,
-                      r.height() * s_virtualScreenScale);
+        auto renderTarget = GLRenderTarget::currentRenderTarget();
+        for (auto const& r : region) {
+            glScissor(
+                r.x(), renderTarget->size().height() - (r.y() + r.height()), r.width(), r.height());
             glDrawArrays(primitiveMode, first, count);
         }
     }
