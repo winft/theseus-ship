@@ -111,10 +111,21 @@ bool TestObject::callback(KWin::ElectricBorder border)
     return true;
 }
 
+void reset_edger()
+{
+    workspace()->edges = std::make_unique<win::screen_edger>(*Test::app()->workspace);
+}
+
+void reset_edger(KSharedConfig::Ptr config)
+{
+    kwinApp()->setConfig(config);
+    reset_edger();
+}
+
 void TestScreenEdges::testInit()
 {
+    reset_edger();
     auto& screenEdges = workspace()->edges;
-    screenEdges->init();
     QCOMPARE(screenEdges->desktop_switching.always, false);
     QCOMPARE(screenEdges->desktop_switching.when_moving_client, false);
     QCOMPARE(screenEdges->time_threshold, 150);
@@ -213,9 +224,9 @@ void TestScreenEdges::testCreatingInitialEdges()
     config->group("Windows").writeEntry("ElectricBorders", 2 /*ElectricAlways*/);
     config->sync();
 
+    reset_edger(config);
     auto& screenEdges = workspace()->edges;
-    screenEdges->config = config;
-    screenEdges->init();
+
     // we don't have multiple desktops, so it's returning false
     QCOMPARE(screenEdges->desktop_switching.always, true);
     QCOMPARE(screenEdges->desktop_switching.when_moving_client, true);
@@ -376,8 +387,8 @@ void TestScreenEdges::testCallback()
 
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
+    reset_edger();
     auto& screenEdges = workspace()->edges;
-    screenEdges->init();
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
@@ -523,8 +534,9 @@ void TestScreenEdges::testCallback()
 
 void TestScreenEdges::testCallbackWithCheck()
 {
+    reset_edger();
     auto& screenEdges = workspace()->edges;
-    screenEdges->init();
+
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
@@ -597,9 +609,6 @@ void TestScreenEdges::test_overlapping_edges()
     Test::app()->set_outputs(geometries);
 
     QCOMPARE(changedSpy.count(), geometries.size() + 3);
-
-    auto& screenEdges = workspace()->edges;
-    screenEdges->init();
 }
 
 void TestScreenEdges::testPushBack_data()
@@ -632,9 +641,8 @@ void TestScreenEdges::testPushBack()
     auto const geometries = std::vector<QRect>{{0, 0, 1024, 768}, {200, 768, 1024, 768}};
     Test::app()->set_outputs(geometries);
 
+    reset_edger(config);
     auto& screenEdges = workspace()->edges;
-    screenEdges->config = config;
-    screenEdges->init();
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
@@ -677,9 +685,8 @@ void TestScreenEdges::testFullScreenBlocking()
     auto client = workspace()->activeClient();
     QVERIFY(client);
 
+    reset_edger(config);
     auto& screenEdges = workspace()->edges;
-    screenEdges->config = config;
-    screenEdges->init();
     TestObject callback;
     QSignalSpy spy(&callback, &TestObject::gotCallback);
     QVERIFY(spy.isValid());
@@ -780,8 +787,9 @@ void TestScreenEdges::testClientEdge()
     QVERIFY(client);
 
     client->setFrameGeometry(QRect(10, 50, 10, 50));
+
+    reset_edger();
     auto& screenEdges = workspace()->edges;
-    screenEdges->init();
 
     screenEdges->reserve(client, KWin::ElectricBottom);
 
@@ -891,9 +899,8 @@ void TestScreenEdges::testTouchEdge()
     group.writeEntry("Right", "krunner");
     config->sync();
 
+    reset_edger(config);
     auto& screenEdges = workspace()->edges;
-    screenEdges->config = config;
-    screenEdges->init();
 
     // we don't have multiple desktops, so it's returning false
     QEXPECT_FAIL("", "Possible on Wayland. Needs investigation.", Abort);
@@ -986,9 +993,8 @@ void TestScreenEdges::testTouchCallback()
     group.writeEntry("Right", "none");
     config->sync();
 
+    reset_edger(config);
     auto& screenEdges = workspace()->edges;
-    screenEdges->config = config;
-    screenEdges->init();
 
     // none of our actions should be reserved
     auto edges

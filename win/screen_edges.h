@@ -204,12 +204,6 @@ public:
     ~screen_edger() override;
 
     /**
-     * Initialize the screen edges.
-     * @internal
-     */
-    void init();
-
-    /**
      * Check, if a screen edge is entered and trigger the appropriate action
      * if one is enabled for the current region and the timeout is satisfied
      * @param pos the position of the mouse pointer

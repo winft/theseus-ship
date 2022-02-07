@@ -713,7 +713,10 @@ screen_edger::screen_edger(Workspace& space)
     corner_offset = (screens.physicalDpiX(0) + screens.physicalDpiY(0) + 5) / 6;
 
     config = kwinApp()->config();
-    init();
+
+    reconfigure();
+    updateLayout();
+    recreateEdges();
 
     QObject::connect(options, &Options::configChanged, this, &win::screen_edger::reconfigure);
     QObject::connect(virtual_desktop_manager::self(),
@@ -727,12 +730,6 @@ screen_edger::screen_edger(Workspace& space)
 
 screen_edger::~screen_edger() = default;
 
-void screen_edger::init()
-{
-    reconfigure();
-    updateLayout();
-    recreateEdges();
-}
 static ElectricBorderAction electricBorderAction(const QString& name)
 {
     QString lowerName = name.toLower();
