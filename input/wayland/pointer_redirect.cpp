@@ -615,11 +615,18 @@ void pointer_redirect::updatePointerConstraints()
     if (!focus()) {
         return;
     }
+
     const auto s = focus()->surface();
     if (!s) {
         return;
     }
-    if (s != waylandServer()->seat()->pointers().get_focus().surface) {
+
+    auto seat = waylandServer()->seat();
+    if (!seat->hasPointer()) {
+        return;
+    }
+
+    if (s != seat->pointers().get_focus().surface) {
         return;
     }
     const bool canConstrain = constraints.enabled && focus() == workspace()->activeClient();
@@ -675,7 +682,7 @@ void pointer_redirect::updatePointerConstraints()
                 if (!(hint.x() < 0 || hint.y() < 0) && focus()) {
                     // TODO(romangg): different client offset for Xwayland clients?
                     processMotion(win::frame_to_client_pos(focus(), focus()->pos()) + hint,
-                                  waylandServer()->seat()->timestamp());
+                                  seat->timestamp());
                 }
             }
             return;
