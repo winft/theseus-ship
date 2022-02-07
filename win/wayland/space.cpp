@@ -43,6 +43,8 @@ space::space(WaylandServer* server)
 {
     namespace WS = Wrapland::Server;
 
+    edges = std::make_unique<win::screen_edger>(*this);
+
     QObject::connect(server->globals->compositor.get(),
                      &WS::Compositor::surfaceCreated,
                      this,
