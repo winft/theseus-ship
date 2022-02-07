@@ -428,7 +428,7 @@ public:
 
     void remove_window(Toplevel* window);
 
-    virtual win::screen_edge* create_screen_edge();
+    virtual win::screen_edge* create_screen_edge(win::screen_edger& edger);
     virtual QRect get_icon_geometry(Toplevel const* win) const;
 
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t* geom);

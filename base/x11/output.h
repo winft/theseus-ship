@@ -36,8 +36,8 @@ public:
         QString name;
         QRect geometry;
         QSize physical_size;
-        int gamma_ramp_size;
-        int refresh_rate;
+        int gamma_ramp_size{0};
+        int refresh_rate{-1};
         xcb_randr_crtc_t crtc{XCB_NONE};
     } data;
 

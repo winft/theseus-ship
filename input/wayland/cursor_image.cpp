@@ -224,7 +224,15 @@ void cursor_image::updateServerCursor()
     const bool needsEmit = m_currentSource == CursorSource::LockScreen
         || m_currentSource == CursorSource::PointerSurface;
 
-    auto const pointer_focus = waylandServer()->seat()->pointers().get_focus();
+    auto seat = waylandServer()->seat();
+    if (!seat->hasPointer()) {
+        if (needsEmit) {
+            Q_EMIT changed();
+        }
+        return;
+    }
+
+    auto const pointer_focus = seat->pointers().get_focus();
     if (pointer_focus.devices.empty()) {
         if (needsEmit) {
             Q_EMIT changed();

@@ -12,7 +12,7 @@
 #include "atoms.h"
 #include "input/cursor.h"
 
-namespace KWin::render::backend::x11
+namespace KWin::win::x11
 {
 
 screen_edge::screen_edge(win::screen_edger* edger)

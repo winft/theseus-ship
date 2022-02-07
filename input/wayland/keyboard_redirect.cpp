@@ -131,6 +131,9 @@ void keyboard_redirect::init()
 void keyboard_redirect::update()
 {
     auto seat = waylandServer()->seat();
+    if (!seat->hasKeyboard()) {
+        return;
+    }
 
     // TODO: this needs better integration
     Toplevel* found = nullptr;

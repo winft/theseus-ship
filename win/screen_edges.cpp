@@ -148,7 +148,7 @@ bool screen_edge::activatesForPointer() const
         return true;
     }
     if (edger->desktop_switching.when_moving_client) {
-        auto c = Workspace::self()->moveResizeClient();
+        auto c = edger->space.moveResizeClient();
         if (c && !win::is_resize(c)) {
             return true;
         }
@@ -274,7 +274,7 @@ bool screen_edge::canActivate(QPoint const& cursorPos, QDateTime const& triggerT
 
 void screen_edge::handle(QPoint const& cursorPos)
 {
-    auto movingClient = Workspace::self()->moveResizeClient();
+    auto movingClient = edger->space.moveResizeClient();
 
     if ((edger->desktop_switching.when_moving_client && movingClient
          && !win::is_resize(movingClient))
@@ -315,7 +315,7 @@ bool screen_edge::handleAction(ElectricBorderAction action)
 {
     switch (action) {
     case ElectricActionShowDesktop: {
-        Workspace::self()->setShowingDesktop(!Workspace::self()->showingDesktop());
+        edger->space.setShowingDesktop(!edger->space.showingDesktop());
         return true;
     }
     case ElectricActionLockScreen: { // Lock the screen
@@ -409,7 +409,7 @@ void screen_edge::switchDesktop(QPoint const& cursorPos)
             pos.setY(OFFSET);
     }
 
-    if (auto c = Workspace::self()->moveResizeClient()) {
+    if (auto c = edger->space.moveResizeClient()) {
         if (c->control->rules().checkDesktop(desktop) != int(desktop)) {
             // user attempts to move a client to another desktop where it is ruleforced to not be
             return;
@@ -525,7 +525,7 @@ void screen_edge::checkBlocking()
     }
 
     bool newValue = false;
-    if (auto client = Workspace::self()->activeClient()) {
+    if (auto client = edger->space.activeClient()) {
         newValue
             = client->control->fullscreen() && client->frameGeometry().contains(geometry.center());
     }
@@ -705,23 +705,31 @@ void screen_edge::setClient(Toplevel* window)
  * screen_edger
  *********************************************************/
 
-screen_edger::screen_edger()
+screen_edger::screen_edger(Workspace& space)
     : gesture_recognizer{std::make_unique<input::gesture_recognizer>()}
+    , space{space}
 {
     auto const& screens = kwinApp()->get_base().screens;
     corner_offset = (screens.physicalDpiX(0) + screens.physicalDpiY(0) + 5) / 6;
 
-    connect(workspace(), &Workspace::clientRemoved, this, &screen_edger::deleteEdgeForClient);
+    config = kwinApp()->config();
+
+    reconfigure();
+    updateLayout();
+    recreateEdges();
+
+    QObject::connect(options, &Options::configChanged, this, &win::screen_edger::reconfigure);
+    QObject::connect(virtual_desktop_manager::self(),
+                     &virtual_desktop_manager::layoutChanged,
+                     this,
+                     &screen_edger::updateLayout);
+
+    QObject::connect(&space, &Workspace::clientActivated, this, &win::screen_edger::checkBlocking);
+    QObject::connect(&space, &Workspace::clientRemoved, this, &screen_edger::deleteEdgeForClient);
 }
 
 screen_edger::~screen_edger() = default;
 
-void screen_edger::init()
-{
-    reconfigure();
-    updateLayout();
-    recreateEdges();
-}
 static ElectricBorderAction electricBorderAction(const QString& name)
 {
     QString lowerName = name.toLower();
@@ -1146,7 +1154,7 @@ screen_edge* screen_edger::createEdge(ElectricBorder border,
                                       int height,
                                       bool createAction)
 {
-    auto edge = workspace()->create_screen_edge();
+    auto edge = space.create_screen_edge(*this);
 
     // Edges can not have negative size.
     assert(width >= 0);
@@ -1307,7 +1315,7 @@ void screen_edger::createEdgeForClient(Toplevel* window, ElectricBorder border)
 
     auto const& screens = kwinApp()->get_base().screens;
     QRect const geo = window->frameGeometry();
-    QRect const fullArea = workspace()->clientArea(FullArea, 0, 1);
+    QRect const fullArea = space.clientArea(FullArea, 0, 1);
 
     for (int i = 0; i < screens.count(); ++i) {
         const QRect screen = screens.geometry(i);

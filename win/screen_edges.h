@@ -27,13 +27,14 @@ class QMouseEvent;
 namespace KWin
 {
 
-class Toplevel;
-
 namespace input
 {
 class gesture_recognizer;
 class swipe_gesture;
 }
+
+class Toplevel;
+class Workspace;
 
 namespace win
 {
@@ -199,14 +200,8 @@ class KWIN_EXPORT screen_edger : public QObject
 {
     Q_OBJECT
 public:
-    screen_edger();
+    screen_edger(Workspace& space);
     ~screen_edger() override;
-
-    /**
-     * Initialize the screen edges.
-     * @internal
-     */
-    void init();
 
     /**
      * Check, if a screen edge is entered and trigger the appropriate action
@@ -308,6 +303,7 @@ public:
 
     std::unique_ptr<input::gesture_recognizer> gesture_recognizer;
     KSharedConfig::Ptr config;
+    Workspace& space;
 
     /// The (dpi dependent) length, reserved for the active corners of each edge - 1/3"
     int corner_offset;

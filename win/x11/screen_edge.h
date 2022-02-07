@@ -12,7 +12,7 @@
 #include "win/screen_edges.h"
 #include "xcbutils.h"
 
-namespace KWin::render::backend::x11
+namespace KWin::win::x11
 {
 
 class screen_edge : public win::screen_edge

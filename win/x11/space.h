@@ -30,7 +30,7 @@ public:
     space();
     ~space() override;
 
-    win::screen_edge* create_screen_edge() override;
+    win::screen_edge* create_screen_edge(win::screen_edger& edger) override;
 
 protected:
     void update_space_area_from_windows(QRect const& desktop_area,

@@ -16,6 +16,8 @@ namespace KWin::win::x11
 
 space::space()
 {
+    edges = std::make_unique<win::screen_edger>(*this);
+
     QObject::connect(
         virtual_desktop_manager::self(), &virtual_desktop_manager::desktopRemoved, this, [this] {
             auto const desktop_count = static_cast<int>(virtual_desktop_manager::self()->count());
@@ -37,12 +39,12 @@ space::~space()
 {
 }
 
-win::screen_edge* space::create_screen_edge()
+win::screen_edge* space::create_screen_edge(win::screen_edger& edger)
 {
     if (!edges_filter) {
         edges_filter = std::make_unique<screen_edges_filter>();
     }
-    return new screen_edge(edges.get());
+    return new screen_edge(&edger);
 }
 
 void space::update_space_area_from_windows(QRect const& desktop_area,
