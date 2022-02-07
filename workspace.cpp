@@ -736,23 +736,26 @@ QString Workspace::supportInformation() const
     const QString no = QStringLiteral("no\n");
 
     support.append(ki18nc("Introductory text shown in the support information.",
-                          "KWin Support Information:\n"
-                          "The following information should be used when requesting support on "
-                          "e.g. https://forum.kde.org.\n"
-                          "It provides information about the currently running instance, which "
-                          "options are used,\n"
-                          "what OpenGL driver and which effects are running.\n"
-                          "Please post the information provided underneath this introductory text "
-                          "to a paste bin service\n"
-                          "like https://paste.kde.org instead of pasting into support threads.\n")
+                          "KWinFT Support Information:\n"
+                          "The following information should be provided when openning an issue\n"
+                          "ticket on https://gitlab.com/kwinft/kwinft.\n"
+                          "It gives information about the currently running instance, which\n"
+                          "options are used, what OpenGL driver and which effects are running.\n"
+                          "Please paste the information provided underneath this introductory\n"
+                          "text into a html details header and triple backticks when you\n"
+                          "create an issue ticket:\n"
+                          "\n<details>\n"
+                          "<summary>Support Information</summary>\n"
+                          "\n```\n"
+                          "PASTE GOES HERE...\n"
+                          "```\n"
+                          "\n</details>\n")
                        .toString());
+
     support.append(QStringLiteral("\n==========================\n\n"));
-    // all following strings are intended for support. They need to be pasted to e.g forums.kde.org
-    // it is expected that the support will happen in English language or that the people providing
-    // help understand English. Because of that all texts are not translated
     support.append(QStringLiteral("Version\n"));
     support.append(QStringLiteral("=======\n"));
-    support.append(QStringLiteral("KWin version: "));
+    support.append(QStringLiteral("KWinFT version: "));
     support.append(QStringLiteral(KWIN_VERSION_STRING));
     support.append(QStringLiteral("\n"));
     support.append(QStringLiteral("Qt Version: "));
