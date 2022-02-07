@@ -95,6 +95,8 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
     , m_inputConfig()
     , m_operationMode(mode)
 {
+    qDebug("Starting KWinFT %s", KWIN_VERSION_STRING);
+
 #if HAVE_PERF
     if(!Perf::Ftrace::valid(this, true)) {
         qCWarning(KWIN_CORE) << "Not able to setup Ftracing interface.";
