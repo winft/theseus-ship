@@ -446,7 +446,6 @@ set(kwin_SRCS
     input/xkb/keyboard.cpp
     input/xkb/keymap.cpp
     input/xkb/manager.cpp
-    killwindow.cpp
     main.cpp
     options.cpp
     render/compositor.cpp
