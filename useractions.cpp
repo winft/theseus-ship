@@ -48,6 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/app_menu.h"
 #include "win/controlling.h"
 #include "win/input.h"
+#include "win/kill_window.h"
 #include "win/layers.h"
 #include "win/net.h"
 #include "win/screen.h"
@@ -73,7 +74,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kauthorized.h>
 
-#include "killwindow.h"
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
