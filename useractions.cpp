@@ -1476,8 +1476,8 @@ void Workspace::slotWindowToDesktopDown()
  */
 void Workspace::slotKillWindow()
 {
-    if (m_windowKiller.isNull()) {
-        m_windowKiller.reset(new KillWindow());
+    if (!m_windowKiller) {
+        m_windowKiller.reset(new win::kill_window);
     }
     m_windowKiller->start();
 }

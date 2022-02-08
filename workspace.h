@@ -72,8 +72,10 @@ class platform;
 
 namespace win
 {
+
 enum class activation;
 class internal_window;
+class kill_window;
 class screen_edge;
 class screen_edger;
 class stacking_order;
@@ -87,7 +89,6 @@ class stacking_tree;
 }
 }
 
-class KillWindow;
 class ShortcutDialog;
 class Toplevel;
 class UserActionsMenu;
@@ -629,7 +630,7 @@ private:
 
     int set_active_client_recursion{0};
 
-    QScopedPointer<KillWindow> m_windowKiller;
+    std::unique_ptr<win::kill_window> m_windowKiller;
 
     SessionManager* m_sessionManager;
 

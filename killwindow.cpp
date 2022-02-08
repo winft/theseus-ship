@@ -1,62 +1,47 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 1999, 2000 Matthias Ettrich <ettrich@kde.org>
+    SPDX-FileCopyrightText: 2003 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2012 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 1999, 2000 Matthias Ettrich <ettrich@kde.org>
-Copyright (C) 2003 Lubos Lunak <l.lunak@kde.org>
-Copyright (C) 2012 Martin Gräßlin <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "killwindow.h"
 
-#include <input/platform.h>
+#include "input/platform.h"
 #include "main.h"
 #include "toplevel.h"
 #include "win/osd.h"
 
 #include <KLocalizedString>
 
-namespace KWin
+namespace KWin::win
 {
 
-KillWindow::KillWindow()
+void kill_window::start()
 {
-}
+    osd_show(i18n("Select window to force close with left click or enter.\nEscape or right click "
+                  "to cancel."),
+             QStringLiteral("window-close"));
 
-KillWindow::~KillWindow()
-{
-}
-
-void KillWindow::start()
-{
-    win::osd_show(i18n("Select window to force close with left click or enter.\nEscape or right "
-                       "click to cancel."),
-                  QStringLiteral("window-close"));
     kwinApp()->input->start_interactive_window_selection(
-        [] (Toplevel* window) {
-            win::osd_hide();
+        [](auto window) {
+            osd_hide();
+
             if (!window) {
                 return;
             }
+
             if (window->control) {
                 window->killWindow();
-            } else if (window->xcb_window()) {
+                return;
+            }
+
+            if (window->xcb_window()) {
                 xcb_kill_client(connection(), window->xcb_window());
             }
-        }, QByteArrayLiteral("pirate")
-    );
+        },
+        QByteArrayLiteral("pirate"));
 }
 
-} // namespace
+}
