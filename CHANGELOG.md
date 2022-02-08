@@ -1,5 +1,26 @@
 # Changelog
 All notable changes to KWinFT will be documented in this file.
+## [5.24.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.24.0-beta.0...kwinft@5.24.0) (2022-02-08)
+
+
+### Bug Fixes
+
+* create screen edger in space child classes ([f571c3a](https://gitlab.com/kwinft/kwinft/commit/f571c3a6de10ef9c7f7b7cd31886775d78ac4956))
+* **effect:** get virtual screen geometry instead of client area ([c8da442](https://gitlab.com/kwinft/kwinft/commit/c8da4428282875ba4844a9e557859f1426c32787))
+* initalize uninitialized var ([49ab436](https://gitlab.com/kwinft/kwinft/commit/49ab4365872ac55dec97f7b5a77e472e00fe5add))
+* initialize base X11 output data ([b05b420](https://gitlab.com/kwinft/kwinft/commit/b05b42015579e893c729f9a3f10b247f884b68a3))
+* **input:** check seat capabilities ([76294cc](https://gitlab.com/kwinft/kwinft/commit/76294cc921d5e20ae5239d1ca027fd5bb5f0e30c))
+* move X11 screen edge to win namespace ([9b55f23](https://gitlab.com/kwinft/kwinft/commit/9b55f230c6bdf6425e13ea4229c7e4088a2f3760))
+* only use sRGB configurations with depth 24 ([1173c66](https://gitlab.com/kwinft/kwinft/commit/1173c66cf7f1de1cccb79de12220cd6e5a8ef245))
+* remove assignment operator in platform.h ([0d4252f](https://gitlab.com/kwinft/kwinft/commit/0d4252fe335030ff1b75817be93460c03dc8699f))
+* silence compiler warnings ([0235b31](https://gitlab.com/kwinft/kwinft/commit/0235b31d5f771870081359d0563e277c49226a6d))
+* update download.kde.org references with autoconfig.kde.org ([fa5461e](https://gitlab.com/kwinft/kwinft/commit/fa5461ec5c8d80d14d608581db31a1e622c9300a))
+
+
+### Refactors
+
+* remove screen edger init function ([0951df8](https://gitlab.com/kwinft/kwinft/commit/0951df85ac1d4386d919125fb316a135fed89235))
+
 ## [5.24.0-beta.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.23.0-beta.0...kwinft@5.24.0-beta.0) (2022-02-03)
 
 
