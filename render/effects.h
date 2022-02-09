@@ -544,6 +544,7 @@ public:
     pid_t pid() const override;
 
     QRect decorationInnerRect() const override;
+    KDecoration2::Decoration* decoration() const override;
     QByteArray readProperty(long atom, long type, int format) const override;
     void deleteProperty(long atom) const override;
 

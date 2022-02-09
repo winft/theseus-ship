@@ -59,6 +59,7 @@ set(kwin_effect_KDE_LIBS
     KF5::Plasma # screenedge effect
     KF5::WindowSystem
     KF5::Service # utils / screenshot effect
+    KDecoration2::KDecoration # blur effect
 )
 
 if (HAVE_ACCESSIBILITY)

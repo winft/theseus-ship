@@ -77,6 +77,7 @@ private:
     void initBlurStrengthValues();
     void updateTexture();
     QRegion blurRegion(const EffectWindow* w) const;
+    QRegion decorationBlurRegion(const EffectWindow* w) const;
     bool shouldBlur(const EffectWindow* w, int mask, const WindowPaintData& data) const;
     void doBlur(const QRegion& shape,
                 const QRect& screen,

@@ -2206,6 +2206,11 @@ QRect effects_window_impl::decorationInnerRect() const
     return contentsRect();
 }
 
+KDecoration2::Decoration* effects_window_impl::decoration() const
+{
+    return win::decoration(toplevel);
+}
+
 QByteArray effects_window_impl::readProperty(long atom, long type, int format) const
 {
     if (!kwinApp()->x11Connection()) {

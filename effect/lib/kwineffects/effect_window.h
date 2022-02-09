@@ -14,6 +14,11 @@
 #include <QIcon>
 #include <QObject>
 
+namespace KDecoration2
+{
+class Decoration;
+}
+
 namespace Wrapland::Server
 {
 class Surface;
@@ -470,6 +475,11 @@ public:
     virtual QRect decorationInnerRect() const = 0;
     bool hasDecoration() const;
     virtual bool decorationHasAlpha() const = 0;
+    /**
+     * Returns the decoration
+     * @since 5.25
+     */
+    virtual KDecoration2::Decoration* decoration() const = 0;
     virtual QByteArray readProperty(long atom, long type, int format) const = 0;
     virtual void deleteProperty(long atom) const = 0;
 
