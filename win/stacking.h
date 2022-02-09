@@ -118,24 +118,25 @@ template<typename Space>
 Toplevel* find_desktop(Space* space, bool topmost, int desktop)
 {
     // TODO(fsorr): use C++20 std::ranges::reverse_view
-    const auto& list = space->stacking_order->sorted();
+    auto const& list = space->stacking_order->sorted();
+    auto is_desktop = [desktop](auto window) {
+        return window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
+            && window->isShown();
+    };
+
     if (topmost) {
-        for (auto it = std::crbegin(list); it != std::crend(list); it++) {
-            auto window = *it;
-            if (window->control && window->isOnDesktop(desktop) && is_desktop(window)
-                && window->isShown()) {
-                return window;
-            }
+        auto it = std::find_if(list.rbegin(), list.rend(), is_desktop);
+        if (it != list.rend()) {
+            return *it;
         }
     } else {
         // bottom-most
-        for (auto const& window : list) {
-            if (window->control && window->isOnDesktop(desktop) && is_desktop(window)
-                && window->isShown()) {
-                return window;
-            }
+        auto it = std::find_if(list.begin(), list.end(), is_desktop);
+        if (it != list.end()) {
+            return *it;
         }
     }
+
     return nullptr;
 }
 
