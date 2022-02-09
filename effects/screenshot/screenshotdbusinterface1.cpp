@@ -4,9 +4,9 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #include "screenshotdbusinterface1.h"
-#include "../service_utils.h"
+
+#include "desktop/kde/service_utils.h"
 
 #include <KLocalizedString>
 #include <KNotification>
@@ -502,7 +502,7 @@ bool ScreenShotDBusInterface1::checkCall() const
     const QDBusReply<uint> reply = connection().interface()->servicePid(message().service());
     if (reply.isValid()) {
         const uint pid = reply.value();
-        const auto interfaces = KWin::fetchRestrictedDBusInterfacesFromPid(pid);
+        const auto interfaces = desktop::kde::fetchRestrictedDBusInterfacesFromPid(pid);
         if (!interfaces.contains(s_dbusInterfaceName)) {
             sendErrorReply(s_errorNotAuthorized, s_errorNotAuthorizedMsg);
             qCWarning(KWIN_SCREENSHOT) << "Process" << pid << "tried to take a screenshot without being granted to DBus interface" << s_dbusInterfaceName;

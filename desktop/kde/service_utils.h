@@ -13,7 +13,7 @@
 #include <QFileInfo>
 #include <QLoggingCategory>
 
-namespace KWin
+namespace KWin::desktop::kde
 {
 
 static QString const s_waylandInterfaceName = QStringLiteral("X-KDE-Wayland-Interfaces");

@@ -5,7 +5,7 @@
 */
 #include "filtered_display.h"
 
-#include "service_utils.h"
+#include "desktop/kde/service_utils.h"
 #include "wayland_logging.h"
 
 #include <QCryptographicHash>
@@ -53,7 +53,7 @@ bool is_trusted_origin(Wrapland::Server::Client* client)
 
 QStringList fetch_requested_interfaces(Wrapland::Server::Client* client)
 {
-    return KWin::fetchRequestedInterfaces(client->executablePath().c_str());
+    return desktop::kde::fetchRequestedInterfaces(client->executablePath().c_str());
 }
 
 filtered_display::filtered_display()
