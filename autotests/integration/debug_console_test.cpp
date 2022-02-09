@@ -19,15 +19,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "debug/wayland_console.h"
+#include "base/wayland/server.h"
+#include "base/x11/xcb/window.h"
+#include "debug/console/wayland/wayland_console.h"
 #include "screens.h"
-#include "wayland_server.h"
 #include "win/control.h"
 #include "win/deco.h"
 #include "win/internal_window.h"
 #include "win/wayland/window.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
@@ -224,7 +224,7 @@ void DebugConsoleTest::testX11Unmanaged()
 
     // let's create an override redirect window
     const uint32_t values[] = {true};
-    Xcb::Window window(QRect(0, 0, 10, 10), XCB_CW_OVERRIDE_REDIRECT, values);
+    base::x11::xcb::window window(QRect(0, 0, 10, 10), XCB_CW_OVERRIDE_REDIRECT, values);
     window.map();
 
     QVERIFY(rowsInsertedSpy.wait());

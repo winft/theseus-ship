@@ -6,12 +6,12 @@
 #include "presentation.h"
 
 #include "base/wayland/output.h"
+#include "base/wayland/server.h"
 #include "main.h"
 #include "render/wayland/output.h"
 #include "toplevel.h"
 #include "utils.h"
 #include "wayland_logging.h"
-#include "wayland_server.h"
 
 #include <Wrapland/Server/output.h>
 #include <Wrapland/Server/presentation_time.h>

@@ -11,11 +11,11 @@
 #include "cursor_theme.h"
 
 #include "base/platform.h"
+#include "base/wayland/server.h"
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "render/effects.h"
 #include "screens.h"
-#include "wayland_server.h"
 #include "win/control.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
@@ -54,7 +54,7 @@ cursor_image::cursor_image()
         reevaluteSource();
     });
 
-    if (waylandServer()->hasScreenLockerIntegration()) {
+    if (waylandServer()->has_screen_locker_integration()) {
         QObject::connect(ScreenLocker::KSldApp::self(),
                          &ScreenLocker::KSldApp::lockStateChanged,
                          this,
@@ -276,10 +276,10 @@ void cursor_image::loadTheme()
     }
 
     // check whether we can create it
-    if (waylandServer()->internalShmPool()) {
-        m_cursorTheme = std::make_unique<cursor_theme>(waylandServer()->internalShmPool());
+    if (waylandServer()->internal_connection.shm) {
+        m_cursorTheme = std::make_unique<cursor_theme>(waylandServer()->internal_connection.shm);
         QObject::connect(waylandServer(),
-                         &WaylandServer::terminatingInternalClientConnection,
+                         &base::wayland::server::terminating_internal_client_connection,
                          this,
                          [this] { m_cursorTheme.reset(); });
     }
@@ -441,11 +441,12 @@ void cursor_image::loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Ima
         if (!b) {
             return;
         }
-        waylandServer()->internalClientConection()->flush();
+        waylandServer()->internal_connection.client->flush();
         waylandServer()->dispatch();
         auto buffer = Wrapland::Server::Buffer::get(
-            waylandServer()->display(),
-            waylandServer()->internalConnection()->getResource(Wrapland::Client::Buffer::getId(b)));
+            waylandServer()->display.get(),
+            waylandServer()->internal_connection.server->getResource(
+                Wrapland::Client::Buffer::getId(b)));
         if (!buffer) {
             return;
         }

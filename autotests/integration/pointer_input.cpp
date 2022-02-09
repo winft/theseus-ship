@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
 #include "input/wayland/cursor_theme.h"
@@ -26,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effects.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "workspace.h"
@@ -62,12 +62,12 @@ namespace KWin
 template<typename T>
 PlatformCursorImage loadReferenceThemeCursor(const T& shape)
 {
-    if (!waylandServer()->internalShmPool()) {
+    if (!waylandServer()->internal_connection.shm) {
         return PlatformCursorImage();
     }
 
     std::unique_ptr<input::wayland::cursor_theme> cursorTheme;
-    cursorTheme.reset(new input::wayland::cursor_theme(waylandServer()->internalShmPool()));
+    cursorTheme.reset(new input::wayland::cursor_theme(waylandServer()->internal_connection.shm));
 
     wl_cursor_image* cursor = cursorTheme->get(shape);
     if (!cursor) {
@@ -79,12 +79,12 @@ PlatformCursorImage loadReferenceThemeCursor(const T& shape)
         return PlatformCursorImage();
     }
 
-    waylandServer()->internalClientConection()->flush();
+    waylandServer()->internal_connection.client->flush();
     waylandServer()->dispatch();
 
     auto bufferId = Wrapland::Client::Buffer::getId(b);
-    auto wlResource = waylandServer()->internalConnection()->getResource(bufferId);
-    auto buffer = Wrapland::Server::Buffer::get(waylandServer()->display(), wlResource);
+    auto wlResource = waylandServer()->internal_connection.server->getResource(bufferId);
+    auto buffer = Wrapland::Server::Buffer::get(waylandServer()->display.get(), wlResource);
     if (!buffer) {
         return PlatformCursorImage{};
     }

@@ -7,6 +7,8 @@
 
 #include "toplevel.h"
 
+#include "base/x11/xcb/geometry_hints.h"
+#include "base/x11/xcb/motif_hints.h"
 #include "win/meta.h"
 
 #include <xcb/sync.h>
@@ -54,24 +56,29 @@ class KWIN_EXPORT window : public Toplevel
 public:
     constexpr static bool is_toplevel{false};
 
+    explicit window(Workspace& space);
+    ~window();
+
+    Workspace& space;
+
     QString iconic_caption;
 
     struct {
         // Most outer window that encompasses all other windows.
-        Xcb::Window outer{};
+        base::x11::xcb::window outer{};
 
         // Window with the same dimensions as client.
         // TODO(romangg): Why do we need this again?
-        Xcb::Window wrapper{};
+        base::x11::xcb::window wrapper{};
 
         // The actual client window.
-        Xcb::Window client{};
+        base::x11::xcb::window client{};
 
         // Including decoration.
-        Xcb::Window input{};
+        base::x11::xcb::window input{};
 
         // For move-resize operations.
-        Xcb::Window grab{};
+        base::x11::xcb::window grab{};
     } xcb_windows;
 
     bool blocks_compositing{false};
@@ -141,8 +148,8 @@ public:
 
     mapping_state mapping{mapping_state::withdrawn};
 
-    Xcb::GeometryHints geometry_hints;
-    Xcb::MotifHints motif_hints;
+    base::x11::xcb::geometry_hints geometry_hints;
+    base::x11::xcb::motif_hints motif_hints;
 
     QTimer* focus_out_timer{nullptr};
     QTimer* ping_timer{nullptr};
@@ -154,9 +161,6 @@ public:
     x11::group* in_group{nullptr};
 
     xcb_colormap_t colormap{XCB_COLORMAP_NONE};
-
-    window();
-    ~window();
 
     bool isClient() const override;
     xcb_window_t frameId() const override;
@@ -251,8 +255,30 @@ public:
     void updateColorScheme() override;
     void killWindow() override;
 
+    void getResourceClass();
+    void getWmClientMachine();
+
+    base::x11::xcb::property fetchWmClientLeader() const;
+    void readWmClientLeader(base::x11::xcb::property& p);
+    void getWmClientLeader();
+
+    /**
+     * This function fetches the opaque region from this Toplevel.
+     * Will only be called on corresponding property changes and for initialization.
+     */
+    void getWmOpaqueRegion();
+    void getSkipCloseAnimation();
+
+    void detectShape(xcb_window_t id);
     void update_input_shape();
 
+    QByteArray sessionId() const;
+    QByteArray wmCommand();
+
+    // TODO(romangg): only required with Xwayland, move it to the child class.
+    void clientMessageEvent(xcb_client_message_event_t* e);
+
+    static bool resourceMatch(window const* c1, window const* c2);
     void debug(QDebug& stream) const override;
 
 Q_SIGNALS:

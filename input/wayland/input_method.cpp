@@ -6,11 +6,11 @@
 */
 #include "input_method.h"
 
+#include "base/wayland/server.h"
 #include "input/filters/keyboard_grab.h"
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
 #include "render/compositor.h"
-#include "wayland_server.h"
 #include "win/scene.h"
 #include "win/transient.h"
 #include "win/wayland/popup_placement.h"
@@ -77,12 +77,12 @@ namespace KWin::input::wayland
 using Wrapland::Server::input_method_keyboard_grab_v2;
 using Wrapland::Server::input_method_popup_surface_v2;
 
-input_method::input_method(WaylandServer* server)
+input_method::input_method(base::wayland::server* server)
 {
     auto seat = server->seat();
 
-    text_input_manager_v3 = server->display()->createTextInputManagerV3();
-    input_method_manager_v2 = server->display()->createInputMethodManagerV2();
+    text_input_manager_v3 = server->display->createTextInputManagerV3();
+    input_method_manager_v2 = server->display->createInputMethodManagerV2();
 
     QObject::connect(seat,
                      &Wrapland::Server::Seat::input_method_v2_changed,

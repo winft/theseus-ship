@@ -6,7 +6,8 @@
 */
 #pragma once
 
-#include "atoms.h"
+#include "base/x11/atoms.h"
+#include "main.h"
 
 #include <string>
 #include <xcb/xcb.h>
@@ -16,19 +17,19 @@ namespace KWin::xwl
 
 inline xcb_atom_t mime_type_to_atom_literal(std::string const& mime_type)
 {
-    return Xcb::Atom(mime_type.c_str(), false, kwinApp()->x11Connection());
+    return base::x11::xcb::atom(mime_type.c_str(), false, kwinApp()->x11Connection());
 }
 
-inline xcb_atom_t mime_type_to_atom(std::string const& mime_type)
+inline xcb_atom_t mime_type_to_atom(std::string const& mime_type, base::x11::atoms const& atoms)
 {
     if (mime_type == "text/plain;charset=utf-8") {
-        return atoms->utf8_string;
+        return atoms.utf8_string;
     }
     if (mime_type == "text/plain") {
-        return atoms->text;
+        return atoms.text;
     }
     if (mime_type == "text/x-uri") {
-        return atoms->uri_list;
+        return atoms.uri_list;
     }
     return mime_type_to_atom_literal(mime_type);
 }
@@ -49,15 +50,15 @@ inline std::string atom_name(xcb_atom_t atom)
     return name;
 }
 
-inline std::vector<std::string> atom_to_mime_types(xcb_atom_t atom)
+inline std::vector<std::string> atom_to_mime_types(xcb_atom_t atom, base::x11::atoms const& atoms)
 {
     std::vector<std::string> mime_types;
 
-    if (atom == atoms->utf8_string) {
+    if (atom == atoms.utf8_string) {
         mime_types.emplace_back("text/plain;charset=utf-8");
-    } else if (atom == atoms->text) {
+    } else if (atom == atoms.text) {
         mime_types.emplace_back("text/plain");
-    } else if (atom == atoms->uri_list || atom == atoms->netscape_url || atom == atoms->moz_url) {
+    } else if (atom == atoms.uri_list || atom == atoms.netscape_url || atom == atoms.moz_url) {
         // We identify netscape and moz format as less detailed formats text/uri-list,
         // text/x-uri and accept the information loss.
         mime_types.emplace_back("text/uri-list");

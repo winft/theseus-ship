@@ -23,4 +23,4 @@ target_link_libraries(pointergestures Qt::Gui Qt::Quick WraplandClient)
 add_executable(cursorhotspottest cursorhotspottest.cpp)
 target_link_libraries(cursorhotspottest Qt::Widgets)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${KWIN_SOURCE_DIR})

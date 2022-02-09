@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "wayland_server.h"
+#include "base/wayland/server.h"
 
 namespace KWin
 {
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
         Test::prepare_app_env(argv[0]);
         auto app = WaylandTestApplication(mode,
                                           Test::create_socket_name("KWin::NoXdgRuntimeDirTest"),
-                                          wayland_start_options::none,
+                                          base::wayland::start_options::none,
                                           argc,
                                           argv);
     } catch (...) {

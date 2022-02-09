@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/wayland/server.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/surface.h>
@@ -21,7 +21,7 @@ void update_surface_outputs(Win* win)
 {
     std::vector<Wrapland::Server::Output*> surface_outputs;
 
-    auto const outputs = waylandServer()->display()->outputs();
+    auto const outputs = waylandServer()->display->outputs();
     for (auto output : outputs) {
         if (win->frameGeometry().intersects(output->output()->geometry().toRect())) {
             surface_outputs.push_back(output->output());
@@ -56,7 +56,7 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
 
     win->m_surface = surface;
 
-    if (surface->client() == waylandServer()->xWaylandConnection()) {
+    if (surface->client() == waylandServer()->xwayland_connection()) {
         QObject::connect(win->m_surface, &Wrapland::Server::Surface::committed, win, [win] {
             if (!win->m_surface->state().damage.isEmpty()) {
                 win->addDamage(win->m_surface->state().damage);

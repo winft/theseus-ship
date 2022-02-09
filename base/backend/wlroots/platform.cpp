@@ -8,11 +8,11 @@
 #include "non_desktop_output.h"
 #include "output.h"
 
+#include "base/wayland/server.h"
 #include "main.h"
 #include "render/backend/wlroots/output.h"
 #include "render/backend/wlroots/platform.h"
 #include "wayland_logging.h"
-#include "wayland_server.h"
 
 #include <Wrapland/Server/display.h>
 #include <stdexcept>
@@ -198,7 +198,7 @@ void platform::setup_drm_leasing()
     }
 
     auto server = waylandServer();
-    server->createDrmLeaseDevice();
+    server->create_drm_lease_device();
 
     connect(server->drm_lease_device(),
             &Wrapland::Server::drm_lease_device_v1::needs_new_client_fd,

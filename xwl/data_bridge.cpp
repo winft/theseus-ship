@@ -23,12 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dnd.h"
 #include "primary_selection.h"
 
-#include "atoms.h"
-
 namespace KWin::xwl
 {
 
 data_bridge::data_bridge(x11_data const& x11)
+    : x11{x11}
 {
     xcb_prefetch_extension_data(x11.connection, &xcb_xfixes_id);
     xfixes = xcb_get_extension_data(x11.connection, &xcb_xfixes_id);
@@ -59,13 +58,13 @@ bool data_bridge::filter_event(xcb_generic_event_t* event)
 
 bool data_bridge::handle_xfixes_notify(xcb_xfixes_selection_notify_event_t* event)
 {
-    if (event->selection == atoms->clipboard) {
+    if (event->selection == x11.atoms->clipboard) {
         return xwl::handle_xfixes_notify(clipboard.get(), event);
     }
-    if (event->selection == atoms->primary_selection) {
+    if (event->selection == x11.atoms->primary_selection) {
         return xwl::handle_xfixes_notify(primary_selection.get(), event);
     }
-    if (event->selection == atoms->xdnd_selection) {
+    if (event->selection == x11.atoms->xdnd_selection) {
         return xwl::handle_xfixes_notify(dnd.get(), event);
     }
     return false;

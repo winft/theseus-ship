@@ -12,7 +12,6 @@
 #include "input/touch_redirect.h"
 
 #include "main.h"
-#include "seat/session.h"
 
 namespace KWin::input::x11
 {

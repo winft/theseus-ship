@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "sync_alarm_filter.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
+#include "base/x11/xcb/extensions.h"
 #include "win/x11/geo.h"
 #include "win/x11/window.h"
 
@@ -30,7 +30,8 @@ namespace KWin::win::x11
 {
 
 sync_alarm_filter::sync_alarm_filter()
-    : base::x11::event_filter(QVector<int>{Xcb::Extensions::self()->syncAlarmNotifyEvent()})
+    : base::x11::event_filter(
+        QVector<int>{base::x11::xcb::extensions::self()->sync_alarm_notify_event()})
 {
 }
 

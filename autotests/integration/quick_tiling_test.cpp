@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "decorations/decorationbridge.h"
 #include "decorations/settings.h"
 #include "input/cursor.h"
@@ -26,12 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scripting/platform.h"
 #include "scripting/script.h"
 #include "toplevel.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/move.h"
 #include "win/screen.h"
 #include "win/x11/window.h"
+#include "workspace.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>

@@ -4,11 +4,11 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-// own
 #include "non_composited_outline.h"
-// KWin libs
-#include <kwinxrenderutils.h>
-// xcb
+
+#include "kwinxrenderutils.h"
+#include "main.h"
+
 #include <xcb/render.h>
 
 namespace KWin::render::backend::x11
@@ -37,7 +37,7 @@ void non_composited_outline::show()
         m_initialized = true;
     }
 
-    const int defaultDepth = Xcb::defaultDepth();
+    int const defaultDepth = base::x11::xcb::default_depth(kwinApp()->x11ScreenNumber());
 
     const QRect& outlineGeometry = get_outline()->geometry();
     // left/right parts are between top/bottom, they don't reach as far as the corners
@@ -45,18 +45,18 @@ void non_composited_outline::show()
     const uint16_t verticalHeight = outlineGeometry.height() - 10;
     const uint16_t horizontalWidth = outlineGeometry.width();
     const uint horizontalHeight = 5;
-    m_leftOutline.setGeometry(
+    m_leftOutline.set_geometry(
         outlineGeometry.x(), outlineGeometry.y() + 5, verticalWidth, verticalHeight);
-    m_rightOutline.setGeometry(outlineGeometry.x() + outlineGeometry.width() - 5,
-                               outlineGeometry.y() + 5,
-                               verticalWidth,
-                               verticalHeight);
-    m_topOutline.setGeometry(
+    m_rightOutline.set_geometry(outlineGeometry.x() + outlineGeometry.width() - 5,
+                                outlineGeometry.y() + 5,
+                                verticalWidth,
+                                verticalHeight);
+    m_topOutline.set_geometry(
         outlineGeometry.x(), outlineGeometry.y(), horizontalWidth, horizontalHeight);
-    m_bottomOutline.setGeometry(outlineGeometry.x(),
-                                outlineGeometry.y() + outlineGeometry.height() - 5,
-                                horizontalWidth,
-                                horizontalHeight);
+    m_bottomOutline.set_geometry(outlineGeometry.x(),
+                                 outlineGeometry.y() + outlineGeometry.height() - 5,
+                                 horizontalWidth,
+                                 horizontalHeight);
 
     const xcb_render_color_t white = {0xffff, 0xffff, 0xffff, 0xffff};
     QColor qGray(Qt::gray);
@@ -80,8 +80,8 @@ void non_composited_outline::show()
         rect.width = 1;
         xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, pic, black, 1, &rect);
 
-        m_leftOutline.setBackgroundPixmap(xpix);
-        m_rightOutline.setBackgroundPixmap(xpix);
+        m_leftOutline.set_background_pixmap(xpix);
+        m_rightOutline.set_background_pixmap(xpix);
         // According to the XSetWindowBackgroundPixmap documentation the pixmap can be freed.
         xcb_free_pixmap(connection(), xpix);
     }
@@ -101,7 +101,7 @@ void non_composited_outline::show()
                                         {2, 3, 1, 2},
                                         {int16_t(horizontalWidth - 3), 3, 1, 2}};
         xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, pic, black, 3, blackRects);
-        m_topOutline.setBackgroundPixmap(xpix);
+        m_topOutline.set_background_pixmap(xpix);
         // According to the XSetWindowBackgroundPixmap documentation the pixmap can be freed.
         xcb_free_pixmap(connection(), xpix);
     }
@@ -121,17 +121,17 @@ void non_composited_outline::show()
                                         {2, 0, 1, 2},
                                         {int16_t(horizontalWidth - 3), 0, 1, 2}};
         xcb_render_fill_rectangles(connection(), XCB_RENDER_PICT_OP_SRC, pic, black, 3, blackRects);
-        m_bottomOutline.setBackgroundPixmap(xpix);
+        m_bottomOutline.set_background_pixmap(xpix);
         // According to the XSetWindowBackgroundPixmap documentation the pixmap can be freed.
         xcb_free_pixmap(connection(), xpix);
     }
-    forEachWindow(&Xcb::Window::clear);
-    forEachWindow(&Xcb::Window::map);
+    forEachWindow(&base::x11::xcb::window::clear);
+    forEachWindow(&base::x11::xcb::window::map);
 }
 
 void non_composited_outline::hide()
 {
-    forEachWindow(&Xcb::Window::unmap);
+    forEachWindow(&base::x11::xcb::window::unmap);
 }
 
 }

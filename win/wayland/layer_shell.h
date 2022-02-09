@@ -14,11 +14,11 @@
 #include "win/transient.h"
 
 #include "base/wayland/output.h"
+#include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
 #include "input/redirect.h"
 #include "render/compositor.h"
 #include "screens.h"
-#include "wayland_server.h"
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/layer_shell_v1.h>
@@ -183,7 +183,7 @@ template<typename Window, typename Space>
 void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* layer_surface)
 {
     auto window = new Window(layer_surface->surface());
-    if (layer_surface->surface()->client() == space->server->screenLockerClientConnection()) {
+    if (layer_surface->surface()->client() == space->server->screen_locker_client_connection) {
         ScreenLocker::KSldApp::self()->lockScreenShown();
     }
 

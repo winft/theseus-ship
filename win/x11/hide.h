@@ -48,12 +48,12 @@ void unmap(Win* win)
     // here.
 
     // Avoid getting UnmapNotify
-    win->xcb_windows.wrapper.selectInput(client_win_mask);
+    win->xcb_windows.wrapper.select_input(client_win_mask);
     win->xcb_windows.outer.unmap();
     win->xcb_windows.wrapper.unmap();
     win->xcb_windows.client.unmap();
     win->xcb_windows.input.unmap();
-    win->xcb_windows.wrapper.selectInput(client_win_mask | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY);
+    win->xcb_windows.wrapper.select_input(client_win_mask | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY);
     export_mapping_state(win, XCB_ICCCM_WM_STATE_ICONIC);
 }
 
@@ -79,7 +79,7 @@ void update_hidden_preview(Win* win)
 {
     if (hidden_preview(win)) {
         workspace()->stacking_order->force_restacking();
-        if (Xcb::Extensions::self()->isShapeInputAvailable()) {
+        if (base::x11::xcb::extensions::self()->is_shape_input_available()) {
             xcb_shape_rectangles(connection(),
                                  XCB_SHAPE_SO_SET,
                                  XCB_SHAPE_SK_INPUT,

@@ -8,19 +8,27 @@
 #include "event.h"
 #include "window_release.h"
 
-#include "win/remnant.h"
-#include "win/space.h"
-
+#include "base/x11/xcb/proto.h"
 #include "render/effects.h"
 #include "utils.h"
-#include "xcbutils.h"
+#include "win/remnant.h"
+#include "win/space.h"
 
 namespace KWin::win::x11
 {
 
-template<typename Win>
-Win* create_unmanaged_window(xcb_window_t w)
+template<typename Space>
+auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x11_window*
 {
+    using Win = typename Space::x11_window;
+
+    auto compositor = render::compositor::self();
+    assert(compositor);
+    if (auto& is_overlay = compositor->x11_integration.is_overlay_window;
+        is_overlay && is_overlay(w)) {
+        return nullptr;
+    }
+
     // Window types that are supported as unmanaged (mainly for compositing).
     NET::WindowTypes constexpr supported_default_types = NET::NormalMask | NET::DesktopMask
         | NET::DockMask | NET::ToolbarMask | NET::MenuMask
@@ -30,20 +38,20 @@ Win* create_unmanaged_window(xcb_window_t w)
         | NET::CriticalNotificationMask;
 
     XServerGrabber xserverGrabber;
-    Xcb::WindowAttributes attr(w);
-    Xcb::WindowGeometry geo(w);
+    base::x11::xcb::window_attributes attr(w);
+    base::x11::xcb::geometry geo(w);
 
-    if (attr.isNull() || attr->map_state != XCB_MAP_STATE_VIEWABLE) {
+    if (attr.is_null() || attr->map_state != XCB_MAP_STATE_VIEWABLE) {
         return nullptr;
     }
     if (attr->_class == XCB_WINDOW_CLASS_INPUT_ONLY) {
         return nullptr;
     }
-    if (geo.isNull()) {
+    if (geo.is_null()) {
         return nullptr;
     }
 
-    auto win = new Win;
+    auto win = new Win(space);
 
     win->supported_default_types = supported_default_types;
     win->set_layer(win::layer::unmanaged);
@@ -52,9 +60,9 @@ Win* create_unmanaged_window(xcb_window_t w)
 
     // The window is also the frame.
     win->setWindowHandles(w);
-    Xcb::selectInput(w,
-                     attr->your_event_mask | XCB_EVENT_MASK_STRUCTURE_NOTIFY
-                         | XCB_EVENT_MASK_PROPERTY_CHANGE);
+    base::x11::xcb::select_input(w,
+                                 attr->your_event_mask | XCB_EVENT_MASK_STRUCTURE_NOTIFY
+                                     | XCB_EVENT_MASK_PROPERTY_CHANGE);
     win->set_frame_geometry(geo.rect());
     win->checkScreen();
     win->m_visual = attr->visual;
@@ -68,7 +76,7 @@ Win* create_unmanaged_window(xcb_window_t w)
     win->getResourceClass();
     win->getWmClientLeader();
     win->getWmClientMachine();
-    if (Xcb::Extensions::self()->isShapeAvailable()) {
+    if (base::x11::xcb::extensions::self()->is_shape_available()) {
         xcb_shape_select_input(connection(), w, true);
     }
     win->detectShape(w);
@@ -92,6 +100,14 @@ Win* create_unmanaged_window(xcb_window_t w)
     if (effects) {
         static_cast<render::effects_handler_impl*>(effects)->checkInputWindowStacking();
     }
+
+    QObject::connect(win, &Win::needsRepaint, space.m_compositor, [win] {
+        render::compositor::self()->schedule_repaint(win);
+    });
+
+    space.addUnmanaged(win);
+    Q_EMIT space.unmanagedAdded(win);
+
     return win;
 }
 
@@ -183,7 +199,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
         win->clientMessageEvent(reinterpret_cast<xcb_client_message_event_t*>(e));
         break;
     default: {
-        if (eventType == Xcb::Extensions::self()->shapeNotifyEvent()) {
+        if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()) {
             win->detectShape(win->xcb_window());
             win->addRepaintFull();
 
@@ -191,7 +207,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
             win->addWorkspaceRepaint(win->frameGeometry());
             Q_EMIT win->frame_geometry_changed(win, win->frameGeometry());
         }
-        if (eventType == Xcb::Extensions::self()->damageNotifyEvent()) {
+        if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {
             win->damageNotifyEvent();
         }
         break;

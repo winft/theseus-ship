@@ -8,9 +8,9 @@
 #include "drm_lease.h"
 #include "platform.h"
 
+#include "base/wayland/server.h"
 #include "main.h"
 #include "utils.h"
-#include "wayland_server.h"
 
 namespace KWin::base::backend::wlroots
 {

@@ -19,12 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "modifier_only_shortcuts.h"
 
+#include "desktop/screen_locker_watcher.h"
 #include "input/event.h"
 #include "input/keyboard.h"
 #include "input/qt_event.h"
 #include "input/xkb/helpers.h"
 #include "options.h"
-#include "screenlockerwatcher.h"
 #include "workspace.h"
 
 #include <QDBusConnection>
@@ -38,8 +38,8 @@ modifier_only_shortcuts_spy::modifier_only_shortcuts_spy()
     : QObject()
     , event_spy()
 {
-    QObject::connect(ScreenLockerWatcher::self(),
-                     &ScreenLockerWatcher::locked,
+    QObject::connect(kwinApp()->screen_locker_watcher.get(),
+                     &desktop::screen_locker_watcher::locked,
                      this,
                      &modifier_only_shortcuts_spy::reset);
 }
@@ -53,7 +53,7 @@ void modifier_only_shortcuts_spy::key(key_event const& event)
     if (event.state == key_state::pressed) {
         const bool wasEmpty = m_pressedKeys.isEmpty();
         m_pressedKeys.insert(event.keycode);
-        if (wasEmpty && m_pressedKeys.size() == 1 && !ScreenLockerWatcher::self()->isLocked()
+        if (wasEmpty && m_pressedKeys.size() == 1 && !kwinApp()->screen_locker_watcher->is_locked()
             && m_pressedButtons == Qt::NoButton && m_cachedMods == Qt::NoModifier) {
             m_modifier = Qt::KeyboardModifier(int(mods));
         } else {

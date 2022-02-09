@@ -9,7 +9,7 @@
 #include "selection_x11.h"
 #include "sources_ext.h"
 
-#include "wayland_server.h"
+#include "base/wayland/server.h"
 
 #include <Wrapland/Server/seat.h>
 
@@ -19,7 +19,7 @@ namespace KWin::xwl
 primary_selection::primary_selection(x11_data const& x11)
 {
     data = create_selection_data<Wrapland::Server::primary_selection_source,
-                                 primary_selection_source_ext>(atoms->primary_selection, x11);
+                                 primary_selection_source_ext>(x11.atoms->primary_selection, x11);
 
     register_x11_selection(this, QSize(10, 10));
 

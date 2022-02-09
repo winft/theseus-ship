@@ -56,9 +56,9 @@ template<typename ServerSource>
 class wl_source
 {
 public:
-    wl_source(ServerSource* source, xcb_connection_t* connection)
+    wl_source(ServerSource* source, x11_data const& x11)
         : server_source{source}
-        , connection{connection}
+        , x11{x11}
         , qobject{std::make_unique<q_wl_source>()}
     {
         assert(source);
@@ -77,12 +77,13 @@ public:
     {
         return qobject.get();
     }
+
     ServerSource* server_source = nullptr;
+    x11_data const& x11;
     std::vector<std::string> offers;
     xcb_timestamp_t timestamp{XCB_CURRENT_TIME};
 
 private:
-    xcb_connection_t* connection;
     std::unique_ptr<q_wl_source> qobject;
 
     Q_DISABLE_COPY(wl_source)
@@ -155,7 +156,7 @@ public:
         return qobject.get();
     }
 
-    x11_data const x11;
+    x11_data const& x11;
     mime_atoms offers;
     xcb_timestamp_t timestamp;
 

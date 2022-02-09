@@ -10,18 +10,18 @@
 
 #include <config-kwin.h>
 
+#include "base/seat/backend/logind/session.h"
+#include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb_event_filter.h"
-#include "debug/x11_console.h"
+#include "debug/console/x11/x11_console.h"
+#include "desktop/screen_locker_watcher.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
-#include "screenlockerwatcher.h"
 #include "scripting/platform.h"
-#include "seat/backend/logind/session.h"
 #include "sm.h"
 #include "win/x11/space.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include <KConfigGroup>
 #include <KCrash>
@@ -137,11 +137,11 @@ private:
         KSelectionOwner::getAtoms();
         if (xa_version == XCB_ATOM_NONE) {
             const QByteArray name(QByteArrayLiteral("VERSION"));
-            ScopedCPointer<xcb_intern_atom_reply_t> atom(xcb_intern_atom_reply(
+            unique_cptr<xcb_intern_atom_reply_t> atom(xcb_intern_atom_reply(
                 connection(),
                 xcb_intern_atom_unchecked(connection(), false, name.length(), name.constData()),
                 nullptr));
-            if (!atom.isNull()) {
+            if (atom) {
                 xa_version = atom->atom;
             }
         }
@@ -152,11 +152,11 @@ private:
             screen_P = QX11Info::appScreen();
         QByteArray screen(QByteArrayLiteral("WM_S"));
         screen.append(QByteArray::number(screen_P));
-        ScopedCPointer<xcb_intern_atom_reply_t> atom(xcb_intern_atom_reply(
+        unique_cptr<xcb_intern_atom_reply_t> atom(xcb_intern_atom_reply(
             connection(),
             xcb_intern_atom_unchecked(connection(), false, screen.length(), screen.constData()),
             nullptr));
-        if (atom.isNull()) {
+        if (!atom) {
             return XCB_ATOM_NONE;
         }
         return atom->atom;
@@ -184,7 +184,7 @@ ApplicationX11::~ApplicationX11()
     workspace.reset();
     base.render->compositor.reset();
     if (!owner.isNull() && owner->ownerWindow() != XCB_WINDOW_NONE)   // If there was no --replace (no new WM)
-        Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
+        base::x11::xcb::set_input_focus(XCB_INPUT_FOCUS_POINTER_ROOT);
 }
 
 void ApplicationX11::setReplace(bool replace)
@@ -199,7 +199,7 @@ void ApplicationX11::lostSelection()
     workspace.reset();
     base.render->compositor.reset();
     // Remove windowmanager privileges
-    Xcb::selectInput(rootWindow(), XCB_EVENT_MASK_PROPERTY_CHANGE);
+    base::x11::xcb::select_input(rootWindow(), XCB_EVENT_MASK_PROPERTY_CHANGE);
     quit();
 }
 
@@ -216,7 +216,7 @@ debug::console* ApplicationX11::create_debug_console()
 void ApplicationX11::start()
 {
     prepare_start();
-    ScreenLockerWatcher::self()->initialize();
+    kwinApp()->screen_locker_watcher->initialize();
 
     base.render = std::make_unique<render::backend::x11::platform>(base);
 
@@ -234,18 +234,17 @@ void ApplicationX11::start()
 
         // Check  whether another windowmanager is running
         const uint32_t maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
-        ScopedCPointer<xcb_generic_error_t> redirectCheck(xcb_request_check(connection(),
-                                                                            xcb_change_window_attributes_checked(connection(),
-                                                                                                                 rootWindow(),
-                                                                                                                 XCB_CW_EVENT_MASK,
-                                                                                                                 maskValues)));
-        if (!redirectCheck.isNull()) {
+        unique_cptr<xcb_generic_error_t> redirectCheck(
+            xcb_request_check(connection(),
+                              xcb_change_window_attributes_checked(
+                                  connection(), rootWindow(), XCB_CW_EVENT_MASK, maskValues)));
+        if (redirectCheck) {
             fputs(i18n("kwin: another window manager is running (try using --replace)\n").toLocal8Bit().constData(), stderr);
             if (!wasCrash()) // if this is a crash-restart, DrKonqi may have stopped the process w/o killing the connection
                 ::exit(1);
         }
 
-        session.reset(new seat::backend::logind::session());
+        session.reset(new base::seat::backend::logind::session());
 
         auto input = new input::x11::platform;
         this->input.reset(input);
@@ -273,15 +272,13 @@ void ApplicationX11::start()
         Q_EMIT startup_finished();
 
         // Trigger possible errors, there's still a chance to abort.
-        Xcb::sync();
+        base::x11::xcb::sync();
         kwinApp()->notifyKSplash();
     });
 
     // we need to do an XSync here, otherwise the QPA might crash us later on
-    Xcb::sync();
+    base::x11::xcb::sync();
     owner->claim(m_replace || wasCrash(), true);
-
-    createAtoms();
 }
 
 bool ApplicationX11::notify(QObject* o, QEvent* e)

@@ -10,6 +10,7 @@
 #include "effects.h"
 #include "shadow.h"
 
+#include "base/x11/xcb/proto.h"
 #include "toplevel.h"
 #include "win/geo.h"
 #include "win/transient.h"
@@ -448,10 +449,10 @@ void window_pixmap::create()
     xcb_pixmap_t pix = xcb_generate_id(connection());
     xcb_void_cookie_t namePixmapCookie
         = xcb_composite_name_window_pixmap_checked(connection(), toplevel()->frameId(), pix);
-    Xcb::WindowAttributes windowAttributes(toplevel()->frameId());
+    base::x11::xcb::window_attributes windowAttributes(toplevel()->frameId());
 
     auto win = toplevel();
-    auto xcb_frame_geometry = Xcb::WindowGeometry(win->frameId());
+    auto xcb_frame_geometry = base::x11::xcb::geometry(win->frameId());
 
     if (xcb_generic_error_t* error = xcb_request_check(connection(), namePixmapCookie)) {
         qCDebug(KWIN_CORE) << "Creating window pixmap failed: " << error->error_code;

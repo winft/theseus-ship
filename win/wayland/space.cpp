@@ -20,8 +20,8 @@
 #include "xdg_shell.h"
 
 #include "base/wayland/idle_inhibition.h"
+#include "base/wayland/server.h"
 #include "screens.h"
-#include "wayland_server.h"
 #include "win/input.h"
 #include "win/screen.h"
 #include "win/setup.h"
@@ -38,7 +38,7 @@
 namespace KWin::win::wayland
 {
 
-space::space(WaylandServer* server)
+space::space(base::wayland::server* server)
     : server{server}
 {
     namespace WS = Wrapland::Server;

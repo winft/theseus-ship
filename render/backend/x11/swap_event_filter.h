@@ -6,8 +6,8 @@
 #pragma once
 
 #include "base/x11/event_filter.h"
+#include "base/x11/xcb/extensions.h"
 #include "render/compositor.h"
-#include "xcbutils.h"
 
 #include <xcb/glx.h>
 
@@ -35,7 +35,7 @@ class swap_event_filter : public base::x11::event_filter
 {
 public:
     swap_event_filter(xcb_drawable_t drawable, xcb_glx_drawable_t glxDrawable)
-        : base::x11::event_filter(Xcb::Extensions::self()->glxEventBase()
+        : base::x11::event_filter(base::x11::xcb::extensions::self()->glx_event_base()
                                   + XCB_GLX_BUFFER_SWAP_COMPLETE)
         , m_drawable(drawable)
         , m_glxDrawable(glxDrawable)

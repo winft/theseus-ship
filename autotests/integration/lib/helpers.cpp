@@ -8,13 +8,11 @@
 
 #include "app.h"
 
-#include "screenlockerwatcher.h"
-#include "screens.h"
-#include "wayland_server.h"
-
+#include "desktop/screen_locker_watcher.h"
 #include "input/backend/wlroots/keyboard.h"
 #include "input/backend/wlroots/pointer.h"
 #include "input/backend/wlroots/touch.h"
+#include "screens.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
@@ -302,7 +300,8 @@ void lock_screen()
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(ScreenLockerWatcher::self(), &ScreenLockerWatcher::locked);
+    QSignalSpy lockWatcherSpy(kwinApp()->screen_locker_watcher.get(),
+                              &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
@@ -313,7 +312,7 @@ void lock_screen()
     QCOMPARE(lockWatcherSpy.count(), 1);
     QCOMPARE(lockStateChangedSpy.count(), 2);
 
-    QVERIFY(ScreenLockerWatcher::self()->isLocked());
+    QVERIFY(kwinApp()->screen_locker_watcher->is_locked());
 }
 
 void unlock_screen()
@@ -321,7 +320,8 @@ void unlock_screen()
     QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(),
                                    &ScreenLocker::KSldApp::lockStateChanged);
     QVERIFY(lockStateChangedSpy.isValid());
-    QSignalSpy lockWatcherSpy(ScreenLockerWatcher::self(), &ScreenLockerWatcher::locked);
+    QSignalSpy lockWatcherSpy(kwinApp()->screen_locker_watcher.get(),
+                              &desktop::screen_locker_watcher::locked);
     QVERIFY(lockWatcherSpy.isValid());
 
     auto const children = ScreenLocker::KSldApp::self()->children();
@@ -353,7 +353,7 @@ void unlock_screen()
 
     QVERIFY(!kwinApp()->is_screen_locked());
 
-    QVERIFY(!ScreenLockerWatcher::self()->isLocked());
+    QVERIFY(!kwinApp()->screen_locker_watcher->is_locked());
 }
 
 void prepare_app_env(std::string const& qpa_plugin_path)

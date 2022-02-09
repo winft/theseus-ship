@@ -19,16 +19,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "screens.h"
 #include "scripting/effect.h"
 #include "toplevel.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/wayland/window.h"
+#include "workspace.h"
 
 #include <KDecoration2/Decoration>
 

@@ -13,6 +13,7 @@
 #include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
 #include "base/wayland/output_helpers.h"
+#include "base/wayland/server.h"
 #include "input/dbus/dbus.h"
 #include "input/dbus/device_manager.h"
 #include "input/filters/dpms.h"
@@ -21,7 +22,6 @@
 #include "input/switch.h"
 #include "input/touch.h"
 #include "main.h"
-#include "wayland_server.h"
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/virtual_keyboard_v1.h>
@@ -39,7 +39,7 @@ platform::platform(base::wayland::platform const& base)
 
     cursor = std::make_unique<wayland::cursor>(this);
     input_method = std::make_unique<wayland::input_method>(waylandServer());
-    virtual_keyboard = waylandServer()->display()->create_virtual_keyboard_manager_v1();
+    virtual_keyboard = waylandServer()->display->create_virtual_keyboard_manager_v1();
 
     QObject::connect(&base, &base::backend::wlroots::platform::output_added, this, [this] {
         base::wayland::check_outputs_on(this->base, dpms_filter);

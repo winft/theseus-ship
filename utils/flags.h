@@ -59,12 +59,9 @@
 
 #define ENUM_FLAGS(X)                                                                              \
     template<>                                                                                     \
-    struct KWin::is_flags_enum<X> {                                                                \
+    struct is_flags_enum<X> {                                                                      \
         static const bool enable = true;                                                           \
     };
-
-namespace KWin
-{
 
 template<typename Enum>
 struct is_flags_enum {
@@ -217,5 +214,3 @@ public:
         return (value & ~mask) == none_value;
     }
 };
-
-}

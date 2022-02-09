@@ -29,16 +29,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class WaylandServer;
 
 namespace input::dbus
 {
 class tablet_mode_manager;
 }
+
 namespace win::wayland
 {
 class space;
 }
+
 namespace xwl
 {
 class xwayland;
@@ -48,7 +49,7 @@ class ApplicationWayland : public Application
 {
     Q_OBJECT
 public:
-    std::unique_ptr<WaylandServer> server;
+    std::unique_ptr<base::wayland::server> server;
     std::unique_ptr<win::wayland::space> workspace;
 
     ApplicationWayland(int &argc, char **argv);
@@ -57,7 +58,7 @@ public:
     bool is_screen_locked() const override;
 
     base::platform& get_base() override;
-    WaylandServer* get_wayland_server() override;
+    base::wayland::server* get_wayland_server() override;
     debug::console* create_debug_console() override;
 
     void start();

@@ -6,14 +6,13 @@
 #pragma once
 
 #include "color_mapper.h"
+#include "moving_window_filter.h"
 #include "space_event.h"
 #include "sync_alarm_filter.h"
 
-#include "atoms.h"
+#include "base/x11/user_interaction_filter.h"
 #include "main.h"
-#include "moving_client_x11_filter.h"
 #include "utils.h"
-#include "was_user_interaction_x11_filter.h"
 
 #include <KStartupInfo>
 
@@ -23,17 +22,18 @@ namespace KWin::win::x11
 static void select_wm_input_event_mask()
 {
     uint32_t presentMask = 0;
-    Xcb::WindowAttributes attr(rootWindow());
-    if (!attr.isNull()) {
+    base::x11::xcb::window_attributes attr(rootWindow());
+    if (!attr.is_null()) {
         presentMask = attr->your_event_mask;
     }
 
-    Xcb::selectInput(rootWindow(),
-                     presentMask | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_PROPERTY_CHANGE
-                         | XCB_EVENT_MASK_COLOR_MAP_CHANGE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT
-                         | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_FOCUS_CHANGE
-                         | // For NotifyDetailNone
-                         XCB_EVENT_MASK_EXPOSURE);
+    base::x11::xcb::select_input(
+        rootWindow(),
+        presentMask | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_PROPERTY_CHANGE
+            | XCB_EVENT_MASK_COLOR_MAP_CHANGE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT
+            | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_FOCUS_CHANGE
+            | // For NotifyDetailNone
+            XCB_EVENT_MASK_EXPOSURE);
 }
 
 template<typename Space>
@@ -41,10 +41,10 @@ void init_space(Space& space)
 {
     assert(kwinApp()->x11Connection());
 
-    atoms->retrieveHelpers();
+    space.atoms->retrieveHelpers();
 
     // first initialize the extensions
-    Xcb::Extensions::self();
+    base::x11::xcb::extensions::self();
     auto colormaps = new color_mapper(&space);
     QObject::connect(&space, &Space::clientActivated, colormaps, &color_mapper::update);
 
@@ -55,23 +55,12 @@ void init_space(Space& space)
     // Select windowmanager privileges
     select_wm_input_event_mask();
 
-    // Compatibility
-    int32_t data = 1;
-
-    xcb_change_property(connection(),
-                        XCB_PROP_MODE_APPEND,
-                        rootWindow(),
-                        atoms->kwin_running,
-                        atoms->kwin_running,
-                        32,
-                        1,
-                        &data);
-
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        space.m_wasUserInteractionFilter.reset(new WasUserInteractionX11Filter);
-        space.m_movingClientFilter.reset(new MovingClientX11Filter);
+        space.m_wasUserInteractionFilter.reset(
+            new base::x11::user_interaction_filter([&space] { space.setWasUserInteraction(); }));
+        space.m_movingClientFilter.reset(new moving_window_filter(space));
     }
-    if (Xcb::Extensions::self()->isSyncAvailable()) {
+    if (base::x11::xcb::extensions::self()->is_sync_available()) {
         space.m_syncAlarmFilter.reset(new sync_alarm_filter);
     }
 
@@ -79,10 +68,10 @@ void init_space(Space& space)
     kwinApp()->update_x11_time_from_clock();
 
     const uint32_t nullFocusValues[] = {true};
-    space.m_nullFocus.reset(new Xcb::Window(QRect(-1, -1, 1, 1),
-                                            XCB_WINDOW_CLASS_INPUT_ONLY,
-                                            XCB_CW_OVERRIDE_REDIRECT,
-                                            nullFocusValues));
+    space.m_nullFocus.reset(new base::x11::xcb::window(QRect(-1, -1, 1, 1),
+                                                       XCB_WINDOW_CLASS_INPUT_ONLY,
+                                                       XCB_CW_OVERRIDE_REDIRECT,
+                                                       nullFocusValues));
     space.m_nullFocus->map();
 
     auto rootInfo = win::x11::root_info::create();
@@ -109,23 +98,23 @@ void init_space(Space& space)
         // Begin updates blocker block
         Blocker blocker(space.stacking_order);
 
-        Xcb::Tree tree(rootWindow());
+        base::x11::xcb::tree tree(rootWindow());
         xcb_window_t* wins = xcb_query_tree_children(tree.data());
 
-        QVector<Xcb::WindowAttributes> windowAttributes(tree->children_len);
-        QVector<Xcb::WindowGeometry> windowGeometries(tree->children_len);
+        QVector<base::x11::xcb::window_attributes> windowAttributes(tree->children_len);
+        QVector<base::x11::xcb::geometry> windowGeometries(tree->children_len);
 
         // Request the attributes and geometries of all toplevel windows
         for (int i = 0; i < tree->children_len; i++) {
-            windowAttributes[i] = Xcb::WindowAttributes(wins[i]);
-            windowGeometries[i] = Xcb::WindowGeometry(wins[i]);
+            windowAttributes[i] = base::x11::xcb::window_attributes(wins[i]);
+            windowGeometries[i] = base::x11::xcb::geometry(wins[i]);
         }
 
         // Get the replies
         for (int i = 0; i < tree->children_len; i++) {
-            Xcb::WindowAttributes attr(windowAttributes.at(i));
+            base::x11::xcb::window_attributes attr(windowAttributes.at(i));
 
-            if (attr.isNull()) {
+            if (attr.is_null()) {
                 continue;
             }
 
@@ -133,14 +122,14 @@ void init_space(Space& space)
                 if (attr->map_state == XCB_MAP_STATE_VIEWABLE
                     && attr->_class != XCB_WINDOW_CLASS_INPUT_ONLY)
                     // ### This will request the attributes again
-                    win::x11::create_unmanaged_window(space, wins[i]);
+                    create_unmanaged_window(wins[i], space);
             } else if (attr->map_state != XCB_MAP_STATE_UNMAPPED) {
                 if (Application::wasCrash()) {
                     space.fixPositionAfterCrash(wins[i], windowGeometries.at(i).data());
                 }
 
                 // ### This will request the attributes again
-                win::x11::create_controlled_window(space, wins[i], true);
+                create_controlled_window(wins[i], true, space);
             }
         }
 

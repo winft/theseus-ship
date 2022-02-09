@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "linux_dmabuf.h"
 
+#include "base/wayland/server.h"
 #include "main.h"
-#include "wayland_server.h"
 
 #include <unistd.h>
 
@@ -37,7 +37,7 @@ dmabuf_buffer::dmabuf_buffer(const QVector<Plane>& planes,
     , m_size(size)
     , m_flags(flags)
 {
-    waylandServer()->addLinuxDmabufBuffer(this);
+    waylandServer()->dmabuf_buffers << this;
 }
 
 dmabuf_buffer::~dmabuf_buffer()
@@ -48,8 +48,8 @@ dmabuf_buffer::~dmabuf_buffer()
             ::close(m_planes[i].fd);
         m_planes[i].fd = -1;
     }
-    if (waylandServer()) {
-        waylandServer()->removeLinuxDmabufBuffer(this);
+    if (auto server = waylandServer()) {
+        server->dmabuf_buffers.remove(this);
     }
 }
 

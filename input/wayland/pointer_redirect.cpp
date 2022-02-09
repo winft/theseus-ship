@@ -12,15 +12,14 @@
 #include "cursor_image.h"
 #include "device_redirect.h"
 
+#include "base/wayland/server.h"
+#include "decorations/decoratedclient.h"
 #include "input/event.h"
 #include "input/event_filter.h"
 #include "input/event_spy.h"
 #include "input/qt_event.h"
-
-#include "decorations/decoratedclient.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "win/input.h"
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
@@ -68,7 +67,7 @@ void pointer_redirect::init()
     device_redirect_init(this);
 
     QObject::connect(&screens, &Screens::changed, this, &pointer_redirect::updateAfterScreenChange);
-    if (waylandServer()->hasScreenLockerIntegration()) {
+    if (waylandServer()->has_screen_locker_integration()) {
         QObject::connect(
             ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
                 waylandServer()->seat()->pointers().cancel_pinch_gesture();
@@ -719,7 +718,7 @@ void pointer_redirect::updatePointerConstraints()
 
 void pointer_redirect::warp_xcb_on_surface_left(Wrapland::Server::Surface* newSurface)
 {
-    auto xc = waylandServer()->xWaylandConnection();
+    auto xc = waylandServer()->xwayland_connection();
     if (!xc) {
         // No XWayland, no point in warping the x cursor
         return;

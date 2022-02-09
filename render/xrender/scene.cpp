@@ -101,7 +101,7 @@ void scene::paintDesktop(int desktop, paint_type mask, const QRegion& region, Sc
 void scene::paintBackground(QRegion region)
 {
     xcb_render_color_t col = {0, 0, 0, 0xffff}; // black
-    const QVector<xcb_rectangle_t>& rects = Xcb::regionToRects(region);
+    const QVector<xcb_rectangle_t>& rects = base::x11::xcb::qt_region_to_rects(region);
     xcb_render_fill_rectangles(connection(),
                                XCB_RENDER_PICT_OP_SRC,
                                xrenderBufferPicture(),

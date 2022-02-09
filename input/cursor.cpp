@@ -10,7 +10,6 @@
 #include "platform.h"
 #include "pointer_redirect.h"
 #include "utils.h"
-#include "xcbutils.h"
 
 #include <KConfig>
 #include <KConfigGroup>

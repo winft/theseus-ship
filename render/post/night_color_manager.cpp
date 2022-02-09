@@ -25,11 +25,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/gamma_ramp.h"
 #include "base/platform.h"
+#include "base/seat/session.h"
 #include "input/redirect.h"
 #include <base/output.h>
 #include <main.h>
 #include <screens.h>
-#include <seat/session.h>
 #include <workspace.h>
 
 #include <color_correct_settings.h>
@@ -102,14 +102,16 @@ void night_color_manager::init()
             this,
             &night_color_manager::hard_reset);
 
-    connect(
-        kwinApp()->session.get(), &seat::session::sessionActiveChanged, this, [this](bool active) {
-            if (active) {
-                hard_reset();
-            } else {
-                cancel_all_timers();
-            }
-        });
+    QObject::connect(kwinApp()->session.get(),
+                     &base::seat::session::sessionActiveChanged,
+                     this,
+                     [this](bool active) {
+                         if (active) {
+                             hard_reset();
+                         } else {
+                             cancel_all_timers();
+                         }
+                     });
 
     connect(clock_skew_notifier.get(), &base::os::clock::skew_notifier::skewed, this, [this]() {
         // check if we're resuming from suspend - in this case do a hard reset

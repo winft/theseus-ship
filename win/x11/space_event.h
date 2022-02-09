@@ -13,53 +13,13 @@
 #include "base/x11/event_filter.h"
 #include "base/x11/event_filter_container.h"
 #include "base/x11/event_filter_manager.h"
+#include "base/x11/xcb/proto.h"
 
 #include <string>
 #include <vector>
 
 namespace KWin::win::x11
 {
-
-template<typename Space>
-auto create_controlled_window(Space& space, xcb_window_t xcb_window, bool is_mapped) ->
-    typename Space::x11_window*
-{
-    Blocker blocker(space.stacking_order);
-
-    auto window
-        = win::x11::create_controlled_window<typename Space::x11_window>(xcb_window, is_mapped);
-    if (window) {
-        space.addClient(window);
-    }
-
-    return window;
-}
-
-template<typename Space>
-auto create_unmanaged_window(Space& space, xcb_window_t xcb_window) -> typename Space::x11_window*
-{
-    // TODO(romangg): this check is not right here!
-    auto compositor = render::compositor::self();
-    assert(compositor);
-    if (auto& is_overlay = compositor->x11_integration.is_overlay_window;
-        is_overlay && is_overlay(xcb_window)) {
-        return nullptr;
-    }
-
-    auto window = win::x11::create_unmanaged_window<typename Space::x11_window>(xcb_window);
-    if (!window) {
-        return nullptr;
-    }
-
-    QObject::connect(window, &win::x11::window::needsRepaint, space.m_compositor, [window] {
-        render::compositor::self()->schedule_repaint(window);
-    });
-
-    space.addUnmanaged(window);
-    Q_EMIT space.unmanagedAdded(window);
-
-    return window;
-}
 
 // TODO(romangg): make this constexpr with C++20.
 static std::vector<std::string> xcb_errors({"Success",
@@ -89,7 +49,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
     if (!event_type) {
         // let's check whether it's an error from one of the extensions KWin uses
         auto error = reinterpret_cast<xcb_generic_error_t*>(event);
-        auto const extensions = Xcb::Extensions::self()->extensions();
+        auto const extensions = base::x11::xcb::extensions::self()->get_data();
 
         for (auto const& extension : extensions) {
             if (error->major_code == extension.majorOpcode) {
@@ -210,7 +170,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             xcb_change_property(connection(),
                                 XCB_PROP_MODE_REPLACE,
                                 create_event->window,
-                                atoms->kde_net_wm_user_creation_time,
+                                space.atoms->kde_net_wm_user_creation_time,
                                 XCB_ATOM_CARDINAL,
                                 32,
                                 1,
@@ -249,7 +209,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             // children of WindowWrapper (=clients), the check is AFAIK useless anyway
             // NOTICE: The save-set support in X11Client::mapRequestEvent() actually requires that
             // this code doesn't check the parent to be root.
-            if (!create_controlled_window(space, map_req_event->window, false)) {
+            if (!create_controlled_window(map_req_event->window, false, space)) {
                 xcb_map_window(connection(), map_req_event->window);
                 const uint32_t values[] = {XCB_STACK_MODE_ABOVE};
                 xcb_configure_window(
@@ -266,7 +226,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         if (map_event->override_redirect) {
             auto c = space.findUnmanaged(map_event->window);
             if (c == nullptr) {
-                c = create_unmanaged_window(space, map_event->window);
+                c = create_unmanaged_window(map_event->window, space);
             }
 
             if (c) {
@@ -275,7 +235,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
                 // before KWIN has chance to remanage it again. so release it right now.
                 if (c->has_scheduled_release) {
                     win::x11::release_window(c, false);
-                    c = create_unmanaged_window(space, map_event->window);
+                    c = create_unmanaged_window(map_event->window, space);
                 }
                 if (c) {
                     return win::x11::unmanaged_event(c, event);
@@ -324,7 +284,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             && (focus_event->detail == XCB_NOTIFY_DETAIL_NONE
                 || focus_event->detail == XCB_NOTIFY_DETAIL_POINTER_ROOT
                 || focus_event->detail == XCB_NOTIFY_DETAIL_INFERIOR)) {
-            Xcb::CurrentInput currentInput;
+            base::x11::xcb::input_focus currentInput;
 
             // focusToNull() uses xTime(), which is old now (FocusIn has no timestamp)
             kwinApp()->update_x11_time_from_clock();
@@ -334,7 +294,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             // #348935
             const bool lostFocusPointerToRoot = currentInput->focus == rootWindow()
                 && focus_event->detail == XCB_NOTIFY_DETAIL_INFERIOR;
-            if (!currentInput.isNull()
+            if (!currentInput.is_null()
                 && (currentInput->focus == XCB_WINDOW_NONE
                     || currentInput->focus == XCB_INPUT_FOCUS_POINTER_ROOT
                     || lostFocusPointerToRoot)) {

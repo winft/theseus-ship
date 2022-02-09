@@ -5,14 +5,16 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "xfixes_cursor_event_filter.h"
+
+#include "base/x11/xcb/extensions.h"
 #include "cursor.h"
-#include "xcbutils.h"
 
 namespace KWin::input::x11
 {
 
 xfixes_cursor_event_filter::xfixes_cursor_event_filter(cursor* cursor)
-    : base::x11::event_filter(QVector<int>{Xcb::Extensions::self()->fixesCursorNotifyEvent()})
+    : base::x11::event_filter(
+        QVector<int>{base::x11::xcb::extensions::self()->fixes_cursor_notify_event()})
     , m_cursor(cursor)
 {
 }

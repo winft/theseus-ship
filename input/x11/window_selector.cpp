@@ -7,10 +7,11 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "window_selector.h"
+
+#include "base/x11/xcb/proto.h"
 #include <input/cursor.h>
 #include <win/x11/window.h>
 #include <workspace.h>
-#include <xcbutils.h>
 
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
@@ -73,25 +74,25 @@ void window_selector::start(std::function<void(const QPoint&)> callback)
 bool window_selector::activate(const QByteArray& cursorName)
 {
     xcb_cursor_t cursor = createCursor(cursorName);
-
     xcb_connection_t* c = connection();
-    ScopedCPointer<xcb_grab_pointer_reply_t> grabPointer(xcb_grab_pointer_reply(
+
+    auto cookie = xcb_grab_pointer_unchecked(
         c,
-        xcb_grab_pointer_unchecked(c,
-                                   false,
-                                   rootWindow(),
-                                   XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
-                                       | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_ENTER_WINDOW
-                                       | XCB_EVENT_MASK_LEAVE_WINDOW,
-                                   XCB_GRAB_MODE_ASYNC,
-                                   XCB_GRAB_MODE_ASYNC,
-                                   XCB_WINDOW_NONE,
-                                   cursor,
-                                   XCB_TIME_CURRENT_TIME),
-        nullptr));
-    if (grabPointer.isNull() || grabPointer->status != XCB_GRAB_STATUS_SUCCESS) {
+        false,
+        rootWindow(),
+        XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION
+            | XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW,
+        XCB_GRAB_MODE_ASYNC,
+        XCB_GRAB_MODE_ASYNC,
+        XCB_WINDOW_NONE,
+        cursor,
+        XCB_TIME_CURRENT_TIME);
+
+    unique_cptr<xcb_grab_pointer_reply_t> reply(xcb_grab_pointer_reply(c, cookie, nullptr));
+    if (!reply || reply->status != XCB_GRAB_STATUS_SUCCESS) {
         return false;
     }
+
     const bool grabbed = grabXKeyboard();
     if (grabbed) {
         grabXServer();
@@ -225,8 +226,8 @@ void window_selector::handleKeyPress(xcb_keycode_t keycode, uint16_t state)
 
 void window_selector::selectWindowUnderPointer()
 {
-    Xcb::Pointer pointer(rootWindow());
-    if (!pointer.isNull() && pointer->child != XCB_WINDOW_NONE) {
+    base::x11::xcb::pointer pointer(rootWindow());
+    if (!pointer.is_null() && pointer->child != XCB_WINDOW_NONE) {
         selectWindowId(pointer->child);
     }
 }
@@ -254,7 +255,7 @@ void window_selector::selectWindowId(xcb_window_t window_to_select)
         if (client) {
             break; // Found the client
         }
-        Xcb::Tree tree(window);
+        base::x11::xcb::tree tree(window);
         if (window == tree->root) {
             // We didn't find the client, probably an override-redirect window
             break;

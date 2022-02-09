@@ -20,22 +20,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "decorations/decorationbridge.h"
 #include "decorations/settings.h"
 #include "input/cursor.h"
 #include "render/effects.h"
 #include "screens.h"
-#include "wayland_server.h"
 #include "win/control.h"
-#include "win/meta.h"
-#include "win/transient.h"
-#include "workspace.h"
-
 #include "win/controlling.h"
 #include "win/input.h"
+#include "win/meta.h"
 #include "win/screen.h"
+#include "win/transient.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
+#include "workspace.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
@@ -947,7 +946,7 @@ void TestXdgShellClient::testUnresponsiveWindow()
     if (socketMode) {
         int sx[2];
         QVERIFY(socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sx) >= 0);
-        waylandServer()->display()->createClient(sx[0]);
+        waylandServer()->display->createClient(sx[0]);
         int socket = dup(sx[1]);
         QVERIFY(socket != -1);
         env.insert(QStringLiteral("WAYLAND_SOCKET"), QByteArray::number(socket));

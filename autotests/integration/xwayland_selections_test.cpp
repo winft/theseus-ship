@@ -20,14 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "screens.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
-
+#include "workspace.h"
 #include "xwl/data_bridge.h"
 #include "xwl/xwayland.h"
 

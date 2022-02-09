@@ -20,11 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "overlay_window.h"
 
 #include "base/platform.h"
+#include "base/x11/xcb/extensions.h"
+#include "base/x11/xcb/helpers.h"
+#include "base/x11/xcb/proto.h"
 #include "kwinglobals.h"
+#include "main.h"
 #include "render/x11/compositor.h"
 #include "screens.h"
 #include "utils.h"
-#include "xcbutils.h"
 
 #include <QVector>
 
@@ -51,13 +54,18 @@ overlay_window::~overlay_window()
 bool overlay_window::create()
 {
     Q_ASSERT(m_window == XCB_WINDOW_NONE);
-    if (!Xcb::Extensions::self()->isCompositeOverlayAvailable())
+
+    if (!base::x11::xcb::extensions::self()->is_composite_overlay_available()) {
         return false;
-    if (!Xcb::Extensions::self()->isShapeInputAvailable()) // needed in setupOverlay()
+    }
+    if (!base::x11::xcb::extensions::self()->is_shape_input_available()) {
+        // needed in setupOverlay()
         return false;
+    }
+
 #ifdef KWIN_HAVE_XCOMPOSITE_OVERLAY
-    Xcb::OverlayWindow overlay(rootWindow());
-    if (overlay.isNull()) {
+    base::x11::xcb::overlay_window overlay(rootWindow());
+    if (overlay.is_null()) {
         return false;
     }
     m_window = overlay->overlay_win;
@@ -73,7 +81,8 @@ bool overlay_window::create()
 void overlay_window::setup(xcb_window_t window)
 {
     Q_ASSERT(m_window != XCB_WINDOW_NONE);
-    Q_ASSERT(Xcb::Extensions::self()->isShapeInputAvailable());
+    Q_ASSERT(base::x11::xcb::extensions::self()->is_shape_input_available());
+
     setNoneBackgroundPixmap(m_window);
     m_shape = QRegion();
     auto const& s = kwinApp()->get_base().screens.size();
@@ -130,7 +139,7 @@ void overlay_window::setShape(const QRegion& reg)
     // and triggers something).
     if (reg == m_shape)
         return;
-    const QVector<xcb_rectangle_t> xrects = Xcb::regionToRects(reg);
+    QVector<xcb_rectangle_t> const xrects = base::x11::xcb::qt_region_to_rects(reg);
     xcb_shape_rectangles(connection(),
                          XCB_SHAPE_SO_SET,
                          XCB_SHAPE_SK_BOUNDING,

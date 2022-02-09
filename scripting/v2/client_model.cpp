@@ -9,9 +9,9 @@
 #include "scripting/space.h"
 #include "scripting/window.h"
 
+#include "base/wayland/server.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "win/virtual_desktops.h"
 #include "workspace.h"
 #include <config-kwin.h>

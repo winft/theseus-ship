@@ -8,7 +8,6 @@
 
 #include "selection_data.h"
 
-#include "atoms.h"
 #include "win/x11/window.h"
 
 #include <QObject>

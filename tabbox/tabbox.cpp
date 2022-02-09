@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox/x11_filter.h"
 
 #include "base/platform.h"
+#include "base/x11/xcb/proto.h"
 #include "render/effects.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
@@ -41,7 +42,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/screen_edges.h"
 #include "win/virtual_desktops.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include "win/controlling.h"
 #include "win/focus_chain.h"
@@ -708,7 +708,7 @@ void TabBox::hide(bool abort)
         qCDebug(KWIN_TABBOX) << "Tab box was not properly closed by an effect";
     m_tabBox->hide(abort);
     if (kwinApp()->x11Connection()) {
-        Xcb::sync();
+        base::x11::xcb::sync();
     }
 }
 
@@ -893,7 +893,7 @@ struct KeySymbolsDeleter
  */
 static bool areKeySymXsDepressed(const uint keySyms[], int nKeySyms)
 {
-    Xcb::QueryKeymap keys;
+    base::x11::xcb::query_keymap keys;
 
     QScopedPointer<xcb_key_symbols_t, KeySymbolsDeleter> symbols(xcb_key_symbols_alloc(connection()));
     if (symbols.isNull() || !keys) {

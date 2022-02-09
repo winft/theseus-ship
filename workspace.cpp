@@ -23,11 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwinglplatform.h>
 
-#include "atoms.h"
 #include "base/dbus/kwin.h"
+#include "base/x11/user_interaction_filter.h"
+#include "base/x11/xcb/extensions.h"
 #include "input/cursor.h"
-#include "killwindow.h"
-#include "moving_client_x11_filter.h"
 #include "render/effects.h"
 #include "render/outline.h"
 #include "rules/rule_book.h"
@@ -41,8 +40,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorationbridge.h"
 #include "main.h"
 #include "useractions.h"
-#include "was_user_interaction_x11_filter.h"
-#include "xcbutils.h"
 
 #include "win/app_menu.h"
 #include "win/controlling.h"
@@ -50,6 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/focus_chain.h"
 #include "win/input.h"
 #include "win/internal_window.h"
+#include "win/kill_window.h"
 #include "win/layers.h"
 #include "win/remnant.h"
 #include "win/setup.h"
@@ -62,6 +60,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/control.h"
 #include "win/x11/event.h"
 #include "win/x11/group.h"
+#include "win/x11/moving_window_filter.h"
 #include "win/x11/netinfo.h"
 #include "win/x11/space_areas.h"
 #include "win/x11/space_setup.h"
@@ -249,10 +248,6 @@ Workspace::~Workspace()
 
     assert(m_windows.empty());
 
-    if (auto c = kwinApp()->x11Connection()) {
-        xcb_delete_property(c, kwinApp()->x11RootWindow(), atoms->kwin_running);
-    }
-
     delete stacking_order;
 
     delete RuleBook::self();
@@ -266,7 +261,7 @@ Workspace::~Workspace()
 
     // TODO: ungrabXServer();
 
-    Xcb::Extensions::destroy();
+    base::x11::xcb::extensions::destroy();
     _self = nullptr;
 }
 
@@ -741,23 +736,26 @@ QString Workspace::supportInformation() const
     const QString no = QStringLiteral("no\n");
 
     support.append(ki18nc("Introductory text shown in the support information.",
-                          "KWin Support Information:\n"
-                          "The following information should be used when requesting support on "
-                          "e.g. https://forum.kde.org.\n"
-                          "It provides information about the currently running instance, which "
-                          "options are used,\n"
-                          "what OpenGL driver and which effects are running.\n"
-                          "Please post the information provided underneath this introductory text "
-                          "to a paste bin service\n"
-                          "like https://paste.kde.org instead of pasting into support threads.\n")
+                          "KWinFT Support Information:\n"
+                          "The following information should be provided when openning an issue\n"
+                          "ticket on https://gitlab.com/kwinft/kwinft.\n"
+                          "It gives information about the currently running instance, which\n"
+                          "options are used, what OpenGL driver and which effects are running.\n"
+                          "Please paste the information provided underneath this introductory\n"
+                          "text into a html details header and triple backticks when you\n"
+                          "create an issue ticket:\n"
+                          "\n<details>\n"
+                          "<summary>Support Information</summary>\n"
+                          "\n```\n"
+                          "PASTE GOES HERE...\n"
+                          "```\n"
+                          "\n</details>\n")
                        .toString());
+
     support.append(QStringLiteral("\n==========================\n\n"));
-    // all following strings are intended for support. They need to be pasted to e.g forums.kde.org
-    // it is expected that the support will happen in English language or that the people providing
-    // help understand English. Because of that all texts are not translated
     support.append(QStringLiteral("Version\n"));
     support.append(QStringLiteral("=======\n"));
-    support.append(QStringLiteral("KWin version: "));
+    support.append(QStringLiteral("KWinFT version: "));
     support.append(QStringLiteral(KWIN_VERSION_STRING));
     support.append(QStringLiteral("\n"));
     support.append(QStringLiteral("Qt Version: "));
@@ -822,7 +820,7 @@ QString Workspace::supportInformation() const
         support.append(QStringLiteral("Protocol Version/Revision: %1/%2\n")
                            .arg(x11setup->protocol_major_version)
                            .arg(x11setup->protocol_minor_version));
-        const auto extensions = Xcb::Extensions::self()->extensions();
+        auto const extensions = base::x11::xcb::extensions::self()->get_data();
         for (const auto& e : extensions) {
             support.append(QStringLiteral("%1: %2; Version: 0x%3\n")
                                .arg(QString::fromUtf8(e.name))

@@ -19,18 +19,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "atoms.h"
+#include "base/wayland/server.h"
+#include "base/x11/atoms.h"
 #include "main.h"
 #include "toplevel.h"
 #include "utils.h"
-#include "wayland_server.h"
-#include "win/transient.h"
-#include "workspace.h"
-
 #include "win/stacking.h"
 #include "win/stacking_order.h"
+#include "win/transient.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
+#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>
@@ -143,14 +142,14 @@ static xcb_window_t createGroupWindow(xcb_connection_t* conn,
         leaderWid = wid;
     }
 
-    xcb_change_property(conn,                    // c
-                        XCB_PROP_MODE_REPLACE,   // mode
-                        wid,                     // window
-                        atoms->wm_client_leader, // property
-                        XCB_ATOM_WINDOW,         // type
-                        32,                      // format
-                        1,                       // data_len
-                        &leaderWid               // data
+    xcb_change_property(conn,                                 // c
+                        XCB_PROP_MODE_REPLACE,                // mode
+                        wid,                                  // window
+                        workspace()->atoms->wm_client_leader, // property
+                        XCB_ATOM_WINDOW,                      // type
+                        32,                                   // format
+                        1,                                    // data_len
+                        &leaderWid                            // data
     );
 
     return wid;
@@ -419,9 +418,9 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
     // will be deduced to _NET_WM_WINDOW_TYPE_DIALOG because we set transient
     // for before (the EWMH spec says to do that).
     xcb_atom_t net_wm_window_type
-        = Xcb::Atom(QByteArrayLiteral("_NET_WM_WINDOW_TYPE"), false, conn.get());
+        = base::x11::xcb::atom(QByteArrayLiteral("_NET_WM_WINDOW_TYPE"), false, conn.get());
     xcb_atom_t net_wm_window_type_normal
-        = Xcb::Atom(QByteArrayLiteral("_NET_WM_WINDOW_TYPE_NORMAL"), false, conn.get());
+        = base::x11::xcb::atom(QByteArrayLiteral("_NET_WM_WINDOW_TYPE_NORMAL"), false, conn.get());
     xcb_change_property(conn.get(),                // c
                         XCB_PROP_MODE_REPLACE,     // mode
                         transientWid,              // window
@@ -537,9 +536,9 @@ void StackingOrderTest::testRaiseGroupTransient()
     // will be deduced to _NET_WM_WINDOW_TYPE_DIALOG because we set transient
     // for before (the EWMH spec says to do that).
     xcb_atom_t net_wm_window_type
-        = Xcb::Atom(QByteArrayLiteral("_NET_WM_WINDOW_TYPE"), false, conn.get());
+        = base::x11::xcb::atom(QByteArrayLiteral("_NET_WM_WINDOW_TYPE"), false, conn.get());
     xcb_atom_t net_wm_window_type_normal
-        = Xcb::Atom(QByteArrayLiteral("_NET_WM_WINDOW_TYPE_NORMAL"), false, conn.get());
+        = base::x11::xcb::atom(QByteArrayLiteral("_NET_WM_WINDOW_TYPE_NORMAL"), false, conn.get());
     xcb_change_property(conn.get(),                // c
                         XCB_PROP_MODE_REPLACE,     // mode
                         transientWid,              // window
@@ -675,9 +674,9 @@ void StackingOrderTest::testDeletedGroupTransient()
     // will be deduced to _NET_WM_WINDOW_TYPE_DIALOG because we set transient
     // for before (the EWMH spec says to do that).
     xcb_atom_t net_wm_window_type
-        = Xcb::Atom(QByteArrayLiteral("_NET_WM_WINDOW_TYPE"), false, conn.get());
+        = base::x11::xcb::atom(QByteArrayLiteral("_NET_WM_WINDOW_TYPE"), false, conn.get());
     xcb_atom_t net_wm_window_type_normal
-        = Xcb::Atom(QByteArrayLiteral("_NET_WM_WINDOW_TYPE_NORMAL"), false, conn.get());
+        = base::x11::xcb::atom(QByteArrayLiteral("_NET_WM_WINDOW_TYPE_NORMAL"), false, conn.get());
     xcb_change_property(conn.get(),                // c
                         XCB_PROP_MODE_REPLACE,     // mode
                         transientWid,              // window

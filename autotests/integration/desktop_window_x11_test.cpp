@@ -19,17 +19,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
+#include "base/x11/xcb/proto.h"
 #include "input/cursor.h"
+#include "kwineffects.h"
 #include "screens.h"
-#include "wayland_server.h"
-#include "workspace.h"
-#include "xcbutils.h"
-#include <kwineffects.h>
-
 #include "win/deco.h"
 #include "win/screen_edges.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
+#include "workspace.h"
 
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
@@ -154,7 +153,7 @@ void X11DesktopWindowTest::testDesktopWindow()
     xcb_flush(c.get());
 
     // verify through a geometry request that it's depth 32
-    Xcb::WindowGeometry geo(w);
+    base::x11::xcb::geometry geo(w);
     QCOMPARE(geo->depth, uint8_t(32));
 
     // we should get a client for it

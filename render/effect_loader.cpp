@@ -338,9 +338,9 @@ void plugin_effect_loader::queryAndLoadAll()
 {
     auto const effects = findAllEffects();
     for (auto const& effect : effects) {
-        load_effect_flags const flags = readConfig(effect.pluginId(), effect.isEnabledByDefault());
-        if (KWin::flags(flags & load_effect_flags::load)) {
-            loadEffect(effect, flags);
+        auto const load_flags = readConfig(effect.pluginId(), effect.isEnabledByDefault());
+        if (flags(load_flags & load_effect_flags::load)) {
+            loadEffect(effect, load_flags);
         }
     }
 }

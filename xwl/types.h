@@ -7,6 +7,8 @@
 
 #include "xwayland_interface.h"
 
+#include "base/x11/atoms.h"
+
 #include <string>
 #include <vector>
 #include <xcb/xcb.h>
@@ -17,6 +19,7 @@ namespace KWin::xwl
 struct x11_data {
     xcb_connection_t* connection{nullptr};
     xcb_screen_t* screen{nullptr};
+    base::x11::atoms* atoms{nullptr};
 };
 
 struct mime_atom {

@@ -42,9 +42,9 @@
 #include "input/filters/window_selector.h"
 #include "input/spies/touch_hide_cursor.h"
 
+#include "base/seat/session.h"
+#include "base/wayland/server.h"
 #include "main.h"
-#include "seat/session.h"
-#include "wayland_server.h"
 
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
@@ -166,7 +166,7 @@ void redirect::setup_workspace()
 
     setup_devices();
 
-    fake_input = waylandServer()->display()->createFakeInput();
+    fake_input = waylandServer()->display->createFakeInput();
     QObject::connect(fake_input.get(),
                      &Wrapland::Server::FakeInput::deviceCreated,
                      this,
@@ -191,7 +191,7 @@ void redirect::setup_workspace()
 
 void redirect::setup_filters()
 {
-    auto const has_global_shortcuts = waylandServer()->hasGlobalShortcutSupport();
+    auto const has_global_shortcuts = waylandServer()->has_global_shortcut_support();
 
     if (kwinApp()->session->hasSessionControl() && has_global_shortcuts) {
         m_filters.emplace_back(new virtual_terminal_filter);
@@ -354,12 +354,12 @@ void redirect::handle_keyboard_added(input::keyboard* keyboard)
     keyboard->xkb->update_from_default();
 
     platform->update_keyboard_leds(keyboard->xkb->leds);
-    waylandServer()->updateKeyState(keyboard->xkb->leds);
+    waylandServer()->update_key_state(keyboard->xkb->leds);
 
     QObject::connect(keyboard->xkb.get(),
                      &xkb::keyboard::leds_changed,
                      waylandServer(),
-                     &WaylandServer::updateKeyState);
+                     &base::wayland::server::update_key_state);
     QObject::connect(keyboard->xkb.get(),
                      &xkb::keyboard::leds_changed,
                      platform,

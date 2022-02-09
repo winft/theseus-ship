@@ -16,6 +16,7 @@ namespace KWin::win::x11
 
 space::space()
 {
+    atoms = std::make_unique<base::x11::atoms>(connection());
     edges = std::make_unique<win::screen_edger>(*this);
 
     QObject::connect(
@@ -44,7 +45,7 @@ win::screen_edge* space::create_screen_edge(win::screen_edger& edger)
     if (!edges_filter) {
         edges_filter = std::make_unique<screen_edges_filter>();
     }
-    return new screen_edge(&edger);
+    return new screen_edge(&edger, *atoms);
 }
 
 void space::update_space_area_from_windows(QRect const& desktop_area,

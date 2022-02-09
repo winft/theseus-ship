@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "render/effect_loader.h"
 #include "scripting/platform.h"
 #include "scripting/script.h"
-#include "wayland_server.h"
 #include "workspace.h"
 
 #define private public

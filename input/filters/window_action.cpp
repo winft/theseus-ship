@@ -6,13 +6,13 @@
 */
 #include "window_action.h"
 
+#include "base/wayland/server.h"
 #include "helpers.h"
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "win/input.h"
 #include "win/transient.h"
 

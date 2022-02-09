@@ -32,9 +32,10 @@
 namespace KWin::win::x11
 {
 
-window::window()
+window::window(Workspace& space)
     : Toplevel(new x11::transient(this))
-    , motif_hints(atoms->motif_wm_hints)
+    , space{space}
+    , motif_hints(space.atoms->motif_wm_hints)
 {
 }
 
@@ -100,7 +101,8 @@ bool window::providesContextHelp() const
 void window::showContextHelp()
 {
     if (info->supportsProtocol(NET::ContextHelpProtocol)) {
-        send_client_message(xcb_window(), atoms->wm_protocols, atoms->net_wm_context_help);
+        send_client_message(
+            xcb_window(), space.atoms->wm_protocols, space.atoms->net_wm_context_help);
     }
 }
 
@@ -147,10 +149,10 @@ bool window::wantsShadowToBeRendered() const
 
 QSize window::resizeIncrements() const
 {
-    return geometry_hints.resizeIncrements();
+    return geometry_hints.resize_increments();
 }
 
-static Xcb::Window shape_helper_window(XCB_WINDOW_NONE);
+static base::x11::xcb::window shape_helper_window(XCB_WINDOW_NONE);
 
 void window::cleanupX11()
 {
@@ -164,7 +166,7 @@ void window::update_input_shape()
         return;
     }
 
-    if (!Xcb::Extensions::self()->isShapeInputAvailable()) {
+    if (!base::x11::xcb::extensions::self()->is_shape_input_available()) {
         return;
     }
     // There appears to be no way to find out if a window has input
@@ -177,7 +179,7 @@ void window::update_input_shape()
     // until the real shape of the client is added and that can make
     // the window lose focus (which is a problem with mouse focus policies)
     // TODO: It seems there is, after all - XShapeGetRectangles() - but maybe this is better
-    if (!shape_helper_window.isValid()) {
+    if (!shape_helper_window.is_valid()) {
         shape_helper_window.create(QRect(0, 0, 1, 1));
     }
 
@@ -269,8 +271,14 @@ void window::setBlockingCompositing(bool block)
 
 void window::add_scene_window_addon()
 {
-    render->shadow_windowing.create = render::x11::create_shadow<render::shadow, Toplevel>;
-    render->shadow_windowing.update = render::x11::read_and_update_shadow<render::shadow>;
+    auto& atoms = space.atoms;
+    render->shadow_windowing.create = [&](auto&& win) {
+        return render::x11::create_shadow<render::shadow, Toplevel>(win, atoms->kde_net_wm_shadow);
+    };
+    render->shadow_windowing.update = [&](auto&& shadow) {
+        return render::x11::read_and_update_shadow<render::shadow>(shadow,
+                                                                   atoms->kde_net_wm_shadow);
+    };
 }
 
 void window::damageNotifyEvent()
@@ -321,7 +329,7 @@ void window::closeWindow()
     update_user_time(this);
 
     if (info->supportsProtocol(NET::DeleteWindowProtocol)) {
-        send_client_message(xcb_window(), atoms->wm_protocols, atoms->wm_delete_window);
+        send_client_message(xcb_window(), space.atoms->wm_protocols, space.atoms->wm_delete_window);
         ping(this);
     } else {
         // Client will not react on wm_delete_window. We have not choice
@@ -332,17 +340,17 @@ void window::closeWindow()
 
 QSize window::minSize() const
 {
-    return control->rules().checkMinSize(geometry_hints.minSize());
+    return control->rules().checkMinSize(geometry_hints.min_size());
 }
 
 QSize window::maxSize() const
 {
-    return control->rules().checkMaxSize(geometry_hints.maxSize());
+    return control->rules().checkMaxSize(geometry_hints.max_size());
 }
 
 QSize window::basicUnit() const
 {
-    return geometry_hints.resizeIncrements();
+    return geometry_hints.resize_increments();
 }
 
 bool window::isCloseable() const
@@ -480,10 +488,10 @@ void window::takeFocus()
 
     if (info->supportsProtocol(NET::TakeFocusProtocol)) {
         kwinApp()->update_x11_time_from_clock();
-        send_client_message(xcb_window(), atoms->wm_protocols, atoms->wm_take_focus);
+        send_client_message(xcb_window(), space.atoms->wm_protocols, space.atoms->wm_take_focus);
     }
 
-    workspace()->setShouldGetFocus(this);
+    space.setShouldGetFocus(this);
     auto breakShowingDesktop = !control->keep_above();
 
     if (breakShowingDesktop) {
@@ -496,7 +504,7 @@ void window::takeFocus()
     }
 
     if (breakShowingDesktop) {
-        workspace()->setShowingDesktop(false);
+        space.setShowingDesktop(false);
     }
 }
 
@@ -565,7 +573,7 @@ void window::setShortcutInternal()
 {
     updateCaption();
 #if 0
-    workspace()->clientShortcutUpdated(this);
+    space.clientShortcutUpdated(this);
 #else
     // Workaround for kwin<->kglobalaccel deadlock, when KWin has X grab and the kded
     // kglobalaccel module tries to create the key grab. KWin should preferably grab
@@ -717,7 +725,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     // TODO(romangg): Remove?
     kwinApp()->get_base().screens.setCurrent(this);
-    workspace()->stacking_order->update();
+    space.stacking_order->update();
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));
 
@@ -732,7 +740,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     // Must be done after signal is emitted so the screen margins are update.
     if (hasStrut()) {
-        workspace()->updateClientArea();
+        space.updateClientArea();
     }
 }
 
@@ -792,7 +800,7 @@ void window::do_set_fullscreen(bool full)
     if (old_full) {
         // May cause focus leave.
         // TODO: Must always be done when fullscreening to other output allowed.
-        workspace()->updateFocusMousePosition(input::get_cursor()->pos());
+        space.updateFocusMousePosition(input::get_cursor()->pos());
     }
 
     control->set_fullscreen(full);
@@ -931,6 +939,102 @@ void window::killWindow()
     destroy_window(this);
 }
 
+void window::getResourceClass()
+{
+    setResourceClass(QByteArray(info->windowClassName()).toLower(),
+                     QByteArray(info->windowClassClass()).toLower());
+}
+
+void window::getWmClientMachine()
+{
+    m_clientMachine->resolve(xcb_window(), wmClientLeader());
+}
+
+base::x11::xcb::property window::fetchWmClientLeader() const
+{
+    return base::x11::xcb::property(
+        false, xcb_window(), space.atoms->wm_client_leader, XCB_ATOM_WINDOW, 0, 10000);
+}
+
+void window::readWmClientLeader(base::x11::xcb::property& prop)
+{
+    m_wmClientLeader = prop.value<xcb_window_t>(xcb_window());
+}
+
+void window::getWmClientLeader()
+{
+    auto prop = fetchWmClientLeader();
+    readWmClientLeader(prop);
+}
+
+void window::getWmOpaqueRegion()
+{
+    const auto rects = info->opaqueRegion();
+    QRegion new_opaque_region;
+    for (const auto& r : rects) {
+        new_opaque_region += QRect(r.pos.x, r.pos.y, r.size.width, r.size.height);
+    }
+
+    opaque_region = new_opaque_region;
+}
+
+void window::getSkipCloseAnimation()
+{
+    setSkipCloseAnimation(fetch_skip_close_animation(*this).to_bool());
+}
+
+void window::detectShape(xcb_window_t id)
+{
+    const bool wasShape = is_shape;
+    is_shape = base::x11::xcb::extensions::self()->has_shape(id);
+    if (wasShape != is_shape) {
+        Q_EMIT shapedChanged();
+    }
+}
+
+/**
+ * Returns sessionId for this client,
+ * taken either from its window or from the leader window.
+ */
+QByteArray window::sessionId() const
+{
+    QByteArray result = base::x11::xcb::string_property(xcb_window(), space.atoms->sm_client_id);
+    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
+        result = base::x11::xcb::string_property(m_wmClientLeader, space.atoms->sm_client_id);
+    }
+    return result;
+}
+
+/**
+ * Returns command property for this client,
+ * taken either from its window or from the leader window.
+ */
+QByteArray window::wmCommand()
+{
+    QByteArray result = base::x11::xcb::string_property(xcb_window(), XCB_ATOM_WM_COMMAND);
+    if (result.isEmpty() && m_wmClientLeader && m_wmClientLeader != xcb_window()) {
+        result = base::x11::xcb::string_property(m_wmClientLeader, XCB_ATOM_WM_COMMAND);
+    }
+    result.replace(0, ' ');
+    return result;
+}
+
+void window::clientMessageEvent(xcb_client_message_event_t* e)
+{
+    if (e->type != space.atoms->wl_surface_id) {
+        return;
+    }
+
+    m_surfaceId = e->data.data32[0];
+    Q_EMIT space.surface_id_changed(this, m_surfaceId);
+    Q_EMIT surfaceIdChanged(m_surfaceId);
+}
+
+bool window::resourceMatch(window const* c1, window const* c2)
+{
+    return c1->resourceClass() == c2->resourceClass();
+}
+
 void window::debug(QDebug& stream) const
 {
     std::string type = "unmanaged";
@@ -951,7 +1055,7 @@ void window::doMinimize()
 {
     update_visibility(this);
     update_allowed_actions(this);
-    workspace()->updateMinimizedOfTransients(this);
+    space.updateMinimizedOfTransients(this);
 }
 
 void window::showOnScreenEdge()
@@ -960,7 +1064,7 @@ void window::showOnScreenEdge()
 
     hideClient(false);
     win::set_keep_below(this, false);
-    xcb_delete_property(connection(), xcb_window(), atoms->kde_screen_edge_show);
+    xcb_delete_property(connection(), xcb_window(), space.atoms->kde_screen_edge_show);
 }
 
 bool window::doStartMoveResize()
@@ -970,7 +1074,7 @@ bool window::doStartMoveResize()
     // This reportedly improves smoothness of the moveresize operation,
     // something with Enter/LeaveNotify events, looks like XFree performance problem or something
     // *shrug* (https://lists.kde.org/?t=107302193400001&r=1&w=2)
-    QRect r = workspace()->clientArea(FullArea, this);
+    auto r = space.clientArea(FullArea, this);
 
     xcb_windows.grab.create(r, XCB_WINDOW_CLASS_INPUT_ONLY, 0, nullptr, rootWindow());
     xcb_windows.grab.map();
@@ -989,9 +1093,9 @@ bool window::doStartMoveResize()
         input::get_cursor()->x11_cursor(control->move_resize().cursor),
         xTime());
 
-    ScopedCPointer<xcb_grab_pointer_reply_t> pointerGrab(
+    unique_cptr<xcb_grab_pointer_reply_t> pointerGrab(
         xcb_grab_pointer_reply(connection(), cookie, nullptr));
-    if (!pointerGrab.isNull() && pointerGrab->status == XCB_GRAB_STATUS_SUCCESS) {
+    if (pointerGrab && pointerGrab->status == XCB_GRAB_STATUS_SUCCESS) {
         has_grab = true;
     }
 

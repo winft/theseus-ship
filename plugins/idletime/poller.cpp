@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "poller.h"
 
+#include "../../base/wayland/server.h"
 #include "../../main.h"
-#include "../../wayland_server.h"
 
 #include <Wrapland/Client/idle.h>
 #include <Wrapland/Client/registry.h>
@@ -29,16 +29,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 KWinIdleTimePoller::KWinIdleTimePoller(QObject *parent)
     : AbstractSystemPoller(parent)
 {
-    connect(KWin::waylandServer(), &KWin::WaylandServer::terminatingInternalClientConnection, this,
-        [this] {
-            qDeleteAll(m_timeouts);
-            m_timeouts.clear();
-            delete m_seat;
-            m_seat = nullptr;
-            delete m_idle;
-            m_idle = nullptr;
-        }
-    );
+    QObject::connect(KWin::waylandServer(),
+                     &KWin::base::wayland::server::terminating_internal_client_connection,
+                     this,
+                     [this] {
+                         qDeleteAll(m_timeouts);
+                         m_timeouts.clear();
+                         delete m_seat;
+                         m_seat = nullptr;
+                         delete m_idle;
+                         m_idle = nullptr;
+                     });
 }
 
 KWinIdleTimePoller::~KWinIdleTimePoller() = default;
@@ -50,7 +51,7 @@ bool KWinIdleTimePoller::isAvailable()
 
 bool KWinIdleTimePoller::setUpPoller()
 {
-    auto registry = KWin::waylandServer()->internalClientRegistry();
+    auto registry = KWin::waylandServer()->internal_connection.registry;
     if (!m_seat) {
         const auto iface = registry->interface(Wrapland::Client::Registry::Interface::Seat);
         m_seat = registry->createSeat(iface.name, iface.version, this);

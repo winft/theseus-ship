@@ -6,11 +6,11 @@
 */
 #include "virtual_terminal.h"
 
+#include "base/seat/session.h"
 #include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/keyboard.h"
 #include "main.h"
-#include "seat/session.h"
 
 namespace KWin::input
 {

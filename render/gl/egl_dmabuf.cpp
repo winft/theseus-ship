@@ -22,9 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwin_eglext.h"
 
+#include "base/wayland/server.h"
 #include "extern/drm_fourcc.h"
 #include "main.h"
-#include "wayland_server.h"
 
 #include <unistd.h>
 
@@ -250,9 +250,8 @@ egl_dmabuf::yuvImport(const QVector<Plane>& planes, uint32_t format, const QSize
 egl_dmabuf::egl_dmabuf(egl_dmabuf_data const& data)
     : data{data}
 {
-    auto prevBuffersSet = waylandServer()->linuxDmabufBuffers();
-    for (auto* buffer : prevBuffersSet) {
-        auto* buf = static_cast<egl_dmabuf_buffer*>(buffer);
+    for (auto buffer : qAsConst(waylandServer()->dmabuf_buffers)) {
+        auto buf = static_cast<egl_dmabuf_buffer*>(buffer);
         buf->setInterfaceImplementation(this);
         buf->addImage(createImage(buf->planes(), buf->format(), buf->size()));
     }
@@ -261,9 +260,8 @@ egl_dmabuf::egl_dmabuf(egl_dmabuf_data const& data)
 
 egl_dmabuf::~egl_dmabuf()
 {
-    auto curBuffers = waylandServer()->linuxDmabufBuffers();
-    for (auto* buffer : curBuffers) {
-        auto* buf = static_cast<egl_dmabuf_buffer*>(buffer);
+    for (auto buffer : qAsConst(waylandServer()->dmabuf_buffers)) {
+        auto buf = static_cast<egl_dmabuf_buffer*>(buffer);
         buf->setInterfaceImplementation(nullptr);
     }
 }

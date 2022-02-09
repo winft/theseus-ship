@@ -6,12 +6,11 @@
 */
 #include "drag_and_drop.h"
 
+#include "base/wayland/server.h"
 #include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
-#include "seat/session.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "workspace.h"
 #include "xwl/xwayland_interface.h"
 

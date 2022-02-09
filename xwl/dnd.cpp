@@ -24,8 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "selection_wl.h"
 #include "selection_x11.h"
 
-#include "atoms.h"
-#include "wayland_server.h"
+#include "base/wayland/server.h"
 
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
@@ -58,7 +57,7 @@ void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_eve
         return;
     }
 
-    if (originSurface->client() != waylandServer()->xWaylandConnection()) {
+    if (originSurface->client() != waylandServer()->xwayland_connection()) {
         // focused surface client is not Xwayland - do not allow drag to start
         // TODO: can we make this stronger (window id comparison)?
         return;
@@ -78,7 +77,7 @@ void do_handle_xfixes_notify(drag_and_drop* sel, xcb_xfixes_selection_notify_eve
     sel->data.source_int.reset(new data_source_ext);
     sel->data.x11_source->set_source(sel->data.source_int.get());
 
-    sel->xdrag.reset(new x11_drag(sel->data.x11_source.get()));
+    sel->xdrag.reset(new x11_drag(*sel->data.x11_source));
 
     QObject::connect(sel->data.qobject.get(),
                      &q_selection::transfer_finished,
@@ -137,7 +136,7 @@ uint32_t drag_and_drop::version()
 drag_and_drop::drag_and_drop(x11_data const& x11)
 {
     data = create_selection_data<Wrapland::Server::data_source, data_source_ext>(
-        atoms->xdnd_selection, x11);
+        x11.atoms->xdnd_selection, x11);
 
     // TODO(romangg): for window size get current screen size and connect to changes.
     register_x11_selection(this, QSize(8192, 8192));
@@ -147,7 +146,7 @@ drag_and_drop::drag_and_drop(x11_data const& x11)
     xcb_change_property(xcb_con,
                         XCB_PROP_MODE_REPLACE,
                         data.window,
-                        atoms->xdnd_aware,
+                        x11.atoms->xdnd_aware,
                         XCB_ATOM_ATOM,
                         32,
                         1,
@@ -196,8 +195,8 @@ void drag_and_drop::start_drag()
     assert(!wldrag);
 
     // New Wl to X drag, init drag and Wl source.
-    wldrag.reset(new wl_drag(srv_src, data.window));
-    auto source = new wl_source<Wrapland::Server::data_source>(srv_src, data.x11.connection);
+    auto source = new wl_source<Wrapland::Server::data_source>(srv_src, data.x11);
+    wldrag.reset(new wl_drag(*source, data.window));
     set_wl_source(this, source);
     own_selection(this, true);
 }

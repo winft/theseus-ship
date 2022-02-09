@@ -22,10 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "compositor.h"
 #include "deco_shadow.h"
 
-#include "atoms.h"
 #include "effects.h"
 #include "toplevel.h"
-
 #include "win/deco.h"
 #include "win/scene.h"
 

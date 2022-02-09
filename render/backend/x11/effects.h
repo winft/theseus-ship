@@ -6,8 +6,8 @@
 */
 #pragma once
 
+#include "base/x11/xcb/window.h"
 #include "render/effects.h"
-#include "xcbutils.h"
 
 #include <memory.h>
 
@@ -36,7 +36,7 @@ protected:
 
 private:
     struct {
-        Xcb::Window window;
+        base::x11::xcb::window window;
         std::unique_ptr<mouse_intercept_filter> filter;
     } mouse_intercept;
 };

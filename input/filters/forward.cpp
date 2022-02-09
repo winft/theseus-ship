@@ -8,6 +8,7 @@
 
 #include "helpers.h"
 
+#include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
@@ -15,7 +16,6 @@
 #include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
-#include "wayland_server.h"
 #include "workspace.h"
 
 #include <Wrapland/Server/pointer_pool.h>

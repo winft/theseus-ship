@@ -15,6 +15,13 @@
 #include "window_release.h"
 #include "xdg_shell.h"
 
+#include "base/wayland/server.h"
+#include "decorations/window.h"
+#include "render/compositor.h"
+#include "render/platform.h"
+#include "render/wayland/shadow.h"
+#include "rules/rules.h"
+#include "utils.h"
 #include "win/deco.h"
 #include "win/geo.h"
 #include "win/layers.h"
@@ -22,14 +29,6 @@
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
-
-#include "decorations/window.h"
-#include "render/compositor.h"
-#include "render/platform.h"
-#include "render/wayland/shadow.h"
-#include "rules/rules.h"
-#include "utils.h"
-#include "wayland_server.h"
 
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
@@ -150,7 +149,7 @@ bool window::isLocalhost() const
 
 bool window::isLockScreen() const
 {
-    return surface()->client() == waylandServer()->screenLockerClientConnection();
+    return surface()->client() == waylandServer()->screen_locker_client_connection;
 }
 
 void window::updateCaption()

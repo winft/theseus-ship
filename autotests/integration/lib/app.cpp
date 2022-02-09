@@ -19,23 +19,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "app.h"
 
-#include "../../base/wayland/output.h"
-#include "../../debug/wayland_console.h"
-#include "../../input/backend/wlroots/platform.h"
-#include "../../input/wayland/cursor.h"
-#include "../../input/wayland/platform.h"
-#include "../../input/wayland/redirect.h"
-#include "../../render/wayland/compositor.h"
-#include "../../screenlockerwatcher.h"
-#include "../../seat/backend/wlroots/session.h"
-#include "../../wayland_server.h"
-#include "../../win/wayland/space.h"
-#include "../../xcbutils.h"
-#include "../../xwl/xwayland.h"
+#include "base/seat/backend/wlroots/session.h"
+#include "base/wayland/output.h"
+#include "debug/console/wayland/wayland_console.h"
+#include "desktop/screen_locker_watcher.h"
+#include "input/backend/wlroots/platform.h"
+#include "input/wayland/cursor.h"
+#include "input/wayland/platform.h"
+#include "input/wayland/redirect.h"
 #include "render/backend/wlroots/output.h"
 #include "render/effects.h"
+#include "render/wayland/compositor.h"
 #include "screens.h"
 #include "scripting/platform.h"
+#include "win/wayland/space.h"
+#include "xwl/xwayland.h"
 
 #include <KCrash>
 #include <KPluginMetaData>
@@ -73,7 +71,7 @@ Q_CONSTRUCTOR_FUNCTION(disable_dr_konqi)
 
 WaylandTestApplication::WaylandTestApplication(OperationMode mode,
                                                std::string const& socket_name,
-                                               wayland_start_options flags,
+                                               base::wayland::start_options flags,
                                                int& argc,
                                                char** argv)
     : Application(mode, argc, argv)
@@ -95,9 +93,8 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
     removeLibraryPath(ownPath);
     addLibraryPath(ownPath);
 
-    server.reset(new WaylandServer(socket_name, flags));
-    base = base::backend::wlroots::platform(
-        wlr_headless_backend_create(server->display()->native()));
+    server.reset(new base::wayland::server(socket_name, flags));
+    base = base::backend::wlroots::platform(wlr_headless_backend_create(server->display->native()));
 
     base.render = std::make_unique<render::backend::wlroots::platform>(base);
 
@@ -147,7 +144,7 @@ base::platform& WaylandTestApplication::get_base()
     return base;
 }
 
-WaylandServer* WaylandTestApplication::get_wayland_server()
+base::wayland::server* WaylandTestApplication::get_wayland_server()
 {
     return server.get();
 }
@@ -166,7 +163,7 @@ void WaylandTestApplication::start()
 
     createOptions();
 
-    session = std::make_unique<seat::backend::wlroots::session>(headless_backend);
+    session = std::make_unique<base::seat::backend::wlroots::session>(headless_backend);
 
     input = std::make_unique<input::backend::wlroots::platform>(base);
     input::wayland::add_dbus(input.get());
@@ -195,7 +192,7 @@ void WaylandTestApplication::start()
     workspace->scripting = std::make_unique<scripting::platform>();
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
-    ScreenLockerWatcher::self()->initialize();
+    kwinApp()->screen_locker_watcher->initialize();
 }
 
 void WaylandTestApplication::set_outputs(size_t count)

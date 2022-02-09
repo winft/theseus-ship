@@ -19,14 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "screens.h"
 #include "scripting/platform.h"
 #include "scripting/script.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/control.h"
 #include "win/wayland/window.h"
+#include "workspace.h"
 
 #include <KPackage/PackageLoader>
 #include <Wrapland/Client/surface.h>

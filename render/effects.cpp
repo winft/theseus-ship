@@ -22,35 +22,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/output.h"
 #include "base/platform.h"
+#include "desktop/screen_locker_watcher.h"
 #include "effect_loader.h"
 #include "effectsadaptor.h"
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
-#include "osd.h"
-#ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
-#endif
 #include "kwineffectquickview.h"
 #include "kwinglutils.h"
-#include "screenlockerwatcher.h"
 #include "screens.h"
 #include "scripting/effect.h"
 #include "thumbnail_item.h"
-#include "win/screen_edges.h"
-#include "win/virtual_desktops.h"
-#include "workspace.h"
-
 #include "win/control.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
+#include "win/osd.h"
 #include "win/remnant.h"
 #include "win/screen.h"
+#include "win/screen_edges.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
+#include "win/virtual_desktops.h"
 #include "win/x11/group.h"
 #include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
 #include "win/x11/window_property_notify_filter.h"
+#include "workspace.h"
+
+#ifdef KWIN_BUILD_TABBOX
+#include "tabbox.h"
+#endif
 
 #include <QDebug>
 
@@ -59,7 +59,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "render/compositor.h"
 #include "render/effect_frame.h"
-#include "xcbutils.h"
 
 #include "decorations/decorationbridge.h"
 #include <KDecoration2/DecorationSettings>
@@ -76,8 +75,8 @@ static QByteArray readWindowProperty(xcb_window_t win, xcb_atom_t atom, xcb_atom
     }
     uint32_t len = 32768;
     for (;;) {
-        Xcb::Property prop(false, win, atom, XCB_ATOM_ANY, 0, len);
-        if (prop.isNull()) {
+        base::x11::xcb::property prop(false, win, atom, XCB_ATOM_ANY, 0, len);
+        if (prop.is_null()) {
             // get property failed
             return QByteArray();
         }
@@ -85,7 +84,7 @@ static QByteArray readWindowProperty(xcb_window_t win, xcb_atom_t atom, xcb_atom
             len *= 2;
             continue;
         }
-        return prop.toByteArray(format, type);
+        return prop.to_byte_array(format, type);
     }
 }
 
@@ -104,11 +103,11 @@ static xcb_atom_t registerSupportProperty(const QByteArray& propertyName)
         return XCB_ATOM_NONE;
     }
     // get the atom for the propertyName
-    ScopedCPointer<xcb_intern_atom_reply_t> atomReply(xcb_intern_atom_reply(
+    unique_cptr<xcb_intern_atom_reply_t> atomReply(xcb_intern_atom_reply(
         c,
         xcb_intern_atom_unchecked(c, false, propertyName.size(), propertyName.constData()),
         nullptr));
-    if (atomReply.isNull()) {
+    if (!atomReply) {
         return XCB_ATOM_NONE;
     }
     // announce property on root window
@@ -238,12 +237,12 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             &win::screen_edger::approaching,
             this,
             &EffectsHandler::screenEdgeApproaching);
-    connect(ScreenLockerWatcher::self(),
-            &ScreenLockerWatcher::locked,
+    connect(kwinApp()->screen_locker_watcher.get(),
+            &desktop::screen_locker_watcher::locked,
             this,
             &EffectsHandler::screenLockingChanged);
-    connect(ScreenLockerWatcher::self(),
-            &ScreenLockerWatcher::aboutToLock,
+    connect(kwinApp()->screen_locker_watcher.get(),
+            &desktop::screen_locker_watcher::about_to_lock,
             this,
             &EffectsHandler::screenAboutToLock);
 
@@ -1674,7 +1673,7 @@ QString effects_handler_impl::supportInformation(const QString& name) const
 
 bool effects_handler_impl::isScreenLocked() const
 {
-    return ScreenLockerWatcher::self()->isLocked();
+    return kwinApp()->screen_locker_watcher->is_locked();
 }
 
 QString effects_handler_impl::debug(const QString& name, const QString& parameter) const
@@ -1757,16 +1756,16 @@ void effects_handler_impl::startInteractivePositionSelection(
 
 void effects_handler_impl::showOnScreenMessage(const QString& message, const QString& iconName)
 {
-    OSD::show(message, iconName);
+    win::osd_show(message, iconName);
 }
 
 void effects_handler_impl::hideOnScreenMessage(OnScreenMessageHideFlags flags)
 {
-    OSD::HideFlags osdFlags;
+    win::osd_hide_flags internal_flags{};
     if (flags.testFlag(OnScreenMessageHideFlag::SkipsCloseAnimation)) {
-        osdFlags |= OSD::HideFlag::SkipCloseAnimation;
+        internal_flags |= win::osd_hide_flags::skip_close_animation;
     }
-    OSD::hide(osdFlags);
+    win::osd_hide(internal_flags);
 }
 
 KSharedConfigPtr effects_handler_impl::config() const

@@ -11,6 +11,7 @@
 
 #include "base/backend/wlroots/output.h"
 #include "base/wayland/platform.h"
+#include "base/wayland/server.h"
 #include "render/backend/wlroots/output.h"
 #include "render/cursor.h"
 #include "render/dbus/compositing.h"
@@ -18,7 +19,6 @@
 #include "render/platform.h"
 #include "render/qpainter/scene.h"
 #include "render/scene.h"
-#include "wayland_server.h"
 #include "win/scene.h"
 #include "workspace.h"
 

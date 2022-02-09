@@ -16,7 +16,7 @@ namespace KWin::xwl
 template<typename Space>
 void handle_new_surface(Space* space, Wrapland::Server::Surface* surface)
 {
-    if (surface->client() != space->server->xWaylandConnection()) {
+    if (surface->client() != space->server->xwayland_connection()) {
         // setting surface is only relevat for Xwayland clients
         return;
     }

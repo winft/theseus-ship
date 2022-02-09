@@ -5,8 +5,11 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "cursor.h"
+
+#include "base/x11/xcb/extensions.h"
+#include "base/x11/xcb/proto.h"
+#include "main.h"
 #include "utils.h"
-#include "xcbutils.h"
 #include "xfixes_cursor_event_filter.h"
 
 #include <QAbstractEventDispatcher>
@@ -39,7 +42,7 @@ cursor::cursor(bool xInputSupport)
 
 #ifndef KCMRULES
     QObject::connect(kwinApp(), &Application::startup_finished, this, [this] {
-        if (Xcb::Extensions::self()->isFixesAvailable()) {
+        if (base::x11::xcb::extensions::self()->is_fixes_available()) {
             m_xfixesFilter = std::make_unique<xfixes_cursor_event_filter>(this);
         }
     });
@@ -84,8 +87,8 @@ void cursor::do_get_pos()
         return;
     }
     m_timeStamp = xTime();
-    Xcb::Pointer pointer(rootWindow());
-    if (pointer.isNull()) {
+    base::x11::xcb::pointer pointer(rootWindow());
+    if (pointer.is_null()) {
         return;
     }
     m_buttonMask = pointer->mask;

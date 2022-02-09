@@ -53,16 +53,6 @@ bool handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* e
     return true;
 }
 
-inline void get_x11_targets(xcb_connection_t* con,
-                            xcb_window_t const window,
-                            xcb_atom_t const atom,
-                            xcb_timestamp_t time)
-{
-    /* will lead to a selection request event for the new owner */
-    xcb_convert_selection(con, window, atom, atoms->targets, atoms->wl_selection, time);
-    xcb_flush(con);
-}
-
 template<typename Selection>
 void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t* event)
 {
@@ -85,8 +75,14 @@ void do_handle_xfixes_notify(Selection* sel, xcb_xfixes_selection_notify_event_t
     create_x11_source(sel, event);
 
     if (auto const& source = sel->data.x11_source) {
-        get_x11_targets(
-            source->x11.connection, sel->data.requestor_window, sel->data.atom, source->timestamp);
+        /* Gets X11 targets, will lead to a selection request event for the new owner. */
+        xcb_convert_selection(source->x11.connection,
+                              sel->data.requestor_window,
+                              sel->data.atom,
+                              sel->data.x11.atoms->targets,
+                              sel->data.x11.atoms->wl_selection,
+                              source->timestamp);
+        xcb_flush(source->x11.connection);
     }
 }
 
@@ -132,7 +128,7 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
     if (qobject_cast<win::x11::window*>(workspace()->activeClient()) == nullptr) {
         // Receiving Wayland selection not allowed when no Xwayland surface active
         // filter the event, but don't act upon it
-        send_selection_notify(event, false);
+        send_selection_notify(sel->data.x11.connection, event, false);
         return true;
     }
 
@@ -140,13 +136,13 @@ bool handle_selection_request(Selection* sel, xcb_selection_request_event_t* eve
         if (event->time < sel->data.timestamp) {
             // cancel earlier attempts at receiving a selection
             // TODO: is this for sure without problems?
-            send_selection_notify(event, false);
+            send_selection_notify(sel->data.x11.connection, event, false);
             return true;
         }
         return false;
     }
 
-    return selection_wl_handle_request(sel->data.wayland_source, sel->data.x11.connection, event);
+    return selection_wl_handle_request(sel->data.wayland_source, event);
 }
 
 template<typename Selection>

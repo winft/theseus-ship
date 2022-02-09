@@ -5,9 +5,9 @@
 */
 #include "effects.h"
 
+#include "base/wayland/server.h"
 #include "render/window.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
@@ -57,7 +57,7 @@ EffectWindow* effects_handler_impl::find_window_by_surface(Wrapland::Server::Sur
 
 Wrapland::Server::Display* effects_handler_impl::waylandDisplay() const
 {
-    return waylandServer()->display();
+    return waylandServer()->display.get();
 }
 
 }

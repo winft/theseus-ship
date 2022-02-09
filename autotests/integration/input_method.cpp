@@ -5,10 +5,10 @@
 */
 #include "lib/app.h"
 
-#include "../../screens.h"
-#include "../../wayland_server.h"
-#include "../../win/wayland/space.h"
-#include "../../win/wayland/window.h"
+#include "base/wayland/server.h"
+#include "screens.h"
+#include "win/wayland/space.h"
+#include "win/wayland/window.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/input_method_v2.h>

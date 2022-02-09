@@ -11,8 +11,8 @@
 #include "platform.h"
 #include "redirect.h"
 
+#include "base/wayland/server.h"
 #include "input/xkb/helpers.h"
-#include "wayland_server.h"
 
 #include <Wrapland/Server/seat.h>
 

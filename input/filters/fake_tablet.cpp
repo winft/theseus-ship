@@ -6,12 +6,12 @@
 */
 #include "fake_tablet.h"
 
+#include "base/wayland/server.h"
 #include "input/logging.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"
 #include "input/redirect.h"
 #include "main.h"
-#include "wayland_server.h"
 #include "workspace.h"
 
 namespace KWin::input
@@ -47,7 +47,7 @@ bool fake_tablet_filter::tabletToolEvent(QTabletEvent* event)
         qCWarning(KWIN_INPUT) << "Unexpected tablet event type" << event;
         break;
     }
-    waylandServer()->simulateUserActivity();
+    waylandServer()->simulate_user_activity();
     return true;
 }
 

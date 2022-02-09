@@ -19,12 +19,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "kwineffects.h"
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "render/qpainter/shadow.h"
 #include "render/window.h"
+#include "shadow.h"
+#include "win/deco.h"
+#include "workspace.h"
 
 #include <algorithm>
 #include <cmath>
@@ -48,12 +52,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wrapland/Server/shadow.h>
 #include <Wrapland/Server/surface.h>
-
-#include "shadow.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
-#include "win/deco.h"
 
 Q_DECLARE_METATYPE(KWin::WindowQuadList)
 

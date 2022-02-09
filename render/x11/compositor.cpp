@@ -8,20 +8,18 @@
 
 #include "compositor_selection_owner.h"
 
+#include "debug/perf/ftrace.h"
 #include "render/dbus/compositing.h"
-#include "render/gl/scene.h"
-#include "render/window.h"
-#include "render/xrender/scene.h"
-
-#include "perf/ftrace.h"
 #include "render/effects.h"
+#include "render/gl/scene.h"
 #include "render/platform.h"
 #include "render/scene.h"
 #include "render/shadow.h"
+#include "render/window.h"
+#include "render/xrender/scene.h"
 #include "toplevel.h"
 #include "utils.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include "win/stacking_order.h"
 #include "win/transient.h"

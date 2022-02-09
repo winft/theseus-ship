@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "output_helpers.h"
 
+#include "base/wayland/server.h"
 #include "input/wayland/dpms.h"
 #include "input/wayland/platform.h"
 #include "main.h"
@@ -29,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/wayland/output.h"
 #include "screens.h"
 #include "wayland_logging.h"
-#include "wayland_server.h"
 
 // Wrapland
 #include <Wrapland/Server/display.h>
@@ -247,7 +247,7 @@ void output::init_interfaces(std::string const& name,
                              Wrapland::Server::Output::Mode* current_mode)
 {
     Q_ASSERT(!m_output);
-    m_output = std::make_unique<Wrapland::Server::Output>(waylandServer()->display());
+    m_output = std::make_unique<Wrapland::Server::Output>(waylandServer()->display.get());
 
     m_output->set_name(name);
     m_output->set_make(make);

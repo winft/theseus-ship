@@ -6,10 +6,10 @@
 */
 #include "screen_edge.h"
 
+#include "base/wayland/server.h"
 #include "input/gestures.h"
 #include "input/qt_event.h"
 #include "main.h"
-#include "wayland_server.h"
 #include "win/screen_edges.h"
 #include "workspace.h"
 

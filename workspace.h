@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_WORKSPACE_H
 #define KWIN_WORKSPACE_H
 
+#include "base/x11/atoms.h"
 #include "options.h"
 #include "sm.h"
 #include "utils.h"
@@ -47,7 +48,15 @@ namespace KWin
 
 namespace base::x11
 {
+
+namespace xcb
+{
+class tree;
+class window;
+}
+
 class event_filter;
+
 }
 
 namespace render
@@ -61,16 +70,12 @@ namespace scripting
 class platform;
 }
 
-namespace Xcb
-{
-class Tree;
-class Window;
-}
-
 namespace win
 {
+
 enum class activation;
 class internal_window;
+class kill_window;
 class screen_edge;
 class screen_edger;
 class stacking_order;
@@ -84,7 +89,6 @@ class stacking_tree;
 }
 }
 
-class KillWindow;
 class ShortcutDialog;
 class Toplevel;
 class UserActionsMenu;
@@ -101,13 +105,14 @@ public:
 
     render::compositor* m_compositor{nullptr};
     KStartupInfo* startup{nullptr};
+    std::unique_ptr<base::x11::atoms> atoms;
 
     QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
     QScopedPointer<base::x11::event_filter> m_movingClientFilter;
     QScopedPointer<base::x11::event_filter> m_syncAlarmFilter;
 
     int m_initialDesktop{1};
-    QScopedPointer<Xcb::Window> m_nullFocus;
+    QScopedPointer<base::x11::xcb::window> m_nullFocus;
 
     std::vector<Toplevel*> m_allClients;
 
@@ -625,7 +630,7 @@ private:
 
     int set_active_client_recursion{0};
 
-    QScopedPointer<KillWindow> m_windowKiller;
+    std::unique_ptr<win::kill_window> m_windowKiller;
 
     SessionManager* m_sessionManager;
 

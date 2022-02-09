@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 
 // own
+#include "base/x11/xcb/helpers.h"
 #include "tabboxhandler.h"
 #include <config-kwin.h>
 #include <kwinglobals.h>
-#include "xcbutils.h"
 // tabbox
 #include "clientmodel.h"
 #include "desktopmodel.h"
@@ -381,7 +381,7 @@ void TabBoxHandler::show()
     }
     if (d->config.isHighlightWindows()) {
         if (kwinApp()->x11Connection()) {
-            Xcb::sync();
+            base::x11::xcb::sync();
         }
         // TODO this should be
         // QMetaObject::invokeMethod(this, "initHighlightWindows", Qt::QueuedConnection);

@@ -8,6 +8,7 @@
 
 #include "redirect.h"
 
+#include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/event_filter.h"
 #include "input/event_spy.h"
@@ -16,10 +17,8 @@
 #include "input/spies/modifier_only_shortcuts.h"
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
-
 #include "main.h"
 #include "toplevel.h"
-#include "wayland_server.h"
 #include "win/stacking_order.h"
 #include "win/wayland/window.h"
 #include "workspace.h"
@@ -99,7 +98,7 @@ void keyboard_redirect::init()
     layout_manager = std::make_unique<xkb::layout_manager>(kwinApp()->input->xkb, config);
     layout_manager->init();
 
-    if (waylandServer()->hasGlobalShortcutSupport()) {
+    if (waylandServer()->has_global_shortcut_support()) {
         redirect->installInputEventSpy(new modifier_only_shortcuts_spy);
     }
 
@@ -120,7 +119,7 @@ void keyboard_redirect::init()
         }
         update();
     });
-    if (waylandServer()->hasScreenLockerIntegration()) {
+    if (waylandServer()->has_screen_locker_integration()) {
         QObject::connect(ScreenLocker::KSldApp::self(),
                          &ScreenLocker::KSldApp::lockStateChanged,
                          this,

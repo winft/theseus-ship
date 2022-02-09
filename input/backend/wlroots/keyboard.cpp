@@ -10,9 +10,9 @@
 
 #include "platform.h"
 
+#include "base/wayland/server.h"
 #include "main.h"
 #include "utils.h"
-#include "wayland_server.h"
 
 extern "C" {
 #include <wlr/backend/libinput.h>

@@ -6,6 +6,7 @@
 */
 #include "helpers.h"
 
+#include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
@@ -14,7 +15,6 @@
 #include "input/xkb/helpers.h"
 #include "main.h"
 #include "options.h"
-#include "wayland_server.h"
 #include "win/input.h"
 #include "workspace.h"
 

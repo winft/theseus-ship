@@ -11,9 +11,9 @@
 
 #include "base/backend/wlroots/platform.h"
 #include "base/platform.h"
+#include "base/wayland/server.h"
 #include "main.h"
 #include "render/backend/wlroots/platform.h"
-#include "wayland_server.h"
 
 #include <memory>
 #include <vector>
@@ -35,7 +35,7 @@ class KWIN_EXPORT WaylandTestApplication : public Application
 {
     Q_OBJECT
 public:
-    std::unique_ptr<WaylandServer> server;
+    std::unique_ptr<base::wayland::server> server;
     base::backend::wlroots::platform base;
     std::unique_ptr<xwl::xwayland> xwayland;
     std::unique_ptr<win::wayland::space> workspace;
@@ -48,7 +48,7 @@ public:
 
     WaylandTestApplication(OperationMode mode,
                            std::string const& socket_name,
-                           wayland_start_options flags,
+                           base::wayland::start_options flags,
                            int& argc,
                            char** argv);
     ~WaylandTestApplication() override;
@@ -56,7 +56,7 @@ public:
     bool is_screen_locked() const override;
 
     base::platform& get_base() override;
-    WaylandServer* get_wayland_server() override;
+    base::wayland::server* get_wayland_server() override;
     debug::console* create_debug_console() override;
 
     void start();
@@ -75,7 +75,10 @@ namespace Test
 {
 
 template<typename Test>
-int create_test(std::string const& test_name, wayland_start_options flags, int argc, char* argv[])
+int create_test(std::string const& test_name,
+                base::wayland::start_options flags,
+                int argc,
+                char* argv[])
 {
     auto const socket_name = create_socket_name(test_name);
     auto mode = Application::OperationModeXwayland;
@@ -103,4 +106,5 @@ int create_test(std::string const& test_name, wayland_start_options flags, int a
         return KWin::Test::create_test<Tester>(#Tester, flags, argc, argv);                        \
     }
 
-#define WAYLANDTEST_MAIN(Tester) WAYLANDTEST_MAIN_FLAGS(Tester, KWin::wayland_start_options::none)
+#define WAYLANDTEST_MAIN(Tester)                                                                   \
+    WAYLANDTEST_MAIN_FLAGS(Tester, KWin::base::wayland::start_options::none)

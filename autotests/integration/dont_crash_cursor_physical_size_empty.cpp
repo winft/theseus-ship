@@ -19,14 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "screens.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/geo.h"
+#include "workspace.h"
 
 #include <KConfigGroup>
 
@@ -102,8 +101,7 @@ void DontCrashCursorPhysicalSizeEmpty::testMoveCursorOverDeco()
     QVERIFY(win::decoration(c));
 
     // destroy physical size
-    Wrapland::Server::Display* display = waylandServer()->display();
-    auto output = display->outputs().front()->output();
+    auto output = waylandServer()->display->outputs().front()->output();
     output->set_physical_size(QSize(0, 0));
 
     // and fake a cursor theme change, so that the theme gets recreated

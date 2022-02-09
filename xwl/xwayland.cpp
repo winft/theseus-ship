@@ -21,15 +21,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xwayland.h"
 #include "data_bridge.h"
 
+#include "base/wayland/server.h"
+#include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb_event_filter.h"
 #include "input/cursor.h"
 #include "main_wayland.h"
 #include "utils.h"
-#include "wayland_server.h"
 #include "win/wayland/space.h"
 #include "win/x11/space_setup.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include <KLocalizedString>
 #include <KSelectionOwner>
@@ -96,7 +96,7 @@ xwayland::xwayland(Application* app, std::function<void(int)> status_callback)
                                 "Failed to dup socket to open XCB connection");
     }
 
-    auto const waylandSocket = waylandServer()->createXWaylandConnection();
+    auto const waylandSocket = waylandServer()->create_xwayland_connection();
     if (waylandSocket == -1) {
         close(fd);
         throw std::runtime_error("Failed to open socket for Xwayland");
@@ -168,8 +168,8 @@ xwayland::~xwayland()
     win::x11::clear_space(*Workspace::self());
 
     if (app->x11Connection()) {
-        Xcb::setInputFocus(XCB_INPUT_FOCUS_POINTER_ROOT);
-        app->destroyAtoms();
+        base::x11::xcb::set_input_focus(XCB_INPUT_FOCUS_POINTER_ROOT);
+        Workspace::self()->atoms.reset();
         Q_EMIT app->x11ConnectionAboutToBeDestroyed();
         app->setX11Connection(nullptr);
         xcb_disconnect(app->x11Connection());
@@ -184,7 +184,7 @@ xwayland::~xwayland()
     delete xwayland_process;
     xwayland_process = nullptr;
 
-    waylandServer()->destroyXWaylandConnection();
+    waylandServer()->destroy_xwayland_connection();
 }
 
 void xwayland::continue_startup_with_x11()
@@ -244,19 +244,21 @@ void xwayland::continue_startup_with_x11()
     KSelectionOwner owner("WM_S0", basic_data.connection, app->x11RootWindow());
     owner.claim(true);
 
-    app->createAtoms();
-
     auto space = static_cast<win::wayland::space*>(Workspace::self());
+    space->atoms = std::make_unique<base::x11::atoms>(basic_data.connection);
+    basic_data.atoms = space->atoms.get();
+
     event_filter = std::make_unique<base::x11::xcb_event_filter<win::wayland::space>>(*space);
     app->installNativeEventFilter(event_filter.get());
 
     // Check  whether another windowmanager is running
     uint32_t const maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
-    ScopedCPointer<xcb_generic_error_t> redirectCheck(
+    unique_cptr<xcb_generic_error_t> redirectCheck(
         xcb_request_check(connection(),
                           xcb_change_window_attributes_checked(
                               connection(), rootWindow(), XCB_CW_EVENT_MASK, maskValues)));
-    if (!redirectCheck.isNull()) {
+
+    if (redirectCheck) {
         fputs(i18n("kwin_wayland: an X11 window manager is running on the X11 Display.\n")
                   .toLocal8Bit()
                   .constData(),
@@ -267,7 +269,8 @@ void xwayland::continue_startup_with_x11()
 
     auto mouseCursor = input::get_cursor();
     if (mouseCursor) {
-        Xcb::defineCursor(app->x11RootWindow(), mouseCursor->x11_cursor(Qt::ArrowCursor));
+        base::x11::xcb::define_cursor(app->x11RootWindow(),
+                                      mouseCursor->x11_cursor(Qt::ArrowCursor));
     }
 
     auto env = app->processStartupEnvironment();
@@ -279,7 +282,7 @@ void xwayland::continue_startup_with_x11()
     Q_EMIT app->x11ConnectionChanged();
 
     // Trigger possible errors, there's still a chance to abort
-    Xcb::sync();
+    base::x11::xcb::sync();
 
     data_bridge.reset(new xwl::data_bridge(basic_data));
 }

@@ -10,12 +10,13 @@ RUN_SCRIPT_URL="https://gitlab.com/kwinft/tooling/-/raw/master/analysis/run-clan
 python <(curl -s $RUN_SCRIPT_URL) -r \
     ${SOURCE_DIR}/autotests \
     ${SOURCE_DIR}/base \
+    ${SOURCE_DIR}/cmake \
     ${SOURCE_DIR}/debug \
+    ${SOURCE_DIR}/desktop \
     ${SOURCE_DIR}/input \
     ${SOURCE_DIR}/win \
     ${SOURCE_DIR}/render \
     ${SOURCE_DIR}/rules \
     ${SOURCE_DIR}/scripting \
-    ${SOURCE_DIR}/seat \
-    ${SOURCE_DIR}/cmake \
+    ${SOURCE_DIR}/utils \
     ${SOURCE_DIR}/xwl

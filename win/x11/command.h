@@ -35,7 +35,7 @@ void establish_command_window_grab(Win* win, uint8_t button)
     // account. We tackle that problem in a kind of smart way. First, we grab the button with all
     // possible modifiers, then we ungrab the ones that are relevant only to commandAllx().
 
-    win->xcb_windows.wrapper.grabButton(
+    win->xcb_windows.wrapper.grab_button(
         XCB_GRAB_MODE_SYNC, XCB_GRAB_MODE_ASYNC, XCB_MOD_MASK_ANY, button);
 
     auto x11Modifier = x11CommandAllModifier();
@@ -43,7 +43,7 @@ void establish_command_window_grab(Win* win, uint8_t button)
     unsigned int mods[8] = {
         0, XCapL, XNumL, XNumL | XCapL, XScrL, XScrL | XCapL, XScrL | XNumL, XScrL | XNumL | XCapL};
     for (int i = 0; i < 8; ++i)
-        win->xcb_windows.wrapper.ungrabButton(x11Modifier | mods[i], button);
+        win->xcb_windows.wrapper.ungrab_button(x11Modifier | mods[i], button);
 }
 
 template<typename Win>
@@ -54,7 +54,7 @@ void establish_command_all_grab(Win* win, uint8_t button)
     unsigned int mods[8] = {
         0, XCapL, XNumL, XNumL | XCapL, XScrL, XScrL | XCapL, XScrL | XNumL, XScrL | XNumL | XCapL};
     for (int i = 0; i < 8; ++i)
-        win->xcb_windows.wrapper.grabButton(
+        win->xcb_windows.wrapper.grab_button(
             XCB_GRAB_MODE_SYNC, XCB_GRAB_MODE_ASYNC, x11Modifier | mods[i], button);
 }
 #undef XCapL

@@ -97,18 +97,18 @@ transient* x11_transient(Win* win)
 }
 
 template<typename Win>
-Xcb::TransientFor fetch_transient(Win* win)
+base::x11::xcb::transient_for fetch_transient(Win* win)
 {
-    return Xcb::TransientFor(win->xcb_window());
+    return base::x11::xcb::transient_for(win->xcb_window());
 }
 
 template<typename Win>
-void read_transient_property(Win* win, Xcb::TransientFor& transientFor)
+void read_transient_property(Win* win, base::x11::xcb::transient_for& transientFor)
 {
     xcb_window_t lead_id = XCB_WINDOW_NONE;
 
     bool failed = false;
-    if (!transientFor.getTransientFor(&lead_id)) {
+    if (!transientFor.get_transient_for(&lead_id)) {
         lead_id = XCB_WINDOW_NONE;
         failed = true;
     }
@@ -274,8 +274,8 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
 
     while (new_transient_for != XCB_WINDOW_NONE && new_transient_for != rootWindow()
            && !workspace()->findClient(predicate_match::window, new_transient_for)) {
-        Xcb::Tree tree(new_transient_for);
-        if (tree.isNull()) {
+        base::x11::xcb::tree tree(new_transient_for);
+        if (tree.is_null()) {
             break;
         }
         new_transient_for = tree->parent;
@@ -324,7 +324,7 @@ xcb_window_t verify_transient_for(Win* win, xcb_window_t new_transient_for, bool
     }
 
     if (new_property_value != x11_transient(win)->original_lead_id) {
-        Xcb::setTransientFor(win->xcb_window(), new_property_value);
+        base::x11::xcb::set_transient_for(win->xcb_window(), new_property_value);
     }
 
     return new_transient_for;

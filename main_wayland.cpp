@@ -22,20 +22,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 
 #include "base/backend/wlroots/platform.h"
-#include "debug/wayland_console.h"
+#include "base/seat/backend/wlroots/session.h"
+#include "base/wayland/server.h"
+#include "debug/console/wayland/wayland_console.h"
+#include "desktop/screen_locker_watcher.h"
 #include "render/backend/wlroots/platform.h"
 #include "render/effects.h"
 #include "render/wayland/compositor.h"
-#include "screenlockerwatcher.h"
-#include "seat/backend/logind/session.h"
-#include "seat/backend/wlroots/session.h"
 #include "input/backend/wlroots/platform.h"
 #include "input/wayland/cursor.h"
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
 #include "input/dbus/tablet_mode_manager.h"
 #include "scripting/platform.h"
-#include "wayland_server.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
 
@@ -53,6 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Qt
 #include <qplatformdefs.h>
 #include <QCommandLineParser>
+#include <QDBusConnection>
 #include <QFileInfo>
 #include <QProcess>
 #include <QStyle>
@@ -182,7 +182,7 @@ base::platform& ApplicationWayland::get_base()
     return *base;
 }
 
-WaylandServer* ApplicationWayland::get_wayland_server()
+base::wayland::server* ApplicationWayland::get_wayland_server()
 {
     return server.get();
 }
@@ -200,14 +200,14 @@ void ApplicationWayland::start()
         setOperationMode(OperationModeXwayland);
     }
 
-    base = std::make_unique<base::backend::wlroots::platform>(waylandServer()->display());
+    base = std::make_unique<base::backend::wlroots::platform>(waylandServer()->display.get());
 
     base->render = std::make_unique<render::backend::wlroots::platform>(*base);
     auto render = static_cast<render::backend::wlroots::platform*>(base->render.get());
 
     createOptions();
 
-    auto session = new seat::backend::wlroots::session(base->backend);
+    auto session = new base::seat::backend::wlroots::session(base->backend);
     this->session.reset(session);
     session->take_control();
 
@@ -235,7 +235,7 @@ void ApplicationWayland::start()
     workspace->scripting = std::make_unique<scripting::platform>();
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
-    ScreenLockerWatcher::self()->initialize();
+    kwinApp()->screen_locker_watcher->initialize();
 }
 
 void ApplicationWayland::handle_server_addons_created()
@@ -499,25 +499,25 @@ int main(int argc, char * argv[])
         a.setSessionArgument(parser.value(exitWithSessionOption));
     }
 
-    auto flags = KWin::wayland_start_options::none;
+    auto flags = KWin::base::wayland::start_options::none;
     if (parser.isSet(screenLockerOption)) {
-        flags = KWin::wayland_start_options::lock_screen;
+        flags = KWin::base::wayland::start_options::lock_screen;
     } else if (parser.isSet(noScreenLockerOption)) {
-        flags = KWin::wayland_start_options::no_lock_screen_integration;
+        flags = KWin::base::wayland::start_options::no_lock_screen_integration;
     }
     if (parser.isSet(noGlobalShortcutsOption)) {
-        flags |= KWin::wayland_start_options::no_global_shortcuts;
+        flags |= KWin::base::wayland::start_options::no_global_shortcuts;
     }
 
     try {
         auto const socket_name = parser.value(waylandSocketOption).toStdString();
-        a.server.reset(new KWin::WaylandServer(socket_name, flags));
+        a.server.reset(new KWin::base::wayland::server(socket_name, flags));
     } catch (std::exception const&) {
         std::cerr << "FATAL ERROR: could not create Wayland server" << std::endl;
         return 1;
     }
 
-    if (auto const& name = a.server->display()->socket_name(); !name.empty()) {
+    if (auto const& name = a.server->display->socket_name(); !name.empty()) {
         environment.insert(QStringLiteral("WAYLAND_DISPLAY"), name.c_str());
     }
 

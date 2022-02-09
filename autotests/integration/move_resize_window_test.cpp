@@ -19,19 +19,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "atoms.h"
+#include "base/wayland/server.h"
+#include "base/x11/atoms.h"
 #include "input/cursor.h"
 #include "render/effects.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "wayland_server.h"
-#include "workspace.h"
-
 #include "win/input.h"
 #include "win/move.h"
 #include "win/placement.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
+#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
@@ -843,7 +842,7 @@ void MoveResizeWindowTest::testAdjustClientGeometryOfAutohidingX11Panel()
     xcb_change_property(c.get(),
                         XCB_PROP_MODE_REPLACE,
                         w,
-                        atoms->kde_screen_edge_show,
+                        workspace()->atoms->kde_screen_edge_show,
                         XCB_ATOM_CARDINAL,
                         32,
                         1,

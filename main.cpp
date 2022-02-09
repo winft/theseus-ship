@@ -22,20 +22,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include <config-kwin.h>
 
+#include "base/seat/session.h"
 #include "base/x11/event_filter_manager.h"
-#include "atoms.h"
+#include "base/x11/xcb/extensions.h"
+#include "debug/perf/ftrace.h"
+#include "desktop/screen_locker_watcher.h"
 #include "render/compositor.h"
 #include "input/global_shortcuts_manager.h"
 #include "input/platform.h"
 #include "input/redirect.h"
-#include "seat/backend/logind/session.h"
 #include "options.h"
-#include "perf/ftrace.h"
 #include "screens.h"
-#include "screenlockerwatcher.h"
 #include "sm.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include <kwineffects.h>
 
@@ -75,8 +74,6 @@ namespace KWin
 
 Options* options;
 
-Atoms* atoms;
-
 int Application::crashes = 0;
 
 void Application::setX11ScreenNumber(int screenNumber)
@@ -98,6 +95,8 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
     , m_inputConfig()
     , m_operationMode(mode)
 {
+    qDebug("Starting KWinFT %s", KWIN_VERSION_STRING);
+
 #if HAVE_PERF
     if(!Perf::Ftrace::valid(this, true)) {
         qCWarning(KWIN_CORE) << "Not able to setup Ftracing interface.";
@@ -153,19 +152,12 @@ void Application::prepare_start()
         m_inputConfig = KSharedConfig::openConfig(QStringLiteral("kcminputrc"), KConfig::NoGlobals);
     }
 
-    ScreenLockerWatcher::create(this);
+    screen_locker_watcher = std::make_unique<desktop::screen_locker_watcher>();
 }
 
 Application::~Application()
 {
     delete options;
-    destroyAtoms();
-}
-
-void Application::destroyAtoms()
-{
-    delete atoms;
-    atoms = nullptr;
 }
 
 void Application::resetCrashesCount()
@@ -266,14 +258,9 @@ bool Application::is_screen_locked() const
     return false;
 }
 
-WaylandServer* Application::get_wayland_server()
+base::wayland::server* Application::get_wayland_server()
 {
     return nullptr;
-}
-
-void Application::createAtoms()
-{
-    atoms = new Atoms;
 }
 
 void Application::createOptions()
@@ -372,11 +359,11 @@ void Application::update_x11_time_from_event(xcb_generic_event_t *event)
         return;
     default:
         // extension handling
-        if (Xcb::Extensions::self()) {
-            if (eventType == Xcb::Extensions::self()->shapeNotifyEvent()) {
+        if (base::x11::xcb::extensions::self()) {
+            if (eventType == base::x11::xcb::extensions::self()->shape_notify_event()) {
                 time = reinterpret_cast<xcb_shape_notify_event_t*>(event)->server_time;
             }
-            if (eventType == Xcb::Extensions::self()->damageNotifyEvent()) {
+            if (eventType == base::x11::xcb::extensions::self()->damage_notify_event()) {
                 time = reinterpret_cast<xcb_damage_notify_event_t*>(event)->timestamp;
             }
         }

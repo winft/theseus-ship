@@ -12,7 +12,6 @@
 #include "win/move.h"
 #include "win/scene.h"
 
-#include "atoms.h"
 #include "decorations/decorationbridge.h"
 #include "decorations/window.h"
 #include "render/compositor.h"
@@ -189,7 +188,7 @@ template<typename Win>
 void get_motif_hints(Win* win, bool initial = false)
 {
     auto const wasClosable = win->motif_hints.close();
-    auto const wasNoBorder = win->motif_hints.noBorder();
+    auto const wasNoBorder = win->motif_hints.no_border();
 
     if (!initial) {
         // Only on property change, initial read is prefetched.
@@ -198,10 +197,10 @@ void get_motif_hints(Win* win, bool initial = false)
 
     win->motif_hints.read();
 
-    if (win->motif_hints.hasDecoration() && win->motif_hints.noBorder() != wasNoBorder) {
+    if (win->motif_hints.has_decoration() && win->motif_hints.no_border() != wasNoBorder) {
         // If we just got a hint telling us to hide decorations, we do so but only do so if the app
         // didn't instruct us to hide decorations in some other way.
-        if (win->motif_hints.noBorder()) {
+        if (win->motif_hints.no_border()) {
             win->user_no_border = win->control->rules().checkNoBorder(true);
         } else if (!win->app_no_border) {
             win->user_no_border = win->control->rules().checkNoBorder(false);
@@ -223,13 +222,14 @@ void get_motif_hints(Win* win, bool initial = false)
 }
 
 template<typename Win>
-Xcb::StringProperty fetch_color_scheme(Win* win)
+base::x11::xcb::string_property fetch_color_scheme(Win* win)
 {
-    return Xcb::StringProperty(win->xcb_windows.client, atoms->kde_color_sheme);
+    return base::x11::xcb::string_property(win->xcb_windows.client,
+                                           win->space.atoms->kde_color_sheme);
 }
 
 template<typename Win>
-void read_color_scheme(Win* win, Xcb::StringProperty& property)
+void read_color_scheme(Win* win, base::x11::xcb::string_property& property)
 {
     win::set_color_scheme(win, win->control->rules().checkDecoColor(QString::fromUtf8(property)));
 }

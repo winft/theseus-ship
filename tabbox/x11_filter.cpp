@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "x11_filter.h"
 
+#include "base/x11/xcb/proto.h"
 #include "render/effects.h"
 #include "tabbox/tabbox.h"
 #include "win/screen_edges.h"
 #include "workspace.h"
-#include "xcbutils.h"
 
 #include <KKeyServer>
 
@@ -142,7 +142,7 @@ void X11Filter::keyRelease(xcb_generic_event_t* event)
     if (mod_index == -1)
         release = true;
     else {
-        Xcb::ModifierMapping xmk;
+        base::x11::xcb::modifier_mapping xmk;
         if (xmk) {
             xcb_keycode_t* keycodes = xmk.keycodes();
             const int maxIndex = xmk.size();

@@ -8,9 +8,9 @@
 
 #include "helpers.h"
 
+#include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/redirect.h"
-#include "wayland_server.h"
 #include "win/deco.h"
 #include "win/geo.h"
 #include "win/transient.h"

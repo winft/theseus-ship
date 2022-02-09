@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "wayland_server.h"
+#include "base/wayland/server.h"
 #include "win/control.h"
 #include "win/meta.h"
 #include "win/move.h"

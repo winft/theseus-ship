@@ -7,9 +7,9 @@
 #include "cursor_theme.h"
 
 #include "base/platform.h"
+#include "base/wayland/server.h"
 #include "main.h"
 #include "screens.h"
-#include "wayland_server.h"
 
 #include <QVector>
 

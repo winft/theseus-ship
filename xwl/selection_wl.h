@@ -10,8 +10,8 @@
 #include "selection_data.h"
 #include "sources.h"
 #include "transfer.h"
+#include "types.h"
 
-#include "atoms.h"
 #include "win/x11/window.h"
 #include "workspace.h"
 
@@ -22,7 +22,9 @@
 namespace KWin::xwl
 {
 
-inline void send_selection_notify(xcb_selection_request_event_t* event, bool success)
+inline void send_selection_notify(xcb_connection_t* connection,
+                                  xcb_selection_request_event_t* event,
+                                  bool success)
 {
     xcb_selection_notify_event_t notify;
     notify.response_type = XCB_SELECTION_NOTIFY;
@@ -33,9 +35,8 @@ inline void send_selection_notify(xcb_selection_request_event_t* event, bool suc
     notify.target = event->target;
     notify.property = success ? event->property : xcb_atom_t(XCB_ATOM_NONE);
 
-    auto xcb_con = kwinApp()->x11Connection();
-    xcb_send_event(xcb_con, 0, event->requestor, XCB_EVENT_MASK_NO_EVENT, (char const*)&notify);
-    xcb_flush(xcb_con);
+    xcb_send_event(connection, 0, event->requestor, XCB_EVENT_MASK_NO_EVENT, (char const*)&notify);
+    xcb_flush(connection);
 }
 
 // must be called in order to provide data from Wl to X
@@ -73,12 +74,15 @@ void set_wl_source(Selection* sel, wl_source<server_source>* source)
 template<typename Selection>
 void start_transfer_to_x11(Selection* sel, xcb_selection_request_event_t* event, qint32 fd)
 {
-    auto transfer = new wl_to_x11_transfer(sel->data.atom, event, fd, sel->data.qobject.get());
+    auto transfer = new wl_to_x11_transfer(
+        sel->data.atom, event, fd, *sel->data.x11.atoms, sel->data.qobject.get());
 
     QObject::connect(transfer,
                      &wl_to_x11_transfer::selection_notify,
                      sel->data.qobject.get(),
-                     &send_selection_notify);
+                     [con = sel->data.x11.connection](auto event, auto success) {
+                         send_selection_notify(con, event, success);
+                     });
     QObject::connect(
         transfer, &wl_to_x11_transfer::finished, sel->data.qobject.get(), [sel, transfer]() {
             Q_EMIT sel->data.qobject->transfer_finished(transfer->get_timestamp());
@@ -128,7 +132,7 @@ void handle_wl_selection_client_change(Selection* sel)
     }
 
     using server_source = std::remove_pointer_t<decltype(srv_src)>;
-    auto wls = new wl_source<server_source>(srv_src, sel->data.x11.connection);
+    auto wls = new wl_source<server_source>(srv_src, sel->data.x11);
 
     set_wl_source(sel, wls);
     own_selection(sel, true);
@@ -181,11 +185,11 @@ void handle_wl_selection_change(Selection* sel)
     handle_wl_selection_client_change(sel);
 }
 
-inline void send_wl_selection_timestamp(xcb_connection_t* con,
+inline void send_wl_selection_timestamp(x11_data const& x11,
                                         xcb_selection_request_event_t* event,
                                         xcb_timestamp_t time)
 {
-    xcb_change_property(con,
+    xcb_change_property(x11.connection,
                         XCB_PROP_MODE_REPLACE,
                         event->requestor,
                         event->property,
@@ -194,25 +198,25 @@ inline void send_wl_selection_timestamp(xcb_connection_t* con,
                         1,
                         &time);
 
-    send_selection_notify(event, true);
+    send_selection_notify(x11.connection, event, true);
 }
 
-inline void send_wl_selection_targets(xcb_connection_t* con,
+inline void send_wl_selection_targets(x11_data const& x11,
                                       xcb_selection_request_event_t* event,
                                       std::vector<std::string> const& offers)
 {
     std::vector<xcb_atom_t> targets;
     targets.resize(offers.size() + 2);
-    targets[0] = atoms->timestamp;
-    targets[1] = atoms->targets;
+    targets[0] = x11.atoms->timestamp;
+    targets[1] = x11.atoms->targets;
 
     size_t cnt = 2;
     for (auto const& mime : offers) {
-        targets[cnt] = mime_type_to_atom(mime);
+        targets[cnt] = mime_type_to_atom(mime, *x11.atoms);
         cnt++;
     }
 
-    xcb_change_property(con,
+    xcb_change_property(x11.connection,
                         XCB_PROP_MODE_REPLACE,
                         event->requestor,
                         event->property,
@@ -221,14 +225,14 @@ inline void send_wl_selection_targets(xcb_connection_t* con,
                         cnt,
                         targets.data());
 
-    send_selection_notify(event, true);
+    send_selection_notify(x11.connection, event, true);
 }
 
 /// Returns the file descriptor to write in or -1 on error.
-template<typename ServerSource>
-int selection_wl_start_transfer(ServerSource server_source, xcb_selection_request_event_t* event)
+template<typename Source>
+int selection_wl_start_transfer(Source&& source, xcb_selection_request_event_t* event)
 {
-    auto const targets = atom_to_mime_types(event->target);
+    auto const targets = atom_to_mime_types(event->target, *source->x11.atoms);
     if (targets.empty()) {
         qCDebug(KWIN_XWL) << "Unknown selection atom. Ignoring request.";
         return -1;
@@ -245,7 +249,7 @@ int selection_wl_start_transfer(ServerSource server_source, xcb_selection_reques
     };
 
     // check supported mimes
-    auto const offers = server_source->mime_types();
+    auto const offers = source->server_source->mime_types();
     auto const mimeIt = std::find_if(offers.begin(), offers.end(), cmp);
     if (mimeIt == offers.end()) {
         // Requested Mime not supported. Not sending selection.
@@ -258,28 +262,28 @@ int selection_wl_start_transfer(ServerSource server_source, xcb_selection_reques
         return -1;
     }
 
-    server_source->request_data(*mimeIt, p[1]);
+    source->server_source->request_data(*mimeIt, p[1]);
     return p[0];
 }
 
 template<typename Source>
-bool selection_wl_handle_request(Source&& source,
-                                 xcb_connection_t* con,
-                                 xcb_selection_request_event_t* event)
+bool selection_wl_handle_request(Source&& source, xcb_selection_request_event_t* event)
 {
-    if (event->target == atoms->targets) {
-        send_wl_selection_targets(con, event, source->offers);
-    } else if (event->target == atoms->timestamp) {
-        send_wl_selection_timestamp(con, event, source->timestamp);
-    } else if (event->target == atoms->delete_atom) {
-        send_selection_notify(event, true);
+    auto& x11 = source->x11;
+
+    if (event->target == x11.atoms->targets) {
+        send_wl_selection_targets(x11, event, source->offers);
+    } else if (event->target == x11.atoms->timestamp) {
+        send_wl_selection_timestamp(x11, event, source->timestamp);
+    } else if (event->target == x11.atoms->delete_atom) {
+        send_selection_notify(x11.connection, event, true);
     } else {
         // try to send mime data
-        if (auto fd = selection_wl_start_transfer(source->server_source, event); fd > 0) {
+        if (auto fd = selection_wl_start_transfer(source, event); fd > 0) {
             Q_EMIT source->get_qobject()->transfer_ready(new xcb_selection_request_event_t(*event),
                                                          fd);
         } else {
-            send_selection_notify(event, false);
+            send_selection_notify(x11.connection, event, false);
         }
     }
     return true;

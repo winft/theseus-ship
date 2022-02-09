@@ -23,7 +23,10 @@ class text_input_manager_v3;
 namespace KWin
 {
 
-class WaylandServer;
+namespace base::wayland
+{
+class server;
+}
 
 namespace win::wayland
 {
@@ -45,7 +48,7 @@ class KWIN_EXPORT input_method : public QObject
 {
     Q_OBJECT
 public:
-    input_method(WaylandServer* server);
+    input_method(base::wayland::server* server);
     ~input_method();
 
 private:

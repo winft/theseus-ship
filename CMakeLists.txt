@@ -398,21 +398,24 @@ add_subdirectory(helpers)
 ########### next target ###############
 
 set(kwin_SRCS
-    atoms.cpp
     base/dbus/kwin.cpp
     base/os/clock/skew_notifier.cpp
     base/os/clock/skew_notifier_engine.cpp
+    base/seat/session.cpp
+    base/seat/backend/logind/session.cpp
     base/x11/event_filter.cpp
     base/x11/event_filter_container.cpp
     base/x11/event_filter_manager.cpp
+    base/x11/xcb/extensions.cpp
     base/gamma_ramp.cpp
     base/output.cpp
     base/platform.cpp
+    desktop/screen_locker_watcher.cpp
     render/post/color_correct_dbus_interface.cpp
     render/post/night_color_manager.cpp
     render/post/suncalc.cpp
-    debug/console.cpp
-    debug/x11_console.cpp
+    debug/console/console.cpp
+    debug/perf/ftrace.cpp
     decorations/decoratedclient.cpp
     decorations/decorationbridge.cpp
     decorations/decorationpalette.cpp
@@ -443,12 +446,8 @@ set(kwin_SRCS
     input/xkb/keyboard.cpp
     input/xkb/keymap.cpp
     input/xkb/manager.cpp
-    killwindow.cpp
     main.cpp
-    moving_client_x11_filter.cpp
-    onscreennotification.cpp
     options.cpp
-    osd.cpp
     render/compositor.cpp
     render/cursor.cpp
     render/dbus/compositing.cpp
@@ -475,7 +474,6 @@ set(kwin_SRCS
     rules/rule_book_settings.cpp
     rules/rules.cpp
     rules/window_rules.cpp
-    screenlockerwatcher.cpp
     screens.cpp
     scripting/dbus_call.cpp
     scripting/js_engine_global_methods_wrapper.cpp
@@ -491,19 +489,18 @@ set(kwin_SRCS
     scripting/utils.cpp
     scripting/window.cpp
     scripting/space.cpp
-    seat/session.cpp
-    seat/backend/logind/session.cpp
     sm.cpp
     toplevel.cpp
     useractions.cpp
     utils.cpp
-    was_user_interaction_x11_filter.cpp
     win/app_menu.cpp
     win/control.cpp
     win/dbus/virtual_desktop_manager.cpp
     win/dbus/virtual_desktop_types.cpp
     win/focus_chain.cpp
     win/internal_window.cpp
+    win/osd_notification.cpp
+    win/osd.cpp
     win/remnant.cpp
     win/screen_edges.cpp
     win/stacking_order.cpp
@@ -522,9 +519,7 @@ set(kwin_SRCS
     win/x11/window.cpp
     win/x11/window_property_notify_filter.cpp
     workspace.cpp
-    xcbutils.cpp
     xwl/xwayland_interface.cpp
-    perf/ftrace.cpp
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -571,7 +566,7 @@ qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.sc
 qt5_add_dbus_interface(kwin_SRCS org.kde.kappmenu.xml appmenu_interface)
 
 ki18n_wrap_ui(kwin_SRCS
-    debug/debug_console.ui
+    debug/console/debug_console.ui
     shortcutdialog.ui
 )
 
@@ -657,7 +652,7 @@ target_precompile_headers(kwin PRIVATE
 target_link_libraries(kwin ${kwinLibs} kwinglutils epoxy::epoxy)
 
 if(HAVE_PERF)
-    target_sources(kwin PRIVATE perf/ftrace_impl.cpp)
+    target_sources(kwin PRIVATE debug/perf/ftrace_impl.cpp)
 endif()
 
 if (KWIN_BUILD_TABBOX)
@@ -686,6 +681,7 @@ endif()
 
 set(kwin_X11_SRCS
    base/x11/output.cpp
+   debug/console/x11/x11_console.cpp
    input/x11/cursor.cpp
    input/x11/platform.cpp
    input/x11/window_selector.cpp
@@ -803,12 +799,15 @@ set(kwin_WAYLAND_SRCS
    base/backend/wlroots/non_desktop_output.cpp
    base/backend/wlroots/output.cpp
    base/backend/wlroots/platform.cpp
+   base/seat/backend/wlroots/session.cpp
+   base/wayland/filtered_display.cpp
    base/wayland/idle_inhibition.cpp
    base/wayland/output.cpp
-   debug/input_device_model.cpp
-   debug/input_filter.cpp
-   debug/surface_tree_model.cpp
-   debug/wayland_console.cpp
+   base/wayland/server.cpp
+   debug/console/wayland/input_device_model.cpp
+   debug/console/wayland/input_filter.cpp
+   debug/console/wayland/surface_tree_model.cpp
+   debug/console/wayland/wayland_console.cpp
    input/backend/wlroots/keyboard.cpp
    input/backend/wlroots/platform.cpp
    input/backend/wlroots/pointer.cpp
@@ -885,8 +884,6 @@ set(kwin_WAYLAND_SRCS
    render/wayland/linux_dmabuf.cpp
    render/wayland/output.cpp
    render/wayland/presentation.cpp
-   seat/backend/wlroots/session.cpp
-   wayland_server.cpp
    win/wayland/space.cpp
    win/wayland/window.cpp
    win/wayland/xwl_window.cpp

@@ -9,16 +9,14 @@
 */
 #include "screen_edge.h"
 
-#include "atoms.h"
 #include "input/cursor.h"
 
 namespace KWin::win::x11
 {
 
-screen_edge::screen_edge(win::screen_edger* edger)
+screen_edge::screen_edge(win::screen_edger* edger, base::x11::atoms& atoms)
     : win::screen_edge(edger)
-    , m_window(XCB_WINDOW_NONE)
-    , m_approachWindow(XCB_WINDOW_NONE)
+    , atoms{atoms}
 {
 }
 
@@ -41,7 +39,7 @@ void screen_edge::doDeactivate()
 
 void screen_edge::createWindow()
 {
-    if (m_window.isValid()) {
+    if (m_window.is_valid()) {
         return;
     }
     const uint32_t mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
@@ -55,7 +53,7 @@ void screen_edge::createWindow()
     xcb_change_property(connection(),
                         XCB_PROP_MODE_REPLACE,
                         m_window,
-                        atoms->xdnd_aware,
+                        atoms.xdnd_aware,
                         XCB_ATOM_ATOM,
                         32,
                         1,
@@ -67,7 +65,7 @@ void screen_edge::createApproachWindow()
     if (!activatesForPointer()) {
         return;
     }
-    if (m_approachWindow.isValid()) {
+    if (m_approachWindow.is_valid()) {
         return;
     }
     if (!approach_geometry.isValid()) {
@@ -83,9 +81,9 @@ void screen_edge::createApproachWindow()
 
 void screen_edge::doGeometryUpdate()
 {
-    m_window.setGeometry(geometry);
-    if (m_approachWindow.isValid()) {
-        m_approachWindow.setGeometry(approach_geometry);
+    m_window.set_geometry(geometry);
+    if (m_approachWindow.is_valid()) {
+        m_approachWindow.set_geometry(approach_geometry);
     }
 }
 

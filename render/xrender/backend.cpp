@@ -7,11 +7,13 @@
 #include "backend.h"
 
 #include "base/platform.h"
+#include "base/x11/xcb/extensions.h"
+#include "base/x11/xcb/helpers.h"
+#include "main.h"
 #include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
 #include "screens.h"
 #include "utils.h"
-#include "xcbutils.h"
 
 #include <kwinxrenderutils.h>
 
@@ -21,11 +23,11 @@ namespace KWin::render::xrender
 backend::backend(render::compositor& compositor)
     : overlay_window{std::make_unique<render::x11::overlay_window>()}
 {
-    if (!Xcb::Extensions::self()->isRenderAvailable()) {
+    if (!base::x11::xcb::extensions::self()->is_render_available()) {
         setFailed("No XRender extension available");
         return;
     }
-    if (!Xcb::Extensions::self()->isFixesRegionAvailable()) {
+    if (!base::x11::xcb::extensions::self()->is_fixes_region_available()) {
         setFailed("No XFixes v3+ extension available");
         return;
     }
@@ -81,7 +83,7 @@ void backend::init(bool createOverlay)
         = createOverlay ? overlay_window->create() : (overlay_window->window() != XCB_WINDOW_NONE);
     if (haveOverlay) {
         overlay_window->setup(XCB_WINDOW_NONE);
-        ScopedCPointer<xcb_get_window_attributes_reply_t> attribs(xcb_get_window_attributes_reply(
+        unique_cptr<xcb_get_window_attributes_reply_t> attribs(xcb_get_window_attributes_reply(
             connection(),
             xcb_get_window_attributes_unchecked(connection(), overlay_window->window()),
             nullptr));
@@ -117,7 +119,7 @@ void backend::createBuffer()
     xcb_pixmap_t pixmap = xcb_generate_id(connection());
     auto const displaySize = kwinApp()->get_base().screens.displaySize();
     xcb_create_pixmap(connection(),
-                      Xcb::defaultDepth(),
+                      base::x11::xcb::default_depth(kwinApp()->x11ScreenNumber()),
                       pixmap,
                       rootWindow(),
                       displaySize.width(),

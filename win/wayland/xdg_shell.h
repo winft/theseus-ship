@@ -10,16 +10,15 @@
 #include "window.h"
 #include "window_release.h"
 
+#include "base/wayland/server.h"
+#include "render/compositor.h"
+#include "toplevel.h"
+#include "wayland_logging.h"
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/meta.h"
 #include "win/setup.h"
 #include "win/transient.h"
-
-#include "render/compositor.h"
-#include "toplevel.h"
-#include "wayland_logging.h"
-#include "wayland_server.h"
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/appmenu.h>
@@ -101,12 +100,14 @@ inline void finalize_shell_window_creation(window* win)
 {
     namespace WS = Wrapland::Server;
 
-    QObject::connect(
-        waylandServer(), &WaylandServer::foreignTransientChanged, win, [win](WS::Surface* child) {
-            if (child == win->surface()) {
-                handle_parent_changed(win);
-            }
-        });
+    QObject::connect(waylandServer(),
+                     &base::wayland::server::foreign_transient_changed,
+                     win,
+                     [win](WS::Surface* child) {
+                         if (child == win->surface()) {
+                             handle_parent_changed(win);
+                         }
+                     });
 
     auto handle_first_commit = [win] {
         QObject::disconnect(win->surface(), &WS::Surface::committed, win, nullptr);
@@ -581,7 +582,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
         // TODO(romangg): Make this check unnecessary.
         return;
     }
-    if (toplevel->client() == space->server->screenLockerClientConnection()) {
+    if (toplevel->client() == space->server->screen_locker_client_connection) {
         ScreenLocker::KSldApp::self()->lockScreenShown();
     }
     auto window = win::wayland::create_toplevel_window(toplevel);
@@ -620,7 +621,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
                      &Wrapland::Server::XdgForeign::parentChanged,
                      window,
                      [server = space->server](auto /*parent*/, auto child) {
-                         Q_EMIT server->foreignTransientChanged(child);
+                         Q_EMIT server->foreign_transient_changed(child);
                      });
 }
 
@@ -768,7 +769,7 @@ void handle_parent_changed(Win* win)
     }
 
     if (!parent_surface) {
-        parent_surface = waylandServer()->findForeignParentForSurface(win->surface());
+        parent_surface = waylandServer()->find_foreign_parent_for_surface(win->surface());
     }
 
     auto parent = static_cast<space*>(workspace())->find_window(parent_surface);
