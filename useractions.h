@@ -58,7 +58,7 @@ class KWIN_EXPORT UserActionsMenu : public QObject
 {
     Q_OBJECT
 public:
-    explicit UserActionsMenu(QObject *parent = nullptr);
+    explicit UserActionsMenu(QObject* parent = nullptr);
     ~UserActionsMenu() override;
     /**
      * Discards the constructed menu, so that it gets recreates
@@ -98,7 +98,7 @@ public:
      * @param pos The position where the menu should be shown.
      * @param client The Client for which the Menu has to be shown.
      */
-    void show(const QRect &pos, Toplevel* window);
+    void show(const QRect& pos, Toplevel* window);
 
 private Q_SLOTS:
     /**
@@ -127,25 +127,25 @@ private Q_SLOTS:
      *
      * @param action Invoked Action containing the Desktop as data element
      */
-    void slotSendToDesktop(QAction *action);
+    void slotSendToDesktop(QAction* action);
     /**
      * Toggle whether the Client is on a desktop (Wayland only)
      *
      * @param action Invoked Action containing the Desktop as data element
      */
-    void slotToggleOnVirtualDesktop(QAction *action);
+    void slotToggleOnVirtualDesktop(QAction* action);
     /**
      * Sends the Client to screen \a screen
      *
      * @param action Invoked Action containing the Screen as data element
      */
-    void slotSendToScreen(QAction *action);
+    void slotSendToScreen(QAction* action);
     /**
      * Performs a window operation.
      *
      * @param action Invoked Action containing the Window Operation to perform for the Client
      */
-    void slotWindowOperation(QAction *action);
+    void slotWindowOperation(QAction* action);
 
 private:
     /**
@@ -166,7 +166,7 @@ private:
      * @param message The message type to be shown
      * @param c The Client for which the dialog should be shown.
      */
-    void helperDialog(const QString &message, Toplevel* window);
+    void helperDialog(const QString& message, Toplevel* window);
     /**
      * The actual main context menu which is show when the UserActionsMenu is invoked.
      */
@@ -202,12 +202,11 @@ private:
      * The Client for which the menu is shown.
      */
     QPointer<Toplevel> m_client;
-    QAction *m_rulesOperation = nullptr;
-    QAction *m_applicationRulesOperation = nullptr;
+    QAction* m_rulesOperation = nullptr;
+    QAction* m_applicationRulesOperation = nullptr;
 };
 
-class ShortcutDialog
-    : public QDialog
+class ShortcutDialog : public QDialog
 {
     Q_OBJECT
 public:
@@ -218,8 +217,10 @@ public Q_SLOTS:
     void keySequenceChanged();
 Q_SIGNALS:
     void dialogDone(bool ok);
+
 protected:
     void done(int r) override;
+
 private:
     Ui::ShortcutDialog m_ui;
     QKeySequence _shortcut;
