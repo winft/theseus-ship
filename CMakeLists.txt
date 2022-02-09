@@ -490,7 +490,6 @@ set(kwin_SRCS
     scripting/space.cpp
     sm.cpp
     toplevel.cpp
-    useractions.cpp
     utils.cpp
     win/app_menu.cpp
     win/control.cpp
@@ -505,6 +504,7 @@ set(kwin_SRCS
     win/shortcut_dialog.cpp
     win/stacking_order.cpp
     win/transient.cpp
+    win/user_actions_menu.cpp
     win/virtual_desktops.cpp
     win/x11/client_machine.cpp
     win/x11/color_mapper.cpp

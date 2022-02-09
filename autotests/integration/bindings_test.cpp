@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "scripting/platform.h"
 #include "scripting/script.h"
-#include "useractions.h"
 #include "win/control.h"
 #include "win/move.h"
 #include "win/virtual_desktops.h"

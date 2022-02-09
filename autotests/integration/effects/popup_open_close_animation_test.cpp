@@ -24,11 +24,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "toplevel.h"
-#include "useractions.h"
 #include "win/deco.h"
 #include "win/internal_window.h"
 #include "win/net.h"
 #include "win/transient.h"
+#include "win/user_actions_menu.h"
 #include "workspace.h"
 
 #include <Wrapland/Client/surface.h>

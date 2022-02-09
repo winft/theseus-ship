@@ -14,7 +14,7 @@
 #include "stacking_order.h"
 #include "toplevel.h"
 #include "types.h"
-#include "useractions.h"
+#include "user_actions_menu.h"
 #include "utils.h"
 #include "workspace.h"
 

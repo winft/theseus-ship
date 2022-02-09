@@ -5,7 +5,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "useractions.h"
+#include "user_actions_menu.h"
 
 #include "base/platform.h"
 #include "main.h"
