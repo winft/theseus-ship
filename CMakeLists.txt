@@ -975,7 +975,10 @@ install(FILES render/post/kconfig/color_correct_settings.kcfg
     DESTINATION ${KDE_INSTALL_KCFGDIR}
     RENAME ${KWIN_NAME}_colorcorrect.kcfg
 )
-install(FILES kwin.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFY5RCDIR} RENAME ${KWIN_NAME}.notifyrc)
+install(FILES desktop/kde/kwin.notifyrc
+  DESTINATION ${KDE_INSTALL_KNOTIFY5RCDIR}
+  RENAME ${KWIN_NAME}.notifyrc
+)
 install(
     FILES
         win/dbus/org.kde.KWin.VirtualDesktopManager.xml
