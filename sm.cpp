@@ -1,45 +1,27 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 1999, 2000 Matthias Ettrich <ettrich@kde.org>
+    SPDX-FileCopyrightText: 2003 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 1999, 2000 Matthias Ettrich <ettrich@kde.org>
-Copyright (C) 2003 Lubos Lunak <l.lunak@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "sm.h"
 
 // Include first to not clash with later X definitions in other includes.
 #include "sessionadaptor.h"
 
-#include <cstdlib>
-#include <kconfig.h>
-#include <pwd.h>
-#include <unistd.h>
-
 #include "rules/rule_book.h"
-#include "workspace.h"
-
 #include "win/stacking_order.h"
 #include "win/x11/geo.h"
 #include "win/x11/window.h"
-
-#include <QDebug>
-#include <QSessionManager>
+#include "workspace.h"
 
 #include <QDBusConnection>
+
+#include <KConfig>
+#include <cstdlib>
+#include <pwd.h>
+#include <unistd.h>
 
 namespace KWin
 {
@@ -51,15 +33,19 @@ static KConfig* sessionConfig(QString id, QString key)
     static QString lastKey;
     static QString pattern
         = QString(QLatin1String("session/%1_%2_%3")).arg(qApp->applicationName());
+
     if (id != lastId || key != lastKey) {
         delete config;
         config = nullptr;
     }
+
     lastId = id;
     lastKey = key;
+
     if (!config) {
         config = new KConfig(pattern.arg(id).arg(key), KConfig::SimpleConfig);
     }
+
     return config;
 }
 
@@ -78,20 +64,31 @@ static const char* const window_type_names[] = {"Unknown",
 
 static const char* windowTypeToTxt(NET::WindowType type)
 {
-    if (type >= NET::Unknown && type <= NET::Splash)
-        return window_type_names[type + 1]; // +1 (unknown==-1)
-    if (type == -2)                         // undefined (not really part of NET::WindowType)
+    if (type >= NET::Unknown && type <= NET::Splash) {
+        // +1 (unknown==-1)
+        return window_type_names[type + 1];
+    }
+
+    if (type == -2) {
+        // undefined (not really part of NET::WindowType)
         return "Undefined";
+    }
+
     qFatal("Unknown Window Type");
     return nullptr;
 }
 
 static NET::WindowType txtToWindowType(const char* txt)
 {
-    for (int i = NET::Unknown; i <= NET::Splash; ++i)
-        if (qstrcmp(txt, window_type_names[i + 1]) == 0) // +1
+    for (int i = NET::Unknown; i <= NET::Splash; ++i) {
+        // Compare with window_type_names at i+1.
+        if (qstrcmp(txt, window_type_names[i + 1]) == 0) {
             return static_cast<NET::WindowType>(i);
-    return static_cast<NET::WindowType>(-2); // undefined
+        }
+    }
+
+    // undefined
+    return static_cast<NET::WindowType>(-2);
 }
 
 /**
@@ -120,19 +117,28 @@ void Workspace::storeSession(const QString& sessionName, SMSavePhase phase)
             // enforced
             continue;
         }
+
         QByteArray sessionId = x11_client->sessionId();
         QByteArray wmCommand = x11_client->wmCommand();
-        if (sessionId.isEmpty())
+
+        if (sessionId.isEmpty()) {
             // remember also applications that are not XSMP capable
             // and use the obsolete WM_COMMAND / WM_SAVE_YOURSELF
-            if (wmCommand.isEmpty())
+            if (wmCommand.isEmpty()) {
                 continue;
+            }
+        }
+
         count++;
-        if (x11_client->control->active())
+        if (x11_client->control->active()) {
             active_client = count;
-        if (phase == SMSavePhase2 || phase == SMSavePhase2Full)
+        }
+
+        if (phase == SMSavePhase2 || phase == SMSavePhase2Full) {
             storeClient(cg, count, x11_client);
+        }
     }
+
     if (phase == SMSavePhase0) {
         // it would be much simpler to save these values to the config file,
         // but both Qt and KDE treat phase1 and phase2 separately,
@@ -143,12 +149,15 @@ void Workspace::storeSession(const QString& sessionName, SMSavePhase phase)
         cg.writeEntry("count", count);
         cg.writeEntry("active", session_active_client);
         cg.writeEntry("desktop", session_desktop);
-    } else { // SMSavePhase2Full
+    } else {
+        // SMSavePhase2Full
         cg.writeEntry("count", count);
         cg.writeEntry("active", session_active_client);
         cg.writeEntry("desktop", win::virtual_desktop_manager::self()->current());
     }
-    config->sync(); // it previously did some "revert to defaults" stuff for phase1 I think
+
+    // it previously did some "revert to defaults" stuff for phase1 I think
+    config->sync();
 }
 
 void Workspace::storeClient(KConfigGroup& cg, int num, win::x11::window* c)
@@ -251,6 +260,7 @@ void Workspace::addSessionInfo(KConfigGroup& cg)
     m_initialDesktop = cg.readEntry("desktop", 1);
     int count = cg.readEntry("count", 0);
     int active_client = cg.readEntry("active", 0);
+
     for (int i = 1; i <= count; i++) {
         QString n = QString::number(i);
         SessionInfo* info = new SessionInfo;
@@ -423,4 +433,4 @@ void SessionManager::quit()
     qApp->quit();
 }
 
-} // namespace
+}
