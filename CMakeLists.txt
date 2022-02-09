@@ -1018,8 +1018,12 @@ configure_package_config_file(KWinDBusInterfaceConfig.cmake.in
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/KWinDBusInterfaceConfig.cmake
     DESTINATION ${CMAKECONFIG_INSTALL_DIR})
 
-ecm_install_configured_files(INPUT plasma-kwin_x11.service.in plasma-kwin_wayland.service.in @ONLY
-            DESTINATION ${SYSTEMD_USER_UNIT_INSTALL_DIR})
+ecm_install_configured_files(
+  INPUT
+    desktop/kde/plasma-kwin_x11.service.in
+    desktop/kde/plasma-kwin_wayland.service.in
+  @ONLY DESTINATION ${SYSTEMD_USER_UNIT_INSTALL_DIR}
+)
 
 install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/kwin_wayland_wrapper
