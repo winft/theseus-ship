@@ -356,7 +356,7 @@ add_feature_info("SCHED_RESET_ON_FORK"
 configure_file(cmake/config-kwin.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kwin.h)
 
 ########### global ###############
-set(kwin_effects_dbus_xml ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.kwin.Effects.xml)
+set(kwin_effects_dbus_xml ${CMAKE_CURRENT_SOURCE_DIR}/render/dbus/org.kde.kwin.Effects.xml)
 qt5_add_dbus_interface(effects_interface_SRCS ${kwin_effects_dbus_xml} kwineffects_interface)
 add_library(KWinEffectsInterface STATIC ${effects_interface_SRCS})
 target_link_libraries(KWinEffectsInterface Qt::DBus)
@@ -549,9 +549,9 @@ qt5_add_dbus_adaptor(kwin_SRCS
   KWin::render::dbus::compositing
 )
 qt5_add_dbus_adaptor(kwin_SRCS
-    org.kde.kwin.ColorCorrect.xml
-    render/post/color_correct_dbus_interface.h
-    KWin::render::post::color_correct_dbus_interface
+  render/dbus/org.kde.kwin.ColorCorrect.xml
+  render/post/color_correct_dbus_interface.h
+  KWin::render::post::color_correct_dbus_interface
 )
 qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_impl)
 qt5_add_dbus_adaptor(kwin_SRCS
@@ -563,7 +563,7 @@ qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.Session.xml sm.h KWin::SessionManage
 
 qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf5_org.freedesktop.ScreenSaver.xml screenlocker_interface)
 qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.screensaver.xml kscreenlocker_interface)
-qt5_add_dbus_interface(kwin_SRCS org.kde.kappmenu.xml appmenu_interface)
+qt5_add_dbus_interface(kwin_SRCS win/dbus/org.kde.kappmenu.xml appmenu_interface)
 
 ki18n_wrap_ui(kwin_SRCS
     debug/console/debug_console.ui
@@ -980,17 +980,17 @@ install(FILES desktop/kde/kwin.notifyrc
   RENAME ${KWIN_NAME}.notifyrc
 )
 install(
-    FILES
-        win/dbus/org.kde.KWin.VirtualDesktopManager.xml
-        base/dbus/org.kde.KWin.xml
-        org.kde.kwin.ColorCorrect.xml
-        render/dbus/org.kde.kwin.Compositing.xml
-        org.kde.kwin.Effects.xml
+  FILES
+    win/dbus/org.kde.KWin.VirtualDesktopManager.xml
+    base/dbus/org.kde.KWin.xml
+    render/dbus/org.kde.kwin.ColorCorrect.xml
+    render/dbus/org.kde.kwin.Compositing.xml
+    render/dbus/org.kde.kwin.Effects.xml
 
-        # Still needs to be installed as plasma-workspace expects it at compile time.
-        data/org.kde.kwin.VirtualKeyboard.xml
-    DESTINATION
-        ${KDE_INSTALL_DBUSINTERFACEDIR}
+    # Still needs to be installed as plasma-workspace expects it at compile time.
+    data/org.kde.kwin.VirtualKeyboard.xml
+  DESTINATION
+    ${KDE_INSTALL_DBUSINTERFACEDIR}
 )
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
