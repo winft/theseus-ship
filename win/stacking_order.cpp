@@ -21,6 +21,9 @@
 #include "toplevel.h"
 #include "workspace.h"
 
+#include <algorithm>
+#include <vector>
+
 namespace KWin::win
 {
 
@@ -138,81 +141,79 @@ void stacking_order::propagate_clients(bool propagate_new_clients)
     // Twice the stacking-order size for inputWindow
     new_win_stack.reserve(new_win_stack.size() + 2 * win_stack.size());
 
-    for (int i = win_stack.size() - 1; i >= 0; --i) {
-        auto x11_window = qobject_cast<x11::window*>(win_stack.at(i));
-        if (!x11_window || x11::hidden_preview(x11_window)) {
-            continue;
-        }
+    // TODO use ranges::view and ranges::transform in c++20
+    std::vector<xcb_window_t> hidden_windows;
+    std::for_each(
+        win_stack.rbegin(), win_stack.rend(), [&new_win_stack, &hidden_windows](auto window) {
+            auto x11_window = qobject_cast<x11::window*>(window);
+            if (!x11_window) {
+                return;
+            }
 
-        if (x11_window->xcb_windows.input) {
+            // Hidden windows with preview are windows that should be unmapped but is kept for
+            // compositing ensure they are stacked below everything else (as far as pure X stacking
+            // order is concerned).
+            if (x11::hidden_preview(x11_window)) {
+                hidden_windows.push_back(x11_window->frameId());
+                return;
+            }
+
             // Stack the input window above the frame
-            new_win_stack.push_back(x11_window->xcb_windows.input);
-        }
+            if (x11_window->xcb_windows.input) {
+                new_win_stack.push_back(x11_window->xcb_windows.input);
+            }
 
-        new_win_stack.push_back(x11_window->frameId());
-    }
+            new_win_stack.push_back(x11_window->frameId());
+        });
 
     // when having hidden previews, stack hidden windows below everything else
     // (as far as pure X stacking order is concerned), in order to avoid having
-    // these windows that should be unmapped to interfere with other windows
-    for (int i = win_stack.size() - 1; i >= 0; --i) {
-        auto x11_window = qobject_cast<x11::window*>(win_stack.at(i));
-        if (!x11_window || !x11::hidden_preview(x11_window)) {
-            continue;
-        }
-        new_win_stack.push_back(x11_window->frameId());
-    }
+    // these windows that should be unmapped to interfere with other windows.
+    std::copy(hidden_windows.begin(), hidden_windows.end(), std::back_inserter(new_win_stack));
+
     // TODO isn't it too inefficient to restack always all clients?
     // TODO don't restack not visible windows?
     Q_ASSERT(new_win_stack.at(0) == x11::rootInfo()->supportWindow());
     base::x11::xcb::restack_windows(new_win_stack);
 
-    int pos = 0;
-    xcb_window_t* xcb_windows(nullptr);
-
-    std::vector<x11::window*> x11_windows;
-    for (auto const& window : workspace()->allClientList()) {
-        auto x11_window = qobject_cast<x11::window*>(window);
-        if (x11_window) {
-            x11_windows.push_back(x11_window);
-        }
-    }
-
     if (propagate_new_clients) {
-        xcb_windows = new xcb_window_t[manual_overlays.size() + x11_windows.size()];
-        for (const auto win : manual_overlays) {
-            xcb_windows[pos++] = win;
-        }
-
         // TODO this is still not completely in the map order
-        // TODO(romangg): can we make this more efficient (only looping once)?
-        for (auto const& x11_window : x11_windows) {
+        // TODO use ranges::view and ranges::transform in c++20
+        std::vector<xcb_window_t> xcb_windows;
+        std::vector<xcb_window_t> non_desktops;
+        std::copy(manual_overlays.begin(), manual_overlays.end(), std::back_inserter(xcb_windows));
+
+        for (auto const& window : workspace()->allClientList()) {
+            auto x11_window = qobject_cast<x11::window*>(window);
+
+            if (!x11_window) {
+                continue;
+            }
+
             if (is_desktop(x11_window)) {
-                xcb_windows[pos++] = x11_window->xcb_window();
-            }
-        }
-        for (auto const& x11_window : x11_windows) {
-            if (!is_desktop(x11_window)) {
-                xcb_windows[pos++] = x11_window->xcb_window();
+                xcb_windows.push_back(x11_window->xcb_window());
+            } else {
+                non_desktops.push_back(x11_window->xcb_window());
             }
         }
 
-        x11::rootInfo()->setClientList(xcb_windows, pos);
-        delete[] xcb_windows;
+        /// Desktop windows are always on the bottom, so copy the non-desktop windows to the
+        /// end/top.
+        std::copy(non_desktops.begin(), non_desktops.end(), std::back_inserter(xcb_windows));
+        x11::rootInfo()->setClientList(xcb_windows.data(), xcb_windows.size());
     }
 
-    xcb_windows = new xcb_window_t[manual_overlays.size() + win_stack.size()];
-    pos = 0;
-    for (auto const& window : win_stack) {
+    std::vector<xcb_window_t> stacked_xcb_windows;
+
+    for (auto window : win_stack) {
         if (auto x11_window = qobject_cast<x11::window*>(window)) {
-            xcb_windows[pos++] = x11_window->xcb_window();
+            stacked_xcb_windows.push_back(x11_window->xcb_window());
         }
     }
-    for (auto const& win : manual_overlays) {
-        xcb_windows[pos++] = win;
-    }
-    x11::rootInfo()->setClientListStacking(xcb_windows, pos);
-    delete[] xcb_windows;
+
+    std::copy(
+        manual_overlays.begin(), manual_overlays.end(), std::back_inserter(stacked_xcb_windows));
+    x11::rootInfo()->setClientListStacking(stacked_xcb_windows.data(), stacked_xcb_windows.size());
 }
 
 }
