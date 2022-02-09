@@ -24,10 +24,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Include first to not clash with later X definitions in other includes.
 #include "sessionadaptor.h"
 
-#include <unistd.h>
 #include <cstdlib>
-#include <pwd.h>
 #include <kconfig.h>
+#include <pwd.h>
+#include <unistd.h>
 
 #include "rules/rule_book.h"
 #include "workspace.h"
@@ -44,12 +44,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-static KConfig *sessionConfig(QString id, QString key)
+static KConfig* sessionConfig(QString id, QString key)
 {
-    static KConfig *config = nullptr;
+    static KConfig* config = nullptr;
     static QString lastId;
     static QString lastKey;
-    static QString pattern = QString(QLatin1String("session/%1_%2_%3")).arg(qApp->applicationName());
+    static QString pattern
+        = QString(QLatin1String("session/%1_%2_%3")).arg(qApp->applicationName());
     if (id != lastId || key != lastKey) {
         delete config;
         config = nullptr;
@@ -62,17 +63,24 @@ static KConfig *sessionConfig(QString id, QString key)
     return config;
 }
 
-static const char* const window_type_names[] = {
-    "Unknown", "Normal" , "Desktop", "Dock", "Toolbar", "Menu", "Dialog",
-    "Override", "TopMenu", "Utility", "Splash"
-};
+static const char* const window_type_names[] = {"Unknown",
+                                                "Normal",
+                                                "Desktop",
+                                                "Dock",
+                                                "Toolbar",
+                                                "Menu",
+                                                "Dialog",
+                                                "Override",
+                                                "TopMenu",
+                                                "Utility",
+                                                "Splash"};
 // change also the two functions below when adding new entries
 
 static const char* windowTypeToTxt(NET::WindowType type)
 {
     if (type >= NET::Unknown && type <= NET::Splash)
-        return window_type_names[ type + 1 ]; // +1 (unknown==-1)
-    if (type == -2)   // undefined (not really part of NET::WindowType)
+        return window_type_names[type + 1]; // +1 (unknown==-1)
+    if (type == -2)                         // undefined (not really part of NET::WindowType)
         return "Undefined";
     qFatal("Unknown Window Type");
     return nullptr;
@@ -80,12 +88,10 @@ static const char* windowTypeToTxt(NET::WindowType type)
 
 static NET::WindowType txtToWindowType(const char* txt)
 {
-    for (int i = NET::Unknown;
-            i <= NET::Splash;
-            ++i)
-        if (qstrcmp(txt, window_type_names[ i + 1 ]) == 0)     // +1
-            return static_cast< NET::WindowType >(i);
-    return static_cast< NET::WindowType >(-2);   // undefined
+    for (int i = NET::Unknown; i <= NET::Splash; ++i)
+        if (qstrcmp(txt, window_type_names[i + 1]) == 0) // +1
+            return static_cast<NET::WindowType>(i);
+    return static_cast<NET::WindowType>(-2); // undefined
 }
 
 /**
@@ -93,13 +99,13 @@ static NET::WindowType txtToWindowType(const char* txt)
  *
  * @see loadSessionInfo
  */
-void Workspace::storeSession(const QString &sessionName, SMSavePhase phase)
+void Workspace::storeSession(const QString& sessionName, SMSavePhase phase)
 {
     qCDebug(KWIN_CORE) << "storing session" << sessionName << "in phase" << phase;
-    KConfig *config = sessionConfig(sessionName, QString());
+    KConfig* config = sessionConfig(sessionName, QString());
 
     KConfigGroup cg(config, "Session");
-    int count =  0;
+    int count = 0;
     int active_client = -1;
 
     for (auto const& client : allClientList()) {
@@ -109,8 +115,9 @@ void Workspace::storeSession(const QString &sessionName, SMSavePhase phase)
         }
 
         if (x11_client->windowType() > NET::Splash) {
-            //window types outside this are not tooltips/menus/OSDs
-            //typically these will be unmanaged and not in this list anyway, but that is not enforced
+            // window types outside this are not tooltips/menus/OSDs
+            // typically these will be unmanaged and not in this list anyway, but that is not
+            // enforced
             continue;
         }
         QByteArray sessionId = x11_client->sessionId();
@@ -144,7 +151,7 @@ void Workspace::storeSession(const QString &sessionName, SMSavePhase phase)
     config->sync(); // it previously did some "revert to defaults" stuff for phase1 I think
 }
 
-void Workspace::storeClient(KConfigGroup &cg, int num, win::x11::window* c)
+void Workspace::storeClient(KConfigGroup& cg, int num, win::x11::window* c)
 {
     QString n = QString::number(num);
     cg.writeEntry(QLatin1String("sessionId") + n, c->sessionId().constData());
@@ -152,12 +159,13 @@ void Workspace::storeClient(KConfigGroup &cg, int num, win::x11::window* c)
     cg.writeEntry(QLatin1String("wmCommand") + n, c->wmCommand().constData());
     cg.writeEntry(QLatin1String("resourceName") + n, c->resourceName().constData());
     cg.writeEntry(QLatin1String("resourceClass") + n, c->resourceClass().constData());
-    cg.writeEntry(QLatin1String("geometry") + n, QRect(win::x11::calculate_gravitation(c, true),
-                                                       win::frame_to_client_size(c, c->size())));
+    cg.writeEntry(
+        QLatin1String("geometry") + n,
+        QRect(win::x11::calculate_gravitation(c, true), win::frame_to_client_size(c, c->size())));
     cg.writeEntry(QLatin1String("restore") + n, c->restore_geometries.maximize);
     cg.writeEntry(QLatin1String("fsrestore") + n, c->restore_geometries.maximize);
-    cg.writeEntry(QLatin1String("maximize") + n, (int) c->maximizeMode());
-    cg.writeEntry(QLatin1String("fullscreen") + n, (int) c->control->fullscreen());
+    cg.writeEntry(QLatin1String("maximize") + n, (int)c->maximizeMode());
+    cg.writeEntry(QLatin1String("fullscreen") + n, (int)c->control->fullscreen());
     cg.writeEntry(QLatin1String("desktop") + n, c->desktop());
 
     // the config entry is called "iconified" for back. comp. reasons
@@ -180,14 +188,14 @@ void Workspace::storeClient(KConfigGroup &cg, int num, win::x11::window* c)
     cg.writeEntry(QLatin1String("windowType") + n, windowTypeToTxt(c->windowType()));
     cg.writeEntry(QLatin1String("shortcut") + n, c->control->shortcut().toString());
     cg.writeEntry(QLatin1String("stackingOrder") + n,
-        static_cast<int>(index_of(stacking_order->pre_stack, c)));
+                  static_cast<int>(index_of(stacking_order->pre_stack, c)));
 }
 
-void Workspace::storeSubSession(const QString &name, QSet<QByteArray> sessionIds)
+void Workspace::storeSubSession(const QString& name, QSet<QByteArray> sessionIds)
 {
-    //TODO clear it first
+    // TODO clear it first
     KConfigGroup cg(KSharedConfig::openConfig(), QLatin1String("SubSession: ") + name);
-    int count =  0;
+    int count = 0;
     int active_client = -1;
 
     for (auto const& client : allClientList()) {
@@ -223,7 +231,7 @@ void Workspace::storeSubSession(const QString &name, QSet<QByteArray> sessionIds
 
     cg.writeEntry("count", count);
     cg.writeEntry("active", active_client);
-    //cg.writeEntry( "desktop", currentDesktop());
+    // cg.writeEntry( "desktop", currentDesktop());
 }
 
 /**
@@ -231,17 +239,17 @@ void Workspace::storeSubSession(const QString &name, QSet<QByteArray> sessionIds
  *
  * @see storeSession
  */
-void Workspace::loadSessionInfo(const QString &sessionName)
+void Workspace::loadSessionInfo(const QString& sessionName)
 {
     session.clear();
     KConfigGroup cg(sessionConfig(sessionName, QString()), "Session");
     addSessionInfo(cg);
 }
 
-void Workspace::addSessionInfo(KConfigGroup &cg)
+void Workspace::addSessionInfo(KConfigGroup& cg)
 {
     m_initialDesktop = cg.readEntry("desktop", 1);
-    int count =  cg.readEntry("count", 0);
+    int count = cg.readEntry("count", 0);
     int active_client = cg.readEntry("active", 0);
     for (int i = 1; i <= count; i++) {
         QString n = QString::number(i);
@@ -251,7 +259,8 @@ void Workspace::addSessionInfo(KConfigGroup &cg)
         info->windowRole = cg.readEntry(QLatin1String("windowRole") + n, QString()).toLatin1();
         info->wmCommand = cg.readEntry(QLatin1String("wmCommand") + n, QString()).toLatin1();
         info->resourceName = cg.readEntry(QLatin1String("resourceName") + n, QString()).toLatin1();
-        info->resourceClass = cg.readEntry(QLatin1String("resourceClass") + n, QString()).toLower().toLatin1();
+        info->resourceClass
+            = cg.readEntry(QLatin1String("resourceClass") + n, QString()).toLower().toLatin1();
         info->geometry = cg.readEntry(QLatin1String("geometry") + n, QRect());
         info->restore = cg.readEntry(QLatin1String("restore") + n, QRect());
         info->fsrestore = cg.readEntry(QLatin1String("fsrestore") + n, QRect());
@@ -267,14 +276,15 @@ void Workspace::addSessionInfo(KConfigGroup &cg)
         info->skipPager = cg.readEntry(QLatin1String("skipPager") + n, false);
         info->skipSwitcher = cg.readEntry(QLatin1String("skipSwitcher") + n, false);
         info->noBorder = cg.readEntry(QLatin1String("userNoBorder") + n, false);
-        info->windowType = txtToWindowType(cg.readEntry(QLatin1String("windowType") + n, QString()).toLatin1().constData());
+        info->windowType = txtToWindowType(
+            cg.readEntry(QLatin1String("windowType") + n, QString()).toLatin1().constData());
         info->shortcut = cg.readEntry(QLatin1String("shortcut") + n, QString());
         info->active = (active_client == i);
         info->stackingOrder = cg.readEntry(QLatin1String("stackingOrder") + n, -1);
     }
 }
 
-void Workspace::loadSubSessionInfo(const QString &name)
+void Workspace::loadSubSessionInfo(const QString& name)
 {
     KConfigGroup cg(KSharedConfig::openConfig(), QLatin1String("SubSession: ") + name);
     addSessionInfo(cg);
@@ -300,7 +310,7 @@ static bool sessionInfoWindowTypeMatch(win::x11::window* c, SessionInfo* info)
  */
 SessionInfo* Workspace::takeSessionInfo(win::x11::window* c)
 {
-    SessionInfo *realInfo = nullptr;
+    SessionInfo* realInfo = nullptr;
     QByteArray sessionId = c->sessionId();
     QByteArray windowRole = c->windowRole();
     QByteArray wmCommand = c->wmCommand();
@@ -320,9 +330,8 @@ SessionInfo* Workspace::takeSessionInfo(win::x11::window* c)
                         remove_all(session, info);
                     }
                 } else {
-                    if (info->windowRole.isEmpty()
-                            && info->resourceName == resourceName
-                            && info->resourceClass == resourceClass) {
+                    if (info->windowRole.isEmpty() && info->resourceName == resourceName
+                        && info->resourceClass == resourceClass) {
                         realInfo = info;
                         remove_all(session, info);
                     }
@@ -334,9 +343,8 @@ SessionInfo* Workspace::takeSessionInfo(win::x11::window* c)
         for (auto const& info : session) {
             if (realInfo)
                 break;
-            if (info->resourceName == resourceName
-                    && info->resourceClass == resourceClass
-                    && sessionInfoWindowTypeMatch(c, info)) {
+            if (info->resourceName == resourceName && info->resourceClass == resourceClass
+                && sessionInfoWindowTypeMatch(c, info)) {
                 if (wmCommand.isEmpty() || info->wmCommand == wmCommand) {
                     realInfo = info;
                     remove_all(session, info);
@@ -347,7 +355,7 @@ SessionInfo* Workspace::takeSessionInfo(win::x11::window* c)
     return realInfo;
 }
 
-SessionManager::SessionManager(QObject *parent)
+SessionManager::SessionManager(QObject* parent)
     : QObject(parent)
 {
     new SessionAdaptor(this);
@@ -395,17 +403,17 @@ void SessionManager::setState(SessionState state)
     Q_EMIT stateChanged();
 }
 
-void SessionManager::loadSession(const QString &name)
+void SessionManager::loadSession(const QString& name)
 {
     Q_EMIT loadSessionRequested(name);
 }
 
-void SessionManager::aboutToSaveSession(const QString &name)
+void SessionManager::aboutToSaveSession(const QString& name)
 {
     Q_EMIT prepareSessionSaveRequested(name);
 }
 
-void SessionManager::finishSaveSession(const QString &name)
+void SessionManager::finishSaveSession(const QString& name)
 {
     Q_EMIT finishSessionSaveRequested(name);
 }
@@ -416,4 +424,3 @@ void SessionManager::quit()
 }
 
 } // namespace
-

@@ -23,10 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_SM_H
 
 #include <QDataStream>
-#include <kwinglobals.h>
-#include <QStringList>
-#include <netwm_def.h>
 #include <QRect>
+#include <QStringList>
+#include <kwinglobals.h>
+#include <netwm_def.h>
 
 namespace KWin
 {
@@ -35,7 +35,7 @@ class KWIN_EXPORT SessionManager : public QObject
 {
     Q_OBJECT
 public:
-    SessionManager(QObject *parent);
+    SessionManager(QObject* parent);
     ~SessionManager() override;
 
     SessionState state() const;
@@ -43,15 +43,15 @@ public:
 Q_SIGNALS:
     void stateChanged();
 
-    void loadSessionRequested(const QString &name);
-    void prepareSessionSaveRequested(const QString &name);
-    void finishSessionSaveRequested(const QString &name);
+    void loadSessionRequested(const QString& name);
+    void prepareSessionSaveRequested(const QString& name);
+    void finishSessionSaveRequested(const QString& name);
 
 public Q_SLOTS: // DBus API
     void setState(uint state);
-    void loadSession(const QString &name);
-    void aboutToSaveSession(const QString &name);
-    void finishSaveSession(const QString &name);
+    void loadSession(const QString& name);
+    void aboutToSaveSession(const QString& name);
+    void finishSaveSession(const QString& name);
     void quit();
 
 private:
@@ -88,11 +88,10 @@ struct SessionInfo {
     float opacity;
 };
 
-
 enum SMSavePhase {
-    SMSavePhase0,     // saving global state in "phase 0"
-    SMSavePhase2,     // saving window state in phase 2
-    SMSavePhase2Full  // complete saving in phase2, there was no phase 0
+    SMSavePhase0,    // saving global state in "phase 0"
+    SMSavePhase2,    // saving window state in phase 2
+    SMSavePhase2Full // complete saving in phase2, there was no phase 0
 };
 
 } // namespace
