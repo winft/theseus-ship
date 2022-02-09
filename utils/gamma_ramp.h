@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace KWin::base
+namespace KWin
 {
 
 class gamma_ramp

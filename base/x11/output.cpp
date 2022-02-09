@@ -7,7 +7,7 @@
 
 #include "platform.h"
 
-#include "base/gamma_ramp.h"
+#include "utils/gamma_ramp.h"
 
 namespace KWin::base::x11
 {
@@ -43,7 +43,7 @@ int output::gamma_ramp_size() const
     return data.gamma_ramp_size;
 }
 
-bool output::set_gamma_ramp(base::gamma_ramp const& gamma)
+bool output::set_gamma_ramp(gamma_ramp const& gamma)
 {
     if (data.crtc == XCB_NONE) {
         return false;
