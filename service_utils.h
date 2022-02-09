@@ -1,77 +1,61 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2020 Méven Car <meven.car@enika.com>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2020, Méven Car <meven.car@enika.com>
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+#include "config-kwin.h"
+#include "kwinglobals.h"
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
-#ifndef SERVICE_UTILS_H
-#define SERVICE_UTILS_H
-
-// cmake stuff
-#include <config-kwin.h>
-// kwin
-#include <kwinglobals.h>
-// Qt
+#include <KApplicationTrader>
 #include <QFileInfo>
 #include <QLoggingCategory>
-//KF
-#include <KApplicationTrader>
 
 namespace KWin
 {
 
-const static QString s_waylandInterfaceName = QStringLiteral("X-KDE-Wayland-Interfaces");
-const static QString s_dbusRestrictedInterfaceName = QStringLiteral("X-KDE-DBUS-Restricted-Interfaces");
+static QString const s_waylandInterfaceName = QStringLiteral("X-KDE-Wayland-Interfaces");
+static QString const s_dbusRestrictedInterfaceName
+    = QStringLiteral("X-KDE-DBUS-Restricted-Interfaces");
 
-static QStringList fetchProcessServiceField(const QString &executablePath, const QString &fieldName)
+static QStringList fetchProcessServiceField(const QString& executablePath, const QString& fieldName)
 {
     // needed to be able to use the logging category in a header static function
-    static QLoggingCategory KWIN_UTILS ("KWIN_UTILS", QtWarningMsg);
-    const auto servicesFound = KApplicationTrader::query([&executablePath] (const KService::Ptr &service) {
+    static QLoggingCategory KWIN_UTILS("KWIN_UTILS", QtWarningMsg);
 
-        if (service->exec().isEmpty() || service->exec() != executablePath)
-            return false;
+    auto const servicesFound
+        = KApplicationTrader::query([&executablePath](const KService::Ptr& service) {
+              if (service->exec().isEmpty() || service->exec() != executablePath)
+                  return false;
 
-        return true;
-    });
+              return true;
+          });
 
     if (servicesFound.isEmpty()) {
         qCDebug(KWIN_UTILS) << "Could not find the desktop file for" << executablePath;
         return {};
     }
 
-    const auto fieldValues = servicesFound.first()->property(fieldName).toStringList();
+    auto const fieldValues = servicesFound.first()->property(fieldName).toStringList();
     if (KWIN_UTILS().isDebugEnabled()) {
-        qCDebug(KWIN_UTILS) << "Interfaces found for" << executablePath << fieldName << ":" << fieldValues;
+        qCDebug(KWIN_UTILS) << "Interfaces found for" << executablePath << fieldName << ":"
+                            << fieldValues;
     }
+
     return fieldValues;
 }
 
-static inline QStringList fetchRequestedInterfaces(const QString &executablePath)
+static inline QStringList fetchRequestedInterfaces(const QString& executablePath)
 {
     return fetchProcessServiceField(executablePath, s_waylandInterfaceName);
 }
 
 static inline QStringList fetchRestrictedDBusInterfacesFromPid(const uint pid)
 {
-    const auto executablePath = QFileInfo(QStringLiteral("/proc/%1/exe").arg(pid)).symLinkTarget();
+    auto const executablePath = QFileInfo(QStringLiteral("/proc/%1/exe").arg(pid)).symLinkTarget();
     return fetchProcessServiceField(executablePath, s_dbusRestrictedInterfaceName);
 }
 
-}// namespace
-
-#endif // SERVICE_UTILS_H
+}
