@@ -788,7 +788,7 @@ bool button_release_event(Win* win,
     }
     if (w == win->frameId() && workspace()->userActionsMenu()
         && workspace()->userActionsMenu()->isShown()) {
-        const_cast<UserActionsMenu*>(workspace()->userActionsMenu())->grabInput();
+        const_cast<user_actions_menu*>(workspace()->userActionsMenu())->grabInput();
     }
     // translate from grab window to local coords
     x = win->pos().x();

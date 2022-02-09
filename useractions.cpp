@@ -1,88 +1,45 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
-
-Copyright (C) 1999, 2000 Matthias Ettrich <ettrich@kde.org>
-Copyright (C) 2003 Lubos Lunak <l.lunak@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
 /*
+    SPDX-FileCopyrightText: 1999, 2000 Matthias Ettrich <ettrich@kde.org>
+    SPDX-FileCopyrightText: 2003 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
- This file contains things relevant to direct user actions, such as
- responses to global keyboard shortcuts, or selecting actions
- from the window operations menu.
-
+    SPDX-License-Identifier: GPL-2.0-or-later
 */
-
-///////////////////////////////////////////////////////////////////////////////
-// NOTE: if you change the menu, keep
-//       plasma-desktop/applets/taskmanager/package/contents/ui/ContextMenu.qml
-//       in sync
-//////////////////////////////////////////////////////////////////////////////
-
 #include "useractions.h"
-#include "input/cursor.h"
-#include "render/compositor.h"
-#include "rules/rule_book.h"
-#include "screens.h"
-#include "scripting/platform.h"
-#include "utils.h"
-#include "workspace.h"
 
-#include "win/app_menu.h"
+#include "base/platform.h"
+#include "main.h"
+#include "scripting/platform.h"
+#include "toplevel.h"
 #include "win/controlling.h"
-#include "win/input.h"
-#include "win/kill_window.h"
-#include "win/layers.h"
 #include "win/net.h"
 #include "win/screen.h"
-#include "win/stacking_order.h"
-#include "win/virtual_desktops.h"
-#include "win/x11/window.h"
-
-#include <KProcess>
-
-#include <QAction>
-#include <QCheckBox>
-#include <QPointer>
-#include <QtConcurrentRun>
-
-#include <KGlobalAccel>
-#include <KLocalizedString>
-#include <QMenu>
-#include <QRegularExpression>
-#include <QWidgetAction>
-#include <QWindow>
-#include <kconfig.h>
-
-#include <kauthorized.h>
+#include "workspace.h"
 
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
 
-namespace KWin
+#include <KAuthorized>
+#include <KConfig>
+#include <KGlobalAccel>
+#include <KLocalizedString>
+#include <KProcess>
+#include <QAction>
+#include <QMenu>
+#include <QPointer>
+#include <QWindow>
+#include <QtConcurrentRun>
+
+namespace KWin::win
 {
 
-struct ShowOnDesktopActionData {
+struct show_on_desktop_action_data {
     uint desktop;
-    bool moveToSingle;
+    bool move_to_single;
 };
 
-UserActionsMenu::UserActionsMenu(QObject* parent)
+user_actions_menu::user_actions_menu(QObject* parent)
     : QObject(parent)
     , m_menu(nullptr)
     , m_desktopMenu(nullptr)
@@ -102,22 +59,22 @@ UserActionsMenu::UserActionsMenu(QObject* parent)
 {
 }
 
-UserActionsMenu::~UserActionsMenu()
+user_actions_menu::~user_actions_menu()
 {
     discard();
 }
 
-bool UserActionsMenu::isShown() const
+bool user_actions_menu::isShown() const
 {
     return m_menu && m_menu->isVisible();
 }
 
-bool UserActionsMenu::hasClient() const
+bool user_actions_menu::hasClient() const
 {
     return m_client && isShown();
 }
 
-void UserActionsMenu::close()
+void user_actions_menu::close()
 {
     if (!m_menu) {
         return;
@@ -126,12 +83,12 @@ void UserActionsMenu::close()
     m_client.clear();
 }
 
-bool UserActionsMenu::isMenuClient(Toplevel const* window) const
+bool user_actions_menu::isMenuClient(Toplevel const* window) const
 {
     return window && window == m_client;
 }
 
-void UserActionsMenu::show(const QRect& pos, Toplevel* window)
+void user_actions_menu::show(const QRect& pos, Toplevel* window)
 {
     Q_ASSERT(window);
     QPointer<Toplevel> cl(window);
@@ -158,13 +115,13 @@ void UserActionsMenu::show(const QRect& pos, Toplevel* window)
     }
 }
 
-void UserActionsMenu::grabInput()
+void user_actions_menu::grabInput()
 {
     m_menu->windowHandle()->setMouseGrabEnabled(true);
     m_menu->windowHandle()->setKeyboardGrabEnabled(true);
 }
 
-void UserActionsMenu::helperDialog(const QString& message, Toplevel* window)
+void user_actions_menu::helperDialog(const QString& message, Toplevel* window)
 {
     QStringList args;
     QString type;
@@ -229,17 +186,17 @@ QStringList configModules(bool controlCenter)
     return args;
 }
 
-void UserActionsMenu::init()
+void user_actions_menu::init()
 {
     if (m_menu) {
         return;
     }
     m_menu = new QMenu;
-    connect(m_menu, &QMenu::aboutToShow, this, &UserActionsMenu::menuAboutToShow);
+    connect(m_menu, &QMenu::aboutToShow, this, &user_actions_menu::menuAboutToShow);
     connect(m_menu,
             &QMenu::triggered,
             this,
-            &UserActionsMenu::slotWindowOperation,
+            &user_actions_menu::slotWindowOperation,
             Qt::QueuedConnection);
 
     QMenu* advancedMenu = new QMenu(m_menu);
@@ -363,7 +320,7 @@ void UserActionsMenu::init()
     m_closeOperation->setData(Options::CloseOp);
 }
 
-void UserActionsMenu::discard()
+void user_actions_menu::discard()
 {
     delete m_menu;
     m_menu = nullptr;
@@ -373,7 +330,7 @@ void UserActionsMenu::discard()
     m_scriptsMenu = nullptr;
 }
 
-void UserActionsMenu::menuAboutToShow()
+void user_actions_menu::menuAboutToShow()
 {
     if (m_client.isNull() || !m_menu)
         return;
@@ -430,7 +387,7 @@ void UserActionsMenu::menuAboutToShow()
     m_applicationRulesOperation->setEnabled(m_client->supportsWindowRules());
 }
 
-void UserActionsMenu::initDesktopPopup()
+void user_actions_menu::initDesktopPopup()
 {
     if (kwinApp()->operationMode() == Application::OperationModeWaylandOnly
         || kwinApp()->operationMode() == Application::OperationModeXwayland) {
@@ -442,11 +399,11 @@ void UserActionsMenu::initDesktopPopup()
         connect(m_multipleDesktopsMenu,
                 &QMenu::triggered,
                 this,
-                &UserActionsMenu::slotToggleOnVirtualDesktop);
+                &user_actions_menu::slotToggleOnVirtualDesktop);
         connect(m_multipleDesktopsMenu,
                 &QMenu::aboutToShow,
                 this,
-                &UserActionsMenu::multipleDesktopsPopupAboutToShow);
+                &user_actions_menu::multipleDesktopsPopupAboutToShow);
 
         QAction* action = m_multipleDesktopsMenu->menuAction();
         // set it as the first item
@@ -459,9 +416,9 @@ void UserActionsMenu::initDesktopPopup()
             return;
 
         m_desktopMenu = new QMenu(m_menu);
-        connect(m_desktopMenu, &QMenu::triggered, this, &UserActionsMenu::slotSendToDesktop);
+        connect(m_desktopMenu, &QMenu::triggered, this, &user_actions_menu::slotSendToDesktop);
         connect(
-            m_desktopMenu, &QMenu::aboutToShow, this, &UserActionsMenu::desktopPopupAboutToShow);
+            m_desktopMenu, &QMenu::aboutToShow, this, &user_actions_menu::desktopPopupAboutToShow);
 
         QAction* action = m_desktopMenu->menuAction();
         // set it as the first item
@@ -471,15 +428,15 @@ void UserActionsMenu::initDesktopPopup()
     }
 }
 
-void UserActionsMenu::initScreenPopup()
+void user_actions_menu::initScreenPopup()
 {
     if (m_screenMenu) {
         return;
     }
 
     m_screenMenu = new QMenu(m_menu);
-    connect(m_screenMenu, &QMenu::triggered, this, &UserActionsMenu::slotSendToScreen);
-    connect(m_screenMenu, &QMenu::aboutToShow, this, &UserActionsMenu::screenPopupAboutToShow);
+    connect(m_screenMenu, &QMenu::triggered, this, &user_actions_menu::slotSendToScreen);
+    connect(m_screenMenu, &QMenu::aboutToShow, this, &user_actions_menu::screenPopupAboutToShow);
 
     QAction* action = m_screenMenu->menuAction();
     // set it as the first item after desktop
@@ -488,7 +445,7 @@ void UserActionsMenu::initScreenPopup()
     action->setIcon(QIcon::fromTheme(QStringLiteral("computer")));
 }
 
-void UserActionsMenu::desktopPopupAboutToShow()
+void user_actions_menu::desktopPopupAboutToShow()
 {
     if (!m_desktopMenu)
         return;
@@ -536,7 +493,7 @@ void UserActionsMenu::desktopPopupAboutToShow()
         action->setEnabled(false);
 }
 
-void UserActionsMenu::multipleDesktopsPopupAboutToShow()
+void user_actions_menu::multipleDesktopsPopupAboutToShow()
 {
     if (!m_multipleDesktopsMenu)
         return;
@@ -548,7 +505,7 @@ void UserActionsMenu::multipleDesktopsPopupAboutToShow()
     }
 
     QAction* action = m_multipleDesktopsMenu->addAction(i18n("&All Desktops"));
-    action->setData(QVariant::fromValue(ShowOnDesktopActionData{0, false}));
+    action->setData(QVariant::fromValue(show_on_desktop_action_data{0, false}));
     action->setCheckable(true);
     if (m_client && m_client->isOnAllDesktops()) {
         action->setChecked(true);
@@ -566,7 +523,7 @@ void UserActionsMenu::multipleDesktopsPopupAboutToShow()
 
         QAction* action = m_multipleDesktopsMenu->addAction(
             basic_name.arg(i).arg(vds->name(i).replace(QLatin1Char('&'), QStringLiteral("&&"))));
-        action->setData(QVariant::fromValue(ShowOnDesktopActionData{i, false}));
+        action->setData(QVariant::fromValue(show_on_desktop_action_data{i, false}));
         action->setCheckable(true);
         if (m_client && !m_client->isOnAllDesktops() && m_client->isOnDesktop(i)) {
             action->setChecked(true);
@@ -578,7 +535,7 @@ void UserActionsMenu::multipleDesktopsPopupAboutToShow()
     for (uint i = 1; i <= vds->count(); ++i) {
         QString name = i18n("Move to %1 %2", i, vds->name(i));
         QAction* action = m_multipleDesktopsMenu->addAction(name);
-        action->setData(QVariant::fromValue(ShowOnDesktopActionData{i, true}));
+        action->setData(QVariant::fromValue(show_on_desktop_action_data{i, true}));
     }
 
     m_multipleDesktopsMenu->addSeparator();
@@ -588,16 +545,16 @@ void UserActionsMenu::multipleDesktopsPopupAboutToShow()
 
     action = m_multipleDesktopsMenu->addAction(
         i18nc("Create a new desktop and add the window to that desktop", "Add to &New Desktop"));
-    action->setData(QVariant::fromValue(ShowOnDesktopActionData{countPlusOne, false}));
+    action->setData(QVariant::fromValue(show_on_desktop_action_data{countPlusOne, false}));
     action->setEnabled(allowNewDesktops);
 
     action = m_multipleDesktopsMenu->addAction(
         i18nc("Create a new desktop and move the window to that desktop", "Move to New Desktop"));
-    action->setData(QVariant::fromValue(ShowOnDesktopActionData{countPlusOne, true}));
+    action->setData(QVariant::fromValue(show_on_desktop_action_data{countPlusOne, true}));
     action->setEnabled(allowNewDesktops);
 }
 
-void UserActionsMenu::screenPopupAboutToShow()
+void user_actions_menu::screenPopupAboutToShow()
 {
     if (!m_screenMenu) {
         return;
@@ -629,7 +586,7 @@ void UserActionsMenu::screenPopupAboutToShow()
     }
 }
 
-void UserActionsMenu::slotWindowOperation(QAction* action)
+void user_actions_menu::slotWindowOperation(QAction* action)
 {
     if (!action->data().isValid())
         return;
@@ -663,7 +620,7 @@ void UserActionsMenu::slotWindowOperation(QAction* action)
                               Q_ARG(Options::WindowOperation, op));
 }
 
-void UserActionsMenu::slotSendToDesktop(QAction* action)
+void user_actions_menu::slotSendToDesktop(QAction* action)
 {
     bool ok = false;
     uint desk = action->data().toUInt(&ok);
@@ -687,16 +644,16 @@ void UserActionsMenu::slotSendToDesktop(QAction* action)
     ws->sendClientToDesktop(m_client.data(), desk, false);
 }
 
-void UserActionsMenu::slotToggleOnVirtualDesktop(QAction* action)
+void user_actions_menu::slotToggleOnVirtualDesktop(QAction* action)
 {
     if (m_client.isNull()) {
         return;
     }
 
-    if (!action->data().canConvert<ShowOnDesktopActionData>()) {
+    if (!action->data().canConvert<show_on_desktop_action_data>()) {
         return;
     }
-    ShowOnDesktopActionData data = action->data().value<ShowOnDesktopActionData>();
+    show_on_desktop_action_data data = action->data().value<show_on_desktop_action_data>();
 
     auto vds = win::virtual_desktop_manager::self();
     if (data.desktop == 0) {
@@ -707,7 +664,7 @@ void UserActionsMenu::slotToggleOnVirtualDesktop(QAction* action)
         vds->setCount(data.desktop);
     }
 
-    if (data.moveToSingle) {
+    if (data.move_to_single) {
         win::set_desktop(m_client.data(), data.desktop);
     } else {
         auto virtualDesktop = win::virtual_desktop_manager::self()->desktopForX11Id(data.desktop);
@@ -719,7 +676,7 @@ void UserActionsMenu::slotToggleOnVirtualDesktop(QAction* action)
     }
 }
 
-void UserActionsMenu::slotSendToScreen(QAction* action)
+void user_actions_menu::slotSendToScreen(QAction* action)
 {
     const int screen = action->data().toInt();
     if (m_client.isNull()) {
@@ -732,6 +689,6 @@ void UserActionsMenu::slotSendToScreen(QAction* action)
     Workspace::self()->sendClientToScreen(m_client.data(), screen);
 }
 
-} // namespace
+}
 
-Q_DECLARE_METATYPE(KWin::ShowOnDesktopActionData);
+Q_DECLARE_METATYPE(KWin::win::show_on_desktop_action_data);

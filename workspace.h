@@ -88,11 +88,11 @@ class screen_edge;
 class screen_edger;
 class shortcut_dialog;
 class stacking_order;
+class user_actions_menu;
 
 }
 
 class Toplevel;
-class UserActionsMenu;
 
 class KWIN_EXPORT Workspace : public QObject
 {
@@ -315,7 +315,7 @@ public:
      * it's not already.
      */
     void showWindowMenu(const QRect& pos, Toplevel* window);
-    const UserActionsMenu* userActionsMenu() const
+    win::user_actions_menu const* userActionsMenu() const
     {
         return m_userActionsMenu;
     }
@@ -604,7 +604,7 @@ private:
      * Holds the menu containing the user actions which is shown
      * on e.g. right click the window decoration.
      */
-    UserActionsMenu* m_userActionsMenu;
+    win::user_actions_menu* m_userActionsMenu;
 
     void modalActionsSwitch(bool enabled);
 

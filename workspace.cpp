@@ -93,10 +93,10 @@ Workspace::Workspace()
     , outline(std::make_unique<render::outline>())
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
-    , m_userActionsMenu(new UserActionsMenu(this))
+    , m_userActionsMenu(new win::user_actions_menu(this))
     , m_sessionManager(new SessionManager(this))
 {
-    // For invoke methods of UserActionsMenu.
+    // For invoke methods of user_actions_menu.
     qRegisterMetaType<Toplevel*>();
 
     win::app_menu::create(this);
