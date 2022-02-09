@@ -502,6 +502,7 @@ set(kwin_SRCS
     win/osd.cpp
     win/remnant.cpp
     win/screen_edges.cpp
+    win/shortcut_dialog.cpp
     win/stacking_order.cpp
     win/transient.cpp
     win/virtual_desktops.cpp
@@ -566,7 +567,7 @@ qt5_add_dbus_interface(kwin_SRCS org.kde.kappmenu.xml appmenu_interface)
 
 ki18n_wrap_ui(kwin_SRCS
     debug/console/debug_console.ui
-    shortcutdialog.ui
+    win/shortcut_dialog.ui
 )
 
 ########### target link libraries ###############

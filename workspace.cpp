@@ -49,6 +49,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/remnant.h"
 #include "win/screen_edges.h"
 #include "win/setup.h"
+#include "win/shortcut_dialog.h"
 #include "win/space.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
@@ -3253,11 +3254,13 @@ void Workspace::setupWindowShortcut(Toplevel* window)
     // keys->setEnabled( false );
     // disable_shortcuts_keys->setEnabled( false );
     // client_keys->setEnabled( false );
-    client_keys_dialog = new ShortcutDialog(window->control->shortcut());
+    client_keys_dialog = new win::shortcut_dialog(window->control->shortcut());
     client_keys_client = window;
 
-    connect(
-        client_keys_dialog, &ShortcutDialog::dialogDone, this, &Workspace::setupWindowShortcutDone);
+    connect(client_keys_dialog,
+            &win::shortcut_dialog::dialogDone,
+            this,
+            &Workspace::setupWindowShortcutDone);
 
     auto area = clientArea(ScreenArea, window);
     auto size = client_keys_dialog->sizeHint();

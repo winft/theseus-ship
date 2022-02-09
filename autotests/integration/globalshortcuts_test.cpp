@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
+#include "win/shortcut_dialog.h"
 #include "win/x11/window.h"
 #include "workspace.h"
 

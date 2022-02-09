@@ -73,13 +73,6 @@ class platform;
 namespace win
 {
 
-enum class activation;
-class internal_window;
-class kill_window;
-class screen_edge;
-class screen_edger;
-class stacking_order;
-
 namespace x11
 {
 enum class predicate_match;
@@ -87,9 +80,17 @@ class window;
 class group;
 class stacking_tree;
 }
+
+enum class activation;
+class internal_window;
+class kill_window;
+class screen_edge;
+class screen_edger;
+class shortcut_dialog;
+class stacking_order;
+
 }
 
-class ShortcutDialog;
 class Toplevel;
 class UserActionsMenu;
 
@@ -403,7 +404,7 @@ public:
     enum Direction { DirectionNorth, DirectionEast, DirectionSouth, DirectionWest };
     void switchWindow(Direction direction);
 
-    ShortcutDialog* shortcutDialog() const
+    win::shortcut_dialog* shortcutDialog() const
     {
         return client_keys_dialog;
     }
@@ -607,7 +608,7 @@ private:
 
     void modalActionsSwitch(bool enabled);
 
-    ShortcutDialog* client_keys_dialog{nullptr};
+    win::shortcut_dialog* client_keys_dialog{nullptr};
     bool global_shortcuts_disabled_for_client{false};
 
     // Timer to collect requests for 'reconfigure'

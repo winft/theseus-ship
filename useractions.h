@@ -19,12 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #ifndef KWIN_USERACTIONS_H
 #define KWIN_USERACTIONS_H
-#include "ui_shortcutdialog.h"
 
 #include <kwinglobals.h>
 
-// Qt
-#include <QDialog>
+#include <QMenu>
 #include <QObject>
 #include <QPointer>
 
@@ -204,26 +202,6 @@ private:
     QPointer<Toplevel> m_client;
     QAction* m_rulesOperation = nullptr;
     QAction* m_applicationRulesOperation = nullptr;
-};
-
-class ShortcutDialog : public QDialog
-{
-    Q_OBJECT
-public:
-    explicit ShortcutDialog(const QKeySequence& cut);
-    void accept() override;
-    QKeySequence shortcut() const;
-public Q_SLOTS:
-    void keySequenceChanged();
-Q_SIGNALS:
-    void dialogDone(bool ok);
-
-protected:
-    void done(int r) override;
-
-private:
-    Ui::ShortcutDialog m_ui;
-    QKeySequence _shortcut;
 };
 
 } // namespace
