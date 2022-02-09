@@ -1014,12 +1014,16 @@ feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAG
 
 include(CMakePackageConfigHelpers)
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinDBusInterface")
-configure_package_config_file(KWinDBusInterfaceConfig.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/KWinDBusInterfaceConfig.cmake"
-    PATH_VARS KDE_INSTALL_DBUSINTERFACEDIR
-    INSTALL_DESTINATION ${CMAKECONFIG_INSTALL_DIR})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/KWinDBusInterfaceConfig.cmake
-    DESTINATION ${CMAKECONFIG_INSTALL_DIR})
+configure_package_config_file(
+  desktop/kde/KWinDBusInterfaceConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/desktop/kde/KWinDBusInterfaceConfig.cmake"
+  PATH_VARS KDE_INSTALL_DBUSINTERFACEDIR
+  INSTALL_DESTINATION ${CMAKECONFIG_INSTALL_DIR}
+)
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/desktop/kde/KWinDBusInterfaceConfig.cmake
+  DESTINATION ${CMAKECONFIG_INSTALL_DIR}
+)
 
 ecm_install_configured_files(
   INPUT
