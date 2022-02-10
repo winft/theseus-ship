@@ -88,12 +88,6 @@ public:
     }
 };
 
-// converting between X11 mouse/keyboard state mask and Qt button/keyboard states
-Qt::MouseButton x11ToQtMouseButton(int button);
-Qt::MouseButton KWIN_EXPORT x11ToQtMouseButton(int button);
-Qt::MouseButtons KWIN_EXPORT x11ToQtMouseButtons(int state);
-Qt::KeyboardModifiers KWIN_EXPORT x11ToQtKeyboardModifiers(int state);
-
 } // namespace
 
 // Must be outside namespace

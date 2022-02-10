@@ -5,8 +5,8 @@
 */
 #include "mouse_intercept_filter.h"
 
+#include "base/x11/xcb/qt_types.h"
 #include "effects.h"
-#include "utils.h"
 
 #include <QMouseEvent>
 
@@ -47,8 +47,8 @@ bool mouse_intercept_filter::event(xcb_generic_event_t* event)
                     break;
                 }
 
-                const Qt::MouseButtons buttons = x11ToQtMouseButtons(me->state);
-                const Qt::KeyboardModifiers modifiers = x11ToQtKeyboardModifiers(me->state);
+                auto const buttons = base::x11::xcb::to_qt_mouse_buttons(me->state);
+                auto const modifiers = base::x11::xcb::to_qt_keyboard_modifiers(me->state);
 
                 if (modifiers & Qt::AltModifier) {
                     int x = angleDelta.x();
@@ -76,8 +76,8 @@ bool mouse_intercept_filter::event(xcb_generic_event_t* event)
                     return m_effects->checkInputWindowEvent(&ev);
                 }
             }
-            const Qt::MouseButton button = x11ToQtMouseButton(me->detail);
-            Qt::MouseButtons buttons = x11ToQtMouseButtons(me->state);
+            auto const button = base::x11::xcb::to_qt_mouse_button(me->detail);
+            auto buttons = base::x11::xcb::to_qt_mouse_buttons(me->state);
             const QEvent::Type type = (eventType == XCB_BUTTON_PRESS) ? QEvent::MouseButtonPress
                                                                       : QEvent::MouseButtonRelease;
             if (type == QEvent::MouseButtonPress) {
@@ -90,7 +90,7 @@ bool mouse_intercept_filter::event(xcb_generic_event_t* event)
                            QPoint(me->root_x, me->root_y),
                            button,
                            buttons,
-                           x11ToQtKeyboardModifiers(me->state));
+                           base::x11::xcb::to_qt_keyboard_modifiers(me->state));
             return m_effects->checkInputWindowEvent(&ev);
         }
     } else if (eventType == XCB_MOTION_NOTIFY) {
@@ -100,8 +100,8 @@ bool mouse_intercept_filter::event(xcb_generic_event_t* event)
                            QPoint(me->event_x, me->event_y),
                            QPoint(me->root_x, me->root_y),
                            Qt::NoButton,
-                           x11ToQtMouseButtons(me->state),
-                           x11ToQtKeyboardModifiers(me->state));
+                           base::x11::xcb::to_qt_mouse_buttons(me->state),
+                           base::x11::xcb::to_qt_keyboard_modifiers(me->state));
             return m_effects->checkInputWindowEvent(&ev);
         }
     }

@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/memory.h"
 
 #include <QWidget>
-#include <kkeyserver.h>
 
 #ifndef KCMRULES
 #include <QApplication>
@@ -128,53 +127,6 @@ void ungrabXKeyboard()
 }
 
 #endif
-
-// converting between X11 mouse/keyboard state mask and Qt button/keyboard states
-
-Qt::MouseButton x11ToQtMouseButton(int button)
-{
-    if (button == XCB_BUTTON_INDEX_1)
-        return Qt::LeftButton;
-    if (button == XCB_BUTTON_INDEX_2)
-        return Qt::MiddleButton;
-    if (button == XCB_BUTTON_INDEX_3)
-        return Qt::RightButton;
-    if (button == XCB_BUTTON_INDEX_4)
-        return Qt::XButton1;
-    if (button == XCB_BUTTON_INDEX_5)
-        return Qt::XButton2;
-    return Qt::NoButton;
-}
-
-Qt::MouseButtons x11ToQtMouseButtons(int state)
-{
-    Qt::MouseButtons ret = {};
-    if (state & XCB_KEY_BUT_MASK_BUTTON_1)
-        ret |= Qt::LeftButton;
-    if (state & XCB_KEY_BUT_MASK_BUTTON_2)
-        ret |= Qt::MiddleButton;
-    if (state & XCB_KEY_BUT_MASK_BUTTON_3)
-        ret |= Qt::RightButton;
-    if (state & XCB_KEY_BUT_MASK_BUTTON_4)
-        ret |= Qt::XButton1;
-    if (state & XCB_KEY_BUT_MASK_BUTTON_5)
-        ret |= Qt::XButton2;
-    return ret;
-}
-
-Qt::KeyboardModifiers x11ToQtKeyboardModifiers(int state)
-{
-    Qt::KeyboardModifiers ret = {};
-    if (state & XCB_KEY_BUT_MASK_SHIFT)
-        ret |= Qt::ShiftModifier;
-    if (state & XCB_KEY_BUT_MASK_CONTROL)
-        ret |= Qt::ControlModifier;
-    if (state & KKeyServer::modXAlt())
-        ret |= Qt::AltModifier;
-    if (state & KKeyServer::modXMeta())
-        ret |= Qt::MetaModifier;
-    return ret;
-}
 
 } // namespace
 

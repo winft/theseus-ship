@@ -12,9 +12,9 @@
 #include "transient.h"
 #include "window_release.h"
 
+#include "base/x11/xcb/qt_types.h"
 #include "win/input.h"
 #include "win/meta.h"
-
 #include "workspace.h"
 
 #include <kkeyserver.h>
@@ -668,7 +668,8 @@ bool button_press_event(Win* win,
         } else {
             if (w == win->xcb_windows.wrapper) {
                 if (button < 4) {
-                    com = win::get_mouse_command(win, x11ToQtMouseButton(button), &was_action);
+                    com = win::get_mouse_command(
+                        win, base::x11::xcb::to_qt_mouse_button(button), &was_action);
                 } else if (button < 6) {
                     com = win::get_wheel_command(win, Qt::Vertical, &was_action);
                 }
@@ -703,14 +704,14 @@ bool button_press_event(Win* win,
         QMouseEvent ev(QMouseEvent::MouseButtonPress,
                        QPoint(x, y),
                        QPoint(x_root, y_root),
-                       x11ToQtMouseButton(button),
-                       x11ToQtMouseButtons(state),
+                       base::x11::xcb::to_qt_mouse_button(button),
+                       base::x11::xcb::to_qt_mouse_buttons(state),
                        Qt::KeyboardModifiers());
         return win::process_decoration_button_press(win, &ev, true);
     }
     if (w == win->frameId() && win::decoration(win)) {
         if (button >= 4 && button <= 7) {
-            const Qt::KeyboardModifiers modifiers = x11ToQtKeyboardModifiers(state);
+            auto const modifiers = base::x11::xcb::to_qt_keyboard_modifiers(state);
             // Logic borrowed from qapplication_x11.cpp
             const int delta = 120 * ((button == 4 || button == 6) ? 1 : -1);
             const bool hor = (((button == 4 || button == 5) && (modifiers & Qt::AltModifier))
@@ -723,7 +724,7 @@ bool button_press_event(Win* win,
                               angle,
                               delta,
                               hor ? Qt::Horizontal : Qt::Vertical,
-                              x11ToQtMouseButtons(state),
+                              base::x11::xcb::to_qt_mouse_buttons(state),
                               modifiers);
             event.setAccepted(false);
             QCoreApplication::sendEvent(win::decoration(win), &event);
@@ -737,9 +738,9 @@ bool button_press_event(Win* win,
             QMouseEvent event(QEvent::MouseButtonPress,
                               QPointF(x, y),
                               QPointF(x_root, y_root),
-                              x11ToQtMouseButton(button),
-                              x11ToQtMouseButtons(state),
-                              x11ToQtKeyboardModifiers(state));
+                              base::x11::xcb::to_qt_mouse_button(button),
+                              base::x11::xcb::to_qt_mouse_buttons(state),
+                              base::x11::xcb::to_qt_keyboard_modifiers(state));
             event.setAccepted(false);
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (!event.isAccepted()) {
@@ -762,15 +763,18 @@ bool button_release_event(Win* win,
                           int x_root,
                           int y_root)
 {
+    auto to_qt_button = base::x11::xcb::to_qt_mouse_button;
+    auto to_qt_buttons = base::x11::xcb::to_qt_mouse_buttons;
+
     if (w == win->frameId() && win::decoration(win)) {
         // wheel handled on buttonPress
         if (button < 4 || button > 7) {
             QMouseEvent event(QEvent::MouseButtonRelease,
                               QPointF(x, y),
                               QPointF(x_root, y_root),
-                              x11ToQtMouseButton(button),
-                              x11ToQtMouseButtons(state) & ~x11ToQtMouseButton(button),
-                              x11ToQtKeyboardModifiers(state));
+                              to_qt_button(button),
+                              to_qt_buttons(state) & ~to_qt_button(button),
+                              base::x11::xcb::to_qt_keyboard_modifiers(state));
             event.setAccepted(false);
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (event.isAccepted() || !win::titlebar_positioned_under_mouse(win)) {
