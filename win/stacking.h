@@ -118,24 +118,25 @@ template<typename Space>
 Toplevel* find_desktop(Space* space, bool topmost, int desktop)
 {
     // TODO(fsorr): use C++20 std::ranges::reverse_view
-    const auto& list = space->stacking_order->sorted();
+    auto const& list = space->stacking_order->sorted();
+    auto is_desktop = [desktop](auto window) {
+        return window->control && window->isOnDesktop(desktop) && win::is_desktop(window)
+            && window->isShown();
+    };
+
     if (topmost) {
-        for (auto it = std::crbegin(list); it != std::crend(list); it++) {
-            auto window = *it;
-            if (window->control && window->isOnDesktop(desktop) && is_desktop(window)
-                && window->isShown()) {
-                return window;
-            }
+        auto it = std::find_if(list.rbegin(), list.rend(), is_desktop);
+        if (it != list.rend()) {
+            return *it;
         }
     } else {
         // bottom-most
-        for (auto const& window : list) {
-            if (window->control && window->isOnDesktop(desktop) && is_desktop(window)
-                && window->isShown()) {
-                return window;
-            }
+        auto it = std::find_if(list.begin(), list.end(), is_desktop);
+        if (it != list.end()) {
+            return *it;
         }
     }
+
     return nullptr;
 }
 
@@ -155,19 +156,26 @@ std::deque<R*> ensure_stacking_order_in_list(std::deque<Toplevel*> const& stacki
 
     // TODO is this worth optimizing?
     std::deque<R*> result;
-    for (auto c : list) {
-        result.push_back(qobject_cast<R*>(c));
+    for (auto win : list) {
+        if (auto rwin = qobject_cast<R*>(win)) {
+            result.push_back(rwin);
+        }
     }
-    for (auto it = stackingOrder.begin(); it != stackingOrder.end(); ++it) {
-        R* c = qobject_cast<R*>(*it);
-        if (!c) {
+
+    // Now reorder the result. For that stackingOrder should be a superset and it define the order
+    // in which windows should appear in result. We then reorder result simply by going through
+    // stackingOrder one-by-one, removing it from result and then adding it back in the end.
+    for (auto win : stackingOrder) {
+        auto rwin = qobject_cast<R*>(win);
+        if (!rwin) {
             continue;
         }
-        if (contains(result, c)) {
-            remove_all(result, c);
-            result.push_back(c);
+        if (contains(result, rwin)) {
+            remove_all(result, rwin);
+            result.push_back(rwin);
         }
     }
+
     return result;
 }
 

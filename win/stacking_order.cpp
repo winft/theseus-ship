@@ -21,6 +21,9 @@
 #include "toplevel.h"
 #include "workspace.h"
 
+#include <algorithm>
+#include <vector>
+
 namespace KWin::win
 {
 
@@ -122,98 +125,95 @@ void stacking_order::propagate_clients(bool propagate_new_clients)
     }
     // restack the windows according to the stacking order
     // supportWindow > electric borders > clients > hidden clients
-    std::vector<xcb_window_t> newWindowStack;
+    std::vector<xcb_window_t> new_win_stack;
 
     // Stack all windows under the support window. The support window is
     // not used for anything (besides the NETWM property), and it's not shown,
     // but it was lowered after kwin startup. Stacking all clients below
     // it ensures that no client will be ever shown above override-redirect
     // windows (e.g. popups).
-    newWindowStack.push_back(x11::rootInfo()->supportWindow());
+    new_win_stack.push_back(x11::rootInfo()->supportWindow());
 
     auto const edges_wins = workspace()->edges->windows();
-    newWindowStack.insert(newWindowStack.end(), edges_wins.begin(), edges_wins.end());
-
-    newWindowStack.insert(newWindowStack.end(), manual_overlays.begin(), manual_overlays.end());
+    new_win_stack.insert(new_win_stack.end(), edges_wins.begin(), edges_wins.end());
+    new_win_stack.insert(new_win_stack.end(), manual_overlays.begin(), manual_overlays.end());
 
     // Twice the stacking-order size for inputWindow
-    newWindowStack.reserve(newWindowStack.size() + 2 * win_stack.size());
+    new_win_stack.reserve(new_win_stack.size() + 2 * win_stack.size());
 
-    for (int i = win_stack.size() - 1; i >= 0; --i) {
-        auto client = qobject_cast<x11::window*>(win_stack.at(i));
-        if (!client || x11::hidden_preview(client)) {
-            continue;
-        }
+    // TODO use ranges::view and ranges::transform in c++20
+    std::vector<xcb_window_t> hidden_windows;
+    std::for_each(
+        win_stack.rbegin(), win_stack.rend(), [&new_win_stack, &hidden_windows](auto window) {
+            auto x11_window = qobject_cast<x11::window*>(window);
+            if (!x11_window) {
+                return;
+            }
 
-        if (client->xcb_windows.input) {
+            // Hidden windows with preview are windows that should be unmapped but is kept for
+            // compositing ensure they are stacked below everything else (as far as pure X stacking
+            // order is concerned).
+            if (x11::hidden_preview(x11_window)) {
+                hidden_windows.push_back(x11_window->frameId());
+                return;
+            }
+
             // Stack the input window above the frame
-            newWindowStack.push_back(client->xcb_windows.input);
-        }
+            if (x11_window->xcb_windows.input) {
+                new_win_stack.push_back(x11_window->xcb_windows.input);
+            }
 
-        newWindowStack.push_back(client->frameId());
-    }
+            new_win_stack.push_back(x11_window->frameId());
+        });
 
     // when having hidden previews, stack hidden windows below everything else
     // (as far as pure X stacking order is concerned), in order to avoid having
-    // these windows that should be unmapped to interfere with other windows
-    for (int i = win_stack.size() - 1; i >= 0; --i) {
-        auto client = qobject_cast<x11::window*>(win_stack.at(i));
-        if (!client || !x11::hidden_preview(client)) {
-            continue;
-        }
-        newWindowStack.push_back(client->frameId());
-    }
+    // these windows that should be unmapped to interfere with other windows.
+    std::copy(hidden_windows.begin(), hidden_windows.end(), std::back_inserter(new_win_stack));
+
     // TODO isn't it too inefficient to restack always all clients?
     // TODO don't restack not visible windows?
-    Q_ASSERT(newWindowStack.at(0) == x11::rootInfo()->supportWindow());
-    base::x11::xcb::restack_windows(newWindowStack);
-
-    int pos = 0;
-    xcb_window_t* cl(nullptr);
-
-    std::vector<x11::window*> x11_clients;
-    for (auto const& client : workspace()->allClientList()) {
-        auto x11_client = qobject_cast<x11::window*>(client);
-        if (x11_client) {
-            x11_clients.push_back(x11_client);
-        }
-    }
+    Q_ASSERT(new_win_stack.at(0) == x11::rootInfo()->supportWindow());
+    base::x11::xcb::restack_windows(new_win_stack);
 
     if (propagate_new_clients) {
-        cl = new xcb_window_t[manual_overlays.size() + x11_clients.size()];
-        for (const auto win : manual_overlays) {
-            cl[pos++] = win;
-        }
-
         // TODO this is still not completely in the map order
-        // TODO(romangg): can we make this more efficient (only looping once)?
-        for (auto const& x11_client : x11_clients) {
-            if (is_desktop(x11_client)) {
-                cl[pos++] = x11_client->xcb_window();
+        // TODO use ranges::view and ranges::transform in c++20
+        std::vector<xcb_window_t> xcb_windows;
+        std::vector<xcb_window_t> non_desktops;
+        std::copy(manual_overlays.begin(), manual_overlays.end(), std::back_inserter(xcb_windows));
+
+        for (auto const& window : workspace()->allClientList()) {
+            auto x11_window = qobject_cast<x11::window*>(window);
+
+            if (!x11_window) {
+                continue;
             }
-        }
-        for (auto const& x11_client : x11_clients) {
-            if (!is_desktop(x11_client)) {
-                cl[pos++] = x11_client->xcb_window();
+
+            if (is_desktop(x11_window)) {
+                xcb_windows.push_back(x11_window->xcb_window());
+            } else {
+                non_desktops.push_back(x11_window->xcb_window());
             }
         }
 
-        x11::rootInfo()->setClientList(cl, pos);
-        delete[] cl;
+        /// Desktop windows are always on the bottom, so copy the non-desktop windows to the
+        /// end/top.
+        std::copy(non_desktops.begin(), non_desktops.end(), std::back_inserter(xcb_windows));
+        x11::rootInfo()->setClientList(xcb_windows.data(), xcb_windows.size());
     }
 
-    cl = new xcb_window_t[manual_overlays.size() + win_stack.size()];
-    pos = 0;
-    for (auto const& client : win_stack) {
-        if (auto x11_client = qobject_cast<x11::window*>(client)) {
-            cl[pos++] = x11_client->xcb_window();
+    std::vector<xcb_window_t> stacked_xcb_windows;
+
+    for (auto window : win_stack) {
+        if (auto x11_window = qobject_cast<x11::window*>(window)) {
+            stacked_xcb_windows.push_back(x11_window->xcb_window());
         }
     }
-    for (auto const& win : manual_overlays) {
-        cl[pos++] = win;
-    }
-    x11::rootInfo()->setClientListStacking(cl, pos);
-    delete[] cl;
+
+    std::copy(
+        manual_overlays.begin(), manual_overlays.end(), std::back_inserter(stacked_xcb_windows));
+    x11::rootInfo()->setClientListStacking(stacked_xcb_windows.data(), stacked_xcb_windows.size());
 }
 
 }
