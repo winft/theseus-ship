@@ -94,7 +94,7 @@ Workspace::Workspace()
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
     , m_userActionsMenu(new win::user_actions_menu(this))
-    , m_sessionManager(new SessionManager(this))
+    , m_sessionManager(new win::session_manager(this))
 {
     // For invoke methods of user_actions_menu.
     qRegisterMetaType<Toplevel*>();
@@ -135,17 +135,18 @@ Workspace::Workspace()
             decorationBridge,
             &Decoration::DecorationBridge::reconfigure);
 
-    connect(
-        m_sessionManager, &SessionManager::loadSessionRequested, this, &Workspace::loadSessionInfo);
-
     connect(m_sessionManager,
-            &SessionManager::prepareSessionSaveRequested,
+            &win::session_manager::loadSessionRequested,
             this,
-            [this](const QString& name) { storeSession(name, SMSavePhase0); });
+            &Workspace::loadSessionInfo);
     connect(m_sessionManager,
-            &SessionManager::finishSessionSaveRequested,
+            &win::session_manager::prepareSessionSaveRequested,
             this,
-            [this](const QString& name) { storeSession(name, SMSavePhase2); });
+            [this](const QString& name) { storeSession(name, win::sm_save_phase0); });
+    connect(m_sessionManager,
+            &win::session_manager::finishSessionSaveRequested,
+            this,
+            [this](const QString& name) { storeSession(name, win::sm_save_phase2); });
 
     new base::dbus::kwin(this);
 
@@ -3986,7 +3987,7 @@ static NET::WindowType txtToWindowType(const char* txt)
  *
  * @see loadSessionInfo
  */
-void Workspace::storeSession(const QString& sessionName, SMSavePhase phase)
+void Workspace::storeSession(const QString& sessionName, win::sm_save_phase phase)
 {
     qCDebug(KWIN_CORE) << "storing session" << sessionName << "in phase" << phase;
     KConfig* config = sessionConfig(sessionName, QString());
@@ -4024,18 +4025,18 @@ void Workspace::storeSession(const QString& sessionName, SMSavePhase phase)
             active_client = count;
         }
 
-        if (phase == SMSavePhase2 || phase == SMSavePhase2Full) {
+        if (phase == win::sm_save_phase2 || phase == win::sm_save_phase2_full) {
             storeClient(cg, count, x11_client);
         }
     }
 
-    if (phase == SMSavePhase0) {
+    if (phase == win::sm_save_phase0) {
         // it would be much simpler to save these values to the config file,
         // but both Qt and KDE treat phase1 and phase2 separately,
         // which results in different sessionkey and different config file :(
         session_active_client = active_client;
         session_desktop = win::virtual_desktop_manager::self()->current();
-    } else if (phase == SMSavePhase2) {
+    } else if (phase == win::sm_save_phase2) {
         cg.writeEntry("count", count);
         cg.writeEntry("active", session_active_client);
         cg.writeEntry("desktop", session_desktop);
@@ -4153,7 +4154,7 @@ void Workspace::addSessionInfo(KConfigGroup& cg)
 
     for (int i = 1; i <= count; i++) {
         QString n = QString::number(i);
-        SessionInfo* info = new SessionInfo;
+        auto info = new win::session_info;
         session.push_back(info);
         info->sessionId = cg.readEntry(QLatin1String("sessionId") + n, QString()).toLatin1();
         info->windowRole = cg.readEntry(QLatin1String("windowRole") + n, QString()).toLatin1();
@@ -4190,7 +4191,7 @@ void Workspace::loadSubSessionInfo(const QString& name)
     addSessionInfo(cg);
 }
 
-static bool sessionInfoWindowTypeMatch(win::x11::window* c, SessionInfo* info)
+static bool sessionInfoWindowTypeMatch(win::x11::window* c, win::session_info* info)
 {
     if (info->windowType == -2) {
         // undefined (not really part of NET::WindowType)
@@ -4208,9 +4209,9 @@ static bool sessionInfoWindowTypeMatch(win::x11::window* c, SessionInfo* info)
  *
  * May return 0 if there's no session info for the client.
  */
-SessionInfo* Workspace::takeSessionInfo(win::x11::window* c)
+win::session_info* Workspace::takeSessionInfo(win::x11::window* c)
 {
-    SessionInfo* realInfo = nullptr;
+    win::session_info* realInfo = nullptr;
     QByteArray sessionId = c->sessionId();
     QByteArray windowRole = c->windowRole();
     QByteArray wmCommand = c->wmCommand();

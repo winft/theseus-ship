@@ -23,26 +23,26 @@
 #include <pwd.h>
 #include <unistd.h>
 
-namespace KWin
+namespace KWin::win
 {
 
-SessionManager::SessionManager(QObject* parent)
+session_manager::session_manager(QObject* parent)
     : QObject(parent)
 {
     new SessionAdaptor(this);
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Session"), this);
 }
 
-SessionManager::~SessionManager()
+session_manager::~session_manager()
 {
 }
 
-SessionState SessionManager::state() const
+SessionState session_manager::state() const
 {
     return m_sessionState;
 }
 
-void SessionManager::setState(uint state)
+void session_manager::setState(uint state)
 {
     switch (state) {
     case 0:
@@ -57,7 +57,7 @@ void SessionManager::setState(uint state)
 }
 
 // TODO should we rethink this now that we have dedicated start end end save methods?
-void SessionManager::setState(SessionState state)
+void session_manager::setState(SessionState state)
 {
     if (state == m_sessionState) {
         return;
@@ -74,22 +74,22 @@ void SessionManager::setState(SessionState state)
     Q_EMIT stateChanged();
 }
 
-void SessionManager::loadSession(const QString& name)
+void session_manager::loadSession(const QString& name)
 {
     Q_EMIT loadSessionRequested(name);
 }
 
-void SessionManager::aboutToSaveSession(const QString& name)
+void session_manager::aboutToSaveSession(const QString& name)
 {
     Q_EMIT prepareSessionSaveRequested(name);
 }
 
-void SessionManager::finishSaveSession(const QString& name)
+void session_manager::finishSaveSession(const QString& name)
 {
     Q_EMIT finishSessionSaveRequested(name);
 }
 
-void SessionManager::quit()
+void session_manager::quit()
 {
     qApp->quit();
 }

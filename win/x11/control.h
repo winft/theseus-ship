@@ -598,7 +598,7 @@ template<typename Win>
 QRect place_on_taking_control(Win* win,
                               QRect& frame_geo,
                               bool mapped,
-                              SessionInfo* session,
+                              win::session_info* session,
                               KStartupInfoData const& asn_data)
 {
     if (session) {

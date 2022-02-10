@@ -206,7 +206,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         elevated_windows.removeAll(d->render->effect.get());
     });
     connect(ws->sessionManager(),
-            &SessionManager::stateChanged,
+            &win::session_manager::stateChanged,
             this,
             &KWin::EffectsHandler::sessionStateChanged);
     connect(vds,

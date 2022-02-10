@@ -285,7 +285,7 @@ public:
         return m_allClients;
     }
 
-    SessionManager* sessionManager() const;
+    win::session_manager* sessionManager() const;
 
 private:
     QTimer* m_quickTileCombineTimer{nullptr};
@@ -326,12 +326,12 @@ public:
     void updateOnAllDesktopsOfTransients(Toplevel* window);
     void checkTransients(Toplevel* window);
 
-    void storeSession(const QString& sessionName, SMSavePhase phase);
+    void storeSession(const QString& sessionName, win::sm_save_phase phase);
     void storeClient(KConfigGroup& cg, int num, win::x11::window* c);
     void storeSubSession(const QString& name, QSet<QByteArray> sessionIds);
     void loadSubSessionInfo(const QString& name);
 
-    SessionInfo* takeSessionInfo(win::x11::window*);
+    win::session_info* takeSessionInfo(win::x11::window*);
 
     // D-Bus interface
     QString supportInformation() const;
@@ -582,7 +582,7 @@ private:
     void loadSessionInfo(const QString& sessionName);
     void addSessionInfo(KConfigGroup& cg);
 
-    std::vector<SessionInfo*> session;
+    std::vector<win::session_info*> session;
 
     Toplevel* movingClient{nullptr};
 
@@ -633,7 +633,7 @@ private:
 
     std::unique_ptr<win::kill_window> m_windowKiller;
 
-    SessionManager* m_sessionManager;
+    win::session_manager* m_sessionManager;
 
 private:
     friend bool performTransiencyCheck();
@@ -666,7 +666,7 @@ inline bool Workspace::wasUserInteraction() const
     return was_user_interaction;
 }
 
-inline SessionManager* Workspace::sessionManager() const
+inline win::session_manager* Workspace::sessionManager() const
 {
     return m_sessionManager;
 }

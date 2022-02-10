@@ -12,15 +12,15 @@
 #include <NETWM>
 #include <QRect>
 
-namespace KWin
+namespace KWin::win
 {
 
-class KWIN_EXPORT SessionManager : public QObject
+class KWIN_EXPORT session_manager : public QObject
 {
     Q_OBJECT
 public:
-    SessionManager(QObject* parent);
-    ~SessionManager() override;
+    session_manager(QObject* parent);
+    ~session_manager() override;
 
     SessionState state() const;
 
@@ -44,7 +44,7 @@ private:
     SessionState m_sessionState{SessionState::Normal};
 };
 
-struct SessionInfo {
+struct session_info {
     QByteArray sessionId;
     QByteArray windowRole;
     QByteArray wmCommand;
@@ -78,10 +78,10 @@ struct SessionInfo {
     float opacity;
 };
 
-enum SMSavePhase {
-    SMSavePhase0,    // saving global state in "phase 0"
-    SMSavePhase2,    // saving window state in phase 2
-    SMSavePhase2Full // complete saving in phase2, there was no phase 0
+enum sm_save_phase {
+    sm_save_phase0,     // saving global state in "phase 0"
+    sm_save_phase2,     // saving window state in phase 2
+    sm_save_phase2_full // complete saving in phase2, there was no phase 0
 };
 
 }
