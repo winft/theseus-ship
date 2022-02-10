@@ -6,7 +6,7 @@
 #pragma once
 
 #include "toplevel.h"
-#include "utils.h"
+#include "utils/blocker.h"
 #include "win/rules.h"
 
 #ifdef KWIN_BUILD_TABBOX
@@ -82,7 +82,7 @@ void release_window(Win* win, bool on_shutdown)
     // Remove ForceTemporarily rules
     RuleBook::self()->discardUsed(win, true);
 
-    Blocker blocker(workspace()->stacking_order);
+    blocker block(workspace()->stacking_order);
 
     if (win->control->move_resize().enabled) {
         win->leaveMoveResize();
@@ -196,7 +196,7 @@ void destroy_window(Win* win)
     // Remove ForceTemporarily rules
     RuleBook::self()->discardUsed(win, true);
 
-    Blocker blocker(workspace()->stacking_order);
+    blocker block(workspace()->stacking_order);
     if (win->control->move_resize().enabled) {
         win->leaveMoveResize();
     }

@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rules/rules.h"
 #include "screens.h"
 #include "scripting/platform.h"
+#include "utils/blocker.h"
 #include "win/app_menu.h"
 #include "win/controlling.h"
 #include "win/dbus/virtual_desktop_manager.h"
@@ -493,7 +494,7 @@ void Workspace::slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop)
 {
     closeActivePopup();
     ++block_focus;
-    Blocker blocker(stacking_order);
+    blocker block(stacking_order);
     win::update_client_visibility_on_desktop_change(this, newDesktop);
     // Restore the focus on this desktop
     --block_focus;
@@ -680,9 +681,8 @@ void Workspace::setShowingDesktop(bool showing)
 
     Toplevel* topDesk = nullptr;
 
-    { // for the blocker RAII
-        Blocker blocker(
-            stacking_order); // updateLayer & lowerClient would invalidate stacking_order
+    {                                  // for the blocker RAII
+        blocker block(stacking_order); // updateLayer & lowerClient would invalidate stacking_order
         for (int i = static_cast<int>(stacking_order->sorted().size()) - 1; i > -1; --i) {
             auto c = qobject_cast<Toplevel*>(stacking_order->sorted().at(i));
             if (c && c->isOnCurrentDesktop()) {
@@ -2481,7 +2481,7 @@ void Workspace::setActiveClient(Toplevel* window)
         m_userActionsMenu->close();
     }
 
-    Blocker blocker(stacking_order);
+    blocker block(stacking_order);
     ++set_active_client_recursion;
     updateFocusMousePosition(input::get_cursor()->pos());
     if (active_client != nullptr) {
@@ -3383,7 +3383,7 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         window->setNoBorder(!window->noBorder());
         break;
     case Options::KeepAboveOp: {
-        Blocker blocker(stacking_order);
+        blocker block(stacking_order);
         bool was = window->control->keep_above();
         win::set_keep_above(window, !window->control->keep_above());
         if (was && !window->control->keep_above()) {
@@ -3392,7 +3392,7 @@ void Workspace::performWindowOperation(Toplevel* window, Options::WindowOperatio
         break;
     }
     case Options::KeepBelowOp: {
-        Blocker blocker(stacking_order);
+        blocker block(stacking_order);
         bool was = window->control->keep_below();
         win::set_keep_below(window, !window->control->keep_below());
         if (was && !window->control->keep_below()) {

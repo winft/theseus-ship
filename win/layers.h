@@ -9,6 +9,7 @@
 #include "transient.h"
 
 #include "toplevel.h"
+#include "utils/blocker.h"
 #include "workspace.h"
 
 namespace KWin
@@ -99,7 +100,8 @@ void update_layer(Win* win)
     if (win->remnant() || win->layer() == belong_to_layer(win)) {
         return;
     }
-    Blocker blocker(workspace()->stacking_order);
+
+    blocker block(workspace()->stacking_order);
 
     // Invalidate, will be updated when doing restacking.
     invalidate_layer(win);

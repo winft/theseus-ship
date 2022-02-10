@@ -16,6 +16,8 @@
 #include "xcb.h"
 
 #include "base/x11/xcb/proto.h"
+#include "rules/rule_book.h"
+#include "utils/blocker.h"
 #include "win/control.h"
 #include "win/controlling.h"
 #include "win/input.h"
@@ -32,9 +34,6 @@
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"
 #endif
-
-#include "rules/rule_book.h"
-#include "utils.h"
 
 #include <KStartupInfo>
 
@@ -626,7 +625,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 {
     using Win = typename Space::x11_window;
 
-    Blocker blocker(space.stacking_order);
+    blocker block(space.stacking_order);
 
     base::x11::xcb::window_attributes attr(w);
     base::x11::xcb::geometry windowGeometry(w);
@@ -1135,7 +1134,7 @@ void lower_client_within_application(Space* space, Win* window)
 
     window->control->cancel_auto_raise();
 
-    Blocker blocker(space->stacking_order);
+    blocker block(space->stacking_order);
 
     remove_all(space->stacking_order->pre_stack, window);
 
@@ -1168,7 +1167,7 @@ void raise_client_within_application(Space* space, Win* window)
 
     window->control->cancel_auto_raise();
 
-    Blocker blocker(space->stacking_order);
+    blocker block(space->stacking_order);
     // ignore mainwindows
 
     // first try to put it above the top-most window of the application

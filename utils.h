@@ -131,50 +131,6 @@ constexpr auto enum_index(Enum enumerator) noexcept
     return static_cast<std::underlying_type_t<Enum>>(enumerator);
 }
 
-/**
- * Helper class to acquire and release a lock inside a scope.
- */
-template<typename BasicLockable>
-class Blocker
-{
-public:
-    explicit Blocker(BasicLockable* lock)
-        : p(lock)
-    {
-        p->lock();
-    }
-    Blocker(Blocker const& other)
-    {
-        p = other.p;
-        p->lock();
-    }
-    Blocker& operator=(Blocker const& other)
-    {
-        Blocker tmp(other);
-        std::swap(*this, tmp);
-        return *this;
-    }
-    Blocker(Blocker&& other) noexcept
-    {
-        p = other.p;
-        other.p = nullptr;
-    }
-    Blocker& operator=(Blocker&& other) noexcept
-    {
-        p = std::move(other.p);
-        return *this;
-    }
-    ~Blocker()
-    {
-        if (p) {
-            p->unlock();
-        }
-    }
-
-private:
-    BasicLockable* p;
-};
-
 } // namespace
 
 // Must be outside namespace

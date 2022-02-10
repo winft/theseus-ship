@@ -12,7 +12,7 @@
 
 #include "base/x11/user_interaction_filter.h"
 #include "main.h"
-#include "utils.h"
+#include "utils/blocker.h"
 
 #include <KStartupInfo>
 
@@ -96,7 +96,7 @@ void init_space(Space& space)
 
     {
         // Begin updates blocker block
-        Blocker blocker(space.stacking_order);
+        blocker block(space.stacking_order);
 
         base::x11::xcb::tree tree(rootWindow());
         xcb_window_t* wins = xcb_query_tree_children(tree.data());

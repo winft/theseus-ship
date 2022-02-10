@@ -21,7 +21,7 @@
 #include "render/platform.h"
 #include "render/wayland/shadow.h"
 #include "rules/rules.h"
-#include "utils.h"
+#include "utils/blocker.h"
 #include "win/deco.h"
 #include "win/geo.h"
 #include "win/layers.h"
@@ -343,7 +343,7 @@ void window::doSetActive()
     if (!control->active()) {
         return;
     }
-    Blocker blocker(workspace()->stacking_order);
+    blocker block(workspace()->stacking_order);
     workspace()->focusToNull();
 }
 
