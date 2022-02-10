@@ -9,6 +9,7 @@
 #include "base/wayland/output.h"
 #include "main.h"
 #include "screens.h"
+#include "utils/algorithm.h"
 
 #include <cmath>
 
