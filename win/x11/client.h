@@ -10,6 +10,7 @@
 #include "netinfo.h"
 #include "window.h"
 
+#include "base/logging.h"
 #include "win/meta.h"
 #include "win/setup.h"
 

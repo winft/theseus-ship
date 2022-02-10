@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "ftrace_impl.h"
 
-#include "utils.h"
+#include "base/logging.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -49,7 +49,7 @@ FtraceImpl::FtraceImpl(QObject* parent)
     : QObject(parent)
 {
     if (qEnvironmentVariableIsSet("KWIN_PERF_FTRACE")) {
-        qCDebug(KWIN_PERF) << "Ftrace marking initially enabled via environment variable";
+        qCDebug(KWIN_CORE) << "Ftrace marking initially enabled via environment variable";
         setEnabled(true);
     }
 }
@@ -62,7 +62,7 @@ bool FtraceImpl::setEnabled(bool enable)
     }
     if (enable) {
         if (!findFile()) {
-            qCWarning(KWIN_PERF)
+            qCWarning(KWIN_CORE)
                 << "Ftrace marking not available. Try reenabling after issue is solved.";
             return false;
         }
@@ -94,7 +94,7 @@ bool FtraceImpl::findFile()
 {
     QFile mountsFile("/proc/mounts");
     if (!mountsFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qCWarning(KWIN_PERF)
+        qCWarning(KWIN_CORE)
             << "No access to mounts file. Can not determine trace marker file location.";
         return false;
     }
@@ -137,14 +137,14 @@ bool FtraceImpl::findFile()
     }
     mountsFile.close();
     if (!markerFileInfo.exists()) {
-        qCWarning(KWIN_PERF) << "Could not determine trace marker file location from mounts.";
+        qCWarning(KWIN_CORE) << "Could not determine trace marker file location from mounts.";
         return false;
     }
 
     const QString path = markerFileInfo.absoluteFilePath();
     m_file = new QFile(path, this);
     if (!m_file->open(QIODevice::WriteOnly)) {
-        qCWarning(KWIN_PERF) << "No access to trace marker file at:" << path;
+        qCWarning(KWIN_CORE) << "No access to trace marker file at:" << path;
         delete m_file;
         m_file = nullptr;
         return false;

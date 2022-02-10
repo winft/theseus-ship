@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "effect_loader.h"
 
-#include "../utils.h"
+#include "base/logging.h"
+#include "config-kwin.h"
+#include "kwineffects.h"
 #include "scripting/effect.h"
-#include <config-kwin.h>
-#include <kwineffects.h>
 
 #include <KConfigGroup>
 #include <KPackage/Package>

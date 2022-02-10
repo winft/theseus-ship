@@ -12,6 +12,7 @@
 #include "transient.h"
 #include "x11/window.h"
 
+#include "base/logging.h"
 #include "decorations/decorationrenderer.h"
 
 #include <cassert>

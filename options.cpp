@@ -21,10 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "options.h"
 
+#include "base/logging.h"
 #include "base/platform.h"
 #include "config-kwin.h"
 #include "render/platform.h"
-#include "utils.h"
 
 #ifndef KCMRULES
 

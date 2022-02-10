@@ -8,6 +8,7 @@
 */
 #include "window.h"
 
+#include "base/logging.h"
 #include "deco_renderer.h"
 #include "scene.h"
 #include "shadow.h"

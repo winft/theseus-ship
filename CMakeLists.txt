@@ -407,6 +407,7 @@ set(kwin_SRCS
     base/x11/event_filter_container.cpp
     base/x11/event_filter_manager.cpp
     base/x11/xcb/extensions.cpp
+    base/logging.cpp
     base/output.cpp
     base/platform.cpp
     desktop/screen_locker_watcher.cpp

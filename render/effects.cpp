@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "effects.h"
 
+#include "base/logging.h"
 #include "base/output.h"
 #include "base/platform.h"
 #include "desktop/screen_locker_watcher.h"

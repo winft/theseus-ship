@@ -7,6 +7,7 @@
 */
 #include "user_actions_menu.h"
 
+#include "base/logging.h"
 #include "base/platform.h"
 #include "main.h"
 #include "scripting/platform.h"

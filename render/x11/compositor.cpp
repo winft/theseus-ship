@@ -8,6 +8,7 @@
 
 #include "compositor_selection_owner.h"
 
+#include "base/logging.h"
 #include "debug/perf/ftrace.h"
 #include "render/dbus/compositing.h"
 #include "render/effects.h"
@@ -18,7 +19,6 @@
 #include "render/window.h"
 #include "render/xrender/scene.h"
 #include "toplevel.h"
-#include "utils.h"
 #include "workspace.h"
 
 #include "win/stacking_order.h"

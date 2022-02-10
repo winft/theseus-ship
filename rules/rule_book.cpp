@@ -6,6 +6,8 @@
 */
 #include "rule_book.h"
 
+#include "base/logging.h"
+
 #include <KXMessages>
 #include <QDir>
 #include <QFile>

@@ -15,6 +15,7 @@
 #include "window.h"
 #include "xcb.h"
 
+#include "base/logging.h"
 #include "base/x11/xcb/proto.h"
 #include "rules/rule_book.h"
 #include "utils/blocker.h"

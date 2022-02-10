@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "thumbnail_item.h"
 
+#include "base/logging.h"
 #include "effects.h"
 #include "render/compositor.h"
 #include "toplevel.h"

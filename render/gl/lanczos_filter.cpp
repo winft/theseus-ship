@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "window.h"
 
+#include "base/logging.h"
 #include "base/platform.h"
 #include "options.h"
 #include "render/effects.h"
@@ -29,10 +30,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "workspace.h"
 
-#include <kwinglplatform.h>
-#include <kwinglutils.h>
-
-#include <kwineffects.h>
+#include "kwineffects.h"
+#include "kwinglplatform.h"
+#include "kwinglutils.h"
 
 #include <QFile>
 #include <QtMath>
