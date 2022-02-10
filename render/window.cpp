@@ -11,6 +11,7 @@
 #include "effects.h"
 #include "shadow.h"
 
+#include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
 #include "toplevel.h"
 #include "win/geo.h"
@@ -446,7 +447,7 @@ void window_pixmap::create()
         }
         return;
     }
-    XServerGrabber grabber;
+    base::x11::server_grabber grabber;
     xcb_pixmap_t pix = xcb_generate_id(connection());
     xcb_void_cookie_t namePixmapCookie
         = xcb_composite_name_window_pixmap_checked(connection(), toplevel()->frameId(), pix);

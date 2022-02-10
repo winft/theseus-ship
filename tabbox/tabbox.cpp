@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tabbox/x11_filter.h"
 
 #include "base/platform.h"
+#include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
 #include "render/effects.h"
 #include "input/keyboard_redirect.h"
@@ -1480,7 +1481,7 @@ bool TabBox::establishTabBoxGrab()
         return true;
     }
     kwinApp()->update_x11_time_from_clock();
-    if (!grabXKeyboard())
+    if (!base::x11::grab_keyboard())
         return false;
     // Don't try to establish a global mouse grab using XGrabPointer, as that would prevent
     // using Alt+Tab while DND (#44972). However force passive grabs on all windows
@@ -1502,7 +1503,7 @@ void TabBox::removeTabBoxGrab()
         return;
     }
     kwinApp()->update_x11_time_from_clock();
-    ungrabXKeyboard();
+    base::x11::ungrab_keyboard();
     Q_ASSERT(m_forcedGlobalMouseGrab);
     m_forcedGlobalMouseGrab = false;
     if (Workspace::self()->activeClient() != nullptr)

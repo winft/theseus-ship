@@ -27,11 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "utils.h"
 
-#include "base/logging.h"
-#include "utils/memory.h"
-
-#include <QWidget>
-
 #ifndef KCMRULES
 #include <QApplication>
 #include <QDebug>
@@ -73,58 +68,6 @@ StrutRect &StrutRect::operator=(const StrutRect &other)
 #endif
 
 #ifndef KCMRULES
-
-static int server_grab_count = 0;
-
-void grabXServer()
-{
-    if (++server_grab_count == 1)
-        xcb_grab_server(connection());
-}
-
-void ungrabXServer()
-{
-    Q_ASSERT(server_grab_count > 0);
-    if (--server_grab_count == 0) {
-        xcb_ungrab_server(connection());
-        xcb_flush(connection());
-    }
-}
-
-static bool keyboard_grabbed = false;
-
-bool grabXKeyboard(xcb_window_t w)
-{
-    if (QWidget::keyboardGrabber() != nullptr)
-        return false;
-    if (keyboard_grabbed)
-        return false;
-    if (qApp->activePopupWidget() != nullptr)
-        return false;
-    if (w == XCB_WINDOW_NONE)
-        w = rootWindow();
-    const xcb_grab_keyboard_cookie_t c = xcb_grab_keyboard_unchecked(connection(), false, w, xTime(),
-                                                                     XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
-    unique_cptr<xcb_grab_keyboard_reply_t> grab(xcb_grab_keyboard_reply(connection(), c, nullptr));
-    if (!grab) {
-        return false;
-    }
-    if (grab->status != XCB_GRAB_STATUS_SUCCESS) {
-        return false;
-    }
-    keyboard_grabbed = true;
-    return true;
-}
-
-void ungrabXKeyboard()
-{
-    if (!keyboard_grabbed) {
-        // grabXKeyboard() may fail sometimes, so don't fail, but at least warn anyway
-        qCDebug(KWIN_CORE) << "ungrabXKeyboard() called but keyboard not grabbed!";
-    }
-    keyboard_grabbed = false;
-    xcb_ungrab_keyboard(connection(), XCB_TIME_CURRENT_TIME);
-}
 
 #endif
 

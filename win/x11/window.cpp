@@ -16,16 +16,16 @@
 #include "unmanaged.h"
 #include "window_release.h"
 
+#include "base/x11/grabs.h"
+#include "decorations/window.h"
 #include "render/x11/shadow.h"
+#include "rules/rules.h"
+#include "utils.h"
 #include "win/deco.h"
 #include "win/layers.h"
 #include "win/remnant.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
-
-#include "decorations/window.h"
-#include "rules/rules.h"
-#include "utils.h"
 
 #include <KDecoration2/DecoratedClient>
 
@@ -1099,7 +1099,7 @@ bool window::doStartMoveResize()
         has_grab = true;
     }
 
-    if (!has_grab && grabXKeyboard(frameId()))
+    if (!has_grab && base::x11::grab_keyboard(frameId()))
         has_grab = move_resize_has_keyboard_grab = true;
     if (!has_grab) {
         // at least one grab is necessary in order to be able to finish move/resize
@@ -1128,7 +1128,7 @@ void window::leaveMoveResize()
     }
 
     if (move_resize_has_keyboard_grab) {
-        ungrabXKeyboard();
+        base::x11::ungrab_keyboard();
     }
 
     move_resize_has_keyboard_grab = false;
