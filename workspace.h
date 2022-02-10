@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/x11/atoms.h"
 #include "options.h"
-#include "sm.h"
 #include "utils.h"
+#include "win/session_manager.h"
 #include "win/space_areas.h"
 
 #include <QTimer>

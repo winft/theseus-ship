@@ -5,7 +5,7 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#include "sm.h"
+#include "session_manager.h"
 
 // Include first to not clash with later X definitions in other includes.
 #include "sessionadaptor.h"

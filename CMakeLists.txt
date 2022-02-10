@@ -488,7 +488,6 @@ set(kwin_SRCS
     scripting/utils.cpp
     scripting/window.cpp
     scripting/space.cpp
-    sm.cpp
     toplevel.cpp
     utils.cpp
     win/app_menu.cpp
@@ -500,6 +499,7 @@ set(kwin_SRCS
     win/osd_notification.cpp
     win/osd.cpp
     win/remnant.cpp
+    win/session_manager.cpp
     win/screen_edges.cpp
     win/shortcut_dialog.cpp
     win/stacking_order.cpp
@@ -559,7 +559,11 @@ qt5_add_dbus_adaptor(kwin_SRCS
     win/dbus/virtual_desktop_manager.h
     KWin::win::dbus::virtual_desktop_manager
 )
-qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.Session.xml sm.h KWin::win::session_manager)
+qt5_add_dbus_adaptor(kwin_SRCS
+  win/dbus/org.kde.KWin.Session.xml
+  win/session_manager.h
+  KWin::win::session_manager
+)
 
 qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf5_org.freedesktop.ScreenSaver.xml screenlocker_interface)
 qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.screensaver.xml kscreenlocker_interface)

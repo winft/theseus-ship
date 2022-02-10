@@ -19,7 +19,6 @@
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
 #include "scripting/platform.h"
-#include "sm.h"
 #include "win/x11/space.h"
 #include "workspace.h"
 
