@@ -11,7 +11,6 @@
 
 #include "scripting_logging.h"
 #include "space.h"
-#include "utils.h"
 
 #include "../options.h"
 #include "../screens.h"

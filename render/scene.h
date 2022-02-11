@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "types.h"
 
-#include "../utils.h"
 #include "kwineffects.h"
 
 #include <QMatrix4x4>

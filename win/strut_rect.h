@@ -9,7 +9,7 @@
 
 #include <QRect>
 
-namespace KWin
+namespace KWin::win
 {
 
 enum StrutArea {
@@ -59,4 +59,4 @@ using StrutRects = QVector<StrutRect>;
 
 }
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::StrutAreas)
+Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::win::StrutAreas)

@@ -11,9 +11,6 @@
 #include "logging.h"
 
 #include "main.h"
-//#include "utils.h"
-
-//#include <config-kwin.h>
 
 #include <KGlobalAccel/private/kglobalaccel_interface.h>
 #include <KGlobalAccel/private/kglobalacceld.h>

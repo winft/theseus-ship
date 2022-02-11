@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "render/backend/x11/platform.h"
 #include "render/x11/compositor.h"
-#include "utils.h"
 #include "win/x11/space.h"
 
 namespace KWin

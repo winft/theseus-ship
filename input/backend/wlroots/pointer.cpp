@@ -7,7 +7,6 @@
 
 #include "control/pointer.h"
 #include "platform.h"
-#include "utils.h"
 
 extern "C" {
 #include <wlr/backend/libinput.h>

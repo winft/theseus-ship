@@ -27,7 +27,6 @@
 #include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
 #include "screens.h"
-#include "utils.h"
 
 #include "win/geo.h"
 #include "win/transient.h"

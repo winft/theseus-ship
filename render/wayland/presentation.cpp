@@ -5,12 +5,13 @@
 */
 #include "presentation.h"
 
+#include "output.h"
+#include "utils.h"
+
 #include "base/wayland/output.h"
 #include "base/wayland/server.h"
 #include "main.h"
-#include "render/wayland/output.h"
 #include "toplevel.h"
-#include "utils.h"
 #include "wayland_logging.h"
 
 #include <Wrapland/Server/output.h>

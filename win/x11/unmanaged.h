@@ -11,7 +11,6 @@
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
 #include "render/effects.h"
-#include "utils.h"
 #include "win/remnant.h"
 #include "win/space.h"
 

@@ -9,7 +9,6 @@
 #include "stacking_tree.h"
 #include "unmanaged.h"
 
-#include "../utils.h"
 #include "base/x11/event_filter.h"
 #include "base/x11/event_filter_container.h"
 #include "base/x11/event_filter_manager.h"

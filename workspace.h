@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/algorithm.h"
 #include "win/session_manager.h"
 #include "win/space_areas.h"
+#include "win/strut_rect.h"
 
 #include <QTimer>
 
@@ -198,7 +199,7 @@ public:
     QRect clientArea(clientAreaOption, Toplevel const* window) const;
     QRect clientArea(clientAreaOption, int screen, int desktop) const;
 
-    QRegion restrictedMoveArea(int desktop, StrutAreas areas = StrutAreaAll) const;
+    QRegion restrictedMoveArea(int desktop, win::StrutAreas areas = win::StrutAreaAll) const;
 
     bool initializing() const;
 
@@ -298,7 +299,8 @@ public:
     // True when performing Workspace::updateClientArea().
     // The calls below are valid only in that case.
     bool inUpdateClientArea() const;
-    QRegion previousRestrictedMoveArea(int desktop, StrutAreas areas = StrutAreaAll) const;
+    QRegion previousRestrictedMoveArea(int desktop,
+                                       win::StrutAreas areas = win::StrutAreaAll) const;
     std::vector<QRect> previousScreenSizes() const;
     int oldDisplayWidth() const;
     int oldDisplayHeight() const;
@@ -621,7 +623,7 @@ private:
     win::space_areas areas;
 
     // Array of the previous restricted areas that window cannot be moved into
-    std::vector<StrutRects> oldrestrictedmovearea;
+    std::vector<win::StrutRects> oldrestrictedmovearea;
 
     // array of previous sizes of xinerama screens
     std::vector<QRect> oldscreensizes;

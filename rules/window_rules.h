@@ -13,7 +13,6 @@
 
 #include "options.h"
 #include "rules.h"
-#include "utils.h"
 #include "win/types.h"
 
 #include <kwin_export.h>

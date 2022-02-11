@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "utils.h"
+#include "strut_rect.h"
 
 #include <QRect>
 #include <vector>

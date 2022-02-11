@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb_event_filter.h"
 #include "input/cursor.h"
 #include "main_wayland.h"
-#include "utils.h"
 #include "win/wayland/space.h"
 #include "win/x11/space_setup.h"
 #include "workspace.h"

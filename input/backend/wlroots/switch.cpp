@@ -7,7 +7,6 @@
 
 #include "control/switch.h"
 #include "platform.h"
-#include "utils.h"
 
 namespace KWin::input::backend::wlroots
 {

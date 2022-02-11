@@ -23,7 +23,6 @@
 #include "x11/window.h"
 
 #include "rules/rules.h"
-#include "utils.h"
 #include "workspace.h"
 
 /**

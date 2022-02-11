@@ -5,8 +5,7 @@
 */
 #pragma once
 
-#include "utils.h"
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <vector>
 

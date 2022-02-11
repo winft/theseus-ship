@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/window.h"
 #include "input/cursor.h"
 #include "rules/rules.h"
-#include "utils.h"
 #include "win/virtual_desktops.h"
 
 #include <NETWM>

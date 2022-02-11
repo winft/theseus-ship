@@ -12,7 +12,6 @@
 #include <netwm_def.h>
 
 #include "options.h"
-#include "utils.h"
 #include "window_rules.h"
 
 class QDebug;

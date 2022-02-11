@@ -23,7 +23,6 @@
 #include "render/platform.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "utils.h"
 #include "win/geo.h"
 #include "win/stacking_order.h"
 #include "win/wayland/input.h"

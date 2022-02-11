@@ -20,7 +20,6 @@
 #include "decorations/window.h"
 #include "render/x11/shadow.h"
 #include "rules/rules.h"
-#include "utils.h"
 #include "win/deco.h"
 #include "win/layers.h"
 #include "win/remnant.h"

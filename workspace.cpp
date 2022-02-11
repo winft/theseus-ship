@@ -1477,21 +1477,26 @@ QRect Workspace::clientArea(clientAreaOption opt, Toplevel const* window) const
     return clientArea(opt, win::pending_frame_geometry(window).center(), window->desktop());
 }
 
-static QRegion strutsToRegion(int desktop, StrutAreas areas, std::vector<StrutRects> const& struts)
+static QRegion
+strutsToRegion(int desktop, win::StrutAreas areas, std::vector<win::StrutRects> const& struts)
 {
-    if (desktop == NETWinInfo::OnAllDesktops || desktop == 0)
+    if (desktop == NETWinInfo::OnAllDesktops || desktop == 0) {
         desktop = win::virtual_desktop_manager::self()->current();
+    }
+
     QRegion region;
-    const StrutRects& rects = struts[desktop];
-    for (const StrutRect& rect : rects) {
+    auto const& rects = struts[desktop];
+
+    for (auto const& rect : rects) {
         if (areas & rect.area()) {
             region += rect;
         }
     }
+
     return region;
 }
 
-QRegion Workspace::restrictedMoveArea(int desktop, StrutAreas areas) const
+QRegion Workspace::restrictedMoveArea(int desktop, win::StrutAreas areas) const
 {
     return strutsToRegion(desktop, areas, this->areas.restrictedmove);
 }
@@ -1501,7 +1506,7 @@ bool Workspace::inUpdateClientArea() const
     return !oldrestrictedmovearea.empty();
 }
 
-QRegion Workspace::previousRestrictedMoveArea(int desktop, StrutAreas areas) const
+QRegion Workspace::previousRestrictedMoveArea(int desktop, win::StrutAreas areas) const
 {
     return strutsToRegion(desktop, areas, oldrestrictedmovearea);
 }

@@ -10,8 +10,6 @@
 
 #include "keymap.h"
 
-#include "utils.h"
-
 #include <KConfigGroup>
 
 #include <QTemporaryFile>

@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output.h"
 
 #include "output_transform.h"
-#include "utils.h"
 
 #include <kwin_export.h>
 

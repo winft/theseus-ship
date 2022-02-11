@@ -8,7 +8,6 @@
 #include "geo.h"
 
 #include "screens.h"
-#include "utils.h"
 #include "win/space_areas.h"
 #include "win/virtual_desktops.h"
 

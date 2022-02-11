@@ -11,7 +11,6 @@
 #include "render/wayland/compositor.h"
 #include "render/wayland/presentation.h"
 #include "screens.h"
-#include "utils.h"
 #include "utils/gamma_ramp.h"
 
 #include <chrono>

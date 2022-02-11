@@ -17,8 +17,6 @@
 #include "input/switch.h"
 #include "input/touch.h"
 
-#include "utils.h"
-
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
