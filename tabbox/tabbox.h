@@ -23,12 +23,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_TABBOX_H
 #define KWIN_TABBOX_H
 
+#include "kwin_export.h"
+#include "kwinglobals.h"
+
 #include <memory>
 
 #include <QKeySequence>
 #include <QTimer>
 #include <QModelIndex>
-#include "utils.h"
 #include "tabbox/tabboxhandler.h"
 
 class KConfigGroup;

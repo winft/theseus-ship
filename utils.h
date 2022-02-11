@@ -7,11 +7,6 @@
 */
 #pragma once
 
-#include "config-kwin.h"
-
-#include "kwinglobals.h"
-#include "win/types.h"
-
 #include <QPoint>
 #include <QRect>
 #include <climits>
