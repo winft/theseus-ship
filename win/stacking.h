@@ -12,6 +12,7 @@
 #include "layers.h"
 #include "meta.h"
 #include "net.h"
+#include "space.h"
 #include "stacking_order.h"
 #include "transient.h"
 #include "utils/blocker.h"
@@ -23,7 +24,6 @@
 #include "x11/window.h"
 
 #include "rules/rules.h"
-#include "workspace.h"
 
 /**
  This file contains things relevant to stacking order and layers.

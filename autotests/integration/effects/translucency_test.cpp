@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "win/move.h"
+#include "win/space.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <KConfigGroup>
 

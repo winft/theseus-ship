@@ -20,7 +20,7 @@
 #include "screens.h"
 #include "win/deco.h"
 #include "win/internal_window.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <QWindow>
 #include <Wrapland/Server/touch_pool.h>

@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "workspace.h"
-
 #include <cassert>
 
 namespace KWin::win::wayland

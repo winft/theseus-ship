@@ -19,7 +19,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 //#define QT_CLEAN_NAMESPACE
 // own
 #include "tabbox.h"
@@ -42,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "win/screen_edges.h"
 #include "win/virtual_desktops.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include "win/controlling.h"
 #include "win/focus_chain.h"

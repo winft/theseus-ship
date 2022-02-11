@@ -31,9 +31,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/control.h"
 #include "win/geo.h"
 #include "win/meta.h"
+#include "win/space.h"
 #include "win/stacking.h"
 #include "win/transient.h"
-#include "workspace.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>

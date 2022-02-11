@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mime.h"
 
 #include "base/wayland/server.h"
+#include "win/space.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/pointer_pool.h>

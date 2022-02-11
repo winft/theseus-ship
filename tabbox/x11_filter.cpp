@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effects.h"
 #include "tabbox/tabbox.h"
 #include "win/screen_edges.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <KKeyServer>
 

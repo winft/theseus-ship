@@ -12,9 +12,9 @@
 #include "toplevel.h"
 #include "win/geo.h"
 #include "win/internal_window.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/virtual_desktops.h"
-#include "workspace.h"
 
 #include <QWindow>
 

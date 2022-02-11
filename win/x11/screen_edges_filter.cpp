@@ -7,7 +7,7 @@
 
 #include "base/x11/atoms.h"
 #include "win/screen_edges.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <QWidget>
 #include <xcb/xcb.h>

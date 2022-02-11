@@ -15,7 +15,7 @@
 #include "base/x11/xcb/qt_types.h"
 #include "win/input.h"
 #include "win/meta.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <kkeyserver.h>
 

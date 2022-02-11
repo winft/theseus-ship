@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/shadow.h"
 #include "render/window.h"
 #include "win/deco.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationShadow>

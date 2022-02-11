@@ -26,9 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/scene.h"
 #include "toplevel.h"
 #include "win/net.h"
+#include "win/space.h"
 #include "win/transient.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>

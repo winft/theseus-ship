@@ -24,9 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "render/compositor.h"
 #include "render/scene.h"
-#include "workspace.h"
-
 #include "win/internal_window.h"
+#include "win/space.h"
 #include "win/x11/window.h"
 
 #include <kwinglplatform.h>

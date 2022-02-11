@@ -28,9 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/internal_window.h"
 #include "win/meta.h"
 #include "win/shortcut_dialog.h"
+#include "win/space.h"
 #include "win/user_actions_menu.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Server/keyboard_pool.h>

@@ -24,9 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "win/control.h"
 #include "win/move.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 

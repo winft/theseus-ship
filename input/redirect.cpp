@@ -24,9 +24,9 @@
 #include "screens.h"
 #include "toplevel.h"
 #include "win/geo.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/wayland/input.h"
-#include "workspace.h"
 
 namespace KWin::input
 {

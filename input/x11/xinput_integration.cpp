@@ -20,7 +20,7 @@
 #include "main.h"
 #include "platform.h"
 #include "win/screen_edges.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <kwinglobals.h>
 

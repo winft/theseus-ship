@@ -7,15 +7,16 @@
 */
 #include "user_actions_menu.h"
 
+#include "controlling.h"
+#include "net.h"
+#include "screen.h"
+#include "space.h"
+
 #include "base/logging.h"
 #include "base/platform.h"
 #include "main.h"
 #include "scripting/platform.h"
 #include "toplevel.h"
-#include "win/controlling.h"
-#include "win/net.h"
-#include "win/screen.h"
-#include "workspace.h"
 
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"

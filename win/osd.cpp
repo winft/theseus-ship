@@ -6,10 +6,11 @@
 */
 #include "osd.h"
 
+#include "space.h"
+
 #include "main.h"
 #include "osd_notification.h"
 #include "scripting/platform.h"
-#include "workspace.h"
 
 #include <QQmlEngine>
 

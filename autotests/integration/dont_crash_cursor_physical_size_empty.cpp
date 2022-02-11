@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effects.h"
 #include "screens.h"
 #include "win/geo.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <KConfigGroup>
 

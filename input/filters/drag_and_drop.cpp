@@ -11,7 +11,7 @@
 #include "input/touch_redirect.h"
 #include "main.h"
 #include "toplevel.h"
-#include "workspace.h"
+#include "win/space.h"
 #include "xwl/xwayland_interface.h"
 
 #include <Wrapland/Server/drag_pool.h>

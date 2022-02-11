@@ -10,7 +10,7 @@
 #include "scripting/window.h"
 
 #include "screens.h"
-#include "workspace.h"
+#include "win/space.h"
 
 namespace KWin::scripting::models::v3
 {

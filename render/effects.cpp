@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/remnant.h"
 #include "win/screen.h"
 #include "win/screen_edges.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/virtual_desktops.h"
@@ -47,7 +48,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
 #include "win/x11/window_property_notify_filter.h"
-#include "workspace.h"
 
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox.h"

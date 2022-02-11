@@ -19,9 +19,9 @@
 #include "input/xkb/layout_manager.h"
 #include "main.h"
 #include "toplevel.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/keyboard_pool.h>

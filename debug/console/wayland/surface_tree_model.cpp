@@ -11,7 +11,6 @@
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/client.h>

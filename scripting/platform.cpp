@@ -21,8 +21,7 @@
 #include "render/thumbnail_item.h"
 #include "scripting_logging.h"
 #include "win/screen_edges.h"
-#include "workspace.h"
-
+#include "win/space.h"
 #include "win/x11/window.h"
 
 #include <KConfigGroup>

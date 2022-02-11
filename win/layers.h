@@ -6,11 +6,11 @@
 #pragma once
 
 #include "net.h"
+#include "space.h"
 #include "transient.h"
 
 #include "toplevel.h"
 #include "utils/blocker.h"
-#include "workspace.h"
 
 namespace KWin
 {

@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/deco.h"
-#include "workspace.h"
+#include "win/space.h"
 #include <config-kwin.h>
 
 // KDecoration

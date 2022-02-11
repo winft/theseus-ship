@@ -13,7 +13,6 @@
 #include "screens.h"
 #include "win/screen_edges.h"
 #include "win/x11/space.h"
-#include "workspace.h"
 
 #include <QDesktopWidget>
 

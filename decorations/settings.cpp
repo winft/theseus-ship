@@ -21,10 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KWin
 #include "decorationbridge.h"
 #include "render/compositor.h"
-#include "win/virtual_desktops.h"
-#include "workspace.h"
-
 #include "win/app_menu.h"
+#include "win/space.h"
+#include "win/virtual_desktops.h"
 
 #include <config-kwin.h>
 

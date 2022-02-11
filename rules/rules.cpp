@@ -17,9 +17,8 @@
 
 #ifndef KCMRULES
 #include "screens.h"
-#include "workspace.h"
-
 #include "win/setup.h"
+#include "win/space.h"
 #include "win/types.h"
 #include "win/x11/client_machine.h"
 #endif

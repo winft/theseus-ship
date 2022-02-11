@@ -24,11 +24,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effects.h"
 #include "screens.h"
 #include "shadow.h"
-#include "workspace.h"
 
 #include "win/input.h"
 #include "win/remnant.h"
 #include "win/scene.h"
+#include "win/space.h"
 #include "win/space_helpers.h"
 #include "win/transient.h"
 

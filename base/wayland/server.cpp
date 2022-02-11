@@ -16,7 +16,6 @@
 #include "win/wayland/space.h"
 #include "win/wayland/surface.h"
 #include "win/wayland/xdg_activation.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>

@@ -19,7 +19,7 @@
 #include "render/window.h"
 #include "render/xrender/scene.h"
 #include "toplevel.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include "win/stacking_order.h"
 #include "win/transient.h"

@@ -10,11 +10,11 @@
 // Include first to not clash with later X definitions in other includes.
 #include "sessionadaptor.h"
 
+#include "stacking_order.h"
+#include "x11/geo.h"
+#include "x11/window.h"
+
 #include "rules/rule_book.h"
-#include "win/stacking_order.h"
-#include "win/x11/geo.h"
-#include "win/x11/window.h"
-#include "workspace.h"
 
 #include <QDBusConnection>
 

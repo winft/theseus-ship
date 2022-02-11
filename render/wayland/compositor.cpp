@@ -20,7 +20,7 @@
 #include "render/qpainter/scene.h"
 #include "render/scene.h"
 #include "win/scene.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include "wayland_logging.h"
 

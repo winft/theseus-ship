@@ -8,10 +8,10 @@
 #include "base/wayland/server.h"
 #include "win/control.h"
 #include "win/move.h"
+#include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/wayland/xdg_activation.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_activation_v1.h>

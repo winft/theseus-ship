@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "scripting/platform.h"
 #include "scripting/script.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #define private public
 #include "win/screen_edges.h"

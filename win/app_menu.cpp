@@ -21,10 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "app_menu.h"
 
-#include "workspace.h"
-#include <appmenu_interface.h>
-
-#include "win/deco.h"
+#include "appmenu_interface.h"
+#include "deco.h"
+#include "space.h"
 
 #include <QDBusObjectPath>
 #include <QDBusServiceWatcher>

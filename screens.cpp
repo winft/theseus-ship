@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "win/control.h"
 #include "win/screen.h"
-#include <workspace.h>
+#include "win/space.h"
 #include "toplevel.h"
 
 namespace KWin

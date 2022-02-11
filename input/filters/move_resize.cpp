@@ -15,7 +15,7 @@
 #include "main.h"
 #include "win/input.h"
 #include "win/move.h"
-#include "workspace.h"
+#include "win/space.h"
 
 namespace KWin::input
 {

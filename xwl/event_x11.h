@@ -10,8 +10,8 @@
 #include "selection_x11.h"
 #include "transfer.h"
 
+#include "win/space.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <QObject>
 #include <xcb/xcb_event.h>

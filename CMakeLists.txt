@@ -503,6 +503,7 @@ set(kwin_SRCS
     win/session_manager.cpp
     win/screen_edges.cpp
     win/shortcut_dialog.cpp
+    win/space.cpp
     win/stacking_order.cpp
     win/transient.cpp
     win/user_actions_menu.cpp
@@ -519,7 +520,6 @@ set(kwin_SRCS
     win/x11/sync_alarm_filter.cpp
     win/x11/window.cpp
     win/x11/window_property_notify_filter.cpp
-    workspace.cpp
     xwl/xwayland_interface.cpp
 )
 

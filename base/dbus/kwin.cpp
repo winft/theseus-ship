@@ -14,7 +14,7 @@
 #include "win/control.h"
 #include "win/geo.h"
 #include "win/placement.h"
-#include "workspace.h"
+#include "win/space.h"
 #include <input/platform.h>
 
 #include <QDBusServiceWatcher>

@@ -12,8 +12,8 @@
 #include "base/x11/xcb/helpers.h"
 #include "utils/blocker.h"
 #include "win/screen_edges.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
-#include "workspace.h"
 
 #include <vector>
 

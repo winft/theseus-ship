@@ -10,13 +10,14 @@
 #include "move.h"
 #include "net.h"
 #include "options.h"
+#include "space.h"
 #include "stacking.h"
 #include "stacking_order.h"
 #include "toplevel.h"
 #include "types.h"
 #include "user_actions_menu.h"
+
 #include "utils/blocker.h"
-#include "workspace.h"
 
 #include <QMouseEvent>
 #include <QStyleHints>

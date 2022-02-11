@@ -5,16 +5,17 @@
 */
 #pragma once
 
-#include "base/platform.h"
 #include "deco.h"
 #include "geo.h"
-#include "input/cursor.h"
 #include "net.h"
+#include "space.h"
+#include "types.h"
+
+#include "base/platform.h"
+#include "input/cursor.h"
 #include "render/outline.h"
 #include "screen_edges.h"
 #include "screens.h"
-#include "types.h"
-#include "workspace.h"
 
 #include <QWidget>
 

@@ -7,9 +7,9 @@
 
 #include "xwl_window.h"
 
-#include "workspace.h"
+#include "kwin_export.h"
+#include "win/space.h"
 
-#include <kwin_export.h>
 #include <memory>
 
 namespace Wrapland::Server

@@ -6,27 +6,26 @@
 */
 #include "compositor.h"
 
+#include "cursor.h"
+#include "dbus/compositing.h"
 #include "effects.h"
 #include "platform.h"
+#include "scene.h"
 #include "utils.h"
+#include "x11/compositor_selection_owner.h"
 
 #include "base/logging.h"
 #include "base/output.h"
 #include "base/platform.h"
 #include "base/wayland/server.h"
-#include "cursor.h"
 #include "debug/perf/ftrace.h"
-#include "render/dbus/compositing.h"
-#include "scene.h"
 #include "screens.h"
-#include "workspace.h"
-
 #include "win/net.h"
 #include "win/remnant.h"
 #include "win/scene.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/x11/stacking_tree.h"
-#include "x11/compositor_selection_owner.h"
 
 #include <QQuickWindow>
 #include <QTimerEvent>

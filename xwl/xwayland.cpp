@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "xwayland.h"
+
 #include "data_bridge.h"
 
 #include "base/wayland/server.h"
@@ -28,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main_wayland.h"
 #include "win/wayland/space.h"
 #include "win/x11/space_setup.h"
-#include "workspace.h"
 
 #include <KLocalizedString>
 #include <KSelectionOwner>

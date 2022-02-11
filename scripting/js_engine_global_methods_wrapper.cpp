@@ -13,7 +13,7 @@
 
 #include "input/redirect.h"
 #include "main.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <KConfigGroup>
 #include <KGlobalAccel>

@@ -16,7 +16,7 @@
 #include "main.h"
 #include "options.h"
 #include "win/input.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>

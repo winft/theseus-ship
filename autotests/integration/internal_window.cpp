@@ -27,8 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/internal_window.h"
 #include "win/move.h"
 #include "win/net.h"
+#include "win/space.h"
 #include "win/x11/stacking_tree.h"
-#include "workspace.h"
 
 #include <QPainter>
 #include <QRasterWindow>

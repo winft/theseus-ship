@@ -24,14 +24,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "suncalc.h"
 
 #include "base/logging.h"
+#include "base/output.h"
 #include "base/platform.h"
 #include "base/seat/session.h"
 #include "input/redirect.h"
+#include "main.h"
+#include "screens.h"
 #include "utils/gamma_ramp.h"
-#include <base/output.h>
-#include <main.h>
-#include <screens.h>
-#include <workspace.h>
+#include "win/space.h"
 
 #include <color_correct_settings.h>
 

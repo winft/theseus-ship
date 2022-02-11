@@ -27,9 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/deco.h"
 #include "win/internal_window.h"
 #include "win/net.h"
+#include "win/space.h"
 #include "win/transient.h"
 #include "win/user_actions_menu.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>

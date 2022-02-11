@@ -12,7 +12,7 @@
 #include "input/qt_event.h"
 #include "input/redirect.h"
 #include "main.h"
-#include "workspace.h"
+#include "win/space.h"
 
 namespace KWin::input
 {

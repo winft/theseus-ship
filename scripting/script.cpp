@@ -19,7 +19,7 @@
 #include "../options.h"
 #include "input/redirect.h"
 #include "win/screen_edges.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <KConfigGroup>
 #include <KGlobalAccel>

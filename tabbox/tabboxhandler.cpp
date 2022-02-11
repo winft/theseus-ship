@@ -31,8 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scripting/platform.h"
 #include "switcheritem.h"
 #include "tabbox_logging.h"
-#include "workspace.h"
-// Qt
+#include "win/space.h"
+
 #include <QKeyEvent>
 #include <QModelIndex>
 #include <QStandardPaths>

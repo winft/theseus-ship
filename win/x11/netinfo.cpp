@@ -23,12 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "root_info_filter.h"
 
-#include "win/virtual_desktops.h"
-#include "workspace.h"
-
 #include "win/controlling.h"
 #include "win/move.h"
+#include "win/space.h"
 #include "win/stacking.h"
+#include "win/virtual_desktops.h"
 #include "win/x11/event.h"
 #include "win/x11/geo.h"
 #include "win/x11/window.h"

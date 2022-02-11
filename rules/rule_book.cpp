@@ -16,9 +16,8 @@
 
 #ifndef KCMRULES
 #include "toplevel.h"
-#include "workspace.h"
-
 #include "win/control.h"
+#include "win/space.h"
 #endif
 
 #include "rule_book_settings.h"

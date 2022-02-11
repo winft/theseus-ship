@@ -19,8 +19,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "group.h"
+
 #include "render/effects.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include "win/control.h"
 #include "win/x11/window.h"

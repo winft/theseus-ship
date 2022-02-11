@@ -16,7 +16,6 @@
 #include "input/xkb/helpers.h"
 #include "main.h"
 #include "tabbox/tabbox.h"
-#include "workspace.h"
 
 #include <Wrapland/Server/seat.h>
 

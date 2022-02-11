@@ -6,8 +6,8 @@
 */
 #include "idle_inhibition.h"
 
+#include "win/space.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Server/kde_idle.h>
 #include <Wrapland/Server/surface.h>

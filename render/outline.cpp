@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "render/compositor.h"
 #include "scripting/platform.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <KConfigGroup>
 #include <QDebug>

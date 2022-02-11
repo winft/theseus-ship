@@ -10,12 +10,13 @@
 */
 #include "screen_edges.h"
 
+#include "move.h"
+#include "space.h"
+
 #include "input/cursor.h"
 #include "input/gestures.h"
 #include "main.h"
 #include "screens.h"
-#include "win/move.h"
-#include "workspace.h"
 
 // DBus generated
 #include "screenlocker_interface.h"

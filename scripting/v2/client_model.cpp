@@ -10,11 +10,11 @@
 #include "scripting/window.h"
 
 #include "base/wayland/server.h"
+#include "config-kwin.h"
 #include "screens.h"
 #include "toplevel.h"
+#include "win/space.h"
 #include "win/virtual_desktops.h"
-#include "workspace.h"
-#include <config-kwin.h>
 
 #include "win/meta.h"
 #include "win/net.h"

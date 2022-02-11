@@ -12,8 +12,8 @@
 #include "transfer.h"
 #include "types.h"
 
+#include "win/space.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <QObject>
 #include <unistd.h>

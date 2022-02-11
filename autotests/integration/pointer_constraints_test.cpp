@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/redirect.h"
 #include "screens.h"
 #include "win/move.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/keyboard.h>
