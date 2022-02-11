@@ -55,8 +55,8 @@
        </entry>
 
        <entry name="AnimationCurve" type="Enum">
-           <default>KWin::Options::AnimationCurve::Linear</default>
-           <choices name="KWin::Options::AnimationCurve">
+           <default>KWin::base::options::AnimationCurve::Linear</default>
+           <choices name="KWin::base::options::AnimationCurve">
                <choice name="Linear"/>
                <choice name="Quadratic"/>
                <choice name="Cubic"/>

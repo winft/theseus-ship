@@ -24,17 +24,17 @@
 
 #endif // KCMRULES
 
-namespace KWin
+namespace KWin::base
 {
 
 #ifndef KCMRULES
 
 int currentRefreshRate()
 {
-    return Options::currentRefreshRate();
+    return options::currentRefreshRate();
 }
 
-int Options::currentRefreshRate()
+int options::currentRefreshRate()
 {
     int rate = -1;
     QString syncScreenName(QLatin1String("primary screen"));
@@ -75,7 +75,7 @@ int Options::currentRefreshRate()
     return rate;
 }
 
-Options::Options()
+options::options()
     : m_settings(new Settings(kwinApp()->config()))
     , m_focusPolicy(ClickToFocus)
     , m_nextFocusPrefersMouse(false)
@@ -93,34 +93,34 @@ Options::Options()
     , m_focusStealingPreventionLevel(0)
     , m_killPingTimeout(0)
     , m_hideUtilityWindowsForInactive(false)
-    , m_compositingMode(Options::defaultCompositingMode())
-    , m_useCompositing(Options::defaultUseCompositing())
-    , m_hiddenPreviews(Options::defaultHiddenPreviews())
-    , m_maxFpsInterval(Options::defaultMaxFpsInterval())
-    , m_refreshRate(Options::defaultRefreshRate())
-    , m_vBlankTime(Options::defaultVBlankTime())
-    , m_glStrictBinding(Options::defaultGlStrictBinding())
-    , m_glStrictBindingFollowsDriver(Options::defaultGlStrictBindingFollowsDriver())
-    , m_glPlatformInterface(Options::defaultGlPlatformInterface())
+    , m_compositingMode(options::defaultCompositingMode())
+    , m_useCompositing(options::defaultUseCompositing())
+    , m_hiddenPreviews(options::defaultHiddenPreviews())
+    , m_maxFpsInterval(options::defaultMaxFpsInterval())
+    , m_refreshRate(options::defaultRefreshRate())
+    , m_vBlankTime(options::defaultVBlankTime())
+    , m_glStrictBinding(options::defaultGlStrictBinding())
+    , m_glStrictBindingFollowsDriver(options::defaultGlStrictBindingFollowsDriver())
+    , m_glPlatformInterface(options::defaultGlPlatformInterface())
     , m_windowsBlockCompositing(true)
     , m_animationCurve(AnimationCurve::Linear)
-    , OpTitlebarDblClick(Options::defaultOperationTitlebarDblClick())
-    , CmdActiveTitlebar1(Options::defaultCommandActiveTitlebar1())
-    , CmdActiveTitlebar2(Options::defaultCommandActiveTitlebar2())
-    , CmdActiveTitlebar3(Options::defaultCommandActiveTitlebar3())
-    , CmdInactiveTitlebar1(Options::defaultCommandInactiveTitlebar1())
-    , CmdInactiveTitlebar2(Options::defaultCommandInactiveTitlebar2())
-    , CmdInactiveTitlebar3(Options::defaultCommandInactiveTitlebar3())
-    , CmdTitlebarWheel(Options::defaultCommandTitlebarWheel())
-    , CmdWindow1(Options::defaultCommandWindow1())
-    , CmdWindow2(Options::defaultCommandWindow2())
-    , CmdWindow3(Options::defaultCommandWindow3())
-    , CmdWindowWheel(Options::defaultCommandWindowWheel())
-    , CmdAll1(Options::defaultCommandAll1())
-    , CmdAll2(Options::defaultCommandAll2())
-    , CmdAll3(Options::defaultCommandAll3())
-    , CmdAllWheel(Options::defaultCommandAllWheel())
-    , CmdAllModKey(Options::defaultKeyCmdAllModKey())
+    , OpTitlebarDblClick(options::defaultOperationTitlebarDblClick())
+    , CmdActiveTitlebar1(options::defaultCommandActiveTitlebar1())
+    , CmdActiveTitlebar2(options::defaultCommandActiveTitlebar2())
+    , CmdActiveTitlebar3(options::defaultCommandActiveTitlebar3())
+    , CmdInactiveTitlebar1(options::defaultCommandInactiveTitlebar1())
+    , CmdInactiveTitlebar2(options::defaultCommandInactiveTitlebar2())
+    , CmdInactiveTitlebar3(options::defaultCommandInactiveTitlebar3())
+    , CmdTitlebarWheel(options::defaultCommandTitlebarWheel())
+    , CmdWindow1(options::defaultCommandWindow1())
+    , CmdWindow2(options::defaultCommandWindow2())
+    , CmdWindow3(options::defaultCommandWindow3())
+    , CmdWindowWheel(options::defaultCommandWindowWheel())
+    , CmdAll1(options::defaultCommandAll1())
+    , CmdAll2(options::defaultCommandAll2())
+    , CmdAll3(options::defaultCommandAll3())
+    , CmdAllWheel(options::defaultCommandAllWheel())
+    , CmdAllModKey(options::defaultKeyCmdAllModKey())
     , electric_border_maximize(false)
     , electric_border_tiling(false)
     , electric_border_corner_ratio(0.0)
@@ -142,11 +142,11 @@ Options::Options()
             });
 }
 
-Options::~Options()
+options::~options()
 {
 }
 
-void Options::setFocusPolicy(FocusPolicy focusPolicy)
+void options::setFocusPolicy(FocusPolicy focusPolicy)
 {
     if (m_focusPolicy == focusPolicy) {
         return;
@@ -160,7 +160,7 @@ void Options::setFocusPolicy(FocusPolicy focusPolicy)
     }
 }
 
-void Options::setNextFocusPrefersMouse(bool nextFocusPrefersMouse)
+void options::setNextFocusPrefersMouse(bool nextFocusPrefersMouse)
 {
     if (m_nextFocusPrefersMouse == nextFocusPrefersMouse) {
         return;
@@ -169,7 +169,7 @@ void Options::setNextFocusPrefersMouse(bool nextFocusPrefersMouse)
     Q_EMIT nextFocusPrefersMouseChanged();
 }
 
-void Options::setClickRaise(bool clickRaise)
+void options::setClickRaise(bool clickRaise)
 {
     if (m_autoRaise) {
         // important: autoRaise implies ClickRaise
@@ -182,7 +182,7 @@ void Options::setClickRaise(bool clickRaise)
     Q_EMIT clickRaiseChanged();
 }
 
-void Options::setAutoRaise(bool autoRaise)
+void options::setAutoRaise(bool autoRaise)
 {
     if (m_focusPolicy == ClickToFocus) {
         autoRaise = false;
@@ -198,7 +198,7 @@ void Options::setAutoRaise(bool autoRaise)
     Q_EMIT autoRaiseChanged();
 }
 
-void Options::setAutoRaiseInterval(int autoRaiseInterval)
+void options::setAutoRaiseInterval(int autoRaiseInterval)
 {
     if (m_focusPolicy == ClickToFocus) {
         autoRaiseInterval = 0;
@@ -210,7 +210,7 @@ void Options::setAutoRaiseInterval(int autoRaiseInterval)
     Q_EMIT autoRaiseIntervalChanged();
 }
 
-void Options::setDelayFocusInterval(int delayFocusInterval)
+void options::setDelayFocusInterval(int delayFocusInterval)
 {
     if (m_focusPolicy == ClickToFocus) {
         delayFocusInterval = 0;
@@ -222,7 +222,7 @@ void Options::setDelayFocusInterval(int delayFocusInterval)
     Q_EMIT delayFocusIntervalChanged();
 }
 
-void Options::setSeparateScreenFocus(bool separateScreenFocus)
+void options::setSeparateScreenFocus(bool separateScreenFocus)
 {
     if (m_separateScreenFocus == separateScreenFocus) {
         return;
@@ -231,7 +231,7 @@ void Options::setSeparateScreenFocus(bool separateScreenFocus)
     Q_EMIT separateScreenFocusChanged(m_separateScreenFocus);
 }
 
-void Options::setPlacement(win::placement placement)
+void options::setPlacement(win::placement placement)
 {
     if (m_placement == placement) {
         return;
@@ -240,7 +240,7 @@ void Options::setPlacement(win::placement placement)
     Q_EMIT placementChanged();
 }
 
-void Options::setBorderSnapZone(int borderSnapZone)
+void options::setBorderSnapZone(int borderSnapZone)
 {
     if (m_borderSnapZone == borderSnapZone) {
         return;
@@ -249,7 +249,7 @@ void Options::setBorderSnapZone(int borderSnapZone)
     Q_EMIT borderSnapZoneChanged();
 }
 
-void Options::setWindowSnapZone(int windowSnapZone)
+void options::setWindowSnapZone(int windowSnapZone)
 {
     if (m_windowSnapZone == windowSnapZone) {
         return;
@@ -258,7 +258,7 @@ void Options::setWindowSnapZone(int windowSnapZone)
     Q_EMIT windowSnapZoneChanged();
 }
 
-void Options::setCenterSnapZone(int centerSnapZone)
+void options::setCenterSnapZone(int centerSnapZone)
 {
     if (m_centerSnapZone == centerSnapZone) {
         return;
@@ -267,7 +267,7 @@ void Options::setCenterSnapZone(int centerSnapZone)
     Q_EMIT centerSnapZoneChanged();
 }
 
-void Options::setSnapOnlyWhenOverlapping(bool snapOnlyWhenOverlapping)
+void options::setSnapOnlyWhenOverlapping(bool snapOnlyWhenOverlapping)
 {
     if (m_snapOnlyWhenOverlapping == snapOnlyWhenOverlapping) {
         return;
@@ -276,7 +276,7 @@ void Options::setSnapOnlyWhenOverlapping(bool snapOnlyWhenOverlapping)
     Q_EMIT snapOnlyWhenOverlappingChanged();
 }
 
-void Options::setRollOverDesktops(bool rollOverDesktops)
+void options::setRollOverDesktops(bool rollOverDesktops)
 {
     if (m_rollOverDesktops == rollOverDesktops) {
         return;
@@ -285,7 +285,7 @@ void Options::setRollOverDesktops(bool rollOverDesktops)
     Q_EMIT rollOverDesktopsChanged(m_rollOverDesktops);
 }
 
-void Options::setFocusStealingPreventionLevel(int focusStealingPreventionLevel)
+void options::setFocusStealingPreventionLevel(int focusStealingPreventionLevel)
 {
     if (!focusPolicyIsReasonable()) {
         focusStealingPreventionLevel = 0;
@@ -297,7 +297,7 @@ void Options::setFocusStealingPreventionLevel(int focusStealingPreventionLevel)
     Q_EMIT focusStealingPreventionLevelChanged();
 }
 
-void Options::setOperationTitlebarDblClick(WindowOperation operationTitlebarDblClick)
+void options::setOperationTitlebarDblClick(WindowOperation operationTitlebarDblClick)
 {
     if (OpTitlebarDblClick == operationTitlebarDblClick) {
         return;
@@ -306,7 +306,7 @@ void Options::setOperationTitlebarDblClick(WindowOperation operationTitlebarDblC
     Q_EMIT operationTitlebarDblClickChanged();
 }
 
-void Options::setOperationMaxButtonLeftClick(WindowOperation op)
+void options::setOperationMaxButtonLeftClick(WindowOperation op)
 {
     if (opMaxButtonLeftClick == op) {
         return;
@@ -315,7 +315,7 @@ void Options::setOperationMaxButtonLeftClick(WindowOperation op)
     Q_EMIT operationMaxButtonLeftClickChanged();
 }
 
-void Options::setOperationMaxButtonRightClick(WindowOperation op)
+void options::setOperationMaxButtonRightClick(WindowOperation op)
 {
     if (opMaxButtonRightClick == op) {
         return;
@@ -324,7 +324,7 @@ void Options::setOperationMaxButtonRightClick(WindowOperation op)
     Q_EMIT operationMaxButtonRightClickChanged();
 }
 
-void Options::setOperationMaxButtonMiddleClick(WindowOperation op)
+void options::setOperationMaxButtonMiddleClick(WindowOperation op)
 {
     if (opMaxButtonMiddleClick == op) {
         return;
@@ -333,7 +333,7 @@ void Options::setOperationMaxButtonMiddleClick(WindowOperation op)
     Q_EMIT operationMaxButtonMiddleClickChanged();
 }
 
-void Options::setCommandActiveTitlebar1(MouseCommand commandActiveTitlebar1)
+void options::setCommandActiveTitlebar1(MouseCommand commandActiveTitlebar1)
 {
     if (CmdActiveTitlebar1 == commandActiveTitlebar1) {
         return;
@@ -342,7 +342,7 @@ void Options::setCommandActiveTitlebar1(MouseCommand commandActiveTitlebar1)
     Q_EMIT commandActiveTitlebar1Changed();
 }
 
-void Options::setCommandActiveTitlebar2(MouseCommand commandActiveTitlebar2)
+void options::setCommandActiveTitlebar2(MouseCommand commandActiveTitlebar2)
 {
     if (CmdActiveTitlebar2 == commandActiveTitlebar2) {
         return;
@@ -351,7 +351,7 @@ void Options::setCommandActiveTitlebar2(MouseCommand commandActiveTitlebar2)
     Q_EMIT commandActiveTitlebar2Changed();
 }
 
-void Options::setCommandActiveTitlebar3(MouseCommand commandActiveTitlebar3)
+void options::setCommandActiveTitlebar3(MouseCommand commandActiveTitlebar3)
 {
     if (CmdActiveTitlebar3 == commandActiveTitlebar3) {
         return;
@@ -360,7 +360,7 @@ void Options::setCommandActiveTitlebar3(MouseCommand commandActiveTitlebar3)
     Q_EMIT commandActiveTitlebar3Changed();
 }
 
-void Options::setCommandInactiveTitlebar1(MouseCommand commandInactiveTitlebar1)
+void options::setCommandInactiveTitlebar1(MouseCommand commandInactiveTitlebar1)
 {
     if (CmdInactiveTitlebar1 == commandInactiveTitlebar1) {
         return;
@@ -369,7 +369,7 @@ void Options::setCommandInactiveTitlebar1(MouseCommand commandInactiveTitlebar1)
     Q_EMIT commandInactiveTitlebar1Changed();
 }
 
-void Options::setCommandInactiveTitlebar2(MouseCommand commandInactiveTitlebar2)
+void options::setCommandInactiveTitlebar2(MouseCommand commandInactiveTitlebar2)
 {
     if (CmdInactiveTitlebar2 == commandInactiveTitlebar2) {
         return;
@@ -378,7 +378,7 @@ void Options::setCommandInactiveTitlebar2(MouseCommand commandInactiveTitlebar2)
     Q_EMIT commandInactiveTitlebar2Changed();
 }
 
-void Options::setCommandInactiveTitlebar3(MouseCommand commandInactiveTitlebar3)
+void options::setCommandInactiveTitlebar3(MouseCommand commandInactiveTitlebar3)
 {
     if (CmdInactiveTitlebar3 == commandInactiveTitlebar3) {
         return;
@@ -387,7 +387,7 @@ void Options::setCommandInactiveTitlebar3(MouseCommand commandInactiveTitlebar3)
     Q_EMIT commandInactiveTitlebar3Changed();
 }
 
-void Options::setCommandWindow1(MouseCommand commandWindow1)
+void options::setCommandWindow1(MouseCommand commandWindow1)
 {
     if (CmdWindow1 == commandWindow1) {
         return;
@@ -396,7 +396,7 @@ void Options::setCommandWindow1(MouseCommand commandWindow1)
     Q_EMIT commandWindow1Changed();
 }
 
-void Options::setCommandWindow2(MouseCommand commandWindow2)
+void options::setCommandWindow2(MouseCommand commandWindow2)
 {
     if (CmdWindow2 == commandWindow2) {
         return;
@@ -405,7 +405,7 @@ void Options::setCommandWindow2(MouseCommand commandWindow2)
     Q_EMIT commandWindow2Changed();
 }
 
-void Options::setCommandWindow3(MouseCommand commandWindow3)
+void options::setCommandWindow3(MouseCommand commandWindow3)
 {
     if (CmdWindow3 == commandWindow3) {
         return;
@@ -414,7 +414,7 @@ void Options::setCommandWindow3(MouseCommand commandWindow3)
     Q_EMIT commandWindow3Changed();
 }
 
-void Options::setCommandWindowWheel(MouseCommand commandWindowWheel)
+void options::setCommandWindowWheel(MouseCommand commandWindowWheel)
 {
     if (CmdWindowWheel == commandWindowWheel) {
         return;
@@ -423,7 +423,7 @@ void Options::setCommandWindowWheel(MouseCommand commandWindowWheel)
     Q_EMIT commandWindowWheelChanged();
 }
 
-void Options::setCommandAll1(MouseCommand commandAll1)
+void options::setCommandAll1(MouseCommand commandAll1)
 {
     if (CmdAll1 == commandAll1) {
         return;
@@ -432,7 +432,7 @@ void Options::setCommandAll1(MouseCommand commandAll1)
     Q_EMIT commandAll1Changed();
 }
 
-void Options::setCommandAll2(MouseCommand commandAll2)
+void options::setCommandAll2(MouseCommand commandAll2)
 {
     if (CmdAll2 == commandAll2) {
         return;
@@ -441,7 +441,7 @@ void Options::setCommandAll2(MouseCommand commandAll2)
     Q_EMIT commandAll2Changed();
 }
 
-void Options::setCommandAll3(MouseCommand commandAll3)
+void options::setCommandAll3(MouseCommand commandAll3)
 {
     if (CmdAll3 == commandAll3) {
         return;
@@ -450,7 +450,7 @@ void Options::setCommandAll3(MouseCommand commandAll3)
     Q_EMIT commandAll3Changed();
 }
 
-void Options::setKeyCmdAllModKey(uint keyCmdAllModKey)
+void options::setKeyCmdAllModKey(uint keyCmdAllModKey)
 {
     if (CmdAllModKey == keyCmdAllModKey) {
         return;
@@ -459,7 +459,7 @@ void Options::setKeyCmdAllModKey(uint keyCmdAllModKey)
     Q_EMIT keyCmdAllModKeyChanged();
 }
 
-void Options::setCondensedTitle(bool condensedTitle)
+void options::setCondensedTitle(bool condensedTitle)
 {
     if (condensed_title == condensedTitle) {
         return;
@@ -468,7 +468,7 @@ void Options::setCondensedTitle(bool condensedTitle)
     Q_EMIT condensedTitleChanged();
 }
 
-void Options::setElectricBorderMaximize(bool electricBorderMaximize)
+void options::setElectricBorderMaximize(bool electricBorderMaximize)
 {
     if (electric_border_maximize == electricBorderMaximize) {
         return;
@@ -477,7 +477,7 @@ void Options::setElectricBorderMaximize(bool electricBorderMaximize)
     Q_EMIT electricBorderMaximizeChanged();
 }
 
-void Options::setElectricBorderTiling(bool electricBorderTiling)
+void options::setElectricBorderTiling(bool electricBorderTiling)
 {
     if (electric_border_tiling == electricBorderTiling) {
         return;
@@ -486,7 +486,7 @@ void Options::setElectricBorderTiling(bool electricBorderTiling)
     Q_EMIT electricBorderTilingChanged();
 }
 
-void Options::setElectricBorderCornerRatio(float electricBorderCornerRatio)
+void options::setElectricBorderCornerRatio(float electricBorderCornerRatio)
 {
     if (electric_border_corner_ratio == electricBorderCornerRatio) {
         return;
@@ -495,7 +495,7 @@ void Options::setElectricBorderCornerRatio(float electricBorderCornerRatio)
     Q_EMIT electricBorderCornerRatioChanged();
 }
 
-void Options::setBorderlessMaximizedWindows(bool borderlessMaximizedWindows)
+void options::setBorderlessMaximizedWindows(bool borderlessMaximizedWindows)
 {
     if (borderless_maximized_windows == borderlessMaximizedWindows) {
         return;
@@ -504,7 +504,7 @@ void Options::setBorderlessMaximizedWindows(bool borderlessMaximizedWindows)
     Q_EMIT borderlessMaximizedWindowsChanged();
 }
 
-void Options::setKillPingTimeout(int killPingTimeout)
+void options::setKillPingTimeout(int killPingTimeout)
 {
     if (m_killPingTimeout == killPingTimeout) {
         return;
@@ -513,7 +513,7 @@ void Options::setKillPingTimeout(int killPingTimeout)
     Q_EMIT killPingTimeoutChanged();
 }
 
-void Options::setHideUtilityWindowsForInactive(bool hideUtilityWindowsForInactive)
+void options::setHideUtilityWindowsForInactive(bool hideUtilityWindowsForInactive)
 {
     if (m_hideUtilityWindowsForInactive == hideUtilityWindowsForInactive) {
         return;
@@ -522,7 +522,7 @@ void Options::setHideUtilityWindowsForInactive(bool hideUtilityWindowsForInactiv
     Q_EMIT hideUtilityWindowsForInactiveChanged();
 }
 
-void Options::setCompositingMode(int compositingMode)
+void options::setCompositingMode(int compositingMode)
 {
     if (m_compositingMode == static_cast<CompositingType>(compositingMode)) {
         return;
@@ -531,7 +531,7 @@ void Options::setCompositingMode(int compositingMode)
     Q_EMIT compositingModeChanged();
 }
 
-void Options::setUseCompositing(bool useCompositing)
+void options::setUseCompositing(bool useCompositing)
 {
     if (m_useCompositing == useCompositing) {
         return;
@@ -540,7 +540,7 @@ void Options::setUseCompositing(bool useCompositing)
     Q_EMIT useCompositingChanged();
 }
 
-void Options::setHiddenPreviews(int hiddenPreviews)
+void options::setHiddenPreviews(int hiddenPreviews)
 {
     if (m_hiddenPreviews == static_cast<HiddenPreviews>(hiddenPreviews)) {
         return;
@@ -549,7 +549,7 @@ void Options::setHiddenPreviews(int hiddenPreviews)
     Q_EMIT hiddenPreviewsChanged();
 }
 
-void Options::setMaxFpsInterval(qint64 maxFpsInterval)
+void options::setMaxFpsInterval(qint64 maxFpsInterval)
 {
     if (m_maxFpsInterval == maxFpsInterval) {
         return;
@@ -558,7 +558,7 @@ void Options::setMaxFpsInterval(qint64 maxFpsInterval)
     Q_EMIT maxFpsIntervalChanged();
 }
 
-void Options::setRefreshRate(uint refreshRate)
+void options::setRefreshRate(uint refreshRate)
 {
     if (m_refreshRate == refreshRate) {
         return;
@@ -567,7 +567,7 @@ void Options::setRefreshRate(uint refreshRate)
     Q_EMIT refreshRateChanged();
 }
 
-void Options::setVBlankTime(qint64 vBlankTime)
+void options::setVBlankTime(qint64 vBlankTime)
 {
     if (m_vBlankTime == vBlankTime) {
         return;
@@ -576,7 +576,7 @@ void Options::setVBlankTime(qint64 vBlankTime)
     Q_EMIT vBlankTimeChanged();
 }
 
-void Options::setGlStrictBinding(bool glStrictBinding)
+void options::setGlStrictBinding(bool glStrictBinding)
 {
     if (m_glStrictBinding == glStrictBinding) {
         return;
@@ -585,7 +585,7 @@ void Options::setGlStrictBinding(bool glStrictBinding)
     Q_EMIT glStrictBindingChanged();
 }
 
-void Options::setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver)
+void options::setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver)
 {
     if (m_glStrictBindingFollowsDriver == glStrictBindingFollowsDriver) {
         return;
@@ -594,7 +594,7 @@ void Options::setGlStrictBindingFollowsDriver(bool glStrictBindingFollowsDriver)
     Q_EMIT glStrictBindingFollowsDriverChanged();
 }
 
-void Options::setWindowsBlockCompositing(bool value)
+void options::setWindowsBlockCompositing(bool value)
 {
     if (m_windowsBlockCompositing == value) {
         return;
@@ -603,7 +603,7 @@ void Options::setWindowsBlockCompositing(bool value)
     Q_EMIT windowsBlockCompositingChanged();
 }
 
-void Options::setAnimationCurve(AnimationCurve curve)
+void options::setAnimationCurve(AnimationCurve curve)
 {
     if (m_animationCurve == curve) {
         return;
@@ -614,7 +614,7 @@ void Options::setAnimationCurve(AnimationCurve curve)
     Q_EMIT animationCurveChanged();
 }
 
-void Options::setGlPlatformInterface(OpenGLPlatformInterface interface)
+void options::setGlPlatformInterface(OpenGLPlatformInterface interface)
 {
     // check environment variable
     const QByteArray envOpenGLInterface(qgetenv("KWIN_OPENGL_INTERFACE"));
@@ -652,12 +652,12 @@ void Options::setGlPlatformInterface(OpenGLPlatformInterface interface)
     Q_EMIT glPlatformInterfaceChanged();
 }
 
-void Options::reparseConfiguration()
+void options::reparseConfiguration()
 {
     m_settings->config()->reparseConfiguration();
 }
 
-void Options::updateSettings()
+void options::updateSettings()
 {
     loadConfig();
     // Read button tooltip animation effect from kdeglobals
@@ -674,7 +674,7 @@ void Options::updateSettings()
     Q_EMIT configChanged();
 }
 
-void Options::loadConfig()
+void options::loadConfig()
 {
     m_settings->load();
 
@@ -725,9 +725,9 @@ void Options::loadConfig()
     // TODO: should they be moved into reloadCompositingSettings?
     config = KConfigGroup(m_settings->config(), "Compositing");
     setMaxFpsInterval(1 * 1000 * 1000 * 1000
-                      / config.readEntry("MaxFPS", Options::defaultMaxFps()));
-    setRefreshRate(config.readEntry("RefreshRate", Options::defaultRefreshRate()));
-    setVBlankTime(config.readEntry("VBlankTime", Options::defaultVBlankTime())
+                      / config.readEntry("MaxFPS", options::defaultMaxFps()));
+    setRefreshRate(config.readEntry("RefreshRate", options::defaultRefreshRate()));
+    setVBlankTime(config.readEntry("VBlankTime", options::defaultVBlankTime())
                   * 1000); // config in micro, value in nano resolution
 
     // Modifier Only Shortcuts
@@ -752,7 +752,7 @@ void Options::loadConfig()
                                      QStringLiteral("activateLauncherMenu")}));
 }
 
-void Options::syncFromKcfgc()
+void options::syncFromKcfgc()
 {
     setCondensedTitle(m_settings->condensedTitle());
     setFocusPolicy(m_settings->focusPolicy());
@@ -785,7 +785,7 @@ void Options::syncFromKcfgc()
     setAnimationCurve(m_settings->animationCurve());
 }
 
-bool Options::loadCompositingConfig(bool force)
+bool options::loadCompositingConfig(bool force)
 {
     KConfigGroup config(m_settings->config(), "Compositing");
 
@@ -841,14 +841,14 @@ bool Options::loadCompositingConfig(bool force)
     setUseCompositing(
         useCompositing || force
         || config.readEntry("Enabled",
-                            Options::defaultUseCompositing() || !platformSupportsNoCompositing));
+                            options::defaultUseCompositing() || !platformSupportsNoCompositing));
 
     if (!m_useCompositing)
         return false; // not enforced or necessary and not "enabled" by settings
     return true;
 }
 
-void Options::reloadCompositingSettings(bool force)
+void options::reloadCompositingSettings(bool force)
 {
     if (!loadCompositingConfig(force)) {
         return;
@@ -861,10 +861,10 @@ void Options::reloadCompositingSettings(bool force)
 
     setGlStrictBindingFollowsDriver(!config.hasKey("GLStrictBinding"));
     if (!isGlStrictBindingFollowsDriver()) {
-        setGlStrictBinding(config.readEntry("GLStrictBinding", Options::defaultGlStrictBinding()));
+        setGlStrictBinding(config.readEntry("GLStrictBinding", options::defaultGlStrictBinding()));
     }
 
-    HiddenPreviews previews = Options::defaultHiddenPreviews();
+    HiddenPreviews previews = options::defaultHiddenPreviews();
     // 4 - off, 5 - shown, 6 - always, other are old values
     int hps = config.readEntry("HiddenPreviews", 5);
     if (hps == 4)
@@ -901,7 +901,7 @@ void Options::reloadCompositingSettings(bool force)
 // if the window is moved out of the workspace (e.g. if the user moves a window
 // by the titlebar, and moves it too high beneath Kicker at the top edge, they
 // may not be able to move it back, unless they know about Meta+LMB)
-Options::WindowOperation Options::windowOperation(const QString& name, bool restricted)
+options::WindowOperation options::windowOperation(const QString& name, bool restricted)
 {
     if (name == QStringLiteral("Move"))
         return restricted ? MoveOp : UnrestrictedMoveOp;
@@ -926,7 +926,7 @@ Options::WindowOperation Options::windowOperation(const QString& name, bool rest
     return NoOp;
 }
 
-Options::MouseCommand Options::mouseCommand(const QString& name, bool restricted)
+options::MouseCommand options::mouseCommand(const QString& name, bool restricted)
 {
     QString lowerName = name.toLower();
     if (lowerName == QStringLiteral("raise"))
@@ -972,7 +972,7 @@ Options::MouseCommand Options::mouseCommand(const QString& name, bool restricted
     return MouseNothing;
 }
 
-Options::MouseWheelCommand Options::mouseWheelCommand(const QString& name)
+options::MouseWheelCommand options::mouseWheelCommand(const QString& name)
 {
     QString lowerName = name.toLower();
     if (lowerName == QStringLiteral("raise/lower"))
@@ -990,12 +990,12 @@ Options::MouseWheelCommand Options::mouseWheelCommand(const QString& name)
     return MouseWheelNothing;
 }
 
-bool Options::condensedTitle() const
+bool options::condensedTitle() const
 {
     return condensed_title;
 }
 
-Options::MouseCommand Options::wheelToMouseCommand(MouseWheelCommand com, int delta) const
+options::MouseCommand options::wheelToMouseCommand(MouseWheelCommand com, int delta) const
 {
     switch (com) {
     case MouseWheelRaiseLower:
@@ -1014,7 +1014,7 @@ Options::MouseCommand Options::wheelToMouseCommand(MouseWheelCommand com, int de
 }
 #endif
 
-double Options::animationTimeFactor() const
+double options::animationTimeFactor() const
 {
 #ifndef KCMRULES
     return m_settings->animationDurationFactor();
@@ -1023,19 +1023,19 @@ double Options::animationTimeFactor() const
 #endif
 }
 
-Options::WindowOperation Options::operationMaxButtonClick(Qt::MouseButtons button) const
+options::WindowOperation options::operationMaxButtonClick(Qt::MouseButtons button) const
 {
     return button == Qt::RightButton ? opMaxButtonRightClick
         : button == Qt::MiddleButton ? opMaxButtonMiddleClick
                                      : opMaxButtonLeftClick;
 }
 
-QStringList Options::modifierOnlyDBusShortcut(Qt::KeyboardModifier mod) const
+QStringList options::modifierOnlyDBusShortcut(Qt::KeyboardModifier mod) const
 {
     return m_modifierOnlyShortcuts.value(mod);
 }
 
-bool Options::isUseCompositing() const
+bool options::isUseCompositing() const
 {
     return m_useCompositing || kwinApp()->get_base().render->requiresCompositing();
 }

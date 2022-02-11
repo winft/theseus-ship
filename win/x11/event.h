@@ -548,7 +548,7 @@ void enter_notify_event(Win* win, xcb_enter_notify_event_t* e)
 
 #define MOUSE_DRIVEN_FOCUS                                                                         \
     (!kwinApp()->options->focusPolicyIsReasonable()                                                \
-     || (kwinApp()->options->focusPolicy() == Options::FocusFollowsMouse                           \
+     || (kwinApp()->options->focusPolicy() == base::options::FocusFollowsMouse                     \
          && kwinApp()->options->isNextFocusPrefersMouse()))
     if (e->mode == XCB_NOTIFY_MODE_NORMAL
         || (e->mode == XCB_NOTIFY_MODE_UNGRAB && MOUSE_DRIVEN_FOCUS)) {
@@ -598,7 +598,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
                 QCoreApplication::sendEvent(deco, &leaveEvent);
             }
         }
-        if (kwinApp()->options->focusPolicy() == Options::FocusStrictlyUnderMouse
+        if (kwinApp()->options->focusPolicy() == base::options::FocusStrictlyUnderMouse
             && win->control->active() && lostMouse) {
             workspace()->requestDelayFocus(nullptr);
         }
@@ -647,7 +647,7 @@ bool button_press_event(Win* win,
             return true;
         }
 
-        Options::MouseCommand com = Options::MouseNothing;
+        auto com = base::options::MouseNothing;
         bool was_action = false;
         if (bModKeyHeld) {
             was_action = true;
@@ -942,7 +942,7 @@ void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
         // movement the expectation is that the cursor is already at the provided position, thus
         // it's more a safety measurement
         cursor->set_pos(QPoint(x_root, y_root));
-        win->performMouseCommand(Options::MouseMove, QPoint(x_root, y_root));
+        win->performMouseCommand(base::options::MouseMove, QPoint(x_root, y_root));
     } else if (mov_res.enabled && direction == NET::MoveResizeCancel) {
         win::finish_move_resize(win, true);
         mov_res.button_down = false;
@@ -977,12 +977,13 @@ void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
         // ignore mouse coordinates given in the message, mouse position is used by the moving
         // algorithm
         cursor->set_pos(win->frameGeometry().center());
-        win->performMouseCommand(Options::MouseUnrestrictedMove, win->frameGeometry().center());
+        win->performMouseCommand(base::options::MouseUnrestrictedMove,
+                                 win->frameGeometry().center());
     } else if (direction == NET::KeyboardSize) {
         // ignore mouse coordinates given in the message, mouse position is used by the resizing
         // algorithm
         cursor->set_pos(win->frameGeometry().bottomRight());
-        win->performMouseCommand(Options::MouseUnrestrictedResize,
+        win->performMouseCommand(base::options::MouseUnrestrictedResize,
                                  win->frameGeometry().bottomRight());
     }
 }

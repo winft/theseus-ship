@@ -55,9 +55,10 @@ compositor::compositor(render::platform& platform)
     , m_delay(0)
     , m_bufferSwapPending(false)
 {
-    connect(kwinApp()->options.get(), &Options::configChanged, this, &compositor::configChanged);
+    connect(
+        kwinApp()->options.get(), &base::options::configChanged, this, &compositor::configChanged);
     connect(kwinApp()->options.get(),
-            &Options::animationSpeedChanged,
+            &base::options::animationSpeedChanged,
             this,
             &compositor::configChanged);
 

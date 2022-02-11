@@ -92,16 +92,16 @@ public:
         // is clicked.
         if ((kwinApp()->options->focusPolicyIsReasonable() && !active())
             || (kwinApp()->options->isClickRaise() && !is_most_recently_raised(m_window))) {
-            if (kwinApp()->options->commandWindow1() != Options::MouseNothing) {
+            if (kwinApp()->options->commandWindow1() != base::options::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_1);
             }
-            if (kwinApp()->options->commandWindow2() != Options::MouseNothing) {
+            if (kwinApp()->options->commandWindow2() != base::options::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_2);
             }
-            if (kwinApp()->options->commandWindow3() != Options::MouseNothing) {
+            if (kwinApp()->options->commandWindow3() != base::options::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_3);
             }
-            if (kwinApp()->options->commandWindowWheel() != Options::MouseNothing) {
+            if (kwinApp()->options->commandWindowWheel() != base::options::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_4);
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_5);
             }
@@ -112,16 +112,16 @@ public:
         // we can do about it, unfortunately.
 
         if (!workspace()->globalShortcutsDisabled()) {
-            if (kwinApp()->options->commandAll1() != Options::MouseNothing) {
+            if (kwinApp()->options->commandAll1() != base::options::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_1);
             }
-            if (kwinApp()->options->commandAll2() != Options::MouseNothing) {
+            if (kwinApp()->options->commandAll2() != base::options::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_2);
             }
-            if (kwinApp()->options->commandAll3() != Options::MouseNothing) {
+            if (kwinApp()->options->commandAll3() != base::options::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_3);
             }
-            if (kwinApp()->options->commandAllWheel() != Options::MouseWheelNothing) {
+            if (kwinApp()->options->commandAllWheel() != base::options::MouseWheelNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_4);
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_5);
             }
@@ -668,11 +668,13 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     QObject::connect(
         win->clientMachine(), &client_machine::localhostChanged, win, &window::updateCaption);
-    QObject::connect(kwinApp()->options.get(), &Options::configChanged, win, [win] {
+    QObject::connect(kwinApp()->options.get(), &base::options::configChanged, win, [win] {
         win->control->update_mouse_grab();
     });
-    QObject::connect(
-        kwinApp()->options.get(), &Options::condensedTitleChanged, win, &window::updateCaption);
+    QObject::connect(kwinApp()->options.get(),
+                     &base::options::condensedTitleChanged,
+                     win,
+                     &window::updateCaption);
 
     QObject::connect(win, &window::moveResizeCursorChanged, win, [win](input::cursor_shape cursor) {
         auto nativeCursor = input::get_cursor()->x11_cursor(cursor);

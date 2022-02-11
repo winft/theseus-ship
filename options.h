@@ -6,15 +6,14 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-#ifndef KWIN_OPTIONS_H
-#define KWIN_OPTIONS_H
+#pragma once
 
 #include "main.h"
 #include "win/types.h"
 
 #include <KConfigWatcher>
 
-namespace KWin
+namespace KWin::base
 {
 
 // Whether to keep all windows mapped when compositing (i.e. whether to have
@@ -33,7 +32,7 @@ enum HiddenPreviews {
 
 class Settings;
 
-class KWIN_EXPORT Options : public QObject
+class KWIN_EXPORT options : public QObject
 {
     Q_OBJECT
     Q_ENUMS(FocusPolicy)
@@ -108,16 +107,16 @@ class KWIN_EXPORT Options : public QObject
      */
     Q_PROPERTY(int focusStealingPreventionLevel READ focusStealingPreventionLevel WRITE
                    setFocusStealingPreventionLevel NOTIFY focusStealingPreventionLevelChanged)
-    Q_PROPERTY(
-        KWin::Options::WindowOperation operationTitlebarDblClick READ operationTitlebarDblClick
-            WRITE setOperationTitlebarDblClick NOTIFY operationTitlebarDblClickChanged)
-    Q_PROPERTY(
-        KWin::Options::WindowOperation operationMaxButtonLeftClick READ operationMaxButtonLeftClick
-            WRITE setOperationMaxButtonLeftClick NOTIFY operationMaxButtonLeftClickChanged)
-    Q_PROPERTY(KWin::Options::WindowOperation operationMaxButtonMiddleClick READ
+    Q_PROPERTY(KWin::base::options::WindowOperation operationTitlebarDblClick READ
+                   operationTitlebarDblClick WRITE setOperationTitlebarDblClick NOTIFY
+                       operationTitlebarDblClickChanged)
+    Q_PROPERTY(KWin::base::options::WindowOperation operationMaxButtonLeftClick READ
+                   operationMaxButtonLeftClick WRITE setOperationMaxButtonLeftClick NOTIFY
+                       operationMaxButtonLeftClickChanged)
+    Q_PROPERTY(KWin::base::options::WindowOperation operationMaxButtonMiddleClick READ
                    operationMaxButtonMiddleClick WRITE setOperationMaxButtonMiddleClick NOTIFY
                        operationMaxButtonMiddleClickChanged)
-    Q_PROPERTY(KWin::Options::WindowOperation operationMaxButtonRightClick READ
+    Q_PROPERTY(KWin::base::options::WindowOperation operationMaxButtonRightClick READ
                    operationMaxButtonRightClick WRITE setOperationMaxButtonRightClick NOTIFY
                        operationMaxButtonRightClickChanged)
     Q_PROPERTY(MouseCommand commandActiveTitlebar1 READ commandActiveTitlebar1 WRITE
@@ -206,8 +205,8 @@ class KWIN_EXPORT Options : public QObject
     Q_PROPERTY(bool windowsBlockCompositing READ windowsBlockCompositing WRITE
                    setWindowsBlockCompositing NOTIFY windowsBlockCompositingChanged)
 public:
-    Options();
-    ~Options() override;
+    options();
+    ~options() override;
 
     void updateSettings();
 
@@ -959,10 +958,8 @@ private:
     MouseCommand wheelToMouseCommand(MouseWheelCommand com, int delta) const;
 };
 
-} // namespace
+}
 
-Q_DECLARE_METATYPE(KWin::Options::WindowOperation)
+Q_DECLARE_METATYPE(KWin::base::options::WindowOperation)
 Q_DECLARE_METATYPE(KWin::OpenGLPlatformInterface)
 Q_DECLARE_METATYPE(KWin::win::placement)
-
-#endif

@@ -1106,7 +1106,7 @@ void Toplevel::closeWindow()
 {
 }
 
-bool Toplevel::performMouseCommand(Options::MouseCommand cmd, const QPoint &globalPos)
+bool Toplevel::performMouseCommand(base::options::MouseCommand cmd, const QPoint &globalPos)
 {
     return win::perform_mouse_command(this, cmd, globalPos);
 }

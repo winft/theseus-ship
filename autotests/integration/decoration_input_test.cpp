@@ -666,9 +666,9 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     workspace()->slotReconfigure();
     QCOMPARE(kwinApp()->options->commandAllModifier(),
              modKey == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier);
-    QCOMPARE(kwinApp()->options->commandAll1(), Options::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->commandAll2(), Options::MouseUnrestrictedMove);
-    QCOMPARE(kwinApp()->options->commandAll3(), Options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll2(), base::options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll3(), base::options::MouseUnrestrictedMove);
 
     // create a window
     auto c = showWindow();

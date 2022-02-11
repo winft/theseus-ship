@@ -85,13 +85,13 @@
             <default>false</default>
         </entry>
         <entry name="FocusPolicy" type="Enum">
-            <choices name="KWin::Options::FocusPolicy">
+            <choices name="KWin::base::options::FocusPolicy">
                 <choice name="ClickToFocus"/>
                 <choice name="FocusFollowsMouse"/>
                 <choice name="FocusUnderMouse"/>
                 <choice name="FocusStrictlyUnderMouse"/>
             </choices>
-            <default>Options::ClickToFocus</default>
+            <default>KWin::base::options::ClickToFocus</default>
         </entry>
         <entry name="NextFocusPrefersMouse" type="Bool">
             <default>false</default>
@@ -100,7 +100,7 @@
             <default>false</default>
         </entry>
         <entry name="ActiveMouseScreen" type="Bool">
-            <default code="true">focusPolicy() != Options::ClickToFocus</default>
+            <default code="true">focusPolicy() != KWin::base::options::ClickToFocus</default>
         </entry>
         <entry name="RollOverDesktops" type="Bool">
             <default>true</default>
@@ -251,8 +251,8 @@
             <default>true</default>
         </entry>
         <entry name="AnimationCurve" type="Enum">
-            <default>KWin::Options::AnimationCurve::Linear</default>
-            <choices name="KWin::Options::AnimationCurve">
+            <default>KWin::base::options::AnimationCurve::Linear</default>
+            <choices name="KWin::base::options::AnimationCurve">
                 <choice name="Linear"/>
                 <choice name="Quadratic"/>
                 <choice name="Cubic"/>

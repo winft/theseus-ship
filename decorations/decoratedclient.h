@@ -110,7 +110,7 @@ public:
     }
 
 private Q_SLOTS:
-    void delayedRequestToggleMaximization(Options::WindowOperation operation);
+    void delayedRequestToggleMaximization(base::options::WindowOperation operation);
 
 private:
     void createRenderer();

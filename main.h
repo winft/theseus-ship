@@ -39,11 +39,6 @@ class QCommandLineParser;
 namespace KWin
 {
 
-namespace debug
-{
-class console;
-}
-
 namespace base
 {
 
@@ -62,16 +57,20 @@ namespace x11
 class event_filter_manager;
 }
 
+class options;
 class platform;
 
+}
+
+namespace debug
+{
+class console;
 }
 
 namespace desktop
 {
 class screen_locker_watcher;
 }
-
-class Options;
 
 class KWIN_EXPORT Application : public  QApplication
 {
@@ -230,7 +229,7 @@ public:
     virtual base::wayland::server* get_wayland_server();
     virtual debug::console* create_debug_console() = 0;
 
-    std::unique_ptr<Options> options;
+    std::unique_ptr<base::options> options;
     std::unique_ptr<base::seat::session> session;
     std::unique_ptr<base::x11::event_filter_manager> x11_event_filters;
     std::unique_ptr<input::platform> input;

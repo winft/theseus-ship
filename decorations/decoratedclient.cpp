@@ -230,7 +230,7 @@ DELEGATE(WId, decorationId, frameId)
 #define DELEGATE(name, op) \
     void DecoratedClientImpl::name() \
     { \
-        workspace()->performWindowOperation(m_client, Options::op); \
+        workspace()->performWindowOperation(m_client, base::options::op); \
     }
 
 DELEGATE(requestToggleOnAllDesktops, OnAllDesktopsOp)
@@ -313,10 +313,10 @@ void DecoratedClientImpl::requestToggleMaximization(Qt::MouseButtons buttons)
         this,
         "delayedRequestToggleMaximization",
         Qt::QueuedConnection,
-        Q_ARG(Options::WindowOperation, kwinApp()->options->operationMaxButtonClick(buttons)));
+        Q_ARG(base::options::WindowOperation, kwinApp()->options->operationMaxButtonClick(buttons)));
 }
 
-void DecoratedClientImpl::delayedRequestToggleMaximization(Options::WindowOperation operation)
+void DecoratedClientImpl::delayedRequestToggleMaximization(base::options::WindowOperation operation)
 {
     workspace()->performWindowOperation(m_client, operation);
 }

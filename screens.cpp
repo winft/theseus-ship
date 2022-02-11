@@ -50,7 +50,7 @@ void Screens::init()
 {
     connect(this, &Screens::sizeChanged, this, &Screens::geometryChanged);
 
-    Settings settings;
+    base::Settings settings;
     settings.setDefaults();
     m_currentFollowsMouse = settings.activeMouseScreen();
 }
@@ -105,7 +105,7 @@ void Screens::reconfigure()
     if (!m_config) {
         return;
     }
-    Settings settings(m_config);
+    base::Settings settings(m_config);
     settings.read();
     setCurrentFollowsMouse(settings.activeMouseScreen());
 }

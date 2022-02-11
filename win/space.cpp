@@ -157,7 +157,8 @@ space::space()
     connect(&screens, &Screens::changed, this, &space::desktopResized);
     screens.setConfig(config);
     screens.reconfigure();
-    connect(kwinApp()->options.get(), &Options::configChanged, &screens, &Screens::reconfigure);
+    connect(
+        kwinApp()->options.get(), &base::options::configChanged, &screens, &Screens::reconfigure);
 
     auto* focusChain = win::focus_chain::create(this);
     connect(this, &space::clientRemoved, focusChain, &win::focus_chain::remove);
@@ -171,7 +172,7 @@ space::space()
             focusChain,
             &win::focus_chain::setCurrentDesktop);
     connect(kwinApp()->options.get(),
-            &Options::separateScreenFocusChanged,
+            &base::options::separateScreenFocusChanged,
             focusChain,
             &win::focus_chain::setSeparateScreenFocus);
     focusChain->setSeparateScreenFocus(kwinApp()->options->isSeparateScreenFocus());
@@ -185,7 +186,7 @@ space::space()
             &space::slotCurrentDesktopChanged);
     vds->setNavigationWrappingAround(kwinApp()->options->isRollOverDesktops());
     connect(kwinApp()->options.get(),
-            &Options::rollOverDesktopsChanged,
+            &base::options::rollOverDesktopsChanged,
             vds,
             &win::virtual_desktop_manager::setNavigationWrappingAround);
     vds->setConfig(config);
@@ -850,7 +851,7 @@ QString space::supportInformation() const
         }
         if (QLatin1String(variant.typeName()) == QLatin1String("KWin::OpenGLPlatformInterface")
             || QLatin1String(variant.typeName())
-                == QLatin1String("KWin::Options::WindowOperation")) {
+                == QLatin1String("KWin::base::options::WindowOperation")) {
             return QString::number(variant.toInt());
         }
         return variant.toString();
@@ -3322,7 +3323,7 @@ void space::clientShortcutUpdated(Toplevel* window)
     }
 }
 
-void space::performWindowOperation(Toplevel* window, Options::WindowOperation op)
+void space::performWindowOperation(Toplevel* window, base::options::WindowOperation op)
 {
     if (!window) {
         return;
@@ -3330,57 +3331,57 @@ void space::performWindowOperation(Toplevel* window, Options::WindowOperation op
 
     auto cursor = input::get_cursor();
 
-    if (op == Options::MoveOp || op == Options::UnrestrictedMoveOp) {
+    if (op == base::options::MoveOp || op == base::options::UnrestrictedMoveOp) {
         cursor->set_pos(window->frameGeometry().center());
     }
-    if (op == Options::ResizeOp || op == Options::UnrestrictedResizeOp) {
+    if (op == base::options::ResizeOp || op == base::options::UnrestrictedResizeOp) {
         cursor->set_pos(window->frameGeometry().bottomRight());
     }
 
     switch (op) {
-    case Options::MoveOp:
-        window->performMouseCommand(Options::MouseMove, cursor->pos());
+    case base::options::MoveOp:
+        window->performMouseCommand(base::options::MouseMove, cursor->pos());
         break;
-    case Options::UnrestrictedMoveOp:
-        window->performMouseCommand(Options::MouseUnrestrictedMove, cursor->pos());
+    case base::options::UnrestrictedMoveOp:
+        window->performMouseCommand(base::options::MouseUnrestrictedMove, cursor->pos());
         break;
-    case Options::ResizeOp:
-        window->performMouseCommand(Options::MouseResize, cursor->pos());
+    case base::options::ResizeOp:
+        window->performMouseCommand(base::options::MouseResize, cursor->pos());
         break;
-    case Options::UnrestrictedResizeOp:
-        window->performMouseCommand(Options::MouseUnrestrictedResize, cursor->pos());
+    case base::options::UnrestrictedResizeOp:
+        window->performMouseCommand(base::options::MouseUnrestrictedResize, cursor->pos());
         break;
-    case Options::CloseOp:
+    case base::options::CloseOp:
         QMetaObject::invokeMethod(window, "closeWindow", Qt::QueuedConnection);
         break;
-    case Options::MaximizeOp:
+    case base::options::MaximizeOp:
         win::maximize(window,
                       window->maximizeMode() == win::maximize_mode::full
                           ? win::maximize_mode::restore
                           : win::maximize_mode::full);
         break;
-    case Options::HMaximizeOp:
+    case base::options::HMaximizeOp:
         win::maximize(window, window->maximizeMode() ^ win::maximize_mode::horizontal);
         break;
-    case Options::VMaximizeOp:
+    case base::options::VMaximizeOp:
         win::maximize(window, window->maximizeMode() ^ win::maximize_mode::vertical);
         break;
-    case Options::RestoreOp:
+    case base::options::RestoreOp:
         win::maximize(window, win::maximize_mode::restore);
         break;
-    case Options::MinimizeOp:
+    case base::options::MinimizeOp:
         win::set_minimized(window, true);
         break;
-    case Options::OnAllDesktopsOp:
+    case base::options::OnAllDesktopsOp:
         win::set_on_all_desktops(window, !window->isOnAllDesktops());
         break;
-    case Options::FullScreenOp:
+    case base::options::FullScreenOp:
         window->setFullScreen(!window->control->fullscreen(), true);
         break;
-    case Options::NoBorderOp:
+    case base::options::NoBorderOp:
         window->setNoBorder(!window->noBorder());
         break;
-    case Options::KeepAboveOp: {
+    case base::options::KeepAboveOp: {
         blocker block(stacking_order);
         bool was = window->control->keep_above();
         win::set_keep_above(window, !window->control->keep_above());
@@ -3389,7 +3390,7 @@ void space::performWindowOperation(Toplevel* window, Options::WindowOperation op
         }
         break;
     }
-    case Options::KeepBelowOp: {
+    case base::options::KeepBelowOp: {
         blocker block(stacking_order);
         bool was = window->control->keep_below();
         win::set_keep_below(window, !window->control->keep_below());
@@ -3398,20 +3399,20 @@ void space::performWindowOperation(Toplevel* window, Options::WindowOperation op
         }
         break;
     }
-    case Options::WindowRulesOp:
+    case base::options::WindowRulesOp:
         RuleBook::self()->edit(window, false);
         break;
-    case Options::ApplicationRulesOp:
+    case base::options::ApplicationRulesOp:
         RuleBook::self()->edit(window, true);
         break;
-    case Options::SetupWindowShortcutOp:
+    case base::options::SetupWindowShortcutOp:
         setupWindowShortcut(window);
         break;
-    case Options::LowerOp:
+    case base::options::LowerOp:
         win::lower_window(workspace(), window);
         break;
-    case Options::OperationsOp:
-    case Options::NoOp:
+    case base::options::OperationsOp:
+    case base::options::NoOp:
         break;
     }
 }
@@ -3526,7 +3527,7 @@ void space::slotWindowToPrevScreen()
 void space::slotWindowMaximize()
 {
     if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::MaximizeOp);
+        performWindowOperation(active_client, base::options::MaximizeOp);
 }
 
 /**
@@ -3535,7 +3536,7 @@ void space::slotWindowMaximize()
 void space::slotWindowMaximizeVertical()
 {
     if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::VMaximizeOp);
+        performWindowOperation(active_client, base::options::VMaximizeOp);
 }
 
 /**
@@ -3544,7 +3545,7 @@ void space::slotWindowMaximizeVertical()
 void space::slotWindowMaximizeHorizontal()
 {
     if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::HMaximizeOp);
+        performWindowOperation(active_client, base::options::HMaximizeOp);
 }
 
 /**
@@ -3553,7 +3554,7 @@ void space::slotWindowMaximizeHorizontal()
 void space::slotWindowMinimize()
 {
     if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::MinimizeOp);
+        performWindowOperation(active_client, base::options::MinimizeOp);
 }
 
 /**
@@ -3607,30 +3608,30 @@ void space::slotWindowOnAllDesktops()
 void space::slotWindowFullScreen()
 {
     if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::FullScreenOp);
+        performWindowOperation(active_client, base::options::FullScreenOp);
 }
 
 void space::slotWindowNoBorder()
 {
     if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::NoBorderOp);
+        performWindowOperation(active_client, base::options::NoBorderOp);
 }
 
 void space::slotWindowAbove()
 {
     if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::KeepAboveOp);
+        performWindowOperation(active_client, base::options::KeepAboveOp);
 }
 
 void space::slotWindowBelow()
 {
     if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::KeepBelowOp);
+        performWindowOperation(active_client, base::options::KeepBelowOp);
 }
 void space::slotSetupWindowShortcut()
 {
     if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::SetupWindowShortcutOp);
+        performWindowOperation(active_client, base::options::SetupWindowShortcutOp);
 }
 
 /**
@@ -3861,7 +3862,7 @@ void space::slotWindowClose()
     //     if ( tab_box->isVisible())
     //         return;
     if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::CloseOp);
+        performWindowOperation(active_client, base::options::CloseOp);
 }
 
 /**
@@ -3870,7 +3871,7 @@ void space::slotWindowClose()
 void space::slotWindowMove()
 {
     if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::UnrestrictedMoveOp);
+        performWindowOperation(active_client, base::options::UnrestrictedMoveOp);
 }
 
 /**
@@ -3879,7 +3880,7 @@ void space::slotWindowMove()
 void space::slotWindowResize()
 {
     if (USABLE_ACTIVE_CLIENT)
-        performWindowOperation(active_client, Options::UnrestrictedResizeOp);
+        performWindowOperation(active_client, base::options::UnrestrictedResizeOp);
 }
 
 #undef USABLE_ACTIVE_CLIENT

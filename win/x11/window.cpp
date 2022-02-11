@@ -563,7 +563,7 @@ bool window::isHiddenInternal() const
     return hidden;
 }
 
-bool window::performMouseCommand(Options::MouseCommand command, QPoint const& globalPos)
+bool window::performMouseCommand(base::options::MouseCommand command, QPoint const& globalPos)
 {
     return x11::perform_mouse_command(this, command, globalPos);
 }

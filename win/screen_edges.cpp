@@ -719,8 +719,10 @@ screen_edger::screen_edger(win::space& space)
     updateLayout();
     recreateEdges();
 
-    QObject::connect(
-        kwinApp()->options.get(), &Options::configChanged, this, &win::screen_edger::reconfigure);
+    QObject::connect(kwinApp()->options.get(),
+                     &base::options::configChanged,
+                     this,
+                     &win::screen_edger::reconfigure);
     QObject::connect(virtual_desktop_manager::self(),
                      &virtual_desktop_manager::layoutChanged,
                      this,

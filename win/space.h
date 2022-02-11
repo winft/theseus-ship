@@ -437,7 +437,7 @@ public:
     void saveOldScreenSizes();
 
 public Q_SLOTS:
-    void performWindowOperation(KWin::Toplevel* window, Options::WindowOperation op);
+    void performWindowOperation(KWin::Toplevel* window, base::options::WindowOperation op);
     // Keybindings
     // void slotSwitchToWindow( int );
     void slotWindowToDesktop(uint i);

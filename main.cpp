@@ -101,7 +101,7 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
     }
 #endif
 
-    qRegisterMetaType<Options::WindowOperation>("Options::WindowOperation");
+    qRegisterMetaType<base::options::WindowOperation>("base::options::WindowOperation");
     qRegisterMetaType<KWin::EffectWindow*>();
     qRegisterMetaType<Wrapland::Server::Surface*>("Wrapland::Server::Surface*");
     qRegisterMetaType<KSharedConfigPtr>();
@@ -260,7 +260,7 @@ base::wayland::server* Application::get_wayland_server()
 
 void Application::createOptions()
 {
-    options = std::make_unique<Options>();
+    options = std::make_unique<base::options>();
     options->loadConfig();
     options->loadCompositingConfig(false);
 }
