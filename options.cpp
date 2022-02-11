@@ -1,24 +1,11 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 1999, 2000 Matthias Ettrich <ettrich@kde.org>
+    SPDX-FileCopyrightText: 2003 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2012 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 1999, 2000 Matthias Ettrich <ettrich@kde.org>
-Copyright (C) 2003 Lubos Lunak <l.lunak@kde.org>
-Copyright (C) 2012 Martin Gräßlin <m.graesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "options.h"
 
 #include "base/logging.h"
@@ -32,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "screens.h"
 #include "settings.h"
-#include <kwinglplatform.h>
 #include <QOpenGLContext>
+#include <kwinglplatform.h>
 
-#endif //KCMRULES
+#endif // KCMRULES
 
 namespace KWin
 {
@@ -51,7 +38,7 @@ int Options::currentRefreshRate()
 {
     int rate = -1;
     QString syncScreenName(QLatin1String("primary screen"));
-    if (options->refreshRate() > 0) {  // use manually configured refresh rate
+    if (options->refreshRate() > 0) { // use manually configured refresh rate
         rate = options->refreshRate();
     } else if (kwinApp()->get_base().screens.count() > 0) {
         // prefer the refreshrate calculated from the screens mode information
@@ -88,7 +75,7 @@ int Options::currentRefreshRate()
     return rate;
 }
 
-Options::Options(QObject *parent)
+Options::Options(QObject* parent)
     : QObject(parent)
     , m_settings(new Settings(kwinApp()->config()))
     , m_focusPolicy(ClickToFocus)
@@ -145,11 +132,15 @@ Options::Options(QObject *parent)
     syncFromKcfgc();
 
     m_configWatcher = KConfigWatcher::create(m_settings->sharedConfig());
-    connect(m_configWatcher.data(), &KConfigWatcher::configChanged, this, [this](const KConfigGroup &group, const QByteArrayList &names) {
-        if (group.name() == QLatin1String("KDE") && names.contains(QByteArrayLiteral("AnimationDurationFactor"))) {
-            Q_EMIT animationSpeedChanged();
-        }
-    });
+    connect(m_configWatcher.data(),
+            &KConfigWatcher::configChanged,
+            this,
+            [this](const KConfigGroup& group, const QByteArrayList& names) {
+                if (group.name() == QLatin1String("KDE")
+                    && names.contains(QByteArrayLiteral("AnimationDurationFactor"))) {
+                    Q_EMIT animationSpeedChanged();
+                }
+            });
 }
 
 Options::~Options()
@@ -650,7 +641,8 @@ void Options::setGlPlatformInterface(OpenGLPlatformInterface interface)
         qCDebug(KWIN_CORE) << "Forcing EGL native interface as Qt uses OpenGL ES";
         interface = EglPlatformInterface;
     } else if (qstrcmp(qgetenv("KWIN_COMPOSE"), "O2ES") == 0) {
-        qCDebug(KWIN_CORE) << "Forcing EGL native interface as OpenGL ES requested through KWIN_COMPOSE environment variable.";
+        qCDebug(KWIN_CORE) << "Forcing EGL native interface as OpenGL ES requested through "
+                              "KWIN_COMPOSE environment variable.";
         interface = EglPlatformInterface;
     }
 
@@ -674,9 +666,8 @@ void Options::updateSettings()
     // and not kstyle tooltips and vise-versa, we don't read the
     // "EffectNoTooltip" setting from kdeglobals.
 
-
-//    QToolTip::setGloballyEnabled( d->show_tooltips );
-// KDE4 this probably needs to be done manually in clients
+    //    QToolTip::setGloballyEnabled( d->show_tooltips );
+    // KDE4 this probably needs to be done manually in clients
 
     // Driver-specific config detection
     reloadCompositingSettings();
@@ -692,26 +683,41 @@ void Options::loadConfig()
 
     // Electric borders
     KConfigGroup config(m_settings->config(), "Windows");
-    OpTitlebarDblClick = windowOperation(config.readEntry("TitlebarDoubleClickCommand", "Maximize"), true);
-    setOperationMaxButtonLeftClick(windowOperation(config.readEntry("MaximizeButtonLeftClickCommand", "Maximize"), true));
-    setOperationMaxButtonMiddleClick(windowOperation(config.readEntry("MaximizeButtonMiddleClickCommand", "Maximize (vertical only)"), true));
-    setOperationMaxButtonRightClick(windowOperation(config.readEntry("MaximizeButtonRightClickCommand", "Maximize (horizontal only)"), true));
+    OpTitlebarDblClick
+        = windowOperation(config.readEntry("TitlebarDoubleClickCommand", "Maximize"), true);
+    setOperationMaxButtonLeftClick(
+        windowOperation(config.readEntry("MaximizeButtonLeftClickCommand", "Maximize"), true));
+    setOperationMaxButtonMiddleClick(windowOperation(
+        config.readEntry("MaximizeButtonMiddleClickCommand", "Maximize (vertical only)"), true));
+    setOperationMaxButtonRightClick(windowOperation(
+        config.readEntry("MaximizeButtonRightClickCommand", "Maximize (horizontal only)"), true));
 
     // Mouse bindings
     config = KConfigGroup(m_settings->config(), "MouseBindings");
     // TODO: add properties for missing options
     CmdTitlebarWheel = mouseWheelCommand(config.readEntry("CommandTitlebarWheel", "Nothing"));
-    CmdAllModKey = (config.readEntry("CommandAllKey", "Meta") == QStringLiteral("Meta")) ? Qt::Key_Meta : Qt::Key_Alt;
+    CmdAllModKey = (config.readEntry("CommandAllKey", "Meta") == QStringLiteral("Meta"))
+        ? Qt::Key_Meta
+        : Qt::Key_Alt;
     CmdAllWheel = mouseWheelCommand(config.readEntry("CommandAllWheel", "Nothing"));
-    setCommandActiveTitlebar1(mouseCommand(config.readEntry("CommandActiveTitlebar1", "Raise"), true));
-    setCommandActiveTitlebar2(mouseCommand(config.readEntry("CommandActiveTitlebar2", "Nothing"), true));
-    setCommandActiveTitlebar3(mouseCommand(config.readEntry("CommandActiveTitlebar3", "Operations menu"), true));
-    setCommandInactiveTitlebar1(mouseCommand(config.readEntry("CommandInactiveTitlebar1", "Activate and raise"), true));
-    setCommandInactiveTitlebar2(mouseCommand(config.readEntry("CommandInactiveTitlebar2", "Nothing"), true));
-    setCommandInactiveTitlebar3(mouseCommand(config.readEntry("CommandInactiveTitlebar3", "Operations menu"), true));
-    setCommandWindow1(mouseCommand(config.readEntry("CommandWindow1", "Activate, raise and pass click"), false));
-    setCommandWindow2(mouseCommand(config.readEntry("CommandWindow2", "Activate and pass click"), false));
-    setCommandWindow3(mouseCommand(config.readEntry("CommandWindow3", "Activate and pass click"), false));
+    setCommandActiveTitlebar1(
+        mouseCommand(config.readEntry("CommandActiveTitlebar1", "Raise"), true));
+    setCommandActiveTitlebar2(
+        mouseCommand(config.readEntry("CommandActiveTitlebar2", "Nothing"), true));
+    setCommandActiveTitlebar3(
+        mouseCommand(config.readEntry("CommandActiveTitlebar3", "Operations menu"), true));
+    setCommandInactiveTitlebar1(
+        mouseCommand(config.readEntry("CommandInactiveTitlebar1", "Activate and raise"), true));
+    setCommandInactiveTitlebar2(
+        mouseCommand(config.readEntry("CommandInactiveTitlebar2", "Nothing"), true));
+    setCommandInactiveTitlebar3(
+        mouseCommand(config.readEntry("CommandInactiveTitlebar3", "Operations menu"), true));
+    setCommandWindow1(
+        mouseCommand(config.readEntry("CommandWindow1", "Activate, raise and pass click"), false));
+    setCommandWindow2(
+        mouseCommand(config.readEntry("CommandWindow2", "Activate and pass click"), false));
+    setCommandWindow3(
+        mouseCommand(config.readEntry("CommandWindow3", "Activate and pass click"), false));
     setCommandWindowWheel(mouseCommand(config.readEntry("CommandWindowWheel", "Scroll"), false));
     setCommandAll1(mouseCommand(config.readEntry("CommandAll1", "Move"), false));
     setCommandAll2(mouseCommand(config.readEntry("CommandAll2", "Toggle raise and lower"), false));
@@ -719,9 +725,11 @@ void Options::loadConfig()
 
     // TODO: should they be moved into reloadCompositingSettings?
     config = KConfigGroup(m_settings->config(), "Compositing");
-    setMaxFpsInterval(1 * 1000 * 1000 * 1000 / config.readEntry("MaxFPS", Options::defaultMaxFps()));
+    setMaxFpsInterval(1 * 1000 * 1000 * 1000
+                      / config.readEntry("MaxFPS", Options::defaultMaxFps()));
     setRefreshRate(config.readEntry("RefreshRate", Options::defaultRefreshRate()));
-    setVBlankTime(config.readEntry("VBlankTime", Options::defaultVBlankTime()) * 1000); // config in micro, value in nano resolution
+    setVBlankTime(config.readEntry("VBlankTime", Options::defaultVBlankTime())
+                  * 1000); // config in micro, value in nano resolution
 
     // Modifier Only Shortcuts
     config = KConfigGroup(m_settings->config(), "ModifierOnlyShortcuts");
@@ -730,15 +738,19 @@ void Options::loadConfig()
         m_modifierOnlyShortcuts.insert(Qt::ShiftModifier, config.readEntry("Shift", QStringList()));
     }
     if (config.hasKey("Control")) {
-        m_modifierOnlyShortcuts.insert(Qt::ControlModifier, config.readEntry("Control", QStringList()));
+        m_modifierOnlyShortcuts.insert(Qt::ControlModifier,
+                                       config.readEntry("Control", QStringList()));
     }
     if (config.hasKey("Alt")) {
         m_modifierOnlyShortcuts.insert(Qt::AltModifier, config.readEntry("Alt", QStringList()));
     }
-    m_modifierOnlyShortcuts.insert(Qt::MetaModifier, config.readEntry("Meta", QStringList{QStringLiteral("org.kde.plasmashell"),
-                                                                                          QStringLiteral("/PlasmaShell"),
-                                                                                          QStringLiteral("org.kde.PlasmaShell"),
-                                                                                          QStringLiteral("activateLauncherMenu")}));
+    m_modifierOnlyShortcuts.insert(
+        Qt::MetaModifier,
+        config.readEntry("Meta",
+                         QStringList{QStringLiteral("org.kde.plasmashell"),
+                                     QStringLiteral("/PlasmaShell"),
+                                     QStringLiteral("org.kde.PlasmaShell"),
+                                     QStringLiteral("activateLauncherMenu")}));
 }
 
 void Options::syncFromKcfgc()
@@ -774,7 +786,7 @@ void Options::syncFromKcfgc()
     setAnimationCurve(m_settings->animationCurve());
 }
 
-bool Options::loadCompositingConfig (bool force)
+bool Options::loadCompositingConfig(bool force)
 {
     KConfigGroup config(m_settings->config(), "Compositing");
 
@@ -788,8 +800,8 @@ bool Options::loadCompositingConfig (bool force)
     else
         compositingMode = OpenGLCompositing;
 
-    if (const char *c = getenv("KWIN_COMPOSE")) {
-        switch(c[0]) {
+    if (const char* c = getenv("KWIN_COMPOSE")) {
+        switch (c[0]) {
         case 'O':
             qCDebug(KWIN_CORE) << "Compositing forced to OpenGL mode by environment variable";
             compositingMode = OpenGLCompositing;
@@ -819,14 +831,18 @@ bool Options::loadCompositingConfig (bool force)
     }
     setCompositingMode(compositingMode);
 
-    const bool platformSupportsNoCompositing = kwinApp()->get_base().render->supportedCompositors().contains(NoCompositing);
+    const bool platformSupportsNoCompositing
+        = kwinApp()->get_base().render->supportedCompositors().contains(NoCompositing);
     if (m_compositingMode == NoCompositing && platformSupportsNoCompositing) {
         setUseCompositing(false);
         return false; // do not even detect compositing preferences if explicitly disabled
     }
 
     // it's either enforced by env or by initial resume from "suspend" or we check the settings
-    setUseCompositing(useCompositing || force || config.readEntry("Enabled", Options::defaultUseCompositing() || !platformSupportsNoCompositing));
+    setUseCompositing(
+        useCompositing || force
+        || config.readEntry("Enabled",
+                            Options::defaultUseCompositing() || !platformSupportsNoCompositing));
 
     if (!m_useCompositing)
         return false; // not enforced or necessary and not "enabled" by settings
@@ -870,7 +886,7 @@ void Options::reloadCompositingSettings(bool force)
             return QString();
         }
     };
-    auto keyToInterface = [](const QString &key) {
+    auto keyToInterface = [](const QString& key) {
         if (key == QStringLiteral("glx")) {
             return GlxPlatformInterface;
         } else if (key == QStringLiteral("egl")) {
@@ -878,14 +894,15 @@ void Options::reloadCompositingSettings(bool force)
         }
         return defaultGlPlatformInterface();
     };
-    setGlPlatformInterface(keyToInterface(config.readEntry("GLPlatformInterface", interfaceToKey(m_glPlatformInterface))));
+    setGlPlatformInterface(keyToInterface(
+        config.readEntry("GLPlatformInterface", interfaceToKey(m_glPlatformInterface))));
 }
 
 // restricted should be true for operations that the user may not be able to repeat
 // if the window is moved out of the workspace (e.g. if the user moves a window
 // by the titlebar, and moves it too high beneath Kicker at the top edge, they
 // may not be able to move it back, unless they know about Meta+LMB)
-Options::WindowOperation Options::windowOperation(const QString &name, bool restricted)
+Options::WindowOperation Options::windowOperation(const QString& name, bool restricted)
 {
     if (name == QStringLiteral("Move"))
         return restricted ? MoveOp : UnrestrictedMoveOp;
@@ -910,42 +927,67 @@ Options::WindowOperation Options::windowOperation(const QString &name, bool rest
     return NoOp;
 }
 
-Options::MouseCommand Options::mouseCommand(const QString &name, bool restricted)
+Options::MouseCommand Options::mouseCommand(const QString& name, bool restricted)
 {
     QString lowerName = name.toLower();
-    if (lowerName == QStringLiteral("raise")) return MouseRaise;
-    if (lowerName == QStringLiteral("lower")) return MouseLower;
-    if (lowerName == QStringLiteral("operations menu")) return MouseOperationsMenu;
-    if (lowerName == QStringLiteral("toggle raise and lower")) return MouseToggleRaiseAndLower;
-    if (lowerName == QStringLiteral("activate and raise")) return MouseActivateAndRaise;
-    if (lowerName == QStringLiteral("activate and lower")) return MouseActivateAndLower;
-    if (lowerName == QStringLiteral("activate")) return MouseActivate;
-    if (lowerName == QStringLiteral("activate, raise and pass click")) return MouseActivateRaiseAndPassClick;
-    if (lowerName == QStringLiteral("activate and pass click")) return MouseActivateAndPassClick;
-    if (lowerName == QStringLiteral("scroll")) return MouseNothing;
-    if (lowerName == QStringLiteral("activate and scroll")) return MouseActivateAndPassClick;
-    if (lowerName == QStringLiteral("activate, raise and scroll")) return MouseActivateRaiseAndPassClick;
+    if (lowerName == QStringLiteral("raise"))
+        return MouseRaise;
+    if (lowerName == QStringLiteral("lower"))
+        return MouseLower;
+    if (lowerName == QStringLiteral("operations menu"))
+        return MouseOperationsMenu;
+    if (lowerName == QStringLiteral("toggle raise and lower"))
+        return MouseToggleRaiseAndLower;
+    if (lowerName == QStringLiteral("activate and raise"))
+        return MouseActivateAndRaise;
+    if (lowerName == QStringLiteral("activate and lower"))
+        return MouseActivateAndLower;
+    if (lowerName == QStringLiteral("activate"))
+        return MouseActivate;
+    if (lowerName == QStringLiteral("activate, raise and pass click"))
+        return MouseActivateRaiseAndPassClick;
+    if (lowerName == QStringLiteral("activate and pass click"))
+        return MouseActivateAndPassClick;
+    if (lowerName == QStringLiteral("scroll"))
+        return MouseNothing;
+    if (lowerName == QStringLiteral("activate and scroll"))
+        return MouseActivateAndPassClick;
+    if (lowerName == QStringLiteral("activate, raise and scroll"))
+        return MouseActivateRaiseAndPassClick;
     if (lowerName == QStringLiteral("activate, raise and move"))
         return restricted ? MouseActivateRaiseAndMove : MouseActivateRaiseAndUnrestrictedMove;
-    if (lowerName == QStringLiteral("move")) return restricted ? MouseMove : MouseUnrestrictedMove;
-    if (lowerName == QStringLiteral("resize")) return restricted ? MouseResize : MouseUnrestrictedResize;
-    if (lowerName == QStringLiteral("minimize")) return MouseMinimize;
-    if (lowerName == QStringLiteral("close")) return MouseClose;
-    if (lowerName == QStringLiteral("increase opacity")) return MouseOpacityMore;
-    if (lowerName == QStringLiteral("decrease opacity")) return MouseOpacityLess;
-    if (lowerName == QStringLiteral("nothing")) return MouseNothing;
+    if (lowerName == QStringLiteral("move"))
+        return restricted ? MouseMove : MouseUnrestrictedMove;
+    if (lowerName == QStringLiteral("resize"))
+        return restricted ? MouseResize : MouseUnrestrictedResize;
+    if (lowerName == QStringLiteral("minimize"))
+        return MouseMinimize;
+    if (lowerName == QStringLiteral("close"))
+        return MouseClose;
+    if (lowerName == QStringLiteral("increase opacity"))
+        return MouseOpacityMore;
+    if (lowerName == QStringLiteral("decrease opacity"))
+        return MouseOpacityLess;
+    if (lowerName == QStringLiteral("nothing"))
+        return MouseNothing;
     return MouseNothing;
 }
 
-Options::MouseWheelCommand Options::mouseWheelCommand(const QString &name)
+Options::MouseWheelCommand Options::mouseWheelCommand(const QString& name)
 {
     QString lowerName = name.toLower();
-    if (lowerName == QStringLiteral("raise/lower")) return MouseWheelRaiseLower;
-    if (lowerName == QStringLiteral("maximize/restore")) return MouseWheelMaximizeRestore;
-    if (lowerName == QStringLiteral("above/below")) return MouseWheelAboveBelow;
-    if (lowerName == QStringLiteral("previous/next desktop")) return MouseWheelPreviousNextDesktop;
-    if (lowerName == QStringLiteral("change opacity")) return MouseWheelChangeOpacity;
-    if (lowerName == QStringLiteral("nothing")) return MouseWheelNothing;
+    if (lowerName == QStringLiteral("raise/lower"))
+        return MouseWheelRaiseLower;
+    if (lowerName == QStringLiteral("maximize/restore"))
+        return MouseWheelMaximizeRestore;
+    if (lowerName == QStringLiteral("above/below"))
+        return MouseWheelAboveBelow;
+    if (lowerName == QStringLiteral("previous/next desktop"))
+        return MouseWheelPreviousNextDesktop;
+    if (lowerName == QStringLiteral("change opacity"))
+        return MouseWheelChangeOpacity;
+    if (lowerName == QStringLiteral("nothing"))
+        return MouseWheelNothing;
     return MouseWheelNothing;
 }
 
@@ -956,7 +998,7 @@ bool Options::condensedTitle() const
 
 Options::MouseCommand Options::wheelToMouseCommand(MouseWheelCommand com, int delta) const
 {
-    switch(com) {
+    switch (com) {
     case MouseWheelRaiseLower:
         return delta > 0 ? MouseRaise : MouseLower;
     case MouseWheelMaximizeRestore:
@@ -975,7 +1017,7 @@ Options::MouseCommand Options::wheelToMouseCommand(MouseWheelCommand com, int de
 
 double Options::animationTimeFactor() const
 {
- #ifndef KCMRULES
+#ifndef KCMRULES
     return m_settings->animationDurationFactor();
 #else
     return 0;
@@ -984,9 +1026,9 @@ double Options::animationTimeFactor() const
 
 Options::WindowOperation Options::operationMaxButtonClick(Qt::MouseButtons button) const
 {
-    return button == Qt::RightButton ? opMaxButtonRightClick :
-           button == Qt::MiddleButton ?   opMaxButtonMiddleClick :
-           opMaxButtonLeftClick;
+    return button == Qt::RightButton ? opMaxButtonRightClick
+        : button == Qt::MiddleButton ? opMaxButtonMiddleClick
+                                     : opMaxButtonLeftClick;
 }
 
 QStringList Options::modifierOnlyDBusShortcut(Qt::KeyboardModifier mod) const
