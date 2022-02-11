@@ -328,12 +328,12 @@ void check_workspace_position(Win* win,
     // the bottom struts bounded by the window's left and right sides).
 
     // Default is to use restrictedMoveArea. That's on active desktop or screen change.
-    auto moveAreaFunc = &Workspace::restrictedMoveArea;
+    auto moveAreaFunc = &space::restrictedMoveArea;
     if (workspace()->inUpdateClientArea()) {
         // On restriected area changes.
         // TODO(romangg): This check back on inUpdateClientArea and then setting here internally a
         //                different function is bad design. Replace with an argument or something.
-        moveAreaFunc = &Workspace::previousRestrictedMoveArea;
+        moveAreaFunc = &space::previousRestrictedMoveArea;
     }
 
     // These 4 compute old bounds.

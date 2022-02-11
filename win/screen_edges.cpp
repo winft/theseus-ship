@@ -705,7 +705,7 @@ void screen_edge::setClient(Toplevel* window)
  * screen_edger
  *********************************************************/
 
-screen_edger::screen_edger(Workspace& space)
+screen_edger::screen_edger(win::space& space)
     : gesture_recognizer{std::make_unique<input::gesture_recognizer>()}
     , space{space}
 {
@@ -724,8 +724,8 @@ screen_edger::screen_edger(Workspace& space)
                      this,
                      &screen_edger::updateLayout);
 
-    QObject::connect(&space, &Workspace::clientActivated, this, &win::screen_edger::checkBlocking);
-    QObject::connect(&space, &Workspace::clientRemoved, this, &screen_edger::deleteEdgeForClient);
+    QObject::connect(&space, &win::space::clientActivated, this, &win::screen_edger::checkBlocking);
+    QObject::connect(&space, &win::space::clientRemoved, this, &screen_edger::deleteEdgeForClient);
 }
 
 screen_edger::~screen_edger() = default;

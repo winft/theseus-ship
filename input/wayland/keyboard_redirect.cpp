@@ -109,7 +109,7 @@ void keyboard_redirect::init()
                      &keyboard_redirect::process_key_repeat);
     redirect->installInputEventSpy(keyRepeatSpy);
 
-    QObject::connect(workspace(), &Workspace::clientActivated, this, [this] {
+    QObject::connect(workspace(), &win::space::clientActivated, this, [this] {
         QObject::disconnect(m_activeClientSurfaceChangedConnection);
         if (auto c = workspace()->activeClient()) {
             m_activeClientSurfaceChangedConnection

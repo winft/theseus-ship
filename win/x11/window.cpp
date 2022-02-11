@@ -31,7 +31,7 @@
 namespace KWin::win::x11
 {
 
-window::window(Workspace& space)
+window::window(win::space& space)
     : Toplevel(new x11::transient(this))
     , space{space}
     , motif_hints(space.atoms->motif_wm_hints)
@@ -577,7 +577,7 @@ void window::setShortcutInternal()
     // Workaround for kwin<->kglobalaccel deadlock, when KWin has X grab and the kded
     // kglobalaccel module tries to create the key grab. KWin should preferably grab
     // they keys itself anyway :(.
-    QTimer::singleShot(0, this, std::bind(&Workspace::clientShortcutUpdated, workspace(), this));
+    QTimer::singleShot(0, this, std::bind(&space::clientShortcutUpdated, workspace(), this));
 #endif
 }
 

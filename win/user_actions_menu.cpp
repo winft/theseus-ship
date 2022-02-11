@@ -630,7 +630,7 @@ void user_actions_menu::slotSendToDesktop(QAction* action)
     }
     if (m_client.isNull())
         return;
-    Workspace* ws = workspace();
+    auto ws = workspace();
     auto vds = win::virtual_desktop_manager::self();
     if (desk == 0) {
         // the 'on_all_desktops' menu entry

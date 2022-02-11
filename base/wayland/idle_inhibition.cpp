@@ -105,8 +105,10 @@ void idle_inhibition::update(Toplevel* window)
 
 void idle_inhibition::slotWorkspaceCreated()
 {
-    connect(
-        workspace(), &Workspace::currentDesktopChanged, this, &idle_inhibition::slotDesktopChanged);
+    connect(workspace(),
+            &win::space::currentDesktopChanged,
+            this,
+            &idle_inhibition::slotDesktopChanged);
 }
 
 void idle_inhibition::slotDesktopChanged()

@@ -511,7 +511,7 @@ void DebugConsoleTest::testClosingDebugConsole()
     QSignalSpy destroyedSpy(console, &QObject::destroyed);
     QVERIFY(destroyedSpy.isValid());
 
-    QSignalSpy clientAddedSpy(workspace(), &Workspace::internalClientAdded);
+    QSignalSpy clientAddedSpy(workspace(), &win::space::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     console->show();
     QCOMPARE(console->windowHandle()->isVisible(), true);

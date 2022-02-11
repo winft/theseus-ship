@@ -585,7 +585,7 @@ public:
 #define SWITCH_WINDOW_SLOT(name, direction)                                                        \
     void name() override                                                                           \
     {                                                                                              \
-        ref_space->switchWindow(Workspace::direction);                                             \
+        ref_space->switchWindow(win::space::direction);                                            \
     }
 
     SIMPLE_SLOT(slotSwitchToNextScreen)

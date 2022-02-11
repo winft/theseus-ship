@@ -85,7 +85,7 @@ compositor::compositor(render::platform& platform)
         }
     });
 
-    connect(workspace(), &Workspace::destroyed, this, [this] {
+    connect(workspace(), &win::space::destroyed, this, [this] {
         for (auto& output : get_platform(this->platform.base).outputs) {
             get_output(output)->render->delay_timer.stop();
         }

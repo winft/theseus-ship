@@ -480,7 +480,7 @@ TabBox::TabBox(QObject *parent)
 
     m_tabBoxMode = TabBoxDesktopMode; // init variables
     connect(&m_delayedShowTimer, &QTimer::timeout, this, &TabBox::show);
-    connect(workspace(), &Workspace::configChanged, this, &TabBox::reconfigure);
+    connect(workspace(), &win::space::configChanged, this, &TabBox::reconfigure);
 }
 
 TabBox::~TabBox()

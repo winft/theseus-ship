@@ -1133,5 +1133,11 @@ void Toplevel::setWindowHandles(xcb_window_t w)
     m_client.reset(w, false);
 }
 
+void Toplevel::setShortcutInternal()
+{
+    updateCaption();
+    workspace()->clientShortcutUpdated(this);
+}
+
 }
 

@@ -107,7 +107,7 @@ void XwaylandSelectionsTest::testSync()
     const QString paste = QFINDTESTDATA(QStringLiteral("paste"));
     QVERIFY(!paste.isEmpty());
 
-    QSignalSpy clientAddedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy clientAddedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(clientAddedSpy.isValid());
     QSignalSpy shellClientAddedSpy(static_cast<win::wayland::space*>(workspace()),
                                    &win::wayland::space::wayland_window_added);
@@ -189,7 +189,7 @@ void XwaylandSelectionsTest::testSync()
     QVERIFY(pasteClient);
 
     if (workspace()->activeClient() != pasteClient) {
-        QSignalSpy clientActivatedSpy(workspace(), &Workspace::clientActivated);
+        QSignalSpy clientActivatedSpy(workspace(), &win::space::clientActivated);
         QVERIFY(clientActivatedSpy.isValid());
         workspace()->activateClient(pasteClient);
         QVERIFY(clientActivatedSpy.wait());

@@ -262,7 +262,7 @@ void TestXdgShellClient::testDesktopPresenceChanged()
     effects->setNumberOfDesktops(4);
     QSignalSpy desktopPresenceChangedClientSpy(c, &win::wayland::window::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedClientSpy.isValid());
-    QSignalSpy desktopPresenceChangedWorkspaceSpy(workspace(), &Workspace::desktopPresenceChanged);
+    QSignalSpy desktopPresenceChangedWorkspaceSpy(workspace(), &win::space::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedWorkspaceSpy.isValid());
     QSignalSpy desktopPresenceChangedEffectsSpy(effects, &EffectsHandler::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedEffectsSpy.isValid());

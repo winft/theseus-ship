@@ -175,7 +175,7 @@ void handle_wl_selection_change(Selection* sel)
     // Wayland native client provides new selection.
     if (!sel->data.active_window_notifier) {
         sel->data.active_window_notifier = QObject::connect(
-            workspace(), &Workspace::clientActivated, sel->data.qobject.get(), [sel] {
+            workspace(), &win::space::clientActivated, sel->data.qobject.get(), [sel] {
                 handle_wl_selection_client_change(sel);
             });
     }

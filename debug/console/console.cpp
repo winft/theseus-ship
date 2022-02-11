@@ -254,10 +254,10 @@ console_model::console_model(QObject* parent)
             m_x11Clients.append(x11_client);
         }
     }
-    connect(workspace(), &Workspace::clientAdded, this, [this](auto c) {
+    connect(workspace(), &win::space::clientAdded, this, [this](auto c) {
         add_window(this, s_x11ClientId - 1, m_x11Clients, c);
     });
-    connect(workspace(), &Workspace::clientRemoved, this, [this](Toplevel* window) {
+    connect(workspace(), &win::space::clientRemoved, this, [this](Toplevel* window) {
         auto c = qobject_cast<win::x11::window*>(window);
         if (!c) {
             return;
@@ -269,10 +269,10 @@ console_model::console_model(QObject* parent)
     for (auto u : unmangeds) {
         m_unmanageds.append(u);
     }
-    connect(workspace(), &Workspace::unmanagedAdded, this, [this](Toplevel* u) {
+    connect(workspace(), &win::space::unmanagedAdded, this, [this](Toplevel* u) {
         add_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
     });
-    connect(workspace(), &Workspace::unmanagedRemoved, this, [this](Toplevel* u) {
+    connect(workspace(), &win::space::unmanagedRemoved, this, [this](Toplevel* u) {
         remove_window(this, s_x11UnmanagedId - 1, m_unmanageds, u);
     });
     for (auto const& window : workspace()->windows()) {
@@ -281,13 +281,15 @@ console_model::console_model(QObject* parent)
         }
     }
     connect(
-        workspace(), &Workspace::internalClientAdded, this, [this](win::internal_window* client) {
+        workspace(), &win::space::internalClientAdded, this, [this](win::internal_window* client) {
             add_window(this, s_workspaceInternalId - 1, m_internalClients, client);
         });
-    connect(
-        workspace(), &Workspace::internalClientRemoved, this, [this](win::internal_window* client) {
-            remove_window(this, s_workspaceInternalId - 1, m_internalClients, client);
-        });
+    connect(workspace(),
+            &win::space::internalClientRemoved,
+            this,
+            [this](win::internal_window* client) {
+                remove_window(this, s_workspaceInternalId - 1, m_internalClients, client);
+            });
 }
 
 console_model::~console_model() = default;

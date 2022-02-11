@@ -55,16 +55,16 @@ surface_tree_model::surface_tree_model(QObject* parent)
                                           reset);
                          reset();
                      });
-    QObject::connect(workspace(), &Workspace::clientAdded, this, [this, reset](auto c) {
+    QObject::connect(workspace(), &win::space::clientAdded, this, [this, reset](auto c) {
         if (c->surface()) {
             QObject::connect(
                 c->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
         }
         reset();
     });
-    QObject::connect(workspace(), &Workspace::clientRemoved, this, reset);
+    QObject::connect(workspace(), &win::space::clientRemoved, this, reset);
     QObject::connect(
-        workspace(), &Workspace::unmanagedAdded, this, [this, reset](Toplevel* window) {
+        workspace(), &win::space::unmanagedAdded, this, [this, reset](Toplevel* window) {
             if (window->surface()) {
                 QObject::connect(window->surface(),
                                  &Wrapland::Server::Surface::subsurfaceTreeChanged,
@@ -73,7 +73,7 @@ surface_tree_model::surface_tree_model(QObject* parent)
             }
             reset();
         });
-    QObject::connect(workspace(), &Workspace::unmanagedRemoved, this, reset);
+    QObject::connect(workspace(), &win::space::unmanagedRemoved, this, reset);
 }
 
 int surface_tree_model::columnCount(const QModelIndex& parent) const

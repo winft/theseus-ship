@@ -797,7 +797,7 @@ void PointerInputTest::testFocusFollowsMouse()
     QVERIFY(window1->frameGeometry().intersects(window2->frameGeometry()));
 
     // signal spies for active window changed and stacking order changed
-    QSignalSpy activeWindowChangedSpy(workspace(), &Workspace::clientActivated);
+    QSignalSpy activeWindowChangedSpy(workspace(), &win::space::clientActivated);
     QVERIFY(activeWindowChangedSpy.isValid());
     QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order, &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
@@ -889,7 +889,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
     QVERIFY(window1->frameGeometry().intersects(window2->frameGeometry()));
 
     // Signal spies for active window changed and stacking order changed.
-    QSignalSpy activeWindowChangedSpy(workspace(), &Workspace::clientActivated);
+    QSignalSpy activeWindowChangedSpy(workspace(), &win::space::clientActivated);
     QVERIFY(activeWindowChangedSpy.isValid());
     QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order, &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());

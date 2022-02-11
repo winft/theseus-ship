@@ -13,7 +13,7 @@
 namespace KWin::win::wayland
 {
 
-xwl_window::xwl_window(Workspace& space)
+xwl_window::xwl_window(win::space& space)
     : window(space)
 {
 }

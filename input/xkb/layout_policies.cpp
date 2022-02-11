@@ -196,7 +196,7 @@ void virtual_desktop_layout_policy::handle_layout_change(uint index)
 window_layout_policy::window_layout_policy(layout_manager* manager)
     : layout_policy(manager)
 {
-    QObject::connect(workspace(), &Workspace::clientActivated, this, [this](auto window) {
+    QObject::connect(workspace(), &win::space::clientActivated, this, [this](auto window) {
         if (!window) {
             return;
         }
@@ -243,7 +243,7 @@ application_layout_policy::application_layout_policy(layout_manager* manager,
     : layout_policy(manager, config)
 {
     QObject::connect(workspace(),
-                     &Workspace::clientActivated,
+                     &win::space::clientActivated,
                      this,
                      &application_layout_policy::handle_client_activated);
 

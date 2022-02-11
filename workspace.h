@@ -20,8 +20,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_WORKSPACE_H
-#define KWIN_WORKSPACE_H
+#pragma once
 
 #include "base/x11/atoms.h"
 #include "options.h"
@@ -71,6 +70,8 @@ namespace scripting
 class platform;
 }
 
+class Toplevel;
+
 namespace win
 {
 
@@ -91,11 +92,7 @@ class shortcut_dialog;
 class stacking_order;
 class user_actions_menu;
 
-}
-
-class Toplevel;
-
-class KWIN_EXPORT Workspace : public QObject
+class KWIN_EXPORT space : public QObject
 {
     Q_OBJECT
 public:
@@ -124,8 +121,10 @@ public:
 
     int block_focus{0};
 
-    explicit Workspace();
-    ~Workspace() override;
+    static space* _self;
+
+    space();
+    ~space() override;
 
     bool workspaceEvent(QEvent*);
 
@@ -266,7 +265,7 @@ public:
     std::vector<Toplevel*> const& windows() const;
 
     /**
-     * @return List of unmanaged "clients" currently registered in Workspace
+     * @return List of unmanaged "clients" currently registered in space
      */
     std::vector<Toplevel*> unmanagedList() const;
     /**
@@ -274,7 +273,7 @@ public:
      */
     std::vector<Toplevel*> remnants() const;
     /**
-     * @returns List of all clients (either X11 or Wayland) currently managed by Workspace
+     * @returns List of all clients (either X11 or Wayland) currently managed by space
      */
     std::vector<Toplevel*> const& allClientList() const
     {
@@ -291,7 +290,7 @@ private:
     // Unsorted
 
 public:
-    // True when performing Workspace::updateClientArea().
+    // True when performing space::updateClientArea().
     // The calls below are valid only in that case.
     bool inUpdateClientArea() const;
     QRegion previousRestrictedMoveArea(int desktop,
@@ -410,7 +409,7 @@ public:
     void addUnmanaged(Toplevel* c);
 
     /**
-     * Adds the internal client to Workspace.
+     * Adds the internal client to space.
      *
      * This method will be called by internal_window when it's mapped.
      *
@@ -420,7 +419,7 @@ public:
     void addInternalClient(win::internal_window* client);
 
     /**
-     * Removes the internal client from Workspace.
+     * Removes the internal client from space.
      *
      * This method is meant to be called only by internal_window.
      *
@@ -613,8 +612,6 @@ private:
 
     QTimer updateToolWindowsTimer;
 
-    static Workspace* _self;
-
     win::space_areas areas;
 
     // Array of the previous restricted areas that window cannot be moved into
@@ -634,65 +631,64 @@ private:
 
 private:
     friend bool performTransiencyCheck();
-    friend Workspace* workspace();
 };
 
-inline Toplevel* Workspace::activeClient() const
+inline Toplevel* space::activeClient() const
 {
     return active_client;
 }
 
-inline Toplevel* Workspace::mostRecentlyActivatedClient() const
+inline Toplevel* space::mostRecentlyActivatedClient() const
 {
     return should_get_focus.size() > 0 ? should_get_focus.back() : active_client;
 }
 
-inline void Workspace::addGroup(win::x11::group* group)
+inline void space::addGroup(win::x11::group* group)
 {
     Q_EMIT groupAdded(group);
     groups.push_back(group);
 }
 
-inline void Workspace::removeGroup(win::x11::group* group)
+inline void space::removeGroup(win::x11::group* group)
 {
     remove_all(groups, group);
 }
 
-inline bool Workspace::wasUserInteraction() const
+inline bool space::wasUserInteraction() const
 {
     return was_user_interaction;
 }
 
-inline win::session_manager* Workspace::sessionManager() const
+inline win::session_manager* space::sessionManager() const
 {
     return m_sessionManager;
 }
 
-inline bool Workspace::showingDesktop() const
+inline bool space::showingDesktop() const
 {
     return showing_desktop;
 }
 
-inline bool Workspace::globalShortcutsDisabled() const
+inline bool space::globalShortcutsDisabled() const
 {
     return global_shortcuts_disabled_for_client;
 }
 
-inline void Workspace::updateFocusMousePosition(const QPoint& pos)
+inline void space::updateFocusMousePosition(const QPoint& pos)
 {
     focusMousePos = pos;
 }
 
-inline QPoint Workspace::focusMousePosition() const
+inline QPoint space::focusMousePosition() const
 {
     return focusMousePos;
 }
 
-inline Workspace* workspace()
+}
+
+inline win::space* workspace()
 {
-    return Workspace::_self;
+    return win::space::_self;
 }
 
 }
-
-#endif

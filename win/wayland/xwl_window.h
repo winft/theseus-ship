@@ -14,7 +14,7 @@ class KWIN_EXPORT xwl_window : public x11::window
 {
     Q_OBJECT
 public:
-    explicit xwl_window(Workspace& space);
+    explicit xwl_window(win::space& space);
 
     qreal bufferScale() const override;
     bool setupCompositing(bool add_full_damage) override;

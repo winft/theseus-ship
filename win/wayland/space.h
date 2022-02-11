@@ -36,7 +36,7 @@ namespace wayland
 class window;
 struct xdg_activation;
 
-class KWIN_EXPORT space : public Workspace
+class KWIN_EXPORT space : public win::space
 {
     Q_OBJECT
 public:

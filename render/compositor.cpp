@@ -191,7 +191,7 @@ void compositor::startupWithWorkspace()
 
     connect(
         workspace(),
-        &Workspace::destroyed,
+        &win::space::destroyed,
         this,
         [this] { compositeTimer.stop(); },
         Qt::UniqueConnection);
@@ -214,7 +214,7 @@ void compositor::startupWithWorkspace()
 
     // Sets also the 'effects' pointer.
     platform.createEffectsHandler(this, scene());
-    connect(workspace(), &Workspace::deletedRemoved, scene(), &scene::removeToplevel);
+    connect(workspace(), &win::space::deletedRemoved, scene(), &scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
     connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
         if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {

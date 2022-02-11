@@ -61,7 +61,7 @@ SettingsImpl::SettingsImpl(KDecoration2::DecorationSettings *parent)
             disconnect(c);
         }
     );
-    connect(workspace(), &Workspace::configChanged, this, &SettingsImpl::readSettings);
+    connect(workspace(), &win::space::configChanged, this, &SettingsImpl::readSettings);
     connect(DecorationBridge::self(), &DecorationBridge::metaDataLoaded, this, &SettingsImpl::readSettings);
 }
 

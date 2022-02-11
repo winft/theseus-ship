@@ -20,7 +20,7 @@
 namespace KWin::win::x11
 {
 
-class KWIN_EXPORT space : public Workspace
+class KWIN_EXPORT space : public win::space
 {
     Q_OBJECT
 public:
