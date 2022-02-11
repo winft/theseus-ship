@@ -337,25 +337,25 @@ void check_workspace_position(Win* win,
     }
 
     // These 4 compute old bounds.
-    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaTop)) {
+    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, strut_area::top)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
             old_top_max = std::max(old_top_max, rect.y() + rect.height());
         }
     }
-    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaRight)) {
+    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, strut_area::right)) {
         auto rect = r & old_wide_frame_geo;
         if (!rect.isEmpty()) {
             old_right_max = std::min(old_right_max, rect.x());
         }
     }
-    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaBottom)) {
+    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, strut_area::bottom)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
             old_bottom_max = std::min(old_bottom_max, rect.y());
         }
     }
-    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaLeft)) {
+    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, strut_area::left)) {
         auto rect = r & old_wide_frame_geo;
         if (!rect.isEmpty()) {
             old_left_max = std::max(old_left_max, rect.x() + rect.width());
@@ -363,25 +363,25 @@ void check_workspace_position(Win* win,
     }
 
     // These 4 compute new bounds.
-    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaTop)) {
+    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), strut_area::top)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
             top_max = std::max(top_max, rect.y() + rect.height());
         }
     }
-    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaRight)) {
+    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), strut_area::right)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
             right_max = std::min(right_max, rect.x());
         }
     }
-    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaBottom)) {
+    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), strut_area::bottom)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
             bottom_max = std::min(bottom_max, rect.y());
         }
     }
-    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaLeft)) {
+    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), strut_area::left)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
             left_max = std::max(left_max, rect.x() + rect.width());

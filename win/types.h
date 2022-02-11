@@ -86,6 +86,15 @@ enum class placement {
     count,          // Number of placement policies, must be last.
 };
 
+enum class strut_area {
+    invalid = 0,
+    top = 1 << 0,
+    right = 1 << 1,
+    bottom = 1 << 2,
+    left = 1 << 3,
+    all = top | right | bottom | left,
+};
+
 enum class quicktiles {
     none = 0,
     left = 0x1,
@@ -102,4 +111,5 @@ enum class quicktiles {
 ENUM_FLAGS(KWin::win::position)
 ENUM_FLAGS(KWin::win::maximize_mode)
 ENUM_FLAGS(KWin::win::same_client_check)
+ENUM_FLAGS(KWin::win::strut_area)
 ENUM_FLAGS(KWin::win::quicktiles)

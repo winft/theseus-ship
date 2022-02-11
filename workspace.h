@@ -199,7 +199,7 @@ public:
     QRect clientArea(clientAreaOption, Toplevel const* window) const;
     QRect clientArea(clientAreaOption, int screen, int desktop) const;
 
-    QRegion restrictedMoveArea(int desktop, win::StrutAreas areas = win::StrutAreaAll) const;
+    QRegion restrictedMoveArea(int desktop, win::strut_area areas = win::strut_area::all) const;
 
     bool initializing() const;
 
@@ -300,7 +300,7 @@ public:
     // The calls below are valid only in that case.
     bool inUpdateClientArea() const;
     QRegion previousRestrictedMoveArea(int desktop,
-                                       win::StrutAreas areas = win::StrutAreaAll) const;
+                                       win::strut_area areas = win::strut_area::all) const;
     std::vector<QRect> previousScreenSizes() const;
     int oldDisplayWidth() const;
     int oldDisplayHeight() const;

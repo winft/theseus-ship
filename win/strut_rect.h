@@ -7,26 +7,18 @@
 */
 #pragma once
 
+#include "types.h"
+
 #include <QRect>
 #include <vector>
 
 namespace KWin::win
 {
 
-enum StrutArea {
-    StrutAreaInvalid = 0, // Null
-    StrutAreaTop = 1 << 0,
-    StrutAreaRight = 1 << 1,
-    StrutAreaBottom = 1 << 2,
-    StrutAreaLeft = 1 << 3,
-    StrutAreaAll = StrutAreaTop | StrutAreaRight | StrutAreaBottom | StrutAreaLeft
-};
-Q_DECLARE_FLAGS(StrutAreas, StrutArea)
-
 class strut_rect : public QRect
 {
 public:
-    explicit strut_rect(QRect rect = QRect(), StrutArea area = StrutAreaInvalid)
+    explicit strut_rect(QRect rect = QRect(), strut_area area = strut_area::invalid)
         : QRect(rect)
         , m_area(area)
     {
@@ -47,17 +39,15 @@ public:
         return *this;
     }
 
-    inline StrutArea area() const
+    inline strut_area area() const
     {
         return m_area;
     }
 
 private:
-    StrutArea m_area;
+    strut_area m_area;
 };
 
 using strut_rects = std::vector<strut_rect>;
 
 }
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(KWin::win::StrutAreas)

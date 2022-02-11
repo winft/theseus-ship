@@ -1061,46 +1061,46 @@ QRect adjusted_client_area(Win const* win, QRect const& desktopArea, QRect const
 }
 
 template<typename Win>
-strut_rect get_strut_rect(Win const* win, StrutArea area)
+strut_rect get_strut_rect(Win const* win, strut_area area)
 {
     // Not valid
-    assert(area != StrutAreaAll);
+    assert(area != strut_area::all);
 
     auto const displaySize = kwinApp()->get_base().screens.displaySize();
     NETExtendedStrut strutArea = strut(win);
 
     switch (area) {
-    case StrutAreaTop:
+    case strut_area::top:
         if (strutArea.top_width != 0)
             return strut_rect(QRect(strutArea.top_start,
                                     0,
                                     strutArea.top_end - strutArea.top_start,
                                     strutArea.top_width),
-                              StrutAreaTop);
+                              strut_area::top);
         break;
-    case StrutAreaRight:
+    case strut_area::right:
         if (strutArea.right_width != 0)
             return strut_rect(QRect(displaySize.width() - strutArea.right_width,
                                     strutArea.right_start,
                                     strutArea.right_width,
                                     strutArea.right_end - strutArea.right_start),
-                              StrutAreaRight);
+                              strut_area::right);
         break;
-    case StrutAreaBottom:
+    case strut_area::bottom:
         if (strutArea.bottom_width != 0)
             return strut_rect(QRect(strutArea.bottom_start,
                                     displaySize.height() - strutArea.bottom_width,
                                     strutArea.bottom_end - strutArea.bottom_start,
                                     strutArea.bottom_width),
-                              StrutAreaBottom);
+                              strut_area::bottom);
         break;
-    case StrutAreaLeft:
+    case strut_area::left:
         if (strutArea.left_width != 0)
             return strut_rect(QRect(0,
                                     strutArea.left_start,
                                     strutArea.left_width,
                                     strutArea.left_end - strutArea.left_start),
-                              StrutAreaLeft);
+                              strut_area::left);
         break;
     default:
         // Not valid
@@ -1114,10 +1114,10 @@ template<typename Win>
 strut_rects get_strut_rects(Win const* win)
 {
     strut_rects region;
-    region.push_back(get_strut_rect(win, StrutAreaTop));
-    region.push_back(get_strut_rect(win, StrutAreaRight));
-    region.push_back(get_strut_rect(win, StrutAreaBottom));
-    region.push_back(get_strut_rect(win, StrutAreaLeft));
+    region.push_back(get_strut_rect(win, strut_area::top));
+    region.push_back(get_strut_rect(win, strut_area::right));
+    region.push_back(get_strut_rect(win, strut_area::bottom));
+    region.push_back(get_strut_rect(win, strut_area::left));
     return region;
 }
 
@@ -1126,10 +1126,10 @@ bool has_offscreen_xinerama_strut(Win const* win)
 {
     // Get strut as a QRegion
     QRegion region;
-    region += get_strut_rect(win, StrutAreaTop);
-    region += get_strut_rect(win, StrutAreaRight);
-    region += get_strut_rect(win, StrutAreaBottom);
-    region += get_strut_rect(win, StrutAreaLeft);
+    region += get_strut_rect(win, strut_area::top);
+    region += get_strut_rect(win, strut_area::right);
+    region += get_strut_rect(win, strut_area::bottom);
+    region += get_strut_rect(win, strut_area::left);
 
     auto const& screens = kwinApp()->get_base().screens;
 

@@ -56,18 +56,18 @@ void update_space_areas(Window* win,
 
     auto margins_to_strut_area = [](auto const& margins) {
         if (margins.left() != 0) {
-            return StrutAreaLeft;
+            return strut_area::left;
         }
         if (margins.right() != 0) {
-            return StrutAreaRight;
+            return strut_area::right;
         }
         if (margins.top() != 0) {
-            return StrutAreaTop;
+            return strut_area::top;
         }
         if (margins.bottom() != 0) {
-            return StrutAreaBottom;
+            return strut_area::bottom;
         }
-        return StrutAreaInvalid;
+        return strut_area::invalid;
     };
 
     auto const strut = margins(screens.geometry(win->screen()));
