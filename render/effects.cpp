@@ -1137,12 +1137,12 @@ QString effects_handler_impl::desktopName(int desktop) const
 
 bool effects_handler_impl::optionRollOverDesktops() const
 {
-    return options->isRollOverDesktops();
+    return kwinApp()->options->isRollOverDesktops();
 }
 
 double effects_handler_impl::animationTimeFactor() const
 {
-    return options->animationTimeFactor();
+    return kwinApp()->options->animationTimeFactor();
 }
 
 WindowQuadType effects_handler_impl::newWindowQuadType()

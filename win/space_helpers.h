@@ -69,7 +69,7 @@ void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)
 template<typename Space>
 void update_tool_windows(Space* space, bool also_hide)
 {
-    if (!options->isHideUtilityWindowsForInactive()) {
+    if (!kwinApp()->options->isHideUtilityWindowsForInactive()) {
         for (auto const& window : space->allClientList()) {
             window->hideClient(false);
         }

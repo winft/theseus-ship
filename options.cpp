@@ -38,8 +38,8 @@ int Options::currentRefreshRate()
 {
     int rate = -1;
     QString syncScreenName(QLatin1String("primary screen"));
-    if (options->refreshRate() > 0) { // use manually configured refresh rate
-        rate = options->refreshRate();
+    if (kwinApp()->options->refreshRate() > 0) { // use manually configured refresh rate
+        rate = kwinApp()->options->refreshRate();
     } else if (kwinApp()->get_base().screens.count() > 0) {
         // prefer the refreshrate calculated from the screens mode information
         // at least the nvidia driver reports 50Hz BS ... *again*!
@@ -75,9 +75,8 @@ int Options::currentRefreshRate()
     return rate;
 }
 
-Options::Options(QObject* parent)
-    : QObject(parent)
-    , m_settings(new Settings(kwinApp()->config()))
+Options::Options()
+    : m_settings(new Settings(kwinApp()->config()))
     , m_focusPolicy(ClickToFocus)
     , m_nextFocusPrefersMouse(false)
     , m_clickRaise(false)

@@ -136,9 +136,9 @@ void place(Win* window, const QRect& area)
     }
 
     if (is_utility(window)) {
-        place_utility(window, area, options->placement());
+        place_utility(window, area, kwinApp()->options->placement());
     } else if (is_dialog(window)) {
-        place_dialog(window, area, options->placement());
+        place_dialog(window, area, kwinApp()->options->placement());
     } else if (is_splash(window)) {
         // on mainwindow, if any, otherwise centered
         place_on_main_window(window, area);
@@ -146,9 +146,9 @@ void place(Win* window, const QRect& area)
                || is_critical_notification(window)) {
         place_on_screen_display(window, area);
     } else if (window->transient()->lead() && window->surface()) {
-        place_dialog(window, area, options->placement());
+        place_dialog(window, area, kwinApp()->options->placement());
     } else {
-        place(window, area, options->placement());
+        place(window, area, kwinApp()->options->placement());
     }
 }
 
@@ -157,10 +157,10 @@ void place(Win* window, const QRect& area, placement policy, placement nextPlace
 {
     switch (policy) {
     case placement::unknown:
-        policy = options->placement();
+        policy = kwinApp()->options->placement();
         [[fallthrough]];
     case placement::global_default:
-        policy = options->placement();
+        policy = kwinApp()->options->placement();
         [[fallthrough]];
     case placement::no_placement:
         return;
@@ -186,7 +186,7 @@ void place(Win* window, const QRect& area, placement policy, placement nextPlace
         place_smart(window, area, nextPlacement);
     }
 
-    if (options->borderSnapZone()) {
+    if (kwinApp()->options->borderSnapZone()) {
         // snap to titlebar / snap to window borders on inner screen edges
         auto const geo = window->geometry_update.frame;
         QPoint corner = geo.topLeft();

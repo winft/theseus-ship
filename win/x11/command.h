@@ -14,7 +14,7 @@ namespace KWin::win::x11
 
 static inline uint16_t x11CommandAllModifier()
 {
-    switch (options->commandAllModifier()) {
+    switch (kwinApp()->options->commandAllModifier()) {
     case Qt::MetaModifier:
         return KKeyServer::modXMeta();
     case Qt::AltModifier:

@@ -157,7 +157,7 @@ space::space()
     connect(&screens, &Screens::changed, this, &space::desktopResized);
     screens.setConfig(config);
     screens.reconfigure();
-    connect(options, &Options::configChanged, &screens, &Screens::reconfigure);
+    connect(kwinApp()->options.get(), &Options::configChanged, &screens, &Screens::reconfigure);
 
     auto* focusChain = win::focus_chain::create(this);
     connect(this, &space::clientRemoved, focusChain, &win::focus_chain::remove);
@@ -170,11 +170,11 @@ space::space()
             &win::virtual_desktop_manager::currentChanged,
             focusChain,
             &win::focus_chain::setCurrentDesktop);
-    connect(options,
+    connect(kwinApp()->options.get(),
             &Options::separateScreenFocusChanged,
             focusChain,
             &win::focus_chain::setSeparateScreenFocus);
-    focusChain->setSeparateScreenFocus(options->isSeparateScreenFocus());
+    focusChain->setSeparateScreenFocus(kwinApp()->options->isSeparateScreenFocus());
 
     auto vds = win::virtual_desktop_manager::self();
     connect(
@@ -183,8 +183,8 @@ space::space()
             &win::virtual_desktop_manager::currentChanged,
             this,
             &space::slotCurrentDesktopChanged);
-    vds->setNavigationWrappingAround(options->isRollOverDesktops());
-    connect(options,
+    vds->setNavigationWrappingAround(kwinApp()->options->isRollOverDesktops());
+    connect(kwinApp()->options.get(),
             &Options::rollOverDesktopsChanged,
             vds,
             &win::virtual_desktop_manager::setNavigationWrappingAround);
@@ -455,10 +455,10 @@ void space::slotReconfigure()
     qCDebug(KWIN_CORE) << "space::slotReconfigure()";
     reconfigureTimer.stop();
 
-    bool borderlessMaximizedWindows = options->borderlessMaximizedWindows();
+    bool borderlessMaximizedWindows = kwinApp()->options->borderlessMaximizedWindows();
 
     kwinApp()->config()->reparseConfiguration();
-    options->updateSettings();
+    kwinApp()->options->updateSettings();
     scripting->start();
 
     Q_EMIT configChanged();
@@ -474,8 +474,8 @@ void space::slotReconfigure()
         }
     }
 
-    if (borderlessMaximizedWindows != options->borderlessMaximizedWindows()
-        && !options->borderlessMaximizedWindows()) {
+    if (borderlessMaximizedWindows != kwinApp()->options->borderlessMaximizedWindows()
+        && !kwinApp()->options->borderlessMaximizedWindows()) {
         // in case borderless maximized windows option changed and new option
         // is to have borders, we need to unset the borders for all maximized windows
         for (auto it = m_allClients.begin(); it != m_allClients.end(); ++it) {
@@ -501,7 +501,7 @@ void space::slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop)
 void space::activateClientOnNewDesktop(uint desktop)
 {
     Toplevel* c = nullptr;
-    if (options->focusPolicyIsReasonable()) {
+    if (kwinApp()->options->focusPolicyIsReasonable()) {
         c = findClientToActivateOnDesktop(desktop);
     }
     // If "unreasonable focus policy" and active_client is on_all_desktops and
@@ -536,7 +536,7 @@ Toplevel* space::findClientToActivateOnDesktop(uint desktop)
         return active_client;
     }
     // from actiavtion.cpp
-    if (options->isNextFocusPrefersMouse()) {
+    if (kwinApp()->options->isNextFocusPrefersMouse()) {
         auto it = stacking_order->sorted().cend();
         while (it != stacking_order->sorted().cbegin()) {
             auto client = qobject_cast<win::x11::window*>(*(--it));
@@ -598,8 +598,8 @@ void space::sendClientToDesktop(Toplevel* window, int desk, bool dont_activate)
     desk = window->desktop(); // Client did range checking
 
     if (window->isOnDesktop(win::virtual_desktop_manager::self()->current())) {
-        if (win::wants_tab_focus(window) && options->focusPolicyIsReasonable() && !was_on_desktop
-            && // for stickyness changes
+        if (win::wants_tab_focus(window) && kwinApp()->options->focusPolicyIsReasonable()
+            && !was_on_desktop && // for stickyness changes
             !dont_activate) {
             request_focus(window);
         } else {
@@ -641,7 +641,7 @@ void space::requestDelayFocus(Toplevel* c)
     delayFocusTimer = new QTimer(this);
     connect(delayFocusTimer, &QTimer::timeout, this, &space::delayFocus);
     delayFocusTimer->setSingleShot(true);
-    delayFocusTimer->start(options->delayFocusInterval());
+    delayFocusTimer->start(kwinApp()->options->delayFocusInterval());
 }
 
 void space::cancelDelayFocus()
@@ -839,7 +839,8 @@ QString space::supportInformation() const
 
     support.append(QStringLiteral("Options\n"));
     support.append(QStringLiteral("=======\n"));
-    const QMetaObject* metaOptions = options->metaObject();
+
+    auto const metaOptions = kwinApp()->options->metaObject();
     auto printProperty = [](const QVariant& variant) {
         if (variant.type() == QVariant::Size) {
             const QSize& s = variant.toSize();
@@ -861,8 +862,9 @@ QString space::supportInformation() const
         }
         support.append(QStringLiteral("%1: %2\n")
                            .arg(property.name())
-                           .arg(printProperty(options->property(property.name()))));
+                           .arg(printProperty(kwinApp()->options->property(property.name()))));
     }
+
     support.append(QStringLiteral("\nScreen Edges\n"));
     support.append(QStringLiteral("============\n"));
     auto const metaScreenEdges = workspace()->edges->metaObject();
@@ -1533,7 +1535,8 @@ int space::oldDisplayHeight() const
 QPoint
 space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, double snapAdjust)
 {
-    QSize borderSnapZone(options->borderSnapZone(), options->borderSnapZone());
+    QSize borderSnapZone(kwinApp()->options->borderSnapZone(),
+                         kwinApp()->options->borderSnapZone());
     QRect maxRect;
     auto guideMaximized = win::maximize_mode::restore;
     if (window->maximizeMode() != win::maximize_mode::restore) {
@@ -1552,9 +1555,10 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
         }
     }
 
-    if (options->windowSnapZone() || !borderSnapZone.isNull() || options->centerSnapZone()) {
+    if (kwinApp()->options->windowSnapZone() || !borderSnapZone.isNull()
+        || kwinApp()->options->centerSnapZone()) {
         auto const& screens = kwinApp()->get_base().screens;
-        const bool sOWO = options->isSnapOnlyWhenOverlapping();
+        const bool sOWO = kwinApp()->options->isSnapOnlyWhenOverlapping();
         const int screen = screens.number(pos + QRect(QPoint(), window->size()).center());
 
         if (maxRect.isNull()) {
@@ -1633,7 +1637,7 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
         }
 
         // windows snap
-        int snap = options->windowSnapZone() * snapAdjust;
+        int snap = kwinApp()->options->windowSnapZone() * snapAdjust;
         if (snap) {
             for (auto l = m_allClients.cbegin(); l != m_allClients.cend(); ++l) {
                 if ((*l) == window)
@@ -1714,7 +1718,7 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
         }
 
         // center snap
-        snap = options->centerSnapZone() * snapAdjust; // snap trigger
+        snap = kwinApp()->options->centerSnapZone() * snapAdjust; // snap trigger
         if (snap) {
             int diffX = qAbs((xmin + xmax) / 2 - (cx + cw / 2));
             int diffY = qAbs((ymin + ymax) / 2 - (cy + ch / 2));
@@ -1722,7 +1726,7 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
                 // Snap to center of screen
                 nx = (xmin + xmax) / 2 - cw / 2;
                 ny = (ymin + ymax) / 2 - ch / 2;
-            } else if (options->borderSnapZone()) {
+            } else if (kwinApp()->options->borderSnapZone()) {
                 // Enhance border snap
                 if ((nx == xmin || nx == xmax - cw) && diffY < snap && diffY < deltaY) {
                     // Snap to vertical center on screen edge
@@ -1745,8 +1749,9 @@ QRect space::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::posit
     // adapted from adjustClientPosition on 29May2004
     // this function is called when resizing a window and will modify
     // the new dimensions to snap to other windows/borders if appropriate
-    if (options->windowSnapZone() || options->borderSnapZone()) { // || options->centerSnapZone )
-        const bool sOWO = options->isSnapOnlyWhenOverlapping();
+    if (kwinApp()->options->windowSnapZone()
+        || kwinApp()->options->borderSnapZone()) { // || kwinApp()->options->centerSnapZone )
+        const bool sOWO = kwinApp()->options->isSnapOnlyWhenOverlapping();
 
         auto const maxRect = clientArea(
             MovementArea, QRect(QPoint(0, 0), window->size()).center(), window->desktop());
@@ -1768,7 +1773,7 @@ QRect space::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::posit
         int lx, ly, lrx, lry; // coords and size for the comparison client, l
 
         // border snap
-        int snap = options->borderSnapZone(); // snap trigger
+        int snap = kwinApp()->options->borderSnapZone(); // snap trigger
         if (snap) {
             deltaX = int(snap);
             deltaY = int(snap);
@@ -1832,7 +1837,7 @@ QRect space::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::posit
         }
 
         // windows snap
-        snap = options->windowSnapZone();
+        snap = kwinApp()->options->windowSnapZone();
         if (snap) {
             deltaX = int(snap);
             deltaY = int(snap);
@@ -1953,7 +1958,7 @@ QRect space::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::posit
         }
 
         // center snap
-        // snap = options->centerSnapZone;
+        // snap = kwinApp()->options->centerSnapZone;
         // if (snap)
         //    {
         //    // Don't resize snap to center as it interferes too much
@@ -2559,7 +2564,7 @@ void space::activateClient(Toplevel* window, bool force)
     window->hideClient(false);
 
     // TODO force should perhaps allow this only if the window already contains the mouse
-    if (options->focusPolicyIsReasonable() || force) {
+    if (kwinApp()->options->focusPolicyIsReasonable() || force) {
         request_focus(window, false, force);
     }
 
@@ -2703,7 +2708,7 @@ bool space::activateNextClient(Toplevel* window)
         return true;
     }
 
-    if (!options->focusPolicyIsReasonable())
+    if (!kwinApp()->options->focusPolicyIsReasonable())
         return false;
 
     Toplevel* get_focus = nullptr;
@@ -2713,7 +2718,7 @@ bool space::activateNextClient(Toplevel* window)
     if (!get_focus && showingDesktop())
         get_focus = win::find_desktop(this, true, desktop); // to not break the state
 
-    if (!get_focus && options->isNextFocusPrefersMouse()) {
+    if (!get_focus && kwinApp()->options->isNextFocusPrefersMouse()) {
         get_focus
             = clientUnderMouse(window ? window->screen() : kwinApp()->get_base().screens.current());
         if (get_focus && (get_focus == window || win::is_desktop(get_focus))) {
@@ -2760,7 +2765,7 @@ void space::setCurrentScreen(int new_screen)
     if (new_screen < 0 || new_screen >= screens.count()) {
         return;
     }
-    if (!options->focusPolicyIsReasonable()) {
+    if (!kwinApp()->options->focusPolicyIsReasonable()) {
         return;
     }
     closeActivePopup();
@@ -2808,7 +2813,7 @@ bool space::allowClientActivation(Toplevel const* window,
                                   bool focus_in,
                                   bool ignore_desktop)
 {
-    // options->focusStealingPreventionLevel :
+    // kwinApp()->options->focusStealingPreventionLevel :
     // 0 - none    - old KWin behaviour, new windows always get focus
     // 1 - low     - focus stealing prevention is applied normally, when unsure, activation is
     // allowed 2 - normal  - focus stealing prevention is applied normally, when unsure, activation
@@ -2820,7 +2825,8 @@ bool space::allowClientActivation(Toplevel const* window,
     if (time == -1U) {
         time = window->userTime();
     }
-    auto level = window->control->rules().checkFSP(options->focusStealingPreventionLevel());
+    auto level
+        = window->control->rules().checkFSP(kwinApp()->options->focusStealingPreventionLevel());
     if (sessionManager()->state() == SessionState::Saving && level <= FSP::Medium) { // <= normal
         return true;
     }
@@ -2906,7 +2912,8 @@ bool space::allowClientActivation(Toplevel const* window,
 // to the same application
 bool space::allowFullClientRaising(Toplevel const* window, xcb_timestamp_t time)
 {
-    auto level = window->control->rules().checkFSP(options->focusStealingPreventionLevel());
+    auto level
+        = window->control->rules().checkFSP(kwinApp()->options->focusStealingPreventionLevel());
     if (sessionManager()->state() == SessionState::Saving && level <= 2) { // <= normal
         return true;
     }
@@ -3569,8 +3576,8 @@ void space::slotWindowLower()
         // As this most likely makes the window no longer visible change the
         // keyboard focus to the next available window.
         // activateNextClient( c ); // Doesn't work when we lower a child window
-        if (active_client->control->active() && options->focusPolicyIsReasonable()) {
-            if (options->isNextFocusPrefersMouse()) {
+        if (active_client->control->active() && kwinApp()->options->focusPolicyIsReasonable()) {
+            if (kwinApp()->options->isNextFocusPrefersMouse()) {
                 auto next = clientUnderMouse(active_client->screen());
                 if (next && next != active_client)
                     request_focus(next);
@@ -3640,7 +3647,7 @@ void windowToDesktop(Toplevel* window)
     auto vds = win::virtual_desktop_manager::self();
     auto ws = workspace();
     Direction functor;
-    // TODO: why is options->isRollOverDesktops() not honored?
+    // TODO: why is kwinApp()->options->isRollOverDesktops() not honored?
     const auto desktop = functor(nullptr, true);
     if (window && !win::is_desktop(window) && !win::is_dock(window)) {
         ws->setMoveResizeClient(window);
@@ -3684,7 +3691,7 @@ void activeClientToDesktop()
     auto ws = workspace();
     const int current = vds->current();
     Direction functor;
-    const int d = functor(current, options->isRollOverDesktops());
+    const int d = functor(current, kwinApp()->options->isRollOverDesktops());
     if (d == current) {
         return;
     }

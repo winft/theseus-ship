@@ -292,11 +292,11 @@ void raise_or_lower_client(Space* space, Window* window)
         && space->most_recently_raised->isShown() && window->isOnCurrentDesktop()) {
         topmost = space->most_recently_raised;
     } else {
-        topmost = top_client_on_desktop(space,
-                                        window->isOnAllDesktops()
-                                            ? win::virtual_desktop_manager::self()->current()
-                                            : window->desktop(),
-                                        options->isSeparateScreenFocus() ? window->screen() : -1);
+        topmost = top_client_on_desktop(
+            space,
+            window->isOnAllDesktops() ? win::virtual_desktop_manager::self()->current()
+                                      : window->desktop(),
+            kwinApp()->options->isSeparateScreenFocus() ? window->screen() : -1);
     }
 
     if (window == topmost) {

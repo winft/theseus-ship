@@ -90,18 +90,18 @@ public:
         //
         // The passive grab below is established so the window can be raised or activated when it
         // is clicked.
-        if ((options->focusPolicyIsReasonable() && !active())
-            || (options->isClickRaise() && !is_most_recently_raised(m_window))) {
-            if (options->commandWindow1() != Options::MouseNothing) {
+        if ((kwinApp()->options->focusPolicyIsReasonable() && !active())
+            || (kwinApp()->options->isClickRaise() && !is_most_recently_raised(m_window))) {
+            if (kwinApp()->options->commandWindow1() != Options::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_1);
             }
-            if (options->commandWindow2() != Options::MouseNothing) {
+            if (kwinApp()->options->commandWindow2() != Options::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_2);
             }
-            if (options->commandWindow3() != Options::MouseNothing) {
+            if (kwinApp()->options->commandWindow3() != Options::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_3);
             }
-            if (options->commandWindowWheel() != Options::MouseNothing) {
+            if (kwinApp()->options->commandWindowWheel() != Options::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_4);
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_5);
             }
@@ -112,16 +112,16 @@ public:
         // we can do about it, unfortunately.
 
         if (!workspace()->globalShortcutsDisabled()) {
-            if (options->commandAll1() != Options::MouseNothing) {
+            if (kwinApp()->options->commandAll1() != Options::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_1);
             }
-            if (options->commandAll2() != Options::MouseNothing) {
+            if (kwinApp()->options->commandAll2() != Options::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_2);
             }
-            if (options->commandAll3() != Options::MouseNothing) {
+            if (kwinApp()->options->commandAll3() != Options::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_3);
             }
-            if (options->commandAllWheel() != Options::MouseWheelNothing) {
+            if (kwinApp()->options->commandAllWheel() != Options::MouseWheelNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_4);
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_5);
             }
@@ -668,9 +668,11 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     QObject::connect(
         win->clientMachine(), &client_machine::localhostChanged, win, &window::updateCaption);
+    QObject::connect(kwinApp()->options.get(), &Options::configChanged, win, [win] {
+        win->control->update_mouse_grab();
+    });
     QObject::connect(
-        options, &Options::configChanged, win, [win] { win->control->update_mouse_grab(); });
-    QObject::connect(options, &Options::condensedTitleChanged, win, &window::updateCaption);
+        kwinApp()->options.get(), &Options::condensedTitleChanged, win, &window::updateCaption);
 
     QObject::connect(win, &window::moveResizeCursorChanged, win, [win](input::cursor_shape cursor) {
         auto nativeCursor = input::get_cursor()->x11_cursor(cursor);
@@ -1061,7 +1063,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
         if (!isMapped) {
             if (allow && win->isOnCurrentDesktop()) {
                 if (!is_special_window(win)) {
-                    if (options->focusPolicyIsReasonable() && wants_tab_focus(win)) {
+                    if (kwinApp()->options->focusPolicyIsReasonable() && wants_tab_focus(win)) {
                         space.request_focus(win);
                     }
                 }
@@ -1470,7 +1472,9 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
             }
             // don't refuse if focus stealing prevention is turned off
             if (!first_window
-                && win->control->rules().checkFSP(options->focusStealingPreventionLevel()) > 0) {
+                && win->control->rules().checkFSP(
+                       kwinApp()->options->focusStealingPreventionLevel())
+                    > 0) {
                 qCDebug(KWIN_CORE) << "User timestamp, already exists:" << 0;
                 return 0; // refuse activation
             }

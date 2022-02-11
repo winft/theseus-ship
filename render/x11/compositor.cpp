@@ -48,7 +48,7 @@ compositor* compositor::self()
 
 compositor::compositor(render::platform& platform)
     : render::compositor(platform)
-    , m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
+    , m_suspended(kwinApp()->options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
 {
     x11_integration.is_overlay_window = [this](auto win) { return checkForOverlayWindow(win); };
     x11_integration.update_blocking

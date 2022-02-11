@@ -72,8 +72,6 @@ Q_DECLARE_METATYPE(KSharedConfigPtr)
 namespace KWin
 {
 
-Options* options;
-
 int Application::crashes = 0;
 
 void Application::setX11ScreenNumber(int screenNumber)
@@ -155,10 +153,7 @@ void Application::prepare_start()
     screen_locker_watcher = std::make_unique<desktop::screen_locker_watcher>();
 }
 
-Application::~Application()
-{
-    delete options;
-}
+Application::~Application() = default;
 
 void Application::resetCrashesCount()
 {
@@ -265,7 +260,7 @@ base::wayland::server* Application::get_wayland_server()
 
 void Application::createOptions()
 {
-    options = new Options;
+    options = std::make_unique<Options>();
     options->loadConfig();
     options->loadCompositingConfig(false);
 }

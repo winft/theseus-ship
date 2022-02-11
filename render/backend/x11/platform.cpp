@@ -108,7 +108,7 @@ gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
         return gl_backend.get();
     }
 
-    switch (options->glPlatformInterface()) {
+    switch (kwinApp()->options->glPlatformInterface()) {
 #if HAVE_EPOXY_GLX
     case GlxPlatformInterface:
         if (has_glx()) {

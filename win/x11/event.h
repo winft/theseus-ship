@@ -547,9 +547,9 @@ void enter_notify_event(Win* win, xcb_enter_notify_event_t* e)
     }
 
 #define MOUSE_DRIVEN_FOCUS                                                                         \
-    (!options->focusPolicyIsReasonable()                                                           \
-     || (options->focusPolicy() == Options::FocusFollowsMouse                                      \
-         && options->isNextFocusPrefersMouse()))
+    (!kwinApp()->options->focusPolicyIsReasonable()                                                \
+     || (kwinApp()->options->focusPolicy() == Options::FocusFollowsMouse                           \
+         && kwinApp()->options->isNextFocusPrefersMouse()))
     if (e->mode == XCB_NOTIFY_MODE_NORMAL
         || (e->mode == XCB_NOTIFY_MODE_UNGRAB && MOUSE_DRIVEN_FOCUS)) {
 #undef MOUSE_DRIVEN_FOCUS
@@ -598,8 +598,8 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
                 QCoreApplication::sendEvent(deco, &leaveEvent);
             }
         }
-        if (options->focusPolicy() == Options::FocusStrictlyUnderMouse && win->control->active()
-            && lostMouse) {
+        if (kwinApp()->options->focusPolicy() == Options::FocusStrictlyUnderMouse
+            && win->control->active() && lostMouse) {
             workspace()->requestDelayFocus(nullptr);
         }
         return;
@@ -608,8 +608,9 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
 
 static inline bool modKeyDown(int state)
 {
-    uint const keyModX = (options->keyCmdAllModKey() == Qt::Key_Meta) ? KKeyServer::modXMeta()
-                                                                      : KKeyServer::modXAlt();
+    uint const keyModX = (kwinApp()->options->keyCmdAllModKey() == Qt::Key_Meta)
+        ? KKeyServer::modXMeta()
+        : KKeyServer::modXAlt();
     return keyModX && (state & KKeyServer::accelModMaskX()) == keyModX;
 }
 
@@ -652,17 +653,18 @@ bool button_press_event(Win* win,
             was_action = true;
             switch (button) {
             case XCB_BUTTON_INDEX_1:
-                com = options->commandAll1();
+                com = kwinApp()->options->commandAll1();
                 break;
             case XCB_BUTTON_INDEX_2:
-                com = options->commandAll2();
+                com = kwinApp()->options->commandAll2();
                 break;
             case XCB_BUTTON_INDEX_3:
-                com = options->commandAll3();
+                com = kwinApp()->options->commandAll3();
                 break;
             case XCB_BUTTON_INDEX_4:
             case XCB_BUTTON_INDEX_5:
-                com = options->operationWindowMouseWheel(button == XCB_BUTTON_INDEX_4 ? 120 : -120);
+                com = kwinApp()->options->operationWindowMouseWheel(
+                    button == XCB_BUTTON_INDEX_4 ? 120 : -120);
                 break;
             }
         } else {
@@ -730,7 +732,7 @@ bool button_press_event(Win* win,
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (!event.isAccepted() && !hor) {
                 if (win::titlebar_positioned_under_mouse(win)) {
-                    win->performMouseCommand(options->operationTitlebarMouseWheel(delta),
+                    win->performMouseCommand(kwinApp()->options->operationTitlebarMouseWheel(delta),
                                              QPoint(x_root, y_root));
                 }
             }

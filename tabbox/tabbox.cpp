@@ -1000,7 +1000,7 @@ void TabBox::navigatingThroughWindows(bool forward, const QKeySequence &shortcut
     if (!m_ready || isGrabbed()) {
         return;
     }
-    if (!options->focusPolicyIsReasonable()) {
+    if (!kwinApp()->options->focusPolicyIsReasonable()) {
         //ungrabXKeyboard(); // need that because of accelerator raw mode
         // CDE style raise / lower
         CDEWalkThroughWindows(forward);
@@ -1118,7 +1118,7 @@ bool TabBox::toggle(ElectricBorder eb)
 
 bool TabBox::toggleMode(TabBoxMode mode)
 {
-    if (!options->focusPolicyIsReasonable())
+    if (!kwinApp()->options->focusPolicyIsReasonable())
         return false; // not supported.
     if (isDisplayed()) {
         accept();
@@ -1222,7 +1222,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
     if (nc) {
         if (c && c != nc)
             win::lower_window(workspace(), c);
-        if (options->focusPolicyIsReasonable()) {
+        if (kwinApp()->options->focusPolicyIsReasonable()) {
             workspace()->activateClient(nc);
         } else {
             if (!nc->isOnDesktop(currentDesktop()))

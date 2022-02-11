@@ -749,7 +749,7 @@ void window::do_set_maximize_mode(maximize_mode mode)
 
     // Update decoration borders.
     if (auto deco = decoration(this); deco && deco->client()
-        && !(options->borderlessMaximizedWindows() && mode == maximize_mode::full)) {
+        && !(kwinApp()->options->borderlessMaximizedWindows() && mode == maximize_mode::full)) {
         auto const deco_client = win::decoration(this)->client().toStrongRef();
         if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {
             Q_EMIT deco_client->maximizedVerticallyChanged(flags(mode & maximize_mode::vertical));

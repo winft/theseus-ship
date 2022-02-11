@@ -55,8 +55,11 @@ compositor::compositor(render::platform& platform)
     , m_delay(0)
     , m_bufferSwapPending(false)
 {
-    connect(options, &Options::configChanged, this, &compositor::configChanged);
-    connect(options, &Options::animationSpeedChanged, this, &compositor::configChanged);
+    connect(kwinApp()->options.get(), &Options::configChanged, this, &compositor::configChanged);
+    connect(kwinApp()->options.get(),
+            &Options::animationSpeedChanged,
+            this,
+            &compositor::configChanged);
 
     m_unusedSupportPropertyTimer.setInterval(compositor_lost_message_delay);
     m_unusedSupportPropertyTimer.setSingleShot(true);
@@ -89,7 +92,7 @@ bool compositor::setupStart()
     }
     m_state = State::Starting;
 
-    options->reloadCompositingSettings(true);
+    kwinApp()->options->reloadCompositingSettings(true);
 
     setupX11Support();
 

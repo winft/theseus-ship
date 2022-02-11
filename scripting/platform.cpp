@@ -98,7 +98,8 @@ void platform::init()
     qmlRegisterType<QAbstractItemModel>();
 
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), qt_space.get());
-    m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("options"), options);
+    m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("options"),
+                                                   kwinApp()->options.get());
 
     decl_space
         = std::make_unique<template_space<declarative_script_space, win::space>>(workspace());

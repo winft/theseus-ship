@@ -241,7 +241,8 @@ public Q_SLOTS:
 #define SWITCH_VD_SLOT(name, direction)                                                            \
     void name()                                                                                    \
     {                                                                                              \
-        win::virtual_desktop_manager::self()->moveTo<direction>(options->isRollOverDesktops());    \
+        win::virtual_desktop_manager::self()->moveTo<direction>(                                   \
+            kwinApp()->options->isRollOverDesktops());                                             \
     }
 
     SWITCH_VD_SLOT(slotSwitchDesktopNext, win::virtual_desktop_next)

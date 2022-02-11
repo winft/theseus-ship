@@ -99,7 +99,7 @@ AnimationSettings animationSettingsFromObject(const QJSValue& object)
                 return QEasingCurve::Linear;
             }
         };
-        settings.curve = get_qt_curve(options->animationCurve());
+        settings.curve = get_qt_curve(kwinApp()->options->animationCurve());
     }
 
     const QJSValue type = object.property(QStringLiteral("type"));

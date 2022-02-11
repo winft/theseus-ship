@@ -206,7 +206,7 @@ class KWIN_EXPORT Options : public QObject
     Q_PROPERTY(bool windowsBlockCompositing READ windowsBlockCompositing WRITE
                    setWindowsBlockCompositing NOTIFY windowsBlockCompositingChanged)
 public:
-    explicit Options(QObject* parent = nullptr);
+    Options();
     ~Options() override;
 
     void updateSettings();
@@ -958,8 +958,6 @@ private:
 
     MouseCommand wheelToMouseCommand(MouseWheelCommand com, int delta) const;
 };
-
-extern KWIN_EXPORT Options* options;
 
 } // namespace
 

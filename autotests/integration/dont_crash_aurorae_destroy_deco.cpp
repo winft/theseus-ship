@@ -97,7 +97,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
     workspace()->slotReconfigure();
-    QCOMPARE(options->borderlessMaximizedWindows(), true);
+    QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
 
     // create an xcb window
     xcb_connection_t* c = xcb_connect(nullptr, nullptr);

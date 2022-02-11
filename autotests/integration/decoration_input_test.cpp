@@ -664,11 +664,11 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll3", "Move");
     group.sync();
     workspace()->slotReconfigure();
-    QCOMPARE(options->commandAllModifier(),
+    QCOMPARE(kwinApp()->options->commandAllModifier(),
              modKey == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier);
-    QCOMPARE(options->commandAll1(), Options::MouseUnrestrictedMove);
-    QCOMPARE(options->commandAll2(), Options::MouseUnrestrictedMove);
-    QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll1(), Options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll2(), Options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll3(), Options::MouseUnrestrictedMove);
 
     // create a window
     auto c = showWindow();

@@ -27,7 +27,7 @@ namespace KWin::input
 bool get_modifier_command(uint32_t key, Options::MouseCommand& command)
 {
     if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
-        != options->commandAllModifier()) {
+        != kwinApp()->options->commandAllModifier()) {
         return false;
     }
     if (kwinApp()->input->redirect->pointer()->isConstrained()) {
@@ -39,13 +39,13 @@ bool get_modifier_command(uint32_t key, Options::MouseCommand& command)
     auto qt_key = button_to_qt_mouse_button(key);
     switch (qt_key) {
     case Qt::LeftButton:
-        command = options->commandAll1();
+        command = kwinApp()->options->commandAll1();
         break;
     case Qt::MiddleButton:
-        command = options->commandAll2();
+        command = kwinApp()->options->commandAll2();
         break;
     case Qt::RightButton:
-        command = options->commandAll3();
+        command = kwinApp()->options->commandAll3();
         break;
     default:
         // nothing
@@ -88,7 +88,7 @@ bool get_wheel_modifier_command(axis_orientation orientation,
                                 Options::MouseCommand& command)
 {
     if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
-        != options->commandAllModifier()) {
+        != kwinApp()->options->commandAllModifier()) {
         return false;
     }
     if (kwinApp()->input->redirect->pointer()->isConstrained()) {
@@ -99,7 +99,7 @@ bool get_wheel_modifier_command(axis_orientation orientation,
     }
 
     auto veritcal_delta = (orientation == axis_orientation::vertical) ? -1 * delta : 0;
-    command = options->operationWindowMouseWheel(veritcal_delta);
+    command = kwinApp()->options->operationWindowMouseWheel(veritcal_delta);
 
     return true;
 }

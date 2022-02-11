@@ -15,7 +15,7 @@ namespace KWin::win
 template<>
 void update_no_border(x11::window* win)
 {
-    if (!options->borderlessMaximizedWindows()) {
+    if (!kwinApp()->options->borderlessMaximizedWindows()) {
         // If maximized windows can have borders there is no change implied.
         return;
     }
