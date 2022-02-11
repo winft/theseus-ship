@@ -154,8 +154,8 @@ int TabBoxHandlerImpl::numberOfDesktops() const
 
 std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::activeClient() const
 {
-    if (Workspace::self()->activeClient())
-        return Workspace::self()->activeClient()->control->tabbox();
+    if (workspace()->activeClient())
+        return workspace()->activeClient()->control->tabbox();
     else
         return std::weak_ptr<TabBoxClient>();
 }
@@ -283,7 +283,7 @@ TabBoxClientList TabBoxHandlerImpl::stackingOrder() const
 }
 
 bool TabBoxHandlerImpl::isKWinCompositing() const {
-    return Workspace::self()->compositing();
+    return workspace()->compositing();
 }
 
 void TabBoxHandlerImpl::raiseClient(TabBoxClient* c) const
@@ -303,7 +303,7 @@ void TabBoxHandlerImpl::elevateClient(TabBoxClient *c, QWindow *tabbox, bool b) 
 {
     auto cl = static_cast<TabBoxClientImpl*>(c)->client();
     win::elevate(cl, b);
-    if (auto w = Workspace::self()->findInternal(tabbox)) {
+    if (auto w = workspace()->findInternal(tabbox)) {
         win::elevate(w, b);
     }
 }
@@ -480,7 +480,7 @@ TabBox::TabBox(QObject *parent)
 
     m_tabBoxMode = TabBoxDesktopMode; // init variables
     connect(&m_delayedShowTimer, &QTimer::timeout, this, &TabBox::show);
-    connect(Workspace::self(), &Workspace::configChanged, this, &TabBox::reconfigure);
+    connect(workspace(), &Workspace::configChanged, this, &TabBox::reconfigure);
 }
 
 TabBox::~TabBox()
@@ -599,8 +599,8 @@ void TabBox::reset(bool partial_reset)
     case TabBoxConfig::ClientTabBox:
         m_tabBox->createModel(partial_reset);
         if (!partial_reset) {
-            if (Workspace::self()->activeClient())
-                setCurrentClient(Workspace::self()->activeClient());
+            if (workspace()->activeClient())
+                setCurrentClient(workspace()->activeClient());
             // it's possible that the active client is not part of the model
             // in that case the index is invalid
             if (!m_tabBox->currentIndex().isValid())
@@ -630,7 +630,7 @@ void TabBox::nextPrev(bool next)
 Toplevel* TabBox::currentClient()
 {
     if (TabBoxClientImpl* client = static_cast< TabBoxClientImpl* >(m_tabBox->client(m_tabBox->currentIndex()))) {
-        if (!Workspace::self()->hasClient(client->client()))
+        if (!workspace()->hasClient(client->client()))
             return nullptr;
         return client->client();
     } else
@@ -1184,7 +1184,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
 // this function find the first suitable client for unreasonable focus
 // policies - the topmost one, with some exceptions (can't be keepabove/below,
 // otherwise it gets stuck on them)
-//     Q_ASSERT(Workspace::self()->block_stacking_updates == 0);
+//     Q_ASSERT(workspace()->block_stacking_updates == 0);
     for (int i = workspace()->stacking_order->sorted().size() - 1;
             i >= 0 ;
             --i) {
@@ -1224,7 +1224,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
         if (c && c != nc)
             win::lower_window(workspace(), c);
         if (options->focusPolicyIsReasonable()) {
-            Workspace::self()->activateClient(nc);
+            workspace()->activateClient(nc);
         } else {
             if (!nc->isOnDesktop(currentDesktop()))
                 setCurrentDesktop(nc->desktop());
@@ -1239,7 +1239,7 @@ void TabBox::KDEOneStepThroughWindows(bool forward, TabBoxMode mode)
     reset();
     nextPrev(forward);
     if (auto c = currentClient()) {
-        Workspace::self()->activateClient(c);
+        workspace()->activateClient(c);
     }
 }
 
@@ -1391,9 +1391,9 @@ void TabBox::accept(bool closeTabBox)
     if (closeTabBox)
         close();
     if (c) {
-        Workspace::self()->activateClient(c);
+        workspace()->activateClient(c);
         if (win::is_desktop(c))
-            Workspace::self()->setShowingDesktop(!Workspace::self()->showingDesktop());
+            workspace()->setShowingDesktop(!workspace()->showingDesktop());
     }
 }
 
@@ -1437,7 +1437,7 @@ int TabBox::previousDesktopStatic(int iDesktop) const
  */
 Toplevel* TabBox::nextClientStatic(Toplevel* c) const
 {
-    const auto &list = Workspace::self()->allClientList();
+    const auto &list = workspace()->allClientList();
     if (!c || list.empty()) {
         return nullptr;
     }
@@ -1458,7 +1458,7 @@ Toplevel* TabBox::nextClientStatic(Toplevel* c) const
  */
 Toplevel* TabBox::previousClientStatic(Toplevel* c) const
 {
-    const auto &list = Workspace::self()->allClientList();
+    const auto &list = workspace()->allClientList();
     if (!c || list.empty()) {
         return nullptr;
     }
@@ -1490,8 +1490,8 @@ bool TabBox::establishTabBoxGrab()
     // the active client, which may not have it.
     Q_ASSERT(!m_forcedGlobalMouseGrab);
     m_forcedGlobalMouseGrab = true;
-    if (Workspace::self()->activeClient() != nullptr)
-        Workspace::self()->activeClient()->control->update_mouse_grab();
+    if (workspace()->activeClient() != nullptr)
+        workspace()->activeClient()->control->update_mouse_grab();
     m_x11EventFilter.reset(new X11Filter);
     return true;
 }
@@ -1506,8 +1506,8 @@ void TabBox::removeTabBoxGrab()
     base::x11::ungrab_keyboard();
     Q_ASSERT(m_forcedGlobalMouseGrab);
     m_forcedGlobalMouseGrab = false;
-    if (Workspace::self()->activeClient() != nullptr)
-        Workspace::self()->activeClient()->control->update_mouse_grab();
+    if (workspace()->activeClient() != nullptr)
+        workspace()->activeClient()->control->update_mouse_grab();
     m_x11EventFilter.reset();
 }
 } // namespace TabBox

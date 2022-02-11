@@ -313,9 +313,9 @@ void TestScreens::testCurrentClient()
     QVERIFY(client);
 
     win::move(client, QPoint(101, 0));
-    QCOMPARE(Workspace::self()->activeClient(), client);
-    Workspace::self()->setActiveClient(nullptr);
-    QCOMPARE(Workspace::self()->activeClient(), nullptr);
+    QCOMPARE(workspace()->activeClient(), client);
+    workspace()->setActiveClient(nullptr);
+    QCOMPARE(workspace()->activeClient(), nullptr);
 
     // it's not the active client, so changing won't work
     screens.setCurrent(client);
@@ -324,7 +324,7 @@ void TestScreens::testCurrentClient()
 
     // making the client active should affect things
     win::set_active(client, true);
-    Workspace::self()->setActiveClient(client);
+    workspace()->setActiveClient(client);
 
     // first of all current should be changed just by the fact that there is an active client
     QCOMPARE(screens.current(), 1);
@@ -338,7 +338,7 @@ void TestScreens::testCurrentClient()
     QCOMPARE(currentChangedSpy.count(), 1);
 
     // and it should even still be on screen 1 if we make the client non-current again
-    Workspace::self()->setActiveClient(nullptr);
+    workspace()->setActiveClient(nullptr);
     win::set_active(client, false);
     QCOMPARE(screens.current(), 1);
 }

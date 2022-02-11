@@ -95,7 +95,7 @@ void TestMaximized::cleanup()
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", false);
     group.sync();
-    Workspace::self()->slotReconfigure();
+    workspace()->slotReconfigure();
     QCOMPARE(options->borderlessMaximizedWindows(), false);
 }
 
@@ -226,7 +226,7 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    Workspace::self()->slotReconfigure();
+    workspace()->slotReconfigure();
     QCOMPARE(options->borderlessMaximizedWindows(), true);
 
     // Create the test client.
@@ -280,7 +280,7 @@ void TestMaximized::testBorderlessMaximizedWindow()
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    Workspace::self()->slotReconfigure();
+    workspace()->slotReconfigure();
     QCOMPARE(options->borderlessMaximizedWindows(), true);
 
     // Create the test client.
@@ -372,7 +372,7 @@ void TestMaximized::testBorderlessMaximizedWindowNoClientSideDecoration()
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    Workspace::self()->slotReconfigure();
+    workspace()->slotReconfigure();
     QCOMPARE(options->borderlessMaximizedWindows(), true);
 
     std::unique_ptr<Surface> surface(Test::create_surface());

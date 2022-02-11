@@ -127,7 +127,7 @@ void user_actions_menu::helperDialog(const QString& message, Toplevel* window)
     QStringList args;
     QString type;
     auto shortcut = [](const QString& name) {
-        QAction* action = Workspace::self()->findChild<QAction*>(name);
+        QAction* action = workspace()->findChild<QAction*>(name);
         Q_ASSERT(action != nullptr);
         const auto shortcuts = KGlobalAccel::self()->shortcut(action);
         return QStringLiteral("%1 (%2)")
@@ -209,7 +209,7 @@ void user_actions_menu::init()
 
     auto setShortcut = [](QAction* action, const QString& actionName) {
         const auto shortcuts
-            = KGlobalAccel::self()->shortcut(Workspace::self()->findChild<QAction*>(actionName));
+            = KGlobalAccel::self()->shortcut(workspace()->findChild<QAction*>(actionName));
         if (!shortcuts.isEmpty()) {
             action->setShortcut(shortcuts.first());
         }
@@ -593,7 +593,7 @@ void user_actions_menu::slotWindowOperation(QAction* action)
         return;
 
     Options::WindowOperation op = static_cast<Options::WindowOperation>(action->data().toInt());
-    auto c = m_client ? m_client : QPointer<Toplevel>(Workspace::self()->activeClient());
+    auto c = m_client ? m_client : QPointer<Toplevel>(workspace()->activeClient());
     if (c.isNull())
         return;
     QString type;
@@ -630,7 +630,7 @@ void user_actions_menu::slotSendToDesktop(QAction* action)
     }
     if (m_client.isNull())
         return;
-    Workspace* ws = Workspace::self();
+    Workspace* ws = workspace();
     auto vds = win::virtual_desktop_manager::self();
     if (desk == 0) {
         // the 'on_all_desktops' menu entry
@@ -687,7 +687,7 @@ void user_actions_menu::slotSendToScreen(QAction* action)
         return;
     }
 
-    Workspace::self()->sendClientToScreen(m_client.data(), screen);
+    workspace()->sendClientToScreen(m_client.data(), screen);
 }
 
 }

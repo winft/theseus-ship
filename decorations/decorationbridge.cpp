@@ -147,7 +147,7 @@ void DecorationBridge::initPlugin()
 
 static void recreateDecorations()
 {
-    Workspace::self()->forEachAbstractClient([](Toplevel* t) { t->updateDecoration(true, true); });
+    workspace()->forEachAbstractClient([](Toplevel* t) { t->updateDecoration(true, true); });
 }
 
 void DecorationBridge::reconfigure()

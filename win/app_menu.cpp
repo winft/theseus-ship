@@ -145,7 +145,7 @@ Toplevel* app_menu::findAbstractClientWithApplicationMenu(const QString& service
         return nullptr;
     }
 
-    return Workspace::self()->findAbstractClient([&](Toplevel const* window) {
+    return workspace()->findAbstractClient([&](Toplevel const* window) {
         return window->control->application_menu()
             == std::make_tuple(serviceName, menuObjectPath.path());
     });

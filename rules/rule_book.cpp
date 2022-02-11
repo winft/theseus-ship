@@ -215,7 +215,7 @@ void RuleBook::setUpdatesDisabled(bool disable)
 {
     m_updatesDisabled = disable;
     if (!disable) {
-        for (auto client : Workspace::self()->allClientList()) {
+        for (auto client : workspace()->allClientList()) {
             client->updateWindowRules(Rules::All);
         }
     }

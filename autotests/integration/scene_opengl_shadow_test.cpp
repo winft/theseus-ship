@@ -138,7 +138,7 @@ void SceneOpenGLShadowTest::initTestCase()
     KConfigGroup group = kwinApp()->config()->group("org.kde.kdecoration2");
     group.writeEntry("library", "org.kde.test.fakedecowithshadows");
     group.sync();
-    Workspace::self()->slotReconfigure();
+    workspace()->slotReconfigure();
 
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);

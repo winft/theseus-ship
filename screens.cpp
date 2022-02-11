@@ -188,7 +188,7 @@ int Screens::current() const
     if (m_currentFollowsMouse) {
         return number(input::get_cursor()->pos());
     }
-    auto client = Workspace::self()->activeClient();
+    auto client = workspace()->activeClient();
     if (client && !win::on_screen(client, m_current)) {
         return client->screen();
     }

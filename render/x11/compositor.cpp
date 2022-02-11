@@ -99,7 +99,7 @@ void compositor::start()
         m_releaseSelectionTimer.stop();
     }
 
-    if (Workspace::self()) {
+    if (workspace()) {
         startupWithWorkspace();
     } else {
         connect(kwinApp(), &Application::workspaceCreated, this, &compositor::startupWithWorkspace);
@@ -393,7 +393,7 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
         // If !c we just check if we can resume in case a blocking client was lost.
         bool shouldResume = true;
 
-        for (auto const& client : Workspace::self()->allClientList()) {
+        for (auto const& client : workspace()->allClientList()) {
             if (client->isBlockingCompositing()) {
                 shouldResume = false;
                 break;

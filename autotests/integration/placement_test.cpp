@@ -128,7 +128,7 @@ void TestPlacement::setPlacementPolicy(win::placement policy)
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("Placement", policy_to_string(policy));
     group.sync();
-    Workspace::self()->slotReconfigure();
+    workspace()->slotReconfigure();
 }
 
 PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)

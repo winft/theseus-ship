@@ -282,8 +282,9 @@ void ApplicationX11::start()
 
 bool ApplicationX11::notify(QObject* o, QEvent* e)
 {
-    if (e->spontaneous() && Workspace::self()->workspaceEvent(e))
+    if (e->spontaneous() && workspace->workspaceEvent(e)) {
         return true;
+    }
     return QApplication::notify(o, e);
 }
 

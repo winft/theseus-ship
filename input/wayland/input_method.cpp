@@ -45,7 +45,7 @@ QRect get_input_popup_placement(Win* parent_window, QRect const& cursor_rectangl
     using constraint_adjust = Wrapland::Server::XdgShellSurface::ConstraintAdjustment;
 
     auto const toplevel = win::lead_of_annexed_transient(parent_window);
-    auto const& screen_bounds = Workspace::self()->clientArea(
+    auto const& screen_bounds = workspace()->clientArea(
         toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
 
     auto const& text_area = cursor_rectangle.isValid() ? cursor_rectangle : QRect(0, 0, 0, 0);

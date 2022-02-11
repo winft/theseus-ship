@@ -230,7 +230,7 @@ DELEGATE(WId, decorationId, frameId)
 #define DELEGATE(name, op) \
     void DecoratedClientImpl::name() \
     { \
-        Workspace::self()->performWindowOperation(m_client, Options::op); \
+        workspace()->performWindowOperation(m_client, Options::op); \
     }
 
 DELEGATE(requestToggleOnAllDesktops, OnAllDesktopsOp)
@@ -292,14 +292,14 @@ void DecoratedClientImpl::requestShowWindowMenu(QRect const& rect)
 {
     // TODO: add rect to requestShowWindowMenu
     auto const client_pos = m_client->pos();
-    Workspace::self()->showWindowMenu(QRect(client_pos + rect.topLeft(),
+    workspace()->showWindowMenu(QRect(client_pos + rect.topLeft(),
                                             client_pos + rect.bottomRight()),
                                       m_client);
 }
 
 void DecoratedClientImpl::requestShowApplicationMenu(const QRect &rect, int actionId)
 {
-    Workspace::self()->showApplicationMenu(rect, m_client, actionId);
+    workspace()->showApplicationMenu(rect, m_client, actionId);
 }
 
 void DecoratedClientImpl::showApplicationMenu(int actionId)
@@ -314,7 +314,7 @@ void DecoratedClientImpl::requestToggleMaximization(Qt::MouseButtons buttons)
 
 void DecoratedClientImpl::delayedRequestToggleMaximization(Options::WindowOperation operation)
 {
-    Workspace::self()->performWindowOperation(m_client, operation);
+    workspace()->performWindowOperation(m_client, operation);
 }
 
 int DecoratedClientImpl::width() const

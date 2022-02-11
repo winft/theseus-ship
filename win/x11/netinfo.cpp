@@ -192,32 +192,31 @@ void root_info::changeActiveWindow(xcb_window_t w,
                                    xcb_timestamp_t timestamp,
                                    xcb_window_t active_window)
 {
-    Workspace* workspace = Workspace::self();
-    if (auto c = workspace->findClient(win::x11::predicate_match::window, w)) {
+    auto space = workspace();
+    if (auto c = space->findClient(win::x11::predicate_match::window, w)) {
         if (timestamp == XCB_CURRENT_TIME)
             timestamp = c->userTime();
         if (src != NET::FromApplication && src != FromTool)
             src = NET::FromTool;
         if (src == NET::FromTool)
-            workspace->activateClient(c, true); // force
-        else if (c == workspace->mostRecentlyActivatedClient()) {
+            space->activateClient(c, true); // force
+        else if (c == space->mostRecentlyActivatedClient()) {
             return; // WORKAROUND? With > 1 plasma activities, we cause this ourselves. bug #240673
         } else {    // NET::FromApplication
             win::x11::window* c2;
-            if (workspace->allowClientActivation(c, timestamp, false, true))
-                workspace->activateClient(c);
+            if (space->allowClientActivation(c, timestamp, false, true))
+                space->activateClient(c);
             // if activation of the requestor's window would be allowed, allow activation too
             else if (active_window != XCB_WINDOW_NONE
-                     && (c2
-                         = workspace->findClient(win::x11::predicate_match::window, active_window))
+                     && (c2 = space->findClient(win::x11::predicate_match::window, active_window))
                          != nullptr
-                     && workspace->allowClientActivation(
+                     && space->allowClientActivation(
                          c2,
                          timestampCompare(timestamp,
                                           c2->userTime() > 0 ? timestamp : c2->userTime()),
                          false,
                          true)) {
-                workspace->activateClient(c);
+                space->activateClient(c);
             } else
                 win::set_demands_attention(c, true);
         }
@@ -230,7 +229,7 @@ void root_info::restackWindow(xcb_window_t w,
                               int detail,
                               xcb_timestamp_t timestamp)
 {
-    if (auto c = Workspace::self()->findClient(win::x11::predicate_match::window, w)) {
+    if (auto c = workspace()->findClient(win::x11::predicate_match::window, w)) {
         if (timestamp == XCB_CURRENT_TIME)
             timestamp = c->userTime();
         if (src != NET::FromApplication && src != FromTool)
@@ -241,14 +240,14 @@ void root_info::restackWindow(xcb_window_t w,
 
 void root_info::closeWindow(xcb_window_t w)
 {
-    auto c = Workspace::self()->findClient(win::x11::predicate_match::window, w);
+    auto c = workspace()->findClient(win::x11::predicate_match::window, w);
     if (c)
         c->closeWindow();
 }
 
 void root_info::moveResize(xcb_window_t w, int x_root, int y_root, unsigned long direction)
 {
-    auto c = Workspace::self()->findClient(win::x11::predicate_match::window, w);
+    auto c = workspace()->findClient(win::x11::predicate_match::window, w);
     if (c) {
         // otherwise grabbing may have old timestamp - this message should include timestamp
         kwinApp()->update_x11_time_from_clock();
@@ -258,20 +257,20 @@ void root_info::moveResize(xcb_window_t w, int x_root, int y_root, unsigned long
 
 void root_info::moveResizeWindow(xcb_window_t w, int flags, int x, int y, int width, int height)
 {
-    auto c = Workspace::self()->findClient(win::x11::predicate_match::window, w);
+    auto c = workspace()->findClient(win::x11::predicate_match::window, w);
     if (c)
         win::x11::net_move_resize_window(c, flags, x, y, width, height);
 }
 
 void root_info::gotPing(xcb_window_t w, xcb_timestamp_t timestamp)
 {
-    if (auto c = Workspace::self()->findClient(win::x11::predicate_match::window, w))
+    if (auto c = workspace()->findClient(win::x11::predicate_match::window, w))
         win::x11::pong(c, timestamp);
 }
 
 void root_info::changeShowingDesktop(bool showing)
 {
-    Workspace::self()->setShowingDesktop(showing);
+    workspace()->setShowingDesktop(showing);
 }
 
 void root_info::setActiveClient(Toplevel* window)
@@ -300,7 +299,7 @@ win_info::win_info(win::x11::window* c,
 
 void win_info::changeDesktop(int desktop)
 {
-    Workspace::self()->sendClientToDesktop(m_client, desktop, true);
+    workspace()->sendClientToDesktop(m_client, desktop, true);
 }
 
 void win_info::changeFullscreenMonitors(NETFullscreenMonitors topology)

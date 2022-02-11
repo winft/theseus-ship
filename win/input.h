@@ -358,8 +358,7 @@ bool process_decoration_button_press(Win* win, QMouseEvent* event, bool ignoreMe
                 // expired -> new first click and pot. init
                 deco.double_click.start();
             } else {
-                Workspace::self()->performWindowOperation(win,
-                                                          options->operationTitlebarDblClick());
+                workspace()->performWindowOperation(win, options->operationTitlebarDblClick());
                 end_move_resize(win);
                 return false;
             }

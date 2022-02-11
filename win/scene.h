@@ -18,7 +18,7 @@ namespace KWin::win
 
 inline bool compositing()
 {
-    return Workspace::self() && Workspace::self()->compositing();
+    return workspace() && workspace()->compositing();
 }
 
 /**

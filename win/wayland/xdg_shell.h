@@ -563,7 +563,7 @@ void install_deco(Win* win, Wrapland::Server::XdgDecoration* deco)
 
     QObject::connect(deco, &Deco::resourceDestroyed, win, [win] {
         win->xdg_deco = nullptr;
-        if (win->closing || !Workspace::self()) {
+        if (win->closing || !workspace()) {
             return;
         }
         win->updateDecoration(true);
@@ -578,7 +578,7 @@ void install_deco(Win* win, Wrapland::Server::XdgDecoration* deco)
 template<typename Window, typename Space>
 void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* toplevel)
 {
-    if (!Workspace::self()) {
+    if (!workspace()) {
         // it's possible that a Surface gets created before Workspace is created
         // TODO(romangg): Make this check unnecessary.
         return;
@@ -629,7 +629,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
 template<typename Window, typename Space>
 void handle_new_popup(Space* space, Wrapland::Server::XdgShellPopup* popup)
 {
-    if (!Workspace::self()) {
+    if (!workspace()) {
         // it's possible that a Surface gets created before Workspace is created
         // TODO(romangg): Make this check unnecessary.
         return;

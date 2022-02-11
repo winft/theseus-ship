@@ -46,7 +46,7 @@ kwin::kwin(QObject* parent)
                  QStringLiteral("/KWin"),
                  QStringLiteral("org.kde.KWin"),
                  QStringLiteral("reloadConfig"),
-                 Workspace::self(),
+                 workspace(),
                  SLOT(slotReloadConfig()));
 }
 
@@ -72,12 +72,12 @@ kwin::~kwin()
 
 void kwin::reconfigure()
 {
-    Workspace::self()->reconfigure();
+    workspace()->reconfigure();
 }
 
 void kwin::killWindow()
 {
-    Workspace::self()->slotKillWindow();
+    workspace()->slotKillWindow();
 }
 
 void kwin::unclutterDesktop()
@@ -87,7 +87,7 @@ void kwin::unclutterDesktop()
 
 QString kwin::supportInformation()
 {
-    return Workspace::self()->supportInformation();
+    return workspace()->supportInformation();
 }
 
 bool kwin::startActivity(const QString& /*in0*/)

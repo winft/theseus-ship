@@ -3652,7 +3652,7 @@ template<typename Direction>
 void windowToDesktop(Toplevel* window)
 {
     auto vds = win::virtual_desktop_manager::self();
-    Workspace* ws = Workspace::self();
+    auto ws = workspace();
     Direction functor;
     // TODO: why is options->isRollOverDesktops() not honored?
     const auto desktop = functor(nullptr, true);
@@ -3695,7 +3695,7 @@ template<typename Direction>
 void activeClientToDesktop()
 {
     auto vds = win::virtual_desktop_manager::self();
-    Workspace* ws = Workspace::self();
+    auto ws = workspace();
     const int current = vds->current();
     Direction functor;
     const int d = functor(current, options->isRollOverDesktops());

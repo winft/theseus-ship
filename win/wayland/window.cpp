@@ -55,8 +55,7 @@ namespace WS = Wrapland::Server;
 
 Toplevel* find_toplevel(WS::Surface* surface)
 {
-    return Workspace::self()->findToplevel(
-        [surface](auto win) { return win->surface() == surface; });
+    return workspace()->findToplevel([surface](auto win) { return win->surface() == surface; });
 }
 
 window::window(WS::Surface* surface)
@@ -542,7 +541,7 @@ void window::configure_geometry(QRect const& frame_geo)
         auto parent = transient()->lead();
         if (parent) {
             auto const top_lead = lead_of_annexed_transient(this);
-            auto const bounds = Workspace::self()->clientArea(
+            auto const bounds = workspace()->clientArea(
                 top_lead->control->fullscreen() ? FullScreenArea : PlacementArea, top_lead);
 
             serial = popup->configure(
@@ -623,7 +622,7 @@ void window::apply_pending_geometry()
             return;
         }
 
-        auto const screen_bounds = Workspace::self()->clientArea(
+        auto const screen_bounds = workspace()->clientArea(
             toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
 
         // Need to set that for get_xdg_shell_popup_placement(..) call.
@@ -889,7 +888,7 @@ void window::unmap()
         control->destroy_wayland_management();
     }
 
-    if (Workspace::self()) {
+    if (workspace()) {
         addWorkspaceRepaint(visible_rect(this));
         if (control) {
             workspace()->clientHidden(this);

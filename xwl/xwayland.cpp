@@ -164,11 +164,11 @@ xwayland::~xwayland()
 
     disconnect(xwayland_fail_notifier);
 
-    win::x11::clear_space(*Workspace::self());
+    win::x11::clear_space(*workspace());
 
     if (app->x11Connection()) {
         base::x11::xcb::set_input_focus(XCB_INPUT_FOCUS_POINTER_ROOT);
-        Workspace::self()->atoms.reset();
+        workspace()->atoms.reset();
         Q_EMIT app->x11ConnectionAboutToBeDestroyed();
         app->setX11Connection(nullptr);
         xcb_disconnect(app->x11Connection());
@@ -243,7 +243,7 @@ void xwayland::continue_startup_with_x11()
     KSelectionOwner owner("WM_S0", basic_data.connection, app->x11RootWindow());
     owner.claim(true);
 
-    auto space = static_cast<win::wayland::space*>(Workspace::self());
+    auto space = static_cast<win::wayland::space*>(workspace());
     space->atoms = std::make_unique<base::x11::atoms>(basic_data.connection);
     basic_data.atoms = space->atoms.get();
 
@@ -277,7 +277,7 @@ void xwayland::continue_startup_with_x11()
     app->setProcessStartupEnvironment(env);
 
     status_callback(0);
-    win::x11::init_space(*static_cast<win::wayland::space*>(Workspace::self()));
+    win::x11::init_space(*static_cast<win::wayland::space*>(workspace()));
     Q_EMIT app->x11ConnectionChanged();
 
     // Trigger possible errors, there's still a chance to abort

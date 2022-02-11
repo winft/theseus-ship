@@ -587,7 +587,7 @@ void place_maximizing(Win* window, const QRect& area, placement nextPlacement)
  */
 inline void unclutter_desktop()
 {
-    const auto& clients = Workspace::self()->allClientList();
+    const auto& clients = workspace()->allClientList();
     for (int i = clients.size() - 1; i >= 0; i--) {
         auto client = clients.at(i);
         if ((!client->isOnCurrentDesktop()) || (client->control->minimized())

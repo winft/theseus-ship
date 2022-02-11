@@ -157,7 +157,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     // pass start
     m_currentBuildQuadsIterator = m_activeEffects.constEnd();
 
-    Workspace* ws = Workspace::self();
+    Workspace* ws = workspace();
     auto vds = win::virtual_desktop_manager::self();
     connect(
         ws, &Workspace::showingDesktopChanged, this, &effects_handler_impl::showingDesktopChanged);
@@ -969,13 +969,13 @@ void effects_handler_impl::activateWindow(EffectWindow* c)
 {
     auto window = static_cast<effects_window_impl*>(c)->window();
     if (window && window->control) {
-        Workspace::self()->activateClient(window, true);
+        workspace()->activateClient(window, true);
     }
 }
 
 EffectWindow* effects_handler_impl::activeWindow() const
 {
-    auto ac = Workspace::self()->activeClient();
+    auto ac = workspace()->activeClient();
     return ac ? ac->render->effect.get() : nullptr;
 }
 
@@ -990,7 +990,7 @@ void effects_handler_impl::moveWindow(EffectWindow* w,
     }
 
     if (snap) {
-        win::move(window, Workspace::self()->adjustClientPosition(window, pos, true, snapAdjust));
+        win::move(window, workspace()->adjustClientPosition(window, pos, true, snapAdjust));
     } else {
         win::move(window, pos);
     }
@@ -1000,7 +1000,7 @@ void effects_handler_impl::windowToDesktop(EffectWindow* w, int desktop)
 {
     auto window = static_cast<effects_window_impl*>(w)->window();
     if (window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
-        Workspace::self()->sendClientToDesktop(window, desktop, true);
+        workspace()->sendClientToDesktop(window, desktop, true);
     }
 }
 
@@ -1030,12 +1030,12 @@ void effects_handler_impl::windowToScreen(EffectWindow* w, int screen)
 {
     auto window = static_cast<effects_window_impl*>(w)->window();
     if (window && window->control && !win::is_desktop(window) && !win::is_dock(window))
-        Workspace::self()->sendClientToScreen(window, screen);
+        workspace()->sendClientToScreen(window, screen);
 }
 
 void effects_handler_impl::setShowingDesktop(bool showing)
 {
-    Workspace::self()->setShowingDesktop(showing);
+    workspace()->setShowingDesktop(showing);
 }
 
 QString effects_handler_impl::currentActivity() const
@@ -1152,10 +1152,10 @@ WindowQuadType effects_handler_impl::newWindowQuadType()
 
 EffectWindow* effects_handler_impl::find_window_by_wid(WId id) const
 {
-    if (auto w = Workspace::self()->findClient(win::x11::predicate_match::window, id)) {
+    if (auto w = workspace()->findClient(win::x11::predicate_match::window, id)) {
         return w->render->effect.get();
     }
-    if (auto unmanaged = Workspace::self()->findUnmanaged(id)) {
+    if (auto unmanaged = workspace()->findUnmanaged(id)) {
         return unmanaged->render->effect.get();
     }
     return nullptr;
@@ -1322,23 +1322,23 @@ int effects_handler_impl::screenNumber(const QPoint& pos) const
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, int screen, int desktop) const
 {
-    return Workspace::self()->clientArea(opt, screen, desktop);
+    return workspace()->clientArea(opt, screen, desktop);
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const EffectWindow* c) const
 {
     auto window = static_cast<effects_window_impl const*>(c)->window();
     if (window->control) {
-        return Workspace::self()->clientArea(opt, window);
+        return workspace()->clientArea(opt, window);
     } else {
-        return Workspace::self()->clientArea(
+        return workspace()->clientArea(
             opt, window->frameGeometry().center(), win::virtual_desktop_manager::self()->current());
     }
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const QPoint& p, int desktop) const
 {
-    return Workspace::self()->clientArea(opt, p, desktop);
+    return workspace()->clientArea(opt, p, desktop);
 }
 
 QRect effects_handler_impl::virtualScreenGeometry() const
@@ -1800,7 +1800,7 @@ void effects_handler_impl::renderEffectQuickView(EffectQuickView* w) const
 
 SessionState effects_handler_impl::sessionState() const
 {
-    return Workspace::self()->sessionManager()->state();
+    return workspace()->sessionManager()->state();
 }
 
 QList<EffectScreen*> effects_handler_impl::screens() const

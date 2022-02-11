@@ -127,11 +127,6 @@ public:
     explicit Workspace();
     ~Workspace() override;
 
-    static Workspace* self()
-    {
-        return _self;
-    }
-
     bool workspaceEvent(QEvent*);
 
     bool hasClient(win::x11::window const*);

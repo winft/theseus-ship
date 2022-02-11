@@ -96,9 +96,9 @@ bool compositor::setupStart()
 
     // There might still be a deleted around, needs to be cleared before
     // creating the scene (BUG 333275).
-    if (Workspace::self()) {
-        while (!Workspace::self()->remnants().empty()) {
-            Workspace::self()->remnants().front()->remnant()->discard();
+    if (workspace()) {
+        while (!workspace()->remnants().empty()) {
+            workspace()->remnants().front()->remnant()->discard();
         }
     }
 
@@ -134,7 +134,7 @@ bool compositor::setupStart()
 
     platform.selected_compositor = m_scene->compositingType();
 
-    if (!Workspace::self() && m_scene && m_scene->compositingType() == QPainterCompositing) {
+    if (!workspace() && m_scene && m_scene->compositingType() == QPainterCompositing) {
         // Force Software QtQuick on first startup with QPainter.
         QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
     }
@@ -202,7 +202,7 @@ void compositor::startupWithWorkspace()
             this,
             &compositor::addRepaintFull);
 
-    for (auto& client : Workspace::self()->windows()) {
+    for (auto& client : workspace()->windows()) {
         if (client->remnant()) {
             continue;
         }
@@ -214,7 +214,7 @@ void compositor::startupWithWorkspace()
 
     // Sets also the 'effects' pointer.
     platform.createEffectsHandler(this, scene());
-    connect(Workspace::self(), &Workspace::deletedRemoved, scene(), &scene::removeToplevel);
+    connect(workspace(), &Workspace::deletedRemoved, scene(), &scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
     connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
         if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
@@ -255,8 +255,8 @@ void compositor::stop(bool on_shutdown)
     delete effects;
     effects = nullptr;
 
-    if (Workspace::self()) {
-        for (auto& c : Workspace::self()->windows()) {
+    if (workspace()) {
+        for (auto& c : workspace()->windows()) {
             if (c->remnant()) {
                 continue;
             }
