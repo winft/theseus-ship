@@ -41,7 +41,7 @@ void update_space_areas(Window* win,
         }
     }
 
-    auto strut_region = win::x11::strut_rects(win);
+    auto strut_region = win::x11::get_strut_rects(win);
     auto const clientsScreenRect = screens.geometry(win->screen());
 
     for (auto strut = strut_region.begin(); strut != strut_region.end(); strut++) {
