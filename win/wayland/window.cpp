@@ -269,7 +269,7 @@ bool window::isMovable() const
     if (geometry_update.fullscreen) {
         return false;
     }
-    if (control->rules().checkPosition(invalidPoint) != invalidPoint) {
+    if (control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
         return false;
     }
     if (plasma_shell_surface) {
@@ -286,7 +286,7 @@ bool window::isMovableAcrossScreens() const
     if (layer_surface) {
         return false;
     }
-    if (control->rules().checkPosition(invalidPoint) != invalidPoint) {
+    if (control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
         return false;
     }
     if (plasma_shell_surface) {

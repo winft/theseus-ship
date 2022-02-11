@@ -19,6 +19,7 @@
 #include "base/x11/xcb/proto.h"
 #include "rules/rule_book.h"
 #include "utils/blocker.h"
+#include "utils/geo.h"
 #include "win/control.h"
 #include "win/controlling.h"
 #include "win/input.h"
@@ -294,9 +295,9 @@ bool position_via_hint(Win* win, QRect const& geo, bool ignore_default, QRect& p
 template<typename Win>
 bool move_with_force_rule(Win* win, QRect& frame_geo, bool is_inital_placement, QRect& area)
 {
-    auto forced_pos = win->control->rules().checkPosition(invalidPoint, is_inital_placement);
+    auto forced_pos = win->control->rules().checkPosition(geo::invalid_point, is_inital_placement);
 
-    if (forced_pos == invalidPoint) {
+    if (forced_pos == geo::invalid_point) {
         return false;
     }
 

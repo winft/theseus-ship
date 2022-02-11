@@ -411,7 +411,7 @@ bool window::isMovable() const
         // allow moving of splashscreens :)
         return false;
     }
-    if (control->rules().checkPosition(invalidPoint) != invalidPoint) {
+    if (control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
         // forced position
         return false;
     }
@@ -427,7 +427,7 @@ bool window::isMovableAcrossScreens() const
         // allow moving of splashscreens :)
         return false;
     }
-    if (control->rules().checkPosition(invalidPoint) != invalidPoint) {
+    if (control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
         // forced position
         return false;
     }
@@ -456,7 +456,7 @@ bool window::isResizable() const
     if ((mode == win::position::top || mode == win::position::top_left
          || mode == win::position::top_right || mode == win::position::left
          || mode == win::position::bottom_left)
-        && control->rules().checkPosition(invalidPoint) != invalidPoint) {
+        && control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
         return false;
     }
 

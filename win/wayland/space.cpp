@@ -164,7 +164,8 @@ void space::handle_window_added(wayland::window* window)
         if (window->maximizeMode() == win::maximize_mode::full) {
             placementDone = true;
         }
-        if (window->control->rules().checkPosition(invalidPoint, true) != invalidPoint) {
+        if (window->control->rules().checkPosition(geo::invalid_point, true)
+            != geo::invalid_point) {
             placementDone = true;
         }
         if (!placementDone) {

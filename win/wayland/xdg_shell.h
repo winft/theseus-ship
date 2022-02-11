@@ -13,6 +13,7 @@
 #include "base/wayland/server.h"
 #include "render/compositor.h"
 #include "toplevel.h"
+#include "utils/geo.h"
 #include "wayland_logging.h"
 #include "win/controlling.h"
 #include "win/input.h"
@@ -157,7 +158,7 @@ inline void finalize_shell_window_creation(window* win)
                 win->updateColorScheme();
 
                 // Don't place the client if its position is set by a rule.
-                if (ctrl->rules().checkPosition(invalidPoint, true) != invalidPoint) {
+                if (ctrl->rules().checkPosition(geo::invalid_point, true) != geo::invalid_point) {
                     win->must_place = false;
                 }
 

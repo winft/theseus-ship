@@ -7,14 +7,10 @@
 */
 #pragma once
 
-#include <QPoint>
 #include <QRect>
-#include <climits>
 
 namespace KWin
 {
-
-QPoint const invalidPoint(INT_MIN, INT_MIN);
 
 enum StrutArea {
     StrutAreaInvalid = 0, // Null

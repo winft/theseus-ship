@@ -6,6 +6,8 @@
 */
 #include "rules.h"
 
+#include "utils/geo.h"
+
 #include <QDebug>
 #include <QFile>
 #include <QFileInfo>
@@ -557,7 +559,7 @@ bool Rules::applyGeometry(QRect& rect, bool init) const
 
 bool Rules::applyPosition(QPoint& pos, bool init) const
 {
-    if (this->position.data != invalidPoint && checkSetRule(position.rule, init)) {
+    if (this->position.data != geo::invalid_point && checkSetRule(position.rule, init)) {
         pos = this->position.data;
     }
     return checkSetStop(position.rule);
