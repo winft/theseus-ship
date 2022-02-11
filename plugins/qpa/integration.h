@@ -49,8 +49,9 @@ public:
     QStringList themeNames() const override;
     QPlatformTheme *createPlatformTheme(const QString &name) const override;
     QPlatformOpenGLContext *createPlatformOpenGLContext(QOpenGLContext *context) const override;
-
     void initialize() override;
+
+    QVector<Screen*> screens() const;
 
 private:
     void initScreens();

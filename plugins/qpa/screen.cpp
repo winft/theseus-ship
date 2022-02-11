@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "screen.h"
 
+#include "integration.h"
+
 #include "base/output_helpers.h"
 #include "base/platform.h"
 #include "main.h"
@@ -29,14 +31,29 @@ namespace KWin
 namespace QPA
 {
 
-Screen::Screen(base::output* output)
+Screen::Screen(base::output* output, Integration* integration)
     : QPlatformScreen()
     , output{output}
     , m_cursor(new PlatformCursor)
+    , m_integration(integration)
 {
 }
 
 Screen::~Screen() = default;
+
+QList<QPlatformScreen*> Screen::virtualSiblings() const
+{
+    auto const screens = m_integration->screens();
+
+    QList<QPlatformScreen*> siblings;
+    siblings.reserve(siblings.size());
+
+    for (auto screen : screens) {
+        siblings << screen;
+    }
+
+    return siblings;
+}
 
 int Screen::depth() const
 {

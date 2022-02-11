@@ -30,12 +30,14 @@ namespace KWin
 {
 namespace QPA
 {
+
+class Integration;
 class PlatformCursor;
 
 class Screen : public QPlatformScreen
 {
 public:
-    explicit Screen(base::output* output);
+    explicit Screen(base::output* output, Integration* integration);
     ~Screen() override;
 
     QString name() const override;
@@ -46,10 +48,12 @@ public:
     QPlatformCursor *cursor() const override;
     QDpi logicalDpi() const override;
     qreal devicePixelRatio() const override;
+    QList<QPlatformScreen *> virtualSiblings() const override;
 
 private:
     base::output* output;
     QScopedPointer<PlatformCursor> m_cursor;
+    Integration* m_integration;
 };
 
 }
