@@ -85,7 +85,8 @@ void update_space_areas(Window* win,
                 screen_area = screen_area.intersected(intersect);
             }
 
-            areas.restrictedmove[desktop] += strut_region;
+            auto& resmove = areas.restrictedmove[desktop];
+            resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
         }
     } else {
         areas.work[win->desktop()] = areas.work[win->desktop()].intersected(rect);
@@ -95,7 +96,8 @@ void update_space_areas(Window* win,
                 screens_geos[screen] - margins(screens_geos[screen]));
         }
 
-        areas.restrictedmove[win->desktop()] += strut_region;
+        auto& resmove = areas.restrictedmove[win->desktop()];
+        resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
     }
 }
 

@@ -62,7 +62,8 @@ void update_space_areas(Window* win,
                 areas.work[desktop] = areas.work[desktop].intersected(client_area);
             }
 
-            areas.restrictedmove[desktop] += strut_region;
+            auto& resmove = areas.restrictedmove[desktop];
+            resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
 
             for (int screen = 0; screen < screens_count; screen++) {
                 auto const client_area_on_screen
@@ -81,7 +82,8 @@ void update_space_areas(Window* win,
             areas.work[win->desktop()] = areas.work[win->desktop()].intersected(client_area);
         }
 
-        areas.restrictedmove[win->desktop()] += strut_region;
+        auto& resmove = areas.restrictedmove[win->desktop()];
+        resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
 
         for (int screen = 0; screen < screens_count; screen++) {
             auto const screen_area = areas.screen[win->desktop()][screen];

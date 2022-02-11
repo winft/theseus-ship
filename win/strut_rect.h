@@ -8,6 +8,7 @@
 #pragma once
 
 #include <QRect>
+#include <vector>
 
 namespace KWin::win
 {
@@ -55,7 +56,7 @@ private:
     StrutArea m_area;
 };
 
-using strut_rects = QVector<strut_rect>;
+using strut_rects = std::vector<strut_rect>;
 
 }
 

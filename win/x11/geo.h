@@ -1114,10 +1114,10 @@ template<typename Win>
 strut_rects get_strut_rects(Win const* win)
 {
     strut_rects region;
-    region += get_strut_rect(win, StrutAreaTop);
-    region += get_strut_rect(win, StrutAreaRight);
-    region += get_strut_rect(win, StrutAreaBottom);
-    region += get_strut_rect(win, StrutAreaLeft);
+    region.push_back(get_strut_rect(win, StrutAreaTop));
+    region.push_back(get_strut_rect(win, StrutAreaRight));
+    region.push_back(get_strut_rect(win, StrutAreaBottom));
+    region.push_back(get_strut_rect(win, StrutAreaLeft));
     return region;
 }
 
