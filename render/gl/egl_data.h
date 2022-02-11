@@ -6,7 +6,6 @@
 #pragma once
 
 #include <epoxy/egl.h>
-#include <wayland-server.h>
 
 #include <QByteArray>
 #include <QList>

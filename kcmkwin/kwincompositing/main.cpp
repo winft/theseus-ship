@@ -94,6 +94,7 @@ KWinCompositingKCM::KWinCompositingKCM(QWidget *parent, const QVariantList &args
     m_form.glCrashedWarning->addAction(reenableGlAction);
     m_form.windowThumbnailWarning->setIcon(QIcon::fromTheme(QStringLiteral("dialog-warning")));
 
+    m_form.compositingLabel->setVisible(!compositingRequired());
     m_form.kcfg_Enabled->setVisible(!compositingRequired());
     m_form.kcfg_WindowsBlockCompositing->setVisible(!compositingRequired());
 
