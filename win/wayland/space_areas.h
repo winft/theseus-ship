@@ -72,7 +72,7 @@ void update_space_areas(Window* win,
 
     auto const strut = margins(screens.geometry(win->screen()));
     auto const strut_region
-        = StrutRects{StrutRect(win->frameGeometry(), margins_to_strut_area(strut))};
+        = strut_rects{strut_rect(win->frameGeometry(), margins_to_strut_area(strut))};
     auto rect = desktop_area - margins(screens.geometry());
 
     if (win->isOnAllDesktops()) {

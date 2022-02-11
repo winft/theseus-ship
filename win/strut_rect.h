@@ -22,22 +22,22 @@ enum StrutArea {
 };
 Q_DECLARE_FLAGS(StrutAreas, StrutArea)
 
-class StrutRect : public QRect
+class strut_rect : public QRect
 {
 public:
-    explicit StrutRect(QRect rect = QRect(), StrutArea area = StrutAreaInvalid)
+    explicit strut_rect(QRect rect = QRect(), StrutArea area = StrutAreaInvalid)
         : QRect(rect)
         , m_area(area)
     {
     }
 
-    StrutRect(StrutRect const& other)
+    strut_rect(strut_rect const& other)
         : QRect(other)
         , m_area(other.area())
     {
     }
 
-    StrutRect& operator=(StrutRect const& other)
+    strut_rect& operator=(strut_rect const& other)
     {
         if (this != &other) {
             QRect::operator=(other);
@@ -55,7 +55,7 @@ private:
     StrutArea m_area;
 };
 
-using StrutRects = QVector<StrutRect>;
+using strut_rects = QVector<strut_rect>;
 
 }
 

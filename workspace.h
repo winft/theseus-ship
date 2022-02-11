@@ -623,7 +623,7 @@ private:
     win::space_areas areas;
 
     // Array of the previous restricted areas that window cannot be moved into
-    std::vector<win::StrutRects> oldrestrictedmovearea;
+    std::vector<win::strut_rects> oldrestrictedmovearea;
 
     // array of previous sizes of xinerama screens
     std::vector<QRect> oldscreensizes;

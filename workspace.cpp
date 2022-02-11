@@ -1478,7 +1478,7 @@ QRect Workspace::clientArea(clientAreaOption opt, Toplevel const* window) const
 }
 
 static QRegion
-strutsToRegion(int desktop, win::StrutAreas areas, std::vector<win::StrutRects> const& struts)
+strutsToRegion(int desktop, win::StrutAreas areas, std::vector<win::strut_rects> const& struts)
 {
     if (desktop == NETWinInfo::OnAllDesktops || desktop == 0) {
         desktop = win::virtual_desktop_manager::self()->current();

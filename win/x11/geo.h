@@ -1061,7 +1061,7 @@ QRect adjusted_client_area(Win const* win, QRect const& desktopArea, QRect const
 }
 
 template<typename Win>
-StrutRect get_strut_rect(Win const* win, StrutArea area)
+strut_rect get_strut_rect(Win const* win, StrutArea area)
 {
     // Not valid
     assert(area != StrutAreaAll);
@@ -1072,48 +1072,48 @@ StrutRect get_strut_rect(Win const* win, StrutArea area)
     switch (area) {
     case StrutAreaTop:
         if (strutArea.top_width != 0)
-            return StrutRect(QRect(strutArea.top_start,
-                                   0,
-                                   strutArea.top_end - strutArea.top_start,
-                                   strutArea.top_width),
-                             StrutAreaTop);
+            return strut_rect(QRect(strutArea.top_start,
+                                    0,
+                                    strutArea.top_end - strutArea.top_start,
+                                    strutArea.top_width),
+                              StrutAreaTop);
         break;
     case StrutAreaRight:
         if (strutArea.right_width != 0)
-            return StrutRect(QRect(displaySize.width() - strutArea.right_width,
-                                   strutArea.right_start,
-                                   strutArea.right_width,
-                                   strutArea.right_end - strutArea.right_start),
-                             StrutAreaRight);
+            return strut_rect(QRect(displaySize.width() - strutArea.right_width,
+                                    strutArea.right_start,
+                                    strutArea.right_width,
+                                    strutArea.right_end - strutArea.right_start),
+                              StrutAreaRight);
         break;
     case StrutAreaBottom:
         if (strutArea.bottom_width != 0)
-            return StrutRect(QRect(strutArea.bottom_start,
-                                   displaySize.height() - strutArea.bottom_width,
-                                   strutArea.bottom_end - strutArea.bottom_start,
-                                   strutArea.bottom_width),
-                             StrutAreaBottom);
+            return strut_rect(QRect(strutArea.bottom_start,
+                                    displaySize.height() - strutArea.bottom_width,
+                                    strutArea.bottom_end - strutArea.bottom_start,
+                                    strutArea.bottom_width),
+                              StrutAreaBottom);
         break;
     case StrutAreaLeft:
         if (strutArea.left_width != 0)
-            return StrutRect(QRect(0,
-                                   strutArea.left_start,
-                                   strutArea.left_width,
-                                   strutArea.left_end - strutArea.left_start),
-                             StrutAreaLeft);
+            return strut_rect(QRect(0,
+                                    strutArea.left_start,
+                                    strutArea.left_width,
+                                    strutArea.left_end - strutArea.left_start),
+                              StrutAreaLeft);
         break;
     default:
         // Not valid
         abort();
     }
 
-    return StrutRect();
+    return strut_rect();
 }
 
 template<typename Win>
-StrutRects get_strut_rects(Win const* win)
+strut_rects get_strut_rects(Win const* win)
 {
-    StrutRects region;
+    strut_rects region;
     region += get_strut_rect(win, StrutAreaTop);
     region += get_strut_rect(win, StrutAreaRight);
     region += get_strut_rect(win, StrutAreaBottom);

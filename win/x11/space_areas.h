@@ -45,7 +45,7 @@ void update_space_areas(Window* win,
     auto const clientsScreenRect = screens.geometry(win->screen());
 
     for (auto strut = strut_region.begin(); strut != strut_region.end(); strut++) {
-        *strut = StrutRect((*strut).intersected(clientsScreenRect), (*strut).area());
+        *strut = strut_rect((*strut).intersected(clientsScreenRect), (*strut).area());
     }
 
     // Ignore offscreen xinerama struts. These interfere with the larger monitors on the setup
