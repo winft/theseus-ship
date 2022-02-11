@@ -28,7 +28,7 @@
 #include "win/placement.h"
 #include "win/screen.h"
 #include "win/setup.h"
-#include "win/space.h"
+#include "win/space_helpers.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 #include "win/util.h"

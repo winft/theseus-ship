@@ -11,7 +11,7 @@
 #include "window_release.h"
 
 #include "render/compositor.h"
-#include "win/space.h"
+#include "win/space_helpers.h"
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
 

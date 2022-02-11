@@ -12,7 +12,7 @@
 #include "base/x11/xcb/proto.h"
 #include "render/effects.h"
 #include "win/remnant.h"
-#include "win/space.h"
+#include "win/space_helpers.h"
 
 namespace KWin::win::x11
 {
