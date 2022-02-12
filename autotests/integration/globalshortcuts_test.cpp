@@ -24,12 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
 #include "screens.h"
-#include "useractions.h"
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
+#include "win/shortcut_dialog.h"
+#include "win/space.h"
+#include "win/user_actions_menu.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Server/keyboard_pool.h>
@@ -364,7 +365,7 @@ void GlobalShortcutsTest::testX11ClientShortcut()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.last().first().value<win::x11::window*>();
@@ -457,7 +458,7 @@ void GlobalShortcutsTest::testSetupWindowShortcut()
     QVERIFY(client->control->active());
     QCOMPARE(client->control->shortcut(), QKeySequence());
 
-    QSignalSpy shortcutDialogAddedSpy(workspace(), &Workspace::internalClientAdded);
+    QSignalSpy shortcutDialogAddedSpy(workspace(), &win::space::internalClientAdded);
     QVERIFY(shortcutDialogAddedSpy.isValid());
     workspace()->slotSetupWindowShortcut();
     QTRY_COMPARE(shortcutDialogAddedSpy.count(), 1);

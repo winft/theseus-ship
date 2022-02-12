@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "effects.h"
 
+#include "base/logging.h"
 #include "base/output.h"
 #include "base/platform.h"
 #include "desktop/screen_locker_watcher.h"
@@ -39,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/remnant.h"
 #include "win/screen.h"
 #include "win/screen_edges.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/virtual_desktops.h"
@@ -46,10 +48,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
 #include "win/x11/window_property_notify_filter.h"
-#include "workspace.h"
 
 #ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
+#include "win/tabbox/tabbox.h"
 #endif
 
 #include <QDebug>
@@ -156,11 +157,11 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     // pass start
     m_currentBuildQuadsIterator = m_activeEffects.constEnd();
 
-    Workspace* ws = Workspace::self();
+    auto ws = workspace();
     auto vds = win::virtual_desktop_manager::self();
     connect(
-        ws, &Workspace::showingDesktopChanged, this, &effects_handler_impl::showingDesktopChanged);
-    connect(ws, &Workspace::currentDesktopChanged, this, [this](int old, Toplevel* c) {
+        ws, &win::space::showingDesktopChanged, this, &effects_handler_impl::showingDesktopChanged);
+    connect(ws, &win::space::currentDesktopChanged, this, [this](int old, Toplevel* c) {
         int const newDesktop = win::virtual_desktop_manager::self()->current();
         if (old != 0 && newDesktop != old) {
             assert(!c || c->render);
@@ -171,42 +172,42 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             Q_EMIT desktopChanged(old, newDesktop);
         }
     });
-    connect(ws, &Workspace::desktopPresenceChanged, this, [this](Toplevel* c, int old) {
+    connect(ws, &win::space::desktopPresenceChanged, this, [this](Toplevel* c, int old) {
         assert(c);
         assert(c->render);
         assert(c->render->effect);
         Q_EMIT desktopPresenceChanged(c->render->effect.get(), old, c->desktop());
     });
-    connect(ws, &Workspace::clientAdded, this, [this](auto c) {
+    connect(ws, &win::space::clientAdded, this, [this](auto c) {
         if (c->readyForPainting())
             slotClientShown(c);
         else
             connect(c, &Toplevel::windowShown, this, &effects_handler_impl::slotClientShown);
     });
-    connect(ws, &Workspace::unmanagedAdded, this, [this](Toplevel* u) {
+    connect(ws, &win::space::unmanagedAdded, this, [this](Toplevel* u) {
         // it's never initially ready but has synthetic 50ms delay
         connect(u, &Toplevel::windowShown, this, &effects_handler_impl::slotUnmanagedShown);
     });
-    connect(ws, &Workspace::internalClientAdded, this, [this](auto client) {
+    connect(ws, &win::space::internalClientAdded, this, [this](auto client) {
         assert(client->render);
         assert(client->render->effect);
         setupAbstractClientConnections(client);
         Q_EMIT windowAdded(client->render->effect.get());
     });
-    connect(ws, &Workspace::clientActivated, this, [this](KWin::Toplevel* window) {
+    connect(ws, &win::space::clientActivated, this, [this](KWin::Toplevel* window) {
         assert(!window || window->render);
         assert(!window || window->render->effect);
         auto eff_win = window ? window->render->effect.get() : nullptr;
         Q_EMIT windowActivated(eff_win);
     });
-    connect(ws, &Workspace::deletedRemoved, this, [this](KWin::Toplevel* d) {
+    connect(ws, &win::space::deletedRemoved, this, [this](KWin::Toplevel* d) {
         assert(d->render);
         assert(d->render->effect);
         Q_EMIT windowDeleted(d->render->effect.get());
         elevated_windows.removeAll(d->render->effect.get());
     });
     connect(ws->sessionManager(),
-            &SessionManager::stateChanged,
+            &win::session_manager::stateChanged,
             this,
             &KWin::EffectsHandler::sessionStateChanged);
     connect(vds,
@@ -968,13 +969,13 @@ void effects_handler_impl::activateWindow(EffectWindow* c)
 {
     auto window = static_cast<effects_window_impl*>(c)->window();
     if (window && window->control) {
-        Workspace::self()->activateClient(window, true);
+        workspace()->activateClient(window, true);
     }
 }
 
 EffectWindow* effects_handler_impl::activeWindow() const
 {
-    auto ac = Workspace::self()->activeClient();
+    auto ac = workspace()->activeClient();
     return ac ? ac->render->effect.get() : nullptr;
 }
 
@@ -989,7 +990,7 @@ void effects_handler_impl::moveWindow(EffectWindow* w,
     }
 
     if (snap) {
-        win::move(window, Workspace::self()->adjustClientPosition(window, pos, true, snapAdjust));
+        win::move(window, workspace()->adjustClientPosition(window, pos, true, snapAdjust));
     } else {
         win::move(window, pos);
     }
@@ -999,7 +1000,7 @@ void effects_handler_impl::windowToDesktop(EffectWindow* w, int desktop)
 {
     auto window = static_cast<effects_window_impl*>(w)->window();
     if (window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
-        Workspace::self()->sendClientToDesktop(window, desktop, true);
+        workspace()->sendClientToDesktop(window, desktop, true);
     }
 }
 
@@ -1029,12 +1030,12 @@ void effects_handler_impl::windowToScreen(EffectWindow* w, int screen)
 {
     auto window = static_cast<effects_window_impl*>(w)->window();
     if (window && window->control && !win::is_desktop(window) && !win::is_dock(window))
-        Workspace::self()->sendClientToScreen(window, screen);
+        workspace()->sendClientToScreen(window, screen);
 }
 
 void effects_handler_impl::setShowingDesktop(bool showing)
 {
-    Workspace::self()->setShowingDesktop(showing);
+    workspace()->setShowingDesktop(showing);
 }
 
 QString effects_handler_impl::currentActivity() const
@@ -1136,12 +1137,12 @@ QString effects_handler_impl::desktopName(int desktop) const
 
 bool effects_handler_impl::optionRollOverDesktops() const
 {
-    return options->isRollOverDesktops();
+    return kwinApp()->options->isRollOverDesktops();
 }
 
 double effects_handler_impl::animationTimeFactor() const
 {
-    return options->animationTimeFactor();
+    return kwinApp()->options->animationTimeFactor();
 }
 
 WindowQuadType effects_handler_impl::newWindowQuadType()
@@ -1151,10 +1152,10 @@ WindowQuadType effects_handler_impl::newWindowQuadType()
 
 EffectWindow* effects_handler_impl::find_window_by_wid(WId id) const
 {
-    if (auto w = Workspace::self()->findClient(win::x11::predicate_match::window, id)) {
+    if (auto w = workspace()->findClient(win::x11::predicate_match::window, id)) {
         return w->render->effect.get();
     }
-    if (auto unmanaged = Workspace::self()->findUnmanaged(id)) {
+    if (auto unmanaged = workspace()->findUnmanaged(id)) {
         return unmanaged->render->effect.get();
     }
     return nullptr;
@@ -1321,23 +1322,23 @@ int effects_handler_impl::screenNumber(const QPoint& pos) const
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, int screen, int desktop) const
 {
-    return Workspace::self()->clientArea(opt, screen, desktop);
+    return workspace()->clientArea(opt, screen, desktop);
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const EffectWindow* c) const
 {
     auto window = static_cast<effects_window_impl const*>(c)->window();
     if (window->control) {
-        return Workspace::self()->clientArea(opt, window);
+        return workspace()->clientArea(opt, window);
     } else {
-        return Workspace::self()->clientArea(
+        return workspace()->clientArea(
             opt, window->frameGeometry().center(), win::virtual_desktop_manager::self()->current());
     }
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const QPoint& p, int desktop) const
 {
-    return Workspace::self()->clientArea(opt, p, desktop);
+    return workspace()->clientArea(opt, p, desktop);
 }
 
 QRect effects_handler_impl::virtualScreenGeometry() const
@@ -1799,7 +1800,7 @@ void effects_handler_impl::renderEffectQuickView(EffectQuickView* w) const
 
 SessionState effects_handler_impl::sessionState() const
 {
-    return Workspace::self()->sessionManager()->state();
+    return workspace()->sessionManager()->state();
 }
 
 QList<EffectScreen*> effects_handler_impl::screens() const

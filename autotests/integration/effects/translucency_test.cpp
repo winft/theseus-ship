@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "win/move.h"
+#include "win/space.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <KConfigGroup>
 
@@ -157,7 +157,7 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -174,7 +174,7 @@ void TranslucencyTest::testMoveAfterDesktopChange()
     effects->setCurrentDesktop(2);
     QVERIFY(!m_translucencyEffect->isActive());
     input::get_cursor()->set_pos(client->frameGeometry().center());
-    workspace()->performWindowOperation(client, Options::MoveOp);
+    workspace()->performWindowOperation(client, base::options::MoveOp);
     QVERIFY(m_translucencyEffect->isActive());
     QTest::qWait(200);
     QVERIFY(m_translucencyEffect->isActive());
@@ -235,7 +235,7 @@ void TranslucencyTest::testDialogClose()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();

@@ -22,10 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "screens.h"
+#include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 #include "xwl/data_bridge.h"
 #include "xwl/xwayland.h"
 
@@ -107,7 +107,7 @@ void XwaylandSelectionsTest::testSync()
     const QString paste = QFINDTESTDATA(QStringLiteral("paste"));
     QVERIFY(!paste.isEmpty());
 
-    QSignalSpy clientAddedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy clientAddedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(clientAddedSpy.isValid());
     QSignalSpy shellClientAddedSpy(static_cast<win::wayland::space*>(workspace()),
                                    &win::wayland::space::wayland_window_added);
@@ -189,7 +189,7 @@ void XwaylandSelectionsTest::testSync()
     QVERIFY(pasteClient);
 
     if (workspace()->activeClient() != pasteClient) {
-        QSignalSpy clientActivatedSpy(workspace(), &Workspace::clientActivated);
+        QSignalSpy clientActivatedSpy(workspace(), &win::space::clientActivated);
         QVERIFY(clientActivatedSpy.isValid());
         workspace()->activateClient(pasteClient);
         QVERIFY(clientActivatedSpy.wait());

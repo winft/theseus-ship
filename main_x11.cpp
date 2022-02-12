@@ -19,9 +19,8 @@
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
 #include "scripting/platform.h"
-#include "sm.h"
+#include "win/space.h"
 #include "win/x11/space.h"
-#include "workspace.h"
 
 #include <KConfigGroup>
 #include <KCrash>
@@ -283,8 +282,9 @@ void ApplicationX11::start()
 
 bool ApplicationX11::notify(QObject* o, QEvent* e)
 {
-    if (e->spontaneous() && Workspace::self()->workspaceEvent(e))
+    if (e->spontaneous() && workspace->workspaceEvent(e)) {
         return true;
+    }
     return QApplication::notify(o, e);
 }
 

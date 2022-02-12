@@ -12,10 +12,10 @@
 #include "glx.h"
 #include "x11_logging.h"
 
+#include "base/options.h"
 #include "base/platform.h"
 #include "base/x11/xcb/helpers.h"
 #include "main.h"
-#include "options.h"
 #include "render/gl/texture.h"
 #include "render/scene.h"
 #include "render/x11/overlay_window.h"
@@ -208,7 +208,7 @@ GlxTexture::GlxTexture(gl::texture* texture, glx_backend* backend)
 GlxTexture::~GlxTexture()
 {
     if (m_glxpixmap != None) {
-        if (!options->isGlStrictBinding()) {
+        if (!kwinApp()->options->isGlStrictBinding()) {
             glXReleaseTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT);
         }
         glXDestroyPixmap(display(), m_glxpixmap);
@@ -218,7 +218,7 @@ GlxTexture::~GlxTexture()
 
 void GlxTexture::onDamage()
 {
-    if (options->isGlStrictBinding() && m_glxpixmap) {
+    if (kwinApp()->options->isGlStrictBinding() && m_glxpixmap) {
         glXReleaseTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT);
         glXBindTexImageEXT(display(), m_glxpixmap, GLX_FRONT_LEFT_EXT, nullptr);
     }

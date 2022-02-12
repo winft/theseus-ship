@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "win/net.h"
+#include "win/space.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/plasmashell.h>
 #include <Wrapland/Client/surface.h>

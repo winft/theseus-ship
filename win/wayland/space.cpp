@@ -32,7 +32,7 @@
 #include "xwl/surface.h"
 
 #ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
+#include "win/tabbox/tabbox.h"
 #endif
 
 namespace KWin::win::wayland
@@ -98,14 +98,14 @@ space::space(base::wayland::server* server)
         [this](auto layer_surface) { handle_new_layer_surface<window>(this, layer_surface); });
 
     activation.reset(new win::wayland::xdg_activation);
-    QObject::connect(this, &Workspace::clientActivated, this, [this] {
+    QObject::connect(this, &space::clientActivated, this, [this] {
         if (activeClient()) {
             activation->clear();
         }
     });
 
     // For Xwayland windows we need to setup Plasma management too.
-    QObject::connect(this, &Workspace::clientAdded, this, &space::handle_x11_window_added);
+    QObject::connect(this, &space::clientAdded, this, &space::handle_x11_window_added);
 
     QObject::connect(virtual_desktop_manager::self(),
                      &virtual_desktop_manager::desktopRemoved,
@@ -164,7 +164,8 @@ void space::handle_window_added(wayland::window* window)
         if (window->maximizeMode() == win::maximize_mode::full) {
             placementDone = true;
         }
-        if (window->control->rules().checkPosition(invalidPoint, true) != invalidPoint) {
+        if (window->control->rules().checkPosition(geo::invalid_point, true)
+            != geo::invalid_point) {
             placementDone = true;
         }
         if (!placementDone) {

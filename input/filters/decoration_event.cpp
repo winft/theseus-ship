@@ -110,8 +110,9 @@ bool decoration_event_filter::axis(axis_event const& event)
 
     if ((event.orientation == axis_orientation::vertical)
         && win::titlebar_positioned_under_mouse(window)) {
-        window->performMouseCommand(options->operationTitlebarMouseWheel(event.delta * -1),
-                                    kwinApp()->input->redirect->pointer()->pos().toPoint());
+        window->performMouseCommand(
+            kwinApp()->options->operationTitlebarMouseWheel(event.delta * -1),
+            kwinApp()->input->redirect->pointer()->pos().toPoint());
     }
     return true;
 }

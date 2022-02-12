@@ -7,13 +7,13 @@
 #include "effects.h"
 
 #include "base/platform.h"
+#include "base/x11/grabs.h"
 #include "input/cursor.h"
+#include "main.h"
 #include "mouse_intercept_filter.h"
 #include "screens.h"
-#include "utils.h"
 #include "win/screen_edges.h"
 #include "win/x11/space.h"
-#include "workspace.h"
 
 #include <QDesktopWidget>
 
@@ -44,7 +44,7 @@ effects_handler_impl::~effects_handler_impl()
 
 bool effects_handler_impl::doGrabKeyboard()
 {
-    bool ret = grabXKeyboard();
+    bool ret = base::x11::grab_keyboard();
     if (!ret)
         return false;
     // Workaround for Qt 5.9 regression introduced with 2b34aefcf02f09253473b096eb4faffd3e62b5f4
@@ -58,7 +58,7 @@ bool effects_handler_impl::doGrabKeyboard()
 
 void effects_handler_impl::doUngrabKeyboard()
 {
-    ungrabXKeyboard();
+    base::x11::ungrab_keyboard();
 }
 
 void effects_handler_impl::doStartMouseInterception(Qt::CursorShape shape)

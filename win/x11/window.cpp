@@ -16,23 +16,22 @@
 #include "unmanaged.h"
 #include "window_release.h"
 
+#include "base/x11/grabs.h"
+#include "decorations/window.h"
 #include "render/x11/shadow.h"
+#include "rules/rules.h"
 #include "win/deco.h"
 #include "win/layers.h"
 #include "win/remnant.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 
-#include "decorations/window.h"
-#include "rules/rules.h"
-#include "utils.h"
-
 #include <KDecoration2/DecoratedClient>
 
 namespace KWin::win::x11
 {
 
-window::window(Workspace& space)
+window::window(win::space& space)
     : Toplevel(new x11::transient(this))
     , space{space}
     , motif_hints(space.atoms->motif_wm_hints)
@@ -261,8 +260,8 @@ void window::finishCompositing(ReleaseReason releaseReason)
 void window::setBlockingCompositing(bool block)
 {
     auto const usedToBlock = blocks_compositing;
-    blocks_compositing
-        = control->rules().checkBlockCompositing(block && options->windowsBlockCompositing());
+    blocks_compositing = control->rules().checkBlockCompositing(
+        block && kwinApp()->options->windowsBlockCompositing());
 
     if (usedToBlock != blocks_compositing) {
         Q_EMIT blockingCompositingChanged(blocks_compositing ? this : nullptr);
@@ -411,7 +410,7 @@ bool window::isMovable() const
         // allow moving of splashscreens :)
         return false;
     }
-    if (control->rules().checkPosition(invalidPoint) != invalidPoint) {
+    if (control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
         // forced position
         return false;
     }
@@ -427,7 +426,7 @@ bool window::isMovableAcrossScreens() const
         // allow moving of splashscreens :)
         return false;
     }
-    if (control->rules().checkPosition(invalidPoint) != invalidPoint) {
+    if (control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
         // forced position
         return false;
     }
@@ -456,7 +455,7 @@ bool window::isResizable() const
     if ((mode == win::position::top || mode == win::position::top_left
          || mode == win::position::top_right || mode == win::position::left
          || mode == win::position::bottom_left)
-        && control->rules().checkPosition(invalidPoint) != invalidPoint) {
+        && control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
         return false;
     }
 
@@ -564,7 +563,7 @@ bool window::isHiddenInternal() const
     return hidden;
 }
 
-bool window::performMouseCommand(Options::MouseCommand command, QPoint const& globalPos)
+bool window::performMouseCommand(base::options::MouseCommand command, QPoint const& globalPos)
 {
     return x11::perform_mouse_command(this, command, globalPos);
 }
@@ -578,7 +577,7 @@ void window::setShortcutInternal()
     // Workaround for kwin<->kglobalaccel deadlock, when KWin has X grab and the kded
     // kglobalaccel module tries to create the key grab. KWin should preferably grab
     // they keys itself anyway :(.
-    QTimer::singleShot(0, this, std::bind(&Workspace::clientShortcutUpdated, workspace(), this));
+    QTimer::singleShot(0, this, std::bind(&space::clientShortcutUpdated, workspace(), this));
 #endif
 }
 
@@ -759,7 +758,7 @@ void window::do_set_maximize_mode(maximize_mode mode)
 
     // Update decoration borders.
     if (auto deco = decoration(this); deco && deco->client()
-        && !(options->borderlessMaximizedWindows() && mode == maximize_mode::full)) {
+        && !(kwinApp()->options->borderlessMaximizedWindows() && mode == maximize_mode::full)) {
         auto const deco_client = decoration(this)->client().toStrongRef().data();
 
         if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {
@@ -1099,7 +1098,7 @@ bool window::doStartMoveResize()
         has_grab = true;
     }
 
-    if (!has_grab && grabXKeyboard(frameId()))
+    if (!has_grab && base::x11::grab_keyboard(frameId()))
         has_grab = move_resize_has_keyboard_grab = true;
     if (!has_grab) {
         // at least one grab is necessary in order to be able to finish move/resize
@@ -1128,7 +1127,7 @@ void window::leaveMoveResize()
     }
 
     if (move_resize_has_keyboard_grab) {
-        ungrabXKeyboard();
+        base::x11::ungrab_keyboard();
     }
 
     move_resize_has_keyboard_grab = false;

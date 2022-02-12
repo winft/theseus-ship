@@ -23,10 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 
 #include "input/cursor.h"
-#include "settings.h"
+#include "options_settings.h"
 #include "win/control.h"
 #include "win/screen.h"
-#include <workspace.h>
+#include "win/space.h"
 #include "toplevel.h"
 
 namespace KWin
@@ -50,7 +50,7 @@ void Screens::init()
 {
     connect(this, &Screens::sizeChanged, this, &Screens::geometryChanged);
 
-    Settings settings;
+    base::Settings settings;
     settings.setDefaults();
     m_currentFollowsMouse = settings.activeMouseScreen();
 }
@@ -105,7 +105,7 @@ void Screens::reconfigure()
     if (!m_config) {
         return;
     }
-    Settings settings(m_config);
+    base::Settings settings(m_config);
     settings.read();
     setCurrentFollowsMouse(settings.activeMouseScreen());
 }
@@ -188,7 +188,7 @@ int Screens::current() const
     if (m_currentFollowsMouse) {
         return number(input::get_cursor()->pos());
     }
-    auto client = Workspace::self()->activeClient();
+    auto client = workspace()->activeClient();
     if (client && !win::on_screen(client, m_current)) {
         return client->screen();
     }

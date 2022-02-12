@@ -5,13 +5,13 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #include "screenshotdbusinterface2.h"
-#include "../service_utils.h"
+
+#include "desktop/kde/service_utils.h"
+
 #include "screenshot2adaptor.h"
 
 #include <KLocalizedString>
-
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QtConcurrent>
@@ -287,7 +287,7 @@ bool ScreenShotDBusInterface2::checkPermissions() const
     const QDBusReply<uint> reply = connection().interface()->servicePid(message().service());
     if (reply.isValid()) {
         const uint pid = reply.value();
-        const auto interfaces = KWin::fetchRestrictedDBusInterfacesFromPid(pid);
+        const auto interfaces = desktop::kde::fetchRestrictedDBusInterfacesFromPid(pid);
         if (!interfaces.contains(s_dbusInterface)) {
             sendErrorReply(s_errorNotAuthorized, s_errorNotAuthorizedMessage);
             return false;

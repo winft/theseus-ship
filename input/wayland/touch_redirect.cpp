@@ -17,7 +17,7 @@
 #include "base/wayland/output.h"
 #include "base/wayland/server.h"
 #include "win/input.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <KScreenLocker/KsldApp>
 

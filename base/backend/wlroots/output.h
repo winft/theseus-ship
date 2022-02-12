@@ -30,7 +30,7 @@ public:
     void update_transform(base::wayland::output_transform transform) override;
 
     int gamma_ramp_size() const override;
-    bool set_gamma_ramp(base::gamma_ramp const& gamma) override;
+    bool set_gamma_ramp(gamma_ramp const& gamma) override;
 
     wlr_output* native;
     wlroots::platform* platform;

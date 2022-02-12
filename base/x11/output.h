@@ -28,7 +28,7 @@ public:
     int refresh_rate() const override;
 
     int gamma_ramp_size() const override;
-    bool set_gamma_ramp(base::gamma_ramp const& gamma) override;
+    bool set_gamma_ramp(gamma_ramp const& gamma) override;
 
     QSize physical_size() const override;
 

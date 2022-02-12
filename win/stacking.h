@@ -12,9 +12,11 @@
 #include "layers.h"
 #include "meta.h"
 #include "net.h"
+#include "space.h"
 #include "stacking_order.h"
 #include "transient.h"
-#include "util.h"
+#include "utils/blocker.h"
+#include "win/util.h"
 #include "x11/group.h"
 
 // Required for casts between Toplevel and window in some template functions.
@@ -22,8 +24,6 @@
 #include "x11/window.h"
 
 #include "rules/rules.h"
-#include "utils.h"
-#include "workspace.h"
 
 /**
  This file contains things relevant to stacking order and layers.
@@ -193,12 +193,12 @@ void lower_window(Space* space, Window* window)
     auto do_lower = [space](auto win) {
         win->control->cancel_auto_raise();
 
-        Blocker blocker(space->stacking_order);
+        blocker block(space->stacking_order);
 
         remove_all(space->stacking_order->pre_stack, win);
         space->stacking_order->pre_stack.push_front(win);
 
-        return blocker;
+        return block;
     };
     auto cleanup = [space](auto win) {
         if (win == space->most_recently_raised) {
@@ -206,7 +206,7 @@ void lower_window(Space* space, Window* window)
         }
     };
 
-    auto blocker = do_lower(window);
+    auto block = do_lower(window);
 
     if (window->transient()->lead() && window->group()) {
         // Lower also all windows in the group, in reversed stacking order.
@@ -237,7 +237,7 @@ void raise_window(Space* space, Window* window)
     auto prepare = [space](auto window) {
         assert(window->control);
         window->control->cancel_auto_raise();
-        return Blocker(space->stacking_order);
+        return blocker(space->stacking_order);
     };
     auto do_raise = [space](auto window) {
         remove_all(space->stacking_order->pre_stack, window);
@@ -248,7 +248,7 @@ void raise_window(Space* space, Window* window)
         }
     };
 
-    auto blocker = prepare(window);
+    auto block = prepare(window);
 
     if (window->transient()->lead()) {
         // Also raise all leads.
@@ -270,7 +270,7 @@ void raise_window(Space* space, Window* window)
                 // Might be without control, at least on X11 this can happen (latte-dock settings).
                 continue;
             }
-            auto blocker = prepare(lead);
+            auto block = prepare(lead);
             do_raise(lead);
         }
     }
@@ -292,11 +292,11 @@ void raise_or_lower_client(Space* space, Window* window)
         && space->most_recently_raised->isShown() && window->isOnCurrentDesktop()) {
         topmost = space->most_recently_raised;
     } else {
-        topmost = top_client_on_desktop(space,
-                                        window->isOnAllDesktops()
-                                            ? win::virtual_desktop_manager::self()->current()
-                                            : window->desktop(),
-                                        options->isSeparateScreenFocus() ? window->screen() : -1);
+        topmost = top_client_on_desktop(
+            space,
+            window->isOnAllDesktops() ? win::virtual_desktop_manager::self()->current()
+                                      : window->desktop(),
+            kwinApp()->options->isSeparateScreenFocus() ? window->screen() : -1);
     }
 
     if (window == topmost) {
@@ -434,7 +434,7 @@ void set_active(Win* win, bool active)
         win->control->cancel_auto_raise();
     }
 
-    Blocker blocker(workspace()->stacking_order);
+    blocker block(workspace()->stacking_order);
 
     // active windows may get different layer
     update_layer(win);

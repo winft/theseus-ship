@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "toplevel.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
-#include "workspace.h"
 
 #include <Wrapland/Server/data_source.h>
 #include <Wrapland/Server/drag_pool.h>

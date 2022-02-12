@@ -8,10 +8,11 @@
 */
 #include "window_selector.h"
 
+#include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
-#include <input/cursor.h>
-#include <win/x11/window.h>
-#include <workspace.h>
+#include "input/cursor.h"
+#include "win/space.h"
+#include "win/x11/window.h"
 
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
@@ -93,9 +94,9 @@ bool window_selector::activate(const QByteArray& cursorName)
         return false;
     }
 
-    const bool grabbed = grabXKeyboard();
+    const bool grabbed = base::x11::grab_keyboard();
     if (grabbed) {
-        grabXServer();
+        base::x11::grab_server();
     } else {
         xcb_ungrab_pointer(connection(), XCB_TIME_CURRENT_TIME);
     }
@@ -234,9 +235,9 @@ void window_selector::selectWindowUnderPointer()
 
 void window_selector::release()
 {
-    ungrabXKeyboard();
+    base::x11::ungrab_keyboard();
     xcb_ungrab_pointer(connection(), XCB_TIME_CURRENT_TIME);
-    ungrabXServer();
+    base::x11::ungrab_server();
     m_active = false;
     m_callback = std::function<void(KWin::Toplevel*)>();
     m_pointSelectionFallback = std::function<void(const QPoint&)>();
@@ -251,7 +252,7 @@ void window_selector::selectWindowId(xcb_window_t window_to_select)
     xcb_window_t window = window_to_select;
     win::x11::window* client = nullptr;
     while (true) {
-        client = Workspace::self()->findClient(win::x11::predicate_match::frame_id, window);
+        client = workspace()->findClient(win::x11::predicate_match::frame_id, window);
         if (client) {
             break; // Found the client
         }
@@ -265,7 +266,7 @@ void window_selector::selectWindowId(xcb_window_t window_to_select)
     if (client) {
         m_callback(client);
     } else {
-        m_callback(Workspace::self()->findUnmanaged(window_to_select));
+        m_callback(workspace()->findUnmanaged(window_to_select));
     }
 }
 

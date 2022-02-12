@@ -8,7 +8,9 @@
 
 #include "compositor_selection_owner.h"
 
+#include "base/logging.h"
 #include "debug/perf/ftrace.h"
+#include "main.h"
 #include "render/dbus/compositing.h"
 #include "render/effects.h"
 #include "render/gl/scene.h"
@@ -18,8 +20,7 @@
 #include "render/window.h"
 #include "render/xrender/scene.h"
 #include "toplevel.h"
-#include "utils.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include "win/stacking_order.h"
 #include "win/transient.h"
@@ -48,7 +49,7 @@ compositor* compositor::self()
 
 compositor::compositor(render::platform& platform)
     : render::compositor(platform)
-    , m_suspended(options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
+    , m_suspended(kwinApp()->options->isUseCompositing() ? NoReasonSuspend : UserSuspend)
 {
     x11_integration.is_overlay_window = [this](auto win) { return checkForOverlayWindow(win); };
     x11_integration.update_blocking
@@ -99,7 +100,7 @@ void compositor::start()
         m_releaseSelectionTimer.stop();
     }
 
-    if (Workspace::self()) {
+    if (workspace()) {
         startupWithWorkspace();
     } else {
         connect(kwinApp(), &Application::workspaceCreated, this, &compositor::startupWithWorkspace);
@@ -393,7 +394,7 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
         // If !c we just check if we can resume in case a blocking client was lost.
         bool shouldResume = true;
 
-        for (auto const& client : Workspace::self()->allClientList()) {
+        for (auto const& client : workspace()->allClientList()) {
             if (client->isBlockingCompositing()) {
                 shouldResume = false;
                 break;

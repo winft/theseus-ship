@@ -20,7 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_MOCK_TABBOX_HANDLER_H
 #define KWIN_MOCK_TABBOX_HANDLER_H
 
-#include "../../tabbox/tabboxhandler.h"
+#include "../../win/tabbox/tabboxhandler.h"
+
 namespace KWin
 {
 class MockTabBoxHandler : public TabBox::TabBoxHandler

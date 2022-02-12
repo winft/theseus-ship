@@ -13,8 +13,6 @@
 #include "input/xkb/keyboard.h"
 #include "main.h"
 
-#include "utils.h"
-
 namespace KWin::input
 {
 

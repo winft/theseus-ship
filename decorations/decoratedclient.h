@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #ifndef KWIN_DECORATED_CLIENT_H
 #define KWIN_DECORATED_CLIENT_H
-#include "options.h"
+#include "base/options.h"
 
 #include <KDecoration2/Private/DecoratedClientPrivate>
 
@@ -110,7 +110,7 @@ public:
     }
 
 private Q_SLOTS:
-    void delayedRequestToggleMaximization(Options::WindowOperation operation);
+    void delayedRequestToggleMaximization(base::options::WindowOperation operation);
 
 private:
     void createRenderer();

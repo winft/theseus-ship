@@ -9,10 +9,10 @@
 #include "remnant.h"
 #include "scene.h"
 #include "shadow.h"
+#include "space.h"
 #include "types.h"
 
 #include "render/outline.h"
-#include "workspace.h"
 
 #include <QRect>
 

@@ -21,7 +21,7 @@
 #include "render/platform.h"
 #include "render/wayland/shadow.h"
 #include "rules/rules.h"
-#include "utils.h"
+#include "utils/blocker.h"
 #include "win/deco.h"
 #include "win/geo.h"
 #include "win/layers.h"
@@ -31,7 +31,7 @@
 #include "win/transient.h"
 
 #ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
+#include "win/tabbox/tabbox.h"
 #endif
 
 #include <Wrapland/Server/buffer.h>
@@ -55,8 +55,7 @@ namespace WS = Wrapland::Server;
 
 Toplevel* find_toplevel(WS::Surface* surface)
 {
-    return Workspace::self()->findToplevel(
-        [surface](auto win) { return win->surface() == surface; });
+    return workspace()->findToplevel([surface](auto win) { return win->surface() == surface; });
 }
 
 window::window(WS::Surface* surface)
@@ -269,7 +268,7 @@ bool window::isMovable() const
     if (geometry_update.fullscreen) {
         return false;
     }
-    if (control->rules().checkPosition(invalidPoint) != invalidPoint) {
+    if (control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
         return false;
     }
     if (plasma_shell_surface) {
@@ -286,7 +285,7 @@ bool window::isMovableAcrossScreens() const
     if (layer_surface) {
         return false;
     }
-    if (control->rules().checkPosition(invalidPoint) != invalidPoint) {
+    if (control->rules().checkPosition(geo::invalid_point) != geo::invalid_point) {
         return false;
     }
     if (plasma_shell_surface) {
@@ -343,7 +342,7 @@ void window::doSetActive()
     if (!control->active()) {
         return;
     }
-    Blocker blocker(workspace()->stacking_order);
+    blocker block(workspace()->stacking_order);
     workspace()->focusToNull();
 }
 
@@ -542,7 +541,7 @@ void window::configure_geometry(QRect const& frame_geo)
         auto parent = transient()->lead();
         if (parent) {
             auto const top_lead = lead_of_annexed_transient(this);
-            auto const bounds = Workspace::self()->clientArea(
+            auto const bounds = workspace()->clientArea(
                 top_lead->control->fullscreen() ? FullScreenArea : PlacementArea, top_lead);
 
             serial = popup->configure(
@@ -623,7 +622,7 @@ void window::apply_pending_geometry()
             return;
         }
 
-        auto const screen_bounds = Workspace::self()->clientArea(
+        auto const screen_bounds = workspace()->clientArea(
             toplevel->control->fullscreen() ? FullScreenArea : PlacementArea, toplevel);
 
         // Need to set that for get_xdg_shell_popup_placement(..) call.
@@ -750,7 +749,7 @@ void window::do_set_maximize_mode(maximize_mode mode)
 
     // Update decoration borders.
     if (auto deco = decoration(this); deco && deco->client()
-        && !(options->borderlessMaximizedWindows() && mode == maximize_mode::full)) {
+        && !(kwinApp()->options->borderlessMaximizedWindows() && mode == maximize_mode::full)) {
         auto const deco_client = win::decoration(this)->client().toStrongRef();
         if ((mode & maximize_mode::vertical) != (old_mode & maximize_mode::vertical)) {
             Q_EMIT deco_client->maximizedVerticallyChanged(flags(mode & maximize_mode::vertical));
@@ -889,7 +888,7 @@ void window::unmap()
         control->destroy_wayland_management();
     }
 
-    if (Workspace::self()) {
+    if (workspace()) {
         addWorkspaceRepaint(visible_rect(this));
         if (control) {
             workspace()->clientHidden(this);

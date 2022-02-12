@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "screen_edge_item.h"
 
+#include "config-kwin.h"
 #include "win/screen_edges.h"
-#include "workspace.h"
-#include <config-kwin.h>
+#include "win/space.h"
 
 #include <QAction>
 

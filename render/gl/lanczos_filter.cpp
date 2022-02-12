@@ -22,17 +22,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "window.h"
 
+#include "base/logging.h"
 #include "base/platform.h"
-#include "options.h"
+#include "main.h"
 #include "render/effects.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "workspace.h"
+#include "win/space.h"
 
-#include <kwinglplatform.h>
-#include <kwinglutils.h>
-
-#include <kwineffects.h>
+#include "kwineffects.h"
+#include "kwinglplatform.h"
+#include "kwinglutils.h"
 
 #include <QFile>
 #include <QtMath>
@@ -181,8 +181,7 @@ void lanczos_filter::performPaint(effects_window_impl* w,
     if (data.xScale() < 0.9 || data.yScale() < 0.9) {
         if (!m_inited)
             init();
-        const QRect screenRect
-            = Workspace::self()->clientArea(ScreenArea, w->screen(), w->desktop());
+        auto const screenRect = workspace()->clientArea(ScreenArea, w->screen(), w->desktop());
         // window geometry may not be bigger than screen geometry to fit into the FBO
         QRect winGeo(w->expandedGeometry());
         if (m_shader && winGeo.width() <= screenRect.width()

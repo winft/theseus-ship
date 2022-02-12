@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "win/deco.h"
 #include "win/screen_edges.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdgdecoration.h>

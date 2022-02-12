@@ -5,7 +5,8 @@
 */
 #pragma once
 
-#include "options.h"
+#include "base/options.h"
+#include "main.h"
 
 #include <kkeyserver.h>
 
@@ -14,7 +15,7 @@ namespace KWin::win::x11
 
 static inline uint16_t x11CommandAllModifier()
 {
-    switch (options->commandAllModifier()) {
+    switch (kwinApp()->options->commandAllModifier()) {
     case Qt::MetaModifier:
         return KKeyServer::modXMeta();
     case Qt::AltModifier:

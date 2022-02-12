@@ -8,9 +8,9 @@
 #include "control.h"
 #include "net.h"
 #include "remnant.h"
+#include "space.h"
 
 #include "rules/rules.h"
-#include "workspace.h"
 
 #include <KDesktopFile>
 #include <klocalizedstring.h>

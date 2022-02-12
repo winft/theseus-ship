@@ -10,7 +10,6 @@ set(kwinrules_SRCS
     ../../input/cursor_shape.cpp
     ../../input/x11/cursor.cpp
     ../../rules/rules.cpp
-    ../../utils.cpp
     ../../win/dbus/virtual_desktop_types.cpp
     kwinsrc.cpp
     optionsmodel.cpp

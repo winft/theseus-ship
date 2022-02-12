@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scripting/platform.h"
 #include "scripting/script.h"
 #include "win/control.h"
+#include "win/space.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <KPackage/PackageLoader>
 #include <Wrapland/Client/surface.h>

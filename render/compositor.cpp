@@ -6,27 +6,26 @@
 */
 #include "compositor.h"
 
+#include "cursor.h"
+#include "dbus/compositing.h"
 #include "effects.h"
 #include "platform.h"
+#include "scene.h"
 #include "utils.h"
+#include "x11/compositor_selection_owner.h"
 
-#include "../utils.h"
+#include "base/logging.h"
 #include "base/output.h"
 #include "base/platform.h"
 #include "base/wayland/server.h"
-#include "cursor.h"
 #include "debug/perf/ftrace.h"
-#include "render/dbus/compositing.h"
-#include "scene.h"
 #include "screens.h"
-#include "workspace.h"
-
 #include "win/net.h"
 #include "win/remnant.h"
 #include "win/scene.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/x11/stacking_tree.h"
-#include "x11/compositor_selection_owner.h"
 
 #include <QQuickWindow>
 #include <QTimerEvent>
@@ -56,8 +55,12 @@ compositor::compositor(render::platform& platform)
     , m_delay(0)
     , m_bufferSwapPending(false)
 {
-    connect(options, &Options::configChanged, this, &compositor::configChanged);
-    connect(options, &Options::animationSpeedChanged, this, &compositor::configChanged);
+    connect(
+        kwinApp()->options.get(), &base::options::configChanged, this, &compositor::configChanged);
+    connect(kwinApp()->options.get(),
+            &base::options::animationSpeedChanged,
+            this,
+            &compositor::configChanged);
 
     m_unusedSupportPropertyTimer.setInterval(compositor_lost_message_delay);
     m_unusedSupportPropertyTimer.setSingleShot(true);
@@ -90,15 +93,15 @@ bool compositor::setupStart()
     }
     m_state = State::Starting;
 
-    options->reloadCompositingSettings(true);
+    kwinApp()->options->reloadCompositingSettings(true);
 
     setupX11Support();
 
     // There might still be a deleted around, needs to be cleared before
     // creating the scene (BUG 333275).
-    if (Workspace::self()) {
-        while (!Workspace::self()->remnants().empty()) {
-            Workspace::self()->remnants().front()->remnant()->discard();
+    if (workspace()) {
+        while (!workspace()->remnants().empty()) {
+            workspace()->remnants().front()->remnant()->discard();
         }
     }
 
@@ -134,7 +137,7 @@ bool compositor::setupStart()
 
     platform.selected_compositor = m_scene->compositingType();
 
-    if (!Workspace::self() && m_scene && m_scene->compositingType() == QPainterCompositing) {
+    if (!workspace() && m_scene && m_scene->compositingType() == QPainterCompositing) {
         // Force Software QtQuick on first startup with QPainter.
         QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
     }
@@ -191,7 +194,7 @@ void compositor::startupWithWorkspace()
 
     connect(
         workspace(),
-        &Workspace::destroyed,
+        &win::space::destroyed,
         this,
         [this] { compositeTimer.stop(); },
         Qt::UniqueConnection);
@@ -202,7 +205,7 @@ void compositor::startupWithWorkspace()
             this,
             &compositor::addRepaintFull);
 
-    for (auto& client : Workspace::self()->windows()) {
+    for (auto& client : workspace()->windows()) {
         if (client->remnant()) {
             continue;
         }
@@ -214,7 +217,7 @@ void compositor::startupWithWorkspace()
 
     // Sets also the 'effects' pointer.
     platform.createEffectsHandler(this, scene());
-    connect(Workspace::self(), &Workspace::deletedRemoved, scene(), &scene::removeToplevel);
+    connect(workspace(), &win::space::deletedRemoved, scene(), &scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
     connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
         if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
@@ -255,8 +258,8 @@ void compositor::stop(bool on_shutdown)
     delete effects;
     effects = nullptr;
 
-    if (Workspace::self()) {
-        for (auto& c : Workspace::self()->windows()) {
+    if (workspace()) {
+        for (auto& c : workspace()->windows()) {
             if (c->remnant()) {
                 continue;
             }

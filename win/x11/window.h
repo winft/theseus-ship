@@ -56,10 +56,10 @@ class KWIN_EXPORT window : public Toplevel
 public:
     constexpr static bool is_toplevel{false};
 
-    explicit window(Workspace& space);
+    explicit window(win::space& space);
     ~window();
 
-    Workspace& space;
+    win::space& space;
 
     QString iconic_caption;
 
@@ -214,7 +214,7 @@ public:
     bool userCanSetNoBorder() const override;
     bool wantsInput() const override;
 
-    bool performMouseCommand(Options::MouseCommand command, QPoint const& globalPos) override;
+    bool performMouseCommand(base::options::MouseCommand command, QPoint const& globalPos) override;
     void setShortcutInternal() override;
 
     bool hasStrut() const override;

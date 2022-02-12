@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "scripting/platform.h"
 #include "scripting/script.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #define private public
 #include "win/screen_edges.h"
@@ -153,7 +153,7 @@ void ScreenEdgeTest::testEdge()
     QCOMPARE(runningChangedSpy.count(), 1);
     QCOMPARE(runningChangedSpy.first().first().toBool(), true);
     // triggering the edge will result in show desktop being triggered
-    QSignalSpy showDesktopSpy(workspace(), &Workspace::showingDesktopChanged);
+    QSignalSpy showDesktopSpy(workspace(), &win::space::showingDesktopChanged);
     QVERIFY(showDesktopSpy.isValid());
 
     // trigger the edge
@@ -202,7 +202,7 @@ void ScreenEdgeTest::testTouchEdge()
     QCOMPARE(runningChangedSpy.count(), 1);
     QCOMPARE(runningChangedSpy.first().first().toBool(), true);
     // triggering the edge will result in show desktop being triggered
-    QSignalSpy showDesktopSpy(workspace(), &Workspace::showingDesktopChanged);
+    QSignalSpy showDesktopSpy(workspace(), &win::space::showingDesktopChanged);
     QVERIFY(showDesktopSpy.isValid());
 
     // trigger the edge
@@ -238,7 +238,7 @@ void ScreenEdgeTest::testEdgeUnregister()
     s->run();
     QVERIFY(runningChangedSpy.wait());
 
-    QSignalSpy showDesktopSpy(workspace(), &Workspace::showingDesktopChanged);
+    QSignalSpy showDesktopSpy(workspace(), &win::space::showingDesktopChanged);
     QVERIFY(showDesktopSpy.isValid());
 
     // trigger the edge
@@ -281,7 +281,7 @@ void ScreenEdgeTest::testDeclarativeTouchEdge()
     s->run();
     QTRY_COMPARE(runningChangedSpy.count(), 1);
 
-    QSignalSpy showDesktopSpy(workspace(), &Workspace::showingDesktopChanged);
+    QSignalSpy showDesktopSpy(workspace(), &win::space::showingDesktopChanged);
     QVERIFY(showDesktopSpy.isValid());
 
     // Trigger the edge through touch

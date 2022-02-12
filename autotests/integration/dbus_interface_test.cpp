@@ -28,11 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "win/controlling.h"
 #include "win/move.h"
+#include "win/space.h"
 #include "win/stacking.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 
@@ -275,7 +275,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();

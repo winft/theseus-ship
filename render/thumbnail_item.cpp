@@ -19,11 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "thumbnail_item.h"
 
+#include "base/logging.h"
 #include "effects.h"
 #include "render/compositor.h"
 #include "toplevel.h"
 #include "win/control.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <QDebug>
 #include <QPainter>

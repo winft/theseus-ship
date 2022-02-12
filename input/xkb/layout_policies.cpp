@@ -10,10 +10,9 @@
 #include "layout_manager.h"
 
 #include "toplevel.h"
-#include "workspace.h"
-
 #include "win/control.h"
 #include "win/net.h"
+#include "win/space.h"
 #include "win/util.h"
 #include "win/virtual_desktops.h"
 
@@ -79,16 +78,18 @@ QString const global_layout_policy::default_layout_entry_key() const
 global_layout_policy::global_layout_policy(layout_manager* manager, KConfigGroup const& config)
     : layout_policy(manager, config)
 {
-    QObject::connect(
-        workspace()->sessionManager(), &SessionManager::prepareSessionSaveRequested, this, [this] {
-            clear_layouts();
-            if (auto const layout = xkb::get_primary_xkb_keyboard()->layout) {
-                this->config.writeEntry(default_layout_entry_key(), layout);
-            }
-        });
+    QObject::connect(workspace()->sessionManager(),
+                     &win::session_manager::prepareSessionSaveRequested,
+                     this,
+                     [this] {
+                         clear_layouts();
+                         if (auto const layout = xkb::get_primary_xkb_keyboard()->layout) {
+                             this->config.writeEntry(default_layout_entry_key(), layout);
+                         }
+                     });
 
     QObject::connect(
-        workspace()->sessionManager(), &SessionManager::loadSessionRequested, this, [this] {
+        workspace()->sessionManager(), &win::session_manager::loadSessionRequested, this, [this] {
             if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
                 set_layout(this->config.readEntry(default_layout_entry_key(), 0));
             }
@@ -104,24 +105,26 @@ virtual_desktop_layout_policy::virtual_desktop_layout_policy(layout_manager* man
                      this,
                      &virtual_desktop_layout_policy::handle_desktop_change);
 
+    QObject::connect(workspace()->sessionManager(),
+                     &win::session_manager::prepareSessionSaveRequested,
+                     this,
+                     [this] {
+                         clear_layouts();
+
+                         for (auto const& [vd, layout] : layouts) {
+                             if (!layout) {
+                                 continue;
+                             }
+
+                             this->config.writeEntry(
+                                 default_layout_entry_key()
+                                     % QLatin1String(QByteArray::number(vd->x11DesktopNumber())),
+                                 layout);
+                         }
+                     });
+
     QObject::connect(
-        workspace()->sessionManager(), &SessionManager::prepareSessionSaveRequested, this, [this] {
-            clear_layouts();
-
-            for (auto const& [vd, layout] : layouts) {
-                if (!layout) {
-                    continue;
-                }
-
-                this->config.writeEntry(
-                    default_layout_entry_key()
-                        % QLatin1String(QByteArray::number(vd->x11DesktopNumber())),
-                    layout);
-            }
-        });
-
-    QObject::connect(
-        workspace()->sessionManager(), &SessionManager::loadSessionRequested, this, [this] {
+        workspace()->sessionManager(), &win::session_manager::loadSessionRequested, this, [this] {
             if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
                 auto const& desktops = win::virtual_desktop_manager::self()->desktops();
 
@@ -192,7 +195,7 @@ void virtual_desktop_layout_policy::handle_layout_change(uint index)
 window_layout_policy::window_layout_policy(layout_manager* manager)
     : layout_policy(manager)
 {
-    QObject::connect(workspace(), &Workspace::clientActivated, this, [this](auto window) {
+    QObject::connect(workspace(), &win::space::clientActivated, this, [this](auto window) {
         if (!window) {
             return;
         }
@@ -239,27 +242,30 @@ application_layout_policy::application_layout_policy(layout_manager* manager,
     : layout_policy(manager, config)
 {
     QObject::connect(workspace(),
-                     &Workspace::clientActivated,
+                     &win::space::clientActivated,
                      this,
                      &application_layout_policy::handle_client_activated);
 
-    QObject::connect(
-        workspace()->sessionManager(), &SessionManager::prepareSessionSaveRequested, this, [this] {
-            clear_layouts();
+    QObject::connect(workspace()->sessionManager(),
+                     &win::session_manager::prepareSessionSaveRequested,
+                     this,
+                     [this] {
+                         clear_layouts();
 
-            for (auto const& [win, layout] : layouts) {
-                if (!layout) {
-                    continue;
-                }
-                if (auto const name = win->control->desktop_file_name(); !name.isEmpty()) {
-                    this->config.writeEntry(default_layout_entry_key() % QLatin1String(name),
-                                            layout);
-                }
-            }
-        });
+                         for (auto const& [win, layout] : layouts) {
+                             if (!layout) {
+                                 continue;
+                             }
+                             if (auto const name = win->control->desktop_file_name();
+                                 !name.isEmpty()) {
+                                 this->config.writeEntry(
+                                     default_layout_entry_key() % QLatin1String(name), layout);
+                             }
+                         }
+                     });
 
     QObject::connect(
-        workspace()->sessionManager(), &SessionManager::loadSessionRequested, this, [this] {
+        workspace()->sessionManager(), &win::session_manager::loadSessionRequested, this, [this] {
             if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
                 auto const keyPrefix = default_layout_entry_key();
                 auto const keyList = this->config.keyList().filter(keyPrefix);

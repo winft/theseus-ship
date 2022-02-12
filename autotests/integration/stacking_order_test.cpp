@@ -23,13 +23,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/atoms.h"
 #include "main.h"
 #include "toplevel.h"
-#include "utils.h"
+#include "utils/blocker.h"
+#include "win/space.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>
@@ -357,7 +357,7 @@ void StackingOrderTest::testGroupTransientIsAboveWindowGroup()
 
     auto conn = create_xcb_connection();
 
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     // Create the group leader.
@@ -475,7 +475,7 @@ void StackingOrderTest::testRaiseGroupTransient()
 
     auto conn = create_xcb_connection();
 
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     // Create the group leader.
@@ -613,7 +613,7 @@ void StackingOrderTest::testDeletedGroupTransient()
 
     auto conn = create_xcb_connection();
 
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     // Create the group leader.
@@ -731,7 +731,7 @@ void StackingOrderTest::testDontKeepAboveNonModalDialogGroupTransients()
 
     auto conn = create_xcb_connection();
 
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
 
     // Create the group leader.
@@ -858,7 +858,7 @@ void StackingOrderTest::testKeepAbove()
 
     // Set the "keep-above" flag on the client B, it should go above other clients.
     {
-        Blocker blocker(workspace()->stacking_order);
+        blocker block(workspace()->stacking_order);
         win::set_keep_above(clientB, true);
     }
 
@@ -897,7 +897,7 @@ void StackingOrderTest::testKeepBelow()
 
     // Set the "keep-below" flag on the client B, it should go below other clients.
     {
-        Blocker blocker(workspace()->stacking_order);
+        blocker block(workspace()->stacking_order);
         win::set_keep_below(clientB, true);
     }
 

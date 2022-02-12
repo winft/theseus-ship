@@ -29,8 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "win/move.h"
 #include "win/screen.h"
+#include "win/space.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
@@ -426,7 +426,7 @@ void QuickTilingTest::testQuickTilingKeyboardMove()
     QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
 
-    workspace()->performWindowOperation(c, Options::UnrestrictedMoveOp);
+    workspace()->performWindowOperation(c, base::options::UnrestrictedMoveOp);
     QCOMPARE(c, workspace()->moveResizeClient());
     QCOMPARE(input::get_cursor()->pos(), QPoint(49, 24));
 
@@ -509,7 +509,7 @@ void QuickTilingTest::testQuickTilingPointerMove()
     QSignalSpy quickTileChangedSpy(c, &Toplevel::quicktiling_changed);
     QVERIFY(quickTileChangedSpy.isValid());
 
-    workspace()->performWindowOperation(c, Options::UnrestrictedMoveOp);
+    workspace()->performWindowOperation(c, base::options::UnrestrictedMoveOp);
     QCOMPARE(c, workspace()->moveResizeClient());
     QCOMPARE(input::get_cursor()->pos(), QPoint(49, 24));
     QVERIFY(configureRequestedSpy.wait());
@@ -685,7 +685,7 @@ void QuickTilingTest::testX11QuickTiling()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -779,7 +779,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();

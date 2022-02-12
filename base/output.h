@@ -12,9 +12,13 @@
 #include <QSize>
 #include <QVector>
 
-namespace KWin::base
+namespace KWin
 {
+
 class gamma_ramp;
+
+namespace base
+{
 
 enum class dpms_mode {
     on,
@@ -151,4 +155,5 @@ private:
     Q_DISABLE_COPY(output)
 };
 
+}
 }

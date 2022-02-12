@@ -8,8 +8,8 @@
 
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/proto.h"
+#include "base/x11/xcb/qt_types.h"
 #include "main.h"
-#include "utils.h"
 #include "xfixes_cursor_event_filter.h"
 
 #include <QAbstractEventDispatcher>
@@ -152,10 +152,10 @@ void cursor::mouse_polled()
     if (lastPos != current_pos() || lastMask != m_buttonMask) {
         Q_EMIT mouse_changed(current_pos(),
                              lastPos,
-                             x11ToQtMouseButtons(m_buttonMask),
-                             x11ToQtMouseButtons(lastMask),
-                             x11ToQtKeyboardModifiers(m_buttonMask),
-                             x11ToQtKeyboardModifiers(lastMask));
+                             base::x11::xcb::to_qt_mouse_buttons(m_buttonMask),
+                             base::x11::xcb::to_qt_mouse_buttons(lastMask),
+                             base::x11::xcb::to_qt_keyboard_modifiers(m_buttonMask),
+                             base::x11::xcb::to_qt_keyboard_modifiers(lastMask));
         lastPos = current_pos();
         lastMask = m_buttonMask;
     }

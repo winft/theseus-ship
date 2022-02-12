@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "render/qpainter/scene.h"
 #include "win/geo.h"
+#include "win/space.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <KConfigGroup>
 
@@ -362,7 +362,7 @@ void SceneQPainterTest::testX11Window()
     xcb_flush(c.data());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
 

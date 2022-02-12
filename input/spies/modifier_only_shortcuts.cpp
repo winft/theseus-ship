@@ -19,13 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "modifier_only_shortcuts.h"
 
+#include "base/options.h"
 #include "desktop/screen_locker_watcher.h"
 #include "input/event.h"
 #include "input/keyboard.h"
 #include "input/qt_event.h"
 #include "input/xkb/helpers.h"
-#include "options.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <QDBusConnection>
 #include <QDBusMessage>
@@ -64,7 +64,7 @@ void modifier_only_shortcuts_spy::key(key_event const& event)
         if (m_pressedKeys.isEmpty() && mods == Qt::NoModifier
             && !workspace()->globalShortcutsDisabled()) {
             if (m_modifier != Qt::NoModifier) {
-                const auto list = options->modifierOnlyDBusShortcut(m_modifier);
+                const auto list = kwinApp()->options->modifierOnlyDBusShortcut(m_modifier);
                 if (list.size() >= 4) {
                     auto call = QDBusMessage::createMethodCall(
                         list.at(0), list.at(1), list.at(2), list.at(3));

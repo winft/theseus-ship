@@ -23,11 +23,10 @@
 #include "render/platform.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "utils.h"
 #include "win/geo.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/wayland/input.h"
-#include "workspace.h"
 
 namespace KWin::input
 {
@@ -84,7 +83,7 @@ Qt::MouseButtons redirect::qtButtonStates() const
 
 Toplevel* redirect::findToplevel(const QPoint& pos)
 {
-    if (!Workspace::self()) {
+    if (!workspace()) {
         return nullptr;
     }
 
@@ -94,7 +93,7 @@ Toplevel* redirect::findToplevel(const QPoint& pos)
         if (effects && static_cast<render::effects_handler_impl*>(effects)->isMouseInterception()) {
             return nullptr;
         }
-        auto const& unmanaged = Workspace::self()->unmanagedList();
+        auto const& unmanaged = workspace()->unmanagedList();
         for (auto const& u : unmanaged) {
             if (win::input_geometry(u).contains(pos) && win::wayland::accepts_input(u, pos)) {
                 return u;
@@ -106,7 +105,7 @@ Toplevel* redirect::findToplevel(const QPoint& pos)
 
 Toplevel* redirect::findManagedToplevel(const QPoint& pos)
 {
-    if (!Workspace::self()) {
+    if (!workspace()) {
         return nullptr;
     }
     auto const isScreenLocked = kwinApp()->is_screen_locked();

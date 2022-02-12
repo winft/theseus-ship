@@ -18,13 +18,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+#include "win/tabbox/tabboxconfig.h"
+
 #include <kcmodule.h>
 #include <ksharedconfig.h>
-#include "tabboxconfig.h"
 
 namespace KWin
 {

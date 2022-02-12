@@ -13,6 +13,7 @@
 #include "base/wayland/server.h"
 #include "render/compositor.h"
 #include "toplevel.h"
+#include "utils/geo.h"
 #include "wayland_logging.h"
 #include "win/controlling.h"
 #include "win/input.h"
@@ -157,7 +158,7 @@ inline void finalize_shell_window_creation(window* win)
                 win->updateColorScheme();
 
                 // Don't place the client if its position is set by a rule.
-                if (ctrl->rules().checkPosition(invalidPoint, true) != invalidPoint) {
+                if (ctrl->rules().checkPosition(geo::invalid_point, true) != geo::invalid_point) {
                     win->must_place = false;
                 }
 
@@ -562,7 +563,7 @@ void install_deco(Win* win, Wrapland::Server::XdgDecoration* deco)
 
     QObject::connect(deco, &Deco::resourceDestroyed, win, [win] {
         win->xdg_deco = nullptr;
-        if (win->closing || !Workspace::self()) {
+        if (win->closing || !workspace()) {
             return;
         }
         win->updateDecoration(true);
@@ -577,7 +578,7 @@ void install_deco(Win* win, Wrapland::Server::XdgDecoration* deco)
 template<typename Window, typename Space>
 void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* toplevel)
 {
-    if (!Workspace::self()) {
+    if (!workspace()) {
         // it's possible that a Surface gets created before Workspace is created
         // TODO(romangg): Make this check unnecessary.
         return;
@@ -628,7 +629,7 @@ void handle_new_toplevel(Space* space, Wrapland::Server::XdgShellToplevel* tople
 template<typename Window, typename Space>
 void handle_new_popup(Space* space, Wrapland::Server::XdgShellPopup* popup)
 {
-    if (!Workspace::self()) {
+    if (!workspace()) {
         // it's possible that a Surface gets created before Workspace is created
         // TODO(romangg): Make this check unnecessary.
         return;
@@ -792,7 +793,7 @@ void handle_move_request(Win* win, Wrapland::Server::Seat* seat, uint32_t serial
         return;
     }
     if (win->isMovable()) {
-        win->performMouseCommand(Options::MouseMove, input::get_cursor()->pos());
+        win->performMouseCommand(base::options::MouseMove, input::get_cursor()->pos());
     }
 }
 
@@ -851,7 +852,7 @@ void handle_resize_request(Win* win, Wrapland::Server::Seat* seat, quint32 seria
 template<typename Win>
 void handle_minimize_request(Win* win)
 {
-    win->performMouseCommand(Options::MouseMinimize, input::get_cursor()->pos());
+    win->performMouseCommand(base::options::MouseMinimize, input::get_cursor()->pos());
 }
 
 template<typename Win>
@@ -885,7 +886,7 @@ void handle_window_menu_request(Win* win,
                                 [[maybe_unused]] quint32 serial,
                                 QPoint const& surfacePos)
 {
-    win->performMouseCommand(Options::MouseOperationsMenu, win->pos() + surfacePos);
+    win->performMouseCommand(base::options::MouseOperationsMenu, win->pos() + surfacePos);
 }
 
 template<typename Win>

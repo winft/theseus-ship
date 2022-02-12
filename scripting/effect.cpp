@@ -11,10 +11,9 @@
 
 #include "scripting_logging.h"
 #include "space.h"
-#include "utils.h"
 
-#include "../options.h"
 #include "../screens.h"
+#include "base/options.h"
 
 #include "input/redirect.h"
 #include "screens.h"
@@ -86,21 +85,21 @@ AnimationSettings animationSettingsFromObject(const QJSValue& object)
         settings.curve = static_cast<QEasingCurve::Type>(curve.toInt());
         settings.set |= AnimationSettings::Curve;
     } else {
-        auto get_qt_curve = [](Options::AnimationCurve curve) {
+        auto get_qt_curve = [](base::options::AnimationCurve curve) {
             switch (curve) {
-            case Options::AnimationCurve::Quadratic:
+            case base::options::AnimationCurve::Quadratic:
                 return QEasingCurve::InOutQuart;
-            case Options::AnimationCurve::Cubic:
+            case base::options::AnimationCurve::Cubic:
                 return QEasingCurve::InOutCubic;
-            case Options::AnimationCurve::Quartic:
+            case base::options::AnimationCurve::Quartic:
                 return QEasingCurve::InOutQuad;
-            case Options::AnimationCurve::Sine:
+            case base::options::AnimationCurve::Sine:
                 return QEasingCurve::InOutSine;
             default:
                 return QEasingCurve::Linear;
             }
         };
-        settings.curve = get_qt_curve(options->animationCurve());
+        settings.curve = get_qt_curve(kwinApp()->options->animationCurve());
     }
 
     const QJSValue type = object.property(QStringLiteral("type"));

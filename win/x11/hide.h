@@ -177,7 +177,8 @@ void update_visibility(Win* win)
     if (win->hidden) {
         win->info->setState(NET::Hidden, NET::Hidden);
         win::set_skip_taskbar(win, true);
-        if (win::compositing() && options->hiddenPreviews() == HiddenPreviewsAlways) {
+        if (win::compositing()
+            && kwinApp()->options->hiddenPreviews() == base::HiddenPreviewsAlways) {
             internal_keep(win);
         } else {
             internal_hide(win);
@@ -189,7 +190,8 @@ void update_visibility(Win* win)
 
     if (win->control->minimized()) {
         win->info->setState(NET::Hidden, NET::Hidden);
-        if (win::compositing() && options->hiddenPreviews() == HiddenPreviewsAlways) {
+        if (win::compositing()
+            && kwinApp()->options->hiddenPreviews() == base::HiddenPreviewsAlways) {
             internal_keep(win);
         } else {
             internal_hide(win);
@@ -199,7 +201,8 @@ void update_visibility(Win* win)
 
     win->info->setState(NET::States(), NET::Hidden);
     if (!win->isOnCurrentDesktop()) {
-        if (win::compositing() && options->hiddenPreviews() != HiddenPreviewsNever) {
+        if (win::compositing()
+            && kwinApp()->options->hiddenPreviews() != base::HiddenPreviewsNever) {
             internal_keep(win);
         } else {
             internal_hide(win);

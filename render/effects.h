@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "kwineffects.h"
-
 #include "scene.h"
+#include "win/types.h"
 
 #include <Plasma/FrameSvg>
 #include <QHash>

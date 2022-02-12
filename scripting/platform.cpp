@@ -16,13 +16,12 @@
 #include "v3/virtual_desktop_model.h"
 #include "window.h"
 
-#include "../options.h"
+#include "base/options.h"
 #include "input/redirect.h"
 #include "render/thumbnail_item.h"
 #include "scripting_logging.h"
 #include "win/screen_edges.h"
-#include "workspace.h"
-
+#include "win/space.h"
 #include "win/x11/window.h"
 
 #include <KConfigGroup>
@@ -44,7 +43,7 @@ platform::platform()
     : m_scriptsLock(new QMutex(QMutex::Recursive))
     , m_qmlEngine(new QQmlEngine(this))
     , m_declarativeScriptSharedContext(new QQmlContext(m_qmlEngine, this))
-    , qt_space{std::make_unique<template_space<qt_script_space, Workspace>>(workspace())}
+    , qt_space{std::make_unique<template_space<qt_script_space, win::space>>(workspace())}
 {
     init();
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"),
@@ -94,14 +93,16 @@ void platform::init()
         [](QQmlEngine* qmlEngine, QJSEngine* jsEngine) -> qt_script_space* {
             Q_UNUSED(qmlEngine)
             Q_UNUSED(jsEngine)
-            return new template_space<qt_script_space, Workspace>(workspace());
+            return new template_space<qt_script_space, win::space>(workspace());
         });
     qmlRegisterType<QAbstractItemModel>();
 
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), qt_space.get());
-    m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("options"), options);
+    m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("options"),
+                                                   kwinApp()->options.get());
 
-    decl_space = std::make_unique<template_space<declarative_script_space, Workspace>>(workspace());
+    decl_space
+        = std::make_unique<template_space<declarative_script_space, win::space>>(workspace());
     m_declarativeScriptSharedContext->setContextProperty(QStringLiteral("workspace"),
                                                          decl_space.get());
     // QQmlListProperty interfaces only work via properties, rebind them as functions here

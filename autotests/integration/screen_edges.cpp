@@ -27,10 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "toplevel.h"
 #include "win/screen_edges.h"
+#include "win/space.h"
 #include "win/stacking.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/surface.h>
@@ -709,7 +709,7 @@ void TestScreenEdges::testFullScreenBlocking()
     client->setFrameGeometry(Test::app()->base.screens.geometry());
     win::set_active(client, true);
     client->setFullScreen(true);
-    Workspace::self()->setActiveClient(client);
+    workspace()->setActiveClient(client);
     Q_EMIT screenEdges->checkBlocking();
 
     // the signal doesn't trigger for corners, let's go over all windows just to be sure that it

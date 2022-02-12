@@ -6,6 +6,8 @@
 */
 #include "rule_book.h"
 
+#include "base/logging.h"
+
 #include <KXMessages>
 #include <QDir>
 #include <QFile>
@@ -14,9 +16,8 @@
 
 #ifndef KCMRULES
 #include "toplevel.h"
-#include "workspace.h"
-
 #include "win/control.h"
+#include "win/space.h"
 #endif
 
 #include "rule_book_settings.h"
@@ -213,7 +214,7 @@ void RuleBook::setUpdatesDisabled(bool disable)
 {
     m_updatesDisabled = disable;
     if (!disable) {
-        for (auto client : Workspace::self()->allClientList()) {
+        for (auto client : workspace()->allClientList()) {
             client->updateWindowRules(Rules::All);
         }
     }

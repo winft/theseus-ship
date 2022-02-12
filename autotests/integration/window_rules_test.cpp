@@ -27,9 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "win/deco.h"
 #include "win/screen_edges.h"
+#include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <netwm.h>
 #include <xcb/xcb_icccm.h>
@@ -149,7 +149,7 @@ void WindowRuleTest::testApplyInitialMaximizeVert()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.last().first().value<win::x11::window*>();
@@ -223,7 +223,7 @@ void WindowRuleTest::testWindowClassChange()
     xcb_map_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.last().first().value<win::x11::window*>();

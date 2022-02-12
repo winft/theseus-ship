@@ -4,11 +4,11 @@ add_definitions(-DKWIN_UNIT_TEST)
 # Test TabBox::ClientModel
 ########################################################
 set(testTabBoxClientModel_SRCS
-    ../../tabbox/clientmodel.cpp
-    ../../tabbox/desktopmodel.cpp
-    ../../tabbox/tabbox_logging.cpp
-    ../../tabbox/tabboxconfig.cpp
-    ../../tabbox/tabboxhandler.cpp
+    ../../win/tabbox/clientmodel.cpp
+    ../../win/tabbox/desktopmodel.cpp
+    ../../win/tabbox/tabbox_logging.cpp
+    ../../win/tabbox/tabboxconfig.cpp
+    ../../win/tabbox/tabboxhandler.cpp
     mock_tabboxclient.cpp
     mock_tabboxhandler.cpp
     test_tabbox_clientmodel.cpp
@@ -39,11 +39,11 @@ ecm_mark_as_test(testTabBoxClientModel)
 # Test TabBox::TabBoxHandler
 ########################################################
 set(testTabBoxHandler_SRCS
-    ../../tabbox/clientmodel.cpp
-    ../../tabbox/desktopmodel.cpp
-    ../../tabbox/tabbox_logging.cpp
-    ../../tabbox/tabboxconfig.cpp
-    ../../tabbox/tabboxhandler.cpp
+    ../../win/tabbox/clientmodel.cpp
+    ../../win/tabbox/desktopmodel.cpp
+    ../../win/tabbox/tabbox_logging.cpp
+    ../../win/tabbox/tabboxconfig.cpp
+    ../../win/tabbox/tabboxhandler.cpp
     mock_tabboxclient.cpp
     mock_tabboxhandler.cpp
     test_tabbox_handler.cpp
@@ -74,8 +74,8 @@ ecm_mark_as_test(testTabBoxHandler)
 # Test TabBox::TabBoxConfig
 ########################################################
 set(testTabBoxConfig_SRCS
-    ../../tabbox/tabbox_logging.cpp
-    ../../tabbox/tabboxconfig.cpp
+    ../../win/tabbox/tabbox_logging.cpp
+    ../../win/tabbox/tabboxconfig.cpp
     test_tabbox_config.cpp
 )
 
@@ -89,8 +89,8 @@ ecm_mark_as_test(testTabBoxConfig)
 # Test TabBox::DesktopChainManager
 ########################################################
 set(testDesktopChain_SRCS
-    ../../tabbox/desktopchain.cpp
-    ../../tabbox/tabbox_logging.cpp
+    ../../win/tabbox/desktopchain.cpp
+    ../../win/tabbox/tabbox_logging.cpp
     test_desktopchain.cpp
 )
 

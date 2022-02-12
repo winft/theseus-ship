@@ -21,14 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
+#include "kwineffects.h"
 #include "render/compositor.h"
 #include "render/scene.h"
 #include "screens.h"
-#include "workspace.h"
-#include <kwineffects.h>
-
 #include "win/deco.h"
 #include "win/screen_edges.h"
+#include "win/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
@@ -98,7 +97,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
     workspace()->slotReconfigure();
-    QCOMPARE(options->borderlessMaximizedWindows(), true);
+    QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
 
     // create an xcb window
     xcb_connection_t* c = xcb_connect(nullptr, nullptr);
@@ -122,7 +121,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     xcb_flush(c);
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();

@@ -10,17 +10,17 @@
 #include "netinfo.h"
 
 #include "base/x11/xcb/helpers.h"
-#include "utils.h"
+#include "utils/blocker.h"
 #include "win/screen_edges.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
-#include "workspace.h"
 
 #include <vector>
 
 namespace KWin::win::x11
 {
 
-class KWIN_EXPORT space : public Workspace
+class KWIN_EXPORT space : public win::space
 {
     Q_OBJECT
 public:
@@ -47,7 +47,7 @@ void restore_session_stacking_order(Space space, Window* c)
         return;
     }
 
-    Blocker blocker(space->stacking_order);
+    blocker block(space->stacking_order);
     remove_all(space->stacking_order->pre_stack, c);
 
     for (auto it = space->stacking_order->pre_stack.begin(); // from bottom

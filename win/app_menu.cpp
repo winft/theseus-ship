@@ -21,10 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "app_menu.h"
 
-#include "workspace.h"
-#include <appmenu_interface.h>
-
-#include "win/deco.h"
+#include "appmenu_interface.h"
+#include "deco.h"
+#include "space.h"
 
 #include <QDBusObjectPath>
 #include <QDBusServiceWatcher>
@@ -145,7 +144,7 @@ Toplevel* app_menu::findAbstractClientWithApplicationMenu(const QString& service
         return nullptr;
     }
 
-    return Workspace::self()->findAbstractClient([&](Toplevel const* window) {
+    return workspace()->findAbstractClient([&](Toplevel const* window) {
         return window->control->application_menu()
             == std::make_tuple(serviceName, menuObjectPath.path());
     });

@@ -21,18 +21,17 @@
 #include "glx_backend.h"
 #endif
 
+#include "base/options.h"
 #include "base/x11/output.h"
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/randr.h"
+#include "kwinxrenderutils.h"
 #include "main_x11.h"
-#include "options.h"
 #include "randr_filter.h"
 #include "render/compositor.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "workspace.h"
-
-#include <kwinxrenderutils.h>
+#include "win/space.h"
 
 #include <KConfigGroup>
 #include <KCrash>
@@ -109,7 +108,7 @@ gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
         return gl_backend.get();
     }
 
-    switch (options->glPlatformInterface()) {
+    switch (kwinApp()->options->glPlatformInterface()) {
 #if HAVE_EPOXY_GLX
     case GlxPlatformInterface:
         if (has_glx()) {

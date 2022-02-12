@@ -22,18 +22,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorationpalette.h"
 #include "decorationrenderer.h"
 
+#include "base/options.h"
 #include "base/platform.h"
 #include "render/compositor.h"
 #include "input/cursor.h"
-#include "options.h"
 #include "render/platform.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/geo.h"
 #include "win/meta.h"
+#include "win/space.h"
 #include "win/stacking.h"
 #include "win/transient.h"
-#include "workspace.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
@@ -230,7 +230,7 @@ DELEGATE(WId, decorationId, frameId)
 #define DELEGATE(name, op) \
     void DecoratedClientImpl::name() \
     { \
-        Workspace::self()->performWindowOperation(m_client, Options::op); \
+        workspace()->performWindowOperation(m_client, base::options::op); \
     }
 
 DELEGATE(requestToggleOnAllDesktops, OnAllDesktopsOp)
@@ -292,14 +292,14 @@ void DecoratedClientImpl::requestShowWindowMenu(QRect const& rect)
 {
     // TODO: add rect to requestShowWindowMenu
     auto const client_pos = m_client->pos();
-    Workspace::self()->showWindowMenu(QRect(client_pos + rect.topLeft(),
+    workspace()->showWindowMenu(QRect(client_pos + rect.topLeft(),
                                             client_pos + rect.bottomRight()),
                                       m_client);
 }
 
 void DecoratedClientImpl::requestShowApplicationMenu(const QRect &rect, int actionId)
 {
-    Workspace::self()->showApplicationMenu(rect, m_client, actionId);
+    workspace()->showApplicationMenu(rect, m_client, actionId);
 }
 
 void DecoratedClientImpl::showApplicationMenu(int actionId)
@@ -309,12 +309,16 @@ void DecoratedClientImpl::showApplicationMenu(int actionId)
 
 void DecoratedClientImpl::requestToggleMaximization(Qt::MouseButtons buttons)
 {
-    QMetaObject::invokeMethod(this, "delayedRequestToggleMaximization", Qt::QueuedConnection, Q_ARG(Options::WindowOperation, options->operationMaxButtonClick(buttons)));
+    QMetaObject::invokeMethod(
+        this,
+        "delayedRequestToggleMaximization",
+        Qt::QueuedConnection,
+        Q_ARG(base::options::WindowOperation, kwinApp()->options->operationMaxButtonClick(buttons)));
 }
 
-void DecoratedClientImpl::delayedRequestToggleMaximization(Options::WindowOperation operation)
+void DecoratedClientImpl::delayedRequestToggleMaximization(base::options::WindowOperation operation)
 {
-    Workspace::self()->performWindowOperation(m_client, operation);
+    workspace()->performWindowOperation(m_client, operation);
 }
 
 int DecoratedClientImpl::width() const

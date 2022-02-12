@@ -5,12 +5,13 @@
 */
 #pragma once
 
+#include "base/x11/grabs.h"
 #include "toplevel.h"
-#include "utils.h"
+#include "utils/blocker.h"
 #include "win/rules.h"
 
 #ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
+#include "win/tabbox/tabbox.h"
 #endif
 
 namespace KWin::win::x11
@@ -82,7 +83,7 @@ void release_window(Win* win, bool on_shutdown)
     // Remove ForceTemporarily rules
     RuleBook::self()->discardUsed(win, true);
 
-    Blocker blocker(workspace()->stacking_order);
+    blocker block(workspace()->stacking_order);
 
     if (win->control->move_resize().enabled) {
         win->leaveMoveResize();
@@ -98,7 +99,7 @@ void release_window(Win* win, bool on_shutdown)
     // Grab X during the release to make removing of properties, setting to withdrawn state
     // and repareting to root an atomic operation
     // (https://lists.kde.org/?l=kde-devel&m=116448102901184&w=2)
-    grabXServer();
+    base::x11::grab_server();
     export_mapping_state(win, XCB_ICCCM_WM_STATE_WITHDRAWN);
 
     // So that it's not considered visible anymore (can't use hideClient(), it would set flags)
@@ -158,7 +159,7 @@ void release_window(Win* win, bool on_shutdown)
     }
 
     delete win;
-    ungrabXServer();
+    base::x11::ungrab_server();
 }
 
 /**
@@ -196,7 +197,7 @@ void destroy_window(Win* win)
     // Remove ForceTemporarily rules
     RuleBook::self()->discardUsed(win, true);
 
-    Blocker blocker(workspace()->stacking_order);
+    blocker block(workspace()->stacking_order);
     if (win->control->move_resize().enabled) {
         win->leaveMoveResize();
     }

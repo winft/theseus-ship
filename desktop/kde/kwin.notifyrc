@@ -1,0 +1,13 @@
+[Global]
+IconName=kwin
+Comment=KWinFT Window Manager
+
+[Event/compositingsuspendeddbus]
+Name=Compositing has been suspended
+Comment=Another application has requested to suspend compositing.
+Action=Popup
+
+[Event/graphicsreset]
+Name=Graphics Reset
+Comment=A graphics reset event occurred
+Action=Popup

@@ -16,7 +16,6 @@
 #include "win/wayland/space.h"
 #include "win/wayland/surface.h"
 #include "win/wayland/xdg_activation.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
@@ -265,7 +264,7 @@ void server::init_workspace()
     win::virtual_desktop_manager::self()->setVirtualDesktopManagement(virtual_desktop_management());
 
     if (window_management()) {
-        connect(ws, &Workspace::showingDesktopChanged, this, [this](bool set) {
+        connect(ws, &win::space::showingDesktopChanged, this, [this](bool set) {
             using namespace Wrapland::Server;
             window_management()->setShowingDesktopState(
                 set ? PlasmaWindowManager::ShowingDesktopState::Enabled
@@ -285,7 +284,7 @@ void server::init_workspace()
             });
 
     // For Xwayland windows
-    QObject::connect(ws, &Workspace::surface_id_changed, this, [this](auto window, auto id) {
+    QObject::connect(ws, &win::space::surface_id_changed, this, [this](auto window, auto id) {
         if (auto surface = compositor()->getSurface(id, xwayland_connection())) {
             win::wayland::set_surface(window, surface);
         }

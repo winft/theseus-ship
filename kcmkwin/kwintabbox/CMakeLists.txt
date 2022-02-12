@@ -6,7 +6,7 @@ include_directories(${KWIN_SOURCE_DIR}/effects ${KWIN_SOURCE_DIR}/tabbox ${KWIN_
 ########### next target ###############
 
 set(kcm_kwintabbox_PART_SRCS
-    ${KWIN_SOURCE_DIR}/tabbox/tabboxconfig.cpp
+    ${KWIN_SOURCE_DIR}/win/tabbox/tabboxconfig.cpp
     layoutpreview.cpp
     main.cpp
     thumbnailitem.cpp
@@ -15,7 +15,10 @@ set(kcm_kwintabbox_PART_SRCS
 )
 
 ki18n_wrap_ui(kcm_kwintabbox_PART_SRCS main.ui)
-qt_add_dbus_interface(kcm_kwintabbox_PART_SRCS ${KWIN_SOURCE_DIR}/org.kde.kwin.Effects.xml kwin_effects_interface)
+qt_add_dbus_interface(kcm_kwintabbox_PART_SRCS
+  ${KWIN_SOURCE_DIR}/render/dbus/org.kde.kwin.Effects.xml
+  kwin_effects_interface
+)
 
 kconfig_add_kcfg_files(kcm_kwintabbox_PART_SRCS kwintabboxsettings.kcfgc kwinswitcheffectsettings.kcfgc kwinpluginssettings.kcfgc)
 add_library(kcm_kwintabbox MODULE ${kcm_kwintabbox_PART_SRCS})

@@ -6,6 +6,8 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "stacking_order.h"
+
+#include "space.h"
 #include "stacking.h"
 #include "transient.h"
 
@@ -19,7 +21,6 @@
 #include "screen_edges.h"
 #include "screens.h"
 #include "toplevel.h"
-#include "workspace.h"
 
 #include <algorithm>
 #include <vector>

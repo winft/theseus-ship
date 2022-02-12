@@ -6,8 +6,9 @@
 */
 #include "idle_inhibition.h"
 
+#include "main.h"
+#include "win/space.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Server/kde_idle.h>
 #include <Wrapland/Server/surface.h>
@@ -105,8 +106,10 @@ void idle_inhibition::update(Toplevel* window)
 
 void idle_inhibition::slotWorkspaceCreated()
 {
-    connect(
-        workspace(), &Workspace::currentDesktopChanged, this, &idle_inhibition::slotDesktopChanged);
+    connect(workspace(),
+            &win::space::currentDesktopChanged,
+            this,
+            &idle_inhibition::slotDesktopChanged);
 }
 
 void idle_inhibition::slotDesktopChanged()

@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/settings.h"
 #include "input/cursor.h"
 #include "screens.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include "win/deco.h"
 #include "win/wayland/window.h"
@@ -95,8 +95,8 @@ void TestMaximized::cleanup()
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", false);
     group.sync();
-    Workspace::self()->slotReconfigure();
-    QCOMPARE(options->borderlessMaximizedWindows(), false);
+    workspace()->slotReconfigure();
+    QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), false);
 }
 
 void TestMaximized::testMaximizedPassedToDeco()
@@ -226,8 +226,8 @@ void TestMaximized::testInitiallyMaximizedBorderless()
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    Workspace::self()->slotReconfigure();
-    QCOMPARE(options->borderlessMaximizedWindows(), true);
+    workspace()->slotReconfigure();
+    QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
 
     // Create the test client.
     std::unique_ptr<Surface> surface(Test::create_surface());
@@ -280,8 +280,8 @@ void TestMaximized::testBorderlessMaximizedWindow()
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    Workspace::self()->slotReconfigure();
-    QCOMPARE(options->borderlessMaximizedWindows(), true);
+    workspace()->slotReconfigure();
+    QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
 
     // Create the test client.
     std::unique_ptr<Surface> surface(Test::create_surface());
@@ -372,8 +372,8 @@ void TestMaximized::testBorderlessMaximizedWindowNoClientSideDecoration()
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("BorderlessMaximizedWindows", true);
     group.sync();
-    Workspace::self()->slotReconfigure();
-    QCOMPARE(options->borderlessMaximizedWindows(), true);
+    workspace()->slotReconfigure();
+    QCOMPARE(kwinApp()->options->borderlessMaximizedWindows(), true);
 
     std::unique_ptr<Surface> surface(Test::create_surface());
     std::unique_ptr<XdgShellToplevel> xdgShellToplevel(Test::create_xdg_shell_toplevel(surface));

@@ -23,11 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
 #include "input/touch_redirect.h"
+#include "kwineffects.h"
 #include "screens.h"
 #include "toplevel.h"
 #include "win/screen_edges.h"
-#include "workspace.h"
-#include <kwineffects.h>
+#include "win/space.h"
 
 #include "win/deco.h"
 #include "win/internal_window.h"
@@ -664,11 +664,11 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll3", "Move");
     group.sync();
     workspace()->slotReconfigure();
-    QCOMPARE(options->commandAllModifier(),
+    QCOMPARE(kwinApp()->options->commandAllModifier(),
              modKey == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier);
-    QCOMPARE(options->commandAll1(), Options::MouseUnrestrictedMove);
-    QCOMPARE(options->commandAll2(), Options::MouseUnrestrictedMove);
-    QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll2(), base::options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll3(), base::options::MouseUnrestrictedMove);
 
     // create a window
     auto c = showWindow();
@@ -860,7 +860,7 @@ void DecorationInputTest::testTooltipDoesntEatKeyEvents()
     QSignalSpy keyEvent(keyboard, &Wrapland::Client::Keyboard::keyChanged);
     QVERIFY(keyEvent.isValid());
 
-    QSignalSpy clientAddedSpy(workspace(), &Workspace::internalClientAdded);
+    QSignalSpy clientAddedSpy(workspace(), &win::space::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     c->control->deco().client->requestShowToolTip(QStringLiteral("test"));
     // now we should get an internal window

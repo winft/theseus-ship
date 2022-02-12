@@ -25,9 +25,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "scripting/effect.h"
+#include "win/space.h"
 #include "win/stacking.h"
 #include "win/virtual_desktops.h"
-#include "workspace.h"
 
 #include <QJSValue>
 #include <QQmlEngine>
@@ -480,7 +480,7 @@ void ScriptedEffectsTest::testKeepAlive()
     } else {
         // the test effect doesn't keep the window alive, so it should be
         // removed immediately
-        QSignalSpy deletedRemovedSpy(workspace(), &Workspace::deletedRemoved);
+        QSignalSpy deletedRemovedSpy(workspace(), &win::space::deletedRemoved);
         QVERIFY(deletedRemovedSpy.isValid());
         QVERIFY(deletedRemovedSpy.count() == 1
                 || deletedRemovedSpy.wait(100)); // 100ms is less than duration of the animation

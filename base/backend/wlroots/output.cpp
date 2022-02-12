@@ -7,12 +7,11 @@
 
 #include "platform.h"
 
-#include "base/gamma_ramp.h"
 #include "render/backend/wlroots/output.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/presentation.h"
 #include "screens.h"
-#include "utils.h"
+#include "utils/gamma_ramp.h"
 
 #include <chrono>
 #include <wayland_logging.h>
@@ -196,7 +195,7 @@ int output::gamma_ramp_size() const
     return wlr_output_get_gamma_size(native);
 }
 
-bool output::set_gamma_ramp(base::gamma_ramp const& gamma)
+bool output::set_gamma_ramp(gamma_ramp const& gamma)
 {
     wlr_output_set_gamma(native, gamma.size(), gamma.red(), gamma.green(), gamma.blue());
 

@@ -20,9 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "utils.h"
-#include <netwm.h>
+#include "kwin_export.h"
 
+#include <QIcon>
+#include <netwm.h>
 #include <vector>
 
 namespace KWin

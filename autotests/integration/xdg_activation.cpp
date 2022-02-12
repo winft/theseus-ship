@@ -8,10 +8,10 @@
 #include "base/wayland/server.h"
 #include "win/control.h"
 #include "win/move.h"
+#include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/wayland/xdg_activation.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_activation_v1.h>
@@ -113,7 +113,7 @@ void xdg_activation_test::test_single_client()
 
     QSignalSpy xdg_activate_spy(server_activation, &Wrapland::Server::XdgActivationV1::activate);
     QVERIFY(xdg_activate_spy.isValid());
-    QSignalSpy activated_spy(workspace(), &Workspace::clientActivated);
+    QSignalSpy activated_spy(workspace(), &win::space::clientActivated);
     QVERIFY(activated_spy.isValid());
 
     QVERIFY(activated_spy.wait());
@@ -184,7 +184,7 @@ void xdg_activation_test::test_multi_client()
 
     QSignalSpy xdg_activate_spy(server_activation, &Wrapland::Server::XdgActivationV1::activate);
     QVERIFY(xdg_activate_spy.isValid());
-    QSignalSpy activated_spy(workspace(), &Workspace::clientActivated);
+    QSignalSpy activated_spy(workspace(), &win::space::clientActivated);
     QVERIFY(activated_spy.isValid());
 
     QVERIFY(activated_spy.wait());

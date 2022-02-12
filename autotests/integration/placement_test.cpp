@@ -24,9 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "screens.h"
 #include "win/placement.h"
+#include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmashell.h>
@@ -128,7 +128,7 @@ void TestPlacement::setPlacementPolicy(win::placement policy)
     auto group = kwinApp()->config()->group("Windows");
     group.writeEntry("Placement", policy_to_string(policy));
     group.sync();
-    Workspace::self()->slotReconfigure();
+    workspace()->slotReconfigure();
 }
 
 PlaceWindowResult TestPlacement::createAndPlaceWindow(QSize const& defaultSize)

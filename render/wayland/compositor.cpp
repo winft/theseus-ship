@@ -20,7 +20,7 @@
 #include "render/qpainter/scene.h"
 #include "render/scene.h"
 #include "win/scene.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include "wayland_logging.h"
 
@@ -78,14 +78,14 @@ compositor::compositor(render::platform& platform)
             &compositor::destroyCompositorSelection);
 
     connect(&platform.base, &base::platform::output_removed, this, [](auto output) {
-        if (auto workspace = Workspace::self()) {
-            for (auto& win : workspace->windows()) {
+        if (auto ws = workspace()) {
+            for (auto& win : ws->windows()) {
                 remove_all(win->repaint_outputs, output);
             }
         }
     });
 
-    connect(workspace(), &Workspace::destroyed, this, [this] {
+    connect(workspace(), &win::space::destroyed, this, [this] {
         for (auto& output : get_platform(this->platform.base).outputs) {
             get_output(output)->render->delay_timer.stop();
         }
@@ -152,7 +152,7 @@ void compositor::start()
         return;
     }
 
-    if (Workspace::self()) {
+    if (workspace()) {
         startupWithWorkspace();
     } else {
         connect(kwinApp(), &Application::workspaceCreated, this, &compositor::startupWithWorkspace);

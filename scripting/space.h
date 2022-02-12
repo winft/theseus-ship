@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "window.h"
 
 #include "base/platform.h"
+#include "main.h"
 #include "screens.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
@@ -241,7 +242,8 @@ public Q_SLOTS:
 #define SWITCH_VD_SLOT(name, direction)                                                            \
     void name()                                                                                    \
     {                                                                                              \
-        win::virtual_desktop_manager::self()->moveTo<direction>(options->isRollOverDesktops());    \
+        win::virtual_desktop_manager::self()->moveTo<direction>(                                   \
+            kwinApp()->options->isRollOverDesktops());                                             \
     }
 
     SWITCH_VD_SLOT(slotSwitchDesktopNext, win::virtual_desktop_next)
@@ -585,7 +587,7 @@ public:
 #define SWITCH_WINDOW_SLOT(name, direction)                                                        \
     void name() override                                                                           \
     {                                                                                              \
-        ref_space->switchWindow(Workspace::direction);                                             \
+        ref_space->switchWindow(win::space::direction);                                            \
     }
 
     SIMPLE_SLOT(slotSwitchToNextScreen)

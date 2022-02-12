@@ -21,9 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "win/screen.h"
+#include "win/space.h"
 #include "win/stacking.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/idleinhibit.h>
 #include <Wrapland/Client/surface.h>

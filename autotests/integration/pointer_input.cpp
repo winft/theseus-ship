@@ -19,17 +19,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/options.h"
 #include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
 #include "input/wayland/cursor_theme.h"
-#include "options.h"
 #include "render/effects.h"
 #include "screens.h"
 #include "toplevel.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
-#include "workspace.h"
 #include <kwineffects.h>
 
 #include "win/move.h"
@@ -451,11 +451,11 @@ void PointerInputTest::testModifierClickUnrestrictedMove()
     group.writeEntry("CommandAll3", "Move");
     group.sync();
     workspace()->slotReconfigure();
-    QCOMPARE(options->commandAllModifier(),
+    QCOMPARE(kwinApp()->options->commandAllModifier(),
              modKey == QStringLiteral("Alt") ? Qt::AltModifier : Qt::MetaModifier);
-    QCOMPARE(options->commandAll1(), Options::MouseUnrestrictedMove);
-    QCOMPARE(options->commandAll2(), Options::MouseUnrestrictedMove);
-    QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll2(), base::options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll3(), base::options::MouseUnrestrictedMove);
 
     // create a window
     QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
@@ -520,10 +520,10 @@ void PointerInputTest::testModifierClickUnrestrictedMoveGlobalShortcutsDisabled(
     group.writeEntry("CommandAll3", "Move");
     group.sync();
     workspace()->slotReconfigure();
-    QCOMPARE(options->commandAllModifier(), Qt::MetaModifier);
-    QCOMPARE(options->commandAll1(), Options::MouseUnrestrictedMove);
-    QCOMPARE(options->commandAll2(), Options::MouseUnrestrictedMove);
-    QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
+    QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll2(), base::options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAll3(), base::options::MouseUnrestrictedMove);
 
     // create a window
     QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
@@ -766,10 +766,10 @@ void PointerInputTest::testFocusFollowsMouse()
     group.sync();
     workspace()->slotReconfigure();
     // verify the settings
-    QCOMPARE(options->focusPolicy(), Options::FocusFollowsMouse);
-    QVERIFY(options->isAutoRaise());
-    QCOMPARE(options->autoRaiseInterval(), 20);
-    QCOMPARE(options->delayFocusInterval(), 200);
+    QCOMPARE(kwinApp()->options->focusPolicy(), base::options::FocusFollowsMouse);
+    QVERIFY(kwinApp()->options->isAutoRaise());
+    QCOMPARE(kwinApp()->options->autoRaiseInterval(), 20);
+    QCOMPARE(kwinApp()->options->delayFocusInterval(), 200);
 
     // create two windows
     QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
@@ -797,7 +797,7 @@ void PointerInputTest::testFocusFollowsMouse()
     QVERIFY(window1->frameGeometry().intersects(window2->frameGeometry()));
 
     // signal spies for active window changed and stacking order changed
-    QSignalSpy activeWindowChangedSpy(workspace(), &Workspace::clientActivated);
+    QSignalSpy activeWindowChangedSpy(workspace(), &win::space::clientActivated);
     QVERIFY(activeWindowChangedSpy.isValid());
     QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order, &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
@@ -889,7 +889,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
     QVERIFY(window1->frameGeometry().intersects(window2->frameGeometry()));
 
     // Signal spies for active window changed and stacking order changed.
-    QSignalSpy activeWindowChangedSpy(workspace(), &Workspace::clientActivated);
+    QSignalSpy activeWindowChangedSpy(workspace(), &win::space::clientActivated);
     QVERIFY(activeWindowChangedSpy.isValid());
     QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order, &win::stacking_order::changed);
     QVERIFY(stackingOrderChangedSpy.isValid());
@@ -956,7 +956,7 @@ void PointerInputTest::testMouseActionActiveWindow()
     group.writeEntry("ClickRaise", clickRaise);
     group.sync();
     workspace()->slotReconfigure();
-    QCOMPARE(options->isClickRaise(), clickRaise);
+    QCOMPARE(kwinApp()->options->isClickRaise(), clickRaise);
 
     // Create two windows.
     QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
@@ -1655,8 +1655,8 @@ void PointerInputTest::testResizeCursor()
     group.writeEntry("CommandAll3", "Resize");
     group.sync();
     workspace()->slotReconfigure();
-    QCOMPARE(options->commandAllModifier(), Qt::MetaModifier);
-    QCOMPARE(options->commandAll3(), Options::MouseUnrestrictedResize);
+    QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
+    QCOMPARE(kwinApp()->options->commandAll3(), base::options::MouseUnrestrictedResize);
 
     // create a test client
     using namespace Wrapland::Client;
@@ -1725,8 +1725,8 @@ void PointerInputTest::testMoveCursor()
     group.writeEntry("CommandAll1", "Move");
     group.sync();
     workspace()->slotReconfigure();
-    QCOMPARE(options->commandAllModifier(), Qt::MetaModifier);
-    QCOMPARE(options->commandAll1(), Options::MouseUnrestrictedMove);
+    QCOMPARE(kwinApp()->options->commandAllModifier(), Qt::MetaModifier);
+    QCOMPARE(kwinApp()->options->commandAll1(), base::options::MouseUnrestrictedMove);
 
     // create a test client
     using namespace Wrapland::Client;

@@ -8,7 +8,6 @@
 #include "geo.h"
 
 #include "screens.h"
-#include "utils.h"
 #include "win/space_areas.h"
 #include "win/virtual_desktops.h"
 
@@ -42,11 +41,11 @@ void update_space_areas(Window* win,
         }
     }
 
-    auto strut_region = win::x11::strut_rects(win);
+    auto strut_region = win::x11::get_strut_rects(win);
     auto const clientsScreenRect = screens.geometry(win->screen());
 
     for (auto strut = strut_region.begin(); strut != strut_region.end(); strut++) {
-        *strut = StrutRect((*strut).intersected(clientsScreenRect), (*strut).area());
+        *strut = strut_rect((*strut).intersected(clientsScreenRect), (*strut).area());
     }
 
     // Ignore offscreen xinerama struts. These interfere with the larger monitors on the setup
@@ -63,7 +62,8 @@ void update_space_areas(Window* win,
                 areas.work[desktop] = areas.work[desktop].intersected(client_area);
             }
 
-            areas.restrictedmove[desktop] += strut_region;
+            auto& resmove = areas.restrictedmove[desktop];
+            resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
 
             for (int screen = 0; screen < screens_count; screen++) {
                 auto const client_area_on_screen
@@ -82,7 +82,8 @@ void update_space_areas(Window* win,
             areas.work[win->desktop()] = areas.work[win->desktop()].intersected(client_area);
         }
 
-        areas.restrictedmove[win->desktop()] += strut_region;
+        auto& resmove = areas.restrictedmove[win->desktop()];
+        resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
 
         for (int screen = 0; screen < screens_count; screen++) {
             auto const screen_area = areas.screen[win->desktop()][screen];

@@ -8,11 +8,11 @@
 #include "event.h"
 #include "window_release.h"
 
+#include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
 #include "render/effects.h"
-#include "utils.h"
 #include "win/remnant.h"
-#include "win/space.h"
+#include "win/space_helpers.h"
 
 namespace KWin::win::x11
 {
@@ -37,7 +37,7 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
         | NET::NotificationMask | NET::ComboBoxMask | NET::DNDIconMask | NET::OnScreenDisplayMask
         | NET::CriticalNotificationMask;
 
-    XServerGrabber xserverGrabber;
+    base::x11::server_grabber xserverGrabber;
     base::x11::xcb::window_attributes attr(w);
     base::x11::xcb::geometry geo(w);
 

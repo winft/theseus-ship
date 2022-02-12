@@ -122,7 +122,7 @@
     </entry>
 
     <entry key="ActiveMouseScreen" type="Bool">
-        <default code="true">focusPolicy() != KWin::Options::ClickToFocus</default>
+        <default code="true">focusPolicy() != KWin::base::options::ClickToFocus</default>
     </entry>
 
     <entry key="FocusStealingPreventionLevel" type="Int">

@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/window.h"
 #include "input/cursor.h"
 #include "rules/rules.h"
-#include "utils.h"
 #include "win/virtual_desktops.h"
 
 #include <NETWM>
@@ -718,7 +717,7 @@ public:
 
     Q_INVOKABLE virtual void closeWindow();
 
-    virtual bool performMouseCommand(Options::MouseCommand, const QPoint &globalPos);
+    virtual bool performMouseCommand(base::options::MouseCommand, const QPoint &globalPos);
 
     virtual Toplevel* findModal();
 

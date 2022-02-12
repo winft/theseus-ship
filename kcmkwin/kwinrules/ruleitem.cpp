@@ -17,9 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "ruleitem.h"
 
+#include "utils/geo.h"
 
 namespace KWin
 {
@@ -221,7 +221,7 @@ QVariant RuleItem::typedValue(const QVariant &value) const
         }
         case Point: {
             const QPoint point = value.toPoint();
-            return (point == invalidPoint) ? QPoint(0, 0) : point;
+            return (point == geo::invalid_point) ? QPoint(0, 0) : point;
         }
         case Size:
             return value.toSize();

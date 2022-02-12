@@ -5,16 +5,17 @@
 */
 #pragma once
 
-#include "base/platform.h"
 #include "deco.h"
 #include "geo.h"
-#include "input/cursor.h"
 #include "net.h"
+#include "space.h"
+#include "types.h"
+
+#include "base/platform.h"
+#include "input/cursor.h"
 #include "render/outline.h"
 #include "screen_edges.h"
 #include "screens.h"
-#include "types.h"
-#include "workspace.h"
 
 #include <QWidget>
 
@@ -328,34 +329,34 @@ void check_workspace_position(Win* win,
     // the bottom struts bounded by the window's left and right sides).
 
     // Default is to use restrictedMoveArea. That's on active desktop or screen change.
-    auto moveAreaFunc = &Workspace::restrictedMoveArea;
+    auto moveAreaFunc = &space::restrictedMoveArea;
     if (workspace()->inUpdateClientArea()) {
         // On restriected area changes.
         // TODO(romangg): This check back on inUpdateClientArea and then setting here internally a
         //                different function is bad design. Replace with an argument or something.
-        moveAreaFunc = &Workspace::previousRestrictedMoveArea;
+        moveAreaFunc = &space::previousRestrictedMoveArea;
     }
 
     // These 4 compute old bounds.
-    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaTop)) {
+    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, strut_area::top)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
             old_top_max = std::max(old_top_max, rect.y() + rect.height());
         }
     }
-    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaRight)) {
+    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, strut_area::right)) {
         auto rect = r & old_wide_frame_geo;
         if (!rect.isEmpty()) {
             old_right_max = std::min(old_right_max, rect.x());
         }
     }
-    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaBottom)) {
+    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, strut_area::bottom)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
             old_bottom_max = std::min(old_bottom_max, rect.y());
         }
     }
-    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, StrutAreaLeft)) {
+    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, strut_area::left)) {
         auto rect = r & old_wide_frame_geo;
         if (!rect.isEmpty()) {
             old_left_max = std::max(old_left_max, rect.x() + rect.width());
@@ -363,25 +364,25 @@ void check_workspace_position(Win* win,
     }
 
     // These 4 compute new bounds.
-    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaTop)) {
+    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), strut_area::top)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
             top_max = std::max(top_max, rect.y() + rect.height());
         }
     }
-    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaRight)) {
+    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), strut_area::right)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
             right_max = std::min(right_max, rect.x());
         }
     }
-    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaBottom)) {
+    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), strut_area::bottom)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
             bottom_max = std::min(bottom_max, rect.y());
         }
     }
-    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), StrutAreaLeft)) {
+    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), strut_area::left)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
             left_max = std::max(left_max, rect.x() + rect.width());
@@ -545,7 +546,7 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
         };
 
         auto area = workspace()->clientArea(MaximizeArea, QPoint(xroot, yroot), win->desktop());
-        if (options->electricBorderTiling()) {
+        if (kwinApp()->options->electricBorderTiling()) {
             if (xroot <= area.x() + 20) {
                 mode |= quicktiles::left;
                 inner_border = in_screen(QPoint(area.x() - 1, yroot));
@@ -556,12 +557,12 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
         }
 
         if (mode != quicktiles::none) {
-            if (yroot <= area.y() + area.height() * options->electricBorderCornerRatio())
+            if (yroot <= area.y() + area.height() * kwinApp()->options->electricBorderCornerRatio())
                 mode |= quicktiles::top;
             else if (yroot >= area.y() + area.height()
-                         - area.height() * options->electricBorderCornerRatio())
+                         - area.height() * kwinApp()->options->electricBorderCornerRatio())
                 mode |= quicktiles::bottom;
-        } else if (options->electricBorderMaximize() && yroot <= area.y() + 5
+        } else if (kwinApp()->options->electricBorderMaximize() && yroot <= area.y() + 5
                    && win->isMaximizable()) {
             mode = quicktiles::maximize;
             inner_border = in_screen(QPoint(xroot, area.y() - 1));

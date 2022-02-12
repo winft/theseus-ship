@@ -13,7 +13,6 @@
 #include "input/event_filter.h"
 #include "input/event_spy.h"
 #include "toplevel.h"
-#include "workspace.h"
 
 #include <cassert>
 

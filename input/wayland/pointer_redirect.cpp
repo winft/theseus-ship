@@ -23,7 +23,6 @@
 #include "win/input.h"
 #include "win/wayland/space.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <KDecoration2/Decoration>
 #include <KScreenLocker/KsldApp>
@@ -98,7 +97,7 @@ void pointer_redirect::init()
     };
     const auto clients = workspace()->allClientList();
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
-    QObject::connect(workspace(), &Workspace::clientAdded, this, setupMoveResizeConnection);
+    QObject::connect(workspace(), &win::space::clientAdded, this, setupMoveResizeConnection);
     QObject::connect(static_cast<win::wayland::space*>(workspace()),
                      &win::wayland::space::wayland_window_added,
                      this,
@@ -527,7 +526,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
                                              this,
                                              &pointer_redirect::updatePointerConstraints);
     notifiers.constraints_activated = QObject::connect(workspace(),
-                                                       &Workspace::clientActivated,
+                                                       &win::space::clientActivated,
                                                        this,
                                                        &pointer_redirect::updatePointerConstraints);
     updatePointerConstraints();

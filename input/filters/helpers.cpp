@@ -6,6 +6,7 @@
 */
 #include "helpers.h"
 
+#include "base/options.h"
 #include "base/wayland/server.h"
 #include "input/event.h"
 #include "input/keyboard_redirect.h"
@@ -14,9 +15,8 @@
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
 #include "main.h"
-#include "options.h"
 #include "win/input.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/seat.h>
@@ -24,10 +24,10 @@
 namespace KWin::input
 {
 
-bool get_modifier_command(uint32_t key, Options::MouseCommand& command)
+bool get_modifier_command(uint32_t key, base::options::MouseCommand& command)
 {
     if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
-        != options->commandAllModifier()) {
+        != kwinApp()->options->commandAllModifier()) {
         return false;
     }
     if (kwinApp()->input->redirect->pointer()->isConstrained()) {
@@ -39,13 +39,13 @@ bool get_modifier_command(uint32_t key, Options::MouseCommand& command)
     auto qt_key = button_to_qt_mouse_button(key);
     switch (qt_key) {
     case Qt::LeftButton:
-        command = options->commandAll1();
+        command = kwinApp()->options->commandAll1();
         break;
     case Qt::MiddleButton:
-        command = options->commandAll2();
+        command = kwinApp()->options->commandAll2();
         break;
     case Qt::RightButton:
-        command = options->commandAll3();
+        command = kwinApp()->options->commandAll3();
         break;
     default:
         // nothing
@@ -54,7 +54,7 @@ bool get_modifier_command(uint32_t key, Options::MouseCommand& command)
     return true;
 }
 
-std::pair<bool, bool> do_perform_mouse_action(Options::MouseCommand command, Toplevel* window)
+std::pair<bool, bool> do_perform_mouse_action(base::options::MouseCommand command, Toplevel* window)
 {
     return std::make_pair(true,
                           !window->performMouseCommand(
@@ -64,7 +64,7 @@ std::pair<bool, bool> do_perform_mouse_action(Options::MouseCommand command, Top
 std::pair<bool, bool> KWIN_EXPORT perform_mouse_modifier_action(button_event const& event,
                                                                 Toplevel* window)
 {
-    auto command = Options::MouseNothing;
+    auto command = base::options::MouseNothing;
     auto was_action = get_modifier_command(event.key, command);
 
     return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
@@ -73,7 +73,7 @@ std::pair<bool, bool> KWIN_EXPORT perform_mouse_modifier_action(button_event con
 std::pair<bool, bool> KWIN_EXPORT
 perform_mouse_modifier_and_window_action(button_event const& event, Toplevel* window)
 {
-    auto command = Options::MouseNothing;
+    auto command = base::options::MouseNothing;
     auto was_action = get_modifier_command(event.key, command);
 
     if (!was_action) {
@@ -85,10 +85,10 @@ perform_mouse_modifier_and_window_action(button_event const& event, Toplevel* wi
 
 bool get_wheel_modifier_command(axis_orientation orientation,
                                 double delta,
-                                Options::MouseCommand& command)
+                                base::options::MouseCommand& command)
 {
     if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
-        != options->commandAllModifier()) {
+        != kwinApp()->options->commandAllModifier()) {
         return false;
     }
     if (kwinApp()->input->redirect->pointer()->isConstrained()) {
@@ -99,14 +99,14 @@ bool get_wheel_modifier_command(axis_orientation orientation,
     }
 
     auto veritcal_delta = (orientation == axis_orientation::vertical) ? -1 * delta : 0;
-    command = options->operationWindowMouseWheel(veritcal_delta);
+    command = kwinApp()->options->operationWindowMouseWheel(veritcal_delta);
 
     return true;
 }
 
 std::pair<bool, bool> KWIN_EXPORT perform_wheel_action(axis_event const& event, Toplevel* window)
 {
-    auto command = Options::MouseNothing;
+    auto command = base::options::MouseNothing;
     auto was_action = get_wheel_modifier_command(event.orientation, event.delta, command);
 
     return was_action ? do_perform_mouse_action(command, window) : std::make_pair(false, false);
@@ -115,7 +115,7 @@ std::pair<bool, bool> KWIN_EXPORT perform_wheel_action(axis_event const& event, 
 std::pair<bool, bool> KWIN_EXPORT perform_wheel_and_window_action(axis_event const& event,
                                                                   Toplevel* window)
 {
-    auto command = Options::MouseNothing;
+    auto command = base::options::MouseNothing;
     auto was_action = get_wheel_modifier_command(event.orientation, event.delta, command);
 
     if (!was_action) {

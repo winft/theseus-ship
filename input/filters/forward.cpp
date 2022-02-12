@@ -16,7 +16,7 @@
 #include "input/redirect.h"
 #include "input/touch_redirect.h"
 #include "main.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>

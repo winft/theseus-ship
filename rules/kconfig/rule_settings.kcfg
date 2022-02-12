@@ -76,7 +76,7 @@
 
     <entry name="position" type="Point">
       <label>Window position</label>
-      <default>invalidPoint</default>
+      <default>geo::invalid_point</default>
     </entry>
     <entry name="positionrule" type="Int">
       <label>Window position rule type</label>

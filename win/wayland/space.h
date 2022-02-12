@@ -5,11 +5,12 @@
 */
 #pragma once
 
+#include "base/wayland/server.h"
 #include "xwl_window.h"
 
-#include "workspace.h"
+#include "kwin_export.h"
+#include "win/space.h"
 
-#include <kwin_export.h>
 #include <memory>
 
 namespace Wrapland::Server
@@ -36,7 +37,7 @@ namespace wayland
 class window;
 struct xdg_activation;
 
-class KWIN_EXPORT space : public Workspace
+class KWIN_EXPORT space : public win::space
 {
     Q_OBJECT
 public:

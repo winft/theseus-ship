@@ -38,7 +38,10 @@ namespace base::os::clock
 class skew_notifier;
 }
 
-class Workspace;
+namespace win
+{
+class space;
+}
 
 namespace render::post
 {
@@ -322,8 +325,8 @@ private:
 
     KConfigWatcher::Ptr config_watcher;
 
-    // The Workspace class needs to call init_shortcuts during initialization.
-    friend class KWin::Workspace;
+    // The space class needs to call init_shortcuts during initialization.
+    friend class KWin::win::space;
 };
 
 }

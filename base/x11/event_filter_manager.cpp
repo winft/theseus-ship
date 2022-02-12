@@ -8,7 +8,7 @@
 #include "event_filter.h"
 #include "event_filter_container.h"
 
-#include <workspace.h>
+#include "win/space.h"
 
 namespace KWin::base::x11
 {

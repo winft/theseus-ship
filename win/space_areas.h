@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "utils.h"
+#include "strut_rect.h"
 
 #include <QRect>
 #include <vector>
@@ -27,7 +27,7 @@ struct space_areas {
     std::vector<QRect> work;
 
     // For each virtual desktop one area in struc rects that windows cannot be moved into.
-    std::vector<StrutRects> restrictedmove;
+    std::vector<strut_rects> restrictedmove;
 
     // For each virtual desktop an array with one work area per xinerama(?) screen.
     std::vector<std::vector<QRect>> screen;

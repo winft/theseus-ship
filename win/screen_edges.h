@@ -34,12 +34,12 @@ class swipe_gesture;
 }
 
 class Toplevel;
-class Workspace;
 
 namespace win
 {
 
 class screen_edger;
+class space;
 
 class KWIN_EXPORT screen_edge : public QObject
 {
@@ -200,7 +200,7 @@ class KWIN_EXPORT screen_edger : public QObject
 {
     Q_OBJECT
 public:
-    screen_edger(Workspace& space);
+    screen_edger(win::space& space);
     ~screen_edger() override;
 
     /**
@@ -303,7 +303,7 @@ public:
 
     std::unique_ptr<input::gesture_recognizer> gesture_recognizer;
     KSharedConfig::Ptr config;
-    Workspace& space;
+    win::space& space;
 
     /// The (dpi dependent) length, reserved for the active corners of each edge - 1/3"
     int corner_offset;

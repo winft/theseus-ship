@@ -6,7 +6,7 @@
 #include "switch.h"
 
 #include "platform.h"
-#include "utils.h"
+#include "utils/algorithm.h"
 
 namespace KWin::input
 {

@@ -26,10 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "win/move.h"
 #include "win/screen_edges.h"
+#include "win/space.h"
 #include "win/stacking.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>

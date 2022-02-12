@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "window_property_notify_filter.h"
 
+#include "main.h"
 #include "render/effects.h"
 #include "render/window.h"
-#include "workspace.h"
-
+#include "win/space.h"
 #include "win/x11/window.h"
 
 namespace KWin::win::x11

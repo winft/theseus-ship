@@ -12,9 +12,9 @@
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
 #include "input/xkb/layout_manager.h"
+#include "win/space.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <KConfigGroup>
 #include <KGlobalAccel>

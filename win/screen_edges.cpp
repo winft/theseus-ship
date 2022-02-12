@@ -10,12 +10,13 @@
 */
 #include "screen_edges.h"
 
+#include "move.h"
+#include "space.h"
+
 #include "input/cursor.h"
 #include "input/gestures.h"
 #include "main.h"
 #include "screens.h"
-#include "win/move.h"
-#include "workspace.h"
 
 // DBus generated
 #include "screenlocker_interface.h"
@@ -705,7 +706,7 @@ void screen_edge::setClient(Toplevel* window)
  * screen_edger
  *********************************************************/
 
-screen_edger::screen_edger(Workspace& space)
+screen_edger::screen_edger(win::space& space)
     : gesture_recognizer{std::make_unique<input::gesture_recognizer>()}
     , space{space}
 {
@@ -718,14 +719,17 @@ screen_edger::screen_edger(Workspace& space)
     updateLayout();
     recreateEdges();
 
-    QObject::connect(options, &Options::configChanged, this, &win::screen_edger::reconfigure);
+    QObject::connect(kwinApp()->options.get(),
+                     &base::options::configChanged,
+                     this,
+                     &win::screen_edger::reconfigure);
     QObject::connect(virtual_desktop_manager::self(),
                      &virtual_desktop_manager::layoutChanged,
                      this,
                      &screen_edger::updateLayout);
 
-    QObject::connect(&space, &Workspace::clientActivated, this, &win::screen_edger::checkBlocking);
-    QObject::connect(&space, &Workspace::clientRemoved, this, &screen_edger::deleteEdgeForClient);
+    QObject::connect(&space, &win::space::clientActivated, this, &win::screen_edger::checkBlocking);
+    QObject::connect(&space, &win::space::clientRemoved, this, &screen_edger::deleteEdgeForClient);
 }
 
 screen_edger::~screen_edger() = default;

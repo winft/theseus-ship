@@ -6,6 +6,7 @@
 #pragma once
 
 #include "base/wayland/server.h"
+#include "main.h"
 #include "toplevel.h"
 
 #include <Wrapland/Server/display.h>

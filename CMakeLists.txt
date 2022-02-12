@@ -353,10 +353,10 @@ add_feature_info("SCHED_RESET_ON_FORK"
                  HAVE_SCHED_RESET_ON_FORK
                  "Required for running kwin_wayland with real-time scheduling")
 
-configure_file(config-kwin.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kwin.h)
+configure_file(cmake/config-kwin.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kwin.h)
 
 ########### global ###############
-set(kwin_effects_dbus_xml ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.kwin.Effects.xml)
+set(kwin_effects_dbus_xml ${CMAKE_CURRENT_SOURCE_DIR}/render/dbus/org.kde.kwin.Effects.xml)
 qt5_add_dbus_interface(effects_interface_SRCS ${kwin_effects_dbus_xml} kwineffects_interface)
 add_library(KWinEffectsInterface STATIC ${effects_interface_SRCS})
 target_link_libraries(KWinEffectsInterface Qt::DBus)
@@ -366,7 +366,6 @@ include_directories(BEFORE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/libkwineffects
     ${CMAKE_CURRENT_SOURCE_DIR}/effects
-    ${CMAKE_CURRENT_SOURCE_DIR}/tabbox
 )
 
 add_subdirectory(libkwineffects)
@@ -391,10 +390,18 @@ add_subdirectory(data)
 
 add_subdirectory(effects)
 add_subdirectory(scripts)
-add_subdirectory(tabbox)
 add_subdirectory(scripting)
-add_subdirectory(helpers)
 
+########### next target ###############
+add_executable(kwin_killer_helper win/x11/helpers/killer.cpp)
+
+target_link_libraries(kwin_killer_helper
+  KF5::AuthCore
+  KF5::I18n
+  KF5::WidgetsAddons
+  Qt::Widgets
+  Qt::X11Extras
+)
 ########### next target ###############
 
 set(kwin_SRCS
@@ -406,8 +413,10 @@ set(kwin_SRCS
     base/x11/event_filter.cpp
     base/x11/event_filter_container.cpp
     base/x11/event_filter_manager.cpp
+    base/x11/grabs.cpp
     base/x11/xcb/extensions.cpp
-    base/gamma_ramp.cpp
+    base/logging.cpp
+    base/options.cpp
     base/output.cpp
     base/platform.cpp
     desktop/screen_locker_watcher.cpp
@@ -447,7 +456,6 @@ set(kwin_SRCS
     input/xkb/keymap.cpp
     input/xkb/manager.cpp
     main.cpp
-    options.cpp
     render/compositor.cpp
     render/cursor.cpp
     render/dbus/compositing.cpp
@@ -489,10 +497,7 @@ set(kwin_SRCS
     scripting/utils.cpp
     scripting/window.cpp
     scripting/space.cpp
-    sm.cpp
     toplevel.cpp
-    useractions.cpp
-    utils.cpp
     win/app_menu.cpp
     win/control.cpp
     win/dbus/virtual_desktop_manager.cpp
@@ -502,9 +507,13 @@ set(kwin_SRCS
     win/osd_notification.cpp
     win/osd.cpp
     win/remnant.cpp
+    win/session_manager.cpp
     win/screen_edges.cpp
+    win/shortcut_dialog.cpp
+    win/space.cpp
     win/stacking_order.cpp
     win/transient.cpp
+    win/user_actions_menu.cpp
     win/virtual_desktops.cpp
     win/x11/client_machine.cpp
     win/x11/color_mapper.cpp
@@ -518,7 +527,6 @@ set(kwin_SRCS
     win/x11/sync_alarm_filter.cpp
     win/x11/window.cpp
     win/x11/window_property_notify_filter.cpp
-    workspace.cpp
     xwl/xwayland_interface.cpp
 )
 
@@ -537,7 +545,7 @@ qt5_add_dbus_adaptor(kwin_SRCS
   KWin::scripting::abstract_script
 )
 
-kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS base/kconfig/options_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_book_settings_base.kcfgc)
@@ -549,9 +557,9 @@ qt5_add_dbus_adaptor(kwin_SRCS
   KWin::render::dbus::compositing
 )
 qt5_add_dbus_adaptor(kwin_SRCS
-    org.kde.kwin.ColorCorrect.xml
-    render/post/color_correct_dbus_interface.h
-    KWin::render::post::color_correct_dbus_interface
+  render/dbus/org.kde.kwin.ColorCorrect.xml
+  render/post/color_correct_dbus_interface.h
+  KWin::render::post::color_correct_dbus_interface
 )
 qt5_add_dbus_adaptor(kwin_SRCS ${kwin_effects_dbus_xml} render/effects.h KWin::render::effects_handler_impl)
 qt5_add_dbus_adaptor(kwin_SRCS
@@ -559,15 +567,19 @@ qt5_add_dbus_adaptor(kwin_SRCS
     win/dbus/virtual_desktop_manager.h
     KWin::win::dbus::virtual_desktop_manager
 )
-qt5_add_dbus_adaptor(kwin_SRCS org.kde.KWin.Session.xml sm.h KWin::SessionManager)
+qt5_add_dbus_adaptor(kwin_SRCS
+  win/dbus/org.kde.KWin.Session.xml
+  win/session_manager.h
+  KWin::win::session_manager
+)
 
 qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf5_org.freedesktop.ScreenSaver.xml screenlocker_interface)
 qt5_add_dbus_interface(kwin_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/org.kde.screensaver.xml kscreenlocker_interface)
-qt5_add_dbus_interface(kwin_SRCS org.kde.kappmenu.xml appmenu_interface)
+qt5_add_dbus_interface(kwin_SRCS win/dbus/org.kde.kappmenu.xml appmenu_interface)
 
 ki18n_wrap_ui(kwin_SRCS
     debug/console/debug_console.ui
-    shortcutdialog.ui
+    win/shortcut_dialog.ui
 )
 
 ########### target link libraries ###############
@@ -656,18 +668,18 @@ if(HAVE_PERF)
 endif()
 
 if (KWIN_BUILD_TABBOX)
-    target_sources(kwin PRIVATE
-        tabbox/clientmodel.cpp
-        tabbox/desktopchain.cpp
-        tabbox/desktopmodel.cpp
-        tabbox/switcheritem.cpp
-        tabbox/tabbox.cpp
-        tabbox/tabbox_logging.cpp
-        tabbox/tabboxconfig.cpp
-        tabbox/tabboxhandler.cpp
-        tabbox/x11_filter.cpp
-    )
-    target_link_libraries(kwin Qt::GuiPrivate)
+  target_sources(kwin PRIVATE
+    win/tabbox/clientmodel.cpp
+    win/tabbox/desktopchain.cpp
+    win/tabbox/desktopmodel.cpp
+    win/tabbox/switcheritem.cpp
+    win/tabbox/tabbox.cpp
+    win/tabbox/tabbox_logging.cpp
+    win/tabbox/tabboxconfig.cpp
+    win/tabbox/tabboxhandler.cpp
+    win/tabbox/x11_filter.cpp
+  )
+  target_link_libraries(kwin Qt::GuiPrivate)
 endif()
 
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
@@ -763,6 +775,7 @@ target_link_libraries(kwin_x11
 
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS kwin_killer_helper DESTINATION ${KDE_INSTALL_LIBEXECDIR})
 
 set(kwin_XWAYLAND_SRCS
    xwl/clipboard.cpp
@@ -970,31 +983,46 @@ add_custom_target(kwin_wayland_wrapper ALL COMMAND
 
 ########### install files ###############
 
-install(FILES kwin.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR} RENAME ${KWIN_NAME}.kcfg)
+install(FILES base/kconfig/options_settings.kcfg
+  DESTINATION ${KDE_INSTALL_KCFGDIR}
+  RENAME ${KWIN_NAME}.kcfg
+)
 install(FILES render/post/kconfig/color_correct_settings.kcfg
     DESTINATION ${KDE_INSTALL_KCFGDIR}
     RENAME ${KWIN_NAME}_colorcorrect.kcfg
 )
-install(FILES kwin.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFY5RCDIR} RENAME ${KWIN_NAME}.notifyrc)
+install(FILES desktop/kde/kwin.notifyrc
+  DESTINATION ${KDE_INSTALL_KNOTIFY5RCDIR}
+  RENAME ${KWIN_NAME}.notifyrc
+)
 install(
-    FILES
-        win/dbus/org.kde.KWin.VirtualDesktopManager.xml
-        base/dbus/org.kde.KWin.xml
-        org.kde.kwin.ColorCorrect.xml
-        render/dbus/org.kde.kwin.Compositing.xml
-        org.kde.kwin.Effects.xml
+  FILES
+    win/dbus/org.kde.KWin.VirtualDesktopManager.xml
+    base/dbus/org.kde.KWin.xml
+    render/dbus/org.kde.kwin.ColorCorrect.xml
+    render/dbus/org.kde.kwin.Compositing.xml
+    render/dbus/org.kde.kwin.Effects.xml
 
-        # Still needs to be installed as plasma-workspace expects it at compile time.
-        data/org.kde.kwin.VirtualKeyboard.xml
-    DESTINATION
-        ${KDE_INSTALL_DBUSINTERFACEDIR}
+    # Still needs to be installed as plasma-workspace expects it at compile time.
+    data/org.kde.kwin.VirtualKeyboard.xml
+  DESTINATION
+    ${KDE_INSTALL_DBUSINTERFACEDIR}
 )
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
 # Install the KWin/Script service type
 install(FILES scripting/kwinscript.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
 
-add_subdirectory(qml)
+# Install the KWin/WindowSwitcher service type
+install(FILES win/tabbox/kwinwindowswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
+install(FILES win/tabbox/kwindesktopswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
+
+# Install QML files
+install(DIRECTORY render/qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
+install(
+  DIRECTORY win/qml/onscreennotification/plasma
+  DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/onscreennotification
+)
 
 if (BUILD_TESTING)
     add_subdirectory(autotests)
@@ -1011,15 +1039,23 @@ feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAG
 
 include(CMakePackageConfigHelpers)
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinDBusInterface")
-configure_package_config_file(KWinDBusInterfaceConfig.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/KWinDBusInterfaceConfig.cmake"
-    PATH_VARS KDE_INSTALL_DBUSINTERFACEDIR
-    INSTALL_DESTINATION ${CMAKECONFIG_INSTALL_DIR})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/KWinDBusInterfaceConfig.cmake
-    DESTINATION ${CMAKECONFIG_INSTALL_DIR})
+configure_package_config_file(
+  desktop/kde/KWinDBusInterfaceConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/desktop/kde/KWinDBusInterfaceConfig.cmake"
+  PATH_VARS KDE_INSTALL_DBUSINTERFACEDIR
+  INSTALL_DESTINATION ${CMAKECONFIG_INSTALL_DIR}
+)
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/desktop/kde/KWinDBusInterfaceConfig.cmake
+  DESTINATION ${CMAKECONFIG_INSTALL_DIR}
+)
 
-ecm_install_configured_files(INPUT plasma-kwin_x11.service.in plasma-kwin_wayland.service.in @ONLY
-            DESTINATION ${SYSTEMD_USER_UNIT_INSTALL_DIR})
+ecm_install_configured_files(
+  INPUT
+    desktop/kde/plasma-kwin_x11.service.in
+    desktop/kde/plasma-kwin_wayland.service.in
+  @ONLY DESTINATION ${SYSTEMD_USER_UNIT_INSTALL_DIR}
+)
 
 install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/kwin_wayland_wrapper

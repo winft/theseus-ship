@@ -10,6 +10,7 @@
 #include "netinfo.h"
 #include "window.h"
 
+#include "base/logging.h"
 #include "win/meta.h"
 #include "win/setup.h"
 
@@ -84,7 +85,7 @@ void ping(Win* win)
         // Can't ping :(
         return;
     }
-    if (options->killPingTimeout() == 0) {
+    if (kwinApp()->options->killPingTimeout() == 0) {
         // Turned off
         return;
     }
@@ -114,7 +115,7 @@ void ping(Win* win)
 
     // We'll run the timer twice, at first we'll desaturate the window
     // and the second time we'll show the "do you want to kill" prompt.
-    win->ping_timer->start(options->killPingTimeout() / 2);
+    win->ping_timer->start(kwinApp()->options->killPingTimeout() / 2);
 
     win->ping_timestamp = xTime();
     rootInfo()->sendPing(win->xcb_window(), win->ping_timestamp);

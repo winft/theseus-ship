@@ -18,15 +18,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "settings.h"
-// KWin
+
 #include "decorationbridge.h"
+
+#include "config-kwin.h"
+#include "main.h"
 #include "render/compositor.h"
-#include "win/virtual_desktops.h"
-#include "workspace.h"
-
 #include "win/app_menu.h"
-
-#include <config-kwin.h>
+#include "win/space.h"
+#include "win/virtual_desktops.h"
 
 #include <KDecoration2/DecorationSettings>
 
@@ -61,7 +61,7 @@ SettingsImpl::SettingsImpl(KDecoration2::DecorationSettings *parent)
             disconnect(c);
         }
     );
-    connect(Workspace::self(), &Workspace::configChanged, this, &SettingsImpl::readSettings);
+    connect(workspace(), &win::space::configChanged, this, &SettingsImpl::readSettings);
     connect(DecorationBridge::self(), &DecorationBridge::metaDataLoaded, this, &SettingsImpl::readSettings);
 }
 

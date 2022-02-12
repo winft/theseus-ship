@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/control.h"
 #include "win/deco.h"
 #include "win/internal_window.h"
+#include "win/space.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
@@ -511,7 +511,7 @@ void DebugConsoleTest::testClosingDebugConsole()
     QSignalSpy destroyedSpy(console, &QObject::destroyed);
     QVERIFY(destroyedSpy.isValid());
 
-    QSignalSpy clientAddedSpy(workspace(), &Workspace::internalClientAdded);
+    QSignalSpy clientAddedSpy(workspace(), &win::space::internalClientAdded);
     QVERIFY(clientAddedSpy.isValid());
     console->show();
     QCOMPARE(console->windowHandle()->isVisible(), true);

@@ -23,14 +23,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "color_correct_dbus_interface.h"
 #include "suncalc.h"
 
-#include "base/gamma_ramp.h"
+#include "base/logging.h"
+#include "base/output.h"
 #include "base/platform.h"
 #include "base/seat/session.h"
 #include "input/redirect.h"
-#include <base/output.h>
-#include <main.h>
-#include <screens.h>
-#include <workspace.h>
+#include "main.h"
+#include "screens.h"
+#include "utils/gamma_ramp.h"
+#include "win/space.h"
 
 #include <color_correct_settings.h>
 
@@ -681,7 +682,7 @@ void night_color_manager::commit_gamma_ramps(int temperature)
             continue;
         }
 
-        base::gamma_ramp ramp(rampsize);
+        gamma_ramp ramp(rampsize);
 
         /*
          * The gamma calculation below is based on the Redshift app:

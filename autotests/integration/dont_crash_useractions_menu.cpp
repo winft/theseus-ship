@@ -24,9 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "screens.h"
-#include "useractions.h"
+#include "win/space.h"
+#include "win/user_actions_menu.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/keyboard.h>

@@ -12,9 +12,9 @@
 #include "toplevel.h"
 #include "win/geo.h"
 #include "win/internal_window.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/virtual_desktops.h"
-#include "workspace.h"
 
 #include <QWindow>
 
@@ -32,7 +32,7 @@ void device_redirect_init(Dev* dev)
     QObject::connect(workspace()->stacking_order, &win::stacking_order::changed, dev, [dev] {
         device_redirect_update(dev);
     });
-    QObject::connect(workspace(), &Workspace::clientMinimizedChanged, dev, [dev] {
+    QObject::connect(workspace(), &win::space::clientMinimizedChanged, dev, [dev] {
         device_redirect_update(dev);
     });
     QObject::connect(win::virtual_desktop_manager::self(),

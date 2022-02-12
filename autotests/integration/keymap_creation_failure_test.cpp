@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/layout_manager.h"
+#include "win/space.h"
 #include "win/virtual_desktops.h"
-#include "workspace.h"
 
 #include <KConfigGroup>
 #include <KGlobalAccel>

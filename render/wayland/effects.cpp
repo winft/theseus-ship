@@ -6,6 +6,7 @@
 #include "effects.h"
 
 #include "base/wayland/server.h"
+#include "main.h"
 #include "render/window.h"
 #include "toplevel.h"
 #include "win/wayland/space.h"

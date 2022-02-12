@@ -5,7 +5,8 @@
 */
 #pragma once
 
-#include "options.h"
+#include "base/options.h"
+#include "main.h"
 
 #include <QVector>
 #include <algorithm>
@@ -17,11 +18,12 @@ template<typename Platform>
 QVector<CompositingType> get_supported_render_types(Platform const& platform)
 {
     auto comps = platform.supportedCompositors();
-    auto const user_cfg_it = std::find(comps.begin(), comps.end(), options->compositingMode());
+    auto const user_cfg_it
+        = std::find(comps.begin(), comps.end(), kwinApp()->options->compositingMode());
 
     if (user_cfg_it != comps.end()) {
         comps.erase(user_cfg_it);
-        comps.prepend(options->compositingMode());
+        comps.prepend(kwinApp()->options->compositingMode());
     } else {
         qWarning() << "Configured compositor not supported by Platform. Falling back to defaults";
     }

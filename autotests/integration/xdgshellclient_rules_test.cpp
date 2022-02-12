@@ -28,10 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/setup.h"
+#include "win/space.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>

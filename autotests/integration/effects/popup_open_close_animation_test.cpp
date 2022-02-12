@@ -24,12 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effect_loader.h"
 #include "render/effects.h"
 #include "toplevel.h"
-#include "useractions.h"
 #include "win/deco.h"
 #include "win/internal_window.h"
 #include "win/net.h"
+#include "win/space.h"
 #include "win/transient.h"
-#include "workspace.h"
+#include "win/user_actions_menu.h"
 
 #include <Wrapland/Client/surface.h>
 #include <Wrapland/Client/xdg_shell.h>
@@ -239,7 +239,7 @@ void PopupOpenCloseAnimationTest::testAnimateDecorationTooltips()
     QVERIFY(!effect->isActive());
 
     // Show a decoration tooltip.
-    QSignalSpy tooltipAddedSpy(workspace(), &Workspace::internalClientAdded);
+    QSignalSpy tooltipAddedSpy(workspace(), &win::space::internalClientAdded);
     QVERIFY(tooltipAddedSpy.isValid());
     client->control->deco().client->requestShowToolTip(QStringLiteral("KWin rocks!"));
     QVERIFY(tooltipAddedSpy.wait());

@@ -12,7 +12,6 @@
 
 #include "base/wayland/server.h"
 #include "main.h"
-#include "utils.h"
 
 extern "C" {
 #include <wlr/backend/libinput.h>

@@ -9,6 +9,7 @@
 
 #include "base/platform.h"
 #include "screens.h"
+#include "utils/algorithm.h"
 
 #include <cassert>
 #include <vector>

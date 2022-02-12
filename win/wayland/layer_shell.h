@@ -211,7 +211,7 @@ void layer_surface_handle_keyboard_interactivity(Win* win)
     auto interactivity = win->layer_surface->keyboard_interactivity();
     if (interactivity != inter::OnDemand) {
         // With interactivity None or Exclusive just reset control.
-        Workspace::self()->activateNextClient(win);
+        workspace()->activateNextClient(win);
     }
     kwinApp()->input->redirect->keyboard()->update();
 }

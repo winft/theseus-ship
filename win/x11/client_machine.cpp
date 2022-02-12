@@ -17,15 +17,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-// own
 #include "client_machine.h"
-#include "utils.h"
-// KF5
+
+#include "base/logging.h"
+#include "main.h"
+
 #include <NETWM>
-// Qt
+
 #include <QFutureWatcher>
 #include <QtConcurrentRun>
-// system
+
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>

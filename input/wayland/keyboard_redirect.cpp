@@ -19,9 +19,9 @@
 #include "input/xkb/layout_manager.h"
 #include "main.h"
 #include "toplevel.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/keyboard_pool.h>
@@ -109,7 +109,7 @@ void keyboard_redirect::init()
                      &keyboard_redirect::process_key_repeat);
     redirect->installInputEventSpy(keyRepeatSpy);
 
-    QObject::connect(workspace(), &Workspace::clientActivated, this, [this] {
+    QObject::connect(workspace(), &win::space::clientActivated, this, [this] {
         QObject::disconnect(m_activeClientSurfaceChangedConnection);
         if (auto c = workspace()->activeClient()) {
             m_activeClientSurfaceChangedConnection

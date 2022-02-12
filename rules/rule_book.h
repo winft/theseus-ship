@@ -11,8 +11,7 @@
 #include <QVector>
 #include <netwm_def.h>
 
-#include "options.h"
-#include "utils.h"
+#include "base/options.h"
 #include "window_rules.h"
 
 class QDebug;

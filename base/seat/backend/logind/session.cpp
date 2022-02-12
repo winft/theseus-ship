@@ -6,7 +6,8 @@
 */
 #include "session.h"
 
-#include "../../../../utils.h"
+#include "base/logging.h"
+#include "config-kwin.h"
 
 #include <QCoreApplication>
 #include <QDBusConnectionInterface>
@@ -16,7 +17,6 @@
 #include <QDBusUnixFileDescriptor>
 #include <QDebug>
 
-#include <config-kwin.h>
 #include <sys/stat.h>
 #if HAVE_SYS_SYSMACROS_H
 #include <sys/sysmacros.h>

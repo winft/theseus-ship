@@ -18,8 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "../testutils.h"
-#include "clientmodel.h"
 #include "mock_tabboxhandler.h"
+#include "win/tabbox/clientmodel.h"
 #include <QX11Info>
 #include <QtTest>
 

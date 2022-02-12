@@ -26,10 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/geo.h"
 #include "win/input.h"
 #include "win/screen_edges.h"
+#include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmashell.h>
@@ -557,7 +557,7 @@ void StrutsTest::testX11Struts()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -674,7 +674,7 @@ void StrutsTest::test363804()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -758,7 +758,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -886,7 +886,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();
@@ -939,7 +939,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
 
     const QRect origGeo = client2->frameGeometry();
     input::get_cursor()->set_pos(origGeo.center());
-    workspace()->performWindowOperation(client2, Options::MoveOp);
+    workspace()->performWindowOperation(client2, base::options::MoveOp);
 
     QTRY_COMPARE(workspace()->moveResizeClient(), client2);
     QVERIFY(win::is_move(client2));

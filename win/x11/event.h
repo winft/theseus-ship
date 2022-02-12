@@ -12,10 +12,10 @@
 #include "transient.h"
 #include "window_release.h"
 
+#include "base/x11/xcb/qt_types.h"
 #include "win/input.h"
 #include "win/meta.h"
-
-#include "workspace.h"
+#include "win/space.h"
 
 #include <kkeyserver.h>
 
@@ -547,9 +547,9 @@ void enter_notify_event(Win* win, xcb_enter_notify_event_t* e)
     }
 
 #define MOUSE_DRIVEN_FOCUS                                                                         \
-    (!options->focusPolicyIsReasonable()                                                           \
-     || (options->focusPolicy() == Options::FocusFollowsMouse                                      \
-         && options->isNextFocusPrefersMouse()))
+    (!kwinApp()->options->focusPolicyIsReasonable()                                                \
+     || (kwinApp()->options->focusPolicy() == base::options::FocusFollowsMouse                     \
+         && kwinApp()->options->isNextFocusPrefersMouse()))
     if (e->mode == XCB_NOTIFY_MODE_NORMAL
         || (e->mode == XCB_NOTIFY_MODE_UNGRAB && MOUSE_DRIVEN_FOCUS)) {
 #undef MOUSE_DRIVEN_FOCUS
@@ -598,8 +598,8 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
                 QCoreApplication::sendEvent(deco, &leaveEvent);
             }
         }
-        if (options->focusPolicy() == Options::FocusStrictlyUnderMouse && win->control->active()
-            && lostMouse) {
+        if (kwinApp()->options->focusPolicy() == base::options::FocusStrictlyUnderMouse
+            && win->control->active() && lostMouse) {
             workspace()->requestDelayFocus(nullptr);
         }
         return;
@@ -608,8 +608,9 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
 
 static inline bool modKeyDown(int state)
 {
-    uint const keyModX = (options->keyCmdAllModKey() == Qt::Key_Meta) ? KKeyServer::modXMeta()
-                                                                      : KKeyServer::modXAlt();
+    uint const keyModX = (kwinApp()->options->keyCmdAllModKey() == Qt::Key_Meta)
+        ? KKeyServer::modXMeta()
+        : KKeyServer::modXAlt();
     return keyModX && (state & KKeyServer::accelModMaskX()) == keyModX;
 }
 
@@ -646,29 +647,31 @@ bool button_press_event(Win* win,
             return true;
         }
 
-        Options::MouseCommand com = Options::MouseNothing;
+        auto com = base::options::MouseNothing;
         bool was_action = false;
         if (bModKeyHeld) {
             was_action = true;
             switch (button) {
             case XCB_BUTTON_INDEX_1:
-                com = options->commandAll1();
+                com = kwinApp()->options->commandAll1();
                 break;
             case XCB_BUTTON_INDEX_2:
-                com = options->commandAll2();
+                com = kwinApp()->options->commandAll2();
                 break;
             case XCB_BUTTON_INDEX_3:
-                com = options->commandAll3();
+                com = kwinApp()->options->commandAll3();
                 break;
             case XCB_BUTTON_INDEX_4:
             case XCB_BUTTON_INDEX_5:
-                com = options->operationWindowMouseWheel(button == XCB_BUTTON_INDEX_4 ? 120 : -120);
+                com = kwinApp()->options->operationWindowMouseWheel(
+                    button == XCB_BUTTON_INDEX_4 ? 120 : -120);
                 break;
             }
         } else {
             if (w == win->xcb_windows.wrapper) {
                 if (button < 4) {
-                    com = win::get_mouse_command(win, x11ToQtMouseButton(button), &was_action);
+                    com = win::get_mouse_command(
+                        win, base::x11::xcb::to_qt_mouse_button(button), &was_action);
                 } else if (button < 6) {
                     com = win::get_wheel_command(win, Qt::Vertical, &was_action);
                 }
@@ -703,14 +706,14 @@ bool button_press_event(Win* win,
         QMouseEvent ev(QMouseEvent::MouseButtonPress,
                        QPoint(x, y),
                        QPoint(x_root, y_root),
-                       x11ToQtMouseButton(button),
-                       x11ToQtMouseButtons(state),
+                       base::x11::xcb::to_qt_mouse_button(button),
+                       base::x11::xcb::to_qt_mouse_buttons(state),
                        Qt::KeyboardModifiers());
         return win::process_decoration_button_press(win, &ev, true);
     }
     if (w == win->frameId() && win::decoration(win)) {
         if (button >= 4 && button <= 7) {
-            const Qt::KeyboardModifiers modifiers = x11ToQtKeyboardModifiers(state);
+            auto const modifiers = base::x11::xcb::to_qt_keyboard_modifiers(state);
             // Logic borrowed from qapplication_x11.cpp
             const int delta = 120 * ((button == 4 || button == 6) ? 1 : -1);
             const bool hor = (((button == 4 || button == 5) && (modifiers & Qt::AltModifier))
@@ -723,13 +726,13 @@ bool button_press_event(Win* win,
                               angle,
                               delta,
                               hor ? Qt::Horizontal : Qt::Vertical,
-                              x11ToQtMouseButtons(state),
+                              base::x11::xcb::to_qt_mouse_buttons(state),
                               modifiers);
             event.setAccepted(false);
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (!event.isAccepted() && !hor) {
                 if (win::titlebar_positioned_under_mouse(win)) {
-                    win->performMouseCommand(options->operationTitlebarMouseWheel(delta),
+                    win->performMouseCommand(kwinApp()->options->operationTitlebarMouseWheel(delta),
                                              QPoint(x_root, y_root));
                 }
             }
@@ -737,9 +740,9 @@ bool button_press_event(Win* win,
             QMouseEvent event(QEvent::MouseButtonPress,
                               QPointF(x, y),
                               QPointF(x_root, y_root),
-                              x11ToQtMouseButton(button),
-                              x11ToQtMouseButtons(state),
-                              x11ToQtKeyboardModifiers(state));
+                              base::x11::xcb::to_qt_mouse_button(button),
+                              base::x11::xcb::to_qt_mouse_buttons(state),
+                              base::x11::xcb::to_qt_keyboard_modifiers(state));
             event.setAccepted(false);
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (!event.isAccepted()) {
@@ -762,15 +765,18 @@ bool button_release_event(Win* win,
                           int x_root,
                           int y_root)
 {
+    auto to_qt_button = base::x11::xcb::to_qt_mouse_button;
+    auto to_qt_buttons = base::x11::xcb::to_qt_mouse_buttons;
+
     if (w == win->frameId() && win::decoration(win)) {
         // wheel handled on buttonPress
         if (button < 4 || button > 7) {
             QMouseEvent event(QEvent::MouseButtonRelease,
                               QPointF(x, y),
                               QPointF(x_root, y_root),
-                              x11ToQtMouseButton(button),
-                              x11ToQtMouseButtons(state) & ~x11ToQtMouseButton(button),
-                              x11ToQtKeyboardModifiers(state));
+                              to_qt_button(button),
+                              to_qt_buttons(state) & ~to_qt_button(button),
+                              base::x11::xcb::to_qt_keyboard_modifiers(state));
             event.setAccepted(false);
             QCoreApplication::sendEvent(win::decoration(win), &event);
             if (event.isAccepted() || !win::titlebar_positioned_under_mouse(win)) {
@@ -788,7 +794,7 @@ bool button_release_event(Win* win,
     }
     if (w == win->frameId() && workspace()->userActionsMenu()
         && workspace()->userActionsMenu()->isShown()) {
-        const_cast<UserActionsMenu*>(workspace()->userActionsMenu())->grabInput();
+        const_cast<user_actions_menu*>(workspace()->userActionsMenu())->grabInput();
     }
     // translate from grab window to local coords
     x = win->pos().x();
@@ -936,7 +942,7 @@ void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
         // movement the expectation is that the cursor is already at the provided position, thus
         // it's more a safety measurement
         cursor->set_pos(QPoint(x_root, y_root));
-        win->performMouseCommand(Options::MouseMove, QPoint(x_root, y_root));
+        win->performMouseCommand(base::options::MouseMove, QPoint(x_root, y_root));
     } else if (mov_res.enabled && direction == NET::MoveResizeCancel) {
         win::finish_move_resize(win, true);
         mov_res.button_down = false;
@@ -971,12 +977,13 @@ void net_move_resize(Win* win, int x_root, int y_root, NET::Direction direction)
         // ignore mouse coordinates given in the message, mouse position is used by the moving
         // algorithm
         cursor->set_pos(win->frameGeometry().center());
-        win->performMouseCommand(Options::MouseUnrestrictedMove, win->frameGeometry().center());
+        win->performMouseCommand(base::options::MouseUnrestrictedMove,
+                                 win->frameGeometry().center());
     } else if (direction == NET::KeyboardSize) {
         // ignore mouse coordinates given in the message, mouse position is used by the resizing
         // algorithm
         cursor->set_pos(win->frameGeometry().bottomRight());
-        win->performMouseCommand(Options::MouseUnrestrictedResize,
+        win->performMouseCommand(base::options::MouseUnrestrictedResize,
                                  win->frameGeometry().bottomRight());
     }
 }

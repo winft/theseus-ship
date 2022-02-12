@@ -15,10 +15,11 @@
 #include "debug/perf/ftrace.h"
 #include "render/gl/scene.h"
 #include "render/platform.h"
+#include "toplevel.h"
 #include "wayland_logging.h"
+#include "win/space.h"
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
-#include "workspace.h"
 
 #include <kwinglplatform.h>
 #include <kwingltexture.h>

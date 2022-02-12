@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include <config-kwin.h>
 
+#include "base/logging.h"
+#include "base/options.h"
 #include "base/seat/session.h"
 #include "base/x11/event_filter_manager.h"
 #include "base/x11/xcb/extensions.h"
@@ -31,10 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/global_shortcuts_manager.h"
 #include "input/platform.h"
 #include "input/redirect.h"
-#include "options.h"
 #include "screens.h"
-#include "sm.h"
-#include "workspace.h"
+#include "win/space.h"
 
 #include <kwineffects.h>
 
@@ -72,8 +72,6 @@ Q_DECLARE_METATYPE(KSharedConfigPtr)
 namespace KWin
 {
 
-Options* options;
-
 int Application::crashes = 0;
 
 void Application::setX11ScreenNumber(int screenNumber)
@@ -103,7 +101,7 @@ Application::Application(Application::OperationMode mode, int &argc, char **argv
     }
 #endif
 
-    qRegisterMetaType<Options::WindowOperation>("Options::WindowOperation");
+    qRegisterMetaType<base::options::WindowOperation>("base::options::WindowOperation");
     qRegisterMetaType<KWin::EffectWindow*>();
     qRegisterMetaType<Wrapland::Server::Surface*>("Wrapland::Server::Surface*");
     qRegisterMetaType<KSharedConfigPtr>();
@@ -155,10 +153,7 @@ void Application::prepare_start()
     screen_locker_watcher = std::make_unique<desktop::screen_locker_watcher>();
 }
 
-Application::~Application()
-{
-    delete options;
-}
+Application::~Application() = default;
 
 void Application::resetCrashesCount()
 {
@@ -265,7 +260,7 @@ base::wayland::server* Application::get_wayland_server()
 
 void Application::createOptions()
 {
-    options = new Options;
+    options = std::make_unique<base::options>();
     options->loadConfig();
     options->loadCompositingConfig(false);
 }

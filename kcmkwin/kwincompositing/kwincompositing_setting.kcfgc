@@ -4,4 +4,4 @@ Mutators=true
 DefaultValueGetters=true
 ParentInConstructor=true
 # Needed for AnimationCurve
-IncludeFiles=\"../options.h\"
+IncludeFiles=base/options.h

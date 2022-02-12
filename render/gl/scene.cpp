@@ -31,29 +31,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "deco_renderer.h"
 #include "effect_frame.h"
+#include "lanczos_filter.h"
 #include "shadow.h"
+#include "texture.h"
 #include "window.h"
 
+#include "base/logging.h"
 #include "base/output.h"
 #include "base/platform.h"
-#include "texture.h"
-
-#include <kwineffectquickview.h>
-#include <kwinglplatform.h>
-
-#include "../../utils.h"
 #include "decorations/decoratedclient.h"
 #include "input/cursor.h"
-#include "lanczos_filter.h"
 #include "main.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
 #include "render/effects.h"
 #include "render/platform.h"
 #include "screens.h"
-
 #include "win/geo.h"
 #include "win/transient.h"
+
+#include "kwineffectquickview.h"
+#include "kwinglplatform.h"
 
 #include <stdexcept>
 #include <unistd.h>
@@ -304,8 +302,8 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
     GLPlatform* glPlatform = GLPlatform::instance();
 
     // set strict binding
-    if (options->isGlStrictBindingFollowsDriver()) {
-        options->setGlStrictBinding(!glPlatform->supports(LooseBinding));
+    if (kwinApp()->options->isGlStrictBindingFollowsDriver()) {
+        kwinApp()->options->setGlStrictBinding(!glPlatform->supports(LooseBinding));
     }
 
     bool haveSyncObjects = glPlatform->isGLES()

@@ -24,12 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/effects.h"
 #include "screens.h"
 #include "shadow.h"
-#include "workspace.h"
 
 #include "win/input.h"
 #include "win/remnant.h"
 #include "win/scene.h"
 #include "win/space.h"
+#include "win/space_helpers.h"
 #include "win/transient.h"
 
 #include "win/x11/client_machine.h"
@@ -1106,7 +1106,7 @@ void Toplevel::closeWindow()
 {
 }
 
-bool Toplevel::performMouseCommand(Options::MouseCommand cmd, const QPoint &globalPos)
+bool Toplevel::performMouseCommand(base::options::MouseCommand cmd, const QPoint &globalPos)
 {
     return win::perform_mouse_command(this, cmd, globalPos);
 }
@@ -1131,6 +1131,12 @@ void Toplevel::setWindowHandles(xcb_window_t w)
 {
     Q_ASSERT(!m_client.is_valid() && w != XCB_WINDOW_NONE);
     m_client.reset(w, false);
+}
+
+void Toplevel::setShortcutInternal()
+{
+    updateCaption();
+    workspace()->clientShortcutUpdated(this);
 }
 
 }

@@ -8,10 +8,11 @@
 
 #include "stacking_tree.h"
 
+#include "main.h"
 #include "toplevel.h"
 #include "win/internal_window.h"
+#include "win/space.h"
 #include "win/stacking_order.h"
-#include "workspace.h"
 
 namespace KWin::win::x11
 {

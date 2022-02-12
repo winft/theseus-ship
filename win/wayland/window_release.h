@@ -8,12 +8,12 @@
 #include "space.h"
 
 #include "rules/rule_book.h"
-#include "utils.h"
+#include "utils/blocker.h"
 #include "win/remnant.h"
 #include "win/stacking_order.h"
 
 #ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
+#include "win/tabbox/tabbox.h"
 #endif
 
 namespace KWin::win::wayland
@@ -24,7 +24,7 @@ void destroy_window(Win* win)
 {
     win->closing = true;
 
-    Blocker blocker(workspace()->stacking_order);
+    blocker block(workspace()->stacking_order);
 
     auto remnant_window = win->create_remnant(win);
     Q_EMIT win->windowClosed(win, remnant_window);

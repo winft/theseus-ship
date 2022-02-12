@@ -31,10 +31,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/input.h"
 #include "win/meta.h"
 #include "win/screen.h"
+#include "win/space.h"
 #include "win/transient.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
-#include "workspace.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
@@ -262,7 +262,7 @@ void TestXdgShellClient::testDesktopPresenceChanged()
     effects->setNumberOfDesktops(4);
     QSignalSpy desktopPresenceChangedClientSpy(c, &win::wayland::window::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedClientSpy.isValid());
-    QSignalSpy desktopPresenceChangedWorkspaceSpy(workspace(), &Workspace::desktopPresenceChanged);
+    QSignalSpy desktopPresenceChangedWorkspaceSpy(workspace(), &win::space::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedWorkspaceSpy.isValid());
     QSignalSpy desktopPresenceChangedEffectsSpy(effects, &EffectsHandler::desktopPresenceChanged);
     QVERIFY(desktopPresenceChangedEffectsSpy.isValid());

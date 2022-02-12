@@ -25,10 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "win/geo.h"
 #include "win/screen_edges.h"
+#include "win/space.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
-#include "workspace.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/plasmawindowmanagement.h>
@@ -146,7 +146,7 @@ void PlasmaWindowTest::testCreateDestroyX11PlasmaWindow()
     xcb_flush(c.get());
 
     // we should get a client for it
-    QSignalSpy windowCreatedSpy(workspace(), &Workspace::clientAdded);
+    QSignalSpy windowCreatedSpy(workspace(), &win::space::clientAdded);
     QVERIFY(windowCreatedSpy.isValid());
     QVERIFY(windowCreatedSpy.wait());
     auto client = windowCreatedSpy.first().first().value<win::x11::window*>();

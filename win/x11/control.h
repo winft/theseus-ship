@@ -15,7 +15,11 @@
 #include "window.h"
 #include "xcb.h"
 
+#include "base/logging.h"
 #include "base/x11/xcb/proto.h"
+#include "rules/rule_book.h"
+#include "utils/blocker.h"
+#include "utils/geo.h"
 #include "win/control.h"
 #include "win/controlling.h"
 #include "win/input.h"
@@ -24,17 +28,14 @@
 #include "win/placement.h"
 #include "win/screen.h"
 #include "win/setup.h"
-#include "win/space.h"
+#include "win/space_helpers.h"
 #include "win/stacking.h"
 #include "win/stacking_order.h"
 #include "win/util.h"
 
 #ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
+#include "win/tabbox/tabbox.h"
 #endif
-
-#include "rules/rule_book.h"
-#include "utils.h"
 
 #include <KStartupInfo>
 
@@ -89,18 +90,18 @@ public:
         //
         // The passive grab below is established so the window can be raised or activated when it
         // is clicked.
-        if ((options->focusPolicyIsReasonable() && !active())
-            || (options->isClickRaise() && !is_most_recently_raised(m_window))) {
-            if (options->commandWindow1() != Options::MouseNothing) {
+        if ((kwinApp()->options->focusPolicyIsReasonable() && !active())
+            || (kwinApp()->options->isClickRaise() && !is_most_recently_raised(m_window))) {
+            if (kwinApp()->options->commandWindow1() != base::options::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_1);
             }
-            if (options->commandWindow2() != Options::MouseNothing) {
+            if (kwinApp()->options->commandWindow2() != base::options::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_2);
             }
-            if (options->commandWindow3() != Options::MouseNothing) {
+            if (kwinApp()->options->commandWindow3() != base::options::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_3);
             }
-            if (options->commandWindowWheel() != Options::MouseNothing) {
+            if (kwinApp()->options->commandWindowWheel() != base::options::MouseNothing) {
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_4);
                 establish_command_window_grab(m_window, XCB_BUTTON_INDEX_5);
             }
@@ -111,16 +112,16 @@ public:
         // we can do about it, unfortunately.
 
         if (!workspace()->globalShortcutsDisabled()) {
-            if (options->commandAll1() != Options::MouseNothing) {
+            if (kwinApp()->options->commandAll1() != base::options::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_1);
             }
-            if (options->commandAll2() != Options::MouseNothing) {
+            if (kwinApp()->options->commandAll2() != base::options::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_2);
             }
-            if (options->commandAll3() != Options::MouseNothing) {
+            if (kwinApp()->options->commandAll3() != base::options::MouseNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_3);
             }
-            if (options->commandAllWheel() != Options::MouseWheelNothing) {
+            if (kwinApp()->options->commandAllWheel() != base::options::MouseWheelNothing) {
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_4);
                 establish_command_all_grab(m_window, XCB_BUTTON_INDEX_5);
             }
@@ -294,9 +295,9 @@ bool position_via_hint(Win* win, QRect const& geo, bool ignore_default, QRect& p
 template<typename Win>
 bool move_with_force_rule(Win* win, QRect& frame_geo, bool is_inital_placement, QRect& area)
 {
-    auto forced_pos = win->control->rules().checkPosition(invalidPoint, is_inital_placement);
+    auto forced_pos = win->control->rules().checkPosition(geo::invalid_point, is_inital_placement);
 
-    if (forced_pos == invalidPoint) {
+    if (forced_pos == geo::invalid_point) {
         return false;
     }
 
@@ -598,7 +599,7 @@ template<typename Win>
 QRect place_on_taking_control(Win* win,
                               QRect& frame_geo,
                               bool mapped,
-                              SessionInfo* session,
+                              win::session_info* session,
                               KStartupInfoData const& asn_data)
 {
     if (session) {
@@ -626,7 +627,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 {
     using Win = typename Space::x11_window;
 
-    Blocker blocker(space.stacking_order);
+    blocker block(space.stacking_order);
 
     base::x11::xcb::window_attributes attr(w);
     base::x11::xcb::geometry windowGeometry(w);
@@ -667,9 +668,13 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
 
     QObject::connect(
         win->clientMachine(), &client_machine::localhostChanged, win, &window::updateCaption);
-    QObject::connect(
-        options, &Options::configChanged, win, [win] { win->control->update_mouse_grab(); });
-    QObject::connect(options, &Options::condensedTitleChanged, win, &window::updateCaption);
+    QObject::connect(kwinApp()->options.get(), &base::options::configChanged, win, [win] {
+        win->control->update_mouse_grab();
+    });
+    QObject::connect(kwinApp()->options.get(),
+                     &base::options::condensedTitleChanged,
+                     win,
+                     &window::updateCaption);
 
     QObject::connect(win, &window::moveResizeCursorChanged, win, [win](input::cursor_shape cursor) {
         auto nativeCursor = input::get_cursor()->x11_cursor(cursor);
@@ -1060,7 +1065,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
         if (!isMapped) {
             if (allow && win->isOnCurrentDesktop()) {
                 if (!is_special_window(win)) {
-                    if (options->focusPolicyIsReasonable() && wants_tab_focus(win)) {
+                    if (kwinApp()->options->focusPolicyIsReasonable() && wants_tab_focus(win)) {
                         space.request_focus(win);
                     }
                 }
@@ -1135,7 +1140,7 @@ void lower_client_within_application(Space* space, Win* window)
 
     window->control->cancel_auto_raise();
 
-    Blocker blocker(space->stacking_order);
+    blocker block(space->stacking_order);
 
     remove_all(space->stacking_order->pre_stack, window);
 
@@ -1168,7 +1173,7 @@ void raise_client_within_application(Space* space, Win* window)
 
     window->control->cancel_auto_raise();
 
-    Blocker blocker(space->stacking_order);
+    blocker block(space->stacking_order);
     // ignore mainwindows
 
     // first try to put it above the top-most window of the application
@@ -1469,7 +1474,9 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
             }
             // don't refuse if focus stealing prevention is turned off
             if (!first_window
-                && win->control->rules().checkFSP(options->focusStealingPreventionLevel()) > 0) {
+                && win->control->rules().checkFSP(
+                       kwinApp()->options->focusStealingPreventionLevel())
+                    > 0) {
                 qCDebug(KWIN_CORE) << "User timestamp, already exists:" << 0;
                 return 0; // refuse activation
             }
