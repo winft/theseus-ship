@@ -1017,6 +1017,8 @@ install(FILES scripting/kwinscript.desktop DESTINATION ${KDE_INSTALL_KSERVICETYP
 install(FILES win/tabbox/kwinwindowswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
 install(FILES win/tabbox/kwindesktopswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
 
+# Install QML files
+install(DIRECTORY render/qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
 add_subdirectory(qml)
 
 if (BUILD_TESTING)
