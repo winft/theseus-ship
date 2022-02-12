@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include "base/wayland/server.h"
 #include "xwl_window.h"
 
 #include "kwin_export.h"

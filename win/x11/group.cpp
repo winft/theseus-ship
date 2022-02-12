@@ -20,11 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "group.h"
 
-#include "render/effects.h"
-#include "win/space.h"
+#include "window.h"
 
+#include "main.h"
+#include "render/effects.h"
 #include "win/control.h"
-#include "win/x11/window.h"
+#include "win/space.h"
 
 #include <KStartupInfo>
 #include <KWindowSystem>

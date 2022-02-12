@@ -18,14 +18,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "settings.h"
-// KWin
+
 #include "decorationbridge.h"
+
+#include "config-kwin.h"
+#include "main.h"
 #include "render/compositor.h"
 #include "win/app_menu.h"
 #include "win/space.h"
 #include "win/virtual_desktops.h"
-
-#include <config-kwin.h>
 
 #include <KDecoration2/DecorationSettings>
 

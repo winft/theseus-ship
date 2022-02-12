@@ -8,7 +8,8 @@
 */
 #pragma once
 
-#include "main.h"
+#include "kwin_export.h"
+#include "kwinglobals.h"
 #include "win/types.h"
 
 #include <KConfigWatcher>
@@ -812,11 +813,6 @@ public:
     static bool defaultGlStrictBindingFollowsDriver()
     {
         return true;
-    }
-    static OpenGLPlatformInterface defaultGlPlatformInterface()
-    {
-        return kwinApp()->shouldUseWaylandForCompositing() ? EglPlatformInterface
-                                                           : GlxPlatformInterface;
     }
     /**
      * Performs loading all settings except compositing related.

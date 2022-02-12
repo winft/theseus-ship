@@ -10,6 +10,7 @@
 
 #include "base/logging.h"
 #include "debug/perf/ftrace.h"
+#include "main.h"
 #include "render/dbus/compositing.h"
 #include "render/effects.h"
 #include "render/gl/scene.h"

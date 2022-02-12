@@ -14,6 +14,7 @@
 #include "base/wayland/server.h"
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
+#include "main.h"
 #include "render/effects.h"
 #include "screens.h"
 #include "win/control.h"

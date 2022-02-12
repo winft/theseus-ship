@@ -6,6 +6,7 @@
 */
 #include "idle_inhibition.h"
 
+#include "main.h"
 #include "win/space.h"
 #include "win/wayland/window.h"
 

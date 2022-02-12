@@ -8,6 +8,7 @@
 
 #include "stacking_tree.h"
 
+#include "main.h"
 #include "toplevel.h"
 #include "win/internal_window.h"
 #include "win/space.h"

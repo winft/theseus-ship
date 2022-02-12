@@ -17,6 +17,7 @@
 
 #include <QProcess>
 
+#include "main.h"
 #include "screens.h"
 #include "settings.h"
 #include <QOpenGLContext>
@@ -75,6 +76,12 @@ int options::currentRefreshRate()
     return rate;
 }
 
+OpenGLPlatformInterface defaultGlPlatformInterface()
+{
+    return kwinApp()->shouldUseWaylandForCompositing() ? EglPlatformInterface
+                                                       : GlxPlatformInterface;
+}
+
 options::options()
     : m_settings(new Settings(kwinApp()->config()))
     , m_focusPolicy(ClickToFocus)
@@ -101,7 +108,7 @@ options::options()
     , m_vBlankTime(options::defaultVBlankTime())
     , m_glStrictBinding(options::defaultGlStrictBinding())
     , m_glStrictBindingFollowsDriver(options::defaultGlStrictBindingFollowsDriver())
-    , m_glPlatformInterface(options::defaultGlPlatformInterface())
+    , m_glPlatformInterface(defaultGlPlatformInterface())
     , m_windowsBlockCompositing(true)
     , m_animationCurve(AnimationCurve::Linear)
     , OpTitlebarDblClick(options::defaultOperationTitlebarDblClick())

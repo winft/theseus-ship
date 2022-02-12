@@ -6,6 +6,8 @@
 #pragma once
 
 #include "deco.h"
+
+#include "main.h"
 #include "render/compositor.h"
 #include "render/effects.h"
 #include "render/shadow.h"

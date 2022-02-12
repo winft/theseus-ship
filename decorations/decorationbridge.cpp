@@ -18,19 +18,20 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "decorationbridge.h"
+
 #include "decoratedclient.h"
 #include "decorationrenderer.h"
 #include "decorations_logging.h"
+#include "settings.h"
 #include "window.h"
 
-#include "settings.h"
-
+#include "config-kwin.h"
+#include "main.h"
 #include "render/scene.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/deco.h"
 #include "win/space.h"
-#include <config-kwin.h>
 
 // KDecoration
 #include <KDecoration2/Decoration>
