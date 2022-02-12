@@ -366,7 +366,6 @@ include_directories(BEFORE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/libkwineffects
     ${CMAKE_CURRENT_SOURCE_DIR}/effects
-    ${CMAKE_CURRENT_SOURCE_DIR}/tabbox
 )
 
 add_subdirectory(libkwineffects)
@@ -391,7 +390,6 @@ add_subdirectory(data)
 
 add_subdirectory(effects)
 add_subdirectory(scripts)
-add_subdirectory(tabbox)
 add_subdirectory(scripting)
 add_subdirectory(helpers)
 
@@ -661,18 +659,18 @@ if(HAVE_PERF)
 endif()
 
 if (KWIN_BUILD_TABBOX)
-    target_sources(kwin PRIVATE
-        tabbox/clientmodel.cpp
-        tabbox/desktopchain.cpp
-        tabbox/desktopmodel.cpp
-        tabbox/switcheritem.cpp
-        tabbox/tabbox.cpp
-        tabbox/tabbox_logging.cpp
-        tabbox/tabboxconfig.cpp
-        tabbox/tabboxhandler.cpp
-        tabbox/x11_filter.cpp
-    )
-    target_link_libraries(kwin Qt::GuiPrivate)
+  target_sources(kwin PRIVATE
+    win/tabbox/clientmodel.cpp
+    win/tabbox/desktopchain.cpp
+    win/tabbox/desktopmodel.cpp
+    win/tabbox/switcheritem.cpp
+    win/tabbox/tabbox.cpp
+    win/tabbox/tabbox_logging.cpp
+    win/tabbox/tabboxconfig.cpp
+    win/tabbox/tabboxhandler.cpp
+    win/tabbox/x11_filter.cpp
+  )
+  target_link_libraries(kwin Qt::GuiPrivate)
 endif()
 
 generate_export_header(kwin EXPORT_FILE_NAME kwin_export.h)
@@ -1004,6 +1002,10 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${KDE_INSTAL
 
 # Install the KWin/Script service type
 install(FILES scripting/kwinscript.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
+
+# Install the KWin/WindowSwitcher service type
+install(FILES win/tabbox/kwinwindowswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
+install(FILES win/tabbox/kwindesktopswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
 
 add_subdirectory(qml)
 

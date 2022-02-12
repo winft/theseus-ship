@@ -20,15 +20,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 //#define QT_CLEAN_NAMESPACE
-// own
 #include "tabbox.h"
-// tabbox
-#include "tabbox/clientmodel.h"
-#include "tabbox/desktopchain.h"
-#include "tabbox/desktopmodel.h"
-#include "tabbox/tabbox_logging.h"
-#include "tabbox/tabboxconfig.h"
-#include "tabbox/x11_filter.h"
+
+#include "clientmodel.h"
+#include "desktopchain.h"
+#include "desktopmodel.h"
+#include "tabbox_logging.h"
+#include "tabboxconfig.h"
+#include "x11_filter.h"
 
 #include "base/platform.h"
 #include "base/x11/grabs.h"

@@ -34,7 +34,7 @@
 #include "win/util.h"
 
 #ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
+#include "win/tabbox/tabbox.h"
 #endif
 
 #include <KStartupInfo>

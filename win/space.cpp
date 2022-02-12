@@ -70,7 +70,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/window.h"
 
 #ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
+#include "tabbox/tabbox.h"
 #endif
 
 #include <KConfig>

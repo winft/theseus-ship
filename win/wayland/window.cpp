@@ -31,7 +31,7 @@
 #include "win/transient.h"
 
 #ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
+#include "win/tabbox/tabbox.h"
 #endif
 
 #include <Wrapland/Server/buffer.h>

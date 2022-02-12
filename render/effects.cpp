@@ -50,7 +50,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/window_property_notify_filter.h"
 
 #ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
+#include "win/tabbox/tabbox.h"
 #endif
 
 #include <QDebug>

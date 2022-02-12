@@ -11,7 +11,7 @@
 #include "win/rules.h"
 
 #ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
+#include "win/tabbox/tabbox.h"
 #endif
 
 namespace KWin::win::x11

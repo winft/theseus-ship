@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "test_tabbox_clientmodel.h"
 #include "../testutils.h"
-#include "clientmodel.h"
 #include "mock_tabboxhandler.h"
+#include "win/tabbox/clientmodel.h"
 
 #include <QX11Info>
 #include <QtTest>

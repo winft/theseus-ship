@@ -22,12 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_TABBOX_H
 #define KWIN_TABBOX_H
 
+#include "tabboxhandler.h"
+
 #include "kwin_export.h"
 #include "kwinglobals.h"
 
 #include <memory>
 
-#include "tabbox/tabboxhandler.h"
 #include <QKeySequence>
 #include <QModelIndex>
 #include <QTimer>

@@ -19,7 +19,7 @@
 #include "toplevel.h"
 
 #ifdef KWIN_BUILD_TABBOX
-#include "tabbox.h"
+#include "tabbox/tabbox.h"
 #endif
 
 #include <KAuthorized>
