@@ -11,11 +11,10 @@
 #include <QVector>
 #include <netwm_def.h>
 
-#include "options.h"
+#include "base/options.h"
+#include "kwin_export.h"
 #include "rules.h"
 #include "win/types.h"
-
-#include <kwin_export.h>
 
 #include <functional>
 

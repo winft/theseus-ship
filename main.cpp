@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 
 #include "base/logging.h"
+#include "base/options.h"
 #include "base/seat/session.h"
 #include "base/x11/event_filter_manager.h"
 #include "base/x11/xcb/extensions.h"
@@ -32,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/global_shortcuts_manager.h"
 #include "input/platform.h"
 #include "input/redirect.h"
-#include "options.h"
 #include "screens.h"
 #include "win/space.h"
 

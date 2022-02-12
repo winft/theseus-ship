@@ -16,7 +16,7 @@
 #include "v3/virtual_desktop_model.h"
 #include "window.h"
 
-#include "../options.h"
+#include "base/options.h"
 #include "input/redirect.h"
 #include "render/thumbnail_item.h"
 #include "scripting_logging.h"

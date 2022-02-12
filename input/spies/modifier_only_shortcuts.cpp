@@ -19,12 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "modifier_only_shortcuts.h"
 
+#include "base/options.h"
 #include "desktop/screen_locker_watcher.h"
 #include "input/event.h"
 #include "input/keyboard.h"
 #include "input/qt_event.h"
 #include "input/xkb/helpers.h"
-#include "options.h"
 #include "win/space.h"
 
 #include <QDBusConnection>

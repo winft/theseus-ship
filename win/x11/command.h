@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "base/options.h"
 #include "main.h"
-#include "options.h"
 
 #include <kkeyserver.h>
 

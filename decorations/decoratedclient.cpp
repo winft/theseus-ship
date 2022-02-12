@@ -22,10 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorationpalette.h"
 #include "decorationrenderer.h"
 
+#include "base/options.h"
 #include "base/platform.h"
 #include "render/compositor.h"
 #include "input/cursor.h"
-#include "options.h"
 #include "render/platform.h"
 #include "toplevel.h"
 #include "win/control.h"

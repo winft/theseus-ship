@@ -2,6 +2,8 @@
 # KI18N Translation Domain for this library
 add_definitions(-DTRANSLATION_DOMAIN=\"kcmkwm\")
 
+include_directories(${KWIN_SOURCE_DIR})
+
 set(kcm_kwinoptions_PART_SRCS
     main.cpp
     mouse.cpp

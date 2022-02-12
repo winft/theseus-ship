@@ -10,7 +10,7 @@
 #include <QRect>
 #include <netwm_def.h>
 
-#include "options.h"
+#include "base/options.h"
 #include "win/types.h"
 
 class QDebug;

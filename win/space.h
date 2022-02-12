@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "base/options.h"
 #include "base/x11/atoms.h"
-#include "options.h"
 #include "utils/algorithm.h"
 #include "win/session_manager.h"
 #include "win/space_areas.h"

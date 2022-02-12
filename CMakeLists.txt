@@ -409,6 +409,7 @@ set(kwin_SRCS
     base/x11/grabs.cpp
     base/x11/xcb/extensions.cpp
     base/logging.cpp
+    base/options.cpp
     base/output.cpp
     base/platform.cpp
     desktop/screen_locker_watcher.cpp
@@ -448,7 +449,6 @@ set(kwin_SRCS
     input/xkb/keymap.cpp
     input/xkb/manager.cpp
     main.cpp
-    options.cpp
     render/compositor.cpp
     render/cursor.cpp
     render/dbus/compositing.cpp
@@ -538,7 +538,7 @@ qt5_add_dbus_adaptor(kwin_SRCS
   KWin::scripting::abstract_script
 )
 
-kconfig_add_kcfg_files(kwin_SRCS settings.kcfgc)
+kconfig_add_kcfg_files(kwin_SRCS base/kconfig/options_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS render/post/kconfig/color_correct_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_settings.kcfgc)
 kconfig_add_kcfg_files(kwin_SRCS rules/kconfig/rule_book_settings_base.kcfgc)
@@ -975,7 +975,10 @@ add_custom_target(kwin_wayland_wrapper ALL COMMAND
 
 ########### install files ###############
 
-install(FILES kwin.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR} RENAME ${KWIN_NAME}.kcfg)
+install(FILES base/kconfig/options_settings.kcfg
+  DESTINATION ${KDE_INSTALL_KCFGDIR}
+  RENAME ${KWIN_NAME}.kcfg
+)
 install(FILES render/post/kconfig/color_correct_settings.kcfg
     DESTINATION ${KDE_INSTALL_KCFGDIR}
     RENAME ${KWIN_NAME}_colorcorrect.kcfg

@@ -29,8 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QRect>
 
 #ifndef KCMRULES
+#include "base/options.h"
 #include "input/cursor.h"
-#include "options.h"
 #include "rules/rules.h"
 #include "screens.h"
 

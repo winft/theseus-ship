@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/options.h"
 #include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
 #include "input/wayland/cursor_theme.h"
-#include "options.h"
 #include "render/effects.h"
 #include "screens.h"
 #include "toplevel.h"

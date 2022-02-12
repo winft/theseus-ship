@@ -11,12 +11,11 @@
 #include "stacking_order.h"
 #include "transient.h"
 #include "types.h"
-
 #include "x11/group.h"
 #include "x11/hide.h"
 #include "x11/netinfo.h"
 
-#include "options.h"
+#include "base/options.h"
 
 namespace KWin::win
 {

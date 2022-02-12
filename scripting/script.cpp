@@ -16,7 +16,7 @@
 #include "utils.h"
 #include "window.h"
 
-#include "../options.h"
+#include "base/options.h"
 #include "input/redirect.h"
 #include "win/screen_edges.h"
 #include "win/space.h"

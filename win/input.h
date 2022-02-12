@@ -5,11 +5,11 @@
 */
 #pragma once
 
+#include "base/options.h"
 #include "control.h"
 #include "layers.h"
 #include "move.h"
 #include "net.h"
-#include "options.h"
 #include "space.h"
 #include "stacking.h"
 #include "stacking_order.h"

@@ -12,10 +12,10 @@
 #include "glx.h"
 #include "x11_logging.h"
 
+#include "base/options.h"
 #include "base/platform.h"
 #include "base/x11/xcb/helpers.h"
 #include "main.h"
-#include "options.h"
 #include "render/gl/texture.h"
 #include "render/scene.h"
 #include "render/x11/overlay_window.h"

@@ -4,6 +4,8 @@ add_definitions(-DTRANSLATION_DOMAIN=\"kcmkwincompositing\")
 
 ################# configure checks and create the configured files #################
 
+include_directories(${KWIN_SOURCE_DIR})
+
 set(kwincompositing_SRC
     main.cpp
     kwincompositingdata.cpp

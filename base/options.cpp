@@ -14,16 +14,14 @@
 #include "render/platform.h"
 
 #ifndef KCMRULES
-
-#include <QProcess>
-
+#include "kwinglplatform.h"
 #include "main.h"
+#include "options_settings.h"
 #include "screens.h"
-#include "settings.h"
-#include <QOpenGLContext>
-#include <kwinglplatform.h>
 
-#endif // KCMRULES
+#include <QOpenGLContext>
+#include <QProcess>
+#endif
 
 namespace KWin::base
 {
