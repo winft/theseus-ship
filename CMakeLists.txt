@@ -234,6 +234,7 @@ add_feature_info("XCB-ICCCM" XCB_ICCCM_FOUND "Required for building test applica
 # dependencies for QPA plugin
 find_package(Qt5FontDatabaseSupport REQUIRED)
 find_package(Qt5ThemeSupport REQUIRED)
+find_package(Qt5ServiceSupport REQUIRED)
 find_package(Qt5EventDispatcherSupport REQUIRED)
 
 find_package(Freetype REQUIRED)

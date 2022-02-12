@@ -52,6 +52,7 @@ Integration::Integration()
     : QObject()
     , QPlatformIntegration()
     , m_fontDb(new QGenericUnixFontDatabase())
+    , m_services(new QGenericUnixServices())
 {
 }
 
@@ -175,6 +176,11 @@ void Integration::initScreens()
     }
 
     m_screens = newScreens;
+}
+
+QPlatformServices *Integration::services() const
+{
+    return m_services.data();
 }
 
 }

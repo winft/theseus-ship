@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <epoxy/egl.h>
 
 #include <qpa/qplatformintegration.h>
+#include <QtServiceSupport/private/qgenericunixservices_p.h>
 #include <QObject>
 
 namespace KWin
@@ -48,7 +49,8 @@ public:
     QPlatformFontDatabase *fontDatabase() const override;
     QStringList themeNames() const override;
     QPlatformTheme *createPlatformTheme(const QString &name) const override;
-    QPlatformOpenGLContext *createPlatformOpenGLContext(QOpenGLContext *context) const override;
+    QPlatformOpenGLContext* createPlatformOpenGLContext(QOpenGLContext* context) const override;
+    QPlatformServices *services() const override;
     void initialize() override;
 
     QVector<Screen*> screens() const;
@@ -60,6 +62,7 @@ private:
     QPlatformNativeInterface *m_nativeInterface{nullptr};
     Screen *m_dummyScreen = nullptr;
     QVector<Screen*> m_screens;
+    QScopedPointer<QGenericUnixServices> m_services;
 };
 
 }
