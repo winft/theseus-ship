@@ -108,6 +108,8 @@ private:
         bool lastPass;
         QPoint translation;
 
+        QPoint currentPos;
+        QVector<int> visibleDesktops;
         EffectWindowList fullscreenWindows;
     } m_paintCtx;
 
