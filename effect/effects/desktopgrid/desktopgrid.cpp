@@ -324,16 +324,14 @@ void DesktopGridEffect::prePaintWindow(EffectWindow* w,
 {
     if (timeline.currentValue() != 0
         || (isUsingPresentWindows() && isMotionManagerMovingWindows())) {
-        if (w->isOnDesktop(paintingDesktop)) {
-            w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
-            if (w->isMinimized() && isUsingPresentWindows())
-                w->enablePainting(EffectWindow::PAINT_DISABLED_BY_MINIMIZE);
-            data.mask |= PAINT_WINDOW_TRANSFORMED;
-
-            if (windowMove && wasWindowMove && windowMove->findModal() == w)
-                w->disablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
-        } else
+        w->enablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
+        if (w->isMinimized() && isUsingPresentWindows()) {
+            w->enablePainting(EffectWindow::PAINT_DISABLED_BY_MINIMIZE);
+        }
+        if (windowMove && wasWindowMove && windowMove->findModal() == w) {
             w->disablePainting(EffectWindow::PAINT_DISABLED_BY_DESKTOP);
+        }
+        data.setTransformed();
     }
     effects->prePaintWindow(w, data, presentTime);
 }
@@ -345,6 +343,9 @@ void DesktopGridEffect::paintWindow(EffectWindow* w,
 {
     if (timeline.currentValue() != 0
         || (isUsingPresentWindows() && isMotionManagerMovingWindows())) {
+        if (!w->isOnDesktop(paintingDesktop)) {
+            return;
+        }
         if (isUsingPresentWindows() && w == windowMove && wasWindowMove
             && ((!wasWindowCopy && sourceDesktop == paintingDesktop)
                 || (sourceDesktop != highlightedDesktop
