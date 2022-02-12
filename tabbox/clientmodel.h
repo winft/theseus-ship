@@ -17,7 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef CLIENTMODEL_H
 #define CLIENTMODEL_H
 #include "tabboxhandler.h"
@@ -36,26 +35,24 @@ namespace KWin
 namespace TabBox
 {
 
-
 /**
  * The model for TabBoxClients used in TabBox.
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  * @since 4.4
  */
-class ClientModel
-    : public QAbstractItemModel
+class ClientModel : public QAbstractItemModel
 {
     Q_OBJECT
 public:
     enum {
-        ClientRole = Qt::UserRole, ///< The TabBoxClient
-        CaptionRole = Qt::UserRole + 1, ///< The caption of TabBoxClient
+        ClientRole = Qt::UserRole,          ///< The TabBoxClient
+        CaptionRole = Qt::UserRole + 1,     ///< The caption of TabBoxClient
         DesktopNameRole = Qt::UserRole + 2, ///< The name of the desktop the TabBoxClient is on
-        IconRole = Qt::UserRole + 3, // TODO: to be removed
-        WIdRole = Qt::UserRole + 5, ///< The window ID of TabBoxClient
-        MinimizedRole = Qt::UserRole + 6, ///< TabBoxClient is minimized
-        CloseableRole = Qt::UserRole + 7 ///< TabBoxClient can be closed
+        IconRole = Qt::UserRole + 3,        // TODO: to be removed
+        WIdRole = Qt::UserRole + 5,         ///< The window ID of TabBoxClient
+        MinimizedRole = Qt::UserRole + 6,   ///< TabBoxClient is minimized
+        CloseableRole = Qt::UserRole + 7    ///< TabBoxClient can be closed
     };
     explicit ClientModel(QObject* parent = nullptr);
     ~ClientModel() override;
@@ -63,7 +60,8 @@ public:
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex& child) const override;
-    QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
+    QModelIndex
+    index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
     QHash<int, QByteArray> roleNames() const override;
     Q_INVOKABLE QString longestCaption() const;
 
@@ -92,7 +90,8 @@ public:
     /**
      * @return Returns the current list of TabBoxClients.
      */
-    TabBoxClientList clientList() const {
+    TabBoxClientList clientList() const
+    {
         return m_clientList;
     }
 

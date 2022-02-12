@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "main.h"
 #include "render/compositor.h"
-#include "tabboxhandler.h"
 #include "screens.h"
+#include "tabboxhandler.h"
 // Qt
 #include <QAbstractItemModel>
 
@@ -32,7 +32,7 @@ namespace KWin
 namespace TabBox
 {
 
-SwitcherItem::SwitcherItem(QObject *parent)
+SwitcherItem::SwitcherItem(QObject* parent)
     : QObject(parent)
     , m_model(nullptr)
     , m_item(nullptr)
@@ -45,8 +45,14 @@ SwitcherItem::SwitcherItem(QObject *parent)
             setCurrentIndex(tabBox->currentIndex().row());
         }
     });
-    connect(&kwinApp()->get_base().screens, &Screens::changed, this, &SwitcherItem::screenGeometryChanged);
-    connect(render::compositor::self(), &render::compositor::compositingToggled, this, &SwitcherItem::compositingChanged);
+    connect(&kwinApp()->get_base().screens,
+            &Screens::changed,
+            this,
+            &SwitcherItem::screenGeometryChanged);
+    connect(render::compositor::self(),
+            &render::compositor::compositingToggled,
+            this,
+            &SwitcherItem::compositingChanged);
 }
 
 SwitcherItem::~SwitcherItem()
@@ -54,7 +60,7 @@ SwitcherItem::~SwitcherItem()
     disconnect(m_selectedIndexConnection);
 }
 
-void SwitcherItem::setItem(QObject *item)
+void SwitcherItem::setItem(QObject* item)
 {
     if (m_item == item) {
         return;
@@ -63,7 +69,7 @@ void SwitcherItem::setItem(QObject *item)
     Q_EMIT itemChanged();
 }
 
-void SwitcherItem::setModel(QAbstractItemModel *model)
+void SwitcherItem::setModel(QAbstractItemModel* model)
 {
     m_model = model;
     Q_EMIT modelChanged();

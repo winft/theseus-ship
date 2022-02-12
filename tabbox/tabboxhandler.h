@@ -17,7 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef TABBOXHANDLER_H
 #define TABBOXHANDLER_H
 
@@ -47,33 +46,35 @@ namespace KWin
 /**
  * The TabBox is a model based view for displaying a list while switching windows or desktops.
  * This functionality is mostly referred to as Alt+Tab. TabBox itself does not provide support for
- * switching windows or desktops. This has to be done outside of TabBox inside an independent controller.
+ * switching windows or desktops. This has to be done outside of TabBox inside an independent
+ * controller.
  *
- * The main entrance point to TabBox is the class TabBoxHandler, which has to be subclassed and implemented.
- * The class TabBoxClient, which represents a window client inside TabBox, has to be implemented as well.
+ * The main entrance point to TabBox is the class TabBoxHandler, which has to be subclassed and
+ * implemented. The class TabBoxClient, which represents a window client inside TabBox, has to be
+ * implemented as well.
  *
  * The behavior of the TabBox is defined by the TabBoxConfig and has to be set in the TabBoxHandler.
- * If the TabBox should be used to switch desktops as well as clients it is sufficient to just provide
- * different TabBoxConfig objects instead of creating an own handler for each mode.
+ * If the TabBox should be used to switch desktops as well as clients it is sufficient to just
+ * provide different TabBoxConfig objects instead of creating an own handler for each mode.
  *
- * In order to use the TabBox the TabBoxConfig has to be set. This defines if the model for desktops or for
- * clients will be used. The model has to be initialized by calling TabBoxHandler::createModel(), as the
- * model is undefined when the TabBox is not active. The TabBox is activated by TabBoxHandler::show().
- * Depending on the current set TabBoxConfig it is possible that the
- * highlight windows effect activated and that the view is not displayed at all. As already mentioned
- * the TabBox does not handle any updating of the selected item. This has to be done by invoking
- * TabBoxHandler::setCurrentIndex(). Nevertheless the TabBoxHandler provides methods to query for the
- * model index or the next or previous item, for a cursor position or for a given item (that is
- * TabBoxClient or desktop). By invoking TabBoxHandler::hide() the view, the
- * optional highlight windows effect are removed. The model is invalidated immediately. So if it is
- * necessary to retrieve the last selected item this has to be done before calling the hide method.
+ * In order to use the TabBox the TabBoxConfig has to be set. This defines if the model for desktops
+ * or for clients will be used. The model has to be initialized by calling
+ * TabBoxHandler::createModel(), as the model is undefined when the TabBox is not active. The TabBox
+ * is activated by TabBoxHandler::show(). Depending on the current set TabBoxConfig it is possible
+ * that the highlight windows effect activated and that the view is not displayed at all. As already
+ * mentioned the TabBox does not handle any updating of the selected item. This has to be done by
+ * invoking TabBoxHandler::setCurrentIndex(). Nevertheless the TabBoxHandler provides methods to
+ * query for the model index or the next or previous item, for a cursor position or for a given item
+ * (that is TabBoxClient or desktop). By invoking TabBoxHandler::hide() the view, the optional
+ * highlight windows effect are removed. The model is invalidated immediately. So if it is necessary
+ * to retrieve the last selected item this has to be done before calling the hide method.
  *
  * The layout of the TabBox View and the items is completely customizable. Therefore TabBox provides
  * a widget LayoutConfig which includes a live preview (in kcmkwin/kwintabbox). The layout of items
- * can be defined by an xml document. That way the user is able to define own custom layouts. The view
- * itself is made up of two widgets: one to show the complete list and one to show only the selected
- * item. This way it is possible to have a view which shows for example a list containing only small
- * icons and nevertheless show the title of the currently selected client.
+ * can be defined by an xml document. That way the user is able to define own custom layouts. The
+ * view itself is made up of two widgets: one to show the complete list and one to show only the
+ * selected item. This way it is possible to have a view which shows for example a list containing
+ * only small icons and nevertheless show the title of the currently selected client.
  */
 namespace TabBox
 {
@@ -96,7 +97,7 @@ class TabBoxHandler : public QObject
 {
     Q_OBJECT
 public:
-    TabBoxHandler(QObject *parent);
+    TabBoxHandler(QObject* parent);
     ~TabBoxHandler() override;
 
     /**
@@ -168,7 +169,7 @@ public:
     /**
      * De-/Elevate a client using the compositor (if enabled)
      */
-    virtual void elevateClient(TabBoxClient* c, QWindow *tabbox, bool elevate) const = 0;
+    virtual void elevateClient(TabBoxClient* c, QWindow* tabbox, bool elevate) const = 0;
 
     /**
      * Raise a client (w/o activating it)
@@ -179,9 +180,10 @@ public:
      * @param c The client to be restacked
      * @param under The client the other one will be placed below
      */
-    virtual void restack(TabBoxClient *c, TabBoxClient *under) = 0;
+    virtual void restack(TabBoxClient* c, TabBoxClient* under) = 0;
 
-    virtual void highlightWindows(TabBoxClient *window = nullptr, QWindow *controller = nullptr) = 0;
+    virtual void highlightWindows(TabBoxClient* window = nullptr, QWindow* controller = nullptr)
+        = 0;
 
     /**
      * @return The current stacking order of TabBoxClients
@@ -203,7 +205,8 @@ public:
      * @param allDesktops Add clients from all desktops or only from current
      * @return The client to be included in the list or NULL if it isn't to be included
      */
-    virtual std::weak_ptr<TabBoxClient> clientToAddToList(TabBoxClient* client, int desktop) const = 0;
+    virtual std::weak_ptr<TabBoxClient> clientToAddToList(TabBoxClient* client,
+                                                          int desktop) const = 0;
     /**
      * @return The first desktop window in the stacking order.
      */
@@ -250,7 +253,7 @@ public:
     /**
      * @returns the current index
      */
-    const QModelIndex &currentIndex() const;
+    const QModelIndex& currentIndex() const;
 
     /**
      * Retrieves the next or previous item of the current item.
@@ -282,7 +285,7 @@ public:
      * be returned.
      * @see DesktopModel::desktopList
      */
-    QList< int > desktopList() const;
+    QList<int> desktopList() const;
     /**
      * @return The desktop for given model index. If the index is not valid
      * or TabBoxMode is not TabBoxConfig::DesktopTabBox -1 will be returned.
@@ -306,7 +309,7 @@ public:
      * if the model does not contain the given TabBoxClient.
      * @see ClientModel::index
      */
-    QModelIndex index(TabBoxClient *client) const;
+    QModelIndex index(TabBoxClient* client) const;
     /**
      * @return Returns the current list of TabBoxClients.
      * If TabBoxMode is not TabBoxConfig::ClientTabBox an empty list will
@@ -328,7 +331,7 @@ public:
      */
     QModelIndex first() const;
 
-    bool eventFilter(QObject *watcher, QEvent *event) override;
+    bool eventFilter(QObject* watcher, QEvent* event) override;
 
     /**
      * @returns whether the TabBox operates in a no modifier grab mode.

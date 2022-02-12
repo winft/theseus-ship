@@ -88,7 +88,7 @@ class DesktopChainManager : public QObject
     Q_OBJECT
 
 public:
-    explicit DesktopChainManager(QObject *parent = nullptr);
+    explicit DesktopChainManager(QObject* parent = nullptr);
     ~DesktopChainManager() override;
 
     /**
@@ -118,21 +118,21 @@ public Q_SLOTS:
      * If there is no chain yet for the given @p identifier a new chain is created and used.
      * @param identifier The identifier of the desktop chain to be used
      */
-    void useChain(const QString &identifier);
+    void useChain(const QString& identifier);
 
 private:
-    typedef QHash< QString, DesktopChain > DesktopChains;
+    typedef QHash<QString, DesktopChain> DesktopChains;
     /**
      * Creates a new desktop chain for the given @p identifier and adds it to the list
      * of identifiers.
      * @returns Position of the new chain in the managed list of chains
      */
-    DesktopChains::Iterator addNewChain(const QString &identifier);
+    DesktopChains::Iterator addNewChain(const QString& identifier);
     /**
      * Creates the very first list to be used when an @p identifier comes in.
      * The dummy chain which is used by default gets copied and used for this chain.
      */
-    void createFirstChain(const QString &identifier);
+    void createFirstChain(const QString& identifier);
 
     DesktopChains::Iterator m_currentChain;
     DesktopChains m_chains;

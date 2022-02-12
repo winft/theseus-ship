@@ -47,21 +47,21 @@ QVariant DesktopModel::data(const QModelIndex& index, int role) const
 
     if (index.parent().isValid()) {
         // parent is valid -> access to Client
-        ClientModel *model = m_clientModels[ m_desktopList[ index.internalId() - 1] ];
+        ClientModel* model = m_clientModels[m_desktopList[index.internalId() - 1]];
         return model->data(model->index(index.row(), 0), role);
     }
 
     const int desktopIndex = index.row();
     if (desktopIndex >= m_desktopList.count())
         return QVariant();
-    switch(role) {
+    switch (role) {
     case Qt::DisplayRole:
     case DesktopNameRole:
-        return tabBox->desktopName(m_desktopList[ desktopIndex ]);
+        return tabBox->desktopName(m_desktopList[desktopIndex]);
     case DesktopRole:
-        return m_desktopList[ desktopIndex ];
+        return m_desktopList[desktopIndex];
     case ClientModelRole:
-        return QVariant::fromValue<void *>(m_clientModels[m_desktopList[desktopIndex]]);
+        return QVariant::fromValue<void*>(m_clientModels[m_desktopList[desktopIndex]]);
     default:
         return QVariant();
     }
@@ -92,7 +92,7 @@ int DesktopModel::rowCount(const QModelIndex& parent) const
             return 0;
         }
         const int desktop = m_desktopList.at(parent.row());
-        const ClientModel *model = m_clientModels.value(desktop);
+        const ClientModel* model = m_clientModels.value(desktop);
         return model->rowCount();
     }
     return m_desktopList.count();
@@ -103,7 +103,7 @@ QModelIndex DesktopModel::parent(const QModelIndex& child) const
     if (!child.isValid() || child.internalId() == 0) {
         return QModelIndex();
     }
-    const int row = child.internalId() -1;
+    const int row = child.internalId() - 1;
     if (row >= m_desktopList.count()) {
         return QModelIndex();
     }
@@ -123,7 +123,7 @@ QModelIndex DesktopModel::index(int row, int column, const QModelIndex& parent) 
             return QModelIndex();
         }
         const int desktop = m_desktopList.at(parent.row());
-        const ClientModel *model = m_clientModels.value(desktop);
+        const ClientModel* model = m_clientModels.value(desktop);
         if (row >= model->rowCount()) {
             return QModelIndex();
         }
@@ -137,10 +137,10 @@ QModelIndex DesktopModel::index(int row, int column, const QModelIndex& parent) 
 QHash<int, QByteArray> DesktopModel::roleNames() const
 {
     return {
-        { Qt::DisplayRole, QByteArrayLiteral("display") },
-        { DesktopNameRole, QByteArrayLiteral("caption") },
-        { DesktopRole, QByteArrayLiteral("desktop") },
-        { ClientModelRole, QByteArrayLiteral("client") },
+        {Qt::DisplayRole, QByteArrayLiteral("display")},
+        {DesktopNameRole, QByteArrayLiteral("caption")},
+        {DesktopRole, QByteArrayLiteral("desktop")},
+        {ClientModelRole, QByteArrayLiteral("client")},
     };
 }
 
@@ -158,7 +158,7 @@ void DesktopModel::createDesktopList()
     qDeleteAll(m_clientModels);
     m_clientModels.clear();
 
-    switch(tabBox->config().desktopSwitchingMode()) {
+    switch (tabBox->config().desktopSwitchingMode()) {
     case TabBoxConfig::MostRecentlyUsedDesktopSwitching: {
         int desktop = tabBox->currentDesktop();
         do {

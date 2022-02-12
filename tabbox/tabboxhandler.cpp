@@ -36,19 +36,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QKeyEvent>
 #include <QModelIndex>
-#include <QStandardPaths>
-#include <QTimer>
-#include <QQmlContext>
 #include <QQmlComponent>
+#include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QStandardPaths>
+#include <QTimer>
 #include <qpa/qwindowsysteminterface.h>
 // KDE
 #include <KLocalizedString>
-#include <KProcess>
 #include <KPackage/Package>
 #include <KPackage/PackageLoader>
+#include <KProcess>
 
 namespace KWin
 {
@@ -58,7 +58,7 @@ namespace TabBox
 class TabBoxHandlerPrivate
 {
 public:
-    TabBoxHandlerPrivate(TabBoxHandler *q);
+    TabBoxHandlerPrivate(TabBoxHandler* q);
 
     ~TabBoxHandlerPrivate();
 
@@ -72,18 +72,18 @@ public:
     void endHighlightWindows(bool abort = false);
 
     void show();
-    QQuickWindow *window() const;
-    SwitcherItem *switcherItem() const;
+    QQuickWindow* window() const;
+    SwitcherItem* switcherItem() const;
 
     ClientModel* clientModel() const;
     DesktopModel* desktopModel() const;
 
-    TabBoxHandler *q; // public pointer
+    TabBoxHandler* q; // public pointer
     // members
     TabBoxConfig config;
     QScopedPointer<QQmlContext> m_qmlContext;
     QScopedPointer<QQmlComponent> m_qmlComponent;
-    QObject *m_mainItem;
+    QObject* m_mainItem;
     QMap<QString, QObject*> m_clientTabBoxes;
     QMap<QString, QObject*> m_desktopTabBoxes;
     ClientModel* m_clientModel;
@@ -97,10 +97,10 @@ public:
     int wheelAngleDelta = 0;
 
 private:
-    QObject *createSwitcherItem(bool desktopMode);
+    QObject* createSwitcherItem(bool desktopMode);
 };
 
-TabBoxHandlerPrivate::TabBoxHandlerPrivate(TabBoxHandler *q)
+TabBoxHandlerPrivate::TabBoxHandlerPrivate(TabBoxHandler* q)
     : m_qmlContext()
     , m_qmlComponent()
     , m_mainItem(nullptr)
@@ -124,26 +124,26 @@ TabBoxHandlerPrivate::~TabBoxHandlerPrivate()
     }
 }
 
-QQuickWindow *TabBoxHandlerPrivate::window() const
+QQuickWindow* TabBoxHandlerPrivate::window() const
 {
     if (!m_mainItem) {
         return nullptr;
     }
-    if (QQuickWindow *w = qobject_cast<QQuickWindow*>(m_mainItem)) {
+    if (QQuickWindow* w = qobject_cast<QQuickWindow*>(m_mainItem)) {
         return w;
     }
     return m_mainItem->findChild<QQuickWindow*>();
 }
 
 #ifndef KWIN_UNIT_TEST
-SwitcherItem *TabBoxHandlerPrivate::switcherItem() const
+SwitcherItem* TabBoxHandlerPrivate::switcherItem() const
 {
     if (!m_mainItem) {
         return nullptr;
     }
-    if (SwitcherItem *i = qobject_cast<SwitcherItem*>(m_mainItem)) {
+    if (SwitcherItem* i = qobject_cast<SwitcherItem*>(m_mainItem)) {
         return i;
-    } else if (QQuickWindow *w = qobject_cast<QQuickWindow*>(m_mainItem)) {
+    } else if (QQuickWindow* w = qobject_cast<QQuickWindow*>(m_mainItem)) {
         return w->contentItem()->findChild<SwitcherItem*>();
     }
     return m_mainItem->findChild<SwitcherItem*>();
@@ -165,8 +165,8 @@ void TabBoxHandlerPrivate::updateHighlightWindows()
     if (!isShown || config.tabBoxMode() != TabBoxConfig::ClientTabBox)
         return;
 
-    TabBoxClient *currentClient = q->client(index);
-    QWindow *w = window();
+    TabBoxClient* currentClient = q->client(index);
+    QWindow* w = window();
 
     if (q->isKWinCompositing()) {
         if (lastRaisedClient)
@@ -193,7 +193,8 @@ void TabBoxHandlerPrivate::updateHighlightWindows()
                     break;
                 }
             }
-            lastRaisedClientSucc = (succIdx < order.size()) ? order.at(succIdx).lock().get() : nullptr;
+            lastRaisedClientSucc
+                = (succIdx < order.size()) ? order.at(succIdx).lock().get() : nullptr;
             q->raiseClient(lastRaisedClient);
         }
     }
@@ -207,8 +208,8 @@ void TabBoxHandlerPrivate::updateHighlightWindows()
 
 void TabBoxHandlerPrivate::endHighlightWindows(bool abort)
 {
-    TabBoxClient *currentClient = q->client(index);
-    QWindow *w = window();
+    TabBoxClient* currentClient = q->client(index);
+    QWindow* w = window();
 
     if (currentClient)
         q->elevateClient(currentClient, w, false);
@@ -221,29 +222,33 @@ void TabBoxHandlerPrivate::endHighlightWindows(bool abort)
 }
 
 #ifndef KWIN_UNIT_TEST
-QObject *TabBoxHandlerPrivate::createSwitcherItem(bool desktopMode)
+QObject* TabBoxHandlerPrivate::createSwitcherItem(bool desktopMode)
 {
     // first try look'n'feel package
-    QString file = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                          QStringLiteral("plasma/look-and-feel/%1/contents/%2")
-                                              .arg(config.layoutName())
-                                              .arg(desktopMode ? QStringLiteral("desktopswitcher/DesktopSwitcher.qml") : QStringLiteral("windowswitcher/WindowSwitcher.qml")));
+    QString file = QStandardPaths::locate(
+        QStandardPaths::GenericDataLocation,
+        QStringLiteral("plasma/look-and-feel/%1/contents/%2")
+            .arg(config.layoutName())
+            .arg(desktopMode ? QStringLiteral("desktopswitcher/DesktopSwitcher.qml")
+                             : QStringLiteral("windowswitcher/WindowSwitcher.qml")));
     if (file.isNull()) {
-        const QString folderName = QLatin1String(KWIN_NAME) + (desktopMode ? QLatin1String("/desktoptabbox/") : QLatin1String("/tabbox/"));
+        const QString folderName = QLatin1String(KWIN_NAME)
+            + (desktopMode ? QLatin1String("/desktoptabbox/") : QLatin1String("/tabbox/"));
         auto findSwitcher = [this, desktopMode, folderName] {
-            const QString type = desktopMode ? QStringLiteral("KWin/DesktopSwitcher") : QStringLiteral("KWin/WindowSwitcher");
-            auto offers = KPackage::PackageLoader::self()->findPackages(type,  folderName,
-                [this] (const KPluginMetaData &data) {
+            const QString type = desktopMode ? QStringLiteral("KWin/DesktopSwitcher")
+                                             : QStringLiteral("KWin/WindowSwitcher");
+            auto offers = KPackage::PackageLoader::self()->findPackages(
+                type, folderName, [this](const KPluginMetaData& data) {
                     return data.pluginId().compare(config.layoutName(), Qt::CaseInsensitive) == 0;
-                }
-            );
+                });
             if (offers.isEmpty()) {
                 // load default
-                offers = KPackage::PackageLoader::self()->findPackages(type,  folderName,
-                    [] (const KPluginMetaData &data) {
-                        return data.pluginId().compare(QStringLiteral("informative"), Qt::CaseInsensitive) == 0;
-                    }
-                );
+                offers = KPackage::PackageLoader::self()->findPackages(
+                    type, folderName, [](const KPluginMetaData& data) {
+                        return data.pluginId().compare(QStringLiteral("informative"),
+                                                       Qt::CaseInsensitive)
+                            == 0;
+                    });
                 if (offers.isEmpty()) {
                     qCDebug(KWIN_TABBOX) << "could not find default window switcher layout";
                     return KPluginMetaData();
@@ -255,14 +260,17 @@ QObject *TabBoxHandlerPrivate::createSwitcherItem(bool desktopMode)
         if (!service.isValid()) {
             return nullptr;
         }
-        if (service.value(QStringLiteral("X-Plasma-API")) != QLatin1String("declarativeappletscript")) {
+        if (service.value(QStringLiteral("X-Plasma-API"))
+            != QLatin1String("declarativeappletscript")) {
             qCDebug(KWIN_TABBOX) << "Window Switcher Layout is no declarativeappletscript";
             return nullptr;
         }
         auto findScriptFile = [service, folderName] {
             const QString pluginName = service.pluginId();
             const QString scriptName = service.value(QStringLiteral("X-Plasma-MainScript"));
-            return QStandardPaths::locate(QStandardPaths::GenericDataLocation, folderName + pluginName + QLatin1String("/contents/") + scriptName);
+            return QStandardPaths::locate(QStandardPaths::GenericDataLocation,
+                                          folderName + pluginName + QLatin1String("/contents/")
+                                              + scriptName);
         };
         file = findScriptFile();
     }
@@ -274,11 +282,14 @@ QObject *TabBoxHandlerPrivate::createSwitcherItem(bool desktopMode)
     if (m_qmlComponent->isError()) {
         qCDebug(KWIN_TABBOX) << "Component failed to load: " << m_qmlComponent->errors();
         QStringList args;
-        args << QStringLiteral("--passivepopup") << i18n("The Window Switcher installation is broken, resources are missing.\n"
-                                            "Contact your distribution about this.") << QStringLiteral("20");
+        args << QStringLiteral("--passivepopup")
+             << i18n(
+                    "The Window Switcher installation is broken, resources are missing.\n"
+                    "Contact your distribution about this.")
+             << QStringLiteral("20");
         KProcess::startDetached(QStringLiteral("kdialog"), args);
     } else {
-        QObject *object = m_qmlComponent->create(m_qmlContext.data());
+        QObject* object = m_qmlComponent->create(m_qmlContext.data());
         if (desktopMode) {
             m_desktopTabBoxes.insert(config.layoutName(), object);
         } else {
@@ -302,7 +313,7 @@ void TabBoxHandlerPrivate::show()
         m_qmlComponent.reset(new QQmlComponent(workspace()->scripting->qmlEngine()));
     }
     const bool desktopMode = (config.tabBoxMode() == TabBoxConfig::DesktopTabBox);
-    auto findMainItem = [this](const QMap<QString, QObject *> &tabBoxes) -> QObject* {
+    auto findMainItem = [this](const QMap<QString, QObject*>& tabBoxes) -> QObject* {
         auto it = tabBoxes.constFind(config.layoutName());
         if (it != tabBoxes.constEnd()) {
             return it.value();
@@ -317,12 +328,12 @@ void TabBoxHandlerPrivate::show()
             return;
         }
     }
-    if (SwitcherItem *item = switcherItem()) {
+    if (SwitcherItem* item = switcherItem()) {
         // In case the model isn't yet set (see below), index will be reset and therefore we
         // need to save the current index row (https://bugs.kde.org/show_bug.cgi?id=333511).
         int indexRow = index.row();
         if (!item->model()) {
-            QAbstractItemModel *model = nullptr;
+            QAbstractItemModel* model = nullptr;
             if (desktopMode) {
                 model = desktopModel();
             } else {
@@ -336,7 +347,7 @@ void TabBoxHandlerPrivate::show()
         // everything is prepared, so let's make the whole thing visible
         item->setVisible(true);
     }
-    if (QWindow *w = window()) {
+    if (QWindow* w = window()) {
         wheelAngleDelta = 0;
         w->installEventFilter(q);
         // pretend to activate the window to enable accessibility notifications
@@ -346,10 +357,10 @@ void TabBoxHandlerPrivate::show()
 }
 
 /***********************************************
-* TabBoxHandler
-***********************************************/
+ * TabBoxHandler
+ ***********************************************/
 
-TabBoxHandler::TabBoxHandler(QObject *parent)
+TabBoxHandler::TabBoxHandler(QObject* parent)
     : QObject(parent)
 {
     KWin::TabBox::tabBox = this;
@@ -386,8 +397,9 @@ void TabBoxHandler::show()
         }
         // TODO this should be
         // QMetaObject::invokeMethod(this, "initHighlightWindows", Qt::QueuedConnection);
-        // but we somehow need to cross > 1 event cycle (likely because of queued invocation in the effects)
-        // to ensure the EffectWindow is present when updateHighlightWindows, thus elevating the window/tabbox
+        // but we somehow need to cross > 1 event cycle (likely because of queued invocation in the
+        // effects) to ensure the EffectWindow is present when updateHighlightWindows, thus
+        // elevating the window/tabbox
         QTimer::singleShot(1, this, &TabBoxHandler::initHighlightWindows);
     }
 }
@@ -404,11 +416,11 @@ void TabBoxHandler::hide(bool abort)
         d->endHighlightWindows(abort);
     }
 #ifndef KWIN_UNIT_TEST
-    if (SwitcherItem *item = d->switcherItem()) {
+    if (SwitcherItem* item = d->switcherItem()) {
         item->setVisible(false);
     }
 #endif
-    if (QQuickWindow *w = d->window()) {
+    if (QQuickWindow* w = d->window()) {
         w->hide();
         w->destroy();
     }
@@ -419,7 +431,7 @@ QModelIndex TabBoxHandler::nextPrev(bool forward) const
 {
     QModelIndex ret;
     QAbstractItemModel* model;
-    switch(d->config.tabBoxMode()) {
+    switch (d->config.tabBoxMode()) {
     case TabBoxConfig::ClientTabBox:
         model = d->clientModel();
         break;
@@ -473,10 +485,10 @@ QModelIndex TabBoxHandler::desktopIndex(int desktop) const
     return d->desktopModel()->desktopIndex(desktop);
 }
 
-QList< int > TabBoxHandler::desktopList() const
+QList<int> TabBoxHandler::desktopList() const
 {
     if (d->config.tabBoxMode() != TabBoxConfig::DesktopTabBox)
-        return QList< int >();
+        return QList<int>();
     return d->desktopModel()->desktopList();
 }
 
@@ -526,7 +538,7 @@ bool TabBoxHandler::containsPos(const QPoint& pos) const
     if (!d->m_mainItem) {
         return false;
     }
-    QWindow *w = d->window();
+    QWindow* w = d->window();
     if (w) {
         return w->geometry().contains(pos);
     }
@@ -547,17 +559,16 @@ TabBoxClientList TabBoxHandler::clientList() const
 
 TabBoxClient* TabBoxHandler::client(const QModelIndex& index) const
 {
-    if ((!index.isValid()) ||
-            (d->config.tabBoxMode() != TabBoxConfig::ClientTabBox))
+    if ((!index.isValid()) || (d->config.tabBoxMode() != TabBoxConfig::ClientTabBox))
         return nullptr;
-    TabBoxClient* c = static_cast< TabBoxClient* >(
-                          d->clientModel()->data(index, ClientModel::ClientRole).value<void *>());
+    TabBoxClient* c = static_cast<TabBoxClient*>(
+        d->clientModel()->data(index, ClientModel::ClientRole).value<void*>());
     return c;
 }
 
 void TabBoxHandler::createModel(bool partialReset)
 {
-    switch(d->config.tabBoxMode()) {
+    switch (d->config.tabBoxMode()) {
     case TabBoxConfig::ClientTabBox: {
         d->clientModel()->createClientList(partialReset);
         // TODO: C++11 use lambda function
@@ -590,7 +601,7 @@ void TabBoxHandler::createModel(bool partialReset)
 QModelIndex TabBoxHandler::first() const
 {
     QAbstractItemModel* model;
-    switch(d->config.tabBoxMode()) {
+    switch (d->config.tabBoxMode()) {
     case TabBoxConfig::ClientTabBox:
         model = d->clientModel();
         break;
@@ -603,12 +614,14 @@ QModelIndex TabBoxHandler::first() const
     return model->index(0, 0);
 }
 
-bool TabBoxHandler::eventFilter(QObject *watched, QEvent *e)
+bool TabBoxHandler::eventFilter(QObject* watched, QEvent* e)
 {
     if (e->type() == QEvent::Wheel && watched == d->window()) {
-        QWheelEvent *event = static_cast<QWheelEvent*>(e);
+        QWheelEvent* event = static_cast<QWheelEvent*>(e);
         // On x11 the delta for vertical scrolling might also be on X for whatever reason
-        const int delta = qAbs(event->angleDelta().x()) > qAbs(event->angleDelta().y()) ? event->angleDelta().x() : event->angleDelta().y();
+        const int delta = qAbs(event->angleDelta().x()) > qAbs(event->angleDelta().y())
+            ? event->angleDelta().x()
+            : event->angleDelta().y();
         d->wheelAngleDelta += delta;
         while (d->wheelAngleDelta <= -120) {
             d->wheelAngleDelta += 120;

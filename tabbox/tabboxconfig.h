@@ -17,7 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef TABBOXCONFIG_H
 #define TABBOXCONFIG_H
 
@@ -56,8 +55,8 @@ public:
      * desktops are included in the TabBoxClient List in the TabBoxClientModel
      */
     enum ClientDesktopMode {
-        AllDesktopsClients, ///< TabBoxClients from all desktops are included.
-        OnlyCurrentDesktopClients, ///< Only TabBoxClients on current desktop are included
+        AllDesktopsClients,          ///< TabBoxClients from all desktops are included.
+        OnlyCurrentDesktopClients,   ///< Only TabBoxClients on current desktop are included
         ExcludeCurrentDesktopClients ///< Exclude TabBoxClients on current desktop
     };
     /**
@@ -65,18 +64,19 @@ public:
      * applications are included in the TabBoxClient List in the TabBoxClientModel
      */
     enum ClientApplicationsMode {
-        AllWindowsAllApplications, ///< TabBoxClients from all applications are included
-        OneWindowPerApplication, ///< Only one TabBoxClient for each application is included
-        AllWindowsCurrentApplication ///< Only TabBoxClients for the current application are included
+        AllWindowsAllApplications,   ///< TabBoxClients from all applications are included
+        OneWindowPerApplication,     ///< Only one TabBoxClient for each application is included
+        AllWindowsCurrentApplication ///< Only TabBoxClients for the current application are
+                                     ///< included
     };
     /**
      * ClientMinimizedMode defines which windows are included in the TabBoxClient List
      * in the TabBoxClientModel based on whether they are minimized or not
      */
     enum ClientMinimizedMode {
-        IgnoreMinimizedStatus, ///< TabBoxClients are included no matter they are minimized or not
+        IgnoreMinimizedStatus,   ///< TabBoxClients are included no matter they are minimized or not
         ExcludeMinimizedClients, ///< Exclude minimized TabBoxClients
-        OnlyMinimizedClients ///< Only minimized TabBoxClients are included
+        OnlyMinimizedClients     ///< Only minimized TabBoxClients are included
     };
     /**
      * ShowDesktopMode defines whether a TabBoxClient representing the desktop
@@ -84,7 +84,7 @@ public:
      */
     enum ShowDesktopMode {
         DoNotShowDesktopClient, ///< A TabBoxClient representing the desktop is not included
-        ShowDesktopClient ///< A TabBoxClient representing the desktop is included
+        ShowDesktopClient       ///< A TabBoxClient representing the desktop is included
     };
     /**
      * ClientMultiScreenMode defines whether windows from the current screen, all but the current
@@ -92,7 +92,7 @@ public:
      */
     enum ClientMultiScreenMode {
         IgnoreMultiScreen, ///< TabBoxClients are included independently of the screen they are on
-        OnlyCurrentScreenClients, ///< Only TabBoxClients on current screen are included
+        OnlyCurrentScreenClients,   ///< Only TabBoxClients on current screen are included
         ExcludeCurrentScreenClients ///< Exclude TabBoxClients from the current screen
     };
     /**
@@ -100,7 +100,8 @@ public:
      * TabBoxClientModel.
      */
     enum ClientSwitchingMode {
-        FocusChainSwitching, ///< Sort by recently used. Most recently used TabBoxClient is the first
+        FocusChainSwitching,   ///< Sort by recently used. Most recently used TabBoxClient is the
+                               ///< first
         StackingOrderSwitching ///< Sort by current stacking order
     };
     /**
@@ -108,16 +109,17 @@ public:
      * TabBoxDesktopModel.
      */
     enum DesktopSwitchingMode {
-        MostRecentlyUsedDesktopSwitching,///< Sort by recently used. Most recently used desktop is the first
-        StaticDesktopSwitching///< Static sorting in numerical ascending order
+        MostRecentlyUsedDesktopSwitching, ///< Sort by recently used. Most recently used desktop is
+                                          ///< the first
+        StaticDesktopSwitching            ///< Static sorting in numerical ascending order
     };
     /**
      * TabBoxMode defines what kind of items the TabBox is displaying and which
      * Model is used
      */
     enum TabBoxMode {
-        ClientTabBox,///< TabBox uses TabBoxClientModel
-        DesktopTabBox///< TabBox uses TabBoxDesktopModel
+        ClientTabBox, ///< TabBox uses TabBoxClientModel
+        DesktopTabBox ///< TabBox uses TabBoxDesktopModel
     };
     TabBoxConfig();
     ~TabBoxConfig();
@@ -264,33 +266,43 @@ public:
     void setLayoutName(const QString& name);
 
     // some static methods to access default values
-    static ClientDesktopMode defaultDesktopMode() {
+    static ClientDesktopMode defaultDesktopMode()
+    {
         return OnlyCurrentDesktopClients;
     }
-    static ClientApplicationsMode defaultApplicationsMode() {
+    static ClientApplicationsMode defaultApplicationsMode()
+    {
         return AllWindowsAllApplications;
     }
-    static ClientMinimizedMode defaultMinimizedMode() {
+    static ClientMinimizedMode defaultMinimizedMode()
+    {
         return IgnoreMinimizedStatus;
     }
-    static ShowDesktopMode defaultShowDesktopMode() {
+    static ShowDesktopMode defaultShowDesktopMode()
+    {
         return DoNotShowDesktopClient;
     }
-    static ClientMultiScreenMode defaultMultiScreenMode() {
+    static ClientMultiScreenMode defaultMultiScreenMode()
+    {
         return IgnoreMultiScreen;
     }
-    static ClientSwitchingMode defaultSwitchingMode() {
+    static ClientSwitchingMode defaultSwitchingMode()
+    {
         return FocusChainSwitching;
     }
-    static bool defaultShowTabBox() {
+    static bool defaultShowTabBox()
+    {
         return true;
     }
-    static bool defaultHighlightWindow() {
+    static bool defaultHighlightWindow()
+    {
         return true;
     }
-    static QString defaultLayoutName() {
+    static QString defaultLayoutName()
+    {
         return QStringLiteral("thumbnail_grid");
     }
+
 private:
     TabBoxConfigPrivate* d;
 };

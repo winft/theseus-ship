@@ -38,9 +38,11 @@ public:
         , clientMultiScreenMode(TabBoxConfig::defaultMultiScreenMode())
         , clientSwitchingMode(TabBoxConfig::defaultSwitchingMode())
         , desktopSwitchingMode(TabBoxConfig::MostRecentlyUsedDesktopSwitching)
-        , layoutName(TabBoxConfig::defaultLayoutName()) {
+        , layoutName(TabBoxConfig::defaultLayoutName())
+    {
     }
-    ~TabBoxConfigPrivate() {
+    ~TabBoxConfigPrivate()
+    {
     }
     bool showTabBox;
     bool highlightWindows;

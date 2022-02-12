@@ -41,7 +41,7 @@ uint DesktopChain::next(uint indexDesktop) const
 {
     const int i = m_chain.indexOf(indexDesktop);
     if (i >= 0 && i + 1 < m_chain.size()) {
-        return m_chain[i+1];
+        return m_chain[i + 1];
     } else if (m_chain.size() > 0) {
         return m_chain[0];
     } else {
@@ -79,12 +79,12 @@ void DesktopChain::add(uint desktop)
         index = m_chain.size() - 1;
     }
     for (int i = index; i > 0; --i) {
-        m_chain[i] = m_chain[i-1];
+        m_chain[i] = m_chain[i - 1];
     }
     m_chain[0] = desktop;
 }
 
-DesktopChainManager::DesktopChainManager(QObject *parent)
+DesktopChainManager::DesktopChainManager(QObject* parent)
     : QObject(parent)
     , m_maxChainSize(0)
 {
@@ -114,7 +114,7 @@ void DesktopChainManager::addDesktop(uint previousDesktop, uint currentDesktop)
     m_currentChain.value().add(currentDesktop);
 }
 
-void DesktopChainManager::useChain(const QString &identifier)
+void DesktopChainManager::useChain(const QString& identifier)
 {
     if (m_currentChain.key().isNull()) {
         createFirstChain(identifier);
@@ -126,14 +126,14 @@ void DesktopChainManager::useChain(const QString &identifier)
     }
 }
 
-void DesktopChainManager::createFirstChain(const QString &identifier)
+void DesktopChainManager::createFirstChain(const QString& identifier)
 {
     DesktopChain value(m_currentChain.value());
     m_chains.erase(m_currentChain);
     m_currentChain = m_chains.insert(identifier, value);
 }
 
-QHash< QString, DesktopChain >::Iterator DesktopChainManager::addNewChain(const QString &identifier)
+QHash<QString, DesktopChain>::Iterator DesktopChainManager::addNewChain(const QString& identifier)
 {
     return m_chains.insert(identifier, DesktopChain(m_maxChainSize));
 }

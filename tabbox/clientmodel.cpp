@@ -17,7 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 // own
 #include "clientmodel.h"
 // tabbox
@@ -60,11 +59,11 @@ QVariant ClientModel::data(const QModelIndex& index, int role) const
         return QVariant();
     }
 
-    auto client = m_clientList[ clientIndex ].lock();
+    auto client = m_clientList[clientIndex].lock();
     if (!client) {
         return QVariant();
     }
-    switch(role) {
+    switch (role) {
     case Qt::DisplayRole:
     case CaptionRole: {
         QString caption = client->caption();
@@ -74,7 +73,7 @@ QVariant ClientModel::data(const QModelIndex& index, int role) const
         return caption;
     }
     case ClientRole:
-        return QVariant::fromValue<void *>(client.get());
+        return QVariant::fromValue<void*>(client.get());
     case DesktopNameRole: {
         return tabBox->desktopName(client.get());
     }
@@ -83,7 +82,7 @@ QVariant ClientModel::data(const QModelIndex& index, int role) const
     case MinimizedRole:
         return client->isMinimized();
     case CloseableRole:
-        //clients that claim to be first are not closeable
+        // clients that claim to be first are not closeable
         return client->isCloseable() && !client->isFirstInTabBox();
     case IconRole:
         return client->icon();
@@ -142,19 +141,20 @@ QModelIndex ClientModel::index(int row, int column, const QModelIndex& parent) c
 QHash<int, QByteArray> ClientModel::roleNames() const
 {
     return {
-        { CaptionRole, QByteArrayLiteral("caption") },
-        { DesktopNameRole, QByteArrayLiteral("desktopName") },
-        { MinimizedRole, QByteArrayLiteral("minimized") },
-        { WIdRole, QByteArrayLiteral("windowId") },
-        { CloseableRole, QByteArrayLiteral("closeable") },
-        { IconRole, QByteArrayLiteral("icon") },
+        {CaptionRole, QByteArrayLiteral("caption")},
+        {DesktopNameRole, QByteArrayLiteral("desktopName")},
+        {MinimizedRole, QByteArrayLiteral("minimized")},
+        {WIdRole, QByteArrayLiteral("windowId")},
+        {CloseableRole, QByteArrayLiteral("closeable")},
+        {IconRole, QByteArrayLiteral("icon")},
     };
 }
 
-QModelIndex ClientModel::index(TabBoxClient *client) const
+QModelIndex ClientModel::index(TabBoxClient* client) const
 {
-    auto it = std::find_if(m_clientList.cbegin(), m_clientList.cend(),
-        [client](auto const& cmp) { return client == cmp.lock().get(); });
+    auto it = std::find_if(m_clientList.cbegin(), m_clientList.cend(), [client](auto const& cmp) {
+        return client == cmp.lock().get();
+    });
     if (it == m_clientList.cend()) {
         return QModelIndex();
     }
@@ -185,13 +185,15 @@ void ClientModel::createClientList(int desktop, bool partialReset)
     TabBoxClientList stickyClients;
 
     auto remove_clients = [this](auto const& target) {
-        m_clientList.erase(
-            std::remove_if(m_clientList.begin(), m_clientList.end(), [&target](auto const& client) {
-                return target.get() == client.lock().get();
-        }), m_clientList.end());
+        m_clientList.erase(std::remove_if(m_clientList.begin(),
+                                          m_clientList.end(),
+                                          [&target](auto const& client) {
+                                              return target.get() == client.lock().get();
+                                          }),
+                           m_clientList.end());
     };
 
-    switch(tabBox->config().clientSwitchingMode()) {
+    switch (tabBox->config().clientSwitchingMode()) {
     case TabBoxConfig::FocusChainSwitching: {
         TabBoxClient* c = start;
         if (!tabBox->isInFocusChain(c)) {
@@ -248,7 +250,8 @@ void ClientModel::createClientList(int desktop, bool partialReset)
         m_clientList.push_back(c);
     }
     if (tabBox->config().clientApplicationsMode() != TabBoxConfig::AllWindowsCurrentApplication
-            && (tabBox->config().showDesktopMode() == TabBoxConfig::ShowDesktopClient || m_clientList.empty())) {
+        && (tabBox->config().showDesktopMode() == TabBoxConfig::ShowDesktopClient
+            || m_clientList.empty())) {
         auto desktopClient = tabBox->desktopClient().lock();
         if (desktopClient) {
             m_clientList.push_back(desktopClient);
