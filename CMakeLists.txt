@@ -391,8 +391,17 @@ add_subdirectory(data)
 add_subdirectory(effects)
 add_subdirectory(scripts)
 add_subdirectory(scripting)
-add_subdirectory(helpers)
 
+########### next target ###############
+add_executable(kwin_killer_helper win/x11/helpers/killer.cpp)
+
+target_link_libraries(kwin_killer_helper
+  KF5::AuthCore
+  KF5::I18n
+  KF5::WidgetsAddons
+  Qt::Widgets
+  Qt::X11Extras
+)
 ########### next target ###############
 
 set(kwin_SRCS
@@ -766,6 +775,7 @@ target_link_libraries(kwin_x11
 
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS kwin_killer_helper DESTINATION ${KDE_INSTALL_LIBEXECDIR})
 
 set(kwin_XWAYLAND_SRCS
    xwl/clipboard.cpp
