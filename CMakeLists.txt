@@ -1019,7 +1019,10 @@ install(FILES win/tabbox/kwindesktopswitcher.desktop DESTINATION ${KDE_INSTALL_K
 
 # Install QML files
 install(DIRECTORY render/qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
-add_subdirectory(qml)
+install(
+  DIRECTORY win/qml/onscreennotification/plasma
+  DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/onscreennotification
+)
 
 if (BUILD_TESTING)
     add_subdirectory(autotests)
