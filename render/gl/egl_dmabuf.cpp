@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwin_eglext.h"
 
 #include "base/wayland/server.h"
-#include "extern/drm_fourcc.h"
 #include "main.h"
+#include "render/extern/drm_fourcc.h"
 
 #include <unistd.h>
 
