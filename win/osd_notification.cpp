@@ -186,8 +186,9 @@ void osd_notification::ensureQmlComponent()
 
     auto const fileName = QStandardPaths::locate(
         QStandardPaths::GenericDataLocation,
-        m_config->group(QStringLiteral("osd_notification"))
-            .readEntry("QmlPath", QStringLiteral(KWIN_NAME "/osd_notification/plasma/main.qml")));
+        m_config->group(QStringLiteral("OnScreenNotification"))
+            .readEntry("QmlPath",
+                       QStringLiteral(KWIN_NAME "/onscreennotification/plasma/main.qml")));
 
     if (fileName.isEmpty()) {
         return;
