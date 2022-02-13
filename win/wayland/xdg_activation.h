@@ -156,6 +156,16 @@ void handle_xdg_activation_activate(Space* space,
         qCDebug(KWIN_WL) << "No window found to xdg-activate" << surface;
         return;
     }
+
+    while (!win->control) {
+        auto lead = win->transient()->lead();
+        if (!lead) {
+            qCDebug(KWIN_WL) << "No window lead with control found to xdg-activate" << surface;
+            return;
+        }
+        win = static_cast<decltype(win)>(lead);
+    }
+
     xdg_activation_activate(space, win, token);
 }
 
