@@ -102,6 +102,11 @@ void set_subsurface_parent(Win* win, Lead* lead)
             // TODO(romangg): use setFrameGeometry?
             win->set_frame_geometry(frame_geo);
 
+            // A top lead might not be available when the client has deleted one of the parent
+            // surfaces in the tree before this subsurface.
+            // TODO(romangg): Instead of checking here on it we could ensure annexed children are
+            //                destroyed when the parent window is. This could be complicated though
+            //                when destroying while iterating over windows.
             auto top_lead = lead_of_annexed_transient(win);
             if (top_lead) {
                 top_lead->addLayerRepaint(old_frame_geo.united(frame_geo));
