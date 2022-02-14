@@ -23,6 +23,7 @@ namespace KWin::win
 remnant::remnant(Toplevel* win, Toplevel* source)
     : win{win}
 {
+    assert(win != source);
     assert(!win->remnant());
 
     frame_margins = win::frame_margins(source);
@@ -58,31 +59,11 @@ remnant::remnant(Toplevel* win, Toplevel* source)
 
     win->transient()->annexed = source->transient()->annexed;
 
-    int alive_count = 0;
     auto const leads = source->transient()->leads();
     for (auto const& lead : leads) {
         lead->transient()->add_child(win);
         lead->transient()->remove_child(source);
         refcount++;
-        if (!lead->remnant()) {
-            alive_count++;
-        }
-    }
-
-    if (alive_count > 0) {
-        // Alive leads might go down next or not. Since we have no information about that we wait
-        // for a short period and check again. All leads not being remnant until then we classify
-        // as being alive and just unref the remnant.
-        annexed_timeout = new QTimer;
-        annexed_timeout->setSingleShot(true);
-        QObject::connect(annexed_timeout, &QTimer::timeout, win, [this] {
-            for (auto lead : this->win->transient()->leads()) {
-                if (!lead->remnant()) {
-                    unref();
-                }
-            }
-        });
-        annexed_timeout->start(100);
     }
 
     auto const children = source->transient()->children;
@@ -135,10 +116,6 @@ void remnant::unref()
     if (--refcount > 0) {
         return;
     }
-
-    // Need to delete the timer as we delete the remnant from the event loop.
-    delete annexed_timeout;
-    annexed_timeout = nullptr;
 
     // needs to be delayed
     // a) when calling from effects, otherwise it'd be rather complicated to handle the case of the
