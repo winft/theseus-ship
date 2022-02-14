@@ -103,8 +103,10 @@ void set_subsurface_parent(Win* win, Lead* lead)
             win->set_frame_geometry(frame_geo);
 
             auto top_lead = lead_of_annexed_transient(win);
-            top_lead->addLayerRepaint(old_frame_geo.united(frame_geo));
-            top_lead->discard_quads();
+            if (top_lead) {
+                top_lead->addLayerRepaint(old_frame_geo.united(frame_geo));
+                top_lead->discard_quads();
+            }
 
             Q_EMIT win->frame_geometry_changed(win, old_frame_geo);
         }
