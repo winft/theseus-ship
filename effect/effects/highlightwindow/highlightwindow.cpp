@@ -156,13 +156,13 @@ void HighlightWindowEffect::startGhostAnimation(EffectWindow* window, int durati
     }
     quint64& animationId = m_animations[window];
     if (animationId) {
-        retarget(animationId, FPx2(m_ghostOpacity, m_ghostOpacity), m_fadeDuration);
+        retarget(animationId, FPx2(m_ghostOpacity, m_ghostOpacity), duration);
     } else {
         const qreal startOpacity = isInitiallyHidden(window) ? 0 : 1;
         animationId = set(window,
                           Opacity,
                           0,
-                          m_fadeDuration,
+                          duration,
                           FPx2(m_ghostOpacity, m_ghostOpacity),
                           m_easingCurve,
                           0,
@@ -179,13 +179,13 @@ void HighlightWindowEffect::startHighlightAnimation(EffectWindow* window, int du
     }
     quint64& animationId = m_animations[window];
     if (animationId) {
-        retarget(animationId, FPx2(1.0, 1.0), m_fadeDuration);
+        retarget(animationId, FPx2(1.0, 1.0), duration);
     } else {
         const qreal startOpacity = isInitiallyHidden(window) ? 0 : 1;
         animationId = set(window,
                           Opacity,
                           0,
-                          m_fadeDuration,
+                          duration,
                           FPx2(1.0, 1.0),
                           m_easingCurve,
                           0,
