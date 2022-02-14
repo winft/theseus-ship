@@ -10,6 +10,13 @@ kconfig_add_kcfg_files(cube_SOURCES
     cubeconfig.kcfgc
 )
 kwin4_add_effect_module(kwin4_effect_cube ${cube_SOURCES})
+target_link_libraries(kwin4_effect_cube PRIVATE
+    kwineffects
+    KF5::ConfigWidgets
+    KF5::GlobalAccel
+    KF5::I18n
+    Qt::Concurrent
+)
 
 # Data files
 install(FILES data/cubecap.png DESTINATION ${KDE_INSTALL_DATADIR}/kwin)

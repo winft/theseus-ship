@@ -8,6 +8,12 @@ kconfig_add_kcfg_files(flipswitch_SOURCES
     flipswitchconfig.kcfgc
 )
 kwin4_add_effect_module(kwin4_effect_flipswitch ${flipswitch_SOURCES})
+target_link_libraries(kwin4_effect_flipswitch PRIVATE
+    kwineffects
+    KF5::ConfigWidgets
+    KF5::GlobalAccel
+    KF5::I18n
+)
 
 #######################################
 # Config
