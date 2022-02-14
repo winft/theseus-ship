@@ -11,6 +11,8 @@
 #include "utils/blocker.h"
 #include "win/remnant.h"
 #include "win/stacking_order.h"
+#include "win/transient.h"
+#include "win/x11/stacking_tree.h"
 
 #ifdef KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
@@ -22,9 +24,21 @@ namespace KWin::win::wayland
 template<typename Win>
 void destroy_window(Win* win)
 {
+    auto space = static_cast<win::wayland::space*>(workspace());
+    blocker block(space->stacking_order);
     win->closing = true;
 
-    blocker block(workspace()->stacking_order);
+    if (win->transient()->annexed && !lead_of_annexed_transient(win)) {
+        // With the lead gone there is no way - and no need - for remnant effects. Delete directly.
+        Q_EMIT win->windowClosed(win, nullptr);
+        space->handle_window_removed(win);
+        space->x_stacking_tree->mark_as_dirty();
+        remove_all(space->m_windows, win);
+        remove_all(space->stacking_order->pre_stack, win);
+        remove_all(space->stacking_order->win_stack, win);
+        delete win;
+        return;
+    }
 
     auto remnant_window = win->create_remnant(win);
     Q_EMIT win->windowClosed(win, remnant_window);
@@ -46,7 +60,7 @@ void destroy_window(Win* win)
         win->control->destroy_decoration();
     }
 
-    static_cast<win::wayland::space*>(workspace())->handle_window_removed(win);
+    space->handle_window_removed(win);
     remnant_window->remnant()->unref();
 
     delete win;
