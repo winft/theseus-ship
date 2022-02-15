@@ -344,9 +344,14 @@ void output::set_delay(presentation_data const& data)
 #endif
 }
 
+bool waiting_for_event(output const& out)
+{
+    return out.delay_timer.isActive() || out.swap_pending || !out.base.is_dpms_on();
+}
+
 void output::set_delay_timer()
 {
-    if (delay_timer.isActive() || swap_pending || !base.is_dpms_on()) {
+    if (waiting_for_event(*this)) {
         // Abort since we will composite when the timer runs out or the timer will only get
         // started at buffer swap.
         return;
@@ -364,7 +369,7 @@ void output::set_delay_timer()
 
 void output::request_frame(Toplevel* window)
 {
-    if (swap_pending || delay_timer.isActive() || frame_timer.isActive() || !base.is_dpms_on()) {
+    if (waiting_for_event(*this) || frame_timer.isActive()) {
         // Frame will be received when timer runs out.
         return;
     }
