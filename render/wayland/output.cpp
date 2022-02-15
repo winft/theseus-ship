@@ -285,25 +285,15 @@ void output::set_delay(presentation_data const& data)
 
     static_cast<gl::scene*>(scene)->backend()->makeCurrent();
 
-#if SWAP_TIME_DEBUG
-    qDebug() << "";
-    std::chrono::nanoseconds render_time_debug;
-#endif
-
     // First get the latest Gl timer queries.
+    std::chrono::nanoseconds render_time_debug;
     last_timer_queries.erase(std::remove_if(last_timer_queries.begin(),
                                             last_timer_queries.end(),
-#if SWAP_TIME_DEBUG
                                             [this, &render_time_debug](auto& timer) {
-#else
-                                            [this](auto& timer) {
-#endif
                                                 if (!timer.get_query()) {
                                                     return false;
                                                 }
-#if SWAP_TIME_DEBUG
                                                 render_time_debug = timer.time();
-#endif
                                                 render_durations.update(timer.time());
                                                 return true;
                                             }),
@@ -332,7 +322,7 @@ void output::set_delay(presentation_data const& data)
 #if SWAP_TIME_DEBUG
     QDebug debug = qDebug();
     debug.noquote().nospace();
-    debug << "SWAP total: " << to_ms((now - swap_ref_time)) << endl;
+    debug << "\nSWAP total: " << to_ms((now - swap_ref_time)) << endl;
     debug << "vblank to now: " << to_ms(now) << " - " << to_ms(data.when) << " = "
           << to_ms(vblank_to_now) << endl;
     debug << "MARGINS vblank: " << to_ms(hw_margin)
