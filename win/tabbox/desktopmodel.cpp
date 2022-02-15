@@ -51,17 +51,17 @@ QVariant DesktopModel::data(const QModelIndex& index, int role) const
         return model->data(model->index(index.row(), 0), role);
     }
 
-    const int desktopIndex = index.row();
-    if (desktopIndex >= m_desktopList.count())
+    const int desktop_index = index.row();
+    if (desktop_index >= m_desktopList.count())
         return QVariant();
     switch (role) {
     case Qt::DisplayRole:
     case DesktopNameRole:
-        return tabBox->desktopName(m_desktopList[desktopIndex]);
+        return tabBox->desktopName(m_desktopList[desktop_index]);
     case DesktopRole:
-        return m_desktopList[desktopIndex];
+        return m_desktopList[desktop_index];
     case ClientModelRole:
-        return QVariant::fromValue<void*>(m_clientModels[m_desktopList[desktopIndex]]);
+        return QVariant::fromValue<void*>(m_clientModels[m_desktopList[desktop_index]]);
     default:
         return QVariant();
     }
@@ -71,9 +71,9 @@ QString DesktopModel::longestCaption() const
 {
     QString caption;
     for (int desktop : m_desktopList) {
-        QString desktopName = tabBox->desktopName(desktop);
-        if (desktopName.size() > caption.size()) {
-            caption = desktopName;
+        QString desktop_name = tabBox->desktopName(desktop);
+        if (desktop_name.size() > caption.size()) {
+            caption = desktop_name;
         }
     }
     return caption;
@@ -163,9 +163,9 @@ void DesktopModel::createDesktopList()
         int desktop = tabBox->currentDesktop();
         do {
             m_desktopList.append(desktop);
-            ClientModel* clientModel = new ClientModel(this);
-            clientModel->createClientList(desktop);
-            m_clientModels.insert(desktop, clientModel);
+            auto* client_model = new ClientModel(this);
+            client_model->createClientList(desktop);
+            m_clientModels.insert(desktop, client_model);
             desktop = tabBox->nextDesktopFocusChain(desktop);
         } while (desktop != tabBox->currentDesktop());
         break;
@@ -173,9 +173,9 @@ void DesktopModel::createDesktopList()
     case TabBoxConfig::StaticDesktopSwitching: {
         for (int i = 1; i <= tabBox->numberOfDesktops(); i++) {
             m_desktopList.append(i);
-            ClientModel* clientModel = new ClientModel(this);
-            clientModel->createClientList(i);
-            m_clientModels.insert(i, clientModel);
+            auto* client_model = new ClientModel(this);
+            client_model->createClientList(i);
+            m_clientModels.insert(i, client_model);
         }
         break;
     }

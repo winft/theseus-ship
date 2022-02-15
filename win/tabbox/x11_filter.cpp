@@ -49,8 +49,8 @@ bool X11Filter::event(xcb_generic_event_t* event)
     if (!TabBox::TabBox::self()->isGrabbed()) {
         return false;
     }
-    const uint8_t eventType = event->response_type & ~0x80;
-    switch (eventType) {
+    const uint8_t event_type = event->response_type & ~0x80;
+    switch (event_type) {
     case XCB_BUTTON_PRESS:
     case XCB_BUTTON_RELEASE: {
         auto e = reinterpret_cast<xcb_button_press_event_t*>(event);
@@ -63,7 +63,7 @@ bool X11Filter::event(xcb_generic_event_t* event)
                 return false;
             }
         }
-        if (eventType == XCB_BUTTON_PRESS) {
+        if (event_type == XCB_BUTTON_PRESS) {
             return buttonPress(e);
         }
         return false;
@@ -107,8 +107,8 @@ bool X11Filter::buttonPress(xcb_button_press_event_t* event)
 
 void X11Filter::motion(xcb_generic_event_t* event)
 {
-    auto* mouseEvent = reinterpret_cast<xcb_motion_notify_event_t*>(event);
-    const QPoint rootPos(mouseEvent->root_x, mouseEvent->root_y);
+    auto* mouse_event = reinterpret_cast<xcb_motion_notify_event_t*>(event);
+    const QPoint rootPos(mouse_event->root_x, mouse_event->root_y);
     // TODO: this should be in ScreenEdges directly
     workspace()->edges->check(rootPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC), true);
     xcb_allow_events(connection(), XCB_ALLOW_ASYNC_POINTER, XCB_CURRENT_TIME);
@@ -116,10 +116,10 @@ void X11Filter::motion(xcb_generic_event_t* event)
 
 void X11Filter::keyPress(xcb_generic_event_t* event)
 {
-    int keyQt;
-    xcb_key_press_event_t* keyEvent = reinterpret_cast<xcb_key_press_event_t*>(event);
-    KKeyServer::xcbKeyPressEventToQt(keyEvent, &keyQt);
-    TabBox::TabBox::self()->keyPress(keyQt);
+    int key_qt;
+    xcb_key_press_event_t* key_event = reinterpret_cast<xcb_key_press_event_t*>(event);
+    KKeyServer::xcbKeyPressEventToQt(key_event, &key_qt);
+    TabBox::TabBox::self()->keyPress(key_qt);
 }
 
 void X11Filter::keyRelease(xcb_generic_event_t* event)
@@ -146,10 +146,10 @@ void X11Filter::keyRelease(xcb_generic_event_t* event)
         base::x11::xcb::modifier_mapping xmk;
         if (xmk) {
             xcb_keycode_t* keycodes = xmk.keycodes();
-            const int maxIndex = xmk.size();
+            const int max_index = xmk.size();
             for (int i = 0; i < xmk->keycodes_per_modifier; ++i) {
                 const int index = xmk->keycodes_per_modifier * mod_index + i;
-                if (index >= maxIndex) {
+                if (index >= max_index) {
                     continue;
                 }
                 if (keycodes[index] == ev->detail) {

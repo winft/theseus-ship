@@ -165,15 +165,15 @@ void TabBoxHandlerPrivate::updateHighlightWindows()
     if (!isShown || config.tabBoxMode() != TabBoxConfig::ClientTabBox)
         return;
 
-    TabBoxClient* currentClient = q->client(index);
+    TabBoxClient* current_client = q->client(index);
     QWindow* w = window();
 
     if (q->isKWinCompositing()) {
         if (lastRaisedClient)
             q->elevateClient(lastRaisedClient, w, false);
-        lastRaisedClient = currentClient;
-        if (currentClient)
-            q->elevateClient(currentClient, w, true);
+        lastRaisedClient = current_client;
+        if (current_client)
+            q->elevateClient(current_client, w, true);
     } else {
         if (lastRaisedClient) {
             if (lastRaisedClientSucc)
@@ -181,38 +181,38 @@ void TabBoxHandlerPrivate::updateHighlightWindows()
             // TODO lastRaisedClient->setMinimized( lastRaisedClientWasMinimized );
         }
 
-        lastRaisedClient = currentClient;
+        lastRaisedClient = current_client;
         if (lastRaisedClient) {
             // TODO if ( (lastRaisedClientWasMinimized = lastRaisedClient->isMinimized()) )
             //         lastRaisedClient->setMinimized( false );
             auto order = q->stackingOrder();
-            auto succIdx = order.size() + 1;
+            auto succ_idx = order.size() + 1;
             for (size_t i = 0; i < order.size(); ++i) {
                 if (order.at(i).lock().get() == lastRaisedClient) {
-                    succIdx = i + 1;
+                    succ_idx = i + 1;
                     break;
                 }
             }
             lastRaisedClientSucc
-                = (succIdx < order.size()) ? order.at(succIdx).lock().get() : nullptr;
+                = (succ_idx < order.size()) ? order.at(succ_idx).lock().get() : nullptr;
             q->raiseClient(lastRaisedClient);
         }
     }
 
     if (config.isShowTabBox() && w) {
-        q->highlightWindows(currentClient, w);
+        q->highlightWindows(current_client, w);
     } else {
-        q->highlightWindows(currentClient);
+        q->highlightWindows(current_client);
     }
 }
 
 void TabBoxHandlerPrivate::endHighlightWindows(bool abort)
 {
-    TabBoxClient* currentClient = q->client(index);
+    TabBoxClient* current_client = q->client(index);
     QWindow* w = window();
 
-    if (currentClient)
-        q->elevateClient(currentClient, w, false);
+    if (current_client)
+        q->elevateClient(current_client, w, false);
     if (abort && lastRaisedClient && lastRaisedClientSucc)
         q->restack(lastRaisedClient, lastRaisedClientSucc);
     lastRaisedClient = nullptr;
@@ -232,19 +232,19 @@ QObject* TabBoxHandlerPrivate::createSwitcherItem(bool desktopMode)
             .arg(desktopMode ? QStringLiteral("desktopswitcher/DesktopSwitcher.qml")
                              : QStringLiteral("windowswitcher/WindowSwitcher.qml")));
     if (file.isNull()) {
-        const QString folderName = QLatin1String(KWIN_NAME)
+        const QString folder_name = QLatin1String(KWIN_NAME)
             + (desktopMode ? QLatin1String("/desktoptabbox/") : QLatin1String("/tabbox/"));
-        auto findSwitcher = [this, desktopMode, folderName] {
+        auto find_switcher = [this, desktopMode, folder_name] {
             const QString type = desktopMode ? QStringLiteral("KWin/DesktopSwitcher")
                                              : QStringLiteral("KWin/WindowSwitcher");
             auto offers = KPackage::PackageLoader::self()->findPackages(
-                type, folderName, [this](const KPluginMetaData& data) {
+                type, folder_name, [this](const KPluginMetaData& data) {
                     return data.pluginId().compare(config.layoutName(), Qt::CaseInsensitive) == 0;
                 });
             if (offers.isEmpty()) {
                 // load default
                 offers = KPackage::PackageLoader::self()->findPackages(
-                    type, folderName, [](const KPluginMetaData& data) {
+                    type, folder_name, [](const KPluginMetaData& data) {
                         return data.pluginId().compare(QStringLiteral("informative"),
                                                        Qt::CaseInsensitive)
                             == 0;
@@ -256,7 +256,7 @@ QObject* TabBoxHandlerPrivate::createSwitcherItem(bool desktopMode)
             }
             return offers.first();
         };
-        auto service = findSwitcher();
+        auto service = find_switcher();
         if (!service.isValid()) {
             return nullptr;
         }
@@ -265,14 +265,14 @@ QObject* TabBoxHandlerPrivate::createSwitcherItem(bool desktopMode)
             qCDebug(KWIN_TABBOX) << "Window Switcher Layout is no declarativeappletscript";
             return nullptr;
         }
-        auto findScriptFile = [service, folderName] {
-            const QString pluginName = service.pluginId();
-            const QString scriptName = service.value(QStringLiteral("X-Plasma-MainScript"));
+        auto find_script_file = [service, folder_name] {
+            const QString plugin_name = service.pluginId();
+            const QString script_name = service.value(QStringLiteral("X-Plasma-MainScript"));
             return QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                          folderName + pluginName + QLatin1String("/contents/")
-                                              + scriptName);
+                                          folder_name + plugin_name + QLatin1String("/contents/")
+                                              + script_name);
         };
-        file = findScriptFile();
+        file = find_script_file();
     }
     if (file.isNull()) {
         qCDebug(KWIN_TABBOX) << "Could not find QML file for window switcher";
@@ -312,8 +312,8 @@ void TabBoxHandlerPrivate::show()
     if (m_qmlComponent.isNull()) {
         m_qmlComponent.reset(new QQmlComponent(workspace()->scripting->qmlEngine()));
     }
-    const bool desktopMode = (config.tabBoxMode() == TabBoxConfig::DesktopTabBox);
-    auto findMainItem = [this](const QMap<QString, QObject*>& tabBoxes) -> QObject* {
+    const bool desktop_mode = (config.tabBoxMode() == TabBoxConfig::DesktopTabBox);
+    auto find_main_item = [this](const QMap<QString, QObject*>& tabBoxes) -> QObject* {
         auto it = tabBoxes.constFind(config.layoutName());
         if (it != tabBoxes.constEnd()) {
             return it.value();
@@ -321,9 +321,10 @@ void TabBoxHandlerPrivate::show()
         return nullptr;
     };
     m_mainItem = nullptr;
-    m_mainItem = desktopMode ? findMainItem(m_desktopTabBoxes) : findMainItem(m_clientTabBoxes);
+    m_mainItem
+        = desktop_mode ? find_main_item(m_desktopTabBoxes) : find_main_item(m_clientTabBoxes);
     if (!m_mainItem) {
-        m_mainItem = createSwitcherItem(desktopMode);
+        m_mainItem = createSwitcherItem(desktop_mode);
         if (!m_mainItem) {
             return;
         }
@@ -334,7 +335,7 @@ void TabBoxHandlerPrivate::show()
         int indexRow = index.row();
         if (!item->model()) {
             QAbstractItemModel* model = nullptr;
-            if (desktopMode) {
+            if (desktop_mode) {
                 model = desktopModel();
             } else {
                 model = clientModel();
@@ -572,23 +573,23 @@ void TabBoxHandler::createModel(bool partialReset)
     case TabBoxConfig::ClientTabBox: {
         d->clientModel()->createClientList(partialReset);
         // TODO: C++11 use lambda function
-        bool lastRaised = false;
-        bool lastRaisedSucc = false;
-        for (auto const& clientPointer : stackingOrder()) {
-            auto client = clientPointer.lock();
+        bool last_raised = false;
+        bool last_raised_succ = false;
+        for (auto const& client_pointer : stackingOrder()) {
+            auto client = client_pointer.lock();
             if (!client) {
                 continue;
             }
             if (client.get() == d->lastRaisedClient) {
-                lastRaised = true;
+                last_raised = true;
             }
             if (client.get() == d->lastRaisedClientSucc) {
-                lastRaisedSucc = true;
+                last_raised_succ = true;
             }
         }
-        if (d->lastRaisedClient && !lastRaised)
+        if (d->lastRaisedClient && !last_raised)
             d->lastRaisedClient = nullptr;
-        if (d->lastRaisedClientSucc && !lastRaisedSucc)
+        if (d->lastRaisedClientSucc && !last_raised_succ)
             d->lastRaisedClientSucc = nullptr;
         break;
     }

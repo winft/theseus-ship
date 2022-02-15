@@ -54,12 +54,12 @@ QVariant ClientModel::data(const QModelIndex& index, int role) const
         return QVariant();
     }
 
-    int clientIndex = index.row();
-    if (clientIndex >= static_cast<int>(m_clientList.size())) {
+    auto client_index = index.row();
+    if (client_index >= static_cast<int>(m_clientList.size())) {
         return QVariant();
     }
 
-    auto client = m_clientList[clientIndex].lock();
+    auto client = m_clientList[client_index].lock();
     if (!client) {
         return QVariant();
     }
@@ -94,8 +94,8 @@ QVariant ClientModel::data(const QModelIndex& index, int role) const
 QString ClientModel::longestCaption() const
 {
     QString caption;
-    for (auto const& clientPointer : m_clientList) {
-        auto client = clientPointer.lock();
+    for (auto const& client_pointer : m_clientList) {
+        auto client = client_pointer.lock();
         if (!client) {
             continue;
         }
@@ -131,7 +131,7 @@ QModelIndex ClientModel::index(int row, int column, const QModelIndex& parent) c
     if (row < 0 || column != 0 || parent.isValid()) {
         return QModelIndex();
     }
-    int index = row * columnCount();
+    auto index = row * columnCount();
     if (index >= static_cast<int>(m_clientList.size()) && !m_clientList.empty()) {
         return QModelIndex();
     }
@@ -158,9 +158,9 @@ QModelIndex ClientModel::index(TabBoxClient* client) const
     if (it == m_clientList.cend()) {
         return QModelIndex();
     }
-    int index = it - m_clientList.cbegin();
-    int row = index / columnCount();
-    int column = index % columnCount();
+    auto index = it - m_clientList.cbegin();
+    auto row = index / columnCount();
+    auto column = index % columnCount();
     return createIndex(row, column);
 }
 
@@ -174,15 +174,15 @@ void ClientModel::createClientList(int desktop, bool partialReset)
     auto start = tabBox->activeClient().lock().get();
     // TODO: new clients are not added at correct position
     if (partialReset && !m_clientList.empty()) {
-        auto firstClient = m_clientList.at(0).lock();
-        if (firstClient) {
-            start = firstClient.get();
+        auto first_client = m_clientList.at(0).lock();
+        if (first_client) {
+            start = first_client.get();
         }
     }
 
     beginResetModel();
     m_clientList.clear();
-    TabBoxClientList stickyClients;
+    TabBoxClientList sticky_clients;
 
     auto remove_clients = [this](auto const& target) {
         m_clientList.erase(std::remove_if(m_clientList.begin(),
@@ -197,9 +197,9 @@ void ClientModel::createClientList(int desktop, bool partialReset)
     case TabBoxConfig::FocusChainSwitching: {
         TabBoxClient* c = start;
         if (!tabBox->isInFocusChain(c)) {
-            auto firstClient = tabBox->firstClientFocusChain().lock();
-            if (firstClient) {
-                c = firstClient.get();
+            auto first_client = tabBox->firstClientFocusChain().lock();
+            if (first_client) {
+                c = first_client.get();
             }
         }
         TabBoxClient* stop = c;
@@ -208,7 +208,7 @@ void ClientModel::createClientList(int desktop, bool partialReset)
             if (add) {
                 m_clientList.push_back(add);
                 if (add.get()->isFirstInTabBox()) {
-                    stickyClients.push_back(add);
+                    sticky_clients.push_back(add);
                 }
             }
             c = tabBox->nextClientFocusChain(c).lock().get();
@@ -230,7 +230,7 @@ void ClientModel::createClientList(int desktop, bool partialReset)
                 } else
                     m_clientList.push_back(add);
                 if (add->isFirstInTabBox()) {
-                    stickyClients.push_back(add);
+                    sticky_clients.push_back(add);
                 }
             }
             if (index >= stacking.size() - 1) {
@@ -245,16 +245,16 @@ void ClientModel::createClientList(int desktop, bool partialReset)
         break;
     }
     }
-    for (auto const& c : stickyClients) {
+    for (auto const& c : sticky_clients) {
         remove_clients(c.lock());
         m_clientList.push_back(c);
     }
     if (tabBox->config().clientApplicationsMode() != TabBoxConfig::AllWindowsCurrentApplication
         && (tabBox->config().showDesktopMode() == TabBoxConfig::ShowDesktopClient
             || m_clientList.empty())) {
-        auto desktopClient = tabBox->desktopClient().lock();
-        if (desktopClient) {
-            m_clientList.push_back(desktopClient);
+        auto desktop_client = tabBox->desktopClient().lock();
+        if (desktop_client) {
+            m_clientList.push_back(desktop_client);
         }
     }
     endResetModel();

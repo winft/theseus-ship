@@ -253,10 +253,10 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
     Toplevel* ret = nullptr;
     auto current = (static_cast<TabBoxClientImpl*>(client))->client();
 
-    bool addClient = checkDesktop(client, desktop) && checkApplications(client)
+    bool add_client = checkDesktop(client, desktop) && checkApplications(client)
         && checkMinimized(client) && checkMultiScreen(client);
-    addClient = addClient && win::wants_tab_focus(current) && !current->control->skip_switcher();
-    if (addClient) {
+    add_client = add_client && win::wants_tab_focus(current) && !current->control->skip_switcher();
+    if (add_client) {
         // don't add windows that have modal dialogs
         auto modal = current->findModal();
         if (!modal || !modal->control || modal == current) {
@@ -656,8 +656,8 @@ QList<Toplevel*> TabBox::currentClientList()
     auto const list = m_tabBox->clientList();
     QList<Toplevel*> ret;
 
-    for (auto& clientPointer : list) {
-        auto client = clientPointer.lock();
+    for (auto& client_pointer : list) {
+        auto client = client_pointer.lock();
         if (!client) {
             continue;
         }
@@ -747,18 +747,19 @@ void TabBox::reconfigure()
     m_delayShow = config.readEntry<bool>("ShowDelay", true);
     m_delayShowTime = config.readEntry<int>("DelayTime", 90);
 
-    const QString defaultDesktopLayout = QStringLiteral("org.kde.breeze.desktop");
-    m_desktopConfig.setLayoutName(config.readEntry("DesktopLayout", defaultDesktopLayout));
-    m_desktopListConfig.setLayoutName(config.readEntry("DesktopListLayout", defaultDesktopLayout));
+    const QString default_desktop_layout = QStringLiteral("org.kde.breeze.desktop");
+    m_desktopConfig.setLayoutName(config.readEntry("DesktopLayout", default_desktop_layout));
+    m_desktopListConfig.setLayoutName(
+        config.readEntry("DesktopListLayout", default_desktop_layout));
 
     QList<ElectricBorder>* borders = &m_borderActivate;
-    QString borderConfig = QStringLiteral("BorderActivate");
+    QString border_config = QStringLiteral("BorderActivate");
     for (int i = 0; i < 2; ++i) {
         for (auto const& border : qAsConst(*borders)) {
             workspace()->edges->unreserve(border, this);
         }
         borders->clear();
-        QStringList list = config.readEntry(borderConfig, QStringList());
+        QStringList list = config.readEntry(border_config, QStringList());
         for (auto const& s : qAsConst(list)) {
             bool ok;
             const int i = s.toInt(&ok);
@@ -768,13 +769,13 @@ void TabBox::reconfigure()
             workspace()->edges->reserve(ElectricBorder(i), this, "toggle");
         }
         borders = &m_borderAlternativeActivate;
-        borderConfig = QStringLiteral("BorderAlternativeActivate");
+        border_config = QStringLiteral("BorderAlternativeActivate");
     }
 
-    auto touchConfig = [this, config](const QString& key,
-                                      QHash<ElectricBorder, QAction*>& actions,
-                                      TabBoxMode mode,
-                                      const QStringList& defaults = QStringList{}) {
+    auto touch_config = [this, config](const QString& key,
+                                       QHash<ElectricBorder, QAction*>& actions,
+                                       TabBoxMode mode,
+                                       const QStringList& defaults = QStringList{}) {
         // fist erase old config
         for (auto it = actions.begin(); it != actions.end();) {
             delete it.value();
@@ -794,10 +795,10 @@ void TabBox::reconfigure()
             actions.insert(ElectricBorder(i), a);
         }
     };
-    touchConfig(QStringLiteral("TouchBorderActivate"), m_touchActivate, TabBoxWindowsMode);
-    touchConfig(QStringLiteral("TouchBorderAlternativeActivate"),
-                m_touchAlternativeActivate,
-                TabBoxWindowsAlternativeMode);
+    touch_config(QStringLiteral("TouchBorderActivate"), m_touchActivate, TabBoxWindowsMode);
+    touch_config(QStringLiteral("TouchBorderAlternativeActivate"),
+                 m_touchAlternativeActivate,
+                 TabBoxWindowsAlternativeMode);
 }
 
 void TabBox::loadConfig(const KConfigGroup& config, TabBoxConfig& tabBoxConfig)
@@ -1234,14 +1235,14 @@ void TabBox::CDEWalkThroughWindows(bool forward)
         options_traverse_all = group.readEntry("TraverseAll", false);
     }
 
-    Toplevel* firstClient = nullptr;
+    Toplevel* first_client = nullptr;
     do {
         nc = forward ? nextClientStatic(nc) : previousClientStatic(nc);
-        if (!firstClient) {
+        if (!first_client) {
             // When we see our first client for the second time,
             // it's time to stop.
-            firstClient = nc;
-        } else if (nc == firstClient) {
+            first_client = nc;
+        } else if (nc == first_client) {
             // No candidates found.
             nc = nullptr;
             break;
@@ -1307,8 +1308,8 @@ void TabBox::keyPress(int keyQt)
     };
 
     // tests whether a shortcut matches and handles pitfalls on ShiftKey invocation
-    auto directionFor = [keyQt, contains](const QKeySequence& forward,
-                                          const QKeySequence& backward) -> Direction {
+    auto direction_for = [keyQt, contains](const QKeySequence& forward,
+                                           const QKeySequence& backward) -> Direction {
         if (contains(forward, keyQt))
             return Forward;
         if (contains(backward, keyQt))
@@ -1340,12 +1341,12 @@ void TabBox::keyPress(int keyQt)
     };
 
     if (m_tabGrab) {
-        static const int ModeCount = 4;
-        static const TabBoxMode modes[ModeCount] = {TabBoxWindowsMode,
-                                                    TabBoxWindowsAlternativeMode,
-                                                    TabBoxCurrentAppWindowsMode,
-                                                    TabBoxCurrentAppWindowsAlternativeMode};
-        const QKeySequence cuts[2 * ModeCount]
+        static const int mode_count = 4;
+        static const TabBoxMode modes[mode_count] = {TabBoxWindowsMode,
+                                                     TabBoxWindowsAlternativeMode,
+                                                     TabBoxCurrentAppWindowsMode,
+                                                     TabBoxCurrentAppWindowsAlternativeMode};
+        const QKeySequence cuts[2 * mode_count]
             = {// forward
                m_cutWalkThroughWindows,
                m_cutWalkThroughWindowsAlternative,
@@ -1356,19 +1357,19 @@ void TabBox::keyPress(int keyQt)
                m_cutWalkThroughWindowsAlternativeReverse,
                m_cutWalkThroughCurrentAppWindowsReverse,
                m_cutWalkThroughCurrentAppWindowsAlternativeReverse};
-        bool testedCurrent = false; // in case of collision, prefer to stay in the current mode
+        bool tested_current = false; // in case of collision, prefer to stay in the current mode
         int i = 0, j = 0;
         while (true) {
-            if (!testedCurrent && modes[i] != mode()) {
+            if (!tested_current && modes[i] != mode()) {
                 ++j;
-                i = (i + 1) % ModeCount;
+                i = (i + 1) % mode_count;
                 continue;
             }
-            if (testedCurrent && modes[i] == mode()) {
+            if (tested_current && modes[i] == mode()) {
                 break;
             }
-            testedCurrent = true;
-            direction = directionFor(cuts[i], cuts[i + ModeCount]);
+            tested_current = true;
+            direction = direction_for(cuts[i], cuts[i + mode_count]);
             if (direction != Steady) {
                 if (modes[i] != mode()) {
                     accept(false);
@@ -1380,22 +1381,22 @@ void TabBox::keyPress(int keyQt)
                     QTimer::singleShot(50, this, replayWithChangedTabboxMode);
                 }
                 break;
-            } else if (++j > 2 * ModeCount) { // guarding counter for invalid modes
+            } else if (++j > 2 * mode_count) { // guarding counter for invalid modes
                 qCDebug(KWIN_TABBOX) << "Invalid TabBoxMode";
                 return;
             }
-            i = (i + 1) % ModeCount;
+            i = (i + 1) % mode_count;
         }
         if (direction != Steady) {
             qCDebug(KWIN_TABBOX) << "== " << cuts[i].toString() << " or "
-                                 << cuts[i + ModeCount].toString();
+                                 << cuts[i + mode_count].toString();
             KDEWalkThroughWindows(direction == Forward);
         }
     } else if (m_desktopGrab) {
-        direction = directionFor(m_cutWalkThroughDesktops, m_cutWalkThroughDesktopsReverse);
+        direction = direction_for(m_cutWalkThroughDesktops, m_cutWalkThroughDesktopsReverse);
         if (direction == Steady)
             direction
-                = directionFor(m_cutWalkThroughDesktopList, m_cutWalkThroughDesktopListReverse);
+                = direction_for(m_cutWalkThroughDesktopList, m_cutWalkThroughDesktopListReverse);
         if (direction != Steady)
             walkThroughDesktops(direction == Forward);
     }
