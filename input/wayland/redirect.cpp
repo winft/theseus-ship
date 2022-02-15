@@ -5,6 +5,7 @@
 */
 #include "redirect.h"
 
+#include "device_redirect.h"
 #include "keyboard_redirect.h"
 #include "platform.h"
 #include "pointer_redirect.h"
@@ -49,7 +50,9 @@
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
 #include <Wrapland/Server/keyboard_pool.h>
+#include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
+#include <Wrapland/Server/touch_pool.h>
 #include <Wrapland/Server/virtual_keyboard_v1.h>
 
 #include <KGlobalAccel>
@@ -70,6 +73,12 @@ redirect::redirect(wayland::platform* platform)
     reconfigure();
 }
 
+template<typename Dev>
+void unset_focus(Dev&& dev)
+{
+    dev->focusUpdate(dev->m_focus.focus, nullptr);
+}
+
 void redirect::setup_devices()
 {
     for (auto pointer : platform->pointers) {
@@ -79,6 +88,7 @@ void redirect::setup_devices()
     QObject::connect(platform, &platform::pointer_removed, this, [this]() {
         if (platform->pointers.empty()) {
             auto seat = find_seat();
+            unset_focus(m_pointer);
             seat->setHasPointer(false);
         }
     });
@@ -90,6 +100,7 @@ void redirect::setup_devices()
     QObject::connect(platform, &platform::keyboard_removed, this, [this]() {
         if (platform->keyboards.empty()) {
             auto seat = find_seat();
+            seat->setFocusedKeyboardSurface(nullptr);
             seat->setHasKeyboard(false);
         }
     });
@@ -101,6 +112,7 @@ void redirect::setup_devices()
     QObject::connect(platform, &platform::touch_removed, this, [this]() {
         if (platform->touchs.empty()) {
             auto seat = find_seat();
+            unset_focus(m_touch);
             seat->setHasTouch(false);
         }
     });
@@ -328,7 +340,10 @@ void redirect::handle_pointer_added(input::pointer* pointer)
         pointer, &pointer::frame, pointer_red, &input::pointer_redirect::process_frame);
 
     auto seat = find_seat();
-    seat->setHasPointer(true);
+    if (!seat->hasPointer()) {
+        seat->setHasPointer(true);
+        device_redirect_update_focus(m_pointer.get());
+    }
 }
 
 void redirect::handle_keyboard_added(input::keyboard* keyboard)
@@ -346,6 +361,7 @@ void redirect::handle_keyboard_added(input::keyboard* keyboard)
 
     if (!seat->hasKeyboard()) {
         seat->setHasKeyboard(true);
+        m_keyboard->update();
         reconfigure();
     }
 
@@ -379,7 +395,10 @@ void redirect::handle_touch_added(input::touch* touch)
     QObject::connect(touch, &touch::frame, touch_red, &input::touch_redirect::frame);
 
     auto seat = find_seat();
-    seat->setHasTouch(true);
+    if (!seat->hasTouch()) {
+        seat->setHasTouch(true);
+        device_redirect_update_focus(m_touch.get());
+    }
 }
 
 void redirect::handle_switch_added(input::switch_device* switch_device)
