@@ -73,38 +73,38 @@ namespace KWin
 namespace TabBox
 {
 
-TabBoxHandlerImpl::TabBoxHandlerImpl(TabBox* tabBox)
-    : TabBoxHandler(tabBox)
-    , m_tabBox(tabBox)
-    , m_desktopFocusChain(new DesktopChainManager(this))
+TabBoxHandlerImpl::TabBoxHandlerImpl(TabBox* tabbox)
+    : TabBoxHandler(tabbox)
+    , m_tabbox(tabbox)
+    , m_desktop_focus_chain(new DesktopChainManager(this))
 {
     // connects for DesktopFocusChainManager
     auto vds = win::virtual_desktop_manager::self();
     connect(vds,
             &win::virtual_desktop_manager::countChanged,
-            m_desktopFocusChain,
+            m_desktop_focus_chain,
             &DesktopChainManager::resize);
     connect(vds,
             &win::virtual_desktop_manager::currentChanged,
-            m_desktopFocusChain,
-            &DesktopChainManager::addDesktop);
+            m_desktop_focus_chain,
+            &DesktopChainManager::add_desktop);
 }
 
 TabBoxHandlerImpl::~TabBoxHandlerImpl()
 {
 }
 
-int TabBoxHandlerImpl::activeScreen() const
+int TabBoxHandlerImpl::active_screen() const
 {
     return kwinApp()->get_base().screens.current();
 }
 
-int TabBoxHandlerImpl::currentDesktop() const
+int TabBoxHandlerImpl::current_desktop() const
 {
     return win::virtual_desktop_manager::self()->current();
 }
 
-QString TabBoxHandlerImpl::desktopName(TabBoxClient* client) const
+QString TabBoxHandlerImpl::desktop_name(TabBoxClient* client) const
 {
     if (TabBoxClientImpl* c = static_cast<TabBoxClientImpl*>(client)) {
         if (!c->client()->isOnAllDesktops())
@@ -114,12 +114,12 @@ QString TabBoxHandlerImpl::desktopName(TabBoxClient* client) const
         win::virtual_desktop_manager::self()->current());
 }
 
-QString TabBoxHandlerImpl::desktopName(int desktop) const
+QString TabBoxHandlerImpl::desktop_name(int desktop) const
 {
     return win::virtual_desktop_manager::self()->name(desktop);
 }
 
-std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::nextClientFocusChain(TabBoxClient* client) const
+std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::next_client_focus_chain(TabBoxClient* client) const
 {
     if (TabBoxClientImpl* c = static_cast<TabBoxClientImpl*>(client)) {
         auto next = win::focus_chain::self()->nextMostRecentlyUsed(c->client());
@@ -130,7 +130,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::nextClientFocusChain(TabBoxClient
     return std::weak_ptr<TabBoxClient>();
 }
 
-std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::firstClientFocusChain() const
+std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::first_client_focus_chain() const
 {
     if (auto c = win::focus_chain::self()->firstMostRecentlyUsed()) {
         return c->control->tabbox();
@@ -139,7 +139,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::firstClientFocusChain() const
     }
 }
 
-bool TabBoxHandlerImpl::isInFocusChain(TabBoxClient* client) const
+bool TabBoxHandlerImpl::is_in_focus_chain(TabBoxClient* client) const
 {
     if (TabBoxClientImpl* c = static_cast<TabBoxClientImpl*>(client)) {
         return win::focus_chain::self()->contains(c->client());
@@ -147,17 +147,17 @@ bool TabBoxHandlerImpl::isInFocusChain(TabBoxClient* client) const
     return false;
 }
 
-int TabBoxHandlerImpl::nextDesktopFocusChain(int desktop) const
+int TabBoxHandlerImpl::next_desktop_focus_chain(int desktop) const
 {
-    return m_desktopFocusChain->next(desktop);
+    return m_desktop_focus_chain->next(desktop);
 }
 
-int TabBoxHandlerImpl::numberOfDesktops() const
+int TabBoxHandlerImpl::number_of_desktops() const
 {
     return win::virtual_desktop_manager::self()->count();
 }
 
-std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::activeClient() const
+std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::active_client() const
 {
     if (workspace()->activeClient())
         return workspace()->activeClient()->control->tabbox();
@@ -165,11 +165,11 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::activeClient() const
         return std::weak_ptr<TabBoxClient>();
 }
 
-bool TabBoxHandlerImpl::checkDesktop(TabBoxClient* client, int desktop) const
+bool TabBoxHandlerImpl::check_desktop(TabBoxClient* client, int desktop) const
 {
     auto current = (static_cast<TabBoxClientImpl*>(client))->client();
 
-    switch (config().clientDesktopMode()) {
+    switch (config().client_desktop_mode()) {
     case TabBoxConfig::AllDesktopsClients:
         return true;
     case TabBoxConfig::ExcludeCurrentDesktopClients:
@@ -179,15 +179,15 @@ bool TabBoxHandlerImpl::checkDesktop(TabBoxClient* client, int desktop) const
     }
 }
 
-bool TabBoxHandlerImpl::checkApplications(TabBoxClient* client) const
+bool TabBoxHandlerImpl::check_applications(TabBoxClient* client) const
 {
     auto current = (static_cast<TabBoxClientImpl*>(client))->client();
     TabBoxClientImpl* c;
 
-    switch (config().clientApplicationsMode()) {
+    switch (config().client_applications_mode()) {
     case TabBoxConfig::OneWindowPerApplication:
         // check if the list already contains an entry of this application
-        for (auto client_weak : clientList()) {
+        for (auto client_weak : client_list()) {
             auto client = client_weak.lock();
             if (!client) {
                 continue;
@@ -201,7 +201,7 @@ bool TabBoxHandlerImpl::checkApplications(TabBoxClient* client) const
         }
         return true;
     case TabBoxConfig::AllWindowsCurrentApplication: {
-        auto pointer = tabBox->activeClient().lock();
+        auto pointer = tabBox->active_client().lock();
         if (!pointer) {
             return false;
         }
@@ -218,23 +218,23 @@ bool TabBoxHandlerImpl::checkApplications(TabBoxClient* client) const
     }
 }
 
-bool TabBoxHandlerImpl::checkMinimized(TabBoxClient* client) const
+bool TabBoxHandlerImpl::check_minimized(TabBoxClient* client) const
 {
-    switch (config().clientMinimizedMode()) {
+    switch (config().client_minimized_mode()) {
     case TabBoxConfig::ExcludeMinimizedClients:
-        return !client->isMinimized();
+        return !client->is_minimized();
     case TabBoxConfig::OnlyMinimizedClients:
-        return client->isMinimized();
+        return client->is_minimized();
     default: // TabBoxConfig::IgnoreMinimizedStatus
         return true;
     }
 }
 
-bool TabBoxHandlerImpl::checkMultiScreen(TabBoxClient* client) const
+bool TabBoxHandlerImpl::check_multi_screen(TabBoxClient* client) const
 {
     auto current = (static_cast<TabBoxClientImpl*>(client))->client();
 
-    switch (config().clientMultiScreenMode()) {
+    switch (config().client_multi_screen_mode()) {
     case TabBoxConfig::IgnoreMultiScreen:
         return true;
     case TabBoxConfig::ExcludeCurrentScreenClients:
@@ -244,8 +244,8 @@ bool TabBoxHandlerImpl::checkMultiScreen(TabBoxClient* client) const
     }
 }
 
-std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* client,
-                                                                 int desktop) const
+std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::client_to_add_to_list(TabBoxClient* client,
+                                                                     int desktop) const
 {
     if (!client) {
         return std::weak_ptr<TabBoxClient>();
@@ -253,8 +253,8 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
     Toplevel* ret = nullptr;
     auto current = (static_cast<TabBoxClientImpl*>(client))->client();
 
-    bool add_client = checkDesktop(client, desktop) && checkApplications(client)
-        && checkMinimized(client) && checkMultiScreen(client);
+    bool add_client = check_desktop(client, desktop) && check_applications(client)
+        && check_minimized(client) && check_multi_screen(client);
     add_client = add_client && win::wants_tab_focus(current) && !current->control->skip_switcher();
     if (add_client) {
         // don't add windows that have modal dialogs
@@ -262,7 +262,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
         if (!modal || !modal->control || modal == current) {
             ret = current;
         } else {
-            auto const cl = clientList();
+            auto const cl = client_list();
             if (std::find_if(cl.cbegin(),
                              cl.cend(),
                              [modal_client = modal->control->tabbox().lock()](auto const& client) {
@@ -276,7 +276,7 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::clientToAddToList(TabBoxClient* c
     return ret ? ret->control->tabbox() : std::weak_ptr<TabBoxClient>();
 }
 
-TabBoxClientList TabBoxHandlerImpl::stackingOrder() const
+TabBoxClientList TabBoxHandlerImpl::stacking_order() const
 {
     auto const stacking = workspace()->stacking_order->sorted();
     TabBoxClientList ret;
@@ -288,12 +288,12 @@ TabBoxClientList TabBoxHandlerImpl::stackingOrder() const
     return ret;
 }
 
-bool TabBoxHandlerImpl::isKWinCompositing() const
+bool TabBoxHandlerImpl::is_kwin_compositing() const
 {
     return workspace()->compositing();
 }
 
-void TabBoxHandlerImpl::raiseClient(TabBoxClient* c) const
+void TabBoxHandlerImpl::raise_client(TabBoxClient* c) const
 {
     win::raise_window(workspace(), static_cast<TabBoxClientImpl*>(c)->client());
 }
@@ -306,7 +306,7 @@ void TabBoxHandlerImpl::restack(TabBoxClient* c, TabBoxClient* under)
                  true);
 }
 
-void TabBoxHandlerImpl::elevateClient(TabBoxClient* c, QWindow* tabbox, bool b) const
+void TabBoxHandlerImpl::elevate_client(TabBoxClient* c, QWindow* tabbox, bool b) const
 {
     auto cl = static_cast<TabBoxClientImpl*>(c)->client();
     win::elevate(cl, b);
@@ -315,7 +315,7 @@ void TabBoxHandlerImpl::elevateClient(TabBoxClient* c, QWindow* tabbox, bool b) 
     }
 }
 
-std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::desktopClient() const
+std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::desktop_client() const
 {
     for (auto const& window : workspace()->stacking_order->sorted()) {
         if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop()
@@ -326,12 +326,12 @@ std::weak_ptr<TabBoxClient> TabBoxHandlerImpl::desktopClient() const
     return std::weak_ptr<TabBoxClient>();
 }
 
-void TabBoxHandlerImpl::activateAndClose()
+void TabBoxHandlerImpl::activate_and_close()
 {
-    m_tabBox->accept();
+    m_tabbox->accept();
 }
 
-void TabBoxHandlerImpl::highlightWindows(TabBoxClient* window, QWindow* controller)
+void TabBoxHandlerImpl::highlight_windows(TabBoxClient* window, QWindow* controller)
 {
     if (!effects) {
         return;
@@ -346,9 +346,9 @@ void TabBoxHandlerImpl::highlightWindows(TabBoxClient* window, QWindow* controll
     static_cast<render::effects_handler_impl*>(effects)->highlightWindows(windows);
 }
 
-bool TabBoxHandlerImpl::noModifierGrab() const
+bool TabBoxHandlerImpl::no_modifier_grab() const
 {
-    return m_tabBox->noModifierGrab();
+    return m_tabbox->no_modifier_grab();
 }
 
 /*********************************************************
@@ -380,7 +380,7 @@ QIcon TabBoxClientImpl::icon() const
     return m_client->control->icon();
 }
 
-bool TabBoxClientImpl::isMinimized() const
+bool TabBoxClientImpl::is_minimized() const
 {
     return m_client->control->minimized();
 }
@@ -405,7 +405,7 @@ int TabBoxClientImpl::height() const
     return m_client->size().height();
 }
 
-bool TabBoxClientImpl::isCloseable() const
+bool TabBoxClientImpl::is_closeable() const
 {
     return m_client->isCloseable();
 }
@@ -415,12 +415,12 @@ void TabBoxClientImpl::close()
     m_client->closeWindow();
 }
 
-bool TabBoxClientImpl::isFirstInTabBox() const
+bool TabBoxClientImpl::is_first_in_tabbox() const
 {
     return m_client->control->first_in_tabbox();
 }
 
-QUuid TabBoxClientImpl::internalId() const
+QUuid TabBoxClientImpl::internal_id() const
 {
     return m_client->internalId();
 }
@@ -439,56 +439,56 @@ TabBox* TabBox::create(QObject* parent)
 
 TabBox::TabBox(QObject* parent)
     : QObject(parent)
-    , m_displayRefcount(0)
-    , m_desktopGrab(false)
-    , m_tabGrab(false)
-    , m_noModifierGrab(false)
-    , m_forcedGlobalMouseGrab(false)
+    , m_display_ref_count(0)
+    , m_desktop_grab(false)
+    , m_tab_grab(false)
+    , m_no_modifier_grab(false)
+    , m_forced_global_mouse_grab(false)
     , m_ready(false)
 {
-    m_isShown = false;
-    m_defaultConfig = TabBoxConfig();
-    m_defaultConfig.setTabBoxMode(TabBoxConfig::ClientTabBox);
-    m_defaultConfig.setClientDesktopMode(TabBoxConfig::OnlyCurrentDesktopClients);
-    m_defaultConfig.setClientApplicationsMode(TabBoxConfig::AllWindowsAllApplications);
-    m_defaultConfig.setClientMinimizedMode(TabBoxConfig::IgnoreMinimizedStatus);
-    m_defaultConfig.setShowDesktopMode(TabBoxConfig::DoNotShowDesktopClient);
-    m_defaultConfig.setClientMultiScreenMode(TabBoxConfig::IgnoreMultiScreen);
-    m_defaultConfig.setClientSwitchingMode(TabBoxConfig::FocusChainSwitching);
+    m_is_shown = false;
+    m_default_config = TabBoxConfig();
+    m_default_config.set_tabbox_mode(TabBoxConfig::ClientTabBox);
+    m_default_config.set_client_desktop_mode(TabBoxConfig::OnlyCurrentDesktopClients);
+    m_default_config.set_client_applications_mode(TabBoxConfig::AllWindowsAllApplications);
+    m_default_config.set_client_minimized_mode(TabBoxConfig::IgnoreMinimizedStatus);
+    m_default_config.set_show_desktop_mode(TabBoxConfig::DoNotShowDesktopClient);
+    m_default_config.set_client_multi_screen_mode(TabBoxConfig::IgnoreMultiScreen);
+    m_default_config.set_client_switching_mode(TabBoxConfig::FocusChainSwitching);
 
-    m_alternativeConfig = TabBoxConfig();
-    m_alternativeConfig.setTabBoxMode(TabBoxConfig::ClientTabBox);
-    m_alternativeConfig.setClientDesktopMode(TabBoxConfig::AllDesktopsClients);
-    m_alternativeConfig.setClientApplicationsMode(TabBoxConfig::AllWindowsAllApplications);
-    m_alternativeConfig.setClientMinimizedMode(TabBoxConfig::IgnoreMinimizedStatus);
-    m_alternativeConfig.setShowDesktopMode(TabBoxConfig::DoNotShowDesktopClient);
-    m_alternativeConfig.setClientMultiScreenMode(TabBoxConfig::IgnoreMultiScreen);
-    m_alternativeConfig.setClientSwitchingMode(TabBoxConfig::FocusChainSwitching);
+    m_alternative_config = TabBoxConfig();
+    m_alternative_config.set_tabbox_mode(TabBoxConfig::ClientTabBox);
+    m_alternative_config.set_client_desktop_mode(TabBoxConfig::AllDesktopsClients);
+    m_alternative_config.set_client_applications_mode(TabBoxConfig::AllWindowsAllApplications);
+    m_alternative_config.set_client_minimized_mode(TabBoxConfig::IgnoreMinimizedStatus);
+    m_alternative_config.set_show_desktop_mode(TabBoxConfig::DoNotShowDesktopClient);
+    m_alternative_config.set_client_multi_screen_mode(TabBoxConfig::IgnoreMultiScreen);
+    m_alternative_config.set_client_switching_mode(TabBoxConfig::FocusChainSwitching);
 
-    m_defaultCurrentApplicationConfig = m_defaultConfig;
-    m_defaultCurrentApplicationConfig.setClientApplicationsMode(
+    m_default_current_application_config = m_default_config;
+    m_default_current_application_config.set_client_applications_mode(
         TabBoxConfig::AllWindowsCurrentApplication);
 
-    m_alternativeCurrentApplicationConfig = m_alternativeConfig;
-    m_alternativeCurrentApplicationConfig.setClientApplicationsMode(
+    m_alternative_current_application_config = m_alternative_config;
+    m_alternative_current_application_config.set_client_applications_mode(
         TabBoxConfig::AllWindowsCurrentApplication);
 
-    m_desktopConfig = TabBoxConfig();
-    m_desktopConfig.setTabBoxMode(TabBoxConfig::DesktopTabBox);
-    m_desktopConfig.setShowTabBox(true);
-    m_desktopConfig.setShowDesktopMode(TabBoxConfig::DoNotShowDesktopClient);
-    m_desktopConfig.setDesktopSwitchingMode(TabBoxConfig::MostRecentlyUsedDesktopSwitching);
+    m_desktop_config = TabBoxConfig();
+    m_desktop_config.set_tabbox_mode(TabBoxConfig::DesktopTabBox);
+    m_desktop_config.set_show_tabbox(true);
+    m_desktop_config.set_show_desktop_mode(TabBoxConfig::DoNotShowDesktopClient);
+    m_desktop_config.set_desktop_switching_mode(TabBoxConfig::MostRecentlyUsedDesktopSwitching);
 
-    m_desktopListConfig = TabBoxConfig();
-    m_desktopListConfig.setTabBoxMode(TabBoxConfig::DesktopTabBox);
-    m_desktopListConfig.setShowTabBox(true);
-    m_desktopListConfig.setShowDesktopMode(TabBoxConfig::DoNotShowDesktopClient);
-    m_desktopListConfig.setDesktopSwitchingMode(TabBoxConfig::StaticDesktopSwitching);
-    m_tabBox = new TabBoxHandlerImpl(this);
-    QTimer::singleShot(0, this, &TabBox::handlerReady);
+    m_desktop_list_config = TabBoxConfig();
+    m_desktop_list_config.set_tabbox_mode(TabBoxConfig::DesktopTabBox);
+    m_desktop_list_config.set_show_tabbox(true);
+    m_desktop_list_config.set_show_desktop_mode(TabBoxConfig::DoNotShowDesktopClient);
+    m_desktop_list_config.set_desktop_switching_mode(TabBoxConfig::StaticDesktopSwitching);
+    m_tabbox = new TabBoxHandlerImpl(this);
+    QTimer::singleShot(0, this, &TabBox::handler_ready);
 
-    m_tabBoxMode = TabBoxDesktopMode; // init variables
-    connect(&m_delayedShowTimer, &QTimer::timeout, this, &TabBox::show);
+    m_tabbox_mode = TabBoxDesktopMode; // init variables
+    connect(&m_delayed_show_timer, &QTimer::timeout, this, &TabBox::show);
     connect(workspace(), &win::space::configChanged, this, &TabBox::reconfigure);
 }
 
@@ -497,24 +497,24 @@ TabBox::~TabBox()
     s_self = nullptr;
 }
 
-void TabBox::handlerReady()
+void TabBox::handler_ready()
 {
-    m_tabBox->setConfig(m_defaultConfig);
+    m_tabbox->set_config(m_default_config);
     reconfigure();
     m_ready = true;
 }
 
 template<typename Slot>
-void TabBox::key(const char* actionName, Slot slot, const QKeySequence& shortcut)
+void TabBox::key(const char* action_name, Slot slot, const QKeySequence& shortcut)
 {
     QAction* a = new QAction(this);
     a->setProperty("componentName", QStringLiteral(KWIN_NAME));
-    a->setObjectName(QString::fromUtf8(actionName));
-    a->setText(i18n(actionName));
+    a->setObjectName(QString::fromUtf8(action_name));
+    a->setText(i18n(action_name));
     KGlobalAccel::self()->setGlobalShortcut(a, QList<QKeySequence>() << shortcut);
     kwinApp()->input->redirect->registerShortcut(shortcut, a, TabBox::self(), slot);
     auto cuts = KGlobalAccel::self()->shortcut(a);
-    globalShortcutChanged(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
+    global_shortcut_changed(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
 }
 
 static const char s_windows[] = I18N_NOOP("Walk Through Windows");
@@ -531,119 +531,124 @@ static const char s_desktopsRev[] = I18N_NOOP("Walk Through Desktops (Reverse)")
 static const char s_desktopList[] = I18N_NOOP("Walk Through Desktop List");
 static const char s_desktopListRev[] = I18N_NOOP("Walk Through Desktop List (Reverse)");
 
-void TabBox::initShortcuts()
+void TabBox::init_shortcuts()
 {
-    key(s_windows, &TabBox::slotWalkThroughWindows, Qt::ALT + Qt::Key_Tab);
-    key(s_windowsRev, &TabBox::slotWalkBackThroughWindows, Qt::ALT + Qt::SHIFT + Qt::Key_Backtab);
-    key(s_app, &TabBox::slotWalkThroughCurrentAppWindows, Qt::ALT + Qt::Key_QuoteLeft);
-    key(s_appRev, &TabBox::slotWalkBackThroughCurrentAppWindows, Qt::ALT + Qt::Key_AsciiTilde);
-    key(s_windowsAlt, &TabBox::slotWalkThroughWindowsAlternative);
-    key(s_windowsAltRev, &TabBox::slotWalkBackThroughWindowsAlternative);
-    key(s_appAlt, &TabBox::slotWalkThroughCurrentAppWindowsAlternative);
-    key(s_appAltRev, &TabBox::slotWalkBackThroughCurrentAppWindowsAlternative);
-    key(s_desktops, &TabBox::slotWalkThroughDesktops);
-    key(s_desktopsRev, &TabBox::slotWalkBackThroughDesktops);
-    key(s_desktopList, &TabBox::slotWalkThroughDesktopList);
-    key(s_desktopListRev, &TabBox::slotWalkBackThroughDesktopList);
+    key(s_windows, &TabBox::slot_walk_through_windows, Qt::ALT + Qt::Key_Tab);
+    key(s_windowsRev,
+        &TabBox::slot_walk_back_through_windows,
+        Qt::ALT + Qt::SHIFT + Qt::Key_Backtab);
+    key(s_app, &TabBox::slot_walk_through_current_app_windows, Qt::ALT + Qt::Key_QuoteLeft);
+    key(s_appRev,
+        &TabBox::slot_walk_back_through_current_app_windows,
+        Qt::ALT + Qt::Key_AsciiTilde);
+    key(s_windowsAlt, &TabBox::slot_walk_through_windows_alternative);
+    key(s_windowsAltRev, &TabBox::slot_walk_back_through_windows_alternative);
+    key(s_appAlt, &TabBox::slot_walk_through_current_app_windows_alternative);
+    key(s_appAltRev, &TabBox::slot_walk_back_through_current_app_windows_alternative);
+    key(s_desktops, &TabBox::slot_walk_through_desktops);
+    key(s_desktopsRev, &TabBox::slot_walk_back_through_desktops);
+    key(s_desktopList, &TabBox::slot_walk_through_desktop_list);
+    key(s_desktopListRev, &TabBox::slot_walk_back_through_desktop_list);
 
     connect(KGlobalAccel::self(),
             &KGlobalAccel::globalShortcutChanged,
             this,
-            &TabBox::globalShortcutChanged);
+            &TabBox::global_shortcut_changed);
 }
 
-void TabBox::globalShortcutChanged(QAction* action, const QKeySequence& seq)
+void TabBox::global_shortcut_changed(QAction* action, const QKeySequence& seq)
 {
     if (qstrcmp(qPrintable(action->objectName()), s_windows) == 0) {
-        m_cutWalkThroughWindows = seq;
+        m_cut_walk_through_windows = seq;
     } else if (qstrcmp(qPrintable(action->objectName()), s_windowsRev) == 0) {
-        m_cutWalkThroughWindowsReverse = seq;
+        m_cut_walk_through_windows_reverse = seq;
     } else if (qstrcmp(qPrintable(action->objectName()), s_app) == 0) {
-        m_cutWalkThroughCurrentAppWindows = seq;
+        m_cut_walk_through_current_app_windows = seq;
     } else if (qstrcmp(qPrintable(action->objectName()), s_appRev) == 0) {
-        m_cutWalkThroughCurrentAppWindowsReverse = seq;
+        m_cut_walk_through_current_app_windows_reverse = seq;
     } else if (qstrcmp(qPrintable(action->objectName()), s_windowsAlt) == 0) {
-        m_cutWalkThroughWindowsAlternative = seq;
+        m_cut_walk_through_windows_alternative = seq;
     } else if (qstrcmp(qPrintable(action->objectName()), s_windowsAltRev) == 0) {
-        m_cutWalkThroughWindowsAlternativeReverse = seq;
+        m_cut_walk_through_windows_alternative_reverse = seq;
     } else if (qstrcmp(qPrintable(action->objectName()), s_appAlt) == 0) {
-        m_cutWalkThroughCurrentAppWindowsAlternative = seq;
+        m_cut_walk_through_current_app_windows_alternative = seq;
     } else if (qstrcmp(qPrintable(action->objectName()), s_appAltRev) == 0) {
-        m_cutWalkThroughCurrentAppWindowsAlternativeReverse = seq;
+        m_cut_walk_through_current_app_windows_alternative_reverse = seq;
     } else if (qstrcmp(qPrintable(action->objectName()), s_desktops) == 0) {
-        m_cutWalkThroughDesktops = seq;
+        m_cut_walk_through_desktops = seq;
     } else if (qstrcmp(qPrintable(action->objectName()), s_desktopsRev) == 0) {
-        m_cutWalkThroughDesktopsReverse = seq;
+        m_cut_walk_through_desktops_reverse = seq;
     } else if (qstrcmp(qPrintable(action->objectName()), s_desktopList) == 0) {
-        m_cutWalkThroughDesktopList = seq;
+        m_cut_walk_through_desktop_list = seq;
     } else if (qstrcmp(qPrintable(action->objectName()), s_desktopListRev) == 0) {
-        m_cutWalkThroughDesktopListReverse = seq;
+        m_cut_walk_through_desktop_list_reverse = seq;
     }
 }
 
-void TabBox::setMode(TabBoxMode mode)
+void TabBox::set_mode(TabBoxMode mode)
 {
-    m_tabBoxMode = mode;
+    m_tabbox_mode = mode;
     switch (mode) {
     case TabBoxWindowsMode:
-        m_tabBox->setConfig(m_defaultConfig);
+        m_tabbox->set_config(m_default_config);
         break;
     case TabBoxWindowsAlternativeMode:
-        m_tabBox->setConfig(m_alternativeConfig);
+        m_tabbox->set_config(m_alternative_config);
         break;
     case TabBoxCurrentAppWindowsMode:
-        m_tabBox->setConfig(m_defaultCurrentApplicationConfig);
+        m_tabbox->set_config(m_default_current_application_config);
         break;
     case TabBoxCurrentAppWindowsAlternativeMode:
-        m_tabBox->setConfig(m_alternativeCurrentApplicationConfig);
+        m_tabbox->set_config(m_alternative_current_application_config);
         break;
     case TabBoxDesktopMode:
-        m_tabBox->setConfig(m_desktopConfig);
+        m_tabbox->set_config(m_desktop_config);
         break;
     case TabBoxDesktopListMode:
-        m_tabBox->setConfig(m_desktopListConfig);
+        m_tabbox->set_config(m_desktop_list_config);
         break;
     }
 }
 
 void TabBox::reset(bool partial_reset)
 {
-    switch (m_tabBox->config().tabBoxMode()) {
+    switch (m_tabbox->config().tabbox_mode()) {
     case TabBoxConfig::ClientTabBox:
-        m_tabBox->createModel(partial_reset);
+        m_tabbox->create_model(partial_reset);
         if (!partial_reset) {
             if (workspace()->activeClient())
-                setCurrentClient(workspace()->activeClient());
+                set_current_client(workspace()->activeClient());
             // it's possible that the active client is not part of the model
             // in that case the index is invalid
-            if (!m_tabBox->currentIndex().isValid())
-                setCurrentIndex(m_tabBox->first());
+            if (!m_tabbox->current_index().isValid())
+                set_current_index(m_tabbox->first());
         } else {
-            if (!m_tabBox->currentIndex().isValid() || !m_tabBox->client(m_tabBox->currentIndex()))
-                setCurrentIndex(m_tabBox->first());
+            if (!m_tabbox->current_index().isValid()
+                || !m_tabbox->client(m_tabbox->current_index()))
+                set_current_index(m_tabbox->first());
         }
         break;
     case TabBoxConfig::DesktopTabBox:
-        m_tabBox->createModel();
+        m_tabbox->create_model();
 
         if (!partial_reset)
-            setCurrentDesktop(win::virtual_desktop_manager::self()->current());
+            set_current_desktop(win::virtual_desktop_manager::self()->current());
         break;
     }
 
-    Q_EMIT tabBoxUpdated();
+    Q_EMIT tabbox_updated();
 }
 
-void TabBox::nextPrev(bool next)
+void TabBox::next_prev(bool next)
 {
-    setCurrentIndex(m_tabBox->nextPrev(next), false);
-    Q_EMIT tabBoxUpdated();
+    set_current_index(m_tabbox->next_prev(next), false);
+    Q_EMIT tabbox_updated();
 }
 
-Toplevel* TabBox::currentClient()
+Toplevel* TabBox::current_client()
 {
     if (TabBoxClientImpl* client
-        = static_cast<TabBoxClientImpl*>(m_tabBox->client(m_tabBox->currentIndex()))) {
+        = static_cast<TabBoxClientImpl*>(m_tabbox->client(m_tabbox->current_index()))) {
         if (!workspace()->hasClient(client->client()))
             return nullptr;
         return client->client();
@@ -651,9 +656,9 @@ Toplevel* TabBox::currentClient()
         return nullptr;
 }
 
-QList<Toplevel*> TabBox::currentClientList()
+QList<Toplevel*> TabBox::current_client_list()
 {
-    auto const list = m_tabBox->clientList();
+    auto const list = m_tabbox->client_list();
     QList<Toplevel*> ret;
 
     for (auto& client_pointer : list) {
@@ -668,60 +673,60 @@ QList<Toplevel*> TabBox::currentClientList()
     return ret;
 }
 
-int TabBox::currentDesktop()
+int TabBox::current_desktop()
 {
-    return m_tabBox->desktop(m_tabBox->currentIndex());
+    return m_tabbox->desktop(m_tabbox->current_index());
 }
 
-QList<int> TabBox::currentDesktopList()
+QList<int> TabBox::current_desktop_list()
 {
-    return m_tabBox->desktopList();
+    return m_tabbox->desktop_list();
 }
 
-void TabBox::setCurrentClient(Toplevel* window)
+void TabBox::set_current_client(Toplevel* window)
 {
-    setCurrentIndex(m_tabBox->index(window->control->tabbox().lock().get()));
+    set_current_index(m_tabbox->index(window->control->tabbox().lock().get()));
 }
 
-void TabBox::setCurrentDesktop(int newDesktop)
+void TabBox::set_current_desktop(int new_desktop)
 {
-    setCurrentIndex(m_tabBox->desktopIndex(newDesktop));
+    set_current_index(m_tabbox->desktop_index(new_desktop));
 }
 
-void TabBox::setCurrentIndex(QModelIndex index, bool notifyEffects)
+void TabBox::set_current_index(QModelIndex index, bool notify_effects)
 {
     if (!index.isValid())
         return;
-    m_tabBox->setCurrentIndex(index);
-    if (notifyEffects) {
-        Q_EMIT tabBoxUpdated();
+    m_tabbox->set_current_index(index);
+    if (notify_effects) {
+        Q_EMIT tabbox_updated();
     }
 }
 
 void TabBox::show()
 {
-    Q_EMIT tabBoxAdded(m_tabBoxMode);
-    if (isDisplayed()) {
-        m_isShown = false;
+    Q_EMIT tabbox_added(m_tabbox_mode);
+    if (is_displayed()) {
+        m_is_shown = false;
         return;
     }
     workspace()->setShowingDesktop(false);
     reference();
-    m_isShown = true;
-    m_tabBox->show();
+    m_is_shown = true;
+    m_tabbox->show();
 }
 
 void TabBox::hide(bool abort)
 {
-    m_delayedShowTimer.stop();
-    if (m_isShown) {
-        m_isShown = false;
+    m_delayed_show_timer.stop();
+    if (m_is_shown) {
+        m_is_shown = false;
         unreference();
     }
-    Q_EMIT tabBoxClosed();
-    if (isDisplayed())
+    Q_EMIT tabbox_closed();
+    if (is_displayed())
         qCDebug(KWIN_TABBOX) << "Tab box was not properly closed by an effect";
-    m_tabBox->hide(abort);
+    m_tabbox->hide(abort);
     if (kwinApp()->x11Connection()) {
         base::x11::xcb::sync();
     }
@@ -732,27 +737,27 @@ void TabBox::reconfigure()
     KSharedConfigPtr c = kwinApp()->config();
     KConfigGroup config = c->group("TabBox");
 
-    loadConfig(c->group("TabBox"), m_defaultConfig);
-    loadConfig(c->group("TabBoxAlternative"), m_alternativeConfig);
+    load_config(c->group("TabBox"), m_default_config);
+    load_config(c->group("TabBoxAlternative"), m_alternative_config);
 
-    m_defaultCurrentApplicationConfig = m_defaultConfig;
-    m_defaultCurrentApplicationConfig.setClientApplicationsMode(
+    m_default_current_application_config = m_default_config;
+    m_default_current_application_config.set_client_applications_mode(
         TabBoxConfig::AllWindowsCurrentApplication);
-    m_alternativeCurrentApplicationConfig = m_alternativeConfig;
-    m_alternativeCurrentApplicationConfig.setClientApplicationsMode(
+    m_alternative_current_application_config = m_alternative_config;
+    m_alternative_current_application_config.set_client_applications_mode(
         TabBoxConfig::AllWindowsCurrentApplication);
 
-    m_tabBox->setConfig(m_defaultConfig);
+    m_tabbox->set_config(m_default_config);
 
-    m_delayShow = config.readEntry<bool>("ShowDelay", true);
-    m_delayShowTime = config.readEntry<int>("DelayTime", 90);
+    m_delay_show = config.readEntry<bool>("ShowDelay", true);
+    m_delay_show_time = config.readEntry<int>("DelayTime", 90);
 
     const QString default_desktop_layout = QStringLiteral("org.kde.breeze.desktop");
-    m_desktopConfig.setLayoutName(config.readEntry("DesktopLayout", default_desktop_layout));
-    m_desktopListConfig.setLayoutName(
+    m_desktop_config.set_layout_name(config.readEntry("DesktopLayout", default_desktop_layout));
+    m_desktop_list_config.set_layout_name(
         config.readEntry("DesktopListLayout", default_desktop_layout));
 
-    QList<ElectricBorder>* borders = &m_borderActivate;
+    QList<ElectricBorder>* borders = &m_border_activate;
     QString border_config = QStringLiteral("BorderActivate");
     for (int i = 0; i < 2; ++i) {
         for (auto const& border : qAsConst(*borders)) {
@@ -768,7 +773,7 @@ void TabBox::reconfigure()
             borders->append(ElectricBorder(i));
             workspace()->edges->reserve(ElectricBorder(i), this, "toggle");
         }
-        borders = &m_borderAlternativeActivate;
+        borders = &m_border_alternative_activate;
         border_config = QStringLiteral("BorderAlternativeActivate");
     }
 
@@ -790,59 +795,59 @@ void TabBox::reconfigure()
                 continue;
             }
             QAction* a = new QAction(this);
-            connect(a, &QAction::triggered, this, std::bind(&TabBox::toggleMode, this, mode));
+            connect(a, &QAction::triggered, this, std::bind(&TabBox::toggle_mode, this, mode));
             workspace()->edges->reserveTouch(ElectricBorder(i), a);
             actions.insert(ElectricBorder(i), a);
         }
     };
-    touch_config(QStringLiteral("TouchBorderActivate"), m_touchActivate, TabBoxWindowsMode);
+    touch_config(QStringLiteral("TouchBorderActivate"), m_touch_activate, TabBoxWindowsMode);
     touch_config(QStringLiteral("TouchBorderAlternativeActivate"),
-                 m_touchAlternativeActivate,
+                 m_touch_alternative_activate,
                  TabBoxWindowsAlternativeMode);
 }
 
-void TabBox::loadConfig(const KConfigGroup& config, TabBoxConfig& tabBoxConfig)
+void TabBox::load_config(const KConfigGroup& config, TabBoxConfig& tabBoxConfig)
 {
-    tabBoxConfig.setClientDesktopMode(TabBoxConfig::ClientDesktopMode(
-        config.readEntry<int>("DesktopMode", TabBoxConfig::defaultDesktopMode())));
-    tabBoxConfig.setClientApplicationsMode(TabBoxConfig::ClientApplicationsMode(
-        config.readEntry<int>("ApplicationsMode", TabBoxConfig::defaultApplicationsMode())));
-    tabBoxConfig.setClientMinimizedMode(TabBoxConfig::ClientMinimizedMode(
-        config.readEntry<int>("MinimizedMode", TabBoxConfig::defaultMinimizedMode())));
-    tabBoxConfig.setShowDesktopMode(TabBoxConfig::ShowDesktopMode(
-        config.readEntry<int>("ShowDesktopMode", TabBoxConfig::defaultShowDesktopMode())));
-    tabBoxConfig.setClientMultiScreenMode(TabBoxConfig::ClientMultiScreenMode(
-        config.readEntry<int>("MultiScreenMode", TabBoxConfig::defaultMultiScreenMode())));
-    tabBoxConfig.setClientSwitchingMode(TabBoxConfig::ClientSwitchingMode(
-        config.readEntry<int>("SwitchingMode", TabBoxConfig::defaultSwitchingMode())));
+    tabBoxConfig.set_client_desktop_mode(TabBoxConfig::ClientDesktopMode(
+        config.readEntry<int>("DesktopMode", TabBoxConfig::default_desktop_mode())));
+    tabBoxConfig.set_client_applications_mode(TabBoxConfig::ClientApplicationsMode(
+        config.readEntry<int>("ApplicationsMode", TabBoxConfig::default_applications_mode())));
+    tabBoxConfig.set_client_minimized_mode(TabBoxConfig::ClientMinimizedMode(
+        config.readEntry<int>("MinimizedMode", TabBoxConfig::default_minimized_mode())));
+    tabBoxConfig.set_show_desktop_mode(TabBoxConfig::ShowDesktopMode(
+        config.readEntry<int>("ShowDesktopMode", TabBoxConfig::default_show_desktop_mode())));
+    tabBoxConfig.set_client_multi_screen_mode(TabBoxConfig::ClientMultiScreenMode(
+        config.readEntry<int>("MultiScreenMode", TabBoxConfig::default_multi_screen_mode())));
+    tabBoxConfig.set_client_switching_mode(TabBoxConfig::ClientSwitchingMode(
+        config.readEntry<int>("SwitchingMode", TabBoxConfig::default_switching_mode())));
 
-    tabBoxConfig.setShowTabBox(
-        config.readEntry<bool>("ShowTabBox", TabBoxConfig::defaultShowTabBox()));
-    tabBoxConfig.setHighlightWindows(
-        config.readEntry<bool>("HighlightWindows", TabBoxConfig::defaultHighlightWindow()));
+    tabBoxConfig.set_show_tabbox(
+        config.readEntry<bool>("ShowTabBox", TabBoxConfig::default_show_tabbox()));
+    tabBoxConfig.set_highlight_windows(
+        config.readEntry<bool>("HighlightWindows", TabBoxConfig::default_highlight_window()));
 
-    tabBoxConfig.setLayoutName(
-        config.readEntry<QString>("LayoutName", TabBoxConfig::defaultLayoutName()));
+    tabBoxConfig.set_layout_name(
+        config.readEntry<QString>("LayoutName", TabBoxConfig::default_layout_name()));
 }
 
-void TabBox::delayedShow()
+void TabBox::delayed_show()
 {
-    if (isDisplayed() || m_delayedShowTimer.isActive())
+    if (is_displayed() || m_delayed_show_timer.isActive())
         // already called show - no need to call it twice
         return;
 
-    if (!m_delayShowTime) {
+    if (!m_delay_show_time) {
         show();
         return;
     }
 
-    m_delayedShowTimer.setSingleShot(true);
-    m_delayedShowTimer.start(m_delayShowTime);
+    m_delayed_show_timer.setSingleShot(true);
+    m_delayed_show_timer.start(m_delay_show_time);
 }
 
-bool TabBox::handleMouseEvent(QMouseEvent* event)
+bool TabBox::handle_mouse_event(QMouseEvent* event)
 {
-    if (!m_isShown && isDisplayed()) {
+    if (!m_is_shown && is_displayed()) {
         // tabbox has been replaced, check effects
         if (effects
             && static_cast<render::effects_handler_impl*>(effects)->checkInputWindowEvent(event)) {
@@ -851,14 +856,14 @@ bool TabBox::handleMouseEvent(QMouseEvent* event)
     }
     switch (event->type()) {
     case QEvent::MouseMove:
-        if (!m_tabBox->containsPos(event->globalPos())) {
+        if (!m_tabbox->contains_pos(event->globalPos())) {
             // filter out all events which are not on the TabBox window.
             // We don't want windows to react on the mouse events
             return true;
         }
         return false;
     case QEvent::MouseButtonPress:
-        if ((!m_isShown && isDisplayed()) || !m_tabBox->containsPos(event->globalPos())) {
+        if ((!m_is_shown && is_displayed()) || !m_tabbox->contains_pos(event->globalPos())) {
             close(); // click outside closes tab
             return true;
         }
@@ -871,9 +876,9 @@ bool TabBox::handleMouseEvent(QMouseEvent* event)
     return false;
 }
 
-bool TabBox::handleWheelEvent(QWheelEvent* event)
+bool TabBox::handle_wheel_event(QWheelEvent* event)
 {
-    if (!m_isShown && isDisplayed()) {
+    if (!m_is_shown && is_displayed()) {
         // tabbox has been replaced, check effects
         if (effects
             && static_cast<render::effects_handler_impl*>(effects)->checkInputWindowEvent(event)) {
@@ -883,28 +888,28 @@ bool TabBox::handleWheelEvent(QWheelEvent* event)
     if (event->angleDelta().y() == 0) {
         return false;
     }
-    const QModelIndex index = m_tabBox->nextPrev(event->angleDelta().y() > 0);
+    const QModelIndex index = m_tabbox->next_prev(event->angleDelta().y() > 0);
     if (index.isValid()) {
-        setCurrentIndex(index);
+        set_current_index(index);
     }
     return true;
 }
 
-void TabBox::grabbedKeyEvent(QKeyEvent* event)
+void TabBox::grabbed_key_event(QKeyEvent* event)
 {
-    Q_EMIT tabBoxKeyEvent(event);
-    if (!m_isShown && isDisplayed()) {
+    Q_EMIT tabbox_key_event(event);
+    if (!m_is_shown && is_displayed()) {
         // tabbox has been replaced, check effects
         return;
     }
-    if (m_noModifierGrab) {
+    if (m_no_modifier_grab) {
         if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return
             || event->key() == Qt::Key_Space) {
             accept();
             return;
         }
     }
-    m_tabBox->grabbedKeyEvent(event);
+    m_tabbox->grabbed_key_event(event);
 }
 
 struct KeySymbolsDeleter {
@@ -1024,195 +1029,197 @@ static bool areModKeysDepressed(const QKeySequence& seq)
     }
 }
 
-void TabBox::navigatingThroughWindows(bool forward, const QKeySequence& shortcut, TabBoxMode mode)
+void TabBox::navigating_through_windows(bool forward, const QKeySequence& shortcut, TabBoxMode mode)
 {
-    if (!m_ready || isGrabbed()) {
+    if (!m_ready || is_grabbed()) {
         return;
     }
     if (!kwinApp()->options->focusPolicyIsReasonable()) {
         // ungrabXKeyboard(); // need that because of accelerator raw mode
         //  CDE style raise / lower
-        CDEWalkThroughWindows(forward);
+        cde_walk_through_windows(forward);
     } else {
         if (areModKeysDepressed(shortcut)) {
-            if (startKDEWalkThroughWindows(mode))
-                KDEWalkThroughWindows(forward);
+            if (start_kde_walk_through_windows(mode))
+                kde_walk_through_windows(forward);
         } else
             // if the shortcut has no modifiers, don't show the tabbox,
             // don't grab, but simply go to the next window
-            KDEOneStepThroughWindows(forward, mode);
+            kde_one_step_through_windows(forward, mode);
     }
 }
 
-void TabBox::slotWalkThroughWindows()
+void TabBox::slot_walk_through_windows()
 {
-    navigatingThroughWindows(true, m_cutWalkThroughWindows, TabBoxWindowsMode);
+    navigating_through_windows(true, m_cut_walk_through_windows, TabBoxWindowsMode);
 }
 
-void TabBox::slotWalkBackThroughWindows()
+void TabBox::slot_walk_back_through_windows()
 {
-    navigatingThroughWindows(false, m_cutWalkThroughWindowsReverse, TabBoxWindowsMode);
+    navigating_through_windows(false, m_cut_walk_through_windows_reverse, TabBoxWindowsMode);
 }
 
-void TabBox::slotWalkThroughWindowsAlternative()
+void TabBox::slot_walk_through_windows_alternative()
 {
-    navigatingThroughWindows(
-        true, m_cutWalkThroughWindowsAlternative, TabBoxWindowsAlternativeMode);
+    navigating_through_windows(
+        true, m_cut_walk_through_windows_alternative, TabBoxWindowsAlternativeMode);
 }
 
-void TabBox::slotWalkBackThroughWindowsAlternative()
+void TabBox::slot_walk_back_through_windows_alternative()
 {
-    navigatingThroughWindows(
-        false, m_cutWalkThroughWindowsAlternativeReverse, TabBoxWindowsAlternativeMode);
+    navigating_through_windows(
+        false, m_cut_walk_through_windows_alternative_reverse, TabBoxWindowsAlternativeMode);
 }
 
-void TabBox::slotWalkThroughCurrentAppWindows()
+void TabBox::slot_walk_through_current_app_windows()
 {
-    navigatingThroughWindows(true, m_cutWalkThroughCurrentAppWindows, TabBoxCurrentAppWindowsMode);
+    navigating_through_windows(
+        true, m_cut_walk_through_current_app_windows, TabBoxCurrentAppWindowsMode);
 }
 
-void TabBox::slotWalkBackThroughCurrentAppWindows()
+void TabBox::slot_walk_back_through_current_app_windows()
 {
-    navigatingThroughWindows(
-        false, m_cutWalkThroughCurrentAppWindowsReverse, TabBoxCurrentAppWindowsMode);
+    navigating_through_windows(
+        false, m_cut_walk_through_current_app_windows_reverse, TabBoxCurrentAppWindowsMode);
 }
 
-void TabBox::slotWalkThroughCurrentAppWindowsAlternative()
+void TabBox::slot_walk_through_current_app_windows_alternative()
 {
-    navigatingThroughWindows(
-        true, m_cutWalkThroughCurrentAppWindowsAlternative, TabBoxCurrentAppWindowsAlternativeMode);
+    navigating_through_windows(true,
+                               m_cut_walk_through_current_app_windows_alternative,
+                               TabBoxCurrentAppWindowsAlternativeMode);
 }
 
-void TabBox::slotWalkBackThroughCurrentAppWindowsAlternative()
+void TabBox::slot_walk_back_through_current_app_windows_alternative()
 {
-    navigatingThroughWindows(false,
-                             m_cutWalkThroughCurrentAppWindowsAlternativeReverse,
-                             TabBoxCurrentAppWindowsAlternativeMode);
+    navigating_through_windows(false,
+                               m_cut_walk_through_current_app_windows_alternative_reverse,
+                               TabBoxCurrentAppWindowsAlternativeMode);
 }
 
-void TabBox::slotWalkThroughDesktops()
+void TabBox::slot_walk_through_desktops()
 {
-    if (!m_ready || isGrabbed()) {
+    if (!m_ready || is_grabbed()) {
         return;
     }
-    if (areModKeysDepressed(m_cutWalkThroughDesktops)) {
-        if (startWalkThroughDesktops())
-            walkThroughDesktops(true);
+    if (areModKeysDepressed(m_cut_walk_through_desktops)) {
+        if (start_walk_through_desktops())
+            walk_through_desktops(true);
     } else {
-        oneStepThroughDesktops(true);
+        one_step_through_desktops(true);
     }
 }
 
-void TabBox::slotWalkBackThroughDesktops()
+void TabBox::slot_walk_back_through_desktops()
 {
-    if (!m_ready || isGrabbed()) {
+    if (!m_ready || is_grabbed()) {
         return;
     }
-    if (areModKeysDepressed(m_cutWalkThroughDesktopsReverse)) {
-        if (startWalkThroughDesktops())
-            walkThroughDesktops(false);
+    if (areModKeysDepressed(m_cut_walk_through_desktops_reverse)) {
+        if (start_walk_through_desktops())
+            walk_through_desktops(false);
     } else {
-        oneStepThroughDesktops(false);
+        one_step_through_desktops(false);
     }
 }
 
-void TabBox::slotWalkThroughDesktopList()
+void TabBox::slot_walk_through_desktop_list()
 {
-    if (!m_ready || isGrabbed()) {
+    if (!m_ready || is_grabbed()) {
         return;
     }
-    if (areModKeysDepressed(m_cutWalkThroughDesktopList)) {
-        if (startWalkThroughDesktopList())
-            walkThroughDesktops(true);
+    if (areModKeysDepressed(m_cut_walk_through_desktop_list)) {
+        if (start_walk_through_desktop_list())
+            walk_through_desktops(true);
     } else {
-        oneStepThroughDesktopList(true);
+        one_step_through_desktop_list(true);
     }
 }
 
-void TabBox::slotWalkBackThroughDesktopList()
+void TabBox::slot_walk_back_through_desktop_list()
 {
-    if (!m_ready || isGrabbed()) {
+    if (!m_ready || is_grabbed()) {
         return;
     }
-    if (areModKeysDepressed(m_cutWalkThroughDesktopListReverse)) {
-        if (startWalkThroughDesktopList())
-            walkThroughDesktops(false);
+    if (areModKeysDepressed(m_cut_walk_through_desktop_list_reverse)) {
+        if (start_walk_through_desktop_list())
+            walk_through_desktops(false);
     } else {
-        oneStepThroughDesktopList(false);
+        one_step_through_desktop_list(false);
     }
 }
 
 bool TabBox::toggle(ElectricBorder eb)
 {
-    if (m_borderAlternativeActivate.contains(eb)) {
-        return toggleMode(TabBoxWindowsAlternativeMode);
+    if (m_border_alternative_activate.contains(eb)) {
+        return toggle_mode(TabBoxWindowsAlternativeMode);
     } else {
-        return toggleMode(TabBoxWindowsMode);
+        return toggle_mode(TabBoxWindowsMode);
     }
 }
 
-bool TabBox::toggleMode(TabBoxMode mode)
+bool TabBox::toggle_mode(TabBoxMode mode)
 {
     if (!kwinApp()->options->focusPolicyIsReasonable())
         return false; // not supported.
-    if (isDisplayed()) {
+    if (is_displayed()) {
         accept();
         return true;
     }
-    if (!establishTabBoxGrab())
+    if (!establish_tabbox_grab())
         return false;
-    m_noModifierGrab = m_tabGrab = true;
-    setMode(mode);
+    m_no_modifier_grab = m_tab_grab = true;
+    set_mode(mode);
     reset();
     show();
     return true;
 }
 
-bool TabBox::startKDEWalkThroughWindows(TabBoxMode mode)
+bool TabBox::start_kde_walk_through_windows(TabBoxMode mode)
 {
-    if (!establishTabBoxGrab())
+    if (!establish_tabbox_grab())
         return false;
-    m_tabGrab = true;
-    m_noModifierGrab = false;
-    setMode(mode);
+    m_tab_grab = true;
+    m_no_modifier_grab = false;
+    set_mode(mode);
     reset();
     return true;
 }
 
-bool TabBox::startWalkThroughDesktops(TabBoxMode mode)
+bool TabBox::start_walk_through_desktops(TabBoxMode mode)
 {
-    if (!establishTabBoxGrab())
+    if (!establish_tabbox_grab())
         return false;
-    m_desktopGrab = true;
-    m_noModifierGrab = false;
-    setMode(mode);
+    m_desktop_grab = true;
+    m_no_modifier_grab = false;
+    set_mode(mode);
     reset();
     return true;
 }
 
-bool TabBox::startWalkThroughDesktops()
+bool TabBox::start_walk_through_desktops()
 {
-    return startWalkThroughDesktops(TabBoxDesktopMode);
+    return start_walk_through_desktops(TabBoxDesktopMode);
 }
 
-bool TabBox::startWalkThroughDesktopList()
+bool TabBox::start_walk_through_desktop_list()
 {
-    return startWalkThroughDesktops(TabBoxDesktopListMode);
+    return start_walk_through_desktops(TabBoxDesktopListMode);
 }
 
-void TabBox::KDEWalkThroughWindows(bool forward)
+void TabBox::kde_walk_through_windows(bool forward)
 {
-    nextPrev(forward);
-    delayedShow();
+    next_prev(forward);
+    delayed_show();
 }
 
-void TabBox::walkThroughDesktops(bool forward)
+void TabBox::walk_through_desktops(bool forward)
 {
-    nextPrev(forward);
-    delayedShow();
+    next_prev(forward);
+    delayed_show();
 }
 
-void TabBox::CDEWalkThroughWindows(bool forward)
+void TabBox::cde_walk_through_windows(bool forward)
 {
     Toplevel* c = nullptr;
     // this function find the first suitable client for unreasonable focus
@@ -1237,7 +1244,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
 
     Toplevel* first_client = nullptr;
     do {
-        nc = forward ? nextClientStatic(nc) : previousClientStatic(nc);
+        nc = forward ? next_client_static(nc) : previous_client_static(nc);
         if (!first_client) {
             // When we see our first client for the second time,
             // it's time to stop.
@@ -1248,7 +1255,7 @@ void TabBox::CDEWalkThroughWindows(bool forward)
             break;
         }
     } while (nc && nc != c
-             && ((!options_traverse_all && !nc->isOnDesktop(currentDesktop()))
+             && ((!options_traverse_all && !nc->isOnDesktop(current_desktop()))
                  || nc->control->minimized() || !win::wants_tab_focus(nc)
                  || nc->control->keep_above() || nc->control->keep_below()));
     if (nc) {
@@ -1257,43 +1264,43 @@ void TabBox::CDEWalkThroughWindows(bool forward)
         if (kwinApp()->options->focusPolicyIsReasonable()) {
             workspace()->activateClient(nc);
         } else {
-            if (!nc->isOnDesktop(currentDesktop()))
-                setCurrentDesktop(nc->desktop());
+            if (!nc->isOnDesktop(current_desktop()))
+                set_current_desktop(nc->desktop());
             win::raise_window(workspace(), nc);
         }
     }
 }
 
-void TabBox::KDEOneStepThroughWindows(bool forward, TabBoxMode mode)
+void TabBox::kde_one_step_through_windows(bool forward, TabBoxMode mode)
 {
-    setMode(mode);
+    set_mode(mode);
     reset();
-    nextPrev(forward);
-    if (auto c = currentClient()) {
+    next_prev(forward);
+    if (auto c = current_client()) {
         workspace()->activateClient(c);
     }
 }
 
-void TabBox::oneStepThroughDesktops(bool forward, TabBoxMode mode)
+void TabBox::one_step_through_desktops(bool forward, TabBoxMode mode)
 {
-    setMode(mode);
+    set_mode(mode);
     reset();
-    nextPrev(forward);
-    if (currentDesktop() != -1)
-        setCurrentDesktop(currentDesktop());
+    next_prev(forward);
+    if (current_desktop() != -1)
+        set_current_desktop(current_desktop());
 }
 
-void TabBox::oneStepThroughDesktops(bool forward)
+void TabBox::one_step_through_desktops(bool forward)
 {
-    oneStepThroughDesktops(forward, TabBoxDesktopMode);
+    one_step_through_desktops(forward, TabBoxDesktopMode);
 }
 
-void TabBox::oneStepThroughDesktopList(bool forward)
+void TabBox::one_step_through_desktop_list(bool forward)
 {
-    oneStepThroughDesktops(forward, TabBoxDesktopListMode);
+    one_step_through_desktops(forward, TabBoxDesktopListMode);
 }
 
-void TabBox::keyPress(int keyQt)
+void TabBox::key_press(int keyQt)
 {
     enum Direction { Backward = -1, Steady = 0, Forward = 1 };
     Direction direction(Steady);
@@ -1340,7 +1347,7 @@ void TabBox::keyPress(int keyQt)
         return Steady;
     };
 
-    if (m_tabGrab) {
+    if (m_tab_grab) {
         static const int mode_count = 4;
         static const TabBoxMode modes[mode_count] = {TabBoxWindowsMode,
                                                      TabBoxWindowsAlternativeMode,
@@ -1348,15 +1355,15 @@ void TabBox::keyPress(int keyQt)
                                                      TabBoxCurrentAppWindowsAlternativeMode};
         const QKeySequence cuts[2 * mode_count]
             = {// forward
-               m_cutWalkThroughWindows,
-               m_cutWalkThroughWindowsAlternative,
-               m_cutWalkThroughCurrentAppWindows,
-               m_cutWalkThroughCurrentAppWindowsAlternative,
+               m_cut_walk_through_windows,
+               m_cut_walk_through_windows_alternative,
+               m_cut_walk_through_current_app_windows,
+               m_cut_walk_through_current_app_windows_alternative,
                // backward
-               m_cutWalkThroughWindowsReverse,
-               m_cutWalkThroughWindowsAlternativeReverse,
-               m_cutWalkThroughCurrentAppWindowsReverse,
-               m_cutWalkThroughCurrentAppWindowsAlternativeReverse};
+               m_cut_walk_through_windows_reverse,
+               m_cut_walk_through_windows_alternative_reverse,
+               m_cut_walk_through_current_app_windows_reverse,
+               m_cut_walk_through_current_app_windows_alternative_reverse};
         bool tested_current = false; // in case of collision, prefer to stay in the current mode
         int i = 0, j = 0;
         while (true) {
@@ -1373,10 +1380,10 @@ void TabBox::keyPress(int keyQt)
             if (direction != Steady) {
                 if (modes[i] != mode()) {
                     accept(false);
-                    setMode(modes[i]);
+                    set_mode(modes[i]);
                     auto replayWithChangedTabboxMode = [this, direction]() {
                         reset();
-                        nextPrev(direction == Forward);
+                        next_prev(direction == Forward);
                     };
                     QTimer::singleShot(50, this, replayWithChangedTabboxMode);
                 }
@@ -1390,44 +1397,44 @@ void TabBox::keyPress(int keyQt)
         if (direction != Steady) {
             qCDebug(KWIN_TABBOX) << "== " << cuts[i].toString() << " or "
                                  << cuts[i + mode_count].toString();
-            KDEWalkThroughWindows(direction == Forward);
+            kde_walk_through_windows(direction == Forward);
         }
-    } else if (m_desktopGrab) {
-        direction = direction_for(m_cutWalkThroughDesktops, m_cutWalkThroughDesktopsReverse);
+    } else if (m_desktop_grab) {
+        direction = direction_for(m_cut_walk_through_desktops, m_cut_walk_through_desktops_reverse);
         if (direction == Steady)
-            direction
-                = direction_for(m_cutWalkThroughDesktopList, m_cutWalkThroughDesktopListReverse);
+            direction = direction_for(m_cut_walk_through_desktop_list,
+                                      m_cut_walk_through_desktop_list_reverse);
         if (direction != Steady)
-            walkThroughDesktops(direction == Forward);
+            walk_through_desktops(direction == Forward);
     }
 
-    if (m_desktopGrab || m_tabGrab) {
+    if (m_desktop_grab || m_tab_grab) {
         if (((keyQt & ~Qt::KeyboardModifierMask) == Qt::Key_Escape) && direction == Steady) {
             // if Escape is part of the shortcut, don't cancel
             close(true);
         } else if (direction == Steady) {
             QKeyEvent* event = new QKeyEvent(
                 QEvent::KeyPress, keyQt & ~Qt::KeyboardModifierMask, Qt::NoModifier);
-            grabbedKeyEvent(event);
+            grabbed_key_event(event);
         }
     }
 }
 
 void TabBox::close(bool abort)
 {
-    if (isGrabbed()) {
-        removeTabBoxGrab();
+    if (is_grabbed()) {
+        remove_tabbox_grab();
     }
     hide(abort);
     kwinApp()->input->redirect->pointer()->setEnableConstraints(true);
-    m_tabGrab = false;
-    m_desktopGrab = false;
-    m_noModifierGrab = false;
+    m_tab_grab = false;
+    m_desktop_grab = false;
+    m_no_modifier_grab = false;
 }
 
 void TabBox::accept(bool closeTabBox)
 {
-    auto c = currentClient();
+    auto c = current_client();
     if (closeTabBox)
         close();
     if (c) {
@@ -1437,35 +1444,35 @@ void TabBox::accept(bool closeTabBox)
     }
 }
 
-void TabBox::modifiersReleased()
+void TabBox::modifiers_released()
 {
-    if (m_noModifierGrab) {
+    if (m_no_modifier_grab) {
         return;
     }
-    if (m_tabGrab) {
-        bool old_control_grab = m_desktopGrab;
+    if (m_tab_grab) {
+        bool old_control_grab = m_desktop_grab;
         accept();
-        m_desktopGrab = old_control_grab;
+        m_desktop_grab = old_control_grab;
     }
-    if (m_desktopGrab) {
-        bool old_tab_grab = m_tabGrab;
-        int desktop = currentDesktop();
+    if (m_desktop_grab) {
+        bool old_tab_grab = m_tab_grab;
+        int desktop = current_desktop();
         close();
-        m_tabGrab = old_tab_grab;
+        m_tab_grab = old_tab_grab;
         if (desktop != -1) {
-            setCurrentDesktop(desktop);
+            set_current_desktop(desktop);
             win::virtual_desktop_manager::self()->setCurrent(desktop);
         }
     }
 }
 
-int TabBox::nextDesktopStatic(int iDesktop) const
+int TabBox::next_desktop_static(int iDesktop) const
 {
     win::virtual_desktop_next functor;
     return functor(iDesktop, true);
 }
 
-int TabBox::previousDesktopStatic(int iDesktop) const
+int TabBox::previous_desktop_static(int iDesktop) const
 {
     win::virtual_desktop_previous functor;
     return functor(iDesktop, true);
@@ -1475,7 +1482,7 @@ int TabBox::previousDesktopStatic(int iDesktop) const
  * Auxiliary functions to travers all clients according to the static
  * order. Useful for the CDE-style Alt-tab feature.
  */
-Toplevel* TabBox::nextClientStatic(Toplevel* c) const
+Toplevel* TabBox::next_client_static(Toplevel* c) const
 {
     const auto& list = workspace()->allClientList();
     if (!c || list.empty()) {
@@ -1496,7 +1503,7 @@ Toplevel* TabBox::nextClientStatic(Toplevel* c) const
  * Auxiliary functions to travers all clients according to the static
  * order. Useful for the CDE-style Alt-tab feature.
  */
-Toplevel* TabBox::previousClientStatic(Toplevel* c) const
+Toplevel* TabBox::previous_client_static(Toplevel* c) const
 {
     const auto& list = workspace()->allClientList();
     if (!c || list.empty()) {
@@ -1514,10 +1521,10 @@ Toplevel* TabBox::previousClientStatic(Toplevel* c) const
     return list.at(pos);
 }
 
-bool TabBox::establishTabBoxGrab()
+bool TabBox::establish_tabbox_grab()
 {
     if (kwinApp()->shouldUseWaylandForCompositing()) {
-        m_forcedGlobalMouseGrab = true;
+        m_forced_global_mouse_grab = true;
         return true;
     }
     kwinApp()->update_x11_time_from_clock();
@@ -1528,27 +1535,27 @@ bool TabBox::establishTabBoxGrab()
     // in order to catch MouseRelease events and close the tabbox (#67416).
     // All clients already have passive grabs in their wrapper windows, so check only
     // the active client, which may not have it.
-    Q_ASSERT(!m_forcedGlobalMouseGrab);
-    m_forcedGlobalMouseGrab = true;
+    Q_ASSERT(!m_forced_global_mouse_grab);
+    m_forced_global_mouse_grab = true;
     if (workspace()->activeClient() != nullptr)
         workspace()->activeClient()->control->update_mouse_grab();
-    m_x11EventFilter.reset(new X11Filter);
+    m_x11_event_filter.reset(new X11Filter);
     return true;
 }
 
-void TabBox::removeTabBoxGrab()
+void TabBox::remove_tabbox_grab()
 {
     if (kwinApp()->shouldUseWaylandForCompositing()) {
-        m_forcedGlobalMouseGrab = false;
+        m_forced_global_mouse_grab = false;
         return;
     }
     kwinApp()->update_x11_time_from_clock();
     base::x11::ungrab_keyboard();
-    Q_ASSERT(m_forcedGlobalMouseGrab);
-    m_forcedGlobalMouseGrab = false;
+    Q_ASSERT(m_forced_global_mouse_grab);
+    m_forced_global_mouse_grab = false;
     if (workspace()->activeClient() != nullptr)
         workspace()->activeClient()->control->update_mouse_grab();
-    m_x11EventFilter.reset();
+    m_x11_event_filter.reset();
 }
 } // namespace TabBox
 } // namespace

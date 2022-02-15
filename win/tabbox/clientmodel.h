@@ -63,7 +63,7 @@ public:
     QModelIndex
     index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
     QHash<int, QByteArray> roleNames() const override;
-    Q_INVOKABLE QString longestCaption() const;
+    Q_INVOKABLE QString longest_caption() const;
 
     /**
      * @param client The TabBoxClient whose index should be returned
@@ -81,18 +81,18 @@ public:
      * @param desktop The desktop for which the list should be created
      * @param partialReset Keep the currently selected client or regenerate everything
      */
-    void createClientList(int desktop, bool partialReset = false);
+    void create_client_list(int desktop, bool partial_reset = false);
     /**
      * This method is provided as a overload for current desktop
      * @see createClientList
      */
-    void createClientList(bool partialReset = false);
+    void create_client_list(bool partial_reset = false);
     /**
      * @return Returns the current list of TabBoxClients.
      */
-    TabBoxClientList clientList() const
+    TabBoxClientList client_list() const
     {
-        return m_clientList;
+        return m_client_list;
     }
 
 public Q_SLOTS:
@@ -104,7 +104,7 @@ public Q_SLOTS:
     void activate(int index);
 
 private:
-    TabBoxClientList m_clientList;
+    TabBoxClientList m_client_list;
 };
 
 } // namespace Tabbox

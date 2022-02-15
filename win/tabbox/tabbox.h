@@ -59,36 +59,36 @@ public:
     explicit TabBoxHandlerImpl(TabBox* tabBox);
     ~TabBoxHandlerImpl() override;
 
-    int activeScreen() const override;
-    std::weak_ptr<TabBoxClient> activeClient() const override;
-    int currentDesktop() const override;
-    QString desktopName(TabBoxClient* client) const override;
-    QString desktopName(int desktop) const override;
-    bool isKWinCompositing() const override;
-    std::weak_ptr<TabBoxClient> nextClientFocusChain(TabBoxClient* client) const override;
-    std::weak_ptr<TabBoxClient> firstClientFocusChain() const override;
-    bool isInFocusChain(TabBoxClient* client) const override;
-    int nextDesktopFocusChain(int desktop) const override;
-    int numberOfDesktops() const override;
-    TabBoxClientList stackingOrder() const override;
-    void elevateClient(TabBoxClient* c, QWindow* tabbox, bool elevate) const override;
-    void raiseClient(TabBoxClient* client) const override;
+    int active_screen() const override;
+    std::weak_ptr<TabBoxClient> active_client() const override;
+    int current_desktop() const override;
+    QString desktop_name(TabBoxClient* client) const override;
+    QString desktop_name(int desktop) const override;
+    bool is_kwin_compositing() const override;
+    std::weak_ptr<TabBoxClient> next_client_focus_chain(TabBoxClient* client) const override;
+    std::weak_ptr<TabBoxClient> first_client_focus_chain() const override;
+    bool is_in_focus_chain(TabBoxClient* client) const override;
+    int next_desktop_focus_chain(int desktop) const override;
+    int number_of_desktops() const override;
+    TabBoxClientList stacking_order() const override;
+    void elevate_client(TabBoxClient* c, QWindow* tabbox, bool elevate) const override;
+    void raise_client(TabBoxClient* client) const override;
     void restack(TabBoxClient* c, TabBoxClient* under) override;
-    std::weak_ptr<TabBoxClient> clientToAddToList(KWin::TabBox::TabBoxClient* client,
-                                                  int desktop) const override;
-    std::weak_ptr<TabBoxClient> desktopClient() const override;
-    void activateAndClose() override;
-    void highlightWindows(TabBoxClient* window = nullptr, QWindow* controller = nullptr) override;
-    bool noModifierGrab() const override;
+    std::weak_ptr<TabBoxClient> client_to_add_to_list(KWin::TabBox::TabBoxClient* client,
+                                                      int desktop) const override;
+    std::weak_ptr<TabBoxClient> desktop_client() const override;
+    void activate_and_close() override;
+    void highlight_windows(TabBoxClient* window = nullptr, QWindow* controller = nullptr) override;
+    bool no_modifier_grab() const override;
 
 private:
-    bool checkDesktop(TabBoxClient* client, int desktop) const;
-    bool checkApplications(TabBoxClient* client) const;
-    bool checkMinimized(TabBoxClient* client) const;
-    bool checkMultiScreen(TabBoxClient* client) const;
+    bool check_desktop(TabBoxClient* client, int desktop) const;
+    bool check_applications(TabBoxClient* client) const;
+    bool check_minimized(TabBoxClient* client) const;
+    bool check_multi_screen(TabBoxClient* client) const;
 
-    TabBox* m_tabBox;
-    DesktopChainManager* m_desktopFocusChain;
+    TabBox* m_tabbox;
+    DesktopChainManager* m_desktop_focus_chain;
 };
 
 class TabBoxClientImpl : public TabBoxClient
@@ -99,15 +99,15 @@ public:
 
     QString caption() const override;
     QIcon icon() const override;
-    bool isMinimized() const override;
+    bool is_minimized() const override;
     int x() const override;
     int y() const override;
     int width() const override;
     int height() const override;
-    bool isCloseable() const override;
+    bool is_closeable() const override;
     void close() override;
-    bool isFirstInTabBox() const override;
-    QUuid internalId() const override;
+    bool is_first_in_tabbox() const override;
+    QUuid internal_id() const override;
 
     Toplevel* client() const
     {
@@ -128,52 +128,52 @@ public:
      * Returns the currently displayed client ( only works in TabBoxWindowsMode ).
      * Returns 0 if no client is displayed.
      */
-    Toplevel* currentClient();
+    Toplevel* current_client();
 
     /**
      * Returns the list of clients potentially displayed ( only works in
      * TabBoxWindowsMode ).
      * Returns an empty list if no clients are available.
      */
-    QList<Toplevel*> currentClientList();
+    QList<Toplevel*> current_client_list();
 
     /**
      * Returns the currently displayed virtual desktop ( only works in
      * TabBoxDesktopListMode )
      * Returns -1 if no desktop is displayed.
      */
-    int currentDesktop();
+    int current_desktop();
 
     /**
      * Returns the list of desktops potentially displayed ( only works in
      * TabBoxDesktopListMode )
      * Returns an empty list if no are available.
      */
-    QList<int> currentDesktopList();
+    QList<int> current_desktop_list();
 
     /**
      * Change the currently selected client, and notify the effects.
      *
      * @see setCurrentDesktop
      */
-    void setCurrentClient(Toplevel* window);
+    void set_current_client(Toplevel* window);
 
     /**
      * Change the currently selected desktop, and notify the effects.
      *
      * @see setCurrentClient
      */
-    void setCurrentDesktop(int newDesktop);
+    void set_current_desktop(int new_desktop);
 
     /**
      * Sets the current mode to \a mode, either TabBoxDesktopListMode or TabBoxWindowsMode
      *
      * @see mode
      */
-    void setMode(TabBoxMode mode);
+    void set_mode(TabBoxMode mode);
     TabBoxMode mode() const
     {
-        return m_tabBoxMode;
+        return m_tabbox_mode;
     }
 
     /**
@@ -185,7 +185,7 @@ public:
     /**
      * Shows the next or previous item, depending on \a next
      */
-    void nextPrev(bool next = true);
+    void next_prev(bool next = true);
 
     /**
      * Shows the tab box after some delay.
@@ -201,7 +201,7 @@ public:
      * just quickly switching between 2 or 3 windows. It seems to work quite
      * nicely.
      */
-    void delayedShow();
+    void delayed_show();
 
     /**
      * Notify effects that the tab box is being hidden.
@@ -216,7 +216,7 @@ public:
      */
     void reference()
     {
-        ++m_displayRefcount;
+        ++m_display_ref_count;
     }
 
     /**
@@ -225,7 +225,7 @@ public:
      */
     void unreference()
     {
-        --m_displayRefcount;
+        --m_display_ref_count;
     }
 
     /**
@@ -235,47 +235,47 @@ public:
      * @see reference
      * @see unreference
      */
-    bool isDisplayed() const
+    bool is_displayed() const
     {
-        return m_displayRefcount > 0;
+        return m_display_ref_count > 0;
     }
 
     /**
      * @returns @c true if TabBox is shown, @c false if replaced by Effect
      */
-    bool isShown() const
+    bool is_shown() const
     {
-        return m_isShown;
+        return m_is_shown;
     }
 
-    bool handleMouseEvent(QMouseEvent* event);
-    bool handleWheelEvent(QWheelEvent* event);
-    void grabbedKeyEvent(QKeyEvent* event);
+    bool handle_mouse_event(QMouseEvent* event);
+    bool handle_wheel_event(QWheelEvent* event);
+    void grabbed_key_event(QKeyEvent* event);
 
-    bool isGrabbed() const
+    bool is_grabbed() const
     {
-        return m_tabGrab || m_desktopGrab;
+        return m_tab_grab || m_desktop_grab;
     }
 
-    void initShortcuts();
+    void init_shortcuts();
 
-    Toplevel* nextClientStatic(Toplevel*) const;
-    Toplevel* previousClientStatic(Toplevel*) const;
-    int nextDesktopStatic(int iDesktop) const;
-    int previousDesktopStatic(int iDesktop) const;
-    void keyPress(int key);
-    void modifiersReleased();
+    Toplevel* next_client_static(Toplevel*) const;
+    Toplevel* previous_client_static(Toplevel*) const;
+    int next_desktop_static(int iDesktop) const;
+    int previous_desktop_static(int iDesktop) const;
+    void key_press(int key);
+    void modifiers_released();
 
-    bool forcedGlobalMouseGrab() const
+    bool forced_global_mouse_grab() const
     {
-        return m_forcedGlobalMouseGrab;
+        return m_forced_global_mouse_grab;
     }
 
-    bool noModifierGrab() const
+    bool no_modifier_grab() const
     {
-        return m_noModifierGrab;
+        return m_no_modifier_grab;
     }
-    void setCurrentIndex(QModelIndex index, bool notifyEffects = true);
+    void set_current_index(QModelIndex index, bool notify_effects = true);
 
     static TabBox* self();
     static TabBox* create(QObject* parent);
@@ -287,99 +287,101 @@ public Q_SLOTS:
      */
     void show();
     void close(bool abort = false);
-    void accept(bool closeTabBox = true);
-    void slotWalkThroughDesktops();
-    void slotWalkBackThroughDesktops();
-    void slotWalkThroughDesktopList();
-    void slotWalkBackThroughDesktopList();
-    void slotWalkThroughWindows();
-    void slotWalkBackThroughWindows();
-    void slotWalkThroughWindowsAlternative();
-    void slotWalkBackThroughWindowsAlternative();
-    void slotWalkThroughCurrentAppWindows();
-    void slotWalkBackThroughCurrentAppWindows();
-    void slotWalkThroughCurrentAppWindowsAlternative();
-    void slotWalkBackThroughCurrentAppWindowsAlternative();
+    void accept(bool close_tabbox = true);
+    void slot_walk_through_desktops();
+    void slot_walk_back_through_desktops();
+    void slot_walk_through_desktop_list();
+    void slot_walk_back_through_desktop_list();
+    void slot_walk_through_windows();
+    void slot_walk_back_through_windows();
+    void slot_walk_through_windows_alternative();
+    void slot_walk_back_through_windows_alternative();
+    void slot_walk_through_current_app_windows();
+    void slot_walk_back_through_current_app_windows();
+    void slot_walk_through_current_app_windows_alternative();
+    void slot_walk_back_through_current_app_windows_alternative();
 
-    void handlerReady();
+    void handler_ready();
 
     bool toggle(ElectricBorder eb);
 
 Q_SIGNALS:
-    void tabBoxAdded(int);
-    void tabBoxClosed();
-    void tabBoxUpdated();
-    void tabBoxKeyEvent(QKeyEvent*);
+    void tabbox_added(int);
+    void tabbox_closed();
+    void tabbox_updated();
+    void tabbox_key_event(QKeyEvent*);
 
 private:
     explicit TabBox(QObject* parent);
-    void loadConfig(const KConfigGroup& config, TabBoxConfig& tabBoxConfig);
+    void load_config(const KConfigGroup& config, TabBoxConfig& tabbox_config);
 
-    bool
-    startKDEWalkThroughWindows(TabBoxMode mode); // TabBoxWindowsMode | TabBoxWindowsAlternativeMode
-    bool startWalkThroughDesktops(TabBoxMode mode); // TabBoxDesktopMode | TabBoxDesktopListMode
-    bool startWalkThroughDesktops();
-    bool startWalkThroughDesktopList();
+    bool start_kde_walk_through_windows(
+        TabBoxMode mode); // TabBoxWindowsMode | TabBoxWindowsAlternativeMode
+    bool start_walk_through_desktops(TabBoxMode mode); // TabBoxDesktopMode | TabBoxDesktopListMode
+    bool start_walk_through_desktops();
+    bool start_walk_through_desktop_list();
     void
-    navigatingThroughWindows(bool forward,
-                             const QKeySequence& shortcut,
-                             TabBoxMode mode); // TabBoxWindowsMode | TabBoxWindowsAlternativeMode
-    void KDEWalkThroughWindows(bool forward);
-    void CDEWalkThroughWindows(bool forward);
-    void walkThroughDesktops(bool forward);
-    void
-    KDEOneStepThroughWindows(bool forward,
-                             TabBoxMode mode); // TabBoxWindowsMode | TabBoxWindowsAlternativeMode
-    void oneStepThroughDesktops(bool forward,
-                                TabBoxMode mode); // TabBoxDesktopMode | TabBoxDesktopListMode
-    void oneStepThroughDesktops(bool forward);
-    void oneStepThroughDesktopList(bool forward);
-    bool establishTabBoxGrab();
-    void removeTabBoxGrab();
+    navigating_through_windows(bool forward,
+                               const QKeySequence& shortcut,
+                               TabBoxMode mode); // TabBoxWindowsMode | TabBoxWindowsAlternativeMode
+    void kde_walk_through_windows(bool forward);
+    void cde_walk_through_windows(bool forward);
+    void walk_through_desktops(bool forward);
+    void kde_one_step_through_windows(
+        bool forward,
+        TabBoxMode mode); // TabBoxWindowsMode | TabBoxWindowsAlternativeMode
+    void one_step_through_desktops(bool forward,
+                                   TabBoxMode mode); // TabBoxDesktopMode | TabBoxDesktopListMode
+    void one_step_through_desktops(bool forward);
+    void one_step_through_desktop_list(bool forward);
+    bool establish_tabbox_grab();
+    void remove_tabbox_grab();
     template<typename Slot>
-    void key(const char* actionName, Slot slot, const QKeySequence& shortcut = QKeySequence());
+    void key(const char* action_name, Slot slot, const QKeySequence& shortcut = QKeySequence());
 
-    bool toggleMode(TabBoxMode mode);
+    bool toggle_mode(TabBoxMode mode);
 
 private Q_SLOTS:
     void reconfigure();
-    void globalShortcutChanged(QAction* action, const QKeySequence& seq);
+    void global_shortcut_changed(QAction* action, const QKeySequence& seq);
 
 private:
-    TabBoxMode m_tabBoxMode;
-    TabBoxHandlerImpl* m_tabBox;
-    bool m_delayShow;
-    int m_delayShowTime;
+    TabBoxMode m_tabbox_mode;
+    TabBoxHandlerImpl* m_tabbox;
+    bool m_delay_show;
+    int m_delay_show_time;
 
-    QTimer m_delayedShowTimer;
-    int m_displayRefcount;
+    QTimer m_delayed_show_timer;
+    int m_display_ref_count;
 
-    TabBoxConfig m_defaultConfig;
-    TabBoxConfig m_alternativeConfig;
-    TabBoxConfig m_defaultCurrentApplicationConfig;
-    TabBoxConfig m_alternativeCurrentApplicationConfig;
-    TabBoxConfig m_desktopConfig;
-    TabBoxConfig m_desktopListConfig;
+    TabBoxConfig m_default_config;
+    TabBoxConfig m_alternative_config;
+    TabBoxConfig m_default_current_application_config;
+    TabBoxConfig m_alternative_current_application_config;
+    TabBoxConfig m_desktop_config;
+    TabBoxConfig m_desktop_list_config;
     // false if an effect has referenced the tabbox
     // true if tabbox is active (independent on showTabbox setting)
-    bool m_isShown;
-    bool m_desktopGrab;
-    bool m_tabGrab;
+    bool m_is_shown;
+    bool m_desktop_grab;
+    bool m_tab_grab;
     // true if tabbox is in modal mode which does not require holding a modifier
-    bool m_noModifierGrab;
-    QKeySequence m_cutWalkThroughDesktops, m_cutWalkThroughDesktopsReverse;
-    QKeySequence m_cutWalkThroughDesktopList, m_cutWalkThroughDesktopListReverse;
-    QKeySequence m_cutWalkThroughWindows, m_cutWalkThroughWindowsReverse;
-    QKeySequence m_cutWalkThroughWindowsAlternative, m_cutWalkThroughWindowsAlternativeReverse;
-    QKeySequence m_cutWalkThroughCurrentAppWindows, m_cutWalkThroughCurrentAppWindowsReverse;
-    QKeySequence m_cutWalkThroughCurrentAppWindowsAlternative,
-        m_cutWalkThroughCurrentAppWindowsAlternativeReverse;
-    bool m_forcedGlobalMouseGrab;
+    bool m_no_modifier_grab;
+    QKeySequence m_cut_walk_through_desktops, m_cut_walk_through_desktops_reverse;
+    QKeySequence m_cut_walk_through_desktop_list, m_cut_walk_through_desktop_list_reverse;
+    QKeySequence m_cut_walk_through_windows, m_cut_walk_through_windows_reverse;
+    QKeySequence m_cut_walk_through_windows_alternative,
+        m_cut_walk_through_windows_alternative_reverse;
+    QKeySequence m_cut_walk_through_current_app_windows,
+        m_cut_walk_through_current_app_windows_reverse;
+    QKeySequence m_cut_walk_through_current_app_windows_alternative,
+        m_cut_walk_through_current_app_windows_alternative_reverse;
+    bool m_forced_global_mouse_grab;
     bool m_ready; // indicates whether the config is completely loaded
-    QList<ElectricBorder> m_borderActivate, m_borderAlternativeActivate;
-    QHash<ElectricBorder, QAction*> m_touchActivate;
-    QHash<ElectricBorder, QAction*> m_touchAlternativeActivate;
-    QScopedPointer<base::x11::event_filter> m_x11EventFilter;
+    QList<ElectricBorder> m_border_activate, m_border_alternative_activate;
+    QHash<ElectricBorder, QAction*> m_touch_activate;
+    QHash<ElectricBorder, QAction*> m_touch_alternative_activate;
+    QScopedPointer<base::x11::event_filter> m_x11_event_filter;
 
     static TabBox* s_self;
 };

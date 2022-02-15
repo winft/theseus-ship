@@ -1166,7 +1166,7 @@ void space::updateTabbox()
 {
 #ifdef KWIN_BUILD_TABBOX
     TabBox::TabBox* tabBox = TabBox::TabBox::self();
-    if (tabBox->isDisplayed()) {
+    if (tabBox->is_displayed()) {
         tabBox->reset(true);
     }
 #endif
@@ -3240,7 +3240,7 @@ void space::initShortcuts()
 #undef DEF6
 
 #ifdef KWIN_BUILD_TABBOX
-    TabBox::TabBox::self()->initShortcuts();
+    TabBox::TabBox::self()->init_shortcuts();
 #endif
     win::virtual_desktop_manager::self()->initShortcuts();
     kwinApp()->get_base().render->night_color->init_shortcuts();

@@ -132,72 +132,72 @@ public:
      * @see setShowTabBox
      * @see defaultShowTabBox
      */
-    bool isShowTabBox() const;
+    bool is_show_tabbox() const;
     /**
      * @return If Highlight Window effect should be used.
      * This option does not apply for TabBoxMode DesktopTabBox.
      * @see setHighlightWindows
      * @see defaultHighlightWindows
      */
-    bool isHighlightWindows() const;
+    bool is_highlight_windows() const;
     /**
      * @return The current TabBoxMode
      * @see setTabBoxMode
      */
-    TabBoxMode tabBoxMode() const;
+    TabBoxMode tabbox_mode() const;
     /**
      * @return The current ClientDesktopMode
      * This option only applies for TabBoxMode ClientTabBox.
      * @see setClientDesktopMode
      * @see defaultDesktopMode
      */
-    ClientDesktopMode clientDesktopMode() const;
+    ClientDesktopMode client_desktop_mode() const;
     /**
      * @return The current ClientApplicationsMode
      * This option only applies for TabBoxMode ClientTabBox.
      * @see setClientApplicationsMode
      * @see defaultApplicationsMode
      */
-    ClientApplicationsMode clientApplicationsMode() const;
+    ClientApplicationsMode client_applications_mode() const;
     /**
      * @return The current ClientMinimizedMode
      * This option only applies for TabBoxMode ClientTabBox.
      * @see setClientMinimizedMode
      * @see defaultMinimizedMode
      */
-    ClientMinimizedMode clientMinimizedMode() const;
+    ClientMinimizedMode client_minimized_mode() const;
     /**
      * @return The current ShowDesktopMode
      * This option only applies for TabBoxMode ClientTabBox.
      * @see setShowDesktopMode
      * @see defaultShowDesktopMode
      */
-    ShowDesktopMode showDesktopMode() const;
+    ShowDesktopMode show_desktop_mode() const;
     /**
      * @return The current ClientMultiScreenMode
      * This option only applies for TabBoxMode ClientTabBox.
      * @see setClientMultiScreenMode
      * @see defaultMultiScreenMode
      */
-    ClientMultiScreenMode clientMultiScreenMode() const;
+    ClientMultiScreenMode client_multi_screen_mode() const;
     /**
      * @return The current ClientSwitchingMode.
      * This option only applies for TabBoxMode ClientTabBox.
      * @see setClientSwitchingMode
      * @see defaultSwitchingMode
      */
-    ClientSwitchingMode clientSwitchingMode() const;
+    ClientSwitchingMode client_switching_mode() const;
     /**
      * @return The current DesktopSwitchingMode
      * This option only applies for TabBoxMode DesktopTabBox.
      * @see setDesktopSwitchingMode
      */
-    DesktopSwitchingMode desktopSwitchingMode() const;
+    DesktopSwitchingMode desktop_switching_mode() const;
     /**
      * @return Then name of the current ItemLayout
      * @see setlayoutName
      */
-    QString& layoutName() const;
+    QString& layout_name() const;
 
     // setters
     /**
@@ -205,100 +205,100 @@ public:
      * This option does not apply for TabBoxMode DesktopTabBox.
      * @see isShowTabBox
      */
-    void setShowTabBox(bool show);
+    void set_show_tabbox(bool show);
     /**
      * @param highlight Highlight Windows effect should be used or not.
      * This option does not apply for TabBoxMode DesktopTabBox.
      * @see isHighlightWindows
      */
-    void setHighlightWindows(bool highlight);
+    void set_highlight_windows(bool highlight);
     /**
      * @param mode The new TabBoxMode to be used.
      * @see tabBoxMode
      */
-    void setTabBoxMode(TabBoxMode mode);
+    void set_tabbox_mode(TabBoxMode mode);
     /**
      * @param desktopMode The new ClientDesktopMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
      * @see clientDesktopMode
      */
-    void setClientDesktopMode(ClientDesktopMode desktopMode);
+    void set_client_desktop_mode(ClientDesktopMode desktop_mode);
     /**
      * @param applicationsMode The new ClientApplicationsMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
      * @see clientApplicationsMode
      */
-    void setClientApplicationsMode(ClientApplicationsMode applicationsMode);
+    void set_client_applications_mode(ClientApplicationsMode applications_mode);
     /**
      * @param minimizedMode The new ClientMinimizedMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
      * @see clientMinimizedMode
      */
-    void setClientMinimizedMode(ClientMinimizedMode minimizedMode);
+    void set_client_minimized_mode(ClientMinimizedMode minimized_mode);
     /**
      * @param showDesktopMode The new ShowDesktopMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
      * @see showDesktopMode
      */
-    void setShowDesktopMode(ShowDesktopMode showDesktopMode);
+    void set_show_desktop_mode(ShowDesktopMode show_desktop_mode);
     /**
      * @param multiScreenMode The new ClientMultiScreenMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
      * @see clientMultiScreenMode
      */
-    void setClientMultiScreenMode(ClientMultiScreenMode multiScreenMode);
+    void set_client_multi_screen_mode(ClientMultiScreenMode multi_screen_mode);
     /**
      * @param switchingMode The new ClientSwitchingMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
      * @see clientSwitchingMode
      */
-    void setClientSwitchingMode(ClientSwitchingMode switchingMode);
+    void set_client_switching_mode(ClientSwitchingMode switching_mode);
     /**
      * @param switchingMode The new DesktopSwitchingMode to be used.
      * This option only applies for TabBoxMode DesktopTabBox.
      * @see desktopSwitchingMode
      */
-    void setDesktopSwitchingMode(DesktopSwitchingMode switchingMode);
+    void set_desktop_switching_mode(DesktopSwitchingMode switching_mode);
     /**
      * @param name The new ItemLayout config name
      * @see layoutName
      */
-    void setLayoutName(const QString& name);
+    void set_layout_name(const QString& name);
 
     // some static methods to access default values
-    static ClientDesktopMode defaultDesktopMode()
+    static ClientDesktopMode default_desktop_mode()
     {
         return OnlyCurrentDesktopClients;
     }
-    static ClientApplicationsMode defaultApplicationsMode()
+    static ClientApplicationsMode default_applications_mode()
     {
         return AllWindowsAllApplications;
     }
-    static ClientMinimizedMode defaultMinimizedMode()
+    static ClientMinimizedMode default_minimized_mode()
     {
         return IgnoreMinimizedStatus;
     }
-    static ShowDesktopMode defaultShowDesktopMode()
+    static ShowDesktopMode default_show_desktop_mode()
     {
         return DoNotShowDesktopClient;
     }
-    static ClientMultiScreenMode defaultMultiScreenMode()
+    static ClientMultiScreenMode default_multi_screen_mode()
     {
         return IgnoreMultiScreen;
     }
-    static ClientSwitchingMode defaultSwitchingMode()
+    static ClientSwitchingMode default_switching_mode()
     {
         return FocusChainSwitching;
     }
-    static bool defaultShowTabBox()
+    static bool default_show_tabbox()
     {
         return true;
     }
-    static bool defaultHighlightWindow()
+    static bool default_highlight_window()
     {
         return true;
     }
-    static QString defaultLayoutName()
+    static QString default_layout_name()
     {
         return QStringLiteral("thumbnail_grid");
     }

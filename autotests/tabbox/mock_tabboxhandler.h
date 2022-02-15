@@ -30,36 +30,36 @@ class MockTabBoxHandler : public TabBox::TabBoxHandler
 public:
     MockTabBoxHandler(QObject* parent = nullptr);
     ~MockTabBoxHandler() override;
-    void activateAndClose() override
+    void activate_and_close() override
     {
     }
-    std::weak_ptr<TabBox::TabBoxClient> activeClient() const override;
-    void setActiveClient(const std::weak_ptr<TabBox::TabBoxClient>& client);
-    int activeScreen() const override
+    std::weak_ptr<TabBox::TabBoxClient> active_client() const override;
+    void set_active_client(const std::weak_ptr<TabBox::TabBoxClient>& client);
+    int active_screen() const override
     {
         return 0;
     }
-    std::weak_ptr<TabBox::TabBoxClient> clientToAddToList(TabBox::TabBoxClient* client,
-                                                          int desktop) const override;
-    int currentDesktop() const override
+    std::weak_ptr<TabBox::TabBoxClient> client_to_add_to_list(TabBox::TabBoxClient* client,
+                                                              int desktop) const override;
+    int current_desktop() const override
     {
         return 1;
     }
-    std::weak_ptr<TabBox::TabBoxClient> desktopClient() const override
+    std::weak_ptr<TabBox::TabBoxClient> desktop_client() const override
     {
         return std::weak_ptr<TabBox::TabBoxClient>();
     }
-    QString desktopName(int desktop) const override
+    QString desktop_name(int desktop) const override
     {
         Q_UNUSED(desktop)
         return "desktop 1";
     }
-    QString desktopName(TabBox::TabBoxClient* client) const override
+    QString desktop_name(TabBox::TabBoxClient* client) const override
     {
         Q_UNUSED(client)
         return "desktop";
     }
-    void elevateClient(TabBox::TabBoxClient* c, QWindow* tabbox, bool elevate) const override
+    void elevate_client(TabBox::TabBoxClient* c, QWindow* tabbox, bool elevate) const override
     {
         Q_UNUSED(c)
         Q_UNUSED(tabbox)
@@ -69,23 +69,23 @@ public:
     {
     }
     std::weak_ptr<TabBox::TabBoxClient>
-    nextClientFocusChain(TabBox::TabBoxClient* client) const override;
-    std::weak_ptr<TabBox::TabBoxClient> firstClientFocusChain() const override;
-    bool isInFocusChain(TabBox::TabBoxClient* client) const override;
-    int nextDesktopFocusChain(int desktop) const override
+    next_client_focus_chain(TabBox::TabBoxClient* client) const override;
+    std::weak_ptr<TabBox::TabBoxClient> first_client_focus_chain() const override;
+    bool is_in_focus_chain(TabBox::TabBoxClient* client) const override;
+    int next_desktop_focus_chain(int desktop) const override
     {
         Q_UNUSED(desktop)
         return 1;
     }
-    int numberOfDesktops() const override
+    int number_of_desktops() const override
     {
         return 1;
     }
-    bool isKWinCompositing() const override
+    bool is_kwin_compositing() const override
     {
         return false;
     }
-    void raiseClient(TabBox::TabBoxClient* c) const override
+    void raise_client(TabBox::TabBoxClient* c) const override
     {
         Q_UNUSED(c)
     }
@@ -94,24 +94,24 @@ public:
         Q_UNUSED(c)
         Q_UNUSED(under)
     }
-    virtual void showOutline(const QRect& outline)
+    virtual void show_outline(const QRect& outline)
     {
         Q_UNUSED(outline)
     }
-    TabBox::TabBoxClientList stackingOrder() const override
+    TabBox::TabBoxClientList stacking_order() const override
     {
         return TabBox::TabBoxClientList();
     }
-    void grabbedKeyEvent(QKeyEvent* event) const override;
+    void grabbed_key_event(QKeyEvent* event) const override;
 
-    void highlightWindows(TabBox::TabBoxClient* window = nullptr,
-                          QWindow* controller = nullptr) override
+    void highlight_windows(TabBox::TabBoxClient* window = nullptr,
+                           QWindow* controller = nullptr) override
     {
         Q_UNUSED(window)
         Q_UNUSED(controller)
     }
 
-    bool noModifierGrab() const override
+    bool no_modifier_grab() const override
     {
         return false;
     }

@@ -38,7 +38,7 @@ public:
     /**
      * Creates a last recently used virtual desktop chain with the given @p initialSize.
      */
-    explicit DesktopChain(uint initialSize = 0);
+    explicit DesktopChain(uint initial_size = 0);
     /**
      * Returns the next desktop in the chain starting from @p indexDesktop.
      * In case that the @p indexDesktop is the last desktop of the chain, the method wraps around
@@ -50,7 +50,7 @@ public:
      * @param indexDesktop The id of the virtual desktop which should be used as a starting point
      * @return The next virtual desktop in the chain
      */
-    uint next(uint indexDesktop) const;
+    uint next(uint index_desktop) const;
     /**
      * Adds the @p desktop to the chain. The @p desktop becomes the first element of the
      * chain. All desktops in the chain from the previous index of @p desktop are moved
@@ -67,7 +67,7 @@ public:
      * @param previousSize The previous size of the desktop chain
      * @param newSize The size to be used for the desktop chain
      */
-    void resize(uint previousSize, uint newSize);
+    void resize(uint previous_size, uint new_size);
 
 private:
     /**
@@ -97,7 +97,7 @@ public:
      * @return The next virtual desktop in the currently used chain
      * @see DesktopChain::next
      */
-    uint next(uint indexDesktop) const;
+    uint next(uint index_desktop) const;
 
 public Q_SLOTS:
     /**
@@ -105,20 +105,20 @@ public Q_SLOTS:
      * @param previousDesktop The previously used desktop, should be the top element of the chain
      * @param currentDesktop The desktop which should be the new top element of the chain
      */
-    void addDesktop(uint previousDesktop, uint currentDesktop);
+    void add_desktop(uint previous_desktop, uint current_desktop);
     /**
      * Resizes all managed desktop chains from @p previousSize to @p newSize.
      * @param previousSize The previously used size for the chains
      * @param newSize The size to be used for the chains
      * @see DesktopChain::resize
      */
-    void resize(uint previousSize, uint newSize);
+    void resize(uint previous_size, uint new_size);
     /**
      * Switches to the desktop chain identified by the given @p identifier.
      * If there is no chain yet for the given @p identifier a new chain is created and used.
      * @param identifier The identifier of the desktop chain to be used
      */
-    void useChain(const QString& identifier);
+    void use_chain(const QString& identifier);
 
 private:
     typedef QHash<QString, DesktopChain> DesktopChains;
@@ -127,19 +127,19 @@ private:
      * of identifiers.
      * @returns Position of the new chain in the managed list of chains
      */
-    DesktopChains::Iterator addNewChain(const QString& identifier);
+    DesktopChains::Iterator add_new_chain(const QString& identifier);
     /**
      * Creates the very first list to be used when an @p identifier comes in.
      * The dummy chain which is used by default gets copied and used for this chain.
      */
-    void createFirstChain(const QString& identifier);
+    void create_first_chain(const QString& identifier);
 
-    DesktopChains::Iterator m_currentChain;
+    DesktopChains::Iterator m_current_chain;
     DesktopChains m_chains;
     /**
      * The maximum size to be used for a new desktop chain
      */
-    uint m_maxChainSize;
+    uint m_max_chain_size;
 };
 
 } // TabBox

@@ -33,18 +33,19 @@ namespace TabBox
 class SwitcherItem : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QAbstractItemModel* model READ model NOTIFY modelChanged)
-    Q_PROPERTY(QRect screenGeometry READ screenGeometry NOTIFY screenGeometryChanged)
-    Q_PROPERTY(bool visible READ isVisible NOTIFY visibleChanged)
-    Q_PROPERTY(bool allDesktops READ isAllDesktops NOTIFY allDesktopsChanged)
-    Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentIndexChanged)
-    Q_PROPERTY(bool noModifierGrab READ noModifierGrab NOTIFY noModifierGrabChanged)
-    Q_PROPERTY(bool compositing READ compositing NOTIFY compositingChanged)
+    Q_PROPERTY(QAbstractItemModel* model READ model NOTIFY model_changed)
+    Q_PROPERTY(QRect screenGeometry READ screen_geometry NOTIFY screen_geometry_changed)
+    Q_PROPERTY(bool visible READ is_visible NOTIFY visible_changed)
+    Q_PROPERTY(bool allDesktops READ is_all_desktops NOTIFY all_desktops_changed)
+    Q_PROPERTY(
+        int currentIndex READ current_index WRITE set_current_index NOTIFY current_index_changed)
+    Q_PROPERTY(bool noModifierGrab READ no_modifier_grab NOTIFY no_modifier_grab_changed)
+    Q_PROPERTY(bool compositing READ compositing NOTIFY compositing_changed)
 
     /**
      * The main QML item that will be displayed in the Dialog
      */
-    Q_PROPERTY(QObject* item READ item WRITE setItem NOTIFY itemChanged)
+    Q_PROPERTY(QObject* item READ item WRITE set_item NOTIFY item_changed)
 
     Q_CLASSINFO("DefaultProperty", "item")
 public:
@@ -52,43 +53,43 @@ public:
     ~SwitcherItem() override;
 
     QAbstractItemModel* model() const;
-    QRect screenGeometry() const;
-    bool isVisible() const;
-    bool isAllDesktops() const;
-    int currentIndex() const;
-    void setCurrentIndex(int index);
+    QRect screen_geometry() const;
+    bool is_visible() const;
+    bool is_all_desktops() const;
+    int current_index() const;
+    void set_current_index(int index);
     QObject* item() const;
-    void setItem(QObject* item);
-    bool noModifierGrab() const
+    void set_item(QObject* item);
+    bool no_modifier_grab() const
     {
-        return m_noModifierGrab;
+        return m_no_modifier_grab;
     }
     bool compositing();
 
     // for usage from outside
-    void setModel(QAbstractItemModel* model);
-    void setAllDesktops(bool all);
-    void setVisible(bool visible);
-    void setNoModifierGrab(bool set);
+    void set_model(QAbstractItemModel* model);
+    void set_all_desktops(bool all);
+    void set_visible(bool visible);
+    void set_no_modifier_grab(bool set);
 
 Q_SIGNALS:
-    void visibleChanged();
-    void currentIndexChanged(int index);
-    void modelChanged();
-    void allDesktopsChanged();
-    void screenGeometryChanged();
-    void itemChanged();
-    void noModifierGrabChanged();
-    void compositingChanged();
+    void visible_changed();
+    void current_index_changed(int index);
+    void model_changed();
+    void all_desktops_changed();
+    void screen_geometry_changed();
+    void item_changed();
+    void no_modifier_grab_changed();
+    void compositing_changed();
 
 private:
     QAbstractItemModel* m_model;
     QObject* m_item;
     bool m_visible;
-    bool m_allDesktops;
-    int m_currentIndex;
-    QMetaObject::Connection m_selectedIndexConnection;
-    bool m_noModifierGrab = false;
+    bool m_all_desktops;
+    int m_current_index;
+    QMetaObject::Connection m_selected_index_connection;
+    bool m_no_modifier_grab = false;
 };
 
 inline QAbstractItemModel* SwitcherItem::model() const
@@ -96,19 +97,19 @@ inline QAbstractItemModel* SwitcherItem::model() const
     return m_model;
 }
 
-inline bool SwitcherItem::isVisible() const
+inline bool SwitcherItem::is_visible() const
 {
     return m_visible;
 }
 
-inline bool SwitcherItem::isAllDesktops() const
+inline bool SwitcherItem::is_all_desktops() const
 {
-    return m_allDesktops;
+    return m_all_desktops;
 }
 
-inline int SwitcherItem::currentIndex() const
+inline int SwitcherItem::current_index() const
 {
-    return m_currentIndex;
+    return m_current_index;
 }
 
 inline QObject* SwitcherItem::item() const

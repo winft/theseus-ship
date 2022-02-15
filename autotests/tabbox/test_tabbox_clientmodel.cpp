@@ -35,12 +35,12 @@ void TestTabBoxClientModel::testLongestCaptionWithNullClient()
 {
     MockTabBoxHandler tabboxhandler;
     TabBox::ClientModel* clientModel = new TabBox::ClientModel(&tabboxhandler);
-    clientModel->createClientList();
-    QCOMPARE(clientModel->longestCaption(), QString());
+    clientModel->create_client_list();
+    QCOMPARE(clientModel->longest_caption(), QString());
     // add a window to the mock
     tabboxhandler.createMockWindow(QString("test"));
-    clientModel->createClientList();
-    QCOMPARE(clientModel->longestCaption(), QString("test"));
+    clientModel->create_client_list();
+    QCOMPARE(clientModel->longest_caption(), QString("test"));
     // delete the one client in the list
     QModelIndex index = clientModel->index(0, 0);
     QVERIFY(index.isValid());
@@ -49,37 +49,37 @@ void TestTabBoxClientModel::testLongestCaptionWithNullClient()
     client->close();
     // internal model of ClientModel now contains a deleted pointer
     // longestCaption should behave just as if the window were not in the list
-    QCOMPARE(clientModel->longestCaption(), QString());
+    QCOMPARE(clientModel->longest_caption(), QString());
 }
 
 void TestTabBoxClientModel::testCreateClientListNoActiveClient()
 {
     MockTabBoxHandler tabboxhandler;
-    tabboxhandler.setConfig(TabBox::TabBoxConfig());
+    tabboxhandler.set_config(TabBox::TabBoxConfig());
     TabBox::ClientModel* clientModel = new TabBox::ClientModel(&tabboxhandler);
-    clientModel->createClientList();
+    clientModel->create_client_list();
     QCOMPARE(clientModel->rowCount(), 0);
     // create two windows, rowCount() should go to two
     auto client = tabboxhandler.createMockWindow(QString("test"));
     tabboxhandler.createMockWindow(QString("test2"));
-    clientModel->createClientList();
+    clientModel->create_client_list();
     QCOMPARE(clientModel->rowCount(), 2);
     // let's ensure there is no active client
-    tabboxhandler.setActiveClient(decltype(client)());
+    tabboxhandler.set_active_client(decltype(client)());
     // now it should still have two members in the list
-    clientModel->createClientList();
+    clientModel->create_client_list();
     QCOMPARE(clientModel->rowCount(), 2);
 }
 
 void TestTabBoxClientModel::testCreateClientListActiveClientNotInFocusChain()
 {
     MockTabBoxHandler tabboxhandler;
-    tabboxhandler.setConfig(TabBox::TabBoxConfig());
+    tabboxhandler.set_config(TabBox::TabBoxConfig());
     TabBox::ClientModel* clientModel = new TabBox::ClientModel(&tabboxhandler);
     // create two windows, rowCount() should go to two
     auto client = tabboxhandler.createMockWindow(QString("test"));
     client = tabboxhandler.createMockWindow(QString("test2"));
-    clientModel->createClientList();
+    clientModel->create_client_list();
     QCOMPARE(clientModel->rowCount(), 2);
 
     // simulate that the active client is not in the focus chain
@@ -87,7 +87,7 @@ void TestTabBoxClientModel::testCreateClientListActiveClientNotInFocusChain()
     // removes the Client from the Focus Chain but leaves the active window as it is
     auto clientOwner = client.lock();
     tabboxhandler.closeWindow(clientOwner.get());
-    clientModel->createClientList();
+    clientModel->create_client_list();
     QCOMPARE(clientModel->rowCount(), 1);
 }
 

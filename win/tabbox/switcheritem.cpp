@@ -37,89 +37,89 @@ SwitcherItem::SwitcherItem(QObject* parent)
     , m_model(nullptr)
     , m_item(nullptr)
     , m_visible(false)
-    , m_allDesktops(false)
-    , m_currentIndex(0)
+    , m_all_desktops(false)
+    , m_current_index(0)
 {
-    m_selectedIndexConnection = connect(tabBox, &TabBoxHandler::selectedIndexChanged, [this] {
-        if (isVisible()) {
-            setCurrentIndex(tabBox->currentIndex().row());
+    m_selected_index_connection = connect(tabBox, &TabBoxHandler::selected_index_changed, [this] {
+        if (is_visible()) {
+            set_current_index(tabBox->current_index().row());
         }
     });
     connect(&kwinApp()->get_base().screens,
             &Screens::changed,
             this,
-            &SwitcherItem::screenGeometryChanged);
+            &SwitcherItem::screen_geometry_changed);
     connect(render::compositor::self(),
             &render::compositor::compositingToggled,
             this,
-            &SwitcherItem::compositingChanged);
+            &SwitcherItem::compositing_changed);
 }
 
 SwitcherItem::~SwitcherItem()
 {
-    disconnect(m_selectedIndexConnection);
+    disconnect(m_selected_index_connection);
 }
 
-void SwitcherItem::setItem(QObject* item)
+void SwitcherItem::set_item(QObject* item)
 {
     if (m_item == item) {
         return;
     }
     m_item = item;
-    Q_EMIT itemChanged();
+    Q_EMIT item_changed();
 }
 
-void SwitcherItem::setModel(QAbstractItemModel* model)
+void SwitcherItem::set_model(QAbstractItemModel* model)
 {
     m_model = model;
-    Q_EMIT modelChanged();
+    Q_EMIT model_changed();
 }
 
-void SwitcherItem::setVisible(bool visible)
+void SwitcherItem::set_visible(bool visible)
 {
     if (m_visible == visible) {
         return;
     }
     if (visible)
-        Q_EMIT screenGeometryChanged();
+        Q_EMIT screen_geometry_changed();
     m_visible = visible;
-    Q_EMIT visibleChanged();
+    Q_EMIT visible_changed();
 }
 
-QRect SwitcherItem::screenGeometry() const
+QRect SwitcherItem::screen_geometry() const
 {
     auto& screens = kwinApp()->get_base().screens;
     return screens.geometry(screens.current());
 }
 
-void SwitcherItem::setCurrentIndex(int index)
+void SwitcherItem::set_current_index(int index)
 {
-    if (m_currentIndex == index) {
+    if (m_current_index == index) {
         return;
     }
-    m_currentIndex = index;
+    m_current_index = index;
     if (m_model) {
-        tabBox->setCurrentIndex(m_model->index(index, 0));
+        tabBox->set_current_index(m_model->index(index, 0));
     }
-    Q_EMIT currentIndexChanged(m_currentIndex);
+    Q_EMIT current_index_changed(m_current_index);
 }
 
-void SwitcherItem::setAllDesktops(bool all)
+void SwitcherItem::set_all_desktops(bool all)
 {
-    if (m_allDesktops == all) {
+    if (m_all_desktops == all) {
         return;
     }
-    m_allDesktops = all;
-    Q_EMIT allDesktopsChanged();
+    m_all_desktops = all;
+    Q_EMIT all_desktops_changed();
 }
 
-void SwitcherItem::setNoModifierGrab(bool set)
+void SwitcherItem::set_no_modifier_grab(bool set)
 {
-    if (m_noModifierGrab == set) {
+    if (m_no_modifier_grab == set) {
         return;
     }
-    m_noModifierGrab = set;
-    Q_EMIT noModifierGrabChanged();
+    m_no_modifier_grab = set;
+    Q_EMIT no_modifier_grab_changed();
 }
 
 bool SwitcherItem::compositing()

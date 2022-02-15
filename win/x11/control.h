@@ -77,7 +77,7 @@ public:
         xcb_ungrab_button(
             connection(), XCB_BUTTON_INDEX_ANY, m_window->xcb_windows.wrapper, XCB_MOD_MASK_ANY);
 
-        if (TabBox::TabBox::self()->forcedGlobalMouseGrab()) {
+        if (TabBox::TabBox::self()->forced_global_mouse_grab()) {
             // see TabBox::establishTabBoxGrab()
             m_window->xcb_windows.wrapper.grab_button(XCB_GRAB_MODE_SYNC, XCB_GRAB_MODE_ASYNC);
             return;

@@ -50,16 +50,16 @@ QVariant ClientModel::data(const QModelIndex& index, int role) const
     if (!index.isValid())
         return QVariant();
 
-    if (m_clientList.empty()) {
+    if (m_client_list.empty()) {
         return QVariant();
     }
 
     auto client_index = index.row();
-    if (client_index >= static_cast<int>(m_clientList.size())) {
+    if (client_index >= static_cast<int>(m_client_list.size())) {
         return QVariant();
     }
 
-    auto client = m_clientList[client_index].lock();
+    auto client = m_client_list[client_index].lock();
     if (!client) {
         return QVariant();
     }
@@ -75,15 +75,15 @@ QVariant ClientModel::data(const QModelIndex& index, int role) const
     case ClientRole:
         return QVariant::fromValue<void*>(client.get());
     case DesktopNameRole: {
-        return tabBox->desktopName(client.get());
+        return tabBox->desktop_name(client.get());
     }
     case WIdRole:
-        return client->internalId();
+        return client->internal_id();
     case MinimizedRole:
-        return client->isMinimized();
+        return client->is_minimized();
     case CloseableRole:
         // clients that claim to be first are not closeable
-        return client->isCloseable() && !client->isFirstInTabBox();
+        return client->is_closeable() && !client->is_first_in_tabbox();
     case IconRole:
         return client->icon();
     default:
@@ -91,10 +91,10 @@ QVariant ClientModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QString ClientModel::longestCaption() const
+QString ClientModel::longest_caption() const
 {
     QString caption;
-    for (auto const& client_pointer : m_clientList) {
+    for (auto const& client_pointer : m_client_list) {
         auto client = client_pointer.lock();
         if (!client) {
             continue;
@@ -117,7 +117,7 @@ int ClientModel::rowCount(const QModelIndex& parent) const
     if (parent.isValid()) {
         return 0;
     }
-    return m_clientList.size();
+    return m_client_list.size();
 }
 
 QModelIndex ClientModel::parent(const QModelIndex& child) const
@@ -132,7 +132,7 @@ QModelIndex ClientModel::index(int row, int column, const QModelIndex& parent) c
         return QModelIndex();
     }
     auto index = row * columnCount();
-    if (index >= static_cast<int>(m_clientList.size()) && !m_clientList.empty()) {
+    if (index >= static_cast<int>(m_client_list.size()) && !m_client_list.empty()) {
         return QModelIndex();
     }
     return createIndex(row, 0);
@@ -152,84 +152,84 @@ QHash<int, QByteArray> ClientModel::roleNames() const
 
 QModelIndex ClientModel::index(TabBoxClient* client) const
 {
-    auto it = std::find_if(m_clientList.cbegin(), m_clientList.cend(), [client](auto const& cmp) {
+    auto it = std::find_if(m_client_list.cbegin(), m_client_list.cend(), [client](auto const& cmp) {
         return client == cmp.lock().get();
     });
-    if (it == m_clientList.cend()) {
+    if (it == m_client_list.cend()) {
         return QModelIndex();
     }
-    auto index = it - m_clientList.cbegin();
+    auto index = it - m_client_list.cbegin();
     auto row = index / columnCount();
     auto column = index % columnCount();
     return createIndex(row, column);
 }
 
-void ClientModel::createClientList(bool partialReset)
+void ClientModel::create_client_list(bool partial_reset)
 {
-    createClientList(tabBox->currentDesktop(), partialReset);
+    create_client_list(tabBox->current_desktop(), partial_reset);
 }
 
-void ClientModel::createClientList(int desktop, bool partialReset)
+void ClientModel::create_client_list(int desktop, bool partial_reset)
 {
-    auto start = tabBox->activeClient().lock().get();
+    auto start = tabBox->active_client().lock().get();
     // TODO: new clients are not added at correct position
-    if (partialReset && !m_clientList.empty()) {
-        auto first_client = m_clientList.at(0).lock();
+    if (partial_reset && !m_client_list.empty()) {
+        auto first_client = m_client_list.at(0).lock();
         if (first_client) {
             start = first_client.get();
         }
     }
 
     beginResetModel();
-    m_clientList.clear();
+    m_client_list.clear();
     TabBoxClientList sticky_clients;
 
     auto remove_clients = [this](auto const& target) {
-        m_clientList.erase(std::remove_if(m_clientList.begin(),
-                                          m_clientList.end(),
-                                          [&target](auto const& client) {
-                                              return target.get() == client.lock().get();
-                                          }),
-                           m_clientList.end());
+        m_client_list.erase(std::remove_if(m_client_list.begin(),
+                                           m_client_list.end(),
+                                           [&target](auto const& client) {
+                                               return target.get() == client.lock().get();
+                                           }),
+                            m_client_list.end());
     };
 
-    switch (tabBox->config().clientSwitchingMode()) {
+    switch (tabBox->config().client_switching_mode()) {
     case TabBoxConfig::FocusChainSwitching: {
         TabBoxClient* c = start;
-        if (!tabBox->isInFocusChain(c)) {
-            auto first_client = tabBox->firstClientFocusChain().lock();
+        if (!tabBox->is_in_focus_chain(c)) {
+            auto first_client = tabBox->first_client_focus_chain().lock();
             if (first_client) {
                 c = first_client.get();
             }
         }
         TabBoxClient* stop = c;
         do {
-            auto add = tabBox->clientToAddToList(c, desktop).lock();
+            auto add = tabBox->client_to_add_to_list(c, desktop).lock();
             if (add) {
-                m_clientList.push_back(add);
-                if (add.get()->isFirstInTabBox()) {
+                m_client_list.push_back(add);
+                if (add.get()->is_first_in_tabbox()) {
                     sticky_clients.push_back(add);
                 }
             }
-            c = tabBox->nextClientFocusChain(c).lock().get();
+            c = tabBox->next_client_focus_chain(c).lock().get();
         } while (c && c != stop);
         break;
     }
     case TabBoxConfig::StackingOrderSwitching: {
         // TODO: needs improvement
-        auto stacking = tabBox->stackingOrder();
+        auto stacking = tabBox->stacking_order();
         auto c = stacking.at(0).lock().get();
         auto stop = c;
         auto index = 0u;
         while (c) {
-            auto add_weak = tabBox->clientToAddToList(c, desktop);
+            auto add_weak = tabBox->client_to_add_to_list(c, desktop);
             if (auto add = add_weak.lock()) {
                 if (start == add.get()) {
                     remove_clients(add);
-                    m_clientList.push_back(add);
+                    m_client_list.push_back(add);
                 } else
-                    m_clientList.push_back(add);
-                if (add->isFirstInTabBox()) {
+                    m_client_list.push_back(add);
+                if (add->is_first_in_tabbox()) {
                     sticky_clients.push_back(add);
                 }
             }
@@ -247,14 +247,14 @@ void ClientModel::createClientList(int desktop, bool partialReset)
     }
     for (auto const& c : sticky_clients) {
         remove_clients(c.lock());
-        m_clientList.push_back(c);
+        m_client_list.push_back(c);
     }
-    if (tabBox->config().clientApplicationsMode() != TabBoxConfig::AllWindowsCurrentApplication
-        && (tabBox->config().showDesktopMode() == TabBoxConfig::ShowDesktopClient
-            || m_clientList.empty())) {
-        auto desktop_client = tabBox->desktopClient().lock();
+    if (tabBox->config().client_applications_mode() != TabBoxConfig::AllWindowsCurrentApplication
+        && (tabBox->config().show_desktop_mode() == TabBoxConfig::ShowDesktopClient
+            || m_client_list.empty())) {
+        auto desktop_client = tabBox->desktop_client().lock();
         if (desktop_client) {
-            m_clientList.push_back(desktop_client);
+            m_client_list.push_back(desktop_client);
         }
     }
     endResetModel();
@@ -266,7 +266,7 @@ void ClientModel::close(int i)
     if (!ind.isValid()) {
         return;
     }
-    if (auto client = m_clientList.at(i).lock()) {
+    if (auto client = m_client_list.at(i).lock()) {
         client->close();
     }
 }
@@ -277,8 +277,8 @@ void ClientModel::activate(int i)
     if (!ind.isValid()) {
         return;
     }
-    tabBox->setCurrentIndex(ind);
-    tabBox->activateAndClose();
+    tabBox->set_current_index(ind);
+    tabBox->activate_and_close();
 }
 
 } // namespace Tabbox

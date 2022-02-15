@@ -79,7 +79,7 @@ namespace KWin
 namespace TabBox
 {
 class DesktopModel;
-class ClientModel;
+class client_model;
 class TabBoxConfig;
 class TabBoxClient;
 class TabBoxHandlerPrivate;
@@ -103,17 +103,17 @@ public:
     /**
      * @return The id of the active screen
      */
-    virtual int activeScreen() const = 0;
+    virtual int active_screen() const = 0;
     /**
      * @return The current active TabBoxClient or NULL
      * if there is no active client.
      */
-    virtual std::weak_ptr<TabBoxClient> activeClient() const = 0;
+    virtual std::weak_ptr<TabBoxClient> active_client() const = 0;
     /**
      * @param client The client which is starting point to find the next client
      * @return The next TabBoxClient in focus chain
      */
-    virtual std::weak_ptr<TabBoxClient> nextClientFocusChain(TabBoxClient* client) const = 0;
+    virtual std::weak_ptr<TabBoxClient> next_client_focus_chain(TabBoxClient* client) const = 0;
     /**
      * This method is used by the ClientModel to find an entrance into the focus chain in case
      * there is no active Client.
@@ -121,7 +121,7 @@ public:
      * @return The first Client of the focus chain
      * @since 4.9.1
      */
-    virtual std::weak_ptr<TabBoxClient> firstClientFocusChain() const = 0;
+    virtual std::weak_ptr<TabBoxClient> first_client_focus_chain() const = 0;
     /**
      * Checks whether the given @p client is part of the focus chain at all.
      * This is useful to figure out whether the currently active Client can be used
@@ -135,46 +135,46 @@ public:
      * @return @c true in case the Client is part of the focus chain, @c false otherwise.
      * @since 4.9.2
      */
-    virtual bool isInFocusChain(TabBoxClient* client) const = 0;
+    virtual bool is_in_focus_chain(TabBoxClient* client) const = 0;
     /**
      * @param client The client whose desktop name should be retrieved
      * @return The desktop name of the given TabBoxClient. If the client is
      * on all desktops the name of current desktop will be returned.
      */
-    virtual QString desktopName(TabBoxClient* client) const = 0;
+    virtual QString desktop_name(TabBoxClient* client) const = 0;
     /**
      * @param desktop The desktop whose name should be retrieved
      * @return The desktop name of given desktop
      */
-    virtual QString desktopName(int desktop) const = 0;
+    virtual QString desktop_name(int desktop) const = 0;
     /**
      * @return The number of current desktop
      */
-    virtual int currentDesktop() const = 0;
+    virtual int current_desktop() const = 0;
     /**
      * @return The number of virtual desktops
      */
-    virtual int numberOfDesktops() const = 0;
+    virtual int number_of_desktops() const = 0;
     /**
      * @param desktop The desktop which is the starting point to find the next desktop
      * @return The next desktop in the current focus chain.
      */
-    virtual int nextDesktopFocusChain(int desktop) const = 0;
+    virtual int next_desktop_focus_chain(int desktop) const = 0;
 
     /**
      * whether KWin is currently compositing and it's related features (elevating) can be used
      */
-    virtual bool isKWinCompositing() const = 0;
+    virtual bool is_kwin_compositing() const = 0;
 
     /**
      * De-/Elevate a client using the compositor (if enabled)
      */
-    virtual void elevateClient(TabBoxClient* c, QWindow* tabbox, bool elevate) const = 0;
+    virtual void elevate_client(TabBoxClient* c, QWindow* tabbox, bool elevate) const = 0;
 
     /**
      * Raise a client (w/o activating it)
      */
-    virtual void raiseClient(TabBoxClient* c) const = 0;
+    virtual void raise_client(TabBoxClient* c) const = 0;
 
     /**
      * @param c The client to be restacked
@@ -182,13 +182,13 @@ public:
      */
     virtual void restack(TabBoxClient* c, TabBoxClient* under) = 0;
 
-    virtual void highlightWindows(TabBoxClient* window = nullptr, QWindow* controller = nullptr)
+    virtual void highlight_windows(TabBoxClient* window = nullptr, QWindow* controller = nullptr)
         = 0;
 
     /**
      * @return The current stacking order of TabBoxClients
      */
-    virtual TabBoxClientList stackingOrder() const = 0;
+    virtual TabBoxClientList stacking_order() const = 0;
     /**
      * Determines if given client will be added to the list:
      * <UL>
@@ -205,16 +205,16 @@ public:
      * @param allDesktops Add clients from all desktops or only from current
      * @return The client to be included in the list or NULL if it isn't to be included
      */
-    virtual std::weak_ptr<TabBoxClient> clientToAddToList(TabBoxClient* client,
-                                                          int desktop) const = 0;
+    virtual std::weak_ptr<TabBoxClient> client_to_add_to_list(TabBoxClient* client,
+                                                              int desktop) const = 0;
     /**
      * @return The first desktop window in the stacking order.
      */
-    virtual std::weak_ptr<TabBoxClient> desktopClient() const = 0;
+    virtual std::weak_ptr<TabBoxClient> desktop_client() const = 0;
     /**
      * Activates the currently selected client and closes the TabBox.
      */
-    virtual void activateAndClose() = 0;
+    virtual void activate_and_close() = 0;
 
     /**
      * @return The currently used TabBoxConfig
@@ -225,7 +225,7 @@ public:
      * It fires the signal configChanged.
      * @param config Updates the currently used TabBoxConfig to config
      */
-    void setConfig(const TabBoxConfig& config);
+    void set_config(const TabBoxConfig& config);
 
     /**
      * Call this method to show the TabBoxView. Depending on current
@@ -249,11 +249,11 @@ public:
      * highlight windows if active.
      * @param index The current Model index
      */
-    void setCurrentIndex(const QModelIndex& index);
+    void set_current_index(const QModelIndex& index);
     /**
      * @returns the current index
      */
-    const QModelIndex& currentIndex() const;
+    const QModelIndex& current_index() const;
 
     /**
      * Retrieves the next or previous item of the current item.
@@ -261,7 +261,7 @@ public:
      * @return The next or previous item. If there is no matching item
      * the current item will be returned.
      */
-    QModelIndex nextPrev(bool forward) const;
+    QModelIndex next_prev(bool forward) const;
 
     /**
      * Initializes the model based on the current config.
@@ -271,21 +271,21 @@ public:
      *
      * @param partialReset Keep the currently selected item or regenerate everything
      */
-    void createModel(bool partialReset = false);
+    void create_model(bool partial_reset = false);
 
     /**
      * @param desktop The desktop whose index should be retrieved
      * @return The model index of given desktop. If TabBoxMode is not
      * TabBoxConfig::DesktopTabBox an invalid model index will be returned.
      */
-    QModelIndex desktopIndex(int desktop) const;
+    QModelIndex desktop_index(int desktop) const;
     /**
      * @return The current list of desktops.
      * If TabBoxMode is not TabBoxConfig::DesktopTabBox an empty list will
      * be returned.
      * @see DesktopModel::desktopList
      */
-    QList<int> desktopList() const;
+    QList<int> desktop_list() const;
     /**
      * @return The desktop for given model index. If the index is not valid
      * or TabBoxMode is not TabBoxConfig::DesktopTabBox -1 will be returned.
@@ -297,12 +297,12 @@ public:
      * Handles additional grabbed key events by the TabBox controller.
      * @param event The key event which has been grabbed
      */
-    virtual void grabbedKeyEvent(QKeyEvent* event) const;
+    virtual void grabbed_key_event(QKeyEvent* event) const;
     /**
      * @param pos The position to be tested in global coordinates
      * @return True if the view contains the point, otherwise false.
      */
-    bool containsPos(const QPoint& pos) const;
+    bool contains_pos(const QPoint& pos) const;
     /**
      * @param client The TabBoxClient whose index should be returned
      * @return Returns the ModelIndex of given TabBoxClient or an invalid ModelIndex
@@ -316,7 +316,7 @@ public:
      * be returned.
      * @see ClientModel::clientList
      */
-    TabBoxClientList clientList() const;
+    TabBoxClientList client_list() const;
     /**
      * @param index The index of the client to be returned
      * @return Returns the TabBoxClient at given model index. If
@@ -337,18 +337,18 @@ public:
      * @returns whether the TabBox operates in a no modifier grab mode.
      * In this mode a click on an item should directly accept and close the tabbox.
      */
-    virtual bool noModifierGrab() const = 0;
+    virtual bool no_modifier_grab() const = 0;
 
 Q_SIGNALS:
     /**
      * This signal is fired when the TabBoxConfig changes
      * @see setConfig
      */
-    void configChanged();
-    void selectedIndexChanged();
+    void config_changed();
+    void selected_index_changed();
 
 private Q_SLOTS:
-    void initHighlightWindows();
+    void init_highlight_windows();
 
 private:
     friend class TabBoxHandlerPrivate;
@@ -380,15 +380,15 @@ public:
     /**
      * @return Minimized state of the client
      */
-    virtual bool isMinimized() const = 0;
+    virtual bool is_minimized() const = 0;
     virtual int x() const = 0;
     virtual int y() const = 0;
     virtual int width() const = 0;
     virtual int height() const = 0;
-    virtual bool isCloseable() const = 0;
+    virtual bool is_closeable() const = 0;
     virtual void close() = 0;
-    virtual bool isFirstInTabBox() const = 0;
-    virtual QUuid internalId() const = 0;
+    virtual bool is_first_in_tabbox() const = 0;
+    virtual QUuid internal_id() const = 0;
 };
 
 /**

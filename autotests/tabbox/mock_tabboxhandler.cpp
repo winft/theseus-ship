@@ -32,23 +32,23 @@ MockTabBoxHandler::~MockTabBoxHandler()
 {
 }
 
-void MockTabBoxHandler::grabbedKeyEvent(QKeyEvent* event) const
+void MockTabBoxHandler::grabbed_key_event(QKeyEvent* event) const
 {
     Q_UNUSED(event)
 }
 
-std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::activeClient() const
+std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::active_client() const
 {
     return m_activeClient;
 }
 
-void MockTabBoxHandler::setActiveClient(const std::weak_ptr<TabBox::TabBoxClient>& client)
+void MockTabBoxHandler::set_active_client(const std::weak_ptr<TabBox::TabBoxClient>& client)
 {
     m_activeClient = client;
 }
 
 std::weak_ptr<TabBox::TabBoxClient>
-MockTabBoxHandler::clientToAddToList(TabBox::TabBoxClient* client, int desktop) const
+MockTabBoxHandler::client_to_add_to_list(TabBox::TabBoxClient* client, int desktop) const
 {
     Q_UNUSED(desktop)
     for (auto const& window : m_windows) {
@@ -60,7 +60,7 @@ MockTabBoxHandler::clientToAddToList(TabBox::TabBoxClient* client, int desktop) 
 }
 
 std::weak_ptr<TabBox::TabBoxClient>
-MockTabBoxHandler::nextClientFocusChain(TabBox::TabBoxClient* client) const
+MockTabBoxHandler::next_client_focus_chain(TabBox::TabBoxClient* client) const
 {
     auto it = m_windows.cbegin();
     for (; it != m_windows.cend(); ++it) {
@@ -79,7 +79,7 @@ MockTabBoxHandler::nextClientFocusChain(TabBox::TabBoxClient* client) const
     return std::weak_ptr<TabBox::TabBoxClient>();
 }
 
-std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::firstClientFocusChain() const
+std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::first_client_focus_chain() const
 {
     if (m_windows.empty()) {
         return std::weak_ptr<TabBox::TabBoxClient>();
@@ -87,7 +87,7 @@ std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::firstClientFocusChain() c
     return m_windows.front();
 }
 
-bool MockTabBoxHandler::isInFocusChain(TabBox::TabBoxClient* client) const
+bool MockTabBoxHandler::is_in_focus_chain(TabBox::TabBoxClient* client) const
 {
     if (!client) {
         return false;

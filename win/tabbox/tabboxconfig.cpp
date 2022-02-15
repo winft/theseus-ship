@@ -28,34 +28,34 @@ class TabBoxConfigPrivate
 {
 public:
     TabBoxConfigPrivate()
-        : showTabBox(TabBoxConfig::defaultShowTabBox())
-        , highlightWindows(TabBoxConfig::defaultHighlightWindow())
-        , tabBoxMode(TabBoxConfig::ClientTabBox)
-        , clientDesktopMode(TabBoxConfig::defaultDesktopMode())
-        , clientApplicationsMode(TabBoxConfig::defaultApplicationsMode())
-        , clientMinimizedMode(TabBoxConfig::defaultMinimizedMode())
-        , showDesktopMode(TabBoxConfig::defaultShowDesktopMode())
-        , clientMultiScreenMode(TabBoxConfig::defaultMultiScreenMode())
-        , clientSwitchingMode(TabBoxConfig::defaultSwitchingMode())
-        , desktopSwitchingMode(TabBoxConfig::MostRecentlyUsedDesktopSwitching)
-        , layoutName(TabBoxConfig::defaultLayoutName())
+        : show_tabbox(TabBoxConfig::default_show_tabbox())
+        , highlight_windows(TabBoxConfig::default_highlight_window())
+        , tabbox_mode(TabBoxConfig::ClientTabBox)
+        , client_desktop_mode(TabBoxConfig::default_desktop_mode())
+        , client_applications_mode(TabBoxConfig::default_applications_mode())
+        , client_minimized_mode(TabBoxConfig::default_minimized_mode())
+        , show_desktop_mode(TabBoxConfig::default_show_desktop_mode())
+        , client_multi_screen_mode(TabBoxConfig::default_multi_screen_mode())
+        , client_switching_mode(TabBoxConfig::default_switching_mode())
+        , desktop_switching_mode(TabBoxConfig::MostRecentlyUsedDesktopSwitching)
+        , layout_name(TabBoxConfig::default_layout_name())
     {
     }
     ~TabBoxConfigPrivate()
     {
     }
-    bool showTabBox;
-    bool highlightWindows;
+    bool show_tabbox;
+    bool highlight_windows;
 
-    TabBoxConfig::TabBoxMode tabBoxMode;
-    TabBoxConfig::ClientDesktopMode clientDesktopMode;
-    TabBoxConfig::ClientApplicationsMode clientApplicationsMode;
-    TabBoxConfig::ClientMinimizedMode clientMinimizedMode;
-    TabBoxConfig::ShowDesktopMode showDesktopMode;
-    TabBoxConfig::ClientMultiScreenMode clientMultiScreenMode;
-    TabBoxConfig::ClientSwitchingMode clientSwitchingMode;
-    TabBoxConfig::DesktopSwitchingMode desktopSwitchingMode;
-    QString layoutName;
+    TabBoxConfig::TabBoxMode tabbox_mode;
+    TabBoxConfig::ClientDesktopMode client_desktop_mode;
+    TabBoxConfig::ClientApplicationsMode client_applications_mode;
+    TabBoxConfig::ClientMinimizedMode client_minimized_mode;
+    TabBoxConfig::ShowDesktopMode show_desktop_mode;
+    TabBoxConfig::ClientMultiScreenMode client_multi_screen_mode;
+    TabBoxConfig::ClientSwitchingMode client_switching_mode;
+    TabBoxConfig::DesktopSwitchingMode desktop_switching_mode;
+    QString layout_name;
 };
 
 TabBoxConfig::TabBoxConfig()
@@ -70,128 +70,128 @@ TabBoxConfig::~TabBoxConfig()
 
 TabBoxConfig& TabBoxConfig::operator=(const KWin::TabBox::TabBoxConfig& object)
 {
-    d->showTabBox = object.isShowTabBox();
-    d->highlightWindows = object.isHighlightWindows();
-    d->tabBoxMode = object.tabBoxMode();
-    d->clientDesktopMode = object.clientDesktopMode();
-    d->clientApplicationsMode = object.clientApplicationsMode();
-    d->clientMinimizedMode = object.clientMinimizedMode();
-    d->showDesktopMode = object.showDesktopMode();
-    d->clientMultiScreenMode = object.clientMultiScreenMode();
-    d->clientSwitchingMode = object.clientSwitchingMode();
-    d->desktopSwitchingMode = object.desktopSwitchingMode();
-    d->layoutName = object.layoutName();
+    d->show_tabbox = object.is_show_tabbox();
+    d->highlight_windows = object.is_highlight_windows();
+    d->tabbox_mode = object.tabbox_mode();
+    d->client_desktop_mode = object.client_desktop_mode();
+    d->client_applications_mode = object.client_applications_mode();
+    d->client_minimized_mode = object.client_minimized_mode();
+    d->show_desktop_mode = object.show_desktop_mode();
+    d->client_multi_screen_mode = object.client_multi_screen_mode();
+    d->client_switching_mode = object.client_switching_mode();
+    d->desktop_switching_mode = object.desktop_switching_mode();
+    d->layout_name = object.layout_name();
     return *this;
 }
 
-void TabBoxConfig::setHighlightWindows(bool highlight)
+void TabBoxConfig::set_highlight_windows(bool highlight)
 {
-    d->highlightWindows = highlight;
+    d->highlight_windows = highlight;
 }
 
-bool TabBoxConfig::isHighlightWindows() const
+bool TabBoxConfig::is_highlight_windows() const
 {
-    return d->highlightWindows;
+    return d->highlight_windows;
 }
 
-void TabBoxConfig::setShowTabBox(bool show)
+void TabBoxConfig::set_show_tabbox(bool show)
 {
-    d->showTabBox = show;
+    d->show_tabbox = show;
 }
 
-bool TabBoxConfig::isShowTabBox() const
+bool TabBoxConfig::is_show_tabbox() const
 {
-    return d->showTabBox;
+    return d->show_tabbox;
 }
 
-void TabBoxConfig::setTabBoxMode(TabBoxConfig::TabBoxMode mode)
+void TabBoxConfig::set_tabbox_mode(TabBoxConfig::TabBoxMode mode)
 {
-    d->tabBoxMode = mode;
+    d->tabbox_mode = mode;
 }
 
-TabBoxConfig::TabBoxMode TabBoxConfig::tabBoxMode() const
+TabBoxConfig::TabBoxMode TabBoxConfig::tabbox_mode() const
 {
-    return d->tabBoxMode;
+    return d->tabbox_mode;
 }
 
-TabBoxConfig::ClientDesktopMode TabBoxConfig::clientDesktopMode() const
+TabBoxConfig::ClientDesktopMode TabBoxConfig::client_desktop_mode() const
 {
-    return d->clientDesktopMode;
+    return d->client_desktop_mode;
 }
 
-void TabBoxConfig::setClientDesktopMode(ClientDesktopMode desktopMode)
+void TabBoxConfig::set_client_desktop_mode(ClientDesktopMode desktop_mode)
 {
-    d->clientDesktopMode = desktopMode;
+    d->client_desktop_mode = desktop_mode;
 }
 
-TabBoxConfig::ClientApplicationsMode TabBoxConfig::clientApplicationsMode() const
+TabBoxConfig::ClientApplicationsMode TabBoxConfig::client_applications_mode() const
 {
-    return d->clientApplicationsMode;
+    return d->client_applications_mode;
 }
 
-void TabBoxConfig::setClientApplicationsMode(ClientApplicationsMode applicationsMode)
+void TabBoxConfig::set_client_applications_mode(ClientApplicationsMode applications_mode)
 {
-    d->clientApplicationsMode = applicationsMode;
+    d->client_applications_mode = applications_mode;
 }
 
-TabBoxConfig::ClientMinimizedMode TabBoxConfig::clientMinimizedMode() const
+TabBoxConfig::ClientMinimizedMode TabBoxConfig::client_minimized_mode() const
 {
-    return d->clientMinimizedMode;
+    return d->client_minimized_mode;
 }
 
-void TabBoxConfig::setClientMinimizedMode(ClientMinimizedMode minimizedMode)
+void TabBoxConfig::set_client_minimized_mode(ClientMinimizedMode minimized_mode)
 {
-    d->clientMinimizedMode = minimizedMode;
+    d->client_minimized_mode = minimized_mode;
 }
 
-TabBoxConfig::ShowDesktopMode TabBoxConfig::showDesktopMode() const
+TabBoxConfig::ShowDesktopMode TabBoxConfig::show_desktop_mode() const
 {
-    return d->showDesktopMode;
+    return d->show_desktop_mode;
 }
 
-void TabBoxConfig::setShowDesktopMode(ShowDesktopMode showDesktopMode)
+void TabBoxConfig::set_show_desktop_mode(ShowDesktopMode show_desktop_mode)
 {
-    d->showDesktopMode = showDesktopMode;
+    d->show_desktop_mode = show_desktop_mode;
 }
 
-TabBoxConfig::ClientMultiScreenMode TabBoxConfig::clientMultiScreenMode() const
+TabBoxConfig::ClientMultiScreenMode TabBoxConfig::client_multi_screen_mode() const
 {
-    return d->clientMultiScreenMode;
+    return d->client_multi_screen_mode;
 }
 
-void TabBoxConfig::setClientMultiScreenMode(ClientMultiScreenMode multiScreenMode)
+void TabBoxConfig::set_client_multi_screen_mode(ClientMultiScreenMode multi_screen_mode)
 {
-    d->clientMultiScreenMode = multiScreenMode;
+    d->client_multi_screen_mode = multi_screen_mode;
 }
 
-TabBoxConfig::ClientSwitchingMode TabBoxConfig::clientSwitchingMode() const
+TabBoxConfig::ClientSwitchingMode TabBoxConfig::client_switching_mode() const
 {
-    return d->clientSwitchingMode;
+    return d->client_switching_mode;
 }
 
-void TabBoxConfig::setClientSwitchingMode(ClientSwitchingMode switchingMode)
+void TabBoxConfig::set_client_switching_mode(ClientSwitchingMode switching_mode)
 {
-    d->clientSwitchingMode = switchingMode;
+    d->client_switching_mode = switching_mode;
 }
 
-TabBoxConfig::DesktopSwitchingMode TabBoxConfig::desktopSwitchingMode() const
+TabBoxConfig::DesktopSwitchingMode TabBoxConfig::desktop_switching_mode() const
 {
-    return d->desktopSwitchingMode;
+    return d->desktop_switching_mode;
 }
 
-void TabBoxConfig::setDesktopSwitchingMode(DesktopSwitchingMode switchingMode)
+void TabBoxConfig::set_desktop_switching_mode(DesktopSwitchingMode switching_mode)
 {
-    d->desktopSwitchingMode = switchingMode;
+    d->desktop_switching_mode = switching_mode;
 }
 
-QString& TabBoxConfig::layoutName() const
+QString& TabBoxConfig::layout_name() const
 {
-    return d->layoutName;
+    return d->layout_name;
 }
 
-void TabBoxConfig::setLayoutName(const QString& name)
+void TabBoxConfig::set_layout_name(const QString& name)
 {
-    d->layoutName = name;
+    d->layout_name = name;
 }
 
 } // namespace TabBox

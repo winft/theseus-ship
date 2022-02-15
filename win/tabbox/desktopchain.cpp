@@ -37,9 +37,9 @@ void DesktopChain::init()
     }
 }
 
-uint DesktopChain::next(uint indexDesktop) const
+uint DesktopChain::next(uint index_desktop) const
 {
-    const int i = m_chain.indexOf(indexDesktop);
+    const int i = m_chain.indexOf(index_desktop);
     if (i >= 0 && i + 1 < m_chain.size()) {
         return m_chain[i + 1];
     } else if (m_chain.size() > 0) {
@@ -49,21 +49,21 @@ uint DesktopChain::next(uint indexDesktop) const
     }
 }
 
-void DesktopChain::resize(uint previousSize, uint newSize)
+void DesktopChain::resize(uint previous_size, uint new_size)
 {
-    Q_ASSERT(int(previousSize) == m_chain.size());
-    m_chain.resize(newSize);
+    Q_ASSERT(int(previous_size) == m_chain.size());
+    m_chain.resize(new_size);
 
-    if (newSize >= previousSize) {
+    if (new_size >= previous_size) {
         // We do not destroy the chain in case new desktops are added
-        for (uint i = previousSize; i < newSize; ++i) {
+        for (uint i = previous_size; i < new_size; ++i) {
             m_chain[i] = i + 1;
         }
     } else {
         // But when desktops are removed, we may have to modify the chain a bit,
         // otherwise invalid desktops may show up.
         for (int i = 0; i < m_chain.size(); ++i) {
-            m_chain[i] = qMin(m_chain[i], newSize);
+            m_chain[i] = qMin(m_chain[i], new_size);
         }
     }
 }
@@ -86,9 +86,9 @@ void DesktopChain::add(uint desktop)
 
 DesktopChainManager::DesktopChainManager(QObject* parent)
     : QObject(parent)
-    , m_maxChainSize(0)
+    , m_max_chain_size(0)
 {
-    m_currentChain = m_chains.insert(QString(), DesktopChain());
+    m_current_chain = m_chains.insert(QString(), DesktopChain());
 }
 
 DesktopChainManager::~DesktopChainManager()
@@ -97,45 +97,45 @@ DesktopChainManager::~DesktopChainManager()
 
 uint DesktopChainManager::next(uint indexDesktop) const
 {
-    return m_currentChain.value().next(indexDesktop);
+    return m_current_chain.value().next(indexDesktop);
 }
 
-void DesktopChainManager::resize(uint previousSize, uint newSize)
+void DesktopChainManager::resize(uint previous_size, uint new_size)
 {
-    m_maxChainSize = newSize;
+    m_max_chain_size = new_size;
     for (DesktopChains::iterator it = m_chains.begin(); it != m_chains.end(); ++it) {
-        it.value().resize(previousSize, newSize);
+        it.value().resize(previous_size, new_size);
     }
 }
 
-void DesktopChainManager::addDesktop(uint previousDesktop, uint currentDesktop)
+void DesktopChainManager::add_desktop(uint previous_desktop, uint current_desktop)
 {
-    Q_UNUSED(previousDesktop)
-    m_currentChain.value().add(currentDesktop);
+    Q_UNUSED(previous_desktop)
+    m_current_chain.value().add(current_desktop);
 }
 
-void DesktopChainManager::useChain(const QString& identifier)
+void DesktopChainManager::use_chain(const QString& identifier)
 {
-    if (m_currentChain.key().isNull()) {
-        createFirstChain(identifier);
+    if (m_current_chain.key().isNull()) {
+        create_first_chain(identifier);
     } else {
-        m_currentChain = m_chains.find(identifier);
-        if (m_currentChain == m_chains.end()) {
-            m_currentChain = addNewChain(identifier);
+        m_current_chain = m_chains.find(identifier);
+        if (m_current_chain == m_chains.end()) {
+            m_current_chain = add_new_chain(identifier);
         }
     }
 }
 
-void DesktopChainManager::createFirstChain(const QString& identifier)
+void DesktopChainManager::create_first_chain(const QString& identifier)
 {
-    DesktopChain value(m_currentChain.value());
-    m_chains.erase(m_currentChain);
-    m_currentChain = m_chains.insert(identifier, value);
+    DesktopChain value(m_current_chain.value());
+    m_chains.erase(m_current_chain);
+    m_current_chain = m_chains.insert(identifier, value);
 }
 
-QHash<QString, DesktopChain>::Iterator DesktopChainManager::addNewChain(const QString& identifier)
+QHash<QString, DesktopChain>::Iterator DesktopChainManager::add_new_chain(const QString& identifier)
 {
-    return m_chains.insert(identifier, DesktopChain(m_maxChainSize));
+    return m_chains.insert(identifier, DesktopChain(m_max_chain_size));
 }
 
 } // namespace TabBox

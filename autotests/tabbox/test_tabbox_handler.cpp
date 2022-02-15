@@ -49,10 +49,10 @@ void TestTabBoxHandler::testDontCrashUpdateOutlineNullClient()
 {
     MockTabBoxHandler tabboxhandler;
     TabBox::TabBoxConfig config;
-    config.setTabBoxMode(TabBox::TabBoxConfig::ClientTabBox);
-    config.setShowTabBox(false);
-    config.setHighlightWindows(false);
-    tabboxhandler.setConfig(config);
+    config.set_tabbox_mode(TabBox::TabBoxConfig::ClientTabBox);
+    config.set_show_tabbox(false);
+    config.set_highlight_windows(false);
+    tabboxhandler.set_config(config);
     // now show the tabbox which will attempt to show the outline
     tabboxhandler.show();
 }

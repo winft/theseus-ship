@@ -31,7 +31,7 @@ class MockTabBoxClient : public TabBox::TabBoxClient
 {
 public:
     explicit MockTabBoxClient(QString caption);
-    bool isMinimized() const override
+    bool is_minimized() const override
     {
         return false;
     }
@@ -48,11 +48,11 @@ public:
     {
         return QPixmap(size);
     }
-    bool isCloseable() const override
+    bool is_closeable() const override
     {
         return true;
     }
-    bool isFirstInTabBox() const override
+    bool is_first_in_tabbox() const override
     {
         return false;
     }
@@ -73,7 +73,7 @@ public:
         return QIcon();
     }
 
-    QUuid internalId() const override
+    QUuid internal_id() const override
     {
         return QUuid{};
     }

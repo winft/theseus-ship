@@ -35,10 +35,10 @@ public:
     bool event(xcb_generic_event_t* event) override;
 
 private:
-    bool buttonPress(xcb_button_press_event_t* event);
+    bool button_press(xcb_button_press_event_t* event);
     void motion(xcb_generic_event_t* event);
-    void keyPress(xcb_generic_event_t* event);
-    void keyRelease(xcb_generic_event_t* event);
+    void key_press(xcb_generic_event_t* event);
+    void key_release(xcb_generic_event_t* event);
 };
 
 }

@@ -59,30 +59,30 @@ public:
     QModelIndex
     index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
     QHash<int, QByteArray> roleNames() const override;
-    Q_INVOKABLE QString longestCaption() const;
+    Q_INVOKABLE QString longest_caption() const;
 
     /**
      * Generates a new list of desktops based on the current config.
      * Calling this method will reset the model.
      */
-    void createDesktopList();
+    void create_desktop_list();
     /**
      * @return The current list of desktops.
      */
-    QList<int> desktopList() const
+    QList<int> desktop_list() const
     {
-        return m_desktopList;
+        return m_desktop_list;
     }
     /**
      * @param desktop The desktop whose ModelIndex should be retrieved
      * @return The ModelIndex of given desktop or an invalid ModelIndex if
      * the desktop is not in the model.
      */
-    QModelIndex desktopIndex(int desktop) const;
+    QModelIndex desktop_index(int desktop) const;
 
 private:
-    QList<int> m_desktopList;
-    QMap<int, ClientModel*> m_clientModels;
+    QList<int> m_desktop_list;
+    QMap<int, ClientModel*> m_client_models;
 };
 
 } // namespace Tabbox

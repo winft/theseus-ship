@@ -229,10 +229,10 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             &EffectsHandler::stackingOrderChanged);
 #ifdef KWIN_BUILD_TABBOX
     TabBox::TabBox* tabBox = TabBox::TabBox::self();
-    connect(tabBox, &TabBox::TabBox::tabBoxAdded, this, &EffectsHandler::tabBoxAdded);
-    connect(tabBox, &TabBox::TabBox::tabBoxUpdated, this, &EffectsHandler::tabBoxUpdated);
-    connect(tabBox, &TabBox::TabBox::tabBoxClosed, this, &EffectsHandler::tabBoxClosed);
-    connect(tabBox, &TabBox::TabBox::tabBoxKeyEvent, this, &EffectsHandler::tabBoxKeyEvent);
+    connect(tabBox, &TabBox::TabBox::tabbox_added, this, &EffectsHandler::tabBoxAdded);
+    connect(tabBox, &TabBox::TabBox::tabbox_updated, this, &EffectsHandler::tabBoxUpdated);
+    connect(tabBox, &TabBox::TabBox::tabbox_closed, this, &EffectsHandler::tabBoxClosed);
+    connect(tabBox, &TabBox::TabBox::tabbox_key_event, this, &EffectsHandler::tabBoxKeyEvent);
 #endif
     connect(workspace()->edges.get(),
             &win::screen_edger::approaching,
@@ -1205,7 +1205,7 @@ void effects_handler_impl::setTabBoxWindow(EffectWindow* w)
 #ifdef KWIN_BUILD_TABBOX
     auto window = static_cast<effects_window_impl*>(w)->window();
     if (window->control) {
-        TabBox::TabBox::self()->setCurrentClient(window);
+        TabBox::TabBox::self()->set_current_client(window);
     }
 #else
     Q_UNUSED(w)
@@ -1215,7 +1215,7 @@ void effects_handler_impl::setTabBoxWindow(EffectWindow* w)
 void effects_handler_impl::setTabBoxDesktop(int desktop)
 {
 #ifdef KWIN_BUILD_TABBOX
-    TabBox::TabBox::self()->setCurrentDesktop(desktop);
+    TabBox::TabBox::self()->set_current_desktop(desktop);
 #else
     Q_UNUSED(desktop)
 #endif
@@ -1224,7 +1224,7 @@ void effects_handler_impl::setTabBoxDesktop(int desktop)
 EffectWindowList effects_handler_impl::currentTabBoxWindowList() const
 {
 #ifdef KWIN_BUILD_TABBOX
-    const auto clients = TabBox::TabBox::self()->currentClientList();
+    const auto clients = TabBox::TabBox::self()->current_client_list();
     EffectWindowList ret;
     ret.reserve(clients.size());
     std::transform(std::cbegin(clients),
@@ -1261,7 +1261,7 @@ void effects_handler_impl::closeTabBox()
 QList<int> effects_handler_impl::currentTabBoxDesktopList() const
 {
 #ifdef KWIN_BUILD_TABBOX
-    return TabBox::TabBox::self()->currentDesktopList();
+    return TabBox::TabBox::self()->current_desktop_list();
 #else
     return QList<int>();
 #endif
@@ -1270,7 +1270,7 @@ QList<int> effects_handler_impl::currentTabBoxDesktopList() const
 int effects_handler_impl::currentTabBoxDesktop() const
 {
 #ifdef KWIN_BUILD_TABBOX
-    return TabBox::TabBox::self()->currentDesktop();
+    return TabBox::TabBox::self()->current_desktop();
 #else
     return -1;
 #endif
@@ -1279,7 +1279,7 @@ int effects_handler_impl::currentTabBoxDesktop() const
 EffectWindow* effects_handler_impl::currentTabBoxWindow() const
 {
 #ifdef KWIN_BUILD_TABBOX
-    if (auto c = TabBox::TabBox::self()->currentClient())
+    if (auto c = TabBox::TabBox::self()->current_client())
         return c->render->effect.get();
 #endif
     return nullptr;

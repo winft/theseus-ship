@@ -104,7 +104,7 @@ void TestDesktopChain::chainAdd()
 
     DesktopChainManager manager(this);
     manager.resize(0, size);
-    manager.addDesktop(0, add);
+    manager.add_desktop(0, add);
     QTEST(manager.next(next), "result");
 }
 
@@ -160,7 +160,7 @@ void TestDesktopChain::resize()
 
     DesktopChainManager manager(this);
     manager.resize(0, size);
-    manager.addDesktop(0, add);
+    manager.add_desktop(0, add);
     manager.resize(size, newSize);
     QTEST(manager.next(next), "result");
 }
@@ -172,11 +172,11 @@ void TestDesktopChain::resizeAdd()
     DesktopChainManager manager(this);
     manager.resize(0, 6);
     chain.add(4);
-    manager.addDesktop(0, 4);
+    manager.add_desktop(0, 4);
     chain.add(5);
-    manager.addDesktop(4, 5);
+    manager.add_desktop(4, 5);
     chain.add(6);
-    manager.addDesktop(5, 6);
+    manager.add_desktop(5, 6);
     QCOMPARE(chain.next(6), (uint)5);
     QCOMPARE(manager.next(6), (uint)5);
     QCOMPARE(chain.next(5), (uint)4);
@@ -193,13 +193,13 @@ void TestDesktopChain::resizeAdd()
     QCOMPARE(manager.next(2), (uint)3);
     // add
     chain.add(1);
-    manager.addDesktop(3, 1);
+    manager.add_desktop(3, 1);
     QCOMPARE(chain.next(3), (uint)3);
     QCOMPARE(manager.next(3), (uint)3);
     QCOMPARE(chain.next(1), (uint)3);
     QCOMPARE(manager.next(1), (uint)3);
     chain.add(2);
-    manager.addDesktop(1, 2);
+    manager.add_desktop(1, 2);
     QCOMPARE(chain.next(1), (uint)3);
     QCOMPARE(manager.next(1), (uint)3);
     QCOMPARE(chain.next(2), (uint)1);
@@ -212,46 +212,46 @@ void TestDesktopChain::useChain()
 {
     DesktopChainManager manager(this);
     manager.resize(0, 4);
-    manager.addDesktop(0, 3);
+    manager.add_desktop(0, 3);
     // creating the first chain, should keep it unchanged
-    manager.useChain(QStringLiteral("test"));
+    manager.use_chain(QStringLiteral("test"));
     QCOMPARE(manager.next(3), (uint)1);
     QCOMPARE(manager.next(1), (uint)2);
     QCOMPARE(manager.next(2), (uint)4);
     QCOMPARE(manager.next(4), (uint)3);
     // but creating a second chain, should create an empty one
-    manager.useChain(QStringLiteral("second chain"));
+    manager.use_chain(QStringLiteral("second chain"));
     QCOMPARE(manager.next(1), (uint)2);
     QCOMPARE(manager.next(2), (uint)3);
     QCOMPARE(manager.next(3), (uint)4);
     QCOMPARE(manager.next(4), (uint)1);
     // adding a desktop should only affect the currently used one
-    manager.addDesktop(3, 2);
+    manager.add_desktop(3, 2);
     QCOMPARE(manager.next(1), (uint)3);
     QCOMPARE(manager.next(2), (uint)1);
     QCOMPARE(manager.next(3), (uint)4);
     QCOMPARE(manager.next(4), (uint)2);
     // verify by switching back
-    manager.useChain(QStringLiteral("test"));
+    manager.use_chain(QStringLiteral("test"));
     QCOMPARE(manager.next(3), (uint)1);
     QCOMPARE(manager.next(1), (uint)2);
     QCOMPARE(manager.next(2), (uint)4);
     QCOMPARE(manager.next(4), (uint)3);
-    manager.addDesktop(3, 1);
+    manager.add_desktop(3, 1);
     // use second chain again and put 4th desktop to front
-    manager.useChain(QStringLiteral("second chain"));
-    manager.addDesktop(3, 4);
+    manager.use_chain(QStringLiteral("second chain"));
+    manager.add_desktop(3, 4);
     // just for the fun a third chain, and let's shrink it
-    manager.useChain(QStringLiteral("third chain"));
+    manager.use_chain(QStringLiteral("third chain"));
     manager.resize(4, 3);
     QCOMPARE(manager.next(1), (uint)2);
     QCOMPARE(manager.next(2), (uint)3);
     // it must have affected all chains
-    manager.useChain(QStringLiteral("test"));
+    manager.use_chain(QStringLiteral("test"));
     QCOMPARE(manager.next(1), (uint)3);
     QCOMPARE(manager.next(3), (uint)2);
     QCOMPARE(manager.next(2), (uint)1);
-    manager.useChain(QStringLiteral("second chain"));
+    manager.use_chain(QStringLiteral("second chain"));
     QCOMPARE(manager.next(3), (uint)2);
     QCOMPARE(manager.next(1), (uint)3);
     QCOMPARE(manager.next(2), (uint)1);
