@@ -237,7 +237,7 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
         offscreenTexture.reset(new GLTexture(GL_RGBA8, geometry.size() * devicePixelRatio));
         offscreenTexture->setFilter(GL_LINEAR);
         offscreenTexture->setWrapMode(GL_CLAMP_TO_EDGE);
-        target.reset(new GLRenderTarget(*offscreenTexture));
+        target.reset(new GLRenderTarget(offscreenTexture.data()));
         validTarget = target->valid();
     }
     if (validTarget) {
@@ -364,6 +364,7 @@ void ScreenShotEffect::grabPointerImage(QImage& snapshot, int xOffset, int yOffs
     }
 
     QPainter painter(&snapshot);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
     painter.drawImage(effects->cursorPos() - cursor.hotSpot() - QPoint(xOffset, yOffset),
                       cursor.image());
 }

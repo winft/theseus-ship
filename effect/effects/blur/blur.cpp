@@ -101,7 +101,7 @@ bool BlurEffect::renderTargetsValid() const
 
 void BlurEffect::deleteFBOs()
 {
-    qDeleteAll(m_renderTargets);
+    qDeleteAll(m_renderTextures);
 
     m_renderTargets.clear();
     m_renderTextures.clear();
@@ -146,19 +146,20 @@ void BlurEffect::updateTexture()
     }
 
     for (int i = 0; i <= m_downSampleIterations; i++) {
-        m_renderTextures.append(GLTexture(textureFormat, effects->virtualScreenSize() / (1 << i)));
-        m_renderTextures.last().setFilter(GL_LINEAR);
-        m_renderTextures.last().setWrapMode(GL_CLAMP_TO_EDGE);
+        m_renderTextures.append(
+            new GLTexture(textureFormat, effects->virtualScreenSize() / (1 << i)));
+        m_renderTextures.constLast()->setFilter(GL_LINEAR);
+        m_renderTextures.constLast()->setWrapMode(GL_CLAMP_TO_EDGE);
 
-        m_renderTargets.append(new GLRenderTarget(m_renderTextures.last()));
+        m_renderTargets.append(new GLRenderTarget(m_renderTextures.constLast()));
     }
 
     // This last set is used as a temporary helper texture
-    m_renderTextures.append(GLTexture(textureFormat, effects->virtualScreenSize()));
-    m_renderTextures.last().setFilter(GL_LINEAR);
-    m_renderTextures.last().setWrapMode(GL_CLAMP_TO_EDGE);
+    m_renderTextures.append(new GLTexture(textureFormat, effects->virtualScreenSize()));
+    m_renderTextures.constLast()->setFilter(GL_LINEAR);
+    m_renderTextures.constLast()->setWrapMode(GL_CLAMP_TO_EDGE);
 
-    m_renderTargets.append(new GLRenderTarget(m_renderTextures.last()));
+    m_renderTargets.append(new GLRenderTarget(m_renderTextures.constLast()));
 
     m_renderTargetsValid = renderTargetsValid();
 
@@ -582,7 +583,7 @@ void BlurEffect::doBlur(const QRegion& shape,
 
     const QRegion expandedBlurRegion = expand(shape) & expand(screen);
 
-    const bool useSRGB = m_renderTextures.first().internalFormat() == GL_SRGB8_ALPHA8;
+    const bool useSRGB = m_renderTextures.constFirst()->internalFormat() == GL_SRGB8_ALPHA8;
 
     // Upload geometry for the down and upsample iterations
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
@@ -692,10 +693,10 @@ void BlurEffect::upscaleRenderToScreen(GLVertexBuffer* vbo,
                                        const QMatrix4x4& screenProjection,
                                        QPoint /*windowPosition*/)
 {
-    m_renderTextures[1].bind();
+    m_renderTextures[1]->bind();
 
     m_shader->bind(BlurShader::UpSampleType);
-    m_shader->setTargetTextureSize(m_renderTextures[0].size() * effects->renderTargetScale());
+    m_shader->setTargetTextureSize(m_renderTextures[0]->size() * effects->renderTargetScale());
 
     m_shader->setOffset(m_offset);
     m_shader->setModelViewProjectionMatrix(screenProjection);
@@ -716,7 +717,7 @@ void BlurEffect::applyNoise(GLVertexBuffer* vbo,
     }
 
     m_shader->bind(BlurShader::NoiseSampleType);
-    m_shader->setTargetTextureSize(m_renderTextures[0].size() * effects->renderTargetScale());
+    m_shader->setTargetTextureSize(m_renderTextures[0]->size() * effects->renderTargetScale());
     m_shader->setNoiseTextureSize(m_noiseTexture.size() * effects->renderTargetScale());
     m_shader->setTexturePosition(windowPosition * effects->renderTargetScale());
 
@@ -739,13 +740,13 @@ void BlurEffect::downSampleTexture(GLVertexBuffer* vbo, int blurRectCount)
     for (int i = 1; i <= m_downSampleIterations; i++) {
         modelViewProjectionMatrix.setToIdentity();
         modelViewProjectionMatrix.ortho(
-            0, m_renderTextures[i].width(), m_renderTextures[i].height(), 0, 0, 65535);
+            0, m_renderTextures[i]->width(), m_renderTextures[i]->height(), 0, 0, 65535);
 
         m_shader->setModelViewProjectionMatrix(modelViewProjectionMatrix);
-        m_shader->setTargetTextureSize(m_renderTextures[i].size());
+        m_shader->setTargetTextureSize(m_renderTextures[i]->size());
 
         // Copy the image from this texture
-        m_renderTextures[i - 1].bind();
+        m_renderTextures[i - 1]->bind();
 
         vbo->draw(GL_TRIANGLES, blurRectCount * i, blurRectCount);
         GLRenderTarget::popRenderTarget();
@@ -764,13 +765,13 @@ void BlurEffect::upSampleTexture(GLVertexBuffer* vbo, int blurRectCount)
     for (int i = m_downSampleIterations - 1; i >= 1; i--) {
         modelViewProjectionMatrix.setToIdentity();
         modelViewProjectionMatrix.ortho(
-            0, m_renderTextures[i].width(), m_renderTextures[i].height(), 0, 0, 65535);
+            0, m_renderTextures[i]->width(), m_renderTextures[i]->height(), 0, 0, 65535);
 
         m_shader->setModelViewProjectionMatrix(modelViewProjectionMatrix);
-        m_shader->setTargetTextureSize(m_renderTextures[i].size());
+        m_shader->setTargetTextureSize(m_renderTextures[i]->size());
 
         // Copy the image from this texture
-        m_renderTextures[i + 1].bind();
+        m_renderTextures[i + 1]->bind();
 
         vbo->draw(GL_TRIANGLES, blurRectCount * i, blurRectCount);
         GLRenderTarget::popRenderTarget();
@@ -795,7 +796,7 @@ void BlurEffect::copyScreenSampleTexture(GLVertexBuffer* vbo,
      */
     m_shader->setBlurRect(blurShape.boundingRect().adjusted(1, 1, -1, -1),
                           effects->virtualScreenSize());
-    m_renderTextures.last().bind();
+    m_renderTextures.last()->bind();
 
     vbo->draw(GL_TRIANGLES, 0, blurRectCount);
     GLRenderTarget::popRenderTarget();

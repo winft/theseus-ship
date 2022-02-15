@@ -372,7 +372,7 @@ public:
     GLRenderTarget(GLRenderTarget&& other) noexcept;
     GLRenderTarget& operator=(GLRenderTarget&& other) noexcept;
     explicit GLRenderTarget(GLuint framebuffer, QRect const& viewport);
-    explicit GLRenderTarget(GLTexture const& texture);
+    explicit GLRenderTarget(GLTexture* texture);
 
     ~GLRenderTarget();
 
@@ -426,7 +426,7 @@ public:
                              GLenum filter = GL_LINEAR);
 
 protected:
-    void initFBO();
+    void initFBO(GLTexture* texture);
 
 private:
     friend void KWin::cleanupGL();
@@ -437,7 +437,6 @@ private:
     static bool s_blitSupported;
     static QStack<GLRenderTarget*> s_renderTargets;
 
-    std::optional<GLTexture> mTexture;
     GLuint mFramebuffer{0};
 
     QRect mViewport;

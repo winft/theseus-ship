@@ -1007,12 +1007,12 @@ GLRenderTarget::GLRenderTarget(GLuint framebuffer, QRect const& viewport)
 {
 }
 
-GLRenderTarget::GLRenderTarget(GLTexture const& texture)
-    : mTexture{texture}
+GLRenderTarget::GLRenderTarget(GLTexture* texture)
+    : mViewport{QRect(QPoint(0, 0), texture->size())}
 {
     // Make sure FBO is supported
-    if (sSupported && !mTexture->isNull()) {
-        initFBO();
+    if (sSupported && !texture->isNull()) {
+        initFBO(texture);
     } else
         qCCritical(LIBKWINGLUTILS) << "Render targets aren't supported!";
 }
@@ -1024,7 +1024,6 @@ GLRenderTarget::GLRenderTarget(GLRenderTarget&& other) noexcept
 
 GLRenderTarget& GLRenderTarget::operator=(GLRenderTarget&& other) noexcept
 {
-    mTexture = other.mTexture;
     mFramebuffer = other.mFramebuffer;
     mViewport = other.mViewport;
     mValid = other.mValid;
@@ -1043,7 +1042,7 @@ GLRenderTarget::~GLRenderTarget()
 
 QSize GLRenderTarget::size() const
 {
-    return mTexture ? mTexture->size() : mViewport.size();
+    return mViewport.size();
 }
 
 void GLRenderTarget::bind()
@@ -1055,12 +1054,7 @@ void GLRenderTarget::bind()
 
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
 
-    if (mTexture) {
-        glViewport(0, 0, mTexture->width(), mTexture->height());
-        mTexture->setDirty();
-    } else {
-        glViewport(mViewport.x(), mViewport.y(), mViewport.width(), mViewport.height());
-    }
+    glViewport(mViewport.x(), mViewport.y(), mViewport.width(), mViewport.height());
 }
 
 static QString formatFramebufferStatus(GLenum status)
@@ -1095,9 +1089,9 @@ static QString formatFramebufferStatus(GLenum status)
     }
 }
 
-void GLRenderTarget::initFBO()
+void GLRenderTarget::initFBO(GLTexture* texture)
 {
-    assert(mTexture);
+    assert(texture);
     assert(!mForeign);
 
     GLuint const cur_fbo = currentRenderTarget() ? currentRenderTarget()->mFramebuffer : 0;
@@ -1129,7 +1123,7 @@ void GLRenderTarget::initFBO()
 #endif
 
     glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, mTexture->target(), mTexture->texture(), 0);
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture->target(), texture->texture(), 0);
 
 #if DEBUG_GLRENDERTARGET
     if ((err = glGetError()) != GL_NO_ERROR) {

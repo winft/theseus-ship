@@ -68,7 +68,7 @@ static void allocateOffscreenData(EffectWindow* window, OffscreenData* offscreen
     offscreenData->texture.reset(new GLTexture(GL_RGBA8, geometry.size()));
     offscreenData->texture->setFilter(GL_LINEAR);
     offscreenData->texture->setWrapMode(GL_CLAMP_TO_EDGE);
-    offscreenData->renderTarget.reset(new GLRenderTarget(*offscreenData->texture));
+    offscreenData->renderTarget.reset(new GLRenderTarget(offscreenData->texture.data()));
     offscreenData->isDirty = true;
 }
 

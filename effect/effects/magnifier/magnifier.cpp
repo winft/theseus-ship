@@ -233,7 +233,7 @@ void MagnifierEffect::zoomIn()
         effects->makeOpenGLContextCurrent();
         m_texture = new GLTexture(GL_RGBA8, magnifier_size.width(), magnifier_size.height());
         m_texture->setYInverted(false);
-        m_fbo = new GLRenderTarget(*m_texture);
+        m_fbo = new GLRenderTarget(m_texture);
     }
     effects->addRepaint(
         magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH));
@@ -274,7 +274,7 @@ void MagnifierEffect::toggle()
             effects->makeOpenGLContextCurrent();
             m_texture = new GLTexture(GL_RGBA8, magnifier_size.width(), magnifier_size.height());
             m_texture->setYInverted(false);
-            m_fbo = new GLRenderTarget(*m_texture);
+            m_fbo = new GLRenderTarget(m_texture);
         }
     } else {
         target_zoom = 1;

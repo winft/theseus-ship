@@ -311,7 +311,7 @@ ZoomEffect::OffscreenData* ZoomEffect::ensureOffscreenData(EffectScreen* screen)
         data->texture.reset(new GLTexture(GL_RGBA8, nativeSize));
         data->texture->setFilter(GL_LINEAR);
         data->texture->setWrapMode(GL_CLAMP_TO_EDGE);
-        data->framebuffer.reset(new GLRenderTarget(*data->texture.data()));
+        data->framebuffer.reset(new GLRenderTarget(data->texture.data()));
     }
     if (!data->vbo || data->viewport != rect) {
         data->vbo.reset(new GLVertexBuffer(GLVertexBuffer::Static));
