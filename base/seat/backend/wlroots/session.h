@@ -24,11 +24,6 @@ class KWIN_EXPORT session : public seat::session
 {
     Q_OBJECT
 public:
-    event_receiver<session> active_changed;
-    event_receiver<session> destroyed;
-    wlr_session* native{nullptr};
-    std::vector<wlr_device*> taken_devices;
-
     explicit session(wlr_backend* backend);
     ~session() override;
 
@@ -44,6 +39,15 @@ public:
     const QString seat() const override;
 
     void take_control();
+
+    wlr_session* native;
+
+private:
+    event_receiver<session> active_changed;
+    event_receiver<session> destroyed;
+
+    bool is_dummy;
+    std::vector<wlr_device*> taken_devices;
 };
 
 }

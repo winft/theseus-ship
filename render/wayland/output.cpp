@@ -9,6 +9,7 @@
 #include "effects.h"
 #include "utils.h"
 
+#include "base/seat/session.h"
 #include "base/wayland/output.h"
 #include "base/wayland/platform.h"
 #include "base/wayland/server.h"
@@ -284,25 +285,15 @@ void output::set_delay(presentation_data const& data)
 
     static_cast<gl::scene*>(scene)->backend()->makeCurrent();
 
-#if SWAP_TIME_DEBUG
-    qDebug() << "";
-    std::chrono::nanoseconds render_time_debug;
-#endif
-
     // First get the latest Gl timer queries.
+    std::chrono::nanoseconds render_time_debug;
     last_timer_queries.erase(std::remove_if(last_timer_queries.begin(),
                                             last_timer_queries.end(),
-#if SWAP_TIME_DEBUG
                                             [this, &render_time_debug](auto& timer) {
-#else
-                                            [this](auto& timer) {
-#endif
                                                 if (!timer.get_query()) {
                                                     return false;
                                                 }
-#if SWAP_TIME_DEBUG
                                                 render_time_debug = timer.time();
-#endif
                                                 render_durations.update(timer.time());
                                                 return true;
                                             }),
@@ -331,7 +322,7 @@ void output::set_delay(presentation_data const& data)
 #if SWAP_TIME_DEBUG
     QDebug debug = qDebug();
     debug.noquote().nospace();
-    debug << "SWAP total: " << to_ms((now - swap_ref_time)) << endl;
+    debug << "\nSWAP total: " << to_ms((now - swap_ref_time)) << endl;
     debug << "vblank to now: " << to_ms(now) << " - " << to_ms(data.when) << " = "
           << to_ms(vblank_to_now) << endl;
     debug << "MARGINS vblank: " << to_ms(hw_margin)
@@ -344,9 +335,15 @@ void output::set_delay(presentation_data const& data)
 #endif
 }
 
+bool waiting_for_event(output const& out)
+{
+    return out.delay_timer.isActive() || out.swap_pending || !out.base.is_dpms_on()
+        || !kwinApp()->session->isActiveSession();
+}
+
 void output::set_delay_timer()
 {
-    if (delay_timer.isActive() || swap_pending || !base.is_dpms_on()) {
+    if (waiting_for_event(*this)) {
         // Abort since we will composite when the timer runs out or the timer will only get
         // started at buffer swap.
         return;
@@ -364,7 +361,7 @@ void output::set_delay_timer()
 
 void output::request_frame(Toplevel* window)
 {
-    if (swap_pending || delay_timer.isActive() || frame_timer.isActive() || !base.is_dpms_on()) {
+    if (waiting_for_event(*this) || frame_timer.isActive()) {
         // Frame will be received when timer runs out.
         return;
     }
