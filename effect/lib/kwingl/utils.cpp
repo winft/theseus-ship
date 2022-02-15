@@ -992,8 +992,6 @@ void GLRenderTarget::pushRenderTargets(QStack<GLRenderTarget*> targets)
 GLRenderTarget* GLRenderTarget::popRenderTarget()
 {
     auto target = s_renderTargets.pop();
-    target->setTextureDirty();
-
     if (!s_renderTargets.isEmpty()) {
         s_renderTargets.top()->bind();
     }

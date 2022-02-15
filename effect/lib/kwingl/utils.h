@@ -382,13 +382,6 @@ public:
         return mValid;
     }
 
-    void setTextureDirty()
-    {
-        if (mTexture.has_value()) {
-            mTexture->setDirty();
-        }
-    }
-
     static void initStatic();
     static bool supported()
     {
