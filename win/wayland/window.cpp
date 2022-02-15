@@ -1101,8 +1101,8 @@ void window::debug(QDebug& stream) const
 
     stream.nospace();
     stream << "\'wayland::window"
-           << "(" << QString::fromStdString(type) << "):" << surface() << ";" << resourceName()
-           << "\'";
+           << "(" << QString::fromStdString(type) << "):" << surface() << ";"
+           << static_cast<void const*>(this) << "\'";
 }
 
 void window::ping(window::ping_reason reason)

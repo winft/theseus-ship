@@ -17,6 +17,7 @@
 #include "render/platform.h"
 #include "toplevel.h"
 #include "wayland_logging.h"
+#include "win/remnant.h"
 #include "win/space.h"
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
@@ -97,7 +98,21 @@ bool output::prepare_run(QRegion& repaints, std::deque<Toplevel*>& windows)
     bool has_window_repaints{false};
     std::deque<Toplevel*> frame_windows;
 
-    for (auto win : windows) {
+    auto window_it = windows.begin();
+    while (window_it != windows.end()) {
+        auto win = *window_it;
+
+        if (win->remnant() && win->transient()->annexed) {
+            if (auto lead = win::lead_of_annexed_transient(win); !lead || !lead->remnant()) {
+                // TODO(romangg): Add repaint to compositor?
+                win->remnant()->refcount = 0;
+                delete win;
+                window_it = windows.erase(window_it);
+                continue;
+            }
+        }
+        window_it++;
+
         if (prepare_repaint(win)) {
             has_window_repaints = true;
         } else if (win->surface()

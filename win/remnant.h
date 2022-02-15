@@ -31,9 +31,6 @@ class control;
 
 class KWIN_EXPORT remnant
 {
-private:
-    QTimer* annexed_timeout{nullptr};
-
 public:
     QMargins frame_margins;
     QRegion render_region;

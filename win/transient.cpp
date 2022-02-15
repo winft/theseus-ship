@@ -33,7 +33,8 @@ transient::~transient()
     }
     m_leads.clear();
 
-    for (auto const& child : children) {
+    auto const children_copy = children;
+    for (auto const& child : children_copy) {
         if (annexed && top_lead) {
             top_lead->discard_quads();
             top_lead->addLayerRepaint(visible_rect(child, child->frameGeometry()));
@@ -85,6 +86,8 @@ void transient::add_child(Toplevel* window)
 {
     assert(m_window != window);
 
+    // TODO(romangg): Instead of a silent fail we should add an assert. Consumers then must ensure
+    //                to add a child only once. The X11 code needs to be adapted for that though.
     if (contains(children, window)) {
         return;
     }
