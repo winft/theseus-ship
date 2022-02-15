@@ -9,6 +9,7 @@
 #include "effects.h"
 #include "utils.h"
 
+#include "base/seat/session.h"
 #include "base/wayland/output.h"
 #include "base/wayland/platform.h"
 #include "base/wayland/server.h"
@@ -346,7 +347,8 @@ void output::set_delay(presentation_data const& data)
 
 bool waiting_for_event(output const& out)
 {
-    return out.delay_timer.isActive() || out.swap_pending || !out.base.is_dpms_on();
+    return out.delay_timer.isActive() || out.swap_pending || !out.base.is_dpms_on()
+        || !kwinApp()->session->isActiveSession();
 }
 
 void output::set_delay_timer()

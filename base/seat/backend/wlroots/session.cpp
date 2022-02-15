@@ -5,6 +5,7 @@
 */
 #include "session.h"
 
+#include "base/backend/wlroots/platform.h"
 #include "base/wayland/server.h"
 #include "main.h"
 
@@ -23,6 +24,7 @@ namespace KWin::base::seat::backend::wlroots
 session::session(wlr_backend* backend)
     : seat::session()
     , native{wlr_backend_get_session(backend)}
+    , is_dummy{static_cast<bool>(base::backend::wlroots::get_headless_backend(backend))}
 {
 }
 
@@ -48,6 +50,9 @@ bool session::hasSessionControl() const
 
 bool session::isActiveSession() const
 {
+    if (is_dummy) {
+        return true;
+    }
     return native && native->active;
 }
 
