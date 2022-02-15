@@ -8,14 +8,15 @@
 
 #include "effects_handler.h"
 #include "logging_p.h"
+#include "shared_qml_engine.h"
 
 #include <kwingl/utils.h>
 
-#include <KDeclarative/QmlObjectSharedEngine>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
 #include <QPointer>
+#include <QQmlEngine>
 #include <QQuickItem>
 #include <QQuickRenderControl>
 #include <QQuickWindow>
@@ -83,7 +84,14 @@ public:
 class Q_DECL_HIDDEN EffectQuickScene::Private
 {
 public:
-    KDeclarative::QmlObjectSharedEngine* qmlObject = nullptr;
+    Private()
+        : qmlEngine(SharedQmlEngine::engine())
+    {
+    }
+
+    SharedQmlEngine::Ptr qmlEngine;
+    QScopedPointer<QQmlComponent> qmlComponent;
+    QScopedPointer<QQuickItem> quickItem;
 };
 
 EffectQuickView::EffectQuickView(QObject* parent)
@@ -553,44 +561,55 @@ EffectQuickScene::EffectQuickScene(QObject* parent)
     : EffectQuickView(parent)
     , d(new EffectQuickScene::Private)
 {
-    d->qmlObject = new KDeclarative::QmlObjectSharedEngine(this);
 }
 
 EffectQuickScene::EffectQuickScene(QObject* parent, QWindow* renderWindow)
     : EffectQuickView(parent, renderWindow)
     , d(new EffectQuickScene::Private)
 {
-    d->qmlObject = new KDeclarative::QmlObjectSharedEngine(this);
 }
 
 EffectQuickScene::EffectQuickScene(QObject* parent, QWindow* renderWindow, ExportMode exportMode)
     : EffectQuickView(parent, renderWindow, exportMode)
     , d(new EffectQuickScene::Private)
 {
-    d->qmlObject = new KDeclarative::QmlObjectSharedEngine(this);
 }
 
 EffectQuickScene::EffectQuickScene(QObject* parent, EffectQuickView::ExportMode exportMode)
     : EffectQuickView(parent, exportMode)
     , d(new EffectQuickScene::Private)
 {
-    d->qmlObject = new KDeclarative::QmlObjectSharedEngine(this);
 }
 
-EffectQuickScene::~EffectQuickScene()
-{
-    delete d->qmlObject;
-}
+EffectQuickScene::~EffectQuickScene() = default;
 
 void EffectQuickScene::setSource(const QUrl& source)
 {
-    d->qmlObject->setSource(source);
+    if (!d->qmlComponent) {
+        d->qmlComponent.reset(new QQmlComponent(d->qmlEngine.data()));
+    }
 
-    QQuickItem* item = rootItem();
-    if (!item) {
-        qCDebug(LIBKWINEFFECTS) << "Could not load effect quick view" << source;
+    d->qmlComponent->loadUrl(source);
+    if (d->qmlComponent->isError()) {
+        qCWarning(LIBKWINEFFECTS).nospace()
+            << "Failed to load effect quick view " << source << ": " << d->qmlComponent->errors();
+        d->qmlComponent.reset();
         return;
     }
+
+    d->quickItem.reset();
+
+    QScopedPointer<QObject> qmlObject(d->qmlComponent->create());
+    QQuickItem* item = qobject_cast<QQuickItem*>(qmlObject.data());
+    if (!item) {
+        qCWarning(LIBKWINEFFECTS) << "Root object of effect quick view" << source
+                                  << "is not a QQuickItem";
+        return;
+    }
+
+    qmlObject.take();
+    d->quickItem.reset(item);
+
     item->setParentItem(contentItem());
 
     auto updateSize = [item, this]() { item->setSize(contentItem()->size()); };
@@ -601,12 +620,12 @@ void EffectQuickScene::setSource(const QUrl& source)
 
 QQmlContext* EffectQuickScene::rootContext() const
 {
-    return d->qmlObject->rootContext();
+    return d->qmlEngine->rootContext();
 }
 
 QQuickItem* EffectQuickScene::rootItem() const
 {
-    return qobject_cast<QQuickItem*>(d->qmlObject->rootObject());
+    return d->quickItem.data();
 }
 
 }
