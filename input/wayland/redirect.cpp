@@ -77,7 +77,8 @@ void redirect::setup_devices()
     }
     QObject::connect(platform, &platform::pointer_added, this, &redirect::handle_pointer_added);
     QObject::connect(platform, &platform::pointer_removed, this, [this]() {
-        if (auto seat = find_seat(); seat && platform->pointers.empty()) {
+        if (platform->pointers.empty()) {
+            auto seat = find_seat();
             seat->setHasPointer(false);
         }
     });
@@ -87,7 +88,8 @@ void redirect::setup_devices()
     }
     QObject::connect(platform, &platform::keyboard_added, this, &redirect::handle_keyboard_added);
     QObject::connect(platform, &platform::keyboard_removed, this, [this]() {
-        if (auto seat = find_seat(); seat && platform->keyboards.empty()) {
+        if (platform->keyboards.empty()) {
+            auto seat = find_seat();
             seat->setHasKeyboard(false);
         }
     });
@@ -97,7 +99,8 @@ void redirect::setup_devices()
     }
     QObject::connect(platform, &platform::touch_added, this, &redirect::handle_touch_added);
     QObject::connect(platform, &platform::touch_removed, this, [this]() {
-        if (auto seat = find_seat(); seat && platform->touchs.empty()) {
+        if (platform->touchs.empty()) {
+            auto seat = find_seat();
             seat->setHasTouch(false);
         }
     });
@@ -324,9 +327,8 @@ void redirect::handle_pointer_added(input::pointer* pointer)
     QObject::connect(
         pointer, &pointer::frame, pointer_red, &input::pointer_redirect::process_frame);
 
-    if (auto seat = find_seat()) {
-        seat->setHasPointer(true);
-    }
+    auto seat = find_seat();
+    seat->setHasPointer(true);
 }
 
 void redirect::handle_keyboard_added(input::keyboard* keyboard)
@@ -376,9 +378,8 @@ void redirect::handle_touch_added(input::touch* touch)
     QObject::connect(touch, &touch::cancel, touch_red, &input::touch_redirect::cancel);
     QObject::connect(touch, &touch::frame, touch_red, &input::touch_redirect::frame);
 
-    if (auto seat = find_seat()) {
-        seat->setHasTouch(true);
-    }
+    auto seat = find_seat();
+    seat->setHasTouch(true);
 }
 
 void redirect::handle_switch_added(input::switch_device* switch_device)
