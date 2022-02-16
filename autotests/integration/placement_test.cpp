@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
-#include "screens.h"
 #include "win/placement.h"
 #include "win/space.h"
 #include "win/wayland/space.h"

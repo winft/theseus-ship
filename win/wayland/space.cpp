@@ -21,7 +21,6 @@
 
 #include "base/wayland/idle_inhibition.h"
 #include "base/wayland/server.h"
-#include "screens.h"
 #include "win/input.h"
 #include "win/screen.h"
 #include "win/setup.h"

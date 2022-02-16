@@ -569,7 +569,6 @@ void user_actions_menu::screenPopupAboutToShow()
 
     m_screenMenu->setPalette(m_client->control->palette().q_palette());
     QActionGroup* group = new QActionGroup(m_screenMenu);
-    auto const& screens = kwinApp()->get_base().screens;
     auto const& outputs = kwinApp()->get_base().get_outputs();
 
     for (size_t i = 0; i < outputs.size(); ++i) {
@@ -579,7 +578,7 @@ void user_actions_menu::screenPopupAboutToShow()
                   "number, second the output identifier. E.g. Screen 1 (HDMI1)",
                   "Screen &%1 (%2)",
                   (i + 1),
-                  screens.name(i)));
+                  outputs.at(i)->name()));
         action->setData(static_cast<int>(i));
         action->setCheckable(true);
         if (m_client && outputs.at(i) == m_client->central_output) {

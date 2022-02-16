@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/proto.h"
 #include "input/cursor.h"
 #include "kwineffects.h"
-#include "screens.h"
 #include "win/deco.h"
 #include "win/screen_edges.h"
 #include "win/space.h"

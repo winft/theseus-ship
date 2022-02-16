@@ -16,7 +16,6 @@
 #include "input/cursor.h"
 #include "render/outline.h"
 #include "screen_edges.h"
-#include "screens.h"
 
 #include <QWidget>
 
@@ -450,38 +449,38 @@ void check_workspace_position(Win* win,
         padding[1] = padding[3] = 0;
     }
 
-    auto const& screens = kwinApp()->get_base().screens;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
 
     if (save[Left] || keep[Left]) {
         frame_geo.moveLeft(std::max(left_max, screenArea.x()) - padding[0]);
     }
-    if (padding[0] && screens.intersecting(frame_geo) > 1) {
+    if (padding[0] && base::get_intersecting_outputs(outputs, frame_geo).size() > 1) {
         frame_geo.moveLeft(frame_geo.left() + padding[0]);
     }
     if (save[Top] || keep[Top]) {
         frame_geo.moveTop(std::max(top_max, screenArea.y()) - padding[1]);
     }
-    if (padding[1] && screens.intersecting(frame_geo) > 1) {
+    if (padding[1] && base::get_intersecting_outputs(outputs, frame_geo).size() > 1) {
         frame_geo.moveTop(frame_geo.top() + padding[1]);
     }
     if (save[Right] || keep[Right]) {
         frame_geo.moveRight(std::min(right_max - 1, screenArea.right()) + padding[2]);
     }
-    if (padding[2] && screens.intersecting(frame_geo) > 1) {
+    if (padding[2] && base::get_intersecting_outputs(outputs, frame_geo).size() > 1) {
         frame_geo.moveRight(frame_geo.right() - padding[2]);
     }
     if (old_frame_geo.x() >= old_left_max && frame_geo.x() < left_max) {
         frame_geo.setLeft(std::max(left_max, screenArea.x()));
     } else if (old_client_geo.x() >= old_left_max && frame_geo.x() + border[Left] < left_max) {
         frame_geo.setLeft(std::max(left_max, screenArea.x()) - border[Left]);
-        if (screens.intersecting(frame_geo) > 1) {
+        if (base::get_intersecting_outputs(outputs, frame_geo).size() > 1) {
             frame_geo.setLeft(frame_geo.left() + border[Left]);
         }
     }
     if (save[Bottom] || keep[Bottom]) {
         frame_geo.moveBottom(std::min(bottom_max - 1, screenArea.bottom()) + padding[3]);
     }
-    if (padding[3] && screens.intersecting(frame_geo) > 1) {
+    if (padding[3] && base::get_intersecting_outputs(outputs, frame_geo).size() > 1) {
         frame_geo.moveBottom(frame_geo.bottom() - padding[3]);
     }
 
@@ -489,7 +488,7 @@ void check_workspace_position(Win* win,
         frame_geo.setTop(std::max(top_max, screenArea.y()));
     } else if (old_client_geo.y() >= old_top_max && frame_geo.y() + border[Top] < top_max) {
         frame_geo.setTop(std::max(top_max, screenArea.y()) - border[Top]);
-        if (screens.intersecting(frame_geo) > 1) {
+        if (base::get_intersecting_outputs(outputs, frame_geo).size() > 1) {
             frame_geo.setTop(frame_geo.top() + border[Top]);
         }
     }
@@ -530,17 +529,16 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
 {
     auto mode = quicktiles::none;
     bool inner_border = false;
-    auto const& screens = kwinApp()->get_base().screens;
     auto const& outputs = kwinApp()->get_base().get_outputs();
 
     for (size_t i = 0; i < outputs.size(); ++i) {
-        if (!screens.geometry(i).contains(QPoint(xroot, yroot))) {
+        if (!outputs.at(i)->geometry().contains(QPoint(xroot, yroot))) {
             continue;
         }
 
-        auto in_screen = [i, &screens, &outputs](const QPoint& pt) {
+        auto in_screen = [i, &outputs](const QPoint& pt) {
             for (size_t j = 0; j < outputs.size(); ++j) {
-                if (j != i && screens.geometry(j).contains(pt)) {
+                if (j != i && outputs.at(j)->geometry().contains(pt)) {
                     return true;
                 }
             }
@@ -681,7 +679,6 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 
             // TODO(romangg): Once we use size_t consistently for screens identification replace
             // these (currentyl implicit casted) types with auto.
-            auto const& screens = kwinApp()->get_base().screens;
             auto const& outputs = kwinApp()->get_base().get_outputs();
             auto const old_screen = win->central_output
                 ? base::get_output_index(kwinApp()->get_base().get_outputs(), *win->central_output)
@@ -692,8 +689,8 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             screens_geos.resize(outputs.size());
 
             for (size_t i = 0; i < outputs.size(); ++i) {
-                // Geoemtry cache.
-                screens_geos[i] = screens.geometry(i);
+                // Geometry cache.
+                screens_geos[i] = outputs.at(i)->geometry();
             }
 
             for (size_t i = 0; i < outputs.size(); ++i) {

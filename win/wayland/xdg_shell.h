@@ -369,10 +369,9 @@ void update_screen_edge(Win* win)
     // We need an edge for the screen edge API, so figure out which edge the window borders.
     Qt::Edges edges;
     auto const geometry = win->frameGeometry();
-    auto const& screens = kwinApp()->get_base().screens;
 
-    for (size_t i = 0; i < kwinApp()->get_base().get_outputs().size(); i++) {
-        auto const screen_geo = screens.geometry(i);
+    for (auto output : kwinApp()->get_base().get_outputs()) {
+        auto const screen_geo = output->geometry();
         if (screen_geo.left() == geometry.left()) {
             edges |= Qt::LeftEdge;
         }

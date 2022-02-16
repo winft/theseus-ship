@@ -15,7 +15,6 @@
 
 #include "base/output_helpers.h"
 #include "main.h"
-#include "screens.h"
 
 #include <Wrapland/Server/plasma_window.h>
 

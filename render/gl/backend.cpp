@@ -26,8 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 #include <kwineffects.h>
 
-#include "screens.h"
-
 #include <epoxy/gl.h>
 
 namespace KWin::render::gl

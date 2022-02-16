@@ -7,7 +7,6 @@
 
 #include "geo.h"
 
-#include "screens.h"
 #include "win/space_areas.h"
 #include "win/virtual_desktops.h"
 
@@ -24,18 +23,15 @@ void update_space_areas(Window* win,
         return;
     }
 
-    auto const& base = kwinApp()->get_base();
-    auto const& screens = base.screens;
-    auto const& outputs = base.get_outputs();
-    auto const screens_count = outputs.size();
+    auto const& outputs = kwinApp()->get_base().get_outputs();
     auto const desktops_count = static_cast<int>(virtual_desktop_manager::self()->count());
 
     auto client_area = adjusted_client_area(win, desktop_area, desktop_area);
 
     // Sanity check that a strut doesn't exclude a complete screen geometry. This is a violation
     // to EWMH, as KWin just ignores the strut.
-    for (size_t screen = 0; screen < screens_count; screen++) {
-        if (!client_area.intersects(screens.geometry(screen))) {
+    for (auto output : outputs) {
+        if (!client_area.intersects(output->geometry())) {
             // TODO(romangg): Can we give this again a logging category?
             qDebug() << "Adjusted client area would exclude a complete screen, ignore.";
             client_area = desktop_area;
@@ -67,7 +63,7 @@ void update_space_areas(Window* win,
             auto& resmove = areas.restrictedmove[desktop];
             resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
 
-            for (size_t screen = 0; screen < screens_count; screen++) {
+            for (size_t screen = 0; screen < outputs.size(); screen++) {
                 auto const client_area_on_screen
                     = win::x11::adjusted_client_area(win, desktop_area, screens_geos[screen]);
                 auto& screen_area = areas.screen[desktop][screen];
@@ -87,7 +83,7 @@ void update_space_areas(Window* win,
         auto& resmove = areas.restrictedmove[win->desktop()];
         resmove.insert(std::end(resmove), std::begin(strut_region), std::end(strut_region));
 
-        for (size_t screen = 0; screen < screens_count; screen++) {
+        for (size_t screen = 0; screen < outputs.size(); screen++) {
             auto const screen_area = areas.screen[win->desktop()][screen];
             auto const geo = screen_area.intersected(
                 win::x11::adjusted_client_area(win, desktop_area, screens_geos[screen]));

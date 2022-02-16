@@ -8,7 +8,6 @@
 #include "base/output_helpers.h"
 #include "base/platform.h"
 #include "main.h"
-#include "screens.h"
 #include "win/space.h"
 #include "win/space_areas.h"
 #include "win/virtual_desktops.h"

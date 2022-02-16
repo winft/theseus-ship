@@ -75,7 +75,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/logging.h"
 #include "base/output.h"
 #include "base/platform.h"
-#include "screens.h"
 #include "win/geo.h"
 
 #include <QQuickWindow>

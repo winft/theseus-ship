@@ -20,8 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_QPA_SCREEN_H
 #define KWIN_QPA_SCREEN_H
 
+#include "base/output.h"
+
 #include <qpa/qplatformscreen.h>
 #include <QScopedPointer>
+#include <functional>
 
 namespace KWin
 {
@@ -45,6 +48,9 @@ public:
     qreal devicePixelRatio() const override;
 
 private:
+    template<typename Ret>
+    Ret get_output_val(std::function<Ret(base::output*)> getter, Ret const& fallback) const;
+
     int m_screen;
     QScopedPointer<PlatformCursor> m_cursor;
 };

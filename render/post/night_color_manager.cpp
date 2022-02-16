@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/seat/session.h"
 #include "input/redirect.h"
 #include "main.h"
-#include "screens.h"
 #include "utils/gamma_ramp.h"
 #include "win/space.h"
 

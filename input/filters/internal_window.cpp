@@ -17,7 +17,6 @@
 #include "input/touch_redirect.h"
 #include "input/xkb/helpers.h"
 #include "main.h"
-#include "screens.h"
 #include "win/deco.h"
 #include "win/internal_window.h"
 #include "win/space.h"

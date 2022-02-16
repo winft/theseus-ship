@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "kwineffects.h"
-#include "screens.h"
 #include "win/geo.h"
 #include "win/input.h"
 #include "win/screen_edges.h"
@@ -638,8 +637,8 @@ void StrutsTest::test363804()
     // two screens in a vertical setup, aligned to right border with panel on the bottom screen
     auto const geometries = std::vector<QRect>{{0, 0, 1920, 1080}, {554, 1080, 1366, 768}};
     Test::app()->set_outputs(geometries);
-    QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
-    QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
+    QCOMPARE(Test::get_output(0)->geometry(), geometries.at(0));
+    QCOMPARE(Test::get_output(1)->geometry(), geometries.at(1));
     QCOMPARE(Test::app()->base.topology.size, QSize(1920, 1848));
 
     // create an xcb window
@@ -723,8 +722,8 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     // area
     auto const geometries = std::vector<QRect>{{0, 282, 1366, 768}, {1366, 0, 1680, 1050}};
     Test::app()->set_outputs(geometries);
-    QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
-    QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
+    QCOMPARE(Test::get_output(0)->geometry(), geometries.at(0));
+    QCOMPARE(Test::get_output(1)->geometry(), geometries.at(1));
     QCOMPARE(Test::app()->base.topology.size, QSize(3046, 1050));
 
     // create the panel
@@ -852,8 +851,8 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     // left screen must be smaller than right screen
     auto const geometries = std::vector<QRect>{{0, 282, 1366, 768}, {1366, 0, 1680, 1050}};
     Test::app()->set_outputs(geometries);
-    QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
-    QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
+    QCOMPARE(Test::get_output(0)->geometry(), geometries.at(0));
+    QCOMPARE(Test::get_output(1)->geometry(), geometries.at(1));
     QCOMPARE(Test::app()->base.topology.size, QSize(3046, 1050));
 
     // create the panel on the right screen, left edge

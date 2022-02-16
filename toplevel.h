@@ -453,7 +453,6 @@ private:
     bool m_damageReplyPending;
     xcb_xfixes_fetch_region_cookie_t m_regionCookie;
     bool m_skipCloseAnimation;
-    // when adding new data members, check also copyToDeleted()
     QVector<win::virtual_desktop*> m_desktops;
 
     win::remnant* m_remnant{nullptr};

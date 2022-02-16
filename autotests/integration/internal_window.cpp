@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "render/effects.h"
-#include "screens.h"
 #include "win/deco.h"
 #include "win/internal_window.h"
 #include "win/move.h"

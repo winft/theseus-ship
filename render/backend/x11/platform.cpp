@@ -31,7 +31,6 @@
 #include "main_x11.h"
 #include "randr_filter.h"
 #include "render/compositor.h"
-#include "screens.h"
 #include "toplevel.h"
 #include "win/space.h"
 

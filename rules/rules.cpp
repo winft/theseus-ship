@@ -20,7 +20,6 @@
 #include <kconfig.h>
 
 #ifndef KCMRULES
-#include "screens.h"
 #include "win/setup.h"
 #include "win/space.h"
 #include "win/types.h"

@@ -14,7 +14,6 @@
 #include "main.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
-#include "screens.h"
 #include "toplevel.h"
 
 #include <kwineffectquickview.h>

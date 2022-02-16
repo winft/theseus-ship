@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "render/compositor.h"
 #include "render/wayland/output.h"
-#include "screens.h"
 #include "wayland_logging.h"
 
 // Wrapland

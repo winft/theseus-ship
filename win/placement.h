@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/options.h"
 #include "input/cursor.h"
 #include "rules/rules.h"
-#include "screens.h"
 
 #include "geo.h"
 #include "meta.h"

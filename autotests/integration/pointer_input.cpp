@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/pointer_redirect.h"
 #include "input/wayland/cursor_theme.h"
 #include "render/effects.h"
-#include "screens.h"
 #include "toplevel.h"
 #include "win/space.h"
 #include "win/stacking_order.h"

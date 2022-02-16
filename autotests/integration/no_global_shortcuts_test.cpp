@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
-#include "screens.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
 

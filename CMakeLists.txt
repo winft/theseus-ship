@@ -482,7 +482,6 @@ set(kwin_SRCS
     rules/rule_book_settings.cpp
     rules/rules.cpp
     rules/window_rules.cpp
-    screens.cpp
     scripting/dbus_call.cpp
     scripting/js_engine_global_methods_wrapper.cpp
     scripting/screen_edge_item.cpp

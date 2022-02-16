@@ -179,7 +179,7 @@ void layer_shell_test::test_create()
     configure_payload payload;
     init_ack_layer_surface(surface.get(), layer_surface.get(), payload);
 
-    auto const output1_geo = Test::app()->base.screens.geometry(1);
+    auto const output1_geo = Test::get_output(1)->geometry();
     QCOMPARE(payload.size, output1_geo.size());
 
     auto render_size = QSize(100, 50);

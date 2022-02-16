@@ -37,7 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
 #include "render/effects.h"
-#include "screens.h"
 #include "win/screen.h"
 #include "win/screen_edges.h"
 #include "win/space.h"

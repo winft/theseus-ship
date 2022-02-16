@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "main.h"
 #include "render/compositor.h"
-#include "screens.h"
 #include "tabbox_handler.h"
 #include "win/screen.h"
 #include "win/space.h"

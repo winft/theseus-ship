@@ -14,6 +14,29 @@ namespace KWin::base
 {
 
 template<typename Output>
+QPoint output_physical_dpi(Output const& output)
+{
+    auto x = output.geometry().width() / (double)output.physical_size().width() * 25.4;
+    auto y = output.geometry().height() / (double)output.physical_size().height() * 25.4;
+
+    // TODO(romangg): std::round instead?
+    return {static_cast<int>(x), static_cast<int>(y)};
+}
+
+template<typename Output>
+std::vector<Output*> get_intersecting_outputs(std::vector<Output*> const& outputs,
+                                              QRect const& rect)
+{
+    std::vector<Output*> intersec;
+    for (auto output : outputs) {
+        if (output->geometry().intersects(rect)) {
+            intersec.push_back(output);
+        }
+    }
+    return intersec;
+}
+
+template<typename Output>
 auto get_nearest_output(std::vector<Output*> const& outputs, QPoint const& pos) -> Output*
 {
     Output* best_output{nullptr};
@@ -45,14 +68,12 @@ void update_output_topology(Base& base)
     auto& topo = base.topology;
     auto const old_topo = topo;
 
-    auto count = base.get_outputs().size();
-
     QRect bounding;
     double max_scale{1.};
 
-    for (size_t i = 0; i < count; ++i) {
-        bounding = bounding.united(base.screens.geometry(i));
-        max_scale = qMax(max_scale, base.screens.scale(i));
+    for (auto output : base.get_outputs()) {
+        bounding = bounding.united(output->geometry());
+        max_scale = qMax(max_scale, output->scale());
     }
 
     if (topo.size != bounding.size()) {

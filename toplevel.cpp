@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "render/compositor.h"
 #include "render/effects.h"
-#include "screens.h"
 #include "shadow.h"
 
 #include "win/input.h"

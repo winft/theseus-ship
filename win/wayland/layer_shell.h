@@ -18,7 +18,6 @@
 #include "input/keyboard_redirect.h"
 #include "input/redirect.h"
 #include "render/compositor.h"
-#include "screens.h"
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/layer_shell_v1.h>

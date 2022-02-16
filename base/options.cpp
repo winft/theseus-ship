@@ -8,8 +8,9 @@
 */
 #include "options.h"
 
-#include "base/logging.h"
-#include "base/platform.h"
+#include "logging.h"
+#include "platform.h"
+
 #include "config-kwin.h"
 #include "render/platform.h"
 
@@ -17,7 +18,6 @@
 #include "kwinglplatform.h"
 #include "main.h"
 #include "options_settings.h"
-#include "screens.h"
 
 #include <QOpenGLContext>
 #include <QProcess>
@@ -36,15 +36,15 @@ int currentRefreshRate()
 int options::currentRefreshRate()
 {
     int rate = -1;
+    QString syncScreenName(QLatin1String("primary screen"));
     auto const& outputs = kwinApp()->get_base().get_outputs();
 
-    QString syncScreenName(QLatin1String("primary screen"));
-    if (kwinApp()->options->refreshRate() > 0) { // use manually configured refresh rate
+    if (kwinApp()->options->refreshRate() > 0) {
+        // use manually configured refresh rate
         rate = kwinApp()->options->refreshRate();
     } else if (outputs.size() > 0) {
         // prefer the refreshrate calculated from the screens mode information
         // at least the nvidia driver reports 50Hz BS ... *again*!
-        auto const& screens = kwinApp()->get_base().screens;
         int syncScreen = 0;
         if (outputs.size() > 1) {
             const QByteArray syncDisplayDevice(qgetenv("__GL_SYNC_DISPLAY_DEVICE"));
@@ -52,8 +52,9 @@ int options::currentRefreshRate()
             // so we try to use its refresh rate
             if (!syncDisplayDevice.isEmpty()) {
                 for (size_t i = 0; i < outputs.size(); ++i) {
-                    if (screens.name(i) == syncDisplayDevice) {
-                        syncScreenName = screens.name(i);
+                    auto const& out_name = outputs.at(i)->name();
+                    if (out_name == syncDisplayDevice) {
+                        syncScreenName = out_name;
                         syncScreen = i;
                         break;
                     }
@@ -61,7 +62,7 @@ int options::currentRefreshRate()
             }
         }
         // TODO forward float precision?
-        rate = qRound(screens.refreshRate(syncScreen));
+        rate = qRound(outputs.at(syncScreen)->refresh_rate() / 1000.);
     }
 
     // 0Hz or less is invalid, so we fallback to a default rate

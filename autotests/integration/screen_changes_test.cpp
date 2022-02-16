@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
-#include "screens.h"
 
 #include <Wrapland/Client/output.h>
 #include <Wrapland/Client/registry.h>

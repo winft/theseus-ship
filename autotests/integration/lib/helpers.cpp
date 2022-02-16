@@ -13,7 +13,6 @@
 #include "input/backend/wlroots/keyboard.h"
 #include "input/backend/wlroots/pointer.h"
 #include "input/backend/wlroots/touch.h"
-#include "screens.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
@@ -55,6 +54,13 @@ void destroy_wayland_connection()
     get_all_clients().clear();
 }
 
+base::output* get_output(size_t index)
+{
+    auto const& outputs = Test::app()->base.get_outputs();
+    assert(index < outputs.size());
+    return outputs.at(index);
+}
+
 void set_current_output(int index)
 {
     auto const& outputs = Test::app()->base.get_outputs();
@@ -70,12 +76,12 @@ void test_outputs_default()
 
 void test_outputs_geometries(std::vector<QRect> const& geometries)
 {
-    auto& screens = Test::app()->base.screens;
-    QCOMPARE(Test::app()->base.get_outputs().size(), geometries.size());
+    auto const& outputs = Test::app()->base.get_outputs();
+    QCOMPARE(outputs.size(), geometries.size());
 
     size_t index = 0;
     for (auto geo : geometries) {
-        QCOMPARE(screens.geometry(index), geo);
+        QCOMPARE(outputs.at(index)->geometry(), geo);
         index++;
     }
 }

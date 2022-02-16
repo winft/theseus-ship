@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwineffects.h"
 #include "render/compositor.h"
 #include "render/scene.h"
-#include "screens.h"
 #include "win/deco.h"
 #include "win/screen_edges.h"
 #include "win/space.h"

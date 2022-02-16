@@ -6,7 +6,6 @@
 #include "lib/app.h"
 
 #include "base/wayland/server.h"
-#include "screens.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 

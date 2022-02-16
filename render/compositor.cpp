@@ -19,7 +19,6 @@
 #include "base/platform.h"
 #include "base/wayland/server.h"
 #include "debug/perf/ftrace.h"
-#include "screens.h"
 #include "win/net.h"
 #include "win/remnant.h"
 #include "win/scene.h"

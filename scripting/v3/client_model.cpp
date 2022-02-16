@@ -8,8 +8,6 @@
 #include "scripting/platform.h"
 #include "scripting/space.h"
 #include "scripting/window.h"
-
-#include "screens.h"
 #include "win/space.h"
 
 namespace KWin::scripting::models::v3
@@ -246,7 +244,8 @@ bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sou
     }
 
     if (m_screenName.has_value()) {
-        if (kwinApp()->get_base().screens.name(client->screen()) != m_screenName) {
+        auto output = base::get_output(kwinApp()->get_base().get_outputs(), client->screen());
+        if (!output || output->name() != m_screenName) {
             return false;
         }
     }

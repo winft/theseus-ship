@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/proto.h"
 #include "input/cursor.h"
 #include "input/gestures.h"
-#include "screens.h"
 #include "toplevel.h"
 #include "win/screen_edges.h"
 #include "win/space.h"

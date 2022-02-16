@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/pointer_redirect.h"
 #include "input/touch_redirect.h"
 #include "kwineffects.h"
-#include "screens.h"
 #include "toplevel.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
@@ -420,7 +419,7 @@ void DecorationInputTest::testPressToMove()
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
     win::move(c,
-              Test::app()->base.screens.geometry(0).center()
+              Test::get_output(0)->geometry().center()
                   - QPoint(c->size().width() / 2, c->size().height() / 2));
     QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
@@ -488,7 +487,7 @@ void DecorationInputTest::testTapToMove()
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
     win::move(c,
-              Test::app()->base.screens.geometry(0).center()
+              Test::get_output(0)->geometry().center()
                   - QPoint(c->size().width() / 2, c->size().height() / 2));
     QSignalSpy startMoveResizedSpy(c, &Toplevel::clientStartUserMovedResized);
     QVERIFY(startMoveResizedSpy.isValid());
@@ -568,7 +567,7 @@ void DecorationInputTest::testResizeOutsideWindow()
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
     win::move(c,
-              Test::app()->base.screens.geometry(0).center()
+              Test::get_output(0)->geometry().center()
                   - QPoint(c->size().width() / 2, c->size().height() / 2));
     QVERIFY(c->frameGeometry() != win::input_geometry(c));
     QVERIFY(win::input_geometry(c).contains(c->frameGeometry()));
@@ -673,7 +672,7 @@ void DecorationInputTest::testModifierClickUnrestrictedMove()
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
     win::move(c,
-              Test::app()->base.screens.geometry(0).center()
+              Test::get_output(0)->geometry().center()
                   - QPoint(c->size().width() / 2, c->size().height() / 2));
     // move cursor on window
     input::get_cursor()->set_pos(
@@ -739,7 +738,7 @@ void DecorationInputTest::testModifierScrollOpacity()
     QVERIFY(win::decoration(c));
     QVERIFY(!c->noBorder());
     win::move(c,
-              Test::app()->base.screens.geometry(0).center()
+              Test::get_output(0)->geometry().center()
                   - QPoint(c->size().width() / 2, c->size().height() / 2));
     // move cursor on window
     input::get_cursor()->set_pos(

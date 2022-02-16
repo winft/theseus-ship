@@ -46,7 +46,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/cursor.h"
 #include "render/effects.h"
 #include "render/platform.h"
-#include "screens.h"
 #include "win/geo.h"
 #include "win/transient.h"
 

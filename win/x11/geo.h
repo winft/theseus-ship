@@ -941,12 +941,17 @@ void sync_geometry(Win* win, QRect const& frame_geo)
 inline QRect fullscreen_monitors_area(NETFullscreenMonitors requestedTopology)
 {
     QRect top, bottom, left, right, total;
-    auto const& screens = kwinApp()->get_base().screens;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
 
-    top = screens.geometry(requestedTopology.top);
-    bottom = screens.geometry(requestedTopology.bottom);
-    left = screens.geometry(requestedTopology.left);
-    right = screens.geometry(requestedTopology.right);
+    auto get_rect = [&outputs](auto index) -> QRect {
+        auto output = base::get_output(outputs, index);
+        return output ? output->geometry() : QRect();
+    };
+    top = get_rect(requestedTopology.top);
+    bottom = get_rect(requestedTopology.bottom);
+    left = get_rect(requestedTopology.left);
+    right = get_rect(requestedTopology.right);
+
     total = top.united(bottom.united(left.united(right)));
 
     return total;
@@ -1132,12 +1137,11 @@ bool has_offscreen_xinerama_strut(Win const* win)
     region += get_strut_rect(win, strut_area::bottom);
     region += get_strut_rect(win, strut_area::left);
 
-    auto const& screens = kwinApp()->get_base().screens;
     auto const& outputs = kwinApp()->get_base().get_outputs();
 
     // Remove all visible areas so that only the invisible remain
-    for (size_t i = 0; i < outputs.size(); i++) {
-        region -= screens.geometry(i);
+    for (auto output : outputs) {
+        region -= output->geometry();
     }
 
     // If there's anything left then we have an offscreen strut

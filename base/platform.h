@@ -9,7 +9,6 @@
 #include "output_topology.h"
 
 #include "kwin_export.h"
-#include "screens.h"
 
 #include <QObject>
 #include <memory>
@@ -38,7 +37,6 @@ public:
     /// Makes a copy of all outputs. Only for external use. Prefer subclass objects instead.
     virtual std::vector<output*> get_outputs() const = 0;
 
-    Screens screens;
     output_topology topology;
     std::unique_ptr<render::platform> render;
 

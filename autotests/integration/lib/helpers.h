@@ -8,6 +8,7 @@
 
 #include "types.h"
 
+#include "base/output.h"
 #include "base/wayland/server.h"
 #include "main.h"
 
@@ -63,6 +64,7 @@ KWIN_EXPORT void setup_wayland_connection(global_selection globals = {});
  */
 KWIN_EXPORT void destroy_wayland_connection();
 
+KWIN_EXPORT base::output* get_output(size_t index);
 KWIN_EXPORT void set_current_output(int index);
 
 KWIN_EXPORT void test_outputs_default();

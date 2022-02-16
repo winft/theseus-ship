@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/atoms.h"
 #include "input/cursor.h"
 #include "render/effects.h"
-#include "screens.h"
 #include "toplevel.h"
 #include "win/input.h"
 #include "win/move.h"
@@ -712,7 +711,7 @@ void MoveResizeWindowTest::testNetMove()
     const QRect origGeo = client->frameGeometry();
 
     // let's move the cursor outside the window
-    input::get_cursor()->set_pos(Test::app()->base.screens.geometry(0).center());
+    input::get_cursor()->set_pos(Test::get_output(0)->geometry().center());
     QVERIFY(!origGeo.contains(input::get_cursor()->pos()));
 
     QSignalSpy moveStartSpy(client, &win::x11::window::clientStartUserMovedResized);
@@ -1161,7 +1160,7 @@ void MoveResizeWindowTest::testSetFullScreenWhenMoving()
     states = configureRequestedSpy.last().at(1).value<XdgShellToplevel::States>();
     QVERIFY(states.testFlag(XdgShellToplevel::State::Fullscreen));
 
-    QCOMPARE(configureRequestedSpy.last().first().toSize(), Test::app()->base.screens.size(0));
+    QCOMPARE(configureRequestedSpy.last().first().toSize(), Test::get_output(0)->geometry().size());
 
     shellSurface->ackConfigure(configureRequestedSpy.last().at(2).value<quint32>());
     Test::render(surface, configureRequestedSpy.last().first().toSize(), Qt::red);

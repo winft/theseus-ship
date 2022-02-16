@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
-#include "screens.h"
 #include "win/meta.h"
 #include "win/space.h"
 #include "win/stacking_order.h"

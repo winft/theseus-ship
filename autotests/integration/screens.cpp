@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "lib/app.h"
-#include "screens.h"
 
 #include "win/move.h"
 #include "win/screen.h"
@@ -244,7 +243,6 @@ void TestScreens::testIntersecting_data()
 
 void TestScreens::testIntersecting()
 {
-    auto& screens = Test::app()->base.screens;
     QSignalSpy changedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(changedSpy.isValid());
 
@@ -254,8 +252,10 @@ void TestScreens::testIntersecting()
     QCOMPARE(changedSpy.count(), 1);
 
     QFETCH(QRect, testGeometry);
-    QCOMPARE(Test::app()->base.get_outputs().size(), geometries.count());
-    QTEST(screens.intersecting(testGeometry), "expectedCount");
+    auto const& outputs = Test::app()->base.get_outputs();
+    QCOMPARE(outputs.size(), geometries.count());
+    QTEST(static_cast<int>(base::get_intersecting_outputs(outputs, testGeometry).size()),
+          "expectedCount");
 }
 
 void TestScreens::testCurrent_data()

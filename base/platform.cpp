@@ -11,7 +11,6 @@ namespace KWin::base
 {
 
 platform::platform()
-    : screens{*this}
 {
     QObject::connect(this, &platform::output_added, this, [this](auto output) {
         if (!topology.current) {

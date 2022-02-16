@@ -36,7 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/post/night_color_manager.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
-#include "screens.h"
 #include "scripting/platform.h"
 #include "utils/blocker.h"
 #include "win/app_menu.h"
@@ -884,27 +883,28 @@ QString space::supportInformation() const
     support.append(QStringLiteral("not supported anymore\n"));
     support.append(QStringLiteral("Active screen follows mouse: "));
 
-    auto const& screens = kwinApp()->get_base().screens;
-    auto const& outputs = kwinApp()->get_base().get_outputs();
-
     if (kwinApp()->options->get_current_output_follows_mouse())
         support.append(QStringLiteral(" yes\n"));
     else
         support.append(QStringLiteral(" no\n"));
+
+    auto const& outputs = kwinApp()->get_base().get_outputs();
     support.append(QStringLiteral("Number of Screens: %1\n\n").arg(outputs.size()));
     for (size_t i = 0; i < outputs.size(); ++i) {
-        const QRect geo = screens.geometry(i);
+        auto const output = outputs.at(i);
+        auto const geo = output->geometry();
         support.append(QStringLiteral("Screen %1:\n").arg(i));
         support.append(QStringLiteral("---------\n"));
-        support.append(QStringLiteral("Name: %1\n").arg(screens.name(i)));
+        support.append(QStringLiteral("Name: %1\n").arg(output->name()));
         support.append(QStringLiteral("Geometry: %1,%2,%3x%4\n")
                            .arg(geo.x())
                            .arg(geo.y())
                            .arg(geo.width())
                            .arg(geo.height()));
-        support.append(QStringLiteral("Scale: %1\n").arg(screens.scale(i)));
-        support.append(QStringLiteral("Refresh Rate: %1\n\n").arg(screens.refreshRate(i)));
+        support.append(QStringLiteral("Scale: %1\n").arg(output->scale()));
+        support.append(QStringLiteral("Refresh Rate: %1\n\n").arg(output->refresh_rate()));
     }
+
     support.append(QStringLiteral("\nCompositing\n"));
     support.append(QStringLiteral("===========\n"));
     if (effects) {
@@ -1324,13 +1324,14 @@ void space::desktopResized()
 
 void space::saveOldScreenSizes()
 {
-    auto const& screens = kwinApp()->get_base().screens;
-    auto const screens_count = kwinApp()->get_base().get_outputs().size();
+    auto&& base = kwinApp()->get_base();
+    auto const& outputs = base.get_outputs();
 
-    olddisplaysize = kwinApp()->get_base().topology.size;
+    olddisplaysize = base.topology.size;
     oldscreensizes.clear();
-    for (size_t i = 0; i < screens_count; ++i) {
-        oldscreensizes.push_back(screens.geometry(i));
+
+    for (auto output : outputs) {
+        oldscreensizes.push_back(output->geometry());
     }
 }
 
@@ -1347,8 +1348,9 @@ void space::saveOldScreenSizes()
  */
 void space::updateClientArea(bool force)
 {
-    auto const& screens = kwinApp()->get_base().screens;
-    int const screens_count = kwinApp()->get_base().get_outputs().size();
+    auto&& base = kwinApp()->get_base();
+    auto const& outputs = base.get_outputs();
+    auto const screens_count = outputs.size();
     auto const desktops_count = static_cast<int>(win::virtual_desktop_manager::self()->count());
 
     // To be determined are new:
@@ -1360,18 +1362,18 @@ void space::updateClientArea(bool force)
     std::vector<QRect> screens_geos(screens_count);
     QRect desktop_area;
 
-    for (auto screen = 0; screen < screens_count; screen++) {
-        desktop_area |= screens.geometry(screen);
+    for (size_t screen = 0; screen < screens_count; screen++) {
+        desktop_area |= outputs.at(screen)->geometry();
     }
 
-    for (auto screen = 0; screen < screens_count; screen++) {
-        screens_geos[screen] = screens.geometry(screen);
+    for (size_t screen = 0; screen < screens_count; screen++) {
+        screens_geos[screen] = outputs.at(screen)->geometry();
     }
 
     for (auto desktop = 1; desktop <= desktops_count; ++desktop) {
         new_areas.work[desktop] = desktop_area;
         new_areas.screen[desktop].resize(screens_count);
-        for (int screen = 0; screen < screens_count; screen++) {
+        for (size_t screen = 0; screen < screens_count; screen++) {
             new_areas.screen[desktop][screen] = screens_geos[screen];
         }
     }
@@ -1385,7 +1387,7 @@ void space::updateClientArea(bool force)
         changed |= areas.restrictedmove[desktop] != new_areas.restrictedmove[desktop];
         changed |= areas.screen[desktop].size() != new_areas.screen[desktop].size();
 
-        for (int screen = 0; !changed && screen < screens_count; screen++) {
+        for (size_t screen = 0; !changed && screen < screens_count; screen++) {
             changed |= new_areas.screen[desktop][screen] != areas.screen[desktop][screen];
         }
     }
@@ -1569,10 +1571,10 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
 
     if (kwinApp()->options->windowSnapZone() || !borderSnapZone.isNull()
         || kwinApp()->options->centerSnapZone()) {
-        auto const& screens = kwinApp()->get_base().screens;
+        auto const& outputs = kwinApp()->get_base().get_outputs();
         const bool sOWO = kwinApp()->options->isSnapOnlyWhenOverlapping();
-        auto output = base::get_nearest_output(kwinApp()->get_base().get_outputs(),
-                                               pos + QRect(QPoint(), window->size()).center());
+        auto output
+            = base::get_nearest_output(outputs, pos + QRect(QPoint(), window->size()).center());
 
         if (maxRect.isNull()) {
             maxRect = clientArea(MovementArea, output, window->desktop());
@@ -1606,15 +1608,19 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
             // snap to titlebar / snap to window borders on inner screen edges
             if (frameMargins.left()
                 && (flags(window->maximizeMode() & win::maximize_mode::horizontal)
-                    || screens.intersecting(
+                    || base::get_intersecting_outputs(
+                           outputs,
                            geo.translated(maxRect.x() - (frameMargins.left() + geo.x()), 0))
+                            .size()
                         > 1)) {
                 frameMargins.setLeft(0);
             }
             if (frameMargins.right()
                 && (flags(window->maximizeMode() & win::maximize_mode::horizontal)
-                    || screens.intersecting(
+                    || base::get_intersecting_outputs(
+                           outputs,
                            geo.translated(maxRect.right() + frameMargins.right() - geo.right(), 0))
+                            .size()
                         > 1)) {
                 frameMargins.setRight(0);
             }
@@ -1623,8 +1629,11 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
             }
             if (frameMargins.bottom()
                 && (flags(window->maximizeMode() & win::maximize_mode::vertical)
-                    || screens.intersecting(geo.translated(
-                           0, maxRect.bottom() + frameMargins.bottom() - geo.bottom()))
+                    || base::get_intersecting_outputs(
+                           outputs,
+                           geo.translated(0,
+                                          maxRect.bottom() + frameMargins.bottom() - geo.bottom()))
+                            .size()
                         > 1)) {
                 frameMargins.setBottom(0);
             }
@@ -2173,7 +2182,8 @@ int space::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge) con
     auto const right = newX - win::frame_margins(window).left();
     auto frameGeometry = window->geometry_update.frame;
     frameGeometry.moveRight(right);
-    if (kwinApp()->get_base().screens.intersecting(frameGeometry) < 2) {
+    if (base::get_intersecting_outputs(kwinApp()->get_base().get_outputs(), frameGeometry).size()
+        < 2) {
         newX = right;
     }
 
@@ -2215,7 +2225,8 @@ int space::packPositionRight(Toplevel const* window, int oldX, bool rightEdge) c
     auto const right = newX + win::frame_margins(window).right();
     auto frameGeometry = window->geometry_update.frame;
     frameGeometry.moveRight(right);
-    if (kwinApp()->get_base().screens.intersecting(frameGeometry) < 2) {
+    if (base::get_intersecting_outputs(kwinApp()->get_base().get_outputs(), frameGeometry).size()
+        < 2) {
         newX = right;
     }
 
@@ -2289,7 +2300,8 @@ int space::packPositionDown(Toplevel const* window, int oldY, bool bottomEdge) c
     auto const bottom = newY + win::frame_margins(window).bottom();
     auto frameGeometry = window->geometry_update.frame;
     frameGeometry.moveBottom(bottom);
-    if (kwinApp()->get_base().screens.intersecting(frameGeometry) < 2) {
+    if (base::get_intersecting_outputs(kwinApp()->get_base().get_outputs(), frameGeometry).size()
+        < 2) {
         newY = bottom;
     }
 

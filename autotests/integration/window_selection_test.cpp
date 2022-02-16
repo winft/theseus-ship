@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/wayland/device_redirect.h"
-#include "screens.h"
 #include "win/space.h"
 #include "win/wayland/window.h"
 

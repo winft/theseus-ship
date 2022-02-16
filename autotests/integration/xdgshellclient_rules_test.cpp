@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
-#include "screens.h"
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/setup.h"

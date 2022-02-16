@@ -145,10 +145,8 @@ void init_space(Space& space)
         delete[] viewports;
         QRect geom;
 
-        auto const& screens = kwinApp()->get_base().screens;
-        auto const& outputs = kwinApp()->get_base().get_outputs();
-        for (size_t i = 0; i < outputs.size(); i++) {
-            geom |= screens.geometry(i);
+        for (auto output : kwinApp()->get_base().get_outputs()) {
+            geom |= output->geometry();
         }
 
         NETSize desktop_geometry;

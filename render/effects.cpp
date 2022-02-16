@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/pointer_redirect.h"
 #include "kwineffectquickview.h"
 #include "kwinglutils.h"
-#include "screens.h"
 #include "scripting/effect.h"
 #include "thumbnail_item.h"
 #include "win/control.h"

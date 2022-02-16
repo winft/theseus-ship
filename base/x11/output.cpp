@@ -7,6 +7,7 @@
 
 #include "platform.h"
 
+#include "kwinglobals.h"
 #include "utils/gamma_ramp.h"
 
 namespace KWin::base::x11

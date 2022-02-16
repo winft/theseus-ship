@@ -18,7 +18,6 @@
 #include "input/event_filter.h"
 #include "input/event_spy.h"
 #include "input/qt_event.h"
-#include "screens.h"
 #include "toplevel.h"
 #include "win/input.h"
 #include "win/wayland/space.h"
@@ -38,11 +37,8 @@ namespace KWin::input::wayland
 
 static bool screenContainsPos(QPointF const& pos)
 {
-    auto const& screens = kwinApp()->get_base().screens;
-    auto const& outputs = kwinApp()->get_base().get_outputs();
-
-    for (size_t i = 0; i < outputs.size(); ++i) {
-        if (screens.geometry(i).contains(pos.toPoint())) {
+    for (auto output : kwinApp()->get_base().get_outputs()) {
+        if (output->geometry().contains(pos.toPoint())) {
             return true;
         }
     }

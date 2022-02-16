@@ -19,7 +19,6 @@
 #include "win/x11/window.h"
 
 #include "screen_edges.h"
-#include "screens.h"
 #include "toplevel.h"
 
 #include <algorithm>

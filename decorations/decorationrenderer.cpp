@@ -18,9 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "decorationrenderer.h"
+
 #include "decoratedclient.h"
 #include "decorations/decorations_logging.h"
-#include "screens.h"
 #include "toplevel.h"
 
 #include <KDecoration2/Decoration>
