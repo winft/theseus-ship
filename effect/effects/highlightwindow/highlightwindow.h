@@ -49,8 +49,8 @@ public Q_SLOTS:
     void slotWindowDeleted(KWin::EffectWindow* w);
 
 private:
-    void startGhostAnimation(EffectWindow* window, int duration = -1);
-    void startHighlightAnimation(EffectWindow* window, int duration = -1);
+    quint64 startGhostAnimation(EffectWindow* window);
+    quint64 startHighlightAnimation(EffectWindow* window);
     void startRevertAnimation(EffectWindow* window);
 
     bool isHighlighted(EffectWindow* window) const;
