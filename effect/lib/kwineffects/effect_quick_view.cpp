@@ -392,6 +392,16 @@ QRect EffectQuickView::geometry() const
     return d->m_view->geometry();
 }
 
+void EffectQuickView::setOpacity(qreal opacity)
+{
+    d->m_view->setOpacity(opacity);
+}
+
+qreal EffectQuickView::opacity() const
+{
+    return d->m_view->opacity();
+}
+
 QQuickItem* EffectQuickView::contentItem() const
 {
     return d->m_view->contentItem();

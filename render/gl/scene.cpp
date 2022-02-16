@@ -767,17 +767,27 @@ void scene::paintDesktop(int desktop, paint_type mask, const QRegion& region, Sc
 
 void scene::paintEffectQuickView(EffectQuickView* w)
 {
-    GLShader* shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture);
-    const QRect rect = w->geometry();
-
     GLTexture* t = w->bufferAsTexture();
     if (!t) {
         return;
     }
 
+    ShaderTraits traits = ShaderTrait::MapTexture;
+    auto a = w->opacity();
+    if (a != 1.0) {
+        traits |= ShaderTrait::Modulate;
+    }
+
+    auto shader = ShaderManager::instance()->pushShader(traits);
+    auto const rect = w->geometry();
+
     QMatrix4x4 mvp(projectionMatrix());
     mvp.translate(rect.x(), rect.y());
     shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
+
+    if (a != 1.0) {
+        shader->setUniform(GLShader::ModulationConstant, QVector4D(a, a, a, a));
+    }
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);

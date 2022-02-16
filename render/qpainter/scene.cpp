@@ -157,7 +157,10 @@ void scene::paintEffectQuickView(EffectQuickView* w)
     if (buffer.isNull()) {
         return;
     }
+    painter->save();
+    painter->setOpacity(w->opacity());
     painter->drawImage(w->geometry(), buffer);
+    painter->restore();
 }
 
 std::unique_ptr<render::window> scene::createWindow(Toplevel* toplevel)
