@@ -1844,6 +1844,7 @@ GLvoid* GLVertexBufferPrivate::getIdleRange(size_t size)
         // Emit a fence now
         BufferFence fence;
         fence.sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+        Q_ASSERT(fence.sync);
         fence.nextEnd = bufferSize;
         fences.emplace_back(fence);
     }
@@ -2142,6 +2143,7 @@ void GLVertexBuffer::endOfFrame()
         } else {
             BufferFence fence;
             fence.sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+            Q_ASSERT(fence.sync);
             fence.nextEnd = d->nextOffset + d->bufferSize;
 
             d->fences.emplace_back(fence);
