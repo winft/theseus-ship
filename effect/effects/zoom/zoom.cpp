@@ -36,7 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <QAction>
-#include <QApplication>
 #include <QLoggingCategory>
 #include <QStyle>
 #include <QVector2D>
