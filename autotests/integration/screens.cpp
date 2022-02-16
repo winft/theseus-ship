@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 
 #include "win/move.h"
+#include "win/screen.h"
 #include "win/stacking.h"
 #include "win/wayland/space.h"
 
@@ -82,7 +83,7 @@ void TestScreens::init()
     m_compositor = Test::get_client().interfaces.compositor.get();
 
     Test::app()->set_outputs(1);
-    Test::app()->base.screens.setCurrent(0);
+    base::set_current_output(Test::app()->base, 0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -271,14 +272,13 @@ void TestScreens::testCurrent_data()
 
 void TestScreens::testCurrent()
 {
-    auto& screens = Test::app()->base.screens;
-    QSignalSpy currentChangedSpy(&screens, &KWin::Screens::currentChanged);
-    QVERIFY(currentChangedSpy.isValid());
+    QSignalSpy current_changed_spy(&Test::app()->base, &base::platform::topology_changed);
+    QVERIFY(current_changed_spy.isValid());
 
     QFETCH(int, current);
-    screens.setCurrent(current);
-    QCOMPARE(screens.current(), current);
-    QTEST(!currentChangedSpy.isEmpty(), "signal");
+    base::set_current_output(Test::app()->base, current);
+    QCOMPARE(win::get_current_output(*Test::app()->workspace), current);
+    QTEST(!current_changed_spy.isEmpty(), "signal");
 }
 
 void TestScreens::testCurrentClient()
@@ -292,8 +292,8 @@ void TestScreens::testCurrentClient()
 
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
-    QSignalSpy currentChangedSpy(&screens, &KWin::Screens::currentChanged);
-    QVERIFY(currentChangedSpy.isValid());
+    QSignalSpy current_changed_spy(&Test::app()->base, &base::platform::topology_changed);
+    QVERIFY(current_changed_spy.isValid());
 
     // Create a window.
     QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
@@ -314,30 +314,33 @@ void TestScreens::testCurrentClient()
     workspace()->setActiveClient(nullptr);
     QCOMPARE(workspace()->activeClient(), nullptr);
 
+    QCOMPARE(win::get_current_output(*Test::app()->workspace), 0);
+
     // it's not the active client, so changing won't work
-    screens.setCurrent(client);
-    QVERIFY(currentChangedSpy.isEmpty());
-    QCOMPARE(screens.current(), 0);
+    win::set_current_output_by_window(Test::app()->base, *client);
+    QVERIFY(current_changed_spy.isEmpty());
+    QCOMPARE(win::get_current_output(*Test::app()->workspace), 0);
 
     // making the client active should affect things
     win::set_active(client, true);
     workspace()->setActiveClient(client);
 
     // first of all current should be changed just by the fact that there is an active client
-    QCOMPARE(screens.current(), 1);
+    QCOMPARE(win::get_current_output(*Test::app()->workspace), 1);
+
     // but also calling setCurrent should emit the changed signal
-    screens.setCurrent(client);
-    QCOMPARE(currentChangedSpy.count(), 1);
-    QCOMPARE(screens.current(), 1);
+    win::set_current_output_by_window(Test::app()->base, *client);
+    QCOMPARE(current_changed_spy.count(), 1);
+    QCOMPARE(win::get_current_output(*Test::app()->workspace), 1);
 
     // setting current with the same client again should not change, though
-    screens.setCurrent(client);
-    QCOMPARE(currentChangedSpy.count(), 1);
+    win::set_current_output_by_window(Test::app()->base, *client);
+    QCOMPARE(current_changed_spy.count(), 1);
 
     // and it should even still be on screen 1 if we make the client non-current again
     workspace()->setActiveClient(nullptr);
     win::set_active(client, false);
-    QCOMPARE(screens.current(), 1);
+    QCOMPARE(win::get_current_output(*Test::app()->workspace), 1);
 }
 
 void TestScreens::testCurrentWithFollowsMouse_data()
@@ -368,7 +371,7 @@ void TestScreens::testCurrentWithFollowsMouse()
     options->current_output_follows_mouse = true;
 
     Test::pointer_motion_absolute(QPointF(0, 0), 1);
-    QCOMPARE(screens.current(), 0);
+    QCOMPARE(win::get_current_output(*Test::app()->workspace), 0);
 
     QFETCH(QList<QRect>, geometries);
     Test::app()->set_outputs(to_vector(geometries));
@@ -378,7 +381,7 @@ void TestScreens::testCurrentWithFollowsMouse()
     QFETCH(QPoint, cursorPos);
     Test::pointer_motion_absolute(cursorPos, 2);
     //    KWin::s_cursorPos = cursorPos;
-    QTEST(screens.current(), "expected");
+    QTEST(win::get_current_output(*Test::app()->workspace), "expected");
 }
 
 void TestScreens::testCurrentPoint_data()
@@ -414,8 +417,8 @@ void TestScreens::testCurrentPoint()
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
     QFETCH(QPoint, cursorPos);
-    screens.setCurrent(cursorPos);
-    QTEST(screens.current(), "expected");
+    base::set_current_output_by_position(Test::app()->base, cursorPos);
+    QTEST(win::get_current_output(*Test::app()->workspace), "expected");
 }
 
 }

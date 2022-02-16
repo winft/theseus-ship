@@ -723,7 +723,7 @@ void window::do_set_geometry(QRect const& frame_geo)
     }
 
     // TODO(romangg): Remove?
-    kwinApp()->get_base().screens.setCurrent(this);
+    win::set_current_output_by_window(kwinApp()->get_base(), *this);
     space.stacking_order->update();
 
     updateWindowRules(static_cast<Rules::Types>(Rules::Position | Rules::Size));

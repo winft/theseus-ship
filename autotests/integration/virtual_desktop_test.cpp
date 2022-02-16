@@ -101,7 +101,6 @@ void VirtualDesktopTest::initTestCase()
 void VirtualDesktopTest::init()
 {
     Test::setup_wayland_connection();
-    Test::app()->base.screens.setCurrent(0);
     win::virtual_desktop_manager::self()->setCount(1);
     win::virtual_desktop_manager::self()->setCurrent(0u);
 }

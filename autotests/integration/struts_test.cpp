@@ -94,8 +94,6 @@ void StrutsTest::init()
     Test::setup_wayland_connection(Test::global_selection::plasma_shell);
     m_compositor = Test::get_client().interfaces.compositor.get();
     m_plasmaShell = Test::get_client().interfaces.plasma_shell.get();
-
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

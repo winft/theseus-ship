@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/logging.h"
 #include "render/outline.h"
+#include "win/screen.h"
 
 #include <QApplication>
 #include <QDesktopWidget>
@@ -201,7 +202,7 @@ int space::numScreens() const
 
 int space::activeScreen() const
 {
-    return kwinApp()->get_base().screens.current();
+    return win::get_current_output(*workspace());
 }
 
 QRect space::virtualScreenGeometry() const

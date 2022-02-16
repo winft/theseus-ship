@@ -95,7 +95,6 @@ void TestPointerConstraints::init()
                                    | Test::global_selection::pointer_constraints);
     QVERIFY(Test::wait_for_wayland_pointer());
 
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(1280, 512));
 }
 

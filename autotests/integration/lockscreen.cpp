@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/scene.h"
 #include "screens.h"
 #include "toplevel.h"
+#include "win/screen.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
 
@@ -228,7 +229,7 @@ void LockScreenTest::init()
     m_shm = Test::get_client().interfaces.shm.get();
     m_seat = Test::get_client().interfaces.seat.get();
 
-    Test::app()->base.screens.setCurrent(0);
+    base::set_current_output(Test::app()->base, 0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

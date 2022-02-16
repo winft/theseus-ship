@@ -166,8 +166,6 @@ void TestXdgShellClientRules::init()
     win::virtual_desktop_manager::self()->setCurrent(
         win::virtual_desktop_manager::self()->desktops().first());
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
-
-    Test::app()->base.screens.setCurrent(0);
 }
 
 void TestXdgShellClientRules::cleanup()

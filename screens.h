@@ -43,18 +43,6 @@ public:
     Screens(base::platform const& base);
     ~Screens() override;
 
-    int current() const;
-    void setCurrent(int current);
-    /**
-     * Called e.g. when a user clicks on a window, set current screen to be the screen
-     * where the click occurred
-     */
-    void setCurrent(const QPoint &pos);
-    /**
-     * Check whether a client moved completely out of what's considered the current screen,
-     * if yes, set a new active screen.
-     */
-    void setCurrent(Toplevel const* window);
     QRect geometry(int screen) const;
     /**
      * The bounding geometry of all screens combined. Overlapping areas
@@ -138,7 +126,6 @@ Q_SIGNALS:
      * Emitted whenever the screens are changed either count or geometry.
      */
     void changed();
-    void currentChanged();
     /**
      * Emitted when the geometry of all screens combined changes.
      * Not emitted when the geometry of an individual screen changes.
@@ -163,7 +150,6 @@ private:
     void updateSize();
     base::output* findOutput(int screen) const;
 
-    int m_current;
     QSize m_boundingSize;
     qreal m_maxScale;
 

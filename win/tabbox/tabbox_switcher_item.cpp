@@ -24,7 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "screens.h"
 #include "tabbox_handler.h"
-// Qt
+#include "win/screen.h"
+#include "win/space.h"
+
 #include <QAbstractItemModel>
 
 namespace KWin
@@ -89,8 +91,7 @@ void tabbox_switcher_item::set_visible(bool visible)
 
 QRect tabbox_switcher_item::screen_geometry() const
 {
-    auto& screens = kwinApp()->get_base().screens;
-    return screens.geometry(screens.current());
+    return kwinApp()->get_base().screens.geometry(win::get_current_output(*workspace()));
 }
 
 void tabbox_switcher_item::set_current_index(int index)

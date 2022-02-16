@@ -6,6 +6,7 @@
 #pragma once
 
 #include "output.h"
+#include "output_topology.h"
 
 #include "kwin_export.h"
 #include "screens.h"
@@ -38,6 +39,7 @@ public:
     virtual std::vector<output*> get_outputs() const = 0;
 
     Screens screens;
+    output_topology topology;
     std::unique_ptr<render::platform> render;
 
 private:
@@ -46,6 +48,7 @@ private:
 Q_SIGNALS:
     void output_added(KWin::base::output*);
     void output_removed(KWin::base::output*);
+    void topology_changed(output_topology const& old_topo, output_topology const& topo);
 };
 
 }

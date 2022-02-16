@@ -105,8 +105,6 @@ void MoveResizeWindowTest::init()
     QVERIFY(Test::wait_for_wayland_pointer());
     m_connection = Test::get_client().connection;
     m_compositor = Test::get_client().interfaces.compositor.get();
-
-    Test::app()->base.screens.setCurrent(0);
 }
 
 void MoveResizeWindowTest::cleanup()

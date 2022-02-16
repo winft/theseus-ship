@@ -130,8 +130,6 @@ void virtual_keyboard_test::init()
     vk_client = Test::client(Test::global_selection::seat
                              | Test::global_selection::virtual_keyboard_manager_v1);
     focus_client = create_focus_client();
-
-    Test::app()->base.screens.setCurrent(0);
 }
 
 void virtual_keyboard_test::cleanup()

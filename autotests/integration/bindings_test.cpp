@@ -71,7 +71,6 @@ void BindingsTest::initTestCase()
 void BindingsTest::init()
 {
     Test::setup_wayland_connection();
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

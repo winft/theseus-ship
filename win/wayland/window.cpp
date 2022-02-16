@@ -922,7 +922,7 @@ void window::handle_commit()
         if (must_place && !isInitialPositionSet()) {
             must_place = false;
             auto const area = workspace()->clientArea(
-                PlacementArea, kwinApp()->get_base().screens.current(), desktop());
+                PlacementArea, get_current_output(*workspace()), desktop());
             placeIn(area);
         }
     } else if (layer_surface) {

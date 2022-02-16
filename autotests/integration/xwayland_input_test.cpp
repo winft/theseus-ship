@@ -64,7 +64,6 @@ void XWaylandInputTest::initTestCase()
 
 void XWaylandInputTest::init()
 {
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
     QVERIFY(static_cast<win::wayland::space*>(workspace())->m_windows.empty());
 }

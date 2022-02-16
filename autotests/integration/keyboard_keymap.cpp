@@ -112,7 +112,6 @@ std::string create_keymap()
 
 void keyboard_keymap_test::init()
 {
-    Test::app()->base.screens.setCurrent(0);
     kwinApp()->input->cursor->set_pos(QPoint(512, 512));
 }
 

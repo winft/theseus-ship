@@ -1182,7 +1182,7 @@ void space::addInternalClient(win::internal_window* client)
 
     if (client->placeable()) {
         auto const area
-            = clientArea(PlacementArea, kwinApp()->get_base().screens.current(), client->desktop());
+            = clientArea(PlacementArea, get_current_output(*workspace()), client->desktop());
         win::place(client, area);
     }
 
@@ -1436,7 +1436,7 @@ QRect space::clientArea(clientAreaOption opt, int screen, int desktop) const
     if (desktop == NETWinInfo::OnAllDesktops || desktop == 0)
         desktop = win::virtual_desktop_manager::self()->current();
     if (screen == -1) {
-        screen = screens.current();
+        screen = get_current_output(*workspace());
     }
     const QSize displaySize = screens.displaySize();
 
@@ -2646,7 +2646,7 @@ void space::request_focus(Toplevel* window, bool raise, bool force_focus)
     }
 
     if (!win::on_active_screen(window)) {
-        kwinApp()->get_base().screens.setCurrent(window->screen());
+        base::set_current_output(kwinApp()->get_base(), window->screen());
     }
 }
 
@@ -2723,8 +2723,7 @@ bool space::activateNextClient(Toplevel* window)
         get_focus = win::find_desktop(this, true, desktop); // to not break the state
 
     if (!get_focus && kwinApp()->options->isNextFocusPrefersMouse()) {
-        get_focus
-            = clientUnderMouse(window ? window->screen() : kwinApp()->get_base().screens.current());
+        get_focus = clientUnderMouse(window ? window->screen() : get_current_output(*workspace()));
         if (get_focus && (get_focus == window || win::is_desktop(get_focus))) {
             // should rather not happen, but it cannot get the focus. rest of usability is tested
             // above
@@ -2764,8 +2763,8 @@ bool space::activateNextClient(Toplevel* window)
 
 void space::setCurrentScreen(int new_screen)
 {
-    auto& screens = kwinApp()->get_base().screens;
-    auto const screens_count = kwinApp()->get_base().get_outputs().size();
+    auto& base = kwinApp()->get_base();
+    auto const screens_count = base.get_outputs().size();
 
     if (new_screen < 0 || new_screen >= static_cast<int>(screens_count)) {
         return;
@@ -2773,16 +2772,20 @@ void space::setCurrentScreen(int new_screen)
     if (!kwinApp()->options->focusPolicyIsReasonable()) {
         return;
     }
+
     closeActivePopup();
+
     const int desktop = win::virtual_desktop_manager::self()->current();
     auto get_focus = win::focus_chain::self()->getForActivation(desktop, new_screen);
     if (get_focus == nullptr) {
         get_focus = win::find_desktop(this, true, desktop);
     }
+
     if (get_focus != nullptr && get_focus != mostRecentlyActivatedClient()) {
         request_focus(get_focus);
     }
-    screens.setCurrent(new_screen);
+
+    base::set_current_output(base, new_screen);
 }
 
 void space::gotFocusIn(Toplevel const* window)
@@ -3484,9 +3487,8 @@ void space::slotSwitchToNextScreen()
     if (screenSwitchImpossible()) {
         return;
     }
-    auto const& screens = kwinApp()->get_base().screens;
     auto const screens_count = static_cast<int>(kwinApp()->get_base().get_outputs().size());
-    setCurrentScreen((screens.current() + 1) % screens_count);
+    setCurrentScreen((get_current_output(*workspace()) + 1) % screens_count);
 }
 
 void space::slotSwitchToPrevScreen()
@@ -3494,9 +3496,8 @@ void space::slotSwitchToPrevScreen()
     if (screenSwitchImpossible()) {
         return;
     }
-    auto const& screens = kwinApp()->get_base().screens;
     auto const screens_count = static_cast<int>(kwinApp()->get_base().get_outputs().size());
-    setCurrentScreen((screens.current() + screens_count - 1) % screens_count);
+    setCurrentScreen((get_current_output(*workspace()) + screens_count - 1) % screens_count);
 }
 
 void space::slotWindowToScreen()

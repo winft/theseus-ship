@@ -1309,7 +1309,7 @@ void effects_handler_impl::addRepaint(int x, int y, int w, int h)
 
 int effects_handler_impl::activeScreen() const
 {
-    return kwinApp()->get_base().screens.current();
+    return win::get_current_output(*workspace());
 }
 
 int effects_handler_impl::numScreens() const

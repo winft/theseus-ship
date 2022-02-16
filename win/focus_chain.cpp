@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "focus_chain.h"
 
-#include "screens.h"
 #include "toplevel.h"
 
 #include "win/controlling.h"
@@ -64,7 +63,7 @@ void focus_chain::resize(uint previousSize, uint newSize)
 
 Toplevel* focus_chain::getForActivation(uint desktop) const
 {
-    return getForActivation(desktop, kwinApp()->get_base().screens.current());
+    return getForActivation(desktop, get_current_output(*workspace()));
 }
 
 Toplevel* focus_chain::getForActivation(uint desktop, int screen) const
@@ -211,8 +210,7 @@ bool focus_chain::isUsableFocusCandidate(Toplevel* window, Toplevel* prev) const
 {
     return window != prev && window->isShown() && window->isOnCurrentDesktop()
         && (!m_separateScreenFocus
-            || win::on_screen(window,
-                              prev ? prev->screen() : kwinApp()->get_base().screens.current()));
+            || win::on_screen(window, prev ? prev->screen() : get_current_output(*workspace())));
 }
 
 Toplevel* focus_chain::nextForDesktop(Toplevel* reference, uint desktop) const

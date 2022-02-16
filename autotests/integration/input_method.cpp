@@ -105,8 +105,6 @@ void input_method_test::init()
     QVERIFY(input_method_spy.isValid());
     QVERIFY(input_method_spy.wait());
     QVERIFY(waylandServer()->seat()->get_input_method_v2());
-
-    Test::app()->base.screens.setCurrent(0);
 }
 
 void input_method_test::cleanup()

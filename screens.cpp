@@ -32,8 +32,7 @@ namespace KWin
 {
 
 Screens::Screens(base::platform const& base)
-    : m_current(0)
-    , m_maxScale(1.0)
+    : m_maxScale(1.0)
     , base{base}
 {
     init();
@@ -117,43 +116,6 @@ void Screens::updateSize()
         m_maxScale = maxScale;
         Q_EMIT maxScaleChanged();
     }
-}
-
-void Screens::setCurrent(int current)
-{
-    if (m_current == current) {
-        return;
-    }
-    m_current = current;
-    Q_EMIT currentChanged();
-}
-
-void Screens::setCurrent(const QPoint &pos)
-{
-    setCurrent(base::get_nearest_output(kwinApp()->get_base().get_outputs(), pos));
-}
-
-void Screens::setCurrent(Toplevel const* window)
-{
-    if (!window->control->active()) {
-        return;
-    }
-    if (!win::on_screen(window, m_current)) {
-        setCurrent(window->screen());
-    }
-}
-
-int Screens::current() const
-{
-    if (kwinApp()->options->get_current_output_follows_mouse()) {
-        return base::get_nearest_output(kwinApp()->get_base().get_outputs(),
-                                        input::get_cursor()->pos());
-    }
-    auto client = workspace()->activeClient();
-    if (client && !win::on_screen(client, m_current)) {
-        return client->screen();
-    }
-    return m_current;
 }
 
 int Screens::intersecting(const QRect &r) const

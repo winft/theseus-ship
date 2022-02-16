@@ -13,6 +13,7 @@
 #include "types.h"
 #include "virtual_desktops.h"
 
+#include "base/output_helpers.h"
 #include "main.h"
 #include "screens.h"
 
@@ -27,10 +28,37 @@ bool on_screen(Win* win, int screen)
     return kwinApp()->get_base().screens.geometry(screen).intersects(win->frameGeometry());
 }
 
+template<typename Space>
+int get_current_output(Space const& space)
+{
+    auto const& base = kwinApp()->get_base();
+
+    if (kwinApp()->options->get_current_output_follows_mouse()) {
+        return base::get_nearest_output(base.get_outputs(), input::get_cursor()->pos());
+    }
+
+    auto const cur = base.topology.current;
+    if (auto client = space.activeClient(); client && !win::on_screen(client, cur)) {
+        return client->screen();
+    }
+    return cur;
+}
+
+template<typename Base, typename Win>
+void set_current_output_by_window(Base& base, Win const& window)
+{
+    if (!window.control->active()) {
+        return;
+    }
+    if (!win::on_screen(&window, base.topology.current)) {
+        base::set_current_output(base, window.screen());
+    }
+}
+
 template<typename Win>
 bool on_active_screen(Win* win)
 {
-    return on_screen(win, kwinApp()->get_base().screens.current());
+    return on_screen(win, get_current_output(*workspace()));
 }
 
 template<typename Win>
@@ -39,7 +67,7 @@ void send_to_screen(Win* win, int new_screen)
     new_screen = win->control->rules().checkScreen(new_screen);
 
     if (win->control->active()) {
-        kwinApp()->get_base().screens.setCurrent(new_screen);
+        set_current_output(kwinApp()->get_base(), new_screen);
         // might impact the layer of a fullscreen window
         for (auto cc : workspace()->allClientList()) {
             if (cc->control->fullscreen() && cc->screen() == new_screen) {

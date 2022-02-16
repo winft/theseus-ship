@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "win/move.h"
 #include "win/screen.h"
-#include "win/space.h"
+#include "win/wayland/space.h"
 #include "win/x11/window.h"
 
 #include <KDecoration2/DecoratedClient>
@@ -123,7 +123,7 @@ void QuickTilingTest::init()
     m_connection = Test::get_client().connection;
     m_compositor = Test::get_client().interfaces.compositor.get();
 
-    Test::app()->base.screens.setCurrent(0);
+    base::set_current_output(Test::app()->base, 0);
 }
 
 void QuickTilingTest::cleanup()

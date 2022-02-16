@@ -40,4 +40,21 @@ size_t get_nearest_output(std::vector<Output*> const& outputs, QPoint const& pos
     return best_output;
 }
 
+template<typename Base>
+void set_current_output(Base& base, int output)
+{
+    if (base.topology.current == output) {
+        return;
+    }
+    auto old_topo = base.topology;
+    base.topology.current = output;
+    Q_EMIT base.topology_changed(old_topo, base.topology);
+}
+
+template<typename Base>
+void set_current_output_by_position(Base& base, QPoint const& pos)
+{
+    set_current_output(base, get_nearest_output(base.get_outputs(), pos));
+}
+
 }

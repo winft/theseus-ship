@@ -519,7 +519,6 @@ private Q_SLOTS:
     void slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop);
 
 Q_SIGNALS:
-    // Signals required for the scripting interface
     void desktopPresenceChanged(KWin::Toplevel*, int);
     void currentDesktopChanged(int, KWin::Toplevel*);
     void clientAdded(KWin::win::x11::window*);

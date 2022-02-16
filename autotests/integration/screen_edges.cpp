@@ -85,8 +85,6 @@ void TestScreenEdges::init()
 {
     Test::setup_wayland_connection();
     m_compositor = Test::get_client().interfaces.compositor.get();
-
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

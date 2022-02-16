@@ -184,7 +184,6 @@ void PointerInputTest::init()
     m_compositor = Test::get_client().interfaces.compositor.get();
     m_seat = Test::get_client().interfaces.seat.get();
 
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
