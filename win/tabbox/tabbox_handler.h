@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef TABBOXHANDLER_H
 #define TABBOXHANDLER_H
 
-#include "tabboxconfig.h"
+#include "tabbox_config.h"
 
 #include <QModelIndex>
 #include <QPixmap>

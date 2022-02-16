@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #ifndef CLIENTMODEL_H
 #define CLIENTMODEL_H
-#include "tabboxhandler.h"
+#include "tabbox_handler.h"
 
 #include <QModelIndex>
 /**

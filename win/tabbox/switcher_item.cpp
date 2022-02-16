@@ -17,13 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "switcheritem.h"
+#include "switcher_item.h"
 
 #include "base/platform.h"
 #include "main.h"
 #include "render/compositor.h"
 #include "screens.h"
-#include "tabboxhandler.h"
+#include "tabbox_handler.h"
 // Qt
 #include <QAbstractItemModel>
 

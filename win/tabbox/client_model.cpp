@@ -18,10 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 // own
-#include "clientmodel.h"
+#include "client_model.h"
 // tabbox
-#include "tabboxconfig.h"
-#include "tabboxhandler.h"
+#include "tabbox_config.h"
+#include "tabbox_handler.h"
 // Qt
 #include <QIcon>
 #include <QUuid>

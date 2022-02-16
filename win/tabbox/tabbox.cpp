@@ -22,11 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define QT_CLEAN_NAMESPACE
 #include "tabbox.h"
 
-#include "clientmodel.h"
-#include "desktopchain.h"
-#include "desktopmodel.h"
+#include "client_model.h"
+#include "desktop_chain.h"
+#include "desktop_model.h"
+#include "tabbox_config.h"
 #include "tabbox_logging.h"
-#include "tabboxconfig.h"
 #include "x11_filter.h"
 
 #include "base/platform.h"

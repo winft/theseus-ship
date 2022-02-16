@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWidget>
 #include <QStandardItemModel>
 
-#include "win/tabbox/tabboxconfig.h"
+#include "win/tabbox/tabbox_config.h"
 
 class KShortcutsEditor;
 class KActionCollection;

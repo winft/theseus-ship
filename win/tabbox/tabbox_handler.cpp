@@ -17,20 +17,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "tabboxhandler.h"
+#include "tabbox_handler.h"
 
 #include "config-kwin.h"
 
-#include "clientmodel.h"
-#include "desktopmodel.h"
-#include "tabboxconfig.h"
+#include "client_model.h"
+#include "desktop_model.h"
+#include "tabbox_config.h"
 
 #include "base/x11/xcb/helpers.h"
 #include "kwinglobals.h"
 #include "main.h"
 #include "render/thumbnail_item.h"
 #include "scripting/platform.h"
-#include "switcheritem.h"
+#include "switcher_item.h"
 #include "tabbox_logging.h"
 #include "win/space.h"
 

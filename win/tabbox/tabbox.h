@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_TABBOX_H
 #define KWIN_TABBOX_H
 
-#include "tabboxhandler.h"
+#include "tabbox_handler.h"
 
 #include "kwin_export.h"
 #include "kwinglobals.h"

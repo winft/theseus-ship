@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
-#include "win/tabbox/tabboxconfig.h"
+#include "win/tabbox/tabbox_config.h"
 
 #include <kcmodule.h>
 #include <ksharedconfig.h>
