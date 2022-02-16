@@ -20,6 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#define private public
+#include "base/options.h"
+#undef private
+
 #include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "screens.h"
@@ -44,7 +48,6 @@ private Q_SLOTS:
     void init();
     void cleanup();
 
-    void testCurrentFollowsMouse();
     void testReconfigure_data();
     void testReconfigure();
     void testSize_data();
@@ -88,43 +91,23 @@ void TestScreens::cleanup()
     Test::destroy_wayland_connection();
 }
 
-void TestScreens::testCurrentFollowsMouse()
-{
-    auto& screens = Test::app()->base.screens;
-    QVERIFY(!screens.m_currentFollowsMouse);
-    screens.m_currentFollowsMouse = true;
-    QVERIFY(screens.m_currentFollowsMouse);
-    // setting to same should not do anything
-    screens.m_currentFollowsMouse = true;
-    QVERIFY(screens.m_currentFollowsMouse);
-
-    // setting back to other value
-    screens.m_currentFollowsMouse = false;
-    QVERIFY(!screens.m_currentFollowsMouse);
-    // setting to same should not do anything
-    screens.m_currentFollowsMouse = false;
-    QVERIFY(!screens.m_currentFollowsMouse);
-}
-
 void TestScreens::testReconfigure_data()
 {
     QTest::addColumn<QString>("focusPolicy");
     QTest::addColumn<bool>("expectedDefault");
-    QTest::addColumn<bool>("setting");
 
-    QTest::newRow("ClickToFocus") << QStringLiteral("ClickToFocus") << false << true;
-    QTest::newRow("FocusFollowsMouse") << QStringLiteral("FocusFollowsMouse") << true << false;
-    QTest::newRow("FocusUnderMouse") << QStringLiteral("FocusUnderMouse") << false << false;
-    QTest::newRow("FocusStrictlyUnderMouse")
-        << QStringLiteral("FocusStrictlyUnderMouse") << false << false;
+    QTest::newRow("ClickToFocus") << QStringLiteral("ClickToFocus") << false;
+    QTest::newRow("FocusFollowsMouse") << QStringLiteral("FocusFollowsMouse") << true;
+    QTest::newRow("FocusUnderMouse") << QStringLiteral("FocusUnderMouse") << true;
+    QTest::newRow("FocusStrictlyUnderMouse") << QStringLiteral("FocusStrictlyUnderMouse") << true;
 }
 
 void TestScreens::testReconfigure()
 {
-    auto& screens = Test::app()->base.screens;
-    screens.reconfigure();
+    auto& options = Test::app()->options;
+    options->loadConfig();
 
-    QTEST(screens.m_currentFollowsMouse, "expectedDefault");
+    QCOMPARE(options->get_current_output_follows_mouse(), false);
 
     QFETCH(QString, focusPolicy);
 
@@ -133,16 +116,23 @@ void TestScreens::testReconfigure()
     config->group("Windows").sync();
     config->sync();
 
-    screens.setConfig(config);
-    screens.reconfigure();
+    auto original_config = Test::app()->config();
+    Test::app()->setConfig(config);
+    options = std::make_unique<base::options>();
+    options->loadConfig();
 
-    QTEST(screens.m_currentFollowsMouse, "expectedDefault");
+    QFETCH(bool, expectedDefault);
+    QCOMPARE(options->get_current_output_follows_mouse(), expectedDefault);
 
-    QFETCH(bool, setting);
-    config->group("Windows").writeEntry("ActiveMouseScreen", setting);
+    config->group("Windows").writeEntry("ActiveMouseScreen", !expectedDefault);
     config->sync();
-    screens.reconfigure();
-    QCOMPARE(screens.m_currentFollowsMouse, setting);
+    options->updateSettings();
+    QCOMPARE(options->get_current_output_follows_mouse(), !expectedDefault);
+
+    Test::app()->setConfig(original_config);
+    options = std::make_unique<base::options>();
+    options->loadConfig();
+    QCOMPARE(options->get_current_output_follows_mouse(), false);
 }
 
 auto to_vector(QList<QRect> const& list)
@@ -365,7 +355,10 @@ void TestScreens::testCurrentWithFollowsMouse()
     auto& screens = Test::app()->base.screens;
     QSignalSpy changedSpy(&screens, &KWin::Screens::changed);
     QVERIFY(changedSpy.isValid());
-    screens.m_currentFollowsMouse = true;
+
+    auto& options = Test::app()->options;
+    options->current_output_follows_mouse = true;
+
     Test::pointer_motion_absolute(QPointF(0, 0), 1);
     QCOMPARE(screens.current(), 0);
 
@@ -403,7 +396,9 @@ void TestScreens::testCurrentPoint()
     auto& screens = Test::app()->base.screens;
     QSignalSpy changedSpy(&screens, &KWin::Screens::changed);
     QVERIFY(changedSpy.isValid());
-    screens.m_currentFollowsMouse = false;
+
+    auto& options = Test::app()->options;
+    options->current_output_follows_mouse = false;
 
     QFETCH(QList<QRect>, geometries);
     Test::app()->set_outputs(to_vector(geometries));

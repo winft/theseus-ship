@@ -165,6 +165,11 @@ void options::setFocusPolicy(FocusPolicy focusPolicy)
     }
 }
 
+bool options::get_current_output_follows_mouse() const
+{
+    return current_output_follows_mouse;
+}
+
 void options::setNextFocusPrefersMouse(bool nextFocusPrefersMouse)
 {
     if (m_nextFocusPrefersMouse == nextFocusPrefersMouse) {
@@ -763,6 +768,7 @@ void options::syncFromKcfgc()
     setFocusPolicy(m_settings->focusPolicy());
     setNextFocusPrefersMouse(m_settings->nextFocusPrefersMouse());
     setSeparateScreenFocus(m_settings->separateScreenFocus());
+    current_output_follows_mouse = m_settings->activeMouseScreen();
     setRollOverDesktops(m_settings->rollOverDesktops());
     setFocusStealingPreventionLevel(m_settings->focusStealingPreventionLevel());
 

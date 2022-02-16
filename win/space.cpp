@@ -150,15 +150,10 @@ space::space()
 
     initShortcuts();
 
-    KSharedConfigPtr config = kwinApp()->config();
     auto& screens = kwinApp()->get_base().screens;
 
     // get screen support
     connect(&screens, &Screens::changed, this, &space::desktopResized);
-    screens.setConfig(config);
-    screens.reconfigure();
-    connect(
-        kwinApp()->options.get(), &base::options::configChanged, &screens, &Screens::reconfigure);
 
     auto* focusChain = win::focus_chain::create(this);
     connect(this, &space::clientRemoved, focusChain, &win::focus_chain::remove);
@@ -189,6 +184,8 @@ space::space()
             &base::options::rollOverDesktopsChanged,
             vds,
             &win::virtual_desktop_manager::setNavigationWrappingAround);
+
+    auto config = kwinApp()->config();
     vds->setConfig(config);
 
     // positioning object needs to be created before the virtual desktops are loaded.
@@ -885,7 +882,7 @@ QString space::supportInformation() const
     support.append(QStringLiteral("Active screen follows mouse: "));
 
     auto const& screens = kwinApp()->get_base().screens;
-    if (screens.m_currentFollowsMouse)
+    if (kwinApp()->options->get_current_output_follows_mouse())
         support.append(QStringLiteral(" yes\n"));
     else
         support.append(QStringLiteral(" no\n"));
@@ -3452,7 +3449,7 @@ void space::slotWindowToDesktop(uint i)
 
 static bool screenSwitchImpossible()
 {
-    if (!kwinApp()->get_base().screens.m_currentFollowsMouse) {
+    if (!kwinApp()->options->get_current_output_follows_mouse()) {
         return false;
     }
     QStringList args;

@@ -22,10 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // KWin includes
 #include <kwinglobals.h>
-// KDE includes
-#include <KConfig>
-#include <KSharedConfig>
-// Qt includes
+
 #include <QObject>
 #include <QRect>
 #include <QVector>
@@ -45,10 +42,7 @@ class KWIN_EXPORT Screens : public QObject
 public:
     Screens(base::platform const& base);
     ~Screens() override;
-    /**
-     * @internal
-     */
-    void setConfig(KSharedConfig::Ptr config);
+
     int count() const;
     int current() const;
     void setCurrent(int current);
@@ -141,11 +135,6 @@ public:
 
     void updateAll();
 
-    bool m_currentFollowsMouse;
-
-public Q_SLOTS:
-    void reconfigure();
-
 Q_SIGNALS:
     void countChanged(int previousCount, int newCount);
     /**
@@ -181,7 +170,6 @@ private:
 
     int m_count;
     int m_current;
-    KSharedConfig::Ptr m_config;
     QSize m_boundingSize;
     qreal m_maxScale;
 

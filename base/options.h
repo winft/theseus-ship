@@ -298,6 +298,8 @@ public:
         return m_separateScreenFocus;
     }
 
+    bool get_current_output_follows_mouse() const;
+
     win::placement placement() const
     {
         return m_placement;
@@ -896,7 +898,10 @@ private:
     bool m_autoRaise;
     int m_autoRaiseInterval;
     int m_delayFocusInterval;
+
     bool m_separateScreenFocus;
+    bool current_output_follows_mouse{false};
+
     win::placement m_placement;
     int m_borderSnapZone;
     int m_windowSnapZone;

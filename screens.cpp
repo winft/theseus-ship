@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 
 #include "input/cursor.h"
-#include "options_settings.h"
 #include "win/control.h"
 #include "win/screen.h"
 #include "win/space.h"
@@ -35,7 +34,6 @@ namespace KWin
 Screens::Screens(base::platform const& base)
     : m_count(0)
     , m_current(0)
-    , m_currentFollowsMouse(false)
     , m_maxScale(1.0)
     , base{base}
 {
@@ -49,10 +47,6 @@ Screens::~Screens()
 void Screens::init()
 {
     connect(this, &Screens::sizeChanged, this, &Screens::geometryChanged);
-
-    base::Settings settings;
-    settings.setDefaults();
-    m_currentFollowsMouse = settings.activeMouseScreen();
 }
 
 QString Screens::name(int screen) const
@@ -98,16 +92,6 @@ qreal Screens::scale(int screen) const
         return output->scale();
     }
     return 1.0;
-}
-
-void Screens::reconfigure()
-{
-    if (!m_config) {
-        return;
-    }
-    base::Settings settings(m_config);
-    settings.read();
-    m_currentFollowsMouse = settings.activeMouseScreen();
 }
 
 void Screens::updateAll()
@@ -177,7 +161,7 @@ void Screens::setCurrent(Toplevel const* window)
 
 int Screens::current() const
 {
-    if (m_currentFollowsMouse) {
+    if (kwinApp()->options->get_current_output_follows_mouse()) {
         return number(input::get_cursor()->pos());
     }
     auto client = workspace()->activeClient();
@@ -224,11 +208,6 @@ Qt::ScreenOrientation Screens::orientation(int screen) const
     // TODO: needs implementing
     Q_UNUSED(screen)
     return Qt::PrimaryOrientation;
-}
-
-void Screens::setConfig(KSharedConfig::Ptr config)
-{
-    m_config = config;
 }
 
 int Screens::physicalDpiX(int screen) const
