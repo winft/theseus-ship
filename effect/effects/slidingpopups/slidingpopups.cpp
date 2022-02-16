@@ -13,8 +13,8 @@
 #include <kwineffects/paint_data.h>
 
 #include <KWindowEffects>
-#include <QApplication>
 #include <QFontMetrics>
+#include <QGuiApplication>
 
 namespace KWin
 {
@@ -103,7 +103,7 @@ void update_function(SlidingPopupsEffect& effect, KWin::effect::anim_update cons
 SlidingPopupsEffect::SlidingPopupsEffect()
 {
     initConfig<SlidingPopupsConfig>();
-    config.distance = QFontMetrics(qApp->font()).height() * 8;
+    config.distance = QFontMetrics(QGuiApplication::font()).height() * 8;
 
     connect(effects, &EffectsHandler::windowClosed, this, &SlidingPopupsEffect::slide_out);
     connect(
