@@ -43,7 +43,6 @@ public:
     Screens(base::platform const& base);
     ~Screens() override;
 
-    int count() const;
     int current() const;
     void setCurrent(int current);
     /**
@@ -175,12 +174,6 @@ private:
 
     base::platform const& base;
 };
-
-inline
-int Screens::count() const
-{
-    return m_count;
-}
 
 inline
 QSize Screens::size() const

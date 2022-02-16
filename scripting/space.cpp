@@ -196,7 +196,7 @@ int space::workspaceWidth() const
 
 int space::numScreens() const
 {
-    return kwinApp()->get_base().screens.count();
+    return kwinApp()->get_base().get_outputs().size();
 }
 
 int space::activeScreen() const

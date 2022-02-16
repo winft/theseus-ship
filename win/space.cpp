@@ -882,12 +882,14 @@ QString space::supportInformation() const
     support.append(QStringLiteral("Active screen follows mouse: "));
 
     auto const& screens = kwinApp()->get_base().screens;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+
     if (kwinApp()->options->get_current_output_follows_mouse())
         support.append(QStringLiteral(" yes\n"));
     else
         support.append(QStringLiteral(" no\n"));
-    support.append(QStringLiteral("Number of Screens: %1\n\n").arg(screens.count()));
-    for (int i = 0; i < screens.count(); ++i) {
+    support.append(QStringLiteral("Number of Screens: %1\n\n").arg(outputs.size()));
+    for (size_t i = 0; i < outputs.size(); ++i) {
         const QRect geo = screens.geometry(i);
         support.append(QStringLiteral("Screen %1:\n").arg(i));
         support.append(QStringLiteral("---------\n"));
@@ -1320,10 +1322,11 @@ void space::desktopResized()
 void space::saveOldScreenSizes()
 {
     auto const& screens = kwinApp()->get_base().screens;
+    auto const screens_count = kwinApp()->get_base().get_outputs().size();
 
     olddisplaysize = screens.displaySize();
     oldscreensizes.clear();
-    for (int i = 0; i < screens.count(); ++i) {
+    for (size_t i = 0; i < screens_count; ++i) {
         oldscreensizes.push_back(screens.geometry(i));
     }
 }
@@ -1342,7 +1345,7 @@ void space::saveOldScreenSizes()
 void space::updateClientArea(bool force)
 {
     auto const& screens = kwinApp()->get_base().screens;
-    auto const screens_count = screens.count();
+    int const screens_count = kwinApp()->get_base().get_outputs().size();
     auto const desktops_count = static_cast<int>(win::virtual_desktop_manager::self()->count());
 
     // To be determined are new:
@@ -2502,7 +2505,7 @@ void space::setActiveClient(Toplevel* window)
 
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer
         // status on > 1 screens
-        if (kwinApp()->get_base().screens.count() > 1) {
+        if (kwinApp()->get_base().get_outputs().size() > 1) {
             for (auto it = m_allClients.begin(); it != m_allClients.end(); ++it) {
                 if (*it != active_client && (*it)->layer() == win::layer::active
                     && (*it)->screen() == active_client->screen()) {
@@ -2759,8 +2762,9 @@ bool space::activateNextClient(Toplevel* window)
 void space::setCurrentScreen(int new_screen)
 {
     auto& screens = kwinApp()->get_base().screens;
+    auto const screens_count = kwinApp()->get_base().get_outputs().size();
 
-    if (new_screen < 0 || new_screen >= screens.count()) {
+    if (new_screen < 0 || new_screen >= static_cast<int>(screens_count)) {
         return;
     }
     if (!kwinApp()->options->focusPolicyIsReasonable()) {
@@ -3478,7 +3482,8 @@ void space::slotSwitchToNextScreen()
         return;
     }
     auto const& screens = kwinApp()->get_base().screens;
-    setCurrentScreen((screens.current() + 1) % screens.count());
+    auto const screens_count = static_cast<int>(kwinApp()->get_base().get_outputs().size());
+    setCurrentScreen((screens.current() + 1) % screens_count);
 }
 
 void space::slotSwitchToPrevScreen()
@@ -3487,16 +3492,15 @@ void space::slotSwitchToPrevScreen()
         return;
     }
     auto const& screens = kwinApp()->get_base().screens;
-    setCurrentScreen((screens.current() + screens.count() - 1) % screens.count());
+    auto const screens_count = static_cast<int>(kwinApp()->get_base().get_outputs().size());
+    setCurrentScreen((screens.current() + screens_count - 1) % screens_count);
 }
 
 void space::slotWindowToScreen()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        const int i = senderValue(sender());
-        if (i < 0)
-            return;
-        if (i >= 0 && i <= kwinApp()->get_base().screens.count()) {
+        int const i = senderValue(sender());
+        if (i >= 0 && i <= static_cast<int>(kwinApp()->get_base().get_outputs().size())) {
             sendClientToScreen(active_client, i);
         }
     }
@@ -3506,16 +3510,17 @@ void space::slotWindowToNextScreen()
 {
     if (USABLE_ACTIVE_CLIENT) {
         sendClientToScreen(active_client,
-                           (active_client->screen() + 1) % kwinApp()->get_base().screens.count());
+                           (active_client->screen() + 1)
+                               % kwinApp()->get_base().get_outputs().size());
     }
 }
 
 void space::slotWindowToPrevScreen()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        auto const& screens = kwinApp()->get_base().screens;
+        auto const screens_count = kwinApp()->get_base().get_outputs().size();
         sendClientToScreen(active_client,
-                           (active_client->screen() + screens.count() - 1) % screens.count());
+                           (active_client->screen() + screens_count - 1) % screens_count);
     }
 }
 

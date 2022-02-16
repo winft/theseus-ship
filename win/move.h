@@ -226,7 +226,7 @@ void check_workspace_position(Win* win,
         return;
     }
 
-    if (kwinApp()->get_base().screens.count() == 0) {
+    if (kwinApp()->get_base().get_outputs().empty()) {
         return;
     }
 
@@ -530,14 +530,15 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
     auto mode = quicktiles::none;
     bool inner_border = false;
     auto const& screens = kwinApp()->get_base().screens;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
 
-    for (int i = 0; i < screens.count(); ++i) {
+    for (size_t i = 0; i < outputs.size(); ++i) {
         if (!screens.geometry(i).contains(QPoint(xroot, yroot))) {
             continue;
         }
 
-        auto in_screen = [i, &screens](const QPoint& pt) {
-            for (int j = 0; j < screens.count(); ++j) {
+        auto in_screen = [i, &screens, &outputs](const QPoint& pt) {
+            for (size_t j = 0; j < outputs.size(); ++j) {
                 if (j != i && screens.geometry(j).contains(pt)) {
                     return true;
                 }
@@ -680,19 +681,20 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             // TODO(romangg): Once we use size_t consistently for screens identification replace
             // these (currentyl implicit casted) types with auto.
             auto const& screens = kwinApp()->get_base().screens;
+            auto const& outputs = kwinApp()->get_base().get_outputs();
             auto const old_screen = win->screen();
             auto screen = old_screen;
 
-            std::vector<QRect> screens_geos(screens.count());
-            screens_geos.resize(screens.count());
+            std::vector<QRect> screens_geos(outputs.size());
+            screens_geos.resize(outputs.size());
 
-            for (int i = 0; i < screens.count(); ++i) {
+            for (size_t i = 0; i < outputs.size(); ++i) {
                 // Geoemtry cache.
                 screens_geos[i] = screens.geometry(i);
             }
 
-            for (int i = 0; i < screens.count(); ++i) {
-                if (i == old_screen) {
+            for (size_t i = 0; i < outputs.size(); ++i) {
+                if (static_cast<int>(i) == old_screen) {
                     continue;
                 }
 
@@ -800,7 +802,7 @@ bool start_move_resize(Win* win)
         return false;
     }
     if (win->control->fullscreen()
-        && (kwinApp()->get_base().screens.count() < 2 || !win->isMovableAcrossScreens())) {
+        && (kwinApp()->get_base().get_outputs().size() < 2 || !win->isMovableAcrossScreens())) {
         return false;
     }
     if (!win->doStartMoveResize()) {
@@ -1139,7 +1141,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
                     // break by moving the window slightly downwards, but it won't stuck) see bug
                     // #274466 and bug #301805 for why we can't just match the titlearea against the
                     // screen
-                    if (kwinApp()->get_base().screens.count() > 1) { // optimization
+                    if (kwinApp()->get_base().get_outputs().size() > 1) {
                         // TODO: could be useful on partial screen struts (half-width panels etc.)
                         int newTitleTop = -1;
                         for (auto const& r : strut) {

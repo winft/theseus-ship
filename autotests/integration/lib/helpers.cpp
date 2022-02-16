@@ -62,7 +62,7 @@ void test_outputs_default()
 void test_outputs_geometries(std::vector<QRect> const& geometries)
 {
     auto& screens = Test::app()->base.screens;
-    QCOMPARE(screens.count(), geometries.size());
+    QCOMPARE(Test::app()->base.get_outputs().size(), geometries.size());
 
     size_t index = 0;
     for (auto geo : geometries) {

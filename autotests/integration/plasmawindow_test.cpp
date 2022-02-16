@@ -280,8 +280,9 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
 
     // The lock screen creates one client per screen.
-    QVERIFY(clientAddedSpy.count() == Test::app()->base.screens.count() || clientAddedSpy.wait());
-    QTRY_COMPARE(clientAddedSpy.count(), Test::app()->base.screens.count());
+    auto outputs_count = Test::app()->base.get_outputs().size();
+    QVERIFY(clientAddedSpy.count() == static_cast<int>(outputs_count) || clientAddedSpy.wait());
+    QTRY_COMPARE(clientAddedSpy.count(), outputs_count);
 
     QVERIFY(clientAddedSpy.first().first().value<win::wayland::window*>()->isLockScreen());
 

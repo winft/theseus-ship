@@ -144,10 +144,13 @@ void init_space(Space& space)
         rootInfo->setDesktopViewport(virtual_desktop_manager::self()->count(), *viewports);
         delete[] viewports;
         QRect geom;
+
         auto const& screens = kwinApp()->get_base().screens;
-        for (int i = 0; i < screens.count(); i++) {
+        auto const& outputs = kwinApp()->get_base().get_outputs();
+        for (size_t i = 0; i < outputs.size(); i++) {
             geom |= screens.geometry(i);
         }
+
         NETSize desktop_geometry;
         desktop_geometry.width = geom.width();
         desktop_geometry.height = geom.height();

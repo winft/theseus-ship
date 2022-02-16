@@ -907,7 +907,9 @@ void screen_edger::updateLayout()
 static bool isLeftScreen(QRect const& screen, QRect const& fullArea)
 {
     auto const& screens = kwinApp()->get_base().screens;
-    if (screens.count() == 1) {
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+
+    if (outputs.size() == 1) {
         return true;
     }
     if (screen.x() == fullArea.x()) {
@@ -916,7 +918,7 @@ static bool isLeftScreen(QRect const& screen, QRect const& fullArea)
 
     // If any other screen has a right edge against our left edge, then this screen is not a left
     // screen.
-    for (int i = 0; i < screens.count(); ++i) {
+    for (size_t i = 0; i < outputs.size(); ++i) {
         const QRect otherGeo = screens.geometry(i);
         if (otherGeo == screen) {
             // that's our screen to test
@@ -937,7 +939,9 @@ static bool isLeftScreen(QRect const& screen, QRect const& fullArea)
 static bool isRightScreen(QRect const& screen, QRect const& fullArea)
 {
     auto const& screens = kwinApp()->get_base().screens;
-    if (screens.count() == 1) {
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+
+    if (outputs.size() == 1) {
         return true;
     }
     if (screen.x() + screen.width() == fullArea.x() + fullArea.width()) {
@@ -946,7 +950,7 @@ static bool isRightScreen(QRect const& screen, QRect const& fullArea)
 
     // If any other screen has any left edge against any of our right edge, then this screen is not
     // a right screen.
-    for (int i = 0; i < screens.count(); ++i) {
+    for (size_t i = 0; i < outputs.size(); ++i) {
         const QRect otherGeo = screens.geometry(i);
         if (otherGeo == screen) {
             // that's our screen to test
@@ -967,7 +971,9 @@ static bool isRightScreen(QRect const& screen, QRect const& fullArea)
 static bool isTopScreen(QRect const& screen, QRect const& fullArea)
 {
     auto const& screens = kwinApp()->get_base().screens;
-    if (screens.count() == 1) {
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+
+    if (outputs.size() == 1) {
         return true;
     }
     if (screen.y() == fullArea.y()) {
@@ -976,7 +982,7 @@ static bool isTopScreen(QRect const& screen, QRect const& fullArea)
 
     // If any other screen has any bottom edge against any of our top edge, then this screen is not
     // a top screen.
-    for (int i = 0; i < screens.count(); ++i) {
+    for (size_t i = 0; i < outputs.size(); ++i) {
         const QRect otherGeo = screens.geometry(i);
         if (otherGeo == screen) {
             // that's our screen to test
@@ -997,7 +1003,9 @@ static bool isTopScreen(QRect const& screen, QRect const& fullArea)
 static bool isBottomScreen(QRect const& screen, QRect const& fullArea)
 {
     auto const& screens = kwinApp()->get_base().screens;
-    if (screens.count() == 1) {
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+
+    if (outputs.size() == 1) {
         return true;
     }
     if (screen.y() + screen.height() == fullArea.y() + fullArea.height()) {
@@ -1006,7 +1014,7 @@ static bool isBottomScreen(QRect const& screen, QRect const& fullArea)
 
     // If any other screen has any top edge against any of our bottom edge, then this screen is not
     // a bottom screen.
-    for (int i = 0; i < screens.count(); ++i) {
+    for (size_t i = 0; i < outputs.size(); ++i) {
         const QRect otherGeo = screens.geometry(i);
         if (otherGeo == screen) {
             // that's our screen to test
@@ -1028,11 +1036,13 @@ static bool isBottomScreen(QRect const& screen, QRect const& fullArea)
 void screen_edger::recreateEdges()
 {
     auto const& screens = kwinApp()->get_base().screens;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+
     auto oldEdges = edges;
     edges.clear();
     const QRect fullArea = screens.geometry();
     QRegion processedRegion;
-    for (int i = 0; i < screens.count(); ++i) {
+    for (size_t i = 0; i < outputs.size(); ++i) {
         const QRegion screen = QRegion(screens.geometry(i)).subtracted(processedRegion);
         processedRegion += screen;
         for (QRect const& screenPart : screen) {
@@ -1318,10 +1328,11 @@ void screen_edger::createEdgeForClient(Toplevel* window, ElectricBorder border)
     int height = 0;
 
     auto const& screens = kwinApp()->get_base().screens;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
     QRect const geo = window->frameGeometry();
     QRect const fullArea = space.clientArea(FullArea, 0, 1);
 
-    for (int i = 0; i < screens.count(); ++i) {
+    for (size_t i = 0; i < outputs.size(); ++i) {
         const QRect screen = screens.geometry(i);
         if (!screen.contains(geo)) {
             // ignoring Clients having a geometry overlapping with multiple screens

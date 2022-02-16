@@ -175,7 +175,7 @@ void X11ClientTest::testFullscreenLayerWithActiveWaylandWindow()
 {
     // this test verifies that an X11 fullscreen window does not stay in the active layer
     // when a Wayland window is active, see BUG: 375759
-    QCOMPARE(Test::app()->base.screens.count(), 1);
+    QCOMPARE(Test::app()->base.get_outputs().size(), 1);
 
     // first create an X11 window
     auto c = create_xcb_connection();

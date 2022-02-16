@@ -181,17 +181,19 @@ void TestScreens::testSize()
 void TestScreens::testCount()
 {
     auto& screens = Test::app()->base.screens;
+    auto const& base = Test::app()->base;
+
     QSignalSpy countChangedSpy(&screens, &KWin::Screens::countChanged);
     QVERIFY(countChangedSpy.isValid());
 
-    QCOMPARE(screens.count(), 1);
+    QCOMPARE(base.get_outputs().size(), 1);
 
     // change to two screens
     QList<QRect> geometries{{QRect{0, 0, 100, 200}, QRect{100, 0, 100, 200}}};
     Test::app()->set_outputs(to_vector(geometries));
 
     QCOMPARE(countChangedSpy.count(), 3);
-    QCOMPARE(screens.count(), 2);
+    QCOMPARE(base.get_outputs().size(), 2);
 
     countChangedSpy.clear();
 
@@ -202,7 +204,7 @@ void TestScreens::testCount()
     QCOMPARE(countChangedSpy.count(), 3);
     QCOMPARE(countChangedSpy.last().first().toInt(), 0);
     QCOMPARE(countChangedSpy.last().last().toInt(), 1);
-    QCOMPARE(screens.count(), 1);
+    QCOMPARE(base.get_outputs().size(), 1);
 
     // Setting the same geometries should emit the signal again.
     QSignalSpy changedSpy(&screens, &Screens::changed);
@@ -248,7 +250,7 @@ void TestScreens::testIntersecting()
     QCOMPARE(changedSpy.count(), geometries.size() + 2);
 
     QFETCH(QRect, testGeometry);
-    QCOMPARE(screens.count(), geometries.count());
+    QCOMPARE(Test::app()->base.get_outputs().size(), geometries.count());
     QTEST(screens.intersecting(testGeometry), "expectedCount");
 }
 

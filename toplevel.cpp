@@ -532,7 +532,7 @@ void Toplevel::checkScreen()
 {
     auto const& screens = kwinApp()->get_base().screens;
 
-    if (screens.count() == 1) {
+    if (kwinApp()->get_base().get_outputs().size() == 1) {
         if (m_screen != 0) {
             m_screen = 0;
             Q_EMIT screenChanged();

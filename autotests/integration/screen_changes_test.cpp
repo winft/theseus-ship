@@ -85,7 +85,7 @@ void ScreenChangesTest::testScreenAddRemove()
     auto xdgOutputManager = registry.createXdgOutputManager(xdgOMData.name, xdgOMData.version);
 
     // should be one output
-    QCOMPARE(Test::app()->base.screens.count(), 1);
+    QCOMPARE(Test::app()->base.get_outputs().size(), 1);
     QCOMPARE(outputAnnouncedSpy.count(), 1);
     const quint32 firstOutputId = outputAnnouncedSpy.first().first().value<quint32>();
     QVERIFY(firstOutputId != 0u);
@@ -98,7 +98,7 @@ void ScreenChangesTest::testScreenAddRemove()
     auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};
     Test::app()->set_outputs(geometries);
 
-    QCOMPARE(screensChangedSpy.count(), Test::app()->base.screens.count() + 2);
+    QCOMPARE(screensChangedSpy.count(), Test::app()->base.get_outputs().size() + 2);
     Test::test_outputs_geometries(geometries);
 
     // this should result in it getting announced, two new outputs are added...
@@ -163,7 +163,7 @@ void ScreenChangesTest::testScreenAddRemove()
     auto const geometries2 = std::vector<QRect>{{0, 0, 1280, 1024}};
     Test::app()->set_outputs(geometries2);
 
-    QCOMPARE(screensChangedSpy.count(), Test::app()->base.screens.count() + 3);
+    QCOMPARE(screensChangedSpy.count(), Test::app()->base.get_outputs().size() + 3);
     Test::test_outputs_geometries(geometries2);
 
     QVERIFY(outputAnnouncedSpy.count() > 0 || outputAnnouncedSpy.wait());

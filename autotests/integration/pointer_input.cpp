@@ -371,9 +371,10 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     QVERIFY(screensChangedSpy.isValid());
 
     // Now let's remove the screen containing the cursor.
-    Test::app()->set_outputs({{0, 0, 1280, 1024}});
+    auto geometries = std::vector<QRect>({{0, 0, 1280, 1024}});
+    Test::app()->set_outputs(geometries);
     QCOMPARE(screensChangedSpy.count(), 4);
-    QCOMPARE(Test::app()->base.screens.count(), 1);
+    Test::test_outputs_geometries(geometries);
 
     // This should have warped the cursor.
     QCOMPARE(input::get_cursor()->pos(), QPoint(639, 511));

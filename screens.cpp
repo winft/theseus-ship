@@ -105,7 +105,9 @@ void Screens::updateSize()
 {
     QRect bounding;
     qreal maxScale = 1.0;
-    for (int i = 0; i < count(); ++i) {
+    auto count = base.get_outputs().size();
+
+    for (size_t i = 0; i < count; ++i) {
         bounding = bounding.united(geometry(i));
         maxScale = qMax(maxScale, scale(i));
     }
@@ -174,7 +176,9 @@ int Screens::current() const
 int Screens::intersecting(const QRect &r) const
 {
     int cnt = 0;
-    for (int i = 0; i < count(); ++i) {
+    auto count = base.get_outputs().size();
+
+    for (size_t i = 0; i < count; ++i) {
         if (geometry(i).intersects(r)) {
             ++cnt;
         }

@@ -19,7 +19,7 @@ void update_space_areas(Window* win,
                         space_areas& areas)
 {
     auto const& screens = kwinApp()->get_base().screens;
-    auto const screens_count = screens.count();
+    auto const screens_count = kwinApp()->get_base().get_outputs().size();
     auto const desktops_count = static_cast<int>(virtual_desktop_manager::self()->count());
 
     // Assuming that only docks have "struts" and that all docks have a strut.
@@ -79,7 +79,7 @@ void update_space_areas(Window* win,
         for (int desktop = 1; desktop <= desktops_count; ++desktop) {
             areas.work[desktop] = areas.work[desktop].intersected(rect);
 
-            for (int screen = 0; screen < screens_count; ++screen) {
+            for (size_t screen = 0; screen < screens_count; ++screen) {
                 auto& screen_area = areas.screen[desktop][screen];
                 auto intersect = screens_geos[screen] - margins(screens_geos[screen]);
                 screen_area = screen_area.intersected(intersect);
@@ -91,7 +91,7 @@ void update_space_areas(Window* win,
     } else {
         areas.work[win->desktop()] = areas.work[win->desktop()].intersected(rect);
 
-        for (int screen = 0; screen < screens_count; screen++) {
+        for (size_t screen = 0; screen < screens_count; screen++) {
             areas.screen[win->desktop()][screen] = areas.screen[win->desktop()][screen].intersected(
                 screens_geos[screen] - margins(screens_geos[screen]));
         }

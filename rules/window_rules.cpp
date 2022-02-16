@@ -9,7 +9,6 @@
 #include <kconfig.h>
 
 #ifndef KCMRULES
-#include "screens.h"
 #include "win/controlling.h"
 #include "win/input.h"
 #include "win/meta.h"
@@ -260,8 +259,9 @@ int WindowRules::checkScreen(int screen, bool init) const
         if ((*it)->applyScreen(ret, init))
             break;
     }
-    if (ret >= kwinApp()->get_base().screens.count())
+    if (ret >= static_cast<int>(kwinApp()->get_base().get_outputs().size())) {
         ret = screen;
+    }
     return ret;
 }
 

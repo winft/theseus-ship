@@ -566,7 +566,7 @@ public:
 
     void sendClientToScreen(KWin::scripting::window* client, int screen) override
     {
-        if (screen < 0 || screen >= kwinApp()->get_base().screens.count()) {
+        if (screen < 0 || screen >= static_cast<int>(kwinApp()->get_base().get_outputs().size())) {
             return;
         }
         ref_space->sendClientToScreen(client->client(), screen);

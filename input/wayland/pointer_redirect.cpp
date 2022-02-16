@@ -39,8 +39,9 @@ namespace KWin::input::wayland
 static bool screenContainsPos(QPointF const& pos)
 {
     auto const& screens = kwinApp()->get_base().screens;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
 
-    for (int i = 0; i < screens.count(); ++i) {
+    for (size_t i = 0; i < outputs.size(); ++i) {
         if (screens.geometry(i).contains(pos.toPoint())) {
             return true;
         }

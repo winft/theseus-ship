@@ -954,7 +954,7 @@ inline QRect fullscreen_monitors_area(NETFullscreenMonitors requestedTopology)
 template<typename Win>
 void update_fullscreen_monitors(Win* win, NETFullscreenMonitors topology)
 {
-    auto count = kwinApp()->get_base().screens.count();
+    auto count = static_cast<int>(kwinApp()->get_base().get_outputs().size());
 
     if (topology.top >= count || topology.bottom >= count || topology.left >= count
         || topology.right >= count) {
@@ -1132,9 +1132,10 @@ bool has_offscreen_xinerama_strut(Win const* win)
     region += get_strut_rect(win, strut_area::left);
 
     auto const& screens = kwinApp()->get_base().screens;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
 
     // Remove all visible areas so that only the invisible remain
-    for (int i = 0; i < screens.count(); i++) {
+    for (size_t i = 0; i < outputs.size(); i++) {
         region -= screens.geometry(i);
     }
 

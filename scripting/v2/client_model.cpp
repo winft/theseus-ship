@@ -295,8 +295,8 @@ abstract_level* abstract_level::create(const QList<client_model::LevelRestrictio
         return nullptr;
     }
     case client_model::ScreenRestriction: {
-        auto screen_count = kwinApp()->get_base().screens.count();
-        for (int i = 0; i < screen_count; ++i) {
+        auto screen_count = kwinApp()->get_base().get_outputs().size();
+        for (size_t i = 0; i < screen_count; ++i) {
             auto childLevel = create(childRestrictions, childrenRestrictions, model, currentLevel);
             if (!childLevel) {
                 continue;

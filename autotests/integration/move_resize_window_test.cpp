@@ -95,8 +95,7 @@ void MoveResizeWindowTest::initTestCase()
 
     Test::app()->start();
     QVERIFY(startup_spy.wait());
-    QCOMPARE(Test::app()->base.screens.count(), 1);
-    QCOMPARE(Test::app()->base.screens.geometry(0), QRect(0, 0, 1280, 1024));
+    Test::test_outputs_geometries({{0, 0, 1280, 1024}});
 }
 
 void MoveResizeWindowTest::init()

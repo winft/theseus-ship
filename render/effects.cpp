@@ -1312,7 +1312,7 @@ int effects_handler_impl::activeScreen() const
 
 int effects_handler_impl::numScreens() const
 {
-    return kwinApp()->get_base().screens.count();
+    return kwinApp()->get_base().get_outputs().size();
 }
 
 int effects_handler_impl::screenNumber(const QPoint& pos) const

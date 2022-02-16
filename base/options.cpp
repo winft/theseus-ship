@@ -36,20 +36,22 @@ int currentRefreshRate()
 int options::currentRefreshRate()
 {
     int rate = -1;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+
     QString syncScreenName(QLatin1String("primary screen"));
     if (kwinApp()->options->refreshRate() > 0) { // use manually configured refresh rate
         rate = kwinApp()->options->refreshRate();
-    } else if (kwinApp()->get_base().screens.count() > 0) {
+    } else if (outputs.size() > 0) {
         // prefer the refreshrate calculated from the screens mode information
         // at least the nvidia driver reports 50Hz BS ... *again*!
         auto const& screens = kwinApp()->get_base().screens;
         int syncScreen = 0;
-        if (screens.count() > 1) {
+        if (outputs.size() > 1) {
             const QByteArray syncDisplayDevice(qgetenv("__GL_SYNC_DISPLAY_DEVICE"));
             // if __GL_SYNC_DISPLAY_DEVICE is exported, the GPU shall sync to that device
             // so we try to use its refresh rate
             if (!syncDisplayDevice.isEmpty()) {
-                for (int i = 0; i < screens.count(); ++i) {
+                for (size_t i = 0; i < outputs.size(); ++i) {
                     if (screens.name(i) == syncDisplayDevice) {
                         syncScreenName = screens.name(i);
                         syncScreen = i;

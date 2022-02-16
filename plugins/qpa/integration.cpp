@@ -147,11 +147,11 @@ QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext*
 
 void Integration::initScreens()
 {
-    auto const& screens = kwinApp()->get_base().screens;
+    auto const screens_count = kwinApp()->get_base().get_outputs().size();
     QVector<Screen*> newScreens;
 
-    newScreens.reserve(qMax(screens.count(), 1));
-    for (int i = 0; i < screens.count(); i++) {
+    newScreens.reserve(std::max<size_t>(screens_count, 1));
+    for (size_t i = 0; i < screens_count; i++) {
         auto screen = new Screen(i);
         QWindowSystemInterface::handleScreenAdded(screen);
         newScreens << screen;
