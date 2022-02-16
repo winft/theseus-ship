@@ -63,6 +63,9 @@ KWIN_EXPORT void setup_wayland_connection(global_selection globals = {});
  */
 KWIN_EXPORT void destroy_wayland_connection();
 
+KWIN_EXPORT void test_outputs_default();
+KWIN_EXPORT void test_outputs_geometries(std::vector<QRect> const& geometries);
+
 KWIN_EXPORT client& get_client();
 KWIN_EXPORT std::vector<client>& get_all_clients();
 

@@ -59,10 +59,7 @@ void layer_shell_test::initTestCase()
 
     auto geometries = std::vector<QRect>{{0, 0, 1000, 500}, {1000, 0, 1000, 500}};
     Test::app()->set_outputs(geometries);
-
-    QCOMPARE(Test::app()->base.screens.count(), geometries.size());
-    QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
-    QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
+    Test::test_outputs_geometries(geometries);
 }
 
 void layer_shell_test::init()

@@ -54,6 +54,23 @@ void destroy_wayland_connection()
     get_all_clients().clear();
 }
 
+void test_outputs_default()
+{
+    test_outputs_geometries({QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)});
+}
+
+void test_outputs_geometries(std::vector<QRect> const& geometries)
+{
+    auto& screens = Test::app()->base.screens;
+    QCOMPARE(screens.count(), geometries.size());
+
+    size_t index = 0;
+    for (auto geo : geometries) {
+        QCOMPARE(screens.geometry(index), geo);
+        index++;
+    }
+}
+
 client& get_client()
 {
     return get_all_clients().front();

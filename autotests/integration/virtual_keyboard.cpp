@@ -78,9 +78,7 @@ void virtual_keyboard_test::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QCOMPARE(Test::app()->base.screens.count(), 2);
-    QCOMPARE(Test::app()->base.screens.geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(Test::app()->base.screens.geometry(1), QRect(1280, 0, 1280, 1024));
+    Test::test_outputs_default();
 }
 
 std::unique_ptr<Wrapland::Client::virtual_keyboard_v1> create_virtual_keyboard(Test::client& client)

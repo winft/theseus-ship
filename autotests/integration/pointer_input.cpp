@@ -173,9 +173,7 @@ void PointerInputTest::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.wait());
-    QCOMPARE(Test::app()->base.screens.count(), 2);
-    QCOMPARE(Test::app()->base.screens.geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(Test::app()->base.screens.geometry(1), QRect(1280, 0, 1280, 1024));
+    Test::test_outputs_default();
 }
 
 void PointerInputTest::init()
@@ -1602,12 +1600,7 @@ void PointerInputTest::testConfineToScreenGeometry()
     auto const geometries = std::vector<QRect>{
         {0, 0, 1280, 1024}, {1280, 0, 1280, 1024}, {2560, 0, 1280, 1024}, {1280, 1024, 1280, 1024}};
     Test::app()->set_outputs(geometries);
-
-    QCOMPARE(Test::app()->base.screens.count(), geometries.size());
-    QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
-    QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
-    QCOMPARE(Test::app()->base.screens.geometry(2), geometries.at(2));
-    QCOMPARE(Test::app()->base.screens.geometry(3), geometries.at(3));
+    Test::test_outputs_geometries(geometries);
 
     // move pointer to initial position
     QFETCH(QPoint, startPos);
