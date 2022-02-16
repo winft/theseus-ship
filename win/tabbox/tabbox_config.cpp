@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-namespace TabBox
+namespace win
 {
 class TabBoxConfigPrivate
 {
@@ -68,7 +68,7 @@ TabBoxConfig::~TabBoxConfig()
     delete d;
 }
 
-TabBoxConfig& TabBoxConfig::operator=(const KWin::TabBox::TabBoxConfig& object)
+TabBoxConfig& TabBoxConfig::operator=(const KWin::win::TabBoxConfig& object)
 {
     d->show_tabbox = object.is_show_tabbox();
     d->highlight_windows = object.is_highlight_windows();
@@ -194,5 +194,5 @@ void TabBoxConfig::set_layout_name(const QString& name)
     d->layout_name = name;
 }
 
-} // namespace TabBox
+} // namespace win
 } // namespace KWin

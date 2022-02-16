@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-namespace TabBox
+namespace win
 {
 
 DesktopModel::DesktopModel(QObject* parent)
@@ -184,5 +184,5 @@ void DesktopModel::create_desktop_list()
     endResetModel();
 }
 
-} // namespace Tabbox
+} // namespace win
 } // namespace KWin

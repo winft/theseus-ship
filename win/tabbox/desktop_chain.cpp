@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-namespace TabBox
+namespace win
 {
 
 DesktopChain::DesktopChain(uint initialSize)
@@ -138,5 +138,5 @@ QHash<QString, DesktopChain>::Iterator DesktopChainManager::add_new_chain(const 
     return m_chains.insert(identifier, DesktopChain(m_max_chain_size));
 }
 
-} // namespace TabBox
+} // namespace win
 } // namespace KWin

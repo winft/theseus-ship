@@ -52,7 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-namespace TabBox
+namespace win
 {
 
 class TabBoxHandlerPrivate
@@ -364,7 +364,7 @@ void TabBoxHandlerPrivate::show()
 TabBoxHandler::TabBoxHandler(QObject* parent)
     : QObject(parent)
 {
-    KWin::TabBox::tabBox = this;
+    KWin::win::tabBox = this;
     d = new TabBoxHandlerPrivate(this);
 }
 
@@ -373,7 +373,7 @@ TabBoxHandler::~TabBoxHandler()
     delete d;
 }
 
-const KWin::TabBox::TabBoxConfig& TabBoxHandler::config() const
+const KWin::win::TabBoxConfig& TabBoxHandler::config() const
 {
     return d->config;
 }
@@ -546,7 +546,7 @@ bool TabBoxHandler::contains_pos(const QPoint& pos) const
     return false;
 }
 
-QModelIndex TabBoxHandler::index(TabBox::TabBoxClient* client) const
+QModelIndex TabBoxHandler::index(win::TabBoxClient* client) const
 {
     return d->client_model()->index(client);
 }
@@ -654,5 +654,5 @@ TabBoxClient::~TabBoxClient()
 {
 }
 
-} // namespace TabBox
+} // namespace win
 } // namespace KWin

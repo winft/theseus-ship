@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-namespace TabBox
+namespace win
 {
 
 ClientModel::ClientModel(QObject* parent)
@@ -281,5 +281,5 @@ void ClientModel::activate(int i)
     tabBox->activate_and_close();
 }
 
-} // namespace Tabbox
+} // namespace win
 } // namespace KWin

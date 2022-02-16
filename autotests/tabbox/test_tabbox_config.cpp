@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtTest>
 
 using namespace KWin;
-using namespace KWin::TabBox;
+using namespace KWin::win;
 
 class TestTabBoxConfig : public QObject
 {

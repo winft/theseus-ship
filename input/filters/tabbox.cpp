@@ -24,27 +24,27 @@ namespace KWin::input
 
 bool tabbox_filter::button(button_event const& event)
 {
-    if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->is_grabbed()) {
+    if (!win::TabBox::self() || !win::TabBox::self()->is_grabbed()) {
         return false;
     }
 
     auto qt_event = button_to_qt_event(event);
-    return TabBox::TabBox::self()->handle_mouse_event(&qt_event);
+    return win::TabBox::self()->handle_mouse_event(&qt_event);
 }
 
 bool tabbox_filter::motion(motion_event const& event)
 {
-    if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->is_grabbed()) {
+    if (!win::TabBox::self() || !win::TabBox::self()->is_grabbed()) {
         return false;
     }
 
     auto qt_event = motion_to_qt_event(event);
-    return TabBox::TabBox::self()->handle_mouse_event(&qt_event);
+    return win::TabBox::self()->handle_mouse_event(&qt_event);
 }
 
 bool tabbox_filter::key(key_event const& event)
 {
-    if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->is_grabbed()) {
+    if (!win::TabBox::self() || !win::TabBox::self()->is_grabbed()) {
         return false;
     }
 
@@ -59,35 +59,34 @@ bool tabbox_filter::key(key_event const& event)
 
     if (event.state == key_state::pressed) {
         auto mods = xkb::get_active_keyboard_modifiers(kwinApp()->input);
-        TabBox::TabBox::self()->key_press(
-            mods | key_to_qt_key(event.keycode, event.base.dev->xkb.get()));
+        win::TabBox::self()->key_press(mods
+                                       | key_to_qt_key(event.keycode, event.base.dev->xkb.get()));
     } else if (xkb::get_active_keyboard_modifiers_relevant_for_global_shortcuts(kwinApp()->input)
                == Qt::NoModifier) {
-        TabBox::TabBox::self()->modifiers_released();
+        win::TabBox::self()->modifiers_released();
     }
     return true;
 }
 
 bool tabbox_filter::key_repeat(key_event const& event)
 {
-    if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->is_grabbed()) {
+    if (!win::TabBox::self() || !win::TabBox::self()->is_grabbed()) {
         return false;
     }
 
     auto mods = xkb::get_active_keyboard_modifiers(kwinApp()->input);
-    TabBox::TabBox::self()->key_press(mods
-                                      | key_to_qt_key(event.keycode, event.base.dev->xkb.get()));
+    win::TabBox::self()->key_press(mods | key_to_qt_key(event.keycode, event.base.dev->xkb.get()));
     return true;
 }
 
 bool tabbox_filter::axis(axis_event const& event)
 {
-    if (!TabBox::TabBox::self() || !TabBox::TabBox::self()->is_grabbed()) {
+    if (!win::TabBox::self() || !win::TabBox::self()->is_grabbed()) {
         return false;
     }
 
     auto qt_event = axis_to_qt_event(event);
-    return TabBox::TabBox::self()->handle_wheel_event(&qt_event);
+    return win::TabBox::self()->handle_wheel_event(&qt_event);
 }
 
 }

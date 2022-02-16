@@ -37,18 +37,18 @@ void MockTabBoxHandler::grabbed_key_event(QKeyEvent* event) const
     Q_UNUSED(event)
 }
 
-std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::active_client() const
+std::weak_ptr<win::TabBoxClient> MockTabBoxHandler::active_client() const
 {
     return m_activeClient;
 }
 
-void MockTabBoxHandler::set_active_client(const std::weak_ptr<TabBox::TabBoxClient>& client)
+void MockTabBoxHandler::set_active_client(const std::weak_ptr<win::TabBoxClient>& client)
 {
     m_activeClient = client;
 }
 
-std::weak_ptr<TabBox::TabBoxClient>
-MockTabBoxHandler::client_to_add_to_list(TabBox::TabBoxClient* client, int desktop) const
+std::weak_ptr<win::TabBoxClient> MockTabBoxHandler::client_to_add_to_list(win::TabBoxClient* client,
+                                                                          int desktop) const
 {
     Q_UNUSED(desktop)
     for (auto const& window : m_windows) {
@@ -56,11 +56,11 @@ MockTabBoxHandler::client_to_add_to_list(TabBox::TabBoxClient* client, int deskt
             return window;
         }
     }
-    return std::weak_ptr<TabBox::TabBoxClient>();
+    return std::weak_ptr<win::TabBoxClient>();
 }
 
-std::weak_ptr<TabBox::TabBoxClient>
-MockTabBoxHandler::next_client_focus_chain(TabBox::TabBoxClient* client) const
+std::weak_ptr<win::TabBoxClient>
+MockTabBoxHandler::next_client_focus_chain(win::TabBoxClient* client) const
 {
     auto it = m_windows.cbegin();
     for (; it != m_windows.cend(); ++it) {
@@ -76,18 +76,18 @@ MockTabBoxHandler::next_client_focus_chain(TabBox::TabBoxClient* client) const
     if (!m_windows.empty()) {
         return m_windows.back();
     }
-    return std::weak_ptr<TabBox::TabBoxClient>();
+    return std::weak_ptr<win::TabBoxClient>();
 }
 
-std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::first_client_focus_chain() const
+std::weak_ptr<win::TabBoxClient> MockTabBoxHandler::first_client_focus_chain() const
 {
     if (m_windows.empty()) {
-        return std::weak_ptr<TabBox::TabBoxClient>();
+        return std::weak_ptr<win::TabBoxClient>();
     }
     return m_windows.front();
 }
 
-bool MockTabBoxHandler::is_in_focus_chain(TabBox::TabBoxClient* client) const
+bool MockTabBoxHandler::is_in_focus_chain(win::TabBoxClient* client) const
 {
     if (!client) {
         return false;
@@ -100,15 +100,15 @@ bool MockTabBoxHandler::is_in_focus_chain(TabBox::TabBoxClient* client) const
     return false;
 }
 
-std::weak_ptr<TabBox::TabBoxClient> MockTabBoxHandler::createMockWindow(const QString& caption)
+std::weak_ptr<win::TabBoxClient> MockTabBoxHandler::createMockWindow(const QString& caption)
 {
-    auto client = std::shared_ptr<TabBox::TabBoxClient>{new MockTabBoxClient(caption)};
+    auto client = std::shared_ptr<win::TabBoxClient>{new MockTabBoxClient(caption)};
     m_windows.push_back(client);
     m_activeClient = client;
-    return std::weak_ptr<TabBox::TabBoxClient>(client);
+    return std::weak_ptr<win::TabBoxClient>(client);
 }
 
-void MockTabBoxHandler::closeWindow(TabBox::TabBoxClient* client)
+void MockTabBoxHandler::closeWindow(win::TabBoxClient* client)
 {
     auto it = m_windows.begin();
     for (; it != m_windows.end(); ++it) {

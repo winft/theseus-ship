@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-using namespace TabBox;
+using namespace win;
 
 KWinTabBoxConfigForm::KWinTabBoxConfigForm(TabboxType type, QWidget *parent)
     : QWidget(parent)
@@ -160,38 +160,38 @@ QString KWinTabBoxConfigForm::layoutName() const
     return ui->effectCombo->currentData().toString();
 }
 
-void KWinTabBoxConfigForm::setFilterScreen(TabBox::TabBoxConfig::ClientMultiScreenMode mode)
+void KWinTabBoxConfigForm::setFilterScreen(win::TabBoxConfig::ClientMultiScreenMode mode)
 {
     ui->filterScreens->setChecked(mode != TabBoxConfig::IgnoreMultiScreen);
     ui->currentScreen->setChecked(mode == TabBoxConfig::OnlyCurrentScreenClients);
     ui->otherScreens->setChecked(mode == TabBoxConfig::ExcludeCurrentScreenClients);
 }
 
-void KWinTabBoxConfigForm::setFilterDesktop(TabBox::TabBoxConfig::ClientDesktopMode mode)
+void KWinTabBoxConfigForm::setFilterDesktop(win::TabBoxConfig::ClientDesktopMode mode)
 {
     ui->filterDesktops->setChecked(mode != TabBoxConfig::AllDesktopsClients);
     ui->currentDesktop->setChecked(mode == TabBoxConfig::OnlyCurrentDesktopClients);
     ui->otherDesktops->setChecked(mode == TabBoxConfig::ExcludeCurrentDesktopClients);
 }
 
-void KWinTabBoxConfigForm::setFilterMinimization(TabBox::TabBoxConfig::ClientMinimizedMode mode)
+void KWinTabBoxConfigForm::setFilterMinimization(win::TabBoxConfig::ClientMinimizedMode mode)
 {
     ui->filterMinimization->setChecked(mode != TabBoxConfig::IgnoreMinimizedStatus);
     ui->visibleWindows->setChecked(mode == TabBoxConfig::ExcludeMinimizedClients);
     ui->hiddenWindows->setChecked(mode == TabBoxConfig::OnlyMinimizedClients);
 }
 
-void KWinTabBoxConfigForm::setApplicationMode(TabBox::TabBoxConfig::ClientApplicationsMode mode)
+void KWinTabBoxConfigForm::setApplicationMode(win::TabBoxConfig::ClientApplicationsMode mode)
 {
     ui->oneAppWindow->setChecked(mode == TabBoxConfig::OneWindowPerApplication);
 }
 
-void KWinTabBoxConfigForm::setShowDesktopMode(TabBox::TabBoxConfig::ShowDesktopMode mode)
+void KWinTabBoxConfigForm::setShowDesktopMode(win::TabBoxConfig::ShowDesktopMode mode)
 {
     ui->showDesktop->setChecked(mode == TabBoxConfig::ShowDesktopClient);
 }
 
-void KWinTabBoxConfigForm::setSwitchingModeChanged(TabBox::TabBoxConfig::ClientSwitchingMode mode)
+void KWinTabBoxConfigForm::setSwitchingModeChanged(win::TabBoxConfig::ClientSwitchingMode mode)
 {
     ui->switchingModeCombo->setCurrentIndex(mode);
 }

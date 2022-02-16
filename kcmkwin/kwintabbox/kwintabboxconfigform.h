@@ -69,12 +69,12 @@ public:
     int switchingMode() const;
     QString layoutName() const;
 
-    void setFilterScreen(TabBox::TabBoxConfig::ClientMultiScreenMode mode);
-    void setFilterDesktop(TabBox::TabBoxConfig::ClientDesktopMode mode);
-    void setFilterMinimization(TabBox::TabBoxConfig::ClientMinimizedMode mode);
-    void setApplicationMode(TabBox::TabBoxConfig::ClientApplicationsMode mode);
-    void setShowDesktopMode(TabBox::TabBoxConfig::ShowDesktopMode mode);
-    void setSwitchingModeChanged(TabBox::TabBoxConfig::ClientSwitchingMode mode);
+    void setFilterScreen(win::TabBoxConfig::ClientMultiScreenMode mode);
+    void setFilterDesktop(win::TabBoxConfig::ClientDesktopMode mode);
+    void setFilterMinimization(win::TabBoxConfig::ClientMinimizedMode mode);
+    void setApplicationMode(win::TabBoxConfig::ClientApplicationsMode mode);
+    void setShowDesktopMode(win::TabBoxConfig::ShowDesktopMode mode);
+    void setSwitchingModeChanged(win::TabBoxConfig::ClientSwitchingMode mode);
     void setLayoutName(const QString &layoutName);
 
     // EffectCombo Data Model

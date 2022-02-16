@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QTest>
 
-using namespace KWin::TabBox;
+using namespace KWin::win;
 
 class TestDesktopChain : public QObject
 {

@@ -27,7 +27,7 @@ class QAbstractItemModel;
 
 namespace KWin
 {
-namespace TabBox
+namespace win
 {
 
 class SwitcherItem : public QObject

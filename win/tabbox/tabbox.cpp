@@ -70,7 +70,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-namespace TabBox
+namespace win
 {
 
 TabBoxHandlerImpl::TabBoxHandlerImpl(TabBox* tabbox)
@@ -1557,5 +1557,5 @@ void TabBox::remove_tabbox_grab()
         workspace()->activeClient()->control->update_mouse_grab();
     m_x11_event_filter.reset();
 }
-} // namespace TabBox
+} // namespace win
 } // namespace

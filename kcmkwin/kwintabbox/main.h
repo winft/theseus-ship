@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 class KWinTabBoxConfigForm;
-namespace TabBox
+namespace win
 {
 class KWinTabboxData;
 class TabBoxSettings;
@@ -55,22 +55,22 @@ private Q_SLOTS:
     void configureEffectClicked();
 
 private:
-    void updateUiFromConfig(KWinTabBoxConfigForm *form, const TabBox::TabBoxSettings *config);
-    void updateConfigFromUi(const KWinTabBoxConfigForm *form, TabBox::TabBoxSettings *config);
-    void updateUiFromDefaultConfig(KWinTabBoxConfigForm *form, const TabBox::TabBoxSettings *config);
+    void updateUiFromConfig(KWinTabBoxConfigForm *form, const win::TabBoxSettings *config);
+    void updateConfigFromUi(const KWinTabBoxConfigForm *form, win::TabBoxSettings *config);
+    void updateUiFromDefaultConfig(KWinTabBoxConfigForm *form, const win::TabBoxSettings *config);
     void initLayoutLists();
-    void setEnabledUi(KWinTabBoxConfigForm *form, const TabBox::TabBoxSettings *config);
+    void setEnabledUi(KWinTabBoxConfigForm *form, const win::TabBoxSettings *config);
     void createConnections(KWinTabBoxConfigForm *form);
-    bool updateUnmanagedIsNeedSave(const KWinTabBoxConfigForm *form, const TabBox::TabBoxSettings *config);
-    bool updateUnmanagedIsDefault(KWinTabBoxConfigForm *form, const TabBox::TabBoxSettings *config);
-    void updateUiDefaultIndicator(bool visible, KWinTabBoxConfigForm *form, const TabBox::TabBoxSettings *config);
+    bool updateUnmanagedIsNeedSave(const KWinTabBoxConfigForm *form, const win::TabBoxSettings *config);
+    bool updateUnmanagedIsDefault(KWinTabBoxConfigForm *form, const win::TabBoxSettings *config);
+    void updateUiDefaultIndicator(bool visible, KWinTabBoxConfigForm *form, const win::TabBoxSettings *config);
 
 private:
     KWinTabBoxConfigForm *m_primaryTabBoxUi = nullptr;
     KWinTabBoxConfigForm *m_alternativeTabBoxUi = nullptr;
     KSharedConfigPtr m_config;
 
-    TabBox::KWinTabboxData *m_data;
+    win::KWinTabboxData *m_data;
 
     // Builtin effects' names
     QString m_coverSwitch;

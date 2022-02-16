@@ -15,7 +15,7 @@
 
 namespace KWin
 {
-namespace TabBox
+namespace win
 {
 
 KWinTabboxData::KWinTabboxData(QObject *parent, const QVariantList &args)

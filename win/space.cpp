@@ -1165,7 +1165,7 @@ win::screen_edge* space::create_screen_edge(win::screen_edger& edger)
 void space::updateTabbox()
 {
 #ifdef KWIN_BUILD_TABBOX
-    TabBox::TabBox* tabBox = TabBox::TabBox::self();
+    win::TabBox* tabBox = TabBox::TabBox::self();
     if (tabBox->is_displayed()) {
         tabBox->reset(true);
     }

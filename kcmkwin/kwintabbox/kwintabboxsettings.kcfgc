@@ -1,5 +1,5 @@
 File=kwintabboxsettings.kcfg
-NameSpace=KWin::TabBox
+NameSpace=KWin::win
 ClassName=TabBoxSettings
 IncludeFiles=\"win/tabbox/tabbox_config.h\"
 Mutators=true

@@ -51,12 +51,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwinswitcheffectsettings.h"
 #include "kwinpluginssettings.h"
 
-K_PLUGIN_FACTORY(KWinTabBoxConfigFactory, registerPlugin<KWin::KWinTabBoxConfig>(); registerPlugin<KWin::TabBox::KWinTabboxData>();)
+K_PLUGIN_FACTORY(KWinTabBoxConfigFactory, registerPlugin<KWin::KWinTabBoxConfig>(); registerPlugin<KWin::win::KWinTabboxData>();)
 
 namespace KWin
 {
 
-using namespace TabBox;
+using namespace win;
 
 KWinTabBoxConfig::KWinTabBoxConfig(QWidget* parent, const QVariantList& args)
     : KCModule(parent, args)
@@ -401,7 +401,7 @@ void KWinTabBoxConfig::defaults()
     updateUnmanagedState();
 }
 
-void KWinTabBoxConfig::updateUiFromConfig(KWinTabBoxConfigForm *form, const KWin::TabBox::TabBoxSettings *config)
+void KWinTabBoxConfig::updateUiFromConfig(KWinTabBoxConfigForm *form, const KWin::win::TabBoxSettings *config)
 {
     form->setFilterScreen(static_cast<TabBoxConfig::ClientMultiScreenMode>(config->multiScreenMode()));
     form->setFilterDesktop(static_cast<TabBoxConfig::ClientDesktopMode>(config->desktopMode()));
@@ -423,7 +423,7 @@ void KWinTabBoxConfig::updateConfigFromUi(const KWinTabBoxConfigForm *form, TabB
     config->setLayoutName(form->layoutName());
 }
 
-void KWinTabBoxConfig::updateUiFromDefaultConfig(KWinTabBoxConfigForm *form, const KWin::TabBox::TabBoxSettings *config)
+void KWinTabBoxConfig::updateUiFromDefaultConfig(KWinTabBoxConfigForm *form, const KWin::win::TabBoxSettings *config)
 {
     form->setFilterScreen(static_cast<TabBoxConfig::ClientMultiScreenMode>(config->defaultMultiScreenModeValue()));
     form->setFilterDesktop(static_cast<TabBoxConfig::ClientDesktopMode>(config->defaultDesktopModeValue()));

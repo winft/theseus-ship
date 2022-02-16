@@ -1,5 +1,5 @@
 File=kwinpluginssettings.kcfg
-NameSpace=KWin::TabBox
+NameSpace=KWin::win
 ClassName=PluginsSettings
 Mutators=true
 DefaultValueGetters=true

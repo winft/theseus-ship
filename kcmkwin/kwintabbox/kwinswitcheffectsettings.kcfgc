@@ -1,5 +1,5 @@
 File=kwinswitcheffectsettings.kcfg
-NameSpace=KWin::TabBox
+NameSpace=KWin::win
 ClassName=SwitchEffectSettings
 Mutators=true
 DefaultValueGetters=true

@@ -31,7 +31,7 @@ MockTabBoxClient::MockTabBoxClient(QString caption)
 
 void MockTabBoxClient::close()
 {
-    static_cast<MockTabBoxHandler*>(TabBox::tabBox)->closeWindow(this);
+    static_cast<MockTabBoxHandler*>(win::tabBox)->closeWindow(this);
 }
 
 } // namespace KWin

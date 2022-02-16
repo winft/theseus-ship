@@ -76,7 +76,7 @@ namespace KWin
  * selected item. This way it is possible to have a view which shows for example a list containing
  * only small icons and nevertheless show the title of the currently selected client.
  */
-namespace TabBox
+namespace win
 {
 class DesktopModel;
 class client_model;

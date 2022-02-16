@@ -48,7 +48,7 @@ namespace base::x11
 class event_filter;
 }
 
-namespace TabBox
+namespace win
 {
 class DesktopChainManager;
 class TabBoxConfig;
@@ -74,7 +74,7 @@ public:
     void elevate_client(TabBoxClient* c, QWindow* tabbox, bool elevate) const override;
     void raise_client(TabBoxClient* client) const override;
     void restack(TabBoxClient* c, TabBoxClient* under) override;
-    std::weak_ptr<TabBoxClient> client_to_add_to_list(KWin::TabBox::TabBoxClient* client,
+    std::weak_ptr<TabBoxClient> client_to_add_to_list(KWin::win::TabBoxClient* client,
                                                       int desktop) const override;
     std::weak_ptr<TabBoxClient> desktop_client() const override;
     void activate_and_close() override;
@@ -391,6 +391,6 @@ inline TabBox* TabBox::self()
     return s_self;
 }
 
-} // namespace TabBox
+} // namespace win
 } // namespace
 #endif
