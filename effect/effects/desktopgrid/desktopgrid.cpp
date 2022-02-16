@@ -1076,6 +1076,9 @@ int DesktopGridEffect::desktopDown(int desktop, bool wrap) const
 
 void DesktopGridEffect::toggle()
 {
+    if (effects->isScreenLocked()) {
+        return;
+    }
     setActive(!activated);
 }
 
