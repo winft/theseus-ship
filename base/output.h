@@ -157,3 +157,5 @@ private:
 
 }
 }
+
+Q_DECLARE_METATYPE(KWin::base::output*);

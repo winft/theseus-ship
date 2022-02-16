@@ -135,7 +135,6 @@ public:
     void updateAll();
 
 Q_SIGNALS:
-    void countChanged(int previousCount, int newCount);
     /**
      * Emitted whenever the screens are changed either count or geometry.
      */
@@ -163,11 +162,8 @@ private:
     void init();
 
     void updateSize();
-    void updateCount();
-    void setCount(int count);
     base::output* findOutput(int screen) const;
 
-    int m_count;
     int m_current;
     QSize m_boundingSize;
     qreal m_maxScale;

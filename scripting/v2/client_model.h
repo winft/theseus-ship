@@ -209,11 +209,12 @@ public:
     window* clientForId(quint32 child) const override;
 private Q_SLOTS:
     void desktopCountChanged(uint previousCount, uint newCount);
-    void screenCountChanged(int previousCount, int newCount);
     void activityAdded(const QString& id);
     void activityRemoved(const QString& id);
 
 private:
+    void screenCountChanged(int previousCount, int newCount);
+
     QList<abstract_level*> m_children;
     QList<client_model::LevelRestriction> m_childRestrictions;
 };

@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "output.h"
+
 #include "kwin_export.h"
 #include "screens.h"
 
@@ -22,7 +24,6 @@ class platform;
 
 namespace base
 {
-class output;
 
 class KWIN_EXPORT platform : public QObject
 {
@@ -43,8 +44,8 @@ private:
     Q_DISABLE_COPY(platform)
 
 Q_SIGNALS:
-    void output_added(output*);
-    void output_removed(output*);
+    void output_added(KWin::base::output*);
+    void output_removed(KWin::base::output*);
 };
 
 }

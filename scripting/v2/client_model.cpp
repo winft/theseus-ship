@@ -19,6 +19,8 @@
 #include "win/meta.h"
 #include "win/net.h"
 
+#include <cassert>
+
 namespace KWin::scripting::models::v2
 {
 
@@ -375,10 +377,16 @@ fork_level::fork_level(const QList<client_model::LevelRestriction>& childRestric
             &win::virtual_desktop_manager::countChanged,
             this,
             &fork_level::desktopCountChanged);
-    connect(&kwinApp()->get_base().screens,
-            &Screens::countChanged,
-            this,
-            &fork_level::screenCountChanged);
+
+    auto& base = kwinApp()->get_base();
+    QObject::connect(&base, &base::platform::output_added, this, [this, &base] {
+        auto count = base.get_outputs().size();
+        screenCountChanged(count - 1, count);
+    });
+    QObject::connect(&base, &base::platform::output_removed, this, [this, &base] {
+        auto count = base.get_outputs().size();
+        screenCountChanged(count + 1, count);
+    });
 }
 
 fork_level::~fork_level()
@@ -419,10 +427,9 @@ void fork_level::desktopCountChanged(uint previousCount, uint newCount)
 
 void fork_level::screenCountChanged(int previousCount, int newCount)
 {
+    assert(previousCount != newCount);
+
     if (restriction() != client_model::client_model::client_model::ScreenRestriction) {
-        return;
-    }
-    if (newCount == previousCount || previousCount != count()) {
         return;
     }
 

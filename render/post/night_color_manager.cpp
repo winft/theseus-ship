@@ -98,10 +98,14 @@ void night_color_manager::init()
         return;
     }
 
-    connect(&kwinApp()->get_base().screens,
-            &Screens::countChanged,
-            this,
-            &night_color_manager::hard_reset);
+    QObject::connect(&kwinApp()->get_base(),
+                     &base::platform::output_added,
+                     this,
+                     &night_color_manager::hard_reset);
+    QObject::connect(&kwinApp()->get_base(),
+                     &base::platform::output_removed,
+                     this,
+                     &night_color_manager::hard_reset);
 
     QObject::connect(kwinApp()->session.get(),
                      &base::seat::session::sessionActiveChanged,

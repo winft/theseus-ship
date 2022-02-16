@@ -32,8 +32,7 @@ namespace KWin
 {
 
 Screens::Screens(base::platform const& base)
-    : m_count(0)
-    , m_current(0)
+    : m_current(0)
     , m_maxScale(1.0)
     , base{base}
 {
@@ -96,7 +95,6 @@ qreal Screens::scale(int screen) const
 
 void Screens::updateAll()
 {
-    updateCount();
     updateSize();
     Q_EMIT changed();
 }
@@ -119,22 +117,6 @@ void Screens::updateSize()
         m_maxScale = maxScale;
         Q_EMIT maxScaleChanged();
     }
-}
-
-void Screens::updateCount()
-{
-    auto size = base.get_outputs().size();
-    setCount(size);
-}
-
-void Screens::setCount(int count)
-{
-    if (m_count == count) {
-        return;
-    }
-    const int previous = m_count;
-    m_count = count;
-    Q_EMIT countChanged(previous, count);
 }
 
 void Screens::setCurrent(int current)

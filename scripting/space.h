@@ -521,16 +521,18 @@ public:
         QObject::connect(
             vds, &win::virtual_desktop_manager::layoutChanged, this, &space::desktopLayoutChanged);
 
-        auto& screens = kwinApp()->get_base().screens;
+        auto& base = kwinApp()->get_base();
+        auto& screens = base.screens;
         QObject::connect(&screens, &Screens::sizeChanged, this, &space::virtualScreenSizeChanged);
         QObject::connect(
             &screens, &Screens::geometryChanged, this, &space::virtualScreenGeometryChanged);
-        QObject::connect(&screens,
-                         &Screens::countChanged,
-                         this,
-                         [this](int /*previousCount*/, int currentCount) {
-                             Q_EMIT Space::numberScreensChanged(currentCount);
-                         });
+
+        QObject::connect(&base, &base::platform::output_added, this, [this, &base] {
+            Q_EMIT Space::numberScreensChanged(base.get_outputs().size());
+        });
+        QObject::connect(&base, &base::platform::output_removed, this, [this, &base] {
+            Q_EMIT Space::numberScreensChanged(base.get_outputs().size());
+        });
 
         connect_legacy_screen_resize(this);
 

@@ -217,8 +217,10 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     connect(
         input::get_cursor(), &input::cursor::mouse_changed, this, &EffectsHandler::mouseChanged);
 
-    auto& screens = kwinApp()->get_base().screens;
-    connect(&screens, &Screens::countChanged, this, &EffectsHandler::numberScreensChanged);
+    auto& base = kwinApp()->get_base();
+    auto& screens = base.screens;
+    connect(&base, &base::platform::output_added, this, &EffectsHandler::numberScreensChanged);
+    connect(&base, &base::platform::output_removed, this, &EffectsHandler::numberScreensChanged);
     connect(&screens, &Screens::sizeChanged, this, &EffectsHandler::virtualScreenSizeChanged);
     connect(
         &screens, &Screens::geometryChanged, this, &EffectsHandler::virtualScreenGeometryChanged);
