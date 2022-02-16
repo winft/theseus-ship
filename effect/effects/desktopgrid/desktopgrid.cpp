@@ -33,10 +33,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <QAction>
-#include <QApplication>
 #include <QEvent>
+#include <QGuiApplication>
 #include <QMatrix4x4>
 #include <QMouseEvent>
+#include <QStyleHints>
 #include <QTimer>
 #include <QVector2D>
 #include <netwm_def.h>
@@ -110,7 +111,7 @@ DesktopGridEffect::DesktopGridEffect()
         }
     });
 
-    windowMoveElevateTimer->setInterval(QApplication::startDragTime());
+    windowMoveElevateTimer->setInterval(QGuiApplication::styleHints()->startDragTime());
     windowMoveElevateTimer->setSingleShot(true);
     connect(windowMoveElevateTimer, &QTimer::timeout, this, [this]() {
         effects->setElevatedWindow(windowMove, true);
@@ -510,7 +511,8 @@ void DesktopGridEffect::windowInputMouseEvent(QEvent* e)
     if (e->type() == QEvent::MouseMove) {
         int d = posToDesktop(me->pos());
         if (windowMove != nullptr
-            && (me->pos() - dragStartPos).manhattanLength() > QApplication::startDragDistance()) {
+            && (me->pos() - dragStartPos).manhattanLength()
+                > QGuiApplication::styleHints()->startDragDistance()) {
             // Handle window moving
             if (windowMoveElevateTimer
                     ->isActive()) { // Window started moving, but is not elevated yet!
@@ -578,7 +580,7 @@ void DesktopGridEffect::windowInputMouseEvent(QEvent* e)
             }
         } else if ((me->buttons() & Qt::LeftButton) && !wasDesktopMove
                    && (me->pos() - dragStartPos).manhattanLength()
-                       > QApplication::startDragDistance()) {
+                       > QGuiApplication::styleHints()->startDragDistance()) {
             wasDesktopMove = true;
             effects->defineCursor(Qt::ClosedHandCursor);
         }
