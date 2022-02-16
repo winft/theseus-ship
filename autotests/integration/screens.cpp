@@ -91,19 +91,19 @@ void TestScreens::cleanup()
 void TestScreens::testCurrentFollowsMouse()
 {
     auto& screens = Test::app()->base.screens;
-    QVERIFY(!screens.isCurrentFollowsMouse());
-    screens.setCurrentFollowsMouse(true);
-    QVERIFY(screens.isCurrentFollowsMouse());
+    QVERIFY(!screens.m_currentFollowsMouse);
+    screens.m_currentFollowsMouse = true;
+    QVERIFY(screens.m_currentFollowsMouse);
     // setting to same should not do anything
-    screens.setCurrentFollowsMouse(true);
-    QVERIFY(screens.isCurrentFollowsMouse());
+    screens.m_currentFollowsMouse = true;
+    QVERIFY(screens.m_currentFollowsMouse);
 
     // setting back to other value
-    screens.setCurrentFollowsMouse(false);
-    QVERIFY(!screens.isCurrentFollowsMouse());
+    screens.m_currentFollowsMouse = false;
+    QVERIFY(!screens.m_currentFollowsMouse);
     // setting to same should not do anything
-    screens.setCurrentFollowsMouse(false);
-    QVERIFY(!screens.isCurrentFollowsMouse());
+    screens.m_currentFollowsMouse = false;
+    QVERIFY(!screens.m_currentFollowsMouse);
 }
 
 void TestScreens::testReconfigure_data()
@@ -124,7 +124,7 @@ void TestScreens::testReconfigure()
     auto& screens = Test::app()->base.screens;
     screens.reconfigure();
 
-    QTEST(screens.isCurrentFollowsMouse(), "expectedDefault");
+    QTEST(screens.m_currentFollowsMouse, "expectedDefault");
 
     QFETCH(QString, focusPolicy);
 
@@ -136,13 +136,13 @@ void TestScreens::testReconfigure()
     screens.setConfig(config);
     screens.reconfigure();
 
-    QTEST(screens.isCurrentFollowsMouse(), "expectedDefault");
+    QTEST(screens.m_currentFollowsMouse, "expectedDefault");
 
     QFETCH(bool, setting);
     config->group("Windows").writeEntry("ActiveMouseScreen", setting);
     config->sync();
     screens.reconfigure();
-    QCOMPARE(screens.isCurrentFollowsMouse(), setting);
+    QCOMPARE(screens.m_currentFollowsMouse, setting);
 }
 
 auto to_vector(QList<QRect> const& list)
@@ -365,7 +365,7 @@ void TestScreens::testCurrentWithFollowsMouse()
     auto& screens = Test::app()->base.screens;
     QSignalSpy changedSpy(&screens, &KWin::Screens::changed);
     QVERIFY(changedSpy.isValid());
-    screens.setCurrentFollowsMouse(true);
+    screens.m_currentFollowsMouse = true;
     Test::pointer_motion_absolute(QPointF(0, 0), 1);
     QCOMPARE(screens.current(), 0);
 
@@ -403,7 +403,7 @@ void TestScreens::testCurrentPoint()
     auto& screens = Test::app()->base.screens;
     QSignalSpy changedSpy(&screens, &KWin::Screens::changed);
     QVERIFY(changedSpy.isValid());
-    screens.setCurrentFollowsMouse(false);
+    screens.m_currentFollowsMouse = false;
 
     QFETCH(QList<QRect>, geometries);
     Test::app()->set_outputs(to_vector(geometries));

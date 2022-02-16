@@ -107,7 +107,7 @@ void Screens::reconfigure()
     }
     base::Settings settings(m_config);
     settings.read();
-    setCurrentFollowsMouse(settings.activeMouseScreen());
+    m_currentFollowsMouse = settings.activeMouseScreen();
 }
 
 void Screens::updateAll()
@@ -173,14 +173,6 @@ void Screens::setCurrent(Toplevel const* window)
     if (!win::on_screen(window, m_current)) {
         setCurrent(window->screen());
     }
-}
-
-void Screens::setCurrentFollowsMouse(bool follows)
-{
-    if (m_currentFollowsMouse == follows) {
-        return;
-    }
-    m_currentFollowsMouse = follows;
 }
 
 int Screens::current() const

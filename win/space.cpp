@@ -885,7 +885,7 @@ QString space::supportInformation() const
     support.append(QStringLiteral("Active screen follows mouse: "));
 
     auto const& screens = kwinApp()->get_base().screens;
-    if (screens.isCurrentFollowsMouse())
+    if (screens.m_currentFollowsMouse)
         support.append(QStringLiteral(" yes\n"));
     else
         support.append(QStringLiteral(" no\n"));
@@ -3452,8 +3452,9 @@ void space::slotWindowToDesktop(uint i)
 
 static bool screenSwitchImpossible()
 {
-    if (!kwinApp()->get_base().screens.isCurrentFollowsMouse())
+    if (!kwinApp()->get_base().screens.m_currentFollowsMouse) {
         return false;
+    }
     QStringList args;
     args << QStringLiteral("--passivepopup")
          << i18n(

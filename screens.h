@@ -62,8 +62,6 @@ public:
      * if yes, set a new active screen.
      */
     void setCurrent(Toplevel const* window);
-    bool isCurrentFollowsMouse() const;
-    void setCurrentFollowsMouse(bool follows);
     QRect geometry(int screen) const;
     /**
      * The bounding geometry of all screens combined. Overlapping areas
@@ -143,6 +141,8 @@ public:
 
     void updateAll();
 
+    bool m_currentFollowsMouse;
+
 public Q_SLOTS:
     void reconfigure();
 
@@ -181,7 +181,6 @@ private:
 
     int m_count;
     int m_current;
-    bool m_currentFollowsMouse;
     KSharedConfig::Ptr m_config;
     QSize m_boundingSize;
     qreal m_maxScale;
@@ -193,12 +192,6 @@ inline
 int Screens::count() const
 {
     return m_count;
-}
-
-inline
-bool Screens::isCurrentFollowsMouse() const
-{
-    return m_currentFollowsMouse;
 }
 
 inline
