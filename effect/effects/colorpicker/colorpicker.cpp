@@ -68,16 +68,11 @@ ColorPickerEffect::~ColorPickerEffect() = default;
 
 void ColorPickerEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
 {
-    m_paintedScreen = data.screen();
+    auto screen = data.screen();
     effects->paintScreen(mask, region, data);
-}
-
-void ColorPickerEffect::postPaintScreen()
-{
-    effects->postPaintScreen();
 
     if (m_scheduledPosition != QPoint(-1, -1)
-        && (!m_paintedScreen || m_paintedScreen->geometry().contains(m_scheduledPosition))) {
+        && (!screen || screen->geometry().contains(m_scheduledPosition))) {
         uint8_t data[3];
         auto const geo = effects->renderTargetRect();
         const QPoint screenPosition(m_scheduledPosition.x() - geo.x(),
