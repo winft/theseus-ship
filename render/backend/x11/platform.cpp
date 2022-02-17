@@ -83,7 +83,6 @@ void platform::init()
     }
 
     doUpdateOutputs<base::x11::xcb::randr::screen_resources>();
-    base.screens.updateAll();
 
     connect(&base.screens, &Screens::changed, this, [] {
         if (!workspace()->compositing()) {
@@ -364,6 +363,7 @@ void platform::doUpdateOutputs()
         o->data.refresh_rate = -1.0f;
         o->data.name = QStringLiteral("Fallback");
         base.outputs.push_back(std::move(o));
+        base.screens.updateAll();
     };
 
     // TODO: instead of resetting all outputs, check if new output is added/removed
@@ -461,7 +461,10 @@ void platform::doUpdateOutputs()
 
     if (base.outputs.empty()) {
         fallback();
+        return;
     }
+
+    base.screens.updateAll();
 }
 
 }

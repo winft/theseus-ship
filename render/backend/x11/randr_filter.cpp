@@ -25,19 +25,13 @@ RandrFilter::RandrFilter(x11::platform* platform)
 {
     m_changedTimer->setSingleShot(true);
     m_changedTimer->setInterval(100);
-    QObject::connect(
-        m_changedTimer, &QTimer::timeout, &kwinApp()->get_base().screens, &Screens::updateAll);
+    QObject::connect(m_changedTimer, &QTimer::timeout, platform, &platform::updateOutputs);
 }
 
 bool RandrFilter::event(xcb_generic_event_t* event)
 {
     Q_ASSERT((event->response_type & ~0x80)
              == base::x11::xcb::extensions::self()->randr_notify_event());
-
-    platform->updateOutputs();
-
-    // Let's try to gather a few XRandR events, unlikely that there is just one.
-    m_changedTimer->start();
 
     // update default screen
     auto* xrrEvent = reinterpret_cast<xcb_randr_screen_change_notify_event_t*>(event);
@@ -53,6 +47,9 @@ bool RandrFilter::event(xcb_generic_event_t* event)
         screen->width_in_millimeters = xrrEvent->mwidth;
         screen->height_in_millimeters = xrrEvent->mheight;
     }
+
+    // Let's try to gather a few XRandR events, unlikely that there is just one.
+    m_changedTimer->start();
 
     return false;
 }
