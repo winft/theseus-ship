@@ -8,6 +8,7 @@
 
 #include "app.h"
 
+#include "base/output_helpers.h"
 #include "desktop/screen_locker_watcher.h"
 #include "input/backend/wlroots/keyboard.h"
 #include "input/backend/wlroots/pointer.h"
@@ -572,8 +573,9 @@ KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_input_de
 
 QPointF get_relative_touch_position(QPointF const& pos)
 {
-    auto const& screens = kwinApp()->get_base().screens;
-    auto screen_number = screens.number(pos.toPoint());
+    auto const& base = kwinApp()->get_base();
+    auto const& screens = base.screens;
+    auto screen_number = base::get_nearest_output(base.get_outputs(), pos.toPoint());
     auto output_size = screens.size(screen_number);
 
     return QPointF(pos.x() / output_size.width(), pos.y() / output_size.height());

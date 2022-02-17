@@ -532,15 +532,17 @@ void Toplevel::setReadyForPainting()
 
 void Toplevel::checkScreen()
 {
-    auto const& screens = kwinApp()->get_base().screens;
+    auto const& base = kwinApp()->get_base();
+    auto const& screens = base.screens;
 
-    if (kwinApp()->get_base().get_outputs().size() == 1) {
+    if (base.get_outputs().size() == 1) {
         if (m_screen != 0) {
             m_screen = 0;
             Q_EMIT screenChanged();
         }
     } else {
-        auto const s = screens.number(frameGeometry().center());
+        auto const s = static_cast<int>(
+            base::get_nearest_output(base.get_outputs(), frameGeometry().center()));
         if (s != m_screen) {
             m_screen = s;
             Q_EMIT screenChanged();

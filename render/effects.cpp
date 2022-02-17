@@ -1319,7 +1319,7 @@ int effects_handler_impl::numScreens() const
 
 int effects_handler_impl::screenNumber(const QPoint& pos) const
 {
-    return kwinApp()->get_base().screens.number(pos);
+    return base::get_nearest_output(kwinApp()->get_base().get_outputs(), pos);
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, int screen, int desktop) const

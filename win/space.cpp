@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinglplatform.h>
 
 #include "base/dbus/kwin.h"
+#include "base/output_helpers.h"
 #include "base/x11/user_interaction_filter.h"
 #include "base/x11/xcb/extensions.h"
 #include "decorations/decorationbridge.h"
@@ -1467,7 +1468,8 @@ QRect space::clientArea(clientAreaOption opt, int screen, int desktop) const
 
 QRect space::clientArea(clientAreaOption opt, const QPoint& p, int desktop) const
 {
-    return clientArea(opt, kwinApp()->get_base().screens.number(p), desktop);
+    return clientArea(
+        opt, base::get_nearest_output(kwinApp()->get_base().get_outputs(), p), desktop);
 }
 
 QRect space::clientArea(clientAreaOption opt, Toplevel const* window) const
@@ -1560,7 +1562,8 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
         || kwinApp()->options->centerSnapZone()) {
         auto const& screens = kwinApp()->get_base().screens;
         const bool sOWO = kwinApp()->options->isSnapOnlyWhenOverlapping();
-        const int screen = screens.number(pos + QRect(QPoint(), window->size()).center());
+        const int screen = base::get_nearest_output(kwinApp()->get_base().get_outputs(),
+                                                    pos + QRect(QPoint(), window->size()).center());
 
         if (maxRect.isNull()) {
             maxRect = clientArea(MovementArea, screen, window->desktop());

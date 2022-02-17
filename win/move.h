@@ -11,6 +11,7 @@
 #include "space.h"
 #include "types.h"
 
+#include "base/output_helpers.h"
 #include "base/platform.h"
 #include "input/cursor.h"
 #include "render/outline.h"
@@ -1089,7 +1090,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         if (!win->isMovable()) {
             // isMovableAcrossScreens() must have been true to get here
             // Special moving of maximized windows on Xinerama screens
-            int screen = kwinApp()->get_base().screens.number(globalPos);
+            int screen = base::get_nearest_output(kwinApp()->get_base().get_outputs(), globalPos);
             if (win->control->fullscreen())
                 mov_res.geometry = workspace()->clientArea(FullScreenArea, screen, 0);
             else {

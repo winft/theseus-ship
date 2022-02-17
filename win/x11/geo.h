@@ -674,8 +674,9 @@ void configure_position_size_from_request(Win* win,
     auto const frame_size = size_for_client_size(win, client_size, size_mode::any, false);
     auto const frame_rect = QRect(frame_pos, frame_size);
 
-    if (auto screen = kwinApp()->get_base().screens.number(frame_rect.center());
-        screen != win->control->rules().checkScreen(screen)) {
+    if (auto screen
+        = base::get_nearest_output(kwinApp()->get_base().get_outputs(), frame_rect.center());
+        static_cast<int>(screen) != win->control->rules().checkScreen(screen)) {
         // not allowed by rule
         return;
     }

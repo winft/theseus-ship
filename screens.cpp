@@ -130,7 +130,7 @@ void Screens::setCurrent(int current)
 
 void Screens::setCurrent(const QPoint &pos)
 {
-    setCurrent(number(pos));
+    setCurrent(base::get_nearest_output(kwinApp()->get_base().get_outputs(), pos));
 }
 
 void Screens::setCurrent(Toplevel const* window)
@@ -146,7 +146,8 @@ void Screens::setCurrent(Toplevel const* window)
 int Screens::current() const
 {
     if (kwinApp()->options->get_current_output_follows_mouse()) {
-        return number(input::get_cursor()->pos());
+        return base::get_nearest_output(kwinApp()->get_base().get_outputs(),
+                                        input::get_cursor()->pos());
     }
     auto client = workspace()->activeClient();
     if (client && !win::on_screen(client, m_current)) {
@@ -213,28 +214,6 @@ base::output* Screens::findOutput(int screen) const
         return outputs.at(screen);
     }
     return nullptr;
-}
-
-int Screens::number(const QPoint &pos) const
-{
-    int bestScreen = 0;
-    int minDistance = INT_MAX;
-    auto const outputs = base.get_outputs();
-    for (size_t i = 0; i < outputs.size(); ++i) {
-        const QRect &geo = outputs[i]->geometry();
-        if (geo.contains(pos)) {
-            return i;
-        }
-        int distance = QPoint(geo.topLeft() - pos).manhattanLength();
-        distance = qMin(distance, QPoint(geo.topRight() - pos).manhattanLength());
-        distance = qMin(distance, QPoint(geo.bottomRight() - pos).manhattanLength());
-        distance = qMin(distance, QPoint(geo.bottomLeft() - pos).manhattanLength());
-        if (distance < minDistance) {
-            minDistance = distance;
-            bestScreen = i;
-        }
-    }
-    return bestScreen;
 }
 
 }

@@ -98,7 +98,6 @@ public:
      * @see sizeChanged()
      */
     QSize size() const;
-    int number(const QPoint &pos) const;
 
     int intersecting(const QRect &r) const;
 

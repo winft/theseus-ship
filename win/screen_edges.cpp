@@ -512,10 +512,12 @@ void screen_edge::setGeometry(QRect const& geometry)
     doGeometryUpdate();
 
     if (isScreenEdge()) {
-        auto const& screens = kwinApp()->get_base().screens;
+        auto const& base = kwinApp()->get_base();
+        auto const& screens = base.screens;
         gesture->setStartGeometry(this->geometry);
-        gesture->setMinimumDelta(QSizeF(MINIMUM_DELTA, MINIMUM_DELTA)
-                                 / screens.scale(screens.number(this->geometry.center())));
+        gesture->setMinimumDelta(
+            QSizeF(MINIMUM_DELTA, MINIMUM_DELTA)
+            / screens.scale(base::get_nearest_output(base.get_outputs(), this->geometry.center())));
     }
 }
 
