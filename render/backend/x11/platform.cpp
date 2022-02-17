@@ -82,7 +82,7 @@ void platform::init()
         throw std::exception();
     }
 
-    initOutputs();
+    doUpdateOutputs<base::x11::xcb::randr::screen_resources>();
     base.screens.updateAll();
 
     connect(&base.screens, &Screens::changed, this, [] {
@@ -348,11 +348,6 @@ QVector<CompositingType> platform::supportedCompositors() const
 #endif
     compositors << NoCompositing;
     return compositors;
-}
-
-void platform::initOutputs()
-{
-    doUpdateOutputs<base::x11::xcb::randr::screen_resources>();
 }
 
 void platform::updateOutputs()

@@ -59,7 +59,6 @@ public:
     void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
     QVector<CompositingType> supportedCompositors() const override;
 
-    void initOutputs();
     void updateOutputs();
 
 private:
