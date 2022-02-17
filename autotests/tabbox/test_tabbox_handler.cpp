@@ -48,8 +48,8 @@ void TestTabBoxHandler::initTestCase()
 void TestTabBoxHandler::testDontCrashUpdateOutlineNullClient()
 {
     MockTabBoxHandler tabboxhandler;
-    win::TabBoxConfig config;
-    config.set_tabbox_mode(win::TabBoxConfig::ClientTabBox);
+    win::tabbox_config config;
+    config.set_tabbox_mode(win::tabbox_config::ClientTabBox);
     config.set_show_tabbox(false);
     config.set_highlight_windows(false);
     tabboxhandler.set_config(config);

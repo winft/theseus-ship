@@ -30,7 +30,7 @@ namespace KWin
 namespace win
 {
 
-class SwitcherItem : public QObject
+class tabbox_switcher_item : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QAbstractItemModel* model READ model NOTIFY model_changed)
@@ -49,8 +49,8 @@ class SwitcherItem : public QObject
 
     Q_CLASSINFO("DefaultProperty", "item")
 public:
-    SwitcherItem(QObject* parent = nullptr);
-    ~SwitcherItem() override;
+    tabbox_switcher_item(QObject* parent = nullptr);
+    ~tabbox_switcher_item() override;
 
     QAbstractItemModel* model() const;
     QRect screen_geometry() const;
@@ -92,32 +92,32 @@ private:
     bool m_no_modifier_grab = false;
 };
 
-inline QAbstractItemModel* SwitcherItem::model() const
+inline QAbstractItemModel* tabbox_switcher_item::model() const
 {
     return m_model;
 }
 
-inline bool SwitcherItem::is_visible() const
+inline bool tabbox_switcher_item::is_visible() const
 {
     return m_visible;
 }
 
-inline bool SwitcherItem::is_all_desktops() const
+inline bool tabbox_switcher_item::is_all_desktops() const
 {
     return m_all_desktops;
 }
 
-inline int SwitcherItem::current_index() const
+inline int tabbox_switcher_item::current_index() const
 {
     return m_current_index;
 }
 
-inline QObject* SwitcherItem::item() const
+inline QObject* tabbox_switcher_item::item() const
 {
     return m_item;
 }
 
-} // TabBox
+} // win
 } // KWin
 
 #endif // KWIN_TABBOX_SWITCHERITEM_H

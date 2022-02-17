@@ -32,7 +32,7 @@ namespace KWin
 namespace win
 {
 
-SwitcherItem::SwitcherItem(QObject* parent)
+tabbox_switcher_item::tabbox_switcher_item(QObject* parent)
     : QObject(parent)
     , m_model(nullptr)
     , m_item(nullptr)
@@ -40,27 +40,28 @@ SwitcherItem::SwitcherItem(QObject* parent)
     , m_all_desktops(false)
     , m_current_index(0)
 {
-    m_selected_index_connection = connect(tabBox, &TabBoxHandler::selected_index_changed, [this] {
-        if (is_visible()) {
-            set_current_index(tabBox->current_index().row());
-        }
-    });
+    m_selected_index_connection
+        = connect(tabbox_handle, &tabbox_handler::selected_index_changed, [this] {
+              if (is_visible()) {
+                  set_current_index(tabbox_handle->current_index().row());
+              }
+          });
     connect(&kwinApp()->get_base().screens,
             &Screens::changed,
             this,
-            &SwitcherItem::screen_geometry_changed);
+            &tabbox_switcher_item::screen_geometry_changed);
     connect(render::compositor::self(),
             &render::compositor::compositingToggled,
             this,
-            &SwitcherItem::compositing_changed);
+            &tabbox_switcher_item::compositing_changed);
 }
 
-SwitcherItem::~SwitcherItem()
+tabbox_switcher_item::~tabbox_switcher_item()
 {
     disconnect(m_selected_index_connection);
 }
 
-void SwitcherItem::set_item(QObject* item)
+void tabbox_switcher_item::set_item(QObject* item)
 {
     if (m_item == item) {
         return;
@@ -69,13 +70,13 @@ void SwitcherItem::set_item(QObject* item)
     Q_EMIT item_changed();
 }
 
-void SwitcherItem::set_model(QAbstractItemModel* model)
+void tabbox_switcher_item::set_model(QAbstractItemModel* model)
 {
     m_model = model;
     Q_EMIT model_changed();
 }
 
-void SwitcherItem::set_visible(bool visible)
+void tabbox_switcher_item::set_visible(bool visible)
 {
     if (m_visible == visible) {
         return;
@@ -86,25 +87,25 @@ void SwitcherItem::set_visible(bool visible)
     Q_EMIT visible_changed();
 }
 
-QRect SwitcherItem::screen_geometry() const
+QRect tabbox_switcher_item::screen_geometry() const
 {
     auto& screens = kwinApp()->get_base().screens;
     return screens.geometry(screens.current());
 }
 
-void SwitcherItem::set_current_index(int index)
+void tabbox_switcher_item::set_current_index(int index)
 {
     if (m_current_index == index) {
         return;
     }
     m_current_index = index;
     if (m_model) {
-        tabBox->set_current_index(m_model->index(index, 0));
+        tabbox_handle->set_current_index(m_model->index(index, 0));
     }
     Q_EMIT current_index_changed(m_current_index);
 }
 
-void SwitcherItem::set_all_desktops(bool all)
+void tabbox_switcher_item::set_all_desktops(bool all)
 {
     if (m_all_desktops == all) {
         return;
@@ -113,7 +114,7 @@ void SwitcherItem::set_all_desktops(bool all)
     Q_EMIT all_desktops_changed();
 }
 
-void SwitcherItem::set_no_modifier_grab(bool set)
+void tabbox_switcher_item::set_no_modifier_grab(bool set)
 {
     if (m_no_modifier_grab == set) {
         return;
@@ -122,7 +123,7 @@ void SwitcherItem::set_no_modifier_grab(bool set)
     Q_EMIT no_modifier_grab_changed();
 }
 
-bool SwitcherItem::compositing()
+bool tabbox_switcher_item::compositing()
 {
     return render::compositor::compositing();
 }

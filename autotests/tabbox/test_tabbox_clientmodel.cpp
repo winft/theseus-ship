@@ -34,7 +34,7 @@ void TestTabBoxClientModel::initTestCase()
 void TestTabBoxClientModel::testLongestCaptionWithNullClient()
 {
     MockTabBoxHandler tabboxhandler;
-    win::ClientModel* clientModel = new win::ClientModel(&tabboxhandler);
+    win::tabbox_client_model* clientModel = new win::tabbox_client_model(&tabboxhandler);
     clientModel->create_client_list();
     QCOMPARE(clientModel->longest_caption(), QString());
     // add a window to the mock
@@ -44,8 +44,8 @@ void TestTabBoxClientModel::testLongestCaptionWithNullClient()
     // delete the one client in the list
     QModelIndex index = clientModel->index(0, 0);
     QVERIFY(index.isValid());
-    win::TabBoxClient* client = static_cast<win::TabBoxClient*>(
-        clientModel->data(index, win::ClientModel::ClientRole).value<void*>());
+    win::tabbox_client* client = static_cast<win::tabbox_client*>(
+        clientModel->data(index, win::tabbox_client_model::ClientRole).value<void*>());
     client->close();
     // internal model of ClientModel now contains a deleted pointer
     // longestCaption should behave just as if the window were not in the list
@@ -55,8 +55,8 @@ void TestTabBoxClientModel::testLongestCaptionWithNullClient()
 void TestTabBoxClientModel::testCreateClientListNoActiveClient()
 {
     MockTabBoxHandler tabboxhandler;
-    tabboxhandler.set_config(win::TabBoxConfig());
-    win::ClientModel* clientModel = new win::ClientModel(&tabboxhandler);
+    tabboxhandler.set_config(win::tabbox_config());
+    win::tabbox_client_model* clientModel = new win::tabbox_client_model(&tabboxhandler);
     clientModel->create_client_list();
     QCOMPARE(clientModel->rowCount(), 0);
     // create two windows, rowCount() should go to two
@@ -74,8 +74,8 @@ void TestTabBoxClientModel::testCreateClientListNoActiveClient()
 void TestTabBoxClientModel::testCreateClientListActiveClientNotInFocusChain()
 {
     MockTabBoxHandler tabboxhandler;
-    tabboxhandler.set_config(win::TabBoxConfig());
-    win::ClientModel* clientModel = new win::ClientModel(&tabboxhandler);
+    tabboxhandler.set_config(win::tabbox_config());
+    win::tabbox_client_model* clientModel = new win::tabbox_client_model(&tabboxhandler);
     // create two windows, rowCount() should go to two
     auto client = tabboxhandler.createMockWindow(QString("test"));
     client = tabboxhandler.createMockWindow(QString("test2"));

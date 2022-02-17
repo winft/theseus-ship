@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QModelIndex>
 /**
  * @file
- * This file defines the class ClientModel, the model for TabBoxClients.
+ * This file defines the class client_model, the model for tabbox_clients.
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  * @since 4.4
@@ -36,26 +36,26 @@ namespace win
 {
 
 /**
- * The model for TabBoxClients used in TabBox.
+ * The model for tabbox_clients used in tabbox.
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  * @since 4.4
  */
-class ClientModel : public QAbstractItemModel
+class tabbox_client_model : public QAbstractItemModel
 {
     Q_OBJECT
 public:
     enum {
-        ClientRole = Qt::UserRole,          ///< The TabBoxClient
-        CaptionRole = Qt::UserRole + 1,     ///< The caption of TabBoxClient
-        DesktopNameRole = Qt::UserRole + 2, ///< The name of the desktop the TabBoxClient is on
+        ClientRole = Qt::UserRole,          ///< The tabbox_client
+        CaptionRole = Qt::UserRole + 1,     ///< The caption of tabbox_client
+        DesktopNameRole = Qt::UserRole + 2, ///< The name of the desktop the tabbox_client is on
         IconRole = Qt::UserRole + 3,        // TODO: to be removed
-        WIdRole = Qt::UserRole + 5,         ///< The window ID of TabBoxClient
-        MinimizedRole = Qt::UserRole + 6,   ///< TabBoxClient is minimized
-        CloseableRole = Qt::UserRole + 7    ///< TabBoxClient can be closed
+        WIdRole = Qt::UserRole + 5,         ///< The window ID of tabbox_client
+        MinimizedRole = Qt::UserRole + 6,   ///< tabbox_client is minimized
+        CloseableRole = Qt::UserRole + 7    ///< tabbox_client can be closed
     };
-    explicit ClientModel(QObject* parent = nullptr);
-    ~ClientModel() override;
+    explicit tabbox_client_model(QObject* parent = nullptr);
+    ~tabbox_client_model() override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
@@ -66,31 +66,31 @@ public:
     Q_INVOKABLE QString longest_caption() const;
 
     /**
-     * @param client The TabBoxClient whose index should be returned
-     * @return Returns the ModelIndex of given TabBoxClient or an invalid ModelIndex
-     * if the model does not contain the given TabBoxClient.
+     * @param client The tabbox_client whose index should be returned
+     * @return Returns the model_index of given tabbox_client or an invalid model_index
+     * if the model does not contain the given tabbox_client.
      */
-    QModelIndex index(TabBoxClient* client) const;
+    QModelIndex index(tabbox_client* client) const;
 
     /**
-     * Generates a new list of TabBoxClients based on the current config.
-     * Calling this method will reset the model. If partialReset is true
+     * Generates a new list of tabbox_clients based on the current config.
+     * Calling this method will reset the model. If partial_reset is true
      * the top of the list is kept as a starting point. If not the
      * current active client is used as the starting point to generate the
      * list.
      * @param desktop The desktop for which the list should be created
-     * @param partialReset Keep the currently selected client or regenerate everything
+     * @param partial_reset Keep the currently selected client or regenerate everything
      */
     void create_client_list(int desktop, bool partial_reset = false);
     /**
      * This method is provided as a overload for current desktop
-     * @see createClientList
+     * @see create_client_list
      */
     void create_client_list(bool partial_reset = false);
     /**
-     * @return Returns the current list of TabBoxClients.
+     * @return Returns the current list of tabbox_clients.
      */
-    TabBoxClientList client_list() const
+    tabbox_client_list client_list() const
     {
         return m_client_list;
     }
@@ -98,16 +98,16 @@ public:
 public Q_SLOTS:
     void close(int index);
     /**
-     * Activates the client at @p index and closes the TabBox.
+     * Activates the client at @p index and closes the tabbox.
      * @param index The row index
      */
     void activate(int index);
 
 private:
-    TabBoxClientList m_client_list;
+    tabbox_client_list m_client_list;
 };
 
-} // namespace Tabbox
+} // namespace win
 } // namespace KWin
 
 #endif // CLIENTMODEL_H

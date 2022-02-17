@@ -45,7 +45,7 @@ void destroy_window(Win* win)
 
     if (win->control) {
 #ifdef KWIN_BUILD_TABBOX
-        auto tabbox = TabBox::TabBox::self();
+        auto tabbox = tabbox::tabbox::self();
         if (tabbox->is_displayed() && tabbox->current_client() == win) {
             tabbox->next_prev(true);
         }

@@ -50,52 +50,52 @@ class event_filter;
 
 namespace win
 {
-class DesktopChainManager;
-class TabBoxConfig;
-class TabBox;
-class TabBoxHandlerImpl : public TabBoxHandler
+class tabbox_desktop_chain_manager;
+class tabbox_config;
+class tabbox;
+class tabbox_handler_impl : public tabbox_handler
 {
 public:
-    explicit TabBoxHandlerImpl(TabBox* tabBox);
-    ~TabBoxHandlerImpl() override;
+    explicit tabbox_handler_impl(win::tabbox* tabbox);
+    ~tabbox_handler_impl() override;
 
     int active_screen() const override;
-    std::weak_ptr<TabBoxClient> active_client() const override;
+    std::weak_ptr<tabbox_client> active_client() const override;
     int current_desktop() const override;
-    QString desktop_name(TabBoxClient* client) const override;
+    QString desktop_name(tabbox_client* client) const override;
     QString desktop_name(int desktop) const override;
     bool is_kwin_compositing() const override;
-    std::weak_ptr<TabBoxClient> next_client_focus_chain(TabBoxClient* client) const override;
-    std::weak_ptr<TabBoxClient> first_client_focus_chain() const override;
-    bool is_in_focus_chain(TabBoxClient* client) const override;
+    std::weak_ptr<tabbox_client> next_client_focus_chain(tabbox_client* client) const override;
+    std::weak_ptr<tabbox_client> first_client_focus_chain() const override;
+    bool is_in_focus_chain(tabbox_client* client) const override;
     int next_desktop_focus_chain(int desktop) const override;
     int number_of_desktops() const override;
-    TabBoxClientList stacking_order() const override;
-    void elevate_client(TabBoxClient* c, QWindow* tabbox, bool elevate) const override;
-    void raise_client(TabBoxClient* client) const override;
-    void restack(TabBoxClient* c, TabBoxClient* under) override;
-    std::weak_ptr<TabBoxClient> client_to_add_to_list(KWin::win::TabBoxClient* client,
-                                                      int desktop) const override;
-    std::weak_ptr<TabBoxClient> desktop_client() const override;
+    tabbox_client_list stacking_order() const override;
+    void elevate_client(tabbox_client* c, QWindow* tabbox, bool elevate) const override;
+    void raise_client(tabbox_client* client) const override;
+    void restack(tabbox_client* c, tabbox_client* under) override;
+    std::weak_ptr<tabbox_client> client_to_add_to_list(KWin::win::tabbox_client* client,
+                                                       int desktop) const override;
+    std::weak_ptr<tabbox_client> desktop_client() const override;
     void activate_and_close() override;
-    void highlight_windows(TabBoxClient* window = nullptr, QWindow* controller = nullptr) override;
+    void highlight_windows(tabbox_client* window = nullptr, QWindow* controller = nullptr) override;
     bool no_modifier_grab() const override;
 
 private:
-    bool check_desktop(TabBoxClient* client, int desktop) const;
-    bool check_applications(TabBoxClient* client) const;
-    bool check_minimized(TabBoxClient* client) const;
-    bool check_multi_screen(TabBoxClient* client) const;
+    bool check_desktop(tabbox_client* client, int desktop) const;
+    bool check_applications(tabbox_client* client) const;
+    bool check_minimized(tabbox_client* client) const;
+    bool check_multi_screen(tabbox_client* client) const;
 
-    TabBox* m_tabbox;
-    DesktopChainManager* m_desktop_focus_chain;
+    win::tabbox* m_tabbox;
+    tabbox_desktop_chain_manager* m_desktop_focus_chain;
 };
 
-class TabBoxClientImpl : public TabBoxClient
+class tabbox_client_impl : public tabbox_client
 {
 public:
-    explicit TabBoxClientImpl(Toplevel* window);
-    ~TabBoxClientImpl() override;
+    explicit tabbox_client_impl(Toplevel* window);
+    ~tabbox_client_impl() override;
 
     QString caption() const override;
     QIcon icon() const override;
@@ -118,11 +118,11 @@ private:
     Toplevel* m_client;
 };
 
-class KWIN_EXPORT TabBox : public QObject
+class KWIN_EXPORT tabbox : public QObject
 {
     Q_OBJECT
 public:
-    ~TabBox() override;
+    ~tabbox() override;
 
     /**
      * Returns the currently displayed client ( only works in TabBoxWindowsMode ).
@@ -190,7 +190,7 @@ public:
     /**
      * Shows the tab box after some delay.
      *
-     * If the 'ShowDelay' setting is false, show() is simply called.
+     * If the 'show_delay' setting is false, show() is simply called.
      *
      * Otherwise, we start a timer for the delay given in the settings and only
      * do a show() when it times out.
@@ -212,7 +212,7 @@ public:
      * Increases the reference count, preventing the default tabbox from showing.
      *
      * @see unreference
-     * @see isDisplayed
+     * @see is_displayed
      */
     void reference()
     {
@@ -241,7 +241,7 @@ public:
     }
 
     /**
-     * @returns @c true if TabBox is shown, @c false if replaced by Effect
+     * @returns @c true if tabbox is shown, @c false if replaced by Effect
      */
     bool is_shown() const
     {
@@ -277,13 +277,13 @@ public:
     }
     void set_current_index(QModelIndex index, bool notify_effects = true);
 
-    static TabBox* self();
-    static TabBox* create(QObject* parent);
+    static win::tabbox* self();
+    static win::tabbox* create(QObject* parent);
 
 public Q_SLOTS:
     /**
      * Notify effects that the tab box is being shown, and only display the
-     * default tab box QFrame if no effect has referenced the tab box.
+     * default tabbox QFrame if no effect has referenced the tabbox.
      */
     void show();
     void close(bool abort = false);
@@ -312,8 +312,8 @@ Q_SIGNALS:
     void tabbox_key_event(QKeyEvent*);
 
 private:
-    explicit TabBox(QObject* parent);
-    void load_config(const KConfigGroup& config, TabBoxConfig& tabbox_config);
+    explicit tabbox(QObject* parent);
+    void load_config(const KConfigGroup& config, tabbox_config& tabbox_config);
 
     bool start_kde_walk_through_windows(
         TabBoxMode mode); // TabBoxWindowsMode | TabBoxWindowsAlternativeMode
@@ -347,19 +347,19 @@ private Q_SLOTS:
 
 private:
     TabBoxMode m_tabbox_mode;
-    TabBoxHandlerImpl* m_tabbox;
+    tabbox_handler_impl* m_tabbox;
     bool m_delay_show;
     int m_delay_show_time;
 
     QTimer m_delayed_show_timer;
     int m_display_ref_count;
 
-    TabBoxConfig m_default_config;
-    TabBoxConfig m_alternative_config;
-    TabBoxConfig m_default_current_application_config;
-    TabBoxConfig m_alternative_current_application_config;
-    TabBoxConfig m_desktop_config;
-    TabBoxConfig m_desktop_list_config;
+    tabbox_config m_default_config;
+    tabbox_config m_alternative_config;
+    tabbox_config m_default_current_application_config;
+    tabbox_config m_alternative_current_application_config;
+    tabbox_config m_desktop_config;
+    tabbox_config m_desktop_list_config;
     // false if an effect has referenced the tabbox
     // true if tabbox is active (independent on showTabbox setting)
     bool m_is_shown;
@@ -383,10 +383,10 @@ private:
     QHash<ElectricBorder, QAction*> m_touch_alternative_activate;
     QScopedPointer<base::x11::event_filter> m_x11_event_filter;
 
-    static TabBox* s_self;
+    static win::tabbox* s_self;
 };
 
-inline TabBox* TabBox::self()
+inline win::tabbox* win::tabbox::self()
 {
     return s_self;
 }

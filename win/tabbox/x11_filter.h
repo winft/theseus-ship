@@ -27,10 +27,10 @@ namespace KWin
 namespace win
 {
 
-class X11Filter : public base::x11::event_filter
+class tabbox_x11_filter : public base::x11::event_filter
 {
 public:
-    explicit X11Filter();
+    explicit tabbox_x11_filter();
 
     bool event(xcb_generic_event_t* event) override;
 

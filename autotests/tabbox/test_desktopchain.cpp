@@ -59,10 +59,10 @@ void TestDesktopChain::chainInit()
 {
     QFETCH(uint, size);
     QFETCH(uint, next);
-    DesktopChain chain(size);
+    tabbox_desktop_chain chain(size);
     QTEST(chain.next(next), "result");
 
-    DesktopChainManager manager(this);
+    tabbox_desktop_chain_manager manager(this);
     manager.resize(0, size);
     QTEST(manager.next(next), "result");
 }
@@ -98,11 +98,11 @@ void TestDesktopChain::chainAdd()
     QFETCH(uint, size);
     QFETCH(uint, add);
     QFETCH(uint, next);
-    DesktopChain chain(size);
+    tabbox_desktop_chain chain(size);
     chain.add(add);
     QTEST(chain.next(next), "result");
 
-    DesktopChainManager manager(this);
+    tabbox_desktop_chain_manager manager(this);
     manager.resize(0, size);
     manager.add_desktop(0, add);
     QTEST(manager.next(next), "result");
@@ -150,7 +150,7 @@ void TestDesktopChain::resize_data()
 void TestDesktopChain::resize()
 {
     QFETCH(uint, size);
-    DesktopChain chain(size);
+    tabbox_desktop_chain chain(size);
     QFETCH(uint, add);
     chain.add(add);
     QFETCH(uint, newSize);
@@ -158,7 +158,7 @@ void TestDesktopChain::resize()
     QFETCH(uint, next);
     QTEST(chain.next(next), "result");
 
-    DesktopChainManager manager(this);
+    tabbox_desktop_chain_manager manager(this);
     manager.resize(0, size);
     manager.add_desktop(0, add);
     manager.resize(size, newSize);
@@ -168,8 +168,8 @@ void TestDesktopChain::resize()
 void TestDesktopChain::resizeAdd()
 {
     // test that verifies that add works after shrinking the chain
-    DesktopChain chain(6);
-    DesktopChainManager manager(this);
+    tabbox_desktop_chain chain(6);
+    tabbox_desktop_chain_manager manager(this);
     manager.resize(0, 6);
     chain.add(4);
     manager.add_desktop(0, 4);
@@ -210,7 +210,7 @@ void TestDesktopChain::resizeAdd()
 
 void TestDesktopChain::useChain()
 {
-    DesktopChainManager manager(this);
+    tabbox_desktop_chain_manager manager(this);
     manager.resize(0, 4);
     manager.add_desktop(0, 3);
     // creating the first chain, should keep it unchanged

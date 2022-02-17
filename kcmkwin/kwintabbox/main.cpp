@@ -403,12 +403,12 @@ void KWinTabBoxConfig::defaults()
 
 void KWinTabBoxConfig::updateUiFromConfig(KWinTabBoxConfigForm *form, const KWin::win::TabBoxSettings *config)
 {
-    form->setFilterScreen(static_cast<TabBoxConfig::ClientMultiScreenMode>(config->multiScreenMode()));
-    form->setFilterDesktop(static_cast<TabBoxConfig::ClientDesktopMode>(config->desktopMode()));
-    form->setFilterMinimization(static_cast<TabBoxConfig::ClientMinimizedMode>(config->minimizedMode()));
-    form->setApplicationMode(static_cast<TabBoxConfig::ClientApplicationsMode>(config->applicationsMode()));
-    form->setShowDesktopMode(static_cast<TabBoxConfig::ShowDesktopMode>(config->showDesktopMode()));
-    form->setSwitchingModeChanged(static_cast<TabBoxConfig::ClientSwitchingMode>(config->switchingMode()));
+    form->setFilterScreen(static_cast<tabbox_config::ClientMultiScreenMode>(config->multiScreenMode()));
+    form->setFilterDesktop(static_cast<tabbox_config::ClientDesktopMode>(config->desktopMode()));
+    form->setFilterMinimization(static_cast<tabbox_config::ClientMinimizedMode>(config->minimizedMode()));
+    form->setApplicationMode(static_cast<tabbox_config::ClientApplicationsMode>(config->applicationsMode()));
+    form->setShowDesktopMode(static_cast<tabbox_config::ShowDesktopMode>(config->showDesktopMode()));
+    form->setSwitchingModeChanged(static_cast<tabbox_config::ClientSwitchingMode>(config->switchingMode()));
     form->setLayoutName(config->layoutName());
 }
 
@@ -425,12 +425,12 @@ void KWinTabBoxConfig::updateConfigFromUi(const KWinTabBoxConfigForm *form, TabB
 
 void KWinTabBoxConfig::updateUiFromDefaultConfig(KWinTabBoxConfigForm *form, const KWin::win::TabBoxSettings *config)
 {
-    form->setFilterScreen(static_cast<TabBoxConfig::ClientMultiScreenMode>(config->defaultMultiScreenModeValue()));
-    form->setFilterDesktop(static_cast<TabBoxConfig::ClientDesktopMode>(config->defaultDesktopModeValue()));
-    form->setFilterMinimization(static_cast<TabBoxConfig::ClientMinimizedMode>(config->defaultMinimizedModeValue()));
-    form->setApplicationMode(static_cast<TabBoxConfig::ClientApplicationsMode>(config->defaultApplicationsModeValue()));
-    form->setShowDesktopMode(static_cast<TabBoxConfig::ShowDesktopMode>(config->defaultShowDesktopModeValue()));
-    form->setSwitchingModeChanged(static_cast<TabBoxConfig::ClientSwitchingMode>(config->defaultSwitchingModeValue()));
+    form->setFilterScreen(static_cast<tabbox_config::ClientMultiScreenMode>(config->defaultMultiScreenModeValue()));
+    form->setFilterDesktop(static_cast<tabbox_config::ClientDesktopMode>(config->defaultDesktopModeValue()));
+    form->setFilterMinimization(static_cast<tabbox_config::ClientMinimizedMode>(config->defaultMinimizedModeValue()));
+    form->setApplicationMode(static_cast<tabbox_config::ClientApplicationsMode>(config->defaultApplicationsModeValue()));
+    form->setShowDesktopMode(static_cast<tabbox_config::ShowDesktopMode>(config->defaultShowDesktopModeValue()));
+    form->setSwitchingModeChanged(static_cast<tabbox_config::ClientSwitchingMode>(config->defaultSwitchingModeValue()));
     form->setLayoutName(config->defaultLayoutNameValue());
 }
 

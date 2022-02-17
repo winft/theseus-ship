@@ -31,23 +31,23 @@ namespace KWin
 namespace win
 {
 
-DesktopModel::DesktopModel(QObject* parent)
+tabbox_desktop_model::tabbox_desktop_model(QObject* parent)
     : QAbstractItemModel(parent)
 {
 }
 
-DesktopModel::~DesktopModel()
+tabbox_desktop_model::~tabbox_desktop_model()
 {
 }
 
-QVariant DesktopModel::data(const QModelIndex& index, int role) const
+QVariant tabbox_desktop_model::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.column() != 0)
         return QVariant();
 
     if (index.parent().isValid()) {
         // parent is valid -> access to Client
-        ClientModel* model = m_client_models[m_desktop_list[index.internalId() - 1]];
+        tabbox_client_model* model = m_client_models[m_desktop_list[index.internalId() - 1]];
         return model->data(model->index(index.row(), 0), role);
     }
 
@@ -57,7 +57,7 @@ QVariant DesktopModel::data(const QModelIndex& index, int role) const
     switch (role) {
     case Qt::DisplayRole:
     case DesktopNameRole:
-        return tabBox->desktop_name(m_desktop_list[desktop_index]);
+        return tabbox_handle->desktop_name(m_desktop_list[desktop_index]);
     case DesktopRole:
         return m_desktop_list[desktop_index];
     case ClientModelRole:
@@ -67,11 +67,11 @@ QVariant DesktopModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QString DesktopModel::longest_caption() const
+QString tabbox_desktop_model::longest_caption() const
 {
     QString caption;
     for (int desktop : m_desktop_list) {
-        QString desktop_name = tabBox->desktop_name(desktop);
+        QString desktop_name = tabbox_handle->desktop_name(desktop);
         if (desktop_name.size() > caption.size()) {
             caption = desktop_name;
         }
@@ -79,26 +79,26 @@ QString DesktopModel::longest_caption() const
     return caption;
 }
 
-int DesktopModel::columnCount(const QModelIndex& parent) const
+int tabbox_desktop_model::columnCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent)
     return 1;
 }
 
-int DesktopModel::rowCount(const QModelIndex& parent) const
+int tabbox_desktop_model::rowCount(const QModelIndex& parent) const
 {
     if (parent.isValid()) {
         if (parent.internalId() != 0 || parent.row() >= m_desktop_list.count()) {
             return 0;
         }
         const int desktop = m_desktop_list.at(parent.row());
-        const ClientModel* model = m_client_models.value(desktop);
+        const tabbox_client_model* model = m_client_models.value(desktop);
         return model->rowCount();
     }
     return m_desktop_list.count();
 }
 
-QModelIndex DesktopModel::parent(const QModelIndex& child) const
+QModelIndex tabbox_desktop_model::parent(const QModelIndex& child) const
 {
     if (!child.isValid() || child.internalId() == 0) {
         return QModelIndex();
@@ -110,7 +110,7 @@ QModelIndex DesktopModel::parent(const QModelIndex& child) const
     return createIndex(row, 0);
 }
 
-QModelIndex DesktopModel::index(int row, int column, const QModelIndex& parent) const
+QModelIndex tabbox_desktop_model::index(int row, int column, const QModelIndex& parent) const
 {
     if (column != 0) {
         return QModelIndex();
@@ -124,7 +124,7 @@ QModelIndex DesktopModel::index(int row, int column, const QModelIndex& parent) 
             return QModelIndex();
         }
         const int desktop = m_desktop_list.at(parent.row());
-        const ClientModel* model = m_client_models.value(desktop);
+        const tabbox_client_model* model = m_client_models.value(desktop);
         if (row >= model->rowCount()) {
             return QModelIndex();
         }
@@ -135,7 +135,7 @@ QModelIndex DesktopModel::index(int row, int column, const QModelIndex& parent) 
     return createIndex(row, column);
 }
 
-QHash<int, QByteArray> DesktopModel::roleNames() const
+QHash<int, QByteArray> tabbox_desktop_model::roleNames() const
 {
     return {
         {Qt::DisplayRole, QByteArrayLiteral("display")},
@@ -145,38 +145,38 @@ QHash<int, QByteArray> DesktopModel::roleNames() const
     };
 }
 
-QModelIndex DesktopModel::desktop_index(int desktop) const
+QModelIndex tabbox_desktop_model::desktop_index(int desktop) const
 {
     if (desktop > m_desktop_list.count())
         return QModelIndex();
     return createIndex(m_desktop_list.indexOf(desktop), 0);
 }
 
-void DesktopModel::create_desktop_list()
+void tabbox_desktop_model::create_desktop_list()
 {
     beginResetModel();
     m_desktop_list.clear();
     qDeleteAll(m_client_models);
     m_client_models.clear();
 
-    switch (tabBox->config().desktop_switching_mode()) {
-    case TabBoxConfig::MostRecentlyUsedDesktopSwitching: {
-        int desktop = tabBox->current_desktop();
+    switch (tabbox_handle->config().desktop_switching_mode()) {
+    case tabbox_config::MostRecentlyUsedDesktopSwitching: {
+        int desktop = tabbox_handle->current_desktop();
         do {
             m_desktop_list.append(desktop);
-            auto* client_model = new ClientModel(this);
-            client_model->create_client_list(desktop);
-            m_client_models.insert(desktop, client_model);
-            desktop = tabBox->next_desktop_focus_chain(desktop);
-        } while (desktop != tabBox->current_desktop());
+            auto* model = new tabbox_client_model(this);
+            model->create_client_list(desktop);
+            m_client_models.insert(desktop, model);
+            desktop = tabbox_handle->next_desktop_focus_chain(desktop);
+        } while (desktop != tabbox_handle->current_desktop());
         break;
     }
-    case TabBoxConfig::StaticDesktopSwitching: {
-        for (int i = 1; i <= tabBox->number_of_desktops(); i++) {
+    case tabbox_config::StaticDesktopSwitching: {
+        for (int i = 1; i <= tabbox_handle->number_of_desktops(); i++) {
             m_desktop_list.append(i);
-            auto* client_model = new ClientModel(this);
-            client_model->create_client_list(i);
-            m_client_models.insert(i, client_model);
+            auto* model = new tabbox_client_model(this);
+            model->create_client_list(i);
+            m_client_models.insert(i, model);
         }
         break;
     }

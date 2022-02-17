@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * @file
- * This file defines the class TabBoxConfig.
+ * This file defines the class tabbox_config.
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  * @since 4.4
@@ -34,73 +34,73 @@ namespace KWin
 {
 namespace win
 {
-class TabBoxConfigPrivate;
+class tabbox_config_private;
 
 /**
- * The TabBoxConfig class holds all configuration options for the TabBox.
- * The TabBoxHandler contains a pointer to an object of this class and is
- * used by all classes of TabBox. The config defines what kind of data the
- * TabBox is displaying and how the layout looks like. There can be different
- * Config sets and by setting a new config in the TabBoxHandler the behaviour
- * of the TabBox is changed immediately.
+ * The tabbox_config class holds all configuration options for the tabbox.
+ * The tabbox_handler contains a pointer to an object of this class and is
+ * used by all classes of tabbox. The config defines what kind of data the
+ * tabbox is displaying and how the layout looks like. There can be different
+ * Config sets and by setting a new config in the tabbox_handler the behaviour
+ * of the tabbox is changed immediately.
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  * @since 4.4
  */
-class TabBoxConfig
+class tabbox_config
 {
 public:
     /**
      * ClientDesktopMode defines whether windows from the current desktop or from all
-     * desktops are included in the TabBoxClient List in the TabBoxClientModel
+     * desktops are included in the tabbox_client List in the client_model
      */
     enum ClientDesktopMode {
-        AllDesktopsClients,          ///< TabBoxClients from all desktops are included.
-        OnlyCurrentDesktopClients,   ///< Only TabBoxClients on current desktop are included
-        ExcludeCurrentDesktopClients ///< Exclude TabBoxClients on current desktop
+        AllDesktopsClients,          ///< tabbox_clients from all desktops are included.
+        OnlyCurrentDesktopClients,   ///< Only tabbox_clients on current desktop are included
+        ExcludeCurrentDesktopClients ///< Exclude tabbox_clients on current desktop
     };
     /**
      * ClientApplicationsMode defines which windows from the current application or from all
-     * applications are included in the TabBoxClient List in the TabBoxClientModel
+     * applications are included in the tabbox_client List in the client_model
      */
     enum ClientApplicationsMode {
-        AllWindowsAllApplications,   ///< TabBoxClients from all applications are included
-        OneWindowPerApplication,     ///< Only one TabBoxClient for each application is included
-        AllWindowsCurrentApplication ///< Only TabBoxClients for the current application are
+        AllWindowsAllApplications,   ///< tabbox_clients from all applications are included
+        OneWindowPerApplication,     ///< Only one tabbox_client for each application is included
+        AllWindowsCurrentApplication ///< Only tabbox_clients for the current application are
                                      ///< included
     };
     /**
-     * ClientMinimizedMode defines which windows are included in the TabBoxClient List
-     * in the TabBoxClientModel based on whether they are minimized or not
+     * ClientMinimizedMode defines which windows are included in the tabbox_client List
+     * in the client_model based on whether they are minimized or not
      */
     enum ClientMinimizedMode {
-        IgnoreMinimizedStatus,   ///< TabBoxClients are included no matter they are minimized or not
-        ExcludeMinimizedClients, ///< Exclude minimized TabBoxClients
-        OnlyMinimizedClients     ///< Only minimized TabBoxClients are included
+        IgnoreMinimizedStatus, ///< tabbox_clients are included no matter they are minimized or not
+        ExcludeMinimizedClients, ///< Exclude minimized tabbox_clients
+        OnlyMinimizedClients     ///< Only minimized tabbox_clients are included
     };
     /**
-     * ShowDesktopMode defines whether a TabBoxClient representing the desktop
-     * is included in the TabBoxClient List in the TabBoxClientModel
+     * ShowDesktopMode defines whether a tabbox_client representing the desktop
+     * is included in the tabbox_client List in the client_model
      */
     enum ShowDesktopMode {
-        DoNotShowDesktopClient, ///< A TabBoxClient representing the desktop is not included
-        ShowDesktopClient       ///< A TabBoxClient representing the desktop is included
+        DoNotShowDesktopClient, ///< A tabbox_client representing the desktop is not included
+        ShowDesktopClient       ///< A tabbox_client representing the desktop is included
     };
     /**
      * ClientMultiScreenMode defines whether windows from the current screen, all but the current
-     * one or from all screens are included in the TabBoxClient List in the TabBoxClientModel.
+     * one or from all screens are included in the tabbox_client List in the client_model.
      */
     enum ClientMultiScreenMode {
-        IgnoreMultiScreen, ///< TabBoxClients are included independently of the screen they are on
-        OnlyCurrentScreenClients,   ///< Only TabBoxClients on current screen are included
-        ExcludeCurrentScreenClients ///< Exclude TabBoxClients from the current screen
+        IgnoreMultiScreen, ///< tabbox_clients are included independently of the screen they are on
+        OnlyCurrentScreenClients,   ///< Only tabbox_clients on current screen are included
+        ExcludeCurrentScreenClients ///< Exclude tabbox_clients from the current screen
     };
     /**
-     * ClientSwitchingMode defines the sorting of the TabBoxClients in the
-     * TabBoxClientModel.
+     * ClientSwitchingMode defines the sorting of the tabbox_clients in the
+     * client_model.
      */
     enum ClientSwitchingMode {
-        FocusChainSwitching,   ///< Sort by recently used. Most recently used TabBoxClient is the
+        FocusChainSwitching,   ///< Sort by recently used. Most recently used tabbox_client is the
                                ///< first
         StackingOrderSwitching ///< Sort by current stacking order
     };
@@ -118,84 +118,84 @@ public:
      * Model is used
      */
     enum TabBoxMode {
-        ClientTabBox, ///< TabBox uses TabBoxClientModel
-        DesktopTabBox ///< TabBox uses TabBoxDesktopModel
+        ClientTabBox, ///< tabbox uses client_model
+        DesktopTabBox ///< tabbox uses desktop_model
     };
-    TabBoxConfig();
-    ~TabBoxConfig();
-    TabBoxConfig& operator=(const TabBoxConfig& object);
+    tabbox_config();
+    ~tabbox_config();
+    tabbox_config& operator=(const tabbox_config& object);
 
     // getters
     /**
-     * @return If the TabBox should be shown or not
+     * @return If the tabbox should be shown or not
      * This option does not apply for TabBoxMode DesktopTabBox.
-     * @see setShowTabBox
-     * @see defaultShowTabBox
+     * @see set_show_tabbox
+     * @see default_show_tabbox
      */
     bool is_show_tabbox() const;
     /**
      * @return If Highlight Window effect should be used.
      * This option does not apply for TabBoxMode DesktopTabBox.
-     * @see setHighlightWindows
-     * @see defaultHighlightWindows
+     * @see set_highlight_windows
+     * @see default_highlight_windows
      */
     bool is_highlight_windows() const;
     /**
      * @return The current TabBoxMode
-     * @see setTabBoxMode
+     * @see set_tabbox_mode
      */
     TabBoxMode tabbox_mode() const;
     /**
      * @return The current ClientDesktopMode
      * This option only applies for TabBoxMode ClientTabBox.
-     * @see setClientDesktopMode
-     * @see defaultDesktopMode
+     * @see set_client_desktop_mode
+     * @see default_desktop_mode
      */
     ClientDesktopMode client_desktop_mode() const;
     /**
      * @return The current ClientApplicationsMode
      * This option only applies for TabBoxMode ClientTabBox.
-     * @see setClientApplicationsMode
-     * @see defaultApplicationsMode
+     * @see set_client_applications_mode
+     * @see default_applications_mode
      */
     ClientApplicationsMode client_applications_mode() const;
     /**
      * @return The current ClientMinimizedMode
      * This option only applies for TabBoxMode ClientTabBox.
-     * @see setClientMinimizedMode
-     * @see defaultMinimizedMode
+     * @see set_client_minimized_mode
+     * @see default_minimized_mode
      */
     ClientMinimizedMode client_minimized_mode() const;
     /**
      * @return The current ShowDesktopMode
      * This option only applies for TabBoxMode ClientTabBox.
-     * @see setShowDesktopMode
-     * @see defaultShowDesktopMode
+     * @see set_show_desktop_mode
+     * @see default_show_desktop_mode
      */
     ShowDesktopMode show_desktop_mode() const;
     /**
      * @return The current ClientMultiScreenMode
      * This option only applies for TabBoxMode ClientTabBox.
-     * @see setClientMultiScreenMode
-     * @see defaultMultiScreenMode
+     * @see set_client_multi_screen_mode
+     * @see default_multi_screen_mode
      */
     ClientMultiScreenMode client_multi_screen_mode() const;
     /**
      * @return The current ClientSwitchingMode.
      * This option only applies for TabBoxMode ClientTabBox.
-     * @see setClientSwitchingMode
-     * @see defaultSwitchingMode
+     * @see set_client_switching_mode
+     * @see default_switching_mode
      */
     ClientSwitchingMode client_switching_mode() const;
     /**
      * @return The current DesktopSwitchingMode
      * This option only applies for TabBoxMode DesktopTabBox.
-     * @see setDesktopSwitchingMode
+     * @see set_desktop_switching_mode
      */
     DesktopSwitchingMode desktop_switching_mode() const;
     /**
-     * @return Then name of the current ItemLayout
-     * @see setlayoutName
+     * @return Then name of the current item_layout
+     * @see set_layout_name
      */
     QString& layout_name() const;
 
@@ -203,13 +203,13 @@ public:
     /**
      * @param show The tabbox should be shown or not.
      * This option does not apply for TabBoxMode DesktopTabBox.
-     * @see isShowTabBox
+     * @see is_show_tabbox
      */
     void set_show_tabbox(bool show);
     /**
      * @param highlight Highlight Windows effect should be used or not.
      * This option does not apply for TabBoxMode DesktopTabBox.
-     * @see isHighlightWindows
+     * @see is_highlight_windows
      */
     void set_highlight_windows(bool highlight);
     /**
@@ -218,50 +218,50 @@ public:
      */
     void set_tabbox_mode(TabBoxMode mode);
     /**
-     * @param desktopMode The new ClientDesktopMode to be used.
+     * @param desktop_mode The new ClientDesktopMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
-     * @see clientDesktopMode
+     * @see client_desktop_mode
      */
     void set_client_desktop_mode(ClientDesktopMode desktop_mode);
     /**
-     * @param applicationsMode The new ClientApplicationsMode to be used.
+     * @param applications_mode The new ClientApplicationsMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
-     * @see clientApplicationsMode
+     * @see client_applications_mode
      */
     void set_client_applications_mode(ClientApplicationsMode applications_mode);
     /**
-     * @param minimizedMode The new ClientMinimizedMode to be used.
+     * @param minimized_mode The new ClientMinimizedMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
-     * @see clientMinimizedMode
+     * @see client_minimized_mode
      */
     void set_client_minimized_mode(ClientMinimizedMode minimized_mode);
     /**
-     * @param showDesktopMode The new ShowDesktopMode to be used.
+     * @param show_desktop_mode The new ShowDesktopMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
-     * @see showDesktopMode
+     * @see show_desktop_mode
      */
     void set_show_desktop_mode(ShowDesktopMode show_desktop_mode);
     /**
-     * @param multiScreenMode The new ClientMultiScreenMode to be used.
+     * @param multi_screen_mode The new ClientMultiScreenMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
-     * @see clientMultiScreenMode
+     * @see client_multi_screen_mode
      */
     void set_client_multi_screen_mode(ClientMultiScreenMode multi_screen_mode);
     /**
-     * @param switchingMode The new ClientSwitchingMode to be used.
+     * @param switching_mode The new ClientSwitchingMode to be used.
      * This option only applies for TabBoxMode ClientTabBox.
-     * @see clientSwitchingMode
+     * @see client_switching_mode
      */
     void set_client_switching_mode(ClientSwitchingMode switching_mode);
     /**
-     * @param switchingMode The new DesktopSwitchingMode to be used.
+     * @param switching_mode The new DesktopSwitchingMode to be used.
      * This option only applies for TabBoxMode DesktopTabBox.
-     * @see desktopSwitchingMode
+     * @see desktop_switching_mode
      */
     void set_desktop_switching_mode(DesktopSwitchingMode switching_mode);
     /**
-     * @param name The new ItemLayout config name
-     * @see layoutName
+     * @param name The new item_layout config name
+     * @see layout_name
      */
     void set_layout_name(const QString& name);
 
@@ -304,7 +304,7 @@ public:
     }
 
 private:
-    TabBoxConfigPrivate* d;
+    tabbox_config_private* d;
 };
 
 } // namespace TabBox

@@ -24,20 +24,20 @@ namespace KWin
 namespace win
 {
 
-DesktopChain::DesktopChain(uint initialSize)
+tabbox_desktop_chain::tabbox_desktop_chain(uint initialSize)
     : m_chain(initialSize)
 {
     init();
 }
 
-void DesktopChain::init()
+void tabbox_desktop_chain::init()
 {
     for (int i = 0; i < m_chain.size(); ++i) {
         m_chain[i] = i + 1;
     }
 }
 
-uint DesktopChain::next(uint index_desktop) const
+uint tabbox_desktop_chain::next(uint index_desktop) const
 {
     const int i = m_chain.indexOf(index_desktop);
     if (i >= 0 && i + 1 < m_chain.size()) {
@@ -49,7 +49,7 @@ uint DesktopChain::next(uint index_desktop) const
     }
 }
 
-void DesktopChain::resize(uint previous_size, uint new_size)
+void tabbox_desktop_chain::resize(uint previous_size, uint new_size)
 {
     Q_ASSERT(int(previous_size) == m_chain.size());
     m_chain.resize(new_size);
@@ -68,7 +68,7 @@ void DesktopChain::resize(uint previous_size, uint new_size)
     }
 }
 
-void DesktopChain::add(uint desktop)
+void tabbox_desktop_chain::add(uint desktop)
 {
     if (m_chain.isEmpty() || int(desktop) > m_chain.count()) {
         return;
@@ -84,37 +84,37 @@ void DesktopChain::add(uint desktop)
     m_chain[0] = desktop;
 }
 
-DesktopChainManager::DesktopChainManager(QObject* parent)
+tabbox_desktop_chain_manager::tabbox_desktop_chain_manager(QObject* parent)
     : QObject(parent)
     , m_max_chain_size(0)
 {
-    m_current_chain = m_chains.insert(QString(), DesktopChain());
+    m_current_chain = m_chains.insert(QString(), tabbox_desktop_chain());
 }
 
-DesktopChainManager::~DesktopChainManager()
+tabbox_desktop_chain_manager::~tabbox_desktop_chain_manager()
 {
 }
 
-uint DesktopChainManager::next(uint indexDesktop) const
+uint tabbox_desktop_chain_manager::next(uint indexDesktop) const
 {
     return m_current_chain.value().next(indexDesktop);
 }
 
-void DesktopChainManager::resize(uint previous_size, uint new_size)
+void tabbox_desktop_chain_manager::resize(uint previous_size, uint new_size)
 {
     m_max_chain_size = new_size;
-    for (DesktopChains::iterator it = m_chains.begin(); it != m_chains.end(); ++it) {
+    for (tabbox_desktop_chains::iterator it = m_chains.begin(); it != m_chains.end(); ++it) {
         it.value().resize(previous_size, new_size);
     }
 }
 
-void DesktopChainManager::add_desktop(uint previous_desktop, uint current_desktop)
+void tabbox_desktop_chain_manager::add_desktop(uint previous_desktop, uint current_desktop)
 {
     Q_UNUSED(previous_desktop)
     m_current_chain.value().add(current_desktop);
 }
 
-void DesktopChainManager::use_chain(const QString& identifier)
+void tabbox_desktop_chain_manager::use_chain(const QString& identifier)
 {
     if (m_current_chain.key().isNull()) {
         create_first_chain(identifier);
@@ -126,16 +126,17 @@ void DesktopChainManager::use_chain(const QString& identifier)
     }
 }
 
-void DesktopChainManager::create_first_chain(const QString& identifier)
+void tabbox_desktop_chain_manager::create_first_chain(const QString& identifier)
 {
-    DesktopChain value(m_current_chain.value());
+    tabbox_desktop_chain value(m_current_chain.value());
     m_chains.erase(m_current_chain);
     m_current_chain = m_chains.insert(identifier, value);
 }
 
-QHash<QString, DesktopChain>::Iterator DesktopChainManager::add_new_chain(const QString& identifier)
+QHash<QString, tabbox_desktop_chain>::Iterator
+tabbox_desktop_chain_manager::add_new_chain(const QString& identifier)
 {
-    return m_chains.insert(identifier, DesktopChain(m_max_chain_size));
+    return m_chains.insert(identifier, tabbox_desktop_chain(m_max_chain_size));
 }
 
 } // namespace win

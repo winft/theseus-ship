@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-class MockTabBoxClient : public win::TabBoxClient
+class MockTabBoxClient : public win::tabbox_client
 {
 public:
     explicit MockTabBoxClient(QString caption);
