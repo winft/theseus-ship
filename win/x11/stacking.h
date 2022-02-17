@@ -1,8 +1,9 @@
 #include "group.h"
 #include "window.h"
 
+#include "base/output_helpers.h"
 #include "base/platform.h"
-#include "screens.h"
+#include "main.h"
 #include "toplevel.h"
 
 #include <deque>
@@ -19,15 +20,15 @@ std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
 {
     constexpr size_t layer_count = static_cast<int>(layer::count);
     std::deque<Toplevel*> layers[layer_count];
+    auto const& outputs = kwinApp()->get_base().get_outputs();
 
     // build the order from layers
-    QVector<QMap<group*, layer>> minimum_layer(
-        std::max<size_t>(kwinApp()->get_base().get_outputs().size(), 1));
+    QVector<QMap<group*, layer>> minimum_layer(std::max<size_t>(outputs.size(), 1));
 
     for (auto const& win : list) {
         auto l = win->layer();
 
-        auto const screen = win->screen();
+        auto const screen = base::get_output_index(outputs, win->central_output);
         auto c = qobject_cast<window*>(win);
 
         QMap<group*, layer>::iterator mLayer = minimum_layer[screen].find(c ? c->group() : nullptr);

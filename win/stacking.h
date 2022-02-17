@@ -15,6 +15,9 @@
 #include "space.h"
 #include "stacking_order.h"
 #include "transient.h"
+
+#include "base/output_helpers.h"
+#include "base/platform.h"
 #include "utils/blocker.h"
 #include "win/util.h"
 #include "x11/group.h"
@@ -103,7 +106,9 @@ Toplevel* top_client_on_desktop(Space* space,
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         auto c = *it;
         if (c && c->isOnDesktop(desktop) && c->isShown()) {
-            if (screen != -1 && c->screen() != screen)
+            if (screen != -1
+                && base::get_output_index(kwinApp()->get_base().get_outputs(), c->central_output)
+                    != screen)
                 continue;
             if (!only_normal)
                 return c;
@@ -296,7 +301,9 @@ void raise_or_lower_client(Space* space, Window* window)
             space,
             window->isOnAllDesktops() ? win::virtual_desktop_manager::self()->current()
                                       : window->desktop(),
-            kwinApp()->options->isSeparateScreenFocus() ? window->screen() : -1);
+            kwinApp()->options->isSeparateScreenFocus() ? base::get_output_index(
+                kwinApp()->get_base().get_outputs(), window->central_output)
+                                                        : -1);
     }
 
     if (window == topmost) {

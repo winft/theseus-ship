@@ -132,8 +132,15 @@ void add_scene_window(Scene& scene, Win& win)
     scene.m_windows[&win] = scn_win;
 
     QObject::connect(&win, &Win::windowClosed, &scene, &Scene::windowClosed);
-    QObject::connect(
-        &win, &Win::screenScaleChanged, &scene, [&] { scene.windowGeometryShapeChanged(&win); });
+    QObject::connect(&win, &Win::central_output_changed, &scene, [&](auto old_out, auto new_out) {
+        if (!new_out) {
+            return;
+        }
+        if (old_out && old_out->scale() == new_out->scale()) {
+            return;
+        }
+        scene.windowGeometryShapeChanged(&win);
+    });
     win.render->effect->setSceneWindow(scn_win);
 
     win.add_scene_window_addon();

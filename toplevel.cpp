@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 
 #include "base/output.h"
+#include "base/output_helpers.h"
+#include "base/platform.h"
 #include "render/compositor.h"
 #include "render/effects.h"
 #include "screens.h"
@@ -50,7 +52,6 @@ Toplevel::Toplevel(win::transient* transient)
     : m_clientMachine(new win::x11::client_machine(this))
     , m_internalId(QUuid::createUuid())
     , m_damageReplyPending(false)
-    , m_screen(0)
     , m_skipCloseAnimation(false)
 {
     m_transient.reset(transient);
@@ -65,8 +66,13 @@ Toplevel::Toplevel(win::transient* transient)
     });
 
     connect(this, &Toplevel::damaged, this, &Toplevel::needsRepaint);
+
+    auto& base = kwinApp()->get_base();
     QObject::connect(
         &kwinApp()->get_base(), &base::platform::topology_changed, this, &Toplevel::checkScreen);
+    QObject::connect(&base, &base::platform::output_added, this, &Toplevel::handle_output_added);
+    QObject::connect(
+        &base, &base::platform::output_removed, this, &Toplevel::handle_output_removed);
 
     setupCheckScreenConnection();
 }
@@ -156,7 +162,7 @@ void Toplevel::copyToDeleted(Toplevel* c)
     m_clientMachine->setParent(this);
     m_wmClientLeader = c->wmClientLeader();
     opaque_region = c->opaqueRegion();
-    m_screen = c->m_screen;
+    central_output = c->central_output;
     m_skipCloseAnimation = c->m_skipCloseAnimation;
     m_internalFBO = c->m_internalFBO;
     m_internalImage = c->m_internalImage;
@@ -528,26 +534,13 @@ void Toplevel::setReadyForPainting()
 
 void Toplevel::checkScreen()
 {
-    auto const& base = kwinApp()->get_base();
-    auto const& screens = base.screens;
-
-    if (base.get_outputs().size() == 1) {
-        if (m_screen != 0) {
-            m_screen = 0;
-            Q_EMIT screenChanged();
-        }
-    } else {
-        auto const s = static_cast<int>(
-            base::get_nearest_output(base.get_outputs(), frameGeometry().center()));
-        if (s != m_screen) {
-            m_screen = s;
-            Q_EMIT screenChanged();
-        }
-    }
-    qreal newScale = screens.scale(m_screen);
-    if (newScale != m_screenScale) {
-        m_screenScale = newScale;
-        Q_EMIT screenScaleChanged();
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+    auto output
+        = base::get_output(outputs, base::get_nearest_output(outputs, frameGeometry().center()));
+    if (central_output != output) {
+        auto old_out = central_output;
+        central_output = output;
+        Q_EMIT central_output_changed(old_out, output);
     }
 }
 
@@ -562,14 +555,26 @@ void Toplevel::removeCheckScreenConnection()
     disconnect(this, &Toplevel::frame_geometry_changed, this, &Toplevel::checkScreen);
 }
 
-int Toplevel::screen() const
+void Toplevel::handle_output_added(base::output* output)
 {
-    return m_screen;
+    if (!central_output) {
+        central_output = output;
+        Q_EMIT central_output_changed(nullptr, output);
+        return;
+    }
+
+    checkScreen();
 }
 
-qreal Toplevel::screenScale() const
+void Toplevel::handle_output_removed(base::output* output)
 {
-    return m_screenScale;
+    if (central_output != output) {
+        return;
+    }
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+    central_output
+        = base::get_output(outputs, base::get_nearest_output(outputs, frameGeometry().center()));
+    Q_EMIT central_output_changed(output, central_output);
 }
 
 qreal Toplevel::bufferScale() const

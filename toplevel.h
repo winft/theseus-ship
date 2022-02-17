@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_TOPLEVEL_H
 #define KWIN_TOPLEVEL_H
 
+#include "base/output.h"
 #include "base/x11/xcb/window.h"
 #include "input/cursor.h"
 #include "rules/rules.h"
@@ -47,11 +48,6 @@ class Surface;
 
 namespace KWin
 {
-
-namespace base
-{
-class output;
-}
 
 namespace render
 {
@@ -134,6 +130,8 @@ public:
     bool ready_for_painting{false};
     bool m_isDamaged{false};
 
+    base::output const* central_output{nullptr};
+
     /**
      * Records all outputs that still need to be repainted for the current repaint regions.
      */
@@ -159,13 +157,6 @@ public:
     QSize size() const;
     QPoint pos() const;
 
-    int screen() const; // the screen where the center is
-    /**
-     * The scale of the screen this window is currently on
-     * @note The buffer scale can be different.
-     * @since 5.12
-     */
-    qreal screenScale() const; //
     /**
      * Returns the ratio between physical pixels and device-independent pixels for
      * the attached buffer (or pixmap).
@@ -366,11 +357,10 @@ Q_SIGNALS:
      */
     void needsRepaint();
     /**
-     * Emitted whenever the Toplevel's screen changes. This can happen either in consequence to
-     * a screen being removed/added or if the Toplevel's geometry changes.
-     * @since 4.11
+     * Emitted whenever the Toplevel's output changes. This can happen either in consequence to
+     * an output being removed/added or if the Toplevel's geometry changes.
      */
-    void screenChanged();
+    void central_output_changed(base::output const* old_out, base::output const* new_out);
     void skipCloseAnimationChanged();
     /**
      * Emitted whenever the window role of the window changes.
@@ -396,13 +386,6 @@ Q_SIGNALS:
      * Emitted whenever the Surface for this Toplevel changes.
      */
     void surfaceChanged();
-
-    /*
-     * Emitted when the client's screen changes onto a screen of a different scale
-     * or the screen we're on changes
-     * @since 5.12
-     */
-    void screenScaleChanged();
 
     /**
      * Emitted whenever the client's shadow changes.
@@ -452,6 +435,8 @@ protected:
     xcb_window_t m_wmClientLeader{XCB_WINDOW_NONE};
 
 private:
+    void handle_output_added(base::output* output);
+    void handle_output_removed(base::output* output);
     void add_repaint_outputs(QRegion const& region);
 
     // when adding new data members, check also copyToDeleted()
@@ -467,10 +452,8 @@ private:
     QByteArray resource_class;
     bool m_damageReplyPending;
     xcb_xfixes_fetch_region_cookie_t m_regionCookie;
-    int m_screen;
     bool m_skipCloseAnimation;
     // when adding new data members, check also copyToDeleted()
-    qreal m_screenScale = 1.0;
     QVector<win::virtual_desktop*> m_desktops;
 
     win::remnant* m_remnant{nullptr};

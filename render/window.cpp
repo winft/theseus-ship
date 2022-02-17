@@ -168,7 +168,7 @@ WindowQuadList window::buildQuads(bool force) const
 
         if (toplevel->control) {
             toplevel->layoutDecorationRects(rects[0], rects[1], rects[2], rects[3]);
-            decorationScale = toplevel->screenScale();
+            decorationScale = toplevel->central_output ? toplevel->central_output->scale() : 1.;
         }
 
         auto const decoration_region = decorationShape();

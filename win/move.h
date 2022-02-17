@@ -683,7 +683,8 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             // these (currentyl implicit casted) types with auto.
             auto const& screens = kwinApp()->get_base().screens;
             auto const& outputs = kwinApp()->get_base().get_outputs();
-            auto const old_screen = win->screen();
+            auto const old_screen
+                = base::get_output_index(kwinApp()->get_base().get_outputs(), win->central_output);
             auto screen = old_screen;
 
             std::vector<QRect> screens_geos(outputs.size());
@@ -844,7 +845,8 @@ bool start_move_resize(Win* win)
 
     mov_res.initial_geometry = pending_frame_geometry(win);
     mov_res.geometry = mov_res.initial_geometry;
-    mov_res.start_screen = win->screen();
+    mov_res.start_screen
+        = base::get_output_index(kwinApp()->get_base().get_outputs(), win->central_output);
 
     check_unrestricted_move_resize(win);
 
@@ -1287,9 +1289,11 @@ void finish_move_resize(Win* win, bool cancel)
     // alignment.
     win->checkScreen();
 
-    if (win->screen() != mov_res.start_screen) {
+    auto output_index
+        = base::get_output_index(kwinApp()->get_base().get_outputs(), win->central_output);
+    if (output_index != mov_res.start_screen) {
         // Checks rule validity
-        workspace()->sendClientToScreen(win, win->screen());
+        workspace()->sendClientToScreen(win, output_index);
         if (win->geometry_update.max_mode != maximize_mode::restore) {
             check_workspace_position(win);
         }
@@ -1397,11 +1401,15 @@ void pack_to(Win* win, int left, int top)
     // May cause leave event.
     workspace()->updateFocusMousePosition(input::get_cursor()->pos());
 
-    auto const old_screen = win->screen();
+    auto const old_screen
+        = base::get_output_index(kwinApp()->get_base().get_outputs(), win->central_output);
     move(win, QPoint(left, top));
-    if (win->screen() != old_screen) {
+
+    auto output_index
+        = base::get_output_index(kwinApp()->get_base().get_outputs(), win->central_output);
+    if (output_index != old_screen) {
         // Checks rule validity.
-        workspace()->sendClientToScreen(win, win->screen());
+        workspace()->sendClientToScreen(win, output_index);
         if (win->maximizeMode() != win::maximize_mode::restore) {
             check_workspace_position(win);
         }

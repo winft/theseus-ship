@@ -257,9 +257,9 @@ void QuickTilingTest::testQuickTiling()
     QCOMPARE(c->frameGeometry(), expectedGeometry);
 
     // send window to other screen
-    QCOMPARE(c->screen(), 0);
+    QCOMPARE(c->central_output, Test::app()->base.get_outputs().at(0));
     win::send_to_screen(c, 1);
-    QCOMPARE(c->screen(), 1);
+    QCOMPARE(c->central_output, Test::app()->base.get_outputs().at(1));
 
     // quick tile should not be changed
     QCOMPARE(c->control->quicktiling(), mode);
@@ -704,12 +704,13 @@ void QuickTilingTest::testX11QuickTiling()
     QCOMPARE(client->restore_geometries.maximize, origGeo);
     QCOMPARE(quickTileChangedSpy.count(), 1);
 
-    QCOMPARE(client->screen(), 0);
+    QCOMPARE(client->central_output, Test::app()->base.get_outputs().at(0));
     QFETCH(win::quicktiles, modeAfterToggle);
 
     // quick tile to same edge again should also act like send to screen
     win::set_quicktile_mode(client, mode, true);
-    QTEST(client->screen(), "screen");
+    QTEST(base::get_output_index(Test::app()->base.get_outputs(), client->central_output),
+          "screen");
     QCOMPARE(client->control->quicktiling(), modeAfterToggle);
     QCOMPARE(client->restore_geometries.maximize.isValid(),
              modeAfterToggle != win::quicktiles::none);
@@ -789,7 +790,12 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     // vertically maximize the window
     win::maximize(client, flags(client->maximizeMode() ^ win::maximize_mode::vertical));
     QCOMPARE(client->frameGeometry().width(), origGeo.width());
-    QCOMPARE(client->size().height(), Test::app()->base.screens.size(client->screen()).height());
+    QCOMPARE(
+        client->size().height(),
+        Test::app()
+            ->base.screens
+            .size(base::get_output_index(Test::app()->base.get_outputs(), client->central_output))
+            .height());
     QCOMPARE(client->restore_geometries.maximize, origGeo);
 
     // now quick tile

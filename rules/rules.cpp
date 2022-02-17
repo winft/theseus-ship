@@ -6,6 +6,10 @@
 */
 #include "rules.h"
 
+#include "base/output.h"
+#include "base/output_helpers.h"
+#include "base/platform.h"
+#include "main.h"
 #include "utils/geo.h"
 
 #include <QDebug>
@@ -509,8 +513,10 @@ bool Rules::update(Toplevel* window, int selection)
     }
 
     if (remember(screen, Screen)) {
-        updated = updated || screen.data != window->screen();
-        screen.data = window->screen();
+        auto output_index
+            = base::get_output_index(kwinApp()->get_base().get_outputs(), window->central_output);
+        updated = updated || screen.data != output_index;
+        screen.data = output_index;
     }
     if (remember(size, Size)) {
         if (!window->control->fullscreen()) {

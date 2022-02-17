@@ -39,7 +39,7 @@ int get_current_output(Space const& space)
 
     auto const cur = base.topology.current;
     if (auto client = space.activeClient(); client && !win::on_screen(client, cur)) {
-        return client->screen();
+        return base::get_output_index(kwinApp()->get_base().get_outputs(), client->central_output);
     }
     return cur;
 }
@@ -51,7 +51,8 @@ void set_current_output_by_window(Base& base, Win const& window)
         return;
     }
     if (!win::on_screen(&window, base.topology.current)) {
-        base::set_current_output(base, window.screen());
+        base::set_current_output(base,
+                                 base::get_output_index(base.get_outputs(), window.central_output));
     }
 }
 
@@ -65,18 +66,19 @@ template<typename Win>
 void send_to_screen(Win* win, int new_screen)
 {
     new_screen = win->control->rules().checkScreen(new_screen);
+    auto new_output = base::get_output(kwinApp()->get_base().get_outputs(), new_screen);
 
     if (win->control->active()) {
         set_current_output(kwinApp()->get_base(), new_screen);
         // might impact the layer of a fullscreen window
         for (auto cc : workspace()->allClientList()) {
-            if (cc->control->fullscreen() && cc->screen() == new_screen) {
+            if (cc->control->fullscreen() && cc->central_output == new_output) {
                 update_layer(cc);
             }
         }
     }
 
-    if (win->screen() == new_screen) {
+    if (win->central_output == new_output) {
         // Don't use isOnScreen(), that's true even when only partially.
         return;
     }

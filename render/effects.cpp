@@ -2017,7 +2017,6 @@ TOPLEVEL_HELPER(int, width, size().width)
 TOPLEVEL_HELPER(int, height, size().height)
 TOPLEVEL_HELPER(QPoint, pos, pos)
 TOPLEVEL_HELPER(QSize, size, size)
-TOPLEVEL_HELPER(int, screen, screen)
 TOPLEVEL_HELPER(QRect, geometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, frameGeometry, frameGeometry)
 TOPLEVEL_HELPER(int, desktop, desktop)
@@ -2096,6 +2095,11 @@ QStringList effects_window_impl::activities() const
 {
     // No support for Activities.
     return {};
+}
+
+int effects_window_impl::screen() const
+{
+    return base::get_output_index(kwinApp()->get_base().get_outputs(), toplevel->central_output);
 }
 
 QRect effects_window_impl::clientGeometry() const

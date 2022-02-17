@@ -286,7 +286,8 @@ void Toplevel::applyWindowRules()
     // MinSize, MaxSize handled by Geometry
     // IgnoreGeometry
     win::set_desktop(this, desktop());
-    workspace()->sendClientToScreen(this, screen());
+    workspace()->sendClientToScreen(
+        this, base::get_output_index(kwinApp()->get_base().get_outputs(), central_output));
     // Type
     win::maximize(this, maximizeMode());
 

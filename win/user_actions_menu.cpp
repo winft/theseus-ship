@@ -582,7 +582,10 @@ void user_actions_menu::screenPopupAboutToShow()
                   screens.name(i)));
         action->setData(static_cast<int>(i));
         action->setCheckable(true);
-        if (m_client && static_cast<int>(i) == m_client->screen()) {
+        if (m_client
+            && static_cast<int>(i)
+                == base::get_output_index(kwinApp()->get_base().get_outputs(),
+                                          m_client->central_output)) {
             action->setChecked(true);
         }
         group->addAction(action);

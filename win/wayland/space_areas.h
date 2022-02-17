@@ -5,6 +5,9 @@
 */
 #pragma once
 
+#include "base/output_helpers.h"
+#include "base/platform.h"
+#include "main.h"
 #include "screens.h"
 #include "win/space.h"
 #include "win/space_areas.h"
@@ -72,7 +75,8 @@ void update_space_areas(Window* win,
         return strut_area::invalid;
     };
 
-    auto const strut = margins(screens.geometry(win->screen()));
+    auto const strut = margins(screens.geometry(
+        base::get_output_index(kwinApp()->get_base().get_outputs(), win->central_output)));
     auto const strut_region
         = strut_rects{strut_rect(win->frameGeometry(), margins_to_strut_area(strut))};
     auto rect = desktop_area - margins(QRect({}, base.topology.size));

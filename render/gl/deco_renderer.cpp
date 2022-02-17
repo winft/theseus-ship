@@ -151,71 +151,72 @@ void deco_renderer::render()
     }
 
     QRect left, top, right, bottom;
-    client()->client()->layoutDecorationRects(left, top, right, bottom);
+    auto window = client()->client();
+    window->layoutDecorationRects(left, top, right, bottom);
 
-    const QRect geometry
-        = dirty ? QRect(QPoint(0, 0), client()->client()->size()) : scheduled.boundingRect();
+    const QRect geometry = dirty ? QRect(QPoint(0, 0), window->size()) : scheduled.boundingRect();
 
     // We pad each part in the decoration atlas in order to avoid texture bleeding.
     const int padding = 1;
 
-    auto renderPart =
-        [=](const QRect& geo, const QRect& partRect, const QPoint& position, bool rotated = false) {
-            if (!geo.isValid()) {
-                return;
-            }
+    auto renderPart = [=](const QRect& geo,
+                          const QRect& partRect,
+                          const QPoint& position,
+                          bool rotated = false) {
+        if (!geo.isValid()) {
+            return;
+        }
 
-            QRect rect = geo;
+        QRect rect = geo;
 
-            // We allow partial decoration updates and it might just so happen that the dirty region
-            // is completely contained inside the decoration part, i.e. the dirty region doesn't
-            // touch any of the decoration's edges. In that case, we should **not** pad the dirty
-            // region.
-            if (rect.left() == partRect.left()) {
-                rect.setLeft(rect.left() - padding);
-            }
-            if (rect.top() == partRect.top()) {
-                rect.setTop(rect.top() - padding);
-            }
-            if (rect.right() == partRect.right()) {
-                rect.setRight(rect.right() + padding);
-            }
-            if (rect.bottom() == partRect.bottom()) {
-                rect.setBottom(rect.bottom() + padding);
-            }
+        // We allow partial decoration updates and it might just so happen that the dirty region
+        // is completely contained inside the decoration part, i.e. the dirty region doesn't
+        // touch any of the decoration's edges. In that case, we should **not** pad the dirty
+        // region.
+        if (rect.left() == partRect.left()) {
+            rect.setLeft(rect.left() - padding);
+        }
+        if (rect.top() == partRect.top()) {
+            rect.setTop(rect.top() - padding);
+        }
+        if (rect.right() == partRect.right()) {
+            rect.setRight(rect.right() + padding);
+        }
+        if (rect.bottom() == partRect.bottom()) {
+            rect.setBottom(rect.bottom() + padding);
+        }
 
-            QRect viewport = geo.translated(-rect.x(), -rect.y());
-            const qreal devicePixelRatio = client()->client()->screenScale();
+        QRect viewport = geo.translated(-rect.x(), -rect.y());
+        auto const devicePixelRatio = window->central_output ? window->central_output->scale() : 1.;
 
-            QImage image(rect.size() * devicePixelRatio, QImage::Format_ARGB32_Premultiplied);
-            image.setDevicePixelRatio(devicePixelRatio);
-            image.fill(Qt::transparent);
+        QImage image(rect.size() * devicePixelRatio, QImage::Format_ARGB32_Premultiplied);
+        image.setDevicePixelRatio(devicePixelRatio);
+        image.fill(Qt::transparent);
 
-            QPainter painter(&image);
-            painter.setRenderHint(QPainter::Antialiasing);
-            painter.setViewport(QRect(viewport.topLeft(), viewport.size() * devicePixelRatio));
-            painter.setWindow(QRect(geo.topLeft(), geo.size() * devicePixelRatio));
-            painter.setClipRect(geo);
-            renderToPainter(&painter, geo);
-            painter.end();
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setViewport(QRect(viewport.topLeft(), viewport.size() * devicePixelRatio));
+        painter.setWindow(QRect(geo.topLeft(), geo.size() * devicePixelRatio));
+        painter.setClipRect(geo);
+        renderToPainter(&painter, geo);
+        painter.end();
 
-            const QRect viewportScaled(viewport.topLeft() * devicePixelRatio,
-                                       viewport.size() * devicePixelRatio);
-            const bool isIntegerScaling
-                = qFuzzyCompare(devicePixelRatio, std::ceil(devicePixelRatio));
-            clamp(image,
-                  isIntegerScaling ? viewportScaled : viewportScaled.marginsRemoved({1, 1, 1, 1}));
+        const QRect viewportScaled(viewport.topLeft() * devicePixelRatio,
+                                   viewport.size() * devicePixelRatio);
+        const bool isIntegerScaling = qFuzzyCompare(devicePixelRatio, std::ceil(devicePixelRatio));
+        clamp(image,
+              isIntegerScaling ? viewportScaled : viewportScaled.marginsRemoved({1, 1, 1, 1}));
 
-            if (rotated) {
-                // TODO: get this done directly when rendering to the image
-                image = rotate(image, QRect(QPoint(), rect.size()));
-                viewport = QRect(viewport.y(), viewport.x(), viewport.height(), viewport.width());
-            }
+        if (rotated) {
+            // TODO: get this done directly when rendering to the image
+            image = rotate(image, QRect(QPoint(), rect.size()));
+            viewport = QRect(viewport.y(), viewport.x(), viewport.height(), viewport.width());
+        }
 
-            const QPoint dirtyOffset = geo.topLeft() - partRect.topLeft();
-            m_texture->update(
-                image, (position + dirtyOffset - viewport.topLeft()) * image.devicePixelRatio());
-        };
+        const QPoint dirtyOffset = geo.topLeft() - partRect.topLeft();
+        m_texture->update(image,
+                          (position + dirtyOffset - viewport.topLeft()) * image.devicePixelRatio());
+    };
 
     const QPoint topPosition(padding, padding);
     const QPoint bottomPosition(padding, topPosition.y() + top.height() + 2 * padding);
@@ -236,7 +237,8 @@ static int align(int value, int align)
 void deco_renderer::resizeTexture()
 {
     QRect left, top, right, bottom;
-    client()->client()->layoutDecorationRects(left, top, right, bottom);
+    auto window = client()->client();
+    window->layoutDecorationRects(left, top, right, bottom);
     QSize size;
 
     size.rwidth() = qMax(qMax(top.width(), bottom.width()), qMax(left.height(), right.height()));
@@ -249,9 +251,11 @@ void deco_renderer::resizeTexture()
 
     size.rwidth() = align(size.width(), 128);
 
-    size *= client()->client()->screenScale();
-    if (m_texture && m_texture->size() == size)
+    size *= window->central_output ? window->central_output->scale() : 1.;
+
+    if (m_texture && m_texture->size() == size) {
         return;
+    }
 
     if (!size.isEmpty()) {
         m_texture.reset(new GLTexture(GL_RGBA8, size.width(), size.height()));

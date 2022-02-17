@@ -1290,7 +1290,9 @@ void restack_window(Win* win,
 
             if (!c
                 || !(is_normal(*it) && c->isShown() && (*it)->isOnCurrentDesktop()
-                     && on_screen(*it, win->screen()))) {
+                     && on_screen(*it,
+                                  base::get_output_index(kwinApp()->get_base().get_outputs(),
+                                                         win->central_output)))) {
                 continue;
             }
 

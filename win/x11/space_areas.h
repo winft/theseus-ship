@@ -24,8 +24,10 @@ void update_space_areas(Window* win,
         return;
     }
 
-    auto const& screens = kwinApp()->get_base().screens;
-    auto const screens_count = kwinApp()->get_base().get_outputs().size();
+    auto const& base = kwinApp()->get_base();
+    auto const& screens = base.screens;
+    auto const& outputs = base.get_outputs();
+    auto const screens_count = outputs.size();
     auto const desktops_count = static_cast<int>(virtual_desktop_manager::self()->count());
 
     auto client_area = adjusted_client_area(win, desktop_area, desktop_area);
@@ -42,7 +44,8 @@ void update_space_areas(Window* win,
     }
 
     auto strut_region = win::x11::get_strut_rects(win);
-    auto const clientsScreenRect = screens.geometry(win->screen());
+    auto const clientsScreenRect
+        = screens.geometry(base::get_output_index(outputs, win->central_output));
 
     for (auto strut = strut_region.begin(); strut != strut_region.end(); strut++) {
         *strut = strut_rect((*strut).intersected(clientsScreenRect), (*strut).area());

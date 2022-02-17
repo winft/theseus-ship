@@ -1426,11 +1426,11 @@ void TestXdgShellClient::testSendToScreen()
     QSignalSpy geometryChangedSpy(window, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
 
-    QCOMPARE(window->screen(), 0);
-    QCOMPARE(popup->screen(), 0);
+    QCOMPARE(window->central_output, Test::app()->base.get_outputs().at(0));
+    QCOMPARE(popup->central_output, Test::app()->base.get_outputs().at(0));
     win::send_to_screen(window, 1);
-    QCOMPARE(window->screen(), 1);
-    QCOMPARE(popup->screen(), 1);
+    QCOMPARE(window->central_output, Test::app()->base.get_outputs().at(1));
+    QCOMPARE(popup->central_output, Test::app()->base.get_outputs().at(1));
 
     QCOMPARE(popup->frameGeometry(),
              QRect(window->frameGeometry().topLeft() + QPoint(5, 10), QSize(50, 40)));

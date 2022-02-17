@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include <algorithm>
 #include <climits>
 #include <cstddef>
 #include <vector>
@@ -82,6 +83,25 @@ template<typename Base>
 void set_current_output_by_position(Base& base, QPoint const& pos)
 {
     set_current_output(base, get_nearest_output(base.get_outputs(), pos));
+}
+
+template<typename Output>
+Output* get_output(std::vector<Output*> const& outputs, int index)
+{
+    if (index >= static_cast<int>(outputs.size()) || index < 0) {
+        return nullptr;
+    }
+    return outputs.at(index);
+}
+
+template<typename Output>
+int get_output_index(std::vector<Output*> const& outputs, Output const* output)
+{
+    if (!output) {
+        return 0;
+    }
+    auto it = std::find(outputs.begin(), outputs.end(), output);
+    return it - outputs.begin();
 }
 
 }

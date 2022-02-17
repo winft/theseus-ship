@@ -2512,7 +2512,7 @@ void space::setActiveClient(Toplevel* window)
         if (kwinApp()->get_base().get_outputs().size() > 1) {
             for (auto it = m_allClients.begin(); it != m_allClients.end(); ++it) {
                 if (*it != active_client && (*it)->layer() == win::layer::active
-                    && (*it)->screen() == active_client->screen()) {
+                    && (*it)->central_output == active_client->central_output) {
                     win::update_layer(*it);
                 }
             }
@@ -2647,7 +2647,9 @@ void space::request_focus(Toplevel* window, bool raise, bool force_focus)
     }
 
     if (!win::on_active_screen(window)) {
-        base::set_current_output(kwinApp()->get_base(), window->screen());
+        auto& base = kwinApp()->get_base();
+        base::set_current_output(
+            base, base::get_output_index(base.get_outputs(), window->central_output));
     }
 }
 
@@ -2724,7 +2726,10 @@ bool space::activateNextClient(Toplevel* window)
         get_focus = win::find_desktop(this, true, desktop); // to not break the state
 
     if (!get_focus && kwinApp()->options->isNextFocusPrefersMouse()) {
-        get_focus = clientUnderMouse(window ? window->screen() : get_current_output(*workspace()));
+        get_focus
+            = clientUnderMouse(window ? base::get_output_index(kwinApp()->get_base().get_outputs(),
+                                                               window->central_output)
+                                      : get_current_output(*workspace()));
         if (get_focus && (get_focus == window || win::is_desktop(get_focus))) {
             // should rather not happen, but it cannot get the focus. rest of usability is tested
             // above
@@ -3515,7 +3520,9 @@ void space::slotWindowToNextScreen()
 {
     if (USABLE_ACTIVE_CLIENT) {
         sendClientToScreen(active_client,
-                           (active_client->screen() + 1)
+                           (base::get_output_index(kwinApp()->get_base().get_outputs(),
+                                                   active_client->central_output)
+                            + 1)
                                % kwinApp()->get_base().get_outputs().size());
     }
 }
@@ -3525,7 +3532,10 @@ void space::slotWindowToPrevScreen()
     if (USABLE_ACTIVE_CLIENT) {
         auto const screens_count = kwinApp()->get_base().get_outputs().size();
         sendClientToScreen(active_client,
-                           (active_client->screen() + screens_count - 1) % screens_count);
+                           (base::get_output_index(kwinApp()->get_base().get_outputs(),
+                                                   active_client->central_output)
+                            + screens_count - 1)
+                               % screens_count);
     }
 }
 
@@ -3587,7 +3597,8 @@ void space::slotWindowLower()
         // activateNextClient( c ); // Doesn't work when we lower a child window
         if (active_client->control->active() && kwinApp()->options->focusPolicyIsReasonable()) {
             if (kwinApp()->options->isNextFocusPrefersMouse()) {
-                auto next = clientUnderMouse(active_client->screen());
+                auto next = clientUnderMouse(base::get_output_index(
+                    kwinApp()->get_base().get_outputs(), active_client->central_output));
                 if (next && next != active_client)
                     request_focus(next);
             } else {

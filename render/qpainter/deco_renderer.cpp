@@ -98,10 +98,11 @@ void deco_renderer::render()
 void deco_renderer::resizeImages()
 {
     QRect left, top, right, bottom;
-    client()->client()->layoutDecorationRects(left, top, right, bottom);
+    auto window = client()->client();
+    window->layoutDecorationRects(left, top, right, bottom);
 
-    auto checkAndCreate = [this](int index, const QSize& size) {
-        auto dpr = client()->client()->screenScale();
+    auto checkAndCreate = [this, window](int index, const QSize& size) {
+        auto dpr = window->central_output ? window->central_output->scale() : 1.;
         if (m_images[index].size() != size * dpr || m_images[index].devicePixelRatio() != dpr) {
             m_images[index] = QImage(size * dpr, QImage::Format_ARGB32_Premultiplied);
             m_images[index].setDevicePixelRatio(dpr);
