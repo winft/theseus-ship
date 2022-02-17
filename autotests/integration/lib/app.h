@@ -14,6 +14,7 @@
 #include "base/wayland/server.h"
 #include "main.h"
 #include "render/backend/wlroots/platform.h"
+#include "win/wayland/space.h"
 
 #include <memory>
 #include <vector>
@@ -22,10 +23,6 @@ struct wlr_input_device;
 
 namespace KWin
 {
-namespace win::wayland
-{
-class space;
-}
 namespace xwl
 {
 class xwayland;

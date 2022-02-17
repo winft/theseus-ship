@@ -9,7 +9,7 @@
 #include "base/platform.h"
 #include "base/wayland/server.h"
 #include "main.h"
-#include "screens.h"
+#include "win/space.h"
 
 #include <QVector>
 
@@ -26,8 +26,14 @@ cursor_theme::cursor_theme(Wrapland::Client::ShmPool* shm)
     : m_theme(nullptr)
     , m_shm(shm)
 {
-    QObject::connect(
-        &kwinApp()->get_base().screens, &Screens::maxScaleChanged, this, &cursor_theme::loadTheme);
+    QObject::connect(&kwinApp()->get_base(),
+                     &base::platform::topology_changed,
+                     this,
+                     [this](auto old, auto topo) {
+                         if (old.max_scale != topo.max_scale) {
+                             loadTheme();
+                         }
+                     });
 }
 
 cursor_theme::~cursor_theme()
@@ -47,7 +53,7 @@ void cursor_theme::loadTheme()
         size = 24;
     }
 
-    size *= kwinApp()->get_base().screens.maxScale();
+    size *= kwinApp()->get_base().topology.max_scale;
 
     auto theme = wl_cursor_theme_load(c->theme_name().toUtf8().constData(), size, m_shm->shm());
     if (theme) {

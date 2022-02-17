@@ -30,7 +30,7 @@ QRect output::geometry() const
     }
 
     // xinerama, lacks RandR
-    return QRect(QPoint(0, 0), platform.screens.displaySize());
+    return QRect({}, platform.topology.size);
 }
 
 int output::refresh_rate() const

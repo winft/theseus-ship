@@ -11,12 +11,12 @@
 #include "wlr_helpers.h"
 
 #include "base/backend/wlroots/output.h"
+#include "base/output_helpers.h"
 #include "input/wayland/platform.h"
 #include "render/utils.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/effects.h"
 #include "render/wayland/egl.h"
-#include "screens.h"
 
 #include <wayland_logging.h>
 
@@ -60,7 +60,7 @@ void platform::init()
         throw std::exception();
     }
 
-    base.screens.updateAll();
+    base::update_output_topology(base);
 }
 
 gl::backend* platform::createOpenGLBackend(render::compositor& /*compositor*/)

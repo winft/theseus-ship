@@ -101,9 +101,9 @@ void lanczos_filter::init()
 
 void lanczos_filter::updateOffscreenSurfaces()
 {
-    auto const& s = kwinApp()->get_base().screens.size();
-    int w = s.width();
-    int h = s.height();
+    auto const& space_size = kwinApp()->get_base().topology.size;
+    int w = space_size.width();
+    int h = space_size.height();
 
     if (!m_offscreenTex || m_offscreenTex->width() != w || m_offscreenTex->height() != h) {
         if (m_offscreenTex) {

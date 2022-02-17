@@ -62,11 +62,12 @@ pointer_redirect::pointer_redirect(input::redirect* redirect)
 
 void pointer_redirect::init()
 {
-    auto const& screens = kwinApp()->get_base().screens;
-
     device_redirect_init(this);
 
-    QObject::connect(&screens, &Screens::changed, this, &pointer_redirect::updateAfterScreenChange);
+    QObject::connect(&kwinApp()->get_base(),
+                     &base::platform::topology_changed,
+                     this,
+                     &pointer_redirect::updateAfterScreenChange);
     if (waylandServer()->has_screen_locker_integration()) {
         QObject::connect(
             ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
@@ -105,7 +106,7 @@ void pointer_redirect::init()
                      setupMoveResizeConnection);
 
     // warp the cursor to center of screen
-    warp(screens.geometry().center());
+    warp(QRect({}, kwinApp()->get_base().topology.size).center());
     updateAfterScreenChange();
 
     auto wayland_cursor = dynamic_cast<wayland::cursor*>(input::get_cursor());
@@ -154,8 +155,8 @@ void pointer_redirect::update_to_reset()
 void pointer_redirect::processMotion(QPointF const& pos, uint32_t time, input::pointer* device)
 {
     // Events for motion_absolute_event have positioning relative to screen size.
-    auto const ssize = kwinApp()->get_base().screens.size();
-    auto const rel_pos = QPointF(pos.x() / ssize.width(), pos.y() / ssize.height());
+    auto const& space_size = kwinApp()->get_base().topology.size;
+    auto const rel_pos = QPointF(pos.x() / space_size.width(), pos.y() / space_size.height());
 
     auto event = motion_absolute_event{rel_pos, {device, time}};
     process_motion_absolute(event);
@@ -244,8 +245,9 @@ void pointer_redirect::process_motion_absolute(motion_absolute_event const& even
         return;
     }
 
-    auto const ssize = kwinApp()->get_base().screens.size();
-    auto const pos = QPointF(ssize.width() * event.pos.x(), ssize.height() * event.pos.y());
+    auto const& space_size = kwinApp()->get_base().topology.size;
+    auto const pos
+        = QPointF(space_size.width() * event.pos.x(), space_size.height() * event.pos.y());
 
     PositionUpdateBlocker blocker(this);
     update_position(pos);
@@ -791,7 +793,7 @@ void pointer_redirect::update_position(const QPointF& pos)
     if (!screenContainsPos(p)) {
         auto const& screens = kwinApp()->get_base().screens;
 
-        QRectF const unitedScreensGeometry = screens.geometry();
+        auto const unitedScreensGeometry = QRectF({}, kwinApp()->get_base().topology.size);
         p = confineToBoundingBox(p, unitedScreensGeometry);
 
         if (!screenContainsPos(p)) {

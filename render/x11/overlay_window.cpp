@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwinglobals.h"
 #include "main.h"
 #include "render/x11/compositor.h"
-#include "screens.h"
+#include "win/space.h"
 
 #include <QVector>
 
@@ -70,7 +70,7 @@ bool overlay_window::create()
     m_window = overlay->overlay_win;
     if (m_window == XCB_WINDOW_NONE)
         return false;
-    resize(kwinApp()->get_base().screens.size());
+    resize(kwinApp()->get_base().topology.size);
     return true;
 #else
     return false;
@@ -84,8 +84,7 @@ void overlay_window::setup(xcb_window_t window)
 
     setNoneBackgroundPixmap(m_window);
     m_shape = QRegion();
-    auto const& s = kwinApp()->get_base().screens.size();
-    setShape(QRect(0, 0, s.width(), s.height()));
+    setShape(QRect({}, kwinApp()->get_base().topology.size));
     if (window != XCB_WINDOW_NONE) {
         setNoneBackgroundPixmap(window);
         setupInputShape(window);
@@ -128,8 +127,7 @@ void overlay_window::hide()
     Q_ASSERT(m_window != XCB_WINDOW_NONE);
     xcb_unmap_window(connection(), m_window);
     m_shown = false;
-    auto const& s = kwinApp()->get_base().screens.size();
-    setShape(QRect(0, 0, s.width(), s.height()));
+    setShape(QRect({}, kwinApp()->get_base().topology.size));
 }
 
 void overlay_window::setShape(const QRegion& reg)
@@ -177,9 +175,11 @@ void overlay_window::destroy()
     if (m_window == XCB_WINDOW_NONE)
         return;
     // reset the overlay shape
-    auto const& s = kwinApp()->get_base().screens.size();
-    xcb_rectangle_t rec
-        = {0, 0, static_cast<uint16_t>(s.width()), static_cast<uint16_t>(s.height())};
+    auto const& space_size = kwinApp()->get_base().topology.size;
+    xcb_rectangle_t rec = {0,
+                           0,
+                           static_cast<uint16_t>(space_size.width()),
+                           static_cast<uint16_t>(space_size.height())};
     xcb_shape_rectangles(connection(),
                          XCB_SHAPE_SO_SET,
                          XCB_SHAPE_SK_BOUNDING,

@@ -8,8 +8,8 @@
 #include "base/platform.h"
 #include "base/wayland/output.h"
 #include "main.h"
-#include "screens.h"
 #include "utils/algorithm.h"
+#include "win/space.h"
 
 #include <cmath>
 
@@ -41,7 +41,7 @@ touch::touch(input::platform* platform)
 {
     platform->touchs.push_back(this);
 
-    QObject::connect(&kwinApp()->get_base().screens, &Screens::changed, this, [this] {
+    QObject::connect(&kwinApp()->get_base(), &base::platform::topology_changed, this, [this] {
         if (!control) {
             return;
         }

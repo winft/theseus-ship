@@ -48,8 +48,8 @@ tabbox_switcher_item::tabbox_switcher_item(QObject* parent)
                   set_current_index(tabbox_handle->current_index().row());
               }
           });
-    connect(&kwinApp()->get_base().screens,
-            &Screens::changed,
+    connect(&kwinApp()->get_base(),
+            &base::platform::topology_changed,
             this,
             &tabbox_switcher_item::screen_geometry_changed);
     connect(render::compositor::self(),

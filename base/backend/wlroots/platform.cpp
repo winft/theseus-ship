@@ -13,6 +13,7 @@
 #include "render/backend/wlroots/output.h"
 #include "render/backend/wlroots/platform.h"
 #include "wayland_logging.h"
+#include "win/space.h"
 
 #include <Wrapland/Server/display.h>
 #include <stdexcept>
@@ -33,8 +34,6 @@ static void handle_destroy(struct wl_listener* listener, void* /*data*/)
 
 void add_new_output(wlroots::platform& platform, wlr_output* native)
 {
-    auto const screens_width = std::max(platform.screens.size().width(), 0);
-
     auto& render = static_cast<render::backend::wlroots::platform&>(*platform.render);
     wlr_output_init_render(native, render.allocator, render.renderer);
 
@@ -52,18 +51,20 @@ void add_new_output(wlroots::platform& platform, wlr_output* native)
 
     auto output = new wlroots::output(native, &platform);
 
-    platform.all_outputs.push_back(output);
-    platform.outputs.push_back(output);
-
-    Q_EMIT platform.output_added(output);
-
     if (align_horizontal) {
         auto shifted_geo = output->geometry();
+        auto screens_width = 0;
+        for (auto out : platform.outputs) {
+            screens_width = std::max(out->geometry().right(), screens_width);
+        }
         shifted_geo.moveLeft(screens_width);
         output->force_geometry(shifted_geo);
     }
 
-    platform.screens.updateAll();
+    platform.all_outputs.push_back(output);
+    platform.outputs.push_back(output);
+
+    Q_EMIT platform.output_added(output);
 }
 
 void handle_new_output(struct wl_listener* listener, void* data)

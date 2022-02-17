@@ -32,19 +32,12 @@ namespace KWin
 {
 
 Screens::Screens(base::platform const& base)
-    : m_maxScale(1.0)
-    , base{base}
+    : base{base}
 {
-    init();
 }
 
 Screens::~Screens()
 {
-}
-
-void Screens::init()
-{
-    connect(this, &Screens::sizeChanged, this, &Screens::geometryChanged);
 }
 
 QString Screens::name(int screen) const
@@ -79,43 +72,12 @@ float Screens::refreshRate(int screen) const
     return 60.0;
 }
 
-qreal Screens::maxScale() const
-{
-    return m_maxScale;
-}
-
 qreal Screens::scale(int screen) const
 {
     if (auto output = findOutput(screen)) {
         return output->scale();
     }
     return 1.0;
-}
-
-void Screens::updateAll()
-{
-    updateSize();
-    Q_EMIT changed();
-}
-
-void Screens::updateSize()
-{
-    QRect bounding;
-    qreal maxScale = 1.0;
-    auto count = base.get_outputs().size();
-
-    for (size_t i = 0; i < count; ++i) {
-        bounding = bounding.united(geometry(i));
-        maxScale = qMax(maxScale, scale(i));
-    }
-    if (m_boundingSize != bounding.size()) {
-        m_boundingSize = bounding.size();
-        Q_EMIT sizeChanged();
-    }
-    if (!qFuzzyCompare(m_maxScale, maxScale)) {
-        m_maxScale = maxScale;
-        Q_EMIT maxScaleChanged();
-    }
 }
 
 int Screens::intersecting(const QRect &r) const
@@ -129,11 +91,6 @@ int Screens::intersecting(const QRect &r) const
         }
     }
     return cnt;
-}
-
-QSize Screens::displaySize() const
-{
-    return size();
 }
 
 QSizeF Screens::physicalSize(int screen) const

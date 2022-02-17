@@ -463,7 +463,7 @@ void pointer_motion_absolute(QPointF const& position, uint32_t time)
     event.device = app->pointer;
     event.time_msec = time;
 
-    auto const screens_size = kwinApp()->get_base().screens.size();
+    auto const screens_size = kwinApp()->get_base().topology.size;
     event.x = position.x() / screens_size.width();
     event.y = position.y() / screens_size.height();
 

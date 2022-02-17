@@ -41,6 +41,33 @@ size_t get_nearest_output(std::vector<Output*> const& outputs, QPoint const& pos
 }
 
 template<typename Base>
+void update_output_topology(Base& base)
+{
+    auto& topo = base.topology;
+    auto const old_topo = topo;
+
+    auto count = base.get_outputs().size();
+
+    QRect bounding;
+    double max_scale{1.};
+
+    for (size_t i = 0; i < count; ++i) {
+        bounding = bounding.united(base.screens.geometry(i));
+        max_scale = qMax(max_scale, base.screens.scale(i));
+    }
+
+    if (topo.size != bounding.size()) {
+        topo.size = bounding.size();
+    }
+
+    if (!qFuzzyCompare(topo.max_scale, max_scale)) {
+        topo.max_scale = max_scale;
+    }
+
+    Q_EMIT base.topology_changed(old_topo, base.topology);
+}
+
+template<typename Base>
 void set_current_output(Base& base, int output)
 {
     if (base.topology.current == output) {

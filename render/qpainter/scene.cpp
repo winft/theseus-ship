@@ -31,9 +31,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "render/cursor.h"
 #include "render/platform.h"
-#include "screens.h"
 #include "toplevel.h"
 #include "wayland_logging.h"
+#include "win/space.h"
 
 #include <kwineffectquickview.h>
 
@@ -96,7 +96,7 @@ int64_t scene::paint_output(base::output* output,
     auto const needsFullRepaint = m_backend->needsFullRepaint();
     if (needsFullRepaint) {
         mask |= render::paint_type::screen_background_first;
-        damage = compositor.platform.base.screens.geometry();
+        damage = QRect({}, kwinApp()->get_base().topology.size);
     }
 
     auto const geometry = output->geometry();

@@ -11,6 +11,8 @@ namespace KWin::base
 {
 
 struct output_topology {
+    QSize size;
+    double max_scale{1.};
     int current{0};
 };
 

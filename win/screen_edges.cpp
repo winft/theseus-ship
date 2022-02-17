@@ -380,7 +380,6 @@ void screen_edge::handleTouchCallback()
 void screen_edge::switchDesktop(QPoint const& cursorPos)
 {
     QPoint pos(cursorPos);
-    auto const& screens = kwinApp()->get_base().screens;
     auto vds = virtual_desktop_manager::self();
     uint const oldDesktop = vds->current();
     uint desktop = oldDesktop;
@@ -390,7 +389,7 @@ void screen_edge::switchDesktop(QPoint const& cursorPos)
         const uint interimDesktop = desktop;
         desktop = vds->toLeft(desktop, vds->isNavigationWrappingAround());
         if (desktop != interimDesktop)
-            pos.setX(screens.size().width() - 1 - OFFSET);
+            pos.setX(kwinApp()->get_base().topology.size.width() - 1 - OFFSET);
     } else if (isRight()) {
         const uint interimDesktop = desktop;
         desktop = vds->toRight(desktop, vds->isNavigationWrappingAround());
@@ -402,7 +401,7 @@ void screen_edge::switchDesktop(QPoint const& cursorPos)
         const uint interimDesktop = desktop;
         desktop = vds->above(desktop, vds->isNavigationWrappingAround());
         if (desktop != interimDesktop)
-            pos.setY(screens.size().height() - 1 - OFFSET);
+            pos.setY(kwinApp()->get_base().topology.size.height() - 1 - OFFSET);
     } else if (isBottom()) {
         const uint interimDesktop = desktop;
         desktop = vds->below(desktop, vds->isNavigationWrappingAround());
@@ -1042,7 +1041,7 @@ void screen_edger::recreateEdges()
 
     auto oldEdges = edges;
     edges.clear();
-    const QRect fullArea = screens.geometry();
+    auto const fullArea = QRect({}, kwinApp()->get_base().topology.size);
     QRegion processedRegion;
     for (size_t i = 0; i < outputs.size(); ++i) {
         const QRegion screen = QRegion(screens.geometry(i)).subtracted(processedRegion);

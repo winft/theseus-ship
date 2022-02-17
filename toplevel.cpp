@@ -65,12 +65,8 @@ Toplevel::Toplevel(win::transient* transient)
     });
 
     connect(this, &Toplevel::damaged, this, &Toplevel::needsRepaint);
-
-    auto& base = kwinApp()->get_base();
-    auto& screens = base.screens;
-    connect(&screens, &Screens::changed, this, &Toplevel::checkScreen);
-    QObject::connect(&base, &base::platform::output_added, this, &Toplevel::checkScreen);
-    QObject::connect(&base, &base::platform::output_removed, this, &Toplevel::checkScreen);
+    QObject::connect(
+        &kwinApp()->get_base(), &base::platform::topology_changed, this, &Toplevel::checkScreen);
 
     setupCheckScreenConnection();
 }

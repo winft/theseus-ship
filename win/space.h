@@ -435,6 +435,7 @@ public:
 
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t* geom);
     void saveOldScreenSizes();
+    void desktopResized();
 
 public Q_SLOTS:
     void performWindowOperation(KWin::Toplevel* window, base::options::WindowOperation op);
@@ -509,7 +510,6 @@ protected:
     Toplevel* client_keys_client{nullptr};
 
 private Q_SLOTS:
-    void desktopResized();
     void slotUpdateToolWindows();
     void delayFocus();
     void slotReloadConfig();

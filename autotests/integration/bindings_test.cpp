@@ -72,6 +72,7 @@ void BindingsTest::init()
 {
     Test::setup_wayland_connection();
     input::get_cursor()->set_pos(QPoint(640, 512));
+    QCOMPARE(input::get_cursor()->pos(), QPoint(640, 512));
 }
 
 void BindingsTest::cleanup()
@@ -105,6 +106,11 @@ void BindingsTest::testSwitchWindow()
     win::move(c2, QPoint(200, 0));
     win::move(c3, QPoint(200, 200));
     win::move(c4, QPoint(0, 200));
+
+    QCOMPARE(c1->pos(), QPoint(0, 0));
+    QCOMPARE(c2->pos(), QPoint(200, 0));
+    QCOMPARE(c3->pos(), QPoint(200, 200));
+    QCOMPARE(c4->pos(), QPoint(0, 200));
 
     // now let's trigger the shortcuts
 

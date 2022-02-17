@@ -66,8 +66,8 @@ void effects_handler_impl::doStartMouseInterception(Qt::CursorShape shape)
     // NOTE: it is intended to not perform an XPointerGrab on X11. See documentation in
     // kwineffects.h The mouse grab is implemented by using a full screen input only window
     if (!mouse_intercept.window.is_valid()) {
-        auto const& s = kwinApp()->get_base().screens.size();
-        const QRect geo(0, 0, s.width(), s.height());
+        auto const& space_size = kwinApp()->get_base().topology.size;
+        const QRect geo(0, 0, space_size.width(), space_size.height());
         const uint32_t mask = XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
         const uint32_t values[] = {true,
                                    XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE

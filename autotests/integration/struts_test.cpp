@@ -624,7 +624,7 @@ void StrutsTest::test363804()
     Test::app()->set_outputs(geometries);
     QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
     QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
-    QCOMPARE(Test::app()->base.screens.geometry(), QRect(0, 0, 1920, 1848));
+    QCOMPARE(Test::app()->base.topology.size, QSize(1920, 1848));
 
     // create an xcb window
     auto c = create_xcb_connection();
@@ -708,7 +708,7 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     Test::app()->set_outputs(geometries);
     QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
     QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
-    QCOMPARE(Test::app()->base.screens.geometry(), QRect(0, 0, 3046, 1050));
+    QCOMPARE(Test::app()->base.topology.size, QSize(3046, 1050));
 
     // create the panel
     auto c = create_xcb_connection();
@@ -836,7 +836,7 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     Test::app()->set_outputs(geometries);
     QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
     QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
-    QCOMPARE(Test::app()->base.screens.geometry(), QRect(0, 0, 3046, 1050));
+    QCOMPARE(Test::app()->base.topology.size, QSize(3046, 1050));
 
     // create the panel on the right screen, left edge
     auto c = create_xcb_connection();

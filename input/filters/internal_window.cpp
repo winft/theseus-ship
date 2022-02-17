@@ -116,6 +116,7 @@ QWindow* get_internal_window()
         return nullptr;
     }
 
+    auto const& base = kwinApp()->get_base();
     QWindow* found = nullptr;
     auto it = windows.end();
 
@@ -132,7 +133,7 @@ QWindow* get_internal_window()
         if (!w->isVisible()) {
             continue;
         }
-        if (!kwinApp()->get_base().screens.geometry().contains(w->geometry())) {
+        if (!QRect({}, base.topology.size).contains(w->geometry())) {
             continue;
         }
         if (w->property("_q_showWithoutActivating").toBool()) {

@@ -89,7 +89,7 @@ PlatformCursorImage loadReferenceThemeCursor(const T& shape)
         return PlatformCursorImage{};
     }
 
-    const qreal scale = Test::app()->base.screens.maxScale();
+    const qreal scale = Test::app()->base.topology.max_scale;
     QImage image = buffer->shmImage()->createQImage().copy();
     image.setDevicePixelRatio(scale);
 
@@ -324,8 +324,8 @@ void PointerInputTest::testWarpingDuringFilter()
     QVERIFY(movedSpy.isEmpty());
     quint32 timestamp = 0;
     Test::pointer_motion_absolute(QPoint(0, 0), timestamp++);
+
     // screen edges push back
-    QEXPECT_FAIL("", "Not being pushed back since effects are loaded differently", Abort);
     QCOMPARE(input::get_cursor()->pos(), QPoint(1, 1));
     QVERIFY(movedSpy.wait());
     QCOMPARE(movedSpy.count(), 2);
@@ -366,24 +366,22 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     QVERIFY(window);
     QVERIFY(!window->frameGeometry().contains(input::get_cursor()->pos()));
 
-    QSignalSpy screensChangedSpy(&Test::app()->base.screens, &Screens::changed);
+    QSignalSpy screensChangedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(screensChangedSpy.isValid());
 
     // Now let's remove the screen containing the cursor.
     auto geometries = std::vector<QRect>({{0, 0, 1280, 1024}});
     Test::app()->set_outputs(geometries);
-    QCOMPARE(screensChangedSpy.count(), 4);
+    QCOMPARE(screensChangedSpy.count(), 1);
     Test::test_outputs_geometries(geometries);
 
     // This should have warped the cursor.
     QCOMPARE(input::get_cursor()->pos(), QPoint(639, 511));
-    QEXPECT_FAIL("", "set_outputs removes an output and moves the window.", Abort);
-    qDebug() << "Fails with:" << window->frameGeometry() << "not containing"
-             << input::get_cursor()->pos();
     QVERIFY(window->frameGeometry().contains(input::get_cursor()->pos()));
 
     // And we should get an enter event.
-    QTRY_COMPARE(enteredSpy.count(), 1);
+    QEXPECT_FAIL("", "geometry contains cursor but no enter event", Continue);
+    QCOMPARE(enteredSpy.count(), 1);
 }
 
 void PointerInputTest::testModifierClickUnrestrictedMove_data()

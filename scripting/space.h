@@ -522,11 +522,13 @@ public:
             vds, &win::virtual_desktop_manager::layoutChanged, this, &space::desktopLayoutChanged);
 
         auto& base = kwinApp()->get_base();
-        auto& screens = base.screens;
-        QObject::connect(&screens, &Screens::sizeChanged, this, &space::virtualScreenSizeChanged);
         QObject::connect(
-            &screens, &Screens::geometryChanged, this, &space::virtualScreenGeometryChanged);
-
+            &base, &base::platform::topology_changed, this, [this](auto old_topo, auto new_topo) {
+                if (old_topo.size != new_topo.size) {
+                    Q_EMIT this->virtualScreenSizeChanged();
+                    Q_EMIT this->virtualScreenGeometryChanged();
+                }
+            });
         QObject::connect(&base, &base::platform::output_added, this, [this, &base] {
             Q_EMIT Space::numberScreensChanged(base.get_outputs().size());
         });

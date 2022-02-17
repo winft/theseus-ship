@@ -294,7 +294,7 @@ scene::scene(render::gl::backend* backend, render::compositor& compositor)
     : render::scene(compositor)
     , m_backend(backend)
 {
-    if (!viewportLimitsMatched(compositor.platform.base.screens.size())) {
+    if (!viewportLimitsMatched(kwinApp()->get_base().topology.size)) {
         // TODO(romangg): throw?
         return;
     }
@@ -522,8 +522,9 @@ int64_t scene::paint(QRegion damage,
         return 0;
     }
 
-    GLVertexBuffer::setVirtualScreenGeometry(compositor.platform.base.screens.geometry());
-    GLRenderTarget::setVirtualScreenGeometry(compositor.platform.base.screens.geometry());
+    auto const screen_geo = QRect({}, kwinApp()->get_base().topology.size);
+    GLVertexBuffer::setVirtualScreenGeometry(screen_geo);
+    GLRenderTarget::setVirtualScreenGeometry(screen_geo);
     GLVertexBuffer::setVirtualScreenScale(1);
     GLRenderTarget::setVirtualScreenScale(1);
 
@@ -534,8 +535,7 @@ int64_t scene::paint(QRegion damage,
     paintScreen(mask, damage, repaint, &update, &valid, presentTime, projectionMatrix());
 
     if (!GLPlatform::instance()->isGLES()) {
-        auto const screenSize = compositor.platform.base.screens.size();
-        auto const displayRegion = QRegion(0, 0, screenSize.width(), screenSize.height());
+        auto const displayRegion = QRegion(0, 0, screen_geo.width(), screen_geo.height());
 
         // Copy dirty parts from front to backbuffer.
         if (!m_backend->supportsBufferAge() && GLPlatform::instance()->driver() == Driver_NVidia
@@ -706,7 +706,7 @@ void scene::extendPaintRegion(QRegion& region, bool opaqueFullscreen)
         return;
     }
 
-    auto const& screenSize = compositor.platform.base.screens.size();
+    auto const& screenSize = kwinApp()->get_base().topology.size;
     const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
 
     uint damagedPixels = 0;
@@ -765,7 +765,7 @@ void scene::paintDesktop(int desktop, paint_type mask, const QRegion& region, Sc
     const QRect r = region.boundingRect();
     glEnable(GL_SCISSOR_TEST);
     glScissor(r.x(),
-              compositor.platform.base.screens.size().height() - r.y() - r.height(),
+              kwinApp()->get_base().topology.size.height() - r.y() - r.height(),
               r.width(),
               r.height());
     render::scene::paintDesktop(desktop, mask, region, data);
@@ -878,12 +878,12 @@ QMatrix4x4 scene::createProjectionMatrix() const
     // Create a second matrix that transforms screen coordinates
     // to world coordinates.
     const float scaleFactor = 1.1 * std::tan(fovY * M_PI / 360.0f) / yMax;
-    auto const& size = compositor.platform.base.screens.size();
 
     QMatrix4x4 matrix;
+    auto const& space_size = kwinApp()->get_base().topology.size;
     matrix.translate(xMin * scaleFactor, yMax * scaleFactor, -1.1);
-    matrix.scale((xMax - xMin) * scaleFactor / size.width(),
-                 -(yMax - yMin) * scaleFactor / size.height(),
+    matrix.scale((xMax - xMin) * scaleFactor / space_size.width(),
+                 -(yMax - yMin) * scaleFactor / space_size.height(),
                  0.001);
 
     // Combine the matrices

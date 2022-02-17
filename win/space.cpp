@@ -151,10 +151,12 @@ space::space()
 
     initShortcuts();
 
-    auto& screens = kwinApp()->get_base().screens;
-
-    // get screen support
-    connect(&screens, &Screens::changed, this, &space::desktopResized);
+    auto& base = kwinApp()->get_base();
+    QObject::connect(&base, &base::platform::topology_changed, this, [this](auto old, auto topo) {
+        if (old.size != topo.size) {
+            desktopResized();
+        }
+    });
 
     auto* focusChain = win::focus_chain::create(this);
     connect(this, &space::clientRemoved, focusChain, &win::focus_chain::remove);
@@ -1301,7 +1303,7 @@ void space::checkTransients(Toplevel* window)
  */
 void space::desktopResized()
 {
-    QRect geom = kwinApp()->get_base().screens.geometry();
+    auto geom = QRect({}, kwinApp()->get_base().topology.size);
     if (win::x11::rootInfo()) {
         NETSize desktop_geometry;
         desktop_geometry.width = geom.width();
@@ -1325,7 +1327,7 @@ void space::saveOldScreenSizes()
     auto const& screens = kwinApp()->get_base().screens;
     auto const screens_count = kwinApp()->get_base().get_outputs().size();
 
-    olddisplaysize = screens.displaySize();
+    olddisplaysize = kwinApp()->get_base().topology.size;
     oldscreensizes.clear();
     for (size_t i = 0; i < screens_count; ++i) {
         oldscreensizes.push_back(screens.geometry(i));
@@ -1438,16 +1440,15 @@ QRect space::clientArea(clientAreaOption opt, int screen, int desktop) const
     if (screen == -1) {
         screen = get_current_output(*workspace());
     }
-    const QSize displaySize = screens.displaySize();
 
+    auto& base = kwinApp()->get_base();
     QRect sarea, warea;
     sarea = (!areas.screen.empty()
              // screens may be missing during KWin initialization or screen config changes
              && screen < static_cast<int>(areas.screen[desktop].size()))
         ? areas.screen[desktop][screen]
         : screens.geometry(screen);
-    warea = areas.work[desktop].isNull() ? QRect(0, 0, displaySize.width(), displaySize.height())
-                                         : areas.work[desktop];
+    warea = areas.work[desktop].isNull() ? QRect({}, base.topology.size) : areas.work[desktop];
 
     switch (opt) {
     case MaximizeArea:
@@ -1461,7 +1462,7 @@ QRect space::clientArea(clientAreaOption opt, int screen, int desktop) const
     case WorkArea:
         return warea;
     case FullArea:
-        return QRect(0, 0, displaySize.width(), displaySize.height());
+        return QRect({}, base.topology.size);
     }
     abort();
 }
@@ -3765,13 +3766,13 @@ void space::switchWindow(Direction direction)
         auto opposite = [&] {
             switch (direction) {
             case DirectionNorth:
-                return QPoint(curPos.x(), kwinApp()->get_base().screens.geometry().height());
+                return QPoint(curPos.x(), kwinApp()->get_base().topology.size.height());
             case DirectionSouth:
                 return QPoint(curPos.x(), 0);
             case DirectionEast:
                 return QPoint(0, curPos.y());
             case DirectionWest:
-                return QPoint(kwinApp()->get_base().screens.geometry().width(), curPos.y());
+                return QPoint(kwinApp()->get_base().topology.size.width(), curPos.y());
             default:
                 Q_UNREACHABLE();
             }

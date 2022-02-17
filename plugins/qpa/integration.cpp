@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../main.h"
 #include "../../render/compositor.h"
 #include "../../render/scene.h"
-#include "../../screens.h"
+#include "win/space.h"
 
 #include <QCoreApplication>
 #include <QtConcurrentRun>
@@ -89,7 +89,8 @@ void Integration::initialize()
     // connect to the startup_finished signal. At this point everything has been created.
     connect(kwinApp(), &Application::startup_finished, this,
         [this] {
-            connect(&kwinApp()->get_base().screens, &Screens::changed, this, &Integration::initScreens);
+            QObject::connect(&kwinApp()->get_base(), &base::platform::topology_changed,
+                             this, &Integration::initScreens);
             initScreens();
         }
     );

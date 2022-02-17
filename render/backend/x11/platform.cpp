@@ -23,6 +23,7 @@
 #endif
 
 #include "base/options.h"
+#include "base/output_helpers.h"
 #include "base/x11/output.h"
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/randr.h"
@@ -84,18 +85,6 @@ void platform::init()
     }
 
     update_outputs_impl<base::x11::xcb::randr::screen_resources>();
-
-    connect(&base.screens, &Screens::changed, this, [] {
-        if (!workspace()->compositing()) {
-            return;
-        }
-        // desktopResized() should take care of when the size or
-        // shape of the desktop has changed, but we also want to
-        // catch refresh rate changes
-        //
-        // TODO: is this still necessary since we get the maximal refresh rate now dynamically?
-        render::compositor::self()->reinitialize();
-    });
 
     XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
     m_randrFilter.reset(new RandrFilter(this));
@@ -401,7 +390,7 @@ void platform::update_outputs_impl()
         }
     }
 
-    base.screens.updateAll();
+    base::update_output_topology(base);
 }
 
 }

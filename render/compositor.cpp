@@ -358,8 +358,8 @@ void compositor::addRepaint([[maybe_unused]] QRegion const& region)
 
 void compositor::addRepaintFull()
 {
-    auto const size = platform.base.screens.size();
-    addRepaint(QRegion(0, 0, size.width(), size.height()));
+    auto const& space_size = kwinApp()->get_base().topology.size;
+    addRepaint(QRegion(0, 0, space_size.width(), space_size.height()));
 }
 
 void compositor::timerEvent(QTimerEvent* te)

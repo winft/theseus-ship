@@ -218,12 +218,16 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         input::get_cursor(), &input::cursor::mouse_changed, this, &EffectsHandler::mouseChanged);
 
     auto& base = kwinApp()->get_base();
-    auto& screens = base.screens;
     connect(&base, &base::platform::output_added, this, &EffectsHandler::numberScreensChanged);
     connect(&base, &base::platform::output_removed, this, &EffectsHandler::numberScreensChanged);
-    connect(&screens, &Screens::sizeChanged, this, &EffectsHandler::virtualScreenSizeChanged);
-    connect(
-        &screens, &Screens::geometryChanged, this, &EffectsHandler::virtualScreenGeometryChanged);
+
+    QObject::connect(
+        &base, &base::platform::topology_changed, this, [this](auto old_topo, auto new_topo) {
+            if (old_topo.size != new_topo.size) {
+                Q_EMIT virtualScreenSizeChanged();
+                Q_EMIT virtualScreenGeometryChanged();
+            }
+        });
 
     connect(ws->stacking_order,
             &win::stacking_order::changed,
@@ -1082,12 +1086,12 @@ int effects_handler_impl::desktopGridHeight() const
 
 int effects_handler_impl::workspaceWidth() const
 {
-    return desktopGridWidth() * kwinApp()->get_base().screens.size().width();
+    return desktopGridWidth() * kwinApp()->get_base().topology.size.width();
 }
 
 int effects_handler_impl::workspaceHeight() const
 {
-    return desktopGridHeight() * kwinApp()->get_base().screens.size().height();
+    return desktopGridHeight() * kwinApp()->get_base().topology.size.height();
 }
 
 int effects_handler_impl::desktopAtCoords(QPoint coords) const
@@ -1106,10 +1110,11 @@ QPoint effects_handler_impl::desktopGridCoords(int id) const
 QPoint effects_handler_impl::desktopCoords(int id) const
 {
     QPoint coords = win::virtual_desktop_manager::self()->grid().gridCoords(id);
-    if (coords.x() == -1)
+    if (coords.x() == -1) {
         return QPoint(-1, -1);
-    auto const& displaySize = kwinApp()->get_base().screens.size();
-    return QPoint(coords.x() * displaySize.width(), coords.y() * displaySize.height());
+    }
+    auto const& space_size = kwinApp()->get_base().topology.size;
+    return QPoint(coords.x() * space_size.width(), coords.y() * space_size.height());
 }
 
 int effects_handler_impl::desktopAbove(int desktop, bool wrap) const
@@ -1345,12 +1350,12 @@ QRect effects_handler_impl::clientArea(clientAreaOption opt, const QPoint& p, in
 
 QRect effects_handler_impl::virtualScreenGeometry() const
 {
-    return kwinApp()->get_base().screens.geometry();
+    return QRect({}, kwinApp()->get_base().topology.size);
 }
 
 QSize effects_handler_impl::virtualScreenSize() const
 {
-    return kwinApp()->get_base().screens.size();
+    return kwinApp()->get_base().topology.size;
 }
 
 void effects_handler_impl::defineCursor(Qt::CursorShape shape)

@@ -18,14 +18,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "lib/app.h"
-
 #define private public
 #include "base/options.h"
 #undef private
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
+#include "lib/app.h"
 #include "screens.h"
 
 #include "win/move.h"
@@ -168,20 +167,18 @@ void TestScreens::testSize_data()
 
 void TestScreens::testSize()
 {
-    auto& screens = Test::app()->base.screens;
-    QSignalSpy sizeChangedSpy(&screens, &KWin::Screens::sizeChanged);
-    QVERIFY(sizeChangedSpy.isValid());
+    QSignalSpy topology_spy(&Test::app()->base, &base::platform::topology_changed);
+    QVERIFY(topology_spy.isValid());
 
     QFETCH(QList<QRect>, geometries);
     Test::app()->set_outputs(to_vector(geometries));
 
-    QTEST(sizeChangedSpy.count(), "changeCount");
-    QTEST(screens.size(), "expectedSize");
+    QCOMPARE(topology_spy.count(), 1);
+    QTEST(Test::app()->base.topology.size, "expectedSize");
 }
 
 void TestScreens::testCount()
 {
-    auto& screens = Test::app()->base.screens;
     auto const& base = Test::app()->base;
 
     QSignalSpy output_added_spy(&base, &base::platform::output_added);
@@ -211,14 +208,14 @@ void TestScreens::testCount()
     QCOMPARE(base.get_outputs().size(), 1);
 
     // Setting the same geometries should emit the signal again.
-    QSignalSpy changedSpy(&screens, &Screens::changed);
+    QSignalSpy changedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(changedSpy.isValid());
 
     output_added_spy.clear();
     output_removed_spy.clear();
 
     Test::app()->set_outputs(to_vector(geometries));
-    QCOMPARE(changedSpy.count(), geometries.size() + 2);
+    QCOMPARE(changedSpy.count(), 1);
     QCOMPARE(output_removed_spy.count(), 1);
     QCOMPARE(output_added_spy.count(), 1);
 }
@@ -248,13 +245,13 @@ void TestScreens::testIntersecting_data()
 void TestScreens::testIntersecting()
 {
     auto& screens = Test::app()->base.screens;
-    QSignalSpy changedSpy(&screens, &KWin::Screens::changed);
+    QSignalSpy changedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(changedSpy.isValid());
 
     QFETCH(QList<QRect>, geometries);
     Test::app()->set_outputs(to_vector(geometries));
 
-    QCOMPARE(changedSpy.count(), geometries.size() + 2);
+    QCOMPARE(changedSpy.count(), 1);
 
     QFETCH(QRect, testGeometry);
     QCOMPARE(Test::app()->base.get_outputs().size(), geometries.count());
@@ -283,17 +280,14 @@ void TestScreens::testCurrent()
 
 void TestScreens::testCurrentClient()
 {
-    auto& screens = Test::app()->base.screens;
-    QSignalSpy changedSpy(&screens, &KWin::Screens::changed);
+    QSignalSpy changedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(changedSpy.isValid());
 
     QList<QRect> geometries{{QRect{0, 0, 100, 100}, QRect{100, 0, 100, 100}}};
     Test::app()->set_outputs(to_vector(geometries));
 
-    QCOMPARE(changedSpy.count(), geometries.size() + 2);
-
-    QSignalSpy current_changed_spy(&Test::app()->base, &base::platform::topology_changed);
-    QVERIFY(current_changed_spy.isValid());
+    QCOMPARE(changedSpy.count(), 1);
+    changedSpy.clear();
 
     // Create a window.
     QSignalSpy clientAddedSpy(static_cast<win::wayland::space*>(workspace()),
@@ -318,7 +312,7 @@ void TestScreens::testCurrentClient()
 
     // it's not the active client, so changing won't work
     win::set_current_output_by_window(Test::app()->base, *client);
-    QVERIFY(current_changed_spy.isEmpty());
+    QVERIFY(changedSpy.isEmpty());
     QCOMPARE(win::get_current_output(*Test::app()->workspace), 0);
 
     // making the client active should affect things
@@ -330,12 +324,12 @@ void TestScreens::testCurrentClient()
 
     // but also calling setCurrent should emit the changed signal
     win::set_current_output_by_window(Test::app()->base, *client);
-    QCOMPARE(current_changed_spy.count(), 1);
+    QCOMPARE(changedSpy.count(), 1);
     QCOMPARE(win::get_current_output(*Test::app()->workspace), 1);
 
     // setting current with the same client again should not change, though
     win::set_current_output_by_window(Test::app()->base, *client);
-    QCOMPARE(current_changed_spy.count(), 1);
+    QCOMPARE(changedSpy.count(), 1);
 
     // and it should even still be on screen 1 if we make the client non-current again
     workspace()->setActiveClient(nullptr);
@@ -363,8 +357,7 @@ void TestScreens::testCurrentWithFollowsMouse_data()
 
 void TestScreens::testCurrentWithFollowsMouse()
 {
-    auto& screens = Test::app()->base.screens;
-    QSignalSpy changedSpy(&screens, &KWin::Screens::changed);
+    QSignalSpy changedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(changedSpy.isValid());
 
     auto& options = Test::app()->options;
@@ -375,8 +368,7 @@ void TestScreens::testCurrentWithFollowsMouse()
 
     QFETCH(QList<QRect>, geometries);
     Test::app()->set_outputs(to_vector(geometries));
-
-    QCOMPARE(changedSpy.count(), geometries.size() + 2);
+    QCOMPARE(changedSpy.count(), 1);
 
     QFETCH(QPoint, cursorPos);
     Test::pointer_motion_absolute(cursorPos, 2);
@@ -404,8 +396,7 @@ void TestScreens::testCurrentPoint_data()
 
 void TestScreens::testCurrentPoint()
 {
-    auto& screens = Test::app()->base.screens;
-    QSignalSpy changedSpy(&screens, &KWin::Screens::changed);
+    QSignalSpy changedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(changedSpy.isValid());
 
     auto& options = Test::app()->options;
@@ -413,8 +404,7 @@ void TestScreens::testCurrentPoint()
 
     QFETCH(QList<QRect>, geometries);
     Test::app()->set_outputs(to_vector(geometries));
-
-    QCOMPARE(changedSpy.count(), geometries.size() + 2);
+    QCOMPARE(changedSpy.count(), 1);
 
     QFETCH(QPoint, cursorPos);
     base::set_current_output_by_position(Test::app()->base, cursorPos);
