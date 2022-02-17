@@ -59,11 +59,11 @@ public:
     void createEffectsHandler(render::compositor* compositor, render::scene* scene) override;
     QVector<CompositingType> supportedCompositors() const override;
 
-    void updateOutputs();
+    void update_outputs();
 
 private:
-    template<typename T>
-    void doUpdateOutputs();
+    template<typename Resources>
+    void update_outputs_impl();
 
     QThread* m_openGLFreezeProtectionThread = nullptr;
     QTimer* m_openGLFreezeProtection = nullptr;

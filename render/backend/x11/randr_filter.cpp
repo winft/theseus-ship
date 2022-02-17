@@ -25,7 +25,7 @@ RandrFilter::RandrFilter(x11::platform* platform)
 {
     m_changedTimer->setSingleShot(true);
     m_changedTimer->setInterval(100);
-    QObject::connect(m_changedTimer, &QTimer::timeout, platform, &platform::updateOutputs);
+    QObject::connect(m_changedTimer, &QTimer::timeout, platform, &platform::update_outputs);
 }
 
 bool RandrFilter::event(xcb_generic_event_t* event)

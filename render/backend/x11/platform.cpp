@@ -82,7 +82,7 @@ void platform::init()
         throw std::exception();
     }
 
-    doUpdateOutputs<base::x11::xcb::randr::screen_resources>();
+    update_outputs_impl<base::x11::xcb::randr::screen_resources>();
 
     connect(&base.screens, &Screens::changed, this, [] {
         if (!workspace()->compositing()) {
@@ -349,20 +349,20 @@ QVector<CompositingType> platform::supportedCompositors() const
     return compositors;
 }
 
-void platform::updateOutputs()
+void platform::update_outputs()
 {
-    doUpdateOutputs<base::x11::xcb::randr::current_resources>();
+    update_outputs_impl<base::x11::xcb::randr::current_resources>();
 }
 
-template<typename T>
-void platform::doUpdateOutputs()
+template<typename Resources>
+void platform::update_outputs_impl()
 {
     auto fallback = [this]() {
-        auto o = std::make_unique<base::x11::output>(base);
-        o->data.gamma_ramp_size = 0;
-        o->data.refresh_rate = -1.0f;
-        o->data.name = QStringLiteral("Fallback");
-        base.outputs.push_back(std::move(o));
+        auto output = std::make_unique<base::x11::output>(base);
+        output->data.gamma_ramp_size = 0;
+        output->data.refresh_rate = -1.0f;
+        output->data.name = QStringLiteral("Fallback");
+        base.outputs.push_back(std::move(output));
         base.screens.updateAll();
     };
 
@@ -375,49 +375,55 @@ void platform::doUpdateOutputs()
         fallback();
         return;
     }
-    T resources(rootWindow());
+
+    Resources resources(rootWindow());
     if (resources.is_null()) {
         fallback();
         return;
     }
+
     xcb_randr_crtc_t* crtcs = resources.crtcs();
     xcb_randr_mode_info_t* modes = resources.modes();
 
-    QVector<base::x11::xcb::randr::crtc_info> infos(resources->num_crtcs);
+    std::vector<base::x11::xcb::randr::crtc_info> crtc_infos(resources->num_crtcs);
     for (int i = 0; i < resources->num_crtcs; ++i) {
-        infos[i] = base::x11::xcb::randr::crtc_info(crtcs[i], resources->config_timestamp);
+        crtc_infos[i] = base::x11::xcb::randr::crtc_info(crtcs[i], resources->config_timestamp);
     }
 
     for (int i = 0; i < resources->num_crtcs; ++i) {
-        base::x11::xcb::randr::crtc_info info(infos.at(i));
+        base::x11::xcb::randr::crtc_info crtc_info(crtc_infos.at(i));
 
-        xcb_randr_output_t* outputs = info.outputs();
-        QVector<base::x11::xcb::randr::output_info> outputInfos(outputs ? resources->num_outputs
-                                                                        : 0);
-        if (outputs) {
+        auto randr_outputs = crtc_info.outputs();
+        std::vector<base::x11::xcb::randr::output_info> output_infos(
+            randr_outputs ? resources->num_outputs : 0);
+
+        if (randr_outputs) {
             for (int i = 0; i < resources->num_outputs; ++i) {
-                outputInfos[i]
-                    = base::x11::xcb::randr::output_info(outputs[i], resources->config_timestamp);
+                output_infos[i] = base::x11::xcb::randr::output_info(randr_outputs[i],
+                                                                     resources->config_timestamp);
             }
         }
 
-        float refreshRate = -1.0f;
+        float refresh_rate = -1.0f;
         for (int j = 0; j < resources->num_modes; ++j) {
-            if (info->mode == modes[j].id) {
-                if (modes[j].htotal != 0 && modes[j].vtotal != 0) { // BUG 313996
-                    // refresh rate calculation - WTF was wikipedia 1998 when I needed it?
+            if (crtc_info->mode == modes[j].id) {
+                if (modes[j].htotal != 0 && modes[j].vtotal != 0) {
+                    // BUG 313996, refresh rate calculation
                     int dotclock = modes[j].dot_clock, vtotal = modes[j].vtotal;
-                    if (modes[j].mode_flags & XCB_RANDR_MODE_FLAG_INTERLACE)
+                    if (modes[j].mode_flags & XCB_RANDR_MODE_FLAG_INTERLACE) {
                         dotclock *= 2;
-                    if (modes[j].mode_flags & XCB_RANDR_MODE_FLAG_DOUBLE_SCAN)
+                    }
+                    if (modes[j].mode_flags & XCB_RANDR_MODE_FLAG_DOUBLE_SCAN) {
                         vtotal *= 2;
-                    refreshRate = dotclock / float(modes[j].htotal * vtotal);
+                    }
+                    refresh_rate = dotclock / float(modes[j].htotal * vtotal);
                 }
-                break; // found mode
+                // Found mode.
+                break;
             }
         }
 
-        const QRect geo = info.rect();
+        auto const geo = crtc_info.rect();
         if (geo.isValid()) {
             xcb_randr_crtc_t crtc = crtcs[i];
 
@@ -426,36 +432,39 @@ void platform::doUpdateOutputs()
             // drm platform do this.
             base::x11::xcb::randr::crtc_gamma gamma(crtc);
 
-            auto o = std::make_unique<base::x11::output>(base);
-            o->data.crtc = crtc;
-            o->data.gamma_ramp_size = gamma.is_null() ? 0 : gamma->size;
-            o->data.geometry = geo;
-            o->data.refresh_rate = refreshRate * 1000;
+            auto output = std::make_unique<base::x11::output>(base);
+            output->data.crtc = crtc;
+            output->data.gamma_ramp_size = gamma.is_null() ? 0 : gamma->size;
+            output->data.geometry = geo;
+            output->data.refresh_rate = refresh_rate * 1000;
 
-            for (int j = 0; j < info->num_outputs; ++j) {
-                base::x11::xcb::randr::output_info outputInfo(outputInfos.at(j));
-                if (outputInfo->crtc != crtc) {
+            for (int j = 0; j < crtc_info->num_outputs; ++j) {
+                base::x11::xcb::randr::output_info output_info(output_infos.at(j));
+                if (output_info->crtc != crtc) {
                     continue;
                 }
-                QSize physicalSize(outputInfo->mm_width, outputInfo->mm_height);
-                switch (info->rotation) {
+
+                auto physical_size = QSize(output_info->mm_width, output_info->mm_height);
+
+                switch (crtc_info->rotation) {
                 case XCB_RANDR_ROTATION_ROTATE_0:
                 case XCB_RANDR_ROTATION_ROTATE_180:
                     break;
                 case XCB_RANDR_ROTATION_ROTATE_90:
                 case XCB_RANDR_ROTATION_ROTATE_270:
-                    physicalSize.transpose();
+                    physical_size.transpose();
                     break;
                 case XCB_RANDR_ROTATION_REFLECT_X:
                 case XCB_RANDR_ROTATION_REFLECT_Y:
                     break;
                 }
-                o->data.name = outputInfo.name();
-                o->data.physical_size = physicalSize;
+
+                output->data.name = output_info.name();
+                output->data.physical_size = physical_size;
                 break;
             }
 
-            base.outputs.push_back(std::move(o));
+            base.outputs.push_back(std::move(output));
         }
     }
 
