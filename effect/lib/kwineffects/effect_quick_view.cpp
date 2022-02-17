@@ -595,6 +595,11 @@ EffectQuickScene::~EffectQuickScene() = default;
 
 void EffectQuickScene::setSource(const QUrl& source)
 {
+    setSource(source, QVariantMap());
+}
+
+void EffectQuickScene::setSource(const QUrl& source, const QVariantMap& initialProperties)
+{
     if (!d->qmlComponent) {
         d->qmlComponent.reset(new QQmlComponent(d->qmlEngine.data()));
     }
@@ -609,7 +614,8 @@ void EffectQuickScene::setSource(const QUrl& source)
 
     d->quickItem.reset();
 
-    QScopedPointer<QObject> qmlObject(d->qmlComponent->create());
+    QScopedPointer<QObject> qmlObject(
+        d->qmlComponent->createWithInitialProperties(initialProperties));
     QQuickItem* item = qobject_cast<QQuickItem*>(qmlObject.data());
     if (!item) {
         qCWarning(LIBKWINEFFECTS) << "Root object of effect quick view" << source

@@ -177,6 +177,7 @@ public:
     QQuickItem* rootItem() const;
 
     void setSource(const QUrl& source);
+    void setSource(const QUrl& source, const QVariantMap& initialProperties);
 
 private:
     class Private;
