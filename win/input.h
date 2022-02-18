@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "base/options.h"
-
 #include "control.h"
 #include "layers.h"
 #include "move.h"
@@ -19,6 +17,7 @@
 #include "types.h"
 #include "user_actions_menu.h"
 
+#include "base/options.h"
 #include "utils/blocker.h"
 
 #include <QMouseEvent>

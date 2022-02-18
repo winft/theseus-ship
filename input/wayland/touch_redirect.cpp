@@ -20,7 +20,6 @@
 #include "win/space.h"
 
 #include <KScreenLocker/KsldApp>
-
 #include <Wrapland/Server/drag_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/touch_pool.h>

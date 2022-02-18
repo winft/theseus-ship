@@ -10,11 +10,12 @@
 #include "base/platform.h"
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/helpers.h"
-#include "kwinxrenderutils.h"
 #include "main.h"
 #include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
 #include "win/space.h"
+
+#include "kwinxrenderutils.h"
 
 namespace KWin::render::xrender
 {

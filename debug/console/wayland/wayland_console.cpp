@@ -5,11 +5,11 @@
 */
 #include "wayland_console.h"
 
-#include "../model_helpers.h"
 #include "input_device_model.h"
 #include "input_filter.h"
 #include "surface_tree_model.h"
 
+#include "debug/console/model_helpers.h"
 #include "input/keyboard.h"
 #include "input/keyboard_redirect.h"
 #include "input/redirect.h"

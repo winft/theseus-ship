@@ -7,9 +7,9 @@
 #pragma once
 
 #include "event.h"
+#include "kwin_export.h"
 
 #include <QObject>
-#include <kwin_export.h>
 
 namespace KWin::input
 {

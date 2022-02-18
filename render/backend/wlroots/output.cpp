@@ -11,16 +11,16 @@
 #include "wlr_includes.h"
 
 #include "base/wayland/server.h"
-#include "config-kwin.h"
 #include "main.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/output.h"
 #include "render/wayland/presentation.h"
 #include "utils/gamma_ramp.h"
 
+#include "wayland_logging.h"
+
 #include <chrono>
 #include <stdexcept>
-#include <wayland_logging.h>
 
 namespace KWin::render::backend::wlroots
 {

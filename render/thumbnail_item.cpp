@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/control.h"
 #include "win/space.h"
 
-#include <QDebug>
 #include <QPainter>
 #include <QQuickWindow>
 

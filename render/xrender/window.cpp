@@ -14,7 +14,7 @@
 #include "win/geo.h"
 #include "win/x11/window.h"
 
-#include <kwinxrenderutils.h>
+#include "kwinxrenderutils.h"
 
 namespace KWin::render::xrender
 {

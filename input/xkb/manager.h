@@ -8,7 +8,7 @@
 */
 #pragma once
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <KConfigGroup>
 #include <KSharedConfig>

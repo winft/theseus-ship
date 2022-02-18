@@ -21,8 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "space.h"
 
-#include <kwinglplatform.h>
-
 #include "base/dbus/kwin.h"
 #include "base/output_helpers.h"
 #include "base/x11/user_interaction_filter.h"
@@ -72,6 +70,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
+
+#include "kwinglplatform.h"
 
 #include <KConfig>
 #include <KConfigGroup>

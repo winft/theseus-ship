@@ -7,9 +7,9 @@
 
 #include "duration_record.h"
 #include "presentation.h"
-#include "render/gl/timer_query.h"
 
-#include <kwin_export.h>
+#include "kwin_export.h"
+#include "render/gl/timer_query.h"
 
 #include <QBasicTimer>
 #include <QRegion>

@@ -19,8 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include <config-kwin.h>
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <QAbstractItemModel>
 #include <QStyledItemDelegate>

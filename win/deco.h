@@ -11,7 +11,6 @@
 #include "wayland/window.h"
 
 #include <KDecoration2/Decoration>
-
 #include <QObject>
 
 namespace KWin::win

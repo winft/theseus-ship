@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <QMap>
 #include <QObject>

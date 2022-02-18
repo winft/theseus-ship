@@ -6,7 +6,8 @@
 */
 #include "event_spy.h"
 
-#include "input/redirect.h"
+#include "redirect.h"
+
 #include "main.h"
 
 #include <QPointF>

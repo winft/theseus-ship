@@ -6,8 +6,11 @@
 #pragma once
 
 #include "event.h"
+#include "kwin_export.h"
 
-#include <kwin_export.h>
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QWheelEvent>
 
 namespace KWin::input
 {

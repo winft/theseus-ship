@@ -5,7 +5,7 @@
 */
 #include "compositor_selection_owner.h"
 
-#include <kwinglobals.h>
+#include "kwinglobals.h"
 
 namespace KWin::render::x11
 {

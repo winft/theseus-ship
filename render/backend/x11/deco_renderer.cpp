@@ -8,11 +8,10 @@
 #include "decorations/decoratedclient.h"
 #include "win/x11/window.h"
 
-#include <kwinglobals.h>
+#include "kwinglobals.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
-
 #include <QTimer>
 
 namespace KWin::render::backend::x11

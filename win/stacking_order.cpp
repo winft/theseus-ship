@@ -7,18 +7,17 @@
 */
 #include "stacking_order.h"
 
+#include "screen_edges.h"
 #include "space.h"
 #include "stacking.h"
 #include "transient.h"
+#include "x11/group.h"
+#include "x11/hide.h"
+#include "x11/netinfo.h"
+#include "x11/stacking.h"
+#include "x11/stacking_tree.h"
+#include "x11/window.h"
 
-#include "win/x11/group.h"
-#include "win/x11/hide.h"
-#include "win/x11/netinfo.h"
-#include "win/x11/stacking.h"
-#include "win/x11/stacking_tree.h"
-#include "win/x11/window.h"
-
-#include "screen_edges.h"
 #include "toplevel.h"
 
 #include <algorithm>

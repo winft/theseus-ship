@@ -13,8 +13,6 @@
 
 #include "main.h"
 
-#include "main.h"
-
 #include <QHash>
 #include <cmath>
 #include <linux/input.h>

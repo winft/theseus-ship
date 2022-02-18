@@ -15,16 +15,16 @@
 #include "space.h"
 #include "stacking_order.h"
 #include "transient.h"
-
-#include "base/output_helpers.h"
-#include "base/platform.h"
-#include "utils/blocker.h"
-#include "win/util.h"
+#include "util.h"
 #include "x11/group.h"
 
 // Required for casts between Toplevel and window in some template functions.
 // TODO(romangg): Remove these casts and this include to make the functions truly generic.
 #include "x11/window.h"
+
+#include "base/output_helpers.h"
+#include "base/platform.h"
+#include "utils/blocker.h"
 
 #include "rules/rules.h"
 

@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include <kwinglobals.h>
+#include "kwinglobals.h"
 
 #include <QImage>
 #include <QObject>

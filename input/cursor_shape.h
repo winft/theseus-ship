@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include <kwinglobals.h>
+#include "kwinglobals.h"
 
 namespace KWin::input
 {

@@ -21,6 +21,8 @@
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
+#include <KScreenLocker/KsldApp>
+#include <QPainter>
 #include <Wrapland/Client/buffer.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Server/buffer.h>
@@ -31,9 +33,6 @@
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
-
-#include <KScreenLocker/KsldApp>
-#include <QPainter>
 #include <wayland-cursor.h>
 
 namespace KWin::input::wayland

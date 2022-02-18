@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "../utils/flags.h"
+#include "utils/flags.h"
 
 namespace KWin::win
 {

@@ -24,10 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwineffects.h"
 
 #include <QMatrix4x4>
-#include <xcb/render.h>
-
 #include <deque>
 #include <memory>
+#include <xcb/render.h>
 
 class QOpenGLFramebufferObject;
 

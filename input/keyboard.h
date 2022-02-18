@@ -9,7 +9,7 @@
 #include "event.h"
 #include "xkb/keyboard.h"
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <QObject>
 

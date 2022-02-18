@@ -16,9 +16,8 @@
 
 #include "rules/rule_book.h"
 
-#include <QDBusConnection>
-
 #include <KConfig>
+#include <QDBusConnection>
 #include <cstdlib>
 #include <pwd.h>
 #include <unistd.h>

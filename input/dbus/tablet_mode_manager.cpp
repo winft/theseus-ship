@@ -12,7 +12,6 @@
 #include "input/touch.h"
 #include "input/wayland/platform.h"
 #include "input/wayland/redirect.h"
-
 #include "main.h"
 
 #include <QDBusConnection>

@@ -47,6 +47,7 @@
 #include "base/wayland/server.h"
 #include "main.h"
 
+#include <KGlobalAccel>
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
 #include <Wrapland/Server/keyboard_pool.h>
@@ -54,8 +55,6 @@
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/touch_pool.h>
 #include <Wrapland/Server/virtual_keyboard_v1.h>
-
-#include <KGlobalAccel>
 
 namespace KWin::input::wayland
 {

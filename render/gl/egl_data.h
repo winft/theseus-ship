@@ -5,10 +5,9 @@
 */
 #pragma once
 
-#include <epoxy/egl.h>
-
 #include <QByteArray>
 #include <QList>
+#include <epoxy/egl.h>
 
 namespace KWin::render::gl
 {

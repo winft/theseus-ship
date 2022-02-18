@@ -16,8 +16,9 @@
 #include "render/x11/compositor.h"
 #include "win/space.h"
 #include "x11_logging.h"
-#include <kwineffectquickview.h>
-#include <kwinglplatform.h>
+
+#include "kwineffectquickview.h"
+#include "kwinglplatform.h"
 
 #include <QOpenGLContext>
 #include <QVariant>

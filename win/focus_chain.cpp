@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "focus_chain.h"
 
-#include "toplevel.h"
+#include "controlling.h"
+#include "screen.h"
+#include "util.h"
 
-#include "win/controlling.h"
-#include "win/screen.h"
-#include "win/util.h"
+#include "toplevel.h"
 
 namespace KWin::win
 {

@@ -21,10 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "types.h"
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <QPoint>
-
 #include <memory>
 #include <xcb/xcb.h>
 

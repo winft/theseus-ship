@@ -17,6 +17,8 @@
 #include "win/wayland/surface.h"
 #include "win/wayland/xdg_activation.h"
 
+#include <KScreenLocker/KsldApp>
+#include <QThread>
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Client/event_queue.h>
@@ -24,14 +26,10 @@
 #include <Wrapland/Client/seat.h>
 #include <Wrapland/Client/shm_pool.h>
 #include <Wrapland/Client/surface.h>
-
 #include <Wrapland/Server/client.h>
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/globals.h>
 #include <Wrapland/Server/surface.h>
-
-#include <KScreenLocker/KsldApp>
-#include <QThread>
 #include <sys/socket.h>
 
 namespace KWin::base::wayland

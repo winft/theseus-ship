@@ -52,15 +52,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwineffectquickview.h"
 #include "kwinglplatform.h"
 
-#include <stdexcept>
-#include <unistd.h>
-
-#include <QMatrix4x4>
-#include <QPainter>
-
 #include <KLocalizedString>
 #include <KNotification>
-
+#include <QMatrix4x4>
+#include <QPainter>
+#include <stdexcept>
+#include <unistd.h>
 #include <xcb/sync.h>
 
 namespace KWin::render::gl

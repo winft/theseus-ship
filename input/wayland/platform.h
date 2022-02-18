@@ -5,10 +5,9 @@
 */
 #pragma once
 
+#include "base/platform.h"
 #include "input/platform.h"
 #include "input/types.h"
-
-#include "base/platform.h"
 
 #include <QPointF>
 

@@ -10,14 +10,13 @@
 
 #include "base/x11/platform.h"
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <QObject>
 
-#include <memory>
-
 #include <X11/Xlib-xcb.h>
 #include <fixx11h.h>
+#include <memory>
 
 namespace KWin
 {

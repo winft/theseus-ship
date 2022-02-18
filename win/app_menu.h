@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include <kwinglobals.h>
+#include "kwinglobals.h"
 
 #include <QObject>
 #include <xcb/xcb.h>

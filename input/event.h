@@ -6,7 +6,9 @@
 */
 #pragma once
 
-#include <QInputEvent>
+#include <QMetaType>
+#include <QPointF>
+#include <cstdint>
 
 namespace KWin::input
 {

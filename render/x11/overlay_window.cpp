@@ -19,19 +19,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "overlay_window.h"
 
+#include "compositor.h"
+
 #include "base/platform.h"
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/helpers.h"
 #include "base/x11/xcb/proto.h"
 #include "kwinglobals.h"
 #include "main.h"
-#include "render/x11/compositor.h"
 #include "win/space.h"
 
 #include <QVector>
 
 #include <xcb/composite.h>
 #include <xcb/shape.h>
+
 #if XCB_COMPOSITE_MAJOR_VERSION > 0 || XCB_COMPOSITE_MINOR_VERSION >= 3
 #define KWIN_HAVE_XCOMPOSITE_OVERLAY
 #endif

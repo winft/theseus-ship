@@ -13,7 +13,6 @@
 #include "kwinglobals.h"
 
 #include <KSharedConfig>
-
 #include <QDateTime>
 #include <QObject>
 #include <QRect>

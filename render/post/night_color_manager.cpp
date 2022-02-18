@@ -32,11 +32,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/gamma_ramp.h"
 #include "win/space.h"
 
-#include <color_correct_settings.h>
+#include "color_correct_settings.h"
 
 #include <KGlobalAccel>
 #include <KLocalizedString>
-
 #include <QAction>
 #include <QDBusConnection>
 #include <QTimer>

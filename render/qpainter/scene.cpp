@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/output.h"
 #include "base/platform.h"
+#include "decorations/decoratedclient.h"
 #include "input/cursor.h"
 #include "main.h"
 #include "render/compositor.h"
@@ -35,15 +36,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_logging.h"
 #include "win/space.h"
 
-#include <kwineffectquickview.h>
-
-#include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/surface.h>
-
-#include "decorations/decoratedclient.h"
+#include "kwineffectquickview.h"
 
 #include <KDecoration2/Decoration>
 #include <QPainter>
+#include <Wrapland/Server/buffer.h>
+#include <Wrapland/Server/surface.h>
 
 #include <cmath>
 

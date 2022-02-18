@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KLocalizedString>
 #include <KSelectionOwner>
-
 #include <QAbstractEventDispatcher>
 #include <QFile>
 #include <QFutureWatcher>

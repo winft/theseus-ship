@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "ftrace.h"
 
-#include <config-kwin.h>
+#include "config-kwin.h"
 
 #if HAVE_PERF
 #include "ftrace_impl.h"

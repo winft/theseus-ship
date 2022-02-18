@@ -18,10 +18,11 @@
 #include "render/wayland/egl.h"
 #include "win/space.h"
 
+#include "kwinglplatform.h"
+#include "wayland_logging.h"
+
 #include <QOpenGLContext>
-#include <kwinglplatform.h>
 #include <stdexcept>
-#include <wayland_logging.h>
 
 namespace KWin::render::backend::wlroots
 {

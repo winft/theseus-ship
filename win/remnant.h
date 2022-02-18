@@ -5,10 +5,9 @@
 */
 #pragma once
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <NETWM>
-
 #include <QMargins>
 #include <QRect>
 #include <QRegion>

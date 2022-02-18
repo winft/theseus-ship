@@ -7,13 +7,12 @@
 */
 #pragma once
 
-#include <kwinglobals.h>
+#include "kwinglobals.h"
 
 #include <QBasicTimer>
 #include <QObject>
 #include <QRegion>
 #include <QTimer>
-
 #include <deque>
 #include <map>
 #include <memory>

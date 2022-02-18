@@ -10,9 +10,8 @@
 #include "main.h"
 #include "platform.h"
 
-#include <xcb/xcb.h>
-
 #include <QTimer>
+#include <xcb/xcb.h>
 
 namespace KWin::render::backend::x11
 {

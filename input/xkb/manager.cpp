@@ -14,10 +14,9 @@
 #include "input/platform.h"
 #include "input/types.h"
 
+#include <sstream>
 #include <xkbcommon/xkbcommon-compose.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
-
-#include <sstream>
 
 Q_LOGGING_CATEGORY(KWIN_XKB, "kwin_xkbcommon", QtWarningMsg)
 

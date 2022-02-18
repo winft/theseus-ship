@@ -9,14 +9,10 @@
 
 #include "effect_frame.h"
 #include "shadow.h"
+#include "texture.h"
 #include "window.h"
 
 #include "base/output.h"
-#include "texture.h"
-
-#include <kwineffectquickview.h>
-#include <kwinglplatform.h>
-
 #include "decorations/decoratedclient.h"
 #include "input/cursor.h"
 #include "lanczos_filter.h"
@@ -26,20 +22,19 @@
 #include "render/effects.h"
 #include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
-
 #include "win/geo.h"
 #include "win/transient.h"
 
-#include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/surface.h>
-
-#include <unistd.h>
-
-#include <QMatrix4x4>
-#include <QPainter>
+#include "kwineffectquickview.h"
+#include "kwinglplatform.h"
 
 #include <KLocalizedString>
 #include <KNotification>
+#include <QMatrix4x4>
+#include <QPainter>
+#include <Wrapland/Server/buffer.h>
+#include <Wrapland/Server/surface.h>
+#include <unistd.h>
 
 namespace KWin::render::gl
 {

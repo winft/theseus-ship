@@ -6,8 +6,6 @@
 */
 #include "osd_notification.h"
 
-#include "config-kwin.h"
-
 #include "input/event.h"
 #include "input/event_spy.h"
 #include "input/pointer_redirect.h"

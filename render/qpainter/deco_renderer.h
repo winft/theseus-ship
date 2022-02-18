@@ -7,6 +7,7 @@
 #pragma once
 
 #include "decorations/decorationrenderer.h"
+
 #include <QImage>
 
 namespace KWin::render::qpainter

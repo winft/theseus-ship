@@ -7,7 +7,10 @@
 #pragma once
 
 #include "event.h"
-#include <kwin_export.h>
+#include "kwin_export.h"
+
+#include <QSet>
+#include <QTabletEvent>
 
 namespace KWin::input
 {

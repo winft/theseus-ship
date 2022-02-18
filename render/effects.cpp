@@ -20,18 +20,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "effects.h"
 
+#include "compositor.h"
+#include "effect_frame.h"
+#include "effect_loader.h"
+#include "effectsadaptor.h"
+#include "platform.h"
+#include "thumbnail_item.h"
+
 #include "base/logging.h"
 #include "base/output.h"
 #include "base/platform.h"
+#include "decorations/decorationbridge.h"
 #include "desktop/screen_locker_watcher.h"
-#include "effect_loader.h"
-#include "effectsadaptor.h"
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
-#include "kwineffectquickview.h"
-#include "kwinglutils.h"
 #include "scripting/effect.h"
-#include "thumbnail_item.h"
 #include "win/control.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
@@ -52,16 +55,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/tabbox/tabbox.h"
 #endif
 
-#include <QDebug>
+#include "kwineffectquickview.h"
+#include "kwinglutils.h"
 
-#include <Plasma/Theme>
-
-#include "platform.h"
-#include "render/compositor.h"
-#include "render/effect_frame.h"
-
-#include "decorations/decorationbridge.h"
 #include <KDecoration2/DecorationSettings>
+#include <Plasma/Theme>
 
 namespace KWin::render
 {

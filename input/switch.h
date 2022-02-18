@@ -8,7 +8,7 @@
 #include "control/switch.h"
 #include "event.h"
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <QObject>
 

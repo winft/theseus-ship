@@ -20,12 +20,11 @@
 #include "render/platform.h"
 #include "render/scene.h"
 #include "render/x11/overlay_window.h"
-
 #include "win/x11/geo.h"
 
-#include <kwineffectquickview.h>
-#include <kwinglutils.h>
-#include <kwinxrenderutils.h>
+#include "kwineffectquickview.h"
+#include "kwinglutils.h"
+#include "kwinxrenderutils.h"
 
 #include <QOpenGLContext>
 #include <algorithm>

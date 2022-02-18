@@ -8,7 +8,7 @@
 #include "base/backend/wlroots/platform.h"
 #include "input/wayland/platform.h"
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 extern "C" {
 #include <wlr/backend/libinput.h>

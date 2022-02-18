@@ -5,8 +5,9 @@
 */
 #pragma once
 
-#include "kwinglutils.h"
 #include "render/effect_frame.h"
+
+#include "kwinglutils.h"
 
 namespace KWin::render::gl
 {

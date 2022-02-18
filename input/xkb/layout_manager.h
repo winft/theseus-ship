@@ -9,13 +9,12 @@
 
 #include <kwin_export.h>
 
-#include <QObject>
-#include <QVector>
-
 #include <KConfigGroup>
 #include <KLocalizedString>
 #include <KSharedConfig>
+#include <QObject>
 #include <QString>
+#include <QVector>
 #include <string>
 
 typedef uint32_t xkb_layout_index_t;

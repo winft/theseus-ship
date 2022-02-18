@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "../console.h"
+#include "debug/console/console.h"
 
 namespace KWin
 {

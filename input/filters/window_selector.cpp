@@ -20,7 +20,6 @@
 #include "main.h"
 
 #include <Wrapland/Server/seat.h>
-
 #include <linux/input.h>
 
 namespace KWin::input

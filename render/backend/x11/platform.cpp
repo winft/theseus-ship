@@ -6,17 +6,15 @@
 */
 #include "platform.h"
 
-#include "glx.h"
-
-#include <config-kwin.h>
-#include <kwinconfig.h>
-
 #include "deco_renderer.h"
 #include "effects.h"
+#include "glx.h"
 #include "non_composited_outline.h"
 #include "output.h"
 #include "output_helpers.h"
 #include "x11_logging.h"
+
+#include "config-kwin.h"
 
 #if HAVE_EPOXY_GLX
 #include "glx_backend.h"
@@ -37,7 +35,6 @@
 #include <KConfigGroup>
 #include <KCrash>
 #include <KLocalizedString>
-
 #include <QOpenGLContext>
 #include <QThread>
 #include <QX11Info>

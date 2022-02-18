@@ -7,7 +7,7 @@
 
 #include "types.h"
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <Wrapland/Client/appmenu.h>
 #include <Wrapland/Client/compositor.h>

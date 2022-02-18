@@ -37,23 +37,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KCrash>
 #include <KPluginMetaData>
-
 #include <QAbstractEventDispatcher>
 #include <QPluginLoader>
 #include <QSocketNotifier>
 #include <QStyle>
 #include <QThread>
 #include <QtConcurrentRun>
+#include <Wrapland/Server/display.h>
+#include <iostream>
+#include <sys/socket.h>
+#include <unistd.h>
 
 extern "C" {
 #include <wlr/backend/headless.h>
 }
-
-#include <Wrapland/Server/display.h>
-
-#include <iostream>
-#include <sys/socket.h>
-#include <unistd.h>
 
 Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
 Q_IMPORT_PLUGIN(KGlobalAccelImpl)
