@@ -44,8 +44,7 @@ void update_space_areas(Window* win,
     }
 
     auto strut_region = win::x11::get_strut_rects(win);
-    auto const clientsScreenRect
-        = screens.geometry(base::get_output_index(outputs, win->central_output));
+    auto const clientsScreenRect = win->central_output ? win->central_output->geometry() : QRect();
 
     for (auto strut = strut_region.begin(); strut != strut_region.end(); strut++) {
         *strut = strut_rect((*strut).intersected(clientsScreenRect), (*strut).area());

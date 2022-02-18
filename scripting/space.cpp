@@ -202,8 +202,11 @@ int space::numScreens() const
 
 int space::activeScreen() const
 {
-    return base::get_output_index(kwinApp()->get_base().get_outputs(),
-                                  win::get_current_output(*workspace()));
+    auto output = win::get_current_output(*workspace());
+    if (!output) {
+        return 0;
+    }
+    return base::get_output_index(kwinApp()->get_base().get_outputs(), *output);
 }
 
 QRect space::virtualScreenGeometry() const

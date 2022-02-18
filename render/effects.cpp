@@ -1317,8 +1317,11 @@ void effects_handler_impl::addRepaint(int x, int y, int w, int h)
 
 int effects_handler_impl::activeScreen() const
 {
-    return base::get_output_index(kwinApp()->get_base().get_outputs(),
-                                  win::get_current_output(*workspace()));
+    auto output = win::get_current_output(*workspace());
+    if (!output) {
+        return 0;
+    }
+    return base::get_output_index(kwinApp()->get_base().get_outputs(), *output);
 }
 
 int effects_handler_impl::numScreens() const
@@ -1328,9 +1331,12 @@ int effects_handler_impl::numScreens() const
 
 int effects_handler_impl::screenNumber(const QPoint& pos) const
 {
-    return base::get_output_index(
-        kwinApp()->get_base().get_outputs(),
-        base::get_nearest_output(kwinApp()->get_base().get_outputs(), pos));
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+    auto output = base::get_nearest_output(outputs, pos);
+    if (!output) {
+        return 0;
+    }
+    return base::get_output_index(outputs, *output);
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, int screen, int desktop) const
@@ -2106,7 +2112,10 @@ QStringList effects_window_impl::activities() const
 
 int effects_window_impl::screen() const
 {
-    return base::get_output_index(kwinApp()->get_base().get_outputs(), toplevel->central_output);
+    if (!toplevel->central_output) {
+        return 0;
+    }
+    return base::get_output_index(kwinApp()->get_base().get_outputs(), *toplevel->central_output);
 }
 
 QRect effects_window_impl::clientGeometry() const

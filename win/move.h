@@ -683,8 +683,9 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             // these (currentyl implicit casted) types with auto.
             auto const& screens = kwinApp()->get_base().screens;
             auto const& outputs = kwinApp()->get_base().get_outputs();
-            auto const old_screen
-                = base::get_output_index(kwinApp()->get_base().get_outputs(), win->central_output);
+            auto const old_screen = win->central_output
+                ? base::get_output_index(kwinApp()->get_base().get_outputs(), *win->central_output)
+                : 0;
             auto screen = old_screen;
 
             std::vector<QRect> screens_geos(outputs.size());
@@ -696,7 +697,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
             }
 
             for (size_t i = 0; i < outputs.size(); ++i) {
-                if (static_cast<int>(i) == old_screen) {
+                if (i == old_screen) {
                     continue;
                 }
 
@@ -845,8 +846,9 @@ bool start_move_resize(Win* win)
 
     mov_res.initial_geometry = pending_frame_geometry(win);
     mov_res.geometry = mov_res.initial_geometry;
-    mov_res.start_screen
-        = base::get_output_index(kwinApp()->get_base().get_outputs(), win->central_output);
+    mov_res.start_screen = win->central_output
+        ? base::get_output_index(kwinApp()->get_base().get_outputs(), *win->central_output)
+        : 0;
 
     check_unrestricted_move_resize(win);
 
@@ -1294,8 +1296,9 @@ void finish_move_resize(Win* win, bool cancel)
     // alignment.
     win->checkScreen();
 
-    auto output_index
-        = base::get_output_index(kwinApp()->get_base().get_outputs(), win->central_output);
+    int output_index = win->central_output
+        ? base::get_output_index(kwinApp()->get_base().get_outputs(), *win->central_output)
+        : 0;
     if (output_index != mov_res.start_screen) {
         // Checks rule validity
         if (win->central_output) {

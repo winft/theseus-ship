@@ -1441,14 +1441,19 @@ QRect space::clientArea(clientAreaOption opt, base::output const* output, int de
         output = get_current_output(*workspace());
     }
 
-    auto const& output_geo = output ? output->geometry() : QRect();
-    auto output_index = base::get_output_index(outputs, output);
+    QRect output_geo;
+    size_t output_index{0};
+
+    if (output) {
+        output_geo = output->geometry();
+        output_index = base::get_output_index(outputs, *output);
+    }
 
     auto& base = kwinApp()->get_base();
     QRect sarea, warea;
     sarea = (!areas.screen.empty()
              // screens may be missing during KWin initialization or screen config changes
-             && output_index < static_cast<int>(areas.screen[desktop].size()))
+             && output_index < areas.screen[desktop].size())
         ? areas.screen[desktop][output_index]
         : output_geo;
     warea = areas.work[desktop].isNull() ? QRect({}, base.topology.size) : areas.work[desktop];
@@ -3489,7 +3494,8 @@ void space::slotSwitchToScreen()
 base::output const* get_derivated_output(base::output const* output, int drift)
 {
     auto const& outputs = kwinApp()->get_base().get_outputs();
-    auto index = base::get_output_index(outputs, output) + drift;
+    auto index = output ? base::get_output_index(outputs, *output) : 0;
+    index += drift;
     return base::get_output(outputs, index % outputs.size());
 }
 
@@ -3612,7 +3618,7 @@ void space::slotWindowLower()
                     request_focus(next);
             } else {
                 activateClient(win::top_client_on_desktop(
-                    workspace(), win::virtual_desktop_manager::self()->current(), -1));
+                    workspace(), win::virtual_desktop_manager::self()->current(), nullptr));
             }
         }
     }

@@ -171,7 +171,7 @@ void init_space(Space& space)
         // No client activated in manage()
         if (new_active_client == nullptr)
             new_active_client = win::top_client_on_desktop(
-                &space, virtual_desktop_manager::self()->current(), -1);
+                &space, virtual_desktop_manager::self()->current(), nullptr);
         if (new_active_client == nullptr) {
             new_active_client
                 = win::find_desktop(&space, true, virtual_desktop_manager::self()->current());

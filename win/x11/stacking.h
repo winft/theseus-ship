@@ -28,11 +28,13 @@ std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
     for (auto const& win : list) {
         auto l = win->layer();
 
-        auto const screen = base::get_output_index(outputs, win->central_output);
+        auto const output_index
+            = win->central_output ? base::get_output_index(outputs, *win->central_output) : 0;
         auto c = qobject_cast<window*>(win);
 
-        QMap<group*, layer>::iterator mLayer = minimum_layer[screen].find(c ? c->group() : nullptr);
-        if (mLayer != minimum_layer[screen].end()) {
+        QMap<group*, layer>::iterator mLayer
+            = minimum_layer[output_index].find(c ? c->group() : nullptr);
+        if (mLayer != minimum_layer[output_index].end()) {
             // If a window is raised above some other window in the same window group
             // which is in the ActiveLayer (i.e. it's fulscreened), make sure it stays
             // above that window (see #95731).
@@ -42,7 +44,7 @@ std::vector<Toplevel*> sort_windows_by_layer(Container const& list)
             }
             *mLayer = l;
         } else if (c) {
-            minimum_layer[screen].insertMulti(c->group(), l);
+            minimum_layer[output_index].insertMulti(c->group(), l);
         }
         layers[static_cast<size_t>(l)].push_back(win);
     }

@@ -274,7 +274,10 @@ void window::setFullScreen(bool set)
 
 int window::screen() const
 {
-    return base::get_output_index(kwinApp()->get_base().get_outputs(), m_client->central_output);
+    if (!m_client->central_output) {
+        return 0;
+    }
+    return base::get_output_index(kwinApp()->get_base().get_outputs(), *m_client->central_output);
 }
 
 int window::desktop() const

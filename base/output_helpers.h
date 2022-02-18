@@ -93,12 +93,9 @@ Output* get_output(std::vector<Output*> const& outputs, int index)
 }
 
 template<typename Output>
-int get_output_index(std::vector<Output*> const& outputs, Output const* output)
+size_t get_output_index(std::vector<Output*> const& outputs, Output const& output)
 {
-    if (!output) {
-        return 0;
-    }
-    auto it = std::find(outputs.begin(), outputs.end(), output);
+    auto it = std::find(outputs.begin(), outputs.end(), &output);
     return it - outputs.begin();
 }
 

@@ -513,8 +513,9 @@ bool Rules::update(Toplevel* window, int selection)
     }
 
     if (remember(screen, Screen)) {
-        auto output_index
-            = base::get_output_index(kwinApp()->get_base().get_outputs(), window->central_output);
+        int output_index = window->central_output
+            ? base::get_output_index(kwinApp()->get_base().get_outputs(), *window->central_output)
+            : 0;
         updated = updated || screen.data != output_index;
         screen.data = output_index;
     }

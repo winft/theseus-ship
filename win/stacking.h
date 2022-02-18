@@ -96,7 +96,7 @@ namespace KWin::win
 template<typename Space>
 Toplevel* top_client_on_desktop(Space* space,
                                 int desktop,
-                                int screen,
+                                base::output const* output,
                                 bool unconstrained = false,
                                 bool only_normal = true)
 {
@@ -106,14 +106,15 @@ Toplevel* top_client_on_desktop(Space* space,
     for (auto it = std::crbegin(list); it != std::crend(list); it++) {
         auto c = *it;
         if (c && c->isOnDesktop(desktop) && c->isShown()) {
-            if (screen != -1
-                && base::get_output_index(kwinApp()->get_base().get_outputs(), c->central_output)
-                    != screen)
+            if (output && c->central_output != output) {
                 continue;
-            if (!only_normal)
+            }
+            if (!only_normal) {
                 return c;
-            if (wants_tab_focus(c) && !is_special_window(c))
+            }
+            if (wants_tab_focus(c) && !is_special_window(c)) {
                 return c;
+            }
         }
     }
     return nullptr;
@@ -301,9 +302,7 @@ void raise_or_lower_client(Space* space, Window* window)
             space,
             window->isOnAllDesktops() ? win::virtual_desktop_manager::self()->current()
                                       : window->desktop(),
-            kwinApp()->options->isSeparateScreenFocus() ? base::get_output_index(
-                kwinApp()->get_base().get_outputs(), window->central_output)
-                                                        : -1);
+            kwinApp()->options->isSeparateScreenFocus() ? window->central_output : nullptr);
     }
 
     if (window == topmost) {

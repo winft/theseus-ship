@@ -257,7 +257,7 @@ base::output const* WindowRules::checkScreen(base::output const* output, bool in
     }
 
     auto const& outputs = kwinApp()->get_base().get_outputs();
-    int index = base::get_output_index(outputs, output);
+    int index = output ? base::get_output_index(outputs, *output) : 0;
 
     for (QVector<Rules*>::ConstIterator it = rules.constBegin(); it != rules.constEnd(); ++it) {
         if ((*it)->applyScreen(index, init))
