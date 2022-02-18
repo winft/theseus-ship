@@ -250,19 +250,21 @@ win::maximize_mode WindowRules::checkMaximize(win::maximize_mode mode, bool init
     return vert | horiz;
 }
 
-int WindowRules::checkScreen(int screen, bool init) const
+base::output const* WindowRules::checkScreen(base::output const* output, bool init) const
 {
-    if (rules.count() == 0)
-        return screen;
-    int ret = screen;
+    if (rules.count() == 0) {
+        return output;
+    }
+
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+    int index = base::get_output_index(outputs, output);
+
     for (QVector<Rules*>::ConstIterator it = rules.constBegin(); it != rules.constEnd(); ++it) {
-        if ((*it)->applyScreen(ret, init))
+        if ((*it)->applyScreen(index, init))
             break;
     }
-    if (ret >= static_cast<int>(kwinApp()->get_base().get_outputs().size())) {
-        ret = screen;
-    }
-    return ret;
+
+    return base::get_output(outputs, index);
 }
 
 // Client
@@ -286,8 +288,9 @@ void Toplevel::applyWindowRules()
     // MinSize, MaxSize handled by Geometry
     // IgnoreGeometry
     win::set_desktop(this, desktop());
-    workspace()->sendClientToScreen(
-        this, base::get_output_index(kwinApp()->get_base().get_outputs(), central_output));
+
+    // TODO(romangg): can central_output be null?
+    workspace()->sendClientToScreen(this, *central_output);
     // Type
     win::maximize(this, maximizeMode());
 

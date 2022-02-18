@@ -535,8 +535,7 @@ void Toplevel::setReadyForPainting()
 void Toplevel::checkScreen()
 {
     auto const& outputs = kwinApp()->get_base().get_outputs();
-    auto output
-        = base::get_output(outputs, base::get_nearest_output(outputs, frameGeometry().center()));
+    auto output = base::get_nearest_output(outputs, frameGeometry().center());
     if (central_output != output) {
         auto old_out = central_output;
         central_output = output;
@@ -572,8 +571,7 @@ void Toplevel::handle_output_removed(base::output* output)
         return;
     }
     auto const& outputs = kwinApp()->get_base().get_outputs();
-    central_output
-        = base::get_output(outputs, base::get_nearest_output(outputs, frameGeometry().center()));
+    central_output = base::get_nearest_output(outputs, frameGeometry().center());
     Q_EMIT central_output_changed(output, central_output);
 }
 

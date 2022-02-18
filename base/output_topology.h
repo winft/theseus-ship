@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "output.h"
+
 #include <QSize>
 
 namespace KWin::base
@@ -13,7 +15,7 @@ namespace KWin::base
 struct output_topology {
     QSize size;
     double max_scale{1.};
-    int current{0};
+    output const* current{nullptr};
 };
 
 }

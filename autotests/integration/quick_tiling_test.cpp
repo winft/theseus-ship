@@ -123,7 +123,7 @@ void QuickTilingTest::init()
     m_connection = Test::get_client().connection;
     m_compositor = Test::get_client().interfaces.compositor.get();
 
-    base::set_current_output(Test::app()->base, 0);
+    Test::set_current_output(0);
 }
 
 void QuickTilingTest::cleanup()
@@ -258,7 +258,10 @@ void QuickTilingTest::testQuickTiling()
 
     // send window to other screen
     QCOMPARE(c->central_output, Test::app()->base.get_outputs().at(0));
-    win::send_to_screen(c, 1);
+
+    auto output = base::get_output(Test::app()->base.get_outputs(), 1);
+    QVERIFY(output);
+    win::send_to_screen(c, *output);
     QCOMPARE(c->central_output, Test::app()->base.get_outputs().at(1));
 
     // quick tile should not be changed

@@ -558,10 +558,18 @@ template<typename Win>
 QRect place_unmapped(Win* win, QRect& frame_geo, KStartupInfoData const& asn_data)
 {
     auto space = workspace();
-    auto const& screens = kwinApp()->get_base().screens;
-    auto screen = asn_data.xinerama() == -1 ? get_current_output(*space) : asn_data.xinerama();
-    screen = win->control->rules().checkScreen(screen, true);
-    auto area = space->clientArea(PlacementArea, screens.geometry(screen).center(), win->desktop());
+    auto const& base = kwinApp()->get_base();
+    auto output = asn_data.xinerama() == -1
+        ? get_current_output(*space)
+        : base::get_output(base.get_outputs(), asn_data.xinerama());
+
+    QPoint center;
+    if (output) {
+        output = win->control->rules().checkScreen(output, true);
+        center = output->geometry().center();
+    }
+
+    auto area = space->clientArea(PlacementArea, center, win->desktop());
 
     // Desktop windows' positions are not placed by us.
     auto must_place = !is_desktop(win);
@@ -1290,9 +1298,7 @@ void restack_window(Win* win,
 
             if (!c
                 || !(is_normal(*it) && c->isShown() && (*it)->isOnCurrentDesktop()
-                     && on_screen(*it,
-                                  base::get_output_index(kwinApp()->get_base().get_outputs(),
-                                                         win->central_output)))) {
+                     && on_screen(*it, win->central_output))) {
                 continue;
             }
 
@@ -1535,7 +1541,10 @@ void startup_id_changed(Win* win)
         workspace()->sendClientToDesktop(win, desktop, true);
     }
     if (asn_data.xinerama() != -1) {
-        workspace()->sendClientToScreen(win, asn_data.xinerama());
+        auto output = base::get_output(kwinApp()->get_base().get_outputs(), asn_data.xinerama());
+        if (output) {
+            workspace()->sendClientToScreen(win, *output);
+        }
     }
     auto const timestamp = asn_id.timestamp();
     if (timestamp != 0) {

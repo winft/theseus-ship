@@ -66,7 +66,7 @@ Toplevel* focus_chain::getForActivation(uint desktop) const
     return getForActivation(desktop, get_current_output(*workspace()));
 }
 
-Toplevel* focus_chain::getForActivation(uint desktop, int screen) const
+Toplevel* focus_chain::getForActivation(uint desktop, base::output const* output) const
 {
     auto it = desktop_focus_chains.constFind(desktop);
     if (it == desktop_focus_chains.constEnd()) {
@@ -76,10 +76,7 @@ Toplevel* focus_chain::getForActivation(uint desktop, int screen) const
     for (int i = chain.size() - 1; i >= 0; --i) {
         auto tmp = chain.at(i);
         // TODO: move the check into Client
-        if (tmp->isShown()
-            && (!m_separateScreenFocus
-                || tmp->central_output
-                    == base::get_output(kwinApp()->get_base().get_outputs(), screen))) {
+        if (tmp->isShown() && (!m_separateScreenFocus || tmp->central_output == output)) {
             return tmp;
         }
     }
@@ -214,9 +211,7 @@ bool focus_chain::isUsableFocusCandidate(Toplevel* window, Toplevel* prev) const
     return window != prev && window->isShown() && window->isOnCurrentDesktop()
         && (!m_separateScreenFocus
             || win::on_screen(window,
-                              prev ? base::get_output_index(kwinApp()->get_base().get_outputs(),
-                                                            prev->central_output)
-                                   : get_current_output(*workspace())));
+                              prev ? prev->central_output : get_current_output(*workspace())));
 }
 
 Toplevel* focus_chain::nextForDesktop(Toplevel* reference, uint desktop) const

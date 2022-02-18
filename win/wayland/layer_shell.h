@@ -160,10 +160,10 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         block_geometry_updates(win, false);
 
         if (!win->layer_surface->output()) {
-            auto current_index = get_current_output(*workspace());
-            auto output = kwinApp()->get_base().get_outputs().at(current_index);
-            win->layer_surface->set_output(
-                static_cast<base::wayland::output*>(output)->wrapland_output());
+            if (auto output = get_current_output(*workspace())) {
+                win->layer_surface->set_output(
+                    static_cast<base::wayland::output const*>(output)->wrapland_output());
+            }
         }
 
         if (win->pending_configures.empty()) {

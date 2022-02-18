@@ -158,4 +158,4 @@ private:
 }
 }
 
-Q_DECLARE_METATYPE(KWin::base::output*);
+Q_DECLARE_METATYPE(KWin::base::output const*);

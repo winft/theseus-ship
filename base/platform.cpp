@@ -13,6 +13,16 @@ namespace KWin::base
 platform::platform()
     : screens{*this}
 {
+    QObject::connect(this, &platform::output_added, this, [this](auto output) {
+        if (!topology.current) {
+            topology.current = output;
+        }
+    });
+    QObject::connect(this, &platform::output_removed, this, [this](auto output) {
+        if (output == topology.current) {
+            topology.current = nullptr;
+        }
+    });
 }
 
 platform::~platform() = default;

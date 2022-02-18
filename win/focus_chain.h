@@ -26,6 +26,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+
+namespace base
+{
+class output;
+}
+
 class Toplevel;
 
 namespace win
@@ -110,7 +116,7 @@ public:
      * @param screen The screen to constrain the search on with separate screen focus
      * @return :X11Client *The Client which could be activated or @c null if there is none.
      */
-    Toplevel* getForActivation(uint desktop, int screen) const;
+    Toplevel* getForActivation(uint desktop, base::output const* output) const;
 
     /**
      * @brief Checks whether the most recently used focus chain contains the given @p client.

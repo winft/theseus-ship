@@ -24,6 +24,12 @@ class KXMessages;
 
 namespace KWin
 {
+
+namespace base
+{
+class output;
+}
+
 class Rules;
 class RuleSettings;
 class Toplevel;
@@ -56,7 +62,7 @@ public:
     int checkOpacityInactive(int s) const;
     bool checkIgnoreGeometry(bool ignore, bool init = false) const;
     int checkDesktop(int desktop, bool init = false) const;
-    int checkScreen(int screen, bool init = false) const;
+    base::output const* checkScreen(base::output const* output, bool init = false) const;
     NET::WindowType checkType(NET::WindowType type) const;
     KWin::win::maximize_mode checkMaximize(win::maximize_mode mode, bool init = false) const;
     bool checkMinimize(bool minimized, bool init = false) const;

@@ -84,7 +84,7 @@ void update_fullscreen_enable(Win* win)
 template<typename Win>
 void update_fullscreen_disable(Win* win)
 {
-    auto const current_output = win->central_output;
+    auto const old_output = win->central_output;
 
     if (has_special_geometry_mode_besides_fullscreen(win)) {
         fullscreen_restore_special_mode(win);
@@ -92,9 +92,8 @@ void update_fullscreen_disable(Win* win)
         fullscreen_restore_geometry(win);
     }
 
-    if (current_output != win->central_output) {
-        workspace()->sendClientToScreen(
-            win, base::get_output_index(kwinApp()->get_base().get_outputs(), current_output));
+    if (old_output && old_output != win->central_output) {
+        workspace()->sendClientToScreen(win, *old_output);
     }
 }
 

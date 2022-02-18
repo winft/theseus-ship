@@ -23,13 +23,16 @@ namespace KWin::win
 {
 
 template<typename Win>
-bool on_screen(Win* win, int screen)
+bool on_screen(Win* win, base::output const* output)
 {
-    return kwinApp()->get_base().screens.geometry(screen).intersects(win->frameGeometry());
+    if (!output) {
+        return false;
+    }
+    return output->geometry().intersects(win->frameGeometry());
 }
 
 template<typename Space>
-int get_current_output(Space const& space)
+base::output const* get_current_output(Space const& space)
 {
     auto const& base = kwinApp()->get_base();
 
@@ -39,7 +42,7 @@ int get_current_output(Space const& space)
 
     auto const cur = base.topology.current;
     if (auto client = space.activeClient(); client && !win::on_screen(client, cur)) {
-        return base::get_output_index(kwinApp()->get_base().get_outputs(), client->central_output);
+        return client->central_output;
     }
     return cur;
 }
@@ -50,9 +53,8 @@ void set_current_output_by_window(Base& base, Win const& window)
     if (!window.control->active()) {
         return;
     }
-    if (!win::on_screen(&window, base.topology.current)) {
-        base::set_current_output(base,
-                                 base::get_output_index(base.get_outputs(), window.central_output));
+    if (window.central_output && !win::on_screen(&window, base.topology.current)) {
+        base::set_current_output(base, window.central_output);
     }
 }
 
@@ -62,23 +64,23 @@ bool on_active_screen(Win* win)
     return on_screen(win, get_current_output(*workspace()));
 }
 
-template<typename Win>
-void send_to_screen(Win* win, int new_screen)
+template<typename Win, typename Output>
+void send_to_screen(Win* win, Output const& output)
 {
-    new_screen = win->control->rules().checkScreen(new_screen);
-    auto new_output = base::get_output(kwinApp()->get_base().get_outputs(), new_screen);
+    auto checked_output = win->control->rules().checkScreen(&output);
 
     if (win->control->active()) {
-        set_current_output(kwinApp()->get_base(), new_screen);
+        base::set_current_output(kwinApp()->get_base(), checked_output);
+
         // might impact the layer of a fullscreen window
         for (auto cc : workspace()->allClientList()) {
-            if (cc->control->fullscreen() && cc->central_output == new_output) {
+            if (cc->control->fullscreen() && cc->central_output == checked_output) {
                 update_layer(cc);
             }
         }
     }
 
-    if (win->central_output == new_output) {
+    if (win->central_output == checked_output) {
         // Don't use isOnScreen(), that's true even when only partially.
         return;
     }
@@ -102,7 +104,7 @@ void send_to_screen(Win* win, int new_screen)
     }
 
     auto oldScreenArea = workspace()->clientArea(MaximizeArea, win);
-    auto screenArea = workspace()->clientArea(MaximizeArea, new_screen, win->desktop());
+    auto screenArea = workspace()->clientArea(MaximizeArea, checked_output, win->desktop());
 
     // the window can have its center so that the position correction moves the new center onto
     // the old screen, what will tile it where it is. Ie. the screen is not changed
@@ -153,7 +155,7 @@ void send_to_screen(Win* win, int new_screen)
     auto children = restacked_by_space_stacking_order(workspace(), win->transient()->children);
     for (auto const& child : children) {
         if (child->control) {
-            send_to_screen(child, new_screen);
+            send_to_screen(child, *checked_output);
         }
     }
 }

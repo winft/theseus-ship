@@ -97,7 +97,8 @@ tabbox_handler_impl::~tabbox_handler_impl()
 
 int tabbox_handler_impl::active_screen() const
 {
-    return win::get_current_output(*workspace());
+    return base::get_output_index(kwinApp()->get_base().get_outputs(),
+                                  win::get_current_output(*workspace()));
 }
 
 int tabbox_handler_impl::current_desktop() const
@@ -234,17 +235,16 @@ bool tabbox_handler_impl::check_minimized(tabbox_client* client) const
 
 bool tabbox_handler_impl::check_multi_screen(tabbox_client* client) const
 {
-    auto current = (static_cast<tabbox_client_impl*>(client))->client();
-    auto output_index
-        = base::get_output_index(kwinApp()->get_base().get_outputs(), current->central_output);
+    auto current_window = (static_cast<tabbox_client_impl*>(client))->client();
+    auto current_output = win::get_current_output(*workspace());
 
     switch (config().client_multi_screen_mode()) {
     case tabbox_config::IgnoreMultiScreen:
         return true;
     case tabbox_config::ExcludeCurrentScreenClients:
-        return output_index != win::get_current_output(*workspace());
+        return current_window->central_output != current_output;
     default: // tabbox_config::OnlyCurrentScreenClients
-        return output_index == win::get_current_output(*workspace());
+        return current_window->central_output == current_output;
     }
 }
 
@@ -321,11 +321,9 @@ void tabbox_handler_impl::elevate_client(tabbox_client* c, QWindow* tabbox, bool
 
 std::weak_ptr<tabbox_client> tabbox_handler_impl::desktop_client() const
 {
-    auto const& outputs = kwinApp()->get_base().get_outputs();
     for (auto const& window : workspace()->stacking_order->sorted()) {
         if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop()
-            && base::get_output_index(outputs, window->central_output)
-                == win::get_current_output(*workspace())) {
+            && window->central_output == win::get_current_output(*workspace())) {
             return window->control->tabbox();
         }
     }

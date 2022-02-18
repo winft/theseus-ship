@@ -229,7 +229,7 @@ void LockScreenTest::init()
     m_shm = Test::get_client().interfaces.shm.get();
     m_seat = Test::get_client().interfaces.seat.get();
 
-    base::set_current_output(Test::app()->base, 0);
+    Test::set_current_output(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

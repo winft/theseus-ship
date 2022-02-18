@@ -55,6 +55,14 @@ void destroy_wayland_connection()
     get_all_clients().clear();
 }
 
+void set_current_output(int index)
+{
+    auto const& outputs = Test::app()->base.get_outputs();
+    auto output = base::get_output(outputs, index);
+    QVERIFY(output);
+    base::set_current_output(Test::app()->base, output);
+}
+
 void test_outputs_default()
 {
     test_outputs_geometries({QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)});
@@ -573,11 +581,10 @@ KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_input_de
 
 QPointF get_relative_touch_position(QPointF const& pos)
 {
-    auto const& base = kwinApp()->get_base();
-    auto const& screens = base.screens;
-    auto screen_number = base::get_nearest_output(base.get_outputs(), pos.toPoint());
-    auto output_size = screens.size(screen_number);
+    auto output = base::get_nearest_output(kwinApp()->get_base().get_outputs(), pos.toPoint());
+    assert(output);
 
+    auto output_size = output->geometry().size();
     return QPointF(pos.x() / output_size.width(), pos.y() / output_size.height());
 }
 

@@ -791,15 +791,15 @@ void pointer_redirect::update_position(const QPointF& pos)
     // verify that at least one screen contains the pointer position
     QPointF p = pos;
     if (!screenContainsPos(p)) {
-        auto const& screens = kwinApp()->get_base().screens;
-
         auto const unitedScreensGeometry = QRectF({}, kwinApp()->get_base().topology.size);
         p = confineToBoundingBox(p, unitedScreensGeometry);
 
         if (!screenContainsPos(p)) {
-            QRectF const currentScreenGeometry = screens.geometry(
-                base::get_nearest_output(kwinApp()->get_base().get_outputs(), m_pos.toPoint()));
-            p = confineToBoundingBox(p, currentScreenGeometry);
+            if (auto const& outputs = kwinApp()->get_base().get_outputs(); !outputs.empty()) {
+                auto output = base::get_nearest_output(outputs, m_pos.toPoint());
+                QRectF const currentScreenGeometry = output->geometry();
+                p = confineToBoundingBox(p, currentScreenGeometry);
+            }
         }
     }
     p = apply_pointer_confinement(p);
@@ -854,10 +854,13 @@ void pointer_redirect::updateAfterScreenChange()
     }
 
     // pointer no longer on a screen, reposition to closes screen
-    auto& base = kwinApp()->get_base();
-    auto const& screens = base.screens;
-    QPointF const pos
-        = screens.geometry(base::get_nearest_output(base.get_outputs(), m_pos.toPoint())).center();
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+    if (outputs.empty()) {
+        return;
+    }
+
+    auto output = base::get_nearest_output(outputs, m_pos.toPoint());
+    QPointF const pos = output->geometry().center();
 
     // TODO: better way to get timestamps
     processMotion(pos, waylandServer()->seat()->timestamp());

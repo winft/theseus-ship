@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
+#include "base/output_helpers.h"
 #include "base/wayland/server.h"
 #include "decorations/decorationbridge.h"
 #include "decorations/settings.h"
@@ -139,7 +140,7 @@ void TestXdgShellClient::init()
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration
                                    | Test::global_selection::appmenu);
 
-    base::set_current_output(Test::app()->base, 0);
+    Test::set_current_output(0);
     input::get_cursor()->set_pos(QPoint(1280, 512));
 }
 
@@ -1426,11 +1427,15 @@ void TestXdgShellClient::testSendToScreen()
     QSignalSpy geometryChangedSpy(window, &win::wayland::window::frame_geometry_changed);
     QVERIFY(geometryChangedSpy.isValid());
 
-    QCOMPARE(window->central_output, Test::app()->base.get_outputs().at(0));
-    QCOMPARE(popup->central_output, Test::app()->base.get_outputs().at(0));
-    win::send_to_screen(window, 1);
-    QCOMPARE(window->central_output, Test::app()->base.get_outputs().at(1));
-    QCOMPARE(popup->central_output, Test::app()->base.get_outputs().at(1));
+    auto const& outputs = Test::app()->base.get_outputs();
+    QCOMPARE(window->central_output, outputs.at(0));
+    QCOMPARE(popup->central_output, outputs.at(0));
+
+    auto output = base::get_output(outputs, 1);
+    QVERIFY(output);
+    win::send_to_screen(window, *output);
+    QCOMPARE(window->central_output, outputs.at(1));
+    QCOMPARE(popup->central_output, outputs.at(1));
 
     QCOMPARE(popup->frameGeometry(),
              QRect(window->frameGeometry().topLeft() + QPoint(5, 10), QSize(50, 40)));

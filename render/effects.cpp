@@ -1034,9 +1034,12 @@ void effects_handler_impl::windowToDesktops(EffectWindow* w, const QVector<uint>
 
 void effects_handler_impl::windowToScreen(EffectWindow* w, int screen)
 {
+    auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
     auto window = static_cast<effects_window_impl*>(w)->window();
-    if (window && window->control && !win::is_desktop(window) && !win::is_dock(window))
-        workspace()->sendClientToScreen(window, screen);
+
+    if (output && window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
+        workspace()->sendClientToScreen(window, *output);
+    }
 }
 
 void effects_handler_impl::setShowingDesktop(bool showing)
@@ -1314,7 +1317,8 @@ void effects_handler_impl::addRepaint(int x, int y, int w, int h)
 
 int effects_handler_impl::activeScreen() const
 {
-    return win::get_current_output(*workspace());
+    return base::get_output_index(kwinApp()->get_base().get_outputs(),
+                                  win::get_current_output(*workspace()));
 }
 
 int effects_handler_impl::numScreens() const
@@ -1324,12 +1328,15 @@ int effects_handler_impl::numScreens() const
 
 int effects_handler_impl::screenNumber(const QPoint& pos) const
 {
-    return base::get_nearest_output(kwinApp()->get_base().get_outputs(), pos);
+    return base::get_output_index(
+        kwinApp()->get_base().get_outputs(),
+        base::get_nearest_output(kwinApp()->get_base().get_outputs(), pos));
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, int screen, int desktop) const
 {
-    return workspace()->clientArea(opt, screen, desktop);
+    auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+    return workspace()->clientArea(opt, output, desktop);
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const EffectWindow* c) const

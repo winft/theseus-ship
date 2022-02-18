@@ -979,8 +979,8 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             // Make sure the titlebar isn't behind a restricted area. We don't need to restrict
             // the other directions. If not visible enough, move the window to the closest valid
             // point. We bruteforce this by slowly moving the window back to its previous position
-            QRegion availableArea(workspace()->clientArea(FullArea, -1, 0));  // On the screen
-            availableArea -= workspace()->restrictedMoveArea(win->desktop()); // Strut areas
+            QRegion availableArea(workspace()->clientArea(FullArea, nullptr, 0)); // On the screen
+            availableArea -= workspace()->restrictedMoveArea(win->desktop());     // Strut areas
             bool transposed = false;
             int requiredPixels;
             QRect bTitleRect = titleBarRect(transposed, requiredPixels);
@@ -1092,11 +1092,11 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         if (!win->isMovable()) {
             // isMovableAcrossScreens() must have been true to get here
             // Special moving of maximized windows on Xinerama screens
-            int screen = base::get_nearest_output(kwinApp()->get_base().get_outputs(), globalPos);
+            auto output = base::get_nearest_output(kwinApp()->get_base().get_outputs(), globalPos);
             if (win->control->fullscreen())
-                mov_res.geometry = workspace()->clientArea(FullScreenArea, screen, 0);
+                mov_res.geometry = workspace()->clientArea(FullScreenArea, output, 0);
             else {
-                auto moveResizeGeom = workspace()->clientArea(MaximizeArea, screen, 0);
+                auto moveResizeGeom = workspace()->clientArea(MaximizeArea, output, 0);
                 auto adjSize = adjusted_frame_size(win, moveResizeGeom.size(), size_mode::max);
                 if (adjSize != moveResizeGeom.size()) {
                     QRect r(moveResizeGeom);
@@ -1114,9 +1114,14 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             mov_res.geometry = moveResizeGeom;
 
             if (!mov_res.unrestricted) {
-                auto const strut = workspace()->restrictedMoveArea(win->desktop()); // Strut areas
-                QRegion availableArea(workspace()->clientArea(FullArea, -1, 0));    // On the screen
-                availableArea -= strut;                                             // Strut areas
+                // Strut areas
+                auto const strut = workspace()->restrictedMoveArea(win->desktop());
+
+                // On the screen
+                QRegion availableArea(workspace()->clientArea(FullArea, nullptr, 0));
+
+                // Strut areas
+                availableArea -= strut;
                 bool transposed = false;
                 int requiredPixels;
                 QRect bTitleRect = titleBarRect(transposed, requiredPixels);
@@ -1293,7 +1298,9 @@ void finish_move_resize(Win* win, bool cancel)
         = base::get_output_index(kwinApp()->get_base().get_outputs(), win->central_output);
     if (output_index != mov_res.start_screen) {
         // Checks rule validity
-        workspace()->sendClientToScreen(win, output_index);
+        if (win->central_output) {
+            workspace()->sendClientToScreen(win, *win->central_output);
+        }
         if (win->geometry_update.max_mode != maximize_mode::restore) {
             check_workspace_position(win);
         }
@@ -1401,15 +1408,13 @@ void pack_to(Win* win, int left, int top)
     // May cause leave event.
     workspace()->updateFocusMousePosition(input::get_cursor()->pos());
 
-    auto const old_screen
-        = base::get_output_index(kwinApp()->get_base().get_outputs(), win->central_output);
+    auto const old_screen = win->central_output;
     move(win, QPoint(left, top));
+    assert(win->central_output);
 
-    auto output_index
-        = base::get_output_index(kwinApp()->get_base().get_outputs(), win->central_output);
-    if (output_index != old_screen) {
+    if (win->central_output != old_screen) {
         // Checks rule validity.
-        workspace()->sendClientToScreen(win, output_index);
+        workspace()->sendClientToScreen(win, *win->central_output);
         if (win->maximizeMode() != win::maximize_mode::restore) {
             check_workspace_position(win);
         }

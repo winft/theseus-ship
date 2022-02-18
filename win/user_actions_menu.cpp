@@ -688,11 +688,13 @@ void user_actions_menu::slotSendToScreen(QAction* action)
     if (m_client.isNull()) {
         return;
     }
-    if (screen >= kwinApp()->get_base().get_outputs().size()) {
+
+    auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+    if (!output) {
         return;
     }
 
-    workspace()->sendClientToScreen(m_client.data(), screen);
+    workspace()->sendClientToScreen(m_client.data(), *output);
 }
 
 }

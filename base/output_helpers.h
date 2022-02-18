@@ -14,16 +14,15 @@ namespace KWin::base
 {
 
 template<typename Output>
-size_t get_nearest_output(std::vector<Output*> const& outputs, QPoint const& pos)
+auto get_nearest_output(std::vector<Output*> const& outputs, QPoint const& pos) -> Output*
 {
-    size_t best_output{0};
-    size_t index{0};
+    Output* best_output{nullptr};
     auto min_distance = INT_MAX;
 
     for (auto const& output : outputs) {
         auto const& geo = output->geometry();
         if (geo.contains(pos)) {
-            return index;
+            return output;
         }
 
         auto distance = QPoint(geo.topLeft() - pos).manhattanLength();
@@ -33,9 +32,8 @@ size_t get_nearest_output(std::vector<Output*> const& outputs, QPoint const& pos
 
         if (distance < min_distance) {
             min_distance = distance;
-            best_output = index;
+            best_output = output;
         }
-        index++;
     }
 
     return best_output;
@@ -68,8 +66,8 @@ void update_output_topology(Base& base)
     Q_EMIT base.topology_changed(old_topo, base.topology);
 }
 
-template<typename Base>
-void set_current_output(Base& base, int output)
+template<typename Base, typename Output>
+void set_current_output(Base& base, Output* output)
 {
     if (base.topology.current == output) {
         return;

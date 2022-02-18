@@ -91,7 +91,8 @@ void tabbox_switcher_item::set_visible(bool visible)
 
 QRect tabbox_switcher_item::screen_geometry() const
 {
-    return kwinApp()->get_base().screens.geometry(win::get_current_output(*workspace()));
+    auto output = win::get_current_output(*workspace());
+    return output ? output->geometry() : QRect();
 }
 
 void tabbox_switcher_item::set_current_index(int index)

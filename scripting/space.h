@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "window.h"
 
+#include "base/output_helpers.h"
 #include "base/platform.h"
 #include "main.h"
 #include "screens.h"
@@ -570,10 +571,11 @@ public:
 
     void sendClientToScreen(KWin::scripting::window* client, int screen) override
     {
-        if (screen < 0 || screen >= static_cast<int>(kwinApp()->get_base().get_outputs().size())) {
+        auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+        if (!output) {
             return;
         }
-        ref_space->sendClientToScreen(client->client(), screen);
+        ref_space->sendClientToScreen(client->client(), *output);
     }
 
 #define SIMPLE_SLOT(name)                                                                          \
@@ -659,7 +661,8 @@ public:
 protected:
     QRect client_area_impl(clientAreaOption option, int screen, int desktop) const override
     {
-        return ref_space->clientArea(option, screen, desktop);
+        auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+        return ref_space->clientArea(option, output, desktop);
     }
 
     QRect client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const override
