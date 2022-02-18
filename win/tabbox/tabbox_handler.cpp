@@ -21,17 +21,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "config-kwin.h"
 
-#include "client_model.h"
-#include "desktop_model.h"
+#include "tabbox_client_model.h"
 #include "tabbox_config.h"
+#include "tabbox_desktop_model.h"
 
 #include "base/x11/xcb/helpers.h"
 #include "kwinglobals.h"
 #include "main.h"
 #include "render/thumbnail_item.h"
 #include "scripting/platform.h"
-#include "switcher_item.h"
 #include "tabbox_logging.h"
+#include "tabbox_switcher_item.h"
 #include "win/space.h"
 
 #include <QKeyEvent>

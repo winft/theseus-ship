@@ -4,8 +4,8 @@ add_definitions(-DKWIN_UNIT_TEST)
 # Test TabBox::ClientModel
 ########################################################
 set(testTabBoxClientModel_SRCS
-    ../../win/tabbox/client_model.cpp
-    ../../win/tabbox/desktop_model.cpp
+    ../../win/tabbox/tabbox_client_model.cpp
+    ../../win/tabbox/tabbox_desktop_model.cpp
     ../../win/tabbox/tabbox_logging.cpp
     ../../win/tabbox/tabbox_config.cpp
     ../../win/tabbox/tabbox_handler.cpp
@@ -39,8 +39,8 @@ ecm_mark_as_test(testTabBoxClientModel)
 # Test TabBox::TabBoxHandler
 ########################################################
 set(testTabBoxHandler_SRCS
-    ../../win/tabbox/client_model.cpp
-    ../../win/tabbox/desktop_model.cpp
+    ../../win/tabbox/tabbox_client_model.cpp
+    ../../win/tabbox/tabbox_desktop_model.cpp
     ../../win/tabbox/tabbox_logging.cpp
     ../../win/tabbox/tabbox_config.cpp
     ../../win/tabbox/tabbox_handler.cpp
@@ -89,7 +89,7 @@ ecm_mark_as_test(testTabBoxConfig)
 # Test TabBox::DesktopChainManager
 ########################################################
 set(testDesktopChain_SRCS
-    ../../win/tabbox/desktop_chain.cpp
+    ../../win/tabbox/tabbox_desktop_chain.cpp
     ../../win/tabbox/tabbox_logging.cpp
     test_desktopchain.cpp
 )

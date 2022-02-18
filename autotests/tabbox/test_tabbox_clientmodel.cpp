@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "test_tabbox_clientmodel.h"
 #include "../testutils.h"
 #include "mock_tabboxhandler.h"
-#include "win/tabbox/client_model.h"
+#include "win/tabbox/tabbox_client_model.h"
 
 #include <QX11Info>
 #include <QtTest>
