@@ -12,11 +12,12 @@
 #include <vector>
 #include <xcb/randr.h>
 
-namespace KWin::render::backend::x11
+namespace KWin::base::x11
 {
 
 template<typename Base, typename Resources>
-std::vector<std::unique_ptr<base::x11::output>> get_outputs(Base& base, Resources resources)
+std::vector<std::unique_ptr<base::x11::output>> get_outputs_from_resources(Base& base,
+                                                                           Resources resources)
 {
     auto add_fallback = [&base](auto& outputs) {
         auto output = std::make_unique<base::x11::output>(base);

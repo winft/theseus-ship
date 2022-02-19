@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
 
+#include "base/backend/x11/platform.h"
 #include "base/x11/grabs.h"
 #include "debug/console/x11/x11_console.h"
 #include "main.h"
@@ -47,7 +48,7 @@ public:
 
     void start();
 
-    base::x11::platform base;
+    base::backend::x11::platform base;
     std::unique_ptr<render::x11::compositor> compositor;
     std::unique_ptr<win::x11::space> workspace;
 };

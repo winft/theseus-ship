@@ -13,7 +13,7 @@
 #include <QTimer>
 #include <xcb/xcb.h>
 
-namespace KWin::render::backend::x11
+namespace KWin::base::backend::x11
 {
 
 RandrFilter::RandrFilter(x11::platform* platform)

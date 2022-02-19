@@ -691,6 +691,8 @@ endif()
 
 
 set(kwin_X11_SRCS
+   base/backend/x11/platform.cpp
+   base/backend/x11/randr_filter.cpp
    base/x11/output.cpp
    debug/console/x11/x11_console.cpp
    input/x11/cursor.cpp
@@ -703,7 +705,6 @@ set(kwin_X11_SRCS
    render/backend/x11/mouse_intercept_filter.cpp
    render/backend/x11/non_composited_outline.cpp
    render/backend/x11/platform.cpp
-   render/backend/x11/randr_filter.cpp
    render/x11/compositor.cpp
    render/x11/overlay_window.cpp
 )

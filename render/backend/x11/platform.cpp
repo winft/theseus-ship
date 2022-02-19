@@ -10,8 +10,6 @@
 #include "effects.h"
 #include "glx.h"
 #include "non_composited_outline.h"
-#include "output.h"
-#include "output_helpers.h"
 #include "x11_logging.h"
 
 #include "config-kwin.h"
@@ -21,13 +19,10 @@
 #endif
 
 #include "base/options.h"
-#include "base/output_helpers.h"
-#include "base/x11/output.h"
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/randr.h"
 #include "kwinxrenderutils.h"
 #include "main_x11.h"
-#include "randr_filter.h"
 #include "render/compositor.h"
 #include "toplevel.h"
 #include "win/space.h"
@@ -80,10 +75,7 @@ void platform::init()
         throw std::exception();
     }
 
-    update_outputs_impl<base::x11::xcb::randr::screen_resources>();
-
     XRenderUtils::init(kwinApp()->x11Connection(), kwinApp()->x11RootWindow());
-    m_randrFilter.reset(new RandrFilter(this));
 }
 
 gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
@@ -333,60 +325,6 @@ QVector<CompositingType> platform::supportedCompositors() const
 #endif
     compositors << NoCompositing;
     return compositors;
-}
-
-void platform::update_outputs()
-{
-    update_outputs_impl<base::x11::xcb::randr::current_resources>();
-}
-
-template<typename Resources>
-void platform::update_outputs_impl()
-{
-    auto outputs = get_outputs(base, Resources(rootWindow()));
-
-    qCDebug(KWIN_X11) << "Update outputs:" << base.outputs.size() << "-->" << outputs.size();
-
-    // First check for removed outputs (we go backwards through the outputs, LIFO).
-    for (auto old_it = base.outputs.rbegin(); old_it != base.outputs.rend();) {
-        auto x11_old_out = static_cast<base::x11::output*>(old_it->get());
-
-        auto is_in_new_outputs = [x11_old_out, &outputs] {
-            auto it = std::find_if(outputs.begin(), outputs.end(), [x11_old_out](auto const& out) {
-                return x11_old_out->data.crtc == out->data.crtc
-                    && x11_old_out->data.name == out->data.name;
-            });
-            return it != outputs.end();
-        };
-
-        if (is_in_new_outputs()) {
-            // The old output is still there. Keep it in the base outputs.
-            old_it++;
-            continue;
-        }
-
-        qCDebug(KWIN_X11) << "  removed:" << x11_old_out->name();
-        auto old_out = std::move(*old_it);
-        old_it = static_cast<decltype(old_it)>(base.outputs.erase(std::next(old_it).base()));
-        Q_EMIT base.output_removed(old_out.get());
-    }
-
-    // Second check for added outputs.
-    for (auto& out : outputs) {
-        auto it
-            = std::find_if(base.outputs.begin(), base.outputs.end(), [&out](auto const& old_out) {
-                  auto old_x11_out = static_cast<base::x11::output*>(old_out.get());
-                  return old_x11_out->data.crtc == out->data.crtc
-                      && old_x11_out->data.name == out->data.name;
-              });
-        if (it == base.outputs.end()) {
-            qCDebug(KWIN_X11) << "  added:" << out->name();
-            base.outputs.push_back(std::move(out));
-            Q_EMIT base.output_added(base.outputs.back().get());
-        }
-    }
-
-    base::update_output_topology(base);
 }
 
 }
