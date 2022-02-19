@@ -19,20 +19,11 @@ template<typename Base, typename Resources>
 std::vector<std::unique_ptr<base::x11::output>> get_outputs_from_resources(Base& base,
                                                                            Resources resources)
 {
-    auto add_fallback = [&base](auto& outputs) {
-        auto output = std::make_unique<base::x11::output>(base);
-        output->data.gamma_ramp_size = 0;
-        output->data.refresh_rate = -1.0f;
-        output->data.name = QStringLiteral("Fallback");
-        outputs.push_back(std::move(output));
-    };
+    if (resources.is_null()) {
+        return {};
+    }
 
     std::vector<std::unique_ptr<base::x11::output>> outputs;
-
-    if (resources.is_null()) {
-        add_fallback(outputs);
-        return outputs;
-    }
 
     xcb_randr_crtc_t* crtcs = resources.crtcs();
     xcb_randr_mode_info_t* modes = resources.modes();
@@ -118,10 +109,6 @@ std::vector<std::unique_ptr<base::x11::output>> get_outputs_from_resources(Base&
 
             outputs.push_back(std::move(output));
         }
-    }
-
-    if (outputs.empty()) {
-        add_fallback(outputs);
     }
 
     return outputs;
