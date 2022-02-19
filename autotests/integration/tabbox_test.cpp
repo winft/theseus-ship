@@ -106,9 +106,9 @@ void TabBoxTest::testCapsLock()
     QTRY_COMPARE(workspace()->stacking_order->sorted(), (std::deque<Toplevel*>{c1, c2, c3}));
 
     // Setup tabbox signal spies
-    QSignalSpy tabboxAddedSpy(TabBox::TabBox::self(), &TabBox::TabBox::tabBoxAdded);
+    QSignalSpy tabboxAddedSpy(win::tabbox::self(), &win::tabbox::tabbox_added);
     QVERIFY(tabboxAddedSpy.isValid());
-    QSignalSpy tabboxClosedSpy(TabBox::TabBox::self(), &TabBox::TabBox::tabBoxClosed);
+    QSignalSpy tabboxClosedSpy(win::tabbox::self(), &win::tabbox::tabbox_closed);
     QVERIFY(tabboxClosedSpy.isValid());
 
     // enable capslock
@@ -125,19 +125,19 @@ void TabBoxTest::testCapsLock()
     Test::keyboard_key_released(KEY_TAB, timestamp++);
 
     QVERIFY(tabboxAddedSpy.wait());
-    QVERIFY(TabBox::TabBox::self()->isGrabbed());
+    QVERIFY(win::tabbox::self()->is_grabbed());
 
     // release alt
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
     QCOMPARE(tabboxClosedSpy.count(), 1);
-    QCOMPARE(TabBox::TabBox::self()->isGrabbed(), false);
+    QCOMPARE(win::tabbox::self()->is_grabbed(), false);
 
     // release caps lock
     Test::keyboard_key_pressed(KEY_CAPSLOCK, timestamp++);
     Test::keyboard_key_released(KEY_CAPSLOCK, timestamp++);
     QCOMPARE(input::xkb::get_active_keyboard_modifiers(kwinApp()->input), Qt::NoModifier);
     QCOMPARE(tabboxClosedSpy.count(), 1);
-    QCOMPARE(TabBox::TabBox::self()->isGrabbed(), false);
+    QCOMPARE(win::tabbox::self()->is_grabbed(), false);
 
     // Has walked backwards to the previously lowest client in the stacking order.
     QCOMPARE(workspace()->activeClient(), c1);
@@ -173,9 +173,9 @@ void TabBoxTest::testMoveForward()
     QVERIFY(c3->control->active());
 
     // Setup tabbox signal spies
-    QSignalSpy tabboxAddedSpy(TabBox::TabBox::self(), &TabBox::TabBox::tabBoxAdded);
+    QSignalSpy tabboxAddedSpy(win::tabbox::self(), &win::tabbox::tabbox_added);
     QVERIFY(tabboxAddedSpy.isValid());
-    QSignalSpy tabboxClosedSpy(TabBox::TabBox::self(), &TabBox::TabBox::tabBoxClosed);
+    QSignalSpy tabboxClosedSpy(win::tabbox::self(), &win::tabbox::tabbox_closed);
     QVERIFY(tabboxClosedSpy.isValid());
 
     // press alt+tab
@@ -186,12 +186,12 @@ void TabBoxTest::testMoveForward()
     Test::keyboard_key_released(KEY_TAB, timestamp++);
 
     QVERIFY(tabboxAddedSpy.wait());
-    QVERIFY(TabBox::TabBox::self()->isGrabbed());
+    QVERIFY(win::tabbox::self()->is_grabbed());
 
     // release alt
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
     QCOMPARE(tabboxClosedSpy.count(), 1);
-    QCOMPARE(TabBox::TabBox::self()->isGrabbed(), false);
+    QCOMPARE(win::tabbox::self()->is_grabbed(), false);
     QCOMPARE(workspace()->activeClient(), c2);
 
     surface3.reset();
@@ -224,9 +224,9 @@ void TabBoxTest::testMoveBackward()
     QVERIFY(c3->control->active());
 
     // Setup tabbox signal spies
-    QSignalSpy tabboxAddedSpy(TabBox::TabBox::self(), &TabBox::TabBox::tabBoxAdded);
+    QSignalSpy tabboxAddedSpy(win::tabbox::self(), &win::tabbox::tabbox_added);
     QVERIFY(tabboxAddedSpy.isValid());
-    QSignalSpy tabboxClosedSpy(TabBox::TabBox::self(), &TabBox::TabBox::tabBoxClosed);
+    QSignalSpy tabboxClosedSpy(win::tabbox::self(), &win::tabbox::tabbox_closed);
     QVERIFY(tabboxClosedSpy.isValid());
 
     // press alt+shift+tab
@@ -240,14 +240,14 @@ void TabBoxTest::testMoveBackward()
     Test::keyboard_key_released(KEY_TAB, timestamp++);
 
     QVERIFY(tabboxAddedSpy.wait());
-    QVERIFY(TabBox::TabBox::self()->isGrabbed());
+    QVERIFY(win::tabbox::self()->is_grabbed());
 
     // release alt
     Test::keyboard_key_released(KEY_LEFTSHIFT, timestamp++);
     QCOMPARE(tabboxClosedSpy.count(), 0);
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
     QCOMPARE(tabboxClosedSpy.count(), 1);
-    QCOMPARE(TabBox::TabBox::self()->isGrabbed(), false);
+    QCOMPARE(win::tabbox::self()->is_grabbed(), false);
     QCOMPARE(workspace()->activeClient(), c1);
 
     surface3.reset();

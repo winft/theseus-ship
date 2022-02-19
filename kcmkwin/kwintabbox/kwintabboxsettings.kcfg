@@ -8,31 +8,31 @@
     </kcfgfile>
     <group name="$(TabBoxGroup)">
        <entry key="DesktopMode" type="Int">
-           <default code="true">TabBoxConfig::defaultDesktopMode()</default>
+           <default code="true">tabbox_config::default_desktop_mode()</default>
        </entry>
        <entry key="ApplicationsMode" type="Int">
-           <default code="true">TabBoxConfig::defaultApplicationsMode()</default>
+           <default code="true">tabbox_config::default_applications_mode()</default>
        </entry>
        <entry key="MinimizedMode" type="Int">
-           <default code="true">TabBoxConfig::defaultMinimizedMode()</default>
+           <default code="true">tabbox_config::default_minimized_mode()</default>
        </entry>
        <entry key="ShowDesktopMode" type="Int">
-           <default code="true">TabBoxConfig::defaultShowDesktopMode()</default>
+           <default code="true">tabbox_config::default_show_desktop_mode()</default>
        </entry>
        <entry key="MultiScreenMode" type="Int">
-           <default code="true">TabBoxConfig::defaultMultiScreenMode()</default>
+           <default code="true">tabbox_config::default_multi_screen_mode()</default>
        </entry>
        <entry key="SwitchingMode" type="Int">
-           <default code="true">TabBoxConfig::defaultSwitchingMode()</default>
+           <default code="true">tabbox_config::default_switching_mode()</default>
        </entry>
        <entry key="LayoutName" type="String">
-           <default code="true">TabBoxConfig::defaultLayoutName()</default>
+           <default code="true">tabbox_config::default_layout_name()</default>
        </entry>
        <entry key="ShowTabBox" type="Bool">
-           <default code="true">TabBoxConfig::defaultShowTabBox()</default>
+           <default code="true">tabbox_config::default_show_tabbox()</default>
        </entry>
        <entry key="HighlightWindows" type="Bool">
-           <default code="true">TabBoxConfig::defaultHighlightWindow()</default>
+           <default code="true">tabbox_config::default_highlight_window()</default>
        </entry>
     </group>
 </kcfg>

@@ -56,9 +56,9 @@ void release_window(Win* win, bool on_shutdown)
     }
 
 #ifdef KWIN_BUILD_TABBOX
-    auto tabbox = TabBox::TabBox::self();
-    if (tabbox->isDisplayed() && tabbox->currentClient() == win) {
-        tabbox->nextPrev(true);
+    auto tabbox = tabbox::tabbox::self();
+    if (tabbox->is_displayed() && tabbox->current_client() == win) {
+        tabbox->next_prev(true);
     }
 #endif
 
@@ -177,9 +177,9 @@ void destroy_window(Win* win)
     }
 
 #ifdef KWIN_BUILD_TABBOX
-    auto tabbox = TabBox::TabBox::self();
-    if (tabbox && tabbox->isDisplayed() && tabbox->currentClient() == win) {
-        tabbox->nextPrev(true);
+    auto tabbox = tabbox::tabbox::self();
+    if (tabbox && tabbox->is_displayed() && tabbox->current_client() == win) {
+        tabbox->next_prev(true);
     }
 #endif
 

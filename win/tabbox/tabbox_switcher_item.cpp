@@ -17,112 +17,113 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "switcheritem.h"
+#include "tabbox_switcher_item.h"
 
 #include "base/platform.h"
 #include "main.h"
 #include "render/compositor.h"
 #include "screens.h"
-#include "tabboxhandler.h"
+#include "tabbox_handler.h"
 // Qt
 #include <QAbstractItemModel>
 
 namespace KWin
 {
-namespace TabBox
+namespace win
 {
 
-SwitcherItem::SwitcherItem(QObject* parent)
+tabbox_switcher_item::tabbox_switcher_item(QObject* parent)
     : QObject(parent)
     , m_model(nullptr)
     , m_item(nullptr)
     , m_visible(false)
-    , m_allDesktops(false)
-    , m_currentIndex(0)
+    , m_all_desktops(false)
+    , m_current_index(0)
 {
-    m_selectedIndexConnection = connect(tabBox, &TabBoxHandler::selectedIndexChanged, [this] {
-        if (isVisible()) {
-            setCurrentIndex(tabBox->currentIndex().row());
-        }
-    });
+    m_selected_index_connection
+        = connect(tabbox_handle, &tabbox_handler::selected_index_changed, [this] {
+              if (is_visible()) {
+                  set_current_index(tabbox_handle->current_index().row());
+              }
+          });
     connect(&kwinApp()->get_base().screens,
             &Screens::changed,
             this,
-            &SwitcherItem::screenGeometryChanged);
+            &tabbox_switcher_item::screen_geometry_changed);
     connect(render::compositor::self(),
             &render::compositor::compositingToggled,
             this,
-            &SwitcherItem::compositingChanged);
+            &tabbox_switcher_item::compositing_changed);
 }
 
-SwitcherItem::~SwitcherItem()
+tabbox_switcher_item::~tabbox_switcher_item()
 {
-    disconnect(m_selectedIndexConnection);
+    disconnect(m_selected_index_connection);
 }
 
-void SwitcherItem::setItem(QObject* item)
+void tabbox_switcher_item::set_item(QObject* item)
 {
     if (m_item == item) {
         return;
     }
     m_item = item;
-    Q_EMIT itemChanged();
+    Q_EMIT item_changed();
 }
 
-void SwitcherItem::setModel(QAbstractItemModel* model)
+void tabbox_switcher_item::set_model(QAbstractItemModel* model)
 {
     m_model = model;
-    Q_EMIT modelChanged();
+    Q_EMIT model_changed();
 }
 
-void SwitcherItem::setVisible(bool visible)
+void tabbox_switcher_item::set_visible(bool visible)
 {
     if (m_visible == visible) {
         return;
     }
     if (visible)
-        Q_EMIT screenGeometryChanged();
+        Q_EMIT screen_geometry_changed();
     m_visible = visible;
-    Q_EMIT visibleChanged();
+    Q_EMIT visible_changed();
 }
 
-QRect SwitcherItem::screenGeometry() const
+QRect tabbox_switcher_item::screen_geometry() const
 {
     auto& screens = kwinApp()->get_base().screens;
     return screens.geometry(screens.current());
 }
 
-void SwitcherItem::setCurrentIndex(int index)
+void tabbox_switcher_item::set_current_index(int index)
 {
-    if (m_currentIndex == index) {
+    if (m_current_index == index) {
         return;
     }
-    m_currentIndex = index;
+    m_current_index = index;
     if (m_model) {
-        tabBox->setCurrentIndex(m_model->index(index, 0));
+        tabbox_handle->set_current_index(m_model->index(index, 0));
     }
-    Q_EMIT currentIndexChanged(m_currentIndex);
+    Q_EMIT current_index_changed(m_current_index);
 }
 
-void SwitcherItem::setAllDesktops(bool all)
+void tabbox_switcher_item::set_all_desktops(bool all)
 {
-    if (m_allDesktops == all) {
+    if (m_all_desktops == all) {
         return;
     }
-    m_allDesktops = all;
-    Q_EMIT allDesktopsChanged();
+    m_all_desktops = all;
+    Q_EMIT all_desktops_changed();
 }
 
-void SwitcherItem::setNoModifierGrab(bool set)
+void tabbox_switcher_item::set_no_modifier_grab(bool set)
 {
-    if (m_noModifierGrab == set) {
+    if (m_no_modifier_grab == set) {
         return;
     }
-    m_noModifierGrab = set;
-    Q_EMIT noModifierGrabChanged();
+    m_no_modifier_grab = set;
+    Q_EMIT no_modifier_grab_changed();
 }
 
-bool SwitcherItem::compositing()
+bool tabbox_switcher_item::compositing()
 {
     return render::compositor::compositing();
 }

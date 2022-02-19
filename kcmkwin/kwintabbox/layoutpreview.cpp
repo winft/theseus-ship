@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
-namespace TabBox
+namespace win
 {
 
 LayoutPreview::LayoutPreview(const QString &path, bool showDesktopThumbnail, QObject *parent)
@@ -269,5 +269,5 @@ void SwitcherItem::decrementIndex()
 }
 
 } // namespace KWin
-} // namespace TabBox
+} // namespace win
 

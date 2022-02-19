@@ -17,12 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "../../win/tabbox/tabboxconfig.h"
+#include "../../win/tabbox/tabbox_config.h"
 
 #include <QtTest>
 
 using namespace KWin;
-using namespace KWin::TabBox;
+using namespace KWin::win;
 
 class TestTabBoxConfig : public QObject
 {
@@ -34,49 +34,49 @@ private Q_SLOTS:
 
 void TestTabBoxConfig::testDefaultCtor()
 {
-    TabBoxConfig config;
-    QCOMPARE(config.isShowTabBox(), TabBoxConfig::defaultShowTabBox());
-    QCOMPARE(config.isHighlightWindows(), TabBoxConfig::defaultHighlightWindow());
-    QCOMPARE(config.tabBoxMode(), TabBoxConfig::ClientTabBox);
-    QCOMPARE(config.clientDesktopMode(), TabBoxConfig::defaultDesktopMode());
-    QCOMPARE(config.clientApplicationsMode(), TabBoxConfig::defaultApplicationsMode());
-    QCOMPARE(config.clientMinimizedMode(), TabBoxConfig::defaultMinimizedMode());
-    QCOMPARE(config.showDesktopMode(), TabBoxConfig::defaultShowDesktopMode());
-    QCOMPARE(config.clientMultiScreenMode(), TabBoxConfig::defaultMultiScreenMode());
-    QCOMPARE(config.clientSwitchingMode(), TabBoxConfig::defaultSwitchingMode());
-    QCOMPARE(config.desktopSwitchingMode(), TabBoxConfig::MostRecentlyUsedDesktopSwitching);
-    QCOMPARE(config.layoutName(), TabBoxConfig::defaultLayoutName());
+    tabbox_config config;
+    QCOMPARE(config.is_show_tabbox(), tabbox_config::default_show_tabbox());
+    QCOMPARE(config.is_highlight_windows(), tabbox_config::default_highlight_window());
+    QCOMPARE(config.tabbox_mode(), tabbox_config::ClientTabBox);
+    QCOMPARE(config.client_desktop_mode(), tabbox_config::default_desktop_mode());
+    QCOMPARE(config.client_applications_mode(), tabbox_config::default_applications_mode());
+    QCOMPARE(config.client_minimized_mode(), tabbox_config::default_minimized_mode());
+    QCOMPARE(config.show_desktop_mode(), tabbox_config::default_show_desktop_mode());
+    QCOMPARE(config.client_multi_screen_mode(), tabbox_config::default_multi_screen_mode());
+    QCOMPARE(config.client_switching_mode(), tabbox_config::default_switching_mode());
+    QCOMPARE(config.desktop_switching_mode(), tabbox_config::MostRecentlyUsedDesktopSwitching);
+    QCOMPARE(config.layout_name(), tabbox_config::default_layout_name());
 }
 
 void TestTabBoxConfig::testAssignmentOperator()
 {
-    TabBoxConfig config;
+    tabbox_config config;
     // changing all values of the config object
-    config.setShowTabBox(!TabBoxConfig::defaultShowTabBox());
-    config.setHighlightWindows(!TabBoxConfig::defaultHighlightWindow());
-    config.setTabBoxMode(TabBoxConfig::DesktopTabBox);
-    config.setClientDesktopMode(TabBoxConfig::AllDesktopsClients);
-    config.setClientApplicationsMode(TabBoxConfig::OneWindowPerApplication);
-    config.setClientMinimizedMode(TabBoxConfig::ExcludeMinimizedClients);
-    config.setShowDesktopMode(TabBoxConfig::ShowDesktopClient);
-    config.setClientMultiScreenMode(TabBoxConfig::ExcludeCurrentScreenClients);
-    config.setClientSwitchingMode(TabBoxConfig::StackingOrderSwitching);
-    config.setDesktopSwitchingMode(TabBoxConfig::StaticDesktopSwitching);
-    config.setLayoutName(QStringLiteral("grid"));
-    TabBoxConfig config2;
+    config.set_show_tabbox(!tabbox_config::default_show_tabbox());
+    config.set_highlight_windows(!tabbox_config::default_highlight_window());
+    config.set_tabbox_mode(tabbox_config::DesktopTabBox);
+    config.set_client_desktop_mode(tabbox_config::AllDesktopsClients);
+    config.set_client_applications_mode(tabbox_config::OneWindowPerApplication);
+    config.set_client_minimized_mode(tabbox_config::ExcludeMinimizedClients);
+    config.set_show_desktop_mode(tabbox_config::ShowDesktopClient);
+    config.set_client_multi_screen_mode(tabbox_config::ExcludeCurrentScreenClients);
+    config.set_client_switching_mode(tabbox_config::StackingOrderSwitching);
+    config.set_desktop_switching_mode(tabbox_config::StaticDesktopSwitching);
+    config.set_layout_name(QStringLiteral("grid"));
+    tabbox_config config2;
     config2 = config;
     // verify the config2 values
-    QCOMPARE(config2.isShowTabBox(), !TabBoxConfig::defaultShowTabBox());
-    QCOMPARE(config2.isHighlightWindows(), !TabBoxConfig::defaultHighlightWindow());
-    QCOMPARE(config2.tabBoxMode(), TabBoxConfig::DesktopTabBox);
-    QCOMPARE(config2.clientDesktopMode(), TabBoxConfig::AllDesktopsClients);
-    QCOMPARE(config2.clientApplicationsMode(), TabBoxConfig::OneWindowPerApplication);
-    QCOMPARE(config2.clientMinimizedMode(), TabBoxConfig::ExcludeMinimizedClients);
-    QCOMPARE(config2.showDesktopMode(), TabBoxConfig::ShowDesktopClient);
-    QCOMPARE(config2.clientMultiScreenMode(), TabBoxConfig::ExcludeCurrentScreenClients);
-    QCOMPARE(config2.clientSwitchingMode(), TabBoxConfig::StackingOrderSwitching);
-    QCOMPARE(config2.desktopSwitchingMode(), TabBoxConfig::StaticDesktopSwitching);
-    QCOMPARE(config2.layoutName(), QStringLiteral("grid"));
+    QCOMPARE(config2.is_show_tabbox(), !tabbox_config::default_show_tabbox());
+    QCOMPARE(config2.is_highlight_windows(), !tabbox_config::default_highlight_window());
+    QCOMPARE(config2.tabbox_mode(), tabbox_config::DesktopTabBox);
+    QCOMPARE(config2.client_desktop_mode(), tabbox_config::AllDesktopsClients);
+    QCOMPARE(config2.client_applications_mode(), tabbox_config::OneWindowPerApplication);
+    QCOMPARE(config2.client_minimized_mode(), tabbox_config::ExcludeMinimizedClients);
+    QCOMPARE(config2.show_desktop_mode(), tabbox_config::ShowDesktopClient);
+    QCOMPARE(config2.client_multi_screen_mode(), tabbox_config::ExcludeCurrentScreenClients);
+    QCOMPARE(config2.client_switching_mode(), tabbox_config::StackingOrderSwitching);
+    QCOMPARE(config2.desktop_switching_mode(), tabbox_config::StaticDesktopSwitching);
+    QCOMPARE(config2.layout_name(), QStringLiteral("grid"));
 }
 
 QTEST_MAIN(TestTabBoxConfig)

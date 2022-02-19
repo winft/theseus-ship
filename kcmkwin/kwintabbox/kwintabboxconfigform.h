@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWidget>
 #include <QStandardItemModel>
 
-#include "win/tabbox/tabboxconfig.h"
+#include "win/tabbox/tabbox_config.h"
 
 class KShortcutsEditor;
 class KActionCollection;
@@ -69,12 +69,12 @@ public:
     int switchingMode() const;
     QString layoutName() const;
 
-    void setFilterScreen(TabBox::TabBoxConfig::ClientMultiScreenMode mode);
-    void setFilterDesktop(TabBox::TabBoxConfig::ClientDesktopMode mode);
-    void setFilterMinimization(TabBox::TabBoxConfig::ClientMinimizedMode mode);
-    void setApplicationMode(TabBox::TabBoxConfig::ClientApplicationsMode mode);
-    void setShowDesktopMode(TabBox::TabBoxConfig::ShowDesktopMode mode);
-    void setSwitchingModeChanged(TabBox::TabBoxConfig::ClientSwitchingMode mode);
+    void setFilterScreen(win::tabbox_config::ClientMultiScreenMode mode);
+    void setFilterDesktop(win::tabbox_config::ClientDesktopMode mode);
+    void setFilterMinimization(win::tabbox_config::ClientMinimizedMode mode);
+    void setApplicationMode(win::tabbox_config::ClientApplicationsMode mode);
+    void setShowDesktopMode(win::tabbox_config::ShowDesktopMode mode);
+    void setSwitchingModeChanged(win::tabbox_config::ClientSwitchingMode mode);
     void setLayoutName(const QString &layoutName);
 
     // EffectCombo Data Model

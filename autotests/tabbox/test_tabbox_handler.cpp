@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "../testutils.h"
 #include "mock_tabboxhandler.h"
-#include "win/tabbox/clientmodel.h"
+#include "win/tabbox/tabbox_client_model.h"
 #include <QX11Info>
 #include <QtTest>
 
@@ -48,11 +48,11 @@ void TestTabBoxHandler::initTestCase()
 void TestTabBoxHandler::testDontCrashUpdateOutlineNullClient()
 {
     MockTabBoxHandler tabboxhandler;
-    TabBox::TabBoxConfig config;
-    config.setTabBoxMode(TabBox::TabBoxConfig::ClientTabBox);
-    config.setShowTabBox(false);
-    config.setHighlightWindows(false);
-    tabboxhandler.setConfig(config);
+    win::tabbox_config config;
+    config.set_tabbox_mode(win::tabbox_config::ClientTabBox);
+    config.set_show_tabbox(false);
+    config.set_highlight_windows(false);
+    tabboxhandler.set_config(config);
     // now show the tabbox which will attempt to show the outline
     tabboxhandler.show();
 }

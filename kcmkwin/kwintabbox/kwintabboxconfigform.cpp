@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-using namespace TabBox;
+using namespace win;
 
 KWinTabBoxConfigForm::KWinTabBoxConfigForm(TabboxType type, QWidget *parent)
     : QWidget(parent)
@@ -116,38 +116,38 @@ bool KWinTabBoxConfigForm::showTabBox() const
 int KWinTabBoxConfigForm::filterScreen() const
 {
     if (ui->filterScreens->isChecked()) {
-        return ui->currentScreen->isChecked() ? TabBoxConfig::OnlyCurrentScreenClients : TabBoxConfig::ExcludeCurrentScreenClients;
+        return ui->currentScreen->isChecked() ? tabbox_config::OnlyCurrentScreenClients : tabbox_config::ExcludeCurrentScreenClients;
     } else {
-        return TabBoxConfig::IgnoreMultiScreen;
+        return tabbox_config::IgnoreMultiScreen;
     }
 }
 
 int KWinTabBoxConfigForm::filterDesktop() const
 {
     if (ui->filterDesktops->isChecked()) {
-        return ui->currentDesktop->isChecked() ? TabBoxConfig::OnlyCurrentDesktopClients : TabBoxConfig::ExcludeCurrentDesktopClients;
+        return ui->currentDesktop->isChecked() ? tabbox_config::OnlyCurrentDesktopClients : tabbox_config::ExcludeCurrentDesktopClients;
     } else {
-        return TabBoxConfig::AllDesktopsClients;
+        return tabbox_config::AllDesktopsClients;
     }
 }
 
 int KWinTabBoxConfigForm::filterMinimization() const
 {
     if (ui->filterMinimization->isChecked()) {
-        return ui->visibleWindows->isChecked() ? TabBoxConfig::ExcludeMinimizedClients : TabBoxConfig::OnlyMinimizedClients;
+        return ui->visibleWindows->isChecked() ? tabbox_config::ExcludeMinimizedClients : tabbox_config::OnlyMinimizedClients;
     } else {
-        return TabBoxConfig::IgnoreMinimizedStatus;
+        return tabbox_config::IgnoreMinimizedStatus;
     }
 }
 
 int KWinTabBoxConfigForm::applicationMode() const
 {
-    return ui->oneAppWindow->isChecked() ? TabBoxConfig::OneWindowPerApplication : TabBoxConfig::AllWindowsAllApplications;
+    return ui->oneAppWindow->isChecked() ? tabbox_config::OneWindowPerApplication : tabbox_config::AllWindowsAllApplications;
 }
 
 int KWinTabBoxConfigForm::showDesktopMode() const
 {
-    return ui->showDesktop->isChecked() ? TabBoxConfig::ShowDesktopClient : TabBoxConfig::DoNotShowDesktopClient;
+    return ui->showDesktop->isChecked() ? tabbox_config::ShowDesktopClient : tabbox_config::DoNotShowDesktopClient;
 }
 
 int KWinTabBoxConfigForm::switchingMode() const
@@ -160,38 +160,38 @@ QString KWinTabBoxConfigForm::layoutName() const
     return ui->effectCombo->currentData().toString();
 }
 
-void KWinTabBoxConfigForm::setFilterScreen(TabBox::TabBoxConfig::ClientMultiScreenMode mode)
+void KWinTabBoxConfigForm::setFilterScreen(win::tabbox_config::ClientMultiScreenMode mode)
 {
-    ui->filterScreens->setChecked(mode != TabBoxConfig::IgnoreMultiScreen);
-    ui->currentScreen->setChecked(mode == TabBoxConfig::OnlyCurrentScreenClients);
-    ui->otherScreens->setChecked(mode == TabBoxConfig::ExcludeCurrentScreenClients);
+    ui->filterScreens->setChecked(mode != tabbox_config::IgnoreMultiScreen);
+    ui->currentScreen->setChecked(mode == tabbox_config::OnlyCurrentScreenClients);
+    ui->otherScreens->setChecked(mode == tabbox_config::ExcludeCurrentScreenClients);
 }
 
-void KWinTabBoxConfigForm::setFilterDesktop(TabBox::TabBoxConfig::ClientDesktopMode mode)
+void KWinTabBoxConfigForm::setFilterDesktop(win::tabbox_config::ClientDesktopMode mode)
 {
-    ui->filterDesktops->setChecked(mode != TabBoxConfig::AllDesktopsClients);
-    ui->currentDesktop->setChecked(mode == TabBoxConfig::OnlyCurrentDesktopClients);
-    ui->otherDesktops->setChecked(mode == TabBoxConfig::ExcludeCurrentDesktopClients);
+    ui->filterDesktops->setChecked(mode != tabbox_config::AllDesktopsClients);
+    ui->currentDesktop->setChecked(mode == tabbox_config::OnlyCurrentDesktopClients);
+    ui->otherDesktops->setChecked(mode == tabbox_config::ExcludeCurrentDesktopClients);
 }
 
-void KWinTabBoxConfigForm::setFilterMinimization(TabBox::TabBoxConfig::ClientMinimizedMode mode)
+void KWinTabBoxConfigForm::setFilterMinimization(win::tabbox_config::ClientMinimizedMode mode)
 {
-    ui->filterMinimization->setChecked(mode != TabBoxConfig::IgnoreMinimizedStatus);
-    ui->visibleWindows->setChecked(mode == TabBoxConfig::ExcludeMinimizedClients);
-    ui->hiddenWindows->setChecked(mode == TabBoxConfig::OnlyMinimizedClients);
+    ui->filterMinimization->setChecked(mode != tabbox_config::IgnoreMinimizedStatus);
+    ui->visibleWindows->setChecked(mode == tabbox_config::ExcludeMinimizedClients);
+    ui->hiddenWindows->setChecked(mode == tabbox_config::OnlyMinimizedClients);
 }
 
-void KWinTabBoxConfigForm::setApplicationMode(TabBox::TabBoxConfig::ClientApplicationsMode mode)
+void KWinTabBoxConfigForm::setApplicationMode(win::tabbox_config::ClientApplicationsMode mode)
 {
-    ui->oneAppWindow->setChecked(mode == TabBoxConfig::OneWindowPerApplication);
+    ui->oneAppWindow->setChecked(mode == tabbox_config::OneWindowPerApplication);
 }
 
-void KWinTabBoxConfigForm::setShowDesktopMode(TabBox::TabBoxConfig::ShowDesktopMode mode)
+void KWinTabBoxConfigForm::setShowDesktopMode(win::tabbox_config::ShowDesktopMode mode)
 {
-    ui->showDesktop->setChecked(mode == TabBoxConfig::ShowDesktopClient);
+    ui->showDesktop->setChecked(mode == tabbox_config::ShowDesktopClient);
 }
 
-void KWinTabBoxConfigForm::setSwitchingModeChanged(TabBox::TabBoxConfig::ClientSwitchingMode mode)
+void KWinTabBoxConfigForm::setSwitchingModeChanged(win::tabbox_config::ClientSwitchingMode mode)
 {
     ui->switchingModeCombo->setCurrentIndex(mode);
 }

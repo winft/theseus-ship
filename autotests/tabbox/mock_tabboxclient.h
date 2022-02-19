@@ -20,18 +20,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_MOCK_TABBOX_CLIENT_H
 #define KWIN_MOCK_TABBOX_CLIENT_H
 
-#include "../../win/tabbox/tabboxhandler.h"
+#include "../../win/tabbox/tabbox_handler.h"
 
 #include <QIcon>
 #include <QUuid>
 
 namespace KWin
 {
-class MockTabBoxClient : public TabBox::TabBoxClient
+class MockTabBoxClient : public win::tabbox_client
 {
 public:
     explicit MockTabBoxClient(QString caption);
-    bool isMinimized() const override
+    bool is_minimized() const override
     {
         return false;
     }
@@ -48,11 +48,11 @@ public:
     {
         return QPixmap(size);
     }
-    bool isCloseable() const override
+    bool is_closeable() const override
     {
         return true;
     }
-    bool isFirstInTabBox() const override
+    bool is_first_in_tabbox() const override
     {
         return false;
     }
@@ -73,7 +73,7 @@ public:
         return QIcon();
     }
 
-    QUuid internalId() const override
+    QUuid internal_id() const override
     {
         return QUuid{};
     }

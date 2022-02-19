@@ -16,7 +16,7 @@
 
 namespace KWin
 {
-namespace TabBox
+namespace win
 {
 class TabBoxSettings;
 class SwitchEffectSettings;

@@ -6,7 +6,7 @@ include_directories(${KWIN_SOURCE_DIR}/effects ${KWIN_SOURCE_DIR}/tabbox ${KWIN_
 ########### next target ###############
 
 set(kcm_kwintabbox_PART_SRCS
-    ${KWIN_SOURCE_DIR}/win/tabbox/tabboxconfig.cpp
+    ${KWIN_SOURCE_DIR}/win/tabbox/tabbox_config.cpp
     layoutpreview.cpp
     main.cpp
     thumbnailitem.cpp

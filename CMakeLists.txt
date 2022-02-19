@@ -669,15 +669,15 @@ endif()
 
 if (KWIN_BUILD_TABBOX)
   target_sources(kwin PRIVATE
-    win/tabbox/clientmodel.cpp
-    win/tabbox/desktopchain.cpp
-    win/tabbox/desktopmodel.cpp
-    win/tabbox/switcheritem.cpp
     win/tabbox/tabbox.cpp
+    win/tabbox/tabbox_client_model.cpp
+    win/tabbox/tabbox_config.cpp
+    win/tabbox/tabbox_desktop_chain.cpp
+    win/tabbox/tabbox_desktop_model.cpp
+    win/tabbox/tabbox_handler.cpp
     win/tabbox/tabbox_logging.cpp
-    win/tabbox/tabboxconfig.cpp
-    win/tabbox/tabboxhandler.cpp
-    win/tabbox/x11_filter.cpp
+    win/tabbox/tabbox_switcher_item.cpp
+    win/tabbox/tabbox_x11_filter.cpp
   )
   target_link_libraries(kwin Qt::GuiPrivate)
 endif()
