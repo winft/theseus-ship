@@ -783,31 +783,15 @@ QString space::supportInformation() const
     support.append(QStringLiteral("=============\n"));
 
     support.append(QStringLiteral("KWIN_BUILD_DECORATIONS: "));
-#if KWIN_BUILD_DECORATIONS
-    support.append(yes);
-#else
-    support.append(no);
-#endif
+    support.append(KWIN_BUILD_DECORATIONS ? yes : no);
     support.append(QStringLiteral("KWIN_BUILD_TABBOX: "));
-#if KWIN_BUILD_TABBOX
-    support.append(yes);
-#else
-    support.append(no);
-#endif
+    support.append(KWIN_BUILD_TABBOX ? yes : no);
     support.append(QStringLiteral("KWIN_BUILD_ACTIVITIES (deprecated): "));
     support.append(no);
     support.append(QStringLiteral("HAVE_PERF: "));
-#if HAVE_PERF
-    support.append(yes);
-#else
-    support.append(no);
-#endif
+    support.append(HAVE_PERF ? yes : no);
     support.append(QStringLiteral("HAVE_EPOXY_GLX: "));
-#if HAVE_EPOXY_GLX
-    support.append(yes);
-#else
-    support.append(no);
-#endif
+    support.append(HAVE_EPOXY_GLX ? yes : no);
     support.append(QStringLiteral("\n"));
 
     if (auto c = kwinApp()->x11Connection()) {
