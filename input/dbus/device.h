@@ -11,7 +11,7 @@
 #include "input/control/switch.h"
 #include "input/control/touch.h"
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <QObject>
 #include <QSizeF>

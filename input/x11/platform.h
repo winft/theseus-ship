@@ -7,7 +7,8 @@
 
 #include "input/platform.h"
 
-#include <config-kwin.h>
+#include "config-kwin.h"
+
 #include <memory>
 
 namespace KWin::input::x11

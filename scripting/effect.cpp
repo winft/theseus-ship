@@ -12,11 +12,8 @@
 #include "scripting_logging.h"
 #include "space.h"
 
-#include "../screens.h"
 #include "base/options.h"
-
 #include "input/redirect.h"
-#include "screens.h"
 #include "win/screen_edges.h"
 
 #include <KConfigGroup>
@@ -664,12 +661,12 @@ QJSValue effect::readConfig(const QString& key, const QJSValue& defaultValue)
 
 int effect::displayWidth() const
 {
-    return kwinApp()->get_base().screens.displaySize().width();
+    return kwinApp()->get_base().topology.size.width();
 }
 
 int effect::displayHeight() const
 {
-    return kwinApp()->get_base().screens.displaySize().height();
+    return kwinApp()->get_base().topology.size.height();
 }
 
 int effect::animationTime(int defaultTime) const

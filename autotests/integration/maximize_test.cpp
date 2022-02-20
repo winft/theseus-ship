@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorationbridge.h"
 #include "decorations/settings.h"
 #include "input/cursor.h"
-#include "screens.h"
 #include "win/space.h"
 
 #include "win/deco.h"
@@ -73,9 +72,7 @@ void TestMaximized::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QCOMPARE(Test::app()->base.screens.count(), 2);
-    QCOMPARE(Test::app()->base.screens.geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(Test::app()->base.screens.geometry(1), QRect(1280, 0, 1280, 1024));
+    Test::test_outputs_default();
 }
 
 void TestMaximized::init()
@@ -83,7 +80,6 @@ void TestMaximized::init()
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration
                                    | Test::global_selection::plasma_shell);
 
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(1280, 512));
 }
 

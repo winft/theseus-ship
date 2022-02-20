@@ -20,23 +20,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "output.h"
 
 #include "output_helpers.h"
+#include "platform.h"
 
 #include "base/wayland/server.h"
 #include "input/wayland/dpms.h"
 #include "input/wayland/platform.h"
 #include "main.h"
-#include "platform.h"
 #include "render/compositor.h"
 #include "render/wayland/output.h"
-#include "screens.h"
 #include "wayland_logging.h"
 
-// Wrapland
+#include <KLocalizedString>
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/output_changeset_v1.h>
 #include <Wrapland/Server/xdg_output.h>
-// KF5
-#include <KLocalizedString>
 
 #include <cmath>
 

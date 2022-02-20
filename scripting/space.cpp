@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/logging.h"
 #include "render/outline.h"
+#include "win/screen.h"
 
 #include <QApplication>
 #include <QDesktopWidget>
@@ -104,7 +105,7 @@ QSize space::workspaceSize() const
 
 QSize space::displaySize() const
 {
-    return kwinApp()->get_base().screens.displaySize();
+    return kwinApp()->get_base().topology.size;
 }
 
 int space::displayWidth() const
@@ -196,22 +197,26 @@ int space::workspaceWidth() const
 
 int space::numScreens() const
 {
-    return kwinApp()->get_base().screens.count();
+    return kwinApp()->get_base().get_outputs().size();
 }
 
 int space::activeScreen() const
 {
-    return kwinApp()->get_base().screens.current();
+    auto output = win::get_current_output(*workspace());
+    if (!output) {
+        return 0;
+    }
+    return base::get_output_index(kwinApp()->get_base().get_outputs(), *output);
 }
 
 QRect space::virtualScreenGeometry() const
 {
-    return kwinApp()->get_base().screens.geometry();
+    return QRect({}, kwinApp()->get_base().topology.size);
 }
 
 QSize space::virtualScreenSize() const
 {
-    return kwinApp()->get_base().screens.size();
+    return kwinApp()->get_base().topology.size;
 }
 
 QList<window*> qt_script_space::clientList() const

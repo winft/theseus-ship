@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "screen.h"
 
+#include "base/output_helpers.h"
 #include "base/platform.h"
 #include "main.h"
 #include "platformcursor.h"
-#include "screens.h"
 
 namespace KWin
 {
@@ -48,14 +48,29 @@ QImage::Format Screen::format() const
     return QImage::Format_ARGB32_Premultiplied;
 }
 
+template<typename Ret>
+Ret Screen::get_output_val(std::function<Ret(base::output*)> getter, Ret const& fallback) const
+{
+    if (m_screen == -1) {
+        // We need this special case because some values are accessed earlier than base exists.
+        // TODO(romangg): Ensure instead that we have a base always at this point.
+        return fallback;
+    }
+    if (auto output = base::get_output(kwinApp()->get_base().get_outputs(), m_screen)) {
+        return getter(output);
+    }
+    return fallback;
+}
+
 QRect Screen::geometry() const
 {
-    return m_screen != -1 ? kwinApp()->get_base().screens.geometry(m_screen) : QRect(0, 0, 1, 1);
+    return get_output_val<QRect>([](auto out) { return out->geometry(); }, QRect(0, 0, 1, 1));
 }
 
 QSizeF Screen::physicalSize() const
 {
-    return m_screen != -1 ? kwinApp()->get_base().screens.physicalSize(m_screen) : QPlatformScreen::physicalSize();
+    return get_output_val<QSizeF>([](auto out) { return out->physical_size(); },
+                                  QPlatformScreen::physicalSize());
 }
 
 QPlatformCursor *Screen::cursor() const
@@ -75,12 +90,12 @@ QDpi Screen::logicalDpi() const
 
 qreal Screen::devicePixelRatio() const
 {
-    return m_screen != -1 ? kwinApp()->get_base().screens.scale(m_screen) : 1.0;
+    return get_output_val<double>([](auto out) { return out->scale(); }, 1.);
 }
 
 QString Screen::name() const
 {
-    return m_screen != -1 ? kwinApp()->get_base().screens.name(m_screen) : QString();
+    return get_output_val<QString>([](auto out) { return out->name(); }, QString());
 }
 
 }

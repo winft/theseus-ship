@@ -7,7 +7,7 @@
 #pragma once
 
 #include "decorations/decorationrenderer.h"
-#include <kwinxrenderutils.h>
+#include "kwinxrenderutils.h"
 
 namespace KWin::render::xrender
 {

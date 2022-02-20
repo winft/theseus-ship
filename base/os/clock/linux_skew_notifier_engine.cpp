@@ -18,7 +18,6 @@
 #include "linux_skew_notifier_engine.h"
 
 #include <QSocketNotifier>
-
 #include <cerrno>
 #include <fcntl.h>
 #include <sys/timerfd.h>

@@ -6,6 +6,10 @@
 */
 #include "rules.h"
 
+#include "base/output.h"
+#include "base/output_helpers.h"
+#include "base/platform.h"
+#include "main.h"
 #include "utils/geo.h"
 
 #include <QDebug>
@@ -16,7 +20,6 @@
 #include <kconfig.h>
 
 #ifndef KCMRULES
-#include "screens.h"
 #include "win/setup.h"
 #include "win/space.h"
 #include "win/types.h"
@@ -509,8 +512,11 @@ bool Rules::update(Toplevel* window, int selection)
     }
 
     if (remember(screen, Screen)) {
-        updated = updated || screen.data != window->screen();
-        screen.data = window->screen();
+        int output_index = window->central_output
+            ? base::get_output_index(kwinApp()->get_base().get_outputs(), *window->central_output)
+            : 0;
+        updated = updated || screen.data != output_index;
+        screen.data = output_index;
     }
     if (remember(size, Size)) {
         if (!window->control->fullscreen()) {

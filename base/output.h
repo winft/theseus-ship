@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <QObject>
 #include <QRect>
@@ -157,3 +157,5 @@ private:
 
 }
 }
+
+Q_DECLARE_METATYPE(KWin::base::output const*);

@@ -29,15 +29,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/seat/session.h"
 #include "input/redirect.h"
 #include "main.h"
-#include "screens.h"
 #include "utils/gamma_ramp.h"
 #include "win/space.h"
 
-#include <color_correct_settings.h>
+#include "color_correct_settings.h"
 
 #include <KGlobalAccel>
 #include <KLocalizedString>
-
 #include <QAction>
 #include <QDBusConnection>
 #include <QTimer>
@@ -98,10 +96,14 @@ void night_color_manager::init()
         return;
     }
 
-    connect(&kwinApp()->get_base().screens,
-            &Screens::countChanged,
-            this,
-            &night_color_manager::hard_reset);
+    QObject::connect(&kwinApp()->get_base(),
+                     &base::platform::output_added,
+                     this,
+                     &night_color_manager::hard_reset);
+    QObject::connect(&kwinApp()->get_base(),
+                     &base::platform::output_removed,
+                     this,
+                     &night_color_manager::hard_reset);
 
     QObject::connect(kwinApp()->session.get(),
                      &base::seat::session::sessionActiveChanged,

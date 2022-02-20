@@ -18,9 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "decorationrenderer.h"
+
 #include "decoratedclient.h"
 #include "decorations/decorations_logging.h"
-#include "screens.h"
 #include "toplevel.h"
 
 #include <KDecoration2/Decoration>
@@ -43,7 +43,18 @@ Renderer::Renderer(DecoratedClientImpl *client)
         m_imageSizesDirty = true;
     };
     connect(client->decoration(), &KDecoration2::Decoration::damaged, this, &Renderer::schedule);
-    connect(client->client(), &Toplevel::screenScaleChanged, this, markImageSizesDirty);
+    connect(client->client(),
+            &Toplevel::central_output_changed,
+            this,
+            [markImageSizesDirty](auto old_out, auto new_out) {
+                if (!new_out) {
+                    return;
+                }
+                if (old_out && old_out->scale() == new_out->scale()) {
+                    return;
+                }
+                markImageSizesDirty();
+            });
     connect(client->decoration(), &KDecoration2::Decoration::bordersChanged, this, markImageSizesDirty);
     connect(client->decoratedClient(), &KDecoration2::DecoratedClient::widthChanged, this, markImageSizesDirty);
     connect(client->decoratedClient(), &KDecoration2::DecoratedClient::heightChanged, this, markImageSizesDirty);
@@ -67,11 +78,12 @@ QRegion Renderer::getScheduled()
 QImage Renderer::renderToImage(const QRect &geo)
 {
     Q_ASSERT(m_client);
-    auto dpr = client()->client()->screenScale();
+    auto window = client()->client();
+    auto dpr = window->central_output ? window->central_output->scale() : 1.;
 
     // Guess the pixel format of the X pixmap into which the QImage will be copied.
     QImage::Format format;
-    const int depth = client()->client()->depth();
+    const int depth = window->depth();
     switch (depth) {
     case 30:
         format = QImage::Format_A2RGB30_Premultiplied;

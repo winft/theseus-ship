@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
-#include "screens.h"
 
 #include <Wrapland/Client/output.h>
 #include <Wrapland/Client/registry.h>
@@ -55,8 +54,6 @@ void ScreenChangesTest::initTestCase()
 void ScreenChangesTest::init()
 {
     Test::setup_wayland_connection();
-
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -85,23 +82,21 @@ void ScreenChangesTest::testScreenAddRemove()
     auto xdgOutputManager = registry.createXdgOutputManager(xdgOMData.name, xdgOMData.version);
 
     // should be one output
-    QCOMPARE(Test::app()->base.screens.count(), 1);
+    QCOMPARE(Test::app()->base.get_outputs().size(), 1);
     QCOMPARE(outputAnnouncedSpy.count(), 1);
     const quint32 firstOutputId = outputAnnouncedSpy.first().first().value<quint32>();
     QVERIFY(firstOutputId != 0u);
     outputAnnouncedSpy.clear();
 
     // let's announce a new output
-    QSignalSpy screensChangedSpy(&Test::app()->base.screens, &Screens::changed);
-    QVERIFY(screensChangedSpy.isValid());
+    QSignalSpy outputs_changed_spy(&Test::app()->base, &base::platform::topology_changed);
+    QVERIFY(outputs_changed_spy.isValid());
 
     auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};
     Test::app()->set_outputs(geometries);
 
-    QCOMPARE(screensChangedSpy.count(), Test::app()->base.screens.count() + 2);
-    QCOMPARE(Test::app()->base.screens.count(), 2);
-    QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
-    QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
+    QCOMPARE(outputs_changed_spy.count(), 1);
+    Test::test_outputs_geometries(geometries);
 
     // this should result in it getting announced, two new outputs are added...
     QVERIFY(outputAnnouncedSpy.count() > 1 || outputAnnouncedSpy.wait());
@@ -155,7 +150,7 @@ void ScreenChangesTest::testScreenAddRemove()
     // now let's try to remove one output again
     outputAnnouncedSpy.clear();
     outputRemovedSpy.clear();
-    screensChangedSpy.clear();
+    outputs_changed_spy.clear();
 
     QSignalSpy o1RemovedSpy(o1.get(), &Output::removed);
     QVERIFY(o1RemovedSpy.isValid());
@@ -165,9 +160,8 @@ void ScreenChangesTest::testScreenAddRemove()
     auto const geometries2 = std::vector<QRect>{{0, 0, 1280, 1024}};
     Test::app()->set_outputs(geometries2);
 
-    QCOMPARE(screensChangedSpy.count(), Test::app()->base.screens.count() + 3);
-    QCOMPARE(Test::app()->base.screens.count(), 1);
-    QCOMPARE(Test::app()->base.screens.geometry(0), geometries2.at(0));
+    QCOMPARE(outputs_changed_spy.count(), 1);
+    Test::test_outputs_geometries(geometries2);
 
     QVERIFY(outputAnnouncedSpy.count() > 0 || outputAnnouncedSpy.wait());
     QCOMPARE(outputAnnouncedSpy.count(), 1);

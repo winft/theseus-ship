@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/global_shortcuts_manager.h"
 #include "input/platform.h"
 #include "input/redirect.h"
-#include "screens.h"
 #include "win/space.h"
 
 #include <kwineffects.h>

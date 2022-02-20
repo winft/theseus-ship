@@ -19,12 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
+#include "kwin_export.h"
 #include "utils/flags.h"
-#include <kwin_export.h>
 
 #include <KPluginMetaData>
 #include <KSharedConfig>
-
 #include <QFlags>
 #include <QMap>
 #include <QObject>

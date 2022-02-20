@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "base/options.h"
+#include "base/output.h"
 #include "base/x11/atoms.h"
 #include "utils/algorithm.h"
 #include "win/session_manager.h"
@@ -191,7 +192,7 @@ public:
 
     QRect clientArea(clientAreaOption, const QPoint& p, int desktop) const;
     QRect clientArea(clientAreaOption, Toplevel const* window) const;
-    QRect clientArea(clientAreaOption, int screen, int desktop) const;
+    QRect clientArea(clientAreaOption, base::output const* output, int desktop) const;
 
     QRegion restrictedMoveArea(int desktop, win::strut_area areas = win::strut_area::all) const;
 
@@ -209,7 +210,7 @@ public:
      */
     Toplevel* mostRecentlyActivatedClient() const;
 
-    Toplevel* clientUnderMouse(int screen) const;
+    Toplevel* clientUnderMouse(base::output const* output) const;
 
     void activateClient(Toplevel* window, bool force = false);
 
@@ -304,7 +305,7 @@ public:
     void sendClientToDesktop(Toplevel* window, int desktop, bool dont_activate);
     void windowToPreviousDesktop(Toplevel* window);
     void windowToNextDesktop(Toplevel* window);
-    void sendClientToScreen(Toplevel* window, int screen);
+    void sendClientToScreen(Toplevel* window, base::output const& output);
 
     /**
      * Shows the menu operations menu for the client and makes it active if
@@ -332,7 +333,7 @@ public:
     // D-Bus interface
     QString supportInformation() const;
 
-    void setCurrentScreen(int new_screen);
+    void setCurrentScreen(base::output const& output);
 
     void setShowingDesktop(bool showing);
     bool showingDesktop() const;
@@ -435,6 +436,7 @@ public:
 
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t* geom);
     void saveOldScreenSizes();
+    void desktopResized();
 
 public Q_SLOTS:
     void performWindowOperation(KWin::Toplevel* window, base::options::WindowOperation op);
@@ -509,7 +511,6 @@ protected:
     Toplevel* client_keys_client{nullptr};
 
 private Q_SLOTS:
-    void desktopResized();
     void slotUpdateToolWindows();
     void delayFocus();
     void slotReloadConfig();
@@ -519,7 +520,6 @@ private Q_SLOTS:
     void slotCurrentDesktopChanged(uint oldDesktop, uint newDesktop);
 
 Q_SIGNALS:
-    // Signals required for the scripting interface
     void desktopPresenceChanged(KWin::Toplevel*, int);
     void currentDesktopChanged(int, KWin::Toplevel*);
     void clientAdded(KWin::win::x11::window*);

@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
-#include "screens.h"
 #include "win/space.h"
 
 #include <KConfigGroup>
@@ -106,7 +105,6 @@ void ModifierOnlyShortcutTest::initTestCase()
 void ModifierOnlyShortcutTest::init()
 {
     Test::setup_wayland_connection();
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

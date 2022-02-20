@@ -6,7 +6,8 @@
 */
 #include "event_filter.h"
 
-#include "input/redirect.h"
+#include "redirect.h"
+
 #include "main.h"
 
 namespace KWin::input

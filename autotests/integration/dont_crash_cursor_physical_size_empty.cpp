@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"
-#include "screens.h"
 #include "win/geo.h"
 #include "win/space.h"
 
@@ -55,8 +54,6 @@ private Q_SLOTS:
 void DontCrashCursorPhysicalSizeEmpty::init()
 {
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
-
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

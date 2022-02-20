@@ -144,10 +144,11 @@ void init_space(Space& space)
         rootInfo->setDesktopViewport(virtual_desktop_manager::self()->count(), *viewports);
         delete[] viewports;
         QRect geom;
-        auto const& screens = kwinApp()->get_base().screens;
-        for (int i = 0; i < screens.count(); i++) {
-            geom |= screens.geometry(i);
+
+        for (auto output : kwinApp()->get_base().get_outputs()) {
+            geom |= output->geometry();
         }
+
         NETSize desktop_geometry;
         desktop_geometry.width = geom.width();
         desktop_geometry.height = geom.height();
@@ -168,7 +169,7 @@ void init_space(Space& space)
         // No client activated in manage()
         if (new_active_client == nullptr)
             new_active_client = win::top_client_on_desktop(
-                &space, virtual_desktop_manager::self()->current(), -1);
+                &space, virtual_desktop_manager::self()->current(), nullptr);
         if (new_active_client == nullptr) {
             new_active_client
                 = win::find_desktop(&space, true, virtual_desktop_manager::self()->current());

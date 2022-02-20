@@ -8,8 +8,7 @@
 #include "structs.h"
 #include "types.h"
 
-#include <kwin_export.h>
-
+#include "kwin_export.h"
 #include "rules/window_rules.h"
 #include "scripting/window.h"
 

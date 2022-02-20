@@ -9,7 +9,6 @@
 #include "types.h"
 
 #include <QObject>
-
 #include <memory>
 
 class QTimer;

@@ -23,13 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorationbridge.h"
 #include "decorations/settings.h"
 #include "input/cursor.h"
-#include "screens.h"
 #include "scripting/platform.h"
 #include "scripting/script.h"
 #include "toplevel.h"
 #include "win/move.h"
 #include "win/screen.h"
-#include "win/space.h"
+#include "win/wayland/space.h"
 #include "win/x11/window.h"
 
 #include <KDecoration2/DecoratedClient>
@@ -114,9 +113,7 @@ void QuickTilingTest::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.wait());
-    QCOMPARE(Test::app()->base.screens.count(), 2);
-    QCOMPARE(Test::app()->base.screens.geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(Test::app()->base.screens.geometry(1), QRect(1280, 0, 1280, 1024));
+    Test::test_outputs_default();
 }
 
 void QuickTilingTest::init()
@@ -125,7 +122,7 @@ void QuickTilingTest::init()
     m_connection = Test::get_client().connection;
     m_compositor = Test::get_client().interfaces.compositor.get();
 
-    Test::app()->base.screens.setCurrent(0);
+    Test::set_current_output(0);
 }
 
 void QuickTilingTest::cleanup()
@@ -259,9 +256,12 @@ void QuickTilingTest::testQuickTiling()
     QCOMPARE(c->frameGeometry(), expectedGeometry);
 
     // send window to other screen
-    QCOMPARE(c->screen(), 0);
-    win::send_to_screen(c, 1);
-    QCOMPARE(c->screen(), 1);
+    QCOMPARE(c->central_output, Test::app()->base.get_outputs().at(0));
+
+    auto output = base::get_output(Test::app()->base.get_outputs(), 1);
+    QVERIFY(output);
+    win::send_to_screen(c, *output);
+    QCOMPARE(c->central_output, Test::app()->base.get_outputs().at(1));
 
     // quick tile should not be changed
     QCOMPARE(c->control->quicktiling(), mode);
@@ -706,12 +706,14 @@ void QuickTilingTest::testX11QuickTiling()
     QCOMPARE(client->restore_geometries.maximize, origGeo);
     QCOMPARE(quickTileChangedSpy.count(), 1);
 
-    QCOMPARE(client->screen(), 0);
+    QCOMPARE(client->central_output, Test::app()->base.get_outputs().at(0));
     QFETCH(win::quicktiles, modeAfterToggle);
 
     // quick tile to same edge again should also act like send to screen
     win::set_quicktile_mode(client, mode, true);
-    QTEST(client->screen(), "screen");
+    QTEST(static_cast<int>(
+              base::get_output_index(Test::app()->base.get_outputs(), *client->central_output)),
+          "screen");
     QCOMPARE(client->control->quicktiling(), modeAfterToggle);
     QCOMPARE(client->restore_geometries.maximize.isValid(),
              modeAfterToggle != win::quicktiles::none);
@@ -791,7 +793,7 @@ void QuickTilingTest::testX11QuickTilingAfterVertMaximize()
     // vertically maximize the window
     win::maximize(client, flags(client->maximizeMode() ^ win::maximize_mode::vertical));
     QCOMPARE(client->frameGeometry().width(), origGeo.width());
-    QCOMPARE(client->size().height(), Test::app()->base.screens.size(client->screen()).height());
+    QCOMPARE(client->size().height(), client->central_output->geometry().height());
     QCOMPARE(client->restore_geometries.maximize, origGeo);
 
     // now quick tile

@@ -7,12 +7,9 @@
 
 #include <kwin_export.h>
 
-#include <QObject>
-#include <QVector>
-
 #include <KConfigGroup>
 #include <KSharedConfig>
-
+#include <QObject>
 #include <QString>
 #include <QVector>
 #include <unordered_map>

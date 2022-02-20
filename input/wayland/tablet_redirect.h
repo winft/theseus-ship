@@ -5,11 +5,11 @@
 */
 #pragma once
 
+#include "input/redirect.h"
 #include "input/tablet_redirect.h"
 
-#include "input/redirect.h"
-
 #include <QPointF>
+#include <QSet>
 
 namespace KWin
 {

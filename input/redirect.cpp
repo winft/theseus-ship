@@ -21,7 +21,6 @@
 #include "main.h"
 #include "render/effects.h"
 #include "render/platform.h"
-#include "screens.h"
 #include "toplevel.h"
 #include "win/geo.h"
 #include "win/space.h"

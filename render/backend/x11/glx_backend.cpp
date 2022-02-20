@@ -17,15 +17,14 @@
 #include "base/x11/xcb/helpers.h"
 #include "main.h"
 #include "render/gl/texture.h"
+#include "render/platform.h"
 #include "render/scene.h"
 #include "render/x11/overlay_window.h"
-#include "screens.h"
-
 #include "win/x11/geo.h"
 
-#include <kwineffectquickview.h>
-#include <kwinglutils.h>
-#include <kwinxrenderutils.h>
+#include "kwineffectquickview.h"
+#include "kwinglutils.h"
+#include "kwinxrenderutils.h"
 
 #include <QOpenGLContext>
 #include <algorithm>
@@ -41,7 +40,6 @@ namespace KWin::render::backend::x11
 
 glx_backend::glx_backend(Display* display, render::compositor& compositor)
     : gl::backend()
-    , m_bufferAge(0)
     , compositor{compositor}
 {
     start_glx_backend(display, compositor, *this);
@@ -64,12 +62,14 @@ int glx_backend::visualDepth(xcb_visualid_t visual) const
 
 void glx_backend::present()
 {
-    if (lastDamage().isEmpty())
+    if (lastDamage().isEmpty()) {
         return;
+    }
 
-    auto const& screenSize = kwinApp()->get_base().screens.size();
-    const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
+    auto const& space_size = compositor.platform.base.topology.size;
+    QRegion const displayRegion(0, 0, space_size.width(), space_size.height());
     const bool canSwapBuffers = supportsBufferAge() || (lastDamage() == displayRegion);
+
     m_needsCompositeTimerStart = true;
 
     if (canSwapBuffers) {
@@ -87,7 +87,7 @@ void glx_backend::present()
     } else if (data.extensions.mesa_copy_sub_buffer) {
         for (const QRect& r : lastDamage()) {
             // convert to OpenGL coordinates
-            int y = screenSize.height() - r.y() - r.height();
+            int y = space_size.height() - r.y() - r.height();
             glXCopySubBufferMESA(data.display, data.window, r.x(), y, r.width(), r.height());
         }
     } else {

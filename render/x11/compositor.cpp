@@ -21,12 +21,11 @@
 #include "render/xrender/scene.h"
 #include "toplevel.h"
 #include "win/space.h"
-
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
 
-#include <kwingltexture.h>
+#include "kwingltexture.h"
 
 #include <KGlobalAccel>
 #include <KLocalizedString>

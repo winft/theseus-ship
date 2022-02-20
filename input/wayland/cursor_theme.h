@@ -8,7 +8,7 @@
 
 #include "input/cursor.h"
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <QObject>
 

@@ -20,8 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "base/x11/event_filter.h"
-
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <QRegion>
 #include <xcb/xcb.h>

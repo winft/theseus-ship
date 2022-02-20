@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwineffects.h"
 #include "render/compositor.h"
 #include "render/scene.h"
-#include "screens.h"
 #include "win/deco.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
@@ -68,9 +67,7 @@ void DontCrashNoBorder::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QCOMPARE(Test::app()->base.screens.count(), 2);
-    QCOMPARE(Test::app()->base.screens.geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(Test::app()->base.screens.geometry(1), QRect(1280, 0, 1280, 1024));
+    Test::test_outputs_default();
 
     auto scene = render::compositor::self()->scene();
     QVERIFY(scene);
@@ -80,8 +77,6 @@ void DontCrashNoBorder::initTestCase()
 void DontCrashNoBorder::init()
 {
     Test::setup_wayland_connection(Test::global_selection::xdg_decoration);
-
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 

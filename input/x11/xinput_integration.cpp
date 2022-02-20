@@ -22,11 +22,10 @@
 #include "win/screen_edges.h"
 #include "win/space.h"
 
-#include <kwinglobals.h>
+#include "kwinglobals.h"
 
 #include <X11/extensions/XI2proto.h>
 #include <X11/extensions/XInput2.h>
-
 #include <linux/input.h>
 
 namespace KWin::input::x11

@@ -8,11 +8,10 @@
 
 #include "cursor_shape.h"
 
-#include <kwinglobals.h>
+#include "kwinglobals.h"
 
 #include <QObject>
 #include <QPoint>
-
 #include <xcb/xcb.h>
 
 namespace KWin::input

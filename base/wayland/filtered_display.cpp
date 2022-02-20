@@ -11,7 +11,6 @@
 #include <QCryptographicHash>
 #include <QFile>
 #include <Wrapland/Server/client.h>
-
 #include <unistd.h>
 
 namespace KWin::base::wayland

@@ -14,6 +14,7 @@
 #include "decorations/decorationpalette.h"
 #include "decorations/window.h"
 #include "render/effects.h"
+
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif

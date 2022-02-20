@@ -6,8 +6,9 @@
 */
 #include "decoration_event.h"
 
-#include "base/wayland/server.h"
 #include "helpers.h"
+
+#include "base/wayland/server.h"
 #include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/qt_event.h"

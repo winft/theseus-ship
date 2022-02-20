@@ -21,7 +21,6 @@
 
 #include "base/wayland/idle_inhibition.h"
 #include "base/wayland/server.h"
-#include "screens.h"
 #include "win/input.h"
 #include "win/screen.h"
 #include "win/setup.h"
@@ -152,7 +151,7 @@ void space::handle_window_added(wayland::window* window)
         win::update_layer(window);
 
         auto const area
-            = clientArea(PlacementArea, kwinApp()->get_base().screens.current(), window->desktop());
+            = clientArea(PlacementArea, get_current_output(*workspace()), window->desktop());
         auto placementDone = false;
 
         if (window->isInitialPositionSet()) {

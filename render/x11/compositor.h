@@ -13,7 +13,6 @@
 #include <QObject>
 #include <QRegion>
 #include <QTimer>
-
 #include <deque>
 #include <memory>
 

@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output.h"
 #include "base/platform.h"
 #include "main.h"
-#include <kwineffects.h>
+#include "win/space.h"
 
-#include "screens.h"
+#include "kwineffects.h"
 
 #include <epoxy/gl.h>
 
@@ -67,8 +67,8 @@ QRegion backend::accumulatedDamageHistory(int bufferAge) const
         for (int i = 0; i < bufferAge - 1; i++)
             region |= m_damageHistory[i];
     } else {
-        auto const& s = kwinApp()->get_base().screens.size();
-        region = QRegion(0, 0, s.width(), s.height());
+        auto const& size = kwinApp()->get_base().topology.size;
+        region = QRegion(0, 0, size.width(), size.height());
     }
 
     return region;
@@ -91,7 +91,7 @@ void backend::endRenderingFrameForScreen(base::output* output,
 
 void backend::copyPixels(const QRegion& region)
 {
-    auto const height = kwinApp()->get_base().screens.size().height();
+    auto const height = kwinApp()->get_base().topology.size.height();
     for (const QRect& r : region) {
         const int x0 = r.x();
         const int y0 = height - r.y() - r.height();

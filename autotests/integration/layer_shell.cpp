@@ -59,17 +59,12 @@ void layer_shell_test::initTestCase()
 
     auto geometries = std::vector<QRect>{{0, 0, 1000, 500}, {1000, 0, 1000, 500}};
     Test::app()->set_outputs(geometries);
-
-    QCOMPARE(Test::app()->base.screens.count(), geometries.size());
-    QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
-    QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
+    Test::test_outputs_geometries(geometries);
 }
 
 void layer_shell_test::init()
 {
     Test::setup_wayland_connection();
-
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(1280, 512));
 }
 
@@ -184,7 +179,7 @@ void layer_shell_test::test_create()
     configure_payload payload;
     init_ack_layer_surface(surface.get(), layer_surface.get(), payload);
 
-    auto const output1_geo = Test::app()->base.screens.geometry(1);
+    auto const output1_geo = Test::get_output(1)->geometry();
     QCOMPARE(payload.size, output1_geo.size());
 
     auto render_size = QSize(100, 50);

@@ -7,7 +7,6 @@
 
 #include "control/headless/keyboard.h"
 #include "control/keyboard.h"
-
 #include "platform.h"
 
 #include "base/wayland/server.h"

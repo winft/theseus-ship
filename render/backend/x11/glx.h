@@ -14,9 +14,11 @@
 #include "main.h"
 #include "render/gl/gl.h"
 #include "render/x11/compositor.h"
+#include "win/space.h"
 #include "x11_logging.h"
-#include <kwineffectquickview.h>
-#include <kwinglplatform.h>
+
+#include "kwineffectquickview.h"
+#include "kwinglplatform.h"
 
 #include <QOpenGLContext>
 #include <QVariant>
@@ -201,8 +203,7 @@ bool init_glx_buffer(Backend& backend)
         xcb_colormap_t colormap = xcb_generate_id(c);
         xcb_create_colormap(c, false, colormap, rootWindow(), visual);
 
-        auto const& size = kwinApp()->get_base().screens.size();
-
+        auto const& space_size = backend.compositor.platform.base.topology.size;
         backend.window = xcb_generate_id(c);
         xcb_create_window(c,
                           backend.visualDepth(visual),
@@ -210,8 +211,8 @@ bool init_glx_buffer(Backend& backend)
                           backend.overlay_window->window(),
                           0,
                           0,
-                          size.width(),
-                          size.height(),
+                          space_size.width(),
+                          space_size.height(),
                           0,
                           XCB_WINDOW_CLASS_INPUT_OUTPUT,
                           visual,

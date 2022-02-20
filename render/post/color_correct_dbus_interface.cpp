@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "color_correct_dbus_interface.h"
 
 #include "colorcorrectadaptor.h"
-
 #include "night_color_manager.h"
 
 #include <QDBusMessage>

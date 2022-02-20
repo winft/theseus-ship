@@ -6,14 +6,15 @@
 */
 #include "platform.h"
 
+#include "compositor.h"
+#include "effects.h"
+#include "outline.h"
+#include "post/night_color_manager.h"
+#include "scene.h"
+
 #include "base/logging.h"
 #include "config-kwin.h"
 #include "main.h"
-#include "render/compositor.h"
-#include "render/effects.h"
-#include "render/outline.h"
-#include "render/post/night_color_manager.h"
-#include "render/scene.h"
 
 #include <cerrno>
 

@@ -8,7 +8,6 @@
 #include "output.h"
 
 #include "base/platform.h"
-#include "screens.h"
 #include "utils/algorithm.h"
 
 #include <cassert>
@@ -31,7 +30,6 @@ public:
         assert(!contains(outputs, output));
         outputs.push_back(output);
         Q_EMIT output_added(output);
-        screens.updateAll();
     }
 
     void disable_output(base::wayland::output* output)
@@ -39,7 +37,6 @@ public:
         assert(contains(outputs, output));
         remove_all(outputs, output);
         Q_EMIT output_removed(output);
-        screens.updateAll();
     }
 
     std::vector<base::output*> get_outputs() const override

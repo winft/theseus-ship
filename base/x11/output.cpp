@@ -7,6 +7,7 @@
 
 #include "platform.h"
 
+#include "kwinglobals.h"
 #include "utils/gamma_ramp.h"
 
 namespace KWin::base::x11
@@ -30,7 +31,7 @@ QRect output::geometry() const
     }
 
     // xinerama, lacks RandR
-    return QRect(QPoint(0, 0), platform.screens.displaySize());
+    return QRect({}, platform.topology.size);
 }
 
 int output::refresh_rate() const

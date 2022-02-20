@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "main.h"
 #include "render/effects.h"
-#include "screens.h"
 #include "toplevel.h"
 #include "win/space.h"
 
@@ -101,9 +100,9 @@ void lanczos_filter::init()
 
 void lanczos_filter::updateOffscreenSurfaces()
 {
-    auto const& s = kwinApp()->get_base().screens.size();
-    int w = s.width();
-    int h = s.height();
+    auto const& space_size = kwinApp()->get_base().topology.size;
+    int w = space_size.width();
+    int h = space_size.height();
 
     if (!m_offscreenTex || m_offscreenTex->width() != w || m_offscreenTex->height() != h) {
         if (m_offscreenTex) {
@@ -179,9 +178,13 @@ void lanczos_filter::performPaint(effects_window_impl* w,
                                   WindowPaintData& data)
 {
     if (data.xScale() < 0.9 || data.yScale() < 0.9) {
-        if (!m_inited)
+        if (!m_inited) {
             init();
-        auto const screenRect = workspace()->clientArea(ScreenArea, w->screen(), w->desktop());
+        }
+
+        auto const screenRect
+            = workspace()->clientArea(ScreenArea, w->window()->central_output, w->desktop());
+
         // window geometry may not be bigger than screen geometry to fit into the FBO
         QRect winGeo(w->expandedGeometry());
         if (m_shader && winGeo.width() <= screenRect.width()

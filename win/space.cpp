@@ -21,9 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "space.h"
 
-#include <kwinglplatform.h>
-
 #include "base/dbus/kwin.h"
+#include "base/output_helpers.h"
 #include "base/x11/user_interaction_filter.h"
 #include "base/x11/xcb/extensions.h"
 #include "decorations/decorationbridge.h"
@@ -35,7 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/post/night_color_manager.h"
 #include "rules/rule_book.h"
 #include "rules/rules.h"
-#include "screens.h"
 #include "scripting/platform.h"
 #include "utils/blocker.h"
 #include "win/app_menu.h"
@@ -72,6 +70,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
+
+#include "kwinglplatform.h"
 
 #include <KConfig>
 #include <KConfigGroup>
@@ -150,15 +150,12 @@ space::space()
 
     initShortcuts();
 
-    KSharedConfigPtr config = kwinApp()->config();
-    auto& screens = kwinApp()->get_base().screens;
-
-    // get screen support
-    connect(&screens, &Screens::changed, this, &space::desktopResized);
-    screens.setConfig(config);
-    screens.reconfigure();
-    connect(
-        kwinApp()->options.get(), &base::options::configChanged, &screens, &Screens::reconfigure);
+    auto& base = kwinApp()->get_base();
+    QObject::connect(&base, &base::platform::topology_changed, this, [this](auto old, auto topo) {
+        if (old.size != topo.size) {
+            desktopResized();
+        }
+    });
 
     auto* focusChain = win::focus_chain::create(this);
     connect(this, &space::clientRemoved, focusChain, &win::focus_chain::remove);
@@ -189,6 +186,8 @@ space::space()
             &base::options::rollOverDesktopsChanged,
             vds,
             &win::virtual_desktop_manager::setNavigationWrappingAround);
+
+    auto config = kwinApp()->config();
     vds->setConfig(config);
 
     // positioning object needs to be created before the virtual desktops are loaded.
@@ -621,9 +620,9 @@ void space::sendClientToDesktop(Toplevel* window, int desk, bool dont_activate)
     updateClientArea();
 }
 
-void space::sendClientToScreen(Toplevel* window, int screen)
+void space::sendClientToScreen(Toplevel* window, base::output const& output)
 {
-    win::send_to_screen(window, screen);
+    win::send_to_screen(window, output);
 }
 
 /**
@@ -884,25 +883,28 @@ QString space::supportInformation() const
     support.append(QStringLiteral("not supported anymore\n"));
     support.append(QStringLiteral("Active screen follows mouse: "));
 
-    auto const& screens = kwinApp()->get_base().screens;
-    if (screens.isCurrentFollowsMouse())
+    if (kwinApp()->options->get_current_output_follows_mouse())
         support.append(QStringLiteral(" yes\n"));
     else
         support.append(QStringLiteral(" no\n"));
-    support.append(QStringLiteral("Number of Screens: %1\n\n").arg(screens.count()));
-    for (int i = 0; i < screens.count(); ++i) {
-        const QRect geo = screens.geometry(i);
+
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+    support.append(QStringLiteral("Number of Screens: %1\n\n").arg(outputs.size()));
+    for (size_t i = 0; i < outputs.size(); ++i) {
+        auto const output = outputs.at(i);
+        auto const geo = output->geometry();
         support.append(QStringLiteral("Screen %1:\n").arg(i));
         support.append(QStringLiteral("---------\n"));
-        support.append(QStringLiteral("Name: %1\n").arg(screens.name(i)));
+        support.append(QStringLiteral("Name: %1\n").arg(output->name()));
         support.append(QStringLiteral("Geometry: %1,%2,%3x%4\n")
                            .arg(geo.x())
                            .arg(geo.y())
                            .arg(geo.width())
                            .arg(geo.height()));
-        support.append(QStringLiteral("Scale: %1\n").arg(screens.scale(i)));
-        support.append(QStringLiteral("Refresh Rate: %1\n\n").arg(screens.refreshRate(i)));
+        support.append(QStringLiteral("Scale: %1\n").arg(output->scale()));
+        support.append(QStringLiteral("Refresh Rate: %1\n\n").arg(output->refresh_rate()));
     }
+
     support.append(QStringLiteral("\nCompositing\n"));
     support.append(QStringLiteral("===========\n"));
     if (effects) {
@@ -1182,7 +1184,7 @@ void space::addInternalClient(win::internal_window* client)
 
     if (client->placeable()) {
         auto const area
-            = clientArea(PlacementArea, kwinApp()->get_base().screens.current(), client->desktop());
+            = clientArea(PlacementArea, get_current_output(*workspace()), client->desktop());
         win::place(client, area);
     }
 
@@ -1301,7 +1303,7 @@ void space::checkTransients(Toplevel* window)
  */
 void space::desktopResized()
 {
-    QRect geom = kwinApp()->get_base().screens.geometry();
+    auto geom = QRect({}, kwinApp()->get_base().topology.size);
     if (win::x11::rootInfo()) {
         NETSize desktop_geometry;
         desktop_geometry.width = geom.width();
@@ -1322,12 +1324,14 @@ void space::desktopResized()
 
 void space::saveOldScreenSizes()
 {
-    auto const& screens = kwinApp()->get_base().screens;
+    auto&& base = kwinApp()->get_base();
+    auto const& outputs = base.get_outputs();
 
-    olddisplaysize = screens.displaySize();
+    olddisplaysize = base.topology.size;
     oldscreensizes.clear();
-    for (int i = 0; i < screens.count(); ++i) {
-        oldscreensizes.push_back(screens.geometry(i));
+
+    for (auto output : outputs) {
+        oldscreensizes.push_back(output->geometry());
     }
 }
 
@@ -1344,8 +1348,9 @@ void space::saveOldScreenSizes()
  */
 void space::updateClientArea(bool force)
 {
-    auto const& screens = kwinApp()->get_base().screens;
-    auto const screens_count = screens.count();
+    auto&& base = kwinApp()->get_base();
+    auto const& outputs = base.get_outputs();
+    auto const screens_count = outputs.size();
     auto const desktops_count = static_cast<int>(win::virtual_desktop_manager::self()->count());
 
     // To be determined are new:
@@ -1357,18 +1362,18 @@ void space::updateClientArea(bool force)
     std::vector<QRect> screens_geos(screens_count);
     QRect desktop_area;
 
-    for (auto screen = 0; screen < screens_count; screen++) {
-        desktop_area |= screens.geometry(screen);
+    for (size_t screen = 0; screen < screens_count; screen++) {
+        desktop_area |= outputs.at(screen)->geometry();
     }
 
-    for (auto screen = 0; screen < screens_count; screen++) {
-        screens_geos[screen] = screens.geometry(screen);
+    for (size_t screen = 0; screen < screens_count; screen++) {
+        screens_geos[screen] = outputs.at(screen)->geometry();
     }
 
     for (auto desktop = 1; desktop <= desktops_count; ++desktop) {
         new_areas.work[desktop] = desktop_area;
         new_areas.screen[desktop].resize(screens_count);
-        for (int screen = 0; screen < screens_count; screen++) {
+        for (size_t screen = 0; screen < screens_count; screen++) {
             new_areas.screen[desktop][screen] = screens_geos[screen];
         }
     }
@@ -1382,7 +1387,7 @@ void space::updateClientArea(bool force)
         changed |= areas.restrictedmove[desktop] != new_areas.restrictedmove[desktop];
         changed |= areas.screen[desktop].size() != new_areas.screen[desktop].size();
 
-        for (int screen = 0; !changed && screen < screens_count; screen++) {
+        for (size_t screen = 0; !changed && screen < screens_count; screen++) {
             changed |= new_areas.screen[desktop][screen] != areas.screen[desktop][screen];
         }
     }
@@ -1428,25 +1433,32 @@ void space::updateClientArea()
  * geometry minus windows on the dock. Placement algorithms should
  * refer to this rather than Screens::geometry.
  */
-QRect space::clientArea(clientAreaOption opt, int screen, int desktop) const
+QRect space::clientArea(clientAreaOption opt, base::output const* output, int desktop) const
 {
-    auto const& screens = kwinApp()->get_base().screens;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
 
     if (desktop == NETWinInfo::OnAllDesktops || desktop == 0)
         desktop = win::virtual_desktop_manager::self()->current();
-    if (screen == -1) {
-        screen = screens.current();
+    if (!output) {
+        output = get_current_output(*workspace());
     }
-    const QSize displaySize = screens.displaySize();
 
+    QRect output_geo;
+    size_t output_index{0};
+
+    if (output) {
+        output_geo = output->geometry();
+        output_index = base::get_output_index(outputs, *output);
+    }
+
+    auto& base = kwinApp()->get_base();
     QRect sarea, warea;
     sarea = (!areas.screen.empty()
              // screens may be missing during KWin initialization or screen config changes
-             && screen < static_cast<int>(areas.screen[desktop].size()))
-        ? areas.screen[desktop][screen]
-        : screens.geometry(screen);
-    warea = areas.work[desktop].isNull() ? QRect(0, 0, displaySize.width(), displaySize.height())
-                                         : areas.work[desktop];
+             && output_index < areas.screen[desktop].size())
+        ? areas.screen[desktop][output_index]
+        : output_geo;
+    warea = areas.work[desktop].isNull() ? QRect({}, base.topology.size) : areas.work[desktop];
 
     switch (opt) {
     case MaximizeArea:
@@ -1456,18 +1468,19 @@ QRect space::clientArea(clientAreaOption opt, int screen, int desktop) const
     case FullScreenArea:
     case MovementArea:
     case ScreenArea:
-        return screens.geometry(screen);
+        return output_geo;
     case WorkArea:
         return warea;
     case FullArea:
-        return QRect(0, 0, displaySize.width(), displaySize.height());
+        return QRect({}, base.topology.size);
     }
     abort();
 }
 
 QRect space::clientArea(clientAreaOption opt, const QPoint& p, int desktop) const
 {
-    return clientArea(opt, kwinApp()->get_base().screens.number(p), desktop);
+    return clientArea(
+        opt, base::get_nearest_output(kwinApp()->get_base().get_outputs(), p), desktop);
 }
 
 QRect space::clientArea(clientAreaOption opt, Toplevel const* window) const
@@ -1558,12 +1571,13 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
 
     if (kwinApp()->options->windowSnapZone() || !borderSnapZone.isNull()
         || kwinApp()->options->centerSnapZone()) {
-        auto const& screens = kwinApp()->get_base().screens;
+        auto const& outputs = kwinApp()->get_base().get_outputs();
         const bool sOWO = kwinApp()->options->isSnapOnlyWhenOverlapping();
-        const int screen = screens.number(pos + QRect(QPoint(), window->size()).center());
+        auto output
+            = base::get_nearest_output(outputs, pos + QRect(QPoint(), window->size()).center());
 
         if (maxRect.isNull()) {
-            maxRect = clientArea(MovementArea, screen, window->desktop());
+            maxRect = clientArea(MovementArea, output, window->desktop());
         }
 
         const int xmin = maxRect.left();
@@ -1594,15 +1608,19 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
             // snap to titlebar / snap to window borders on inner screen edges
             if (frameMargins.left()
                 && (flags(window->maximizeMode() & win::maximize_mode::horizontal)
-                    || screens.intersecting(
+                    || base::get_intersecting_outputs(
+                           outputs,
                            geo.translated(maxRect.x() - (frameMargins.left() + geo.x()), 0))
+                            .size()
                         > 1)) {
                 frameMargins.setLeft(0);
             }
             if (frameMargins.right()
                 && (flags(window->maximizeMode() & win::maximize_mode::horizontal)
-                    || screens.intersecting(
+                    || base::get_intersecting_outputs(
+                           outputs,
                            geo.translated(maxRect.right() + frameMargins.right() - geo.right(), 0))
+                            .size()
                         > 1)) {
                 frameMargins.setRight(0);
             }
@@ -1611,8 +1629,11 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
             }
             if (frameMargins.bottom()
                 && (flags(window->maximizeMode() & win::maximize_mode::vertical)
-                    || screens.intersecting(geo.translated(
-                           0, maxRect.bottom() + frameMargins.bottom() - geo.bottom()))
+                    || base::get_intersecting_outputs(
+                           outputs,
+                           geo.translated(0,
+                                          maxRect.bottom() + frameMargins.bottom() - geo.bottom()))
+                            .size()
                         > 1)) {
                 frameMargins.setBottom(0);
             }
@@ -2161,7 +2182,8 @@ int space::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge) con
     auto const right = newX - win::frame_margins(window).left();
     auto frameGeometry = window->geometry_update.frame;
     frameGeometry.moveRight(right);
-    if (kwinApp()->get_base().screens.intersecting(frameGeometry) < 2) {
+    if (base::get_intersecting_outputs(kwinApp()->get_base().get_outputs(), frameGeometry).size()
+        < 2) {
         newX = right;
     }
 
@@ -2203,7 +2225,8 @@ int space::packPositionRight(Toplevel const* window, int oldX, bool rightEdge) c
     auto const right = newX + win::frame_margins(window).right();
     auto frameGeometry = window->geometry_update.frame;
     frameGeometry.moveRight(right);
-    if (kwinApp()->get_base().screens.intersecting(frameGeometry) < 2) {
+    if (base::get_intersecting_outputs(kwinApp()->get_base().get_outputs(), frameGeometry).size()
+        < 2) {
         newX = right;
     }
 
@@ -2277,7 +2300,8 @@ int space::packPositionDown(Toplevel const* window, int oldY, bool bottomEdge) c
     auto const bottom = newY + win::frame_margins(window).bottom();
     auto frameGeometry = window->geometry_update.frame;
     frameGeometry.moveBottom(bottom);
-    if (kwinApp()->get_base().screens.intersecting(frameGeometry) < 2) {
+    if (base::get_intersecting_outputs(kwinApp()->get_base().get_outputs(), frameGeometry).size()
+        < 2) {
         newY = bottom;
     }
 
@@ -2505,10 +2529,10 @@ void space::setActiveClient(Toplevel* window)
 
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer
         // status on > 1 screens
-        if (kwinApp()->get_base().screens.count() > 1) {
+        if (kwinApp()->get_base().get_outputs().size() > 1) {
             for (auto it = m_allClients.begin(); it != m_allClients.end(); ++it) {
                 if (*it != active_client && (*it)->layer() == win::layer::active
-                    && (*it)->screen() == active_client->screen()) {
+                    && (*it)->central_output == active_client->central_output) {
                     win::update_layer(*it);
                 }
             }
@@ -2643,7 +2667,7 @@ void space::request_focus(Toplevel* window, bool raise, bool force_focus)
     }
 
     if (!win::on_active_screen(window)) {
-        kwinApp()->get_base().screens.setCurrent(window->screen());
+        base::set_current_output(kwinApp()->get_base(), window->central_output);
     }
 }
 
@@ -2660,7 +2684,7 @@ void space::clientHidden(Toplevel* window)
     activateNextClient(window);
 }
 
-Toplevel* space::clientUnderMouse(int screen) const
+Toplevel* space::clientUnderMouse(base::output const* output) const
 {
     auto it = stacking_order->sorted().cend();
     while (it != stacking_order->sorted().cbegin()) {
@@ -2672,7 +2696,7 @@ Toplevel* space::clientUnderMouse(int screen) const
         // rule out clients which are not really visible.
         // the screen test is rather superfluous for xrandr & twinview since the geometry would
         // differ -> TODO: might be dropped
-        if (!(client->isShown() && client->isOnCurrentDesktop() && win::on_screen(client, screen)))
+        if (!(client->isShown() && client->isOnCurrentDesktop() && win::on_screen(client, output)))
             continue;
 
         if (client->frameGeometry().contains(input::get_cursor()->pos())) {
@@ -2721,7 +2745,7 @@ bool space::activateNextClient(Toplevel* window)
 
     if (!get_focus && kwinApp()->options->isNextFocusPrefersMouse()) {
         get_focus
-            = clientUnderMouse(window ? window->screen() : kwinApp()->get_base().screens.current());
+            = clientUnderMouse(window ? window->central_output : get_current_output(*workspace()));
         if (get_focus && (get_focus == window || win::is_desktop(get_focus))) {
             // should rather not happen, but it cannot get the focus. rest of usability is tested
             // above
@@ -2759,26 +2783,25 @@ bool space::activateNextClient(Toplevel* window)
     return true;
 }
 
-void space::setCurrentScreen(int new_screen)
+void space::setCurrentScreen(base::output const& output)
 {
-    auto& screens = kwinApp()->get_base().screens;
-
-    if (new_screen < 0 || new_screen >= screens.count()) {
-        return;
-    }
     if (!kwinApp()->options->focusPolicyIsReasonable()) {
         return;
     }
+
     closeActivePopup();
+
     const int desktop = win::virtual_desktop_manager::self()->current();
-    auto get_focus = win::focus_chain::self()->getForActivation(desktop, new_screen);
+    auto get_focus = win::focus_chain::self()->getForActivation(desktop, &output);
     if (get_focus == nullptr) {
         get_focus = win::find_desktop(this, true, desktop);
     }
+
     if (get_focus != nullptr && get_focus != mostRecentlyActivatedClient()) {
         request_focus(get_focus);
     }
-    screens.setCurrent(new_screen);
+
+    base::set_current_output(kwinApp()->get_base(), &output);
 }
 
 void space::gotFocusIn(Toplevel const* window)
@@ -3452,8 +3475,9 @@ void space::slotWindowToDesktop(uint i)
 
 static bool screenSwitchImpossible()
 {
-    if (!kwinApp()->get_base().screens.isCurrentFollowsMouse())
+    if (!kwinApp()->options->get_current_output_follows_mouse()) {
         return false;
+    }
     QStringList args;
     args << QStringLiteral("--passivepopup")
          << i18n(
@@ -3467,11 +3491,29 @@ static bool screenSwitchImpossible()
 
 void space::slotSwitchToScreen()
 {
-    if (screenSwitchImpossible())
+    if (screenSwitchImpossible()) {
         return;
-    const int i = senderValue(sender());
-    if (i > -1)
-        setCurrentScreen(i);
+    }
+
+    int const screen = senderValue(sender());
+    auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+
+    if (output) {
+        setCurrentScreen(*output);
+    }
+}
+
+base::output const* get_derivated_output(base::output const* output, int drift)
+{
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+    auto index = output ? base::get_output_index(outputs, *output) : 0;
+    index += drift;
+    return base::get_output(outputs, index % outputs.size());
+}
+
+base::output const* get_derivated_output(int drift)
+{
+    return get_derivated_output(get_current_output(*workspace()), drift);
 }
 
 void space::slotSwitchToNextScreen()
@@ -3479,8 +3521,9 @@ void space::slotSwitchToNextScreen()
     if (screenSwitchImpossible()) {
         return;
     }
-    auto const& screens = kwinApp()->get_base().screens;
-    setCurrentScreen((screens.current() + 1) % screens.count());
+    if (auto output = get_derivated_output(1)) {
+        setCurrentScreen(*output);
+    }
 }
 
 void space::slotSwitchToPrevScreen()
@@ -3488,36 +3531,39 @@ void space::slotSwitchToPrevScreen()
     if (screenSwitchImpossible()) {
         return;
     }
-    auto const& screens = kwinApp()->get_base().screens;
-    setCurrentScreen((screens.current() + screens.count() - 1) % screens.count());
+    if (auto output = get_derivated_output(-1)) {
+        setCurrentScreen(*output);
+    }
 }
 
 void space::slotWindowToScreen()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        const int i = senderValue(sender());
-        if (i < 0)
-            return;
-        if (i >= 0 && i <= kwinApp()->get_base().screens.count()) {
-            sendClientToScreen(active_client, i);
+        int const screen = senderValue(sender());
+        auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+        if (output) {
+            sendClientToScreen(active_client, *output);
         }
     }
 }
 
 void space::slotWindowToNextScreen()
 {
-    if (USABLE_ACTIVE_CLIENT) {
-        sendClientToScreen(active_client,
-                           (active_client->screen() + 1) % kwinApp()->get_base().screens.count());
+    if (!USABLE_ACTIVE_CLIENT) {
+        return;
+    }
+    if (auto output = get_derivated_output(active_client->central_output, 1)) {
+        sendClientToScreen(active_client, *output);
     }
 }
 
 void space::slotWindowToPrevScreen()
 {
-    if (USABLE_ACTIVE_CLIENT) {
-        auto const& screens = kwinApp()->get_base().screens;
-        sendClientToScreen(active_client,
-                           (active_client->screen() + screens.count() - 1) % screens.count());
+    if (!USABLE_ACTIVE_CLIENT) {
+        return;
+    }
+    if (auto output = get_derivated_output(active_client->central_output, -1)) {
+        sendClientToScreen(active_client, *output);
     }
 }
 
@@ -3579,12 +3625,12 @@ void space::slotWindowLower()
         // activateNextClient( c ); // Doesn't work when we lower a child window
         if (active_client->control->active() && kwinApp()->options->focusPolicyIsReasonable()) {
             if (kwinApp()->options->isNextFocusPrefersMouse()) {
-                auto next = clientUnderMouse(active_client->screen());
+                auto next = clientUnderMouse(active_client->central_output);
                 if (next && next != active_client)
                     request_focus(next);
             } else {
                 activateClient(win::top_client_on_desktop(
-                    workspace(), win::virtual_desktop_manager::self()->current(), -1));
+                    workspace(), win::virtual_desktop_manager::self()->current(), nullptr));
             }
         }
     }
@@ -3758,13 +3804,13 @@ void space::switchWindow(Direction direction)
         auto opposite = [&] {
             switch (direction) {
             case DirectionNorth:
-                return QPoint(curPos.x(), kwinApp()->get_base().screens.geometry().height());
+                return QPoint(curPos.x(), kwinApp()->get_base().topology.size.height());
             case DirectionSouth:
                 return QPoint(curPos.x(), 0);
             case DirectionEast:
                 return QPoint(0, curPos.y());
             case DirectionWest:
-                return QPoint(kwinApp()->get_base().screens.geometry().width(), curPos.y());
+                return QPoint(kwinApp()->get_base().topology.size.width(), curPos.y());
             default:
                 Q_UNREACHABLE();
             }

@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include "kwinxrenderutils.h"
 #include "render/effect_frame.h"
-#include <kwinxrenderutils.h>
 
 namespace KWin::render::xrender
 {

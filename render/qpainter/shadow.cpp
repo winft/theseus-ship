@@ -10,22 +10,19 @@
 #include "window.h"
 
 #include "base/output.h"
+#include "decorations/decoratedclient.h"
 #include "input/cursor.h"
 #include "main.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
-#include "screens.h"
 #include "toplevel.h"
 
-#include <kwineffectquickview.h>
-
-#include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/surface.h>
-
-#include "decorations/decoratedclient.h"
+#include "kwineffectquickview.h"
 
 #include <KDecoration2/Decoration>
 #include <QPainter>
+#include <Wrapland/Server/buffer.h>
+#include <Wrapland/Server/surface.h>
 
 #include <cmath>
 

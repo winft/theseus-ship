@@ -5,9 +5,8 @@
 */
 #pragma once
 
-#include <xcb/xcb.h>
-
 #include <cstring>
+#include <xcb/xcb.h>
 
 namespace KWin::input::x11
 {

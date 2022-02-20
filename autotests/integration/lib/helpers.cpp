@@ -8,11 +8,11 @@
 
 #include "app.h"
 
+#include "base/output_helpers.h"
 #include "desktop/screen_locker_watcher.h"
 #include "input/backend/wlroots/keyboard.h"
 #include "input/backend/wlroots/pointer.h"
 #include "input/backend/wlroots/touch.h"
-#include "screens.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 
@@ -52,6 +52,38 @@ void setup_wayland_connection(global_selection globals)
 void destroy_wayland_connection()
 {
     get_all_clients().clear();
+}
+
+base::output* get_output(size_t index)
+{
+    auto const& outputs = Test::app()->base.get_outputs();
+    assert(index < outputs.size());
+    return outputs.at(index);
+}
+
+void set_current_output(int index)
+{
+    auto const& outputs = Test::app()->base.get_outputs();
+    auto output = base::get_output(outputs, index);
+    QVERIFY(output);
+    base::set_current_output(Test::app()->base, output);
+}
+
+void test_outputs_default()
+{
+    test_outputs_geometries({QRect(0, 0, 1280, 1024), QRect(1280, 0, 1280, 1024)});
+}
+
+void test_outputs_geometries(std::vector<QRect> const& geometries)
+{
+    auto const& outputs = Test::app()->base.get_outputs();
+    QCOMPARE(outputs.size(), geometries.size());
+
+    size_t index = 0;
+    for (auto geo : geometries) {
+        QCOMPARE(outputs.at(index)->geometry(), geo);
+        index++;
+    }
 }
 
 client& get_client()
@@ -445,7 +477,7 @@ void pointer_motion_absolute(QPointF const& position, uint32_t time)
     event.device = app->pointer;
     event.time_msec = time;
 
-    auto const screens_size = kwinApp()->get_base().screens.size();
+    auto const screens_size = kwinApp()->get_base().topology.size;
     event.x = position.x() / screens_size.width();
     event.y = position.y() / screens_size.height();
 
@@ -555,10 +587,10 @@ KWIN_EXPORT void keyboard_key_released(uint32_t key, uint32_t time, wlr_input_de
 
 QPointF get_relative_touch_position(QPointF const& pos)
 {
-    auto const& screens = kwinApp()->get_base().screens;
-    auto screen_number = screens.number(pos.toPoint());
-    auto output_size = screens.size(screen_number);
+    auto output = base::get_nearest_output(kwinApp()->get_base().get_outputs(), pos.toPoint());
+    assert(output);
 
+    auto output_size = output->geometry().size();
     return QPointF(pos.x() / output_size.width(), pos.y() / output_size.height());
 }
 

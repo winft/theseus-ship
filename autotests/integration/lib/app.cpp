@@ -30,30 +30,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/backend/wlroots/output.h"
 #include "render/effects.h"
 #include "render/wayland/compositor.h"
-#include "screens.h"
 #include "scripting/platform.h"
+#include "win/screen.h"
 #include "win/wayland/space.h"
 #include "xwl/xwayland.h"
 
 #include <KCrash>
 #include <KPluginMetaData>
-
 #include <QAbstractEventDispatcher>
 #include <QPluginLoader>
 #include <QSocketNotifier>
 #include <QStyle>
 #include <QThread>
 #include <QtConcurrentRun>
+#include <Wrapland/Server/display.h>
+#include <iostream>
+#include <sys/socket.h>
+#include <unistd.h>
 
 extern "C" {
 #include <wlr/backend/headless.h>
 }
-
-#include <Wrapland/Server/display.h>
-
-#include <iostream>
-#include <sys/socket.h>
-#include <unistd.h>
 
 Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
 Q_IMPORT_PLUGIN(KGlobalAccelImpl)
@@ -232,8 +229,7 @@ void WaylandTestApplication::set_outputs(std::vector<Test::output> const& output
         base.all_outputs.back()->force_geometry(output.geometry);
     }
 
-    // Update again in case of force geometry change.
-    base.screens.updateAll();
+    base::update_output_topology(base);
 }
 
 void WaylandTestApplication::handle_server_addons_created()

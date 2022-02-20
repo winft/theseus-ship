@@ -19,20 +19,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "base/output.h"
-
 #include "output_transform.h"
 
-#include <kwin_export.h>
+#include "base/output.h"
+#include "kwin_export.h"
 
 #include <QObject>
 #include <QPoint>
 #include <QRect>
 #include <QSize>
 #include <QVector>
-#include <memory>
-
 #include <Wrapland/Server/output.h>
+#include <memory>
 
 namespace Wrapland
 {

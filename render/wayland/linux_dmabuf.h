@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <QVector>
 #include <Wrapland/Server/linux_dmabuf_v1.h>

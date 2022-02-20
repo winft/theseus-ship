@@ -6,7 +6,6 @@
 #include "lib/app.h"
 
 #include "input/cursor.h"
-#include "screens.h"
 #include "win/space.h"
 #include "win/wayland/window.h"
 
@@ -70,9 +69,7 @@ void keyboard_keymap_test::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QCOMPARE(Test::app()->base.screens.count(), 2);
-    QCOMPARE(Test::app()->base.screens.geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(Test::app()->base.screens.geometry(1), QRect(1280, 0, 1280, 1024));
+    Test::test_outputs_default();
 }
 
 test_window create_window(Test::client& client)
@@ -114,7 +111,6 @@ std::string create_keymap()
 
 void keyboard_keymap_test::init()
 {
-    Test::app()->base.screens.setCurrent(0);
     kwinApp()->input->cursor->set_pos(QPoint(512, 512));
 }
 

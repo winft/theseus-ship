@@ -7,11 +7,10 @@
 */
 #pragma once
 
-#include <QObject>
-#include <QVector>
-
 #include <KConfigGroup>
 #include <KSharedConfig>
+#include <QObject>
+#include <QVector>
 
 class QAction;
 class QDBusArgument;

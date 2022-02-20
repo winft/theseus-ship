@@ -26,24 +26,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/output.h"
 #include "base/platform.h"
+#include "decorations/decoratedclient.h"
 #include "input/cursor.h"
 #include "main.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
 #include "render/platform.h"
-#include "screens.h"
 #include "toplevel.h"
 #include "wayland_logging.h"
+#include "win/space.h"
 
-#include <kwineffectquickview.h>
-
-#include <Wrapland/Server/buffer.h>
-#include <Wrapland/Server/surface.h>
-
-#include "decorations/decoratedclient.h"
+#include "kwineffectquickview.h"
 
 #include <KDecoration2/Decoration>
 #include <QPainter>
+#include <Wrapland/Server/buffer.h>
+#include <Wrapland/Server/surface.h>
 
 #include <cmath>
 
@@ -96,7 +94,7 @@ int64_t scene::paint_output(base::output* output,
     auto const needsFullRepaint = m_backend->needsFullRepaint();
     if (needsFullRepaint) {
         mask |= render::paint_type::screen_background_first;
-        damage = compositor.platform.base.screens.geometry();
+        damage = QRect({}, kwinApp()->get_base().topology.size);
     }
 
     auto const geometry = output->geometry();

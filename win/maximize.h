@@ -5,11 +5,10 @@
 */
 #pragma once
 
-#include "win/move.h"
-#include "win/net.h"
-#include "win/types.h"
-
+#include "move.h"
+#include "net.h"
 #include "placement.h"
+#include "types.h"
 
 namespace KWin::win
 {

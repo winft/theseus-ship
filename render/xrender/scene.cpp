@@ -31,13 +31,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/platform.h"
 #include "render/shadow.h"
 #include "toplevel.h"
-
 #include "win/geo.h"
 #include "win/scene.h"
 #include "win/x11/window.h"
 
+#include "kwineffectquickview.h"
+
 #include <cassert>
-#include <kwineffectquickview.h>
 
 namespace KWin::render::xrender
 {

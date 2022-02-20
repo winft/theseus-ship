@@ -16,12 +16,13 @@
 #include "input/redirect.h"
 #include "main.h"
 #include "render/effects.h"
-#include "screens.h"
 #include "win/control.h"
 #include "win/wayland/space.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
 
+#include <KScreenLocker/KsldApp>
+#include <QPainter>
 #include <Wrapland/Client/buffer.h>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Server/buffer.h>
@@ -32,9 +33,6 @@
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>
 #include <Wrapland/Server/surface.h>
-
-#include <KScreenLocker/KsldApp>
-#include <QPainter>
 #include <wayland-cursor.h>
 
 namespace KWin::input::wayland
@@ -451,7 +449,7 @@ void cursor_image::loadThemeCursor(const T& shape, QHash<T, Image>& cursors, Ima
         if (!buffer) {
             return;
         }
-        auto scale = kwinApp()->get_base().screens.maxScale();
+        auto scale = kwinApp()->get_base().topology.max_scale;
         int hotSpotX = qRound(cursor->hotspot_x / scale);
         int hotSpotY = qRound(cursor->hotspot_y / scale);
         QImage img = buffer->shmImage()->createQImage().copy();

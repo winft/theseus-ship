@@ -7,10 +7,10 @@
 #pragma once
 
 #include "gl/egl_data.h"
-#include "input/redirect.h"
 
-#include <kwin_export.h>
-#include <kwinglobals.h>
+#include "input/redirect.h"
+#include "kwin_export.h"
+#include "kwinglobals.h"
 
 #include <QObject>
 #include <epoxy/egl.h>

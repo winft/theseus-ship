@@ -16,7 +16,6 @@
 #include "input/redirect.h"
 #include "input/switch.h"
 #include "input/xkb/keyboard.h"
-
 #include "main.h"
 
 #include <KLocalizedString>

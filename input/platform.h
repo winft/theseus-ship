@@ -7,7 +7,7 @@
 
 #include "xkb/manager.h"
 
-#include <kwin_export.h>
+#include "kwin_export.h"
 
 #include <KSharedConfig>
 #include <QObject>

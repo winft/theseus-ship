@@ -12,7 +12,6 @@
 
 #include <Wrapland/Server/kde_idle.h>
 #include <Wrapland/Server/surface.h>
-
 #include <algorithm>
 #include <functional>
 

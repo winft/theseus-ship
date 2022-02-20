@@ -75,7 +75,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/logging.h"
 #include "base/output.h"
 #include "base/platform.h"
-#include "screens.h"
 #include "win/geo.h"
 
 #include <QQuickWindow>
@@ -124,8 +123,8 @@ void scene::paintScreen(paint_type& mask,
                         std::chrono::milliseconds presentTime,
                         const QMatrix4x4& projection)
 {
-    auto const& screenSize = kwinApp()->get_base().screens.size();
-    const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
+    auto const& space_size = kwinApp()->get_base().topology.size;
+    const QRegion displayRegion(0, 0, space_size.width(), space_size.height());
     mask = (damage == displayRegion) ? paint_type::none : paint_type::screen_region;
 
     if (Q_UNLIKELY(presentTime < m_expectedPresentTimestamp)) {
@@ -253,8 +252,8 @@ void scene::paintGenericScreen(paint_type orig_mask, ScreenPaintData)
         paintWindow(d.window, d.mask, d.region, d.quads);
     }
 
-    auto const& screenSize = kwinApp()->get_base().screens.size();
-    damaged_region = QRegion(0, 0, screenSize.width(), screenSize.height());
+    auto const& space_size = kwinApp()->get_base().topology.size;
+    damaged_region = QRegion(0, 0, space_size.width(), space_size.height());
 }
 
 // The optimized case without any transformations at all.
@@ -340,8 +339,8 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
     const QRegion repaintClip = repaint_region - dirtyArea;
     dirtyArea |= repaint_region;
 
-    auto const& screenSize = kwinApp()->get_base().screens.size();
-    const QRegion displayRegion(0, 0, screenSize.width(), screenSize.height());
+    auto const& space_size = kwinApp()->get_base().topology.size;
+    const QRegion displayRegion(0, 0, space_size.width(), space_size.height());
     bool fullRepaint(dirtyArea == displayRegion); // spare some expensive region operations
     if (!fullRepaint) {
         extendPaintRegion(dirtyArea, opaqueFullscreen);
@@ -467,8 +466,7 @@ static window* s_recursionCheck = nullptr;
 void scene::paintWindow(window* w, paint_type mask, QRegion region, WindowQuadList quads)
 {
     // no painting outside visible screen (and no transformations)
-    auto const& screenSize = kwinApp()->get_base().screens.size();
-    region &= QRect(0, 0, screenSize.width(), screenSize.height());
+    region &= QRect({}, kwinApp()->get_base().topology.size);
     if (region.isEmpty()) // completely clipped
         return;
 
@@ -586,12 +584,12 @@ void scene::paintDesktopThumbnails(window* w)
         s_recursionCheck = w;
 
         ScreenPaintData data;
-        auto const& screenSize = kwinApp()->get_base().screens.size();
-        QSize size = screenSize;
+        auto const& space_size = kwinApp()->get_base().topology.size;
+        auto size = space_size;
 
         size.scale(item->width(), item->height(), Qt::KeepAspectRatio);
-        data *= QVector2D(size.width() / double(screenSize.width()),
-                          size.height() / double(screenSize.height()));
+        data *= QVector2D(size.width() / double(space_size.width()),
+                          size.height() / double(space_size.height()));
         const QPointF point = item->mapToScene(item->position());
         const qreal x = point.x() + w->x() + (item->width() - size.width()) / 2;
         const qreal y = point.y() + w->y() + (item->height() - size.height()) / 2;

@@ -22,9 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "window.h"
 
+#include "base/output_helpers.h"
 #include "base/platform.h"
 #include "main.h"
-#include "screens.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
@@ -521,16 +521,20 @@ public:
         QObject::connect(
             vds, &win::virtual_desktop_manager::layoutChanged, this, &space::desktopLayoutChanged);
 
-        auto& screens = kwinApp()->get_base().screens;
-        QObject::connect(&screens, &Screens::sizeChanged, this, &space::virtualScreenSizeChanged);
+        auto& base = kwinApp()->get_base();
         QObject::connect(
-            &screens, &Screens::geometryChanged, this, &space::virtualScreenGeometryChanged);
-        QObject::connect(&screens,
-                         &Screens::countChanged,
-                         this,
-                         [this](int /*previousCount*/, int currentCount) {
-                             Q_EMIT Space::numberScreensChanged(currentCount);
-                         });
+            &base, &base::platform::topology_changed, this, [this](auto old_topo, auto new_topo) {
+                if (old_topo.size != new_topo.size) {
+                    Q_EMIT this->virtualScreenSizeChanged();
+                    Q_EMIT this->virtualScreenGeometryChanged();
+                }
+            });
+        QObject::connect(&base, &base::platform::output_added, this, [this, &base] {
+            Q_EMIT Space::numberScreensChanged(base.get_outputs().size());
+        });
+        QObject::connect(&base, &base::platform::output_removed, this, [this, &base] {
+            Q_EMIT Space::numberScreensChanged(base.get_outputs().size());
+        });
 
         connect_legacy_screen_resize(this);
 
@@ -566,10 +570,11 @@ public:
 
     void sendClientToScreen(KWin::scripting::window* client, int screen) override
     {
-        if (screen < 0 || screen >= kwinApp()->get_base().screens.count()) {
+        auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+        if (!output) {
             return;
         }
-        ref_space->sendClientToScreen(client->client(), screen);
+        ref_space->sendClientToScreen(client->client(), *output);
     }
 
 #define SIMPLE_SLOT(name)                                                                          \
@@ -655,7 +660,8 @@ public:
 protected:
     QRect client_area_impl(clientAreaOption option, int screen, int desktop) const override
     {
-        return ref_space->clientArea(option, screen, desktop);
+        auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+        return ref_space->clientArea(option, output, desktop);
     }
 
     QRect client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const override

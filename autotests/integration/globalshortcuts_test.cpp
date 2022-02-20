@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "input/keyboard_redirect.h"
 #include "input/xkb/helpers.h"
-#include "screens.h"
 #include "win/input.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
@@ -90,7 +89,6 @@ void GlobalShortcutsTest::initTestCase()
 void GlobalShortcutsTest::init()
 {
     Test::setup_wayland_connection();
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 
     input::xkb::get_primary_xkb_keyboard()->switch_to_layout(0);

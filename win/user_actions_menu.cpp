@@ -345,7 +345,7 @@ void user_actions_menu::menuAboutToShow()
     } else {
         initDesktopPopup();
     }
-    if (kwinApp()->get_base().screens.count() == 1
+    if (kwinApp()->get_base().get_outputs().size() == 1
         || (!m_client->isMovable() && !m_client->isMovableAcrossScreens())) {
         delete m_screenMenu;
         m_screenMenu = nullptr;
@@ -569,19 +569,19 @@ void user_actions_menu::screenPopupAboutToShow()
 
     m_screenMenu->setPalette(m_client->control->palette().q_palette());
     QActionGroup* group = new QActionGroup(m_screenMenu);
-    auto const& screens = kwinApp()->get_base().screens;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
 
-    for (int i = 0; i < screens.count(); ++i) {
+    for (size_t i = 0; i < outputs.size(); ++i) {
         // assumption: there are not more than 9 screens attached.
         QAction* action = m_screenMenu->addAction(
             i18nc("@item:inmenu List of all Screens to send a window to. First argument is a "
                   "number, second the output identifier. E.g. Screen 1 (HDMI1)",
                   "Screen &%1 (%2)",
                   (i + 1),
-                  screens.name(i)));
-        action->setData(i);
+                  outputs.at(i)->name()));
+        action->setData(static_cast<int>(i));
         action->setCheckable(true);
-        if (m_client && i == m_client->screen()) {
+        if (m_client && outputs.at(i) == m_client->central_output) {
             action->setChecked(true);
         }
         group->addAction(action);
@@ -680,15 +680,17 @@ void user_actions_menu::slotToggleOnVirtualDesktop(QAction* action)
 
 void user_actions_menu::slotSendToScreen(QAction* action)
 {
-    const int screen = action->data().toInt();
+    size_t const screen = action->data().toInt();
     if (m_client.isNull()) {
         return;
     }
-    if (screen >= kwinApp()->get_base().screens.count()) {
+
+    auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+    if (!output) {
         return;
     }
 
-    workspace()->sendClientToScreen(m_client.data(), screen);
+    workspace()->sendClientToScreen(m_client.data(), *output);
 }
 
 }

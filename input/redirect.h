@@ -9,10 +9,9 @@
 #pragma once
 
 #include "event.h"
-#include <kwin_export.h>
-#include <kwinglobals.h>
 
-#include <KSharedConfig>
+#include "kwin_export.h"
+#include "kwinglobals.h"
 
 #include <QAction>
 #include <QObject>

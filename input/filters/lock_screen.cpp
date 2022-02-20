@@ -19,7 +19,6 @@
 #include "win/wayland/window.h"
 
 #include <KScreenLocker/KsldApp>
-
 #include <Wrapland/Server/keyboard_pool.h>
 #include <Wrapland/Server/pointer_pool.h>
 #include <Wrapland/Server/seat.h>

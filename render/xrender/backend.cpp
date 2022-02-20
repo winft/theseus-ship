@@ -10,11 +10,12 @@
 #include "base/platform.h"
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/helpers.h"
-#include "kwinxrenderutils.h"
 #include "main.h"
 #include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
-#include "screens.h"
+#include "win/space.h"
+
+#include "kwinxrenderutils.h"
 
 namespace KWin::render::xrender
 {
@@ -116,13 +117,13 @@ void backend::init(bool createOverlay)
 void backend::createBuffer()
 {
     xcb_pixmap_t pixmap = xcb_generate_id(connection());
-    auto const displaySize = kwinApp()->get_base().screens.displaySize();
+    auto const& space_size = kwinApp()->get_base().topology.size;
     xcb_create_pixmap(connection(),
                       base::x11::xcb::default_depth(kwinApp()->x11ScreenNumber()),
                       pixmap,
                       rootWindow(),
-                      displaySize.width(),
-                      displaySize.height());
+                      space_size.width(),
+                      space_size.height());
     xcb_render_picture_t b = xcb_generate_id(connection());
     xcb_render_create_picture(connection(), b, pixmap, m_format, 0, nullptr);
     xcb_free_pixmap(connection(), pixmap); // The picture owns the pixmap now
@@ -131,7 +132,8 @@ void backend::createBuffer()
 
 void backend::present(paint_type mask, QRegion const& damage)
 {
-    auto const displaySize = kwinApp()->get_base().screens.displaySize();
+    auto const& space_size = kwinApp()->get_base().topology.size;
+
     if (flags(mask & paint_type::screen_region)) {
         // Use the damage region as the clip region for the root window
         XFixesRegion frontRegion(damage);
@@ -149,8 +151,8 @@ void backend::present(paint_type mask, QRegion const& damage)
                              0,
                              0,
                              0,
-                             displaySize.width(),
-                             displaySize.height());
+                             space_size.width(),
+                             space_size.height());
         xcb_xfixes_set_picture_clip_region(connection(), m_front, XCB_XFIXES_REGION_NONE, 0, 0);
         xcb_flush(connection());
     } else {
@@ -166,8 +168,8 @@ void backend::present(paint_type mask, QRegion const& damage)
                              0,
                              0,
                              0,
-                             displaySize.width(),
-                             displaySize.height());
+                             space_size.width(),
+                             space_size.height());
         xcb_flush(connection());
     }
 }

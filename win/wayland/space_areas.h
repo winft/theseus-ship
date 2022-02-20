@@ -5,7 +5,10 @@
 */
 #pragma once
 
-#include "screens.h"
+#include "base/output_helpers.h"
+#include "base/platform.h"
+#include "main.h"
+#include "win/space.h"
 #include "win/space_areas.h"
 #include "win/virtual_desktops.h"
 
@@ -18,8 +21,8 @@ void update_space_areas(Window* win,
                         std::vector<QRect> const& screens_geos,
                         space_areas& areas)
 {
-    auto const& screens = kwinApp()->get_base().screens;
-    auto const screens_count = screens.count();
+    auto const& base = kwinApp()->get_base();
+    auto const screens_count = base.get_outputs().size();
     auto const desktops_count = static_cast<int>(virtual_desktop_manager::self()->count());
 
     // Assuming that only docks have "struts" and that all docks have a strut.
@@ -70,16 +73,16 @@ void update_space_areas(Window* win,
         return strut_area::invalid;
     };
 
-    auto const strut = margins(screens.geometry(win->screen()));
+    auto const strut = margins(win->central_output ? win->central_output->geometry() : QRect());
     auto const strut_region
         = strut_rects{strut_rect(win->frameGeometry(), margins_to_strut_area(strut))};
-    auto rect = desktop_area - margins(screens.geometry());
+    auto rect = desktop_area - margins(QRect({}, base.topology.size));
 
     if (win->isOnAllDesktops()) {
         for (int desktop = 1; desktop <= desktops_count; ++desktop) {
             areas.work[desktop] = areas.work[desktop].intersected(rect);
 
-            for (int screen = 0; screen < screens_count; ++screen) {
+            for (size_t screen = 0; screen < screens_count; ++screen) {
                 auto& screen_area = areas.screen[desktop][screen];
                 auto intersect = screens_geos[screen] - margins(screens_geos[screen]);
                 screen_area = screen_area.intersected(intersect);
@@ -91,7 +94,7 @@ void update_space_areas(Window* win,
     } else {
         areas.work[win->desktop()] = areas.work[win->desktop()].intersected(rect);
 
-        for (int screen = 0; screen < screens_count; screen++) {
+        for (size_t screen = 0; screen < screens_count; screen++) {
             areas.screen[win->desktop()][screen] = areas.screen[win->desktop()][screen].intersected(
                 screens_geos[screen] - margins(screens_geos[screen]));
         }

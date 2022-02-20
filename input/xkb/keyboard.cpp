@@ -11,17 +11,14 @@
 #include "keymap.h"
 
 #include <KConfigGroup>
-
-#include <QTemporaryFile>
 #include <QtXkbCommonSupport/private/qxkbcommon_p.h>
-
-#include <xkbcommon/xkbcommon-compose.h>
-#include <xkbcommon/xkbcommon-keysyms.h>
 
 #include <bitset>
 #include <cassert>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <xkbcommon/xkbcommon-compose.h>
+#include <xkbcommon/xkbcommon-keysyms.h>
 
 namespace KWin::input::xkb
 {

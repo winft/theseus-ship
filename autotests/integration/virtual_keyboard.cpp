@@ -6,7 +6,6 @@
 #include "lib/app.h"
 
 #include "input/wayland/platform.h"
-#include "screens.h"
 #include "win/space.h"
 #include "win/wayland/window.h"
 
@@ -78,9 +77,7 @@ void virtual_keyboard_test::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.size() || startup_spy.wait());
-    QCOMPARE(Test::app()->base.screens.count(), 2);
-    QCOMPARE(Test::app()->base.screens.geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(Test::app()->base.screens.geometry(1), QRect(1280, 0, 1280, 1024));
+    Test::test_outputs_default();
 }
 
 std::unique_ptr<Wrapland::Client::virtual_keyboard_v1> create_virtual_keyboard(Test::client& client)
@@ -132,8 +129,6 @@ void virtual_keyboard_test::init()
     vk_client = Test::client(Test::global_selection::seat
                              | Test::global_selection::virtual_keyboard_manager_v1);
     focus_client = create_focus_client();
-
-    Test::app()->base.screens.setCurrent(0);
 }
 
 void virtual_keyboard_test::cleanup()

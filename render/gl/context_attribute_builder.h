@@ -18,8 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
+
+#include "kwin_export.h"
+
 #include <QDebug>
-#include <kwin_export.h>
 
 namespace KWin::render::gl
 {

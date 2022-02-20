@@ -20,7 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "input/event_spy.h"
-#include <kwin_export.h>
+
+#include "kwin_export.h"
 
 #include <QObject>
 #include <QSet>

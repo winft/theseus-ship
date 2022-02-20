@@ -9,8 +9,6 @@
 
 #include "input/types.h"
 
-#include <kwin_export.h>
-
 namespace KWin::input::control
 {
 

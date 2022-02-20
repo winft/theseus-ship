@@ -22,9 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "main.h"
 #include "render/compositor.h"
-#include "screens.h"
 #include "tabbox_handler.h"
-// Qt
+#include "win/screen.h"
+#include "win/space.h"
+
 #include <QAbstractItemModel>
 
 namespace KWin
@@ -46,8 +47,8 @@ tabbox_switcher_item::tabbox_switcher_item(QObject* parent)
                   set_current_index(tabbox_handle->current_index().row());
               }
           });
-    connect(&kwinApp()->get_base().screens,
-            &Screens::changed,
+    connect(&kwinApp()->get_base(),
+            &base::platform::topology_changed,
             this,
             &tabbox_switcher_item::screen_geometry_changed);
     connect(render::compositor::self(),
@@ -89,8 +90,8 @@ void tabbox_switcher_item::set_visible(bool visible)
 
 QRect tabbox_switcher_item::screen_geometry() const
 {
-    auto& screens = kwinApp()->get_base().screens;
-    return screens.geometry(screens.current());
+    auto output = win::get_current_output(*workspace());
+    return output ? output->geometry() : QRect();
 }
 
 void tabbox_switcher_item::set_current_index(int index)

@@ -20,19 +20,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "effects.h"
 
+#include "compositor.h"
+#include "effect_frame.h"
+#include "effect_loader.h"
+#include "effectsadaptor.h"
+#include "platform.h"
+#include "thumbnail_item.h"
+
 #include "base/logging.h"
 #include "base/output.h"
 #include "base/platform.h"
+#include "decorations/decorationbridge.h"
 #include "desktop/screen_locker_watcher.h"
-#include "effect_loader.h"
-#include "effectsadaptor.h"
 #include "input/cursor.h"
 #include "input/pointer_redirect.h"
-#include "kwineffectquickview.h"
-#include "kwinglutils.h"
-#include "screens.h"
 #include "scripting/effect.h"
-#include "thumbnail_item.h"
 #include "win/control.h"
 #include "win/internal_window.h"
 #include "win/meta.h"
@@ -53,16 +55,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/tabbox/tabbox.h"
 #endif
 
-#include <QDebug>
+#include "kwineffectquickview.h"
+#include "kwinglutils.h"
 
-#include <Plasma/Theme>
-
-#include "platform.h"
-#include "render/compositor.h"
-#include "render/effect_frame.h"
-
-#include "decorations/decorationbridge.h"
 #include <KDecoration2/DecorationSettings>
+#include <Plasma/Theme>
 
 namespace KWin::render
 {
@@ -217,11 +214,17 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     connect(
         input::get_cursor(), &input::cursor::mouse_changed, this, &EffectsHandler::mouseChanged);
 
-    auto& screens = kwinApp()->get_base().screens;
-    connect(&screens, &Screens::countChanged, this, &EffectsHandler::numberScreensChanged);
-    connect(&screens, &Screens::sizeChanged, this, &EffectsHandler::virtualScreenSizeChanged);
-    connect(
-        &screens, &Screens::geometryChanged, this, &EffectsHandler::virtualScreenGeometryChanged);
+    auto& base = kwinApp()->get_base();
+    connect(&base, &base::platform::output_added, this, &EffectsHandler::numberScreensChanged);
+    connect(&base, &base::platform::output_removed, this, &EffectsHandler::numberScreensChanged);
+
+    QObject::connect(
+        &base, &base::platform::topology_changed, this, [this](auto old_topo, auto new_topo) {
+            if (old_topo.size != new_topo.size) {
+                Q_EMIT virtualScreenSizeChanged();
+                Q_EMIT virtualScreenGeometryChanged();
+            }
+        });
 
     connect(ws->stacking_order,
             &win::stacking_order::changed,
@@ -1028,9 +1031,12 @@ void effects_handler_impl::windowToDesktops(EffectWindow* w, const QVector<uint>
 
 void effects_handler_impl::windowToScreen(EffectWindow* w, int screen)
 {
+    auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
     auto window = static_cast<effects_window_impl*>(w)->window();
-    if (window && window->control && !win::is_desktop(window) && !win::is_dock(window))
-        workspace()->sendClientToScreen(window, screen);
+
+    if (output && window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
+        workspace()->sendClientToScreen(window, *output);
+    }
 }
 
 void effects_handler_impl::setShowingDesktop(bool showing)
@@ -1080,12 +1086,12 @@ int effects_handler_impl::desktopGridHeight() const
 
 int effects_handler_impl::workspaceWidth() const
 {
-    return desktopGridWidth() * kwinApp()->get_base().screens.size().width();
+    return desktopGridWidth() * kwinApp()->get_base().topology.size.width();
 }
 
 int effects_handler_impl::workspaceHeight() const
 {
-    return desktopGridHeight() * kwinApp()->get_base().screens.size().height();
+    return desktopGridHeight() * kwinApp()->get_base().topology.size.height();
 }
 
 int effects_handler_impl::desktopAtCoords(QPoint coords) const
@@ -1104,10 +1110,11 @@ QPoint effects_handler_impl::desktopGridCoords(int id) const
 QPoint effects_handler_impl::desktopCoords(int id) const
 {
     QPoint coords = win::virtual_desktop_manager::self()->grid().gridCoords(id);
-    if (coords.x() == -1)
+    if (coords.x() == -1) {
         return QPoint(-1, -1);
-    auto const& displaySize = kwinApp()->get_base().screens.size();
-    return QPoint(coords.x() * displaySize.width(), coords.y() * displaySize.height());
+    }
+    auto const& space_size = kwinApp()->get_base().topology.size;
+    return QPoint(coords.x() * space_size.width(), coords.y() * space_size.height());
 }
 
 int effects_handler_impl::desktopAbove(int desktop, bool wrap) const
@@ -1307,22 +1314,32 @@ void effects_handler_impl::addRepaint(int x, int y, int w, int h)
 
 int effects_handler_impl::activeScreen() const
 {
-    return kwinApp()->get_base().screens.current();
+    auto output = win::get_current_output(*workspace());
+    if (!output) {
+        return 0;
+    }
+    return base::get_output_index(kwinApp()->get_base().get_outputs(), *output);
 }
 
 int effects_handler_impl::numScreens() const
 {
-    return kwinApp()->get_base().screens.count();
+    return kwinApp()->get_base().get_outputs().size();
 }
 
 int effects_handler_impl::screenNumber(const QPoint& pos) const
 {
-    return kwinApp()->get_base().screens.number(pos);
+    auto const& outputs = kwinApp()->get_base().get_outputs();
+    auto output = base::get_nearest_output(outputs, pos);
+    if (!output) {
+        return 0;
+    }
+    return base::get_output_index(outputs, *output);
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, int screen, int desktop) const
 {
-    return workspace()->clientArea(opt, screen, desktop);
+    auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
+    return workspace()->clientArea(opt, output, desktop);
 }
 
 QRect effects_handler_impl::clientArea(clientAreaOption opt, const EffectWindow* c) const
@@ -1343,12 +1360,12 @@ QRect effects_handler_impl::clientArea(clientAreaOption opt, const QPoint& p, in
 
 QRect effects_handler_impl::virtualScreenGeometry() const
 {
-    return kwinApp()->get_base().screens.geometry();
+    return QRect({}, kwinApp()->get_base().topology.size);
 }
 
 QSize effects_handler_impl::virtualScreenSize() const
 {
-    return kwinApp()->get_base().screens.size();
+    return kwinApp()->get_base().topology.size;
 }
 
 void effects_handler_impl::defineCursor(Qt::CursorShape shape)
@@ -2010,7 +2027,6 @@ TOPLEVEL_HELPER(int, width, size().width)
 TOPLEVEL_HELPER(int, height, size().height)
 TOPLEVEL_HELPER(QPoint, pos, pos)
 TOPLEVEL_HELPER(QSize, size, size)
-TOPLEVEL_HELPER(int, screen, screen)
 TOPLEVEL_HELPER(QRect, geometry, frameGeometry)
 TOPLEVEL_HELPER(QRect, frameGeometry, frameGeometry)
 TOPLEVEL_HELPER(int, desktop, desktop)
@@ -2089,6 +2105,14 @@ QStringList effects_window_impl::activities() const
 {
     // No support for Activities.
     return {};
+}
+
+int effects_window_impl::screen() const
+{
+    if (!toplevel->central_output) {
+        return 0;
+    }
+    return base::get_output_index(kwinApp()->get_base().get_outputs(), *toplevel->central_output);
 }
 
 QRect effects_window_impl::clientGeometry() const

@@ -8,10 +8,11 @@
 */
 #pragma once
 
+#include "osd.h"
+
 #include "input/platform.h"
 #include "main.h"
 #include "toplevel.h"
-#include "win/osd.h"
 
 #include <KLocalizedString>
 

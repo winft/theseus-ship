@@ -6,10 +6,11 @@
 #include "cursor.h"
 
 #include "compositor.h"
-#include <input/cursor.h>
-#include <input/platform.h>
-#include <input/pointer_redirect.h>
-#include <main.h>
+
+#include "input/cursor.h"
+#include "input/platform.h"
+#include "input/pointer_redirect.h"
+#include "main.h"
 
 namespace KWin::render
 {

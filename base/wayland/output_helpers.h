@@ -5,9 +5,10 @@
 */
 #pragma once
 
-#include "base/wayland/output.h"
+#include "output.h"
+
+#include "base/output_helpers.h"
 #include "input/filters/dpms.h"
-#include "screens.h"
 #include "wayland_logging.h"
 
 #include <Wrapland/Server/output_changeset_v1.h>
@@ -49,8 +50,8 @@ void request_outputs_change(Base& base, Wrapland::Server::OutputConfigurationV1*
         output->apply_changes(changeset);
     }
 
-    base.screens.updateAll();
     config->setApplied();
+    update_output_topology(base);
 }
 
 template<typename Base, typename Filter>

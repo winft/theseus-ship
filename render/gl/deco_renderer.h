@@ -7,10 +7,10 @@
 */
 #pragma once
 
-#include <cmath>
-
 #include "decorations/decorationrenderer.h"
 #include "kwinglutils.h"
+
+#include <cmath>
 
 namespace KWin::render::gl
 {

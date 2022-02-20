@@ -23,7 +23,6 @@
 #include <Wrapland/Server/surface.h>
 #include <Wrapland/Server/text_input_pool.h>
 #include <Wrapland/Server/text_input_v3.h>
-
 #include <cassert>
 
 namespace

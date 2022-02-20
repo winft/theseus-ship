@@ -6,7 +6,7 @@
 #pragma once
 
 #include "egl_context_attribute_builder.h"
-#include <wayland_logging.h>
+#include "wayland_logging.h"
 
 #include <QOpenGLContext>
 #include <epoxy/egl.h>

@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
-#include "screens.h"
 #include "win/control.h"
 #include "win/move.h"
 #include "win/net.h"
@@ -231,16 +230,14 @@ void PlasmaSurfaceTest::testOSDPlacement()
     QCOMPARE(c->frameGeometry(), QRect(590, 657, 100, 50));
 
     // change the screen size
-    QSignalSpy screensChangedSpy(&Test::app()->base.screens, &Screens::changed);
+    QSignalSpy screensChangedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(screensChangedSpy.isValid());
 
     auto const geometries = std::vector<QRect>{{0, 0, 1280, 1024}, {1280, 0, 1280, 1024}};
     Test::app()->set_outputs(geometries);
 
-    QCOMPARE(screensChangedSpy.count(), Test::app()->base.screens.count() + 2);
-    QCOMPARE(Test::app()->base.screens.count(), 2);
-    QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
-    QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
+    QCOMPARE(screensChangedSpy.count(), 1);
+    Test::test_outputs_geometries(geometries);
     QCOMPARE(c->frameGeometry(), QRect(590, 657, 100, 50));
 
     // change size of window

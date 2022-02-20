@@ -19,11 +19,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "window.h"
-#include "screens.h"
 
 #include "base/platform.h"
 #include "main.h"
 #include "win/internal_window.h"
+#include "win/space.h"
 
 #include <logging.h>
 
@@ -39,7 +39,7 @@ static quint32 s_windowId = 0;
 Window::Window(QWindow *window)
     : QPlatformWindow(window)
     , m_windowId(++s_windowId)
-    , m_scale(kwinApp()->get_base().screens.maxScale())
+    , m_scale(kwinApp()->get_base().topology.max_scale)
 {
 }
 

@@ -11,11 +11,11 @@
 #include "space.h"
 #include "types.h"
 
+#include "base/output_helpers.h"
 #include "base/platform.h"
 #include "input/cursor.h"
 #include "render/outline.h"
 #include "screen_edges.h"
-#include "screens.h"
 
 #include <QWidget>
 
@@ -226,7 +226,7 @@ void check_workspace_position(Win* win,
         return;
     }
 
-    if (kwinApp()->get_base().screens.count() == 0) {
+    if (kwinApp()->get_base().get_outputs().empty()) {
         return;
     }
 
@@ -449,38 +449,38 @@ void check_workspace_position(Win* win,
         padding[1] = padding[3] = 0;
     }
 
-    auto const& screens = kwinApp()->get_base().screens;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
 
     if (save[Left] || keep[Left]) {
         frame_geo.moveLeft(std::max(left_max, screenArea.x()) - padding[0]);
     }
-    if (padding[0] && screens.intersecting(frame_geo) > 1) {
+    if (padding[0] && base::get_intersecting_outputs(outputs, frame_geo).size() > 1) {
         frame_geo.moveLeft(frame_geo.left() + padding[0]);
     }
     if (save[Top] || keep[Top]) {
         frame_geo.moveTop(std::max(top_max, screenArea.y()) - padding[1]);
     }
-    if (padding[1] && screens.intersecting(frame_geo) > 1) {
+    if (padding[1] && base::get_intersecting_outputs(outputs, frame_geo).size() > 1) {
         frame_geo.moveTop(frame_geo.top() + padding[1]);
     }
     if (save[Right] || keep[Right]) {
         frame_geo.moveRight(std::min(right_max - 1, screenArea.right()) + padding[2]);
     }
-    if (padding[2] && screens.intersecting(frame_geo) > 1) {
+    if (padding[2] && base::get_intersecting_outputs(outputs, frame_geo).size() > 1) {
         frame_geo.moveRight(frame_geo.right() - padding[2]);
     }
     if (old_frame_geo.x() >= old_left_max && frame_geo.x() < left_max) {
         frame_geo.setLeft(std::max(left_max, screenArea.x()));
     } else if (old_client_geo.x() >= old_left_max && frame_geo.x() + border[Left] < left_max) {
         frame_geo.setLeft(std::max(left_max, screenArea.x()) - border[Left]);
-        if (screens.intersecting(frame_geo) > 1) {
+        if (base::get_intersecting_outputs(outputs, frame_geo).size() > 1) {
             frame_geo.setLeft(frame_geo.left() + border[Left]);
         }
     }
     if (save[Bottom] || keep[Bottom]) {
         frame_geo.moveBottom(std::min(bottom_max - 1, screenArea.bottom()) + padding[3]);
     }
-    if (padding[3] && screens.intersecting(frame_geo) > 1) {
+    if (padding[3] && base::get_intersecting_outputs(outputs, frame_geo).size() > 1) {
         frame_geo.moveBottom(frame_geo.bottom() - padding[3]);
     }
 
@@ -488,7 +488,7 @@ void check_workspace_position(Win* win,
         frame_geo.setTop(std::max(top_max, screenArea.y()));
     } else if (old_client_geo.y() >= old_top_max && frame_geo.y() + border[Top] < top_max) {
         frame_geo.setTop(std::max(top_max, screenArea.y()) - border[Top]);
-        if (screens.intersecting(frame_geo) > 1) {
+        if (base::get_intersecting_outputs(outputs, frame_geo).size() > 1) {
             frame_geo.setTop(frame_geo.top() + border[Top]);
         }
     }
@@ -529,16 +529,16 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
 {
     auto mode = quicktiles::none;
     bool inner_border = false;
-    auto const& screens = kwinApp()->get_base().screens;
+    auto const& outputs = kwinApp()->get_base().get_outputs();
 
-    for (int i = 0; i < screens.count(); ++i) {
-        if (!screens.geometry(i).contains(QPoint(xroot, yroot))) {
+    for (size_t i = 0; i < outputs.size(); ++i) {
+        if (!outputs.at(i)->geometry().contains(QPoint(xroot, yroot))) {
             continue;
         }
 
-        auto in_screen = [i, &screens](const QPoint& pt) {
-            for (int j = 0; j < screens.count(); ++j) {
-                if (j != i && screens.geometry(j).contains(pt)) {
+        auto in_screen = [i, &outputs](const QPoint& pt) {
+            for (size_t j = 0; j < outputs.size(); ++j) {
+                if (j != i && outputs.at(j)->geometry().contains(pt)) {
                     return true;
                 }
             }
@@ -679,19 +679,21 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
 
             // TODO(romangg): Once we use size_t consistently for screens identification replace
             // these (currentyl implicit casted) types with auto.
-            auto const& screens = kwinApp()->get_base().screens;
-            auto const old_screen = win->screen();
+            auto const& outputs = kwinApp()->get_base().get_outputs();
+            auto const old_screen = win->central_output
+                ? base::get_output_index(kwinApp()->get_base().get_outputs(), *win->central_output)
+                : 0;
             auto screen = old_screen;
 
-            std::vector<QRect> screens_geos(screens.count());
-            screens_geos.resize(screens.count());
+            std::vector<QRect> screens_geos(outputs.size());
+            screens_geos.resize(outputs.size());
 
-            for (int i = 0; i < screens.count(); ++i) {
-                // Geoemtry cache.
-                screens_geos[i] = screens.geometry(i);
+            for (size_t i = 0; i < outputs.size(); ++i) {
+                // Geometry cache.
+                screens_geos[i] = outputs.at(i)->geometry();
             }
 
-            for (int i = 0; i < screens.count(); ++i) {
+            for (size_t i = 0; i < outputs.size(); ++i) {
                 if (i == old_screen) {
                     continue;
                 }
@@ -800,7 +802,7 @@ bool start_move_resize(Win* win)
         return false;
     }
     if (win->control->fullscreen()
-        && (kwinApp()->get_base().screens.count() < 2 || !win->isMovableAcrossScreens())) {
+        && (kwinApp()->get_base().get_outputs().size() < 2 || !win->isMovableAcrossScreens())) {
         return false;
     }
     if (!win->doStartMoveResize()) {
@@ -841,7 +843,9 @@ bool start_move_resize(Win* win)
 
     mov_res.initial_geometry = pending_frame_geometry(win);
     mov_res.geometry = mov_res.initial_geometry;
-    mov_res.start_screen = win->screen();
+    mov_res.start_screen = win->central_output
+        ? base::get_output_index(kwinApp()->get_base().get_outputs(), *win->central_output)
+        : 0;
 
     check_unrestricted_move_resize(win);
 
@@ -974,8 +978,8 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             // Make sure the titlebar isn't behind a restricted area. We don't need to restrict
             // the other directions. If not visible enough, move the window to the closest valid
             // point. We bruteforce this by slowly moving the window back to its previous position
-            QRegion availableArea(workspace()->clientArea(FullArea, -1, 0));  // On the screen
-            availableArea -= workspace()->restrictedMoveArea(win->desktop()); // Strut areas
+            QRegion availableArea(workspace()->clientArea(FullArea, nullptr, 0)); // On the screen
+            availableArea -= workspace()->restrictedMoveArea(win->desktop());     // Strut areas
             bool transposed = false;
             int requiredPixels;
             QRect bTitleRect = titleBarRect(transposed, requiredPixels);
@@ -1087,11 +1091,11 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         if (!win->isMovable()) {
             // isMovableAcrossScreens() must have been true to get here
             // Special moving of maximized windows on Xinerama screens
-            int screen = kwinApp()->get_base().screens.number(globalPos);
+            auto output = base::get_nearest_output(kwinApp()->get_base().get_outputs(), globalPos);
             if (win->control->fullscreen())
-                mov_res.geometry = workspace()->clientArea(FullScreenArea, screen, 0);
+                mov_res.geometry = workspace()->clientArea(FullScreenArea, output, 0);
             else {
-                auto moveResizeGeom = workspace()->clientArea(MaximizeArea, screen, 0);
+                auto moveResizeGeom = workspace()->clientArea(MaximizeArea, output, 0);
                 auto adjSize = adjusted_frame_size(win, moveResizeGeom.size(), size_mode::max);
                 if (adjSize != moveResizeGeom.size()) {
                     QRect r(moveResizeGeom);
@@ -1109,9 +1113,14 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             mov_res.geometry = moveResizeGeom;
 
             if (!mov_res.unrestricted) {
-                auto const strut = workspace()->restrictedMoveArea(win->desktop()); // Strut areas
-                QRegion availableArea(workspace()->clientArea(FullArea, -1, 0));    // On the screen
-                availableArea -= strut;                                             // Strut areas
+                // Strut areas
+                auto const strut = workspace()->restrictedMoveArea(win->desktop());
+
+                // On the screen
+                QRegion availableArea(workspace()->clientArea(FullArea, nullptr, 0));
+
+                // Strut areas
+                availableArea -= strut;
                 bool transposed = false;
                 int requiredPixels;
                 QRect bTitleRect = titleBarRect(transposed, requiredPixels);
@@ -1139,7 +1148,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
                     // break by moving the window slightly downwards, but it won't stuck) see bug
                     // #274466 and bug #301805 for why we can't just match the titlearea against the
                     // screen
-                    if (kwinApp()->get_base().screens.count() > 1) { // optimization
+                    if (kwinApp()->get_base().get_outputs().size() > 1) {
                         // TODO: could be useful on partial screen struts (half-width panels etc.)
                         int newTitleTop = -1;
                         for (auto const& r : strut) {
@@ -1284,9 +1293,14 @@ void finish_move_resize(Win* win, bool cancel)
     // alignment.
     win->checkScreen();
 
-    if (win->screen() != mov_res.start_screen) {
+    int output_index = win->central_output
+        ? base::get_output_index(kwinApp()->get_base().get_outputs(), *win->central_output)
+        : 0;
+    if (output_index != mov_res.start_screen) {
         // Checks rule validity
-        workspace()->sendClientToScreen(win, win->screen());
+        if (win->central_output) {
+            workspace()->sendClientToScreen(win, *win->central_output);
+        }
         if (win->geometry_update.max_mode != maximize_mode::restore) {
             check_workspace_position(win);
         }
@@ -1394,11 +1408,13 @@ void pack_to(Win* win, int left, int top)
     // May cause leave event.
     workspace()->updateFocusMousePosition(input::get_cursor()->pos());
 
-    auto const old_screen = win->screen();
+    auto const old_screen = win->central_output;
     move(win, QPoint(left, top));
-    if (win->screen() != old_screen) {
+    assert(win->central_output);
+
+    if (win->central_output != old_screen) {
         // Checks rule validity.
-        workspace()->sendClientToScreen(win, win->screen());
+        workspace()->sendClientToScreen(win, *win->central_output);
         if (win->maximizeMode() != win::maximize_mode::restore) {
             check_workspace_position(win);
         }

@@ -9,7 +9,7 @@
 #include "config.h"
 #include "input/platform.h"
 
-#include <config-kwin.h>
+#include "config-kwin.h"
 
 namespace KWin::input::control
 {

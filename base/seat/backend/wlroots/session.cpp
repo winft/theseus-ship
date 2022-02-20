@@ -9,7 +9,7 @@
 #include "base/wayland/server.h"
 #include "main.h"
 
-#include <wayland_logging.h>
+#include "wayland_logging.h"
 
 #include <Wrapland/Server/display.h>
 

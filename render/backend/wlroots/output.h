@@ -11,8 +11,6 @@
 
 #include <Wrapland/Server/drm_lease_v1.h>
 
-#include <wayland-server-core.h>
-
 struct wlr_output;
 
 namespace KWin::render::backend::wlroots

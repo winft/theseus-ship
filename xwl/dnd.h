@@ -23,9 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "selection_data.h"
 #include "selection_x11.h"
 
-#include <Wrapland/Server/data_source.h>
-
 #include <QPoint>
+#include <Wrapland/Server/data_source.h>
 #include <memory>
 #include <vector>
 

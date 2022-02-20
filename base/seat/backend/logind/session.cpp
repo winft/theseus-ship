@@ -7,6 +7,7 @@
 #include "session.h"
 
 #include "base/logging.h"
+
 #include "config-kwin.h"
 
 #include <QCoreApplication>

@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "device_redirect.h"
-
 #include "event.h"
 
 #include <QPointF>

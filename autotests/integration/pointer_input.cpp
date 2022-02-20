@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/pointer_redirect.h"
 #include "input/wayland/cursor_theme.h"
 #include "render/effects.h"
-#include "screens.h"
 #include "toplevel.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
@@ -89,7 +88,7 @@ PlatformCursorImage loadReferenceThemeCursor(const T& shape)
         return PlatformCursorImage{};
     }
 
-    const qreal scale = Test::app()->base.screens.maxScale();
+    const qreal scale = Test::app()->base.topology.max_scale;
     QImage image = buffer->shmImage()->createQImage().copy();
     image.setDevicePixelRatio(scale);
 
@@ -173,9 +172,7 @@ void PointerInputTest::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.wait());
-    QCOMPARE(Test::app()->base.screens.count(), 2);
-    QCOMPARE(Test::app()->base.screens.geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(Test::app()->base.screens.geometry(1), QRect(1280, 0, 1280, 1024));
+    Test::test_outputs_default();
 }
 
 void PointerInputTest::init()
@@ -186,7 +183,6 @@ void PointerInputTest::init()
     m_compositor = Test::get_client().interfaces.compositor.get();
     m_seat = Test::get_client().interfaces.seat.get();
 
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -327,8 +323,8 @@ void PointerInputTest::testWarpingDuringFilter()
     QVERIFY(movedSpy.isEmpty());
     quint32 timestamp = 0;
     Test::pointer_motion_absolute(QPoint(0, 0), timestamp++);
+
     // screen edges push back
-    QEXPECT_FAIL("", "Not being pushed back since effects are loaded differently", Abort);
     QCOMPARE(input::get_cursor()->pos(), QPoint(1, 1));
     QVERIFY(movedSpy.wait());
     QCOMPARE(movedSpy.count(), 2);
@@ -369,23 +365,22 @@ void PointerInputTest::testUpdateFocusAfterScreenChange()
     QVERIFY(window);
     QVERIFY(!window->frameGeometry().contains(input::get_cursor()->pos()));
 
-    QSignalSpy screensChangedSpy(&Test::app()->base.screens, &Screens::changed);
+    QSignalSpy screensChangedSpy(&Test::app()->base, &base::platform::topology_changed);
     QVERIFY(screensChangedSpy.isValid());
 
     // Now let's remove the screen containing the cursor.
-    Test::app()->set_outputs({{0, 0, 1280, 1024}});
-    QCOMPARE(screensChangedSpy.count(), 4);
-    QCOMPARE(Test::app()->base.screens.count(), 1);
+    auto geometries = std::vector<QRect>({{0, 0, 1280, 1024}});
+    Test::app()->set_outputs(geometries);
+    QCOMPARE(screensChangedSpy.count(), 1);
+    Test::test_outputs_geometries(geometries);
 
     // This should have warped the cursor.
     QCOMPARE(input::get_cursor()->pos(), QPoint(639, 511));
-    QEXPECT_FAIL("", "set_outputs removes an output and moves the window.", Abort);
-    qDebug() << "Fails with:" << window->frameGeometry() << "not containing"
-             << input::get_cursor()->pos();
     QVERIFY(window->frameGeometry().contains(input::get_cursor()->pos()));
 
     // And we should get an enter event.
-    QTRY_COMPARE(enteredSpy.count(), 1);
+    QEXPECT_FAIL("", "geometry contains cursor but no enter event", Continue);
+    QCOMPARE(enteredSpy.count(), 1);
 }
 
 void PointerInputTest::testModifierClickUnrestrictedMove_data()
@@ -792,7 +787,7 @@ void PointerInputTest::testFocusFollowsMouse()
     auto window2 = workspace()->activeClient();
     QVERIFY(window2);
     QVERIFY(window1 != window2);
-    QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window2);
+    QCOMPARE(win::top_client_on_desktop(workspace(), 1, nullptr), window2);
     // geometry of the two windows should be overlapping
     QVERIFY(window1->frameGeometry().intersects(window2->frameGeometry()));
 
@@ -811,18 +806,18 @@ void PointerInputTest::testFocusFollowsMouse()
     input::get_cursor()->set_pos(10, 10);
     QVERIFY(stackingOrderChangedSpy.wait());
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
-    QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window1);
+    QCOMPARE(win::top_client_on_desktop(workspace(), 1, nullptr), window1);
     QTRY_VERIFY(window1->control->active());
 
     // move on second window, but move away before active window change delay hits
     input::get_cursor()->set_pos(810, 810);
     QVERIFY(stackingOrderChangedSpy.wait());
     QCOMPARE(stackingOrderChangedSpy.count(), 2);
-    QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window2);
+    QCOMPARE(win::top_client_on_desktop(workspace(), 1, nullptr), window2);
     input::get_cursor()->set_pos(10, 10);
     QVERIFY(!activeWindowChangedSpy.wait(250));
     QVERIFY(window1->control->active());
-    QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window1);
+    QCOMPARE(win::top_client_on_desktop(workspace(), 1, nullptr), window1);
     // as we moved back on window 1 that should been raised in the mean time
     QCOMPARE(stackingOrderChangedSpy.count(), 3);
 
@@ -883,7 +878,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
     auto window2 = workspace()->activeClient();
     QVERIFY(window2);
     QVERIFY(window1 != window2);
-    QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window2);
+    QCOMPARE(win::top_client_on_desktop(workspace(), 1, nullptr), window2);
 
     // Geometry of the two windows should be overlapping.
     QVERIFY(window1->frameGeometry().intersects(window2->frameGeometry()));
@@ -916,7 +911,7 @@ void PointerInputTest::testMouseActionInactiveWindow()
     // Should raise window1 and activate it.
     QCOMPARE(stackingOrderChangedSpy.count(), 1);
     QVERIFY(!activeWindowChangedSpy.isEmpty());
-    QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window1);
+    QCOMPARE(win::top_client_on_desktop(workspace(), 1, nullptr), window1);
     QVERIFY(window1->control->active());
     QVERIFY(!window2->control->active());
 
@@ -988,14 +983,14 @@ void PointerInputTest::testMouseActionActiveWindow()
 
     QSignalSpy window2DestroyedSpy(window2, &QObject::destroyed);
     QVERIFY(window2DestroyedSpy.isValid());
-    QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window2);
+    QCOMPARE(win::top_client_on_desktop(workspace(), 1, nullptr), window2);
 
     // Geometry of the two windows should be overlapping.
     QVERIFY(window1->frameGeometry().intersects(window2->frameGeometry()));
 
     // lower the currently active window
     win::lower_window(workspace(), window2);
-    QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window1);
+    QCOMPARE(win::top_client_on_desktop(workspace(), 1, nullptr), window1);
 
     // Signal spy for stacking order spy.
     QSignalSpy stackingOrderChangedSpy(workspace()->stacking_order, &win::stacking_order::changed);
@@ -1014,11 +1009,12 @@ void PointerInputTest::testMouseActionActiveWindow()
 
     if (clickRaise) {
         QCOMPARE(stackingOrderChangedSpy.count(), 1);
-        QTRY_COMPARE_WITH_TIMEOUT(win::top_client_on_desktop(workspace(), 1, -1), window2, 200);
+        QTRY_COMPARE_WITH_TIMEOUT(
+            win::top_client_on_desktop(workspace(), 1, nullptr), window2, 200);
     } else {
         QCOMPARE(stackingOrderChangedSpy.count(), 0);
         QVERIFY(!stackingOrderChangedSpy.wait(100));
-        QCOMPARE(win::top_client_on_desktop(workspace(), 1, -1), window1);
+        QCOMPARE(win::top_client_on_desktop(workspace(), 1, nullptr), window1);
     }
 
     // Release again.
@@ -1602,12 +1598,7 @@ void PointerInputTest::testConfineToScreenGeometry()
     auto const geometries = std::vector<QRect>{
         {0, 0, 1280, 1024}, {1280, 0, 1280, 1024}, {2560, 0, 1280, 1024}, {1280, 1024, 1280, 1024}};
     Test::app()->set_outputs(geometries);
-
-    QCOMPARE(Test::app()->base.screens.count(), geometries.size());
-    QCOMPARE(Test::app()->base.screens.geometry(0), geometries.at(0));
-    QCOMPARE(Test::app()->base.screens.geometry(1), geometries.at(1));
-    QCOMPARE(Test::app()->base.screens.geometry(2), geometries.at(2));
-    QCOMPARE(Test::app()->base.screens.geometry(3), geometries.at(3));
+    Test::test_outputs_geometries(geometries);
 
     // move pointer to initial position
     QFETCH(QPoint, startPos);

@@ -249,6 +249,7 @@ void ApplicationX11::start()
         this->input.reset(input);
         input->redirect->install_shortcuts();
 
+        base.update_outputs();
         auto render = static_cast<render::backend::x11::platform*>(base.render.get());
         try {
             render->init();

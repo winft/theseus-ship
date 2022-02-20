@@ -10,7 +10,6 @@
 #include "render/backend/wlroots/output.h"
 #include "render/wayland/compositor.h"
 #include "render/wayland/presentation.h"
-#include "screens.h"
 #include "utils/gamma_ramp.h"
 
 #include <chrono>
@@ -103,7 +102,6 @@ output::~output()
         remove_all(platform->outputs, this);
         remove_all(platform->all_outputs, this);
         Q_EMIT platform->output_removed(this);
-        platform->screens.updateAll();
     }
 }
 

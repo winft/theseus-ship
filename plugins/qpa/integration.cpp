@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../main.h"
 #include "../../render/compositor.h"
 #include "../../render/scene.h"
-#include "../../screens.h"
+#include "win/space.h"
 
 #include <QCoreApplication>
 #include <QtConcurrentRun>
@@ -89,7 +89,8 @@ void Integration::initialize()
     // connect to the startup_finished signal. At this point everything has been created.
     connect(kwinApp(), &Application::startup_finished, this,
         [this] {
-            connect(&kwinApp()->get_base().screens, &Screens::changed, this, &Integration::initScreens);
+            QObject::connect(&kwinApp()->get_base(), &base::platform::topology_changed,
+                             this, &Integration::initScreens);
             initScreens();
         }
     );
@@ -147,11 +148,11 @@ QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext*
 
 void Integration::initScreens()
 {
-    auto const& screens = kwinApp()->get_base().screens;
+    auto const screens_count = kwinApp()->get_base().get_outputs().size();
     QVector<Screen*> newScreens;
 
-    newScreens.reserve(qMax(screens.count(), 1));
-    for (int i = 0; i < screens.count(); i++) {
+    newScreens.reserve(std::max<size_t>(screens_count, 1));
+    for (size_t i = 0; i < screens_count; i++) {
         auto screen = new Screen(i);
         QWindowSystemInterface::handleScreenAdded(screen);
         newScreens << screen;

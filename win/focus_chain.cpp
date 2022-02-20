@@ -19,12 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "focus_chain.h"
 
-#include "screens.h"
-#include "toplevel.h"
+#include "controlling.h"
+#include "screen.h"
+#include "util.h"
 
-#include "win/controlling.h"
-#include "win/screen.h"
-#include "win/util.h"
+#include "toplevel.h"
 
 namespace KWin::win
 {
@@ -64,10 +63,10 @@ void focus_chain::resize(uint previousSize, uint newSize)
 
 Toplevel* focus_chain::getForActivation(uint desktop) const
 {
-    return getForActivation(desktop, kwinApp()->get_base().screens.current());
+    return getForActivation(desktop, get_current_output(*workspace()));
 }
 
-Toplevel* focus_chain::getForActivation(uint desktop, int screen) const
+Toplevel* focus_chain::getForActivation(uint desktop, base::output const* output) const
 {
     auto it = desktop_focus_chains.constFind(desktop);
     if (it == desktop_focus_chains.constEnd()) {
@@ -77,7 +76,7 @@ Toplevel* focus_chain::getForActivation(uint desktop, int screen) const
     for (int i = chain.size() - 1; i >= 0; --i) {
         auto tmp = chain.at(i);
         // TODO: move the check into Client
-        if (tmp->isShown() && (!m_separateScreenFocus || tmp->screen() == screen)) {
+        if (tmp->isShown() && (!m_separateScreenFocus || tmp->central_output == output)) {
             return tmp;
         }
     }
@@ -212,7 +211,7 @@ bool focus_chain::isUsableFocusCandidate(Toplevel* window, Toplevel* prev) const
     return window != prev && window->isShown() && window->isOnCurrentDesktop()
         && (!m_separateScreenFocus
             || win::on_screen(window,
-                              prev ? prev->screen() : kwinApp()->get_base().screens.current()));
+                              prev ? prev->central_output : get_current_output(*workspace())));
 }
 
 Toplevel* focus_chain::nextForDesktop(Toplevel* reference, uint desktop) const

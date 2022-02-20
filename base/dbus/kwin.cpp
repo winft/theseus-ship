@@ -6,16 +6,17 @@
 */
 #include "kwin.h"
 
+#include "kwinadaptor.h"
+
 #include "debug/console/console.h"
 #include "debug/perf/ftrace.h"
-#include "kwinadaptor.h"
+#include "input/platform.h"
 #include "main.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/geo.h"
 #include "win/placement.h"
 #include "win/space.h"
-#include <input/platform.h>
 
 #include <QDBusServiceWatcher>
 

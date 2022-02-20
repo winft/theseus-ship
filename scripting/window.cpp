@@ -85,7 +85,7 @@ window::window(Toplevel* client, space* workspace)
     connect(client, &Toplevel::iconChanged, this, &window::iconChanged);
     connect(client, &Toplevel::frame_geometry_changed, this, &window::geometryChanged);
     connect(client, &Toplevel::hasAlphaChanged, this, &window::hasAlphaChanged);
-    connect(client, &Toplevel::screenChanged, this, &window::screenChanged);
+    connect(client, &Toplevel::central_output_changed, this, &window::screenChanged);
     connect(client, &Toplevel::windowRoleChanged, this, &window::windowRoleChanged);
     connect(client, &Toplevel::shapedChanged, this, &window::shapedChanged);
     connect(client, &Toplevel::skipCloseAnimationChanged, this, &window::skipCloseAnimationChanged);
@@ -274,7 +274,10 @@ void window::setFullScreen(bool set)
 
 int window::screen() const
 {
-    return m_client->screen();
+    if (!m_client->central_output) {
+        return 0;
+    }
+    return base::get_output_index(kwinApp()->get_base().get_outputs(), *m_client->central_output);
 }
 
 int window::desktop() const

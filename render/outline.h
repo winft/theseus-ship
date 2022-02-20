@@ -19,12 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include <kwinglobals.h>
+#include "kwin_export.h"
+#include "kwinglobals.h"
 
 #include <QObject>
 #include <QRect>
-
-#include <kwin_export.h>
 
 class QQmlContext;
 class QQmlComponent;

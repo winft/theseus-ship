@@ -20,15 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effect_loader.h"
 
 #include "base/logging.h"
+#include "scripting/effect.h"
+
 #include "config-kwin.h"
 #include "kwineffects.h"
-#include "scripting/effect.h"
 
 #include <KConfigGroup>
 #include <KPackage/Package>
 #include <KPackage/PackageLoader>
-
-#include <QDebug>
 #include <QFutureWatcher>
 #include <QMap>
 #include <QStringList>

@@ -33,6 +33,18 @@ space::space()
             }
         });
 
+    QObject::connect(&kwinApp()->get_base(), &base::platform::topology_changed, this, [this] {
+        if (!compositing()) {
+            return;
+        }
+        // desktopResized() should take care of when the size or
+        // shape of the desktop has changed, but we also want to
+        // catch refresh rate changes
+        //
+        // TODO: is this still necessary since we get the maximal refresh rate now dynamically?
+        render::compositor::self()->reinitialize();
+    });
+
     init_space(*this);
 }
 

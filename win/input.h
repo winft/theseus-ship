@@ -5,11 +5,11 @@
 */
 #pragma once
 
-#include "base/options.h"
 #include "control.h"
 #include "layers.h"
 #include "move.h"
 #include "net.h"
+#include "screen.h"
 #include "space.h"
 #include "stacking.h"
 #include "stacking_order.h"
@@ -17,6 +17,7 @@
 #include "types.h"
 #include "user_actions_menu.h"
 
+#include "base/options.h"
 #include "utils/blocker.h"
 
 #include <QMouseEvent>
@@ -30,7 +31,7 @@ bool is_most_recently_raised(Win* win)
 {
     // The last toplevel in the unconstrained stacking order is the most recently raised one.
     auto last = top_client_on_desktop(
-        workspace(), virtual_desktop_manager::self()->current(), -1, true, false);
+        workspace(), virtual_desktop_manager::self()->current(), nullptr, true, false);
     return last == win;
 }
 
@@ -84,20 +85,21 @@ template<typename Win>
 bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint const& globalPos)
 {
     bool replay = false;
-    auto& screens = kwinApp()->get_base().screens;
+    auto& base = kwinApp()->get_base();
+    auto space = workspace();
 
     switch (cmd) {
     case base::options::MouseRaise:
-        raise_window(workspace(), win);
+        raise_window(space, win);
         break;
     case base::options::MouseLower: {
-        lower_window(workspace(), win);
+        lower_window(space, win);
         // Used to be activateNextClient(win), then topClientOnDesktop
         // since win is a mouseOp it's however safe to use the client under the mouse instead.
         if (win->control->active() && kwinApp()->options->focusPolicyIsReasonable()) {
-            auto next = workspace()->clientUnderMouse(win->screen());
+            auto next = space->clientUnderMouse(win->central_output);
             if (next && next != win)
-                workspace()->request_focus(next);
+                space->request_focus(next);
         }
         break;
     }
@@ -105,10 +107,10 @@ bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint con
         if (win->control->active() && kwinApp()->options->isClickRaise()) {
             auto_raise(win);
         }
-        workspace()->showWindowMenu(QRect(globalPos, globalPos), win);
+        space->showWindowMenu(QRect(globalPos, globalPos), win);
         break;
     case base::options::MouseToggleRaiseAndLower:
-        raise_or_lower_client(workspace(), win);
+        raise_or_lower_client(space, win);
         break;
     case base::options::MouseActivateAndRaise: {
         // For clickraise mode.
@@ -116,8 +118,8 @@ bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint con
         bool mustReplay = !win->control->rules().checkAcceptFocus(win->acceptsFocus());
 
         if (mustReplay) {
-            auto it = workspace()->stacking_order->sorted().cend();
-            auto begin = workspace()->stacking_order->sorted().cbegin();
+            auto it = space->stacking_order->sorted().cend();
+            auto begin = space->stacking_order->sorted().cbegin();
             while (mustReplay && --it != begin && *it != win) {
                 auto window = *it;
                 if (!window->control
@@ -131,32 +133,32 @@ bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint con
             }
         }
 
-        workspace()->request_focus(win, true);
-        screens.setCurrent(globalPos);
+        space->request_focus(win, true);
+        base::set_current_output_by_position(base, globalPos);
         replay = replay || mustReplay;
         break;
     }
     case base::options::MouseActivateAndLower:
-        workspace()->request_focus(win);
-        lower_window(workspace(), win);
-        screens.setCurrent(globalPos);
+        space->request_focus(win);
+        lower_window(space, win);
+        base::set_current_output_by_position(base, globalPos);
         replay = replay || !win->control->rules().checkAcceptFocus(win->acceptsFocus());
         break;
     case base::options::MouseActivate:
         // For clickraise mode.
         replay = win->control->active();
-        workspace()->request_focus(win);
-        screens.setCurrent(globalPos);
+        space->request_focus(win);
+        base::set_current_output_by_position(base, globalPos);
         replay = replay || !win->control->rules().checkAcceptFocus(win->acceptsFocus());
         break;
     case base::options::MouseActivateRaiseAndPassClick:
-        workspace()->request_focus(win, true);
-        screens.setCurrent(globalPos);
+        space->request_focus(win, true);
+        base::set_current_output_by_position(base, globalPos);
         replay = true;
         break;
     case base::options::MouseActivateAndPassClick:
-        workspace()->request_focus(win);
-        screens.setCurrent(globalPos);
+        space->request_focus(win);
+        base::set_current_output_by_position(base, globalPos);
         replay = true;
         break;
     case base::options::MouseMaximize:
@@ -169,7 +171,7 @@ bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint con
         set_minimized(win, true);
         break;
     case base::options::MouseAbove: {
-        blocker block(workspace()->stacking_order);
+        blocker block(space->stacking_order);
         if (win->control->keep_below()) {
             set_keep_below(win, false);
         } else {
@@ -178,7 +180,7 @@ bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint con
         break;
     }
     case base::options::MouseBelow: {
-        blocker block(workspace()->stacking_order);
+        blocker block(space->stacking_order);
         if (win->control->keep_above()) {
             set_keep_above(win, false);
         } else {
@@ -187,10 +189,10 @@ bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint con
         break;
     }
     case base::options::MousePreviousDesktop:
-        workspace()->windowToPreviousDesktop(win);
+        space->windowToPreviousDesktop(win);
         break;
     case base::options::MouseNextDesktop:
-        workspace()->windowToNextDesktop(win);
+        space->windowToNextDesktop(win);
         break;
     case base::options::MouseOpacityMore:
         // No point in changing the opacity of the desktop.
@@ -208,9 +210,9 @@ bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint con
         break;
     case base::options::MouseActivateRaiseAndMove:
     case base::options::MouseActivateRaiseAndUnrestrictedMove:
-        raise_window(workspace(), win);
-        workspace()->request_focus(win);
-        screens.setCurrent(globalPos);
+        raise_window(space, win);
+        space->request_focus(win);
+        base::set_current_output_by_position(base, globalPos);
         // Fallthrough
     case base::options::MouseMove:
     case base::options::MouseUnrestrictedMove: {
@@ -292,16 +294,19 @@ bool perform_mouse_command(Win* win, base::options::MouseCommand cmd, QPoint con
 template<typename Win>
 void enter_event(Win* win, const QPoint& globalPos)
 {
+    auto space = workspace();
+
     if (kwinApp()->options->focusPolicy() == base::options::ClickToFocus
-        || workspace()->userActionsMenu()->isShown()) {
+        || space->userActionsMenu()->isShown()) {
         return;
     }
 
     if (kwinApp()->options->isAutoRaise() && !win::is_desktop(win) && !win::is_dock(win)
-        && workspace()->focusChangeEnabled() && globalPos != workspace()->focusMousePosition()
-        && top_client_on_desktop(workspace(),
+        && space->focusChangeEnabled() && globalPos != space->focusMousePosition()
+        && top_client_on_desktop(space,
                                  virtual_desktop_manager::self()->current(),
-                                 kwinApp()->options->isSeparateScreenFocus() ? win->screen() : -1)
+                                 kwinApp()->options->isSeparateScreenFocus() ? win->central_output
+                                                                             : nullptr)
             != win) {
         win->control->start_auto_raise();
     }
@@ -313,8 +318,8 @@ void enter_event(Win* win, const QPoint& globalPos)
     // For FocusFollowsMouse, change focus only if the mouse has actually been moved, not if the
     // focus change came because of window changes (e.g. closing a window) - #92290
     if (kwinApp()->options->focusPolicy() != base::options::FocusFollowsMouse
-        || globalPos != workspace()->focusMousePosition()) {
-        workspace()->requestDelayFocus(win);
+        || globalPos != space->focusMousePosition()) {
+        space->requestDelayFocus(win);
     }
 }
 

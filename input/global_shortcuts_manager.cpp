@@ -14,7 +14,6 @@
 
 #include <KGlobalAccel/private/kglobalaccel_interface.h>
 #include <KGlobalAccel/private/kglobalacceld.h>
-
 #include <QAction>
 
 namespace KWin::input

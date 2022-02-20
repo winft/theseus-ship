@@ -32,7 +32,8 @@ bool is_active_fullscreen(Win const* win)
     // According to NETWM spec implementation notes suggests "focused windows having state
     // _NET_WM_STATE_FULLSCREEN" to be on the highest layer. Also take the screen into account.
     return ac
-        && (ac == win || ac->screen() != win->screen() || contains(ac->transient()->leads(), win));
+        && (ac == win || ac->central_output != win->central_output
+            || contains(ac->transient()->leads(), win));
 }
 
 template<typename Win>

@@ -5,8 +5,10 @@
 */
 #pragma once
 
+#include "output.h"
+#include "output_topology.h"
+
 #include "kwin_export.h"
-#include "screens.h"
 
 #include <QObject>
 #include <memory>
@@ -22,7 +24,6 @@ class platform;
 
 namespace base
 {
-class output;
 
 class KWIN_EXPORT platform : public QObject
 {
@@ -36,15 +37,16 @@ public:
     /// Makes a copy of all outputs. Only for external use. Prefer subclass objects instead.
     virtual std::vector<output*> get_outputs() const = 0;
 
-    Screens screens;
+    output_topology topology;
     std::unique_ptr<render::platform> render;
 
 private:
     Q_DISABLE_COPY(platform)
 
 Q_SIGNALS:
-    void output_added(output*);
-    void output_removed(output*);
+    void output_added(KWin::base::output*);
+    void output_removed(KWin::base::output*);
+    void topology_changed(output_topology const& old_topo, output_topology const& topo);
 };
 
 }

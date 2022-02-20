@@ -16,13 +16,13 @@
 #include "render/gl/egl.h"
 #include "render/gl/gl.h"
 #include "render/wayland/egl.h"
+#include "win/space.h"
 
-#include "screens.h"
+#include "kwinglplatform.h"
+#include "wayland_logging.h"
 
 #include <QOpenGLContext>
-#include <kwinglplatform.h>
 #include <stdexcept>
-#include <wayland_logging.h>
 
 namespace KWin::render::backend::wlroots
 {
@@ -273,7 +273,7 @@ void egl_backend::prepareRenderFramebuffer(egl_output const& egl_out) const
 
 void egl_backend::setViewport(egl_output const& egl_out) const
 {
-    auto const& overall = platform.base.screens.size();
+    auto const& overall = platform.base.topology.size;
     auto const& geo = egl_out.out->base.geometry();
     auto const& view = egl_out.out->base.view_geometry();
 

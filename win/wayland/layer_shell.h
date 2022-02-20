@@ -18,7 +18,6 @@
 #include "input/keyboard_redirect.h"
 #include "input/redirect.h"
 #include "render/compositor.h"
-#include "screens.h"
 
 #include <KScreenLocker/KsldApp>
 #include <Wrapland/Server/layer_shell_v1.h>
@@ -160,10 +159,10 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
         block_geometry_updates(win, false);
 
         if (!win->layer_surface->output()) {
-            auto current_index = kwinApp()->get_base().screens.current();
-            auto output = kwinApp()->get_base().get_outputs().at(current_index);
-            win->layer_surface->set_output(
-                static_cast<base::wayland::output*>(output)->wrapland_output());
+            if (auto output = get_current_output(*workspace())) {
+                win->layer_surface->set_output(
+                    static_cast<base::wayland::output const*>(output)->wrapland_output());
+            }
         }
 
         if (win->pending_configures.empty()) {

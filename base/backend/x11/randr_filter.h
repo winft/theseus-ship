@@ -9,7 +9,7 @@
 
 class QTimer;
 
-namespace KWin::render::backend::x11
+namespace KWin::base::backend::x11
 {
 class platform;
 

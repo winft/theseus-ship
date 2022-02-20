@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/wayland/server.h"
 #include "input/cursor.h"
 #include "kwineffects.h"
-#include "screens.h"
 #include "win/geo.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
@@ -79,9 +78,7 @@ void PlasmaWindowTest::initTestCase()
     Test::app()->set_outputs(2);
 
     QVERIFY(startup_spy.wait());
-    QCOMPARE(Test::app()->base.screens.count(), 2);
-    QCOMPARE(Test::app()->base.screens.geometry(0), QRect(0, 0, 1280, 1024));
-    QCOMPARE(Test::app()->base.screens.geometry(1), QRect(1280, 0, 1280, 1024));
+    Test::test_outputs_default();
     setenv("QMLSCENE_DEVICE", "softwarecontext", true);
 }
 
@@ -91,7 +88,6 @@ void PlasmaWindowTest::init()
     m_windowManagement = Test::get_client().interfaces.window_management.get();
     m_compositor = Test::get_client().interfaces.compositor.get();
 
-    Test::app()->base.screens.setCurrent(0);
     input::get_cursor()->set_pos(QPoint(640, 512));
 }
 
@@ -282,8 +278,9 @@ void PlasmaWindowTest::testLockScreenNoPlasmaWindow()
     ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
 
     // The lock screen creates one client per screen.
-    QVERIFY(clientAddedSpy.count() == Test::app()->base.screens.count() || clientAddedSpy.wait());
-    QTRY_COMPARE(clientAddedSpy.count(), Test::app()->base.screens.count());
+    auto outputs_count = Test::app()->base.get_outputs().size();
+    QVERIFY(clientAddedSpy.count() == static_cast<int>(outputs_count) || clientAddedSpy.wait());
+    QTRY_COMPARE(clientAddedSpy.count(), outputs_count);
 
     QVERIFY(clientAddedSpy.first().first().value<win::wayland::window*>()->isLockScreen());
 

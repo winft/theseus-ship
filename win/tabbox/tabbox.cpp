@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
 #include "render/effects.h"
-#include "screens.h"
+#include "win/screen.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
 #include "win/virtual_desktops.h"
@@ -96,7 +96,11 @@ tabbox_handler_impl::~tabbox_handler_impl()
 
 int tabbox_handler_impl::active_screen() const
 {
-    return kwinApp()->get_base().screens.current();
+    auto output = win::get_current_output(*workspace());
+    if (!output) {
+        return 0;
+    }
+    return base::get_output_index(kwinApp()->get_base().get_outputs(), *output);
 }
 
 int tabbox_handler_impl::current_desktop() const
@@ -233,15 +237,16 @@ bool tabbox_handler_impl::check_minimized(tabbox_client* client) const
 
 bool tabbox_handler_impl::check_multi_screen(tabbox_client* client) const
 {
-    auto current = (static_cast<tabbox_client_impl*>(client))->client();
+    auto current_window = (static_cast<tabbox_client_impl*>(client))->client();
+    auto current_output = win::get_current_output(*workspace());
 
     switch (config().client_multi_screen_mode()) {
     case tabbox_config::IgnoreMultiScreen:
         return true;
     case tabbox_config::ExcludeCurrentScreenClients:
-        return current->screen() != kwinApp()->get_base().screens.current();
+        return current_window->central_output != current_output;
     default: // tabbox_config::OnlyCurrentScreenClients
-        return current->screen() == kwinApp()->get_base().screens.current();
+        return current_window->central_output == current_output;
     }
 }
 
@@ -320,7 +325,7 @@ std::weak_ptr<tabbox_client> tabbox_handler_impl::desktop_client() const
 {
     for (auto const& window : workspace()->stacking_order->sorted()) {
         if (window->control && win::is_desktop(window) && window->isOnCurrentDesktop()
-            && window->screen() == kwinApp()->get_base().screens.current()) {
+            && window->central_output == win::get_current_output(*workspace())) {
             return window->control->tabbox();
         }
     }

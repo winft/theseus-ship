@@ -8,15 +8,13 @@
 #include "base/wayland/server.h"
 #include "main.h"
 
+#include <QThread>
+#include <QtTest>
 #include <Wrapland/Client/connection_thread.h>
 #include <Wrapland/Server/display.h>
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include <QThread>
-#include <QtTest>
 
 namespace Clt = Wrapland::Client;
 

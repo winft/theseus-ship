@@ -57,16 +57,16 @@ public:
     std::unordered_map<xcb_visualid_t, fb_config_info*> fb_configs;
     std::unordered_map<xcb_visualid_t, int> visual_depth_hash;
 
+    render::compositor& compositor;
+
 protected:
     void present() override;
 
 private:
     bool supportsSwapEvents() const;
 
-    int m_bufferAge;
+    int m_bufferAge{0};
     bool m_needsCompositeTimerStart = false;
-
-    render::compositor& compositor;
 };
 
 /**
