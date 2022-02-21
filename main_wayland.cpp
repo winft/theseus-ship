@@ -55,7 +55,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDBusConnection>
 #include <QFileInfo>
 #include <QProcess>
-#include <QStyle>
 #include <QDebug>
 #include <QWindow>
 
@@ -151,12 +150,6 @@ ApplicationWayland::~ApplicationWayland()
 
     // Kill Xwayland before terminating its connection.
     xwayland.reset();
-
-    if (QStyle *s = style()) {
-        // Unpolish style before terminating internal connection.
-        s->unpolish(this);
-    }
-
     waylandServer()->terminateClientConnections();
 
     if (base->render->compositor) {
