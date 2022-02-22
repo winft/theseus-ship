@@ -24,6 +24,7 @@ kwin_add_effect_config(kwin_cubeslide_config ${kwin_cubeslide_config_SRCS})
 
 target_link_libraries(kwin_cubeslide_config
     KF5::ConfigWidgets
+    KF5::CoreAddons
     KF5::I18n
     kwineffects
     KWinEffectsInterface
