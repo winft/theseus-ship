@@ -98,11 +98,11 @@ DesktopGridEffectConfig::DesktopGridEffectConfig(QWidget* parent, const QVariant
     DesktopGridConfig::instance(KWIN_CONFIG);
     addConfig(DesktopGridConfig::self(), m_ui);
     connect(m_ui->kcfg_LayoutMode,
-            qOverload<int>(&KComboBox::currentIndexChanged),
+            qOverload<int>(&QComboBox::currentIndexChanged),
             this,
             &DesktopGridEffectConfig::layoutSelectionChanged);
     connect(m_ui->desktopNameAlignmentCombo,
-            qOverload<int>(&KComboBox::currentIndexChanged),
+            qOverload<int>(&QComboBox::currentIndexChanged),
             this,
             &DesktopGridEffectConfig::markAsChanged);
     connect(m_ui->clickBehaviorButtonGroup,
