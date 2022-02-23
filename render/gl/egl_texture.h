@@ -428,93 +428,115 @@ bool load_texture_from_pixmap(Texture& texture, render::window_pixmap* pixmap)
 }
 
 template<typename Texture>
-void update_texture_from_pixmap(Texture& texture, render::window_pixmap* pixmap)
+void update_texture_from_dmabuf(Texture& texture, egl_dmabuf_buffer* dmabuf)
 {
-    // FIXME: Refactor this method.
+    assert(dmabuf);
 
+    if (dmabuf->images().size() == 0) {
+        return;
+    }
+
+    texture.q->bind();
+
+    // TODO
+    glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES)dmabuf->images().at(0));
+    texture.q->unbind();
+
+    if (texture.m_image != EGL_NO_IMAGE_KHR) {
+        eglDestroyImageKHR(texture.m_backend->data.base.display, texture.m_image);
+    }
+
+    // The wl_buffer has ownership of the image
+    texture.m_image = EGL_NO_IMAGE_KHR;
+
+    // The origin in a dmabuf-buffer is at the upper-left corner, so the meaning
+    // of Y-inverted is the inverse of OpenGL.
+    texture.q->setYInverted(!(dmabuf->flags() & Wrapland::Server::LinuxDmabufV1::YInverted));
+}
+
+template<typename Texture>
+void update_texture_from_shm(Texture& texture, render::window_pixmap* pixmap)
+{
     auto const buffer = pixmap->buffer();
-    if (!buffer) {
-        if (update_texture_from_fbo(texture, pixmap->fbo())) {
-            return;
-        }
-        if (update_texture_from_internal_image_object(texture, pixmap)) {
-            return;
-        }
-        return;
-    }
+    assert(buffer && buffer->shmBuffer());
 
-    auto s = pixmap->surface();
-    if (auto dmabuf = static_cast<egl_dmabuf_buffer*>(buffer->linuxDmabufBuffer())) {
-        if (dmabuf->images().size() == 0) {
-            return;
-        }
-
-        texture.q->bind();
-
-        // TODO
-        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES)dmabuf->images().at(0));
-        texture.q->unbind();
-
-        if (texture.m_image != EGL_NO_IMAGE_KHR) {
-            eglDestroyImageKHR(texture.m_backend->data.base.display, texture.m_image);
-        }
-
-        // The wl_buffer has ownership of the image
-        texture.m_image = EGL_NO_IMAGE_KHR;
-
-        // The origin in a dmabuf-buffer is at the upper-left corner, so the meaning
-        // of Y-inverted is the inverse of OpenGL.
-        texture.q->setYInverted(!(dmabuf->flags() & Wrapland::Server::LinuxDmabufV1::YInverted));
-
-        if (s) {
-            s->resetTrackedDamage();
-        }
-
-        return;
-    }
-
-    if (!buffer->shmBuffer()) {
-        texture.q->bind();
-        auto image = attach_buffer_to_khr_image(texture, buffer);
-        texture.q->unbind();
-
-        if (image != EGL_NO_IMAGE_KHR) {
-            if (texture.m_image != EGL_NO_IMAGE_KHR) {
-                eglDestroyImageKHR(texture.m_backend->data.base.display, texture.m_image);
-            }
-            texture.m_image = image;
-        }
-
-        if (s) {
-            s->resetTrackedDamage();
-        }
-
-        return;
-    }
-
-    // shm fallback
-    auto shmImage = buffer->shmImage();
-    if (!shmImage || !s) {
+    auto image = buffer->shmImage();
+    auto surface = pixmap->surface();
+    if (!image || !surface) {
         return;
     }
 
     if (buffer->size() != texture.m_size) {
-        // buffer size has changed, reload shm texture
+        // Buffer size has changed, reload shm texture.
         if (!load_shm_texture(texture, buffer)) {
             return;
         }
     }
 
     assert(buffer->size() == texture.m_size);
-
-    auto const damage = s->trackedDamage();
-    s->resetTrackedDamage();
+    auto const& damage = surface->trackedDamage();
 
     if (!GLPlatform::instance()->isGLES() || texture.m_hasSubImageUnpack) {
-        texture_subimage(texture, s->state().scale, shmImage.value(), damage);
+        texture_subimage(texture, surface->state().scale, image.value(), damage);
     } else {
-        texture_subimage_from_qimage(texture, s->state().scale, shmImage->createQImage(), damage);
+        texture_subimage_from_qimage(
+            texture, surface->state().scale, image->createQImage(), damage);
     }
+}
+
+template<typename Texture>
+void update_texture_from_egl(Texture& texture, Wrapland::Server::Buffer* buffer)
+{
+    texture.q->bind();
+    auto image = attach_buffer_to_khr_image(texture, buffer);
+    texture.q->unbind();
+
+    if (image != EGL_NO_IMAGE_KHR) {
+        if (texture.m_image != EGL_NO_IMAGE_KHR) {
+            eglDestroyImageKHR(texture.m_backend->data.base.display, texture.m_image);
+        }
+        texture.m_image = image;
+    }
+}
+
+template<typename Texture>
+void update_texture_from_external(Texture& texture, render::window_pixmap* pixmap)
+{
+    auto const buffer = pixmap->buffer();
+    assert(buffer);
+
+    if (auto dmabuf = buffer->linuxDmabufBuffer()) {
+        update_texture_from_dmabuf(texture, static_cast<egl_dmabuf_buffer*>(dmabuf));
+    } else if (auto shm = buffer->shmBuffer()) {
+        update_texture_from_shm(texture, pixmap);
+    } else {
+        update_texture_from_egl(texture, buffer);
+    }
+
+    if (auto surface = pixmap->surface()) {
+        surface->resetTrackedDamage();
+    }
+}
+
+template<typename Texture>
+void update_texture_from_internal(Texture& texture, render::window_pixmap* pixmap)
+{
+    assert(!pixmap->buffer());
+
+    if (update_texture_from_fbo(texture, pixmap->fbo())) {
+        return;
+    }
+    update_texture_from_internal_image_object(texture, pixmap);
+}
+
+template<typename Texture>
+void update_texture_from_pixmap(Texture& texture, render::window_pixmap* pixmap)
+{
+    if (pixmap->buffer()) {
+        update_texture_from_external(texture, pixmap);
+        return;
+    }
+    update_texture_from_internal(texture, pixmap);
 }
 
 }
