@@ -81,6 +81,9 @@ DesktopGridEffect::DesktopGridEffect()
     QAction* a = m_gestureAction;
 
     connect(a, &QAction::triggered, this, [this]() {
+        if (effects->hasActiveFullScreenEffect() && effects->activeFullScreenEffect() != this) {
+            return;
+        }
         if ((qreal(timeline.currentTime()) / qreal(timeline.duration())) > 0.5) {
             if (effects->isScreenLocked()) {
                 return;
@@ -98,15 +101,18 @@ DesktopGridEffect::DesktopGridEffect()
     });
     effects->registerRealtimeTouchpadPinchShortcut(
         PinchDirection::Contracting, 4, a, [this](qreal cb) {
-            if (activated)
+            if (activated) {
                 return;
+            }
+            if (effects->hasActiveFullScreenEffect() && effects->activeFullScreenEffect() != this) {
+                return;
+            }
 
             if (timeline.currentValue() == 0) {
                 activated = true;
                 setup();
                 activated = false;
             }
-
             timeline.setCurrentTime(timeline.duration() * cb);
             effects->addRepaintFull();
         });
