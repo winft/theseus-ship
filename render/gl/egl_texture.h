@@ -193,34 +193,6 @@ bool load_internal_image_object(Texture& texture, render::window_pixmap* pixmap)
 }
 
 template<typename Texture>
-bool load_dmabuf_texture(Texture& texture, egl_dmabuf_buffer* dmabuf)
-{
-    assert(dmabuf);
-
-    if (dmabuf->images().at(0) == EGL_NO_IMAGE_KHR) {
-        qCritical(KWIN_WL) << "Invalid dmabuf-based wl_buffer";
-        texture.q->discard();
-        return false;
-    }
-
-    assert(texture.m_image == EGL_NO_IMAGE_KHR);
-
-    glGenTextures(1, &texture.m_texture);
-    texture.q->setWrapMode(GL_CLAMP_TO_EDGE);
-    texture.q->setFilter(GL_NEAREST);
-
-    texture.q->bind();
-    glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES)dmabuf->images().at(0));
-    texture.q->unbind();
-
-    texture.m_size = dmabuf->size();
-    texture.q->setYInverted(!(dmabuf->flags() & Wrapland::Server::LinuxDmabufV1::YInverted));
-    texture.updateMatrix();
-
-    return true;
-}
-
-template<typename Texture>
 bool load_egl_texture(Texture& texture, Wrapland::Server::Buffer* buffer)
 {
     if (!texture.m_backend->data.query_wl_buffer) {
@@ -399,7 +371,7 @@ bool load_texture_from_external(Texture& texture, render::window_pixmap* pixmap)
     }
 
     if (auto dmabuf = buffer->linuxDmabufBuffer()) {
-        return load_dmabuf_texture(texture, static_cast<egl_dmabuf_buffer*>(dmabuf));
+        return update_texture_from_dmabuf(texture, static_cast<egl_dmabuf_buffer*>(dmabuf));
     }
     if (buffer->shmBuffer()) {
         return load_shm_texture(texture, buffer);
@@ -430,7 +402,7 @@ bool load_texture_from_pixmap(Texture& texture, render::window_pixmap* pixmap)
 }
 
 template<typename Texture>
-void update_texture_from_dmabuf(Texture& texture, egl_dmabuf_buffer* dmabuf)
+bool update_texture_from_dmabuf(Texture& texture, egl_dmabuf_buffer* dmabuf)
 {
     assert(dmabuf);
     assert(texture.m_image == EGL_NO_IMAGE_KHR);
@@ -438,18 +410,33 @@ void update_texture_from_dmabuf(Texture& texture, egl_dmabuf_buffer* dmabuf)
     if (dmabuf->images().empty() || dmabuf->images().at(0) == EGL_NO_IMAGE_KHR) {
         qCritical(KWIN_WL) << "Invalid dmabuf-based wl_buffer";
         texture.q->discard();
-        return;
+        return false;
     }
 
     texture.q->bind();
+
+    if (!texture.m_texture) {
+        // Recreate the texture.
+        glGenTextures(1, &texture.m_texture);
+
+        texture.q->setWrapMode(GL_CLAMP_TO_EDGE);
+        texture.q->setFilter(GL_NEAREST);
+    }
 
     // TODO
     glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES)dmabuf->images().at(0));
     texture.q->unbind();
 
+    if (texture.m_size != dmabuf->size()) {
+        texture.m_size = dmabuf->size();
+        texture.updateMatrix();
+    }
+
     // The origin in a dmabuf-buffer is at the upper-left corner, so the meaning
     // of Y-inverted is the inverse of OpenGL.
     texture.q->setYInverted(!(dmabuf->flags() & Wrapland::Server::LinuxDmabufV1::YInverted));
+
+    return true;
 }
 
 template<typename Texture>
