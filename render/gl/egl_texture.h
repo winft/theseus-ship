@@ -66,7 +66,7 @@ EGLImageKHR attach_buffer_to_khr_image(Texture& texture, Wrapland::Server::Buffe
 }
 
 template<typename Texture>
-bool update_texture_from_image(Texture& texture, QImage const& image)
+bool load_texture_from_image(Texture& texture, QImage const& image)
 {
     if (image.isNull()) {
         return false;
@@ -177,13 +177,13 @@ bool update_texture_from_internal_image_object(Texture& texture, render::window_
 template<typename Texture>
 bool load_shm_texture(Texture& texture, Wrapland::Server::Buffer* buffer)
 {
-    return update_texture_from_image(texture, buffer->shmImage()->createQImage());
+    return load_texture_from_image(texture, buffer->shmImage()->createQImage());
 }
 
 template<typename Texture>
 bool load_internal_image_object(Texture& texture, render::window_pixmap* pixmap)
 {
-    return update_texture_from_image(texture, pixmap->internalImage());
+    return load_texture_from_image(texture, pixmap->internalImage());
 }
 
 template<typename Texture>
