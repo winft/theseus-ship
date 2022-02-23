@@ -9,6 +9,7 @@
 #include "kwin_eglext.h"
 #include "kwinglplatform.h"
 #include "toplevel.h"
+#include "wayland_logging.h"
 #include "window.h"
 
 #include <QImage>
