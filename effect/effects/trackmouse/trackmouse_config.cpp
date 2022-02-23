@@ -75,8 +75,6 @@ TrackMouseEffectConfig::TrackMouseEffectConfig(QWidget* parent, const QVariantLi
             &KKeySequenceWidget::keySequenceChanged,
             this,
             &TrackMouseEffectConfig::shortcutChanged);
-
-    load();
 }
 
 TrackMouseEffectConfig::~TrackMouseEffectConfig()

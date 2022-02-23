@@ -90,8 +90,6 @@ PresentWindowsEffectConfig::PresentWindowsEffectConfig(QWidget* parent, const QV
 
     PresentWindowsConfig::instance(KWIN_CONFIG);
     addConfig(PresentWindowsConfig::self(), m_ui);
-
-    load();
 }
 
 PresentWindowsEffectConfig::~PresentWindowsEffectConfig()

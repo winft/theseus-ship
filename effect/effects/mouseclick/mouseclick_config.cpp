@@ -68,7 +68,6 @@ MouseClickEffectConfig::MouseClickEffectConfig(QWidget* parent, const QVariantLi
 
     MouseClickConfig::instance(KWIN_CONFIG);
     addConfig(MouseClickConfig::self(), m_ui);
-    load();
 }
 
 MouseClickEffectConfig::~MouseClickEffectConfig()

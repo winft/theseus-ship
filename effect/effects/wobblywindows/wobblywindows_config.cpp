@@ -68,8 +68,6 @@ WobblyWindowsEffectConfig::WobblyWindowsEffectConfig(QWidget* parent, const QVar
             &QSlider::valueChanged,
             this,
             &WobblyWindowsEffectConfig::wobblinessChanged);
-
-    load();
 }
 
 WobblyWindowsEffectConfig::~WobblyWindowsEffectConfig()

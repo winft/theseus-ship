@@ -113,9 +113,6 @@ DesktopGridEffectConfig::DesktopGridEffectConfig(QWidget* parent, const QVariant
             &KShortcutsEditor::keyChange,
             this,
             &DesktopGridEffectConfig::markAsChanged);
-
-    load();
-    layoutSelectionChanged();
 }
 
 DesktopGridEffectConfig::~DesktopGridEffectConfig()
@@ -148,6 +145,7 @@ void DesktopGridEffectConfig::load()
     if (clickBehaviorButton) {
         clickBehaviorButton->setChecked(true);
     }
+    layoutSelectionChanged();
 }
 
 void DesktopGridEffectConfig::layoutSelectionChanged()
