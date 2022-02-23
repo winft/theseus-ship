@@ -433,8 +433,11 @@ template<typename Texture>
 void update_texture_from_dmabuf(Texture& texture, egl_dmabuf_buffer* dmabuf)
 {
     assert(dmabuf);
+    assert(texture.m_image == EGL_NO_IMAGE_KHR);
 
-    if (dmabuf->images().size() == 0) {
+    if (dmabuf->images().empty() || dmabuf->images().at(0) == EGL_NO_IMAGE_KHR) {
+        qCritical(KWIN_WL) << "Invalid dmabuf-based wl_buffer";
+        texture.q->discard();
         return;
     }
 
@@ -443,13 +446,6 @@ void update_texture_from_dmabuf(Texture& texture, egl_dmabuf_buffer* dmabuf)
     // TODO
     glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES)dmabuf->images().at(0));
     texture.q->unbind();
-
-    if (texture.m_image != EGL_NO_IMAGE_KHR) {
-        eglDestroyImageKHR(texture.m_backend->data.base.display, texture.m_image);
-    }
-
-    // The wl_buffer has ownership of the image
-    texture.m_image = EGL_NO_IMAGE_KHR;
 
     // The origin in a dmabuf-buffer is at the upper-left corner, so the meaning
     // of Y-inverted is the inverse of OpenGL.
