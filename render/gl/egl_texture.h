@@ -499,7 +499,7 @@ void update_texture_from_pixmap(Texture& texture, render::window_pixmap* pixmap)
 
     if (buffer->size() != texture.m_size) {
         // buffer size has changed, reload shm texture
-        if (!load_texture_from_pixmap(texture, pixmap)) {
+        if (!load_shm_texture(texture, buffer)) {
             return;
         }
     }
