@@ -25,20 +25,19 @@ namespace KWin::render::gl
 template<typename Texture>
 void attach_buffer_to_khr_image(Texture& texture, Wrapland::Server::Buffer* buffer)
 {
+    auto const& egl_data = texture.m_backend->data;
     EGLint format, yInverted;
 
-    texture.m_backend->data.query_wl_buffer(
-        texture.m_backend->data.base.display, buffer->resource(), EGL_TEXTURE_FORMAT, &format);
+    egl_data.query_wl_buffer(
+        egl_data.base.display, buffer->resource(), EGL_TEXTURE_FORMAT, &format);
 
     if (format != EGL_TEXTURE_RGB && format != EGL_TEXTURE_RGBA) {
         qCDebug(KWIN_WL) << "Unsupported texture format: " << format;
         return;
     }
 
-    if (!texture.m_backend->data.query_wl_buffer(texture.m_backend->data.base.display,
-                                                 buffer->resource(),
-                                                 EGL_WAYLAND_Y_INVERTED_WL,
-                                                 &yInverted)) {
+    if (!egl_data.query_wl_buffer(
+            egl_data.base.display, buffer->resource(), EGL_WAYLAND_Y_INVERTED_WL, &yInverted)) {
         // if EGL_WAYLAND_Y_INVERTED_WL is not supported wl_buffer should be treated as if value
         // were EGL_TRUE
         yInverted = EGL_TRUE;
@@ -49,7 +48,7 @@ void attach_buffer_to_khr_image(Texture& texture, Wrapland::Server::Buffer* buff
         0,
         EGL_NONE,
     };
-    EGLImageKHR image = eglCreateImageKHR(texture.m_backend->data.base.display,
+    EGLImageKHR image = eglCreateImageKHR(egl_data.base.display,
                                           EGL_NO_CONTEXT,
                                           EGL_WAYLAND_BUFFER_WL,
                                           (EGLClientBuffer)buffer->resource(),
@@ -63,7 +62,7 @@ void attach_buffer_to_khr_image(Texture& texture, Wrapland::Server::Buffer* buff
     texture.q->unbind();
 
     if (texture.m_image != EGL_NO_IMAGE_KHR) {
-        eglDestroyImageKHR(texture.m_backend->data.base.display, texture.m_image);
+        eglDestroyImageKHR(egl_data.base.display, texture.m_image);
     }
     texture.m_image = image;
 
