@@ -22,18 +22,17 @@
 namespace KWin::render::gl
 {
 
-// TODO(romangg): This function returns an image but has side effects on the texture. Either return
-//                void or remove the side effects.
 template<typename Texture>
-EGLImageKHR attach_buffer_to_khr_image(Texture& texture, Wrapland::Server::Buffer* buffer)
+void attach_buffer_to_khr_image(Texture& texture, Wrapland::Server::Buffer* buffer)
 {
     EGLint format, yInverted;
+
     texture.m_backend->data.query_wl_buffer(
         texture.m_backend->data.base.display, buffer->resource(), EGL_TEXTURE_FORMAT, &format);
 
     if (format != EGL_TEXTURE_RGB && format != EGL_TEXTURE_RGBA) {
         qCDebug(KWIN_WL) << "Unsupported texture format: " << format;
-        return EGL_NO_IMAGE_KHR;
+        return;
     }
 
     if (!texture.m_backend->data.query_wl_buffer(texture.m_backend->data.base.display,
@@ -55,15 +54,22 @@ EGLImageKHR attach_buffer_to_khr_image(Texture& texture, Wrapland::Server::Buffe
                                           EGL_WAYLAND_BUFFER_WL,
                                           (EGLClientBuffer)buffer->resource(),
                                           attribs);
-
-    if (image != EGL_NO_IMAGE_KHR) {
-        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES)image);
-        texture.m_size = buffer->size();
-        texture.updateMatrix();
-        texture.q->setYInverted(yInverted);
+    if (image == EGL_NO_IMAGE_KHR) {
+        return;
     }
 
-    return image;
+    texture.q->bind();
+    glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES)image);
+    texture.q->unbind();
+
+    if (texture.m_image != EGL_NO_IMAGE_KHR) {
+        eglDestroyImageKHR(texture.m_backend->data.base.display, texture.m_image);
+    }
+    texture.m_image = image;
+
+    texture.m_size = buffer->size();
+    texture.updateMatrix();
+    texture.q->setYInverted(yInverted);
 }
 
 template<typename Texture>
@@ -229,11 +235,8 @@ bool load_egl_texture(Texture& texture, Wrapland::Server::Buffer* buffer)
     texture.q->setWrapMode(GL_CLAMP_TO_EDGE);
     texture.q->setFilter(GL_LINEAR);
 
-    texture.q->bind();
-    texture.m_image = attach_buffer_to_khr_image(texture, buffer);
-    texture.q->unbind();
-
-    if (EGL_NO_IMAGE_KHR == texture.m_image) {
+    attach_buffer_to_khr_image(texture, buffer);
+    if (texture.m_image == EGL_NO_IMAGE_KHR) {
         qCDebug(KWIN_WL) << "failed to create egl image";
         texture.q->discard();
         return false;
@@ -487,16 +490,7 @@ void update_texture_from_shm(Texture& texture, render::window_pixmap* pixmap)
 template<typename Texture>
 void update_texture_from_egl(Texture& texture, Wrapland::Server::Buffer* buffer)
 {
-    texture.q->bind();
-    auto image = attach_buffer_to_khr_image(texture, buffer);
-    texture.q->unbind();
-
-    if (image != EGL_NO_IMAGE_KHR) {
-        if (texture.m_image != EGL_NO_IMAGE_KHR) {
-            eglDestroyImageKHR(texture.m_backend->data.base.display, texture.m_image);
-        }
-        texture.m_image = image;
-    }
+    attach_buffer_to_khr_image(texture, buffer);
 }
 
 template<typename Texture>
