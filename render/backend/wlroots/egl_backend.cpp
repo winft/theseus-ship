@@ -47,7 +47,6 @@ egl_backend::egl_backend(wlroots::platform& platform)
     data.base.display = native->display;
     data.base.context = native->context;
 
-    data.query_wl_buffer = native->procs.eglQueryWaylandBufferWL;
     data.base.create_image_khr = native->procs.eglCreateImageKHR;
     data.base.destroy_image_khr = native->procs.eglDestroyImageKHR;
 
