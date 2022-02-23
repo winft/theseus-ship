@@ -187,10 +187,11 @@ bool load_internal_image_object(Texture& texture, render::window_pixmap* pixmap)
 }
 
 template<typename Texture>
-bool load_dmabuf_texture(Texture& texture, Wrapland::Server::Buffer* buffer)
+bool load_dmabuf_texture(Texture& texture, egl_dmabuf_buffer* dmabuf)
 {
-    auto dmabuf = static_cast<egl_dmabuf_buffer*>(buffer->linuxDmabufBuffer());
-    if (!dmabuf || dmabuf->images().at(0) == EGL_NO_IMAGE_KHR) {
+    assert(dmabuf);
+
+    if (dmabuf->images().at(0) == EGL_NO_IMAGE_KHR) {
         qCritical(KWIN_WL) << "Invalid dmabuf-based wl_buffer";
         texture.q->discard();
         return false;
@@ -385,31 +386,44 @@ void texture_subimage_from_qimage(Texture& texture,
 }
 
 template<typename Texture>
-bool load_texture_from_pixmap(Texture& texture, render::window_pixmap* pixmap)
+bool load_texture_from_external(Texture& texture, render::window_pixmap* pixmap)
 {
-    // FIXME: Refactor this method.
+    auto buffer = pixmap->buffer();
+    assert(buffer);
 
-    auto const& buffer = pixmap->buffer();
-    if (!buffer) {
-        if (update_texture_from_fbo(texture, pixmap->fbo())) {
-            return true;
-        }
-        if (load_internal_image_object(texture, pixmap)) {
-            return true;
-        }
-        return false;
+    if (auto surface = pixmap->surface()) {
+        surface->resetTrackedDamage();
     }
 
-    // try Wayland loading
-    if (auto s = pixmap->surface()) {
-        s->resetTrackedDamage();
+    if (auto dmabuf = buffer->linuxDmabufBuffer()) {
+        return load_dmabuf_texture(texture, static_cast<egl_dmabuf_buffer*>(dmabuf));
     }
-    if (buffer->linuxDmabufBuffer()) {
-        return load_dmabuf_texture(texture, buffer);
-    } else if (buffer->shmBuffer()) {
+    if (buffer->shmBuffer()) {
         return load_shm_texture(texture, buffer);
     }
+
+    // As a last resort try loading via wl_drm.
     return load_egl_texture(texture, buffer);
+}
+
+template<typename Texture>
+bool load_texture_from_internal(Texture& texture, render::window_pixmap* pixmap)
+{
+    assert(!pixmap->buffer());
+
+    if (update_texture_from_fbo(texture, pixmap->fbo())) {
+        return true;
+    }
+    return load_internal_image_object(texture, pixmap);
+}
+
+template<typename Texture>
+bool load_texture_from_pixmap(Texture& texture, render::window_pixmap* pixmap)
+{
+    if (pixmap->buffer()) {
+        return load_texture_from_external(texture, pixmap);
+    }
+    return load_texture_from_internal(texture, pixmap);
 }
 
 template<typename Texture>
