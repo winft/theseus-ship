@@ -78,65 +78,6 @@ void attach_buffer_to_khr_image(Texture& texture, Wrapland::Server::Buffer* buff
 }
 
 template<typename Texture>
-bool load_texture_from_image(Texture& texture, QImage const& image)
-{
-    if (image.isNull()) {
-        return false;
-    }
-
-    glGenTextures(1, &texture.m_texture);
-    texture.q->setFilter(GL_LINEAR);
-    texture.q->setWrapMode(GL_CLAMP_TO_EDGE);
-
-    auto const& size = image.size();
-    texture.q->bind();
-
-    GLenum format{0};
-    switch (image.format()) {
-    case QImage::Format_ARGB32:
-    case QImage::Format_ARGB32_Premultiplied:
-        format = GL_RGBA8;
-        break;
-    case QImage::Format_RGB32:
-        format = GL_RGB8;
-        break;
-    default:
-        return false;
-    }
-
-    if (Texture::s_supportsARGB32 && format == GL_RGBA8) {
-        auto const im = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-        glTexImage2D(texture.m_target,
-                     0,
-                     GL_BGRA_EXT,
-                     im.width(),
-                     im.height(),
-                     0,
-                     GL_BGRA_EXT,
-                     GL_UNSIGNED_BYTE,
-                     im.bits());
-    } else {
-        auto const im = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
-        glTexImage2D(texture.m_target,
-                     0,
-                     GL_RGBA,
-                     im.width(),
-                     im.height(),
-                     0,
-                     GL_RGBA,
-                     GL_UNSIGNED_BYTE,
-                     im.bits());
-    }
-
-    texture.q->unbind();
-    texture.q->setYInverted(true);
-    texture.m_size = size;
-    texture.updateMatrix();
-
-    return true;
-}
-
-template<typename Texture>
 bool update_texture_from_fbo(Texture& texture, std::shared_ptr<QOpenGLFramebufferObject> const& fbo)
 {
     if (!fbo) {
@@ -163,13 +104,46 @@ bool update_texture_from_internal_image_object(Texture& texture, WinBuffer const
         return false;
     }
 
-    if (texture.m_size != image.size()) {
-        glDeleteTextures(1, &texture.m_texture);
-        return load_texture_from_image(texture, image);
+    uint32_t format;
+
+    // TODO(romangg): The Qt pixel formats depend on the endianness while DRM is always LE. So on BE
+    //                machines QImage::Format_RGBA8888_Premultiplied would instead correspond to
+    //                DRM_FORMAT_RGBX8888, see [1]. But at the same time Format_ARGB32_Premultiplied
+    //                does not seem to be influenced. Need to test this on an actual BE machine to
+    //                be sure.
+    // [1] https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/3464#note_1277281
+    switch (image.format()) {
+    case QImage::Format_ARGB32:
+    case QImage::Format_ARGB32_Premultiplied:
+        format = DRM_FORMAT_ARGB8888;
+        break;
+    case QImage::Format_RGB32:
+        format = DRM_FORMAT_XBGR8888;
+        break;
+    default:
+        return false;
     }
 
-    texture_subimage_from_qimage(texture, image.devicePixelRatio(), image, buffer.damage());
-    return true;
+    QImage conv_image;
+    if (Texture::s_supportsARGB32 && format == DRM_FORMAT_ARGB8888) {
+        conv_image = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    } else {
+        conv_image = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
+    }
+
+    // We know it's an internal image so access the damage without the virtual buffer damage call.
+    // TODO(romangg): Wrap this into a helper function in render::wayland namespace.
+    auto const& damage = std::visit(
+        overload{[&](auto&& win) -> QRegion { return win->render_data.damage_region; }},
+        *buffer.buffer.window->ref_win);
+
+    return update_texture_from_data(texture,
+                                    format,
+                                    image.bytesPerLine(),
+                                    image.size(),
+                                    damage,
+                                    image.devicePixelRatio(),
+                                    conv_image.bits());
 }
 
 template<typename Texture>
@@ -198,51 +172,6 @@ bool update_texture_from_egl(Texture& texture, Wrapland::Server::Buffer* buffer)
     }
 
     return true;
-}
-
-template<typename Texture>
-void texture_subimage_from_qimage(Texture& texture,
-                                  int scale,
-                                  QImage const& image,
-                                  QRegion const& damage)
-{
-    texture.q->bind();
-
-    if (Texture::s_supportsARGB32
-        && (image.format() == QImage::Format_ARGB32
-            || image.format() == QImage::Format_ARGB32_Premultiplied)) {
-        auto const im = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-        for (auto const& rect : damage) {
-            auto scaledRect = QRect(
-                rect.x() * scale, rect.y() * scale, rect.width() * scale, rect.height() * scale);
-            glTexSubImage2D(texture.m_target,
-                            0,
-                            scaledRect.x(),
-                            scaledRect.y(),
-                            scaledRect.width(),
-                            scaledRect.height(),
-                            GL_BGRA_EXT,
-                            GL_UNSIGNED_BYTE,
-                            im.copy(scaledRect).constBits());
-        }
-    } else {
-        auto const im = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
-        for (auto const& rect : damage) {
-            auto scaledRect = QRect(
-                rect.x() * scale, rect.y() * scale, rect.width() * scale, rect.height() * scale);
-            glTexSubImage2D(texture.m_target,
-                            0,
-                            scaledRect.x(),
-                            scaledRect.y(),
-                            scaledRect.width(),
-                            scaledRect.height(),
-                            GL_RGBA,
-                            GL_UNSIGNED_BYTE,
-                            im.copy(scaledRect).constBits());
-        }
-    }
-
-    texture.q->unbind();
 }
 
 template<typename Texture>
