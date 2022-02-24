@@ -171,19 +171,13 @@ bool update_texture_from_internal_image_object(Texture& texture, render::window_
 
     if (texture.m_size != image.size()) {
         glDeleteTextures(1, &texture.m_texture);
-        return load_internal_image_object(texture, pixmap);
+        return load_texture_from_image(texture, image);
     }
 
     texture_subimage_from_qimage(
         texture, image.devicePixelRatio(), image, pixmap->toplevel()->damage());
 
     return true;
-}
-
-template<typename Texture>
-bool load_internal_image_object(Texture& texture, render::window_pixmap* pixmap)
-{
-    return load_texture_from_image(texture, pixmap->internalImage());
 }
 
 template<typename Texture>
@@ -383,7 +377,7 @@ bool load_texture_from_internal(Texture& texture, render::window_pixmap* pixmap)
     if (update_texture_from_fbo(texture, pixmap->fbo())) {
         return true;
     }
-    return load_internal_image_object(texture, pixmap);
+    return update_texture_from_internal_image_object(texture, pixmap);
 }
 
 template<typename Texture>
