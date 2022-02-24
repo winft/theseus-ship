@@ -1,16 +1,16 @@
 /*
-    SPDX-FileCopyrightText: 2021 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #pragma once
 
-#include "egl_dmabuf.h"
-#include "kwin_eglext.h"
 #include "kwinglplatform.h"
+#include "render/gl/egl_dmabuf.h"
+#include "render/gl/kwin_eglext.h"
+#include "render/gl/window.h"
 #include "toplevel.h"
 #include "wayland_logging.h"
-#include "window.h"
 
 #include <QImage>
 #include <QOpenGLFramebufferObject>
@@ -19,7 +19,7 @@
 #include <cassert>
 #include <epoxy/gl.h>
 
-namespace KWin::render::gl
+namespace KWin::render::backend::wlroots
 {
 
 template<typename Texture>
@@ -150,7 +150,7 @@ bool update_texture_from_fbo(Texture& texture, const QSharedPointer<QOpenGLFrame
 }
 
 template<typename Texture>
-bool update_texture_from_internal_image_object(Texture& texture, render::window_pixmap* pixmap)
+bool update_texture_from_internal_image_object(Texture& texture, window_pixmap* pixmap)
 {
     auto const image = pixmap->internalImage();
     if (image.isNull()) {
@@ -303,7 +303,7 @@ void texture_subimage_from_qimage(Texture& texture,
 }
 
 template<typename Texture>
-bool update_texture_from_dmabuf(Texture& texture, egl_dmabuf_buffer* dmabuf)
+bool update_texture_from_dmabuf(Texture& texture, gl::egl_dmabuf_buffer* dmabuf)
 {
     assert(dmabuf);
     assert(texture.m_image == EGL_NO_IMAGE_KHR);
@@ -341,7 +341,7 @@ bool update_texture_from_dmabuf(Texture& texture, egl_dmabuf_buffer* dmabuf)
 }
 
 template<typename Texture>
-bool update_texture_from_shm(Texture& texture, render::window_pixmap* pixmap)
+bool update_texture_from_shm(Texture& texture, window_pixmap* pixmap)
 {
     auto const buffer = pixmap->buffer();
     assert(buffer && buffer->shmBuffer());
@@ -371,14 +371,14 @@ bool update_texture_from_shm(Texture& texture, render::window_pixmap* pixmap)
 }
 
 template<typename Texture>
-bool update_texture_from_external(Texture& texture, render::window_pixmap* pixmap)
+bool update_texture_from_external(Texture& texture, window_pixmap* pixmap)
 {
     bool ret;
     auto const buffer = pixmap->buffer();
     assert(buffer);
 
     if (auto dmabuf = buffer->linuxDmabufBuffer()) {
-        ret = update_texture_from_dmabuf(texture, static_cast<egl_dmabuf_buffer*>(dmabuf));
+        ret = update_texture_from_dmabuf(texture, static_cast<gl::egl_dmabuf_buffer*>(dmabuf));
     } else if (auto shm = buffer->shmBuffer()) {
         ret = update_texture_from_shm(texture, pixmap);
     } else {
@@ -393,7 +393,7 @@ bool update_texture_from_external(Texture& texture, render::window_pixmap* pixma
 }
 
 template<typename Texture>
-bool update_texture_from_internal(Texture& texture, render::window_pixmap* pixmap)
+bool update_texture_from_internal(Texture& texture, window_pixmap* pixmap)
 {
     assert(!pixmap->buffer());
 
@@ -402,7 +402,7 @@ bool update_texture_from_internal(Texture& texture, render::window_pixmap* pixma
 }
 
 template<typename Texture>
-bool update_texture_from_pixmap(Texture& texture, render::window_pixmap* pixmap)
+bool update_texture_from_pixmap(Texture& texture, window_pixmap* pixmap)
 {
     if (pixmap->buffer()) {
         return update_texture_from_external(texture, pixmap);

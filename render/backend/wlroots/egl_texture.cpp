@@ -6,9 +6,9 @@
 #include "egl_texture.h"
 
 #include "egl_backend.h"
+#include "texture_update.h"
 
 #include "render/gl/egl.h"
-#include "render/gl/egl_texture.h"
 
 namespace KWin::render::backend::wlroots
 {
@@ -36,7 +36,7 @@ gl::backend* egl_texture::backend()
 
 bool egl_texture::updateTexture(window_pixmap* pixmap)
 {
-    return gl::update_texture_from_pixmap(*this, pixmap);
+    return update_texture_from_pixmap(*this, pixmap);
 }
 
 }
