@@ -84,7 +84,6 @@ private:
     friend class glx_backend;
     GlxTexture(gl::texture* texture, glx_backend* backend);
 
-    bool loadTexture(xcb_pixmap_t pix, const QSize& size, xcb_visualid_t visual);
     Display* display() const
     {
         return m_backend->data.display;
