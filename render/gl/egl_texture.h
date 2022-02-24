@@ -98,40 +98,28 @@ bool load_texture_from_image(Texture& texture, QImage const& image)
         return false;
     }
 
-    if (GLPlatform::instance()->isGLES()) {
-        if (Texture::s_supportsARGB32 && format == GL_RGBA8) {
-            auto const im = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-            glTexImage2D(texture.m_target,
-                         0,
-                         GL_BGRA_EXT,
-                         im.width(),
-                         im.height(),
-                         0,
-                         GL_BGRA_EXT,
-                         GL_UNSIGNED_BYTE,
-                         im.bits());
-        } else {
-            auto const im = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
-            glTexImage2D(texture.m_target,
-                         0,
-                         GL_RGBA,
-                         im.width(),
-                         im.height(),
-                         0,
-                         GL_RGBA,
-                         GL_UNSIGNED_BYTE,
-                         im.bits());
-        }
-    } else {
+    if (Texture::s_supportsARGB32 && format == GL_RGBA8) {
+        auto const im = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
         glTexImage2D(texture.m_target,
                      0,
-                     format,
-                     size.width(),
-                     size.height(),
+                     GL_BGRA_EXT,
+                     im.width(),
+                     im.height(),
                      0,
-                     GL_BGRA,
+                     GL_BGRA_EXT,
                      GL_UNSIGNED_BYTE,
-                     image.bits());
+                     im.bits());
+    } else {
+        auto const im = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
+        glTexImage2D(texture.m_target,
+                     0,
+                     GL_RGBA,
+                     im.width(),
+                     im.height(),
+                     0,
+                     GL_RGBA,
+                     GL_UNSIGNED_BYTE,
+                     im.bits());
     }
 
     texture.q->unbind();
@@ -235,42 +223,25 @@ void texture_subimage(Texture& texture,
     // counter-part. If more formats are added in the future this needs to be checked.
     auto const glFormat = GL_BGRA;
 
-    if (GLPlatform::instance()->isGLES()) {
-        if (Texture::s_supportsARGB32
-            && (img.format() == Wrapland::Server::ShmImage::Format::argb8888)) {
-            for (auto const& rect : damage) {
-                auto const scaledRect = getScaledRect(rect);
-                prepareSubImage(img, scaledRect);
-                glTexSubImage2D(texture.m_target,
-                                0,
-                                scaledRect.x(),
-                                scaledRect.y(),
-                                scaledRect.width(),
-                                scaledRect.height(),
-                                glFormat,
-                                GL_UNSIGNED_BYTE,
-                                img.data());
-                finalizseSubImage();
-            }
-        } else {
-            for (auto const& rect : damage) {
-                auto scaledRect = getScaledRect(rect);
-                prepareSubImage(img, scaledRect);
-                glTexSubImage2D(texture.m_target,
-                                0,
-                                scaledRect.x(),
-                                scaledRect.y(),
-                                scaledRect.width(),
-                                scaledRect.height(),
-                                glFormat,
-                                GL_UNSIGNED_BYTE,
-                                img.data());
-                finalizseSubImage();
-            }
+    if (Texture::s_supportsARGB32
+        && (img.format() == Wrapland::Server::ShmImage::Format::argb8888)) {
+        for (auto const& rect : damage) {
+            auto const scaledRect = getScaledRect(rect);
+            prepareSubImage(img, scaledRect);
+            glTexSubImage2D(texture.m_target,
+                            0,
+                            scaledRect.x(),
+                            scaledRect.y(),
+                            scaledRect.width(),
+                            scaledRect.height(),
+                            glFormat,
+                            GL_UNSIGNED_BYTE,
+                            img.data());
+            finalizseSubImage();
         }
     } else {
         for (auto const& rect : damage) {
-            auto const scaledRect = getScaledRect(rect);
+            auto scaledRect = getScaledRect(rect);
             prepareSubImage(img, scaledRect);
             glTexSubImage2D(texture.m_target,
                             0,
@@ -294,45 +265,9 @@ void texture_subimage_from_qimage(Texture& texture,
 {
     texture.q->bind();
 
-    if (GLPlatform::instance()->isGLES()) {
-        if (Texture::s_supportsARGB32
-            && (image.format() == QImage::Format_ARGB32
-                || image.format() == QImage::Format_ARGB32_Premultiplied)) {
-            auto const im = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-            for (auto const& rect : damage) {
-                auto scaledRect = QRect(rect.x() * scale,
-                                        rect.y() * scale,
-                                        rect.width() * scale,
-                                        rect.height() * scale);
-                glTexSubImage2D(texture.m_target,
-                                0,
-                                scaledRect.x(),
-                                scaledRect.y(),
-                                scaledRect.width(),
-                                scaledRect.height(),
-                                GL_BGRA_EXT,
-                                GL_UNSIGNED_BYTE,
-                                im.copy(scaledRect).constBits());
-            }
-        } else {
-            auto const im = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
-            for (auto const& rect : damage) {
-                auto scaledRect = QRect(rect.x() * scale,
-                                        rect.y() * scale,
-                                        rect.width() * scale,
-                                        rect.height() * scale);
-                glTexSubImage2D(texture.m_target,
-                                0,
-                                scaledRect.x(),
-                                scaledRect.y(),
-                                scaledRect.width(),
-                                scaledRect.height(),
-                                GL_RGBA,
-                                GL_UNSIGNED_BYTE,
-                                im.copy(scaledRect).constBits());
-            }
-        }
-    } else {
+    if (Texture::s_supportsARGB32
+        && (image.format() == QImage::Format_ARGB32
+            || image.format() == QImage::Format_ARGB32_Premultiplied)) {
         auto const im = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
         for (auto const& rect : damage) {
             auto scaledRect = QRect(
@@ -343,7 +278,22 @@ void texture_subimage_from_qimage(Texture& texture,
                             scaledRect.y(),
                             scaledRect.width(),
                             scaledRect.height(),
-                            GL_BGRA,
+                            GL_BGRA_EXT,
+                            GL_UNSIGNED_BYTE,
+                            im.copy(scaledRect).constBits());
+        }
+    } else {
+        auto const im = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
+        for (auto const& rect : damage) {
+            auto scaledRect = QRect(
+                rect.x() * scale, rect.y() * scale, rect.width() * scale, rect.height() * scale);
+            glTexSubImage2D(texture.m_target,
+                            0,
+                            scaledRect.x(),
+                            scaledRect.y(),
+                            scaledRect.width(),
+                            scaledRect.height(),
+                            GL_RGBA,
                             GL_UNSIGNED_BYTE,
                             im.copy(scaledRect).constBits());
         }
@@ -410,7 +360,7 @@ bool update_texture_from_shm(Texture& texture, render::window_pixmap* pixmap)
     assert(buffer->size() == texture.m_size);
     auto const& damage = surface->trackedDamage();
 
-    if (!GLPlatform::instance()->isGLES() || texture.m_hasSubImageUnpack) {
+    if (texture.m_hasSubImageUnpack) {
         texture_subimage(texture, surface->state().scale, image.value(), damage);
     } else {
         texture_subimage_from_qimage(
