@@ -181,12 +181,6 @@ bool update_texture_from_internal_image_object(Texture& texture, render::window_
 }
 
 template<typename Texture>
-bool load_shm_texture(Texture& texture, Wrapland::Server::Buffer* buffer)
-{
-    return load_texture_from_image(texture, buffer->shmImage()->createQImage());
-}
-
-template<typename Texture>
 bool load_internal_image_object(Texture& texture, render::window_pixmap* pixmap)
 {
     return load_texture_from_image(texture, pixmap->internalImage());
@@ -374,7 +368,7 @@ bool load_texture_from_external(Texture& texture, render::window_pixmap* pixmap)
         return update_texture_from_dmabuf(texture, static_cast<egl_dmabuf_buffer*>(dmabuf));
     }
     if (buffer->shmBuffer()) {
-        return load_shm_texture(texture, buffer);
+        return update_texture_from_shm(texture, pixmap);
     }
 
     // As a last resort try loading via wl_drm.
@@ -440,7 +434,7 @@ bool update_texture_from_dmabuf(Texture& texture, egl_dmabuf_buffer* dmabuf)
 }
 
 template<typename Texture>
-void update_texture_from_shm(Texture& texture, render::window_pixmap* pixmap)
+bool update_texture_from_shm(Texture& texture, render::window_pixmap* pixmap)
 {
     auto const buffer = pixmap->buffer();
     assert(buffer && buffer->shmBuffer());
@@ -448,14 +442,12 @@ void update_texture_from_shm(Texture& texture, render::window_pixmap* pixmap)
     auto image = buffer->shmImage();
     auto surface = pixmap->surface();
     if (!image || !surface) {
-        return;
+        return false;
     }
 
     if (buffer->size() != texture.m_size) {
-        // Buffer size has changed, reload shm texture.
-        if (!load_shm_texture(texture, buffer)) {
-            return;
-        }
+        // First time update or buffer size has changed.
+        return load_texture_from_image(texture, image->createQImage());
     }
 
     assert(buffer->size() == texture.m_size);
@@ -467,6 +459,8 @@ void update_texture_from_shm(Texture& texture, render::window_pixmap* pixmap)
         texture_subimage_from_qimage(
             texture, surface->state().scale, image->createQImage(), damage);
     }
+
+    return true;
 }
 
 template<typename Texture>
