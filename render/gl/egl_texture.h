@@ -353,47 +353,6 @@ void texture_subimage_from_qimage(Texture& texture,
 }
 
 template<typename Texture>
-bool load_texture_from_external(Texture& texture, render::window_pixmap* pixmap)
-{
-    auto buffer = pixmap->buffer();
-    assert(buffer);
-
-    if (auto surface = pixmap->surface()) {
-        surface->resetTrackedDamage();
-    }
-
-    if (auto dmabuf = buffer->linuxDmabufBuffer()) {
-        return update_texture_from_dmabuf(texture, static_cast<egl_dmabuf_buffer*>(dmabuf));
-    }
-    if (buffer->shmBuffer()) {
-        return update_texture_from_shm(texture, pixmap);
-    }
-
-    // As a last resort try loading via wl_drm.
-    return update_texture_from_egl(texture, buffer);
-}
-
-template<typename Texture>
-bool load_texture_from_internal(Texture& texture, render::window_pixmap* pixmap)
-{
-    assert(!pixmap->buffer());
-
-    if (update_texture_from_fbo(texture, pixmap->fbo())) {
-        return true;
-    }
-    return update_texture_from_internal_image_object(texture, pixmap);
-}
-
-template<typename Texture>
-bool load_texture_from_pixmap(Texture& texture, render::window_pixmap* pixmap)
-{
-    if (pixmap->buffer()) {
-        return load_texture_from_external(texture, pixmap);
-    }
-    return load_texture_from_internal(texture, pixmap);
-}
-
-template<typename Texture>
 bool update_texture_from_dmabuf(Texture& texture, egl_dmabuf_buffer* dmabuf)
 {
     assert(dmabuf);
@@ -462,43 +421,43 @@ bool update_texture_from_shm(Texture& texture, render::window_pixmap* pixmap)
 }
 
 template<typename Texture>
-void update_texture_from_external(Texture& texture, render::window_pixmap* pixmap)
+bool update_texture_from_external(Texture& texture, render::window_pixmap* pixmap)
 {
+    bool ret;
     auto const buffer = pixmap->buffer();
     assert(buffer);
 
     if (auto dmabuf = buffer->linuxDmabufBuffer()) {
-        update_texture_from_dmabuf(texture, static_cast<egl_dmabuf_buffer*>(dmabuf));
+        ret = update_texture_from_dmabuf(texture, static_cast<egl_dmabuf_buffer*>(dmabuf));
     } else if (auto shm = buffer->shmBuffer()) {
-        update_texture_from_shm(texture, pixmap);
+        ret = update_texture_from_shm(texture, pixmap);
     } else {
-        update_texture_from_egl(texture, buffer);
+        ret = update_texture_from_egl(texture, buffer);
     }
 
     if (auto surface = pixmap->surface()) {
         surface->resetTrackedDamage();
     }
+
+    return ret;
 }
 
 template<typename Texture>
-void update_texture_from_internal(Texture& texture, render::window_pixmap* pixmap)
+bool update_texture_from_internal(Texture& texture, render::window_pixmap* pixmap)
 {
     assert(!pixmap->buffer());
 
-    if (update_texture_from_fbo(texture, pixmap->fbo())) {
-        return;
-    }
-    update_texture_from_internal_image_object(texture, pixmap);
+    return update_texture_from_fbo(texture, pixmap->fbo())
+        || update_texture_from_internal_image_object(texture, pixmap);
 }
 
 template<typename Texture>
-void update_texture_from_pixmap(Texture& texture, render::window_pixmap* pixmap)
+bool update_texture_from_pixmap(Texture& texture, render::window_pixmap* pixmap)
 {
     if (pixmap->buffer()) {
-        update_texture_from_external(texture, pixmap);
-        return;
+        return update_texture_from_external(texture, pixmap);
     }
-    update_texture_from_internal(texture, pixmap);
+    return update_texture_from_internal(texture, pixmap);
 }
 
 }

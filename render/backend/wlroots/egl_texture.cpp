@@ -36,7 +36,7 @@ gl::backend* egl_texture::backend()
 
 bool egl_texture::loadTexture(window_pixmap* pixmap)
 {
-    return gl::load_texture_from_pixmap(*this, pixmap);
+    return gl::update_texture_from_pixmap(*this, pixmap);
 }
 
 void egl_texture::updateTexture(window_pixmap* pixmap)
