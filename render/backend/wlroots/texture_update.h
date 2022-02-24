@@ -5,6 +5,11 @@
 */
 #pragma once
 
+#include "platform.h"
+#include "wlr_helpers.h"
+#include "wlr_includes.h"
+#include "wlr_non_owning_data_buffer.h"
+
 #include "render/gl/egl_dmabuf.h"
 #include "render/gl/kwin_eglext.h"
 #include "render/gl/window.h"
@@ -17,6 +22,7 @@
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
 #include <cassert>
+#include <drm_fourcc.h>
 #include <epoxy/gl.h>
 
 namespace KWin::render::backend::wlroots
@@ -195,67 +201,6 @@ bool update_texture_from_egl(Texture& texture, Wrapland::Server::Buffer* buffer)
 }
 
 template<typename Texture>
-void texture_subimage(Texture& texture,
-                      int scale,
-                      Wrapland::Server::ShmImage const& img,
-                      QRegion const& damage)
-{
-    auto prepareSubImage = [&](auto const& img, auto const& rect) {
-        texture.q->bind();
-        glPixelStorei(GL_UNPACK_ROW_LENGTH_EXT, img.stride() / (img.bpp() / 8));
-        glPixelStorei(GL_UNPACK_SKIP_PIXELS_EXT, rect.x());
-        glPixelStorei(GL_UNPACK_SKIP_ROWS_EXT, rect.y());
-    };
-    auto finalizseSubImage = [&]() {
-        glPixelStorei(GL_UNPACK_ROW_LENGTH_EXT, 0);
-        glPixelStorei(GL_UNPACK_SKIP_PIXELS_EXT, 0);
-        glPixelStorei(GL_UNPACK_SKIP_ROWS_EXT, 0);
-        texture.q->unbind();
-    };
-    auto getScaledRect = [scale](auto const& rect) {
-        return QRect(
-            rect.x() * scale, rect.y() * scale, rect.width() * scale, rect.height() * scale);
-    };
-
-    // Currently Wrapland only supports argb8888 and xrgb8888 formats, which both have the same Gl
-    // counter-part. If more formats are added in the future this needs to be checked.
-    auto const glFormat = GL_BGRA;
-
-    if (Texture::s_supportsARGB32
-        && (img.format() == Wrapland::Server::ShmImage::Format::argb8888)) {
-        for (auto const& rect : damage) {
-            auto const scaledRect = getScaledRect(rect);
-            prepareSubImage(img, scaledRect);
-            glTexSubImage2D(texture.m_target,
-                            0,
-                            scaledRect.x(),
-                            scaledRect.y(),
-                            scaledRect.width(),
-                            scaledRect.height(),
-                            glFormat,
-                            GL_UNSIGNED_BYTE,
-                            img.data());
-            finalizseSubImage();
-        }
-    } else {
-        for (auto const& rect : damage) {
-            auto scaledRect = getScaledRect(rect);
-            prepareSubImage(img, scaledRect);
-            glTexSubImage2D(texture.m_target,
-                            0,
-                            scaledRect.x(),
-                            scaledRect.y(),
-                            scaledRect.width(),
-                            scaledRect.height(),
-                            glFormat,
-                            GL_UNSIGNED_BYTE,
-                            img.data());
-            finalizseSubImage();
-        }
-    }
-}
-
-template<typename Texture>
 void texture_subimage_from_qimage(Texture& texture,
                                   int scale,
                                   QImage const& image,
@@ -338,6 +283,53 @@ bool update_texture_from_dmabuf(Texture& texture, gl::egl_dmabuf_buffer* dmabuf)
     return true;
 }
 
+template<typename Texture>
+bool update_texture_from_data(Texture& texture,
+                              uint32_t format,
+                              uint32_t stride,
+                              QSize const& size,
+                              QRegion const& damage,
+                              int32_t scale,
+                              void* data)
+{
+    if (size != texture.m_size) {
+        // First time update or size has changed.
+        wlr_texture_destroy(texture.native);
+        texture.native = wlr_texture_from_pixels(texture.m_backend->platform.renderer,
+                                                 format,
+                                                 stride,
+                                                 size.width(),
+                                                 size.height(),
+                                                 data);
+        if (!texture.native) {
+            return false;
+        }
+
+        wlr_gles2_texture_attribs tex_attribs;
+        wlr_gles2_texture_get_attribs(texture.native, &tex_attribs);
+
+        texture.m_texture = tex_attribs.tex;
+        texture.q->unbind();
+        texture.q->setYInverted(true);
+        texture.m_size = size;
+        texture.updateMatrix();
+
+        return true;
+    }
+
+    assert(size == texture.m_size);
+
+    auto buffer
+        = wlr_non_owning_data_buffer_create(size.width(), size.height(), format, stride, data);
+    auto pixman_damage = create_scaled_pixman_region(damage, scale);
+
+    wlr_texture_update_from_buffer(texture.native, &buffer->base, &pixman_damage);
+
+    pixman_region32_fini(&pixman_damage);
+    wlr_buffer_drop(&buffer->base);
+    return true;
+}
+
 template<typename Texture, typename WinBuffer>
 bool update_texture_from_shm(Texture& texture, WinBuffer const& buffer)
 {
@@ -350,22 +342,15 @@ bool update_texture_from_shm(Texture& texture, WinBuffer const& buffer)
         return false;
     }
 
-    if (extbuf->size() != texture.m_size) {
-        // First time update or buffer size has changed.
-        return load_texture_from_image(texture, image->createQImage());
-    }
-
-    assert(extbuf->size() == texture.m_size);
-    auto const& damage = surface->trackedDamage();
-
-    if (texture.m_hasSubImageUnpack) {
-        texture_subimage(texture, surface->state().scale, image.value(), damage);
-    } else {
-        texture_subimage_from_qimage(
-            texture, surface->state().scale, image->createQImage(), damage);
-    }
-
-    return true;
+    return update_texture_from_data(texture,
+                                    image->format() == Wrapland::Server::ShmImage::Format::argb8888
+                                        ? DRM_FORMAT_ARGB8888
+                                        : DRM_FORMAT_XRGB8888,
+                                    image->stride(),
+                                    extbuf->size(),
+                                    surface->trackedDamage(),
+                                    surface->state().scale,
+                                    image->data());
 }
 
 template<typename Texture, typename WinBuffer>

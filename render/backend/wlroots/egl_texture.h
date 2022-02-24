@@ -6,11 +6,10 @@
 #pragma once
 
 #include "texture_update.h"
+#include "wlr_includes.h"
 
 #include "render/gl/egl.h"
 #include "render/gl/texture.h"
-
-#include <epoxy/egl.h>
 
 namespace KWin::render::backend::wlroots
 {
@@ -35,6 +34,7 @@ public:
         if (m_image != EGL_NO_IMAGE_KHR) {
             eglDestroyImageKHR(m_backend->data.base.display, m_image);
         }
+        wlr_texture_destroy(native);
     }
 
     bool updateTexture(buffer_t* buffer) override
@@ -48,6 +48,7 @@ public:
     }
 
     gl::texture<typename Backend::abstract_type>* q;
+    wlr_texture* native{nullptr};
     EGLImageKHR m_image{EGL_NO_IMAGE_KHR};
     bool m_hasSubImageUnpack{false};
 
