@@ -181,22 +181,26 @@ bool update_texture_from_internal_image_object(Texture& texture, render::window_
 }
 
 template<typename Texture>
-bool load_egl_texture(Texture& texture, Wrapland::Server::Buffer* buffer)
+bool update_texture_from_egl(Texture& texture, Wrapland::Server::Buffer* buffer)
 {
-    if (!texture.m_backend->data.query_wl_buffer) {
-        return false;
-    }
-    if (!buffer->resource()) {
-        return false;
-    }
+    if (!texture.m_texture) {
+        if (!texture.m_backend->data.query_wl_buffer) {
+            return false;
+        }
+        if (!buffer->resource()) {
+            // TODO(romangg): can we assert instead?
+            return false;
+        }
 
-    glGenTextures(1, &texture.m_texture);
-    texture.q->setWrapMode(GL_CLAMP_TO_EDGE);
-    texture.q->setFilter(GL_LINEAR);
+        glGenTextures(1, &texture.m_texture);
+        texture.q->setWrapMode(GL_CLAMP_TO_EDGE);
+        texture.q->setFilter(GL_LINEAR);
+    }
 
     attach_buffer_to_khr_image(texture, buffer);
+
     if (texture.m_image == EGL_NO_IMAGE_KHR) {
-        qCDebug(KWIN_WL) << "failed to create egl image";
+        qCDebug(KWIN_WL) << "Failed to update texture via EGL/wl_drm";
         texture.q->discard();
         return false;
     }
@@ -366,7 +370,7 @@ bool load_texture_from_external(Texture& texture, render::window_pixmap* pixmap)
     }
 
     // As a last resort try loading via wl_drm.
-    return load_egl_texture(texture, buffer);
+    return update_texture_from_egl(texture, buffer);
 }
 
 template<typename Texture>
@@ -455,12 +459,6 @@ bool update_texture_from_shm(Texture& texture, render::window_pixmap* pixmap)
     }
 
     return true;
-}
-
-template<typename Texture>
-void update_texture_from_egl(Texture& texture, Wrapland::Server::Buffer* buffer)
-{
-    attach_buffer_to_khr_image(texture, buffer);
 }
 
 template<typename Texture>
