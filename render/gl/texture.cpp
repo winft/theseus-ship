@@ -56,7 +56,7 @@ bool texture::load(render::window_pixmap* pixmap)
     // new texture_private();
     d_ptr = d_func()->backend()->createBackendTexture(this);
 
-    return d_func()->loadTexture(pixmap);
+    return d_func()->updateTexture(pixmap);
 }
 
 void texture::updateFromPixmap(render::window_pixmap* pixmap)
@@ -70,11 +70,6 @@ texture_private::texture_private()
 
 texture_private::~texture_private()
 {
-}
-
-void texture_private::updateTexture(render::window_pixmap* pixmap)
-{
-    Q_UNUSED(pixmap)
 }
 
 }

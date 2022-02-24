@@ -34,14 +34,9 @@ gl::backend* egl_texture::backend()
     return m_backend;
 }
 
-bool egl_texture::loadTexture(window_pixmap* pixmap)
+bool egl_texture::updateTexture(window_pixmap* pixmap)
 {
     return gl::update_texture_from_pixmap(*this, pixmap);
-}
-
-void egl_texture::updateTexture(window_pixmap* pixmap)
-{
-    gl::update_texture_from_pixmap(*this, pixmap);
 }
 
 }
