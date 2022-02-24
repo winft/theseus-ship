@@ -180,30 +180,43 @@ bool update_texture_from_dmabuf(Texture& texture, gl::egl_dmabuf_buffer* dmabuf)
     assert(dmabuf);
     assert(texture.m_image == EGL_NO_IMAGE_KHR);
 
-    if (dmabuf->images().empty() || dmabuf->images().at(0) == EGL_NO_IMAGE_KHR) {
-        qCritical(KWIN_CORE) << "Invalid dmabuf-based wl_buffer";
-        texture.q->discard();
-        return false;
-    }
+    if (texture.m_size != dmabuf->size) {
+        // First time update or size has changed.
+        // TODO(romangg): Should we also recreate the texture on other param changes?
+        wlr_dmabuf_attributes dmabuf_attribs;
+        auto const& planes = dmabuf->planes;
+        dmabuf_attribs.width = dmabuf->size.width();
+        dmabuf_attribs.height = dmabuf->size.height();
+        dmabuf_attribs.format = dmabuf->format;
+        dmabuf_attribs.modifier = dmabuf->modifier;
+        dmabuf_attribs.n_planes = planes.size();
 
-    texture.q->bind();
+        auto planes_count = std::min(planes.size(), static_cast<size_t>(WLR_DMABUF_MAX_PLANES));
+        for (size_t i = 0; i < planes_count; i++) {
+            auto plane = planes.at(i);
+            dmabuf_attribs.offset[i] = plane.offset;
+            dmabuf_attribs.stride[i] = plane.stride;
+            dmabuf_attribs.fd[i] = plane.fd;
+        }
 
-    if (!texture.m_texture) {
-        // Recreate the texture.
-        glGenTextures(1, &texture.m_texture);
+        wlr_texture_destroy(texture.native);
+        texture.native
+            = wlr_texture_from_dmabuf(texture.m_backend->platform.renderer, &dmabuf_attribs);
+        if (!texture.native) {
+            return false;
+        }
 
+        wlr_gles2_texture_attribs tex_attribs;
+        wlr_gles2_texture_get_attribs(texture.native, &tex_attribs);
+
+        texture.m_texture = tex_attribs.tex;
         texture.q->setWrapMode(GL_CLAMP_TO_EDGE);
         texture.q->setFilter(GL_NEAREST);
-    }
-
-    // TODO
-    glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES)dmabuf->images().at(0));
-    texture.q->unbind();
-
-    if (texture.m_size != dmabuf->size) {
         texture.m_size = dmabuf->size;
         texture.updateMatrix();
     }
+
+    assert(texture.native);
 
     // The origin in a dmabuf-buffer is at the upper-left corner, so the meaning
     // of Y-inverted is the inverse of OpenGL.
