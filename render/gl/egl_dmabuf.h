@@ -75,12 +75,6 @@ public:
                   Flags flags);
 
     egl_dmabuf_data data;
-
-private:
-    QVector<uint32_t> queryFormats();
-    void setSupportedFormatsAndModifiers();
-
-    friend class egl_dmabuf_buffer;
 };
 
 template<typename Backend>

@@ -64,4 +64,26 @@ pixman_region32_t create_pixman_region(Region const& src_region)
     return create_scaled_pixman_region(src_region, 1);
 }
 
+template<typename Format>
+std::vector<Format> get_drm_formats(wlr_drm_format_set const* set)
+{
+    if (!set) {
+        return {};
+    }
+
+    std::vector<Format> formats;
+
+    for (size_t fmt_index = 0; fmt_index < set->len; fmt_index++) {
+        auto fmt = set->formats[fmt_index];
+        Format format;
+        format.format = fmt->format;
+        for (size_t mod_index = 0; mod_index < fmt->len; mod_index++) {
+            format.modifiers.insert(fmt->modifiers[mod_index]);
+        }
+        formats.push_back(std::move(format));
+    }
+
+    return formats;
+}
+
 }

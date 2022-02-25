@@ -70,6 +70,10 @@ public:
         gl::init_gl(EglPlatformInterface, get_proc_address);
         gl::init_buffer_age(*this);
         wayland::init_egl(*this, data);
+
+        auto formats_set = wlr_renderer_get_dmabuf_texture_formats(platform.renderer);
+        auto formats_map = get_drm_formats<Wrapland::Server::drm_format>(formats_set);
+        waylandServer()->linux_dmabuf()->set_formats(formats_map);
     }
 
     ~egl_backend() override
