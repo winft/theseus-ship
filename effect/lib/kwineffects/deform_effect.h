@@ -37,13 +37,19 @@ public:
 
     static bool supported();
 
-private:
+    /**
+     * If set our offscreen texture will be updated with the latest contents
+     * It should be set before redirecting windows
+     * The default is true
+     */
+    void setLive(bool live);
+
+protected:
     void drawWindow(EffectWindow* window,
                     int mask,
                     const QRegion& region,
                     WindowPaintData& data) override;
 
-protected:
     /**
      * This function must be called when the effect wants to animate the specified
      * @a window.
