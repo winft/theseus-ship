@@ -172,7 +172,7 @@ Wrapland::Server::Subcompositor* server::subcompositor() const
     return globals->subcompositor.get();
 }
 
-Wrapland::Server::LinuxDmabufV1* server::linux_dmabuf()
+Wrapland::Server::linux_dmabuf_v1* server::linux_dmabuf()
 {
     if (!globals->linux_dmabuf_v1) {
         globals->linux_dmabuf_v1 = display->createLinuxDmabuf();

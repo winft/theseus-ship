@@ -335,7 +335,8 @@ bool update_texture_from_dmabuf(Texture& texture, gl::egl_dmabuf_buffer* dmabuf)
 
     // The origin in a dmabuf-buffer is at the upper-left corner, so the meaning
     // of Y-inverted is the inverse of OpenGL.
-    texture.q->setYInverted(!(dmabuf->flags() & Wrapland::Server::LinuxDmabufV1::YInverted));
+    texture.q->setYInverted(
+        !(dmabuf->flags() & Wrapland::Server::linux_dmabuf_flag_v1::y_inverted));
 
     return true;
 }

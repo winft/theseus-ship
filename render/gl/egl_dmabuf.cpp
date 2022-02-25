@@ -121,8 +121,8 @@ void egl_dmabuf_buffer::removeImages()
     m_images.clear();
 }
 
-using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
-using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
+using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
+using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
 
 EGLImage egl_dmabuf::createImage(const QVector<Plane>& planes, uint32_t format, const QSize& size)
 {
@@ -188,10 +188,10 @@ EGLImage egl_dmabuf::createImage(const QVector<Plane>& planes, uint32_t format, 
     return image;
 }
 
-Wrapland::Server::LinuxDmabufBufferV1* egl_dmabuf::importBuffer(const QVector<Plane>& planes,
-                                                                uint32_t format,
-                                                                const QSize& size,
-                                                                Flags flags)
+Wrapland::Server::linux_dmabuf_buffer_v1* egl_dmabuf::importBuffer(const QVector<Plane>& planes,
+                                                                   uint32_t format,
+                                                                   const QSize& size,
+                                                                   Flags flags)
 {
     Q_ASSERT(planes.count() > 0);
 
@@ -208,7 +208,7 @@ Wrapland::Server::LinuxDmabufBufferV1* egl_dmabuf::importBuffer(const QVector<Pl
     return nullptr;
 }
 
-Wrapland::Server::LinuxDmabufBufferV1*
+Wrapland::Server::linux_dmabuf_buffer_v1*
 egl_dmabuf::yuvImport(const QVector<Plane>& planes, uint32_t format, const QSize& size, Flags flags)
 {
     YuvFormat yuvFormat;
