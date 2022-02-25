@@ -345,9 +345,11 @@ void egl_dmabuf::setSupportedFormatsAndModifiers()
     }
     filterFormatsWithMultiplePlanes(formats);
 
-    QHash<uint32_t, QSet<uint64_t>> set;
+    std::vector<Wrapland::Server::drm_format> drm_formats;
 
     for (auto format : qAsConst(formats)) {
+        Wrapland::Server::drm_format drm_format;
+        drm_format.format = format;
         if (eglQueryDmaBufModifiersEXT != nullptr) {
             EGLint count = 0;
             EGLBoolean success = eglQueryDmaBufModifiersEXT(
@@ -357,19 +359,16 @@ void egl_dmabuf::setSupportedFormatsAndModifiers()
                 QVector<uint64_t> modifiers(count);
                 if (eglQueryDmaBufModifiersEXT(
                         data.base.display, format, count, modifiers.data(), nullptr, &count)) {
-                    QSet<uint64_t> modifiersSet;
                     for (auto mod : qAsConst(modifiers)) {
-                        modifiersSet.insert(mod);
+                        drm_format.modifiers.insert(mod);
                     }
-                    set.insert(format, modifiersSet);
-                    continue;
                 }
             }
         }
-        set.insert(format, QSet<uint64_t>());
+        drm_formats.push_back(drm_format);
     }
 
-    waylandServer()->linux_dmabuf()->set_formats(set);
+    waylandServer()->linux_dmabuf()->set_formats(drm_formats);
 }
 
 }
