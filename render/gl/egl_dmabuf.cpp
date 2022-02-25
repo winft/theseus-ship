@@ -189,16 +189,17 @@ EGLImage egl_dmabuf::createImage(const QVector<Plane>& planes, uint32_t format, 
     return image;
 }
 
-Wrapland::Server::linux_dmabuf_buffer_v1* egl_dmabuf::import_buffer(QVector<Plane> const& planes,
-                                                                    uint32_t format,
-                                                                    const QSize& size,
-                                                                    Flags flags)
+std::unique_ptr<Wrapland::Server::linux_dmabuf_buffer_v1>
+egl_dmabuf::import_buffer(QVector<Plane> const& planes,
+                          uint32_t format,
+                          const QSize& size,
+                          Flags flags)
 {
     Q_ASSERT(planes.count() > 0);
 
     // Try first to import as a single image
     if (auto* img = createImage(planes, format, size)) {
-        return new egl_dmabuf_buffer(img, planes, format, size, flags, this);
+        return std::make_unique<egl_dmabuf_buffer>(img, planes, format, size, flags, this);
     }
 
     // TODO: to enable this we must be able to store multiple textures per window pixmap

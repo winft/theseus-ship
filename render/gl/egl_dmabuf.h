@@ -92,7 +92,7 @@ public:
     explicit egl_dmabuf(egl_dmabuf_data const& data);
     ~egl_dmabuf();
 
-    Wrapland::Server::linux_dmabuf_buffer_v1*
+    std::unique_ptr<Wrapland::Server::linux_dmabuf_buffer_v1>
     import_buffer(QVector<Plane> const& planes, uint32_t format, const QSize& size, Flags flags);
 
     egl_dmabuf_data data;
