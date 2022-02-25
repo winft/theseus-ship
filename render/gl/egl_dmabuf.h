@@ -36,37 +36,11 @@ class egl_dmabuf;
 class KWIN_EXPORT egl_dmabuf_buffer : public Wrapland::Server::linux_dmabuf_buffer_v1
 {
 public:
-    using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
-    using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
-
-    enum class ImportType { Direct, Conversion };
-
-    egl_dmabuf_buffer(EGLImage image,
-                      std::vector<Plane> planes,
+    egl_dmabuf_buffer(std::vector<Wrapland::Server::linux_dmabuf_plane_v1> planes,
                       uint32_t format,
                       uint64_t modifier,
                       const QSize& size,
-                      Flags flags,
-                      egl_dmabuf* interfaceImpl);
-
-    egl_dmabuf_buffer(std::vector<Plane> planes,
-                      uint32_t format,
-                      uint64_t modifier,
-                      const QSize& size,
-                      Flags flags,
-                      egl_dmabuf* interfaceImpl);
-
-    ~egl_dmabuf_buffer() override;
-
-    void addImage(EGLImage image);
-    void removeImages();
-
-    std::vector<EGLImage> const& images() const;
-
-private:
-    std::vector<EGLImage> m_images;
-    egl_dmabuf* m_interfaceImpl;
-    ImportType m_importType;
+                      Wrapland::Server::linux_dmabuf_flags_v1 flags);
 };
 
 struct egl_dmabuf_data {
@@ -103,16 +77,6 @@ public:
     egl_dmabuf_data data;
 
 private:
-    EGLImage createImage(std::vector<Plane> const& planes,
-                         uint32_t format,
-                         uint64_t modifier,
-                         const QSize& size);
-
-    Wrapland::Server::linux_dmabuf_buffer_v1* yuvImport(std::vector<Plane> const& planes,
-                                                        uint32_t format,
-                                                        uint64_t modifier,
-                                                        const QSize& size,
-                                                        Flags flags);
     QVector<uint32_t> queryFormats();
     void setSupportedFormatsAndModifiers();
 

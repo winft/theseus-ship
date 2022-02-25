@@ -32,161 +32,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::gl
 {
 
-struct YuvPlane {
-    int widthDivisor = 0;
-    int heightDivisor = 0;
-    uint32_t format = 0;
-    int planeIndex = 0;
-};
-
-struct YuvFormat {
-    uint32_t format = 0;
-    int inputPlanes = 0;
-    int outputPlanes = 0;
-    int textureType = 0;
-    struct YuvPlane planes[3];
-};
-
-YuvFormat yuvFormats[]
-    = {{DRM_FORMAT_YUYV,
-        1,
-        2,
-        EGL_TEXTURE_Y_XUXV_WL,
-        {{1, 1, DRM_FORMAT_GR88, 0}, {2, 1, DRM_FORMAT_ARGB8888, 0}}},
-       {DRM_FORMAT_NV12,
-        2,
-        2,
-        EGL_TEXTURE_Y_UV_WL,
-        {{1, 1, DRM_FORMAT_R8, 0}, {2, 2, DRM_FORMAT_GR88, 1}}},
-       {DRM_FORMAT_YUV420,
-        3,
-        3,
-        EGL_TEXTURE_Y_U_V_WL,
-        {{1, 1, DRM_FORMAT_R8, 0}, {2, 2, DRM_FORMAT_R8, 1}, {2, 2, DRM_FORMAT_R8, 2}}},
-       {DRM_FORMAT_YUV444,
-        3,
-        3,
-        EGL_TEXTURE_Y_U_V_WL,
-        {{1, 1, DRM_FORMAT_R8, 0}, {1, 1, DRM_FORMAT_R8, 1}, {1, 1, DRM_FORMAT_R8, 2}}}};
-
-egl_dmabuf_buffer::egl_dmabuf_buffer(EGLImage image,
-                                     std::vector<Plane> planes,
-                                     uint32_t format,
-                                     uint64_t modifier,
-                                     const QSize& size,
-                                     Flags flags,
-                                     egl_dmabuf* interfaceImpl)
-    : egl_dmabuf_buffer(std::move(planes), format, modifier, size, flags, interfaceImpl)
-{
-    m_importType = ImportType::Direct;
-    addImage(image);
-}
+using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
+using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
 
 egl_dmabuf_buffer::egl_dmabuf_buffer(std::vector<Plane> planes,
                                      uint32_t format,
                                      uint64_t modifier,
                                      const QSize& size,
-                                     Flags flags,
-                                     egl_dmabuf* interfaceImpl)
+                                     Flags flags)
     : Wrapland::Server::linux_dmabuf_buffer_v1(std::move(planes), format, modifier, size, flags)
-    , m_interfaceImpl(interfaceImpl)
 {
-    m_importType = ImportType::Conversion;
-}
-
-egl_dmabuf_buffer::~egl_dmabuf_buffer()
-{
-    removeImages();
-}
-
-std::vector<EGLImage> const& egl_dmabuf_buffer::images() const
-{
-    return m_images;
-}
-
-void egl_dmabuf_buffer::addImage(EGLImage image)
-{
-    m_images.push_back(image);
-}
-
-void egl_dmabuf_buffer::removeImages()
-{
-    if (m_interfaceImpl) {
-        for (auto image : m_images) {
-            m_interfaceImpl->data.base.destroy_image_khr(m_interfaceImpl->data.base.display, image);
-        }
-    }
-    m_images.clear();
-}
-
-using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
-using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
-
-EGLImage egl_dmabuf::createImage(std::vector<Plane> const& planes,
-                                 uint32_t format,
-                                 uint64_t modifier,
-                                 const QSize& size)
-{
-    const bool hasModifiers
-        = eglQueryDmaBufModifiersEXT != nullptr && modifier != DRM_FORMAT_MOD_INVALID;
-
-    QVector<EGLint> attribs;
-    attribs << EGL_WIDTH << size.width() << EGL_HEIGHT << size.height() << EGL_LINUX_DRM_FOURCC_EXT
-            << EGLint(format)
-
-            << EGL_DMA_BUF_PLANE0_FD_EXT << planes[0].fd << EGL_DMA_BUF_PLANE0_OFFSET_EXT
-            << EGLint(planes[0].offset) << EGL_DMA_BUF_PLANE0_PITCH_EXT << EGLint(planes[0].stride);
-
-    if (hasModifiers) {
-        attribs << EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT << EGLint(modifier & 0xffffffff)
-                << EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT << EGLint(modifier >> 32);
-    }
-
-    if (planes.size() > 1) {
-        attribs << EGL_DMA_BUF_PLANE1_FD_EXT << planes[1].fd << EGL_DMA_BUF_PLANE1_OFFSET_EXT
-                << EGLint(planes[1].offset) << EGL_DMA_BUF_PLANE1_PITCH_EXT
-                << EGLint(planes[1].stride);
-
-        if (hasModifiers) {
-            attribs << EGL_DMA_BUF_PLANE1_MODIFIER_LO_EXT << EGLint(modifier & 0xffffffff)
-                    << EGL_DMA_BUF_PLANE1_MODIFIER_HI_EXT << EGLint(modifier >> 32);
-        }
-    }
-
-    if (planes.size() > 2) {
-        attribs << EGL_DMA_BUF_PLANE2_FD_EXT << planes[2].fd << EGL_DMA_BUF_PLANE2_OFFSET_EXT
-                << EGLint(planes[2].offset) << EGL_DMA_BUF_PLANE2_PITCH_EXT
-                << EGLint(planes[2].stride);
-
-        if (hasModifiers) {
-            attribs << EGL_DMA_BUF_PLANE2_MODIFIER_LO_EXT << EGLint(modifier & 0xffffffff)
-                    << EGL_DMA_BUF_PLANE2_MODIFIER_HI_EXT << EGLint(modifier >> 32);
-        }
-    }
-
-    if (eglQueryDmaBufModifiersEXT != nullptr && planes.size() > 3) {
-        attribs << EGL_DMA_BUF_PLANE3_FD_EXT << planes[3].fd << EGL_DMA_BUF_PLANE3_OFFSET_EXT
-                << EGLint(planes[3].offset) << EGL_DMA_BUF_PLANE3_PITCH_EXT
-                << EGLint(planes[3].stride);
-
-        if (hasModifiers) {
-            attribs << EGL_DMA_BUF_PLANE3_MODIFIER_LO_EXT << EGLint(modifier & 0xffffffff)
-                    << EGL_DMA_BUF_PLANE3_MODIFIER_HI_EXT << EGLint(modifier >> 32);
-        }
-    }
-
-    attribs << EGL_NONE;
-
-    auto image = data.base.create_image_khr(data.base.display,
-                                            EGL_NO_CONTEXT,
-                                            EGL_LINUX_DMA_BUF_EXT,
-                                            (EGLClientBuffer) nullptr,
-                                            attribs.data());
-    if (image == EGL_NO_IMAGE_KHR) {
-        return nullptr;
-    }
-
-    return image;
 }
 
 std::unique_ptr<Wrapland::Server::linux_dmabuf_buffer_v1>
@@ -197,58 +52,7 @@ egl_dmabuf::import_buffer(std::vector<Plane> const& planes,
                           Flags flags)
 {
     Q_ASSERT(planes.size() > 0);
-
-    // Try first to import as a single image
-    if (auto* img = createImage(planes, format, modifier, size)) {
-        return std::make_unique<egl_dmabuf_buffer>(
-            img, planes, format, modifier, size, flags, this);
-    }
-
-    // TODO: to enable this we must be able to store multiple textures per window pixmap
-    //       and when on window draw do yuv to rgb transformation per shader (see Weston)
-    //    // not a single image, try yuv import
-    //    return yuvImport(planes, format, size, flags);
-
-    return nullptr;
-}
-
-Wrapland::Server::linux_dmabuf_buffer_v1* egl_dmabuf::yuvImport(std::vector<Plane> const& planes,
-                                                                uint32_t format,
-                                                                uint64_t modifier,
-                                                                const QSize& size,
-                                                                Flags flags)
-{
-    YuvFormat yuvFormat;
-    for (YuvFormat f : yuvFormats) {
-        if (f.format == format) {
-            yuvFormat = f;
-            break;
-        }
-    }
-    if (yuvFormat.format == 0) {
-        return nullptr;
-    }
-    if (static_cast<int>(planes.size()) != yuvFormat.inputPlanes) {
-        return nullptr;
-    }
-
-    auto* buf = new egl_dmabuf_buffer(planes, format, modifier, size, flags, this);
-
-    for (int i = 0; i < yuvFormat.outputPlanes; i++) {
-        int planeIndex = yuvFormat.planes[i].planeIndex;
-        Plane plane{planes[planeIndex].fd, planes[planeIndex].offset, planes[planeIndex].stride};
-        const auto planeFormat = yuvFormat.planes[i].format;
-        const auto planeSize = QSize(size.width() / yuvFormat.planes[i].widthDivisor,
-                                     size.height() / yuvFormat.planes[i].heightDivisor);
-        auto* image = createImage(std::vector<Plane>(1, plane), planeFormat, modifier, planeSize);
-        if (!image) {
-            delete buf;
-            return nullptr;
-        }
-        buf->addImage(image);
-    }
-    // TODO: add buf import properties
-    return buf;
+    return std::make_unique<egl_dmabuf_buffer>(planes, format, modifier, size, flags);
 }
 
 egl_dmabuf::egl_dmabuf(egl_dmabuf_data const& data)
