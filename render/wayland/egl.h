@@ -19,9 +19,7 @@ namespace KWin::render::wayland
 template<typename Backend>
 void init_egl(Backend& backend, egl_data& egl)
 {
-    if (!kwinApp()->get_wayland_server()) {
-        return;
-    }
+    assert(kwinApp()->get_wayland_server());
 
     if (backend.hasExtension(QByteArrayLiteral("EGL_WL_bind_wayland_display"))) {
         egl.bind_wl_display = reinterpret_cast<egl_data::bind_wl_display_func>(

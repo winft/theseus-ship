@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 #include "render/extern/drm_fourcc.h"
 
+#include <Wrapland/Server/globals.h>
 #include <unistd.h>
 
 namespace KWin::render::gl
@@ -188,10 +189,10 @@ EGLImage egl_dmabuf::createImage(const QVector<Plane>& planes, uint32_t format, 
     return image;
 }
 
-Wrapland::Server::linux_dmabuf_buffer_v1* egl_dmabuf::importBuffer(const QVector<Plane>& planes,
-                                                                   uint32_t format,
-                                                                   const QSize& size,
-                                                                   Flags flags)
+Wrapland::Server::linux_dmabuf_buffer_v1* egl_dmabuf::import_buffer(QVector<Plane> const& planes,
+                                                                    uint32_t format,
+                                                                    const QSize& size,
+                                                                    Flags flags)
 {
     Q_ASSERT(planes.count() > 0);
 
@@ -250,6 +251,15 @@ egl_dmabuf::yuvImport(const QVector<Plane>& planes, uint32_t format, const QSize
 egl_dmabuf::egl_dmabuf(egl_dmabuf_data const& data)
     : data{data}
 {
+    // TODO(romangg): Could we just reset it? I.e. recreate the global.
+    auto& dmabuf = waylandServer()->globals->linux_dmabuf_v1;
+    assert(!dmabuf);
+    dmabuf = std::make_unique<Wrapland::Server::linux_dmabuf_v1>(
+        waylandServer()->display.get(),
+        [this](auto const& planes, auto format, auto const& size, auto flags) {
+            return import_buffer(planes, format, size, flags);
+        });
+
     for (auto buffer : qAsConst(waylandServer()->dmabuf_buffers)) {
         auto buf = static_cast<egl_dmabuf_buffer*>(buffer);
         buf->setInterfaceImplementation(this);
@@ -358,7 +368,7 @@ void egl_dmabuf::setSupportedFormatsAndModifiers()
         set.insert(format, QSet<uint64_t>());
     }
 
-    wayland::linux_dmabuf::setSupportedFormatsAndModifiers(set);
+    waylandServer()->linux_dmabuf()->set_formats(set);
 }
 
 }

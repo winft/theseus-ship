@@ -83,19 +83,17 @@ struct egl_dmabuf_data {
     query_modifiers_ext_func query_modifiers_ext{nullptr};
 };
 
-class egl_dmabuf : public wayland::linux_dmabuf
+class egl_dmabuf
 {
 public:
     using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
     using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
 
     explicit egl_dmabuf(egl_dmabuf_data const& data);
-    ~egl_dmabuf() override;
+    ~egl_dmabuf();
 
-    Wrapland::Server::linux_dmabuf_buffer_v1* importBuffer(const QVector<Plane>& planes,
-                                                           uint32_t format,
-                                                           const QSize& size,
-                                                           Flags flags) override;
+    Wrapland::Server::linux_dmabuf_buffer_v1*
+    import_buffer(QVector<Plane> const& planes, uint32_t format, const QSize& size, Flags flags);
 
     egl_dmabuf_data data;
 

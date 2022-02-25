@@ -60,22 +60,4 @@ private:
     Flags m_flags;
 };
 
-class KWIN_EXPORT linux_dmabuf : public Wrapland::Server::linux_dmabuf_v1::Impl
-{
-public:
-    using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
-    using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
-
-    explicit linux_dmabuf();
-    ~linux_dmabuf() override;
-
-    Wrapland::Server::linux_dmabuf_buffer_v1* importBuffer(const QVector<Plane>& planes,
-                                                           uint32_t format,
-                                                           const QSize& size,
-                                                           Flags flags) override;
-
-protected:
-    void setSupportedFormatsAndModifiers(QHash<uint32_t, QSet<uint64_t>>& set);
-};
-
 }

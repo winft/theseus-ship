@@ -53,37 +53,4 @@ dmabuf_buffer::~dmabuf_buffer()
     }
 }
 
-linux_dmabuf::linux_dmabuf()
-    : Wrapland::Server::linux_dmabuf_v1::Impl()
-{
-    Q_ASSERT(waylandServer());
-    waylandServer()->linux_dmabuf()->setImpl(this);
-}
-
-linux_dmabuf::~linux_dmabuf()
-{
-    waylandServer()->linux_dmabuf()->setImpl(nullptr);
-}
-
-using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
-using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
-
-Wrapland::Server::linux_dmabuf_buffer_v1* linux_dmabuf::importBuffer(const QVector<Plane>& planes,
-                                                                     uint32_t format,
-                                                                     const QSize& size,
-                                                                     Flags flags)
-{
-    Q_UNUSED(planes)
-    Q_UNUSED(format)
-    Q_UNUSED(size)
-    Q_UNUSED(flags)
-
-    return nullptr;
-}
-
-void linux_dmabuf::setSupportedFormatsAndModifiers(QHash<uint32_t, QSet<uint64_t>>& set)
-{
-    waylandServer()->linux_dmabuf()->set_formats(set);
-}
-
 }
