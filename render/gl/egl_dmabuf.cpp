@@ -102,11 +102,6 @@ std::vector<EGLImage> const& egl_dmabuf_buffer::images() const
     return m_images;
 }
 
-void egl_dmabuf_buffer::setInterfaceImplementation(egl_dmabuf* interfaceImpl)
-{
-    m_interfaceImpl = interfaceImpl;
-}
-
 void egl_dmabuf_buffer::addImage(EGLImage image)
 {
     m_images.push_back(image);
@@ -261,20 +256,7 @@ egl_dmabuf::egl_dmabuf(egl_dmabuf_data const& data)
             return import_buffer(planes, format, size, flags);
         });
 
-    for (auto buffer : qAsConst(waylandServer()->dmabuf_buffers)) {
-        auto buf = static_cast<egl_dmabuf_buffer*>(buffer);
-        buf->setInterfaceImplementation(this);
-        buf->addImage(createImage(buf->planes(), buf->format(), buf->size()));
-    }
     setSupportedFormatsAndModifiers();
-}
-
-egl_dmabuf::~egl_dmabuf()
-{
-    for (auto buffer : qAsConst(waylandServer()->dmabuf_buffers)) {
-        auto buf = static_cast<egl_dmabuf_buffer*>(buffer);
-        buf->setInterfaceImplementation(nullptr);
-    }
 }
 
 const uint32_t s_multiPlaneFormats[] = {

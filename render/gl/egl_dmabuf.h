@@ -55,7 +55,6 @@ public:
 
     ~egl_dmabuf_buffer() override;
 
-    void setInterfaceImplementation(egl_dmabuf* interfaceImpl);
     void addImage(EGLImage image);
     void removeImages();
 
@@ -90,7 +89,6 @@ public:
     using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
 
     explicit egl_dmabuf(egl_dmabuf_data const& data);
-    ~egl_dmabuf();
 
     std::unique_ptr<Wrapland::Server::linux_dmabuf_buffer_v1>
     import_buffer(QVector<Plane> const& planes, uint32_t format, const QSize& size, Flags flags);

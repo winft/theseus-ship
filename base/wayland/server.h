@@ -39,7 +39,6 @@ class drm_lease_device_v1;
 class KdeIdle;
 class KeyState;
 class LayerShellV1;
-class linux_dmabuf_buffer_v1;
 class linux_dmabuf_v1;
 class PlasmaVirtualDesktopManager;
 class PlasmaWindowManager;
@@ -170,7 +169,6 @@ public:
 
     } internal_connection;
 
-    QSet<Wrapland::Server::linux_dmabuf_buffer_v1*> dmabuf_buffers;
     Wrapland::Server::Client* screen_locker_client_connection{nullptr};
 
 Q_SIGNALS:

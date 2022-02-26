@@ -37,7 +37,6 @@ dmabuf_buffer::dmabuf_buffer(const QVector<Plane>& planes,
     , m_size(size)
     , m_flags(flags)
 {
-    waylandServer()->dmabuf_buffers << this;
 }
 
 dmabuf_buffer::~dmabuf_buffer()
@@ -47,9 +46,6 @@ dmabuf_buffer::~dmabuf_buffer()
         if (m_planes[i].fd != -1)
             ::close(m_planes[i].fd);
         m_planes[i].fd = -1;
-    }
-    if (auto server = waylandServer()) {
-        server->dmabuf_buffers.remove(this);
     }
 }
 
