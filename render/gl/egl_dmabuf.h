@@ -41,13 +41,13 @@ public:
     enum class ImportType { Direct, Conversion };
 
     egl_dmabuf_buffer(EGLImage image,
-                      const QVector<Plane>& planes,
+                      std::vector<Plane> planes,
                       uint32_t format,
                       const QSize& size,
                       Flags flags,
                       egl_dmabuf* interfaceImpl);
 
-    egl_dmabuf_buffer(const QVector<Plane>& planes,
+    egl_dmabuf_buffer(std::vector<Plane> planes,
                       uint32_t format,
                       const QSize& size,
                       Flags flags,
@@ -91,15 +91,18 @@ public:
     explicit egl_dmabuf(egl_dmabuf_data const& data);
 
     std::unique_ptr<Wrapland::Server::linux_dmabuf_buffer_v1>
-    import_buffer(QVector<Plane> const& planes, uint32_t format, const QSize& size, Flags flags);
+    import_buffer(std::vector<Plane> const& planes,
+                  uint32_t format,
+                  const QSize& size,
+                  Flags flags);
 
     egl_dmabuf_data data;
 
 private:
-    EGLImage createImage(const QVector<Plane>& planes, uint32_t format, const QSize& size);
+    EGLImage createImage(std::vector<Plane> const& planes, uint32_t format, const QSize& size);
 
     Wrapland::Server::linux_dmabuf_buffer_v1*
-    yuvImport(const QVector<Plane>& planes, uint32_t format, const QSize& size, Flags flags);
+    yuvImport(std::vector<Plane> const& planes, uint32_t format, const QSize& size, Flags flags);
     QVector<uint32_t> queryFormats();
     void setSupportedFormatsAndModifiers();
 

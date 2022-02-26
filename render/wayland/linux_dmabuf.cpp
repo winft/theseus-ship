@@ -27,23 +27,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::render::wayland
 {
 
-dmabuf_buffer::dmabuf_buffer(const QVector<Plane>& planes,
+dmabuf_buffer::dmabuf_buffer(std::vector<Plane> planes,
                              uint32_t format,
                              const QSize& size,
                              Flags flags)
-    : Wrapland::Server::linux_dmabuf_buffer_v1(format, size)
-    , m_planes(planes)
-    , m_flags(flags)
+    : Wrapland::Server::linux_dmabuf_buffer_v1(std::move(planes), format, size, flags)
 {
 }
 
 dmabuf_buffer::~dmabuf_buffer()
 {
     // Close all open file descriptors
-    for (int i = 0; i < m_planes.count(); i++) {
-        if (m_planes[i].fd != -1)
-            ::close(m_planes[i].fd);
-        m_planes[i].fd = -1;
+    for (auto& plane : planes) {
+        if (plane.fd != -1) {
+            ::close(plane.fd);
+        }
     }
 }
 

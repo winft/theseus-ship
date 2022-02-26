@@ -33,21 +33,8 @@ public:
     using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
     using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
 
-    dmabuf_buffer(const QVector<Plane>& planes, uint32_t format, const QSize& size, Flags flags);
+    dmabuf_buffer(std::vector<Plane> planes, uint32_t format, const QSize& size, Flags flags);
     ~dmabuf_buffer() override;
-
-    const QVector<Plane>& planes() const
-    {
-        return m_planes;
-    }
-    Flags flags() const
-    {
-        return m_flags;
-    }
-
-private:
-    QVector<Plane> m_planes;
-    Flags m_flags;
 };
 
 }
