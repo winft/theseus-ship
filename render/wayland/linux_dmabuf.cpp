@@ -35,14 +35,4 @@ dmabuf_buffer::dmabuf_buffer(std::vector<Plane> planes,
 {
 }
 
-dmabuf_buffer::~dmabuf_buffer()
-{
-    // Close all open file descriptors
-    for (auto& plane : planes) {
-        if (plane.fd != -1) {
-            ::close(plane.fd);
-        }
-    }
-}
-
 }

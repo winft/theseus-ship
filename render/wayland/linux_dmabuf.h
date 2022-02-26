@@ -34,7 +34,6 @@ public:
     using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
 
     dmabuf_buffer(std::vector<Plane> planes, uint32_t format, const QSize& size, Flags flags);
-    ~dmabuf_buffer() override;
 };
 
 }
