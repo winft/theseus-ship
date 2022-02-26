@@ -26,28 +26,10 @@ find_package(PkgConfig)
 pkg_check_modules(PKG_wlroots QUIET wlroots)
 
 set(wlroots_VERSION ${PKG_wlroots_VERSION})
-
-find_path(wlroots_INCLUDE_DIRS
-  NAMES wlr/config.h
-  HINTS ${PKG_wlroots_INCLUDE_DIRS}
-)
-
-# Some wlroots headers also include Pixman headers without transient inclusion.
-find_path(wlroots_pixman_INCLUDE_DIRS
-  NAMES pixman.h
-  HINTS ${PKG_wlroots_INCLUDE_DIRS}
-  PATH_SUFFIXES pixman-1
-)
-
-# Merge the include dirs variables and delete the temporary one for Pixman.
-set(wlroots_INCLUDE_DIRS
-  "${wlroots_INCLUDE_DIRS}" "${wlroots_pixman_INCLUDE_DIRS}"
-  CACHE PATH "wlroots includes" FORCE
-)
-set(wlroots_pixman_INCLUDE_DIRS CACHE INTERNAL "" FORCE)
+set(wlroots_INCLUDE_DIRS ${PKG_wlroots_INCLUDE_DIRS})
 
 find_library(wlroots_LIBRARIES
-  NAMES wlroots
+  NAMES ${PKG_wlroots_LIBRARIES}
   HINTS ${PKG_wlroots_LIBRARY_DIRS}
 )
 
