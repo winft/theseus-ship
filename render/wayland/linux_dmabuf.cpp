@@ -33,8 +33,6 @@ dmabuf_buffer::dmabuf_buffer(const QVector<Plane>& planes,
                              Flags flags)
     : Wrapland::Server::linux_dmabuf_buffer_v1(format, size)
     , m_planes(planes)
-    , m_format(format)
-    , m_size(size)
     , m_flags(flags)
 {
 }

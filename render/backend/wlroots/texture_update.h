@@ -328,8 +328,8 @@ bool update_texture_from_dmabuf(Texture& texture, gl::egl_dmabuf_buffer* dmabuf)
     glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES)dmabuf->images().at(0));
     texture.q->unbind();
 
-    if (texture.m_size != dmabuf->size()) {
-        texture.m_size = dmabuf->size();
+    if (texture.m_size != dmabuf->size) {
+        texture.m_size = dmabuf->size;
         texture.updateMatrix();
     }
 

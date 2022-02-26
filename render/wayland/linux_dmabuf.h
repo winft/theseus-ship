@@ -40,14 +40,6 @@ public:
     {
         return m_planes;
     }
-    uint32_t format() const
-    {
-        return m_format;
-    }
-    QSize size() const
-    {
-        return m_size;
-    }
     Flags flags() const
     {
         return m_flags;
@@ -55,8 +47,6 @@ public:
 
 private:
     QVector<Plane> m_planes;
-    uint32_t m_format;
-    QSize m_size;
     Flags m_flags;
 };
 
