@@ -899,7 +899,6 @@ set(kwin_WAYLAND_SRCS
    render/backend/wlroots/qpainter_output.cpp
    render/wayland/compositor.cpp
    render/wayland/effects.cpp
-   render/wayland/linux_dmabuf.cpp
    render/wayland/output.cpp
    render/wayland/presentation.cpp
    win/wayland/space.cpp

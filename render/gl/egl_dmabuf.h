@@ -22,9 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "egl_data.h"
 
-#include "render/wayland/linux_dmabuf.h"
-
 #include <QVector>
+#include <Wrapland/Server/linux_dmabuf_v1.h>
 #include <cassert>
 #include <epoxy/egl.h>
 
@@ -32,7 +31,7 @@ namespace KWin::render::gl
 {
 class egl_dmabuf;
 
-class egl_dmabuf_buffer : public wayland::dmabuf_buffer
+class egl_dmabuf_buffer : public Wrapland::Server::linux_dmabuf_buffer_v1
 {
 public:
     using Plane = Wrapland::Server::linux_dmabuf_plane_v1;

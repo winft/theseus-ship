@@ -86,7 +86,7 @@ egl_dmabuf_buffer::egl_dmabuf_buffer(std::vector<Plane> planes,
                                      const QSize& size,
                                      Flags flags,
                                      egl_dmabuf* interfaceImpl)
-    : wayland::dmabuf_buffer(std::move(planes), format, size, flags)
+    : Wrapland::Server::linux_dmabuf_buffer_v1(std::move(planes), format, size, flags)
     , m_interfaceImpl(interfaceImpl)
 {
     m_importType = ImportType::Conversion;
