@@ -29,7 +29,11 @@
 #include <linux/input.h>
 
 extern "C" {
+#if HAVE_WLR_BASE_INPUT_DEVICES
+#include <wlr/interfaces/wlr_keyboard.h>
+#else
 #include <wlr/interfaces/wlr_input_device.h>
+#endif
 }
 
 namespace KWin
@@ -120,12 +124,24 @@ private:
 wlr_input_device* keyboard_layout_test::create_keyboard()
 {
     keyboards_index++;
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    auto keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
+    auto name = "headless-keyboard" + std::to_string(keyboards_index);
+    wlr_keyboard_init(keyboard, nullptr, name.c_str());
+    Test::wlr_signal_emit_safe(&Test::app()->base.backend->events.new_input, keyboard);
+    return &keyboard->base;
+#else
     return wlr_headless_add_input_device(Test::app()->base.backend, WLR_INPUT_DEVICE_KEYBOARD);
+#endif
 }
 
 void remove_input_device(wlr_input_device* device)
 {
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    wlr_keyboard_destroy(device->keyboard);
+#else
     wlr_input_device_destroy(device);
+#endif
 }
 
 void keyboard_layout_test::reconfigure_layouts()
