@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "app.h"
 
+#include "config-kwin.h"
+
 #include "base/seat/backend/wlroots/session.h"
 #include "base/wayland/output.h"
 #include "debug/console/wayland/wayland_console.h"
@@ -50,6 +52,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 extern "C" {
 #include <wlr/backend/headless.h>
+#if HAVE_WLR_BASE_INPUT_DEVICES
+#include <wlr/interfaces/wlr_keyboard.h>
+#include <wlr/interfaces/wlr_pointer.h>
+#include <wlr/interfaces/wlr_touch.h>
+#endif
 }
 
 Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
@@ -102,6 +109,15 @@ WaylandTestApplication::WaylandTestApplication(OperationMode mode,
 
 WaylandTestApplication::~WaylandTestApplication()
 {
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    assert(keyboard);
+    assert(pointer);
+    assert(touch);
+    wlr_keyboard_destroy(keyboard->keyboard);
+    wlr_pointer_destroy(pointer->pointer);
+    wlr_touch_destroy(touch->touch);
+#endif
+
     setTerminating();
 
     // need to unload all effects prior to destroying X connection as they might do X calls
@@ -166,9 +182,18 @@ void WaylandTestApplication::start()
     input::wayland::add_dbus(input.get());
     input->redirect->install_shortcuts();
 
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    auto keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));
+    auto pointer = static_cast<wlr_pointer*>(calloc(1, sizeof(wlr_pointer)));
+    auto touch = static_cast<wlr_touch*>(calloc(1, sizeof(wlr_touch)));
+#else
     keyboard = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_KEYBOARD);
     pointer = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_POINTER);
     touch = wlr_headless_add_input_device(headless_backend, WLR_INPUT_DEVICE_TOUCH);
+#endif
+    assert(keyboard);
+    assert(pointer);
+    assert(touch);
 
     try {
         static_cast<render::backend::wlroots::platform*>(base.render.get())->init();
@@ -176,6 +201,22 @@ void WaylandTestApplication::start()
         std::cerr << "FATAL ERROR: backend failed to initialize, exiting now" << std::endl;
         ::exit(1);
     }
+
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    wlr_keyboard_init(keyboard, nullptr, "headless-keyboard");
+    wlr_pointer_init(pointer, nullptr, "headless-pointer");
+    wlr_touch_init(touch, nullptr, "headless-touch");
+
+    // TODO(romangg): Replace the wlr_input_device* members with specific devices once we depend on
+    //                wlroots 0.16.
+    this->keyboard = &keyboard->base;
+    this->pointer = &pointer->base;
+    this->touch = &touch->base;
+
+    Test::wlr_signal_emit_safe(&base.backend->events.new_input, keyboard);
+    Test::wlr_signal_emit_safe(&base.backend->events.new_input, pointer);
+    Test::wlr_signal_emit_safe(&base.backend->events.new_input, touch);
+#endif
 
     // Must set physical size for calculation of screen edges corner offset.
     // TODO(romangg): Make the corner offset calculation not depend on that.

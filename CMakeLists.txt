@@ -192,6 +192,11 @@ set_package_properties(wlroots PROPERTIES
     PURPOSE "Required for building wlroots backend."
 )
 
+if (${wlroots_VERSION} VERSION_GREATER_EQUAL 0.16)
+  set(HAVE_WLR_BASE_INPUT_DEVICES 1)
+endif()
+
+
 find_package(X11)
 set_package_properties(X11 PROPERTIES
     DESCRIPTION "X11 libraries"
@@ -978,7 +983,7 @@ endif()
 # Required for Plasma Wayland session. It expects a binary with this name to launch on startup.
 add_custom_target(kwin_wayland_wrapper ALL COMMAND
     ${CMAKE_COMMAND} -E create_symlink
-    kwin_wayland ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/kwin_wayland_wrapper
+    kwin_wayland ${CMAKE_CURRENT_BINARY_DIR}/bin/kwin_wayland_wrapper
 )
 
 ########### install files ###############
@@ -1058,6 +1063,6 @@ ecm_install_configured_files(
 )
 
 install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/kwin_wayland_wrapper
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/bin/kwin_wayland_wrapper
     DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
 )

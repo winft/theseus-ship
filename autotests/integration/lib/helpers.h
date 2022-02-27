@@ -15,6 +15,7 @@
 #include <QtTest>
 #include <Wrapland/Client/xdg_shell.h>
 
+struct wl_signal;
 struct wlr_input_device;
 
 namespace Wrapland::Client
@@ -180,6 +181,8 @@ KWIN_EXPORT void lock_screen();
  * @returns @c true if the screen could be unlocked, @c false otherwise
  */
 KWIN_EXPORT void unlock_screen();
+
+KWIN_EXPORT void wlr_signal_emit_safe(wl_signal* signal, void* data);
 
 KWIN_EXPORT void pointer_motion_absolute(QPointF const& position, uint32_t time);
 
