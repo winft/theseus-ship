@@ -10,7 +10,6 @@
 #define KWIN_XCLIPBOARD_SYNC_BIN "${CMAKE_INSTALL_FULL_LIBEXECDIR}/org_kde_kwin_xclipboard_syncer"
 #cmakedefine01 HAVE_X11_XINPUT
 #cmakedefine01 HAVE_PERF
-#cmakedefine01 HAVE_SYS_SYSMACROS_H
 #cmakedefine01 HAVE_BREEZE_DECO
 #cmakedefine01 HAVE_LIBCAP
 #cmakedefine01 HAVE_SCHED_RESET_ON_FORK
@@ -20,12 +19,6 @@
 #if HAVE_BREEZE_DECO
 #define BREEZE_KDECORATION_PLUGIN_ID "${BREEZE_KDECORATION_PLUGIN_ID}"
 #endif
-
-/* Define to 1 if you have the <unistd.h> header file. */
-#cmakedefine HAVE_UNISTD_H 1
-
-/* Define to 1 if you have the <malloc.h> header file. */
-#cmakedefine HAVE_MALLOC_H 1
 
 #cmakedefine XCB_ICCCM_FOUND 1
 #ifndef XCB_ICCCM_FOUND

@@ -19,12 +19,14 @@
 #include <QDebug>
 
 #include <sys/stat.h>
-#if HAVE_SYS_SYSMACROS_H
+
+#if __has_include(<sys/sysmacros.h>)
 #include <sys/sysmacros.h>
 #endif
 #ifndef major
 #include <sys/types.h>
 #endif
+
 #include <fcntl.h>
 #include <unistd.h>
 

@@ -54,13 +54,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cerrno>
 
 // system
-#ifdef HAVE_UNISTD_H
+#if __has_include(<unistd.h>)
 #include <unistd.h>
-#endif // HAVE_UNISTD_H
+#endif
 
-#ifdef HAVE_MALLOC_H
+#if __has_include(<malloc.h>)
 #include <malloc.h>
-#endif // HAVE_MALLOC_H
+#endif
 
 // xcb
 #include <xcb/damage.h>
@@ -233,11 +233,7 @@ void Application::setupMalloc()
     // due to fragmentation especially if we use the raster graphicssystem. On the
     // otherside if the threshold is too low, free() starts to permanently ask the kernel
     // about shrinking the heap.
-#ifdef HAVE_UNISTD_H
     const int pagesize = sysconf(_SC_PAGESIZE);
-#else
-    const int pagesize = 4*1024;
-#endif // HAVE_UNISTD_H
     mallopt(M_TRIM_THRESHOLD, 5*pagesize);
 #endif // M_TRIM_THRESHOLD
 }
