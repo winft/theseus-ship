@@ -40,8 +40,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kconfiggroup.h>
 #include <ksharedconfig.h>
 
-#include <Wrapland/Server/surface.h>
-
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
 #include <xcb/xfixes.h>
 #endif

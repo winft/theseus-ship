@@ -39,7 +39,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QQmlContext>
 #include <QQuickItem>
-#include <Wrapland/Server/surface.h>
 
 #include <cmath>
 
