@@ -55,8 +55,7 @@ egl_dmabuf::import_buffer(std::vector<Plane> const& planes,
     return std::make_unique<egl_dmabuf_buffer>(planes, format, modifier, size, flags);
 }
 
-egl_dmabuf::egl_dmabuf(egl_dmabuf_data const& data)
-    : data{data}
+egl_dmabuf::egl_dmabuf()
 {
     // TODO(romangg): Could we just reset it? I.e. recreate the global.
     auto& dmabuf = waylandServer()->globals->linux_dmabuf_v1;

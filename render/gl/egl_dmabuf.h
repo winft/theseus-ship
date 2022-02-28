@@ -43,29 +43,13 @@ public:
                       Wrapland::Server::linux_dmabuf_flags_v1 flags);
 };
 
-struct egl_dmabuf_data {
-    egl_data base;
-
-    using query_formats_ext_func
-        = EGLBoolean (*)(EGLDisplay dpy, EGLint max_formats, EGLint* formats, EGLint* num_formats);
-    using query_modifiers_ext_func = EGLBoolean (*)(EGLDisplay dpy,
-                                                    EGLint format,
-                                                    EGLint max_modifiers,
-                                                    EGLuint64KHR* modifiers,
-                                                    EGLBoolean* external_only,
-                                                    EGLint* num_modifiers);
-
-    query_formats_ext_func query_formats_ext{nullptr};
-    query_modifiers_ext_func query_modifiers_ext{nullptr};
-};
-
 class KWIN_EXPORT egl_dmabuf
 {
 public:
     using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
     using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
 
-    explicit egl_dmabuf(egl_dmabuf_data const& data);
+    egl_dmabuf();
 
     std::unique_ptr<Wrapland::Server::linux_dmabuf_buffer_v1>
     import_buffer(std::vector<Plane> const& planes,
@@ -73,8 +57,6 @@ public:
                   uint64_t modifier,
                   const QSize& size,
                   Flags flags);
-
-    egl_dmabuf_data data;
 };
 
 template<typename Backend>
@@ -86,17 +68,7 @@ static egl_dmabuf* egl_dmabuf_factory(Backend& backend)
         return nullptr;
     }
 
-    egl_dmabuf_data data;
-    data.base = backend.data.base;
-
-    if (backend.hasExtension(QByteArrayLiteral("EGL_EXT_image_dma_buf_import_modifiers"))) {
-        data.query_formats_ext = reinterpret_cast<egl_dmabuf_data::query_formats_ext_func>(
-            eglGetProcAddress("eglQueryDmaBufFormatsEXT"));
-        data.query_modifiers_ext = reinterpret_cast<egl_dmabuf_data::query_modifiers_ext_func>(
-            eglGetProcAddress("eglQueryDmaBufModifiersEXT"));
-    }
-
-    return new egl_dmabuf(data);
+    return new egl_dmabuf;
 }
 
 }
