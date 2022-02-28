@@ -20,18 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "egl_data.h"
-
 #include "kwin_export.h"
 
-#include <QVector>
 #include <Wrapland/Server/linux_dmabuf_v1.h>
-#include <cassert>
-#include <epoxy/egl.h>
 
 namespace KWin::render::gl
 {
-class egl_dmabuf;
 
 class KWIN_EXPORT egl_dmabuf_buffer : public Wrapland::Server::linux_dmabuf_buffer_v1
 {
@@ -58,17 +52,5 @@ public:
                   const QSize& size,
                   Flags flags);
 };
-
-template<typename Backend>
-static egl_dmabuf* egl_dmabuf_factory(Backend& backend)
-{
-    assert(backend.data.base.display != EGL_NO_DISPLAY);
-
-    if (!backend.hasExtension(QByteArrayLiteral("EGL_EXT_image_dma_buf_import"))) {
-        return nullptr;
-    }
-
-    return new egl_dmabuf;
-}
 
 }
