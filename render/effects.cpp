@@ -1979,7 +1979,7 @@ void effects_window_impl::addLayerRepaint(int x, int y, int w, int h)
 
 const EffectWindowGroup* effects_window_impl::group() const
 {
-    if (auto c = qobject_cast<win::x11::window*>(toplevel)) {
+    if (auto c = qobject_cast<win::x11::window*>(toplevel); c && c->group()) {
         return c->group()->effectGroup();
     }
     return nullptr; // TODO
