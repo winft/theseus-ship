@@ -47,7 +47,6 @@ public Q_SLOTS:
     void slotWindowAdded(KWin::EffectWindow* w);
     void slotWindowClosed(KWin::EffectWindow* w);
     void slotWindowDeleted(KWin::EffectWindow* w);
-    void slotPropertyNotify(KWin::EffectWindow* w, long atom, EffectWindow* addedWindow = nullptr);
 
 private:
     void startGhostAnimation(EffectWindow* window, int duration = -1);
@@ -60,7 +59,6 @@ private:
     void finishHighlighting();
     void highlightWindows(const QVector<KWin::EffectWindow*>& windows);
 
-    long m_atom;
     QList<EffectWindow*> m_highlightedWindows;
     QHash<EffectWindow*, quint64> m_animations;
     QEasingCurve m_easingCurve;

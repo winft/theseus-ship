@@ -18,18 +18,10 @@ HighlightWindowEffect::HighlightWindowEffect()
     , m_fadeDuration(animationTime(150))
     , m_monitorWindow(nullptr)
 {
-    // TODO KF6 remove atom support
-    m_atom = effects->announceSupportProperty("_KDE_WINDOW_HIGHLIGHT", this);
     connect(effects, &EffectsHandler::windowAdded, this, &HighlightWindowEffect::slotWindowAdded);
     connect(effects, &EffectsHandler::windowClosed, this, &HighlightWindowEffect::slotWindowClosed);
     connect(
         effects, &EffectsHandler::windowDeleted, this, &HighlightWindowEffect::slotWindowDeleted);
-    connect(effects, &EffectsHandler::propertyNotify, this, [this](EffectWindow* w, long atom) {
-        slotPropertyNotify(w, atom, nullptr);
-    });
-    connect(effects, &EffectsHandler::xcbConnectionChanged, this, [this] {
-        m_atom = effects->announceSupportProperty("_KDE_WINDOW_HIGHLIGHT", this);
-    });
 
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin/HighlightWindow"),
                                                  QStringLiteral("org.kde.KWin.HighlightWindow"),
@@ -87,7 +79,6 @@ void HighlightWindowEffect::slotWindowAdded(EffectWindow* w)
             startGhostAnimation(w, 0); // this window is not currently highlighted
         }
     }
-    slotPropertyNotify(w, m_atom, w); // Check initial value
 }
 
 void HighlightWindowEffect::slotWindowClosed(EffectWindow* w)
@@ -99,55 +90,6 @@ void HighlightWindowEffect::slotWindowClosed(EffectWindow* w)
 void HighlightWindowEffect::slotWindowDeleted(EffectWindow* w)
 {
     m_animations.remove(w);
-}
-
-void HighlightWindowEffect::slotPropertyNotify(EffectWindow* w, long a, EffectWindow* addedWindow)
-{
-    if (a != m_atom || m_atom == XCB_ATOM_NONE)
-        return; // Not our atom
-
-    // if the window is null, the property was set on the root window - see events.cpp
-    QByteArray byteData
-        = w ? w->readProperty(m_atom, m_atom, 32) : effects->readRootProperty(m_atom, m_atom, 32);
-    if (byteData.length() < 1) {
-        // Property was removed, clearing highlight
-        if (!addedWindow || w != addedWindow)
-            finishHighlighting();
-        return;
-    }
-    auto* data = reinterpret_cast<uint32_t*>(byteData.data());
-
-    if (!data[0]) {
-        // Purposely clearing highlight by issuing a NULL target
-        finishHighlighting();
-        return;
-    }
-    m_monitorWindow = w;
-    bool found = false;
-    int length = byteData.length() / sizeof(data[0]);
-    // foreach ( EffectWindow* e, m_highlightedWindows )
-    //     effects->setElevatedWindow( e, false );
-    m_highlightedWindows.clear();
-    m_highlightedIds.clear();
-    for (int i = 0; i < length; i++) {
-        m_highlightedIds << data[i];
-        EffectWindow* foundWin = effects->findWindow(data[i]);
-        if (!foundWin) {
-            qCDebug(KWIN_HIGHLIGHTWINDOW)
-                << "Invalid window targetted for highlight. Requested:" << data[i];
-            continue; // might come in later.
-        }
-        m_highlightedWindows.append(foundWin);
-        // TODO: We cannot just simply elevate the window as this will elevate it over
-        // Plasma tooltips and other such windows as well
-        // effects->setElevatedWindow( foundWin, true );
-        found = true;
-    }
-    if (!found) {
-        finishHighlighting();
-        return;
-    }
-    prepareHighlighting();
 }
 
 void HighlightWindowEffect::prepareHighlighting()
