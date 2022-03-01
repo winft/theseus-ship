@@ -9,8 +9,7 @@
 namespace KWin
 {
 
-KWIN_EFFECT_FACTORY(TouchPointsEffect,
-                    "metadata.json.stripped")
+KWIN_EFFECT_FACTORY(TouchPointsEffect, "metadata.json.stripped")
 
 } // namespace KWin
 

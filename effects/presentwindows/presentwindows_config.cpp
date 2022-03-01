@@ -22,16 +22,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "presentwindows_config.h"
 // KConfigSkeleton
 #include "presentwindowsconfig.h"
+#include <QAction>
 #include <config-kwin.h>
 #include <kwineffects_interface.h>
-#include <QAction>
 
-#include <kconfiggroup.h>
-#include <KActionCollection>
 #include <KAboutData>
+#include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KPluginFactory>
+#include <kconfiggroup.h>
 
 #include <QVBoxLayout>
 
@@ -40,13 +40,14 @@ K_PLUGIN_CLASS(KWin::PresentWindowsEffectConfig)
 namespace KWin
 {
 
-PresentWindowsEffectConfigForm::PresentWindowsEffectConfigForm(QWidget* parent) : QWidget(parent)
+PresentWindowsEffectConfigForm::PresentWindowsEffectConfigForm(QWidget* parent)
+    : QWidget(parent)
 {
     setupUi(this);
 }
 
 PresentWindowsEffectConfig::PresentWindowsEffectConfig(QWidget* parent, const QVariantList& args)
-    :   KCModule(parent, args)
+    : KCModule(parent, args)
 {
     m_ui = new PresentWindowsEffectConfigForm(this);
 
@@ -64,8 +65,10 @@ PresentWindowsEffectConfig::PresentWindowsEffectConfig(QWidget* parent, const QV
     QAction* a = m_actionCollection->addAction(QStringLiteral("ExposeAll"));
     a->setText(i18n("Toggle Present Windows (All desktops)"));
     a->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F10 << Qt::Key_LaunchC);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F10 << Qt::Key_LaunchC);
+    KGlobalAccel::self()->setDefaultShortcut(
+        a, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F10 << Qt::Key_LaunchC);
+    KGlobalAccel::self()->setShortcut(
+        a, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F10 << Qt::Key_LaunchC);
 
     QAction* b = m_actionCollection->addAction(QStringLiteral("Expose"));
     b->setText(i18n("Toggle Present Windows (Current desktop)"));
@@ -81,7 +84,10 @@ PresentWindowsEffectConfig::PresentWindowsEffectConfig(QWidget* parent, const QV
 
     m_ui->shortcutEditor->addCollection(m_actionCollection);
 
-    connect(m_ui->shortcutEditor, &KShortcutsEditor::keyChange, this, &PresentWindowsEffectConfig::markAsChanged);
+    connect(m_ui->shortcutEditor,
+            &KShortcutsEditor::keyChange,
+            this,
+            &PresentWindowsEffectConfig::markAsChanged);
 
     PresentWindowsConfig::instance(KWIN_CONFIG);
     addConfig(PresentWindowsConfig::self(), m_ui);
@@ -99,9 +105,8 @@ void PresentWindowsEffectConfig::save()
 {
     KCModule::save();
     m_ui->shortcutEditor->save();
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("presentwindows"));
 }
 

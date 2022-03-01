@@ -23,16 +23,16 @@
 #include "glideconfig.h"
 #include <config-kwin.h>
 
-#include <kwineffects_interface.h>
 #include <KAboutData>
 #include <KPluginFactory>
+#include <kwineffects_interface.h>
 
 K_PLUGIN_CLASS(KWin::GlideEffectConfig)
 
 namespace KWin
 {
 
-GlideEffectConfig::GlideEffectConfig(QWidget *parent, const QVariantList &args)
+GlideEffectConfig::GlideEffectConfig(QWidget* parent, const QVariantList& args)
     : KCModule(parent, args)
 {
     ui.setupUi(this);
@@ -48,9 +48,8 @@ GlideEffectConfig::~GlideEffectConfig()
 void GlideEffectConfig::save()
 {
     KCModule::save();
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("glide"));
 }
 

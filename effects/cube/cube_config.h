@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ui_cube_config.h"
 
-
 namespace KWin
 {
 
@@ -47,6 +46,7 @@ public Q_SLOTS:
 
 private Q_SLOTS:
     void capsSelectionChanged();
+
 private:
     CubeEffectConfigForm* m_ui;
     KActionCollection* m_actionCollection;

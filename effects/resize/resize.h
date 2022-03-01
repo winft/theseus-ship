@@ -26,8 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class ResizeEffect
-    : public AnimationEffect
+class ResizeEffect : public AnimationEffect
 {
     Q_OBJECT
     Q_PROPERTY(bool textureScale READ isTextureScale)
@@ -35,30 +34,39 @@ class ResizeEffect
 public:
     ResizeEffect();
     ~ResizeEffect() override;
-    inline bool provides(Effect::Feature ef) override {
+    inline bool provides(Effect::Feature ef) override
+    {
         return ef == Effect::Resize;
     }
-    inline bool isActive() const override { return m_active || AnimationEffect::isActive(); }
+    inline bool isActive() const override
+    {
+        return m_active || AnimationEffect::isActive();
+    }
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
     void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
     void reconfigure(ReconfigureFlags) override;
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         return 60;
     }
 
-    bool isTextureScale() const {
+    bool isTextureScale() const
+    {
         return m_features & TextureScale;
     }
-    bool isOutline() const {
+    bool isOutline() const
+    {
         return m_features & Outline;
     }
 
 public Q_SLOTS:
-    void slotWindowStartUserMovedResized(KWin::EffectWindow *w);
-    void slotWindowStepUserMovedResized(KWin::EffectWindow *w, const QRect &geometry);
-    void slotWindowFinishUserMovedResized(KWin::EffectWindow *w);
+    void slotWindowStartUserMovedResized(KWin::EffectWindow* w);
+    void slotWindowStepUserMovedResized(KWin::EffectWindow* w, const QRect& geometry);
+    void slotWindowFinishUserMovedResized(KWin::EffectWindow* w);
 
 private:
     enum Feature { TextureScale = 1 << 0, Outline = 1 << 1 };

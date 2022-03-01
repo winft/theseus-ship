@@ -24,7 +24,7 @@
 namespace KWin
 {
 
-static ScreenShotFlags screenShotFlagsFromOptions(const QVariantMap &options)
+static ScreenShotFlags screenShotFlagsFromOptions(const QVariantMap& options)
 {
     ScreenShotFlags flags = ScreenShotFlags();
 
@@ -46,7 +46,7 @@ static ScreenShotFlags screenShotFlagsFromOptions(const QVariantMap &options)
     return flags;
 }
 
-static void writeBufferToPipe(int fileDescriptor, const QByteArray &buffer)
+static void writeBufferToPipe(int fileDescriptor, const QByteArray& buffer)
 {
     QFile file;
     if (!file.open(fileDescriptor, QIODevice::WriteOnly, QFileDevice::AutoCloseHandle)) {
@@ -75,11 +75,12 @@ static void writeBufferToPipe(int fileDescriptor, const QByteArray &buffer)
             qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "pipe is broken";
             return;
         } else {
-            const char *chunk = buffer.constData() + (buffer.size() - remainingSize);
+            const char* chunk = buffer.constData() + (buffer.size() - remainingSize);
             const qint64 writtenCount = file.write(chunk, remainingSize);
 
             if (writtenCount < 0) {
-                qCWarning(KWIN_SCREENSHOT) << Q_FUNC_INFO << "write() failed:" << file.errorString();
+                qCWarning(KWIN_SCREENSHOT)
+                    << Q_FUNC_INFO << "write() failed:" << file.errorString();
                 return;
             }
 
@@ -95,17 +96,23 @@ static const QString s_dbusServiceName = QStringLiteral("org.kde.KWin.ScreenShot
 static const QString s_dbusInterface = QStringLiteral("org.kde.KWin.ScreenShot2");
 static const QString s_dbusObjectPath = QStringLiteral("/org/kde/KWin/ScreenShot2");
 
-static const QString s_errorNotAuthorized = QStringLiteral("org.kde.KWin.ScreenShot2.Error.NoAuthorized");
-static const QString s_errorNotAuthorizedMessage = QStringLiteral("The process is not authorized to take a screenshot");
+static const QString s_errorNotAuthorized
+    = QStringLiteral("org.kde.KWin.ScreenShot2.Error.NoAuthorized");
+static const QString s_errorNotAuthorizedMessage
+    = QStringLiteral("The process is not authorized to take a screenshot");
 static const QString s_errorCancelled = QStringLiteral("org.kde.KWin.ScreenShot2.Error.Cancelled");
 static const QString s_errorCancelledMessage = QStringLiteral("Screenshot got cancelled");
-static const QString s_errorInvalidWindow = QStringLiteral("org.kde.KWin.ScreenShot2.Error.InvalidWindow");
+static const QString s_errorInvalidWindow
+    = QStringLiteral("org.kde.KWin.ScreenShot2.Error.InvalidWindow");
 static const QString s_errorInvalidWindowMessage = QStringLiteral("Invalid window requested");
-static const QString s_errorInvalidArea = QStringLiteral("org.kde.KWin.ScreenShot2.Error.InvalidArea");
+static const QString s_errorInvalidArea
+    = QStringLiteral("org.kde.KWin.ScreenShot2.Error.InvalidArea");
 static const QString s_errorInvalidAreaMessage = QStringLiteral("Invalid area requested");
-static const QString s_errorInvalidScreen = QStringLiteral("org.kde.KWin.ScreenShot2.Error.InvalidScreen");
+static const QString s_errorInvalidScreen
+    = QStringLiteral("org.kde.KWin.ScreenShot2.Error.InvalidScreen");
 static const QString s_errorInvalidScreenMessage = QStringLiteral("Invalid screen requested");
-static const QString s_errorFileDescriptor = QStringLiteral("org.kde.KWin.ScreenShot2.Error.FileDescriptor");
+static const QString s_errorFileDescriptor
+    = QStringLiteral("org.kde.KWin.ScreenShot2.Error.FileDescriptor");
 static const QString s_errorFileDescriptorMessage = QStringLiteral("No valid file descriptor");
 
 class ScreenShotSource2 : public QObject
@@ -113,11 +120,11 @@ class ScreenShotSource2 : public QObject
     Q_OBJECT
 
 public:
-    explicit ScreenShotSource2(const QFuture<QImage> &future);
+    explicit ScreenShotSource2(const QFuture<QImage>& future);
 
     bool isCancelled() const;
     bool isCompleted() const;
-    void marshal(ScreenShotSinkPipe2 *sink);
+    void marshal(ScreenShotSinkPipe2* sink);
 
 Q_SIGNALS:
     void cancelled();
@@ -125,7 +132,7 @@ Q_SIGNALS:
 
 private:
     QFuture<QImage> m_future;
-    QFutureWatcher<QImage> *m_watcher;
+    QFutureWatcher<QImage>* m_watcher;
 };
 
 class ScreenShotSourceScreen2 : public ScreenShotSource2
@@ -133,7 +140,7 @@ class ScreenShotSourceScreen2 : public ScreenShotSource2
     Q_OBJECT
 
 public:
-    ScreenShotSourceScreen2(ScreenShotEffect *effect, EffectScreen *screen, ScreenShotFlags flags);
+    ScreenShotSourceScreen2(ScreenShotEffect* effect, EffectScreen* screen, ScreenShotFlags flags);
 };
 
 class ScreenShotSourceArea2 : public ScreenShotSource2
@@ -141,7 +148,7 @@ class ScreenShotSourceArea2 : public ScreenShotSource2
     Q_OBJECT
 
 public:
-    ScreenShotSourceArea2(ScreenShotEffect *effect, const QRect &area, ScreenShotFlags flags);
+    ScreenShotSourceArea2(ScreenShotEffect* effect, const QRect& area, ScreenShotFlags flags);
 };
 
 class ScreenShotSourceWindow2 : public ScreenShotSource2
@@ -149,7 +156,7 @@ class ScreenShotSourceWindow2 : public ScreenShotSource2
     Q_OBJECT
 
 public:
-    ScreenShotSourceWindow2(ScreenShotEffect *effect, EffectWindow *window, ScreenShotFlags flags);
+    ScreenShotSourceWindow2(ScreenShotEffect* effect, EffectWindow* window, ScreenShotFlags flags);
 };
 
 class ScreenShotSinkPipe2 : public QObject
@@ -161,14 +168,14 @@ public:
     ~ScreenShotSinkPipe2();
 
     void cancel();
-    void flush(const QImage &image);
+    void flush(const QImage& image);
 
 private:
     QDBusMessage m_replyMessage;
     int m_fileDescriptor;
 };
 
-ScreenShotSource2::ScreenShotSource2(const QFuture<QImage> &future)
+ScreenShotSource2::ScreenShotSource2(const QFuture<QImage>& future)
     : m_future(future)
 {
     m_watcher = new QFutureWatcher<QImage>(this);
@@ -187,27 +194,27 @@ bool ScreenShotSource2::isCompleted() const
     return m_future.isFinished();
 }
 
-void ScreenShotSource2::marshal(ScreenShotSinkPipe2 *sink)
+void ScreenShotSource2::marshal(ScreenShotSinkPipe2* sink)
 {
     sink->flush(m_future.result());
 }
 
-ScreenShotSourceScreen2::ScreenShotSourceScreen2(ScreenShotEffect *effect,
-                                                 EffectScreen *screen,
+ScreenShotSourceScreen2::ScreenShotSourceScreen2(ScreenShotEffect* effect,
+                                                 EffectScreen* screen,
                                                  ScreenShotFlags flags)
     : ScreenShotSource2(effect->scheduleScreenShot(screen, flags))
 {
 }
 
-ScreenShotSourceArea2::ScreenShotSourceArea2(ScreenShotEffect *effect,
-                                             const QRect &area,
+ScreenShotSourceArea2::ScreenShotSourceArea2(ScreenShotEffect* effect,
+                                             const QRect& area,
                                              ScreenShotFlags flags)
     : ScreenShotSource2(effect->scheduleScreenShot(area, flags))
 {
 }
 
-ScreenShotSourceWindow2::ScreenShotSourceWindow2(ScreenShotEffect *effect,
-                                                 EffectWindow *window,
+ScreenShotSourceWindow2::ScreenShotSourceWindow2(ScreenShotEffect* effect,
+                                                 EffectWindow* window,
                                                  ScreenShotFlags flags)
     : ScreenShotSource2(effect->scheduleScreenShot(window, flags))
 {
@@ -228,11 +235,11 @@ ScreenShotSinkPipe2::~ScreenShotSinkPipe2()
 
 void ScreenShotSinkPipe2::cancel()
 {
-    QDBusConnection::sessionBus().send(m_replyMessage.createErrorReply(s_errorCancelled,
-                                                                       s_errorCancelledMessage));
+    QDBusConnection::sessionBus().send(
+        m_replyMessage.createErrorReply(s_errorCancelled, s_errorCancelledMessage));
 }
 
-void ScreenShotSinkPipe2::flush(const QImage &image)
+void ScreenShotSinkPipe2::flush(const QImage& image)
 {
     if (m_fileDescriptor == -1) {
         return;
@@ -247,17 +254,20 @@ void ScreenShotSinkPipe2::flush(const QImage &image)
     results.insert(QStringLiteral("stride"), quint32(image.bytesPerLine()));
     QDBusConnection::sessionBus().send(m_replyMessage.createReply(results));
 
-    QtConcurrent::run([](int fileDescriptor, const QImage &image) {
-        const QByteArray buffer(reinterpret_cast<const char *>(image.constBits()),
-                                image.sizeInBytes());
-        writeBufferToPipe(fileDescriptor, buffer);
-    }, m_fileDescriptor, image);
+    QtConcurrent::run(
+        [](int fileDescriptor, const QImage& image) {
+            const QByteArray buffer(reinterpret_cast<const char*>(image.constBits()),
+                                    image.sizeInBytes());
+            writeBufferToPipe(fileDescriptor, buffer);
+        },
+        m_fileDescriptor,
+        image);
 
     // The ownership of the pipe file descriptor has been moved to the worker thread.
     m_fileDescriptor = -1;
 }
 
-ScreenShotDBusInterface2::ScreenShotDBusInterface2(ScreenShotEffect *effect)
+ScreenShotDBusInterface2::ScreenShotDBusInterface2(ScreenShotEffect* effect)
     : QObject(effect)
     , m_effect(effect)
 {
@@ -299,14 +309,14 @@ bool ScreenShotDBusInterface2::checkPermissions() const
     return true;
 }
 
-QVariantMap ScreenShotDBusInterface2::CaptureActiveWindow(const QVariantMap &options,
+QVariantMap ScreenShotDBusInterface2::CaptureActiveWindow(const QVariantMap& options,
                                                           QDBusUnixFileDescriptor pipe)
 {
     if (!checkPermissions()) {
         return QVariantMap();
     }
 
-    EffectWindow *window = effects->activeWindow();
+    EffectWindow* window = effects->activeWindow();
     if (!window) {
         sendErrorReply(s_errorInvalidWindow, s_errorInvalidWindowMessage);
         return QVariantMap();
@@ -318,22 +328,23 @@ QVariantMap ScreenShotDBusInterface2::CaptureActiveWindow(const QVariantMap &opt
         return QVariantMap();
     }
 
-    takeScreenShot(window, screenShotFlagsFromOptions(options),
+    takeScreenShot(window,
+                   screenShotFlagsFromOptions(options),
                    new ScreenShotSinkPipe2(fileDescriptor, message()));
 
     setDelayedReply(true);
     return QVariantMap();
 }
 
-QVariantMap ScreenShotDBusInterface2::CaptureWindow(const QString &handle,
-                                                    const QVariantMap &options,
+QVariantMap ScreenShotDBusInterface2::CaptureWindow(const QString& handle,
+                                                    const QVariantMap& options,
                                                     QDBusUnixFileDescriptor pipe)
 {
     if (!checkPermissions()) {
         return QVariantMap();
     }
 
-    EffectWindow *window = effects->findWindow(handle);
+    EffectWindow* window = effects->findWindow(handle);
     if (!window) {
         bool ok;
         const int winId = handle.toInt(&ok);
@@ -354,15 +365,19 @@ QVariantMap ScreenShotDBusInterface2::CaptureWindow(const QString &handle,
         return QVariantMap();
     }
 
-    takeScreenShot(window, screenShotFlagsFromOptions(options),
+    takeScreenShot(window,
+                   screenShotFlagsFromOptions(options),
                    new ScreenShotSinkPipe2(fileDescriptor, message()));
 
     setDelayedReply(true);
     return QVariantMap();
 }
 
-QVariantMap ScreenShotDBusInterface2::CaptureArea(int x, int y, int width, int height,
-                                                  const QVariantMap &options,
+QVariantMap ScreenShotDBusInterface2::CaptureArea(int x,
+                                                  int y,
+                                                  int width,
+                                                  int height,
+                                                  const QVariantMap& options,
                                                   QDBusUnixFileDescriptor pipe)
 {
     if (!checkPermissions()) {
@@ -381,22 +396,23 @@ QVariantMap ScreenShotDBusInterface2::CaptureArea(int x, int y, int width, int h
         return QVariantMap();
     }
 
-    takeScreenShot(area, screenShotFlagsFromOptions(options),
+    takeScreenShot(area,
+                   screenShotFlagsFromOptions(options),
                    new ScreenShotSinkPipe2(fileDescriptor, message()));
 
     setDelayedReply(true);
     return QVariantMap();
 }
 
-QVariantMap ScreenShotDBusInterface2::CaptureScreen(const QString &name,
-                                                    const QVariantMap &options,
+QVariantMap ScreenShotDBusInterface2::CaptureScreen(const QString& name,
+                                                    const QVariantMap& options,
                                                     QDBusUnixFileDescriptor pipe)
 {
     if (!checkPermissions()) {
         return QVariantMap();
     }
 
-    EffectScreen *screen = effects->findScreen(name);
+    EffectScreen* screen = effects->findScreen(name);
     if (!screen) {
         sendErrorReply(s_errorInvalidScreen, s_errorInvalidScreenMessage);
         return QVariantMap();
@@ -408,14 +424,15 @@ QVariantMap ScreenShotDBusInterface2::CaptureScreen(const QString &name,
         return QVariantMap();
     }
 
-    takeScreenShot(screen, screenShotFlagsFromOptions(options),
+    takeScreenShot(screen,
+                   screenShotFlagsFromOptions(options),
                    new ScreenShotSinkPipe2(fileDescriptor, message()));
 
     setDelayedReply(true);
     return QVariantMap();
 }
 
-QVariantMap ScreenShotDBusInterface2::CaptureActiveScreen(const QVariantMap &options,
+QVariantMap ScreenShotDBusInterface2::CaptureActiveScreen(const QVariantMap& options,
                                                           QDBusUnixFileDescriptor pipe)
 {
     if (!checkPermissions()) {
@@ -434,7 +451,8 @@ QVariantMap ScreenShotDBusInterface2::CaptureActiveScreen(const QVariantMap &opt
         return QVariantMap();
     }
 
-    takeScreenShot(screen, screenShotFlagsFromOptions(options),
+    takeScreenShot(screen,
+                   screenShotFlagsFromOptions(options),
                    new ScreenShotSinkPipe2(fileDescriptor, message()));
 
     setDelayedReply(true);
@@ -442,7 +460,7 @@ QVariantMap ScreenShotDBusInterface2::CaptureActiveScreen(const QVariantMap &opt
 }
 
 QVariantMap ScreenShotDBusInterface2::CaptureInteractive(uint kind,
-                                                         const QVariantMap &options,
+                                                         const QVariantMap& options,
                                                          QDBusUnixFileDescriptor pipe)
 {
     const int fileDescriptor = dup(pipe.fileDescriptor());
@@ -454,8 +472,9 @@ QVariantMap ScreenShotDBusInterface2::CaptureInteractive(uint kind,
     const QDBusMessage replyMessage = message();
 
     if (kind == 0) {
-        effects->startInteractiveWindowSelection([=](EffectWindow *window) {
-            effects->hideOnScreenMessage(EffectsHandler::OnScreenMessageHideFlag::SkipsCloseAnimation);
+        effects->startInteractiveWindowSelection([=](EffectWindow* window) {
+            effects->hideOnScreenMessage(
+                EffectsHandler::OnScreenMessageHideFlag::SkipsCloseAnimation);
 
             if (!window) {
                 close(fileDescriptor);
@@ -463,7 +482,8 @@ QVariantMap ScreenShotDBusInterface2::CaptureInteractive(uint kind,
                 QDBusConnection bus = QDBusConnection::sessionBus();
                 bus.send(replyMessage.createErrorReply(s_errorCancelled, s_errorCancelledMessage));
             } else {
-                takeScreenShot(window, screenShotFlagsFromOptions(options),
+                takeScreenShot(window,
+                               screenShotFlagsFromOptions(options),
                                new ScreenShotSinkPipe2(fileDescriptor, replyMessage));
             }
         });
@@ -471,8 +491,9 @@ QVariantMap ScreenShotDBusInterface2::CaptureInteractive(uint kind,
                                           "Escape or right click to cancel."),
                                      QStringLiteral("spectacle"));
     } else {
-        effects->startInteractivePositionSelection([=](const QPoint &point) {
-            effects->hideOnScreenMessage(EffectsHandler::OnScreenMessageHideFlag::SkipsCloseAnimation);
+        effects->startInteractivePositionSelection([=](const QPoint& point) {
+            effects->hideOnScreenMessage(
+                EffectsHandler::OnScreenMessageHideFlag::SkipsCloseAnimation);
 
             if (point == QPoint(-1, -1)) {
                 close(fileDescriptor);
@@ -480,8 +501,9 @@ QVariantMap ScreenShotDBusInterface2::CaptureInteractive(uint kind,
                 QDBusConnection bus = QDBusConnection::sessionBus();
                 bus.send(replyMessage.createErrorReply(s_errorCancelled, s_errorCancelledMessage));
             } else {
-                EffectScreen *screen = effects->screenAt(point);
-                takeScreenShot(screen, screenShotFlagsFromOptions(options),
+                EffectScreen* screen = effects->screenAt(point);
+                takeScreenShot(screen,
+                               screenShotFlagsFromOptions(options),
                                new ScreenShotSinkPipe2(fileDescriptor, replyMessage));
             }
         });
@@ -494,7 +516,7 @@ QVariantMap ScreenShotDBusInterface2::CaptureInteractive(uint kind,
     return QVariantMap();
 }
 
-void ScreenShotDBusInterface2::bind(ScreenShotSinkPipe2 *sink, ScreenShotSource2 *source)
+void ScreenShotDBusInterface2::bind(ScreenShotSinkPipe2* sink, ScreenShotSource2* source)
 {
     connect(source, &ScreenShotSource2::cancelled, sink, [sink, source]() {
         sink->cancel();
@@ -511,20 +533,23 @@ void ScreenShotDBusInterface2::bind(ScreenShotSinkPipe2 *sink, ScreenShotSource2
     });
 }
 
-void ScreenShotDBusInterface2::takeScreenShot(EffectScreen *screen, ScreenShotFlags flags,
-                                              ScreenShotSinkPipe2 *sink)
+void ScreenShotDBusInterface2::takeScreenShot(EffectScreen* screen,
+                                              ScreenShotFlags flags,
+                                              ScreenShotSinkPipe2* sink)
 {
     bind(sink, new ScreenShotSourceScreen2(m_effect, screen, flags));
 }
 
-void ScreenShotDBusInterface2::takeScreenShot(const QRect &area, ScreenShotFlags flags,
-                                              ScreenShotSinkPipe2 *sink)
+void ScreenShotDBusInterface2::takeScreenShot(const QRect& area,
+                                              ScreenShotFlags flags,
+                                              ScreenShotSinkPipe2* sink)
 {
     bind(sink, new ScreenShotSourceArea2(m_effect, area, flags));
 }
 
-void ScreenShotDBusInterface2::takeScreenShot(EffectWindow *window, ScreenShotFlags flags,
-                                              ScreenShotSinkPipe2 *sink)
+void ScreenShotDBusInterface2::takeScreenShot(EffectWindow* window,
+                                              ScreenShotFlags flags,
+                                              ScreenShotSinkPipe2* sink)
 {
     bind(sink, new ScreenShotSourceWindow2(m_effect, window, flags));
 }

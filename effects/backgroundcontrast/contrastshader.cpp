@@ -32,9 +32,10 @@
 
 using namespace KWin;
 
-
 ContrastShader::ContrastShader()
-    : mValid(false), shader(nullptr), m_opacity(1)
+    : mValid(false)
+    , shader(nullptr)
+    , m_opacity(1)
 {
 }
 
@@ -43,7 +44,7 @@ ContrastShader::~ContrastShader()
     reset();
 }
 
-ContrastShader *ContrastShader::create()
+ContrastShader* ContrastShader::create()
 {
     return new ContrastShader();
 }
@@ -70,7 +71,7 @@ float ContrastShader::opacity() const
     return m_opacity;
 }
 
-void ContrastShader::setColorMatrix(const QMatrix4x4 &matrix)
+void ContrastShader::setColorMatrix(const QMatrix4x4& matrix)
 {
     if (!isValid())
         return;
@@ -80,7 +81,7 @@ void ContrastShader::setColorMatrix(const QMatrix4x4 &matrix)
     ShaderManager::instance()->popShader();
 }
 
-void ContrastShader::setTextureMatrix(const QMatrix4x4 &matrix)
+void ContrastShader::setTextureMatrix(const QMatrix4x4& matrix)
 {
     if (!isValid())
         return;
@@ -88,7 +89,7 @@ void ContrastShader::setTextureMatrix(const QMatrix4x4 &matrix)
     shader->setUniform(textureMatrixLocation, matrix);
 }
 
-void ContrastShader::setModelViewProjectionMatrix(const QMatrix4x4 &matrix)
+void ContrastShader::setModelViewProjectionMatrix(const QMatrix4x4& matrix)
 {
     if (!isValid())
         return;
@@ -115,16 +116,17 @@ void ContrastShader::init()
 
     const bool gles = GLPlatform::instance()->isGLES();
     const bool glsl_140 = !gles && GLPlatform::instance()->glslVersion() >= kVersionNumber(1, 40);
-    const bool core = glsl_140 || (gles && GLPlatform::instance()->glslVersion() >= kVersionNumber(3, 0));
+    const bool core
+        = glsl_140 || (gles && GLPlatform::instance()->glslVersion() >= kVersionNumber(3, 0));
 
     QByteArray vertexSource;
     QByteArray fragmentSource;
 
-    const QByteArray attribute   = core ? "in"                : "attribute";
-    const QByteArray varying_in  = core ? (gles ? "in" : "noperspective in") : "varying";
+    const QByteArray attribute = core ? "in" : "attribute";
+    const QByteArray varying_in = core ? (gles ? "in" : "noperspective in") : "varying";
     const QByteArray varying_out = core ? (gles ? "out" : "noperspective out") : "varying";
-    const QByteArray texture2D   = core ? "texture"           : "texture2D";
-    const QByteArray fragColor   = core ? "fragColor"         : "gl_FragColor";
+    const QByteArray texture2D = core ? "texture" : "texture2D";
+    const QByteArray fragColor = core ? "fragColor" : "gl_FragColor";
 
     // Vertex shader
     // ===================================================================
@@ -150,7 +152,6 @@ void ContrastShader::init()
     stream << "    gl_Position = modelViewProjectionMatrix * vertex;\n";
     stream << "}\n";
     stream.flush();
-
 
     // Fragment shader
     // ===================================================================
@@ -180,7 +181,8 @@ void ContrastShader::init()
     stream2 << "    if (opacity >= 1.0) {\n";
     stream2 << "        " << fragColor << " = tex * colorMatrix;\n";
     stream2 << "    } else {\n";
-    stream2 << "        " << fragColor << " = tex * (opacity * colorMatrix + (1.0 - opacity) * mat4(1.0));\n";
+    stream2 << "        " << fragColor
+            << " = tex * (opacity * colorMatrix + (1.0 - opacity) * mat4(1.0));\n";
     stream2 << "    }\n";
 
     stream2 << "}\n";
@@ -191,8 +193,8 @@ void ContrastShader::init()
     if (shader->isValid()) {
         colorMatrixLocation = shader->uniformLocation("colorMatrix");
         textureMatrixLocation = shader->uniformLocation("textureMatrix");
-        mvpMatrixLocation     = shader->uniformLocation("modelViewProjectionMatrix");
-        opacityLocation       = shader->uniformLocation("opacity");
+        mvpMatrixLocation = shader->uniformLocation("modelViewProjectionMatrix");
+        opacityLocation = shader->uniformLocation("opacity");
 
         QMatrix4x4 modelViewProjection;
         const QSize screenSize = effects->virtualScreenSize();
@@ -207,4 +209,3 @@ void ContrastShader::init()
 
     setIsValid(shader->isValid());
 }
-

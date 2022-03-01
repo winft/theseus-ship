@@ -44,18 +44,22 @@ public:
 
     void reconfigure(ReconfigureFlags) override;
 
-    void prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion &region, ScreenPaintData &data) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
     void postPaintScreen() override;
 
-    void prePaintWindow(EffectWindow *w, WindowPrePaintData &data, std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow *w, int mask, QRegion region, WindowPaintData &data) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
+    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
 
-    bool isActive() const override {
+    bool isActive() const override
+    {
         return m_active;
     }
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         return 50;
     }
 
@@ -68,9 +72,9 @@ public:
     bool slideBackground() const;
 
 private Q_SLOTS:
-    void desktopChanged(int old, int current, EffectWindow *with);
-    void windowAdded(EffectWindow *w);
-    void windowDeleted(EffectWindow *w);
+    void desktopChanged(int old, int current, EffectWindow* with);
+    void windowAdded(EffectWindow* w);
+    void windowDeleted(EffectWindow* w);
 
 private:
     QPoint desktopCoords(int id) const;
@@ -78,11 +82,11 @@ private:
     int workspaceWidth() const;
     int workspaceHeight() const;
 
-    bool isTranslated(const EffectWindow *w) const;
-    bool isPainted(const EffectWindow *w) const;
-    bool shouldElevate(const EffectWindow *w) const;
+    bool isTranslated(const EffectWindow* w) const;
+    bool isPainted(const EffectWindow* w) const;
+    bool shouldElevate(const EffectWindow* w) const;
 
-    void start(int old, int current, EffectWindow *movingWindow = nullptr);
+    void start(int old, int current, EffectWindow* movingWindow = nullptr);
     void stop();
 
 private:
@@ -95,7 +99,7 @@ private:
     TimeLine m_timeLine;
     QPoint m_startPos;
     QPoint m_diff;
-    EffectWindow *m_movingWindow = nullptr;
+    EffectWindow* m_movingWindow = nullptr;
     std::chrono::milliseconds m_lastPresentTime = std::chrono::milliseconds::zero();
 
     struct {

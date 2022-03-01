@@ -18,12 +18,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 
-
 #ifndef SLIDE_CONFIG_H
 #define SLIDE_CONFIG_H
 
-#include <KCModule>
 #include "ui_slide_config.h"
+#include <KCModule>
 
 namespace KWin
 {
@@ -33,7 +32,8 @@ class SlideEffectConfig : public KCModule
     Q_OBJECT
 
 public:
-    explicit SlideEffectConfig(QWidget *parent = nullptr, const QVariantList &args = QVariantList());
+    explicit SlideEffectConfig(QWidget* parent = nullptr,
+                               const QVariantList& args = QVariantList());
     ~SlideEffectConfig() override;
 
     void save() override;

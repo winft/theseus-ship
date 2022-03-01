@@ -30,7 +30,7 @@ class ZoomAccessibilityIntegration : public QObject
     Q_OBJECT
 
 public:
-    explicit ZoomAccessibilityIntegration(QObject *parent = nullptr);
+    explicit ZoomAccessibilityIntegration(QObject* parent = nullptr);
 
     void setFocusTrackingEnabled(bool enabled);
     bool isFocusTrackingEnabled() const;
@@ -39,17 +39,17 @@ public:
     bool isTextCaretTrackingEnabled() const;
 
 Q_SIGNALS:
-    void focusPointChanged(const QPoint &point);
+    void focusPointChanged(const QPoint& point);
 
 private Q_SLOTS:
-    void slotFocusChanged(const QAccessibleClient::AccessibleObject &object);
+    void slotFocusChanged(const QAccessibleClient::AccessibleObject& object);
 
 private:
     void createAccessibilityRegistry();
     void destroyAccessibilityRegistry();
     void updateAccessibilityRegistry();
 
-    QAccessibleClient::Registry *m_accessibilityRegistry = nullptr;
+    QAccessibleClient::Registry* m_accessibilityRegistry = nullptr;
     bool m_isFocusTrackingEnabled = false;
     bool m_isTextCaretTrackingEnabled = false;
 };

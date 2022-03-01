@@ -25,9 +25,9 @@
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
 
-#include <QVector>
-#include <QVector2D>
 #include <QStack>
+#include <QVector2D>
+#include <QVector>
 
 namespace Wrapland
 {
@@ -56,59 +56,84 @@ public:
     static bool enabledByDefault();
 
     void reconfigure(ReconfigureFlags flags) override;
-    void prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void drawWindow(EffectWindow *w, int mask, const QRegion &region, WindowPaintData &data) override;
-    void paintEffectFrame(EffectFrame *frame, const QRegion &region, double opacity, double frameOpacity) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
+    void
+    drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data) override;
+    void paintEffectFrame(EffectFrame* frame,
+                          const QRegion& region,
+                          double opacity,
+                          double frameOpacity) override;
 
     bool provides(Feature feature) override;
     bool isActive() const override;
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         return 75;
     }
 
-    bool eventFilter(QObject *watched, QEvent *event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 public Q_SLOTS:
-    void slotWindowAdded(KWin::EffectWindow *w);
-    void slotWindowDeleted(KWin::EffectWindow *w);
-    void slotPropertyNotify(KWin::EffectWindow *w, long atom);
+    void slotWindowAdded(KWin::EffectWindow* w);
+    void slotWindowDeleted(KWin::EffectWindow* w);
+    void slotPropertyNotify(KWin::EffectWindow* w, long atom);
     void slotScreenGeometryChanged();
 
 private:
-    QRect expand(const QRect &rect) const;
-    QRegion expand(const QRegion &region) const;
+    QRect expand(const QRect& rect) const;
+    QRegion expand(const QRegion& region) const;
     bool renderTargetsValid() const;
     void deleteFBOs();
     void initBlurStrengthValues();
     void updateTexture();
-    QRegion blurRegion(const EffectWindow *w) const;
-    bool shouldBlur(const EffectWindow *w, int mask, const WindowPaintData &data) const;
-    void updateBlurRegion(EffectWindow *w) const;
-    void doBlur(const QRegion &shape, const QRect &screen, const float opacity, const QMatrix4x4 &screenProjection, bool isDock, QRect windowRect);
-    void uploadRegion(QVector2D *&map, const QRegion &region, const int downSampleIterations);
-    void uploadGeometry(GLVertexBuffer *vbo, const QRegion &blurRegion, const QRegion &windowRegion);
+    QRegion blurRegion(const EffectWindow* w) const;
+    bool shouldBlur(const EffectWindow* w, int mask, const WindowPaintData& data) const;
+    void updateBlurRegion(EffectWindow* w) const;
+    void doBlur(const QRegion& shape,
+                const QRect& screen,
+                const float opacity,
+                const QMatrix4x4& screenProjection,
+                bool isDock,
+                QRect windowRect);
+    void uploadRegion(QVector2D*& map, const QRegion& region, const int downSampleIterations);
+    void
+    uploadGeometry(GLVertexBuffer* vbo, const QRegion& blurRegion, const QRegion& windowRegion);
     void generateNoiseTexture();
 
-    void upscaleRenderToScreen(GLVertexBuffer *vbo, int vboStart, int blurRectCount, const QMatrix4x4 &screenProjection, QPoint windowPosition);
-    void applyNoise(GLVertexBuffer *vbo, int vboStart, int blurRectCount, const QMatrix4x4 &screenProjection, QPoint windowPosition);
-    void downSampleTexture(GLVertexBuffer *vbo, int blurRectCount);
-    void upSampleTexture(GLVertexBuffer *vbo, int blurRectCount);
-    void copyScreenSampleTexture(GLVertexBuffer *vbo, int blurRectCount, QRegion blurShape, const QMatrix4x4 &screenProjection);
+    void upscaleRenderToScreen(GLVertexBuffer* vbo,
+                               int vboStart,
+                               int blurRectCount,
+                               const QMatrix4x4& screenProjection,
+                               QPoint windowPosition);
+    void applyNoise(GLVertexBuffer* vbo,
+                    int vboStart,
+                    int blurRectCount,
+                    const QMatrix4x4& screenProjection,
+                    QPoint windowPosition);
+    void downSampleTexture(GLVertexBuffer* vbo, int blurRectCount);
+    void upSampleTexture(GLVertexBuffer* vbo, int blurRectCount);
+    void copyScreenSampleTexture(GLVertexBuffer* vbo,
+                                 int blurRectCount,
+                                 QRegion blurShape,
+                                 const QMatrix4x4& screenProjection);
 
 private:
-    BlurShader *m_shader;
-    QVector <GLRenderTarget*> m_renderTargets;
-    QVector <GLTexture> m_renderTextures;
-    QStack <GLRenderTarget*> m_renderTargetStack;
+    BlurShader* m_shader;
+    QVector<GLRenderTarget*> m_renderTargets;
+    QVector<GLTexture> m_renderTextures;
+    QStack<GLRenderTarget*> m_renderTargetStack;
 
     GLTexture m_noiseTexture;
 
     bool m_renderTargetsValid;
     long net_wm_blur_region;
     QRegion m_paintedArea; // keeps track of all painted areas (from bottom to top)
-    QRegion m_currentBlur; // keeps track of the currently blured area of the windows(from bottom to top)
+    QRegion m_currentBlur; // keeps track of the currently blured area of the windows(from bottom to
+                           // top)
 
     int m_downSampleIterations; // number of times the texture will be downsized to half size
     int m_offset;
@@ -122,21 +147,20 @@ private:
         int expandSize;
     };
 
-    QVector <OffsetStruct> blurOffsets;
+    QVector<OffsetStruct> blurOffsets;
 
     struct BlurValuesStruct {
         int iteration;
         float offset;
     };
 
-    QVector <BlurValuesStruct> blurStrengthValues;
+    QVector<BlurValuesStruct> blurStrengthValues;
 
-    QMap <EffectWindow*, QMetaObject::Connection> windowBlurChangedConnections;
+    QMap<EffectWindow*, QMetaObject::Connection> windowBlurChangedConnections;
     std::unique_ptr<Wrapland::Server::BlurManager> wayland_blur_manager;
 };
 
-inline
-bool BlurEffect::provides(Effect::Feature feature)
+inline bool BlurEffect::provides(Effect::Feature feature)
 {
     if (feature == Blur) {
         return true;
@@ -144,8 +168,6 @@ bool BlurEffect::provides(Effect::Feature feature)
     return KWin::Effect::provides(feature);
 }
 
-
 } // namespace KWin
 
 #endif
-

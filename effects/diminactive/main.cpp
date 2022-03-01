@@ -9,8 +9,7 @@
 namespace KWin
 {
 
-KWIN_EFFECT_FACTORY(DimInactiveEffect,
-                    "metadata.json.stripped")
+KWIN_EFFECT_FACTORY(DimInactiveEffect, "metadata.json.stripped")
 
 } // namespace KWin
 

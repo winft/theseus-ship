@@ -13,6 +13,7 @@ python <(curl -s $RUN_SCRIPT_URL) -r \
     ${SOURCE_DIR}/cmake \
     ${SOURCE_DIR}/debug \
     ${SOURCE_DIR}/desktop \
+    ${SOURCE_DIR}/effects \
     ${SOURCE_DIR}/input \
     ${SOURCE_DIR}/libkwineffects \
     ${SOURCE_DIR}/win \

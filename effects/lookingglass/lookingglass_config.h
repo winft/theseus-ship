@@ -41,7 +41,8 @@ class LookingGlassEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit LookingGlassEffectConfig(QWidget* parent = nullptr, const QVariantList& args = QVariantList());
+    explicit LookingGlassEffectConfig(QWidget* parent = nullptr,
+                                      const QVariantList& args = QVariantList());
     ~LookingGlassEffectConfig() override;
 
     void save() override;

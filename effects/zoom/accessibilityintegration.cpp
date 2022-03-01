@@ -25,7 +25,7 @@ using namespace QAccessibleClient; // Whatever, sue me...
 namespace KWin
 {
 
-ZoomAccessibilityIntegration::ZoomAccessibilityIntegration(QObject *parent)
+ZoomAccessibilityIntegration::ZoomAccessibilityIntegration(QObject* parent)
     : QObject(parent)
 {
 }
@@ -84,10 +84,14 @@ void ZoomAccessibilityIntegration::createAccessibilityRegistry()
 {
     m_accessibilityRegistry = new Registry(this);
 
-    connect(m_accessibilityRegistry, &Registry::textCaretMoved,
-            this, &ZoomAccessibilityIntegration::slotFocusChanged);
-    connect(m_accessibilityRegistry, &Registry::focusChanged,
-            this, &ZoomAccessibilityIntegration::slotFocusChanged);
+    connect(m_accessibilityRegistry,
+            &Registry::textCaretMoved,
+            this,
+            &ZoomAccessibilityIntegration::slotFocusChanged);
+    connect(m_accessibilityRegistry,
+            &Registry::focusChanged,
+            this,
+            &ZoomAccessibilityIntegration::slotFocusChanged);
 }
 
 void ZoomAccessibilityIntegration::destroyAccessibilityRegistry()
@@ -102,7 +106,7 @@ void ZoomAccessibilityIntegration::destroyAccessibilityRegistry()
     m_accessibilityRegistry = nullptr;
 }
 
-void ZoomAccessibilityIntegration::slotFocusChanged(const AccessibleObject &object)
+void ZoomAccessibilityIntegration::slotFocusChanged(const AccessibleObject& object)
 {
     Q_EMIT focusPointChanged(object.focusPoint());
 }

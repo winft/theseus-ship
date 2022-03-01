@@ -49,13 +49,12 @@ void SheetEffect::reconfigure(ReconfigureFlags flags)
     SheetConfig::self()->read();
 
     // TODO: Rename AnimationTime config key to Duration.
-    const int d = animationTime(SheetConfig::animationTime() != 0
-        ? SheetConfig::animationTime()
-        : 300);
+    const int d
+        = animationTime(SheetConfig::animationTime() != 0 ? SheetConfig::animationTime() : 300);
     m_duration = std::chrono::milliseconds(static_cast<int>(d));
 }
 
-void SheetEffect::prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime)
+void SheetEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
     auto animationIt = m_animations.begin();
     while (animationIt != m_animations.end()) {
@@ -74,7 +73,9 @@ void SheetEffect::prePaintScreen(ScreenPrePaintData &data, std::chrono::millisec
     effects->prePaintScreen(data, presentTime);
 }
 
-void SheetEffect::prePaintWindow(EffectWindow *w, WindowPrePaintData &data, std::chrono::milliseconds presentTime)
+void SheetEffect::prePaintWindow(EffectWindow* w,
+                                 WindowPrePaintData& data,
+                                 std::chrono::milliseconds presentTime)
 {
     if (m_animations.contains(w)) {
         data.setTransformed();
@@ -84,7 +85,7 @@ void SheetEffect::prePaintWindow(EffectWindow *w, WindowPrePaintData &data, std:
     effects->prePaintWindow(w, data, presentTime);
 }
 
-void SheetEffect::paintWindow(EffectWindow *w, int mask, QRegion region, WindowPaintData &data)
+void SheetEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
 {
     auto animationIt = m_animations.constFind(w);
     if (animationIt == m_animations.constEnd()) {
@@ -122,11 +123,11 @@ void SheetEffect::paintWindow(EffectWindow *w, int mask, QRegion region, WindowP
     effects->paintWindow(w, mask, region, data);
 }
 
-void SheetEffect::postPaintWindow(EffectWindow *w)
+void SheetEffect::postPaintWindow(EffectWindow* w)
 {
     auto animationIt = m_animations.begin();
     while (animationIt != m_animations.end()) {
-        EffectWindow *w = animationIt.key();
+        EffectWindow* w = animationIt.key();
         w->addRepaintFull();
         if ((*animationIt).timeLine.done()) {
             if (w->isDeleted()) {
@@ -152,11 +153,10 @@ bool SheetEffect::isActive() const
 
 bool SheetEffect::supported()
 {
-    return effects->isOpenGLCompositing()
-        && effects->animationsSupported();
+    return effects->isOpenGLCompositing() && effects->animationsSupported();
 }
 
-void SheetEffect::slotWindowAdded(EffectWindow *w)
+void SheetEffect::slotWindowAdded(EffectWindow* w)
 {
     if (effects->activeFullScreenEffect()) {
         return;
@@ -166,7 +166,7 @@ void SheetEffect::slotWindowAdded(EffectWindow *w)
         return;
     }
 
-    Animation &animation = m_animations[w];
+    Animation& animation = m_animations[w];
     animation.parentY = 0;
     animation.timeLine.reset();
     animation.timeLine.setDuration(m_duration);
@@ -174,10 +174,9 @@ void SheetEffect::slotWindowAdded(EffectWindow *w)
     animation.timeLine.setEasingCurve(QEasingCurve::Linear);
 
     const auto windows = effects->stackingOrder();
-    auto parentIt = std::find_if(windows.constBegin(), windows.constEnd(),
-        [w](EffectWindow *p) {
-            return p->findModal() == w;
-        });
+    auto parentIt = std::find_if(windows.constBegin(), windows.constEnd(), [w](EffectWindow* p) {
+        return p->findModal() == w;
+    });
     if (parentIt != windows.constEnd()) {
         animation.parentY = (*parentIt)->y();
     }
@@ -187,7 +186,7 @@ void SheetEffect::slotWindowAdded(EffectWindow *w)
     w->addRepaintFull();
 }
 
-void SheetEffect::slotWindowClosed(EffectWindow *w)
+void SheetEffect::slotWindowClosed(EffectWindow* w)
 {
     if (effects->activeFullScreenEffect()) {
         return;
@@ -199,7 +198,7 @@ void SheetEffect::slotWindowClosed(EffectWindow *w)
 
     w->refWindow();
 
-    Animation &animation = m_animations[w];
+    Animation& animation = m_animations[w];
 
     animation.timeLine.reset();
     animation.parentY = 0;
@@ -208,10 +207,9 @@ void SheetEffect::slotWindowClosed(EffectWindow *w)
     animation.timeLine.setEasingCurve(QEasingCurve::Linear);
 
     const auto windows = effects->stackingOrder();
-    auto parentIt = std::find_if(windows.constBegin(), windows.constEnd(),
-        [w](EffectWindow *p) {
-            return p->findModal() == w;
-        });
+    auto parentIt = std::find_if(windows.constBegin(), windows.constEnd(), [w](EffectWindow* p) {
+        return p->findModal() == w;
+    });
     if (parentIt != windows.constEnd()) {
         animation.parentY = (*parentIt)->y();
     }
@@ -221,12 +219,12 @@ void SheetEffect::slotWindowClosed(EffectWindow *w)
     w->addRepaintFull();
 }
 
-void SheetEffect::slotWindowDeleted(EffectWindow *w)
+void SheetEffect::slotWindowDeleted(EffectWindow* w)
 {
     m_animations.remove(w);
 }
 
-bool SheetEffect::isSheetWindow(EffectWindow *w) const
+bool SheetEffect::isSheetWindow(EffectWindow* w) const
 {
     return w->isModal();
 }

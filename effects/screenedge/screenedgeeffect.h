@@ -22,11 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects.h>
 
 class QTimer;
-namespace Plasma {
-    class Svg;
+namespace Plasma
+{
+class Svg;
 }
 
-namespace KWin {
+namespace KWin
+{
 class Glow;
 class GLTexture;
 
@@ -36,28 +38,30 @@ class ScreenEdgeEffect : public Effect
 public:
     ScreenEdgeEffect();
     ~ScreenEdgeEffect() override;
-    void prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion &region, ScreenPaintData &data) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
     bool isActive() const override;
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         return 90;
     }
 
 private Q_SLOTS:
-    void edgeApproaching(ElectricBorder border, qreal factor, const QRect &geometry);
+    void edgeApproaching(ElectricBorder border, qreal factor, const QRect& geometry);
     void cleanup();
+
 private:
     void ensureGlowSvg();
-    Glow *createGlow(ElectricBorder border, qreal factor, const QRect &geometry);
-    template <typename T>
-    T *createCornerGlow(ElectricBorder border);
-    template <typename T>
-    T *createEdgeGlow(ElectricBorder border, const QSize &size);
+    Glow* createGlow(ElectricBorder border, qreal factor, const QRect& geometry);
+    template<typename T>
+    T* createCornerGlow(ElectricBorder border);
+    template<typename T>
+    T* createEdgeGlow(ElectricBorder border, const QSize& size);
     QSize cornerGlowSize(ElectricBorder border);
-    Plasma::Svg *m_glow = nullptr;
+    Plasma::Svg* m_glow = nullptr;
     QHash<ElectricBorder, Glow*> m_borders;
-    QTimer *m_cleanupTimer;
+    QTimer* m_cleanupTimer;
 };
 
 class Glow

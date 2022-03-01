@@ -34,37 +34,38 @@ public:
     HighlightWindowEffect();
     ~HighlightWindowEffect() override;
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         return 70;
     }
 
     bool provides(Feature feature) override;
-    bool perform(Feature feature, const QVariantList &arguments) override;
-    Q_SCRIPTABLE void highlightWindows(const QStringList &windows);
+    bool perform(Feature feature, const QVariantList& arguments) override;
+    Q_SCRIPTABLE void highlightWindows(const QStringList& windows);
 
 public Q_SLOTS:
     void slotWindowAdded(KWin::EffectWindow* w);
-    void slotWindowClosed(KWin::EffectWindow *w);
-    void slotWindowDeleted(KWin::EffectWindow *w);
-    void slotPropertyNotify(KWin::EffectWindow* w, long atom, EffectWindow *addedWindow = nullptr);
+    void slotWindowClosed(KWin::EffectWindow* w);
+    void slotWindowDeleted(KWin::EffectWindow* w);
+    void slotPropertyNotify(KWin::EffectWindow* w, long atom, EffectWindow* addedWindow = nullptr);
 
 private:
-    void startGhostAnimation(EffectWindow *window, int duration = -1);
-    void startHighlightAnimation(EffectWindow *window, int duration = -1);
-    void startRevertAnimation(EffectWindow *window);
+    void startGhostAnimation(EffectWindow* window, int duration = -1);
+    void startHighlightAnimation(EffectWindow* window, int duration = -1);
+    void startRevertAnimation(EffectWindow* window);
 
-    bool isHighlighted(EffectWindow *window) const;
+    bool isHighlighted(EffectWindow* window) const;
 
     void prepareHighlighting();
     void finishHighlighting();
-    void highlightWindows(const QVector<KWin::EffectWindow *> &windows);
+    void highlightWindows(const QVector<KWin::EffectWindow*>& windows);
 
     long m_atom;
-    QList<EffectWindow *> m_highlightedWindows;
-    QHash<EffectWindow *, quint64> m_animations;
+    QList<EffectWindow*> m_highlightedWindows;
+    QHash<EffectWindow*, quint64> m_animations;
     QEasingCurve m_easingCurve;
     int m_fadeDuration;
-    EffectWindow *m_monitorWindow;
+    EffectWindow* m_monitorWindow;
     QList<WId> m_highlightedIds;
     float m_ghostOpacity = 0;
 };

@@ -30,12 +30,13 @@
 namespace KWin
 {
 
-BlurShader::BlurShader(QObject *parent)
+BlurShader::BlurShader(QObject* parent)
     : QObject(parent)
 {
     const bool gles = GLPlatform::instance()->isGLES();
     const bool glsl_140 = !gles && GLPlatform::instance()->glslVersion() >= kVersionNumber(1, 40);
-    const bool core = glsl_140 || (gles && GLPlatform::instance()->glslVersion() >= kVersionNumber(3, 0));
+    const bool core
+        = glsl_140 || (gles && GLPlatform::instance()->glslVersion() >= kVersionNumber(3, 0));
 
     QByteArray vertexSource;
     QByteArray fragmentDownSource;
@@ -43,8 +44,8 @@ BlurShader::BlurShader(QObject *parent)
     QByteArray fragmentCopySource;
     QByteArray fragmentNoiseSource;
 
-    const QByteArray attribute = core ? "in"        : "attribute";
-    const QByteArray texture2D = core ? "texture"   : "texture2D";
+    const QByteArray attribute = core ? "in" : "attribute";
+    const QByteArray texture2D = core ? "texture" : "texture2D";
     const QByteArray fragColor = core ? "fragColor" : "gl_FragColor";
 
     QString glHeaderString;
@@ -59,10 +60,11 @@ BlurShader::BlurShader(QObject *parent)
         glHeaderString += "#version 140\n\n";
     }
 
-    QString glUniformString = "uniform sampler2D texUnit;\n"
-        "uniform float offset;\n"
-        "uniform vec2 renderTextureSize;\n"
-        "uniform vec2 halfpixel;\n";
+    QString glUniformString
+        = "uniform sampler2D texUnit;\n"
+          "uniform float offset;\n"
+          "uniform vec2 renderTextureSize;\n"
+          "uniform vec2 halfpixel;\n";
 
     if (core) {
         glUniformString += "out vec4 fragColor;\n\n";
@@ -95,8 +97,10 @@ BlurShader::BlurShader(QObject *parent)
     streamFragDown << "    vec4 sum = " << texture2D << "(texUnit, uv) * 4.0;\n";
     streamFragDown << "    sum += " << texture2D << "(texUnit, uv - halfpixel.xy * offset);\n";
     streamFragDown << "    sum += " << texture2D << "(texUnit, uv + halfpixel.xy * offset);\n";
-    streamFragDown << "    sum += " << texture2D << "(texUnit, uv + vec2(halfpixel.x, -halfpixel.y) * offset);\n";
-    streamFragDown << "    sum += " << texture2D << "(texUnit, uv - vec2(halfpixel.x, -halfpixel.y) * offset);\n";
+    streamFragDown << "    sum += " << texture2D
+                   << "(texUnit, uv + vec2(halfpixel.x, -halfpixel.y) * offset);\n";
+    streamFragDown << "    sum += " << texture2D
+                   << "(texUnit, uv - vec2(halfpixel.x, -halfpixel.y) * offset);\n";
     streamFragDown << "    \n";
     streamFragDown << "    " << fragColor << " = sum / 8.0;\n";
     streamFragDown << "}\n";
@@ -112,14 +116,22 @@ BlurShader::BlurShader(QObject *parent)
     streamFragUp << "{\n";
     streamFragUp << "    vec2 uv = vec2(gl_FragCoord.xy / renderTextureSize);\n";
     streamFragUp << "    \n";
-    streamFragUp << "    vec4 sum = " << texture2D << "(texUnit, uv + vec2(-halfpixel.x * 2.0, 0.0) * offset);\n";
-    streamFragUp << "    sum += " << texture2D << "(texUnit, uv + vec2(-halfpixel.x, halfpixel.y) * offset) * 2.0;\n";
-    streamFragUp << "    sum += " << texture2D << "(texUnit, uv + vec2(0.0, halfpixel.y * 2.0) * offset);\n";
-    streamFragUp << "    sum += " << texture2D << "(texUnit, uv + vec2(halfpixel.x, halfpixel.y) * offset) * 2.0;\n";
-    streamFragUp << "    sum += " << texture2D << "(texUnit, uv + vec2(halfpixel.x * 2.0, 0.0) * offset);\n";
-    streamFragUp << "    sum += " << texture2D << "(texUnit, uv + vec2(halfpixel.x, -halfpixel.y) * offset) * 2.0;\n";
-    streamFragUp << "    sum += " << texture2D << "(texUnit, uv + vec2(0.0, -halfpixel.y * 2.0) * offset);\n";
-    streamFragUp << "    sum += " << texture2D << "(texUnit, uv + vec2(-halfpixel.x, -halfpixel.y) * offset) * 2.0;\n";
+    streamFragUp << "    vec4 sum = " << texture2D
+                 << "(texUnit, uv + vec2(-halfpixel.x * 2.0, 0.0) * offset);\n";
+    streamFragUp << "    sum += " << texture2D
+                 << "(texUnit, uv + vec2(-halfpixel.x, halfpixel.y) * offset) * 2.0;\n";
+    streamFragUp << "    sum += " << texture2D
+                 << "(texUnit, uv + vec2(0.0, halfpixel.y * 2.0) * offset);\n";
+    streamFragUp << "    sum += " << texture2D
+                 << "(texUnit, uv + vec2(halfpixel.x, halfpixel.y) * offset) * 2.0;\n";
+    streamFragUp << "    sum += " << texture2D
+                 << "(texUnit, uv + vec2(halfpixel.x * 2.0, 0.0) * offset);\n";
+    streamFragUp << "    sum += " << texture2D
+                 << "(texUnit, uv + vec2(halfpixel.x, -halfpixel.y) * offset) * 2.0;\n";
+    streamFragUp << "    sum += " << texture2D
+                 << "(texUnit, uv + vec2(0.0, -halfpixel.y * 2.0) * offset);\n";
+    streamFragUp << "    sum += " << texture2D
+                 << "(texUnit, uv + vec2(-halfpixel.x, -halfpixel.y) * offset) * 2.0;\n";
     streamFragUp << "    \n";
     streamFragUp << "    " << fragColor << " = sum / 12.0;\n";
     streamFragUp << "}\n";
@@ -142,7 +154,8 @@ BlurShader::BlurShader(QObject *parent)
     streamFragCopy << "void main(void)\n";
     streamFragCopy << "{\n";
     streamFragCopy << "     vec2 uv = vec2(gl_FragCoord.xy / renderTextureSize);\n";
-    streamFragCopy << "    " << fragColor << " = " << texture2D << "(texUnit, clamp(uv, blurRect.xy, blurRect.zw));\n";
+    streamFragCopy << "    " << fragColor << " = " << texture2D
+                   << "(texUnit, clamp(uv, blurRect.xy, blurRect.zw));\n";
     streamFragCopy << "}\n";
 
     streamFragCopy.flush();
@@ -157,42 +170,55 @@ BlurShader::BlurShader(QObject *parent)
 
     streamFragNoise << "void main(void)\n";
     streamFragNoise << "{\n";
-    streamFragNoise << "    vec2 uvNoise = vec2((texStartPos.xy + gl_FragCoord.xy) / noiseTextureSize);\n";
+    streamFragNoise
+        << "    vec2 uvNoise = vec2((texStartPos.xy + gl_FragCoord.xy) / noiseTextureSize);\n";
     streamFragNoise << "    \n";
-    streamFragNoise << "    " << fragColor << " = vec4(" << texture2D << "(texUnit, uvNoise).rrr, 0);\n";
+    streamFragNoise << "    " << fragColor << " = vec4(" << texture2D
+                    << "(texUnit, uvNoise).rrr, 0);\n";
     streamFragNoise << "}\n";
 
     streamFragNoise.flush();
 
-    m_shaderDownsample.reset(ShaderManager::instance()->loadShaderFromCode(vertexSource, fragmentDownSource));
-    m_shaderUpsample.reset(ShaderManager::instance()->loadShaderFromCode(vertexSource, fragmentUpSource));
-    m_shaderCopysample.reset(ShaderManager::instance()->loadShaderFromCode(vertexSource, fragmentCopySource));
-    m_shaderNoisesample.reset(ShaderManager::instance()->loadShaderFromCode(vertexSource, fragmentNoiseSource));
+    m_shaderDownsample.reset(
+        ShaderManager::instance()->loadShaderFromCode(vertexSource, fragmentDownSource));
+    m_shaderUpsample.reset(
+        ShaderManager::instance()->loadShaderFromCode(vertexSource, fragmentUpSource));
+    m_shaderCopysample.reset(
+        ShaderManager::instance()->loadShaderFromCode(vertexSource, fragmentCopySource));
+    m_shaderNoisesample.reset(
+        ShaderManager::instance()->loadShaderFromCode(vertexSource, fragmentNoiseSource));
 
-    m_valid = m_shaderDownsample->isValid() &&
-              m_shaderUpsample->isValid() &&
-              m_shaderCopysample->isValid() &&
-              m_shaderNoisesample->isValid();
+    m_valid = m_shaderDownsample->isValid() && m_shaderUpsample->isValid()
+        && m_shaderCopysample->isValid() && m_shaderNoisesample->isValid();
 
     if (m_valid) {
-        m_mvpMatrixLocationDownsample = m_shaderDownsample->uniformLocation("modelViewProjectionMatrix");
+        m_mvpMatrixLocationDownsample
+            = m_shaderDownsample->uniformLocation("modelViewProjectionMatrix");
         m_offsetLocationDownsample = m_shaderDownsample->uniformLocation("offset");
-        m_renderTextureSizeLocationDownsample = m_shaderDownsample->uniformLocation("renderTextureSize");
+        m_renderTextureSizeLocationDownsample
+            = m_shaderDownsample->uniformLocation("renderTextureSize");
         m_halfpixelLocationDownsample = m_shaderDownsample->uniformLocation("halfpixel");
 
-        m_mvpMatrixLocationUpsample = m_shaderUpsample->uniformLocation("modelViewProjectionMatrix");
+        m_mvpMatrixLocationUpsample
+            = m_shaderUpsample->uniformLocation("modelViewProjectionMatrix");
         m_offsetLocationUpsample = m_shaderUpsample->uniformLocation("offset");
-        m_renderTextureSizeLocationUpsample = m_shaderUpsample->uniformLocation("renderTextureSize");
+        m_renderTextureSizeLocationUpsample
+            = m_shaderUpsample->uniformLocation("renderTextureSize");
         m_halfpixelLocationUpsample = m_shaderUpsample->uniformLocation("halfpixel");
 
-        m_mvpMatrixLocationCopysample = m_shaderCopysample->uniformLocation("modelViewProjectionMatrix");
-        m_renderTextureSizeLocationCopysample = m_shaderCopysample->uniformLocation("renderTextureSize");
+        m_mvpMatrixLocationCopysample
+            = m_shaderCopysample->uniformLocation("modelViewProjectionMatrix");
+        m_renderTextureSizeLocationCopysample
+            = m_shaderCopysample->uniformLocation("renderTextureSize");
         m_blurRectLocationCopysample = m_shaderCopysample->uniformLocation("blurRect");
 
-        m_mvpMatrixLocationNoisesample = m_shaderNoisesample->uniformLocation("modelViewProjectionMatrix");
+        m_mvpMatrixLocationNoisesample
+            = m_shaderNoisesample->uniformLocation("modelViewProjectionMatrix");
         m_offsetLocationNoisesample = m_shaderNoisesample->uniformLocation("offset");
-        m_renderTextureSizeLocationNoisesample = m_shaderNoisesample->uniformLocation("renderTextureSize");
-        m_noiseTextureSizeLocationNoisesample = m_shaderNoisesample->uniformLocation("noiseTextureSize");
+        m_renderTextureSizeLocationNoisesample
+            = m_shaderNoisesample->uniformLocation("renderTextureSize");
+        m_noiseTextureSizeLocationNoisesample
+            = m_shaderNoisesample->uniformLocation("noiseTextureSize");
         m_texStartPosLocationNoisesample = m_shaderNoisesample->uniformLocation("texStartPos");
         m_halfpixelLocationNoisesample = m_shaderNoisesample->uniformLocation("halfpixel");
 
@@ -200,7 +226,7 @@ BlurShader::BlurShader(QObject *parent)
         const QSize screenSize = effects->virtualScreenSize();
         modelViewProjection.ortho(0, screenSize.width(), screenSize.height(), 0, 0, 65535);
 
-        //Add default values to the uniforms of the shaders
+        // Add default values to the uniforms of the shaders
         ShaderManager::instance()->pushShader(m_shaderDownsample.data());
         m_shaderDownsample->setUniform(m_mvpMatrixLocationDownsample, modelViewProjection);
         m_shaderDownsample->setUniform(m_offsetLocationDownsample, float(1.0));
@@ -224,7 +250,8 @@ BlurShader::BlurShader(QObject *parent)
         ShaderManager::instance()->pushShader(m_shaderNoisesample.data());
         m_shaderNoisesample->setUniform(m_mvpMatrixLocationNoisesample, modelViewProjection);
         m_shaderNoisesample->setUniform(m_offsetLocationNoisesample, float(1.0));
-        m_shaderNoisesample->setUniform(m_renderTextureSizeLocationNoisesample, QVector2D(1.0, 1.0));
+        m_shaderNoisesample->setUniform(m_renderTextureSizeLocationNoisesample,
+                                        QVector2D(1.0, 1.0));
         m_shaderNoisesample->setUniform(m_noiseTextureSizeLocationNoisesample, QVector2D(1.0, 1.0));
         m_shaderNoisesample->setUniform(m_texStartPosLocationNoisesample, QVector2D(1.0, 1.0));
         m_shaderNoisesample->setUniform(m_halfpixelLocationNoisesample, QVector2D(1.0, 1.0));
@@ -237,7 +264,7 @@ BlurShader::~BlurShader()
 {
 }
 
-void BlurShader::setModelViewProjectionMatrix(const QMatrix4x4 &matrix)
+void BlurShader::setModelViewProjectionMatrix(const QMatrix4x4& matrix)
 {
     if (!isValid()) {
         return;
@@ -326,7 +353,7 @@ void BlurShader::setOffset(float offset)
     }
 }
 
-void BlurShader::setTargetTextureSize(const QSize &renderTextureSize)
+void BlurShader::setTargetTextureSize(const QSize& renderTextureSize)
 {
     if (!isValid()) {
         return;
@@ -341,17 +368,20 @@ void BlurShader::setTargetTextureSize(const QSize &renderTextureSize)
 
     case UpSampleType:
         m_shaderUpsample->setUniform(m_renderTextureSizeLocationUpsample, texSize);
-        m_shaderUpsample->setUniform(m_halfpixelLocationUpsample, QVector2D(0.5 / texSize.x(), 0.5 / texSize.y()));
+        m_shaderUpsample->setUniform(m_halfpixelLocationUpsample,
+                                     QVector2D(0.5 / texSize.x(), 0.5 / texSize.y()));
         break;
 
     case DownSampleType:
         m_shaderDownsample->setUniform(m_renderTextureSizeLocationDownsample, texSize);
-        m_shaderDownsample->setUniform(m_halfpixelLocationDownsample, QVector2D(0.5 / texSize.x(), 0.5 / texSize.y()));
+        m_shaderDownsample->setUniform(m_halfpixelLocationDownsample,
+                                       QVector2D(0.5 / texSize.x(), 0.5 / texSize.y()));
         break;
 
     case NoiseSampleType:
         m_shaderNoisesample->setUniform(m_renderTextureSizeLocationNoisesample, texSize);
-        m_shaderNoisesample->setUniform(m_halfpixelLocationNoisesample, QVector2D(0.5 / texSize.x(), 0.5 / texSize.y()));
+        m_shaderNoisesample->setUniform(m_halfpixelLocationNoisesample,
+                                        QVector2D(0.5 / texSize.x(), 0.5 / texSize.y()));
         break;
 
     default:
@@ -360,7 +390,7 @@ void BlurShader::setTargetTextureSize(const QSize &renderTextureSize)
     }
 }
 
-void BlurShader::setNoiseTextureSize(const QSize &noiseTextureSize)
+void BlurShader::setNoiseTextureSize(const QSize& noiseTextureSize)
 {
     const QVector2D noiseTexSize(noiseTextureSize.width(), noiseTextureSize.height());
 
@@ -370,23 +400,22 @@ void BlurShader::setNoiseTextureSize(const QSize &noiseTextureSize)
     }
 }
 
-void BlurShader::setTexturePosition(const QPoint &texPos)
+void BlurShader::setTexturePosition(const QPoint& texPos)
 {
-    m_shaderNoisesample->setUniform(m_texStartPosLocationNoisesample, QVector2D(-texPos.x(), texPos.y()));
+    m_shaderNoisesample->setUniform(m_texStartPosLocationNoisesample,
+                                    QVector2D(-texPos.x(), texPos.y()));
 }
 
-void BlurShader::setBlurRect(const QRect &blurRect, const QSize &screenSize)
+void BlurShader::setBlurRect(const QRect& blurRect, const QSize& screenSize)
 {
     if (!isValid()) {
         return;
     }
 
-    const QVector4D rect(
-        blurRect.left()         / float(screenSize.width()),
-        1.0 - blurRect.bottom() / float(screenSize.height()),
-        blurRect.right()        / float(screenSize.width()),
-        1.0 - blurRect.top()    / float(screenSize.height())
-    );
+    const QVector4D rect(blurRect.left() / float(screenSize.width()),
+                         1.0 - blurRect.bottom() / float(screenSize.height()),
+                         blurRect.right() / float(screenSize.width()),
+                         1.0 - blurRect.top() / float(screenSize.height()));
 
     m_shaderCopysample->setUniform(m_blurRectLocationCopysample, rect);
 }

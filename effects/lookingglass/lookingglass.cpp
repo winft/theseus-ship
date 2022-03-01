@@ -25,14 +25,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lookingglassconfig.h"
 
 #include <QAction>
-#include <kwinglutils.h>
 #include <kwinglplatform.h>
+#include <kwinglutils.h>
 
-#include <KStandardAction>
 #include <KGlobalAccel>
 #include <KLocalizedString>
-#include <QVector2D>
+#include <KStandardAction>
 #include <QFile>
+#include <QVector2D>
 
 #include <kmessagebox.h>
 
@@ -94,7 +94,8 @@ LookingGlassEffect::~LookingGlassEffect()
 
 bool LookingGlassEffect::supported()
 {
-    return effects->compositingType() == OpenGLCompositing && !GLPlatform::instance()->supports(LimitedNPOT);
+    return effects->compositingType() == OpenGLCompositing
+        && !GLPlatform::instance()->supports(LimitedNPOT);
 }
 
 void LookingGlassEffect::reconfigure(ReconfigureFlags)
@@ -125,7 +126,10 @@ bool LookingGlassEffect::loadData()
         return false;
     }
 
-    m_shader = ShaderManager::instance()->generateShaderFromFile(ShaderTrait::MapTexture, QString(), QStringLiteral(":/effects/lookingglass/shaders/lookingglass.frag"));
+    m_shader = ShaderManager::instance()->generateShaderFromFile(
+        ShaderTrait::MapTexture,
+        QString(),
+        QStringLiteral(":/effects/lookingglass/shaders/lookingglass.frag"));
     if (m_shader->isValid()) {
         ShaderBinder binder(m_shader);
         m_shader->setUniform("u_textureSize", QVector2D(screenSize.width(), screenSize.height()));
@@ -207,7 +211,8 @@ QRect LookingGlassEffect::magnifierArea() const
     return QRect(cursorPos().x() - radius, cursorPos().y() - radius, 2 * radius, 2 * radius);
 }
 
-void LookingGlassEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void LookingGlassEffect::prePaintScreen(ScreenPrePaintData& data,
+                                        std::chrono::milliseconds presentTime)
 {
     const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
     if (zoom != target_zoom) {
@@ -223,7 +228,8 @@ void LookingGlassEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::m
             m_enabled = false;
         }
 
-        effects->addRepaint(cursorPos().x() - radius, cursorPos().y() - radius, 2 * radius, 2 * radius);
+        effects->addRepaint(
+            cursorPos().x() - radius, cursorPos().y() - radius, 2 * radius, 2 * radius);
     }
     if (zoom != target_zoom) {
         m_lastPresentTime = presentTime;
@@ -239,8 +245,12 @@ void LookingGlassEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::m
     effects->prePaintScreen(data, presentTime);
 }
 
-void LookingGlassEffect::slotMouseChanged(const QPoint& pos, const QPoint& old, Qt::MouseButtons,
-                                      Qt::MouseButtons, Qt::KeyboardModifiers, Qt::KeyboardModifiers)
+void LookingGlassEffect::slotMouseChanged(const QPoint& pos,
+                                          const QPoint& old,
+                                          Qt::MouseButtons,
+                                          Qt::MouseButtons,
+                                          Qt::KeyboardModifiers,
+                                          Qt::KeyboardModifiers)
 {
     if (pos != old && m_enabled) {
         effects->addRepaint(pos.x() - radius, pos.y() - radius, 2 * radius, 2 * radius);
@@ -255,7 +265,7 @@ void LookingGlassEffect::slotWindowDamaged()
     }
 }
 
-void LookingGlassEffect::paintScreen(int mask, const QRegion &region, ScreenPaintData &data)
+void LookingGlassEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
 {
     // Call the next effect.
     effects->paintScreen(mask, region, data);
@@ -284,4 +294,3 @@ bool LookingGlassEffect::isActive() const
 }
 
 } // namespace
-

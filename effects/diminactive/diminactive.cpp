@@ -39,7 +39,7 @@ namespace KWin
  * @param w2 The second window
  * @returns @c true if both windows belong to the same window group, @c false otherwise
  */
-static inline bool belongToSameGroup(const EffectWindow *w1, const EffectWindow *w2)
+static inline bool belongToSameGroup(const EffectWindow* w1, const EffectWindow* w2)
 {
     return w1 && w2 && w1->group() && w1->group() == w2->group();
 }
@@ -49,18 +49,21 @@ DimInactiveEffect::DimInactiveEffect()
     initConfig<DimInactiveConfig>();
     reconfigure(ReconfigureAll);
 
-    connect(effects, &EffectsHandler::windowActivated,
-            this, &DimInactiveEffect::windowActivated);
-    connect(effects, &EffectsHandler::windowClosed,
-            this, &DimInactiveEffect::windowClosed);
-    connect(effects, &EffectsHandler::windowDeleted,
-            this, &DimInactiveEffect::windowDeleted);
-    connect(effects, &EffectsHandler::activeFullScreenEffectChanged,
-            this, &DimInactiveEffect::activeFullScreenEffectChanged);
-    connect(effects, &EffectsHandler::windowKeepAboveChanged,
-            this, &DimInactiveEffect::updateActiveWindow);
-    connect(effects, &EffectsHandler::windowFullScreenChanged,
-            this, &DimInactiveEffect::updateActiveWindow);
+    connect(effects, &EffectsHandler::windowActivated, this, &DimInactiveEffect::windowActivated);
+    connect(effects, &EffectsHandler::windowClosed, this, &DimInactiveEffect::windowClosed);
+    connect(effects, &EffectsHandler::windowDeleted, this, &DimInactiveEffect::windowDeleted);
+    connect(effects,
+            &EffectsHandler::activeFullScreenEffectChanged,
+            this,
+            &DimInactiveEffect::activeFullScreenEffectChanged);
+    connect(effects,
+            &EffectsHandler::windowKeepAboveChanged,
+            this,
+            &DimInactiveEffect::updateActiveWindow);
+    connect(effects,
+            &EffectsHandler::windowFullScreenChanged,
+            this,
+            &DimInactiveEffect::updateActiveWindow);
 }
 
 DimInactiveEffect::~DimInactiveEffect()
@@ -83,9 +86,7 @@ void DimInactiveEffect::reconfigure(ReconfigureFlags flags)
 
     updateActiveWindow(effects->activeWindow());
 
-    m_activeWindowGroup = (m_dimByGroup && m_activeWindow)
-        ? m_activeWindow->group()
-        : nullptr;
+    m_activeWindowGroup = (m_dimByGroup && m_activeWindow) ? m_activeWindow->group() : nullptr;
 
     m_fullScreenTransition.timeLine.setDuration(
         std::chrono::milliseconds(static_cast<int>(animationTime(250))));
@@ -93,7 +94,8 @@ void DimInactiveEffect::reconfigure(ReconfigureFlags flags)
     effects->addRepaintFull();
 }
 
-void DimInactiveEffect::prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime)
+void DimInactiveEffect::prePaintScreen(ScreenPrePaintData& data,
+                                       std::chrono::milliseconds presentTime)
 {
     std::chrono::milliseconds delta(0);
     if (m_lastPresentTime.count()) {
@@ -114,7 +116,10 @@ void DimInactiveEffect::prePaintScreen(ScreenPrePaintData &data, std::chrono::mi
     effects->prePaintScreen(data, presentTime);
 }
 
-void DimInactiveEffect::paintWindow(EffectWindow *w, int mask, QRegion region, WindowPaintData &data)
+void DimInactiveEffect::paintWindow(EffectWindow* w,
+                                    int mask,
+                                    QRegion region,
+                                    WindowPaintData& data)
 {
     auto transitionIt = m_transitions.constFind(w);
     if (transitionIt != m_transitions.constEnd()) {
@@ -150,7 +155,7 @@ void DimInactiveEffect::postPaintScreen()
 
     auto transitionIt = m_transitions.begin();
     while (transitionIt != m_transitions.end()) {
-        EffectWindow *w = transitionIt.key();
+        EffectWindow* w = transitionIt.key();
         if ((*transitionIt).done()) {
             transitionIt = m_transitions.erase(transitionIt);
         } else {
@@ -166,7 +171,7 @@ void DimInactiveEffect::postPaintScreen()
     effects->postPaintScreen();
 }
 
-void DimInactiveEffect::dimWindow(WindowPaintData &data, qreal strength)
+void DimInactiveEffect::dimWindow(WindowPaintData& data, qreal strength)
 {
     qreal dimFactor;
     if (m_fullScreenTransition.active) {
@@ -181,7 +186,7 @@ void DimInactiveEffect::dimWindow(WindowPaintData &data, qreal strength)
     data.multiplySaturation(1.0 - strength * dimFactor);
 }
 
-bool DimInactiveEffect::canDimWindow(const EffectWindow *w) const
+bool DimInactiveEffect::canDimWindow(const EffectWindow* w) const
 {
     if (m_activeWindow == w) {
         return false;
@@ -215,18 +220,13 @@ bool DimInactiveEffect::canDimWindow(const EffectWindow *w) const
         return false;
     }
 
-    return w->isNormalWindow()
-        || w->isDialog()
-        || w->isUtility()
-        || w->isDock()
-        || w->isDesktop();
+    return w->isNormalWindow() || w->isDialog() || w->isUtility() || w->isDock() || w->isDesktop();
 }
 
-void DimInactiveEffect::scheduleInTransition(EffectWindow *w)
+void DimInactiveEffect::scheduleInTransition(EffectWindow* w)
 {
-    TimeLine &timeLine = m_transitions[w];
-    timeLine.setDuration(
-        std::chrono::milliseconds(static_cast<int>(animationTime(160))));
+    TimeLine& timeLine = m_transitions[w];
+    timeLine.setDuration(std::chrono::milliseconds(static_cast<int>(animationTime(160))));
     if (timeLine.done()) {
         // If the Out animation is still active, then we're trucating
         // duration of the timeline(from 250ms to 160ms). If the timeline
@@ -239,7 +239,7 @@ void DimInactiveEffect::scheduleInTransition(EffectWindow *w)
     timeLine.setEasingCurve(QEasingCurve::InOutSine);
 }
 
-void DimInactiveEffect::scheduleGroupInTransition(EffectWindow *w)
+void DimInactiveEffect::scheduleGroupInTransition(EffectWindow* w)
 {
     if (!m_dimByGroup) {
         scheduleInTransition(w);
@@ -252,16 +252,15 @@ void DimInactiveEffect::scheduleGroupInTransition(EffectWindow *w)
     }
 
     const auto members = w->group()->members();
-    for (EffectWindow *member : members) {
+    for (EffectWindow* member : members) {
         scheduleInTransition(member);
     }
 }
 
-void DimInactiveEffect::scheduleOutTransition(EffectWindow *w)
+void DimInactiveEffect::scheduleOutTransition(EffectWindow* w)
 {
-    TimeLine &timeLine = m_transitions[w];
-    timeLine.setDuration(
-        std::chrono::milliseconds(static_cast<int>(animationTime(250))));
+    TimeLine& timeLine = m_transitions[w];
+    timeLine.setDuration(std::chrono::milliseconds(static_cast<int>(animationTime(250))));
     if (timeLine.done()) {
         timeLine.reset();
     }
@@ -269,7 +268,7 @@ void DimInactiveEffect::scheduleOutTransition(EffectWindow *w)
     timeLine.setEasingCurve(QEasingCurve::InOutSine);
 }
 
-void DimInactiveEffect::scheduleGroupOutTransition(EffectWindow *w)
+void DimInactiveEffect::scheduleGroupOutTransition(EffectWindow* w)
 {
     if (!m_dimByGroup) {
         scheduleOutTransition(w);
@@ -282,12 +281,12 @@ void DimInactiveEffect::scheduleGroupOutTransition(EffectWindow *w)
     }
 
     const auto members = w->group()->members();
-    for (EffectWindow *member : members) {
+    for (EffectWindow* member : members) {
         scheduleOutTransition(member);
     }
 }
 
-void DimInactiveEffect::scheduleRepaint(EffectWindow *w)
+void DimInactiveEffect::scheduleRepaint(EffectWindow* w)
 {
     if (!m_dimByGroup) {
         w->addRepaintFull();
@@ -300,12 +299,12 @@ void DimInactiveEffect::scheduleRepaint(EffectWindow *w)
     }
 
     const auto members = w->group()->members();
-    for (EffectWindow *member : members) {
+    for (EffectWindow* member : members) {
         member->addRepaintFull();
     }
 }
 
-void DimInactiveEffect::windowActivated(EffectWindow *w)
+void DimInactiveEffect::windowActivated(EffectWindow* w)
 {
     if (!w) {
         return;
@@ -331,12 +330,10 @@ void DimInactiveEffect::windowActivated(EffectWindow *w)
         return;
     }
 
-    EffectWindow *previousActiveWindow = m_activeWindow;
+    EffectWindow* previousActiveWindow = m_activeWindow;
     m_activeWindow = canDimWindow(w) ? w : nullptr;
 
-    m_activeWindowGroup = (m_dimByGroup && m_activeWindow)
-        ? m_activeWindow->group()
-        : nullptr;
+    m_activeWindowGroup = (m_dimByGroup && m_activeWindow) ? m_activeWindow->group() : nullptr;
 
     if (previousActiveWindow) {
         scheduleGroupOutTransition(previousActiveWindow);
@@ -349,7 +346,7 @@ void DimInactiveEffect::windowActivated(EffectWindow *w)
     }
 }
 
-void DimInactiveEffect::windowClosed(EffectWindow *w)
+void DimInactiveEffect::windowClosed(EffectWindow* w)
 {
     // When a window is closed, we should force current dim strength that
     // is applied to it to avoid flickering when some effect animates
@@ -383,7 +380,7 @@ void DimInactiveEffect::windowClosed(EffectWindow *w)
     }
 }
 
-void DimInactiveEffect::windowDeleted(EffectWindow *w)
+void DimInactiveEffect::windowDeleted(EffectWindow* w)
 {
     m_forceDim.remove(w);
 
@@ -400,16 +397,13 @@ void DimInactiveEffect::activeFullScreenEffectChanged()
         m_fullScreenTransition.timeLine.reset();
     }
     m_fullScreenTransition.timeLine.setDirection(
-        effects->activeFullScreenEffect()
-            ? TimeLine::Forward
-            : TimeLine::Backward
-    );
+        effects->activeFullScreenEffect() ? TimeLine::Forward : TimeLine::Backward);
     m_fullScreenTransition.active = true;
 
     effects->addRepaintFull();
 }
 
-void DimInactiveEffect::updateActiveWindow(EffectWindow *w)
+void DimInactiveEffect::updateActiveWindow(EffectWindow* w)
 {
     if (effects->activeWindow() == nullptr) {
         return;

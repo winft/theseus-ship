@@ -45,8 +45,8 @@ public:
 
     void reconfigure(ReconfigureFlags flags) override;
 
-    void prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow *w, int mask, QRegion region, WindowPaintData &data) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
     void postPaintScreen() override;
 
     int requestedEffectChainPosition() const override;
@@ -60,21 +60,21 @@ public:
     bool dimFullScreen() const;
 
 private Q_SLOTS:
-    void windowActivated(EffectWindow *w);
-    void windowClosed(EffectWindow *w);
-    void windowDeleted(EffectWindow *w);
+    void windowActivated(EffectWindow* w);
+    void windowClosed(EffectWindow* w);
+    void windowDeleted(EffectWindow* w);
     void activeFullScreenEffectChanged();
 
-    void updateActiveWindow(EffectWindow *w);
+    void updateActiveWindow(EffectWindow* w);
 
 private:
-    void dimWindow(WindowPaintData &data, qreal strength);
-    bool canDimWindow(const EffectWindow *w) const;
-    void scheduleInTransition(EffectWindow *w);
-    void scheduleGroupInTransition(EffectWindow *w);
-    void scheduleOutTransition(EffectWindow *w);
-    void scheduleGroupOutTransition(EffectWindow *w);
-    void scheduleRepaint(EffectWindow *w);
+    void dimWindow(WindowPaintData& data, qreal strength);
+    bool canDimWindow(const EffectWindow* w) const;
+    void scheduleInTransition(EffectWindow* w);
+    void scheduleGroupInTransition(EffectWindow* w);
+    void scheduleOutTransition(EffectWindow* w);
+    void scheduleGroupOutTransition(EffectWindow* w);
+    void scheduleRepaint(EffectWindow* w);
 
 private:
     qreal m_dimStrength;
@@ -84,8 +84,8 @@ private:
     bool m_dimByGroup;
     bool m_dimFullScreen;
 
-    EffectWindow *m_activeWindow = nullptr;
-    const EffectWindowGroup *m_activeWindowGroup;
+    EffectWindow* m_activeWindow = nullptr;
+    const EffectWindowGroup* m_activeWindowGroup;
     QHash<EffectWindow*, TimeLine> m_transitions;
     QHash<EffectWindow*, qreal> m_forceDim;
     std::chrono::milliseconds m_lastPresentTime = std::chrono::milliseconds::zero();

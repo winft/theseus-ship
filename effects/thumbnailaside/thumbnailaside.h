@@ -35,8 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class ThumbnailAsideEffect
-    : public Effect
+class ThumbnailAsideEffect : public Effect
 {
     Q_OBJECT
     Q_PROPERTY(int maxWidth READ configuredMaxWidth)
@@ -46,30 +45,35 @@ class ThumbnailAsideEffect
 public:
     ThumbnailAsideEffect();
     void reconfigure(ReconfigureFlags) override;
-    void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
-    void paintWindow(EffectWindow *w, int mask, QRegion region, WindowPaintData &data) override;
+    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
+    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
 
     // for properties
-    int configuredMaxWidth() const {
+    int configuredMaxWidth() const
+    {
         return maxwidth;
     }
-    int configuredSpacing() const {
+    int configuredSpacing() const
+    {
         return spacing;
     }
-    qreal configuredOpacity() const {
+    qreal configuredOpacity() const
+    {
         return opacity;
     }
-    int configuredScreen() const {
+    int configuredScreen() const
+    {
         return screen;
     }
     bool isActive() const override;
 
 private Q_SLOTS:
     void toggleCurrentThumbnail();
-    void slotWindowClosed(KWin::EffectWindow *w);
-    void slotWindowGeometryShapeChanged(KWin::EffectWindow *w, const QRect &old);
+    void slotWindowClosed(KWin::EffectWindow* w);
+    void slotWindowGeometryShapeChanged(KWin::EffectWindow* w, const QRect& old);
     void slotWindowDamaged(KWin::EffectWindow* w, QRegion const& damage);
     void repaintAll();
+
 private:
     void addThumbnail(EffectWindow* w);
     void removeThumbnail(EffectWindow* w);
@@ -79,7 +83,7 @@ private:
         int index;
         QRect rect;
     };
-    QHash< EffectWindow*, Data > windows;
+    QHash<EffectWindow*, Data> windows;
     int maxwidth;
     int spacing;
     double opacity;

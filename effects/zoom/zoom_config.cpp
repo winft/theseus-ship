@@ -27,10 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAction>
 
+#include <KAboutData>
+#include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>
-#include <KActionCollection>
-#include <KAboutData>
 #include <KPluginFactory>
 
 #include <QVBoxLayout>
@@ -40,13 +40,14 @@ K_PLUGIN_CLASS(KWin::ZoomEffectConfig)
 namespace KWin
 {
 
-ZoomEffectConfigForm::ZoomEffectConfigForm(QWidget* parent) : QWidget(parent)
+ZoomEffectConfigForm::ZoomEffectConfigForm(QWidget* parent)
+    : QWidget(parent)
 {
     setupUi(this);
 }
 
-ZoomEffectConfig::ZoomEffectConfig(QWidget* parent, const QVariantList& args) :
-    KCModule(parent, args)
+ZoomEffectConfig::ZoomEffectConfig(QWidget* parent, const QVariantList& args)
+    : KCModule(parent, args)
 {
     ZoomConfig::instance(KWIN_CONFIG);
     m_ui = new ZoomEffectConfigForm(this);
@@ -64,7 +65,7 @@ ZoomEffectConfig::ZoomEffectConfig(QWidget* parent, const QVariantList& args) :
 #endif
 
     // Shortcut config. The shortcut belongs to the component "kwin"!
-    KActionCollection *actionCollection = new KActionCollection(this, QStringLiteral("kwin"));
+    KActionCollection* actionCollection = new KActionCollection(this, QStringLiteral("kwin"));
     actionCollection->setComponentDisplayName(i18n("KWin"));
     actionCollection->setConfigGroup(QStringLiteral("Zoom"));
     actionCollection->setConfigGlobal(true);
@@ -89,29 +90,36 @@ ZoomEffectConfig::ZoomEffectConfig(QWidget* parent, const QVariantList& args) :
     a->setIcon(QIcon::fromTheme(QStringLiteral("go-previous")));
     a->setText(i18n("Move Left"));
     a->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Left);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Left);
+    KGlobalAccel::self()->setDefaultShortcut(
+        a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Left);
+    KGlobalAccel::self()->setShortcut(a,
+                                      QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Left);
 
     a = actionCollection->addAction(QStringLiteral("MoveZoomRight"));
     a->setIcon(QIcon::fromTheme(QStringLiteral("go-next")));
     a->setText(i18n("Move Right"));
     a->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Right);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Right);
+    KGlobalAccel::self()->setDefaultShortcut(
+        a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Right);
+    KGlobalAccel::self()->setShortcut(a,
+                                      QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Right);
 
     a = actionCollection->addAction(QStringLiteral("MoveZoomUp"));
     a->setIcon(QIcon::fromTheme(QStringLiteral("go-up")));
     a->setText(i18n("Move Up"));
     a->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Up);
+    KGlobalAccel::self()->setDefaultShortcut(
+        a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Up);
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Up);
 
     a = actionCollection->addAction(QStringLiteral("MoveZoomDown"));
     a->setIcon(QIcon::fromTheme(QStringLiteral("go-down")));
     a->setText(i18n("Move Down"));
     a->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Down);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Down);
+    KGlobalAccel::self()->setDefaultShortcut(
+        a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Down);
+    KGlobalAccel::self()->setShortcut(a,
+                                      QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_Down);
 
     a = actionCollection->addAction(QStringLiteral("MoveMouseToFocus"));
     a->setIcon(QIcon::fromTheme(QStringLiteral("view-restore")));
@@ -142,9 +150,8 @@ void ZoomEffectConfig::save()
 {
     m_ui->editor->save(); // undo() will restore to this state from now on
     KCModule::save();
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("zoom"));
 }
 

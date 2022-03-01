@@ -30,8 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-struct GlideAnimation
-{
+struct GlideAnimation {
     TimeLine timeLine;
     std::chrono::milliseconds lastPresentTime = std::chrono::milliseconds::zero();
 };
@@ -55,9 +54,11 @@ public:
 
     void reconfigure(ReconfigureFlags flags) override;
 
-    void prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(EffectWindow *w, WindowPrePaintData &data, std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow *w, int mask, QRegion region, WindowPaintData &data) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
+    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
     void postPaintScreen() override;
 
     bool isActive() const override;
@@ -65,12 +66,7 @@ public:
 
     static bool supported();
 
-    enum RotationEdge {
-        Top    = 0,
-        Right  = 1,
-        Bottom = 2,
-        Left   = 3
-    };
+    enum RotationEdge { Top = 0, Right = 1, Bottom = 2, Left = 3 };
     Q_ENUM(RotationEdge)
 
     int duration() const;
@@ -84,16 +80,16 @@ public:
     qreal outOpacity() const;
 
 private Q_SLOTS:
-    void windowAdded(EffectWindow *w);
-    void windowClosed(EffectWindow *w);
-    void windowDeleted(EffectWindow *w);
-    void windowDataChanged(EffectWindow *w, int role);
+    void windowAdded(EffectWindow* w);
+    void windowClosed(EffectWindow* w);
+    void windowDeleted(EffectWindow* w);
+    void windowDataChanged(EffectWindow* w, int role);
 
 private:
-    bool isGlideWindow(EffectWindow *w) const;
+    bool isGlideWindow(EffectWindow* w) const;
 
     std::chrono::milliseconds m_duration;
-    QHash<EffectWindow *, GlideAnimation> m_animations;
+    QHash<EffectWindow*, GlideAnimation> m_animations;
 
     struct GlideParams {
         RotationEdge edge;

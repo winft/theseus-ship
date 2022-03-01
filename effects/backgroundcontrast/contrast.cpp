@@ -26,14 +26,15 @@
 #include <QMatrix4x4>
 #include <QWindow>
 
-#include <Wrapland/Server/surface.h>
 #include <Wrapland/Server/contrast.h>
 #include <Wrapland/Server/display.h>
+#include <Wrapland/Server/surface.h>
 
 namespace KWin
 {
 
-static const QByteArray s_contrastAtomName = QByteArrayLiteral("_KDE_NET_WM_BACKGROUND_CONTRAST_REGION");
+static const QByteArray s_contrastAtomName
+    = QByteArrayLiteral("_KDE_NET_WM_BACKGROUND_CONTRAST_REGION");
 
 ContrastEffect::ContrastEffect()
 {
@@ -45,7 +46,7 @@ ContrastEffect::ContrastEffect()
     //     Should be included in _NET_SUPPORTED instead.
     if (shader && shader->isValid()) {
         net_wm_contrast_region = effects->announceSupportProperty(s_contrastAtomName, this);
-        Wrapland::Server::Display *display = effects->waylandDisplay();
+        Wrapland::Server::Display* display = effects->waylandDisplay();
         if (display) {
             wayland_contrast_manager = display->createContrastManager();
         }
@@ -56,18 +57,19 @@ ContrastEffect::ContrastEffect()
     connect(effects, &EffectsHandler::windowAdded, this, &ContrastEffect::slotWindowAdded);
     connect(effects, &EffectsHandler::windowDeleted, this, &ContrastEffect::slotWindowDeleted);
     connect(effects, &EffectsHandler::propertyNotify, this, &ContrastEffect::slotPropertyNotify);
-    connect(effects, &EffectsHandler::screenGeometryChanged, this, &ContrastEffect::slotScreenGeometryChanged);
-    connect(effects, &EffectsHandler::xcbConnectionChanged, this,
-        [this] {
-            if (shader && shader->isValid()) {
-                net_wm_contrast_region = effects->announceSupportProperty(s_contrastAtomName, this);
-            }
+    connect(effects,
+            &EffectsHandler::screenGeometryChanged,
+            this,
+            &ContrastEffect::slotScreenGeometryChanged);
+    connect(effects, &EffectsHandler::xcbConnectionChanged, this, [this] {
+        if (shader && shader->isValid()) {
+            net_wm_contrast_region = effects->announceSupportProperty(s_contrastAtomName, this);
         }
-    );
+    });
 
     // Fetch the contrast regions for all windows
     auto const windowList = effects->stackingOrder();
-    for (EffectWindow *window : windowList) {
+    for (EffectWindow* window : windowList) {
         slotWindowAdded(window);
     }
 }
@@ -84,7 +86,7 @@ void ContrastEffect::slotScreenGeometryChanged()
         effects->reloadEffect(this);
         return;
     }
-    for (EffectWindow *window: effects->stackingOrder()) {
+    for (EffectWindow* window : effects->stackingOrder()) {
         updateContrastRegion(window);
     }
 }
@@ -102,18 +104,20 @@ void ContrastEffect::reconfigure(ReconfigureFlags flags)
     }
 }
 
-void ContrastEffect::updateContrastRegion(EffectWindow *w)
+void ContrastEffect::updateContrastRegion(EffectWindow* w)
 {
     QRegion region;
     float colorTransform[16];
     bool valid = false;
 
     if (net_wm_contrast_region != XCB_ATOM_NONE) {
-        const QByteArray value = w->readProperty(net_wm_contrast_region, net_wm_contrast_region, 32);
+        const QByteArray value
+            = w->readProperty(net_wm_contrast_region, net_wm_contrast_region, 32);
 
-        if (value.size() > 0 && !((value.size() - (16 * sizeof(uint32_t))) % ((4 * sizeof(uint32_t))))) {
-            const uint32_t *cardinals = reinterpret_cast<const uint32_t*>(value.constData());
-            const float *floatCardinals = reinterpret_cast<const float*>(value.constData());
+        if (value.size() > 0
+            && !((value.size() - (16 * sizeof(uint32_t))) % ((4 * sizeof(uint32_t))))) {
+            const uint32_t* cardinals = reinterpret_cast<const uint32_t*>(value.constData());
+            const float* floatCardinals = reinterpret_cast<const float*>(value.constData());
             unsigned int i = 0;
             for (; i < ((value.size() - (16 * sizeof(uint32_t)))) / sizeof(uint32_t);) {
                 int x = cardinals[i++];
@@ -139,7 +143,8 @@ void ContrastEffect::updateContrastRegion(EffectWindow *w)
     if (surf && surf->state().contrast) {
         auto& contrast = surf->state().contrast;
         region = contrast->region();
-        m_colorMatrices[w] = colorMatrix(contrast->contrast(), contrast->intensity(), contrast->saturation());
+        m_colorMatrices[w]
+            = colorMatrix(contrast->contrast(), contrast->intensity(), contrast->saturation());
         valid = true;
     }
 
@@ -176,16 +181,17 @@ void ContrastEffect::updateContrastRegion(EffectWindow *w)
     }
 }
 
-void ContrastEffect::slotWindowAdded(EffectWindow *w)
+void ContrastEffect::slotWindowAdded(EffectWindow* w)
 {
     auto surf = w->surface();
 
     if (surf) {
-        m_contrastChangedConnections[w] = connect(surf, &Wrapland::Server::Surface::committed, this, [this, w, surf] () {
-            if (w && surf->state().updates & Wrapland::Server::surface_change::contrast) {
-                updateContrastRegion(w);
-            }
-        });
+        m_contrastChangedConnections[w]
+            = connect(surf, &Wrapland::Server::Surface::committed, this, [this, w, surf]() {
+                  if (w && surf->state().updates & Wrapland::Server::surface_change::contrast) {
+                      updateContrastRegion(w);
+                  }
+              });
     }
 
     if (auto internal = w->internalWindow()) {
@@ -195,15 +201,15 @@ void ContrastEffect::slotWindowAdded(EffectWindow *w)
     updateContrastRegion(w);
 }
 
-bool ContrastEffect::eventFilter(QObject *watched, QEvent *event)
+bool ContrastEffect::eventFilter(QObject* watched, QEvent* event)
 {
     auto internal = qobject_cast<QWindow*>(watched);
     if (internal && event->type() == QEvent::DynamicPropertyChange) {
-        QDynamicPropertyChangeEvent *pe = static_cast<QDynamicPropertyChangeEvent*>(event);
-        if (pe->propertyName() == "kwin_background_region" ||
-            pe->propertyName() == "kwin_background_contrast" ||
-            pe->propertyName() == "kwin_background_intensity" ||
-            pe->propertyName() == "kwin_background_saturation") {
+        QDynamicPropertyChangeEvent* pe = static_cast<QDynamicPropertyChangeEvent*>(event);
+        if (pe->propertyName() == "kwin_background_region"
+            || pe->propertyName() == "kwin_background_contrast"
+            || pe->propertyName() == "kwin_background_intensity"
+            || pe->propertyName() == "kwin_background_saturation") {
             if (auto w = effects->findWindow(internal)) {
                 updateContrastRegion(w);
             }
@@ -212,7 +218,7 @@ bool ContrastEffect::eventFilter(QObject *watched, QEvent *event)
     return false;
 }
 
-void ContrastEffect::slotWindowDeleted(EffectWindow *w)
+void ContrastEffect::slotWindowDeleted(EffectWindow* w)
 {
     if (m_contrastChangedConnections.contains(w)) {
         disconnect(m_contrastChangedConnections[w]);
@@ -221,7 +227,7 @@ void ContrastEffect::slotWindowDeleted(EffectWindow *w)
     }
 }
 
-void ContrastEffect::slotPropertyNotify(EffectWindow *w, long atom)
+void ContrastEffect::slotPropertyNotify(EffectWindow* w, long atom)
 {
     if (w && atom == net_wm_contrast_region && net_wm_contrast_region != XCB_ATOM_NONE) {
         updateContrastRegion(w);
@@ -230,46 +236,50 @@ void ContrastEffect::slotPropertyNotify(EffectWindow *w, long atom)
 
 QMatrix4x4 ContrastEffect::colorMatrix(qreal contrast, qreal intensity, qreal saturation)
 {
-    QMatrix4x4 satMatrix; //saturation
-    QMatrix4x4 intMatrix; //intensity
-    QMatrix4x4 contMatrix; //contrast
+    QMatrix4x4 satMatrix;  // saturation
+    QMatrix4x4 intMatrix;  // intensity
+    QMatrix4x4 contMatrix; // contrast
 
-    //Saturation matrix
+    // Saturation matrix
     if (!qFuzzyCompare(saturation, 1.0)) {
         const qreal rval = (1.0 - saturation) * .2126;
         const qreal gval = (1.0 - saturation) * .7152;
         const qreal bval = (1.0 - saturation) * .0722;
 
-        satMatrix = QMatrix4x4(rval + saturation, rval,     rval,     0.0,
-            gval,     gval + saturation, gval,     0.0,
-            bval,     bval,     bval + saturation, 0.0,
-            0,        0,        0,        1.0);
+        // clang-format off
+        satMatrix = QMatrix4x4(rval + saturation, rval,              rval,              0.0,
+                               gval,              gval + saturation, gval,              0.0,
+                               bval,              bval,              bval + saturation, 0.0,
+                               0,                 0,                 0,                 1.0);
+        // clang-format on
     }
 
-    //IntensityMatrix
+    // IntensityMatrix
     if (!qFuzzyCompare(intensity, 1.0)) {
         intMatrix.scale(intensity, intensity, intensity);
     }
 
-    //Contrast Matrix
+    // Contrast Matrix
     if (!qFuzzyCompare(contrast, 1.0)) {
         const float transl = (1.0 - contrast) / 2.0;
 
+        // clang-format off
         contMatrix = QMatrix4x4(contrast, 0,        0,        0.0,
-            0,        contrast, 0,        0.0,
-            0,        0,        contrast, 0.0,
-            transl,   transl,   transl,   1.0);
+                                0,        contrast, 0,        0.0,
+                                0,        0,        contrast, 0.0,
+                                transl,   transl,   transl,   1.0);
+        // clang-format on
     }
 
     QMatrix4x4 colorMatrix = contMatrix * satMatrix * intMatrix;
-    //colorMatrix = colorMatrix.transposed();
+    // colorMatrix = colorMatrix.transposed();
 
     return colorMatrix;
 }
 
 bool ContrastEffect::enabledByDefault()
 {
-    GLPlatform *gl = GLPlatform::instance();
+    GLPlatform* gl = GLPlatform::instance();
 
     if (gl->isIntel() && gl->chipClass() < SandyBridge)
         return false;
@@ -297,7 +307,7 @@ bool ContrastEffect::supported()
     return supported;
 }
 
-QRegion ContrastEffect::contrastRegion(const EffectWindow *w) const
+QRegion ContrastEffect::contrastRegion(const EffectWindow* w) const
 {
     QRegion region;
 
@@ -305,8 +315,7 @@ QRegion ContrastEffect::contrastRegion(const EffectWindow *w) const
     if (value.isValid()) {
         const QRegion appRegion = qvariant_cast<QRegion>(value);
         if (!appRegion.isEmpty()) {
-            region |= appRegion.translated(w->contentsRect().topLeft()) &
-                      w->decorationInnerRect();
+            region |= appRegion.translated(w->contentsRect().topLeft()) & w->decorationInnerRect();
         } else {
             // An empty region means that the blur effect should be enabled
             // for the whole window.
@@ -317,9 +326,9 @@ QRegion ContrastEffect::contrastRegion(const EffectWindow *w) const
     return region;
 }
 
-void ContrastEffect::uploadRegion(QVector2D *&map, const QRegion &region)
+void ContrastEffect::uploadRegion(QVector2D*& map, const QRegion& region)
 {
-    for (const QRect &r : region) {
+    for (const QRect& r : region) {
         const QVector2D topLeft(r.x(), r.y());
         const QVector2D topRight(r.x() + r.width(), r.y());
         const QVector2D bottomLeft(r.x(), r.y() + r.height());
@@ -337,25 +346,22 @@ void ContrastEffect::uploadRegion(QVector2D *&map, const QRegion &region)
     }
 }
 
-void ContrastEffect::uploadGeometry(GLVertexBuffer *vbo, const QRegion &region)
+void ContrastEffect::uploadGeometry(GLVertexBuffer* vbo, const QRegion& region)
 {
     const int vertexCount = region.rectCount() * 6;
     if (!vertexCount)
         return;
 
-    QVector2D *map = (QVector2D *) vbo->map(vertexCount * sizeof(QVector2D));
+    QVector2D* map = (QVector2D*)vbo->map(vertexCount * sizeof(QVector2D));
     uploadRegion(map, region);
     vbo->unmap();
 
-    const GLVertexAttrib layout[] = {
-        { VA_Position, 2, GL_FLOAT, 0 },
-        { VA_TexCoord, 2, GL_FLOAT, 0 }
-    };
+    const GLVertexAttrib layout[] = {{VA_Position, 2, GL_FLOAT, 0}, {VA_TexCoord, 2, GL_FLOAT, 0}};
 
     vbo->setAttribLayout(layout, 2, sizeof(QVector2D));
 }
 
-void ContrastEffect::prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime)
+void ContrastEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
     m_paintedArea = QRegion();
     m_currentContrast = QRegion();
@@ -363,7 +369,9 @@ void ContrastEffect::prePaintScreen(ScreenPrePaintData &data, std::chrono::milli
     effects->prePaintScreen(data, presentTime);
 }
 
-void ContrastEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime)
+void ContrastEffect::prePaintWindow(EffectWindow* w,
+                                    WindowPrePaintData& data,
+                                    std::chrono::milliseconds presentTime)
 {
     // this effect relies on prePaintWindow being called in the bottom to top order
 
@@ -382,7 +390,7 @@ void ContrastEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, s
     m_currentContrast -= data.clip;
     // if we have to paint a non-opaque part of this window that intersects with the
     // currently blurred region (which is not cached) we have to redraw the whole region
-    if ((data.paint-data.clip).intersects(m_currentContrast)) {
+    if ((data.paint - data.clip).intersects(m_currentContrast)) {
         data.paint |= m_currentContrast;
     }
 
@@ -406,13 +414,14 @@ void ContrastEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, s
 
     m_currentContrast |= contrastArea;
 
-
     // m_paintedArea keep track of all repainted areas
     m_paintedArea -= data.clip;
     m_paintedArea |= data.paint;
 }
 
-bool ContrastEffect::shouldContrast(const EffectWindow *w, int mask, const WindowPaintData &data) const
+bool ContrastEffect::shouldContrast(const EffectWindow* w,
+                                    int mask,
+                                    const WindowPaintData& data) const
 {
     if (!shader || !shader->isValid())
         return false;
@@ -426,7 +435,8 @@ bool ContrastEffect::shouldContrast(const EffectWindow *w, int mask, const Windo
     bool scaled = !qFuzzyCompare(data.xScale(), 1.0) && !qFuzzyCompare(data.yScale(), 1.0);
     bool translated = data.xTranslation() || data.yTranslation();
 
-    if ((scaled || (translated || (mask & PAINT_WINDOW_TRANSFORMED))) && !w->data(WindowForceBackgroundContrastRole).toBool())
+    if ((scaled || (translated || (mask & PAINT_WINDOW_TRANSFORMED)))
+        && !w->data(WindowForceBackgroundContrastRole).toBool())
         return false;
 
     if (!w->hasAlpha())
@@ -435,7 +445,10 @@ bool ContrastEffect::shouldContrast(const EffectWindow *w, int mask, const Windo
     return true;
 }
 
-void ContrastEffect::drawWindow(EffectWindow *w, int mask, const QRegion &region, WindowPaintData &data)
+void ContrastEffect::drawWindow(EffectWindow* w,
+                                int mask,
+                                const QRegion& region,
+                                WindowPaintData& data)
 {
     const QRect screen = GLRenderTarget::virtualScreenGeometry();
     if (shouldContrast(w, mask, data)) {
@@ -449,14 +462,14 @@ void ContrastEffect::drawWindow(EffectWindow *w, int mask, const QRegion &region
             QRegion scaledShape;
             for (QRect r : shape) {
                 r.moveTo(pt.x() + (r.x() - pt.x()) * data.xScale() + data.xTranslation(),
-                            pt.y() + (r.y() - pt.y()) * data.yScale() + data.yTranslation());
+                         pt.y() + (r.y() - pt.y()) * data.yScale() + data.yTranslation());
                 r.setWidth(r.width() * data.xScale());
                 r.setHeight(r.height() * data.yScale());
                 scaledShape |= r;
             }
             shape = scaledShape & region;
 
-        //Only translated, not scaled
+            // Only translated, not scaled
         } else if (translated) {
             shape = shape.translated(data.xTranslation(), data.yTranslation());
             shape = shape & region;
@@ -471,13 +484,21 @@ void ContrastEffect::drawWindow(EffectWindow *w, int mask, const QRegion &region
     effects->drawWindow(w, mask, region, data);
 }
 
-void ContrastEffect::paintEffectFrame(EffectFrame *frame, const QRegion &region, double opacity, double frameOpacity)
+void ContrastEffect::paintEffectFrame(EffectFrame* frame,
+                                      const QRegion& region,
+                                      double opacity,
+                                      double frameOpacity)
 {
-    //FIXME: this is a no-op for now, it should figure out the right contrast, intensity, saturation
+    // FIXME: this is a no-op for now, it should figure out the right contrast, intensity,
+    // saturation
     effects->paintEffectFrame(frame, region, opacity, frameOpacity);
 }
 
-void ContrastEffect::doContrast(EffectWindow *w, const QRegion& shape, const QRect& screen, const float opacity, const QMatrix4x4 &screenProjection)
+void ContrastEffect::doContrast(EffectWindow* w,
+                                const QRegion& shape,
+                                const QRect& screen,
+                                const float opacity,
+                                const QMatrix4x4& screenProjection)
 {
     const QRegion actualShape = shape & screen;
     const QRect r = actualShape.boundingRect();
@@ -485,7 +506,7 @@ void ContrastEffect::doContrast(EffectWindow *w, const QRegion& shape, const QRe
     qreal scale = GLRenderTarget::virtualScreenScale();
 
     // Upload geometry for the horizontal and vertical passes
-    GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
+    GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
     uploadGeometry(vbo, actualShape);
     vbo->bindArrays();
@@ -498,14 +519,19 @@ void ContrastEffect::doContrast(EffectWindow *w, const QRegion& shape, const QRe
     scratch.bind();
 
     const QRect sg = GLRenderTarget::virtualScreenGeometry();
-    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (r.x() - sg.x()) * scale, (sg.height() - (r.y() - sg.y() + r.height())) * scale,
-                        scratch.width(), scratch.height());
+    glCopyTexSubImage2D(GL_TEXTURE_2D,
+                        0,
+                        0,
+                        0,
+                        (r.x() - sg.x()) * scale,
+                        (sg.height() - (r.y() - sg.y() + r.height())) * scale,
+                        scratch.width(),
+                        scratch.height());
 
     // Draw the texture on the offscreen framebuffer object, while blurring it horizontally
 
     shader->setColorMatrix(m_colorMatrices.value(w));
     shader->bind();
-
 
     shader->setOpacity(opacity);
     // Set up the texture matrix to transform from screen coordinates
@@ -536,4 +562,3 @@ bool ContrastEffect::isActive() const
 }
 
 } // namespace KWin
-

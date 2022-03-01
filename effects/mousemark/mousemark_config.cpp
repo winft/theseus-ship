@@ -27,10 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAction>
 
-#include <KLocalizedString>
-#include <KActionCollection>
 #include <KAboutData>
+#include <KActionCollection>
 #include <KGlobalAccel>
+#include <KLocalizedString>
 #include <KPluginFactory>
 
 #include <QDebug>
@@ -41,13 +41,14 @@ K_PLUGIN_CLASS(KWin::MouseMarkEffectConfig)
 namespace KWin
 {
 
-MouseMarkEffectConfigForm::MouseMarkEffectConfigForm(QWidget* parent) : QWidget(parent)
+MouseMarkEffectConfigForm::MouseMarkEffectConfigForm(QWidget* parent)
+    : QWidget(parent)
 {
     setupUi(this);
 }
 
-MouseMarkEffectConfig::MouseMarkEffectConfig(QWidget* parent, const QVariantList& args) :
-    KCModule(parent, args)
+MouseMarkEffectConfig::MouseMarkEffectConfig(QWidget* parent, const QVariantList& args)
+    : KCModule(parent, args)
 {
     m_ui = new MouseMarkEffectConfigForm(this);
 
@@ -67,14 +68,18 @@ MouseMarkEffectConfig::MouseMarkEffectConfig(QWidget* parent, const QVariantList
     QAction* a = m_actionCollection->addAction(QStringLiteral("ClearMouseMarks"));
     a->setText(i18n("Clear Mouse Marks"));
     a->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << Qt::SHIFT + Qt::META + Qt::Key_F11);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::SHIFT + Qt::META + Qt::Key_F11);
+    KGlobalAccel::self()->setDefaultShortcut(
+        a, QList<QKeySequence>() << Qt::SHIFT + Qt::META + Qt::Key_F11);
+    KGlobalAccel::self()->setShortcut(a,
+                                      QList<QKeySequence>() << Qt::SHIFT + Qt::META + Qt::Key_F11);
 
     a = m_actionCollection->addAction(QStringLiteral("ClearLastMouseMark"));
     a->setText(i18n("Clear Last Mouse Mark"));
     a->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << Qt::SHIFT + Qt::META + Qt::Key_F12);
-    KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::SHIFT + Qt::META + Qt::Key_F12);
+    KGlobalAccel::self()->setDefaultShortcut(
+        a, QList<QKeySequence>() << Qt::SHIFT + Qt::META + Qt::Key_F12);
+    KGlobalAccel::self()->setShortcut(a,
+                                      QList<QKeySequence>() << Qt::SHIFT + Qt::META + Qt::Key_F12);
 
     m_ui->editor->addCollection(m_actionCollection);
 
@@ -89,15 +94,14 @@ MouseMarkEffectConfig::~MouseMarkEffectConfig()
 
 void MouseMarkEffectConfig::save()
 {
-    qDebug() << "Saving config of MouseMark" ;
+    qDebug() << "Saving config of MouseMark";
     KCModule::save();
 
     m_actionCollection->writeSettings();
-    m_ui->editor->save();   // undo() will restore to this state from now on
+    m_ui->editor->save(); // undo() will restore to this state from now on
 
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("mousemark"));
 }
 

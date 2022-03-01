@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kcmodule.h>
 
-#include "ui_desktopgrid_config.h"
 #include "desktopgrid.h"
+#include "ui_desktopgrid_config.h"
 
 namespace KWin
 {
@@ -41,7 +41,8 @@ class DesktopGridEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit DesktopGridEffectConfig(QWidget* parent = nullptr, const QVariantList& args = QVariantList());
+    explicit DesktopGridEffectConfig(QWidget* parent = nullptr,
+                                     const QVariantList& args = QVariantList());
     ~DesktopGridEffectConfig() override;
 
 public Q_SLOTS:

@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ui_wobblywindows_config.h"
 
-
 namespace KWin
 {
 
@@ -34,7 +33,8 @@ class WobblyWindowsEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit WobblyWindowsEffectConfig(QWidget* parent = nullptr, const QVariantList& args = QVariantList());
+    explicit WobblyWindowsEffectConfig(QWidget* parent = nullptr,
+                                       const QVariantList& args = QVariantList());
     ~WobblyWindowsEffectConfig() override;
 
 public Q_SLOTS:

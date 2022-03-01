@@ -21,16 +21,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_CUBESLIDE_H
 #define KWIN_CUBESLIDE_H
 
-#include <kwineffects.h>
-#include <kwinglutils.h>
 #include <QQueue>
 #include <QSet>
 #include <QTimeLine>
+#include <kwineffects.h>
+#include <kwinglutils.h>
 
 namespace KWin
 {
-class CubeSlideEffect
-    : public Effect
+class CubeSlideEffect : public Effect
 {
     Q_OBJECT
     Q_PROPERTY(int rotationDuration READ configuredRotationDuration)
@@ -43,32 +42,40 @@ public:
     ~CubeSlideEffect() override;
     void reconfigure(ReconfigureFlags) override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
+    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
     void postPaintScreen() override;
-    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
     void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
     bool isActive() const override;
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         return 50;
     }
 
     static bool supported();
 
     // for properties
-    int configuredRotationDuration() const {
+    int configuredRotationDuration() const
+    {
         return rotationDuration;
     }
-    bool isDontSlidePanels() const {
+    bool isDontSlidePanels() const
+    {
         return dontSlidePanels;
     }
-    bool isDontSlideStickyWindows() const {
+    bool isDontSlideStickyWindows() const
+    {
         return dontSlideStickyWindows;
     }
-    bool isUsePagerLayout() const {
+    bool isUsePagerLayout() const
+    {
         return usePagerLayout;
     }
-    bool isUseWindowMoving() const {
+    bool isUseWindowMoving() const
+    {
         return useWindowMoving;
     }
 private Q_SLOTS:
@@ -76,17 +83,12 @@ private Q_SLOTS:
     void slotWindowDeleted(EffectWindow* w);
 
     void slotDesktopChanged(int old, int current, EffectWindow* w);
-    void slotWindowStepUserMovedResized(KWin::EffectWindow *w);
-    void slotWindowFinishUserMovedResized(KWin::EffectWindow *w);
+    void slotWindowStepUserMovedResized(KWin::EffectWindow* w);
+    void slotWindowFinishUserMovedResized(KWin::EffectWindow* w);
     void slotNumberDesktopsChanged();
 
 private:
-    enum RotationDirection {
-        Left,
-        Right,
-        Upwards,
-        Downwards
-    };
+    enum RotationDirection { Left, Right, Upwards, Downwards };
     void paintSlideCube(int mask, QRegion region, ScreenPaintData& data);
     void windowMovingChanged(float progress, RotationDirection direction);
 

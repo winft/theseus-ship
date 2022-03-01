@@ -42,7 +42,8 @@ class TrackMouseEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit TrackMouseEffectConfig(QWidget* parent = nullptr, const QVariantList& args = QVariantList());
+    explicit TrackMouseEffectConfig(QWidget* parent = nullptr,
+                                    const QVariantList& args = QVariantList());
     ~TrackMouseEffectConfig() override;
 
 public Q_SLOTS:
@@ -50,7 +51,8 @@ public Q_SLOTS:
     void load() override;
     void defaults() override;
 private Q_SLOTS:
-    void shortcutChanged(const QKeySequence &seq);
+    void shortcutChanged(const QKeySequence& seq);
+
 private:
     TrackMouseEffectConfigForm* m_ui;
     KActionCollection* m_actionCollection;

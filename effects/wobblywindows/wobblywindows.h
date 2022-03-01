@@ -39,17 +39,19 @@ class WobblyWindowsEffect : public DeformEffect
     Q_PROPERTY(bool moveWobble READ isMoveWobble)
     Q_PROPERTY(bool resizeWobble READ isResizeWobble)
 public:
-
     WobblyWindowsEffect();
     ~WobblyWindowsEffect() override;
 
     void reconfigure(ReconfigureFlags) override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
     void postPaintScreen() override;
     bool isActive() const override;
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         // Please notice that the Wobbly Windows effect has to be placed
         // after the Maximize effect in the effect chain, otherwise there
         // can be visual artifacts when dragging maximized windows.
@@ -75,54 +77,67 @@ public:
     static bool supported();
 
     // for properties
-    qreal stiffness() const {
+    qreal stiffness() const
+    {
         return m_stiffness;
     }
-    qreal drag() const {
+    qreal drag() const
+    {
         return m_drag;
     }
-    qreal moveFactor() const {
+    qreal moveFactor() const
+    {
         return m_move_factor;
     }
-    qreal xTesselation() const {
+    qreal xTesselation() const
+    {
         return m_xTesselation;
     }
-    qreal yTesselation() const {
+    qreal yTesselation() const
+    {
         return m_yTesselation;
     }
-    qreal minVelocity() const {
+    qreal minVelocity() const
+    {
         return m_minVelocity;
     }
-    qreal maxVelocity() const {
+    qreal maxVelocity() const
+    {
         return m_maxVelocity;
     }
-    qreal stopVelocity() const {
+    qreal stopVelocity() const
+    {
         return m_stopVelocity;
     }
-    qreal minAcceleration() const {
+    qreal minAcceleration() const
+    {
         return m_minAcceleration;
     }
-    qreal maxAcceleration() const {
+    qreal maxAcceleration() const
+    {
         return m_maxAcceleration;
     }
-    qreal stopAcceleration() const {
+    qreal stopAcceleration() const
+    {
         return m_stopAcceleration;
     }
-    bool isMoveWobble() const {
+    bool isMoveWobble() const
+    {
         return m_moveWobble;
     }
-    bool isResizeWobble() const {
+    bool isResizeWobble() const
+    {
         return m_resizeWobble;
     }
 
 protected:
-    void deform(EffectWindow *w, int mask, WindowPaintData &data, WindowQuadList &quads) override;
+    void deform(EffectWindow* w, int mask, WindowPaintData& data, WindowQuadList& quads) override;
 
 public Q_SLOTS:
-    void slotWindowStartUserMovedResized(KWin::EffectWindow *w);
-    void slotWindowStepUserMovedResized(KWin::EffectWindow *w, const QRect &geometry);
-    void slotWindowFinishUserMovedResized(KWin::EffectWindow *w);
-    void slotWindowMaximizeStateChanged(KWin::EffectWindow *w, bool horizontal, bool vertical);
+    void slotWindowStartUserMovedResized(KWin::EffectWindow* w);
+    void slotWindowStepUserMovedResized(KWin::EffectWindow* w, const QRect& geometry);
+    void slotWindowFinishUserMovedResized(KWin::EffectWindow* w);
+    void slotWindowMaximizeStateChanged(KWin::EffectWindow* w, bool horizontal, bool vertical);
 
 private:
     void startMovedResized(EffectWindow* w);
@@ -162,7 +177,7 @@ private:
         std::chrono::milliseconds clock;
     };
 
-    QHash< const EffectWindow*,  WindowWobblyInfos > windows;
+    QHash<const EffectWindow*, WindowWobblyInfos> windows;
 
     QRegion m_updateRegion;
 

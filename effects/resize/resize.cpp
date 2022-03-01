@@ -29,8 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KColorScheme>
 
-#include <QVector2D>
 #include <QPainter>
+#include <QVector2D>
 
 namespace KWin
 {
@@ -42,9 +42,18 @@ ResizeEffect::ResizeEffect()
 {
     initConfig<ResizeConfig>();
     reconfigure(ReconfigureAll);
-    connect(effects, &EffectsHandler::windowStartUserMovedResized, this, &ResizeEffect::slotWindowStartUserMovedResized);
-    connect(effects, &EffectsHandler::windowStepUserMovedResized, this, &ResizeEffect::slotWindowStepUserMovedResized);
-    connect(effects, &EffectsHandler::windowFinishUserMovedResized, this, &ResizeEffect::slotWindowFinishUserMovedResized);
+    connect(effects,
+            &EffectsHandler::windowStartUserMovedResized,
+            this,
+            &ResizeEffect::slotWindowStartUserMovedResized);
+    connect(effects,
+            &EffectsHandler::windowStepUserMovedResized,
+            this,
+            &ResizeEffect::slotWindowStepUserMovedResized);
+    connect(effects,
+            &EffectsHandler::windowFinishUserMovedResized,
+            this,
+            &ResizeEffect::slotWindowFinishUserMovedResized);
 }
 
 ResizeEffect::~ResizeEffect()
@@ -59,7 +68,9 @@ void ResizeEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::millise
     AnimationEffect::prePaintScreen(data, presentTime);
 }
 
-void ResizeEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime)
+void ResizeEffect::prePaintWindow(EffectWindow* w,
+                                  WindowPrePaintData& data,
+                                  std::chrono::milliseconds presentTime)
 {
     if (m_active && w == m_resizeWindow)
         data.mask |= PAINT_WINDOW_TRANSFORMED;
@@ -71,30 +82,33 @@ void ResizeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Window
     if (m_active && w == m_resizeWindow) {
         if (m_features & TextureScale) {
             data += (m_currentGeometry.topLeft() - m_originalGeometry.topLeft());
-            data *= QVector2D(float(m_currentGeometry.width())/m_originalGeometry.width(),
-                              float(m_currentGeometry.height())/m_originalGeometry.height());
+            data *= QVector2D(float(m_currentGeometry.width()) / m_originalGeometry.width(),
+                              float(m_currentGeometry.height()) / m_originalGeometry.height());
         }
         effects->paintWindow(w, mask, region, data);
 
         if (m_features & Outline) {
             QRegion intersection = m_originalGeometry.intersected(m_currentGeometry);
-            QRegion paintRegion = QRegion(m_originalGeometry).united(m_currentGeometry).subtracted(intersection);
+            QRegion paintRegion
+                = QRegion(m_originalGeometry).united(m_currentGeometry).subtracted(intersection);
             float alpha = 0.8f;
-            QColor color = KColorScheme(QPalette::Normal, KColorScheme::Selection).background().color();
+            QColor color
+                = KColorScheme(QPalette::Normal, KColorScheme::Selection).background().color();
 
             if (effects->isOpenGLCompositing()) {
-                GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
+                GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
                 vbo->reset();
                 vbo->setUseColor(true);
                 ShaderBinder binder(ShaderTrait::UniformColor);
-                binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, data.screenProjectionMatrix());
+                binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
+                                            data.screenProjectionMatrix());
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 color.setAlphaF(alpha);
                 vbo->setColor(color);
                 QVector<float> verts;
                 verts.reserve(paintRegion.rectCount() * 12);
-                for (const QRect &r : paintRegion) {
+                for (const QRect& r : paintRegion) {
                     verts << r.x() + r.width() << r.y();
                     verts << r.x() << r.y();
                     verts << r.x() << r.y() + r.height();
@@ -110,20 +124,24 @@ void ResizeEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Window
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
             if (effects->compositingType() == XRenderCompositing) {
                 QVector<xcb_rectangle_t> rects;
-                for (const QRect &r : paintRegion) {
-                    xcb_rectangle_t rect = {int16_t(r.x()), int16_t(r.y()), uint16_t(r.width()), uint16_t(r.height())};
+                for (const QRect& r : paintRegion) {
+                    xcb_rectangle_t rect = {
+                        int16_t(r.x()), int16_t(r.y()), uint16_t(r.width()), uint16_t(r.height())};
                     rects << rect;
                 }
-                xcb_render_fill_rectangles(xcbConnection(), XCB_RENDER_PICT_OP_OVER,
-                                           effects->xrenderBufferPicture(), preMultiply(color, alpha),
-                                           rects.count(), rects.constData());
+                xcb_render_fill_rectangles(xcbConnection(),
+                                           XCB_RENDER_PICT_OP_OVER,
+                                           effects->xrenderBufferPicture(),
+                                           preMultiply(color, alpha),
+                                           rects.count(),
+                                           rects.constData());
             }
 #endif
             if (effects->compositingType() == QPainterCompositing) {
-                QPainter *painter = effects->scenePainter();
+                QPainter* painter = effects->scenePainter();
                 painter->save();
                 color.setAlphaF(alpha);
-                for (const QRect &r : paintRegion) {
+                for (const QRect& r : paintRegion) {
                     painter->fillRect(r, color);
                 }
                 painter->restore();
@@ -144,7 +162,7 @@ void ResizeEffect::reconfigure(ReconfigureFlags)
         m_features |= Outline;
 }
 
-void ResizeEffect::slotWindowStartUserMovedResized(EffectWindow *w)
+void ResizeEffect::slotWindowStartUserMovedResized(EffectWindow* w)
 {
     if (w->isUserResize() && !w->isUserMove()) {
         m_active = true;
@@ -155,7 +173,7 @@ void ResizeEffect::slotWindowStartUserMovedResized(EffectWindow *w)
     }
 }
 
-void ResizeEffect::slotWindowFinishUserMovedResized(EffectWindow *w)
+void ResizeEffect::slotWindowFinishUserMovedResized(EffectWindow* w)
 {
     if (m_active && w == m_resizeWindow) {
         m_active = false;
@@ -166,7 +184,7 @@ void ResizeEffect::slotWindowFinishUserMovedResized(EffectWindow *w)
     }
 }
 
-void ResizeEffect::slotWindowStepUserMovedResized(EffectWindow *w, const QRect &geometry)
+void ResizeEffect::slotWindowStepUserMovedResized(EffectWindow* w, const QRect& geometry)
 {
     if (m_active && w == m_resizeWindow) {
         m_currentGeometry = geometry;

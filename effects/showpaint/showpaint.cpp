@@ -36,19 +36,12 @@ namespace KWin
 {
 
 static const qreal s_alpha = 0.2;
-static const QVector<QColor> s_colors {
-    Qt::red,
-    Qt::green,
-    Qt::blue,
-    Qt::cyan,
-    Qt::magenta,
-    Qt::yellow,
-    Qt::gray
-};
+static const QVector<QColor>
+    s_colors{Qt::red, Qt::green, Qt::blue, Qt::cyan, Qt::magenta, Qt::yellow, Qt::gray};
 
 ShowPaintEffect::ShowPaintEffect()
 {
-    auto *toggleAction = new QAction(this);
+    auto* toggleAction = new QAction(this);
     toggleAction->setObjectName(QStringLiteral("Toggle"));
     toggleAction->setText(i18n("Toggle Show Paint"));
     KGlobalAccel::self()->setDefaultShortcut(toggleAction, {});
@@ -58,7 +51,7 @@ ShowPaintEffect::ShowPaintEffect()
     connect(toggleAction, &QAction::triggered, this, &ShowPaintEffect::toggle);
 }
 
-void ShowPaintEffect::paintScreen(int mask, const QRegion &region, ScreenPaintData &data)
+void ShowPaintEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
 {
     m_painted = QRegion();
     effects->paintScreen(mask, region, data);
@@ -78,15 +71,15 @@ void ShowPaintEffect::paintScreen(int mask, const QRegion &region, ScreenPaintDa
     }
 }
 
-void ShowPaintEffect::paintWindow(EffectWindow *w, int mask, QRegion region, WindowPaintData &data)
+void ShowPaintEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
 {
     m_painted |= region;
     effects->paintWindow(w, mask, region, data);
 }
 
-void ShowPaintEffect::paintGL(const QMatrix4x4 &projection)
+void ShowPaintEffect::paintGL(const QMatrix4x4& projection)
 {
-    GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
+    GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
     vbo->setUseColor(true);
     ShaderBinder binder(ShaderTrait::UniformColor);
@@ -98,7 +91,7 @@ void ShowPaintEffect::paintGL(const QMatrix4x4 &projection)
     vbo->setColor(color);
     QVector<float> verts;
     verts.reserve(m_painted.rectCount() * 12);
-    for (const QRect &r : m_painted) {
+    for (const QRect& r : m_painted) {
         verts << r.x() + r.width() << r.y();
         verts << r.x() << r.y();
         verts << r.x() << r.y() + r.height();
@@ -115,18 +108,24 @@ void ShowPaintEffect::paintXrender()
 {
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
     xcb_render_color_t col;
-    const QColor &color = s_colors[m_colorIndex];
+    const QColor& color = s_colors[m_colorIndex];
     col.alpha = int(s_alpha * 0xffff);
     col.red = int(s_alpha * 0xffff * color.red() / 255);
     col.green = int(s_alpha * 0xffff * color.green() / 255);
     col.blue = int(s_alpha * 0xffff * color.blue() / 255);
     QVector<xcb_rectangle_t> rects;
     rects.reserve(m_painted.rectCount());
-    for (const QRect &r : m_painted) {
-        xcb_rectangle_t rect = {int16_t(r.x()), int16_t(r.y()), uint16_t(r.width()), uint16_t(r.height())};
+    for (const QRect& r : m_painted) {
+        xcb_rectangle_t rect
+            = {int16_t(r.x()), int16_t(r.y()), uint16_t(r.width()), uint16_t(r.height())};
         rects << rect;
     }
-    xcb_render_fill_rectangles(xcbConnection(), XCB_RENDER_PICT_OP_OVER, effects->xrenderBufferPicture(), col, rects.count(), rects.constData());
+    xcb_render_fill_rectangles(xcbConnection(),
+                               XCB_RENDER_PICT_OP_OVER,
+                               effects->xrenderBufferPicture(),
+                               col,
+                               rects.count(),
+                               rects.constData());
 #endif
 }
 
@@ -134,7 +133,7 @@ void ShowPaintEffect::paintQPainter()
 {
     QColor color = s_colors[m_colorIndex];
     color.setAlphaF(s_alpha);
-    for (const QRect &r : m_painted) {
+    for (const QRect& r : m_painted) {
         effects->scenePainter()->fillRect(r, color);
     }
 }

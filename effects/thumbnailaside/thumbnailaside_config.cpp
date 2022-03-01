@@ -26,28 +26,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAction>
 
-#include <KLocalizedString>
-#include <kconfiggroup.h>
-#include <KActionCollection>
 #include <KAboutData>
+#include <KActionCollection>
 #include <KGlobalAccel>
+#include <KLocalizedString>
 #include <KPluginFactory>
+#include <kconfiggroup.h>
 
-#include <QWidget>
 #include <QVBoxLayout>
+#include <QWidget>
 
 K_PLUGIN_CLASS(KWin::ThumbnailAsideEffectConfig)
 
 namespace KWin
 {
 
-ThumbnailAsideEffectConfigForm::ThumbnailAsideEffectConfigForm(QWidget* parent) : QWidget(parent)
+ThumbnailAsideEffectConfigForm::ThumbnailAsideEffectConfigForm(QWidget* parent)
+    : QWidget(parent)
 {
     setupUi(this);
 }
 
-ThumbnailAsideEffectConfig::ThumbnailAsideEffectConfig(QWidget* parent, const QVariantList& args) :
-    KCModule(parent, args)
+ThumbnailAsideEffectConfig::ThumbnailAsideEffectConfig(QWidget* parent, const QVariantList& args)
+    : KCModule(parent, args)
 {
     m_ui = new ThumbnailAsideEffectConfigForm(this);
 
@@ -55,7 +56,10 @@ ThumbnailAsideEffectConfig::ThumbnailAsideEffectConfig(QWidget* parent, const QV
 
     layout->addWidget(m_ui);
 
-    connect(m_ui->editor, &KShortcutsEditor::keyChange, this, &ThumbnailAsideEffectConfig::markAsChanged);
+    connect(m_ui->editor,
+            &KShortcutsEditor::keyChange,
+            this,
+            &ThumbnailAsideEffectConfig::markAsChanged);
 
     ThumbnailAsideConfig::instance(KWIN_CONFIG);
     addConfig(ThumbnailAsideConfig::self(), this);
@@ -70,7 +74,8 @@ ThumbnailAsideEffectConfig::ThumbnailAsideEffectConfig(QWidget* parent, const QV
     QAction* a = m_actionCollection->addAction(QStringLiteral("ToggleCurrentThumbnail"));
     a->setText(i18n("Toggle Thumbnail for Current Window"));
     a->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_T);
+    KGlobalAccel::self()->setDefaultShortcut(
+        a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_T);
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::CTRL + Qt::Key_T);
 
     m_ui->editor->addCollection(m_actionCollection);
@@ -88,9 +93,8 @@ void ThumbnailAsideEffectConfig::save()
 {
     KCModule::save();
     m_ui->editor->save();
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("thumbnailaside"));
 }
 

@@ -34,7 +34,7 @@ class ScreenShotDBusInterface1 : public QObject, protected QDBusContext
     Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Screenshot")
 
 public:
-    explicit ScreenShotDBusInterface1(ScreenShotEffect *effect, QObject *parent = nullptr);
+    explicit ScreenShotDBusInterface1(ScreenShotEffect* effect, QObject* parent = nullptr);
     ~ScreenShotDBusInterface1() override;
 
 Q_SIGNALS:
@@ -106,7 +106,7 @@ public Q_SLOTS:
      * @param shouldReturnNativeSize
      */
     Q_SCRIPTABLE void screenshotScreens(QDBusUnixFileDescriptor fd,
-                                        const QStringList &screensNames,
+                                        const QStringList& screensNames,
                                         bool captureCursor = false,
                                         bool shouldReturnNativeSize = false);
 
@@ -144,21 +144,27 @@ public Q_SLOTS:
      * @param captureCursor Whether to include the cursor in the image
      * @returns Path to stored screenshot, or null string in failure case.
      */
-    Q_SCRIPTABLE QString screenshotArea(int x, int y, int width, int height, bool captureCursor = false);
+    Q_SCRIPTABLE QString
+    screenshotArea(int x, int y, int width, int height, bool captureCursor = false);
 
 private Q_SLOTS:
     void handleSourceCompleted();
     void handleSourceCancelled();
 
 private:
-    enum class InfoMessageMode { Window, Screen, };
+    enum class InfoMessageMode {
+        Window,
+        Screen,
+    };
 
-    void takeScreenShot(EffectScreen *screen, ScreenShotFlags flags, ScreenShotSink1 *sink);
-    void takeScreenShot(const QList<EffectScreen *> &screens, ScreenShotFlags flags, ScreenShotSink1 *sink);
-    void takeScreenShot(const QRect &area, ScreenShotFlags flags, ScreenShotSink1 *sink);
-    void takeScreenShot(EffectWindow *window, ScreenShotFlags flags, ScreenShotSink1 *sink);
+    void takeScreenShot(EffectScreen* screen, ScreenShotFlags flags, ScreenShotSink1* sink);
+    void takeScreenShot(const QList<EffectScreen*>& screens,
+                        ScreenShotFlags flags,
+                        ScreenShotSink1* sink);
+    void takeScreenShot(const QRect& area, ScreenShotFlags flags, ScreenShotSink1* sink);
+    void takeScreenShot(EffectWindow* window, ScreenShotFlags flags, ScreenShotSink1* sink);
 
-    void bind(ScreenShotSink1 *sink, ScreenShotSource1 *source);
+    void bind(ScreenShotSink1* sink, ScreenShotSource1* source);
 
     bool checkCall() const;
     bool isTakingScreenshot() const;
@@ -166,7 +172,7 @@ private:
     void showInfoMessage(InfoMessageMode mode);
     void hideInfoMessage();
 
-    ScreenShotEffect *m_effect;
+    ScreenShotEffect* m_effect;
     QScopedPointer<ScreenShotSink1> m_sink;
     QScopedPointer<ScreenShotSource1> m_source;
 };

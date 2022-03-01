@@ -27,8 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
 #include <kwinxrenderutils.h>
-#include <xcb/xcb.h>
 #include <xcb/render.h>
+#include <xcb/xcb.h>
 #endif
 
 #include <KConfigGroup>
@@ -49,7 +49,8 @@ MouseClickEffect::MouseClickEffect()
     QAction* a = new QAction(this);
     a->setObjectName(QStringLiteral("ToggleMouseClick"));
     a->setText(i18n("Toggle Mouse Click Effect"));
-    KGlobalAccel::self()->setDefaultShortcut(a, QList<QKeySequence>() << Qt::META + Qt::Key_Asterisk);
+    KGlobalAccel::self()->setDefaultShortcut(a,
+                                             QList<QKeySequence>() << Qt::META + Qt::Key_Asterisk);
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::Key_Asterisk);
     effects->registerGlobalShortcut(Qt::META + Qt::Key_Asterisk, a);
     connect(a, &QAction::triggered, this, &MouseClickEffect::toggleEnabled);
@@ -87,7 +88,8 @@ void MouseClickEffect::reconfigure(ReconfigureFlags)
     m_font = MouseClickConfig::font();
 }
 
-void MouseClickEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void MouseClickEffect::prePaintScreen(ScreenPrePaintData& data,
+                                      std::chrono::milliseconds presentTime)
 {
     const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
 
@@ -119,7 +121,7 @@ void MouseClickEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::mil
     effects->prePaintScreen(data, presentTime);
 }
 
-void MouseClickEffect::paintScreen(int mask, const QRegion &region, ScreenPaintData& data)
+void MouseClickEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
 {
     effects->paintScreen(mask, region, data);
 
@@ -165,9 +167,12 @@ float MouseClickEffect::computeAlpha(const MouseEvent* click, int ring)
     return (m_ringLife - (float)click->m_time - ringDistance * (ring)) / m_ringLife;
 }
 
-void MouseClickEffect::slotMouseChanged(const QPoint& pos, const QPoint&,
-                                        Qt::MouseButtons buttons, Qt::MouseButtons oldButtons,
-                                        Qt::KeyboardModifiers, Qt::KeyboardModifiers)
+void MouseClickEffect::slotMouseChanged(const QPoint& pos,
+                                        const QPoint&,
+                                        Qt::MouseButtons buttons,
+                                        Qt::MouseButtons oldButtons,
+                                        Qt::KeyboardModifiers,
+                                        Qt::KeyboardModifiers)
 {
     if (buttons == oldButtons)
         return;
@@ -179,7 +184,8 @@ void MouseClickEffect::slotMouseChanged(const QPoint& pos, const QPoint&,
         if (isPressed(b->m_button, buttons, oldButtons)) {
             m = new MouseEvent(i, pos, 0, createEffectFrame(pos, b->m_labelDown), true);
             break;
-        } else if (isReleased(b->m_button, buttons, oldButtons) && (!b->m_isPressed || b->m_time > m_ringLife)) {
+        } else if (isReleased(b->m_button, buttons, oldButtons)
+                   && (!b->m_isPressed || b->m_time > m_ringLife)) {
             // we might miss a press, thus also check !b->m_isPressed, bug #314762
             m = new MouseEvent(i, pos, 0, createEffectFrame(pos, b->m_labelUp), false);
             break;
@@ -193,7 +199,8 @@ void MouseClickEffect::slotMouseChanged(const QPoint& pos, const QPoint&,
     repaint();
 }
 
-EffectFrame* MouseClickEffect::createEffectFrame(const QPoint& pos, const QString& text) {
+EffectFrame* MouseClickEffect::createEffectFrame(const QPoint& pos, const QString& text)
+{
     if (!m_showText) {
         return nullptr;
     }
@@ -210,22 +217,27 @@ void MouseClickEffect::repaint()
         QRegion dirtyRegion;
         const int radius = m_ringMaxSize + m_lineWidth;
         for (auto const& click : qAsConst(m_clicks)) {
-            dirtyRegion |= QRect(click->m_pos.x() - radius, click->m_pos.y() - radius, 2*radius, 2*radius);
+            dirtyRegion |= QRect(
+                click->m_pos.x() - radius, click->m_pos.y() - radius, 2 * radius, 2 * radius);
             if (click->m_frame) {
                 // we grant the plasma style 32px padding for stuff like shadows...
-                dirtyRegion |= click->m_frame->geometry().adjusted(-32,-32,32,32);
+                dirtyRegion |= click->m_frame->geometry().adjusted(-32, -32, 32, 32);
             }
         }
         effects->addRepaint(dirtyRegion);
     }
 }
 
-bool MouseClickEffect::isReleased(Qt::MouseButtons button, Qt::MouseButtons buttons, Qt::MouseButtons oldButtons)
+bool MouseClickEffect::isReleased(Qt::MouseButtons button,
+                                  Qt::MouseButtons buttons,
+                                  Qt::MouseButtons oldButtons)
 {
     return !(button & buttons) && (button & oldButtons);
 }
 
-bool MouseClickEffect::isPressed(Qt::MouseButtons button, Qt::MouseButtons buttons, Qt::MouseButtons oldButtons)
+bool MouseClickEffect::isPressed(Qt::MouseButtons button,
+                                 Qt::MouseButtons buttons,
+                                 Qt::MouseButtons oldButtons)
 {
     return (button & buttons) && !(button & oldButtons);
 }
@@ -238,7 +250,8 @@ void MouseClickEffect::toggleEnabled()
         connect(effects, &EffectsHandler::mouseChanged, this, &MouseClickEffect::slotMouseChanged);
         effects->startMousePolling();
     } else {
-        disconnect(effects, &EffectsHandler::mouseChanged, this, &MouseClickEffect::slotMouseChanged);
+        disconnect(
+            effects, &EffectsHandler::mouseChanged, this, &MouseClickEffect::slotMouseChanged);
         effects->stopMousePolling();
     }
 
@@ -282,11 +295,11 @@ void MouseClickEffect::drawCircleGl(const QColor& color, float cx, float cy, flo
 {
     static const int num_segments = 80;
     static const float theta = 2 * 3.1415926 / float(num_segments);
-    static const float c = cosf(theta); //precalculate the sine and cosine
+    static const float c = cosf(theta); // precalculate the sine and cosine
     static const float s = sinf(theta);
     float t;
 
-    float x = r;//we start at angle = 0
+    float x = r; // we start at angle = 0
     float y = 0;
 
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
@@ -297,8 +310,8 @@ void MouseClickEffect::drawCircleGl(const QColor& color, float cx, float cy, flo
     verts.reserve(num_segments * 2);
 
     for (int ii = 0; ii < num_segments; ++ii) {
-        verts << x + cx << y + cy;//output vertex
-        //apply the rotation matrix
+        verts << x + cx << y + cy; // output vertex
+        // apply the rotation matrix
         t = x;
         x = c * x - s * y;
         y = s * t + c * y;
@@ -313,51 +326,57 @@ void MouseClickEffect::drawCircleXr(const QColor& color, float cx, float cy, flo
     if (r <= m_lineWidth)
         return;
 
-    int num_segments = r+8;
+    int num_segments = r + 8;
     float theta = 2.0 * 3.1415926 / num_segments;
-    float cos = cosf(theta); //precalculate the sine and cosine
+    float cos = cosf(theta); // precalculate the sine and cosine
     float sin = sinf(theta);
-    float x[2] = {r, r-m_lineWidth};
+    float x[2] = {r, r - m_lineWidth};
     float y[2] = {0, 0};
 
-#define DOUBLE_TO_FIXED(d) ((xcb_render_fixed_t) ((d) * 65536))
+#define DOUBLE_TO_FIXED(d) ((xcb_render_fixed_t)((d)*65536))
     QVector<xcb_render_pointfix_t> strip;
-    strip.reserve(2*num_segments+2);
+    strip.reserve(2 * num_segments + 2);
 
     xcb_render_pointfix_t point;
-    point.x = DOUBLE_TO_FIXED(x[1]+cx);
-    point.y = DOUBLE_TO_FIXED(y[1]+cy);
+    point.x = DOUBLE_TO_FIXED(x[1] + cx);
+    point.y = DOUBLE_TO_FIXED(y[1] + cy);
     strip << point;
 
     for (int i = 0; i < num_segments; ++i) {
-        //apply the rotation matrix
+        // apply the rotation matrix
         const float h[2] = {x[0], x[1]};
         x[0] = cos * x[0] - sin * y[0];
         x[1] = cos * x[1] - sin * y[1];
         y[0] = sin * h[0] + cos * y[0];
         y[1] = sin * h[1] + cos * y[1];
 
-        point.x = DOUBLE_TO_FIXED(x[0]+cx);
-        point.y = DOUBLE_TO_FIXED(y[0]+cy);
+        point.x = DOUBLE_TO_FIXED(x[0] + cx);
+        point.y = DOUBLE_TO_FIXED(y[0] + cy);
         strip << point;
 
-        point.x = DOUBLE_TO_FIXED(x[1]+cx);
-        point.y = DOUBLE_TO_FIXED(y[1]+cy);
+        point.x = DOUBLE_TO_FIXED(x[1] + cx);
+        point.y = DOUBLE_TO_FIXED(y[1] + cy);
         strip << point;
     }
 
     const float h = x[0];
     x[0] = cos * x[0] - sin * y[0];
-    y[0] = sin * h    + cos * y[0];
+    y[0] = sin * h + cos * y[0];
 
-    point.x = DOUBLE_TO_FIXED(x[0]+cx);
-    point.y = DOUBLE_TO_FIXED(y[0]+cy);
+    point.x = DOUBLE_TO_FIXED(x[0] + cx);
+    point.y = DOUBLE_TO_FIXED(y[0] + cy);
     strip << point;
 
     XRenderPicture fill = xRenderFill(color);
-    xcb_render_tri_strip(xcbConnection(), XCB_RENDER_PICT_OP_OVER,
-                          fill, effects->xrenderBufferPicture(), 0,
-                          0, 0, strip.count(), strip.constData());
+    xcb_render_tri_strip(xcbConnection(),
+                         XCB_RENDER_PICT_OP_OVER,
+                         fill,
+                         effects->xrenderBufferPicture(),
+                         0,
+                         0,
+                         0,
+                         strip.count(),
+                         strip.constData());
 #undef DOUBLE_TO_FIXED
 #else
     Q_UNUSED(color)
@@ -367,18 +386,18 @@ void MouseClickEffect::drawCircleXr(const QColor& color, float cx, float cy, flo
 #endif
 }
 
-void MouseClickEffect::drawCircleQPainter(const QColor &color, float cx, float cy, float r)
+void MouseClickEffect::drawCircleQPainter(const QColor& color, float cx, float cy, float r)
 {
-    QPainter *painter = effects->scenePainter();
+    QPainter* painter = effects->scenePainter();
     painter->save();
     painter->setPen(color);
     painter->drawArc(cx - r, cy - r, r * 2, r * 2, 0, 5760);
     painter->restore();
 }
 
-void MouseClickEffect::paintScreenSetupGl(int, QRegion, ScreenPaintData &data)
+void MouseClickEffect::paintScreenSetupGl(int, QRegion, ScreenPaintData& data)
 {
-    GLShader *shader = ShaderManager::instance()->pushShader(ShaderTrait::UniformColor);
+    GLShader* shader = ShaderManager::instance()->pushShader(ShaderTrait::UniformColor);
     shader->setUniform(GLShader::ModelViewProjectionMatrix, data.projectionMatrix());
 
     glLineWidth(m_lineWidth);
@@ -394,4 +413,3 @@ void MouseClickEffect::paintScreenFinishGl(int, QRegion, ScreenPaintData&)
 }
 
 } // namespace
-

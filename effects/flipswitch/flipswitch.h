@@ -21,17 +21,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_FLIPSWITCH_H
 #define KWIN_FLIPSWITCH_H
 
-#include <kwineffects.h>
+#include <QFont>
 #include <QMatrix4x4>
 #include <QQueue>
 #include <QTimeLine>
-#include <QFont>
+#include <kwineffects.h>
 
 namespace KWin
 {
 
-class FlipSwitchEffect
-    : public Effect
+class FlipSwitchEffect : public Effect
 {
     Q_OBJECT
     Q_PROPERTY(bool tabBox READ isTabBox)
@@ -47,48 +46,58 @@ public:
 
     void reconfigure(ReconfigureFlags) override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
+    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
     void postPaintScreen() override;
-    void prePaintWindow(EffectWindow *w, WindowPrePaintData &data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
     void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
     void grabbedKeyboardEvent(QKeyEvent* e) override;
     void windowInputMouseEvent(QEvent* e) override;
     bool isActive() const override;
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         return 50;
     }
 
     static bool supported();
 
     // for properties
-    bool isTabBox() const {
+    bool isTabBox() const
+    {
         return m_tabbox;
     }
-    bool isTabBoxAlternative() const {
+    bool isTabBoxAlternative() const
+    {
         return m_tabboxAlternative;
     }
-    int duration() const {
+    int duration() const
+    {
         return m_timeLine.duration();
     }
-    int angle() const {
+    int angle() const
+    {
         return m_angle;
     }
-    qreal xPosition() const {
+    qreal xPosition() const
+    {
         return m_xPosition;
     }
-    qreal yPosition() const {
+    qreal yPosition() const
+    {
         return m_yPosition;
     }
-    bool isWindowTitle() const {
+    bool isWindowTitle() const
+    {
         return m_windowTitle;
     }
 private Q_SLOTS:
     void toggleActiveCurrent();
     void toggleActiveAllDesktops();
-    void globalShortcutChanged(QAction *action, const QKeySequence &shortcut);
+    void globalShortcutChanged(QAction* action, const QKeySequence& shortcut);
     void slotWindowAdded(KWin::EffectWindow* w);
-    void slotWindowClosed(KWin::EffectWindow *w);
+    void slotWindowClosed(KWin::EffectWindow* w);
     void slotTabBoxAdded(int mode);
     void slotTabBoxClosed();
     void slotTabBoxUpdated();
@@ -96,29 +105,28 @@ private Q_SLOTS:
 
 private:
     class ItemInfo;
-    enum SwitchingDirection {
-        DirectionForward,
-        DirectionBackward
-    };
-    enum FlipSwitchMode {
-        TabboxMode,
-        CurrentDesktopMode,
-        AllDesktopsMode
-    };
+    enum SwitchingDirection { DirectionForward, DirectionBackward };
+    enum FlipSwitchMode { TabboxMode, CurrentDesktopMode, AllDesktopsMode };
     void setActive(bool activate, FlipSwitchMode mode);
-    bool isSelectableWindow(EffectWindow *w) const;
+    bool isSelectableWindow(EffectWindow* w) const;
     void scheduleAnimation(const SwitchingDirection& direction, int distance = 1);
-    void adjustWindowMultiScreen(const EffectWindow *w, WindowPaintData& data);
+    void adjustWindowMultiScreen(const EffectWindow* w, WindowPaintData& data);
     void selectNextOrPreviousWindow(bool forward);
-    inline void selectNextWindow() { selectNextOrPreviousWindow(true); }
-    inline void selectPreviousWindow() { selectNextOrPreviousWindow(false); }
+    inline void selectNextWindow()
+    {
+        selectNextOrPreviousWindow(true);
+    }
+    inline void selectPreviousWindow()
+    {
+        selectNextOrPreviousWindow(false);
+    }
     /**
      * Updates the caption of the caption frame.
      * Taking care of rewording the desktop client.
      * As well sets the icon for the caption frame.
      */
     void updateCaption();
-    QQueue< SwitchingDirection> m_scheduledDirections;
+    QQueue<SwitchingDirection> m_scheduledDirections;
     EffectWindow* m_selectedWindow;
     QTimeLine m_timeLine;
     QTimeLine m_startStopTimeLine;
@@ -135,7 +143,7 @@ private:
     EffectFrame* m_captionFrame;
     QFont m_captionFont;
     EffectWindowList m_flipOrderedWindows;
-    QHash< const EffectWindow*, ItemInfo* > m_windows;
+    QHash<const EffectWindow*, ItemInfo*> m_windows;
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_modelviewMatrix;
     // options

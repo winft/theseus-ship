@@ -21,20 +21,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_CUBE_H
 #define KWIN_CUBE_H
 
-#include <kwineffects.h>
-#include <kwinglutils.h>
-#include <QObject>
-#include <QQueue>
-#include <QMatrix4x4>
-#include <QFont>
 #include "cube_inside.h"
 #include "cube_proxy.h"
+#include <QFont>
+#include <QMatrix4x4>
+#include <QObject>
+#include <QQueue>
+#include <kwineffects.h>
+#include <kwinglutils.h>
 
 namespace KWin
 {
 
-class CubeEffect
-    : public Effect
+class CubeEffect : public Effect
 {
     Q_OBJECT
     Q_PROPERTY(qreal cubeOpacity READ configuredCubeOpacity)
@@ -59,16 +58,19 @@ public:
     ~CubeEffect() override;
     void reconfigure(ReconfigureFlags) override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
+    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
     void postPaintScreen() override;
-    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
     void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
     bool borderActivated(ElectricBorder border) override;
     void grabbedKeyboardEvent(QKeyEvent* e) override;
     void windowInputMouseEvent(QEvent* e) override;
     bool isActive() const override;
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         return 50;
     }
 
@@ -80,52 +82,68 @@ public:
     static bool supported();
 
     // for properties
-    qreal configuredCubeOpacity() const {
+    qreal configuredCubeOpacity() const
+    {
         return cubeOpacity;
     }
-    bool isOpacityDesktopOnly() const {
+    bool isOpacityDesktopOnly() const
+    {
         return opacityDesktopOnly;
     }
-    bool isDisplayDesktopName() const {
+    bool isDisplayDesktopName() const
+    {
         return displayDesktopName;
     }
-    bool isReflection() const {
+    bool isReflection() const
+    {
         return reflection;
     }
-    int configuredRotationDuration() const {
+    int configuredRotationDuration() const
+    {
         return rotationDuration.count();
     }
-    QColor configuredBackgroundColor() const {
+    QColor configuredBackgroundColor() const
+    {
         return backgroundColor;
     }
-    QColor configuredCapColor() const {
+    QColor configuredCapColor() const
+    {
         return capColor;
     }
-    bool isPaintCaps() const {
+    bool isPaintCaps() const
+    {
         return paintCaps;
     }
-    bool isCloseOnMouseRelease() const {
+    bool isCloseOnMouseRelease() const
+    {
         return closeOnMouseRelease;
     }
-    qreal configuredZPosition() const {
+    qreal configuredZPosition() const
+    {
         return zPosition;
     }
-    bool isUseForTabBox() const {
+    bool isUseForTabBox() const
+    {
         return useForTabBox;
     }
-    bool isInvertKeys() const {
+    bool isInvertKeys() const
+    {
         return invertKeys;
     }
-    bool isInvertMouse() const {
+    bool isInvertMouse() const
+    {
         return invertMouse;
     }
-    qreal configuredCapDeformationFactor() const {
+    qreal configuredCapDeformationFactor() const
+    {
         return capDeformationFactor;
     }
-    bool isUseZOrdering() const {
+    bool isUseZOrdering() const
+    {
         return useZOrdering;
     }
-    bool isTexturedCaps() const {
+    bool isTexturedCaps() const
+    {
         return texturedCaps;
     }
 private Q_SLOTS:
@@ -134,33 +152,20 @@ private Q_SLOTS:
     void toggleSphere();
     // slots for global shortcut changed
     // needed to toggle the effect
-    void globalShortcutChanged(QAction *action, const QKeySequence &seq);
+    void globalShortcutChanged(QAction* action, const QKeySequence& seq);
     void slotTabBoxAdded(int mode);
     void slotTabBoxUpdated();
     void slotTabBoxClosed();
     void slotCubeCapLoaded();
     void slotWallPaperLoaded();
+
 private:
-    enum class AnimationState {
-        None,
-        Start,
-        Stop,
-        Left,
-        Right
-    };
-    enum class VerticalAnimationState {
-        None,
-        Upwards,
-        Downwards
-    };
-    enum CubeMode {
-        Cube,
-        Cylinder,
-        Sphere
-    };
+    enum class AnimationState { None, Start, Stop, Left, Right };
+    enum class VerticalAnimationState { None, Upwards, Downwards };
+    enum CubeMode { Cube, Cylinder, Sphere };
     void toggle(CubeMode newMode = Cube);
     void paintCube(int mask, QRegion region, ScreenPaintData& data);
-    void paintCap(bool frontFirst, float zOffset, const QMatrix4x4 &projection);
+    void paintCap(bool frontFirst, float zOffset, const QMatrix4x4& projection);
     void paintCubeCap();
     void paintCylinderCap();
     void paintSphereCap();
@@ -168,8 +173,8 @@ private:
     void rotateCube();
     void rotateToDesktop(int desktop);
     void setActive(bool active);
-    QImage loadCubeCap(const QString &capPath);
-    QImage loadWallPaper(const QString &file);
+    QImage loadCubeCap(const QString& capPath);
+    QImage loadWallPaper(const QString& file);
     void startAnimation(AnimationState state);
     void startVerticalAnimation(VerticalAnimationState state);
 
@@ -243,7 +248,7 @@ private:
     QMatrix4x4 m_reflectionMatrix;
     QMatrix4x4 m_textureMirrorMatrix;
     QMatrix4x4 m_currentFaceMatrix;
-    GLVertexBuffer *m_cubeCapBuffer;
+    GLVertexBuffer* m_cubeCapBuffer;
 
     // Shortcuts - needed to toggle the effect
     QList<QKeySequence> cubeShortcut;
@@ -252,11 +257,11 @@ private:
 
     // proxy
     CubeEffectProxy m_proxy;
-    QList< CubeInsideEffect* > m_cubeInsideEffects;
+    QList<CubeInsideEffect*> m_cubeInsideEffects;
 
-    QAction *m_cubeAction;
-    QAction *m_cylinderAction;
-    QAction *m_sphereAction;
+    QAction* m_cubeAction;
+    QAction* m_cylinderAction;
+    QAction* m_sphereAction;
 };
 
 } // namespace

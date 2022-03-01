@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "magnifierconfig.h"
 
 #include <QAction>
-#include <kwinconfig.h>
 #include <kstandardaction.h>
+#include <kwinconfig.h>
 
 #include <kwinglutils.h>
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
@@ -100,8 +100,8 @@ void MagnifierEffect::destroyPixmap()
 
 bool MagnifierEffect::supported()
 {
-    return  effects->compositingType() == XRenderCompositing ||
-            (effects->isOpenGLCompositing() && GLRenderTarget::blitSupported());
+    return effects->compositingType() == XRenderCompositing
+        || (effects->isOpenGLCompositing() && GLRenderTarget::blitSupported());
 }
 
 void MagnifierEffect::reconfigure(ReconfigureFlags)
@@ -117,7 +117,8 @@ void MagnifierEffect::reconfigure(ReconfigureFlags)
         toggle();
 }
 
-void MagnifierEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void MagnifierEffect::prePaintScreen(ScreenPrePaintData& data,
+                                     std::chrono::milliseconds presentTime)
 {
     const int time = m_lastPresentTime.count() ? (presentTime - m_lastPresentTime).count() : 0;
 
@@ -146,20 +147,22 @@ void MagnifierEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::mill
 
     effects->prePaintScreen(data, presentTime);
     if (zoom != 1.0)
-        data.paint |= magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH);
+        data.paint
+            |= magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH);
 }
 
-void MagnifierEffect::paintScreen(int mask, const QRegion &region, ScreenPaintData& data)
+void MagnifierEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
 {
-    effects->paintScreen(mask, region, data);   // paint normal screen
+    effects->paintScreen(mask, region, data); // paint normal screen
     if (zoom != 1.0) {
         // get the right area from the current rendered screen
         const QRect area = magnifierArea();
         const QPoint cursor = cursorPos();
 
-        QRect srcArea(cursor.x() - (double)area.width() / (zoom*2),
-                      cursor.y() - (double)area.height() / (zoom*2),
-                      (double)area.width() / zoom, (double)area.height() / zoom);
+        QRect srcArea(cursor.x() - (double)area.width() / (zoom * 2),
+                      cursor.y() - (double)area.height() / (zoom * 2),
+                      (double)area.width() / zoom,
+                      (double)area.height() / zoom);
         if (effects->isOpenGLCompositing()) {
             m_fbo->blitFromFramebuffer(srcArea);
             // paint magnifier
@@ -174,7 +177,7 @@ void MagnifierEffect::paintScreen(int mask, const QRegion &region, ScreenPaintDa
             ShaderManager::instance()->popShader();
             m_texture->unbind();
             QVector<float> verts;
-            GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
+            GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
             vbo->reset();
             vbo->setColor(QColor(0, 0, 0));
             const QRectF areaF = area;
@@ -209,7 +212,8 @@ void MagnifierEffect::paintScreen(int mask, const QRegion &region, ScreenPaintDa
             vbo->setData(verts.size() / 2, 2, verts.constData(), nullptr);
 
             ShaderBinder binder(ShaderTrait::UniformColor);
-            binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix, data.projectionMatrix());
+            binder.shader()->setUniform(GLShader::ModelViewProjectionMatrix,
+                                        data.projectionMatrix());
             vbo->render(GL_TRIANGLES);
         }
         if (effects->compositingType() == XRenderCompositing) {
@@ -218,40 +222,91 @@ void MagnifierEffect::paintScreen(int mask, const QRegion &region, ScreenPaintDa
                 destroyPixmap();
                 m_pixmap = xcb_generate_id(xcbConnection());
                 m_pixmapSize = srcArea.size();
-                xcb_create_pixmap(xcbConnection(), 32, m_pixmap, x11RootWindow(), m_pixmapSize.width(), m_pixmapSize.height());
+                xcb_create_pixmap(xcbConnection(),
+                                  32,
+                                  m_pixmap,
+                                  x11RootWindow(),
+                                  m_pixmapSize.width(),
+                                  m_pixmapSize.height());
                 m_picture.reset(new XRenderPicture(m_pixmap, 32));
             }
-#define DOUBLE_TO_FIXED(d) ((xcb_render_fixed_t) ((d) * 65536))
-            static const xcb_render_transform_t identity = {
-                DOUBLE_TO_FIXED(1), DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(0),
-                DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(1), DOUBLE_TO_FIXED(0),
-                DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(1)
-            };
-            static xcb_render_transform_t xform = {
-                DOUBLE_TO_FIXED(1), DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(0),
-                DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(1), DOUBLE_TO_FIXED(0),
-                DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(0), DOUBLE_TO_FIXED(1)
-            };
-            xcb_render_composite(xcbConnection(), XCB_RENDER_PICT_OP_SRC, effects->xrenderBufferPicture(), 0, *m_picture,
-                                srcArea.x(), srcArea.y(), 0, 0, 0, 0, srcArea.width(), srcArea.height());
+#define DOUBLE_TO_FIXED(d) ((xcb_render_fixed_t)((d)*65536))
+            static const xcb_render_transform_t identity = {DOUBLE_TO_FIXED(1),
+                                                            DOUBLE_TO_FIXED(0),
+                                                            DOUBLE_TO_FIXED(0),
+                                                            DOUBLE_TO_FIXED(0),
+                                                            DOUBLE_TO_FIXED(1),
+                                                            DOUBLE_TO_FIXED(0),
+                                                            DOUBLE_TO_FIXED(0),
+                                                            DOUBLE_TO_FIXED(0),
+                                                            DOUBLE_TO_FIXED(1)};
+            static xcb_render_transform_t xform = {DOUBLE_TO_FIXED(1),
+                                                   DOUBLE_TO_FIXED(0),
+                                                   DOUBLE_TO_FIXED(0),
+                                                   DOUBLE_TO_FIXED(0),
+                                                   DOUBLE_TO_FIXED(1),
+                                                   DOUBLE_TO_FIXED(0),
+                                                   DOUBLE_TO_FIXED(0),
+                                                   DOUBLE_TO_FIXED(0),
+                                                   DOUBLE_TO_FIXED(1)};
+            xcb_render_composite(xcbConnection(),
+                                 XCB_RENDER_PICT_OP_SRC,
+                                 effects->xrenderBufferPicture(),
+                                 0,
+                                 *m_picture,
+                                 srcArea.x(),
+                                 srcArea.y(),
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 srcArea.width(),
+                                 srcArea.height());
             xcb_flush(xcbConnection());
-            xform.matrix11 = DOUBLE_TO_FIXED(1.0/zoom);
-            xform.matrix22 = DOUBLE_TO_FIXED(1.0/zoom);
+            xform.matrix11 = DOUBLE_TO_FIXED(1.0 / zoom);
+            xform.matrix22 = DOUBLE_TO_FIXED(1.0 / zoom);
 #undef DOUBLE_TO_FIXED
             xcb_render_set_picture_transform(xcbConnection(), *m_picture, xform);
-            xcb_render_set_picture_filter(xcbConnection(), *m_picture, 4, const_cast<char*>("good"), 0, nullptr);
-            xcb_render_composite(xcbConnection(), XCB_RENDER_PICT_OP_SRC, *m_picture, 0, effects->xrenderBufferPicture(),
-                                 0, 0, 0, 0, area.x(), area.y(), area.width(), area.height() );
-            xcb_render_set_picture_filter(xcbConnection(), *m_picture, 4, const_cast<char*>("fast"), 0, nullptr);
+            xcb_render_set_picture_filter(
+                xcbConnection(), *m_picture, 4, const_cast<char*>("good"), 0, nullptr);
+            xcb_render_composite(xcbConnection(),
+                                 XCB_RENDER_PICT_OP_SRC,
+                                 *m_picture,
+                                 0,
+                                 effects->xrenderBufferPicture(),
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 area.x(),
+                                 area.y(),
+                                 area.width(),
+                                 area.height());
+            xcb_render_set_picture_filter(
+                xcbConnection(), *m_picture, 4, const_cast<char*>("fast"), 0, nullptr);
             xcb_render_set_picture_transform(xcbConnection(), *m_picture, identity);
-            const xcb_rectangle_t rects[4] = {
-                { int16_t(area.x()+FRAME_WIDTH), int16_t(area.y()), uint16_t(area.width()-FRAME_WIDTH), uint16_t(FRAME_WIDTH)},
-                { int16_t(area.right()-FRAME_WIDTH), int16_t(area.y()+FRAME_WIDTH), uint16_t(FRAME_WIDTH), uint16_t(area.height()-FRAME_WIDTH)},
-                { int16_t(area.x()), int16_t(area.bottom()-FRAME_WIDTH), uint16_t(area.width()-FRAME_WIDTH), uint16_t(FRAME_WIDTH)},
-                { int16_t(area.x()), int16_t(area.y()), uint16_t(FRAME_WIDTH), uint16_t(area.height()-FRAME_WIDTH)}
-            };
-            xcb_render_fill_rectangles(xcbConnection(), XCB_RENDER_PICT_OP_SRC, effects->xrenderBufferPicture(),
-                                       preMultiply(QColor(0,0,0,255)), 4, rects);
+            const xcb_rectangle_t rects[4] = {{int16_t(area.x() + FRAME_WIDTH),
+                                               int16_t(area.y()),
+                                               uint16_t(area.width() - FRAME_WIDTH),
+                                               uint16_t(FRAME_WIDTH)},
+                                              {int16_t(area.right() - FRAME_WIDTH),
+                                               int16_t(area.y() + FRAME_WIDTH),
+                                               uint16_t(FRAME_WIDTH),
+                                               uint16_t(area.height() - FRAME_WIDTH)},
+                                              {int16_t(area.x()),
+                                               int16_t(area.bottom() - FRAME_WIDTH),
+                                               uint16_t(area.width() - FRAME_WIDTH),
+                                               uint16_t(FRAME_WIDTH)},
+                                              {int16_t(area.x()),
+                                               int16_t(area.y()),
+                                               uint16_t(FRAME_WIDTH),
+                                               uint16_t(area.height() - FRAME_WIDTH)}};
+            xcb_render_fill_rectangles(xcbConnection(),
+                                       XCB_RENDER_PICT_OP_SRC,
+                                       effects->xrenderBufferPicture(),
+                                       preMultiply(QColor(0, 0, 0, 255)),
+                                       4,
+                                       rects);
 #endif
         }
     }
@@ -260,7 +315,8 @@ void MagnifierEffect::paintScreen(int mask, const QRegion &region, ScreenPaintDa
 void MagnifierEffect::postPaintScreen()
 {
     if (zoom != target_zoom) {
-        QRect framedarea = magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH);
+        QRect framedarea
+            = magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH);
         effects->addRepaint(framedarea);
     }
     effects->postPaintScreen();
@@ -268,8 +324,10 @@ void MagnifierEffect::postPaintScreen()
 
 QRect MagnifierEffect::magnifierArea(QPoint pos) const
 {
-    return QRect(pos.x() - magnifier_size.width() / 2, pos.y() - magnifier_size.height() / 2,
-                 magnifier_size.width(), magnifier_size.height());
+    return QRect(pos.x() - magnifier_size.width() / 2,
+                 pos.y() - magnifier_size.height() / 2,
+                 magnifier_size.width(),
+                 magnifier_size.height());
 }
 
 void MagnifierEffect::zoomIn()
@@ -285,7 +343,8 @@ void MagnifierEffect::zoomIn()
         m_texture->setYInverted(false);
         m_fbo = new GLRenderTarget(*m_texture);
     }
-    effects->addRepaint(magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH));
+    effects->addRepaint(
+        magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH));
 }
 
 void MagnifierEffect::zoomOut()
@@ -306,7 +365,8 @@ void MagnifierEffect::zoomOut()
             destroyPixmap();
         }
     }
-    effects->addRepaint(magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH));
+    effects->addRepaint(
+        magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH));
 }
 
 void MagnifierEffect::toggle()
@@ -332,11 +392,16 @@ void MagnifierEffect::toggle()
             effects->stopMousePolling();
         }
     }
-    effects->addRepaint(magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH));
+    effects->addRepaint(
+        magnifierArea().adjusted(-FRAME_WIDTH, -FRAME_WIDTH, FRAME_WIDTH, FRAME_WIDTH));
 }
 
-void MagnifierEffect::slotMouseChanged(const QPoint& pos, const QPoint& old,
-                                   Qt::MouseButtons, Qt::MouseButtons, Qt::KeyboardModifiers, Qt::KeyboardModifiers)
+void MagnifierEffect::slotMouseChanged(const QPoint& pos,
+                                       const QPoint& old,
+                                       Qt::MouseButtons,
+                                       Qt::MouseButtons,
+                                       Qt::KeyboardModifiers,
+                                       Qt::KeyboardModifiers)
 {
     if (pos != old && zoom != 1)
         // need full repaint as we might lose some change events on fast mouse movements
@@ -357,4 +422,3 @@ bool MagnifierEffect::isActive() const
 }
 
 } // namespace
-

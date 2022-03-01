@@ -21,8 +21,8 @@
 #ifndef GLIDE_CONFIG_H
 #define GLIDE_CONFIG_H
 
-#include <KCModule>
 #include "ui_glide_config.h"
+#include <KCModule>
 
 namespace KWin
 {
@@ -32,7 +32,8 @@ class GlideEffectConfig : public KCModule
     Q_OBJECT
 
 public:
-    explicit GlideEffectConfig(QWidget *parent = nullptr, const QVariantList &args = QVariantList());
+    explicit GlideEffectConfig(QWidget* parent = nullptr,
+                               const QVariantList& args = QVariantList());
     ~GlideEffectConfig() override;
 
     void save() override;
@@ -44,4 +45,3 @@ private:
 } // namespace KWin
 
 #endif
-

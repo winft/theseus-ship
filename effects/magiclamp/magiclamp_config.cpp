@@ -24,9 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwineffects_interface.h>
 
-#include <kconfiggroup.h>
 #include <KAboutData>
 #include <KPluginFactory>
+#include <kconfiggroup.h>
 
 #include <QVBoxLayout>
 
@@ -35,13 +35,14 @@ K_PLUGIN_CLASS(KWin::MagicLampEffectConfig)
 namespace KWin
 {
 
-MagicLampEffectConfigForm::MagicLampEffectConfigForm(QWidget* parent) : QWidget(parent)
+MagicLampEffectConfigForm::MagicLampEffectConfigForm(QWidget* parent)
+    : QWidget(parent)
 {
     setupUi(this);
 }
 
-MagicLampEffectConfig::MagicLampEffectConfig(QWidget* parent, const QVariantList& args) :
-    KCModule(parent, args)
+MagicLampEffectConfig::MagicLampEffectConfig(QWidget* parent, const QVariantList& args)
+    : KCModule(parent, args)
 {
     m_ui = new MagicLampEffectConfigForm(this);
 
@@ -58,9 +59,8 @@ MagicLampEffectConfig::MagicLampEffectConfig(QWidget* parent, const QVariantList
 void MagicLampEffectConfig::save()
 {
     KCModule::save();
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("magiclamp"));
 }
 

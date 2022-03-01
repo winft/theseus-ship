@@ -26,8 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-struct MagicLampAnimation
-{
+struct MagicLampAnimation {
     TimeLine timeLine;
     std::chrono::milliseconds lastPresentTime = std::chrono::milliseconds::zero();
 };
@@ -41,34 +40,33 @@ public:
 
     void reconfigure(ReconfigureFlags) override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
     void postPaintScreen() override;
     bool isActive() const override;
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         return 50;
     }
 
     static bool supported();
 
 protected:
-    void deform(EffectWindow *window, int mask, WindowPaintData &data, WindowQuadList &quads) override;
+    void
+    deform(EffectWindow* window, int mask, WindowPaintData& data, WindowQuadList& quads) override;
 
 public Q_SLOTS:
-    void slotWindowDeleted(KWin::EffectWindow *w);
-    void slotWindowMinimized(KWin::EffectWindow *w);
-    void slotWindowUnminimized(KWin::EffectWindow *w);
+    void slotWindowDeleted(KWin::EffectWindow* w);
+    void slotWindowMinimized(KWin::EffectWindow* w);
+    void slotWindowUnminimized(KWin::EffectWindow* w);
 
 private:
     std::chrono::milliseconds m_duration;
-    QHash<EffectWindow *, MagicLampAnimation> m_animations;
+    QHash<EffectWindow*, MagicLampAnimation> m_animations;
 
-    enum IconPosition {
-        Top,
-        Bottom,
-        Left,
-        Right
-    };
+    enum IconPosition { Top, Bottom, Left, Right };
 };
 
 } // namespace

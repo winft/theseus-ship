@@ -22,10 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "flipswitchconfig.h"
 
 #include <QAction>
-#include <kwinconfig.h>
 #include <QFont>
 #include <QKeyEvent>
 #include <QMatrix4x4>
+#include <kwinconfig.h>
 
 #include <KGlobalAccel>
 #include <KLocalizedString>
@@ -61,15 +61,20 @@ FlipSwitchEffect::FlipSwitchEffect()
     KGlobalAccel::self()->setShortcut(flipSwitchCurrentAction, QList<QKeySequence>());
     m_shortcutCurrent = KGlobalAccel::self()->shortcut(flipSwitchCurrentAction);
     effects->registerGlobalShortcut(QKeySequence(), flipSwitchCurrentAction);
-    connect(flipSwitchCurrentAction, &QAction::triggered, this, &FlipSwitchEffect::toggleActiveCurrent);
+    connect(
+        flipSwitchCurrentAction, &QAction::triggered, this, &FlipSwitchEffect::toggleActiveCurrent);
     QAction* flipSwitchAllAction = new QAction(this);
     flipSwitchAllAction->setObjectName(QStringLiteral("FlipSwitchAll"));
     flipSwitchAllAction->setText(i18n("Toggle Flip Switch (All desktops)"));
     KGlobalAccel::self()->setShortcut(flipSwitchAllAction, QList<QKeySequence>());
     effects->registerGlobalShortcut(QKeySequence(), flipSwitchAllAction);
     m_shortcutAll = KGlobalAccel::self()->shortcut(flipSwitchAllAction);
-    connect(flipSwitchAllAction, &QAction::triggered, this, &FlipSwitchEffect::toggleActiveAllDesktops);
-    connect(KGlobalAccel::self(), &KGlobalAccel::globalShortcutChanged, this, &FlipSwitchEffect::globalShortcutChanged);
+    connect(
+        flipSwitchAllAction, &QAction::triggered, this, &FlipSwitchEffect::toggleActiveAllDesktops);
+    connect(KGlobalAccel::self(),
+            &KGlobalAccel::globalShortcutChanged,
+            this,
+            &FlipSwitchEffect::globalShortcutChanged);
     connect(effects, &EffectsHandler::windowAdded, this, &FlipSwitchEffect::slotWindowAdded);
     connect(effects, &EffectsHandler::windowClosed, this, &FlipSwitchEffect::slotWindowClosed);
     connect(effects, &EffectsHandler::tabBoxAdded, this, &FlipSwitchEffect::slotTabBoxAdded);
@@ -107,7 +112,8 @@ void FlipSwitchEffect::reconfigure(ReconfigureFlags)
     m_windowTitle = FlipSwitchConfig::windowTitle();
 }
 
-void FlipSwitchEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
+void FlipSwitchEffect::prePaintScreen(ScreenPrePaintData& data,
+                                      std::chrono::milliseconds presentTime)
 {
     int time = 0;
     if (m_animation || m_start || m_stop) {
@@ -128,7 +134,7 @@ void FlipSwitchEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::mil
     effects->prePaintScreen(data, presentTime);
 }
 
-void FlipSwitchEffect::paintScreen(int mask, const QRegion &region, ScreenPaintData& data)
+void FlipSwitchEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
 {
     effects->paintScreen(mask, region, data);
     if (m_active) {
@@ -163,7 +169,8 @@ void FlipSwitchEffect::paintScreen(int mask, const QRegion &region, ScreenPaintD
             }
             tabIndex = index;
             EffectWindow* w = nullptr;
-            if (!m_scheduledDirections.isEmpty() && m_scheduledDirections.head() == DirectionBackward) {
+            if (!m_scheduledDirections.isEmpty()
+                && m_scheduledDirections.head() == DirectionBackward) {
                 index--;
                 if (index < 0)
                     index = tempList.count() + index;
@@ -190,7 +197,8 @@ void FlipSwitchEffect::paintScreen(int mask, const QRegion &region, ScreenPaintD
             }
             tabIndex = index;
             EffectWindow* w = nullptr;
-            if (!m_scheduledDirections.isEmpty() && m_scheduledDirections.head() == DirectionBackward) {
+            if (!m_scheduledDirections.isEmpty()
+                && m_scheduledDirections.head() == DirectionBackward) {
                 index++;
                 if (index >= tempList.count())
                     index = 0;
@@ -206,12 +214,11 @@ void FlipSwitchEffect::paintScreen(int mask, const QRegion &region, ScreenPaintD
             }
         }
 
-
         int winMask = PAINT_WINDOW_TRANSFORMED | PAINT_WINDOW_TRANSLUCENT;
         // fade in/out one window at the end of the stack during animation
         if (m_animation && !m_scheduledDirections.isEmpty()) {
             EffectWindow* w = m_flipOrderedWindows.last();
-            if (ItemInfo *info = m_windows.value(w,0)) {
+            if (ItemInfo* info = m_windows.value(w, 0)) {
                 WindowPaintData data(w);
                 if (effects->numScreens() > 1) {
                     data.setProjectionMatrix(m_projectionMatrix);
@@ -224,13 +231,19 @@ void FlipSwitchEffect::paintScreen(int mask, const QRegion &region, ScreenPaintD
                 data.setSaturation(info->saturation);
                 int distance = tempList.count() - 1;
                 float zDistance = 500.0f;
-                data.translate(- (w->x() - m_screenArea.x() + data.xTranslation()) * m_startStopTimeLine.currentValue());
+                data.translate(-(w->x() - m_screenArea.x() + data.xTranslation())
+                               * m_startStopTimeLine.currentValue());
 
-                data.translate(m_screenArea.width() * m_xPosition * m_startStopTimeLine.currentValue(),
-                               (m_screenArea.y() + m_screenArea.height() * m_yPosition - (w->y() + w->height() + data.yTranslation())) * m_startStopTimeLine.currentValue());
-                data.translate(- (m_screenArea.width() * 0.25f) * distance * m_startStopTimeLine.currentValue(),
-                               - (m_screenArea.height() * 0.10f) * distance * m_startStopTimeLine.currentValue(),
-                               - (zDistance * distance) * m_startStopTimeLine.currentValue());
+                data.translate(m_screenArea.width() * m_xPosition
+                                   * m_startStopTimeLine.currentValue(),
+                               (m_screenArea.y() + m_screenArea.height() * m_yPosition
+                                - (w->y() + w->height() + data.yTranslation()))
+                                   * m_startStopTimeLine.currentValue());
+                data.translate(-(m_screenArea.width() * 0.25f) * distance
+                                   * m_startStopTimeLine.currentValue(),
+                               -(m_screenArea.height() * 0.10f) * distance
+                                   * m_startStopTimeLine.currentValue(),
+                               -(zDistance * distance) * m_startStopTimeLine.currentValue());
                 if (m_scheduledDirections.head() == DirectionForward)
                     data.multiplyOpacity(0.8 * m_timeLine.currentValue());
                 else
@@ -244,7 +257,7 @@ void FlipSwitchEffect::paintScreen(int mask, const QRegion &region, ScreenPaintD
         }
 
         for (auto const& w : qAsConst(m_flipOrderedWindows)) {
-            ItemInfo *info = m_windows.value(w,0);
+            ItemInfo* info = m_windows.value(w, 0);
             if (!info)
                 continue;
             WindowPaintData data(w);
@@ -269,24 +282,30 @@ void FlipSwitchEffect::paintScreen(int mask, const QRegion &region, ScreenPaintD
             } else {
                 distance = m_flipOrderedWindows.count() - m_flipOrderedWindows.indexOf(w) - 1;
 
-                if (!m_scheduledDirections.isEmpty() && m_scheduledDirections.head() == DirectionBackward) {
+                if (!m_scheduledDirections.isEmpty()
+                    && m_scheduledDirections.head() == DirectionBackward) {
                     distance--;
                 }
             }
-            if (!m_scheduledDirections.isEmpty() && m_scheduledDirections.head() == DirectionBackward) {
+            if (!m_scheduledDirections.isEmpty()
+                && m_scheduledDirections.head() == DirectionBackward) {
                 if (w == m_flipOrderedWindows.last()) {
                     distance = -1;
                     data.multiplyOpacity(m_timeLine.currentValue());
                 }
             }
             float zDistance = 500.0f;
-            data.translate(- (w->x() - m_screenArea.x() + data.xTranslation()) * m_startStopTimeLine.currentValue());
+            data.translate(-(w->x() - m_screenArea.x() + data.xTranslation())
+                           * m_startStopTimeLine.currentValue());
             data.translate(m_screenArea.width() * m_xPosition * m_startStopTimeLine.currentValue(),
-                           (m_screenArea.y() + m_screenArea.height() * m_yPosition - (w->y() + w->height() + data.yTranslation())) * m_startStopTimeLine.currentValue());
+                           (m_screenArea.y() + m_screenArea.height() * m_yPosition
+                            - (w->y() + w->height() + data.yTranslation()))
+                               * m_startStopTimeLine.currentValue());
 
-            data.translate(-(m_screenArea.width() * 0.25f) * distance * m_startStopTimeLine.currentValue(),
-                           -(m_screenArea.height() * 0.10f) * distance * m_startStopTimeLine.currentValue(),
-                           -(zDistance * distance) * m_startStopTimeLine.currentValue());
+            data.translate(
+                -(m_screenArea.width() * 0.25f) * distance * m_startStopTimeLine.currentValue(),
+                -(m_screenArea.height() * 0.10f) * distance * m_startStopTimeLine.currentValue(),
+                -(zDistance * distance) * m_startStopTimeLine.currentValue());
             if (m_animation && !m_scheduledDirections.isEmpty()) {
                 if (m_scheduledDirections.head() == DirectionForward) {
                     data.translate((m_screenArea.width() * 0.25f) * m_timeLine.currentValue(),
@@ -295,9 +314,9 @@ void FlipSwitchEffect::paintScreen(int mask, const QRegion &region, ScreenPaintD
                     if (distance == 0)
                         data.multiplyOpacity((1.0 - m_timeLine.currentValue()));
                 } else {
-                    data.translate(- (m_screenArea.width() * 0.25f) * m_timeLine.currentValue(),
-                                   - (m_screenArea.height() * 0.10f) * m_timeLine.currentValue(),
-                                   - zDistance * m_timeLine.currentValue());
+                    data.translate(-(m_screenArea.width() * 0.25f) * m_timeLine.currentValue(),
+                                   -(m_screenArea.height() * 0.10f) * m_timeLine.currentValue(),
+                                   -zDistance * m_timeLine.currentValue());
                 }
             }
             data.multiplyOpacity((0.8 + 0.2 * (1.0 - m_startStopTimeLine.currentValue())));
@@ -371,7 +390,9 @@ void FlipSwitchEffect::postPaintScreen()
     effects->postPaintScreen();
 }
 
-void FlipSwitchEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime)
+void FlipSwitchEffect::prePaintWindow(EffectWindow* w,
+                                      WindowPrePaintData& data,
+                                      std::chrono::milliseconds presentTime)
 {
     if (m_active) {
         if (m_windows.contains(w)) {
@@ -394,7 +415,7 @@ void FlipSwitchEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data,
 void FlipSwitchEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
 {
     if (m_active) {
-        ItemInfo *info = m_windows.value(w,0);
+        ItemInfo* info = m_windows.value(w, 0);
         if (info) {
             info->opacity = data.opacity();
             info->brightness = data.brightness();
@@ -422,12 +443,11 @@ void FlipSwitchEffect::slotTabBoxAdded(int mode)
         return;
     // only for windows mode
     effects->setShowingDesktop(false);
-    if (((mode == TabBoxWindowsMode && m_tabbox) ||
-            (mode == TabBoxWindowsAlternativeMode && m_tabboxAlternative) ||
-            (mode == TabBoxCurrentAppWindowsMode && m_tabbox) ||
-            (mode == TabBoxCurrentAppWindowsAlternativeMode && m_tabboxAlternative))
-            && (!m_active || (m_active && m_stop))
-            && !effects->currentTabBoxWindowList().isEmpty()) {
+    if (((mode == TabBoxWindowsMode && m_tabbox)
+         || (mode == TabBoxWindowsAlternativeMode && m_tabboxAlternative)
+         || (mode == TabBoxCurrentAppWindowsMode && m_tabbox)
+         || (mode == TabBoxCurrentAppWindowsAlternativeMode && m_tabboxAlternative))
+        && (!m_active || (m_active && m_stop)) && !effects->currentTabBoxWindowList().isEmpty()) {
         setActive(true, TabboxMode);
         if (m_active)
             effects->refTabBox();
@@ -450,7 +470,8 @@ void FlipSwitchEffect::slotTabBoxUpdated()
             if (m_selectedWindow != effects->currentTabBoxWindow()) {
                 if (m_selectedWindow != nullptr) {
                     int old_index = effects->currentTabBoxWindowList().indexOf(m_selectedWindow);
-                    int new_index = effects->currentTabBoxWindowList().indexOf(effects->currentTabBoxWindow());
+                    int new_index = effects->currentTabBoxWindowList().indexOf(
+                        effects->currentTabBoxWindow());
                     SwitchingDirection new_direction;
                     int distance = new_index - old_index;
                     if (distance > 0)
@@ -489,7 +510,7 @@ void FlipSwitchEffect::slotTabBoxUpdated()
 void FlipSwitchEffect::slotWindowAdded(EffectWindow* w)
 {
     if (m_active && isSelectableWindow(w)) {
-        m_windows[ w ] = new ItemInfo;
+        m_windows[w] = new ItemInfo;
     }
 }
 
@@ -498,7 +519,7 @@ void FlipSwitchEffect::slotWindowClosed(EffectWindow* w)
     if (m_selectedWindow == w)
         m_selectedWindow = nullptr;
     if (m_active) {
-        QHash< const EffectWindow*, ItemInfo* >::iterator it = m_windows.find(w);
+        QHash<const EffectWindow*, ItemInfo*>::iterator it = m_windows.find(w);
         if (it != m_windows.end()) {
             delete *it;
             m_windows.erase(it);
@@ -530,7 +551,7 @@ void FlipSwitchEffect::setActive(bool activate, FlipSwitchMode mode)
         auto const& stacking_order = effects->stackingOrder();
         for (auto const& w : qAsConst(stacking_order)) {
             if (isSelectableWindow(w) && !m_windows.contains(w))
-                m_windows[ w ] = new ItemInfo;
+                m_windows[w] = new ItemInfo;
         }
         if (m_windows.isEmpty())
             return;
@@ -545,7 +566,8 @@ void FlipSwitchEffect::setActive(bool activate, FlipSwitchMode mode)
         if (effects->numScreens() > 1) {
             // unfortunatelly we have to change the projection matrix in dual screen mode
             // code is copied from Coverswitch
-            QRect fullRect = effects->clientArea(FullArea, m_activeScreen, effects->currentDesktop());
+            QRect fullRect
+                = effects->clientArea(FullArea, m_activeScreen, effects->currentDesktop());
             float fovy = 60.0f;
             float aspect = 1.0f;
             float zNear = 0.1f;
@@ -553,29 +575,33 @@ void FlipSwitchEffect::setActive(bool activate, FlipSwitchMode mode)
 
             float ymax = zNear * std::tan(fovy * M_PI / 360.0f);
             float ymin = -ymax;
-            float xmin =  ymin * aspect;
+            float xmin = ymin * aspect;
             float xmax = ymax * aspect;
 
             if (m_screenArea.width() != fullRect.width()) {
                 if (m_screenArea.x() == 0) {
                     // horizontal layout: left screen
                     xmin *= (float)m_screenArea.width() / (float)fullRect.width();
-                    xmax *= (fullRect.width() - 0.5f * m_screenArea.width()) / (0.5f * fullRect.width());
+                    xmax *= (fullRect.width() - 0.5f * m_screenArea.width())
+                        / (0.5f * fullRect.width());
                 } else {
                     // horizontal layout: right screen
-                    xmin *= (fullRect.width() - 0.5f * m_screenArea.width()) / (0.5f * fullRect.width());
+                    xmin *= (fullRect.width() - 0.5f * m_screenArea.width())
+                        / (0.5f * fullRect.width());
                     xmax *= (float)m_screenArea.width() / (float)fullRect.width();
                 }
             }
             if (m_screenArea.height() != fullRect.height()) {
                 if (m_screenArea.y() == 0) {
                     // vertical layout: top screen
-                    ymin *= (fullRect.height() - 0.5f * m_screenArea.height()) / (0.5f * fullRect.height());
+                    ymin *= (fullRect.height() - 0.5f * m_screenArea.height())
+                        / (0.5f * fullRect.height());
                     ymax *= (float)m_screenArea.height() / (float)fullRect.height();
                 } else {
                     // vertical layout: bottom screen
                     ymin *= (float)m_screenArea.height() / (float)fullRect.height();
-                    ymax *= (fullRect.height() - 0.5f * m_screenArea.height()) / (0.5f * fullRect.height());
+                    ymax *= (fullRect.height() - 0.5f * m_screenArea.height())
+                        / (0.5f * fullRect.height());
                 }
             }
 
@@ -588,9 +614,9 @@ void FlipSwitchEffect::setActive(bool activate, FlipSwitchMode mode)
             // to world coordinates.
             QMatrix4x4 matrix;
             matrix.translate(xmin * scaleFactor, ymax * scaleFactor, -1.1);
-            matrix.scale( (xmax - xmin) * scaleFactor / fullRect.width(),
-                        -(ymax - ymin) * scaleFactor / fullRect.height(),
-                        0.001);
+            matrix.scale((xmax - xmin) * scaleFactor / fullRect.width(),
+                         -(ymax - ymin) * scaleFactor / fullRect.height(),
+                         0.001);
             // Combine the matrices
             m_projectionMatrix *= matrix;
 
@@ -606,7 +632,7 @@ void FlipSwitchEffect::setActive(bool activate, FlipSwitchMode mode)
             m_scheduledDirections.clear();
         }
 
-        switch(m_mode) {
+        switch (m_mode) {
         case TabboxMode:
             m_selectedWindow = effects->currentTabBoxWindow();
             effects->startMouseInterception(this, Qt::ArrowCursor);
@@ -625,7 +651,8 @@ void FlipSwitchEffect::setActive(bool activate, FlipSwitchMode mode)
 
         // Setup caption frame geometry
         QRect frameRect = QRect(m_screenArea.width() * 0.25f + m_screenArea.x(),
-                                m_screenArea.height() * 0.1f + m_screenArea.y() - QFontMetrics(m_captionFont).height(),
+                                m_screenArea.height() * 0.1f + m_screenArea.y()
+                                    - QFontMetrics(m_captionFont).height(),
                                 m_screenArea.width() * 0.5f,
                                 QFontMetrics(m_captionFont).height());
         if (!m_captionFrame) {
@@ -710,13 +737,13 @@ bool FlipSwitchEffect::isSelectableWindow(EffectWindow* w) const
         return false;
     if (!w->acceptsFocus())
         return false;
-    switch(m_mode) {
+    switch (m_mode) {
     case TabboxMode:
         return effects->currentTabBoxWindowList().contains(w);
     case CurrentDesktopMode:
         return w->isOnCurrentDesktop();
     case AllDesktopsMode:
-        //nothing special
+        // nothing special
         break;
     }
     return true;
@@ -775,17 +802,17 @@ void FlipSwitchEffect::adjustWindowMultiScreen(const KWin::EffectWindow* w, Wind
     QRect fullRect = effects->clientArea(FullArea, m_activeScreen, effects->currentDesktop());
     if (w->screen() == m_activeScreen) {
         if (clientRect.width() != fullRect.width() && clientRect.x() != fullRect.x()) {
-            data.translate(- clientRect.x());
+            data.translate(-clientRect.x());
         }
         if (clientRect.height() != fullRect.height() && clientRect.y() != fullRect.y()) {
-            data.translate(0.0, - clientRect.y());
+            data.translate(0.0, -clientRect.y());
         }
     } else {
         if (clientRect.width() != fullRect.width() && clientRect.x() < rect.x()) {
-            data.translate(- (m_screenArea.x() - clientRect.x()));
+            data.translate(-(m_screenArea.x() - clientRect.x()));
         }
         if (clientRect.height() != fullRect.height() && clientRect.y() < m_screenArea.y()) {
-            data.translate(0.0, - (m_screenArea.y() - clientRect.y()));
+            data.translate(0.0, -(m_screenArea.y() - clientRect.y()));
         }
     }
 }
@@ -805,7 +832,7 @@ void FlipSwitchEffect::selectNextOrPreviousWindow(bool forward)
     if (newIndex == effects->currentTabBoxWindowList().size()) {
         newIndex = 0;
     } else if (newIndex < 0) {
-        newIndex = effects->currentTabBoxWindowList().size() -1;
+        newIndex = effects->currentTabBoxWindowList().size() - 1;
     }
     if (index == newIndex) {
         return;
@@ -813,11 +840,10 @@ void FlipSwitchEffect::selectNextOrPreviousWindow(bool forward)
     effects->setTabBoxWindow(effects->currentTabBoxWindowList().at(newIndex));
 }
 
-
 //*************************************************************
 // Keyboard handling
 //*************************************************************
-void FlipSwitchEffect::globalShortcutChanged(QAction *action, const QKeySequence &shortcut)
+void FlipSwitchEffect::globalShortcutChanged(QAction* action, const QKeySequence& shortcut)
 {
     if (action->objectName() == QStringLiteral("FlipSwitchAll")) {
         m_shortcutAll.clear();
@@ -832,7 +858,8 @@ void FlipSwitchEffect::grabbedKeyboardEvent(QKeyEvent* e)
 {
     if (e->type() == QEvent::KeyPress) {
         // check for global shortcuts
-        // HACK: keyboard grab disables the global shortcuts so we have to check for global shortcut (bug 156155)
+        // HACK: keyboard grab disables the global shortcuts so we have to check for global shortcut
+        // (bug 156155)
         if (m_mode == CurrentDesktopMode && m_shortcutCurrent.contains(e->key() + e->modifiers())) {
             toggleActiveCurrent();
             return;
@@ -842,7 +869,7 @@ void FlipSwitchEffect::grabbedKeyboardEvent(QKeyEvent* e)
             return;
         }
 
-        switch(e->key()) {
+        switch (e->key()) {
         case Qt::Key_Escape:
             setActive(false, m_mode);
             return;
@@ -859,7 +886,9 @@ void FlipSwitchEffect::grabbedKeyboardEvent(QKeyEvent* e)
                 }
             }
             if (!found) {
-                for (int i = effects->stackingOrder().count() - 1; i > effects->stackingOrder().indexOf(m_selectedWindow); i--) {
+                for (int i = effects->stackingOrder().count() - 1;
+                     i > effects->stackingOrder().indexOf(m_selectedWindow);
+                     i--) {
                     if (isSelectableWindow(effects->stackingOrder().at(i))) {
                         m_selectedWindow = effects->stackingOrder().at(i);
                         found = true;
@@ -878,7 +907,9 @@ void FlipSwitchEffect::grabbedKeyboardEvent(QKeyEvent* e)
             if (m_windows.isEmpty())
                 return; // sanity check
             bool found = false;
-            for (int i = effects->stackingOrder().indexOf(m_selectedWindow) + 1; i < effects->stackingOrder().count(); i++) {
+            for (int i = effects->stackingOrder().indexOf(m_selectedWindow) + 1;
+                 i < effects->stackingOrder().count();
+                 i++) {
                 if (isSelectableWindow(effects->stackingOrder().at(i))) {
                     m_selectedWindow = effects->stackingOrder().at(i);
                     found = true;
@@ -914,7 +945,7 @@ void FlipSwitchEffect::grabbedKeyboardEvent(QKeyEvent* e)
     }
 }
 
-void FlipSwitchEffect::slotTabBoxKeyEvent(QKeyEvent *event)
+void FlipSwitchEffect::slotTabBoxKeyEvent(QKeyEvent* event)
 {
     if (event->type() == QEvent::KeyPress) {
         switch (event->key()) {
@@ -944,9 +975,10 @@ void FlipSwitchEffect::updateCaption()
         return;
     }
     if (m_selectedWindow->isDesktop()) {
-        m_captionFrame->setText(i18nc("Special entry in alt+tab list for minimizing all windows",
-                     "Show Desktop"));
-        static QPixmap pix = QIcon::fromTheme(QStringLiteral("user-desktop")).pixmap(m_captionFrame->iconSize());
+        m_captionFrame->setText(
+            i18nc("Special entry in alt+tab list for minimizing all windows", "Show Desktop"));
+        static QPixmap pix
+            = QIcon::fromTheme(QStringLiteral("user-desktop")).pixmap(m_captionFrame->iconSize());
         m_captionFrame->setIcon(pix);
     } else {
         m_captionFrame->setText(m_selectedWindow->caption());
@@ -965,7 +997,7 @@ void FlipSwitchEffect::windowInputMouseEvent(QEvent* e)
     // we don't want click events during animations
     if (m_animation)
         return;
-    QMouseEvent* event = static_cast< QMouseEvent* >(e);
+    QMouseEvent* event = static_cast<QMouseEvent*>(e);
 
     switch (event->button()) {
     case Qt::XButton1: // wheel up
@@ -999,4 +1031,3 @@ FlipSwitchEffect::ItemInfo::~ItemInfo()
 }
 
 } // namespace
-

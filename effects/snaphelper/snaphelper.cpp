@@ -36,14 +36,10 @@ namespace KWin
 static const int s_lineWidth = 4;
 static const QColor s_lineColor = QColor(128, 128, 128, 128);
 
-static QRegion computeDirtyRegion(const QRect &windowRect)
+static QRegion computeDirtyRegion(const QRect& windowRect)
 {
     const QMargins outlineMargins(
-        s_lineWidth / 2,
-        s_lineWidth / 2,
-        s_lineWidth / 2,
-        s_lineWidth / 2
-    );
+        s_lineWidth / 2, s_lineWidth / 2, s_lineWidth / 2, s_lineWidth / 2);
 
     QRegion dirtyRegion;
     for (int i = 0; i < effects->numScreens(); ++i) {
@@ -62,12 +58,10 @@ static QRegion computeDirtyRegion(const QRect &windowRect)
         horizontalBarRect.adjust(-1, -1, 1, 1);
         dirtyRegion += horizontalBarRect;
 
-        const QRect outlineOuterRect = screenWindowRect
-            .marginsAdded(outlineMargins)
-            .adjusted(-1, -1, 1, 1);
-        const QRect outlineInnerRect = screenWindowRect
-            .marginsRemoved(outlineMargins)
-            .adjusted(1, 1, -1, -1);
+        const QRect outlineOuterRect
+            = screenWindowRect.marginsAdded(outlineMargins).adjusted(-1, -1, 1, 1);
+        const QRect outlineInnerRect
+            = screenWindowRect.marginsRemoved(outlineMargins).adjusted(1, 1, -1, -1);
         dirtyRegion += QRegion(outlineOuterRect) - QRegion(outlineInnerRect);
     }
 
@@ -79,9 +73,18 @@ SnapHelperEffect::SnapHelperEffect()
     reconfigure(ReconfigureAll);
 
     connect(effects, &EffectsHandler::windowClosed, this, &SnapHelperEffect::slotWindowClosed);
-    connect(effects, &EffectsHandler::windowStartUserMovedResized, this, &SnapHelperEffect::slotWindowStartUserMovedResized);
-    connect(effects, &EffectsHandler::windowFinishUserMovedResized, this, &SnapHelperEffect::slotWindowFinishUserMovedResized);
-    connect(effects, &EffectsHandler::windowGeometryShapeChanged, this, &SnapHelperEffect::slotWindowGeometryShapeChanged);
+    connect(effects,
+            &EffectsHandler::windowStartUserMovedResized,
+            this,
+            &SnapHelperEffect::slotWindowStartUserMovedResized);
+    connect(effects,
+            &EffectsHandler::windowFinishUserMovedResized,
+            this,
+            &SnapHelperEffect::slotWindowFinishUserMovedResized);
+    connect(effects,
+            &EffectsHandler::windowGeometryShapeChanged,
+            this,
+            &SnapHelperEffect::slotWindowGeometryShapeChanged);
 }
 
 SnapHelperEffect::~SnapHelperEffect()
@@ -96,7 +99,8 @@ void SnapHelperEffect::reconfigure(ReconfigureFlags flags)
         std::chrono::milliseconds(static_cast<int>(animationTime(250))));
 }
 
-void SnapHelperEffect::prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime)
+void SnapHelperEffect::prePaintScreen(ScreenPrePaintData& data,
+                                      std::chrono::milliseconds presentTime)
 {
     std::chrono::milliseconds delta = std::chrono::milliseconds::zero();
     if (m_animation.lastPresentTime.count()) {
@@ -111,17 +115,15 @@ void SnapHelperEffect::prePaintScreen(ScreenPrePaintData &data, std::chrono::mil
     effects->prePaintScreen(data, presentTime);
 }
 
-void SnapHelperEffect::paintScreen(int mask, const QRegion &region, ScreenPaintData &data)
+void SnapHelperEffect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
 {
     effects->paintScreen(mask, region, data);
 
-    const qreal opacityFactor = m_animation.active
-        ? m_animation.timeLine.value()
-        : 1.0;
+    const qreal opacityFactor = m_animation.active ? m_animation.timeLine.value() : 1.0;
 
     // Display the guide
     if (effects->isOpenGLCompositing()) {
-        GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
+        GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
         vbo->reset();
         vbo->setUseColor(true);
         ShaderBinder binder(ShaderTrait::UniformColor);
@@ -139,7 +141,7 @@ void SnapHelperEffect::paintScreen(int mask, const QRegion &region, ScreenPaintD
         for (int i = 0; i < effects->numScreens(); ++i) {
             const QRect rect = effects->clientArea(ScreenArea, i, 0);
             const int midX = rect.x() + rect.width() / 2;
-            const int midY = rect.y() + rect.height() / 2 ;
+            const int midY = rect.y() + rect.height() / 2;
             const int halfWidth = m_geometry.width() / 2;
             const int halfHeight = m_geometry.height() / 2;
 
@@ -178,7 +180,7 @@ void SnapHelperEffect::paintScreen(int mask, const QRegion &region, ScreenPaintD
         for (int i = 0; i < effects->numScreens(); ++i) {
             const QRect rect = effects->clientArea(ScreenArea, i, 0);
             const int midX = rect.x() + rect.width() / 2;
-            const int midY = rect.y() + rect.height() / 2 ;
+            const int midY = rect.y() + rect.height() / 2;
             const int halfWidth = m_geometry.width() / 2;
             const int halfHeight = m_geometry.height() / 2;
 
@@ -223,13 +225,17 @@ void SnapHelperEffect::paintScreen(int mask, const QRegion &region, ScreenPaintD
             QColor color = s_lineColor;
             color.setAlphaF(color.alphaF() * opacityFactor);
 
-            xcb_render_fill_rectangles(xcbConnection(), XCB_RENDER_PICT_OP_OVER, effects->xrenderBufferPicture(),
-                                       preMultiply(color), 6, rects);
+            xcb_render_fill_rectangles(xcbConnection(),
+                                       XCB_RENDER_PICT_OP_OVER,
+                                       effects->xrenderBufferPicture(),
+                                       preMultiply(color),
+                                       6,
+                                       rects);
         }
 #endif
     }
     if (effects->compositingType() == QPainterCompositing) {
-        QPainter *painter = effects->scenePainter();
+        QPainter* painter = effects->scenePainter();
         painter->save();
         QColor color = s_lineColor;
         color.setAlphaF(color.alphaF() * opacityFactor);
@@ -241,8 +247,10 @@ void SnapHelperEffect::paintScreen(int mask, const QRegion &region, ScreenPaintD
         for (int i = 0; i < effects->numScreens(); ++i) {
             const QRect rect = effects->clientArea(ScreenArea, i, 0);
             // Center lines.
-            painter->drawLine(rect.center().x(), rect.y(), rect.center().x(), rect.y() + rect.height());
-            painter->drawLine(rect.x(), rect.center().y(), rect.x() + rect.width(), rect.center().y());
+            painter->drawLine(
+                rect.center().x(), rect.y(), rect.center().x(), rect.y() + rect.height());
+            painter->drawLine(
+                rect.x(), rect.center().y(), rect.x() + rect.width(), rect.center().y());
 
             // Window outline.
             QRect outlineRect(0, 0, m_geometry.width(), m_geometry.height());
@@ -267,7 +275,7 @@ void SnapHelperEffect::postPaintScreen()
     effects->postPaintScreen();
 }
 
-void SnapHelperEffect::slotWindowClosed(EffectWindow *w)
+void SnapHelperEffect::slotWindowClosed(EffectWindow* w)
 {
     if (w != m_window) {
         return;
@@ -285,7 +293,7 @@ void SnapHelperEffect::slotWindowClosed(EffectWindow *w)
     effects->addRepaint(computeDirtyRegion(m_geometry));
 }
 
-void SnapHelperEffect::slotWindowStartUserMovedResized(EffectWindow *w)
+void SnapHelperEffect::slotWindowStartUserMovedResized(EffectWindow* w)
 {
     if (!w->isMovable()) {
         return;
@@ -304,7 +312,7 @@ void SnapHelperEffect::slotWindowStartUserMovedResized(EffectWindow *w)
     effects->addRepaint(computeDirtyRegion(m_geometry));
 }
 
-void SnapHelperEffect::slotWindowFinishUserMovedResized(EffectWindow *w)
+void SnapHelperEffect::slotWindowFinishUserMovedResized(EffectWindow* w)
 {
     if (w != m_window) {
         return;
@@ -323,7 +331,7 @@ void SnapHelperEffect::slotWindowFinishUserMovedResized(EffectWindow *w)
     effects->addRepaint(computeDirtyRegion(m_geometry));
 }
 
-void SnapHelperEffect::slotWindowGeometryShapeChanged(EffectWindow *w, const QRect &old)
+void SnapHelperEffect::slotWindowGeometryShapeChanged(EffectWindow* w, const QRect& old)
 {
     if (w != m_window) {
         return;

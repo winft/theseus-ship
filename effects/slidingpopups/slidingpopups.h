@@ -44,13 +44,16 @@ public:
     SlidingPopupsEffect();
     ~SlidingPopupsEffect() override;
 
-    void prePaintWindow(EffectWindow *w, WindowPrePaintData &data, std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow *w, int mask, QRegion region, WindowPaintData &data) override;
-    void postPaintWindow(EffectWindow *w) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
+    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
+    void postPaintWindow(EffectWindow* w) override;
     void reconfigure(ReconfigureFlags flags) override;
     bool isActive() const override;
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         return 40;
     }
 
@@ -59,22 +62,22 @@ public:
     int slideInDuration() const;
     int slideOutDuration() const;
 
-    bool eventFilter(QObject *watched, QEvent *event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private Q_SLOTS:
-    void slotWindowAdded(EffectWindow *w);
-    void slotWindowDeleted(EffectWindow *w);
-    void slotPropertyNotify(EffectWindow *w, long atom);
-    void slotWaylandSlideOnShowChanged(EffectWindow *w);
+    void slotWindowAdded(EffectWindow* w);
+    void slotWindowDeleted(EffectWindow* w);
+    void slotPropertyNotify(EffectWindow* w, long atom);
+    void slotWaylandSlideOnShowChanged(EffectWindow* w);
 
-    void slideIn(EffectWindow *w);
-    void slideOut(EffectWindow *w);
+    void slideIn(EffectWindow* w);
+    void slideOut(EffectWindow* w);
     void stopAnimations();
 
 private:
-    void setupAnimData(EffectWindow *w);
-    void setupInternalWindowSlide(EffectWindow *w);
-    void setupSlideData(EffectWindow *w);
+    void setupAnimData(EffectWindow* w);
+    void setupInternalWindowSlide(EffectWindow* w);
+    void setupSlideData(EffectWindow* w);
 
     long m_atom;
     std::unique_ptr<Wrapland::Server::SlideManager> wayland_slide_manager;
@@ -83,24 +86,16 @@ private:
     std::chrono::milliseconds m_slideInDuration;
     std::chrono::milliseconds m_slideOutDuration;
 
-    enum class AnimationKind {
-        In,
-        Out
-    };
+    enum class AnimationKind { In, Out };
 
     struct Animation {
         AnimationKind kind;
         TimeLine timeLine;
         std::chrono::milliseconds lastPresentTime = std::chrono::milliseconds::zero();
     };
-    QHash<EffectWindow *, Animation> m_animations;
+    QHash<EffectWindow*, Animation> m_animations;
 
-    enum class Location {
-        Left,
-        Top,
-        Right,
-        Bottom
-    };
+    enum class Location { Left, Top, Right, Bottom };
 
     struct AnimationData {
         int offset;

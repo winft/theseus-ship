@@ -32,7 +32,7 @@ class ShowPaintEffectConfig : public KCModule
     Q_OBJECT
 
 public:
-    explicit ShowPaintEffectConfig(QWidget *parent = nullptr, const QVariantList &args = {});
+    explicit ShowPaintEffectConfig(QWidget* parent = nullptr, const QVariantList& args = {});
     ~ShowPaintEffectConfig() override;
 
 public Q_SLOTS:
@@ -40,7 +40,7 @@ public Q_SLOTS:
     void defaults() override;
 
 private:
-    Ui::ShowPaintEffectConfig *m_ui;
+    Ui::ShowPaintEffectConfig* m_ui;
 };
 
 } // namespace KWin

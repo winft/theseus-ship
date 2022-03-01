@@ -27,8 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-class TouchPointsEffect
-    : public Effect
+class TouchPointsEffect : public Effect
 {
     Q_OBJECT
     Q_PROPERTY(qreal lineWidth READ lineWidth)
@@ -39,24 +38,28 @@ public:
     TouchPointsEffect();
     ~TouchPointsEffect() override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
+    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
-    bool touchDown(qint32 id, const QPointF &pos, quint32 time) override;
-    bool touchMotion(qint32 id, const QPointF &pos, quint32 time) override;
+    bool touchDown(qint32 id, const QPointF& pos, quint32 time) override;
+    bool touchMotion(qint32 id, const QPointF& pos, quint32 time) override;
     bool touchUp(qint32 id, quint32 time) override;
 
     // for properties
-    qreal lineWidth() const {
+    qreal lineWidth() const
+    {
         return m_lineWidth;
     }
-    int ringLife() const {
+    int ringLife() const
+    {
         return m_ringLife;
     }
-    int ringSize() const {
+    int ringSize() const
+    {
         return m_ringMaxSize;
     }
-    int ringCount() const {
+    int ringCount() const
+    {
         return m_ringCount;
     }
 
@@ -92,7 +95,6 @@ private:
     QHash<quint32, QPointF> m_latestPositions;
     QHash<quint32, Qt::GlobalColor> m_colors;
     std::chrono::milliseconds m_lastPresentTime = std::chrono::milliseconds::zero();
-
 };
 
 } // namespace

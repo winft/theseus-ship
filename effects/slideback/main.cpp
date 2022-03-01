@@ -9,8 +9,7 @@
 namespace KWin
 {
 
-KWIN_EFFECT_FACTORY(SlideBackEffect,
-                    "metadata.json.stripped")
+KWIN_EFFECT_FACTORY(SlideBackEffect, "metadata.json.stripped")
 
 } // namespace KWin
 

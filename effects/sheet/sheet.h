@@ -39,10 +39,12 @@ public:
 
     void reconfigure(ReconfigureFlags flags) override;
 
-    void prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(EffectWindow *w, WindowPrePaintData &data, std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow *w, int mask, QRegion region, WindowPaintData &data) override;
-    void postPaintWindow(EffectWindow *w) override;
+    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
+    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
+    void postPaintWindow(EffectWindow* w) override;
 
     bool isActive() const override;
     int requestedEffectChainPosition() const override;
@@ -52,12 +54,12 @@ public:
     int duration() const;
 
 private Q_SLOTS:
-    void slotWindowAdded(EffectWindow *w);
-    void slotWindowClosed(EffectWindow *w);
-    void slotWindowDeleted(EffectWindow *w);
+    void slotWindowAdded(EffectWindow* w);
+    void slotWindowClosed(EffectWindow* w);
+    void slotWindowDeleted(EffectWindow* w);
 
 private:
-    bool isSheetWindow(EffectWindow *w) const;
+    bool isSheetWindow(EffectWindow* w) const;
 
 private:
     std::chrono::milliseconds m_duration;

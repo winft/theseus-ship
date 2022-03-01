@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ui_cubeslide_config.h"
 
-
 namespace KWin
 {
 
@@ -40,7 +39,8 @@ class CubeSlideEffectConfig : public KCModule
 {
     Q_OBJECT
 public:
-    explicit CubeSlideEffectConfig(QWidget* parent = nullptr, const QVariantList& args = QVariantList());
+    explicit CubeSlideEffectConfig(QWidget* parent = nullptr,
+                                   const QVariantList& args = QVariantList());
 
 public Q_SLOTS:
     void save() override;

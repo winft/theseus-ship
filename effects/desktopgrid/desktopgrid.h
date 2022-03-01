@@ -22,9 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_DESKTOPGRID_H
 #define KWIN_DESKTOPGRID_H
 
-#include <kwineffects.h>
 #include <QObject>
 #include <QTimeLine>
+#include <kwineffects.h>
 
 class QTimer;
 
@@ -35,8 +35,7 @@ namespace KWin
 
 class PresentWindowsEffectProxy;
 
-class DesktopGridEffect
-    : public Effect
+class DesktopGridEffect : public Effect
 {
     Q_OBJECT
     Q_PROPERTY(int zoomDuration READ configuredZoomDuration)
@@ -51,53 +50,62 @@ public:
     ~DesktopGridEffect() override;
     void reconfigure(ReconfigureFlags) override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
+    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
     void postPaintScreen() override;
-    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(EffectWindow* w,
+                        WindowPrePaintData& data,
+                        std::chrono::milliseconds presentTime) override;
     void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
     void windowInputMouseEvent(QEvent* e) override;
     void grabbedKeyboardEvent(QKeyEvent* e) override;
     bool borderActivated(ElectricBorder border) override;
     bool isActive() const override;
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         return 50;
     }
 
-    enum { LayoutPager, LayoutAutomatic, LayoutCustom }; // Layout modes
+    enum { LayoutPager, LayoutAutomatic, LayoutCustom };        // Layout modes
     enum { SwitchDesktopAndActivateWindow, SwitchDesktopOnly }; // Click behavior
 
     // for properties
-    int configuredZoomDuration() const {
+    int configuredZoomDuration() const
+    {
         return zoomDuration;
     }
-    int configuredBorder() const {
+    int configuredBorder() const
+    {
         return border;
     }
-    Qt::Alignment configuredDesktopNameAlignment() const {
+    Qt::Alignment configuredDesktopNameAlignment() const
+    {
         return desktopNameAlignment;
     }
-    int configuredLayoutMode() const {
+    int configuredLayoutMode() const
+    {
         return layoutMode;
     }
-    int configuredCustomLayoutRows() const {
+    int configuredCustomLayoutRows() const
+    {
         return customLayoutRows;
     }
-    bool isUsePresentWindows() const {
+    bool isUsePresentWindows() const
+    {
         return clickBehavior == SwitchDesktopAndActivateWindow;
     }
 private Q_SLOTS:
     void toggle();
     // slots for global shortcut changed
     // needed to toggle the effect
-    void globalShortcutChanged(QAction *action, const QKeySequence& seq);
+    void globalShortcutChanged(QAction* action, const QKeySequence& seq);
     void slotAddDesktop();
     void slotRemoveDesktop();
     void slotWindowAdded(KWin::EffectWindow* w);
-    void slotWindowClosed(KWin::EffectWindow *w);
-    void slotWindowDeleted(KWin::EffectWindow *w);
+    void slotWindowClosed(KWin::EffectWindow* w);
+    void slotWindowDeleted(KWin::EffectWindow* w);
     void slotNumberDesktopsChanged(uint old);
-    void slotWindowGeometryShapeChanged(KWin::EffectWindow *w, const QRect &old);
+    void slotWindowGeometryShapeChanged(KWin::EffectWindow* w, const QRect& old);
 
 private:
     QPointF scalePos(const QPoint& pos, int desktop, int screen = -1) const;
@@ -115,12 +123,12 @@ private:
     void setupGrid();
     void finish();
     bool isMotionManagerMovingWindows() const;
-    bool isRelevantWithPresentWindows(EffectWindow *w) const;
+    bool isRelevantWithPresentWindows(EffectWindow* w) const;
     bool isUsingPresentWindows() const;
     QRectF moveGeometryToDesktop(int desktop) const;
     void desktopsAdded(int old);
     void desktopsRemoved(int old);
-    QVector<int> desktopList(const EffectWindow *w) const;
+    QVector<int> desktopList(const EffectWindow* w) const;
 
     QList<ElectricBorder> borderActivate;
     int zoomDuration;
@@ -141,13 +149,13 @@ private:
     EffectWindow* windowMove;
     QPoint windowMoveDiff;
     QPoint dragStartPos;
-    QTimer *windowMoveElevateTimer;
+    QTimer* windowMoveElevateTimer;
     std::chrono::milliseconds lastPresentTime;
 
     // Soft highlighting
     QList<QTimeLine*> hoverTimeline;
 
-    QList< EffectFrame* > desktopNames;
+    QList<EffectFrame*> desktopNames;
 
     QSize gridSize;
     Qt::Orientation orientation;
@@ -168,8 +176,7 @@ private:
 
     QVector<EffectQuickScene*> m_desktopButtons;
 
-    QAction *m_activateAction;
-
+    QAction* m_activateAction;
 };
 
 } // namespace

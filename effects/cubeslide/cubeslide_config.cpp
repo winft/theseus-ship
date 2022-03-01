@@ -23,23 +23,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 #include <kwineffects_interface.h>
 
-#include <kconfiggroup.h>
 #include <KAboutData>
 #include <KPluginFactory>
 #include <QVBoxLayout>
+#include <kconfiggroup.h>
 
 K_PLUGIN_CLASS(KWin::CubeSlideEffectConfig)
 
 namespace KWin
 {
 
-CubeSlideEffectConfigForm::CubeSlideEffectConfigForm(QWidget* parent) : QWidget(parent)
+CubeSlideEffectConfigForm::CubeSlideEffectConfigForm(QWidget* parent)
+    : QWidget(parent)
 {
     setupUi(this);
 }
 
-CubeSlideEffectConfig::CubeSlideEffectConfig(QWidget* parent, const QVariantList& args) :
-    KCModule(parent, args)
+CubeSlideEffectConfig::CubeSlideEffectConfig(QWidget* parent, const QVariantList& args)
+    : KCModule(parent, args)
 {
     m_ui = new CubeSlideEffectConfigForm(this);
 
@@ -56,9 +57,8 @@ CubeSlideEffectConfig::CubeSlideEffectConfig(QWidget* parent, const QVariantList
 void CubeSlideEffectConfig::save()
 {
     KCModule::save();
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("cubeslide"));
 }
 

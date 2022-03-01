@@ -37,27 +37,22 @@ class BlurShader : public QObject
     Q_OBJECT
 
 public:
-    BlurShader(QObject *parent = nullptr);
+    BlurShader(QObject* parent = nullptr);
     ~BlurShader() override;
 
     bool isValid() const;
 
-    enum SampleType {
-        DownSampleType,
-        UpSampleType,
-        CopySampleType,
-        NoiseSampleType
-    };
+    enum SampleType { DownSampleType, UpSampleType, CopySampleType, NoiseSampleType };
 
     void bind(SampleType sampleType);
     void unbind();
 
-    void setModelViewProjectionMatrix(const QMatrix4x4 &matrix);
+    void setModelViewProjectionMatrix(const QMatrix4x4& matrix);
     void setOffset(float offset);
-    void setTargetTextureSize(const QSize &renderTextureSize);
-    void setNoiseTextureSize(const QSize &noiseTextureSize);
-    void setTexturePosition(const QPoint &texPos);
-    void setBlurRect(const QRect &blurRect, const QSize &screenSize);
+    void setTargetTextureSize(const QSize& renderTextureSize);
+    void setNoiseTextureSize(const QSize& noiseTextureSize);
+    void setTexturePosition(const QPoint& texPos);
+    void setBlurRect(const QRect& blurRect, const QSize& screenSize);
 
 private:
     QScopedPointer<GLShader> m_shaderDownsample;
@@ -86,7 +81,7 @@ private:
     int m_texStartPosLocationNoisesample;
     int m_halfpixelLocationNoisesample;
 
-    //Caching uniform values to aviod unnecessary setUniform calls
+    // Caching uniform values to aviod unnecessary setUniform calls
     int m_activeSampleType = -1;
 
     float m_offsetDownsample = 0.0;

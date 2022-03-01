@@ -25,10 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 #include <kwineffects_interface.h>
 
-#include <KLocalizedString>
 #include <KAboutData>
-#include <kconfiggroup.h>
+#include <KLocalizedString>
 #include <KPluginFactory>
+#include <kconfiggroup.h>
 
 K_PLUGIN_CLASS(KWin::WobblyWindowsEffectConfig)
 
@@ -44,48 +44,31 @@ struct ParameterSet {
     int move_factor;
 };
 
-static const ParameterSet set_0 = {
-    15,
-    80,
-    10
-};
+static const ParameterSet set_0 = {15, 80, 10};
 
-static const ParameterSet set_1 = {
-    10,
-    85,
-    10
-};
+static const ParameterSet set_1 = {10, 85, 10};
 
-static const ParameterSet set_2 = {
-    6,
-    90,
-    10
-};
+static const ParameterSet set_2 = {6, 90, 10};
 
-static const ParameterSet set_3 = {
-    3,
-    92,
-    20
-};
+static const ParameterSet set_3 = {3, 92, 20};
 
-static const ParameterSet set_4 = {
-    1,
-    97,
-    25
-};
+static const ParameterSet set_4 = {1, 97, 25};
 
-ParameterSet pset[5] = { set_0, set_1, set_2, set_3, set_4 };
+ParameterSet pset[5] = {set_0, set_1, set_2, set_3, set_4};
 
 //-----------------------------------------------------------------------------
 
-WobblyWindowsEffectConfig::WobblyWindowsEffectConfig(QWidget* parent, const QVariantList& args) :
-    KCModule(parent, args)
+WobblyWindowsEffectConfig::WobblyWindowsEffectConfig(QWidget* parent, const QVariantList& args)
+    : KCModule(parent, args)
 {
     WobblyWindowsConfig::instance(KWIN_CONFIG);
     m_ui.setupUi(this);
 
     addConfig(WobblyWindowsConfig::self(), this);
-    connect(m_ui.kcfg_WobblynessLevel, &QSlider::valueChanged, this, &WobblyWindowsEffectConfig::wobblinessChanged);
+    connect(m_ui.kcfg_WobblynessLevel,
+            &QSlider::valueChanged,
+            this,
+            &WobblyWindowsEffectConfig::wobblinessChanged);
 
     load();
 }
@@ -98,9 +81,8 @@ void WobblyWindowsEffectConfig::save()
 {
     KCModule::save();
 
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("wobblywindows"));
 }
 

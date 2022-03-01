@@ -25,29 +25,30 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAction>
 
-#include <kconfiggroup.h>
-#include <kcolorscheme.h>
-#include <KActionCollection>
 #include <KAboutData>
+#include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KPluginFactory>
+#include <kcolorscheme.h>
+#include <kconfiggroup.h>
 
-#include <QVBoxLayout>
 #include <QColor>
+#include <QVBoxLayout>
 
 K_PLUGIN_CLASS(KWin::CubeEffectConfig)
 
 namespace KWin
 {
 
-CubeEffectConfigForm::CubeEffectConfigForm(QWidget* parent) : QWidget(parent)
+CubeEffectConfigForm::CubeEffectConfigForm(QWidget* parent)
+    : QWidget(parent)
 {
     setupUi(this);
 }
 
-CubeEffectConfig::CubeEffectConfig(QWidget* parent, const QVariantList& args) :
-    KCModule(parent, args)
+CubeEffectConfig::CubeEffectConfig(QWidget* parent, const QVariantList& args)
+    : KCModule(parent, args)
 {
     m_ui = new CubeEffectConfigForm(this);
 
@@ -68,7 +69,8 @@ CubeEffectConfig::CubeEffectConfig(QWidget* parent, const QVariantList& args) :
     QAction* cubeAction = m_actionCollection->addAction(QStringLiteral("Cube"));
     cubeAction->setText(i18n("Desktop Cube"));
     cubeAction->setProperty("isConfigurationAction", true);
-    KGlobalAccel::self()->setDefaultShortcut(cubeAction, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F11);
+    KGlobalAccel::self()->setDefaultShortcut(cubeAction,
+                                             QList<QKeySequence>() << Qt::CTRL + Qt::Key_F11);
     KGlobalAccel::self()->setShortcut(cubeAction, QList<QKeySequence>() << Qt::CTRL + Qt::Key_F11);
     QAction* cylinderAction = m_actionCollection->addAction(QStringLiteral("Cylinder"));
     cylinderAction->setText(i18n("Desktop Cylinder"));
@@ -82,7 +84,8 @@ CubeEffectConfig::CubeEffectConfig(QWidget* parent, const QVariantList& args) :
     m_ui->editor->addCollection(m_actionCollection);
 
     capsSelectionChanged();
-    connect(m_ui->kcfg_Caps, &QCheckBox::stateChanged, this, &CubeEffectConfig::capsSelectionChanged);
+    connect(
+        m_ui->kcfg_Caps, &QCheckBox::stateChanged, this, &CubeEffectConfig::capsSelectionChanged);
     m_ui->kcfg_Wallpaper->setFilter(QStringLiteral("*.png *.jpeg *.jpg "));
     CubeConfig::instance(KWIN_CONFIG);
     addConfig(CubeConfig::self(), m_ui);
@@ -93,9 +96,8 @@ void CubeEffectConfig::save()
 {
     KCModule::save();
     m_ui->editor->save();
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("cube"));
 }
 

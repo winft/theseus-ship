@@ -35,7 +35,7 @@ K_PLUGIN_CLASS(KWin::DimInactiveEffectConfig)
 namespace KWin
 {
 
-DimInactiveEffectConfig::DimInactiveEffectConfig(QWidget *parent, const QVariantList &args)
+DimInactiveEffectConfig::DimInactiveEffectConfig(QWidget* parent, const QVariantList& args)
     : KCModule(parent, args)
 {
     m_ui.setupUi(this);
@@ -52,9 +52,8 @@ void DimInactiveEffectConfig::save()
 {
     KCModule::save();
 
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("diminactive"));
 }
 

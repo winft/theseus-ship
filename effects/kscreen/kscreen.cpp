@@ -60,11 +60,10 @@ KscreenEffect::KscreenEffect()
 {
     initConfig<KscreenConfig>();
     connect(effects, &EffectsHandler::propertyNotify, this, &KscreenEffect::propertyNotify);
-    connect(effects, &EffectsHandler::xcbConnectionChanged, this,
-        [this] {
-            m_atom = effects->announceSupportProperty(QByteArrayLiteral("_KDE_KWIN_KSCREEN_SUPPORT"), this);
-        }
-    );
+    connect(effects, &EffectsHandler::xcbConnectionChanged, this, [this] {
+        m_atom = effects->announceSupportProperty(QByteArrayLiteral("_KDE_KWIN_KSCREEN_SUPPORT"),
+                                                  this);
+    });
     reconfigure(ReconfigureAll);
 }
 
@@ -77,11 +76,10 @@ void KscreenEffect::reconfigure(ReconfigureFlags flags)
     Q_UNUSED(flags)
 
     KscreenConfig::self()->read();
-    m_timeLine.setDuration(
-        std::chrono::milliseconds(animationTime<KscreenConfig>(250)));
+    m_timeLine.setDuration(std::chrono::milliseconds(animationTime<KscreenConfig>(250)));
 }
 
-void KscreenEffect::prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime)
+void KscreenEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
     std::chrono::milliseconds delta = std::chrono::milliseconds::zero();
     if (m_lastPresentTime.count()) {
@@ -111,7 +109,9 @@ void KscreenEffect::postPaintScreen()
     }
 }
 
-void KscreenEffect::prePaintWindow(EffectWindow *w, WindowPrePaintData &data, std::chrono::milliseconds presentTime)
+void KscreenEffect::prePaintWindow(EffectWindow* w,
+                                   WindowPrePaintData& data,
+                                   std::chrono::milliseconds presentTime)
 {
     if (m_state != StateNormal) {
         data.setTranslucent();
@@ -119,37 +119,38 @@ void KscreenEffect::prePaintWindow(EffectWindow *w, WindowPrePaintData &data, st
     effects->prePaintWindow(w, data, presentTime);
 }
 
-void KscreenEffect::paintWindow(EffectWindow *w, int mask, QRegion region, WindowPaintData &data)
+void KscreenEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
 {
-    //fade to black and fully opaque
+    // fade to black and fully opaque
     switch (m_state) {
-        case StateFadingOut:
-            data.setOpacity(data.opacity() + (1.0 - data.opacity()) * m_timeLine.value());
-            data.multiplyBrightness(1.0 - m_timeLine.value());
-            break;
-        case StateFadedOut:
-            data.multiplyOpacity(0.0);
-            data.multiplyBrightness(0.0);
-            break;
-        case StateFadingIn:
-            data.setOpacity(data.opacity() + (1.0 - data.opacity()) * (1.0 - m_timeLine.value()));
-            data.multiplyBrightness(m_timeLine.value());
-            break;
-        default:
-            // no adjustment
-            break;
+    case StateFadingOut:
+        data.setOpacity(data.opacity() + (1.0 - data.opacity()) * m_timeLine.value());
+        data.multiplyBrightness(1.0 - m_timeLine.value());
+        break;
+    case StateFadedOut:
+        data.multiplyOpacity(0.0);
+        data.multiplyBrightness(0.0);
+        break;
+    case StateFadingIn:
+        data.setOpacity(data.opacity() + (1.0 - data.opacity()) * (1.0 - m_timeLine.value()));
+        data.multiplyBrightness(m_timeLine.value());
+        break;
+    default:
+        // no adjustment
+        break;
     }
     effects->paintWindow(w, mask, region, data);
 }
 
-void KscreenEffect::propertyNotify(EffectWindow *window, long int atom)
+void KscreenEffect::propertyNotify(EffectWindow* window, long int atom)
 {
     if (window || atom != m_atom || m_atom == XCB_ATOM_NONE) {
         return;
     }
     QByteArray byteData = effects->readRootProperty(m_atom, XCB_ATOM_CARDINAL, 32);
-    const uint32_t *data = byteData.isEmpty() ? nullptr : reinterpret_cast<const uint32_t *>(byteData.data());
-    if (!data // Property was deleted
+    const uint32_t* data
+        = byteData.isEmpty() ? nullptr : reinterpret_cast<const uint32_t*>(byteData.data());
+    if (!data              // Property was deleted
         || data[0] == 0) { // normal state - KWin should have switched to it
         if (m_state != StateNormal) {
             m_state = StateNormal;
@@ -195,7 +196,14 @@ void KscreenEffect::switchState()
         value = 0l;
     }
     if (value != -1l && m_atom != XCB_ATOM_NONE) {
-        xcb_change_property(xcbConnection(), XCB_PROP_MODE_REPLACE, x11RootWindow(), m_atom, XCB_ATOM_CARDINAL, 32, 1, &value);
+        xcb_change_property(xcbConnection(),
+                            XCB_PROP_MODE_REPLACE,
+                            x11RootWindow(),
+                            m_atom,
+                            XCB_ATOM_CARDINAL,
+                            32,
+                            1,
+                            &value);
     }
 }
 

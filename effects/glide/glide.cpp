@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-static const QSet<QString> s_blacklist {
+static const QSet<QString> s_blacklist{
     QStringLiteral("ksmserver ksmserver"),
     QStringLiteral("ksmserver-logout-greeter ksmserver-logout-greeter"),
     QStringLiteral("ksplashqml ksplashqml"),
@@ -78,7 +78,7 @@ void GlideEffect::reconfigure(ReconfigureFlags flags)
     m_outParams.opacity.to = GlideConfig::outOpacity();
 }
 
-void GlideEffect::prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime)
+void GlideEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
     auto animationIt = m_animations.begin();
     while (animationIt != m_animations.end()) {
@@ -97,7 +97,9 @@ void GlideEffect::prePaintScreen(ScreenPrePaintData &data, std::chrono::millisec
     effects->prePaintScreen(data, presentTime);
 }
 
-void GlideEffect::prePaintWindow(EffectWindow *w, WindowPrePaintData &data, std::chrono::milliseconds presentTime)
+void GlideEffect::prePaintWindow(EffectWindow* w,
+                                 WindowPrePaintData& data,
+                                 std::chrono::milliseconds presentTime)
 {
     if (m_animations.contains(w)) {
         data.setTransformed();
@@ -107,7 +109,7 @@ void GlideEffect::prePaintWindow(EffectWindow *w, WindowPrePaintData &data, std:
     effects->prePaintWindow(w, data, presentTime);
 }
 
-void GlideEffect::paintWindow(EffectWindow *w, int mask, QRegion region, WindowPaintData &data)
+void GlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data)
 {
     auto animationIt = m_animations.constFind(w);
     if (animationIt == m_animations.constEnd()) {
@@ -183,7 +185,7 @@ void GlideEffect::postPaintScreen()
     auto animationIt = m_animations.begin();
     while (animationIt != m_animations.end()) {
         if ((*animationIt).timeLine.done()) {
-            EffectWindow *w = animationIt.key();
+            EffectWindow* w = animationIt.key();
             if (w->isDeleted()) {
                 w->unrefWindow();
             }
@@ -204,11 +206,10 @@ bool GlideEffect::isActive() const
 
 bool GlideEffect::supported()
 {
-    return effects->isOpenGLCompositing()
-        && effects->animationsSupported();
+    return effects->isOpenGLCompositing() && effects->animationsSupported();
 }
 
-void GlideEffect::windowAdded(EffectWindow *w)
+void GlideEffect::windowAdded(EffectWindow* w)
 {
     if (effects->activeFullScreenEffect()) {
         return;
@@ -222,14 +223,14 @@ void GlideEffect::windowAdded(EffectWindow *w)
         return;
     }
 
-    const void *addGrab = w->data(WindowAddedGrabRole).value<void*>();
+    const void* addGrab = w->data(WindowAddedGrabRole).value<void*>();
     if (addGrab && addGrab != this) {
         return;
     }
 
     w->setData(WindowAddedGrabRole, QVariant::fromValue(static_cast<void*>(this)));
 
-    GlideAnimation &animation = m_animations[w];
+    GlideAnimation& animation = m_animations[w];
     animation.timeLine.reset();
     animation.timeLine.setDirection(TimeLine::Forward);
     animation.timeLine.setDuration(m_duration);
@@ -238,7 +239,7 @@ void GlideEffect::windowAdded(EffectWindow *w)
     effects->addRepaintFull();
 }
 
-void GlideEffect::windowClosed(EffectWindow *w)
+void GlideEffect::windowClosed(EffectWindow* w)
 {
     if (effects->activeFullScreenEffect()) {
         return;
@@ -252,7 +253,7 @@ void GlideEffect::windowClosed(EffectWindow *w)
         return;
     }
 
-    const void *closeGrab = w->data(WindowClosedGrabRole).value<void*>();
+    const void* closeGrab = w->data(WindowClosedGrabRole).value<void*>();
     if (closeGrab && closeGrab != this) {
         return;
     }
@@ -260,7 +261,7 @@ void GlideEffect::windowClosed(EffectWindow *w)
     w->refWindow();
     w->setData(WindowClosedGrabRole, QVariant::fromValue(static_cast<void*>(this)));
 
-    GlideAnimation &animation = m_animations[w];
+    GlideAnimation& animation = m_animations[w];
     animation.timeLine.reset();
     animation.timeLine.setDirection(TimeLine::Forward);
     animation.timeLine.setDuration(m_duration);
@@ -269,12 +270,12 @@ void GlideEffect::windowClosed(EffectWindow *w)
     effects->addRepaintFull();
 }
 
-void GlideEffect::windowDeleted(EffectWindow *w)
+void GlideEffect::windowDeleted(EffectWindow* w)
 {
     m_animations.remove(w);
 }
 
-void GlideEffect::windowDataChanged(EffectWindow *w, int role)
+void GlideEffect::windowDataChanged(EffectWindow* w, int role)
 {
     if (role != WindowAddedGrabRole && role != WindowClosedGrabRole) {
         return;
@@ -296,7 +297,7 @@ void GlideEffect::windowDataChanged(EffectWindow *w, int role)
     m_animations.erase(animationIt);
 }
 
-bool GlideEffect::isGlideWindow(EffectWindow *w) const
+bool GlideEffect::isGlideWindow(EffectWindow* w) const
 {
     // We don't want to animate most of plasmashell's windows, yet, some
     // of them we want to, for example, Task Manager Settings window.
@@ -305,7 +306,7 @@ bool GlideEffect::isGlideWindow(EffectWindow *w) const
     // to use a heuristic: if a window has decoration, then it's most
     // likely a dialog or a settings window so we have to animate it.
     if (w->windowClass() == QLatin1String("plasmashell plasmashell")
-            || w->windowClass() == QLatin1String("plasmashell org.kde.plasmashell")) {
+        || w->windowClass() == QLatin1String("plasmashell org.kde.plasmashell")) {
         return w->hasDecoration();
     }
 
@@ -333,8 +334,7 @@ bool GlideEffect::isGlideWindow(EffectWindow *w) const
         return false;
     }
 
-    return w->isNormalWindow()
-        || w->isDialog();
+    return w->isNormalWindow() || w->isDialog();
 }
 
 } // namespace KWin

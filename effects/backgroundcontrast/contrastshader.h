@@ -36,16 +36,17 @@ public:
 
     void init();
 
-    static ContrastShader *create();
+    static ContrastShader* create();
 
-    bool isValid() const {
+    bool isValid() const
+    {
         return mValid;
     }
 
-    void setColorMatrix(const QMatrix4x4 &matrix);
+    void setColorMatrix(const QMatrix4x4& matrix);
 
-    void setTextureMatrix(const QMatrix4x4 &matrix);
-    void setModelViewProjectionMatrix(const QMatrix4x4 &matrix);
+    void setTextureMatrix(const QMatrix4x4& matrix);
+    void setModelViewProjectionMatrix(const QMatrix4x4& matrix);
 
     void bind();
     void unbind();
@@ -54,14 +55,15 @@ public:
     float opacity() const;
 
 protected:
-    void setIsValid(bool value) {
+    void setIsValid(bool value)
+    {
         mValid = value;
     }
     void reset();
 
 private:
     bool mValid;
-    GLShader *shader;
+    GLShader* shader;
     int mvpMatrixLocation;
     int textureMatrixLocation;
     int colorMatrixLocation;
@@ -69,8 +71,6 @@ private:
     float m_opacity;
 };
 
-
 } // namespace KWin
 
 #endif
-

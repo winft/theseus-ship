@@ -20,12 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_COLORPICKER_H
 #define KWIN_COLORPICKER_H
 
-#include <kwineffects.h>
+#include <QColor>
 #include <QDBusContext>
 #include <QDBusMessage>
 #include <QDBusUnixFileDescriptor>
 #include <QObject>
-#include <QColor>
+#include <kwineffects.h>
 
 namespace KWin
 {
@@ -37,11 +37,12 @@ class ColorPickerEffect : public Effect, protected QDBusContext
 public:
     ColorPickerEffect();
     ~ColorPickerEffect() override;
-    void paintScreen(int mask, const QRegion &region, ScreenPaintData &data) override;
+    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
 
-    int requestedEffectChainPosition() const override {
+    int requestedEffectChainPosition() const override
+    {
         return 50;
     }
 
@@ -55,7 +56,7 @@ private:
     void hideInfoMessage();
 
     QDBusMessage m_replyMessage;
-    EffectScreen *m_paintedScreen = nullptr;
+    EffectScreen* m_paintedScreen = nullptr;
     QPoint m_scheduledPosition;
     bool m_picking = false;
 };

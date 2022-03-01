@@ -33,7 +33,7 @@ K_PLUGIN_CLASS(KWin::SlideEffectConfig)
 namespace KWin
 {
 
-SlideEffectConfig::SlideEffectConfig(QWidget *parent, const QVariantList &args)
+SlideEffectConfig::SlideEffectConfig(QWidget* parent, const QVariantList& args)
     : KCModule(parent, args)
 {
     m_ui.setupUi(this);
@@ -50,9 +50,8 @@ void SlideEffectConfig::save()
 {
     KCModule::save();
 
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
-                                         QDBusConnection::sessionBus());
+    OrgKdeKwinEffectsInterface interface(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("slide"));
 }
 

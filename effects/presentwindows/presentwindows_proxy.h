@@ -33,7 +33,9 @@ public:
     explicit PresentWindowsEffectProxy(PresentWindowsEffect* effect);
     ~PresentWindowsEffectProxy();
 
-    void calculateWindowTransformations(EffectWindowList windows, int screen, WindowMotionManager& manager);
+    void calculateWindowTransformations(EffectWindowList windows,
+                                        int screen,
+                                        WindowMotionManager& manager);
 
     void reCreateGrids();
 

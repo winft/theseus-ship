@@ -34,19 +34,19 @@ K_PLUGIN_CLASS(KWin::ShowPaintEffectConfig)
 namespace KWin
 {
 
-ShowPaintEffectConfig::ShowPaintEffectConfig(QWidget *parent, const QVariantList &args)
+ShowPaintEffectConfig::ShowPaintEffectConfig(QWidget* parent, const QVariantList& args)
     : KCModule(parent, args)
     , m_ui(new Ui::ShowPaintEffectConfig)
 {
     m_ui->setupUi(this);
 
-    auto *actionCollection = new KActionCollection(this, QStringLiteral("kwin"));
+    auto* actionCollection = new KActionCollection(this, QStringLiteral("kwin"));
 
     actionCollection->setComponentDisplayName(i18n("KWin"));
     actionCollection->setConfigGroup(QStringLiteral("ShowPaint"));
     actionCollection->setConfigGlobal(true);
 
-    QAction *toggleAction = actionCollection->addAction(QStringLiteral("Toggle"));
+    QAction* toggleAction = actionCollection->addAction(QStringLiteral("Toggle"));
     toggleAction->setText(i18n("Toggle Show Paint"));
     toggleAction->setProperty("isConfigurationAction", true);
     KGlobalAccel::self()->setDefaultShortcut(toggleAction, {});
@@ -54,8 +54,10 @@ ShowPaintEffectConfig::ShowPaintEffectConfig(QWidget *parent, const QVariantList
 
     m_ui->shortcutsEditor->addCollection(actionCollection);
 
-    connect(m_ui->shortcutsEditor, &KShortcutsEditor::keyChange,
-            this, &ShowPaintEffectConfig::markAsChanged);
+    connect(m_ui->shortcutsEditor,
+            &KShortcutsEditor::keyChange,
+            this,
+            &ShowPaintEffectConfig::markAsChanged);
 
     load();
 }

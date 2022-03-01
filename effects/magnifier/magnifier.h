@@ -31,8 +31,7 @@ class GLRenderTarget;
 class GLTexture;
 class XRenderPicture;
 
-class MagnifierEffect
-    : public Effect
+class MagnifierEffect : public Effect
 {
     Q_OBJECT
     Q_PROPERTY(QSize magnifierSize READ magnifierSize)
@@ -42,27 +41,33 @@ public:
     ~MagnifierEffect() override;
     void reconfigure(ReconfigureFlags) override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void paintScreen(int mask, const QRegion &region, ScreenPaintData& data) override;
+    void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
     void postPaintScreen() override;
     bool isActive() const override;
     static bool supported();
 
     // for properties
-    QSize magnifierSize() const {
+    QSize magnifierSize() const
+    {
         return magnifier_size;
     }
-    qreal targetZoom() const {
+    qreal targetZoom() const
+    {
         return target_zoom;
     }
 private Q_SLOTS:
     void zoomIn();
     void zoomOut();
     void toggle();
-    void slotMouseChanged(const QPoint& pos, const QPoint& old,
-                              Qt::MouseButtons buttons, Qt::MouseButtons oldbuttons,
-                              Qt::KeyboardModifiers modifiers, Qt::KeyboardModifiers oldmodifiers);
+    void slotMouseChanged(const QPoint& pos,
+                          const QPoint& old,
+                          Qt::MouseButtons buttons,
+                          Qt::MouseButtons oldbuttons,
+                          Qt::KeyboardModifiers modifiers,
+                          Qt::KeyboardModifiers oldmodifiers);
     void slotWindowDamaged();
     void destroyPixmap();
+
 private:
     QRect magnifierArea(QPoint pos = cursorPos()) const;
     double zoom;
@@ -70,8 +75,8 @@ private:
     bool polling; // Mouse polling
     std::chrono::milliseconds m_lastPresentTime;
     QSize magnifier_size;
-    GLTexture *m_texture;
-    GLRenderTarget *m_fbo;
+    GLTexture* m_texture;
+    GLRenderTarget* m_fbo;
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
     xcb_pixmap_t m_pixmap;
     QSize m_pixmapSize;
