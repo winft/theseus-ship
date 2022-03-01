@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwinglutils.h>
 
 #include <QMouseEvent>
-#include <netwm_def.h>
 
 #include <QApplication>
 #include <QDBusConnection>
@@ -57,7 +56,6 @@ PresentWindowsEffect::PresentWindowsEffect()
     , m_decalOpacity(0.0)
     , m_hasKeyboardGrab(false)
     , m_mode(ModeCurrentDesktop)
-    , m_managerWindow(nullptr)
     , m_needInitialSelection(false)
     , m_highlightedWindow(nullptr)
     , m_lastPresentTime(std::chrono::milliseconds::zero())
@@ -68,14 +66,6 @@ PresentWindowsEffect::PresentWindowsEffect()
     , m_exposeClassAction(new QAction(this))
 {
     initConfig<PresentWindowsConfig>();
-
-    // TODO KF6 remove atom support
-    auto announceSupportProperties = [this] {
-        m_atomDesktop = effects->announceSupportProperty("_KDE_PRESENT_WINDOWS_DESKTOP", this);
-        m_atomWindows = effects->announceSupportProperty("_KDE_PRESENT_WINDOWS_GROUP", this);
-    };
-    announceSupportProperties();
-    connect(effects, &EffectsHandler::xcbConnectionChanged, this, announceSupportProperties);
 
     QAction* exposeAction = m_exposeAction;
     exposeAction->setObjectName(QStringLiteral("Expose"));
@@ -124,8 +114,6 @@ PresentWindowsEffect::PresentWindowsEffect()
             &EffectsHandler::windowGeometryShapeChanged,
             this,
             &PresentWindowsEffect::slotWindowGeometryShapeChanged);
-    connect(
-        effects, &EffectsHandler::propertyNotify, this, &PresentWindowsEffect::slotPropertyNotify);
     connect(effects, &EffectsHandler::numberScreensChanged, this, [this] {
         if (isActive())
             reCreateGrids();
@@ -548,9 +536,6 @@ void PresentWindowsEffect::slotWindowAdded(EffectWindow* w)
 
 void PresentWindowsEffect::slotWindowClosed(EffectWindow* w)
 {
-    if (m_managerWindow == w)
-        m_managerWindow = nullptr;
-
     DataHash::iterator winData = m_windowData.find(w);
     if (winData == m_windowData.end())
         return;
@@ -911,81 +896,6 @@ void PresentWindowsEffect::grabbedKeyboardEvent(QKeyEvent* e)
             }
             break;
         }
-    }
-}
-
-//-----------------------------------------------------------------------------
-// Atom handling
-void PresentWindowsEffect::slotPropertyNotify(EffectWindow* w, long a)
-{
-    if (m_atomDesktop == XCB_ATOM_NONE && m_atomWindows == XCB_ATOM_NONE) {
-        return;
-    }
-    if (!w || (a != m_atomDesktop && a != m_atomWindows))
-        return; // Not our atom
-
-    if (a == m_atomDesktop) {
-        QByteArray byteData = w->readProperty(m_atomDesktop, m_atomDesktop, 32);
-        if (byteData.length() < 1) {
-            // Property was removed, end present windows
-            setActive(false);
-            return;
-        }
-        auto* data = reinterpret_cast<uint32_t*>(byteData.data());
-
-        if (!data[0]) {
-            // Purposely ending present windows by issuing a NULL target
-            setActive(false);
-            return;
-        }
-        // present windows is active so don't do anything
-        if (m_activated)
-            return;
-
-        int desktop = data[0];
-        if (desktop > effects->numberOfDesktops())
-            return;
-        if (desktop == -1)
-            toggleActiveAllDesktops();
-        else {
-            m_mode = ModeSelectedDesktop;
-            m_desktop = desktop;
-            m_managerWindow = w;
-            setActive(true);
-        }
-    } else if (a == m_atomWindows) {
-        QByteArray byteData = w->readProperty(m_atomWindows, m_atomWindows, 32);
-        if (byteData.length() < 1) {
-            // Property was removed, end present windows
-            setActive(false);
-            return;
-        }
-        auto* data = reinterpret_cast<uint32_t*>(byteData.data());
-
-        if (!data[0]) {
-            // Purposely ending present windows by issuing a NULL target
-            setActive(false);
-            return;
-        }
-        // present windows is active so don't do anything
-        if (m_activated)
-            return;
-
-        // for security clear selected windows
-        m_selectedWindows.clear();
-        int length = byteData.length() / sizeof(data[0]);
-        for (int i = 0; i < length; i++) {
-            EffectWindow* foundWin = effects->findWindow(data[i]);
-            if (!foundWin) {
-                qCDebug(KWIN_PRESENTWINDOWS)
-                    << "Invalid window targetted for present windows. Requested:" << data[i];
-                continue;
-            }
-            m_selectedWindows.append(foundWin);
-        }
-        m_mode = ModeWindowGroup;
-        m_managerWindow = w;
-        setActive(true);
     }
 }
 
@@ -1770,15 +1680,6 @@ void PresentWindowsEffect::setActive(bool active)
         if (m_hasKeyboardGrab)
             effects->ungrabKeyboard();
         m_hasKeyboardGrab = false;
-
-        // destroy atom on manager window
-        if (m_managerWindow) {
-            if (m_mode == ModeSelectedDesktop && m_atomDesktop != XCB_ATOM_NONE)
-                m_managerWindow->deleteProperty(m_atomDesktop);
-            else if (m_mode == ModeWindowGroup && m_atomWindows != XCB_ATOM_NONE)
-                m_managerWindow->deleteProperty(m_atomWindows);
-            m_managerWindow = nullptr;
-        }
     }
 
     effects->addRepaintFull(); // Trigger the first repaint

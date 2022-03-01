@@ -231,8 +231,6 @@ public Q_SLOTS:
     void slotWindowClosed(KWin::EffectWindow* w);
     void slotWindowDeleted(KWin::EffectWindow* w);
     void slotWindowGeometryShapeChanged(KWin::EffectWindow* w, const QRect& old);
-    // atoms
-    void slotPropertyNotify(KWin::EffectWindow* w, long atom);
 
 private Q_SLOTS:
     void closeWindow();
@@ -315,7 +313,6 @@ private:
     PresentWindowsMode m_mode;
     int m_desktop;
     EffectWindowList m_selectedWindows;
-    EffectWindow* m_managerWindow;
     QString m_class;
     bool m_needInitialSelection;
 
@@ -338,13 +335,6 @@ private:
     QList<QKeySequence> shortcut;
     QList<QKeySequence> shortcutAll;
     QList<QKeySequence> shortcutClass;
-
-    // Atoms
-    // Present windows for all windows of given desktop
-    // -1 for all desktops
-    long m_atomDesktop;
-    // Present windows for group of window ids
-    long m_atomWindows;
 
     // Mouse Actions
     WindowMouseAction m_leftButtonWindow;
