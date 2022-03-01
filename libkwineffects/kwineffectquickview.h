@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <QObject>
-#include <QUrl>
 #include <QRect>
+#include <QUrl>
 
 #include <kwineffects_export.h>
 
@@ -63,7 +63,8 @@ public:
     static void setShareContext(std::unique_ptr<QOpenGLContext> context);
 
     enum class ExportMode {
-        /** The contents will be available as a texture in the shared contexts. Image will be blank*/
+        /** The contents will be available as a texture in the shared contexts. Image will be
+           blank*/
         Texture,
         /** The contents will be blit during the update into a QImage buffer. */
         Image
@@ -73,26 +74,26 @@ public:
      * Construct a new KWinQuickView
      * Export mode will be determined by the current effectsHandler
      */
-    EffectQuickView(QObject *parent);
+    EffectQuickView(QObject* parent);
 
     /**
      * Construct a new EffectQuickView with the specified @a parent and the
      * render window @a renderWindow. The render window can be used by QtQuick
      * to compute the scale factor.
      */
-    EffectQuickView(QObject *parent, QWindow *renderWindow);
+    EffectQuickView(QObject* parent, QWindow* renderWindow);
 
     /**
      * Construct a new EffectQuickView with the specified @a parent and the
      * render window @a renderWindow. The render window can be used by QtQuick
      * to compute the scale factor.
      */
-    EffectQuickView(QObject *parent, QWindow *renderWindow, ExportMode exportMode);
+    EffectQuickView(QObject* parent, QWindow* renderWindow, ExportMode exportMode);
 
     /**
      * Construct a new KWinQuickView explicitly stating an export mode
      */
-    EffectQuickView(QObject *parent, ExportMode exportMode);
+    EffectQuickView(QObject* parent, ExportMode exportMode);
 
     /**
      * Note that this may change the current GL Context
@@ -105,7 +106,7 @@ public:
      * The geometry of the current view
      * This may be out of sync with the current buffer size if an update is pending
      */
-    void setGeometry(const QRect &rect);
+    void setGeometry(const QRect& rect);
     QRect geometry() const;
 
     /**
@@ -119,7 +120,7 @@ public:
     void update();
 
     /** The invisble root item of the window*/
-    QQuickItem *contentItem() const;
+    QQuickItem* contentItem() const;
 
     /**
      * @brief Marks the window as visible/invisible
@@ -139,7 +140,7 @@ public:
      * Returns the current output of the scene graph
      * @note The render context must valid at the time of calling
      */
-    GLTexture *bufferAsTexture();
+    GLTexture* bufferAsTexture();
 
     /**
      * Returns the current output of the scene graph
@@ -151,15 +152,15 @@ public:
      * Local co-ordinates are transformed
      * If it is handled the event will be accepted
      */
-    void forwardMouseEvent(QEvent *mouseEvent);
+    void forwardMouseEvent(QEvent* mouseEvent);
     /**
      * Inject a key event into the window.
      * If it is handled the event will be accepted
      */
-    void forwardKeyEvent(QKeyEvent *keyEvent);
+    void forwardKeyEvent(QKeyEvent* keyEvent);
 
-    bool forwardTouchDown(qint32 id, const QPointF &pos, quint32 time);
-    bool forwardTouchMotion(qint32 id, const QPointF &pos, quint32 time);
+    bool forwardTouchDown(qint32 id, const QPointF& pos, quint32 time);
+    bool forwardTouchMotion(qint32 id, const QPointF& pos, quint32 time);
     bool forwardTouchUp(qint32 id, quint32 time);
 
 Q_SIGNALS:
@@ -167,7 +168,7 @@ Q_SIGNALS:
      * The frame buffer has changed, contents need re-rendering on screen
      */
     void repaintNeeded();
-    void geometryChanged(const QRect &oldGeometry, const QRect &newGeometry);
+    void geometryChanged(const QRect& oldGeometry, const QRect& newGeometry);
     void renderRequested();
     void sceneChanged();
 
@@ -187,17 +188,17 @@ private:
 class KWINEFFECTS_EXPORT EffectQuickScene : public EffectQuickView
 {
 public:
-    EffectQuickScene(QObject *parent);
-    EffectQuickScene(QObject *parent, ExportMode exportMode);
-    EffectQuickScene(QObject *parent, QWindow *renderWindow);
-    EffectQuickScene(QObject *parent, QWindow *renderWindow, ExportMode exportMode);
+    EffectQuickScene(QObject* parent);
+    EffectQuickScene(QObject* parent, ExportMode exportMode);
+    EffectQuickScene(QObject* parent, QWindow* renderWindow);
+    EffectQuickScene(QObject* parent, QWindow* renderWindow, ExportMode exportMode);
     ~EffectQuickScene();
 
-    QQmlContext *rootContext() const;
+    QQmlContext* rootContext() const;
     /** top level item in the given source*/
-    QQuickItem *rootItem() const;
+    QQuickItem* rootItem() const;
 
-    void setSource(const QUrl &source);
+    void setSource(const QUrl& source);
 
 private:
     class Private;

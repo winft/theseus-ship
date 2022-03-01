@@ -41,16 +41,16 @@ namespace KWin
 /**
  * dumps a QColor into a xcb_render_color_t
  */
-KWINXRENDERUTILS_EXPORT xcb_render_color_t preMultiply(const QColor &c, float opacity = 1.0);
+KWINXRENDERUTILS_EXPORT xcb_render_color_t preMultiply(const QColor& c, float opacity = 1.0);
 
 /** @internal */
-class KWINXRENDERUTILS_EXPORT XRenderPictureData
-    : public QSharedData
+class KWINXRENDERUTILS_EXPORT XRenderPictureData : public QSharedData
 {
 public:
     explicit XRenderPictureData(xcb_render_picture_t pic = XCB_RENDER_PICTURE_NONE);
     ~XRenderPictureData();
     xcb_render_picture_t value();
+
 private:
     xcb_render_picture_t picture;
     Q_DISABLE_COPY(XRenderPictureData)
@@ -67,65 +67,63 @@ class KWINXRENDERUTILS_EXPORT XRenderPicture
 {
 public:
     explicit XRenderPicture(xcb_render_picture_t pic = XCB_RENDER_PICTURE_NONE);
-    explicit XRenderPicture(const QImage &img);
+    explicit XRenderPicture(const QImage& img);
     XRenderPicture(xcb_pixmap_t pix, int depth);
     operator xcb_render_picture_t();
+
 private:
-    void fromImage(const QImage &img);
-    QExplicitlySharedDataPointer< XRenderPictureData > d;
+    void fromImage(const QImage& img);
+    QExplicitlySharedDataPointer<XRenderPictureData> d;
 };
 
 class KWINXRENDERUTILS_EXPORT XFixesRegion
 {
 public:
-    explicit XFixesRegion(const QRegion &region);
+    explicit XFixesRegion(const QRegion& region);
     virtual ~XFixesRegion();
 
     operator xcb_xfixes_region_t();
+
 private:
     xcb_xfixes_region_t m_region;
 };
 
-inline
-XRenderPictureData::XRenderPictureData(xcb_render_picture_t pic)
+inline XRenderPictureData::XRenderPictureData(xcb_render_picture_t pic)
     : picture(pic)
 {
 }
 
-inline
-xcb_render_picture_t XRenderPictureData::value()
+inline xcb_render_picture_t XRenderPictureData::value()
 {
     return picture;
 }
 
-inline
-XRenderPicture::XRenderPicture(xcb_render_picture_t pic)
+inline XRenderPicture::XRenderPicture(xcb_render_picture_t pic)
     : d(new XRenderPictureData(pic))
 {
 }
 
-inline
-XRenderPicture::operator xcb_render_picture_t()
+inline XRenderPicture::operator xcb_render_picture_t()
 {
     return d->value();
 }
 
-inline
-XFixesRegion::operator xcb_xfixes_region_t()
+inline XFixesRegion::operator xcb_xfixes_region_t()
 {
     return m_region;
 }
 
 /**
  * Static 1x1 picture used to deliver a black pixel with given opacity (for blending performance)
- * Call and Use, the PixelPicture will stay, but may change it's opacity meanwhile. It's NOT threadsafe either
+ * Call and Use, the PixelPicture will stay, but may change it's opacity meanwhile. It's NOT
+ * threadsafe either
  */
 KWINXRENDERUTILS_EXPORT XRenderPicture xRenderBlendPicture(double opacity);
 /**
  * Creates a 1x1 Picture filled with c
  */
-KWINXRENDERUTILS_EXPORT XRenderPicture xRenderFill(const xcb_render_color_t &c);
-KWINXRENDERUTILS_EXPORT XRenderPicture xRenderFill(const QColor &c);
+KWINXRENDERUTILS_EXPORT XRenderPicture xRenderFill(const xcb_render_color_t& c);
+KWINXRENDERUTILS_EXPORT XRenderPicture xRenderFill(const QColor& c);
 
 /**
  * Allows to render a window into a (transparent) pixmap
@@ -141,7 +139,7 @@ KWINXRENDERUTILS_EXPORT void setXRenderOffscreen(bool b);
  * NOTICE: do NOT call setXRenderOffscreen(true) in addition!
  * NOTICE: do not forget to xRenderPopTarget once you're done to continue the normal render process
  */
-KWINXRENDERUTILS_EXPORT void xRenderPushTarget(XRenderPicture *pic);
+KWINXRENDERUTILS_EXPORT void xRenderPushTarget(XRenderPicture* pic);
 KWINXRENDERUTILS_EXPORT void xRenderPopTarget();
 
 /**
@@ -161,14 +159,14 @@ KWINXRENDERUTILS_EXPORT void scene_setXRenderOffscreenTarget(xcb_render_picture_
 /**
  * scene_xRenderWindowOffscreenTarget() is used by the scene to figure the target set by an effect
  */
-KWINXRENDERUTILS_EXPORT XRenderPicture *scene_xRenderOffscreenTarget();
+KWINXRENDERUTILS_EXPORT XRenderPicture* scene_xRenderOffscreenTarget();
 
 namespace XRenderUtils
 {
 /**
  * @internal
  */
-KWINXRENDERUTILS_EXPORT void init(xcb_connection_t *connection, xcb_window_t rootWindow);
+KWINXRENDERUTILS_EXPORT void init(xcb_connection_t* connection, xcb_window_t rootWindow);
 
 /**
  * Returns the Xrender format that corresponds to the given visual ID.
@@ -178,7 +176,8 @@ KWINXRENDERUTILS_EXPORT xcb_render_pictformat_t findPictFormat(xcb_visualid_t vi
 /**
  * Returns the xcb_render_directformat_t for the given Xrender format.
  */
-KWINXRENDERUTILS_EXPORT const xcb_render_directformat_t *findPictFormatInfo(xcb_render_pictformat_t format);
+KWINXRENDERUTILS_EXPORT const xcb_render_directformat_t*
+findPictFormatInfo(xcb_render_pictformat_t format);
 
 /**
  * @internal

@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_GLUTILS_H
 
 // kwin
-#include <kwinglutils_export.h>
-#include "kwinglutils_funcs.h"
 #include "kwingltexture.h"
+#include "kwinglutils_funcs.h"
+#include <kwinglutils_export.h>
 
 // Qt
 #include <QSize>
@@ -39,8 +39,8 @@ class QVector3D;
 class QVector4D;
 class QMatrix4x4;
 
-template< class K, class V > class QHash;
-
+template<class K, class V>
+class QHash;
 
 namespace KWin
 {
@@ -52,14 +52,13 @@ class GLVertexBufferPrivate;
 //  well as checking for GL version and extensions
 //  Note that GL context has to be created by the time this function is called
 typedef void (*resolveFuncPtr)();
-void KWINGLUTILS_EXPORT initGL(const std::function<resolveFuncPtr(const char*)> &resolveFunction);
+void KWINGLUTILS_EXPORT initGL(const std::function<resolveFuncPtr(const char*)>& resolveFunction);
 // Cleans up all resources hold by the GL Context
 void KWINGLUTILS_EXPORT cleanupGL();
 
-
 bool KWINGLUTILS_EXPORT hasGLVersion(int major, int minor, int release = 0);
 // use for both OpenGL and GLX extensions
-bool KWINGLUTILS_EXPORT hasGLExtension(const QByteArray &extension);
+bool KWINGLUTILS_EXPORT hasGLExtension(const QByteArray& extension);
 
 // detect OpenGL error (add to various places in code to pinpoint the place)
 bool KWINGLUTILS_EXPORT checkGLError(const char* txt);
@@ -69,20 +68,18 @@ QList<QByteArray> KWINGLUTILS_EXPORT openGLExtensions();
 class KWINGLUTILS_EXPORT GLShader
 {
 public:
-    enum Flags {
-        NoFlags         = 0,
-        ExplicitLinking = (1 << 0)
-    };
+    enum Flags { NoFlags = 0, ExplicitLinking = (1 << 0) };
 
-    GLShader(const QString &vertexfile, const QString &fragmentfile, unsigned int flags = NoFlags);
+    GLShader(const QString& vertexfile, const QString& fragmentfile, unsigned int flags = NoFlags);
     ~GLShader();
 
-    bool isValid() const  {
+    bool isValid() const
+    {
         return mValid;
     }
 
-    void bindAttributeLocation(const char *name, int index);
-    void bindFragDataLocation(const char *name, int index);
+    void bindAttributeLocation(const char* name, int index);
+    void bindFragDataLocation(const char* name, int index);
 
     bool link();
 
@@ -98,11 +95,11 @@ public:
 
     bool setUniform(int location, float value);
     bool setUniform(int location, int value);
-    bool setUniform(int location, const QVector2D &value);
-    bool setUniform(int location, const QVector3D &value);
-    bool setUniform(int location, const QVector4D &value);
-    bool setUniform(int location, const QMatrix4x4 &value);
-    bool setUniform(int location, const QColor &value);
+    bool setUniform(int location, const QVector2D& value);
+    bool setUniform(int location, const QVector3D& value);
+    bool setUniform(int location, const QVector4D& value);
+    bool setUniform(int location, const QMatrix4x4& value);
+    bool setUniform(int location, const QColor& value);
 
     int attributeLocation(const char* name);
     bool setAttribute(const char* name, float value);
@@ -122,54 +119,42 @@ public:
         MatrixCount
     };
 
-    enum Vec2Uniform {
-        Offset,
-        Vec2UniformCount
-    };
+    enum Vec2Uniform { Offset, Vec2UniformCount };
 
-    enum Vec4Uniform {
-        ModulationConstant,
-        Vec4UniformCount
-    };
+    enum Vec4Uniform { ModulationConstant, Vec4UniformCount };
 
-    enum FloatUniform {
-        Saturation,
-        FloatUniformCount
-    };
+    enum FloatUniform { Saturation, FloatUniformCount };
 
     enum IntUniform {
-        AlphaToOne,     ///< @deprecated no longer used
+        AlphaToOne, ///< @deprecated no longer used
         IntUniformCount
     };
 
-    enum ColorUniform {
-        Color,
-        ColorUniformCount
-    };
+    enum ColorUniform { Color, ColorUniformCount };
 
-    bool setUniform(MatrixUniform uniform, const QMatrix4x4 &matrix);
-    bool setUniform(Vec2Uniform uniform,   const QVector2D &value);
-    bool setUniform(Vec4Uniform uniform,   const QVector4D &value);
-    bool setUniform(FloatUniform uniform,  float value);
-    bool setUniform(IntUniform uniform,    int value);
-    bool setUniform(ColorUniform uniform,  const QVector4D &value);
-    bool setUniform(ColorUniform uniform,  const QColor &value);
+    bool setUniform(MatrixUniform uniform, const QMatrix4x4& matrix);
+    bool setUniform(Vec2Uniform uniform, const QVector2D& value);
+    bool setUniform(Vec4Uniform uniform, const QVector4D& value);
+    bool setUniform(FloatUniform uniform, float value);
+    bool setUniform(IntUniform uniform, int value);
+    bool setUniform(ColorUniform uniform, const QVector4D& value);
+    bool setUniform(ColorUniform uniform, const QColor& value);
 
 protected:
     GLShader(unsigned int flags = NoFlags);
     bool loadFromFiles(const QString& vertexfile, const QString& fragmentfile);
-    bool load(const QByteArray &vertexSource, const QByteArray &fragmentSource);
-    const QByteArray prepareSource(GLenum shaderType, const QByteArray &sourceCode) const;
-    bool compile(GLuint program, GLenum shaderType, const QByteArray &sourceCode) const;
+    bool load(const QByteArray& vertexSource, const QByteArray& fragmentSource);
+    const QByteArray prepareSource(GLenum shaderType, const QByteArray& sourceCode) const;
+    bool compile(GLuint program, GLenum shaderType, const QByteArray& sourceCode) const;
     void bind();
     void unbind();
     void resolveLocations();
 
 private:
     unsigned int mProgram;
-    bool mValid:1;
-    bool mLocationsResolved:1;
-    bool mExplicitLinking:1;
+    bool mValid : 1;
+    bool mLocationsResolved : 1;
+    bool mExplicitLinking : 1;
     int mMatrixLocation[MatrixCount];
     int mVec2Location[Vec2UniformCount];
     int mVec4Location[Vec4UniformCount];
@@ -180,16 +165,14 @@ private:
     friend class ShaderManager;
 };
 
-
 enum class ShaderTrait {
-    MapTexture       = (1 << 0),
-    UniformColor     = (1 << 1),
-    Modulate         = (1 << 2),
+    MapTexture = (1 << 0),
+    UniformColor = (1 << 1),
+    Modulate = (1 << 2),
     AdjustSaturation = (1 << 3),
 };
 
 Q_DECLARE_FLAGS(ShaderTraits, ShaderTrait)
-
 
 /**
  * @short Manager for Shaders.
@@ -208,12 +191,12 @@ public:
     /**
      * Returns a shader with the given traits, creating it if necessary.
      */
-    GLShader *shader(ShaderTraits traits);
+    GLShader* shader(ShaderTraits traits);
 
     /**
      * @return The currently bound shader or @c null if no shader is bound.
      */
-    GLShader *getBoundShader() const;
+    GLShader* getBoundShader() const;
 
     /**
      * @return @c true if a shader is bound, @c false otherwise
@@ -224,7 +207,7 @@ public:
      * Pushes the current shader onto the stack and binds a shader
      * with the given traits.
      */
-    GLShader *pushShader(ShaderTraits traits);
+    GLShader* pushShader(ShaderTraits traits);
 
     /**
      * Binds the @p shader.
@@ -233,7 +216,7 @@ public:
      * @param shader The shader to be bound
      * @see popShader
      */
-    void pushShader(GLShader *shader);
+    void pushShader(GLShader* shader);
 
     /**
      * Unbinds the currently bound shader and rebinds a previous stored shader.
@@ -251,12 +234,13 @@ public:
      * @param fragmentSource The source code of the fragment shader.
      * @return The created shader
      */
-    GLShader *loadShaderFromCode(const QByteArray &vertexSource, const QByteArray &fragmentSource);
+    GLShader* loadShaderFromCode(const QByteArray& vertexSource, const QByteArray& fragmentSource);
 
     /**
-     * Creates a custom shader with the given @p traits and custom @p vertexSource and or @p fragmentSource.
-     * If the @p vertexSource is empty a vertex shader with the given @p traits is generated.
-     * If it is not empty the @p vertexSource is used as the source for the vertex shader.
+     * Creates a custom shader with the given @p traits and custom @p vertexSource and or @p
+     * fragmentSource. If the @p vertexSource is empty a vertex shader with the given @p traits is
+     * generated. If it is not empty the @p vertexSource is used as the source for the vertex
+     * shader.
      *
      * The same applies for argument @p fragmentSource just for the fragment shader.
      *
@@ -265,14 +249,18 @@ public:
      *
      * @param traits The shader traits for generating the shader
      * @param vertexSource optional vertex shader source code to be used instead of shader traits
-     * @param fragmentSource optional fragment shader source code to be used instead of shader traits
+     * @param fragmentSource optional fragment shader source code to be used instead of shader
+     * traits
      * @return new generated shader
      * @since 5.6
      */
-    GLShader *generateCustomShader(ShaderTraits traits, const QByteArray &vertexSource = QByteArray(), const QByteArray &fragmentSource = QByteArray());
+    GLShader* generateCustomShader(ShaderTraits traits,
+                                   const QByteArray& vertexSource = QByteArray(),
+                                   const QByteArray& fragmentSource = QByteArray());
 
     /**
-     * Creates a custom shader with the given @p traits and custom @p vertexFile and or @p fragmentFile.
+     * Creates a custom shader with the given @p traits and custom @p vertexFile and or @p
+     * fragmentFile.
      *
      * If the @p vertexFile is empty a vertex shader with the given @p traits is generated.
      * If it is not empty the @p vertexFile is used as the source for the vertex shader.
@@ -291,12 +279,14 @@ public:
      * @return new generated shader
      * @see generateCustomShader
      */
-    GLShader *generateShaderFromFile(ShaderTraits traits, const QString &vertexFile = QString(), const QString &fragmentFile = QString());
+    GLShader* generateShaderFromFile(ShaderTraits traits,
+                                     const QString& vertexFile = QString(),
+                                     const QString& fragmentFile = QString());
 
     /**
      * @return a pointer to the ShaderManager instance
      */
-    static ShaderManager *instance();
+    static ShaderManager* instance();
 
     /**
      * @internal
@@ -307,16 +297,16 @@ private:
     ShaderManager();
     ~ShaderManager();
 
-    void bindFragDataLocations(GLShader *shader);
-    void bindAttributeLocations(GLShader *shader) const;
+    void bindFragDataLocations(GLShader* shader);
+    void bindAttributeLocations(GLShader* shader) const;
 
     QByteArray generateVertexSource(ShaderTraits traits) const;
     QByteArray generateFragmentSource(ShaderTraits traits) const;
-    GLShader *generateShader(ShaderTraits traits);
+    GLShader* generateShader(ShaderTraits traits);
 
     QStack<GLShader*> m_boundShaders;
-    QHash<ShaderTraits, GLShader *> m_shaderHash;
-    static ShaderManager *s_shaderManager;
+    QHash<ShaderTraits, GLShader*> m_shaderHash;
+    static ShaderManager* s_shaderManager;
 };
 
 /**
@@ -344,7 +334,7 @@ public:
      * @param shader The Shader to push on the stack
      * @see ShaderManager::pushShader
      */
-    explicit ShaderBinder(GLShader *shader);
+    explicit ShaderBinder(GLShader* shader);
     /**
      * @brief Pushes the Shader with the given @p traits to the ShaderManager's stack.
      *
@@ -358,34 +348,30 @@ public:
     /**
      * @return The Shader pushed to the Stack.
      */
-    GLShader *shader();
+    GLShader* shader();
 
 private:
-    GLShader *m_shader;
+    GLShader* m_shader;
 };
 
-inline
-ShaderBinder::ShaderBinder(GLShader *shader)
+inline ShaderBinder::ShaderBinder(GLShader* shader)
     : m_shader(shader)
 {
     ShaderManager::instance()->pushShader(shader);
 }
 
-inline
-ShaderBinder::ShaderBinder(ShaderTraits traits)
+inline ShaderBinder::ShaderBinder(ShaderTraits traits)
     : m_shader(nullptr)
 {
     m_shader = ShaderManager::instance()->pushShader(traits);
 }
 
-inline
-ShaderBinder::~ShaderBinder()
+inline ShaderBinder::~ShaderBinder()
 {
     ShaderManager::instance()->popShader();
 }
 
-inline
-GLShader* ShaderBinder::shader()
+inline GLShader* ShaderBinder::shader()
 {
     return m_shader;
 }
@@ -439,16 +425,19 @@ public:
      */
     void detachTexture();
 
-    bool valid() const  {
+    bool valid() const
+    {
         return mValid;
     }
 
-    void setTextureDirty() {
+    void setTextureDirty()
+    {
         mTexture.setDirty();
     }
 
     static void initStatic();
-    static bool supported()  {
+    static bool supported()
+    {
         return sSupported;
     }
 
@@ -457,10 +446,10 @@ public:
      * @param targets The stack of GLRenderTargets
      * @since 5.13
      */
-    static void pushRenderTargets(QStack <GLRenderTarget*> targets);
+    static void pushRenderTargets(QStack<GLRenderTarget*> targets);
 
-    static void pushRenderTarget(GLRenderTarget *target);
-    static GLRenderTarget *popRenderTarget();
+    static void pushRenderTarget(GLRenderTarget* target);
+    static GLRenderTarget* popRenderTarget();
     static bool isRenderTargetBound();
     /**
      * Whether the GL_EXT_framebuffer_blit extension is supported.
@@ -474,21 +463,26 @@ public:
     /**
      * Blits the content of the current draw framebuffer into the texture attached to this FBO.
      *
-     * Be aware that framebuffer blitting may not be supported on all hardware. Use blitSupported to check whether
-     * it is supported.
-     * @param source Geometry in screen coordinates which should be blitted, if not specified complete framebuffer is used
-     * @param destination Geometry in attached texture, if not specified complete texture is used as destination
+     * Be aware that framebuffer blitting may not be supported on all hardware. Use blitSupported to
+     * check whether it is supported.
+     * @param source Geometry in screen coordinates which should be blitted, if not specified
+     * complete framebuffer is used
+     * @param destination Geometry in attached texture, if not specified complete texture is used as
+     * destination
      * @param filter The filter to use if blitted content needs to be scaled.
      * @see blitSupported
      * @since 4.8
      */
-    void blitFromFramebuffer(const QRect &source = QRect(), const QRect &destination = QRect(), GLenum filter = GL_LINEAR);
+    void blitFromFramebuffer(const QRect& source = QRect(),
+                             const QRect& destination = QRect(),
+                             GLenum filter = GL_LINEAR);
 
     /**
      * Sets the virtual screen size to @p s.
      * @since 5.2
      */
-    static void setVirtualScreenSize(const QSize &s) {
+    static void setVirtualScreenSize(const QSize& s)
+    {
         s_virtualScreenSize = s;
     }
 
@@ -499,7 +493,8 @@ public:
      * @see virtualScreenGeometry
      * @since 5.9
      */
-    static void setVirtualScreenGeometry(const QRect &g) {
+    static void setVirtualScreenGeometry(const QRect& g)
+    {
         s_virtualScreenGeometry = g;
     }
 
@@ -509,7 +504,8 @@ public:
      * @see setVirtualScreenGeometry
      * @since 5.9
      */
-    static QRect virtualScreenGeometry() {
+    static QRect virtualScreenGeometry()
+    {
         return s_virtualScreenGeometry;
     }
 
@@ -520,11 +516,13 @@ public:
      * system uses and the target
      * @since 5.10
      */
-    static void setVirtualScreenScale(qreal scale) {
+    static void setVirtualScreenScale(qreal scale)
+    {
         s_virtualScreenScale = scale;
     }
 
-    static qreal virtualScreenScale() {
+    static qreal virtualScreenScale()
+    {
         return s_virtualScreenScale;
     }
 
@@ -533,14 +531,13 @@ public:
      *
      * @since 5.18
      */
-    static void setKWinFramebuffer(GLuint fb) {
+    static void setKWinFramebuffer(GLuint fb)
+    {
         s_kwinFramebuffer = fb;
     }
 
-
 protected:
     void initFBO();
-
 
 private:
     friend void KWin::cleanupGL();
@@ -560,11 +557,7 @@ private:
     GLuint mFramebuffer;
 };
 
-enum VertexAttributeType {
-    VA_Position = 0,
-    VA_TexCoord = 1,
-    VertexAttributeCount = 2
-};
+enum VertexAttributeType { VA_Position = 0, VA_TexCoord = 1, VertexAttributeCount = 2 };
 
 /**
  * Describes the format of a vertex attribute stored in a buffer object.
@@ -573,12 +566,11 @@ enum VertexAttributeType {
  * vector components, the data type, and the offset of the first element
  * relative to the start of the vertex data.
  */
-struct GLVertexAttrib
-{
-    int index;            /** The attribute index */
-    int size;             /** The number of components [1..4] */
-    GLenum type;          /** The type (e.g. GL_FLOAT) */
-    int relativeOffset;   /** The relative offset of the attribute */
+struct GLVertexAttrib {
+    int index;          /** The attribute index */
+    int size;           /** The number of components [1..4] */
+    GLenum type;        /** The type (e.g. GL_FLOAT) */
+    int relativeOffset; /** The relative offset of the attribute */
 };
 
 /**
@@ -589,7 +581,8 @@ struct GLVertexAttrib
  * data to the GPU in OpenGL ES 2 and OpenGL 3 with forward compatible mode.
  *
  * If VBOs are not supported on the used OpenGL profile this class falls back to legacy
- * rendering using client arrays. Therefore this class should always be used for rendering geometries.
+ * rendering using client arrays. Therefore this class should always be used for rendering
+ * geometries.
  *
  * @author Martin Gräßlin <mgraesslin@kde.org>
  * @since 4.6
@@ -602,8 +595,8 @@ public:
      */
     enum UsageHint {
         Dynamic, ///< frequent changes, but used several times for rendering
-        Static, ///< No changes to data
-        Stream ///< Data only used once for rendering, updated very frequently
+        Static,  ///< No changes to data
+        Stream   ///< Data only used once for rendering, updated very frequently
     };
 
     explicit GLVertexBuffer(UsageHint hint);
@@ -634,12 +627,12 @@ public:
      *     vbo->setAttribLayout(attribs, 2, sizeof(Vertex));
      *     vbo->setData(vertices, sizeof(vertices));
      */
-    void setAttribLayout(const GLVertexAttrib *attribs, int count, int stride);
+    void setAttribLayout(const GLVertexAttrib* attribs, int count, int stride);
 
     /**
      * Uploads data into the buffer object's data store.
      */
-    void setData(const void *data, size_t sizeInBytes);
+    void setData(const void* data, size_t sizeInBytes);
 
     /**
      * Sets the number of vertices that will be drawn by the render() method.
@@ -674,7 +667,7 @@ public:
      * It is assumed that the GL_ARRAY_BUFFER_BINDING will not be changed while
      * the buffer object is mapped.
      */
-    GLvoid *map(size_t size);
+    GLvoid* map(size_t size);
 
     /**
      * Flushes the mapped buffer range and unmaps the buffer.
@@ -699,7 +692,11 @@ public:
     /**
      * Draws count vertices beginning with first.
      */
-    void draw(const QRegion &region, GLenum primitiveMode, int first, int count, bool hardwareClipping = false);
+    void draw(const QRegion& region,
+              GLenum primitiveMode,
+              int first,
+              int count,
+              bool hardwareClipping = false);
 
     /**
      * Renders the vertex data in given @a primitiveMode.
@@ -781,7 +778,7 @@ public:
      * @return A shared VBO for streaming data
      * @since 4.7
      */
-    static GLVertexBuffer *streamingBuffer();
+    static GLVertexBuffer* streamingBuffer();
 
     /**
      * Sets the virtual screen geometry to @p g.
@@ -789,7 +786,8 @@ public:
      * in the virtual geometry space the rendering geometries use.
      * @since 5.9
      */
-    static void setVirtualScreenGeometry(const QRect &g) {
+    static void setVirtualScreenGeometry(const QRect& g)
+    {
         s_virtualScreenGeometry = g;
     }
 
@@ -800,7 +798,8 @@ public:
      * system uses and the target
      * @since 5.11.3
      */
-    static void setVirtualScreenScale(qreal s) {
+    static void setVirtualScreenScale(qreal s)
+    {
         s_virtualScreenScale = s;
     }
 

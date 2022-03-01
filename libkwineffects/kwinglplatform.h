@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_GLPLATFORM_H
 #define KWIN_GLPLATFORM_H
 
-#include <kwinglutils_export.h>
 #include <kwinglobals.h>
+#include <kwinglutils_export.h>
 
 #include <QByteArray>
 #include <QSet>
@@ -91,7 +91,7 @@ enum GLFeature {
 };
 
 enum Driver {
-    Driver_R100,  // Technically "Radeon"
+    Driver_R100, // Technically "Radeon"
     Driver_R200,
     Driver_R300C,
     Driver_R300G,
@@ -115,73 +115,72 @@ enum Driver {
 
 enum ChipClass {
     // Radeon
-    R100          = 0,      // GL1.3         DX7                   2000
-    R200,                   // GL1.4         DX8.1     SM 1.4      2001
-    R300,                   // GL2.0         DX9       SM 2.0      2002
-    R400,                   // GL2.0         DX9b      SM 2.0b     2004
-    R500,                   // GL2.0         DX9c      SM 3.0      2005
-    R600,                   // GL3.3         DX10      SM 4.0      2006
-    R700,                   // GL3.3         DX10.1    SM 4.1      2008
-    Evergreen,              // GL4.0  CL1.0  DX11      SM 5.0      2009
-    NorthernIslands,        // GL4.0  CL1.1  DX11      SM 5.0      2010
-    SouthernIslands,        // GL4.5  CL1.2  DX11.1    SM 5.1      2012
-    SeaIslands,             // GL4.5  CL2.0  DX12      SM 6.0      2013
-    VolcanicIslands,        // GL4.5  CL2.0  DX12      SM 6.0      2015
-    ArcticIslands,          // GL4.5  CL2.0  DX12      SM 6.0      2016
-    Vega,                   // GL4.6  CL2.0  DX12      SM 6.0      2017
-    Navi,                   // GL4.6  CL2.0  DX12.1    SM 6.4      2019
+    R100 = 0,        // GL1.3         DX7                   2000
+    R200,            // GL1.4         DX8.1     SM 1.4      2001
+    R300,            // GL2.0         DX9       SM 2.0      2002
+    R400,            // GL2.0         DX9b      SM 2.0b     2004
+    R500,            // GL2.0         DX9c      SM 3.0      2005
+    R600,            // GL3.3         DX10      SM 4.0      2006
+    R700,            // GL3.3         DX10.1    SM 4.1      2008
+    Evergreen,       // GL4.0  CL1.0  DX11      SM 5.0      2009
+    NorthernIslands, // GL4.0  CL1.1  DX11      SM 5.0      2010
+    SouthernIslands, // GL4.5  CL1.2  DX11.1    SM 5.1      2012
+    SeaIslands,      // GL4.5  CL2.0  DX12      SM 6.0      2013
+    VolcanicIslands, // GL4.5  CL2.0  DX12      SM 6.0      2015
+    ArcticIslands,   // GL4.5  CL2.0  DX12      SM 6.0      2016
+    Vega,            // GL4.6  CL2.0  DX12      SM 6.0      2017
+    Navi,            // GL4.6  CL2.0  DX12.1    SM 6.4      2019
     UnknownRadeon = 999,
 
     // NVIDIA
-    NV10          = 1000,   // GL1.2         DX7                   1999
-    NV20,                   // GL1.3         DX8       SM 1.1      2001
-    NV30,                   // GL1.5         DX9a      SM 2.0      2003
-    NV40,                   // GL2.1         DX9c      SM 3.0      2004
-    G80,                    // GL3.3         DX10      SM 4.0      2006
-    GF100,                  // GL4.1  CL1.1  DX11      SM 5.0      2010
+    NV10 = 1000, // GL1.2         DX7                   1999
+    NV20,        // GL1.3         DX8       SM 1.1      2001
+    NV30,        // GL1.5         DX9a      SM 2.0      2003
+    NV40,        // GL2.1         DX9c      SM 3.0      2004
+    G80,         // GL3.3         DX10      SM 4.0      2006
+    GF100,       // GL4.1  CL1.1  DX11      SM 5.0      2010
     UnknownNVidia = 1999,
 
     // Intel
-    I8XX          = 2000,   //       GL1.3         DX7                   2001
-    I915,                   //       GL1.4/1.5     DX9/DX9c  SM 2.0      2004
-    I965,                   //       GL2.0/2.1     DX9/DX10  SM 3.0/4.0  2006
-    SandyBridge,            // Gen6  GL3.1  CL1.1  DX10.1    SM 4.0      2010
-    IvyBridge,              // Gen7  GL4.0  CL1.1  DX11      SM 5.0      2012
-    Haswell,                // Gen7  GL4.0  CL1.2  DX11.1    SM 5.0      2013
-    BayTrail,               // Gen7  GL4.0  CL1.2  DX11.1    SM 5.0      2013
-    Cherryview,             // Gen8  GL4.0  CL1.2  DX11.2    SM 5.0      2013
-    Broadwell,              // Gen8  GL4.4  CL2.0  DX11.2    SM 5.0      2014
-    ApolloLake,             // Gen9  GL4.6  CL3.0  DX12      SM 6.0      2016
-    Skylake,                // Gen9  GL4.6  CL3.0  DX12      SM 6.0      2015
-    GeminiLake,             // Gen9  GL4.6  CL3.0  DX12      SM 6.0      2017
-    KabyLake,               // Gen9  GL4.6  CL3.0  DX12      SM 6.0      2017
-    CoffeeLake,             // Gen9  GL4.6  CL3.0  DX12      SM 6.0      2018
-    WhiskeyLake,            // Gen9  GL4.6  GL3.0  DX12      SM 6.0      2018
-    CometLake,              // Gen9  GL4.6  GL3.0  DX12      SM 6.0      2019
-    CannonLake,             // Gen10 GL4.6  GL3.0  DX12      SM 6.0      2018
-    IceLake,                // Gen11 GL4.6  CL3.0  DX12.1    SM 6.0      2019
-    TigerLake,              // Gen12 GL4.6  CL3.0  DX12.1    SM 6.0      2020
-    UnknownIntel  = 2999,
+    I8XX = 2000, //       GL1.3         DX7                   2001
+    I915,        //       GL1.4/1.5     DX9/DX9c  SM 2.0      2004
+    I965,        //       GL2.0/2.1     DX9/DX10  SM 3.0/4.0  2006
+    SandyBridge, // Gen6  GL3.1  CL1.1  DX10.1    SM 4.0      2010
+    IvyBridge,   // Gen7  GL4.0  CL1.1  DX11      SM 5.0      2012
+    Haswell,     // Gen7  GL4.0  CL1.2  DX11.1    SM 5.0      2013
+    BayTrail,    // Gen7  GL4.0  CL1.2  DX11.1    SM 5.0      2013
+    Cherryview,  // Gen8  GL4.0  CL1.2  DX11.2    SM 5.0      2013
+    Broadwell,   // Gen8  GL4.4  CL2.0  DX11.2    SM 5.0      2014
+    ApolloLake,  // Gen9  GL4.6  CL3.0  DX12      SM 6.0      2016
+    Skylake,     // Gen9  GL4.6  CL3.0  DX12      SM 6.0      2015
+    GeminiLake,  // Gen9  GL4.6  CL3.0  DX12      SM 6.0      2017
+    KabyLake,    // Gen9  GL4.6  CL3.0  DX12      SM 6.0      2017
+    CoffeeLake,  // Gen9  GL4.6  CL3.0  DX12      SM 6.0      2018
+    WhiskeyLake, // Gen9  GL4.6  GL3.0  DX12      SM 6.0      2018
+    CometLake,   // Gen9  GL4.6  GL3.0  DX12      SM 6.0      2019
+    CannonLake,  // Gen10 GL4.6  GL3.0  DX12      SM 6.0      2018
+    IceLake,     // Gen11 GL4.6  CL3.0  DX12.1    SM 6.0      2019
+    TigerLake,   // Gen12 GL4.6  CL3.0  DX12.1    SM 6.0      2020
+    UnknownIntel = 2999,
 
     // Qualcomm Adreno
     // from https://en.wikipedia.org/wiki/Adreno
-    Adreno1XX     = 3000,   // GLES1.1
-    Adreno2XX,              // GLES2.0       DX9c
-    Adreno3XX,              // GLES3.0 CL1.1 DX11.1
-    Adreno4XX,              // GLES3.1 CL1.2 DX11.2
-    Adreno5XX,              // GLES3.1 CL2.0 DX11.2
+    Adreno1XX = 3000, // GLES1.1
+    Adreno2XX,        // GLES2.0       DX9c
+    Adreno3XX,        // GLES3.0 CL1.1 DX11.1
+    Adreno4XX,        // GLES3.1 CL1.2 DX11.2
+    Adreno5XX,        // GLES3.1 CL2.0 DX11.2
     UnknownAdreno = 3999,
 
     // Panfrost Mali
     // from https://docs.mesa3d.org/drivers/panfrost.html
-    MaliT7XX      = 4000,   // GLES2.0/GLES3.0
-    MaliT8XX,               // GLES3.0
-    MaliGXX,                // GLES3.0
+    MaliT7XX = 4000, // GLES2.0/GLES3.0
+    MaliT8XX,        // GLES3.0
+    MaliGXX,         // GLES3.0
     UnknownPanfrost = 4999,
 
     UnknownChipClass = 99999,
 };
-
 
 class KWINGLUTILS_EXPORT GLPlatform
 {
@@ -201,7 +200,7 @@ public:
     /**
      * Returns a pointer to the GLPlatform instance.
      */
-    static GLPlatform *instance();
+    static GLPlatform* instance();
 
     /**
      * Returns true if the driver support the given feature, and false otherwise.
@@ -323,7 +322,7 @@ public:
      **/
     bool isVirgl() const;
 
-     /**
+    /**
      * @returns @c true if the "GPU" is a Panfrost Mali GPU
      * @since 5.21.5
      **/
@@ -333,23 +332,23 @@ public:
      * @returns the GL_VERSION string as provided by the driver.
      * @since 4.9
      */
-    const QByteArray &glVersionString() const;
+    const QByteArray& glVersionString() const;
     /**
      * @returns the GL_RENDERER string as provided by the driver.
      * @since 4.9
      */
-    const QByteArray &glRendererString() const;
+    const QByteArray& glRendererString() const;
     /**
      * @returns the GL_VENDOR string as provided by the driver.
      * @since 4.9
      */
-    const QByteArray &glVendorString() const;
+    const QByteArray& glVendorString() const;
     /**
      * @returns the GL_SHADING_LANGUAGE_VERSION string as provided by the driver.
      * If the driver does not support the OpenGL Shading Language a null bytearray is returned.
      * @since 4.9
      */
-    const QByteArray &glShadingLanguageVersionString() const;
+    const QByteArray& glShadingLanguageVersionString() const;
     /**
      * @returns Whether the driver supports loose texture binding.
      * @since 4.9
@@ -453,20 +452,20 @@ private:
     qint64 m_galliumVersion;
     qint64 m_serverVersion;
     qint64 m_kernelVersion;
-    bool m_looseBinding: 1;
-    bool m_supportsGLSL: 1;
-    bool m_limitedGLSL: 1;
-    bool m_textureNPOT: 1;
-    bool m_limitedNPOT: 1;
-    bool m_supportsTimerQuery: 1;
-    bool m_virtualMachine: 1;
-    bool m_preferBufferSubData: 1;
+    bool m_looseBinding : 1;
+    bool m_supportsGLSL : 1;
+    bool m_limitedGLSL : 1;
+    bool m_textureNPOT : 1;
+    bool m_limitedNPOT : 1;
+    bool m_supportsTimerQuery : 1;
+    bool m_virtualMachine : 1;
+    bool m_preferBufferSubData : 1;
     OpenGLPlatformInterface m_platformInterface;
-    bool m_gles: 1;
-    static GLPlatform *s_platform;
+    bool m_gles : 1;
+    static GLPlatform* s_platform;
 };
 
-inline GLPlatform *GLPlatform::instance()
+inline GLPlatform* GLPlatform::instance()
 {
     if (!s_platform)
         s_platform = new GLPlatform;
@@ -477,4 +476,3 @@ inline GLPlatform *GLPlatform::instance()
 } // namespace KWin
 
 #endif // KWIN_GLPLATFORM_H
-

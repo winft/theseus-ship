@@ -14,6 +14,7 @@ python <(curl -s $RUN_SCRIPT_URL) -r \
     ${SOURCE_DIR}/debug \
     ${SOURCE_DIR}/desktop \
     ${SOURCE_DIR}/input \
+    ${SOURCE_DIR}/libkwineffects \
     ${SOURCE_DIR}/win \
     ${SOURCE_DIR}/render \
     ${SOURCE_DIR}/rules \

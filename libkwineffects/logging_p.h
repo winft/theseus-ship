@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_KWINEFFECTS_LOGGING_P_H
 #define KWIN_KWINEFFECTS_LOGGING_P_H
 
-#include <QLoggingCategory>
 #include <QDebug>
+#include <QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(LIBKWINEFFECTS)
 Q_DECLARE_LOGGING_CATEGORY(LIBKWINGLUTILS)

@@ -26,7 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QEasingCurve>
 
-namespace KWin {
+namespace KWin
+{
 
 /**
  * Wraps effects->setActiveFullScreenEffect for the duration of it's lifespan
@@ -34,8 +35,9 @@ namespace KWin {
 class FullScreenEffectLock
 {
 public:
-    FullScreenEffectLock(Effect *effect);
+    FullScreenEffectLock(Effect* effect);
     ~FullScreenEffectLock();
+
 private:
     Q_DISABLE_COPY(FullScreenEffectLock)
 };
@@ -47,11 +49,11 @@ typedef QSharedPointer<FullScreenEffectLock> FullScreenEffectLockPtr;
 class KeepAliveLock
 {
 public:
-    KeepAliveLock(EffectWindow *w);
+    KeepAliveLock(EffectWindow* w);
     ~KeepAliveLock();
 
 private:
-    EffectWindow *m_window;
+    EffectWindow* m_window;
     Q_DISABLE_COPY(KeepAliveLock)
 };
 typedef QSharedPointer<KeepAliveLock> KeepAliveLockPtr;
@@ -62,26 +64,33 @@ typedef QSharedPointer<KeepAliveLock> KeepAliveLockPtr;
 class PreviousWindowPixmapLock
 {
 public:
-    PreviousWindowPixmapLock(EffectWindow *w);
+    PreviousWindowPixmapLock(EffectWindow* w);
     ~PreviousWindowPixmapLock();
 
 private:
-    EffectWindow *m_window;
+    EffectWindow* m_window;
     Q_DISABLE_COPY(PreviousWindowPixmapLock)
 };
 typedef QSharedPointer<PreviousWindowPixmapLock> PreviousWindowPixmapLockPtr;
 
-class KWINEFFECTS_EXPORT AniData {
+class KWINEFFECTS_EXPORT AniData
+{
 public:
     AniData();
-    AniData(AnimationEffect::Attribute a, int meta, const FPx2 &to,
-            int delay, const FPx2 &from, bool waitAtSource,
-            FullScreenEffectLockPtr =FullScreenEffectLockPtr(),
-            bool keepAlive = true, PreviousWindowPixmapLockPtr previousWindowPixmapLock = {});
+    AniData(AnimationEffect::Attribute a,
+            int meta,
+            const FPx2& to,
+            int delay,
+            const FPx2& from,
+            bool waitAtSource,
+            FullScreenEffectLockPtr = FullScreenEffectLockPtr(),
+            bool keepAlive = true,
+            PreviousWindowPixmapLockPtr previousWindowPixmapLock = {});
 
     bool isActive() const;
 
-    inline bool isOneDimensional() const {
+    inline bool isOneDimensional() const
+    {
         return from[0] == from[1] && to[0] == to[1];
     }
 
@@ -104,6 +113,6 @@ public:
 
 } // namespace
 
-QDebug operator<<(QDebug dbg, const KWin::AniData &a);
+QDebug operator<<(QDebug dbg, const KWin::AniData& a);
 
 #endif // ANIDATA_H

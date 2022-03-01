@@ -27,18 +27,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwinxrenderutils.h"
 #endif
 
-#include <QVariant>
-#include <QList>
-#include <QTimeLine>
 #include <QFontMetrics>
+#include <QList>
 #include <QMatrix4x4>
 #include <QPainter>
 #include <QPixmap>
+#include <QTimeLine>
+#include <QVariant>
 #include <QVector2D>
 #include <QtMath>
 
-#include <ksharedconfig.h>
 #include <kconfiggroup.h>
+#include <ksharedconfig.h>
 
 #include <Wrapland/Server/surface.h>
 
@@ -47,9 +47,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #if defined(__SSE2__)
-#  include <emmintrin.h>
+#include <emmintrin.h>
 #endif
-
 
 namespace KWin
 {
@@ -66,13 +65,15 @@ void WindowPrePaintData::setTransformed()
     mask |= Effect::PAINT_WINDOW_TRANSFORMED;
 }
 
-class PaintDataPrivate {
+class PaintDataPrivate
+{
 public:
     PaintDataPrivate()
-        :  scale(1., 1., 1.)
+        : scale(1., 1., 1.)
         , rotationAxis(0, 0, 1.)
         , rotationAngle(0.)
-    {}
+    {
+    }
     QVector3D scale;
     QVector3D translation;
 
@@ -106,13 +107,13 @@ qreal PaintData::zScale() const
     return d->scale.z();
 }
 
-void PaintData::setScale(const QVector2D &scale)
+void PaintData::setScale(const QVector2D& scale)
 {
     d->scale.setX(scale.x());
     d->scale.setY(scale.y());
 }
 
-void PaintData::setScale(const QVector3D &scale)
+void PaintData::setScale(const QVector3D& scale)
 {
     d->scale = scale;
 }
@@ -131,7 +132,7 @@ void PaintData::setZScale(qreal scale)
     d->scale.setZ(scale);
 }
 
-const QVector3D &PaintData::scale() const
+const QVector3D& PaintData::scale() const
 {
     return d->scale;
 }
@@ -156,7 +157,7 @@ void PaintData::translate(qreal x, qreal y, qreal z)
     translate(QVector3D(x, y, z));
 }
 
-void PaintData::translate(const QVector3D &t)
+void PaintData::translate(const QVector3D& t)
 {
     d->translation += t;
 }
@@ -176,7 +177,7 @@ qreal PaintData::zTranslation() const
     return d->translation.z();
 }
 
-const QVector3D &PaintData::translation() const
+const QVector3D& PaintData::translation() const
 {
     return d->translation;
 }
@@ -216,17 +217,18 @@ void PaintData::setRotationAxis(Qt::Axis axis)
     }
 }
 
-void PaintData::setRotationAxis(const QVector3D &axis)
+void PaintData::setRotationAxis(const QVector3D& axis)
 {
     d->rotationAxis = axis;
 }
 
-void PaintData::setRotationOrigin(const QVector3D &origin)
+void PaintData::setRotationOrigin(const QVector3D& origin)
 {
     d->rotationOrigin = origin;
 }
 
-class WindowPaintDataPrivate {
+class WindowPaintDataPrivate
+{
 public:
     qreal opacity;
     qreal saturation;
@@ -238,12 +240,12 @@ public:
     QMatrix4x4 screenProjectionMatrix;
 };
 
-WindowPaintData::WindowPaintData(EffectWindow *w)
+WindowPaintData::WindowPaintData(EffectWindow* w)
     : WindowPaintData(w, QMatrix4x4())
 {
 }
 
-WindowPaintData::WindowPaintData(EffectWindow* w, const QMatrix4x4 &screenProjectionMatrix)
+WindowPaintData::WindowPaintData(EffectWindow* w, const QMatrix4x4& screenProjectionMatrix)
     : PaintData()
     , shader(nullptr)
     , d(new WindowPaintDataPrivate())
@@ -257,7 +259,7 @@ WindowPaintData::WindowPaintData(EffectWindow* w, const QMatrix4x4 &screenProjec
     setCrossFadeProgress(1.0);
 }
 
-WindowPaintData::WindowPaintData(const WindowPaintData &other)
+WindowPaintData::WindowPaintData(const WindowPaintData& other)
     : PaintData()
     , quads(other.quads)
     , shader(other.shader)
@@ -353,7 +355,7 @@ qreal WindowPaintData::multiplyBrightness(qreal factor)
     return d->brightness;
 }
 
-void WindowPaintData::setProjectionMatrix(const QMatrix4x4 &matrix)
+void WindowPaintData::setProjectionMatrix(const QMatrix4x4& matrix)
 {
     d->pMatrix = matrix;
 }
@@ -363,12 +365,12 @@ QMatrix4x4 WindowPaintData::projectionMatrix() const
     return d->pMatrix;
 }
 
-QMatrix4x4 &WindowPaintData::rprojectionMatrix()
+QMatrix4x4& WindowPaintData::rprojectionMatrix()
 {
     return d->pMatrix;
 }
 
-void WindowPaintData::setModelViewMatrix(const QMatrix4x4 &matrix)
+void WindowPaintData::setModelViewMatrix(const QMatrix4x4& matrix)
 {
     d->mvMatrix = matrix;
 }
@@ -378,12 +380,12 @@ QMatrix4x4 WindowPaintData::modelViewMatrix() const
     return d->mvMatrix;
 }
 
-QMatrix4x4 &WindowPaintData::rmodelViewMatrix()
+QMatrix4x4& WindowPaintData::rmodelViewMatrix()
 {
     return d->mvMatrix;
 }
 
-WindowPaintData &WindowPaintData::operator*=(qreal scale)
+WindowPaintData& WindowPaintData::operator*=(qreal scale)
 {
     this->setXScale(this->xScale() * scale);
     this->setYScale(this->yScale() * scale);
@@ -391,14 +393,14 @@ WindowPaintData &WindowPaintData::operator*=(qreal scale)
     return *this;
 }
 
-WindowPaintData &WindowPaintData::operator*=(const QVector2D &scale)
+WindowPaintData& WindowPaintData::operator*=(const QVector2D& scale)
 {
     this->setXScale(this->xScale() * scale.x());
     this->setYScale(this->yScale() * scale.y());
     return *this;
 }
 
-WindowPaintData &WindowPaintData::operator*=(const QVector3D &scale)
+WindowPaintData& WindowPaintData::operator*=(const QVector3D& scale)
 {
     this->setXScale(this->xScale() * scale.x());
     this->setYScale(this->yScale() * scale.y());
@@ -406,22 +408,22 @@ WindowPaintData &WindowPaintData::operator*=(const QVector3D &scale)
     return *this;
 }
 
-WindowPaintData &WindowPaintData::operator+=(const QPointF &translation)
+WindowPaintData& WindowPaintData::operator+=(const QPointF& translation)
 {
     return this->operator+=(QVector3D(translation));
 }
 
-WindowPaintData &WindowPaintData::operator+=(const QPoint &translation)
+WindowPaintData& WindowPaintData::operator+=(const QPoint& translation)
 {
     return this->operator+=(QVector3D(translation));
 }
 
-WindowPaintData &WindowPaintData::operator+=(const QVector2D &translation)
+WindowPaintData& WindowPaintData::operator+=(const QVector2D& translation)
 {
     return this->operator+=(QVector3D(translation));
 }
 
-WindowPaintData &WindowPaintData::operator+=(const QVector3D &translation)
+WindowPaintData& WindowPaintData::operator+=(const QVector3D& translation)
 {
     translate(translation);
     return *this;
@@ -436,7 +438,7 @@ class ScreenPaintData::Private
 {
 public:
     QMatrix4x4 projectionMatrix;
-    EffectScreen *screen = nullptr;
+    EffectScreen* screen = nullptr;
 };
 
 ScreenPaintData::ScreenPaintData()
@@ -445,7 +447,7 @@ ScreenPaintData::ScreenPaintData()
 {
 }
 
-ScreenPaintData::ScreenPaintData(const QMatrix4x4 &projectionMatrix, EffectScreen *screen)
+ScreenPaintData::ScreenPaintData(const QMatrix4x4& projectionMatrix, EffectScreen* screen)
     : PaintData()
     , d(new Private())
 {
@@ -455,7 +457,7 @@ ScreenPaintData::ScreenPaintData(const QMatrix4x4 &projectionMatrix, EffectScree
 
 ScreenPaintData::~ScreenPaintData() = default;
 
-ScreenPaintData::ScreenPaintData(const ScreenPaintData &other)
+ScreenPaintData::ScreenPaintData(const ScreenPaintData& other)
     : PaintData()
     , d(new Private())
 {
@@ -470,7 +472,7 @@ ScreenPaintData::ScreenPaintData(const ScreenPaintData &other)
     d->screen = other.d->screen;
 }
 
-ScreenPaintData &ScreenPaintData::operator=(const ScreenPaintData &rhs)
+ScreenPaintData& ScreenPaintData::operator=(const ScreenPaintData& rhs)
 {
     setXScale(rhs.xScale());
     setYScale(rhs.yScale());
@@ -486,7 +488,7 @@ ScreenPaintData &ScreenPaintData::operator=(const ScreenPaintData &rhs)
     return *this;
 }
 
-ScreenPaintData &ScreenPaintData::operator*=(qreal scale)
+ScreenPaintData& ScreenPaintData::operator*=(qreal scale)
 {
     setXScale(this->xScale() * scale);
     setYScale(this->yScale() * scale);
@@ -494,14 +496,14 @@ ScreenPaintData &ScreenPaintData::operator*=(qreal scale)
     return *this;
 }
 
-ScreenPaintData &ScreenPaintData::operator*=(const QVector2D &scale)
+ScreenPaintData& ScreenPaintData::operator*=(const QVector2D& scale)
 {
     setXScale(this->xScale() * scale.x());
     setYScale(this->yScale() * scale.y());
     return *this;
 }
 
-ScreenPaintData &ScreenPaintData::operator*=(const QVector3D &scale)
+ScreenPaintData& ScreenPaintData::operator*=(const QVector3D& scale)
 {
     setXScale(this->xScale() * scale.x());
     setYScale(this->yScale() * scale.y());
@@ -509,22 +511,22 @@ ScreenPaintData &ScreenPaintData::operator*=(const QVector3D &scale)
     return *this;
 }
 
-ScreenPaintData &ScreenPaintData::operator+=(const QPointF &translation)
+ScreenPaintData& ScreenPaintData::operator+=(const QPointF& translation)
 {
     return this->operator+=(QVector3D(translation));
 }
 
-ScreenPaintData &ScreenPaintData::operator+=(const QPoint &translation)
+ScreenPaintData& ScreenPaintData::operator+=(const QPoint& translation)
 {
     return this->operator+=(QVector3D(translation));
 }
 
-ScreenPaintData &ScreenPaintData::operator+=(const QVector2D &translation)
+ScreenPaintData& ScreenPaintData::operator+=(const QVector2D& translation)
 {
     return this->operator+=(QVector3D(translation));
 }
 
-ScreenPaintData &ScreenPaintData::operator+=(const QVector3D &translation)
+ScreenPaintData& ScreenPaintData::operator+=(const QVector3D& translation)
 {
     translate(translation);
     return *this;
@@ -535,7 +537,7 @@ QMatrix4x4 ScreenPaintData::projectionMatrix() const
     return d->projectionMatrix;
 }
 
-EffectScreen *ScreenPaintData::screen() const
+EffectScreen* ScreenPaintData::screen() const
 {
     return d->screen;
 }
@@ -544,7 +546,7 @@ EffectScreen *ScreenPaintData::screen() const
 // Effect
 //****************************************
 
-Effect::Effect(QObject *parent)
+Effect::Effect(QObject* parent)
     : QObject(parent)
 {
 }
@@ -580,7 +582,7 @@ void Effect::prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds 
     effects->prePaintScreen(data, presentTime);
 }
 
-void Effect::paintScreen(int mask, const QRegion &region, ScreenPaintData& data)
+void Effect::paintScreen(int mask, const QRegion& region, ScreenPaintData& data)
 {
     effects->paintScreen(mask, region, data);
 }
@@ -590,7 +592,9 @@ void Effect::postPaintScreen()
     effects->postPaintScreen();
 }
 
-void Effect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime)
+void Effect::prePaintWindow(EffectWindow* w,
+                            WindowPrePaintData& data,
+                            std::chrono::milliseconds presentTime)
 {
     effects->prePaintWindow(w, data, presentTime);
 }
@@ -605,7 +609,10 @@ void Effect::postPaintWindow(EffectWindow* w)
     effects->postPaintWindow(w);
 }
 
-void Effect::paintEffectFrame(KWin::EffectFrame* frame, const QRegion &region, double opacity, double frameOpacity)
+void Effect::paintEffectFrame(KWin::EffectFrame* frame,
+                              const QRegion& region,
+                              double opacity,
+                              double frameOpacity)
 {
     effects->paintEffectFrame(frame, region, opacity, frameOpacity);
 }
@@ -620,12 +627,12 @@ bool Effect::isActive() const
     return true;
 }
 
-QString Effect::debug(const QString &) const
+QString Effect::debug(const QString&) const
 {
     return QString();
 }
 
-void Effect::drawWindow(EffectWindow* w, int mask, const QRegion &region, WindowPaintData& data)
+void Effect::drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data)
 {
     effects->drawWindow(w, mask, region, data);
 }
@@ -635,8 +642,11 @@ void Effect::buildQuads(EffectWindow* w, WindowQuadList& quadList)
     effects->buildQuads(w, quadList);
 }
 
-void Effect::setPositionTransformations(WindowPaintData& data, QRect& region, EffectWindow* w,
-                                        const QRect& r, Qt::AspectRatioMode aspect)
+void Effect::setPositionTransformations(WindowPaintData& data,
+                                        QRect& region,
+                                        EffectWindow* w,
+                                        const QRect& r,
+                                        Qt::AspectRatioMode aspect)
 {
     QSize size = w->size();
     size.scale(r.size(), aspect);
@@ -673,7 +683,7 @@ int Effect::requestedEffectChainPosition() const
     return 0;
 }
 
-xcb_connection_t *Effect::xcbConnection() const
+xcb_connection_t* Effect::xcbConnection() const
 {
     return effects->xcbConnection();
 }
@@ -683,7 +693,7 @@ xcb_window_t Effect::x11RootWindow() const
     return effects->x11RootWindow();
 }
 
-bool Effect::touchDown(qint32 id, const QPointF &pos, quint32 time)
+bool Effect::touchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     Q_UNUSED(id)
     Q_UNUSED(pos)
@@ -691,7 +701,7 @@ bool Effect::touchDown(qint32 id, const QPointF &pos, quint32 time)
     return false;
 }
 
-bool Effect::touchMotion(qint32 id, const QPointF &pos, quint32 time)
+bool Effect::touchMotion(qint32 id, const QPointF& pos, quint32 time)
 {
     Q_UNUSED(id)
     Q_UNUSED(pos)
@@ -706,7 +716,7 @@ bool Effect::touchUp(qint32 id, quint32 time)
     return false;
 }
 
-bool Effect::perform(Feature feature, const QVariantList &arguments)
+bool Effect::perform(Feature feature, const QVariantList& arguments)
 {
     Q_UNUSED(feature)
     Q_UNUSED(arguments)
@@ -744,7 +754,10 @@ EffectsHandler::EffectsHandler(CompositingType type)
     if (compositing_type == NoCompositing)
         return;
     KWin::effects = this;
-    connect(this, QOverload<int, int>::of(&EffectsHandler::desktopChanged), this, &EffectsHandler::desktopChangedLegacy);
+    connect(this,
+            QOverload<int, int>::of(&EffectsHandler::desktopChanged),
+            this,
+            &EffectsHandler::desktopChangedLegacy);
 }
 
 EffectsHandler::~EffectsHandler()
@@ -786,7 +799,7 @@ EffectWindow* EffectsHandler::findWindow(QUuid const& id) const
 
 EffectsHandler* effects = nullptr;
 
-EffectScreen::EffectScreen(QObject *parent)
+EffectScreen::EffectScreen(QObject* parent)
     : QObject(parent)
 {
 }
@@ -798,17 +811,17 @@ EffectScreen::EffectScreen(QObject *parent)
 class Q_DECL_HIDDEN EffectWindow::Private
 {
 public:
-    Private(EffectWindow *q);
+    Private(EffectWindow* q);
 
-    EffectWindow *q;
+    EffectWindow* q;
 };
 
-EffectWindow::Private::Private(EffectWindow *q)
+EffectWindow::Private::Private(EffectWindow* q)
     : q(q)
 {
 }
 
-EffectWindow::EffectWindow(QObject *parent)
+EffectWindow::EffectWindow(QObject* parent)
     : QObject(parent)
     , d(new Private(this))
 {
@@ -818,7 +831,7 @@ EffectWindow::~EffectWindow()
 {
 }
 
-bool EffectWindow::isOnActivity(const QString &activity) const
+bool EffectWindow::isOnActivity(const QString& activity) const
 {
     const QStringList _activities = activities();
     return _activities.isEmpty() || _activities.contains(activity);
@@ -866,9 +879,7 @@ bool EffectWindow::hasDecoration() const
 
 bool EffectWindow::isVisible() const
 {
-    return !isMinimized()
-           && isOnCurrentDesktop()
-           && isOnCurrentActivity();
+    return !isMinimized() && isOnCurrentDesktop() && isOnCurrentActivity();
 }
 
 //****************************************
@@ -892,40 +903,40 @@ WindowQuad WindowQuad::makeSubQuad(double x1, double y1, double x2, double y2) c
 #endif
     WindowQuad ret(*this);
     // vertices are clockwise starting from topleft
-    ret.verts[ 0 ].px = x1;
-    ret.verts[ 3 ].px = x1;
-    ret.verts[ 1 ].px = x2;
-    ret.verts[ 2 ].px = x2;
-    ret.verts[ 0 ].py = y1;
-    ret.verts[ 1 ].py = y1;
-    ret.verts[ 2 ].py = y2;
-    ret.verts[ 3 ].py = y2;
+    ret.verts[0].px = x1;
+    ret.verts[3].px = x1;
+    ret.verts[1].px = x2;
+    ret.verts[2].px = x2;
+    ret.verts[0].py = y1;
+    ret.verts[1].py = y1;
+    ret.verts[2].py = y2;
+    ret.verts[3].py = y2;
     // original x/y are supposed to be the same, no transforming is done here
-    ret.verts[ 0 ].ox = x1;
-    ret.verts[ 3 ].ox = x1;
-    ret.verts[ 1 ].ox = x2;
-    ret.verts[ 2 ].ox = x2;
-    ret.verts[ 0 ].oy = y1;
-    ret.verts[ 1 ].oy = y1;
-    ret.verts[ 2 ].oy = y2;
-    ret.verts[ 3 ].oy = y2;
+    ret.verts[0].ox = x1;
+    ret.verts[3].ox = x1;
+    ret.verts[1].ox = x2;
+    ret.verts[2].ox = x2;
+    ret.verts[0].oy = y1;
+    ret.verts[1].oy = y1;
+    ret.verts[2].oy = y2;
+    ret.verts[3].oy = y2;
 
     const double my_u0 = verts[0].tx;
     const double my_u1 = verts[2].tx;
     const double my_v0 = verts[0].ty;
     const double my_v1 = verts[2].ty;
 
-    const double width  = right() - left();
+    const double width = right() - left();
     const double height = bottom() - top();
 
-    const double texWidth  = my_u1 - my_u0;
+    const double texWidth = my_u1 - my_u0;
     const double texHeight = my_v1 - my_v0;
 
     if (!uvAxisSwapped()) {
-        const double u0 = (x1 - left()) / width  * texWidth  + my_u0;
-        const double u1 = (x2 - left()) / width  * texWidth  + my_u0;
-        const double v0 = (y1 - top())  / height * texHeight + my_v0;
-        const double v1 = (y2 - top())  / height * texHeight + my_v0;
+        const double u0 = (x1 - left()) / width * texWidth + my_u0;
+        const double u1 = (x2 - left()) / width * texWidth + my_u0;
+        const double v0 = (y1 - top()) / height * texHeight + my_v0;
+        const double v1 = (y2 - top()) / height * texHeight + my_v0;
 
         ret.verts[0].tx = u0;
         ret.verts[3].tx = u0;
@@ -936,10 +947,10 @@ WindowQuad WindowQuad::makeSubQuad(double x1, double y1, double x2, double y2) c
         ret.verts[2].ty = v1;
         ret.verts[3].ty = v1;
     } else {
-        const double u0 = (y1 - top())  / height * texWidth  + my_u0;
-        const double u1 = (y2 - top())  / height * texWidth  + my_u0;
-        const double v0 = (x1 - left()) / width  * texHeight + my_v0;
-        const double v1 = (x2 - left()) / width  * texHeight + my_v0;
+        const double u0 = (y1 - top()) / height * texWidth + my_u0;
+        const double u1 = (y2 - top()) / height * texWidth + my_u0;
+        const double v0 = (x1 - left()) / width * texHeight + my_v0;
+        const double v1 = (x2 - left()) / width * texHeight + my_v0;
 
         ret.verts[0].tx = u0;
         ret.verts[1].tx = u0;
@@ -959,10 +970,10 @@ WindowQuad WindowQuad::makeSubQuad(double x1, double y1, double x2, double y2) c
 bool WindowQuad::smoothNeeded() const
 {
     // smoothing is needed if the width or height of the quad does not match the original size
-    double width = verts[ 1 ].ox - verts[ 0 ].ox;
-    double height = verts[ 2 ].oy - verts[ 1 ].oy;
-    return(verts[ 1 ].px - verts[ 0 ].px != width || verts[ 2 ].px - verts[ 3 ].px != width
-           || verts[ 2 ].py - verts[ 1 ].py != height || verts[ 3 ].py - verts[ 0 ].py != height);
+    double width = verts[1].ox - verts[0].ox;
+    double height = verts[2].oy - verts[1].oy;
+    return (verts[1].px - verts[0].px != width || verts[2].px - verts[3].px != width
+            || verts[2].py - verts[1].py != height || verts[3].py - verts[0].py != height);
 }
 
 /***************************************************************
@@ -973,19 +984,17 @@ WindowQuadList WindowQuadList::splitAtX(double x) const
 {
     WindowQuadList ret;
     ret.reserve(count());
-    for (const WindowQuad & quad : *this) {
+    for (const WindowQuad& quad : *this) {
 #if !defined(QT_NO_DEBUG)
         if (quad.isTransformed())
             qFatal("Splitting quads is allowed only in pre-paint calls!");
 #endif
         bool wholeleft = true;
         bool wholeright = true;
-        for (int i = 0;
-                i < 4;
-                ++i) {
-            if (quad[ i ].x() < x)
+        for (int i = 0; i < 4; ++i) {
+            if (quad[i].x() < x)
                 wholeright = false;
-            if (quad[ i ].x() > x)
+            if (quad[i].x() > x)
                 wholeleft = false;
         }
         if (wholeleft || wholeright) { // is whole in one split part
@@ -1006,19 +1015,17 @@ WindowQuadList WindowQuadList::splitAtY(double y) const
 {
     WindowQuadList ret;
     ret.reserve(count());
-    for (const WindowQuad & quad : *this) {
+    for (const WindowQuad& quad : *this) {
 #if !defined(QT_NO_DEBUG)
         if (quad.isTransformed())
             qFatal("Splitting quads is allowed only in pre-paint calls!");
 #endif
         bool wholetop = true;
         bool wholebottom = true;
-        for (int i = 0;
-                i < 4;
-                ++i) {
-            if (quad[ i ].y() < y)
+        for (int i = 0; i < 4; ++i) {
+            if (quad[i].y() < y)
                 wholebottom = false;
-            if (quad[ i ].y() > y)
+            if (quad[i].y() > y)
                 wholetop = false;
         }
         if (wholetop || wholebottom) { // is whole in one split part
@@ -1041,9 +1048,9 @@ WindowQuadList WindowQuadList::makeGrid(int maxQuadSize) const
         return *this;
 
     // Find the bounding rectangle
-    double left   = first().left();
-    double right  = first().right();
-    double top    = first().top();
+    double left = first().left();
+    double right = first().right();
+    double top = first().top();
     double bottom = first().bottom();
 
     for (auto const& quad : qAsConst(*this)) {
@@ -1051,18 +1058,18 @@ WindowQuadList WindowQuadList::makeGrid(int maxQuadSize) const
         if (quad.isTransformed())
             qFatal("Splitting quads is allowed only in pre-paint calls!");
 #endif
-        left   = qMin(left,   quad.left());
-        right  = qMax(right,  quad.right());
-        top    = qMin(top,    quad.top());
+        left = qMin(left, quad.left());
+        right = qMax(right, quad.right());
+        top = qMin(top, quad.top());
         bottom = qMax(bottom, quad.bottom());
     }
 
     WindowQuadList ret;
 
-    for (const WindowQuad &quad : *this) {
-        const double quadLeft   = quad.left();
-        const double quadRight  = quad.right();
-        const double quadTop    = quad.top();
+    for (const WindowQuad& quad : *this) {
+        const double quadLeft = quad.left();
+        const double quadRight = quad.right();
+        const double quadTop = quad.top();
         const double quadBottom = quad.bottom();
 
         // sanity check, see BUG 390953
@@ -1073,7 +1080,7 @@ WindowQuadList WindowQuadList::makeGrid(int maxQuadSize) const
 
         // Compute the top-left corner of the first intersecting grid cell
         const double xBegin = left + qFloor((quadLeft - left) / maxQuadSize) * maxQuadSize;
-        const double yBegin = top  + qFloor((quadTop  - top)  / maxQuadSize) * maxQuadSize;
+        const double yBegin = top + qFloor((quadTop - top) / maxQuadSize) * maxQuadSize;
 
         // Loop over all intersecting cells and add sub-quads
         for (double y = yBegin; y < quadBottom; y += maxQuadSize) {
@@ -1098,19 +1105,19 @@ WindowQuadList WindowQuadList::makeRegularGrid(int xSubdivisions, int ySubdivisi
         return *this;
 
     // Find the bounding rectangle
-    double left   = first().left();
-    double right  = first().right();
-    double top    = first().top();
+    double left = first().left();
+    double right = first().right();
+    double top = first().top();
     double bottom = first().bottom();
 
-    for (const WindowQuad &quad : *this) {
+    for (const WindowQuad& quad : *this) {
 #if !defined(QT_NO_DEBUG)
         if (quad.isTransformed())
             qFatal("Splitting quads is allowed only in pre-paint calls!");
 #endif
-        left   = qMin(left,   quad.left());
-        right  = qMax(right,  quad.right());
-        top    = qMin(top,    quad.top());
+        left = qMin(left, quad.left());
+        right = qMax(right, quad.right());
+        top = qMin(top, quad.top());
         bottom = qMax(bottom, quad.bottom());
     }
 
@@ -1119,10 +1126,10 @@ WindowQuadList WindowQuadList::makeRegularGrid(int xSubdivisions, int ySubdivisi
 
     WindowQuadList ret;
 
-    for (const WindowQuad &quad : *this) {
-        const double quadLeft   = quad.left();
-        const double quadRight  = quad.right();
-        const double quadTop    = quad.top();
+    for (const WindowQuad& quad : *this) {
+        const double quadLeft = quad.left();
+        const double quadRight = quad.right();
+        const double quadTop = quad.top();
         const double quadBottom = quad.bottom();
 
         // sanity check, see BUG 390953
@@ -1133,7 +1140,7 @@ WindowQuadList WindowQuadList::makeRegularGrid(int xSubdivisions, int ySubdivisi
 
         // Compute the top-left corner of the first intersecting grid cell
         const double xBegin = left + qFloor((quadLeft - left) / xIncrement) * xIncrement;
-        const double yBegin = top  + qFloor((quadTop  - top)  / yIncrement) * yIncrement;
+        const double yBegin = top + qFloor((quadTop - top) / yIncrement) * yIncrement;
 
         // Loop over all intersecting cells and add sub-quads
         for (double y = yBegin; y < quadBottom; y += yIncrement) {
@@ -1153,41 +1160,42 @@ WindowQuadList WindowQuadList::makeRegularGrid(int xSubdivisions, int ySubdivisi
 }
 
 #ifndef GL_TRIANGLES
-#  define GL_TRIANGLES      0x0004
+#define GL_TRIANGLES 0x0004
 #endif
 
 #ifndef GL_QUADS
-#  define GL_QUADS          0x0007
+#define GL_QUADS 0x0007
 #endif
 
-void WindowQuadList::makeInterleavedArrays(unsigned int type, GLVertex2D *vertices, const QMatrix4x4 &textureMatrix) const
+void WindowQuadList::makeInterleavedArrays(unsigned int type,
+                                           GLVertex2D* vertices,
+                                           const QMatrix4x4& textureMatrix) const
 {
     // Since we know that the texture matrix just scales and translates
     // we can use this information to optimize the transformation
     const QVector2D coeff(textureMatrix(0, 0), textureMatrix(1, 1));
     const QVector2D offset(textureMatrix(0, 3), textureMatrix(1, 3));
 
-    GLVertex2D *vertex = vertices;
+    GLVertex2D* vertex = vertices;
 
     Q_ASSERT(type == GL_QUADS || type == GL_TRIANGLES);
 
-    switch (type)
-    {
+    switch (type) {
     case GL_QUADS:
 #if defined(__SSE2__)
         if (!(intptr_t(vertex) & 0xf)) {
-            for (const WindowQuad &quad : *this) {
+            for (const WindowQuad& quad : *this) {
                 alignas(16) GLVertex2D v[4];
 
                 for (int j = 0; j < 4; j++) {
-                    const WindowVertex &wv = quad[j];
+                    const WindowVertex& wv = quad[j];
 
                     v[j].position = QVector2D(wv.x(), wv.y());
                     v[j].texcoord = QVector2D(wv.u(), wv.v()) * coeff + offset;
                 }
 
-                const __m128i *srcP = reinterpret_cast<const __m128i *>(&v);
-                __m128i *dstP = reinterpret_cast<__m128i *>(vertex);
+                const __m128i* srcP = reinterpret_cast<const __m128i*>(&v);
+                __m128i* dstP = reinterpret_cast<__m128i*>(vertex);
 
                 _mm_stream_si128(&dstP[0], _mm_load_si128(&srcP[0])); // Top-left
                 _mm_stream_si128(&dstP[1], _mm_load_si128(&srcP[1])); // Top-right
@@ -1199,9 +1207,9 @@ void WindowQuadList::makeInterleavedArrays(unsigned int type, GLVertex2D *vertic
         } else
 #endif // __SSE2__
         {
-            for (const WindowQuad &quad : *this) {
+            for (const WindowQuad& quad : *this) {
                 for (int j = 0; j < 4; j++) {
-                    const WindowVertex &wv = quad[j];
+                    const WindowVertex& wv = quad[j];
 
                     GLVertex2D v;
                     v.position = QVector2D(wv.x(), wv.y());
@@ -1216,18 +1224,18 @@ void WindowQuadList::makeInterleavedArrays(unsigned int type, GLVertex2D *vertic
     case GL_TRIANGLES:
 #if defined(__SSE2__)
         if (!(intptr_t(vertex) & 0xf)) {
-            for (const WindowQuad &quad : *this) {
+            for (const WindowQuad& quad : *this) {
                 alignas(16) GLVertex2D v[4];
 
                 for (int j = 0; j < 4; j++) {
-                    const WindowVertex &wv = quad[j];
+                    const WindowVertex& wv = quad[j];
 
                     v[j].position = QVector2D(wv.x(), wv.y());
                     v[j].texcoord = QVector2D(wv.u(), wv.v()) * coeff + offset;
                 }
 
-                const __m128i *srcP = reinterpret_cast<const __m128i *>(&v);
-                __m128i *dstP = reinterpret_cast<__m128i *>(vertex);
+                const __m128i* srcP = reinterpret_cast<const __m128i*>(&v);
+                __m128i* dstP = reinterpret_cast<__m128i*>(vertex);
 
                 __m128i src[4];
                 src[0] = _mm_load_si128(&srcP[0]); // Top-left
@@ -1250,11 +1258,11 @@ void WindowQuadList::makeInterleavedArrays(unsigned int type, GLVertex2D *vertic
         } else
 #endif // __SSE2__
         {
-            for (const WindowQuad &quad : *this) {
+            for (const WindowQuad& quad : *this) {
                 GLVertex2D v[4]; // Four unique vertices / quad
 
                 for (int j = 0; j < 4; j++) {
-                    const WindowVertex &wv = quad[j];
+                    const WindowVertex& wv = quad[j];
 
                     v[j].position = QVector2D(wv.x(), wv.y());
                     v[j].texcoord = QVector2D(wv.u(), wv.v()) * coeff + offset;
@@ -1278,20 +1286,23 @@ void WindowQuadList::makeInterleavedArrays(unsigned int type, GLVertex2D *vertic
     }
 }
 
-void WindowQuadList::makeArrays(float **vertices, float **texcoords, const QSizeF &size, bool yInverted) const
+void WindowQuadList::makeArrays(float** vertices,
+                                float** texcoords,
+                                const QSizeF& size,
+                                bool yInverted) const
 {
     *vertices = new float[count() * 6 * 2];
     *texcoords = new float[count() * 6 * 2];
 
-    float *vpos = *vertices;
-    float *tpos = *texcoords;
+    float* vpos = *vertices;
+    float* tpos = *texcoords;
 
-     // Note: The positions in a WindowQuad are stored in clockwise order
-    const int index[] = { 1, 0, 3, 3, 2, 1 };
+    // Note: The positions in a WindowQuad are stored in clockwise order
+    const int index[] = {1, 0, 3, 3, 2, 1};
 
-    for (const WindowQuad &quad : *this) {
+    for (const WindowQuad& quad : *this) {
         for (int j = 0; j < 6; j++) {
-            const WindowVertex &wv = quad[index[j]];
+            const WindowVertex& wv = quad[index[j]];
 
             *vpos++ = wv.x();
             *vpos++ = wv.y();
@@ -1319,7 +1330,7 @@ WindowQuadList WindowQuadList::select(WindowQuadType type) const
 
 WindowQuadList WindowQuadList::filterOut(WindowQuadType type) const
 {
-    for (const WindowQuad & q : *this) {
+    for (const WindowQuad& q : *this) {
         if (q.type() == type) { // something to filter out, make a copy and filter
             WindowQuadList ret;
             for (auto const& q : qAsConst(*this)) {
@@ -1334,19 +1345,21 @@ WindowQuadList WindowQuadList::filterOut(WindowQuadType type) const
 
 bool WindowQuadList::smoothNeeded() const
 {
-    return std::any_of(constBegin(), constEnd(), [] (const WindowQuad & q) { return q.smoothNeeded(); });
+    return std::any_of(
+        constBegin(), constEnd(), [](const WindowQuad& q) { return q.smoothNeeded(); });
 }
 
 bool WindowQuadList::isTransformed() const
 {
-    return std::any_of(constBegin(), constEnd(), [] (const WindowQuad & q) { return q.isTransformed(); });
+    return std::any_of(
+        constBegin(), constEnd(), [](const WindowQuad& q) { return q.isTransformed(); });
 }
 
 /***************************************************************
  PaintClipper
 ***************************************************************/
 
-QStack< QRegion >* PaintClipper::areas = nullptr;
+QStack<QRegion>* PaintClipper::areas = nullptr;
 
 PaintClipper::PaintClipper(const QRegion& allowed_area)
     : area(allowed_area)
@@ -1361,10 +1374,10 @@ PaintClipper::~PaintClipper()
 
 void PaintClipper::push(const QRegion& allowed_area)
 {
-    if (allowed_area == infiniteRegion())  // don't push these
+    if (allowed_area == infiniteRegion()) // don't push these
         return;
     if (areas == nullptr)
-        areas = new QStack< QRegion >;
+        areas = new QStack<QRegion>;
     areas->push(allowed_area);
 }
 
@@ -1388,17 +1401,20 @@ bool PaintClipper::clip()
 
 QRegion PaintClipper::paintArea()
 {
-    Q_ASSERT(areas != nullptr);   // can be called only with clip() == true
-    const QSize &s = effects->virtualScreenSize();
+    Q_ASSERT(areas != nullptr); // can be called only with clip() == true
+    const QSize& s = effects->virtualScreenSize();
     QRegion ret(0, 0, s.width(), s.height());
-    for (const QRegion & r : qAsConst(*areas)) {
+    for (const QRegion& r : qAsConst(*areas)) {
         ret &= r;
     }
     return ret;
 }
 
 struct PaintClipper::Iterator::Data {
-    Data() : index(0) {}
+    Data()
+        : index(0)
+    {
+    }
     int index;
     QRegion region;
 };
@@ -1414,7 +1430,8 @@ PaintClipper::Iterator::Iterator()
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
     if (clip() && effects->compositingType() == XRenderCompositing) {
         XFixesRegion region(paintArea());
-        xcb_xfixes_set_picture_clip_region(connection(), effects->xrenderBufferPicture(), region, 0, 0);
+        xcb_xfixes_set_picture_clip_region(
+            connection(), effects->xrenderBufferPicture(), region, 0, 0);
     }
 #endif
 }
@@ -1423,7 +1440,8 @@ PaintClipper::Iterator::~Iterator()
 {
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
     if (clip() && effects->compositingType() == XRenderCompositing)
-        xcb_xfixes_set_picture_clip_region(connection(), effects->xrenderBufferPicture(), XCB_XFIXES_REGION_NONE, 0, 0);
+        xcb_xfixes_set_picture_clip_region(
+            connection(), effects->xrenderBufferPicture(), XCB_XFIXES_REGION_NONE, 0, 0);
 #endif
     delete data;
 }
@@ -1469,7 +1487,7 @@ Motion1D::Motion1D(double initial, double strength, double smoothness)
 {
 }
 
-Motion1D::Motion1D(const Motion1D &other)
+Motion1D::Motion1D(const Motion1D& other)
     : Motion<double>(other)
 {
 }
@@ -1487,7 +1505,7 @@ Motion2D::Motion2D(QPointF initial, double strength, double smoothness)
 {
 }
 
-Motion2D::Motion2D(const Motion2D &other)
+Motion2D::Motion2D(const Motion2D& other)
     : Motion<QPointF>(other)
 {
 }
@@ -1501,7 +1519,7 @@ Motion2D::~Motion2D()
 ***************************************************************/
 
 WindowMotionManager::WindowMotionManager(bool useGlobalAnimationModifier)
-    :   m_useGlobalAnimationModifier(useGlobalAnimationModifier)
+    : m_useGlobalAnimationModifier(useGlobalAnimationModifier)
 
 {
     // TODO: Allow developer to modify motion attributes
@@ -1511,7 +1529,7 @@ WindowMotionManager::~WindowMotionManager()
 {
 }
 
-void WindowMotionManager::manage(EffectWindow *w)
+void WindowMotionManager::manage(EffectWindow* w)
 {
     if (m_managedWindows.contains(w))
         return;
@@ -1524,7 +1542,7 @@ void WindowMotionManager::manage(EffectWindow *w)
         smoothness = effects->animationTimeFactor() * 4.0;
     }
 
-    WindowMotion &motion = m_managedWindows[ w ];
+    WindowMotion& motion = m_managedWindows[w];
     motion.translation.setStrength(strength);
     motion.translation.setSmoothness(smoothness);
     motion.scale.setStrength(strength * 1.33);
@@ -1534,7 +1552,7 @@ void WindowMotionManager::manage(EffectWindow *w)
     motion.scale.setValue(QPointF(1.0, 1.0));
 }
 
-void WindowMotionManager::unmanage(EffectWindow *w)
+void WindowMotionManager::unmanage(EffectWindow* w)
 {
     m_movingWindowsSet.remove(w);
     m_managedWindows.remove(w);
@@ -1553,7 +1571,7 @@ void WindowMotionManager::calculate(int time)
         m_movingWindowsSet.clear();
         QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.begin();
         for (; it != m_managedWindows.end(); ++it) {
-            WindowMotion *motion = &it.value();
+            WindowMotion* motion = &it.value();
             motion->translation.finish();
             motion->scale.finish();
         }
@@ -1561,13 +1579,13 @@ void WindowMotionManager::calculate(int time)
 
     QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.begin();
     for (; it != m_managedWindows.end(); ++it) {
-        WindowMotion *motion = &it.value();
+        WindowMotion* motion = &it.value();
         int stopped = 0;
 
         // TODO: What happens when distance() == 0 but we are still moving fast?
         // TODO: Motion needs to be calculated from the window's center
 
-        Motion2D *trans = &motion->translation;
+        Motion2D* trans = &motion->translation;
         if (trans->distance().isNull())
             ++stopped;
         else {
@@ -1575,15 +1593,16 @@ void WindowMotionManager::calculate(int time)
             trans->calculate(time);
             const short fx = trans->target().x() <= trans->startValue().x() ? -1 : 1;
             const short fy = trans->target().y() <= trans->startValue().y() ? -1 : 1;
-            if (trans->distance().x()*fx/0.5 < 1.0 && trans->velocity().x()*fx/0.2 < 1.0 &&
-                trans->distance().y()*fy/0.5 < 1.0 && trans->velocity().y()*fy/0.2 < 1.0) {
+            if (trans->distance().x() * fx / 0.5 < 1.0 && trans->velocity().x() * fx / 0.2 < 1.0
+                && trans->distance().y() * fy / 0.5 < 1.0
+                && trans->velocity().y() * fy / 0.2 < 1.0) {
                 // Hide tiny oscillations
                 motion->translation.finish();
                 ++stopped;
             }
         }
 
-        Motion2D *scale = &motion->scale;
+        Motion2D* scale = &motion->scale;
         if (scale->distance().isNull())
             ++stopped;
         else {
@@ -1591,8 +1610,9 @@ void WindowMotionManager::calculate(int time)
             scale->calculate(time);
             const short fx = scale->target().x() < 1.0 ? -1 : 1;
             const short fy = scale->target().y() < 1.0 ? -1 : 1;
-            if (scale->distance().x()*fx/0.001 < 1.0 && scale->velocity().x()*fx/0.05 < 1.0 &&
-                scale->distance().y()*fy/0.001 < 1.0 && scale->velocity().y()*fy/0.05 < 1.0) {
+            if (scale->distance().x() * fx / 0.001 < 1.0 && scale->velocity().x() * fx / 0.05 < 1.0
+                && scale->distance().y() * fy / 0.001 < 1.0
+                && scale->velocity().y() * fy / 0.05 < 1.0) {
                 // Hide tiny oscillations
                 motion->scale.finish();
                 ++stopped;
@@ -1609,8 +1629,8 @@ void WindowMotionManager::reset()
 {
     QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.begin();
     for (; it != m_managedWindows.end(); ++it) {
-        WindowMotion *motion = &it.value();
-        EffectWindow *window = it.key();
+        WindowMotion* motion = &it.value();
+        EffectWindow* window = it.key();
         motion->translation.setTarget(window->pos());
         motion->translation.finish();
         motion->scale.setTarget(QPointF(1.0, 1.0));
@@ -1618,38 +1638,39 @@ void WindowMotionManager::reset()
     }
 }
 
-void WindowMotionManager::reset(EffectWindow *w)
+void WindowMotionManager::reset(EffectWindow* w)
 {
     QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.find(w);
     if (it == m_managedWindows.end())
         return;
 
-    WindowMotion *motion = &it.value();
+    WindowMotion* motion = &it.value();
     motion->translation.setTarget(w->pos());
     motion->translation.finish();
     motion->scale.setTarget(QPointF(1.0, 1.0));
     motion->scale.finish();
 }
 
-void WindowMotionManager::apply(EffectWindow *w, WindowPaintData &data)
+void WindowMotionManager::apply(EffectWindow* w, WindowPaintData& data)
 {
     QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.find(w);
     if (it == m_managedWindows.end())
         return;
 
-    // TODO: Take into account existing scale so that we can work with multiple managers (E.g. Present windows + grid)
-    WindowMotion *motion = &it.value();
+    // TODO: Take into account existing scale so that we can work with multiple managers (E.g.
+    // Present windows + grid)
+    WindowMotion* motion = &it.value();
     data += (motion->translation.value() - QPointF(w->x(), w->y()));
     data *= QVector2D(motion->scale.value());
 }
 
-void WindowMotionManager::moveWindow(EffectWindow *w, QPoint target, double scale, double yScale)
+void WindowMotionManager::moveWindow(EffectWindow* w, QPoint target, double scale, double yScale)
 {
     QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.find(w);
     if (it == m_managedWindows.end())
         abort(); // Notify the effect author that they did something wrong
 
-    WindowMotion *motion = &it.value();
+    WindowMotion* motion = &it.value();
 
     if (yScale == 0.0)
         yScale = scale;
@@ -1664,16 +1685,17 @@ void WindowMotionManager::moveWindow(EffectWindow *w, QPoint target, double scal
     m_movingWindowsSet << w;
 }
 
-QRectF WindowMotionManager::transformedGeometry(EffectWindow *w) const
+QRectF WindowMotionManager::transformedGeometry(EffectWindow* w) const
 {
     QHash<EffectWindow*, WindowMotion>::const_iterator it = m_managedWindows.constFind(w);
     if (it == m_managedWindows.end())
         return w->frameGeometry();
 
-    const WindowMotion *motion = &it.value();
+    const WindowMotion* motion = &it.value();
     QRectF geometry(w->frameGeometry());
 
-    // TODO: Take into account existing scale so that we can work with multiple managers (E.g. Present windows + grid)
+    // TODO: Take into account existing scale so that we can work with multiple managers (E.g.
+    // Present windows + grid)
     geometry.moveTo(motion->translation.value());
     geometry.setWidth(geometry.width() * motion->scale.value().x());
     geometry.setHeight(geometry.height() * motion->scale.value().y());
@@ -1681,26 +1703,28 @@ QRectF WindowMotionManager::transformedGeometry(EffectWindow *w) const
     return geometry;
 }
 
-void WindowMotionManager::setTransformedGeometry(EffectWindow *w, const QRectF &geometry)
+void WindowMotionManager::setTransformedGeometry(EffectWindow* w, const QRectF& geometry)
 {
     QHash<EffectWindow*, WindowMotion>::iterator it = m_managedWindows.find(w);
     if (it == m_managedWindows.end())
         return;
-    WindowMotion *motion = &it.value();
+    WindowMotion* motion = &it.value();
     motion->translation.setValue(geometry.topLeft());
-    motion->scale.setValue(QPointF(geometry.width() / qreal(w->width()), geometry.height() / qreal(w->height())));
+    motion->scale.setValue(
+        QPointF(geometry.width() / qreal(w->width()), geometry.height() / qreal(w->height())));
 }
 
-QRectF WindowMotionManager::targetGeometry(EffectWindow *w) const
+QRectF WindowMotionManager::targetGeometry(EffectWindow* w) const
 {
     QHash<EffectWindow*, WindowMotion>::const_iterator it = m_managedWindows.constFind(w);
     if (it == m_managedWindows.end())
         return w->frameGeometry();
 
-    const WindowMotion *motion = &it.value();
+    const WindowMotion* motion = &it.value();
     QRectF geometry(w->frameGeometry());
 
-    // TODO: Take into account existing scale so that we can work with multiple managers (E.g. Present windows + grid)
+    // TODO: Take into account existing scale so that we can work with multiple managers (E.g.
+    // Present windows + grid)
     geometry.moveTo(motion->translation.target());
     geometry.setWidth(geometry.width() * motion->scale.target().x());
     geometry.setHeight(geometry.height() * motion->scale.target().y());
@@ -1712,7 +1736,7 @@ EffectWindow* WindowMotionManager::windowAtPoint(QPoint point, bool useStackingO
 {
     Q_UNUSED(useStackingOrder);
     // TODO: Stacking order uses EffectsHandler::stackingOrder() then filters by m_managedWindows
-    QHash< EffectWindow*, WindowMotion >::ConstIterator it = m_managedWindows.constBegin();
+    QHash<EffectWindow*, WindowMotion>::ConstIterator it = m_managedWindows.constBegin();
     while (it != m_managedWindows.constEnd()) {
         if (transformedGeometry(it.key()).contains(point))
             return it.key();
@@ -1784,7 +1808,7 @@ QMatrix4x4 EffectFrame::screenProjectionMatrix() const
     return d->screenProjectionMatrix;
 }
 
-void EffectFrame::setScreenProjectionMatrix(const QMatrix4x4 &spm)
+void EffectFrame::setScreenProjectionMatrix(const QMatrix4x4& spm)
 {
     d->screenProjectionMatrix = spm;
 }
@@ -1814,7 +1838,7 @@ TimeLine::TimeLine(std::chrono::milliseconds duration, Direction direction)
     d->direction = direction;
 }
 
-TimeLine::TimeLine(const TimeLine &other)
+TimeLine::TimeLine(const TimeLine& other)
     : d(other.d)
 {
 }
@@ -1829,8 +1853,7 @@ qreal TimeLine::progress() const
 qreal TimeLine::value() const
 {
     const qreal t = progress();
-    return d->easingCurve.valueForProgress(
-        d->direction == Backward ? 1.0 - t : t);
+    return d->easingCurve.valueForProgress(d->direction == Backward ? 1.0 - t : t);
 }
 
 void TimeLine::update(std::chrono::milliseconds delta)
@@ -1893,7 +1916,7 @@ void TimeLine::setDirection(TimeLine::Direction direction)
     d->direction = direction;
 
     if (d->elapsed > std::chrono::milliseconds::zero()
-            || d->sourceRedirectMode == RedirectMode::Strict) {
+        || d->sourceRedirectMode == RedirectMode::Strict) {
         d->elapsed = d->duration - d->elapsed;
     }
 
@@ -1916,7 +1939,7 @@ QEasingCurve TimeLine::easingCurve() const
     return d->easingCurve;
 }
 
-void TimeLine::setEasingCurve(const QEasingCurve &easingCurve)
+void TimeLine::setEasingCurve(const QEasingCurve& easingCurve)
 {
     d->easingCurve = easingCurve;
 }
@@ -1928,8 +1951,7 @@ void TimeLine::setEasingCurve(QEasingCurve::Type type)
 
 bool TimeLine::running() const
 {
-    return d->elapsed != std::chrono::milliseconds::zero()
-        && d->elapsed != d->duration;
+    return d->elapsed != std::chrono::milliseconds::zero() && d->elapsed != d->duration;
 }
 
 bool TimeLine::done() const
@@ -1963,7 +1985,7 @@ void TimeLine::setTargetRedirectMode(RedirectMode mode)
     d->targetRedirectMode = mode;
 }
 
-TimeLine &TimeLine::operator=(const TimeLine &other)
+TimeLine& TimeLine::operator=(const TimeLine& other)
 {
     d = other.d;
     return *this;

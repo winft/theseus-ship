@@ -32,35 +32,39 @@ class KWINEFFECTS_EXPORT DeformEffect : public Effect
     Q_OBJECT
 
 public:
-    explicit DeformEffect(QObject *parent = nullptr);
+    explicit DeformEffect(QObject* parent = nullptr);
     ~DeformEffect() override;
 
     static bool supported();
 
 private:
-    void drawWindow(EffectWindow *window, int mask, const QRegion& region, WindowPaintData &data) override;
+    void drawWindow(EffectWindow* window,
+                    int mask,
+                    const QRegion& region,
+                    WindowPaintData& data) override;
 
 protected:
     /**
      * This function must be called when the effect wants to animate the specified
      * @a window.
      */
-    void redirect(EffectWindow *window);
+    void redirect(EffectWindow* window);
     /**
      * This function must be called when the effect is done animating the specified
      * @a window. The window will be automatically unredirected if it's deleted.
      */
-    void unredirect(EffectWindow *window);
+    void unredirect(EffectWindow* window);
 
     /**
      * Override this function to transform the window quad grid of the given window.
      */
-    virtual void deform(EffectWindow *window, int mask, WindowPaintData &data, WindowQuadList &quads);
+    virtual void
+    deform(EffectWindow* window, int mask, WindowPaintData& data, WindowQuadList& quads);
 
 private Q_SLOTS:
-    void handleWindowGeometryChanged(EffectWindow *window);
-    void handleWindowDamaged(EffectWindow *window);
-    void handleWindowDeleted(EffectWindow *window);
+    void handleWindowGeometryChanged(EffectWindow* window);
+    void handleWindowDamaged(EffectWindow* window);
+    void handleWindowDeleted(EffectWindow* window);
 
 private:
     void setupConnections();

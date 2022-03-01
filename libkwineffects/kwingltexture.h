@@ -24,11 +24,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwinglutils_export.h>
 
-#include <QSize>
-#include <QRegion>
-#include <QSharedPointer>
 #include <QExplicitlySharedDataPointer>
 #include <QMatrix4x4>
+#include <QRegion>
+#include <QSharedPointer>
+#include <QSize>
 
 #include <epoxy/gl.h>
 
@@ -44,10 +44,7 @@ namespace KWin
 class GLVertexBuffer;
 class GLTexturePrivate;
 
-enum TextureCoordinateType {
-    NormalizedCoordinates = 0,
-    UnnormalizedCoordinates
-};
+enum TextureCoordinateType { NormalizedCoordinates = 0, UnnormalizedCoordinates };
 
 class KWINGLUTILS_EXPORT GLTexture
 {
@@ -58,17 +55,17 @@ public:
     explicit GLTexture(const QPixmap& pixmap, GLenum target = GL_TEXTURE_2D);
     explicit GLTexture(const QString& fileName);
     GLTexture(GLenum internalFormat, int width, int height, int levels = 1);
-    explicit GLTexture(GLenum internalFormat, const QSize &size, int levels = 1);
+    explicit GLTexture(GLenum internalFormat, const QSize& size, int levels = 1);
 
     /**
      * Create a GLTexture wrapper around an existing texture.
      * Management of the underlying texture remains the responsibility of the caller.
      * @since 5.18
      */
-    explicit GLTexture(GLuint textureId, GLenum internalFormat, const QSize &size, int levels = 1);
+    explicit GLTexture(GLuint textureId, GLenum internalFormat, const QSize& size, int levels = 1);
     virtual ~GLTexture();
 
-    GLTexture & operator = (const GLTexture& tex);
+    GLTexture& operator=(const GLTexture& tex);
 
     bool isNull() const;
     QSize size() const;
@@ -102,11 +99,12 @@ public:
      */
     QMatrix4x4 matrix(TextureCoordinateType type) const;
 
-    void update(const QImage& image, const QPoint &offset = QPoint(0, 0), const QRect &src = QRect());
+    void
+    update(const QImage& image, const QPoint& offset = QPoint(0, 0), const QRect& src = QRect());
     virtual void discard();
     void bind();
     void unbind();
-    void render(const QRegion &region, const QRect& rect, bool hardwareClipping = false);
+    void render(const QRegion& region, const QRect& rect, bool hardwareClipping = false);
 
     GLuint texture() const;
     GLenum target() const;

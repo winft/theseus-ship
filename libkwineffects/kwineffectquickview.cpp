@@ -20,16 +20,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwineffectquickview.h"
 
-#include "kwinglutils.h"
 #include "kwineffects.h"
+#include "kwinglutils.h"
 #include "logging_p.h"
 
+#include <QQmlComponent>
+#include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickItem>
-#include <QQmlContext>
-#include <QQmlComponent>
-#include <QQuickView>
 #include <QQuickRenderControl>
+#include <QQuickView>
 #include <QUrl>
 
 #include <QOffscreenSurface>
@@ -49,13 +49,13 @@ class EffectQuickRenderControl : public QQuickRenderControl
     Q_OBJECT
 
 public:
-    explicit EffectQuickRenderControl(QWindow *renderWindow, QObject *parent = nullptr)
+    explicit EffectQuickRenderControl(QWindow* renderWindow, QObject* parent = nullptr)
         : QQuickRenderControl(parent)
         , m_renderWindow(renderWindow)
     {
     }
 
-    QWindow *renderWindow(QPoint *offset) override
+    QWindow* renderWindow(QPoint* offset) override
     {
         if (offset) {
             *offset = QPoint(0, 0);
@@ -70,13 +70,13 @@ private:
 class Q_DECL_HIDDEN EffectQuickView::Private
 {
 public:
-    QQuickWindow *m_view;
-    QQuickRenderControl *m_renderControl;
+    QQuickWindow* m_view;
+    QQuickRenderControl* m_renderControl;
     QScopedPointer<QOffscreenSurface> m_offscreenSurface;
     QScopedPointer<QOpenGLContext> m_glcontext;
     QScopedPointer<QOpenGLFramebufferObject> m_fbo;
 
-    QTimer *m_repaintTimer;
+    QTimer* m_repaintTimer;
     QImage m_image;
     QScopedPointer<GLTexture> m_textureExport;
     // if we should capture a QImage after rendering into our BO.
@@ -87,7 +87,7 @@ public:
 
     QList<QTouchEvent::TouchPoint> touchPoints;
     Qt::TouchPointStates touchState;
-    QTouchDevice *touchDevice;
+    QTouchDevice* touchDevice;
 
     void releaseResources();
 
@@ -97,25 +97,25 @@ public:
 class Q_DECL_HIDDEN EffectQuickScene::Private
 {
 public:
-    KDeclarative::QmlObjectSharedEngine *qmlObject = nullptr;
+    KDeclarative::QmlObjectSharedEngine* qmlObject = nullptr;
 };
 
-EffectQuickView::EffectQuickView(QObject *parent)
+EffectQuickView::EffectQuickView(QObject* parent)
     : EffectQuickView(parent, effects ? ExportMode::Texture : ExportMode::Image)
 {
 }
 
-EffectQuickView::EffectQuickView(QObject *parent, ExportMode exportMode)
+EffectQuickView::EffectQuickView(QObject* parent, ExportMode exportMode)
     : EffectQuickView(parent, nullptr, exportMode)
 {
 }
 
-EffectQuickView::EffectQuickView(QObject *parent, QWindow *renderWindow)
+EffectQuickView::EffectQuickView(QObject* parent, QWindow* renderWindow)
     : EffectQuickView(parent, renderWindow, effects ? ExportMode::Texture : ExportMode::Image)
 {
 }
 
-EffectQuickView::EffectQuickView(QObject *parent, QWindow *renderWindow, ExportMode exportMode)
+EffectQuickView::EffectQuickView(QObject* parent, QWindow* renderWindow, ExportMode exportMode)
     : QObject(parent)
     , d(new EffectQuickView::Private)
 {
@@ -129,7 +129,8 @@ EffectQuickView::EffectQuickView(QObject *parent, QWindow *renderWindow, ExportM
         d->m_useBlit = true;
     }
 
-    const bool usingGl = d->m_view->rendererInterface()->graphicsApi() == QSGRendererInterface::OpenGL;
+    const bool usingGl
+        = d->m_view->rendererInterface()->graphicsApi() == QSGRendererInterface::OpenGL;
 
     if (!usingGl) {
         qCDebug(LIBKWINEFFECTS) << "QtQuick Software rendering mode detected";
@@ -157,7 +158,8 @@ EffectQuickView::EffectQuickView(QObject *parent, QWindow *renderWindow, ExportM
 
         // On Wayland, opengl contexts are implicitly shared.
         if (!effects->waylandDisplay() && !d->m_glcontext->shareContext()) {
-            qCDebug(LIBKWINEFFECTS) << "Failed to create a shared context, falling back to raster rendering";
+            qCDebug(LIBKWINEFFECTS)
+                << "Failed to create a shared context, falling back to raster rendering";
 
             qCDebug(LIBKWINEFFECTS) << "Extra debug:";
             qCDebug(LIBKWINEFFECTS) << "our context:" << d->m_glcontext.data();
@@ -178,8 +180,14 @@ EffectQuickView::EffectQuickView(QObject *parent, QWindow *renderWindow, ExportM
     d->m_repaintTimer->setInterval(10);
 
     connect(d->m_repaintTimer, &QTimer::timeout, this, &EffectQuickView::update);
-    connect(d->m_renderControl, &QQuickRenderControl::renderRequested, this, &EffectQuickView::handleRenderRequested);
-    connect(d->m_renderControl, &QQuickRenderControl::sceneChanged, this, &EffectQuickView::handleSceneChanged);
+    connect(d->m_renderControl,
+            &QQuickRenderControl::renderRequested,
+            this,
+            &EffectQuickView::handleRenderRequested);
+    connect(d->m_renderControl,
+            &QQuickRenderControl::sceneChanged,
+            this,
+            &EffectQuickView::handleSceneChanged);
 
     d->touchDevice = new QTouchDevice{};
     d->touchDevice->setCapabilities(QTouchDevice::Position);
@@ -254,7 +262,8 @@ void EffectQuickView::update()
         const QSize nativeSize = d->m_view->size() * d->m_view->effectiveDevicePixelRatio();
         if (d->m_fbo.isNull() || d->m_fbo->size() != nativeSize) {
             d->m_textureExport.reset(nullptr);
-            d->m_fbo.reset(new QOpenGLFramebufferObject(nativeSize, QOpenGLFramebufferObject::CombinedDepthStencil));
+            d->m_fbo.reset(new QOpenGLFramebufferObject(
+                nativeSize, QOpenGLFramebufferObject::CombinedDepthStencil));
             if (!d->m_fbo->isValid()) {
                 d->m_fbo.reset();
                 d->m_glcontext->doneCurrent();
@@ -283,7 +292,7 @@ void EffectQuickView::update()
     Q_EMIT repaintNeeded();
 }
 
-void EffectQuickView::forwardMouseEvent(QEvent *e)
+void EffectQuickView::forwardMouseEvent(QEvent* e)
 {
     if (!d->m_visible) {
         return;
@@ -292,20 +301,19 @@ void EffectQuickView::forwardMouseEvent(QEvent *e)
     case QEvent::MouseMove:
     case QEvent::MouseButtonPress:
     case QEvent::MouseButtonRelease:
-    case QEvent::MouseButtonDblClick:
-    {
-        QMouseEvent *me = static_cast<QMouseEvent *>(e);
+    case QEvent::MouseButtonDblClick: {
+        QMouseEvent* me = static_cast<QMouseEvent*>(e);
         const QPoint widgetPos = d->m_view->mapFromGlobal(me->pos());
-        QMouseEvent cloneEvent(me->type(), widgetPos, me->pos(), me->button(), me->buttons(), me->modifiers());
+        QMouseEvent cloneEvent(
+            me->type(), widgetPos, me->pos(), me->button(), me->buttons(), me->modifiers());
         QCoreApplication::sendEvent(d->m_view, &cloneEvent);
         e->setAccepted(cloneEvent.isAccepted());
         return;
     }
     case QEvent::HoverEnter:
     case QEvent::HoverLeave:
-    case QEvent::HoverMove:
-    {
-        QHoverEvent *he = static_cast<QHoverEvent *>(e);
+    case QEvent::HoverMove: {
+        QHoverEvent* he = static_cast<QHoverEvent*>(e);
         const QPointF widgetPos = d->m_view->mapFromGlobal(he->pos());
         const QPointF oldWidgetPos = d->m_view->mapFromGlobal(he->oldPos());
         QHoverEvent cloneEvent(he->type(), widgetPos, oldWidgetPos, he->modifiers());
@@ -313,12 +321,17 @@ void EffectQuickView::forwardMouseEvent(QEvent *e)
         e->setAccepted(cloneEvent.isAccepted());
         return;
     }
-    case QEvent::Wheel:
-    {
-        QWheelEvent *we = static_cast<QWheelEvent *>(e);
+    case QEvent::Wheel: {
+        QWheelEvent* we = static_cast<QWheelEvent*>(e);
         const QPointF widgetPos = d->m_view->mapFromGlobal(we->pos());
-        QWheelEvent cloneEvent(widgetPos, we->globalPosF(), we->pixelDelta(), we->angleDelta(), we->buttons(),
-                               we->modifiers(), we->phase(), we->inverted());
+        QWheelEvent cloneEvent(widgetPos,
+                               we->globalPosF(),
+                               we->pixelDelta(),
+                               we->angleDelta(),
+                               we->buttons(),
+                               we->modifiers(),
+                               we->phase(),
+                               we->inverted());
         QCoreApplication::sendEvent(d->m_view, &cloneEvent);
         e->setAccepted(cloneEvent.isAccepted());
         return;
@@ -328,7 +341,7 @@ void EffectQuickView::forwardMouseEvent(QEvent *e)
     }
 }
 
-void EffectQuickView::forwardKeyEvent(QKeyEvent *keyEvent)
+void EffectQuickView::forwardKeyEvent(QKeyEvent* keyEvent)
 {
     if (!d->m_visible) {
         return;
@@ -341,25 +354,27 @@ void EffectQuickView::setShareContext(std::unique_ptr<QOpenGLContext> context)
     s_shareContext = std::move(context);
 }
 
-bool EffectQuickView::forwardTouchDown(qint32 id, const QPointF &pos, quint32 time)
+bool EffectQuickView::forwardTouchDown(qint32 id, const QPointF& pos, quint32 time)
 {
     Q_UNUSED(time)
 
     d->updateTouchState(Qt::TouchPointPressed, id, pos);
 
-    QTouchEvent event(QEvent::TouchBegin, d->touchDevice, Qt::NoModifier, d->touchState, d->touchPoints);
+    QTouchEvent event(
+        QEvent::TouchBegin, d->touchDevice, Qt::NoModifier, d->touchState, d->touchPoints);
     QCoreApplication::sendEvent(d->m_view, &event);
 
     return event.isAccepted();
 }
 
-bool EffectQuickView::forwardTouchMotion(qint32 id, const QPointF &pos, quint32 time)
+bool EffectQuickView::forwardTouchMotion(qint32 id, const QPointF& pos, quint32 time)
 {
     Q_UNUSED(time)
 
     d->updateTouchState(Qt::TouchPointMoved, id, pos);
 
-    QTouchEvent event(QEvent::TouchUpdate, d->touchDevice, Qt::NoModifier, d->touchState, d->touchPoints);
+    QTouchEvent event(
+        QEvent::TouchUpdate, d->touchDevice, Qt::NoModifier, d->touchState, d->touchPoints);
     QCoreApplication::sendEvent(d->m_view, &event);
 
     return event.isAccepted();
@@ -371,7 +386,8 @@ bool EffectQuickView::forwardTouchUp(qint32 id, quint32 time)
 
     d->updateTouchState(Qt::TouchPointReleased, id, QPointF{});
 
-    QTouchEvent event(QEvent::TouchEnd, d->touchDevice, Qt::NoModifier, d->touchState, d->touchPoints);
+    QTouchEvent event(
+        QEvent::TouchEnd, d->touchDevice, Qt::NoModifier, d->touchState, d->touchPoints);
     QCoreApplication::sendEvent(d->m_view, &event);
 
     return event.isAccepted();
@@ -382,7 +398,7 @@ QRect EffectQuickView::geometry() const
     return d->m_view->geometry();
 }
 
-QQuickItem *EffectQuickView::contentItem() const
+QQuickItem* EffectQuickView::contentItem() const
 {
     return d->m_view->contentItem();
 }
@@ -394,13 +410,11 @@ void EffectQuickView::setVisible(bool visible)
     }
     d->m_visible = visible;
 
-    if (visible){
+    if (visible) {
         Q_EMIT d->m_renderControl->renderRequested();
     } else {
         // deferred to not change GL context
-        QTimer::singleShot(0, this, [this]() {
-            d->releaseResources();
-        });
+        QTimer::singleShot(0, this, [this]() { d->releaseResources(); });
     }
 }
 
@@ -419,7 +433,7 @@ void EffectQuickView::hide()
     setVisible(false);
 }
 
-GLTexture *EffectQuickView::bufferAsTexture()
+GLTexture* EffectQuickView::bufferAsTexture()
 {
     if (d->m_useBlit) {
         if (d->m_image.isNull()) {
@@ -431,7 +445,8 @@ GLTexture *EffectQuickView::bufferAsTexture()
             return nullptr;
         }
         if (!d->m_textureExport) {
-            d->m_textureExport.reset(new GLTexture(d->m_fbo->texture(), d->m_fbo->format().internalTextureFormat(), d->m_fbo->size()));
+            d->m_textureExport.reset(new GLTexture(
+                d->m_fbo->texture(), d->m_fbo->format().internalTextureFormat(), d->m_fbo->size()));
         }
     }
     return d->m_textureExport.data();
@@ -447,7 +462,7 @@ QSize EffectQuickView::size() const
     return d->m_view->geometry().size();
 }
 
-void EffectQuickView::setGeometry(const QRect &rect)
+void EffectQuickView::setGeometry(const QRect& rect)
 {
     const QRect oldGeometry = d->m_view->geometry();
     d->m_view->setGeometry(rect);
@@ -465,19 +480,24 @@ void EffectQuickView::Private::releaseResources()
     }
 }
 
-void EffectQuickView::Private::updateTouchState(Qt::TouchPointState state, qint32 id, const QPointF &pos)
+void EffectQuickView::Private::updateTouchState(Qt::TouchPointState state,
+                                                qint32 id,
+                                                const QPointF& pos)
 {
     // Remove the points that were previously in a released state, since they
     // are no longer relevant. Additionally, reset the state of all remaining
     // points to Stationary so we only have one touch point with a different
     // state.
-    touchPoints.erase(std::remove_if(touchPoints.begin(), touchPoints.end(), [](QTouchEvent::TouchPoint &point) {
-        if (point.state() == Qt::TouchPointReleased) {
-            return true;
-        }
-        point.setState(Qt::TouchPointStationary);
-        return false;
-    }), touchPoints.end());
+    touchPoints.erase(std::remove_if(touchPoints.begin(),
+                                     touchPoints.end(),
+                                     [](QTouchEvent::TouchPoint& point) {
+                                         if (point.state() == Qt::TouchPointReleased) {
+                                             return true;
+                                         }
+                                         point.setState(Qt::TouchPointStationary);
+                                         return false;
+                                     }),
+                      touchPoints.end());
 
     // QtQuick Pointer Handlers incorrectly consider a touch point with ID 0
     // to be an invalid touch point. This has been fixed in Qt 6 but could not
@@ -487,85 +507,84 @@ void EffectQuickView::Private::updateTouchState(Qt::TouchPointState state, qint3
 
     // Find the touch point that has changed. This is separate from the above
     // loop because removing the released touch points invalidates iterators.
-    auto changed = std::find_if(touchPoints.begin(), touchPoints.end(), [id](const QTouchEvent::TouchPoint &point) {
-        return point.id() == id + idOffset;
-    });
+    auto changed = std::find_if(
+        touchPoints.begin(), touchPoints.end(), [id](const QTouchEvent::TouchPoint& point) {
+            return point.id() == id + idOffset;
+        });
 
     switch (state) {
     case Qt::TouchPointPressed: {
-            if (changed != touchPoints.end()) {
-                return;
-            }
-
-            QTouchEvent::TouchPoint point;
-            point.setId(id + idOffset);
-            point.setState(Qt::TouchPointPressed);
-            point.setScreenPos(pos);
-            point.setScenePos(m_view->mapFromGlobal(pos.toPoint()));
-            point.setPos(m_view->mapFromGlobal(pos.toPoint()));
-
-            touchPoints.append(point);
+        if (changed != touchPoints.end()) {
+            return;
         }
-        break;
+
+        QTouchEvent::TouchPoint point;
+        point.setId(id + idOffset);
+        point.setState(Qt::TouchPointPressed);
+        point.setScreenPos(pos);
+        point.setScenePos(m_view->mapFromGlobal(pos.toPoint()));
+        point.setPos(m_view->mapFromGlobal(pos.toPoint()));
+
+        touchPoints.append(point);
+    } break;
     case Qt::TouchPointMoved: {
-            if (changed == touchPoints.end()) {
-                return;
-            }
-
-            auto &point = *changed;
-            point.setLastPos(point.pos());
-            point.setLastScenePos(point.scenePos());
-            point.setLastScreenPos(point.screenPos());
-            point.setScenePos(m_view->mapFromGlobal(pos.toPoint()));
-            point.setPos(m_view->mapFromGlobal(pos.toPoint()));
-            point.setScreenPos(pos);
-            point.setState(Qt::TouchPointMoved);
+        if (changed == touchPoints.end()) {
+            return;
         }
-        break;
+
+        auto& point = *changed;
+        point.setLastPos(point.pos());
+        point.setLastScenePos(point.scenePos());
+        point.setLastScreenPos(point.screenPos());
+        point.setScenePos(m_view->mapFromGlobal(pos.toPoint()));
+        point.setPos(m_view->mapFromGlobal(pos.toPoint()));
+        point.setScreenPos(pos);
+        point.setState(Qt::TouchPointMoved);
+    } break;
     case Qt::TouchPointReleased: {
-            if (changed == touchPoints.end()) {
-                return;
-            }
-
-            auto &point = *changed;
-            point.setLastPos(point.pos());
-            point.setLastScreenPos(point.screenPos());
-            point.setState(Qt::TouchPointReleased);
+        if (changed == touchPoints.end()) {
+            return;
         }
-        break;
+
+        auto& point = *changed;
+        point.setLastPos(point.pos());
+        point.setLastScreenPos(point.screenPos());
+        point.setState(Qt::TouchPointReleased);
+    } break;
     default:
         break;
     }
 
     // The touch state value is used in QTouchEvent and includes all the states
     // that the current touch points are in.
-    touchState = std::accumulate(touchPoints.begin(), touchPoints.end(), Qt::TouchPointStates{}, [](auto init, const auto &point) {
-        return init | point.state();
-    });
+    touchState = std::accumulate(touchPoints.begin(),
+                                 touchPoints.end(),
+                                 Qt::TouchPointStates{},
+                                 [](auto init, const auto& point) { return init | point.state(); });
 }
 
-EffectQuickScene::EffectQuickScene(QObject *parent)
+EffectQuickScene::EffectQuickScene(QObject* parent)
     : EffectQuickView(parent)
     , d(new EffectQuickScene::Private)
 {
     d->qmlObject = new KDeclarative::QmlObjectSharedEngine(this);
 }
 
-EffectQuickScene::EffectQuickScene(QObject *parent, QWindow *renderWindow)
+EffectQuickScene::EffectQuickScene(QObject* parent, QWindow* renderWindow)
     : EffectQuickView(parent, renderWindow)
     , d(new EffectQuickScene::Private)
 {
     d->qmlObject = new KDeclarative::QmlObjectSharedEngine(this);
 }
 
-EffectQuickScene::EffectQuickScene(QObject *parent, QWindow *renderWindow, ExportMode exportMode)
+EffectQuickScene::EffectQuickScene(QObject* parent, QWindow* renderWindow, ExportMode exportMode)
     : EffectQuickView(parent, renderWindow, exportMode)
     , d(new EffectQuickScene::Private)
 {
     d->qmlObject = new KDeclarative::QmlObjectSharedEngine(this);
 }
 
-EffectQuickScene::EffectQuickScene(QObject *parent, EffectQuickView::ExportMode exportMode)
+EffectQuickScene::EffectQuickScene(QObject* parent, EffectQuickView::ExportMode exportMode)
     : EffectQuickView(parent, exportMode)
     , d(new EffectQuickScene::Private)
 {
@@ -577,11 +596,11 @@ EffectQuickScene::~EffectQuickScene()
     delete d->qmlObject;
 }
 
-void EffectQuickScene::setSource(const QUrl &source)
+void EffectQuickScene::setSource(const QUrl& source)
 {
     d->qmlObject->setSource(source);
 
-    QQuickItem *item = rootItem();
+    QQuickItem* item = rootItem();
     if (!item) {
         qCDebug(LIBKWINEFFECTS) << "Could not load effect quick view" << source;
         return;
@@ -594,14 +613,14 @@ void EffectQuickScene::setSource(const QUrl &source)
     connect(contentItem(), &QQuickItem::heightChanged, item, updateSize);
 }
 
-QQmlContext *EffectQuickScene::rootContext() const
+QQmlContext* EffectQuickScene::rootContext() const
 {
     return d->qmlObject->rootContext();
 }
 
-QQuickItem *EffectQuickScene::rootItem() const
+QQuickItem* EffectQuickScene::rootItem() const
 {
-    return qobject_cast<QQuickItem *>(d->qmlObject->rootObject());
+    return qobject_cast<QQuickItem*>(d->qmlObject->rootObject());
 }
 
 }
