@@ -33,6 +33,7 @@
 #include <QPainter>
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
+#include <cmath>
 #include <unistd.h>
 
 namespace KWin::render::gl

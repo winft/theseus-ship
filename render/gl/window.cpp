@@ -17,6 +17,7 @@
 #include "win/geo.h"
 
 #include <Wrapland/Server/surface.h>
+#include <cmath>
 
 namespace KWin::render::gl
 {
