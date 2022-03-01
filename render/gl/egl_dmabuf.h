@@ -22,9 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "egl_data.h"
 
-#include "render/wayland/linux_dmabuf.h"
-
 #include <QVector>
+#include <Wrapland/Server/linux_dmabuf_v1.h>
 #include <cassert>
 #include <epoxy/egl.h>
 
@@ -32,22 +31,22 @@ namespace KWin::render::gl
 {
 class egl_dmabuf;
 
-class egl_dmabuf_buffer : public wayland::dmabuf_buffer
+class egl_dmabuf_buffer : public Wrapland::Server::linux_dmabuf_buffer_v1
 {
 public:
-    using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
-    using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
+    using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
+    using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
 
     enum class ImportType { Direct, Conversion };
 
     egl_dmabuf_buffer(EGLImage image,
-                      const QVector<Plane>& planes,
+                      std::vector<Plane> planes,
                       uint32_t format,
                       const QSize& size,
                       Flags flags,
                       egl_dmabuf* interfaceImpl);
 
-    egl_dmabuf_buffer(const QVector<Plane>& planes,
+    egl_dmabuf_buffer(std::vector<Plane> planes,
                       uint32_t format,
                       const QSize& size,
                       Flags flags,
@@ -55,7 +54,6 @@ public:
 
     ~egl_dmabuf_buffer() override;
 
-    void setInterfaceImplementation(egl_dmabuf* interfaceImpl);
     void addImage(EGLImage image);
     void removeImages();
 
@@ -83,27 +81,27 @@ struct egl_dmabuf_data {
     query_modifiers_ext_func query_modifiers_ext{nullptr};
 };
 
-class egl_dmabuf : public wayland::linux_dmabuf
+class egl_dmabuf
 {
 public:
-    using Plane = Wrapland::Server::LinuxDmabufV1::Plane;
-    using Flags = Wrapland::Server::LinuxDmabufV1::Flags;
+    using Plane = Wrapland::Server::linux_dmabuf_plane_v1;
+    using Flags = Wrapland::Server::linux_dmabuf_flags_v1;
 
     explicit egl_dmabuf(egl_dmabuf_data const& data);
-    ~egl_dmabuf() override;
 
-    Wrapland::Server::LinuxDmabufBufferV1* importBuffer(const QVector<Plane>& planes,
-                                                        uint32_t format,
-                                                        const QSize& size,
-                                                        Flags flags) override;
+    std::unique_ptr<Wrapland::Server::linux_dmabuf_buffer_v1>
+    import_buffer(std::vector<Plane> const& planes,
+                  uint32_t format,
+                  const QSize& size,
+                  Flags flags);
 
     egl_dmabuf_data data;
 
 private:
-    EGLImage createImage(const QVector<Plane>& planes, uint32_t format, const QSize& size);
+    EGLImage createImage(std::vector<Plane> const& planes, uint32_t format, const QSize& size);
 
-    Wrapland::Server::LinuxDmabufBufferV1*
-    yuvImport(const QVector<Plane>& planes, uint32_t format, const QSize& size, Flags flags);
+    Wrapland::Server::linux_dmabuf_buffer_v1*
+    yuvImport(std::vector<Plane> const& planes, uint32_t format, const QSize& size, Flags flags);
     QVector<uint32_t> queryFormats();
     void setSupportedFormatsAndModifiers();
 

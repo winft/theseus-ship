@@ -20,8 +20,7 @@ public:
     egl_texture(gl::texture* texture, egl_backend* backend);
     ~egl_texture() override;
 
-    bool loadTexture(window_pixmap* pixmap) override;
-    void updateTexture(window_pixmap* pixmap) override;
+    bool updateTexture(window_pixmap* pixmap) override;
     gl::backend* backend() override;
 
     gl::texture* q;

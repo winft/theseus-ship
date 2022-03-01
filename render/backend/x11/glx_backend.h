@@ -77,14 +77,13 @@ class GlxTexture : public gl::texture_private
 public:
     ~GlxTexture() override;
     void onDamage() override;
-    bool loadTexture(render::window_pixmap* pixmap) override;
+    bool updateTexture(render::window_pixmap* pixmap) override;
     gl::backend* backend() override;
 
 private:
     friend class glx_backend;
     GlxTexture(gl::texture* texture, glx_backend* backend);
 
-    bool loadTexture(xcb_pixmap_t pix, const QSize& size, xcb_visualid_t visual);
     Display* display() const
     {
         return m_backend->data.display;

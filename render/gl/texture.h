@@ -67,8 +67,7 @@ class KWIN_EXPORT texture_private : public GLTexturePrivate
 public:
     ~texture_private() override;
 
-    virtual bool loadTexture(render::window_pixmap* pixmap) = 0;
-    virtual void updateTexture(render::window_pixmap* pixmap);
+    virtual bool updateTexture(render::window_pixmap* pixmap) = 0;
     virtual gl::backend* backend() = 0;
 
 protected:

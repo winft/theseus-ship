@@ -39,8 +39,7 @@ class drm_lease_device_v1;
 class KdeIdle;
 class KeyState;
 class LayerShellV1;
-class LinuxDmabufBufferV1;
-class LinuxDmabufV1;
+class linux_dmabuf_v1;
 class PlasmaVirtualDesktopManager;
 class PlasmaWindowManager;
 class PresentationManager;
@@ -78,7 +77,7 @@ public:
 
     Wrapland::Server::Compositor* compositor() const;
     Wrapland::Server::Subcompositor* subcompositor() const;
-    Wrapland::Server::LinuxDmabufV1* linux_dmabuf();
+    Wrapland::Server::linux_dmabuf_v1* linux_dmabuf();
     Wrapland::Server::Viewporter* viewporter() const;
     Wrapland::Server::PresentationManager* presentation_manager() const;
 
@@ -170,7 +169,6 @@ public:
 
     } internal_connection;
 
-    QSet<Wrapland::Server::LinuxDmabufBufferV1*> dmabuf_buffers;
     Wrapland::Server::Client* screen_locker_client_connection{nullptr};
 
 Q_SIGNALS:

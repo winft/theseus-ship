@@ -225,10 +225,18 @@ void GlxTexture::onDamage()
     GLTexturePrivate::onDamage();
 }
 
-bool GlxTexture::loadTexture(xcb_pixmap_t pixmap, const QSize& size, xcb_visualid_t visual)
+bool GlxTexture::updateTexture(render::window_pixmap* pixmap)
 {
-    if (pixmap == XCB_NONE || size.isEmpty() || visual == XCB_NONE)
+    if (m_target) {
+        return true;
+    }
+
+    auto const size = win::render_geometry(pixmap->toplevel()).size();
+    auto const visual = pixmap->toplevel()->visual();
+
+    if (pixmap->pixmap() == XCB_NONE || size.isEmpty() || visual == XCB_NONE) {
         return false;
+    }
 
     auto const info = fb_config_info_for_visual(visual, *m_backend);
     if (!info || info->fbconfig == nullptr)
@@ -254,7 +262,7 @@ bool GlxTexture::loadTexture(xcb_pixmap_t pixmap, const QSize& size, xcb_visuali
                          m_target == GL_TEXTURE_2D ? GLX_TEXTURE_2D_EXT : GLX_TEXTURE_RECTANGLE_EXT,
                          0};
 
-    m_glxpixmap = glXCreatePixmap(display(), info->fbconfig, pixmap, attrs);
+    m_glxpixmap = glXCreatePixmap(display(), info->fbconfig, pixmap->pixmap(), attrs);
     m_size = size;
     m_yInverted = info->y_inverted ? true : false;
     m_canUseMipmaps = false;
@@ -269,12 +277,6 @@ bool GlxTexture::loadTexture(xcb_pixmap_t pixmap, const QSize& size, xcb_visuali
 
     updateMatrix();
     return true;
-}
-
-bool GlxTexture::loadTexture(render::window_pixmap* pixmap)
-{
-    Toplevel* t = pixmap->toplevel();
-    return loadTexture(pixmap->pixmap(), win::render_geometry(t).size(), t->visual());
 }
 
 gl::backend* GlxTexture::backend()
