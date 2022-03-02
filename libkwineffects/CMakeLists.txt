@@ -41,6 +41,7 @@ set(kwin_EFFECTSLIB_SRCS
     kwindeformeffect.cpp
     kwineffectquickview.cpp
     kwineffects.cpp
+    kwineffects/effect.cpp
     logging.cpp
 )
 
@@ -107,6 +108,7 @@ install(FILES
     DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
 install(FILES
+    kwineffects/effect.h
     kwineffects/types.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwineffects COMPONENT Devel)
 
