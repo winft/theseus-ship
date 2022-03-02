@@ -538,27 +538,6 @@ EffectScreen* ScreenPaintData::screen() const
 }
 
 //****************************************
-// EffectFactory
-//****************************************
-EffectPluginFactory::EffectPluginFactory()
-{
-}
-
-EffectPluginFactory::~EffectPluginFactory()
-{
-}
-
-bool EffectPluginFactory::enabledByDefault() const
-{
-    return true;
-}
-
-bool EffectPluginFactory::isSupported() const
-{
-    return true;
-}
-
-//****************************************
 // EffectsHandler
 //****************************************
 
