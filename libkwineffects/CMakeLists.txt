@@ -106,6 +106,10 @@ install(FILES
     kwinxrenderutils.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
+install(FILES
+    kwineffects/types.h
+    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwineffects COMPONENT Devel)
+
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinEffects")
 
 

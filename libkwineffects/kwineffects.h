@@ -20,9 +20,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWINEFFECTS_H
 #define KWINEFFECTS_H
+
+#include <kwineffects/types.h>
 
 #include <kwinconfig.h>
 #include <kwineffects_export.h>
@@ -58,12 +59,6 @@ class QKeyEvent;
 class QMatrix4x4;
 class QAction;
 
-/**
- * Logging category to be used inside the KWin effects.
- * Do not use in this library.
- */
-Q_DECLARE_LOGGING_CATEGORY(KWINEFFECTS)
-
 namespace Wrapland::Server
 {
 class Surface;
@@ -76,13 +71,11 @@ namespace KWin
 class PaintDataPrivate;
 class WindowPaintDataPrivate;
 
-class EffectWindow;
 class EffectWindowGroup;
 class EffectFrame;
 class EffectFramePrivate;
 class EffectQuickView;
 class EffectScreen;
-class Effect;
 class WindowQuad;
 class GLShader;
 class XRenderPicture;
@@ -91,9 +84,6 @@ class WindowPrePaintData;
 class WindowPaintData;
 class ScreenPrePaintData;
 class ScreenPaintData;
-
-typedef QPair<QString, Effect*> EffectPair;
-typedef QList<KWin::EffectWindow*> EffectWindowList;
 
 /** @defgroup kwineffects KWin effects library
  * KWin effects library contains necessary classes for creating new KWin
@@ -187,67 +177,6 @@ typedef QList<KWin::EffectWindow*> EffectWindowList;
  *
  * @{
  */
-
-#define KWIN_EFFECT_API_MAKE_VERSION(major, minor) ((major) << 8 | (minor))
-#define KWIN_EFFECT_API_VERSION_MAJOR 0
-#define KWIN_EFFECT_API_VERSION_MINOR 233
-#define KWIN_EFFECT_API_VERSION                                                                    \
-    KWIN_EFFECT_API_MAKE_VERSION(KWIN_EFFECT_API_VERSION_MAJOR, KWIN_EFFECT_API_VERSION_MINOR)
-
-enum WindowQuadType {
-    WindowQuadError, // for the stupid default ctor
-    WindowQuadContents,
-    WindowQuadDecoration,
-    // Shadow Quad types
-    WindowQuadShadow, // OpenGL only. The other shadow types are only used by Xrender
-    WindowQuadShadowTop,
-    WindowQuadShadowTopRight,
-    WindowQuadShadowRight,
-    WindowQuadShadowBottomRight,
-    WindowQuadShadowBottom,
-    WindowQuadShadowBottomLeft,
-    WindowQuadShadowLeft,
-    WindowQuadShadowTopLeft,
-    EFFECT_QUAD_TYPE_START = 100 ///< @internal
-};
-
-/**
- * EffectWindow::setData() and EffectWindow::data() global roles.
- * All values between 0 and 999 are reserved for global roles.
- */
-enum DataRole {
-    // Grab roles are used to force all other animations to ignore the window.
-    // The value of the data is set to the Effect's `this` value.
-    WindowAddedGrabRole = 1,
-    WindowClosedGrabRole,
-    WindowMinimizedGrabRole,
-    WindowUnminimizedGrabRole,
-    WindowForceBlurRole,               ///< For fullscreen effects to enforce blurring of windows,
-    WindowBlurBehindRole,              ///< For single windows to blur behind
-    WindowForceBackgroundContrastRole, ///< For fullscreen effects to enforce the background
-                                       ///< contrast,
-    WindowBackgroundContrastRole,      ///< For single windows to enable Background contrast
-    LanczosCacheRole
-};
-
-/**
- * Style types used by @ref EffectFrame.
- * @since 4.6
- */
-enum EffectFrameStyle {
-    EffectFrameNone,     ///< Displays no frame around the contents.
-    EffectFrameUnstyled, ///< Displays a basic box around the contents.
-    EffectFrameStyled    ///< Displays a Plasma-styled frame around the contents.
-};
-
-/**
- * Infinite region (i.e. a special region type saying that everything needs to be painted).
- */
-KWINEFFECTS_EXPORT inline QRect infiniteRegion()
-{
-    // INT_MIN / 2 because width/height is used (INT_MIN+INT_MAX==-1)
-    return QRect(INT_MIN / 2, INT_MIN / 2, INT_MAX, INT_MAX);
-}
 
 /**
  * @short Base class for all KWin effects
