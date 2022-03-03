@@ -40,7 +40,6 @@ set(kwin_EFFECTSLIB_SRCS
     kwinanimationeffect.cpp
     kwindeformeffect.cpp
     kwineffectquickview.cpp
-    kwineffects.cpp
     kwineffects/effect.cpp
     kwineffects/effect_frame.cpp
     kwineffects/effect_plugin_factory.cpp
