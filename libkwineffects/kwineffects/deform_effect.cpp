@@ -1,10 +1,15 @@
 /*
     SPDX-FileCopyrightText: 2021 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
+#include "deform_effect.h"
 
-#include "kwindeformeffect.h"
+#include "effect_window.h"
+#include "effects_handler.h"
+#include "paint_data.h"
+
 #include "kwingltexture.h"
 #include "kwinglutils.h"
 
@@ -252,4 +257,4 @@ void DeformEffect::destroyConnections()
     d->windowDeletedConnection = {};
 }
 
-} // namespace KWin
+}

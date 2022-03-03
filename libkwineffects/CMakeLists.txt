@@ -38,7 +38,7 @@ install(TARGETS kwinxrenderutils EXPORT KWinEffectsTargets ${INSTALL_TARGETS_DEF
 set(kwin_EFFECTSLIB_SRCS
     anidata.cpp
     kwinanimationeffect.cpp
-    kwindeformeffect.cpp
+    kwineffects/deform_effect.cpp
     kwineffects/effect.cpp
     kwineffects/effect_frame.cpp
     kwineffects/effect_plugin_factory.cpp
@@ -117,6 +117,7 @@ install(FILES
     DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
 install(FILES
+    kwineffects/deform_effect.h
     kwineffects/effect.h
     kwineffects/effect_frame.h
     kwineffects/effect_plugin_factory.h
