@@ -43,6 +43,7 @@ set(kwin_EFFECTSLIB_SRCS
     kwineffects.cpp
     kwineffects/effect.cpp
     kwineffects/effect_plugin_factory.cpp
+    kwineffects/effect_screen.cpp
     kwineffects/effects_handler.cpp
     logging.cpp
 )
@@ -112,6 +113,7 @@ install(FILES
 install(FILES
     kwineffects/effect.h
     kwineffects/effect_plugin_factory.h
+    kwineffects/effect_screen.h
     kwineffects/effects_handler.h
     kwineffects/types.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwineffects COMPONENT Devel)

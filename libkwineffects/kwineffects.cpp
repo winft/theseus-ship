@@ -537,11 +537,6 @@ EffectScreen* ScreenPaintData::screen() const
     return d->screen;
 }
 
-EffectScreen::EffectScreen(QObject* parent)
-    : QObject(parent)
-{
-}
-
 //****************************************
 // EffectWindow
 //****************************************
