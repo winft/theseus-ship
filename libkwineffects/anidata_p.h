@@ -22,9 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef ANIDATA_H
 #define ANIDATA_H
 
-#include "kwinanimationeffect.h"
+#include <kwineffects/animation_effect.h>
+#include <kwineffects/time_line.h>
 
 #include <QEasingCurve>
+#include <QSharedPointer>
 
 namespace KWin
 {
