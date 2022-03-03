@@ -39,10 +39,10 @@ set(kwin_EFFECTSLIB_SRCS
     anidata.cpp
     kwinanimationeffect.cpp
     kwindeformeffect.cpp
-    kwineffectquickview.cpp
     kwineffects/effect.cpp
     kwineffects/effect_frame.cpp
     kwineffects/effect_plugin_factory.cpp
+    kwineffects/effect_quick_view.cpp
     kwineffects/effect_screen.cpp
     kwineffects/effect_window.cpp
     kwineffects/effects_handler.cpp
@@ -120,6 +120,7 @@ install(FILES
     kwineffects/effect.h
     kwineffects/effect_frame.h
     kwineffects/effect_plugin_factory.h
+    kwineffects/effect_quick_view.h
     kwineffects/effect_screen.h
     kwineffects/effect_window.h
     kwineffects/effects_handler.h
