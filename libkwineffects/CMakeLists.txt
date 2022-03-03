@@ -42,6 +42,7 @@ set(kwin_EFFECTSLIB_SRCS
     kwineffectquickview.cpp
     kwineffects.cpp
     kwineffects/effect.cpp
+    kwineffects/effect_frame.cpp
     kwineffects/effect_plugin_factory.cpp
     kwineffects/effect_screen.cpp
     kwineffects/effect_window.cpp
@@ -117,6 +118,7 @@ install(FILES
 
 install(FILES
     kwineffects/effect.h
+    kwineffects/effect_frame.h
     kwineffects/effect_plugin_factory.h
     kwineffects/effect_screen.h
     kwineffects/effect_window.h
