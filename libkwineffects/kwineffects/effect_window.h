@@ -336,7 +336,7 @@ class KWINEFFECTS_EXPORT EffectWindow : public QObject
      *
      * @since 5.18
      */
-    Q_PROPERTY(bool outline READ isOutline CONSTANT)
+    Q_PROPERTY(pid_t pid READ pid CONSTANT)
 
     /**
      * Whether this EffectWindow represents the screenlocker greeter.
