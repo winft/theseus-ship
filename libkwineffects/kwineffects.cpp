@@ -537,61 +537,6 @@ EffectScreen* ScreenPaintData::screen() const
     return d->screen;
 }
 
-//****************************************
-// EffectsHandler
-//****************************************
-
-EffectsHandler::EffectsHandler(CompositingType type)
-    : compositing_type(type)
-{
-    if (compositing_type == NoCompositing)
-        return;
-    KWin::effects = this;
-    connect(this,
-            QOverload<int, int>::of(&EffectsHandler::desktopChanged),
-            this,
-            &EffectsHandler::desktopChangedLegacy);
-}
-
-EffectsHandler::~EffectsHandler()
-{
-    // All effects should already be unloaded by Impl dtor
-    Q_ASSERT(loaded_effects.count() == 0);
-    KWin::effects = nullptr;
-}
-
-CompositingType EffectsHandler::compositingType() const
-{
-    return compositing_type;
-}
-
-bool EffectsHandler::isOpenGLCompositing() const
-{
-    return compositing_type == OpenGLCompositing;
-}
-
-EffectWindow* EffectsHandler::findWindow(WId id) const
-{
-    return find_window_by_wid(id);
-}
-
-EffectWindow* EffectsHandler::findWindow(Wrapland::Server::Surface* surface) const
-{
-    return find_window_by_surface(surface);
-}
-
-EffectWindow* EffectsHandler::findWindow(QWindow* window) const
-{
-    return find_window_by_qwindow(window);
-}
-
-EffectWindow* EffectsHandler::findWindow(QUuid const& id) const
-{
-    return find_window_by_uuid(id);
-}
-
-EffectsHandler* effects = nullptr;
-
 EffectScreen::EffectScreen(QObject* parent)
     : QObject(parent)
 {
