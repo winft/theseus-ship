@@ -77,6 +77,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "win/geo.h"
 
+#include <kwineffects/paint_clipper.h>
+
 #include <QQuickWindow>
 #include <QVector2D>
 

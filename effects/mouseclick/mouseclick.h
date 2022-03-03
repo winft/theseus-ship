@@ -17,15 +17,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_MOUSECLICK_H
 #define KWIN_MOUSECLICK_H
 
-#include <KLocalizedString>
-#include <QFont>
-#include <kwineffects.h>
+#include <kwineffects/effect.h>
+#include <kwineffects/effect_frame.h>
 #include <kwinglutils.h>
 #include <kwinxrenderutils.h>
+
+#include <KLocalizedString>
+#include <QFont>
 
 namespace KWin
 {

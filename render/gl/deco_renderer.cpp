@@ -25,7 +25,6 @@
 #include "win/geo.h"
 #include "win/transient.h"
 
-#include "kwineffectquickview.h"
 #include "kwinglplatform.h"
 
 #include <KLocalizedString>

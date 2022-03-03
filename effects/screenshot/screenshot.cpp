@@ -9,6 +9,9 @@
 #include "screenshotdbusinterface1.h"
 #include "screenshotdbusinterface2.h"
 
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
 

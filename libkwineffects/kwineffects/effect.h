@@ -6,6 +6,7 @@
 #pragma once
 
 #include <kwineffects/export.h>
+#include <kwineffects/types.h>
 #include <kwinglobals.h>
 
 #include <KSharedConfig>

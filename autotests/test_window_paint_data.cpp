@@ -18,7 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "win/virtual_desktops.h"
-#include <kwineffects.h>
+
+#include <kwineffects/effect_window.h>
+#include <kwineffects/paint_data.h>
+#include <kwineffects/window_quad.h>
 
 #include <QGraphicsRotation>
 #include <QGraphicsScale>

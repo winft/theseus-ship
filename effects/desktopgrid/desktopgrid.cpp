@@ -19,12 +19,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "desktopgrid.h"
+
 // KConfigSkeleton
 #include "desktopgridconfig.h"
 
 #include "../presentwindows/presentwindows_proxy.h"
+
+#include <kwineffects/effect_frame.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_clipper.h>
 
 #include <KGlobalAccel>
 #include <KLocalizedString>

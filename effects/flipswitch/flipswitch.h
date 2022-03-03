@@ -17,15 +17,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_FLIPSWITCH_H
 #define KWIN_FLIPSWITCH_H
+
+#include <kwineffects/effect.h>
 
 #include <QFont>
 #include <QMatrix4x4>
 #include <QQueue>
 #include <QTimeLine>
-#include <kwineffects.h>
 
 namespace KWin
 {

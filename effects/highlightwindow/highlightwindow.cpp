@@ -6,7 +6,12 @@
 */
 #include "highlightwindow.h"
 
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/types.h>
+
 #include <QDBusConnection>
+#include <QUuid>
 
 Q_LOGGING_CATEGORY(KWIN_HIGHLIGHTWINDOW, "kwin_effect_highlightwindow", QtWarningMsg)
 

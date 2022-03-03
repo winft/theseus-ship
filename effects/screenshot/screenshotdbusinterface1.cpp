@@ -8,6 +8,9 @@
 
 #include "desktop/kde/service_utils.h"
 
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+
 #include <KLocalizedString>
 #include <KNotification>
 

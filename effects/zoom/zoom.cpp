@@ -18,14 +18,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "zoom.h"
+
 // KConfigSkeleton
 #include "zoomconfig.h"
 
 #if HAVE_ACCESSIBILITY
 #include "accessibilityintegration.h"
 #endif
+
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
 
 #include <KConfigGroup>
 #include <KGlobalAccel>

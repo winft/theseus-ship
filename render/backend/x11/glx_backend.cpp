@@ -22,7 +22,6 @@
 #include "render/x11/overlay_window.h"
 #include "win/x11/geo.h"
 
-#include "kwineffectquickview.h"
 #include "kwinglutils.h"
 #include "kwinxrenderutils.h"
 

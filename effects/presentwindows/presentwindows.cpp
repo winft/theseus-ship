@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KLocalizedString>
 #include <QAction>
 
+#include <kwineffects/effect_frame.h>
+#include <kwineffects/effects_handler.h>
 #include <kwinglutils.h>
 
 #include <QMouseEvent>
@@ -38,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QQuickItem>
 #include <QQuickView>
 #include <QTimer>
+#include <QUuid>
 #include <QVector2D>
 #include <QVector4D>
 

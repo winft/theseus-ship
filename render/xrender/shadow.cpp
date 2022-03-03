@@ -8,6 +8,7 @@
 */
 #include "shadow.h"
 
+#include "kwinglobals.h"
 #include "kwinxrenderutils.h"
 #include "utils/algorithm.h"
 

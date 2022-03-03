@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/wayland/server.h"
 #include "input/cursor.h"
-#include "kwineffects.h"
 #include "toplevel.h"
 #include "win/move.h"
 #include "win/screen_edges.h"

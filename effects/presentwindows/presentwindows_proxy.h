@@ -17,10 +17,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_PRESENTWINDOWS_PROXY_H
 #define KWIN_PRESENTWINDOWS_PROXY_H
-#include <kwineffects.h>
+
+#include <kwineffects/motions.h>
+#include <kwineffects/types.h>
 
 namespace KWin
 {

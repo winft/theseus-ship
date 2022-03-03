@@ -28,7 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QRegion>
 #include <QSize>
 
-#include <kwineffects.h>
+#include <kwineffects/effect.h>
+#include <kwineffects/time_line.h>
 #include <kwinglutils.h>
 
 namespace KWin

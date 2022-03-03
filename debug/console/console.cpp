@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 #include "win/x11/window.h"
 
+#include <kwineffects/effects_handler.h>
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
 

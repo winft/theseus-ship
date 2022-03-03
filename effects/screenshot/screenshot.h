@@ -6,7 +6,8 @@
 */
 #pragma once
 
-#include <kwineffects.h>
+#include <kwineffects/effect.h>
+#include <kwineffects/effect_screen.h>
 
 #include <QFuture>
 #include <QFutureInterface>

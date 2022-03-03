@@ -17,9 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_CUBE_H
 #define KWIN_CUBE_H
+
+#include <kwineffects/effect.h>
+#include <kwineffects/time_line.h>
+#include <kwinglutils.h>
 
 #include "cube_inside.h"
 #include "cube_proxy.h"
@@ -27,8 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMatrix4x4>
 #include <QObject>
 #include <QQueue>
-#include <kwineffects.h>
-#include <kwinglutils.h>
 
 namespace KWin
 {

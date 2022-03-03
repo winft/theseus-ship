@@ -7,12 +7,10 @@ Copyright (C) 2008 Cédric Borgese <cedric.borgese@gmail.com>
 You can Freely distribute this program under the GNU General Public
 License. See the file "COPYING" for the exact licensing terms.
 ******************************************************************/
-
 #ifndef KWIN_WOBBLYWINDOWS_H
 #define KWIN_WOBBLYWINDOWS_H
 
-// Include with base class for effects.
-#include <kwindeformeffect.h>
+#include <kwineffects/deform_effect.h>
 
 namespace KWin
 {

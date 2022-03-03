@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/scene.h"
 #include "win/x11/window.h"
 
-#include "kwineffectquickview.h"
+#include <kwineffects/paint_clipper.h>
 
 #include <cassert>
 

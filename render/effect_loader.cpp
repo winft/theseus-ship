@@ -23,7 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scripting/effect.h"
 
 #include "config-kwin.h"
-#include "kwineffects.h"
+#include "kwineffects/effect_plugin_factory.h"
+#include "kwineffects/effects_handler.h"
 
 #include <KConfigGroup>
 #include <KPackage/Package>

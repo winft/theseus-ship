@@ -24,13 +24,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // KConfigSkeleton
 #include "lookingglassconfig.h"
 
-#include <QAction>
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
 
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KStandardAction>
+#include <QAction>
 #include <QFile>
 #include <QVector2D>
 

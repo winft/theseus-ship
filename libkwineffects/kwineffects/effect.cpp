@@ -5,7 +5,8 @@
 */
 #include "effect.h"
 
-#include "kwineffects.h"
+#include "effect_window.h"
+#include "effects_handler.h"
 #include "paint_data.h"
 
 #include <KConfigGroup>

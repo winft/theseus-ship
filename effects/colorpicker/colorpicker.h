@@ -20,12 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_COLORPICKER_H
 #define KWIN_COLORPICKER_H
 
+#include <kwineffects/effect.h>
+#include <kwineffects/effect_screen.h>
+
 #include <QColor>
 #include <QDBusContext>
 #include <QDBusMessage>
 #include <QDBusUnixFileDescriptor>
 #include <QObject>
-#include <kwineffects.h>
 
 namespace KWin
 {

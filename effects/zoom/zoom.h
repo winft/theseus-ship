@@ -18,15 +18,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_ZOOM_H
 #define KWIN_ZOOM_H
 
 #include <config-kwin.h>
+#include <kwineffects/effect.h>
 
 #include <QTime>
 #include <QTimeLine>
-#include <kwineffects.h>
 
 namespace KWin
 {

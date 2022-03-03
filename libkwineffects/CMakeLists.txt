@@ -36,7 +36,7 @@ install(TARGETS kwinxrenderutils EXPORT KWinEffectsTargets ${INSTALL_TARGETS_DEF
 
 ###  effects lib  ###
 set(kwin_EFFECTSLIB_SRCS
-    anidata.cpp
+    kwineffects/anidata.cpp
     kwineffects/animation_effect.cpp
     kwineffects/deform_effect.cpp
     kwineffects/effect.cpp
@@ -103,11 +103,11 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/kwinconfig.h
     ${CMAKE_CURRENT_BINARY_DIR}/kwinglutils_export.h
     ${CMAKE_CURRENT_BINARY_DIR}/kwinxrenderutils_export.h
-    kwinanimationeffect.h
-    kwindeformeffect.h
-    kwineffectquickview.h
-    kwineffects.h
-    kwineffects_export.h
+    kwineffects/legacy/kwinanimationeffect.h
+    kwineffects/legacy/kwindeformeffect.h
+    kwineffects/legacy/kwineffectquickview.h
+    kwineffects/legacy/kwineffects.h
+    kwineffects/legacy/kwineffects_export.h
     kwinglobals.h
     kwinglplatform.h
     kwingltexture.h

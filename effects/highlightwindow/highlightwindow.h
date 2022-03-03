@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_HIGHLIGHTWINDOW_H
 #define KWIN_HIGHLIGHTWINDOW_H
 
-#include <kwinanimationeffect.h>
+#include <kwineffects/animation_effect.h>
 
 namespace KWin
 {

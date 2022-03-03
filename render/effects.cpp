@@ -55,7 +55,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/tabbox/tabbox.h"
 #endif
 
-#include "kwineffectquickview.h"
 #include "kwinglutils.h"
 
 #include <KDecoration2/DecorationSettings>

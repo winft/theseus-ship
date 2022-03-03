@@ -3,8 +3,9 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
-
 #include "trackmouse.h"
+
+#include <kwineffects/effect_plugin_factory.h>
 
 namespace KWin
 {

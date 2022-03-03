@@ -18,8 +18,6 @@
 #include "render/cursor.h"
 #include "toplevel.h"
 
-#include "kwineffectquickview.h"
-
 #include <KDecoration2/Decoration>
 #include <QPainter>
 #include <Wrapland/Server/buffer.h>

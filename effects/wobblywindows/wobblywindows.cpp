@@ -7,9 +7,12 @@ Copyright (C) 2008 Cédric Borgese <cedric.borgese@gmail.com>
 You can Freely distribute this program under the GNU General Public
 License. See the file "COPYING" for the exact licensing terms.
 ******************************************************************/
-
 #include "wobblywindows.h"
 #include "wobblywindowsconfig.h"
+
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
 
 #include <cmath>
 

@@ -18,19 +18,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "mousemark.h"
 
 // KConfigSkeleton
 #include "mousemarkconfig.h"
 
-#include <KGlobalAccel>
-#include <KLocalizedString>
-#include <QAction>
 #include <kwinconfig.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
 
+#include <KGlobalAccel>
+#include <KLocalizedString>
+#include <QAction>
 #include <QPainter>
 
 #include <cmath>

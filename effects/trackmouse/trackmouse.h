@@ -19,17 +19,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_TRACKMOUSE_H
 #define KWIN_TRACKMOUSE_H
 
-#include <kwineffects.h>
+#include <kwineffects/effect.h>
 
 class QAction;
 
 namespace KWin
 {
+
 class GLTexture;
+class XRenderPicture;
 
 class TrackMouseEffect : public Effect
 {

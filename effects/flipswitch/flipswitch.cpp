@@ -18,19 +18,23 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "flipswitch.h"
+
 // KConfigSkeleton
 #include "flipswitchconfig.h"
 
+#include <kwinconfig.h>
+#include <kwineffects/effect_frame.h>
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
+#include <kwinglutils.h>
+
+#include <KGlobalAccel>
+#include <KLocalizedString>
 #include <QAction>
 #include <QFont>
 #include <QKeyEvent>
 #include <QMatrix4x4>
-#include <kwinconfig.h>
-
-#include <KGlobalAccel>
-#include <KLocalizedString>
-
-#include <kwinglutils.h>
 
 #include <cmath>
 

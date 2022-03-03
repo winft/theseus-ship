@@ -17,11 +17,10 @@
  *   the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  *   Boston, MA 02110-1301, USA.
  */
-
 #ifndef CONTRAST_H
 #define CONTRAST_H
 
-#include <kwineffects.h>
+#include <kwineffects/effect.h>
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
 

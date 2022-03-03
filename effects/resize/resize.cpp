@@ -17,12 +17,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "resize.h"
+
 // KConfigSkeleton
 #include "resizeconfig.h"
 
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
 #include <kwinglutils.h>
+
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
 #include "kwinxrenderutils.h"
 #endif

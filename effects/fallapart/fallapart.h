@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_FALLAPART_H
 #define KWIN_FALLAPART_H
 
-#include <kwindeformeffect.h>
+#include <kwineffects/deform_effect.h>
 
 namespace KWin
 {

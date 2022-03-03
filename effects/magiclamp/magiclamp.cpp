@@ -17,12 +17,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 // based on minimize animation by Rivo Laks <rivolaks@hot.ee>
-
 #include "magiclamp.h"
+
 // KConfigSkeleton
 #include "magiclampconfig.h"
+
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
 
 namespace KWin
 {

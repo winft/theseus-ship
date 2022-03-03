@@ -17,19 +17,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_STARTUPFEEDBACK_H
 #define KWIN_STARTUPFEEDBACK_H
+
+#include <kwineffects/effect.h>
+
 #include <KConfigWatcher>
 #include <KStartupInfo>
 #include <QObject>
-#include <kwineffects.h>
 
 #include <chrono>
 
 class KSelectionOwner;
 namespace KWin
 {
+class GLShader;
 class GLTexture;
 
 class StartupFeedbackEffect : public Effect

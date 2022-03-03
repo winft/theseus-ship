@@ -23,6 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cubeslideconfig.h"
 
 #include <kwinconfig.h>
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
 #include <kwinglutils.h>
 
 #include <QVector3D>

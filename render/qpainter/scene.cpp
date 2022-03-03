@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wayland_logging.h"
 #include "win/space.h"
 
-#include "kwineffectquickview.h"
+#include <kwineffects/effects_handler.h>
 
 #include <KDecoration2/Decoration>
 #include <QPainter>

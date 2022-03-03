@@ -18,8 +18,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "coverswitch.h"
+
 // KConfigSkeleton
 #include "coverswitchconfig.h"
+
+#include <kwinconfig.h>
+#include <kwineffects/effect_frame.h>
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
+#include <kwinglplatform.h>
+#include <kwinglutils.h>
 
 #include <KLocalizedString>
 #include <QFile>
@@ -29,10 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMatrix4x4>
 #include <QMouseEvent>
 #include <kcolorscheme.h>
-#include <kwinconfig.h>
-
-#include <kwinglplatform.h>
-#include <kwinglutils.h>
 
 #include <cmath>
 

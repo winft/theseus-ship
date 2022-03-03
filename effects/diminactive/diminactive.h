@@ -23,8 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_DIMINACTIVE_H
 #define KWIN_DIMINACTIVE_H
 
-// kwineffects
-#include <kwineffects.h>
+#include <kwineffects/effect.h>
+#include <kwineffects/effect_window.h>
+#include <kwineffects/time_line.h>
 
 namespace KWin
 {

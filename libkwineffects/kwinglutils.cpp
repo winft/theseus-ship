@@ -24,9 +24,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // need to call GLTexturePrivate::initStatic()
 #include "kwingltexture_p.h"
 
-#include "kwineffects.h"
 #include "kwinglplatform.h"
 #include "logging_p.h"
+
+#include <kwineffects/types.h>
 
 #include <QFile>
 #include <QHash>

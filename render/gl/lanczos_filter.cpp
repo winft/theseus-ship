@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "toplevel.h"
 #include "win/space.h"
 
-#include "kwineffects.h"
 #include "kwinglplatform.h"
 #include "kwinglutils.h"
 

@@ -19,7 +19,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "startupfeedback.h"
-// Qt
+
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
+#include <kwinglutils.h>
+
+#include <KConfigGroup>
+#include <KSelectionOwner>
+#include <KSharedConfig>
+#include <KStartupInfo>
+#include <KWindowSystem>
 #include <QApplication>
 #include <QDBusConnectionInterface>
 #include <QDBusServiceWatcher>
@@ -29,14 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStandardPaths>
 #include <QStyle>
 #include <QTimer>
-// KDE
-#include <KConfigGroup>
-#include <KSelectionOwner>
-#include <KSharedConfig>
-#include <KStartupInfo>
-#include <KWindowSystem>
-// KWin
-#include <kwinglutils.h>
 
 // based on StartupId in KRunner by Lubos Lunak
 // Copyright (C) 2001 Lubos Lunak <l.lunak@kde.org>

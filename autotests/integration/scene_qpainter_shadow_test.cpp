@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lib/app.h"
 
 #include "base/wayland/server.h"
-#include "kwineffects.h"
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"

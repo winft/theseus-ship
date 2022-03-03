@@ -9,7 +9,7 @@
 */
 #pragma once
 
-#include <kwinanimationeffect.h>
+#include <kwineffects/animation_effect.h>
 
 #include <QJSEngine>
 #include <QJSValue>

@@ -18,12 +18,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_SLIDINGPOPUPS_H
 #define KWIN_SLIDINGPOPUPS_H
 
-// Include with base class for effects.
-#include <kwineffects.h>
+#include <kwineffects/effect.h>
+#include <kwineffects/time_line.h>
+
 #include <memory>
 
 namespace Wrapland::Server

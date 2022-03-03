@@ -21,7 +21,7 @@
 #ifndef BLUR_H
 #define BLUR_H
 
-#include <kwineffects.h>
+#include <kwineffects/effect.h>
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
 

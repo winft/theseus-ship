@@ -19,14 +19,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
-// own
 #include "sheet.h"
 
 // KConfigSkeleton
 #include "sheetconfig.h"
 
-// Qt
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
+
 #include <QMatrix4x4>
 
 namespace KWin

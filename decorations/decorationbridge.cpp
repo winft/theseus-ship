@@ -33,15 +33,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/deco.h"
 #include "win/space.h"
 
-// KDecoration
+#include <kwineffects/effect_plugin_factory.h>
+
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/DecorationSettings>
-
-// Frameworks
 #include <KPluginMetaData>
-
-// Qt
 #include <QMetaProperty>
 #include <QPainter>
 

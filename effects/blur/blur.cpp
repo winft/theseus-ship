@@ -18,11 +18,16 @@
  *   the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  *   Boston, MA 02110-1301, USA.
  */
-
 #include "blur.h"
 #include "blurshader.h"
+
 // KConfigSkeleton
 #include "blurconfig.h"
+
+#include <kwineffects/effect_frame.h>
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
 
 #include <QGuiApplication>
 #include <QMatrix4x4>

@@ -20,7 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_KSCREEN_H
 #define KWIN_KSCREEN_H
 
-#include <kwineffects.h>
+#include <kwineffects/effect.h>
+#include <kwineffects/effect_window.h>
+#include <kwineffects/paint_data.h>
+#include <kwineffects/time_line.h>
 
 namespace KWin
 {

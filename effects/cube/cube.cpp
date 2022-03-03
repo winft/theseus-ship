@@ -18,16 +18,23 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "cube.h"
+
 // KConfigSkeleton
 #include "cubeconfig.h"
 
 #include "cube_inside.h"
 
+#include <kwinconfig.h>
+#include <kwineffects/effect_frame.h>
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
+#include <kwinglplatform.h>
+#include <kwinglutils.h>
+
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <QAction>
-#include <kwinconfig.h>
-
 #include <QApplication>
 #include <QColor>
 #include <QElapsedTimer>
@@ -40,9 +47,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtConcurrentRun>
 
 #include <cmath>
-
-#include <kwinglplatform.h>
-#include <kwinglutils.h>
 
 Q_LOGGING_CATEGORY(KWIN_CUBE, "kwin_effect_cube", QtWarningMsg)
 

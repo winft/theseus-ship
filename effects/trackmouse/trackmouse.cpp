@@ -19,23 +19,23 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "trackmouse.h"
 
 // KConfigSkeleton
 #include "trackmouseconfig.h"
 
-#include <QAction>
-#include <QMatrix4x4>
-#include <QPainter>
-#include <QTime>
-
 #include <kwinconfig.h>
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
 #include <kwinglutils.h>
 #include <kwinxrenderutils.h>
 
 #include <KGlobalAccel>
 #include <KLocalizedString>
+#include <QAction>
+#include <QMatrix4x4>
+#include <QPainter>
+#include <QTime>
 
 #include <cmath>
 

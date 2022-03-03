@@ -18,11 +18,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "colorpicker.h"
+
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
+#include <kwinglutils.h>
+#include <kwinglutils_funcs.h>
+
 #include <KLocalizedString>
 #include <QDBusConnection>
 #include <QDBusMetaType>
-#include <kwinglutils.h>
-#include <kwinglutils_funcs.h>
 
 Q_DECLARE_METATYPE(QColor)
 

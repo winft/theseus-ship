@@ -18,14 +18,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #ifndef KWIN_PRESENTWINDOWS_H
 #define KWIN_PRESENTWINDOWS_H
 
 #include "presentwindows_proxy.h"
 
-#include <kwineffectquickview.h>
-#include <kwineffects.h>
+#include <kwineffects/effect_quick_view.h>
+#include <kwineffects/effect_window.h>
 
 #include <QElapsedTimer>
 

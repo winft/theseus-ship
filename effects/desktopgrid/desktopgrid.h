@@ -22,13 +22,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KWIN_DESKTOPGRID_H
 #define KWIN_DESKTOPGRID_H
 
+#include <kwineffects/effect.h>
+#include <kwineffects/effect_quick_view.h>
+#include <kwineffects/motions.h>
+
 #include <QObject>
 #include <QTimeLine>
-#include <kwineffects.h>
 
 class QTimer;
-
-#include "kwineffectquickview.h"
 
 namespace KWin
 {

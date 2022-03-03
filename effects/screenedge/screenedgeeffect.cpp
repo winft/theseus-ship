@@ -18,17 +18,18 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "screenedgeeffect.h"
-// KWin
+
+#include <kwineffects/effects_handler.h>
+#include <kwineffects/paint_data.h>
 #include <kwingltexture.h>
 #include <kwinglutils.h>
 #include <kwinxrenderutils.h>
-// KDE
+
 #include <Plasma/Svg>
-// Qt
 #include <QPainter>
 #include <QTimer>
 #include <QVector4D>
-// xcb
+
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
 #include <xcb/render.h>
 #endif
