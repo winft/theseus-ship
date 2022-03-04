@@ -18,6 +18,8 @@ namespace KWin::render::wayland
 effects_handler_impl::effects_handler_impl(render::compositor* compositor, render::scene* scene)
     : render::effects_handler_impl(compositor, scene)
 {
+    reconfigure();
+
     auto space = static_cast<win::wayland::space*>(workspace());
 
     // TODO(romangg): We do this for every window here, even for windows that are not an xdg-shell

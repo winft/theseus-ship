@@ -305,8 +305,6 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     for (base::output* output : outputs) {
         slotOutputEnabled(output);
     }
-
-    reconfigure();
 }
 
 effects_handler_impl::~effects_handler_impl()
