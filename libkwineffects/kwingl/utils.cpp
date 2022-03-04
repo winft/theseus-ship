@@ -39,6 +39,8 @@
 #define unlikely(x) (x)
 #endif
 
+Q_LOGGING_CATEGORY(LIBKWINGLUTILS, "libkwinglutils", QtWarningMsg)
+
 namespace KWin
 {
 // Variables

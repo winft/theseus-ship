@@ -11,7 +11,6 @@ ecm_setup_version(${PROJECT_VERSION}
 ### xrenderutils lib ###
 set(kwin_XRENDERUTILS_SRCS
     kwinxrender/utils.cpp
-    logging.cpp
 )
 
 add_library(kwinxrenderutils SHARED ${kwin_XRENDERUTILS_SRCS})
@@ -51,7 +50,6 @@ set(kwin_EFFECTSLIB_SRCS
     kwineffects/paint_data.cpp
     kwineffects/time_line.cpp
     kwineffects/window_quad.cpp
-    logging.cpp
 )
 
 add_library(kwineffects SHARED ${kwin_EFFECTSLIB_SRCS})
@@ -85,7 +83,6 @@ set(kwin_GLUTILSLIB_SRCS
     kwingl/texture.cpp
     kwingl/utils.cpp
     kwingl/utils_funcs.cpp
-    logging.cpp
 )
 
 add_library(kwinglutils SHARED ${kwin_GLUTILSLIB_SRCS})

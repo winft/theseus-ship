@@ -6,12 +6,13 @@
 */
 #include "utils.h"
 
-#include "logging_p.h"
-
 #include <QCoreApplication>
 #include <QGlobalStatic>
+#include <QLoggingCategory>
 #include <QPixmap>
 #include <QStack>
+
+Q_LOGGING_CATEGORY(LIBKWINXRENDERUTILS, "libkwinxrenderutils", QtWarningMsg)
 
 namespace KWin
 {

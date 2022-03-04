@@ -23,6 +23,8 @@
 #include <QTouchEvent>
 #include <QWindow>
 
+Q_LOGGING_CATEGORY(LIBKWINEFFECTS, "libkwineffects", QtWarningMsg)
+
 namespace KWin
 {
 
