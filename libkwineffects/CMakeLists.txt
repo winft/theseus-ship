@@ -89,7 +89,7 @@ set(kwin_GLUTILSLIB_SRCS
 )
 
 add_library(kwinglutils SHARED ${kwin_GLUTILSLIB_SRCS})
-generate_export_header(kwinglutils BASE_NAME kwinglutils EXPORT_FILE_NAME kwinglutils_export.h)
+generate_export_header(kwinglutils BASE_NAME kwinglutils EXPORT_FILE_NAME kwingl/export.h)
 target_link_libraries(kwinglutils PUBLIC XCB::XCB KF5::CoreAddons KF5::ConfigCore KF5::WindowSystem epoxy::epoxy)
 set_target_properties(kwinglutils PROPERTIES
     VERSION ${KWINEFFECTS_VERSION}
@@ -101,7 +101,6 @@ install(TARGETS kwinglutils EXPORT KWinEffectsTargets ${INSTALL_TARGETS_DEFAULT_
 
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/kwinconfig.h
-    ${CMAKE_CURRENT_BINARY_DIR}/kwinglutils_export.h
     ${CMAKE_CURRENT_BINARY_DIR}/kwinxrenderutils_export.h
     kwineffects/legacy/kwinanimationeffect.h
     kwineffects/legacy/kwindeformeffect.h
@@ -112,6 +111,7 @@ install(FILES
     kwinglplatform.h
     kwingltexture.h
     kwinglutils.h
+    kwinglutils_export.h
     kwinglutils_funcs.h
     kwinxrenderutils.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
@@ -136,6 +136,7 @@ install(FILES
     DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwineffects COMPONENT Devel)
 
 install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/kwingl/export.h
     kwingl/platform.h
     kwingl/texture.h
     kwingl/utils.h

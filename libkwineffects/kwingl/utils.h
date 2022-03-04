@@ -9,7 +9,7 @@
 
 #include "kwingltexture.h"
 #include "kwinglutils_funcs.h"
-#include <kwinglutils_export.h>
+#include <kwingl/export.h>
 
 #include <QSize>
 #include <QStack>

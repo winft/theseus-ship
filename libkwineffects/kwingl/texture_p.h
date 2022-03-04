@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kwinconfig.h" // KWIN_HAVE_OPENGL
 #include "kwinglutils.h"
-#include <kwinglutils_export.h>
+#include <kwingl/export.h>
 
 #include <QImage>
 #include <QMatrix4x4>

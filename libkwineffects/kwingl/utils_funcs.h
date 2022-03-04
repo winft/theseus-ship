@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include <kwinglutils_export.h>
+#include <kwingl/export.h>
 
 #include <epoxy/gl.h>
 #include <functional>

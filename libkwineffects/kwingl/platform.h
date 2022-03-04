@@ -6,8 +6,8 @@
 */
 #pragma once
 
+#include <kwingl/export.h>
 #include <kwinglobals.h>
-#include <kwinglutils_export.h>
 
 #include <QByteArray>
 #include <QSet>

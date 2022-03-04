@@ -7,7 +7,7 @@
 */
 #pragma once
 
-#include <kwinglutils_export.h>
+#include <kwingl/export.h>
 
 #include <QExplicitlySharedDataPointer>
 #include <QMatrix4x4>
