@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include <kwineffects_export.h>
+#include <kwineffects/export.h>
 
 #include <QObject>
 

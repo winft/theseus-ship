@@ -6,8 +6,8 @@
 #pragma once
 
 #include <kwineffects/effect_window.h>
+#include <kwineffects/export.h>
 #include <kwineffects/paint_data.h>
-#include <kwineffects_export.h>
 
 #include <QPointF>
 

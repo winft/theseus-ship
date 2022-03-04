@@ -6,7 +6,7 @@
 */
 #pragma once
 
-#include <kwineffects_export.h>
+#include <kwineffects/export.h>
 
 #include <QEasingCurve>
 #include <QMetaType>

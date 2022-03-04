@@ -55,7 +55,7 @@ set(kwin_EFFECTSLIB_SRCS
 )
 
 add_library(kwineffects SHARED ${kwin_EFFECTSLIB_SRCS})
-generate_export_header(kwineffects EXPORT_FILE_NAME kwineffects_export.h)
+generate_export_header(kwineffects EXPORT_FILE_NAME kwineffects/export.h)
 target_link_libraries(kwineffects
     PUBLIC
         KF5::ConfigCore
@@ -101,13 +101,13 @@ install(TARGETS kwinglutils EXPORT KWinEffectsTargets ${INSTALL_TARGETS_DEFAULT_
 
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/kwinconfig.h
-    ${CMAKE_CURRENT_BINARY_DIR}/kwineffects_export.h
     ${CMAKE_CURRENT_BINARY_DIR}/kwinglutils_export.h
     ${CMAKE_CURRENT_BINARY_DIR}/kwinxrenderutils_export.h
     kwinanimationeffect.h
     kwindeformeffect.h
     kwineffectquickview.h
     kwineffects.h
+    kwineffects_export.h
     kwinglobals.h
     kwinglplatform.h
     kwingltexture.h
@@ -117,6 +117,7 @@ install(FILES
     DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
 install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/kwineffects/export.h
     kwineffects/animation_effect.h
     kwineffects/deform_effect.h
     kwineffects/effect.h

@@ -6,8 +6,8 @@
 #pragma once
 
 #include <kwinconfig.h>
+#include <kwineffects/export.h>
 #include <kwineffects/types.h>
-#include <kwineffects_export.h>
 #include <kwinglobals.h>
 
 #include <NETWM>

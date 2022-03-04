@@ -5,8 +5,8 @@
 */
 #pragma once
 
+#include <kwineffects/export.h>
 #include <kwineffects/types.h>
-#include <kwineffects_export.h>
 
 #include <QRegion>
 

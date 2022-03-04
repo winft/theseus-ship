@@ -8,7 +8,7 @@
 #pragma once
 
 #include <kwineffects/effect.h>
-#include <kwineffects_export.h>
+#include <kwineffects/export.h>
 
 #include <QEasingCurve>
 #include <QElapsedTimer>

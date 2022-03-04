@@ -6,8 +6,8 @@
 #pragma once
 
 #include <kwineffects/effect.h>
+#include <kwineffects/export.h>
 #include <kwineffects/window_quad.h>
-#include <kwineffects_export.h>
 
 namespace KWin
 {
