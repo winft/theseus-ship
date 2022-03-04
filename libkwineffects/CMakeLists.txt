@@ -83,7 +83,7 @@ install(TARGETS kwineffects EXPORT KWinEffectsTargets ${INSTALL_TARGETS_DEFAULT_
 set(kwin_GLUTILSLIB_SRCS
     kwinglplatform.cpp
     kwingltexture.cpp
-    kwinglutils.cpp
+    kwingl/utils.cpp
     kwinglutils_funcs.cpp
     logging.cpp
 )
@@ -134,6 +134,10 @@ install(FILES
     kwineffects/types.h
     kwineffects/window_quad.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwineffects COMPONENT Devel)
+
+install(FILES
+    kwingl/utils.h
+    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwingl COMPONENT Devel)
 
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinEffects")
 
