@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "kwinconfig.h" // KWIN_HAVE_OPENGL
-#include "kwinglutils.h"
 #include <kwingl/export.h>
+#include <kwingl/utils.h>
 
 #include <QImage>
 #include <QMatrix4x4>

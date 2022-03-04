@@ -13,7 +13,7 @@
 #include "win/scene.h"
 
 #include <QPainter>
-#include <kwinglplatform.h>
+#include <kwingl/platform.h>
 
 namespace KWin::render::gl
 {

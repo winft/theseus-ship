@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_MOUSEMARK_H
 
 #include <kwineffects/effect.h>
-#include <kwinglutils.h>
+#include <kwingl/utils.h>
 #include <kwinxrenderutils.h>
 
 struct xcb_render_color_t;

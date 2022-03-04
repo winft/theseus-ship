@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwineffects/effect.h>
 #include <kwineffects/time_line.h>
-#include <kwinglutils.h>
+#include <kwingl/utils.h>
 
 #include "cube_inside.h"
 #include "cube_proxy.h"

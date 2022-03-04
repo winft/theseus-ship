@@ -20,7 +20,7 @@
 #include "contrastshader.h"
 
 #include <kwineffects/effects_handler.h>
-#include <kwinglplatform.h>
+#include <kwingl/platform.h>
 
 #include <QByteArray>
 #include <QMatrix4x4>

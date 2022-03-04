@@ -6,9 +6,9 @@
 */
 #include "platform.h"
 
-// include kwinglutils_funcs.h to avoid the redeclaration issues
+// include utils_funcs.h to avoid the redeclaration issues
 // between qopengl.h and epoxy/gl.h
-#include "kwinglutils_funcs.h"
+#include "utils_funcs.h"
 
 #include <epoxy/gl.h>
 

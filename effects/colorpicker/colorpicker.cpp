@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwineffects/effects_handler.h>
 #include <kwineffects/paint_data.h>
-#include <kwinglutils.h>
-#include <kwinglutils_funcs.h>
+#include <kwingl/utils.h>
+#include <kwingl/utils_funcs.h>
 
 #include <KLocalizedString>
 #include <QDBusConnection>

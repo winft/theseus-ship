@@ -22,9 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "backend.h"
 
-#include "kwinglutils.h"
 #include "render/scene.h"
 #include "render/shadow.h"
+
+#include <kwingl/utils.h>
 
 #include <memory>
 #include <unordered_map>

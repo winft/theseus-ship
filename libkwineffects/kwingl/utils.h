@@ -7,9 +7,9 @@
 */
 #pragma once
 
-#include "kwingltexture.h"
-#include "kwinglutils_funcs.h"
 #include <kwingl/export.h>
+#include <kwingl/texture.h>
+#include <kwingl/utils_funcs.h>
 
 #include <QSize>
 #include <QStack>

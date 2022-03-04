@@ -50,7 +50,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/transient.h"
 
 #include "kwineffects/paint_clipper.h"
-#include "kwinglplatform.h"
+#include <kwingl/platform.h>
 
 #include <KLocalizedString>
 #include <KNotification>

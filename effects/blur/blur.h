@@ -22,8 +22,8 @@
 #define BLUR_H
 
 #include <kwineffects/effect.h>
-#include <kwinglplatform.h>
-#include <kwinglutils.h>
+#include <kwingl/platform.h>
+#include <kwingl/utils.h>
 
 #include <QStack>
 #include <QVector2D>

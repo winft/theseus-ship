@@ -7,7 +7,7 @@
 
 #include "render/shadow.h"
 
-#include "kwinglutils.h"
+#include <kwingl/utils.h>
 
 #include <QSharedPointer>
 

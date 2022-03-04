@@ -20,8 +20,8 @@
 #include "blurshader.h"
 
 #include <kwineffects/effects_handler.h>
-#include <kwinglplatform.h>
-#include <kwinglutils.h>
+#include <kwingl/platform.h>
+#include <kwingl/utils.h>
 
 #include <QByteArray>
 #include <QTextStream>

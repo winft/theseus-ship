@@ -11,9 +11,9 @@
 // KWIN_HAVE_OPENGL
 #include "kwinconfig.h"
 
-#include "kwinglplatform.h"
-#include "kwinglutils.h"
-#include "kwinglutils_funcs.h"
+#include "platform.h"
+#include "utils.h"
+#include "utils_funcs.h"
 
 #include "texture_p.h"
 

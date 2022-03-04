@@ -9,7 +9,7 @@
 
 #include "render/window.h"
 
-#include "kwinglutils.h"
+#include <kwingl/utils.h>
 
 #include <QMatrix4x4>
 #include <QVector4D>

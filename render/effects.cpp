@@ -55,7 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/tabbox/tabbox.h"
 #endif
 
-#include "kwinglutils.h"
+#include <kwingl/utils.h>
 
 #include <KDecoration2/DecorationSettings>
 #include <Plasma/Theme>

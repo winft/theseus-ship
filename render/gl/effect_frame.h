@@ -7,7 +7,7 @@
 
 #include "render/effect_frame.h"
 
-#include "kwinglutils.h"
+#include <kwingl/utils.h>
 
 namespace KWin::render::gl
 {

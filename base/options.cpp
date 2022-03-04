@@ -15,9 +15,10 @@
 #include "render/platform.h"
 
 #ifndef KCMRULES
-#include "kwinglplatform.h"
 #include "main.h"
 #include "options_settings.h"
+
+#include <kwingl/platform.h>
 
 #include <QOpenGLContext>
 #include <QProcess>

@@ -16,10 +16,10 @@
 #include "render/gl/egl.h"
 #include "render/gl/gl.h"
 #include "render/wayland/egl.h"
+#include "wayland_logging.h"
 #include "win/space.h"
 
-#include "kwinglplatform.h"
-#include "wayland_logging.h"
+#include <kwingl/platform.h>
 
 #include <QOpenGLContext>
 #include <stdexcept>

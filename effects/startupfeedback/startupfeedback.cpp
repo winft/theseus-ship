@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwineffects/effects_handler.h>
 #include <kwineffects/paint_data.h>
-#include <kwinglutils.h>
+#include <kwingl/utils.h>
 
 #include <KConfigGroup>
 #include <KSelectionOwner>

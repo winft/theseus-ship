@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwineffects/effects_handler.h>
 #include <kwineffects/paint_data.h>
-#include <kwingltexture.h>
-#include <kwinglutils.h>
+#include <kwingl/texture.h>
+#include <kwingl/utils.h>
 #include <kwinxrenderutils.h>
 
 #include <Plasma/Svg>

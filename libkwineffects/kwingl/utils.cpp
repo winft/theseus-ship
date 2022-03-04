@@ -10,8 +10,8 @@
 // need to call GLTexturePrivate::initStatic()
 #include "texture_p.h"
 
-#include "kwinglplatform.h"
 #include "logging_p.h"
+#include "platform.h"
 
 #include <kwineffects/types.h>
 

@@ -10,8 +10,8 @@
 #include "effects_handler.h"
 #include "paint_data.h"
 
-#include "kwingltexture.h"
-#include "kwinglutils.h"
+#include <kwingl/texture.h>
+#include <kwingl/utils.h>
 
 namespace KWin
 {

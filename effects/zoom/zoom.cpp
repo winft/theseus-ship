@@ -40,7 +40,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QVector2D>
 #include <kstandardaction.h>
 
-#include <kwinglutils.h>
+#include <kwingl/utils.h>
+
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
 #include <kwinxrenderutils.h>
 #include <xcb/render.h>

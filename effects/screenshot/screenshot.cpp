@@ -12,8 +12,8 @@
 #include <kwineffects/effect_window.h>
 #include <kwineffects/effects_handler.h>
 #include <kwineffects/paint_data.h>
-#include <kwinglplatform.h>
-#include <kwinglutils.h>
+#include <kwingl/platform.h>
+#include <kwingl/utils.h>
 
 #include <QPainter>
 

@@ -7,8 +7,9 @@
 #include "effect_quick_view.h"
 
 #include "effects_handler.h"
-#include "kwinglutils.h"
 #include "logging_p.h"
+
+#include <kwingl/utils.h>
 
 #include <KDeclarative/QmlObjectSharedEngine>
 #include <QOffscreenSurface>

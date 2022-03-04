@@ -107,13 +107,13 @@ install(FILES
     kwineffects/legacy/kwineffectquickview.h
     kwineffects/legacy/kwineffects.h
     kwineffects/legacy/kwineffects_export.h
-    kwinglobals.h
-    kwinglplatform.h
-    kwingltexture.h
-    kwinglutils.h
-    kwinglutils_export.h
-    kwinglutils_funcs.h
+    kwingl/legacy/kwinglplatform.h
+    kwingl/legacy/kwingltexture.h
+    kwingl/legacy/kwinglutils.h
+    kwingl/legacy/kwinglutils_export.h
+    kwingl/legacy/kwinglutils_funcs.h
     kwinxrenderutils.h
+    kwinglobals.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
 install(FILES

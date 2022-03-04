@@ -10,8 +10,9 @@
 #include "output.h"
 #include "platform.h"
 
-#include "kwinglutils.h"
 #include "wayland_logging.h"
+
+#include <kwingl/utils.h>
 
 namespace KWin::render::backend::wlroots
 {

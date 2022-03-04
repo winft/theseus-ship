@@ -18,7 +18,7 @@
 #include "x11_logging.h"
 
 #include <kwineffects/effect_quick_view.h>
-#include <kwinglplatform.h>
+#include <kwingl/platform.h>
 
 #include <QOpenGLContext>
 #include <QVariant>

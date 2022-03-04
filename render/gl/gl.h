@@ -6,8 +6,8 @@
 #pragma once
 
 #include "kwinglobals.h"
-#include "kwinglplatform.h"
-#include "kwinglutils.h"
+#include <kwingl/platform.h>
+#include <kwingl/utils.h>
 
 #include <epoxy/egl.h>
 

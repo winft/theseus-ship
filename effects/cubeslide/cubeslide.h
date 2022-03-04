@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_CUBESLIDE_H
 
 #include <kwineffects/effect.h>
-#include <kwinglutils.h>
+#include <kwingl/utils.h>
 
 #include <QQueue>
 #include <QSet>
