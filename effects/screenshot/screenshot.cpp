@@ -18,7 +18,7 @@
 #include <QPainter>
 
 #if defined(KWIN_HAVE_XRENDER_COMPOSITING)
-#include <kwinxrenderutils.h>
+#include <kwinxrender/utils.h>
 #include <xcb/xcb_image.h>
 #endif
 

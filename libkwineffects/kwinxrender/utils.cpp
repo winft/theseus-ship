@@ -1,24 +1,11 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2008 Lubos Lunak <l.lunak@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2008 Lubos Lunak <l.lunak@kde.org>
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#include "utils.h"
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
-#include "kwinxrenderutils.h"
 #include "logging_p.h"
 
 #include <QCoreApplication>
@@ -48,7 +35,7 @@ void cleanup()
     s_rootWindow = XCB_WINDOW_NONE;
 }
 
-} // namespace
+}
 
 // adapted from Qt, because this really sucks ;)
 xcb_render_color_t preMultiply(const QColor& c, float opacity)
@@ -309,6 +296,6 @@ const xcb_render_directformat_t* findPictFormatInfo(xcb_render_pictformat_t form
     return d->formatInfoHash.value(format);
 }
 
-} // namespace XRenderUtils
+}
 
-} // namespace KWin
+}

@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects/paint_data.h>
 #include <kwingl/texture.h>
 #include <kwingl/utils.h>
-#include <kwinxrenderutils.h>
+#include <kwinxrender/utils.h>
 
 #include <Plasma/Svg>
 #include <QPainter>

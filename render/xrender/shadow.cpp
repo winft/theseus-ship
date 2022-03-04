@@ -9,8 +9,9 @@
 #include "shadow.h"
 
 #include "kwinglobals.h"
-#include "kwinxrenderutils.h"
 #include "utils/algorithm.h"
+
+#include <kwinxrender/utils.h>
 
 #include <QPainter>
 

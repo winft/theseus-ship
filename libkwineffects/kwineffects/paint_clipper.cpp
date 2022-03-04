@@ -11,7 +11,7 @@
 #include <kwinconfig.h>
 
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
-#include "kwinxrenderutils.h"
+#include <kwinxrender/utils.h>
 #endif
 
 #include <QStack>

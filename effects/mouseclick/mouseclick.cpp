@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwingl/utils.h>
 
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
-#include <kwinxrenderutils.h>
+#include <kwinxrender/utils.h>
 #include <xcb/render.h>
 #include <xcb/xcb.h>
 #endif

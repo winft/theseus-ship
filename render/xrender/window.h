@@ -8,7 +8,7 @@
 
 #include "render/window.h"
 
-#include <kwinxrenderutils.h>
+#include <kwinxrender/utils.h>
 
 #include <QPoint>
 #include <QRect>

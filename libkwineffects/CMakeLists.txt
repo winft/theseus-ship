@@ -10,12 +10,12 @@ ecm_setup_version(${PROJECT_VERSION}
 
 ### xrenderutils lib ###
 set(kwin_XRENDERUTILS_SRCS
-    kwinxrenderutils.cpp
+    kwinxrender/utils.cpp
     logging.cpp
 )
 
 add_library(kwinxrenderutils SHARED ${kwin_XRENDERUTILS_SRCS})
-generate_export_header(kwinxrenderutils EXPORT_FILE_NAME kwinxrenderutils_export.h)
+generate_export_header(kwinxrenderutils EXPORT_FILE_NAME kwinxrender/export.h)
 target_link_libraries(kwinxrenderutils
     PUBLIC
         Qt::Core
@@ -101,7 +101,6 @@ install(TARGETS kwinglutils EXPORT KWinEffectsTargets ${INSTALL_TARGETS_DEFAULT_
 
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/kwinconfig.h
-    ${CMAKE_CURRENT_BINARY_DIR}/kwinxrenderutils_export.h
     kwineffects/legacy/kwinanimationeffect.h
     kwineffects/legacy/kwindeformeffect.h
     kwineffects/legacy/kwineffectquickview.h
@@ -112,7 +111,8 @@ install(FILES
     kwingl/legacy/kwinglutils.h
     kwingl/legacy/kwinglutils_export.h
     kwingl/legacy/kwinglutils_funcs.h
-    kwinxrenderutils.h
+    kwinxrender/legacy/kwinxrenderutils.h
+    kwinxrender/legacy/kwinxrenderutils_export.h
     kwinglobals.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
@@ -142,6 +142,11 @@ install(FILES
     kwingl/utils.h
     kwingl/utils_funcs.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwingl COMPONENT Devel)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/kwinxrender/export.h
+    kwinxrender/utils.h
+    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwinxrender COMPONENT Devel)
 
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinEffects")
 

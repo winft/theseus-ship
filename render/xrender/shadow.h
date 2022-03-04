@@ -7,7 +7,7 @@
 
 #include "render/shadow.h"
 
-#include <libkwineffects/kwinxrenderutils.h>
+#include <kwinxrender/utils.h>
 
 #include <xcb/render.h>
 

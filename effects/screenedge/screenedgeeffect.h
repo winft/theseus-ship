@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_SCREEN_EDGE_EFFECT_H
 
 #include <kwineffects/effect.h>
-#include <kwinxrenderutils.h>
+#include <kwinxrender/utils.h>
 
 class QTimer;
 namespace Plasma

@@ -21,11 +21,12 @@
 #include "base/options.h"
 #include "base/x11/xcb/extensions.h"
 #include "base/x11/xcb/randr.h"
-#include "kwinxrenderutils.h"
 #include "main_x11.h"
 #include "render/compositor.h"
 #include "toplevel.h"
 #include "win/space.h"
+
+#include <kwinxrender/utils.h>
 
 #include <KConfigGroup>
 #include <KCrash>

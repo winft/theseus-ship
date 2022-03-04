@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects/effect.h>
 #include <kwineffects/effect_frame.h>
 #include <kwingl/utils.h>
-#include <kwinxrenderutils.h>
+#include <kwinxrender/utils.h>
 
 #include <KLocalizedString>
 #include <QFont>
