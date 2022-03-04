@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "kwin_export.h"
+#include "kwingl/texture_p.h"
 #include "kwingltexture.h"
-#include "kwingltexture_p.h"
 
 namespace KWin::render
 {

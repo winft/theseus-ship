@@ -82,7 +82,7 @@ install(TARGETS kwineffects EXPORT KWinEffectsTargets ${INSTALL_TARGETS_DEFAULT_
 # kwingl(es)utils library
 set(kwin_GLUTILSLIB_SRCS
     kwingl/platform.cpp
-    kwingltexture.cpp
+    kwingl/texture.cpp
     kwingl/utils.cpp
     kwinglutils_funcs.cpp
     logging.cpp
@@ -137,6 +137,7 @@ install(FILES
 
 install(FILES
     kwingl/platform.h
+    kwingl/texture.h
     kwingl/utils.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwingl COMPONENT Devel)
 

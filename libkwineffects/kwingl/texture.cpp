@@ -1,32 +1,21 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2007 Rivo Laks <rivolaks@hot.ee>
+    SPDX-FileCopyrightText: 2011 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2012 Philipp Knechtges <philipp-dev@knechtges.com>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2006-2007 Rivo Laks <rivolaks@hot.ee>
-Copyright (C) 2010, 2011 Martin Gräßlin <mgraesslin@kde.org>
-Copyright (C) 2012 Philipp Knechtges <philipp-dev@knechtges.com>
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#include "texture.h"
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-
-#include "kwinconfig.h" // KWIN_HAVE_OPENGL
+// KWIN_HAVE_OPENGL
+#include "kwinconfig.h"
 
 #include "kwinglplatform.h"
 #include "kwinglutils.h"
 #include "kwinglutils_funcs.h"
 
-#include "kwingltexture_p.h"
+#include "texture_p.h"
 
 #include <QImage>
 #include <QMatrix4x4>
@@ -762,4 +751,4 @@ QImage GLTexture::toImage() const
     return ret;
 }
 
-} // namespace KWin
+}

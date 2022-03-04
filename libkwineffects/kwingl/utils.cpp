@@ -8,7 +8,7 @@
 #include "utils.h"
 
 // need to call GLTexturePrivate::initStatic()
-#include "kwingltexture_p.h"
+#include "texture_p.h"
 
 #include "kwinglplatform.h"
 #include "logging_p.h"
