@@ -84,7 +84,7 @@ set(kwin_GLUTILSLIB_SRCS
     kwingl/platform.cpp
     kwingl/texture.cpp
     kwingl/utils.cpp
-    kwinglutils_funcs.cpp
+    kwingl/utils_funcs.cpp
     logging.cpp
 )
 
@@ -139,6 +139,7 @@ install(FILES
     kwingl/platform.h
     kwingl/texture.h
     kwingl/utils.h
+    kwingl/utils_funcs.h
     DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwingl COMPONENT Devel)
 
 set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinEffects")
