@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QX11Info>
 #include <QtTest>
 
-#include "../../libkwineffects/kwinxrender/utils.h"
+#include "../../effect/lib/kwinxrender/utils.h"
 #include "../testutils.h"
 
 class BlendPictureTest : public QObject

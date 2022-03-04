@@ -331,7 +331,7 @@ include_directories(${XKB_INCLUDE_DIR})
 set(HAVE_EPOXY_GLX ${epoxy_HAS_GLX})
 
 # for things that are also used by kwin libraries
-configure_file(libkwineffects/kwinconfig.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/libkwineffects/kwinconfig.h )
+configure_file(effect/lib/kwinconfig.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/effect/lib/kwinconfig.h )
 
 include(CheckIncludeFile)
 include(CheckIncludeFiles)
@@ -367,13 +367,12 @@ add_library(KWinEffectsInterface STATIC ${effects_interface_SRCS})
 target_link_libraries(KWinEffectsInterface Qt::DBus)
 
 include_directories(BEFORE
-    ${CMAKE_CURRENT_BINARY_DIR}/libkwineffects
+    ${CMAKE_CURRENT_BINARY_DIR}/effect/lib
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/libkwineffects
-    ${CMAKE_CURRENT_SOURCE_DIR}/effects
+    ${CMAKE_CURRENT_SOURCE_DIR}/effect/lib
 )
 
-add_subdirectory(libkwineffects)
+add_subdirectory(effect)
 if (KWIN_BUILD_KCMS)
     add_subdirectory(kcmkwin)
 endif()
@@ -393,7 +392,6 @@ ecm_setup_qtplugin_macro_names(
 
 add_subdirectory(data)
 
-add_subdirectory(effects)
 add_subdirectory(scripts)
 add_subdirectory(scripting)
 
