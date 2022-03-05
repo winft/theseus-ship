@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "lib/app.h"
 
 #include "base/wayland/server.h"
-#include "libkwineffects/anidata_p.h"
+#include "kwineffects/anidata_p.h"
 #include "render/compositor.h"
 #include "render/effect_loader.h"
 #include "render/effects.h"

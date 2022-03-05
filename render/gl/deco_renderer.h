@@ -8,7 +8,8 @@
 #pragma once
 
 #include "decorations/decorationrenderer.h"
-#include "kwinglutils.h"
+
+#include <kwingl/utils.h>
 
 #include <cmath>
 

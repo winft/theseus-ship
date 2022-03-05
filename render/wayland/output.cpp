@@ -23,8 +23,8 @@
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
 
-#include "kwinglplatform.h"
-#include "kwingltexture.h"
+#include <kwingl/platform.h>
+#include <kwingl/texture.h>
 
 #include <Wrapland/Server/surface.h>
 

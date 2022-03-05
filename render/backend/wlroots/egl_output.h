@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "kwingltexture.h"
+#include <kwingl/texture.h>
 
 #include <QRegion>
 #include <deque>

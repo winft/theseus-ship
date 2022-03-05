@@ -21,7 +21,7 @@
 
 #include <QAbstractListModel>
 
-#include "../win/dbus/virtual_desktop_types.h"
+#include "../../win/dbus/virtual_desktop_types.h"
 
 class QDBusArgument;
 class QDBusMessage;

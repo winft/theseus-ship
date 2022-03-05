@@ -16,6 +16,9 @@
 #include "input/redirect.h"
 #include "win/screen_edges.h"
 
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
+
 #include <KConfigGroup>
 #include <KGlobalAccel>
 #include <KPluginMetaData>

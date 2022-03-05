@@ -21,10 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "types.h"
 
+#include "kwin_export.h"
+
+#include <kwineffects/window_quad.h>
+
 #include <QObject>
 #include <QPixmap>
 #include <functional>
-#include <kwineffects.h>
 
 namespace KDecoration2
 {

@@ -49,8 +49,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/geo.h"
 #include "win/transient.h"
 
-#include "kwineffectquickview.h"
-#include "kwinglplatform.h"
+#include "kwineffects/paint_clipper.h"
+#include <kwingl/platform.h>
 
 #include <KLocalizedString>
 #include <KNotification>

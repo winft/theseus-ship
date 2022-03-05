@@ -55,8 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/tabbox/tabbox.h"
 #endif
 
-#include "kwineffectquickview.h"
-#include "kwinglutils.h"
+#include <kwingl/utils.h>
 
 #include <KDecoration2/DecorationSettings>
 #include <Plasma/Theme>
@@ -306,8 +305,6 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     for (base::output* output : outputs) {
         slotOutputEnabled(output);
     }
-
-    reconfigure();
 }
 
 effects_handler_impl::~effects_handler_impl()

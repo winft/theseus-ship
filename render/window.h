@@ -9,7 +9,7 @@
 #include "shadow.h"
 #include "types.h"
 
-#include "kwineffects.h"
+#include <kwineffects/paint_data.h>
 
 #include <memory>
 
@@ -18,6 +18,7 @@ class QOpenGLFramebufferObject;
 namespace Wrapland::Server
 {
 class Buffer;
+class Surface;
 }
 
 namespace KWin

@@ -14,13 +14,15 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
 #include "aurorae.h"
 #include "auroraetheme.h"
+
 #include "config-kwin.h"
-#include "kwineffectquickview.h"
-// qml imports
+
 #include "decorationoptions.h"
+
+#include <kwineffects/effect_quick_view.h>
+
 // KDecoration2
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/DecorationSettings>

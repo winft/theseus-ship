@@ -22,6 +22,8 @@ namespace KWin::render::backend::x11
 effects_handler_impl::effects_handler_impl(render::compositor* compositor, render::scene* scene)
     : render::effects_handler_impl(compositor, scene)
 {
+    reconfigure();
+
     connect(this, &effects_handler_impl::screenGeometryChanged, this, [this](const QSize& size) {
         if (mouse_intercept.window.is_valid()) {
             mouse_intercept.window.set_geometry(QRect(0, 0, size.width(), size.height()));

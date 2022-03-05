@@ -21,7 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "types.h"
 
-#include "kwineffects.h"
+#include <kwineffects/effect_quick_view.h>
+#include <kwineffects/paint_data.h>
 
 #include <QMatrix4x4>
 #include <deque>

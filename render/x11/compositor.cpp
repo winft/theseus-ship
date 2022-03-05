@@ -25,7 +25,7 @@
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
 
-#include "kwingltexture.h"
+#include <kwingl/texture.h>
 
 #include <KGlobalAccel>
 #include <KLocalizedString>

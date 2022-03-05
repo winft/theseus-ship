@@ -20,9 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "kwineffects.h"
 #include "scene.h"
 #include "win/types.h"
+
+#include <kwineffects/effect_frame.h>
+#include <kwineffects/effect_screen.h>
+#include <kwineffects/effect_window.h>
+#include <kwineffects/effects_handler.h>
 
 #include <Plasma/FrameSvg>
 #include <QHash>

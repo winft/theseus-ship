@@ -15,7 +15,7 @@
 #include "render/x11/overlay_window.h"
 #include "win/space.h"
 
-#include "kwinxrenderutils.h"
+#include <kwinxrender/utils.h>
 
 namespace KWin::render::xrender
 {

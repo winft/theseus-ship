@@ -25,14 +25,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "render/compositor.h"
 #include "render/scene.h"
 #include "toplevel.h"
+#include "win/move.h"
 #include "win/screen.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
-
-#include "win/move.h"
 #include "win/wayland/space.h"
-
-#include <kwineffects.h>
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>

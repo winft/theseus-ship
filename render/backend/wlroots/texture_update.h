@@ -5,12 +5,13 @@
 */
 #pragma once
 
-#include "kwinglplatform.h"
 #include "render/gl/egl_dmabuf.h"
 #include "render/gl/kwin_eglext.h"
 #include "render/gl/window.h"
 #include "toplevel.h"
 #include "wayland_logging.h"
+
+#include <kwingl/platform.h>
 
 #include <QImage>
 #include <QOpenGLFramebufferObject>

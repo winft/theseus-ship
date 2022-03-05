@@ -8,6 +8,8 @@
 
 #include "render/window.h"
 
+#include <kwinxrender/utils.h>
+
 #include <QPoint>
 #include <QRect>
 #include <QRegion>

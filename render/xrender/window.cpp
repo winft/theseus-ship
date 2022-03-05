@@ -14,7 +14,7 @@
 #include "win/geo.h"
 #include "win/x11/window.h"
 
-#include "kwinxrenderutils.h"
+#include <kwineffects/paint_clipper.h>
 
 namespace KWin::render::xrender
 {

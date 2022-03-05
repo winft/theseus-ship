@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
-#include <kwineffects.h>
 
 #include "win/move.h"
 #include "win/screen_edges.h"

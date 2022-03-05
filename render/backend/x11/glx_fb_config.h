@@ -5,8 +5,9 @@
 */
 #pragma once
 
-#include "kwinxrenderutils.h"
 #include "x11_logging.h"
+
+#include <kwinxrender/utils.h>
 
 #include <epoxy/glx.h>
 

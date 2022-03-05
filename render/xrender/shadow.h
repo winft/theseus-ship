@@ -7,6 +7,8 @@
 
 #include "render/shadow.h"
 
+#include <kwinxrender/utils.h>
+
 #include <xcb/render.h>
 
 namespace KWin::render

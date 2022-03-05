@@ -17,8 +17,8 @@
 #include "win/space.h"
 #include "x11_logging.h"
 
-#include "kwineffectquickview.h"
-#include "kwinglplatform.h"
+#include <kwineffects/effect_quick_view.h>
+#include <kwingl/platform.h>
 
 #include <QOpenGLContext>
 #include <QVariant>

@@ -19,8 +19,6 @@
 #include "win/scene.h"
 #include "win/x11/window.h"
 
-#include "kwineffectquickview.h"
-
 #include <cassert>
 
 namespace KWin::render::xrender
