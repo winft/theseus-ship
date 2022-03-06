@@ -12,6 +12,9 @@
 #include <QPixmap>
 #include <QStack>
 
+#include <xcb/render.h>
+#include <xcb/xcb_image.h>
+
 Q_LOGGING_CATEGORY(LIBKWINXRENDERUTILS, "libkwinxrenderutils", QtWarningMsg)
 
 namespace KWin
@@ -238,6 +241,45 @@ bool xRenderOffscreen()
 xcb_render_picture_t xRenderOffscreenTarget()
 {
     return s_offscreenTarget;
+}
+
+QImage xrender_picture_to_image(xcb_render_picture_t source, QRect const& geometry)
+{
+    auto c = XRenderUtils::s_connection;
+    xcb_pixmap_t xpix = xcb_generate_id(c);
+    xcb_create_pixmap(c, 32, xpix, XRenderUtils::s_rootWindow, geometry.width(), geometry.height());
+    XRenderPicture pic(xpix, 32);
+
+    xcb_render_composite(c,
+                         XCB_RENDER_PICT_OP_SRC,
+                         source,
+                         XCB_RENDER_PICTURE_NONE,
+                         pic,
+                         geometry.x(),
+                         geometry.y(),
+                         0,
+                         0,
+                         0,
+                         0,
+                         geometry.width(),
+                         geometry.height());
+    xcb_flush(c);
+
+    auto ximg = xcb_image_get(
+        c, xpix, 0, 0, geometry.width(), geometry.height(), ~0, XCB_IMAGE_FORMAT_Z_PIXMAP);
+
+    auto cleanup_ximg = [](void* data) { xcb_image_destroy(static_cast<xcb_image_t*>(data)); };
+    QImage image(ximg->data,
+                 ximg->width,
+                 ximg->height,
+                 ximg->stride,
+                 QImage::Format_ARGB32_Premultiplied,
+                 cleanup_ximg,
+                 ximg);
+
+    // TODO: byte order might need swapping
+    xcb_free_pixmap(c, xpix);
+    return image.copy();
 }
 
 namespace XRenderUtils
