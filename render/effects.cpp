@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effect_frame.h"
 #include "effect_loader.h"
 #include "effectsadaptor.h"
+#include "gl/backend.h"
+#include "gl/scene.h"
 #include "platform.h"
 #include "thumbnail_item.h"
 
@@ -1901,7 +1903,11 @@ QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double
                      static_cast<GLvoid*>(image.bits()));
     }
 
-    image = image.mirrored();
+    auto gl_backend = static_cast<render::gl::scene*>(m_scene)->backend();
+    QMatrix4x4 flip_vert;
+    flip_vert(1, 1) = -1;
+
+    image = image.transformed((flip_vert * gl_backend->transformation).toTransform());
     image.setDevicePixelRatio(scale);
     return image;
 }
