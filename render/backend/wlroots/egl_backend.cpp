@@ -158,10 +158,6 @@ QRegion egl_backend::prepareRenderingForScreen(base::output* output)
 
     GLRenderTarget::setKWinFramebuffer(wlr_gles2_renderer_get_current_fbo(platform.renderer));
 
-    QMatrix4x4 flip_180;
-    flip_180(1, 1) = -1;
-    transformation = flip_180;
-
     prepareRenderFramebuffer(*out);
     setViewport(*out);
 
@@ -358,7 +354,9 @@ void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
         0,
         0,
         1);
-    shader->setUniform(GLShader::ModelViewProjectionMatrix, rotationMatrix);
+    QMatrix4x4 flip_180;
+    flip_180(1, 1) = -1;
+    shader->setUniform(GLShader::ModelViewProjectionMatrix, flip_180 * rotationMatrix);
 
     glBindTexture(GL_TEXTURE_2D, egl_out.render.texture);
     egl_out.render.vbo->render(GL_TRIANGLES);
