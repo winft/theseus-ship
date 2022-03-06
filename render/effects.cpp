@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "effect_frame.h"
 #include "effect_loader.h"
 #include "effectsadaptor.h"
+#include "gl/backend.h"
+#include "gl/scene.h"
 #include "platform.h"
 #include "thumbnail_item.h"
 
@@ -55,6 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/tabbox/tabbox.h"
 #endif
 
+#include <kwingl/platform.h>
 #include <kwingl/utils.h>
 
 #include <KDecoration2/DecorationSettings>
@@ -1459,7 +1462,7 @@ void effects_handler_impl::unregisterTouchBorder(ElectricBorder border, QAction*
     workspace()->edges->unreserveTouch(border, action);
 }
 
-unsigned long effects_handler_impl::xrenderBufferPicture()
+unsigned long effects_handler_impl::xrenderBufferPicture() const
 {
     return m_scene->xrenderBufferPicture();
 }
@@ -1866,6 +1869,47 @@ void effects_handler_impl::slotOutputDisabled(base::output* output)
 bool effects_handler_impl::isCursorHidden() const
 {
     return input::get_cursor()->is_hidden();
+}
+
+QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double scale) const
+{
+    if (!isOpenGLCompositing()) {
+        return {};
+    }
+
+    QImage image;
+    auto const nativeSize = geometry.size() * scale;
+
+    if (GLRenderTarget::blitSupported() && !GLPlatform::instance()->isGLES()) {
+        image = QImage(nativeSize.width(), nativeSize.height(), QImage::Format_ARGB32);
+
+        GLTexture texture(GL_RGBA8, nativeSize.width(), nativeSize.height());
+        GLRenderTarget target(texture);
+        target.blitFromFramebuffer(geometry);
+
+        // Copy content from framebuffer into image.
+        texture.bind();
+        glGetTexImage(
+            GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<GLvoid*>(image.bits()));
+        texture.unbind();
+    } else {
+        image = QImage(nativeSize.width(), nativeSize.height(), QImage::Format_ARGB32);
+        glReadPixels(0,
+                     0,
+                     nativeSize.width(),
+                     nativeSize.height(),
+                     GL_RGBA,
+                     GL_UNSIGNED_BYTE,
+                     static_cast<GLvoid*>(image.bits()));
+    }
+
+    auto gl_backend = static_cast<render::gl::scene*>(m_scene)->backend();
+    QMatrix4x4 flip_vert;
+    flip_vert(1, 1) = -1;
+
+    image = image.transformed((flip_vert * gl_backend->transformation).toTransform());
+    image.setDevicePixelRatio(scale);
+    return image;
 }
 
 //****************************************

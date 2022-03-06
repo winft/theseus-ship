@@ -107,8 +107,10 @@ gl::backend* platform::createOpenGLBackend(render::compositor& compositor)
 
 void platform::render_stop(bool /*on_shutdown*/)
 {
-    assert(gl_backend);
-    tear_down_glx_backend(*gl_backend);
+    if (gl_backend) {
+        tear_down_glx_backend(*gl_backend);
+        gl_backend.reset();
+    }
 }
 
 bool platform::requiresCompositing() const

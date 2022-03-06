@@ -14,6 +14,8 @@
 #include "win/screen_edges.h"
 #include "win/x11/space.h"
 
+#include <kwinxrender/utils.h>
+
 #include <QDesktopWidget>
 
 namespace KWin::render::backend::x11
@@ -101,6 +103,20 @@ void effects_handler_impl::defineCursor(Qt::CursorShape shape)
     if (c != XCB_CURSOR_NONE) {
         mouse_intercept.window.define_cursor(c);
     }
+}
+
+QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double scale) const
+{
+#if defined(KWIN_HAVE_XRENDER_COMPOSITING)
+    if (compositingType() == XRenderCompositing) {
+        auto image = xrender_picture_to_image(xrenderBufferPicture(), geometry);
+        image.setDevicePixelRatio(scale);
+        return image;
+    }
+#endif
+
+    // Provides OpenGL blits.
+    return render::effects_handler_impl::blit_from_framebuffer(geometry, scale);
 }
 
 void effects_handler_impl::doCheckInputWindowStacking()

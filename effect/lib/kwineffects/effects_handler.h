@@ -419,7 +419,7 @@ public:
      * @return bool @c true in case of OpenGL based Compositor, @c false otherwise
      */
     bool isOpenGLCompositing() const;
-    virtual unsigned long xrenderBufferPicture() = 0;
+    virtual unsigned long xrenderBufferPicture() const = 0;
     /**
      * @brief Provides access to the QPainter which is rendering to the back buffer.
      *
@@ -683,6 +683,8 @@ public:
     virtual EffectScreen* screenAt(const QPoint& point) const = 0;
     virtual EffectScreen* findScreen(const QString& name) const = 0;
     virtual EffectScreen* findScreen(int screenId) const = 0;
+
+    virtual QImage blit_from_framebuffer(QRect const& geometry, double scale) const = 0;
 
 Q_SIGNALS:
     /**

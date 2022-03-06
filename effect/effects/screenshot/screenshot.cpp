@@ -73,49 +73,7 @@ static void convertFromGLImage(QImage& img, int w, int h)
             }
         }
     }
-    img = img.mirrored();
 }
-
-#if defined(KWIN_HAVE_XRENDER_COMPOSITING)
-static void xImageCleanup(void* data)
-{
-    xcb_image_destroy(static_cast<xcb_image_t*>(data));
-}
-
-static QImage xPictureToImage(xcb_render_picture_t srcPic, const QRect& geometry)
-{
-    xcb_connection_t* c = effects->xcbConnection();
-    xcb_pixmap_t xpix = xcb_generate_id(c);
-    xcb_create_pixmap(c, 32, xpix, effects->x11RootWindow(), geometry.width(), geometry.height());
-    XRenderPicture pic(xpix, 32);
-    xcb_render_composite(c,
-                         XCB_RENDER_PICT_OP_SRC,
-                         srcPic,
-                         XCB_RENDER_PICTURE_NONE,
-                         pic,
-                         geometry.x(),
-                         geometry.y(),
-                         0,
-                         0,
-                         0,
-                         0,
-                         geometry.width(),
-                         geometry.height());
-    xcb_flush(c);
-    xcb_image_t* xImage = xcb_image_get(
-        c, xpix, 0, 0, geometry.width(), geometry.height(), ~0, XCB_IMAGE_FORMAT_Z_PIXMAP);
-    QImage img(xImage->data,
-               xImage->width,
-               xImage->height,
-               xImage->stride,
-               QImage::Format_ARGB32_Premultiplied,
-               xImageCleanup,
-               xImage);
-    // TODO: byte order might need swapping
-    xcb_free_pixmap(c, xpix);
-    return img.copy();
-}
-#endif
 
 bool ScreenShotEffect::supported()
 {
@@ -303,6 +261,7 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
                           static_cast<GLvoid*>(img.bits()));
             GLRenderTarget::popRenderTarget();
             convertFromGLImage(img, img.width(), img.height());
+            img = img.mirrored();
         }
 #if defined(KWIN_HAVE_XRENDER_COMPOSITING)
         if (effects->compositingType() == XRenderCompositing) {
@@ -310,8 +269,8 @@ void ScreenShotEffect::takeScreenShot(ScreenShotWindowData* screenshot)
             effects->drawWindow(
                 window, mask, QRegion(0, 0, geometry.width(), geometry.height()), d);
             if (xRenderOffscreenTarget()) {
-                img = xPictureToImage(xRenderOffscreenTarget(),
-                                      QRect(0, 0, geometry.width(), geometry.height()));
+                img = xrender_picture_to_image(xRenderOffscreenTarget(),
+                                               QRect(0, 0, geometry.width(), geometry.height()));
             }
             setXRenderOffscreen(false);
         }
@@ -417,42 +376,7 @@ void ScreenShotEffect::postPaintScreen()
 
 QImage ScreenShotEffect::blitScreenshot(const QRect& geometry, qreal devicePixelRatio) const
 {
-    QImage image;
-
-    if (effects->isOpenGLCompositing()) {
-        const QSize nativeSize = geometry.size() * devicePixelRatio;
-
-        if (GLRenderTarget::blitSupported() && !GLPlatform::instance()->isGLES()) {
-            image = QImage(nativeSize.width(), nativeSize.height(), QImage::Format_ARGB32);
-            GLTexture texture(GL_RGBA8, nativeSize.width(), nativeSize.height());
-            GLRenderTarget target(texture);
-            target.blitFromFramebuffer(geometry);
-            // copy content from framebuffer into image
-            texture.bind();
-            glGetTexImage(
-                GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<GLvoid*>(image.bits()));
-            texture.unbind();
-        } else {
-            image = QImage(nativeSize.width(), nativeSize.height(), QImage::Format_ARGB32);
-            glReadPixels(0,
-                         0,
-                         nativeSize.width(),
-                         nativeSize.height(),
-                         GL_RGBA,
-                         GL_UNSIGNED_BYTE,
-                         static_cast<GLvoid*>(image.bits()));
-        }
-        convertFromGLImage(image, nativeSize.width(), nativeSize.height());
-    }
-
-#if defined(KWIN_HAVE_XRENDER_COMPOSITING)
-    if (effects->compositingType() == XRenderCompositing) {
-        image = xPictureToImage(effects->xrenderBufferPicture(), geometry);
-    }
-#endif
-
-    image.setDevicePixelRatio(devicePixelRatio);
-    return image;
+    return effects->blit_from_framebuffer(geometry, devicePixelRatio);
 }
 
 void ScreenShotEffect::grabPointerImage(QImage& snapshot, int xOffset, int yOffset) const

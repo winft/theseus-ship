@@ -20,6 +20,7 @@ target_link_libraries(kwinxrenderutils
         Qt::Core
         Qt::Gui
 
+        XCB::IMAGE
         XCB::RENDER
         XCB::XCB
         XCB::XFIXES

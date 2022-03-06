@@ -24,6 +24,7 @@ public:
     ~effects_handler_impl() override;
 
     void defineCursor(Qt::CursorShape shape) override;
+    QImage blit_from_framebuffer(QRect const& geometry, double scale) const override;
 
 protected:
     bool doGrabKeyboard() override;

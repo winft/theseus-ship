@@ -133,6 +133,9 @@ KWINXRENDERUTILS_EXPORT bool xRenderOffscreen();
  */
 KWINXRENDERUTILS_EXPORT xcb_render_picture_t xRenderOffscreenTarget();
 
+KWINXRENDERUTILS_EXPORT QImage xrender_picture_to_image(xcb_render_picture_t source,
+                                                        QRect const& geometry);
+
 /**
  * NOTICE: HANDS OFF!!!
  * scene_setXRenderWindowOffscreenTarget() is ONLY to be used by the renderer - DO NOT TOUCH!

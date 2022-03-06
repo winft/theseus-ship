@@ -201,7 +201,7 @@ public:
     void registerTouchBorder(ElectricBorder border, QAction* action) override;
     void unregisterTouchBorder(ElectricBorder border, QAction* action) override;
 
-    unsigned long xrenderBufferPicture() override;
+    unsigned long xrenderBufferPicture() const override;
     QPainter* scenePainter() override;
     void reconfigure() override;
     QByteArray readRootProperty(long atom, long type, int format) const override;
@@ -312,6 +312,7 @@ public:
     EffectScreen* findScreen(const QString& name) const override;
     EffectScreen* findScreen(int screenId) const override;
     bool isCursorHidden() const override;
+    QImage blit_from_framebuffer(QRect const& geometry, double scale) const override;
 
 public Q_SLOTS:
     void slotCurrentTabAboutToChange(EffectWindow* from, EffectWindow* to);
