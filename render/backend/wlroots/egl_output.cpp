@@ -61,6 +61,18 @@ bool egl_output::reset()
 bool egl_output::reset_framebuffer()
 {
     cleanup_framebuffer();
+
+    auto const view_geo = out->base.view_geometry();
+    auto const centered_view
+        = out->base.mode_size() != view_geo.size() || !view_geo.topLeft().isNull();
+
+    if (out->base.transform() == base::wayland::output_transform::normal && !centered_view) {
+        // No need to create intermediate framebuffer.
+        return true;
+    }
+
+    // TODO(romangg): Also return in case wlroots can rotate in hardware.
+
     make_current();
 
     glGenFramebuffers(1, &render.framebuffer);
@@ -69,7 +81,7 @@ bool egl_output::reset_framebuffer()
     glGenTextures(1, &render.texture);
     glBindTexture(GL_TEXTURE_2D, render.texture);
 
-    auto const texSize = out->base.view_geometry().size();
+    auto const texSize = view_geo.size();
 
     glTexImage2D(GL_TEXTURE_2D,
                  0,
