@@ -179,7 +179,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     auto client = dynamic_cast<win::x11::window*>(toplevel);
     auto remnant = toplevel->remnant();
     auto const decorationRect = QRect(QPoint(), toplevel->size());
-    if (((client && !client->noBorder()) || (remnant && !remnant->no_border)) && true) {
+    if ((client && client->control && !client->noBorder()) || (remnant && !remnant->no_border)) {
         // decorated client
         transformed_shape = decorationRect;
         if (toplevel->shape()) {
@@ -303,18 +303,16 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     xcb_render_picture_t bottom = XCB_RENDER_PICTURE_NONE;
     QRect dtr, dlr, drr, dbr;
     deco_renderer const* renderer = nullptr;
-    if (client) {
-        if (client && !client->noBorder()) {
-            if (win::decoration(client)) {
-                auto r = static_cast<deco_renderer*>(client->control->deco().client->renderer());
-                if (r) {
-                    r->render();
-                    renderer = r;
-                }
+    if (client && client->control && !client->noBorder()) {
+        if (win::decoration(client)) {
+            auto r = static_cast<deco_renderer*>(client->control->deco().client->renderer());
+            if (r) {
+                r->render();
+                renderer = r;
             }
-            noBorder = client->noBorder();
-            client->layoutDecorationRects(dlr, dtr, drr, dbr);
         }
+        noBorder = client->noBorder();
+        client->layoutDecorationRects(dlr, dtr, drr, dbr);
     }
     if (remnant && !remnant->no_border) {
         renderer = static_cast<const deco_renderer*>(remnant->decoration_renderer);
