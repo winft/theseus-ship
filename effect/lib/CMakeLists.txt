@@ -120,6 +120,7 @@ install(FILES
     kwineffects/deform_effect.h
     kwineffects/effect.h
     kwineffects/effect_frame.h
+    kwineffects/effect_integration.h
     kwineffects/effect_plugin_factory.h
     kwineffects/effect_quick_view.h
     kwineffects/effect_screen.h

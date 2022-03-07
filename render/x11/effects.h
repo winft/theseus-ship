@@ -6,6 +6,8 @@
 */
 #pragma once
 
+#include "effect/blur_integration.h"
+
 #include "base/x11/xcb/window.h"
 #include "render/effects.h"
 
@@ -23,8 +25,14 @@ public:
     effects_handler_impl(render::compositor* compositor, render::scene* scene);
     ~effects_handler_impl() override;
 
+    bool eventFilter(QObject* watched, QEvent* event) override;
+
     void defineCursor(Qt::CursorShape shape) override;
     QImage blit_from_framebuffer(QRect const& geometry, double scale) const override;
+
+    effect::region_integration& get_blur_integration() override;
+
+    blur_integration<effects_handler_impl> blur;
 
 protected:
     bool doGrabKeyboard() override;
@@ -34,6 +42,7 @@ protected:
     void doStopMouseInterception() override;
 
     void doCheckInputWindowStacking() override;
+    void handle_effect_destroy(Effect& effect) override;
 
 private:
     struct {

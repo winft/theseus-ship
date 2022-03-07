@@ -32,6 +32,12 @@ bool contains(V const& container, T const& arg)
     return std::find(container.cbegin(), container.cend(), arg) != container.cend();
 }
 
+template<typename V, typename F>
+bool contains_if(V const& container, F&& f)
+{
+    return std::find_if(container.cbegin(), container.cend(), f) != container.cend();
+}
+
 template<typename V, typename T>
 void remove_all(V& container, T const& arg)
 {

@@ -5,6 +5,8 @@
 */
 #include "effects.h"
 
+#include "effect/update.h"
+
 #include "base/wayland/server.h"
 #include "main.h"
 #include "render/window.h"
@@ -17,6 +19,7 @@ namespace KWin::render::wayland
 
 effects_handler_impl::effects_handler_impl(render::compositor* compositor, render::scene* scene)
     : render::effects_handler_impl(compositor, scene)
+    , blur{*this, *waylandServer()->display}
 {
     reconfigure();
 
@@ -50,6 +53,12 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     }
 }
 
+bool effects_handler_impl::eventFilter(QObject* watched, QEvent* event)
+{
+    handle_internal_window_effect_update_event(blur, watched, event);
+    return false;
+}
+
 EffectWindow* effects_handler_impl::find_window_by_surface(Wrapland::Server::Surface* surface) const
 {
     if (auto win = static_cast<win::wayland::space*>(workspace())->find_window(surface)) {
@@ -61,6 +70,16 @@ EffectWindow* effects_handler_impl::find_window_by_surface(Wrapland::Server::Sur
 Wrapland::Server::Display* effects_handler_impl::waylandDisplay() const
 {
     return waylandServer()->display.get();
+}
+
+effect::region_integration& effects_handler_impl::get_blur_integration()
+{
+    return blur;
+}
+
+void effects_handler_impl::handle_effect_destroy(Effect& effect)
+{
+    blur.remove(effect);
 }
 
 }

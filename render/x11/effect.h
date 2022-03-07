@@ -6,6 +6,7 @@
 #pragma once
 
 #include "main.h"
+#include "render/compositor.h"
 #include "utils/memory.h"
 
 #include <kwineffects/effect.h>

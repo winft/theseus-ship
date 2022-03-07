@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include <kwineffects/effect_integration.h>
 #include <kwineffects/export.h>
 #include <kwineffects/types.h>
 #include <kwinglobals.h>
@@ -683,6 +684,8 @@ public:
     virtual EffectScreen* screenAt(const QPoint& point) const = 0;
     virtual EffectScreen* findScreen(const QString& name) const = 0;
     virtual EffectScreen* findScreen(int screenId) const = 0;
+
+    virtual effect::region_integration& get_blur_integration() = 0;
 
     virtual QImage blit_from_framebuffer(QRect const& geometry, double scale) const = 0;
 

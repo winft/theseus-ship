@@ -29,14 +29,6 @@
 #include <QVector2D>
 #include <QVector>
 
-namespace Wrapland
-{
-namespace Server
-{
-class BlurManager;
-}
-}
-
 namespace KWin
 {
 
@@ -75,13 +67,7 @@ public:
         return 75;
     }
 
-    bool eventFilter(QObject* watched, QEvent* event) override;
-
-public Q_SLOTS:
-    void slotWindowAdded(KWin::EffectWindow* w);
-    void slotWindowDeleted(KWin::EffectWindow* w);
-    void slotPropertyNotify(KWin::EffectWindow* w, long atom);
-    void slotScreenGeometryChanged();
+    void reset();
 
 private:
     QRect expand(const QRect& rect) const;
@@ -92,7 +78,6 @@ private:
     void updateTexture();
     QRegion blurRegion(const EffectWindow* w) const;
     bool shouldBlur(const EffectWindow* w, int mask, const WindowPaintData& data) const;
-    void updateBlurRegion(EffectWindow* w) const;
     void doBlur(const QRegion& shape,
                 const QRect& screen,
                 const float opacity,
@@ -130,7 +115,6 @@ private:
     GLTexture m_noiseTexture;
 
     bool m_renderTargetsValid;
-    long net_wm_blur_region;
     QRegion m_paintedArea; // keeps track of all painted areas (from bottom to top)
     QRegion m_currentBlur; // keeps track of the currently blured area of the windows(from bottom to
                            // top)
@@ -155,9 +139,6 @@ private:
     };
 
     QVector<BlurValuesStruct> blurStrengthValues;
-
-    QMap<EffectWindow*, QMetaObject::Connection> windowBlurChangedConnections;
-    std::unique_ptr<Wrapland::Server::BlurManager> wayland_blur_manager;
 };
 
 inline bool BlurEffect::provides(Effect::Feature feature)

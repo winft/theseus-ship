@@ -400,6 +400,9 @@ protected:
     QMultiMap<int, EffectPair> effect_order;
     int next_window_quad_type{EFFECT_QUAD_TYPE_START};
 
+    // TODO(romangg): replace this function with free function templates. It's called from the dtor!
+    virtual void handle_effect_destroy(Effect& effect);
+
 private:
     void destroyEffect(Effect* effect);
 

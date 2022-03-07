@@ -117,17 +117,13 @@ public:
      * is no Compositor.
      */
     virtual Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl* client);
+    virtual void createEffectsHandler(render::compositor* compositor, render::scene* scene) = 0;
 
     /**
      * Platform specific way to invert the screen.
      * Default implementation invokes the invert effect
      */
     virtual void invertScreen();
-
-    /**
-     * Default implementation creates an EffectsHandlerImp;
-     */
-    virtual void createEffectsHandler(render::compositor* compositor, render::scene* scene);
 
     /**
      * The CompositingTypes supported by the Platform.

@@ -1447,8 +1447,13 @@ void effects_handler_impl::unloadEffect(const QString& name)
     m_compositor->addRepaintFull();
 }
 
+void effects_handler_impl::handle_effect_destroy(Effect& /*effect*/)
+{
+}
+
 void effects_handler_impl::destroyEffect(Effect* effect)
 {
+    assert(effect);
     makeOpenGLContextCurrent();
 
     if (fullscreen_effect == effect) {
@@ -1460,6 +1465,7 @@ void effects_handler_impl::destroyEffect(Effect* effect)
     }
 
     stopMouseInterception(effect);
+    handle_effect_destroy(*effect);
 
     const QList<QByteArray> properties = m_propertiesForEffects.keys();
     for (const QByteArray& property : properties) {

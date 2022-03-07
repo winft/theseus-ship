@@ -91,9 +91,4 @@ void platform::invertScreen()
     }
 }
 
-void platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
-{
-    new render::effects_handler_impl(compositor, scene);
-}
-
 }
