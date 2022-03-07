@@ -7,10 +7,7 @@
 
 #include "base/x11/event_filter.h"
 
-namespace KWin::render
-{
-
-namespace backend::x11
+namespace KWin::render::x11
 {
 
 class effects_handler_impl;
@@ -27,5 +24,4 @@ private:
     xcb_window_t m_window;
 };
 
-}
 }

@@ -6,11 +6,12 @@
 */
 #include "effects.h"
 
+#include "mouse_intercept_filter.h"
+
 #include "base/platform.h"
 #include "base/x11/grabs.h"
 #include "input/cursor.h"
 #include "main.h"
-#include "mouse_intercept_filter.h"
 #include "win/screen_edges.h"
 #include "win/x11/space.h"
 
@@ -18,7 +19,7 @@
 
 #include <QDesktopWidget>
 
-namespace KWin::render::backend::x11
+namespace KWin::render::x11
 {
 
 effects_handler_impl::effects_handler_impl(render::compositor* compositor, render::scene* scene)

@@ -11,7 +11,7 @@
 
 #include <memory.h>
 
-namespace KWin::render::backend::x11
+namespace KWin::render::x11
 {
 
 class mouse_intercept_filter;

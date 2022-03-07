@@ -7,7 +7,6 @@
 #include "platform.h"
 
 #include "deco_renderer.h"
-#include "effects.h"
 #include "glx.h"
 #include "non_composited_outline.h"
 #include "x11_logging.h"
@@ -23,6 +22,7 @@
 #include "base/x11/xcb/randr.h"
 #include "main_x11.h"
 #include "render/compositor.h"
+#include "render/x11/effects.h"
 #include "toplevel.h"
 #include "win/space.h"
 
@@ -314,7 +314,7 @@ void platform::invertScreen()
 
 void platform::createEffectsHandler(render::compositor* compositor, render::scene* scene)
 {
-    new effects_handler_impl(compositor, scene);
+    new render::x11::effects_handler_impl(compositor, scene);
 }
 
 QVector<CompositingType> platform::supportedCompositors() const

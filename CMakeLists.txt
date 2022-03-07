@@ -704,11 +704,11 @@ set(kwin_X11_SRCS
    input/x11/xfixes_cursor_event_filter.cpp
    input/logging.cpp
    render/backend/x11/deco_renderer.cpp
-   render/backend/x11/effects.cpp
-   render/backend/x11/mouse_intercept_filter.cpp
    render/backend/x11/non_composited_outline.cpp
    render/backend/x11/platform.cpp
    render/x11/compositor.cpp
+   render/x11/effects.cpp
+   render/x11/mouse_intercept_filter.cpp
    render/x11/overlay_window.cpp
 )
 
