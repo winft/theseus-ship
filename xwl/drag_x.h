@@ -133,7 +133,7 @@ private:
 
     uint32_t m_version = 0;
 
-    xcb_atom_t action_atom;
+    xcb_atom_t action_atom{XCB_NONE};
     dnd_action action = dnd_action::none;
 
     bool mapped = false;
