@@ -222,23 +222,28 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             this,
             &EffectsHandler::screenAboutToLock);
 
-    connect(kwinApp(), &Application::x11ConnectionChanged, this, [this] {
+    auto make_property_filter = [this] {
+        using filter = win::x11::window_property_notify_filter<effects_handler_impl, win::space>;
+        x11_property_notify
+            = std::make_unique<filter>(*this, *workspace(), kwinApp()->x11RootWindow());
+    };
+
+    connect(kwinApp(), &Application::x11ConnectionChanged, this, [this, make_property_filter] {
         registered_atoms.clear();
         for (auto it = m_propertiesForEffects.keyBegin(); it != m_propertiesForEffects.keyEnd();
              it++) {
             x11::add_support_property(*this, *it);
         }
         if (kwinApp()->x11Connection()) {
-            m_x11WindowPropertyNotify
-                = std::make_unique<win::x11::window_property_notify_filter>(this);
+            make_property_filter();
         } else {
-            m_x11WindowPropertyNotify.reset();
+            x11_property_notify.reset();
         }
         Q_EMIT xcbConnectionChanged();
     });
 
     if (kwinApp()->x11Connection()) {
-        m_x11WindowPropertyNotify = std::make_unique<win::x11::window_property_notify_filter>(this);
+        make_property_filter();
     }
 
     // connect all clients

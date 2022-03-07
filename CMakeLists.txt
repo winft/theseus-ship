@@ -528,7 +528,6 @@ set(kwin_SRCS
     win/x11/stacking_tree.cpp
     win/x11/sync_alarm_filter.cpp
     win/x11/window.cpp
-    win/x11/window_property_notify_filter.cpp
     xwl/xwayland_interface.cpp
 )
 

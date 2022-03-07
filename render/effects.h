@@ -54,11 +54,19 @@ namespace base
 class output;
 }
 
-namespace win::x11
+namespace win
+{
+
+namespace x11
 {
 class group;
 class window;
+template<typename Effects, typename Space>
 class window_property_notify_filter;
+}
+
+class space;
+
 }
 
 class Deleted;
@@ -405,7 +413,8 @@ private:
     QList<Effect*> m_grabbedMouseEffects;
     effect_loader* m_effectLoader;
     int m_trackingCursorChanges;
-    std::unique_ptr<win::x11::window_property_notify_filter> m_x11WindowPropertyNotify;
+    std::unique_ptr<win::x11::window_property_notify_filter<effects_handler_impl, win::space>>
+        x11_property_notify;
     QList<EffectScreen*> m_effectScreens;
 };
 

@@ -1,47 +1,51 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2017 Martin Flöser <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2017 Martin Flöser <mgraesslin@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #pragma once
 
 #include "base/x11/event_filter.h"
+#include "win/x11/window.h"
 
-namespace KWin
-{
-namespace render
-{
-class effects_handler_impl;
-}
-
-namespace win::x11
+namespace KWin::win::x11
 {
 
+template<typename Effects, typename Space>
 class window_property_notify_filter : public base::x11::event_filter
 {
 public:
-    explicit window_property_notify_filter(render::effects_handler_impl* effects);
+    window_property_notify_filter(Effects& effects, Space& space, xcb_window_t root_window)
+        : base::x11::event_filter(QVector<int>{XCB_PROPERTY_NOTIFY})
+        , effects{effects}
+        , space{space}
+        , root_window{root_window}
+    {
+    }
 
-    bool event(xcb_generic_event_t* event) override;
+    bool event(xcb_generic_event_t* event) override
+    {
+        auto pe = reinterpret_cast<xcb_property_notify_event_t*>(event);
+        if (!effects.registered_atoms.contains(pe->atom)) {
+            return false;
+        }
+
+        if (pe->window == root_window) {
+            Q_EMIT effects.propertyNotify(nullptr, pe->atom);
+        } else if (const auto c = space.findClient(win::x11::predicate_match::window, pe->window)) {
+            Q_EMIT effects.propertyNotify(c->render->effect.get(), pe->atom);
+        } else if (const auto c = space.findUnmanaged(pe->window)) {
+            Q_EMIT effects.propertyNotify(c->render->effect.get(), pe->atom);
+        }
+
+        return false;
+    }
 
 private:
-    render::effects_handler_impl* m_effects;
+    Effects& effects;
+    Space& space;
+    xcb_window_t root_window;
 };
-
-}
 
 }
