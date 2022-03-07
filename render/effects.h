@@ -61,8 +61,6 @@ namespace x11
 {
 class group;
 class window;
-template<typename Effects, typename Space>
-class window_property_notify_filter;
 }
 
 class space;
@@ -74,6 +72,12 @@ class Toplevel;
 
 namespace render
 {
+
+namespace x11
+{
+template<typename Effects, typename Space>
+class property_notify_filter;
+}
 
 class basic_thumbnail_item;
 class desktop_thumbnail_item;
@@ -413,7 +417,7 @@ private:
     QList<Effect*> m_grabbedMouseEffects;
     effect_loader* m_effectLoader;
     int m_trackingCursorChanges;
-    std::unique_ptr<win::x11::window_property_notify_filter<effects_handler_impl, win::space>>
+    std::unique_ptr<x11::property_notify_filter<effects_handler_impl, win::space>>
         x11_property_notify;
     QList<EffectScreen*> m_effectScreens;
 };

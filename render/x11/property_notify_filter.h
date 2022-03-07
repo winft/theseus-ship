@@ -9,14 +9,14 @@
 #include "base/x11/event_filter.h"
 #include "win/x11/window.h"
 
-namespace KWin::win::x11
+namespace KWin::render::x11
 {
 
 template<typename Effects, typename Space>
-class window_property_notify_filter : public base::x11::event_filter
+class property_notify_filter : public base::x11::event_filter
 {
 public:
-    window_property_notify_filter(Effects& effects, Space& space, xcb_window_t root_window)
+    property_notify_filter(Effects& effects, Space& space, xcb_window_t root_window)
         : base::x11::event_filter(QVector<int>{XCB_PROPERTY_NOTIFY})
         , effects{effects}
         , space{space}

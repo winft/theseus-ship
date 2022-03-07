@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "platform.h"
 #include "thumbnail_item.h"
 #include "x11/effect.h"
+#include "x11/property_notify_filter.h"
 
 #include "base/logging.h"
 #include "base/output.h"
@@ -52,7 +53,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/group.h"
 #include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
-#include "win/x11/window_property_notify_filter.h"
 
 #ifdef KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
@@ -223,7 +223,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             &EffectsHandler::screenAboutToLock);
 
     auto make_property_filter = [this] {
-        using filter = win::x11::window_property_notify_filter<effects_handler_impl, win::space>;
+        using filter = x11::property_notify_filter<effects_handler_impl, win::space>;
         x11_property_notify
             = std::make_unique<filter>(*this, *workspace(), kwinApp()->x11RootWindow());
     };
