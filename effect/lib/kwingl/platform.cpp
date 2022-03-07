@@ -1062,7 +1062,9 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
 
 static void print(const QByteArray& label, const QByteArray& setting)
 {
+    auto old_flags = std::cout.flags();
     std::cout << std::setw(40) << std::left << label.data() << setting.data() << std::endl;
+    std::cout.flags(old_flags);
 }
 
 void GLPlatform::printResults() const
