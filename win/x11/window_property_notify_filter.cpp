@@ -37,7 +37,7 @@ window_property_notify_filter::window_property_notify_filter(render::effects_han
 bool window_property_notify_filter::event(xcb_generic_event_t* event)
 {
     const auto* pe = reinterpret_cast<xcb_property_notify_event_t*>(event);
-    if (!m_effects->isPropertyTypeRegistered(pe->atom)) {
+    if (!m_effects->registered_atoms.contains(pe->atom)) {
         return false;
     }
     if (pe->window == kwinApp()->x11RootWindow()) {

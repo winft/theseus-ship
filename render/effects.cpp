@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl/scene.h"
 #include "platform.h"
 #include "thumbnail_item.h"
+#include "x11/effect.h"
 
 #include "base/logging.h"
 #include "base/output.h"
@@ -96,41 +97,10 @@ static void deleteWindowProperty(xcb_window_t win, long int atom)
     xcb_delete_property(kwinApp()->x11Connection(), win, atom);
 }
 
-static xcb_atom_t registerSupportProperty(const QByteArray& propertyName)
-{
-    auto c = kwinApp()->x11Connection();
-    if (!c) {
-        return XCB_ATOM_NONE;
-    }
-    // get the atom for the propertyName
-    unique_cptr<xcb_intern_atom_reply_t> atomReply(xcb_intern_atom_reply(
-        c,
-        xcb_intern_atom_unchecked(c, false, propertyName.size(), propertyName.constData()),
-        nullptr));
-    if (!atomReply) {
-        return XCB_ATOM_NONE;
-    }
-    // announce property on root window
-    unsigned char dummy = 0;
-    xcb_change_property(c,
-                        XCB_PROP_MODE_REPLACE,
-                        kwinApp()->x11RootWindow(),
-                        atomReply->atom,
-                        atomReply->atom,
-                        8,
-                        1,
-                        &dummy);
-    // TODO: add to _NET_SUPPORTED
-    return atomReply->atom;
-}
-
 //---------------------
 
 effects_handler_impl::effects_handler_impl(render::compositor* compositor, render::scene* scene)
     : EffectsHandler(scene->compositingType())
-    , keyboard_grab_effect(nullptr)
-    , fullscreen_effect(nullptr)
-    , next_window_quad_type(EFFECT_QUAD_TYPE_START)
     , m_compositor(compositor)
     , m_scene(scene)
     , m_desktopRendering(false)
@@ -256,13 +226,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         registered_atoms.clear();
         for (auto it = m_propertiesForEffects.keyBegin(); it != m_propertiesForEffects.keyEnd();
              it++) {
-            const auto atom = registerSupportProperty(*it);
-            if (atom == XCB_ATOM_NONE) {
-                continue;
-            }
-            m_compositor->keepSupportProperty(atom);
-            m_managedProperties.insert(*it, atom);
-            registerPropertyType(atom, true);
+            x11::add_support_property(*this, *it);
         }
         if (kwinApp()->x11Connection()) {
             m_x11WindowPropertyNotify
@@ -905,59 +869,15 @@ void effects_handler_impl::desktopResized(const QSize& size)
     Q_EMIT screenGeometryChanged(size);
 }
 
-void effects_handler_impl::registerPropertyType(long atom, bool reg)
-{
-    if (reg)
-        ++registered_atoms[atom]; // initialized to 0 if not present yet
-    else {
-        if (--registered_atoms[atom] == 0)
-            registered_atoms.remove(atom);
-    }
-}
-
 xcb_atom_t effects_handler_impl::announceSupportProperty(const QByteArray& propertyName,
                                                          Effect* effect)
 {
-    PropertyEffectMap::iterator it = m_propertiesForEffects.find(propertyName);
-    if (it != m_propertiesForEffects.end()) {
-        // property has already been registered for an effect
-        // just append Effect and return the atom stored in m_managedProperties
-        if (!it.value().contains(effect)) {
-            it.value().append(effect);
-        }
-        return m_managedProperties.value(propertyName, XCB_ATOM_NONE);
-    }
-    m_propertiesForEffects.insert(propertyName, QList<Effect*>() << effect);
-    const auto atom = registerSupportProperty(propertyName);
-    if (atom == XCB_ATOM_NONE) {
-        return atom;
-    }
-    m_compositor->keepSupportProperty(atom);
-    m_managedProperties.insert(propertyName, atom);
-    registerPropertyType(atom, true);
-    return atom;
+    return x11::announce_support_property(*this, effect, propertyName);
 }
 
 void effects_handler_impl::removeSupportProperty(const QByteArray& propertyName, Effect* effect)
 {
-    PropertyEffectMap::iterator it = m_propertiesForEffects.find(propertyName);
-    if (it == m_propertiesForEffects.end()) {
-        // property is not registered - nothing to do
-        return;
-    }
-    if (!it.value().contains(effect)) {
-        // property is not registered for given effect - nothing to do
-        return;
-    }
-    it.value().removeAll(effect);
-    if (!it.value().isEmpty()) {
-        // property still registered for another effect - nothing further to do
-        return;
-    }
-    const xcb_atom_t atom = m_managedProperties.take(propertyName);
-    registerPropertyType(atom, false);
-    m_propertiesForEffects.remove(propertyName);
-    m_compositor->removeSupportProperty(atom); // delayed removal
+    x11::remove_support_property(*this, effect, propertyName);
 }
 
 QByteArray effects_handler_impl::readRootProperty(long atom, long type, int format) const

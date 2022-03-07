@@ -287,12 +287,6 @@ public:
     bool touchUp(qint32 id, quint32 time);
 
     void highlightWindows(const QVector<EffectWindow*>& windows);
-
-    bool isPropertyTypeRegistered(xcb_atom_t atom) const
-    {
-        return registered_atoms.contains(atom);
-    }
-
     void windowToDesktops(EffectWindow* w, const QVector<uint>& desktops) override;
 
     /**
@@ -313,6 +307,12 @@ public:
     EffectScreen* findScreen(int screenId) const override;
     bool isCursorHidden() const override;
     QImage blit_from_framebuffer(QRect const& geometry, double scale) const override;
+
+    using PropertyEffectMap = QHash<QByteArray, QList<Effect*>>;
+    PropertyEffectMap m_propertiesForEffects;
+    QHash<QByteArray, qulonglong> m_managedProperties;
+    render::compositor* m_compositor;
+    QHash<long, int> registered_atoms;
 
 public Q_SLOTS:
     void slotCurrentTabAboutToChange(EffectWindow* from, EffectWindow* to);
@@ -382,15 +382,13 @@ protected:
      */
     virtual void doCheckInputWindowStacking();
 
-    Effect* keyboard_grab_effect;
-    Effect* fullscreen_effect;
+    Effect* keyboard_grab_effect{nullptr};
+    Effect* fullscreen_effect{nullptr};
     QList<EffectWindow*> elevated_windows;
     QMultiMap<int, EffectPair> effect_order;
-    QHash<long, int> registered_atoms;
-    int next_window_quad_type;
+    int next_window_quad_type{EFFECT_QUAD_TYPE_START};
 
 private:
-    void registerPropertyType(long atom, bool reg);
     void destroyEffect(Effect* effect);
 
     typedef QVector<Effect*> EffectsList;
@@ -401,10 +399,6 @@ private:
     EffectsIterator m_currentPaintEffectFrameIterator;
     EffectsIterator m_currentPaintScreenIterator;
     EffectsIterator m_currentBuildQuadsIterator;
-    typedef QHash<QByteArray, QList<Effect*>> PropertyEffectMap;
-    PropertyEffectMap m_propertiesForEffects;
-    QHash<QByteArray, qulonglong> m_managedProperties;
-    render::compositor* m_compositor;
     render::scene* m_scene;
     bool m_desktopRendering;
     int m_currentRenderedDesktop;
