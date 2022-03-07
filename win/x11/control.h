@@ -1011,7 +1011,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
                               win->info->state() & NET::SkipSwitcher, !isMapped));
 
         if (win->info->state() & NET::DemandsAttention) {
-            win->control->demands_attention();
+            set_demands_attention(win, true);
         }
         if (win->info->state() & NET::Modal) {
             win->transient()->set_modal(true);
@@ -1078,7 +1078,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
                     }
                 }
             } else if (!session && !is_special_window(win)) {
-                win->control->demands_attention();
+                set_demands_attention(win, true);
             }
         }
     } else {
