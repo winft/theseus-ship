@@ -315,6 +315,7 @@ void raise_or_lower_client(Space* space, Window* window)
 template<typename Space, typename Window>
 void restack(Space* space, Window* window, Toplevel* under, bool force = false)
 {
+    assert(under);
     assert(contains(space->stacking_order->pre_stack, under));
 
     if (!force && !belong_to_same_client(under, window)) {
@@ -325,16 +326,20 @@ void restack(Space* space, Window* window, Toplevel* under, bool force = false)
             auto other = *it;
             if (other->control && other->layer() == window->layer()
                 && belong_to_same_client(under, other)) {
-                under = (window == other) ? nullptr : other;
+                // window doesn't belong to the same client as under, as we checked above, but other
+                // does, so window can't be other.
+                assert(window != other);
+                under = other;
                 break;
             }
         }
     }
-    if (under) {
-        remove_all(space->stacking_order->pre_stack, window);
-        auto it = find(space->stacking_order->pre_stack, under);
-        space->stacking_order->pre_stack.insert(it, window);
-    }
+
+    assert(under);
+
+    remove_all(space->stacking_order->pre_stack, window);
+    auto it = find(space->stacking_order->pre_stack, under);
+    space->stacking_order->pre_stack.insert(it, window);
 
     assert(contains(space->stacking_order->pre_stack, window));
     focus_chain::self()->moveAfterClient(window, under);
