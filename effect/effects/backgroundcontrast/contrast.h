@@ -28,14 +28,6 @@
 #include <QVector>
 #include <memory>
 
-namespace Wrapland
-{
-namespace Server
-{
-class ContrastManager;
-}
-}
-
 namespace KWin
 {
 
@@ -51,7 +43,6 @@ public:
     static bool supported();
     static bool enabledByDefault();
 
-    static QMatrix4x4 colorMatrix(qreal contrast, qreal intensity, qreal saturation);
     void reconfigure(ReconfigureFlags flags) override;
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void prePaintWindow(EffectWindow* w,
@@ -72,18 +63,14 @@ public:
         return 76;
     }
 
-    bool eventFilter(QObject* watched, QEvent* event) override;
-
-public Q_SLOTS:
-    void slotWindowAdded(KWin::EffectWindow* w);
     void slotWindowDeleted(KWin::EffectWindow* w);
-    void slotPropertyNotify(KWin::EffectWindow* w, long atom);
-    void slotScreenGeometryChanged();
+    void reset();
+
+    QHash<const EffectWindow*, QMatrix4x4> m_colorMatrices;
 
 private:
     QRegion contrastRegion(const EffectWindow* w) const;
     bool shouldContrast(const EffectWindow* w, int mask, const WindowPaintData& data) const;
-    void updateContrastRegion(EffectWindow* w);
     void doContrast(EffectWindow* w,
                     const QRegion& shape,
                     const QRect& screen,
@@ -94,14 +81,9 @@ private:
 
 private:
     ContrastShader* shader;
-    long net_wm_contrast_region;
     QRegion m_paintedArea;     // actually painted area which is greater than m_damagedArea
     QRegion m_currentContrast; // keeps track of the currently contrasted area of non-caching
                                // windows(from bottom to top)
-    QHash<const EffectWindow*, QMatrix4x4> m_colorMatrices;
-    QHash<const EffectWindow*, QMetaObject::Connection>
-        m_contrastChangedConnections; // used only in Wayland to keep track of effect changed
-    std::unique_ptr<Wrapland::Server::ContrastManager> wayland_contrast_manager;
 };
 
 inline bool ContrastEffect::provides(Effect::Feature feature)

@@ -5,6 +5,7 @@
 */
 #pragma once
 
+#include <QMatrix4x4>
 #include <QRegion>
 #include <functional>
 
@@ -39,7 +40,15 @@ struct value_update {
 };
 
 using region_update = value_update<QRegion>;
+
+struct color_update {
+    update base;
+    QRegion region;
+    QMatrix4x4 color;
+};
+
 using region_integration = win_integration<region_update>;
+using color_integration = win_integration<color_update>;
 
 }
 }

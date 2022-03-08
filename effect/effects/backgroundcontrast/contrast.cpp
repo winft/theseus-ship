@@ -26,17 +26,30 @@
 #include <kwineffects/paint_data.h>
 
 #include <QMatrix4x4>
-#include <QWindow>
-
-#include <Wrapland/Server/contrast.h>
-#include <Wrapland/Server/display.h>
-#include <Wrapland/Server/surface.h>
 
 namespace KWin
 {
 
-static const QByteArray s_contrastAtomName
-    = QByteArrayLiteral("_KDE_NET_WM_BACKGROUND_CONTRAST_REGION");
+void update_function(ContrastEffect& effect, KWin::effect::color_update const& update)
+{
+    if (!update.base.window) {
+        // Reset requested
+        effect.reset();
+        return;
+    }
+
+    effect.m_colorMatrices[update.base.window] = update.color;
+
+    // If the specified region is empty, enable the contrast effect for the whole window.
+    if (update.region.isEmpty() && update.base.valid) {
+        // Set the data to a dummy value.
+        // This is needed to be able to distinguish between the value not
+        // being set, and being set to an empty region.
+        update.base.window->setData(WindowBackgroundContrastRole, 1);
+    } else {
+        update.base.window->setData(WindowBackgroundContrastRole, update.region);
+    }
+}
 
 ContrastEffect::ContrastEffect()
 {
@@ -44,36 +57,13 @@ ContrastEffect::ContrastEffect()
 
     reconfigure(ReconfigureAll);
 
-    // ### Hackish way to announce support.
-    //     Should be included in _NET_SUPPORTED instead.
     if (shader && shader->isValid()) {
-        net_wm_contrast_region = effects->announceSupportProperty(s_contrastAtomName, this);
-        Wrapland::Server::Display* display = effects->waylandDisplay();
-        if (display) {
-            wayland_contrast_manager = display->createContrastManager();
-        }
-    } else {
-        net_wm_contrast_region = 0;
+        auto& contrast_integration = effects->get_contrast_integration();
+        auto update = [this](auto&& data) { update_function(*this, data); };
+        contrast_integration.add(*this, update);
     }
 
-    connect(effects, &EffectsHandler::windowAdded, this, &ContrastEffect::slotWindowAdded);
     connect(effects, &EffectsHandler::windowDeleted, this, &ContrastEffect::slotWindowDeleted);
-    connect(effects, &EffectsHandler::propertyNotify, this, &ContrastEffect::slotPropertyNotify);
-    connect(effects,
-            &EffectsHandler::screenGeometryChanged,
-            this,
-            &ContrastEffect::slotScreenGeometryChanged);
-    connect(effects, &EffectsHandler::xcbConnectionChanged, this, [this] {
-        if (shader && shader->isValid()) {
-            net_wm_contrast_region = effects->announceSupportProperty(s_contrastAtomName, this);
-        }
-    });
-
-    // Fetch the contrast regions for all windows
-    auto const windowList = effects->stackingOrder();
-    for (EffectWindow* window : windowList) {
-        slotWindowAdded(window);
-    }
 }
 
 ContrastEffect::~ContrastEffect()
@@ -81,15 +71,12 @@ ContrastEffect::~ContrastEffect()
     delete shader;
 }
 
-void ContrastEffect::slotScreenGeometryChanged()
+void ContrastEffect::reset()
 {
-    effects->makeOpenGLContextCurrent();
     if (!supported()) {
+        effects->makeOpenGLContextCurrent();
         effects->reloadEffect(this);
-        return;
-    }
-    for (EffectWindow* window : effects->stackingOrder()) {
-        updateContrastRegion(window);
+        // TODO(romangg): done context?
     }
 }
 
@@ -101,182 +88,13 @@ void ContrastEffect::reconfigure(ReconfigureFlags flags)
         shader->init();
 
     if (!shader || !shader->isValid()) {
-        effects->removeSupportProperty(s_contrastAtomName, this);
-        wayland_contrast_manager.reset();
+        effects->get_contrast_integration().remove(*this);
     }
-}
-
-void ContrastEffect::updateContrastRegion(EffectWindow* w)
-{
-    QRegion region;
-    float colorTransform[16];
-    bool valid = false;
-
-    if (net_wm_contrast_region != XCB_ATOM_NONE) {
-        const QByteArray value
-            = w->readProperty(net_wm_contrast_region, net_wm_contrast_region, 32);
-
-        if (value.size() > 0
-            && !((value.size() - (16 * sizeof(uint32_t))) % ((4 * sizeof(uint32_t))))) {
-            const uint32_t* cardinals = reinterpret_cast<const uint32_t*>(value.constData());
-            const float* floatCardinals = reinterpret_cast<const float*>(value.constData());
-            unsigned int i = 0;
-            for (; i < ((value.size() - (16 * sizeof(uint32_t)))) / sizeof(uint32_t);) {
-                int x = cardinals[i++];
-                int y = cardinals[i++];
-                int w = cardinals[i++];
-                int h = cardinals[i++];
-                region += QRect(x, y, w, h);
-            }
-
-            for (unsigned int j = 0; j < 16; ++j) {
-                colorTransform[j] = floatCardinals[i + j];
-            }
-
-            QMatrix4x4 colorMatrix(colorTransform);
-            m_colorMatrices[w] = colorMatrix;
-        }
-
-        valid = !value.isNull();
-    }
-
-    auto surf = w->surface();
-
-    if (surf && surf->state().contrast) {
-        auto& contrast = surf->state().contrast;
-        region = contrast->region();
-        m_colorMatrices[w]
-            = colorMatrix(contrast->contrast(), contrast->intensity(), contrast->saturation());
-        valid = true;
-    }
-
-    if (auto internal = w->internalWindow()) {
-        const auto property = internal->property("kwin_background_region");
-        if (property.isValid()) {
-            region = property.value<QRegion>();
-            bool ok = false;
-            qreal contrast = internal->property("kwin_background_contrast").toReal(&ok);
-            if (!ok) {
-                contrast = 1.0;
-            }
-            qreal intensity = internal->property("kwin_background_intensity").toReal(&ok);
-            if (!ok) {
-                intensity = 1.0;
-            }
-            qreal saturation = internal->property("kwin_background_saturation").toReal(&ok);
-            if (!ok) {
-                saturation = 1.0;
-            }
-            m_colorMatrices[w] = colorMatrix(contrast, intensity, saturation);
-            valid = true;
-        }
-    }
-
-    // If the specified region is empty, enable the contrast effect for the whole window.
-    if (region.isEmpty() && valid) {
-        // Set the data to a dummy value.
-        // This is needed to be able to distinguish between the value not
-        // being set, and being set to an empty region.
-        w->setData(WindowBackgroundContrastRole, 1);
-    } else {
-        w->setData(WindowBackgroundContrastRole, region);
-    }
-}
-
-void ContrastEffect::slotWindowAdded(EffectWindow* w)
-{
-    auto surf = w->surface();
-
-    if (surf) {
-        m_contrastChangedConnections[w]
-            = connect(surf, &Wrapland::Server::Surface::committed, this, [this, w, surf]() {
-                  if (w && surf->state().updates & Wrapland::Server::surface_change::contrast) {
-                      updateContrastRegion(w);
-                  }
-              });
-    }
-
-    if (auto internal = w->internalWindow()) {
-        internal->installEventFilter(this);
-    }
-
-    updateContrastRegion(w);
-}
-
-bool ContrastEffect::eventFilter(QObject* watched, QEvent* event)
-{
-    auto internal = qobject_cast<QWindow*>(watched);
-    if (internal && event->type() == QEvent::DynamicPropertyChange) {
-        QDynamicPropertyChangeEvent* pe = static_cast<QDynamicPropertyChangeEvent*>(event);
-        if (pe->propertyName() == "kwin_background_region"
-            || pe->propertyName() == "kwin_background_contrast"
-            || pe->propertyName() == "kwin_background_intensity"
-            || pe->propertyName() == "kwin_background_saturation") {
-            if (auto w = effects->findWindow(internal)) {
-                updateContrastRegion(w);
-            }
-        }
-    }
-    return false;
 }
 
 void ContrastEffect::slotWindowDeleted(EffectWindow* w)
 {
-    if (m_contrastChangedConnections.contains(w)) {
-        disconnect(m_contrastChangedConnections[w]);
-        m_contrastChangedConnections.remove(w);
-        m_colorMatrices.remove(w);
-    }
-}
-
-void ContrastEffect::slotPropertyNotify(EffectWindow* w, long atom)
-{
-    if (w && atom == net_wm_contrast_region && net_wm_contrast_region != XCB_ATOM_NONE) {
-        updateContrastRegion(w);
-    }
-}
-
-QMatrix4x4 ContrastEffect::colorMatrix(qreal contrast, qreal intensity, qreal saturation)
-{
-    QMatrix4x4 satMatrix;  // saturation
-    QMatrix4x4 intMatrix;  // intensity
-    QMatrix4x4 contMatrix; // contrast
-
-    // Saturation matrix
-    if (!qFuzzyCompare(saturation, 1.0)) {
-        const qreal rval = (1.0 - saturation) * .2126;
-        const qreal gval = (1.0 - saturation) * .7152;
-        const qreal bval = (1.0 - saturation) * .0722;
-
-        // clang-format off
-        satMatrix = QMatrix4x4(rval + saturation, rval,              rval,              0.0,
-                               gval,              gval + saturation, gval,              0.0,
-                               bval,              bval,              bval + saturation, 0.0,
-                               0,                 0,                 0,                 1.0);
-        // clang-format on
-    }
-
-    // IntensityMatrix
-    if (!qFuzzyCompare(intensity, 1.0)) {
-        intMatrix.scale(intensity, intensity, intensity);
-    }
-
-    // Contrast Matrix
-    if (!qFuzzyCompare(contrast, 1.0)) {
-        const float transl = (1.0 - contrast) / 2.0;
-
-        // clang-format off
-        contMatrix = QMatrix4x4(contrast, 0,        0,        0.0,
-                                0,        contrast, 0,        0.0,
-                                0,        0,        contrast, 0.0,
-                                transl,   transl,   transl,   1.0);
-        // clang-format on
-    }
-
-    QMatrix4x4 colorMatrix = contMatrix * satMatrix * intMatrix;
-    // colorMatrix = colorMatrix.transposed();
-
-    return colorMatrix;
+    m_colorMatrices.remove(w);
 }
 
 bool ContrastEffect::enabledByDefault()

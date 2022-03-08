@@ -686,6 +686,7 @@ public:
     virtual EffectScreen* findScreen(int screenId) const = 0;
 
     virtual effect::region_integration& get_blur_integration() = 0;
+    virtual effect::color_integration& get_contrast_integration() = 0;
 
     virtual QImage blit_from_framebuffer(QRect const& geometry, double scale) const = 0;
 

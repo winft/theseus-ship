@@ -6,6 +6,7 @@
 #pragma once
 
 #include "effect/blur_integration.h"
+#include "effect/contrast_integration.h"
 
 #include "render/effects.h"
 
@@ -24,8 +25,10 @@ public:
     Wrapland::Server::Display* waylandDisplay() const override;
 
     effect::region_integration& get_blur_integration() override;
+    effect::color_integration& get_contrast_integration() override;
 
     blur_integration<effects_handler_impl> blur;
+    contrast_integration<effects_handler_impl> contrast;
 
 protected:
     void handle_effect_destroy(Effect& effect) override;

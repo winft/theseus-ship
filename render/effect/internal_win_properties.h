@@ -34,6 +34,7 @@ public:
 };
 
 using internal_region_property = internal_effect_property<QRegion>;
+using internal_double_property = internal_effect_property<double>;
 
 // TODO(romangg): Instead of constructing the array at runtime, we could try to create the list of
 //                types at compile time with the property name as template argument of the
@@ -41,6 +42,19 @@ using internal_region_property = internal_effect_property<QRegion>;
 inline std::array<std::variant<internal_region_property>, 1> get_internal_blur_properties()
 {
     return {internal_region_property("kwin_blur")};
+}
+
+using internal_contrast_properties
+    = std::array<std::variant<internal_region_property, internal_double_property>, 4>;
+
+inline internal_contrast_properties get_internal_contrast_properties()
+{
+    return {
+        internal_region_property("kwin_background_region"),
+        internal_double_property("kwin_background_contrast"),
+        internal_double_property("kwin_background_intensity"),
+        internal_double_property("kwin_background_saturation"),
+    };
 }
 
 }

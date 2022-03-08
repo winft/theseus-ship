@@ -26,6 +26,7 @@ namespace KWin::render::x11
 effects_handler_impl::effects_handler_impl(render::compositor* compositor, render::scene* scene)
     : render::effects_handler_impl(compositor, scene)
     , blur{*this}
+    , contrast{*this}
 {
     reconfigure();
 
@@ -51,6 +52,7 @@ effects_handler_impl::~effects_handler_impl()
 bool effects_handler_impl::eventFilter(QObject* watched, QEvent* event)
 {
     handle_internal_window_effect_update_event(blur, watched, event);
+    handle_internal_window_effect_update_event(contrast, watched, event);
     return false;
 }
 
@@ -119,6 +121,11 @@ effect::region_integration& effects_handler_impl::get_blur_integration()
     return blur;
 }
 
+effect::color_integration& effects_handler_impl::get_contrast_integration()
+{
+    return contrast;
+}
+
 QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double scale) const
 {
 #if defined(KWIN_HAVE_XRENDER_COMPOSITING)
@@ -145,6 +152,7 @@ void effects_handler_impl::doCheckInputWindowStacking()
 void effects_handler_impl::handle_effect_destroy(Effect& effect)
 {
     blur.remove(effect);
+    contrast.remove(effect);
 }
 
 }

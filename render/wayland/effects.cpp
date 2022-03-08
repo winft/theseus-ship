@@ -20,6 +20,7 @@ namespace KWin::render::wayland
 effects_handler_impl::effects_handler_impl(render::compositor* compositor, render::scene* scene)
     : render::effects_handler_impl(compositor, scene)
     , blur{*this, *waylandServer()->display}
+    , contrast{*this, *waylandServer()->display}
 {
     reconfigure();
 
@@ -56,6 +57,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
 bool effects_handler_impl::eventFilter(QObject* watched, QEvent* event)
 {
     handle_internal_window_effect_update_event(blur, watched, event);
+    handle_internal_window_effect_update_event(contrast, watched, event);
     return false;
 }
 
@@ -77,9 +79,15 @@ effect::region_integration& effects_handler_impl::get_blur_integration()
     return blur;
 }
 
+effect::color_integration& effects_handler_impl::get_contrast_integration()
+{
+    return contrast;
+}
+
 void effects_handler_impl::handle_effect_destroy(Effect& effect)
 {
     blur.remove(effect);
+    contrast.remove(effect);
 }
 
 }
