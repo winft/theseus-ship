@@ -1261,6 +1261,20 @@ public:
         compositor.space->edges->reserveTouch(border, action);
     }
 
+    void registerRealtimeTouchBorder(ElectricBorder border,
+                                     QAction* action,
+                                     EffectsHandler::TouchBorderCallback progressCallback) override
+    {
+        compositor.space->edges->reserveTouch(
+            border,
+            action,
+            [progressCallback](
+                ElectricBorder border, const QSizeF& deltaProgress, base::output* output) {
+                progressCallback(
+                    border, deltaProgress, effect_screen_impl<base::output>::get(output));
+            });
+    }
+
     void unregisterTouchBorder(ElectricBorder border, QAction* action) override
     {
         compositor.space->edges->unreserveTouch(border, action);
