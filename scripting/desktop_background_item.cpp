@@ -104,3 +104,5 @@ void desktop_background_item::updateWindow()
 }
 
 } // namespace KWin
+
+#include "moc_desktop_background_item.cpp"
