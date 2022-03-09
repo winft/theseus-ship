@@ -53,7 +53,6 @@ public:
     static bool supported();
 
     void slideIn(EffectWindow* w);
-    void setupAnimData(EffectWindow* w);
 
     enum class AnimationKind { In, Out };
 

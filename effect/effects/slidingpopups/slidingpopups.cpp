@@ -32,6 +32,56 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
+void sanitize_anim_data(effect::anim_update& data,
+                        std::chrono::milliseconds const& in_fallback,
+                        std::chrono::milliseconds const& out_fallback)
+{
+    auto const screen_area = effects->clientArea(
+        FullScreenArea, data.base.window->screen(), effects->currentDesktop());
+    auto const win_geo = data.base.window->frameGeometry();
+
+    if (data.offset == -1) {
+        switch (data.location) {
+        case effect::position::left:
+            data.offset = qMax(win_geo.left() - screen_area.left(), 0);
+            break;
+        case effect::position::top:
+            data.offset = qMax(win_geo.top() - screen_area.top(), 0);
+            break;
+        case effect::position::right:
+            data.offset = qMax(screen_area.right() - win_geo.right(), 0);
+            break;
+        case effect::position::bottom:
+        default:
+            data.offset = qMax(screen_area.bottom() - win_geo.bottom(), 0);
+            break;
+        }
+    }
+
+    switch (data.location) {
+    case effect::position::left:
+        data.offset = std::max<double>(win_geo.left() - screen_area.left(), data.offset);
+        break;
+    case effect::position::top:
+        data.offset = std::max<double>(win_geo.top() - screen_area.top(), data.offset);
+        break;
+    case effect::position::right:
+        data.offset = std::max<double>(screen_area.right() - win_geo.right(), data.offset);
+        break;
+    case effect::position::bottom:
+    default:
+        data.offset = std::max<double>(screen_area.bottom() - win_geo.bottom(), data.offset);
+        break;
+    }
+
+    if (!data.in.count()) {
+        data.in = in_fallback;
+    }
+    if (!data.out.count()) {
+        data.out = out_fallback;
+    }
+}
+
 void update_function(SlidingPopupsEffect& effect, KWin::effect::anim_update const& update)
 {
     // Should always come with a window.
@@ -51,8 +101,12 @@ void update_function(SlidingPopupsEffect& effect, KWin::effect::anim_update cons
     auto const window_added = !effect.m_animationsData.contains(window);
     auto& data = effect.m_animationsData[window];
     data = update;
+    sanitize_anim_data(data, effect.m_slideInDuration, effect.m_slideOutDuration);
 
-    effect.setupAnimData(window);
+    // Grab the window, so other windowClosed effects will ignore it
+    data.base.window->setData(WindowClosedGrabRole,
+                              QVariant::fromValue(static_cast<void*>(&effect)));
+
     if (window_added) {
         effect.slideIn(window);
     }
@@ -221,55 +275,6 @@ void SlidingPopupsEffect::slotWindowDeleted(EffectWindow* w)
 {
     m_animations.remove(w);
     m_animationsData.remove(w);
-}
-
-void SlidingPopupsEffect::setupAnimData(EffectWindow* w)
-{
-    const QRect screenRect
-        = effects->clientArea(FullScreenArea, w->screen(), effects->currentDesktop());
-    const QRect windowGeo = w->frameGeometry();
-    auto& animData = m_animationsData[w];
-
-    if (animData.offset == -1) {
-        switch (animData.location) {
-        case effect::position::left:
-            animData.offset = qMax(windowGeo.left() - screenRect.left(), 0);
-            break;
-        case effect::position::top:
-            animData.offset = qMax(windowGeo.top() - screenRect.top(), 0);
-            break;
-        case effect::position::right:
-            animData.offset = qMax(screenRect.right() - windowGeo.right(), 0);
-            break;
-        case effect::position::bottom:
-        default:
-            animData.offset = qMax(screenRect.bottom() - windowGeo.bottom(), 0);
-            break;
-        }
-    }
-    // sanitize
-    switch (animData.location) {
-    case effect::position::left:
-        animData.offset = std::max<double>(windowGeo.left() - screenRect.left(), animData.offset);
-        break;
-    case effect::position::top:
-        animData.offset = std::max<double>(windowGeo.top() - screenRect.top(), animData.offset);
-        break;
-    case effect::position::right:
-        animData.offset = std::max<double>(screenRect.right() - windowGeo.right(), animData.offset);
-        break;
-    case effect::position::bottom:
-    default:
-        animData.offset
-            = std::max<double>(screenRect.bottom() - windowGeo.bottom(), animData.offset);
-        break;
-    }
-
-    animData.in = (animData.in.count() != 0) ? animData.in : m_slideInDuration;
-    animData.out = (animData.out.count() != 0) ? animData.out : m_slideOutDuration;
-
-    // Grab the window, so other windowClosed effects will ignore it
-    w->setData(WindowClosedGrabRole, QVariant::fromValue(static_cast<void*>(this)));
 }
 
 void SlidingPopupsEffect::slideIn(EffectWindow* w)
