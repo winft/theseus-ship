@@ -143,9 +143,10 @@ public:
             "org.kde.kwin", 3, 0, "Options", space.base.options->qobject.get());
 
         qmlRegisterAnonymousType<window>("org.kde.kwin", 2);
-        qmlRegisterType<win::virtual_desktop>();
+        qmlRegisterAnonymousType<win::virtual_desktop>("org.kde.kwin", 2);
         qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 2);
         qmlRegisterAnonymousType<window>("org.kde.kwin", 3);
+        qmlRegisterAnonymousType<win::virtual_desktop>("org.kde.kwin", 3);
         qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);
 
         // TODO Plasma 6: Drop context properties.
