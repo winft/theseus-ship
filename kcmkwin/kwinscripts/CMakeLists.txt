@@ -19,7 +19,7 @@ target_link_libraries(kcm_kwin_scripts
     KF5::I18n
     KF5::KCMUtils
     KF5::KIOCore
-    KF5::NewStuff
+    KF5::NewStuffWidgets
     KF5::Package
 )
 
