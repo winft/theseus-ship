@@ -33,9 +33,6 @@ namespace KWin
 class SlidingPopupsEffect : public Effect
 {
     Q_OBJECT
-    Q_PROPERTY(int slideInDuration READ slideInDuration)
-    Q_PROPERTY(int slideOutDuration READ slideOutDuration)
-
 public:
     SlidingPopupsEffect();
     ~SlidingPopupsEffect() override;
@@ -54,9 +51,6 @@ public:
     }
 
     static bool supported();
-
-    int slideInDuration() const;
-    int slideOutDuration() const;
 
     void slideIn(EffectWindow* w);
     void setupAnimData(EffectWindow* w);
@@ -81,16 +75,6 @@ private Q_SLOTS:
     void stopAnimations();
 };
 
-inline int SlidingPopupsEffect::slideInDuration() const
-{
-    return m_slideInDuration.count();
 }
-
-inline int SlidingPopupsEffect::slideOutDuration() const
-{
-    return m_slideOutDuration.count();
-}
-
-} // namespace
 
 #endif
