@@ -28,6 +28,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     , blur{*this}
     , contrast{*this}
     , slide{*this}
+    , kscreen{*this}
 {
     reconfigure();
 
@@ -133,6 +134,11 @@ effect::anim_integration& effects_handler_impl::get_slide_integration()
     return slide;
 }
 
+effect::kscreen_integration& effects_handler_impl::get_kscreen_integration()
+{
+    return kscreen;
+}
+
 QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double scale) const
 {
 #if defined(KWIN_HAVE_XRENDER_COMPOSITING)
@@ -161,6 +167,7 @@ void effects_handler_impl::handle_effect_destroy(Effect& effect)
     blur.remove(effect);
     contrast.remove(effect);
     slide.remove(effect);
+    kscreen.remove(effect);
 }
 
 }

@@ -8,6 +8,7 @@
 
 #include "effect/blur_integration.h"
 #include "effect/contrast_integration.h"
+#include "effect/kscreen_integration.h"
 #include "effect/slide_integration.h"
 
 #include "base/x11/xcb/window.h"
@@ -35,10 +36,12 @@ public:
     effect::region_integration& get_blur_integration() override;
     effect::color_integration& get_contrast_integration() override;
     effect::anim_integration& get_slide_integration() override;
+    effect::kscreen_integration& get_kscreen_integration() override;
 
     blur_integration<effects_handler_impl> blur;
     contrast_integration<effects_handler_impl> contrast;
     slide_integration<effects_handler_impl> slide;
+    kscreen_integration<effects_handler_impl> kscreen;
 
 protected:
     bool doGrabKeyboard() override;

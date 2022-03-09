@@ -54,18 +54,35 @@ Q_LOGGING_CATEGORY(KWIN_KSCREEN, "kwin_effect_kscreen", QtWarningMsg)
 namespace KWin
 {
 
+void update_function(KscreenEffect& effect, KWin::effect::fade_update const& update)
+{
+    assert(!update.base.window);
+
+    effect.m_state = KscreenEffect::StateNormal;
+
+    if (update.value == -1) {
+        effect.m_state = KscreenEffect::StateFadedOut;
+    } else if (update.value == -0.5) {
+        effect.m_state = KscreenEffect::StateFadingOut;
+        effect.m_timeLine.reset();
+    } else if (update.value == 0.5) {
+        effect.m_state = KscreenEffect::StateFadingIn;
+        effect.m_timeLine.reset();
+    }
+
+    effects->addRepaintFull();
+}
+
 KscreenEffect::KscreenEffect()
     : Effect()
     , m_lastPresentTime(std::chrono::milliseconds::zero())
-    , m_state(StateNormal)
-    , m_atom(effects->announceSupportProperty("_KDE_KWIN_KSCREEN_SUPPORT", this))
 {
     initConfig<KscreenConfig>();
-    connect(effects, &EffectsHandler::propertyNotify, this, &KscreenEffect::propertyNotify);
-    connect(effects, &EffectsHandler::xcbConnectionChanged, this, [this] {
-        m_atom = effects->announceSupportProperty(QByteArrayLiteral("_KDE_KWIN_KSCREEN_SUPPORT"),
-                                                  this);
-    });
+
+    auto& kscreen_integration = effects->get_kscreen_integration();
+    auto update = [this](auto&& data) { update_function(*this, data); };
+    kscreen_integration.add(*this, update);
+
     reconfigure(ReconfigureAll);
 }
 
@@ -144,68 +161,14 @@ void KscreenEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Windo
     effects->paintWindow(w, mask, region, data);
 }
 
-void KscreenEffect::propertyNotify(EffectWindow* window, long int atom)
-{
-    if (window || atom != m_atom || m_atom == XCB_ATOM_NONE) {
-        return;
-    }
-    QByteArray byteData = effects->readRootProperty(m_atom, XCB_ATOM_CARDINAL, 32);
-    const uint32_t* data
-        = byteData.isEmpty() ? nullptr : reinterpret_cast<const uint32_t*>(byteData.data());
-    if (!data              // Property was deleted
-        || data[0] == 0) { // normal state - KWin should have switched to it
-        if (m_state != StateNormal) {
-            m_state = StateNormal;
-            effects->addRepaintFull();
-        }
-        return;
-    }
-    if (data[0] == 2) {
-        // faded out state - KWin should have switched to it
-        if (m_state != StateFadedOut) {
-            m_state = StateFadedOut;
-            effects->addRepaintFull();
-        }
-        return;
-    }
-    if (data[0] == 1) {
-        // kscreen wants KWin to fade out all windows
-        m_state = StateFadingOut;
-        m_timeLine.reset();
-        effects->addRepaintFull();
-        return;
-    }
-    if (data[0] == 3) {
-        // kscreen wants KWin to fade in again
-        m_state = StateFadingIn;
-        m_timeLine.reset();
-        effects->addRepaintFull();
-        return;
-    }
-    qCDebug(KWIN_KSCREEN) << "Incorrect Property state, immediate stop: " << data[0];
-    m_state = StateNormal;
-    effects->addRepaintFull();
-}
-
 void KscreenEffect::switchState()
 {
-    long value = -1l;
     if (m_state == StateFadingOut) {
         m_state = StateFadedOut;
-        value = 2l;
+        effects->get_kscreen_integration().change_state(*this, -1);
     } else if (m_state == StateFadingIn) {
         m_state = StateNormal;
-        value = 0l;
-    }
-    if (value != -1l && m_atom != XCB_ATOM_NONE) {
-        xcb_change_property(xcbConnection(),
-                            XCB_PROP_MODE_REPLACE,
-                            x11RootWindow(),
-                            m_atom,
-                            XCB_ATOM_CARDINAL,
-                            32,
-                            1,
-                            &value);
+        effects->get_kscreen_integration().change_state(*this, 1);
     }
 }
 

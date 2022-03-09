@@ -42,6 +42,7 @@ struct value_update {
     Val value;
 };
 
+using fade_update = value_update<double>;
 using region_update = value_update<QRegion>;
 
 struct color_update {
@@ -59,9 +60,17 @@ struct anim_update {
     double distance;
 };
 
+using fade_integration = win_integration<fade_update>;
 using region_integration = win_integration<region_update>;
 using color_integration = win_integration<color_update>;
 using anim_integration = win_integration<anim_update>;
+
+// Effect is special, requires an extra callback.
+class kscreen_integration : public fade_integration
+{
+public:
+    virtual void change_state(Effect& effect, double state) = 0;
+};
 
 }
 }

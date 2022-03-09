@@ -28,6 +28,7 @@ public:
     effect::region_integration& get_blur_integration() override;
     effect::color_integration& get_contrast_integration() override;
     effect::anim_integration& get_slide_integration() override;
+    effect::kscreen_integration& get_kscreen_integration() override;
 
     blur_integration<effects_handler_impl> blur;
     contrast_integration<effects_handler_impl> contrast;

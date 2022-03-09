@@ -91,6 +91,25 @@ effect::anim_integration& effects_handler_impl::get_slide_integration()
     return slide;
 }
 
+// KScreen effect is only available on X11.
+class kscreen_integration : public effect::kscreen_integration
+{
+    void add(Effect& /*effect*/, update_function const& /*update*/) override
+    {
+    }
+    void remove(Effect& /*effect*/) override
+    {
+    }
+    void change_state(Effect& /*effect*/, double /*state*/) override
+    {
+    }
+} kscreen_dummy;
+
+effect::kscreen_integration& effects_handler_impl::get_kscreen_integration()
+{
+    return kscreen_dummy;
+}
+
 void effects_handler_impl::handle_effect_destroy(Effect& effect)
 {
     blur.remove(effect);
