@@ -979,7 +979,7 @@ install(FILES render/post/kconfig/color_correct_settings.kcfg
     RENAME ${KWIN_NAME}_colorcorrect.kcfg
 )
 install(FILES desktop/kde/kwin.notifyrc
-  DESTINATION ${KDE_INSTALL_KNOTIFY5RCDIR}
+  DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR}
   RENAME ${KWIN_NAME}.notifyrc
 )
 install(
@@ -998,11 +998,11 @@ install(
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
 # Install the KWin/Script service type
-install(FILES scripting/kwinscript.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
+install(FILES scripting/kwinscript.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPESDIR})
 
 # Install the KWin/WindowSwitcher service type
-install(FILES win/tabbox/kwinwindowswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
-install(FILES win/tabbox/kwindesktopswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
+install(FILES win/tabbox/kwinwindowswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPESDIR})
+install(FILES win/tabbox/kwindesktopswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPESDIR})
 
 # Install QML files
 install(DIRECTORY render/qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
