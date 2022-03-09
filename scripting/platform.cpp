@@ -71,7 +71,7 @@ void platform::init()
     qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 2, 0, "ThumbnailItem");
     qmlRegisterType<dbus_call>("org.kde.kwin", 2, 0, "DBusCall");
     qmlRegisterType<screen_edge_item>("org.kde.kwin", 2, 0, "ScreenEdgeItem");
-    qmlRegisterType<models::v2::client_model>();
+    qmlRegisterAnonymousType<models::v2::client_model>("org.kde.kwin", 2);
     qmlRegisterType<models::v2::simple_client_model>("org.kde.kwin", 2, 0, "ClientModel");
     qmlRegisterType<models::v2::client_model_by_screen>(
         "org.kde.kwin", 2, 0, "ClientModelByScreen");
@@ -88,7 +88,8 @@ void platform::init()
     qmlRegisterType<models::v3::client_filter_model>("org.kde.kwin", 3, 0, "ClientFilterModel");
     qmlRegisterType<models::v3::virtual_desktop_model>("org.kde.kwin", 3, 0, "VirtualDesktopModel");
 
-    qmlRegisterType<window>();
+    qmlRegisterAnonymousType<window>("org.kde.kwin", 2);
+    qmlRegisterAnonymousType<window>("org.kde.kwin", 3);
     qmlRegisterSingletonType<qt_script_space>(
         "org.kde.kwin",
         3,
@@ -99,7 +100,8 @@ void platform::init()
             Q_UNUSED(jsEngine)
             return new template_space<qt_script_space, win::space>(&space);
         });
-    qmlRegisterType<QAbstractItemModel>();
+    qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 2);
+    qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);
 
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("workspace"), qt_space.get());
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("options"),
