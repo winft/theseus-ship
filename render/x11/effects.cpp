@@ -27,6 +27,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     : render::effects_handler_impl(compositor, scene)
     , blur{*this}
     , contrast{*this}
+    , slide{*this}
 {
     reconfigure();
 
@@ -53,6 +54,7 @@ bool effects_handler_impl::eventFilter(QObject* watched, QEvent* event)
 {
     handle_internal_window_effect_update_event(blur, watched, event);
     handle_internal_window_effect_update_event(contrast, watched, event);
+    handle_internal_window_effect_update_event(slide, watched, event);
     return false;
 }
 
@@ -126,6 +128,11 @@ effect::color_integration& effects_handler_impl::get_contrast_integration()
     return contrast;
 }
 
+effect::anim_integration& effects_handler_impl::get_slide_integration()
+{
+    return slide;
+}
+
 QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double scale) const
 {
 #if defined(KWIN_HAVE_XRENDER_COMPOSITING)
@@ -153,6 +160,7 @@ void effects_handler_impl::handle_effect_destroy(Effect& effect)
 {
     blur.remove(effect);
     contrast.remove(effect);
+    slide.remove(effect);
 }
 
 }

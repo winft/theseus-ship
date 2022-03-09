@@ -22,14 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KWIN_SLIDINGPOPUPS_H
 
 #include <kwineffects/effect.h>
+#include <kwineffects/effect_integration.h>
 #include <kwineffects/time_line.h>
 
 #include <memory>
-
-namespace Wrapland::Server
-{
-class SlideManager;
-}
 
 namespace KWin
 {
@@ -62,29 +58,8 @@ public:
     int slideInDuration() const;
     int slideOutDuration() const;
 
-    bool eventFilter(QObject* watched, QEvent* event) override;
-
-private Q_SLOTS:
-    void slotWindowAdded(EffectWindow* w);
-    void slotWindowDeleted(EffectWindow* w);
-    void slotPropertyNotify(EffectWindow* w, long atom);
-    void slotWaylandSlideOnShowChanged(EffectWindow* w);
-
     void slideIn(EffectWindow* w);
-    void slideOut(EffectWindow* w);
-    void stopAnimations();
-
-private:
     void setupAnimData(EffectWindow* w);
-    void setupInternalWindowSlide(EffectWindow* w);
-    void setupSlideData(EffectWindow* w);
-
-    long m_atom;
-    std::unique_ptr<Wrapland::Server::SlideManager> wayland_slide_manager;
-
-    int m_slideLength;
-    std::chrono::milliseconds m_slideInDuration;
-    std::chrono::milliseconds m_slideOutDuration;
 
     enum class AnimationKind { In, Out };
 
@@ -94,17 +69,16 @@ private:
         std::chrono::milliseconds lastPresentTime = std::chrono::milliseconds::zero();
     };
     QHash<EffectWindow*, Animation> m_animations;
+    QHash<const EffectWindow*, effect::anim_update> m_animationsData;
 
-    enum class Location { Left, Top, Right, Bottom };
+    std::chrono::milliseconds m_slideInDuration;
+    std::chrono::milliseconds m_slideOutDuration;
+    int m_slideLength;
 
-    struct AnimationData {
-        int offset;
-        Location location;
-        std::chrono::milliseconds slideInDuration;
-        std::chrono::milliseconds slideOutDuration;
-        int slideLength;
-    };
-    QHash<const EffectWindow*, AnimationData> m_animationsData;
+private Q_SLOTS:
+    void slotWindowDeleted(EffectWindow* w);
+    void slideOut(EffectWindow* w);
+    void stopAnimations();
 };
 
 inline int SlidingPopupsEffect::slideInDuration() const

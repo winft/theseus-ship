@@ -5,8 +5,11 @@
 */
 #pragma once
 
+#include <kwineffects/types.h>
+
 #include <QMatrix4x4>
 #include <QRegion>
+#include <chrono>
 #include <functional>
 
 namespace KWin
@@ -47,8 +50,18 @@ struct color_update {
     QMatrix4x4 color;
 };
 
+struct anim_update {
+    update base;
+    position location;
+    std::chrono::milliseconds in;
+    std::chrono::milliseconds out;
+    double offset;
+    double distance;
+};
+
 using region_integration = win_integration<region_update>;
 using color_integration = win_integration<color_update>;
+using anim_integration = win_integration<anim_update>;
 
 }
 }

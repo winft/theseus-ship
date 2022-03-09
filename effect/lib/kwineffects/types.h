@@ -84,4 +84,19 @@ inline QRect infiniteRegion()
     return QRect(INT_MIN / 2, INT_MIN / 2, INT_MAX, INT_MAX);
 }
 
+// New types should go here.
+namespace effect
+{
+
+// TODO(romangg): Replace with win::position once it has been ported to a common library.
+enum class position {
+    center = 0,
+    left,
+    top,
+    right,
+    bottom,
+};
+
+}
+
 }

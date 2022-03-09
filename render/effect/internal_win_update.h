@@ -137,4 +137,42 @@ effect::color_update get_internal_window_contrast_update(EffectIntegrator& effi,
             get_contrast_color_matrix(contrast, intensity, saturation)};
 }
 
+template<typename EffectIntegrator>
+effect::anim_update get_internal_window_slide_update(EffectIntegrator& effi, EffectWindow& window)
+{
+    auto internal = window.internalWindow();
+    if (!internal) {
+        return {};
+    }
+
+    auto location = get_internal_window_prop_val_or_default(
+        std::get<internal_slide_from_location_property>(effi.internal_properties.at(0)),
+        *internal,
+        KWindowEffects::NoEdge);
+
+    auto get_slide_position = [](auto loc) {
+        switch (loc) {
+        case KWindowEffects::BottomEdge:
+            return effect::position::bottom;
+        case KWindowEffects::TopEdge:
+            return effect::position::top;
+        case KWindowEffects::RightEdge:
+            return effect::position::right;
+        case KWindowEffects::LeftEdge:
+            return effect::position::left;
+        default:
+            return effect::position::center;
+        }
+    };
+    auto pos = get_slide_position(location);
+    if (pos == effect::position::center) {
+        return {};
+    }
+
+    auto offset = get_internal_window_prop_val_or_default(
+        std::get<internal_int_property>(effi.internal_properties.at(1)), *internal, -1);
+
+    return {&window, true, pos, {}, {}, static_cast<double>(offset), 0};
+}
+
 }
