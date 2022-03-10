@@ -165,37 +165,37 @@ private:
     void helperDialog(const QString& message, Toplevel* window);
 
     /// The actual main context menu which is show when the user_actions_menu is invoked.
-    QMenu* m_menu;
+    QMenu* m_menu{nullptr};
 
     /// The move to desktop sub menu.
-    QMenu* m_desktopMenu;
+    QMenu* m_desktopMenu{nullptr};
 
     /// The move to desktop sub menu, with the Wayland protocol.
-    QMenu* m_multipleDesktopsMenu;
+    QMenu* m_multipleDesktopsMenu{nullptr};
 
     /// The move to screen sub menu.
-    QMenu* m_screenMenu;
+    QMenu* m_screenMenu{nullptr};
 
     /// Menu for further entries added by scripts.
-    QMenu* m_scriptsMenu;
+    QMenu* m_scriptsMenu{nullptr};
 
-    QAction* m_resizeOperation;
-    QAction* m_moveOperation;
-    QAction* m_maximizeOperation;
-    QAction* m_shadeOperation;
-    QAction* m_keepAboveOperation;
-    QAction* m_keepBelowOperation;
-    QAction* m_fullScreenOperation;
-    QAction* m_noBorderOperation;
-    QAction* m_minimizeOperation;
-    QAction* m_closeOperation;
-    QAction* m_shortcutOperation;
+    QAction* m_resizeOperation{nullptr};
+    QAction* m_moveOperation{nullptr};
+    QAction* m_maximizeOperation{nullptr};
+    QAction* m_shadeOperation{nullptr};
+    QAction* m_keepAboveOperation{nullptr};
+    QAction* m_keepBelowOperation{nullptr};
+    QAction* m_fullScreenOperation{nullptr};
+    QAction* m_noBorderOperation{nullptr};
+    QAction* m_minimizeOperation{nullptr};
+    QAction* m_closeOperation{nullptr};
+    QAction* m_shortcutOperation{nullptr};
 
     /// The Client for which the menu is shown.
     QPointer<Toplevel> m_client;
 
-    QAction* m_rulesOperation = nullptr;
-    QAction* m_applicationRulesOperation = nullptr;
+    QAction* m_rulesOperation{nullptr};
+    QAction* m_applicationRulesOperation{nullptr};
 };
 
 }

@@ -59,7 +59,7 @@ class KWIN_EXPORT output : public QObject
     duration_record render_durations;
 
     // Used for debugging rendering time.
-    std::chrono::nanoseconds swap_ref_time;
+    std::chrono::nanoseconds swap_ref_time{};
 
     QRegion repaints_region;
 

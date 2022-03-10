@@ -207,7 +207,7 @@ inline void check_offscreen_position(QRect& frame_geo, const QRect& screenArea)
     if (frame_geo.top() > screenArea.bottom()) {
         frame_geo.moveTop(screenArea.bottom() - screenArea.height() / 4);
     } else if (frame_geo.bottom() < screenArea.top()) {
-        frame_geo.moveBottom(screenArea.top() + screenArea.width() / 4);
+        frame_geo.moveBottom(screenArea.top() + screenArea.height() / 4);
     }
 }
 

@@ -43,21 +43,6 @@ struct show_on_desktop_action_data {
 
 user_actions_menu::user_actions_menu(QObject* parent)
     : QObject(parent)
-    , m_menu(nullptr)
-    , m_desktopMenu(nullptr)
-    , m_multipleDesktopsMenu(nullptr)
-    , m_screenMenu(nullptr)
-    , m_scriptsMenu(nullptr)
-    , m_resizeOperation(nullptr)
-    , m_moveOperation(nullptr)
-    , m_maximizeOperation(nullptr)
-    , m_keepAboveOperation(nullptr)
-    , m_keepBelowOperation(nullptr)
-    , m_fullScreenOperation(nullptr)
-    , m_noBorderOperation(nullptr)
-    , m_minimizeOperation(nullptr)
-    , m_closeOperation(nullptr)
-    , m_shortcutOperation(nullptr)
 {
 }
 
