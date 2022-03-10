@@ -55,7 +55,7 @@ struct selection_data {
     xcb_window_t window{XCB_WINDOW_NONE};
 
     bool disown_pending{false};
-    xcb_timestamp_t timestamp;
+    xcb_timestamp_t timestamp{XCB_CURRENT_TIME};
     xcb_window_t requestor_window{XCB_WINDOW_NONE};
 
     // Active source, if any. Only one of them at max can exist

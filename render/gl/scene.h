@@ -146,7 +146,7 @@ private:
 
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_screenProjectionMatrix;
-    GLuint vao;
+    GLuint vao{0};
 };
 
 inline bool scene::hasPendingFlush() const
