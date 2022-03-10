@@ -63,7 +63,9 @@ remnant::remnant(Toplevel* win, Toplevel* source)
     for (auto const& lead : leads) {
         lead->transient()->add_child(win);
         lead->transient()->remove_child(source);
-        refcount++;
+        if (win->transient()->annexed) {
+            refcount++;
+        }
     }
 
     auto const children = source->transient()->children;
