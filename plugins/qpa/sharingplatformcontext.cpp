@@ -94,7 +94,7 @@ GLuint SharingPlatformContext::defaultFramebufferObject(QPlatformSurface *surfac
 {
     if (Window *window = dynamic_cast<Window*>(surface)) {
         const auto &fbo = window->contentFBO();
-        if (!fbo.isNull()) {
+        if (fbo) {
             return fbo->handle();
         }
         qCDebug(KWIN_QPA) << "No default framebuffer object for internal window";

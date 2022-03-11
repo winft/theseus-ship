@@ -132,9 +132,9 @@ bool load_texture_from_image(Texture& texture, QImage const& image)
 }
 
 template<typename Texture>
-bool update_texture_from_fbo(Texture& texture, const QSharedPointer<QOpenGLFramebufferObject>& fbo)
+bool update_texture_from_fbo(Texture& texture, std::shared_ptr<QOpenGLFramebufferObject> const& fbo)
 {
-    if (fbo.isNull()) {
+    if (!fbo) {
         return false;
     }
 

@@ -189,7 +189,7 @@ public:
      * @return The Wayland Buffer for this window pixmap.
      */
     Wrapland::Server::Buffer* buffer() const;
-    const QSharedPointer<QOpenGLFramebufferObject>& fbo() const;
+    std::shared_ptr<QOpenGLFramebufferObject> const& fbo() const;
     QImage internalImage() const;
 
     /**
@@ -250,7 +250,7 @@ private:
     bool m_discarded;
     QRect m_contentsRect;
     std::shared_ptr<Wrapland::Server::Buffer> m_buffer;
-    QSharedPointer<QOpenGLFramebufferObject> m_fbo;
+    std::shared_ptr<QOpenGLFramebufferObject> m_fbo;
     QImage m_internalImage;
 };
 

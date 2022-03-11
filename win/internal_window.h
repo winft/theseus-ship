@@ -75,7 +75,7 @@ public:
     void showOnScreenEdge() override;
 
     void destroyClient();
-    void present(const QSharedPointer<QOpenGLFramebufferObject> fbo);
+    void present(std::shared_ptr<QOpenGLFramebufferObject> const& fbo);
     void present(const QImage& image, const QRegion& damage);
     QWindow* internalWindow() const;
 

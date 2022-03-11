@@ -273,7 +273,7 @@ public:
     quint32 surfaceId() const;
     Wrapland::Server::Surface *surface() const;
 
-    const QSharedPointer<QOpenGLFramebufferObject> &internalFramebufferObject() const;
+    std::shared_ptr<QOpenGLFramebufferObject> const& internalFramebufferObject() const;
     QImage internalImageObject() const;
 
     /**
@@ -425,7 +425,7 @@ protected:
     /**
      * An FBO object KWin internal windows might render to.
      */
-    QSharedPointer<QOpenGLFramebufferObject> m_internalFBO;
+    std::shared_ptr<QOpenGLFramebufferObject> m_internalFBO;
     QImage m_internalImage;
 
     bool is_shape{false};
@@ -840,7 +840,7 @@ inline Wrapland::Server::Surface *Toplevel::surface() const
     return m_surface;
 }
 
-inline const QSharedPointer<QOpenGLFramebufferObject> &Toplevel::internalFramebufferObject() const
+inline std::shared_ptr<QOpenGLFramebufferObject> const& Toplevel::internalFramebufferObject() const
 {
     return m_internalFBO;
 }

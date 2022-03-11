@@ -509,7 +509,7 @@ static bool needsPixmapUpdate(const window_pixmap* pixmap)
     }
 
     // That's an internal client with an opengl framebuffer object attached.
-    if (!pixmap->fbo().isNull()) {
+    if (pixmap->fbo()) {
         return !pixmap->toplevel()->damage().isEmpty();
     }
 

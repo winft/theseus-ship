@@ -442,7 +442,7 @@ void window_pixmap::create()
     if (kwinApp()->shouldUseWaylandForCompositing()) {
         // use Buffer
         updateBuffer();
-        if (m_buffer || !m_fbo.isNull()) {
+        if (m_buffer || m_fbo) {
             m_window->unreferencePreviousPixmap();
         }
         return;
@@ -488,7 +488,7 @@ void window_pixmap::create()
 
 bool window_pixmap::isValid() const
 {
-    if (m_buffer || !m_fbo.isNull() || !m_internalImage.isNull()) {
+    if (m_buffer || m_fbo || !m_internalImage.isNull()) {
         return true;
     }
     return m_pixmap != XCB_PIXMAP_NONE;
@@ -518,7 +518,7 @@ Wrapland::Server::Buffer* window_pixmap::buffer() const
     return m_buffer.get();
 }
 
-const QSharedPointer<QOpenGLFramebufferObject>& window_pixmap::fbo() const
+std::shared_ptr<QOpenGLFramebufferObject> const& window_pixmap::fbo() const
 {
     return m_fbo;
 }

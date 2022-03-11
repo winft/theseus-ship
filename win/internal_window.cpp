@@ -409,7 +409,7 @@ void internal_window::destroyClient()
     delete this;
 }
 
-void internal_window::present(const QSharedPointer<QOpenGLFramebufferObject> fbo)
+void internal_window::present(std::shared_ptr<QOpenGLFramebufferObject> const& fbo)
 {
     Q_ASSERT(m_internalImage.isNull());
 
@@ -430,7 +430,7 @@ void internal_window::present(const QSharedPointer<QOpenGLFramebufferObject> fbo
 
 void internal_window::present(const QImage& image, const QRegion& damage)
 {
-    Q_ASSERT(m_internalFBO.isNull());
+    Q_ASSERT(!m_internalFBO);
 
     const QSize bufferSize = image.size() / buffer_scale_internal();
 
