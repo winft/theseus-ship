@@ -1,35 +1,17 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    SPDX-FileCopyrightText: 2009 Marco Martin notmart@gmail.com
+    SPDX-FileCopyrightText: 2018 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-Copyright (C) 2009 Marco Martin notmart@gmail.com
-Copyright (C) 2018 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
-#ifndef KWIN_SLIDINGPOPUPS_H
-#define KWIN_SLIDINGPOPUPS_H
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+#pragma once
 
 #include <kwineffects/effect.h>
+#include <kwineffects/effect_integration.h>
 #include <kwineffects/time_line.h>
 
 #include <memory>
-
-namespace Wrapland::Server
-{
-class SlideManager;
-}
 
 namespace KWin
 {
@@ -37,18 +19,15 @@ namespace KWin
 class SlidingPopupsEffect : public Effect
 {
     Q_OBJECT
-    Q_PROPERTY(int slideInDuration READ slideInDuration)
-    Q_PROPERTY(int slideOutDuration READ slideOutDuration)
-
 public:
     SlidingPopupsEffect();
     ~SlidingPopupsEffect() override;
 
-    void prePaintWindow(EffectWindow* w,
+    void prePaintWindow(EffectWindow* win,
                         WindowPrePaintData& data,
                         std::chrono::milliseconds presentTime) override;
-    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
-    void postPaintWindow(EffectWindow* w) override;
+    void paintWindow(EffectWindow* win, int mask, QRegion region, WindowPaintData& data) override;
+    void postPaintWindow(EffectWindow* win) override;
     void reconfigure(ReconfigureFlags flags) override;
     bool isActive() const override;
 
@@ -59,64 +38,31 @@ public:
 
     static bool supported();
 
-    int slideInDuration() const;
-    int slideOutDuration() const;
+    void slide_in(EffectWindow* win);
+    void slide_out(EffectWindow* win);
 
-    bool eventFilter(QObject* watched, QEvent* event) override;
-
-private Q_SLOTS:
-    void slotWindowAdded(EffectWindow* w);
-    void slotWindowDeleted(EffectWindow* w);
-    void slotPropertyNotify(EffectWindow* w, long atom);
-    void slotWaylandSlideOnShowChanged(EffectWindow* w);
-
-    void slideIn(EffectWindow* w);
-    void slideOut(EffectWindow* w);
-    void stopAnimations();
-
-private:
-    void setupAnimData(EffectWindow* w);
-    void setupInternalWindowSlide(EffectWindow* w);
-    void setupSlideData(EffectWindow* w);
-
-    long m_atom;
-    std::unique_ptr<Wrapland::Server::SlideManager> wayland_slide_manager;
-
-    int m_slideLength;
-    std::chrono::milliseconds m_slideInDuration;
-    std::chrono::milliseconds m_slideOutDuration;
-
-    enum class AnimationKind { In, Out };
+    enum class AnimationKind {
+        In,
+        Out,
+    };
 
     struct Animation {
         AnimationKind kind;
-        TimeLine timeLine;
-        std::chrono::milliseconds lastPresentTime = std::chrono::milliseconds::zero();
+        TimeLine timeline;
+        std::chrono::milliseconds last_present_time{std::chrono::milliseconds::zero()};
     };
-    QHash<EffectWindow*, Animation> m_animations;
+    QHash<EffectWindow*, Animation> animations;
+    QHash<EffectWindow const*, effect::anim_update> window_data;
 
-    enum class Location { Left, Top, Right, Bottom };
+    struct {
+        std::chrono::milliseconds in;
+        std::chrono::milliseconds out;
+        int distance;
+    } config;
 
-    struct AnimationData {
-        int offset;
-        Location location;
-        std::chrono::milliseconds slideInDuration;
-        std::chrono::milliseconds slideOutDuration;
-        int slideLength;
-    };
-    QHash<const EffectWindow*, AnimationData> m_animationsData;
+private:
+    void handle_window_deleted(EffectWindow* win);
+    void stopAnimations();
 };
 
-inline int SlidingPopupsEffect::slideInDuration() const
-{
-    return m_slideInDuration.count();
 }
-
-inline int SlidingPopupsEffect::slideOutDuration() const
-{
-    return m_slideOutDuration.count();
-}
-
-} // namespace
-
-#endif

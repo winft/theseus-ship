@@ -54,11 +54,17 @@ namespace base
 class output;
 }
 
-namespace win::x11
+namespace win
+{
+
+namespace x11
 {
 class group;
 class window;
-class window_property_notify_filter;
+}
+
+class space;
+
 }
 
 class Deleted;
@@ -66,6 +72,12 @@ class Toplevel;
 
 namespace render
 {
+
+namespace x11
+{
+template<typename Effects, typename Space>
+class property_notify_filter;
+}
 
 class basic_thumbnail_item;
 class desktop_thumbnail_item;
@@ -287,12 +299,6 @@ public:
     bool touchUp(qint32 id, quint32 time);
 
     void highlightWindows(const QVector<EffectWindow*>& windows);
-
-    bool isPropertyTypeRegistered(xcb_atom_t atom) const
-    {
-        return registered_atoms.contains(atom);
-    }
-
     void windowToDesktops(EffectWindow* w, const QVector<uint>& desktops) override;
 
     /**
@@ -313,6 +319,12 @@ public:
     EffectScreen* findScreen(int screenId) const override;
     bool isCursorHidden() const override;
     QImage blit_from_framebuffer(QRect const& geometry, double scale) const override;
+
+    using PropertyEffectMap = QHash<QByteArray, QList<Effect*>>;
+    PropertyEffectMap m_propertiesForEffects;
+    QHash<QByteArray, qulonglong> m_managedProperties;
+    render::compositor* m_compositor;
+    QHash<long, int> registered_atoms;
 
 public Q_SLOTS:
     void slotCurrentTabAboutToChange(EffectWindow* from, EffectWindow* to);
@@ -382,15 +394,16 @@ protected:
      */
     virtual void doCheckInputWindowStacking();
 
-    Effect* keyboard_grab_effect;
-    Effect* fullscreen_effect;
+    Effect* keyboard_grab_effect{nullptr};
+    Effect* fullscreen_effect{nullptr};
     QList<EffectWindow*> elevated_windows;
     QMultiMap<int, EffectPair> effect_order;
-    QHash<long, int> registered_atoms;
-    int next_window_quad_type;
+    int next_window_quad_type{EFFECT_QUAD_TYPE_START};
+
+    // TODO(romangg): replace this function with free function templates. It's called from the dtor!
+    virtual void handle_effect_destroy(Effect& effect);
 
 private:
-    void registerPropertyType(long atom, bool reg);
     void destroyEffect(Effect* effect);
 
     typedef QVector<Effect*> EffectsList;
@@ -401,17 +414,14 @@ private:
     EffectsIterator m_currentPaintEffectFrameIterator;
     EffectsIterator m_currentPaintScreenIterator;
     EffectsIterator m_currentBuildQuadsIterator;
-    typedef QHash<QByteArray, QList<Effect*>> PropertyEffectMap;
-    PropertyEffectMap m_propertiesForEffects;
-    QHash<QByteArray, qulonglong> m_managedProperties;
-    render::compositor* m_compositor;
     render::scene* m_scene;
     bool m_desktopRendering;
     int m_currentRenderedDesktop;
     QList<Effect*> m_grabbedMouseEffects;
     effect_loader* m_effectLoader;
     int m_trackingCursorChanges;
-    std::unique_ptr<win::x11::window_property_notify_filter> m_x11WindowPropertyNotify;
+    std::unique_ptr<x11::property_notify_filter<effects_handler_impl, win::space>>
+        x11_property_notify;
     QList<EffectScreen*> m_effectScreens;
 };
 

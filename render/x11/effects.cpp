@@ -6,11 +6,13 @@
 */
 #include "effects.h"
 
+#include "effect/update.h"
+#include "mouse_intercept_filter.h"
+
 #include "base/platform.h"
 #include "base/x11/grabs.h"
 #include "input/cursor.h"
 #include "main.h"
-#include "mouse_intercept_filter.h"
 #include "win/screen_edges.h"
 #include "win/x11/space.h"
 
@@ -18,11 +20,15 @@
 
 #include <QDesktopWidget>
 
-namespace KWin::render::backend::x11
+namespace KWin::render::x11
 {
 
 effects_handler_impl::effects_handler_impl(render::compositor* compositor, render::scene* scene)
     : render::effects_handler_impl(compositor, scene)
+    , blur{*this}
+    , contrast{*this}
+    , slide{*this}
+    , kscreen{*this}
 {
     reconfigure();
 
@@ -43,6 +49,14 @@ effects_handler_impl::~effects_handler_impl()
     // here. Yeah, this is quite a bit ugly but it's fine; someday, X11
     // will be dead (or not?).
     unloadAllEffects();
+}
+
+bool effects_handler_impl::eventFilter(QObject* watched, QEvent* event)
+{
+    handle_internal_window_effect_update_event(blur, watched, event);
+    handle_internal_window_effect_update_event(contrast, watched, event);
+    handle_internal_window_effect_update_event(slide, watched, event);
+    return false;
 }
 
 bool effects_handler_impl::doGrabKeyboard()
@@ -105,6 +119,26 @@ void effects_handler_impl::defineCursor(Qt::CursorShape shape)
     }
 }
 
+effect::region_integration& effects_handler_impl::get_blur_integration()
+{
+    return blur;
+}
+
+effect::color_integration& effects_handler_impl::get_contrast_integration()
+{
+    return contrast;
+}
+
+effect::anim_integration& effects_handler_impl::get_slide_integration()
+{
+    return slide;
+}
+
+effect::kscreen_integration& effects_handler_impl::get_kscreen_integration()
+{
+    return kscreen;
+}
+
 QImage effects_handler_impl::blit_from_framebuffer(QRect const& geometry, double scale) const
 {
 #if defined(KWIN_HAVE_XRENDER_COMPOSITING)
@@ -126,6 +160,14 @@ void effects_handler_impl::doCheckInputWindowStacking()
     // Raise electric border windows above the input windows
     // so they can still be triggered. TODO: Do both at once.
     workspace()->edges->ensureOnTop();
+}
+
+void effects_handler_impl::handle_effect_destroy(Effect& effect)
+{
+    blur.remove(effect);
+    contrast.remove(effect);
+    slide.remove(effect);
+    kscreen.remove(effect);
 }
 
 }

@@ -33,20 +33,32 @@
 #include <QMatrix4x4>
 #include <QScreen> // for QGuiApplication
 #include <QTime>
-#include <QWindow>
 #include <cmath> // for ceil()
 
 #include <KConfigGroup>
 #include <KSharedConfig>
-#include <Wrapland/Server/blur.h>
-#include <Wrapland/Server/display.h>
-#include <Wrapland/Server/shadow.h>
-#include <Wrapland/Server/surface.h>
 
 namespace KWin
 {
 
-static const QByteArray s_blurAtomName = QByteArrayLiteral("_KDE_NET_WM_BLUR_BEHIND_REGION");
+void update_function(BlurEffect& effect, KWin::effect::region_update const& update)
+{
+    if (!update.base.window) {
+        // Reset requested
+        effect.reset();
+        return;
+    }
+
+    // If the specified blur region is empty, enable blur for the whole window.
+    if (update.value.isEmpty() && update.base.valid) {
+        // Set the data to a dummy value.
+        // This is needed to be able to distinguish between the value not
+        // being set, and being set to an empty region.
+        update.base.window->setData(WindowBlurBehindRole, 1);
+    } else {
+        update.base.window->setData(WindowBlurBehindRole, update.value);
+    }
+}
 
 BlurEffect::BlurEffect()
 {
@@ -56,35 +68,10 @@ BlurEffect::BlurEffect()
     initBlurStrengthValues();
     reconfigure(ReconfigureAll);
 
-    // ### Hackish way to announce support.
-    //     Should be included in _NET_SUPPORTED instead.
     if (m_shader && m_shader->isValid() && m_renderTargetsValid) {
-        net_wm_blur_region = effects->announceSupportProperty(s_blurAtomName, this);
-        Wrapland::Server::Display* display = effects->waylandDisplay();
-        if (display) {
-            wayland_blur_manager = display->createBlurManager();
-        }
-    } else {
-        net_wm_blur_region = 0;
-    }
-
-    connect(effects, &EffectsHandler::windowAdded, this, &BlurEffect::slotWindowAdded);
-    connect(effects, &EffectsHandler::windowDeleted, this, &BlurEffect::slotWindowDeleted);
-    connect(effects, &EffectsHandler::propertyNotify, this, &BlurEffect::slotPropertyNotify);
-    connect(effects,
-            &EffectsHandler::screenGeometryChanged,
-            this,
-            &BlurEffect::slotScreenGeometryChanged);
-    connect(effects, &EffectsHandler::xcbConnectionChanged, this, [this] {
-        if (m_shader && m_shader->isValid() && m_renderTargetsValid) {
-            net_wm_blur_region = effects->announceSupportProperty(s_blurAtomName, this);
-        }
-    });
-
-    // Fetch the blur regions for all windows
-    auto const stackingOrder = effects->stackingOrder();
-    for (EffectWindow* window : stackingOrder) {
-        slotWindowAdded(window);
+        auto& blur_integration = effects->get_blur_integration();
+        auto update = [this](auto&& data) { update_function(*this, data); };
+        blur_integration.add(*this, update);
     }
 }
 
@@ -93,16 +80,10 @@ BlurEffect::~BlurEffect()
     deleteFBOs();
 }
 
-void BlurEffect::slotScreenGeometryChanged()
+void BlurEffect::reset()
 {
     effects->makeOpenGLContextCurrent();
     updateTexture();
-
-    // Fetch the blur regions for all windows
-    auto const& stacking_order = effects->stackingOrder();
-    for (auto const& window : qAsConst(stacking_order)) {
-        updateBlurRegion(window);
-    }
     effects->doneOpenGLContextCurrent();
 }
 
@@ -276,108 +257,11 @@ void BlurEffect::reconfigure(ReconfigureFlags flags)
     updateTexture();
 
     if (!m_shader || !m_shader->isValid()) {
-        effects->removeSupportProperty(s_blurAtomName, this);
-        wayland_blur_manager.reset();
+        effects->get_blur_integration().remove(*this);
     }
 
     // Update all windows for the blur to take effect
     effects->addRepaintFull();
-}
-
-void BlurEffect::updateBlurRegion(EffectWindow* w) const
-{
-    QRegion region;
-    bool valid = false;
-
-    if (net_wm_blur_region != XCB_ATOM_NONE) {
-        const QByteArray value = w->readProperty(net_wm_blur_region, XCB_ATOM_CARDINAL, 32);
-        if (value.size() > 0 && !(value.size() % (4 * sizeof(uint32_t)))) {
-            const uint32_t* cardinals = reinterpret_cast<const uint32_t*>(value.constData());
-            for (unsigned int i = 0; i < value.size() / sizeof(uint32_t);) {
-                int x = cardinals[i++];
-                int y = cardinals[i++];
-                int w = cardinals[i++];
-                int h = cardinals[i++];
-                region += QRect(x, y, w, h);
-            }
-        }
-        valid = !value.isNull();
-    }
-
-    auto surf = w->surface();
-
-    if (surf && surf->state().blur) {
-        region = surf->state().blur->region();
-        valid = true;
-    }
-
-    if (auto internal = w->internalWindow()) {
-        const auto property = internal->property("kwin_blur");
-        if (property.isValid()) {
-            region = property.value<QRegion>();
-            valid = true;
-        }
-    }
-
-    // If the specified blur region is empty, enable blur for the whole window.
-    if (region.isEmpty() && valid) {
-        // Set the data to a dummy value.
-        // This is needed to be able to distinguish between the value not
-        // being set, and being set to an empty region.
-        w->setData(WindowBlurBehindRole, 1);
-    } else {
-        w->setData(WindowBlurBehindRole, region);
-    }
-}
-
-void BlurEffect::slotWindowAdded(EffectWindow* w)
-{
-    auto surf = w->surface();
-
-    if (surf) {
-        windowBlurChangedConnections[w]
-            = connect(surf, &Wrapland::Server::Surface::committed, this, [this, w, surf]() {
-                  if (w && surf->state().updates & Wrapland::Server::surface_change::blur) {
-                      updateBlurRegion(w);
-                  }
-              });
-    }
-    if (auto internal = w->internalWindow()) {
-        internal->installEventFilter(this);
-    }
-
-    updateBlurRegion(w);
-}
-
-void BlurEffect::slotWindowDeleted(EffectWindow* w)
-{
-    auto it = windowBlurChangedConnections.find(w);
-    if (it == windowBlurChangedConnections.end()) {
-        return;
-    }
-    disconnect(*it);
-    windowBlurChangedConnections.erase(it);
-}
-
-void BlurEffect::slotPropertyNotify(EffectWindow* w, long atom)
-{
-    if (w && atom == net_wm_blur_region && net_wm_blur_region != XCB_ATOM_NONE) {
-        updateBlurRegion(w);
-    }
-}
-
-bool BlurEffect::eventFilter(QObject* watched, QEvent* event)
-{
-    auto internal = qobject_cast<QWindow*>(watched);
-    if (internal && event->type() == QEvent::DynamicPropertyChange) {
-        QDynamicPropertyChangeEvent* pe = static_cast<QDynamicPropertyChangeEvent*>(event);
-        if (pe->propertyName() == "kwin_blur") {
-            if (auto w = effects->findWindow(internal)) {
-                updateBlurRegion(w);
-            }
-        }
-    }
-    return false;
 }
 
 bool BlurEffect::enabledByDefault()

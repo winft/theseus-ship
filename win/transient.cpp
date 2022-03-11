@@ -61,7 +61,7 @@ void transient::add_lead(Toplevel* lead)
     assert(m_window != lead);
     assert(!contains(m_leads, lead));
 
-    if (m_window->remnant()) {
+    if (m_window->remnant() && annexed) {
         m_window->remnant()->ref();
     }
     m_leads.push_back(lead);
@@ -77,7 +77,7 @@ void transient::remove_lead(Toplevel* lead)
     remove_all(m_leads, lead);
     Q_EMIT m_window->transientChanged();
 
-    if (m_window->remnant()) {
+    if (m_window->remnant() && annexed) {
         m_window->remnant()->unref();
     }
 }

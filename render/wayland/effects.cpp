@@ -5,6 +5,8 @@
 */
 #include "effects.h"
 
+#include "effect/update.h"
+
 #include "base/wayland/server.h"
 #include "main.h"
 #include "render/window.h"
@@ -17,6 +19,9 @@ namespace KWin::render::wayland
 
 effects_handler_impl::effects_handler_impl(render::compositor* compositor, render::scene* scene)
     : render::effects_handler_impl(compositor, scene)
+    , blur{*this, *waylandServer()->display}
+    , contrast{*this, *waylandServer()->display}
+    , slide{*this, *waylandServer()->display}
 {
     reconfigure();
 
@@ -50,6 +55,14 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     }
 }
 
+bool effects_handler_impl::eventFilter(QObject* watched, QEvent* event)
+{
+    handle_internal_window_effect_update_event(blur, watched, event);
+    handle_internal_window_effect_update_event(contrast, watched, event);
+    handle_internal_window_effect_update_event(slide, watched, event);
+    return false;
+}
+
 EffectWindow* effects_handler_impl::find_window_by_surface(Wrapland::Server::Surface* surface) const
 {
     if (auto win = static_cast<win::wayland::space*>(workspace())->find_window(surface)) {
@@ -61,6 +74,47 @@ EffectWindow* effects_handler_impl::find_window_by_surface(Wrapland::Server::Sur
 Wrapland::Server::Display* effects_handler_impl::waylandDisplay() const
 {
     return waylandServer()->display.get();
+}
+
+effect::region_integration& effects_handler_impl::get_blur_integration()
+{
+    return blur;
+}
+
+effect::color_integration& effects_handler_impl::get_contrast_integration()
+{
+    return contrast;
+}
+
+effect::anim_integration& effects_handler_impl::get_slide_integration()
+{
+    return slide;
+}
+
+// KScreen effect is only available on X11.
+class kscreen_integration : public effect::kscreen_integration
+{
+    void add(Effect& /*effect*/, update_function const& /*update*/) override
+    {
+    }
+    void remove(Effect& /*effect*/) override
+    {
+    }
+    void change_state(Effect& /*effect*/, double /*state*/) override
+    {
+    }
+} kscreen_dummy;
+
+effect::kscreen_integration& effects_handler_impl::get_kscreen_integration()
+{
+    return kscreen_dummy;
+}
+
+void effects_handler_impl::handle_effect_destroy(Effect& effect)
+{
+    blur.remove(effect);
+    contrast.remove(effect);
+    slide.remove(effect);
 }
 
 }

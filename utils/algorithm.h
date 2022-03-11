@@ -1,7 +1,7 @@
 /*
     SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-    SPDX-License-Identifier: GPL-2.0-or-later
+    SPDX-License-Identifier: MIT
 */
 #pragma once
 
@@ -30,6 +30,12 @@ template<typename V, typename T>
 bool contains(V const& container, T const& arg)
 {
     return std::find(container.cbegin(), container.cend(), arg) != container.cend();
+}
+
+template<typename V, typename F>
+bool contains_if(V const& container, F&& f)
+{
+    return std::find_if(container.cbegin(), container.cend(), f) != container.cend();
 }
 
 template<typename V, typename T>

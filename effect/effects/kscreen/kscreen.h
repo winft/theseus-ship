@@ -51,16 +51,19 @@ public:
         return 99;
     }
 
-private Q_SLOTS:
-    void propertyNotify(KWin::EffectWindow* window, long atom);
+    enum FadeOutState {
+        StateNormal,
+        StateFadingOut,
+        StateFadedOut,
+        StateFadingIn,
+    };
+
+    FadeOutState m_state{StateNormal};
+    TimeLine m_timeLine;
 
 private:
     void switchState();
-    enum FadeOutState { StateNormal, StateFadingOut, StateFadedOut, StateFadingIn };
-    TimeLine m_timeLine;
     std::chrono::milliseconds m_lastPresentTime;
-    FadeOutState m_state;
-    xcb_atom_t m_atom;
 };
 
 } // namespace KWin

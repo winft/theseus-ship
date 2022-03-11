@@ -1,7 +1,8 @@
 /*
+    SPDX-FileCopyrightText: 2021 Francesco Sorrentino <francesco.sorr@gmail.com>
     SPDX-FileCopyrightText: 2022 Roman Gilg <subdiff@gmail.com>
 
-    SPDX-License-Identifier: GPL-2.0-or-later
+    SPDX-License-Identifier: MIT
 */
 #pragma once
 
