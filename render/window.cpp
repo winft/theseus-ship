@@ -46,14 +46,14 @@ uint32_t window::id() const
 
 void window::referencePreviousPixmap()
 {
-    if (!m_previousPixmap.isNull() && m_previousPixmap->isDiscarded()) {
+    if (m_previousPixmap && m_previousPixmap->isDiscarded()) {
         m_referencePixmapCounter++;
     }
 }
 
 void window::unreferencePreviousPixmap()
 {
-    if (m_previousPixmap.isNull() || !m_previousPixmap->isDiscarded()) {
+    if (!m_previousPixmap || !m_previousPixmap->isDiscarded()) {
         return;
     }
     m_referencePixmapCounter--;
@@ -64,9 +64,9 @@ void window::unreferencePreviousPixmap()
 
 void window::discardPixmap()
 {
-    if (!m_currentPixmap.isNull()) {
+    if (m_currentPixmap) {
         if (m_currentPixmap->isValid()) {
-            m_previousPixmap.reset(m_currentPixmap.take());
+            m_previousPixmap.reset(m_currentPixmap.release());
             m_previousPixmap->markAsDiscarded();
         } else {
             m_currentPixmap.reset();
@@ -76,7 +76,7 @@ void window::discardPixmap()
 
 void window::updatePixmap()
 {
-    if (m_currentPixmap.isNull()) {
+    if (!m_currentPixmap) {
         m_currentPixmap.reset(createWindowPixmap());
     }
     if (!m_currentPixmap->isValid()) {

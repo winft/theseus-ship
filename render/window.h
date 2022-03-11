@@ -133,11 +133,11 @@ protected:
     render::shadow* m_shadow;
 
 private:
-    QScopedPointer<window_pixmap> m_currentPixmap;
-    QScopedPointer<window_pixmap> m_previousPixmap;
+    std::unique_ptr<window_pixmap> m_currentPixmap;
+    std::unique_ptr<window_pixmap> m_previousPixmap;
     int m_referencePixmapCounter;
     window_paint_disable_type disable_painting{window_paint_disable_type::none};
-    mutable QScopedPointer<WindowQuadList> cached_quad_list;
+    mutable std::unique_ptr<WindowQuadList> cached_quad_list;
     uint32_t const m_id;
     Q_DISABLE_COPY(window)
 };
@@ -257,24 +257,24 @@ private:
 template<typename T>
 inline T* window::windowPixmap()
 {
-    if (m_currentPixmap.isNull()) {
+    if (!m_currentPixmap) {
         m_currentPixmap.reset(createWindowPixmap());
     }
     if (m_currentPixmap->isValid()) {
-        return static_cast<T*>(m_currentPixmap.data());
+        return static_cast<T*>(m_currentPixmap.get());
     }
     m_currentPixmap->create();
     if (m_currentPixmap->isValid()) {
-        return static_cast<T*>(m_currentPixmap.data());
+        return static_cast<T*>(m_currentPixmap.get());
     } else {
-        return static_cast<T*>(m_previousPixmap.data());
+        return static_cast<T*>(m_previousPixmap.get());
     }
 }
 
 template<typename T>
 inline T* window::previousWindowPixmap()
 {
-    return static_cast<T*>(m_previousPixmap.data());
+    return static_cast<T*>(m_previousPixmap.get());
 }
 
 }
