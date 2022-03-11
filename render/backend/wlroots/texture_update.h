@@ -151,9 +151,9 @@ bool update_texture_from_fbo(Texture& texture, std::shared_ptr<QOpenGLFramebuffe
 }
 
 template<typename Texture>
-bool update_texture_from_internal_image_object(Texture& texture, window_pixmap* pixmap)
+bool update_texture_from_internal_image_object(Texture& texture, render::buffer* buffer)
 {
-    auto const image = pixmap->internalImage();
+    auto const image = buffer->internalImage();
     if (image.isNull()) {
         return false;
     }
@@ -164,7 +164,7 @@ bool update_texture_from_internal_image_object(Texture& texture, window_pixmap* 
     }
 
     texture_subimage_from_qimage(
-        texture, image.devicePixelRatio(), image, pixmap->toplevel()->damage());
+        texture, image.devicePixelRatio(), image, buffer->toplevel()->damage());
 
     return true;
 }
@@ -342,23 +342,23 @@ bool update_texture_from_dmabuf(Texture& texture, gl::egl_dmabuf_buffer* dmabuf)
 }
 
 template<typename Texture>
-bool update_texture_from_shm(Texture& texture, window_pixmap* pixmap)
+bool update_texture_from_shm(Texture& texture, render::buffer* buffer)
 {
-    auto const buffer = pixmap->buffer();
-    assert(buffer && buffer->shmBuffer());
+    auto const extbuf = buffer->wayland_buffer();
+    assert(extbuf && extbuf->shmBuffer());
 
-    auto image = buffer->shmImage();
-    auto surface = pixmap->surface();
+    auto image = extbuf->shmImage();
+    auto surface = buffer->surface();
     if (!image || !surface) {
         return false;
     }
 
-    if (buffer->size() != texture.m_size) {
+    if (extbuf->size() != texture.m_size) {
         // First time update or buffer size has changed.
         return load_texture_from_image(texture, image->createQImage());
     }
 
-    assert(buffer->size() == texture.m_size);
+    assert(extbuf->size() == texture.m_size);
     auto const& damage = surface->trackedDamage();
 
     if (texture.m_hasSubImageUnpack) {
@@ -372,21 +372,21 @@ bool update_texture_from_shm(Texture& texture, window_pixmap* pixmap)
 }
 
 template<typename Texture>
-bool update_texture_from_external(Texture& texture, window_pixmap* pixmap)
+bool update_texture_from_external(Texture& texture, render::buffer* buffer)
 {
     bool ret;
-    auto const buffer = pixmap->buffer();
-    assert(buffer);
+    auto const extbuf = buffer->wayland_buffer();
+    assert(extbuf);
 
-    if (auto dmabuf = buffer->linuxDmabufBuffer()) {
+    if (auto dmabuf = extbuf->linuxDmabufBuffer()) {
         ret = update_texture_from_dmabuf(texture, static_cast<gl::egl_dmabuf_buffer*>(dmabuf));
-    } else if (auto shm = buffer->shmBuffer()) {
-        ret = update_texture_from_shm(texture, pixmap);
+    } else if (auto shm = extbuf->shmBuffer()) {
+        ret = update_texture_from_shm(texture, buffer);
     } else {
-        ret = update_texture_from_egl(texture, buffer);
+        ret = update_texture_from_egl(texture, extbuf);
     }
 
-    if (auto surface = pixmap->surface()) {
+    if (auto surface = buffer->surface()) {
         surface->resetTrackedDamage();
     }
 
@@ -394,21 +394,21 @@ bool update_texture_from_external(Texture& texture, window_pixmap* pixmap)
 }
 
 template<typename Texture>
-bool update_texture_from_internal(Texture& texture, window_pixmap* pixmap)
+bool update_texture_from_internal(Texture& texture, render::buffer* buffer)
 {
-    assert(!pixmap->buffer());
+    assert(!buffer->wayland_buffer());
 
-    return update_texture_from_fbo(texture, pixmap->fbo())
-        || update_texture_from_internal_image_object(texture, pixmap);
+    return update_texture_from_fbo(texture, buffer->fbo())
+        || update_texture_from_internal_image_object(texture, buffer);
 }
 
 template<typename Texture>
-bool update_texture_from_pixmap(Texture& texture, window_pixmap* pixmap)
+bool update_texture_from_buffer(Texture& texture, render::buffer* buffer)
 {
-    if (pixmap->buffer()) {
-        return update_texture_from_external(texture, pixmap);
+    if (buffer->wayland_buffer()) {
+        return update_texture_from_external(texture, buffer);
     }
-    return update_texture_from_internal(texture, pixmap);
+    return update_texture_from_internal(texture, buffer);
 }
 
 }

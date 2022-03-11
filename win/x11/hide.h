@@ -25,7 +25,7 @@ void map(Win* win)
     // virtual desktop, etc.).  We kept the last known good pixmap around
     // for use in effects, but now we want to have access to the new pixmap
     if (win::compositing()) {
-        win->discardWindowPixmap();
+        win->discard_buffer();
     }
 
     win->xcb_windows.outer.map();

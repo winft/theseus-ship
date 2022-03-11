@@ -34,24 +34,24 @@ window::~window()
     m_scene->windows.erase(id());
 }
 
-// Bind the window pixmap to an OpenGL texture.
+// Bind the buffer to an OpenGL texture.
 render::gl::texture* window::bindTexture()
 {
-    auto pixmap = windowPixmap<window_pixmap>();
-    if (!pixmap) {
+    auto buffer = get_buffer<gl::buffer>();
+    if (!buffer) {
         return nullptr;
     }
-    if (pixmap->isDiscarded()) {
-        return pixmap->texture();
+    if (buffer->isDiscarded()) {
+        return buffer->texture();
     }
 
     if (!get_window()->damage().isEmpty())
         m_scene->insertWait();
 
-    if (!pixmap->bind()) {
+    if (!buffer->bind()) {
         return nullptr;
     }
-    return pixmap->texture();
+    return buffer->texture();
     ;
 }
 
@@ -188,9 +188,9 @@ GLTexture* window::getDecorationTexture() const
     return nullptr;
 }
 
-render::window_pixmap* window::createWindowPixmap()
+render::buffer* window::create_buffer()
 {
-    return new window_pixmap(this, m_scene);
+    return new buffer(this, m_scene);
 }
 
 QVector4D window::modulate(float opacity, float brightness) const
@@ -248,7 +248,7 @@ void window::setupLeafNodes(std::vector<LeafNode>& nodes,
         node.coordinateType = UnnormalizedCoordinates;
     };
 
-    setup_content(0, this, windowPixmap<window_pixmap>()->texture());
+    setup_content(0, this, get_buffer<buffer>()->texture());
 
     int contents_count = quads.size() - ContentLeaf;
     if (has_previous_content) {
@@ -268,7 +268,7 @@ void window::setupLeafNodes(std::vector<LeafNode>& nodes,
     }
 
     if (has_previous_content) {
-        auto previous = previousWindowPixmap<window_pixmap>();
+        auto previous = previous_buffer<buffer>();
         auto const last = quads.size() - 1;
         nodes[last].texture = previous ? previous->texture() : nullptr;
         nodes[last].hasAlpha = !isOpaque();
@@ -360,7 +360,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 
     bool has_previous_content = false;
     if (data.crossFadeProgress() != 1.0) {
-        auto previous = previousWindowPixmap<window_pixmap>();
+        auto previous = previous_buffer<buffer>();
         if (previous) {
             has_previous_content = true;
             quads.resize(quads.size() + 1);
@@ -482,54 +482,54 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 }
 
 //****************************************
-// window_pixmap
+// buffer
 //****************************************
 
-window_pixmap::window_pixmap(render::window* window, gl::scene* scene)
-    : render::window_pixmap(window)
+buffer::buffer(render::window* window, gl::scene* scene)
+    : render::buffer(window)
     , m_texture(scene->createTexture())
     , m_scene(scene)
 {
 }
 
-window_pixmap::~window_pixmap()
+buffer::~buffer()
 {
 }
 
-static bool needsPixmapUpdate(const window_pixmap* pixmap)
+static bool needs_buffer_update(gl::buffer const* buffer)
 {
     // That's a regular Wayland client.
-    if (pixmap->surface()) {
-        return !pixmap->surface()->trackedDamage().isEmpty();
+    if (buffer->surface()) {
+        return !buffer->surface()->trackedDamage().isEmpty();
     }
 
     // That's an internal client with a raster buffer attached.
-    if (!pixmap->internalImage().isNull()) {
-        return !pixmap->toplevel()->damage().isEmpty();
+    if (!buffer->internalImage().isNull()) {
+        return !buffer->toplevel()->damage().isEmpty();
     }
 
     // That's an internal client with an opengl framebuffer object attached.
-    if (pixmap->fbo()) {
-        return !pixmap->toplevel()->damage().isEmpty();
+    if (buffer->fbo()) {
+        return !buffer->toplevel()->damage().isEmpty();
     }
 
     // That's an X11 client.
     return false;
 }
 
-render::gl::texture* window_pixmap::texture() const
+render::gl::texture* buffer::texture() const
 {
     return m_texture.data();
 }
 
-bool window_pixmap::bind()
+bool buffer::bind()
 {
     if (!m_texture->isNull()) {
         if (!toplevel()->damage().isEmpty()) {
             updateBuffer();
         }
-        if (needsPixmapUpdate(this)) {
-            m_texture->updateFromPixmap(this);
+        if (needs_buffer_update(this)) {
+            m_texture->update_from_buffer(this);
             // mipmaps need to be updated
             m_texture->setDirty();
         }
@@ -550,12 +550,12 @@ bool window_pixmap::bind()
     return success;
 }
 
-bool window_pixmap::isValid() const
+bool buffer::isValid() const
 {
     if (!m_texture->isNull()) {
         return true;
     }
-    return render::window_pixmap::isValid();
+    return render::buffer::isValid();
 }
 
 }

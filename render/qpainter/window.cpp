@@ -49,12 +49,12 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 
     if (region.isEmpty())
         return;
-    auto pixmap = windowPixmap<window_pixmap>();
-    if (!pixmap || !pixmap->isValid()) {
+    auto buffer = get_buffer<qpainter::buffer>();
+    if (!buffer || !buffer->isValid()) {
         return;
     }
     if (!toplevel->damage().isEmpty()) {
-        pixmap->updateBuffer();
+        buffer->updateBuffer();
         toplevel->resetDamage();
     }
 
@@ -108,11 +108,11 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
             source = QRectF(viewportRectangle.topLeft() * imageScale,
                             viewportRectangle.bottomRight() * imageScale);
         } else {
-            source = pixmap->image().rect();
+            source = buffer->image().rect();
         }
         target = win::render_geometry(toplevel).translated(-pos());
     }
-    painter->drawImage(target, pixmap->image(), source);
+    painter->drawImage(target, buffer->image(), source);
 
     if (!opaque) {
         tempPainter.restore();
@@ -189,29 +189,29 @@ void window::renderWindowDecorations(QPainter* painter)
     painter->drawImage(dbr, renderer->image(deco_renderer::DecorationPart::Bottom));
 }
 
-render::window_pixmap* window::createWindowPixmap()
+render::buffer* window::create_buffer()
 {
-    return new window_pixmap(this);
+    return new buffer(this);
 }
 
 //****************************************
-// window_pixmap
+// buffer
 //****************************************
-window_pixmap::window_pixmap(render::window* window)
-    : render::window_pixmap(window)
+buffer::buffer(render::window* window)
+    : render::buffer(window)
 {
 }
 
-window_pixmap::~window_pixmap()
+buffer::~buffer()
 {
 }
 
-void window_pixmap::create()
+void buffer::create()
 {
     if (isValid()) {
         return;
     }
-    render::window_pixmap::create();
+    render::buffer::create();
     if (!isValid()) {
         return;
     }
@@ -221,25 +221,25 @@ void window_pixmap::create()
         return;
     }
     // performing deep copy, this could probably be improved
-    m_image = buffer()->shmImage()->createQImage().copy();
+    m_image = wayland_buffer()->shmImage()->createQImage().copy();
     if (auto s = surface()) {
         s->resetTrackedDamage();
     }
 }
 
-bool window_pixmap::isValid() const
+bool buffer::isValid() const
 {
     if (!m_image.isNull()) {
         return true;
     }
-    return render::window_pixmap::isValid();
+    return render::buffer::isValid();
 }
 
-void window_pixmap::updateBuffer()
+void buffer::updateBuffer()
 {
-    auto oldBuffer = buffer();
-    render::window_pixmap::updateBuffer();
-    auto b = buffer();
+    auto oldBuffer = wayland_buffer();
+    render::buffer::updateBuffer();
+    auto b = wayland_buffer();
     if (!surface()) {
         // That's an internal client.
         m_image = internalImage();
@@ -259,7 +259,7 @@ void window_pixmap::updateBuffer()
     }
 }
 
-QImage const& window_pixmap::image()
+QImage const& buffer::image()
 {
     return m_image;
 }

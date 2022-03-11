@@ -28,8 +28,9 @@ class Toplevel;
 
 namespace render
 {
+
+class buffer;
 class effects_window_impl;
-class window_pixmap;
 
 class KWIN_EXPORT window
 {
@@ -41,9 +42,9 @@ public:
     // perform the actual painting of the window
     virtual void performPaint(paint_type mask, QRegion region, WindowPaintData data) = 0;
 
-    // do any cleanup needed when the window's composite pixmap is discarded
-    void discardPixmap();
-    void updatePixmap();
+    // do any cleanup needed when the window's buffer is discarded
+    void discard_buffer();
+    void update_buffer();
 
     int x() const;
     int y() const;
@@ -81,8 +82,8 @@ public:
     render::shadow const* shadow() const;
     render::shadow* shadow();
 
-    void referencePreviousPixmap();
-    void unreferencePreviousPixmap();
+    void reference_previous_buffer();
+    void unreference_previous_buffer();
     void invalidateQuadsCache();
 
     std::unique_ptr<effects_window_impl> effect;
@@ -98,44 +99,46 @@ protected:
     WindowQuadList makeContentsQuads(int id, QPoint const& offset = QPoint()) const;
 
     /**
-     * @brief Returns the window pixmap for this Window.
+     * @brief Returns the buffer for this Window.
      *
-     * If the window pixmap does not yet exist, this method will invoke createWindowPixmap.
-     * If the window pixmap is not valid it tries to create it, in case this succeeds the
-     * window pixmap is returned. In case it fails, the previous (and still valid) window pixmap is
+     * If the buffer does not yet exist, this method will invoke create_buffer.
+     * If the buffer is not valid it tries to create it, in case this succeeds the
+     * buffer is returned. In case it fails, the previous (and still valid) buffer is
      * returned.
      *
      * @note This method can return @c NULL as there might neither be a valid previous nor current
-     * window pixmap around.
+     * buffer around.
      *
-     * The window pixmap gets casted to the type passed in as a template parameter. That way this
-     * class does not need to know the actual window pixmap subclass used by the concrete scene
+     * The buffer gets casted to the type passed in as a template parameter. That way this
+     * class does not need to know the actual buffer subclass used by the concrete scene
      * implementations.
      *
-     * @return The window_pixmap casted to T* or @c NULL if there is no valid window pixmap.
+     * @return The buffer casted to T* or @c NULL if there is no valid buffer.
      */
     template<typename T>
-    T* windowPixmap();
+    T* get_buffer();
     template<typename T>
-    T* previousWindowPixmap();
+    T* previous_buffer();
 
     /**
-     * @brief Factory method to create a window_pixmap.
+     * @brief Factory method to create a buffer.
      *
      * The inheriting classes need to implement this method to create a new instance of their
-     * window_pixmap subclass.
-     * @note Do not use window_pixmap::create on the created instance. The scene will take care of
+     * buffer subclass.
+     * @note Do not use buffer::create on the created instance. The scene will take care of
      * that.
      */
-    virtual window_pixmap* createWindowPixmap() = 0;
+    virtual buffer* create_buffer() = 0;
     Toplevel* toplevel;
     image_filter_type filter;
     render::shadow* m_shadow;
 
 private:
-    std::unique_ptr<window_pixmap> m_currentPixmap;
-    std::unique_ptr<window_pixmap> m_previousPixmap;
-    int m_referencePixmapCounter;
+    struct {
+        std::unique_ptr<buffer> current;
+        std::unique_ptr<buffer> previous;
+        int previous_refs{0};
+    } buffers;
     window_paint_disable_type disable_painting{window_paint_disable_type::none};
     mutable std::unique_ptr<WindowQuadList> cached_quad_list;
     uint32_t const m_id;
@@ -143,40 +146,39 @@ private:
 };
 
 /**
- * @brief Wrapper for a pixmap of the window.
+ * @brief Wrapper for a buffer of the window.
  *
- * This class encapsulates the functionality to get the pixmap for a window. When initialized the
- * pixmap is not yet mapped to the window and isValid will return @c false. The pixmap mapping to
+ * This class encapsulates the functionality to get the buffer for a window. When initialized the
+ * buffer is not yet mapped to the window and isValid will return @c false. The buffer mapping to
  * the window can be established through @ref create. If it succeeds isValid will return @c true,
- * otherwise it will keep in the non valid state and it can be tried to create the pixmap mapping
+ * otherwise it will keep in the non valid state and it can be tried to create the buffer mapping
  * again (e.g. in the next frame).
  *
- * This class is not intended to be updated when the pixmap is no longer valid due to e.g. resizing
+ * This class is not intended to be updated when the buffer is no longer valid due to e.g. resizing
  * the window. Instead a new instance of this class should be instantiated. The idea behind this is
- * that a valid pixmap does not get destroyed, but can continue to be used. To indicate that a newer
- * pixmap should in generally be around, one can use markAsDiscarded.
+ * that a valid buffer does not get destroyed, but can continue to be used. To indicate that a newer
+ * buffer should in generally be around, one can use markAsDiscarded.
  *
  * This class is intended to be inherited for the needs of the compositor backends which need
- * further mapping from the native pixmap to the respective rendering format.
+ * further mapping from the native buffer to the respective rendering format.
  */
-class KWIN_EXPORT window_pixmap
+class KWIN_EXPORT buffer
 {
 public:
-    virtual ~window_pixmap();
+    virtual ~buffer();
     /**
-     * @brief Tries to create the mapping between the Window and the pixmap.
+     * @brief Tries to create the mapping between the window and the buffer.
      *
-     * In case this method succeeds in creating the pixmap for the window, isValid will return @c
-     * true otherwise
-     * @c false.
+     * In case this method succeeds in creating the buffer for the window, isValid will return @c
+     * true otherwise @c false.
      *
      * Inheriting classes should re-implement this method in case they need to add further
-     * functionality for mapping the native pixmap to the rendering format.
+     * functionality for mapping the native buffer to the rendering format.
      */
     virtual void create();
 
     /**
-     * @return @c true if the pixmap has been created and is valid, @c false otherwise
+     * @return @c true if the buffer has been created and is valid, @c false otherwise
      */
     virtual bool isValid() const;
 
@@ -186,24 +188,24 @@ public:
     xcb_pixmap_t pixmap() const;
 
     /**
-     * @return The Wayland Buffer for this window pixmap.
+     * @return The Wayland Buffer for this buffer.
      */
-    Wrapland::Server::Buffer* buffer() const;
+    Wrapland::Server::Buffer* wayland_buffer() const;
     std::shared_ptr<QOpenGLFramebufferObject> const& fbo() const;
     QImage internalImage() const;
 
     /**
-     * @brief Whether this window pixmap is considered as discarded. This means the window has
-     * changed in a way that a new window pixmap should have been created already.
+     * @brief Whether this buffer is considered as discarded. This means the window has
+     * changed in a way that a new buffer should have been created already.
      *
-     * @return @c true if this window pixmap is considered as discarded, @c false otherwise.
+     * @return @c true if this buffer is considered as discarded, @c false otherwise.
      * @see markAsDiscarded
      */
     bool isDiscarded() const;
 
     /**
-     * @brief Marks this window pixmap as discarded. From now on isDiscarded will return @c true.
-     * This method should only be used by the Window when it changes in a way that a new pixmap is
+     * @brief Marks this buffer as discarded. From now on isDiscarded will return @c true.
+     * This method should only be used by the Window when it changes in a way that a new buffer is
      * required.
      *
      * @see isDiscarded
@@ -211,31 +213,31 @@ public:
     void markAsDiscarded();
 
     /**
-     * The size of the pixmap.
+     * The size of the buffer.
      */
     const QSize& size() const;
 
     /**
-     * The geometry of the Client's content inside the pixmap. In case of a decorated Client the
-     * pixmap also contains the decoration which is not rendered into this pixmap, though. This
-     * contentsRect tells where inside the complete pixmap the real content is.
+     * The geometry of the Client's content inside the buffer. In case of a decorated Client the
+     * buffer may also contain the decoration, which is not rendered into this buffer though. This
+     * contentsRect tells where inside the complete buffer the real content is.
      */
     const QRect& contentsRect() const;
 
     /**
-     * @brief Returns the Toplevel this window pixmap belongs to.
-     * Note: the Toplevel can change over the lifetime of the window pixmap in case the Toplevel is
+     * @brief Returns the Toplevel this buffer belongs to.
+     * Note: the Toplevel can change over the lifetime of the buffer in case the Toplevel is
      * copied to Deleted.
      */
     Toplevel* toplevel() const;
 
     /**
-     * @returns the surface this window pixmap references, might be @c null.
+     * @returns the surface this buffer references, might be @c null.
      */
     Wrapland::Server::Surface* surface() const;
 
 protected:
-    explicit window_pixmap(render::window* window);
+    explicit buffer(render::window* window);
 
     /**
      * Should be called by the implementing subclasses when the Wayland Buffer changed and needs
@@ -255,26 +257,26 @@ private:
 };
 
 template<typename T>
-inline T* window::windowPixmap()
+inline T* window::get_buffer()
 {
-    if (!m_currentPixmap) {
-        m_currentPixmap.reset(createWindowPixmap());
+    if (!buffers.current) {
+        buffers.current.reset(create_buffer());
     }
-    if (m_currentPixmap->isValid()) {
-        return static_cast<T*>(m_currentPixmap.get());
+    if (buffers.current->isValid()) {
+        return static_cast<T*>(buffers.current.get());
     }
-    m_currentPixmap->create();
-    if (m_currentPixmap->isValid()) {
-        return static_cast<T*>(m_currentPixmap.get());
+    buffers.current->create();
+    if (buffers.current->isValid()) {
+        return static_cast<T*>(buffers.current.get());
     } else {
-        return static_cast<T*>(m_previousPixmap.get());
+        return static_cast<T*>(buffers.previous.get());
     }
 }
 
 template<typename T>
-inline T* window::previousWindowPixmap()
+inline T* window::previous_buffer()
 {
-    return static_cast<T*>(m_previousPixmap.get());
+    return static_cast<T*>(buffers.previous.get());
 }
 
 }

@@ -129,7 +129,7 @@ void unmanaged_configure_event(Win* win, xcb_configure_notify_event_t* e)
         win->addRepaintFull();
 
         if (old.size() != win->frameGeometry().size()) {
-            win->discardWindowPixmap();
+            win->discard_buffer();
         }
         Q_EMIT win->frame_geometry_changed(win, old);
     }

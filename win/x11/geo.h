@@ -153,7 +153,7 @@ void apply_pending_geometry(Win* win, int64_t update_request_number)
     win->do_set_geometry(frame_geo);
     win->do_set_maximize_mode(max_mode);
 
-    update_window_pixmap(win);
+    update_window_buffer(win);
 
     if (resizing) {
         update_move_resize(win, input::get_cursor()->pos());

@@ -155,7 +155,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 
     if (region.isEmpty())
         return;
-    auto pixmap = windowPixmap<window_pixmap>();
+    auto pixmap = get_buffer<buffer>();
     if (!pixmap || !pixmap->isValid()) {
         return;
     }
@@ -421,7 +421,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                              dr.width(),
                              dr.height());
         if (data.crossFadeProgress() < 1.0 && data.crossFadeProgress() > 0.0) {
-            auto previous = previousWindowPixmap<window_pixmap>();
+            auto previous = previous_buffer<buffer>();
             if (previous && previous != pixmap) {
                 static xcb_render_color_t cFadeColor = {0, 0, 0, 0};
                 cFadeColor.alpha = uint16_t((1.0 - data.crossFadeProgress()) * 0xffff);
@@ -575,9 +575,9 @@ void window::setPictureFilter(xcb_render_picture_t pic, image_filter_type filter
         connection(), pic, filterName.length(), filterName.constData(), 0, nullptr);
 }
 
-render::window_pixmap* window::createWindowPixmap()
+render::buffer* window::create_buffer()
 {
-    return new window_pixmap(this, format);
+    return new buffer(this, format);
 }
 
 void scene::handle_screen_geometry_change(QSize const& size)
@@ -601,29 +601,29 @@ void window::setTransformedShape(QRegion const& shape)
 }
 
 //****************************************
-// window_pixmap
+// buffer
 //****************************************
 
-window_pixmap::window_pixmap(render::window* window, xcb_render_pictformat_t format)
-    : render::window_pixmap(window)
+buffer::buffer(render::window* window, xcb_render_pictformat_t format)
+    : render::buffer(window)
     , m_picture(XCB_RENDER_PICTURE_NONE)
     , m_format(format)
 {
 }
 
-window_pixmap::~window_pixmap()
+buffer::~buffer()
 {
     if (m_picture != XCB_RENDER_PICTURE_NONE) {
         xcb_render_free_picture(connection(), m_picture);
     }
 }
 
-void window_pixmap::create()
+void buffer::create()
 {
     if (isValid()) {
         return;
     }
-    render::window_pixmap::create();
+    render::buffer::create();
     if (!isValid()) {
         return;
     }
@@ -631,7 +631,7 @@ void window_pixmap::create()
     xcb_render_create_picture(connection(), m_picture, pixmap(), m_format, 0, nullptr);
 }
 
-xcb_render_picture_t window_pixmap::picture() const
+xcb_render_picture_t buffer::picture() const
 {
     return m_picture;
 }

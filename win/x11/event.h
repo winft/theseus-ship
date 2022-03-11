@@ -182,7 +182,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
                 // The frame geometry stays the same so we just update our server geometry and use
                 // the latest synced frame geometry.
                 update_server_geometry(win, win->synced_geometry.frame);
-                win->discardWindowPixmap();
+                win->discard_buffer();
             }
         }
     }

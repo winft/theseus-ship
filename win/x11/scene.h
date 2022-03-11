@@ -30,10 +30,10 @@ auto setup_compositing(Win& win, bool add_full_damage)
 }
 
 template<typename Win>
-void update_window_pixmap(Win* win)
+void update_window_buffer(Win* win)
 {
     if (win->render) {
-        win->render->updatePixmap();
+        win->render->update_buffer();
     }
 }
 

@@ -19,7 +19,7 @@ namespace KWin::render::gl
 
 class scene;
 class texture;
-class window_pixmap;
+class buffer;
 
 class window final : public render::window
 {
@@ -54,7 +54,7 @@ public:
     window(Toplevel* toplevel, gl::scene* scene);
     ~window() override;
 
-    render::window_pixmap* createWindowPixmap() override;
+    render::buffer* create_buffer() override;
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override;
 
 private:
@@ -79,11 +79,11 @@ private:
     bool m_blendingEnabled{false};
 };
 
-class window_pixmap : public render::window_pixmap
+class buffer : public render::buffer
 {
 public:
-    window_pixmap(render::window* window, gl::scene* scene);
-    ~window_pixmap() override;
+    buffer(render::window* window, gl::scene* scene);
+    ~buffer() override;
     render::gl::texture* texture() const;
     bool bind();
     bool isValid() const override;

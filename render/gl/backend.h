@@ -35,12 +35,7 @@ class output;
 
 class SceneOpenGL;
 
-namespace render
-{
-
-class window_pixmap;
-
-namespace gl
+namespace render::gl
 {
 
 class texture;
@@ -267,6 +262,5 @@ private:
     QList<QByteArray> m_extensions;
 };
 
-}
 }
 }

@@ -719,7 +719,7 @@ void window::do_set_geometry(QRect const& frame_geo)
 
     if (frame_to_render_rect(this, old_frame_geo).size()
         != frame_to_render_rect(this, frame_geo).size()) {
-        discardWindowPixmap();
+        discard_buffer();
     }
 
     // TODO(romangg): Remove?

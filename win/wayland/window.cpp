@@ -906,7 +906,7 @@ void window::handle_commit()
     }
 
     if (surface()->state().updates & Wrapland::Server::surface_change::size) {
-        discardWindowPixmap();
+        discard_buffer();
     }
 
     if (!surface()->state().damage.isEmpty()) {

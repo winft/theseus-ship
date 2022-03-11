@@ -264,7 +264,7 @@ void Toplevel::finishCompositing(ReleaseReason releaseReason)
         return;
 
     if (render) {
-        discardWindowPixmap();
+        discard_buffer();
         render.reset();
     }
 
@@ -278,11 +278,11 @@ void Toplevel::finishCompositing(ReleaseReason releaseReason)
     repaints_region = QRegion();
 }
 
-void Toplevel::discardWindowPixmap()
+void Toplevel::discard_buffer()
 {
     addDamageFull();
     if (render) {
-        render->discardPixmap();
+        render->discard_buffer();
     }
 }
 

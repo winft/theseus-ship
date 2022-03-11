@@ -26,9 +26,6 @@ window::window(Toplevel* c)
     : toplevel(c)
     , filter(image_filter_type::fast)
     , m_shadow(nullptr)
-    , m_currentPixmap()
-    , m_previousPixmap()
-    , m_referencePixmapCounter(0)
     , cached_quad_list(nullptr)
     , m_id{window_id++}
 {
@@ -44,43 +41,44 @@ uint32_t window::id() const
     return m_id;
 }
 
-void window::referencePreviousPixmap()
+void window::reference_previous_buffer()
 {
-    if (m_previousPixmap && m_previousPixmap->isDiscarded()) {
-        m_referencePixmapCounter++;
+    if (buffers.previous && buffers.previous->isDiscarded()) {
+        buffers.previous_refs++;
     }
 }
 
-void window::unreferencePreviousPixmap()
+void window::unreference_previous_buffer()
 {
-    if (!m_previousPixmap || !m_previousPixmap->isDiscarded()) {
+    if (!buffers.previous || !buffers.previous->isDiscarded()) {
         return;
     }
-    m_referencePixmapCounter--;
-    if (m_referencePixmapCounter == 0) {
-        m_previousPixmap.reset();
+    buffers.previous_refs--;
+    assert(buffers.previous_refs >= 0);
+    if (buffers.previous_refs == 0) {
+        buffers.previous.reset();
     }
 }
 
-void window::discardPixmap()
+void window::discard_buffer()
 {
-    if (m_currentPixmap) {
-        if (m_currentPixmap->isValid()) {
-            m_previousPixmap.reset(m_currentPixmap.release());
-            m_previousPixmap->markAsDiscarded();
+    if (buffers.current) {
+        if (buffers.current->isValid()) {
+            buffers.previous.reset(buffers.current.release());
+            buffers.previous->markAsDiscarded();
         } else {
-            m_currentPixmap.reset();
+            buffers.current.reset();
         }
     }
 }
 
-void window::updatePixmap()
+void window::update_buffer()
 {
-    if (!m_currentPixmap) {
-        m_currentPixmap.reset(createWindowPixmap());
+    if (!buffers.current) {
+        buffers.current.reset(create_buffer());
     }
-    if (!m_currentPixmap->isValid()) {
-        m_currentPixmap->create();
+    if (!buffers.current->isValid()) {
+        buffers.current->create();
     }
 }
 
@@ -319,7 +317,7 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
         if (!sw) {
             continue;
         }
-        if (auto const pixmap = sw->windowPixmap<window_pixmap>(); !pixmap || !pixmap->isValid()) {
+        if (auto const buf = sw->get_buffer<buffer>(); !buf || !buf->isValid()) {
             continue;
         }
         quads << sw->makeContentsQuads(sw->id(), offset + child->pos() - toplevel->pos());
@@ -416,24 +414,24 @@ render::shadow* window::shadow()
 }
 
 //****************************************
-// window_pixmap
+// buffer
 //****************************************
 
-window_pixmap::window_pixmap(render::window* window)
+buffer::buffer(render::window* window)
     : m_window(window)
     , m_pixmap(XCB_PIXMAP_NONE)
     , m_discarded(false)
 {
 }
 
-window_pixmap::~window_pixmap()
+buffer::~buffer()
 {
     if (m_pixmap != XCB_WINDOW_NONE) {
         xcb_free_pixmap(connection(), m_pixmap);
     }
 }
 
-void window_pixmap::create()
+void buffer::create()
 {
     if (isValid() || toplevel()->isDeleted()) {
         return;
@@ -443,7 +441,7 @@ void window_pixmap::create()
         // use Buffer
         updateBuffer();
         if (m_buffer || m_fbo) {
-            m_window->unreferencePreviousPixmap();
+            m_window->unreference_previous_buffer();
         }
         return;
     }
@@ -457,21 +455,21 @@ void window_pixmap::create()
     auto xcb_frame_geometry = base::x11::xcb::geometry(win->frameId());
 
     if (xcb_generic_error_t* error = xcb_request_check(connection(), namePixmapCookie)) {
-        qCDebug(KWIN_CORE) << "Creating window pixmap failed: " << error->error_code;
+        qCDebug(KWIN_CORE) << "Creating buffer failed: " << error->error_code;
         free(error);
         return;
     }
     // check that the received pixmap is valid and actually matches what we
     // know about the window (i.e. size)
     if (!windowAttributes || windowAttributes->map_state != XCB_MAP_STATE_VIEWABLE) {
-        qCDebug(KWIN_CORE) << "Creating window pixmap failed by mapping state: " << win;
+        qCDebug(KWIN_CORE) << "Creating buffer failed by mapping state: " << win;
         xcb_free_pixmap(connection(), pix);
         return;
     }
 
     auto const render_geo = win::render_geometry(win);
     if (xcb_frame_geometry.size() != render_geo.size()) {
-        qCDebug(KWIN_CORE) << "Creating window pixmap failed by size: " << win << " : "
+        qCDebug(KWIN_CORE) << "Creating buffer failed by size: " << win << " : "
                            << xcb_frame_geometry.rect() << " | " << render_geo;
         xcb_free_pixmap(connection(), pix);
         return;
@@ -483,10 +481,10 @@ void window_pixmap::create()
     // Content relative to render geometry.
     m_contentsRect = (render_geo - win::frame_margins(win)).translated(-render_geo.topLeft());
 
-    m_window->unreferencePreviousPixmap();
+    m_window->unreference_previous_buffer();
 }
 
-bool window_pixmap::isValid() const
+bool buffer::isValid() const
 {
     if (m_buffer || m_fbo || !m_internalImage.isNull()) {
         return true;
@@ -494,7 +492,7 @@ bool window_pixmap::isValid() const
     return m_pixmap != XCB_PIXMAP_NONE;
 }
 
-void window_pixmap::updateBuffer()
+void buffer::updateBuffer()
 {
     using namespace Wrapland::Server;
     if (m_window->update_wayland_buffer) {
@@ -508,53 +506,53 @@ void window_pixmap::updateBuffer()
     }
 }
 
-Wrapland::Server::Surface* window_pixmap::surface() const
+Wrapland::Server::Surface* buffer::surface() const
 {
     return toplevel()->surface();
 }
 
-Wrapland::Server::Buffer* window_pixmap::buffer() const
+Wrapland::Server::Buffer* buffer::wayland_buffer() const
 {
     return m_buffer.get();
 }
 
-std::shared_ptr<QOpenGLFramebufferObject> const& window_pixmap::fbo() const
+std::shared_ptr<QOpenGLFramebufferObject> const& buffer::fbo() const
 {
     return m_fbo;
 }
 
-QImage window_pixmap::internalImage() const
+QImage buffer::internalImage() const
 {
     return m_internalImage;
 }
 
-Toplevel* window_pixmap::toplevel() const
+Toplevel* buffer::toplevel() const
 {
     return m_window->get_window();
 }
 
-xcb_pixmap_t window_pixmap::pixmap() const
+xcb_pixmap_t buffer::pixmap() const
 {
     return m_pixmap;
 }
 
-bool window_pixmap::isDiscarded() const
+bool buffer::isDiscarded() const
 {
     return m_discarded;
 }
 
-void window_pixmap::markAsDiscarded()
+void buffer::markAsDiscarded()
 {
     m_discarded = true;
-    m_window->referencePreviousPixmap();
+    m_window->reference_previous_buffer();
 }
 
-const QRect& window_pixmap::contentsRect() const
+const QRect& buffer::contentsRect() const
 {
     return m_contentsRect;
 }
 
-const QSize& window_pixmap::size() const
+const QSize& buffer::size() const
 {
     return m_pixmapSize;
 }

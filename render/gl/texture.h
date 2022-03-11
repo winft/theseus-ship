@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin::render
 {
-class window_pixmap;
+class buffer;
 
 namespace gl
 {
@@ -47,8 +47,8 @@ public:
 private:
     texture(texture_private& dd);
 
-    bool load(render::window_pixmap* pixmap);
-    void updateFromPixmap(render::window_pixmap* pixmap);
+    bool load(render::buffer* buffer);
+    void update_from_buffer(render::buffer* buffer);
 
     inline texture_private* d_func()
     {
@@ -60,7 +60,7 @@ private:
     }
 
     friend class texture_private;
-    friend class window_pixmap;
+    friend class buffer;
 };
 
 class KWIN_EXPORT texture_private : public GLTexturePrivate
@@ -68,7 +68,7 @@ class KWIN_EXPORT texture_private : public GLTexturePrivate
 public:
     ~texture_private() override;
 
-    virtual bool updateTexture(render::window_pixmap* pixmap) = 0;
+    virtual bool updateTexture(render::buffer* buffer) = 0;
     virtual gl::backend* backend() = 0;
 
 protected:

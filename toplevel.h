@@ -313,7 +313,7 @@ public:
     void disownDataPassedToDeleted();
 
     virtual void damageNotifyEvent();
-    void discardWindowPixmap();
+    void discard_buffer();
 
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
 

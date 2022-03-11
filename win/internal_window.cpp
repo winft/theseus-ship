@@ -419,7 +419,7 @@ void internal_window::present(std::shared_ptr<QOpenGLFramebufferObject> const& f
     markAsMapped();
 
     if (m_internalFBO != fbo) {
-        discardWindowPixmap();
+        discard_buffer();
         m_internalFBO = fbo;
     }
 
@@ -438,7 +438,7 @@ void internal_window::present(const QImage& image, const QRegion& damage)
     markAsMapped();
 
     if (m_internalImage.size() != image.size()) {
-        discardWindowPixmap();
+        discard_buffer();
     }
 
     m_internalImage = image;
