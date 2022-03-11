@@ -221,10 +221,7 @@ public:
     void removeSupportProperty(const QByteArray& propertyName, Effect* effect) override;
 
     bool hasDecorationShadows() const override;
-
     bool decorationsHaveAlpha() const override;
-
-    bool decorationSupportsBlurBehind() const override;
 
     EffectFrame* effectFrame(EffectFrameStyle style,
                              bool staticSize,

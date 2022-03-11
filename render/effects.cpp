@@ -541,11 +541,6 @@ bool effects_handler_impl::decorationsHaveAlpha() const
     return true;
 }
 
-bool effects_handler_impl::decorationSupportsBlurBehind() const
-{
-    return Decoration::DecorationBridge::self()->needsBlur();
-}
-
 // start another painting pass
 void effects_handler_impl::startPaint()
 {
