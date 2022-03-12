@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "texture.h"
 
 #include "backend.h"
-#include "window.h"
+#include "buffer.h"
 
 namespace KWin::render::gl
 {

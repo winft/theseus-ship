@@ -79,18 +79,4 @@ private:
     bool m_blendingEnabled{false};
 };
 
-class buffer : public render::buffer
-{
-public:
-    buffer(render::window* window, gl::scene* scene);
-    ~buffer() override;
-    render::gl::texture* texture() const;
-    bool bind();
-    bool isValid() const override;
-
-private:
-    QScopedPointer<render::gl::texture> m_texture;
-    scene* m_scene;
-};
-
 }

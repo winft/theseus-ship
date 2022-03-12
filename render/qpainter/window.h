@@ -30,20 +30,4 @@ private:
     scene* m_scene;
 };
 
-class buffer : public render::buffer
-{
-public:
-    explicit buffer(render::window* window);
-    ~buffer() override;
-
-    void create() override;
-    bool isValid() const override;
-
-    void updateBuffer() override;
-    QImage const& image();
-
-private:
-    QImage m_image;
-};
-
 }

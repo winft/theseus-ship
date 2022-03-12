@@ -55,18 +55,4 @@ private:
     static XRenderPicture* s_fadeAlphaPicture;
 };
 
-class buffer : public render::buffer
-{
-public:
-    buffer(render::window* window, xcb_render_pictformat_t format);
-    ~buffer() override;
-
-    xcb_render_picture_t picture() const;
-    void create() override;
-
-private:
-    xcb_render_picture_t m_picture;
-    xcb_render_pictformat_t m_format;
-};
-
 }

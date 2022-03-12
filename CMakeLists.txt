@@ -425,11 +425,13 @@ set(kwin_SRCS
     input/xkb/keymap.cpp
     input/xkb/manager.cpp
     main.cpp
+    render/buffer.cpp
     render/compositor.cpp
     render/cursor.cpp
     render/dbus/compositing.cpp
     render/effect_loader.cpp
     render/effects.cpp
+    render/gl/buffer.cpp
     render/gl/backend.cpp
     render/gl/context_attribute_builder.cpp
     render/gl/deco_renderer.cpp
@@ -673,6 +675,7 @@ set(kwin_X11_SRCS
 if (KWIN_HAVE_XRENDER_COMPOSITING)
   set(kwin_X11_SRCS
     ${kwin_X11_SRCS}
+    render/xrender/buffer.cpp
     render/xrender/backend.cpp
     render/xrender/deco_renderer.cpp
     render/xrender/effect_frame.cpp
@@ -841,6 +844,7 @@ set(kwin_WAYLAND_SRCS
    input/xkb/layout_manager.cpp
    input/xkb/layout_policies.cpp
    render/gl/egl_dmabuf.cpp
+   render/qpainter/buffer.cpp
    render/qpainter/deco_renderer.cpp
    render/qpainter/effect_frame.cpp
    render/qpainter/scene.cpp
