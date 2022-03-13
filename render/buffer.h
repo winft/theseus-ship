@@ -128,11 +128,6 @@ public:
      */
     Toplevel* toplevel() const;
 
-    /**
-     * @returns the surface this buffer references, might be @c null.
-     */
-    Wrapland::Server::Surface* surface() const;
-
 protected:
     explicit buffer(render::window* window);
 

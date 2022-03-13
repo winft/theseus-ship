@@ -50,11 +50,6 @@ void buffer::updateBuffer()
     win_integration->update();
 }
 
-Wrapland::Server::Surface* buffer::surface() const
-{
-    return toplevel()->surface();
-}
-
 Toplevel* buffer::toplevel() const
 {
     return m_window->get_window();

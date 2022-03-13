@@ -36,7 +36,7 @@ void buffer::create()
     // For now we rely on the fact that the QPainter backend is only run on Wayland.
     auto& win_integrate = static_cast<render::wayland::buffer_win_integration&>(*win_integration);
 
-    if (!surface()) {
+    if (!toplevel()->surface()) {
         // That's an internal client.
         m_image = win_integrate.internal.image;
         return;
@@ -44,7 +44,7 @@ void buffer::create()
 
     // performing deep copy, this could probably be improved
     m_image = win_integrate.external->shmImage()->createQImage().copy();
-    if (auto s = surface()) {
+    if (auto s = toplevel()->surface()) {
         s->resetTrackedDamage();
     }
 }
@@ -65,7 +65,8 @@ void buffer::updateBuffer()
     auto oldBuffer = win_integrate.external.get();
     render::buffer::updateBuffer();
     auto b = win_integrate.external.get();
-    if (!surface()) {
+
+    if (!toplevel()->surface()) {
         // That's an internal client.
         m_image = win_integrate.internal.image;
         return;
@@ -77,10 +78,11 @@ void buffer::updateBuffer()
     if (b == oldBuffer) {
         return;
     }
+
     // perform deep copy
     m_image = b->shmImage()->createQImage().copy();
-    if (auto s = surface()) {
-        s->resetTrackedDamage();
+    if (auto surface = toplevel()->surface()) {
+        surface->resetTrackedDamage();
     }
 }
 
