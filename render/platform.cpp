@@ -16,8 +16,6 @@
 #include "config-kwin.h"
 #include "main.h"
 
-#include <cerrno>
-
 namespace KWin::render
 {
 
