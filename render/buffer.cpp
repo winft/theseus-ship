@@ -30,20 +30,12 @@ void buffer::create()
         return;
     }
 
-    // always update from Buffer on Wayland, don't try using XPixmap
-    if (kwinApp()->shouldUseWaylandForCompositing()) {
-        // use Buffer
-        updateBuffer();
+    updateBuffer();
 
-        // TODO(romangg): Do we need to exclude the internal image case?
-        if (!win_integration->valid()) {
-            return;
-        }
-    } else {
-        win_integration->update();
+    // TODO(romangg): Do we need to exclude the internal image case?
+    if (win_integration->valid()) {
+        m_window->unreference_previous_buffer();
     }
-
-    m_window->unreference_previous_buffer();
 }
 
 bool buffer::isValid() const
