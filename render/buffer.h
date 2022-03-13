@@ -39,6 +39,25 @@ struct buffer_win_integration {
     }
     virtual ~buffer_win_integration() = default;
     virtual bool valid() const = 0;
+
+    // TODO(romangg): Only implemented on X11 at the moment. Required for cross-fading. Remove?
+    virtual QSize get_size() const
+    {
+        return {};
+    }
+
+    /**
+     * The geometry of the Client's content inside the buffer. In case of a decorated Client the
+     * buffer may also contain the decoration, which is not rendered into this buffer though. This
+     * contentsRect tells where inside the complete buffer the real content is.
+     *
+     * TODO(romangg): Only implemented on X11 at the moment. Required for cross-fading. Remove?
+     */
+    virtual QRect get_contents_rect() const
+    {
+        return {};
+    }
+
     virtual QRegion damage() const = 0;
 
     std::function<void(void)> update;
@@ -82,11 +101,6 @@ public:
      */
     virtual bool isValid() const;
 
-    /**
-     * @return The native X11 pixmap handle
-     */
-    xcb_pixmap_t pixmap() const;
-
     std::unique_ptr<buffer_win_integration> win_integration;
 
     /**
@@ -106,18 +120,6 @@ public:
      * @see isDiscarded
      */
     void markAsDiscarded();
-
-    /**
-     * The size of the buffer.
-     */
-    const QSize& size() const;
-
-    /**
-     * The geometry of the Client's content inside the buffer. In case of a decorated Client the
-     * buffer may also contain the decoration, which is not rendered into this buffer though. This
-     * contentsRect tells where inside the complete buffer the real content is.
-     */
-    const QRect& contentsRect() const;
 
     /**
      * @brief Returns the Toplevel this buffer belongs to.
@@ -142,10 +144,7 @@ protected:
 
 private:
     render::window* m_window;
-    xcb_pixmap_t m_pixmap;
-    QSize m_pixmapSize;
     bool m_discarded;
-    QRect m_contentsRect;
 };
 
 }

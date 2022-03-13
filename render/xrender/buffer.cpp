@@ -6,6 +6,8 @@
 */
 #include "buffer.h"
 
+#include "render/x11/buffer.h"
+
 #include <kwinglobals.h>
 
 namespace KWin::render::xrender
@@ -35,7 +37,8 @@ void buffer::create()
         return;
     }
     m_picture = xcb_generate_id(connection());
-    xcb_render_create_picture(connection(), m_picture, pixmap(), m_format, 0, nullptr);
+    auto const& win_integrate = static_cast<render::x11::buffer_win_integration&>(*win_integration);
+    xcb_render_create_picture(connection(), m_picture, win_integrate.pixmap, m_format, 0, nullptr);
 }
 
 xcb_render_picture_t buffer::picture() const

@@ -18,6 +18,7 @@
 
 #include "base/x11/grabs.h"
 #include "decorations/window.h"
+#include "render/x11/buffer.h"
 #include "render/x11/shadow.h"
 #include "rules/rules.h"
 #include "win/deco.h"
@@ -278,6 +279,18 @@ void window::add_scene_window_addon()
         return render::x11::read_and_update_shadow<render::shadow>(shadow,
                                                                    atoms->kde_net_wm_shadow);
     };
+
+    auto setup_buffer = [this](auto& buffer) {
+        auto win_integrate = std::make_unique<render::x11::buffer_win_integration>(buffer);
+        auto update_helper = [&buffer]() {
+            auto& win_integrate
+                = static_cast<render::x11::buffer_win_integration&>(*buffer.win_integration);
+            create_window_buffer(buffer.toplevel(), win_integrate);
+        };
+        win_integrate->update = update_helper;
+        buffer.win_integration = std::move(win_integrate);
+    };
+    render->win_integration.setup_buffer = setup_buffer;
 }
 
 void window::damageNotifyEvent()

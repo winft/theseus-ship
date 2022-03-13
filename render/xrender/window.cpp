@@ -437,15 +437,19 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                                                1,
                                                &rect);
                 }
-                if (previous->size() != pixmap->size()) {
+
+                auto const previous_size = previous->win_integration->get_size();
+                auto const current_size = pixmap->win_integration->get_size();
+
+                if (previous_size != current_size) {
                     xcb_render_transform_t xform2
-                        = {DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix11)
-                                           * previous->size().width() / pixmap->size().width()),
+                        = {DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix11) * previous_size.width()
+                                           / current_size.width()),
                            DOUBLE_TO_FIXED(0),
                            DOUBLE_TO_FIXED(0),
                            DOUBLE_TO_FIXED(0),
-                           DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix22)
-                                           * previous->size().height() / pixmap->size().height()),
+                           DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix22) * previous_size.height()
+                                           / current_size.height()),
                            DOUBLE_TO_FIXED(0),
                            DOUBLE_TO_FIXED(0),
                            DOUBLE_TO_FIXED(0),
@@ -467,7 +471,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                                      dr.width(),
                                      dr.height());
 
-                if (previous->size() != pixmap->size()) {
+                if (previous_size != current_size) {
                     xcb_render_set_picture_transform(connection(), previous->picture(), identity);
                 }
             }

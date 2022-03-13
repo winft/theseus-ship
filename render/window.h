@@ -151,9 +151,8 @@ inline T* window::get_buffer()
 {
     if (!buffers.current) {
         buffers.current.reset(create_buffer());
-        if (win_integration.setup_buffer) {
-            win_integration.setup_buffer(*buffers.current);
-        }
+        assert(win_integration.setup_buffer);
+        win_integration.setup_buffer(*buffers.current);
     }
     if (buffers.current->isValid()) {
         return static_cast<T*>(buffers.current.get());

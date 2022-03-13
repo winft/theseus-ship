@@ -363,7 +363,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         if (previous) {
             has_previous_content = true;
             quads.resize(quads.size() + 1);
-            auto const& old_content_rect = previous->contentsRect();
+            auto const& old_content_rect = previous->win_integration->get_contents_rect();
 
             for (const WindowQuad& quad : quads[ContentLeaf]) {
                 if (quad.id() != static_cast<int>(id())) {
@@ -391,10 +391,11 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                     auto const old_x = xFactor * old_content_rect.width() + old_content_rect.x();
                     auto const old_y = yFactor * old_content_rect.height() + old_content_rect.y();
 
+                    // TODO(romangg): The get_size() call is only valid on X11!
                     WindowVertex vertex(quad[i].x(),
                                         quad[i].y(),
-                                        old_x / previous->size().width(),
-                                        old_y / previous->size().height());
+                                        old_x / previous->win_integration->get_size().width(),
+                                        old_y / previous->win_integration->get_size().height());
                     newQuad[i] = vertex;
                 }
 
