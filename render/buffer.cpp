@@ -39,7 +39,9 @@ void buffer::create()
     if (kwinApp()->shouldUseWaylandForCompositing()) {
         // use Buffer
         updateBuffer();
-        if (m_buffer || m_fbo) {
+
+        // TODO(romangg): Do we need to exclude the internal image case?
+        if (win_integration->valid()) {
             m_window->unreference_previous_buffer();
         }
         return;
@@ -85,44 +87,23 @@ void buffer::create()
 
 bool buffer::isValid() const
 {
-    if (m_buffer || m_fbo || !m_internalImage.isNull()) {
-        return true;
+    if (win_integration) {
+        return win_integration->valid();
     }
+
     return m_pixmap != XCB_PIXMAP_NONE;
 }
 
 void buffer::updateBuffer()
 {
-    using namespace Wrapland::Server;
-    if (m_window->update_wayland_buffer) {
-        m_window->update_wayland_buffer(toplevel(), m_buffer);
-    } else if (toplevel()->internalFramebufferObject()) {
-        m_fbo = toplevel()->internalFramebufferObject();
-    } else if (!toplevel()->internalImageObject().isNull()) {
-        m_internalImage = toplevel()->internalImageObject();
-    } else {
-        m_buffer.reset();
+    if (win_integration) {
+        win_integration->update();
     }
 }
 
 Wrapland::Server::Surface* buffer::surface() const
 {
     return toplevel()->surface();
-}
-
-Wrapland::Server::Buffer* buffer::wayland_buffer() const
-{
-    return m_buffer.get();
-}
-
-std::shared_ptr<QOpenGLFramebufferObject> const& buffer::fbo() const
-{
-    return m_fbo;
-}
-
-QImage buffer::internalImage() const
-{
-    return m_internalImage;
 }
 
 Toplevel* buffer::toplevel() const

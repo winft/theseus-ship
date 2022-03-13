@@ -12,6 +12,7 @@
 
 #include <kwineffects/paint_data.h>
 
+#include <functional>
 #include <memory>
 
 namespace Wrapland::Server
@@ -26,6 +27,10 @@ class Toplevel;
 
 namespace render
 {
+
+struct window_win_integration {
+    std::function<void(buffer&)> setup_buffer;
+};
 
 class effects_window_impl;
 
@@ -84,10 +89,9 @@ public:
     void invalidateQuadsCache();
 
     std::unique_ptr<effects_window_impl> effect;
+    window_win_integration win_integration;
     shadow_windowing_integration shadow_windowing;
 
-    std::function<void(Toplevel*, std::shared_ptr<Wrapland::Server::Buffer>&)>
-        update_wayland_buffer;
     std::function<QRectF(Toplevel*, QRectF const&)> get_wayland_viewport;
 
 protected:
@@ -147,6 +151,9 @@ inline T* window::get_buffer()
 {
     if (!buffers.current) {
         buffers.current.reset(create_buffer());
+        if (win_integration.setup_buffer) {
+            win_integration.setup_buffer(*buffers.current);
+        }
     }
     if (buffers.current->isValid()) {
         return static_cast<T*>(buffers.current.get());

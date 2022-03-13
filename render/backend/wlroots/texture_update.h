@@ -8,6 +8,7 @@
 #include "render/gl/egl_dmabuf.h"
 #include "render/gl/kwin_eglext.h"
 #include "render/gl/window.h"
+#include "render/wayland/buffer.h"
 #include "toplevel.h"
 #include "wayland_logging.h"
 
@@ -151,9 +152,11 @@ bool update_texture_from_fbo(Texture& texture, std::shared_ptr<QOpenGLFramebuffe
 }
 
 template<typename Texture>
-bool update_texture_from_internal_image_object(Texture& texture, render::buffer* buffer)
+bool update_texture_from_internal_image_object(
+    Texture& texture,
+    render::wayland::buffer_win_integration const& buffer)
 {
-    auto const image = buffer->internalImage();
+    auto const image = buffer.internal.image;
     if (image.isNull()) {
         return false;
     }
@@ -163,9 +166,7 @@ bool update_texture_from_internal_image_object(Texture& texture, render::buffer*
         return load_texture_from_image(texture, image);
     }
 
-    texture_subimage_from_qimage(
-        texture, image.devicePixelRatio(), image, buffer->toplevel()->damage());
-
+    texture_subimage_from_qimage(texture, image.devicePixelRatio(), image, buffer.damage());
     return true;
 }
 
@@ -342,13 +343,14 @@ bool update_texture_from_dmabuf(Texture& texture, gl::egl_dmabuf_buffer* dmabuf)
 }
 
 template<typename Texture>
-bool update_texture_from_shm(Texture& texture, render::buffer* buffer)
+bool update_texture_from_shm(Texture& texture,
+                             render::wayland::buffer_win_integration const& buffer)
 {
-    auto const extbuf = buffer->wayland_buffer();
+    auto const extbuf = buffer.external.get();
     assert(extbuf && extbuf->shmBuffer());
 
     auto image = extbuf->shmImage();
-    auto surface = buffer->surface();
+    auto surface = extbuf->surface();
     if (!image || !surface) {
         return false;
     }
@@ -372,10 +374,11 @@ bool update_texture_from_shm(Texture& texture, render::buffer* buffer)
 }
 
 template<typename Texture>
-bool update_texture_from_external(Texture& texture, render::buffer* buffer)
+bool update_texture_from_external(Texture& texture,
+                                  render::wayland::buffer_win_integration const& buffer)
 {
     bool ret;
-    auto const extbuf = buffer->wayland_buffer();
+    auto const extbuf = buffer.external.get();
     assert(extbuf);
 
     if (auto dmabuf = extbuf->linuxDmabufBuffer()) {
@@ -386,7 +389,7 @@ bool update_texture_from_external(Texture& texture, render::buffer* buffer)
         ret = update_texture_from_egl(texture, extbuf);
     }
 
-    if (auto surface = buffer->surface()) {
+    if (auto surface = extbuf->surface()) {
         surface->resetTrackedDamage();
     }
 
@@ -394,21 +397,23 @@ bool update_texture_from_external(Texture& texture, render::buffer* buffer)
 }
 
 template<typename Texture>
-bool update_texture_from_internal(Texture& texture, render::buffer* buffer)
+bool update_texture_from_internal(Texture& texture, render::wayland::buffer_win_integration& buffer)
 {
-    assert(!buffer->wayland_buffer());
+    assert(!buffer.external);
 
-    return update_texture_from_fbo(texture, buffer->fbo())
+    return update_texture_from_fbo(texture, buffer.internal.fbo)
         || update_texture_from_internal_image_object(texture, buffer);
 }
 
 template<typename Texture>
 bool update_texture_from_buffer(Texture& texture, render::buffer* buffer)
 {
-    if (buffer->wayland_buffer()) {
-        return update_texture_from_external(texture, buffer);
+    auto& win_integrate
+        = static_cast<render::wayland::buffer_win_integration&>(*buffer->win_integration);
+    if (win_integrate.external) {
+        return update_texture_from_external(texture, win_integrate);
     }
-    return update_texture_from_internal(texture, buffer);
+    return update_texture_from_internal(texture, win_integrate);
 }
 
 }

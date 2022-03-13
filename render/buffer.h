@@ -10,6 +10,7 @@
 #include "types.h"
 
 #include <QImage>
+#include <functional>
 #include <memory>
 #include <xcb/xcb.h>
 
@@ -17,7 +18,6 @@ class QOpenGLFramebufferObject;
 
 namespace Wrapland::Server
 {
-class Buffer;
 class Surface;
 }
 
@@ -29,7 +29,21 @@ class Toplevel;
 namespace render
 {
 
+class buffer;
 class window;
+
+struct buffer_win_integration {
+    buffer_win_integration(render::buffer const& buffer)
+        : buffer{buffer}
+    {
+    }
+    virtual ~buffer_win_integration() = default;
+    virtual bool valid() const = 0;
+    virtual QRegion damage() const = 0;
+
+    std::function<void(void)> update;
+    render::buffer const& buffer;
+};
 
 /**
  * @brief Wrapper for a buffer of the window.
@@ -73,12 +87,7 @@ public:
      */
     xcb_pixmap_t pixmap() const;
 
-    /**
-     * @return The Wayland Buffer for this buffer.
-     */
-    Wrapland::Server::Buffer* wayland_buffer() const;
-    std::shared_ptr<QOpenGLFramebufferObject> const& fbo() const;
-    QImage internalImage() const;
+    std::unique_ptr<buffer_win_integration> win_integration;
 
     /**
      * @brief Whether this buffer is considered as discarded. This means the window has
@@ -137,9 +146,6 @@ private:
     QSize m_pixmapSize;
     bool m_discarded;
     QRect m_contentsRect;
-    std::shared_ptr<Wrapland::Server::Buffer> m_buffer;
-    std::shared_ptr<QOpenGLFramebufferObject> m_fbo;
-    QImage m_internalImage;
 };
 
 }

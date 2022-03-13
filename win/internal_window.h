@@ -37,6 +37,7 @@ public:
     ~internal_window() override;
 
     bool setupCompositing(bool add_full_damage) override;
+    void add_scene_window_addon() override;
     bool eventFilter(QObject* watched, QEvent* event) override;
 
     qreal bufferScale() const override;

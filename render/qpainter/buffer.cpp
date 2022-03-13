@@ -6,6 +6,8 @@
 */
 #include "buffer.h"
 
+#include "render/wayland/buffer.h"
+
 #include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
 
@@ -30,13 +32,18 @@ void buffer::create()
     if (!isValid()) {
         return;
     }
+
+    // For now we rely on the fact that the QPainter backend is only run on Wayland.
+    auto& win_integrate = static_cast<render::wayland::buffer_win_integration&>(*win_integration);
+
     if (!surface()) {
         // That's an internal client.
-        m_image = internalImage();
+        m_image = win_integrate.internal.image;
         return;
     }
+
     // performing deep copy, this could probably be improved
-    m_image = wayland_buffer()->shmImage()->createQImage().copy();
+    m_image = win_integrate.external->shmImage()->createQImage().copy();
     if (auto s = surface()) {
         s->resetTrackedDamage();
     }
@@ -52,12 +59,15 @@ bool buffer::isValid() const
 
 void buffer::updateBuffer()
 {
-    auto oldBuffer = wayland_buffer();
+    // For now we rely on the fact that the QPainter backend is only run on Wayland.
+    auto& win_integrate = static_cast<render::wayland::buffer_win_integration&>(*win_integration);
+
+    auto oldBuffer = win_integrate.external.get();
     render::buffer::updateBuffer();
-    auto b = wayland_buffer();
+    auto b = win_integrate.external.get();
     if (!surface()) {
         // That's an internal client.
-        m_image = internalImage();
+        m_image = win_integrate.internal.image;
         return;
     }
     if (!b) {

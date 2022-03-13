@@ -32,23 +32,12 @@ buffer::~buffer()
 
 static bool needs_buffer_update(gl::buffer const* buffer)
 {
-    // That's a regular Wayland client.
-    if (buffer->surface()) {
-        return !buffer->surface()->trackedDamage().isEmpty();
+    if (!buffer->win_integration) {
+        return false;
     }
 
-    // That's an internal client with a raster buffer attached.
-    if (!buffer->internalImage().isNull()) {
-        return !buffer->toplevel()->damage().isEmpty();
-    }
-
-    // That's an internal client with an opengl framebuffer object attached.
-    if (buffer->fbo()) {
-        return !buffer->toplevel()->damage().isEmpty();
-    }
-
-    // That's an X11 client.
-    return false;
+    // TODO(romangg): Do we need to handle X11 windows differently? Always return false like before?
+    return !buffer->win_integration->damage().isEmpty();
 }
 
 render::gl::texture* buffer::texture() const

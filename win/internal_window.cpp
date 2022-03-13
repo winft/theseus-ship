@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "geo.h"
 #include "meta.h"
 #include "remnant.h"
+#include "render/wayland/buffer.h"
 #include "scene.h"
 #include "setup.h"
 #include "space.h"
@@ -121,6 +122,29 @@ bool internal_window::setupCompositing([[maybe_unused]] bool add_full_damage)
 {
     assert(!add_full_damage);
     return win::setup_compositing(*this, false);
+}
+
+void internal_window::add_scene_window_addon()
+{
+    auto setup_buffer = [this](auto& buffer) {
+        auto win_integrate = std::make_unique<render::wayland::buffer_win_integration>(buffer);
+        auto update_helper = [&buffer]() {
+            auto win = buffer.toplevel();
+            auto& win_integrate
+                = static_cast<render::wayland::buffer_win_integration&>(*buffer.win_integration);
+            if (auto fbo = win->internalFramebufferObject()) {
+                win_integrate.internal.fbo = fbo;
+                return;
+            }
+            if (auto img = win->internalImageObject(); !img.isNull()) {
+                win_integrate.internal.image = img;
+            }
+        };
+        win_integrate->update = update_helper;
+        buffer.win_integration = std::move(win_integrate);
+    };
+
+    render->win_integration.setup_buffer = setup_buffer;
 }
 
 bool internal_window::eventFilter(QObject* watched, QEvent* event)

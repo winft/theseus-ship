@@ -19,6 +19,7 @@
 #include "decorations/window.h"
 #include "render/compositor.h"
 #include "render/platform.h"
+#include "render/wayland/buffer.h"
 #include "render/wayland/shadow.h"
 #include "rules/rules.h"
 #include "utils/blocker.h"
@@ -91,7 +92,16 @@ void window::add_scene_window_addon()
 {
     assert(surface());
 
-    auto update_buffer_helper = [](auto window, auto& target) { update_buffer(*window, target); };
+    auto setup_buffer = [this](auto& buffer) {
+        auto win_integrate = std::make_unique<render::wayland::buffer_win_integration>(buffer);
+        auto update_helper = [&buffer]() {
+            auto& win_integrate
+                = static_cast<render::wayland::buffer_win_integration&>(*buffer.win_integration);
+            update_buffer(*buffer.toplevel(), win_integrate.external);
+        };
+        win_integrate->update = update_helper;
+        buffer.win_integration = std::move(win_integrate);
+    };
     auto get_viewport = [](auto window, auto contentsRect) {
         if (!window->surface()) {
             // Can happen on remnant.
@@ -114,7 +124,7 @@ void window::add_scene_window_addon()
         return QRectF();
     };
 
-    render->update_wayland_buffer = update_buffer_helper;
+    render->win_integration.setup_buffer = setup_buffer;
     render->get_wayland_viewport = get_viewport;
     render->shadow_windowing.create = render::wayland::create_shadow<render::shadow, Toplevel>;
     render->shadow_windowing.update = render::wayland::update_shadow<render::shadow>;
