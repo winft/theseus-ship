@@ -94,7 +94,7 @@ bool window::beginRenderWindow(paint_type mask, const QRegion& region, WindowPai
 
         const QRegion filterRegion = region.translated(-x(), -y());
         // split all quads in bounding rect with the actual rects in the region
-        for (const WindowQuad& quad : qAsConst(data.quads)) {
+        for (auto const& quad : qAsConst(data.quads)) {
             for (const QRect& r : filterRegion) {
                 const QRectF rf(r);
                 const QRectF quadRect(QPointF(quad.left(), quad.top()),
@@ -332,7 +332,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     auto content_ids = std::vector<int>{last_content_id};
 
     // Split the quads into separate lists for each type
-    for (auto const& quad : data.quads) {
+    for (auto const& quad : qAsConst(data.quads)) {
         switch (quad.type()) {
         case WindowQuadShadow:
             quads[ShadowLeaf].append(quad);
@@ -365,7 +365,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
             quads.resize(quads.size() + 1);
             auto const& old_content_rect = previous->win_integration->get_contents_rect();
 
-            for (const WindowQuad& quad : quads[ContentLeaf]) {
+            for (auto const& quad : qAsConst(quads[ContentLeaf])) {
                 if (quad.id() != static_cast<int>(id())) {
                     // We currently only do this for the main window and not annexed children
                     // that means we can skip from here on.
