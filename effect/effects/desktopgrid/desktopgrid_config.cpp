@@ -106,7 +106,7 @@ DesktopGridEffectConfig::DesktopGridEffectConfig(QWidget* parent, const QVariant
             this,
             &DesktopGridEffectConfig::markAsChanged);
     connect(m_ui->clickBehaviorButtonGroup,
-            qOverload<int>(&QButtonGroup::buttonClicked),
+            &QButtonGroup::idClicked,
             this,
             &DesktopGridEffectConfig::markAsChanged);
     connect(m_ui->shortcutEditor,
