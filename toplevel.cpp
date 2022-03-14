@@ -163,8 +163,6 @@ void Toplevel::copyToDeleted(Toplevel* c)
     opaque_region = c->opaqueRegion();
     central_output = c->central_output;
     m_skipCloseAnimation = c->m_skipCloseAnimation;
-    m_internalFBO = c->m_internalFBO;
-    m_internalImage = c->m_internalImage;
     m_desktops = c->desktops();
     m_layer = c->layer();
     has_in_content_deco = c->has_in_content_deco;

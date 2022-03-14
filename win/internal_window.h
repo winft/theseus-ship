@@ -82,6 +82,11 @@ public:
 
     bool has_pending_repaints() const override;
 
+    struct {
+        std::shared_ptr<QOpenGLFramebufferObject> fbo;
+        QImage image;
+    } buffers;
+
 protected:
     bool acceptsFocus() const override;
     bool belongsToSameApplication(Toplevel const* other,
