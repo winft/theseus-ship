@@ -71,7 +71,7 @@ public:
     WindowQuadList buildQuads(bool force = false) const;
 
     void create_shadow();
-    void updateShadow(render::shadow* shadow);
+    void updateShadow(std::unique_ptr<render::shadow> shadow);
     render::shadow const* shadow() const;
     render::shadow* shadow();
 

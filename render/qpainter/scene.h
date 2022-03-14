@@ -49,7 +49,7 @@ public:
     CompositingType compositingType() const override;
     bool initFailed() const override;
     render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
-    render::shadow* createShadow(Toplevel* toplevel) override;
+    std::unique_ptr<render::shadow> createShadow(Toplevel* toplevel) override;
     Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl* impl) override;
     void handle_screen_geometry_change(QSize const& size) override;
 

@@ -109,17 +109,16 @@ bool read_and_update_shadow(Shadow& impl, base::x11::xcb::atom const& shadow_ato
 }
 
 template<typename Shadow, typename Win>
-Shadow* create_shadow(Win& win, base::x11::xcb::atom const& shadow_atom)
+std::unique_ptr<Shadow> create_shadow(Win& win, base::x11::xcb::atom const& shadow_atom)
 {
     auto data = read_shadow_property(win, shadow_atom);
     if (data.isEmpty()) {
-        return nullptr;
+        return {};
     }
 
     auto shadow = render::compositor::self()->scene()->createShadow(&win);
     if (!update_shadow(*shadow, data)) {
-        delete shadow;
-        return nullptr;
+        return {};
     }
 
     return shadow;

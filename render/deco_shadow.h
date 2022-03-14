@@ -74,21 +74,20 @@ bool update_deco_shadow(Shadow& impl, KDecoration2::Decoration* decoration)
 }
 
 template<typename Shadow, typename Win>
-Shadow* create_deco_shadow(Win& win)
+std::unique_ptr<Shadow> create_deco_shadow(Win& win)
 {
     if (!win.control) {
-        return nullptr;
+        return {};
     }
 
     auto deco = win::decoration(&win);
     if (!deco) {
-        return nullptr;
+        return {};
     }
 
     auto shadow = render::compositor::self()->scene()->createShadow(&win);
     if (!update_deco_shadow(*shadow, deco)) {
-        delete shadow;
-        return nullptr;
+        return {};
     }
 
     return shadow;

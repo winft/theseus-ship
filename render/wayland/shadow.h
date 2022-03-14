@@ -72,17 +72,16 @@ bool update_shadow(Shadow& impl)
 }
 
 template<typename Shadow, typename Win>
-Shadow* create_shadow(Win& win)
+std::unique_ptr<Shadow> create_shadow(Win& win)
 {
     auto surface = win.surface();
     if (!surface || !surface->state().shadow) {
-        return nullptr;
+        return {};
     }
 
     auto shadow = render::compositor::self()->scene()->createShadow(&win);
     if (!update_shadow(*shadow)) {
-        delete shadow;
-        return nullptr;
+        return {};
     }
 
     return shadow;

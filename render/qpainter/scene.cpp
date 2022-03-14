@@ -173,9 +173,9 @@ render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)
     return new effect_frame(frame, this);
 }
 
-render::shadow* scene::createShadow(Toplevel* toplevel)
+std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)
 {
-    return new shadow(toplevel);
+    return std::make_unique<shadow>(toplevel);
 }
 
 Decoration::Renderer* scene::createDecorationRenderer(Decoration::DecoratedClientImpl* impl)

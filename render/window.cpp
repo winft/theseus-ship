@@ -340,17 +340,14 @@ void window::create_shadow()
     }
 
     if (shadow) {
-        updateShadow(shadow);
+        updateShadow(std::move(shadow));
         Q_EMIT toplevel->shadowChanged();
     }
 }
 
-void window::updateShadow(render::shadow* shadow)
+void window::updateShadow(std::unique_ptr<render::shadow> shadow)
 {
-    if (m_shadow.get() == shadow) {
-        return;
-    }
-    m_shadow.reset(shadow);
+    m_shadow = std::move(shadow);
 }
 
 Toplevel* window::get_window() const
