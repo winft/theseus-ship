@@ -57,7 +57,8 @@ render::gl::texture* window::bindTexture()
 QMatrix4x4 window::transformation(paint_type mask, const WindowPaintData& data) const
 {
     QMatrix4x4 matrix;
-    matrix.translate(x(), y());
+    auto const win_pos = toplevel->pos();
+    matrix.translate(win_pos.x(), win_pos.y());
 
     if (!(mask & paint_type::window_transformed)) {
         return matrix;
@@ -92,7 +93,9 @@ bool window::beginRenderWindow(paint_type mask, const QRegion& region, WindowPai
         WindowQuadList quads;
         quads.reserve(data.quads.count());
 
-        const QRegion filterRegion = region.translated(-x(), -y());
+        auto const win_pos = toplevel->pos();
+        auto const filterRegion = region.translated(-win_pos.x(), -win_pos.y());
+
         // split all quads in bounding rect with the actual rects in the region
         for (auto const& quad : qAsConst(data.quads)) {
             for (const QRect& r : filterRegion) {

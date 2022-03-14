@@ -357,45 +357,6 @@ void window::updateShadow(render::shadow* shadow)
     delete m_shadow;
     m_shadow = shadow;
 }
-int window::x() const
-{
-    return toplevel->pos().x();
-}
-
-int window::y() const
-{
-    return toplevel->pos().y();
-}
-
-int window::width() const
-{
-    return toplevel->size().width();
-}
-
-int window::height() const
-{
-    return toplevel->size().height();
-}
-
-QRect window::geometry() const
-{
-    return toplevel->frameGeometry();
-}
-
-QSize window::size() const
-{
-    return toplevel->size();
-}
-
-QPoint window::pos() const
-{
-    return toplevel->pos();
-}
-
-QRect window::rect() const
-{
-    return QRect(QPoint(), toplevel->size());
-}
 
 Toplevel* window::get_window() const
 {

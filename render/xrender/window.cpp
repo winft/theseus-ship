@@ -60,7 +60,8 @@ QRect window::mapToScreen(paint_type mask, const WindowPaintData& data, const QR
     }
 
     // Move the rectangle to the screen position
-    r.translate(x(), y());
+    auto const win_pos = toplevel->pos();
+    r.translate(win_pos.x(), win_pos.y());
 
     if (flags(mask & paint_type::screen_transformed)) {
         // Apply the screen transformation
@@ -85,7 +86,8 @@ QPoint window::mapToScreen(paint_type mask, const WindowPaintData& data, const Q
     }
 
     // Move the point to the screen position
-    pt += QPoint(x(), y());
+    auto const win_pos = toplevel->pos();
+    pt += QPoint(win_pos.x(), win_pos.y());
 
     if (flags(mask & paint_type::screen_transformed)) {
         // Apply the screen transformation
@@ -169,7 +171,8 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     filter = image_filter_type::fast;
 
     // do required transformations
-    const QRect wr = mapToScreen(mask, data, QRect(0, 0, width(), height()));
+    auto const win_size = toplevel->size();
+    auto const wr = mapToScreen(mask, data, QRect(0, 0, win_size.width(), win_size.height()));
 
     // Content rect (in the buffer)
     auto cr = win::frame_relative_client_rect(toplevel);
@@ -515,8 +518,9 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
             if (blitInTempPixmap) {
                 rect.x = -temp_visibleRect.left();
                 rect.y = -temp_visibleRect.top();
-                rect.width = width();
-                rect.height = height();
+                auto const size = toplevel->size();
+                rect.width = size.width();
+                rect.height = size.height();
             } else {
                 rect.x = wr.x();
                 rect.y = wr.y();

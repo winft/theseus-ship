@@ -64,7 +64,8 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     painter->setClipRegion(region);
     painter->setClipping(true);
 
-    painter->translate(x(), y());
+    auto const win_pos = toplevel->pos();
+    painter->translate(win_pos.x(), win_pos.y());
     if (flags(mask & paint_type::window_transformed)) {
         painter->translate(data.xTranslation(), data.yTranslation());
         painter->scale(data.xScale(), data.yScale());
@@ -110,7 +111,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         } else {
             source = buffer->image().rect();
         }
-        target = win::render_geometry(toplevel).translated(-pos());
+        target = win::render_geometry(toplevel).translated(-toplevel->pos());
     }
     painter->drawImage(target, buffer->image(), source);
 

@@ -48,15 +48,6 @@ public:
     void discard_buffer();
     void update_buffer();
 
-    int x() const;
-    int y() const;
-    int width() const;
-    int height() const;
-    QRect geometry() const;
-    QPoint pos() const;
-    QSize size() const;
-    QRect rect() const;
-
     // access to the internal window class
     // TODO eventually get rid of this
     Toplevel* get_window() const;
