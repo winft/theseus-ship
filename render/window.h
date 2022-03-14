@@ -123,7 +123,7 @@ protected:
     virtual buffer* create_buffer() = 0;
     Toplevel* toplevel;
     image_filter_type filter;
-    render::shadow* m_shadow;
+    std::unique_ptr<render::shadow> m_shadow;
 
 private:
     struct {

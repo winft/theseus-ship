@@ -339,7 +339,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 
     // BEGIN shadow preparations
     QRect stlr, str, strr, srr, sbrr, sbr, sblr, slr;
-    auto m_xrenderShadow = static_cast<xrender::shadow*>(m_shadow);
+    auto m_xrenderShadow = static_cast<xrender::shadow*>(m_shadow.get());
 
     if (wantShadow) {
         m_xrenderShadow->layoutShadowRects(str, strr, srr, sbrr, sbr, sblr, slr, stlr);

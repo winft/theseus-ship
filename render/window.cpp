@@ -22,16 +22,12 @@ uint32_t window_id{0};
 window::window(Toplevel* c)
     : toplevel(c)
     , filter(image_filter_type::fast)
-    , m_shadow(nullptr)
     , cached_quad_list(nullptr)
     , m_id{window_id++}
 {
 }
 
-window::~window()
-{
-    delete m_shadow;
-}
+window::~window() = default;
 
 uint32_t window::id() const
 {
@@ -351,11 +347,10 @@ void window::create_shadow()
 
 void window::updateShadow(render::shadow* shadow)
 {
-    if (m_shadow == shadow) {
+    if (m_shadow.get() == shadow) {
         return;
     }
-    delete m_shadow;
-    m_shadow = shadow;
+    m_shadow.reset(shadow);
 }
 
 Toplevel* window::get_window() const
@@ -370,12 +365,12 @@ void window::updateToplevel(Toplevel* c)
 
 render::shadow const* window::shadow() const
 {
-    return m_shadow;
+    return m_shadow.get();
 }
 
 render::shadow* window::shadow()
 {
-    return m_shadow;
+    return m_shadow.get();
 }
 
 }

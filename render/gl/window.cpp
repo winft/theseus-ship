@@ -221,7 +221,7 @@ void window::setupLeafNodes(std::vector<LeafNode>& nodes,
     nodes.resize(quads.size());
 
     if (!quads[ShadowLeaf].isEmpty()) {
-        nodes[ShadowLeaf].texture = static_cast<gl::shadow*>(m_shadow)->shadowTexture();
+        nodes[ShadowLeaf].texture = static_cast<gl::shadow&>(*m_shadow).shadowTexture();
         nodes[ShadowLeaf].opacity = data.opacity();
         nodes[ShadowLeaf].hasAlpha = true;
         nodes[ShadowLeaf].coordinateType = NormalizedCoordinates;
