@@ -30,6 +30,7 @@ namespace render
 
 struct window_win_integration {
     std::function<void(buffer&)> setup_buffer;
+    std::function<QRectF(Toplevel*, QRectF const&)> get_viewport;
 };
 
 class effects_window_impl;
@@ -82,8 +83,6 @@ public:
     std::unique_ptr<effects_window_impl> effect;
     window_win_integration win_integration;
     shadow_windowing_integration shadow_windowing;
-
-    std::function<QRectF(Toplevel*, QRectF const&)> get_wayland_viewport;
 
 protected:
     WindowQuadList

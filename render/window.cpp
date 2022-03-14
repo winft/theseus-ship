@@ -290,8 +290,8 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
         QRectF const contentsRect = *contentsRegion.begin();
         QRectF sourceRect(contentsRect.topLeft() * textureScale,
                           contentsRect.bottomRight() * textureScale);
-        if (get_wayland_viewport) {
-            if (auto vp = get_wayland_viewport(toplevel, contentsRect); vp.isValid()) {
+        if (auto& vp_getter = win_integration.get_viewport) {
+            if (auto vp = vp_getter(toplevel, contentsRect); vp.isValid()) {
                 sourceRect = vp;
             }
         }

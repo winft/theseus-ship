@@ -125,7 +125,7 @@ void window::add_scene_window_addon()
     };
 
     render->win_integration.setup_buffer = setup_buffer;
-    render->get_wayland_viewport = get_viewport;
+    render->win_integration.get_viewport = get_viewport;
     render->shadow_windowing.create = render::wayland::create_shadow<render::shadow, Toplevel>;
     render->shadow_windowing.update = render::wayland::update_shadow<render::shadow>;
 

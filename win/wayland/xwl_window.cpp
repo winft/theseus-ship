@@ -48,7 +48,7 @@ void xwl_window::add_scene_window_addon()
     };
 
     render->win_integration.setup_buffer = setup_buffer;
-    render->get_wayland_viewport = get_viewport;
+    render->win_integration.get_viewport = get_viewport;
 
     if (surface()) {
         setup_scale_scene_notify(*this);
