@@ -146,7 +146,6 @@ void add_scene_window(Scene& scene, Win& win)
     win.add_scene_window_addon();
 
     win::update_shadow(&win);
-    scn_win->updateShadow(win::shadow(&win));
     QObject::connect(
         &win, &Win::shadowChanged, &scene, [scn_win] { scn_win->invalidateQuadsCache(); });
 }
