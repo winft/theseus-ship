@@ -112,9 +112,9 @@ WaylandTestApplication::~WaylandTestApplication()
     assert(keyboard);
     assert(pointer);
     assert(touch);
-    wlr_keyboard_destroy(keyboard->keyboard);
-    wlr_pointer_destroy(pointer->pointer);
-    wlr_touch_destroy(touch->touch);
+    wlr_keyboard_finish(keyboard->keyboard);
+    wlr_pointer_finish(pointer->pointer);
+    wlr_touch_finish(touch->touch);
 #endif
 
     setTerminating();

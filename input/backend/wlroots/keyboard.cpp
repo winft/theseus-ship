@@ -84,7 +84,12 @@ keyboard::keyboard(wlr_input_device* dev, input::platform* platform)
 
     destroyed.receiver = this;
     destroyed.event.notify = handle_destroy;
+
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    wl_signal_add(&backend->base.events.destroy, &destroyed.event);
+#else
     wl_signal_add(&backend->events.destroy, &destroyed.event);
+#endif
 
     key_rec.receiver = this;
     key_rec.event.notify = handle_key;
