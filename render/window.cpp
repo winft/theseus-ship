@@ -59,14 +59,19 @@ void window::unreference_previous_buffer()
 
 void window::discard_buffer()
 {
-    if (buffers.current) {
-        if (buffers.current->isValid()) {
-            buffers.previous.reset(buffers.current.release());
-            buffers.previous->markAsDiscarded();
-        } else {
-            buffers.current.reset();
-        }
+    if (!buffers.current) {
+        return;
     }
+
+    if (!buffers.current->isValid()) {
+        // An invalid buffer is simply being reset.
+        buffers.current.reset();
+        return;
+    }
+
+    // Move the current buffer to previous buffer.
+    buffers.previous = std::move(buffers.current);
+    buffers.previous->markAsDiscarded();
 }
 
 void window::update_buffer()
