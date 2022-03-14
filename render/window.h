@@ -149,20 +149,11 @@ private:
 template<typename T>
 inline T* window::get_buffer()
 {
-    if (!buffers.current) {
-        buffers.current.reset(create_buffer());
-        assert(win_integration.setup_buffer);
-        win_integration.setup_buffer(*buffers.current);
-    }
+    update_buffer();
     if (buffers.current->isValid()) {
         return static_cast<T*>(buffers.current.get());
     }
-    buffers.current->create();
-    if (buffers.current->isValid()) {
-        return static_cast<T*>(buffers.current.get());
-    } else {
-        return static_cast<T*>(buffers.previous.get());
-    }
+    return static_cast<T*>(buffers.previous.get());
 }
 
 template<typename T>
