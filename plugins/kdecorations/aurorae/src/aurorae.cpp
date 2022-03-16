@@ -335,6 +335,9 @@ void Decoration::init()
         connect(m_view->contentItem(), &QQuickItem::heightChanged, m_item, updateSize);
         connect(m_view, &KWin::EffectQuickView::repaintNeeded, this, &Decoration::updateBuffer);
     }
+
+    m_supportsMask = m_item->property("supportsMask").toBool();
+
     setupBorders(m_item);
 
 
@@ -594,7 +597,7 @@ void Decoration::updateExtendedBorders()
 
 void Decoration::updateBlur()
 {
-    if (!m_item) {
+    if (!m_item || !m_supportsMask) {
         return;
     }
 
