@@ -203,6 +203,18 @@ public:
     virtual void
     registerTouchpadPinchShortcut(PinchDirection direction, uint fingerCount, QAction* action)
         = 0;
+
+    /**
+     * @brief Registers a global touchscreen swipe gesture shortcut with the provided @p action.
+     *
+     * @param direction The direction for the swipe
+     * @param action The action which gets triggered when the gesture triggers
+     * @since 5.25
+     */
+    virtual void
+    registerTouchscreenSwipeShortcut(SwipeDirection direction, uint fingerCount, QAction* action)
+        = 0;
+
     /**
      * Retrieve the proxy class for an effect if it has one. Will return NULL if
      * the effect isn't loaded or doesn't have a proxy class.

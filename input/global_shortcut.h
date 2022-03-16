@@ -45,14 +45,16 @@ struct PointerAxisShortcut {
 };
 
 struct SwipeShortcut {
+    DeviceType device;
     SwipeDirection direction;
     uint fingerCount;
     bool operator==(const SwipeShortcut& rhs) const
     {
-        return direction == rhs.direction && fingerCount == rhs.fingerCount;
+        return direction == rhs.direction && fingerCount == rhs.fingerCount && device == rhs.device;
     }
 };
 struct RealtimeFeedbackSwipeShortcut {
+    DeviceType device;
     SwipeDirection direction;
     std::function<void(qreal)> progressCallback;
     uint fingerCount;
@@ -60,7 +62,7 @@ struct RealtimeFeedbackSwipeShortcut {
     template<typename T>
     bool operator==(const T& rhs) const
     {
-        return direction == rhs.direction && fingerCount == rhs.fingerCount;
+        return direction == rhs.direction && fingerCount == rhs.fingerCount && device == rhs.device;
     }
 };
 struct PinchShortcut {

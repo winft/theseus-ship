@@ -123,6 +123,8 @@ enum class SwipeDirection { Invalid, Down, Left, Up, Right };
 
 enum class PinchDirection { Expanding, Contracting };
 
+enum class DeviceType { Touchpad, Touchscreen };
+
 /**
  * Represents the state of the session running outside kwin
  * Under Plasma this is managed by ksmserver

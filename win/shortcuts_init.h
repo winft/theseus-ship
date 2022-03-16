@@ -166,6 +166,10 @@ void shortcuts_init_virtual_desktops(Space& space)
                                            PointerAxisUp,
                                            manager->qobject->template findChild<QAction*>(
                                                QStringLiteral("Switch to Previous Desktop")));
+
+    input::platform_register_touchscreen_swipe_shortcut(input, SwipeDirection::Left, 3, nextAction);
+    input::platform_register_touchscreen_swipe_shortcut(
+        input, SwipeDirection::Right, 3, previousAction);
 }
 
 template<typename Space>

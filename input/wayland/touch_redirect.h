@@ -159,7 +159,11 @@ public:
 
     void frame()
     {
-        redirect->platform.base.server->seat()->touches().touch_frame();
+        if (!redirect->platform.base.server->seat()->hasTouch()) {
+            return;
+        }
+        process_filters(redirect->m_filters,
+                        std::bind(&event_filter<Redirect>::touch_frame, std::placeholders::_1));
     }
 
     void insertId(qint32 internalId, qint32 wraplandId)

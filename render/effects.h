@@ -710,6 +710,14 @@ public:
             *compositor.platform.base.input, direction, fingerCount, action);
     }
 
+    void registerTouchscreenSwipeShortcut(SwipeDirection direction,
+                                          uint fingerCount,
+                                          QAction* action) override
+    {
+        input::platform_register_touchscreen_swipe_shortcut(
+            *compositor.platform.base.input, direction, fingerCount, action);
+    }
+
     void startMousePolling() override
     {
         // Don't need to start/stop polling manually anymore nowadays. On X11 we use XInput to

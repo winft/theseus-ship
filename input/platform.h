@@ -142,4 +142,13 @@ void platform_register_global_accel(Platform& platform, KGlobalAccelInterface* i
     platform.shortcuts->setKGlobalAccelInterface(interface);
 }
 
+template<typename Platform>
+void platform_register_touchscreen_swipe_shortcut(Platform& platform,
+                                                  SwipeDirection direction,
+                                                  uint fingerCount,
+                                                  QAction* action)
+{
+    platform.shortcuts->registerTouchscreenSwipe(action, direction, fingerCount);
+}
+
 }

@@ -106,6 +106,18 @@ public:
         return true;
     }
 
+    bool touch_cancel() override
+    {
+        this->redirect.touch->cancel();
+        return true;
+    }
+
+    bool touch_frame() override
+    {
+        this->redirect.touch->frame();
+        return true;
+    }
+
     bool axis(axis_event const& event) override
     {
         auto seat = this->redirect.platform.base.server->seat();
