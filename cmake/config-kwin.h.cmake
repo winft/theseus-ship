@@ -10,11 +10,6 @@
 #define KWIN_XCLIPBOARD_SYNC_BIN "${CMAKE_INSTALL_FULL_LIBEXECDIR}/org_kde_kwin_xclipboard_syncer"
 #cmakedefine01 HAVE_X11_XINPUT
 #cmakedefine01 HAVE_PERF
-#cmakedefine01 HAVE_SYS_PRCTL_H
-#cmakedefine01 HAVE_PR_SET_DUMPABLE
-#cmakedefine01 HAVE_PR_SET_PDEATHSIG
-#cmakedefine01 HAVE_SYS_PROCCTL_H
-#cmakedefine01 HAVE_PROC_TRACE_CTL
 #cmakedefine01 HAVE_SYS_SYSMACROS_H
 #cmakedefine01 HAVE_BREEZE_DECO
 #cmakedefine01 HAVE_LIBCAP
