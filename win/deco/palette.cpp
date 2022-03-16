@@ -134,13 +134,13 @@ QColor palette::color(KDecoration2::ColorGroup group, KDecoration2::ColorRole ro
 
 QPalette palette::get_qt_palette() const
 {
-    return m_legacyPalette ? m_legacyPalette->palette
-                           : KColorScheme::createApplicationPalette(m_colorSchemeConfig);
+    return m_legacyPalette ? m_legacyPalette->palette : m_applicationPalette;
 }
 
 void palette::update()
 {
     m_colorSchemeConfig->sync();
+    m_applicationPalette = KColorScheme::createApplicationPalette(m_colorSchemeConfig);
 
     if (KColorScheme::isColorSetSupported(m_colorSchemeConfig, KColorScheme::Header)) {
         m_palette.active

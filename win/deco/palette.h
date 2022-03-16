@@ -78,6 +78,7 @@ private:
     KSharedConfig::Ptr m_colorSchemeConfig;
 
     ModernPalette m_palette;
+    QPalette m_applicationPalette;
 };
 
 }
