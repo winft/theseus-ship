@@ -48,11 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QX11Info>
 
 #include <cerrno>
-
-// system
-#if __has_include(<unistd.h>)
 #include <unistd.h>
-#endif
 
 #if __has_include(<malloc.h>)
 #include <malloc.h>
