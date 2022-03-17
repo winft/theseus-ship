@@ -318,7 +318,7 @@ KCM.ScrollViewKCM {
                 Layout.fillWidth: true
 
                 Item {
-                    width: units.largeSpacing
+                    Layout.preferredWidth: Kirigami.Units.gridUnit
                 }
 
                 QQC2.CheckBox {
