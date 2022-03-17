@@ -8,9 +8,6 @@
 
 #include "main.h"
 
-#include <QFutureWatcher>
-#include <QtConcurrentRun>
-
 // dbus generated
 #include "kscreenlocker_interface.h"
 #include "screenlocker_interface.h"
@@ -35,98 +32,41 @@ void screen_locker_watcher::initialize()
     m_serviceWatcher->setWatchMode(QDBusServiceWatcher::WatchForOwnerChange);
     m_serviceWatcher->addWatchedService(SCREEN_LOCKER_SERVICE_NAME);
 
-    // check whether service is registered
-    using future_reply = QFutureWatcher<QDBusReply<bool>>;
-    auto watcher = new future_reply(this);
+    m_interface = new OrgFreedesktopScreenSaverInterface(SCREEN_LOCKER_SERVICE_NAME,
+                                                         QStringLiteral("/ScreenSaver"),
+                                                         QDBusConnection::sessionBus(),
+                                                         this);
+    m_kdeInterface = new OrgKdeScreensaverInterface(SCREEN_LOCKER_SERVICE_NAME,
+                                                    QStringLiteral("/ScreenSaver"),
+                                                    QDBusConnection::sessionBus(),
+                                                    this);
+    connect(m_interface,
+            &OrgFreedesktopScreenSaverInterface::ActiveChanged,
+            this,
+            &screen_locker_watcher::set_locked);
+    connect(m_kdeInterface,
+            &OrgKdeScreensaverInterface::AboutToLock,
+            this,
+            &screen_locker_watcher::about_to_lock);
 
-    QObject::connect(
-        watcher, &future_reply::finished, this, &screen_locker_watcher::service_registered_queried);
-    QObject::connect(watcher, &future_reply::canceled, watcher, &future_reply::deleteLater);
-
-    watcher->setFuture(QtConcurrent::run(QDBusConnection::sessionBus().interface(),
-                                         &QDBusConnectionInterface::isServiceRegistered,
-                                         SCREEN_LOCKER_SERVICE_NAME));
+    query_active();
 }
 
-void screen_locker_watcher::service_owner_changed(QString const& service_name,
+void screen_locker_watcher::service_owner_changed(QString const& /*service_name*/,
                                                   QString const& /*old_owner*/,
                                                   QString const& new_owner)
 {
-    if (service_name != SCREEN_LOCKER_SERVICE_NAME) {
-        return;
-    }
-
-    delete m_interface;
-    m_interface = nullptr;
-    delete m_kdeInterface;
-    m_kdeInterface = nullptr;
-
     m_locked = false;
-
-    if (new_owner.isEmpty()) {
-        return;
+    if (!new_owner.isEmpty()) {
+        query_active();
     }
+}
 
-    m_interface = new OrgFreedesktopScreenSaverInterface(
-        new_owner, QStringLiteral("/ScreenSaver"), QDBusConnection::sessionBus(), this);
-    m_kdeInterface = new OrgKdeScreensaverInterface(
-        new_owner, QStringLiteral("/ScreenSaver"), QDBusConnection::sessionBus(), this);
-
-    QObject::connect(m_interface,
-                     &OrgFreedesktopScreenSaverInterface::ActiveChanged,
-                     this,
-                     &screen_locker_watcher::set_locked);
-
-    auto watcher = new QDBusPendingCallWatcher(m_interface->GetActive(), this);
-    QObject::connect(
+void screen_locker_watcher::query_active()
+{
+    QDBusPendingCallWatcher* watcher = new QDBusPendingCallWatcher(m_interface->GetActive(), this);
+    connect(
         watcher, &QDBusPendingCallWatcher::finished, this, &screen_locker_watcher::active_queried);
-    QObject::connect(m_kdeInterface,
-                     &OrgKdeScreensaverInterface::AboutToLock,
-                     this,
-                     &screen_locker_watcher::about_to_lock);
-}
-
-void screen_locker_watcher::service_registered_queried()
-{
-    auto watcher = dynamic_cast<QFutureWatcher<QDBusReply<bool>>*>(sender());
-    if (!watcher) {
-        return;
-    }
-
-    using future_reply = QFutureWatcher<QDBusReply<QString>>;
-    auto const& reply = watcher->result();
-
-    if (reply.isValid() && reply.value()) {
-        auto owner_watcher = new future_reply(this);
-
-        QObject::connect(owner_watcher,
-                         &future_reply::finished,
-                         this,
-                         &screen_locker_watcher::service_owner_queried);
-        QObject::connect(
-            owner_watcher, &future_reply::canceled, owner_watcher, &future_reply::deleteLater);
-
-        owner_watcher->setFuture(QtConcurrent::run(QDBusConnection::sessionBus().interface(),
-                                                   &QDBusConnectionInterface::serviceOwner,
-                                                   SCREEN_LOCKER_SERVICE_NAME));
-    }
-
-    watcher->deleteLater();
-}
-
-void screen_locker_watcher::service_owner_queried()
-{
-    auto watcher = dynamic_cast<QFutureWatcher<QDBusReply<QString>>*>(sender());
-    if (!watcher) {
-        return;
-    }
-
-    auto const reply = watcher->result();
-    if (reply.isValid()) {
-        service_owner_changed(SCREEN_LOCKER_SERVICE_NAME, QString(), reply.value());
-    }
-
-    watcher->deleteLater();
 }
 
 void screen_locker_watcher::active_queried(QDBusPendingCallWatcher* watcher)
