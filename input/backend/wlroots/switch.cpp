@@ -5,6 +5,7 @@
 */
 #include "switch.h"
 
+#include "config-kwin.h"
 #include "control/switch.h"
 #include "platform.h"
 
@@ -26,7 +27,11 @@ static void handle_toggle(struct wl_listener* listener, [[maybe_unused]] void* d
 {
     er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
     auto switch_device = event_receiver_struct->receiver;
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    auto wlr_event = reinterpret_cast<wlr_switch_toggle_event*>(data);
+#else
     auto wlr_event = reinterpret_cast<wlr_event_switch_toggle*>(data);
+#endif
 
     auto event = switch_toggle_event{
         static_cast<switch_type>(wlr_event->switch_type),
@@ -57,5 +62,4 @@ switch_device::switch_device(wlr_input_device* dev, input::platform* platform)
     toggle_rec.event.notify = handle_toggle;
     wl_signal_add(&backend->events.toggle, &toggle_rec.event);
 }
-
 }

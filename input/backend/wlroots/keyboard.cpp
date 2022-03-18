@@ -34,7 +34,11 @@ static void handle_key(struct wl_listener* listener, [[maybe_unused]] void* data
 {
     er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
     auto keyboard = event_receiver_struct->receiver;
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    auto wlr_event = reinterpret_cast<wlr_keyboard_key_event*>(data);
+#else
     auto wlr_event = reinterpret_cast<wlr_event_keyboard_key*>(data);
+#endif
 
     auto event = key_event{
         wlr_event->keycode,

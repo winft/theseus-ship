@@ -471,10 +471,14 @@ void pointer_motion_absolute(QPointF const& position, uint32_t time)
     auto app = Test::app();
 
     QVERIFY(app->pointer);
-
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    wlr_pointer_motion_absolute_event event{};
+    event.pointer = app->pointer->pointer;
+#else
     wlr_event_pointer_motion_absolute event{};
-
     event.device = app->pointer;
+#endif
+
     event.time_msec = time;
 
     auto const screens_size = kwinApp()->get_base().topology.size;
@@ -490,10 +494,14 @@ void pointer_button_impl(uint32_t button, uint32_t time, wlr_button_state state)
     auto app = Test::app();
 
     QVERIFY(app->pointer);
-
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    wlr_pointer_button_event event{};
+    event.pointer = app->pointer->pointer;
+#else
     wlr_event_pointer_button event{};
-
     event.device = app->pointer;
+#endif
+
     event.time_msec = time;
 
     event.button = button;
@@ -522,10 +530,14 @@ void pointer_axis_impl(double delta,
     auto app = Test::app();
 
     QVERIFY(app->pointer);
-
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    wlr_pointer_axis_event event{};
+    event.pointer = app->pointer->pointer;
+#else
     wlr_event_pointer_axis event{};
-
     event.device = app->pointer;
+#endif
+
     event.time_msec = time;
 
     event.delta = delta;
@@ -555,7 +567,11 @@ void keyboard_key_impl(uint32_t key,
                        wl_keyboard_key_state state,
                        wlr_input_device* keyboard)
 {
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    wlr_keyboard_key_event event{};
+#else
     wlr_event_keyboard_key event{};
+#endif
 
     event.keycode = key;
     event.time_msec = time;
@@ -599,10 +615,14 @@ void touch_down(int32_t id, QPointF const& position, uint32_t time)
     auto app = Test::app();
 
     QVERIFY(app->touch);
-
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    wlr_touch_down_event event{};
+    event.touch = app->touch->touch;
+#else
     wlr_event_touch_down event{};
-
     event.device = app->touch;
+#endif
+
     event.time_msec = time;
 
     event.touch_id = id;
@@ -619,10 +639,14 @@ void touch_up(int32_t id, uint32_t time)
     auto app = Test::app();
 
     QVERIFY(app->touch);
-
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    wlr_touch_up_event event{};
+    event.touch = app->touch->touch;
+#else
     wlr_event_touch_up event{};
-
     event.device = app->touch;
+#endif
+
     event.time_msec = time;
 
     event.touch_id = id;
@@ -635,10 +659,14 @@ void touch_motion(int32_t id, QPointF const& position, uint32_t time)
     auto app = Test::app();
 
     QVERIFY(app->touch);
-
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    wlr_touch_motion_event event{};
+    event.touch = app->touch->touch;
+#else
     wlr_event_touch_motion event{};
-
     event.device = app->touch;
+#endif
+
     event.time_msec = time;
 
     event.touch_id = id;
@@ -655,10 +683,13 @@ void touch_cancel()
     auto app = Test::app();
 
     QVERIFY(app->touch);
-
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    wlr_touch_cancel_event event{};
+    event.touch = app->touch->touch;
+#else
     wlr_event_touch_cancel event{};
-
     event.device = app->touch;
+#endif
 
     wlr_signal_emit_safe(&app->touch->touch->events.cancel, &event);
 }
