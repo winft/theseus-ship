@@ -30,11 +30,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects/effects_handler.h>
 #include <kwingl/utils.h>
 
-#include <QMouseEvent>
-
 #include <QApplication>
 #include <QDBusConnection>
 #include <QGraphicsObject>
+#include <QLoggingCategory>
+#include <QMouseEvent>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickItem>
@@ -43,7 +43,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QUuid>
 #include <QVector2D>
 #include <QVector4D>
-
 #include <climits>
 #include <cmath>
 

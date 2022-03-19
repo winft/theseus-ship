@@ -12,6 +12,7 @@
 #include <QFuture>
 #include <QFutureInterface>
 #include <QImage>
+#include <QLoggingCategory>
 #include <QObject>
 
 Q_DECLARE_LOGGING_CATEGORY(KWIN_SCREENSHOT)

@@ -11,6 +11,7 @@
 #include <kwineffects/types.h>
 
 #include <QDBusConnection>
+#include <QLoggingCategory>
 #include <QUuid>
 
 Q_LOGGING_CATEGORY(KWIN_HIGHLIGHTWINDOW, "kwin_effect_highlightwindow", QtWarningMsg)

@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwineffects/effects_handler.h>
 
+#include <QLoggingCategory>
+
 /**
  * How this effect works:
  *

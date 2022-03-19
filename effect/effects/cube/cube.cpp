@@ -41,11 +41,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QEvent>
 #include <QFutureWatcher>
 #include <QKeyEvent>
+#include <QLoggingCategory>
 #include <QRect>
 #include <QVector2D>
 #include <QVector3D>
 #include <QtConcurrentRun>
-
 #include <cmath>
 
 Q_LOGGING_CATEGORY(KWIN_CUBE, "kwin_effect_cube", QtWarningMsg)

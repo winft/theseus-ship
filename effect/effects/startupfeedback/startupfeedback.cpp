@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDBusConnectionInterface>
 #include <QDBusServiceWatcher>
 #include <QFile>
+#include <QLoggingCategory>
 #include <QPainter>
 #include <QSize>
 #include <QStandardPaths>

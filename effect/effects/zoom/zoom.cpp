@@ -30,17 +30,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects/effect_window.h>
 #include <kwineffects/effects_handler.h>
 #include <kwineffects/paint_data.h>
+#include <kwingl/utils.h>
 
 #include <KConfigGroup>
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <QAction>
 #include <QApplication>
+#include <QLoggingCategory>
 #include <QStyle>
 #include <QVector2D>
 #include <kstandardaction.h>
-
-#include <kwingl/utils.h>
 
 #ifdef KWIN_HAVE_XRENDER_COMPOSITING
 #include <kwinxrender/utils.h>

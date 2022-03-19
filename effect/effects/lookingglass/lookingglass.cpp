@@ -35,11 +35,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KStandardAction>
 #include <QAction>
 #include <QFile>
+#include <QLoggingCategory>
 #include <QVector2D>
-
-#include <kmessagebox.h>
-
 #include <cmath>
+#include <kmessagebox.h>
 
 Q_LOGGING_CATEGORY(KWIN_LOOKINGGLASS, "kwin_effect_lookingglass", QtWarningMsg)
 

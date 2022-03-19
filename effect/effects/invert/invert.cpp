@@ -31,9 +31,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KLocalizedString>
 #include <QAction>
 #include <QFile>
-#include <QStandardPaths>
-
+#include <QLoggingCategory>
 #include <QMatrix4x4>
+#include <QStandardPaths>
 
 Q_LOGGING_CATEGORY(KWIN_INVERT, "kwin_effect_invert", QtWarningMsg)
 
