@@ -35,7 +35,7 @@ class PlatformCursor;
 class Screen : public QPlatformScreen
 {
 public:
-    explicit Screen(int screen);
+    explicit Screen(base::output* output);
     ~Screen() override;
 
     QString name() const override;
@@ -48,10 +48,7 @@ public:
     qreal devicePixelRatio() const override;
 
 private:
-    template<typename Ret>
-    Ret get_output_val(std::function<Ret(base::output*)> getter, Ret const& fallback) const;
-
-    int m_screen;
+    base::output* output;
     QScopedPointer<PlatformCursor> m_cursor;
 };
 

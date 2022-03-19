@@ -29,9 +29,9 @@ namespace KWin
 namespace QPA
 {
 
-Screen::Screen(int screen)
+Screen::Screen(base::output* output)
     : QPlatformScreen()
-    , m_screen(screen)
+    , output{output}
     , m_cursor(new PlatformCursor)
 {
 }
@@ -48,29 +48,14 @@ QImage::Format Screen::format() const
     return QImage::Format_ARGB32_Premultiplied;
 }
 
-template<typename Ret>
-Ret Screen::get_output_val(std::function<Ret(base::output*)> getter, Ret const& fallback) const
-{
-    if (m_screen == -1) {
-        // We need this special case because some values are accessed earlier than base exists.
-        // TODO(romangg): Ensure instead that we have a base always at this point.
-        return fallback;
-    }
-    if (auto output = base::get_output(kwinApp()->get_base().get_outputs(), m_screen)) {
-        return getter(output);
-    }
-    return fallback;
-}
-
 QRect Screen::geometry() const
 {
-    return get_output_val<QRect>([](auto out) { return out->geometry(); }, QRect(0, 0, 1, 1));
+    return output ? output->geometry() : QRect(0, 0, 1, 1);
 }
 
 QSizeF Screen::physicalSize() const
 {
-    return get_output_val<QSizeF>([](auto out) { return out->physical_size(); },
-                                  QPlatformScreen::physicalSize());
+    return output ? output->physical_size() : QPlatformScreen::physicalSize();
 }
 
 QPlatformCursor *Screen::cursor() const
@@ -90,12 +75,12 @@ QDpi Screen::logicalDpi() const
 
 qreal Screen::devicePixelRatio() const
 {
-    return get_output_val<double>([](auto out) { return out->scale(); }, 1.);
+    return output ? output->scale() : 1.;
 }
 
 QString Screen::name() const
 {
-    return get_output_val<QString>([](auto out) { return out->name(); }, QString());
+    return output ? output->name() : QString();
 }
 
 }
