@@ -65,6 +65,7 @@ protected:
 private:
     bool supportsSwapEvents() const;
 
+    GLRenderTarget native_fbo;
     int m_bufferAge{0};
     bool m_needsCompositeTimerStart = false;
 };
