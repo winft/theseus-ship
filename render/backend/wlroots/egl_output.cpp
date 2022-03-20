@@ -78,26 +78,11 @@ bool egl_output::reset_framebuffer()
     glGenFramebuffers(1, &render.framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, render.framebuffer);
 
-    glGenTextures(1, &render.texture);
-    glBindTexture(GL_TEXTURE_2D, render.texture);
-
     auto const texSize = view_geo.size();
+    render.texture = GLTexture(GL_TEXTURE_2D, texSize.width(), texSize.height());
 
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGBA,
-                 texSize.width(),
-                 texSize.height(),
-                 0,
-                 GL_RGBA,
-                 GL_UNSIGNED_BYTE,
-                 NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render.texture, 0);
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render.texture->texture(), 0);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         qCWarning(KWIN_WL) << "Framebuffer not complete";
@@ -113,8 +98,7 @@ void egl_output::cleanup_framebuffer()
         return;
     }
     make_current();
-    glDeleteTextures(1, &render.texture);
-    render.texture = 0;
+    render.texture = {};
     glDeleteFramebuffers(1, &render.framebuffer);
     render.framebuffer = 0;
 }

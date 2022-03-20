@@ -11,6 +11,7 @@
 #include <deque>
 #include <epoxy/egl.h>
 #include <memory>
+#include <optional>
 
 namespace KWin::render::backend::wlroots
 {
@@ -44,7 +45,7 @@ public:
 
     struct {
         GLuint framebuffer = 0;
-        GLuint texture = 0;
+        std::optional<GLTexture> texture;
         std::shared_ptr<GLVertexBuffer> vbo;
     } render;
 };

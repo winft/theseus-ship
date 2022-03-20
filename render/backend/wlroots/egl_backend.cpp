@@ -360,7 +360,7 @@ void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
         1);
     shader->setUniform(GLShader::ModelViewProjectionMatrix, rotationMatrix);
 
-    glBindTexture(GL_TEXTURE_2D, egl_out.render.texture);
+    egl_out.render.texture->bind();
     egl_out.render.vbo->render(GL_TRIANGLES);
     ShaderManager::instance()->popShader();
 }
