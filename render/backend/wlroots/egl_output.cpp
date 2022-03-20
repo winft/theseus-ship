@@ -75,32 +75,20 @@ bool egl_output::reset_framebuffer()
 
     make_current();
 
-    glGenFramebuffers(1, &render.framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, render.framebuffer);
-
     auto const texSize = view_geo.size();
     render.texture = GLTexture(GL_TEXTURE_2D, texSize.width(), texSize.height());
-
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render.texture->texture(), 0);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        qCWarning(KWIN_WL) << "Framebuffer not complete";
-        return false;
-    }
-
-    return true;
+    render.fbo = GLRenderTarget(render.texture.value());
+    return render.fbo.valid();
 }
 
 void egl_output::cleanup_framebuffer()
 {
-    if (!render.framebuffer) {
+    if (!render.fbo.valid()) {
         return;
     }
     make_current();
     render.texture = {};
-    glDeleteFramebuffers(1, &render.framebuffer);
-    render.framebuffer = 0;
+    render.fbo = {};
 }
 
 void egl_output::make_current() const

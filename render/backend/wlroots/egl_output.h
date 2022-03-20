@@ -6,6 +6,7 @@
 #pragma once
 
 #include <kwingl/texture.h>
+#include <kwingl/utils.h>
 
 #include <QRegion>
 #include <deque>
@@ -44,7 +45,7 @@ public:
     std::deque<QRegion> damageHistory;
 
     struct {
-        GLuint framebuffer = 0;
+        GLRenderTarget fbo;
         std::optional<GLTexture> texture;
         std::shared_ptr<GLVertexBuffer> vbo;
     } render;

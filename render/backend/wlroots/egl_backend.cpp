@@ -170,7 +170,7 @@ QRegion egl_backend::prepareRenderingForScreen(base::output* output)
         // know the status of the back buffer we render to.
         return output->geometry();
     }
-    if (out->render.framebuffer) {
+    if (out->render.fbo.valid()) {
         // If we render to the extra frame buffer, do not use buffer age. It leads to artifacts.
         // TODO(romangg): Can we make use of buffer age even in this case somehow?
         return output->geometry();
@@ -261,13 +261,11 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
     }
 }
 
-void egl_backend::prepareRenderFramebuffer(egl_output const& egl_out) const
+void egl_backend::prepareRenderFramebuffer(egl_output& egl_out) const
 {
-    if (!egl_out.render.framebuffer) {
-        return;
+    if (egl_out.render.fbo.valid()) {
+        GLRenderTarget::pushRenderTarget(&egl_out.render.fbo);
     }
-    glBindFramebuffer(GL_FRAMEBUFFER, egl_out.render.framebuffer);
-    GLRenderTarget::setKWinFramebuffer(egl_out.render.framebuffer);
 }
 
 void egl_backend::setViewport(egl_output const& egl_out) const
@@ -330,15 +328,13 @@ void egl_backend::initRenderTarget(egl_output& egl_out)
 
 void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
 {
-    if (!egl_out.render.framebuffer) {
+    if (!egl_out.render.fbo.valid()) {
         // No additional render target.
         return;
     }
     initRenderTarget(egl_out);
 
-    auto wlr_fbo = wlr_gles2_renderer_get_current_fbo(platform.renderer);
-    glBindFramebuffer(GL_FRAMEBUFFER, wlr_fbo);
-    GLRenderTarget::setKWinFramebuffer(wlr_fbo);
+    GLRenderTarget::popRenderTarget();
 
     GLuint clearColor[4] = {0, 0, 0, 0};
     glClearBufferuiv(GL_COLOR, 0, clearColor);
