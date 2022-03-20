@@ -367,17 +367,9 @@ inline GLShader* ShaderBinder::shader()
 class KWINGLUTILS_EXPORT GLRenderTarget
 {
 public:
-    /**
-     * Constructs a GLRenderTarget
-     * @since 5.13
-     */
-    explicit GLRenderTarget();
+    GLRenderTarget() = default;
+    explicit GLRenderTarget(GLTexture const& texture);
 
-    /**
-     * Constructs a GLRenderTarget
-     * @param color texture where the scene will be rendered onto
-     */
-    explicit GLRenderTarget(const GLTexture& color);
     ~GLRenderTarget();
 
     /**
@@ -509,6 +501,7 @@ protected:
 private:
     friend void KWin::cleanupGL();
     static void cleanup();
+
     static bool sSupported;
     static bool s_blitSupported;
     static QStack<GLRenderTarget*> s_renderTargets;
@@ -519,9 +512,8 @@ private:
     static GLuint s_kwinFramebuffer;
 
     GLTexture mTexture;
-    bool mValid;
-
-    GLuint mFramebuffer;
+    GLuint mFramebuffer{0};
+    bool mValid{false};
 };
 
 enum VertexAttributeType { VA_Position = 0, VA_TexCoord = 1, VertexAttributeCount = 2 };

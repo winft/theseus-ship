@@ -1001,36 +1001,25 @@ void GLRenderTarget::pushRenderTargets(QStack<GLRenderTarget*> targets)
 
 GLRenderTarget* GLRenderTarget::popRenderTarget()
 {
-    GLRenderTarget* ret = s_renderTargets.pop();
-    ret->setTextureDirty();
+    auto target = s_renderTargets.pop();
+    target->setTextureDirty();
 
     if (!s_renderTargets.isEmpty()) {
         s_renderTargets.top()->enable();
     } else {
-        ret->disable();
+        target->disable();
         glViewport(s_virtualScreenViewport[0],
                    s_virtualScreenViewport[1],
                    s_virtualScreenViewport[2],
                    s_virtualScreenViewport[3]);
     }
 
-    return ret;
+    return target;
 }
 
-GLRenderTarget::GLRenderTarget()
+GLRenderTarget::GLRenderTarget(GLTexture const& texture)
+    : mTexture{texture}
 {
-    // Reset variables
-    mValid = false;
-    mTexture = GLTexture();
-}
-
-GLRenderTarget::GLRenderTarget(const GLTexture& color)
-{
-    // Reset variables
-    mValid = false;
-
-    mTexture = color;
-
     // Make sure FBO is supported
     if (sSupported && !mTexture.isNull()) {
         initFBO();
