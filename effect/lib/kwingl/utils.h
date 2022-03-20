@@ -374,18 +374,6 @@ public:
 
     ~GLRenderTarget();
 
-    /**
-     * Enables this render target.
-     * All OpenGL commands from now on affect this render target until the
-     *  @ref disable method is called
-     */
-    bool enable();
-    /**
-     * Disables this render target, activating whichever target was active
-     *  when @ref enable was called.
-     */
-    bool disable();
-
     bool valid() const
     {
         return mValid;
@@ -497,6 +485,7 @@ protected:
 private:
     friend void KWin::cleanupGL();
     static void cleanup();
+    void bind();
 
     static bool sSupported;
     static bool s_blitSupported;

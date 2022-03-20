@@ -990,7 +990,7 @@ void GLRenderTarget::pushRenderTarget(GLRenderTarget* target)
     if (s_renderTargets.isEmpty()) {
         glGetIntegerv(GL_VIEWPORT, s_virtualScreenViewport);
     }
-    target->enable();
+    target->bind();
     s_renderTargets.push(target);
 }
 
@@ -999,7 +999,7 @@ void GLRenderTarget::pushRenderTargets(QStack<GLRenderTarget*> targets)
     if (s_renderTargets.isEmpty()) {
         glGetIntegerv(GL_VIEWPORT, s_virtualScreenViewport);
     }
-    targets.top()->enable();
+    targets.top()->bind();
     s_renderTargets.append(targets);
 }
 
@@ -1009,9 +1009,9 @@ GLRenderTarget* GLRenderTarget::popRenderTarget()
     target->setTextureDirty();
 
     if (!s_renderTargets.isEmpty()) {
-        s_renderTargets.top()->enable();
+        s_renderTargets.top()->bind();
     } else {
-        target->disable();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(s_virtualScreenViewport[0],
                    s_virtualScreenViewport[1],
                    s_virtualScreenViewport[2],
@@ -1046,11 +1046,11 @@ GLRenderTarget::~GLRenderTarget()
     }
 }
 
-bool GLRenderTarget::enable()
+void GLRenderTarget::bind()
 {
     if (!valid()) {
         qCCritical(LIBKWINGLUTILS) << "Can't enable invalid render target!";
-        return false;
+        return;
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
@@ -1061,25 +1061,6 @@ bool GLRenderTarget::enable()
     } else {
         glViewport(mViewport.x(), mViewport.y(), mViewport.width(), mViewport.height());
     }
-
-    return true;
-}
-
-bool GLRenderTarget::disable()
-{
-    if (!valid()) {
-        qCCritical(LIBKWINGLUTILS) << "Can't disable invalid render target!";
-        return false;
-    }
-
-    if (s_renderTargets.isEmpty()) {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    } else {
-        s_renderTargets.top()->enable();
-    }
-
-    setTextureDirty();
-    return true;
 }
 
 static QString formatFramebufferStatus(GLenum status)
