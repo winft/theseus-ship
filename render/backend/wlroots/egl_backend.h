@@ -66,7 +66,7 @@ private:
     void cleanup();
     void cleanupSurfaces();
 
-    void setViewport(egl_output const& egl_out) const;
+    QRect get_viewport(egl_output const& egl_out) const;
     void initRenderTarget(egl_output& egl_out);
 
     void prepareRenderFramebuffer(egl_output& egl_out) const;

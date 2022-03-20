@@ -163,7 +163,9 @@ QRegion egl_backend::prepareRenderingForScreen(base::output* output)
     transformation = flip_180;
 
     prepareRenderFramebuffer(*out);
-    setViewport(*out);
+
+    auto viewport = get_viewport(*out);
+    glViewport(viewport.x(), viewport.y(), viewport.width(), viewport.height());
 
     if (!supportsBufferAge()) {
         // If buffer age exenstion is not supported we always repaint the whole output as we don't
@@ -268,7 +270,7 @@ void egl_backend::prepareRenderFramebuffer(egl_output& egl_out) const
     }
 }
 
-void egl_backend::setViewport(egl_output const& egl_out) const
+QRect egl_backend::get_viewport(egl_output const& egl_out) const
 {
     auto const& overall = platform.base.topology.size;
     auto const& geo = egl_out.out->base.geometry();
@@ -277,10 +279,10 @@ void egl_backend::setViewport(egl_output const& egl_out) const
     auto const width_ratio = view.width() / (double)geo.width();
     auto const height_ratio = view.height() / (double)geo.height();
 
-    glViewport(-geo.x() * width_ratio,
-               -geo.y() * height_ratio,
-               overall.width() * width_ratio,
-               overall.height() * height_ratio);
+    return QRect(-geo.x() * width_ratio,
+                 -geo.y() * height_ratio,
+                 overall.width() * width_ratio,
+                 overall.height() * height_ratio);
 }
 
 const float vertices[] = {
