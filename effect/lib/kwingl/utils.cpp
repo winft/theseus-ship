@@ -946,7 +946,6 @@ QSize GLRenderTarget::s_virtualScreenSize;
 QRect GLRenderTarget::s_virtualScreenGeometry;
 qreal GLRenderTarget::s_virtualScreenScale = 1.0;
 GLint GLRenderTarget::s_virtualScreenViewport[4];
-GLuint GLRenderTarget::s_kwinFramebuffer = 0;
 
 void GLRenderTarget::initStatic()
 {
@@ -979,6 +978,11 @@ bool GLRenderTarget::isRenderTargetBound()
 bool GLRenderTarget::blitSupported()
 {
     return s_blitSupported;
+}
+
+GLRenderTarget* GLRenderTarget::currentRenderTarget()
+{
+    return s_renderTargets.isEmpty() ? nullptr : s_renderTargets.top();
 }
 
 void GLRenderTarget::pushRenderTarget(GLRenderTarget* target)
@@ -1068,7 +1072,12 @@ bool GLRenderTarget::disable()
         return false;
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, s_kwinFramebuffer);
+    if (s_renderTargets.isEmpty()) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    } else {
+        s_renderTargets.top()->enable();
+    }
+
     setTextureDirty();
     return true;
 }
@@ -1108,6 +1117,9 @@ static QString formatFramebufferStatus(GLenum status)
 void GLRenderTarget::initFBO()
 {
     assert(mTexture);
+    assert(!mForeign);
+
+    GLuint const cur_fbo = currentRenderTarget() ? currentRenderTarget()->mFramebuffer : 0;
 
 #if DEBUG_GLRENDERTARGET
     GLenum err = glGetError();
@@ -1141,7 +1153,7 @@ void GLRenderTarget::initFBO()
 #if DEBUG_GLRENDERTARGET
     if ((err = glGetError()) != GL_NO_ERROR) {
         qCCritical(LIBKWINGLUTILS) << "glFramebufferTexture2D failed: " << formatGLError(err);
-        glBindFramebuffer(GL_FRAMEBUFFER, s_kwinFramebuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, cur_fbo);
         glDeleteFramebuffers(1, &mFramebuffer);
         return;
     }
@@ -1149,7 +1161,7 @@ void GLRenderTarget::initFBO()
 
     const GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, s_kwinFramebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, cur_fbo);
 
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         // We have an incomplete framebuffer, consider it invalid
@@ -1174,9 +1186,10 @@ void GLRenderTarget::blitFromFramebuffer(const QRect& source,
         return;
     }
 
+    auto top = currentRenderTarget();
     GLRenderTarget::pushRenderTarget(this);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFramebuffer);
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, s_kwinFramebuffer);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, top ? top->mFramebuffer : 0);
 
     auto const size = mTexture ? mTexture->size() : mViewport.size();
     const QRect s = source.isNull() ? s_virtualScreenGeometry : source;

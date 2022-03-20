@@ -156,16 +156,15 @@ QRegion egl_backend::prepareRenderingForScreen(base::output* output)
     wlr_output_attach_render(native_out, &out->bufferAge);
     wlr_renderer_begin(platform.renderer, output->geometry().width(), output->geometry().height());
 
-    GLRenderTarget::setKWinFramebuffer(wlr_gles2_renderer_get_current_fbo(platform.renderer));
+    native_fbo
+        = GLRenderTarget(wlr_gles2_renderer_get_current_fbo(platform.renderer), get_viewport(*out));
+    GLRenderTarget::pushRenderTarget(&native_fbo);
 
     QMatrix4x4 flip_180;
     flip_180(1, 1) = -1;
     transformation = flip_180;
 
     prepareRenderFramebuffer(*out);
-
-    auto viewport = get_viewport(*out);
-    glViewport(viewport.x(), viewport.y(), viewport.width(), viewport.height());
 
     if (!supportsBufferAge()) {
         // If buffer age exenstion is not supported we always repaint the whole output as we don't
@@ -230,6 +229,7 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
         out->out->last_timer_queries.emplace_back();
     }
 
+    GLRenderTarget::popRenderTarget();
     wlr_renderer_end(platform.renderer);
 
     if (damagedRegion.intersected(output->geometry()).isEmpty()) {

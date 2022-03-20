@@ -615,7 +615,6 @@ void BlurEffect::doBlur(const QRegion& shape,
     const QRect sourceRect = expandedBlurRegion.boundingRect() & screen;
     const QRect destRect = sourceRect.translated(xTranslate, yTranslate);
 
-    GLRenderTarget::pushRenderTargets(m_renderTargetStack);
     int blurRectCount = expandedBlurRegion.rectCount() * 6;
 
     /*
@@ -627,6 +626,7 @@ void BlurEffect::doBlur(const QRegion& shape,
      */
     if (isDock) {
         m_renderTargets.last()->blitFromFramebuffer(sourceRect, destRect);
+        GLRenderTarget::pushRenderTargets(m_renderTargetStack);
 
         if (useSRGB) {
             glEnable(GL_FRAMEBUFFER_SRGB);
@@ -638,6 +638,7 @@ void BlurEffect::doBlur(const QRegion& shape,
         copyScreenSampleTexture(vbo, blurRectCount, shape.translated(xTranslate, yTranslate), mvp);
     } else {
         m_renderTargets.first()->blitFromFramebuffer(sourceRect, destRect);
+        GLRenderTarget::pushRenderTargets(m_renderTargetStack);
 
         if (useSRGB) {
             glEnable(GL_FRAMEBUFFER_SRGB);
