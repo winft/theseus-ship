@@ -1017,11 +1017,19 @@ GLRenderTarget* GLRenderTarget::popRenderTarget()
     return target;
 }
 
+GLRenderTarget::GLRenderTarget(GLuint framebuffer, QRect const& viewport)
+    : mFramebuffer{framebuffer}
+    , mViewport{viewport}
+    , mValid{true}
+    , mForeign{true}
+{
+}
+
 GLRenderTarget::GLRenderTarget(GLTexture const& texture)
     : mTexture{texture}
 {
     // Make sure FBO is supported
-    if (sSupported && !mTexture.isNull()) {
+    if (sSupported && !mTexture->isNull()) {
         initFBO();
     } else
         qCCritical(LIBKWINGLUTILS) << "Render targets aren't supported!";
@@ -1029,7 +1037,7 @@ GLRenderTarget::GLRenderTarget(GLTexture const& texture)
 
 GLRenderTarget::~GLRenderTarget()
 {
-    if (mValid) {
+    if (mValid && !mForeign) {
         glDeleteFramebuffers(1, &mFramebuffer);
     }
 }
@@ -1042,8 +1050,13 @@ bool GLRenderTarget::enable()
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
-    glViewport(0, 0, mTexture.width(), mTexture.height());
-    mTexture.setDirty();
+
+    if (mTexture) {
+        glViewport(0, 0, mTexture->width(), mTexture->height());
+        mTexture->setDirty();
+    } else {
+        glViewport(mViewport.x(), mViewport.y(), mViewport.width(), mViewport.height());
+    }
 
     return true;
 }
@@ -1056,8 +1069,7 @@ bool GLRenderTarget::disable()
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, s_kwinFramebuffer);
-    mTexture.setDirty();
-
+    setTextureDirty();
     return true;
 }
 
@@ -1095,6 +1107,8 @@ static QString formatFramebufferStatus(GLenum status)
 
 void GLRenderTarget::initFBO()
 {
+    assert(mTexture);
+
 #if DEBUG_GLRENDERTARGET
     GLenum err = glGetError();
     if (err != GL_NO_ERROR)
@@ -1122,7 +1136,7 @@ void GLRenderTarget::initFBO()
 #endif
 
     glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, mTexture.target(), mTexture.texture(), 0);
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, mTexture->target(), mTexture->texture(), 0);
 
 #if DEBUG_GLRENDERTARGET
     if ((err = glGetError()) != GL_NO_ERROR) {
@@ -1163,9 +1177,10 @@ void GLRenderTarget::blitFromFramebuffer(const QRect& source,
     GLRenderTarget::pushRenderTarget(this);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFramebuffer);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, s_kwinFramebuffer);
+
+    auto const size = mTexture ? mTexture->size() : mViewport.size();
     const QRect s = source.isNull() ? s_virtualScreenGeometry : source;
-    const QRect d
-        = destination.isNull() ? QRect(0, 0, mTexture.width(), mTexture.height()) : destination;
+    const QRect d = destination.isNull() ? QRect(0, 0, size.width(), size.height()) : destination;
 
     glBlitFramebuffer(
         (s.x() - s_virtualScreenGeometry.x()) * s_virtualScreenScale,
@@ -1175,9 +1190,9 @@ void GLRenderTarget::blitFromFramebuffer(const QRect& source,
         (s_virtualScreenGeometry.height() - (s.y() - s_virtualScreenGeometry.y()))
             * s_virtualScreenScale,
         d.x(),
-        mTexture.height() - d.y() - d.height(),
+        size.height() - d.y() - d.height(),
         d.x() + d.width(),
-        mTexture.height() - d.y(),
+        size.height() - d.y(),
         GL_COLOR_BUFFER_BIT,
         filter);
     GLRenderTarget::popRenderTarget();

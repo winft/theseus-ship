@@ -13,6 +13,7 @@
 
 #include <QSize>
 #include <QStack>
+#include <optional>
 
 class QVector2D;
 class QVector3D;
@@ -368,6 +369,7 @@ class KWINGLUTILS_EXPORT GLRenderTarget
 {
 public:
     GLRenderTarget() = default;
+    explicit GLRenderTarget(GLuint framebuffer, QRect const& viewport);
     explicit GLRenderTarget(GLTexture const& texture);
 
     ~GLRenderTarget();
@@ -391,7 +393,9 @@ public:
 
     void setTextureDirty()
     {
-        mTexture.setDirty();
+        if (mTexture.has_value()) {
+            mTexture->setDirty();
+        }
     }
 
     static void initStatic();
@@ -511,9 +515,12 @@ private:
     static GLint s_virtualScreenViewport[4];
     static GLuint s_kwinFramebuffer;
 
-    GLTexture mTexture;
+    std::optional<GLTexture> mTexture;
     GLuint mFramebuffer{0};
+
+    QRect mViewport;
     bool mValid{false};
+    bool mForeign{false};
 };
 
 enum VertexAttributeType { VA_Position = 0, VA_TexCoord = 1, VertexAttributeCount = 2 };
