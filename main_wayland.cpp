@@ -45,7 +45,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KCrash>
 #include <KLocalizedString>
 #include <KPluginMetaData>
-#include <KQuickAddons/QtQuickSettings>
 #include <KShell>
 #include <UpdateLaunchEnvironmentJob>
 
@@ -409,8 +408,6 @@ int main(int argc, char * argv[])
     qunsetenv("QT_QPA_PLATFORM");
 
     KWin::Application::createAboutData();
-    KQuickAddons::QtQuickSettings::init();
-
     QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),
                                       i18n("Start a rootless Xwayland server."));
     QCommandLineOption waylandSocketOption(QStringList{QStringLiteral("s"), QStringLiteral("socket")},

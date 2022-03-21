@@ -574,7 +574,6 @@ set(kwin_KDE_LIBS
     KF5::Notifications
     KF5::Package
     KF5::Plasma
-    KF5::QuickAddons
     KF5::WindowSystem
 
     KDecoration2::KDecoration
