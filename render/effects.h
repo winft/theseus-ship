@@ -335,6 +335,25 @@ public:
                     Q_EMIT desktopChanged(old, newDesktop);
                 });
         connect(ws->qobject.get(),
+                &win::space_qobject::currentDesktopChanging,
+                this,
+                [this, space = ws](uint currentDesktop, QPointF offset) {
+                    EffectWindow* eff_win{nullptr};
+                    if (auto& mov_res = space->move_resize_window) {
+                        std::visit(overload{[&](auto&& win) {
+                                       assert(win->render);
+                                       assert(win->render->effect);
+                                       eff_win = win->render->effect.get();
+                                   }},
+                                   *mov_res);
+                    }
+                    Q_EMIT desktopChanging(currentDesktop, offset, eff_win);
+                });
+        connect(ws->qobject.get(),
+                &win::space_qobject::currentDesktopChangingCancelled,
+                this,
+                [this]() { Q_EMIT desktopChangingCancelled(); });
+        connect(ws->qobject.get(),
                 &win::space_qobject::desktopPresenceChanged,
                 this,
                 [this, space = ws](auto win_id, int old) {

@@ -25,6 +25,8 @@ public Q_SLOTS:
 Q_SIGNALS:
     void desktopPresenceChanged(quint32, int);
     void currentDesktopChanged(int);
+    void currentDesktopChanging(uint currentDesktop, QPointF delta); // for realtime animations
+    void currentDesktopChangingCancelled();
 
     // X11 window
     void clientAdded(quint32);

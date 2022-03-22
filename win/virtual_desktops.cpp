@@ -22,6 +22,7 @@ namespace KWin::win
 {
 
 static bool s_loadingDesktopSettings = false;
+static const double GESTURE_SWITCH_THRESHOLD = .25;
 
 static QString generateDesktopId()
 {
@@ -235,11 +236,14 @@ virtual_desktop_manager_qobject::virtual_desktop_manager_qobject() = default;
 virtual_desktop_manager::virtual_desktop_manager()
     : qobject{std::make_unique<virtual_desktop_manager_qobject>()}
     , m_grid{*this}
+    , m_swipeGestureReleasedY(new QAction(qobject.get()))
+    , m_swipeGestureReleasedX(new QAction(qobject.get()))
     , singleton{qobject.get(),
                 [this] { return desktops(); },
                 [this](auto pos, auto const& name) { return createVirtualDesktop(pos, name); },
                 [this](auto id) { return removeVirtualDesktop(id); },
                 [this] { return currentDesktop(); }}
+
 {
     singleton_interface::virtual_desktops = &singleton;
 }
@@ -594,7 +598,7 @@ virtual_desktop* virtual_desktop_manager::currentDesktop() const
 
 bool virtual_desktop_manager::setCurrent(uint newDesktop)
 {
-    if (newDesktop < 1 || newDesktop > count() || newDesktop == current()) {
+    if (newDesktop < 1 || newDesktop > count()) {
         return false;
     }
 
@@ -894,6 +898,32 @@ void virtual_desktop_manager::setNETDesktopLayout(Qt::Orientation orientation,
     // TODO: why is there no call to m_rootInfo->setDesktopLayout?
     Q_EMIT qobject->layoutChanged(width, height);
     Q_EMIT qobject->rowsChanged(height);
+}
+
+void virtual_desktop_manager::connect_gestures()
+{
+    KGlobalAccel::connect(
+        m_swipeGestureReleasedX.get(), &QAction::triggered, qobject.get(), [this]() {
+            if (m_currentDesktopOffset.x() <= -GESTURE_SWITCH_THRESHOLD) {
+                slotLeft();
+            } else if (m_currentDesktopOffset.x() >= GESTURE_SWITCH_THRESHOLD) {
+                slotRight();
+            } else {
+                Q_EMIT qobject->currentChangingCancelled();
+            }
+            m_currentDesktopOffset = QPointF(0, 0);
+        });
+    KGlobalAccel::connect(
+        m_swipeGestureReleasedY.get(), &QAction::triggered, qobject.get(), [this]() {
+            if (m_currentDesktopOffset.y() <= -GESTURE_SWITCH_THRESHOLD) {
+                slotUp();
+            } else if (m_currentDesktopOffset.y() >= GESTURE_SWITCH_THRESHOLD) {
+                slotDown();
+            } else {
+                Q_EMIT qobject->currentChangingCancelled();
+            }
+            m_currentDesktopOffset = QPointF(0, 0);
+        });
 }
 
 void virtual_desktop_manager::slotSwitchTo(QAction& action)
