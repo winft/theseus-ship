@@ -662,7 +662,7 @@ void scene::paintBackground(QRegion region)
 {
     PaintClipper pc(region);
     if (!PaintClipper::clip()) {
-        glClearColor(0, 0, 0, 1);
+        glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
         return;
     }
@@ -912,7 +912,7 @@ void scene::doPaintBackground(const QVector<float>& vertices)
 {
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
-    vbo->setUseColor(true);
+    vbo->setColor(QColor(0, 0, 0, 0));
     vbo->setData(vertices.count() / 2, 2, vertices.data(), nullptr);
 
     ShaderBinder binder(ShaderTrait::UniformColor);
