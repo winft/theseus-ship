@@ -24,6 +24,12 @@
 #include <QTouchEvent>
 #include <QWindow>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QQuickOpenGLUtils>
+#include <QQuickRenderTarget>
+#include <private/qeventpoint_p.h> // for QMutableEventPoint
+#endif
+
 Q_LOGGING_CATEGORY(LIBKWINEFFECTS, "libkwineffects", QtWarningMsg)
 
 namespace KWin
@@ -264,7 +270,12 @@ void EffectQuickView::update()
                 return;
             }
         }
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         d->m_view->setRenderTarget(d->m_fbo.data());
+#else
+        d->m_view->setRenderTarget(
+            QQuickRenderTarget::fromOpenGLTexture(d->m_fbo->texture(), d->m_fbo->size()));
+#endif
     }
 
     d->m_renderControl->polishItems();
@@ -272,7 +283,11 @@ void EffectQuickView::update()
 
     d->m_renderControl->render();
     if (usingGl) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         d->m_view->resetOpenGLState();
+#else
+        QQuickOpenGLUtils::resetOpenGLState();
+#endif
     }
 
     if (d->m_useBlit) {
