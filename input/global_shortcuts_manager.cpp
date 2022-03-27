@@ -124,6 +124,17 @@ bool global_shortcuts_manager::processKey(Qt::KeyboardModifiers mods, int keyQt)
     return false;
 }
 
+bool global_shortcuts_manager::processKeyRelease(Qt::KeyboardModifiers mods, int keyQt)
+{
+    if (m_kglobalAccelInterface) {
+        QMetaObject::invokeMethod(m_kglobalAccelInterface,
+                                  "checkKeyReleased",
+                                  Qt::DirectConnection,
+                                  Q_ARG(int, int(mods) | keyQt));
+    }
+    return false;
+}
+
 template<typename ShortcutKind, typename... Args>
 bool match(QVector<global_shortcut>& shortcuts, Args... args)
 {

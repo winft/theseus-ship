@@ -96,9 +96,9 @@ bool global_shortcut_filter::key(key_event const& event)
 
     if (event.state == key_state::pressed) {
         return shortcuts->processKey(modifiers, qt_key);
+    } else {
+        return shortcuts->processKeyRelease(modifiers, qt_key);
     }
-
-    return false;
 }
 
 bool global_shortcut_filter::key_repeat(key_event const& event)
