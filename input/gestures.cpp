@@ -199,33 +199,31 @@ void gesture_recognizer::updateSwipeGesture(const QSizeF& delta)
     m_currentDelta += delta;
 
     swipe_gesture::Direction direction; // Overall direction
+    Axis swipeAxis;
 
     // Pick an axis for gestures so horizontal ones don't change to vertical ones without lifting
     // fingers
     if (m_currentSwipeAxis == Axis::None) {
         if (std::abs(m_currentDelta.width()) >= std::abs(m_currentDelta.height())) {
-            // horizontal
+            swipeAxis = Axis::Horizontal;
             direction = m_currentDelta.width() < 0 ? swipe_gesture::Direction::Left
                                                    : swipe_gesture::Direction::Right;
         } else {
-            // vertical
+            swipeAxis = Axis::Vertical;
             direction = m_currentDelta.height() < 0 ? swipe_gesture::Direction::Up
                                                     : swipe_gesture::Direction::Down;
         }
-        switch (direction) {
-        case swipe_gesture::Direction::Up:
-        case swipe_gesture::Direction::Down:
-            m_currentSwipeAxis = Axis::Vertical;
-            break;
-        case swipe_gesture::Direction::Left:
-        case swipe_gesture::Direction::Right:
-            m_currentSwipeAxis = Axis::Horizontal;
-            break;
+        if (std::abs(m_currentDelta.width()) >= 5 || std::abs(m_currentDelta.height()) >= 5) {
+            // only lock in a direction if the delta is big enough
+            // to prevent accidentally choosing the wrong direction
+            m_currentSwipeAxis = swipeAxis;
         }
+    } else {
+        swipeAxis = m_currentSwipeAxis;
     }
 
     // Find the current swipe direction
-    switch (m_currentSwipeAxis) {
+    switch (swipeAxis) {
     case Axis::Vertical:
         direction = m_currentDelta.height() < 0 ? swipe_gesture::Direction::Up
                                                 : swipe_gesture::Direction::Down;
@@ -235,7 +233,7 @@ void gesture_recognizer::updateSwipeGesture(const QSizeF& delta)
                                                : swipe_gesture::Direction::Right;
         break;
     default:
-        return;
+        Q_UNREACHABLE();
     }
 
     // Eliminate wrong gestures (takes two iterations)
