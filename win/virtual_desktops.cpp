@@ -577,9 +577,9 @@ void virtual_desktop_manager::removeVirtualDesktop(virtual_desktop* desktop)
         Q_EMIT qobject->currentChanged(oldCurrent, newCurrent);
     }
 
+    updateRootInfo();
     save();
 
-    updateRootInfo();
     Q_EMIT qobject->desktopRemoved(desktop);
     Q_EMIT qobject->countChanged(m_desktops.count() + 1, m_desktops.count());
 
@@ -760,6 +760,12 @@ void virtual_desktop_manager::updateLayout()
         // Not given, set default layout
         m_rows = count() == 1u ? 1 : 2;
         columns = count() / m_rows;
+    }
+
+    // Patch to make desktop grid size equal 1 when 1 desktop for desktop switching animations
+    if (m_desktops.size() == 1) {
+        m_rows = 1;
+        columns = 1;
     }
 
     setNETDesktopLayout(
