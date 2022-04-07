@@ -81,6 +81,10 @@ public Q_SLOTS:
     {
         return support_information_impl();
     }
+    QString activeOutputName()
+    {
+        return active_output_name_impl();
+    }
     Q_NOREPLY void unclutterDesktop()
     {
         unclutter_desktop_impl();
@@ -112,6 +116,7 @@ protected:
     virtual bool set_current_desktop_impl(int desktop) = 0;
 
     virtual QString support_information_impl() = 0;
+    virtual QString active_output_name_impl() = 0;
     virtual void unclutter_desktop_impl() = 0;
 
     virtual void show_debug_console_impl() = 0;
@@ -147,6 +152,15 @@ public:
     QString support_information_impl() override
     {
         return debug::get_support_info(space);
+    }
+
+    QString active_output_name_impl() override
+    {
+        auto output = win::get_current_output(space);
+        if (!output) {
+            return {};
+        }
+        return output->name();
     }
 
     int current_desktop_impl() override
