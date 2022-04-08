@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAction>
 
-#include <KAboutData>
 #include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>

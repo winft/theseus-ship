@@ -22,7 +22,6 @@
 #include "blurconfig.h"
 #include <config-kwin.h>
 
-#include <KAboutData>
 #include <KPluginFactory>
 #include <kwineffects_interface.h>
 

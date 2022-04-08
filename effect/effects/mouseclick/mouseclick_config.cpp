@@ -24,14 +24,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 #include <kwineffects_interface.h>
 
-#include <QAction>
-
-#include <KAboutData>
 #include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KPluginFactory>
-
+#include <QAction>
 #include <QWidget>
 
 K_PLUGIN_CLASS(KWin::MouseClickEffectConfig)

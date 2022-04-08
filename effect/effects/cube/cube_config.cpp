@@ -23,9 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 #include <kwineffects_interface.h>
 
-#include <QAction>
-
-#include <KAboutData>
 #include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>
@@ -33,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kcolorscheme.h>
 #include <kconfiggroup.h>
 
+#include <QAction>
 #include <QColor>
 #include <QVBoxLayout>
 
