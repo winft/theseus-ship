@@ -33,7 +33,7 @@
 #include "win/stacking_order.h"
 #include "win/util.h"
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
 #endif
 

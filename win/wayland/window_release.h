@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "config-kwin.h"
+
 #include "space.h"
 
 #include "rules/rule_book.h"
@@ -14,7 +16,7 @@
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
 #endif
 
@@ -44,7 +46,7 @@ void destroy_window(Win* win)
     Q_EMIT win->windowClosed(win, remnant_window);
 
     if (win->control) {
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
         auto tabbox = tabbox::tabbox::self();
         if (tabbox->is_displayed() && tabbox->current_client() == win) {
             tabbox->next_prev(true);

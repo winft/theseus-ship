@@ -15,7 +15,7 @@
 #include "decorations/window.h"
 #include "render/effects.h"
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
 #include "toplevel.h"
@@ -43,7 +43,7 @@ control::~control()
 void control::setup_tabbox()
 {
     assert(!m_tabbox);
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     m_tabbox = std::make_shared<win::tabbox_client_impl>(m_win);
 #endif
 }

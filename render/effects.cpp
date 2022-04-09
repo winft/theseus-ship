@@ -54,7 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
 #endif
 
@@ -202,7 +202,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
             &win::stacking_order::changed,
             this,
             &EffectsHandler::stackingOrderChanged);
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     win::tabbox* tabBox = win::tabbox::self();
     connect(tabBox, &win::tabbox::tabbox_added, this, &EffectsHandler::tabBoxAdded);
     connect(tabBox, &win::tabbox::tabbox_updated, this, &EffectsHandler::tabBoxUpdated);
@@ -1129,7 +1129,7 @@ void effects_handler_impl::setElevatedWindow(KWin::EffectWindow* w, bool set)
 
 void effects_handler_impl::setTabBoxWindow(EffectWindow* w)
 {
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     auto window = static_cast<effects_window_impl*>(w)->window();
     if (window->control) {
         win::tabbox::self()->set_current_client(window);
@@ -1141,7 +1141,7 @@ void effects_handler_impl::setTabBoxWindow(EffectWindow* w)
 
 void effects_handler_impl::setTabBoxDesktop(int desktop)
 {
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     win::tabbox::self()->set_current_desktop(desktop);
 #else
     Q_UNUSED(desktop)
@@ -1150,7 +1150,7 @@ void effects_handler_impl::setTabBoxDesktop(int desktop)
 
 EffectWindowList effects_handler_impl::currentTabBoxWindowList() const
 {
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     const auto clients = win::tabbox::self()->current_client_list();
     EffectWindowList ret;
     ret.reserve(clients.size());
@@ -1166,28 +1166,28 @@ EffectWindowList effects_handler_impl::currentTabBoxWindowList() const
 
 void effects_handler_impl::refTabBox()
 {
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     win::tabbox::self()->reference();
 #endif
 }
 
 void effects_handler_impl::unrefTabBox()
 {
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     win::tabbox::self()->unreference();
 #endif
 }
 
 void effects_handler_impl::closeTabBox()
 {
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     win::tabbox::self()->close();
 #endif
 }
 
 QList<int> effects_handler_impl::currentTabBoxDesktopList() const
 {
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     return win::tabbox::self()->current_desktop_list();
 #else
     return QList<int>();
@@ -1196,7 +1196,7 @@ QList<int> effects_handler_impl::currentTabBoxDesktopList() const
 
 int effects_handler_impl::currentTabBoxDesktop() const
 {
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     return win::tabbox::self()->current_desktop();
 #else
     return -1;
@@ -1205,7 +1205,7 @@ int effects_handler_impl::currentTabBoxDesktop() const
 
 EffectWindow* effects_handler_impl::currentTabBoxWindow() const
 {
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     if (auto c = win::tabbox::self()->current_client())
         return c->render->effect.get();
 #endif

@@ -10,7 +10,7 @@
 #include "utils/blocker.h"
 #include "win/rules.h"
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
 #endif
 
@@ -55,7 +55,7 @@ void release_window(Win* win, bool on_shutdown)
         return;
     }
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     auto tabbox = tabbox::tabbox::self();
     if (tabbox->is_displayed() && tabbox->current_client() == win) {
         tabbox->next_prev(true);
@@ -176,7 +176,7 @@ void destroy_window(Win* win)
         return;
     }
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     auto tabbox = tabbox::tabbox::self();
     if (tabbox && tabbox->is_displayed() && tabbox->current_client() == win) {
         tabbox->next_prev(true);

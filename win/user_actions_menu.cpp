@@ -18,7 +18,7 @@
 #include "scripting/platform.h"
 #include "toplevel.h"
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
 
@@ -166,7 +166,7 @@ QStringList configModules(bool controlCenter)
              << QStringLiteral("kwinmoving") << QStringLiteral("kwinadvanced")
              << QStringLiteral("kwinrules") << QStringLiteral("kwincompositing")
              << QStringLiteral("kwineffects")
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
              << QStringLiteral("kwintabbox")
 #endif
              << QStringLiteral("kwinscreenedges") << QStringLiteral("kwinscripts");

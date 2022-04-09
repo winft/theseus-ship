@@ -67,7 +67,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
 
@@ -118,7 +118,7 @@ space::space()
     // dbus interface
     new win::dbus::virtual_desktop_manager(win::virtual_desktop_manager::self());
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     // need to create the tabbox before compositing scene is setup
     tabbox::tabbox::create(this);
 #endif
@@ -783,13 +783,13 @@ QString space::supportInformation() const
     support.append(QStringLiteral("=============\n"));
 
     support.append(QStringLiteral("KWIN_BUILD_DECORATIONS: "));
-#ifdef KWIN_BUILD_DECORATIONS
+#if KWIN_BUILD_DECORATIONS
     support.append(yes);
 #else
     support.append(no);
 #endif
     support.append(QStringLiteral("KWIN_BUILD_TABBOX: "));
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     support.append(yes);
 #else
     support.append(no);
@@ -1167,7 +1167,7 @@ win::screen_edge* space::create_screen_edge(win::screen_edger& edger)
 
 void space::updateTabbox()
 {
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     win::tabbox* tabBox = tabbox::tabbox::self();
     if (tabBox->is_displayed()) {
         tabBox->reset(true);
@@ -3266,7 +3266,7 @@ void space::initShortcuts()
 #undef DEF5
 #undef DEF6
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     tabbox::tabbox::self()->init_shortcuts();
 #endif
     win::virtual_desktop_manager::self()->initShortcuts();
