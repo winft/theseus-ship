@@ -867,11 +867,7 @@ QString space::supportInformation() const
     support.append(QStringLiteral("Multi-Head: "));
     support.append(QStringLiteral("not supported anymore\n"));
     support.append(QStringLiteral("Active screen follows mouse: "));
-
-    if (kwinApp()->options->get_current_output_follows_mouse())
-        support.append(QStringLiteral(" yes\n"));
-    else
-        support.append(QStringLiteral(" no\n"));
+    support.append(kwinApp()->options->get_current_output_follows_mouse() ? yes : no);
 
     auto const& outputs = kwinApp()->get_base().get_outputs();
     support.append(QStringLiteral("Number of Screens: %1\n\n").arg(outputs.size()));
@@ -962,44 +958,23 @@ QString space::supportInformation() const
 
             support.append(QStringLiteral("Direct rendering: "));
             support.append(QStringLiteral("Requires strict binding: "));
-            if (!platform->isLooseBinding()) {
-                support.append(QStringLiteral("yes\n"));
-            } else {
-                support.append(QStringLiteral("no\n"));
-            }
+            support.append(!platform->isLooseBinding() ? yes : no);
             support.append(QStringLiteral("GLSL shaders: "));
             if (platform->supports(GLSL)) {
-                if (platform->supports(LimitedGLSL)) {
-                    support.append(QStringLiteral(" limited\n"));
-                } else {
-                    support.append(QStringLiteral(" yes\n"));
-                }
+                support.append(platform->supports(LimitedGLSL) ? QStringLiteral("limited\n") : yes);
             } else {
-                support.append(QStringLiteral(" no\n"));
+                support.append(no);
             }
             support.append(QStringLiteral("Texture NPOT support: "));
             if (platform->supports(TextureNPOT)) {
-                if (platform->supports(LimitedNPOT)) {
-                    support.append(QStringLiteral(" limited\n"));
-                } else {
-                    support.append(QStringLiteral(" yes\n"));
-                }
+                support.append(platform->supports(LimitedNPOT) ? QStringLiteral("limited\n") : yes);
             } else {
-                support.append(QStringLiteral(" no\n"));
+                support.append(no);
             }
             support.append(QStringLiteral("Virtual Machine: "));
-            if (platform->isVirtualMachine()) {
-                support.append(QStringLiteral(" yes\n"));
-            } else {
-                support.append(QStringLiteral(" no\n"));
-            }
+            support.append(platform->isVirtualMachine() ? yes : no);
             support.append(QStringLiteral("Timer query support: "));
-            if (platform->supports(GLFeature::TimerQuery)) {
-                support.append(QStringLiteral("yes\n"));
-            } else {
-                support.append(QStringLiteral("no\n"));
-            }
-
+            support.append(platform->supports(GLFeature::TimerQuery) ? yes : no);
             support.append(QStringLiteral("OpenGL 2 Shaders are used\n"));
             break;
         }
