@@ -40,7 +40,7 @@ namespace KWin::scripting
 {
 
 platform::platform()
-    : m_scriptsLock(new QMutex(QMutex::Recursive))
+    : m_scriptsLock(new QRecursiveMutex)
     , m_qmlEngine(new QQmlEngine(this))
     , m_declarativeScriptSharedContext(new QQmlContext(m_qmlEngine, this))
     , qt_space{std::make_unique<template_space<qt_script_space, win::space>>(workspace())}

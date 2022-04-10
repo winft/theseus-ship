@@ -270,8 +270,8 @@ application_layout_policy::application_layout_policy(layout_manager* manager,
                 auto const keyPrefix = default_layout_entry_key();
                 auto const keyList = this->config.keyList().filter(keyPrefix);
                 for (auto const& key : keyList) {
-                    restored_layouts.insert(
-                        {key.midRef(keyPrefix.size()).toLatin1(), this->config.readEntry(key, 0)});
+                    restored_layouts.insert({QStringView(key).mid(keyPrefix.size()).toLatin1(),
+                                             this->config.readEntry(key, 0)});
                 }
             }
         });

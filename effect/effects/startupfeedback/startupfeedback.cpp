@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDBusConnectionInterface>
 #include <QDBusServiceWatcher>
 #include <QFile>
+#include <QLoggingCategory>
 #include <QPainter>
 #include <QSize>
 #include <QStandardPaths>
@@ -260,7 +261,7 @@ void StartupFeedbackEffect::paintScreen(int mask, const QRegion& region, ScreenP
         mvp.translate(m_currentGeometry.x(), m_currentGeometry.y());
         ShaderManager::instance()->getBoundShader()->setUniform(GLShader::ModelViewProjectionMatrix,
                                                                 mvp);
-        texture->render(m_currentGeometry, m_currentGeometry);
+        texture->render(m_currentGeometry);
         ShaderManager::instance()->popShader();
         texture->unbind();
         glDisable(GL_BLEND);

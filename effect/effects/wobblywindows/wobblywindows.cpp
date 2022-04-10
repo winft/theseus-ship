@@ -14,6 +14,7 @@ License. See the file "COPYING" for the exact licensing terms.
 #include <kwineffects/effects_handler.h>
 #include <kwineffects/paint_data.h>
 
+#include <QLoggingCategory>
 #include <cmath>
 
 //#define COMPUTE_STATS

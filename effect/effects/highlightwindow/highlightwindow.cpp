@@ -11,6 +11,7 @@
 #include <kwineffects/types.h>
 
 #include <QDBusConnection>
+#include <QLoggingCategory>
 #include <QUuid>
 
 Q_LOGGING_CATEGORY(KWIN_HIGHLIGHTWINDOW, "kwin_effect_highlightwindow", QtWarningMsg)
@@ -76,12 +77,15 @@ void HighlightWindowEffect::slotWindowAdded(EffectWindow* w)
         // This window was demanded to be highlighted before it appeared on the screen.
         for (const WId& id : qAsConst(m_highlightedIds)) {
             if (w == effects->findWindow(id)) {
-                startHighlightAnimation(w, 0);
+                const quint64 animationId = startHighlightAnimation(w);
+                complete(animationId);
                 return;
             }
         }
         if (isHighlightWindow(w)) {
-            startGhostAnimation(w, 0); // this window is not currently highlighted
+            const quint64 animationId
+                = startGhostAnimation(w); // this window is not currently highlighted
+            complete(animationId);
         }
     }
 }
@@ -149,11 +153,8 @@ void HighlightWindowEffect::highlightWindows(const QVector<KWin::EffectWindow*>&
     prepareHighlighting();
 }
 
-void HighlightWindowEffect::startGhostAnimation(EffectWindow* window, int duration)
+quint64 HighlightWindowEffect::startGhostAnimation(EffectWindow* window)
 {
-    if (duration == -1) {
-        duration = m_fadeDuration;
-    }
     quint64& animationId = m_animations[window];
     if (animationId) {
         retarget(animationId, FPx2(m_ghostOpacity, m_ghostOpacity), m_fadeDuration);
@@ -170,13 +171,11 @@ void HighlightWindowEffect::startGhostAnimation(EffectWindow* window, int durati
                           false,
                           false);
     }
+    return animationId;
 }
 
-void HighlightWindowEffect::startHighlightAnimation(EffectWindow* window, int duration)
+quint64 HighlightWindowEffect::startHighlightAnimation(EffectWindow* window)
 {
-    if (duration == -1) {
-        duration = m_fadeDuration;
-    }
     quint64& animationId = m_animations[window];
     if (animationId) {
         retarget(animationId, FPx2(1.0, 1.0), m_fadeDuration);
@@ -193,6 +192,7 @@ void HighlightWindowEffect::startHighlightAnimation(EffectWindow* window, int du
                           false,
                           false);
     }
+    return animationId;
 }
 
 void HighlightWindowEffect::startRevertAnimation(EffectWindow* window)

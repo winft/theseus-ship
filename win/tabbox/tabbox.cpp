@@ -57,6 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KConfig>
 #include <KConfigGroup>
 #include <KGlobalAccel>
+#include <KLazyLocalizedString>
 #include <KLocalizedString>
 #include <kkeyserver.h>
 // X11
@@ -511,31 +512,33 @@ void tabbox::handler_ready()
 }
 
 template<typename Slot>
-void tabbox::key(const char* action_name, Slot slot, const QKeySequence& shortcut)
+void tabbox::key(const KLazyLocalizedString& action_name, Slot slot, const QKeySequence& shortcut)
 {
     QAction* a = new QAction(this);
     a->setProperty("componentName", QStringLiteral(KWIN_NAME));
-    a->setObjectName(QString::fromUtf8(action_name));
-    a->setText(i18n(action_name));
+    a->setObjectName(QString::fromUtf8(action_name.untranslatedText()));
+    a->setText(action_name.toString());
     KGlobalAccel::self()->setGlobalShortcut(a, QList<QKeySequence>() << shortcut);
     kwinApp()->input->redirect->registerShortcut(shortcut, a, tabbox::self(), slot);
     auto cuts = KGlobalAccel::self()->shortcut(a);
     global_shortcut_changed(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
 }
 
-static const char s_windows[] = I18N_NOOP("Walk Through Windows");
-static const char s_windowsRev[] = I18N_NOOP("Walk Through Windows (Reverse)");
-static const char s_windowsAlt[] = I18N_NOOP("Walk Through Windows Alternative");
-static const char s_windowsAltRev[] = I18N_NOOP("Walk Through Windows Alternative (Reverse)");
-static const char s_app[] = I18N_NOOP("Walk Through Windows of Current Application");
-static const char s_appRev[] = I18N_NOOP("Walk Through Windows of Current Application (Reverse)");
-static const char s_appAlt[] = I18N_NOOP("Walk Through Windows of Current Application Alternative");
-static const char s_appAltRev[]
-    = I18N_NOOP("Walk Through Windows of Current Application Alternative (Reverse)");
-static const char s_desktops[] = I18N_NOOP("Walk Through Desktops");
-static const char s_desktopsRev[] = I18N_NOOP("Walk Through Desktops (Reverse)");
-static const char s_desktopList[] = I18N_NOOP("Walk Through Desktop List");
-static const char s_desktopListRev[] = I18N_NOOP("Walk Through Desktop List (Reverse)");
+static constexpr const auto s_windows = kli18n("Walk Through Windows");
+static constexpr const auto s_windowsRev = kli18n("Walk Through Windows (Reverse)");
+static constexpr const auto s_windowsAlt = kli18n("Walk Through Windows Alternative");
+static constexpr const auto s_windowsAltRev = kli18n("Walk Through Windows Alternative (Reverse)");
+static constexpr const auto s_app = kli18n("Walk Through Windows of Current Application");
+static constexpr const auto s_appRev
+    = kli18n("Walk Through Windows of Current Application (Reverse)");
+static constexpr const auto s_appAlt
+    = kli18n("Walk Through Windows of Current Application Alternative");
+static constexpr const auto s_appAltRev
+    = kli18n("Walk Through Windows of Current Application Alternative (Reverse)");
+static constexpr const auto s_desktops = kli18n("Walk Through Desktops");
+static constexpr const auto s_desktopsRev = kli18n("Walk Through Desktops (Reverse)");
+static constexpr const auto s_desktopList = kli18n("Walk Through Desktop List");
+static constexpr const auto s_desktopListRev = kli18n("Walk Through Desktop List (Reverse)");
 
 void tabbox::init_shortcuts()
 {
@@ -564,29 +567,30 @@ void tabbox::init_shortcuts()
 
 void tabbox::global_shortcut_changed(QAction* action, const QKeySequence& seq)
 {
-    if (qstrcmp(qPrintable(action->objectName()), s_windows) == 0) {
+    if (qstrcmp(qPrintable(action->objectName()), s_windows.untranslatedText()) == 0) {
         m_cut_walk_through_windows = seq;
-    } else if (qstrcmp(qPrintable(action->objectName()), s_windowsRev) == 0) {
+    } else if (qstrcmp(qPrintable(action->objectName()), s_windowsRev.untranslatedText()) == 0) {
         m_cut_walk_through_windows_reverse = seq;
-    } else if (qstrcmp(qPrintable(action->objectName()), s_app) == 0) {
+    } else if (qstrcmp(qPrintable(action->objectName()), s_app.untranslatedText()) == 0) {
         m_cut_walk_through_current_app_windows = seq;
-    } else if (qstrcmp(qPrintable(action->objectName()), s_appRev) == 0) {
+    } else if (qstrcmp(qPrintable(action->objectName()), s_appRev.untranslatedText()) == 0) {
         m_cut_walk_through_current_app_windows_reverse = seq;
-    } else if (qstrcmp(qPrintable(action->objectName()), s_windowsAlt) == 0) {
+    } else if (qstrcmp(qPrintable(action->objectName()), s_windowsAlt.untranslatedText()) == 0) {
         m_cut_walk_through_windows_alternative = seq;
-    } else if (qstrcmp(qPrintable(action->objectName()), s_windowsAltRev) == 0) {
+    } else if (qstrcmp(qPrintable(action->objectName()), s_windowsAltRev.untranslatedText()) == 0) {
         m_cut_walk_through_windows_alternative_reverse = seq;
-    } else if (qstrcmp(qPrintable(action->objectName()), s_appAlt) == 0) {
+    } else if (qstrcmp(qPrintable(action->objectName()), s_appAlt.untranslatedText()) == 0) {
         m_cut_walk_through_current_app_windows_alternative = seq;
-    } else if (qstrcmp(qPrintable(action->objectName()), s_appAltRev) == 0) {
+    } else if (qstrcmp(qPrintable(action->objectName()), s_appAltRev.untranslatedText()) == 0) {
         m_cut_walk_through_current_app_windows_alternative_reverse = seq;
-    } else if (qstrcmp(qPrintable(action->objectName()), s_desktops) == 0) {
+    } else if (qstrcmp(qPrintable(action->objectName()), s_desktops.untranslatedText()) == 0) {
         m_cut_walk_through_desktops = seq;
-    } else if (qstrcmp(qPrintable(action->objectName()), s_desktopsRev) == 0) {
+    } else if (qstrcmp(qPrintable(action->objectName()), s_desktopsRev.untranslatedText()) == 0) {
         m_cut_walk_through_desktops_reverse = seq;
-    } else if (qstrcmp(qPrintable(action->objectName()), s_desktopList) == 0) {
+    } else if (qstrcmp(qPrintable(action->objectName()), s_desktopList.untranslatedText()) == 0) {
         m_cut_walk_through_desktop_list = seq;
-    } else if (qstrcmp(qPrintable(action->objectName()), s_desktopListRev) == 0) {
+    } else if (qstrcmp(qPrintable(action->objectName()), s_desktopListRev.untranslatedText())
+               == 0) {
         m_cut_walk_through_desktop_list_reverse = seq;
     }
 }

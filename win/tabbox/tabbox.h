@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTimer>
 
 class KConfigGroup;
+class KLazyLocalizedString;
 class QAction;
 class QMouseEvent;
 class QKeyEvent;
@@ -337,7 +338,9 @@ private:
     bool establish_tabbox_grab();
     void remove_tabbox_grab();
     template<typename Slot>
-    void key(const char* action_name, Slot slot, const QKeySequence& shortcut = QKeySequence());
+    void key(const KLazyLocalizedString& action_name,
+             Slot slot,
+             const QKeySequence& shortcut = QKeySequence());
 
     bool toggle_mode(TabBoxMode mode);
 

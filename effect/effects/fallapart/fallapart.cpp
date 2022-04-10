@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <kwineffects/paint_data.h>
 #include <kwineffects/types.h>
 
+#include <QLoggingCategory>
 #include <cmath>
 
 Q_LOGGING_CATEGORY(KWIN_FALLAPART, "kwin_effect_fallapart", QtWarningMsg)
@@ -176,6 +177,8 @@ bool FallApartEffect::isRealWindow(EffectWindow* w)
 
 void FallApartEffect::slotWindowClosed(EffectWindow* c)
 {
+    if (effects->activeFullScreenEffect())
+        return;
     if (!isRealWindow(c))
         return;
     if (!c->isVisible())

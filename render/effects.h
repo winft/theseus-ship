@@ -221,10 +221,7 @@ public:
     void removeSupportProperty(const QByteArray& propertyName, Effect* effect) override;
 
     bool hasDecorationShadows() const override;
-
     bool decorationsHaveAlpha() const override;
-
-    bool decorationSupportsBlurBehind() const override;
 
     EffectFrame* effectFrame(EffectFrameStyle style,
                              bool staticSize,
@@ -319,6 +316,9 @@ public:
     EffectScreen* findScreen(int screenId) const override;
     bool isCursorHidden() const override;
     QImage blit_from_framebuffer(QRect const& geometry, double scale) const override;
+
+    QRect renderTargetRect() const override;
+    qreal renderTargetScale() const override;
 
     using PropertyEffectMap = QHash<QByteArray, QList<Effect*>>;
     PropertyEffectMap m_propertiesForEffects;
@@ -544,6 +544,7 @@ public:
     pid_t pid() const override;
 
     QRect decorationInnerRect() const override;
+    KDecoration2::Decoration* decoration() const override;
     QByteArray readProperty(long atom, long type, int format) const override;
     void deleteProperty(long atom) const override;
 

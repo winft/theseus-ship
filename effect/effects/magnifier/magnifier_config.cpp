@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAction>
 
-#include <KAboutData>
 #include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>
@@ -87,8 +86,6 @@ MagnifierEffectConfig::MagnifierEffectConfig(QWidget* parent, const QVariantList
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::Key_0);
 
     m_ui->editor->addCollection(m_actionCollection);
-
-    load();
 }
 
 MagnifierEffectConfig::~MagnifierEffectConfig()

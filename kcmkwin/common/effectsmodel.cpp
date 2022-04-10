@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KAboutData>
 #include <KCModule>
+#include <KCModuleLoader>
 #include <KConfigGroup>
 #include <KLocalizedString>
 #include <KPackage/PackageLoader>
@@ -329,7 +330,7 @@ void EffectsModel::loadJavascriptEffects(const KConfigGroup &kwinConfig)
 
         const QString pluginKeyword = plugin.value(QStringLiteral("X-KDE-PluginKeyword"));
         if (!pluginKeyword.isEmpty()) {
-            QDir package(QFileInfo(plugin.fileName()).dir());
+            QDir package(QFileInfo(plugin.metaDataFileName()).dir());
             package.cd(QStringLiteral("contents"));
             const QString xmlFile = package.filePath(QStringLiteral("config/main.xml"));
             const QString uiFile =package.filePath(QStringLiteral("ui/config.ui"));
@@ -614,14 +615,10 @@ QModelIndex EffectsModel::findByPluginId(const QString &pluginId) const
     return index(std::distance(m_effects.constBegin(), it), 0);
 }
 
-static KCModule *loadBinaryConfig(const QString &configModule, QObject *parent)
+static KCModule *loadBinaryConfig(const QString &configModule, QWidget *parent)
 {
-    if (configModule.isEmpty()) {
-        return nullptr;
-    }
-
     const KPluginMetaData metaData(QStringLiteral("kwin/effects/configs/") + configModule);
-    return KPluginFactory::instantiatePlugin<KCModule>(metaData, parent).plugin;
+    return KCModuleLoader::loadModule(metaData, parent);
 }
 
 static KCModule *findScriptedConfig(const QString &pluginId, QObject *parent)
@@ -647,11 +644,6 @@ void EffectsModel::requestConfigure(const QModelIndex &index, QWindow *transient
     } else {
         const QString configModule = index.data(ConfigModuleRole).toString();
         module = loadBinaryConfig(configModule, dialog);
-    }
-
-    if (!module) {
-        delete dialog;
-        return;
     }
 
     dialog->setWindowTitle(index.data(NameRole).toString());

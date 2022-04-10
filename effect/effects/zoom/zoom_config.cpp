@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAction>
 
-#include <KAboutData>
 #include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>
@@ -136,8 +135,6 @@ ZoomEffectConfig::ZoomEffectConfig(QWidget* parent, const QVariantList& args)
     KGlobalAccel::self()->setShortcut(a, QList<QKeySequence>() << Qt::META + Qt::Key_F6);
 
     m_ui->editor->addCollection(actionCollection);
-
-    load();
 }
 
 ZoomEffectConfig::~ZoomEffectConfig()

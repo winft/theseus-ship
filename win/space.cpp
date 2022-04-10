@@ -67,7 +67,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
 
@@ -76,6 +76,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <KConfig>
 #include <KConfigGroup>
 #include <KGlobalAccel>
+#include <KLazyLocalizedString>
 #include <KLocalizedString>
 #include <KProcess>
 #include <KStartupInfo>
@@ -117,7 +118,7 @@ space::space()
     // dbus interface
     new win::dbus::virtual_desktop_manager(win::virtual_desktop_manager::self());
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     // need to create the tabbox before compositing scene is setup
     tabbox::tabbox::create(this);
 #endif
@@ -782,31 +783,15 @@ QString space::supportInformation() const
     support.append(QStringLiteral("=============\n"));
 
     support.append(QStringLiteral("KWIN_BUILD_DECORATIONS: "));
-#ifdef KWIN_BUILD_DECORATIONS
-    support.append(yes);
-#else
-    support.append(no);
-#endif
+    support.append(KWIN_BUILD_DECORATIONS ? yes : no);
     support.append(QStringLiteral("KWIN_BUILD_TABBOX: "));
-#ifdef KWIN_BUILD_TABBOX
-    support.append(yes);
-#else
-    support.append(no);
-#endif
+    support.append(KWIN_BUILD_TABBOX ? yes : no);
     support.append(QStringLiteral("KWIN_BUILD_ACTIVITIES (deprecated): "));
     support.append(no);
     support.append(QStringLiteral("HAVE_PERF: "));
-#if HAVE_PERF
-    support.append(yes);
-#else
-    support.append(no);
-#endif
+    support.append(HAVE_PERF ? yes : no);
     support.append(QStringLiteral("HAVE_EPOXY_GLX: "));
-#if HAVE_EPOXY_GLX
-    support.append(yes);
-#else
-    support.append(no);
-#endif
+    support.append(HAVE_EPOXY_GLX ? yes : no);
     support.append(QStringLiteral("\n"));
 
     if (auto c = kwinApp()->x11Connection()) {
@@ -882,11 +867,7 @@ QString space::supportInformation() const
     support.append(QStringLiteral("Multi-Head: "));
     support.append(QStringLiteral("not supported anymore\n"));
     support.append(QStringLiteral("Active screen follows mouse: "));
-
-    if (kwinApp()->options->get_current_output_follows_mouse())
-        support.append(QStringLiteral(" yes\n"));
-    else
-        support.append(QStringLiteral(" no\n"));
+    support.append(kwinApp()->options->get_current_output_follows_mouse() ? yes : no);
 
     auto const& outputs = kwinApp()->get_base().get_outputs();
     support.append(QStringLiteral("Number of Screens: %1\n\n").arg(outputs.size()));
@@ -977,44 +958,23 @@ QString space::supportInformation() const
 
             support.append(QStringLiteral("Direct rendering: "));
             support.append(QStringLiteral("Requires strict binding: "));
-            if (!platform->isLooseBinding()) {
-                support.append(QStringLiteral("yes\n"));
-            } else {
-                support.append(QStringLiteral("no\n"));
-            }
+            support.append(!platform->isLooseBinding() ? yes : no);
             support.append(QStringLiteral("GLSL shaders: "));
             if (platform->supports(GLSL)) {
-                if (platform->supports(LimitedGLSL)) {
-                    support.append(QStringLiteral(" limited\n"));
-                } else {
-                    support.append(QStringLiteral(" yes\n"));
-                }
+                support.append(platform->supports(LimitedGLSL) ? QStringLiteral("limited\n") : yes);
             } else {
-                support.append(QStringLiteral(" no\n"));
+                support.append(no);
             }
             support.append(QStringLiteral("Texture NPOT support: "));
             if (platform->supports(TextureNPOT)) {
-                if (platform->supports(LimitedNPOT)) {
-                    support.append(QStringLiteral(" limited\n"));
-                } else {
-                    support.append(QStringLiteral(" yes\n"));
-                }
+                support.append(platform->supports(LimitedNPOT) ? QStringLiteral("limited\n") : yes);
             } else {
-                support.append(QStringLiteral(" no\n"));
+                support.append(no);
             }
             support.append(QStringLiteral("Virtual Machine: "));
-            if (platform->isVirtualMachine()) {
-                support.append(QStringLiteral(" yes\n"));
-            } else {
-                support.append(QStringLiteral(" no\n"));
-            }
+            support.append(platform->isVirtualMachine() ? yes : no);
             support.append(QStringLiteral("Timer query support: "));
-            if (platform->supports(GLFeature::TimerQuery)) {
-                support.append(QStringLiteral("yes\n"));
-            } else {
-                support.append(QStringLiteral("no\n"));
-            }
-
+            support.append(platform->supports(GLFeature::TimerQuery) ? yes : no);
             support.append(QStringLiteral("OpenGL 2 Shaders are used\n"));
             break;
         }
@@ -1166,7 +1126,7 @@ win::screen_edge* space::create_screen_edge(win::screen_edger& edger)
 
 void space::updateTabbox()
 {
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     win::tabbox* tabBox = tabbox::tabbox::self();
     if (tabBox->is_displayed()) {
         tabBox->reset(true);
@@ -3084,173 +3044,176 @@ void space::initShortcuts()
     // new DEF3 allows to pass data to the action, replacing the %1 argument in the name
 
 #define DEF2(name, descr, key, fnSlot)                                                             \
-    initShortcut(QStringLiteral(name), i18n(descr), key, &space::fnSlot);
+    initShortcut(QStringLiteral(name), descr.toString(), key, &space::fnSlot);
 
-#define DEF(name, key, fnSlot) initShortcut(QStringLiteral(name), i18n(name), key, &space::fnSlot);
+#define DEF(name, key, fnSlot)                                                                     \
+    initShortcut(QString::fromUtf8(name.untranslatedText()), name.toString(), key, &space::fnSlot);
 
 #define DEF3(name, key, fnSlot, value)                                                             \
-    initShortcut(QStringLiteral(name).arg(value), i18n(name, value), key, &space::fnSlot, value);
+    initShortcut(QString::fromUtf8(name.untranslatedText()).arg(value),                            \
+                 name.subs(value).toString(),                                                      \
+                 key,                                                                              \
+                 &space::fnSlot,                                                                   \
+                 value);
 
 #define DEF4(name, descr, key, functor)                                                            \
-    initShortcut(QStringLiteral(name), i18n(descr), key, functor);
+    initShortcut(QStringLiteral(name), descr.toString(), key, functor);
 
 #define DEF5(name, key, functor, value)                                                            \
-    initShortcut(QStringLiteral(name).arg(value), i18n(name, value), key, functor, value);
+    initShortcut(QString::fromUtf8(name.untranslatedText()).arg(value),                            \
+                 name.subs(value).toString(),                                                      \
+                 key,                                                                              \
+                 functor,                                                                          \
+                 value);
 
 #define DEF6(name, key, target, fnSlot)                                                            \
-    initShortcut(QStringLiteral(name), i18n(name), key, target, &fnSlot);
+    initShortcut(QString::fromUtf8(name.untranslatedText()), name.toString(), key, target, &fnSlot);
 
-    DEF(I18N_NOOP("Window Operations Menu"), Qt::ALT + Qt::Key_F3, slotWindowOperations);
-    DEF2("Window Close", I18N_NOOP("Close Window"), Qt::ALT + Qt::Key_F4, slotWindowClose);
+    DEF(kli18n("Window Operations Menu"), Qt::ALT + Qt::Key_F3, slotWindowOperations);
+    DEF2("Window Close", kli18n("Close Window"), Qt::ALT + Qt::Key_F4, slotWindowClose);
     DEF2("Window Maximize",
-         I18N_NOOP("Maximize Window"),
+         kli18n("Maximize Window"),
          Qt::META + Qt::Key_PageUp,
          slotWindowMaximize);
     DEF2("Window Maximize Vertical",
-         I18N_NOOP("Maximize Window Vertically"),
+         kli18n("Maximize Window Vertically"),
          0,
          slotWindowMaximizeVertical);
     DEF2("Window Maximize Horizontal",
-         I18N_NOOP("Maximize Window Horizontally"),
+         kli18n("Maximize Window Horizontally"),
          0,
          slotWindowMaximizeHorizontal);
     DEF2("Window Minimize",
-         I18N_NOOP("Minimize Window"),
+         kli18n("Minimize Window"),
          Qt::META + Qt::Key_PageDown,
          slotWindowMinimize);
-    DEF2("Window Move", I18N_NOOP("Move Window"), 0, slotWindowMove);
-    DEF2("Window Resize", I18N_NOOP("Resize Window"), 0, slotWindowResize);
-    DEF2("Window Raise", I18N_NOOP("Raise Window"), 0, slotWindowRaise);
-    DEF2("Window Lower", I18N_NOOP("Lower Window"), 0, slotWindowLower);
-    DEF(I18N_NOOP("Toggle Window Raise/Lower"), 0, slotWindowRaiseOrLower);
-    DEF2("Window Fullscreen", I18N_NOOP("Make Window Fullscreen"), 0, slotWindowFullScreen);
-    DEF2("Window No Border", I18N_NOOP("Hide Window Border"), 0, slotWindowNoBorder);
-    DEF2("Window Above Other Windows", I18N_NOOP("Keep Window Above Others"), 0, slotWindowAbove);
-    DEF2("Window Below Other Windows", I18N_NOOP("Keep Window Below Others"), 0, slotWindowBelow);
-    DEF(I18N_NOOP("Activate Window Demanding Attention"),
+    DEF2("Window Move", kli18n("Move Window"), 0, slotWindowMove);
+    DEF2("Window Resize", kli18n("Resize Window"), 0, slotWindowResize);
+    DEF2("Window Raise", kli18n("Raise Window"), 0, slotWindowRaise);
+    DEF2("Window Lower", kli18n("Lower Window"), 0, slotWindowLower);
+    DEF(kli18n("Toggle Window Raise/Lower"), 0, slotWindowRaiseOrLower);
+    DEF2("Window Fullscreen", kli18n("Make Window Fullscreen"), 0, slotWindowFullScreen);
+    DEF2("Window No Border", kli18n("Hide Window Border"), 0, slotWindowNoBorder);
+    DEF2("Window Above Other Windows", kli18n("Keep Window Above Others"), 0, slotWindowAbove);
+    DEF2("Window Below Other Windows", kli18n("Keep Window Below Others"), 0, slotWindowBelow);
+    DEF(kli18n("Activate Window Demanding Attention"),
         Qt::CTRL + Qt::ALT + Qt::Key_A,
         slotActivateAttentionWindow);
-    DEF(I18N_NOOP("Setup Window Shortcut"), 0, slotSetupWindowShortcut);
-    DEF2("Window Pack Right", I18N_NOOP("Pack Window to the Right"), 0, slotWindowPackRight);
-    DEF2("Window Pack Left", I18N_NOOP("Pack Window to the Left"), 0, slotWindowPackLeft);
-    DEF2("Window Pack Up", I18N_NOOP("Pack Window Up"), 0, slotWindowPackUp);
-    DEF2("Window Pack Down", I18N_NOOP("Pack Window Down"), 0, slotWindowPackDown);
+    DEF(kli18n("Setup Window Shortcut"), 0, slotSetupWindowShortcut);
+    DEF2("Window Pack Right", kli18n("Pack Window to the Right"), 0, slotWindowPackRight);
+    DEF2("Window Pack Left", kli18n("Pack Window to the Left"), 0, slotWindowPackLeft);
+    DEF2("Window Pack Up", kli18n("Pack Window Up"), 0, slotWindowPackUp);
+    DEF2("Window Pack Down", kli18n("Pack Window Down"), 0, slotWindowPackDown);
     DEF2("Window Grow Horizontal",
-         I18N_NOOP("Pack Grow Window Horizontally"),
+         kli18n("Pack Grow Window Horizontally"),
          0,
          slotWindowGrowHorizontal);
-    DEF2("Window Grow Vertical",
-         I18N_NOOP("Pack Grow Window Vertically"),
-         0,
-         slotWindowGrowVertical);
+    DEF2("Window Grow Vertical", kli18n("Pack Grow Window Vertically"), 0, slotWindowGrowVertical);
     DEF2("Window Shrink Horizontal",
-         I18N_NOOP("Pack Shrink Window Horizontally"),
+         kli18n("Pack Shrink Window Horizontally"),
          0,
          slotWindowShrinkHorizontal);
     DEF2("Window Shrink Vertical",
-         I18N_NOOP("Pack Shrink Window Vertically"),
+         kli18n("Pack Shrink Window Vertically"),
          0,
          slotWindowShrinkVertical);
     DEF4("Window Quick Tile Left",
-         I18N_NOOP("Quick Tile Window to the Left"),
+         kli18n("Quick Tile Window to the Left"),
          Qt::META + Qt::Key_Left,
          std::bind(&space::quickTileWindow, this, win::quicktiles::left));
     DEF4("Window Quick Tile Right",
-         I18N_NOOP("Quick Tile Window to the Right"),
+         kli18n("Quick Tile Window to the Right"),
          Qt::META + Qt::Key_Right,
          std::bind(&space::quickTileWindow, this, win::quicktiles::right));
     DEF4("Window Quick Tile Top",
-         I18N_NOOP("Quick Tile Window to the Top"),
+         kli18n("Quick Tile Window to the Top"),
          Qt::META + Qt::Key_Up,
          std::bind(&space::quickTileWindow, this, win::quicktiles::top));
     DEF4("Window Quick Tile Bottom",
-         I18N_NOOP("Quick Tile Window to the Bottom"),
+         kli18n("Quick Tile Window to the Bottom"),
          Qt::META + Qt::Key_Down,
          std::bind(&space::quickTileWindow, this, win::quicktiles::bottom));
     DEF4("Window Quick Tile Top Left",
-         I18N_NOOP("Quick Tile Window to the Top Left"),
+         kli18n("Quick Tile Window to the Top Left"),
          0,
          std::bind(&space::quickTileWindow, this, win::quicktiles::top | win::quicktiles::left));
     DEF4("Window Quick Tile Bottom Left",
-         I18N_NOOP("Quick Tile Window to the Bottom Left"),
+         kli18n("Quick Tile Window to the Bottom Left"),
          0,
          std::bind(&space::quickTileWindow, this, win::quicktiles::bottom | win::quicktiles::left));
     DEF4("Window Quick Tile Top Right",
-         I18N_NOOP("Quick Tile Window to the Top Right"),
+         kli18n("Quick Tile Window to the Top Right"),
          0,
          std::bind(&space::quickTileWindow, this, win::quicktiles::top | win::quicktiles::right));
     DEF4(
         "Window Quick Tile Bottom Right",
-        I18N_NOOP("Quick Tile Window to the Bottom Right"),
+        kli18n("Quick Tile Window to the Bottom Right"),
         0,
         std::bind(&space::quickTileWindow, this, win::quicktiles::bottom | win::quicktiles::right));
     DEF4("Switch Window Up",
-         I18N_NOOP("Switch to Window Above"),
+         kli18n("Switch to Window Above"),
          Qt::META + Qt::ALT + Qt::Key_Up,
          std::bind(
              static_cast<void (space::*)(Direction)>(&space::switchWindow), this, DirectionNorth));
     DEF4("Switch Window Down",
-         I18N_NOOP("Switch to Window Below"),
+         kli18n("Switch to Window Below"),
          Qt::META + Qt::ALT + Qt::Key_Down,
          std::bind(
              static_cast<void (space::*)(Direction)>(&space::switchWindow), this, DirectionSouth));
     DEF4("Switch Window Right",
-         I18N_NOOP("Switch to Window to the Right"),
+         kli18n("Switch to Window to the Right"),
          Qt::META + Qt::ALT + Qt::Key_Right,
          std::bind(
              static_cast<void (space::*)(Direction)>(&space::switchWindow), this, DirectionEast));
     DEF4("Switch Window Left",
-         I18N_NOOP("Switch to Window to the Left"),
+         kli18n("Switch to Window to the Left"),
          Qt::META + Qt::ALT + Qt::Key_Left,
          std::bind(
              static_cast<void (space::*)(Direction)>(&space::switchWindow), this, DirectionWest));
     DEF2("Increase Opacity",
-         I18N_NOOP("Increase Opacity of Active Window by 5 %"),
+         kli18n("Increase Opacity of Active Window by 5 %"),
          0,
          slotIncreaseWindowOpacity);
     DEF2("Decrease Opacity",
-         I18N_NOOP("Decrease Opacity of Active Window by 5 %"),
+         kli18n("Decrease Opacity of Active Window by 5 %"),
          0,
          slotLowerWindowOpacity);
 
     DEF2("Window On All Desktops",
-         I18N_NOOP("Keep Window on All Desktops"),
+         kli18n("Keep Window on All Desktops"),
          0,
          slotWindowOnAllDesktops);
 
     for (int i = 1; i < 21; ++i) {
-        DEF5(I18N_NOOP("Window to Desktop %1"),
-             0,
-             std::bind(&space::slotWindowToDesktop, this, i),
-             i);
+        DEF5(kli18n("Window to Desktop %1"), 0, std::bind(&space::slotWindowToDesktop, this, i), i);
     }
-    DEF(I18N_NOOP("Window to Next Desktop"), 0, slotWindowToNextDesktop);
-    DEF(I18N_NOOP("Window to Previous Desktop"), 0, slotWindowToPreviousDesktop);
-    DEF(I18N_NOOP("Window One Desktop to the Right"), 0, slotWindowToDesktopRight);
-    DEF(I18N_NOOP("Window One Desktop to the Left"), 0, slotWindowToDesktopLeft);
-    DEF(I18N_NOOP("Window One Desktop Up"), 0, slotWindowToDesktopUp);
-    DEF(I18N_NOOP("Window One Desktop Down"), 0, slotWindowToDesktopDown);
+    DEF(kli18n("Window to Next Desktop"), 0, slotWindowToNextDesktop);
+    DEF(kli18n("Window to Previous Desktop"), 0, slotWindowToPreviousDesktop);
+    DEF(kli18n("Window One Desktop to the Right"), 0, slotWindowToDesktopRight);
+    DEF(kli18n("Window One Desktop to the Left"), 0, slotWindowToDesktopLeft);
+    DEF(kli18n("Window One Desktop Up"), 0, slotWindowToDesktopUp);
+    DEF(kli18n("Window One Desktop Down"), 0, slotWindowToDesktopDown);
 
     for (int i = 0; i < 8; ++i) {
-        DEF3(I18N_NOOP("Window to Screen %1"), 0, slotWindowToScreen, i);
+        DEF3(kli18n("Window to Screen %1"), 0, slotWindowToScreen, i);
     }
-    DEF(I18N_NOOP("Window to Next Screen"), 0, slotWindowToNextScreen);
-    DEF(I18N_NOOP("Window to Previous Screen"), 0, slotWindowToPrevScreen);
-    DEF(I18N_NOOP("Show Desktop"), Qt::META + Qt::Key_D, slotToggleShowDesktop);
+    DEF(kli18n("Window to Next Screen"), 0, slotWindowToNextScreen);
+    DEF(kli18n("Window to Previous Screen"), 0, slotWindowToPrevScreen);
+    DEF(kli18n("Show Desktop"), Qt::META + Qt::Key_D, slotToggleShowDesktop);
 
     for (int i = 0; i < 8; ++i) {
-        DEF3(I18N_NOOP("Switch to Screen %1"), 0, slotSwitchToScreen, i);
+        DEF3(kli18n("Switch to Screen %1"), 0, slotSwitchToScreen, i);
     }
 
-    DEF(I18N_NOOP("Switch to Next Screen"), 0, slotSwitchToNextScreen);
-    DEF(I18N_NOOP("Switch to Previous Screen"), 0, slotSwitchToPrevScreen);
+    DEF(kli18n("Switch to Next Screen"), 0, slotSwitchToNextScreen);
+    DEF(kli18n("Switch to Previous Screen"), 0, slotSwitchToPrevScreen);
 
-    DEF(I18N_NOOP("Kill Window"), Qt::CTRL + Qt::ALT + Qt::Key_Escape, slotKillWindow);
-    DEF6(I18N_NOOP("Suspend Compositing"),
+    DEF(kli18n("Kill Window"), Qt::CTRL + Qt::ALT + Qt::Key_Escape, slotKillWindow);
+    DEF6(kli18n("Suspend Compositing"),
          Qt::SHIFT + Qt::ALT + Qt::Key_F12,
          render::compositor::self(),
          render::compositor::toggleCompositing);
-    DEF6(I18N_NOOP("Invert Screen Colors"),
+    DEF6(kli18n("Invert Screen Colors"),
          0,
          kwinApp()->get_base().render.get(),
          render::platform::invertScreen);
@@ -3262,7 +3225,7 @@ void space::initShortcuts()
 #undef DEF5
 #undef DEF6
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     tabbox::tabbox::self()->init_shortcuts();
 #endif
     win::virtual_desktop_manager::self()->initShortcuts();

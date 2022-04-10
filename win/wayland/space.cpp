@@ -30,7 +30,7 @@
 #include "win/x11/stacking_tree.h"
 #include "xwl/surface.h"
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
 #endif
 

@@ -52,6 +52,7 @@ Integration::Integration()
     : QObject()
     , QPlatformIntegration()
     , m_fontDb(new QGenericUnixFontDatabase())
+    , m_services(new QGenericUnixServices())
 {
 }
 
@@ -60,6 +61,11 @@ Integration::~Integration()
     for (QPlatformScreen *platformScreen : m_screens) {
         QWindowSystemInterface::handleScreenRemoved(platformScreen);
     }
+}
+
+QVector<Screen*> Integration::screens() const
+{
+    return m_screens;
 }
 
 bool Integration::hasCapability(Capability cap) const
@@ -95,7 +101,7 @@ void Integration::initialize()
         }
     );
     QPlatformIntegration::initialize();
-    auto dummyScreen = new Screen(-1);
+    auto dummyScreen = new Screen(nullptr, this);
     QWindowSystemInterface::handleScreenAdded(dummyScreen);
     m_screens << dummyScreen;
 }
@@ -148,24 +154,33 @@ QPlatformOpenGLContext* Integration::createPlatformOpenGLContext(QOpenGLContext*
 
 void Integration::initScreens()
 {
-    auto const screens_count = kwinApp()->get_base().get_outputs().size();
+    auto const outputs = kwinApp()->get_base().get_outputs();
     QVector<Screen*> newScreens;
 
-    newScreens.reserve(std::max<size_t>(screens_count, 1));
-    for (size_t i = 0; i < screens_count; i++) {
-        auto screen = new Screen(i);
+    newScreens.reserve(std::max<size_t>(outputs.size(), 1));
+
+    for (auto output : outputs) {
+        auto screen = new Screen(output, this);
         QWindowSystemInterface::handleScreenAdded(screen);
         newScreens << screen;
     }
+
     if (newScreens.isEmpty()) {
-        auto dummyScreen = new Screen(-1);
+        auto dummyScreen = new Screen(nullptr, this);
         QWindowSystemInterface::handleScreenAdded(dummyScreen);
         newScreens << dummyScreen;
     }
+
     while (!m_screens.isEmpty()) {
         QWindowSystemInterface::handleScreenRemoved(m_screens.takeLast());
     }
+
     m_screens = newScreens;
+}
+
+QPlatformServices *Integration::services() const
+{
+    return m_services.data();
 }
 
 }

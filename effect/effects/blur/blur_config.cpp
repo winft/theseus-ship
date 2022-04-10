@@ -22,7 +22,6 @@
 #include "blurconfig.h"
 #include <config-kwin.h>
 
-#include <KAboutData>
 #include <KPluginFactory>
 #include <kwineffects_interface.h>
 
@@ -37,8 +36,6 @@ BlurEffectConfig::BlurEffectConfig(QWidget* parent, const QVariantList& args)
     ui.setupUi(this);
     BlurConfig::instance(KWIN_CONFIG);
     addConfig(BlurConfig::self(), this);
-
-    load();
 }
 
 BlurEffectConfig::~BlurEffectConfig()

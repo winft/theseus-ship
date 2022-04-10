@@ -6,11 +6,13 @@
 #pragma once
 
 #include <kwingl/texture.h>
+#include <kwingl/utils.h>
 
 #include <QRegion>
 #include <deque>
 #include <epoxy/egl.h>
 #include <memory>
+#include <optional>
 
 namespace KWin::render::backend::wlroots
 {
@@ -43,8 +45,8 @@ public:
     std::deque<QRegion> damageHistory;
 
     struct {
-        GLuint framebuffer = 0;
-        GLuint texture = 0;
+        GLRenderTarget fbo;
+        std::optional<GLTexture> texture;
         std::shared_ptr<GLVertexBuffer> vbo;
     } render;
 };

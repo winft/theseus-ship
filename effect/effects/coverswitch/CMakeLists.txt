@@ -9,18 +9,26 @@ kconfig_add_kcfg_files(coverswitch_SOURCES
     coverswitchconfig.kcfgc
 )
 kwin4_add_effect_module(kwin4_effect_coverswitch ${coverswitch_SOURCES})
+target_link_libraries(kwin4_effect_coverswitch PRIVATE
+    kwineffects
+    KF5::ConfigWidgets
+    KF5::I18n
+)
 
 #######################################
 # Config
-set(kwin_coverswitch_config_SRCS coverswitch_config.cpp)
-ki18n_wrap_ui(kwin_coverswitch_config_SRCS coverswitch_config.ui)
-kconfig_add_kcfg_files(kwin_coverswitch_config_SRCS coverswitchconfig.kcfgc)
+if (KWIN_BUILD_KCMS)
+  set(kwin_coverswitch_config_SRCS coverswitch_config.cpp)
+  ki18n_wrap_ui(kwin_coverswitch_config_SRCS coverswitch_config.ui)
+  kconfig_add_kcfg_files(kwin_coverswitch_config_SRCS coverswitchconfig.kcfgc)
 
-kwin_add_effect_config(kwin_coverswitch_config ${kwin_coverswitch_config_SRCS})
+  kwin_add_effect_config(kwin_coverswitch_config ${kwin_coverswitch_config_SRCS})
 
-target_link_libraries(kwin_coverswitch_config
+  target_link_libraries(kwin_coverswitch_config
     KF5::ConfigWidgets
+    KF5::CoreAddons
     KF5::I18n
     Qt::DBus
     KWinEffectsInterface
-)
+  )
+endif()

@@ -30,7 +30,6 @@ add_library(kcm_kwinscreenedges MODULE ${kcm_kwinscreenedges_PART_SRCS})
 set(kcm_screenedges_LIBS
     Qt::DBus
 
-    KF5::Completion
     KF5::ConfigCore
     KF5::ConfigWidgets
     KF5::KCMUtils
@@ -62,4 +61,4 @@ add_library(kcm_kwintouchscreen MODULE ${kcm_kwintouchscreenedges_PART_SRCS})
 target_link_libraries(kcm_kwintouchscreen ${X11_LIBRARIES} ${kcm_screenedges_LIBS})
 
 install(TARGETS kcm_kwinscreenedges kcm_kwintouchscreen DESTINATION ${KDE_INSTALL_PLUGINDIR})
-install(FILES kwinscreenedges.desktop kwintouchscreen.desktop DESTINATION ${KDE_INSTALL_KSERVICES5DIR})
+install(FILES kwinscreenedges.desktop kwintouchscreen.desktop DESTINATION ${KDE_INSTALL_KSERVICESDIR})

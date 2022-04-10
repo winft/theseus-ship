@@ -34,9 +34,12 @@
 #include <QScreen> // for QGuiApplication
 #include <QTime>
 #include <cmath> // for ceil()
+#include <cstdlib>
 
 #include <KConfigGroup>
 #include <KSharedConfig>
+
+#include <KDecoration2/Decoration>
 
 namespace KWin
 {
@@ -296,6 +299,23 @@ bool BlurEffect::supported()
     return supported;
 }
 
+bool BlurEffect::decorationSupportsBlurBehind(const EffectWindow* w) const
+{
+    return w->decoration() && !w->decoration()->blurRegion().isNull();
+}
+
+QRegion BlurEffect::decorationBlurRegion(const EffectWindow* w) const
+{
+    if (!decorationSupportsBlurBehind(w)) {
+        return QRegion();
+    }
+
+    QRegion decorationRegion = QRegion(w->decoration()->rect()) - w->decorationInnerRect();
+
+    // we return only blurred regions that belong to decoration region
+    return decorationRegion.intersected(w->decoration()->blurRegion());
+}
+
 QRect BlurEffect::expand(const QRect& rect) const
 {
     return rect.adjusted(-m_expandSize, -m_expandSize, m_expandSize, m_expandSize);
@@ -320,8 +340,8 @@ QRegion BlurEffect::blurRegion(const EffectWindow* w) const
     if (value.isValid()) {
         const QRegion appRegion = qvariant_cast<QRegion>(value);
         if (!appRegion.isEmpty()) {
-            if (w->decorationHasAlpha() && effects->decorationSupportsBlurBehind()) {
-                region = QRegion(w->rect()) - w->decorationInnerRect();
+            if (w->decorationHasAlpha() && decorationSupportsBlurBehind(w)) {
+                region = decorationBlurRegion(w);
             }
             region |= appRegion.translated(w->contentsRect().topLeft()) & w->decorationInnerRect();
         } else {
@@ -329,10 +349,10 @@ QRegion BlurEffect::blurRegion(const EffectWindow* w) const
             // for the whole window.
             region = w->rect();
         }
-    } else if (w->decorationHasAlpha() && effects->decorationSupportsBlurBehind()) {
+    } else if (w->decorationHasAlpha() && decorationSupportsBlurBehind(w)) {
         // If the client hasn't specified a blur region, we'll only enable
         // the effect behind the decoration.
-        region = QRegion(w->rect()) - w->decorationInnerRect();
+        region = decorationBlurRegion(w);
     }
 
     return region;
@@ -410,16 +430,19 @@ void BlurEffect::prePaintWindow(EffectWindow* w,
         return;
     }
 
-    // to blur an area partially we have to shrink the opaque area of a window
-    QRegion newClip;
     const QRegion oldClip = data.clip;
-    for (const QRect& rect : data.clip) {
-        newClip |= rect.adjusted(m_expandSize, m_expandSize, -m_expandSize, -m_expandSize);
-    }
-    data.clip = newClip;
+    if (data.clip.intersects(m_currentBlur)) {
+        // to blur an area partially we have to shrink the opaque area of a window
+        QRegion newClip;
+        for (const QRect& rect : data.clip) {
+            newClip |= rect.adjusted(m_expandSize, m_expandSize, -m_expandSize, -m_expandSize);
+        }
+        data.clip = newClip;
 
-    // we don't have to blur a region we don't see
-    m_currentBlur -= newClip;
+        // we don't have to blur a region we don't see
+        m_currentBlur -= newClip;
+    }
+
     // if we have to paint a non-opaque part of this window that intersects with the
     // currently blurred region we have to redraw the whole region
     if ((data.paint - oldClip).intersects(m_currentBlur)) {
@@ -466,8 +489,7 @@ bool BlurEffect::shouldBlur(const EffectWindow* w, int mask, const WindowPaintDa
         && !w->data(WindowForceBlurRole).toBool())
         return false;
 
-    bool blurBehindDecos
-        = effects->decorationsHaveAlpha() && effects->decorationSupportsBlurBehind();
+    bool blurBehindDecos = effects->decorationsHaveAlpha() && decorationSupportsBlurBehind(w);
 
     if (!w->hasAlpha() && w->opacity() >= 1.0 && !(blurBehindDecos && w->hasDecoration()))
         return false;
@@ -477,8 +499,8 @@ bool BlurEffect::shouldBlur(const EffectWindow* w, int mask, const WindowPaintDa
 
 void BlurEffect::drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data)
 {
-    const QRect screen = GLRenderTarget::virtualScreenGeometry();
     if (shouldBlur(w, mask, data)) {
+        const QRect screen = effects->renderTargetRect();
         QRegion shape = region & blurRegion(w).translated(w->pos()) & screen;
 
         // let's do the evil parts - someone wants to blur behind a transformed window
@@ -549,7 +571,7 @@ void BlurEffect::generateNoiseTexture()
     }
 
     // Init randomness based on time
-    qsrand((uint)QTime::currentTime().msec());
+    std::srand((uint)QTime::currentTime().msec());
 
     QImage noiseImage(QSize(256, 256), QImage::Format_Grayscale8);
 
@@ -557,7 +579,7 @@ void BlurEffect::generateNoiseTexture()
         uint8_t* noiseImageLine = (uint8_t*)noiseImage.scanLine(y);
 
         for (int x = 0; x < noiseImage.width(); x++) {
-            noiseImageLine[x] = qrand() % m_noiseStrength;
+            noiseImageLine[x] = std::rand() % m_noiseStrength;
         }
     }
 
@@ -594,8 +616,6 @@ void BlurEffect::doBlur(const QRegion& shape,
 
     const QRect sourceRect = expandedBlurRegion.boundingRect() & screen;
     const QRect destRect = sourceRect.translated(xTranslate, yTranslate);
-
-    GLRenderTarget::pushRenderTargets(m_renderTargetStack);
     int blurRectCount = expandedBlurRegion.rectCount() * 6;
 
     /*
@@ -606,7 +626,9 @@ void BlurEffect::doBlur(const QRegion& shape,
      * when maximized windows or windows near the panel affect the dock blur.
      */
     if (isDock) {
-        m_renderTargets.last()->blitFromFramebuffer(sourceRect, destRect);
+        m_renderTargets.last()->blitFromFramebuffer(effects->mapToRenderTarget(sourceRect),
+                                                    destRect);
+        GLRenderTarget::pushRenderTargets(m_renderTargetStack);
 
         if (useSRGB) {
             glEnable(GL_FRAMEBUFFER_SRGB);
@@ -617,7 +639,9 @@ void BlurEffect::doBlur(const QRegion& shape,
         mvp.ortho(0, screenRect.width(), screenRect.height(), 0, 0, 65535);
         copyScreenSampleTexture(vbo, blurRectCount, shape.translated(xTranslate, yTranslate), mvp);
     } else {
-        m_renderTargets.first()->blitFromFramebuffer(sourceRect, destRect);
+        m_renderTargets.first()->blitFromFramebuffer(effects->mapToRenderTarget(sourceRect),
+                                                     destRect);
+        GLRenderTarget::pushRenderTargets(m_renderTargetStack);
 
         if (useSRGB) {
             glEnable(GL_FRAMEBUFFER_SRGB);
@@ -694,8 +718,7 @@ void BlurEffect::upscaleRenderToScreen(GLVertexBuffer* vbo,
     m_renderTextures[1].bind();
 
     m_shader->bind(BlurShader::UpSampleType);
-    m_shader->setTargetTextureSize(m_renderTextures[0].size()
-                                   * GLRenderTarget::virtualScreenScale());
+    m_shader->setTargetTextureSize(m_renderTextures[0].size() * effects->renderTargetScale());
 
     m_shader->setOffset(m_offset);
     m_shader->setModelViewProjectionMatrix(screenProjection);
@@ -712,10 +735,9 @@ void BlurEffect::applyNoise(GLVertexBuffer* vbo,
                             QPoint windowPosition)
 {
     m_shader->bind(BlurShader::NoiseSampleType);
-    m_shader->setTargetTextureSize(m_renderTextures[0].size()
-                                   * GLRenderTarget::virtualScreenScale());
-    m_shader->setNoiseTextureSize(m_noiseTexture.size() * GLRenderTarget::virtualScreenScale());
-    m_shader->setTexturePosition(windowPosition * GLRenderTarget::virtualScreenScale());
+    m_shader->setTargetTextureSize(m_renderTextures[0].size() * effects->renderTargetScale());
+    m_shader->setNoiseTextureSize(m_noiseTexture.size() * effects->renderTargetScale());
+    m_shader->setTexturePosition(windowPosition * effects->renderTargetScale());
 
     m_noiseTexture.bind();
 

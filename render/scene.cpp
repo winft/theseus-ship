@@ -684,4 +684,36 @@ QVector<QByteArray> scene::openGLPlatformInterfaceExtensions() const
     return QVector<QByteArray>{};
 }
 
+QRect scene::renderTargetRect() const
+{
+    return m_renderTargetRect;
+}
+
+void scene::setRenderTargetRect(const QRect& rect)
+{
+    m_renderTargetRect = rect;
+}
+
+qreal scene::renderTargetScale() const
+{
+    return m_renderTargetScale;
+}
+
+void scene::setRenderTargetScale(qreal scale)
+{
+    m_renderTargetScale = scale;
+}
+
+QRegion scene::mapToRenderTarget(const QRegion& region) const
+{
+    QRegion result;
+    for (auto const& rect : region) {
+        result += QRect((rect.x() - m_renderTargetRect.x()) * m_renderTargetScale,
+                        (rect.y() - m_renderTargetRect.y()) * m_renderTargetScale,
+                        rect.width() * m_renderTargetScale,
+                        rect.height() * m_renderTargetScale);
+    }
+    return result;
+}
+
 }

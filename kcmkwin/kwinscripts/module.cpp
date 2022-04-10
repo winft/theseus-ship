@@ -37,10 +37,10 @@
 #include <KPackage/PackageStructure>
 #include <KPluginFactory>
 
-#include <KNewStuff3/KNS3/Button>
+#include <KNSWidgets/Button>
 
-#include "version.h"
 #include "kwinscriptsdata.h"
+#include "config-kwin.h"
 
 Module::Module(QWidget *parent, const QVariantList &args) :
     KCModule(parent, args),
@@ -50,7 +50,7 @@ Module::Module(QWidget *parent, const QVariantList &args) :
 {
     KAboutData *about = new KAboutData("kwin-scripts",
                                        i18n("KWin Scripts"),
-                                       global_s_versionStringFull,
+                                       KWIN_VERSION_STRING,
                                        i18n("Configure KWin scripts"),
                                        KAboutLicense::GPL_V2);
 
@@ -65,7 +65,7 @@ Module::Module(QWidget *parent, const QVariantList &args) :
     ui->messageWidget->hide();
 
     ui->ghnsButton->setConfigFile(QStringLiteral("kwinscripts.knsrc"));
-    connect(ui->ghnsButton, &KNS3::Button::dialogFinished, this, [this](const KNS3::Entry::List &changedEntries) {
+    connect(ui->ghnsButton, &KNSWidgets::Button::dialogFinished, this, [this](const KNSCore::Entry::List &changedEntries) {
         if (!changedEntries.isEmpty()) {
             ui->scriptSelector->clear();
             updateListViewContents();

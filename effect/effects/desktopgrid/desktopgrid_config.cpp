@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAction>
 
-#include <KAboutData>
 #include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>
@@ -99,24 +98,21 @@ DesktopGridEffectConfig::DesktopGridEffectConfig(QWidget* parent, const QVariant
     DesktopGridConfig::instance(KWIN_CONFIG);
     addConfig(DesktopGridConfig::self(), m_ui);
     connect(m_ui->kcfg_LayoutMode,
-            qOverload<int>(&KComboBox::currentIndexChanged),
+            qOverload<int>(&QComboBox::currentIndexChanged),
             this,
             &DesktopGridEffectConfig::layoutSelectionChanged);
     connect(m_ui->desktopNameAlignmentCombo,
-            qOverload<int>(&KComboBox::currentIndexChanged),
+            qOverload<int>(&QComboBox::currentIndexChanged),
             this,
             &DesktopGridEffectConfig::markAsChanged);
     connect(m_ui->clickBehaviorButtonGroup,
-            qOverload<int>(&QButtonGroup::buttonClicked),
+            &QButtonGroup::idClicked,
             this,
             &DesktopGridEffectConfig::markAsChanged);
     connect(m_ui->shortcutEditor,
             &KShortcutsEditor::keyChange,
             this,
             &DesktopGridEffectConfig::markAsChanged);
-
-    load();
-    layoutSelectionChanged();
 }
 
 DesktopGridEffectConfig::~DesktopGridEffectConfig()
@@ -149,6 +145,7 @@ void DesktopGridEffectConfig::load()
     if (clickBehaviorButton) {
         clickBehaviorButton->setChecked(true);
     }
+    layoutSelectionChanged();
 }
 
 void DesktopGridEffectConfig::layoutSelectionChanged()

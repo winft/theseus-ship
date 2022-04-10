@@ -16,7 +16,7 @@ class QQmlContext;
 class QQmlEngine;
 class QAction;
 class QMenu;
-class QMutex;
+class QRecursiveMutex;
 
 /// @c true == javascript, @c false == qml
 typedef QList<QPair<bool, QPair<QString, QString>>> LoadScriptList;
@@ -53,7 +53,7 @@ private:
     /**
      * Lock to protect the scripts member variable.
      */
-    QScopedPointer<QMutex> m_scriptsLock;
+    QScopedPointer<QRecursiveMutex> m_scriptsLock;
 
     // Preferably call ONLY at load time
     void runScripts();

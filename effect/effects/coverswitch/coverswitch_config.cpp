@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "coverswitchconfig.h"
 #include <config-kwin.h>
 
-#include <KAboutData>
 #include <KPluginFactory>
 #include <kwineffects_interface.h>
 

@@ -42,7 +42,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QAbstractEventDispatcher>
 #include <QPluginLoader>
 #include <QSocketNotifier>
-#include <QStyle>
 #include <QThread>
 #include <QtConcurrentRun>
 #include <Wrapland/Server/display.h>
@@ -128,12 +127,6 @@ WaylandTestApplication::~WaylandTestApplication()
 
     // Kill Xwayland before terminating its connection.
     xwayland.reset();
-
-    if (QStyle* s = style()) {
-        // Unpolish style before terminating internal connection.
-        s->unpolish(this);
-    }
-
     waylandServer()->terminateClientConnections();
 
     // Block compositor to prevent further compositing from crashing with a null workspace.

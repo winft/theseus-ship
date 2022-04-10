@@ -44,10 +44,6 @@ public:
     static bool enabledByDefault();
 
     void reconfigure(ReconfigureFlags flags) override;
-    void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(EffectWindow* w,
-                        WindowPrePaintData& data,
-                        std::chrono::milliseconds presentTime) override;
     void
     drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data) override;
     void paintEffectFrame(EffectFrame* frame,
@@ -81,9 +77,6 @@ private:
 
 private:
     ContrastShader* shader;
-    QRegion m_paintedArea;     // actually painted area which is greater than m_damagedArea
-    QRegion m_currentContrast; // keeps track of the currently contrasted area of non-caching
-                               // windows(from bottom to top)
 };
 
 inline bool ContrastEffect::provides(Effect::Feature feature)

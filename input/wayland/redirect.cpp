@@ -228,7 +228,7 @@ void redirect::setup_filters()
     m_filters.emplace_back(new effects_filter);
     m_filters.emplace_back(new move_resize_filter);
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
     m_filters.emplace_back(new tabbox_filter);
 #endif
 

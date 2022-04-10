@@ -27,12 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAction>
 
-#include <KAboutData>
 #include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KPluginFactory>
-
 #include <QDebug>
 #include <QWidget>
 
@@ -51,8 +49,6 @@ MouseMarkEffectConfig::MouseMarkEffectConfig(QWidget* parent, const QVariantList
     : KCModule(parent, args)
 {
     m_ui = new MouseMarkEffectConfigForm(this);
-
-    m_ui->kcfg_LineWidth->setSuffix(ki18ncp("Suffix", " pixel", " pixels"));
 
     QVBoxLayout* layout = new QVBoxLayout(this);
 
@@ -83,13 +79,22 @@ MouseMarkEffectConfig::MouseMarkEffectConfig(QWidget* parent, const QVariantList
 
     m_ui->editor->addCollection(m_actionCollection);
 
-    load();
+    connect(m_ui->kcfg_LineWidth, qOverload<int>(&QSpinBox::valueChanged), this, [this]() {
+        updateSpinBoxSuffix();
+    });
 }
 
 MouseMarkEffectConfig::~MouseMarkEffectConfig()
 {
     // Undo (only) unsaved changes to global key shortcuts
     m_ui->editor->undo();
+}
+
+void MouseMarkEffectConfig::load()
+{
+    KCModule::load();
+
+    updateSpinBoxSuffix();
 }
 
 void MouseMarkEffectConfig::save()
@@ -103,6 +108,12 @@ void MouseMarkEffectConfig::save()
     OrgKdeKwinEffectsInterface interface(
         QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("mousemark"));
+}
+
+void MouseMarkEffectConfig::updateSpinBoxSuffix()
+{
+    m_ui->kcfg_LineWidth->setSuffix(
+        i18ncp("Suffix", " pixel", " pixels", m_ui->kcfg_LineWidth->value()));
 }
 
 } // namespace

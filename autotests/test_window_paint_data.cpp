@@ -253,6 +253,10 @@ public:
     {
         return false;
     }
+    KDecoration2::Decoration* decoration() const override
+    {
+        return nullptr;
+    }
     QString caption() const override
     {
         return QString();

@@ -776,7 +776,7 @@ void options::syncFromKcfgc()
     setRollOverDesktops(m_settings->rollOverDesktops());
     setFocusStealingPreventionLevel(m_settings->focusStealingPreventionLevel());
 
-#ifdef KWIN_BUILD_DECORATIONS
+#if KWIN_BUILD_DECORATIONS
     setPlacement(static_cast<win::placement>(m_settings->placement()));
 #else
     setPlacement(win::placement::maximizing);

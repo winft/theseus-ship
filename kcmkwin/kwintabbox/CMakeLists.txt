@@ -26,11 +26,10 @@ add_library(kcm_kwintabbox MODULE ${kcm_kwintabbox_PART_SRCS})
 target_link_libraries(kcm_kwintabbox
     Qt::Quick
 
-    KF5::Completion
     KF5::GlobalAccel
     KF5::I18n
     KF5::KCMUtils
-    KF5::NewStuff
+    KF5::NewStuffWidgets
     KF5::Package
     KF5::Service
 
@@ -40,7 +39,7 @@ target_link_libraries(kcm_kwintabbox
 install(TARGETS kcm_kwintabbox DESTINATION ${PLUGIN_INSTALL_DIR} )
 
 ########### install files ###############
-install(FILES kwintabbox.desktop DESTINATION ${KDE_INSTALL_KSERVICES5DIR})
+install(FILES kwintabbox.desktop DESTINATION ${KDE_INSTALL_KSERVICESDIR})
 install(FILES thumbnails/konqueror.png
               thumbnails/kmail.png
               thumbnails/systemsettings.png

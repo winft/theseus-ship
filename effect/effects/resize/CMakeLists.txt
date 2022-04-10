@@ -11,6 +11,10 @@ kconfig_add_kcfg_files(resize_SOURCES
 )
 
 kwin4_add_effect_module(kwin4_effect_resize ${resize_SOURCES})
+target_link_libraries(kwin4_effect_resize PRIVATE
+    kwineffects
+    KF5::ConfigWidgets
+)
 
 #######################################
 # Config

@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwineffects_interface.h>
 
-#include <KAboutData>
 #include <KPluginFactory>
 #include <kconfiggroup.h>
 
@@ -52,8 +51,6 @@ MagicLampEffectConfig::MagicLampEffectConfig(QWidget* parent, const QVariantList
 
     MagicLampConfig::instance(KWIN_CONFIG);
     addConfig(MagicLampConfig::self(), m_ui);
-
-    load();
 }
 
 void MagicLampEffectConfig::save()

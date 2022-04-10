@@ -33,7 +33,7 @@
 #include "win/stacking_order.h"
 #include "win/util.h"
 
-#ifdef KWIN_BUILD_TABBOX
+#if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
 #endif
 
@@ -716,7 +716,8 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
         | NET::WM2WindowRole | NET::WM2UserTime | NET::WM2StartupId | NET::WM2ExtendedStrut
         | NET::WM2Opacity | NET::WM2FullscreenMonitors | NET::WM2GroupLeader | NET::WM2Urgency
         | NET::WM2Input | NET::WM2Protocols | NET::WM2InitialMappingState | NET::WM2IconPixmap
-        | NET::WM2OpaqueRegion | NET::WM2DesktopFileName | NET::WM2GTKFrameExtents;
+        | NET::WM2OpaqueRegion | NET::WM2DesktopFileName | NET::WM2GTKFrameExtents
+        | NET::WM2GTKApplicationId;
 
     auto wmClientLeaderCookie = win->fetchWmClientLeader();
     auto skipCloseAnimationCookie = fetch_skip_close_animation(*win);
@@ -766,12 +767,13 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
     win->transient()->set_modal((win->info->state() & NET::Modal) != 0);
     read_transient_property(win, transientCookie);
 
+    QByteArray desktopFileName{win->info->desktopFileName()};
+    if (desktopFileName.isEmpty()) {
+        desktopFileName = win->info->gtkApplicationId();
+    }
     set_desktop_file_name(win,
-                          win->control->rules()
-                              .checkDesktopFile(QByteArray(win->info->desktopFileName()), true)
-                              .toUtf8());
+                          win->control->rules().checkDesktopFile(desktopFileName, true).toUtf8());
     get_icons(win);
-
     QObject::connect(win, &window::desktopFileNameChanged, win, [win] { get_icons(win); });
 
     win->geometry_hints.read();

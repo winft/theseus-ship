@@ -55,17 +55,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDBusConnection>
 #include <QFileInfo>
 #include <QProcess>
-#include <QStyle>
 #include <QDebug>
 #include <QWindow>
-
-// system
-#if HAVE_SYS_PRCTL_H
-#include <sys/prctl.h>
-#endif
-#if HAVE_SYS_PROCCTL_H
-#include <sys/procctl.h>
-#endif
 
 #if HAVE_LIBCAP
 #include <sys/capability.h>
@@ -151,12 +142,6 @@ ApplicationWayland::~ApplicationWayland()
 
     // Kill Xwayland before terminating its connection.
     xwayland.reset();
-
-    if (QStyle *s = style()) {
-        // Unpolish style before terminating internal connection.
-        s->unpolish(this);
-    }
-
     waylandServer()->terminateClientConnections();
 
     if (base->render->compositor) {
@@ -343,42 +328,6 @@ void ApplicationWayland::startSession()
     Q_EMIT startup_finished();
 }
 
-static void disablePtrace()
-{
-#if HAVE_PR_SET_DUMPABLE
-    // check whether we are running under a debugger
-    const QFileInfo parent(QStringLiteral("/proc/%1/exe").arg(getppid()));
-    if (parent.isSymLink() &&
-            (parent.symLinkTarget().endsWith(QLatin1String("/gdb")) ||
-             parent.symLinkTarget().endsWith(QLatin1String("/gdbserver")) ||
-             parent.symLinkTarget().endsWith(QLatin1String("/lldb-server")))) {
-        // debugger, don't adjust
-        return;
-    }
-
-    // disable ptrace in kwin_wayland
-    prctl(PR_SET_DUMPABLE, 0);
-#endif
-#if HAVE_PROC_TRACE_CTL
-    // FreeBSD's rudimentary procfs does not support /proc/<pid>/exe
-    // We could use the P_TRACED flag of the process to find out
-    // if the process is being debugged ond FreeBSD.
-    int mode = PROC_TRACE_CTL_DISABLE;
-    procctl(P_PID, getpid(), PROC_TRACE_CTL, &mode);
-#endif
-
-}
-
-static void unsetDumpable(int sig)
-{
-#if HAVE_PR_SET_DUMPABLE
-    prctl(PR_SET_DUMPABLE, 1);
-#endif
-    signal(sig, SIG_IGN);
-    raise(sig);
-    return;
-}
-
 void dropNiceCapability()
 {
 #if HAVE_LIBCAP
@@ -417,7 +366,6 @@ int main(int argc, char * argv[])
         std::cerr << "kwin_wayland does not support running as root." << std::endl;
         return 1;
     }
-    KWin::disablePtrace();
     KWin::Application::setupMalloc();
     KWin::Application::setupLocalizedString();
     KWin::gainRealTime();
@@ -429,8 +377,6 @@ int main(int argc, char * argv[])
         signal(SIGINT, SIG_IGN);
     if (signal(SIGHUP, KWin::sighandler) == SIG_IGN)
         signal(SIGHUP, SIG_IGN);
-    signal(SIGABRT, KWin::unsetDumpable);
-    signal(SIGSEGV, KWin::unsetDumpable);
     signal(SIGPIPE, SIG_IGN);
     // ensure that no thread takes SIGUSR
     sigset_t userSignals;
@@ -449,8 +395,10 @@ int main(int argc, char * argv[])
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     KWin::ApplicationWayland a(argc, argv);
     a.setupTranslator();
-    // reset QT_QPA_PLATFORM to a sane value for any processes started from KWin
-    setenv("QT_QPA_PLATFORM", "wayland", true);
+
+    // Reset QT_QPA_PLATFORM so we don't propagate it to our children (e.g. apps launched from the
+    // overview effect).
+    qunsetenv("QT_QPA_PLATFORM");
 
     KWin::Application::createAboutData();
     KQuickAddons::QtQuickSettings::init();

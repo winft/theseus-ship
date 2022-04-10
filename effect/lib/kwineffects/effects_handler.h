@@ -77,10 +77,6 @@ class KWINEFFECTS_EXPORT EffectsHandler : public QObject
      * Whether window decorations use the alpha channel.
      */
     Q_PROPERTY(bool decorationsHaveAlpha READ decorationsHaveAlpha)
-    /**
-     * Whether the window decorations support blurring behind the decoration.
-     */
-    Q_PROPERTY(bool decorationSupportsBlurBehind READ decorationSupportsBlurBehind)
     Q_PROPERTY(CompositingType compositingType READ compositingType CONSTANT)
     Q_PROPERTY(QPoint cursorPos READ cursorPos)
     Q_PROPERTY(QSize virtualScreenSize READ virtualScreenSize NOTIFY virtualScreenSizeChanged)
@@ -478,13 +474,6 @@ public:
     virtual bool decorationsHaveAlpha() const = 0;
 
     /**
-     * Returns @a true if the window decorations support blurring behind the decoration, and @a
-     * false otherwise
-     * @since 4.6
-     */
-    virtual bool decorationSupportsBlurBehind() const = 0;
-
-    /**
      * Creates a new frame object. If the frame does not have a static size
      * then it will be located at @a position with @a alignment. A
      * non-static frame will automatically adjust its size to fit the contents.
@@ -691,6 +680,26 @@ public:
     virtual effect::kscreen_integration& get_kscreen_integration() = 0;
 
     virtual QImage blit_from_framebuffer(QRect const& geometry, double scale) const = 0;
+
+    /**
+     * Returns the rect that's currently being repainted, in the logical pixels.
+     */
+    virtual QRect renderTargetRect() const = 0;
+    /**
+     * Returns the device pixel ratio of the current render target.
+     */
+    virtual qreal renderTargetScale() const = 0;
+
+    /**
+     * Maps the given @a rect from the global screen cordinates to the render
+     * target local coordinate system.
+     */
+    QRect mapToRenderTarget(QRect const& rect) const;
+    /**
+     * Maps the given @a region from the global screen coordinates to the render
+     * target local coordinate system.
+     */
+    QRegion mapToRenderTarget(QRegion const& region) const;
 
 Q_SIGNALS:
     /**

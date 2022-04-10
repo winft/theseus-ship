@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 #include <kwineffects_interface.h>
 
-#include <KAboutData>
 #include <KLocalizedString>
 #include <KPluginFactory>
 
@@ -42,8 +41,6 @@ ShowFpsEffectConfig::ShowFpsEffectConfig(QWidget* parent, const QVariantList& ar
 
     ShowFpsConfig::instance(KWIN_CONFIG);
     addConfig(ShowFpsConfig::self(), this);
-
-    load();
 }
 
 ShowFpsEffectConfig::~ShowFpsEffectConfig()

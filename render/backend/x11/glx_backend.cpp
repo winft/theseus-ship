@@ -133,11 +133,16 @@ QRegion glx_backend::prepareRenderingFrame()
 
     startRenderTimer();
 
+    native_fbo = GLRenderTarget(0, QRect({}, compositor.platform.base.topology.size));
+    GLRenderTarget::pushRenderTarget(&native_fbo);
+
     return repaint;
 }
 
 void glx_backend::endRenderingFrame(const QRegion& renderedRegion, const QRegion& damagedRegion)
 {
+    GLRenderTarget::popRenderTarget();
+
     if (damagedRegion.isEmpty()) {
         setLastDamage(QRegion());
 

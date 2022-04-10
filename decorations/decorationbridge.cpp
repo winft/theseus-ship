@@ -60,7 +60,6 @@ KWIN_SINGLETON_FACTORY(DecorationBridge)
 DecorationBridge::DecorationBridge(QObject *parent)
     : KDecoration2::DecorationBridge(parent)
     , m_factory(nullptr)
-    , m_blur(false)
     , m_showToolTips(false)
     , m_settings()
     , m_noPlugin(false)
@@ -197,7 +196,6 @@ void DecorationBridge::reconfigure()
 void DecorationBridge::loadMetaData(const QJsonObject &object)
 {
     // reset all settings
-    m_blur = false;
     m_recommendedBorderSize = QString();
     m_theme = QString();
     m_defaultTheme = QString();
@@ -209,10 +207,6 @@ void DecorationBridge::loadMetaData(const QJsonObject &object)
         return;
     }
     const QVariantMap decoSettingsMap = decoSettings.toObject().toVariantMap();
-    auto blurIt = decoSettingsMap.find(QStringLiteral("blur"));
-    if (blurIt != decoSettingsMap.end()) {
-        m_blur = blurIt.value().toBool();
-    }
     auto recBorderSizeIt = decoSettingsMap.find(QStringLiteral("recommendedBorderSize"));
     if (recBorderSizeIt != decoSettingsMap.end()) {
         m_recommendedBorderSize = recBorderSizeIt.value().toString();
@@ -294,7 +288,6 @@ QString DecorationBridge::supportInformation() const
         b.append(QStringLiteral("Plugin: %1\n").arg(m_plugin));
         b.append(QStringLiteral("Theme: %1\n").arg(m_theme));
         b.append(QStringLiteral("Plugin recommends border size: %1\n").arg(m_recommendedBorderSize.isNull() ? "No" : m_recommendedBorderSize));
-        b.append(QStringLiteral("Blur: %1\n").arg(m_blur));
         const QMetaObject *metaOptions = m_settings->metaObject();
         for (int i=0; i<metaOptions->propertyCount(); ++i) {
             const QMetaProperty property = metaOptions->property(i);

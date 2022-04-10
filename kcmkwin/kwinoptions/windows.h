@@ -32,7 +32,6 @@
 class QRadioButton;
 class QCheckBox;
 class QPushButton;
-class KComboBox;
 class QGroupBox;
 class QLabel;
 class QSlider;

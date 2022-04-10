@@ -39,6 +39,26 @@ bool EffectsHandler::isOpenGLCompositing() const
     return compositing_type == OpenGLCompositing;
 }
 
+QRect EffectsHandler::mapToRenderTarget(QRect const& rect) const
+{
+    auto const targetRect = renderTargetRect();
+    auto const targetScale = renderTargetScale();
+
+    return QRect((rect.x() - targetRect.x()) * targetScale,
+                 (rect.y() - targetRect.y()) * targetScale,
+                 rect.width() * targetScale,
+                 rect.height() * targetScale);
+}
+
+QRegion EffectsHandler::mapToRenderTarget(QRegion const& region) const
+{
+    QRegion result;
+    for (auto const& rect : region) {
+        result += mapToRenderTarget(rect);
+    }
+    return result;
+}
+
 EffectWindow* EffectsHandler::findWindow(WId id) const
 {
     return find_window_by_wid(id);

@@ -5,14 +5,9 @@
 */
 #pragma once
 
-#include <QLoggingCategory>
+#include <QPair>
 #include <QRect>
-
-/**
- * Logging category to be used inside the KWin effects.
- * Do not use in this library.
- */
-Q_DECLARE_LOGGING_CATEGORY(KWINEFFECTS)
+#include <climits>
 
 namespace KWin
 {

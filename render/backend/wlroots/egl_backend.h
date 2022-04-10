@@ -8,6 +8,8 @@
 #include "render/gl/backend.h"
 #include "render/wayland/egl_data.h"
 
+#include <kwingl/utils.h>
+
 #include <memory>
 
 struct wlr_egl;
@@ -57,6 +59,7 @@ public:
     gl::egl_dmabuf* dmabuf{nullptr};
     wayland::egl_data data;
 
+    GLRenderTarget native_fbo;
     wlr_egl* native{nullptr};
 
 protected:
@@ -66,10 +69,10 @@ private:
     void cleanup();
     void cleanupSurfaces();
 
-    void setViewport(egl_output const& egl_out) const;
+    QRect get_viewport(egl_output const& egl_out) const;
     void initRenderTarget(egl_output& egl_out);
 
-    void prepareRenderFramebuffer(egl_output const& egl_out) const;
+    void prepareRenderFramebuffer(egl_output& egl_out) const;
     void renderFramebufferToSurface(egl_output& egl_out);
 };
 

@@ -156,21 +156,22 @@ QRegion egl_backend::prepareRenderingForScreen(base::output* output)
     wlr_output_attach_render(native_out, &out->bufferAge);
     wlr_renderer_begin(platform.renderer, output->geometry().width(), output->geometry().height());
 
-    GLRenderTarget::setKWinFramebuffer(wlr_gles2_renderer_get_current_fbo(platform.renderer));
+    native_fbo
+        = GLRenderTarget(wlr_gles2_renderer_get_current_fbo(platform.renderer), get_viewport(*out));
+    GLRenderTarget::pushRenderTarget(&native_fbo);
 
     QMatrix4x4 flip_180;
     flip_180(1, 1) = -1;
     transformation = flip_180;
 
     prepareRenderFramebuffer(*out);
-    setViewport(*out);
 
     if (!supportsBufferAge()) {
         // If buffer age exenstion is not supported we always repaint the whole output as we don't
         // know the status of the back buffer we render to.
         return output->geometry();
     }
-    if (out->render.framebuffer) {
+    if (out->render.fbo.valid()) {
         // If we render to the extra frame buffer, do not use buffer age. It leads to artifacts.
         // TODO(romangg): Can we make use of buffer age even in this case somehow?
         return output->geometry();
@@ -228,6 +229,7 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
         out->out->last_timer_queries.emplace_back();
     }
 
+    GLRenderTarget::popRenderTarget();
     wlr_renderer_end(platform.renderer);
 
     if (damagedRegion.intersected(output->geometry()).isEmpty()) {
@@ -261,16 +263,14 @@ void egl_backend::endRenderingFrameForScreen(base::output* output,
     }
 }
 
-void egl_backend::prepareRenderFramebuffer(egl_output const& egl_out) const
+void egl_backend::prepareRenderFramebuffer(egl_output& egl_out) const
 {
-    if (!egl_out.render.framebuffer) {
-        return;
+    if (egl_out.render.fbo.valid()) {
+        GLRenderTarget::pushRenderTarget(&egl_out.render.fbo);
     }
-    glBindFramebuffer(GL_FRAMEBUFFER, egl_out.render.framebuffer);
-    GLRenderTarget::setKWinFramebuffer(egl_out.render.framebuffer);
 }
 
-void egl_backend::setViewport(egl_output const& egl_out) const
+QRect egl_backend::get_viewport(egl_output const& egl_out) const
 {
     auto const& overall = platform.base.topology.size;
     auto const& geo = egl_out.out->base.geometry();
@@ -279,10 +279,10 @@ void egl_backend::setViewport(egl_output const& egl_out) const
     auto const width_ratio = view.width() / (double)geo.width();
     auto const height_ratio = view.height() / (double)geo.height();
 
-    glViewport(-geo.x() * width_ratio,
-               -geo.y() * height_ratio,
-               overall.width() * width_ratio,
-               overall.height() * height_ratio);
+    return QRect(-geo.x() * width_ratio,
+                 -geo.y() * height_ratio,
+                 overall.width() * width_ratio,
+                 overall.height() * height_ratio);
 }
 
 const float vertices[] = {
@@ -330,15 +330,13 @@ void egl_backend::initRenderTarget(egl_output& egl_out)
 
 void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
 {
-    if (!egl_out.render.framebuffer) {
+    if (!egl_out.render.fbo.valid()) {
         // No additional render target.
         return;
     }
     initRenderTarget(egl_out);
 
-    auto wlr_fbo = wlr_gles2_renderer_get_current_fbo(platform.renderer);
-    glBindFramebuffer(GL_FRAMEBUFFER, wlr_fbo);
-    GLRenderTarget::setKWinFramebuffer(wlr_fbo);
+    GLRenderTarget::popRenderTarget();
 
     GLuint clearColor[4] = {0, 0, 0, 0};
     glClearBufferuiv(GL_COLOR, 0, clearColor);
@@ -360,7 +358,7 @@ void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
         1);
     shader->setUniform(GLShader::ModelViewProjectionMatrix, rotationMatrix);
 
-    glBindTexture(GL_TEXTURE_2D, egl_out.render.texture);
+    egl_out.render.texture->bind();
     egl_out.render.vbo->render(GL_TRIANGLES);
     ShaderManager::instance()->popShader();
 }

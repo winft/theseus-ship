@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <config-kwin.h>
 #include <kwineffects_interface.h>
 
-#include <KAboutData>
 #include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>
@@ -91,8 +90,6 @@ PresentWindowsEffectConfig::PresentWindowsEffectConfig(QWidget* parent, const QV
 
     PresentWindowsConfig::instance(KWIN_CONFIG);
     addConfig(PresentWindowsConfig::self(), m_ui);
-
-    load();
 }
 
 PresentWindowsEffectConfig::~PresentWindowsEffectConfig()

@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAction>
 
-#include <KAboutData>
 #include <KActionCollection>
 #include <KGlobalAccel>
 #include <KLocalizedString>
@@ -67,8 +66,6 @@ InvertEffectConfig::InvertEffectConfig(QWidget* parent, const QVariantList& args
     connect(
         mShortcutEditor, &KShortcutsEditor::keyChange, this, &InvertEffectConfig::markAsChanged);
     layout->addWidget(mShortcutEditor);
-
-    load();
 }
 
 InvertEffectConfig::~InvertEffectConfig()

@@ -49,6 +49,7 @@ set(kwin_EFFECTSLIB_SRCS
     kwineffects/motions.cpp
     kwineffects/paint_clipper.cpp
     kwineffects/paint_data.cpp
+    kwineffects/shared_qml_engine.cpp
     kwineffects/time_line.cpp
     kwineffects/window_quad.cpp
 )
@@ -64,7 +65,7 @@ target_link_libraries(kwineffects
         WraplandServer
     PRIVATE
         Qt::Quick
-        KF5::Declarative
+        KF5::I18n
         kwinglutils
 )
 if (KWIN_HAVE_XRENDER_COMPOSITING)

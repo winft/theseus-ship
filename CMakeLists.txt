@@ -7,7 +7,7 @@ set(PROJECT_VERSION_MAJOR 5)
 set(CMAKE_C_STANDARD 99)
 
 set(QT_MIN_VERSION "5.15.0")
-set(KF5_MIN_VERSION "5.89")
+set(KF5_MIN_VERSION "5.91")
 set(KDE_COMPILERSETTINGS_LEVEL "5.84")
 
 find_package(ECM ${KF5_MIN_VERSION} REQUIRED NO_MODULE)
@@ -24,7 +24,6 @@ find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Core
     DBus
     Quick
-    QuickWidgets
     UiTools
     Widgets
     X11Extras
@@ -71,7 +70,6 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
     Crash
     GlobalAccel
     I18n
-    IconThemes
     IdleTime
     Notifications
     Package
@@ -82,13 +80,11 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
 )
 # required frameworks by config modules
 find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
-    Completion
     Declarative
     KCMUtils
     KIO
     NewStuff
     Service
-    TextWidgets
     XmlGui
 )
 
@@ -234,6 +230,7 @@ add_feature_info("XCB-ICCCM" XCB_ICCCM_FOUND "Required for building test applica
 # dependencies for QPA plugin
 find_package(Qt5FontDatabaseSupport REQUIRED)
 find_package(Qt5ThemeSupport REQUIRED)
+find_package(Qt5ServiceSupport REQUIRED)
 find_package(Qt5EventDispatcherSupport REQUIRED)
 
 find_package(Freetype REQUIRED)
@@ -269,13 +266,6 @@ set_package_properties(Libcap PROPERTIES
     PURPOSE "Needed for running kwin_wayland with real-time scheduling policy"
 )
 set(HAVE_LIBCAP ${Libcap_FOUND})
-
-find_package(hwdata)
-set_package_properties(hwdata PROPERTIES
-    TYPE RUNTIME
-    PURPOSE "Runtime-only dependency needed for mapping monitor hardware vendor IDs to full names"
-    URL "https://github.com/vcrhonek/hwdata"
-)
 
 find_package(QAccessibilityClient CONFIG)
 set_package_properties(QAccessibilityClient PROPERTIES
@@ -328,22 +318,6 @@ configure_file(effect/lib/kwinconfig.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/effect/
 include(CheckIncludeFile)
 include(CheckIncludeFiles)
 include(CheckSymbolExists)
-check_include_files(unistd.h HAVE_UNISTD_H)
-check_include_files(malloc.h HAVE_MALLOC_H)
-
-check_include_file("sys/prctl.h" HAVE_SYS_PRCTL_H)
-check_symbol_exists(PR_SET_DUMPABLE "sys/prctl.h" HAVE_PR_SET_DUMPABLE)
-check_symbol_exists(PR_SET_PDEATHSIG "sys/prctl.h" HAVE_PR_SET_PDEATHSIG)
-check_include_file("sys/procctl.h" HAVE_SYS_PROCCTL_H)
-check_symbol_exists(PROC_TRACE_CTL "sys/procctl.h" HAVE_PROC_TRACE_CTL)
-if (HAVE_PR_SET_DUMPABLE OR HAVE_PROC_TRACE_CTL)
-    set(CAN_DISABLE_PTRACE TRUE)
-endif()
-add_feature_info("prctl/procctl tracing control"
-                 CAN_DISABLE_PTRACE
-                 "Required for disallowing ptrace on kwin_wayland process")
-
-check_include_file("sys/sysmacros.h" HAVE_SYS_SYSMACROS_H)
 
 check_symbol_exists(SCHED_RESET_ON_FORK "sched.h" HAVE_SCHED_RESET_ON_FORK)
 add_feature_info("SCHED_RESET_ON_FORK"
@@ -757,8 +731,8 @@ endif()
 add_executable(kwin_x11 ${kwin_X11_SRCS} main_x11.cpp)
 target_link_libraries(kwin_x11
   kwin_x11_lib
-  kwin4_effect_builtins
 )
+kcoreaddons_target_static_plugins(kwin_x11 "kwin/effects/plugins")
 
 install(TARGETS kwin ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_x11 ${INSTALL_TARGETS_DEFAULT_ARGS})
@@ -923,8 +897,11 @@ PUBLIC
   Libinput::Libinput
   Threads::Threads
   PW::KScreenLocker
-PRIVATE
-  kwin4_effect_builtins
+)
+
+kcoreaddons_target_static_plugins(
+  kwin_wayland_lib "kwin/effects/plugins"
+  LINK_OPTION "PRIVATE"
 )
 
 set_target_properties(kwin_wayland_lib PROPERTIES
@@ -978,7 +955,7 @@ install(FILES render/post/kconfig/color_correct_settings.kcfg
     RENAME ${KWIN_NAME}_colorcorrect.kcfg
 )
 install(FILES desktop/kde/kwin.notifyrc
-  DESTINATION ${KDE_INSTALL_KNOTIFY5RCDIR}
+  DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR}
   RENAME ${KWIN_NAME}.notifyrc
 )
 install(
@@ -997,11 +974,11 @@ install(
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwin_export.h DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel)
 
 # Install the KWin/Script service type
-install(FILES scripting/kwinscript.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
+install(FILES scripting/kwinscript.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPESDIR})
 
 # Install the KWin/WindowSwitcher service type
-install(FILES win/tabbox/kwinwindowswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
-install(FILES win/tabbox/kwindesktopswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPES5DIR})
+install(FILES win/tabbox/kwinwindowswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPESDIR})
+install(FILES win/tabbox/kwindesktopswitcher.desktop DESTINATION ${KDE_INSTALL_KSERVICETYPESDIR})
 
 # Install QML files
 install(DIRECTORY render/qml/outline/plasma DESTINATION ${KDE_INSTALL_DATADIR}/${KWIN_NAME}/outline)
@@ -1040,7 +1017,7 @@ ecm_install_configured_files(
   INPUT
     desktop/kde/plasma-kwin_x11.service.in
     desktop/kde/plasma-kwin_wayland.service.in
-  @ONLY DESTINATION ${SYSTEMD_USER_UNIT_INSTALL_DIR}
+  @ONLY DESTINATION ${KDE_INSTALL_SYSTEMDUSERUNITDIR}
 )
 
 install(
