@@ -267,13 +267,6 @@ set_package_properties(Libcap PROPERTIES
 )
 set(HAVE_LIBCAP ${Libcap_FOUND})
 
-find_package(hwdata)
-set_package_properties(hwdata PROPERTIES
-    TYPE RUNTIME
-    PURPOSE "Runtime-only dependency needed for mapping monitor hardware vendor IDs to full names"
-    URL "https://github.com/vcrhonek/hwdata"
-)
-
 find_package(QAccessibilityClient CONFIG)
 set_package_properties(QAccessibilityClient PROPERTIES
     URL "https://www.kde.org"
