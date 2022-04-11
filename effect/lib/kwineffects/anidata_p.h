@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef ANIDATA_H
 #define ANIDATA_H
 
+#include "kwingl/utils.h"
 #include <kwineffects/animation_effect.h>
 #include <kwineffects/time_line.h>
 
@@ -87,7 +88,8 @@ public:
             bool waitAtSource,
             FullScreenEffectLockPtr = FullScreenEffectLockPtr(),
             bool keepAlive = true,
-            PreviousWindowPixmapLockPtr previousWindowPixmapLock = {});
+            PreviousWindowPixmapLockPtr previousWindowPixmapLock = {},
+            GLShader* shader = nullptr);
 
     bool isActive() const;
 
@@ -111,6 +113,7 @@ public:
     KeepAliveLockPtr keepAliveLock;
     PreviousWindowPixmapLockPtr previousWindowPixmapLock;
     AnimationEffect::TerminationFlags terminationFlags;
+    GLShader* shader{nullptr};
 };
 
 } // namespace

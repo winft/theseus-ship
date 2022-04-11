@@ -87,7 +87,8 @@ AniData::AniData(AnimationEffect::Attribute a,
                  bool waitAtSource_,
                  FullScreenEffectLockPtr fullScreenEffectLock_,
                  bool keepAlive,
-                 PreviousWindowPixmapLockPtr previousWindowPixmapLock_)
+                 PreviousWindowPixmapLockPtr previousWindowPixmapLock_,
+                 GLShader* shader)
     : attribute(a)
     , from(from_)
     , to(to_)
@@ -98,6 +99,7 @@ AniData::AniData(AnimationEffect::Attribute a,
     , waitAtSource(waitAtSource_)
     , keepAlive(keepAlive)
     , previousWindowPixmapLock(std::move(previousWindowPixmapLock_))
+    , shader(shader)
 {
 }
 
