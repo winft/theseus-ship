@@ -138,7 +138,7 @@ wlr_input_device* keyboard_layout_test::create_keyboard()
 void remove_input_device(wlr_input_device* device)
 {
 #if HAVE_WLR_BASE_INPUT_DEVICES
-    wlr_keyboard_destroy(device->keyboard);
+    wlr_keyboard_finish(device->keyboard);
 #else
     wlr_input_device_destroy(device);
 #endif

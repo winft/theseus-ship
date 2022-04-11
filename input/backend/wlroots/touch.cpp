@@ -5,6 +5,7 @@
 */
 #include "touch.h"
 
+#include "config-kwin.h"
 #include "control/touch.h"
 #include "platform.h"
 
@@ -30,7 +31,11 @@ static void handle_down(struct wl_listener* listener, [[maybe_unused]] void* dat
 {
     er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    auto wlr_event = reinterpret_cast<wlr_touch_down_event*>(data);
+#else
     auto wlr_event = reinterpret_cast<wlr_event_touch_down*>(data);
+#endif
 
     auto event = touch_down_event{
         wlr_event->touch_id,
@@ -48,7 +53,11 @@ static void handle_up(struct wl_listener* listener, [[maybe_unused]] void* data)
 {
     er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    auto wlr_event = reinterpret_cast<wlr_touch_up_event*>(data);
+#else
     auto wlr_event = reinterpret_cast<wlr_event_touch_up*>(data);
+#endif
 
     auto event = touch_up_event{
         wlr_event->touch_id,
@@ -65,7 +74,11 @@ static void handle_motion(struct wl_listener* listener, [[maybe_unused]] void* d
 {
     er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    auto wlr_event = reinterpret_cast<wlr_touch_motion_event*>(data);
+#else
     auto wlr_event = reinterpret_cast<wlr_event_touch_motion*>(data);
+#endif
 
     auto event = touch_motion_event{
         wlr_event->touch_id,
@@ -83,7 +96,11 @@ static void handle_cancel(struct wl_listener* listener, [[maybe_unused]] void* d
 {
     er* event_receiver_struct = wl_container_of(listener, event_receiver_struct, event);
     auto touch = event_receiver_struct->receiver;
+#if HAVE_WLR_BASE_INPUT_DEVICES
+    auto wlr_event = reinterpret_cast<wlr_touch_cancel_event*>(data);
+#else
     auto wlr_event = reinterpret_cast<wlr_event_touch_cancel*>(data);
+#endif
 
     auto event = touch_cancel_event{
         wlr_event->touch_id,
@@ -138,5 +155,4 @@ touch::touch(wlr_input_device* dev, input::platform* platform)
     frame_rec.event.notify = handle_frame;
     wl_signal_add(&backend->events.frame, &frame_rec.event);
 }
-
 }
