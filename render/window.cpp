@@ -6,13 +6,10 @@
 */
 #include "window.h"
 
-#include "base/logging.h"
 #include "deco_shadow.h"
 #include "effects.h"
 #include "shadow.h"
 
-#include "base/x11/grabs.h"
-#include "base/x11/xcb/proto.h"
 #include "toplevel.h"
 #include "win/geo.h"
 #include "win/transient.h"
@@ -25,62 +22,63 @@ uint32_t window_id{0};
 window::window(Toplevel* c)
     : toplevel(c)
     , filter(image_filter_type::fast)
-    , m_shadow(nullptr)
-    , m_currentPixmap()
-    , m_previousPixmap()
-    , m_referencePixmapCounter(0)
     , cached_quad_list(nullptr)
     , m_id{window_id++}
 {
 }
 
-window::~window()
-{
-    delete m_shadow;
-}
+window::~window() = default;
 
 uint32_t window::id() const
 {
     return m_id;
 }
 
-void window::referencePreviousPixmap()
+void window::reference_previous_buffer()
 {
-    if (!m_previousPixmap.isNull() && m_previousPixmap->isDiscarded()) {
-        m_referencePixmapCounter++;
+    if (buffers.previous && buffers.previous->isDiscarded()) {
+        buffers.previous_refs++;
     }
 }
 
-void window::unreferencePreviousPixmap()
+void window::unreference_previous_buffer()
 {
-    if (m_previousPixmap.isNull() || !m_previousPixmap->isDiscarded()) {
+    if (!buffers.previous || !buffers.previous->isDiscarded()) {
         return;
     }
-    m_referencePixmapCounter--;
-    if (m_referencePixmapCounter == 0) {
-        m_previousPixmap.reset();
+    buffers.previous_refs--;
+    assert(buffers.previous_refs >= 0);
+    if (buffers.previous_refs == 0) {
+        buffers.previous.reset();
     }
 }
 
-void window::discardPixmap()
+void window::discard_buffer()
 {
-    if (!m_currentPixmap.isNull()) {
-        if (m_currentPixmap->isValid()) {
-            m_previousPixmap.reset(m_currentPixmap.take());
-            m_previousPixmap->markAsDiscarded();
-        } else {
-            m_currentPixmap.reset();
-        }
+    if (!buffers.current) {
+        return;
     }
+
+    if (!buffers.current->isValid()) {
+        // An invalid buffer is simply being reset.
+        buffers.current.reset();
+        return;
+    }
+
+    // Move the current buffer to previous buffer.
+    buffers.previous = std::move(buffers.current);
+    buffers.previous->markAsDiscarded();
 }
 
-void window::updatePixmap()
+void window::update_buffer()
 {
-    if (m_currentPixmap.isNull()) {
-        m_currentPixmap.reset(createWindowPixmap());
+    if (!buffers.current) {
+        buffers.current.reset(create_buffer());
+        assert(win_integration.setup_buffer);
+        win_integration.setup_buffer(*buffers.current);
     }
-    if (!m_currentPixmap->isValid()) {
-        m_currentPixmap->create();
+    if (!buffers.current->isValid()) {
+        buffers.current->create();
     }
 }
 
@@ -292,8 +290,8 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
         QRectF const contentsRect = *contentsRegion.begin();
         QRectF sourceRect(contentsRect.topLeft() * textureScale,
                           contentsRect.bottomRight() * textureScale);
-        if (get_wayland_viewport) {
-            if (auto vp = get_wayland_viewport(toplevel, contentsRect); vp.isValid()) {
+        if (auto& vp_getter = win_integration.get_viewport) {
+            if (auto vp = vp_getter(toplevel, contentsRect); vp.isValid()) {
                 sourceRect = vp;
             }
         }
@@ -319,7 +317,7 @@ WindowQuadList window::makeContentsQuads(int id, QPoint const& offset) const
         if (!sw) {
             continue;
         }
-        if (auto const pixmap = sw->windowPixmap<window_pixmap>(); !pixmap || !pixmap->isValid()) {
+        if (auto const buf = sw->get_buffer<buffer>(); !buf || !buf->isValid()) {
             continue;
         }
         quads << sw->makeContentsQuads(sw->id(), offset + child->pos() - toplevel->pos());
@@ -342,57 +340,14 @@ void window::create_shadow()
     }
 
     if (shadow) {
-        updateShadow(shadow);
+        updateShadow(std::move(shadow));
         Q_EMIT toplevel->shadowChanged();
     }
 }
 
-void window::updateShadow(render::shadow* shadow)
+void window::updateShadow(std::unique_ptr<render::shadow> shadow)
 {
-    if (m_shadow == shadow) {
-        return;
-    }
-    delete m_shadow;
-    m_shadow = shadow;
-}
-int window::x() const
-{
-    return toplevel->pos().x();
-}
-
-int window::y() const
-{
-    return toplevel->pos().y();
-}
-
-int window::width() const
-{
-    return toplevel->size().width();
-}
-
-int window::height() const
-{
-    return toplevel->size().height();
-}
-
-QRect window::geometry() const
-{
-    return toplevel->frameGeometry();
-}
-
-QSize window::size() const
-{
-    return toplevel->size();
-}
-
-QPoint window::pos() const
-{
-    return toplevel->pos();
-}
-
-QRect window::rect() const
-{
-    return QRect(QPoint(), toplevel->size());
+    m_shadow = std::move(shadow);
 }
 
 Toplevel* window::get_window() const
@@ -407,156 +362,12 @@ void window::updateToplevel(Toplevel* c)
 
 render::shadow const* window::shadow() const
 {
-    return m_shadow;
+    return m_shadow.get();
 }
 
 render::shadow* window::shadow()
 {
-    return m_shadow;
-}
-
-//****************************************
-// window_pixmap
-//****************************************
-
-window_pixmap::window_pixmap(render::window* window)
-    : m_window(window)
-    , m_pixmap(XCB_PIXMAP_NONE)
-    , m_discarded(false)
-{
-}
-
-window_pixmap::~window_pixmap()
-{
-    if (m_pixmap != XCB_WINDOW_NONE) {
-        xcb_free_pixmap(connection(), m_pixmap);
-    }
-}
-
-void window_pixmap::create()
-{
-    if (isValid() || toplevel()->isDeleted()) {
-        return;
-    }
-    // always update from Buffer on Wayland, don't try using XPixmap
-    if (kwinApp()->shouldUseWaylandForCompositing()) {
-        // use Buffer
-        updateBuffer();
-        if (m_buffer || !m_fbo.isNull()) {
-            m_window->unreferencePreviousPixmap();
-        }
-        return;
-    }
-    base::x11::server_grabber grabber;
-    xcb_pixmap_t pix = xcb_generate_id(connection());
-    xcb_void_cookie_t namePixmapCookie
-        = xcb_composite_name_window_pixmap_checked(connection(), toplevel()->frameId(), pix);
-    base::x11::xcb::window_attributes windowAttributes(toplevel()->frameId());
-
-    auto win = toplevel();
-    auto xcb_frame_geometry = base::x11::xcb::geometry(win->frameId());
-
-    if (xcb_generic_error_t* error = xcb_request_check(connection(), namePixmapCookie)) {
-        qCDebug(KWIN_CORE) << "Creating window pixmap failed: " << error->error_code;
-        free(error);
-        return;
-    }
-    // check that the received pixmap is valid and actually matches what we
-    // know about the window (i.e. size)
-    if (!windowAttributes || windowAttributes->map_state != XCB_MAP_STATE_VIEWABLE) {
-        qCDebug(KWIN_CORE) << "Creating window pixmap failed by mapping state: " << win;
-        xcb_free_pixmap(connection(), pix);
-        return;
-    }
-
-    auto const render_geo = win::render_geometry(win);
-    if (xcb_frame_geometry.size() != render_geo.size()) {
-        qCDebug(KWIN_CORE) << "Creating window pixmap failed by size: " << win << " : "
-                           << xcb_frame_geometry.rect() << " | " << render_geo;
-        xcb_free_pixmap(connection(), pix);
-        return;
-    }
-
-    m_pixmap = pix;
-    m_pixmapSize = render_geo.size();
-
-    // Content relative to render geometry.
-    m_contentsRect = (render_geo - win::frame_margins(win)).translated(-render_geo.topLeft());
-
-    m_window->unreferencePreviousPixmap();
-}
-
-bool window_pixmap::isValid() const
-{
-    if (m_buffer || !m_fbo.isNull() || !m_internalImage.isNull()) {
-        return true;
-    }
-    return m_pixmap != XCB_PIXMAP_NONE;
-}
-
-void window_pixmap::updateBuffer()
-{
-    using namespace Wrapland::Server;
-    if (m_window->update_wayland_buffer) {
-        m_window->update_wayland_buffer(toplevel(), m_buffer);
-    } else if (toplevel()->internalFramebufferObject()) {
-        m_fbo = toplevel()->internalFramebufferObject();
-    } else if (!toplevel()->internalImageObject().isNull()) {
-        m_internalImage = toplevel()->internalImageObject();
-    } else {
-        m_buffer.reset();
-    }
-}
-
-Wrapland::Server::Surface* window_pixmap::surface() const
-{
-    return toplevel()->surface();
-}
-
-Wrapland::Server::Buffer* window_pixmap::buffer() const
-{
-    return m_buffer.get();
-}
-
-const QSharedPointer<QOpenGLFramebufferObject>& window_pixmap::fbo() const
-{
-    return m_fbo;
-}
-
-QImage window_pixmap::internalImage() const
-{
-    return m_internalImage;
-}
-
-Toplevel* window_pixmap::toplevel() const
-{
-    return m_window->get_window();
-}
-
-xcb_pixmap_t window_pixmap::pixmap() const
-{
-    return m_pixmap;
-}
-
-bool window_pixmap::isDiscarded() const
-{
-    return m_discarded;
-}
-
-void window_pixmap::markAsDiscarded()
-{
-    m_discarded = true;
-    m_window->referencePreviousPixmap();
-}
-
-const QRect& window_pixmap::contentsRect() const
-{
-    return m_contentsRect;
-}
-
-const QSize& window_pixmap::size() const
-{
-    return m_pixmapSize;
+    return m_shadow.get();
 }
 
 }

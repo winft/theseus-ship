@@ -34,9 +34,9 @@ gl::backend* egl_texture::backend()
     return m_backend;
 }
 
-bool egl_texture::updateTexture(window_pixmap* pixmap)
+bool egl_texture::updateTexture(render::buffer* buffer)
 {
-    return update_texture_from_pixmap(*this, pixmap);
+    return update_texture_from_buffer(*this, buffer);
 }
 
 }

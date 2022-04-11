@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "geo.h"
 #include "meta.h"
 #include "remnant.h"
+#include "render/wayland/buffer.h"
 #include "scene.h"
 #include "setup.h"
 #include "space.h"
@@ -121,6 +122,29 @@ bool internal_window::setupCompositing([[maybe_unused]] bool add_full_damage)
 {
     assert(!add_full_damage);
     return win::setup_compositing(*this, false);
+}
+
+void internal_window::add_scene_window_addon()
+{
+    auto setup_buffer = [this](auto& buffer) {
+        auto win_integrate = std::make_unique<render::wayland::buffer_win_integration>(buffer);
+        auto update_helper = [&buffer]() {
+            auto win = static_cast<internal_window*>(buffer.toplevel());
+            auto& win_integrate
+                = static_cast<render::wayland::buffer_win_integration&>(*buffer.win_integration);
+            if (win->buffers.fbo) {
+                win_integrate.internal.fbo = win->buffers.fbo;
+                return;
+            }
+            if (!win->buffers.image.isNull()) {
+                win_integrate.internal.image = win->buffers.image;
+            }
+        };
+        win_integrate->update = update_helper;
+        buffer.win_integration = std::move(win_integrate);
+    };
+
+    render->win_integration.setup_buffer = setup_buffer;
 }
 
 bool internal_window::eventFilter(QObject* watched, QEvent* event)
@@ -409,18 +433,18 @@ void internal_window::destroyClient()
     delete this;
 }
 
-void internal_window::present(const QSharedPointer<QOpenGLFramebufferObject> fbo)
+void internal_window::present(std::shared_ptr<QOpenGLFramebufferObject> const& fbo)
 {
-    Q_ASSERT(m_internalImage.isNull());
+    assert(buffers.image.isNull());
 
     const QSize bufferSize = fbo->size() / buffer_scale_internal();
 
     setFrameGeometry(QRect(pos(), win::client_to_frame_size(this, bufferSize)));
     markAsMapped();
 
-    if (m_internalFBO != fbo) {
-        discardWindowPixmap();
-        m_internalFBO = fbo;
+    if (buffers.fbo != fbo) {
+        discard_buffer();
+        buffers.fbo = fbo;
     }
 
     setDepth(32);
@@ -430,18 +454,18 @@ void internal_window::present(const QSharedPointer<QOpenGLFramebufferObject> fbo
 
 void internal_window::present(const QImage& image, const QRegion& damage)
 {
-    Q_ASSERT(m_internalFBO.isNull());
+    assert(!buffers.fbo);
 
     const QSize bufferSize = image.size() / buffer_scale_internal();
 
     setFrameGeometry(QRect(pos(), win::client_to_frame_size(this, bufferSize)));
     markAsMapped();
 
-    if (m_internalImage.size() != image.size()) {
-        discardWindowPixmap();
+    if (buffers.image.size() != image.size()) {
+        discard_buffer();
     }
 
-    m_internalImage = image;
+    buffers.image = image;
 
     setDepth(32);
     addDamage(damage);

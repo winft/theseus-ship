@@ -21,29 +21,13 @@ public:
     void performPaint(paint_type mask, QRegion region, WindowPaintData data) override;
 
 protected:
-    render::window_pixmap* createWindowPixmap() override;
+    render::buffer* create_buffer() override;
 
 private:
     void renderShadow(QPainter* painter);
     void renderWindowDecorations(QPainter* painter);
 
     scene* m_scene;
-};
-
-class window_pixmap : public render::window_pixmap
-{
-public:
-    explicit window_pixmap(render::window* window);
-    ~window_pixmap() override;
-
-    void create() override;
-    bool isValid() const override;
-
-    void updateBuffer() override;
-    QImage const& image();
-
-private:
-    QImage m_image;
 };
 
 }

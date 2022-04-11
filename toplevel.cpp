@@ -163,8 +163,6 @@ void Toplevel::copyToDeleted(Toplevel* c)
     opaque_region = c->opaqueRegion();
     central_output = c->central_output;
     m_skipCloseAnimation = c->m_skipCloseAnimation;
-    m_internalFBO = c->m_internalFBO;
-    m_internalImage = c->m_internalImage;
     m_desktops = c->desktops();
     m_layer = c->layer();
     has_in_content_deco = c->has_in_content_deco;
@@ -264,7 +262,7 @@ void Toplevel::finishCompositing(ReleaseReason releaseReason)
         return;
 
     if (render) {
-        discardWindowPixmap();
+        discard_buffer();
         render.reset();
     }
 
@@ -278,11 +276,11 @@ void Toplevel::finishCompositing(ReleaseReason releaseReason)
     repaints_region = QRegion();
 }
 
-void Toplevel::discardWindowPixmap()
+void Toplevel::discard_buffer()
 {
     addDamageFull();
     if (render) {
-        render->discardPixmap();
+        render->discard_buffer();
     }
 }
 

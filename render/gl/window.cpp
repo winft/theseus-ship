@@ -8,7 +8,7 @@
 */
 #include "window.h"
 
-#include "base/logging.h"
+#include "buffer.h"
 #include "deco_renderer.h"
 #include "scene.h"
 #include "shadow.h"
@@ -16,7 +16,6 @@
 
 #include "win/geo.h"
 
-#include <Wrapland/Server/surface.h>
 #include <cmath>
 
 namespace KWin::render::gl
@@ -34,31 +33,32 @@ window::~window()
     m_scene->windows.erase(id());
 }
 
-// Bind the window pixmap to an OpenGL texture.
+// Bind the buffer to an OpenGL texture.
 render::gl::texture* window::bindTexture()
 {
-    auto pixmap = windowPixmap<window_pixmap>();
-    if (!pixmap) {
+    auto buffer = get_buffer<gl::buffer>();
+    if (!buffer) {
         return nullptr;
     }
-    if (pixmap->isDiscarded()) {
-        return pixmap->texture();
+    if (buffer->isDiscarded()) {
+        return buffer->texture();
     }
 
     if (!get_window()->damage().isEmpty())
         m_scene->insertWait();
 
-    if (!pixmap->bind()) {
+    if (!buffer->bind()) {
         return nullptr;
     }
-    return pixmap->texture();
+    return buffer->texture();
     ;
 }
 
 QMatrix4x4 window::transformation(paint_type mask, const WindowPaintData& data) const
 {
     QMatrix4x4 matrix;
-    matrix.translate(x(), y());
+    auto const win_pos = toplevel->pos();
+    matrix.translate(win_pos.x(), win_pos.y());
 
     if (!(mask & paint_type::window_transformed)) {
         return matrix;
@@ -93,9 +93,11 @@ bool window::beginRenderWindow(paint_type mask, const QRegion& region, WindowPai
         WindowQuadList quads;
         quads.reserve(data.quads.count());
 
-        const QRegion filterRegion = region.translated(-x(), -y());
+        auto const win_pos = toplevel->pos();
+        auto const filterRegion = region.translated(-win_pos.x(), -win_pos.y());
+
         // split all quads in bounding rect with the actual rects in the region
-        for (const WindowQuad& quad : qAsConst(data.quads)) {
+        for (auto const& quad : qAsConst(data.quads)) {
             for (const QRect& r : filterRegion) {
                 const QRectF rf(r);
                 const QRectF quadRect(QPointF(quad.left(), quad.top()),
@@ -188,9 +190,9 @@ GLTexture* window::getDecorationTexture() const
     return nullptr;
 }
 
-render::window_pixmap* window::createWindowPixmap()
+render::buffer* window::create_buffer()
 {
-    return new window_pixmap(this, m_scene);
+    return new buffer(this, m_scene);
 }
 
 QVector4D window::modulate(float opacity, float brightness) const
@@ -219,7 +221,7 @@ void window::setupLeafNodes(std::vector<LeafNode>& nodes,
     nodes.resize(quads.size());
 
     if (!quads[ShadowLeaf].isEmpty()) {
-        nodes[ShadowLeaf].texture = static_cast<gl::shadow*>(m_shadow)->shadowTexture();
+        nodes[ShadowLeaf].texture = static_cast<gl::shadow&>(*m_shadow).shadowTexture();
         nodes[ShadowLeaf].opacity = data.opacity();
         nodes[ShadowLeaf].hasAlpha = true;
         nodes[ShadowLeaf].coordinateType = NormalizedCoordinates;
@@ -248,7 +250,7 @@ void window::setupLeafNodes(std::vector<LeafNode>& nodes,
         node.coordinateType = UnnormalizedCoordinates;
     };
 
-    setup_content(0, this, windowPixmap<window_pixmap>()->texture());
+    setup_content(0, this, get_buffer<buffer>()->texture());
 
     int contents_count = quads.size() - ContentLeaf;
     if (has_previous_content) {
@@ -268,7 +270,7 @@ void window::setupLeafNodes(std::vector<LeafNode>& nodes,
     }
 
     if (has_previous_content) {
-        auto previous = previousWindowPixmap<window_pixmap>();
+        auto previous = previous_buffer<buffer>();
         auto const last = quads.size() - 1;
         nodes[last].texture = previous ? previous->texture() : nullptr;
         nodes[last].hasAlpha = !isOpaque();
@@ -333,7 +335,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     auto content_ids = std::vector<int>{last_content_id};
 
     // Split the quads into separate lists for each type
-    for (auto const& quad : data.quads) {
+    for (auto const& quad : qAsConst(data.quads)) {
         switch (quad.type()) {
         case WindowQuadShadow:
             quads[ShadowLeaf].append(quad);
@@ -360,13 +362,13 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 
     bool has_previous_content = false;
     if (data.crossFadeProgress() != 1.0) {
-        auto previous = previousWindowPixmap<window_pixmap>();
+        auto previous = previous_buffer<buffer>();
         if (previous) {
             has_previous_content = true;
             quads.resize(quads.size() + 1);
-            auto const& old_content_rect = previous->contentsRect();
+            auto const& old_content_rect = previous->win_integration->get_contents_rect();
 
-            for (const WindowQuad& quad : quads[ContentLeaf]) {
+            for (auto const& quad : qAsConst(quads[ContentLeaf])) {
                 if (quad.id() != static_cast<int>(id())) {
                     // We currently only do this for the main window and not annexed children
                     // that means we can skip from here on.
@@ -392,10 +394,11 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                     auto const old_x = xFactor * old_content_rect.width() + old_content_rect.x();
                     auto const old_y = yFactor * old_content_rect.height() + old_content_rect.y();
 
+                    // TODO(romangg): The get_size() call is only valid on X11!
                     WindowVertex vertex(quad[i].x(),
                                         quad[i].y(),
-                                        old_x / previous->size().width(),
-                                        old_y / previous->size().height());
+                                        old_x / previous->win_integration->get_size().width(),
+                                        old_y / previous->win_integration->get_size().height());
                     newQuad[i] = vertex;
                 }
 
@@ -479,83 +482,6 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         ShaderManager::instance()->popShader();
 
     endRenderWindow();
-}
-
-//****************************************
-// window_pixmap
-//****************************************
-
-window_pixmap::window_pixmap(render::window* window, gl::scene* scene)
-    : render::window_pixmap(window)
-    , m_texture(scene->createTexture())
-    , m_scene(scene)
-{
-}
-
-window_pixmap::~window_pixmap()
-{
-}
-
-static bool needsPixmapUpdate(const window_pixmap* pixmap)
-{
-    // That's a regular Wayland client.
-    if (pixmap->surface()) {
-        return !pixmap->surface()->trackedDamage().isEmpty();
-    }
-
-    // That's an internal client with a raster buffer attached.
-    if (!pixmap->internalImage().isNull()) {
-        return !pixmap->toplevel()->damage().isEmpty();
-    }
-
-    // That's an internal client with an opengl framebuffer object attached.
-    if (!pixmap->fbo().isNull()) {
-        return !pixmap->toplevel()->damage().isEmpty();
-    }
-
-    // That's an X11 client.
-    return false;
-}
-
-render::gl::texture* window_pixmap::texture() const
-{
-    return m_texture.data();
-}
-
-bool window_pixmap::bind()
-{
-    if (!m_texture->isNull()) {
-        if (!toplevel()->damage().isEmpty()) {
-            updateBuffer();
-        }
-        if (needsPixmapUpdate(this)) {
-            m_texture->updateFromPixmap(this);
-            // mipmaps need to be updated
-            m_texture->setDirty();
-        }
-        toplevel()->resetDamage();
-        return true;
-    }
-    if (!isValid()) {
-        return false;
-    }
-
-    bool success = m_texture->load(this);
-
-    if (success) {
-        toplevel()->resetDamage();
-    } else {
-        qCDebug(KWIN_CORE) << "Failed to bind window";
-    }
-    return success;
-}
-
-bool window_pixmap::isValid() const
-{
-    if (!m_texture->isNull()) {
-        return true;
-    }
-    return render::window_pixmap::isValid();
 }
 
 }

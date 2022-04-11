@@ -33,7 +33,7 @@ public:
     static void cleanup();
 
 protected:
-    render::window_pixmap* createWindowPixmap() override;
+    render::buffer* create_buffer() override;
 
 private:
     QRect mapToScreen(paint_type mask, const WindowPaintData& data, const QRect& rect) const;
@@ -53,20 +53,6 @@ private:
 
     static XRenderPicture* s_tempPicture;
     static XRenderPicture* s_fadeAlphaPicture;
-};
-
-class window_pixmap : public render::window_pixmap
-{
-public:
-    window_pixmap(render::window* window, xcb_render_pictformat_t format);
-    ~window_pixmap() override;
-
-    xcb_render_picture_t picture() const;
-    void create() override;
-
-private:
-    xcb_render_picture_t m_picture;
-    xcb_render_pictformat_t m_format;
 };
 
 }

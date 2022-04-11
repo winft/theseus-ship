@@ -51,7 +51,7 @@ namespace render
 class shadow;
 
 struct shadow_windowing_integration {
-    std::function<shadow*(Toplevel&)> create;
+    std::function<std::unique_ptr<shadow>(Toplevel&)> create;
     std::function<bool(shadow&)> update;
 };
 

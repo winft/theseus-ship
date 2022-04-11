@@ -180,7 +180,7 @@ void create_decoration(Win* win)
     win->geometry_update.original.deco_margins = frame_margins(win);
 
     if (render::compositor::compositing()) {
-        win->discardWindowPixmap();
+        win->discard_buffer();
     }
 }
 

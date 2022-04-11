@@ -7,6 +7,7 @@
 #include "window.h"
 
 #include "backend.h"
+#include "buffer.h"
 #include "deco_renderer.h"
 #include "scene.h"
 #include "shadow.h"
@@ -59,7 +60,8 @@ QRect window::mapToScreen(paint_type mask, const WindowPaintData& data, const QR
     }
 
     // Move the rectangle to the screen position
-    r.translate(x(), y());
+    auto const win_pos = toplevel->pos();
+    r.translate(win_pos.x(), win_pos.y());
 
     if (flags(mask & paint_type::screen_transformed)) {
         // Apply the screen transformation
@@ -84,7 +86,8 @@ QPoint window::mapToScreen(paint_type mask, const WindowPaintData& data, const Q
     }
 
     // Move the point to the screen position
-    pt += QPoint(x(), y());
+    auto const win_pos = toplevel->pos();
+    pt += QPoint(win_pos.x(), win_pos.y());
 
     if (flags(mask & paint_type::screen_transformed)) {
         // Apply the screen transformation
@@ -155,7 +158,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 
     if (region.isEmpty())
         return;
-    auto pixmap = windowPixmap<window_pixmap>();
+    auto pixmap = get_buffer<buffer>();
     if (!pixmap || !pixmap->isValid()) {
         return;
     }
@@ -168,7 +171,8 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     filter = image_filter_type::fast;
 
     // do required transformations
-    const QRect wr = mapToScreen(mask, data, QRect(0, 0, width(), height()));
+    auto const win_size = toplevel->size();
+    auto const wr = mapToScreen(mask, data, QRect(0, 0, win_size.width(), win_size.height()));
 
     // Content rect (in the buffer)
     auto cr = win::frame_relative_client_rect(toplevel);
@@ -335,7 +339,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 
     // BEGIN shadow preparations
     QRect stlr, str, strr, srr, sbrr, sbr, sblr, slr;
-    auto m_xrenderShadow = static_cast<xrender::shadow*>(m_shadow);
+    auto m_xrenderShadow = static_cast<xrender::shadow*>(m_shadow.get());
 
     if (wantShadow) {
         m_xrenderShadow->layoutShadowRects(str, strr, srr, sbrr, sbr, sblr, slr, stlr);
@@ -421,7 +425,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                              dr.width(),
                              dr.height());
         if (data.crossFadeProgress() < 1.0 && data.crossFadeProgress() > 0.0) {
-            auto previous = previousWindowPixmap<window_pixmap>();
+            auto previous = previous_buffer<buffer>();
             if (previous && previous != pixmap) {
                 static xcb_render_color_t cFadeColor = {0, 0, 0, 0};
                 cFadeColor.alpha = uint16_t((1.0 - data.crossFadeProgress()) * 0xffff);
@@ -436,15 +440,19 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                                                1,
                                                &rect);
                 }
-                if (previous->size() != pixmap->size()) {
+
+                auto const previous_size = previous->win_integration->get_size();
+                auto const current_size = pixmap->win_integration->get_size();
+
+                if (previous_size != current_size) {
                     xcb_render_transform_t xform2
-                        = {DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix11)
-                                           * previous->size().width() / pixmap->size().width()),
+                        = {DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix11) * previous_size.width()
+                                           / current_size.width()),
                            DOUBLE_TO_FIXED(0),
                            DOUBLE_TO_FIXED(0),
                            DOUBLE_TO_FIXED(0),
-                           DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix22)
-                                           * previous->size().height() / pixmap->size().height()),
+                           DOUBLE_TO_FIXED(FIXED_TO_DOUBLE(xform.matrix22) * previous_size.height()
+                                           / current_size.height()),
                            DOUBLE_TO_FIXED(0),
                            DOUBLE_TO_FIXED(0),
                            DOUBLE_TO_FIXED(0),
@@ -466,7 +474,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
                                      dr.width(),
                                      dr.height());
 
-                if (previous->size() != pixmap->size()) {
+                if (previous_size != current_size) {
                     xcb_render_set_picture_transform(connection(), previous->picture(), identity);
                 }
             }
@@ -510,8 +518,9 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
             if (blitInTempPixmap) {
                 rect.x = -temp_visibleRect.left();
                 rect.y = -temp_visibleRect.top();
-                rect.width = width();
-                rect.height = height();
+                auto const size = toplevel->size();
+                rect.width = size.width();
+                rect.height = size.height();
             } else {
                 rect.x = wr.x();
                 rect.y = wr.y();
@@ -575,9 +584,9 @@ void window::setPictureFilter(xcb_render_picture_t pic, image_filter_type filter
         connection(), pic, filterName.length(), filterName.constData(), 0, nullptr);
 }
 
-render::window_pixmap* window::createWindowPixmap()
+render::buffer* window::create_buffer()
 {
-    return new window_pixmap(this, format);
+    return new buffer(this, format);
 }
 
 void scene::handle_screen_geometry_change(QSize const& size)
@@ -598,42 +607,6 @@ QRegion window::transformedShape() const
 void window::setTransformedShape(QRegion const& shape)
 {
     transformed_shape = shape;
-}
-
-//****************************************
-// window_pixmap
-//****************************************
-
-window_pixmap::window_pixmap(render::window* window, xcb_render_pictformat_t format)
-    : render::window_pixmap(window)
-    , m_picture(XCB_RENDER_PICTURE_NONE)
-    , m_format(format)
-{
-}
-
-window_pixmap::~window_pixmap()
-{
-    if (m_picture != XCB_RENDER_PICTURE_NONE) {
-        xcb_render_free_picture(connection(), m_picture);
-    }
-}
-
-void window_pixmap::create()
-{
-    if (isValid()) {
-        return;
-    }
-    render::window_pixmap::create();
-    if (!isValid()) {
-        return;
-    }
-    m_picture = xcb_generate_id(connection());
-    xcb_render_create_picture(connection(), m_picture, pixmap(), m_format, 0, nullptr);
-}
-
-xcb_render_picture_t window_pixmap::picture() const
-{
-    return m_picture;
 }
 
 }

@@ -19,6 +19,7 @@
 #include "render/gl/texture.h"
 #include "render/platform.h"
 #include "render/scene.h"
+#include "render/x11/buffer.h"
 #include "render/x11/overlay_window.h"
 #include "win/x11/geo.h"
 
@@ -229,16 +230,18 @@ void GlxTexture::onDamage()
     GLTexturePrivate::onDamage();
 }
 
-bool GlxTexture::updateTexture(render::window_pixmap* pixmap)
+bool GlxTexture::updateTexture(render::buffer* buffer)
 {
     if (m_target) {
         return true;
     }
 
-    auto const size = win::render_geometry(pixmap->toplevel()).size();
-    auto const visual = pixmap->toplevel()->visual();
+    auto const size = win::render_geometry(buffer->toplevel()).size();
+    auto const visual = buffer->toplevel()->visual();
 
-    if (pixmap->pixmap() == XCB_NONE || size.isEmpty() || visual == XCB_NONE) {
+    auto const& win_integrate
+        = static_cast<render::x11::buffer_win_integration&>(*buffer->win_integration);
+    if (win_integrate.pixmap == XCB_NONE || size.isEmpty() || visual == XCB_NONE) {
         return false;
     }
 
@@ -266,7 +269,7 @@ bool GlxTexture::updateTexture(render::window_pixmap* pixmap)
                          m_target == GL_TEXTURE_2D ? GLX_TEXTURE_2D_EXT : GLX_TEXTURE_RECTANGLE_EXT,
                          0};
 
-    m_glxpixmap = glXCreatePixmap(display(), info->fbconfig, pixmap->pixmap(), attrs);
+    m_glxpixmap = glXCreatePixmap(display(), info->fbconfig, win_integrate.pixmap, attrs);
     m_size = size;
     m_yInverted = info->y_inverted ? true : false;
     m_canUseMipmaps = false;

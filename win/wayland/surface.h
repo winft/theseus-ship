@@ -68,7 +68,7 @@ void set_surface(Win* win, Wrapland::Server::Surface* surface)
         });
         QObject::connect(win->m_surface, &Wrapland::Server::Surface::committed, win, [win] {
             if (win->m_surface->state().updates & Wrapland::Server::surface_change::size) {
-                win->discardWindowPixmap();
+                win->discard_buffer();
                 // Quads for Xwayland clients need for size emulation.
                 // Also apparently needed for unmanaged Xwayland clients (compare Kate's open-file
                 // dialog when type-forward list is changing size).

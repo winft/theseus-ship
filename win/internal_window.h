@@ -37,6 +37,7 @@ public:
     ~internal_window() override;
 
     bool setupCompositing(bool add_full_damage) override;
+    void add_scene_window_addon() override;
     bool eventFilter(QObject* watched, QEvent* event) override;
 
     qreal bufferScale() const override;
@@ -75,11 +76,16 @@ public:
     void showOnScreenEdge() override;
 
     void destroyClient();
-    void present(const QSharedPointer<QOpenGLFramebufferObject> fbo);
+    void present(std::shared_ptr<QOpenGLFramebufferObject> const& fbo);
     void present(const QImage& image, const QRegion& damage);
     QWindow* internalWindow() const;
 
     bool has_pending_repaints() const override;
+
+    struct {
+        std::shared_ptr<QOpenGLFramebufferObject> fbo;
+        QImage image;
+    } buffers;
 
 protected:
     bool acceptsFocus() const override;

@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "texture.h"
 
 #include "backend.h"
-#include "window.h"
+#include "buffer.h"
 
 namespace KWin::render::gl
 {
@@ -46,9 +46,9 @@ void texture::discard()
     d_ptr = d_func()->backend()->createBackendTexture(this);
 }
 
-bool texture::load(render::window_pixmap* pixmap)
+bool texture::load(render::buffer* buffer)
 {
-    if (!pixmap->isValid()) {
+    if (!buffer->isValid()) {
         return false;
     }
 
@@ -56,12 +56,12 @@ bool texture::load(render::window_pixmap* pixmap)
     // new texture_private();
     d_ptr = d_func()->backend()->createBackendTexture(this);
 
-    return d_func()->updateTexture(pixmap);
+    return d_func()->updateTexture(buffer);
 }
 
-void texture::updateFromPixmap(render::window_pixmap* pixmap)
+void texture::update_from_buffer(render::buffer* buffer)
 {
-    d_func()->updateTexture(pixmap);
+    d_func()->updateTexture(buffer);
 }
 
 texture_private::texture_private()

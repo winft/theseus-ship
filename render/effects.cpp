@@ -2389,14 +2389,14 @@ void effects_window_impl::closeWindow()
 void effects_window_impl::referencePreviousWindowPixmap()
 {
     if (sw) {
-        sw->referencePreviousPixmap();
+        sw->reference_previous_buffer();
     }
 }
 
 void effects_window_impl::unreferencePreviousWindowPixmap()
 {
     if (sw) {
-        sw->unreferencePreviousPixmap();
+        sw->unreference_previous_buffer();
     }
 }
 

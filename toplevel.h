@@ -273,9 +273,6 @@ public:
     quint32 surfaceId() const;
     Wrapland::Server::Surface *surface() const;
 
-    const QSharedPointer<QOpenGLFramebufferObject> &internalFramebufferObject() const;
-    QImage internalImageObject() const;
-
     /**
      * Maps from global to window coordinates.
      */
@@ -313,7 +310,7 @@ public:
     void disownDataPassedToDeleted();
 
     virtual void damageNotifyEvent();
-    void discardWindowPixmap();
+    void discard_buffer();
 
     void setResourceClass(const QByteArray &name, const QByteArray &className = QByteArray());
 
@@ -421,12 +418,6 @@ protected:
     void copyToDeleted(Toplevel* c);
     friend QDebug& operator<<(QDebug& stream, const Toplevel*);
     void setDepth(int depth);
-
-    /**
-     * An FBO object KWin internal windows might render to.
-     */
-    QSharedPointer<QOpenGLFramebufferObject> m_internalFBO;
-    QImage m_internalImage;
 
     bool is_shape{false};
     QRegion opaque_region;
@@ -838,16 +829,6 @@ inline quint32 Toplevel::surfaceId() const
 inline Wrapland::Server::Surface *Toplevel::surface() const
 {
     return m_surface;
-}
-
-inline const QSharedPointer<QOpenGLFramebufferObject> &Toplevel::internalFramebufferObject() const
-{
-    return m_internalFBO;
-}
-
-inline QImage Toplevel::internalImageObject() const
-{
-    return m_internalImage;
 }
 
 KWIN_EXPORT QDebug& operator<<(QDebug& stream, const Toplevel*);

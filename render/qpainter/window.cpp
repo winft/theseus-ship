@@ -6,6 +6,7 @@
 */
 #include "window.h"
 
+#include "buffer.h"
 #include "deco_renderer.h"
 #include "scene.h"
 #include "shadow.h"
@@ -14,7 +15,6 @@
 #include "win/x11/window.h"
 
 #include <QPainter>
-#include <Wrapland/Server/buffer.h>
 #include <Wrapland/Server/surface.h>
 
 namespace KWin::render::qpainter
@@ -49,12 +49,12 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
 
     if (region.isEmpty())
         return;
-    auto pixmap = windowPixmap<window_pixmap>();
-    if (!pixmap || !pixmap->isValid()) {
+    auto buffer = get_buffer<qpainter::buffer>();
+    if (!buffer || !buffer->isValid()) {
         return;
     }
     if (!toplevel->damage().isEmpty()) {
-        pixmap->updateBuffer();
+        buffer->updateBuffer();
         toplevel->resetDamage();
     }
 
@@ -64,7 +64,8 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     painter->setClipRegion(region);
     painter->setClipping(true);
 
-    painter->translate(x(), y());
+    auto const win_pos = toplevel->pos();
+    painter->translate(win_pos.x(), win_pos.y());
     if (flags(mask & paint_type::window_transformed)) {
         painter->translate(data.xTranslation(), data.yTranslation());
         painter->scale(data.xScale(), data.yScale());
@@ -108,11 +109,11 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
             source = QRectF(viewportRectangle.topLeft() * imageScale,
                             viewportRectangle.bottomRight() * imageScale);
         } else {
-            source = pixmap->image().rect();
+            source = buffer->image().rect();
         }
-        target = win::render_geometry(toplevel).translated(-pos());
+        target = win::render_geometry(toplevel).translated(-toplevel->pos());
     }
-    painter->drawImage(target, pixmap->image(), source);
+    painter->drawImage(target, buffer->image(), source);
 
     if (!opaque) {
         tempPainter.restore();
@@ -189,79 +190,9 @@ void window::renderWindowDecorations(QPainter* painter)
     painter->drawImage(dbr, renderer->image(deco_renderer::DecorationPart::Bottom));
 }
 
-render::window_pixmap* window::createWindowPixmap()
+render::buffer* window::create_buffer()
 {
-    return new window_pixmap(this);
-}
-
-//****************************************
-// window_pixmap
-//****************************************
-window_pixmap::window_pixmap(render::window* window)
-    : render::window_pixmap(window)
-{
-}
-
-window_pixmap::~window_pixmap()
-{
-}
-
-void window_pixmap::create()
-{
-    if (isValid()) {
-        return;
-    }
-    render::window_pixmap::create();
-    if (!isValid()) {
-        return;
-    }
-    if (!surface()) {
-        // That's an internal client.
-        m_image = internalImage();
-        return;
-    }
-    // performing deep copy, this could probably be improved
-    m_image = buffer()->shmImage()->createQImage().copy();
-    if (auto s = surface()) {
-        s->resetTrackedDamage();
-    }
-}
-
-bool window_pixmap::isValid() const
-{
-    if (!m_image.isNull()) {
-        return true;
-    }
-    return render::window_pixmap::isValid();
-}
-
-void window_pixmap::updateBuffer()
-{
-    auto oldBuffer = buffer();
-    render::window_pixmap::updateBuffer();
-    auto b = buffer();
-    if (!surface()) {
-        // That's an internal client.
-        m_image = internalImage();
-        return;
-    }
-    if (!b) {
-        m_image = QImage();
-        return;
-    }
-    if (b == oldBuffer) {
-        return;
-    }
-    // perform deep copy
-    m_image = b->shmImage()->createQImage().copy();
-    if (auto s = surface()) {
-        s->resetTrackedDamage();
-    }
-}
-
-QImage const& window_pixmap::image()
-{
-    return m_image;
+    return new buffer(this);
 }
 
 }

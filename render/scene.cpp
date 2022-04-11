@@ -302,7 +302,7 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
             auto const clientShape = win::content_render_region(toplevel).translated(
                 win::frame_to_render_pos(toplevel, toplevel->pos()));
             auto const opaqueShape = toplevel->opaqueRegion().translated(
-                win::frame_to_client_pos(toplevel, window->pos()) - window->pos());
+                win::frame_to_client_pos(toplevel, toplevel->pos()) - toplevel->pos());
             data.clip = clientShape & opaqueShape;
             if (clientShape == opaqueShape) {
                 data.mask = static_cast<int>(orig_mask | paint_type::window_opaque);
@@ -315,7 +315,7 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
         // The decoration is drawn in the second pass.
         if (toplevel->control && !win::decoration_has_alpha(toplevel)
             && toplevel->opacity() == 1.0) {
-            data.clip = window->decorationShape().translated(window->pos());
+            data.clip = window->decorationShape().translated(toplevel->pos());
         }
 
         data.quads = window->buildQuads();
@@ -546,11 +546,14 @@ void scene::paintWindowThumbnails(window* w,
         if (!item->window()) {
             continue;
         }
+
         const QPointF point = item->mapToScene(QPointF(0, 0));
-        qreal x = point.x() + w->x() + (item->width() - size.width()) / 2;
-        qreal y = point.y() + w->y() + (item->height() - size.height()) / 2;
+        auto const win_pos = w->get_window()->pos();
+        qreal x = point.x() + win_pos.x() + (item->width() - size.width()) / 2;
+        qreal y = point.y() + win_pos.y() + (item->height() - size.height()) / 2;
         x -= thumb->x();
         y -= thumb->y();
+
         // compensate shadow topleft padding
         x += (thumb->x() - visualThumbRect.x()) * thumbData.xScale();
         y += (thumb->y() - visualThumbRect.y()) * thumbData.yScale();
@@ -592,13 +595,17 @@ void scene::paintDesktopThumbnails(window* w)
         size.scale(item->width(), item->height(), Qt::KeepAspectRatio);
         data *= QVector2D(size.width() / double(space_size.width()),
                           size.height() / double(space_size.height()));
+
         const QPointF point = item->mapToScene(item->position());
-        const qreal x = point.x() + w->x() + (item->width() - size.width()) / 2;
-        const qreal y = point.y() + w->y() + (item->height() - size.height()) / 2;
+        auto const win_pos = w->get_window()->pos();
+        const qreal x = point.x() + win_pos.x() + (item->width() - size.width()) / 2;
+        const qreal y = point.y() + win_pos.y() + (item->height() - size.height()) / 2;
         const QRect region = QRect(x, y, item->width(), item->height());
+
         QRegion clippingRegion = region;
         clippingRegion &= QRegion(wImpl->x(), wImpl->y(), wImpl->width(), wImpl->height());
         adjustClipRegion(item, clippingRegion);
+
         data += QPointF(x, y);
         auto const desktopMask = paint_type::screen_transformed | paint_type::window_transformed
             | paint_type::screen_background_first;
