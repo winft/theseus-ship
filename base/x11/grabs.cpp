@@ -43,9 +43,11 @@ bool grab_keyboard(xcb_window_t w)
         return false;
     }
     if (keyboard_grabbed) {
+        qCDebug(KWIN_CORE) << "Failed to grab X Keyboard: already grabbed by us";
         return false;
     }
     if (qApp->activePopupWidget() != nullptr) {
+        qCDebug(KWIN_CORE) << "Failed to grab X Keyboard: no popup widget";
         return false;
     }
 
@@ -59,9 +61,11 @@ bool grab_keyboard(xcb_window_t w)
         xcb_grab_keyboard_reply(connection(), cookie, nullptr));
 
     if (!grab) {
+        qCDebug(KWIN_CORE) << "Failed to grab X Keyboard: grab null";
         return false;
     }
     if (grab->status != XCB_GRAB_STATUS_SUCCESS) {
+        qCDebug(KWIN_CORE) << "Failed to grab X Keyboard: grab failed with status" << grab->status;
         return false;
     }
 
