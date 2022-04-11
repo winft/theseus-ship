@@ -40,6 +40,7 @@ class KWIN_EXPORT effect : public KWin::AnimationEffect
     Q_ENUMS(EasingCurve)
     Q_ENUMS(SessionState)
     Q_ENUMS(ElectricBorder)
+    Q_ENUMS(ShaderTrait)
     /**
      * The plugin ID of the effect
      */
@@ -67,6 +68,14 @@ public:
         LanczosCacheRole
     };
     enum EasingCurve { GaussianCurve = 128 };
+    // copied from kwinglutils.h
+    enum class ShaderTrait {
+        MapTexture = (1 << 0),
+        UniformColor = (1 << 1),
+        Modulate = (1 << 2),
+        AdjustSaturation = (1 << 3),
+    };
+
     const QString& scriptFile() const
     {
         return m_scriptFile;
@@ -189,7 +198,8 @@ public:
                                  int curve = QEasingCurve::Linear,
                                  int delay = 0,
                                  bool fullScreen = false,
-                                 bool keepAlive = true);
+                                 bool keepAlive = true,
+                                 uint shaderId = 0);
     Q_SCRIPTABLE QJSValue animate(const QJSValue& object);
 
     Q_SCRIPTABLE quint64 set(KWin::EffectWindow* window,
@@ -201,7 +211,8 @@ public:
                              int curve = QEasingCurve::Linear,
                              int delay = 0,
                              bool fullScreen = false,
-                             bool keepAlive = true);
+                             bool keepAlive = true,
+                             uint shaderId = 0);
     Q_SCRIPTABLE QJSValue set(const QJSValue& object);
 
     Q_SCRIPTABLE bool
@@ -226,6 +237,9 @@ public:
     Q_SCRIPTABLE bool cancel(const QList<quint64>& animationIds);
 
     Q_SCRIPTABLE QList<int> touchEdgesForAction(const QString& action) const;
+
+    Q_SCRIPTABLE uint addFragmentShader(ShaderTrait traits, const QString& fragmentShaderFile = {});
+    Q_SCRIPTABLE void setUniform(uint shaderId, const QString& name, const QJSValue& value);
 
     QHash<int, QJSValueList>& realtimeScreenEdgeCallbacks()
     {
@@ -262,6 +276,8 @@ private:
 
     QJSValue animate_helper(const QJSValue& object, AnimationType animationType);
 
+    GLShader* findShader(uint shaderId) const;
+
     QJSEngine* m_engine;
     QString m_effectName;
     QString m_scriptFile;
@@ -274,6 +290,8 @@ private:
     KConfigLoader* m_config{nullptr};
     int m_chainPosition{0};
     Effect* m_activeFullScreenEffect = nullptr;
+    QHash<uint, GLShader*> m_shaders;
+    uint m_nextShaderId{1u};
 
     std::function<base::options&()> get_options;
     std::function<QSize()> get_screen_size;
