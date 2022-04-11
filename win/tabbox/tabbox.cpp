@@ -1410,9 +1410,8 @@ void tabbox::key_press(int keyQt)
             // if Escape is part of the shortcut, don't cancel
             close(true);
         } else if (direction == Steady) {
-            QKeyEvent* event = new QKeyEvent(
-                QEvent::KeyPress, keyQt & ~Qt::KeyboardModifierMask, Qt::NoModifier);
-            grabbed_key_event(event);
+            QKeyEvent event(QEvent::KeyPress, keyQt & ~Qt::KeyboardModifierMask, Qt::NoModifier);
+            grabbed_key_event(&event);
         }
     }
 }
