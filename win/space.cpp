@@ -271,6 +271,9 @@ void space::addClient(win::x11::window* c)
 {
     auto grp = findGroup(c->xcb_window());
 
+    m_windows.push_back(c);
+    m_allClients.push_back(c);
+
     Q_EMIT clientAdded(c);
 
     if (grp != nullptr)
@@ -284,9 +287,6 @@ void space::addClient(win::x11::window* c)
     } else {
         win::focus_chain::self()->update(c, win::focus_chain::Update);
     }
-
-    m_windows.push_back(c);
-    m_allClients.push_back(c);
 
     if (!contains(stacking_order->pre_stack, c)) {
         // Raise if it hasn't got any stacking position yet
