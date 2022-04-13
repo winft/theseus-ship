@@ -108,6 +108,8 @@ public:
 
     enum IntUniform {
         AlphaToOne, ///< @deprecated no longer used
+        TextureWidth,
+        TextureHeight,
         IntUniformCount
     };
 

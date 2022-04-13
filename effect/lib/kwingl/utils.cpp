@@ -440,6 +440,9 @@ void GLShader::resolveLocations()
 
     mColorLocation[Color] = uniformLocation("geometryColor");
 
+    mIntLocation[TextureWidth] = uniformLocation("textureWidth");
+    mIntLocation[TextureHeight] = uniformLocation("textureHeight");
+
     mLocationsResolved = true;
 }
 

@@ -6,6 +6,7 @@
 */
 #pragma once
 
+#include "kwingl/utils.h"
 #include <kwineffects/effect.h>
 #include <kwineffects/export.h>
 
@@ -65,6 +66,13 @@ protected:
      */
     virtual void
     apply(EffectWindow* window, int mask, WindowPaintData& data, WindowQuadList& quads);
+
+    /**
+     * Allows to specify a @p shader to draw the redirected texture for @p window.
+     * Can only be called once the window is redirected.
+     * @since 5.25
+     **/
+    void setShader(EffectWindow* window, GLShader* shader);
 
 private Q_SLOTS:
     void handleWindowGeometryChanged(EffectWindow* window);

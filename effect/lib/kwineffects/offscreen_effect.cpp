@@ -20,6 +20,7 @@ struct OffscreenData {
     QScopedPointer<GLTexture> texture;
     QScopedPointer<GLRenderTarget> renderTarget;
     bool isDirty = true;
+    GLShader* shader = nullptr;
 };
 
 class OffscreenEffectPrivate
@@ -34,7 +35,8 @@ public:
                GLTexture* texture,
                const QRegion& region,
                const WindowPaintData& data,
-               const WindowQuadList& quads);
+               const WindowQuadList& quads,
+               GLShader* offscreenShader);
     GLTexture* maybeRender(EffectWindow* window, OffscreenData* offscreenData);
 
     bool live = true;
@@ -143,11 +145,14 @@ void OffscreenEffectPrivate::paint(EffectWindow* window,
                                    GLTexture* texture,
                                    const QRegion& region,
                                    const WindowPaintData& data,
-                                   const WindowQuadList& quads)
+                                   const WindowQuadList& quads,
+                                   GLShader* offscreenShader)
 {
-    ShaderBinder binder(ShaderTrait::MapTexture | ShaderTrait::Modulate
-                        | ShaderTrait::AdjustSaturation);
-    GLShader* shader = binder.shader();
+    GLShader* shader = offscreenShader
+        ? offscreenShader
+        : ShaderManager::instance()->shader(ShaderTrait::MapTexture | ShaderTrait::Modulate
+                                            | ShaderTrait::AdjustSaturation);
+    ShaderBinder binder(shader);
 
     const bool indexedQuads = GLVertexBuffer::supportsIndexedQuads();
     const GLenum primitiveType = indexedQuads ? GL_QUADS : GL_TRIANGLES;
@@ -176,6 +181,8 @@ void OffscreenEffectPrivate::paint(EffectWindow* window,
     shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
     shader->setUniform(GLShader::ModulationConstant, QVector4D(rgb, rgb, rgb, a));
     shader->setUniform(GLShader::Saturation, data.saturation());
+    shader->setUniform(GLShader::TextureWidth, texture->width());
+    shader->setUniform(GLShader::TextureHeight, texture->height());
 
     const bool clipping = region != infiniteRegion();
     const QRegion clipRegion = clipping ? effects->mapToRenderTarget(region) : infiniteRegion();
@@ -225,7 +232,7 @@ void OffscreenEffect::drawWindow(EffectWindow* window,
     apply(window, mask, data, quads);
 
     GLTexture* texture = d->maybeRender(window, offscreenData);
-    d->paint(window, texture, region, data, quads);
+    d->paint(window, texture, region, data, quads, offscreenData->shader);
 }
 
 void OffscreenEffect::handleWindowGeometryChanged(EffectWindow* window)
@@ -244,6 +251,14 @@ void OffscreenEffect::handleWindowDamaged(EffectWindow* window)
 {
     if (auto offscreenData = d->windows.value(window)) {
         offscreenData->isDirty = true;
+    }
+}
+
+void OffscreenEffect::setShader(EffectWindow* window, GLShader* shader)
+{
+    OffscreenData* offscreenData = d->windows.value(window);
+    if (offscreenData) {
+        offscreenData->shader = shader;
     }
 }
 
