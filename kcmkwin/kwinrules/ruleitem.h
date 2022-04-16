@@ -92,7 +92,6 @@ public:
 
     QVariant options() const;
     void setOptionsData(const QList<OptionsModel::Data> &data);
-    uint optionsMask() const;
 
     RulePolicy::Type policyType() const;
     int policy() const;          // int belongs to anonymous enum in Rules::
@@ -121,7 +120,6 @@ private:
 
     RulePolicy *m_policy;
     OptionsModel *m_options;
-    uint m_optionsMask;
 };
 
 }   //namespace

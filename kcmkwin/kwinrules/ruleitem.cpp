@@ -41,7 +41,6 @@ RuleItem::RuleItem(const QString &key,
     , m_enabled(false)
     , m_policy(new RulePolicy(policyType))
     , m_options(nullptr)
-    , m_optionsMask(0U - 1)
 {
     reset();
 }
@@ -155,25 +154,10 @@ QVariant RuleItem::options() const
 void RuleItem::setOptionsData(const QList<OptionsModel::Data> &data)
 {
     if (!m_options) {
-        if (m_type != Option && m_type != NetTypes) {
-            return;
-        }
-        m_options = new OptionsModel();
+        m_options = new OptionsModel({}, m_type == NetTypes);
     }
     m_options->updateModelData(data);
     m_options->setValue(m_value);
-
-    if (m_type == NetTypes) {
-        m_optionsMask = 0;
-        for (const OptionsModel::Data &dataItem : data) {
-            m_optionsMask += 1 << dataItem.value.toUInt();
-        }
-    }
-}
-
-uint RuleItem::optionsMask() const
-{
-    return m_optionsMask;
 }
 
 int RuleItem::policy() const
@@ -204,31 +188,31 @@ QString RuleItem::policyKey() const
 QVariant RuleItem::typedValue(const QVariant &value) const
 {
     switch (type()) {
-        case Undefined:
-        case Option:
-            return value;
-        case Boolean:
-            return value.toBool();
-        case Integer:
-        case Percentage:
-            return value.toInt();
-        case NetTypes: {
-            const uint typesMask = value.toUInt() & optionsMask();  // filter by the allowed mask in the model
-            if (typesMask == 0 || typesMask == optionsMask()) {     // if no types or all of them are selected
-                return 0U - 1;                                      // return an all active mask (NET:AllTypesMask)
-            }
-            return typesMask;
+    case Undefined:
+    case Option:
+        return value;
+    case Boolean:
+        return value.toBool();
+    case Integer:
+    case Percentage:
+        return value.toInt();
+    case NetTypes: {
+        const uint typesMask = m_options ? value.toUInt() & m_options->allOptionsMask() : 0; // filter by the allowed mask in the model
+        if (typesMask == 0 || typesMask == m_options->allOptionsMask()) { // if no types or all of them are selected
+            return 0U - 1; // return an all active mask (NET:AllTypesMask)
         }
-        case Point: {
-            const QPoint point = value.toPoint();
-            return (point == geo::invalid_point) ? QPoint(0, 0) : point;
-        }
-        case Size:
-            return value.toSize();
-        case String:
-            return value.toString().trimmed();
-        case Shortcut:
-            return value.toString();
+        return typesMask;
+    }
+    case Point: {
+        const QPoint point = value.toPoint();
+        return (point == geo::invalid_point) ? QPoint(0, 0) : point;
+    }
+    case Size:
+        return value.toSize();
+    case String:
+        return value.toString().trimmed();
+    case Shortcut:
+        return value.toString();
     }
     return value;
 }

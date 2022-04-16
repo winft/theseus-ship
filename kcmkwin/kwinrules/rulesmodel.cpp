@@ -69,7 +69,6 @@ QHash< int, QByteArray > RulesModel::roleNames() const
         {PolicyRole,         QByteArrayLiteral("policy")},
         {PolicyModelRole,    QByteArrayLiteral("policyModel")},
         {OptionsModelRole,   QByteArrayLiteral("options")},
-        {OptionsMaskRole,    QByteArrayLiteral("optionsMask")},
         {SuggestedValueRole, QByteArrayLiteral("suggested")},
     };
 }
@@ -117,8 +116,6 @@ QVariant RulesModel::data(const QModelIndex &index, int role) const
         return rule->policyModel();
     case OptionsModelRole:
         return rule->options();
-    case OptionsMaskRole:
-        return rule->optionsMask();
     case SuggestedValueRole:
         return rule->suggestedValue();
     }
@@ -444,11 +441,19 @@ void RulesModel::populateRuleList()
                          i18n("Maximized vertically"), i18n("Size & Position"),
                          QIcon::fromTheme("resizerow")));
 
-    auto desktop = addRule(new RuleItem(QLatin1String("desktop"),
-                                        RulePolicy::SetRule, RuleItem::Option,
-                                        i18n("Virtual Desktop"), i18n("Size & Position"),
-                                        QIcon::fromTheme("virtual-desktops")));
-    desktop->setOptionsData(virtualDesktopsModelData());
+    RuleItem *desktops;
+    desktops = new RuleItem(QLatin1String("desktops"),
+                            RulePolicy::SetRule, RuleItem::Option,
+                            i18n("Virtual Desktop"), i18n("Size & Position"),
+                            QIcon::fromTheme("virtual-desktops"));
+    addRule(desktops);
+    desktops->setOptionsData(virtualDesktopsModelData());
+
+    connect(this, &RulesModel::virtualDesktopsUpdated, this, [this]() {
+        m_rules["desktops"]->setOptionsData(virtualDesktopsModelData());
+        const QModelIndex index = indexOf("desktops");
+        Q_EMIT dataChanged(index, index, {OptionsModelRole});
+    });
 
     connect(this, &RulesModel::virtualDesktopsUpdated,
             this, [this] { m_rules["desktop"]->setOptionsData(virtualDesktopsModelData()); });
@@ -692,20 +697,20 @@ void RulesModel::setSuggestedProperties(const QVariantMap &info)
 
 QList<OptionsModel::Data> RulesModel::windowTypesModelData() const
 {
-    static const auto modelData = QList<OptionsModel::Data> {
-        //TODO: Find/create better icons
-        { NET::Normal,  i18n("Normal Window")     , QIcon::fromTheme("window")                   },
-        { NET::Dialog,  i18n("Dialog Window")     , QIcon::fromTheme("window-duplicate")         },
-        { NET::Utility, i18n("Utility Window")    , QIcon::fromTheme("dialog-object-properties") },
-        { NET::Dock,    i18n("Dock (panel)")      , QIcon::fromTheme("list-remove")              },
-        { NET::Toolbar, i18n("Toolbar")           , QIcon::fromTheme("tools")                    },
-        { NET::Menu,    i18n("Torn-Off Menu")     , QIcon::fromTheme("overflow-menu-left")       },
-        { NET::Splash,  i18n("Splash Screen")     , QIcon::fromTheme("embosstool")               },
-        { NET::Desktop, i18n("Desktop")           , QIcon::fromTheme("desktop")                  },
-        // { NET::Override, i18n("Unmanaged Window")   },  deprecated
-        { NET::TopMenu, i18n("Standalone Menubar"), QIcon::fromTheme("application-menu")       },
-        { NET::OnScreenDisplay, i18n("On Screen Display"), QIcon::fromTheme("osd-duplicate")     }
-    };
+    static const auto modelData = QList<OptionsModel::Data>{
+        // TODO: Find/create better icons
+        {1 << NET::Normal, i18n("Normal Window"), QIcon::fromTheme("window")},
+        {1 << NET::Dialog, i18n("Dialog Window"), QIcon::fromTheme("window-duplicate")},
+        {1 << NET::Utility, i18n("Utility Window"), QIcon::fromTheme("dialog-object-properties")},
+        {1 << NET::Dock, i18n("Dock (panel)"), QIcon::fromTheme("list-remove")},
+        {1 << NET::Toolbar, i18n("Toolbar"), QIcon::fromTheme("tools")},
+        {1 << NET::Menu, i18n("Torn-Off Menu"), QIcon::fromTheme("overflow-menu-left")},
+        {1 << NET::Splash, i18n("Splash Screen"), QIcon::fromTheme("embosstool")},
+        {1 << NET::Desktop, i18n("Desktop"), QIcon::fromTheme("desktop")},
+        // {1 <<  NET::Override, i18n("Unmanaged Window")},  deprecated
+        {1 << NET::TopMenu, i18n("Standalone Menubar"), QIcon::fromTheme("application-menu")},
+        {1 << NET::OnScreenDisplay, i18n("On Screen Display"), QIcon::fromTheme("osd-duplicate")}};
+
     return modelData;
 }
 
