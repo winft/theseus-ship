@@ -41,17 +41,27 @@ public:
     enum OptionsRole {
         ValueRole = Qt::UserRole,
         IconNameRole,
+        OptionTypeRole, // The type of an option item, defaults to NormalOption
         BitMaskRole,
     };
     Q_ENUM(OptionsRole)
 
+    enum OptionType {
+        NormalOption = 0, /**< Normal option */
+        ExclusiveOption, /**< An exclusive option, so all other option items are deselected when this one is selected */
+        SelectAllOption, /**< All option items are selected when this option item is selected */
+    };
+    Q_ENUM(OptionType)
+
     struct Data {
-        Data(const QVariant &value, const QString &text, const QIcon &icon = {}, const QString &description = {})
+        Data(const QVariant &value, const QString &text, const QIcon &icon = {}, const QString &description = {}, OptionType optionType = NormalOption)
             : value(value)
             , text(text)
             , icon(icon)
             , description(description)
-            {}
+            , optionType(optionType)
+        {
+        }
         Data(const QVariant &value, const QString &text, const QString &description)
             : value(value)
             , text(text)
@@ -62,6 +72,7 @@ public:
         QString text;
         QIcon icon;
         QString description;
+        OptionType optionType = NormalOption;
     };
 
 public:
@@ -80,6 +91,7 @@ public:
     void resetValue();
 
     bool useFlags() const;
+    QVariant allValues() const;
     uint allOptionsMask() const;
 
     void updateModelData(const QList<Data> &data);

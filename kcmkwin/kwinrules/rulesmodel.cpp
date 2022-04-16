@@ -42,6 +42,8 @@ RulesModel::RulesModel(QObject *parent)
                                          QStringLiteral("Do not create objects of type RuleItem"));
     qmlRegisterUncreatableType<RulesModel>("org.kde.kcms.kwinrules", 1, 0, "RulesModel",
                                                  QStringLiteral("Do not create objects of type RulesModel"));
+    qmlRegisterUncreatableType<OptionsModel>("org.kde.kcms.kwinrules", 1, 0, "OptionsModel",
+                                             QStringLiteral("Do not create objects of type OptionsModel"));
 
     qDBusRegisterMetaType<KWin::win::dbus::virtual_desktop_data>();
     qDBusRegisterMetaType<KWin::win::dbus::virtual_desktop_data_vector>();
@@ -699,6 +701,7 @@ QList<OptionsModel::Data> RulesModel::windowTypesModelData() const
 {
     static const auto modelData = QList<OptionsModel::Data>{
         // TODO: Find/create better icons
+        {0, i18n("All Window Types"), {}, {}, OptionsModel::SelectAllOption},
         {1 << NET::Normal, i18n("Normal Window"), QIcon::fromTheme("window")},
         {1 << NET::Dialog, i18n("Dialog Window"), QIcon::fromTheme("window-duplicate")},
         {1 << NET::Utility, i18n("Utility Window"), QIcon::fromTheme("dialog-object-properties")},
@@ -717,14 +720,19 @@ QList<OptionsModel::Data> RulesModel::windowTypesModelData() const
 QList<OptionsModel::Data> RulesModel::virtualDesktopsModelData() const
 {
     QList<OptionsModel::Data> modelData;
+    modelData << OptionsModel::Data{
+        QString(),
+        i18n("All Desktops"),
+        QIcon::fromTheme("window-pin"),
+        i18nc("@info:tooltip in the virtual desktop list", "Make the window available on all desktops"),
+        OptionsModel::ExclusiveOption,
+    };
     for (auto const& desktop : m_virtualDesktops) {
         modelData << OptionsModel::Data{
-            desktop.position + 1,  // "desktop" setting uses the desktop position (int) starting at 1
+            desktop.id,
             QString::number(desktop.position + 1).rightJustified(2) + QStringLiteral(": ") + desktop.name,
-            QIcon::fromTheme("virtual-desktops")
-        };
+            QIcon::fromTheme("virtual-desktops")};
     }
-    modelData << OptionsModel::Data{ NET::OnAllDesktops, i18n("All Desktops"), QIcon::fromTheme("window-pin") };
     return modelData;
 }
 
