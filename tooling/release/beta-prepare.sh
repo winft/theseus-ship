@@ -48,6 +48,11 @@ BRANCH_NAME="Plasma/$(echo $NEXT_VERSION | sed -e 's,^\(\w*\.\w*\)\..*,\1,g')"
 echo "New stable branch name: $BRANCH_NAME"
 git checkout -b $BRANCH_NAME
 
+# Adapt the CI now using the stable image.
+sed -i "s/IMAGE_VERSION\: master/IMAGE_VERSION: stable/g" .gitlab-ci.yml
+git add .gitlab-ci.yml
+git commit -m "ci: switch to stable image" -m "For running CI against stable branch $BRANCH_NAME as target."
+
 # Go back to master branch and update version to next release.
 git checkout master
 MASTER_CMAKE_VERSION=$(semver -i minor $CMAKE_VERSION)

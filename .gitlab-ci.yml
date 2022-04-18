@@ -6,6 +6,8 @@ stages:
 
 variables:
   IMAGE_BASE: ${CI_REGISTRY}/kwinft/ci-images/archlinux/kwinft-base
+  IMAGE_VERSION: master
+  IMAGE: ${IMAGE_BASE}-${IMAGE_VERSION}:latest
 
 workflow:
   rules:
@@ -23,20 +25,24 @@ include:
 # We use the following two job templates because we build with different images on master and
 # stable branches and GitLab CI does allow to set the image name only through variable expansion.
 .common-master: &common-master
-  image: ${IMAGE_BASE}-master:latest
   rules:
     - if: '$COVERITY_SCAN_RUN'
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ /^Plasma\// || $CI_COMMIT_TAG'
+    - if: '$IMAGE_VERSION != "master"'
+      when: never
+    - if: $CI_COMMIT_TAG
       when: never
     - when: on_success
 
 .common-stable: &common-stable
-  image: ${IMAGE_BASE}-stable:latest
   rules:
     - if: '$COVERITY_SCAN_RUN'
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ /^Plasma\// || $CI_COMMIT_TAG'
+    - if: '$IMAGE_VERSION == "stable"'
+      when: on_success
+    - if: $CI_COMMIT_TAG
+      variables:
+        IMAGE_VERSION: stable
       when: on_success
     - when: never
 
@@ -53,7 +59,7 @@ Message Lint:
 Clang-Format:
   extends: .clang-format
   stage: Compliance
-  image: ${IMAGE_BASE}-master:latest
+  image: $IMAGE
 
 
 ####################################################################################################
@@ -64,10 +70,11 @@ Clang-Format:
 Coverity Scan:
   extends: .coverity-scan
   stage: Build
-  image: ${IMAGE_BASE}-master:latest
+  image: $IMAGE
 
 .common-build: &common-build
   stage: Build
+  image: $IMAGE
   script:
     - mkdir build && cd build
     - cmake -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
@@ -97,6 +104,7 @@ Stable Build:
 .common-test:
   extends: .tests-with-coverage
   stage: Analysis
+  image: $IMAGE
   variables:
     # Following tests are currently disabled on CI:
     # * lockscreen, modifier-only-shortcut: flaky on CI because the lockscreen greeter process likes to
