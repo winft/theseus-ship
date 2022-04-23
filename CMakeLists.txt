@@ -1,23 +1,35 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-project(KWinFT)
-set(PROJECT_VERSION "5.24.80")
-set(PROJECT_VERSION_MAJOR 5)
-
-set(CMAKE_C_STANDARD 99)
+project(KWinFT VERSION 5.24.80)
 
 set(QT_MIN_VERSION "5.15.0")
 set(KF5_MIN_VERSION "5.91")
 set(KDE_COMPILERSETTINGS_LEVEL "5.84")
 
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0
+  -DQT_NO_KEYWORDS
+  -DQT_USE_QSTRINGBUILDER
+  -DQT_NO_URL_CAST_FROM_STRING
+  -DQT_NO_CAST_TO_ASCII
+)
+
+# Prevent EGL headers from including platform headers, in particular Xlib.h.
+add_definitions(-DMESA_EGL_NO_X11_HEADERS)
+add_definitions(-DEGL_NO_X11)
+add_definitions(-DEGL_NO_PLATFORM_SPECIFIC_TYPES)
+
 find_package(ECM ${KF5_MIN_VERSION} REQUIRED NO_MODULE)
+
+# where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${ECM_MODULE_PATH})
 
 include(FeatureSummary)
 include(WriteBasicConfigVersionFile)
 include(GenerateExportHeader)
-
-# where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${ECM_MODULE_PATH})
 
 find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Concurrent
@@ -46,21 +58,6 @@ include(KDECompilerSettings NO_POLICY_SCOPE)
 include(ECMInstallIcons)
 include(ECMOptionalAddSubdirectory)
 include(ECMConfiguredInstall)
-
-add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0
-    -DQT_NO_KEYWORDS
-    -DQT_USE_QSTRINGBUILDER
-    -DQT_NO_URL_CAST_FROM_STRING
-    -DQT_NO_CAST_TO_ASCII
-)
-
-# Prevent EGL headers from including platform headers, in particular Xlib.h.
-add_definitions(-DMESA_EGL_NO_X11_HEADERS)
-add_definitions(-DEGL_NO_X11)
-add_definitions(-DEGL_NO_PLATFORM_SPECIFIC_TYPES)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # required frameworks by Core
 find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
@@ -108,7 +105,9 @@ set_package_properties(KF5Kirigami2 PROPERTIES
     TYPE RUNTIME
 )
 
-find_package(KDecoration2 ${PROJECT_VERSION} CONFIG REQUIRED)
+find_package(KDecoration2 ${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}
+  CONFIG REQUIRED
+)
 
 find_package(KScreenLocker CONFIG REQUIRED)
 set_package_properties(KScreenLocker PROPERTIES
@@ -287,8 +286,6 @@ ecm_find_qmlmodule(org.kde.plasma.core 2.0)
 ecm_find_qmlmodule(org.kde.plasma.components 2.0)
 
 ########### configure tests ###############
-include(CMakeDependentOption)
-
 option(KWIN_BUILD_DECORATIONS "Enable building of KWin decorations." ON)
 option(KWIN_BUILD_KCMS "Enable building of KWin configuration modules." ON)
 option(KWIN_BUILD_TABBOX "Enable building of KWin Tabbox functionality" ON)
@@ -621,8 +618,8 @@ set(kwinLibs
 add_library(kwin SHARED ${kwin_SRCS})
 
 set_target_properties(kwin PROPERTIES
-   VERSION ${PROJECT_VERSION}
-   SOVERSION ${PROJECT_VERSION_MAJOR}
+   VERSION ${CMAKE_PROJECT_VERSION}
+   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
 )
 
 target_precompile_headers(kwin PRIVATE
@@ -909,8 +906,8 @@ kcoreaddons_target_static_plugins(
 )
 
 set_target_properties(kwin_wayland_lib PROPERTIES
-   VERSION ${PROJECT_VERSION}
-   SOVERSION ${PROJECT_VERSION_MAJOR}
+   VERSION ${CMAKE_PROJECT_VERSION}
+   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
    OUTPUT_NAME "kwin_wayland"
 )
 target_compile_definitions(kwin_wayland_lib PUBLIC WLR_USE_UNSTABLE)

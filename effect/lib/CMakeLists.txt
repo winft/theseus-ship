@@ -1,7 +1,7 @@
 ########### next target ###############
 include(ECMSetupVersion)
 
-ecm_setup_version(${PROJECT_VERSION}
+ecm_setup_version(${CMAKE_PROJECT_VERSION}
                   VARIABLE_PREFIX KWINEFFECTS
                   VERSION_HEADER "${CMAKE_CURRENT_BINARY_DIR}/kwineffects_version.h"
                   PACKAGE_VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/KWinEffectsConfigVersion.cmake"

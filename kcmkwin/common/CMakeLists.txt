@@ -24,8 +24,8 @@ target_link_libraries(kcmkwincommon
 )
 
 set_target_properties(kcmkwincommon PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
+    VERSION ${CMAKE_PROJECT_VERSION}
+    SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
 )
 
 install(TARGETS kcmkwincommon ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
