@@ -1,5 +1,41 @@
 # Changelog
 All notable changes to KWinFT will be documented in this file.
+### [5.24.1](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.24.0...kwinft@5.24.1) (2022-04-23)
+
+
+### Bug Fixes
+
+* adapt to wlroots input changes ([c52353e](https://gitlab.com/kwinft/kwinft/commit/c52353ebb9ceec1bda807d4284186082dba36e22))
+* add "cmath" header in deco_renderer.h ([dcbde1b](https://gitlab.com/kwinft/kwinft/commit/dcbde1b89f40a6a3c2d34db96de92ef4562156fb))
+* add missing cmath imports ([33cb8a0](https://gitlab.com/kwinft/kwinft/commit/33cb8a0d8225cd34a28e85f073a4ebd274cb9e39))
+* add missing include for libc++ after c2f41815196a ([87190a5](https://gitlab.com/kwinft/kwinft/commit/87190a548487666298e6af52da000fe426e9fd3d))
+* check for and reset GLX backend on tear down ([533ed7e](https://gitlab.com/kwinft/kwinft/commit/533ed7e3faf2d063a205906b4bcc2f80163c98e6))
+* check for control on deco render ([fddbb19](https://gitlab.com/kwinft/kwinft/commit/fddbb19ef434f63831bad0443faf393301c89f93))
+* check on session active when scheduling new frames ([8f20537](https://gitlab.com/kwinft/kwinft/commit/8f20537461b701002fc2891eda8dd3b822dfcdff))
+* correct prefix of Lanczos shader path ([9bba565](https://gitlab.com/kwinft/kwinft/commit/9bba565f441ab8e558a038ca054ccae3de764819))
+* destroy annexed remnants with alive leads before paint ([82c45f5](https://gitlab.com/kwinft/kwinft/commit/82c45f5d00cb9fa563b68e6894afb20c0df49c79))
+* destroy leaderless annexed windows directly ([160cbf5](https://gitlab.com/kwinft/kwinft/commit/160cbf5d046dd6e24d36ec19133305c5e7071de9))
+* drop "wayland-server.h" in egl_data.h ([9b9f04d](https://gitlab.com/kwinft/kwinft/commit/9b9f04d59341b014ab2baa028ae613324d332499))
+* ensure that toplead exist before repaint ([81b1f15](https://gitlab.com/kwinft/kwinft/commit/81b1f151d196c0121f16797a7ec7da3be5321c8c))
+* get proc address ourselves for eglQueryWaylandBufferWL ([b1347a3](https://gitlab.com/kwinft/kwinft/commit/b1347a330abe4b22fc2b775c20a06d78b6fee26b))
+* guard against null group ([062a535](https://gitlab.com/kwinft/kwinft/commit/062a535e49e0681d74777807fadf7470a619cb9e))
+* **input:** check for headless backend instead of device ([0958c51](https://gitlab.com/kwinft/kwinft/commit/0958c513f8582466151b98db816635c3158c6124))
+* **input:** set and unset focus on seat capability changes ([b11265d](https://gitlab.com/kwinft/kwinft/commit/b11265d8933ba1b13e8faea0cf36f6e3e81f0132))
+* make control actually demand attention ([b0b3d41](https://gitlab.com/kwinft/kwinft/commit/b0b3d41c5c60fddbd8088dfc367ddf0c6dc99736))
+* only ref annexed transient remnants for each lead ([2b64c1e](https://gitlab.com/kwinft/kwinft/commit/2b64c1e06c1fedd449d45114474224543d0bb3e8))
+* raise lead if window is without control ([485960f](https://gitlab.com/kwinft/kwinft/commit/485960fa536c6289a66521bb0024fbf55c52c42b))
+* remove transient children from copy ([4f2831f](https://gitlab.com/kwinft/kwinft/commit/4f2831f8fa96b70a0dcccbffbcef732cc5950b28))
+* render into texture framebuffer to flip for wlroots ([ac69491](https://gitlab.com/kwinft/kwinft/commit/ac69491a74f47774747e967f0e856b5bc7e06e21))
+* use height instead of width ([cf5b303](https://gitlab.com/kwinft/kwinft/commit/cf5b303f3da79ed550404d651cdc4e9aae857049))
+* use wlroots new input event names ([1258214](https://gitlab.com/kwinft/kwinft/commit/12582147864080a52ad1c27cfbba85b495ac80c2))
+
+
+### Refactors
+
+* check on common event waiting for render timers in helper ([f01383d](https://gitlab.com/kwinft/kwinft/commit/f01383d088b9eaecddc8e56add9498796205a1d2))
+* drop seat check on device changes ([8e75f3e](https://gitlab.com/kwinft/kwinft/commit/8e75f3edaca20bf4a8b0a095eb863a6c71947904))
+* simplify swap time debugging ([9c8fe01](https://gitlab.com/kwinft/kwinft/commit/9c8fe01cb88583319a3adc7fa958a4d3f9186f0e))
+
 ## [5.24.0](https://gitlab.com/kwinft/kwinft/compare/kwinft@5.24.0-beta.0...kwinft@5.24.0) (2022-02-08)
 
 
