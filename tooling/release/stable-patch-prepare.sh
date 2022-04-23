@@ -4,7 +4,7 @@ set -eu
 set -o pipefail
 
 function set_cmake_version {
-    sed -i "s/\(set(PROJECT_VERSION \"\).*\")/\1${1}\")/g" CMakeLists.txt
+    sed -i "s/\(project(KWinFT VERSION \).*)/\1${1})/g" CMakeLists.txt
 }
 
 # We start from master (that has the beta tag).

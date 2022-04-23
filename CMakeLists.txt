@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-project(KWinFT)
-set(PROJECT_VERSION "5.24.80")
-set(PROJECT_VERSION_MAJOR 5)
+project(KWinFT VERSION 5.24.80)
 
 set(CMAKE_C_STANDARD 99)
 
@@ -108,7 +106,7 @@ set_package_properties(KF5Kirigami2 PROPERTIES
     TYPE RUNTIME
 )
 
-find_package(KDecoration2 ${PROJECT_VERSION} CONFIG REQUIRED)
+find_package(KDecoration2 ${CMAKE_PROJECT_VERSION} CONFIG REQUIRED)
 
 find_package(KScreenLocker CONFIG REQUIRED)
 set_package_properties(KScreenLocker PROPERTIES
@@ -621,8 +619,8 @@ set(kwinLibs
 add_library(kwin SHARED ${kwin_SRCS})
 
 set_target_properties(kwin PROPERTIES
-   VERSION ${PROJECT_VERSION}
-   SOVERSION ${PROJECT_VERSION_MAJOR}
+   VERSION ${CMAKE_PROJECT_VERSION}
+   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
 )
 
 target_precompile_headers(kwin PRIVATE
@@ -909,8 +907,8 @@ kcoreaddons_target_static_plugins(
 )
 
 set_target_properties(kwin_wayland_lib PROPERTIES
-   VERSION ${PROJECT_VERSION}
-   SOVERSION ${PROJECT_VERSION_MAJOR}
+   VERSION ${CMAKE_PROJECT_VERSION}
+   SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR}
    OUTPUT_NAME "kwin_wayland"
 )
 target_compile_definitions(kwin_wayland_lib PUBLIC WLR_USE_UNSTABLE)
