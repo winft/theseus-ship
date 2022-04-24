@@ -587,7 +587,6 @@ private:
     QPoint focusMousePos;
 
     bool showing_desktop{false};
-    int m_remnant_count{0};
 
     std::vector<win::x11::group*> groups;
 

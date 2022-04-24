@@ -382,7 +382,6 @@ void space::addDeleted(Toplevel* c, Toplevel* orig)
 {
     assert(!contains(m_windows, c));
 
-    m_remnant_count++;
     m_windows.push_back(c);
 
     auto const unconstraintedIndex = index_of(stacking_order->pre_stack, orig);
@@ -408,7 +407,6 @@ void space::removeDeleted(Toplevel* window)
     assert(contains(m_windows, window));
 
     Q_EMIT deletedRemoved(window);
-    m_remnant_count--;
 
     remove_all(m_windows, window);
     remove_all(stacking_order->pre_stack, window);
