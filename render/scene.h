@@ -72,7 +72,6 @@ class KWIN_EXPORT scene : public QObject
     Q_OBJECT
 public:
     explicit scene(render::compositor& compositor);
-    ~scene() override = 0;
 
     // Returns true if the ctor failed to properly initialize.
     virtual bool initFailed() const = 0;
@@ -180,7 +179,6 @@ public:
 
     QRegion mapToRenderTarget(const QRegion& region) const;
 
-    QHash<Toplevel*, window*> m_windows;
     render::compositor& compositor;
     scene_windowing_integration windowing_integration;
 
