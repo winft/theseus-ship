@@ -207,7 +207,7 @@ void update_group(Win* win, bool add)
                 if (!contains(member->transient()->children, win)) {
                     member->transient()->add_child(win);
                 }
-            } else {
+            } else if (contains(member->transient()->children, win)) {
                 member->transient()->remove_child(win);
             }
         }
