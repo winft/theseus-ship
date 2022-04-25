@@ -174,13 +174,11 @@ render::scene* compositor::create_scene(QVector<CompositingType> const& support)
     return nullptr;
 }
 
-std::deque<Toplevel*> compositor::performCompositing()
+void compositor::performCompositing()
 {
     for (auto& output : get_platform(platform.base).outputs) {
         get_output(output)->render->run();
     }
-
-    return std::deque<Toplevel*>();
 }
 
 }

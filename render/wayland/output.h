@@ -89,7 +89,7 @@ public:
     void set_delay_timer();
     void request_frame(Toplevel* window);
 
-    std::deque<Toplevel*> run();
+    void run();
     void dry_run();
 
     void presented(presentation_data const& data);
