@@ -409,15 +409,9 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
     }
 }
 
-void scene::removeToplevel(Toplevel* toplevel)
-{
-    toplevel->render.reset();
-}
-
 void scene::windowClosed(Toplevel* toplevel, Toplevel* deleted)
 {
     if (!deleted) {
-        removeToplevel(toplevel);
         return;
     }
 

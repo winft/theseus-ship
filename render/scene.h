@@ -98,13 +98,6 @@ public:
                                  std::chrono::milliseconds presentTime);
 
     virtual std::unique_ptr<render::window> createWindow(Toplevel* toplevel) = 0;
-    /**
-     * Removes the Toplevel from the scene.
-     *
-     * @param toplevel The window to be removed.
-     * @note You can remove a toplevel from the scene only once.
-     */
-    void removeToplevel(Toplevel* toplevel);
 
     /**
      * @brief Creates the scene backend of an effect frame.
