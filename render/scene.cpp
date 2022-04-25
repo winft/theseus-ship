@@ -172,7 +172,7 @@ void scene::paintScreen(paint_type& mask,
                          repaint_output ? effects->findScreen(repaint_output->name()) : nullptr);
     effects->paintScreen(static_cast<int>(mask), region, data);
 
-    for (auto const& w : qAsConst(stacking_order)) {
+    for (auto const& w : stacking_order) {
         effects->postPaintWindow(w->effect.get());
     }
 
@@ -214,7 +214,7 @@ void scene::paintGenericScreen(paint_type orig_mask, ScreenPaintData)
     }
     QVector<Phase2Data> phase2;
     phase2.reserve(stacking_order.size());
-    for (auto const& w : qAsConst(stacking_order)) {
+    for (auto const& w : stacking_order) {
         // bottom to top
         auto topw = w->get_window();
 
@@ -268,8 +268,7 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
     bool opaqueFullscreen = false;
 
     // Traverse the scene windows from bottom to top.
-    for (int i = 0; i < stacking_order.count(); ++i) {
-        auto window = stacking_order[i];
+    for (auto&& window : stacking_order) {
         auto toplevel = window->get_window();
         WindowPrePaintData data;
         data.mask = static_cast<int>(
@@ -447,7 +446,7 @@ void scene::createStackingOrder(std::deque<Toplevel*> const& toplevels)
     // TODO: cache the stacking_order in case it has not changed
     for (auto const& c : toplevels) {
         assert(c->render);
-        stacking_order.append(c->render.get());
+        stacking_order.push_back(c->render.get());
     }
 }
 

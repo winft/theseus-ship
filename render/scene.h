@@ -265,8 +265,9 @@ private:
                                qreal saturation);
     void paintDesktopThumbnails(window* w);
     std::chrono::milliseconds m_expectedPresentTimestamp = std::chrono::milliseconds::zero();
-    // windows in their stacking order
-    QVector<window*> stacking_order;
+
+    // Windows stacking order of the current paint run.
+    std::vector<window*> stacking_order;
 
     QRect m_renderTargetRect;
     qreal m_renderTargetScale = 1;
