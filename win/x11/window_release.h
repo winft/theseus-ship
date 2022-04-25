@@ -42,10 +42,14 @@ void finish_unmanaged_removal(Win* win, Toplevel* remnant)
     assert(contains(workspace()->m_windows, win));
 
     remove_window_from_lists(*workspace(), win);
-    win->addWorkspaceRepaint(win::visible_rect(remnant));
+    win->addWorkspaceRepaint(win::visible_rect(win));
 
-    win->disownDataPassedToDeleted();
-    remnant->remnant()->unref();
+    if (remnant) {
+        win->disownDataPassedToDeleted();
+        remnant->remnant()->unref();
+    } else {
+        workspace()->delete_window(win);
+    }
 
     Q_EMIT workspace()->unmanagedRemoved(win);
 }
@@ -193,9 +197,11 @@ void release_window(Win* win, bool on_shutdown)
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
     win->geometry_update.block--;
 
-    if (!on_shutdown) {
+    if (del) {
         win->disownDataPassedToDeleted();
         del->remnant()->unref();
+    } else {
+        workspace()->delete_window(win);
     }
 
     delete win;
@@ -264,8 +270,12 @@ void destroy_window(Win* win)
 
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
     win->geometry_update.block--;
-    win->disownDataPassedToDeleted();
-    del->remnant()->unref();
+    if (del) {
+        win->disownDataPassedToDeleted();
+        del->remnant()->unref();
+    } else {
+        workspace()->delete_window(win);
+    }
     delete win;
 }
 

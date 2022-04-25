@@ -117,6 +117,11 @@ NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_
 
 Toplevel* Toplevel::create_remnant(Toplevel* source)
 {
+    if (!source->readyForPainting()) {
+        // Don't create remnants for windows that have never been shown.
+        return nullptr;
+    }
+
     auto win = new Toplevel();
     win->copyToDeleted(source);
     win->m_remnant = new win::remnant(win, source);

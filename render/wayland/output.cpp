@@ -225,6 +225,12 @@ void output::run()
         get_compositor(platform)->presentation->lock(this, windows);
     }
 
+    for (auto win : windows) {
+        if (win->remnant() && !win->remnant()->refcount) {
+            delete win;
+        }
+    }
+
     Perf::Ftrace::end(ftrace_identifier, msc);
 }
 

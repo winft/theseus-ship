@@ -431,7 +431,11 @@ void internal_window::destroyClient()
     workspace()->updateClientArea();
     Q_EMIT workspace()->internalClientRemoved(this);
 
-    deleted->remnant()->unref();
+    if (deleted) {
+        deleted->remnant()->unref();
+    } else {
+        workspace()->delete_window(this);
+    }
     m_internalWindow = nullptr;
 
     delete this;

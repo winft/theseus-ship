@@ -389,7 +389,6 @@ void space::addDeleted(Toplevel* c, Toplevel* orig)
 
 void space::delete_window(Toplevel* window)
 {
-    assert(contains(m_windows, window));
     remove_window_from_stacking_order(*this, window);
     remove_window_from_lists(*this, window);
 

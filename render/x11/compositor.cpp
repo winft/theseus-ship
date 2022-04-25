@@ -20,6 +20,7 @@
 #include "render/window.h"
 #include "render/xrender/scene.h"
 #include "toplevel.h"
+#include "win/remnant.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
@@ -335,6 +336,12 @@ void compositor::performCompositing()
     update_paint_periods(duration);
     create_opengl_safepoint(OpenGLSafePoint::PostFrame);
     retard_next_composition();
+
+    for (auto win : windows) {
+        if (win->remnant() && !win->remnant()->refcount) {
+            delete win;
+        }
+    }
 
     Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
 }

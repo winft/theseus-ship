@@ -63,7 +63,12 @@ void destroy_window(Win* win)
     }
 
     space->handle_window_removed(win);
-    remnant_window->remnant()->unref();
+
+    if (remnant_window) {
+        remnant_window->remnant()->unref();
+    } else {
+        workspace()->delete_window(win);
+    }
 
     delete win;
 }
