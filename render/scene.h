@@ -182,8 +182,7 @@ Q_SIGNALS:
 public Q_SLOTS:
     // shape/size of a window changed
     void windowGeometryShapeChanged(KWin::Toplevel* c);
-    // a window has been closed
-    void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);
+    void init_remnant(KWin::Toplevel& remnant);
 
 protected:
     void createStackingOrder(std::deque<Toplevel*> const& toplevels);

@@ -346,7 +346,6 @@ protected Q_SLOTS:
     void slotClientShown(KWin::Toplevel*);
     void slotXdgShellClientShown(KWin::Toplevel*);
     void slotUnmanagedShown(KWin::Toplevel*);
-    void slotWindowClosed(KWin::Toplevel* c, KWin::Toplevel* remnant);
     void slotClientMaximized(KWin::Toplevel* window, win::maximize_mode maxMode);
     void slotOpacityChanged(KWin::Toplevel* t, qreal oldOpacity);
     void slotClientModalityChanged();
@@ -404,6 +403,7 @@ protected:
     virtual void handle_effect_destroy(Effect& effect);
 
 private:
+    void add_remnant(Toplevel* remnant);
     void destroyEffect(Effect* effect);
 
     typedef QVector<Effect*> EffectsList;

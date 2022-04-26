@@ -161,8 +161,7 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
     auto space = static_cast<win::wayland::space*>(workspace());
     space->m_windows.push_back(popup);
 
-    QObject::connect(
-        popup, &window::windowClosed, this, [this, popup] { remove_all(popups, popup); });
+    QObject::connect(popup, &window::closed, this, [this](auto win) { remove_all(popups, win); });
 
     QObject::connect(popup_surface,
                      &input_method_popup_surface_v2::resourceDestroyed,

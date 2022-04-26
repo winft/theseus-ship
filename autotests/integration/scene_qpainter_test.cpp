@@ -421,7 +421,7 @@ void SceneQPainterTest::testX11Window()
     xcb_unmap_window(c.data(), w);
     xcb_flush(c.data());
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
     xcb_destroy_window(c.data(), w);

@@ -35,7 +35,6 @@ public:
 
 private:
     void handle_window_added(win::wayland::window* window);
-    void handle_window_removed(Toplevel* window);
     void cancelPopups();
 
     std::vector<win::wayland::window*> m_popups;

@@ -48,18 +48,14 @@ void popup_filter::handle_window_added(win::wayland::window* window)
             this,
             [this, window] { handle_window_added(window); },
             Qt::UniqueConnection);
-        connect(window,
-                &Toplevel::windowClosed,
-                this,
-                &popup_filter::handle_window_removed,
-                Qt::UniqueConnection);
+        connect(
+            window,
+            &Toplevel::closed,
+            this,
+            [this, window] { remove_all(m_popups, window); },
+            Qt::UniqueConnection);
         m_popups.push_back(window);
     }
-}
-
-void popup_filter::handle_window_removed(Toplevel* window)
-{
-    remove_all(m_popups, window);
 }
 
 bool popup_filter::button(button_event const& event)

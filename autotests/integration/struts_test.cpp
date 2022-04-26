@@ -603,7 +603,7 @@ void StrutsTest::testX11Struts()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 
@@ -708,7 +708,7 @@ void StrutsTest::test363804()
     xcb_flush(c.get());
     c.reset();
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }
@@ -822,14 +822,14 @@ void StrutsTest::testLeftScreenSmallerBottomAligned()
     QCOMPARE(client2->maximizeMode(), win::maximize_mode::full);
 
     // destroy window again
-    QSignalSpy normalWindowClosedSpy(client2, &win::x11::window::windowClosed);
+    QSignalSpy normalWindowClosedSpy(client2, &win::x11::window::closed);
     QVERIFY(normalWindowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w2);
     xcb_destroy_window(c.get(), w2);
     xcb_flush(c.get());
     QVERIFY(normalWindowClosedSpy.wait());
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     // and destroy the window again
@@ -969,14 +969,14 @@ void StrutsTest::testWindowMoveWithPanelBetweenScreens()
     QCOMPARE(client2->frameGeometry(), QRect(origGeo.translated(-800, 0)));
 
     // Destroy window again.
-    QSignalSpy normalWindowClosedSpy(client2, &win::x11::window::windowClosed);
+    QSignalSpy normalWindowClosedSpy(client2, &win::x11::window::closed);
     QVERIFY(normalWindowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w2);
     xcb_destroy_window(c.get(), w2);
     xcb_flush(c.get());
     QVERIFY(normalWindowClosedSpy.wait());
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     // and destroy the window again

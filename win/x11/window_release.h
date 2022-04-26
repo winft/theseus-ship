@@ -23,8 +23,9 @@ void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Re
     Toplevel* del = nullptr;
     if (releaseReason != ReleaseReason::KWinShutsDown) {
         del = Toplevel::create_remnant(win);
+        Q_EMIT win->remnant_created(del);
     }
-    Q_EMIT win->windowClosed(win, del);
+    Q_EMIT win->closed(win);
     win->finishCompositing(releaseReason);
 
     // Don't affect our own windows.
@@ -77,7 +78,10 @@ void release_window(Win* win, bool on_shutdown)
         Q_EMIT win->clientFinishUserMovedResized(win);
     }
 
-    Q_EMIT win->windowClosed(win, del);
+    if (del) {
+        Q_EMIT win->remnant_created(del);
+    }
+    Q_EMIT win->closed(win);
     win->finishCompositing();
 
     // Remove ForceTemporarily rules
@@ -190,7 +194,9 @@ void destroy_window(Win* win)
     if (win->control->move_resize().enabled) {
         Q_EMIT win->clientFinishUserMovedResized(win);
     }
-    Q_EMIT win->windowClosed(win, del);
+
+    Q_EMIT win->remnant_created(del);
+    Q_EMIT win->closed(win);
 
     win->finishCompositing(ReleaseReason::Destroyed);
 

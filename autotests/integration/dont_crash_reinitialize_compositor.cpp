@@ -132,7 +132,7 @@ void DontCrashReinitializeCompositorTest::testReinitializeCompositor()
     QVERIFY(!effect->isActive());
 
     // Close the test client.
-    QSignalSpy windowClosedSpy(client, &win::wayland::window::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::wayland::window::closed);
     QVERIFY(windowClosedSpy.isValid());
     shellSurface.reset();
     surface.reset();

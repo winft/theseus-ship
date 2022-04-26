@@ -339,7 +339,8 @@ Q_SIGNALS:
     void visible_geometry_changed();
 
     void paddingChanged(KWin::Toplevel* toplevel, const QRect& old);
-    void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);
+    void remnant_created(KWin::Toplevel* remnant);
+    void closed(KWin::Toplevel* toplevel);
     void windowShown(KWin::Toplevel* toplevel);
     void windowHidden(KWin::Toplevel* toplevel);
     /**

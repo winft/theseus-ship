@@ -47,7 +47,7 @@ void idle_inhibition::register_window(win::wayland::window* window)
     connect(window, &win::wayland::window::clientUnminimized, this, updateInhibit);
     connect(window, &win::wayland::window::windowHidden, this, updateInhibit);
     connect(window, &win::wayland::window::windowShown, this, updateInhibit);
-    connect(window, &win::wayland::window::windowClosed, this, [this, window] {
+    connect(window, &win::wayland::window::closed, this, [this, window] {
         uninhibit(window);
         auto it = m_connections.find(window);
         if (it != m_connections.end()) {

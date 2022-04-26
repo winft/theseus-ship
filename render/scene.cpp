@@ -409,20 +409,14 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
     }
 }
 
-void scene::windowClosed(Toplevel* toplevel, Toplevel* deleted)
+void scene::init_remnant(Toplevel& remnant)
 {
-    if (!deleted) {
-        return;
-    }
+    assert(remnant.render);
+    remnant.render->updateToplevel(&remnant);
 
-    assert(!toplevel->render);
-    assert(deleted->render);
-    auto& window = deleted->render;
-    window->updateToplevel(deleted);
-
-    if (auto shadow = window->shadow()) {
-        shadow->m_topLevel = deleted;
-        connect(deleted, &Toplevel::frame_geometry_changed, shadow, &shadow::geometryChanged);
+    if (auto shadow = remnant.render->shadow()) {
+        shadow->m_topLevel = &remnant;
+        connect(&remnant, &Toplevel::frame_geometry_changed, shadow, &shadow::geometryChanged);
     }
 }
 

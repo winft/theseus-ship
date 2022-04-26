@@ -163,7 +163,7 @@ void X11ClientTest::testTrimCaption()
     xcb_unmap_window(c.get(), w);
     xcb_flush(c.get());
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
     xcb_destroy_window(c.get(), w);
@@ -419,8 +419,8 @@ void X11ClientTest::testX11WindowId()
     QUuid deletedUuid;
     QCOMPARE(deletedUuid.isNull(), true);
 
-    connect(client, &win::x11::window::windowClosed, this, [&deletedUuid](Toplevel*, Toplevel* d) {
-        deletedUuid = d->internalId();
+    connect(client, &win::x11::window::remnant_created, this, [&deletedUuid](auto remnant) {
+        deletedUuid = remnant->internalId();
     });
 
     NETRootInfo rootInfo(c.get(), NET::WMAllProperties);
@@ -449,7 +449,7 @@ void X11ClientTest::testX11WindowId()
     // and destroy the window again
     xcb_unmap_window(c.get(), w);
     xcb_flush(c.get());
-    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::remnant_created);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 
@@ -505,7 +505,7 @@ void X11ClientTest::testCaptionChanges()
     QCOMPARE(win::caption(client), QStringLiteral("bar"));
 
     // and destroy the window again
-    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(c.get(), w);
     xcb_flush(c.get());

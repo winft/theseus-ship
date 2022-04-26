@@ -126,7 +126,9 @@ void add_scene_window(Scene& scene, Win& win)
     win.render = scene.createWindow(&win);
     win.render->effect = std::make_unique<render::effects_window_impl>(&win);
 
-    QObject::connect(&win, &Win::windowClosed, &scene, &Scene::windowClosed);
+    QObject::connect(&win, &Win::remnant_created, &scene, [scene_ptr = &scene](auto remnant) {
+        scene_ptr->init_remnant(*remnant);
+    });
     QObject::connect(&win, &Win::central_output_changed, &scene, [&](auto old_out, auto new_out) {
         if (!new_out) {
             return;

@@ -298,7 +298,7 @@ void effects_handler_impl::unloadAllEffects()
 
 void effects_handler_impl::setupAbstractClientConnections(Toplevel* window)
 {
-    connect(window, &Toplevel::windowClosed, this, &effects_handler_impl::slotWindowClosed);
+    connect(window, &Toplevel::remnant_created, this, &effects_handler_impl::add_remnant);
     connect(window,
             static_cast<void (Toplevel::*)(KWin::Toplevel*, win::maximize_mode)>(
                 &Toplevel::clientMaximizedStateChanged),
@@ -373,7 +373,7 @@ void effects_handler_impl::setupClientConnections(win::x11::window* c)
 
 void effects_handler_impl::setupUnmanagedConnections(Toplevel* u)
 {
-    connect(u, &Toplevel::windowClosed, this, &effects_handler_impl::slotWindowClosed);
+    connect(u, &Toplevel::remnant_created, this, &effects_handler_impl::add_remnant);
     connect(u, &Toplevel::opacityChanged, this, &effects_handler_impl::slotOpacityChanged);
     connect(u,
             &Toplevel::frame_geometry_changed,
@@ -618,12 +618,11 @@ void effects_handler_impl::slotUnmanagedShown(KWin::Toplevel* t)
     Q_EMIT windowAdded(t->render->effect.get());
 }
 
-void effects_handler_impl::slotWindowClosed(KWin::Toplevel* c, Toplevel* remnant)
+void effects_handler_impl::add_remnant(Toplevel* remnant)
 {
-    c->disconnect(this);
-    if (remnant) {
-        Q_EMIT windowClosed(remnant->render->effect.get());
-    }
+    assert(remnant);
+    assert(remnant->render);
+    Q_EMIT windowClosed(remnant->render->effect.get());
 }
 
 void effects_handler_impl::slotClientModalityChanged()

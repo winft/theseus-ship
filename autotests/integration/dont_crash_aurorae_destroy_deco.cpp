@@ -157,7 +157,7 @@ void DontCrashAuroraeDestroyDecoTest::testBorderlessMaximizedWindows()
     xcb_flush(c);
     xcb_disconnect(c);
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
     QVERIFY(windowClosedSpy.isValid());
     QVERIFY(windowClosedSpy.wait());
 }

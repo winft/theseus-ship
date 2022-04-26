@@ -218,7 +218,7 @@ void TestDbusInterface::testGetWindowInfoXdgShellClient()
 
     // finally close window
     const auto id = client->internalId();
-    QSignalSpy windowClosedSpy(client, &win::wayland::window::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::wayland::window::closed);
     QVERIFY(windowClosedSpy.isValid());
     shellSurface.reset();
     surface.reset();
@@ -382,7 +382,7 @@ void TestDbusInterface::testGetWindowInfoX11Client()
     QCOMPARE(verifyProperty(QStringLiteral("maximizeVertical")), false);
     QCOMPARE(verifyProperty(QStringLiteral("maximizeHorizontal")), true);
 
-    QSignalSpy windowClosedSpy(client, &win::x11::window::windowClosed);
+    QSignalSpy windowClosedSpy(client, &win::x11::window::closed);
     QVERIFY(windowClosedSpy.isValid());
 
     const auto id = client->internalId();

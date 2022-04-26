@@ -157,7 +157,7 @@ void InputStackingOrderTest::testPointerFocusUpdatesOnStackingOrderChange()
     QCOMPARE(waylandServer()->seat()->pointers().get_focus().surface, window1->surface());
 
     // let's destroy window1, that should pass focus to window2 again
-    QSignalSpy windowClosedSpy(window1, &Toplevel::windowClosed);
+    QSignalSpy windowClosedSpy(window1, &Toplevel::closed);
     QVERIFY(windowClosedSpy.isValid());
     surface1.reset();
     QVERIFY(windowClosedSpy.wait());

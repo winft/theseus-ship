@@ -33,7 +33,7 @@ struct test_window {
     {
         client_toplevel.reset();
         if (window) {
-            QSignalSpy windowDeletedSpy(window, &Toplevel::windowClosed);
+            QSignalSpy windowDeletedSpy(window, &Toplevel::closed);
             QVERIFY(windowDeletedSpy.isValid());
             QVERIFY(Test::wait_for_destroyed(window));
             QCOMPARE(windowDeletedSpy.size(), 1);
