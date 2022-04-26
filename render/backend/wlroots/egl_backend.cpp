@@ -338,8 +338,7 @@ void egl_backend::renderFramebufferToSurface(egl_output& egl_out)
 
     GLRenderTarget::popRenderTarget();
 
-    GLuint clearColor[4] = {0, 0, 0, 0};
-    glClearBufferuiv(GL_COLOR, 0, clearColor);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     auto geo = egl_out.out->base.view_geometry();
     if (has_portrait_transform(egl_out.out->base)) {
