@@ -23,7 +23,6 @@ void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Re
     Toplevel* del = nullptr;
     if (releaseReason != ReleaseReason::KWinShutsDown) {
         del = Toplevel::create_remnant(win);
-        Q_EMIT win->remnant_created(del);
     }
     Q_EMIT win->closed(win);
     win->finishCompositing(releaseReason);
@@ -78,9 +77,6 @@ void release_window(Win* win, bool on_shutdown)
         Q_EMIT win->clientFinishUserMovedResized(win);
     }
 
-    if (del) {
-        Q_EMIT win->remnant_created(del);
-    }
     Q_EMIT win->closed(win);
     win->finishCompositing();
 
@@ -195,7 +191,6 @@ void destroy_window(Win* win)
         Q_EMIT win->clientFinishUserMovedResized(win);
     }
 
-    Q_EMIT win->remnant_created(del);
     Q_EMIT win->closed(win);
 
     win->finishCompositing(ReleaseReason::Destroyed);

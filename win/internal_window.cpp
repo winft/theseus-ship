@@ -421,8 +421,6 @@ void internal_window::destroyClient()
     }
 
     auto deleted = create_remnant(this);
-
-    Q_EMIT remnant_created(deleted);
     Q_EMIT closed(this);
 
     control->destroy_decoration();
