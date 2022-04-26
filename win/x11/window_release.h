@@ -9,6 +9,7 @@
 #include "toplevel.h"
 #include "utils/blocker.h"
 #include "win/rules.h"
+#include "win/space_helpers.h"
 
 #if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
@@ -36,10 +37,12 @@ void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Re
     }
 
     if (releaseReason != ReleaseReason::KWinShutsDown) {
-        workspace()->removeUnmanaged(win);
+        assert(contains(workspace()->m_windows, win));
+        remove_window_from_lists(*workspace(), win);
         win->addWorkspaceRepaint(win::visible_rect(del));
         win->disownDataPassedToDeleted();
         del->remnant()->unref();
+        Q_EMIT workspace()->unmanagedRemoved(win);
     }
     delete win;
 }

@@ -369,14 +369,6 @@ void space::removeClient(win::x11::window* c)
     updateTabbox();
 }
 
-void space::removeUnmanaged(Toplevel* window)
-{
-    Q_ASSERT(contains(m_windows, window));
-    remove_all(m_windows, window);
-    Q_EMIT unmanagedRemoved(window);
-    x_stacking_tree->mark_as_dirty();
-}
-
 void space::addDeleted(Toplevel* c, Toplevel* orig)
 {
     assert(!contains(m_windows, c));

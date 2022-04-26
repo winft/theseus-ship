@@ -345,8 +345,6 @@ public:
     void addGroup(win::x11::group* group);
     void removeGroup(win::x11::group* group);
 
-    // Only called from Unmanaged::release().
-    void removeUnmanaged(Toplevel* window);
     void delete_window(Toplevel* window);
     void addDeleted(Toplevel* c, Toplevel* orig);
 
