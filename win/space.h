@@ -347,7 +347,7 @@ public:
 
     // Only called from Unmanaged::release().
     void removeUnmanaged(Toplevel* window);
-    void removeDeleted(Toplevel* window);
+    void delete_window(Toplevel* window);
     void addDeleted(Toplevel* c, Toplevel* orig);
 
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
@@ -428,8 +428,6 @@ public:
      * @internal
      */
     void removeInternalClient(win::internal_window* client);
-
-    void remove_window(Toplevel* window);
 
     virtual win::screen_edge* create_screen_edge(win::screen_edger& edger);
     virtual QRect get_icon_geometry(Toplevel const* win) const;
@@ -532,7 +530,7 @@ Q_SIGNALS:
     void groupAdded(KWin::win::x11::group*);
     void unmanagedAdded(KWin::Toplevel*);
     void unmanagedRemoved(KWin::Toplevel*);
-    void deletedRemoved(KWin::Toplevel*);
+    void window_deleted(KWin::Toplevel*);
     void configChanged();
     void showingDesktopChanged(bool showing);
 

@@ -104,7 +104,7 @@ remnant::~remnant()
     assert(refcount == 0);
 
     if (workspace()) {
-        workspace()->removeDeleted(win);
+        workspace()->delete_window(win);
     }
 }
 

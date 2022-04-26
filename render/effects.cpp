@@ -169,7 +169,7 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
         auto eff_win = window ? window->render->effect.get() : nullptr;
         Q_EMIT windowActivated(eff_win);
     });
-    connect(ws, &win::space::deletedRemoved, this, [this](KWin::Toplevel* d) {
+    connect(ws, &win::space::window_deleted, this, [this](KWin::Toplevel* d) {
         assert(d->render);
         assert(d->render->effect);
         Q_EMIT windowDeleted(d->render->effect.get());
