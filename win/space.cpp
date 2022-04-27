@@ -1142,15 +1142,6 @@ void space::addInternalClient(win::internal_window* client)
     Q_EMIT internalClientAdded(client);
 }
 
-void space::removeInternalClient(win::internal_window* client)
-{
-    remove_window_from_lists(*this, client);
-    stacking_order->update(true);
-    updateClientArea();
-
-    Q_EMIT internalClientRemoved(client);
-}
-
 QRect space::get_icon_geometry(Toplevel const* /*win*/) const
 {
     return QRect();

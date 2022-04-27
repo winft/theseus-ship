@@ -417,16 +417,6 @@ public:
      */
     void addInternalClient(win::internal_window* client);
 
-    /**
-     * Removes the internal client from space.
-     *
-     * This method is meant to be called only by internal_window.
-     *
-     * @see internalClientRemoved
-     * @internal
-     */
-    void removeInternalClient(win::internal_window* client);
-
     virtual win::screen_edge* create_screen_edge(win::screen_edger& edger);
     virtual QRect get_icon_geometry(Toplevel const* win) const;
 
