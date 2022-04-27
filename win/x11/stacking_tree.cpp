@@ -21,7 +21,7 @@ void stacking_tree::mark_as_dirty()
 {
     is_dirty = true;
     if (kwinApp()->x11Connection()) {
-        xcbtree.reset(new base::x11::xcb::tree(kwinApp()->x11RootWindow()));
+        xcbtree = std::make_unique<base::x11::xcb::tree>(kwinApp()->x11RootWindow());
     }
 }
 
