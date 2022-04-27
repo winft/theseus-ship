@@ -103,7 +103,6 @@ public:
         = 0;
     virtual void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) = 0;
     virtual void postPaintScreen() = 0;
-    virtual void paintDesktop(int desktop, int mask, QRegion region, ScreenPaintData& data) = 0;
     virtual void
     prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds presentTime)
         = 0;

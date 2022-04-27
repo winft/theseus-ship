@@ -653,12 +653,6 @@ public:
     {
     }
 
-    virtual void
-    paintDesktop(int desktop, paint_type mask, const QRegion& region, ScreenPaintData& data)
-    {
-        platform.compositor->effects->paintDesktop(desktop, static_cast<int>(mask), region, data);
-    }
-
     virtual void paintEffectQuickView(EffectQuickView* view) = 0;
 
     // The region which actually has been painted by paintScreen() and should be

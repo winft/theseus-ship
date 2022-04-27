@@ -94,25 +94,6 @@ void effects_handler_wrap::paintScreen(int mask, const QRegion& region, ScreenPa
     }
 }
 
-void effects_handler_wrap::paintDesktop(int desktop,
-                                        int mask,
-                                        QRegion region,
-                                        ScreenPaintData& data)
-{
-    if (desktop < 1 || desktop > numberOfDesktops()) {
-        return;
-    }
-    m_currentRenderedDesktop = desktop;
-    m_desktopRendering = true;
-    // save the paint screen iterator
-    EffectsIterator savedIterator = m_currentPaintScreenIterator;
-    m_currentPaintScreenIterator = m_activeEffects.constBegin();
-    paintScreen(mask, region, data);
-    // restore the saved iterator
-    m_currentPaintScreenIterator = savedIterator;
-    m_desktopRendering = false;
-}
-
 void effects_handler_wrap::postPaintScreen()
 {
     if (m_currentPaintScreenIterator != m_activeEffects.constEnd()) {

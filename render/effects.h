@@ -96,10 +96,6 @@ public:
 
     void prePaintScreen(ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
     void paintScreen(int mask, const QRegion& region, ScreenPaintData& data) override;
-    /**
-     * Special hook to perform a paintScreen but just with the windows on @p desktop.
-     */
-    void paintDesktop(int desktop, int mask, QRegion region, ScreenPaintData& data) override;
     void postPaintScreen() override;
     void prePaintWindow(EffectWindow* w,
                         WindowPrePaintData& data,
@@ -164,22 +160,6 @@ public:
 
     QList<EffectWindow*> elevatedWindows() const;
     QStringList activeEffects() const;
-
-    /**
-     * @returns Whether we are currently in a desktop rendering process triggered by paintDesktop
-     * hook
-     */
-    bool isDesktopRendering() const
-    {
-        return m_desktopRendering;
-    }
-    /**
-     * @returns the desktop currently being rendered in the paintDesktop hook.
-     */
-    int currentRenderedDesktop() const
-    {
-        return m_currentRenderedDesktop;
-    }
 
     Wrapland::Server::Display* waylandDisplay() const override;
 
@@ -279,8 +259,6 @@ private:
     EffectsIterator m_currentPaintWindowIterator;
     EffectsIterator m_currentPaintScreenIterator;
     EffectsIterator m_currentBuildQuadsIterator;
-    bool m_desktopRendering{false};
-    int m_currentRenderedDesktop{0};
     QList<Effect*> m_grabbedMouseEffects;
     effect_loader* m_effectLoader;
     base::options& options;

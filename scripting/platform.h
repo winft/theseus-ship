@@ -105,8 +105,6 @@ public:
         : platform_wrap(*space.base.options, space.base.config)
         , space{space}
     {
-        qmlRegisterType<render::desktop_thumbnail_item>(
-            "org.kde.kwin", 2, 0, "DesktopThumbnailItem");
         qmlRegisterType<render::window_thumbnail_item>("org.kde.kwin", 2, 0, "ThumbnailItem");
         qmlRegisterType<dbus_call>("org.kde.kwin", 2, 0, "DBusCall");
         qmlRegisterType<screen_edge_item>("org.kde.kwin", 2, 0, "ScreenEdgeItem");
