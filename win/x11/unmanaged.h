@@ -105,7 +105,8 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
         render::compositor::self()->schedule_repaint(win);
     });
 
-    space.addUnmanaged(win);
+    space.m_windows.push_back(win);
+    space.x_stacking_tree->mark_as_dirty();
     Q_EMIT space.unmanagedAdded(win);
 
     return win;

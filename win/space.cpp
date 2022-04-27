@@ -315,12 +315,6 @@ void space::addClient(win::x11::window* c)
     updateTabbox();
 }
 
-void space::addUnmanaged(Toplevel* c)
-{
-    m_windows.push_back(c);
-    x_stacking_tree->mark_as_dirty();
-}
-
 /**
  * Destroys the client \a c
  */

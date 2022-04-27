@@ -405,7 +405,6 @@ public:
     }
 
     void addClient(win::x11::window* c);
-    void addUnmanaged(Toplevel* c);
 
     /**
      * Adds the internal client to space.
