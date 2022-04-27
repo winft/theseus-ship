@@ -18,7 +18,7 @@
 #include "window.h"
 
 #include "kwinglobals.h"
-#include "render/thumbnail_item.h"
+#include "render/window_thumbnail_item.h"
 
 #include <QQmlContext>
 #include <QQmlEngine>

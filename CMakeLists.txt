@@ -408,7 +408,7 @@ set(kwin_SRCS
     render/gl/egl_context_attribute_builder.cpp
     render/outline.cpp
     render/singleton_interface.cpp
-    render/thumbnail_item.cpp
+    render/window_thumbnail_item.cpp
     render/x11/compositor_selection_owner.cpp
     scripting/dbus_call.cpp
     scripting/desktop_background_item.cpp

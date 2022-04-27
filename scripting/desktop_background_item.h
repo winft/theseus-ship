@@ -7,7 +7,7 @@
 #pragma once
 
 #include "base/output.h"
-#include "render/thumbnail_item.h"
+#include "render/window_thumbnail_item.h"
 #include "win/virtual_desktops.h"
 
 namespace KWin
