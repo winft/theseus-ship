@@ -343,10 +343,9 @@ void space::removeClient(win::x11::window* c)
     }
 
     assert(contains(m_allClients, c));
+
     // TODO: if marked client is removed, notify the marked list
-    remove_all(m_allClients, c);
-    remove_all(m_windows, c);
-    x_stacking_tree->mark_as_dirty();
+    remove_window_from_lists(*this, c);
     remove_all(attention_chain, c);
 
     auto group = findGroup(c->xcb_window());
@@ -1153,10 +1152,7 @@ void space::addInternalClient(win::internal_window* client)
 
 void space::removeInternalClient(win::internal_window* client)
 {
-    remove_all(m_allClients, client);
-    remove_all(m_windows, client);
-
-    x_stacking_tree->mark_as_dirty();
+    remove_window_from_lists(*this, client);
     stacking_order->update(true);
     updateClientArea();
 
