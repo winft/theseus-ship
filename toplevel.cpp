@@ -260,9 +260,6 @@ void Toplevel::finishCompositing(ReleaseReason releaseReason)
 {
     assert(!remnant());
 
-    if (kwinApp()->operationMode() == Application::OperationModeX11 && damage_handle == XCB_NONE)
-        return;
-
     if (render) {
         discard_buffer();
         render.reset();
