@@ -19,6 +19,24 @@ namespace KWin::win::x11
 {
 
 template<typename Win>
+void destroy_damage_handle(Win& win)
+{
+    if (win.damage_handle == XCB_NONE) {
+        return;
+    }
+    xcb_damage_destroy(connection(), win.damage_handle);
+    win.damage_handle = XCB_NONE;
+}
+
+template<typename Win>
+void reset_have_resize_effect(Win& win)
+{
+    if (win.control) {
+        win.control->reset_have_resize_effect();
+    }
+}
+
+template<typename Win>
 void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Release)
 {
     Toplevel* del = nullptr;

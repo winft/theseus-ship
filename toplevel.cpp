@@ -74,7 +74,6 @@ Toplevel::Toplevel(win::transient* transient)
 
 Toplevel::~Toplevel()
 {
-    Q_ASSERT(damage_handle == XCB_NONE);
     delete info;
     delete m_remnant;
 }

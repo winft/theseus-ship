@@ -251,16 +251,13 @@ bool window::setupCompositing(bool add_full_damage)
 void window::finishCompositing(ReleaseReason releaseReason)
 {
     Toplevel::finishCompositing(releaseReason);
-
-    if (damage_handle != XCB_NONE && releaseReason != ReleaseReason::Destroyed) {
-        xcb_damage_destroy(connection(), damage_handle);
+    if (releaseReason != ReleaseReason::Destroyed) {
+        destroy_damage_handle(*this);
     }
-    damage_handle = XCB_NONE;
 
-    if (control) {
-        // for safety in case KWin is just resizing the window
-        control->reset_have_resize_effect();
-    }
+    // For safety in case KWin is just resizing the window.
+    // TODO(romangg): Is this really needed?
+    reset_have_resize_effect(*this);
 }
 
 void window::setBlockingCompositing(bool block)
