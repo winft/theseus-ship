@@ -33,10 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space_helpers.h"
 #include "win/transient.h"
 
-#include "win/x11/client_machine.h"
-#include "win/x11/netinfo.h"
-#include "win/x11/xcb.h"
-
 #include <QDebug>
 
 namespace KWin
@@ -256,7 +252,7 @@ void Toplevel::add_scene_window_addon()
 {
 }
 
-void Toplevel::finishCompositing(ReleaseReason releaseReason)
+void Toplevel::finishCompositing(ReleaseReason /*releaseReason*/)
 {
     assert(!remnant());
 
@@ -265,12 +261,6 @@ void Toplevel::finishCompositing(ReleaseReason releaseReason)
         render.reset();
     }
 
-    if (damage_handle != XCB_NONE &&
-            releaseReason != ReleaseReason::Destroyed) {
-        xcb_damage_destroy(connection(), damage_handle);
-    }
-
-    damage_handle = XCB_NONE;
     damage_region = QRegion();
     repaints_region = QRegion();
 }

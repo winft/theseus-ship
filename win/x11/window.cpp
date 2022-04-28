@@ -252,6 +252,11 @@ void window::finishCompositing(ReleaseReason releaseReason)
 {
     Toplevel::finishCompositing(releaseReason);
 
+    if (damage_handle != XCB_NONE && releaseReason != ReleaseReason::Destroyed) {
+        xcb_damage_destroy(connection(), damage_handle);
+    }
+    damage_handle = XCB_NONE;
+
     if (control) {
         // for safety in case KWin is just resizing the window
         control->reset_have_resize_effect();
