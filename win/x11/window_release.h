@@ -18,15 +18,6 @@
 namespace KWin::win::x11
 {
 
-/**
- * Enum to describe the reason why a Toplevel has to be released.
- */
-enum class ReleaseReason {
-    Release,      ///< Normal Release after e.g. an Unmap notify event (window still valid)
-    Destroyed,    ///< Release after an Destroy notify event (window no longer valid)
-    KWinShutsDown ///< Release on KWin Shutdown (window still valid)
-};
-
 template<typename Win>
 void destroy_damage_handle(Win& win)
 {
@@ -46,30 +37,48 @@ void reset_have_resize_effect(Win& win)
 }
 
 template<typename Win>
-void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Release)
+void finish_unmanaged_removal(Win* win, Toplevel* remnant)
+{
+    assert(contains(workspace()->m_windows, win));
+
+    remove_window_from_lists(*workspace(), win);
+    win->addWorkspaceRepaint(win::visible_rect(remnant));
+
+    win->disownDataPassedToDeleted();
+    remnant->remnant()->unref();
+
+    Q_EMIT workspace()->unmanagedRemoved(win);
+}
+
+template<typename Win>
+void release_unmanaged(Win* win, bool on_shutdown)
 {
     Toplevel* del = nullptr;
-    if (releaseReason != ReleaseReason::KWinShutsDown) {
+    if (!on_shutdown) {
         del = Toplevel::create_remnant(win);
     }
     Q_EMIT win->closed(win);
 
     // Don't affect our own windows.
-    if (!QWidget::find(win->xcb_window()) && releaseReason != ReleaseReason::Destroyed) {
+    if (!QWidget::find(win->xcb_window())) {
         if (base::x11::xcb::extensions::self()->is_shape_available()) {
             xcb_shape_select_input(connection(), win->xcb_window(), false);
         }
         base::x11::xcb::select_input(win->xcb_window(), XCB_EVENT_MASK_NO_EVENT);
     }
 
-    if (releaseReason != ReleaseReason::KWinShutsDown) {
-        assert(contains(workspace()->m_windows, win));
-        remove_window_from_lists(*workspace(), win);
-        win->addWorkspaceRepaint(win::visible_rect(del));
-        win->disownDataPassedToDeleted();
-        del->remnant()->unref();
-        Q_EMIT workspace()->unmanagedRemoved(win);
+    if (!on_shutdown) {
+        finish_unmanaged_removal(win, del);
     }
+    delete win;
+}
+
+template<typename Win>
+void destroy_unmanaged(Win* win)
+{
+    auto del = Toplevel::create_remnant(win);
+    Q_EMIT win->closed(win);
+    finish_unmanaged_removal(win, del);
     delete win;
 }
 
@@ -81,7 +90,7 @@ void release_window(Win* win, bool on_shutdown)
 
     if (!win->control) {
         destroy_damage_handle(*win);
-        release_unmanaged(win, on_shutdown ? ReleaseReason::KWinShutsDown : ReleaseReason::Release);
+        release_unmanaged(win, on_shutdown);
         return;
     }
 
@@ -203,7 +212,7 @@ void destroy_window(Win* win)
     win->deleting = true;
 
     if (!win->control) {
-        release_unmanaged(win, ReleaseReason::Destroyed);
+        destroy_unmanaged(win);
         return;
     }
 

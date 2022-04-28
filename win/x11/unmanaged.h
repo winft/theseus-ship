@@ -187,7 +187,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
         // It's of course still possible that we miss the destroy in which case non-fatal
         // X errors are reported to the event loop and logged by Qt.
         win->has_scheduled_release = true;
-        QTimer::singleShot(1, win, [win] { release_unmanaged(win); });
+        QTimer::singleShot(1, win, [win] { release_unmanaged(win, false); });
         break;
     }
     case XCB_CONFIGURE_NOTIFY:
