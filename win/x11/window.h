@@ -173,7 +173,7 @@ public:
     QRect iconGeometry() const override;
 
     bool setupCompositing(bool add_full_damage) override;
-    void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release) override;
+    void finishCompositing() override;
     void setBlockingCompositing(bool block) override;
     void add_scene_window_addon() override;
 

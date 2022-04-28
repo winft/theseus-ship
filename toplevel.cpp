@@ -251,7 +251,7 @@ void Toplevel::add_scene_window_addon()
 {
 }
 
-void Toplevel::finishCompositing(ReleaseReason /*releaseReason*/)
+void Toplevel::finishCompositing()
 {
     assert(!remnant());
 

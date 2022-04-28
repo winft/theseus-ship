@@ -68,15 +68,6 @@ class remnant;
 class transient;
 }
 
-/**
- * Enum to describe the reason why a Toplevel has to be released.
- */
-enum class ReleaseReason {
-    Release, ///< Normal Release after e.g. an Unmap notify event (window still valid)
-    Destroyed, ///< Release after an Destroy notify event (window no longer valid)
-    KWinShutsDown ///< Release on KWin Shutdown (window still valid)
-};
-
 class KWIN_EXPORT Toplevel : public QObject
 {
     Q_OBJECT
@@ -209,7 +200,7 @@ public:
     bool hasAlpha() const;
     virtual bool setupCompositing(bool add_full_damage);
     virtual void add_scene_window_addon();
-    virtual void finishCompositing(ReleaseReason releaseReason = ReleaseReason::Release);
+    virtual void finishCompositing();
 
     Q_INVOKABLE void addRepaint(int x, int y, int w, int h);
     Q_INVOKABLE void addRepaint(QRect const& rect);

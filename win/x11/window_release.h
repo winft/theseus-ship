@@ -18,6 +18,15 @@
 namespace KWin::win::x11
 {
 
+/**
+ * Enum to describe the reason why a Toplevel has to be released.
+ */
+enum class ReleaseReason {
+    Release,      ///< Normal Release after e.g. an Unmap notify event (window still valid)
+    Destroyed,    ///< Release after an Destroy notify event (window no longer valid)
+    KWinShutsDown ///< Release on KWin Shutdown (window still valid)
+};
+
 template<typename Win>
 void destroy_damage_handle(Win& win)
 {
@@ -44,7 +53,6 @@ void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Re
         del = Toplevel::create_remnant(win);
     }
     Q_EMIT win->closed(win);
-    win->finishCompositing(releaseReason);
 
     // Don't affect our own windows.
     if (!QWidget::find(win->xcb_window()) && releaseReason != ReleaseReason::Destroyed) {
@@ -72,6 +80,7 @@ void release_window(Win* win, bool on_shutdown)
     win->deleting = true;
 
     if (!win->control) {
+        destroy_damage_handle(*win);
         release_unmanaged(win, on_shutdown ? ReleaseReason::KWinShutsDown : ReleaseReason::Release);
         return;
     }
@@ -84,6 +93,8 @@ void release_window(Win* win, bool on_shutdown)
 #endif
 
     win->control->destroy_wayland_management();
+    destroy_damage_handle(*win);
+    reset_have_resize_effect(*win);
 
     Toplevel* del = nullptr;
     if (on_shutdown) {
@@ -99,7 +110,6 @@ void release_window(Win* win, bool on_shutdown)
     }
 
     Q_EMIT win->closed(win);
-    win->finishCompositing();
 
     // Remove ForceTemporarily rules
     RuleBook::self()->discardUsed(win, true);
@@ -205,6 +215,7 @@ void destroy_window(Win* win)
 #endif
 
     win->control->destroy_wayland_management();
+    reset_have_resize_effect(*win);
 
     auto del = win->create_remnant(win);
 
@@ -213,8 +224,6 @@ void destroy_window(Win* win)
     }
 
     Q_EMIT win->closed(win);
-
-    win->finishCompositing(ReleaseReason::Destroyed);
 
     // Remove ForceTemporarily rules
     RuleBook::self()->discardUsed(win, true);
