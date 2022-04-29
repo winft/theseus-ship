@@ -7,6 +7,7 @@
 
 #include "window.h"
 
+#include "base/logging.h"
 #include "win/stacking.h"
 #include "win/transient.h"
 

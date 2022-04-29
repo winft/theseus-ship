@@ -267,54 +267,6 @@ space::~space()
     _self = nullptr;
 }
 
-void space::addClient(win::x11::window* c)
-{
-    auto grp = findGroup(c->xcb_window());
-
-    m_windows.push_back(c);
-    m_allClients.push_back(c);
-
-    Q_EMIT clientAdded(c);
-
-    if (grp != nullptr)
-        grp->gotLeader(c);
-
-    if (win::is_desktop(c)) {
-        if (active_client == nullptr && should_get_focus.empty() && c->isOnCurrentDesktop()) {
-            // TODO: Make sure desktop is active after startup if there's no other window active
-            request_focus(c);
-        }
-    } else {
-        win::focus_chain::self()->update(c, win::focus_chain::Update);
-    }
-
-    if (!contains(stacking_order->pre_stack, c)) {
-        // Raise if it hasn't got any stacking position yet
-        stacking_order->pre_stack.push_back(c);
-    }
-    if (!contains(stacking_order->sorted(), c)) {
-        // It'll be updated later, and updateToolWindows() requires c to be in stacking_order.
-        stacking_order->win_stack.push_back(c);
-    }
-    x_stacking_tree->mark_as_dirty();
-    updateClientArea(); // This cannot be in manage(), because the client got added only now
-    win::update_layer(c);
-    if (win::is_desktop(c)) {
-        win::raise_window(this, c);
-        // If there's no active client, make this desktop the active one
-        if (activeClient() == nullptr && should_get_focus.size() == 0)
-            activateClient(
-                win::find_desktop(this, true, win::virtual_desktop_manager::self()->current()));
-    }
-    win::x11::check_active_modal<win::x11::window>();
-    checkTransients(c);
-    stacking_order->update(true); // Propagate new client
-    if (win::is_utility(c) || win::is_menu(c) || win::is_toolbar(c)) {
-        win::update_tool_windows(this, true);
-    }
-    updateTabbox();
-}
-
 /**
  * Destroys the client \a c
  */

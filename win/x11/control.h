@@ -13,6 +13,7 @@
 #include "netinfo.h"
 #include "space.h"
 #include "window.h"
+#include "window_create.h"
 #include "xcb.h"
 
 #include "base/logging.h"
@@ -1137,7 +1138,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
             info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
         });
 
-    space.addClient(win);
+    add_controlled_window_to_space(space, win);
     return win;
 }
 

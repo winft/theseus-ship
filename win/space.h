@@ -282,6 +282,7 @@ public:
     }
 
     win::session_manager* sessionManager() const;
+    void updateTabbox();
 
 private:
     QTimer* m_quickTileCombineTimer{nullptr};
@@ -403,8 +404,6 @@ public:
         return client_keys_dialog;
     }
 
-    void addClient(win::x11::window* c);
-
     /**
      * Adds the internal client to space.
      *
@@ -485,7 +484,6 @@ public Q_SLOTS:
     void updateClientArea();
 
 protected:
-    void updateTabbox();
     virtual void update_space_area_from_windows(QRect const& desktop_area,
                                                 std::vector<QRect> const& screens_geos,
                                                 win::space_areas& areas);
