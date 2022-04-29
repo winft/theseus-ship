@@ -18,6 +18,60 @@
 namespace KWin::win::x11
 {
 
+template<typename Space, typename Win>
+void remove_controlled_window_from_space(Space& space, Win* win)
+{
+    if (win == space.active_popup_client) {
+        space.closeActivePopup();
+    }
+
+    if (space.m_userActionsMenu->isMenuClient(win)) {
+        space.m_userActionsMenu->close();
+    }
+
+    if (space.client_keys_client == win) {
+        space.setupWindowShortcutDone(false);
+    }
+    if (!win->control->shortcut().isEmpty()) {
+        // Remove from client_keys.
+        set_shortcut(win, QString());
+
+        // Needed, since this is otherwise delayed by setShortcut() and wouldn't run
+        space.clientShortcutUpdated(win);
+    }
+
+    assert(contains(space.m_allClients, win));
+
+    // TODO: if marked client is removed, notify the marked list
+    remove_window_from_lists(space, win);
+    remove_all(space.attention_chain, win);
+
+    auto group = space.findGroup(win->xcb_window());
+    if (group) {
+        group->lostLeader();
+    }
+
+    if (win == space.most_recently_raised) {
+        space.most_recently_raised = nullptr;
+    }
+
+    remove_all(space.should_get_focus, win);
+
+    assert(win != space.active_client);
+
+    if (win == space.last_active_client) {
+        space.last_active_client = nullptr;
+    }
+    if (win == space.delayfocus_client)
+        space.cancelDelayFocus();
+
+    Q_EMIT space.clientRemoved(win);
+
+    space.stacking_order->update(true);
+    space.updateClientArea();
+    space.updateTabbox();
+}
+
 template<typename Win>
 void destroy_damage_handle(Win& win)
 {
@@ -160,7 +214,7 @@ void release_window(Win* win, bool on_shutdown)
     clean_grouping(win);
 
     if (!on_shutdown) {
-        workspace()->removeClient(win);
+        remove_controlled_window_from_space(*workspace(), win);
         // Only when the window is being unmapped, not when closing down KWin (NETWM
         // sections 5.5,5.7)
         win->info->setDesktop(0);
@@ -261,7 +315,7 @@ void destroy_window(Win* win)
     workspace()->clientHidden(win);
     win->control->destroy_decoration();
     clean_grouping(win);
-    workspace()->removeClient(win);
+    remove_controlled_window_from_space(*workspace(), win);
 
     // invalidate
     win->xcb_windows.client.reset();

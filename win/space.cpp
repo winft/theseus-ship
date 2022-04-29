@@ -93,9 +93,9 @@ space* space::_self = nullptr;
 space::space()
     : QObject(nullptr)
     , outline(std::make_unique<render::outline>())
+    , m_userActionsMenu(new win::user_actions_menu(this))
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
-    , m_userActionsMenu(new win::user_actions_menu(this))
     , m_sessionManager(new win::session_manager(this))
 {
     // For invoke methods of user_actions_menu.
@@ -265,54 +265,6 @@ space::~space()
 
     base::x11::xcb::extensions::destroy();
     _self = nullptr;
-}
-
-/**
- * Destroys the client \a c
- */
-void space::removeClient(win::x11::window* c)
-{
-    if (c == active_popup_client)
-        closeActivePopup();
-    if (m_userActionsMenu->isMenuClient(c)) {
-        m_userActionsMenu->close();
-    }
-
-    if (client_keys_client == c)
-        setupWindowShortcutDone(false);
-    if (!c->control->shortcut().isEmpty()) {
-        // Remove from client_keys.
-        win::set_shortcut(c, QString());
-
-        // Needed, since this is otherwise delayed by setShortcut() and wouldn't run
-        clientShortcutUpdated(c);
-    }
-
-    assert(contains(m_allClients, c));
-
-    // TODO: if marked client is removed, notify the marked list
-    remove_window_from_lists(*this, c);
-    remove_all(attention_chain, c);
-
-    auto group = findGroup(c->xcb_window());
-    if (group != nullptr)
-        group->lostLeader();
-
-    if (c == most_recently_raised) {
-        most_recently_raised = nullptr;
-    }
-    remove_all(should_get_focus, c);
-    Q_ASSERT(c != active_client);
-    if (c == last_active_client)
-        last_active_client = nullptr;
-    if (c == delayfocus_client)
-        cancelDelayFocus();
-
-    Q_EMIT clientRemoved(c);
-
-    stacking_order->update(true);
-    updateClientArea();
-    updateTabbox();
 }
 
 void space::delete_window(Toplevel* window)

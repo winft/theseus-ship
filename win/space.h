@@ -113,6 +113,11 @@ public:
 
     int m_initialDesktop{1};
     QScopedPointer<base::x11::xcb::window> m_nullFocus;
+    Toplevel* active_popup_client{nullptr};
+
+    Toplevel* last_active_client{nullptr};
+    Toplevel* delayfocus_client{nullptr};
+    Toplevel* client_keys_client{nullptr};
 
     std::vector<Toplevel*> m_allClients;
 
@@ -121,6 +126,12 @@ public:
     std::deque<Toplevel*> attention_chain;
 
     int block_focus{0};
+
+    /**
+     * Holds the menu containing the user actions which is shown
+     * on e.g. right click the window decoration.
+     */
+    win::user_actions_menu* m_userActionsMenu;
 
     static space* _self;
 
@@ -339,8 +350,6 @@ public:
     void setShowingDesktop(bool showing);
     bool showingDesktop() const;
 
-    // Only called from win::x11::window::destroyClient() or win::x11::window::releaseWindow()
-    void removeClient(win::x11::window*);
     void setActiveClient(Toplevel* window);
     win::x11::group* findGroup(xcb_window_t leader) const;
     void addGroup(win::x11::group* group);
@@ -420,6 +429,7 @@ public:
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t* geom);
     void saveOldScreenSizes();
     void desktopResized();
+    void closeActivePopup();
 
 public Q_SLOTS:
     void performWindowOperation(KWin::Toplevel* window, base::options::WindowOperation op);
@@ -488,10 +498,6 @@ protected:
                                                 std::vector<QRect> const& screens_geos,
                                                 win::space_areas& areas);
 
-    Toplevel* last_active_client{nullptr};
-    Toplevel* delayfocus_client{nullptr};
-    Toplevel* client_keys_client{nullptr};
-
 private Q_SLOTS:
     void slotUpdateToolWindows();
     void delayFocus();
@@ -548,14 +554,12 @@ private:
     void setupWindowShortcut(Toplevel* window);
     bool switchWindow(Toplevel* c, Direction direction, QPoint curPos, int desktop);
 
-    void closeActivePopup();
     void updateClientArea(bool force);
     void resetClientAreas(uint desktopCount);
     void activateClientOnNewDesktop(uint desktop);
     Toplevel* findClientToActivateOnDesktop(uint desktop);
 
     QWidget* active_popup{nullptr};
-    Toplevel* active_popup_client{nullptr};
 
     void loadSessionInfo(const QString& sessionName);
     void addSessionInfo(KConfigGroup& cg);
@@ -576,12 +580,6 @@ private:
 
     int session_active_client;
     int session_desktop;
-
-    /**
-     * Holds the menu containing the user actions which is shown
-     * on e.g. right click the window decoration.
-     */
-    win::user_actions_menu* m_userActionsMenu;
 
     void modalActionsSwitch(bool enabled);
 
