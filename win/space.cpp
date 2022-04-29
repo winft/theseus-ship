@@ -267,21 +267,6 @@ space::~space()
     _self = nullptr;
 }
 
-void space::delete_window(Toplevel* window)
-{
-    remove_window_from_stacking_order(*this, window);
-    remove_window_from_lists(*this, window);
-
-    if (auto& update_block = m_compositor->x11_integration.update_blocking; update_block) {
-        auto& control = window->remnant() ? window->remnant()->control : window->control;
-        if (control) {
-            update_block(nullptr);
-        }
-    }
-
-    Q_EMIT window_deleted(window);
-}
-
 void space::stopUpdateToolWindowsTimer()
 {
     updateToolWindowsTimer.stop();

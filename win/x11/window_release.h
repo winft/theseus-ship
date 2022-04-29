@@ -102,7 +102,7 @@ void finish_unmanaged_removal(Win* win, Toplevel* remnant)
         win->disownDataPassedToDeleted();
         remnant->remnant()->unref();
     } else {
-        workspace()->delete_window(win);
+        delete_window_from_space(*workspace(), win);
     }
 
     Q_EMIT workspace()->unmanagedRemoved(win);
@@ -255,7 +255,7 @@ void release_window(Win* win, bool on_shutdown)
         win->disownDataPassedToDeleted();
         del->remnant()->unref();
     } else {
-        workspace()->delete_window(win);
+        delete_window_from_space(*workspace(), win);
     }
 
     delete win;
@@ -328,7 +328,7 @@ void destroy_window(Win* win)
         win->disownDataPassedToDeleted();
         del->remnant()->unref();
     } else {
-        workspace()->delete_window(win);
+        delete_window_from_space(*workspace(), win);
     }
     delete win;
 }

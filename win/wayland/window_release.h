@@ -12,6 +12,7 @@
 #include "rules/rule_book.h"
 #include "utils/blocker.h"
 #include "win/remnant.h"
+#include "win/space_helpers.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
 #include "win/x11/stacking_tree.h"
@@ -67,7 +68,7 @@ void destroy_window(Win* win)
     if (remnant_window) {
         remnant_window->remnant()->unref();
     } else {
-        workspace()->delete_window(win);
+        delete_window_from_space(*space, win);
     }
 
     delete win;

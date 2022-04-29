@@ -355,8 +355,6 @@ public:
     void addGroup(win::x11::group* group);
     void removeGroup(win::x11::group* group);
 
-    void delete_window(Toplevel* window);
-
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
 
     void focusToNull(); // SELI TODO: Public?

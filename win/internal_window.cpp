@@ -434,7 +434,7 @@ void internal_window::destroyClient()
     if (deleted) {
         deleted->remnant()->unref();
     } else {
-        workspace()->delete_window(this);
+        delete_window_from_space(*workspace(), this);
     }
     m_internalWindow = nullptr;
 
