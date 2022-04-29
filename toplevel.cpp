@@ -126,7 +126,7 @@ Toplevel* Toplevel::create_remnant(Toplevel* source)
     win->copyToDeleted(source);
     win->m_remnant = new win::remnant(win, source);
 
-    workspace()->addDeleted(win, source);
+    win::add_remnant(*workspace(), source, win);
     Q_EMIT source->remnant_created(win);
     return win;
 }

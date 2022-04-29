@@ -346,7 +346,6 @@ public:
     void removeGroup(win::x11::group* group);
 
     void delete_window(Toplevel* window);
-    void addDeleted(Toplevel* c, Toplevel* orig);
 
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
 

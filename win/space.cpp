@@ -363,30 +363,6 @@ void space::removeClient(win::x11::window* c)
     updateTabbox();
 }
 
-void space::addDeleted(Toplevel* c, Toplevel* orig)
-{
-    assert(!contains(m_windows, c));
-
-    m_windows.push_back(c);
-
-    auto const unconstraintedIndex = index_of(stacking_order->pre_stack, orig);
-    if (unconstraintedIndex != -1) {
-        stacking_order->pre_stack.at(unconstraintedIndex) = c;
-    } else {
-        stacking_order->pre_stack.push_back(c);
-    }
-    auto const index = index_of(stacking_order->sorted(), orig);
-    if (index != -1) {
-        stacking_order->win_stack.at(index) = c;
-    } else {
-        stacking_order->win_stack.push_back(c);
-    }
-    x_stacking_tree->mark_as_dirty();
-    connect(c, &Toplevel::needsRepaint, m_compositor, [c] {
-        render::compositor::self()->schedule_repaint(c);
-    });
-}
-
 void space::delete_window(Toplevel* window)
 {
     remove_window_from_stacking_order(*this, window);

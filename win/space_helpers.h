@@ -22,6 +22,33 @@ namespace KWin::win
 {
 
 template<typename Space, typename Win>
+void add_remnant(Space& space, Win* orig, Win* remnant)
+{
+    assert(!contains(space.m_windows, remnant));
+
+    space.m_windows.push_back(remnant);
+
+    auto const unconstraintedIndex = index_of(space.stacking_order->pre_stack, orig);
+    if (unconstraintedIndex != -1) {
+        space.stacking_order->pre_stack.at(unconstraintedIndex) = remnant;
+    } else {
+        space.stacking_order->pre_stack.push_back(remnant);
+    }
+
+    auto const index = index_of(space.stacking_order->sorted(), orig);
+    if (index != -1) {
+        space.stacking_order->win_stack.at(index) = remnant;
+    } else {
+        space.stacking_order->win_stack.push_back(remnant);
+    }
+
+    space.x_stacking_tree->mark_as_dirty();
+    QObject::connect(remnant, &Toplevel::needsRepaint, space.m_compositor, [remnant] {
+        render::compositor::self()->schedule_repaint(remnant);
+    });
+}
+
+template<typename Space, typename Win>
 void remove_window_from_lists(Space& space, Win* win)
 {
     remove_all(space.m_allClients, win);
