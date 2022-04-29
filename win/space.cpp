@@ -979,27 +979,6 @@ void space::updateTabbox()
 #endif
 }
 
-void space::addInternalClient(win::internal_window* client)
-{
-    m_windows.push_back(client);
-    m_allClients.push_back(client);
-
-    win::setup_space_window_connections(this, client);
-    win::update_layer(client);
-
-    if (client->placeable()) {
-        auto const area
-            = clientArea(PlacementArea, get_current_output(*workspace()), client->desktop());
-        win::place(client, area);
-    }
-
-    x_stacking_tree->mark_as_dirty();
-    stacking_order->update(true);
-    updateClientArea();
-
-    Q_EMIT internalClientAdded(client);
-}
-
 QRect space::get_icon_geometry(Toplevel const* /*win*/) const
 {
     return QRect();

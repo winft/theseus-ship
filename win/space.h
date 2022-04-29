@@ -411,16 +411,6 @@ public:
         return client_keys_dialog;
     }
 
-    /**
-     * Adds the internal client to space.
-     *
-     * This method will be called by internal_window when it's mapped.
-     *
-     * @see internalClientAdded
-     * @internal
-     */
-    void addInternalClient(win::internal_window* client);
-
     virtual win::screen_edge* create_screen_edge(win::screen_edger& edger);
     virtual QRect get_icon_geometry(Toplevel const* win) const;
 

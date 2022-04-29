@@ -582,10 +582,29 @@ void internal_window::setCaption(QString const& cap)
 
 void internal_window::markAsMapped()
 {
-    if (!ready_for_painting) {
-        setReadyForPainting();
-        workspace()->addInternalClient(this);
+    if (ready_for_painting) {
+        return;
     }
+
+    setReadyForPainting();
+
+    auto space = workspace();
+    space->m_windows.push_back(this);
+    space->m_allClients.push_back(this);
+
+    setup_space_window_connections(space, this);
+    update_layer(this);
+
+    if (placeable()) {
+        auto const area = space->clientArea(PlacementArea, get_current_output(*space), desktop());
+        place(this, area);
+    }
+
+    space->x_stacking_tree->mark_as_dirty();
+    space->stacking_order->update(true);
+    space->updateClientArea();
+
+    Q_EMIT space->internalClientAdded(this);
 }
 
 void internal_window::updateInternalWindowGeometry()
