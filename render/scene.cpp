@@ -94,11 +94,6 @@ scene::scene(render::compositor& compositor)
 {
 }
 
-scene::~scene()
-{
-    Q_ASSERT(m_windows.isEmpty());
-}
-
 int64_t scene::paint(QRegion /*damage*/,
                      std::deque<Toplevel*> const& /*windows*/,
                      std::chrono::milliseconds /*presentTime*/)
@@ -177,7 +172,7 @@ void scene::paintScreen(paint_type& mask,
                          repaint_output ? effects->findScreen(repaint_output->name()) : nullptr);
     effects->paintScreen(static_cast<int>(mask), region, data);
 
-    for (auto const& w : qAsConst(stacking_order)) {
+    for (auto const& w : stacking_order) {
         effects->postPaintWindow(w->effect.get());
     }
 
@@ -219,7 +214,7 @@ void scene::paintGenericScreen(paint_type orig_mask, ScreenPaintData)
     }
     QVector<Phase2Data> phase2;
     phase2.reserve(stacking_order.size());
-    for (auto const& w : qAsConst(stacking_order)) {
+    for (auto const& w : stacking_order) {
         // bottom to top
         auto topw = w->get_window();
 
@@ -273,8 +268,7 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
     bool opaqueFullscreen = false;
 
     // Traverse the scene windows from bottom to top.
-    for (int i = 0; i < stacking_order.count(); ++i) {
-        auto window = stacking_order[i];
+    for (auto&& window : stacking_order) {
         auto toplevel = window->get_window();
         WindowPrePaintData data;
         data.mask = static_cast<int>(
@@ -415,46 +409,32 @@ void scene::paintSimpleScreen(paint_type orig_mask, QRegion region)
     }
 }
 
-void scene::removeToplevel(Toplevel* toplevel)
+void scene::init_remnant(Toplevel& remnant)
 {
-    Q_ASSERT(m_windows.contains(toplevel));
-    m_windows.take(toplevel);
-    toplevel->render.reset();
-}
+    assert(remnant.render);
+    remnant.render->updateToplevel(&remnant);
 
-void scene::windowClosed(Toplevel* toplevel, Toplevel* deleted)
-{
-    if (!deleted) {
-        removeToplevel(toplevel);
-        return;
+    if (auto shadow = remnant.render->shadow()) {
+        shadow->m_topLevel = &remnant;
+        connect(&remnant, &Toplevel::frame_geometry_changed, shadow, &shadow::geometryChanged);
     }
-
-    Q_ASSERT(m_windows.contains(toplevel));
-    auto window = m_windows.take(toplevel);
-    window->updateToplevel(deleted);
-
-    if (auto shadow = window->shadow()) {
-        shadow->m_topLevel = deleted;
-        connect(deleted, &Toplevel::frame_geometry_changed, shadow, &shadow::geometryChanged);
-    }
-
-    m_windows[deleted] = window;
 }
 
 void scene::windowGeometryShapeChanged(Toplevel* c)
 {
-    if (!m_windows.contains(c)) // this is ok, shape is not valid by default
+    if (!c->render) {
+        // This is ok, shape is not valid by default.
         return;
-    auto w = m_windows[c];
-    w->invalidateQuadsCache();
+    }
+    c->render->invalidateQuadsCache();
 }
 
 void scene::createStackingOrder(std::deque<Toplevel*> const& toplevels)
 {
     // TODO: cache the stacking_order in case it has not changed
     for (auto const& c : toplevels) {
-        assert(m_windows.contains(c));
-        stacking_order.append(m_windows[c]);
+        assert(c->render);
+        stacking_order.push_back(c->render.get());
     }
 }
 

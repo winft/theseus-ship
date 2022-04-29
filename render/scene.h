@@ -72,7 +72,6 @@ class KWIN_EXPORT scene : public QObject
     Q_OBJECT
 public:
     explicit scene(render::compositor& compositor);
-    ~scene() override = 0;
 
     // Returns true if the ctor failed to properly initialize.
     virtual bool initFailed() const = 0;
@@ -99,13 +98,6 @@ public:
                                  std::chrono::milliseconds presentTime);
 
     virtual std::unique_ptr<render::window> createWindow(Toplevel* toplevel) = 0;
-    /**
-     * Removes the Toplevel from the scene.
-     *
-     * @param toplevel The window to be removed.
-     * @note You can remove a toplevel from the scene only once.
-     */
-    void removeToplevel(Toplevel* toplevel);
 
     /**
      * @brief Creates the scene backend of an effect frame.
@@ -180,7 +172,6 @@ public:
 
     QRegion mapToRenderTarget(const QRegion& region) const;
 
-    QHash<Toplevel*, window*> m_windows;
     render::compositor& compositor;
     scene_windowing_integration windowing_integration;
 
@@ -191,8 +182,7 @@ Q_SIGNALS:
 public Q_SLOTS:
     // shape/size of a window changed
     void windowGeometryShapeChanged(KWin::Toplevel* c);
-    // a window has been closed
-    void windowClosed(KWin::Toplevel* toplevel, KWin::Toplevel* deleted);
+    void init_remnant(KWin::Toplevel& remnant);
 
 protected:
     void createStackingOrder(std::deque<Toplevel*> const& toplevels);
@@ -267,8 +257,9 @@ private:
                                qreal saturation);
     void paintDesktopThumbnails(window* w);
     std::chrono::milliseconds m_expectedPresentTimestamp = std::chrono::milliseconds::zero();
-    // windows in their stacking order
-    QVector<window*> stacking_order;
+
+    // Windows stacking order of the current paint run.
+    std::vector<window*> stacking_order;
 
     QRect m_renderTargetRect;
     qreal m_renderTargetScale = 1;

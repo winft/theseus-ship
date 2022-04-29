@@ -248,14 +248,14 @@ bool window::setupCompositing(bool add_full_damage)
     return x11::setup_compositing(*this, add_full_damage);
 }
 
-void window::finishCompositing(ReleaseReason releaseReason)
+void window::finishCompositing()
 {
-    Toplevel::finishCompositing(releaseReason);
+    Toplevel::finishCompositing();
+    destroy_damage_handle(*this);
 
-    if (control) {
-        // for safety in case KWin is just resizing the window
-        control->reset_have_resize_effect();
-    }
+    // For safety in case KWin is just resizing the window.
+    // TODO(romangg): Is this really needed?
+    reset_have_resize_effect(*this);
 }
 
 void window::setBlockingCompositing(bool block)

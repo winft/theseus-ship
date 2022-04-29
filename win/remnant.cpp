@@ -104,7 +104,7 @@ remnant::~remnant()
     assert(refcount == 0);
 
     if (workspace()) {
-        workspace()->removeDeleted(win);
+        workspace()->delete_window(win);
     }
 }
 
@@ -115,15 +115,7 @@ void remnant::ref()
 
 void remnant::unref()
 {
-    if (--refcount > 0) {
-        return;
-    }
-
-    // needs to be delayed
-    // a) when calling from effects, otherwise it'd be rather complicated to handle the case of the
-    // window going away during a painting pass
-    // b) to prevent dangeling pointers in the stacking order, see bug #317765
-    win->deleteLater();
+    --refcount;
 }
 
 void remnant::discard()

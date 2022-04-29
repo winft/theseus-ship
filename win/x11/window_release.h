@@ -9,6 +9,7 @@
 #include "toplevel.h"
 #include "utils/blocker.h"
 #include "win/rules.h"
+#include "win/space_helpers.h"
 
 #if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
@@ -18,29 +19,70 @@ namespace KWin::win::x11
 {
 
 template<typename Win>
-void release_unmanaged(Win* win, ReleaseReason releaseReason = ReleaseReason::Release)
+void destroy_damage_handle(Win& win)
+{
+    if (win.damage_handle == XCB_NONE) {
+        return;
+    }
+    xcb_damage_destroy(connection(), win.damage_handle);
+    win.damage_handle = XCB_NONE;
+}
+
+template<typename Win>
+void reset_have_resize_effect(Win& win)
+{
+    if (win.control) {
+        win.control->reset_have_resize_effect();
+    }
+}
+
+template<typename Win>
+void finish_unmanaged_removal(Win* win, Toplevel* remnant)
+{
+    assert(contains(workspace()->m_windows, win));
+
+    remove_window_from_lists(*workspace(), win);
+    win->addWorkspaceRepaint(win::visible_rect(win));
+
+    if (remnant) {
+        win->disownDataPassedToDeleted();
+        remnant->remnant()->unref();
+    } else {
+        workspace()->delete_window(win);
+    }
+
+    Q_EMIT workspace()->unmanagedRemoved(win);
+}
+
+template<typename Win>
+void release_unmanaged(Win* win, bool on_shutdown)
 {
     Toplevel* del = nullptr;
-    if (releaseReason != ReleaseReason::KWinShutsDown) {
+    if (!on_shutdown) {
         del = Toplevel::create_remnant(win);
     }
-    Q_EMIT win->windowClosed(win, del);
-    win->finishCompositing(releaseReason);
+    Q_EMIT win->closed(win);
 
     // Don't affect our own windows.
-    if (!QWidget::find(win->xcb_window()) && releaseReason != ReleaseReason::Destroyed) {
+    if (!QWidget::find(win->xcb_window())) {
         if (base::x11::xcb::extensions::self()->is_shape_available()) {
             xcb_shape_select_input(connection(), win->xcb_window(), false);
         }
         base::x11::xcb::select_input(win->xcb_window(), XCB_EVENT_MASK_NO_EVENT);
     }
 
-    if (releaseReason != ReleaseReason::KWinShutsDown) {
-        workspace()->removeUnmanaged(win);
-        win->addWorkspaceRepaint(win::visible_rect(del));
-        win->disownDataPassedToDeleted();
-        del->remnant()->unref();
+    if (!on_shutdown) {
+        finish_unmanaged_removal(win, del);
     }
+    delete win;
+}
+
+template<typename Win>
+void destroy_unmanaged(Win* win)
+{
+    auto del = Toplevel::create_remnant(win);
+    Q_EMIT win->closed(win);
+    finish_unmanaged_removal(win, del);
     delete win;
 }
 
@@ -51,7 +93,8 @@ void release_window(Win* win, bool on_shutdown)
     win->deleting = true;
 
     if (!win->control) {
-        release_unmanaged(win, on_shutdown ? ReleaseReason::KWinShutsDown : ReleaseReason::Release);
+        destroy_damage_handle(*win);
+        release_unmanaged(win, on_shutdown);
         return;
     }
 
@@ -63,6 +106,8 @@ void release_window(Win* win, bool on_shutdown)
 #endif
 
     win->control->destroy_wayland_management();
+    destroy_damage_handle(*win);
+    reset_have_resize_effect(*win);
 
     Toplevel* del = nullptr;
     if (on_shutdown) {
@@ -77,8 +122,7 @@ void release_window(Win* win, bool on_shutdown)
         Q_EMIT win->clientFinishUserMovedResized(win);
     }
 
-    Q_EMIT win->windowClosed(win, del);
-    win->finishCompositing();
+    Q_EMIT win->closed(win);
 
     // Remove ForceTemporarily rules
     RuleBook::self()->discardUsed(win, true);
@@ -153,9 +197,11 @@ void release_window(Win* win, bool on_shutdown)
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
     win->geometry_update.block--;
 
-    if (!on_shutdown) {
+    if (del) {
         win->disownDataPassedToDeleted();
         del->remnant()->unref();
+    } else {
+        workspace()->delete_window(win);
     }
 
     delete win;
@@ -172,7 +218,7 @@ void destroy_window(Win* win)
     win->deleting = true;
 
     if (!win->control) {
-        release_unmanaged(win, ReleaseReason::Destroyed);
+        destroy_unmanaged(win);
         return;
     }
 
@@ -184,15 +230,15 @@ void destroy_window(Win* win)
 #endif
 
     win->control->destroy_wayland_management();
+    reset_have_resize_effect(*win);
 
     auto del = win->create_remnant(win);
 
     if (win->control->move_resize().enabled) {
         Q_EMIT win->clientFinishUserMovedResized(win);
     }
-    Q_EMIT win->windowClosed(win, del);
 
-    win->finishCompositing(ReleaseReason::Destroyed);
+    Q_EMIT win->closed(win);
 
     // Remove ForceTemporarily rules
     RuleBook::self()->discardUsed(win, true);
@@ -224,8 +270,12 @@ void destroy_window(Win* win)
 
     // Don't use GeometryUpdatesBlocker, it would now set the geometry
     win->geometry_update.block--;
-    win->disownDataPassedToDeleted();
-    del->remnant()->unref();
+    if (del) {
+        win->disownDataPassedToDeleted();
+        del->remnant()->unref();
+    } else {
+        workspace()->delete_window(win);
+    }
     delete win;
 }
 

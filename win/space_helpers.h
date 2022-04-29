@@ -14,11 +14,27 @@
 #include "x11/group.h"
 #include "x11/hide.h"
 #include "x11/netinfo.h"
+#include "x11/stacking_tree.h"
 
 #include "base/options.h"
 
 namespace KWin::win
 {
+
+template<typename Space, typename Win>
+void remove_window_from_lists(Space& space, Win* win)
+{
+    remove_all(space.m_allClients, win);
+    remove_all(space.m_windows, win);
+    space.x_stacking_tree->mark_as_dirty();
+}
+
+template<typename Space, typename Win>
+void remove_window_from_stacking_order(Space& space, Win* win)
+{
+    remove_all(space.stacking_order->pre_stack, win);
+    remove_all(space.stacking_order->win_stack, win);
+}
 
 template<typename Space>
 void update_client_visibility_on_desktop_change(Space* space, uint newDesktop)

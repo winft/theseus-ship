@@ -70,10 +70,7 @@ void transient::add_lead(Toplevel* lead)
 
 void transient::remove_lead(Toplevel* lead)
 {
-    if (!contains(m_leads, lead)) {
-        return;
-    }
-
+    assert(contains(m_leads, lead));
     remove_all(m_leads, lead);
     Q_EMIT m_window->transientChanged();
 
@@ -102,6 +99,7 @@ void transient::add_child(Toplevel* window)
 
 void transient::remove_child(Toplevel* window)
 {
+    assert(contains(children, window));
     remove_all(children, window);
     window->transient()->remove_lead(m_window);
 

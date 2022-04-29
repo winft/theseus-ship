@@ -33,10 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space_helpers.h"
 #include "win/transient.h"
 
-#include "win/x11/client_machine.h"
-#include "win/x11/netinfo.h"
-#include "win/x11/xcb.h"
-
 #include <QDebug>
 
 namespace KWin
@@ -78,7 +74,6 @@ Toplevel::Toplevel(win::transient* transient)
 
 Toplevel::~Toplevel()
 {
-    Q_ASSERT(damage_handle == XCB_NONE);
     delete info;
     delete m_remnant;
 }
@@ -122,10 +117,17 @@ NET::WindowType Toplevel::windowType([[maybe_unused]] bool direct,int supported_
 
 Toplevel* Toplevel::create_remnant(Toplevel* source)
 {
+    if (!source->readyForPainting()) {
+        // Don't create remnants for windows that have never been shown.
+        return nullptr;
+    }
+
     auto win = new Toplevel();
     win->copyToDeleted(source);
     win->m_remnant = new win::remnant(win, source);
+
     workspace()->addDeleted(win, source);
+    Q_EMIT source->remnant_created(win);
     return win;
 }
 
@@ -254,24 +256,15 @@ void Toplevel::add_scene_window_addon()
 {
 }
 
-void Toplevel::finishCompositing(ReleaseReason releaseReason)
+void Toplevel::finishCompositing()
 {
     assert(!remnant());
-
-    if (kwinApp()->operationMode() == Application::OperationModeX11 && damage_handle == XCB_NONE)
-        return;
 
     if (render) {
         discard_buffer();
         render.reset();
     }
 
-    if (damage_handle != XCB_NONE &&
-            releaseReason != ReleaseReason::Destroyed) {
-        xcb_damage_destroy(connection(), damage_handle);
-    }
-
-    damage_handle = XCB_NONE;
     damage_region = QRegion();
     repaints_region = QRegion();
 }

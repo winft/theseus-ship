@@ -345,9 +345,7 @@ public:
     void addGroup(win::x11::group* group);
     void removeGroup(win::x11::group* group);
 
-    // Only called from Unmanaged::release().
-    void removeUnmanaged(Toplevel* window);
-    void removeDeleted(Toplevel* window);
+    void delete_window(Toplevel* window);
     void addDeleted(Toplevel* c, Toplevel* orig);
 
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
@@ -407,7 +405,6 @@ public:
     }
 
     void addClient(win::x11::window* c);
-    void addUnmanaged(Toplevel* c);
 
     /**
      * Adds the internal client to space.
@@ -418,18 +415,6 @@ public:
      * @internal
      */
     void addInternalClient(win::internal_window* client);
-
-    /**
-     * Removes the internal client from space.
-     *
-     * This method is meant to be called only by internal_window.
-     *
-     * @see internalClientRemoved
-     * @internal
-     */
-    void removeInternalClient(win::internal_window* client);
-
-    void remove_window(Toplevel* window);
 
     virtual win::screen_edge* create_screen_edge(win::screen_edger& edger);
     virtual QRect get_icon_geometry(Toplevel const* win) const;
@@ -532,7 +517,7 @@ Q_SIGNALS:
     void groupAdded(KWin::win::x11::group*);
     void unmanagedAdded(KWin::Toplevel*);
     void unmanagedRemoved(KWin::Toplevel*);
-    void deletedRemoved(KWin::Toplevel*);
+    void window_deleted(KWin::Toplevel*);
     void configChanged();
     void showingDesktopChanged(bool showing);
 
@@ -587,7 +572,6 @@ private:
     QPoint focusMousePos;
 
     bool showing_desktop{false};
-    int m_remnant_count{0};
 
     std::vector<win::x11::group*> groups;
 

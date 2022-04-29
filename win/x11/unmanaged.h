@@ -105,7 +105,8 @@ auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x1
         render::compositor::self()->schedule_repaint(win);
     });
 
-    space.addUnmanaged(win);
+    space.m_windows.push_back(win);
+    space.x_stacking_tree->mark_as_dirty();
     Q_EMIT space.unmanagedAdded(win);
 
     return win;
@@ -186,7 +187,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
         // It's of course still possible that we miss the destroy in which case non-fatal
         // X errors are reported to the event loop and logged by Qt.
         win->has_scheduled_release = true;
-        QTimer::singleShot(1, win, [win] { release_unmanaged(win); });
+        QTimer::singleShot(1, win, [win] { release_unmanaged(win, false); });
         break;
     }
     case XCB_CONFIGURE_NOTIFY:

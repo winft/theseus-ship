@@ -189,7 +189,7 @@ auto to_ms = [](std::chrono::nanoseconds val) {
 };
 #endif
 
-std::deque<Toplevel*> output::run()
+void output::run()
 {
     QRegion repaints;
     std::deque<Toplevel*> windows;
@@ -198,7 +198,7 @@ std::deque<Toplevel*> output::run()
     test_timer.start();
 
     if (!prepare_run(repaints, windows)) {
-        return std::deque<Toplevel*>();
+        return;
     }
 
     auto const ftrace_identifier = QString::fromStdString("paint-" + std::to_string(index));
@@ -225,9 +225,13 @@ std::deque<Toplevel*> output::run()
         get_compositor(platform)->presentation->lock(this, windows);
     }
 
-    Perf::Ftrace::end(ftrace_identifier, msc);
+    for (auto win : windows) {
+        if (win->remnant() && !win->remnant()->refcount) {
+            delete win;
+        }
+    }
 
-    return windows;
+    Perf::Ftrace::end(ftrace_identifier, msc);
 }
 
 void output::dry_run()

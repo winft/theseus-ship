@@ -23,23 +23,22 @@ class transient : public win::transient
 public:
     xcb_window_t lead_id{XCB_WINDOW_NONE};
     xcb_window_t original_lead_id{XCB_WINDOW_NONE};
+    window* win;
 
     transient(window* win)
         : win::transient(win)
+        , win{win}
     {
     }
 
-    void remove_child(Toplevel* child) override
+    void remove_lead(Toplevel* lead) override
     {
-        // window is transient for m_client, but m_client is going away
-        // make window instead a group transient.
-        win::transient::remove_child(child);
+        win::transient::remove_lead(lead);
 
-        if (!child->transient()->lead()) {
-            if (auto x11_child = qobject_cast<window*>(child)) {
-                static_cast<transient*>(x11_child->transient())->lead_id = XCB_WINDOW_NONE;
-                set_transient_lead(x11_child, XCB_WINDOW_NONE);
-            }
+        if (leads().empty()) {
+            // If there is no more lead, make window a group transient.
+            lead_id = XCB_WINDOW_NONE;
+            set_transient_lead(win, XCB_WINDOW_NONE);
         }
     }
 };
@@ -207,7 +206,7 @@ void update_group(Win* win, bool add)
                 if (!contains(member->transient()->children, win)) {
                     member->transient()->add_child(win);
                 }
-            } else {
+            } else if (contains(member->transient()->children, win)) {
                 member->transient()->remove_child(win);
             }
         }

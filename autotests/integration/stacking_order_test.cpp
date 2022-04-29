@@ -90,6 +90,7 @@ void StackingOrderTest::cleanup()
 void deleted_deleter(Toplevel* deleted)
 {
     if (deleted != nullptr) {
+        QCOMPARE(deleted->remnant()->refcount, 1);
         deleted->remnant()->unref();
     }
 }
@@ -323,18 +324,17 @@ void StackingOrderTest::testDeletedTransient()
     QTRY_VERIFY(!transient2->control->active());
 
     // Close the top-most transient.
-    connect(transient2, &win::wayland::window::windowClosed, this, [](auto toplevel, auto deleted) {
-        Q_UNUSED(toplevel)
-        deleted->remnant()->ref();
+    connect(transient2, &win::wayland::window::remnant_created, this, [](auto remnant) {
+        remnant->remnant()->ref();
     });
 
-    QSignalSpy windowClosedSpy(transient2, &win::wayland::window::windowClosed);
+    QSignalSpy windowClosedSpy(transient2, &win::wayland::window::remnant_created);
     QVERIFY(windowClosedSpy.isValid());
     transient2ShellSurface.reset();
     transient2Surface.reset();
     QVERIFY(windowClosedSpy.wait());
 
-    auto deletedTransient = create_deleted(windowClosedSpy.first().at(1).value<Toplevel*>());
+    auto deletedTransient = create_deleted(windowClosedSpy.front().front().value<Toplevel*>());
     QVERIFY(deletedTransient);
 
     // The deleted transient still has to be above its old parent (transient1).
@@ -703,19 +703,24 @@ void StackingOrderTest::testDeletedGroupTransient()
     QCOMPARE(workspace()->stacking_order->sorted(),
              (std::deque<Toplevel*>{leader, member1, member2, transient}));
 
+    if (!transient->ready_for_painting) {
+        QSignalSpy window_shown_spy(transient, &win::x11::window::windowShown);
+        QVERIFY(window_shown_spy.isValid());
+        QVERIFY(window_shown_spy.wait());
+    }
+
     // Unmap the transient.
-    connect(transient, &win::x11::window::windowClosed, this, [](auto toplevel, auto deleted) {
-        Q_UNUSED(toplevel)
-        deleted->remnant()->ref();
+    connect(transient, &win::x11::window::remnant_created, this, [](auto remnant) {
+        remnant->remnant()->ref();
     });
 
-    QSignalSpy windowClosedSpy(transient, &win::x11::window::windowClosed);
+    QSignalSpy windowClosedSpy(transient, &win::x11::window::remnant_created);
     QVERIFY(windowClosedSpy.isValid());
     xcb_unmap_window(conn.get(), transientWid);
     xcb_flush(conn.get());
     QVERIFY(windowClosedSpy.wait());
 
-    auto deletedTransient = create_deleted(windowClosedSpy.first().at(1).value<Toplevel*>());
+    auto deletedTransient = create_deleted(windowClosedSpy.front().front().value<Toplevel*>());
     QVERIFY(deletedTransient.get());
 
     // The transient has to be above each member of the window group.

@@ -34,7 +34,6 @@ private:
     Toplevel* m_window;
 
     void add_lead(Toplevel* lead);
-    void remove_lead(Toplevel* lead);
 
 public:
     std::vector<Toplevel*> children;
@@ -48,11 +47,10 @@ public:
      * The transient lead at first position or nullptr when not a child.
      */
     Toplevel* lead() const;
-
     std::vector<Toplevel*> const& leads() const;
 
     void add_child(Toplevel* window);
-    virtual void remove_child(Toplevel* window);
+    void remove_child(Toplevel* window);
 
     /**
      * Returns true when window is a lead for this directly or through a chain of leads indirectly.
@@ -61,6 +59,9 @@ public:
 
     bool modal() const;
     void set_modal(bool modal);
+
+protected:
+    virtual void remove_lead(Toplevel* lead);
 };
 
 }

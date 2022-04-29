@@ -216,7 +216,6 @@ void compositor::startupWithWorkspace()
 
     // Sets also the 'effects' pointer.
     platform.createEffectsHandler(this, scene());
-    connect(workspace(), &win::space::deletedRemoved, scene(), &scene::removeToplevel);
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
     connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
         if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
@@ -262,7 +261,6 @@ void compositor::stop(bool on_shutdown)
             if (c->remnant()) {
                 continue;
             }
-            m_scene->removeToplevel(c);
             c->finishCompositing();
         }
 

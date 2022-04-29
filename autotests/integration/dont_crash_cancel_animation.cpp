@@ -108,7 +108,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     QTest::qWait(200);
 
     // wait for the window to be passed to Deleted
-    QSignalSpy windowDeletedSpy(c, &Toplevel::windowClosed);
+    QSignalSpy windowDeletedSpy(c, &Toplevel::closed);
     QVERIFY(windowDeletedSpy.isValid());
 
     surface.reset();

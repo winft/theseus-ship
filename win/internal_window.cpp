@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 #include "setup.h"
 #include "space.h"
+#include "space_helpers.h"
 
 #include "decorations/decorationbridge.h"
 #include "decorations/window.h"
@@ -421,13 +422,20 @@ void internal_window::destroyClient()
     }
 
     auto deleted = create_remnant(this);
-    Q_EMIT windowClosed(this, deleted);
+    Q_EMIT closed(this);
 
     control->destroy_decoration();
 
-    workspace()->removeInternalClient(this);
+    remove_window_from_lists(*workspace(), this);
+    workspace()->stacking_order->update(true);
+    workspace()->updateClientArea();
+    Q_EMIT workspace()->internalClientRemoved(this);
 
-    deleted->remnant()->unref();
+    if (deleted) {
+        deleted->remnant()->unref();
+    } else {
+        workspace()->delete_window(this);
+    }
     m_internalWindow = nullptr;
 
     delete this;

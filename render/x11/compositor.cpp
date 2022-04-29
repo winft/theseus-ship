@@ -20,6 +20,7 @@
 #include "render/window.h"
 #include "render/xrender/scene.h"
 #include "toplevel.h"
+#include "win/remnant.h"
 #include "win/space.h"
 #include "win/stacking_order.h"
 #include "win/transient.h"
@@ -314,13 +315,13 @@ render::scene* compositor::create_scene(QVector<CompositingType> const& support)
     return scene;
 }
 
-std::deque<Toplevel*> compositor::performCompositing()
+void compositor::performCompositing()
 {
     QRegion repaints;
     std::deque<Toplevel*> windows;
 
     if (!prepare_composition(repaints, windows)) {
-        return std::deque<Toplevel*>();
+        return;
     }
 
     Perf::Ftrace::begin(QStringLiteral("Paint"), ++s_msc);
@@ -336,9 +337,13 @@ std::deque<Toplevel*> compositor::performCompositing()
     create_opengl_safepoint(OpenGLSafePoint::PostFrame);
     retard_next_composition();
 
-    Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
+    for (auto win : windows) {
+        if (win->remnant() && !win->remnant()->refcount) {
+            delete win;
+        }
+    }
 
-    return windows;
+    Perf::Ftrace::end(QStringLiteral("Paint"), s_msc);
 }
 
 void compositor::create_opengl_safepoint(OpenGLSafePoint safepoint)

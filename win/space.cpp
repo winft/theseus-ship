@@ -244,7 +244,7 @@ space::~space()
     // At this point only remnants are remaining.
     for (auto it = m_windows.begin(); it != m_windows.end();) {
         assert((*it)->remnant());
-        Q_EMIT deletedRemoved(*it);
+        Q_EMIT window_deleted(*it);
         it = m_windows.erase(it);
     }
 
@@ -271,6 +271,9 @@ void space::addClient(win::x11::window* c)
 {
     auto grp = findGroup(c->xcb_window());
 
+    m_windows.push_back(c);
+    m_allClients.push_back(c);
+
     Q_EMIT clientAdded(c);
 
     if (grp != nullptr)
@@ -284,9 +287,6 @@ void space::addClient(win::x11::window* c)
     } else {
         win::focus_chain::self()->update(c, win::focus_chain::Update);
     }
-
-    m_windows.push_back(c);
-    m_allClients.push_back(c);
 
     if (!contains(stacking_order->pre_stack, c)) {
         // Raise if it hasn't got any stacking position yet
@@ -315,12 +315,6 @@ void space::addClient(win::x11::window* c)
     updateTabbox();
 }
 
-void space::addUnmanaged(Toplevel* c)
-{
-    m_windows.push_back(c);
-    x_stacking_tree->mark_as_dirty();
-}
-
 /**
  * Destroys the client \a c
  */
@@ -343,10 +337,9 @@ void space::removeClient(win::x11::window* c)
     }
 
     assert(contains(m_allClients, c));
+
     // TODO: if marked client is removed, notify the marked list
-    remove_all(m_allClients, c);
-    remove_all(m_windows, c);
-    x_stacking_tree->mark_as_dirty();
+    remove_window_from_lists(*this, c);
     remove_all(attention_chain, c);
 
     auto group = findGroup(c->xcb_window());
@@ -370,19 +363,10 @@ void space::removeClient(win::x11::window* c)
     updateTabbox();
 }
 
-void space::removeUnmanaged(Toplevel* window)
-{
-    Q_ASSERT(contains(m_windows, window));
-    remove_all(m_windows, window);
-    Q_EMIT unmanagedRemoved(window);
-    x_stacking_tree->mark_as_dirty();
-}
-
 void space::addDeleted(Toplevel* c, Toplevel* orig)
 {
     assert(!contains(m_windows, c));
 
-    m_remnant_count++;
     m_windows.push_back(c);
 
     auto const unconstraintedIndex = index_of(stacking_order->pre_stack, orig);
@@ -403,23 +387,19 @@ void space::addDeleted(Toplevel* c, Toplevel* orig)
     });
 }
 
-void space::removeDeleted(Toplevel* window)
+void space::delete_window(Toplevel* window)
 {
-    assert(contains(m_windows, window));
+    remove_window_from_stacking_order(*this, window);
+    remove_window_from_lists(*this, window);
 
-    Q_EMIT deletedRemoved(window);
-    m_remnant_count--;
-
-    remove_all(m_windows, window);
-    remove_all(stacking_order->pre_stack, window);
-    remove_all(stacking_order->win_stack, window);
-
-    x_stacking_tree->mark_as_dirty();
-
-    if (auto& update_block = m_compositor->x11_integration.update_blocking;
-        update_block && window->remnant()->control) {
-        update_block(nullptr);
+    if (auto& update_block = m_compositor->x11_integration.update_blocking; update_block) {
+        auto& control = window->remnant() ? window->remnant()->control : window->control;
+        if (control) {
+            update_block(nullptr);
+        }
     }
+
+    Q_EMIT window_deleted(window);
 }
 
 void space::stopUpdateToolWindowsTimer()
@@ -1153,28 +1133,6 @@ void space::addInternalClient(win::internal_window* client)
     updateClientArea();
 
     Q_EMIT internalClientAdded(client);
-}
-
-void space::removeInternalClient(win::internal_window* client)
-{
-    remove_all(m_allClients, client);
-    remove_all(m_windows, client);
-
-    x_stacking_tree->mark_as_dirty();
-    stacking_order->update(true);
-    updateClientArea();
-
-    Q_EMIT internalClientRemoved(client);
-}
-
-void space::remove_window(Toplevel* window)
-{
-    remove_all(m_windows, window);
-    remove_all(stacking_order->pre_stack, window);
-    remove_all(stacking_order->win_stack, window);
-
-    x_stacking_tree->mark_as_dirty();
-    stacking_order->update(true);
 }
 
 QRect space::get_icon_geometry(Toplevel const* /*win*/) const

@@ -231,7 +231,7 @@ void window_layout_policy::handle_layout_change(uint index)
     if (it == layouts.end()) {
         layouts.insert({window, index});
         QObject::connect(
-            window, &Toplevel::windowClosed, this, [this, window] { layouts.erase(window); });
+            window, &Toplevel::closed, this, [this, window] { layouts.erase(window); });
     } else {
         it->second = index;
     }
@@ -339,7 +339,7 @@ void application_layout_policy::handle_layout_change(uint index)
     if (it == layouts.end()) {
         layouts.insert({window, index});
         QObject::connect(
-            window, &Toplevel::windowClosed, this, [this, window] { layouts.erase(window); });
+            window, &Toplevel::closed, this, [this, window] { layouts.erase(window); });
     } else {
         if (it->second == index) {
             return;
