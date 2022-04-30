@@ -172,15 +172,6 @@ public:
      * @see findClient(win::x11::predicate_match, xcb_window_t)
      */
     Toplevel* findAbstractClient(std::function<bool(Toplevel const*)> func) const;
-    /**
-     * @brief Finds the Client matching the given match @p predicate for the given window.
-     *
-     * @param predicate Which window should be compared
-     * @param w The window id to test against
-     * @return KWin::win::x11::window* The found Client or @c null
-     * @see findClient(std::function<bool (win::x11::window const*)>)
-     */
-    win::x11::window* findClient(win::x11::predicate_match predicate, xcb_window_t w) const;
     void forEachAbstractClient(std::function<void(Toplevel*)> func);
     /**
      * @brief Finds the Unmanaged with the given window id.

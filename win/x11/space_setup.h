@@ -161,8 +161,8 @@ void init_space(Space& space)
     Toplevel* new_active_client = nullptr;
     if (!qApp->isSessionRestored()) {
         --space.block_focus;
-        new_active_client
-            = space.findClient(win::x11::predicate_match::window, client_info.activeWindow());
+        new_active_client = find_controlled_window<x11::window>(
+            space, predicate_match::window, client_info.activeWindow());
     }
     if (new_active_client == nullptr && space.activeClient() == nullptr
         && space.should_get_focus.size() == 0) {

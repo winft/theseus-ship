@@ -5,6 +5,8 @@
 */
 #pragma once
 
+#include "types.h"
+
 #include "toplevel.h"
 
 #include "base/x11/xcb/geometry_hints.h"
@@ -32,16 +34,6 @@ constexpr NET::WindowTypes supported_managed_window_types_mask = NET::NormalMask
     | NET::DialogMask /*| NET::OverrideMask*/ | NET::TopMenuMask | NET::UtilityMask
     | NET::SplashMask | NET::NotificationMask | NET::OnScreenDisplayMask
     | NET::CriticalNotificationMask;
-
-/**
- * @brief Defines predicate matches on how to search for a window.
- */
-enum class predicate_match {
-    window,
-    wrapper_id,
-    frame_id,
-    input_id,
-};
 
 enum class mapping_state {
     withdrawn, ///< Not handled, as per ICCCM WithdrawnState

@@ -8,6 +8,7 @@
 
 #include "base/x11/event_filter.h"
 #include "win/x11/window.h"
+#include "win/x11/window_find.h"
 
 namespace KWin::render::x11
 {
@@ -33,7 +34,8 @@ public:
 
         if (pe->window == root_window) {
             Q_EMIT effects.propertyNotify(nullptr, pe->atom);
-        } else if (const auto c = space.findClient(win::x11::predicate_match::window, pe->window)) {
+        } else if (const auto c = win::x11::find_controlled_window<win::x11::window>(
+                       space, win::x11::predicate_match::window, pe->window)) {
             Q_EMIT effects.propertyNotify(c->render->effect.get(), pe->atom);
         } else if (const auto c = space.findUnmanaged(pe->window)) {
             Q_EMIT effects.propertyNotify(c->render->effect.get(), pe->atom);

@@ -875,33 +875,6 @@ win::x11::window* space::findUnmanaged(xcb_window_t w) const
         [w](auto toplevel) { return !toplevel->control && toplevel->xcb_window() == w; }));
 }
 
-win::x11::window* space::findClient(win::x11::predicate_match predicate, xcb_window_t w) const
-{
-    switch (predicate) {
-    case win::x11::predicate_match::window:
-        return qobject_cast<win::x11::window*>(findAbstractClient([w](Toplevel const* c) {
-            auto x11_client = qobject_cast<win::x11::window const*>(c);
-            return x11_client && x11_client->xcb_window() == w;
-        }));
-    case win::x11::predicate_match::wrapper_id:
-        return qobject_cast<win::x11::window*>(findAbstractClient([w](Toplevel const* c) {
-            auto x11_client = qobject_cast<win::x11::window const*>(c);
-            return x11_client && x11_client->xcb_windows.wrapper == w;
-        }));
-    case win::x11::predicate_match::frame_id:
-        return qobject_cast<win::x11::window*>(findAbstractClient([w](Toplevel const* c) {
-            auto x11_client = qobject_cast<win::x11::window const*>(c);
-            return x11_client && x11_client->xcb_windows.outer == w;
-        }));
-    case win::x11::predicate_match::input_id:
-        return qobject_cast<win::x11::window*>(findAbstractClient([w](Toplevel const* c) {
-            auto x11_client = qobject_cast<win::x11::window const*>(c);
-            return x11_client && x11_client->xcb_windows.input == w;
-        }));
-    }
-    return nullptr;
-}
-
 Toplevel* space::findToplevel(std::function<bool(const Toplevel*)> func) const
 {
     auto const it = std::find_if(m_windows.cbegin(), m_windows.cend(), [&func](auto const& win) {

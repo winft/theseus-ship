@@ -53,6 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/x11/group.h"
 #include "win/x11/stacking_tree.h"
 #include "win/x11/window.h"
+#include "win/x11/window_find.h"
 
 #if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
@@ -1078,7 +1079,8 @@ WindowQuadType effects_handler_impl::newWindowQuadType()
 
 EffectWindow* effects_handler_impl::find_window_by_wid(WId id) const
 {
-    if (auto w = workspace()->findClient(win::x11::predicate_match::window, id)) {
+    if (auto w = win::x11::find_controlled_window<win::x11::window>(
+            *workspace(), win::x11::predicate_match::window, id)) {
         return w->render->effect.get();
     }
     if (auto unmanaged = workspace()->findUnmanaged(id)) {

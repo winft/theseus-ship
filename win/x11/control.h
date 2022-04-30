@@ -14,6 +14,7 @@
 #include "space.h"
 #include "window.h"
 #include "window_create.h"
+#include "window_find.h"
 #include "xcb.h"
 
 #include "base/logging.h"
@@ -1249,7 +1250,8 @@ void restack_window(Win* win,
 {
     Win* other = nullptr;
     if (detail == XCB_STACK_MODE_OPPOSITE) {
-        other = workspace()->findClient(predicate_match::window, above);
+        other = find_controlled_window<win::x11::window>(
+            *workspace(), predicate_match::window, above);
         if (!other) {
             raise_or_lower_client(workspace(), win);
             return;
@@ -1269,13 +1271,15 @@ void restack_window(Win* win,
             ++it;
         }
     } else if (detail == XCB_STACK_MODE_TOP_IF) {
-        other = workspace()->findClient(predicate_match::window, above);
+        other = find_controlled_window<win::x11::window>(
+            *workspace(), predicate_match::window, above);
         if (other && other->frameGeometry().intersects(win->frameGeometry())) {
             raise_client_request(workspace(), win, src, timestamp);
         }
         return;
     } else if (detail == XCB_STACK_MODE_BOTTOM_IF) {
-        other = workspace()->findClient(predicate_match::window, above);
+        other = find_controlled_window<win::x11::window>(
+            *workspace(), predicate_match::window, above);
         if (other && other->frameGeometry().intersects(win->frameGeometry())) {
             lower_client_request(workspace(), win, src, timestamp);
         }
@@ -1283,7 +1287,8 @@ void restack_window(Win* win,
     }
 
     if (!other)
-        other = workspace()->findClient(predicate_match::window, above);
+        other = find_controlled_window<win::x11::window>(
+            *workspace(), predicate_match::window, above);
 
     if (other && detail == XCB_STACK_MODE_ABOVE) {
         auto it = workspace()->stacking_order->sorted().cend();

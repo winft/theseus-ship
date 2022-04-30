@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "group.h"
 
 #include "window.h"
+#include "window_find.h"
 
 #include "main.h"
 #include "render/effects.h"
@@ -46,7 +47,8 @@ group::group(xcb_window_t leader_P)
     , refcount(0)
 {
     if (leader_P != XCB_WINDOW_NONE) {
-        leader_client = workspace()->findClient(win::x11::predicate_match::window, leader_P);
+        leader_client = find_controlled_window<win::x11::window>(
+            *workspace(), predicate_match::window, leader_P);
         leader_info = new NETWinInfo(
             connection(), leader_P, rootWindow(), NET::Properties(), NET::WM2StartupId);
     }
