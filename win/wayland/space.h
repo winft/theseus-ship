@@ -46,6 +46,7 @@ public:
     space(base::wayland::server* server);
     ~space() override;
 
+    Toplevel* findInternal(QWindow* window) const override;
     QRect get_icon_geometry(Toplevel const* win) const override;
 
     window* find_window(Wrapland::Server::Surface* surface) const;

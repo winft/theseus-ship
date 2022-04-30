@@ -913,24 +913,6 @@ void space::forEachAbstractClient(std::function<void(Toplevel*)> func)
     });
 }
 
-Toplevel* space::findInternal(QWindow* w) const
-{
-    if (!w) {
-        return nullptr;
-    }
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        return findUnmanaged(w->winId());
-    }
-    for (auto client : m_windows) {
-        if (auto internal = qobject_cast<internal_window*>(client)) {
-            if (internal->internalWindow() == w) {
-                return internal;
-            }
-        }
-    }
-    return nullptr;
-}
-
 bool space::compositing() const
 {
     return m_compositor && m_compositor->scene();

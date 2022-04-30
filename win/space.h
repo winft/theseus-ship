@@ -180,6 +180,7 @@ public:
     win::x11::window* findUnmanaged(xcb_window_t w) const;
     Toplevel* findToplevel(std::function<bool(Toplevel const*)> func) const;
     void forEachToplevel(std::function<void(Toplevel*)> func);
+
     /**
      * @brief Finds a Toplevel for the internal window @p w.
      *
@@ -188,7 +189,7 @@ public:
      *
      * @returns Toplevel
      */
-    Toplevel* findInternal(QWindow* w) const;
+    virtual Toplevel* findInternal(QWindow* w) const = 0;
 
     QRect clientArea(clientAreaOption, const QPoint& p, int desktop) const;
     QRect clientArea(clientAreaOption, Toplevel const* window) const;

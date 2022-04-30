@@ -22,6 +22,7 @@
 #include "base/wayland/idle_inhibition.h"
 #include "base/wayland/server.h"
 #include "win/input.h"
+#include "win/internal_window.h"
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/stacking_order.h"
@@ -281,6 +282,22 @@ void space::handle_desktop_removed(virtual_desktop* desktop)
                 true);
         }
     }
+}
+
+Toplevel* space::findInternal(QWindow* window) const
+{
+    if (!window) {
+        return nullptr;
+    }
+
+    for (auto win : m_windows) {
+        if (auto internal = qobject_cast<internal_window*>(win);
+            internal && internal->internalWindow() == window) {
+            return internal;
+        }
+    }
+
+    return nullptr;
 }
 
 QRect space::get_icon_geometry(Toplevel const* win) const

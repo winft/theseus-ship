@@ -29,6 +29,7 @@ public:
     space();
     ~space() override;
 
+    Toplevel* findInternal(QWindow* window) const override;
     win::screen_edge* create_screen_edge(win::screen_edger& edger) override;
 
 protected:
