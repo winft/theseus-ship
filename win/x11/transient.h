@@ -421,7 +421,10 @@ group* find_client_leader_group(Win const* win)
 {
     group* ret = nullptr;
 
-    for (auto const& other : workspace()->allClientList()) {
+    for (auto const& other : workspace()->m_windows) {
+        if (!other->control) {
+            continue;
+        }
         if (other == win) {
             continue;
         }

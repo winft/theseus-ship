@@ -40,7 +40,7 @@ void remove_controlled_window_from_space(Space& space, Win* win)
         space.clientShortcutUpdated(win);
     }
 
-    assert(contains(space.m_allClients, win));
+    assert(contains(space.m_windows, win));
 
     // TODO: if marked client is removed, notify the marked list
     remove_window_from_lists(space, win);

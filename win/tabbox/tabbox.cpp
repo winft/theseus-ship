@@ -1488,13 +1488,24 @@ int tabbox::previous_desktop_static(int iDesktop) const
     return functor(iDesktop, true);
 }
 
+std::vector<Toplevel*> get_windows_with_control(std::vector<Toplevel*>& windows)
+{
+    std::vector<Toplevel*> with_control;
+    for (auto win : windows) {
+        if (win->control) {
+            with_control.push_back(win);
+        }
+    }
+    return with_control;
+}
+
 /**
  * Auxiliary functions to travers all clients according to the static
  * order. Useful for the CDE-style Alt-tab feature.
  */
 Toplevel* tabbox::next_client_static(Toplevel* c) const
 {
-    const auto& list = workspace()->allClientList();
+    auto const& list = get_windows_with_control(workspace()->m_windows);
     if (!c || list.empty()) {
         return nullptr;
     }
@@ -1515,7 +1526,7 @@ Toplevel* tabbox::next_client_static(Toplevel* c) const
  */
 Toplevel* tabbox::previous_client_static(Toplevel* c) const
 {
-    const auto& list = workspace()->allClientList();
+    auto const& list = get_windows_with_control(workspace()->m_windows);
     if (!c || list.empty()) {
         return nullptr;
     }

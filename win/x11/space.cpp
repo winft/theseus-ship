@@ -22,7 +22,10 @@ space::space()
     QObject::connect(
         virtual_desktop_manager::self(), &virtual_desktop_manager::desktopRemoved, this, [this] {
             auto const desktop_count = static_cast<int>(virtual_desktop_manager::self()->count());
-            for (auto const& window : m_allClients) {
+            for (auto const& window : m_windows) {
+                if (!window->control) {
+                    continue;
+                }
                 if (window->isOnAllDesktops()) {
                     continue;
                 }
@@ -64,7 +67,10 @@ void space::update_space_area_from_windows(QRect const& desktop_area,
                                            std::vector<QRect> const& screens_geos,
                                            win::space_areas& areas)
 {
-    for (auto const& window : m_allClients) {
+    for (auto const& window : m_windows) {
+        if (!window->control) {
+            continue;
+        }
         if (auto x11_window = qobject_cast<win::x11::window*>(window)) {
             update_space_areas(x11_window, desktop_area, screens_geos, areas);
         }

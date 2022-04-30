@@ -538,8 +538,10 @@ public:
 
         connect_legacy_screen_resize(this);
 
-        for (auto client : ref_space->allClientList()) {
-            Space::handle_client_added(client);
+        for (auto window : ref_space->m_windows) {
+            if (window->control) {
+                Space::handle_client_added(window);
+            }
         }
     }
 

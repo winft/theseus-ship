@@ -67,7 +67,6 @@ void add_remnant(Space& space, Win* orig, Win* remnant)
 template<typename Space, typename Win>
 void remove_window_from_lists(Space& space, Win* win)
 {
-    remove_all(space.m_allClients, win);
     remove_all(space.m_windows, win);
     space.x_stacking_tree->mark_as_dirty();
 }
@@ -128,8 +127,10 @@ template<typename Space>
 void update_tool_windows(Space* space, bool also_hide)
 {
     if (!kwinApp()->options->isHideUtilityWindowsForInactive()) {
-        for (auto const& window : space->allClientList()) {
-            window->hideClient(false);
+        for (auto const& window : space->m_windows) {
+            if (window->control) {
+                window->hideClient(false);
+            }
         }
         return;
     }

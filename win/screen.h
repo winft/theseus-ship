@@ -72,8 +72,8 @@ void send_to_screen(Win* win, Output const& output)
         base::set_current_output(kwinApp()->get_base(), checked_output);
 
         // might impact the layer of a fullscreen window
-        for (auto cc : workspace()->allClientList()) {
-            if (cc->control->fullscreen() && cc->central_output == checked_output) {
+        for (auto cc : workspace()->m_windows) {
+            if (cc->control && cc->control->fullscreen() && cc->central_output == checked_output) {
                 update_layer(cc);
             }
         }

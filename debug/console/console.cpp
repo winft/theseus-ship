@@ -248,10 +248,11 @@ QString console_delegate::displayText(const QVariant& value, const QLocale& loca
 console_model::console_model(QObject* parent)
     : QAbstractItemModel(parent)
 {
-    for (auto const& client : workspace()->allClientList()) {
-        auto x11_client = qobject_cast<win::x11::window*>(client);
-        if (x11_client) {
-            m_x11Clients.append(x11_client);
+    for (auto const& window : workspace()->m_windows) {
+        if (window->control) {
+            if (auto x11_client = qobject_cast<win::x11::window*>(window)) {
+                m_x11Clients.append(x11_client);
+            }
         }
     }
     connect(workspace(), &win::space::clientAdded, this, [this](auto c) {

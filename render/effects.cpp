@@ -248,9 +248,12 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     }
 
     // connect all clients
-    for (auto& client : ws->allClientList()) {
+    for (auto& window : ws->m_windows) {
         // TODO: Can we merge this with the one for Wayland XdgShellClients below?
-        auto x11_client = qobject_cast<win::x11::window*>(client);
+        if (!window->control) {
+            continue;
+        }
+        auto x11_client = qobject_cast<win::x11::window*>(window);
         if (!x11_client) {
             continue;
         }

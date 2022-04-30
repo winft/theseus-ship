@@ -119,8 +119,6 @@ public:
     Toplevel* delayfocus_client{nullptr};
     Toplevel* client_keys_client{nullptr};
 
-    std::vector<Toplevel*> m_allClients;
-
     // Last is most recent.
     std::deque<Toplevel*> should_get_focus;
     std::deque<Toplevel*> attention_chain;
@@ -275,13 +273,6 @@ public:
      * @return Remnant windows, i.e. already closed but still kept around for closing effects.
      */
     std::vector<Toplevel*> remnants() const;
-    /**
-     * @returns List of all clients (either X11 or Wayland) currently managed by space
-     */
-    std::vector<Toplevel*> const& allClientList() const
-    {
-        return m_allClients;
-    }
 
     win::session_manager* sessionManager() const;
     void updateTabbox();

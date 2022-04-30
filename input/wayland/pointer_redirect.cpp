@@ -93,7 +93,8 @@ void pointer_redirect::init()
             device_redirect_update(this);
         });
     };
-    const auto clients = workspace()->allClientList();
+
+    auto const clients = workspace()->m_windows;
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
     QObject::connect(workspace(), &win::space::clientAdded, this, setupMoveResizeConnection);
     QObject::connect(static_cast<win::wayland::space*>(workspace()),

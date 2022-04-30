@@ -203,9 +203,7 @@ void clear_space(Space& space)
         release_window(window, is_x11);
 
         // No removeClient() is called, it does more than just removing.
-        // However, remove from some lists to e.g. prevent performTransiencyCheck()
-        // from crashing.
-        remove_all(space.m_allClients, window);
+        // However, remove from some lists to e.g. prevent performTransiencyCheck() from crashing.
         remove_all(space.m_windows, window);
     }
 

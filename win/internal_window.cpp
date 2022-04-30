@@ -590,7 +590,6 @@ void internal_window::markAsMapped()
 
     auto space = workspace();
     space->m_windows.push_back(this);
-    space->m_allClients.push_back(this);
 
     setup_space_window_connections(space, this);
     update_layer(this);

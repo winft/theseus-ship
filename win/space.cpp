@@ -313,7 +313,7 @@ void space::slotReconfigure()
     win::update_tool_windows(this, true);
 
     RuleBook::self()->load();
-    for (auto window : m_allClients) {
+    for (auto window : m_windows) {
         if (window->supportsWindowRules()) {
             win::evaluate_rules(window);
             RuleBook::self()->discardUsed(window, false);
@@ -324,9 +324,10 @@ void space::slotReconfigure()
         && !kwinApp()->options->borderlessMaximizedWindows()) {
         // in case borderless maximized windows option changed and new option
         // is to have borders, we need to unset the borders for all maximized windows
-        for (auto it = m_allClients.begin(); it != m_allClients.end(); ++it) {
-            if ((*it)->maximizeMode() == win::maximize_mode::full)
-                (*it)->checkNoBorder();
+        for (auto window : m_windows) {
+            if (window->maximizeMode() == win::maximize_mode::full) {
+                window->checkNoBorder();
+            }
         }
     }
 }
@@ -570,8 +571,10 @@ void space::disableGlobalShortcutsForClient(bool disable)
 
     global_shortcuts_disabled_for_client = disable;
     // Update also Meta+LMB actions etc.
-    for (auto& client : allClientList()) {
-        client->control->update_mouse_grab();
+    for (auto window : m_windows) {
+        if (auto& ctrl = window->control) {
+            ctrl->update_mouse_grab();
+        }
     }
 }
 
@@ -863,7 +866,9 @@ QString space::supportInformation() const
 
 Toplevel* space::findAbstractClient(std::function<bool(const Toplevel*)> func) const
 {
-    if (auto ret = win::find_in_list(m_allClients, func)) {
+    if (auto ret = find_in_list(m_windows, std::function([this, &func](Toplevel const* win) {
+                                    return win->control && func(win);
+                                }))) {
         return ret;
     }
     return nullptr;
@@ -901,7 +906,11 @@ bool space::hasClient(Toplevel const* window)
 
 void space::forEachAbstractClient(std::function<void(Toplevel*)> func)
 {
-    std::for_each(m_allClients.cbegin(), m_allClients.cend(), func);
+    std::for_each(m_windows.cbegin(), m_windows.cend(), [&, this](auto win) {
+        if (win->control) {
+            func(win);
+        }
+    });
 }
 
 Toplevel* space::findInternal(QWindow* w) const
@@ -912,8 +921,8 @@ Toplevel* space::findInternal(QWindow* w) const
     if (kwinApp()->operationMode() == Application::OperationModeX11) {
         return findUnmanaged(w->winId());
     }
-    for (auto client : m_allClients) {
-        if (auto internal = qobject_cast<win::internal_window*>(client)) {
+    for (auto client : m_windows) {
+        if (auto internal = qobject_cast<internal_window*>(client)) {
             if (internal->internalWindow() == w) {
                 return internal;
             }
@@ -1142,8 +1151,10 @@ void space::updateClientArea(bool force)
             }
         }
 
-        for (auto win : m_allClients) {
-            win::check_workspace_position(win);
+        for (auto win : m_windows) {
+            if (win->control) {
+                check_workspace_position(win);
+            }
         }
 
         // Reset, no longer valid or needed.
@@ -1396,22 +1407,32 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
         // windows snap
         int snap = kwinApp()->options->windowSnapZone() * snapAdjust;
         if (snap) {
-            for (auto l = m_allClients.cbegin(); l != m_allClients.cend(); ++l) {
-                if ((*l) == window)
+            for (auto win : m_windows) {
+                if (!win->control) {
                     continue;
-                if ((*l)->control->minimized())
-                    continue; // is minimized
-                if (!(*l)->isShown())
-                    continue;
-                if (!((*l)->isOnDesktop(window->desktop()) || window->isOnDesktop((*l)->desktop())))
-                    continue; // wrong virtual desktop
-                if (win::is_desktop(*l) || win::is_splash(*l))
-                    continue;
+                }
 
-                lx = (*l)->pos().x();
-                ly = (*l)->pos().y();
-                lrx = lx + (*l)->size().width();
-                lry = ly + (*l)->size().height();
+                if (win == window) {
+                    continue;
+                }
+                if (win->control->minimized()) {
+                    continue;
+                }
+                if (!win->isShown()) {
+                    continue;
+                }
+                if (!win->isOnDesktop(window->desktop()) && !window->isOnDesktop(win->desktop())) {
+                    // wrong virtual desktop
+                    continue;
+                }
+                if (is_desktop(win) || is_splash(win)) {
+                    continue;
+                }
+
+                lx = win->pos().x();
+                ly = win->pos().y();
+                lrx = lx + win->size().width();
+                lry = ly + win->size().height();
 
                 if (!flags(guideMaximized & win::maximize_mode::horizontal)
                     && (((cy <= lry) && (cy >= ly)) || ((ry >= ly) && (ry <= lry))
@@ -1598,13 +1619,14 @@ QRect space::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::posit
         if (snap) {
             deltaX = int(snap);
             deltaY = int(snap);
-            for (auto l = m_allClients.cbegin(); l != m_allClients.cend(); ++l) {
-                if ((*l)->isOnDesktop(win::virtual_desktop_manager::self()->current())
-                    && !(*l)->control->minimized() && (*l) != window) {
-                    lx = (*l)->pos().x() - 1;
-                    ly = (*l)->pos().y() - 1;
-                    lrx = (*l)->pos().x() + (*l)->size().width();
-                    lry = (*l)->pos().y() + (*l)->size().height();
+            for (auto win : m_windows) {
+                if (win->control
+                    && win->isOnDesktop(win::virtual_desktop_manager::self()->current())
+                    && !win->control->minimized() && win != window) {
+                    lx = win->pos().x() - 1;
+                    ly = win->pos().y() - 1;
+                    lrx = win->pos().x() + win->size().width();
+                    lry = win->pos().y() + win->size().height();
 
 #define WITHIN_HEIGHT                                                                              \
     (((newcy <= lry) && (newcy >= ly)) || ((newry >= ly) && (newry <= lry))                        \
@@ -1929,15 +1951,15 @@ int space::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge) con
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
         ? win::virtual_desktop_manager::self()->current()
         : window->desktop();
-    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (win::is_irrelevant(*it, window, desktop)) {
+    for (auto win : m_windows) {
+        if (is_irrelevant(win, window, desktop)) {
             continue;
         }
-        const int x = leftEdge ? (*it)->geometry_update.frame.right() + 1
-                               : (*it)->geometry_update.frame.left() - 1;
+        const int x = leftEdge ? win->geometry_update.frame.right() + 1
+                               : win->geometry_update.frame.left() - 1;
         if (x > newX && x < oldX
-            && !(window->geometry_update.frame.top() > (*it)->geometry_update.frame.bottom()
-                 || window->geometry_update.frame.bottom() < (*it)->geometry_update.frame.top())) {
+            && !(window->geometry_update.frame.top() > win->geometry_update.frame.bottom()
+                 || window->geometry_update.frame.bottom() < win->geometry_update.frame.top())) {
             newX = x;
         }
     }
@@ -1972,15 +1994,15 @@ int space::packPositionRight(Toplevel const* window, int oldX, bool rightEdge) c
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
         ? win::virtual_desktop_manager::self()->current()
         : window->desktop();
-    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (win::is_irrelevant(*it, window, desktop)) {
+    for (auto win : m_windows) {
+        if (is_irrelevant(win, window, desktop)) {
             continue;
         }
-        const int x = rightEdge ? (*it)->geometry_update.frame.left() - 1
-                                : (*it)->geometry_update.frame.right() + 1;
+        const int x = rightEdge ? win->geometry_update.frame.left() - 1
+                                : win->geometry_update.frame.right() + 1;
         if (x < newX && x > oldX
-            && !(window->geometry_update.frame.top() > (*it)->geometry_update.frame.bottom()
-                 || window->geometry_update.frame.bottom() < (*it)->geometry_update.frame.top())) {
+            && !(window->geometry_update.frame.top() > win->geometry_update.frame.bottom()
+                 || window->geometry_update.frame.bottom() < win->geometry_update.frame.top())) {
             newX = x;
         }
     }
@@ -2005,16 +2027,16 @@ int space::packPositionUp(Toplevel const* window, int oldY, bool topEdge) const
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
         ? win::virtual_desktop_manager::self()->current()
         : window->desktop();
-    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (win::is_irrelevant(*it, window, desktop)) {
+    for (auto win : m_windows) {
+        if (is_irrelevant(win, window, desktop)) {
             continue;
         }
-        const int y = topEdge ? (*it)->geometry_update.frame.bottom() + 1
-                              : (*it)->geometry_update.frame.top() - 1;
+        const int y = topEdge ? win->geometry_update.frame.bottom() + 1
+                              : win->geometry_update.frame.top() - 1;
         if (y > newY && y < oldY
             && !(window->geometry_update.frame.left()
-                     > (*it)->geometry_update.frame.right() // they overlap in X direction
-                 || window->geometry_update.frame.right() < (*it)->geometry_update.frame.left())) {
+                     > win->geometry_update.frame.right() // they overlap in X direction
+                 || window->geometry_update.frame.right() < win->geometry_update.frame.left())) {
             newY = y;
         }
     }
@@ -2046,15 +2068,15 @@ int space::packPositionDown(Toplevel const* window, int oldY, bool bottomEdge) c
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
         ? win::virtual_desktop_manager::self()->current()
         : window->desktop();
-    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (win::is_irrelevant(*it, window, desktop)) {
+    for (auto win : m_windows) {
+        if (is_irrelevant(win, window, desktop)) {
             continue;
         }
-        const int y = bottomEdge ? (*it)->geometry_update.frame.top() - 1
-                                 : (*it)->geometry_update.frame.bottom() + 1;
+        const int y = bottomEdge ? win->geometry_update.frame.top() - 1
+                                 : win->geometry_update.frame.bottom() + 1;
         if (y < newY && y > oldY
-            && !(window->geometry_update.frame.left() > (*it)->geometry_update.frame.right()
-                 || window->geometry_update.frame.right() < (*it)->geometry_update.frame.left())) {
+            && !(window->geometry_update.frame.left() > win->geometry_update.frame.right()
+                 || window->geometry_update.frame.right() < win->geometry_update.frame.left())) {
             newY = y;
         }
     }
@@ -2265,10 +2287,10 @@ void space::setActiveClient(Toplevel* window)
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer
         // status on > 1 screens
         if (kwinApp()->get_base().get_outputs().size() > 1) {
-            for (auto it = m_allClients.begin(); it != m_allClients.end(); ++it) {
-                if (*it != active_client && (*it)->layer() == win::layer::active
-                    && (*it)->central_output == active_client->central_output) {
-                    win::update_layer(*it);
+            for (auto win : m_windows) {
+                if (win->control && win != active_client && win->layer() == win::layer::active
+                    && win->central_output == active_client->central_output) {
+                    update_layer(win);
                 }
             }
         }
@@ -3685,8 +3707,8 @@ bool space::shortcutAvailable(const QKeySequence& cut, Toplevel* ignore) const
     }
 
     // Check now conflicts with activation shortcuts for current clients.
-    for (const auto client : m_allClients) {
-        if (client != ignore && client->control->shortcut() == cut) {
+    for (auto const win : m_windows) {
+        if (win != ignore && win->control && win->control->shortcut() == cut) {
             return false;
         }
     }
@@ -3773,8 +3795,11 @@ void space::storeSession(const QString& sessionName, win::sm_save_phase phase)
     int count = 0;
     int active_client = -1;
 
-    for (auto const& client : allClientList()) {
-        auto x11_client = qobject_cast<win::x11::window*>(client);
+    for (auto const& window : m_windows) {
+        if (!window->control) {
+            continue;
+        }
+        auto x11_client = qobject_cast<x11::window*>(window);
         if (!x11_client) {
             continue;
         }
@@ -3875,8 +3900,12 @@ void space::storeSubSession(const QString& name, QSet<QByteArray> sessionIds)
     int count = 0;
     int active_client = -1;
 
-    for (auto const& client : allClientList()) {
-        auto x11_client = qobject_cast<win::x11::window*>(client);
+    for (auto const& window : m_windows) {
+        if (!window->control) {
+            continue;
+        }
+
+        auto x11_client = qobject_cast<win::x11::window*>(window);
         if (!x11_client) {
             continue;
         }
