@@ -874,12 +874,6 @@ Toplevel* space::findAbstractClient(std::function<bool(const Toplevel*)> func) c
     return nullptr;
 }
 
-win::x11::window* space::findUnmanaged(xcb_window_t w) const
-{
-    return static_cast<win::x11::window*>(findToplevel(
-        [w](auto toplevel) { return !toplevel->control && toplevel->xcb_window() == w; }));
-}
-
 Toplevel* space::findToplevel(std::function<bool(const Toplevel*)> func) const
 {
     auto const it = std::find_if(m_windows.cbegin(), m_windows.cend(), [&func](auto const& win) {

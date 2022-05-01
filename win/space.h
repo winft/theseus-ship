@@ -171,13 +171,6 @@ public:
      */
     Toplevel* findAbstractClient(std::function<bool(Toplevel const*)> func) const;
     void forEachAbstractClient(std::function<void(Toplevel*)> func);
-    /**
-     * @brief Finds the Unmanaged with the given window id.
-     *
-     * @param w The window id to search for
-     * @return KWin::Unmanaged* Found Unmanaged or @c null if there is no Unmanaged with given Id.
-     */
-    win::x11::window* findUnmanaged(xcb_window_t w) const;
     Toplevel* findToplevel(std::function<bool(Toplevel const*)> func) const;
     void forEachToplevel(std::function<void(Toplevel*)> func);
 

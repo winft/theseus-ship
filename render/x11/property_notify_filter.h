@@ -7,6 +7,7 @@
 #pragma once
 
 #include "base/x11/event_filter.h"
+#include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
 #include "win/x11/window_find.h"
 
@@ -37,7 +38,7 @@ public:
         } else if (const auto c = win::x11::find_controlled_window<win::x11::window>(
                        space, win::x11::predicate_match::window, pe->window)) {
             Q_EMIT effects.propertyNotify(c->render->effect.get(), pe->atom);
-        } else if (const auto c = space.findUnmanaged(pe->window)) {
+        } else if (const auto c = win::x11::find_unmanaged<win::x11::window>(space, pe->window)) {
             Q_EMIT effects.propertyNotify(c->render->effect.get(), pe->atom);
         }
 

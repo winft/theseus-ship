@@ -155,7 +155,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
             if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto unmanaged = space.findUnmanaged(event_window)) {
+        } else if (auto unmanaged = find_unmanaged<win::x11::window>(space, event_window)) {
             if (win::x11::unmanaged_event(unmanaged, event)) {
                 return true;
             }
@@ -228,7 +228,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         auto map_event = reinterpret_cast<xcb_map_notify_event_t*>(event);
 
         if (map_event->override_redirect) {
-            auto c = space.findUnmanaged(map_event->window);
+            auto c = find_unmanaged<win::x11::window>(space, map_event->window);
             if (c == nullptr) {
                 c = create_unmanaged_window(map_event->window, space);
             }

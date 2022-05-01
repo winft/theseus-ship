@@ -12,6 +12,7 @@
 #include "base/x11/xcb/proto.h"
 #include "input/cursor.h"
 #include "win/space.h"
+#include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
 #include "win/x11/window_find.h"
 
@@ -268,7 +269,7 @@ void window_selector::selectWindowId(xcb_window_t window_to_select)
     if (client) {
         m_callback(client);
     } else {
-        m_callback(workspace()->findUnmanaged(window_to_select));
+        m_callback(win::x11::find_unmanaged<win::x11::window>(*workspace(), window_to_select));
     }
 }
 

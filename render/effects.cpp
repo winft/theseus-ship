@@ -52,6 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/virtual_desktops.h"
 #include "win/x11/group.h"
 #include "win/x11/stacking_tree.h"
+#include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
 #include "win/x11/window_find.h"
 
@@ -1086,7 +1087,7 @@ EffectWindow* effects_handler_impl::find_window_by_wid(WId id) const
             *workspace(), win::x11::predicate_match::window, id)) {
         return w->render->effect.get();
     }
-    if (auto unmanaged = workspace()->findUnmanaged(id)) {
+    if (auto unmanaged = win::x11::find_unmanaged<win::x11::window>(*workspace(), id)) {
         return unmanaged->render->effect.get();
     }
     return nullptr;

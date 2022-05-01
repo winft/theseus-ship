@@ -60,7 +60,7 @@ Toplevel* space::findInternal(QWindow* window) const
     if (!window) {
         return nullptr;
     }
-    return findUnmanaged(window->winId());
+    return find_unmanaged<win::x11::window>(*this, window->winId());
 }
 
 win::screen_edge* space::create_screen_edge(win::screen_edger& edger)
