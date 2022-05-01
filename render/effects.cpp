@@ -959,7 +959,7 @@ void effects_handler_impl::windowToScreen(EffectWindow* w, int screen)
     auto window = static_cast<effects_window_impl*>(w)->window();
 
     if (output && window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
-        workspace()->sendClientToScreen(window, *output);
+        win::send_to_screen(*workspace(), window, *output);
     }
 }
 

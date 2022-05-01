@@ -1433,7 +1433,7 @@ void TestXdgShellClient::testSendToScreen()
 
     auto output = base::get_output(outputs, 1);
     QVERIFY(output);
-    win::send_to_screen(window, *output);
+    win::send_to_screen(*workspace(), window, *output);
     QCOMPARE(window->central_output, outputs.at(1));
     QCOMPARE(popup->central_output, outputs.at(1));
 

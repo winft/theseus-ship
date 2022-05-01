@@ -1300,7 +1300,7 @@ void finish_move_resize(Win* win, bool cancel)
     if (output_index != mov_res.start_screen) {
         // Checks rule validity
         if (win->central_output) {
-            workspace()->sendClientToScreen(win, *win->central_output);
+            send_to_screen(*workspace(), win, *win->central_output);
         }
         if (win->geometry_update.max_mode != maximize_mode::restore) {
             check_workspace_position(win);
@@ -1415,7 +1415,7 @@ void pack_to(Win* win, int left, int top)
 
     if (win->central_output != old_screen) {
         // Checks rule validity.
-        workspace()->sendClientToScreen(win, *win->central_output);
+        send_to_screen(*workspace(), win, *win->central_output);
         if (win->maximizeMode() != win::maximize_mode::restore) {
             check_workspace_position(win);
         }
@@ -1445,8 +1445,8 @@ void start_delayed_move_resize(Win* win)
     mov_res.delay_timer->start(QApplication::startDragTime());
 }
 
-template<typename Win, typename Output>
-void send_to_screen(Win* win, Output const& output)
+template<typename Space, typename Win, typename Output>
+void send_to_screen(Space const& space, Win* win, Output const& output)
 {
     auto checked_output = win->control->rules().checkScreen(&output);
 
@@ -1454,7 +1454,7 @@ void send_to_screen(Win* win, Output const& output)
         base::set_current_output(kwinApp()->get_base(), checked_output);
 
         // might impact the layer of a fullscreen window
-        for (auto cc : workspace()->m_windows) {
+        for (auto cc : space.m_windows) {
             if (cc->control && cc->control->fullscreen() && cc->central_output == checked_output) {
                 update_layer(cc);
             }
@@ -1484,8 +1484,8 @@ void send_to_screen(Win* win, Output const& output)
         set_quicktile_mode(win, quicktiles::none, true);
     }
 
-    auto oldScreenArea = workspace()->clientArea(MaximizeArea, win);
-    auto screenArea = workspace()->clientArea(MaximizeArea, checked_output, win->desktop());
+    auto oldScreenArea = space.clientArea(MaximizeArea, win);
+    auto screenArea = space.clientArea(MaximizeArea, checked_output, win->desktop());
 
     // the window can have its center so that the position correction moves the new center onto
     // the old screen, what will tile it where it is. Ie. the screen is not changed
@@ -1533,10 +1533,10 @@ void send_to_screen(Win* win, Output const& output)
         win->restore_geometries.maximize = restore_geo;
     }
 
-    auto children = restacked_by_space_stacking_order(workspace(), win->transient()->children);
+    auto children = restacked_by_space_stacking_order(&space, win->transient()->children);
     for (auto const& child : children) {
         if (child->control) {
-            send_to_screen(child, *checked_output);
+            send_to_screen(space, child, *checked_output);
         }
     }
 }

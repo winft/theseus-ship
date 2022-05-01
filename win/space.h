@@ -293,7 +293,6 @@ public:
     void sendClientToDesktop(Toplevel* window, int desktop, bool dont_activate);
     void windowToPreviousDesktop(Toplevel* window);
     void windowToNextDesktop(Toplevel* window);
-    void sendClientToScreen(Toplevel* window, base::output const& output);
 
     /**
      * Shows the menu operations menu for the client and makes it active if

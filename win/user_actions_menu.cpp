@@ -675,7 +675,7 @@ void user_actions_menu::slotSendToScreen(QAction* action)
         return;
     }
 
-    workspace()->sendClientToScreen(m_client.data(), *output);
+    win::send_to_screen(*workspace(), m_client.data(), *output);
 }
 
 }

@@ -467,11 +467,6 @@ void space::sendClientToDesktop(Toplevel* window, int desk, bool dont_activate)
     updateClientArea();
 }
 
-void space::sendClientToScreen(Toplevel* window, base::output const& output)
-{
-    win::send_to_screen(window, output);
-}
-
 /**
  * Delayed focus functions
  */
@@ -3278,7 +3273,7 @@ void space::slotWindowToScreen()
         int const screen = senderValue(sender());
         auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
         if (output) {
-            sendClientToScreen(active_client, *output);
+            send_to_screen(*this, active_client, *output);
         }
     }
 }
@@ -3289,7 +3284,7 @@ void space::slotWindowToNextScreen()
         return;
     }
     if (auto output = get_derivated_output(active_client->central_output, 1)) {
-        sendClientToScreen(active_client, *output);
+        send_to_screen(*this, active_client, *output);
     }
 }
 
@@ -3299,7 +3294,7 @@ void space::slotWindowToPrevScreen()
         return;
     }
     if (auto output = get_derivated_output(active_client->central_output, -1)) {
-        sendClientToScreen(active_client, *output);
+        send_to_screen(*this, active_client, *output);
     }
 }
 

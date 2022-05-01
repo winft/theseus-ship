@@ -92,7 +92,7 @@ void update_fullscreen_disable(Win* win)
     }
 
     if (old_output && old_output != win->central_output) {
-        workspace()->sendClientToScreen(win, *old_output);
+        send_to_screen(*workspace(), win, *old_output);
     }
 }
 

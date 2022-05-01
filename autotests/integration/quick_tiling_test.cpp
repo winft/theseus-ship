@@ -260,7 +260,7 @@ void QuickTilingTest::testQuickTiling()
 
     auto output = base::get_output(Test::app()->base.get_outputs(), 1);
     QVERIFY(output);
-    win::send_to_screen(c, *output);
+    win::send_to_screen(*workspace(), c, *output);
     QCOMPARE(c->central_output, Test::app()->base.get_outputs().at(1));
 
     // quick tile should not be changed

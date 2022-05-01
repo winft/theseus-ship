@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output_helpers.h"
 #include "base/platform.h"
 #include "main.h"
+#include "win/move.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
@@ -576,7 +577,7 @@ public:
         if (!output) {
             return;
         }
-        ref_space->sendClientToScreen(client->client(), *output);
+        win::send_to_screen(*ref_space, client->client(), *output);
     }
 
 #define SIMPLE_SLOT(name)                                                                          \

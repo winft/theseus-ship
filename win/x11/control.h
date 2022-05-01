@@ -1551,7 +1551,7 @@ void startup_id_changed(Win* win)
     if (asn_data.xinerama() != -1) {
         auto output = base::get_output(kwinApp()->get_base().get_outputs(), asn_data.xinerama());
         if (output) {
-            workspace()->sendClientToScreen(win, *output);
+            send_to_screen(*workspace(), win, *output);
         }
     }
     auto const timestamp = asn_id.timestamp();
