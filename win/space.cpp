@@ -877,11 +877,6 @@ Toplevel* space::findToplevel(std::function<bool(const Toplevel*)> func) const
     return it != m_windows.cend() ? *it : nullptr;
 }
 
-void space::forEachToplevel(std::function<void(Toplevel*)> func)
-{
-    std::for_each(m_windows.cbegin(), m_windows.cend(), func);
-}
-
 bool space::hasClient(Toplevel const* window)
 {
     if (auto cc = dynamic_cast<win::x11::window const*>(window)) {
@@ -891,15 +886,6 @@ bool space::hasClient(Toplevel const* window)
             != nullptr;
     }
     return false;
-}
-
-void space::forEachAbstractClient(std::function<void(Toplevel*)> func)
-{
-    std::for_each(m_windows.cbegin(), m_windows.cend(), [&, this](auto win) {
-        if (win->control) {
-            func(win);
-        }
-    });
 }
 
 bool space::compositing() const

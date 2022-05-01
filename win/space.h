@@ -170,9 +170,7 @@ public:
      * @see findClient(win::x11::predicate_match, xcb_window_t)
      */
     Toplevel* findAbstractClient(std::function<bool(Toplevel const*)> func) const;
-    void forEachAbstractClient(std::function<void(Toplevel*)> func);
     Toplevel* findToplevel(std::function<bool(Toplevel const*)> func) const;
-    void forEachToplevel(std::function<void(Toplevel*)> func);
 
     /**
      * @brief Finds a Toplevel for the internal window @p w.

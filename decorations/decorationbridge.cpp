@@ -144,7 +144,11 @@ void DecorationBridge::initPlugin()
 
 static void recreateDecorations()
 {
-    workspace()->forEachAbstractClient([](Toplevel* t) { t->updateDecoration(true, true); });
+    for (auto win : workspace()->m_windows) {
+        if (win->control) {
+            win->updateDecoration(true, true);
+        }
+    }
 }
 
 void DecorationBridge::reconfigure()
