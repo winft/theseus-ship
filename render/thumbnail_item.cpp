@@ -132,6 +132,16 @@ window_thumbnail_item::~window_thumbnail_item()
 {
 }
 
+Toplevel* find_controlled_window(QUuid const& wId)
+{
+    for (auto win : workspace()->m_windows) {
+        if (win->control && win->internalId() == wId) {
+            return win;
+        }
+    }
+    return nullptr;
+}
+
 void window_thumbnail_item::setWId(const QUuid& wId)
 {
     if (m_wId == wId) {
@@ -139,8 +149,7 @@ void window_thumbnail_item::setWId(const QUuid& wId)
     }
     m_wId = wId;
     if (m_wId != nullptr) {
-        setClient(workspace()->findAbstractClient(
-            [this](Toplevel const* c) { return c->internalId() == m_wId; }));
+        setClient(find_controlled_window(m_wId));
     } else if (m_client) {
         m_client = nullptr;
         Q_EMIT clientChanged();
@@ -167,8 +176,7 @@ void window_thumbnail_item::paint(QPainter* painter)
     if (effects) {
         return;
     }
-    auto client = workspace()->findAbstractClient(
-        [this](Toplevel const* c) { return c->internalId() == m_wId; });
+    auto client = find_controlled_window(m_wId);
     if (!client) {
         return;
     }

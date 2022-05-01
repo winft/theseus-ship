@@ -100,12 +100,20 @@ bool is_special_window(Win* win)
 template<typename Win>
 Win* find_client_with_same_caption(Win const* win)
 {
-    auto fetchNameInternalPredicate = [win](Win const* cl) {
-        return (!is_special_window(cl) || is_toolbar(cl)) && cl != win
-            && cl->caption.normal == win->caption.normal
-            && cl->caption.suffix == win->caption.suffix;
-    };
-    return workspace()->findAbstractClient(fetchNameInternalPredicate);
+    for (auto candidate : workspace()->m_windows) {
+        if (!candidate->control || candidate == win) {
+            continue;
+        }
+        if (is_special_window(candidate) && !is_toolbar(candidate)) {
+            continue;
+        }
+        if (candidate->caption.normal != win->caption.normal
+            || candidate->caption.suffix != win->caption.suffix) {
+            continue;
+        }
+        return candidate;
+    }
+    return nullptr;
 }
 
 }

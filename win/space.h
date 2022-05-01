@@ -138,40 +138,6 @@ public:
 
     bool workspaceEvent(QEvent*);
 
-    bool hasClient(win::x11::window const*);
-    bool hasClient(Toplevel const* window);
-
-    /**
-     * @brief Finds the first Client matching the condition expressed by passed in @p func.
-     *
-     * Internally findClient uses the std::find_if algorithm and that determines how the function
-     * needs to be implemented. An example usage for finding a Client with a matching windowId
-     * @code
-     * xcb_window_t w; // our test window
-     * auto client = findClient([w](win::x11::window const* c) -> bool {
-     *     return c->window() == w;
-     * });
-     * @endcode
-     *
-     * For the standard cases of matching the window id with one of the Client's windows use
-     * the simplified overload method findClient(win::x11::predicate_match, xcb_window_t).
-     * Above example can be simplified to:
-     * @code
-     * xcb_window_t w; // our test window
-     * auto client = findClient(win::x11::predicate_match::window, w);
-     * @endcode
-     *
-     * @param func Unary function that accepts a win::x11::window* as argument and
-     * returns a value convertible to bool. The value returned indicates whether the
-     * win::x11::window* is considered a match in the context of this function.
-     * The function shall not modify its argument.
-     * This can either be a function pointer or a function object.
-     * @return KWin::win::x11::window* The found Client or @c null
-     * @see findClient(win::x11::predicate_match, xcb_window_t)
-     */
-    Toplevel* findAbstractClient(std::function<bool(Toplevel const*)> func) const;
-    Toplevel* findToplevel(std::function<bool(Toplevel const*)> func) const;
-
     /**
      * @brief Finds a Toplevel for the internal window @p w.
      *

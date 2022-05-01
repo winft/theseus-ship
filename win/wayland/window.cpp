@@ -54,11 +54,6 @@ namespace KWin::win::wayland
 
 namespace WS = Wrapland::Server;
 
-Toplevel* find_toplevel(WS::Surface* surface)
-{
-    return workspace()->findToplevel([surface](auto win) { return win->surface() == surface; });
-}
-
 window::window(WS::Surface* surface)
     : Toplevel()
 {

@@ -212,14 +212,16 @@ QVariantMap kwin::queryWindowInfo()
 QVariantMap kwin::getWindowInfo(const QString& uuid)
 {
     auto const id = QUuid::fromString(uuid);
-    auto const client = workspace()->findAbstractClient(
-        [&id](Toplevel const* c) { return c->internalId() == id; });
 
-    if (client) {
-        return clientToVariantMap(client);
-    } else {
-        return {};
+    for (auto win : workspace()->m_windows) {
+        if (!win->control) {
+            continue;
+        }
+        if (win->internalId() == id) {
+            return clientToVariantMap(win);
+        }
     }
+    return {};
 }
 
 }

@@ -1109,9 +1109,12 @@ EffectWindow* effects_handler_impl::find_window_by_qwindow(QWindow* w) const
 
 EffectWindow* effects_handler_impl::find_window_by_uuid(const QUuid& id) const
 {
-    auto const toplevel
-        = workspace()->findToplevel([&id](Toplevel const* t) { return t->internalId() == id; });
-    return toplevel ? toplevel->render->effect.get() : nullptr;
+    for (auto win : workspace()->m_windows) {
+        if (!win->remnant() && win->internalId() == id) {
+            return win->render->effect.get();
+        }
+    }
+    return nullptr;
 }
 
 EffectWindowList effects_handler_impl::stackingOrder() const

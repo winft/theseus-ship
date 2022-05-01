@@ -21,14 +21,13 @@ void handle_new_surface(Space* space, Wrapland::Server::Surface* surface)
         return;
     }
 
-    auto check = [surface](auto const window) {
-        // Match on surface id and exclude windows already having a surface. This way we
-        // only find Xwayland windows. Wayland native windows always have a surface.
-        return window->surfaceId() == surface->id() && !window->surface();
-    };
-
-    if (auto window = space->findToplevel(check)) {
-        win::wayland::set_surface(window, surface);
+    for (auto win : workspace()->m_windows) {
+        // Match on surface id and exclude windows already having a surface. This way we only find
+        // Xwayland windows. Wayland native windows always have a surface.
+        if (!win->remnant() && win->surfaceId() == surface->id() && !win->surface()) {
+            win::wayland::set_surface(win, surface);
+            break;
+        }
     }
 }
 

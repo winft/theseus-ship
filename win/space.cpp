@@ -859,35 +859,6 @@ QString space::supportInformation() const
     return support;
 }
 
-Toplevel* space::findAbstractClient(std::function<bool(const Toplevel*)> func) const
-{
-    if (auto ret = find_in_list(m_windows, std::function([this, &func](Toplevel const* win) {
-                                    return win->control && func(win);
-                                }))) {
-        return ret;
-    }
-    return nullptr;
-}
-
-Toplevel* space::findToplevel(std::function<bool(const Toplevel*)> func) const
-{
-    auto const it = std::find_if(m_windows.cbegin(), m_windows.cend(), [&func](auto const& win) {
-        return !win->remnant() && func(win);
-    });
-    return it != m_windows.cend() ? *it : nullptr;
-}
-
-bool space::hasClient(Toplevel const* window)
-{
-    if (auto cc = dynamic_cast<win::x11::window const*>(window)) {
-        return hasClient(cc);
-    } else {
-        return findAbstractClient([window](Toplevel const* test) { return test == window; })
-            != nullptr;
-    }
-    return false;
-}
-
 bool space::compositing() const
 {
     return m_compositor && m_compositor->scene();
@@ -1738,12 +1709,6 @@ void space::fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t
         const uint32_t values[] = {geometry->x - left, geometry->y - top};
         xcb_configure_window(connection(), w, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
     }
-}
-
-bool space::hasClient(win::x11::window const* c)
-{
-    auto abstract_c = static_cast<Toplevel const*>(c);
-    return findAbstractClient([abstract_c](Toplevel const* test) { return test == abstract_c; });
 }
 
 std::vector<Toplevel*> const& space::windows() const

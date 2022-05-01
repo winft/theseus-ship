@@ -38,17 +38,21 @@ sync_alarm_filter::sync_alarm_filter()
 bool sync_alarm_filter::event(xcb_generic_event_t* event)
 {
     auto alarmEvent = reinterpret_cast<xcb_sync_alarm_notify_event_t*>(event);
-    auto client = workspace()->findAbstractClient([alarmEvent](Toplevel const* client) {
-        auto x11_client = qobject_cast<win::x11::window const*>(client);
-        if (!x11_client) {
-            return false;
+
+    for (auto win : workspace()->m_windows) {
+        if (!win->control) {
+            continue;
         }
-        auto const sync_request = x11_client->sync_request;
-        return alarmEvent->alarm == sync_request.alarm;
-    });
-    if (client) {
-        win::x11::handle_sync(static_cast<win::x11::window*>(client), alarmEvent->counter_value);
+        auto x11_win = qobject_cast<win::x11::window*>(win);
+        if (!x11_win) {
+            continue;
+        }
+        if (alarmEvent->alarm == x11_win->sync_request.alarm) {
+            handle_sync(x11_win, alarmEvent->counter_value);
+            break;
+        }
     }
+
     return false;
 }
 

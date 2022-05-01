@@ -657,13 +657,15 @@ void tabbox::next_prev(bool next)
 
 Toplevel* tabbox::current_client()
 {
-    if (tabbox_client_impl* client
+    if (auto client
         = static_cast<tabbox_client_impl*>(m_tabbox->client(m_tabbox->current_index()))) {
-        if (!workspace()->hasClient(client->client()))
-            return nullptr;
-        return client->client();
-    } else
-        return nullptr;
+        for (auto win : workspace()->m_windows) {
+            if (win == client->client()) {
+                return win;
+            }
+        }
+    }
+    return nullptr;
 }
 
 QList<Toplevel*> tabbox::current_client_list()
