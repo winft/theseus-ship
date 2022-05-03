@@ -73,6 +73,12 @@ File=kwinrc
 Group=Plugins
 Key=kwin4_effect_fadeEnabled,kwin4_effect_scaleEnabled
 
+# Overview config group based upon plugin id
+Id=overview-group-plugin-id
+File=kwinrc
+Options=AllGroups
+Script=kwin-5.25-effect-pluginid-config-group.py,python3
+
 # Tidy up after a bug from the animation speed movement
 Id=animation-speed-cleanup
 File=kwinrc

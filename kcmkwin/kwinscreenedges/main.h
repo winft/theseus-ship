@@ -34,6 +34,7 @@ namespace KWin
 class KWinScreenEdgeData;
 class KWinScreenEdgesConfigForm;
 class KWinScreenEdgeScriptSettings;
+class KWinScreenEdgeEffectSettings;
 
 class KWinScreenEdgesConfig : public KCModule
 {
@@ -54,15 +55,16 @@ protected:
 private:
     KWinScreenEdgesConfigForm *m_form;
     KSharedConfigPtr m_config;
+    QStringList m_effects; // list of effect IDs ordered in the list they are presented in the menu
     QStringList m_scripts; //list of script IDs ordered in the list they are presented in the menu
     QHash<QString, KWinScreenEdgeScriptSettings*> m_scriptSettings;
+    QHash<QString, KWinScreenEdgeEffectSettings*> m_effectSettings;
     KWinScreenEdgeData *m_data;
 
     enum EffectActions {
         PresentWindowsAll = ELECTRIC_ACTION_COUNT, // Start at the end of built in actions
         PresentWindowsCurrent,
         PresentWindowsClass,
-        DesktopGrid,
         Cube,
         Cylinder,
         Sphere,
