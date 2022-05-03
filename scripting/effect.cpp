@@ -13,6 +13,7 @@
 
 #include "base/options.h"
 #include "input/platform.h"
+#include "win/screen_edges.h"
 
 #include <kwineffects/effect_window.h>
 #include <kwineffects/effects_handler.h>
@@ -38,13 +39,15 @@ struct AnimationSettings {
         Delay = 1 << 2,
         Duration = 1 << 3,
         FullScreen = 1 << 4,
-        KeepAlive = 1 << 5
+        KeepAlive = 1 << 5,
+        FrozenTime = 1 << 6
     };
     AnimationEffect::Attribute type;
     QEasingCurve::Type curve;
     QJSValue from;
     QJSValue to;
     int delay;
+    qint64 frozenTime;
     uint duration;
     uint set;
     uint metaData;
@@ -122,6 +125,14 @@ AnimationSettings animationSettingsFromObject(const QJSValue& object,
         settings.set |= AnimationSettings::KeepAlive;
     } else {
         settings.keepAlive = true;
+    }
+
+    const QJSValue frozenTime = object.property(QStringLiteral("frozenTime"));
+    if (frozenTime.isNumber()) {
+        settings.frozenTime = frozenTime.toInt();
+        settings.set |= AnimationSettings::FrozenTime;
+    } else {
+        settings.frozenTime = -1;
     }
 
     return settings;
@@ -238,6 +249,7 @@ bool effect::init(QString const& effectName, QString const& pathToScript, KShare
 
         QStringLiteral("registerShortcut"),
         QStringLiteral("registerScreenEdge"),
+        QStringLiteral("registerRealtimeScreenEdge"),
         QStringLiteral("registerTouchScreenEdge"),
         QStringLiteral("unregisterScreenEdge"),
         QStringLiteral("unregisterTouchScreenEdge"),
@@ -245,6 +257,7 @@ bool effect::init(QString const& effectName, QString const& pathToScript, KShare
         QStringLiteral("animate"),
         QStringLiteral("set"),
         QStringLiteral("retarget"),
+        QStringLiteral("freezeInTime"),
         QStringLiteral("redirect"),
         QStringLiteral("complete"),
         QStringLiteral("cancel"),
@@ -282,6 +295,29 @@ QString effect::pluginId() const
 bool effect::isActiveFullScreenEffect() const
 {
     return effects.activeFullScreenEffect() == this;
+}
+
+QList<int> effect::touchEdgesForAction(const QString& action) const
+{
+    QList<int> ret;
+    if (m_exclusiveCategory == QStringLiteral("show-desktop")
+        && action == QStringLiteral("show-desktop")) {
+        const QVector borders({ElectricTop, ElectricRight, ElectricBottom, ElectricLeft});
+
+        for (const auto b : borders) {
+            if (win::singleton_interface::edger->action_for_touch_border(b)
+                == ElectricActionShowDesktop) {
+                ret.append(b);
+            }
+        }
+        return ret;
+    } else {
+        if (!m_config) {
+            return ret;
+        }
+        return m_config->property(QStringLiteral("TouchBorderActivate") + action)
+            .value<QList<int>>();
+    }
 }
 
 QJSValue effect::animate_helper(const QJSValue& object, AnimationType animationType)
@@ -402,6 +438,9 @@ QJSValue effect::animate_helper(const QJSValue& object, AnimationType animationT
                               setting.delay,
                               setting.fullScreenEffect,
                               setting.keepAlive);
+            if (setting.frozenTime >= 0) {
+                freezeInTime(animationId, setting.frozenTime);
+            }
         } else {
             animationId = animate(window,
                                   setting.type,
@@ -413,6 +452,9 @@ QJSValue effect::animate_helper(const QJSValue& object, AnimationType animationT
                                   setting.delay,
                                   setting.fullScreenEffect,
                                   setting.keepAlive);
+            if (setting.frozenTime >= 0) {
+                freezeInTime(animationId, setting.frozenTime);
+            }
         }
         array.setProperty(i, animationId);
     }
@@ -497,6 +539,18 @@ bool effect::retarget(const QList<quint64>& animationIds,
 {
     return std::all_of(animationIds.begin(), animationIds.end(), [&](quint64 animationId) {
         return retarget(animationId, newTarget, newRemainingTime);
+    });
+}
+
+bool effect::freezeInTime(quint64 animationId, qint64 frozenTime)
+{
+    return AnimationEffect::freezeInTime(animationId, frozenTime);
+}
+
+bool effect::freezeInTime(const QList<quint64>& animationIds, qint64 frozenTime)
+{
+    return std::all_of(animationIds.begin(), animationIds.end(), [&](quint64 animationId) {
+        return AnimationEffect::freezeInTime(animationId, frozenTime);
     });
 }
 
@@ -668,6 +722,47 @@ bool effect::registerScreenEdge(int edge, const QJSValue& callback)
     // TODO(romangg): Better go here via internal types, than using the singleton interface.
     effects.reserveElectricBorder(static_cast<ElectricBorder>(edge), this);
     border_callbacks.insert({edge, {callback}});
+    return true;
+}
+
+bool effect::registerRealtimeScreenEdge(int edge, const QJSValue& callback)
+{
+    if (!callback.isCallable()) {
+        m_engine->throwError(QStringLiteral("Screen edge handler must be callable"));
+        return false;
+    }
+    auto it = realtimeScreenEdgeCallbacks().find(edge);
+    if (it == realtimeScreenEdgeCallbacks().end()) {
+        // not yet registered
+        realtimeScreenEdgeCallbacks().insert(edge, QJSValueList{callback});
+        auto triggerAction = new QAction(this);
+        connect(triggerAction, &QAction::triggered, this, [this, edge]() {
+            auto it = realtimeScreenEdgeCallbacks().constFind(edge);
+            if (it != realtimeScreenEdgeCallbacks().constEnd()) {
+                for (const QJSValue& callback : it.value()) {
+                    QJSValue(callback).call({edge});
+                }
+            }
+        });
+        effects.registerRealtimeTouchBorder(
+            static_cast<KWin::ElectricBorder>(edge),
+            triggerAction,
+            [this](ElectricBorder border, const QSizeF& deltaProgress, EffectScreen* screen) {
+                auto it = realtimeScreenEdgeCallbacks().constFind(border);
+                if (it != realtimeScreenEdgeCallbacks().constEnd()) {
+                    for (const QJSValue& callback : it.value()) {
+                        QJSValue delta = m_engine->newObject();
+                        delta.setProperty("width", deltaProgress.width());
+                        delta.setProperty("height", deltaProgress.height());
+
+                        QJSValue(callback).call(
+                            {border, QJSValue(delta), m_engine->newQObject(screen)});
+                    }
+                }
+            });
+    } else {
+        it->append(callback);
+    }
     return true;
 }
 

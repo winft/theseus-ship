@@ -104,6 +104,7 @@ public:
     TimeLine timeLine;
     uint meta;
     qint64 startTime;
+    qint64 frozenTime;
     QSharedPointer<FullScreenEffectLock> fullScreenEffectLock;
     bool waitAtSource;
     bool keepAlive;

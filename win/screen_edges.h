@@ -983,6 +983,7 @@ public:
               [this](auto border, auto id) { return unreserve(border, id); },
               [this](auto border, auto action) { return reserveTouch(border, action); },
               [this](auto border, auto action) { return unreserveTouch(border, action); },
+              [this](auto action) { return actionForTouchBorder(action); },
           }
     {
         singleton_interface::edger = &singleton;
@@ -1794,6 +1795,11 @@ private:
             return it.value();
         }
         return ElectricActionNone;
+    }
+
+    ElectricBorderAction actionForTouchBorder(ElectricBorder border) const
+    {
+        return touch_call_backs.value(border);
     }
 
     template<typename Win>

@@ -36,6 +36,8 @@ struct screen_edger_singleton {
 
     std::function<void(ElectricBorder, QAction*)> reserve_touch;
     std::function<void(ElectricBorder, QAction*)> unreserve_touch;
+
+    std::function<ElectricBorderAction(ElectricBorder)> action_for_touch_border;
 };
 
 struct virtual_desktops_singleton {

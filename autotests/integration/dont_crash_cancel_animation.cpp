@@ -74,6 +74,7 @@ void DontCrashCancelAnimationFromAnimationEndedTest::testScript()
     auto effect = scripting::effect::create(QStringLiteral("crashy"),
                                             QFINDTESTDATA("data/anim-data-delete-effect/effect.js"),
                                             10,
+                                            QString(),
                                             *effects,
                                             *Test::app()->base->render->compositor);
     QVERIFY(effect);
