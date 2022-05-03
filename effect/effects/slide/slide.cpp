@@ -39,8 +39,6 @@ SlideEffect::SlideEffect()
     initConfig<SlideConfig>();
     reconfigure(ReconfigureAll);
 
-    m_timeLine.setEasingCurve(QEasingCurve::OutCubic);
-
     connect(effects,
             QOverload<int, int, EffectWindow*>::of(&EffectsHandler::desktopChanged),
             this,
@@ -74,8 +72,11 @@ void SlideEffect::reconfigure(ReconfigureFlags)
 {
     SlideConfig::self()->read();
 
-    m_fullAnimationDuration = animationTime<SlideConfig>(500);
-    m_timeLine.setDuration(std::chrono::milliseconds(m_fullAnimationDuration));
+    const qreal springConstant = 200.0 / effects->animationTimeFactor();
+    const qreal dampingRatio = 1.1;
+
+    m_motionX = SpringMotion(springConstant, dampingRatio);
+    m_motionY = SpringMotion(springConstant, dampingRatio);
 
     m_hGap = SlideConfig::horizontalGap();
     m_vGap = SlideConfig::verticalGap();
@@ -111,7 +112,11 @@ void SlideEffect::prePaintScreen(ScreenPrePaintData& data, std::chrono::millisec
     m_lastPresentTime = presentTime;
 
     if (m_state == State::ActiveAnimation) {
-        m_currentPosition = m_startPos + (m_endPos - m_startPos) * m_timeLine.value();
+        m_motionX.advance(timeDelta);
+        m_motionY.advance(timeDelta);
+        const QSize virtualSpaceSize = effects->virtualScreenSize();
+        m_currentPosition.setX(m_motionX.position() / virtualSpaceSize.width());
+        m_currentPosition.setY(m_motionY.position() / virtualSpaceSize.height());
     }
 
     const int w = effects->desktopGridWidth();
@@ -327,7 +332,7 @@ void SlideEffect::paintWindow(EffectWindow* w, int mask, QRegion region, WindowP
 
 void SlideEffect::postPaintScreen()
 {
-    if (m_state == State::ActiveAnimation && m_timeLine.done()) {
+    if (m_state == State::ActiveAnimation && !m_motionX.isMoving() && !m_motionY.isMoving()) {
         finishedSwitching();
     }
 
@@ -374,7 +379,6 @@ void SlideEffect::startAnimation(int old, int current, EffectWindow* movingWindo
 
     m_state = State::ActiveAnimation;
     m_movingWindow = movingWindow;
-    m_timeLine.reset();
 
     m_startPos = m_currentPosition;
     m_endPos = effects->desktopGridCoords(current);
@@ -382,21 +386,11 @@ void SlideEffect::startAnimation(int old, int current, EffectWindow* movingWindo
         optimizePath();
     }
 
-    // Find an apropriate duration
-    QPointF distance = m_startPos - m_endPos;
-    distance.setX(std::abs(distance.x()));
-    distance.setY(std::abs(distance.y()));
-    if (distance.x() < 1 && distance.y() < 1) {
-        if (distance.x() > distance.y()) {
-            m_timeLine.setDuration(std::chrono::milliseconds(
-                std::max(1, (int)(m_fullAnimationDuration * distance.x()))));
-        } else {
-            m_timeLine.setDuration(std::chrono::milliseconds(
-                std::max(1, (int)(m_fullAnimationDuration * distance.y()))));
-        }
-    } else {
-        m_timeLine.setDuration(std::chrono::milliseconds(m_fullAnimationDuration));
-    }
+    const QSize virtualSpaceSize = effects->virtualScreenSize();
+    m_motionX.setAnchor(m_endPos.x() * virtualSpaceSize.width());
+    m_motionX.setPosition(m_startPos.x() * virtualSpaceSize.width());
+    m_motionY.setAnchor(m_endPos.y() * virtualSpaceSize.height());
+    m_motionY.setPosition(m_startPos.y() * virtualSpaceSize.height());
 
     effects->setActiveFullScreenEffect(this);
     effects->addRepaintFull();
