@@ -51,7 +51,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwinswitcheffectsettings.h"
 #include "kwinpluginssettings.h"
 
-K_PLUGIN_FACTORY(KWinTabBoxConfigFactory, registerPlugin<KWin::KWinTabBoxConfig>(); registerPlugin<KWin::win::KWinTabboxData>();)
+K_PLUGIN_FACTORY_WITH_JSON(KWinTabBoxConfigFactory,
+                           "kwintabbox.json",
+                           registerPlugin<KWin::KWinTabBoxConfig>();
+                           registerPlugin<KWin::win::KWinTabboxData>();)
 
 namespace KWin
 {

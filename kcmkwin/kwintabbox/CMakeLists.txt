@@ -21,7 +21,7 @@ qt_add_dbus_interface(kcm_kwintabbox_PART_SRCS
 )
 
 kconfig_add_kcfg_files(kcm_kwintabbox_PART_SRCS kwintabboxsettings.kcfgc kwinswitcheffectsettings.kcfgc kwinpluginssettings.kcfgc)
-add_library(kcm_kwintabbox MODULE ${kcm_kwintabbox_PART_SRCS})
+kcoreaddons_add_plugin(kcm_kwintabbox SOURCES ${kcm_kwintabbox_PART_SRCS} INSTALL_NAMESPACE "plasma/kcms/systemsettings_qwidgets")
 
 target_link_libraries(kcm_kwintabbox
     Qt::Quick

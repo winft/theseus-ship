@@ -36,7 +36,7 @@
 #include "kwinoptions_kdeglobals_settings.h"
 #include "kwinoptionsdata.h"
 
-K_PLUGIN_FACTORY(KWinOptionsFactory, registerPlugin<KWinOptions>();)
+K_PLUGIN_CLASS_WITH_JSON(KWinOptions, "kwinoptions.json")
 
 class KFocusConfigStandalone : public KFocusConfig
 {

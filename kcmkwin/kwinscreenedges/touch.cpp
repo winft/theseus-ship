@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwintouchscreensettings.h"
 #include "kwintouchscreenscriptsettings.h"
 
-K_PLUGIN_FACTORY(KWinScreenEdgesConfigFactory, registerPlugin<KWin::KWinScreenEdgesConfig>(); registerPlugin<KWin::KWinTouchScreenData>();)
+K_PLUGIN_FACTORY_WITH_JSON(KWinScreenEdgesConfigFactory, "kwintouchscreen.json", registerPlugin<KWin::KWinScreenEdgesConfig>(); registerPlugin<KWin::KWinTouchScreenData>();)
 
 namespace KWin
 {
