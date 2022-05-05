@@ -7,7 +7,5 @@
         "License": "GPL",
         "Name": "Window View"
     },
-    "org.kde.kwin.effect": {
-        "internal": true
-    }
+    "X-KDE-ConfigModule": "kwin_windowview_config"
 }
