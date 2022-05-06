@@ -24,7 +24,6 @@ for line in fileinput.input():
     migrate_group("MouseClick", "mouseclick", line)
     migrate_group("MouseMark", "mousemark", line)
     migrate_group("Overview", "overview", line)
-    migrate_group("PresentWindows", "presentwindows", line)
     migrate_group("Sheet", "sheet", line)
     migrate_group("ShowFps", "showfps", line)
     migrate_group("Slide", "slide", line)
