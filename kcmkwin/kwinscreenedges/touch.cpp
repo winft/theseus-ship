@@ -150,7 +150,7 @@ void KWinScreenEdgesConfig::monitorInit()
 
     KConfigGroup config(m_config, "Plugins");
     for (const KPluginMetaData &script: scripts) {
-        if (script.value(QStringLiteral("X-KWin-Border-Activate")) != QLatin1String("true")) {
+        if (script.value(QStringLiteral("X-KWin-Border-Activate"), false) != QLatin1String("true")) {
             continue;
         }
 
