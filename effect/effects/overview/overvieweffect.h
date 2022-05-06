@@ -16,6 +16,7 @@ class OverviewEffect : public QuickSceneEffect
     Q_OBJECT
     Q_PROPERTY(int animationDuration READ animationDuration NOTIFY animationDurationChanged)
     Q_PROPERTY(int layout READ layout NOTIFY layoutChanged)
+    Q_PROPERTY(bool ignoreMinimized READ ignoreMinimized NOTIFY ignoreMinimizedChanged)
     Q_PROPERTY(bool blurBackground READ blurBackground NOTIFY blurBackgroundChanged)
     Q_PROPERTY(qreal partialActivationFactor READ partialActivationFactor NOTIFY
                    partialActivationFactorChanged)
@@ -30,6 +31,8 @@ public:
 
     int layout() const;
     void setLayout(int layout);
+
+    bool ignoreMinimized() const;
 
     int animationDuration() const;
     void setAnimationDuration(int duration);
@@ -51,6 +54,7 @@ Q_SIGNALS:
     void blurBackgroundChanged();
     void partialActivationFactorChanged();
     void gestureInProgressChanged();
+    void ignoreMinimizedChanged();
 
 public Q_SLOTS:
     void activate();

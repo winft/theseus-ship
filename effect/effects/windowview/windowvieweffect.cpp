@@ -188,6 +188,11 @@ void WindowViewEffect::setLayout(int layout)
     }
 }
 
+bool WindowViewEffect::ignoreMinimized() const
+{
+    return WindowViewConfig::ignoreMinimized();
+}
+
 int WindowViewEffect::requestedEffectChainPosition() const
 {
     return 70;

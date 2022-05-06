@@ -230,6 +230,22 @@ void client_filter_model::resetWindowType()
     }
 }
 
+void client_filter_model::setMinimizedWindows(bool show)
+{
+    if (m_showMinimizedWindows == show) {
+        return;
+    }
+
+    m_showMinimizedWindows = show;
+    invalidateFilter();
+    Q_EMIT minimizedWindowsChanged();
+}
+
+bool client_filter_model::minimizedWindows() const
+{
+    return m_showMinimizedWindows;
+}
+
 bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
 {
     if (!m_clientModel) {
@@ -285,6 +301,10 @@ bool client_filter_model::filterAcceptsRow(int sourceRow, const QModelIndex& sou
             return true;
         }
         return false;
+    }
+
+    if (!m_showMinimizedWindows) {
+        return !client->isMinimized();
     }
     return true;
 }

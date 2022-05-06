@@ -163,6 +163,11 @@ int OverviewEffect::layout() const
     return m_layout;
 }
 
+bool OverviewEffect::ignoreMinimized() const
+{
+    return OverviewConfig::ignoreMinimized();
+}
+
 void OverviewEffect::setLayout(int layout)
 {
     if (m_layout != layout) {
