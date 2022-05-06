@@ -92,23 +92,14 @@ DesktopGridEffectConfig::DesktopGridEffectConfig(QWidget* parent, const QVariant
                                              QVariant(Qt::AlignLeft | Qt::AlignTop));
     m_ui->desktopNameAlignmentCombo->addItem(i18n("Center"), QVariant(Qt::AlignCenter));
 
-    m_ui->clickBehaviorButtonGroup->setId(m_ui->switchDesktopAndActivateWindow,
-                                          DesktopGridEffect::SwitchDesktopAndActivateWindow);
-    m_ui->clickBehaviorButtonGroup->setId(m_ui->switchDesktopOnly,
-                                          DesktopGridEffect::SwitchDesktopOnly);
-
     DesktopGridConfig::instance(KWIN_CONFIG);
     addConfig(DesktopGridConfig::self(), m_ui);
-    connect(m_ui->kcfg_LayoutMode,
+    connect(m_ui->kcfg_DesktopLayoutMode,
             qOverload<int>(&QComboBox::currentIndexChanged),
             this,
-            &DesktopGridEffectConfig::layoutSelectionChanged);
+            &DesktopGridEffectConfig::desktopLayoutSelectionChanged);
     connect(m_ui->desktopNameAlignmentCombo,
             qOverload<int>(&QComboBox::currentIndexChanged),
-            this,
-            &DesktopGridEffectConfig::markAsChanged);
-    connect(m_ui->clickBehaviorButtonGroup,
-            &QButtonGroup::idClicked,
             this,
             &DesktopGridEffectConfig::markAsChanged);
     connect(m_ui->shortcutEditor,
@@ -129,8 +120,8 @@ void DesktopGridEffectConfig::save()
     DesktopGridConfig::setDesktopNameAlignment(
         m_ui->desktopNameAlignmentCombo->itemData(m_ui->desktopNameAlignmentCombo->currentIndex())
             .toInt());
-    DesktopGridConfig::setClickBehavior(m_ui->clickBehaviorButtonGroup->checkedId());
     KCModule::save();
+    DesktopGridConfig::self()->save();
 
     OrgKdeKwinEffectsInterface interface(
         QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"), QDBusConnection::sessionBus());
@@ -142,17 +133,14 @@ void DesktopGridEffectConfig::load()
     KCModule::load();
     m_ui->desktopNameAlignmentCombo->setCurrentIndex(m_ui->desktopNameAlignmentCombo->findData(
         QVariant(DesktopGridConfig::desktopNameAlignment())));
-    QAbstractButton* clickBehaviorButton
-        = m_ui->clickBehaviorButtonGroup->button(DesktopGridConfig::clickBehavior());
-    if (clickBehaviorButton) {
-        clickBehaviorButton->setChecked(true);
-    }
-    layoutSelectionChanged();
+
+    desktopLayoutSelectionChanged();
 }
 
-void DesktopGridEffectConfig::layoutSelectionChanged()
+void DesktopGridEffectConfig::desktopLayoutSelectionChanged()
 {
-    if (m_ui->kcfg_LayoutMode->currentIndex() == DesktopGridEffect::LayoutCustom) {
+    if (m_ui->kcfg_DesktopLayoutMode->currentIndex()
+        == int(DesktopGridEffect::DesktopLayoutMode::LayoutCustom)) {
         m_ui->layoutRowsLabel->setEnabled(true);
         m_ui->kcfg_CustomLayoutRows->setEnabled(true);
     } else {
@@ -165,7 +153,6 @@ void DesktopGridEffectConfig::defaults()
 {
     KCModule::defaults();
     m_ui->desktopNameAlignmentCombo->setCurrentIndex(0);
-    m_ui->clickBehaviorButtonGroup->button(0)->setChecked(true);
 }
 
 } // namespace

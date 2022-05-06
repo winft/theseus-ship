@@ -6,6 +6,7 @@
         "Id": "desktopgrid",
         "License": "GPL",
         "Name": "Desktop Grid"
+
     },
     "X-KDE-ConfigModule": "kwin_desktopgrid_config",
     "X-KWin-Border-Activate": true,

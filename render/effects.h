@@ -417,6 +417,14 @@ public:
                 &win::virtual_desktop_manager_qobject::countChanged,
                 this,
                 &EffectsHandler::numberDesktopsChanged);
+        connect(vds->qobject.get(),
+                &win::virtual_desktop_manager_qobject::layoutChanged,
+                this,
+                [this](int width, int height) {
+                    Q_EMIT desktopGridSizeChanged(QSize(width, height));
+                    Q_EMIT desktopGridWidthChanged(width);
+                    Q_EMIT desktopGridHeightChanged(height);
+                });
         QObject::connect(ws->input->cursor.get(),
                          &input::cursor::mouse_changed,
                          this,

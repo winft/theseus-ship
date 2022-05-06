@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kcmodule.h>
 
-#include "desktopgrid.h"
+#include "desktopgrideffect.h"
 #include "ui_desktopgrid_config.h"
 
 namespace KWin
@@ -51,7 +51,7 @@ public Q_SLOTS:
     void defaults() override;
 
 private Q_SLOTS:
-    void layoutSelectionChanged();
+    void desktopLayoutSelectionChanged();
 
 private:
     DesktopGridEffectConfigForm* m_ui;
