@@ -29,7 +29,7 @@
 #include <KPluginFactory>
 
 K_PLUGIN_FACTORY_WITH_JSON(VirtualDesktopsFactory,
-                           "kcm_kwin_virtualdesktops.json",
+                           "metadata.json",
                            registerPlugin<KWin::VirtualDesktops>();
                            registerPlugin<KWin::VirtualDesktopsData>();)
 

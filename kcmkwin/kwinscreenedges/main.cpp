@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "kwinscreenedgesettings.h"
 #include "kwinscreenedgescriptsettings.h"
 
-K_PLUGIN_FACTORY_WITH_JSON(KWinScreenEdgesConfigFactory, "kwinscreenedges.json", registerPlugin<KWin::KWinScreenEdgesConfig>(); registerPlugin<KWin::KWinScreenEdgeData>();)
+K_PLUGIN_FACTORY_WITH_JSON(KWinScreenEdgesConfigFactory, "metadata.json", registerPlugin<KWin::KWinScreenEdgesConfig>(); registerPlugin<KWin::KWinScreenEdgeData>();)
 
 namespace KWin
 {
