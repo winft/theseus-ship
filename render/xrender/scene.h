@@ -48,7 +48,6 @@ public:
     int64_t paint(QRegion damage,
                   std::deque<Toplevel*> const& windows,
                   std::chrono::milliseconds presentTime) override;
-    render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     std::unique_ptr<render::shadow> createShadow(Toplevel* toplevel) override;
     void handle_screen_geometry_change(QSize const& size) override;
     xcb_render_picture_t xrenderBufferPicture() const override;

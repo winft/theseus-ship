@@ -67,22 +67,6 @@ public:
     virtual const QSize& iconSize() const = 0;
 
     /**
-     * Sets the geometry of a selection.
-     * To remove the selection set a null rect.
-     * @param selection The geometry of the selection in screen coordinates.
-     */
-    virtual void setSelection(const QRect& selection) = 0;
-
-    /**
-     * @param shader The GLShader for rendering.
-     */
-    virtual void setShader(GLShader* shader) = 0;
-    /**
-     * @returns The GLShader used for rendering or null if none.
-     */
-    virtual GLShader* shader() const = 0;
-
-    /**
      * @returns The style of this EffectFrame.
      */
     virtual EffectFrameStyle style() const = 0;
@@ -96,13 +80,13 @@ public:
      * @see setCrossFadeProgress
      * @since 4.6
      */
-    void enableCrossFade(bool enable);
+    virtual void enableCrossFade(bool enable) = 0;
     /**
      * @returns @c true if cross fading is enabled, @c false otherwise
      * @see enableCrossFade
      * @since 4.6
      */
-    bool isCrossFade() const;
+    virtual bool isCrossFade() const = 0;
     /**
      * Sets the current progress for cross fading the last used icon/text
      * with current icon/text to @p progress.
@@ -115,7 +99,7 @@ public:
      * @see crossFadeProgress
      * @since 4.6
      */
-    void setCrossFadeProgress(qreal progress);
+    virtual void setCrossFadeProgress(qreal progress) = 0;
     /**
      * @returns The current progress for cross fading
      * @see setCrossFadeProgress
@@ -123,23 +107,7 @@ public:
      * @see isCrossFade
      * @since 4.6
      */
-    qreal crossFadeProgress() const;
-
-    /**
-     * Returns The projection matrix as used by the current screen painting pass
-     * including screen transformations.
-     *
-     * This matrix is only valid during a rendering pass started by render.
-     *
-     * @since 5.6
-     * @see render
-     * @see EffectsHandler::paintEffectFrame
-     * @see Effect::paintEffectFrame
-     */
-    QMatrix4x4 screenProjectionMatrix() const;
-
-protected:
-    void setScreenProjectionMatrix(const QMatrix4x4& projection);
+    virtual qreal crossFadeProgress() const = 0;
 
 private:
     EffectFramePrivate* const d;

@@ -46,10 +46,6 @@ public:
     void reconfigure(ReconfigureFlags flags) override;
     void
     drawWindow(EffectWindow* w, int mask, const QRegion& region, WindowPaintData& data) override;
-    void paintEffectFrame(EffectFrame* frame,
-                          const QRegion& region,
-                          double opacity,
-                          double frameOpacity) override;
 
     bool provides(Feature feature) override;
     bool isActive() const override;

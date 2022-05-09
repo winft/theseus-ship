@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "backend.h"
 #include "deco_renderer.h"
-#include "effect_frame.h"
 #include "shadow.h"
 #include "window.h"
 
@@ -56,7 +55,6 @@ scene::scene(render::compositor& compositor)
 scene::~scene()
 {
     window::cleanup();
-    effect_frame::cleanup();
 }
 
 // the entry point for painting
@@ -111,11 +109,6 @@ void scene::paintBackground(QRegion region)
 std::unique_ptr<render::window> scene::createWindow(Toplevel* toplevel)
 {
     return std::make_unique<window>(toplevel, *this);
-}
-
-render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)
-{
-    return new effect_frame(frame);
 }
 
 std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)

@@ -55,8 +55,6 @@ class renderer;
 namespace render
 {
 class compositor;
-class effect_frame;
-class effect_frame_impl;
 class effects_window_impl;
 class shadow;
 class window;
@@ -92,12 +90,6 @@ public:
 
     virtual std::unique_ptr<render::window> createWindow(Toplevel* toplevel) = 0;
 
-    /**
-     * @brief Creates the scene backend of an effect frame.
-     *
-     * @param frame The effect frame this effect_frame belongs to.
-     */
-    virtual effect_frame* createEffectFrame(effect_frame_impl* frame) = 0;
     /**
      * @brief Creates the scene specific shadow subclass.
      *

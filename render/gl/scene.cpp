@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scene.h"
 
 #include "deco_renderer.h"
-#include "effect_frame.h"
 #include "lanczos_filter.h"
 #include "shadow.h"
 #include "texture.h"
@@ -346,8 +345,6 @@ scene::~scene()
         delete lanczos;
         lanczos = nullptr;
     }
-
-    effect_frame::cleanup();
 
     delete m_syncManager;
 }
@@ -806,11 +803,6 @@ void scene::doneOpenGLContextCurrent()
 bool scene::supportsSurfacelessContext() const
 {
     return m_backend->supportsSurfacelessContext();
-}
-
-render::effect_frame* scene::createEffectFrame(effect_frame_impl* frame)
-{
-    return new effect_frame(frame, this);
 }
 
 std::unique_ptr<render::shadow> scene::createShadow(Toplevel* toplevel)

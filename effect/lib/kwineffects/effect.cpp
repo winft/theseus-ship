@@ -77,14 +77,6 @@ void Effect::postPaintWindow(EffectWindow* w)
     effects->postPaintWindow(w);
 }
 
-void Effect::paintEffectFrame(KWin::EffectFrame* frame,
-                              const QRegion& region,
-                              double opacity,
-                              double frameOpacity)
-{
-    effects->paintEffectFrame(frame, region, opacity, frameOpacity);
-}
-
 bool Effect::provides(Feature)
 {
     return false;
