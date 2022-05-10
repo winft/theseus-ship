@@ -146,9 +146,10 @@ template<typename Platform>
 void platform_register_touchscreen_swipe_shortcut(Platform& platform,
                                                   SwipeDirection direction,
                                                   uint fingerCount,
-                                                  QAction* action)
+                                                  QAction* action,
+                                                  std::function<void(qreal)> progressCallback)
 {
-    platform.shortcuts->registerTouchscreenSwipe(action, direction, fingerCount);
+    platform.shortcuts->registerTouchscreenSwipe(action, progressCallback, direction, fingerCount);
 }
 
 }

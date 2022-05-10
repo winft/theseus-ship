@@ -128,21 +128,24 @@ WindowViewEffect::WindowViewEffect()
                 }
             });
 
+    const auto gestureCallback = [this](qreal progress) {
+        if (m_status == Status::Active) {
+            return;
+        }
+        const bool wasInProgress = m_partialActivationFactor > 0;
+        m_partialActivationFactor = progress;
+        Q_EMIT partialActivationFactorChanged();
+        if (!wasInProgress) {
+            Q_EMIT gestureInProgressChanged();
+        }
+        if (!isRunning()) {
+            partialActivate();
+        }
+    };
     effects->registerRealtimeTouchpadSwipeShortcut(
-        SwipeDirection::Down, 4, m_realtimeToggleAction, [this](qreal progress) {
-            if (m_status == Status::Active) {
-                return;
-            }
-            const bool wasInProgress = m_partialActivationFactor > 0;
-            m_partialActivationFactor = progress;
-            Q_EMIT partialActivationFactorChanged();
-            if (!wasInProgress) {
-                Q_EMIT gestureInProgressChanged();
-            }
-            if (!isRunning()) {
-                partialActivate();
-            }
-        });
+        SwipeDirection::Down, 4, m_realtimeToggleAction, gestureCallback);
+    effects->registerTouchscreenSwipeShortcut(
+        SwipeDirection::Down, 3, m_realtimeToggleAction, gestureCallback);
 
     reconfigure(ReconfigureAll);
 }

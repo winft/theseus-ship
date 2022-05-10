@@ -72,7 +72,10 @@ public:
                                        PinchDirection direction,
                                        uint fingerCount = 4);
 
-    void registerTouchscreenSwipe(QAction* action, SwipeDirection direction, uint fingerCount);
+    void registerTouchscreenSwipe(QAction* action,
+                                  std::function<void(qreal)> progressCallback,
+                                  SwipeDirection direction,
+                                  uint fingerCount);
 
     /**
      * @brief Processes a key event to decide whether a shortcut needs to be triggered.

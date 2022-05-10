@@ -46,8 +46,6 @@ OverviewEffect::OverviewEffect()
     KGlobalAccel::self()->setShortcut(m_toggleAction, {defaultToggleShortcut});
     m_toggleShortcut = KGlobalAccel::self()->shortcut(m_toggleAction);
     effects->registerGlobalShortcut({defaultToggleShortcut}, m_toggleAction);
-    effects->registerTouchscreenSwipeShortcut(SwipeDirection::Up, 3, m_toggleAction);
-    effects->registerTouchscreenSwipeShortcut(SwipeDirection::Down, 3, m_toggleAction);
 
     auto progressCallback = [this](qreal progress) {
         if (m_status == Status::Active) {
@@ -66,6 +64,8 @@ OverviewEffect::OverviewEffect()
 
     effects->registerRealtimeTouchpadSwipeShortcut(
         SwipeDirection::Up, 4, m_realtimeToggleAction, progressCallback);
+    effects->registerTouchscreenSwipeShortcut(
+        SwipeDirection::Up, 3, m_realtimeToggleAction, progressCallback);
 
     connect(effects, &EffectsHandler::screenAboutToLock, this, &OverviewEffect::realDeactivate);
 

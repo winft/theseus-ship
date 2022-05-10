@@ -175,7 +175,7 @@ public:
             return true;
         } else {
             auto pos = event.pos;
-            m_touchPoints.insert(event.id, {pos, QSize()});
+            m_touchPoints.insert(event.id, pos);
             if (m_touchPoints.count() == 1) {
                 m_lastTouchDownTime = event.base.time_msec;
             } else {
@@ -193,7 +193,7 @@ public:
                     m_touchPoints.constBegin(),
                     m_touchPoints.constEnd(),
                     [pos, xfactor, yfactor](const auto& point) {
-                        QPointF p = pos - point.pos;
+                        QPointF p = pos - point;
                         return std::abs(xfactor * p.x()) + std::abs(yfactor * p.y()) < 50;
                     });
                 if (!distanceMatch) {
@@ -221,20 +221,19 @@ public:
             if (m_gestureCancelled) {
                 return true;
             }
-            // only track one finger for simplicity
-            if (event.id != m_touchPoints.begin().key()) {
-                return true;
-            }
-            auto& point = m_touchPoints[event.id];
-            QPointF dist = event.pos - point.pos;
             auto const& outputs = this->redirect.platform.base.outputs;
             auto output = base::get_nearest_output(outputs, event.pos.toPoint());
-            float xfactor = output->physical_size().width() / (float)output->geometry().width();
-            float yfactor = output->physical_size().height() / (float)output->geometry().height();
-            QSize delta = QSize(xfactor * dist.x(), yfactor * dist.y()) * 10;
-            point.distance += delta;
-            point.pos = event.pos;
-            this->redirect.platform.shortcuts->processSwipeUpdate(DeviceType::Touchscreen, delta);
+            const float xfactor
+                = output->physical_size().width() / (float)output->geometry().width();
+            const float yfactor
+                = output->physical_size().height() / (float)output->geometry().height();
+
+            auto& point = m_touchPoints[event.id];
+            const QPointF dist = event.pos - point;
+            const QSizeF delta = QSizeF(xfactor * dist.x(), yfactor * dist.y());
+            this->redirect.platform.shortcuts->processSwipeUpdate(DeviceType::Touchscreen,
+                                                                  5 * delta / m_touchPoints.size());
+            point = event.pos;
             return true;
         }
         return false;
@@ -263,16 +262,12 @@ public:
     }
 
 private:
-    struct TouchPoint {
-        QPointF pos;
-        QSize distance;
-    };
     bool m_gestureTaken = false;
     bool m_gestureCancelled = false;
     bool m_touchGestureCancelSent = false;
     uint32_t m_lastTouchDownTime = 0;
     QPointF m_lastAverageDistance;
-    QMap<int32_t, TouchPoint> m_touchPoints;
+    QMap<int32_t, QPointF> m_touchPoints;
 
     QTimer* m_powerDown = nullptr;
 };

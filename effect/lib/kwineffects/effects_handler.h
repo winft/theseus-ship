@@ -210,8 +210,10 @@ public:
      * @param action The action which gets triggered when the gesture triggers
      * @since 5.25
      */
-    virtual void
-    registerTouchscreenSwipeShortcut(SwipeDirection direction, uint fingerCount, QAction* action)
+    virtual void registerTouchscreenSwipeShortcut(SwipeDirection direction,
+                                                  uint fingerCount,
+                                                  QAction* action,
+                                                  std::function<void(qreal)> progressCallback)
         = 0;
 
     /**

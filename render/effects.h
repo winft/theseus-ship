@@ -717,10 +717,11 @@ public:
 
     void registerTouchscreenSwipeShortcut(SwipeDirection direction,
                                           uint fingerCount,
-                                          QAction* action) override
+                                          QAction* action,
+                                          std::function<void(qreal)> progressCallback) override
     {
         input::platform_register_touchscreen_swipe_shortcut(
-            *compositor.platform.base.input, direction, fingerCount, action);
+            *compositor.platform.base.input, direction, fingerCount, action, progressCallback);
     }
 
     void startMousePolling() override

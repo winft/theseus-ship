@@ -168,7 +168,20 @@ void shortcuts_init_virtual_desktops(Space& space)
     auto swipeGestureReleasedX = manager->swipe_gesture_released_x();
     auto swipeGestureReleasedY = manager->swipe_gesture_released_y();
 
-    // These take the live feedback from a gesture
+    const auto left = [manager](qreal cb) {
+        if (manager->grid().width() > 1) {
+            manager->set_desktop_offset_x(cb);
+            Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                     manager->m_current_desktop_offset());
+        }
+    };
+    const auto right = [manager](qreal cb) {
+        if (manager->grid().width() > 1) {
+            manager->set_desktop_offset_x(-cb);
+            Q_EMIT manager->qobject->currentChanging(manager->current(),
+                                                     manager->m_current_desktop_offset());
+        }
+    };
     input::platform_register_realtime_touchpad_swipe_shortcut(
         input, SwipeDirection::Left, 3, swipeGestureReleasedX, [manager](qreal cb) {
             if (manager->grid().width() > 1) {
@@ -219,9 +232,9 @@ void shortcuts_init_virtual_desktops(Space& space)
         });
 
     input::platform_register_touchscreen_swipe_shortcut(
-        input, SwipeDirection::Left, 3, slotRightAction);
+        input, SwipeDirection::Left, 3, swipeGestureReleasedX, left);
     input::platform_register_touchscreen_swipe_shortcut(
-        input, SwipeDirection::Right, 3, slotLeftAction);
+        input, SwipeDirection::Right, 3, swipeGestureReleasedX, right);
 
     // axis events
     input::platform_register_axis_shortcut(
