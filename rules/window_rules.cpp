@@ -290,7 +290,7 @@ void Toplevel::applyWindowRules()
     win::set_desktop(this, desktop());
 
     // TODO(romangg): can central_output be null?
-    workspace()->sendClientToScreen(this, *central_output);
+    win::send_to_screen(*workspace(), this, *central_output);
     // Type
     win::maximize(this, maximizeMode());
 

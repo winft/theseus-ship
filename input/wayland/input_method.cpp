@@ -29,13 +29,18 @@ namespace
 {
 using namespace KWin;
 
-auto get_window(Wrapland::Server::text_input_v3* text_input)
+Toplevel* get_window(Wrapland::Server::text_input_v3* text_input)
 {
     auto input_surface = text_input->entered_surface();
-    auto window = workspace()->findAbstractClient(
-        [input_surface](auto win) { return win->surface() == input_surface; });
-    assert(window);
-    return window;
+
+    for (auto win : workspace()->m_windows) {
+        if (win->control && win->surface() == input_surface) {
+            return win;
+        }
+    }
+
+    assert(false);
+    return nullptr;
 }
 
 template<typename Win>

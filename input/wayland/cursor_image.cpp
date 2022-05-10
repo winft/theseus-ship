@@ -89,7 +89,7 @@ void cursor_image::setup_workspace()
         });
     }
 
-    auto const clients = workspace()->allClientList();
+    auto const clients = workspace()->m_windows;
     std::for_each(clients.begin(), clients.end(), [this](auto win) { setup_move_resize(win); });
 
     QObject::connect(workspace(), &win::space::clientAdded, this, &cursor_image::setup_move_resize);

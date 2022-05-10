@@ -17,6 +17,17 @@
 namespace KWin::win::x11
 {
 
+template<typename Win, typename Space>
+Win* find_unmanaged(Space&& space, xcb_window_t xcb_win)
+{
+    for (auto win : space.m_windows) {
+        if (!win->remnant() && !win->control && win->xcb_window() == xcb_win) {
+            return static_cast<Win*>(win);
+        }
+    }
+    return nullptr;
+}
+
 template<typename Space>
 auto create_unmanaged_window(xcb_window_t w, Space& space) -> typename Space::x11_window*
 {

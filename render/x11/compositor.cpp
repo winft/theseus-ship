@@ -398,7 +398,7 @@ void compositor::updateClientCompositeBlocking(Toplevel* window)
         // If !c we just check if we can resume in case a blocking client was lost.
         bool shouldResume = true;
 
-        for (auto const& client : workspace()->allClientList()) {
+        for (auto const& client : workspace()->m_windows) {
             if (client->isBlockingCompositing()) {
                 shouldResume = false;
                 break;

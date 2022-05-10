@@ -873,11 +873,12 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
         return;
     }
 
-    workspace()->forEachToplevel([](auto client) {
-        if (auto x11_win = qobject_cast<window*>(client)) {
+    for (auto win : workspace()->m_windows) {
+        if (auto x11_win = qobject_cast<window*>(win)) {
             cancel_focus_out_timer(x11_win);
         }
-    });
+    }
+
     // check if this client is in should_get_focus list or if activation is allowed
     bool activate = workspace()->allowClientActivation(win, -1U, true);
 

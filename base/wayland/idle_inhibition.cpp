@@ -113,7 +113,11 @@ void idle_inhibition::slotWorkspaceCreated()
 
 void idle_inhibition::slotDesktopChanged()
 {
-    workspace()->forEachAbstractClient([this](Toplevel* t) { update(t); });
+    for (auto win : workspace()->m_windows) {
+        if (win->control) {
+            update(win);
+        }
+    }
 }
 
 }

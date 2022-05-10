@@ -161,8 +161,8 @@ void init_space(Space& space)
     Toplevel* new_active_client = nullptr;
     if (!qApp->isSessionRestored()) {
         --space.block_focus;
-        new_active_client
-            = space.findClient(win::x11::predicate_match::window, client_info.activeWindow());
+        new_active_client = find_controlled_window<x11::window>(
+            space, predicate_match::window, client_info.activeWindow());
     }
     if (new_active_client == nullptr && space.activeClient() == nullptr
         && space.should_get_focus.size() == 0) {
@@ -203,9 +203,7 @@ void clear_space(Space& space)
         release_window(window, is_x11);
 
         // No removeClient() is called, it does more than just removing.
-        // However, remove from some lists to e.g. prevent performTransiencyCheck()
-        // from crashing.
-        remove_all(space.m_allClients, window);
+        // However, remove from some lists to e.g. prevent performTransiencyCheck() from crashing.
         remove_all(space.m_windows, window);
     }
 

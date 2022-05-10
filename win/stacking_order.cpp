@@ -182,9 +182,12 @@ void stacking_order::propagate_clients(bool propagate_new_clients)
         std::vector<xcb_window_t> non_desktops;
         std::copy(manual_overlays.begin(), manual_overlays.end(), std::back_inserter(xcb_windows));
 
-        for (auto const& window : workspace()->allClientList()) {
-            auto x11_window = qobject_cast<x11::window*>(window);
+        for (auto const& window : workspace()->m_windows) {
+            if (!window->control) {
+                continue;
+            }
 
+            auto x11_window = qobject_cast<x11::window*>(window);
             if (!x11_window) {
                 continue;
             }

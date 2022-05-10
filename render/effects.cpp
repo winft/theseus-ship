@@ -52,7 +52,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/virtual_desktops.h"
 #include "win/x11/group.h"
 #include "win/x11/stacking_tree.h"
+#include "win/x11/unmanaged.h"
 #include "win/x11/window.h"
+#include "win/x11/window_find.h"
 
 #if KWIN_BUILD_TABBOX
 #include "win/tabbox/tabbox.h"
@@ -247,9 +249,12 @@ effects_handler_impl::effects_handler_impl(render::compositor* compositor, rende
     }
 
     // connect all clients
-    for (auto& client : ws->allClientList()) {
+    for (auto& window : ws->m_windows) {
         // TODO: Can we merge this with the one for Wayland XdgShellClients below?
-        auto x11_client = qobject_cast<win::x11::window*>(client);
+        if (!window->control) {
+            continue;
+        }
+        auto x11_client = qobject_cast<win::x11::window*>(window);
         if (!x11_client) {
             continue;
         }
@@ -954,7 +959,7 @@ void effects_handler_impl::windowToScreen(EffectWindow* w, int screen)
     auto window = static_cast<effects_window_impl*>(w)->window();
 
     if (output && window && window->control && !win::is_desktop(window) && !win::is_dock(window)) {
-        workspace()->sendClientToScreen(window, *output);
+        win::send_to_screen(*workspace(), window, *output);
     }
 }
 
@@ -1078,10 +1083,11 @@ WindowQuadType effects_handler_impl::newWindowQuadType()
 
 EffectWindow* effects_handler_impl::find_window_by_wid(WId id) const
 {
-    if (auto w = workspace()->findClient(win::x11::predicate_match::window, id)) {
+    if (auto w = win::x11::find_controlled_window<win::x11::window>(
+            *workspace(), win::x11::predicate_match::window, id)) {
         return w->render->effect.get();
     }
-    if (auto unmanaged = workspace()->findUnmanaged(id)) {
+    if (auto unmanaged = win::x11::find_unmanaged<win::x11::window>(*workspace(), id)) {
         return unmanaged->render->effect.get();
     }
     return nullptr;
@@ -1103,9 +1109,12 @@ EffectWindow* effects_handler_impl::find_window_by_qwindow(QWindow* w) const
 
 EffectWindow* effects_handler_impl::find_window_by_uuid(const QUuid& id) const
 {
-    auto const toplevel
-        = workspace()->findToplevel([&id](Toplevel const* t) { return t->internalId() == id; });
-    return toplevel ? toplevel->render->effect.get() : nullptr;
+    for (auto win : workspace()->m_windows) {
+        if (!win->remnant() && win->internalId() == id) {
+            return win->render->effect.get();
+        }
+    }
+    return nullptr;
 }
 
 EffectWindowList effects_handler_impl::stackingOrder() const

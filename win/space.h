@@ -113,14 +113,23 @@ public:
 
     int m_initialDesktop{1};
     QScopedPointer<base::x11::xcb::window> m_nullFocus;
+    Toplevel* active_popup_client{nullptr};
 
-    std::vector<Toplevel*> m_allClients;
+    Toplevel* last_active_client{nullptr};
+    Toplevel* delayfocus_client{nullptr};
+    Toplevel* client_keys_client{nullptr};
 
     // Last is most recent.
     std::deque<Toplevel*> should_get_focus;
     std::deque<Toplevel*> attention_chain;
 
     int block_focus{0};
+
+    /**
+     * Holds the menu containing the user actions which is shown
+     * on e.g. right click the window decoration.
+     */
+    win::user_actions_menu* m_userActionsMenu;
 
     static space* _self;
 
@@ -129,57 +138,6 @@ public:
 
     bool workspaceEvent(QEvent*);
 
-    bool hasClient(win::x11::window const*);
-    bool hasClient(Toplevel const* window);
-
-    /**
-     * @brief Finds the first Client matching the condition expressed by passed in @p func.
-     *
-     * Internally findClient uses the std::find_if algorithm and that determines how the function
-     * needs to be implemented. An example usage for finding a Client with a matching windowId
-     * @code
-     * xcb_window_t w; // our test window
-     * auto client = findClient([w](win::x11::window const* c) -> bool {
-     *     return c->window() == w;
-     * });
-     * @endcode
-     *
-     * For the standard cases of matching the window id with one of the Client's windows use
-     * the simplified overload method findClient(win::x11::predicate_match, xcb_window_t).
-     * Above example can be simplified to:
-     * @code
-     * xcb_window_t w; // our test window
-     * auto client = findClient(win::x11::predicate_match::window, w);
-     * @endcode
-     *
-     * @param func Unary function that accepts a win::x11::window* as argument and
-     * returns a value convertible to bool. The value returned indicates whether the
-     * win::x11::window* is considered a match in the context of this function.
-     * The function shall not modify its argument.
-     * This can either be a function pointer or a function object.
-     * @return KWin::win::x11::window* The found Client or @c null
-     * @see findClient(win::x11::predicate_match, xcb_window_t)
-     */
-    Toplevel* findAbstractClient(std::function<bool(Toplevel const*)> func) const;
-    /**
-     * @brief Finds the Client matching the given match @p predicate for the given window.
-     *
-     * @param predicate Which window should be compared
-     * @param w The window id to test against
-     * @return KWin::win::x11::window* The found Client or @c null
-     * @see findClient(std::function<bool (win::x11::window const*)>)
-     */
-    win::x11::window* findClient(win::x11::predicate_match predicate, xcb_window_t w) const;
-    void forEachAbstractClient(std::function<void(Toplevel*)> func);
-    /**
-     * @brief Finds the Unmanaged with the given window id.
-     *
-     * @param w The window id to search for
-     * @return KWin::Unmanaged* Found Unmanaged or @c null if there is no Unmanaged with given Id.
-     */
-    win::x11::window* findUnmanaged(xcb_window_t w) const;
-    Toplevel* findToplevel(std::function<bool(Toplevel const*)> func) const;
-    void forEachToplevel(std::function<void(Toplevel*)> func);
     /**
      * @brief Finds a Toplevel for the internal window @p w.
      *
@@ -188,7 +146,7 @@ public:
      *
      * @returns Toplevel
      */
-    Toplevel* findInternal(QWindow* w) const;
+    virtual Toplevel* findInternal(QWindow* w) const = 0;
 
     QRect clientArea(clientAreaOption, const QPoint& p, int desktop) const;
     QRect clientArea(clientAreaOption, Toplevel const* window) const;
@@ -273,15 +231,9 @@ public:
      * @return Remnant windows, i.e. already closed but still kept around for closing effects.
      */
     std::vector<Toplevel*> remnants() const;
-    /**
-     * @returns List of all clients (either X11 or Wayland) currently managed by space
-     */
-    std::vector<Toplevel*> const& allClientList() const
-    {
-        return m_allClients;
-    }
 
     win::session_manager* sessionManager() const;
+    void updateTabbox();
 
 private:
     QTimer* m_quickTileCombineTimer{nullptr};
@@ -305,7 +257,6 @@ public:
     void sendClientToDesktop(Toplevel* window, int desktop, bool dont_activate);
     void windowToPreviousDesktop(Toplevel* window);
     void windowToNextDesktop(Toplevel* window);
-    void sendClientToScreen(Toplevel* window, base::output const& output);
 
     /**
      * Shows the menu operations menu for the client and makes it active if
@@ -338,15 +289,10 @@ public:
     void setShowingDesktop(bool showing);
     bool showingDesktop() const;
 
-    // Only called from win::x11::window::destroyClient() or win::x11::window::releaseWindow()
-    void removeClient(win::x11::window*);
     void setActiveClient(Toplevel* window);
     win::x11::group* findGroup(xcb_window_t leader) const;
     void addGroup(win::x11::group* group);
     void removeGroup(win::x11::group* group);
-
-    void delete_window(Toplevel* window);
-    void addDeleted(Toplevel* c, Toplevel* orig);
 
     bool checkStartupNotification(xcb_window_t w, KStartupInfoId& id, KStartupInfoData& data);
 
@@ -404,24 +350,13 @@ public:
         return client_keys_dialog;
     }
 
-    void addClient(win::x11::window* c);
-
-    /**
-     * Adds the internal client to space.
-     *
-     * This method will be called by internal_window when it's mapped.
-     *
-     * @see internalClientAdded
-     * @internal
-     */
-    void addInternalClient(win::internal_window* client);
-
     virtual win::screen_edge* create_screen_edge(win::screen_edger& edger);
     virtual QRect get_icon_geometry(Toplevel const* win) const;
 
     void fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t* geom);
     void saveOldScreenSizes();
     void desktopResized();
+    void closeActivePopup();
 
 public Q_SLOTS:
     void performWindowOperation(KWin::Toplevel* window, base::options::WindowOperation op);
@@ -486,14 +421,9 @@ public Q_SLOTS:
     void updateClientArea();
 
 protected:
-    void updateTabbox();
     virtual void update_space_area_from_windows(QRect const& desktop_area,
                                                 std::vector<QRect> const& screens_geos,
                                                 win::space_areas& areas);
-
-    Toplevel* last_active_client{nullptr};
-    Toplevel* delayfocus_client{nullptr};
-    Toplevel* client_keys_client{nullptr};
 
 private Q_SLOTS:
     void slotUpdateToolWindows();
@@ -551,14 +481,12 @@ private:
     void setupWindowShortcut(Toplevel* window);
     bool switchWindow(Toplevel* c, Direction direction, QPoint curPos, int desktop);
 
-    void closeActivePopup();
     void updateClientArea(bool force);
     void resetClientAreas(uint desktopCount);
     void activateClientOnNewDesktop(uint desktop);
     Toplevel* findClientToActivateOnDesktop(uint desktop);
 
     QWidget* active_popup{nullptr};
-    Toplevel* active_popup_client{nullptr};
 
     void loadSessionInfo(const QString& sessionName);
     void addSessionInfo(KConfigGroup& cg);
@@ -579,12 +507,6 @@ private:
 
     int session_active_client;
     int session_desktop;
-
-    /**
-     * Holds the menu containing the user actions which is shown
-     * on e.g. right click the window decoration.
-     */
-    win::user_actions_menu* m_userActionsMenu;
 
     void modalActionsSwitch(bool enabled);
 

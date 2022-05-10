@@ -13,6 +13,8 @@
 #include "netinfo.h"
 #include "space.h"
 #include "window.h"
+#include "window_create.h"
+#include "window_find.h"
 #include "xcb.h"
 
 #include "base/logging.h"
@@ -1137,7 +1139,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
             info.setOpacity(static_cast<unsigned long>(win->opacity() * 0xffffffff));
         });
 
-    space.addClient(win);
+    add_controlled_window_to_space(space, win);
     return win;
 }
 
@@ -1248,7 +1250,8 @@ void restack_window(Win* win,
 {
     Win* other = nullptr;
     if (detail == XCB_STACK_MODE_OPPOSITE) {
-        other = workspace()->findClient(predicate_match::window, above);
+        other = find_controlled_window<win::x11::window>(
+            *workspace(), predicate_match::window, above);
         if (!other) {
             raise_or_lower_client(workspace(), win);
             return;
@@ -1268,13 +1271,15 @@ void restack_window(Win* win,
             ++it;
         }
     } else if (detail == XCB_STACK_MODE_TOP_IF) {
-        other = workspace()->findClient(predicate_match::window, above);
+        other = find_controlled_window<win::x11::window>(
+            *workspace(), predicate_match::window, above);
         if (other && other->frameGeometry().intersects(win->frameGeometry())) {
             raise_client_request(workspace(), win, src, timestamp);
         }
         return;
     } else if (detail == XCB_STACK_MODE_BOTTOM_IF) {
-        other = workspace()->findClient(predicate_match::window, above);
+        other = find_controlled_window<win::x11::window>(
+            *workspace(), predicate_match::window, above);
         if (other && other->frameGeometry().intersects(win->frameGeometry())) {
             lower_client_request(workspace(), win, src, timestamp);
         }
@@ -1282,7 +1287,8 @@ void restack_window(Win* win,
     }
 
     if (!other)
-        other = workspace()->findClient(predicate_match::window, above);
+        other = find_controlled_window<win::x11::window>(
+            *workspace(), predicate_match::window, above);
 
     if (other && detail == XCB_STACK_MODE_ABOVE) {
         auto it = workspace()->stacking_order->sorted().cend();
@@ -1479,8 +1485,12 @@ xcb_timestamp_t read_user_time_map_timestamp(Win* win,
                 else
                     first_window = false;
             } else {
-                if (workspace()->findAbstractClient(sameApplicationActiveHackPredicate))
-                    first_window = false;
+                for (auto win : workspace()->m_windows) {
+                    if (win->control && sameApplicationActiveHackPredicate(win)) {
+                        first_window = false;
+                        break;
+                    }
+                }
             }
             // don't refuse if focus stealing prevention is turned off
             if (!first_window
@@ -1545,7 +1555,7 @@ void startup_id_changed(Win* win)
     if (asn_data.xinerama() != -1) {
         auto output = base::get_output(kwinApp()->get_base().get_outputs(), asn_data.xinerama());
         if (output) {
-            workspace()->sendClientToScreen(win, *output);
+            send_to_screen(*workspace(), win, *output);
         }
     }
     auto const timestamp = asn_id.timestamp();

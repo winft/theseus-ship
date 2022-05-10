@@ -144,8 +144,12 @@ Toplevel* app_menu::findAbstractClientWithApplicationMenu(const QString& service
         return nullptr;
     }
 
-    return workspace()->findAbstractClient([&](Toplevel const* window) {
-        return window->control->application_menu()
-            == std::make_tuple(serviceName, menuObjectPath.path());
-    });
+    auto const addr = std::make_tuple(serviceName, menuObjectPath.path());
+
+    for (auto win : workspace()->m_windows) {
+        if (win->control && win->control->application_menu() == addr) {
+            return win;
+        }
+    }
+    return nullptr;
 }

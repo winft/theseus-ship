@@ -93,9 +93,9 @@ space* space::_self = nullptr;
 space::space()
     : QObject(nullptr)
     , outline(std::make_unique<render::outline>())
+    , m_userActionsMenu(new win::user_actions_menu(this))
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
-    , m_userActionsMenu(new win::user_actions_menu(this))
     , m_sessionManager(new win::session_manager(this))
 {
     // For invoke methods of user_actions_menu.
@@ -267,141 +267,6 @@ space::~space()
     _self = nullptr;
 }
 
-void space::addClient(win::x11::window* c)
-{
-    auto grp = findGroup(c->xcb_window());
-
-    m_windows.push_back(c);
-    m_allClients.push_back(c);
-
-    Q_EMIT clientAdded(c);
-
-    if (grp != nullptr)
-        grp->gotLeader(c);
-
-    if (win::is_desktop(c)) {
-        if (active_client == nullptr && should_get_focus.empty() && c->isOnCurrentDesktop()) {
-            // TODO: Make sure desktop is active after startup if there's no other window active
-            request_focus(c);
-        }
-    } else {
-        win::focus_chain::self()->update(c, win::focus_chain::Update);
-    }
-
-    if (!contains(stacking_order->pre_stack, c)) {
-        // Raise if it hasn't got any stacking position yet
-        stacking_order->pre_stack.push_back(c);
-    }
-    if (!contains(stacking_order->sorted(), c)) {
-        // It'll be updated later, and updateToolWindows() requires c to be in stacking_order.
-        stacking_order->win_stack.push_back(c);
-    }
-    x_stacking_tree->mark_as_dirty();
-    updateClientArea(); // This cannot be in manage(), because the client got added only now
-    win::update_layer(c);
-    if (win::is_desktop(c)) {
-        win::raise_window(this, c);
-        // If there's no active client, make this desktop the active one
-        if (activeClient() == nullptr && should_get_focus.size() == 0)
-            activateClient(
-                win::find_desktop(this, true, win::virtual_desktop_manager::self()->current()));
-    }
-    win::x11::check_active_modal<win::x11::window>();
-    checkTransients(c);
-    stacking_order->update(true); // Propagate new client
-    if (win::is_utility(c) || win::is_menu(c) || win::is_toolbar(c)) {
-        win::update_tool_windows(this, true);
-    }
-    updateTabbox();
-}
-
-/**
- * Destroys the client \a c
- */
-void space::removeClient(win::x11::window* c)
-{
-    if (c == active_popup_client)
-        closeActivePopup();
-    if (m_userActionsMenu->isMenuClient(c)) {
-        m_userActionsMenu->close();
-    }
-
-    if (client_keys_client == c)
-        setupWindowShortcutDone(false);
-    if (!c->control->shortcut().isEmpty()) {
-        // Remove from client_keys.
-        win::set_shortcut(c, QString());
-
-        // Needed, since this is otherwise delayed by setShortcut() and wouldn't run
-        clientShortcutUpdated(c);
-    }
-
-    assert(contains(m_allClients, c));
-
-    // TODO: if marked client is removed, notify the marked list
-    remove_window_from_lists(*this, c);
-    remove_all(attention_chain, c);
-
-    auto group = findGroup(c->xcb_window());
-    if (group != nullptr)
-        group->lostLeader();
-
-    if (c == most_recently_raised) {
-        most_recently_raised = nullptr;
-    }
-    remove_all(should_get_focus, c);
-    Q_ASSERT(c != active_client);
-    if (c == last_active_client)
-        last_active_client = nullptr;
-    if (c == delayfocus_client)
-        cancelDelayFocus();
-
-    Q_EMIT clientRemoved(c);
-
-    stacking_order->update(true);
-    updateClientArea();
-    updateTabbox();
-}
-
-void space::addDeleted(Toplevel* c, Toplevel* orig)
-{
-    assert(!contains(m_windows, c));
-
-    m_windows.push_back(c);
-
-    auto const unconstraintedIndex = index_of(stacking_order->pre_stack, orig);
-    if (unconstraintedIndex != -1) {
-        stacking_order->pre_stack.at(unconstraintedIndex) = c;
-    } else {
-        stacking_order->pre_stack.push_back(c);
-    }
-    auto const index = index_of(stacking_order->sorted(), orig);
-    if (index != -1) {
-        stacking_order->win_stack.at(index) = c;
-    } else {
-        stacking_order->win_stack.push_back(c);
-    }
-    x_stacking_tree->mark_as_dirty();
-    connect(c, &Toplevel::needsRepaint, m_compositor, [c] {
-        render::compositor::self()->schedule_repaint(c);
-    });
-}
-
-void space::delete_window(Toplevel* window)
-{
-    remove_window_from_stacking_order(*this, window);
-    remove_window_from_lists(*this, window);
-
-    if (auto& update_block = m_compositor->x11_integration.update_blocking; update_block) {
-        auto& control = window->remnant() ? window->remnant()->control : window->control;
-        if (control) {
-            update_block(nullptr);
-        }
-    }
-
-    Q_EMIT window_deleted(window);
-}
-
 void space::stopUpdateToolWindowsTimer()
 {
     updateToolWindowsTimer.stop();
@@ -448,7 +313,7 @@ void space::slotReconfigure()
     win::update_tool_windows(this, true);
 
     RuleBook::self()->load();
-    for (auto window : m_allClients) {
+    for (auto window : m_windows) {
         if (window->supportsWindowRules()) {
             win::evaluate_rules(window);
             RuleBook::self()->discardUsed(window, false);
@@ -459,9 +324,10 @@ void space::slotReconfigure()
         && !kwinApp()->options->borderlessMaximizedWindows()) {
         // in case borderless maximized windows option changed and new option
         // is to have borders, we need to unset the borders for all maximized windows
-        for (auto it = m_allClients.begin(); it != m_allClients.end(); ++it) {
-            if ((*it)->maximizeMode() == win::maximize_mode::full)
-                (*it)->checkNoBorder();
+        for (auto window : m_windows) {
+            if (window->maximizeMode() == win::maximize_mode::full) {
+                window->checkNoBorder();
+            }
         }
     }
 }
@@ -601,11 +467,6 @@ void space::sendClientToDesktop(Toplevel* window, int desk, bool dont_activate)
     updateClientArea();
 }
 
-void space::sendClientToScreen(Toplevel* window, base::output const& output)
-{
-    win::send_to_screen(window, output);
-}
-
 /**
  * Delayed focus functions
  */
@@ -705,8 +566,10 @@ void space::disableGlobalShortcutsForClient(bool disable)
 
     global_shortcuts_disabled_for_client = disable;
     // Update also Meta+LMB actions etc.
-    for (auto& client : allClientList()) {
-        client->control->update_mouse_grab();
+    for (auto window : m_windows) {
+        if (auto& ctrl = window->control) {
+            ctrl->update_mouse_grab();
+        }
     }
 }
 
@@ -996,94 +859,6 @@ QString space::supportInformation() const
     return support;
 }
 
-Toplevel* space::findAbstractClient(std::function<bool(const Toplevel*)> func) const
-{
-    if (auto ret = win::find_in_list(m_allClients, func)) {
-        return ret;
-    }
-    return nullptr;
-}
-
-win::x11::window* space::findUnmanaged(xcb_window_t w) const
-{
-    return static_cast<win::x11::window*>(findToplevel(
-        [w](auto toplevel) { return !toplevel->control && toplevel->xcb_window() == w; }));
-}
-
-win::x11::window* space::findClient(win::x11::predicate_match predicate, xcb_window_t w) const
-{
-    switch (predicate) {
-    case win::x11::predicate_match::window:
-        return qobject_cast<win::x11::window*>(findAbstractClient([w](Toplevel const* c) {
-            auto x11_client = qobject_cast<win::x11::window const*>(c);
-            return x11_client && x11_client->xcb_window() == w;
-        }));
-    case win::x11::predicate_match::wrapper_id:
-        return qobject_cast<win::x11::window*>(findAbstractClient([w](Toplevel const* c) {
-            auto x11_client = qobject_cast<win::x11::window const*>(c);
-            return x11_client && x11_client->xcb_windows.wrapper == w;
-        }));
-    case win::x11::predicate_match::frame_id:
-        return qobject_cast<win::x11::window*>(findAbstractClient([w](Toplevel const* c) {
-            auto x11_client = qobject_cast<win::x11::window const*>(c);
-            return x11_client && x11_client->xcb_windows.outer == w;
-        }));
-    case win::x11::predicate_match::input_id:
-        return qobject_cast<win::x11::window*>(findAbstractClient([w](Toplevel const* c) {
-            auto x11_client = qobject_cast<win::x11::window const*>(c);
-            return x11_client && x11_client->xcb_windows.input == w;
-        }));
-    }
-    return nullptr;
-}
-
-Toplevel* space::findToplevel(std::function<bool(const Toplevel*)> func) const
-{
-    auto const it = std::find_if(m_windows.cbegin(), m_windows.cend(), [&func](auto const& win) {
-        return !win->remnant() && func(win);
-    });
-    return it != m_windows.cend() ? *it : nullptr;
-}
-
-void space::forEachToplevel(std::function<void(Toplevel*)> func)
-{
-    std::for_each(m_windows.cbegin(), m_windows.cend(), func);
-}
-
-bool space::hasClient(Toplevel const* window)
-{
-    if (auto cc = dynamic_cast<win::x11::window const*>(window)) {
-        return hasClient(cc);
-    } else {
-        return findAbstractClient([window](Toplevel const* test) { return test == window; })
-            != nullptr;
-    }
-    return false;
-}
-
-void space::forEachAbstractClient(std::function<void(Toplevel*)> func)
-{
-    std::for_each(m_allClients.cbegin(), m_allClients.cend(), func);
-}
-
-Toplevel* space::findInternal(QWindow* w) const
-{
-    if (!w) {
-        return nullptr;
-    }
-    if (kwinApp()->operationMode() == Application::OperationModeX11) {
-        return findUnmanaged(w->winId());
-    }
-    for (auto client : m_allClients) {
-        if (auto internal = qobject_cast<win::internal_window*>(client)) {
-            if (internal->internalWindow() == w) {
-                return internal;
-            }
-        }
-    }
-    return nullptr;
-}
-
 bool space::compositing() const
 {
     return m_compositor && m_compositor->scene();
@@ -1112,27 +887,6 @@ void space::updateTabbox()
         tabBox->reset(true);
     }
 #endif
-}
-
-void space::addInternalClient(win::internal_window* client)
-{
-    m_windows.push_back(client);
-    m_allClients.push_back(client);
-
-    win::setup_space_window_connections(this, client);
-    win::update_layer(client);
-
-    if (client->placeable()) {
-        auto const area
-            = clientArea(PlacementArea, get_current_output(*workspace()), client->desktop());
-        win::place(client, area);
-    }
-
-    x_stacking_tree->mark_as_dirty();
-    stacking_order->update(true);
-    updateClientArea();
-
-    Q_EMIT internalClientAdded(client);
 }
 
 QRect space::get_icon_geometry(Toplevel const* /*win*/) const
@@ -1325,8 +1079,10 @@ void space::updateClientArea(bool force)
             }
         }
 
-        for (auto win : m_allClients) {
-            win::check_workspace_position(win);
+        for (auto win : m_windows) {
+            if (win->control) {
+                check_workspace_position(win);
+            }
         }
 
         // Reset, no longer valid or needed.
@@ -1579,22 +1335,32 @@ space::adjustClientPosition(Toplevel* window, QPoint pos, bool unrestricted, dou
         // windows snap
         int snap = kwinApp()->options->windowSnapZone() * snapAdjust;
         if (snap) {
-            for (auto l = m_allClients.cbegin(); l != m_allClients.cend(); ++l) {
-                if ((*l) == window)
+            for (auto win : m_windows) {
+                if (!win->control) {
                     continue;
-                if ((*l)->control->minimized())
-                    continue; // is minimized
-                if (!(*l)->isShown())
-                    continue;
-                if (!((*l)->isOnDesktop(window->desktop()) || window->isOnDesktop((*l)->desktop())))
-                    continue; // wrong virtual desktop
-                if (win::is_desktop(*l) || win::is_splash(*l))
-                    continue;
+                }
 
-                lx = (*l)->pos().x();
-                ly = (*l)->pos().y();
-                lrx = lx + (*l)->size().width();
-                lry = ly + (*l)->size().height();
+                if (win == window) {
+                    continue;
+                }
+                if (win->control->minimized()) {
+                    continue;
+                }
+                if (!win->isShown()) {
+                    continue;
+                }
+                if (!win->isOnDesktop(window->desktop()) && !window->isOnDesktop(win->desktop())) {
+                    // wrong virtual desktop
+                    continue;
+                }
+                if (is_desktop(win) || is_splash(win)) {
+                    continue;
+                }
+
+                lx = win->pos().x();
+                ly = win->pos().y();
+                lrx = lx + win->size().width();
+                lry = ly + win->size().height();
 
                 if (!flags(guideMaximized & win::maximize_mode::horizontal)
                     && (((cy <= lry) && (cy >= ly)) || ((ry >= ly) && (ry <= lry))
@@ -1781,13 +1547,14 @@ QRect space::adjustClientSize(Toplevel* window, QRect moveResizeGeom, win::posit
         if (snap) {
             deltaX = int(snap);
             deltaY = int(snap);
-            for (auto l = m_allClients.cbegin(); l != m_allClients.cend(); ++l) {
-                if ((*l)->isOnDesktop(win::virtual_desktop_manager::self()->current())
-                    && !(*l)->control->minimized() && (*l) != window) {
-                    lx = (*l)->pos().x() - 1;
-                    ly = (*l)->pos().y() - 1;
-                    lrx = (*l)->pos().x() + (*l)->size().width();
-                    lry = (*l)->pos().y() + (*l)->size().height();
+            for (auto win : m_windows) {
+                if (win->control
+                    && win->isOnDesktop(win::virtual_desktop_manager::self()->current())
+                    && !win->control->minimized() && win != window) {
+                    lx = win->pos().x() - 1;
+                    ly = win->pos().y() - 1;
+                    lrx = win->pos().x() + win->size().width();
+                    lry = win->pos().y() + win->size().height();
 
 #define WITHIN_HEIGHT                                                                              \
     (((newcy <= lry) && (newcy >= ly)) || ((newry >= ly) && (newry <= lry))                        \
@@ -1942,12 +1709,6 @@ void space::fixPositionAfterCrash(xcb_window_t w, const xcb_get_geometry_reply_t
         const uint32_t values[] = {geometry->x - left, geometry->y - top};
         xcb_configure_window(connection(), w, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
     }
-}
-
-bool space::hasClient(win::x11::window const* c)
-{
-    auto abstract_c = static_cast<Toplevel const*>(c);
-    return findAbstractClient([abstract_c](Toplevel const* test) { return test == abstract_c; });
 }
 
 std::vector<Toplevel*> const& space::windows() const
@@ -2112,15 +1873,15 @@ int space::packPositionLeft(Toplevel const* window, int oldX, bool leftEdge) con
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
         ? win::virtual_desktop_manager::self()->current()
         : window->desktop();
-    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (win::is_irrelevant(*it, window, desktop)) {
+    for (auto win : m_windows) {
+        if (is_irrelevant(win, window, desktop)) {
             continue;
         }
-        const int x = leftEdge ? (*it)->geometry_update.frame.right() + 1
-                               : (*it)->geometry_update.frame.left() - 1;
+        const int x = leftEdge ? win->geometry_update.frame.right() + 1
+                               : win->geometry_update.frame.left() - 1;
         if (x > newX && x < oldX
-            && !(window->geometry_update.frame.top() > (*it)->geometry_update.frame.bottom()
-                 || window->geometry_update.frame.bottom() < (*it)->geometry_update.frame.top())) {
+            && !(window->geometry_update.frame.top() > win->geometry_update.frame.bottom()
+                 || window->geometry_update.frame.bottom() < win->geometry_update.frame.top())) {
             newX = x;
         }
     }
@@ -2155,15 +1916,15 @@ int space::packPositionRight(Toplevel const* window, int oldX, bool rightEdge) c
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
         ? win::virtual_desktop_manager::self()->current()
         : window->desktop();
-    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (win::is_irrelevant(*it, window, desktop)) {
+    for (auto win : m_windows) {
+        if (is_irrelevant(win, window, desktop)) {
             continue;
         }
-        const int x = rightEdge ? (*it)->geometry_update.frame.left() - 1
-                                : (*it)->geometry_update.frame.right() + 1;
+        const int x = rightEdge ? win->geometry_update.frame.left() - 1
+                                : win->geometry_update.frame.right() + 1;
         if (x < newX && x > oldX
-            && !(window->geometry_update.frame.top() > (*it)->geometry_update.frame.bottom()
-                 || window->geometry_update.frame.bottom() < (*it)->geometry_update.frame.top())) {
+            && !(window->geometry_update.frame.top() > win->geometry_update.frame.bottom()
+                 || window->geometry_update.frame.bottom() < win->geometry_update.frame.top())) {
             newX = x;
         }
     }
@@ -2188,16 +1949,16 @@ int space::packPositionUp(Toplevel const* window, int oldY, bool topEdge) const
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
         ? win::virtual_desktop_manager::self()->current()
         : window->desktop();
-    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (win::is_irrelevant(*it, window, desktop)) {
+    for (auto win : m_windows) {
+        if (is_irrelevant(win, window, desktop)) {
             continue;
         }
-        const int y = topEdge ? (*it)->geometry_update.frame.bottom() + 1
-                              : (*it)->geometry_update.frame.top() - 1;
+        const int y = topEdge ? win->geometry_update.frame.bottom() + 1
+                              : win->geometry_update.frame.top() - 1;
         if (y > newY && y < oldY
             && !(window->geometry_update.frame.left()
-                     > (*it)->geometry_update.frame.right() // they overlap in X direction
-                 || window->geometry_update.frame.right() < (*it)->geometry_update.frame.left())) {
+                     > win->geometry_update.frame.right() // they overlap in X direction
+                 || window->geometry_update.frame.right() < win->geometry_update.frame.left())) {
             newY = y;
         }
     }
@@ -2229,15 +1990,15 @@ int space::packPositionDown(Toplevel const* window, int oldY, bool bottomEdge) c
     const int desktop = window->desktop() == 0 || window->isOnAllDesktops()
         ? win::virtual_desktop_manager::self()->current()
         : window->desktop();
-    for (auto it = m_allClients.cbegin(), end = m_allClients.cend(); it != end; ++it) {
-        if (win::is_irrelevant(*it, window, desktop)) {
+    for (auto win : m_windows) {
+        if (is_irrelevant(win, window, desktop)) {
             continue;
         }
-        const int y = bottomEdge ? (*it)->geometry_update.frame.top() - 1
-                                 : (*it)->geometry_update.frame.bottom() + 1;
+        const int y = bottomEdge ? win->geometry_update.frame.top() - 1
+                                 : win->geometry_update.frame.bottom() + 1;
         if (y < newY && y > oldY
-            && !(window->geometry_update.frame.left() > (*it)->geometry_update.frame.right()
-                 || window->geometry_update.frame.right() < (*it)->geometry_update.frame.left())) {
+            && !(window->geometry_update.frame.left() > win->geometry_update.frame.right()
+                 || window->geometry_update.frame.right() < win->geometry_update.frame.left())) {
             newY = y;
         }
     }
@@ -2448,10 +2209,10 @@ void space::setActiveClient(Toplevel* window)
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer
         // status on > 1 screens
         if (kwinApp()->get_base().get_outputs().size() > 1) {
-            for (auto it = m_allClients.begin(); it != m_allClients.end(); ++it) {
-                if (*it != active_client && (*it)->layer() == win::layer::active
-                    && (*it)->central_output == active_client->central_output) {
-                    win::update_layer(*it);
+            for (auto win : m_windows) {
+                if (win->control && win != active_client && win->layer() == win::layer::active
+                    && win->central_output == active_client->central_output) {
+                    update_layer(win);
                 }
             }
         }
@@ -3463,7 +3224,7 @@ void space::slotWindowToScreen()
         int const screen = senderValue(sender());
         auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
         if (output) {
-            sendClientToScreen(active_client, *output);
+            send_to_screen(*this, active_client, *output);
         }
     }
 }
@@ -3474,7 +3235,7 @@ void space::slotWindowToNextScreen()
         return;
     }
     if (auto output = get_derivated_output(active_client->central_output, 1)) {
-        sendClientToScreen(active_client, *output);
+        send_to_screen(*this, active_client, *output);
     }
 }
 
@@ -3484,7 +3245,7 @@ void space::slotWindowToPrevScreen()
         return;
     }
     if (auto output = get_derivated_output(active_client->central_output, -1)) {
-        sendClientToScreen(active_client, *output);
+        send_to_screen(*this, active_client, *output);
     }
 }
 
@@ -3868,8 +3629,8 @@ bool space::shortcutAvailable(const QKeySequence& cut, Toplevel* ignore) const
     }
 
     // Check now conflicts with activation shortcuts for current clients.
-    for (const auto client : m_allClients) {
-        if (client != ignore && client->control->shortcut() == cut) {
+    for (auto const win : m_windows) {
+        if (win != ignore && win->control && win->control->shortcut() == cut) {
             return false;
         }
     }
@@ -3956,8 +3717,11 @@ void space::storeSession(const QString& sessionName, win::sm_save_phase phase)
     int count = 0;
     int active_client = -1;
 
-    for (auto const& client : allClientList()) {
-        auto x11_client = qobject_cast<win::x11::window*>(client);
+    for (auto const& window : m_windows) {
+        if (!window->control) {
+            continue;
+        }
+        auto x11_client = qobject_cast<x11::window*>(window);
         if (!x11_client) {
             continue;
         }
@@ -4058,8 +3822,12 @@ void space::storeSubSession(const QString& name, QSet<QByteArray> sessionIds)
     int count = 0;
     int active_client = -1;
 
-    for (auto const& client : allClientList()) {
-        auto x11_client = qobject_cast<win::x11::window*>(client);
+    for (auto const& window : m_windows) {
+        if (!window->control) {
+            continue;
+        }
+
+        auto x11_client = qobject_cast<win::x11::window*>(window);
         if (!x11_client) {
             continue;
         }

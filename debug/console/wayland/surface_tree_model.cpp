@@ -37,8 +37,8 @@ surface_tree_model::surface_tree_model(QObject* parent)
         QObject::connect(
             u->surface(), &Wrapland::Server::Surface::subsurfaceTreeChanged, this, reset);
     }
-    for (auto c : workspace()->allClientList()) {
-        if (!c->surface()) {
+    for (auto c : workspace()->m_windows) {
+        if (!c->control || !c->surface()) {
             continue;
         }
         QObject::connect(
@@ -81,6 +81,17 @@ int surface_tree_model::columnCount(const QModelIndex& parent) const
     return 1;
 }
 
+std::vector<Toplevel*> get_windows_with_control(std::vector<Toplevel*>& windows)
+{
+    std::vector<Toplevel*> with_control;
+    for (auto win : windows) {
+        if (win->control) {
+            with_control.push_back(win);
+        }
+    }
+    return with_control;
+}
+
 int surface_tree_model::rowCount(const QModelIndex& parent) const
 {
     if (parent.isValid()) {
@@ -92,7 +103,8 @@ int surface_tree_model::rowCount(const QModelIndex& parent) const
     }
 
     // toplevel are all windows
-    return workspace()->allClientList().size() + workspace()->unmanagedList().size();
+    return get_windows_with_control(workspace()->m_windows).size()
+        + workspace()->unmanagedList().size();
 }
 
 QModelIndex surface_tree_model::index(int row, int column, const QModelIndex& parent) const
@@ -115,7 +127,7 @@ QModelIndex surface_tree_model::index(int row, int column, const QModelIndex& pa
     }
 
     // a window
-    const auto& allClients = workspace()->allClientList();
+    auto const& allClients = get_windows_with_control(workspace()->m_windows);
     if (row_u < allClients.size()) {
         // references a client
         return createIndex(row_u, column, allClients.at(row_u)->surface());
@@ -162,7 +174,7 @@ QModelIndex surface_tree_model::parent(const QModelIndex& child) const
         }
         // not a subsurface, thus it's a true window
         size_t row = 0;
-        const auto& allClients = workspace()->allClientList();
+        const auto& allClients = get_windows_with_control(workspace()->m_windows);
         for (; row < allClients.size(); row++) {
             if (allClients.at(row)->surface() == parent) {
                 return createIndex(row, 0, parent);

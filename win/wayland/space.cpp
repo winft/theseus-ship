@@ -22,6 +22,7 @@
 #include "base/wayland/idle_inhibition.h"
 #include "base/wayland/server.h"
 #include "win/input.h"
+#include "win/internal_window.h"
 #include "win/screen.h"
 #include "win/setup.h"
 #include "win/stacking_order.h"
@@ -170,8 +171,6 @@ void space::handle_window_added(wayland::window* window)
         if (!placementDone) {
             window->placeIn(area);
         }
-
-        m_allClients.push_back(window);
     }
 
     if (!contains(stacking_order->pre_stack, window)) {
@@ -222,7 +221,6 @@ void space::handle_window_removed(wayland::window* window)
     remove_all(m_windows, window);
 
     if (window->control) {
-        remove_all(m_allClients, window);
         if (window == most_recently_raised) {
             most_recently_raised = nullptr;
         }
@@ -267,7 +265,10 @@ void space::handle_x11_window_added(x11::window* window)
 
 void space::handle_desktop_removed(virtual_desktop* desktop)
 {
-    for (auto const& client : m_allClients) {
+    for (auto const& client : m_windows) {
+        if (!client->control) {
+            continue;
+        }
         if (!client->desktops().contains(desktop)) {
             continue;
         }
@@ -281,6 +282,22 @@ void space::handle_desktop_removed(virtual_desktop* desktop)
                 true);
         }
     }
+}
+
+Toplevel* space::findInternal(QWindow* window) const
+{
+    if (!window) {
+        return nullptr;
+    }
+
+    for (auto win : m_windows) {
+        if (auto internal = qobject_cast<internal_window*>(win);
+            internal && internal->internalWindow() == window) {
+            return internal;
+        }
+    }
+
+    return nullptr;
 }
 
 QRect space::get_icon_geometry(Toplevel const* win) const
@@ -320,7 +337,10 @@ void space::update_space_area_from_windows(QRect const& desktop_area,
                                            std::vector<QRect> const& screens_geos,
                                            win::space_areas& areas)
 {
-    for (auto const& window : m_allClients) {
+    for (auto const& window : m_windows) {
+        if (!window->control) {
+            continue;
+        }
         if (auto x11_window = qobject_cast<win::x11::window*>(window)) {
             win::x11::update_space_areas(x11_window, desktop_area, screens_geos, areas);
         }
@@ -328,6 +348,7 @@ void space::update_space_area_from_windows(QRect const& desktop_area,
 
     // TODO(romangg): Combine this and above loop.
     for (auto win : m_windows) {
+        // TODO(romangg): check on control like in the previous loop?
         if (auto wl_win = qobject_cast<win::wayland::window*>(win)) {
             update_space_areas(wl_win, desktop_area, screens_geos, areas);
         }

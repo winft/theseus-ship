@@ -135,23 +135,27 @@ bool space_event(Space& space, xcb_generic_event_t* event)
 
     auto const event_window = win::x11::find_event_window(event);
     if (event_window != XCB_WINDOW_NONE) {
-        if (auto c = space.findClient(win::x11::predicate_match::window, event_window)) {
+        if (auto c
+            = find_controlled_window<x11::window>(space, predicate_match::window, event_window)) {
             if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto c = space.findClient(win::x11::predicate_match::wrapper_id, event_window)) {
+        } else if (auto c = find_controlled_window<x11::window>(
+                       space, predicate_match::wrapper_id, event_window)) {
             if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto c = space.findClient(win::x11::predicate_match::frame_id, event_window)) {
+        } else if (auto c = find_controlled_window<x11::window>(
+                       space, predicate_match::frame_id, event_window)) {
             if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto c = space.findClient(win::x11::predicate_match::input_id, event_window)) {
+        } else if (auto c = find_controlled_window<x11::window>(
+                       space, predicate_match::input_id, event_window)) {
             if (win::x11::window_event(c, event)) {
                 return true;
             }
-        } else if (auto unmanaged = space.findUnmanaged(event_window)) {
+        } else if (auto unmanaged = find_unmanaged<win::x11::window>(space, event_window)) {
             if (win::x11::unmanaged_event(unmanaged, event)) {
                 return true;
             }
@@ -195,7 +199,8 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         kwinApp()->update_x11_time_from_clock();
         auto map_req_event = reinterpret_cast<xcb_map_request_event_t*>(event);
 
-        if (auto c = space.findClient(win::x11::predicate_match::window, map_req_event->window)) {
+        if (auto c = find_controlled_window<x11::window>(
+                space, predicate_match::window, map_req_event->window)) {
             // event->xmaprequest.window is different from event->xany.window
             // TODO this shouldn't be necessary now
             win::x11::window_event(c, event);
@@ -223,7 +228,7 @@ bool space_event(Space& space, xcb_generic_event_t* event)
         auto map_event = reinterpret_cast<xcb_map_notify_event_t*>(event);
 
         if (map_event->override_redirect) {
-            auto c = space.findUnmanaged(map_event->window);
+            auto c = find_unmanaged<win::x11::window>(space, map_event->window);
             if (c == nullptr) {
                 c = create_unmanaged_window(map_event->window, space);
             }

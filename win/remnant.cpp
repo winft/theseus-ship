@@ -9,6 +9,7 @@
 #include "geo.h"
 #include "meta.h"
 #include "net.h"
+#include "space_helpers.h"
 #include "transient.h"
 #include "x11/window.h"
 
@@ -104,7 +105,7 @@ remnant::~remnant()
     assert(refcount == 0);
 
     if (workspace()) {
-        workspace()->delete_window(win);
+        delete_window_from_space(*workspace(), win);
     }
 }
 

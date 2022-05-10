@@ -586,12 +586,13 @@ void place_maximizing(Win* window, const QRect& area, placement nextPlacement)
  */
 inline void unclutter_desktop()
 {
-    const auto& clients = workspace()->allClientList();
+    auto const& clients = workspace()->m_windows;
     for (int i = clients.size() - 1; i >= 0; i--) {
         auto client = clients.at(i);
-        if ((!client->isOnCurrentDesktop()) || (client->control->minimized())
-            || (client->isOnAllDesktops()) || (!client->isMovable()))
+        if (!client->control || !client->isOnCurrentDesktop() || client->control->minimized()
+            || client->isOnAllDesktops() || !client->isMovable()) {
             continue;
+        }
         const QRect placementArea = workspace()->clientArea(PlacementArea, client);
         place_smart(client, placementArea);
     }
