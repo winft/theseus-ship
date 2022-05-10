@@ -182,11 +182,6 @@ Wrapland::Server::Viewporter* server::viewporter() const
     return globals->viewporter.get();
 }
 
-Wrapland::Server::PresentationManager* server::presentation_manager() const
-{
-    return globals->presentation_manager.get();
-}
-
 Wrapland::Server::Seat* server::seat() const
 {
     if (globals->seats.empty()) {
@@ -238,12 +233,6 @@ Wrapland::Server::KdeIdle* server::kde_idle() const
 Wrapland::Server::drm_lease_device_v1* server::drm_lease_device() const
 {
     return globals->drm_lease_device_v1.get();
-}
-
-void server::create_presentation_manager()
-{
-    Q_ASSERT(!globals->presentation_manager);
-    globals->presentation_manager = display->createPresentationManager();
 }
 
 Wrapland::Server::Surface*

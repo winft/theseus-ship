@@ -12,13 +12,17 @@
 
 #include <chrono>
 #include <deque>
+#include <memory>
 #include <time.h>
+
+#include <Wrapland/Server/presentation_time.h>
 
 class QElapsedTimer;
 
 namespace Wrapland::Server
 {
 class PresentationFeedback;
+class PresentationManager;
 class Surface;
 }
 
@@ -65,6 +69,8 @@ private:
     QHash<uint32_t, Wrapland::Server::Surface*> surfaces;
 
     clockid_t clockid;
+
+    std::unique_ptr<Wrapland::Server::PresentationManager> presentation_manager;
 };
 
 }

@@ -79,7 +79,6 @@ public:
     Wrapland::Server::Subcompositor* subcompositor() const;
     Wrapland::Server::linux_dmabuf_v1* linux_dmabuf();
     Wrapland::Server::Viewporter* viewporter() const;
-    Wrapland::Server::PresentationManager* presentation_manager() const;
 
     Wrapland::Server::Seat* seat() const;
 
@@ -95,8 +94,6 @@ public:
 
     Wrapland::Server::KdeIdle* kde_idle() const;
     Wrapland::Server::drm_lease_device_v1* drm_lease_device() const;
-
-    void create_presentation_manager();
 
     /**
      * @returns a parent of a surface imported with the foreign protocol, if any
