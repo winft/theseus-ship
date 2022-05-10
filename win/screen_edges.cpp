@@ -132,8 +132,7 @@ void screen_edge::unreserve()
 }
 void screen_edge::unreserve(QObject* object)
 {
-    if (callbacks.contains(object)) {
-        callbacks.remove(object);
+    if (callbacks.remove(object) > 0) {
         disconnect(object, &QObject::destroyed, this, qOverload<QObject*>(&screen_edge::unreserve));
         unreserve();
     }
