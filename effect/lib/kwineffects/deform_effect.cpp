@@ -168,9 +168,6 @@ void DeformEffectPrivate::paint(EffectWindow* window,
     quads.makeInterleavedArrays(primitiveType, map, texture->matrix(NormalizedCoordinates));
     vbo->unmap();
     vbo->bindArrays();
-    glEnable(GL_SCISSOR_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     const qreal rgb = data.brightness() * data.opacity();
     const qreal a = data.opacity();
@@ -181,16 +178,24 @@ void DeformEffectPrivate::paint(EffectWindow* window,
     shader->setUniform(GLShader::ModulationConstant, QVector4D(rgb, rgb, rgb, a));
     shader->setUniform(GLShader::Saturation, data.saturation());
 
+    const bool clipping = region != infiniteRegion();
+    const QRegion clipRegion = clipping ? effects->mapToRenderTarget(region) : infiniteRegion();
+
+    if (clipping) {
+        glEnable(GL_SCISSOR_TEST);
+    }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
     texture->bind();
-    vbo->draw(effects->mapToRenderTarget(region),
-              primitiveType,
-              0,
-              verticesPerQuad * quads.count(),
-              true);
+    vbo->draw(clipRegion, primitiveType, 0, verticesPerQuad * quads.count(), clipping);
     texture->unbind();
 
     glDisable(GL_BLEND);
-    glDisable(GL_SCISSOR_TEST);
+    if (clipping) {
+        glDisable(GL_SCISSOR_TEST);
+    }
     vbo->unbindArrays();
 }
 
