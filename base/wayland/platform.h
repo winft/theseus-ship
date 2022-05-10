@@ -11,7 +11,13 @@
 #include "utils/algorithm.h"
 
 #include <cassert>
+#include <memory>
 #include <vector>
+
+namespace Wrapland::Server
+{
+class drm_lease_device_v1;
+}
 
 namespace KWin::base::wayland
 {
@@ -47,6 +53,9 @@ public:
         }
         return vec;
     }
+
+    // A Wayland DRM node
+    std::unique_ptr<Wrapland::Server::drm_lease_device_v1> drm_lease_device;
 };
 
 }

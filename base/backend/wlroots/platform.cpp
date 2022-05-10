@@ -8,12 +8,9 @@
 #include "non_desktop_output.h"
 #include "output.h"
 
-#include "base/wayland/server.h"
-#include "main.h"
 #include "render/backend/wlroots/output.h"
 #include "render/backend/wlroots/platform.h"
 #include "wayland_logging.h"
-#include "win/space.h"
 
 #include <Wrapland/Server/display.h>
 #include <stdexcept>
@@ -87,20 +84,19 @@ void handle_new_output(struct wl_listener* listener, void* data)
 }
 
 platform::platform(Wrapland::Server::Display* display)
-    : platform(wlr_backend_autocreate(display->native()))
+    : platform(display, wlr_backend_autocreate(display->native()))
 {
 }
 
-platform::platform(wlr_backend* backend)
-    : destroyed{std::make_unique<event_receiver<platform>>()}
+platform::platform(Wrapland::Server::Display* display, wlr_backend* backend)
+    : backend{backend}
+    , destroyed{std::make_unique<event_receiver<platform>>()}
     , new_output{std::make_unique<event_receiver<platform>>()}
 {
     align_horizontal = qgetenv("KWIN_WLR_OUTPUT_ALIGN_HORIZONTAL") == QByteArrayLiteral("1");
 
     // TODO(romangg): Make this dependent on KWIN_WL debug verbosity.
     wlr_log_init(WLR_DEBUG, nullptr);
-
-    this->backend = backend;
 
     destroyed->receiver = this;
     destroyed->event.notify = handle_destroy;
@@ -110,7 +106,9 @@ platform::platform(wlr_backend* backend)
     new_output->event.notify = handle_new_output;
     wl_signal_add(&backend->events.new_output, &new_output->event);
 
-    setup_drm_leasing();
+    if (auto drm = get_drm_backend(backend)) {
+        setup_drm_leasing(display, drm);
+    }
 }
 
 platform::platform(platform&& other) noexcept
@@ -191,25 +189,19 @@ void process_drm_leased(wlroots::platform& platform, Wrapland::Server::drm_lease
     qCDebug(KWIN_WL) << "DRM resources have been leased to client";
 }
 
-void platform::setup_drm_leasing()
+void platform::setup_drm_leasing(Wrapland::Server::Display* display, wlr_backend* drm_backend)
 {
-    auto drm_backend = get_drm_backend(backend);
-    if (!drm_backend) {
-        return;
-    }
+    drm_lease_device = display->createDrmLeaseDeviceV1();
 
-    auto server = waylandServer();
-    server->create_drm_lease_device();
-
-    connect(server->drm_lease_device(),
+    connect(drm_lease_device.get(),
             &Wrapland::Server::drm_lease_device_v1::needs_new_client_fd,
             this,
-            [device = server->drm_lease_device(), drm_backend] {
+            [this, drm_backend] {
                 // TODO(romangg): wait in case not DRM master at the moment.
                 auto fd = wlr_drm_backend_get_non_master_fd(drm_backend);
-                device->update_fd(fd);
+                drm_lease_device->update_fd(fd);
             });
-    connect(server->drm_lease_device(),
+    connect(drm_lease_device.get(),
             &Wrapland::Server::drm_lease_device_v1::leased,
             this,
             [this](auto lease) {

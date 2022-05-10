@@ -230,11 +230,6 @@ Wrapland::Server::KdeIdle* server::kde_idle() const
     return globals->kde_idle.get();
 }
 
-Wrapland::Server::drm_lease_device_v1* server::drm_lease_device() const
-{
-    return globals->drm_lease_device_v1.get();
-}
-
 Wrapland::Server::Surface*
 server::find_foreign_parent_for_surface(Wrapland::Server::Surface* surface)
 {
@@ -382,13 +377,6 @@ void server::destroy_xwayland_connection()
     disconnect(m_xwayland.destroyConnection);
     m_xwayland.client->destroy();
     m_xwayland.client = nullptr;
-}
-
-void server::create_drm_lease_device()
-{
-    if (!drm_lease_device()) {
-        globals->drm_lease_device_v1 = display->createDrmLeaseDeviceV1();
-    }
 }
 
 void server::create_addons(std::function<void()> callback)

@@ -93,7 +93,6 @@ public:
     Wrapland::Server::PlasmaWindowManager* window_management() const;
 
     Wrapland::Server::KdeIdle* kde_idle() const;
-    Wrapland::Server::drm_lease_device_v1* drm_lease_device() const;
 
     /**
      * @returns a parent of a surface imported with the foreign protocol, if any
@@ -105,8 +104,6 @@ public:
      */
     int create_xwayland_connection();
     void destroy_xwayland_connection();
-
-    void create_drm_lease_device();
 
     bool is_screen_locked() const;
     /**
