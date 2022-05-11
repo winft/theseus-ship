@@ -299,6 +299,7 @@ public:
 
     bool handleDndNotify(xcb_window_t window, QPoint const& point);
     bool handleEnterNotifiy(xcb_window_t window, QPoint const& point, QDateTime const& timestamp);
+    bool remainActiveOnFullscreen() const;
 
     std::unique_ptr<input::gesture_recognizer> gesture_recognizer;
     KSharedConfig::Ptr config;
@@ -373,6 +374,7 @@ private:
                             ElectricBorderAction* oldValue,
                             ElectricBorderAction newValue);
     void setActionForTouchBorder(ElectricBorder border, ElectricBorderAction newValue);
+    void setRemainActiveOnFullscreen(bool remainActive);
     ElectricBorderAction actionForEdge(screen_edge* edge) const;
     ElectricBorderAction actionForTouchEdge(screen_edge* edge) const;
     void createEdgeForClient(Toplevel* window, ElectricBorder border);
@@ -382,6 +384,7 @@ private:
     std::vector<screen_edge*> edges;
 
     QMap<ElectricBorder, ElectricBorderAction> touch_actions;
+    bool m_remainActiveOnFullscreen{false};
 };
 
 /**********************************************************

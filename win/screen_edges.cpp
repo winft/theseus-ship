@@ -519,15 +519,10 @@ void screen_edge::setGeometry(QRect const& geometry)
 
 void screen_edge::checkBlocking()
 {
-    if (isCorner()) {
-        return;
-    }
+    auto window = edger->space.activeClient();
+    auto const newValue = !edger->remainActiveOnFullscreen() && window
+        && window->control->fullscreen() && window->frameGeometry().contains(geometry.center());
 
-    bool newValue = false;
-    if (auto client = edger->space.activeClient()) {
-        newValue
-            = client->control->fullscreen() && client->frameGeometry().contains(geometry.center());
-    }
     if (newValue == is_blocked) {
         return;
     }
@@ -754,6 +749,9 @@ void screen_edger::reconfigure()
         return;
     }
 
+    KConfigGroup screenEdgesConfig = config->group("ScreenEdges");
+    setRemainActiveOnFullscreen(screenEdgesConfig.readEntry("RemainActiveOnFullscreen", false));
+
     // TODO: migrate settings to a group ScreenEdges
     auto windowsConfig = config->group("Windows");
 
@@ -879,6 +877,11 @@ void screen_edger::setActionForTouchBorder(ElectricBorder border, ElectricBorder
             (*it)->set_touch_action(newValue);
         }
     }
+}
+
+void screen_edger::setRemainActiveOnFullscreen(bool remainActive)
+{
+    m_remainActiveOnFullscreen = remainActive;
 }
 
 void screen_edger::updateLayout()
@@ -1196,10 +1199,10 @@ screen_edge* screen_edger::createEdge(ElectricBorder border,
             }
         }
     }
+
     connect(edge, &screen_edge::approaching, this, &screen_edger::approaching);
-    if (edge->isScreenEdge()) {
-        connect(this, &screen_edger::checkBlocking, edge, &screen_edge::checkBlocking);
-    }
+    connect(this, &screen_edger::checkBlocking, edge, &screen_edge::checkBlocking);
+
     return edge;
 }
 
@@ -1544,6 +1547,10 @@ bool screen_edger::handleDndNotify(xcb_window_t window, QPoint const& point)
         }
     }
     return false;
+}
+bool screen_edger::remainActiveOnFullscreen() const
+{
+    return m_remainActiveOnFullscreen;
 }
 
 void screen_edger::ensureOnTop()
