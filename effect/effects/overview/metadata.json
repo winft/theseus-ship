@@ -2,7 +2,7 @@
     "KPlugin": {
         "Category": "Window Management",
         "Description": "Allows you to overview virtual desktops and windows",
-        "EnabledByDefault": false,
+        "EnabledByDefault": true,
         "Id": "overview",
         "License": "GPL",
         "Name": "Overview"
