@@ -91,6 +91,7 @@ public:
     uint32_t acked_configure{0};
 
     bool must_place{false};
+    bool inhibit_idle{false};
 
     window(Wrapland::Server::Surface* surface);
     ~window() = default;

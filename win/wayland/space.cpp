@@ -7,6 +7,7 @@
 
 #include "appmenu.h"
 #include "deco.h"
+#include "idle.h"
 #include "layer_shell.h"
 #include "plasma_shell.h"
 #include "plasma_window.h"
@@ -19,7 +20,6 @@
 #include "xdg_activation.h"
 #include "xdg_shell.h"
 
-#include "base/wayland/idle_inhibition.h"
 #include "base/wayland/server.h"
 #include "win/input.h"
 #include "win/internal_window.h"
@@ -35,11 +35,16 @@
 #include "win/tabbox/tabbox.h"
 #endif
 
+#include <Wrapland/Server/idle_inhibit_v1.h>
+#include <Wrapland/Server/kde_idle.h>
+
 namespace KWin::win::wayland
 {
 
 space::space(base::wayland::server* server)
     : server{server}
+    , kde_idle{server->display->createIdle()}
+    , idle_inhibit_manager_v1{server->display->createIdleInhibitManager()}
 {
     namespace WS = Wrapland::Server;
 
@@ -68,11 +73,16 @@ space::space(base::wayland::server* server)
                      &WS::PlasmaShell::surfaceCreated,
                      [this](auto surface) { handle_new_plasma_shell_surface(this, surface); });
 
-    auto idle_inhibition = new base::wayland::idle_inhibition(server->globals->kde_idle.get());
-    QObject::connect(
-        this, &space::wayland_window_added, idle_inhibition, [idle_inhibition](auto window) {
-            idle_inhibition->register_window(static_cast<win::wayland::window*>(window));
-        });
+    QObject::connect(this, &space::currentDesktopChanged, kde_idle.get(), [this] {
+        for (auto win : m_windows) {
+            if (!win->control) {
+                continue;
+            }
+            if (auto wlwin = qobject_cast<wayland::window*>(win)) {
+                idle_update(*kde_idle, *wlwin);
+            }
+        }
+    });
 
     QObject::connect(server->globals->appmenu_manager.get(),
                      &WS::AppmenuManager::appmenuCreated,
@@ -210,6 +220,8 @@ void space::handle_window_added(wayland::window* window)
             stacking_order->update(true);
             updateClientArea();
         });
+
+        idle_setup(*kde_idle, *window);
     }
 
     adopt_transient_children(this, window);

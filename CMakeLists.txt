@@ -775,7 +775,6 @@ set(kwin_WAYLAND_SRCS
    base/backend/wlroots/platform.cpp
    base/seat/backend/wlroots/session.cpp
    base/wayland/filtered_display.cpp
-   base/wayland/idle_inhibition.cpp
    base/wayland/output.cpp
    base/wayland/server.cpp
    debug/console/wayland/input_device_model.cpp

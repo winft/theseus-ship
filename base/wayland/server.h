@@ -92,8 +92,6 @@ public:
     Wrapland::Server::LayerShellV1* layer_shell() const;
     Wrapland::Server::PlasmaWindowManager* window_management() const;
 
-    Wrapland::Server::KdeIdle* kde_idle() const;
-
     /**
      * @returns a parent of a surface imported with the foreign protocol, if any
      */
@@ -145,7 +143,6 @@ public:
      */
     socket_pair_connection create_connection();
 
-    void simulate_user_activity();
     void update_key_state(input::keyboard_leds leds);
 
     std::unique_ptr<Wrapland::Server::Display> display;

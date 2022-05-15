@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "lib/app.h"
 
-#include "base/wayland/server.h"
 #include "win/screen.h"
 #include "win/space.h"
 #include "win/stacking.h"
@@ -80,7 +79,7 @@ void TestIdleInhibition::cleanup()
 
 void TestIdleInhibition::testInhibit()
 {
-    auto idle = waylandServer()->kde_idle();
+    auto idle = Test::app()->workspace->kde_idle.get();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);
@@ -127,7 +126,7 @@ void TestIdleInhibition::testDontInhibitWhenNotOnCurrentDesktop()
     QCOMPARE(win::virtual_desktop_manager::self()->count(), 2u);
 
     // Get reference to the idle interface.
-    auto idle = waylandServer()->kde_idle();
+    auto idle = Test::app()->workspace->kde_idle.get();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);
@@ -185,7 +184,7 @@ void TestIdleInhibition::testDontInhibitWhenMinimized()
     // associated surface is minimized.
 
     // Get reference to the idle interface.
-    auto idle = waylandServer()->kde_idle();
+    auto idle = Test::app()->workspace->kde_idle.get();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);
@@ -233,7 +232,7 @@ void TestIdleInhibition::testDontInhibitWhenUnmapped()
     // when the associated client is unmapped.
 
     // Get reference to the idle interface.
-    auto idle = waylandServer()->kde_idle();
+    auto idle = Test::app()->workspace->kde_idle.get();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);
@@ -297,7 +296,7 @@ void TestIdleInhibition::testDontInhibitWhenLeftCurrentDesktop()
     QCOMPARE(win::virtual_desktop_manager::self()->count(), 2u);
 
     // Get reference to the idle interface.
-    auto idle = waylandServer()->kde_idle();
+    auto idle = Test::app()->workspace->kde_idle.get();
     QVERIFY(idle);
     QVERIFY(!idle->isInhibited());
     QSignalSpy inhibitedSpy(idle, &KdeIdle::inhibitedChanged);

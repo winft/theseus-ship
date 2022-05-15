@@ -15,6 +15,8 @@
 
 namespace Wrapland::Server
 {
+class IdleInhibitManagerV1;
+class KdeIdle;
 class PlasmaShellSurface;
 class Surface;
 }
@@ -56,7 +58,11 @@ public:
     void handle_window_removed(wayland::window* window);
 
     base::wayland::server* server;
+    std::unique_ptr<Wrapland::Server::KdeIdle> kde_idle;
+    std::unique_ptr<Wrapland::Server::IdleInhibitManagerV1> idle_inhibit_manager_v1;
+
     std::unique_ptr<win::wayland::xdg_activation> activation;
+
     QVector<Wrapland::Server::PlasmaShellSurface*> plasma_shell_surfaces;
 
 protected:

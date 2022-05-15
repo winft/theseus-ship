@@ -123,8 +123,6 @@ void server::create_globals()
     globals->data_device_manager = display->createDataDeviceManager();
     globals->primary_selection_device_manager = display->createPrimarySelectionDeviceManager();
     globals->data_control_manager_v1 = display->create_data_control_manager_v1();
-    globals->kde_idle = display->createIdle();
-    globals->idle_inhibit_manager_v1 = display->createIdleInhibitManager();
 
     globals->plasma_shell = display->createPlasmaShell();
     globals->appmenu_manager = display->createAppmenuManager();
@@ -223,11 +221,6 @@ Wrapland::Server::LayerShellV1* server::layer_shell() const
 Wrapland::Server::PlasmaWindowManager* server::window_management() const
 {
     return globals->plasma_window_manager.get();
-}
-
-Wrapland::Server::KdeIdle* server::kde_idle() const
-{
-    return globals->kde_idle.get();
 }
 
 Wrapland::Server::Surface*
@@ -476,13 +469,6 @@ bool server::has_screen_locker_integration() const
 bool server::has_global_shortcut_support() const
 {
     return !(m_initFlags & start_options::no_global_shortcuts);
-}
-
-void server::simulate_user_activity()
-{
-    if (globals->kde_idle) {
-        globals->kde_idle->simulateUserActivity();
-    }
 }
 
 void server::update_key_state(input::keyboard_leds leds)
