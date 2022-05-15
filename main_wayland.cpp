@@ -62,6 +62,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #include <sched.h>
+#include <sys/resource.h>
 
 #include <iostream>
 #include <iomanip>
@@ -73,6 +74,39 @@ Q_IMPORT_PLUGIN(KWinIdleTimePoller)
 
 namespace KWin
 {
+
+static rlimit originalNofileLimit = {
+    .rlim_cur = 0,
+    .rlim_max = 0,
+};
+
+static bool bumpNofileLimit()
+{
+    if (getrlimit(RLIMIT_NOFILE, &originalNofileLimit) == -1) {
+        std::cerr << "Failed to bump RLIMIT_NOFILE limit, getrlimit() failed: " << strerror(errno)
+                  << std::endl;
+        return false;
+    }
+
+    rlimit limit = originalNofileLimit;
+    limit.rlim_cur = limit.rlim_max;
+
+    if (setrlimit(RLIMIT_NOFILE, &limit) == -1) {
+        std::cerr << "Failed to bump RLIMIT_NOFILE limit, setrlimit() failed: " << strerror(errno)
+                  << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+static void restoreNofileLimit()
+{
+    if (setrlimit(RLIMIT_NOFILE, &originalNofileLimit) == -1) {
+        std::cerr << "Failed to restore RLIMIT_NOFILE limit, legacy apps might be broken"
+                  << std::endl;
+    }
+}
 
 static void sighandler(int)
 {
@@ -385,12 +419,20 @@ int main(int argc, char * argv[])
     if (signal(SIGHUP, KWin::sighandler) == SIG_IGN)
         signal(SIGHUP, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
+
     // ensure that no thread takes SIGUSR
     sigset_t userSignals;
     sigemptyset(&userSignals);
     sigaddset(&userSignals, SIGUSR1);
     sigaddset(&userSignals, SIGUSR2);
     pthread_sigmask(SIG_BLOCK, &userSignals, nullptr);
+
+    // It's easy to exceed the file descriptor limit because many things are backed using fds
+    // nowadays, e.g. dmabufs, shm buffers, etc. Bump the RLIMIT_NOFILE limit to handle that.
+    // Some apps may still use select(), so we reset the limit to its original value in fork().
+    if (KWin::bumpNofileLimit()) {
+        pthread_atfork(nullptr, nullptr, KWin::restoreNofileLimit);
+    }
 
     auto environment = QProcessEnvironment::systemEnvironment();
 
