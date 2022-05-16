@@ -40,24 +40,24 @@ void stacking_tree::update()
     winlist = workspace()->stacking_order->sorted();
 
     if (xcbtree && !xcbtree->is_null()) {
-        std::unique_ptr<base::x11::xcb::tree> tree{std::move(xcbtree)};
-        xcb_window_t* windows = tree->children();
-        const auto count = tree->data()->children_len;
+        // this constructs a vector of references with the start and end
+        // of the xcbtree C pointer array of type xcb_window_t, we use reference_wrapper to only
+        // create an vector of references instead of making a copy of each element into the vector.
+        std::vector<std::reference_wrapper<xcb_window_t>> windows(
+            xcbtree->children(), xcbtree->children() + xcbtree->data()->children_len);
+        auto const& unmanaged_list = workspace()->unmanagedList();
 
-        auto const unmanageds = workspace()->unmanagedList();
-        auto foundUnmanagedCount = unmanageds.size();
-        for (size_t i = 0; i < count; ++i) {
-            for (auto const& u : unmanageds) {
-                if (u->xcb_window() == windows[i]) {
-                    winlist.push_back(u);
-                    foundUnmanagedCount--;
-                    break;
-                }
-            }
-            if (foundUnmanagedCount == 0) {
-                break;
+        for (auto const& win : windows) {
+            auto unmanaged = std::find_if(unmanaged_list.begin(),
+                                          unmanaged_list.end(),
+                                          [&win](auto u) { return win == u->xcb_window(); });
+
+            if (unmanaged != std::end(unmanaged_list)) {
+                winlist.push_back(*unmanaged);
             }
         }
+
+        xcbtree.reset();
     }
 
     for (auto const& toplevel : workspace()->windows()) {
