@@ -924,10 +924,6 @@ target_link_libraries(kwin_wayland
     KF5::DBusAddons
 )
 
-if (HAVE_LIBCAP)
-    target_link_libraries(kwin_wayland ${Libcap_LIBRARIES})
-endif()
-
 install(TARGETS kwin_wayland_lib ${INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
 install(TARGETS kwin_wayland ${INSTALL_TARGETS_DEFAULT_ARGS})
 if (HAVE_LIBCAP)

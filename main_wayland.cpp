@@ -57,10 +57,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QWindow>
 
-#if HAVE_LIBCAP
-#include <sys/capability.h>
-#endif
-
 #include <sched.h>
 #include <sys/resource.h>
 
@@ -128,19 +124,13 @@ enum class RealTimeFlags
 };
 
 namespace {
-void gainRealTime(RealTimeFlags flags = RealTimeFlags::DontReset)
+void gainRealTime()
 {
 #if HAVE_SCHED_RESET_ON_FORK
     const int minPriority = sched_get_priority_min(SCHED_RR);
-    struct sched_param sp;
+    sched_param sp;
     sp.sched_priority = minPriority;
-    int policy = SCHED_RR;
-    if (flags == RealTimeFlags::ResetOnFork) {
-        policy |= SCHED_RESET_ON_FORK;
-    }
-    sched_setscheduler(0, policy, &sp);
-#else
-    Q_UNUSED(flags);
+    sched_setscheduler(0, SCHED_RR | SCHED_RESET_ON_FORK, &sp);
 #endif
 }
 }
@@ -231,10 +221,6 @@ void ApplicationWayland::start()
 
     input.reset(new input::backend::wlroots::platform(*base));
     static_cast<input::wayland::platform&>(*input).install_shortcuts();
-
-    // now libinput thread has been created, adjust scheduler to not leak into other processes
-    // TODO(romangg): can be removed?
-    gainRealTime(RealTimeFlags::ResetOnFork);
 
     try {
         render->init();
@@ -369,27 +355,6 @@ void ApplicationWayland::startSession()
     Q_EMIT startup_finished();
 }
 
-void dropNiceCapability()
-{
-#if HAVE_LIBCAP
-    cap_t caps = cap_get_proc();
-    if (!caps) {
-        return;
-    }
-    cap_value_t capList[] = { CAP_SYS_NICE };
-    if (cap_set_flag(caps, CAP_PERMITTED, 1, capList, CAP_CLEAR) == -1) {
-        cap_free(caps);
-        return;
-    }
-    if (cap_set_flag(caps, CAP_EFFECTIVE, 1, capList, CAP_CLEAR) == -1) {
-        cap_free(caps);
-        return;
-    }
-    cap_set_proc(caps);
-    cap_free(caps);
-#endif
-}
-
 } // namespace
 
 int main(int argc, char * argv[])
@@ -410,7 +375,6 @@ int main(int argc, char * argv[])
     KWin::Application::setupMalloc();
     KWin::Application::setupLocalizedString();
     KWin::gainRealTime();
-    KWin::dropNiceCapability();
 
     if (signal(SIGTERM, KWin::sighandler) == SIG_IGN)
         signal(SIGTERM, SIG_IGN);
