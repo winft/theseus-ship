@@ -318,7 +318,13 @@ bool Rules::matchWMClass(const QByteArray& match_class, const QByteArray& match_
 {
     if (wmclass.match != UnimportantMatch) {
         // TODO optimize?
-        QByteArray cwmclass = wmclasscomplete ? match_name + ' ' + match_class : match_class;
+        QByteArray cwmclass;
+        if (wmclasscomplete) {
+            cwmclass.append(match_name);
+            cwmclass.append(' ');
+        }
+        cwmclass.append(match_class);
+
         if (wmclass.match == RegExpMatch
             && !QRegularExpression(QString::fromUtf8(wmclass.data))
                     .match(QString::fromUtf8(cwmclass))

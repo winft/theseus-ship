@@ -461,9 +461,14 @@ QByteArray GLPlatform::versionToString8(qint64 version)
     int minor = (version >> 16) & 0xffff;
     int patch = version & 0xffff;
 
-    QByteArray string = QByteArray::number(major) + '.' + QByteArray::number(minor);
-    if (patch != 0)
-        string += '.' + QByteArray::number(patch);
+    auto string = QByteArray::number(major);
+    string.append('.');
+    string.append(QByteArray::number(minor));
+
+    if (patch != 0) {
+        string.append('.');
+        string.append(QByteArray::number(patch));
+    }
 
     return string;
 }
