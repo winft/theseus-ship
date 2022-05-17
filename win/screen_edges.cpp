@@ -521,7 +521,9 @@ void screen_edge::checkBlocking()
 {
     auto window = edger->space.activeClient();
     auto const newValue = !edger->remainActiveOnFullscreen() && window
-        && window->control->fullscreen() && window->frameGeometry().contains(geometry.center());
+        && window->control->fullscreen() && window->frameGeometry().contains(geometry.center())
+        && !(edger->space.render.effects
+             && edger->space.render.effects->hasActiveFullScreenEffect());
 
     if (newValue == is_blocked) {
         return;

@@ -683,6 +683,7 @@ void effects_handler_impl::setActiveFullScreenEffect(Effect* e)
     Q_EMIT activeFullScreenEffectChanged();
     if (activeChanged) {
         Q_EMIT hasActiveFullScreenEffectChanged();
+        m_compositor->space->edges->checkBlocking();
     }
 }
 
