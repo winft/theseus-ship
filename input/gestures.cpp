@@ -41,7 +41,7 @@ void swipe_gesture::setStartGeometry(const QRect& geometry)
     Q_ASSERT(m_maximumY >= m_minimumY);
 }
 
-qreal swipe_gesture::minimumDeltaReachedProgress(const QSizeF& delta) const
+qreal swipe_gesture::deltaToProgress(const QSizeF& delta) const
 {
     if (!m_minimumDeltaRelevant || m_minimumDelta.isNull()) {
         return 1.0;
@@ -61,19 +61,19 @@ qreal swipe_gesture::minimumDeltaReachedProgress(const QSizeF& delta) const
 
 bool swipe_gesture::minimumDeltaReached(const QSizeF& delta) const
 {
-    return minimumDeltaReachedProgress(delta) >= 1.0;
+    return deltaToProgress(delta) >= 1.0;
 }
 
 pinch_gesture::~pinch_gesture() = default;
 
-qreal pinch_gesture::minimumScaleDeltaReachedProgress(const qreal& scaleDelta) const
+qreal pinch_gesture::scaleDeltaToProgress(const qreal& scaleDelta) const
 {
     return std::abs(scaleDelta - 1) / minimumScaleDelta();
 }
 
 bool pinch_gesture::minimumScaleDeltaReached(const qreal& scaleDelta) const
 {
-    return minimumScaleDeltaReachedProgress(scaleDelta) >= 1.0;
+    return scaleDeltaToProgress(scaleDelta) >= 1.0;
 }
 
 gesture_recognizer::~gesture_recognizer() = default;
@@ -262,7 +262,7 @@ void gesture_recognizer::updateSwipeGesture(const QSizeF& delta)
 
     // Send progress update
     for (swipe_gesture* g : std::as_const(m_activeSwipeGestures)) {
-        Q_EMIT g->progress(g->minimumDeltaReachedProgress(m_currentDelta));
+        Q_EMIT g->progress(g->deltaToProgress(m_currentDelta));
         Q_EMIT g->deltaProgress(m_currentDelta);
     }
 }
@@ -366,7 +366,7 @@ void gesture_recognizer::updatePinchGesture(qreal scale, qreal angleDelta, const
     }
 
     for (pinch_gesture* g : std::as_const(m_activePinchGestures)) {
-        Q_EMIT g->progress(g->minimumScaleDeltaReachedProgress(scale));
+        Q_EMIT g->progress(g->scaleDeltaToProgress(scale));
     }
 }
 
