@@ -68,7 +68,7 @@ pinch_gesture::~pinch_gesture() = default;
 
 qreal pinch_gesture::scaleDeltaToProgress(const qreal& scaleDelta) const
 {
-    return std::abs(scaleDelta - 1) / minimumScaleDelta();
+    return std::clamp(std::abs(scaleDelta - 1) / minimumScaleDelta(), 0.0, 1.0);
 }
 
 bool pinch_gesture::minimumScaleDeltaReached(const qreal& scaleDelta) const
