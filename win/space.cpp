@@ -94,6 +94,7 @@ space* space::_self = nullptr;
 space::space()
     : QObject(nullptr)
     , outline(std::make_unique<render::outline>())
+    , deco(std::make_unique<deco::bridge>(*this))
     , m_userActionsMenu(new win::user_actions_menu(this))
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
@@ -130,9 +131,8 @@ space::space()
     connect(this, &space::currentDesktopChanged, m_compositor, &render::compositor::addRepaintFull);
     connect(m_compositor, &QObject::destroyed, this, [this] { m_compositor = nullptr; });
 
-    auto decorationBridge = deco::bridge::create(this);
-    decorationBridge->init();
-    connect(this, &space::configChanged, decorationBridge, &deco::bridge::reconfigure);
+    deco->init();
+    connect(this, &space::configChanged, deco.get(), &deco::bridge::reconfigure);
 
     connect(m_sessionManager,
             &win::session_manager::loadSessionRequested,
@@ -658,10 +658,10 @@ QString space::supportInformation() const
         support.append(QStringLiteral("\n"));
     }
 
-    if (auto bridge = deco::bridge::self()) {
+    if (deco) {
         support.append(QStringLiteral("Decoration\n"));
         support.append(QStringLiteral("==========\n"));
-        support.append(bridge->supportInformation());
+        support.append(deco->supportInformation());
         support.append(QStringLiteral("\n"));
     }
 

@@ -62,7 +62,7 @@ settings::settings(KDecoration2::DecorationSettings* parent)
         disconnect(c);
     });
     connect(workspace(), &win::space::configChanged, this, &settings::readSettings);
-    connect(bridge::self(), &bridge::metaDataLoaded, this, &settings::readSettings);
+    connect(workspace()->deco.get(), &bridge::metaDataLoaded, this, &settings::readSettings);
 }
 
 settings::~settings() = default;
@@ -196,7 +196,7 @@ void settings::readSettings()
     if (m_autoBorderSize) {
         /* Falls back to Normal border size, if the plugin does not provide a valid recommendation.
          */
-        size = stringToSize(bridge::self()->recommendedBorderSize());
+        size = stringToSize(workspace()->deco->recommendedBorderSize());
     }
     if (size != m_borderSize) {
         m_borderSize = size;

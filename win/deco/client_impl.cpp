@@ -276,7 +276,7 @@ QColor client_impl::color(KDecoration2::ColorGroup group, KDecoration2::ColorRol
 
 void client_impl::requestShowToolTip(const QString& text)
 {
-    if (!bridge::self()->showToolTips()) {
+    if (!workspace()->deco->showToolTips()) {
         return;
     }
 

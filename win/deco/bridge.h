@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include <kwinglobals.h>
+#include <kwin_export.h>
 
 #include <KDecoration2/Private/DecorationBridge>
 
@@ -35,7 +35,13 @@ class DecorationSettings;
 
 namespace KWin
 {
+
 class Toplevel;
+
+namespace win
+{
+class space;
+}
 
 namespace win::deco
 {
@@ -46,9 +52,10 @@ class KWIN_EXPORT bridge : public KDecoration2::DecorationBridge
 {
     Q_OBJECT
 public:
+    bridge(win::space& space);
     ~bridge() override;
 
-    static bool hasPlugin();
+    bool hasPlugin();
 
     void init();
     KDecoration2::Decoration* createDecoration(window* window);
@@ -88,16 +95,17 @@ private:
     void initPlugin();
     QString readTheme() const;
     void readDecorationOptions();
-    KPluginFactory* m_factory;
-    bool m_showToolTips;
+    void recreateDecorations();
+
+    KPluginFactory* m_factory{nullptr};
+    bool m_showToolTips{false};
     QString m_recommendedBorderSize;
     QString m_plugin;
     QString m_defaultTheme;
     QString m_theme;
     QSharedPointer<KDecoration2::DecorationSettings> m_settings;
-    bool m_noPlugin;
-
-    KWIN_SINGLETON(bridge)
+    bool m_noPlugin{false};
+    win::space& space;
 };
 
 }

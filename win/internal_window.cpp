@@ -533,7 +533,7 @@ double internal_window::buffer_scale_internal() const
 void internal_window::createDecoration(const QRect& rect)
 {
     control->deco().window = new deco::window(this);
-    auto decoration = deco::bridge::self()->createDecoration(control->deco().window);
+    auto decoration = workspace()->deco->createDecoration(control->deco().window);
 
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);

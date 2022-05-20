@@ -614,7 +614,7 @@ void QuickTilingTest::testQuickTilingTouchMove()
     // When there are no borders, there is no change to them when quick-tiling.
     // TODO: we should test both cases with fixed fake decoration for autotests.
     auto const hasBorders
-        = win::deco::bridge::self()->settings()->borderSize() != KDecoration2::BorderSize::None;
+        = workspace()->deco->settings()->borderSize() != KDecoration2::BorderSize::None;
 
     QCOMPARE(quickTileChangedSpy.count(), 1);
     QTEST(c->control->quicktiling(), "expectedMode");

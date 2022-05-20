@@ -53,22 +53,14 @@ static const QString s_defaultPlugin = QStringLiteral(BREEZE_KDECORATION_PLUGIN_
 static const QString s_defaultPlugin = s_aurorae;
 #endif
 
-KWIN_SINGLETON_FACTORY(bridge)
-
-bridge::bridge(QObject* parent)
-    : KDecoration2::DecorationBridge(parent)
-    , m_factory(nullptr)
-    , m_showToolTips(false)
-    , m_settings()
-    , m_noPlugin(false)
+bridge::bridge(win::space& space)
+    : m_settings()
+    , space{space}
 {
     readDecorationOptions();
 }
 
-bridge::~bridge()
-{
-    s_self = nullptr;
-}
+bridge::~bridge() = default;
 
 QString bridge::readPlugin()
 {
@@ -92,11 +84,7 @@ void bridge::readDecorationOptions()
 
 bool bridge::hasPlugin()
 {
-    auto bridge = bridge::self();
-    if (!bridge) {
-        return false;
-    }
-    return !bridge->m_noPlugin && bridge->m_factory;
+    return !m_noPlugin && m_factory;
 }
 
 void bridge::init()
@@ -140,9 +128,9 @@ void bridge::initPlugin()
     }
 }
 
-static void recreateDecorations()
+void bridge::recreateDecorations()
 {
-    for (auto win : workspace()->m_windows) {
+    for (auto win : space.m_windows) {
         if (win->control) {
             win->updateDecoration(true, true);
         }

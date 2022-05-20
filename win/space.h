@@ -76,6 +76,11 @@ class Toplevel;
 namespace win
 {
 
+namespace deco
+{
+class bridge;
+}
+
 namespace x11
 {
 enum class predicate_match;
@@ -106,6 +111,7 @@ public:
     render::compositor* m_compositor{nullptr};
     KStartupInfo* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
+    std::unique_ptr<deco::bridge> deco;
 
     QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
     QScopedPointer<base::x11::event_filter> m_movingClientFilter;
