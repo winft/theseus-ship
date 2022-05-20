@@ -94,7 +94,7 @@ space* space::_self = nullptr;
 space::space()
     : QObject(nullptr)
     , outline(std::make_unique<render::outline>())
-    , deco(std::make_unique<deco::bridge>(*this))
+    , deco{std::make_unique<deco::bridge<space>>(*this)}
     , m_userActionsMenu(new win::user_actions_menu(this))
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
@@ -132,7 +132,7 @@ space::space()
     connect(m_compositor, &QObject::destroyed, this, [this] { m_compositor = nullptr; });
 
     deco->init();
-    connect(this, &space::configChanged, deco.get(), &deco::bridge::reconfigure);
+    connect(this, &space::configChanged, deco->qobject.get(), [this] { deco->reconfigure(); });
 
     connect(m_sessionManager,
             &win::session_manager::loadSessionRequested,

@@ -78,6 +78,7 @@ namespace win
 
 namespace deco
 {
+template<typename Space>
 class bridge;
 }
 
@@ -111,7 +112,7 @@ public:
     render::compositor* m_compositor{nullptr};
     KStartupInfo* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
-    std::unique_ptr<deco::bridge> deco;
+    std::unique_ptr<deco::bridge<space>> deco;
 
     QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
     QScopedPointer<base::x11::event_filter> m_movingClientFilter;

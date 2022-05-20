@@ -62,7 +62,10 @@ settings::settings(KDecoration2::DecorationSettings* parent)
         disconnect(c);
     });
     connect(workspace(), &win::space::configChanged, this, &settings::readSettings);
-    connect(workspace()->deco.get(), &bridge::metaDataLoaded, this, &settings::readSettings);
+    connect(workspace()->deco->qobject.get(),
+            &bridge_qobject::metaDataLoaded,
+            this,
+            &settings::readSettings);
 }
 
 settings::~settings() = default;
