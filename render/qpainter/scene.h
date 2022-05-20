@@ -50,7 +50,7 @@ public:
     bool initFailed() const override;
     render::effect_frame* createEffectFrame(effect_frame_impl* frame) override;
     std::unique_ptr<render::shadow> createShadow(Toplevel* toplevel) override;
-    Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl* impl) override;
+    win::deco::renderer* createDecorationRenderer(win::deco::client_impl* impl) override;
     void handle_screen_geometry_change(QSize const& size) override;
 
     bool animationsSupported() const override

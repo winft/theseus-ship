@@ -24,10 +24,10 @@ namespace base
 class platform;
 }
 
-namespace Decoration
+namespace win::deco
 {
-class Renderer;
-class DecoratedClientImpl;
+class client_impl;
+class renderer;
 }
 
 namespace render
@@ -111,12 +111,12 @@ public:
     virtual render::outline_visual* createOutline(render::outline* outline);
 
     /**
-     * Creates the Decoration::Renderer for the given @p client.
+     * Creates the deco renderer for the given @p client.
      *
      * The default implementation creates a Renderer suited for the Compositor, @c nullptr if there
      * is no Compositor.
      */
-    virtual Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl* client);
+    virtual win::deco::renderer* createDecorationRenderer(win::deco::client_impl* client);
     virtual void createEffectsHandler(render::compositor* compositor, render::scene* scene) = 0;
 
     /**

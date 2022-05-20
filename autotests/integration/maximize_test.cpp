@@ -122,8 +122,8 @@ void TestMaximized::testMaximizedPassedToDeco()
 
     // When there are no borders, there is no change to them when maximizing.
     // TODO: we should test both cases with fixed fake decoration for autotests.
-    const bool hasBorders = Decoration::DecorationBridge::self()->settings()->borderSize()
-        != KDecoration2::BorderSize::None;
+    auto const hasBorders
+        = win::deco::bridge::self()->settings()->borderSize() != KDecoration2::BorderSize::None;
 
     // now maximize
     QSignalSpy bordersChangedSpy(decoration, &KDecoration2::Decoration::bordersChanged);

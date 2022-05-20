@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_DECORATION_SETTINGS_H
-#define KWIN_DECORATION_SETTINGS_H
+#pragma once
 
 #include <KDecoration2/Private/DecorationSettingsPrivate>
 
@@ -26,20 +25,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class KConfigGroup;
 
-namespace KWin
-{
-namespace Decoration
+namespace KWin::win::deco
 {
 
-class SettingsImpl : public QObject, public KDecoration2::DecorationSettingsPrivate
+class settings : public QObject, public KDecoration2::DecorationSettingsPrivate
 {
     Q_OBJECT
 public:
-    explicit SettingsImpl(KDecoration2::DecorationSettings* parent);
-    ~SettingsImpl() override;
+    explicit settings(KDecoration2::DecorationSettings* parent);
+    ~settings() override;
+
     bool isAlphaChannelSupported() const override;
     bool isOnAllDesktopsAvailable() const override;
     bool isCloseOnDoubleClickOnMenu() const override;
+
     KDecoration2::BorderSize borderSize() const override
     {
         return m_borderSize;
@@ -70,7 +69,5 @@ private:
     bool m_closeDoubleClickMenu = false;
     QFont m_font;
 };
-} // Decoration
-} // KWin
 
-#endif
+}

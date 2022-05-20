@@ -70,7 +70,7 @@ render::outline_visual* platform::createOutline(render::outline* outline)
     return nullptr;
 }
 
-Decoration::Renderer* platform::createDecorationRenderer(Decoration::DecoratedClientImpl* client)
+win::deco::renderer* platform::createDecorationRenderer(win::deco::client_impl* client)
 {
     if (render::compositor::self()->scene()) {
         return render::compositor::self()->scene()->createDecorationRenderer(client);

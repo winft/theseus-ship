@@ -192,8 +192,7 @@ bool window::belongsToSameApplication(Toplevel const* other, win::same_client_ch
 bool window::noBorder() const
 {
     if (xdg_deco && xdg_deco->requestedMode() != WS::XdgDecoration::Mode::ClientSide) {
-        return !Decoration::DecorationBridge::hasPlugin() || user_no_border
-            || geometry_update.fullscreen;
+        return !deco::bridge::hasPlugin() || user_no_border || geometry_update.fullscreen;
     }
     return true;
 }
@@ -360,7 +359,7 @@ bool window::userCanSetFullScreen() const
 
 bool window::userCanSetNoBorder() const
 {
-    if (!Decoration::DecorationBridge::hasPlugin()) {
+    if (!deco::bridge::hasPlugin()) {
         return false;
     }
     if (!xdg_deco || xdg_deco->requestedMode() == WS::XdgDecoration::Mode::ClientSide) {
@@ -997,9 +996,8 @@ void window::updateDecoration(bool check_workspace_pos, bool force)
         control->destroy_decoration();
     } else {
         // Create decoration.
-        control->deco().window = new Decoration::window(this);
-        auto decoration
-            = Decoration::DecorationBridge::self()->createDecoration(control->deco().window);
+        control->deco().window = new deco::window(this);
+        auto decoration = deco::bridge::self()->createDecoration(control->deco().window);
         if (decoration) {
             QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
             connect(decoration, &KDecoration2::Decoration::shadowChanged, this, [this] {

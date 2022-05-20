@@ -17,8 +17,8 @@
 namespace KWin::render::backend::x11
 {
 
-deco_renderer::deco_renderer(Decoration::DecoratedClientImpl* client)
-    : Renderer(client)
+deco_renderer::deco_renderer(win::deco::client_impl* client)
+    : renderer(client)
     , m_scheduleTimer(new QTimer(this))
     , m_gc(XCB_NONE)
 {
@@ -27,7 +27,7 @@ deco_renderer::deco_renderer(Decoration::DecoratedClientImpl* client)
     m_scheduleTimer->setInterval(0);
     connect(m_scheduleTimer, &QTimer::timeout, this, &deco_renderer::render);
     connect(this,
-            &Renderer::renderScheduled,
+            &renderer::renderScheduled,
             m_scheduleTimer,
             static_cast<void (QTimer::*)()>(&QTimer::start));
 }
@@ -46,10 +46,10 @@ void deco_renderer::reparent(Toplevel* window)
     }
     disconnect(m_scheduleTimer, &QTimer::timeout, this, &deco_renderer::render);
     disconnect(this,
-               &Renderer::renderScheduled,
+               &renderer::renderScheduled,
                m_scheduleTimer,
                static_cast<void (QTimer::*)()>(&QTimer::start));
-    Renderer::reparent(window);
+    renderer::reparent(window);
 }
 
 void deco_renderer::render()

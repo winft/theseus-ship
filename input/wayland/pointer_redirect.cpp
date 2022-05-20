@@ -409,8 +409,7 @@ void pointer_redirect::cleanupInternalWindow(QWindow* old, QWindow* now)
     }
 }
 
-void pointer_redirect::cleanupDecoration(Decoration::DecoratedClientImpl* old,
-                                         Decoration::DecoratedClientImpl* now)
+void pointer_redirect::cleanupDecoration(win::deco::client_impl* old, win::deco::client_impl* now)
 {
     QObject::disconnect(notifiers.decoration_geometry);
     notifiers.decoration_geometry = QMetaObject::Connection();

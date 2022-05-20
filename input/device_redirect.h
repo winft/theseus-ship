@@ -17,9 +17,9 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Decoration
+namespace win::deco
 {
-class DecoratedClientImpl;
+class client_impl;
 }
 
 namespace input
@@ -33,7 +33,7 @@ struct device_redirect_at {
 
 struct device_redirect_focus {
     QPointer<Toplevel> focus;
-    QPointer<Decoration::DecoratedClientImpl> decoration;
+    QPointer<win::deco::client_impl> decoration;
     QPointer<QWindow> internalWindow;
 };
 
@@ -64,7 +64,7 @@ public:
      * @brief The Decoration currently receiving events.
      * @return decoration with pointer focus.
      */
-    Decoration::DecoratedClientImpl* decoration() const;
+    win::deco::client_impl* decoration() const;
     /**
      * @brief The internal window currently receiving events.
      * @return QWindow with pointer focus.
@@ -74,8 +74,7 @@ public:
     virtual QPointF position() const;
 
     virtual void cleanupInternalWindow(QWindow* old, QWindow* now);
-    virtual void cleanupDecoration(Decoration::DecoratedClientImpl* old,
-                                   Decoration::DecoratedClientImpl* now);
+    virtual void cleanupDecoration(win::deco::client_impl* old, win::deco::client_impl* now);
 
     virtual void focusUpdate(Toplevel* old, Toplevel* now);
 

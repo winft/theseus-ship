@@ -129,10 +129,9 @@ space::space()
     connect(this, &space::currentDesktopChanged, m_compositor, &render::compositor::addRepaintFull);
     connect(m_compositor, &QObject::destroyed, this, [this] { m_compositor = nullptr; });
 
-    auto decorationBridge = Decoration::DecorationBridge::create(this);
+    auto decorationBridge = deco::bridge::create(this);
     decorationBridge->init();
-    connect(
-        this, &space::configChanged, decorationBridge, &Decoration::DecorationBridge::reconfigure);
+    connect(this, &space::configChanged, decorationBridge, &deco::bridge::reconfigure);
 
     connect(m_sessionManager,
             &win::session_manager::loadSessionRequested,
@@ -658,7 +657,7 @@ QString space::supportInformation() const
         support.append(QStringLiteral("\n"));
     }
 
-    if (auto bridge = Decoration::DecorationBridge::self()) {
+    if (auto bridge = deco::bridge::self()) {
         support.append(QStringLiteral("Decoration\n"));
         support.append(QStringLiteral("==========\n"));
         support.append(bridge->supportInformation());

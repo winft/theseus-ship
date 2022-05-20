@@ -62,7 +62,7 @@ void setup_window_control_connections(Win* win)
 
     QObject::connect(win, &Win::paletteChanged, win, [win] { trigger_decoration_repaint(win); });
 
-    QObject::connect(Decoration::DecorationBridge::self(), &QObject::destroyed, win, [win] {
+    QObject::connect(deco::bridge::self(), &QObject::destroyed, win, [win] {
         win->control->destroy_decoration();
     });
 

@@ -46,10 +46,10 @@ namespace base
 class output;
 }
 
-namespace Decoration
+namespace win::deco
 {
-class DecoratedClientImpl;
-class Renderer;
+class client_impl;
+class renderer;
 }
 
 namespace render
@@ -134,7 +134,7 @@ public:
 
     virtual void triggerFence();
 
-    virtual Decoration::Renderer* createDecorationRenderer(Decoration::DecoratedClientImpl*) = 0;
+    virtual win::deco::renderer* createDecorationRenderer(win::deco::client_impl*) = 0;
 
     /**
      * Whether the scene is able to drive animations.

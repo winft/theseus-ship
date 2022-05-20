@@ -24,12 +24,12 @@
 namespace KWin::render::xrender
 {
 
-deco_renderer::deco_renderer(Decoration::DecoratedClientImpl* client)
-    : Renderer(client)
+deco_renderer::deco_renderer(win::deco::client_impl* client)
+    : renderer(client)
     , m_gc(XCB_NONE)
 {
     connect(this,
-            &Renderer::renderScheduled,
+            &renderer::renderScheduled,
             client->client(),
             static_cast<void (Toplevel::*)(QRegion const&)>(&Toplevel::addRepaint));
     for (int i = 0; i < int(DecorationPart::Count); ++i) {
@@ -158,7 +158,7 @@ xcb_render_picture_t deco_renderer::picture(deco_renderer::DecorationPart part) 
 void deco_renderer::reparent(Toplevel* window)
 {
     render();
-    Renderer::reparent(window);
+    renderer::reparent(window);
 }
 
 }

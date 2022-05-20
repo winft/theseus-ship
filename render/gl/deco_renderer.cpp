@@ -39,12 +39,12 @@
 namespace KWin::render::gl
 {
 
-deco_renderer::deco_renderer(Decoration::DecoratedClientImpl* client)
-    : Renderer(client)
+deco_renderer::deco_renderer(win::deco::client_impl* client)
+    : renderer(client)
     , m_texture()
 {
     connect(this,
-            &Renderer::renderScheduled,
+            &renderer::renderScheduled,
             client->client(),
             static_cast<void (Toplevel::*)(QRegion const&)>(&Toplevel::addRepaint));
 }
@@ -264,7 +264,7 @@ void deco_renderer::resizeTexture()
 void deco_renderer::reparent(Toplevel* window)
 {
     render();
-    Renderer::reparent(window);
+    renderer::reparent(window);
 }
 
 }

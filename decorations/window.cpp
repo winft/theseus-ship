@@ -5,7 +5,7 @@
 */
 #include "window.h"
 
-namespace KWin::Decoration
+namespace KWin::win::deco
 {
 
 window::window(Toplevel* win)

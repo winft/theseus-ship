@@ -62,7 +62,7 @@ void device_redirect_set_focus(Dev* dev, Toplevel* toplevel)
 }
 
 template<typename Dev>
-void device_redirect_set_decoration(Dev* dev, Decoration::DecoratedClientImpl* decoration)
+void device_redirect_set_decoration(Dev* dev, win::deco::client_impl* decoration)
 {
     auto old_deco = dev->m_focus.decoration;
     dev->m_focus.decoration = decoration;

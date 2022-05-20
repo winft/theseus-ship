@@ -23,13 +23,13 @@
 namespace KWin
 {
 
-namespace Decoration
+namespace win
+{
+
+namespace deco
 {
 class window;
 }
-
-namespace win
-{
 
 struct move_resize_op {
     bool enabled{false};
@@ -45,12 +45,12 @@ struct move_resize_op {
     QTimer* delay_timer{nullptr};
 };
 
-struct deco {
+struct deco_impl {
     QMetaObject::Connection client_destroy;
 
-    Decoration::window* window{nullptr};
+    deco::window* window{nullptr};
     KDecoration2::Decoration* decoration{nullptr};
-    Decoration::DecoratedClientImpl* client{nullptr};
+    deco::client_impl* client{nullptr};
 
     struct {
     private:
@@ -76,23 +76,21 @@ struct deco {
         }
     } double_click;
 
-    deco() = default;
-    deco(deco&) = delete;
-    deco& operator=(deco) = delete;
-    deco(deco&& source) noexcept = delete;
-    deco& operator=(deco&& source) noexcept = delete;
+    deco_impl() = default;
+    deco_impl(deco_impl&) = delete;
+    deco_impl& operator=(deco_impl) = delete;
+    deco_impl(deco_impl&& source) noexcept = delete;
+    deco_impl& operator=(deco_impl&& source) noexcept = delete;
 
-    void set_client(Decoration::DecoratedClientImpl* client)
+    void set_client(deco::client_impl* client)
     {
         assert(client);
         assert(!client_destroy);
 
         this->client = client;
         QObject::disconnect(client_destroy);
-        client_destroy = QObject::connect(client,
-                                          &Decoration::DecoratedClientImpl::destroyed,
-                                          client,
-                                          [this]() { this->client = nullptr; });
+        client_destroy = QObject::connect(
+            client, &deco::client_impl::destroyed, client, [this]() { this->client = nullptr; });
     }
 
     bool enabled() const
@@ -102,7 +100,7 @@ struct deco {
 };
 
 struct palette {
-    using dp = Decoration::DecorationPalette;
+    using dp = deco::palette;
 
     std::shared_ptr<dp> current;
     QString color_scheme;
@@ -115,7 +113,7 @@ struct palette {
         if (!current) {
             return QPalette();
         }
-        return current->palette();
+        return current->get_qt_palette();
     }
 };
 

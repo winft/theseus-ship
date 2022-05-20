@@ -28,7 +28,7 @@ Toplevel* device_redirect::focus() const
     return m_focus.focus.data();
 }
 
-Decoration::DecoratedClientImpl* device_redirect::decoration() const
+win::deco::client_impl* device_redirect::decoration() const
 {
     return m_focus.decoration;
 }
@@ -46,8 +46,8 @@ QPointF device_redirect::position() const
 void device_redirect::cleanupInternalWindow(QWindow* /*old*/, QWindow* /*now*/)
 {
 }
-void device_redirect::cleanupDecoration(Decoration::DecoratedClientImpl* /*old*/,
-                                        Decoration::DecoratedClientImpl* /*now*/)
+void device_redirect::cleanupDecoration(win::deco::client_impl* /*old*/,
+                                        win::deco::client_impl* /*now*/)
 {
 }
 

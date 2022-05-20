@@ -373,7 +373,7 @@ win::move_resize_op& control::move_resize()
     return m_move_resize;
 }
 
-win::deco& control::deco()
+win::deco_impl& control::deco()
 {
     return m_deco;
 }

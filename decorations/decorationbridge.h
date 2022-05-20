@@ -17,8 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_DECORATION_BRIDGE_H
-#define KWIN_DECORATION_BRIDGE_H
+#pragma once
 
 #include <kwinglobals.h>
 
@@ -38,15 +37,16 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Decoration
+namespace win::deco
 {
+
 class window;
 
-class KWIN_EXPORT DecorationBridge : public KDecoration2::DecorationBridge
+class KWIN_EXPORT bridge : public KDecoration2::DecorationBridge
 {
     Q_OBJECT
 public:
-    ~DecorationBridge() override;
+    ~bridge() override;
 
     static bool hasPlugin();
 
@@ -96,9 +96,9 @@ private:
     QString m_theme;
     QSharedPointer<KDecoration2::DecorationSettings> m_settings;
     bool m_noPlugin;
-    KWIN_SINGLETON(DecorationBridge)
-};
-} // Decoration
-} // KWin
 
-#endif
+    KWIN_SINGLETON(bridge)
+};
+
+}
+}

@@ -29,18 +29,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QPainter>
 
-namespace KWin
-{
-namespace Decoration
+namespace KWin::win::deco
 {
 
-Renderer::Renderer(DecoratedClientImpl* client)
+renderer::renderer(client_impl* client)
     : QObject(client)
     , m_client(client)
     , m_imageSizesDirty(true)
 {
     auto markImageSizesDirty = [this] { m_imageSizesDirty = true; };
-    connect(client->decoration(), &KDecoration2::Decoration::damaged, this, &Renderer::schedule);
+    connect(client->decoration(), &KDecoration2::Decoration::damaged, this, &renderer::schedule);
     connect(client->client(),
             &Toplevel::central_output_changed,
             this,
@@ -65,22 +63,22 @@ Renderer::Renderer(DecoratedClientImpl* client)
             markImageSizesDirty);
 }
 
-Renderer::~Renderer() = default;
+renderer::~renderer() = default;
 
-void Renderer::schedule(const QRegion& rect)
+void renderer::schedule(const QRegion& rect)
 {
     m_scheduled = m_scheduled.united(rect);
     Q_EMIT renderScheduled(rect);
 }
 
-QRegion Renderer::getScheduled()
+QRegion renderer::getScheduled()
 {
     QRegion region = m_scheduled;
     m_scheduled = QRegion();
     return region;
 }
 
-QImage Renderer::renderToImage(const QRect& geo)
+QImage renderer::renderToImage(const QRect& geo)
 {
     Q_ASSERT(m_client);
     auto window = client()->client();
@@ -114,16 +112,15 @@ QImage Renderer::renderToImage(const QRect& geo)
     return image;
 }
 
-void Renderer::renderToPainter(QPainter* painter, const QRect& rect)
+void renderer::renderToPainter(QPainter* painter, const QRect& rect)
 {
     client()->decoration()->paint(painter, rect);
 }
 
-void Renderer::reparent(Toplevel* window)
+void renderer::reparent(Toplevel* window)
 {
     setParent(window);
     m_client = nullptr;
 }
 
-}
 }

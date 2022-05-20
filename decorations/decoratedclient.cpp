@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "decoratedclient.h"
+
 #include "decorationbridge.h"
 #include "decorationpalette.h"
 #include "decorationrenderer.h"
@@ -42,14 +43,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStyle>
 #include <QToolTip>
 
-namespace KWin
-{
-namespace Decoration
+namespace KWin::win::deco
 {
 
-DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
-                                         KDecoration2::DecoratedClient* decoratedClient,
-                                         KDecoration2::Decoration* decoration)
+client_impl::client_impl(Toplevel* window,
+                         KDecoration2::DecoratedClient* decoratedClient,
+                         KDecoration2::Decoration* decoration)
     : QObject()
     , ApplicationMenuEnabledDecoratedClientPrivate(decoratedClient, decoration)
     , m_client(window)
@@ -62,7 +61,7 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     connect(window, &Toplevel::activeChanged, this, [decoratedClient, window]() {
         Q_EMIT decoratedClient->activeChanged(window->control->active());
     });
-    connect(window, &Toplevel::frame_geometry_changed, this, &DecoratedClientImpl::update_size);
+    connect(window, &Toplevel::frame_geometry_changed, this, &client_impl::update_size);
     connect(window, &Toplevel::desktopChanged, this, [decoratedClient, window]() {
         Q_EMIT decoratedClient->onAllDesktopsChanged(window->isOnAllDesktops());
     });
@@ -85,7 +84,7 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     connect(render::compositor::self(),
             &render::compositor::aboutToToggleCompositing,
             this,
-            &DecoratedClientImpl::destroyRenderer);
+            &client_impl::destroyRenderer);
     m_compositorToggledConnection = connect(render::compositor::self(),
                                             &render::compositor::compositingToggled,
                                             this,
@@ -137,14 +136,14 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     });
 }
 
-DecoratedClientImpl::~DecoratedClientImpl()
+client_impl::~client_impl()
 {
     if (m_toolTipShowing) {
         requestHideToolTip();
     }
 }
 
-void DecoratedClientImpl::update_size()
+void client_impl::update_size()
 {
     if (win::frame_to_client_size(m_client, m_client->size()) == m_clientSize) {
         return;
@@ -164,13 +163,13 @@ void DecoratedClientImpl::update_size()
     Q_EMIT deco_client->sizeChanged(m_clientSize);
 }
 
-QPalette DecoratedClientImpl::palette() const
+QPalette client_impl::palette() const
 {
     return m_client->control->palette().q_palette();
 }
 
 #define DELEGATE(type, name, clientName)                                                           \
-    type DecoratedClientImpl::name() const                                                         \
+    type client_impl::name() const                                                                 \
     {                                                                                              \
         return m_client->clientName();                                                             \
     }
@@ -190,7 +189,7 @@ DELEGATE2(bool, isOnAllDesktops)
 #undef DELEGATE
 
 #define DELEGATE_WIN(type, name, impl_name)                                                        \
-    type DecoratedClientImpl::name() const                                                         \
+    type client_impl::name() const                                                                 \
     {                                                                                              \
         return win::impl_name(m_client);                                                           \
     }
@@ -200,7 +199,7 @@ DELEGATE_WIN(QString, caption, caption)
 #undef DELEGATE_WIN
 
 #define DELEGATE_WIN_CTRL(type, name, impl_name)                                                   \
-    type DecoratedClientImpl::name() const                                                         \
+    type client_impl::name() const                                                                 \
     {                                                                                              \
         return m_client->control->impl_name();                                                     \
     }
@@ -213,7 +212,7 @@ DELEGATE_WIN_CTRL(bool, isKeepBelow, keep_below)
 #undef DELEGATE_WIN_CTRL
 
 #define DELEGATE_WIN_TRANSIENT(type, name, impl_name)                                              \
-    type DecoratedClientImpl::name() const                                                         \
+    type client_impl::name() const                                                                 \
     {                                                                                              \
         return m_client->transient()->impl_name();                                                 \
     }
@@ -223,7 +222,7 @@ DELEGATE_WIN_TRANSIENT(bool, isModal, modal)
 #undef DELEGATE_WIN_TRANSIENT
 
 #define DELEGATE(type, name, clientName)                                                           \
-    type DecoratedClientImpl::name() const                                                         \
+    type client_impl::name() const                                                                 \
     {                                                                                              \
         return m_client->clientName();                                                             \
     }
@@ -234,7 +233,7 @@ DELEGATE(WId, decorationId, frameId)
 #undef DELEGATE
 
 #define DELEGATE(name, op)                                                                         \
-    void DecoratedClientImpl::name()                                                               \
+    void client_impl::name()                                                                       \
     {                                                                                              \
         workspace()->performWindowOperation(m_client, base::options::op);                          \
     }
@@ -246,7 +245,7 @@ DELEGATE(requestToggleKeepBelow, KeepBelowOp)
 #undef DELEGATE
 
 #define DELEGATE(name, clientName)                                                                 \
-    void DecoratedClientImpl::name()                                                               \
+    void client_impl::name()                                                                       \
     {                                                                                              \
         m_client->clientName();                                                                    \
     }
@@ -255,18 +254,17 @@ DELEGATE(requestContextHelp, showContextHelp)
 
 #undef DELEGATE
 
-void DecoratedClientImpl::requestMinimize()
+void client_impl::requestMinimize()
 {
     win::set_minimized(m_client, true);
 }
 
-void DecoratedClientImpl::requestClose()
+void client_impl::requestClose()
 {
     QMetaObject::invokeMethod(m_client, "closeWindow", Qt::QueuedConnection);
 }
 
-QColor DecoratedClientImpl::color(KDecoration2::ColorGroup group,
-                                  KDecoration2::ColorRole role) const
+QColor client_impl::color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const
 {
     auto dp = m_client->control->palette().current;
     if (dp) {
@@ -276,9 +274,9 @@ QColor DecoratedClientImpl::color(KDecoration2::ColorGroup group,
     return QColor();
 }
 
-void DecoratedClientImpl::requestShowToolTip(const QString& text)
+void client_impl::requestShowToolTip(const QString& text)
 {
-    if (!DecorationBridge::self()->showToolTips()) {
+    if (!bridge::self()->showToolTips()) {
         return;
     }
 
@@ -288,14 +286,14 @@ void DecoratedClientImpl::requestShowToolTip(const QString& text)
     m_toolTipWakeUp.start(m_toolTipFallAsleep.hasExpired() ? wakeUpDelay : 20);
 }
 
-void DecoratedClientImpl::requestHideToolTip()
+void client_impl::requestHideToolTip()
 {
     m_toolTipWakeUp.stop();
     QToolTip::hideText();
     m_toolTipShowing = false;
 }
 
-void DecoratedClientImpl::requestShowWindowMenu(QRect const& rect)
+void client_impl::requestShowWindowMenu(QRect const& rect)
 {
     // TODO: add rect to requestShowWindowMenu
     auto const client_pos = m_client->pos();
@@ -303,17 +301,17 @@ void DecoratedClientImpl::requestShowWindowMenu(QRect const& rect)
                                 m_client);
 }
 
-void DecoratedClientImpl::requestShowApplicationMenu(const QRect& rect, int actionId)
+void client_impl::requestShowApplicationMenu(const QRect& rect, int actionId)
 {
     workspace()->showApplicationMenu(rect, m_client, actionId);
 }
 
-void DecoratedClientImpl::showApplicationMenu(int actionId)
+void client_impl::showApplicationMenu(int actionId)
 {
     decoration()->showApplicationMenu(actionId);
 }
 
-void DecoratedClientImpl::requestToggleMaximization(Qt::MouseButtons buttons)
+void client_impl::requestToggleMaximization(Qt::MouseButtons buttons)
 {
     QMetaObject::invokeMethod(this,
                               "delayedRequestToggleMaximization",
@@ -322,42 +320,42 @@ void DecoratedClientImpl::requestToggleMaximization(Qt::MouseButtons buttons)
                                     kwinApp()->options->operationMaxButtonClick(buttons)));
 }
 
-void DecoratedClientImpl::delayedRequestToggleMaximization(base::options::WindowOperation operation)
+void client_impl::delayedRequestToggleMaximization(base::options::WindowOperation operation)
 {
     workspace()->performWindowOperation(m_client, operation);
 }
 
-int DecoratedClientImpl::width() const
+int client_impl::width() const
 {
     return m_clientSize.width();
 }
 
-int DecoratedClientImpl::height() const
+int client_impl::height() const
 {
     return m_clientSize.height();
 }
 
-QSize DecoratedClientImpl::size() const
+QSize client_impl::size() const
 {
     return m_clientSize;
 }
 
-bool DecoratedClientImpl::isMaximizedVertically() const
+bool client_impl::isMaximizedVertically() const
 {
     return flags(m_client->maximizeMode() & win::maximize_mode::vertical);
 }
 
-bool DecoratedClientImpl::isMaximized() const
+bool client_impl::isMaximized() const
 {
     return isMaximizedHorizontally() && isMaximizedVertically();
 }
 
-bool DecoratedClientImpl::isMaximizedHorizontally() const
+bool client_impl::isMaximizedHorizontally() const
 {
     return flags(m_client->maximizeMode() & win::maximize_mode::horizontal);
 }
 
-Qt::Edges DecoratedClientImpl::adjacentScreenEdges() const
+Qt::Edges client_impl::adjacentScreenEdges() const
 {
     Qt::Edges edges;
     auto const mode = m_client->control->quicktiling();
@@ -384,26 +382,25 @@ Qt::Edges DecoratedClientImpl::adjacentScreenEdges() const
     return edges;
 }
 
-bool DecoratedClientImpl::hasApplicationMenu() const
+bool client_impl::hasApplicationMenu() const
 {
     return m_client->control->has_application_menu();
 }
 
-bool DecoratedClientImpl::isApplicationMenuActive() const
+bool client_impl::isApplicationMenuActive() const
 {
     return m_client->control->application_menu_active();
 }
 
-void DecoratedClientImpl::createRenderer()
+void client_impl::createRenderer()
 {
     m_renderer = kwinApp()->get_base().render->createDecorationRenderer(this);
 }
 
-void DecoratedClientImpl::destroyRenderer()
+void client_impl::destroyRenderer()
 {
     delete m_renderer;
     m_renderer = nullptr;
 }
 
-}
 }

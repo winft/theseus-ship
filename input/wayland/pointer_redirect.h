@@ -16,11 +16,6 @@ namespace Wrapland::Server
 class Surface;
 }
 
-namespace Decoration
-{
-class DecoratedClientImpl;
-}
-
 namespace KWin
 {
 class Toplevel;
@@ -79,8 +74,7 @@ public:
     void process_frame() override;
 
     void cleanupInternalWindow(QWindow* old, QWindow* now) override;
-    void cleanupDecoration(Decoration::DecoratedClientImpl* old,
-                           Decoration::DecoratedClientImpl* now) override;
+    void cleanupDecoration(win::deco::client_impl* old, win::deco::client_impl* now) override;
 
     void focusUpdate(Toplevel* focusOld, Toplevel* focusNow) override;
     QPointF position() const override;

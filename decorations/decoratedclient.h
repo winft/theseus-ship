@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#ifndef KWIN_DECORATED_CLIENT_H
-#define KWIN_DECORATED_CLIENT_H
+#pragma once
+
 #include "base/options.h"
 
 #include <KDecoration2/Private/DecoratedClientPrivate>
@@ -31,21 +31,20 @@ namespace KWin
 {
 class Toplevel;
 
-namespace Decoration
+namespace win::deco
 {
 
-class Renderer;
+class renderer;
 
-class KWIN_EXPORT DecoratedClientImpl
-    : public QObject,
-      public KDecoration2::ApplicationMenuEnabledDecoratedClientPrivate
+class KWIN_EXPORT client_impl : public QObject,
+                                public KDecoration2::ApplicationMenuEnabledDecoratedClientPrivate
 {
     Q_OBJECT
 public:
-    explicit DecoratedClientImpl(Toplevel* window,
-                                 KDecoration2::DecoratedClient* decoratedClient,
-                                 KDecoration2::Decoration* decoration);
-    ~DecoratedClientImpl() override;
+    explicit client_impl(Toplevel* window,
+                         KDecoration2::DecoratedClient* decoratedClient,
+                         KDecoration2::Decoration* decoration);
+    ~client_impl() override;
     QString caption() const override;
     WId decorationId() const override;
     int desktop() const override;
@@ -112,7 +111,7 @@ public:
     {
         return m_client;
     }
-    Renderer* renderer()
+    deco::renderer* renderer()
     {
         return m_renderer;
     }
@@ -129,7 +128,7 @@ private:
     void destroyRenderer();
     Toplevel* m_client;
     QSize m_clientSize;
-    Renderer* m_renderer;
+    deco::renderer* m_renderer;
     QMetaObject::Connection m_compositorToggledConnection;
 
     QString m_toolTipText;
@@ -140,5 +139,3 @@ private:
 
 }
 }
-
-#endif

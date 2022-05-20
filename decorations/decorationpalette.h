@@ -19,9 +19,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-
-#ifndef KWIN_DECORATION_PALETTE_H
-#define KWIN_DECORATION_PALETTE_H
+#pragma once
 
 #include <kwin_export.h>
 
@@ -34,21 +32,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <optional>
 
-namespace KWin
-{
-namespace Decoration
+namespace KWin::win::deco
 {
 
-class KWIN_EXPORT DecorationPalette : public QObject
+class KWIN_EXPORT palette : public QObject
 {
     Q_OBJECT
 public:
-    DecorationPalette(const QString& colorScheme);
+    palette(const QString& colorScheme);
 
     bool isValid() const;
 
     QColor color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const;
-    QPalette palette() const;
+    QPalette get_qt_palette() const;
 
 Q_SIGNALS:
     void changed();
@@ -85,6 +81,3 @@ private:
 };
 
 }
-}
-
-#endif

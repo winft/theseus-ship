@@ -34,11 +34,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QFontDatabase>
 
-namespace KWin
+namespace KWin::win::deco
 {
-namespace Decoration
-{
-SettingsImpl::SettingsImpl(KDecoration2::DecorationSettings* parent)
+
+settings::settings(KDecoration2::DecorationSettings* parent)
     : QObject()
     , DecorationSettingsPrivate(parent)
     , m_borderSize(KDecoration2::BorderSize::Normal)
@@ -62,26 +61,23 @@ SettingsImpl::SettingsImpl(KDecoration2::DecorationSettings* parent)
     connect(render::compositor::self(), &render::compositor::aboutToDestroy, this, [c] {
         disconnect(c);
     });
-    connect(workspace(), &win::space::configChanged, this, &SettingsImpl::readSettings);
-    connect(DecorationBridge::self(),
-            &DecorationBridge::metaDataLoaded,
-            this,
-            &SettingsImpl::readSettings);
+    connect(workspace(), &win::space::configChanged, this, &settings::readSettings);
+    connect(bridge::self(), &bridge::metaDataLoaded, this, &settings::readSettings);
 }
 
-SettingsImpl::~SettingsImpl() = default;
+settings::~settings() = default;
 
-bool SettingsImpl::isAlphaChannelSupported() const
+bool settings::isAlphaChannelSupported() const
 {
     return render::compositor::self()->compositing();
 }
 
-bool SettingsImpl::isOnAllDesktopsAvailable() const
+bool settings::isOnAllDesktopsAvailable() const
 {
     return win::virtual_desktop_manager::self()->count() > 1;
 }
 
-bool SettingsImpl::isCloseOnDoubleClickOnMenu() const
+bool settings::isCloseOnDoubleClickOnMenu() const
 {
     return m_closeDoubleClickMenu;
 }
@@ -120,7 +116,7 @@ static QString buttonsToString(const QVector<KDecoration2::DecorationButtonType>
     return ret;
 }
 
-QVector<KDecoration2::DecorationButtonType> SettingsImpl::readDecorationButtons(
+QVector<KDecoration2::DecorationButtonType> settings::readDecorationButtons(
     const KConfigGroup& config,
     const char* key,
     const QVector<KDecoration2::DecorationButtonType>& defaultValue) const
@@ -162,7 +158,7 @@ static KDecoration2::BorderSize stringToSize(const QString& name)
     return it.value();
 }
 
-void SettingsImpl::readSettings()
+void settings::readSettings()
 {
     KConfigGroup config = kwinApp()->config()->group(QStringLiteral("org.kde.kdecoration2"));
     const auto& left
@@ -200,7 +196,7 @@ void SettingsImpl::readSettings()
     if (m_autoBorderSize) {
         /* Falls back to Normal border size, if the plugin does not provide a valid recommendation.
          */
-        size = stringToSize(DecorationBridge::self()->recommendedBorderSize());
+        size = stringToSize(bridge::self()->recommendedBorderSize());
     }
     if (size != m_borderSize) {
         m_borderSize = size;
@@ -215,5 +211,4 @@ void SettingsImpl::readSettings()
     Q_EMIT decorationSettings()->reconfigured();
 }
 
-}
 }

@@ -259,7 +259,7 @@ outline_visual* platform::createOutline(render::outline* outline)
     return ret;
 }
 
-Decoration::Renderer* platform::createDecorationRenderer(Decoration::DecoratedClientImpl* client)
+win::deco::renderer* platform::createDecorationRenderer(win::deco::client_impl* client)
 {
     auto renderer = render::platform::createDecorationRenderer(client);
     if (!renderer) {

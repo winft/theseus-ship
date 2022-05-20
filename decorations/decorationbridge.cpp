@@ -42,9 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMetaProperty>
 #include <QPainter>
 
-namespace KWin
-{
-namespace Decoration
+namespace KWin::win::deco
 {
 
 static const QString s_aurorae = QStringLiteral("org.kde.kwin.aurorae");
@@ -55,9 +53,9 @@ static const QString s_defaultPlugin = QStringLiteral(BREEZE_KDECORATION_PLUGIN_
 static const QString s_defaultPlugin = s_aurorae;
 #endif
 
-KWIN_SINGLETON_FACTORY(DecorationBridge)
+KWIN_SINGLETON_FACTORY(bridge)
 
-DecorationBridge::DecorationBridge(QObject* parent)
+bridge::bridge(QObject* parent)
     : KDecoration2::DecorationBridge(parent)
     , m_factory(nullptr)
     , m_showToolTips(false)
@@ -67,12 +65,12 @@ DecorationBridge::DecorationBridge(QObject* parent)
     readDecorationOptions();
 }
 
-DecorationBridge::~DecorationBridge()
+bridge::~bridge()
 {
     s_self = nullptr;
 }
 
-QString DecorationBridge::readPlugin()
+QString bridge::readPlugin()
 {
     return kwinApp()->config()->group(s_pluginName).readEntry("library", s_defaultPlugin);
 }
@@ -82,26 +80,26 @@ static bool readNoPlugin()
     return kwinApp()->config()->group(s_pluginName).readEntry("NoPlugin", false);
 }
 
-QString DecorationBridge::readTheme() const
+QString bridge::readTheme() const
 {
     return kwinApp()->config()->group(s_pluginName).readEntry("theme", m_defaultTheme);
 }
 
-void DecorationBridge::readDecorationOptions()
+void bridge::readDecorationOptions()
 {
     m_showToolTips = kwinApp()->config()->group(s_pluginName).readEntry("ShowToolTips", true);
 }
 
-bool DecorationBridge::hasPlugin()
+bool bridge::hasPlugin()
 {
-    const DecorationBridge* bridge = DecorationBridge::self();
+    auto bridge = bridge::self();
     if (!bridge) {
         return false;
     }
     return !bridge->m_noPlugin && bridge->m_factory;
 }
 
-void DecorationBridge::init()
+void bridge::init()
 {
     using namespace Wrapland::Server;
     m_noPlugin = readNoPlugin();
@@ -125,7 +123,7 @@ void DecorationBridge::init()
     }
 }
 
-void DecorationBridge::initPlugin()
+void bridge::initPlugin()
 {
     const KPluginMetaData metaData = KPluginMetaData::findPluginById(s_pluginName, m_plugin);
     if (!metaData.isValid()) {
@@ -151,7 +149,7 @@ static void recreateDecorations()
     }
 }
 
-void DecorationBridge::reconfigure()
+void bridge::reconfigure()
 {
     readDecorationOptions();
 
@@ -197,7 +195,7 @@ void DecorationBridge::reconfigure()
     }
 }
 
-void DecorationBridge::loadMetaData(const QJsonObject& object)
+void bridge::loadMetaData(const QJsonObject& object)
 {
     // reset all settings
     m_recommendedBorderSize = QString();
@@ -220,7 +218,7 @@ void DecorationBridge::loadMetaData(const QJsonObject& object)
     Q_EMIT metaDataLoaded();
 }
 
-void DecorationBridge::findTheme(const QVariantMap& map)
+void bridge::findTheme(const QVariantMap& map)
 {
     auto it = map.find(QStringLiteral("themes"));
     if (it == map.end()) {
@@ -235,20 +233,19 @@ void DecorationBridge::findTheme(const QVariantMap& map)
 }
 
 std::unique_ptr<KDecoration2::DecoratedClientPrivate>
-DecorationBridge::createClient(KDecoration2::DecoratedClient* client,
-                               KDecoration2::Decoration* decoration)
+bridge::createClient(KDecoration2::DecoratedClient* client, KDecoration2::Decoration* decoration)
 {
-    return std::make_unique<DecoratedClientImpl>(
+    return std::make_unique<client_impl>(
         static_cast<window*>(decoration->parent())->win, client, decoration);
 }
 
 std::unique_ptr<KDecoration2::DecorationSettingsPrivate>
-DecorationBridge::settings(KDecoration2::DecorationSettings* parent)
+bridge::settings(KDecoration2::DecorationSettings* parent)
 {
-    return std::unique_ptr<SettingsImpl>(new SettingsImpl(parent));
+    return std::unique_ptr<deco::settings>(new deco::settings(parent));
 }
 
-KDecoration2::Decoration* DecorationBridge::createDecoration(window* window)
+KDecoration2::Decoration* bridge::createDecoration(window* window)
 {
     if (m_noPlugin) {
         return nullptr;
@@ -286,7 +283,7 @@ static QString settingsProperty(const QVariant& variant)
     return variant.toString();
 }
 
-QString DecorationBridge::supportInformation() const
+QString bridge::supportInformation() const
 {
     QString b;
     if (m_noPlugin) {
@@ -310,5 +307,4 @@ QString DecorationBridge::supportInformation() const
     return b;
 }
 
-} // Decoration
-} // KWin
+}

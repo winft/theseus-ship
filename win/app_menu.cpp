@@ -100,7 +100,7 @@ void app_menu::slotShowRequest(const QString& serviceName,
                                int actionId)
 {
     // Ignore show request when user has not configured the application menu title bar button
-    auto deco_settings = Decoration::DecorationBridge::self()->settings();
+    auto deco_settings = deco::bridge::self()->settings();
     auto menu_enum = KDecoration2::DecorationButtonType::ApplicationMenu;
     auto not_left = deco_settings && !deco_settings->decorationButtonsLeft().contains(menu_enum);
     auto not_right = deco_settings && !deco_settings->decorationButtonsRight().contains(menu_enum);

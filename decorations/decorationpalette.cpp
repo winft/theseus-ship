@@ -32,12 +32,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPalette>
 #include <QStandardPaths>
 
-namespace KWin
-{
-namespace Decoration
+namespace KWin::win::deco
 {
 
-DecorationPalette::DecorationPalette(const QString& colorScheme)
+palette::palette(const QString& colorScheme)
     : m_colorScheme(colorScheme != QStringLiteral("kdeglobals") ? colorScheme : QString())
 {
     if (m_colorScheme.isEmpty()) {
@@ -47,17 +45,17 @@ DecorationPalette::DecorationPalette(const QString& colorScheme)
     }
     m_watcher = KConfigWatcher::create(m_colorSchemeConfig);
 
-    connect(m_watcher.data(), &KConfigWatcher::configChanged, this, &DecorationPalette::update);
+    connect(m_watcher.data(), &KConfigWatcher::configChanged, this, &palette::update);
 
     update();
 }
 
-bool DecorationPalette::isValid() const
+bool palette::isValid() const
 {
     return true;
 }
 
-QColor DecorationPalette::color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const
+QColor palette::color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const
 {
     using KDecoration2::ColorGroup;
     using KDecoration2::ColorRole;
@@ -134,13 +132,13 @@ QColor DecorationPalette::color(KDecoration2::ColorGroup group, KDecoration2::Co
     }
 }
 
-QPalette DecorationPalette::palette() const
+QPalette palette::get_qt_palette() const
 {
     return m_legacyPalette ? m_legacyPalette->palette
                            : KColorScheme::createApplicationPalette(m_colorSchemeConfig);
 }
 
-void DecorationPalette::update()
+void palette::update()
 {
     m_colorSchemeConfig->sync();
 
@@ -187,5 +185,4 @@ void DecorationPalette::update()
     Q_EMIT changed();
 }
 
-}
 }
