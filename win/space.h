@@ -162,8 +162,6 @@ public:
      */
     std::unique_ptr<win::user_actions_menu> user_actions_menu;
 
-    static space* _self;
-
     explicit space(render::compositor& render);
     ~space() override;
 
@@ -613,11 +611,6 @@ inline QPoint space::focusMousePosition() const
     return focusMousePos;
 }
 
-}
-
-inline win::space* workspace()
-{
-    return win::space::_self;
 }
 
 }

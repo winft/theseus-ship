@@ -90,8 +90,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win
 {
 
-space* space::_self = nullptr;
-
 space::space(render::compositor& render)
     : outline{std::make_unique<render::outline>(render)}
     , render{render}
@@ -110,7 +108,6 @@ space::space(render::compositor& render)
     qRegisterMetaType<Toplevel*>();
 
     singleton_interface::space = this;
-    _self = this;
 
     m_quickTileCombineTimer = new QTimer(this);
     m_quickTileCombineTimer->setSingleShot(true);
@@ -256,7 +253,6 @@ space::~space()
     // TODO: ungrabXServer();
 
     base::x11::xcb::extensions::destroy();
-    _self = nullptr;
     singleton_interface::space = nullptr;
 }
 
@@ -687,7 +683,7 @@ QString space::supportInformation() const
 
     support.append(QStringLiteral("\nScreen Edges\n"));
     support.append(QStringLiteral("============\n"));
-    auto const metaScreenEdges = workspace()->edges->metaObject();
+    auto const metaScreenEdges = edges->metaObject();
     for (int i = 0; i < metaScreenEdges->propertyCount(); ++i) {
         const QMetaProperty property = metaScreenEdges->property(i);
         if (QLatin1String(property.name()) == QLatin1String("objectName")) {
@@ -695,7 +691,7 @@ QString space::supportInformation() const
         }
         support.append(QStringLiteral("%1: %2\n")
                            .arg(property.name())
-                           .arg(printProperty(workspace()->edges->property(property.name()))));
+                           .arg(printProperty(edges->property(property.name()))));
     }
     support.append(QStringLiteral("\nScreens\n"));
     support.append(QStringLiteral("=======\n"));
@@ -978,7 +974,7 @@ void space::desktopResized()
     saveOldScreenSizes(); // after updateClientArea(), so that one still uses the previous one
 
     // TODO: emit a signal instead and remove the deep function calls into edges and effects
-    workspace()->edges->recreateEdges();
+    edges->recreateEdges();
 
     if (effects) {
         static_cast<render::effects_handler_impl*>(effects)->desktopResized(geom.size());
@@ -1105,7 +1101,7 @@ QRect space::clientArea(clientAreaOption opt, base::output const* output, int de
     if (desktop == NETWinInfo::OnAllDesktops || desktop == 0)
         desktop = virtual_desktop_manager->current();
     if (!output) {
-        output = get_current_output(*workspace());
+        output = get_current_output(*this);
     }
 
     QRect output_geo;
@@ -2415,8 +2411,7 @@ bool space::activateNextClient(Toplevel* window)
         get_focus = win::find_desktop(this, true, desktop); // to not break the state
 
     if (!get_focus && kwinApp()->options->isNextFocusPrefersMouse()) {
-        get_focus
-            = clientUnderMouse(window ? window->central_output : get_current_output(*workspace()));
+        get_focus = clientUnderMouse(window ? window->central_output : get_current_output(*this));
         if (get_focus && (get_focus == window || win::is_desktop(get_focus))) {
             // should rather not happen, but it cannot get the focus. rest of usability is tested
             // above
@@ -3093,7 +3088,7 @@ void space::performWindowOperation(Toplevel* window, base::options::WindowOperat
         bool was = window->control->keep_below();
         win::set_keep_below(window, !window->control->keep_below());
         if (was && !window->control->keep_below()) {
-            win::lower_window(workspace(), window);
+            win::lower_window(this, window);
         }
         break;
     }
@@ -3107,7 +3102,7 @@ void space::performWindowOperation(Toplevel* window, base::options::WindowOperat
         setupWindowShortcut(window);
         break;
     case base::options::LowerOp:
-        win::lower_window(workspace(), window);
+        win::lower_window(this, window);
         break;
     case base::options::OperationsOp:
     case base::options::NoOp:
@@ -3186,9 +3181,9 @@ base::output const* get_derivated_output(base::output const* output, int drift)
     return base::get_output(outputs, index % outputs.size());
 }
 
-base::output const* get_derivated_output(int drift)
+base::output const* get_derivated_output(win::space& space, int drift)
 {
-    return get_derivated_output(get_current_output(*workspace()), drift);
+    return get_derivated_output(get_current_output(space), drift);
 }
 
 void space::slotSwitchToNextScreen()
@@ -3196,7 +3191,7 @@ void space::slotSwitchToNextScreen()
     if (screenSwitchImpossible()) {
         return;
     }
-    if (auto output = get_derivated_output(1)) {
+    if (auto output = get_derivated_output(*this, 1)) {
         setCurrentScreen(*output);
     }
 }
@@ -3206,7 +3201,7 @@ void space::slotSwitchToPrevScreen()
     if (screenSwitchImpossible()) {
         return;
     }
-    if (auto output = get_derivated_output(-1)) {
+    if (auto output = get_derivated_output(*this, -1)) {
         setCurrentScreen(*output);
     }
 }
@@ -3294,7 +3289,7 @@ void space::slotWindowRaise()
 void space::slotWindowLower()
 {
     if (USABLE_ACTIVE_CLIENT) {
-        win::lower_window(workspace(), active_client);
+        win::lower_window(this, active_client);
         // As this most likely makes the window no longer visible change the
         // keyboard focus to the next available window.
         // activateNextClient( c ); // Doesn't work when we lower a child window
@@ -3304,8 +3299,8 @@ void space::slotWindowLower()
                 if (next && next != active_client)
                     request_focus(next);
             } else {
-                activateClient(win::top_client_on_desktop(
-                    workspace(), virtual_desktop_manager->current(), nullptr));
+                activateClient(
+                    win::top_client_on_desktop(this, virtual_desktop_manager->current(), nullptr));
             }
         }
     }
@@ -3317,7 +3312,7 @@ void space::slotWindowLower()
 void space::slotWindowRaiseOrLower()
 {
     if (USABLE_ACTIVE_CLIENT)
-        win::raise_or_lower_client(workspace(), active_client);
+        win::raise_or_lower_client(this, active_client);
 }
 
 void space::slotWindowOnAllDesktops()
