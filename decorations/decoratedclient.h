@@ -37,13 +37,14 @@ namespace Decoration
 class Renderer;
 
 class KWIN_EXPORT DecoratedClientImpl
-        : public QObject,
-          public KDecoration2::ApplicationMenuEnabledDecoratedClientPrivate
+    : public QObject,
+      public KDecoration2::ApplicationMenuEnabledDecoratedClientPrivate
 {
     Q_OBJECT
 public:
-    explicit DecoratedClientImpl(Toplevel* window, KDecoration2::DecoratedClient *decoratedClient,
-                                 KDecoration2::Decoration *decoration);
+    explicit DecoratedClientImpl(Toplevel* window,
+                                 KDecoration2::DecoratedClient* decoratedClient,
+                                 KDecoration2::Decoration* decoration);
     ~DecoratedClientImpl() override;
     QString caption() const override;
     WId decorationId() const override;
@@ -65,8 +66,14 @@ public:
     bool isResizeable() const override;
 
     // Deprecated.
-    bool isShadeable() const override { return false; }
-    bool isShaded() const override { return false; }
+    bool isShadeable() const override
+    {
+        return false;
+    }
+    bool isShaded() const override
+    {
+        return false;
+    }
 
     QPalette palette() const override;
     QColor color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const override;
@@ -80,32 +87,37 @@ public:
     bool hasApplicationMenu() const override;
     bool isApplicationMenuActive() const override;
 
-    void requestShowToolTip(const QString &text) override;
+    void requestShowToolTip(const QString& text) override;
     void requestHideToolTip() override;
     void requestClose() override;
     void requestContextHelp() override;
     void requestToggleMaximization(Qt::MouseButtons buttons) override;
     void requestMinimize() override;
     void requestShowWindowMenu(QRect const& rect) override;
-    void requestShowApplicationMenu(const QRect &rect, int actionId) override;
+    void requestShowApplicationMenu(const QRect& rect, int actionId) override;
     void requestToggleKeepAbove() override;
     void requestToggleKeepBelow() override;
     void requestToggleOnAllDesktops() override;
 
     // Deprecated.
-    void requestToggleShade() override {}
+    void requestToggleShade() override
+    {
+    }
 
     void showApplicationMenu(int actionId) override;
 
     void update_size();
 
-    Toplevel* client() {
+    Toplevel* client()
+    {
         return m_client;
     }
-    Renderer *renderer() {
+    Renderer* renderer()
+    {
         return m_renderer;
     }
-    KDecoration2::DecoratedClient *decoratedClient() {
+    KDecoration2::DecoratedClient* decoratedClient()
+    {
         return KDecoration2::DecoratedClientPrivate::client();
     }
 
@@ -117,7 +129,7 @@ private:
     void destroyRenderer();
     Toplevel* m_client;
     QSize m_clientSize;
-    Renderer *m_renderer;
+    Renderer* m_renderer;
     QMetaObject::Connection m_compositorToggledConnection;
 
     QString m_toolTipText;

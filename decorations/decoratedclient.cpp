@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/options.h"
 #include "base/platform.h"
-#include "render/compositor.h"
 #include "input/cursor.h"
+#include "render/compositor.h"
 #include "render/platform.h"
 #include "toplevel.h"
 #include "win/control.h"
@@ -48,8 +48,8 @@ namespace Decoration
 {
 
 DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
-                                         KDecoration2::DecoratedClient *decoratedClient,
-                                         KDecoration2::Decoration *decoration)
+                                         KDecoration2::DecoratedClient* decoratedClient,
+                                         KDecoration2::Decoration* decoration)
     : QObject()
     , ApplicationMenuEnabledDecoratedClientPrivate(decoratedClient, decoration)
     , m_client(window)
@@ -59,76 +59,82 @@ DecoratedClientImpl::DecoratedClientImpl(Toplevel* window,
     createRenderer();
     window->control->deco().set_client(this);
 
-    connect(window, &Toplevel::activeChanged, this,
-        [decoratedClient, window]() {
-            Q_EMIT decoratedClient->activeChanged(window->control->active());
-        }
-    );
+    connect(window, &Toplevel::activeChanged, this, [decoratedClient, window]() {
+        Q_EMIT decoratedClient->activeChanged(window->control->active());
+    });
     connect(window, &Toplevel::frame_geometry_changed, this, &DecoratedClientImpl::update_size);
-    connect(window, &Toplevel::desktopChanged, this,
-        [decoratedClient, window]() {
-            Q_EMIT decoratedClient->onAllDesktopsChanged(window->isOnAllDesktops());
-        }
-    );
-    connect(window, &Toplevel::captionChanged, this,
-        [decoratedClient, window]() {
-            Q_EMIT decoratedClient->captionChanged(win::caption(window));
-        }
-    );
-    connect(window, &Toplevel::iconChanged, this,
-        [decoratedClient, window]() {
-            Q_EMIT decoratedClient->iconChanged(window->control->icon());
-        }
-    );
+    connect(window, &Toplevel::desktopChanged, this, [decoratedClient, window]() {
+        Q_EMIT decoratedClient->onAllDesktopsChanged(window->isOnAllDesktops());
+    });
+    connect(window, &Toplevel::captionChanged, this, [decoratedClient, window]() {
+        Q_EMIT decoratedClient->captionChanged(win::caption(window));
+    });
+    connect(window, &Toplevel::iconChanged, this, [decoratedClient, window]() {
+        Q_EMIT decoratedClient->iconChanged(window->control->icon());
+    });
 
-    connect(window, &Toplevel::keepAboveChanged,
-            decoratedClient, &KDecoration2::DecoratedClient::keepAboveChanged);
-    connect(window, &Toplevel::keepBelowChanged,
-            decoratedClient, &KDecoration2::DecoratedClient::keepBelowChanged);
+    connect(window,
+            &Toplevel::keepAboveChanged,
+            decoratedClient,
+            &KDecoration2::DecoratedClient::keepAboveChanged);
+    connect(window,
+            &Toplevel::keepBelowChanged,
+            decoratedClient,
+            &KDecoration2::DecoratedClient::keepBelowChanged);
 
-    connect(render::compositor::self(), &render::compositor::aboutToToggleCompositing, this, &DecoratedClientImpl::destroyRenderer);
-    m_compositorToggledConnection = connect(render::compositor::self(), &render::compositor::compositingToggled, this,
-        [this, decoration]() {
-            createRenderer();
-            decoration->update();
-        }
-    );
-    connect(render::compositor::self(), &render::compositor::aboutToDestroy, this,
-        [this] {
-            disconnect(m_compositorToggledConnection);
-            m_compositorToggledConnection = QMetaObject::Connection();
-        }
-    );
-    connect(window, &Toplevel::quicktiling_changed, decoratedClient,
-        [this, decoratedClient]() {
-            Q_EMIT decoratedClient->adjacentScreenEdgesChanged(adjacentScreenEdges());
-        }
-    );
-    connect(window, &Toplevel::closeableChanged,
-            decoratedClient, &KDecoration2::DecoratedClient::closeableChanged);
-    connect(window, &Toplevel::minimizeableChanged,
-            decoratedClient, &KDecoration2::DecoratedClient::minimizeableChanged);
-    connect(window, &Toplevel::maximizeableChanged,
-            decoratedClient, &KDecoration2::DecoratedClient::maximizeableChanged);
+    connect(render::compositor::self(),
+            &render::compositor::aboutToToggleCompositing,
+            this,
+            &DecoratedClientImpl::destroyRenderer);
+    m_compositorToggledConnection = connect(render::compositor::self(),
+                                            &render::compositor::compositingToggled,
+                                            this,
+                                            [this, decoration]() {
+                                                createRenderer();
+                                                decoration->update();
+                                            });
+    connect(render::compositor::self(), &render::compositor::aboutToDestroy, this, [this] {
+        disconnect(m_compositorToggledConnection);
+        m_compositorToggledConnection = QMetaObject::Connection();
+    });
+    connect(window, &Toplevel::quicktiling_changed, decoratedClient, [this, decoratedClient]() {
+        Q_EMIT decoratedClient->adjacentScreenEdgesChanged(adjacentScreenEdges());
+    });
+    connect(window,
+            &Toplevel::closeableChanged,
+            decoratedClient,
+            &KDecoration2::DecoratedClient::closeableChanged);
+    connect(window,
+            &Toplevel::minimizeableChanged,
+            decoratedClient,
+            &KDecoration2::DecoratedClient::minimizeableChanged);
+    connect(window,
+            &Toplevel::maximizeableChanged,
+            decoratedClient,
+            &KDecoration2::DecoratedClient::maximizeableChanged);
 
-    connect(window, &Toplevel::paletteChanged,
-            decoratedClient, &KDecoration2::DecoratedClient::paletteChanged);
+    connect(window,
+            &Toplevel::paletteChanged,
+            decoratedClient,
+            &KDecoration2::DecoratedClient::paletteChanged);
 
-    connect(window, &Toplevel::hasApplicationMenuChanged,
-            decoratedClient, &KDecoration2::DecoratedClient::hasApplicationMenuChanged);
-    connect(window, &Toplevel::applicationMenuActiveChanged,
-            decoratedClient, &KDecoration2::DecoratedClient::applicationMenuActiveChanged);
+    connect(window,
+            &Toplevel::hasApplicationMenuChanged,
+            decoratedClient,
+            &KDecoration2::DecoratedClient::hasApplicationMenuChanged);
+    connect(window,
+            &Toplevel::applicationMenuActiveChanged,
+            decoratedClient,
+            &KDecoration2::DecoratedClient::applicationMenuActiveChanged);
 
     m_toolTipWakeUp.setSingleShot(true);
-    connect(&m_toolTipWakeUp, &QTimer::timeout, this,
-            [this]() {
-                int fallAsleepDelay = QApplication::style()->styleHint(QStyle::SH_ToolTip_FallAsleepDelay);
-                this->m_toolTipFallAsleep.setRemainingTime(fallAsleepDelay);
+    connect(&m_toolTipWakeUp, &QTimer::timeout, this, [this]() {
+        int fallAsleepDelay = QApplication::style()->styleHint(QStyle::SH_ToolTip_FallAsleepDelay);
+        this->m_toolTipFallAsleep.setRemainingTime(fallAsleepDelay);
 
-                QToolTip::showText(input::get_cursor()->pos(), this->m_toolTipText);
-                m_toolTipShowing = true;
-            }
-    );
+        QToolTip::showText(input::get_cursor()->pos(), this->m_toolTipText);
+        m_toolTipShowing = true;
+    });
 }
 
 DecoratedClientImpl::~DecoratedClientImpl()
@@ -163,10 +169,10 @@ QPalette DecoratedClientImpl::palette() const
     return m_client->control->palette().q_palette();
 }
 
-#define DELEGATE(type, name, clientName) \
-    type DecoratedClientImpl::name() const \
-    { \
-        return m_client->clientName(); \
+#define DELEGATE(type, name, clientName)                                                           \
+    type DecoratedClientImpl::name() const                                                         \
+    {                                                                                              \
+        return m_client->clientName();                                                             \
     }
 
 #define DELEGATE2(type, name) DELEGATE(type, name, name)
@@ -183,20 +189,20 @@ DELEGATE2(bool, isOnAllDesktops)
 #undef DELEGATE2
 #undef DELEGATE
 
-#define DELEGATE_WIN(type, name, impl_name) \
-    type DecoratedClientImpl::name() const \
-    { \
-        return win::impl_name(m_client); \
+#define DELEGATE_WIN(type, name, impl_name)                                                        \
+    type DecoratedClientImpl::name() const                                                         \
+    {                                                                                              \
+        return win::impl_name(m_client);                                                           \
     }
 
 DELEGATE_WIN(QString, caption, caption)
 
 #undef DELEGATE_WIN
 
-#define DELEGATE_WIN_CTRL(type, name, impl_name) \
-    type DecoratedClientImpl::name() const \
-    { \
-        return m_client->control->impl_name(); \
+#define DELEGATE_WIN_CTRL(type, name, impl_name)                                                   \
+    type DecoratedClientImpl::name() const                                                         \
+    {                                                                                              \
+        return m_client->control->impl_name();                                                     \
     }
 
 DELEGATE_WIN_CTRL(bool, isActive, active)
@@ -206,20 +212,20 @@ DELEGATE_WIN_CTRL(bool, isKeepBelow, keep_below)
 
 #undef DELEGATE_WIN_CTRL
 
-#define DELEGATE_WIN_TRANSIENT(type, name, impl_name) \
-    type DecoratedClientImpl::name() const \
-    { \
-        return m_client->transient()->impl_name(); \
+#define DELEGATE_WIN_TRANSIENT(type, name, impl_name)                                              \
+    type DecoratedClientImpl::name() const                                                         \
+    {                                                                                              \
+        return m_client->transient()->impl_name();                                                 \
     }
 
 DELEGATE_WIN_TRANSIENT(bool, isModal, modal)
 
 #undef DELEGATE_WIN_TRANSIENT
 
-#define DELEGATE(type, name, clientName) \
-    type DecoratedClientImpl::name() const \
-    { \
-        return m_client->clientName(); \
+#define DELEGATE(type, name, clientName)                                                           \
+    type DecoratedClientImpl::name() const                                                         \
+    {                                                                                              \
+        return m_client->clientName();                                                             \
     }
 
 DELEGATE(WId, windowId, xcb_window)
@@ -227,10 +233,10 @@ DELEGATE(WId, decorationId, frameId)
 
 #undef DELEGATE
 
-#define DELEGATE(name, op) \
-    void DecoratedClientImpl::name() \
-    { \
-        workspace()->performWindowOperation(m_client, base::options::op); \
+#define DELEGATE(name, op)                                                                         \
+    void DecoratedClientImpl::name()                                                               \
+    {                                                                                              \
+        workspace()->performWindowOperation(m_client, base::options::op);                          \
     }
 
 DELEGATE(requestToggleOnAllDesktops, OnAllDesktopsOp)
@@ -239,10 +245,10 @@ DELEGATE(requestToggleKeepBelow, KeepBelowOp)
 
 #undef DELEGATE
 
-#define DELEGATE(name, clientName) \
-    void DecoratedClientImpl::name() \
-    { \
-        m_client->clientName(); \
+#define DELEGATE(name, clientName)                                                                 \
+    void DecoratedClientImpl::name()                                                               \
+    {                                                                                              \
+        m_client->clientName();                                                                    \
     }
 
 DELEGATE(requestContextHelp, showContextHelp)
@@ -259,7 +265,8 @@ void DecoratedClientImpl::requestClose()
     QMetaObject::invokeMethod(m_client, "closeWindow", Qt::QueuedConnection);
 }
 
-QColor DecoratedClientImpl::color(KDecoration2::ColorGroup group, KDecoration2::ColorRole role) const
+QColor DecoratedClientImpl::color(KDecoration2::ColorGroup group,
+                                  KDecoration2::ColorRole role) const
 {
     auto dp = m_client->control->palette().current;
     if (dp) {
@@ -269,7 +276,7 @@ QColor DecoratedClientImpl::color(KDecoration2::ColorGroup group, KDecoration2::
     return QColor();
 }
 
-void DecoratedClientImpl::requestShowToolTip(const QString &text)
+void DecoratedClientImpl::requestShowToolTip(const QString& text)
 {
     if (!DecorationBridge::self()->showToolTips()) {
         return;
@@ -292,12 +299,11 @@ void DecoratedClientImpl::requestShowWindowMenu(QRect const& rect)
 {
     // TODO: add rect to requestShowWindowMenu
     auto const client_pos = m_client->pos();
-    workspace()->showWindowMenu(QRect(client_pos + rect.topLeft(),
-                                            client_pos + rect.bottomRight()),
-                                      m_client);
+    workspace()->showWindowMenu(QRect(client_pos + rect.topLeft(), client_pos + rect.bottomRight()),
+                                m_client);
 }
 
-void DecoratedClientImpl::requestShowApplicationMenu(const QRect &rect, int actionId)
+void DecoratedClientImpl::requestShowApplicationMenu(const QRect& rect, int actionId)
 {
     workspace()->showApplicationMenu(rect, m_client, actionId);
 }
@@ -309,11 +315,11 @@ void DecoratedClientImpl::showApplicationMenu(int actionId)
 
 void DecoratedClientImpl::requestToggleMaximization(Qt::MouseButtons buttons)
 {
-    QMetaObject::invokeMethod(
-        this,
-        "delayedRequestToggleMaximization",
-        Qt::QueuedConnection,
-        Q_ARG(base::options::WindowOperation, kwinApp()->options->operationMaxButtonClick(buttons)));
+    QMetaObject::invokeMethod(this,
+                              "delayedRequestToggleMaximization",
+                              Qt::QueuedConnection,
+                              Q_ARG(base::options::WindowOperation,
+                                    kwinApp()->options->operationMaxButtonClick(buttons)));
 }
 
 void DecoratedClientImpl::delayedRequestToggleMaximization(base::options::WindowOperation operation)

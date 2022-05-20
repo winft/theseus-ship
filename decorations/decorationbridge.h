@@ -51,22 +51,28 @@ public:
     static bool hasPlugin();
 
     void init();
-    KDecoration2::Decoration *createDecoration(window* window);
+    KDecoration2::Decoration* createDecoration(window* window);
 
-    std::unique_ptr<KDecoration2::DecoratedClientPrivate> createClient(KDecoration2::DecoratedClient *client, KDecoration2::Decoration *decoration) override;
-    std::unique_ptr<KDecoration2::DecorationSettingsPrivate> settings(KDecoration2::DecorationSettings *parent) override;
+    std::unique_ptr<KDecoration2::DecoratedClientPrivate>
+    createClient(KDecoration2::DecoratedClient* client,
+                 KDecoration2::Decoration* decoration) override;
+    std::unique_ptr<KDecoration2::DecorationSettingsPrivate>
+    settings(KDecoration2::DecorationSettings* parent) override;
 
-    QString recommendedBorderSize() const {
+    QString recommendedBorderSize() const
+    {
         return m_recommendedBorderSize;
     }
 
-    bool showToolTips() const {
+    bool showToolTips() const
+    {
         return m_showToolTips;
     }
 
     void reconfigure();
 
-    const QSharedPointer<KDecoration2::DecorationSettings> &settings() const {
+    const QSharedPointer<KDecoration2::DecorationSettings>& settings() const
+    {
         return m_settings;
     }
 
@@ -77,12 +83,12 @@ Q_SIGNALS:
 
 private:
     QString readPlugin();
-    void loadMetaData(const QJsonObject &object);
-    void findTheme(const QVariantMap &map);
+    void loadMetaData(const QJsonObject& object);
+    void findTheme(const QVariantMap& map);
     void initPlugin();
     QString readTheme() const;
     void readDecorationOptions();
-    KPluginFactory *m_factory;
+    KPluginFactory* m_factory;
     bool m_showToolTips;
     QString m_recommendedBorderSize;
     QString m_plugin;

@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "decorations/decorations_logging.h"
 #include "toplevel.h"
 
-#include <KDecoration2/Decoration>
 #include <KDecoration2/DecoratedClient>
+#include <KDecoration2/Decoration>
 
 #include <QDebug>
 #include <QPainter>
@@ -34,14 +34,12 @@ namespace KWin
 namespace Decoration
 {
 
-Renderer::Renderer(DecoratedClientImpl *client)
+Renderer::Renderer(DecoratedClientImpl* client)
     : QObject(client)
     , m_client(client)
     , m_imageSizesDirty(true)
 {
-    auto markImageSizesDirty = [this]{
-        m_imageSizesDirty = true;
-    };
+    auto markImageSizesDirty = [this] { m_imageSizesDirty = true; };
     connect(client->decoration(), &KDecoration2::Decoration::damaged, this, &Renderer::schedule);
     connect(client->client(),
             &Toplevel::central_output_changed,
@@ -55,14 +53,21 @@ Renderer::Renderer(DecoratedClientImpl *client)
                 }
                 markImageSizesDirty();
             });
-    connect(client->decoration(), &KDecoration2::Decoration::bordersChanged, this, markImageSizesDirty);
-    connect(client->decoratedClient(), &KDecoration2::DecoratedClient::widthChanged, this, markImageSizesDirty);
-    connect(client->decoratedClient(), &KDecoration2::DecoratedClient::heightChanged, this, markImageSizesDirty);
+    connect(
+        client->decoration(), &KDecoration2::Decoration::bordersChanged, this, markImageSizesDirty);
+    connect(client->decoratedClient(),
+            &KDecoration2::DecoratedClient::widthChanged,
+            this,
+            markImageSizesDirty);
+    connect(client->decoratedClient(),
+            &KDecoration2::DecoratedClient::heightChanged,
+            this,
+            markImageSizesDirty);
 }
 
 Renderer::~Renderer() = default;
 
-void Renderer::schedule(const QRegion &rect)
+void Renderer::schedule(const QRegion& rect)
 {
     m_scheduled = m_scheduled.united(rect);
     Q_EMIT renderScheduled(rect);
@@ -75,7 +80,7 @@ QRegion Renderer::getScheduled()
     return region;
 }
 
-QImage Renderer::renderToImage(const QRect &geo)
+QImage Renderer::renderToImage(const QRect& geo)
 {
     Q_ASSERT(m_client);
     auto window = client()->client();
@@ -109,7 +114,7 @@ QImage Renderer::renderToImage(const QRect &geo)
     return image;
 }
 
-void Renderer::renderToPainter(QPainter *painter, const QRect &rect)
+void Renderer::renderToPainter(QPainter* painter, const QRect& rect)
 {
     client()->decoration()->paint(painter, rect);
 }

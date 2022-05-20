@@ -12,6 +12,7 @@ python <(curl -s $RUN_SCRIPT_URL) -r \
     ${SOURCE_DIR}/base \
     ${SOURCE_DIR}/cmake \
     ${SOURCE_DIR}/debug \
+    ${SOURCE_DIR}/decorations \
     ${SOURCE_DIR}/desktop \
     ${SOURCE_DIR}/effect \
     ${SOURCE_DIR}/input \

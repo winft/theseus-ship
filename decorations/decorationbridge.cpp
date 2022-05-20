@@ -35,8 +35,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwineffects/effect_plugin_factory.h>
 
-#include <KDecoration2/Decoration>
 #include <KDecoration2/DecoratedClient>
+#include <KDecoration2/Decoration>
 #include <KDecoration2/DecorationSettings>
 #include <KPluginMetaData>
 #include <QMetaProperty>
@@ -57,7 +57,7 @@ static const QString s_defaultPlugin = s_aurorae;
 
 KWIN_SINGLETON_FACTORY(DecorationBridge)
 
-DecorationBridge::DecorationBridge(QObject *parent)
+DecorationBridge::DecorationBridge(QObject* parent)
     : KDecoration2::DecorationBridge(parent)
     , m_factory(nullptr)
     , m_showToolTips(false)
@@ -94,7 +94,7 @@ void DecorationBridge::readDecorationOptions()
 
 bool DecorationBridge::hasPlugin()
 {
-    const DecorationBridge *bridge = DecorationBridge::self();
+    const DecorationBridge* bridge = DecorationBridge::self();
     if (!bridge) {
         return false;
     }
@@ -197,7 +197,7 @@ void DecorationBridge::reconfigure()
     }
 }
 
-void DecorationBridge::loadMetaData(const QJsonObject &object)
+void DecorationBridge::loadMetaData(const QJsonObject& object)
 {
     // reset all settings
     m_recommendedBorderSize = QString();
@@ -220,7 +220,7 @@ void DecorationBridge::loadMetaData(const QJsonObject &object)
     Q_EMIT metaDataLoaded();
 }
 
-void DecorationBridge::findTheme(const QVariantMap &map)
+void DecorationBridge::findTheme(const QVariantMap& map)
 {
     auto it = map.find(QStringLiteral("themes"));
     if (it == map.end()) {
@@ -234,18 +234,21 @@ void DecorationBridge::findTheme(const QVariantMap &map)
     m_theme = readTheme();
 }
 
-std::unique_ptr<KDecoration2::DecoratedClientPrivate> DecorationBridge::createClient(KDecoration2::DecoratedClient *client, KDecoration2::Decoration *decoration)
+std::unique_ptr<KDecoration2::DecoratedClientPrivate>
+DecorationBridge::createClient(KDecoration2::DecoratedClient* client,
+                               KDecoration2::Decoration* decoration)
 {
-    return std::make_unique<DecoratedClientImpl>(static_cast<window*>(decoration->parent())->win,
-                                                 client, decoration);
+    return std::make_unique<DecoratedClientImpl>(
+        static_cast<window*>(decoration->parent())->win, client, decoration);
 }
 
-std::unique_ptr<KDecoration2::DecorationSettingsPrivate> DecorationBridge::settings(KDecoration2::DecorationSettings *parent)
+std::unique_ptr<KDecoration2::DecorationSettingsPrivate>
+DecorationBridge::settings(KDecoration2::DecorationSettings* parent)
 {
     return std::unique_ptr<SettingsImpl>(new SettingsImpl(parent));
 }
 
-KDecoration2::Decoration *DecorationBridge::createDecoration(window* window)
+KDecoration2::Decoration* DecorationBridge::createDecoration(window* window)
 {
     if (m_noPlugin) {
         return nullptr;
@@ -253,7 +256,7 @@ KDecoration2::Decoration *DecorationBridge::createDecoration(window* window)
     if (!m_factory) {
         return nullptr;
     }
-    QVariantMap args({ {QStringLiteral("bridge"), QVariant::fromValue(this)} });
+    QVariantMap args({{QStringLiteral("bridge"), QVariant::fromValue(this)}});
 
     if (!m_theme.isEmpty()) {
         args.insert(QStringLiteral("theme"), m_theme);
@@ -264,13 +267,13 @@ KDecoration2::Decoration *DecorationBridge::createDecoration(window* window)
     return deco;
 }
 
-static
-QString settingsProperty(const QVariant &variant)
+static QString settingsProperty(const QVariant& variant)
 {
     if (QLatin1String(variant.typeName()) == QLatin1String("KDecoration2::BorderSize")) {
         return QString::number(variant.toInt());
-    } else if (QLatin1String(variant.typeName()) == QLatin1String("QVector<KDecoration2::DecorationButtonType>")) {
-        const auto &b = variant.value<QVector<KDecoration2::DecorationButtonType>>();
+    } else if (QLatin1String(variant.typeName())
+               == QLatin1String("QVector<KDecoration2::DecorationButtonType>")) {
+        const auto& b = variant.value<QVector<KDecoration2::DecorationButtonType>>();
         QString buffer;
         for (auto it = b.begin(); it != b.end(); ++it) {
             if (it != b.begin()) {
@@ -291,14 +294,17 @@ QString DecorationBridge::supportInformation() const
     } else {
         b.append(QStringLiteral("Plugin: %1\n").arg(m_plugin));
         b.append(QStringLiteral("Theme: %1\n").arg(m_theme));
-        b.append(QStringLiteral("Plugin recommends border size: %1\n").arg(m_recommendedBorderSize.isNull() ? "No" : m_recommendedBorderSize));
-        const QMetaObject *metaOptions = m_settings->metaObject();
-        for (int i=0; i<metaOptions->propertyCount(); ++i) {
+        b.append(QStringLiteral("Plugin recommends border size: %1\n")
+                     .arg(m_recommendedBorderSize.isNull() ? "No" : m_recommendedBorderSize));
+        const QMetaObject* metaOptions = m_settings->metaObject();
+        for (int i = 0; i < metaOptions->propertyCount(); ++i) {
             const QMetaProperty property = metaOptions->property(i);
             if (QLatin1String(property.name()) == QLatin1String("objectName")) {
                 continue;
             }
-            b.append(QStringLiteral("%1: %2\n").arg(property.name()).arg(settingsProperty(m_settings->property(property.name()))));
+            b.append(QStringLiteral("%1: %2\n")
+                         .arg(property.name())
+                         .arg(settingsProperty(m_settings->property(property.name()))));
         }
     }
     return b;

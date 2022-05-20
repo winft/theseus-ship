@@ -40,7 +40,7 @@ class KWIN_EXPORT Renderer : public QObject
 public:
     ~Renderer() override;
 
-    void schedule(const QRegion &region);
+    void schedule(const QRegion& region);
 
     /**
      * Reparents this Renderer to the @p deleted.
@@ -50,10 +50,10 @@ public:
     virtual void reparent(Toplevel* window);
 
 Q_SIGNALS:
-    void renderScheduled(const QRegion &geo);
+    void renderScheduled(const QRegion& geo);
 
 protected:
-    explicit Renderer(DecoratedClientImpl *client);
+    explicit Renderer(DecoratedClientImpl* client);
     /**
      * @returns the scheduled paint region and resets
      */
@@ -61,21 +61,24 @@ protected:
 
     virtual void render() = 0;
 
-    DecoratedClientImpl *client() {
+    DecoratedClientImpl* client()
+    {
         return m_client;
     }
 
-    bool areImageSizesDirty() const {
+    bool areImageSizesDirty() const
+    {
         return m_imageSizesDirty;
     }
-    void resetImageSizesDirty() {
+    void resetImageSizesDirty()
+    {
         m_imageSizesDirty = false;
     }
-    QImage renderToImage(const QRect &geo);
-    void renderToPainter(QPainter *painter, const QRect &rect);
+    QImage renderToImage(const QRect& geo);
+    void renderToPainter(QPainter* painter, const QRect& rect);
 
 private:
-    DecoratedClientImpl *m_client;
+    DecoratedClientImpl* m_client;
     QRegion m_scheduled;
     bool m_imageSizesDirty;
 };

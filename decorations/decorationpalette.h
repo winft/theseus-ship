@@ -25,12 +25,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <kwin_export.h>
 
-#include <KDecoration2/DecorationSettings>
-#include <QFileSystemWatcher>
-#include <QPalette>
-#include <KSharedConfig>
 #include <KColorScheme>
 #include <KConfigWatcher>
+#include <KDecoration2/DecorationSettings>
+#include <KSharedConfig>
+#include <QFileSystemWatcher>
+#include <QPalette>
 
 #include <optional>
 
@@ -43,7 +43,7 @@ class KWIN_EXPORT DecorationPalette : public QObject
 {
     Q_OBJECT
 public:
-    DecorationPalette(const QString &colorScheme);
+    DecorationPalette(const QString& colorScheme);
 
     bool isValid() const;
 
@@ -52,6 +52,7 @@ public:
 
 Q_SIGNALS:
     void changed();
+
 private:
     void update();
 
