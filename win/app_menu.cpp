@@ -23,12 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "appmenu_interface.h"
 #include "deco.h"
+#include "deco/bridge.h"
 #include "space.h"
 
 #include <QDBusObjectPath>
 #include <QDBusServiceWatcher>
 
-#include "decorations/decorationbridge.h"
 #include <KDecoration2/DecorationSettings>
 
 using namespace KWin;

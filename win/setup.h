@@ -7,11 +7,11 @@
 
 #include "app_menu.h"
 #include "deco.h"
+#include "deco/bridge.h"
 #include "placement.h"
-#include "render/compositor.h"
 #include "screen.h"
 
-#include "decorations/decorationbridge.h"
+#include "render/compositor.h"
 #include "rules/rule_book.h"
 
 #include <KDecoration2/Decoration>

@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include "decorations/decorationrenderer.h"
+#include "win/deco/renderer.h"
 
 #include <xcb/xcb.h>
 

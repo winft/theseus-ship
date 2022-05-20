@@ -21,11 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #include "space.h"
 
+#include "deco/bridge.h"
+
 #include "base/dbus/kwin.h"
 #include "base/output_helpers.h"
 #include "base/x11/user_interaction_filter.h"
 #include "base/x11/xcb/extensions.h"
-#include "decorations/decorationbridge.h"
 #include "input/cursor.h"
 #include "main.h"
 #include "render/effects.h"

@@ -13,7 +13,6 @@
 #include "window.h"
 
 #include "base/output.h"
-#include "decorations/decoratedclient.h"
 #include "input/cursor.h"
 #include "lanczos_filter.h"
 #include "main.h"
@@ -22,6 +21,7 @@
 #include "render/effects.h"
 #include "render/x11/compositor.h"
 #include "render/x11/overlay_window.h"
+#include "win/deco/client_impl.h"
 #include "win/geo.h"
 #include "win/transient.h"
 

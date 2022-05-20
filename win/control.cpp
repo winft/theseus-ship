@@ -6,18 +6,18 @@
 #include "control.h"
 
 #include "app_menu.h"
+#include "deco/client_impl.h"
+#include "deco/palette.h"
+#include "deco/window.h"
 #include "stacking.h"
 
 #include <config-kwin.h>
 
-#include "decorations/decoratedclient.h"
-#include "decorations/decorationpalette.h"
-#include "decorations/window.h"
-#include "render/effects.h"
-
 #if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
+
+#include "render/effects.h"
 #include "toplevel.h"
 
 #include <Wrapland/Server/plasma_window.h>

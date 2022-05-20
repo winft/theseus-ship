@@ -5,7 +5,7 @@
 */
 #include "deco_renderer.h"
 
-#include "decorations/decoratedclient.h"
+#include "win/deco/client_impl.h"
 #include "win/x11/window.h"
 
 #include "kwinglobals.h"

@@ -13,12 +13,12 @@
 #include "device_redirect.h"
 
 #include "base/wayland/server.h"
-#include "decorations/decoratedclient.h"
 #include "input/event.h"
 #include "input/event_filter.h"
 #include "input/event_spy.h"
 #include "input/qt_event.h"
 #include "toplevel.h"
+#include "win/deco/client_impl.h"
 #include "win/input.h"
 #include "win/wayland/space.h"
 #include "win/x11/window.h"

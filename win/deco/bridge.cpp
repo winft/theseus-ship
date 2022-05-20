@@ -17,11 +17,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
-#include "decorationbridge.h"
+#include "bridge.h"
 
-#include "decoratedclient.h"
-#include "decorationrenderer.h"
+#include "client_impl.h"
 #include "decorations_logging.h"
+#include "renderer.h"
 #include "settings.h"
 #include "window.h"
 

@@ -11,10 +11,10 @@
 #include "shadow.h"
 #include "window.h"
 
-#include "decorations/decoratedclient.h"
 #include "render/effects.h"
 #include "render/shadow.h"
 #include "toplevel.h"
+#include "win/deco/client_impl.h"
 #include "win/geo.h"
 #include "win/scene.h"
 #include "win/x11/window.h"

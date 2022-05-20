@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lib/app.h"
 
 #include "base/wayland/server.h"
-#include "decorations/decorationbridge.h"
-#include "decorations/settings.h"
 #include "input/cursor.h"
+#include "win/deco/bridge.h"
+#include "win/deco/settings.h"
 #include "win/space.h"
 
 #include "win/deco.h"

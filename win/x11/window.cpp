@@ -17,11 +17,11 @@
 #include "window_release.h"
 
 #include "base/x11/grabs.h"
-#include "decorations/window.h"
 #include "render/x11/buffer.h"
 #include "render/x11/shadow.h"
 #include "rules/rules.h"
 #include "win/deco.h"
+#include "win/deco/window.h"
 #include "win/layers.h"
 #include "win/remnant.h"
 #include "win/stacking.h"

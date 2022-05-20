@@ -5,10 +5,10 @@
 */
 #pragma once
 
+#include "deco/client_impl.h"
+#include "deco/palette.h"
 #include "types.h"
 
-#include "decorations/decoratedclient.h"
-#include "decorations/decorationpalette.h"
 #include "input/cursor.h"
 
 #include <KDecoration2/Decoration>

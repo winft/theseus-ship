@@ -9,12 +9,11 @@
 #include "input.h"
 #include "window.h"
 
+#include "render/compositor.h"
+#include "win/deco/bridge.h"
+#include "win/deco/window.h"
 #include "win/move.h"
 #include "win/scene.h"
-
-#include "decorations/decorationbridge.h"
-#include "decorations/window.h"
-#include "render/compositor.h"
 
 #include <KDecoration2/DecoratedClient>
 

@@ -5,8 +5,8 @@
 */
 #include "device_redirect.h"
 
-#include "decorations/decoratedclient.h"
 #include "toplevel.h"
+#include "win/deco/client_impl.h"
 
 namespace KWin::input
 {

@@ -28,13 +28,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "win/space.h"
 
 #include "win/deco.h"
+#include "win/deco/bridge.h"
+#include "win/deco/client_impl.h"
+#include "win/deco/settings.h"
 #include "win/internal_window.h"
 #include "win/move.h"
 #include "win/wayland/window.h"
-
-#include "decorations/decoratedclient.h"
-#include "decorations/decorationbridge.h"
-#include "decorations/settings.h"
 
 #include <Wrapland/Client/compositor.h>
 #include <Wrapland/Client/connection_thread.h>

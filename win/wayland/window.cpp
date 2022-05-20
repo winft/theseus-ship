@@ -18,7 +18,6 @@
 #include "xdg_shell.h"
 
 #include "base/wayland/server.h"
-#include "decorations/window.h"
 #include "render/compositor.h"
 #include "render/platform.h"
 #include "render/wayland/buffer.h"
@@ -26,6 +25,7 @@
 #include "rules/rules.h"
 #include "utils/blocker.h"
 #include "win/deco.h"
+#include "win/deco/window.h"
 #include "win/geo.h"
 #include "win/layers.h"
 #include "win/remnant.h"

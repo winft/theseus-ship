@@ -10,12 +10,12 @@
 #include "window.h"
 
 #include "base/output.h"
-#include "decorations/decoratedclient.h"
 #include "input/cursor.h"
 #include "main.h"
 #include "render/compositor.h"
 #include "render/cursor.h"
 #include "toplevel.h"
+#include "win/deco/client_impl.h"
 
 #include <KDecoration2/Decoration>
 #include <QPainter>

@@ -6,6 +6,7 @@
 #include "remnant.h"
 
 #include "control.h"
+#include "deco/renderer.h"
 #include "geo.h"
 #include "meta.h"
 #include "net.h"
@@ -14,7 +15,6 @@
 #include "x11/window.h"
 
 #include "base/logging.h"
-#include "decorations/decorationrenderer.h"
 
 #include <cassert>
 
