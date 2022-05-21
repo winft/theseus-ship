@@ -89,8 +89,10 @@ struct deco_impl {
 
         this->client = client;
         QObject::disconnect(client_destroy);
-        client_destroy = QObject::connect(
-            client, &deco::client_impl::destroyed, client, [this]() { this->client = nullptr; });
+        client_destroy = QObject::connect(client->qobject.get(),
+                                          &deco::client_impl_qobject::destroyed,
+                                          client->qobject.get(),
+                                          [this]() { this->client = nullptr; });
     }
 
     bool enabled() const

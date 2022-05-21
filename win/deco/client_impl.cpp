@@ -46,91 +46,96 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win::deco
 {
 
+client_impl_qobject::~client_impl_qobject() = default;
+
 client_impl::client_impl(Toplevel* window,
                          KDecoration2::DecoratedClient* decoratedClient,
                          KDecoration2::Decoration* decoration)
-    : QObject()
-    , ApplicationMenuEnabledDecoratedClientPrivate(decoratedClient, decoration)
+    : ApplicationMenuEnabledDecoratedClientPrivate(decoratedClient, decoration)
+    , qobject{std::make_unique<client_impl_qobject>()}
     , m_client(window)
     , m_clientSize(win::frame_to_client_size(window, window->size()))
 {
     createRenderer();
     window->control->deco().set_client(this);
 
-    connect(window, &Toplevel::activeChanged, this, [decoratedClient, window]() {
+    QObject::connect(window, &Toplevel::activeChanged, qobject.get(), [decoratedClient, window]() {
         Q_EMIT decoratedClient->activeChanged(window->control->active());
     });
-    connect(window, &Toplevel::frame_geometry_changed, this, &client_impl::update_size);
-    connect(window, &Toplevel::desktopChanged, this, [decoratedClient, window]() {
+    QObject::connect(
+        window, &Toplevel::frame_geometry_changed, qobject.get(), [this] { update_size(); });
+    QObject::connect(window, &Toplevel::desktopChanged, qobject.get(), [decoratedClient, window]() {
         Q_EMIT decoratedClient->onAllDesktopsChanged(window->isOnAllDesktops());
     });
-    connect(window, &Toplevel::captionChanged, this, [decoratedClient, window]() {
+    QObject::connect(window, &Toplevel::captionChanged, qobject.get(), [decoratedClient, window]() {
         Q_EMIT decoratedClient->captionChanged(win::caption(window));
     });
-    connect(window, &Toplevel::iconChanged, this, [decoratedClient, window]() {
+    QObject::connect(window, &Toplevel::iconChanged, qobject.get(), [decoratedClient, window]() {
         Q_EMIT decoratedClient->iconChanged(window->control->icon());
     });
 
-    connect(window,
-            &Toplevel::keepAboveChanged,
-            decoratedClient,
-            &KDecoration2::DecoratedClient::keepAboveChanged);
-    connect(window,
-            &Toplevel::keepBelowChanged,
-            decoratedClient,
-            &KDecoration2::DecoratedClient::keepBelowChanged);
+    QObject::connect(window,
+                     &Toplevel::keepAboveChanged,
+                     decoratedClient,
+                     &KDecoration2::DecoratedClient::keepAboveChanged);
+    QObject::connect(window,
+                     &Toplevel::keepBelowChanged,
+                     decoratedClient,
+                     &KDecoration2::DecoratedClient::keepBelowChanged);
 
-    connect(render::compositor::self(),
-            &render::compositor::aboutToToggleCompositing,
-            this,
-            [this] { m_renderer.reset(); });
-    m_compositorToggledConnection = connect(render::compositor::self(),
-                                            &render::compositor::compositingToggled,
-                                            this,
-                                            [this, decoration]() {
-                                                createRenderer();
-                                                decoration->update();
-                                            });
-    connect(render::compositor::self(), &render::compositor::aboutToDestroy, this, [this] {
-        disconnect(m_compositorToggledConnection);
-        m_compositorToggledConnection = QMetaObject::Connection();
-    });
-    connect(window, &Toplevel::quicktiling_changed, decoratedClient, [this, decoratedClient]() {
-        Q_EMIT decoratedClient->adjacentScreenEdgesChanged(adjacentScreenEdges());
-    });
-    connect(window,
-            &Toplevel::closeableChanged,
-            decoratedClient,
-            &KDecoration2::DecoratedClient::closeableChanged);
-    connect(window,
-            &Toplevel::minimizeableChanged,
-            decoratedClient,
-            &KDecoration2::DecoratedClient::minimizeableChanged);
-    connect(window,
-            &Toplevel::maximizeableChanged,
-            decoratedClient,
-            &KDecoration2::DecoratedClient::maximizeableChanged);
+    QObject::connect(render::compositor::self(),
+                     &render::compositor::aboutToToggleCompositing,
+                     qobject.get(),
+                     [this] { m_renderer.reset(); });
+    m_compositorToggledConnection = QObject::connect(render::compositor::self(),
+                                                     &render::compositor::compositingToggled,
+                                                     qobject.get(),
+                                                     [this, decoration]() {
+                                                         createRenderer();
+                                                         decoration->update();
+                                                     });
+    QObject::connect(
+        render::compositor::self(), &render::compositor::aboutToDestroy, qobject.get(), [this] {
+            QObject::disconnect(m_compositorToggledConnection);
+            m_compositorToggledConnection = QMetaObject::Connection();
+        });
+    QObject::connect(
+        window, &Toplevel::quicktiling_changed, decoratedClient, [this, decoratedClient]() {
+            Q_EMIT decoratedClient->adjacentScreenEdgesChanged(adjacentScreenEdges());
+        });
+    QObject::connect(window,
+                     &Toplevel::closeableChanged,
+                     decoratedClient,
+                     &KDecoration2::DecoratedClient::closeableChanged);
+    QObject::connect(window,
+                     &Toplevel::minimizeableChanged,
+                     decoratedClient,
+                     &KDecoration2::DecoratedClient::minimizeableChanged);
+    QObject::connect(window,
+                     &Toplevel::maximizeableChanged,
+                     decoratedClient,
+                     &KDecoration2::DecoratedClient::maximizeableChanged);
 
-    connect(window,
-            &Toplevel::paletteChanged,
-            decoratedClient,
-            &KDecoration2::DecoratedClient::paletteChanged);
+    QObject::connect(window,
+                     &Toplevel::paletteChanged,
+                     decoratedClient,
+                     &KDecoration2::DecoratedClient::paletteChanged);
 
-    connect(window,
-            &Toplevel::hasApplicationMenuChanged,
-            decoratedClient,
-            &KDecoration2::DecoratedClient::hasApplicationMenuChanged);
-    connect(window,
-            &Toplevel::applicationMenuActiveChanged,
-            decoratedClient,
-            &KDecoration2::DecoratedClient::applicationMenuActiveChanged);
+    QObject::connect(window,
+                     &Toplevel::hasApplicationMenuChanged,
+                     decoratedClient,
+                     &KDecoration2::DecoratedClient::hasApplicationMenuChanged);
+    QObject::connect(window,
+                     &Toplevel::applicationMenuActiveChanged,
+                     decoratedClient,
+                     &KDecoration2::DecoratedClient::applicationMenuActiveChanged);
 
     m_toolTipWakeUp.setSingleShot(true);
-    connect(&m_toolTipWakeUp, &QTimer::timeout, this, [this]() {
+    QObject::connect(&m_toolTipWakeUp, &QTimer::timeout, qobject.get(), [this]() {
         int fallAsleepDelay = QApplication::style()->styleHint(QStyle::SH_ToolTip_FallAsleepDelay);
-        this->m_toolTipFallAsleep.setRemainingTime(fallAsleepDelay);
+        m_toolTipFallAsleep.setRemainingTime(fallAsleepDelay);
 
-        QToolTip::showText(input::get_cursor()->pos(), this->m_toolTipText);
+        QToolTip::showText(input::get_cursor()->pos(), m_toolTipText);
         m_toolTipShowing = true;
     });
 }
@@ -322,16 +327,13 @@ void client_impl::showApplicationMenu(int actionId)
 
 void client_impl::requestToggleMaximization(Qt::MouseButtons buttons)
 {
-    QMetaObject::invokeMethod(this,
-                              "delayedRequestToggleMaximization",
-                              Qt::QueuedConnection,
-                              Q_ARG(base::options::WindowOperation,
-                                    kwinApp()->options->operationMaxButtonClick(buttons)));
-}
-
-void client_impl::delayedRequestToggleMaximization(base::options::WindowOperation operation)
-{
-    workspace()->performWindowOperation(m_client, operation);
+    QMetaObject::invokeMethod(
+        qobject.get(),
+        [this, buttons] {
+            workspace()->performWindowOperation(
+                m_client, kwinApp()->options->operationMaxButtonClick(buttons));
+        },
+        Qt::QueuedConnection);
 }
 
 int client_impl::width() const

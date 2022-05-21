@@ -36,15 +36,21 @@ namespace win::deco
 
 class renderer;
 
-class KWIN_EXPORT client_impl : public QObject,
-                                public KDecoration2::ApplicationMenuEnabledDecoratedClientPrivate
+class client_impl_qobject : public QObject
 {
     Q_OBJECT
 public:
-    explicit client_impl(Toplevel* window,
-                         KDecoration2::DecoratedClient* decoratedClient,
-                         KDecoration2::Decoration* decoration);
+    ~client_impl_qobject() override;
+};
+
+class KWIN_EXPORT client_impl : public KDecoration2::ApplicationMenuEnabledDecoratedClientPrivate
+{
+public:
+    client_impl(Toplevel* window,
+                KDecoration2::DecoratedClient* decoratedClient,
+                KDecoration2::Decoration* decoration);
     ~client_impl() override;
+
     QString caption() const override;
     WId decorationId() const override;
     int desktop() const override;
@@ -121,8 +127,7 @@ public:
         return KDecoration2::DecoratedClientPrivate::client();
     }
 
-private Q_SLOTS:
-    void delayedRequestToggleMaximization(base::options::WindowOperation operation);
+    std::unique_ptr<client_impl_qobject> qobject;
 
 private:
     void createRenderer();

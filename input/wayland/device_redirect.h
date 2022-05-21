@@ -79,7 +79,9 @@ void device_redirect_set_decoration(Dev* dev, win::deco::client_impl* deco)
     dev->focus.deco = deco;
     if (deco) {
         dev->focus.notifiers.deco_destroy = QObject::connect(
-            deco, &win::deco::client_impl::destroyed, dev, [dev] { dev->focus.deco = nullptr; });
+            deco->qobject.get(), &win::deco::client_impl_qobject::destroyed, dev, [dev] {
+                dev->focus.deco = nullptr;
+            });
     }
     dev->cleanupDecoration(old_deco, dev->focus.deco);
     Q_EMIT dev->decorationChanged();
