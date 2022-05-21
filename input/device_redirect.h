@@ -10,7 +10,6 @@
 
 #include "kwin_export.h"
 
-#include <QPointer>
 #include <QWindow>
 
 namespace KWin
@@ -27,14 +26,22 @@ namespace input
 class redirect;
 
 struct device_redirect_at {
-    QPointer<Toplevel> window;
-    QMetaObject::Connection surface_notifier;
+    Toplevel* window{nullptr};
+    struct {
+        QMetaObject::Connection surface;
+        QMetaObject::Connection destroy;
+    } notifiers;
 };
 
 struct device_redirect_focus {
-    QPointer<Toplevel> window;
-    QPointer<win::deco::client_impl> deco;
-    QPointer<QWindow> internal_window;
+    Toplevel* window{nullptr};
+    win::deco::client_impl* deco{nullptr};
+    QWindow* internal_window{nullptr};
+    struct {
+        QMetaObject::Connection window_destroy;
+        QMetaObject::Connection deco_destroy;
+        QMetaObject::Connection internal_window_destroy;
+    } notifiers;
 };
 
 class KWIN_EXPORT device_redirect : public QObject

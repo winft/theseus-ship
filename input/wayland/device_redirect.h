@@ -42,38 +42,59 @@ void device_redirect_init(Dev* dev)
 }
 
 template<typename Dev>
-bool device_redirect_set_at(Dev* dev, Toplevel* toplevel)
+bool device_redirect_set_at(Dev* dev, Toplevel* window)
 {
-    if (dev->at.window == toplevel) {
+    if (dev->at.window == window) {
         return false;
     }
-    QObject::disconnect(dev->at.surface_notifier);
-    dev->at.surface_notifier = QMetaObject::Connection();
+    QObject::disconnect(dev->at.notifiers.surface);
+    QObject::disconnect(dev->at.notifiers.destroy);
 
-    dev->at.window = toplevel;
+    dev->at.window = window;
+    if (window) {
+        dev->at.notifiers.destroy = QObject::connect(
+            window, &Toplevel::destroyed, dev, [dev] { dev->at.window = nullptr; });
+    }
     return true;
 }
 
 template<typename Dev>
-void device_redirect_set_focus(Dev* dev, Toplevel* toplevel)
+void device_redirect_set_focus(Dev* dev, Toplevel* window)
 {
-    dev->focus.window = toplevel;
+    QObject::disconnect(dev->focus.notifiers.window_destroy);
+    dev->focus.window = window;
+    if (window) {
+        dev->focus.notifiers.window_destroy = QObject::connect(
+            window, &Toplevel::destroyed, dev, [dev] { dev->focus.window = nullptr; });
+    }
+
     // TODO: call focusUpdate?
 }
 
 template<typename Dev>
-void device_redirect_set_decoration(Dev* dev, win::deco::client_impl* decoration)
+void device_redirect_set_decoration(Dev* dev, win::deco::client_impl* deco)
 {
+    QObject::disconnect(dev->focus.notifiers.deco_destroy);
     auto old_deco = dev->focus.deco;
-    dev->focus.deco = decoration;
-    dev->cleanupDecoration(old_deco.data(), dev->focus.deco.data());
+    dev->focus.deco = deco;
+    if (deco) {
+        dev->focus.notifiers.deco_destroy = QObject::connect(
+            deco, &win::deco::client_impl::destroyed, dev, [dev] { dev->focus.deco = nullptr; });
+    }
+    dev->cleanupDecoration(old_deco, dev->focus.deco);
     Q_EMIT dev->decorationChanged();
 }
 
 template<typename Dev>
 void device_redirect_set_internal_window(Dev* dev, QWindow* window)
 {
+    QObject::disconnect(dev->focus.notifiers.internal_window_destroy);
     dev->focus.internal_window = window;
+    if (window) {
+        dev->focus.notifiers.window_destroy = QObject::connect(
+            window, &QWindow::destroyed, dev, [dev] { dev->focus.internal_window = nullptr; });
+    }
+
     // TODO: call internalWindowUpdate?
 }
 
@@ -85,15 +106,15 @@ void device_redirect_update_focus(Dev* dev)
     if (dev->at.window && !dev->at.window->surface()) {
         // The surface has not yet been created (special XWayland case).
         // Therefore listen for its creation.
-        if (!dev->at.surface_notifier) {
-            dev->at.surface_notifier
+        if (!dev->at.notifiers.surface) {
+            dev->at.notifiers.surface
                 = QObject::connect(dev->at.window, &Toplevel::surfaceChanged, dev, [dev] {
                       device_redirect_update(dev);
                   });
         }
-        dev->focus.window = nullptr;
+        device_redirect_set_focus(dev, nullptr);
     } else {
-        dev->focus.window = dev->at.window;
+        device_redirect_set_focus(dev, dev->at.window);
     }
 
     dev->focusUpdate(oldFocus, dev->focus.window);
@@ -102,25 +123,22 @@ void device_redirect_update_focus(Dev* dev)
 template<typename Dev>
 bool device_redirect_update_decoration(Dev* dev)
 {
-    const auto oldDeco = dev->focus.deco.data();
-    dev->focus.deco = nullptr;
+    auto const old_deco = dev->focus.deco;
+    decltype(dev->focus.deco) new_deco{nullptr};
 
-    auto ac = dev->at.window.data();
-    if (ac && ac->control && ac->control->deco().client) {
-        auto const client_geo = win::frame_to_client_rect(ac, ac->frameGeometry());
+    if (auto win = dev->at.window; win && win->control && win->control->deco().client) {
+        auto const client_geo = win::frame_to_client_rect(win, win->frameGeometry());
         if (!client_geo.contains(dev->position().toPoint())) {
             // input device above decoration
-            dev->focus.deco = ac->control->deco().client;
+            new_deco = win->control->deco().client;
         }
     }
 
-    if (dev->focus.deco == oldDeco) {
-        // no change to decoration
+    if (new_deco == old_deco) {
         return false;
     }
 
-    dev->cleanupDecoration(oldDeco, dev->focus.deco.data());
-    Q_EMIT dev->decorationChanged();
+    device_redirect_set_decoration(dev, new_deco);
     return true;
 }
 

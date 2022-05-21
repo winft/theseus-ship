@@ -219,7 +219,7 @@ void TestPointerConstraints::testConfinedPointer()
     QVERIFY(unconfinedSpy2.isValid());
 
     // activate it again, this confines again
-    workspace()->activateClient(kwinApp()->input->redirect->pointer()->focus.window.data());
+    workspace()->activateClient(kwinApp()->input->redirect->pointer()->focus.window);
     QVERIFY(confinedSpy2.wait());
     QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
 
@@ -229,7 +229,7 @@ void TestPointerConstraints::testConfinedPointer()
     QVERIFY(unconfinedSpy2.wait());
     QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), false);
     // activate it again, this confines again
-    workspace()->activateClient(kwinApp()->input->redirect->pointer()->focus.window.data());
+    workspace()->activateClient(kwinApp()->input->redirect->pointer()->focus.window);
     QVERIFY(confinedSpy2.wait());
     QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
 
@@ -331,7 +331,7 @@ void TestPointerConstraints::testLockedPointer()
     QVERIFY(lockedSpy2.isValid());
 
     // activate the client again, this should lock again
-    workspace()->activateClient(kwinApp()->input->redirect->pointer()->focus.window.data());
+    workspace()->activateClient(kwinApp()->input->redirect->pointer()->focus.window);
     QVERIFY(lockedSpy2.wait());
     QCOMPARE(kwinApp()->input->redirect->pointer()->isConstrained(), true);
 

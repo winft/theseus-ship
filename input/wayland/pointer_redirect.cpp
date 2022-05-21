@@ -116,7 +116,7 @@ void pointer_redirect::init()
 
 void pointer_redirect::update_on_start_move_resize()
 {
-    break_pointer_constraints(focus.window.data() ? focus.window->surface() : nullptr);
+    break_pointer_constraints(focus.window ? focus.window->surface() : nullptr);
     disconnect_pointer_constraints_connection();
     device_redirect_set_focus(this, nullptr);
     waylandServer()->seat()->pointers().set_focused_surface(nullptr);
@@ -124,19 +124,19 @@ void pointer_redirect::update_on_start_move_resize()
 
 void pointer_redirect::update_to_reset()
 {
-    if (auto focus_internal = focus.internal_window.data()) {
+    if (auto focus_internal = focus.internal_window) {
         QObject::disconnect(notifiers.internal_window);
         notifiers.internal_window = QMetaObject::Connection();
         QEvent event(QEvent::Leave);
         QCoreApplication::sendEvent(focus_internal, &event);
         device_redirect_set_internal_window(this, nullptr);
     }
-    if (auto focus_deco = focus.deco.data()) {
+    if (auto focus_deco = focus.deco) {
         QHoverEvent event(QEvent::HoverLeave, QPointF(), QPointF());
         QCoreApplication::instance()->sendEvent(focus_deco->decoration(), &event);
         device_redirect_set_decoration(this, nullptr);
     }
-    if (auto focus_window = focus.window.data()) {
+    if (auto focus_window = focus.window) {
         if (focus_window->control) {
             win::leave_event(focus_window);
         }
@@ -401,7 +401,7 @@ void pointer_redirect::cleanupInternalWindow(QWindow* old, QWindow* now)
 
     if (now) {
         notifiers.internal_window = QObject::connect(
-            focus.internal_window.data(), &QWindow::visibleChanged, this, [this](bool visible) {
+            focus.internal_window, &QWindow::visibleChanged, this, [this](bool visible) {
                 if (!visible) {
                     device_redirect_update(this);
                 }
@@ -442,9 +442,9 @@ void pointer_redirect::cleanupDecoration(win::deco::client_impl* old, win::deco:
               }
               // ensure maximize button gets the leave event when maximizing/restore a window, see
               // BUG 385140
-              auto const old_deco = focus.deco.data();
+              auto const old_deco = focus.deco;
               device_redirect_update(this);
-              auto deco = focus.deco.data();
+              auto deco = focus.deco;
               if (old_deco && old_deco == deco && !win::is_move(deco->client())
                   && !win::is_resize(deco->client()) && !areButtonsPressed()) {
                   // position of window did not change, we need to send HoverMotion manually
@@ -475,7 +475,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
         workspace()->updateFocusMousePosition(m_pos.toPoint());
     }
 
-    if (auto focus_internal = focus.internal_window.data()) {
+    if (auto focus_internal = focus.internal_window) {
         // enter internal window
         auto const pos = at.window->pos();
         QEnterEvent enterEvent(pos, pos, m_pos);
@@ -483,7 +483,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     }
 
     auto seat = waylandServer()->seat();
-    if (!focusNow || !focusNow->surface() || focus.deco.data()) {
+    if (!focusNow || !focusNow->surface() || focus.deco) {
         // Clean up focused pointer surface if there's no client to take focus,
         // or the pointer is on a client without surface or on a decoration.
         warp_xcb_on_surface_left(nullptr);
@@ -504,7 +504,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
 
     notifiers.focus_geometry
         = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
-              if (!focus.window.data()) {
+              if (!focus.window) {
                   // Might happen for Xwayland clients.
                   return;
               }
@@ -610,7 +610,7 @@ bool pointer_redirect::isConstrained() const
 
 void pointer_redirect::updatePointerConstraints()
 {
-    if (!focus.window.data()) {
+    if (!focus.window) {
         return;
     }
 
@@ -627,8 +627,7 @@ void pointer_redirect::updatePointerConstraints()
     if (s != seat->pointers().get_focus().surface) {
         return;
     }
-    auto const canConstrain
-        = constraints.enabled && focus.window.data() == workspace()->activeClient();
+    auto const canConstrain = constraints.enabled && focus.window == workspace()->activeClient();
     auto const cf = s->confinedPointer();
 
     if (cf) {
@@ -640,13 +639,13 @@ void pointer_redirect::updatePointerConstraints()
             }
             return;
         }
-        const QRegion r = getConstraintRegion(focus.window.data(), cf.data());
+        const QRegion r = getConstraintRegion(focus.window, cf.data());
         if (canConstrain && r.contains(m_pos.toPoint())) {
             cf->setConfined(true);
             constraints.confined = true;
             notifiers.confined_pointer_region = QObject::connect(
                 cf.data(), &Wrapland::Server::ConfinedPointerV1::regionChanged, this, [this] {
-                    if (!focus.window.data()) {
+                    if (!focus.window) {
                         return;
                     }
                     const auto s = focus.window->surface();
@@ -654,8 +653,7 @@ void pointer_redirect::updatePointerConstraints()
                         return;
                     }
                     const auto cf = s->confinedPointer();
-                    if (!getConstraintRegion(focus.window.data(), cf.data())
-                             .contains(m_pos.toPoint())) {
+                    if (!getConstraintRegion(focus.window, cf.data()).contains(m_pos.toPoint())) {
                         // pointer no longer in confined region, break the confinement
                         cf->setConfined(false);
                         constraints.confined = false;
@@ -681,16 +679,16 @@ void pointer_redirect::updatePointerConstraints()
                 lock->setLocked(false);
                 constraints.locked = false;
                 disconnect_locked_pointer_destroyed_connection();
-                if (!(hint.x() < 0 || hint.y() < 0) && focus.window.data()) {
+                if (!(hint.x() < 0 || hint.y() < 0) && focus.window) {
                     // TODO(romangg): different client offset for Xwayland clients?
-                    processMotion(win::frame_to_client_pos(focus.window.data(), focus.window->pos())
+                    processMotion(win::frame_to_client_pos(focus.window, focus.window->pos())
                                       + hint,
                                   seat->timestamp());
                 }
             }
             return;
         }
-        const QRegion r = getConstraintRegion(focus.window.data(), lock.data());
+        const QRegion r = getConstraintRegion(focus.window, lock.data());
         if (canConstrain && r.contains(m_pos.toPoint())) {
             lock->setLocked(true);
             constraints.locked = true;
@@ -704,12 +702,12 @@ void pointer_redirect::updatePointerConstraints()
                 this,
                 [this, lock]() {
                     const auto hint = lock->cursorPositionHint();
-                    if (hint.x() < 0 || hint.y() < 0 || !focus.window.data()) {
+                    if (hint.x() < 0 || hint.y() < 0 || !focus.window) {
                         return;
                     }
                     // TODO(romangg): different client offset for Xwayland clients?
                     auto globalHint
-                        = win::frame_to_client_pos(focus.window.data(), focus.window->pos()) + hint;
+                        = win::frame_to_client_pos(focus.window, focus.window->pos()) + hint;
                     processMotion(globalHint, waylandServer()->seat()->timestamp());
                 });
             // TODO: connect to region change - is it needed at all? If the pointer is locked it's
@@ -752,7 +750,7 @@ void pointer_redirect::warp_xcb_on_surface_left(Wrapland::Server::Surface* newSu
 
 QPointF pointer_redirect::apply_pointer_confinement(const QPointF& pos) const
 {
-    if (!focus.window.data()) {
+    if (!focus.window) {
         return pos;
     }
     auto s = focus.window->surface();
@@ -767,7 +765,7 @@ QPointF pointer_redirect::apply_pointer_confinement(const QPointF& pos) const
         return pos;
     }
 
-    auto const confinementRegion = getConstraintRegion(focus.window.data(), cf.data());
+    auto const confinementRegion = getConstraintRegion(focus.window, cf.data());
     if (confinementRegion.contains(pos.toPoint())) {
         return pos;
     }

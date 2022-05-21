@@ -119,7 +119,7 @@ void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
     }
 
     auto seat = waylandServer()->seat();
-    if (!focusNow || !focusNow->surface() || focus.deco.data()) {
+    if (!focusNow || !focusNow->surface() || focus.deco) {
         // no new surface or internal window or on decoration -> cleanup
         seat->touches().set_focused_surface(nullptr);
         return;
@@ -133,7 +133,7 @@ void touch_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
                                             + focusNow->pos());
     focus_geometry_notifier
         = QObject::connect(focusNow, &Toplevel::frame_geometry_changed, this, [this] {
-              auto focus_win = focus.window.data();
+              auto focus_win = focus.window;
               if (!focus_win) {
                   return;
               }

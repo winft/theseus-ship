@@ -207,7 +207,7 @@ void DecorationInputTest::testAxis()
 
     MOTION(QPoint(c->frameGeometry().center().x(), win::frame_to_client_pos(c, QPoint()).y() / 2));
 
-    QVERIFY(kwinApp()->input->redirect->pointer()->focus.deco.data());
+    QVERIFY(kwinApp()->input->redirect->pointer()->focus.deco);
     QCOMPARE(kwinApp()->input->redirect->pointer()->focus.deco->decoration()->sectionUnderMouse(),
              Qt::TitleBarArea);
 
@@ -227,7 +227,7 @@ void DecorationInputTest::testAxis()
     win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
-    QVERIFY(kwinApp()->input->redirect->pointer()->focus.deco.data());
+    QVERIFY(kwinApp()->input->redirect->pointer()->focus.deco);
     QCOMPARE(kwinApp()->input->redirect->pointer()->focus.deco->client(), c);
     QTEST(kwinApp()->input->redirect->pointer()->focus.deco->decoration()->sectionUnderMouse(),
           "expectedSection");
@@ -274,7 +274,7 @@ void KWin::DecorationInputTest::testDoubleClick()
     win::move(c, QPoint(0, 0));
     QFETCH(QPoint, decoPoint);
     MOTION(decoPoint);
-    QVERIFY(kwinApp()->input->redirect->pointer()->focus.deco.data());
+    QVERIFY(kwinApp()->input->redirect->pointer()->focus.deco);
     QCOMPARE(kwinApp()->input->redirect->pointer()->focus.deco->client(), c);
     QTEST(kwinApp()->input->redirect->pointer()->focus.deco->decoration()->sectionUnderMouse(),
           "expectedSection");
@@ -330,7 +330,7 @@ void KWin::DecorationInputTest::testDoubleTap()
     QFETCH(QPoint, decoPoint);
     // double click
     Test::touch_down(0, decoPoint, timestamp++);
-    QVERIFY(kwinApp()->input->redirect->touch()->focus.deco.data());
+    QVERIFY(kwinApp()->input->redirect->touch()->focus.deco);
     QCOMPARE(kwinApp()->input->redirect->touch()->focus.deco->client(), c);
     QTEST(kwinApp()->input->redirect->touch()->focus.deco->decoration()->sectionUnderMouse(),
           "expectedSection");
@@ -810,9 +810,9 @@ void DecorationInputTest::testTouchEvents()
     const QPoint tapPoint(c->frameGeometry().center().x(),
                           win::frame_to_client_pos(c, QPoint()).y() / 2);
 
-    QVERIFY(!kwinApp()->input->redirect->touch()->focus.deco.data());
+    QVERIFY(!kwinApp()->input->redirect->touch()->focus.deco);
     Test::touch_down(0, tapPoint, timestamp++);
-    QVERIFY(kwinApp()->input->redirect->touch()->focus.deco.data());
+    QVERIFY(kwinApp()->input->redirect->touch()->focus.deco);
     QCOMPARE(kwinApp()->input->redirect->touch()->focus.deco->decoration(), win::decoration(c));
     QCOMPARE(hoverMoveSpy.count(), 1);
     QCOMPARE(hoverLeaveSpy.count(), 0);

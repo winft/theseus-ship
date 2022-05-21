@@ -176,7 +176,7 @@ void cursor_image::update()
 void cursor_image::updateDecoration()
 {
     QObject::disconnect(m_decorationConnection);
-    auto deco = kwinApp()->input->redirect->pointer()->focus.deco.data();
+    auto deco = kwinApp()->input->redirect->pointer()->focus.deco;
     auto c = deco ? deco->client() : nullptr;
     if (c) {
         m_decorationConnection = QObject::connect(
@@ -192,7 +192,7 @@ void cursor_image::updateDecorationCursor()
     m_decorationCursor.image = QImage();
     m_decorationCursor.hotSpot = QPoint();
 
-    auto deco = kwinApp()->input->redirect->pointer()->focus.deco.data();
+    auto deco = kwinApp()->input->redirect->pointer()->focus.deco;
     if (auto c = deco ? deco->client() : nullptr) {
         loadThemeCursor(c->control->move_resize().cursor, &m_decorationCursor);
         if (m_currentSource == CursorSource::Decoration) {
@@ -484,11 +484,11 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::MoveResize);
         return;
     }
-    if (kwinApp()->input->redirect->pointer()->focus.deco.data()) {
+    if (kwinApp()->input->redirect->pointer()->focus.deco) {
         setSource(CursorSource::Decoration);
         return;
     }
-    if (kwinApp()->input->redirect->pointer()->focus.window.data()
+    if (kwinApp()->input->redirect->pointer()->focus.window
         && !waylandServer()->seat()->pointers().get_focus().devices.empty()) {
         setSource(CursorSource::PointerSurface);
         return;
