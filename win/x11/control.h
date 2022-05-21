@@ -1044,7 +1044,7 @@ auto create_controlled_window(xcb_window_t w, bool isMapped, Space& space) ->
         restore_session_stacking_order(&space, win);
     }
 
-    if (!compositing()) {
+    if (!win->space.compositing()) {
         // set to true in case compositing is turned on later. bug #160393
         win->ready_for_painting = true;
     }

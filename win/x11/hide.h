@@ -24,7 +24,7 @@ void map(Win* win)
     // XComposite invalidates backing pixmaps on unmap (minimize, different
     // virtual desktop, etc.).  We kept the last known good pixmap around
     // for use in effects, but now we want to have access to the new pixmap
-    if (win::compositing()) {
+    if (win->space.compositing()) {
         win->discard_buffer();
     }
 
@@ -143,7 +143,7 @@ void internal_hide(Win* win)
 template<typename Win>
 void internal_keep(Win* win)
 {
-    assert(win::compositing());
+    assert(win->space.compositing());
 
     if (win->mapping == mapping_state::kept) {
         return;
@@ -177,7 +177,7 @@ void update_visibility(Win* win)
     if (win->hidden) {
         win->info->setState(NET::Hidden, NET::Hidden);
         win::set_skip_taskbar(win, true);
-        if (win::compositing()
+        if (win->space.compositing()
             && kwinApp()->options->hiddenPreviews() == base::HiddenPreviewsAlways) {
             internal_keep(win);
         } else {
@@ -190,7 +190,7 @@ void update_visibility(Win* win)
 
     if (win->control->minimized()) {
         win->info->setState(NET::Hidden, NET::Hidden);
-        if (win::compositing()
+        if (win->space.compositing()
             && kwinApp()->options->hiddenPreviews() == base::HiddenPreviewsAlways) {
             internal_keep(win);
         } else {
@@ -201,7 +201,7 @@ void update_visibility(Win* win)
 
     win->info->setState(NET::States(), NET::Hidden);
     if (!win->isOnCurrentDesktop()) {
-        if (win::compositing()
+        if (win->space.compositing()
             && kwinApp()->options->hiddenPreviews() != base::HiddenPreviewsNever) {
             internal_keep(win);
         } else {

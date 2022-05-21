@@ -158,7 +158,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
     win->info->event(e, &dirtyProperties, &dirtyProperties2);
 
     if (dirtyProperties2 & NET::WM2Opacity) {
-        if (win::compositing()) {
+        if (win->space.compositing()) {
             win->addRepaintFull();
             Q_EMIT win->opacityChanged(win, old_opacity);
         }

@@ -232,7 +232,7 @@ void Toplevel::setOpacity(double new_opacity)
     if (old_opacity == new_opacity)
         return;
     info->setOpacity(static_cast< unsigned long >(new_opacity * 0xffffffff));
-    if (win::compositing()) {
+    if (space.compositing()) {
         addRepaintFull();
         Q_EMIT opacityChanged(this, old_opacity);
     }
@@ -362,7 +362,7 @@ void Toplevel::getDamageRegionReply()
 
 void Toplevel::addDamageFull()
 {
-    if (!win::compositing()) {
+    if (!space.compositing()) {
         return;
     }
 
@@ -398,7 +398,7 @@ void Toplevel::addRepaint(QRect const& rect)
 
 void Toplevel::addRepaint(QRegion const& region)
 {
-    if (!win::compositing()) {
+    if (!space.compositing()) {
         return;
     }
     repaints_region += region;
@@ -418,7 +418,7 @@ void Toplevel::addLayerRepaint(QRect const& rect)
 
 void Toplevel::addLayerRepaint(QRegion const& region)
 {
-    if (!win::compositing()) {
+    if (!space.compositing()) {
         return;
     }
     layer_repaints_region += region;
@@ -506,7 +506,7 @@ void Toplevel::addWorkspaceRepaint(int x, int y, int w, int h)
 
 void Toplevel::addWorkspaceRepaint(QRect const& rect)
 {
-    if (!win::compositing()) {
+    if (!space.compositing()) {
         return;
     }
     render::compositor::self()->addRepaint(rect);
@@ -516,7 +516,7 @@ void Toplevel::setReadyForPainting()
 {
     if (!ready_for_painting) {
         ready_for_painting = true;
-        if (win::compositing()) {
+        if (space.compositing()) {
             addRepaintFull();
             Q_EMIT windowShown(this);
         }

@@ -75,7 +75,7 @@ void update_shape(Win* win)
     // when the decoration calls it or when the decoration is created/destroyed
     win->update_input_shape();
 
-    if (win::compositing()) {
+    if (win->space.compositing()) {
         win->addRepaintFull();
 
         // In case shape change removes part of this window
@@ -900,7 +900,7 @@ bool update_server_geometry(Win* win, QRect const& frame_geo)
     }
 
     if (win->control->move_resize().enabled) {
-        if (win::compositing()) {
+        if (win->space.compositing()) {
             // Defer the X server update until we leave this mode.
             win->move_needs_server_update = true;
         } else {
