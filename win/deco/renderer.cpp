@@ -34,8 +34,7 @@ namespace KWin::win::deco
 {
 
 renderer::renderer(client_impl* client)
-    : QObject(client)
-    , m_client(client)
+    : m_client(client)
     , m_imageSizesDirty(true)
 {
     auto markImageSizesDirty = [this] { m_imageSizesDirty = true; };
@@ -118,9 +117,8 @@ void renderer::renderToPainter(QPainter* painter, const QRect& rect)
     client()->decoration()->paint(painter, rect);
 }
 
-void renderer::reparent(Toplevel* window)
+void renderer::reparent()
 {
-    setParent(window);
     m_client = nullptr;
 }
 

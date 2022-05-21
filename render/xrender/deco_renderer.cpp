@@ -155,10 +155,10 @@ xcb_render_picture_t deco_renderer::picture(deco_renderer::DecorationPart part) 
     return *picture;
 }
 
-void deco_renderer::reparent(Toplevel* window)
+void deco_renderer::reparent()
 {
     render();
-    renderer::reparent(window);
+    renderer::reparent();
 }
 
 }

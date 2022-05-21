@@ -42,10 +42,7 @@ remnant::remnant(Toplevel* win, Toplevel* source)
             source->layoutDecorationRects(
                 decoration_left, decoration_top, decoration_right, decoration_bottom);
             if (win::decoration(source)) {
-                if (auto renderer = source->control->deco().client->renderer()) {
-                    decoration_renderer = renderer;
-                    decoration_renderer->reparent(win);
-                }
+                decoration_renderer = source->control->deco().client->move_renderer();
             }
         }
         minimized = source->control->minimized();

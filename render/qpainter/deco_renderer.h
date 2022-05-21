@@ -22,7 +22,7 @@ public:
     ~deco_renderer() override;
 
     void render() override;
-    void reparent(Toplevel* window) override;
+    void reparent() override;
 
     QImage image(DecorationPart part) const;
 

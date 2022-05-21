@@ -261,10 +261,10 @@ void deco_renderer::resizeTexture()
     }
 }
 
-void deco_renderer::reparent(Toplevel* window)
+void deco_renderer::reparent()
 {
     render();
-    renderer::reparent(window);
+    renderer::reparent();
 }
 
 }

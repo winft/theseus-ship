@@ -21,7 +21,7 @@ public:
     explicit deco_renderer(win::deco::client_impl* client);
     ~deco_renderer() override;
 
-    void reparent(Toplevel* window) override;
+    void reparent() override;
 
 protected:
     void render() override;

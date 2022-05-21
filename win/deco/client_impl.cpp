@@ -53,7 +53,6 @@ client_impl::client_impl(Toplevel* window,
     , ApplicationMenuEnabledDecoratedClientPrivate(decoratedClient, decoration)
     , m_client(window)
     , m_clientSize(win::frame_to_client_size(window, window->size()))
-    , m_renderer(nullptr)
 {
     createRenderer();
     window->control->deco().set_client(this);
@@ -84,7 +83,7 @@ client_impl::client_impl(Toplevel* window,
     connect(render::compositor::self(),
             &render::compositor::aboutToToggleCompositing,
             this,
-            &client_impl::destroyRenderer);
+            [this] { m_renderer.reset(); });
     m_compositorToggledConnection = connect(render::compositor::self(),
                                             &render::compositor::compositingToggled,
                                             this,
@@ -161,6 +160,16 @@ void client_impl::update_size()
         Q_EMIT deco_client->heightChanged(m_clientSize.height());
     }
     Q_EMIT deco_client->sizeChanged(m_clientSize);
+}
+
+std::unique_ptr<deco::renderer> client_impl::move_renderer()
+{
+    if (!m_renderer) {
+        return {};
+    }
+
+    m_renderer->reparent();
+    return std::move(m_renderer);
 }
 
 QPalette client_impl::palette() const
@@ -394,13 +403,7 @@ bool client_impl::isApplicationMenuActive() const
 
 void client_impl::createRenderer()
 {
-    m_renderer = kwinApp()->get_base().render->createDecorationRenderer(this);
-}
-
-void client_impl::destroyRenderer()
-{
-    delete m_renderer;
-    m_renderer = nullptr;
+    m_renderer.reset(kwinApp()->get_base().render->createDecorationRenderer(this));
 }
 
 }

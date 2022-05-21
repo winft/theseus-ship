@@ -110,10 +110,10 @@ void deco_renderer::resizeImages()
     checkAndCreate(int(DecorationPart::Bottom), bottom.size());
 }
 
-void deco_renderer::reparent(Toplevel* window)
+void deco_renderer::reparent()
 {
     render();
-    renderer::reparent(window);
+    renderer::reparent();
 }
 
 }

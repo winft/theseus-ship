@@ -41,12 +41,8 @@ public:
 
     void schedule(const QRegion& region);
 
-    /**
-     * Reparents this renderer to the @p deleted.
-     * After this call the renderer is no longer able to render
-     * anything, client() returns a nullptr.
-     */
-    virtual void reparent(Toplevel* window);
+    /// After this call the renderer is no longer able to render anything, client() returns null.
+    virtual void reparent();
 
 Q_SIGNALS:
     void renderScheduled(const QRegion& geo);

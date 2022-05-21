@@ -49,7 +49,7 @@ public:
 
     bool minimized{false};
 
-    deco::renderer* decoration_renderer{nullptr};
+    std::unique_ptr<deco::renderer> decoration_renderer;
     double opacity{1};
     NET::WindowType window_type{NET::Unknown};
     QByteArray window_role;

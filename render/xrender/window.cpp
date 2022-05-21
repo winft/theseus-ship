@@ -319,7 +319,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
         client->layoutDecorationRects(dlr, dtr, drr, dbr);
     }
     if (remnant && !remnant->no_border) {
-        renderer = static_cast<const deco_renderer*>(remnant->decoration_renderer);
+        renderer = static_cast<const deco_renderer*>(remnant->decoration_renderer.get());
         noBorder = remnant->no_border;
         remnant->layout_decoration_rects(dlr, dtr, drr, dbr);
     }

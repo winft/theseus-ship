@@ -39,7 +39,7 @@ deco_renderer::~deco_renderer()
     }
 }
 
-void deco_renderer::reparent(Toplevel* window)
+void deco_renderer::reparent()
 {
     if (m_scheduleTimer->isActive()) {
         m_scheduleTimer->stop();
@@ -49,7 +49,7 @@ void deco_renderer::reparent(Toplevel* window)
                &renderer::renderScheduled,
                m_scheduleTimer,
                static_cast<void (QTimer::*)()>(&QTimer::start));
-    renderer::reparent(window);
+    renderer::reparent();
 }
 
 void deco_renderer::render()

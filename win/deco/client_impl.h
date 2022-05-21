@@ -113,8 +113,9 @@ public:
     }
     deco::renderer* renderer()
     {
-        return m_renderer;
+        return m_renderer.get();
     }
+    std::unique_ptr<deco::renderer> move_renderer();
     KDecoration2::DecoratedClient* decoratedClient()
     {
         return KDecoration2::DecoratedClientPrivate::client();
@@ -125,10 +126,10 @@ private Q_SLOTS:
 
 private:
     void createRenderer();
-    void destroyRenderer();
+
     Toplevel* m_client;
     QSize m_clientSize;
-    deco::renderer* m_renderer;
+    std::unique_ptr<deco::renderer> m_renderer;
     QMetaObject::Connection m_compositorToggledConnection;
 
     QString m_toolTipText;
