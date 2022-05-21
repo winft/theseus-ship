@@ -34,7 +34,10 @@ namespace KWin
 class ZoomAccessibilityIntegration;
 #endif
 
+class EffectScreen;
+class GLRenderTarget;
 class GLTexture;
+class GLVertexBuffer;
 
 class ZoomEffect : public Effect
 {
@@ -106,6 +109,7 @@ private Q_SLOTS:
                           Qt::KeyboardModifiers modifiers,
                           Qt::KeyboardModifiers oldmodifiers);
     void slotWindowDamaged();
+    void slotScreenRemoved(EffectScreen* screen);
 
 private:
     void showCursor();
@@ -113,7 +117,15 @@ private:
     void moveZoom(int x, int y);
 
 private:
+    struct OffscreenData {
+        QScopedPointer<GLTexture> texture;
+        QScopedPointer<GLRenderTarget> framebuffer;
+        QScopedPointer<GLVertexBuffer> vbo;
+        QRect viewport;
+    };
+
     GLTexture* ensureCursorTexture();
+    OffscreenData* ensureOffscreenData(EffectScreen* screen);
     void markCursorTextureDirty();
 
 #if HAVE_ACCESSIBILITY
@@ -146,6 +158,7 @@ private:
     int xMove, yMove;
     double moveFactor;
     std::chrono::milliseconds lastPresentTime;
+    QHash<EffectScreen*, OffscreenData*> m_offscreenData;
 };
 
 } // namespace
