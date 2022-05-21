@@ -233,6 +233,8 @@ void DecorationInputTest::testAxis()
           "expectedSection");
     Test::pointer_axis_vertical(5.0, timestamp++, 0);
     QVERIFY(!c->control->keep_below());
+
+    QEXPECT_FAIL("topLeft|xdgWmBase", "Button at (0,0;24x24) filters out the event", Continue);
     QVERIFY(!c->control->keep_above());
 }
 

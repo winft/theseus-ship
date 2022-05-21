@@ -103,7 +103,7 @@ bool decoration_event_filter::axis(axis_event const& event)
                                         qt_event.modifiers());
 
     adapted_qt_event.setAccepted(false);
-    QCoreApplication::sendEvent(decoration, &adapted_qt_event);
+    QCoreApplication::sendEvent(decoration->decoration(), &adapted_qt_event);
 
     if (adapted_qt_event.isAccepted()) {
         return true;
