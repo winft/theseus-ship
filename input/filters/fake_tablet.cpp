@@ -20,10 +20,6 @@ namespace KWin::input
 
 bool fake_tablet_filter::tabletToolEvent(QTabletEvent* event)
 {
-    if (!workspace()) {
-        return false;
-    }
-
     auto get_event = [&event](button_state state) {
         return button_event{qt_mouse_button_to_button(Qt::LeftButton),
                             state,

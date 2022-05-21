@@ -82,10 +82,6 @@ Qt::MouseButtons redirect::qtButtonStates() const
 
 Toplevel* redirect::findToplevel(const QPoint& pos)
 {
-    if (!workspace()) {
-        return nullptr;
-    }
-
     // TODO: check whether the unmanaged wants input events at all
     if (!kwinApp()->is_screen_locked()) {
         // if an effect overrides the cursor we don't have a window to focus
@@ -104,9 +100,6 @@ Toplevel* redirect::findToplevel(const QPoint& pos)
 
 Toplevel* redirect::findManagedToplevel(const QPoint& pos)
 {
-    if (!workspace()) {
-        return nullptr;
-    }
     auto const isScreenLocked = kwinApp()->is_screen_locked();
     auto const& stacking = workspace()->stacking_order->sorted();
     if (stacking.empty()) {

@@ -480,6 +480,8 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::EffectsOverride);
         return;
     }
+
+    // TODO(romangg): We need this check on space for tests. Make the cursor image go before space.
     if (workspace() && workspace()->moveResizeClient()) {
         setSource(CursorSource::MoveResize);
         return;
