@@ -42,6 +42,8 @@ public:
     compositor(render::platform& platform);
     static compositor* self();
 
+    void start(win::space& space) override;
+
     void schedule_repaint();
     void schedule_repaint(Toplevel* window) override;
 
@@ -96,7 +98,6 @@ public:
     x11::overlay_window* overlay_window{nullptr};
 
 protected:
-    void start() override;
     render::scene* create_scene(QVector<CompositingType> const& support) override;
     void performCompositing() override;
 

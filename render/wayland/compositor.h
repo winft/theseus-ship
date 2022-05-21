@@ -37,6 +37,8 @@ public:
     compositor(render::platform& platform);
     ~compositor();
 
+    void start(win::space& space) override;
+
     void schedule_repaint(Toplevel* window) override;
     void schedule_frame_callback(Toplevel* window) override;
 
@@ -51,7 +53,6 @@ public:
     render::wayland::presentation* presentation;
 
 protected:
-    void start() override;
     render::scene* create_scene(QVector<CompositingType> const& support) override;
     void performCompositing() override;
 

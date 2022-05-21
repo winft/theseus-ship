@@ -24,6 +24,8 @@
 
 #include "wayland_logging.h"
 
+#include <QQuickWindow>
+
 namespace KWin::render::wayland
 {
 
@@ -76,22 +78,6 @@ compositor::compositor(render::platform& platform)
             &Application::x11ConnectionAboutToBeDestroyed,
             this,
             &compositor::destroyCompositorSelection);
-
-    connect(&platform.base, &base::platform::output_removed, this, [](auto output) {
-        if (auto ws = workspace()) {
-            for (auto& win : ws->windows()) {
-                remove_all(win->repaint_outputs, output);
-            }
-        }
-    });
-
-    connect(workspace(), &win::space::destroyed, this, [this] {
-        for (auto& output : get_platform(this->platform.base).outputs) {
-            get_output(output)->render->delay_timer.stop();
-        }
-    });
-
-    start();
 }
 
 compositor::~compositor() = default;
@@ -145,18 +131,35 @@ void compositor::unlock()
     }
 }
 
-void compositor::start()
+void compositor::start(win::space& space)
 {
+    if (!this->space) {
+        // On first start setup connections.
+        QObject::connect(
+            &platform.base, &base::platform::output_removed, this, [this](auto output) {
+                for (auto& win : this->space->m_windows) {
+                    remove_all(win->repaint_outputs, output);
+                }
+            });
+        QObject::connect(&space, &win::space::destroyed, this, [this] {
+            for (auto& output : get_platform(this->platform.base).outputs) {
+                get_output(output)->render->delay_timer.stop();
+            }
+        });
+    }
+
     if (!render::compositor::setupStart()) {
         // Internal setup failed, abort.
         return;
     }
 
-    if (workspace()) {
-        startupWithWorkspace();
-    } else {
-        connect(kwinApp(), &Application::workspaceCreated, this, &compositor::startupWithWorkspace);
+    assert(scene());
+    if (scene()->compositingType() == QPainterCompositing) {
+        // Force Software QtQuick on first startup with QPainter.
+        QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
     }
+
+    startupWithWorkspace(space);
 }
 
 render::scene* compositor::create_scene(QVector<CompositingType> const& support)

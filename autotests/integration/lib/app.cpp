@@ -219,6 +219,7 @@ void WaylandTestApplication::start()
 
     base.render->compositor = std::make_unique<render::wayland::compositor>(*base.render);
     workspace = std::make_unique<win::wayland::space>(server.get());
+    base.render->compositor->start(*workspace);
     Q_EMIT workspaceCreated();
 
     workspace->scripting = std::make_unique<scripting::platform>();

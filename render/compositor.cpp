@@ -26,7 +26,6 @@
 #include "win/stacking_order.h"
 #include "win/x11/stacking_tree.h"
 
-#include <QQuickWindow>
 #include <QTimerEvent>
 
 namespace KWin::render
@@ -128,11 +127,6 @@ bool compositor::setupStart()
 
     platform.selected_compositor = m_scene->compositingType();
 
-    if (!workspace() && m_scene && m_scene->compositingType() == QPainterCompositing) {
-        // Force Software QtQuick on first startup with QPainter.
-        QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
-    }
-
     connect(scene(), &scene::resetCompositing, this, &compositor::reinitialize);
     Q_EMIT sceneCreated();
 
@@ -173,30 +167,29 @@ void compositor::setupX11Support()
         con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
 }
 
-void compositor::startupWithWorkspace()
+void compositor::startupWithWorkspace(win::space& space)
 {
+    this->space = &space;
+
     connect(kwinApp(),
             &Application::x11ConnectionChanged,
             this,
             &compositor::setupX11Support,
             Qt::UniqueConnection);
-    workspace()->x_stacking_tree->mark_as_dirty();
+    space.x_stacking_tree->mark_as_dirty();
     assert(m_scene);
 
     connect(
-        workspace(),
+        &space,
         &win::space::destroyed,
         this,
         [this] { compositeTimer.stop(); },
         Qt::UniqueConnection);
     setupX11Support();
 
-    connect(workspace()->stacking_order,
-            &win::stacking_order::changed,
-            this,
-            &compositor::addRepaintFull);
+    connect(space.stacking_order, &win::stacking_order::changed, this, &compositor::addRepaintFull);
 
-    for (auto& client : workspace()->windows()) {
+    for (auto& client : space.windows()) {
         if (client->remnant()) {
             continue;
         }
@@ -209,7 +202,7 @@ void compositor::startupWithWorkspace()
     // Sets also the 'effects' pointer.
     platform.createEffectsHandler(this, scene());
     connect(effects, &EffectsHandler::screenGeometryChanged, this, &compositor::addRepaintFull);
-    connect(workspace()->stacking_order, &win::stacking_order::unlocked, this, []() {
+    connect(space.stacking_order, &win::stacking_order::unlocked, this, []() {
         if (auto eff_impl = static_cast<effects_handler_impl*>(effects)) {
             eff_impl->checkInputWindowStacking();
         }
@@ -248,8 +241,8 @@ void compositor::stop(bool on_shutdown)
     delete effects;
     effects = nullptr;
 
-    if (workspace()) {
-        for (auto& c : workspace()->windows()) {
+    if (space) {
+        for (auto& c : space->windows()) {
             if (c->remnant()) {
                 continue;
             }
@@ -260,8 +253,8 @@ void compositor::stop(bool on_shutdown)
             xcb_composite_unredirect_subwindows(
                 con, kwinApp()->x11RootWindow(), XCB_COMPOSITE_REDIRECT_MANUAL);
         }
-        while (!workspace()->remnants().empty()) {
-            workspace()->remnants().front()->remnant()->discard();
+        while (!space->remnants().empty()) {
+            space->remnants().front()->remnant()->discard();
         }
     }
 
@@ -323,7 +316,9 @@ void compositor::reinitialize()
 
     // Restart compositing
     stop(false);
-    start();
+
+    assert(space);
+    start(*space);
 
     if (effects) {
         // start() may fail

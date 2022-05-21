@@ -21,6 +21,11 @@ namespace KWin
 {
 class Toplevel;
 
+namespace win
+{
+class space;
+}
+
 namespace render
 {
 
@@ -56,6 +61,8 @@ public:
 
     ~compositor() override;
     static compositor* self();
+
+    virtual void start(win::space& space) = 0;
 
     // when adding repaints caused by a window, you probably want to use
     // either Toplevel::addRepaint() or Toplevel::addWorkspaceRepaint()
@@ -114,6 +121,7 @@ public:
     std::unique_ptr<cursor> software_cursor;
     compositor_x11_integration x11_integration;
     render::platform& platform;
+    win::space* space{nullptr};
 
 Q_SIGNALS:
     void compositingToggled(bool active);
@@ -124,8 +132,6 @@ Q_SIGNALS:
 protected:
     compositor(render::platform& platform);
     void timerEvent(QTimerEvent* te) override;
-
-    virtual void start() = 0;
     void stop(bool on_shutdown);
 
     /**
@@ -136,7 +142,7 @@ protected:
     /**
      * Continues the startup after Scene And Workspace are created
      */
-    void startupWithWorkspace();
+    void startupWithWorkspace(win::space& space);
     virtual render::scene* create_scene(QVector<CompositingType> const& support) = 0;
 
     virtual void performCompositing() = 0;

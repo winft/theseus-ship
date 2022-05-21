@@ -215,6 +215,8 @@ void ApplicationWayland::start()
 
     render->compositor = std::make_unique<render::wayland::compositor>(*render);
     workspace = std::make_unique<win::wayland::space>(server.get());
+
+    render->compositor->start(*workspace);
     Q_EMIT workspaceCreated();
 
     workspace->scripting = std::make_unique<scripting::platform>();
