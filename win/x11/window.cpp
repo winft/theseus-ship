@@ -33,8 +33,7 @@ namespace KWin::win::x11
 {
 
 window::window(win::space& space)
-    : Toplevel(new x11::transient(this))
-    , space{space}
+    : Toplevel(new x11::transient(this), space)
     , motif_hints(space.atoms->motif_wm_hints)
 {
 }

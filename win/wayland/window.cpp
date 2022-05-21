@@ -56,8 +56,8 @@ namespace KWin::win::wayland
 
 namespace WS = Wrapland::Server;
 
-window::window(WS::Surface* surface)
-    : Toplevel()
+window::window(WS::Surface* surface, win::space& space)
+    : Toplevel(space)
 {
     connect(surface, &WS::Surface::subsurfaceTreeChanged, this, [this] {
         discard_shape();

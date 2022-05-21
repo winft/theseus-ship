@@ -146,7 +146,7 @@ void Window::map()
         return;
     }
 
-    m_handle = new win::internal_window(window());
+    m_handle = new win::internal_window(window(), *workspace());
 }
 
 void Window::unmap()

@@ -38,13 +38,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin
 {
 
-Toplevel::Toplevel()
-    : Toplevel(new win::transient(this))
+Toplevel::Toplevel(win::space& space)
+    : Toplevel(new win::transient(this), space)
 {
 }
 
-Toplevel::Toplevel(win::transient* transient)
-    : m_clientMachine(new win::x11::client_machine(this))
+Toplevel::Toplevel(win::transient* transient, win::space& space)
+    : space{space}
+    , m_clientMachine(new win::x11::client_machine(this))
     , m_internalId(QUuid::createUuid())
     , m_damageReplyPending(false)
     , m_skipCloseAnimation(false)
@@ -122,7 +123,7 @@ Toplevel* Toplevel::create_remnant(Toplevel* source)
         return nullptr;
     }
 
-    auto win = new Toplevel();
+    auto win = new Toplevel(source->space);
     win->copyToDeleted(source);
     win->m_remnant = new win::remnant(win, source);
 

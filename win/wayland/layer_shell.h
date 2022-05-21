@@ -181,7 +181,7 @@ void assign_layer_surface_role(Win* win, Wrapland::Server::LayerSurfaceV1* layer
 template<typename Window, typename Space>
 void handle_new_layer_surface(Space* space, Wrapland::Server::LayerSurfaceV1* layer_surface)
 {
-    auto window = new Window(layer_surface->surface());
+    auto window = new Window(layer_surface->surface(), *space);
     if (layer_surface->surface()->client() == space->server->screen_locker_client_connection) {
         ScreenLocker::KSldApp::self()->lockScreenShown();
     }

@@ -93,7 +93,7 @@ public:
     bool must_place{false};
     bool inhibit_idle{false};
 
-    window(Wrapland::Server::Surface* surface);
+    window(Wrapland::Server::Surface* surface, win::space& space);
     ~window() = default;
 
     qreal bufferScale() const override;

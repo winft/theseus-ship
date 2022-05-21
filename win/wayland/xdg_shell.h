@@ -68,7 +68,7 @@ inline window* create_shell_window(Space& space, Wrapland::Server::XdgShellSurfa
 
     auto const surface = shell_surface->surface();
 
-    auto win = new window(surface);
+    auto win = new window(surface, space);
     block_geometry_updates(win, true);
 
     QObject::connect(

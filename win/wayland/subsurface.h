@@ -133,7 +133,7 @@ void set_subsurface_parent(Win* win, Lead* lead)
 template<typename Window, typename Space>
 void handle_new_subsurface(Space* space, Wrapland::Server::Subsurface* subsurface)
 {
-    auto window = new Window(subsurface->surface());
+    auto window = new Window(subsurface->surface(), *space);
 
     space->m_windows.push_back(window);
     QObject::connect(subsurface,

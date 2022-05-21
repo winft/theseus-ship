@@ -65,6 +65,7 @@ class group;
 
 class control;
 class remnant;
+class space;
 class transient;
 }
 
@@ -127,8 +128,9 @@ public:
      * Records all outputs that still need to be repainted for the current repaint regions.
      */
     std::vector<base::output*> repaint_outputs;
+    win::space& space;
 
-    explicit Toplevel();
+    explicit Toplevel(win::space& space);
     ~Toplevel() override;
 
     virtual xcb_window_t frameId() const;
@@ -404,7 +406,7 @@ public Q_SLOTS:
     void setReadyForPainting();
 
 protected:
-    explicit Toplevel(win::transient* transient);
+    Toplevel(win::transient* transient, win::space& space);
 
     virtual void debug(QDebug& stream) const;
     void copyToDeleted(Toplevel* c);

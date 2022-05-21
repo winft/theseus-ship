@@ -68,8 +68,9 @@ private:
     internal_window* m_client;
 };
 
-internal_window::internal_window(QWindow* window)
-    : m_internalWindow(window)
+internal_window::internal_window(QWindow* window, win::space& space)
+    : Toplevel(space)
+    , m_internalWindow(window)
     , synced_geo(window->geometry())
     , m_internalWindowFlags(window->flags())
 {

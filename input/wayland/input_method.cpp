@@ -157,13 +157,13 @@ void input_method::handle_popup_surface_created(input_method_popup_surface_v2* p
 {
     using win::wayland::window;
 
-    auto popup = popups.emplace_back(new window(popup_surface->surface()));
+    auto space = static_cast<win::wayland::space*>(workspace());
+    auto popup = popups.emplace_back(new window(popup_surface->surface(), *space));
     popup->input_method_popup = popup_surface;
     popup->transient()->annexed = true;
     popup->hidden = true;
     popup->set_layer(win::layer::notification);
 
-    auto space = static_cast<win::wayland::space*>(workspace());
     space->m_windows.push_back(popup);
 
     QObject::connect(popup, &window::closed, this, [this](auto win) { remove_all(popups, win); });
