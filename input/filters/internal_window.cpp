@@ -29,7 +29,7 @@ namespace KWin::input
 
 bool internal_window_filter::button(button_event const& event)
 {
-    auto internal = kwinApp()->input->redirect->pointer()->internalWindow();
+    auto internal = kwinApp()->input->redirect->pointer()->focus.internal_window.data();
     if (!internal) {
         return false;
     }
@@ -58,7 +58,7 @@ bool internal_window_filter::button(button_event const& event)
 
 bool internal_window_filter::motion(motion_event const& event)
 {
-    auto internal = kwinApp()->input->redirect->pointer()->internalWindow();
+    auto internal = kwinApp()->input->redirect->pointer()->focus.internal_window.data();
     if (!internal) {
         return false;
     }
@@ -77,7 +77,7 @@ bool internal_window_filter::motion(motion_event const& event)
 
 bool internal_window_filter::axis(axis_event const& event)
 {
-    auto internal = kwinApp()->input->redirect->pointer()->internalWindow();
+    auto internal = kwinApp()->input->redirect->pointer()->focus.internal_window.data();
     if (!internal) {
         return false;
     }
@@ -213,7 +213,7 @@ bool internal_window_filter::touch_down(touch_down_event const& event)
     }
     // a new touch point
     seat->setTimestamp(event.base.time_msec);
-    auto internal = touch->internalWindow();
+    auto internal = touch->focus.internal_window.data();
     if (!internal) {
         return false;
     }
@@ -239,7 +239,7 @@ bool internal_window_filter::touch_down(touch_down_event const& event)
 bool internal_window_filter::touch_motion(touch_motion_event const& event)
 {
     auto touch = kwinApp()->input->redirect->touch();
-    auto internal = touch->internalWindow();
+    auto internal = touch->focus.internal_window.data();
     if (!internal) {
         return false;
     }
@@ -267,7 +267,7 @@ bool internal_window_filter::touch_motion(touch_motion_event const& event)
 bool internal_window_filter::touch_up(touch_up_event const& event)
 {
     auto touch = kwinApp()->input->redirect->touch();
-    auto internal = touch->internalWindow();
+    auto internal = touch->focus.internal_window.data();
     const bool removed = m_pressedIds.remove(event.id);
     if (!internal) {
         return removed;

@@ -27,14 +27,14 @@ namespace input
 class redirect;
 
 struct device_redirect_at {
-    QPointer<Toplevel> at;
+    QPointer<Toplevel> window;
     QMetaObject::Connection surface_notifier;
 };
 
 struct device_redirect_focus {
-    QPointer<Toplevel> focus;
-    QPointer<win::deco::client_impl> decoration;
-    QPointer<QWindow> internalWindow;
+    QPointer<Toplevel> window;
+    QPointer<win::deco::client_impl> deco;
+    QPointer<QWindow> internal_window;
 };
 
 class KWIN_EXPORT device_redirect : public QObject
@@ -42,34 +42,6 @@ class KWIN_EXPORT device_redirect : public QObject
     Q_OBJECT
 public:
     ~device_redirect() override;
-
-    /**
-     * @brief First Toplevel currently at the position of the input device
-     * according to the stacking order.
-     * @return Toplevel* at device position.
-     *
-     * This will be null if no toplevel is at the position
-     */
-    Toplevel* at() const;
-    /**
-     * @brief Toplevel currently having pointer input focus (this might
-     * be different from the Toplevel at the position of the pointer).
-     * @return Toplevel* with pointer focus.
-     *
-     * This will be null if no toplevel has focus
-     */
-    Toplevel* focus() const;
-
-    /**
-     * @brief The Decoration currently receiving events.
-     * @return decoration with pointer focus.
-     */
-    win::deco::client_impl* decoration() const;
-    /**
-     * @brief The internal window currently receiving events.
-     * @return QWindow with pointer focus.
-     */
-    QWindow* internalWindow() const;
 
     virtual QPointF position() const;
 
@@ -79,15 +51,23 @@ public:
     virtual void focusUpdate(Toplevel* old, Toplevel* now);
 
     /**
-     * Certain input devices can be in a state of having no valid
-     * position. An example are touch screens when no finger/pen
-     * is resting on the surface (no touch point).
+     * Certain input devices can be in a state of having no valid position. An example are touch
+     * screens when no finger/pen is resting on the surface (no touch point).
      */
     virtual bool positionValid() const;
     virtual bool focusUpdatesBlocked();
 
-    device_redirect_at m_at;
-    device_redirect_focus m_focus;
+    /**
+     * Element currently at the position of the input device according to the stacking order. Might
+     * be null if no element is at the position.
+     */
+    device_redirect_at at;
+
+    /**
+     * Element currently having pointer input focus (this might be different from the window
+     * at the position of the pointer). Might be null if no element has focus.
+     */
+    device_redirect_focus focus;
 
     input::redirect* redirect;
 

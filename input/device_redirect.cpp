@@ -18,26 +18,6 @@ device_redirect::device_redirect(input::redirect* redirect)
 
 device_redirect::~device_redirect() = default;
 
-Toplevel* device_redirect::at() const
-{
-    return m_at.at.data();
-}
-
-Toplevel* device_redirect::focus() const
-{
-    return m_focus.focus.data();
-}
-
-win::deco::client_impl* device_redirect::decoration() const
-{
-    return m_focus.decoration;
-}
-
-QWindow* device_redirect::internalWindow() const
-{
-    return m_focus.internalWindow;
-}
-
 QPointF device_redirect::position() const
 {
     return {};

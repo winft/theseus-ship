@@ -1066,7 +1066,7 @@ void PointerInputTest::testCursorImage()
     // Move the cursor to center of window. This should first set a null pointer. So we still show
     // the old cursor.
     input::get_cursor()->set_pos(window->frameGeometry().center());
-    QCOMPARE(p->focus(), window);
+    QCOMPARE(p->focus.window.data(), window);
     QCOMPARE(input::get_cursor()->image(), fallback_cursor);
     QVERIFY(enteredSpy.wait());
 
@@ -1132,7 +1132,7 @@ void PointerInputTest::testCursorImage()
 
     // Move cursor somewhere else, should reset to fallback cursor.
     input::get_cursor()->set_pos(window->frameGeometry().bottomLeft() + QPoint(20, 20));
-    QVERIFY(!p->focus());
+    QVERIFY(!p->focus.window.data());
     QVERIFY(!input::get_cursor()->image().isNull());
     QCOMPARE(input::get_cursor()->image(), fallback_cursor);
 }

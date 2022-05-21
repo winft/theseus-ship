@@ -75,7 +75,7 @@ redirect::redirect(wayland::platform* platform)
 template<typename Dev>
 void unset_focus(Dev&& dev)
 {
-    dev->focusUpdate(dev->m_focus.focus, nullptr);
+    dev->focusUpdate(dev->focus.window, nullptr);
 }
 
 void redirect::setup_devices()
