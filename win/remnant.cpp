@@ -101,10 +101,7 @@ remnant::~remnant()
         qCCritical(KWIN_CORE) << "Deleted client has non-zero reference count (" << refcount << ")";
     }
     assert(refcount == 0);
-
-    if (workspace()) {
-        delete_window_from_space(*workspace(), win);
-    }
+    delete_window_from_space(*workspace(), win);
 }
 
 void remnant::ref()

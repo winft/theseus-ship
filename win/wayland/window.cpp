@@ -895,11 +895,9 @@ void window::unmap()
         control->destroy_wayland_management();
     }
 
-    if (workspace()) {
-        addWorkspaceRepaint(visible_rect(this));
-        if (control) {
-            workspace()->clientHidden(this);
-        }
+    addWorkspaceRepaint(visible_rect(this));
+    if (control) {
+        workspace()->clientHidden(this);
     }
 
     Q_EMIT windowHidden(this);

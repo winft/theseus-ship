@@ -557,7 +557,7 @@ void install_deco(Win* win, Wrapland::Server::XdgDecoration* deco)
 
     QObject::connect(deco, &Deco::resourceDestroyed, win, [win] {
         win->xdg_deco = nullptr;
-        if (win->closing || !workspace()) {
+        if (win->closing) {
             return;
         }
         win->updateDecoration(true);
