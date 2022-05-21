@@ -133,7 +133,7 @@ void check_unrestricted_move_resize(Win* win)
         return;
     }
 
-    auto desktopArea = workspace()->clientArea(WorkArea, mov_res.geometry.center(), win->desktop());
+    auto desktopArea = win->space.clientArea(WorkArea, mov_res.geometry.center(), win->desktop());
     int left_marge, right_marge, top_marge, bottom_marge, titlebar_marge;
 
     // restricted move/resize - keep at least part of the titlebar always visible
@@ -232,7 +232,7 @@ void check_workspace_position(Win* win,
     }
 
     if (win->geometry_update.fullscreen) {
-        auto area = workspace()->clientArea(FullScreenArea, win);
+        auto area = win->space.clientArea(FullScreenArea, win);
         win->setFrameGeometry(area);
         return;
     }
@@ -241,7 +241,7 @@ void check_workspace_position(Win* win,
         geometry_updates_blocker block(win);
 
         win->update_maximized(win->geometry_update.max_mode);
-        auto const screenArea = workspace()->clientArea(ScreenArea, win);
+        auto const screenArea = win->space.clientArea(ScreenArea, win);
 
         auto geo = pending_frame_geometry(win);
         check_offscreen_position(geo, screenArea);
@@ -275,12 +275,11 @@ void check_workspace_position(Win* win,
     // Old and new maximums have different starting values so windows on the screen
     // edge will move when a new strut is placed on the edge.
     QRect old_screen_area;
-    if (workspace()->inUpdateClientArea()) {
+    if (win->space.inUpdateClientArea()) {
         // we need to find the screen area as it was before the change
-        old_screen_area
-            = QRect(0, 0, workspace()->oldDisplayWidth(), workspace()->oldDisplayHeight());
+        old_screen_area = QRect(0, 0, win->space.oldDisplayWidth(), win->space.oldDisplayHeight());
         int distance = INT_MAX;
-        for (auto const& r : workspace()->previousScreenSizes()) {
+        for (auto const& r : win->space.previousScreenSizes()) {
             int d = r.contains(old_frame_geo.center())
                 ? 0
                 : (r.center() - old_frame_geo.center()).manhattanLength();
@@ -290,7 +289,7 @@ void check_workspace_position(Win* win,
             }
         }
     } else {
-        old_screen_area = workspace()->clientArea(ScreenArea, old_frame_geo.center(), oldDesktop);
+        old_screen_area = win->space.clientArea(ScreenArea, old_frame_geo.center(), oldDesktop);
     }
 
     // With full screen height.
@@ -307,7 +306,7 @@ void check_workspace_position(Win* win,
     auto old_left_max = old_screen_area.x();
 
     auto const screenArea
-        = workspace()->clientArea(ScreenArea, pending_frame_geometry(win).center(), win->desktop());
+        = win->space.clientArea(ScreenArea, pending_frame_geometry(win).center(), win->desktop());
 
     auto top_max = screenArea.y();
     auto right_max = screenArea.x() + screenArea.width();
@@ -331,7 +330,7 @@ void check_workspace_position(Win* win,
 
     // Default is to use restrictedMoveArea. That's on active desktop or screen change.
     auto moveAreaFunc = &space::restrictedMoveArea;
-    if (workspace()->inUpdateClientArea()) {
+    if (win->space.inUpdateClientArea()) {
         // On restriected area changes.
         // TODO(romangg): This check back on inUpdateClientArea and then setting here internally a
         //                different function is bad design. Replace with an argument or something.
@@ -339,25 +338,25 @@ void check_workspace_position(Win* win,
     }
 
     // These 4 compute old bounds.
-    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, strut_area::top)) {
+    for (auto const& r : (win->space.*moveAreaFunc)(oldDesktop, strut_area::top)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
             old_top_max = std::max(old_top_max, rect.y() + rect.height());
         }
     }
-    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, strut_area::right)) {
+    for (auto const& r : (win->space.*moveAreaFunc)(oldDesktop, strut_area::right)) {
         auto rect = r & old_wide_frame_geo;
         if (!rect.isEmpty()) {
             old_right_max = std::min(old_right_max, rect.x());
         }
     }
-    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, strut_area::bottom)) {
+    for (auto const& r : (win->space.*moveAreaFunc)(oldDesktop, strut_area::bottom)) {
         auto rect = r & old_tall_frame_geo;
         if (!rect.isEmpty()) {
             old_bottom_max = std::min(old_bottom_max, rect.y());
         }
     }
-    for (auto const& r : (workspace()->*moveAreaFunc)(oldDesktop, strut_area::left)) {
+    for (auto const& r : (win->space.*moveAreaFunc)(oldDesktop, strut_area::left)) {
         auto rect = r & old_wide_frame_geo;
         if (!rect.isEmpty()) {
             old_left_max = std::max(old_left_max, rect.x() + rect.width());
@@ -365,25 +364,25 @@ void check_workspace_position(Win* win,
     }
 
     // These 4 compute new bounds.
-    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), strut_area::top)) {
+    for (auto const& r : win->space.restrictedMoveArea(win->desktop(), strut_area::top)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
             top_max = std::max(top_max, rect.y() + rect.height());
         }
     }
-    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), strut_area::right)) {
+    for (auto const& r : win->space.restrictedMoveArea(win->desktop(), strut_area::right)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
             right_max = std::min(right_max, rect.x());
         }
     }
-    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), strut_area::bottom)) {
+    for (auto const& r : win->space.restrictedMoveArea(win->desktop(), strut_area::bottom)) {
         auto rect = r & tall_frame_geo;
         if (!rect.isEmpty()) {
             bottom_max = std::min(bottom_max, rect.y());
         }
     }
-    for (auto const& r : workspace()->restrictedMoveArea(win->desktop(), strut_area::left)) {
+    for (auto const& r : win->space.restrictedMoveArea(win->desktop(), strut_area::left)) {
         auto rect = r & wide_frame_geo;
         if (!rect.isEmpty()) {
             left_max = std::max(left_max, rect.x() + rect.width());
@@ -546,7 +545,7 @@ void check_quicktile_maximization_zones(Win* win, int xroot, int yroot)
             return false;
         };
 
-        auto area = workspace()->clientArea(MaximizeArea, QPoint(xroot, yroot), win->desktop());
+        auto area = win->space.clientArea(MaximizeArea, QPoint(xroot, yroot), win->desktop());
         if (kwinApp()->options->electricBorderTiling()) {
             if (xroot <= area.x() + 20) {
                 mode |= quicktiles::left;
@@ -595,7 +594,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
     }
 
     // May cause leave event
-    workspace()->updateFocusMousePosition(input::get_cursor()->pos());
+    win->space.updateFocusMousePosition(input::get_cursor()->pos());
 
     geometry_updates_blocker blocker(win);
 
@@ -619,7 +618,7 @@ void set_quicktile_mode(Win* win, quicktiles mode, bool keyboard)
         } else {
             win->control->set_quicktiling(quicktiles::maximize);
             set_maximize(win, true, true);
-            auto clientArea = workspace()->clientArea(MaximizeArea, win);
+            auto clientArea = win->space.clientArea(MaximizeArea, win);
 
             if (auto frame_geo = pending_frame_geometry(win); frame_geo.top() != clientArea.top()) {
                 frame_geo.moveTop(clientArea.top());
@@ -838,7 +837,7 @@ bool start_move_resize(Win* win)
     }
 
     mov_res.enabled = true;
-    workspace()->setMoveResizeClient(win);
+    win->space.setMoveResizeClient(win);
 
     win->control->update_have_resize_effect();
 
@@ -852,8 +851,8 @@ bool start_move_resize(Win* win)
 
     Q_EMIT win->clientStartUserMovedResized(win);
 
-    if (workspace()->edges->desktop_switching.when_moving_client) {
-        workspace()->edges->reserveDesktopSwitching(true, Qt::Vertical | Qt::Horizontal);
+    if (win->space.edges->desktop_switching.when_moving_client) {
+        win->space.edges->reserveDesktopSwitching(true, Qt::Vertical | Qt::Horizontal);
     }
 
     return true;
@@ -973,14 +972,14 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
         calculateMoveResizeGeom();
 
         // adjust new size to snap to other windows/borders
-        mov_res.geometry = workspace()->adjustClientSize(win, mov_res.geometry, mode);
+        mov_res.geometry = win->space.adjustClientSize(win, mov_res.geometry, mode);
 
         if (!mov_res.unrestricted) {
             // Make sure the titlebar isn't behind a restricted area. We don't need to restrict
             // the other directions. If not visible enough, move the window to the closest valid
             // point. We bruteforce this by slowly moving the window back to its previous position
-            QRegion availableArea(workspace()->clientArea(FullArea, nullptr, 0)); // On the screen
-            availableArea -= workspace()->restrictedMoveArea(win->desktop());     // Strut areas
+            QRegion availableArea(win->space.clientArea(FullArea, nullptr, 0)); // On the screen
+            availableArea -= win->space.restrictedMoveArea(win->desktop());     // Strut areas
             bool transposed = false;
             int requiredPixels;
             QRect bTitleRect = titleBarRect(transposed, requiredPixels);
@@ -1094,9 +1093,9 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             // Special moving of maximized windows on Xinerama screens
             auto output = base::get_nearest_output(kwinApp()->get_base().get_outputs(), globalPos);
             if (win->control->fullscreen())
-                mov_res.geometry = workspace()->clientArea(FullScreenArea, output, 0);
+                mov_res.geometry = win->space.clientArea(FullScreenArea, output, 0);
             else {
-                auto moveResizeGeom = workspace()->clientArea(MaximizeArea, output, 0);
+                auto moveResizeGeom = win->space.clientArea(MaximizeArea, output, 0);
                 auto adjSize = adjusted_frame_size(win, moveResizeGeom.size(), size_mode::max);
                 if (adjSize != moveResizeGeom.size()) {
                     QRect r(moveResizeGeom);
@@ -1109,16 +1108,16 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
             // first move, then snap, then check bounds
             auto moveResizeGeom = mov_res.geometry;
             moveResizeGeom.moveTopLeft(topleft);
-            moveResizeGeom.moveTopLeft(workspace()->adjustClientPosition(
+            moveResizeGeom.moveTopLeft(win->space.adjustClientPosition(
                 win, moveResizeGeom.topLeft(), mov_res.unrestricted));
             mov_res.geometry = moveResizeGeom;
 
             if (!mov_res.unrestricted) {
                 // Strut areas
-                auto const strut = workspace()->restrictedMoveArea(win->desktop());
+                auto const strut = win->space.restrictedMoveArea(win->desktop());
 
                 // On the screen
-                QRegion availableArea(workspace()->clientArea(FullArea, nullptr, 0));
+                QRegion availableArea(win->space.clientArea(FullArea, nullptr, 0));
 
                 // Strut areas
                 availableArea -= strut;
@@ -1202,7 +1201,7 @@ auto move_resize_impl(Win* win, int x, int y, int x_root, int y_root)
     }
 
     if (is_move(win)) {
-        workspace()->edges->check(globalPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC));
+        win->space.edges->check(globalPos, QDateTime::fromMSecsSinceEpoch(xTime(), Qt::UTC));
     }
 }
 
@@ -1300,7 +1299,7 @@ void finish_move_resize(Win* win, bool cancel)
     if (output_index != mov_res.start_screen) {
         // Checks rule validity
         if (win->central_output) {
-            send_to_screen(*workspace(), win, *win->central_output);
+            send_to_screen(win->space, win, *win->central_output);
         }
         if (win->geometry_update.max_mode != maximize_mode::restore) {
             check_workspace_position(win);
@@ -1407,7 +1406,7 @@ template<typename Win>
 void pack_to(Win* win, int left, int top)
 {
     // May cause leave event.
-    workspace()->updateFocusMousePosition(input::get_cursor()->pos());
+    win->space.updateFocusMousePosition(input::get_cursor()->pos());
 
     auto const old_screen = win->central_output;
     move(win, QPoint(left, top));
@@ -1415,7 +1414,7 @@ void pack_to(Win* win, int left, int top)
 
     if (win->central_output != old_screen) {
         // Checks rule validity.
-        send_to_screen(*workspace(), win, *win->central_output);
+        send_to_screen(win->space, win, *win->central_output);
         if (win->maximizeMode() != win::maximize_mode::restore) {
             check_workspace_position(win);
         }

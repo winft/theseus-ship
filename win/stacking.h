@@ -360,7 +360,7 @@ void restack_client_under_active(Space* space, Win* window)
 template<typename Win>
 void auto_raise(Win* win)
 {
-    raise_window(workspace(), win);
+    raise_window(&win->space, win);
     win->control->cancel_auto_raise();
 }
 
@@ -439,13 +439,13 @@ void set_active(Win* win, bool active)
         : win->control->rules().checkOpacityInactive(qRound(win->opacity() * 100.0));
     win->setOpacity(ruledOpacity / 100.0);
 
-    workspace()->setActiveClient(active ? win : nullptr);
+    win->space.setActiveClient(active ? win : nullptr);
 
     if (!active) {
         win->control->cancel_auto_raise();
     }
 
-    blocker block(workspace()->stacking_order);
+    blocker block(win->space.stacking_order);
 
     // active windows may get different layer
     update_layer(win);
@@ -481,7 +481,7 @@ void set_demands_attention(Win* win, bool demand)
         win->info->setState(demand ? NET::DemandsAttention : NET::States(), NET::DemandsAttention);
     }
 
-    workspace()->clientAttentionChanged(win, demand);
+    win->space.clientAttentionChanged(win, demand);
     Q_EMIT win->demandsAttentionChanged();
 }
 

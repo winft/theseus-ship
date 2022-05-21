@@ -180,7 +180,7 @@ bool unmanaged_event(Win* win, xcb_generic_event_t* e)
         break;
     case XCB_UNMAP_NOTIFY: {
         // may cause leave event
-        workspace()->updateFocusMousePosition(input::get_cursor()->pos());
+        win->space.updateFocusMousePosition(input::get_cursor()->pos());
 
         // unmap notify might have been emitted due to a destroy notify
         // but unmap notify gets emitted before the destroy notify, nevertheless at this

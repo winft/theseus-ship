@@ -78,7 +78,7 @@ template<typename Win>
 void update_hidden_preview(Win* win)
 {
     if (hidden_preview(win)) {
-        workspace()->stacking_order->force_restacking();
+        win->space.stacking_order->force_restacking();
         if (base::x11::xcb::extensions::self()->is_shape_input_available()) {
             xcb_shape_rectangles(connection(),
                                  XCB_SHAPE_SO_SET,
@@ -91,7 +91,7 @@ void update_hidden_preview(Win* win)
                                  nullptr);
         }
     } else {
-        workspace()->stacking_order->force_restacking();
+        win->space.stacking_order->force_restacking();
         win->update_input_shape();
     }
 }
@@ -136,7 +136,7 @@ void internal_hide(Win* win)
     }
 
     win->addWorkspaceRepaint(win::visible_rect(win));
-    workspace()->clientHidden(win);
+    win->space.clientHidden(win);
     Q_EMIT win->windowHidden(win);
 }
 
@@ -159,12 +159,12 @@ void internal_keep(Win* win)
     win->xcb_windows.input.unmap();
     if (win->control->active()) {
         // get rid of input focus, bug #317484
-        workspace()->focusToNull();
+        win->space.focusToNull();
     }
 
     update_hidden_preview(win);
     win->addWorkspaceRepaint(win::visible_rect(win));
-    workspace()->clientHidden(win);
+    win->space.clientHidden(win);
 }
 
 template<typename Win>

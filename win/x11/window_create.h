@@ -56,7 +56,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
                 find_desktop(&space, true, virtual_desktop_manager::self()->current()));
     }
 
-    check_active_modal<Win>();
+    check_active_modal<Win>(space);
     space.checkTransients(win);
 
     // Propagate new client

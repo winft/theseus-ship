@@ -142,7 +142,7 @@ void create_decoration(Win* win)
     }
 
     win->control->deco().window = new deco::window(win);
-    auto decoration = workspace()->deco->createDecoration(win->control->deco().window);
+    auto decoration = win->space.deco->createDecoration(win->control->deco().window);
 
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);

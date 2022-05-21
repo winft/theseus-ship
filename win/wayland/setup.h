@@ -159,9 +159,9 @@ void setup_plasma_management(Space* space, Win* win)
                      win,
                      [win](bool set) { win::set_demands_attention(win, set); });
     QObject::connect(
-        plasma_win, &Wrapland::Server::PlasmaWindow::activeRequested, win, [space, win](bool set) {
+        plasma_win, &Wrapland::Server::PlasmaWindow::activeRequested, win, [win](bool set) {
             if (set) {
-                space->activateClient(win, true);
+                win->space.activateClient(win, true);
             }
         });
 

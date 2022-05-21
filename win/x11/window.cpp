@@ -589,7 +589,7 @@ void window::setShortcutInternal()
     // Workaround for kwin<->kglobalaccel deadlock, when KWin has X grab and the kded
     // kglobalaccel module tries to create the key grab. KWin should preferably grab
     // they keys itself anyway :(.
-    QTimer::singleShot(0, this, std::bind(&space::clientShortcutUpdated, workspace(), this));
+    QTimer::singleShot(0, this, std::bind(&space::clientShortcutUpdated, &space, this));
 #endif
 }
 
@@ -817,7 +817,7 @@ void window::do_set_fullscreen(bool full)
     control->set_fullscreen(full);
 
     if (full) {
-        raise_window(workspace(), this);
+        raise_window(&space, this);
     } else {
         // TODO(romangg): Can we do this also in setFullScreen? What about deco update?
         info->setState(full ? NET::FullScreen : NET::States(), NET::FullScreen);

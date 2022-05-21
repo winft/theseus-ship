@@ -157,7 +157,7 @@ bool internal_window::eventFilter(QObject* watched, QEvent* event)
         }
         if (pe->propertyName() == "kwin_windowType") {
             m_windowType = m_internalWindow->property("kwin_windowType").value<NET::WindowType>();
-            workspace()->updateClientArea();
+            space.updateClientArea();
         }
     }
     return false;
@@ -426,15 +426,15 @@ void internal_window::destroyClient()
 
     control->destroy_decoration();
 
-    remove_window_from_lists(*workspace(), this);
-    workspace()->stacking_order->update(true);
-    workspace()->updateClientArea();
-    Q_EMIT workspace()->internalClientRemoved(this);
+    remove_window_from_lists(space, this);
+    space.stacking_order->update(true);
+    space.updateClientArea();
+    Q_EMIT space.internalClientRemoved(this);
 
     if (deleted) {
         deleted->remnant()->unref();
     } else {
-        delete_window_from_space(*workspace(), this);
+        delete_window_from_space(space, this);
     }
     m_internalWindow = nullptr;
 
@@ -534,7 +534,7 @@ double internal_window::buffer_scale_internal() const
 void internal_window::createDecoration(const QRect& rect)
 {
     control->deco().window = new deco::window(this);
-    auto decoration = workspace()->deco->createDecoration(control->deco().window);
+    auto decoration = space.deco->createDecoration(control->deco().window);
 
     if (decoration) {
         QMetaObject::invokeMethod(decoration, "update", Qt::QueuedConnection);
@@ -587,22 +587,21 @@ void internal_window::markAsMapped()
 
     setReadyForPainting();
 
-    auto space = workspace();
-    space->m_windows.push_back(this);
+    space.m_windows.push_back(this);
 
-    setup_space_window_connections(space, this);
+    setup_space_window_connections(&space, this);
     update_layer(this);
 
     if (placeable()) {
-        auto const area = space->clientArea(PlacementArea, get_current_output(*space), desktop());
+        auto const area = space.clientArea(PlacementArea, get_current_output(space), desktop());
         place(this, area);
     }
 
-    space->x_stacking_tree->mark_as_dirty();
-    space->stacking_order->update(true);
-    space->updateClientArea();
+    space.x_stacking_tree->mark_as_dirty();
+    space.stacking_order->update(true);
+    space.updateClientArea();
 
-    Q_EMIT space->internalClientAdded(this);
+    Q_EMIT space.internalClientAdded(this);
 }
 
 void internal_window::updateInternalWindowGeometry()

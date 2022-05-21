@@ -60,7 +60,7 @@ void set_current_output_by_window(Base& base, Win const& window)
 template<typename Win>
 bool on_active_screen(Win* win)
 {
-    return on_screen(win, get_current_output(*workspace()));
+    return on_screen(win, get_current_output(win->space));
 }
 
 template<typename Win>
@@ -132,11 +132,11 @@ void set_desktops(Win* win, QVector<virtual_desktop*> desktops)
 
     if ((was_desk == NET::OnAllDesktops) != (win->desktop() == NET::OnAllDesktops)) {
         // OnAllDesktops changed
-        workspace()->updateOnAllDesktopsOfTransients(win);
+        win->space.updateOnAllDesktopsOfTransients(win);
     }
 
     auto transients_stacking_order
-        = restacked_by_space_stacking_order(workspace(), win->transient()->children);
+        = restacked_by_space_stacking_order(&win->space, win->transient()->children);
     for (auto const& child : transients_stacking_order) {
         if (!child->transient()->annexed) {
             set_desktops(child, desktops);

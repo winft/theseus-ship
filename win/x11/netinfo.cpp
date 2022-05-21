@@ -300,7 +300,7 @@ win_info::win_info(win::x11::window* c,
 
 void win_info::changeDesktop(int desktop)
 {
-    workspace()->sendClientToDesktop(m_client, desktop, true);
+    m_client->space.sendClientToDesktop(m_client, desktop, true);
 }
 
 void win_info::changeFullscreenMonitors(NETFullscreenMonitors topology)

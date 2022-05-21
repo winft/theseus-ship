@@ -62,7 +62,7 @@ void setup_window_control_connections(Win* win)
 
     QObject::connect(win, &Win::paletteChanged, win, [win] { trigger_decoration_repaint(win); });
 
-    QObject::connect(workspace()->deco.get(), &QObject::destroyed, win, [win] {
+    QObject::connect(win->space.deco.get(), &QObject::destroyed, win, [win] {
         win->control->destroy_decoration();
     });
 
@@ -89,8 +89,8 @@ void setup_window_control_connections(Win* win)
                          }
                          geometry_updates_blocker blocker(win);
 
-                         auto const area = workspace()->clientArea(
-                             PlacementArea, get_current_output(*workspace()), win->desktop());
+                         auto const area = win->space.clientArea(
+                             PlacementArea, get_current_output(win->space), win->desktop());
 
                          win::place(win, area);
                      });

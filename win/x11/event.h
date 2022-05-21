@@ -112,7 +112,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         }
         if ((dirtyProperties & NET::WMStrut) != 0
             || (dirtyProperties2 & NET::WM2ExtendedStrut) != 0) {
-            workspace()->updateClientArea();
+            win->space.updateClientArea();
         }
         if ((dirtyProperties & NET::WMIcon) != 0) {
             get_icons(win);
@@ -122,7 +122,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
         // info->userTime() is the value of the property, userTime() also includes
         // updates of the time done by KWin (ButtonPress on windowrapper etc.).
         if ((dirtyProperties2 & NET::WM2UserTime) != 0) {
-            workspace()->setWasUserInteraction();
+            win->space.setWasUserInteraction();
             update_user_time(win, win->info->userTime());
         }
         if ((dirtyProperties2 & NET::WM2StartupId) != 0) {
@@ -250,7 +250,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
                             event->event_y,
                             event->root_x,
                             event->root_y);
-        workspace()->updateFocusMousePosition(QPoint(event->root_x, event->root_y));
+        win->space.updateFocusMousePosition(QPoint(event->root_x, event->root_y));
         break;
     }
     case XCB_ENTER_NOTIFY: {
@@ -268,7 +268,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
                             event->event_y,
                             event->root_x,
                             event->root_y);
-        workspace()->updateFocusMousePosition(QPoint(event->root_x, event->root_y));
+        win->space.updateFocusMousePosition(QPoint(event->root_x, event->root_y));
         break;
     }
     case XCB_LEAVE_NOTIFY: {
@@ -282,7 +282,7 @@ bool window_event(Win* win, xcb_generic_event_t* e)
                             event->root_y);
         leave_notify_event(win, event);
         // not here, it'd break following enter notify handling
-        // workspace()->updateFocusMousePosition( QPoint( e->xcrossing.x_root, e->xcrossing.y_root
+        // win->space.updateFocusMousePosition( QPoint( e->xcrossing.x_root, e->xcrossing.y_root
         // ));
         break;
     }
@@ -352,8 +352,8 @@ bool map_request_event(Win* win, xcb_map_request_event_t* e)
         win::set_minimized(win, false);
     }
     if (!win->isOnCurrentDesktop()) {
-        if (workspace()->allowClientActivation(win)) {
-            workspace()->activateClient(win);
+        if (win->space.allowClientActivation(win)) {
+            win->space.activateClient(win);
         } else {
             win::set_demands_attention(win, true);
         }
@@ -600,7 +600,7 @@ void leave_notify_event(Win* win, xcb_leave_notify_event_t* e)
         }
         if (kwinApp()->options->focusPolicy() == base::options::FocusStrictlyUnderMouse
             && win->control->active() && lostMouse) {
-            workspace()->requestDelayFocus(nullptr);
+            win->space.requestDelayFocus(nullptr);
         }
         return;
     }
@@ -792,9 +792,9 @@ bool button_release_event(Win* win,
     if (w != win->frameId() && w != win->xcb_windows.input && w != win->xcb_windows.grab) {
         return true;
     }
-    if (w == win->frameId() && workspace()->userActionsMenu()
-        && workspace()->userActionsMenu()->isShown()) {
-        const_cast<user_actions_menu*>(workspace()->userActionsMenu())->grabInput();
+    if (w == win->frameId() && win->space.userActionsMenu()
+        && win->space.userActionsMenu()->isShown()) {
+        const_cast<user_actions_menu*>(win->space.userActionsMenu())->grabInput();
     }
     // translate from grab window to local coords
     x = win->pos().x();
@@ -873,21 +873,21 @@ void focus_in_event(Win* win, xcb_focus_in_event_t* e)
         return;
     }
 
-    for (auto win : workspace()->m_windows) {
+    for (auto win : win->space.m_windows) {
         if (auto x11_win = qobject_cast<window*>(win)) {
             cancel_focus_out_timer(x11_win);
         }
     }
 
     // check if this client is in should_get_focus list or if activation is allowed
-    bool activate = workspace()->allowClientActivation(win, -1U, true);
+    bool activate = win->space.allowClientActivation(win, -1U, true);
 
     // remove from should_get_focus list
-    workspace()->gotFocusIn(win);
+    win->space.gotFocusIn(win);
     if (activate) {
         win::set_active(win, true);
     } else {
-        workspace()->restoreFocus();
+        win->space.restoreFocus();
         win::set_demands_attention(win, true);
     }
 }

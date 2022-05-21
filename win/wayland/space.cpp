@@ -200,7 +200,7 @@ void space::handle_window_added(wayland::window* window)
         win::update_layer(window);
 
         auto const area
-            = clientArea(PlacementArea, get_current_output(*workspace()), window->desktop());
+            = clientArea(PlacementArea, get_current_output(window->space), window->desktop());
         auto placementDone = false;
 
         if (window->isInitialPositionSet()) {

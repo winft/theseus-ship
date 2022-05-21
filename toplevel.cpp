@@ -127,7 +127,7 @@ Toplevel* Toplevel::create_remnant(Toplevel* source)
     win->copyToDeleted(source);
     win->m_remnant = new win::remnant(win, source);
 
-    win::add_remnant(*workspace(), source, win);
+    win::add_remnant(win->space, source, win);
     Q_EMIT source->remnant_created(win);
     return win;
 }
@@ -1034,13 +1034,13 @@ void Toplevel::doPerformMoveResize()
 
 void Toplevel::leaveMoveResize()
 {
-    workspace()->setMoveResizeClient(nullptr);
+    space.setMoveResizeClient(nullptr);
     control->move_resize().enabled = false;
-    if (workspace()->edges->desktop_switching.when_moving_client) {
-        workspace()->edges->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
+    if (space.edges->desktop_switching.when_moving_client) {
+        space.edges->reserveDesktopSwitching(false, Qt::Vertical|Qt::Horizontal);
     }
     if (control->electric_maximizing()) {
-        workspace()->outline->hide();
+        space.outline->hide();
         win::elevate(this, false);
     }
 }
@@ -1118,7 +1118,7 @@ bool Toplevel::belongsToSameApplication([[maybe_unused]] Toplevel const* other,
 
 QRect Toplevel::iconGeometry() const
 {
-    return workspace()->get_icon_geometry(this);
+    return space.get_icon_geometry(this);
 }
 
 void Toplevel::setWindowHandles(xcb_window_t w)
@@ -1130,7 +1130,7 @@ void Toplevel::setWindowHandles(xcb_window_t w)
 void Toplevel::setShortcutInternal()
 {
     updateCaption();
-    workspace()->clientShortcutUpdated(this);
+    space.clientShortcutUpdated(this);
 }
 
 }

@@ -290,7 +290,7 @@ void Toplevel::applyWindowRules()
     win::set_desktop(this, desktop());
 
     // TODO(romangg): can central_output be null?
-    win::send_to_screen(*workspace(), this, *central_output);
+    win::send_to_screen(space, this, *central_output);
     // Type
     win::maximize(this, maximizeMode());
 
@@ -308,8 +308,8 @@ void Toplevel::applyWindowRules()
 
     // FSP
     // AcceptFocus :
-    if (workspace()->mostRecentlyActivatedClient() == this && !client_rules.checkAcceptFocus(true))
-        workspace()->activateNextClient(this);
+    if (space.mostRecentlyActivatedClient() == this && !client_rules.checkAcceptFocus(true))
+        space.activateNextClient(this);
 
     // Closeable
     if (auto s = size(); s != size() && s.isValid()) {
@@ -325,8 +325,7 @@ void Toplevel::applyWindowRules()
     // see also X11Client::setActive()
     if (control->active()) {
         setOpacity(control->rules().checkOpacityActive(qRound(opacity() * 100.0)) / 100.0);
-        workspace()->disableGlobalShortcutsForClient(
-            control->rules().checkDisableGlobalShortcuts(false));
+        space.disableGlobalShortcutsForClient(control->rules().checkDisableGlobalShortcuts(false));
     } else {
         setOpacity(control->rules().checkOpacityInactive(qRound(opacity() * 100.0)) / 100.0);
     }
