@@ -96,14 +96,6 @@ bool compositor::setupStart()
 
     setupX11Support();
 
-    // There might still be a deleted around, needs to be cleared before
-    // creating the scene (BUG 333275).
-    if (workspace()) {
-        while (!workspace()->remnants().empty()) {
-            workspace()->remnants().front()->remnant()->discard();
-        }
-    }
-
     Q_EMIT aboutToToggleCompositing();
 
     auto supported_render_types = get_supported_render_types(platform);
