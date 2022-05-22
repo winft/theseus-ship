@@ -18,6 +18,11 @@
 namespace KWin::input
 {
 
+fake_tablet_filter::fake_tablet_filter(input::redirect& redirect)
+    : redirect{redirect}
+{
+}
+
 bool fake_tablet_filter::tabletToolEvent(QTabletEvent* event)
 {
     auto get_event = [&event](button_state state) {
@@ -44,7 +49,7 @@ bool fake_tablet_filter::tabletToolEvent(QTabletEvent* event)
         qCWarning(KWIN_INPUT) << "Unexpected tablet event type" << event;
         break;
     }
-    static_cast<win::wayland::space*>(workspace())->kde_idle->simulateUserActivity();
+    static_cast<win::wayland::space&>(redirect.space).kde_idle->simulateUserActivity();
 
     return true;
 }

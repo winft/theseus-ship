@@ -94,7 +94,7 @@ Toplevel* redirect::findToplevel(const QPoint& pos)
         if (effects && static_cast<render::effects_handler_impl*>(effects)->isMouseInterception()) {
             return nullptr;
         }
-        auto const& unmanaged = workspace()->unmanagedList();
+        auto const& unmanaged = space.unmanagedList();
         for (auto const& u : unmanaged) {
             if (win::input_geometry(u).contains(pos) && win::wayland::accepts_input(u, pos)) {
                 return u;
@@ -107,7 +107,7 @@ Toplevel* redirect::findToplevel(const QPoint& pos)
 Toplevel* redirect::findManagedToplevel(const QPoint& pos)
 {
     auto const isScreenLocked = kwinApp()->is_screen_locked();
-    auto const& stacking = workspace()->stacking_order->sorted();
+    auto const& stacking = space.stacking_order->sorted();
     if (stacking.empty()) {
         return nullptr;
     }

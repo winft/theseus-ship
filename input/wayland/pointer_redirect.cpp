@@ -94,10 +94,10 @@ void pointer_redirect::init()
         });
     };
 
-    auto const clients = workspace()->m_windows;
+    auto const clients = redirect->space.m_windows;
     std::for_each(clients.begin(), clients.end(), setupMoveResizeConnection);
-    QObject::connect(workspace(), &win::space::clientAdded, this, setupMoveResizeConnection);
-    QObject::connect(static_cast<win::wayland::space*>(workspace()),
+    QObject::connect(&redirect->space, &win::space::clientAdded, this, setupMoveResizeConnection);
+    QObject::connect(static_cast<win::wayland::space*>(&redirect->space),
                      &win::wayland::space::wayland_window_added,
                      this,
                      setupMoveResizeConnection);
@@ -413,7 +413,7 @@ void pointer_redirect::cleanupDecoration(win::deco::client_impl* old, win::deco:
 {
     QObject::disconnect(notifiers.decoration_geometry);
     notifiers.decoration_geometry = QMetaObject::Connection();
-    workspace()->updateFocusMousePosition(position().toPoint());
+    redirect->space.updateFocusMousePosition(position().toPoint());
 
     if (old) {
         // send leave event to old decoration
@@ -472,7 +472,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
         if (auto lead = win::lead_of_annexed_transient(focusNow)) {
             win::enter_event(lead, m_pos.toPoint());
         }
-        workspace()->updateFocusMousePosition(m_pos.toPoint());
+        redirect->space.updateFocusMousePosition(m_pos.toPoint());
     }
 
     if (auto focus_internal = focus.internal_window) {
@@ -510,7 +510,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
               }
 
               // TODO: can we check on the client instead?
-              if (workspace()->moveResizeClient()) {
+              if (redirect->space.moveResizeClient()) {
                   // don't update while moving
                   return;
               }
@@ -525,7 +525,7 @@ void pointer_redirect::focusUpdate(Toplevel* focusOld, Toplevel* focusNow)
                                              &Wrapland::Server::Surface::pointerConstraintsChanged,
                                              this,
                                              &pointer_redirect::updatePointerConstraints);
-    notifiers.constraints_activated = QObject::connect(workspace(),
+    notifiers.constraints_activated = QObject::connect(&redirect->space,
                                                        &win::space::clientActivated,
                                                        this,
                                                        &pointer_redirect::updatePointerConstraints);
@@ -627,7 +627,7 @@ void pointer_redirect::updatePointerConstraints()
     if (s != seat->pointers().get_focus().surface) {
         return;
     }
-    auto const canConstrain = constraints.enabled && focus.window == workspace()->activeClient();
+    auto const canConstrain = constraints.enabled && focus.window == redirect->space.activeClient();
     auto const cf = s->confinedPointer();
 
     if (cf) {

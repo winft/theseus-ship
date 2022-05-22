@@ -79,7 +79,7 @@ void platform::start_interactive_window_selection(std::function<void(KWin::Tople
                                                   QByteArray const& cursorName)
 {
     if (!window_sel) {
-        window_sel.reset(new window_selector);
+        window_sel.reset(new window_selector(*this));
     }
     window_sel->start(callback, cursorName);
 }
@@ -87,7 +87,7 @@ void platform::start_interactive_window_selection(std::function<void(KWin::Tople
 void platform::start_interactive_position_selection(std::function<void(QPoint const&)> callback)
 {
     if (!window_sel) {
-        window_sel.reset(new window_selector);
+        window_sel.reset(new window_selector(*this));
     }
     window_sel->start(callback);
 }

@@ -21,7 +21,7 @@ namespace KWin::input::wayland
 
 cursor::cursor(wayland::platform* platform)
     : input::cursor()
-    , cursor_image{std::make_unique<wayland::cursor_image>()}
+    , cursor_image{std::make_unique<wayland::cursor_image>(*platform)}
     , platform{platform}
 {
     auto redirect = platform->redirect;

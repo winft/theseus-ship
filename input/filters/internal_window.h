@@ -10,9 +10,13 @@
 namespace KWin::input
 {
 
+class redirect;
+
 class KWIN_EXPORT internal_window_filter : public event_filter
 {
 public:
+    explicit internal_window_filter(input::redirect& redirect);
+
     bool key(key_event const& event) override;
     bool key_repeat(key_event const& event) override;
 
@@ -28,6 +32,7 @@ private:
     QSet<qint32> m_pressedIds;
     QPointF m_lastGlobalTouchPos;
     QPointF m_lastLocalTouchPos;
+    input::redirect& redirect;
 };
 
 }

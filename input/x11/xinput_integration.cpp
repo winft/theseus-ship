@@ -139,7 +139,7 @@ public:
                 = QPointF(fixed1616ToReal(e->event_x), fixed1616ToReal(e->event_y));
             if (e->detail == m_trackingTouchId) {
                 const auto last = m_lastTouchPositions.value(e->detail);
-                workspace()->edges->gesture_recognizer->updateSwipeGesture(
+                xinput->platform->redirect->space.edges->gesture_recognizer->updateSwipeGesture(
                     QSizeF(touchPosition.x() - last.x(), touchPosition.y() - last.y()));
             }
             m_lastTouchPositions.insert(e->detail, touchPosition);
@@ -148,7 +148,7 @@ public:
         case XI_TouchEnd: {
             auto e = reinterpret_cast<xXIDeviceEvent*>(event);
             if (e->detail == m_trackingTouchId) {
-                workspace()->edges->gesture_recognizer->endSwipeGesture();
+                xinput->platform->redirect->space.edges->gesture_recognizer->endSwipeGesture();
             }
             m_lastTouchPositions.remove(e->detail);
             m_trackingTouchId = 0;
@@ -160,7 +160,9 @@ public:
             if (it == m_lastTouchPositions.constEnd()) {
                 XIAllowTouchEvents(display(), e->deviceid, e->sourceid, e->touchid, XIRejectTouch);
             } else {
-                if (workspace()->edges->gesture_recognizer->startSwipeGesture(it.value()) > 0) {
+                if (xinput->platform->redirect->space.edges->gesture_recognizer->startSwipeGesture(
+                        it.value())
+                    > 0) {
                     m_trackingTouchId = e->touchid;
                 }
                 XIAllowTouchEvents(display(),
@@ -234,8 +236,8 @@ public:
 xinput_integration::xinput_integration(Display* display, x11::platform* platform)
     : fake_devices{std::make_unique<input::pointer>(platform),
                    std::make_unique<input::keyboard>(platform)}
-    , m_x11Display(display)
     , platform{platform}
+    , m_x11Display(display)
 {
 }
 
@@ -313,7 +315,8 @@ void xinput_integration::startListening()
     m_keyReleaseFilter.reset(new XKeyPressReleaseEventFilter(XCB_KEY_RELEASE, this));
 
     // install the input event spies also relevant for X11 platform
-    kwinApp()->input->redirect->installInputEventSpy(new input::modifier_only_shortcuts_spy);
+    auto redirect = kwinApp()->input->redirect;
+    redirect->installInputEventSpy(new input::modifier_only_shortcuts_spy(*redirect));
 }
 
 void xinput_integration::setup_fake_devices()

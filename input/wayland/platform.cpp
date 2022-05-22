@@ -35,7 +35,7 @@ platform::platform(base::wayland::platform const& base)
 {
     config = kwinApp()->inputConfig();
 
-    input_method = std::make_unique<wayland::input_method>(waylandServer());
+    input_method = std::make_unique<wayland::input_method>(*this, waylandServer());
     virtual_keyboard = waylandServer()->display->create_virtual_keyboard_manager_v1();
 
     QObject::connect(&base, &base::backend::wlroots::platform::output_added, this, [this] {

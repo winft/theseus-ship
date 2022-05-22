@@ -35,6 +35,8 @@ public:
     static layout_policy*
     create(layout_manager* manager, KConfigGroup const& config, QString const& policy);
 
+    xkb::layout_manager* manager;
+
 protected:
     explicit layout_policy(layout_manager* manager, KConfigGroup const& config = KConfigGroup());
 
@@ -48,9 +50,6 @@ protected:
 
     KConfigGroup config;
     static const char default_layout_entry_key_prefix[];
-
-private:
-    xkb::layout_manager* manager;
 };
 
 class global_layout_policy : public layout_policy

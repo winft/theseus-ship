@@ -10,9 +10,13 @@
 namespace KWin::input
 {
 
+class redirect;
+
 class lock_screen_filter : public event_filter
 {
 public:
+    explicit lock_screen_filter(input::redirect& redirect);
+
     bool button(button_event const& event) override;
     bool motion(motion_event const& event) override;
     bool axis(axis_event const& event) override;
@@ -36,6 +40,8 @@ private:
     bool pointerSurfaceAllowed() const;
     bool keyboardSurfaceAllowed() const;
     bool touchSurfaceAllowed() const;
+
+    input::redirect& redirect;
 };
 
 }

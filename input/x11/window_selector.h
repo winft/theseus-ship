@@ -22,10 +22,12 @@ class Toplevel;
 namespace input::x11
 {
 
+class platform;
+
 class window_selector : public base::x11::event_filter
 {
 public:
-    window_selector();
+    window_selector(x11::platform& platform);
     ~window_selector() override;
 
     void start(std::function<void(KWin::Toplevel*)> callback, const QByteArray& cursorName);
@@ -48,9 +50,10 @@ private:
     bool activate(const QByteArray& cursorName = QByteArray());
     void cancelCallback();
 
-    bool m_active;
+    bool m_active{false};
     std::function<void(KWin::Toplevel*)> m_callback;
     std::function<void(const QPoint&)> m_pointSelectionFallback;
+    x11::platform& platform;
 };
 
 }

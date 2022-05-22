@@ -10,9 +10,13 @@
 namespace KWin::input
 {
 
+class redirect;
+
 class KWIN_EXPORT move_resize_filter : public event_filter
 {
 public:
+    explicit move_resize_filter(input::redirect& redirect);
+
     bool key(key_event const& event) override;
     bool key_repeat(key_event const& event) override;
 
@@ -27,6 +31,7 @@ public:
 private:
     qint32 m_id = 0;
     bool m_set = false;
+    input::redirect& redirect;
 };
 
 }

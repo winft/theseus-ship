@@ -10,9 +10,13 @@
 namespace KWin::input
 {
 
+class redirect;
+
 class drag_and_drop_filter : public event_filter
 {
 public:
+    explicit drag_and_drop_filter(input::redirect& redirect);
+
     bool button(button_event const& event) override;
     bool motion(motion_event const& event) override;
 
@@ -22,6 +26,7 @@ public:
 
 private:
     qint32 m_touchId = -1;
+    input::redirect& redirect;
 };
 
 }

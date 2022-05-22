@@ -9,6 +9,7 @@
 #include "cursor_image.h"
 
 #include "cursor_theme.h"
+#include "platform.h"
 
 #include "base/platform.h"
 #include "base/wayland/server.h"
@@ -38,7 +39,8 @@
 namespace KWin::input::wayland
 {
 
-cursor_image::cursor_image()
+cursor_image::cursor_image(wayland::platform& platform)
+    : platform{platform}
 {
     QObject::connect(waylandServer()->seat(),
                      &Wrapland::Server::Seat::focusedPointerChanged,
@@ -71,7 +73,7 @@ cursor_image::~cursor_image() = default;
 
 void cursor_image::setup_theme()
 {
-    QObject::connect(static_cast<win::wayland::space*>(workspace()),
+    QObject::connect(static_cast<win::wayland::space*>(&platform.redirect->space),
                      &win::wayland::space::wayland_window_added,
                      this,
                      &cursor_image::setup_move_resize);
@@ -89,10 +91,13 @@ void cursor_image::setup_theme()
         });
     }
 
-    auto const clients = workspace()->m_windows;
+    auto const clients = platform.redirect->space.m_windows;
     std::for_each(clients.begin(), clients.end(), [this](auto win) { setup_move_resize(win); });
 
-    QObject::connect(workspace(), &win::space::clientAdded, this, &cursor_image::setup_move_resize);
+    QObject::connect(&platform.redirect->space,
+                     &win::space::clientAdded,
+                     this,
+                     &cursor_image::setup_move_resize);
 
     Q_EMIT changed();
 }
@@ -206,7 +211,7 @@ void cursor_image::updateMoveResize()
 {
     m_moveResizeCursor.image = QImage();
     m_moveResizeCursor.hotSpot = QPoint();
-    if (auto window = workspace()->moveResizeClient()) {
+    if (auto window = platform.redirect->space.moveResizeClient()) {
         loadThemeCursor(window->control->move_resize().cursor, &m_moveResizeCursor);
         if (m_currentSource == CursorSource::MoveResize) {
             Q_EMIT changed();
@@ -480,9 +485,7 @@ void cursor_image::reevaluteSource()
         setSource(CursorSource::EffectsOverride);
         return;
     }
-
-    // TODO(romangg): We need this check on space for tests. Make the cursor image go before space.
-    if (workspace() && workspace()->moveResizeClient()) {
+    if (platform.redirect->space.moveResizeClient()) {
         setSource(CursorSource::MoveResize);
         return;
     }

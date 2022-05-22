@@ -33,7 +33,7 @@ bool get_modifier_command(uint32_t key, base::options::MouseCommand& command)
     if (kwinApp()->input->redirect->pointer()->isConstrained()) {
         return false;
     }
-    if (workspace()->globalShortcutsDisabled()) {
+    if (kwinApp()->input->redirect->space.globalShortcutsDisabled()) {
         return false;
     }
     auto qt_key = button_to_qt_mouse_button(key);
@@ -94,7 +94,7 @@ bool get_wheel_modifier_command(axis_orientation orientation,
     if (kwinApp()->input->redirect->pointer()->isConstrained()) {
         return false;
     }
-    if (workspace()->globalShortcutsDisabled()) {
+    if (kwinApp()->input->redirect->space.globalShortcutsDisabled()) {
         return false;
     }
 

@@ -54,6 +54,8 @@ public:
     void switchToNextLayout();
     void switchToPreviousLayout();
 
+    xkb::manager& xkb;
+
 Q_SIGNALS:
     void layoutChanged(uint index);
     void layoutsReconfigured();
@@ -70,7 +72,6 @@ private:
     void switchToLayout(xkb_layout_index_t index);
     void load_shortcuts(xkb::keyboard* xkb);
 
-    xkb::manager& xkb;
     KConfigGroup m_configGroup;
     QVector<QAction*> m_layoutShortcuts;
     dbus::keyboard_layout* m_dbusInterface = nullptr;

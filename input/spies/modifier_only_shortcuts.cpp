@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/event.h"
 #include "input/keyboard.h"
 #include "input/qt_event.h"
+#include "input/redirect.h"
 #include "input/xkb/helpers.h"
 #include "win/space.h"
 
@@ -34,9 +35,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::input
 {
 
-modifier_only_shortcuts_spy::modifier_only_shortcuts_spy()
+modifier_only_shortcuts_spy::modifier_only_shortcuts_spy(input::redirect& redirect)
     : QObject()
     , event_spy()
+    , redirect{redirect}
 {
     QObject::connect(kwinApp()->screen_locker_watcher.get(),
                      &desktop::screen_locker_watcher::locked,
@@ -62,7 +64,7 @@ void modifier_only_shortcuts_spy::key(key_event const& event)
     } else if (!m_pressedKeys.isEmpty()) {
         m_pressedKeys.remove(event.keycode);
         if (m_pressedKeys.isEmpty() && mods == Qt::NoModifier
-            && !workspace()->globalShortcutsDisabled()) {
+            && !redirect.space.globalShortcutsDisabled()) {
             if (m_modifier != Qt::NoModifier) {
                 const auto list = kwinApp()->options->modifierOnlyDBusShortcut(m_modifier);
                 if (list.size() >= 4) {

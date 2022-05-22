@@ -9,6 +9,7 @@
 #include "helpers.h"
 #include "layout_manager.h"
 
+#include "input/redirect.h"
 #include "toplevel.h"
 #include "win/control.h"
 #include "win/net.h"
@@ -24,8 +25,8 @@ namespace input::xkb
 
 layout_policy::layout_policy(layout_manager* manager, KConfigGroup const& config)
     : QObject(manager)
-    , config(config)
     , manager(manager)
+    , config(config)
 {
     QObject::connect(
         manager, &layout_manager::layoutsReconfigured, this, &layout_policy::clear_cache);
@@ -78,22 +79,20 @@ QString const global_layout_policy::default_layout_entry_key() const
 global_layout_policy::global_layout_policy(layout_manager* manager, KConfigGroup const& config)
     : layout_policy(manager, config)
 {
-    QObject::connect(workspace()->sessionManager(),
-                     &win::session_manager::prepareSessionSaveRequested,
-                     this,
-                     [this] {
-                         clear_layouts();
-                         if (auto const layout = xkb::get_primary_xkb_keyboard()->layout) {
-                             this->config.writeEntry(default_layout_entry_key(), layout);
-                         }
-                     });
-
+    auto session_manager = manager->xkb.platform->redirect->space.sessionManager();
     QObject::connect(
-        workspace()->sessionManager(), &win::session_manager::loadSessionRequested, this, [this] {
-            if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
-                set_layout(this->config.readEntry(default_layout_entry_key(), 0));
+        session_manager, &win::session_manager::prepareSessionSaveRequested, this, [this] {
+            clear_layouts();
+            if (auto const layout = xkb::get_primary_xkb_keyboard()->layout) {
+                this->config.writeEntry(default_layout_entry_key(), layout);
             }
         });
+
+    QObject::connect(session_manager, &win::session_manager::loadSessionRequested, this, [this] {
+        if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
+            set_layout(this->config.readEntry(default_layout_entry_key(), 0));
+        }
+    });
 }
 
 virtual_desktop_layout_policy::virtual_desktop_layout_policy(layout_manager* manager,
@@ -105,47 +104,45 @@ virtual_desktop_layout_policy::virtual_desktop_layout_policy(layout_manager* man
                      this,
                      &virtual_desktop_layout_policy::handle_desktop_change);
 
-    QObject::connect(workspace()->sessionManager(),
-                     &win::session_manager::prepareSessionSaveRequested,
-                     this,
-                     [this] {
-                         clear_layouts();
-
-                         for (auto const& [vd, layout] : layouts) {
-                             if (!layout) {
-                                 continue;
-                             }
-
-                             this->config.writeEntry(
-                                 default_layout_entry_key()
-                                     % QLatin1String(QByteArray::number(vd->x11DesktopNumber())),
-                                 layout);
-                         }
-                     });
-
+    auto session_manager = manager->xkb.platform->redirect->space.sessionManager();
     QObject::connect(
-        workspace()->sessionManager(), &win::session_manager::loadSessionRequested, this, [this] {
-            if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
-                auto const& desktops = win::virtual_desktop_manager::self()->desktops();
+        session_manager, &win::session_manager::prepareSessionSaveRequested, this, [this] {
+            clear_layouts();
 
-                for (auto const desktop : desktops) {
-                    uint const layout = this->config.readEntry(
-                        default_layout_entry_key()
-                            % QLatin1String(QByteArray::number(desktop->x11DesktopNumber())),
-                        0u);
-
-                    if (layout) {
-                        layouts.insert({desktop, layout});
-                        QObject::connect(desktop,
-                                         &win::virtual_desktop::aboutToBeDestroyed,
-                                         this,
-                                         [this, desktop] { layouts.erase(desktop); });
-                    }
+            for (auto const& [vd, layout] : layouts) {
+                if (!layout) {
+                    continue;
                 }
 
-                handle_desktop_change();
+                this->config.writeEntry(
+                    default_layout_entry_key()
+                        % QLatin1String(QByteArray::number(vd->x11DesktopNumber())),
+                    layout);
             }
         });
+
+    QObject::connect(session_manager, &win::session_manager::loadSessionRequested, this, [this] {
+        if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
+            auto const& desktops = win::virtual_desktop_manager::self()->desktops();
+
+            for (auto const desktop : desktops) {
+                uint const layout = this->config.readEntry(
+                    default_layout_entry_key()
+                        % QLatin1String(QByteArray::number(desktop->x11DesktopNumber())),
+                    0u);
+
+                if (layout) {
+                    layouts.insert({desktop, layout});
+                    QObject::connect(desktop,
+                                     &win::virtual_desktop::aboutToBeDestroyed,
+                                     this,
+                                     [this, desktop] { layouts.erase(desktop); });
+                }
+            }
+
+            handle_desktop_change();
+        }
+    });
 }
 
 void virtual_desktop_layout_policy::clear_cache()
@@ -195,18 +192,21 @@ void virtual_desktop_layout_policy::handle_layout_change(uint index)
 window_layout_policy::window_layout_policy(layout_manager* manager)
     : layout_policy(manager)
 {
-    QObject::connect(workspace(), &win::space::clientActivated, this, [this](auto window) {
-        if (!window) {
-            return;
-        }
+    QObject::connect(&manager->xkb.platform->redirect->space,
+                     &win::space::clientActivated,
+                     this,
+                     [this](auto window) {
+                         if (!window) {
+                             return;
+                         }
 
-        // Ignore some special types.
-        if (win::is_desktop(window) || win::is_dock(window)) {
-            return;
-        }
+                         // Ignore some special types.
+                         if (win::is_desktop(window) || win::is_dock(window)) {
+                             return;
+                         }
 
-        set_layout(getLayout(layouts, window));
-    });
+                         set_layout(getLayout(layouts, window));
+                     });
 }
 
 void window_layout_policy::clear_cache()
@@ -216,7 +216,7 @@ void window_layout_policy::clear_cache()
 
 void window_layout_policy::handle_layout_change(uint index)
 {
-    auto window = workspace()->activeClient();
+    auto window = manager->xkb.platform->redirect->space.activeClient();
     if (!window) {
         return;
     }
@@ -241,31 +241,29 @@ application_layout_policy::application_layout_policy(layout_manager* manager,
                                                      KConfigGroup const& config)
     : layout_policy(manager, config)
 {
-    QObject::connect(workspace(),
+    auto space = &manager->xkb.platform->redirect->space;
+    QObject::connect(space,
                      &win::space::clientActivated,
                      this,
                      &application_layout_policy::handle_client_activated);
 
-    QObject::connect(workspace()->sessionManager(),
-                     &win::session_manager::prepareSessionSaveRequested,
-                     this,
-                     [this] {
-                         clear_layouts();
+    QObject::connect(
+        space->sessionManager(), &win::session_manager::prepareSessionSaveRequested, this, [this] {
+            clear_layouts();
 
-                         for (auto const& [win, layout] : layouts) {
-                             if (!layout) {
-                                 continue;
-                             }
-                             if (auto const name = win->control->desktop_file_name();
-                                 !name.isEmpty()) {
-                                 this->config.writeEntry(
-                                     default_layout_entry_key() % QLatin1String(name), layout);
-                             }
-                         }
-                     });
+            for (auto const& [win, layout] : layouts) {
+                if (!layout) {
+                    continue;
+                }
+                if (auto const name = win->control->desktop_file_name(); !name.isEmpty()) {
+                    this->config.writeEntry(default_layout_entry_key() % QLatin1String(name),
+                                            layout);
+                }
+            }
+        });
 
     QObject::connect(
-        workspace()->sessionManager(), &win::session_manager::loadSessionRequested, this, [this] {
+        space->sessionManager(), &win::session_manager::loadSessionRequested, this, [this] {
             if (xkb::get_primary_xkb_keyboard()->layouts_count() > 1) {
                 auto const keyPrefix = default_layout_entry_key();
                 auto const keyList = this->config.keyList().filter(keyPrefix);
@@ -324,7 +322,7 @@ void application_layout_policy::clear_cache()
 
 void application_layout_policy::handle_layout_change(uint index)
 {
-    auto window = workspace()->activeClient();
+    auto window = manager->xkb.platform->redirect->space.activeClient();
     if (!window) {
         return;
     }

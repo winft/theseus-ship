@@ -29,10 +29,11 @@ void device_redirect_update(Dev* dev);
 template<typename Dev>
 void device_redirect_init(Dev* dev)
 {
-    QObject::connect(workspace()->stacking_order, &win::stacking_order::changed, dev, [dev] {
-        device_redirect_update(dev);
-    });
-    QObject::connect(workspace(), &win::space::clientMinimizedChanged, dev, [dev] {
+    QObject::connect(dev->redirect->space.stacking_order,
+                     &win::stacking_order::changed,
+                     dev,
+                     [dev] { device_redirect_update(dev); });
+    QObject::connect(&dev->redirect->space, &win::space::clientMinimizedChanged, dev, [dev] {
         device_redirect_update(dev);
     });
     QObject::connect(win::virtual_desktop_manager::self(),
@@ -156,14 +157,13 @@ void device_redirect_update_internal_window(Dev* dev, QWindow* window)
     dev->cleanupInternalWindow(old_internal, window);
 }
 
-static QWindow* device_redirect_find_internal_window(QPoint const& pos)
+static QWindow* device_redirect_find_internal_window(std::vector<Toplevel*> const& windows,
+                                                     QPoint const& pos)
 {
-    if (kwinApp()->is_screen_locked()) {
+    if (windows.empty()) {
         return nullptr;
     }
-
-    auto const& windows = workspace()->windows();
-    if (windows.empty()) {
+    if (kwinApp()->is_screen_locked()) {
         return nullptr;
     }
 
@@ -203,11 +203,11 @@ void device_redirect_update(Dev* dev)
 
     if (dev->positionValid()) {
         auto const pos = dev->position().toPoint();
-        internal_window = device_redirect_find_internal_window(pos);
+        internal_window = device_redirect_find_internal_window(dev->redirect->space.windows(), pos);
         if (internal_window) {
-            toplevel = workspace()->findInternal(internal_window);
+            toplevel = dev->redirect->space.findInternal(internal_window);
         } else {
-            toplevel = kwinApp()->input->redirect->findToplevel(pos);
+            toplevel = dev->redirect->findToplevel(pos);
         }
     }
     // Always set the toplevel at the position of the input device.

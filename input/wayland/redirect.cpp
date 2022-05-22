@@ -181,18 +181,18 @@ void redirect::setup_filters()
     if (has_global_shortcuts) {
         m_filters.emplace_back(new terminate_server_filter);
     }
-    m_filters.emplace_back(new drag_and_drop_filter);
-    m_filters.emplace_back(new lock_screen_filter);
-    m_filters.emplace_back(new popup_filter);
+    m_filters.emplace_back(new drag_and_drop_filter(*this));
+    m_filters.emplace_back(new lock_screen_filter(*this));
+    m_filters.emplace_back(new popup_filter(*this));
 
     window_selector = new window_selector_filter;
     m_filters.push_back(window_selector);
 
     if (has_global_shortcuts) {
-        m_filters.emplace_back(new screen_edge_filter);
+        m_filters.emplace_back(new screen_edge_filter(*this));
     }
     m_filters.emplace_back(new effects_filter);
-    m_filters.emplace_back(new move_resize_filter);
+    m_filters.emplace_back(new move_resize_filter(*this));
 
 #if KWIN_BUILD_TABBOX
     m_filters.emplace_back(new tabbox_filter);
@@ -203,11 +203,11 @@ void redirect::setup_filters()
     }
 
     m_filters.emplace_back(new decoration_event_filter);
-    m_filters.emplace_back(new internal_window_filter);
+    m_filters.emplace_back(new internal_window_filter(*this));
 
     m_filters.emplace_back(new window_action_filter);
     m_filters_install_iterator = m_filters.insert(m_filters.cend(), new forward_filter);
-    m_filters.emplace_back(new fake_tablet_filter);
+    m_filters.emplace_back(new fake_tablet_filter(*this));
 }
 
 void redirect::reconfigure()

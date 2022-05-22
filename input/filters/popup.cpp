@@ -25,11 +25,10 @@
 namespace KWin::input
 {
 
-popup_filter::popup_filter()
-    : QObject()
+popup_filter::popup_filter(input::redirect& redirect)
 {
     QObject::connect(
-        static_cast<win::wayland::space*>(workspace()),
+        static_cast<win::wayland::space*>(&redirect.space),
         &win::wayland::space::wayland_window_added,
         this,
         [this](auto window) { handle_window_added(static_cast<win::wayland::window*>(window)); });

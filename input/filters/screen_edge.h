@@ -10,11 +10,14 @@
 namespace KWin::input
 {
 
+class redirect;
+
 class KWIN_EXPORT screen_edge_filter : public event_filter
 {
 public:
-    bool motion(motion_event const& event) override;
+    explicit screen_edge_filter(input::redirect& redirect);
 
+    bool motion(motion_event const& event) override;
     bool touch_down(touch_down_event const& event) override;
     bool touch_motion(touch_motion_event const& event) override;
     bool touch_up(touch_up_event const& event) override;
@@ -23,6 +26,7 @@ private:
     bool m_touchInProgress = false;
     qint32 m_id = 0;
     QPointF m_lastPos;
+    input::redirect& redirect;
 };
 
 }
