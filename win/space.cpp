@@ -95,7 +95,7 @@ space::space()
     : QObject(nullptr)
     , outline(std::make_unique<render::outline>())
     , deco{std::make_unique<deco::bridge<space>>(*this)}
-    , m_userActionsMenu(new win::user_actions_menu(this))
+    , user_actions_menu{std::make_unique<win::user_actions_menu>()}
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
     , m_sessionManager(new win::session_manager(this))
@@ -307,7 +307,7 @@ void space::slotReconfigure()
 
     Q_EMIT configChanged();
 
-    m_userActionsMenu->discard();
+    user_actions_menu->discard();
     win::update_tool_windows(this, true);
 
     RuleBook::self()->load();
@@ -2183,9 +2183,9 @@ void space::setActiveClient(Toplevel* window)
 
     if (active_popup && active_popup_client != window && set_active_client_recursion == 0)
         closeActivePopup();
-    if (m_userActionsMenu->hasClient() && !m_userActionsMenu->isMenuClient(window)
+    if (user_actions_menu->hasClient() && !user_actions_menu->isMenuClient(window)
         && set_active_client_recursion == 0) {
-        m_userActionsMenu->close();
+        user_actions_menu->close();
     }
 
     blocker block(stacking_order);
@@ -2718,7 +2718,7 @@ void space::closeActivePopup()
         active_popup = nullptr;
         active_popup_client = nullptr;
     }
-    m_userActionsMenu->close();
+    user_actions_menu->close();
 }
 
 template<typename Slot>
@@ -2947,7 +2947,9 @@ void space::initShortcuts()
 #endif
     win::virtual_desktop_manager::self()->initShortcuts();
     kwinApp()->get_base().render->night_color->init_shortcuts();
-    m_userActionsMenu->discard(); // so that it's recreated next time
+
+    // so that it's recreated next time
+    user_actions_menu->discard();
 }
 
 void space::setupWindowShortcut(Toplevel* window)
@@ -3571,7 +3573,7 @@ void space::slotWindowOperations()
 
 void space::showWindowMenu(const QRect& pos, Toplevel* window)
 {
-    m_userActionsMenu->show(pos, window);
+    user_actions_menu->show(pos, window);
 }
 
 void space::showApplicationMenu(const QRect& pos, Toplevel* window, int actionId)

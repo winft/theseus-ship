@@ -45,8 +45,9 @@ void init_space(Space& space)
 
     // first initialize the extensions
     base::x11::xcb::extensions::self();
-    auto colormaps = new color_mapper(&space);
-    QObject::connect(&space, &Space::clientActivated, colormaps, &color_mapper::update);
+    space.color_mapper = std::make_unique<color_mapper>();
+    QObject::connect(
+        &space, &Space::clientActivated, space.color_mapper.get(), &color_mapper::update);
 
     // Call this before XSelectInput() on the root window
     space.startup = new KStartupInfo(

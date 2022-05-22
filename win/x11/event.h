@@ -792,9 +792,9 @@ bool button_release_event(Win* win,
     if (w != win->frameId() && w != win->xcb_windows.input && w != win->xcb_windows.grab) {
         return true;
     }
-    if (w == win->frameId() && win->space.userActionsMenu()
-        && win->space.userActionsMenu()->isShown()) {
-        const_cast<user_actions_menu*>(win->space.userActionsMenu())->grabInput();
+    if (w == win->frameId() && win->space.user_actions_menu
+        && win->space.user_actions_menu->isShown()) {
+        win->space.user_actions_menu->grabInput();
     }
     // translate from grab window to local coords
     x = win->pos().x();

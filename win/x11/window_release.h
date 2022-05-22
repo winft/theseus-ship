@@ -25,8 +25,8 @@ void remove_controlled_window_from_space(Space& space, Win* win)
         space.closeActivePopup();
     }
 
-    if (space.m_userActionsMenu->isMenuClient(win)) {
-        space.m_userActionsMenu->close();
+    if (space.user_actions_menu->isMenuClient(win)) {
+        space.user_actions_menu->close();
     }
 
     if (space.client_keys_client == win) {

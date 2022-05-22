@@ -260,11 +260,11 @@ void GlobalShortcutsTest::testUserActionsMenu()
     QVERIFY(c->control->active());
 
     quint32 timestamp = 0;
-    QVERIFY(!workspace()->userActionsMenu()->isShown());
+    QVERIFY(!workspace()->user_actions_menu->isShown());
     Test::keyboard_key_pressed(KEY_LEFTALT, timestamp++);
     Test::keyboard_key_pressed(KEY_F3, timestamp++);
     Test::keyboard_key_released(KEY_F3, timestamp++);
-    QTRY_VERIFY(workspace()->userActionsMenu()->isShown());
+    QTRY_VERIFY(workspace()->user_actions_menu->isShown());
     Test::keyboard_key_released(KEY_LEFTALT, timestamp++);
 }
 

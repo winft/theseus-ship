@@ -17,7 +17,7 @@ class KWIN_EXPORT color_mapper : public QObject
 {
     Q_OBJECT
 public:
-    color_mapper(QObject* parent);
+    color_mapper();
     ~color_mapper() override;
 public Q_SLOTS:
     void update();

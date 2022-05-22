@@ -90,7 +90,7 @@ void TestDontCrashUseractionsMenu::testShowHideShowUseractionsMenu()
     QVERIFY(client);
 
     workspace()->showWindowMenu(QRect(), client);
-    auto userActionsMenu = workspace()->userActionsMenu();
+    auto& userActionsMenu = workspace()->user_actions_menu;
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
 

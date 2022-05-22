@@ -46,7 +46,7 @@ class KWIN_EXPORT user_actions_menu : public QObject
 {
     Q_OBJECT
 public:
-    explicit user_actions_menu(QObject* parent = nullptr);
+    user_actions_menu();
     ~user_actions_menu() override;
 
     /**

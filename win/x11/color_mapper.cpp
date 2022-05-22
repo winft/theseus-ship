@@ -12,9 +12,8 @@
 namespace KWin::win::x11
 {
 
-color_mapper::color_mapper(QObject* parent)
-    : QObject(parent)
-    , m_default(defaultScreen()->default_colormap)
+color_mapper::color_mapper()
+    : m_default(defaultScreen()->default_colormap)
     , m_installed(defaultScreen()->default_colormap)
 {
 }

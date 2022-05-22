@@ -90,6 +90,7 @@ class bridge;
 namespace x11
 {
 enum class predicate_match;
+class color_mapper;
 class window;
 class group;
 class stacking_tree;
@@ -119,6 +120,7 @@ public:
     std::unique_ptr<base::x11::atoms> atoms;
     std::unique_ptr<deco::bridge<space>> deco;
     std::unique_ptr<input::redirect> input;
+    std::unique_ptr<x11::color_mapper> color_mapper;
 
     QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
     QScopedPointer<base::x11::event_filter> m_movingClientFilter;
@@ -142,7 +144,7 @@ public:
      * Holds the menu containing the user actions which is shown
      * on e.g. right click the window decoration.
      */
-    win::user_actions_menu* m_userActionsMenu;
+    std::unique_ptr<win::user_actions_menu> user_actions_menu;
 
     static space* _self;
 
@@ -277,10 +279,6 @@ public:
      * it's not already.
      */
     void showWindowMenu(const QRect& pos, Toplevel* window);
-    win::user_actions_menu const* userActionsMenu() const
-    {
-        return m_userActionsMenu;
-    }
 
     void showApplicationMenu(const QRect& pos, Toplevel* window, int actionId);
 

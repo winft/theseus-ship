@@ -297,7 +297,7 @@ void enter_event(Win* win, const QPoint& globalPos)
     auto space = &win->space;
 
     if (kwinApp()->options->focusPolicy() == base::options::ClickToFocus
-        || space->userActionsMenu()->isShown()) {
+        || space->user_actions_menu->isShown()) {
         return;
     }
 

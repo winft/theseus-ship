@@ -41,8 +41,7 @@ struct show_on_desktop_action_data {
     bool move_to_single;
 };
 
-user_actions_menu::user_actions_menu(QObject* parent)
-    : QObject(parent)
+user_actions_menu::user_actions_menu()
 {
 }
 

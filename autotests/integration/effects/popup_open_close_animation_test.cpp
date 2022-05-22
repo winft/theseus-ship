@@ -183,7 +183,7 @@ void PopupOpenCloseAnimationTest::testAnimateUserActionsPopup()
 
     // Show the user actions popup.
     workspace()->showWindowMenu(QRect(), client);
-    auto userActionsMenu = workspace()->userActionsMenu();
+    auto& userActionsMenu = workspace()->user_actions_menu;
     QTRY_VERIFY(userActionsMenu->isShown());
     QVERIFY(userActionsMenu->hasClient());
     QVERIFY(effect->isActive());
