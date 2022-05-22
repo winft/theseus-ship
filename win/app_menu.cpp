@@ -34,16 +34,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace KWin;
 using namespace KWin::win;
 
-KWIN_SINGLETON_FACTORY(app_menu)
-
 static const QString s_viewService(QStringLiteral("org.kde.kappmenuview"));
 
-app_menu::app_menu(QObject* parent)
-    : QObject(parent)
-    , m_appmenuInterface(new OrgKdeKappmenuInterface(QStringLiteral("org.kde.kappmenu"),
+app_menu::app_menu(win::space& space)
+    : m_appmenuInterface(new OrgKdeKappmenuInterface(QStringLiteral("org.kde.kappmenu"),
                                                      QStringLiteral("/KAppMenu"),
                                                      QDBusConnection::sessionBus(),
                                                      this))
+    , space{space}
 {
     connect(m_appmenuInterface,
             &OrgKdeKappmenuInterface::showRequest,
@@ -73,11 +71,6 @@ app_menu::app_menu(QObject* parent)
         QStringLiteral("org.kde.kappmenu"));
 }
 
-app_menu::~app_menu()
-{
-    s_self = nullptr;
-}
-
 bool app_menu::applicationMenuEnabled() const
 {
     return m_applicationMenuEnabled;
@@ -100,7 +93,7 @@ void app_menu::slotShowRequest(const QString& serviceName,
                                int actionId)
 {
     // Ignore show request when user has not configured the application menu title bar button
-    auto deco_settings = workspace()->deco->settings();
+    auto deco_settings = space.deco->settings();
     auto menu_enum = KDecoration2::DecorationButtonType::ApplicationMenu;
     auto not_left = deco_settings && !deco_settings->decorationButtonsLeft().contains(menu_enum);
     auto not_right = deco_settings && !deco_settings->decorationButtonsRight().contains(menu_enum);
@@ -146,7 +139,7 @@ Toplevel* app_menu::findAbstractClientWithApplicationMenu(const QString& service
 
     auto const addr = std::make_tuple(serviceName, menuObjectPath.path());
 
-    for (auto win : workspace()->m_windows) {
+    for (auto win : space.m_windows) {
         if (win->control && win->control->application_menu() == addr) {
             return win;
         }

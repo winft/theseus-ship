@@ -95,9 +95,10 @@ void setup_window_control_connections(Win* win)
                          win::place(win, area);
                      });
 
-    QObject::connect(app_menu::self(), &app_menu::applicationMenuEnabledChanged, win, [win] {
-        Q_EMIT win->hasApplicationMenuChanged(win->control->has_application_menu());
-    });
+    QObject::connect(
+        win->space.app_menu.get(), &app_menu::applicationMenuEnabledChanged, win, [win] {
+            Q_EMIT win->hasApplicationMenuChanged(win->control->has_application_menu());
+        });
 }
 
 }

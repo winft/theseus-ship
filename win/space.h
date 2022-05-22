@@ -97,6 +97,7 @@ class stacking_tree;
 }
 
 enum class activation;
+class app_menu;
 class internal_window;
 class kill_window;
 class screen_edge;
@@ -119,6 +120,7 @@ public:
     KStartupInfo* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
     std::unique_ptr<deco::bridge<space>> deco;
+    std::unique_ptr<win::app_menu> app_menu;
     std::unique_ptr<input::redirect> input;
     std::unique_ptr<x11::color_mapper> color_mapper;
 

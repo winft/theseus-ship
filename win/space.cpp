@@ -95,6 +95,7 @@ space::space()
     : QObject(nullptr)
     , outline(std::make_unique<render::outline>())
     , deco{std::make_unique<deco::bridge<space>>(*this)}
+    , app_menu{std::make_unique<win::app_menu>(*this)}
     , user_actions_menu{std::make_unique<win::user_actions_menu>()}
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
@@ -102,8 +103,6 @@ space::space()
 {
     // For invoke methods of user_actions_menu.
     qRegisterMetaType<Toplevel*>();
-
-    win::app_menu::create(this);
 
     _self = this;
 
@@ -3578,7 +3577,7 @@ void space::showWindowMenu(const QRect& pos, Toplevel* window)
 
 void space::showApplicationMenu(const QRect& pos, Toplevel* window, int actionId)
 {
-    win::app_menu::self()->showApplicationMenu(window->pos() + pos.bottomLeft(), window, actionId);
+    app_menu->showApplicationMenu(window->pos() + pos.bottomLeft(), window, actionId);
 }
 
 /**

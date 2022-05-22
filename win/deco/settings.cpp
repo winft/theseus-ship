@@ -185,7 +185,7 @@ void settings::readSettings()
         m_rightButtons = right;
         Q_EMIT decorationSettings()->decorationButtonsRightChanged(m_rightButtons);
     }
-    win::app_menu::self()->setViewEnabled(
+    workspace()->app_menu->setViewEnabled(
         left.contains(KDecoration2::DecorationButtonType::ApplicationMenu)
         || right.contains(KDecoration2::DecorationButtonType::ApplicationMenu));
     const bool close = config.readEntry("CloseOnDoubleClickOnMenu", false);
