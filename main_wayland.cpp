@@ -197,7 +197,6 @@ void ApplicationWayland::start()
     session->take_control();
 
     input.reset(new input::backend::wlroots::platform(*base));
-    input::wayland::add_dbus(input.get());
     input->redirect->install_shortcuts();
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
@@ -215,11 +214,13 @@ void ApplicationWayland::start()
 
     render->compositor = std::make_unique<render::wayland::compositor>(*render);
     workspace = std::make_unique<win::wayland::space>(server.get());
-
-    render->compositor->start(*workspace);
     Q_EMIT workspaceCreated();
 
+    input::wayland::add_dbus(input.get());
+
     workspace->scripting = std::make_unique<scripting::platform>();
+
+    render->compositor->start(*workspace);
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
     kwinApp()->screen_locker_watcher->initialize();

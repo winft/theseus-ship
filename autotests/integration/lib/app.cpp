@@ -173,7 +173,6 @@ void WaylandTestApplication::start()
     session = std::make_unique<base::seat::backend::wlroots::session>(headless_backend);
 
     input = std::make_unique<input::backend::wlroots::platform>(base);
-    input::wayland::add_dbus(input.get());
     input->redirect->install_shortcuts();
 
 #if HAVE_WLR_BASE_INPUT_DEVICES
@@ -219,10 +218,13 @@ void WaylandTestApplication::start()
 
     base.render->compositor = std::make_unique<render::wayland::compositor>(*base.render);
     workspace = std::make_unique<win::wayland::space>(server.get());
-    base.render->compositor->start(*workspace);
     Q_EMIT workspaceCreated();
 
+    input::wayland::add_dbus(input.get());
+
     workspace->scripting = std::make_unique<scripting::platform>();
+
+    base.render->compositor->start(*workspace);
 
     waylandServer()->create_addons([this] { handle_server_addons_created(); });
     kwinApp()->screen_locker_watcher->initialize();
