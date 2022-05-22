@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "input/cursor.h"
 #include "main_wayland.h"
 #include "win/wayland/space.h"
+#include "win/wayland/surface.h"
 #include "win/x11/space_setup.h"
 
 #include <KLocalizedString>
@@ -40,6 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QThread>
 #include <QtConcurrentRun>
 
+#include <compositor.h>
 #include <iostream>
 #include <sys/socket.h>
 
@@ -241,6 +243,17 @@ void xwayland::continue_startup_with_x11()
     event_filter = std::make_unique<base::x11::xcb_event_filter<win::wayland::space>>(*space);
     app->installNativeEventFilter(event_filter.get());
 
+    QObject::connect(
+        space,
+        &win::space::surface_id_changed,
+        this,
+        [space, xwayland_connection = waylandServer()->xwayland_connection()](auto window,
+                                                                              auto id) {
+            if (auto surface = space->compositor->getSurface(id, xwayland_connection)) {
+                win::wayland::set_surface(window, surface);
+            }
+        });
+
     // Check  whether another windowmanager is running
     uint32_t const maskValues[] = {XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT};
     unique_cptr<xcb_generic_error_t> redirectCheck(
@@ -268,7 +281,7 @@ void xwayland::continue_startup_with_x11()
     app->setProcessStartupEnvironment(env);
 
     status_callback(0);
-    win::x11::init_space(*static_cast<win::wayland::space*>(workspace()));
+    win::x11::init_space(*space);
     Q_EMIT app->x11ConnectionChanged();
 
     // Trigger possible errors, there's still a chance to abort

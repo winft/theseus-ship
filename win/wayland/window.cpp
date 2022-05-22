@@ -12,6 +12,8 @@
 #include "setup.h"
 #include "subsurface.h"
 #include "surface.h"
+#include "win/space.h"
+#include "win/wayland/space.h"
 #include "window_release.h"
 #include "xdg_shell.h"
 
@@ -859,7 +861,8 @@ void window::map()
 
     if (control) {
         if (!isLockScreen()) {
-            setup_plasma_management(this);
+            auto space = static_cast<win::wayland::space*>(workspace());
+            setup_plasma_management(space, this);
         }
         update_screen_edge(this);
     }
@@ -1114,7 +1117,7 @@ void window::ping(window::ping_reason reason)
 {
     assert(toplevel);
 
-    auto shell = waylandServer()->xdg_shell();
+    auto shell = static_cast<win::wayland::space*>(workspace())->xdg_shell.get();
     auto const serial = shell->ping(toplevel->client());
     pings.insert({serial, reason});
 }

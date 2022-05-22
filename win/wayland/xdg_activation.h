@@ -22,7 +22,7 @@ namespace KWin::win::wayland
 namespace
 {
 // From wlroots' util/token.
-constexpr size_t token_strlen{33};
+inline constexpr size_t token_strlen{33};
 
 inline bool generate_token(char out[token_strlen])
 {

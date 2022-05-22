@@ -35,43 +35,77 @@
 #include "win/tabbox/tabbox.h"
 #endif
 
+#include <Wrapland/Server/appmenu.h>
+#include <Wrapland/Server/compositor.h>
 #include <Wrapland/Server/idle_inhibit_v1.h>
 #include <Wrapland/Server/kde_idle.h>
+#include <Wrapland/Server/plasma_shell.h>
+#include <Wrapland/Server/server_decoration_palette.h>
+#include <Wrapland/Server/subcompositor.h>
+#include <Wrapland/Server/xdg_activation_v1.h>
+#include <Wrapland/Server/xdg_shell.h>
 
 namespace KWin::win::wayland
 {
 
 space::space(base::wayland::server* server)
     : server{server}
+    , compositor{server->display->createCompositor()}
+    , subcompositor{server->display->createSubCompositor()}
+    , xdg_shell{server->display->createXdgShell()}
+    , layer_shell{server->display->createLayerShellV1()}
+    , xdg_decoration_manager{server->display->createXdgDecorationManager(xdg_shell.get())}
+    , xdg_activation{server->display->createXdgActivationV1()}
+    , xdg_foreign{server->display->createXdgForeign()}
+    , plasma_shell{server->display->createPlasmaShell()}
+    , plasma_window_manager{server->display->createPlasmaWindowManager()}
+    , plasma_virtual_desktop_manager{server->display->createPlasmaVirtualDesktopManager()}
     , kde_idle{server->display->createIdle()}
     , idle_inhibit_manager_v1{server->display->createIdleInhibitManager()}
+    , appmenu_manager{server->display->createAppmenuManager()}
+    , server_side_decoration_palette_manager{
+          server->display->createServerSideDecorationPaletteManager()}
 {
     namespace WS = Wrapland::Server;
 
     edges = std::make_unique<win::screen_edger>(*this);
 
-    QObject::connect(server->globals->compositor.get(),
-                     &WS::Compositor::surfaceCreated,
-                     this,
-                     [this](auto surface) { xwl::handle_new_surface(this, surface); });
+    plasma_window_manager->setShowingDesktopState(
+        Wrapland::Server::PlasmaWindowManager::ShowingDesktopState::Disabled);
+    plasma_window_manager->setVirtualDesktopManager(plasma_virtual_desktop_manager.get());
+    win::virtual_desktop_manager::self()->setVirtualDesktopManagement(
+        plasma_virtual_desktop_manager.get());
 
-    QObject::connect(server->globals->xdg_shell.get(),
-                     &WS::XdgShell::toplevelCreated,
-                     this,
-                     [this](auto toplevel) { handle_new_toplevel<window>(this, toplevel); });
-    QObject::connect(server->globals->xdg_shell.get(),
-                     &WS::XdgShell::popupCreated,
-                     this,
-                     [this](auto popup) { handle_new_popup<window>(this, popup); });
+    QObject::connect(compositor.get(), &WS::Compositor::surfaceCreated, this, [this](auto surface) {
+        xwl::handle_new_surface(this, surface);
+    });
 
-    QObject::connect(server->globals->xdg_decoration_manager.get(),
+    QObject::connect(xdg_shell.get(), &WS::XdgShell::toplevelCreated, this, [this](auto toplevel) {
+        handle_new_toplevel<window>(this, toplevel);
+    });
+    QObject::connect(xdg_shell.get(), &WS::XdgShell::popupCreated, this, [this](auto popup) {
+        handle_new_popup<window>(this, popup);
+    });
+
+    QObject::connect(xdg_decoration_manager.get(),
                      &WS::XdgDecorationManager::decorationCreated,
                      this,
                      [this](auto deco) { handle_new_xdg_deco(this, deco); });
 
-    QObject::connect(server->globals->plasma_shell.get(),
-                     &WS::PlasmaShell::surfaceCreated,
-                     [this](auto surface) { handle_new_plasma_shell_surface(this, surface); });
+    QObject::connect(
+        xdg_activation.get(), &WS::XdgActivationV1::token_requested, this, [this](auto token) {
+            win::wayland::xdg_activation_create_token(this, token);
+        });
+    QObject::connect(xdg_activation.get(),
+                     &WS::XdgActivationV1::activate,
+                     this,
+                     [this](auto const& token, auto surface) {
+                         handle_xdg_activation_activate(this, token, surface);
+                     });
+
+    QObject::connect(plasma_shell.get(), &WS::PlasmaShell::surfaceCreated, [this](auto surface) {
+        handle_new_plasma_shell_surface(this, surface);
+    });
 
     QObject::connect(this, &space::currentDesktopChanged, kde_idle.get(), [this] {
         for (auto win : m_windows) {
@@ -84,30 +118,34 @@ space::space(base::wayland::server* server)
         }
     });
 
-    QObject::connect(server->globals->appmenu_manager.get(),
+    QObject::connect(appmenu_manager.get(),
                      &WS::AppmenuManager::appmenuCreated,
                      [this](auto appmenu) { handle_new_appmenu(this, appmenu); });
 
-    QObject::connect(server->globals->server_side_decoration_palette_manager.get(),
+    QObject::connect(server_side_decoration_palette_manager.get(),
                      &WS::ServerSideDecorationPaletteManager::paletteCreated,
                      [this](auto palette) { handle_new_palette(this, palette); });
 
-    QObject::connect(server->globals->plasma_window_manager.get(),
+    QObject::connect(plasma_window_manager.get(),
                      &WS::PlasmaWindowManager::requestChangeShowingDesktop,
                      this,
                      [this](auto state) { handle_change_showing_desktop(this, state); });
+    QObject::connect(this, &win::space::showingDesktopChanged, this, [this](bool set) {
+        using ShowingState = Wrapland::Server::PlasmaWindowManager::ShowingDesktopState;
+        plasma_window_manager->setShowingDesktopState(set ? ShowingState::Enabled
+                                                          : ShowingState::Disabled);
+    });
 
-    QObject::connect(server->globals->subcompositor.get(),
-                     &Wrapland::Server::Subcompositor::subsurfaceCreated,
+    QObject::connect(subcompositor.get(),
+                     &WS::Subcompositor::subsurfaceCreated,
                      this,
                      [this](auto subsurface) { handle_new_subsurface<window>(this, subsurface); });
     QObject::connect(
-        server->globals->layer_shell_v1.get(),
-        &Wrapland::Server::LayerShellV1::surface_created,
-        this,
-        [this](auto layer_surface) { handle_new_layer_surface<window>(this, layer_surface); });
+        layer_shell.get(), &WS::LayerShellV1::surface_created, this, [this](auto layer_surface) {
+            handle_new_layer_surface<window>(this, layer_surface);
+        });
 
-    activation.reset(new win::wayland::xdg_activation);
+    activation = std::make_unique<win::wayland::xdg_activation>();
     QObject::connect(this, &space::clientActivated, this, [this] {
         if (activeClient()) {
             activation->clear();
@@ -267,10 +305,10 @@ void space::handle_window_removed(wayland::window* window)
 void space::handle_x11_window_added(x11::window* window)
 {
     if (window->readyForPainting()) {
-        setup_plasma_management(window);
+        setup_plasma_management(this, window);
     } else {
-        QObject::connect(window, &x11::window::windowShown, this, [](auto window) {
-            setup_plasma_management(window);
+        QObject::connect(window, &x11::window::windowShown, this, [this](auto window) {
+            setup_plasma_management(this, window);
         });
     }
 }
