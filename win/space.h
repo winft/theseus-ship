@@ -98,6 +98,7 @@ class stacking_tree;
 
 enum class activation;
 class app_menu;
+class focus_chain;
 class internal_window;
 class kill_window;
 class screen_edge;
@@ -232,6 +233,7 @@ public:
 
     win::stacking_order* stacking_order;
     std::unique_ptr<win::x11::stacking_tree> x_stacking_tree;
+    std::unique_ptr<win::focus_chain> focus_chain;
 
     void stopUpdateToolWindowsTimer();
     void resetUpdateToolWindowsTimer();

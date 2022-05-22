@@ -99,6 +99,7 @@ space::space()
     , user_actions_menu{std::make_unique<win::user_actions_menu>()}
     , stacking_order(new win::stacking_order)
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
+    , focus_chain{std::make_unique<win::focus_chain>(*this)}
     , m_sessionManager(new win::session_manager(this))
 {
     // For invoke methods of user_actions_menu.
@@ -155,22 +156,21 @@ space::space()
         }
     });
 
-    auto* focusChain = win::focus_chain::create(this);
-    connect(this, &space::clientRemoved, focusChain, &win::focus_chain::remove);
-    connect(this, &space::clientActivated, focusChain, &win::focus_chain::setActiveClient);
+    connect(this, &space::clientRemoved, focus_chain.get(), &win::focus_chain::remove);
+    connect(this, &space::clientActivated, focus_chain.get(), &win::focus_chain::setActiveClient);
     connect(win::virtual_desktop_manager::self(),
             &win::virtual_desktop_manager::countChanged,
-            focusChain,
+            focus_chain.get(),
             &win::focus_chain::resize);
     connect(win::virtual_desktop_manager::self(),
             &win::virtual_desktop_manager::currentChanged,
-            focusChain,
+            focus_chain.get(),
             &win::focus_chain::setCurrentDesktop);
     connect(kwinApp()->options.get(),
             &base::options::separateScreenFocusChanged,
-            focusChain,
+            focus_chain.get(),
             &win::focus_chain::setSeparateScreenFocus);
-    focusChain->setSeparateScreenFocus(kwinApp()->options->isSeparateScreenFocus());
+    focus_chain.get()->setSeparateScreenFocus(kwinApp()->options->isSeparateScreenFocus());
 
     auto vds = win::virtual_desktop_manager::self();
     connect(
@@ -374,7 +374,7 @@ void space::activateClientOnNewDesktop(uint desktop)
 Toplevel* space::findClientToActivateOnDesktop(uint desktop)
 {
     if (movingClient != nullptr && active_client == movingClient
-        && win::focus_chain::self()->contains(active_client, desktop) && active_client->isShown()
+        && focus_chain->contains(active_client, desktop) && active_client->isShown()
         && active_client->isOnCurrentDesktop()) {
         // A requestFocus call will fail, as the client is already active
         return active_client;
@@ -400,7 +400,7 @@ Toplevel* space::findClientToActivateOnDesktop(uint desktop)
             }
         }
     }
-    return win::focus_chain::self()->getForActivation(desktop);
+    return focus_chain->getForActivation(desktop);
 }
 
 void space::slotDesktopCountChanged(uint previousCount, uint newCount)
@@ -540,8 +540,8 @@ void space::setShowingDesktop(bool showing)
     if (showing_desktop && topDesk) {
         request_focus(topDesk);
     } else if (!showing_desktop && changed) {
-        const auto client = win::focus_chain::self()->getForActivation(
-            win::virtual_desktop_manager::self()->current());
+        const auto client
+            = focus_chain->getForActivation(win::virtual_desktop_manager::self()->current());
         if (client) {
             activateClient(client);
         }
@@ -2200,7 +2200,7 @@ void space::setActiveClient(Toplevel* window)
 
     if (active_client) {
         last_active_client = active_client;
-        win::focus_chain::self()->update(active_client, win::focus_chain::MakeFirst);
+        focus_chain->update(active_client, win::focus_chain::MakeFirst);
         win::set_demands_attention(active_client, false);
 
         // activating a client can cause a non active fullscreen window to loose the ActiveLayer
@@ -2433,8 +2433,7 @@ bool space::activateNextClient(Toplevel* window)
         // first try to pass the focus to the (former) active clients leader
         if (window && window->transient()->lead()) {
             auto leaders = window->transient()->leads();
-            if (leaders.size() == 1
-                && win::focus_chain::self()->isUsableFocusCandidate(leaders.at(0), window)) {
+            if (leaders.size() == 1 && focus_chain->isUsableFocusCandidate(leaders.at(0), window)) {
                 get_focus = leaders.at(0);
 
                 // also raise - we don't know where it came from
@@ -2443,7 +2442,7 @@ bool space::activateNextClient(Toplevel* window)
         }
         if (!get_focus) {
             // nope, ask the focus chain for the next candidate
-            get_focus = win::focus_chain::self()->nextForDesktop(window, desktop);
+            get_focus = focus_chain->nextForDesktop(window, desktop);
         }
     }
 
@@ -2468,7 +2467,7 @@ void space::setCurrentScreen(base::output const& output)
     closeActivePopup();
 
     const int desktop = win::virtual_desktop_manager::self()->current();
-    auto get_focus = win::focus_chain::self()->getForActivation(desktop, &output);
+    auto get_focus = focus_chain->getForActivation(desktop, &output);
     if (get_focus == nullptr) {
         get_focus = win::find_desktop(this, true, desktop);
     }

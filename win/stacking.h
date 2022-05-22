@@ -342,7 +342,7 @@ void restack(Space* space, Window* window, Toplevel* under, bool force = false)
     space->stacking_order->pre_stack.insert(it, window);
 
     assert(contains(space->stacking_order->pre_stack, window));
-    focus_chain::self()->moveAfterClient(window, under);
+    space->focus_chain->moveAfterClient(window, under);
     space->stacking_order->update();
 }
 

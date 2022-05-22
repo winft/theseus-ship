@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 #pragma once
 
-#include "kwinglobals.h"
+#include "kwin_export.h"
 
 #include <QHash>
 #include <QObject>
@@ -36,6 +36,9 @@ class Toplevel;
 
 namespace win
 {
+
+class space;
+
 /**
  * @brief Singleton class to handle the various focus chains.
  *
@@ -60,7 +63,9 @@ public:
         MakeLast,
         Update,
     };
-    ~focus_chain() override;
+
+    focus_chain(win::space& space);
+
     /**
      * @brief Updates the position of the @p client according to the requested @p change in the
      * focus chain.
@@ -225,11 +230,10 @@ private:
     void insertClientIntoChain(Toplevel* window, Chain& chain);
     Chain m_mostRecentlyUsed;
     QHash<uint, Chain> desktop_focus_chains;
-    bool m_separateScreenFocus;
-    Toplevel* m_activeClient;
-    uint m_currentDesktop;
-
-    KWIN_SINGLETON_VARIABLE(focus_chain, s_manager)
+    bool m_separateScreenFocus{false};
+    Toplevel* m_activeClient{nullptr};
+    uint m_currentDesktop{0};
+    win::space& space;
 };
 
 inline bool focus_chain::contains(Toplevel* window) const

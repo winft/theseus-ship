@@ -28,19 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win
 {
 
-KWIN_SINGLETON_FACTORY_VARIABLE(focus_chain, s_manager)
-
-focus_chain::focus_chain(QObject* parent)
-    : QObject(parent)
-    , m_separateScreenFocus(false)
-    , m_activeClient(nullptr)
-    , m_currentDesktop(0)
+focus_chain::focus_chain(win::space& space)
+    : space{space}
 {
-}
-
-focus_chain::~focus_chain()
-{
-    s_manager = nullptr;
 }
 
 void focus_chain::remove(Toplevel* window)
@@ -63,7 +53,7 @@ void focus_chain::resize(uint previousSize, uint newSize)
 
 Toplevel* focus_chain::getForActivation(uint desktop) const
 {
-    return getForActivation(desktop, get_current_output(*workspace()));
+    return getForActivation(desktop, get_current_output(space));
 }
 
 Toplevel* focus_chain::getForActivation(uint desktop, base::output const* output) const
@@ -210,8 +200,7 @@ bool focus_chain::isUsableFocusCandidate(Toplevel* window, Toplevel* prev) const
 {
     return window != prev && window->isShown() && window->isOnCurrentDesktop()
         && (!m_separateScreenFocus
-            || win::on_screen(window,
-                              prev ? prev->central_output : get_current_output(*workspace())));
+            || win::on_screen(window, prev ? prev->central_output : get_current_output(space)));
 }
 
 Toplevel* focus_chain::nextForDesktop(Toplevel* reference, uint desktop) const

@@ -31,7 +31,7 @@ void add_controlled_window_to_space(Space& space, Win* win)
             space.request_focus(win);
         }
     } else {
-        focus_chain::self()->update(win, focus_chain::Update);
+        space.focus_chain->update(win, focus_chain::Update);
     }
 
     if (!contains(space.stacking_order->pre_stack, win)) {
