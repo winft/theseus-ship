@@ -27,22 +27,11 @@ class platform;
 namespace input
 {
 
-namespace dbus
-{
-class device_manager;
-}
-
-class cursor;
 class dpms_filter;
-
-class keyboard;
-class pointer;
-class redirect;
-class switch_device;
-class touch;
 
 namespace wayland
 {
+
 class input_method;
 
 class KWIN_EXPORT platform : public input::platform
