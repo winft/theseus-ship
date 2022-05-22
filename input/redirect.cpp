@@ -30,6 +30,11 @@
 namespace KWin::input
 {
 
+redirect::redirect(input::platform& platform)
+    : platform{platform}
+{
+}
+
 redirect::~redirect()
 {
     auto const filters = m_filters;

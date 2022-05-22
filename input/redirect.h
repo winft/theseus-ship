@@ -28,9 +28,11 @@ class Toplevel;
 
 namespace input
 {
+
 class event_filter;
 class event_spy;
 class global_shortcuts_manager;
+class platform;
 class window_selector_filter;
 
 class keyboard_redirect;
@@ -183,6 +185,8 @@ public:
 
     virtual void install_shortcuts() = 0;
 
+    input::platform& platform;
+
 Q_SIGNALS:
     /**
      * @brief Emitted when the global pointer position changed
@@ -216,7 +220,7 @@ Q_SIGNALS:
     void keyStateChanged(quint32 keyCode, key_state state);
 
 protected:
-    redirect() = default;
+    redirect(input::platform& platform);
 
     std::unique_ptr<keyboard_redirect> m_keyboard;
     std::unique_ptr<pointer_redirect> m_pointer;

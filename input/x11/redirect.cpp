@@ -16,7 +16,8 @@
 namespace KWin::input::x11
 {
 
-redirect::redirect()
+redirect::redirect(input::platform& platform)
+    : input::redirect(platform)
 {
     m_pointer = std::make_unique<input::pointer_redirect>(this);
     m_keyboard = std::make_unique<input::keyboard_redirect>(this);

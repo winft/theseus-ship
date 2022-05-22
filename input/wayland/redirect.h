@@ -32,7 +32,7 @@ class KWIN_EXPORT redirect : public input::redirect
 {
     Q_OBJECT
 public:
-    redirect(wayland::platform* platform);
+    redirect(input::platform& platform);
     ~redirect() override;
 
     bool has_tablet_mode_switch();
@@ -43,8 +43,6 @@ public:
     bool isSelectingWindow() const override;
 
     void install_shortcuts() override;
-
-    wayland::platform* platform{nullptr};
 
 Q_SIGNALS:
     void has_tablet_mode_switch_changed(bool set);

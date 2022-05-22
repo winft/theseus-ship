@@ -34,7 +34,7 @@ platform::platform(base::wayland::platform const& base)
 {
     config = kwinApp()->inputConfig();
 
-    auto redirect_ptr = new wayland::redirect(this);
+    auto redirect_ptr = new wayland::redirect(*this);
     redirect.reset(redirect_ptr);
 
     cursor = std::make_unique<wayland::cursor>(this);

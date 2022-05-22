@@ -40,7 +40,7 @@ platform::platform()
     }
 #endif
 
-    redirect = std::make_unique<input::x11::redirect>();
+    redirect = std::make_unique<input::x11::redirect>(*this);
     create_cursor();
 }
 

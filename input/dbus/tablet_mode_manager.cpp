@@ -27,31 +27,23 @@ public:
         : QObject(parent)
         , m_parent(parent)
     {
-        auto& plat
-            = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get())->platform;
+        auto plat = kwinApp()->input.get();
+        QObject::connect(
+            plat, &input::platform::pointer_added, this, &tablet_mode_touchpad_removed_spy::check);
         QObject::connect(plat,
-                         &input::wayland::platform::pointer_added,
+                         &input::platform::pointer_removed,
                          this,
                          &tablet_mode_touchpad_removed_spy::check);
-        QObject::connect(plat,
-                         &input::wayland::platform::pointer_removed,
-                         this,
-                         &tablet_mode_touchpad_removed_spy::check);
-        QObject::connect(plat,
-                         &input::wayland::platform::touch_added,
-                         this,
-                         &tablet_mode_touchpad_removed_spy::check);
-        QObject::connect(plat,
-                         &input::wayland::platform::touch_removed,
-                         this,
-                         &tablet_mode_touchpad_removed_spy::check);
+        QObject::connect(
+            plat, &input::platform::touch_added, this, &tablet_mode_touchpad_removed_spy::check);
+        QObject::connect(
+            plat, &input::platform::touch_removed, this, &tablet_mode_touchpad_removed_spy::check);
         check();
     }
 
     void check()
     {
-        auto& plat
-            = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get())->platform;
+        auto plat = kwinApp()->input.get();
         if (!plat) {
             return;
         }
@@ -72,7 +64,7 @@ tablet_mode_manager::tablet_mode_manager()
     if (redirect->has_tablet_mode_switch()) {
         redirect->installInputEventSpy(new tablet_mode_switch_spy(this));
     } else {
-        redirect->has_tablet_mode_switch_changed(false);
+        Q_EMIT redirect->has_tablet_mode_switch_changed(false);
     }
 
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin"),

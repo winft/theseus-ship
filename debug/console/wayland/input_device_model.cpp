@@ -23,8 +23,7 @@ static const quint32 s_clientBitMask = 0x0000FFFF;
 input_device_model::input_device_model(QObject* parent)
     : QAbstractItemModel(parent)
 {
-    auto& platform
-        = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get())->platform;
+    auto platform = kwinApp()->input.get();
 
     for (auto& dev : platform->dbus->devices) {
         m_devices.push_back(dev);
@@ -38,9 +37,8 @@ input_device_model::input_device_model(QObject* parent)
                      &input::dbus::device_manager::deviceAdded,
                      this,
                      [this](auto const& sys_name) {
-                         auto redirect = static_cast<input::wayland::redirect*>(
-                             kwinApp()->input->redirect.get());
-                         for (auto& dev : redirect->platform->dbus->devices) {
+                         auto platform = kwinApp()->input.get();
+                         for (auto& dev : platform->dbus->devices) {
                              if (dev->sysName() != sys_name) {
                                  continue;
                              }
