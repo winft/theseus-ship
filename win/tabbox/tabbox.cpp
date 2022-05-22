@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "base/x11/grabs.h"
 #include "base/x11/xcb/proto.h"
-#include "input/keyboard_redirect.h"
 #include "input/pointer_redirect.h"
 #include "input/redirect.h"
 #include "input/xkb/helpers.h"
@@ -519,7 +518,7 @@ void tabbox::key(const KLazyLocalizedString& action_name, Slot slot, const QKeyS
     a->setObjectName(QString::fromUtf8(action_name.untranslatedText()));
     a->setText(action_name.toString());
     KGlobalAccel::self()->setGlobalShortcut(a, QList<QKeySequence>() << shortcut);
-    kwinApp()->input->redirect->registerShortcut(shortcut, a, tabbox::self(), slot);
+    kwinApp()->input->registerShortcut(shortcut, a, tabbox::self(), slot);
     auto cuts = KGlobalAccel::self()->shortcut(a);
     global_shortcut_changed(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
 }

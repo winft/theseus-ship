@@ -17,7 +17,7 @@
 #include "window.h"
 
 #include "base/options.h"
-#include "input/redirect.h"
+#include "input/platform.h"
 #include "win/screen_edges.h"
 #include "win/space.h"
 
@@ -354,7 +354,7 @@ bool script::registerShortcut(const QString& objectName,
 
     const QKeySequence shortcut = keySequence;
     KGlobalAccel::self()->setShortcut(action, {shortcut});
-    kwinApp()->input->redirect->registerShortcut(shortcut, action);
+    kwinApp()->input->registerShortcut(shortcut, action);
 
     connect(action, &QAction::triggered, this, [this, action, callback]() {
         QJSValue(callback).call({m_engine->toScriptValue(action)});

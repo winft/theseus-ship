@@ -197,7 +197,7 @@ void ApplicationWayland::start()
     session->take_control();
 
     input.reset(new input::backend::wlroots::platform(*base));
-    input->redirect->install_shortcuts();
+    static_cast<input::wayland::platform&>(*input).install_shortcuts();
 
     // now libinput thread has been created, adjust scheduler to not leak into other processes
     // TODO(romangg): can be removed?

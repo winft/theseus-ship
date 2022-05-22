@@ -42,8 +42,6 @@ public:
     void startInteractivePositionSelection(std::function<void(QPoint const&)> callback) override;
     bool isSelectingWindow() const override;
 
-    void install_shortcuts() override;
-
 Q_SIGNALS:
     void has_tablet_mode_switch_changed(bool set);
 
@@ -51,7 +49,6 @@ private:
     void setup_workspace();
     void setup_devices();
     void setup_filters();
-    void setup_touchpad_shortcuts();
     void reconfigure();
 
     void handle_pointer_added(input::pointer* pointer);

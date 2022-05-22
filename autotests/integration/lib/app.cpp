@@ -173,7 +173,7 @@ void WaylandTestApplication::start()
     session = std::make_unique<base::seat::backend::wlroots::session>(headless_backend);
 
     input = std::make_unique<input::backend::wlroots::platform>(base);
-    input->redirect->install_shortcuts();
+    static_cast<input::wayland::platform&>(*input).install_shortcuts();
 
 #if HAVE_WLR_BASE_INPUT_DEVICES
     auto keyboard = static_cast<wlr_keyboard*>(calloc(1, sizeof(wlr_keyboard)));

@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/output.h"
 #include "base/platform.h"
 #include "base/seat/session.h"
-#include "input/redirect.h"
+#include "input/platform.h"
 #include "main.h"
 #include "utils/gamma_ramp.h"
 #include "win/space.h"
@@ -266,7 +266,7 @@ void night_color_manager::init_shortcuts()
     toggleAction->setObjectName(QStringLiteral("Toggle Night Color"));
     toggleAction->setText(i18n("Toggle Night Color"));
     KGlobalAccel::setGlobalShortcut(toggleAction, QList<QKeySequence>());
-    kwinApp()->input->redirect->registerShortcut(
+    kwinApp()->input->registerShortcut(
         QKeySequence(), toggleAction, this, &night_color_manager::toggle);
 }
 

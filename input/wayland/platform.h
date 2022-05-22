@@ -43,6 +43,7 @@ public:
     platform& operator=(platform const&) = delete;
     ~platform() override;
 
+    void install_shortcuts();
     void update_keyboard_leds(input::keyboard_leds leds);
 
     void toggle_touchpads();
@@ -61,6 +62,8 @@ public:
     std::unique_ptr<input::dpms_filter> dpms_filter;
 
 private:
+    void setup_touchpad_shortcuts();
+
     base::wayland::platform const& base;
     bool touchpads_enabled{true};
 };

@@ -17,7 +17,6 @@
 #include "tablet_redirect.h"
 #include "touch_redirect.h"
 
-#include "global_shortcuts_manager.h"
 #include "main.h"
 #include "render/effects.h"
 #include "render/platform.h"
@@ -139,36 +138,6 @@ Toplevel* redirect::findManagedToplevel(const QPoint& pos)
         }
     } while (it != stacking.begin());
     return nullptr;
-}
-
-void redirect::registerShortcut(const QKeySequence& shortcut, QAction* action)
-{
-    Q_UNUSED(shortcut)
-    kwinApp()->input->setup_action_for_global_accel(action);
-}
-
-void redirect::registerPointerShortcut(Qt::KeyboardModifiers modifiers,
-                                       Qt::MouseButton pointerButtons,
-                                       QAction* action)
-{
-    m_shortcuts->registerPointerShortcut(action, modifiers, pointerButtons);
-}
-
-void redirect::registerAxisShortcut(Qt::KeyboardModifiers modifiers,
-                                    PointerAxisDirection axis,
-                                    QAction* action)
-{
-    m_shortcuts->registerAxisShortcut(action, modifiers, axis);
-}
-
-void redirect::registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action)
-{
-    m_shortcuts->registerTouchpadSwipe(action, direction);
-}
-
-void redirect::registerGlobalAccel(KGlobalAccelInterface* interface)
-{
-    m_shortcuts->setKGlobalAccelInterface(interface);
 }
 
 QPointF redirect::globalPointer() const

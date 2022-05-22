@@ -816,26 +816,26 @@ bool effects_handler_impl::touchUp(qint32 id, quint32 time)
 
 void effects_handler_impl::registerGlobalShortcut(const QKeySequence& shortcut, QAction* action)
 {
-    kwinApp()->input->redirect->registerShortcut(shortcut, action);
+    kwinApp()->input->registerShortcut(shortcut, action);
 }
 
 void effects_handler_impl::registerPointerShortcut(Qt::KeyboardModifiers modifiers,
                                                    Qt::MouseButton pointerButtons,
                                                    QAction* action)
 {
-    kwinApp()->input->redirect->registerPointerShortcut(modifiers, pointerButtons, action);
+    kwinApp()->input->registerPointerShortcut(modifiers, pointerButtons, action);
 }
 
 void effects_handler_impl::registerAxisShortcut(Qt::KeyboardModifiers modifiers,
                                                 PointerAxisDirection axis,
                                                 QAction* action)
 {
-    kwinApp()->input->redirect->registerAxisShortcut(modifiers, axis, action);
+    kwinApp()->input->registerAxisShortcut(modifiers, axis, action);
 }
 
 void effects_handler_impl::registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action)
 {
-    kwinApp()->input->redirect->registerTouchpadSwipeShortcut(direction, action);
+    kwinApp()->input->registerTouchpadSwipeShortcut(direction, action);
 }
 
 void* effects_handler_impl::getProxy(QString name)

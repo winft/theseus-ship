@@ -159,7 +159,7 @@ void GlobalShortcutsTest::testNonLatinLayout()
 
     KGlobalAccel::self()->stealShortcutSystemwide(seq);
     KGlobalAccel::self()->setShortcut(action.get(), {seq}, KGlobalAccel::NoAutoloading);
-    kwinApp()->input->redirect->registerShortcut(seq, action.get());
+    kwinApp()->input->registerShortcut(seq, action.get());
 
     quint32 timestamp = 0;
     Test::keyboard_key_pressed(modifierKey, timestamp++);
@@ -183,7 +183,7 @@ void GlobalShortcutsTest::testConsumedShift()
     QVERIFY(triggeredSpy.isValid());
     KGlobalAccel::self()->setShortcut(
         action.get(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
-    kwinApp()->input->redirect->registerShortcut(Qt::Key_Percent, action.get());
+    kwinApp()->input->registerShortcut(Qt::Key_Percent, action.get());
 
     // press shift+5
     quint32 timestamp = 0;
@@ -212,7 +212,7 @@ void GlobalShortcutsTest::testRepeatedTrigger()
     QVERIFY(triggeredSpy.isValid());
     KGlobalAccel::self()->setShortcut(
         action.get(), QList<QKeySequence>{Qt::Key_Percent}, KGlobalAccel::NoAutoloading);
-    kwinApp()->input->redirect->registerShortcut(Qt::Key_Percent, action.get());
+    kwinApp()->input->registerShortcut(Qt::Key_Percent, action.get());
 
     // we need to configure the key repeat first. It is only enabled on libinput
     waylandServer()->seat()->keyboards().set_repeat_info(25, 300);
@@ -279,7 +279,7 @@ void GlobalShortcutsTest::testMetaShiftW()
     KGlobalAccel::self()->setShortcut(action.get(),
                                       QList<QKeySequence>{Qt::META + Qt::SHIFT + Qt::Key_W},
                                       KGlobalAccel::NoAutoloading);
-    kwinApp()->input->redirect->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.get());
+    kwinApp()->input->registerShortcut(Qt::META + Qt::SHIFT + Qt::Key_W, action.get());
 
     // press meta+shift+w
     quint32 timestamp = 0;
@@ -307,7 +307,7 @@ void GlobalShortcutsTest::testComponseKey()
     QVERIFY(triggeredSpy.isValid());
     KGlobalAccel::self()->setShortcut(
         action.get(), QList<QKeySequence>{Qt::UNICODE_ACCEL}, KGlobalAccel::NoAutoloading);
-    kwinApp()->input->redirect->registerShortcut(Qt::UNICODE_ACCEL, action.get());
+    kwinApp()->input->registerShortcut(Qt::UNICODE_ACCEL, action.get());
 
     // press & release `
     quint32 timestamp = 0;

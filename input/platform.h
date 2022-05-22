@@ -8,12 +8,15 @@
 #include "xkb/manager.h"
 
 #include "kwin_export.h"
+#include "kwinglobals.h"
 
 #include <KSharedConfig>
+#include <QAction>
 #include <QObject>
 #include <memory>
 #include <vector>
 
+class KGlobalAccelInterface;
 class QAction;
 
 namespace KWin
@@ -28,6 +31,7 @@ class device_manager;
 }
 
 class cursor;
+class global_shortcuts_manager;
 class keyboard;
 class pointer;
 class redirect;
@@ -46,6 +50,7 @@ public:
     input::xkb::manager xkb;
     std::unique_ptr<input::redirect> redirect;
     std::unique_ptr<input::cursor> cursor;
+    std::unique_ptr<global_shortcuts_manager> shortcuts;
 
     std::unique_ptr<dbus::device_manager> dbus;
     KSharedConfigPtr config;
@@ -54,6 +59,26 @@ public:
     platform(platform const&) = delete;
     platform& operator=(platform const&) = delete;
     ~platform() override;
+
+    void registerShortcut(QKeySequence const& shortcut, QAction* action);
+    /**
+     * @overload
+     *
+     * Like registerShortcut, but also connects QAction::triggered to the @p slot on @p receiver.
+     * It's recommended to use this method as it ensures that the X11 timestamp is updated prior
+     * to the @p slot being invoked. If not using this overload it's required to ensure that
+     * registerShortcut is called before connecting to QAction's triggered signal.
+     */
+    template<typename T, typename Slot>
+    void registerShortcut(const QKeySequence& shortcut, QAction* action, T* receiver, Slot slot);
+    void registerPointerShortcut(Qt::KeyboardModifiers modifiers,
+                                 Qt::MouseButton pointerButtons,
+                                 QAction* action);
+    void registerAxisShortcut(Qt::KeyboardModifiers modifiers,
+                              PointerAxisDirection axis,
+                              QAction* action);
+    void registerTouchpadSwipeShortcut(SwipeDirection direction, QAction* action);
+    void registerGlobalAccel(KGlobalAccelInterface* interface);
 
     /**
      * Platform specific preparation for an @p action which is used for KGlobalAccel.
@@ -117,6 +142,14 @@ Q_SIGNALS:
     void switch_removed(KWin::input::switch_device*);
     void touch_removed(KWin::input::touch*);
 };
+
+template<typename T, typename Slot>
+inline void
+platform::registerShortcut(const QKeySequence& shortcut, QAction* action, T* receiver, Slot slot)
+{
+    registerShortcut(shortcut, action);
+    QObject::connect(action, &QAction::triggered, receiver, slot);
+}
 
 }
 }

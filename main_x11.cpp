@@ -15,6 +15,7 @@
 #include "base/x11/xcb_event_filter.h"
 #include "debug/console/x11/x11_console.h"
 #include "desktop/screen_locker_watcher.h"
+#include "input/global_shortcuts_manager.h"
 #include "input/x11/platform.h"
 #include "input/x11/redirect.h"
 #include "render/x11/compositor.h"
@@ -247,7 +248,8 @@ void ApplicationX11::start()
 
         auto input = new input::x11::platform;
         this->input.reset(input);
-        input->redirect->install_shortcuts();
+        input->shortcuts = std::make_unique<input::global_shortcuts_manager>();
+        input->shortcuts->init();
 
         base.update_outputs();
         auto render = static_cast<render::backend::x11::platform*>(base.render.get());

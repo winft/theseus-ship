@@ -13,7 +13,7 @@
 #include "space.h"
 
 #include "base/options.h"
-#include "input/redirect.h"
+#include "input/platform.h"
 #include "win/screen_edges.h"
 
 #include <kwineffects/effect_window.h>
@@ -635,7 +635,7 @@ void effect::registerShortcut(const QString& objectName,
     action->setText(text);
     const QKeySequence shortcut = QKeySequence(keySequence);
     KGlobalAccel::self()->setShortcut(action, QList<QKeySequence>() << shortcut);
-    kwinApp()->input->redirect->registerShortcut(shortcut, action);
+    kwinApp()->input->registerShortcut(shortcut, action);
     connect(action, &QAction::triggered, this, [this, action, callback]() {
         QJSValue actionObject = m_engine->newQObject(action);
         QQmlEngine::setObjectOwnership(action, QQmlEngine::CppOwnership);

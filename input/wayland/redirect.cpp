@@ -16,7 +16,6 @@
 #include "fake/pointer.h"
 #include "fake/touch.h"
 
-#include "input/global_shortcuts_manager.h"
 #include "input/keyboard.h"
 #include "input/pointer.h"
 #include "input/switch.h"
@@ -47,7 +46,6 @@
 #include "base/wayland/server.h"
 #include "main.h"
 
-#include <KGlobalAccel>
 #include <Wrapland/Server/display.h>
 #include <Wrapland/Server/fake_input.h>
 #include <Wrapland/Server/keyboard_pool.h>
@@ -127,49 +125,7 @@ void redirect::setup_devices()
     QObject::connect(&platform, &platform::switch_added, this, &redirect::handle_switch_added);
 }
 
-void redirect::install_shortcuts()
-{
-    m_shortcuts = std::make_unique<input::global_shortcuts_manager>();
-    m_shortcuts->init();
-    setup_touchpad_shortcuts();
-}
-
 redirect::~redirect() = default;
-
-void redirect::setup_touchpad_shortcuts()
-{
-    auto toggle_action = new QAction(this);
-    auto on_action = new QAction(this);
-    auto off_action = new QAction(this);
-
-    constexpr auto const component{"kcm_touchpad"};
-
-    toggle_action->setObjectName(QStringLiteral("Toggle Touchpad"));
-    toggle_action->setProperty("componentName", component);
-    on_action->setObjectName(QStringLiteral("Enable Touchpad"));
-    on_action->setProperty("componentName", component);
-    off_action->setObjectName(QStringLiteral("Disable Touchpad"));
-    off_action->setProperty("componentName", component);
-
-    KGlobalAccel::self()->setDefaultShortcut(toggle_action,
-                                             QList<QKeySequence>{Qt::Key_TouchpadToggle});
-    KGlobalAccel::self()->setShortcut(toggle_action, QList<QKeySequence>{Qt::Key_TouchpadToggle});
-    KGlobalAccel::self()->setDefaultShortcut(on_action, QList<QKeySequence>{Qt::Key_TouchpadOn});
-    KGlobalAccel::self()->setShortcut(on_action, QList<QKeySequence>{Qt::Key_TouchpadOn});
-    KGlobalAccel::self()->setDefaultShortcut(off_action, QList<QKeySequence>{Qt::Key_TouchpadOff});
-    KGlobalAccel::self()->setShortcut(off_action, QList<QKeySequence>{Qt::Key_TouchpadOff});
-
-    registerShortcut(Qt::Key_TouchpadToggle, toggle_action);
-    registerShortcut(Qt::Key_TouchpadOn, on_action);
-    registerShortcut(Qt::Key_TouchpadOff, off_action);
-
-    QObject::connect(
-        toggle_action, &QAction::triggered, &wl_plat(platform), &platform::toggle_touchpads);
-    QObject::connect(
-        on_action, &QAction::triggered, &wl_plat(platform), &platform::enable_touchpads);
-    QObject::connect(
-        off_action, &QAction::triggered, &wl_plat(platform), &platform::disable_touchpads);
-}
 
 void redirect::setup_workspace()
 {
