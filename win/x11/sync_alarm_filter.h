@@ -21,15 +21,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/x11/event_filter.h"
 
-namespace KWin::win::x11
+namespace KWin::win
+{
+
+class space;
+
+namespace x11
 {
 
 class KWIN_EXPORT sync_alarm_filter : public base::x11::event_filter
 {
 public:
-    sync_alarm_filter();
+    sync_alarm_filter(win::space& space);
 
     bool event(xcb_generic_event_t* event) override;
+
+private:
+    win::space& space;
 };
 
+}
 }

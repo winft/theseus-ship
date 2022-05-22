@@ -10,21 +10,29 @@
 #include <QObject>
 #include <xcb/xproto.h>
 
-namespace KWin::win::x11
+namespace KWin::win
+{
+
+class space;
+
+namespace x11
 {
 
 class KWIN_EXPORT color_mapper : public QObject
 {
     Q_OBJECT
 public:
-    color_mapper();
+    explicit color_mapper(win::space& space);
     ~color_mapper() override;
+
 public Q_SLOTS:
     void update();
 
 private:
     xcb_colormap_t m_default;
     xcb_colormap_t m_installed;
+    win::space& space;
 };
 
+}
 }

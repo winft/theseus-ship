@@ -3456,7 +3456,7 @@ void space::slotWindowToDesktopDown()
 void space::slotKillWindow()
 {
     if (!m_windowKiller) {
-        m_windowKiller.reset(new win::kill_window);
+        m_windowKiller = std::make_unique<win::kill_window>(*this);
     }
     m_windowKiller->start();
 }

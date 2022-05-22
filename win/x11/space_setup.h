@@ -45,7 +45,7 @@ void init_space(Space& space)
 
     // first initialize the extensions
     base::x11::xcb::extensions::self();
-    space.color_mapper = std::make_unique<color_mapper>();
+    space.color_mapper = std::make_unique<color_mapper>(space);
     QObject::connect(
         &space, &Space::clientActivated, space.color_mapper.get(), &color_mapper::update);
 
@@ -62,7 +62,7 @@ void init_space(Space& space)
         space.m_movingClientFilter.reset(new moving_window_filter(space));
     }
     if (base::x11::xcb::extensions::self()->is_sync_available()) {
-        space.m_syncAlarmFilter.reset(new sync_alarm_filter);
+        space.m_syncAlarmFilter.reset(new sync_alarm_filter(space));
     }
 
     // Needed for proper initialization of user_time in Client ctor

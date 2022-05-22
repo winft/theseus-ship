@@ -29,9 +29,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win::x11
 {
 
-sync_alarm_filter::sync_alarm_filter()
+sync_alarm_filter::sync_alarm_filter(win::space& space)
     : base::x11::event_filter(
         QVector<int>{base::x11::xcb::extensions::self()->sync_alarm_notify_event()})
+    , space{space}
 {
 }
 
@@ -39,7 +40,7 @@ bool sync_alarm_filter::event(xcb_generic_event_t* event)
 {
     auto alarmEvent = reinterpret_cast<xcb_sync_alarm_notify_event_t*>(event);
 
-    for (auto win : workspace()->m_windows) {
+    for (auto win : space.m_windows) {
         if (!win->control) {
             continue;
         }

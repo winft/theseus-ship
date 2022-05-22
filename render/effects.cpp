@@ -1715,7 +1715,7 @@ void effects_handler_impl::startInteractivePositionSelection(
 
 void effects_handler_impl::showOnScreenMessage(const QString& message, const QString& iconName)
 {
-    win::osd_show(message, iconName);
+    win::osd_show(*m_compositor->space, message, iconName);
 }
 
 void effects_handler_impl::hideOnScreenMessage(OnScreenMessageHideFlags flags)
@@ -1724,7 +1724,7 @@ void effects_handler_impl::hideOnScreenMessage(OnScreenMessageHideFlags flags)
     if (flags.testFlag(OnScreenMessageHideFlag::SkipsCloseAnimation)) {
         internal_flags |= win::osd_hide_flags::skip_close_animation;
     }
-    win::osd_hide(internal_flags);
+    win::osd_hide(*m_compositor->space, internal_flags);
 }
 
 KSharedConfigPtr effects_handler_impl::config() const

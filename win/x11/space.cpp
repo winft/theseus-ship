@@ -66,7 +66,7 @@ Toplevel* space::findInternal(QWindow* window) const
 win::screen_edge* space::create_screen_edge(win::screen_edger& edger)
 {
     if (!edges_filter) {
-        edges_filter = std::make_unique<screen_edges_filter>();
+        edges_filter = std::make_unique<screen_edges_filter>(*this);
     }
     return new screen_edge(&edger, *atoms);
 }
