@@ -5,6 +5,7 @@
 */
 #include "redirect.h"
 
+#include "cursor.h"
 #include "device_redirect.h"
 #include "keyboard_redirect.h"
 #include "platform.h"
@@ -67,12 +68,11 @@ wayland::platform& wl_plat(input::platform& platform)
     return static_cast<wayland::platform&>(platform);
 }
 
-redirect::redirect(input::platform& platform)
-    : input::redirect(platform)
+redirect::redirect(input::platform& platform, win::space& space)
+    : input::redirect(platform, space)
     , config_watcher{KConfigWatcher::create(kwinApp()->inputConfig())}
 {
-    QObject::connect(kwinApp(), &Application::workspaceCreated, this, &redirect::setup_workspace);
-    reconfigure();
+    setup_workspace();
 }
 
 template<typename Dev>
@@ -136,6 +136,8 @@ void redirect::setup_workspace()
                 reconfigure();
             }
         });
+
+    platform.cursor = std::make_unique<wayland::cursor>(&wl_plat(platform));
 
     m_pointer = std::make_unique<wayland::pointer_redirect>(this);
     m_keyboard = std::make_unique<wayland::keyboard_redirect>(this);

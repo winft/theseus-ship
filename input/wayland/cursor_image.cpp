@@ -62,14 +62,14 @@ cursor_image::cursor_image()
 
     m_surfaceRenderedTimer.start();
 
-    assert(!workspace());
-    QObject::connect(
-        kwinApp(), &Application::startup_finished, this, &cursor_image::setup_workspace);
+    // Loading the theme is delayed to end of startup because we depend on the client connection.
+    // TODO(romangg): Instead load the theme without client connection and setup directly.
+    QObject::connect(kwinApp(), &Application::startup_finished, this, &cursor_image::setup_theme);
 }
 
 cursor_image::~cursor_image() = default;
 
-void cursor_image::setup_workspace()
+void cursor_image::setup_theme()
 {
     QObject::connect(static_cast<win::wayland::space*>(workspace()),
                      &win::wayland::space::wayland_window_added,

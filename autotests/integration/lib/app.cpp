@@ -171,7 +171,6 @@ void WaylandTestApplication::start()
     createOptions();
 
     session = std::make_unique<base::seat::backend::wlroots::session>(headless_backend);
-
     input = std::make_unique<input::backend::wlroots::platform>(base);
     static_cast<input::wayland::platform&>(*input).install_shortcuts();
 
@@ -218,10 +217,10 @@ void WaylandTestApplication::start()
 
     base.render->compositor = std::make_unique<render::wayland::compositor>(*base.render);
     workspace = std::make_unique<win::wayland::space>(server.get());
-    Q_EMIT workspaceCreated();
 
+    workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);
     input::wayland::add_dbus(input.get());
-
+    workspace->initShortcuts();
     workspace->scripting = std::make_unique<scripting::platform>();
 
     base.render->compositor->start(*workspace);

@@ -48,7 +48,7 @@ public:
     std::vector<touch*> touchs;
 
     input::xkb::manager xkb;
-    std::unique_ptr<input::redirect> redirect;
+    input::redirect* redirect{nullptr};
     std::unique_ptr<input::cursor> cursor;
     std::unique_ptr<global_shortcuts_manager> shortcuts;
 

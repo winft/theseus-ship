@@ -26,13 +26,11 @@ class pointer;
 class touch;
 }
 
-class platform;
-
 class KWIN_EXPORT redirect : public input::redirect
 {
     Q_OBJECT
 public:
-    redirect(input::platform& platform);
+    redirect(input::platform& platform, win::space& space);
     ~redirect() override;
 
     bool has_tablet_mode_switch();

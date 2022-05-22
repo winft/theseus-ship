@@ -29,10 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/x11/xcb/extensions.h"
 #include "debug/perf/ftrace.h"
 #include "desktop/screen_locker_watcher.h"
-#include "render/compositor.h"
-#include "input/global_shortcuts_manager.h"
-#include "input/platform.h"
-#include "input/redirect.h"
 #include "win/space.h"
 
 #include <kwineffects/effect_window.h>

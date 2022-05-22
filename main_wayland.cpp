@@ -210,14 +210,13 @@ void ApplicationWayland::start()
         QCoreApplication::exit(1);
     }
 
-    tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
-
     render->compositor = std::make_unique<render::wayland::compositor>(*render);
     workspace = std::make_unique<win::wayland::space>(server.get());
-    Q_EMIT workspaceCreated();
 
+    workspace->input = std::make_unique<input::wayland::redirect>(*input, *workspace);
     input::wayland::add_dbus(input.get());
-
+    workspace->initShortcuts();
+    tablet_mode_manager = std::make_unique<input::dbus::tablet_mode_manager>();
     workspace->scripting = std::make_unique<scripting::platform>();
 
     render->compositor->start(*workspace);

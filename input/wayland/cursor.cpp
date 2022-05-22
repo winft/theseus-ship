@@ -24,7 +24,7 @@ cursor::cursor(wayland::platform* platform)
     , cursor_image{std::make_unique<wayland::cursor_image>()}
     , platform{platform}
 {
-    auto redirect = platform->redirect.get();
+    auto redirect = platform->redirect;
     QObject::connect(redirect, &redirect::globalPointerChanged, this, &cursor::slot_pos_changed);
     QObject::connect(
         redirect, &redirect::pointerButtonStateChanged, this, &cursor::slot_pointer_button_changed);

@@ -22,6 +22,11 @@ namespace KWin
 {
 class Toplevel;
 
+namespace win
+{
+class space;
+}
+
 namespace input
 {
 
@@ -155,6 +160,7 @@ public:
     virtual bool isSelectingWindow() const;
 
     input::platform& platform;
+    win::space& space;
 
 Q_SIGNALS:
     /**
@@ -189,7 +195,7 @@ Q_SIGNALS:
     void keyStateChanged(quint32 keyCode, key_state state);
 
 protected:
-    redirect(input::platform& platform);
+    redirect(input::platform& platform, win::space& space);
 
     std::unique_ptr<keyboard_redirect> m_keyboard;
     std::unique_ptr<pointer_redirect> m_pointer;

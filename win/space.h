@@ -60,6 +60,11 @@ class event_filter;
 
 }
 
+namespace input
+{
+class redirect;
+}
+
 namespace render
 {
 class compositor;
@@ -113,6 +118,7 @@ public:
     KStartupInfo* startup{nullptr};
     std::unique_ptr<base::x11::atoms> atoms;
     std::unique_ptr<deco::bridge<space>> deco;
+    std::unique_ptr<input::redirect> input;
 
     QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;
     QScopedPointer<base::x11::event_filter> m_movingClientFilter;
@@ -161,6 +167,7 @@ public:
 
     QRegion restrictedMoveArea(int desktop, win::strut_area areas = win::strut_area::all) const;
 
+    void initShortcuts();
     bool initializing() const;
 
     /**
@@ -471,7 +478,6 @@ Q_SIGNALS:
     void surface_id_changed(KWin::Toplevel*, quint32);
 
 private:
-    void initShortcuts();
     template<typename Slot>
     void initShortcut(const QString& actionName,
                       const QString& description,

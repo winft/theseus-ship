@@ -5,7 +5,6 @@
 */
 #include "platform.h"
 
-#include "cursor.h"
 #include "input_method.h"
 #include "pointer_redirect.h"
 #include "redirect.h"
@@ -36,10 +35,6 @@ platform::platform(base::wayland::platform const& base)
 {
     config = kwinApp()->inputConfig();
 
-    auto redirect_ptr = new wayland::redirect(*this);
-    redirect.reset(redirect_ptr);
-
-    cursor = std::make_unique<wayland::cursor>(this);
     input_method = std::make_unique<wayland::input_method>(waylandServer());
     virtual_keyboard = waylandServer()->display->create_virtual_keyboard_manager_v1();
 

@@ -70,10 +70,6 @@ compositor::compositor(render::platform& platform)
         qApp->quit();
     }
 
-    // For now we use the software cursor as our wlroots backend does not support yet a hardware
-    // cursor.
-    software_cursor->set_enabled(true);
-
     connect(kwinApp(),
             &Application::x11ConnectionAboutToBeDestroyed,
             this,
@@ -158,6 +154,11 @@ void compositor::start(win::space& space)
         // Force Software QtQuick on first startup with QPainter.
         QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
     }
+
+    // For now we use the software cursor as our wlroots backend does not support yet a hardware
+    // cursor.
+    software_cursor = std::make_unique<cursor>(kwinApp()->input.get());
+    software_cursor->set_enabled(true);
 
     startupWithWorkspace(space);
 }

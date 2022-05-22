@@ -43,10 +43,7 @@ public:
 
     void check()
     {
-        auto plat = kwinApp()->input.get();
-        if (!plat) {
-            return;
-        }
+        auto& plat = kwinApp()->input;
         auto has_touch = !plat->touchs.empty();
         auto has_pointer = !plat->pointers.empty();
         m_parent->setTabletModeAvailable(has_touch);
@@ -59,7 +56,7 @@ private:
 
 tablet_mode_manager::tablet_mode_manager()
 {
-    auto redirect = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get());
+    auto redirect = static_cast<input::wayland::redirect*>(kwinApp()->input->redirect);
 
     if (redirect->has_tablet_mode_switch()) {
         redirect->installInputEventSpy(new tablet_mode_switch_spy(this));
@@ -87,14 +84,13 @@ void tablet_mode_manager::hasTabletModeInputChanged(bool set)
     } else {
         auto setupDetector = [this] {
             auto spy = new tablet_mode_touchpad_removed_spy(this);
-            QObject::connect(
-                static_cast<input::wayland::redirect*>(kwinApp()->input->redirect.get()),
-                &input::wayland::redirect::has_tablet_mode_switch_changed,
-                spy,
-                [spy](bool set) {
-                    if (set)
-                        spy->deleteLater();
-                });
+            QObject::connect(static_cast<input::wayland::redirect*>(kwinApp()->input->redirect),
+                             &input::wayland::redirect::has_tablet_mode_switch_changed,
+                             spy,
+                             [spy](bool set) {
+                                 if (set)
+                                     spy->deleteLater();
+                             });
         };
         setupDetector();
     }

@@ -52,7 +52,7 @@ Q_SIGNALS:
     void changed();
 
 private:
-    void setup_workspace();
+    void setup_theme();
     void setup_move_resize(Toplevel* window);
 
     void reevaluteSource();

@@ -134,7 +134,7 @@ void input_method::handle_keyboard_grabbed(input_method_keyboard_grab_v2* grab)
 
     QObject::connect(grab,
                      &Wrapland::Server::input_method_keyboard_grab_v2::resourceDestroyed,
-                     kwinApp()->input->redirect.get(),
+                     kwinApp()->input->redirect,
                      [this, filter] {
                          kwinApp()->input->redirect->uninstallInputEventFilter(filter);
                          remove_all_if(filters, [filter](auto&& f) { return f.get() == filter; });

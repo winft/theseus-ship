@@ -10,7 +10,6 @@
 #include "global_shortcuts_manager.h"
 #include "keyboard.h"
 #include "pointer.h"
-#include "redirect.h"
 #include "switch.h"
 #include "touch.h"
 

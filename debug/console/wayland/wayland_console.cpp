@@ -45,7 +45,7 @@ wayland_console::wayland_console()
         }
         if (index == 5) {
             update_keyboard_tab();
-            QObject::connect(kwinApp()->input->redirect.get(),
+            QObject::connect(kwinApp()->input->redirect,
                              &input::redirect::keyStateChanged,
                              this,
                              &wayland_console::update_keyboard_tab);

@@ -29,9 +29,11 @@
 namespace KWin::input
 {
 
-redirect::redirect(input::platform& platform)
+redirect::redirect(input::platform& platform, win::space& space)
     : platform{platform}
+    , space{space}
 {
+    platform.redirect = this;
 }
 
 redirect::~redirect()

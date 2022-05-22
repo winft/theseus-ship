@@ -32,7 +32,7 @@ pointer::pointer(Wrapland::Server::FakeInputDevice* device, input::platform* pla
         this,
         [this](auto const& delta) {
             // TODO: Fix time
-            auto redirect = this->platform->redirect.get();
+            auto redirect = this->platform->redirect;
             redirect->pointer()->process_motion_absolute(
                 {redirect->globalPointer() + QPointF(delta.width(), delta.height()), {this, 0}});
             wlspace().kde_idle->simulateUserActivity();

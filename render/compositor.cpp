@@ -46,8 +46,7 @@ bool compositor::compositing()
 }
 
 compositor::compositor(render::platform& platform)
-    : software_cursor{std::make_unique<cursor>(kwinApp()->input.get())}
-    , platform{platform}
+    : platform{platform}
     , dbus{std::make_unique<dbus::compositing>(*this)}
 {
     connect(

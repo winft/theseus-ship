@@ -12,11 +12,10 @@
 #include "input/x11/xinput_integration.h"
 #endif
 
-#include "input/keyboard_redirect.h"
 #include "input/logging.h"
-#include "input/x11/redirect.h"
 #include "main.h"
 
+#include <QAction>
 #include <QX11Info>
 
 namespace KWin::input::x11
@@ -39,8 +38,6 @@ platform::platform()
         }
     }
 #endif
-
-    redirect = std::make_unique<input::x11::redirect>(*this);
     create_cursor();
 }
 

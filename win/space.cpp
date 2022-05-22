@@ -149,8 +149,6 @@ space::space()
 
     new base::dbus::kwin(this);
 
-    initShortcuts();
-
     auto& base = kwinApp()->get_base();
     QObject::connect(&base, &base::platform::topology_changed, this, [this](auto old, auto topo) {
         if (old.size != topo.size) {
