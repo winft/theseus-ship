@@ -15,7 +15,7 @@
 namespace KWin::render
 {
 
-class platform;
+class compositor;
 
 namespace dbus
 {
@@ -71,7 +71,7 @@ class compositing : public QObject
     Q_PROPERTY(bool platformRequiresCompositing READ platformRequiresCompositing)
 
 public:
-    explicit compositing(render::platform& platform);
+    explicit compositing(render::compositor& compositor);
     ~compositing() override = default;
 
     bool isActive() const;
@@ -125,7 +125,7 @@ Q_SIGNALS:
     void compositingToggled(bool active);
 
 private:
-    render::platform& platform;
+    render::compositor& compositor;
 };
 
 }

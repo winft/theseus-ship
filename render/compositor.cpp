@@ -48,10 +48,7 @@ bool compositor::compositing()
 compositor::compositor(render::platform& platform)
     : software_cursor{std::make_unique<cursor>(kwinApp()->input.get())}
     , platform{platform}
-    , m_state(State::Off)
-    , m_selectionOwner(nullptr)
-    , m_delay(0)
-    , m_bufferSwapPending(false)
+    , dbus{std::make_unique<dbus::compositing>(*this)}
 {
     connect(
         kwinApp()->options.get(), &base::options::configChanged, this, &compositor::configChanged);
@@ -66,9 +63,6 @@ compositor::compositor(render::platform& platform)
             &QTimer::timeout,
             this,
             &compositor::deleteUnusedSupportProperties);
-
-    // register DBus
-    dbus = new dbus::compositing(platform);
 }
 
 compositor::~compositor()

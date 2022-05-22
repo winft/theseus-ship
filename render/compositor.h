@@ -59,6 +59,7 @@ public:
         Stopping,
     };
 
+    explicit compositor(render::platform& platform);
     ~compositor() override;
     static compositor* self();
 
@@ -130,7 +131,6 @@ Q_SIGNALS:
     void sceneCreated();
 
 protected:
-    compositor(render::platform& platform);
     void timerEvent(QTimerEvent* te) override;
     void stop(bool on_shutdown);
 
@@ -154,13 +154,13 @@ protected:
 
     void destroyCompositorSelection();
 
-    State m_state;
-    x11::compositor_selection_owner* m_selectionOwner;
+    State m_state{State::Off};
+    x11::compositor_selection_owner* m_selectionOwner{nullptr};
     QRegion repaints_region;
     QBasicTimer compositeTimer;
-    qint64 m_delay;
-    bool m_bufferSwapPending;
-    dbus::compositing* dbus{nullptr};
+    qint64 m_delay{0};
+    bool m_bufferSwapPending{false};
+    std::unique_ptr<dbus::compositing> dbus;
 
 private:
     void claimCompositorSelection();
