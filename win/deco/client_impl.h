@@ -29,9 +29,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace KWin
 {
+
 class Toplevel;
 
-namespace win::deco
+namespace win
+{
+
+class space;
+
+namespace deco
 {
 
 class renderer;
@@ -141,7 +147,9 @@ private:
     QTimer m_toolTipWakeUp;
     QDeadlineTimer m_toolTipFallAsleep;
     bool m_toolTipShowing = false;
+    win::space& space;
 };
 
+}
 }
 }

@@ -55,6 +55,7 @@ client_impl::client_impl(Toplevel* window,
     , qobject{std::make_unique<client_impl_qobject>()}
     , m_client(window)
     , m_clientSize(win::frame_to_client_size(window, window->size()))
+    , space{window->space}
 {
     createRenderer();
     window->control->deco().set_client(this);
@@ -249,7 +250,7 @@ DELEGATE(WId, decorationId, frameId)
 #define DELEGATE(name, op)                                                                         \
     void client_impl::name()                                                                       \
     {                                                                                              \
-        workspace()->performWindowOperation(m_client, base::options::op);                          \
+        space.performWindowOperation(m_client, base::options::op);                                 \
     }
 
 DELEGATE(requestToggleOnAllDesktops, OnAllDesktopsOp)
@@ -290,7 +291,7 @@ QColor client_impl::color(KDecoration2::ColorGroup group, KDecoration2::ColorRol
 
 void client_impl::requestShowToolTip(const QString& text)
 {
-    if (!workspace()->deco->showToolTips()) {
+    if (!space.deco->showToolTips()) {
         return;
     }
 
@@ -311,13 +312,13 @@ void client_impl::requestShowWindowMenu(QRect const& rect)
 {
     // TODO: add rect to requestShowWindowMenu
     auto const client_pos = m_client->pos();
-    workspace()->showWindowMenu(QRect(client_pos + rect.topLeft(), client_pos + rect.bottomRight()),
-                                m_client);
+    space.showWindowMenu(QRect(client_pos + rect.topLeft(), client_pos + rect.bottomRight()),
+                         m_client);
 }
 
 void client_impl::requestShowApplicationMenu(const QRect& rect, int actionId)
 {
-    workspace()->showApplicationMenu(rect, m_client, actionId);
+    space.showApplicationMenu(rect, m_client, actionId);
 }
 
 void client_impl::showApplicationMenu(int actionId)
@@ -330,8 +331,8 @@ void client_impl::requestToggleMaximization(Qt::MouseButtons buttons)
     QMetaObject::invokeMethod(
         qobject.get(),
         [this, buttons] {
-            workspace()->performWindowOperation(
-                m_client, kwinApp()->options->operationMaxButtonClick(buttons));
+            space.performWindowOperation(m_client,
+                                         kwinApp()->options->operationMaxButtonClick(buttons));
         },
         Qt::QueuedConnection);
 }

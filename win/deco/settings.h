@@ -25,14 +25,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class KConfigGroup;
 
-namespace KWin::win::deco
+namespace KWin::win
+{
+
+class space;
+
+namespace deco
 {
 
 class settings : public QObject, public KDecoration2::DecorationSettingsPrivate
 {
     Q_OBJECT
 public:
-    explicit settings(KDecoration2::DecorationSettings* parent);
+    settings(win::space& space, KDecoration2::DecorationSettings* parent);
     ~settings() override;
 
     bool isAlphaChannelSupported() const override;
@@ -68,6 +73,8 @@ private:
     bool m_autoBorderSize = true;
     bool m_closeDoubleClickMenu = false;
     QFont m_font;
+    win::space& space;
 };
 
+}
 }

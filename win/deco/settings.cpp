@@ -37,10 +37,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace KWin::win::deco
 {
 
-settings::settings(KDecoration2::DecorationSettings* parent)
+settings::settings(win::space& space, KDecoration2::DecorationSettings* parent)
     : QObject()
     , DecorationSettingsPrivate(parent)
     , m_borderSize(KDecoration2::BorderSize::Normal)
+    , space{space}
 {
     readSettings();
 
@@ -48,7 +49,7 @@ settings::settings(KDecoration2::DecorationSettings* parent)
                      &render::compositor::compositingToggled,
                      parent,
                      &KDecoration2::DecorationSettings::alphaChannelSupportedChanged);
-    connect(workspace()->virtual_desktop_manager.get(),
+    connect(space.virtual_desktop_manager.get(),
             &win::virtual_desktop_manager::countChanged,
             this,
             [parent](uint previous, uint current) {
@@ -61,11 +62,9 @@ settings::settings(KDecoration2::DecorationSettings* parent)
     connect(render::compositor::self(), &render::compositor::aboutToDestroy, this, [c] {
         disconnect(c);
     });
-    connect(workspace(), &win::space::configChanged, this, &settings::readSettings);
-    connect(workspace()->deco->qobject.get(),
-            &bridge_qobject::metaDataLoaded,
-            this,
-            &settings::readSettings);
+    connect(&space, &win::space::configChanged, this, &settings::readSettings);
+    connect(
+        space.deco->qobject.get(), &bridge_qobject::metaDataLoaded, this, &settings::readSettings);
 }
 
 settings::~settings() = default;
@@ -77,7 +76,7 @@ bool settings::isAlphaChannelSupported() const
 
 bool settings::isOnAllDesktopsAvailable() const
 {
-    return workspace()->virtual_desktop_manager->count() > 1;
+    return space.virtual_desktop_manager->count() > 1;
 }
 
 bool settings::isCloseOnDoubleClickOnMenu() const
@@ -185,7 +184,7 @@ void settings::readSettings()
         m_rightButtons = right;
         Q_EMIT decorationSettings()->decorationButtonsRightChanged(m_rightButtons);
     }
-    workspace()->app_menu->setViewEnabled(
+    space.app_menu->setViewEnabled(
         left.contains(KDecoration2::DecorationButtonType::ApplicationMenu)
         || right.contains(KDecoration2::DecorationButtonType::ApplicationMenu));
     const bool close = config.readEntry("CloseOnDoubleClickOnMenu", false);
@@ -199,7 +198,7 @@ void settings::readSettings()
     if (m_autoBorderSize) {
         /* Falls back to Normal border size, if the plugin does not provide a valid recommendation.
          */
-        size = stringToSize(workspace()->deco->recommendedBorderSize());
+        size = stringToSize(space.deco->recommendedBorderSize());
     }
     if (size != m_borderSize) {
         m_borderSize = size;

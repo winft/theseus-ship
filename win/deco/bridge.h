@@ -158,7 +158,7 @@ public:
     std::unique_ptr<KDecoration2::DecorationSettingsPrivate>
     settings(KDecoration2::DecorationSettings* parent) override
     {
-        return std::unique_ptr<deco::settings>(new deco::settings(parent));
+        return std::unique_ptr<deco::settings>(new deco::settings(space, parent));
     }
 
     QString recommendedBorderSize() const
