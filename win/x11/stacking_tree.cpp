@@ -17,6 +17,11 @@
 namespace KWin::win::x11
 {
 
+stacking_tree::stacking_tree(win::space& space)
+    : space{space}
+{
+}
+
 void stacking_tree::mark_as_dirty()
 {
     is_dirty = true;
@@ -37,7 +42,7 @@ std::deque<Toplevel*> const& stacking_tree::as_list()
 void stacking_tree::update()
 {
     // use our own stacking order, not the X one, as they may differ
-    winlist = workspace()->stacking_order->sorted();
+    winlist = space.stacking_order->sorted();
 
     if (xcbtree && !xcbtree->is_null()) {
         // this constructs a vector of references with the start and end
@@ -45,7 +50,7 @@ void stacking_tree::update()
         // create an vector of references instead of making a copy of each element into the vector.
         std::vector<std::reference_wrapper<xcb_window_t>> windows(
             xcbtree->children(), xcbtree->children() + xcbtree->data()->children_len);
-        auto const& unmanaged_list = workspace()->unmanagedList();
+        auto const& unmanaged_list = space.unmanagedList();
 
         for (auto const& win : windows) {
             auto unmanaged = std::find_if(unmanaged_list.begin(),
@@ -60,7 +65,7 @@ void stacking_tree::update()
         xcbtree.reset();
     }
 
-    for (auto const& toplevel : workspace()->windows()) {
+    for (auto const& toplevel : space.windows()) {
         auto internal = qobject_cast<internal_window*>(toplevel);
         if (internal && internal->isShown()) {
             winlist.push_back(internal);
