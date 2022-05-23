@@ -26,6 +26,11 @@
 namespace KWin::win
 {
 
+stacking_order::stacking_order(win::space& space)
+    : space{space}
+{
+}
+
 void stacking_order::update(bool propagate_new_clients)
 {
     if (block_stacking_updates > 0) {
@@ -37,7 +42,7 @@ void stacking_order::update(bool propagate_new_clients)
     restacking_required = false;
     if (order_changed || propagate_new_clients) {
         propagate_clients(propagate_new_clients);
-        workspace()->x_stacking_tree->mark_as_dirty();
+        space.x_stacking_tree->mark_as_dirty();
         Q_EMIT changed();
     }
 }
@@ -133,7 +138,7 @@ void stacking_order::propagate_clients(bool propagate_new_clients)
     // windows (e.g. popups).
     new_win_stack.push_back(x11::rootInfo()->supportWindow());
 
-    auto const edges_wins = workspace()->edges->windows();
+    auto const edges_wins = space.edges->windows();
     new_win_stack.insert(new_win_stack.end(), edges_wins.begin(), edges_wins.end());
     new_win_stack.insert(new_win_stack.end(), manual_overlays.begin(), manual_overlays.end());
 
@@ -182,7 +187,7 @@ void stacking_order::propagate_clients(bool propagate_new_clients)
         std::vector<xcb_window_t> non_desktops;
         std::copy(manual_overlays.begin(), manual_overlays.end(), std::back_inserter(xcb_windows));
 
-        for (auto const& window : workspace()->m_windows) {
+        for (auto const& window : space.m_windows) {
             if (!window->control) {
                 continue;
             }

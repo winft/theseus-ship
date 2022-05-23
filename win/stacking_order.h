@@ -29,10 +29,14 @@ namespace x11
 class window;
 }
 
+class space;
+
 class KWIN_EXPORT stacking_order : public QObject
 {
     Q_OBJECT
 public:
+    explicit stacking_order(win::space& space);
+
     /**
      * Returns the list of clients sorted in stacking order, with topmost client
      * at the last position
@@ -109,6 +113,7 @@ private:
     bool blocked_propagating_new_clients{false};
 
     bool restacking_required{false};
+    win::space& space;
 };
 
 }

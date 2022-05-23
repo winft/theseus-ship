@@ -98,7 +98,7 @@ space::space()
     , app_menu{std::make_unique<win::app_menu>(*this)}
     , rule_book{std::make_unique<RuleBook>(*this)}
     , user_actions_menu{std::make_unique<win::user_actions_menu>()}
-    , stacking_order{std::make_unique<win::stacking_order>()}
+    , stacking_order{std::make_unique<win::stacking_order>(*this)}
     , x_stacking_tree(std::make_unique<win::x11::stacking_tree>())
     , focus_chain{std::make_unique<win::focus_chain>(*this)}
     , virtual_desktop_manager{std::make_unique<win::virtual_desktop_manager>()}
