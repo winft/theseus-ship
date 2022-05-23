@@ -23,6 +23,8 @@ class Toplevel;
 namespace win
 {
 
+class space;
+
 /**
  * @brief Menu shown for a Client.
  *
@@ -46,7 +48,7 @@ class KWIN_EXPORT user_actions_menu : public QObject
 {
     Q_OBJECT
 public:
-    user_actions_menu();
+    explicit user_actions_menu(win::space& space);
     ~user_actions_menu() override;
 
     /**
@@ -196,6 +198,8 @@ private:
 
     QAction* m_rulesOperation{nullptr};
     QAction* m_applicationRulesOperation{nullptr};
+
+    win::space& space;
 };
 
 }
