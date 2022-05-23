@@ -158,7 +158,7 @@ base::wayland::server* WaylandTestApplication::get_wayland_server()
 
 debug::console* WaylandTestApplication::create_debug_console()
 {
-    return new debug::wayland_console;
+    return new debug::wayland_console(*workspace);
 }
 
 void WaylandTestApplication::start()

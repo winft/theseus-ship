@@ -210,7 +210,7 @@ base::platform& ApplicationX11::get_base()
 
 debug::console* ApplicationX11::create_debug_console()
 {
-    return new debug::x11_console;
+    return new debug::x11_console(*workspace);
 }
 
 void ApplicationX11::start()

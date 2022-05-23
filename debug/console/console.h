@@ -35,7 +35,9 @@ namespace KWin
 
 namespace win
 {
+
 class internal_window;
+class space;
 
 namespace wayland
 {
@@ -57,7 +59,7 @@ class KWIN_EXPORT console_model : public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    explicit console_model(QObject* parent = nullptr);
+    explicit console_model(win::space& space, QObject* parent = nullptr);
     ~console_model() override;
 
     int columnCount(const QModelIndex& parent) const override;
@@ -95,6 +97,7 @@ private:
     QVector<win::internal_window*> m_internalClients;
     QVector<win::x11::window*> m_x11Clients;
     QVector<Toplevel*> m_unmanageds;
+    win::space& space;
 };
 
 class KWIN_EXPORT console_delegate : public QStyledItemDelegate

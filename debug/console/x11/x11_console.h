@@ -16,7 +16,7 @@ class KWIN_EXPORT x11_console : public console
 {
     Q_OBJECT
 public:
-    x11_console();
+    explicit x11_console(win::space& space);
 };
 
 }

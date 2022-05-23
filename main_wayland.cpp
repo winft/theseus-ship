@@ -174,7 +174,7 @@ base::wayland::server* ApplicationWayland::get_wayland_server()
 
 debug::console* ApplicationWayland::create_debug_console()
 {
-    return new debug::wayland_console;
+    return new debug::wayland_console(*workspace);
 }
 
 void ApplicationWayland::start()

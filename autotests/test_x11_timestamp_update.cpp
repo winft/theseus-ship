@@ -79,7 +79,7 @@ base::platform& X11TestApplication::get_base()
 
 debug::console* X11TestApplication::create_debug_console()
 {
-    return new debug::x11_console;
+    return new debug::x11_console(*workspace);
 }
 
 void X11TestApplication::start()

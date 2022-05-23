@@ -24,7 +24,7 @@ class KWIN_EXPORT wayland_console : public console
 {
     Q_OBJECT
 public:
-    wayland_console();
+    wayland_console(win::space& space);
     ~wayland_console();
 
 private:
@@ -37,7 +37,7 @@ class KWIN_EXPORT wayland_console_model : public console_model
 {
     Q_OBJECT
 public:
-    explicit wayland_console_model(QObject* parent = nullptr);
+    explicit wayland_console_model(win::space& space, QObject* parent = nullptr);
 
 protected:
     bool get_client_count(int parent_id, int& count) const override;
