@@ -32,41 +32,7 @@ class window;
 class KWIN_EXPORT stacking_order : public QObject
 {
     Q_OBJECT
-
-Q_SIGNALS:
-    /**
-     * This signal is emitted every time the `unlock()` method is called,
-     * most often because a StackingUpdatesBlocker goes out of scope and is destroyed.
-     * Current consumers:
-     * - EffectsHandlerImpl::checkInputWindowStacking()
-     */
-    void unlocked();
-    /**
-     * This signal is emitted when the stacking order changed, i.e. a window is risen
-     * or lowered
-     */
-    void changed();
-
-private:
-    bool sort();
-    void propagate_clients(bool propagate_new_clients);
-
-    std::deque<xcb_window_t> manual_overlays;
-
-    // When > 0, updates are temporarily disabled
-    int block_stacking_updates{0};
-
-    // Propagate all clients after next update
-    bool blocked_propagating_new_clients{false};
-
-    bool restacking_required{false};
-
 public:
-    // How windows are configured in z-direction.
-    std::deque<Toplevel*> win_stack;
-    // Unsorted deque
-    std::deque<Toplevel*> pre_stack;
-
     /**
      * Returns the list of clients sorted in stacking order, with topmost client
      * at the last position
@@ -110,6 +76,39 @@ public:
     {
         manual_overlays.erase(std::find(manual_overlays.begin(), manual_overlays.end(), id));
     }
+
+    /// How windows are configured in z-direction.
+    std::deque<Toplevel*> win_stack;
+    /// Unsorted deque
+    std::deque<Toplevel*> pre_stack;
+
+Q_SIGNALS:
+    /**
+     * This signal is emitted every time the `unlock()` method is called,
+     * most often because a StackingUpdatesBlocker goes out of scope and is destroyed.
+     * Current consumers:
+     * - EffectsHandlerImpl::checkInputWindowStacking()
+     */
+    void unlocked();
+    /**
+     * This signal is emitted when the stacking order changed, i.e. a window is risen
+     * or lowered
+     */
+    void changed();
+
+private:
+    bool sort();
+    void propagate_clients(bool propagate_new_clients);
+
+    std::deque<xcb_window_t> manual_overlays;
+
+    // When > 0, updates are temporarily disabled
+    int block_stacking_updates{0};
+
+    // Propagate all clients after next update
+    bool blocked_propagating_new_clients{false};
+
+    bool restacking_required{false};
 };
 
 }
