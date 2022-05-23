@@ -181,12 +181,12 @@ const QString &AuroraeTheme::themeName() const
 
 void AuroraeTheme::borders(int& left, int& top, int& right, int& bottom, bool maximized) const
 {
-    const qreal titleHeight = qMax((qreal)d->themeConfig.titleHeight(),
+    const qreal titleHeight = qMax(static_cast<qreal>(d->themeConfig.titleHeight()),
                                    d->themeConfig.buttonHeight()*buttonSizeFactor() +
                                    d->themeConfig.buttonMarginTop());
     if (maximized) {
         const qreal title = titleHeight + d->themeConfig.titleEdgeTopMaximized() + d->themeConfig.titleEdgeBottomMaximized();
-        switch ((DecorationPosition)d->themeConfig.decorationPosition()) {
+        switch (static_cast<DecorationPosition>(d->themeConfig.decorationPosition())) {
         case DecorationTop:
             left = right = bottom = 0;
             top = title;
@@ -259,7 +259,7 @@ void AuroraeTheme::borders(int& left, int& top, int& right, int& bottom, bool ma
         }
 
         const qreal title = titleHeight + d->themeConfig.titleEdgeTop() + d->themeConfig.titleEdgeBottom();
-        switch ((DecorationPosition)d->themeConfig.decorationPosition()) {
+        switch (static_cast<DecorationPosition>(d->themeConfig.decorationPosition())) {
         case DecorationTop:
             top     = title;
             break;
@@ -505,7 +505,7 @@ qreal AuroraeTheme::buttonSizeFactor() const
 
 DecorationPosition AuroraeTheme::decorationPosition() const
 {
-    return (DecorationPosition)d->themeConfig.decorationPosition();
+    return static_cast<DecorationPosition>(d->themeConfig.decorationPosition());
 }
 
 } // namespace

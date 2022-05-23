@@ -35,7 +35,11 @@ inline void send_selection_notify(xcb_connection_t* connection,
     notify.target = event->target;
     notify.property = success ? event->property : xcb_atom_t(XCB_ATOM_NONE);
 
-    xcb_send_event(connection, 0, event->requestor, XCB_EVENT_MASK_NO_EVENT, (char const*)&notify);
+    xcb_send_event(connection,
+                   0,
+                   event->requestor,
+                   XCB_EVENT_MASK_NO_EVENT,
+                   reinterpret_cast<char const*>(&notify));
     xcb_flush(connection);
 }
 

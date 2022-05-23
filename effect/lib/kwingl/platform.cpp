@@ -666,9 +666,9 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
 {
     m_platformInterface = platformInterface;
 
-    m_vendor = (const char*)glGetString(GL_VENDOR);
-    m_renderer = (const char*)glGetString(GL_RENDERER);
-    m_version = (const char*)glGetString(GL_VERSION);
+    m_vendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+    m_renderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+    m_version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
 
     // Parse the OpenGL version
     const QList<QByteArray> versionTokens = m_version.split(' ');
@@ -693,11 +693,11 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
         glGetIntegerv(GL_NUM_EXTENSIONS, &count);
 
         for (int i = 0; i < count; i++) {
-            const char* name = (const char*)glGetStringi(GL_EXTENSIONS, i);
+            const char* name = reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, i));
             m_extensions.insert(name);
         }
     } else {
-        const QByteArray extensions = (const char*)glGetString(GL_EXTENSIONS);
+        const QByteArray extensions = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
         auto extensionsList = extensions.split(' ');
         m_extensions = {extensionsList.constBegin(), extensionsList.constEnd()};
     }
@@ -741,7 +741,7 @@ void GLPlatform::detect(OpenGLPlatformInterface platformInterface)
 
     if (m_supportsGLSL) {
         // Parse the GLSL version
-        m_glsl_version = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
+        m_glsl_version = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
         m_glslVersion = parseVersionString(m_glsl_version);
     }
 

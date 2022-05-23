@@ -59,10 +59,11 @@ PlatformCursorImage cursor::platform_image() const
         return PlatformCursorImage();
     }
 
-    QImage qcursorimg((uchar*)xcb_xfixes_get_cursor_image_cursor_image(cursor.data()),
-                      cursor->width,
-                      cursor->height,
-                      QImage::Format_ARGB32_Premultiplied);
+    QImage qcursorimg(
+        reinterpret_cast<uchar*>(xcb_xfixes_get_cursor_image_cursor_image(cursor.data())),
+        cursor->width,
+        cursor->height,
+        QImage::Format_ARGB32_Premultiplied);
 
     // deep copy of image as the data is going to be freed
     return PlatformCursorImage(qcursorimg.copy(), QPoint(cursor->xhot, cursor->yhot));

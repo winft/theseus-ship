@@ -718,7 +718,8 @@ void GLTexture::setSwizzle(GLenum red, GLenum green, GLenum blue, GLenum alpha)
 
     if (!GLPlatform::instance()->isGLES()) {
         const GLuint swizzle[] = {red, green, blue, alpha};
-        glTexParameteriv(d->m_target, GL_TEXTURE_SWIZZLE_RGBA, (const GLint*)swizzle);
+        glTexParameteriv(
+            d->m_target, GL_TEXTURE_SWIZZLE_RGBA, reinterpret_cast<const GLint*>(swizzle));
     } else {
         glTexParameteri(d->m_target, GL_TEXTURE_SWIZZLE_R, red);
         glTexParameteri(d->m_target, GL_TEXTURE_SWIZZLE_G, green);

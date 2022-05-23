@@ -291,8 +291,8 @@ void MouseMarkEffect::clearLast()
 MouseMarkEffect::Mark MouseMarkEffect::createArrow(QPoint arrow_start, QPoint arrow_end)
 {
     Mark ret;
-    double angle = atan2((double)(arrow_end.y() - arrow_start.y()),
-                         (double)(arrow_end.x() - arrow_start.x()));
+    double angle = atan2(static_cast<double>(arrow_end.y() - arrow_start.y()),
+                         static_cast<double>(arrow_end.x() - arrow_start.x()));
     ret += arrow_start
         + QPoint(50 * cos(angle + M_PI / 6),
                  50 * sin(angle + M_PI / 6)); // right one

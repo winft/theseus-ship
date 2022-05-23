@@ -395,7 +395,7 @@ void BlurEffect::uploadGeometry(GLVertexBuffer* vbo,
     if (!vertexCount)
         return;
 
-    QVector2D* map = (QVector2D*)vbo->map(vertexCount * sizeof(QVector2D));
+    QVector2D* map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
 
     uploadRegion(map, blurRegion, m_downSampleIterations);
     uploadRegion(map, windowRegion, 0);
@@ -571,12 +571,12 @@ void BlurEffect::generateNoiseTexture()
     }
 
     // Init randomness based on time
-    std::srand((uint)QTime::currentTime().msec());
+    std::srand(static_cast<uint>(QTime::currentTime().msec()));
 
     QImage noiseImage(QSize(256, 256), QImage::Format_Grayscale8);
 
     for (int y = 0; y < noiseImage.height(); y++) {
-        uint8_t* noiseImageLine = (uint8_t*)noiseImage.scanLine(y);
+        uint8_t* noiseImageLine = static_cast<uint8_t*>(noiseImage.scanLine(y));
 
         for (int x = 0; x < noiseImage.width(); x++) {
             noiseImageLine[x] = std::rand() % m_noiseStrength;

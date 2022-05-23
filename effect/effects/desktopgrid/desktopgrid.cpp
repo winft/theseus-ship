@@ -240,8 +240,8 @@ void DesktopGridEffect::paintScreen(int mask, const QRegion& region, ScreenPaint
         QPoint diff = cursorPos() - m_windowMoveStartPoint;
         QRect geo = m_windowMoveGeometry.translated(diff);
         WindowPaintData d(windowMove, data.projectionMatrix());
-        d *= QVector2D((qreal)geo.width() / (qreal)windowMove->width(),
-                       (qreal)geo.height() / (qreal)windowMove->height());
+        d *= QVector2D(static_cast<qreal>(geo.width()) / static_cast<qreal>(windowMove->width()),
+                       static_cast<qreal>(geo.height()) / static_cast<qreal>(windowMove->height()));
         d += QPoint(geo.left() - windowMove->x(), geo.top() - windowMove->y());
         effects->drawWindow(
             windowMove, PAINT_WINDOW_TRANSFORMED | PAINT_WINDOW_LANCZOS, infiniteRegion(), d);
@@ -382,14 +382,16 @@ void DesktopGridEffect::paintWindow(EffectWindow* w,
 
             QPointF newPos = scalePos(transformedGeo.topLeft().toPoint(), paintingDesktop, screen);
             double progress = timeline.currentValue();
-            d.setXScale(interpolate(1,
-                                    xScale * scale[screen] * (float)transformedGeo.width()
-                                        / (float)w->frameGeometry().width(),
-                                    progress));
-            d.setYScale(interpolate(1,
-                                    yScale * scale[screen] * (float)transformedGeo.height()
-                                        / (float)w->frameGeometry().height(),
-                                    progress));
+            d.setXScale(
+                interpolate(1,
+                            xScale * scale[screen] * static_cast<float>(transformedGeo.width())
+                                / static_cast<float>(w->frameGeometry().width()),
+                            progress));
+            d.setYScale(
+                interpolate(1,
+                            yScale * scale[screen] * static_cast<float>(transformedGeo.height())
+                                / static_cast<float>(w->frameGeometry().height()),
+                            progress));
             d += QPoint(qRound(newPos.x() - w->x()), qRound(newPos.y() - w->y()));
 
             if (isUsingPresentWindows() && (w->isDock() || w->isSkipSwitcher())) {
@@ -531,9 +533,10 @@ void DesktopGridEffect::windowInputMouseEvent(QEvent* e)
                             const QPointF pos = scalePos(transformedGeo.topLeft().toPoint(),
                                                          sourceDesktop,
                                                          windowMove->screen());
-                            const QSize size(
-                                scale[windowMove->screen()] * (float)transformedGeo.width(),
-                                scale[windowMove->screen()] * (float)transformedGeo.height());
+                            const QSize size(scale[windowMove->screen()]
+                                                 * static_cast<float>(transformedGeo.width()),
+                                             scale[windowMove->screen()]
+                                                 * static_cast<float>(transformedGeo.height()));
                             m_windowMoveGeometry = QRect(pos.toPoint(), size);
                             m_windowMoveStartPoint = me->pos();
                         }

@@ -172,7 +172,7 @@ void ContrastEffect::uploadGeometry(GLVertexBuffer* vbo, const QRegion& region)
     if (!vertexCount)
         return;
 
-    QVector2D* map = (QVector2D*)vbo->map(vertexCount * sizeof(QVector2D));
+    QVector2D* map = static_cast<QVector2D*>(vbo->map(vertexCount * sizeof(QVector2D)));
     uploadRegion(map, region);
     vbo->unmap();
 

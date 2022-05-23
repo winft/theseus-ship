@@ -104,12 +104,14 @@ void output::update_view_geometry()
 
     QSizeF view_size;
     view_size.setWidth(mode_size.width());
-    view_size.setHeight(view_size.width() * source_size.height() / (double)source_size.width());
+    view_size.setHeight(view_size.width() * source_size.height()
+                        / static_cast<double>(source_size.width()));
 
     if (view_size.height() > mode_size.height()) {
         auto const oldSize = view_size;
         view_size.setHeight(mode_size.height());
-        view_size.setWidth(oldSize.width() * view_size.height() / (double)oldSize.height());
+        view_size.setWidth(oldSize.width() * view_size.height()
+                           / static_cast<double>(oldSize.height()));
     }
 
     Q_ASSERT(view_size.height() <= mode_size.height());
@@ -155,7 +157,8 @@ void output::apply_changes(Wrapland::Server::OutputChangesetV1 const* changeset)
         emitModeChanged = true;
     }
     if (changeset->transformChanged()) {
-        qCDebug(KWIN_WL) << "Server setting transform: " << (int)(changeset->transform());
+        qCDebug(KWIN_WL) << "Server setting transform: "
+                         << static_cast<int>(changeset->transform());
         m_output->set_transform(changeset->transform());
         update_transform(toTransform(changeset->transform()));
         emitModeChanged = true;

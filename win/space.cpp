@@ -3788,8 +3788,8 @@ void space::storeClient(KConfigGroup& cg, int num, win::x11::window* c)
         QRect(win::x11::calculate_gravitation(c, true), win::frame_to_client_size(c, c->size())));
     cg.writeEntry(QLatin1String("restore") + n, c->restore_geometries.maximize);
     cg.writeEntry(QLatin1String("fsrestore") + n, c->restore_geometries.maximize);
-    cg.writeEntry(QLatin1String("maximize") + n, (int)c->maximizeMode());
-    cg.writeEntry(QLatin1String("fullscreen") + n, (int)c->control->fullscreen());
+    cg.writeEntry(QLatin1String("maximize") + n, static_cast<int>(c->maximizeMode()));
+    cg.writeEntry(QLatin1String("fullscreen") + n, static_cast<int>(c->control->fullscreen()));
     cg.writeEntry(QLatin1String("desktop") + n, c->desktop());
 
     // the config entry is called "iconified" for back. comp. reasons

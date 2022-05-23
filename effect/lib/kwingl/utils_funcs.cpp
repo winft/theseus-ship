@@ -64,10 +64,11 @@ void glResolveFunctions(const std::function<resolveFuncPtr(const char*)>& resolv
         GL_RESOLVE_WITH_EXT(glGetnUniformfv, glGetnUniformfvARB);
     } else if (robustContext && haveExtRobustness) {
         // See https://www.khronos.org/registry/gles/extensions/EXT/EXT_robustness.txt
-        glGetGraphicsResetStatus
-            = (glGetGraphicsResetStatus_func)resolveFunction("glGetGraphicsResetStatusEXT");
-        glReadnPixels = (glReadnPixels_func)resolveFunction("glReadnPixelsEXT");
-        glGetnUniformfv = (glGetnUniformfv_func)resolveFunction("glGetnUniformfvEXT");
+        glGetGraphicsResetStatus = reinterpret_cast<glGetGraphicsResetStatus_func>(
+            resolveFunction("glGetGraphicsResetStatusEXT"));
+        glReadnPixels = reinterpret_cast<glReadnPixels_func>(resolveFunction("glReadnPixelsEXT"));
+        glGetnUniformfv
+            = reinterpret_cast<glGetnUniformfv_func>(resolveFunction("glGetnUniformfvEXT"));
     } else {
         glGetGraphicsResetStatus = KWin::GetGraphicsResetStatus;
         glReadnPixels = KWin::ReadnPixels;

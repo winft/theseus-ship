@@ -175,7 +175,7 @@ float TouchPointsEffect::computeRadius(int time, bool press, int ring)
 float TouchPointsEffect::computeAlpha(int time, int ring)
 {
     float ringDistance = m_ringLife / (m_ringCount * 3);
-    return (m_ringLife - (float)time - ringDistance * (ring)) / m_ringLife;
+    return (m_ringLife - static_cast<float>(time) - ringDistance * (ring)) / m_ringLife;
 }
 
 void TouchPointsEffect::repaint()

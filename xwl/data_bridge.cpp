@@ -51,7 +51,7 @@ bool data_bridge::filter_event(xcb_generic_event_t* event)
         return true;
     }
     if (event->response_type - xfixes->first_event == XCB_XFIXES_SELECTION_NOTIFY) {
-        return handle_xfixes_notify((xcb_xfixes_selection_notify_event_t*)event);
+        return handle_xfixes_notify(reinterpret_cast<xcb_xfixes_selection_notify_event_t*>(event));
     }
     return false;
 }

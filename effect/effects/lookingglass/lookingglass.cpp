@@ -224,7 +224,8 @@ void LookingGlassEffect::prePaintScreen(ScreenPrePaintData& data,
         else
             zoom = qMax(zoom * qMin(1.0 - diff, 0.8), target_zoom);
         qCDebug(KWIN_LOOKINGGLASS) << "zoom is now " << zoom;
-        radius = qBound((double)initialradius, initialradius * zoom, 3.5 * initialradius);
+        radius
+            = qBound(static_cast<double>(initialradius), initialradius * zoom, 3.5 * initialradius);
 
         if (zoom <= 1.0f) {
             m_enabled = false;
@@ -281,8 +282,8 @@ void LookingGlassEffect::paintScreen(int mask, const QRegion& region, ScreenPain
 
         // Use the shader
         ShaderBinder binder(m_shader);
-        m_shader->setUniform("u_zoom", (float)zoom);
-        m_shader->setUniform("u_radius", (float)radius);
+        m_shader->setUniform("u_zoom", static_cast<float>(zoom));
+        m_shader->setUniform("u_radius", static_cast<float>(radius));
         m_shader->setUniform("u_cursor", QVector2D(cursorPos().x(), cursorPos().y()));
         m_shader->setUniform(GLShader::ModelViewProjectionMatrix, data.projectionMatrix());
         m_vbo->render(GL_TRIANGLES);

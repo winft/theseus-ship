@@ -482,7 +482,7 @@ virtual_desktop* virtual_desktop_manager::desktopForId(QByteArray const& id) con
 virtual_desktop* virtual_desktop_manager::createVirtualDesktop(uint position, QString const& name)
 {
     // too many, can't insert new ones
-    if ((uint)m_desktops.count() == virtual_desktop_manager::maximum()) {
+    if (static_cast<uint>(m_desktops.count()) == virtual_desktop_manager::maximum()) {
         return nullptr;
     }
 
@@ -511,7 +511,7 @@ virtual_desktop* virtual_desktop_manager::createVirtualDesktop(uint position, QS
     m_desktops.insert(position, vd);
 
     // update the id of displaced desktops
-    for (uint i = position + 1; i < (uint)m_desktops.count(); ++i) {
+    for (uint i = position + 1; i < static_cast<uint>(m_desktops.count()); ++i) {
         m_desktops[i]->setX11DesktopNumber(i + 1);
         if (m_rootInfo) {
             m_rootInfo->setDesktopName(i + 1, m_desktops[i]->name().toUtf8().data());
@@ -548,14 +548,14 @@ void virtual_desktop_manager::removeVirtualDesktop(virtual_desktop* desktop)
     uint const i = desktop->x11DesktopNumber() - 1;
     m_desktops.remove(i);
 
-    for (uint j = i; j < (uint)m_desktops.count(); ++j) {
+    for (uint j = i; j < static_cast<uint>(m_desktops.count()); ++j) {
         m_desktops[j]->setX11DesktopNumber(j + 1);
         if (m_rootInfo) {
             m_rootInfo->setDesktopName(j + 1, m_desktops[j]->name().toUtf8().data());
         }
     }
 
-    uint const newCurrent = qMin(oldCurrent, (uint)m_desktops.count());
+    uint const newCurrent = qMin(oldCurrent, static_cast<uint>(m_desktops.count()));
     m_current = m_desktops.at(newCurrent - 1);
     if (oldCurrent != newCurrent) {
         Q_EMIT currentChanged(oldCurrent, newCurrent);
@@ -617,7 +617,7 @@ void virtual_desktop_manager::setCount(uint count)
     uint const oldCount = m_desktops.count();
 
     // this explicit check makes it more readable
-    if ((uint)m_desktops.count() > count) {
+    if (static_cast<uint>(m_desktops.count()) > count) {
         auto const desktopsToRemove = m_desktops.mid(count);
         m_desktops.resize(count);
         if (m_current) {

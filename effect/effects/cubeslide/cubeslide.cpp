@@ -101,8 +101,9 @@ void CubeSlideEffect::prePaintScreen(ScreenPrePaintData& data,
             | PAINT_SCREEN_BACKGROUND_FIRST;
         timeLine.setCurrentTime(timeLine.currentTime() + delta.count());
         if (windowMoving
-            && timeLine.currentTime() > progressRestriction * (qreal)timeLine.duration())
-            timeLine.setCurrentTime(progressRestriction * (qreal)timeLine.duration());
+            && timeLine.currentTime()
+                > progressRestriction * static_cast<qreal>(timeLine.duration()))
+            timeLine.setCurrentTime(progressRestriction * static_cast<qreal>(timeLine.duration()));
     }
     effects->prePaintScreen(data, presentTime);
 }
@@ -513,7 +514,8 @@ void CubeSlideEffect::slotDesktopChanged(int old, int current, EffectWindow* w)
             }
         }
     }
-    timeLine.setDuration((float)rotationDuration / (float)slideRotations.count());
+    timeLine.setDuration(static_cast<float>(rotationDuration)
+                         / static_cast<float>(slideRotations.count()));
     if (activate) {
         startAnimation();
         front_desktop = old;
@@ -596,20 +598,26 @@ void CubeSlideEffect::slotWindowStepUserMovedResized(EffectWindow* w)
         horizontal, screenSize.height() - vertical, screenSize.width() - horizontal * 2, vertical);
     if (leftRect.contains(cursor)) {
         if (effects->desktopToLeft(effects->currentDesktop()) != effects->currentDesktop())
-            windowMovingChanged(0.3 * (float)(horizontal - cursor.x()) / (float)horizontal, Left);
+            windowMovingChanged(0.3 * static_cast<float>(horizontal - cursor.x())
+                                    / static_cast<float>(horizontal),
+                                Left);
     } else if (rightRect.contains(cursor)) {
         if (effects->desktopToRight(effects->currentDesktop()) != effects->currentDesktop())
-            windowMovingChanged(0.3 * (float)(cursor.x() - screenSize.width() + horizontal)
-                                    / (float)horizontal,
-                                Right);
+            windowMovingChanged(
+                0.3 * static_cast<float>(cursor.x() - screenSize.width() + horizontal)
+                    / static_cast<float>(horizontal),
+                Right);
     } else if (topRect.contains(cursor)) {
         if (effects->desktopAbove(effects->currentDesktop()) != effects->currentDesktop())
-            windowMovingChanged(0.3 * (float)(vertical - cursor.y()) / (float)vertical, Upwards);
+            windowMovingChanged(0.3 * static_cast<float>(vertical - cursor.y())
+                                    / static_cast<float>(vertical),
+                                Upwards);
     } else if (bottomRect.contains(cursor)) {
         if (effects->desktopBelow(effects->currentDesktop()) != effects->currentDesktop())
-            windowMovingChanged(0.3 * (float)(cursor.y() - screenSize.height() + vertical)
-                                    / (float)vertical,
-                                Downwards);
+            windowMovingChanged(
+                0.3 * static_cast<float>(cursor.y() - screenSize.height() + vertical)
+                    / static_cast<float>(vertical),
+                Downwards);
     } else {
         // not in one of the areas
         windowMoving = false;

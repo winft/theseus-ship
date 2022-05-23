@@ -168,7 +168,7 @@ void session::logindServiceRegistered()
     QVariantList args;
     if (sessionId.isEmpty()) {
         methodName = QStringLiteral("GetSessionByPID");
-        args << (quint32)QCoreApplication::applicationPid();
+        args << static_cast<quint32>(QCoreApplication::applicationPid());
     } else {
         methodName = QStringLiteral("GetSession");
         args << QString::fromLocal8Bit(sessionId);
@@ -282,7 +282,7 @@ void session::getVirtualTerminal()
                 return;
             }
             const int vt = reply.value().toUInt();
-            if (m_vt != (int)vt) {
+            if (m_vt != static_cast<int>(vt)) {
                 m_vt = vt;
                 Q_EMIT virtualTerminalChanged(m_vt);
             }

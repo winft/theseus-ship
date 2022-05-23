@@ -419,7 +419,7 @@ void window::performPaint(paint_type mask, QRegion region, WindowPaintData data)
     auto const size = verticesPerQuad * quad_count * sizeof(GLVertex2D);
 
     GLVertexBuffer* vbo = GLVertexBuffer::streamingBuffer();
-    GLVertex2D* map = (GLVertex2D*)vbo->map(size);
+    GLVertex2D* map = static_cast<GLVertex2D*>(vbo->map(size));
 
     std::vector<LeafNode> nodes;
     setupLeafNodes(nodes, quads, has_previous_content, data);

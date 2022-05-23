@@ -347,11 +347,11 @@ static glXFuncPtr getProcAddress(const char* name)
 {
     glXFuncPtr ret = nullptr;
 #if HAVE_EPOXY_GLX
-    ret = glXGetProcAddress((const GLubyte*)name);
+    ret = glXGetProcAddress(reinterpret_cast<const GLubyte*>(name));
 #endif
 #if HAVE_DL_LIBRARY
     if (ret == nullptr) {
-        ret = (glXFuncPtr)dlsym(RTLD_DEFAULT, name);
+        ret = reinterpret_cast<glXFuncPtr>(dlsym(RTLD_DEFAULT, name));
     }
 #endif
     return ret;

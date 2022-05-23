@@ -585,14 +585,16 @@ void FlipSwitchEffect::setActive(bool activate, FlipSwitchMode mode)
             if (m_screenArea.width() != fullRect.width()) {
                 if (m_screenArea.x() == 0) {
                     // horizontal layout: left screen
-                    xmin *= (float)m_screenArea.width() / (float)fullRect.width();
+                    xmin *= static_cast<float>(m_screenArea.width())
+                        / static_cast<float>(fullRect.width());
                     xmax *= (fullRect.width() - 0.5f * m_screenArea.width())
                         / (0.5f * fullRect.width());
                 } else {
                     // horizontal layout: right screen
                     xmin *= (fullRect.width() - 0.5f * m_screenArea.width())
                         / (0.5f * fullRect.width());
-                    xmax *= (float)m_screenArea.width() / (float)fullRect.width();
+                    xmax *= static_cast<float>(m_screenArea.width())
+                        / static_cast<float>(fullRect.width());
                 }
             }
             if (m_screenArea.height() != fullRect.height()) {
@@ -600,10 +602,12 @@ void FlipSwitchEffect::setActive(bool activate, FlipSwitchMode mode)
                     // vertical layout: top screen
                     ymin *= (fullRect.height() - 0.5f * m_screenArea.height())
                         / (0.5f * fullRect.height());
-                    ymax *= (float)m_screenArea.height() / (float)fullRect.height();
+                    ymax *= static_cast<float>(m_screenArea.height())
+                        / static_cast<float>(fullRect.height());
                 } else {
                     // vertical layout: bottom screen
-                    ymin *= (float)m_screenArea.height() / (float)fullRect.height();
+                    ymin *= static_cast<float>(m_screenArea.height())
+                        / static_cast<float>(fullRect.height());
                     ymax *= (fullRect.height() - 0.5f * m_screenArea.height())
                         / (0.5f * fullRect.height());
                 }

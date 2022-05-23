@@ -178,12 +178,16 @@ void PresentWindowsEffect::reconfigure(ReconfigureFlags)
     m_fillGaps = PresentWindowsConfig::fillGaps();
     m_fadeDuration = double(animationTime(150));
     m_showPanel = PresentWindowsConfig::showPanel();
-    m_leftButtonWindow = (WindowMouseAction)PresentWindowsConfig::leftButtonWindow();
-    m_middleButtonWindow = (WindowMouseAction)PresentWindowsConfig::middleButtonWindow();
-    m_rightButtonWindow = (WindowMouseAction)PresentWindowsConfig::rightButtonWindow();
-    m_leftButtonDesktop = (DesktopMouseAction)PresentWindowsConfig::leftButtonDesktop();
-    m_middleButtonDesktop = (DesktopMouseAction)PresentWindowsConfig::middleButtonDesktop();
-    m_rightButtonDesktop = (DesktopMouseAction)PresentWindowsConfig::rightButtonDesktop();
+    m_leftButtonWindow = static_cast<WindowMouseAction>(PresentWindowsConfig::leftButtonWindow());
+    m_middleButtonWindow
+        = static_cast<WindowMouseAction>(PresentWindowsConfig::middleButtonWindow());
+    m_rightButtonWindow = static_cast<WindowMouseAction>(PresentWindowsConfig::rightButtonWindow());
+    m_leftButtonDesktop
+        = static_cast<DesktopMouseAction>(PresentWindowsConfig::leftButtonDesktop());
+    m_middleButtonDesktop
+        = static_cast<DesktopMouseAction>(PresentWindowsConfig::middleButtonDesktop());
+    m_rightButtonDesktop
+        = static_cast<DesktopMouseAction>(PresentWindowsConfig::rightButtonDesktop());
 
     // touch screen edges
     const QVector<ElectricBorder> relevantBorders{
@@ -1158,14 +1162,16 @@ void PresentWindowsEffect::calculateWindowTransformationsKompose(EffectWindowLis
     // Following code is taken from Kompose 0.5.4, src/komposelayout.cpp
     int spacing = 10;
     int rows, columns;
-    double parentRatio = availRect.width() / (double)availRect.height();
+    double parentRatio = availRect.width() / static_cast<double>(availRect.height());
     // Use more columns than rows when parent's width > parent's height
     if (parentRatio > 1) {
-        columns = (int)ceil(sqrt((double)windowlist.count()));
-        rows = (int)ceil((double)windowlist.count() / (double)columns);
+        columns = static_cast<int>(ceil(sqrt(static_cast<double>(windowlist.count()))));
+        rows = static_cast<int>(
+            ceil(static_cast<double>(windowlist.count()) / static_cast<double>(columns)));
     } else {
-        rows = (int)ceil(sqrt((double)windowlist.count()));
-        columns = (int)ceil((double)windowlist.count() / (double)rows);
+        rows = static_cast<int>(ceil(sqrt(static_cast<double>(windowlist.count()))));
+        columns = static_cast<int>(
+            ceil(static_cast<double>(windowlist.count()) / static_cast<double>(rows)));
     }
     // qCDebug(KWIN_PRESENTWINDOWS) << "Using " << rows << " rows & " << columns << " columns for "
     // << windowlist.count() << " clients";
@@ -1220,11 +1226,11 @@ void PresentWindowsEffect::calculateWindowTransformationsKompose(EffectWindowLis
                 if ((ratio >= 1.0 && heightByWidth <= usableH)
                     || (ratio < 1.0 && widthByHeight > usableW)) {
                     widgetw = usableW;
-                    widgeth = (int)heightByWidth;
+                    widgeth = static_cast<int>(heightByWidth);
                 } else if ((ratio < 1.0 && widthByHeight <= usableW)
                            || (ratio >= 1.0 && heightByWidth > usableH)) {
                     widgeth = usableH;
-                    widgetw = (int)widthByHeight;
+                    widgetw = static_cast<int>(widthByHeight);
                 }
                 // Don't upscale large-ish windows
                 if (widgetw > window->width()
@@ -1566,7 +1572,8 @@ void PresentWindowsEffect::setActive(bool active)
     if (m_activated) {
         effects->setShowingDesktop(false);
         m_needInitialSelection = true;
-        m_closeButtonCorner = (Qt::Corner)effects->kwinOption(KWin::CloseButtonCorner).toInt();
+        m_closeButtonCorner
+            = static_cast<Qt::Corner>(effects->kwinOption(KWin::CloseButtonCorner).toInt());
         m_decalOpacity = 0.0;
         m_highlightedWindow = nullptr;
         m_windowFilter.clear();

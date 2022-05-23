@@ -57,7 +57,7 @@ void screen_edge::createWindow()
                         XCB_ATOM_ATOM,
                         32,
                         1,
-                        (unsigned char*)(&version));
+                        reinterpret_cast<unsigned char*>(&version));
 }
 
 void screen_edge::createApproachWindow()

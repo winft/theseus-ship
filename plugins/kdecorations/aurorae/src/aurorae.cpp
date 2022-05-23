@@ -302,8 +302,8 @@ void Decoration::init()
         auto readButtonSize = [this, theme] {
             const KSharedConfigPtr conf = KSharedConfig::openConfig(QStringLiteral("auroraerc"));
             const KConfigGroup themeGroup(conf, m_themeName.mid(16));
-            theme->setButtonSize((KDecoration2::BorderSize)(themeGroup.readEntry<int>("ButtonSize",
-                                                                                      int(KDecoration2::BorderSize::Normal) - s_indexMapper) + s_indexMapper));
+            theme->setButtonSize(static_cast<KDecoration2::BorderSize>((themeGroup.readEntry<int>("ButtonSize",
+                                                                                                  int(KDecoration2::BorderSize::Normal) - s_indexMapper) + s_indexMapper)));
         };
         connect(this, &Decoration::configChanged, theme, readButtonSize);
         readButtonSize();

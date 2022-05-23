@@ -613,7 +613,7 @@ void AnimationEffect::paintWindow(EffectWindow* w, int mask, QRegion region, Win
                 break;
             }
             case Rotation: {
-                data.setRotationAxis((Qt::Axis)metaData(Axis, anim->meta));
+                data.setRotationAxis(static_cast<Qt::Axis>(metaData(Axis, anim->meta)));
                 const float prgrs = progress(*anim);
                 data.setRotationAngle(anim->from[0] + prgrs * (anim->to[0] - anim->from[0]));
 

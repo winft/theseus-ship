@@ -163,10 +163,10 @@ void MagnifierEffect::paintScreen(int mask, const QRegion& region, ScreenPaintDa
         const QRect area = magnifierArea();
         const QPoint cursor = cursorPos();
 
-        QRect srcArea(cursor.x() - (double)area.width() / (zoom * 2),
-                      cursor.y() - (double)area.height() / (zoom * 2),
-                      (double)area.width() / zoom,
-                      (double)area.height() / zoom);
+        QRect srcArea(cursor.x() - static_cast<double>(area.width()) / (zoom * 2),
+                      cursor.y() - static_cast<double>(area.height()) / (zoom * 2),
+                      static_cast<double>(area.width()) / zoom,
+                      static_cast<double>(area.height()) / zoom);
         if (effects->isOpenGLCompositing()) {
             m_fbo->blitFromFramebuffer(srcArea);
             // paint magnifier
