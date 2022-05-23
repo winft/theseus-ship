@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "base/logging.h"
 #include "render/outline.h"
-#include "win/screen.h"
 
 #include <QApplication>
 #include <QDesktopWidget>
@@ -64,35 +63,6 @@ window* space::get_window(Toplevel* client) const
     return client->control->scripting.get();
 }
 
-int space::currentDesktop() const
-{
-    return win::virtual_desktop_manager::self()->current();
-}
-
-int space::numberOfDesktops() const
-{
-    return win::virtual_desktop_manager::self()->count();
-}
-
-void space::setCurrentDesktop(int desktop)
-{
-    win::virtual_desktop_manager::self()->setCurrent(desktop);
-}
-
-void space::setNumberOfDesktops(int count)
-{
-    win::virtual_desktop_manager::self()->setCount(count);
-}
-
-QString space::currentActivity() const
-{
-    return {};
-}
-
-void space::setCurrentActivity(QString /*activity*/)
-{
-}
-
 QStringList space::activityList() const
 {
     return {};
@@ -118,26 +88,6 @@ int space::displayHeight() const
     return displaySize().height();
 }
 
-QString space::desktopName(int desktop) const
-{
-    return win::virtual_desktop_manager::self()->name(desktop);
-}
-
-void space::createDesktop(int position, const QString& name) const
-{
-    win::virtual_desktop_manager::self()->createVirtualDesktop(position, name);
-}
-
-void space::removeDesktop(int position) const
-{
-    auto vd = win::virtual_desktop_manager::self()->desktopForX11Id(position + 1);
-    if (!vd) {
-        return;
-    }
-
-    win::virtual_desktop_manager::self()->removeVirtualDesktop(vd->id());
-}
-
 void space::setupAbstractClientConnections(window* window)
 {
     connect(window, &window::clientMinimized, this, &space::clientMinimized);
@@ -150,29 +100,14 @@ void space::setupClientConnections(window* window)
     connect(window, &window::clientFullScreenSet, this, &space::clientFullScreenSet);
 }
 
-void space::showOutline(const QRect& geometry)
-{
-    workspace()->outline->show(geometry);
-}
-
 void space::showOutline(int x, int y, int width, int height)
 {
-    workspace()->outline->show(QRect(x, y, width, height));
-}
-
-void space::hideOutline()
-{
-    workspace()->outline->hide();
+    showOutline(QRect(x, y, width, height));
 }
 
 window* space::getClient(qulonglong windowId)
 {
     return get_client_impl(windowId);
-}
-
-QSize space::desktopGridSize() const
-{
-    return win::virtual_desktop_manager::self()->grid().size();
 }
 
 int space::desktopGridWidth() const
@@ -198,15 +133,6 @@ int space::workspaceWidth() const
 int space::numScreens() const
 {
     return kwinApp()->get_base().get_outputs().size();
-}
-
-int space::activeScreen() const
-{
-    auto output = win::get_current_output(*workspace());
-    if (!output) {
-        return 0;
-    }
-    return base::get_output_index(kwinApp()->get_base().get_outputs(), *output);
 }
 
 QRect space::virtualScreenGeometry() const

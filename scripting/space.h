@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "base/platform.h"
 #include "main.h"
 #include "win/move.h"
+#include "win/screen.h"
 #include "win/virtual_desktops.h"
 #include "win/wayland/window.h"
 #include "win/x11/window.h"
@@ -135,19 +136,25 @@ public:
     };
     Q_ENUM(ElectricBorder)
 
-#define GETTERSETTERDEF(rettype, getter, setter)                                                   \
-    rettype getter() const;                                                                        \
-    void setter(rettype val);
-    GETTERSETTERDEF(int, numberOfDesktops, setNumberOfDesktops)
-    GETTERSETTERDEF(int, currentDesktop, setCurrentDesktop)
-    GETTERSETTERDEF(QString, currentActivity, setCurrentActivity)
-#undef GETTERSETTERDEF
+    virtual int currentDesktop() const = 0;
+    virtual void setCurrentDesktop(int desktop) = 0;
+    virtual int numberOfDesktops() const = 0;
+    virtual void setNumberOfDesktops(int count) = 0;
+
+    /// Deprecated
+    QString currentActivity() const
+    {
+        return {};
+    }
+    void setCurrentActivity(QString /*activity*/)
+    {
+    }
 
     virtual window* activeClient() const = 0;
 
     virtual void setActiveClient(window* win) = 0;
 
-    QSize desktopGridSize() const;
+    virtual QSize desktopGridSize() const = 0;
     int desktopGridWidth() const;
     int desktopGridHeight() const;
     int workspaceWidth() const;
@@ -156,7 +163,7 @@ public:
     int displayWidth() const;
     int displayHeight() const;
     QSize displaySize() const;
-    int activeScreen() const;
+    virtual int activeScreen() const = 0;
     int numScreens() const;
     QStringList activityList() const;
     QSize virtualScreenSize() const;
@@ -212,19 +219,53 @@ public:
     /**
      * Returns the name for the given @p desktop.
      */
-    Q_SCRIPTABLE QString desktopName(int desktop) const;
+    Q_SCRIPTABLE QString desktopName(int desktop) const
+    {
+        return desktop_name_impl(desktop);
+    }
     /**
      * Create a new virtual desktop at the requested position.
      * @param position The position of the desktop. It should be in range [0, count].
      * @param name The name for the new desktop, if empty the default name will be used.
      */
-    Q_SCRIPTABLE void createDesktop(int position, const QString& name) const;
+    Q_SCRIPTABLE void createDesktop(int position, QString const& name) const
+    {
+        return create_desktop_impl(position, name);
+    }
     /**
      * Remove the virtual desktop at the requested position
      * @param position The position of the desktop to be removed. It should be in range [0, count -
      * 1].
      */
-    Q_SCRIPTABLE void removeDesktop(int position) const;
+    Q_SCRIPTABLE void removeDesktop(int position) const
+    {
+        return remove_desktop_impl(position);
+    }
+
+    Q_SCRIPTABLE void slotSwitchDesktopNext() const
+    {
+        switch_desktop_next_impl();
+    }
+    Q_SCRIPTABLE void slotSwitchDesktopPrevious() const
+    {
+        switch_desktop_previous_impl();
+    }
+    Q_SCRIPTABLE void slotSwitchDesktopRight() const
+    {
+        switch_desktop_right_impl();
+    }
+    Q_SCRIPTABLE void slotSwitchDesktopLeft() const
+    {
+        switch_desktop_left_impl();
+    }
+    Q_SCRIPTABLE void slotSwitchDesktopUp() const
+    {
+        switch_desktop_up_impl();
+    }
+    Q_SCRIPTABLE void slotSwitchDesktopDown() const
+    {
+        switch_desktop_down_impl();
+    }
 
     /**
      * Provides support information about the currently running KWin instance.
@@ -239,21 +280,6 @@ public:
     Q_SCRIPTABLE KWin::scripting::window* getClient(qulonglong windowId);
 
 public Q_SLOTS:
-    /// All the available key bindings.
-#define SWITCH_VD_SLOT(name, direction)                                                            \
-    void name()                                                                                    \
-    {                                                                                              \
-        win::virtual_desktop_manager::self()->moveTo<direction>(                                   \
-            kwinApp()->options->isRollOverDesktops());                                             \
-    }
-
-    SWITCH_VD_SLOT(slotSwitchDesktopNext, win::virtual_desktop_next)
-    SWITCH_VD_SLOT(slotSwitchDesktopPrevious, win::virtual_desktop_previous)
-    SWITCH_VD_SLOT(slotSwitchDesktopRight, win::virtual_desktop_right)
-    SWITCH_VD_SLOT(slotSwitchDesktopLeft, win::virtual_desktop_left)
-    SWITCH_VD_SLOT(slotSwitchDesktopUp, win::virtual_desktop_above)
-    SWITCH_VD_SLOT(slotSwitchDesktopDown, win::virtual_desktop_below)
-
     virtual void slotSwitchToNextScreen() = 0;
     virtual void slotWindowToNextScreen() = 0;
     virtual void slotToggleShowDesktop() = 0;
@@ -332,7 +358,7 @@ public Q_SLOTS:
      * If an outline is already shown the outline is moved to the new position.
      * Use hideOutline to remove the outline again.
      */
-    void showOutline(QRect const& geometry);
+    virtual void showOutline(QRect const& geometry) = 0;
     /**
      * Overloaded method for convenience.
      */
@@ -340,7 +366,7 @@ public Q_SLOTS:
     /**
      * Hides the outline previously shown by showOutline.
      */
-    void hideOutline();
+    virtual void hideOutline() = 0;
 
     window* get_window(Toplevel* client) const;
 
@@ -436,6 +462,17 @@ protected:
     client_area_impl(clientAreaOption option, QPoint const& point, int desktop) const = 0;
     virtual QRect client_area_impl(clientAreaOption option, window* window) const = 0;
     virtual QRect client_area_impl(clientAreaOption option, window const* window) const = 0;
+
+    virtual QString desktop_name_impl(int desktop) const = 0;
+    virtual void create_desktop_impl(int position, QString const& name) const = 0;
+    virtual void remove_desktop_impl(int position) const = 0;
+
+    virtual void switch_desktop_next_impl() const = 0;
+    virtual void switch_desktop_previous_impl() const = 0;
+    virtual void switch_desktop_left_impl() const = 0;
+    virtual void switch_desktop_right_impl() const = 0;
+    virtual void switch_desktop_up_impl() const = 0;
+    virtual void switch_desktop_down_impl() const = 0;
 
     virtual window* get_client_impl(qulonglong windowId) = 0;
 
@@ -546,6 +583,26 @@ public:
         }
     }
 
+    int currentDesktop() const override
+    {
+        return win::virtual_desktop_manager::self()->current();
+    }
+
+    void setCurrentDesktop(int desktop) override
+    {
+        win::virtual_desktop_manager::self()->setCurrent(desktop);
+    }
+
+    int numberOfDesktops() const override
+    {
+        return win::virtual_desktop_manager::self()->count();
+    }
+
+    void setNumberOfDesktops(int count) override
+    {
+        win::virtual_desktop_manager::self()->setCount(count);
+    }
+
     std::vector<window*> windows() const override
     {
         std::vector<window*> ret;
@@ -571,6 +628,20 @@ public:
         ref_space->activateClient(win->client());
     }
 
+    QSize desktopGridSize() const override
+    {
+        return win::virtual_desktop_manager::self()->grid().size();
+    }
+
+    int activeScreen() const override
+    {
+        auto output = win::get_current_output(*ref_space);
+        if (!output) {
+            return 0;
+        }
+        return base::get_output_index(kwinApp()->get_base().get_outputs(), *output);
+    }
+
     void sendClientToScreen(KWin::scripting::window* client, int screen) override
     {
         auto output = base::get_output(kwinApp()->get_base().get_outputs(), screen);
@@ -578,6 +649,16 @@ public:
             return;
         }
         win::send_to_screen(*ref_space, client->client(), *output);
+    }
+
+    void showOutline(QRect const& geometry) override
+    {
+        ref_space->outline->show(geometry);
+    }
+
+    void hideOutline() override
+    {
+        ref_space->outline->hide();
     }
 
 #define SIMPLE_SLOT(name)                                                                          \
@@ -680,6 +761,52 @@ protected:
     QRect client_area_impl(clientAreaOption option, window const* window) const override
     {
         return ref_space->clientArea(option, window->client());
+    }
+
+    QString desktop_name_impl(int desktop) const override
+    {
+        return win::virtual_desktop_manager::self()->name(desktop);
+    }
+    void create_desktop_impl(int position, QString const& name) const override
+    {
+        win::virtual_desktop_manager::self()->createVirtualDesktop(position, name);
+    }
+    void remove_desktop_impl(int position) const override
+    {
+        if (auto vd = win::virtual_desktop_manager::self()->desktopForX11Id(position + 1)) {
+            win::virtual_desktop_manager::self()->removeVirtualDesktop(vd->id());
+        }
+    }
+
+    template<typename Direction>
+    void switch_desktop() const
+    {
+        win::virtual_desktop_manager::self()->moveTo<Direction>(
+            kwinApp()->options->isRollOverDesktops());
+    }
+    void switch_desktop_next_impl() const override
+    {
+        switch_desktop<win::virtual_desktop_next>();
+    }
+    void switch_desktop_previous_impl() const override
+    {
+        switch_desktop<win::virtual_desktop_previous>();
+    }
+    void switch_desktop_left_impl() const override
+    {
+        switch_desktop<win::virtual_desktop_left>();
+    }
+    void switch_desktop_right_impl() const override
+    {
+        switch_desktop<win::virtual_desktop_right>();
+    }
+    void switch_desktop_up_impl() const override
+    {
+        switch_desktop<win::virtual_desktop_above>();
+    }
+    void switch_desktop_down_impl() const override
+    {
+        switch_desktop<win::virtual_desktop_below>();
     }
 
     QString supportInformation() const override
