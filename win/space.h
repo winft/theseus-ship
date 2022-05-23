@@ -105,6 +105,7 @@ class screen_edge;
 class screen_edger;
 class shortcut_dialog;
 class stacking_order;
+class tabbox;
 class user_actions_menu;
 class virtual_desktop_manager;
 
@@ -124,6 +125,7 @@ public:
     std::unique_ptr<deco::bridge<space>> deco;
     std::unique_ptr<win::app_menu> app_menu;
     std::unique_ptr<input::redirect> input;
+    std::unique_ptr<win::tabbox> tabbox;
     std::unique_ptr<x11::color_mapper> color_mapper;
 
     QScopedPointer<base::x11::event_filter> m_wasUserInteractionFilter;

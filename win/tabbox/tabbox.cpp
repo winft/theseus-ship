@@ -436,18 +436,8 @@ QUuid tabbox_client_impl::internal_id() const
 /*********************************************************
  * TabBox
  *********************************************************/
-tabbox* tabbox::s_self = nullptr;
-
-tabbox* tabbox::create(QObject* parent)
-{
-    Q_ASSERT(!s_self);
-    s_self = new tabbox(parent);
-    return s_self;
-}
-
-tabbox::tabbox(QObject* parent)
-    : QObject(parent)
-    , m_display_ref_count(0)
+tabbox::tabbox()
+    : m_display_ref_count(0)
     , m_desktop_grab(false)
     , m_tab_grab(false)
     , m_no_modifier_grab(false)
@@ -500,10 +490,7 @@ tabbox::tabbox(QObject* parent)
     connect(workspace(), &win::space::configChanged, this, &tabbox::reconfigure);
 }
 
-tabbox::~tabbox()
-{
-    s_self = nullptr;
-}
+tabbox::~tabbox() = default;
 
 void tabbox::handler_ready()
 {
@@ -520,7 +507,7 @@ void tabbox::key(const KLazyLocalizedString& action_name, Slot slot, const QKeyS
     a->setObjectName(QString::fromUtf8(action_name.untranslatedText()));
     a->setText(action_name.toString());
     KGlobalAccel::self()->setGlobalShortcut(a, QList<QKeySequence>() << shortcut);
-    kwinApp()->input->registerShortcut(shortcut, a, tabbox::self(), slot);
+    kwinApp()->input->registerShortcut(shortcut, a, this, slot);
     auto cuts = KGlobalAccel::self()->shortcut(a);
     global_shortcut_changed(a, cuts.isEmpty() ? QKeySequence() : cuts.first());
 }

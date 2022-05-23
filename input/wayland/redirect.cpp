@@ -195,7 +195,7 @@ void redirect::setup_filters()
     m_filters.emplace_back(new move_resize_filter(*this));
 
 #if KWIN_BUILD_TABBOX
-    m_filters.emplace_back(new tabbox_filter);
+    m_filters.emplace_back(new tabbox_filter(*this));
 #endif
 
     if (has_global_shortcuts) {

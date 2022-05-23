@@ -118,7 +118,7 @@ space::space()
 
 #if KWIN_BUILD_TABBOX
     // need to create the tabbox before compositing scene is setup
-    tabbox::tabbox::create(this);
+    tabbox = std::make_unique<win::tabbox>();
 #endif
 
     m_compositor = render::compositor::self();
@@ -875,9 +875,8 @@ win::screen_edge* space::create_screen_edge(win::screen_edger& edger)
 void space::updateTabbox()
 {
 #if KWIN_BUILD_TABBOX
-    win::tabbox* tabBox = tabbox::tabbox::self();
-    if (tabBox->is_displayed()) {
-        tabBox->reset(true);
+    if (tabbox->is_displayed()) {
+        tabbox->reset(true);
     }
 #endif
 }
@@ -2938,7 +2937,7 @@ void space::initShortcuts()
 #undef DEF6
 
 #if KWIN_BUILD_TABBOX
-    tabbox::tabbox::self()->init_shortcuts();
+    tabbox->init_shortcuts();
 #endif
     virtual_desktop_manager->initShortcuts();
     kwinApp()->get_base().render->night_color->init_shortcuts();

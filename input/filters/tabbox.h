@@ -11,15 +11,22 @@
 namespace KWin::input
 {
 
+class redirect;
+
 class KWIN_EXPORT tabbox_filter : public event_filter
 {
 public:
+    explicit tabbox_filter(input::redirect& redirect);
+
     bool key(key_event const& event) override;
     bool key_repeat(key_event const& event) override;
 
     bool button(button_event const& event) override;
     bool motion(motion_event const& event) override;
     bool axis(axis_event const& event) override;
+
+private:
+    input::redirect& redirect;
 };
 
 }

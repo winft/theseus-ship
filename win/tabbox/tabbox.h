@@ -123,6 +123,7 @@ class KWIN_EXPORT tabbox : public QObject
 {
     Q_OBJECT
 public:
+    tabbox();
     ~tabbox() override;
 
     /**
@@ -278,9 +279,6 @@ public:
     }
     void set_current_index(QModelIndex index, bool notify_effects = true);
 
-    static win::tabbox* self();
-    static win::tabbox* create(QObject* parent);
-
 public Q_SLOTS:
     /**
      * Notify effects that the tab box is being shown, and only display the
@@ -313,7 +311,6 @@ Q_SIGNALS:
     void tabbox_key_event(QKeyEvent*);
 
 private:
-    explicit tabbox(QObject* parent);
     void load_config(const KConfigGroup& config, tabbox_config& tabbox_config);
 
     bool start_kde_walk_through_windows(
@@ -385,14 +382,7 @@ private:
     QHash<ElectricBorder, QAction*> m_touch_activate;
     QHash<ElectricBorder, QAction*> m_touch_alternative_activate;
     QScopedPointer<base::x11::event_filter> m_x11_event_filter;
-
-    static win::tabbox* s_self;
 };
-
-inline win::tabbox* win::tabbox::self()
-{
-    return s_self;
-}
 
 } // namespace win
 } // namespace
