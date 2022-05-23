@@ -372,12 +372,12 @@ void check_group(Win* win, x11::group* group)
             group = win->space.findGroup(win->info->groupLeader());
             if (!group) {
                 // doesn't exist yet
-                group = new x11::group(win->info->groupLeader());
+                group = new x11::group(win->info->groupLeader(), win->space);
             }
         } else {
             group = find_client_leader_group(win);
             if (!group) {
-                group = new x11::group(XCB_WINDOW_NONE);
+                group = new x11::group(XCB_WINDOW_NONE, win->space);
             }
         }
     }

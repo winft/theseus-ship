@@ -39,21 +39,18 @@ namespace KWin::win::x11
 // group
 //********************************************
 
-group::group(xcb_window_t leader_P)
-    : leader_client(nullptr)
-    , leader_wid(leader_P)
-    , leader_info(nullptr)
-    , user_time(-1U)
-    , refcount(0)
+group::group(xcb_window_t leader_P, win::space& space)
+    : leader_wid(leader_P)
+    , space{space}
 {
     if (leader_P != XCB_WINDOW_NONE) {
-        leader_client = find_controlled_window<win::x11::window>(
-            *workspace(), predicate_match::window, leader_P);
+        leader_client
+            = find_controlled_window<win::x11::window>(space, predicate_match::window, leader_P);
         leader_info = new NETWinInfo(
             connection(), leader_P, rootWindow(), NET::Properties(), NET::WM2StartupId);
     }
     effect_group = new render::effect_window_group_impl(this);
-    workspace()->addGroup(this);
+    space.addGroup(this);
 }
 
 group::~group()
@@ -108,7 +105,7 @@ void group::removeMember(win::x11::window* member_P)
     // other members of the group (which would be however deleted already
     // if there were no other members)
     if (refcount == 0 && _members.empty()) {
-        workspace()->removeGroup(this);
+        space.removeGroup(this);
         delete this;
     }
 }
@@ -121,7 +118,7 @@ void group::ref()
 void group::deref()
 {
     if (--refcount == 0 && _members.empty()) {
-        workspace()->removeGroup(this);
+        space.removeGroup(this);
         delete this;
     }
 }
@@ -137,7 +134,7 @@ void group::lostLeader()
     assert(std::find(_members.cbegin(), _members.cend(), leader_client) == _members.cend());
     leader_client = nullptr;
     if (_members.empty()) {
-        workspace()->removeGroup(this);
+        space.removeGroup(this);
         delete this;
     }
 }
@@ -150,7 +147,7 @@ void group::startupIdChanged()
 {
     KStartupInfoId asn_id;
     KStartupInfoData asn_data;
-    bool asn_valid = workspace()->checkStartupNotification(leader_wid, asn_id, asn_data);
+    bool asn_valid = space.checkStartupNotification(leader_wid, asn_id, asn_data);
     if (!asn_valid)
         return;
     if (asn_id.timestamp() != 0 && user_time != -1U
